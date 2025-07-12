@@ -604,6 +604,7 @@ var StaticFieldsTraces = map[string]v3.AttributeKey{}
 
 var IsDotMetricsEnabled = false
 var PreferSpanMetrics = false
+var MaxJSONFlatteningDepth = 1
 
 func init() {
 	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)
@@ -613,6 +614,12 @@ func init() {
 	}
 	if GetOrDefaultEnv("USE_SPAN_METRICS", "false") == "true" {
 		PreferSpanMetrics = true
+	}
+
+	// set max flattening depth
+	depth, err := strconv.Atoi(GetOrDefaultEnv(maxJSONFlatteningDepth, "1"))
+	if err == nil {
+		MaxJSONFlatteningDepth = depth
 	}
 }
 
@@ -641,3 +648,4 @@ func GetDefaultSiteURL() string {
 }
 
 const DotMetricsEnabled = "DOT_METRICS_ENABLED"
+const maxJSONFlatteningDepth = "MAX_JSON_FLATTENING_DEPTH"
