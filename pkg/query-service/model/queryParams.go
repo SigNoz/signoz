@@ -410,12 +410,6 @@ type CustomRetentionTTLParams struct {
 	ResourceRules  []CustomRetentionRule `json:"resourceRules"`
 }
 
-type CustomRetentionRule struct {
-	Key   string `json:"key"`
-	Name  string `json:"name"`
-	Value int    `json:"value"`
-}
-
 type CustomRetentionTTLResponse struct {
 	Message string `json:"message"`
 }
@@ -424,6 +418,12 @@ type GetCustomRetentionTTLResponse struct {
 	DefaultTTLDays int                   `json:"defaultTTLDays"`
 	ResourceRules  []CustomRetentionRule `json:"resourceRules"`
 	Status         string                `json:"status"`
+}
+
+type CustomRetentionRule struct {
+	Key   string `json:"key"`
+	Name  string `json:"name"`
+	Value int    `json:"value"`
 }
 
 type GetTTLParams struct {

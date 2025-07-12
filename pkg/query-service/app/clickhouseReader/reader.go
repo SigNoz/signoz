@@ -1644,7 +1644,7 @@ func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID stri
 	go func(ttlPayload map[string]string, resourceRulesJSON string, defaultTTLDays int) {
 		for tableName, query := range ttlPayload {
 			// Store the operation in the database
-			customTTL := types.CustomRetentionTTLSetting{
+			customTTL := types.TTLSetting{
 				Identifiable: types.Identifiable{
 					ID: valuer.GenerateUUID(),
 				},
@@ -1652,12 +1652,12 @@ func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID stri
 					CreatedAt: time.Now(),
 					UpdatedAt: time.Now(),
 				},
-				TransactionID:  uuid,
-				TableName:      tableName,
-				DefaultTTLDays: defaultTTLDays,
-				ResourceRules:  resourceRulesJSON,
-				Status:         constants.StatusPending,
-				OrgID:          orgID,
+				TransactionID: uuid,
+				TableName:     tableName,
+				TTL:           defaultTTLDays,
+				ResourceRules: resourceRulesJSON,
+				Status:        constants.StatusPending,
+				OrgID:         orgID,
 			}
 
 			// Use context.Background() for async operation
@@ -1684,7 +1684,7 @@ func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID stri
 
 func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID string) (*model.GetCustomRetentionTTLResponse, *model.ApiError) {
 	// Get the latest custom retention TTL setting
-	customTTL := new(types.CustomRetentionTTLSetting)
+	customTTL := new(types.TTLSetting)
 	err := r.sqlDB.BunDB().NewSelect().
 		Model(customTTL).
 		Where("org_id = ?", orgID).
@@ -1715,14 +1715,14 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 	}
 
 	return &model.GetCustomRetentionTTLResponse{
-		DefaultTTLDays: customTTL.DefaultTTLDays,
+		DefaultTTLDays: customTTL.TTL,
 		ResourceRules:  resourceRules,
 		Status:         customTTL.Status,
 	}, nil
 }
 
-func (r *ClickHouseReader) checkCustomRetentionTTLStatusItem(ctx context.Context, orgID string, tableName string) (*types.CustomRetentionTTLSetting, *model.ApiError) {
-	ttl := new(types.CustomRetentionTTLSetting)
+func (r *ClickHouseReader) checkCustomRetentionTTLStatusItem(ctx context.Context, orgID string, tableName string) (*types.TTLSetting, *model.ApiError) {
+	ttl := new(types.TTLSetting)
 	err := r.sqlDB.BunDB().NewSelect().
 		Model(ttl).
 		Where("table_name = ?", tableName).
@@ -1742,7 +1742,7 @@ func (r *ClickHouseReader) updateCustomRetentionTTLStatus(ctx context.Context, o
 	statusItem, err := r.checkCustomRetentionTTLStatusItem(ctx, orgID, tableName)
 	if err == nil && statusItem != nil {
 		_, dbErr := r.sqlDB.BunDB().NewUpdate().
-			Model(new(types.CustomRetentionTTLSetting)).
+			Model(new(types.TTLSetting)).
 			Set("updated_at = ?", time.Now()).
 			Set("status = ?", status).
 			Where("id = ?", statusItem.ID.StringValue()).
