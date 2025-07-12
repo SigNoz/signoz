@@ -144,7 +144,7 @@ export function QueryBuilderProvider({
 				.includes(queryData.aggregateOperator);
 
 			if (!isCurrentOperatorAvailableInList) {
-				return { ...queryData, aggregateOperator: initialOperators[0].value };
+				return { ...queryData, aggregateOperator: initialOperators[0]?.value };
 			}
 
 			return queryData;
@@ -246,6 +246,8 @@ export function QueryBuilderProvider({
 			const queryData = query.builder.queryData?.map((item) =>
 				getElementWithActualOperator(item, dataSource, panelType),
 			);
+
+			console.log('queryData', queryData, panelType, dataSource);
 
 			return { ...query, builder: { ...query.builder, queryData } };
 		},
@@ -853,18 +855,35 @@ export function QueryBuilderProvider({
 	);
 
 	const handleRunQuery = useCallback(
-		(shallUpdateStepInterval?: boolean) => {
+		(shallUpdateStepInterval?: boolean, newQBQuery?: boolean) => {
+			let currentQueryData = currentQuery;
+			if (newQBQuery) {
+				currentQueryData = {
+					...currentQueryData,
+					builder: {
+						...currentQueryData.builder,
+						queryData: currentQueryData.builder.queryData.map((item) => ({
+							...item,
+							filters: {
+								items: [],
+								op: 'AND',
+							},
+							having: [],
+						})),
+					},
+				};
+			}
 			redirectWithQueryBuilderData({
 				...{
-					...currentQuery,
+					...currentQueryData,
 					...updateStepInterval(
 						{
-							builder: currentQuery.builder,
-							clickhouse_sql: currentQuery.clickhouse_sql,
-							promql: currentQuery.promql,
-							id: currentQuery.id,
+							builder: currentQueryData.builder,
+							clickhouse_sql: currentQueryData.clickhouse_sql,
+							promql: currentQueryData.promql,
+							id: currentQueryData.id,
 							queryType,
-							unit: currentQuery.unit,
+							unit: currentQueryData.unit,
 						},
 						maxTime,
 						minTime,

@@ -2,6 +2,7 @@ import logEvent from 'api/common/logEvent';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
@@ -136,6 +137,7 @@ function GridCardGraph({
 				formatForWeb: widget.panelTypes === PANEL_TYPES.TABLE,
 				start: customTimeRange?.startTime || start,
 				end: customTimeRange?.endTime || end,
+				originalGraphType: widget.panelTypes,
 			};
 		}
 		updatedQuery.builder.queryData[0].pageSize = 10;
@@ -269,6 +271,12 @@ function GridCardGraph({
 			queryResponse.data?.payload.data.result,
 		);
 		queryResponse.data.payload.data.result = sortedSeriesData;
+	}
+
+	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.PIE) {
+		const transformedData = populateMultipleResults(queryResponse?.data);
+		// eslint-disable-next-line no-param-reassign
+		queryResponse.data = transformedData;
 	}
 
 	const menuList =
