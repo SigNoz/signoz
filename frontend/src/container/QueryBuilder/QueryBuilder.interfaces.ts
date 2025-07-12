@@ -28,5 +28,6 @@ export type QueryBuilderProps = {
 	queryComponents?: { renderOrderBy?: (props: OrderByFilterProps) => ReactNode };
 	isListViewPanel?: boolean;
 	showFunctions?: boolean;
+	showOnlyWhereClause?: boolean;
 	version: string;
 };

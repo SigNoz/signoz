@@ -4,11 +4,11 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
+import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
-import { QueryBuilder } from 'container/QueryBuilder';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { isEmpty } from 'lodash-es';
@@ -48,7 +48,7 @@ function QuerySection({
 	const isDarkMode = useIsDarkMode();
 
 	const renderMetricUI = (): JSX.Element => (
-		<QueryBuilder
+		<QueryBuilderV2
 			panelType={panelType}
 			config={{
 				queryVariant: 'static',
@@ -144,7 +144,7 @@ function QuerySection({
 					<div className="alert-tabs">
 						<Tabs
 							type="card"
-							style={{ width: '100%' }}
+							style={{ width: '100%', padding: '0px 8px' }}
 							defaultActiveKey={currentTab}
 							activeKey={currentTab}
 							onChange={handleQueryCategoryChange}
@@ -178,7 +178,7 @@ function QuerySection({
 					<div className="alert-tabs">
 						<Tabs
 							type="card"
-							style={{ width: '100%' }}
+							style={{ width: '100%', padding: '0px 8px' }}
 							defaultActiveKey={currentTab}
 							activeKey={currentTab}
 							onChange={handleQueryCategoryChange}
@@ -218,7 +218,7 @@ function QuerySection({
 	return (
 		<>
 			<StepHeading> {t('alert_form_step2', { step: step2Label })}</StepHeading>
-			<FormContainer>
+			<FormContainer className="alert-query-section-container">
 				<div>{renderTabs(alertType)}</div>
 				{renderQuerySection(currentTab)}
 			</FormContainer>

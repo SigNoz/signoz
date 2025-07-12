@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { renderHook } from '@testing-library/react';
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { LogViewMode } from 'container/LogsTable';
 import { FontSize } from 'container/OptionsMenu/types';
 import {
@@ -8,10 +9,7 @@ import {
 	Preferences,
 } from 'providers/preferences/types';
 import { act } from 'react-dom/test-utils';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceUpdater } from '../updater/usePreferenceUpdater';
@@ -81,11 +79,11 @@ describe('usePreferenceUpdater', () => {
 	it('should call the logs updater for updateColumns with logs dataSource', () => {
 		const setReSync = jest.fn();
 		const setSavedViewPreferences = jest.fn();
-		const newColumns: BaseAutocompleteData[] = [
+		const newColumns: TelemetryFieldKey[] = [
 			{
-				key: 'new-column',
-				type: 'tag',
-				dataType: DataTypes.String,
+				name: 'new-column',
+				fieldContext: '',
+				fieldDataType: DataTypes.String,
 				isColumn: true,
 			},
 		];
@@ -147,11 +145,11 @@ describe('usePreferenceUpdater', () => {
 	it('should call the traces updater for updateColumns with traces dataSource', () => {
 		const setReSync = jest.fn();
 		const setSavedViewPreferences = jest.fn();
-		const newColumns: BaseAutocompleteData[] = [
+		const newColumns: TelemetryFieldKey[] = [
 			{
-				key: 'new-trace-column',
-				type: 'tag',
-				dataType: DataTypes.String,
+				name: 'new-trace-column',
+				fieldContext: '',
+				fieldDataType: DataTypes.String,
 				isColumn: true,
 			},
 		];
@@ -227,9 +225,9 @@ describe('usePreferenceUpdater', () => {
 		act(() => {
 			result.current.updateColumns([
 				{
-					key: 'column',
-					type: 'tag',
-					dataType: DataTypes.String,
+					name: 'column',
+					fieldContext: '',
+					fieldDataType: DataTypes.String,
 					isColumn: true,
 				},
 			]);

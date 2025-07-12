@@ -1,9 +1,7 @@
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { defaultOptionsQuery } from 'container/OptionsMenu/constants';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import getTracesUpdaterConfig from '../configs/tracesUpdaterConfig';
 import { PreferenceMode } from '../types';
@@ -34,11 +32,11 @@ describe('tracesUpdaterConfig', () => {
 	const mockSetSavedViewPreferences = jest.fn();
 
 	// Test data
-	const mockColumns: BaseAutocompleteData[] = [
+	const mockColumns: TelemetryFieldKey[] = [
 		{
-			key: 'test-trace-column',
-			type: 'tag',
-			dataType: DataTypes.String,
+			name: 'test-trace-column',
+			fieldContext: '',
+			fieldDataType: DataTypes.String,
 			isColumn: true,
 		},
 	];
