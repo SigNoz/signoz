@@ -161,15 +161,18 @@ export function Formula({
 					<Col span={24}>
 						<Input.TextArea
 							name="expression"
+							className="formula-expression"
 							onChange={handleChange}
 							size="middle"
 							value={formula.expression}
+							placeholder="Enter formula"
 							rows={2}
 						/>
 					</Col>
 					<Col span={24}>
 						<Input
 							name="legend"
+							className="formula-legend"
 							onChange={handleChange}
 							size="middle"
 							value={formula.legend}
