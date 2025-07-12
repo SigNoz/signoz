@@ -8,9 +8,11 @@ import getChartData, { GetChartDataProps } from 'lib/getChartData';
 import GetMinMax from 'lib/getMinMax';
 import { colors } from 'lib/getRandomColor';
 import { memo, useCallback, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
+import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { LogsExplorerChartProps } from './LogsExplorerChart.interfaces';
 import { CardStyled } from './LogsExplorerChart.styled';
@@ -23,6 +25,10 @@ function LogsExplorerChart({
 	className,
 	isLogsExplorerViews = false,
 }: LogsExplorerChartProps): JSX.Element {
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 	const location = useLocation();
@@ -78,9 +84,11 @@ function LogsExplorerChart({
 						queryData: data,
 					},
 				],
+				minTime,
+				maxTime,
 				createDataset: handleCreateDatasets,
 			}),
-		[data, handleCreateDatasets],
+		[data, handleCreateDatasets, minTime, maxTime],
 	);
 
 	return (
