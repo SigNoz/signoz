@@ -1,6 +1,7 @@
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { getLogIndicatorType } from 'components/Logs/LogStateIndicator/utils';
+import { getColumnWidth } from 'components/Logs/TableView/config';
 import { useTableView } from 'components/Logs/TableView/useTableView';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
@@ -8,7 +9,15 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
-import { forwardRef, memo, useCallback, useMemo } from 'react';
+import {
+	forwardRef,
+	memo,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import {
 	TableComponents,
 	TableVirtuoso,
@@ -75,10 +84,15 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			onGroupByAttribute,
 		} = useActiveLog();
 
+		// Ref to measure table width
+		const tableRef = useRef<HTMLDivElement>(null);
+		const [tableWidth, setTableWidth] = useState<number | undefined>(undefined);
+
 		const { dataSource, columns } = useTableView({
 			...tableViewProps,
 			onClickExpand: onSetActiveLog,
 			onOpenLogsContext: handleSetActiveContextLog,
+			tableWidth,
 		});
 
 		const { draggedColumns, onDragColumns } = useDragColumns<
@@ -86,6 +100,34 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 		>(LOCALSTORAGE.LOGS_LIST_COLUMNS);
 
 		const isDarkMode = useIsDarkMode();
+
+		// Measure table width on mount and resize
+		useEffect(() => {
+			const measureTableWidth = (): void => {
+				if (tableRef.current) {
+					setTableWidth(tableRef.current.offsetWidth);
+				}
+			};
+
+			measureTableWidth();
+
+			// Add resize listener
+
+			// Add ResizeObserver to monitor table container size changes
+			let resizeObserver: ResizeObserver | null = null;
+			if (tableRef.current) {
+				resizeObserver = new ResizeObserver(() => {
+					measureTableWidth();
+				});
+				resizeObserver.observe(tableRef.current);
+			}
+
+			return (): void => {
+				if (resizeObserver) {
+					resizeObserver.disconnect();
+				}
+			};
+		}, []);
 
 		const tableColumns = useMemo(
 			() => getDraggedColumns<Record<string, unknown>>(columns, draggedColumns),
@@ -119,7 +161,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 		);
 
 		const tableHeader = useCallback(
-			() => (
+			(): JSX.Element => (
 				<tr>
 					{tableColumns
 						.filter((column) => column.key)
@@ -133,6 +175,9 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 									$isDragColumn={isDragColumn}
 									key={column.key}
 									fontSize={tableViewProps?.fontSize}
+									style={{
+										...getColumnWidth(column.key as string, tableColumns, tableWidth),
+									}}
 									// eslint-disable-next-line react/jsx-props-no-spreading
 									{...(isDragColumn && { className: 'dragHandler' })}
 								>
@@ -142,7 +187,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 						})}
 				</tr>
 			),
-			[tableColumns, isDarkMode, tableViewProps?.fontSize],
+			[tableColumns, isDarkMode, tableViewProps?.fontSize, tableWidth],
 		);
 
 		const handleClickExpand = (index: number): void => {
@@ -152,7 +197,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 		};
 
 		return (
-			<>
+			<div ref={tableRef} style={{ width: '100%' }}>
 				<TableVirtuoso
 					ref={ref}
 					initialTopMostItemIndex={
@@ -204,7 +249,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					onClickActionItem={onAddToQuery}
 					onGroupByAttribute={onGroupByAttribute}
 				/>
-			</>
+			</div>
 		);
 	},
 );
