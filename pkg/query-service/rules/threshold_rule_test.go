@@ -1219,6 +1219,35 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			matchType:    "1", // Once
 			target:       200, // 200 GB
 		},
+		{
+			targetUnit: "decgbytes",
+			yAxisUnit:  "By",
+			values: [][]interface{}{
+				{float64(2863284053), "attr", time.Now()},                             // 2.86 GB
+				{float64(2863388842), "attr", time.Now().Add(1 * time.Second)},        // 2.86 GB
+				{float64(300947400), "attr", time.Now().Add(2 * time.Second)},         // 0.3 GB
+				{float64(299316000), "attr", time.Now().Add(3 * time.Second)},         // 0.3 GB
+				{float64(66640400.00000001), "attr", time.Now().Add(4 * time.Second)}, // 66.64 MB
+			},
+			expectAlerts: 0,
+			compareOp:    "1", // Above
+			matchType:    "1", // Once
+			target:       200, // 200 GB
+		},
+		{
+			targetUnit: "h",
+			yAxisUnit:  "min",
+			values: [][]interface{}{
+				{float64(55), "attr", time.Now()},                      // 55 minutes
+				{float64(57), "attr", time.Now().Add(1 * time.Minute)}, // 57 minutes
+				{float64(30), "attr", time.Now().Add(2 * time.Minute)}, // 30 minutes
+				{float64(29), "attr", time.Now().Add(3 * time.Minute)}, // 29 minutes
+			},
+			expectAlerts: 0,
+			compareOp:    "1", // Above
+			matchType:    "1", // Once
+			target:       1,   // 1 hour
+		},
 	}
 
 	for idx, c := range cases {
