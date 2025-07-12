@@ -1,8 +1,4 @@
 .trace-explorer-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-
 	.trace-explorer-run-query {
 		display: flex;
 		flex-direction: row-reverse;
@@ -26,9 +22,44 @@
 }
 
 .traces-explorer-views {
+	padding: 8px;
+
 	.ant-tabs-tabpane {
 		padding: 0 8px;
 	}
+}
+
+.qb-search-view-container {
+	padding: 8px;
+
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 8px;
+
+	.ant-select-selector {
+		border-radius: 2px;
+		border: 1px solid var(--bg-slate-400) !important;
+		background: var(--bg-ink-300) !important;
+		height: 34px !important;
+		box-sizing: border-box !important;
+	}
+}
+
+.trace-explorer-list-view {
+	flex: 1;
+}
+
+.trace-explorer-traces-view {
+	flex: 1;
+}
+
+.trace-explorer-table-view {
+	flex: 1;
+}
+
+.trace-explorer-time-series-view {
+	flex: 1;
 }
 
 .trace-explorer-page {
@@ -36,7 +67,8 @@
 
 	.filter {
 		width: 260px;
-		height: 100vh;
+		height: 100%;
+		min-height: 100vh;
 
 		border-right: 0px;
 		border: 1px solid var(--bg-slate-400);
@@ -50,11 +82,10 @@
 
 	.trace-explorer {
 		width: 100%;
-		border-left: 1px solid var(--bg-slate-400);
 		background: var(--bg-ink-500);
 
 		> .ant-card-body {
-			padding: 8px 8px;
+			padding: 0;
 		}
 
 		border-color: var(--bg-slate-400);

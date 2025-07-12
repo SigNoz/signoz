@@ -2,12 +2,13 @@ import './ChartPreview.styles.scss';
 
 import { InfoCircleOutlined } from '@ant-design/icons';
 import Spinner from 'components/Spinner';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import AnomalyAlertEvaluationView from 'container/AnomalyAlertEvaluationView';
 import GridPanelSwitch from 'container/GridPanelSwitch';
+import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { getFormatNameByOptionId } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
@@ -16,6 +17,7 @@ import {
 	Time as TimeV2,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -78,6 +80,7 @@ function ChartPreview({
 	const threshold = alertDef?.condition.target || 0;
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
+	const { currentQuery } = useQueryBuilder();
 
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -144,7 +147,8 @@ function ChartPreview({
 			},
 			originalGraphType: graphType,
 		},
-		alertDef?.version || DEFAULT_ENTITY_VERSION,
+		// alertDef?.version || DEFAULT_ENTITY_VERSION,
+		ENTITY_VERSION_V5,
 		{
 			queryKey: [
 				'chartPreview',
@@ -173,6 +177,12 @@ function ChartPreview({
 			queryResponse.data?.payload.data.result,
 		);
 		queryResponse.data.payload.data.result = sortedSeriesData;
+	}
+
+	if (queryResponse.data && graphType === PANEL_TYPES.PIE) {
+		const transformedData = populateMultipleResults(queryResponse?.data);
+		// eslint-disable-next-line no-param-reassign
+		queryResponse.data = transformedData;
 	}
 
 	const containerDimensions = useResizeObserver(graphRef);
@@ -246,6 +256,8 @@ function ChartPreview({
 				tzDate: (timestamp: number) =>
 					uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 				timezone: timezone.value,
+				currentQuery,
+				query: query || currentQuery,
 			}),
 		[
 			yAxisUnit,
@@ -261,6 +273,8 @@ function ChartPreview({
 			alertDef?.condition.targetUnit,
 			graphType,
 			timezone.value,
+			currentQuery,
+			query,
 		],
 	);
 
