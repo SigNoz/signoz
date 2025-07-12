@@ -1,6 +1,7 @@
-import { Button, Popover } from 'antd';
+import { Button, Popover, Tooltip } from 'antd';
 import cx from 'classnames';
 import { Ellipsis, PencilLine, Trash2 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { useState } from 'react';
 import { FunnelData } from 'types/api/traceFunnels';
 
@@ -61,6 +62,7 @@ function FunnelItemPopover({
 }: FunnelItemPopoverProps): JSX.Element {
 	const [isRenameModalOpen, setIsRenameModalOpen] = useState<boolean>(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+	const { hasEditPermission } = useAppContext();
 
 	const handleRenameCancel = (): void => {
 		setIsRenameModalOpen(false);
@@ -70,6 +72,19 @@ function FunnelItemPopover({
 		e.preventDefault();
 		e.stopPropagation();
 	};
+
+	if (!hasEditPermission) {
+		return (
+			<Tooltip title="You need editor or admin access to edit funnels">
+				<Button
+					type="text"
+					className="funnel-item__action-btn"
+					icon={<Ellipsis size={14} />}
+					disabled
+				/>
+			</Tooltip>
+		);
+	}
 
 	return (
 		// eslint-disable-next-line jsx-a11y/click-events-have-key-events

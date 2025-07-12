@@ -22,6 +22,7 @@ import {
 	ChevronRight,
 	Leaf,
 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import {
 	Dispatch,
 	SetStateAction,
@@ -70,10 +71,10 @@ function SpanOverview({
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
-
 	handleAddSpanToFunnel: (span: Span) => void;
 }): JSX.Element {
 	const isRootSpan = span.level === 0;
+	const { hasEditPermission } = useAppContext();
 
 	let color = generateColor(span.serviceName, themeColors.traceDetailColors);
 	if (span.hasError) {
@@ -152,23 +153,32 @@ function SpanOverview({
 					{!!span.serviceName && !!span.name && (
 						<div className="add-funnel-button">
 							<span className="add-funnel-button__separator">·</span>
-							<Button
-								type="text"
-								size="small"
-								className="add-funnel-button__button"
-								onClick={(e): void => {
-									e.preventDefault();
-									e.stopPropagation();
-									handleAddSpanToFunnel(span);
-								}}
-								icon={
-									<img
-										className="add-funnel-button__icon"
-										src="/Icons/funnel-add.svg"
-										alt="funnel-icon"
-									/>
+							<Tooltip
+								title={
+									!hasEditPermission
+										? 'You need editor or admin access to add spans to funnels'
+										: ''
 								}
-							/>
+							>
+								<Button
+									type="text"
+									size="small"
+									className="add-funnel-button__button"
+									onClick={(e): void => {
+										e.preventDefault();
+										e.stopPropagation();
+										handleAddSpanToFunnel(span);
+									}}
+									disabled={!hasEditPermission}
+									icon={
+										<img
+											className="add-funnel-button__icon"
+											src="/Icons/funnel-add.svg"
+											alt="funnel-icon"
+										/>
+									}
+								/>
+							</Tooltip>
 						</div>
 					)}
 				</section>

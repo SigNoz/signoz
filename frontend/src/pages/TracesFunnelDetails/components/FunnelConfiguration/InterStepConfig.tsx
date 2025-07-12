@@ -3,6 +3,7 @@ import './InterStepConfig.styles.scss';
 import { Divider } from 'antd';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
+import { useAppContext } from 'providers/App/App';
 import { FunnelStepData, LatencyOptions } from 'types/api/traceFunnels';
 
 function InterStepConfig({
@@ -13,6 +14,7 @@ function InterStepConfig({
 	step: FunnelStepData;
 }): JSX.Element {
 	const { handleStepChange: onStepChange } = useFunnelContext();
+	const { hasEditPermission } = useAppContext();
 	const options = Object.entries(LatencyOptions).map(([key, value]) => ({
 		label: key,
 		value,
@@ -28,11 +30,15 @@ function InterStepConfig({
 				<SignozRadioGroup
 					value={step.latency_type ?? LatencyOptions.P99}
 					options={options}
-					onChange={(e): void =>
-						onStepChange(index, {
-							...step,
-							latency_type: e.target.value,
-						})
+					disabled={!hasEditPermission}
+					onChange={
+						hasEditPermission
+							? (e): void =>
+									onStepChange(index, {
+										...step,
+										latency_type: e.target.value,
+									})
+							: (): void => {}
 					}
 				/>
 			</div>

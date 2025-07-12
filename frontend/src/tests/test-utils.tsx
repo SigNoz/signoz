@@ -22,7 +22,7 @@ import {
 	LicenseState,
 	LicenseStatus,
 } from 'types/api/licensesV3/getActive';
-import { ROLES } from 'types/roles';
+import { ROLES, USER_ROLES } from 'types/roles';
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -162,6 +162,7 @@ export function getAppContextMock(
 				displayName: 'Pentagon',
 			},
 		],
+		hasEditPermission: role === USER_ROLES.ADMIN || role === USER_ROLES.EDITOR,
 		isFetchingUser: false,
 		userFetchError: null,
 		featureFlags: [

@@ -8,6 +8,7 @@ import { PencilLine } from 'lucide-react';
 import FunnelItemPopover from 'pages/TracesFunnels/components/FunnelsList/FunnelItemPopover';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
+import { useAppContext } from 'providers/App/App';
 import { memo, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { FunnelData } from 'types/api/traceFunnels';
@@ -33,6 +34,7 @@ function FunnelConfiguration({
 	triggerAutoSave,
 	showNotifications,
 }: FunnelConfigurationProps): JSX.Element {
+	const { hasEditPermission } = useAppContext();
 	const { triggerSave } = useFunnelContext();
 	const {
 		isPopoverOpen,
@@ -62,7 +64,10 @@ function FunnelConfiguration({
 					<div className="funnel-configuration__header-right">
 						<Tooltip
 							title={
-								funnel?.description
+								// eslint-disable-next-line no-nested-ternary
+								!hasEditPermission
+									? 'You need editor or admin access to edit funnel description'
+									: funnel?.description
 									? 'Edit funnel description'
 									: 'Add funnel description'
 							}
@@ -73,6 +78,7 @@ function FunnelConfiguration({
 								icon={<PencilLine size={14} />}
 								onClick={(): void => setIsDescriptionModalOpen(true)}
 								aria-label="Edit Funnel Description"
+								disabled={!hasEditPermission}
 							/>
 						</Tooltip>
 						<CopyToClipboard textToCopy={window.location.href} />
