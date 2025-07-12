@@ -1,8 +1,8 @@
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { placeWidgetAtBottom } from 'container/NewWidget/utils';
 import { Dashboard } from 'types/api/dashboard/getAll';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 const baseLogsSelectedColumns = {
@@ -16,7 +16,7 @@ export const addEmptyWidgetInDashboardJSONWithQuery = (
 	query: Query,
 	widgetId: string,
 	panelType?: PANEL_TYPES,
-	selectedColumns?: BaseAutocompleteData[] | null,
+	selectedColumns?: TelemetryFieldKey[] | null,
 ): Dashboard => {
 	const logsSelectedColumns = [
 		baseLogsSelectedColumns,

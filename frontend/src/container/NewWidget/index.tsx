@@ -581,7 +581,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const setGraphHandler = (type: PANEL_TYPES): void => {
 		setIsLoadingPanelData(true);
-		const updatedQuery = handleQueryChange(type as any, supersetQuery);
+		const updatedQuery = handleQueryChange(
+			type as any,
+			supersetQuery,
+			selectedGraph,
+		);
 		setGraphType(type);
 		redirectWithQueryBuilderData(
 			updatedQuery,

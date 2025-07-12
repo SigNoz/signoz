@@ -15,6 +15,7 @@ import {
 	Typography,
 } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { TelemetryFieldKey } from 'api/v5/v5';
 import axios from 'axios';
 import cx from 'classnames';
 import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
@@ -67,7 +68,6 @@ import {
 } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
@@ -270,7 +270,7 @@ function ExplorerOptions({
 
 	const getUpdatedExtraData = (
 		extraData: string | undefined,
-		newSelectedColumns: BaseAutocompleteData[],
+		newSelectedColumns: TelemetryFieldKey[],
 		formattingOptions?: FormattingOptions,
 	): string => {
 		let updatedExtraData;
@@ -354,7 +354,7 @@ function ExplorerOptions({
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
 	type ExtraData = {
-		selectColumns?: BaseAutocompleteData[];
+		selectColumns?: TelemetryFieldKey[];
 		version?: number;
 	};
 
@@ -589,13 +589,6 @@ function ExplorerOptions({
 		[isDarkMode],
 	);
 
-	const hideToolbar = (): void => {
-		setExplorerToolBarVisibility(false, sourcepage);
-		if (setIsExplorerOptionHidden) {
-			setIsExplorerOptionHidden(true);
-		}
-	};
-
 	const isEditDeleteSupported = allowedRoles.includes(user.role as string);
 
 	const [
@@ -781,6 +774,13 @@ function ExplorerOptions({
 			</Button>
 		);
 	}, [disabled, isOneChartPerQuery, onAddToDashboard, splitedQueries]);
+
+	const hideToolbar = (): void => {
+		setExplorerToolBarVisibility(false, sourcepage);
+		if (setIsExplorerOptionHidden) {
+			setIsExplorerOptionHidden(true);
+		}
+	};
 
 	return (
 		<div className="explorer-options-container">
