@@ -115,7 +115,7 @@ func (c *Controller) GenerateConnectionUrl(ctx context.Context, orgId string, cl
 	}
 
 	// TODO(Raj): parameterized this in follow up changes
-	agentVersion := "v0.0.4"
+	agentVersion := "v0.0.5"
 
 	connectionUrl := fmt.Sprintf(
 		"https://%s.console.aws.amazon.com/cloudformation/home?region=%s#/stacks/quickcreate?",
