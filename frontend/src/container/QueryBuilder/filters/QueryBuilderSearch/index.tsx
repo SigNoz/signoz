@@ -262,9 +262,9 @@ function QueryBuilderSearch({
 	};
 
 	const queryTags = useMemo(() => {
-		if (!query.aggregateAttribute.key && isMetricsDataSource) return [];
+		if (!query.aggregateAttribute?.key && isMetricsDataSource) return [];
 		return tags;
-	}, [isMetricsDataSource, query.aggregateAttribute.key, tags]);
+	}, [isMetricsDataSource, query.aggregateAttribute?.key, tags]);
 
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
@@ -385,7 +385,7 @@ function QueryBuilderSearch({
 					!showAllFilters && options.length > 3 && !key ? 'hide-scroll' : '',
 				)}
 				rootClassName="query-builder-search"
-				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+				disabled={isMetricsDataSource && !query.aggregateAttribute?.key}
 				style={selectStyle}
 				onSearch={handleSearch}
 				onChange={onChangeHandler}

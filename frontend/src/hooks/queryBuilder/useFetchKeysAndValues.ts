@@ -68,13 +68,13 @@ export const useFetchKeysAndValues = (
 			searchKey,
 			query.dataSource,
 			query.aggregateOperator,
-			query.aggregateAttribute.key,
+			query.aggregateAttribute?.key,
 		],
 		[
 			searchKey,
 			query.dataSource,
 			query.aggregateOperator,
-			query.aggregateAttribute.key,
+			query.aggregateAttribute?.key,
 		],
 	);
 
@@ -107,12 +107,12 @@ export const useFetchKeysAndValues = (
 			query.dataSource === DataSource.METRICS &&
 			!isInfraMonitoring &&
 			!isMetricsExplorer
-				? !!query.dataSource && !!query.aggregateAttribute.dataType
+				? !!query.dataSource && !!query.aggregateAttribute?.dataType
 				: true,
 		[
 			isInfraMonitoring,
 			isMetricsExplorer,
-			query.aggregateAttribute.dataType,
+			query.aggregateAttribute?.dataType,
 			query.dataSource,
 		],
 	);
@@ -121,12 +121,12 @@ export const useFetchKeysAndValues = (
 		{
 			searchText: searchKey,
 			dataSource: query.dataSource,
-			aggregateOperator: query.aggregateOperator,
+			aggregateOperator: query.aggregateOperator || '',
 			aggregateAttribute:
 				isInfraMonitoring && entity
 					? GetK8sEntityToAggregateAttribute(entity, dotMetricsEnabled)
-					: query.aggregateAttribute.key,
-			tagType: query.aggregateAttribute.type ?? null,
+					: query.aggregateAttribute?.key || '',
+			tagType: query.aggregateAttribute?.type ?? null,
 		},
 		{
 			queryKey: [searchParams],
@@ -221,7 +221,8 @@ export const useFetchKeysAndValues = (
 					dataSource: query.dataSource,
 					aggregateAttribute:
 						GetK8sEntityToAggregateAttribute(entity, dotMetricsEnabled) ||
-						query.aggregateAttribute.key,
+						query.aggregateAttribute?.key ||
+						'',
 					attributeKey: filterAttributeKey?.key ?? tagKey,
 					filterAttributeKeyDataType:
 						filterAttributeKey?.dataType ?? DataTypes.EMPTY,
@@ -242,9 +243,9 @@ export const useFetchKeysAndValues = (
 				payload = response.payload?.data;
 			} else {
 				const response = await getAttributesValues({
-					aggregateOperator: query.aggregateOperator,
+					aggregateOperator: query.aggregateOperator || '',
 					dataSource: query.dataSource,
-					aggregateAttribute: query.aggregateAttribute.key,
+					aggregateAttribute: query.aggregateAttribute?.key || '',
 					attributeKey: filterAttributeKey?.key ?? tagKey,
 					filterAttributeKeyDataType:
 						filterAttributeKey?.dataType ?? DataTypes.EMPTY,

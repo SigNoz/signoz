@@ -251,7 +251,7 @@ export default function Events({
 				<div className="filter-section">
 					{query && (
 						<QueryBuilderSearch
-							query={query}
+							query={query as IBuilderQuery}
 							onChange={(value): void => handleChangeEventFilters(value, VIEWS.EVENTS)}
 							disableNavigationShortcuts
 						/>

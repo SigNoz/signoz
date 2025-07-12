@@ -410,18 +410,18 @@ export default function LogsFormatOptionsMenu({
 									)}
 
 									<div className="column-format">
-										{addColumn?.value?.map(({ key, id }) => (
-											<div className="column-name" key={id}>
+										{addColumn?.value?.map(({ name }) => (
+											<div className="column-name" key={name}>
 												<div className="name">
-													<Tooltip placement="left" title={key}>
-														{key}
+													<Tooltip placement="left" title={name}>
+														{name}
 													</Tooltip>
 												</div>
 												{addColumn?.value?.length > 1 && (
 													<X
 														className="delete-btn"
 														size={14}
-														onClick={(): void => addColumn.onRemove(id as string)}
+														onClick={(): void => addColumn.onRemove(name)}
 													/>
 												)}
 											</div>

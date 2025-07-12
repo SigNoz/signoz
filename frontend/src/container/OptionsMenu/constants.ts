@@ -1,4 +1,4 @@
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TelemetryFieldKey } from 'api/v5/v5';
 
 import { FontSize, OptionsQuery } from './types';
 
@@ -11,71 +11,56 @@ export const defaultOptionsQuery: OptionsQuery = {
 	fontSize: FontSize.SMALL,
 };
 
-export const defaultLogsSelectedColumns = [
+export const defaultLogsSelectedColumns: TelemetryFieldKey[] = [
 	{
-		key: 'timestamp',
-		dataType: DataTypes.String,
-		type: 'tag',
+		name: 'timestamp',
+		signal: 'logs',
+		fieldContext: 'log',
+		fieldDataType: '',
 		isColumn: true,
 		isJSON: false,
-		id: 'timestamp--string--tag--true',
 		isIndexed: false,
 	},
 	{
-		key: 'body',
-		dataType: DataTypes.String,
-		type: 'tag',
+		name: 'body',
+		signal: 'logs',
+		fieldContext: 'log',
+		fieldDataType: '',
 		isColumn: true,
 		isJSON: false,
-		id: 'body--string--tag--true',
 		isIndexed: false,
 	},
 ];
 
-export const defaultTraceSelectedColumns = [
+export const defaultTraceSelectedColumns: TelemetryFieldKey[] = [
 	{
-		key: 'serviceName',
-		dataType: DataTypes.String,
-		type: 'tag',
-		isColumn: true,
-		isJSON: false,
-		id: 'serviceName--string--tag--true',
-		isIndexed: false,
+		name: 'service.name',
+		signal: 'traces',
+		fieldContext: 'resource',
+		fieldDataType: 'string',
 	},
 	{
-		key: 'name',
-		dataType: DataTypes.String,
-		type: 'tag',
-		isColumn: true,
-		isJSON: false,
-		id: 'name--string--tag--true',
-		isIndexed: false,
+		name: 'name',
+		signal: 'traces',
+		fieldContext: 'span',
+		fieldDataType: 'string',
 	},
 	{
-		key: 'durationNano',
-		dataType: DataTypes.Float64,
-		type: 'tag',
-		isColumn: true,
-		isJSON: false,
-		id: 'durationNano--float64--tag--true',
-		isIndexed: false,
+		name: 'duration_nano',
+		signal: 'traces',
+		fieldContext: 'span',
+		fieldDataType: '',
 	},
 	{
-		key: 'httpMethod',
-		dataType: DataTypes.String,
-		type: 'tag',
-		isColumn: true,
-		isJSON: false,
-		id: 'httpMethod--string--tag--true',
-		isIndexed: false,
+		name: 'http_method',
+		signal: 'traces',
+		fieldContext: 'span',
+		fieldDataType: '',
 	},
 	{
-		key: 'responseStatusCode',
-		dataType: DataTypes.String,
-		type: 'tag',
-		isColumn: true,
-		isJSON: false,
-		id: 'responseStatusCode--string--tag--true',
-		isIndexed: false,
+		name: 'response_status_code',
+		signal: 'traces',
+		fieldContext: 'span',
+		fieldDataType: '',
 	},
 ];
