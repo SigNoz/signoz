@@ -289,43 +289,6 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existingUser, err := h.module.GetUserByID(ctx, claims.OrgID, id)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	// only displayName, role can be updated
-	if user.DisplayName == "" {
-		user.DisplayName = existingUser.DisplayName
-	}
-
-	if user.Role == "" {
-		user.Role = existingUser.Role
-	}
-
-	if user.Role != existingUser.Role && claims.Role != types.RoleAdmin {
-		render.Error(w, errors.New(errors.TypeForbidden, errors.CodeForbidden, "only admins can change roles"))
-		return
-	}
-
-	// Make sure that the request is not demoting the last admin user.
-	// also an admin user can only change role of their own or other user
-	if user.Role != existingUser.Role && existingUser.Role == types.RoleAdmin.String() {
-		adminUsers, err := h.module.GetUsersByRoleInOrg(ctx, claims.OrgID, types.RoleAdmin)
-		if err != nil {
-			render.Error(w, err)
-			return
-		}
-
-		if len(adminUsers) == 1 {
-			render.Error(w, errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot demote the last admin"))
-			return
-		}
-	}
-
-	user.UpdatedAt = time.Now()
-
 	updatedUser, err := h.module.UpdateUser(ctx, claims.OrgID, id, &user, claims.UserID)
 	if err != nil {
 		render.Error(w, err)

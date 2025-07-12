@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <p>Hi {{.CustomerName}},</p>
+
+    <p>We wanted to inform you that your role in the <strong>SigNoz</strong> project has been updated by <strong>{{.UpdatedByEmail}}</strong>.</p>
+
+    <p>
+        <strong>Previous Role:</strong> {{.OldRole}}<br>
+        <strong>New Role:</strong> {{.NewRole}}
+    </p>
+
+    <p>
+        Please note that you will need to <strong>log out and log back in</strong> for the changes to take effect.
+    </p>
+
+    <p>
+        If you were not expecting this change or have any questions, please reach out to your project administrator or contact us at <a href="mailto:support@signoz.io">support@signoz.io</a>.
+    </p>
+
+    <p>Thanks,<br/>The SigNoz Team</p>
+</body>
+</html>
