@@ -167,7 +167,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
-			expectedSQL:   "true",
+			expectedSQL:   "WHERE body <> ?",
+			expectedArgs:  []any{""},
 			expectedError: nil,
 		},
 		{
@@ -178,7 +179,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotExists,
 			value:         nil,
-			expectedSQL:   "true",
+			expectedSQL:   "WHERE body = ?",
+			expectedArgs:  []any{""},
 			expectedError: nil,
 		},
 		{
