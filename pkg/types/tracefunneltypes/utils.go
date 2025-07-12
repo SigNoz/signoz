@@ -27,9 +27,9 @@ func ValidateTimestampIsMilliseconds(timestamp int64) bool {
 }
 
 func ValidateFunnelSteps(steps []*FunnelStep) error {
-	if len(steps) < 2 {
-		return fmt.Errorf("funnel must have at least 2 steps")
-	}
+	// if len(steps) < 2 {
+	// 	return fmt.Errorf("funnel must have at least 2 steps")
+	// }
 
 	for i, step := range steps {
 		if step.ServiceName == "" {
