@@ -4,6 +4,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
+import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
@@ -11,7 +12,7 @@ import {
 	getDefaultWidgetData,
 	PANEL_TYPE_TO_QUERY_TYPES,
 } from 'container/NewWidget/utils';
-import { QueryBuilder } from 'container/QueryBuilder';
+// import { QueryBuilder } from 'container/QueryBuilder';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -63,7 +64,7 @@ function QuerySection({
 
 	const { query } = selectedWidget;
 
-	useShareBuilderUrl(query);
+	useShareBuilderUrl({ defaultValue: query });
 
 	const handleStageQuery = useCallback(
 		(query: Query): void => {
@@ -142,6 +143,11 @@ function QuerySection({
 		return config;
 	}, []);
 
+	const queryComponents = useMemo(
+		(): QueryBuilderProps['queryComponents'] => ({}),
+		[],
+	);
+
 	const items = useMemo(() => {
 		const supportedQueryTypes = PANEL_TYPE_TO_QUERY_TYPES[selectedGraph] || [];
 
@@ -150,12 +156,15 @@ function QuerySection({
 				icon: <Atom size={14} />,
 				label: 'Query Builder',
 				component: (
-					<QueryBuilder
-						panelType={selectedGraph}
-						filterConfigs={filterConfigs}
-						version={selectedDashboard?.data?.version || 'v3'}
-						isListViewPanel={selectedGraph === PANEL_TYPES.LIST}
-					/>
+					<div className="query-builder-v2-container">
+						<QueryBuilderV2
+							panelType={selectedGraph}
+							filterConfigs={filterConfigs}
+							version={selectedDashboard?.data?.version || 'v3'}
+							isListViewPanel={selectedGraph === PANEL_TYPES.LIST}
+							queryComponents={queryComponents}
+						/>
+					</div>
 				),
 			},
 			[EQueryType.CLICKHOUSE]: {
@@ -186,6 +195,7 @@ function QuerySection({
 			children: queryTypeComponents[queryType].component,
 		}));
 	}, [
+		queryComponents,
 		selectedGraph,
 		filterConfigs,
 		selectedDashboard?.data?.version,
