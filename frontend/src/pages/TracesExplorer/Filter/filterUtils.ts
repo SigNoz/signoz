@@ -12,18 +12,28 @@ import { DataSource } from 'types/common/queryBuilder';
 export const AllTraceFilterKeyValue: Record<string, string> = {
 	durationNanoMin: 'Duration',
 	durationNano: 'Duration',
+	duration_nano: 'Duration',
 	durationNanoMax: 'Duration',
 	'deployment.environment': 'Environment',
 	hasError: 'Status',
+	has_error: 'Status',
 	serviceName: 'Service Name',
+	'service.name': 'service.name',
 	name: 'Operation / Name',
 	rpcMethod: 'RPC Method',
+	'rpc.method': 'RPC Method',
 	responseStatusCode: 'Status Code',
+	response_status_code: 'Status Code',
 	httpHost: 'HTTP Host',
+	http_host: 'HTTP Host',
 	httpMethod: 'HTTP Method',
+	http_method: 'HTTP Method',
 	httpRoute: 'HTTP Route',
+	'http.route': 'HTTP Route',
 	httpUrl: 'HTTP URL',
+	'http.url': 'HTTP URL',
 	traceID: 'Trace ID',
+	trace_id: 'Trace ID',
 } as const;
 
 export type AllTraceFilterKeys = keyof typeof AllTraceFilterKeyValue;

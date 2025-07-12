@@ -1,0 +1,33 @@
+.trace-explorer-controls {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+
+	.order-by-container {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+
+		.order-by-label {
+			color: var(--text-vanilla-400);
+			font-size: 12px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 16px; /* 133.333% */
+
+			display: flex;
+			align-items: center;
+			gap: 4px;
+		}
+
+		.order-by-select {
+			width: 100px;
+
+			.ant-select-selector {
+				border: none;
+				box-shadow: none;
+				background-color: transparent;
+			}
+		}
+	}
+}

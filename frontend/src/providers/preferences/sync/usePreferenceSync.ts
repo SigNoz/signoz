@@ -1,8 +1,8 @@
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { defaultSelectedColumns as defaultTracesSelectedColumns } from 'container/TracesExplorer/ListView/configs';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
 import { useEffect, useState } from 'react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
@@ -21,7 +21,7 @@ export function usePreferenceSync({
 	preferences: Preferences | null;
 	loading: boolean;
 	error: Error | null;
-	updateColumns: (newColumns: BaseAutocompleteData[]) => void;
+	updateColumns: (newColumns: TelemetryFieldKey[]) => void;
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 } {
 	const { data: viewsData } = useGetAllViews(dataSource);
@@ -37,7 +37,7 @@ export function usePreferenceSync({
 		)?.extraData;
 
 		const parsedExtraData = JSON.parse(extraData || '{}');
-		let columns: BaseAutocompleteData[] = [];
+		let columns: TelemetryFieldKey[] = [];
 		let formatting: FormattingOptions | undefined;
 		if (dataSource === DataSource.LOGS) {
 			columns = parsedExtraData?.selectColumns || defaultLogsSelectedColumns;
