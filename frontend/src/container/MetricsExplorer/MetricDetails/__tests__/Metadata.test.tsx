@@ -138,7 +138,7 @@ describe('Metadata', () => {
 		expect(mockRefetchMetricDetails).toHaveBeenCalled();
 	});
 
-	it('should show error notification when metadata update fails', async () => {
+	it('should show error notification when metadata update fails with non-200 response', async () => {
 		render(
 			<Metadata
 				metricName={mockMetricName}
