@@ -1561,6 +1561,9 @@ func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID stri
 	if params.Type != constants.LogsTTL {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("custom retention TTL only supported for logs")}
 	}
+	if err := r.validateResourceRules(ctx, params.ResourceRules); err != nil {
+		return nil, err
+	}
 
 	tableNames := []string{
 		r.logsDB + "." + r.logsLocalTableV2,
@@ -1751,6 +1754,46 @@ func (r *ClickHouseReader) updateCustomRetentionTTLStatus(ctx context.Context, o
 			zap.L().Error("Error in processing custom_retention_ttl_status update sql query", zap.Error(dbErr))
 		}
 	}
+}
+
+func (r *ClickHouseReader) validateResourceRules(ctx context.Context, resourceRules []model.CustomRetentionRule) *model.ApiError {
+	if len(resourceRules) == 0 {
+		return nil
+	}
+
+	validResourceKeys := make(map[string]struct{})
+	query := fmt.Sprintf("SELECT DISTINCT name FROM %s.%s", r.logsDB, r.logsResourceKeys)
+
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to fetch valid resource keys: %v", err)}
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to scan resource keys: %v", err)}
+		}
+		validResourceKeys[name] = struct{}{}
+	}
+
+	// Validate each rule
+	var invalidKeys []string
+	for _, rule := range resourceRules {
+		if _, exists := validResourceKeys[rule.Key]; !exists {
+			invalidKeys = append(invalidKeys, rule.Key)
+		}
+	}
+
+	if len(invalidKeys) > 0 {
+		return &model.ApiError{
+			Typ: model.ErrorBadData,
+			Err: fmt.Errorf("invalid resource keys found: %v. Please check logs_resource_keys table for valid keys", invalidKeys),
+		}
+	}
+
+	return nil
 }
 
 // SetTTL sets the TTL for traces or metrics or logs tables.
