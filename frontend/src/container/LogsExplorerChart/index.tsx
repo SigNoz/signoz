@@ -8,9 +8,11 @@ import getChartData, { GetChartDataProps } from 'lib/getChartData';
 import GetMinMax from 'lib/getMinMax';
 import { colors } from 'lib/getRandomColor';
 import { memo, useCallback, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
+import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { LogsExplorerChartProps } from './LogsExplorerChart.interfaces';
 import { CardStyled } from './LogsExplorerChart.styled';
@@ -27,6 +29,11 @@ function LogsExplorerChart({
 	const urlQuery = useUrlQuery();
 	const location = useLocation();
 	const { safeNavigate } = useSafeNavigate();
+
+	// Access global time state for min/max range
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 	const handleCreateDatasets: Required<GetChartDataProps>['createDataset'] = useCallback(
 		(element, index, allLabels) => ({
 			data: element,
@@ -83,6 +90,15 @@ function LogsExplorerChart({
 		[data, handleCreateDatasets],
 	);
 
+	// Convert nanosecond timestamps to milliseconds for Chart.js
+	const { chartMinTime, chartMaxTime } = useMemo(
+		() => ({
+			chartMinTime: minTime ? Math.floor(minTime / 1e6) : undefined,
+			chartMaxTime: maxTime ? Math.floor(maxTime / 1e6) : undefined,
+		}),
+		[minTime, maxTime],
+	);
+
 	return (
 		<CardStyled className={className}>
 			{isLoading ? (
@@ -95,6 +111,8 @@ function LogsExplorerChart({
 					type="bar"
 					animate
 					onDragSelect={onDragSelect}
+					minTime={chartMinTime}
+					maxTime={chartMaxTime}
 				/>
 			)}
 		</CardStyled>
