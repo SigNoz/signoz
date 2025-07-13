@@ -6,6 +6,7 @@ import './Checkbox.styles.scss';
 
 import { Button, Checkbox, Input, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
+import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
 import {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
@@ -20,11 +21,9 @@ import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { IQueryPair } from 'types/antlrQueryTypes';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { extractQueryPairs } from 'utils/queryContextUtils';
 import { v4 as uuid } from 'uuid';
 
 import LogsQuickFilterEmptyState from './LogsQuickFilterEmptyState';
@@ -168,6 +167,11 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				...currentQuery.builder,
 				queryData: currentQuery.builder.queryData.map((item, idx) => ({
 					...item,
+					filter: {
+						expression: removeKeysFromExpression(item.filter?.expression ?? '', [
+							filter.attributeKey.key,
+						]),
+					},
 					filters: {
 						...item.filters,
 						items:
@@ -215,63 +219,10 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			);
 
 			if (query.filter?.expression) {
-				// Destructure the filter expression string
-				const { expression } = query.filter;
-
-				// Extract key-value query pairs from the expression
-				const exisitingQueryPairs = extractQueryPairs(expression);
-
-				let queryPairsMap: Map<string, IQueryPair>;
-
-				if (exisitingQueryPairs.length > 0) {
-					// Build a map for quick lookup of query pairs by their lowercase trimmed keys
-					queryPairsMap = new Map(
-						exisitingQueryPairs.map((pair) => {
-							const key = pair.key.trim().toLowerCase();
-							return [key, pair];
-						}),
-					);
-
-					// Lookup the current query pair using the attribute key (case-insensitive)
-					const currentQueryPair = queryPairsMap.get(
-						`${filter.attributeKey.key}`.trim().toLowerCase(),
-					);
-
-					if (currentQueryPair && currentQueryPair.isComplete) {
-						// Determine the start index of the query pair (fallback order: key → operator → value)
-						const queryPairStart =
-							currentQueryPair.position.keyStart ??
-							currentQueryPair.position.operatorStart ??
-							currentQueryPair.position.valueStart;
-
-						// Determine the end index of the query pair (fallback order: value → operator → key)
-						let queryPairEnd =
-							currentQueryPair.position.valueEnd ??
-							currentQueryPair.position.operatorEnd ??
-							currentQueryPair.position.keyEnd;
-
-						// Get the part of the expression that comes after the current query pair
-						const expressionAfterPair = `${expression.slice(queryPairEnd + 1)}`;
-
-						// Match optional spaces and an optional conjunction (AND/OR), case-insensitive
-						const conjunctionOrSpacesRegex = /^(\s*((AND|OR)\s+)?)/i;
-						const match = expressionAfterPair.match(conjunctionOrSpacesRegex);
-
-						if (match && match.length > 0) {
-							// If match is found, extend the queryPairEnd to include the matched part
-							queryPairEnd += match[0].length;
-						}
-
-						// Remove the full query pair (including any conjunction/whitespace) from the expression
-						const updatedExpression = `${expression.slice(
-							0,
-							queryPairStart,
-						)}${expression.slice(queryPairEnd + 1)}`;
-
-						// Update the query filter expression, trimming any extra spaces
-						query.filter.expression = updatedExpression.trim();
-					}
-				}
+				query.filter.expression = removeKeysFromExpression(
+					query.filter.expression,
+					[filter.attributeKey.key],
+				);
 			}
 
 			if (isOnlyOrAll === 'Only') {
