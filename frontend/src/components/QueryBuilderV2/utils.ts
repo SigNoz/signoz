@@ -347,6 +347,79 @@ export const convertFiltersToExpressionWithExistingQuery = (
 };
 
 /**
+ * Removes specified key-value pairs from a logical query expression string.
+ *
+ * This function parses the given query expression and removes any query pairs
+ * whose keys match those in the `keysToRemove` array. It also removes any trailing
+ * logical conjunctions (e.g., `AND`, `OR`) and whitespace that follow the matched pairs,
+ * ensuring that the resulting expression remains valid and clean.
+ *
+ * @param expression - The full query string.
+ * @param keysToRemove - An array of keys (case-insensitive) that should be removed from the expression.
+ * @returns A new expression string with the specified keys and their associated clauses removed.
+ */
+export const removeKeysFromExpression = (
+	expression: string,
+	keysToRemove: string[],
+): string => {
+	if (!keysToRemove || keysToRemove.length === 0) {
+		return expression;
+	}
+
+	let updatedExpression = expression;
+
+	if (updatedExpression) {
+		keysToRemove.forEach((key) => {
+			// Extract key-value query pairs from the expression
+			const exisitingQueryPairs = extractQueryPairs(updatedExpression);
+
+			let queryPairsMap: Map<string, IQueryPair>;
+
+			if (exisitingQueryPairs.length > 0) {
+				// Build a map for quick lookup of query pairs by their lowercase trimmed keys
+				queryPairsMap = new Map(
+					exisitingQueryPairs.map((pair) => {
+						const key = pair.key.trim().toLowerCase();
+						return [key, pair];
+					}),
+				);
+
+				// Lookup the current query pair using the attribute key (case-insensitive)
+				const currentQueryPair = queryPairsMap.get(`${key}`.trim().toLowerCase());
+				if (currentQueryPair && currentQueryPair.isComplete) {
+					// Determine the start index of the query pair (fallback order: key → operator → value)
+					const queryPairStart =
+						currentQueryPair.position.keyStart ??
+						currentQueryPair.position.operatorStart ??
+						currentQueryPair.position.valueStart;
+					// Determine the end index of the query pair (fallback order: value → operator → key)
+					let queryPairEnd =
+						currentQueryPair.position.valueEnd ??
+						currentQueryPair.position.operatorEnd ??
+						currentQueryPair.position.keyEnd;
+					// Get the part of the expression that comes after the current query pair
+					const expressionAfterPair = `${expression.slice(queryPairEnd + 1)}`;
+					// Match optional spaces and an optional conjunction (AND/OR), case-insensitive
+					const conjunctionOrSpacesRegex = /^(\s*((AND|OR)\s+)?)/i;
+					const match = expressionAfterPair.match(conjunctionOrSpacesRegex);
+					if (match && match.length > 0) {
+						// If match is found, extend the queryPairEnd to include the matched part
+						queryPairEnd += match[0].length;
+					}
+					// Remove the full query pair (including any conjunction/whitespace) from the expression
+					updatedExpression = `${expression.slice(
+						0,
+						queryPairStart,
+					)}${expression.slice(queryPairEnd + 1)}`.trim();
+				}
+			}
+		});
+	}
+
+	return updatedExpression;
+};
+
+/**
  * Convert old having format to new having format
  * @param having - Array of old having objects with columnName, op, and value
  * @returns New having format with expression string
