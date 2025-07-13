@@ -2,24 +2,30 @@ package sqlmigration
 
 import (
 	"context"
+
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 )
 
 type updateTTLSettingForCustomRetention struct {
-	sqlstore sqlstore.SQLStore
+	sqlstore  sqlstore.SQLStore
+	sqlschema sqlschema.SQLSchema
 }
 
-func NewUpdateTTLSettingForCustomRetentionFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
+func NewUpdateTTLSettingForCustomRetentionFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(factory.MustNewName("update_ttl_setting"), func(ctx context.Context, providerSettings factory.ProviderSettings, config Config) (SQLMigration, error) {
-		return newUpdateTTLSettingForCustomRetention(ctx, providerSettings, config, sqlstore)
+		return newUpdateTTLSettingForCustomRetention(ctx, providerSettings, config, sqlstore, sqlschema)
 	})
 }
 
-func newUpdateTTLSettingForCustomRetention(_ context.Context, _ factory.ProviderSettings, _ Config, sqlstore sqlstore.SQLStore) (SQLMigration, error) {
-	return &updateTTLSettingForCustomRetention{sqlstore: sqlstore}, nil
+func newUpdateTTLSettingForCustomRetention(_ context.Context, _ factory.ProviderSettings, _ Config, sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) (SQLMigration, error) {
+	return &updateTTLSettingForCustomRetention{
+		sqlstore:  sqlstore,
+		sqlschema: sqlschema,
+	}, nil
 }
 
 func (migration *updateTTLSettingForCustomRetention) Register(migrations *migrate.Migrations) error {
@@ -30,22 +36,46 @@ func (migration *updateTTLSettingForCustomRetention) Register(migrations *migrat
 }
 
 func (migration *updateTTLSettingForCustomRetention) Up(ctx context.Context, db *bun.DB) error {
+	if err := migration.sqlschema.ToggleFKEnforcement(ctx, db, false); err != nil {
+		return err
+	}
+
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
+
 	defer func() {
 		_ = tx.Rollback()
 	}()
 
-	// Add only the resource_rules column to ttl_setting table
-	_, err = tx.Exec("ALTER TABLE ttl_setting ADD COLUMN resource_rules TEXT")
+	// Get the table and its constraints
+	table, uniqueConstraints, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("ttl_setting"))
 	if err != nil {
 		return err
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	// Define the new column
+	column := &sqlschema.Column{
+		Name:     sqlschema.ColumnName("resource_rules"),
+		DataType: sqlschema.DataTypeText,
+		Nullable: true,
+	}
+
+	// Add the resource_rules column using sqlschema
+	sqls := migration.sqlschema.Operator().AddColumn(table, uniqueConstraints, column, nil)
+
+	for _, sql := range sqls {
+		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	if err := migration.sqlschema.ToggleFKEnforcement(ctx, db, true); err != nil {
 		return err
 	}
 
