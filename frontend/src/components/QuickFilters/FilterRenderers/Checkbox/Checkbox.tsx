@@ -20,9 +20,11 @@ import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { IQueryPair } from 'types/antlrQueryTypes';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { extractQueryPairs } from 'utils/queryContextUtils';
 import { v4 as uuid } from 'uuid';
 
 import LogsQuickFilterEmptyState from './LogsQuickFilterEmptyState';
@@ -211,6 +213,53 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			query.filters.items = query.filters.items.filter(
 				(q) => !isEqual(q.key?.key, filter.attributeKey.key),
 			);
+
+			if (query.filter?.expression) {
+				const { expression } = query.filter;
+				const exisitingQueryPairs = extractQueryPairs(expression);
+
+				let queryPairsMap: Map<string, IQueryPair>;
+
+				if (exisitingQueryPairs.length > 0) {
+					queryPairsMap = new Map(
+						exisitingQueryPairs.map((pair) => {
+							const key = pair.key.trim().toLowerCase();
+							return [key, pair];
+						}),
+					);
+
+					const currentQueryPair = queryPairsMap.get(
+						`${filter.attributeKey.key}`.trim().toLowerCase(),
+					);
+
+					if (currentQueryPair && currentQueryPair.isComplete) {
+						const queryPairStart =
+							currentQueryPair.position.keyStart ??
+							currentQueryPair.position.operatorStart ??
+							currentQueryPair.position.valueStart;
+						let queryPairEnd =
+							currentQueryPair.position.valueEnd ??
+							currentQueryPair.position.operatorEnd ??
+							currentQueryPair.position.keyEnd;
+
+						const expressionAfterPair = `${expression.slice(queryPairEnd + 1)}`;
+						const conjunctionOrSpacesRegex = /^(\s*((AND|OR)\s+)?)/i;
+						const match = expressionAfterPair.match(conjunctionOrSpacesRegex);
+
+						if (match && match.length > 0) {
+							queryPairEnd += match[0].length;
+						}
+
+						const updatedExpression = `${expression.slice(
+							0,
+							queryPairStart,
+						)}${expression.slice(queryPairEnd + 1)}`;
+
+						query.filter.expression = updatedExpression.trim();
+					}
+				}
+			}
+
 			if (isOnlyOrAll === 'Only') {
 				const newFilterItem: TagFilterItem = {
 					id: uuid(),
