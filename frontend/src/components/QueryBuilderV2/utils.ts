@@ -398,7 +398,7 @@ export const removeKeysFromExpression = (
 						currentQueryPair.position.operatorEnd ??
 						currentQueryPair.position.keyEnd;
 					// Get the part of the expression that comes after the current query pair
-					const expressionAfterPair = `${expression.slice(queryPairEnd + 1)}`;
+					const expressionAfterPair = `${updatedExpression.slice(queryPairEnd + 1)}`;
 					// Match optional spaces and an optional conjunction (AND/OR), case-insensitive
 					const conjunctionOrSpacesRegex = /^(\s*((AND|OR)\s+)?)/i;
 					const match = expressionAfterPair.match(conjunctionOrSpacesRegex);
@@ -407,10 +407,10 @@ export const removeKeysFromExpression = (
 						queryPairEnd += match[0].length;
 					}
 					// Remove the full query pair (including any conjunction/whitespace) from the expression
-					updatedExpression = `${expression.slice(
+					updatedExpression = `${updatedExpression.slice(
 						0,
 						queryPairStart,
-					)}${expression.slice(queryPairEnd + 1)}`.trim();
+					)}${updatedExpression.slice(queryPairEnd + 1)}`.trim();
 				}
 			}
 		});
