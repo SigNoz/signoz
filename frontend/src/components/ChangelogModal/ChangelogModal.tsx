@@ -6,6 +6,7 @@ import updateUserPreference from 'api/v1/user/preferences/name/update';
 import cx from 'classnames';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import dayjs from 'dayjs';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { ChevronsDown, ScrollText } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -28,6 +29,8 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 	const formattedReleaseDate = dayjs(changelog?.release_date).format(
 		'MMMM D, YYYY',
 	);
+
+	const { isCloudUser } = useGetTenantLicense();
 
 	const seenChangelogVersion = userPreferences?.find(
 		(preference) =>
@@ -121,18 +124,20 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 							{changelog.features.length > 1 ? 'features' : 'feature'}
 						</span>
 					)}
-					<div className="changelog-modal-footer-ctas">
-						<Button type="default" icon={<CloseOutlined />} onClick={onClose}>
-							Skip for now
-						</Button>
-						<Button
-							type="primary"
-							icon={<CheckOutlined />}
-							onClick={onClickUpdateWorkspace}
-						>
-							Update my workspace
-						</Button>
-					</div>
+					{!isCloudUser && (
+						<div className="changelog-modal-footer-ctas">
+							<Button type="default" icon={<CloseOutlined />} onClick={onClose}>
+								Skip for now
+							</Button>
+							<Button
+								type="primary"
+								icon={<CheckOutlined />}
+								onClick={onClickUpdateWorkspace}
+							>
+								Update my workspace
+							</Button>
+						</div>
+					)}
 					{changelog && (
 						<div className="scroll-btn-container">
 							<button
