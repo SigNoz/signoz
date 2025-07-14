@@ -3,6 +3,7 @@ package constants
 import (
 	"maps"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -35,6 +36,8 @@ var UpdatedMetricsMetadataCachePrefix = GetOrDefaultEnv("METRICS_UPDATED_METADAT
 
 const NormalizedMetricsMapCacheKey = "NORMALIZED_METRICS_MAP_CACHE_KEY"
 const NormalizedMetricsMapQueryThreads = 10
+
+var NormalizedMetricsMapRegex = regexp.MustCompile(`[^a-zA-Z0-9]`)
 
 // TODO(srikanthccv): remove after backfilling is done
 func UseMetricsPreAggregation() bool {

@@ -6048,11 +6048,9 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 }
 
 func (r *ClickHouseReader) GetCorrespondingNormalizedMetrics(ctx context.Context, orgID valuer.UUID) (map[string]string, error) {
-	specialCharRegex := regexp.MustCompile(`[^a-zA-Z0-9]`)
-
 	// sanitize removes all non-alphanumeric characters from s
 	sanitize := func(s string) string {
-		return specialCharRegex.ReplaceAllString(s, "")
+		return constants.NormalizedMetricsMapRegex.ReplaceAllString(s, "")
 	}
 
 	// Try cache first
