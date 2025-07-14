@@ -1,4 +1,5 @@
 import { Select } from 'antd';
+import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep } from 'lodash-es';
 import { useEffect, useState } from 'react';
@@ -119,8 +120,18 @@ function SpanScopeSelector({
 			return [...nonScopeFilters, ...newScopeFilter];
 		};
 
+		const keysToRemove = Object.values(SPAN_FILTER_CONFIG)
+			.map((config) => config?.key)
+			.filter((key): key is string => typeof key === 'string');
+
 		newQuery.builder.queryData = newQuery.builder.queryData.map((item) => ({
 			...item,
+			filter: {
+				expression: removeKeysFromExpression(
+					item.filter?.expression ?? '',
+					keysToRemove,
+				),
+			},
 			filters: {
 				...item.filters,
 				items: getUpdatedFilters(
