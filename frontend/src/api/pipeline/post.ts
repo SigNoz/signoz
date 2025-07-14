@@ -15,7 +15,6 @@ const post = async (props: Props): Promise<SuccessResponseV2<Pipeline>> => {
 		};
 	} catch (error) {
 		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
-		throw error;
 	}
 };
 
