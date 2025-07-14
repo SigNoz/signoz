@@ -70,18 +70,6 @@ const stopEventsExtension = EditorView.domEventHandlers({
 	},
 });
 
-// const disallowMultipleSpaces: Extension = EditorView.inputHandler.of(
-// 	(view, from, to, text) => {
-// 		const currentLine = view.state.doc.lineAt(from);
-// 		const before = currentLine.text.slice(0, from - currentLine.from);
-// 		const after = currentLine.text.slice(to - currentLine.from);
-
-// 		const newText = before + text + after;
-
-// 		return /\s{2,}/.test(newText);
-// 	},
-// );
-
 function QuerySearch({
 	onChange,
 	queryData,
@@ -105,8 +93,22 @@ function QuerySearch({
 		errors: [],
 	});
 
+	const handleQueryValidation = (newQuery: string): void => {
+		try {
+			const validationResponse = validateQuery(newQuery);
+			setValidation(validationResponse);
+		} catch (error) {
+			setValidation({
+				isValid: false,
+				message: 'Failed to process query',
+				errors: [error as IDetailedError],
+			});
+		}
+	};
+
 	useEffect(() => {
 		setQuery(queryData.filter?.expression || '');
+		handleQueryValidation(queryData.filter?.expression || '');
 	}, [queryData.filter?.expression]);
 
 	const [keySuggestions, setKeySuggestions] = useState<
@@ -457,19 +459,6 @@ function QuerySearch({
 		setQuery(value);
 		handleQueryChange(value);
 		onChange(value);
-	};
-
-	const handleQueryValidation = (newQuery: string): void => {
-		try {
-			const validationResponse = validateQuery(newQuery);
-			setValidation(validationResponse);
-		} catch (error) {
-			setValidation({
-				isValid: false,
-				message: 'Failed to process query',
-				errors: [error as IDetailedError],
-			});
-		}
 	};
 
 	const handleBlur = (): void => {
