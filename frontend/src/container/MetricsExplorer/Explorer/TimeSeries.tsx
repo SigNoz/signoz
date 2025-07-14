@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios';
 import classNames from 'classnames';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -88,6 +89,21 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 					ENTITY_VERSION_V5,
 				),
 			enabled: !!payload,
+			retry: (failureCount: number, error: Error): boolean => {
+				let status: number | undefined;
+
+				if (error instanceof APIError) {
+					status = error.getHttpStatusCode();
+				} else if (isAxiosError(error)) {
+					status = error.response?.status;
+				}
+
+				if (status && status >= 400 && status < 500) {
+					return false;
+				}
+
+				return failureCount < 3;
+			},
 			onError: (error: APIError): void => {
 				showErrorModal(error);
 			},
