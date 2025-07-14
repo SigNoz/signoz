@@ -105,8 +105,22 @@ function QuerySearch({
 		errors: [],
 	});
 
+	const handleQueryValidation = (newQuery: string): void => {
+		try {
+			const validationResponse = validateQuery(newQuery);
+			setValidation(validationResponse);
+		} catch (error) {
+			setValidation({
+				isValid: false,
+				message: 'Failed to process query',
+				errors: [error as IDetailedError],
+			});
+		}
+	};
+
 	useEffect(() => {
 		setQuery(queryData.filter?.expression || '');
+		handleQueryValidation(queryData.filter?.expression || '');
 	}, [queryData.filter?.expression]);
 
 	const [keySuggestions, setKeySuggestions] = useState<
@@ -457,19 +471,6 @@ function QuerySearch({
 		setQuery(value);
 		handleQueryChange(value);
 		onChange(value);
-	};
-
-	const handleQueryValidation = (newQuery: string): void => {
-		try {
-			const validationResponse = validateQuery(newQuery);
-			setValidation(validationResponse);
-		} catch (error) {
-			setValidation({
-				isValid: false,
-				message: 'Failed to process query',
-				errors: [error as IDetailedError],
-			});
-		}
 	};
 
 	const handleBlur = (): void => {
