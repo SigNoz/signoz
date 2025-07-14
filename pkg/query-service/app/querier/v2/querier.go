@@ -506,7 +506,9 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, params *v3.
 	var results []*v3.Result
 	var err error
 	var errQueriesByName map[string]error
-	q.ValidateMetricNames(ctx, params.CompositeQuery, orgID)
+	if q.testingMode != true && q.reader != nil {
+		q.ValidateMetricNames(ctx, params.CompositeQuery, orgID)
+	}
 	if params.CompositeQuery != nil {
 		switch params.CompositeQuery.QueryType {
 		case v3.QueryTypeBuilder:
