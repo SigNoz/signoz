@@ -221,6 +221,10 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 							spec.Aggregations[i].Temporality = temp
 						}
 					}
+					// TODO(srikanthccv): warn when the metric is missing
+					if spec.Aggregations[i].Temporality == metrictypes.Unknown {
+						spec.Aggregations[i].Temporality = metrictypes.Unspecified
+					}
 				}
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
