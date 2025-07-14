@@ -7,7 +7,7 @@ export const useCoordinates = (): {
 	coordinates: Coordinates | null;
 	clickedData: ClickedData | null;
 	popoverPosition: PopoverPosition | null;
-	onClick: (e: React.MouseEvent, data?: ClickedData) => void;
+	onClick: (coordinates: { x: number; y: number }, data?: ClickedData) => void;
 	onClose: () => void;
 	subMenu: string; // todo: create enum
 	setSubMenu: (subMenu: string) => void;
@@ -61,12 +61,12 @@ export const useCoordinates = (): {
 	);
 
 	const onClick = useCallback(
-		(e: React.MouseEvent, data?: ClickedData): void => {
-			const coords: Coordinates = { x: e.clientX, y: e.clientY };
-			const position = calculatePosition(coords.x, coords.y);
+		(coords: { x: number; y: number }, data?: ClickedData): void => {
+			const coordinates: Coordinates = { x: coords.x, y: coords.y };
+			const position = calculatePosition(coordinates.x, coordinates.y);
 			if (data) {
 				setClickedData(data);
-				setCoordinates(coords);
+				setCoordinates(coordinates);
 				setPopoverPosition(position);
 			}
 		},

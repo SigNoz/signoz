@@ -17,6 +17,11 @@ import { getBaseMeta } from './drilldownUtils';
  * Gets the query data that matches the clicked column's dataIndex
  */
 export const getQueryData = (query: Query, clickedData: any): IBuilderQuery => {
+	if (!clickedData) {
+		console.warn('clickedData is null in getQueryData');
+		return initialQueryBuilderFormValuesMap.logs;
+	}
+
 	const queryData = query?.builder?.queryData?.filter(
 		(item: IBuilderQuery) => item.queryName === clickedData.column.dataIndex,
 	);
@@ -30,6 +35,11 @@ export const getFiltersToAdd = (
 	query: Query,
 	clickedData: any,
 ): FilterData[] => {
+	if (!clickedData) {
+		console.warn('clickedData is null in getFiltersToAdd');
+		return [];
+	}
+
 	const queryData = getQueryData(query, clickedData);
 	const { groupBy } = queryData;
 
@@ -46,27 +56,35 @@ export const isEmptyFilterValue = (value: any): boolean =>
 /**
  * Creates filters to add to the query from table columns for view mode navigation
  */
-export const getFiltersToAddToView = (clickedData: any): FilterData[] =>
-	clickedData?.tableColumns
-		?.filter((col: any) => !col.isValueColumn)
-		.reduce((acc: FilterData[], col: any) => {
-			// only add table col which have isValueColumn false. and the filter value suffices the isEmptyFilterValue condition.
-			const { dataIndex } = col;
-			if (!dataIndex || typeof dataIndex !== 'string') return acc;
-			if (
-				clickedData?.column?.isValueColumn &&
-				isEmptyFilterValue(clickedData?.record?.[dataIndex])
-			)
-				return acc;
-			return [
-				...acc,
-				{
-					filterKey: dataIndex,
-					filterValue: clickedData?.record?.[dataIndex] || '',
-					operator: OPERATORS['='],
-				},
-			];
-		}, []) || [];
+export const getFiltersToAddToView = (clickedData: any): FilterData[] => {
+	if (!clickedData) {
+		console.warn('clickedData is null in getFiltersToAddToView');
+		return [];
+	}
+
+	return (
+		clickedData?.tableColumns
+			?.filter((col: any) => !col.isValueColumn)
+			.reduce((acc: FilterData[], col: any) => {
+				// only add table col which have isValueColumn false. and the filter value suffices the isEmptyFilterValue condition.
+				const { dataIndex } = col;
+				if (!dataIndex || typeof dataIndex !== 'string') return acc;
+				if (
+					clickedData?.column?.isValueColumn &&
+					isEmptyFilterValue(clickedData?.record?.[dataIndex])
+				)
+					return acc;
+				return [
+					...acc,
+					{
+						filterKey: dataIndex,
+						filterValue: clickedData?.record?.[dataIndex] || '',
+						operator: OPERATORS['='],
+					},
+				];
+			}, []) || []
+	);
+};
 
 const VIEW_QUERY_MAP: Record<string, IBuilderQuery> = {
 	view_logs: initialQueryBuilderFormValuesMap.logs,
@@ -124,6 +142,11 @@ export const getBreakoutQuery = (
 	groupBy: BaseAutocompleteData,
 	filtersToAdd: FilterData[],
 ): Query => {
+	if (!clickedData) {
+		console.warn('clickedData is null in getBreakoutQuery');
+		return query;
+	}
+
 	console.log('>> groupBy', groupBy);
 	console.log('>> clickedData', clickedData);
 	console.log('>> query', query);

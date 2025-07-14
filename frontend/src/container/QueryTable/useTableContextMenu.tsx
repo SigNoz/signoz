@@ -28,7 +28,10 @@ export function useTableContextMenu({
 	subMenu,
 	setSubMenu,
 }: UseTableContextMenuProps): {
-	menuItemsConfig: { header?: string; items?: React.ReactNode };
+	menuItemsConfig: {
+		header?: string | React.ReactNode;
+		items?: React.ReactNode;
+	};
 } {
 	const drilldownQuery = useGetCompositeQueryParam() || query;
 	const { handleFilterDrilldown } = useFilterDrilldown({
@@ -38,17 +41,19 @@ export function useTableContextMenu({
 		onClose,
 	});
 
-	const filterDrilldownConfig = useMemo(
-		() =>
-			getContextMenuConfig({
-				configType: ConfigType.GROUP,
-				query,
-				clickedData,
-				panelType: 'table',
-				onColumnClick: handleFilterDrilldown,
-			}),
-		[handleFilterDrilldown, clickedData, query],
-	);
+	const filterDrilldownConfig = useMemo(() => {
+		if (!clickedData) {
+			console.warn('clickedData is null in filterDrilldownConfig');
+			return {};
+		}
+		return getContextMenuConfig({
+			configType: ConfigType.GROUP,
+			query,
+			clickedData,
+			panelType: 'table',
+			onColumnClick: handleFilterDrilldown,
+		});
+	}, [handleFilterDrilldown, clickedData, query]);
 
 	const { aggregateDrilldownConfig } = useAggregateDrilldown({
 		query: drilldownQuery,
@@ -60,7 +65,12 @@ export function useTableContextMenu({
 	});
 
 	const menuItemsConfig = useMemo(() => {
-		if (!coordinates) return {};
+		if (!coordinates || !clickedData) {
+			if (!clickedData) {
+				console.warn('clickedData is null in menuItemsConfig');
+			}
+			return {};
+		}
 		const columnType = clickedData?.column?.isValueColumn
 			? ConfigType.AGGREGATE
 			: ConfigType.GROUP;

@@ -13,6 +13,8 @@ export interface OnClickPluginOpts {
 			queryName: string;
 			inFocusOrNot: boolean;
 		},
+		absoluteMouseX?: number,
+		absoluteMouseY?: number,
 	) => void;
 	apiResponse?: MetricRangePayloadProps;
 }
@@ -24,8 +26,13 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 		init: (u: uPlot) => {
 			// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 			handleClick = function (event: MouseEvent) {
+				// Keep original relative coordinates
 				const mouseX = event.offsetX + 40;
 				const mouseY = event.offsetY + 40;
+
+				// Add new absolute coordinates
+				const absoluteMouseX = event.clientX;
+				const absoluteMouseY = event.clientY;
 
 				// Convert pixel positions to data values
 				// do not use mouseX and mouseY here as it offsets the timestamp as well
@@ -54,7 +61,16 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 					});
 				}
 
-				opts.onClick(xValue, yValue, mouseX, mouseY, metric, outputMetric);
+				opts.onClick(
+					xValue,
+					yValue,
+					mouseX,
+					mouseY,
+					metric,
+					outputMetric,
+					absoluteMouseX,
+					absoluteMouseY,
+				);
 			};
 			u.over.addEventListener('click', handleClick);
 		},

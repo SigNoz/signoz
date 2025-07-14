@@ -45,7 +45,10 @@ const useAggregateDrilldown = ({
 	subMenu: string;
 	setSubMenu: (subMenu: string) => void;
 }): {
-	aggregateDrilldownConfig: { header?: string; items?: ContextMenuItem };
+	aggregateDrilldownConfig: {
+		header?: string | React.ReactNode;
+		items?: ContextMenuItem;
+	};
 } => {
 	const { redirectWithQueryBuilderData } = useQueryBuilder();
 
@@ -77,7 +80,7 @@ const useAggregateDrilldown = ({
 			}
 
 			const route = getRoute(key);
-			const filtersToAdd = getFiltersToAddToView(clickedData);
+			const filtersToAdd = clickedData ? getFiltersToAddToView(clickedData) : [];
 			const viewQuery = getViewQuery(query, filtersToAdd, key);
 
 			let queryParams = {
@@ -112,18 +115,20 @@ const useAggregateDrilldown = ({
 		],
 	);
 
-	const aggregateDrilldownConfig = useMemo(
-		() =>
-			getContextMenuConfig({
-				subMenu,
-				configType: ConfigType.AGGREGATE,
-				query,
-				clickedData,
-				panelType: 'table',
-				onColumnClick: handleAggregateDrilldown,
-			}),
-		[handleAggregateDrilldown, clickedData, query, subMenu],
-	);
+	const aggregateDrilldownConfig = useMemo(() => {
+		if (!clickedData) {
+			console.warn('clickedData is null in aggregateDrilldownConfig');
+			return {};
+		}
+		return getContextMenuConfig({
+			subMenu,
+			configType: ConfigType.AGGREGATE,
+			query,
+			clickedData,
+			panelType: 'table',
+			onColumnClick: handleAggregateDrilldown,
+		});
+	}, [handleAggregateDrilldown, clickedData, query, subMenu]);
 	return { aggregateDrilldownConfig };
 };
 

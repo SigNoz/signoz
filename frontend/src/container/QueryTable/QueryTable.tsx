@@ -91,7 +91,7 @@ export function QueryTable({
 		): void => {
 			e.stopPropagation();
 			if (isQueryTypeBuilder && isDrilldownEnabled) {
-				onClick(e, { record, column, tableColumns });
+				onClick({ x: e.clientX, y: e.clientY }, { record, column, tableColumns });
 			}
 		},
 		[isQueryTypeBuilder, isDrilldownEnabled, onClick],
@@ -183,7 +183,7 @@ export function QueryTable({
 			<ContextMenu
 				coordinates={coordinates}
 				popoverPosition={popoverPosition}
-				title={menuItemsConfig.header}
+				title={menuItemsConfig.header as string}
 				items={menuItemsConfig.items}
 				onClose={onClose}
 			/>
