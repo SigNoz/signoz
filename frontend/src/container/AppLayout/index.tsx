@@ -13,6 +13,7 @@ import manageCreditCardApi from 'api/v1/portal/create';
 import getUserLatestVersion from 'api/v1/version/getLatestVersion';
 import getUserVersion from 'api/v1/version/getVersion';
 import cx from 'classnames';
+import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
 import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { Events } from 'constants/events';
@@ -54,7 +55,10 @@ import {
 } from 'types/actions/app';
 import { ErrorResponse, SuccessResponse, SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
-import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
+import {
+	ChangelogSchema,
+	DeploymentType,
+} from 'types/api/changelog/getChangelogByVersion';
 import APIError from 'types/api/error';
 import {
 	LicenseEvent,
@@ -86,6 +90,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		featureFlagsFetchError,
 		userPreferences,
 		updateChangelog,
+		toggleChangelogModal,
+		showChangelogModal,
+		changelog,
 	} = useAppContext();
 
 	const { notifications } = useNotifications();
@@ -138,6 +145,15 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
+	const changelogForTenant = isCloudUserVal
+		? DeploymentType.CLOUD_ONLY
+		: DeploymentType.OSS_ONLY;
+
+	const seenChangelogVersion = userPreferences?.find(
+		(preference) =>
+			preference.name === USER_PREFERENCES.LAST_SEEN_CHANGELOG_VERSION,
+	)?.value as string;
+
 	const [
 		getUserVersionResponse,
 		getUserLatestVersionResponse,
@@ -155,10 +171,33 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		},
 		{
 			queryFn: (): Promise<SuccessResponse<ChangelogSchema> | ErrorResponse> =>
-				getChangelogByVersion(latestVersion),
-			queryKey: ['getChangelogByVersion', latestVersion],
-			enabled: isLoggedIn && !isCloudUserVal && Boolean(latestVersion),
+				getChangelogByVersion(latestVersion, changelogForTenant),
+			queryKey: ['getChangelogByVersion', latestVersion, changelogForTenant],
+			enabled: isLoggedIn && Boolean(latestVersion),
 		},
+	]);
+
+	useEffect(() => {
+		let timer: ReturnType<typeof setTimeout>;
+		if (
+			isCloudUserVal &&
+			Boolean(latestVersion) &&
+			latestVersion !== seenChangelogVersion
+		) {
+			// Automatically open the changelog modal for cloud users after 1s, if they've not seen this version before.
+			timer = setTimeout(() => {
+				toggleChangelogModal();
+			}, 1000);
+		}
+
+		return (): void => {
+			clearInterval(timer);
+		};
+	}, [
+		isCloudUserVal,
+		latestVersion,
+		seenChangelogVersion,
+		toggleChangelogModal,
 	]);
 
 	useEffect(() => {
@@ -683,6 +722,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			</Flex>
 
 			{showAddCreditCardModal && <ChatSupportGateway />}
+			{showChangelogModal && changelog && (
+				<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
+			)}
 		</Layout>
 	);
 }
