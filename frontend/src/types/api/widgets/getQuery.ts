@@ -50,6 +50,12 @@ export interface SeriesItem {
 	};
 }
 
+export interface Column {
+	name: string;
+	queryName: string;
+	isValueColumn: boolean;
+}
+
 export interface QueryDataV3 {
 	list: ListItem[] | null;
 	queryName: string;
@@ -69,11 +75,7 @@ export interface QueryDataV3 {
 				[key: string]: any;
 			};
 		}[];
-		columns: {
-			name: string;
-			queryName: string;
-			isValueColumn: boolean;
-		}[];
+		columns: Column[];
 	};
 }
 

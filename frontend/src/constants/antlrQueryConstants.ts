@@ -17,6 +17,7 @@ export const OPERATORS = {
 
 export const NON_VALUE_OPERATORS = [OPERATORS.EXISTS];
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum QUERY_BUILDER_KEY_TYPES {
 	STRING = 'string',
 	NUMBER = 'number',
@@ -56,13 +57,13 @@ export const QUERY_BUILDER_OPERATORS_BY_KEY_TYPE = {
 };
 
 export const negationQueryOperatorSuggestions = [
-	{ label: OPERATORS['LIKE'], type: 'operator', info: 'Like' },
-	{ label: OPERATORS['ILIKE'], type: 'operator', info: 'Case insensitive like' },
-	{ label: OPERATORS['EXISTS'], type: 'operator', info: 'Exists' },
-	{ label: OPERATORS['BETWEEN'], type: 'operator', info: 'Between' },
-	{ label: OPERATORS['IN'], type: 'operator', info: 'In' },
-	{ label: OPERATORS['REGEXP'], type: 'operator', info: 'Regular expression' },
-	{ label: OPERATORS['CONTAINS'], type: 'operator', info: 'Contains' },
+	{ label: OPERATORS.LIKE, type: 'operator', info: 'Like' },
+	{ label: OPERATORS.ILIKE, type: 'operator', info: 'Case insensitive like' },
+	{ label: OPERATORS.EXISTS, type: 'operator', info: 'Exists' },
+	{ label: OPERATORS.BETWEEN, type: 'operator', info: 'Between' },
+	{ label: OPERATORS.IN, type: 'operator', info: 'In' },
+	{ label: OPERATORS.REGEXP, type: 'operator', info: 'Regular expression' },
+	{ label: OPERATORS.CONTAINS, type: 'operator', info: 'Contains' },
 ];
 
 export const queryOperatorSuggestions = [
@@ -72,6 +73,6 @@ export const queryOperatorSuggestions = [
 	{ label: OPERATORS['<'], type: 'operator', info: 'Less than' },
 	{ label: OPERATORS['>='], type: 'operator', info: 'Greater than or equal to' },
 	{ label: OPERATORS['<='], type: 'operator', info: 'Less than or equal to' },
-	{ label: OPERATORS['NOT'], type: 'operator', info: 'Not' },
+	{ label: OPERATORS.NOT, type: 'operator', info: 'Not' },
 	...negationQueryOperatorSuggestions,
 ];

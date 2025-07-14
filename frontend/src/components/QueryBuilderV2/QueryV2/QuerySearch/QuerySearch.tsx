@@ -18,6 +18,13 @@ import { Button, Card, Collapse, Popover, Tag } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import cx from 'classnames';
+import {
+	negationQueryOperatorSuggestions,
+	QUERY_BUILDER_KEY_TYPES,
+	QUERY_BUILDER_OPERATORS_BY_KEY_TYPE,
+	queryOperatorSuggestions,
+} from 'constants/antlrQueryConstants';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isNull } from 'lodash-es';
 import { TriangleAlert } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -31,18 +38,11 @@ import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
 import { validateQuery } from 'utils/antlrQueryUtils';
 import {
-	negationQueryOperatorSuggestions,
-	QUERY_BUILDER_KEY_TYPES,
-	QUERY_BUILDER_OPERATORS_BY_KEY_TYPE,
-	queryOperatorSuggestions,
-} from 'constants/antlrQueryConstants';
-import {
 	getCurrentValueIndexAtCursor,
 	getQueryContextAtCursor,
 } from 'utils/queryContextUtils';
 
 import { queryExamples } from './constants';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
 const { Panel } = Collapse;
 
@@ -522,6 +522,7 @@ function QuerySearch({
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	function autoSuggestions(context: CompletionContext): CompletionResult | null {
 		// This matches words before the cursor position
+		// eslint-disable-next-line no-useless-escape
 		const word = context.matchBefore(/[a-zA-Z0-9_.:/?&=#%\-\[\]]*/);
 		if (word?.from === word?.to && !context.explicit) return null;
 
@@ -871,6 +872,7 @@ function QuerySearch({
 					isLoadingSuggestions) &&
 				!(isLoadingSuggestions && lastKeyRef.current === keyName)
 			) {
+				// eslint-disable-next-line sonarjs/no-identical-functions
 				setTimeout(() => {
 					fetchValueSuggestions({
 						key: keyName,
@@ -1154,9 +1156,7 @@ function QuerySearch({
 									preventDefault: true,
 									// Prevent default behavior of Enter to add new line
 									// and instead run a custom action
-									run: (): boolean => {
-										return true;
-									},
+									run: (): boolean => true,
 								},
 								{
 									key: 'Mod-Enter',
@@ -1173,9 +1173,7 @@ function QuerySearch({
 									key: 'Shift-Enter',
 									preventDefault: true,
 									// Prevent default behavior of Shift-Enter to add new line
-									run: (): boolean => {
-										return true;
-									},
+									run: (): boolean => true,
 								},
 							]),
 						),

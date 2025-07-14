@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash-es';
+import { cloneDeep, isEmpty } from 'lodash-es';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import {
@@ -139,7 +139,7 @@ function convertScalarDataArrayToTable(
 	});
 }
 
-function convertScalerWithFormatForWeb(
+function convertScalarWithFormatForWeb(
 	scalarDataArray: ScalarData[],
 	legendMap: Record<string, string>,
 	aggregationPerQuery: Record<string, any>,
@@ -306,7 +306,7 @@ export function convertV5ResponseToLegacy(
 	// If formatForWeb is true, return as-is (like existing logic)
 	if (formatForWeb && v5Data?.type === 'scalar') {
 		const scalarData = v5Data.data.results as ScalarData[];
-		const webTables = convertScalerWithFormatForWeb(
+		const webTables = convertScalarWithFormatForWeb(
 			scalarData,
 			legendMap,
 			aggregationPerQuery,
@@ -342,7 +342,7 @@ export function convertV5ResponseToLegacy(
 		legacyResponse.payload.data.result = legacyResponse.payload.data.result.map(
 			(queryData: any) => {
 				// eslint-disable-line @typescript-eslint/no-explicit-any
-				const newQueryData = queryData;
+				const newQueryData = cloneDeep(queryData);
 				newQueryData.legend = legendMap[queryData.queryName];
 
 				// If metric names is an empty object
