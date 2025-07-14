@@ -17,37 +17,6 @@ import {
 } from './tokenUtils';
 import { NON_VALUE_OPERATORS } from 'constants/antlrQueryConstants';
 
-// Function to normalize multiple spaces to single spaces when not in quotes
-function normalizeSpaces(query: string): string {
-	let result = '';
-	let inQuotes = false;
-	let lastChar = '';
-
-	for (let i = 0; i < query.length; i++) {
-		const char = query[i];
-
-		// Track quote state
-		if (char === "'" && (i === 0 || query[i - 1] !== '\\')) {
-			inQuotes = !inQuotes;
-		}
-
-		// If we're in quotes, always keep the original character
-		if (inQuotes) {
-			result += char;
-		}
-		// Otherwise, collapse multiple spaces to a single space
-		else if (char === ' ' && lastChar === ' ') {
-			// Skip this space (don't add it)
-		} else {
-			result += char;
-		}
-
-		lastChar = char;
-	}
-
-	return result;
-}
-
 // Function to create a context object
 export function createContext(
 	token: Token,
@@ -576,33 +545,10 @@ export function getQueryContextAtCursor(
 			(isAtSpace && isAfterToken) ||
 			(cursorIndex === query.length && isAfterToken);
 
-		// First normalize the query to handle multiple spaces
-		// We need to adjust cursorIndex based on space normalization
-		let adjustedCursorIndex = cursorIndex;
-		let spaceCount = 0;
-		let inQuotes = false;
+		cursorIndex = cursorIndex;
 
-		// Count consecutive spaces before the cursor to adjust the cursor position
-		for (let i = 0; i < cursorIndex; i++) {
-			// Track quote state
-			if (query[i] === "'" && (i === 0 || query[i - 1] !== '\\')) {
-				inQuotes = !inQuotes;
-			}
-
-			// Only count spaces when not in quotes
-			if (!inQuotes && query[i] === ' ' && (i === 0 || query[i - 1] === ' ')) {
-				spaceCount++;
-			}
-		}
-
-		// Adjust cursor position based on removed spaces
-		adjustedCursorIndex = cursorIndex - spaceCount;
-
-		// Normalize the query by removing extra spaces when not in quotes
-		const normalizedQuery = normalizeSpaces(query);
-
-		// Create input stream and lexer with normalized query
-		const input = normalizedQuery || '';
+		// Create input stream and lexer with query
+		const input = query || '';
 		const chars = CharStreams.fromString(input);
 		const lexer = new FilterQueryLexer(chars);
 
@@ -626,15 +572,12 @@ export function getQueryContextAtCursor(
 
 			// FIXED: Consider a token to be the lastTokenBeforeCursor if the cursor is
 			// exactly at the end of the token (including the last character)
-			if (
-				token.stop < adjustedCursorIndex ||
-				token.stop + 1 === adjustedCursorIndex
-			) {
+			if (token.stop < cursorIndex || token.stop + 1 === cursorIndex) {
 				lastTokenBeforeCursor = token;
 			}
 
 			// If we found a token that starts after the cursor, we're done searching
-			if (token.start > adjustedCursorIndex) {
+			if (token.start > cursorIndex) {
 				break;
 			}
 		}
@@ -645,13 +588,13 @@ export function getQueryContextAtCursor(
 		// Find the current pair without causing a circular dependency
 		let currentPair: IQueryPair | null = null;
 		if (queryPairs.length > 0) {
-			currentPair = getCurrentQueryPair(queryPairs, query, adjustedCursorIndex);
+			currentPair = getCurrentQueryPair(queryPairs, query, cursorIndex);
 		}
 
 		// Determine precise context boundaries
 		const contextBoundaries = determineContextBoundaries(
 			query,
-			adjustedCursorIndex,
+			cursorIndex,
 			allTokens,
 			queryPairs,
 		);
@@ -660,54 +603,54 @@ export function getQueryContextAtCursor(
 		// FIXED: Include the case where the cursor is exactly at the end of a boundary
 		const isInKeyBoundary =
 			contextBoundaries.keyContext &&
-			((adjustedCursorIndex >= contextBoundaries.keyContext.start &&
-				adjustedCursorIndex <= contextBoundaries.keyContext.end) ||
-				adjustedCursorIndex === contextBoundaries.keyContext.end + 1);
+			((cursorIndex >= contextBoundaries.keyContext.start &&
+				cursorIndex <= contextBoundaries.keyContext.end) ||
+				cursorIndex === contextBoundaries.keyContext.end + 1);
 
 		const isInNegationBoundary =
 			contextBoundaries.negationContext &&
-			((adjustedCursorIndex >= contextBoundaries.negationContext.start &&
-				adjustedCursorIndex <= contextBoundaries.negationContext.end) ||
-				adjustedCursorIndex === contextBoundaries.negationContext.end + 1);
+			((cursorIndex >= contextBoundaries.negationContext.start &&
+				cursorIndex <= contextBoundaries.negationContext.end) ||
+				cursorIndex === contextBoundaries.negationContext.end + 1);
 
 		const isInOperatorBoundary =
 			contextBoundaries.operatorContext &&
-			((adjustedCursorIndex >= contextBoundaries.operatorContext.start &&
-				adjustedCursorIndex <= contextBoundaries.operatorContext.end) ||
-				adjustedCursorIndex === contextBoundaries.operatorContext.end + 1);
+			((cursorIndex >= contextBoundaries.operatorContext.start &&
+				cursorIndex <= contextBoundaries.operatorContext.end) ||
+				cursorIndex === contextBoundaries.operatorContext.end + 1);
 
 		const isInValueBoundary =
 			contextBoundaries.valueContext &&
-			((adjustedCursorIndex >= contextBoundaries.valueContext.start &&
-				adjustedCursorIndex <= contextBoundaries.valueContext.end) ||
-				adjustedCursorIndex === contextBoundaries.valueContext.end + 1);
+			((cursorIndex >= contextBoundaries.valueContext.start &&
+				cursorIndex <= contextBoundaries.valueContext.end) ||
+				cursorIndex === contextBoundaries.valueContext.end + 1);
 
 		const isInConjunctionBoundary =
 			contextBoundaries.conjunctionContext &&
-			((adjustedCursorIndex >= contextBoundaries.conjunctionContext.start &&
-				adjustedCursorIndex <= contextBoundaries.conjunctionContext.end) ||
-				adjustedCursorIndex === contextBoundaries.conjunctionContext.end + 1);
+			((cursorIndex >= contextBoundaries.conjunctionContext.start &&
+				cursorIndex <= contextBoundaries.conjunctionContext.end) ||
+				cursorIndex === contextBoundaries.conjunctionContext.end + 1);
 
 		// Check for bracket list context (used for IN operator values)
 		const isInBracketListBoundary =
 			contextBoundaries.bracketContext &&
 			contextBoundaries.bracketContext.isForList &&
-			adjustedCursorIndex >= contextBoundaries.bracketContext.start &&
-			adjustedCursorIndex <= contextBoundaries.bracketContext.end + 1;
+			cursorIndex >= contextBoundaries.bracketContext.start &&
+			cursorIndex <= contextBoundaries.bracketContext.end + 1;
 
 		// Check for general parenthesis context (not for IN operator lists)
 		const isInParenthesisBoundary =
 			contextBoundaries.bracketContext &&
 			!contextBoundaries.bracketContext.isForList &&
-			adjustedCursorIndex >= contextBoundaries.bracketContext.start &&
-			adjustedCursorIndex <= contextBoundaries.bracketContext.end + 1;
+			cursorIndex >= contextBoundaries.bracketContext.start &&
+			cursorIndex <= contextBoundaries.bracketContext.end + 1;
 
 		// Check if we're right after a closing bracket for a list (IN operator)
 		// This helps transition to conjunction context after a multi-value list
 		const isAfterClosingBracketList =
 			contextBoundaries.bracketContext &&
 			contextBoundaries.bracketContext.isForList &&
-			adjustedCursorIndex === contextBoundaries.bracketContext.end + 2 &&
+			cursorIndex === contextBoundaries.bracketContext.end + 2 &&
 			query[contextBoundaries.bracketContext.end + 1] === ' ';
 
 		// If cursor is within a specific context boundary, this takes precedence
@@ -740,8 +683,8 @@ export function getQueryContextAtCursor(
 			return {
 				tokenType: -1,
 				text: '',
-				start: adjustedCursorIndex,
-				stop: adjustedCursorIndex,
+				start: cursorIndex,
+				stop: cursorIndex,
 				currentToken: '',
 				isInKey: isInKeyBoundary || false,
 				isInNegation: isInNegationBoundary || false,
@@ -769,7 +712,7 @@ export function getQueryContextAtCursor(
 
 		// Continue with existing token-based logic for cases not covered by context boundaries
 		// Handle cursor at the very end of input
-		if (adjustedCursorIndex >= input.length && allTokens.length > 0) {
+		if (cursorIndex >= input.length && allTokens.length > 0) {
 			const lastRealToken = allTokens
 				.filter((t) => t.type !== FilterQueryLexer.EOF)
 				.pop();
@@ -788,10 +731,7 @@ export function getQueryContextAtCursor(
 				}
 
 				// FIXED: Check if cursor is within token bounds (inclusive) or exactly at the end
-				if (
-					token.start <= adjustedCursorIndex &&
-					adjustedCursorIndex <= token.stop + 1
-				) {
+				if (token.start <= cursorIndex && cursorIndex <= token.stop + 1) {
 					exactToken = token;
 					previousToken = i > 0 ? allTokens[i - 1] : null;
 					nextToken = i < allTokens.length - 1 ? allTokens[i + 1] : null;
@@ -811,10 +751,7 @@ export function getQueryContextAtCursor(
 						continue;
 					}
 
-					if (
-						current.stop + 1 < adjustedCursorIndex &&
-						adjustedCursorIndex < next.start
-					) {
+					if (current.stop + 1 < cursorIndex && cursorIndex < next.start) {
 						previousToken = current;
 						nextToken = next;
 						break;
@@ -828,8 +765,8 @@ export function getQueryContextAtCursor(
 			return {
 				tokenType: -1,
 				text: '',
-				start: adjustedCursorIndex,
-				stop: adjustedCursorIndex,
+				start: cursorIndex,
+				stop: cursorIndex,
 				currentToken: '',
 				isInKey: true, // Default to key context when input is empty
 				isInNegation: false,
@@ -858,8 +795,8 @@ export function getQueryContextAtCursor(
 				return {
 					tokenType: lastTokenBeforeCursor.type,
 					text: lastTokenBeforeCursor.text,
-					start: adjustedCursorIndex,
-					stop: adjustedCursorIndex,
+					start: cursorIndex,
+					stop: cursorIndex,
 					currentToken: lastTokenBeforeCursor.text,
 					isInKey: false,
 					isInNegation: false,
@@ -879,8 +816,8 @@ export function getQueryContextAtCursor(
 				return {
 					tokenType: lastTokenBeforeCursor.type,
 					text: lastTokenBeforeCursor.text,
-					start: adjustedCursorIndex,
-					stop: adjustedCursorIndex,
+					start: cursorIndex,
+					stop: cursorIndex,
 					currentToken: lastTokenBeforeCursor.text,
 					isInKey: false,
 					isInNegation: false,
@@ -903,8 +840,8 @@ export function getQueryContextAtCursor(
 				return {
 					tokenType: lastTokenBeforeCursor.type,
 					text: lastTokenBeforeCursor.text,
-					start: adjustedCursorIndex,
-					stop: adjustedCursorIndex,
+					start: cursorIndex,
+					stop: cursorIndex,
 					currentToken: lastTokenBeforeCursor.text,
 					isInKey: false,
 					isInNegation: false,
@@ -928,8 +865,8 @@ export function getQueryContextAtCursor(
 				return {
 					tokenType: lastTokenBeforeCursor.type,
 					text: lastTokenBeforeCursor.text,
-					start: adjustedCursorIndex,
-					stop: adjustedCursorIndex,
+					start: cursorIndex,
+					stop: cursorIndex,
 					currentToken: lastTokenBeforeCursor.text,
 					isInKey: false,
 					isInNegation: false,
@@ -952,8 +889,8 @@ export function getQueryContextAtCursor(
 				return {
 					tokenType: lastTokenBeforeCursor.type,
 					text: lastTokenBeforeCursor.text,
-					start: adjustedCursorIndex,
-					stop: adjustedCursorIndex,
+					start: cursorIndex,
+					stop: cursorIndex,
 					currentToken: lastTokenBeforeCursor.text,
 					isInKey: true, // After conjunction + space, should be key context
 					isInNegation: false,
@@ -976,8 +913,8 @@ export function getQueryContextAtCursor(
 				return {
 					tokenType: lastTokenBeforeCursor.type,
 					text: lastTokenBeforeCursor.text,
-					start: adjustedCursorIndex,
-					stop: adjustedCursorIndex,
+					start: cursorIndex,
+					stop: cursorIndex,
 					currentToken: lastTokenBeforeCursor.text,
 					isInKey: false,
 					isInNegation: false,
@@ -995,7 +932,7 @@ export function getQueryContextAtCursor(
 
 		// FIXED: Consider the case where the cursor is at the end of a token
 		// with no space yet (user is actively typing)
-		if (exactToken && adjustedCursorIndex === exactToken.stop + 1) {
+		if (exactToken && cursorIndex === exactToken.stop + 1) {
 			const tokenContext = determineTokenContext(exactToken, input);
 
 			// When the cursor is at the end of a token, return the current token context
@@ -1070,8 +1007,8 @@ export function getQueryContextAtCursor(
 				return {
 					tokenType: previousToken.type,
 					text: previousToken.text,
-					start: adjustedCursorIndex,
-					stop: adjustedCursorIndex,
+					start: cursorIndex,
+					stop: cursorIndex,
 					currentToken: previousToken.text,
 					isInKey: false,
 					isInNegation: false,
@@ -1093,8 +1030,8 @@ export function getQueryContextAtCursor(
 				return {
 					tokenType: previousToken.type,
 					text: previousToken.text,
-					start: adjustedCursorIndex,
-					stop: adjustedCursorIndex,
+					start: cursorIndex,
+					stop: cursorIndex,
 					currentToken: previousToken.text,
 					isInKey: false,
 					isInNegation: false,
@@ -1114,8 +1051,8 @@ export function getQueryContextAtCursor(
 				return {
 					tokenType: previousToken.type,
 					text: previousToken.text,
-					start: adjustedCursorIndex,
-					stop: adjustedCursorIndex,
+					start: cursorIndex,
+					stop: cursorIndex,
 					currentToken: previousToken.text,
 					isInKey: false,
 					isInNegation: false,
@@ -1137,8 +1074,8 @@ export function getQueryContextAtCursor(
 				return {
 					tokenType: previousToken.type,
 					text: previousToken.text,
-					start: adjustedCursorIndex,
-					stop: adjustedCursorIndex,
+					start: cursorIndex,
+					stop: cursorIndex,
 					currentToken: previousToken.text,
 					isInKey: true, // After conjunction, progress back to key context
 					isInNegation: false,
@@ -1158,8 +1095,8 @@ export function getQueryContextAtCursor(
 		return {
 			tokenType: -1,
 			text: '',
-			start: adjustedCursorIndex,
-			stop: adjustedCursorIndex,
+			start: cursorIndex,
+			stop: cursorIndex,
 			currentToken: '',
 			isInKey: true,
 			isInNegation: false,
@@ -1211,11 +1148,8 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 			return [];
 		}
 
-		// Normalize the query to handle multiple spaces
-		const normalizedQuery = normalizeSpaces(query);
-
-		// Create input stream and lexer with normalized query
-		const input = normalizedQuery || '';
+		// Create input stream and lexer with query query
+		const input = query || '';
 		const chars = CharStreams.fromString(input);
 		const lexer = new FilterQueryLexer(chars);
 
