@@ -70,18 +70,6 @@ const stopEventsExtension = EditorView.domEventHandlers({
 	},
 });
 
-// const disallowMultipleSpaces: Extension = EditorView.inputHandler.of(
-// 	(view, from, to, text) => {
-// 		const currentLine = view.state.doc.lineAt(from);
-// 		const before = currentLine.text.slice(0, from - currentLine.from);
-// 		const after = currentLine.text.slice(to - currentLine.from);
-
-// 		const newText = before + text + after;
-
-// 		return /\s{2,}/.test(newText);
-// 	},
-// );
-
 function QuerySearch({
 	onChange,
 	queryData,
