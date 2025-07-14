@@ -34,6 +34,7 @@ var MetricsExplorerClickhouseThreads = GetOrDefaultEnvInt("METRICS_EXPLORER_CLIC
 var UpdatedMetricsMetadataCachePrefix = GetOrDefaultEnv("METRICS_UPDATED_METADATA_CACHE_KEY", "UPDATED_METRICS_METADATA")
 
 const NormalizedMetricsMapCacheKey = "NORMALIZED_METRICS_MAP_CACHE_KEY"
+const NormalizedMetricsMapQueryThreads = 10
 
 // TODO(srikanthccv): remove after backfilling is done
 func UseMetricsPreAggregation() bool {

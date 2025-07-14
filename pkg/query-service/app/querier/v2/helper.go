@@ -291,6 +291,7 @@ func (q *querier) ValidateMetricNames(ctx context.Context, query *v3.CompositeQu
 			expr, err := parser.ParseExpr(query.Query)
 			if err != nil {
 				zap.L().Debug("error parsing promQL expression", zap.String("query", query.Query), zap.Error(err))
+				continue
 			}
 			parser.Inspect(expr, func(node parser.Node, path []parser.Node) error {
 				if vs, ok := node.(*parser.VectorSelector); ok {
@@ -299,6 +300,7 @@ func (q *querier) ValidateMetricNames(ctx context.Context, query *v3.CompositeQu
 							if unNormName, ok := metrics[m.Value]; ok {
 								if unNormName != m.Value {
 									zap.L().Error("using normalized metric name", zap.String("query", query.Query), zap.String("metric", m.Value))
+									continue
 								}
 							}
 						}
@@ -312,6 +314,7 @@ func (q *querier) ValidateMetricNames(ctx context.Context, query *v3.CompositeQu
 			if unNormName, ok := metrics[query.AggregateAttribute.Key]; ok {
 				if unNormName != query.AggregateAttribute.Key {
 					zap.L().Error("using normalized metric name", zap.String("metrics", query.AggregateAttribute.Key))
+					continue
 				}
 			}
 		}

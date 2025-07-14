@@ -6063,8 +6063,9 @@ func (r *ClickHouseReader) GetCorrespondingNormalizedMetrics(ctx context.Context
 		return resultDto.MetricsMap, nil
 	}
 
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.NormalizedMetricsMapQueryThreads)
 	query := "SELECT DISTINCT metric_name, type, toUInt8(__normalized) FROM %s.%s"
-	rows, err := r.db.Query(ctx, fmt.Sprintf(query, signozMetricDBName, signozTSTableNameV4))
+	rows, err := r.db.Query(valueCtx, fmt.Sprintf(query, signozMetricDBName, signozTSTableNameV41Day))
 	if err != nil {
 		return nil, err
 	}
