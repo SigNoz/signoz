@@ -545,8 +545,6 @@ export function getQueryContextAtCursor(
 			(isAtSpace && isAfterToken) ||
 			(cursorIndex === query.length && isAfterToken);
 
-		cursorIndex = cursorIndex;
-
 		// Create input stream and lexer with query
 		const input = query || '';
 		const chars = CharStreams.fromString(input);
