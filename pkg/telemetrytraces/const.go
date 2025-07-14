@@ -274,45 +274,45 @@ var (
 	SpanSearchScopeRoot       = "isroot"
 	SpanSearchScopeEntryPoint = "isentrypoint"
 
-	DefaultFields = []telemetrytypes.TelemetryFieldKey{
-		{
+	DefaultFields = map[string]telemetrytypes.TelemetryFieldKey{
+		"timestamp": {
 			Name:          "timestamp",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
 			FieldDataType: telemetrytypes.FieldDataTypeNumber,
 		},
-		{
+		"span_id": {
 			Name:          "span_id",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
-		{
+		"trace_id": {
 			Name:          "trace_id",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
-		{
+		"name": {
 			Name:          "name",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
-		{
+		"service.name": {
 			Name:          "service.name",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextResource,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 			Materialized:  true,
 		},
-		{
+		"duration_nano": {
 			Name:          "duration_nano",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
 			FieldDataType: telemetrytypes.FieldDataTypeNumber,
 		},
-		{
+		"response_status_code": {
 			Name:          "response_status_code",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
