@@ -371,14 +371,14 @@ export const removeKeysFromExpression = (
 	if (updatedExpression) {
 		keysToRemove.forEach((key) => {
 			// Extract key-value query pairs from the expression
-			const exisitingQueryPairs = extractQueryPairs(updatedExpression);
+			const existingQueryPairs = extractQueryPairs(updatedExpression);
 
 			let queryPairsMap: Map<string, IQueryPair>;
 
-			if (exisitingQueryPairs.length > 0) {
+			if (existingQueryPairs.length > 0) {
 				// Build a map for quick lookup of query pairs by their lowercase trimmed keys
 				queryPairsMap = new Map(
-					exisitingQueryPairs.map((pair) => {
+					existingQueryPairs.map((pair) => {
 						const key = pair.key.trim().toLowerCase();
 						return [key, pair];
 					}),
