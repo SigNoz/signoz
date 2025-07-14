@@ -6,7 +6,7 @@ import { ExpandableConfig } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import savePipeline from 'api/pipeline/post';
 import { useNotifications } from 'hooks/useNotifications';
-import { isUndefined } from 'lodash-es';
+import { isEqual, isUndefined } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
 import React, {
 	useCallback,
@@ -75,7 +75,7 @@ function PipelinesListEmptyState(): JSX.Element {
 							<a
 								href="https://signoz.io/docs/logs-pipelines/introduction/?utm_source=product&utm_medium=pipelines-tab"
 								target="_blank"
-								rel="noreferrer"
+								rel="noopener noreferrer"
 							>
 								here
 							</a>
@@ -407,15 +407,46 @@ function PipelineListsView({
 		return undefined;
 	}, [isEditingActionMode, addNewPipelineHandler, t]);
 
+	const getModifiedJsonFlatteningConfigs = useCallback(
+		() =>
+			currPipelineData.flatMap((pipeline) => {
+				const prevPipeline = prevPipelineData.find((p) => p.name === pipeline.name);
+
+				return (pipeline.config || [])
+					.filter((processor) => {
+						const prevProcessor = prevPipeline?.config?.find(
+							(p) => p.name === processor.name,
+						);
+						return (
+							processor.type === 'json_parser' &&
+							(!prevProcessor ||
+								prevProcessor.enable_flattening !== processor.enable_flattening ||
+								prevProcessor.enable_paths !== processor.enable_paths ||
+								prevProcessor.path_prefix !== processor.path_prefix ||
+								!isEqual(prevProcessor.mapping, processor.mapping))
+						);
+					})
+					.map((processor) => ({
+						enableFlattening: !!processor.enable_flattening,
+						enablePaths: !!processor.enable_paths,
+						pathPrefix: processor.path_prefix || '',
+						mapping: processor.mapping || {},
+					}));
+			}),
+		[currPipelineData, prevPipelineData],
+	);
+
 	const onSaveConfigurationHandler = useCallback(async () => {
 		const modifiedPipelineData = currPipelineData.map((item: PipelineData) => {
 			const pipelineData = { ...item };
 			delete pipelineData?.id;
 			return pipelineData;
 		});
+
 		const response = await savePipeline({
 			data: { pipelines: modifiedPipelineData },
 		});
+
 		if (response.statusCode === 200) {
 			refetchPipelineLists();
 			setActionMode(ActionMode.Viewing);
@@ -424,6 +455,15 @@ function PipelineListsView({
 			const pipelinesInDB = response.payload?.pipelines || [];
 			setCurrPipelineData(pipelinesInDB);
 			setPrevPipelineData(pipelinesInDB);
+
+			// Log modified JSON flattening configurations
+			const modifiedConfigs = getModifiedJsonFlatteningConfigs();
+			if (modifiedConfigs.length > 0) {
+				logEvent('Logs pipeline: Saved JSON Flattening Configuration', {
+					count: modifiedConfigs.length,
+					configurations: modifiedConfigs,
+				});
+			}
 
 			logEvent('Logs: Pipelines: Saved Pipelines', {
 				count: pipelinesInDB.length,
@@ -446,7 +486,14 @@ function PipelineListsView({
 			setPrevPipelineData(modifiedPipelineData);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [currPipelineData, notifications, refetchPipelineLists, setActionMode, t]);
+	}, [
+		currPipelineData,
+		notifications,
+		refetchPipelineLists,
+		setActionMode,
+		t,
+		getModifiedJsonFlatteningConfigs,
+	]);
 
 	const onCancelConfigurationHandler = useCallback((): void => {
 		setActionMode(ActionMode.Viewing);
