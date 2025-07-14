@@ -6046,3 +6046,87 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 
 	return &searchSpansResult, nil
 }
+
+func (r *ClickHouseReader) GetCorrespondingNormalizedMetrics(ctx context.Context, orgID valuer.UUID) (map[string]string, error) {
+	specialCharRegex := regexp.MustCompile(`[^a-zA-Z0-9]`)
+
+	// sanitize removes all non-alphanumeric characters from s
+	sanitize := func(s string) string {
+		return specialCharRegex.ReplaceAllString(s, "")
+	}
+
+	// Try cache first
+	resultDto := new(model.NormalizedMetricsMap)
+	cacheKey := constants.NormalizedMetricsMapCacheKey
+
+	if err := r.cache.Get(ctx, orgID, cacheKey, resultDto, true); err == nil {
+		return resultDto.MetricsMap, nil
+	}
+
+	query := "SELECT DISTINCT metric_name, type, toUInt8(__normalized) FROM %s.%s"
+	rows, err := r.db.Query(ctx, fmt.Sprintf(query, signozMetricDBName, signozTSTableNameV4))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Group metrics by sanitized name
+	type metricPair struct {
+		normalizedName   string
+		unnormalizedName string
+		metricType       string
+	}
+	metricPairs := make(map[string]*metricPair)
+
+	for rows.Next() {
+		var metricName, metricType string
+		var normalized uint8
+
+		if err := rows.Scan(&metricName, &metricType, &normalized); err != nil {
+			return nil, err
+		}
+
+		sanitized := sanitize(metricName)
+		pair, exists := metricPairs[sanitized]
+		if !exists {
+			pair = &metricPair{}
+			metricPairs[sanitized] = pair
+		}
+
+		pair.metricType = metricType
+		if normalized != 0 {
+			pair.normalizedName = metricName
+		} else {
+			pair.unnormalizedName = metricName
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// Handle Summary metrics with quantile
+	for sanitized, pair := range metricPairs {
+		if pair.normalizedName != "" && pair.unnormalizedName == "" && pair.metricType == "Summary" {
+			if quantilePair, exists := metricPairs[sanitized+"quantile"]; exists {
+				pair.unnormalizedName = quantilePair.unnormalizedName
+			}
+		}
+	}
+
+	// Build result map
+	result := make(map[string]string)
+	for _, pair := range metricPairs {
+		if pair.normalizedName != "" {
+			result[pair.normalizedName] = pair.unnormalizedName
+		}
+	}
+
+	// Cache result
+	resultDto.MetricsMap = result
+	if err := r.cache.Set(ctx, orgID, cacheKey, resultDto, 0); err != nil {
+		zap.L().Error("Failed to cache normalized metrics map", zap.Error(err))
+	}
+
+	return result, nil
+}

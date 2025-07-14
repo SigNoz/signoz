@@ -3,6 +3,7 @@ package v2
 import (
 	"context"
 	"fmt"
+	"github.com/prometheus/prometheus/promql/parser"
 	"strings"
 	"sync"
 
@@ -274,5 +275,45 @@ func (q *querier) runBuilderQuery(
 		Err:    nil,
 		Name:   queryName,
 		Series: resultSeries,
+	}
+}
+
+// ValidateMetricNames function is used to print all those queries who are still using old normalized metrics and not new metrics.
+func (q *querier) ValidateMetricNames(ctx context.Context, query *v3.CompositeQuery, orgID valuer.UUID) {
+	metrics, err := q.reader.GetCorrespondingNormalizedMetrics(ctx, orgID)
+	if err != nil {
+		zap.L().Error("error getting corresponding normalized metrics", zap.Error(err))
+		return
+	}
+	switch query.QueryType {
+	case v3.QueryTypePromQL:
+		for _, query := range query.PromQueries {
+			expr, err := parser.ParseExpr(query.Query)
+			if err != nil {
+				zap.L().Debug("error parsing promQL expression", zap.String("query", query.Query), zap.Error(err))
+			}
+			parser.Inspect(expr, func(node parser.Node, path []parser.Node) error {
+				if vs, ok := node.(*parser.VectorSelector); ok {
+					for _, m := range vs.LabelMatchers {
+						if m.Name == "__name__" {
+							if unNormName, ok := metrics[m.Value]; ok {
+								if unNormName != m.Value {
+									zap.L().Error("using normalized metric name", zap.String("query", query.Query), zap.String("metric", m.Value))
+								}
+							}
+						}
+					}
+				}
+				return nil
+			})
+		}
+	case v3.QueryTypeBuilder:
+		for _, query := range query.BuilderQueries {
+			if unNormName, ok := metrics[query.AggregateAttribute.Key]; ok {
+				if unNormName != query.AggregateAttribute.Key {
+					zap.L().Error("using normalized metric name", zap.String("metrics", query.AggregateAttribute.Key))
+				}
+			}
+		}
 	}
 }
