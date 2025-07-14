@@ -26,11 +26,11 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 		init: (u: uPlot) => {
 			// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 			handleClick = function (event: MouseEvent) {
-				// Keep original relative coordinates
+				// relative coordinates
 				const mouseX = event.offsetX + 40;
 				const mouseY = event.offsetY + 40;
 
-				// Add new absolute coordinates
+				// absolute coordinates
 				const absoluteMouseX = event.clientX;
 				const absoluteMouseY = event.clientY;
 
