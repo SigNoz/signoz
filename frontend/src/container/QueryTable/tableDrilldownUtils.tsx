@@ -6,7 +6,6 @@ import {
 import {
 	addFilterToSelectedQuery,
 	FilterData,
-	isNumberDataType,
 } from 'container/QueryTable/drilldownUtils';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -36,9 +35,7 @@ export const getFiltersToAdd = (
 
 	return groupBy.map((item: BaseAutocompleteData) => ({
 		filterKey: item.key,
-		filterValue: isNumberDataType(item.dataType)
-			? Number(clickedData.record[item.key])
-			: clickedData.record[item.key],
+		filterValue: clickedData.record[item.key],
 		operator: OPERATORS['='],
 	}));
 };

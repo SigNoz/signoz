@@ -29,7 +29,7 @@ function BreakoutOptions({
 	queryData,
 	onColumnClick,
 }: BreakoutOptionsProps): JSX.Element {
-	const { groupBy } = queryData;
+	const { groupBy = [] } = queryData;
 	const { isFetching, data } = useGetAggregateKeys(
 		{
 			aggregateAttribute: queryData.aggregateAttribute.key,

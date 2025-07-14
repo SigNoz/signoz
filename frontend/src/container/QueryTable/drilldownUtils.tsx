@@ -80,9 +80,7 @@ function addFiltersToQuerySteps(
 				id: uuid(),
 				key: baseMeta,
 				op: operator,
-				value: isNumberDataType(baseMeta.dataType)
-					? Number(filterValue)
-					: filterValue,
+				value: filterValue,
 			});
 		});
 
