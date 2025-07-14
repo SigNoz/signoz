@@ -91,9 +91,14 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID, userID string, bul
 		return nil, err
 	}
 
-	// send telemetry event
 	for i := 0; i < len(invites); i++ {
 		m.analytics.TrackUser(ctx, orgID, creator.ID.String(), "Invite Sent", map[string]any{"invitee_email": invites[i].Email, "invitee_role": invites[i].Role})
+
+		// if the frontend base url is not provided, we don't send the email
+		if bulkInvites.Invites[i].FrontendBaseUrl == "" {
+			m.settings.Logger().InfoContext(ctx, "frontend base url is not provided, skipping email", "invitee_email", invites[i].Email)
+			continue
+		}
 
 		if err := m.emailing.SendHTML(ctx, invites[i].Email, "You are invited to join a team in SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
 			"CustomerName": invites[i].Name,
@@ -171,18 +176,69 @@ func (m *Module) ListUsers(ctx context.Context, orgID string) ([]*types.Gettable
 }
 
 func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *types.User, updatedBy string) (*types.User, error) {
-	user, err := m.store.UpdateUser(ctx, orgID, id, user)
+
+	existingUser, err := m.GetUserByID(ctx, orgID, id)
 	if err != nil {
 		return nil, err
 	}
 
-	traits := types.NewTraitsFromUser(user)
+	requestor, err := m.GetUserByID(ctx, orgID, updatedBy)
+	if err != nil {
+		return nil, err
+	}
+
+	// only displayName, role can be updated
+	if user.DisplayName == "" {
+		user.DisplayName = existingUser.DisplayName
+	}
+
+	if user.Role == "" {
+		user.Role = existingUser.Role
+	}
+
+	if user.Role != existingUser.Role && requestor.Role != types.RoleAdmin.String() {
+		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "only admins can change roles")
+	}
+
+	// Make sure that the request is not demoting the last admin user.
+	// also an admin user can only change role of their own or other user
+	if user.Role != existingUser.Role && existingUser.Role == types.RoleAdmin.String() {
+		adminUsers, err := m.GetUsersByRoleInOrg(ctx, orgID, types.RoleAdmin)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(adminUsers) == 1 {
+			return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot demote the last admin")
+		}
+	}
+
+	user.UpdatedAt = time.Now()
+
+	updatedUser, err := m.store.UpdateUser(ctx, orgID, id, user)
+	if err != nil {
+		return nil, err
+	}
+
+	traits := types.NewTraitsFromUser(updatedUser)
 	m.analytics.IdentifyUser(ctx, user.OrgID, user.ID.String(), traits)
 
 	traits["updated_by"] = updatedBy
 	m.analytics.TrackUser(ctx, user.OrgID, user.ID.String(), "User Updated", traits)
 
-	return user, nil
+	// if the role is updated then send an email
+	if existingUser.Role != updatedUser.Role {
+		if err := m.emailing.SendHTML(ctx, existingUser.Email, "Your Role is updated in SigNoz", emailtypes.TemplateNameUpdateRole, map[string]any{
+			"CustomerName":   existingUser.DisplayName,
+			"UpdatedByEmail": requestor.Email,
+			"OldRole":        existingUser.Role,
+			"NewRole":        updatedUser.Role,
+		}); err != nil {
+			m.settings.Logger().ErrorContext(ctx, "failed to send email", "error", err)
+		}
+	}
+
+	return updatedUser, nil
 }
 
 func (m *Module) DeleteUser(ctx context.Context, orgID string, id string, deletedBy string) error {

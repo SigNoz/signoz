@@ -29,7 +29,7 @@ func TestSpanScopeFilterExpression(t *testing.T) {
 		{
 			name:              "simple isentrypoint filter",
 			expression:        "isentrypoint = true",
-			expectedCondition: "((name, resource_string_service$name) GLOBAL IN (SELECT DISTINCT name, serviceName from signoz_traces.distributed_top_level_operations)) AND parent_span_id != ''",
+			expectedCondition: "((name, resource_string_service$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from signoz_traces.distributed_top_level_operations)) AND parent_span_id != ''",
 		},
 		{
 			name:              "combined filter with AND",
@@ -39,7 +39,7 @@ func TestSpanScopeFilterExpression(t *testing.T) {
 		{
 			name:              "combined filter with OR",
 			expression:        "isentrypoint = true OR has_error = true",
-			expectedCondition: "((name, resource_string_service$name) GLOBAL IN (SELECT DISTINCT name, serviceName from signoz_traces.distributed_top_level_operations)) AND parent_span_id != ''",
+			expectedCondition: "((name, resource_string_service$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from signoz_traces.distributed_top_level_operations)) AND parent_span_id != ''",
 		},
 	}
 

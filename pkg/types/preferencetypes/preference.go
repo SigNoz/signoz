@@ -145,6 +145,15 @@ func NewAvailablePreference() map[Name]Preference {
 			AllowedValues: []string{},
 			Value:         MustNewValue([]any{}, ValueTypeArray),
 		},
+		NameLastSeenChangelogVersion: {
+			Name:          NameLastSeenChangelogVersion,
+			Description:   "Changelog version seen by the user.",
+			ValueType:     ValueTypeString,
+			DefaultValue:  MustNewValue("", ValueTypeString),
+			AllowedScopes: []Scope{ScopeUser},
+			AllowedValues: []string{},
+			Value:         MustNewValue("", ValueTypeString),
+		},
 	}
 }
 
