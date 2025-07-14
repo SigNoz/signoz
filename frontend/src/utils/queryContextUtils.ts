@@ -1411,7 +1411,7 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 	}
 }
 
-function getIndexTillSpace(pair: IQueryPair, query: string): number {
+function getEndIndexAfterSpaces(pair: IQueryPair, query: string): number {
 	const { position } = pair;
 	let pairEnd = position.valueEnd || position.operatorEnd || position.keyEnd;
 
@@ -1460,7 +1460,7 @@ export function getCurrentQueryPair(
 					((pairEnd >= cursorIndex && pairStart <= cursorIndex) ||
 						(!pair.isComplete &&
 							pairStart <= cursorIndex &&
-							getIndexTillSpace(pair, query) >= cursorIndex)) &&
+							getEndIndexAfterSpaces(pair, query) >= cursorIndex)) &&
 					(!bestMatch ||
 						pairEnd >
 							(bestMatch.position.valueEnd ||
