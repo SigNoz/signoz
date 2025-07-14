@@ -413,17 +413,17 @@ function PipelineListsView({
 				const prevPipeline = prevPipelineData.find((p) => p.name === pipeline.name);
 
 				return (pipeline.config || [])
-					.filter((processor) => processor.type === 'json_parser')
 					.filter((processor) => {
 						const prevProcessor = prevPipeline?.config?.find(
 							(p) => p.name === processor.name,
 						);
 						return (
-							!prevProcessor ||
-							prevProcessor.enable_flattening !== processor.enable_flattening ||
-							prevProcessor.enable_paths !== processor.enable_paths ||
-							prevProcessor.path_prefix !== processor.path_prefix ||
-							!isEqual(prevProcessor.mapping, processor.mapping)
+							processor.type === 'json_parser' &&
+							(!prevProcessor ||
+								prevProcessor.enable_flattening !== processor.enable_flattening ||
+								prevProcessor.enable_paths !== processor.enable_paths ||
+								prevProcessor.path_prefix !== processor.path_prefix ||
+								!isEqual(prevProcessor.mapping, processor.mapping))
 						);
 					})
 					.map((processor) => ({
