@@ -100,6 +100,8 @@ github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd h1:Bk43AsDYe0fhkb
 github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd/go.mod h1:nxRcH/OEdM8QxzH37xkGzomr1O0JpYBRS6pwjsWW6Pc=
 github.com/SigNoz/signoz-otel-collector v0.111.44-rc.2 h1:1B0XyYArJKQ5hIRDGS50BleTGwAeCpDjHstMMoLitu0=
 github.com/SigNoz/signoz-otel-collector v0.111.44-rc.2/go.mod h1:wifrjG9bfG0EjVwzmiWt64Z2OgzRBAD99q1c/JAmDYo=
+github.com/SigNoz/signoz-otel-collector v0.128.1 h1:D0bKMrRNgcKreKKYoakCr5jTWj1srupbNwGIvpHMihw=
+github.com/SigNoz/signoz-otel-collector v0.128.1/go.mod h1:vFQLsJFzQwVkO1ltIMH+z9KKuTZTn/P0lKu2mNYDBpE=
 github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5/go.mod h1:SkGFH1ia65gfNATL8TAiHDNxPzPdmEL5uirI2Uyuz6c=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
