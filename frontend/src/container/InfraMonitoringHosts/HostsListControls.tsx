@@ -11,9 +11,11 @@ import { DataSource } from 'types/common/queryBuilder';
 function HostsListControls({
 	handleFiltersChange,
 	filters,
+	showAutoRefresh,
 }: {
 	handleFiltersChange: (value: IBuilderQuery['filters']) => void;
 	filters: IBuilderQuery['filters'];
+	showAutoRefresh: boolean;
 }): JSX.Element {
 	const currentQuery = initialQueriesMap[DataSource.METRICS];
 	const updatedCurrentQuery = useMemo(
@@ -58,7 +60,7 @@ function HostsListControls({
 
 			<div className="time-selector">
 				<DateTimeSelectionV2
-					showAutoRefresh
+					showAutoRefresh={showAutoRefresh}
 					showRefreshText={false}
 					hideShareModal
 				/>

@@ -306,12 +306,7 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 		// 2. deref each slot into the output row
 		row := make([]any, len(scan))
 		for i, cell := range scan {
-			valPtr := reflect.ValueOf(cell)
-			if valPtr.Kind() == reflect.Pointer && !valPtr.IsNil() {
-				row[i] = valPtr.Elem().Interface()
-			} else {
-				row[i] = nil // Nullable columns come back as nil pointers
-			}
+			row[i] = derefValue(cell)
 		}
 		data = append(data, row)
 	}
@@ -324,6 +319,23 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 		Columns:   cd,
 		Data:      data,
 	}, nil
+}
+
+func derefValue(v interface{}) interface{} {
+	if v == nil {
+		return nil
+	}
+
+	val := reflect.ValueOf(v)
+
+	for val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return nil
+		}
+		val = val.Elem()
+	}
+
+	return val.Interface()
 }
 
 func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {

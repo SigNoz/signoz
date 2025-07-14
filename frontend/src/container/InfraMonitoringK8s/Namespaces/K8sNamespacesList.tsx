@@ -190,6 +190,32 @@ function K8sNamespacesList({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData, groupBy]);
 
+	const groupedByRowDataQueryKey = useMemo(() => {
+		if (selectedNamespaceUID) {
+			return [
+				'namespaceList',
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(selectedRowData),
+			];
+		}
+		return [
+			'namespaceList',
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(selectedRowData),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		queryFilters,
+		orderBy,
+		selectedNamespaceUID,
+		minTime,
+		maxTime,
+		selectedRowData,
+	]);
+
 	const {
 		data: groupedByRowData,
 		isFetching: isFetchingGroupedByRowData,
@@ -199,7 +225,7 @@ function K8sNamespacesList({
 	} = useGetK8sNamespacesList(
 		fetchGroupedByRowDataQuery as K8sNamespacesListPayload,
 		{
-			queryKey: ['namespaceList', fetchGroupedByRowDataQuery],
+			queryKey: groupedByRowDataQueryKey,
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
 		undefined,
@@ -250,11 +276,44 @@ function K8sNamespacesList({
 		[groupedByRowData, groupBy],
 	);
 
+	const queryKey = useMemo(() => {
+		if (selectedNamespaceUID) {
+			return [
+				'namespaceList',
+				String(pageSize),
+				String(currentPage),
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(groupBy),
+			];
+		}
+		return [
+			'namespaceList',
+			String(pageSize),
+			String(currentPage),
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(groupBy),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		selectedNamespaceUID,
+		pageSize,
+		currentPage,
+		queryFilters,
+		orderBy,
+		groupBy,
+		minTime,
+		maxTime,
+	]);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sNamespacesList(
 		query as K8sNamespacesListPayload,
 		{
-			queryKey: ['namespaceList', query],
+			queryKey,
 			enabled: !!query,
+			keepPreviousData: true,
 		},
 		undefined,
 		dotMetricsEnabled,
@@ -592,6 +651,9 @@ function K8sNamespacesList({
 		});
 	};
 
+	const showTableLoadingState =
+		(isFetching || isLoading) && formattedNamespacesData.length === 0;
+
 	return (
 		<div className="k8s-list">
 			<K8sHeader
@@ -604,12 +666,13 @@ function K8sNamespacesList({
 				handleGroupByChange={handleGroupByChange}
 				selectedGroupBy={groupBy}
 				entity={K8sCategory.NODES}
+				showAutoRefresh={!selectedNamespaceData}
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
 			<Table
 				className="k8s-list-table namespaces-list-table"
-				dataSource={isFetching || isLoading ? [] : formattedNamespacesData}
+				dataSource={showTableLoadingState ? [] : formattedNamespacesData}
 				columns={columns}
 				pagination={{
 					current: currentPage,
@@ -621,26 +684,25 @@ function K8sNamespacesList({
 				}}
 				scroll={{ x: true }}
 				loading={{
-					spinning: isFetching || isLoading,
+					spinning: showTableLoadingState,
 					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 				}}
 				locale={{
-					emptyText:
-						isFetching || isLoading ? null : (
-							<div className="no-filtered-hosts-message-container">
-								<div className="no-filtered-hosts-message-content">
-									<img
-										src="/Icons/emptyState.svg"
-										alt="thinking-emoji"
-										className="empty-state-svg"
-									/>
+					emptyText: showTableLoadingState ? null : (
+						<div className="no-filtered-hosts-message-container">
+							<div className="no-filtered-hosts-message-content">
+								<img
+									src="/Icons/emptyState.svg"
+									alt="thinking-emoji"
+									className="empty-state-svg"
+								/>
 
-									<Typography.Text className="no-filtered-hosts-message">
-										This query had no results. Edit your query and try again!
-									</Typography.Text>
-								</div>
+								<Typography.Text className="no-filtered-hosts-message">
+									This query had no results. Edit your query and try again!
+								</Typography.Text>
 							</div>
-						),
+						</div>
+					),
 				}}
 				tableLayout="fixed"
 				onChange={handleTableChange}
