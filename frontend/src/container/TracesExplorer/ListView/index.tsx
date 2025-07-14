@@ -1,7 +1,7 @@
 import './ListView.styles.scss';
 
-import { Select } from 'antd';
 import logEvent from 'api/common/logEvent';
+import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ResizeTable } from 'components/ResizeTable';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -47,7 +47,7 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 
 	const panelType = panelTypeFromQueryBuilder || PANEL_TYPES.LIST;
 
-	const [orderDirection, setOrderDirection] = useState<string>('desc');
+	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
 
 	const {
 		selectedTime: globalSelectedTime,
@@ -64,8 +64,6 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 			selectColumns: defaultSelectedColumns,
 		},
 	});
-
-	console.log('options', options);
 
 	const { draggedColumns, onDragColumns } = useDragColumns<RowData>(
 		LOCALSTORAGE.TRACES_LIST_COLUMNS,
@@ -85,14 +83,14 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 		if (query.builder.queryData[0]) {
 			query.builder.queryData[0].orderBy = [
 				{
-					columnName: 'timestamp',
-					order: orderDirection as 'asc' | 'desc',
+					columnName: orderBy.split(':')[0],
+					order: orderBy.split(':')[1] as 'asc' | 'desc',
 				},
 			];
 		}
 
 		return query;
-	}, [stagedQuery, orderDirection]);
+	}, [stagedQuery, orderBy]);
 
 	const queryKey = useMemo(
 		() => [
@@ -104,7 +102,7 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 			panelType,
 			paginationConfig,
 			options?.selectColumns,
-			orderDirection,
+			orderBy,
 		],
 		[
 			stagedQuery,
@@ -114,7 +112,7 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 			options?.selectColumns,
 			maxTime,
 			minTime,
-			orderDirection,
+			orderBy,
 		],
 	);
 
@@ -175,6 +173,10 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 		[columns, onDragColumns],
 	);
 
+	const handleOrderChange = useCallback((value: string) => {
+		setOrderBy(value);
+	}, []);
+
 	const isDataAbsent =
 		!isLoading &&
 		!isFetching &&
@@ -202,16 +204,10 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 							Order by <Minus size={14} /> <ArrowUp10 size={14} />
 						</div>
 
-						<Select
-							placeholder="Select order by"
-							className="order-by-select"
-							style={{ width: 100 }}
-							value={orderDirection}
-							onChange={(value): void => setOrderDirection(value)}
-							options={[
-								{ label: 'Ascending', value: 'asc' },
-								{ label: 'Descending', value: 'desc' },
-							]}
+						<ListViewOrderBy
+							value={orderBy}
+							onChange={handleOrderChange}
+							dataSource={DataSource.TRACES}
 						/>
 					</div>
 
