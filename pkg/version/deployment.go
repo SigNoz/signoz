@@ -109,7 +109,7 @@ func detectPlatform() string {
 	case os.Getenv("RAILWAY_SERVICE_ID") != "":
 		return "railway"
 	case os.Getenv("ECS_CONTAINER_METADATA_URI_V4") != "":
-		return "aws-ecs"
+		return "ecs"
 	}
 
 	// Try to detect cloud provider through metadata endpoints
