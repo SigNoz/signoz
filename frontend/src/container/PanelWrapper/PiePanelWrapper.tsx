@@ -6,10 +6,13 @@ import { Pie } from '@visx/shape';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { themeColors } from 'constants/theme';
+import { getPieChartClickData } from 'container/QueryTable/Drilldown/drilldownUtils';
+import useGraphContextMenu from 'container/QueryTable/Drilldown/useGraphContextMenu';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { isNaN } from 'lodash-es';
+import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
 import { useRef, useState } from 'react';
 
 import { PanelWrapperProps, TooltipData } from './panelWrapper.types';
@@ -48,6 +51,7 @@ function PiePanelWrapper({
 		label: string;
 		value: string;
 		color: string;
+		record: any;
 	}[] = [].concat(
 		...(panelData
 			.map((d) => {
@@ -55,6 +59,7 @@ function PiePanelWrapper({
 				return {
 					label,
 					value: d?.values?.[0]?.[1],
+					record: d,
 					color:
 						widget?.customLegendColors?.[label] ||
 						generateColor(
@@ -142,6 +147,26 @@ function PiePanelWrapper({
 		return active.color === color ? color : lightenedColor;
 	};
 
+	const {
+		coordinates,
+		popoverPosition,
+		clickedData,
+		onClose,
+		onClick,
+		subMenu,
+		setSubMenu,
+	} = useCoordinates();
+
+	const { menuItemsConfig } = useGraphContextMenu({
+		widgetId: widget.id || '',
+		query: widget.query,
+		graphData: clickedData,
+		onClose,
+		coordinates,
+		subMenu,
+		setSubMenu,
+	});
+
 	return (
 		<div className="piechart-wrapper">
 			{!pieChartData.length && <div className="piechart-no-data">No data</div>}
@@ -165,7 +190,7 @@ function PiePanelWrapper({
 									height={size}
 								>
 									{
-										// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+										// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, sonarjs/cognitive-complexity
 										(pie) =>
 											pie.arcs.map((arc) => {
 												const { label } = arc.data;
@@ -226,6 +251,12 @@ function PiePanelWrapper({
 															hideTooltip();
 															setActive(null);
 														}}
+														onClick={(e): void => {
+															const data = getPieChartClickData(arc);
+															if (data && data?.queryName) {
+																onClick({ x: e.clientX, y: e.clientY }, data);
+															}
+														}}
 													>
 														<path d={arcPath || ''} fill={getFillColor(arcFill)} />
 
@@ -284,6 +315,13 @@ function PiePanelWrapper({
 											})
 									}
 								</Pie>
+								<ContextMenu
+									coordinates={coordinates}
+									popoverPosition={popoverPosition}
+									title={menuItemsConfig.header as string}
+									items={menuItemsConfig.items}
+									onClose={onClose}
+								/>
 
 								{/* Add total value in the center */}
 								<text
