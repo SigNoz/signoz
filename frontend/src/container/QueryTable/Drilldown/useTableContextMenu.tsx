@@ -1,11 +1,12 @@
-import { ConfigType } from 'container/QueryTable/contextConfig';
-import { getFiltersToAddToView } from 'container/QueryTable/tableDrilldownUtils';
-import useAggregateDrilldown from 'container/QueryTable/useAggregateDrilldown';
-import useFilterDrilldown from 'container/QueryTable/useFilterDrilldown';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { ClickedData } from 'periscope/components/ContextMenu/types';
 import { useMemo } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+
+import { ConfigType } from './contextConfig';
+import { getFiltersToAddToView } from './tableDrilldownUtils';
+import useAggregateDrilldown from './useAggregateDrilldown';
+import useFilterDrilldown from './useFilterDrilldown';
 
 interface UseTableContextMenuProps {
 	widgetId?: string;

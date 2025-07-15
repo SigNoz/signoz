@@ -1,7 +1,5 @@
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { FilterData } from 'container/QueryTable/drilldownUtils';
-import { getViewQuery } from 'container/QueryTable/tableDrilldownUtils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
@@ -12,6 +10,8 @@ import {
 	ContextMenuItem,
 	getAggregateContextMenuConfig,
 } from './contextConfig';
+import { FilterData } from './drilldownUtils';
+import { getViewQuery } from './tableDrilldownUtils';
 
 // Type for aggregate data
 export interface AggregateData {

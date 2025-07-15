@@ -3,16 +3,16 @@ import {
 	initialQueryBuilderFormValuesMap,
 	OPERATORS,
 } from 'constants/queryBuilder';
-import {
-	addFilterToSelectedQuery,
-	FilterData,
-} from 'container/QueryTable/drilldownUtils';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
-import { getBaseMeta } from './drilldownUtils';
+import {
+	addFilterToSelectedQuery,
+	FilterData,
+	getBaseMeta,
+} from './drilldownUtils';
 import { AggregateData } from './useAggregateDrilldown';
 /**
  * Gets the query data that matches the aggregate data's queryName

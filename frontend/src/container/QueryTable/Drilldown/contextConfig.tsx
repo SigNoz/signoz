@@ -1,12 +1,11 @@
 import { QUERY_BUILDER_OPERATORS_BY_TYPES } from 'constants/queryBuilder';
-import BreakoutOptions from 'container/QueryTable/BreakoutOptions';
-import { getBaseMeta } from 'container/QueryTable/drilldownUtils';
 import ContextMenu, { ClickedData } from 'periscope/components/ContextMenu';
 import { ReactNode } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { getAggregateColumnHeader } from './drilldownUtils';
+import BreakoutOptions from './BreakoutOptions';
+import { getAggregateColumnHeader, getBaseMeta } from './drilldownUtils';
 import { AGGREGATE_OPTIONS, SUPPORTED_OPERATORS } from './menuOptions';
 import { getBreakoutQuery, getQueryData } from './tableDrilldownUtils';
 import { AggregateData } from './useAggregateDrilldown';

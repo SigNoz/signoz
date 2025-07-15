@@ -14,8 +14,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { shouldEnableDrilldown } from 'utils/dashboard/generateExportToDashboardLink';
 
+import useTableContextMenu from './Drilldown/useTableContextMenu';
 import { QueryTableProps } from './QueryTable.intefaces';
-import useTableContextMenu from './useTableContextMenu';
 import { createDownloadableData } from './utils';
 
 export function QueryTable({
