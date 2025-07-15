@@ -665,13 +665,11 @@ function QuerySearch({
 				queryContext.currentPair.valuesPosition &&
 				queryContext.currentPair.valueList
 			) {
-				const idx = getCurrentValueIndexAtCursor(
-					queryContext.currentPair?.valuesPosition,
-					cursorPos.ch,
-				);
+				const { valuesPosition, valueList } = queryContext.currentPair;
+				const idx = getCurrentValueIndexAtCursor(valuesPosition, cursorPos.ch);
 				searchText = isNull(idx)
 					? ''
-					: unquote(queryContext.currentPair.valueList[idx]).toLowerCase().trim();
+					: unquote(valueList[idx]).toLowerCase().trim();
 			}
 
 			options = (valueSuggestions || []).filter((option) =>
