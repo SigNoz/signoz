@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { ColumnsType, ColumnType } from 'antd/es/table';
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { convertUnit } from 'container/NewWidget/RightContainer/dataFormatCategories';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
@@ -191,6 +192,7 @@ export function createColumnsAndDataSource(
 								(query) => query.queryName === item.queryName,
 						  )
 						: undefined,
+					PANEL_TYPES.TABLE,
 				)?.length > 1;
 
 			const column: ColumnType<RowData> = {

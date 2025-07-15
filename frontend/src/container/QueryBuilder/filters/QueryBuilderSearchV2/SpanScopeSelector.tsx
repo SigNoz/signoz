@@ -138,13 +138,14 @@ function SpanScopeSelector({
 					item.filters?.items,
 					item.queryName === query?.queryName,
 				),
+				op: item.filters?.op || 'AND',
 			},
 		}));
 
 		if (skipQueryBuilderRedirect && onChange && query) {
 			onChange({
-				...query.filters,
-				items: getUpdatedFilters([...query.filters.items], true),
+				...(query.filters || { items: [], op: 'AND' }),
+				items: getUpdatedFilters([...(query.filters?.items || [])], true) || [],
 			});
 
 			setSelectedScope(newScope);

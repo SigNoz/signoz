@@ -138,8 +138,8 @@ function StatusCodeBarCharts({
 	const widget = useMemo<Widgets>(
 		() =>
 			getStatusCodeBarChartWidgetData(domainName, endPointName, {
-				items: [...filters.items],
-				op: filters.op,
+				items: [...(filters?.items || [])],
+				op: filters?.op || 'AND',
 			}),
 		[domainName, endPointName, filters],
 	);

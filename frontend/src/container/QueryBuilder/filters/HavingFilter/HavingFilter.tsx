@@ -45,9 +45,9 @@ export function HavingFilter({
 	const aggregatorAttribute = useMemo(
 		() =>
 			transformStringWithPrefix({
-				str: query.aggregateAttribute.key,
-				prefix: query.aggregateAttribute.type || '',
-				condition: !query.aggregateAttribute.isColumn,
+				str: query.aggregateAttribute?.key || '',
+				prefix: query.aggregateAttribute?.type || '',
+				condition: !query.aggregateAttribute?.isColumn,
 			}),
 		[query],
 	);
@@ -62,7 +62,9 @@ export function HavingFilter({
 			return `${query.spaceAggregation.toUpperCase()}(${aggregatorAttribute})`;
 		}
 
-		return `${query.aggregateOperator.toUpperCase()}(${aggregatorAttribute})`;
+		return `${
+			query.aggregateOperator?.toUpperCase() || ''
+		}(${aggregatorAttribute})`;
 	}, [query, aggregatorAttribute, entityVersion]);
 
 	const aggregatorOptions: SelectOption<string, string>[] = useMemo(
@@ -244,7 +246,7 @@ export function HavingFilter({
 				tagRender={tagRender}
 				value={localValues}
 				data-testid="havingSelect"
-				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+				disabled={isMetricsDataSource && !query.aggregateAttribute?.key}
 				style={{ width: '100%' }}
 				notFoundContent={currentFormValue.value.length === 0 ? undefined : null}
 				placeholder="GroupBy(operation) > 5"

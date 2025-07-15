@@ -165,7 +165,7 @@ function QuerySearch({
 		const response = await getKeySuggestions({
 			signal: dataSource,
 			searchText: searchText || '',
-			metricName: queryData.aggregateAttribute.key ?? undefined,
+			metricName: queryData.aggregateAttribute?.key ?? undefined,
 		});
 
 		if (response.data.data) {
@@ -186,7 +186,7 @@ function QuerySearch({
 		setKeySuggestions([]);
 		fetchKeySuggestions();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dataSource, queryData.aggregateAttribute.key]);
+	}, [dataSource, queryData.aggregateAttribute?.key]);
 
 	// Add a state for tracking editing mode
 	const [editingMode, setEditingMode] = useState<
