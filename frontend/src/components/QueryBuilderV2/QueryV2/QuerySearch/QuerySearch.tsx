@@ -476,6 +476,12 @@ function QuerySearch({
 		if (query) {
 			handleQueryValidation(query);
 		}
+
+		return (): void => {
+			if (debouncedFetchValueSuggestions) {
+				debouncedFetchValueSuggestions.cancel();
+			}
+		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
