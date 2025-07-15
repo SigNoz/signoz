@@ -108,6 +108,8 @@ func detectPlatform() string {
 		return "coolify"
 	case os.Getenv("RAILWAY_SERVICE_ID") != "":
 		return "railway"
+	case os.Getenv("ECS_CONTAINER_METADATA_URI_V4") != "":
+		return "aws-ecs"
 	}
 
 	// Try to detect cloud provider through metadata endpoints
@@ -165,18 +167,5 @@ func detectPlatform() string {
 		}
 	}
 
-
-	// AWS ECS metadata
-	if ecsMetaURI := os.Getenv("ECS_CONTAINER_METADATA_URI_V4"); ecsMetaURI != "" {
-		ecsTaskURL := ecsMetaURI + "/task"
-		if req, err := http.NewRequest(http.MethodGet, ecsTaskURL, nil); err == nil {
-			if resp, err := client.Do(req); err == nil {
-				resp.Body.Close()
-				if resp.StatusCode == 200 {
-					return "aws-ecs"
-				}
-			}
-		}
-	}
 	return "unknown"
 }
