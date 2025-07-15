@@ -118,15 +118,15 @@ func (df *DeprecatedFlags) RegisterFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&df.Cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
 	cmd.Flags().StringVar(&df.GatewayUrl, "gateway-url", "", "(url to the gateway)")
 
-	cmd.Flags().MarkDeprecated("max-idle-conns", "use SIGNOZ_TELEMETRYSTORE_MAX__IDLE__CONNS instead")
-	cmd.Flags().MarkDeprecated("max-open-conns", "use SIGNOZ_TELEMETRYSTORE_MAX__OPEN__CONNS instead")
-	cmd.Flags().MarkDeprecated("dial-timeout", "use SIGNOZ_TELEMETRYSTORE_DIAL__TIMEOUT instead")
-	cmd.Flags().MarkDeprecated("config", "use SIGNOZ_PROMETHEUS_CONFIG instead")
-	cmd.Flags().MarkDeprecated("flux-interval", "use SIGNOZ_QUERIER_FLUX__INTERVAL instead")
-	cmd.Flags().MarkDeprecated("flux-interval-for-trace-detail", "use SIGNOZ_QUERIER_FLUX__INTERVAL instead")
-	cmd.Flags().MarkDeprecated("cluster", "use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER instead")
-	cmd.Flags().MarkDeprecated("prefer-span-metrics", "use USE_SPAN_METRICS instead")
-	cmd.Flags().MarkDeprecated("gateway-url", "use SIGNOZ_GATEWAY_URL instead")
+	_ = cmd.Flags().MarkDeprecated("max-idle-conns", "use SIGNOZ_TELEMETRYSTORE_MAX__IDLE__CONNS instead")
+	_ = cmd.Flags().MarkDeprecated("max-open-conns", "use SIGNOZ_TELEMETRYSTORE_MAX__OPEN__CONNS instead")
+	_ = cmd.Flags().MarkDeprecated("dial-timeout", "use SIGNOZ_TELEMETRYSTORE_DIAL__TIMEOUT instead")
+	_ = cmd.Flags().MarkDeprecated("config", "use SIGNOZ_PROMETHEUS_CONFIG instead")
+	_ = cmd.Flags().MarkDeprecated("flux-interval", "use SIGNOZ_QUERIER_FLUX__INTERVAL instead")
+	_ = cmd.Flags().MarkDeprecated("flux-interval-for-trace-detail", "use SIGNOZ_QUERIER_FLUX__INTERVAL instead")
+	_ = cmd.Flags().MarkDeprecated("cluster", "use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER instead")
+	_ = cmd.Flags().MarkDeprecated("prefer-span-metrics", "use USE_SPAN_METRICS instead")
+	_ = cmd.Flags().MarkDeprecated("gateway-url", "use SIGNOZ_GATEWAY_URL instead")
 }
 
 func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprecatedFlags DeprecatedFlags) (Config, error) {

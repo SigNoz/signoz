@@ -9,7 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
+	"go.uber.org/zap" //nolint:depguard
 )
 
 var RootCmd = &cobra.Command{

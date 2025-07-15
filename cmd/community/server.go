@@ -59,7 +59,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 	jwt := authtypes.NewJWT(cmd.NewJWTSecret(ctx, logger), 30*time.Minute, 30*24*time.Hour)
 
 	signoz, err := signoz.New(
-		context.Background(),
+		ctx,
 		config,
 		jwt,
 		zeus.Config{},
