@@ -1561,6 +1561,8 @@ func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID stri
 	if params.Type != constants.LogsTTL {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("custom retention TTL only supported for logs")}
 	}
+
+	// Validate resource rules
 	if err := r.validateResourceRules(ctx, params.ResourceRules); err != nil {
 		return nil, err
 	}
@@ -1580,56 +1582,9 @@ func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID stri
 		}
 	}
 
-	type kv struct {
-		Key string
-		TTL int
-	}
-	groups := make(map[kv][]string)
-	for _, r := range params.ResourceRules {
-		groups[kv{r.Key, r.Value}] = append(groups[kv{r.Key, r.Value}], r.Name)
-	}
-
-	var conditions []string
-	for k, names := range groups {
-		quoted := make([]string, len(names))
-		for i, n := range names {
-			quoted[i] = fmt.Sprintf("'%s'", n)
-		}
-		cond := fmt.Sprintf(
-			"resources_string['%s'] IN (%s), %d",
-			k.Key,
-			strings.Join(quoted, ", "),
-			k.TTL,
-		)
-		conditions = append(conditions, cond)
-	}
-
-	multiIfExpr := fmt.Sprintf(
-		"multiIf(%s, %d)",
-		strings.Join(conditions, ", "),
-		params.DefaultTTLDays,
-	)
-
-	var resourceConditions []string
-	for k, names := range groups {
-		quoted := make([]string, len(names))
-		for i, n := range names {
-			quoted[i] = fmt.Sprintf("'%s'", n)
-		}
-		cond := fmt.Sprintf(
-			"JSONExtractString(labels, '%s') IN (%s), %d",
-			k.Key,
-			strings.Join(quoted, ", "),
-			k.TTL,
-		)
-		resourceConditions = append(resourceConditions, cond)
-	}
-
-	resourceMultiIfExpr := fmt.Sprintf(
-		"multiIf(%s, %d)",
-		strings.Join(resourceConditions, ", "),
-		params.DefaultTTLDays,
-	)
+	// Build multiIf expressions for both tables
+	multiIfExpr := r.buildMultiIfExpression(params.ResourceRules, params.DefaultTTLDays, false)
+	resourceMultiIfExpr := r.buildMultiIfExpression(params.ResourceRules, params.DefaultTTLDays, true)
 
 	ttlPayload := map[string]string{
 		tableNames[0]: fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 MATERIALIZED %s`,
@@ -1683,6 +1638,72 @@ func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID stri
 	}(ttlPayload, string(resourceRulesJSON), params.DefaultTTLDays)
 
 	return &model.CustomRetentionTTLResponse{Message: "custom retention TTL has been successfully set up"}, nil
+}
+
+// New method to build multiIf expressions with support for multiple AND conditions
+func (r *ClickHouseReader) buildMultiIfExpression(resourceRules []model.CustomRetentionRule, defaultTTLDays int, isResourceTable bool) string {
+	var conditions []string
+
+	for i, rule := range resourceRules {
+		zap.L().Info("Processing rule", zap.Int("ruleIndex", i), zap.Int("ttlDays", rule.TTLDays), zap.Int("conditionsCount", len(rule.Conditions)))
+
+		if len(rule.Conditions) == 0 {
+			zap.L().Warn("Rule has no conditions, skipping", zap.Int("ruleIndex", i))
+			continue
+		}
+
+		// Build AND conditions for this rule
+		var andConditions []string
+		for j, condition := range rule.Conditions {
+			zap.L().Info("Processing condition", zap.Int("ruleIndex", i), zap.Int("conditionIndex", j), zap.String("key", condition.Key), zap.Strings("values", condition.Values))
+
+			if len(condition.Values) == 0 {
+				zap.L().Warn("Condition has no values, skipping", zap.Int("ruleIndex", i), zap.Int("conditionIndex", j))
+				continue
+			}
+
+			// Quote the values
+			quoted := make([]string, len(condition.Values))
+			for k, v := range condition.Values {
+				quoted[k] = fmt.Sprintf("'%s'", v)
+			}
+
+			var conditionExpr string
+			if isResourceTable {
+				// For resource table, use JSONExtractString
+				conditionExpr = fmt.Sprintf(
+					"JSONExtractString(labels, '%s') IN (%s)",
+					condition.Key,
+					strings.Join(quoted, ", "),
+				)
+			} else {
+				// For main logs table, use resources_string
+				conditionExpr = fmt.Sprintf(
+					"resources_string['%s'] IN (%s)",
+					condition.Key,
+					strings.Join(quoted, ", "),
+				)
+			}
+			andConditions = append(andConditions, conditionExpr)
+		}
+
+		if len(andConditions) > 0 {
+			// Join all conditions with AND
+			fullCondition := strings.Join(andConditions, " AND ")
+			conditionWithTTL := fmt.Sprintf("%s, %d", fullCondition, rule.TTLDays)
+			zap.L().Info("Adding condition to multiIf", zap.String("condition", conditionWithTTL))
+			conditions = append(conditions, conditionWithTTL)
+		}
+	}
+
+	result := fmt.Sprintf(
+		"multiIf(%s, %d)",
+		strings.Join(conditions, ", "),
+		defaultTTLDays,
+	)
+
+	zap.L().Info("Final multiIf expression", zap.String("expression", result))
+	return result
 }
 
 func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID string) (*model.GetCustomRetentionTTLResponse, *model.ApiError) {
@@ -1756,11 +1777,30 @@ func (r *ClickHouseReader) updateCustomRetentionTTLStatus(ctx context.Context, o
 	}
 }
 
+// Enhanced validation function to handle multiple conditions
 func (r *ClickHouseReader) validateResourceRules(ctx context.Context, resourceRules []model.CustomRetentionRule) *model.ApiError {
 	if len(resourceRules) == 0 {
 		return nil
 	}
 
+	// Collect all unique keys from all conditions
+	var allKeys []string
+	keySet := make(map[string]struct{})
+
+	for _, rule := range resourceRules {
+		for _, condition := range rule.Conditions {
+			if _, exists := keySet[condition.Key]; !exists {
+				allKeys = append(allKeys, condition.Key)
+				keySet[condition.Key] = struct{}{}
+			}
+		}
+	}
+
+	if len(allKeys) == 0 {
+		return nil
+	}
+
+	// Query all valid resource keys once
 	validResourceKeys := make(map[string]struct{})
 	query := fmt.Sprintf("SELECT DISTINCT name FROM %s.%s", r.logsDB, r.logsResourceKeys)
 
@@ -1778,11 +1818,11 @@ func (r *ClickHouseReader) validateResourceRules(ctx context.Context, resourceRu
 		validResourceKeys[name] = struct{}{}
 	}
 
-	// Validate each rule
+	// Validate each key
 	var invalidKeys []string
-	for _, rule := range resourceRules {
-		if _, exists := validResourceKeys[rule.Key]; !exists {
-			invalidKeys = append(invalidKeys, rule.Key)
+	for _, key := range allKeys {
+		if _, exists := validResourceKeys[key]; !exists {
+			invalidKeys = append(invalidKeys, key)
 		}
 	}
 

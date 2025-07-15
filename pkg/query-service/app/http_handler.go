@@ -1885,12 +1885,6 @@ func (aH *APIHandler) setCustomRetentionTTL(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Validate params
-	if err := validateCustomRetentionTTLParams(&params); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
 	// Context is not used here as TTL is long duration DB operation
 	result, apiErr := aH.reader.SetCustomRetentionTTL(context.Background(), claims.OrgID, &params)
 	if apiErr != nil {
