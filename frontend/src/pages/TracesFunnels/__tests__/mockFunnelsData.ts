@@ -77,11 +77,16 @@ export const defaultMockFunnelContext: FunnelContextType = {
 	validationResponse: undefined,
 	isValidateStepsLoading: false,
 	hasIncompleteStepFields: false,
-	setHasIncompleteStepFields: jest.fn(),
 	hasAllEmptyStepFields: false,
-	setHasAllEmptyStepFields: jest.fn(),
 	handleReplaceStep: jest.fn(),
 	handleRestoreSteps: jest.fn(),
+	handleSaveFunnel: jest.fn(),
+	triggerSave: false,
+	hasUnsavedChanges: false,
+	isUpdatingFunnel: false,
+	setIsUpdatingFunnel: jest.fn(),
+	lastUpdatedSteps: [],
+	setLastUpdatedSteps: jest.fn(),
 };
 
 export const mockOverviewData: FunnelOverviewResponse = {
@@ -94,7 +99,7 @@ export const mockOverviewData: FunnelOverviewResponse = {
 				avg_rate: 10.5,
 				conversion_rate: 80.0,
 				errors: 2,
-				p99_latency: 250.0,
+				latency: 250.0,
 			},
 		},
 	],

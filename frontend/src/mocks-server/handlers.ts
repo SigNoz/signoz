@@ -40,7 +40,7 @@ const mockStepTransitionOverviewData: FunnelOverviewResponse = {
 				avg_rate: 8.5,
 				conversion_rate: 92.0,
 				errors: 1,
-				p99_latency: 150000000,
+				latency: 150000000,
 			},
 		},
 	],
@@ -291,6 +291,7 @@ export const handlers = [
 	),
 	rest.get('http://localhost/locales/en-US/common.json', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(commonEnTranslation)),
+	),
 	rest.get(
 		'http://localhost/api/v1/trace-funnels/get/:funnelId',
 		(req, res, ctx) => {
