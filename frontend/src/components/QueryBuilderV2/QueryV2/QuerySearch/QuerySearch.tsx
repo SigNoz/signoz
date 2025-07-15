@@ -28,7 +28,7 @@ import {
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { debounce, isNull } from 'lodash-es';
 import { TriangleAlert } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	IDetailedError,
 	IQueryContext,
@@ -400,7 +400,10 @@ function QuerySearch({
 		[activeKey, dataSource, isLoadingSuggestions],
 	);
 
-	const debouncedFetchValueSuggestions = debounce(fetchValueSuggestions, 300);
+	const debouncedFetchValueSuggestions = useMemo(
+		() => debounce(fetchValueSuggestions, 300),
+		[fetchValueSuggestions],
+	);
 
 	const handleUpdate = useCallback((viewUpdate: { view: EditorView }): void => {
 		if (!isMountedRef.current) return;
