@@ -1,4 +1,6 @@
+import { PieArcDatum } from '@visx/shape/lib/shapes/Pie';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
+import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import cloneDeep from 'lodash-es/cloneDeep';
 import {
@@ -144,5 +146,65 @@ export const getAggregateColumnHeader = (
 	return {
 		dataSource,
 		aggregations: aggregationExpressions.join(', '),
+	};
+};
+
+const getFiltersFromMetric = (metric: any): FilterData[] =>
+	Object.keys(metric).map((key) => ({
+		filterKey: key,
+		filterValue: metric[key],
+		operator: OPERATORS['='],
+	}));
+
+export const getUplotClickData = ({
+	uplotData,
+}: {
+	uplotData: any[];
+}): {
+	coord: { x: number; y: number };
+	record: { queryName: string; filters: FilterData[] };
+} | null => {
+	const [, , , , metric, queryData, absoluteMouseX, absoluteMouseY] = uplotData;
+	console.log('args', uplotData);
+	console.log('on Click', {
+		uplotData,
+		absoluteMouseX,
+		absoluteMouseY,
+	});
+
+	if (!queryData?.queryName || !metric) {
+		return null;
+	}
+
+	const record = {
+		queryName: queryData.queryName,
+		filters: getFiltersFromMetric(metric),
+	};
+
+	console.log('CLICKED DATA: ', record);
+
+	return {
+		coord: {
+			x: absoluteMouseX,
+			y: absoluteMouseY,
+		},
+		record,
+	};
+};
+
+export const getPieChartClickData = (
+	arc: PieArcDatum<{
+		label: string;
+		value: string;
+		color: string;
+		record: any;
+	}>,
+): { queryName: string; filters: FilterData[] } | null => {
+	console.log('arc ->', arc.data);
+	const { metric, queryName } = arc.data.record;
+	if (!queryName || !metric) return null;
+	return {
+		queryName,
+		filters: getFiltersFromMetric(metric), // TODO: add where clause query as well.
 	};
 };
