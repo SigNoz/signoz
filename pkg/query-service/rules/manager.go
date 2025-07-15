@@ -330,7 +330,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 	if err != nil {
 		return err
 	}
-	if parsedRule.BroadcastToAll {
+	if len(parsedRule.PreferredChannels) == 0 {
 		channels, err := m.alertmanager.ListChannels(ctx, claims.OrgID)
 		if err != nil {
 			return err
@@ -509,7 +509,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 		return nil, err
 	}
 
-	if len(parsedRule.PreferredChannels) == 0 && parsedRule.BroadcastToAll {
+	if len(parsedRule.PreferredChannels) == 0 {
 		channels, err := m.alertmanager.ListChannels(ctx, claims.OrgID)
 		if err != nil {
 			return nil, err
