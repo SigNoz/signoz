@@ -60,7 +60,6 @@ type PostableRule struct {
 	// Source captures the source url where rule has been created
 	Source string `json:"source,omitempty"`
 
-	BroadcastToAll    bool     `json:"broadcastToAll,omitempty"`
 	PreferredChannels []string `json:"preferredChannels,omitempty"`
 
 	Version string `json:"version,omitempty"`
