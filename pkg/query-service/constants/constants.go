@@ -38,6 +38,7 @@ const NormalizedMetricsMapCacheKey = "NORMALIZED_METRICS_MAP_CACHE_KEY"
 const NormalizedMetricsMapQueryThreads = 10
 
 var NormalizedMetricsMapRegex = regexp.MustCompile(`[^a-zA-Z0-9]`)
+var NormalizedMetricsMapQuantileRegex = regexp.MustCompile(`(?i)([._-]?quantile.*)$`)
 
 // TODO(srikanthccv): remove after backfilling is done
 func UseMetricsPreAggregation() bool {

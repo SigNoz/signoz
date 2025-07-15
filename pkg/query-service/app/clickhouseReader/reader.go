@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
@@ -6047,85 +6048,89 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	return &searchSpansResult, nil
 }
 
-func (r *ClickHouseReader) GetCorrespondingNormalizedMetrics(ctx context.Context, orgID valuer.UUID) (map[string]string, error) {
-	// sanitize removes all non-alphanumeric characters from s
+func (r *ClickHouseReader) GetCorrespondingNormalizedMetrics(ctx context.Context, orgID valuer.UUID, metricName string) (string, string, error) {
+	if metricName == "" {
+		return "", "", nil
+	}
+	var normalizedName, unnormalizedName string
 	sanitize := func(s string) string {
 		return constants.NormalizedMetricsMapRegex.ReplaceAllString(s, "")
 	}
-
-	// Try cache first
-	resultDto := new(model.NormalizedMetricsMap)
-	cacheKey := constants.NormalizedMetricsMapCacheKey
-
-	if err := r.cache.Get(ctx, orgID, cacheKey, resultDto, true); err == nil {
-		return resultDto.MetricsMap, nil
+	stripQuantile := func(s string) string {
+		return constants.NormalizedMetricsMapQuantileRegex.ReplaceAllString(s, "")
 	}
 
+	metricsToRegex := func(name string) string {
+		tokens := strings.FieldsFunc(strings.ToLower(name), func(r rune) bool {
+			return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+		})
+		if len(tokens) == 0 {
+			return "^$"
+		}
+		return "^" + strings.Join(tokens, "[^a-z0-9]*")
+	}
+
+	resultDto := new(model.NormalizedMetricsMap)
+	cacheKey := constants.NormalizedMetricsMapCacheKey + stripQuantile(sanitize(metricName))
+
+	if err := r.cache.Get(ctx, orgID, cacheKey, resultDto, true); err == nil {
+		return resultDto.NormalizedMetricName, resultDto.UnNormalizedMetricName, nil
+	}
+
+	processedMetricName := stripQuantile(metricName)
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.NormalizedMetricsMapQueryThreads)
-	query := "SELECT DISTINCT metric_name, type, toUInt8(__normalized) FROM %s.%s"
-	rows, err := r.db.Query(valueCtx, fmt.Sprintf(query, signozMetricDBName, signozTSTableNameV41Day))
+	query := "SELECT metric_name, toUInt8(__normalized), any(type) FROM %s.%s WHERE  lower(metric_name) REGEXP ? group by metric_name, __normalized;"
+	rows, err := r.db.Query(valueCtx, fmt.Sprintf(query, signozMetricDBName, signozTSTableNameV41Day), metricsToRegex(processedMetricName))
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
 	defer rows.Close()
 
-	// Group metrics by sanitized name
-	type metricPair struct {
-		normalizedName   string
-		unnormalizedName string
-		metricType       string
-	}
-	metricPairs := make(map[string]*metricPair)
-
+	wantKey := stripQuantile(sanitize(metricName))
 	for rows.Next() {
-		var metricName, metricType string
+
+		if normalizedName != "" && unnormalizedName != "" {
+			break // got the pair we need
+		}
+
+		var name, metricType string
 		var normalized uint8
-
-		if err := rows.Scan(&metricName, &metricType, &normalized); err != nil {
-			return nil, err
+		var processed string
+		if err := rows.Scan(&name, &normalized, &metricType); err != nil {
+			return "", "", err
 		}
 
-		sanitized := sanitize(metricName)
-		pair, exists := metricPairs[sanitized]
-		if !exists {
-			pair = &metricPair{}
-			metricPairs[sanitized] = pair
+		processed = name
+		if metricType == "Summary" && normalized == 0 {
+			processed = stripQuantile(name)
 		}
 
-		pair.metricType = metricType
-		if normalized != 0 {
-			pair.normalizedName = metricName
+		if sanitize(processed) != wantKey {
+			continue
+		}
+
+		if normalized == 1 {
+			normalizedName = name
 		} else {
-			pair.unnormalizedName = metricName
+			unnormalizedName = name
 		}
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return "", "", err
 	}
 
-	// Handle Summary metrics with quantile
-	for sanitized, pair := range metricPairs {
-		if pair.normalizedName != "" && pair.unnormalizedName == "" && pair.metricType == "Summary" {
-			if quantilePair, exists := metricPairs[sanitized+"quantile"]; exists {
-				pair.unnormalizedName = quantilePair.unnormalizedName
-			}
-		}
+	if normalizedName == "" || unnormalizedName == "" {
+		err = fmt.Errorf("no matching metrics found for %s", metricName)
+		zap.L().Debug("normalized metrics doesnt exist", zap.String("metric_name", metricName), zap.Any("error", err))
+		return "", "", fmt.Errorf("no matching metrics found for %s", metricName)
 	}
 
-	// Build result map
-	result := make(map[string]string)
-	for _, pair := range metricPairs {
-		if pair.normalizedName != "" {
-			result[pair.normalizedName] = pair.unnormalizedName
-		}
-	}
-
-	// Cache result
-	resultDto.MetricsMap = result
+	resultDto.NormalizedMetricName = normalizedName
+	resultDto.UnNormalizedMetricName = unnormalizedName
 	if err := r.cache.Set(ctx, orgID, cacheKey, resultDto, 0); err != nil {
-		zap.L().Error("Failed to cache normalized metrics map", zap.Error(err))
+		zap.L().Error("failed to cache normalized metric pair", zap.Error(err))
 	}
 
-	return result, nil
+	return normalizedName, unnormalizedName, nil
 }

@@ -3,7 +3,8 @@ package model
 import "encoding/json"
 
 type NormalizedMetricsMap struct {
-	MetricsMap map[string]string `json:"metrics"`
+	NormalizedMetricName   string `json:"normalizedMetricName"`
+	UnNormalizedMetricName string `json:"unNormalizedMetricName"`
 }
 
 func (c *NormalizedMetricsMap) MarshalBinary() (data []byte, err error) {
