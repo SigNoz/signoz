@@ -157,17 +157,22 @@ const getFiltersFromMetric = (metric: any): FilterData[] =>
 	}));
 
 export const getUplotClickData = ({
-	uplotData,
+	metric,
+	queryData,
+	absoluteMouseX,
+	absoluteMouseY,
 }: {
-	uplotData: any[];
+	metric?: { [key: string]: string };
+	queryData?: { queryName: string; inFocusOrNot: boolean };
+	absoluteMouseX: number;
+	absoluteMouseY: number;
 }): {
 	coord: { x: number; y: number };
 	record: { queryName: string; filters: FilterData[] };
 } | null => {
-	const [, , , , metric, queryData, absoluteMouseX, absoluteMouseY] = uplotData;
-	console.log('args', uplotData);
 	console.log('on Click', {
-		uplotData,
+		metric,
+		queryData,
 		absoluteMouseX,
 		absoluteMouseY,
 	});

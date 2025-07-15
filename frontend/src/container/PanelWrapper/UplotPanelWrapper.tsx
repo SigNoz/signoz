@@ -6,6 +6,8 @@ import Uplot from 'components/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import GraphManager from 'container/GridCardLayout/GridCard/FullView/GraphManager';
 import { getLocalStorageGraphVisibilityState } from 'container/GridCardLayout/GridCard/utils';
+import { getUplotClickData } from 'container/QueryTable/Drilldown/drilldownUtils';
+import useGraphContextMenu from 'container/QueryTable/Drilldown/useGraphContextMenu';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -13,9 +15,10 @@ import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { cloneDeep, isEqual, isUndefined } from 'lodash-es';
 import _noop from 'lodash-es/noop';
+import { ContextMenu, useCoordinates } from 'periscope/components/ContextMenu';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useTimezone } from 'providers/Timezone';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import uPlot from 'uplot';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
@@ -64,6 +67,25 @@ function UplotPanelWrapper({
 	}, [queryResponse]);
 
 	const containerDimensions = useResizeObserver(graphRef);
+
+	const {
+		coordinates,
+		popoverPosition,
+		clickedData,
+		onClose,
+		onClick,
+		subMenu,
+		setSubMenu,
+	} = useCoordinates();
+	const { menuItemsConfig } = useGraphContextMenu({
+		widgetId: widget.id || '',
+		query: widget.query,
+		graphData: clickedData,
+		onClose,
+		coordinates,
+		subMenu,
+		setSubMenu,
+	});
 
 	useEffect(() => {
 		const {
@@ -114,6 +136,42 @@ function UplotPanelWrapper({
 
 	const { timezone } = useTimezone();
 
+	const clickHandlerWithContextMenu = useCallback(
+		(...args: any[]) => {
+			const [
+				xValue,
+				yValue,
+				mouseX,
+				mouseY,
+				metric,
+				queryData,
+				absoluteMouseX,
+				absoluteMouseY,
+			] = args;
+			const data = getUplotClickData({
+				metric,
+				queryData,
+				absoluteMouseX,
+				absoluteMouseY,
+			});
+			console.log('onClickData: ', data);
+			if (data && data?.record?.queryName) {
+				onClick(data.coord, data.record);
+			}
+			onClickHandler?.(
+				xValue,
+				yValue,
+				mouseX,
+				mouseY,
+				metric,
+				queryData,
+				absoluteMouseX,
+				absoluteMouseY,
+			);
+		},
+		[onClick, onClickHandler],
+	);
+
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
@@ -123,7 +181,7 @@ function UplotPanelWrapper({
 				isDarkMode,
 				onDragSelect,
 				yAxisUnit: widget?.yAxisUnit,
-				onClickHandler: onClickHandler || _noop,
+				onClickHandler: clickHandlerWithContextMenu || _noop,
 				thresholds: widget.thresholds,
 				minTimeScale,
 				maxTimeScale,
@@ -158,7 +216,7 @@ function UplotPanelWrapper({
 			containerDimensions,
 			isDarkMode,
 			onDragSelect,
-			onClickHandler,
+			clickHandlerWithContextMenu,
 			minTimeScale,
 			maxTimeScale,
 			graphVisibility,
@@ -178,6 +236,13 @@ function UplotPanelWrapper({
 	return (
 		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
 			<Uplot options={options} data={chartData} ref={lineChartRef} />
+			<ContextMenu
+				coordinates={coordinates}
+				popoverPosition={popoverPosition}
+				title={menuItemsConfig.header as string}
+				items={menuItemsConfig.items}
+				onClose={onClose}
+			/>
 			{widget?.stackedBarChart && isFullViewMode && (
 				<Alert
 					message="Selecting multiple legends is currently not supported in case of stacked bar charts"
