@@ -144,7 +144,7 @@ export const useFetchKeysAndValues = (
 		{
 			searchText: searchKey,
 			dataSource: query.dataSource,
-			filters: query.filters,
+			filters: query.filters || { items: [], op: 'AND' },
 		},
 		{
 			queryKey: [suggestionsParams],

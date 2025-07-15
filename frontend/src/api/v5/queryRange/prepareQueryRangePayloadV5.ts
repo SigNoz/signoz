@@ -103,7 +103,7 @@ function createBaseSpec(
 				: queryData.limit || undefined,
 		offset: requestType === 'raw' ? queryData.offset : undefined,
 		order:
-			queryData.orderBy.length > 0
+			queryData.orderBy?.length > 0
 				? queryData.orderBy.map(
 						(order: any): OrderBy => ({
 							key: {

@@ -60,14 +60,14 @@ function EntityLogsDetailedView({
 							...currentQuery.builder.queryData[0].aggregateAttribute,
 						},
 						filters: {
-							items: filterOutPrimaryFilters(logFilters.items, queryKeyFilters),
+							items: filterOutPrimaryFilters(logFilters?.items || [], queryKeyFilters),
 							op: 'AND',
 						},
 					},
 				],
 			},
 		}),
-		[currentQuery, logFilters.items, queryKeyFilters],
+		[currentQuery, logFilters?.items, queryKeyFilters],
 	);
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;

@@ -113,12 +113,14 @@ export enum DropdownState {
 }
 
 function getInitTags(query: IBuilderQuery): ITag[] {
-	return query.filters.items.map((item) => ({
-		id: item.id,
-		key: item.key as BaseAutocompleteData,
-		op: getOperatorFromValue(item.op),
-		value: item.value,
-	}));
+	return (
+		query.filters?.items?.map((item) => ({
+			id: item.id,
+			key: item.key as BaseAutocompleteData,
+			op: getOperatorFromValue(item.op),
+			value: item.value,
+		})) || []
+	);
 }
 
 function QueryBuilderSearchV2(
@@ -188,7 +190,7 @@ function QueryBuilderSearchV2(
 	const queryFiltersWithoutId = useMemo(
 		() => ({
 			...query.filters,
-			items: query.filters.items.map((item) => {
+			items: query.filters?.items.map((item) => {
 				const filterWithoutId = cloneDeep(item);
 				unset(filterWithoutId, 'id');
 				return filterWithoutId;
@@ -265,7 +267,7 @@ function QueryBuilderSearchV2(
 		{
 			searchText: searchValue?.split(' ')[0],
 			dataSource: query.dataSource,
-			filters: query.filters,
+			filters: query.filters || { items: [], op: 'AND' },
 		},
 		{
 			queryKey: [suggestionsParams],
@@ -915,7 +917,7 @@ function QueryBuilderSearchV2(
 			setSearchValue('');
 			setTags((prev) => prev.filter((t) => !isEqual(t, tagDetails)));
 			if (triggerOnChangeOnClose) {
-				onChange(query.filters);
+				onChange(query.filters || { items: [], op: 'AND' });
 			}
 		};
 

@@ -387,7 +387,7 @@ function LogsExplorerViewsContainer({
 		if (!stagedQuery) return;
 
 		const newRequestData = getRequestData(stagedQuery, {
-			filters,
+			filters: filters || { items: [], op: 'AND' },
 			page: page + 1,
 			pageSize: nextPageSize,
 		});
@@ -770,7 +770,7 @@ function LogsExplorerViewsContainer({
 							logs={logs}
 							onEndReached={handleEndReached}
 							isError={isError}
-							isFilterApplied={!isEmpty(listQuery?.filters.items)}
+							isFilterApplied={!isEmpty(listQuery?.filters?.items)}
 						/>
 					)}
 
@@ -779,7 +779,7 @@ function LogsExplorerViewsContainer({
 							isLoading={isLoading || isFetching}
 							data={data}
 							isError={isError}
-							isFilterApplied={!isEmpty(listQuery?.filters.items)}
+							isFilterApplied={!isEmpty(listQuery?.filters?.items)}
 							dataSource={DataSource.LOGS}
 						/>
 					)}

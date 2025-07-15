@@ -73,7 +73,7 @@ export type IBuilderQuery = {
 	temporality?: string;
 	functions: QueryFunctionProps[];
 	filter?: Filter;
-	filters: TagFilter;
+	filters?: TagFilter;
 	groupBy: BaseAutocompleteData[];
 	expression: string;
 	disabled: boolean;

@@ -42,7 +42,10 @@ function QuerySection({
 	selectedGraph,
 	queryResponse,
 }: QueryProps): JSX.Element {
-	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+	const {
+		currentQuery,
+		handleRunQuery: handleRunQueryFromQueryBuilder,
+	} = useQueryBuilder();
 	const urlQuery = useUrlQuery();
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -98,13 +101,13 @@ function QuerySection({
 					],
 				},
 			});
-			redirectWithQueryBuilderData(query);
+			handleRunQueryFromQueryBuilder(false, true);
 		},
 		[
 			selectedDashboard,
 			selectedWidget,
 			setSelectedDashboard,
-			redirectWithQueryBuilderData,
+			handleRunQueryFromQueryBuilder,
 		],
 	);
 

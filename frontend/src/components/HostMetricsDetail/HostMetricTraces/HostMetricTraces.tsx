@@ -74,16 +74,16 @@ function HostMetricTraces({
 							...currentQuery.builder.queryData[0].aggregateAttribute,
 						},
 						filters: {
-							items: tracesFilters.items.filter(
-								(item) => item.key?.key !== 'host.name',
-							),
+							items:
+								tracesFilters?.items?.filter((item) => item.key?.key !== 'host.name') ||
+								[],
 							op: 'AND',
 						},
 					},
 				],
 			},
 		}),
-		[currentQuery, tracesFilters.items],
+		[currentQuery, tracesFilters?.items],
 	);
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
@@ -140,7 +140,8 @@ function HostMetricTraces({
 
 	const isDataEmpty =
 		!isLoading && !isFetching && !isError && traces.length === 0;
-	const hasAdditionalFilters = tracesFilters.items.length > 1;
+	const hasAdditionalFilters =
+		tracesFilters?.items && tracesFilters?.items?.length > 1;
 
 	const totalCount =
 		data?.payload?.data?.newResult?.data?.result?.[0]?.list?.length || 0;
