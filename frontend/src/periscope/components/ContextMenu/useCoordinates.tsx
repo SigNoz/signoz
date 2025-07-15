@@ -1,19 +1,19 @@
 import { useCallback, useState } from 'react';
 
-import { ClickedData, Coordinates, PopoverPosition } from './types';
+import { Coordinates, PopoverPosition } from './types';
 
 // Custom hook for managing coordinates
 export const useCoordinates = (): {
 	coordinates: Coordinates | null;
-	clickedData: ClickedData | null;
+	clickedData: any;
 	popoverPosition: PopoverPosition | null;
-	onClick: (coordinates: { x: number; y: number }, data?: ClickedData) => void;
+	onClick: (coordinates: { x: number; y: number }, data?: any) => void;
 	onClose: () => void;
 	subMenu: string; // todo: create enum
 	setSubMenu: (subMenu: string) => void;
 } => {
 	const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
-	const [clickedData, setClickedData] = useState<ClickedData | null>(null);
+	const [clickedData, setClickedData] = useState<any>(null);
 	const [subMenu, setSubMenu] = useState<string>('');
 	const [popoverPosition, setPopoverPosition] = useState<PopoverPosition | null>(
 		null,
@@ -61,7 +61,7 @@ export const useCoordinates = (): {
 	);
 
 	const onClick = useCallback(
-		(coords: { x: number; y: number }, data?: ClickedData): void => {
+		(coords: { x: number; y: number }, data?: any): void => {
 			const coordinates: Coordinates = { x: coords.x, y: coords.y };
 			const position = calculatePosition(coordinates.x, coordinates.y);
 			if (data) {
