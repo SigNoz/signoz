@@ -52,14 +52,16 @@ function HostMetricLogsDetailedView({
 							...currentQuery.builder.queryData[0].aggregateAttribute,
 						},
 						filters: {
-							items: logFilters.items.filter((item) => item.key?.key !== 'host.name'),
+							items:
+								logFilters?.items?.filter((item) => item.key?.key !== 'host.name') ||
+								[],
 							op: 'AND',
 						},
 					},
 				],
 			},
 		}),
-		[currentQuery, logFilters.items],
+		[currentQuery, logFilters?.items],
 	);
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
@@ -70,7 +72,7 @@ function HostMetricLogsDetailedView({
 				<div className="filter-section">
 					{query && (
 						<QueryBuilderSearch
-							query={query}
+							query={query as IBuilderQuery}
 							onChange={(value): void => handleChangeLogFilters(value, VIEWS.LOGS)}
 							disableNavigationShortcuts
 						/>

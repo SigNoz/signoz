@@ -113,12 +113,14 @@ export enum DropdownState {
 }
 
 function getInitTags(query: IBuilderQuery): ITag[] {
-	return query.filters.items.map((item) => ({
-		id: item.id,
-		key: item.key as BaseAutocompleteData,
-		op: getOperatorFromValue(item.op),
-		value: item.value,
-	}));
+	return (
+		query.filters?.items?.map((item) => ({
+			id: item.id,
+			key: item.key as BaseAutocompleteData,
+			op: getOperatorFromValue(item.op),
+			value: item.value,
+		})) || []
+	);
 }
 
 function QueryBuilderSearchV2(
@@ -175,20 +177,20 @@ function QueryBuilderSearchV2(
 			searchValue,
 			query.dataSource,
 			query.aggregateOperator,
-			query.aggregateAttribute.key,
+			query.aggregateAttribute?.key,
 		],
 		[
 			searchValue,
 			query.dataSource,
 			query.aggregateOperator,
-			query.aggregateAttribute.key,
+			query.aggregateAttribute?.key,
 		],
 	);
 
 	const queryFiltersWithoutId = useMemo(
 		() => ({
 			...query.filters,
-			items: query.filters.items.map((item) => {
+			items: query.filters?.items.map((item) => {
 				const filterWithoutId = cloneDeep(item);
 				unset(filterWithoutId, 'id');
 				return filterWithoutId;
@@ -206,7 +208,7 @@ function QueryBuilderSearchV2(
 		() => [
 			query.aggregateOperator,
 			query.dataSource,
-			query.aggregateAttribute.key,
+			query.aggregateAttribute?.key,
 			currentFilterItem?.key?.key || '',
 			currentFilterItem?.key?.dataType,
 			currentFilterItem?.key?.type ?? '',
@@ -217,7 +219,7 @@ function QueryBuilderSearchV2(
 		[
 			query.aggregateOperator,
 			query.dataSource,
-			query.aggregateAttribute.key,
+			query.aggregateAttribute?.key,
 			currentFilterItem?.key?.key,
 			currentFilterItem?.key?.dataType,
 			currentFilterItem?.key?.type,
@@ -237,19 +239,20 @@ function QueryBuilderSearchV2(
 	const isQueryEnabled = useMemo(() => {
 		if (currentState === DropdownState.ATTRIBUTE_KEY) {
 			return query.dataSource === DataSource.METRICS
-				? !!query.dataSource && !!query.aggregateAttribute.dataType
+				? !!query.dataSource && !!query.aggregateAttribute?.dataType
 				: true;
 		}
+
 		return false;
-	}, [currentState, query.aggregateAttribute.dataType, query.dataSource]);
+	}, [currentState, query.aggregateAttribute?.dataType, query.dataSource]);
 
 	const { data, isFetching } = useGetAggregateKeys(
 		{
 			searchText: searchValue?.split(' ')[0],
 			dataSource: query.dataSource,
-			aggregateOperator: query.aggregateOperator,
-			aggregateAttribute: query.aggregateAttribute.key,
-			tagType: query.aggregateAttribute.type ?? null,
+			aggregateOperator: query.aggregateOperator || '',
+			aggregateAttribute: query.aggregateAttribute?.key || '',
+			tagType: query.aggregateAttribute?.type ?? null,
 		},
 		{
 			queryKey: [searchParams],
@@ -264,7 +267,7 @@ function QueryBuilderSearchV2(
 		{
 			searchText: searchValue?.split(' ')[0],
 			dataSource: query.dataSource,
-			filters: query.filters,
+			filters: query.filters || { items: [], op: 'AND' },
 		},
 		{
 			queryKey: [suggestionsParams],
@@ -277,9 +280,9 @@ function QueryBuilderSearchV2(
 		isFetching: isFetchingAttributeValues,
 	} = useGetAggregateValues(
 		{
-			aggregateOperator: query.aggregateOperator,
+			aggregateOperator: query.aggregateOperator || '',
 			dataSource: query.dataSource,
-			aggregateAttribute: query.aggregateAttribute.key,
+			aggregateAttribute: query.aggregateAttribute?.key || '',
 			attributeKey: currentFilterItem?.key?.key || '',
 			filterAttributeKeyDataType:
 				currentFilterItem?.key?.dataType ?? DataTypes.EMPTY,
@@ -914,7 +917,7 @@ function QueryBuilderSearchV2(
 			setSearchValue('');
 			setTags((prev) => prev.filter((t) => !isEqual(t, tagDetails)));
 			if (triggerOnChangeOnClose) {
-				onChange(query.filters);
+				onChange(query.filters || { items: [], op: 'AND' });
 			}
 		};
 
@@ -992,7 +995,7 @@ function QueryBuilderSearchV2(
 					className,
 				)}
 				rootClassName={cx('query-builder-search', rootClassName)}
-				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+				disabled={isMetricsDataSource && !query.aggregateAttribute?.key}
 				style={selectStyle}
 				onSearch={handleSearch}
 				onSelect={handleDropdownSelect}

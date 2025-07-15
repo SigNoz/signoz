@@ -153,7 +153,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 		);
 	}
 
-	filters.items.forEach((filter) => {
+	filters?.items?.forEach((filter) => {
 		const { key, op, value } = filter;
 
 		// Skip invalid filters with no key
@@ -310,7 +310,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 	});
 
 	// Merge new filter items with existing ones
-	if (newFilterItems.length > 0) {
+	if (newFilterItems.length > 0 && updatedFilters?.items) {
 		updatedFilters.items = [...updatedFilters.items, ...newFilterItems];
 	}
 
@@ -600,3 +600,57 @@ export function getQueryLabelWithAggregation(
 
 	return labels;
 }
+
+export const adjustQueryForV5 = (currentQuery: Query): Query => {
+	if (currentQuery.queryType === EQueryType.QUERY_BUILDER) {
+		console.log('currentQuery', currentQuery);
+		const newQueryData = currentQuery.builder.queryData.map((query) => {
+			const aggregations = query.aggregations?.map((aggregation) => {
+				if (query.dataSource === DataSource.METRICS) {
+					const metricAggregation = aggregation as MetricAggregation;
+					return {
+						...aggregation,
+						metricName:
+							metricAggregation.metricName || query.aggregateAttribute?.key || '',
+						timeAggregation:
+							metricAggregation.timeAggregation || query.timeAggregation || '',
+						spaceAggregation:
+							metricAggregation.spaceAggregation || query.spaceAggregation || '',
+						reduceTo: metricAggregation.reduceTo || query.reduceTo || 'avg',
+					};
+				}
+				return aggregation;
+			});
+
+			const {
+				aggregateAttribute,
+				aggregateOperator,
+				timeAggregation,
+				spaceAggregation,
+				reduceTo,
+				filters,
+				...retainedQuery
+			} = query;
+
+			const newAggregations =
+				query.dataSource === DataSource.METRICS
+					? (aggregations as MetricAggregation[])
+					: (aggregations as (TraceAggregation | LogAggregation)[]);
+
+			return {
+				...retainedQuery,
+				aggregations: newAggregations,
+			};
+		});
+
+		return {
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: newQueryData,
+			},
+		};
+	}
+
+	return currentQuery;
+};

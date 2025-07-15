@@ -42,6 +42,7 @@ import {
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 // ** Types
 import {
 	IBuilderFormula,
@@ -141,7 +142,7 @@ export function QueryBuilderProvider({
 
 			const isCurrentOperatorAvailableInList = initialOperators
 				.map((operator) => operator.value)
-				.includes(queryData.aggregateOperator);
+				.includes(queryData.aggregateOperator || '');
 
 			if (!isCurrentOperatorAvailableInList) {
 				return { ...queryData, aggregateOperator: initialOperators[0]?.value };
@@ -177,10 +178,10 @@ export function QueryBuilderProvider({
 					aggregateAttribute: {
 						...item.aggregateAttribute,
 						id: createIdFromObjectFields(
-							item.aggregateAttribute,
+							item.aggregateAttribute as BaseAutocompleteData,
 							baseAutoCompleteIdKeysOrder,
 						),
-					},
+					} as BaseAutocompleteData,
 				};
 
 				return currentElement;
@@ -282,7 +283,7 @@ export function QueryBuilderProvider({
 				aggregateAttribute: {
 					...aggregateAttribute,
 					id: '',
-				},
+				} as BaseAutocompleteData,
 				timeAggregation,
 				spaceAggregation,
 				functions,

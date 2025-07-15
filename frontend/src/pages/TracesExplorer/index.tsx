@@ -279,7 +279,7 @@ function TracesExplorer(): JSX.Element {
 		[],
 	);
 
-	const isFilterApplied = useMemo(() => !isEmpty(listQuery?.filters.items), [
+	const isFilterApplied = useMemo(() => !isEmpty(listQuery?.filters?.items), [
 		listQuery,
 	]);
 

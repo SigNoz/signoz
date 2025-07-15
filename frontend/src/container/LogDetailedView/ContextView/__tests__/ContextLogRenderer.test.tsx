@@ -231,19 +231,19 @@ describe('ContextLogRenderer', () => {
 			expect(afterBuilderQuery.offset).toEqual(10);
 
 			// Verify operator changes
-			expect(initialBuilderQuery.filters.items[0].op).toEqual(
+			expect(initialBuilderQuery.filters?.items[0]?.op).toEqual(
 				expectedOpChange.before,
 			);
-			expect(afterBuilderQuery.filters.items[0].op).toEqual(
+			expect(afterBuilderQuery.filters?.items[0]?.op).toEqual(
 				expectedOpChange.after,
 			);
 
 			// Verify filter structure remains consistent
-			expect(initialBuilderQuery.filters.items.length).toEqual(
-				afterBuilderQuery.filters.items.length,
+			expect(initialBuilderQuery.filters?.items?.length).toEqual(
+				afterBuilderQuery.filters?.items?.length,
 			);
-			expect(initialBuilderQuery.filters.items[0]?.key?.key).toEqual('id');
-			expect(afterBuilderQuery.filters.items[0]?.key?.key).toEqual('id');
+			expect(initialBuilderQuery.filters?.items[0]?.key?.key).toEqual('id');
+			expect(afterBuilderQuery.filters?.items[0]?.key?.key).toEqual('id');
 		};
 
 		it('should keep the start and end timestamps constant on clicking load more (prev / next) pages', async () => {

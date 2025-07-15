@@ -65,15 +65,15 @@ export interface QueryFunctionProps {
 export type IBuilderQuery = {
 	queryName: string;
 	dataSource: DataSource;
-	aggregateOperator: string;
-	aggregateAttribute: BaseAutocompleteData;
+	aggregateOperator?: string;
+	aggregateAttribute?: BaseAutocompleteData;
 	aggregations?: TraceAggregation[] | LogAggregation[] | MetricAggregation[];
-	timeAggregation: string;
+	timeAggregation?: string;
 	spaceAggregation?: string;
 	temporality?: string;
 	functions: QueryFunctionProps[];
 	filter?: Filter;
-	filters: TagFilter;
+	filters?: TagFilter;
 	groupBy: BaseAutocompleteData[];
 	expression: string;
 	disabled: boolean;
@@ -82,7 +82,7 @@ export type IBuilderQuery = {
 	limit: number | null;
 	stepInterval: number | undefined;
 	orderBy: OrderByPayload[];
-	reduceTo: ReduceOperators;
+	reduceTo?: ReduceOperators;
 	legend: string;
 	pageSize?: number;
 	offset?: number;

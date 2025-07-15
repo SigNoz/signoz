@@ -176,10 +176,11 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 						...item.filters,
 						items:
 							idx === lastUsedQuery
-								? item.filters.items.filter(
+								? item.filters?.items?.filter(
 										(fil) => !isEqual(fil.key?.key, filter.attributeKey.key),
-								  )
-								: [...item.filters.items],
+								  ) || []
+								: [...(item.filters?.items || [])],
+						op: item.filters?.op || 'AND',
 					},
 				})),
 			},
