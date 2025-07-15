@@ -6,12 +6,14 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
 import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter';
 import { ReduceToFilter } from 'container/QueryBuilder/filters/ReduceToFilter/ReduceToFilter';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { isEmpty } from 'lodash-es';
 import { BarChart2, ScrollText, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import { MetricAggregation } from 'types/api/v5/queryRange';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 import HavingFilter from './HavingFilter/HavingFilter';
 
@@ -88,6 +90,8 @@ function QueryAddOns({
 		entityVersion: '',
 	});
 
+	const { handleSetQueryData } = useQueryBuilder();
+
 	useEffect(() => {
 		if (isListViewPanel) {
 			setAddOns([]);
@@ -156,11 +160,19 @@ function QueryAddOns({
 		[handleChangeQueryData],
 	);
 
-	const handleChangeReduceTo = useCallback(
-		(value: IBuilderQuery['reduceTo']) => {
-			handleChangeQueryData('reduceTo', value);
+	const handleChangeReduceToV5 = useCallback(
+		(value: ReduceOperators) => {
+			handleSetQueryData(index, {
+				...query,
+				aggregations: [
+					{
+						...(query.aggregations?.[0] as MetricAggregation),
+						reduceTo: value,
+					},
+				],
+			});
 		},
-		[handleChangeQueryData],
+		[handleSetQueryData, index, query],
 	);
 
 	const handleRemoveView = useCallback(
@@ -205,7 +217,7 @@ function QueryAddOns({
 									<GroupByFilter
 										disabled={
 											query.dataSource === DataSource.METRICS &&
-											!query.aggregateAttribute.key
+											!(query.aggregations?.[0] as MetricAggregation)?.metricName
 										}
 										query={query}
 										onChange={handleChangeGroupByKeys}
@@ -279,7 +291,7 @@ function QueryAddOns({
 							<div className="periscope-input-with-label">
 								<div className="label">Reduce to</div>
 								<div className="input">
-									<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
+									<ReduceToFilter query={query} onChange={handleChangeReduceToV5} />
 								</div>
 
 								<Button

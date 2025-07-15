@@ -103,7 +103,7 @@ function createBaseSpec(
 				: queryData.limit || undefined,
 		offset: requestType === 'raw' ? queryData.offset : undefined,
 		order:
-			queryData.orderBy.length > 0
+			queryData.orderBy?.length > 0
 				? queryData.orderBy.map(
 						(order: any): OrderBy => ({
 							key: {
@@ -163,17 +163,37 @@ export function parseAggregations(
 
 export function createAggregation(
 	queryData: any,
+	panelType?: PANEL_TYPES,
 ): TraceAggregation[] | LogAggregation[] | MetricAggregation[] {
 	if (!queryData) {
 		return [];
 	}
+
+	const haveReduceTo =
+		queryData.dataSource === DataSource.METRICS &&
+		panelType &&
+		(panelType === PANEL_TYPES.TABLE ||
+			panelType === PANEL_TYPES.PIE ||
+			panelType === PANEL_TYPES.VALUE);
+
 	if (queryData.dataSource === DataSource.METRICS) {
 		return [
 			{
-				metricName: queryData?.aggregateAttribute?.key,
-				temporality: queryData?.aggregateAttribute?.temporality,
-				timeAggregation: queryData?.timeAggregation,
-				spaceAggregation: queryData?.spaceAggregation,
+				metricName:
+					queryData?.aggregations?.[0]?.metricName ||
+					queryData?.aggregateAttribute?.key,
+				temporality:
+					queryData?.aggregations?.[0]?.temporality ||
+					queryData?.aggregateAttribute?.temporality,
+				timeAggregation:
+					queryData?.aggregations?.[0]?.timeAggregation ||
+					queryData?.timeAggregation,
+				spaceAggregation:
+					queryData?.aggregations?.[0]?.spaceAggregation ||
+					queryData?.spaceAggregation,
+				reduceTo: haveReduceTo
+					? queryData?.aggregations?.[0]?.reduceTo || queryData?.reduceTo
+					: undefined,
 			},
 		];
 	}
@@ -201,7 +221,7 @@ function convertBuilderQueriesToV5(
 			const baseSpec = createBaseSpec(queryData, requestType, panelType);
 			let spec: QueryEnvelope['spec'];
 
-			const aggregations = createAggregation(queryData);
+			const aggregations = createAggregation(queryData, panelType);
 
 			switch (signal) {
 				case 'traces':
@@ -311,6 +331,7 @@ export const prepareQueryRangePayloadV5 = ({
 	end: endTime,
 	formatForWeb,
 	originalGraphType,
+	fillGaps,
 }: GetQueryResultsProps): PrepareQueryRangePayloadV5Result => {
 	let legendMap: Record<string, string> = {};
 	const requestType = mapPanelTypeToRequestType(graphType);
@@ -398,6 +419,7 @@ export const prepareQueryRangePayloadV5 = ({
 				(originalGraphType
 					? originalGraphType === PANEL_TYPES.TABLE
 					: graphType === PANEL_TYPES.TABLE),
+			fillGaps: fillGaps || false,
 		},
 		variables: Object.entries(variables).reduce((acc, [key, value]) => {
 			acc[key] = { value };

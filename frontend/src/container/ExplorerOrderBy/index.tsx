@@ -20,9 +20,9 @@ function ExplorerOrderBy({ query, onChange }: OrderByFilterProps): JSX.Element {
 
 	const { data, isFetching } = useGetAggregateKeys(
 		{
-			aggregateAttribute: query.aggregateAttribute.key,
+			aggregateAttribute: query.aggregateAttribute?.key || '',
 			dataSource: query.dataSource,
-			aggregateOperator: query.aggregateOperator,
+			aggregateOperator: query.aggregateOperator || '',
 			searchText: debouncedSearchText,
 		},
 		{

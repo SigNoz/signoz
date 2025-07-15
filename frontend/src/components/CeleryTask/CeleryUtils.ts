@@ -64,7 +64,8 @@ export function applyCeleryFilterOnWidgetData(
 								...queryItem,
 								filters: {
 									...queryItem.filters,
-									items: [...queryItem.filters.items, ...filters],
+									items: [...(queryItem.filters?.items || []), ...filters],
+									op: queryItem.filters?.op || 'AND',
 								},
 						  }
 						: queryItem,

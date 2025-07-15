@@ -36,7 +36,8 @@ const useInitialQuery = (log: ILog): Query => {
 			queryData: updatedAllQueriesOperator.builder.queryData.map((item) => {
 				const filters = {
 					...item.filters,
-					items: [...item.filters.items, ...resourcesFilters],
+					items: [...(item.filters?.items || []), ...resourcesFilters],
+					op: item.filters?.op || 'AND',
 				};
 
 				const updatedFilters = updateFilters(filters);
