@@ -27,6 +27,7 @@ import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
+import useTabVisibility from 'hooks/useTabFocus';
 import history from 'lib/history';
 import { isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
@@ -154,6 +155,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			preference.name === USER_PREFERENCES.LAST_SEEN_CHANGELOG_VERSION,
 	)?.value as string;
 
+	const isVisible = useTabVisibility();
+
 	const [
 		getUserVersionResponse,
 		getUserLatestVersionResponse,
@@ -176,6 +179,13 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			enabled: isLoggedIn && Boolean(latestVersion),
 		},
 	]);
+
+	useEffect(() => {
+		// refetch the changelog only when the current tab becomes active + there isn't an active request + no changelog already available
+		if (!changelog && !getChangelogByVersionResponse.isLoading && isVisible) {
+			getChangelogByVersionResponse.refetch();
+		}
+	}, [isVisible, changelog, getChangelogByVersionResponse]);
 
 	useEffect(() => {
 		let timer: ReturnType<typeof setTimeout>;
