@@ -57,6 +57,10 @@ export default function TableRow({
 		[currentLog, handleSetActiveContextLog],
 	);
 
+	const hasSingleColumn =
+		tableColumns.filter((column) => column.key !== 'state-indicator').length ===
+		1;
+
 	return (
 		<>
 			{tableColumns.map((column) => {
@@ -80,10 +84,7 @@ export default function TableRow({
 					<TableCellStyled
 						$isDragColumn={false}
 						$isLogIndicator={column.key === 'state-indicator'}
-						$hasSingleColumn={
-							tableColumns.filter((column) => column.key !== 'state-indicator')
-								.length === 1
-						}
+						$hasSingleColumn={hasSingleColumn}
 						$isDarkMode={isDarkMode}
 						key={column.key}
 						fontSize={fontSize}
