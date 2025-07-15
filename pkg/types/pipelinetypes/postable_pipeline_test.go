@@ -332,7 +332,7 @@ var operatorTest = []struct {
 			ID:        "severity",
 			Type:      "severity_parser",
 			ParseFrom: "attributes.test_severity",
-			SeverityMapping: map[string][]string{
+			Mapping: map[string][]string{
 				"trace": {"test_trace"},
 				"fatal": {"test_fatal"},
 			},
@@ -344,7 +344,7 @@ var operatorTest = []struct {
 		Operator: PipelineOperator{
 			ID:                    "severity",
 			Type:                  "severity_parser",
-			SeverityMapping:       map[string][]string{},
+			Mapping:               map[string][]string{},
 			OverwriteSeverityText: true,
 		},
 		IsValid: false,
@@ -354,7 +354,7 @@ var operatorTest = []struct {
 			ID:        "severity",
 			Type:      "severity_parser",
 			ParseFrom: "attributes.test",
-			SeverityMapping: map[string][]string{
+			Mapping: map[string][]string{
 				"not-a-level": {"bad-level"},
 			},
 			OverwriteSeverityText: true,
