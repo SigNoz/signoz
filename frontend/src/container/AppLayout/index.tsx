@@ -183,17 +183,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	useEffect(() => {
 		// refetch the changelog only when the current tab becomes active + there isn't an active request + no changelog already available
 		if (!changelog && !getChangelogByVersionResponse.isLoading && isVisible) {
-			const FOUR_HOURS_MS = 4 * 60 * 60 * 1000; // 4 hours in ms
-
-			const now = Date.now();
-			const lastUpdated = getChangelogByVersionResponse.dataUpdatedAt || 0;
-
-			const timeSinceLastUpdate = now - lastUpdated;
-
-			// only refetch when there's a difference of 4 hours from the last refetch time.
-			if (timeSinceLastUpdate >= FOUR_HOURS_MS) {
-				getChangelogByVersionResponse.refetch();
-			}
+			getChangelogByVersionResponse.refetch();
 		}
 	}, [isVisible, changelog, getChangelogByVersionResponse]);
 
