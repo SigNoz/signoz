@@ -174,7 +174,7 @@ services:
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
     !!merge <<: *db-depend
-    image: signoz/signoz:v0.88.0
+    image: signoz/signoz:v0.89.0
     command:
       - --config=/root/config/prometheus.yml
     ports:
@@ -194,6 +194,7 @@ services:
       - TELEMETRY_ENABLED=true
       - DEPLOYMENT_TYPE=docker-swarm
       - SIGNOZ_JWT_SECRET=secret
+      - DOT_METRICS_ENABLED=true
     healthcheck:
       test:
         - CMD

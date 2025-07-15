@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
 	"github.com/SigNoz/signoz/ee/query-service/app"
+	"github.com/SigNoz/signoz/ee/sqlschema/postgressqlschema"
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
 	"github.com/SigNoz/signoz/ee/zeus"
 	"github.com/SigNoz/signoz/ee/zeus/httpzeus"
@@ -21,6 +22,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -145,6 +147,14 @@ func main() {
 		signoz.NewEmailingProviderFactories(),
 		signoz.NewCacheProviderFactories(),
 		signoz.NewWebProviderFactories(),
+		func(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]] {
+			existingFactories := signoz.NewSQLSchemaProviderFactories(sqlstore)
+			if err := existingFactories.Add(postgressqlschema.NewFactory(sqlstore)); err != nil {
+				zap.L().Fatal("Failed to add postgressqlschema factory", zap.Error(err))
+			}
+
+			return existingFactories
+		},
 		sqlStoreFactories,
 		signoz.NewTelemetryStoreProviderFactories(),
 	)
