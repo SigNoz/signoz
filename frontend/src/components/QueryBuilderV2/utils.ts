@@ -20,6 +20,7 @@ import {
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
+import { unquote } from 'utils/stringUtils';
 import { v4 as uuid } from 'uuid';
 
 /**
@@ -94,21 +95,6 @@ export const convertFiltersToExpression = (
 		expression: expressions.join(' AND '),
 	};
 };
-
-function unquote(str: string): string {
-	if (typeof str !== 'string') return str;
-
-	const startsWithQuote = str.startsWith('"') || str.startsWith("'");
-	const endsWithSameQuote =
-		(str.endsWith('"') && str[0] === '"') ||
-		(str.endsWith("'") && str[0] === "'");
-
-	if (startsWithQuote && endsWithSameQuote && str.length >= 2) {
-		return str.slice(1, -1);
-	}
-
-	return str;
-}
 
 const formatValuesForFilter = (value: string | string[]): string | string[] => {
 	if (Array.isArray(value)) {
