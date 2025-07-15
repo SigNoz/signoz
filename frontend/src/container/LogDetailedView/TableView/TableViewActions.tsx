@@ -231,6 +231,7 @@ export default function TableViewActions(
 									fieldFilterKey,
 									parseFieldValue(fieldData.value),
 									dataType,
+									fieldType,
 								)}
 							/>
 						</Tooltip>
@@ -249,6 +250,7 @@ export default function TableViewActions(
 									fieldFilterKey,
 									parseFieldValue(fieldData.value),
 									dataType,
+									fieldType,
 								)}
 							/>
 						</Tooltip>
