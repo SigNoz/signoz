@@ -331,6 +331,7 @@ export const prepareQueryRangePayloadV5 = ({
 	end: endTime,
 	formatForWeb,
 	originalGraphType,
+	fillGaps,
 }: GetQueryResultsProps): PrepareQueryRangePayloadV5Result => {
 	let legendMap: Record<string, string> = {};
 	const requestType = mapPanelTypeToRequestType(graphType);
@@ -418,6 +419,7 @@ export const prepareQueryRangePayloadV5 = ({
 				(originalGraphType
 					? originalGraphType === PANEL_TYPES.TABLE
 					: graphType === PANEL_TYPES.TABLE),
+			fillGaps: fillGaps || false,
 		},
 		variables: Object.entries(variables).reduce((acc, [key, value]) => {
 			acc[key] = { value };
