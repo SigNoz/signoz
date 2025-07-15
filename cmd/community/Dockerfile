@@ -16,5 +16,4 @@ COPY frontend/build/ /etc/signoz/web/
 
 RUN chmod 755 /root /root/signoz
 
-ENTRYPOINT ["./signoz"]
-CMD ["server"]
+ENTRYPOINT ["./signoz", "server"]
