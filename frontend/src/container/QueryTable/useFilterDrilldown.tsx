@@ -2,8 +2,10 @@ import { QueryParams } from 'constants/query';
 import { addFilterToQuery } from 'container/QueryTable/drilldownUtils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ClickedData } from 'periscope/components/ContextMenu/types';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+
+import { getGroupContextMenuConfig } from './contextConfig';
 
 const useFilterDrilldown = ({
 	query,
@@ -15,7 +17,12 @@ const useFilterDrilldown = ({
 	widgetId: string;
 	clickedData: ClickedData | null;
 	onClose: () => void;
-}): { handleFilterDrilldown: (operator: string) => void } => {
+}): {
+	filterDrilldownConfig: {
+		header?: string | React.ReactNode;
+		items?: React.ReactNode;
+	};
+} => {
 	const { redirectWithQueryBuilderData } = useQueryBuilder();
 
 	const redirectToViewMode = useCallback(
@@ -47,8 +54,21 @@ const useFilterDrilldown = ({
 		[onClose, clickedData, query, redirectToViewMode],
 	);
 
+	const filterDrilldownConfig = useMemo(() => {
+		if (!clickedData) {
+			console.warn('clickedData is null in filterDrilldownConfig');
+			return {};
+		}
+		return getGroupContextMenuConfig({
+			query,
+			clickedData,
+			panelType: 'table',
+			onColumnClick: handleFilterDrilldown,
+		});
+	}, [handleFilterDrilldown, clickedData, query]);
+
 	return {
-		handleFilterDrilldown,
+		filterDrilldownConfig,
 	};
 };
 

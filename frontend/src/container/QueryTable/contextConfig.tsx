@@ -8,11 +8,8 @@ import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getAggregateColumnHeader } from './drilldownUtils';
 import { AGGREGATE_OPTIONS, SUPPORTED_OPERATORS } from './menuOptions';
-import {
-	getBreakoutQuery,
-	getFiltersToAdd,
-	getQueryData,
-} from './tableDrilldownUtils';
+import { getBreakoutQuery, getQueryData } from './tableDrilldownUtils';
+import { AggregateData } from './useAggregateDrilldown';
 
 export type ContextMenuItem = ReactNode;
 
@@ -45,7 +42,7 @@ export interface BreakoutOptionsProps {
 	onColumnClick: (groupBy: BaseAutocompleteData) => void;
 }
 
-function getGroupContextMenuConfig({
+export function getGroupContextMenuConfig({
 	query,
 	clickedData,
 	panelType,
@@ -88,26 +85,32 @@ function getGroupContextMenuConfig({
 	return {};
 }
 
-function getAggregateContextMenuConfig({
+export function getAggregateContextMenuConfig({
 	subMenu,
 	query,
-	clickedData,
 	onColumnClick,
-}: Omit<ContextMenuConfigParams, 'configType'>): AggregateContextMenuConfig {
-	console.log('getAggregateContextMenuConfig', { clickedData, query });
+	aggregateData,
+}: {
+	subMenu?: string;
+	query: Query;
+	onColumnClick: (key: string, query?: Query) => void;
+	aggregateData: AggregateData | null;
+}): AggregateContextMenuConfig {
+	console.log('getAggregateContextMenuConfig', { query, aggregateData });
 
 	if (subMenu === 'breakout') {
-		const queryData = getQueryData(query, clickedData);
+		const queryData = getQueryData(query, aggregateData);
 		return {
 			header: 'Breakout by',
 			items: (
 				<BreakoutOptions
 					queryData={queryData}
 					onColumnClick={(groupBy: BaseAutocompleteData): void => {
-						const filtersToAdd = getFiltersToAdd(query, clickedData);
+						// Use aggregateData.filters
+						const filtersToAdd = aggregateData?.filters || [];
 						const breakoutQuery = getBreakoutQuery(
 							query,
-							clickedData,
+							aggregateData,
 							groupBy,
 							filtersToAdd,
 						);
@@ -118,10 +121,15 @@ function getAggregateContextMenuConfig({
 		};
 	}
 
+	// Use aggregateData.queryName
+	const queryName = aggregateData?.queryName;
 	const { dataSource, aggregations } = getAggregateColumnHeader(
 		query,
-		clickedData?.column?.dataIndex as string,
+		queryName as string,
 	);
+
+	console.log('dataSource', dataSource);
+	console.log('aggregations', aggregations);
 
 	return {
 		header: (
@@ -140,37 +148,4 @@ function getAggregateContextMenuConfig({
 			</ContextMenu.Item>
 		)),
 	};
-}
-
-export function getContextMenuConfig({
-	subMenu,
-	configType,
-	query,
-	clickedData,
-	panelType,
-	onColumnClick,
-}: ContextMenuConfigParams): {
-	header?: string | ReactNode;
-	items?: ContextMenuItem;
-} {
-	if (configType === ConfigType.GROUP) {
-		return getGroupContextMenuConfig({
-			query,
-			clickedData,
-			panelType,
-			onColumnClick,
-		});
-	}
-
-	if (configType === ConfigType.AGGREGATE) {
-		return getAggregateContextMenuConfig({
-			subMenu,
-			query,
-			clickedData,
-			panelType,
-			onColumnClick,
-		});
-	}
-
-	return {};
 }

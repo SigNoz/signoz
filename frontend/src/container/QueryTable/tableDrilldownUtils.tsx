@@ -13,41 +13,23 @@ import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
 import { getBaseMeta } from './drilldownUtils';
+import { AggregateData } from './useAggregateDrilldown';
 /**
- * Gets the query data that matches the clicked column's dataIndex
+ * Gets the query data that matches the aggregate data's queryName
  */
-export const getQueryData = (query: Query, clickedData: any): IBuilderQuery => {
-	if (!clickedData) {
-		console.warn('clickedData is null in getQueryData');
+export const getQueryData = (
+	query: Query,
+	aggregateData: AggregateData | null,
+): IBuilderQuery => {
+	if (!aggregateData) {
+		console.warn('aggregateData is null in getQueryData');
 		return initialQueryBuilderFormValuesMap.logs;
 	}
 
 	const queryData = query?.builder?.queryData?.filter(
-		(item: IBuilderQuery) => item.queryName === clickedData.column.dataIndex,
+		(item: IBuilderQuery) => item.queryName === aggregateData.queryName,
 	);
 	return queryData[0];
-};
-
-/**
- * Creates filters to add to the query from columns which are part of the query.builder.queryData[].groupBy
- */
-export const getFiltersToAdd = (
-	query: Query,
-	clickedData: any,
-): FilterData[] => {
-	if (!clickedData) {
-		console.warn('clickedData is null in getFiltersToAdd');
-		return [];
-	}
-
-	const queryData = getQueryData(query, clickedData);
-	const { groupBy } = queryData;
-
-	return groupBy.map((item: BaseAutocompleteData) => ({
-		filterKey: item.key,
-		filterValue: clickedData.record[item.key],
-		operator: OPERATORS['='],
-	}));
 };
 
 export const isEmptyFilterValue = (value: any): boolean =>
@@ -138,29 +120,29 @@ export const getViewQuery = (
  */
 export const getBreakoutQuery = (
 	query: Query,
-	clickedData: any,
+	aggregateData: AggregateData | null,
 	groupBy: BaseAutocompleteData,
 	filtersToAdd: FilterData[],
 ): Query => {
-	if (!clickedData) {
-		console.warn('clickedData is null in getBreakoutQuery');
+	if (!aggregateData) {
+		console.warn('aggregateData is null in getBreakoutQuery');
 		return query;
 	}
 
 	console.log('>> groupBy', groupBy);
-	console.log('>> clickedData', clickedData);
+	console.log('>> aggregateData', aggregateData);
 	console.log('>> query', query);
 
 	const queryWithFilters = addFilterToSelectedQuery(
 		query,
 		filtersToAdd,
-		clickedData.column.dataIndex,
+		aggregateData.queryName,
 	);
 	const newQuery = cloneDeep(queryWithFilters);
 
 	newQuery.builder.queryData = newQuery.builder.queryData.map(
 		(item: IBuilderQuery) => {
-			if (item.queryName === clickedData.column.dataIndex) {
+			if (item.queryName === aggregateData.queryName) {
 				return {
 					...item,
 					groupBy: [groupBy],

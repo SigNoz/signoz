@@ -1,7 +1,5 @@
-import {
-	ConfigType,
-	getContextMenuConfig,
-} from 'container/QueryTable/contextConfig';
+import { ConfigType } from 'container/QueryTable/contextConfig';
+import { getFiltersToAddToView } from 'container/QueryTable/tableDrilldownUtils';
 import useAggregateDrilldown from 'container/QueryTable/useAggregateDrilldown';
 import useFilterDrilldown from 'container/QueryTable/useFilterDrilldown';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
@@ -34,34 +32,29 @@ export function useTableContextMenu({
 	};
 } {
 	const drilldownQuery = useGetCompositeQueryParam() || query;
-	const { handleFilterDrilldown } = useFilterDrilldown({
+	const { filterDrilldownConfig } = useFilterDrilldown({
 		query: drilldownQuery,
 		widgetId,
 		clickedData,
 		onClose,
 	});
 
-	const filterDrilldownConfig = useMemo(() => {
-		if (!clickedData) {
-			console.warn('clickedData is null in filterDrilldownConfig');
-			return {};
-		}
-		return getContextMenuConfig({
-			configType: ConfigType.GROUP,
-			query,
-			clickedData,
-			panelType: 'table',
-			onColumnClick: handleFilterDrilldown,
-		});
-	}, [handleFilterDrilldown, clickedData, query]);
+	const aggregateData = useMemo(() => {
+		if (!clickedData?.column?.isValueColumn) return null;
+
+		return {
+			queryName: String(clickedData.column.dataIndex || ''),
+			filters: getFiltersToAddToView(clickedData) || [],
+		};
+	}, [clickedData]);
 
 	const { aggregateDrilldownConfig } = useAggregateDrilldown({
 		query: drilldownQuery,
 		widgetId,
-		clickedData,
 		onClose,
 		subMenu,
 		setSubMenu,
+		aggregateData,
 	});
 
 	const menuItemsConfig = useMemo(() => {

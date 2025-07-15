@@ -122,7 +122,8 @@ export const getAggregateColumnHeader = (
 		return { dataSource: '', aggregations: '' };
 	}
 
-	const { dataSource, aggregations } = queryStep;
+	console.log('queryStep', queryStep);
+	const { dataSource, aggregations } = queryStep; // TODO: check if this is correct
 
 	// Extract aggregation expressions based on data source type
 	let aggregationExpressions: string[] = [];
