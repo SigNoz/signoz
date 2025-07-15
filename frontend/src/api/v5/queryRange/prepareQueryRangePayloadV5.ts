@@ -163,6 +163,7 @@ export function parseAggregations(
 
 export function createAggregation(
 	queryData: any,
+	panelType?: PANEL_TYPES,
 ): TraceAggregation[] | LogAggregation[] | MetricAggregation[] {
 	if (!queryData) {
 		return [];
@@ -170,9 +171,10 @@ export function createAggregation(
 
 	const haveReduceTo =
 		queryData.dataSource === DataSource.METRICS &&
-		(queryData.panelType === PANEL_TYPES.TABLE ||
-			queryData.panelType === PANEL_TYPES.PIE ||
-			queryData.panelType === PANEL_TYPES.VALUE);
+		panelType &&
+		(panelType === PANEL_TYPES.TABLE ||
+			panelType === PANEL_TYPES.PIE ||
+			panelType === PANEL_TYPES.VALUE);
 
 	if (queryData.dataSource === DataSource.METRICS) {
 		return [
@@ -219,7 +221,7 @@ function convertBuilderQueriesToV5(
 			const baseSpec = createBaseSpec(queryData, requestType, panelType);
 			let spec: QueryEnvelope['spec'];
 
-			const aggregations = createAggregation(queryData);
+			const aggregations = createAggregation(queryData, panelType);
 
 			switch (signal) {
 				case 'traces':
