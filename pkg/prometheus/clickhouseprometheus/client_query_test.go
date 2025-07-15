@@ -56,11 +56,11 @@ func TestClient_QuerySamples(t *testing.T) {
 			description:        "Should successfully retrieve samples for multiple time series",
 			setupMock: func(mock cmock.ClickConnMockCommon, args ...any) {
 				values := [][]interface{}{
-					{"cpu_usage", uint64(123), int64(1001), float64(1.1), uint32(0)}, // 0.57 seconds
-					{"cpu_usage", uint64(123), int64(1001), float64(1.1), uint32(0)}, // 0.57 seconds
-					{"cpu_usage", uint64(456), int64(1001), float64(1.2), uint32(0)}, // 0.3 seconds
-					{"cpu_usage", uint64(456), int64(1001), float64(1.2), uint32(0)}, // 0.3 seconds
-					{"cpu_usage", uint64(456), int64(1001), float64(1.2), uint32(0)}, // 0.06 seconds
+					{"cpu_usage", uint64(123), int64(1001), float64(1.1), uint32(0)},
+					{"cpu_usage", uint64(123), int64(1001), float64(1.1), uint32(0)},
+					{"cpu_usage", uint64(456), int64(1001), float64(1.2), uint32(0)},
+					{"cpu_usage", uint64(456), int64(1001), float64(1.2), uint32(0)},
+					{"cpu_usage", uint64(456), int64(1001), float64(1.2), uint32(0)},
 				}
 				mock.ExpectQuery("SELECT metric_name, fingerprint, unix_milli, value, flags").WithArgs(args...).WillReturnRows(
 					cmock.NewRows(cols, values),
