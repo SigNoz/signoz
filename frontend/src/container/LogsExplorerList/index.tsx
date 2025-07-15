@@ -219,6 +219,7 @@ function LogsExplorerList({
 					filters: {
 						...item.filters,
 						items: idx === queryIndex ? [] : [...(item.filters?.items || [])],
+						op: item.filters?.op || 'AND',
 					},
 				})),
 			},

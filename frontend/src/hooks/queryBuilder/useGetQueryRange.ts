@@ -35,7 +35,7 @@ export const useGetQueryRange: UseGetQueryRange = (
 			requestData.graphType === PANEL_TYPES.LIST &&
 			firstQueryData?.orderBy?.length === 1 &&
 			// exclude list with id filter (i.e. context logs)
-			!firstQueryData?.filters.items.some((filter) => filter.key?.key === 'id') &&
+			!firstQueryData?.filters?.items.some((filter) => filter.key?.key === 'id') &&
 			firstQueryData?.orderBy[0].columnName === 'timestamp';
 
 		const modifiedRequestData = {

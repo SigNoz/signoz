@@ -41,7 +41,8 @@ export function useNavigateToExplorer(): (
 						aggregateOperator: MetricAggregateOperator.NOOP,
 						filters: {
 							...item.filters,
-							items: selectedFilters,
+							items: [...(item.filters?.items || []), ...selectedFilters],
+							op: item.filters?.op || 'AND',
 						},
 						groupBy: [],
 						disabled: false,

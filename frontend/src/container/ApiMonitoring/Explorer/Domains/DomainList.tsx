@@ -105,7 +105,7 @@ function DomainList(): JSX.Element {
 						op: '=',
 						value: 'Client',
 					},
-					...(compositeData?.builder?.queryData[0]?.filters.items || []),
+					...(compositeData?.builder?.queryData[0]?.filters?.items || []),
 				],
 			},
 		};

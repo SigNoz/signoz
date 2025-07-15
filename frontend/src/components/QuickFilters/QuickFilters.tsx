@@ -92,7 +92,8 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 					...item,
 					filters: {
 						...item.filters,
-						items: idx === lastUsedQuery ? [] : [...item.filters.items],
+						items: idx === lastUsedQuery ? [] : [...(item.filters?.items || [])],
+						op: item.filters?.op || 'AND',
 					},
 				})),
 			},

@@ -268,7 +268,7 @@ function QueryBuilderSearch({
 
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
-		const initialSourceKeys = query.filters.items?.map(
+		const initialSourceKeys = query.filters?.items?.map(
 			(item) => item.key as BaseAutocompleteData,
 		);
 
@@ -277,9 +277,10 @@ function QueryBuilderSearch({
 
 			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
 
-			const filterAttribute = [...initialSourceKeys, ...sourceKeys].find(
-				(key) => key?.key === getRemovePrefixFromKey(tagKey),
-			);
+			const filterAttribute = [
+				...(initialSourceKeys || []),
+				...(sourceKeys || []),
+			].find((key) => key?.key === getRemovePrefixFromKey(tagKey));
 
 			const computedTagValue =
 				tagValue && Array.isArray(tagValue) && tagValue[tagValue.length - 1] === ''

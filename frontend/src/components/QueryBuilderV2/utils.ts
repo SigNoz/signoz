@@ -153,7 +153,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 		);
 	}
 
-	filters.items.forEach((filter) => {
+	filters?.items?.forEach((filter) => {
 		const { key, op, value } = filter;
 
 		// Skip invalid filters with no key
@@ -310,7 +310,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 	});
 
 	// Merge new filter items with existing ones
-	if (newFilterItems.length > 0) {
+	if (newFilterItems.length > 0 && updatedFilters?.items) {
 		updatedFilters.items = [...updatedFilters.items, ...newFilterItems];
 	}
 
@@ -622,14 +622,13 @@ export const adjustQueryForV5 = (currentQuery: Query): Query => {
 				return aggregation;
 			});
 
-			console.log('aggregations', aggregations);
-
 			const {
 				aggregateAttribute,
 				aggregateOperator,
 				timeAggregation,
 				spaceAggregation,
 				reduceTo,
+				filters,
 				...retainedQuery
 			} = query;
 

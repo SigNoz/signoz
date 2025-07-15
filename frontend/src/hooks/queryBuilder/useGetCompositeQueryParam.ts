@@ -33,7 +33,7 @@ export const useGetCompositeQueryParam = (): Query | null => {
 						const convertedQuery = { ...query };
 
 						const convertedFilter = convertFiltersToExpressionWithExistingQuery(
-							query.filters,
+							query.filters || { items: [], op: 'AND' },
 							existingExpression,
 						);
 						convertedQuery.filter = convertedFilter.filter;

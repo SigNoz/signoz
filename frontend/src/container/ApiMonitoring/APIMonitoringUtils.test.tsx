@@ -101,14 +101,14 @@ describe('API Monitoring Utils', () => {
 
 			// Check that each query includes the domainName filter
 			result.query.builder.queryData.forEach((query) => {
-				const serverNameFilter = query.filters.items.find(
+				const serverNameFilter = query.filters?.items?.find(
 					(item) => item.key && item.key.key === SPAN_ATTRIBUTES.SERVER_NAME,
 				);
 				expect(serverNameFilter).toBeDefined();
 				expect(serverNameFilter?.value).toBe(domainName);
 
 				// Check that the custom filters were included
-				const testFilter = query.filters.items.find(
+				const testFilter = query.filters?.items?.find(
 					(item) => item.id === 'test-filter',
 				);
 				expect(testFilter).toBeDefined();
@@ -210,13 +210,13 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.op).toBe('AND');
+			expect(result?.op).toBe('AND');
 			// The implementation includes all keys from rowData, not just those in groupBy
-			expect(result.items.length).toBeGreaterThanOrEqual(3);
+			expect(result?.items?.length).toBeGreaterThanOrEqual(3);
 
 			// Verify each filter matches the corresponding groupBy
 			expect(
-				result.items.some(
+				result?.items?.some(
 					(item) =>
 						item.key &&
 						item.key.key === 'http.method' &&
@@ -226,7 +226,7 @@ describe('API Monitoring Utils', () => {
 			).toBe(true);
 
 			expect(
-				result.items.some(
+				result?.items?.some(
 					(item) =>
 						item.key &&
 						item.key.key === 'http.status_code' &&
@@ -236,7 +236,7 @@ describe('API Monitoring Utils', () => {
 			).toBe(true);
 
 			expect(
-				result.items.some(
+				result?.items?.some(
 					(item) =>
 						item.key &&
 						item.key.key === 'service.name' &&
@@ -272,10 +272,10 @@ describe('API Monitoring Utils', () => {
 			// Assert
 			expect(result).toBeDefined();
 			// The implementation includes all keys from rowData, not just those in groupBy
-			expect(result.items.length).toBeGreaterThanOrEqual(1);
+			expect(result?.items?.length).toBeGreaterThanOrEqual(1);
 
 			// Should include the known field with the proper dataType from groupBy
-			const knownField = result.items.find(
+			const knownField = result?.items?.find(
 				(item) => item.key && item.key.key === 'http.method',
 			);
 			expect(knownField).toBeDefined();
@@ -285,7 +285,7 @@ describe('API Monitoring Utils', () => {
 			}
 
 			// Should include the unknown field
-			const unknownField = result.items.find(
+			const unknownField = result?.items?.find(
 				(item) => item.key && item.key.key === 'unknown.field',
 			);
 			expect(unknownField).toBeDefined();
@@ -304,8 +304,8 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.op).toBe('AND');
-			expect(result.items).toHaveLength(0);
+			expect(result?.op).toBe('AND');
+			expect(result?.items).toHaveLength(0);
 		});
 	});
 
@@ -386,11 +386,11 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.op).toBe('AND');
-			expect(result.items.length).toBeGreaterThanOrEqual(3);
+			expect(result?.op).toBe('AND');
+			expect(result?.items?.length).toBeGreaterThanOrEqual(3);
 
 			// Check domain filter
-			const domainFilter = result.items.find(
+			const domainFilter = result?.items?.find(
 				(item) =>
 					item.key &&
 					item.key.key === SPAN_ATTRIBUTES.SERVER_NAME &&
@@ -399,7 +399,7 @@ describe('API Monitoring Utils', () => {
 			expect(domainFilter).toBeDefined();
 
 			// Check endpoint filter
-			const endpointFilter = result.items.find(
+			const endpointFilter = result?.items?.find(
 				(item) =>
 					item.key &&
 					item.key.key === SPAN_ATTRIBUTES.URL_PATH &&
@@ -408,7 +408,7 @@ describe('API Monitoring Utils', () => {
 			expect(endpointFilter).toBeDefined();
 
 			// Check status code filter
-			const statusFilter = result.items.find(
+			const statusFilter = result?.items?.find(
 				(item) =>
 					item.key &&
 					item.key.key === SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE &&
@@ -469,7 +469,7 @@ describe('API Monitoring Utils', () => {
 			expect(queryData.filters).toBeDefined();
 
 			// Check for domain filter
-			const domainFilter = queryData.filters.items.find(
+			const domainFilter = queryData.filters?.items?.find(
 				// eslint-disable-next-line sonarjs/no-identical-functions
 				(item) =>
 					item.key &&
@@ -479,7 +479,7 @@ describe('API Monitoring Utils', () => {
 			expect(domainFilter).toBeDefined();
 
 			// Check that custom filters were included
-			const testFilter = queryData.filters.items.find(
+			const testFilter = queryData.filters?.items?.find(
 				(item) => item.id === 'test-filter',
 			);
 			expect(testFilter).toBeDefined();
@@ -583,7 +583,7 @@ describe('API Monitoring Utils', () => {
 				} = query;
 				queryData.forEach((qd) => {
 					if (qd.filters && qd.filters.items) {
-						const serverNameFilter = qd.filters.items.find(
+						const serverNameFilter = qd.filters?.items?.find(
 							(item) => item.key && item.key.key === SPAN_ATTRIBUTES.SERVER_NAME,
 						);
 						expect(serverNameFilter).toBeDefined();
@@ -595,7 +595,7 @@ describe('API Monitoring Utils', () => {
 					}
 
 					// Should include our custom filter
-					const customFilter = qd.filters.items.find(
+					const customFilter = qd.filters?.items?.find(
 						(item) => item.id === 'test-filter',
 					);
 					expect(customFilter).toBeDefined();
@@ -631,7 +631,7 @@ describe('API Monitoring Utils', () => {
 			const queryData = result.query.builder.queryData[0];
 
 			// Should have domain filter
-			const domainFilter = queryData.filters.items.find(
+			const domainFilter = queryData.filters?.items?.find(
 				(item) => item.key && item.key.key === SPAN_ATTRIBUTES.SERVER_NAME,
 			);
 			expect(domainFilter).toBeDefined();
@@ -698,7 +698,7 @@ describe('API Monitoring Utils', () => {
 			const queryData = result.query.builder.queryData[0];
 
 			// Should have domain filter
-			const domainFilter = queryData.filters.items.find(
+			const domainFilter = queryData.filters?.items?.find(
 				(item) => item.key && item.key.key === SPAN_ATTRIBUTES.SERVER_NAME,
 			);
 			expect(domainFilter).toBeDefined();
@@ -1375,7 +1375,7 @@ describe('API Monitoring Utils', () => {
 			const queryData = result.query.builder.queryData[0];
 
 			// Should have domain filter
-			const domainFilter = queryData.filters.items.find(
+			const domainFilter = queryData.filters?.items?.find(
 				(item) => item.key && item.key.key === SPAN_ATTRIBUTES.SERVER_NAME,
 			);
 			expect(domainFilter).toBeDefined();
@@ -1384,7 +1384,7 @@ describe('API Monitoring Utils', () => {
 			}
 
 			// Should have endpoint filter if provided
-			const endpointFilter = queryData.filters.items.find(
+			const endpointFilter = queryData.filters?.items?.find(
 				(item) => item.key && item.key.key === SPAN_ATTRIBUTES.URL_PATH,
 			);
 			expect(endpointFilter).toBeDefined();
@@ -1422,7 +1422,7 @@ describe('API Monitoring Utils', () => {
 			const queryData = result.query.builder.queryData[0];
 
 			// Should include our custom filter
-			const includedFilter = queryData.filters.items.find(
+			const includedFilter = queryData.filters?.items?.find(
 				(item) => item.id === 'custom-filter',
 			);
 			expect(includedFilter).toBeDefined();

@@ -49,7 +49,7 @@ export const omitIdFromQuery = (query: Query | null): any => ({
 				const { id, ...rest } = groupByAttribute;
 				return rest;
 			});
-			const newItems = queryData.filters.items.map((item) => {
+			const newItems = queryData.filters?.items?.map((item) => {
 				const { id, ...newItem } = item;
 				if (item.key) {
 					const { id, ...rest } = item.key;
