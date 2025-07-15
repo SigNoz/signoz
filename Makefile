@@ -20,18 +20,18 @@ GO_BUILD_LDFLAG_LICENSE_SIGNOZ_IO 	= -X github.com/SigNoz/signoz/ee/zeus.depreca
 
 GO_BUILD_VERSION_LDFLAGS 		= -X github.com/SigNoz/signoz/pkg/version.version=$(VERSION) -X github.com/SigNoz/signoz/pkg/version.hash=$(COMMIT_SHORT_SHA) -X github.com/SigNoz/signoz/pkg/version.time=$(TIMESTAMP) -X github.com/SigNoz/signoz/pkg/version.branch=$(BRANCH_NAME)
 GO_BUILD_ARCHS_COMMUNITY 		= $(addprefix go-build-community-,$(ARCHS))
-GO_BUILD_CONTEXT_COMMUNITY 		= $(SRC)/pkg/query-service
+GO_BUILD_CONTEXT_COMMUNITY 		= $(SRC)/cmd/community
 GO_BUILD_LDFLAGS_COMMUNITY 		= $(GO_BUILD_VERSION_LDFLAGS) -X github.com/SigNoz/signoz/pkg/version.variant=community
 GO_BUILD_ARCHS_ENTERPRISE 		= $(addprefix go-build-enterprise-,$(ARCHS))
 GO_BUILD_ARCHS_ENTERPRISE_RACE  = $(addprefix go-build-enterprise-race-,$(ARCHS))
-GO_BUILD_CONTEXT_ENTERPRISE 	= $(SRC)/ee/query-service
+GO_BUILD_CONTEXT_ENTERPRISE 	= $(SRC)/cmd/enterprise
 GO_BUILD_LDFLAGS_ENTERPRISE 	= $(GO_BUILD_VERSION_LDFLAGS) -X github.com/SigNoz/signoz/pkg/version.variant=enterprise $(GO_BUILD_LDFLAG_ZEUS_URL) $(GO_BUILD_LDFLAG_LICENSE_SIGNOZ_IO)
 
 DOCKER_BUILD_ARCHS_COMMUNITY 	= $(addprefix docker-build-community-,$(ARCHS))
-DOCKERFILE_COMMUNITY 			= $(SRC)/pkg/query-service/Dockerfile
+DOCKERFILE_COMMUNITY 			= $(SRC)/cmd/community/Dockerfile
 DOCKER_REGISTRY_COMMUNITY 		?= docker.io/signoz/signoz-community
 DOCKER_BUILD_ARCHS_ENTERPRISE 	= $(addprefix docker-build-enterprise-,$(ARCHS))
-DOCKERFILE_ENTERPRISE 			= $(SRC)/ee/query-service/Dockerfile
+DOCKERFILE_ENTERPRISE 			= $(SRC)/cmd/enterprise/Dockerfile
 DOCKER_REGISTRY_ENTERPRISE 		?= docker.io/signoz/signoz
 JS_BUILD_CONTEXT 				= $(SRC)/frontend
 

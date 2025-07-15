@@ -30,6 +30,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
+	"github.com/spf13/cobra"
 )
 
 // Config defines the entire input configuration of signoz.
@@ -104,6 +105,28 @@ type DeprecatedFlags struct {
 	PreferSpanMetrics          bool
 	Cluster                    string
 	GatewayUrl                 string
+}
+
+func (df *DeprecatedFlags) RegisterFlags(cmd *cobra.Command) {
+	cmd.Flags().IntVar(&df.MaxIdleConns, "max-idle-conns", 50, "max idle connections to the database")
+	cmd.Flags().IntVar(&df.MaxOpenConns, "max-open-conns", 100, "max open connections to the database")
+	cmd.Flags().DurationVar(&df.DialTimeout, "dial-timeout", 5*time.Second, "dial timeout for the database")
+	cmd.Flags().StringVar(&df.Config, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
+	cmd.Flags().StringVar(&df.FluxInterval, "flux-interval", "5m", "flux interval")
+	cmd.Flags().StringVar(&df.FluxIntervalForTraceDetail, "flux-interval-for-trace-detail", "2m", "flux interval for trace detail")
+	cmd.Flags().BoolVar(&df.PreferSpanMetrics, "prefer-span-metrics", false, "(prefer span metrics for service level metrics)")
+	cmd.Flags().StringVar(&df.Cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
+	cmd.Flags().StringVar(&df.GatewayUrl, "gateway-url", "", "(url to the gateway)")
+
+	cmd.Flags().MarkDeprecated("max-idle-conns", "use SIGNOZ_TELEMETRYSTORE_MAX__IDLE__CONNS instead")
+	cmd.Flags().MarkDeprecated("max-open-conns", "use SIGNOZ_TELEMETRYSTORE_MAX__OPEN__CONNS instead")
+	cmd.Flags().MarkDeprecated("dial-timeout", "use SIGNOZ_TELEMETRYSTORE_DIAL__TIMEOUT instead")
+	cmd.Flags().MarkDeprecated("config", "use SIGNOZ_PROMETHEUS_CONFIG instead")
+	cmd.Flags().MarkDeprecated("flux-interval", "use SIGNOZ_QUERIER_FLUX__INTERVAL instead")
+	cmd.Flags().MarkDeprecated("flux-interval-for-trace-detail", "use SIGNOZ_QUERIER_FLUX__INTERVAL instead")
+	cmd.Flags().MarkDeprecated("cluster", "use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER instead")
+	cmd.Flags().MarkDeprecated("prefer-span-metrics", "use USE_SPAN_METRICS instead")
+	cmd.Flags().MarkDeprecated("gateway-url", "use SIGNOZ_GATEWAY_URL instead")
 }
 
 func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprecatedFlags DeprecatedFlags) (Config, error) {

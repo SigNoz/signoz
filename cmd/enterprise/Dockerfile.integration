@@ -34,3 +34,4 @@ RUN mv /root/linux-${TARGETARCH}/signoz /root/signoz
 RUN chmod 755 /root /root/signoz
 
 ENTRYPOINT ["/root/signoz"]
+CMD ["server"]
