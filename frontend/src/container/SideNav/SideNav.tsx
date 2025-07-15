@@ -808,12 +808,12 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	};
 
 	const onClickVersionHandler = useCallback((): void => {
-		if (isCloudUser || !changelog) {
+		if (!changelog) {
 			return;
 		}
 
 		toggleChangelogModal();
-	}, [isCloudUser, changelog, toggleChangelogModal]);
+	}, [changelog, toggleChangelogModal]);
 
 	useEffect(() => {
 		if (!isLatestVersion && !isCloudUser) {

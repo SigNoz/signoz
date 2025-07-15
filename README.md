@@ -231,6 +231,8 @@ Not sure how to get started? Just ping us on `#contributing` in our [slack commu
 - [Shaheer Kochai](https://github.com/ahmadshaheer)
 - [Amlan Kumar Nandy](https://github.com/amlannandy)
 - [Sahil Khan](https://github.com/sawhil)
+- [Aditya Singh](https://github.com/aks07)
+- [Abhi Kumar](https://github.com/ahrefabhi)
 
 #### DevOps
 
