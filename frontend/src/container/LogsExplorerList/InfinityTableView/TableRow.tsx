@@ -80,9 +80,14 @@ export default function TableRow({
 					<TableCellStyled
 						$isDragColumn={false}
 						$isLogIndicator={column.key === 'state-indicator'}
+						$hasSingleColumn={
+							tableColumns.filter((column) => column.key !== 'state-indicator')
+								.length === 1
+						}
 						$isDarkMode={isDarkMode}
 						key={column.key}
 						fontSize={fontSize}
+						columnKey={column.key as string}
 					>
 						{cloneElement(children, props)}
 					</TableCellStyled>

@@ -136,7 +136,10 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 								field: string | number,
 							): ColumnTypeRender<Record<string, unknown>> => ({
 								props: {
-									style: defaultTableStyle,
+									style: {
+										...defaultTableStyle,
+										...(fields.length > 2 ? { width: '50rem' } : {}),
+									},
 								},
 								children: (
 									<TableBodyContent
