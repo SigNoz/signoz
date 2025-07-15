@@ -20,6 +20,7 @@ import {
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
+import { unquote } from 'utils/stringUtils';
 import { v4 as uuid } from 'uuid';
 
 /**
@@ -94,21 +95,6 @@ export const convertFiltersToExpression = (
 		expression: expressions.join(' AND '),
 	};
 };
-
-function unquote(str: string): string {
-	if (typeof str !== 'string') return str;
-
-	const startsWithQuote = str.startsWith('"') || str.startsWith("'");
-	const endsWithSameQuote =
-		(str.endsWith('"') && str[0] === '"') ||
-		(str.endsWith("'") && str[0] === "'");
-
-	if (startsWithQuote && endsWithSameQuote && str.length >= 2) {
-		return str.slice(1, -1);
-	}
-
-	return str;
-}
 
 const formatValuesForFilter = (value: string | string[]): string | string[] => {
 	if (Array.isArray(value)) {
@@ -398,7 +384,7 @@ export const removeKeysFromExpression = (
 						currentQueryPair.position.operatorEnd ??
 						currentQueryPair.position.keyEnd;
 					// Get the part of the expression that comes after the current query pair
-					const expressionAfterPair = `${expression.slice(queryPairEnd + 1)}`;
+					const expressionAfterPair = `${updatedExpression.slice(queryPairEnd + 1)}`;
 					// Match optional spaces and an optional conjunction (AND/OR), case-insensitive
 					const conjunctionOrSpacesRegex = /^(\s*((AND|OR)\s+)?)/i;
 					const match = expressionAfterPair.match(conjunctionOrSpacesRegex);
@@ -407,10 +393,10 @@ export const removeKeysFromExpression = (
 						queryPairEnd += match[0].length;
 					}
 					// Remove the full query pair (including any conjunction/whitespace) from the expression
-					updatedExpression = `${expression.slice(
+					updatedExpression = `${updatedExpression.slice(
 						0,
 						queryPairStart,
-					)}${expression.slice(queryPairEnd + 1)}`.trim();
+					)}${updatedExpression.slice(queryPairEnd + 1)}`.trim();
 				}
 			}
 		});

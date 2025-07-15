@@ -26,9 +26,9 @@ import {
 	queryOperatorSuggestions,
 } from 'constants/antlrQueryConstants';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { isNull } from 'lodash-es';
+import { debounce, isNull } from 'lodash-es';
 import { TriangleAlert } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	IDetailedError,
 	IQueryContext,
@@ -42,6 +42,7 @@ import {
 	getCurrentValueIndexAtCursor,
 	getQueryContextAtCursor,
 } from 'utils/queryContextUtils';
+import { unquote } from 'utils/stringUtils';
 
 import { queryExamples } from './constants';
 
@@ -109,7 +110,6 @@ function QuerySearch({
 
 	useEffect(() => {
 		setQuery(queryData.filter?.expression || '');
-		handleQueryValidation(queryData.filter?.expression || '');
 	}, [queryData.filter?.expression]);
 
 	const [keySuggestions, setKeySuggestions] = useState<
@@ -400,6 +400,11 @@ function QuerySearch({
 		[activeKey, dataSource, isLoadingSuggestions],
 	);
 
+	const debouncedFetchValueSuggestions = useMemo(
+		() => debounce(fetchValueSuggestions, 300),
+		[fetchValueSuggestions],
+	);
+
 	const handleUpdate = useCallback((viewUpdate: { view: EditorView }): void => {
 		if (!isMountedRef.current) return;
 
@@ -465,15 +470,18 @@ function QuerySearch({
 	const handleBlur = (): void => {
 		handleQueryValidation(query);
 		setIsFocused(false);
-		if (editorRef.current) {
-			closeCompletion(editorRef.current);
-		}
 	};
 
 	useEffect(() => {
 		if (query) {
 			handleQueryValidation(query);
 		}
+
+		return (): void => {
+			if (debouncedFetchValueSuggestions) {
+				debouncedFetchValueSuggestions.cancel();
+			}
+		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
@@ -656,27 +664,38 @@ function QuerySearch({
 				return null;
 			}
 
-			const searchText = word?.text.toLowerCase().trim() ?? '';
+			let searchText = '';
+
+			if (
+				queryContext.currentPair &&
+				queryContext.currentPair.valuesPosition &&
+				queryContext.currentPair.valueList
+			) {
+				const { valuesPosition, valueList } = queryContext.currentPair;
+				const idx = getCurrentValueIndexAtCursor(valuesPosition, cursorPos.ch);
+				searchText = isNull(idx)
+					? ''
+					: unquote(valueList[idx]).toLowerCase().trim();
+			}
+
 			options = (valueSuggestions || []).filter((option) =>
 				option.label.toLowerCase().includes(searchText),
 			);
 
 			if (
 				keyName &&
-				((options.length === 0 &&
+				(((options.length === 0 || searchText === '') &&
 					(!isCompleteValuesList || lastValueRef.current !== searchText) &&
 					!isFetchingCompleteValuesList) ||
 					keyName !== activeKey ||
 					isLoadingSuggestions) &&
 				!(isLoadingSuggestions && lastKeyRef.current === keyName)
 			) {
-				setTimeout(() => {
-					fetchValueSuggestions({
-						key: keyName,
-						searchText,
-						fetchingComplete: true,
-					});
-				}, 300);
+				debouncedFetchValueSuggestions({
+					key: keyName,
+					searchText,
+					fetchingComplete: true,
+				});
 			}
 
 			// For values in bracket list, just add quotes without enclosing in brackets
@@ -846,7 +865,11 @@ function QuerySearch({
 			if (!keyName) {
 				return null;
 			}
-			const searchText = word?.text.toLowerCase().trim() ?? '';
+			let searchText = '';
+
+			if (queryContext.currentPair && queryContext.currentPair.value) {
+				searchText = unquote(queryContext.currentPair.value).toLowerCase().trim();
+			}
 
 			options = (valueSuggestions || []).filter((option) =>
 				option.label.toLowerCase().includes(searchText),
@@ -855,7 +878,7 @@ function QuerySearch({
 			// Trigger fetch only if needed
 			if (
 				keyName &&
-				((options.length === 0 &&
+				(((options.length === 0 || searchText === '') &&
 					(!isCompleteValuesList || lastValueRef.current !== searchText) &&
 					!isFetchingCompleteValuesList) ||
 					keyName !== activeKey ||
@@ -863,13 +886,11 @@ function QuerySearch({
 				!(isLoadingSuggestions && lastKeyRef.current === keyName)
 			) {
 				// eslint-disable-next-line sonarjs/no-identical-functions
-				setTimeout(() => {
-					fetchValueSuggestions({
-						key: keyName,
-						searchText,
-						fetchingComplete: true,
-					});
-				}, 300);
+				debouncedFetchValueSuggestions({
+					key: keyName,
+					searchText,
+					fetchingComplete: true,
+				});
 			}
 
 			// Process options to add appropriate formatting when selected
@@ -1018,22 +1039,6 @@ function QuerySearch({
 			}
 		}
 
-		// // If no specific context is detected, provide general suggestions
-		// options = [
-		// 	...(keySuggestions || []),
-		// 	{ label: 'AND', type: 'conjunction', boost: -10 },
-		// 	{ label: 'OR', type: 'conjunction', boost: -10 },
-		// 	{ label: '(', type: 'parenthesis', info: 'Open group', boost: -20 },
-		// ];
-
-		// // Add space after selection for general context
-		// const optionsWithSpace = addSpaceToOptions(options);
-
-		// return {
-		// 	from: word?.from ?? 0,
-		// 	options: optionsWithSpace,
-		// };
-
 		// Don't show anything if no context detected
 		return {
 			from: word?.from ?? 0,
@@ -1043,8 +1048,12 @@ function QuerySearch({
 
 	// Effect to handle focus state and trigger suggestions
 	useEffect(() => {
-		if (isFocused && editorRef.current) {
-			startCompletion(editorRef.current);
+		if (editorRef.current) {
+			if (!isFocused) {
+				closeCompletion(editorRef.current);
+			} else {
+				startCompletion(editorRef.current);
+			}
 		}
 	}, [isFocused]);
 
@@ -1174,9 +1183,6 @@ function QuerySearch({
 					}}
 					onFocus={(): void => {
 						setIsFocused(true);
-						if (editorRef.current) {
-							startCompletion(editorRef.current);
-						}
 					}}
 					onBlur={handleBlur}
 				/>

@@ -865,6 +865,13 @@ export function QueryBuilderProvider({
 						...currentQueryData.builder,
 						queryData: currentQueryData.builder.queryData.map((item) => ({
 							...item,
+							filter: {
+								...item.filter,
+								expression:
+									item.filter?.expression.trim() === ''
+										? ''
+										: item.filter?.expression ?? '',
+							},
 							filters: {
 								items: [],
 								op: 'AND',
