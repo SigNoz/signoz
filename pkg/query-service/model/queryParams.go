@@ -412,7 +412,7 @@ type CustomRetentionTTLParams struct {
 
 type CustomRetentionRule struct {
 	Conditions []FilterCondition `json:"conditions"`
-	TTLDays    int               `json:"ttlDays"` // Make sure this matches the JSON field name
+	TTLDays    int               `json:"ttlDays"`
 }
 
 type FilterCondition struct {
