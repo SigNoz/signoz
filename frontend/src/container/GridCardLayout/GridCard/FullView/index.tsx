@@ -322,6 +322,7 @@ function FullView({
 								tableProcessedDataRef={tableProcessedDataRef}
 								searchTerm={searchTerm}
 								onClickHandler={onClickHandler}
+								enableDrillDown={enableDrillDown}
 							/>
 						</GraphContainer>
 					</div>

@@ -1,13 +1,20 @@
 import { PieArcDatum } from '@visx/shape/lib/shapes/Pie';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
-import { OPERATORS } from 'constants/queryBuilder';
+import {
+	initialQueryBuilderFormValuesMap,
+	OPERATORS,
+} from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import cloneDeep from 'lodash-es/cloneDeep';
 import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	Query,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
 export function getBaseMeta(
@@ -212,4 +219,75 @@ export const getPieChartClickData = (
 		queryName,
 		filters: getFiltersFromMetric(metric), // TODO: add where clause query as well.
 	};
+};
+
+/**
+ * Gets the query data that matches the aggregate data's queryName
+ */
+export const getQueryData = (
+	query: Query,
+	queryName: string,
+): IBuilderQuery => {
+	const queryData = query?.builder?.queryData?.filter(
+		(item: IBuilderQuery) => item.queryName === queryName,
+	);
+	return queryData[0];
+};
+
+const VIEW_QUERY_MAP: Record<string, IBuilderQuery> = {
+	view_logs: initialQueryBuilderFormValuesMap.logs,
+	view_metrics: initialQueryBuilderFormValuesMap.metrics,
+	view_traces: initialQueryBuilderFormValuesMap.traces,
+};
+
+export const getViewQuery = (
+	query: Query,
+	filtersToAdd: FilterData[],
+	key: string,
+	queryName: string,
+): Query | null => {
+	const newQuery = cloneDeep(query);
+
+	const queryBuilderData = VIEW_QUERY_MAP[key];
+
+	if (!queryBuilderData) return null;
+
+	let existingFilters: TagFilterItem[] = [];
+	if (queryName) {
+		const queryData = getQueryData(query, queryName);
+		existingFilters = queryData.filters.items;
+	}
+
+	console.log('existingFilters', { existingFilters, query });
+
+	newQuery.builder.queryData = [queryBuilderData];
+
+	const filters = filtersToAdd.reduce((acc: any[], filter) => {
+		// use existing query to get baseMeta
+		const baseMeta = getBaseMeta(query, filter.filterKey);
+		if (!baseMeta) return acc;
+
+		acc.push({
+			id: uuid(),
+			key: baseMeta,
+			op: filter.operator,
+			value: filter.filterValue,
+		});
+
+		return acc;
+	}, []);
+
+	const allFilters = [...existingFilters, ...filters];
+
+	newQuery.builder.queryData[0].filters = {
+		items: allFilters,
+		op: 'AND',
+	};
+
+	newQuery.builder.queryData[0].filter = convertFiltersToExpression({
+		items: allFilters,
+		op: 'AND',
+	});
+
+	return newQuery;
 };

@@ -10,8 +10,7 @@ import {
 	ContextMenuItem,
 	getAggregateContextMenuConfig,
 } from './contextConfig';
-import { FilterData } from './drilldownUtils';
-import { getViewQuery } from './tableDrilldownUtils';
+import { FilterData, getViewQuery } from './drilldownUtils';
 
 // Type for aggregate data
 export interface AggregateData {
@@ -88,7 +87,12 @@ const useAggregateDrilldown = ({
 			const route = getRoute(key);
 			const timeRange = aggregateData?.timeRange;
 			const filtersToAdd = aggregateData?.filters || [];
-			const viewQuery = getViewQuery(query, filtersToAdd, key);
+			const viewQuery = getViewQuery(
+				query,
+				filtersToAdd,
+				key,
+				aggregateData?.queryName || '',
+			);
 
 			let queryParams = {
 				[QueryParams.compositeQuery]: JSON.stringify(viewQuery),

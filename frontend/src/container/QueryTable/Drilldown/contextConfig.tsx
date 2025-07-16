@@ -5,9 +5,13 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import BreakoutOptions from './BreakoutOptions';
-import { getAggregateColumnHeader, getBaseMeta } from './drilldownUtils';
+import {
+	getAggregateColumnHeader,
+	getBaseMeta,
+	getQueryData,
+} from './drilldownUtils';
 import { AGGREGATE_OPTIONS, SUPPORTED_OPERATORS } from './menuOptions';
-import { getBreakoutQuery, getQueryData } from './tableDrilldownUtils';
+import { getBreakoutQuery } from './tableDrilldownUtils';
 import { AggregateData } from './useAggregateDrilldown';
 
 export type ContextMenuItem = ReactNode;
@@ -98,7 +102,7 @@ export function getAggregateContextMenuConfig({
 	console.log('getAggregateContextMenuConfig', { query, aggregateData });
 
 	if (subMenu === 'breakout') {
-		const queryData = getQueryData(query, aggregateData);
+		const queryData = getQueryData(query, aggregateData?.queryName || '');
 		return {
 			header: 'Breakout by',
 			items: (
