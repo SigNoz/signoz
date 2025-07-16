@@ -17,6 +17,10 @@ import { getViewQuery } from './tableDrilldownUtils';
 export interface AggregateData {
 	queryName: string;
 	filters: FilterData[];
+	timeRange?: {
+		startTime: number;
+		endTime: number;
+	};
 }
 
 const getRoute = (key: string): string => {
@@ -82,11 +86,16 @@ const useAggregateDrilldown = ({
 			}
 
 			const route = getRoute(key);
+			const timeRange = aggregateData?.timeRange;
 			const filtersToAdd = aggregateData?.filters || [];
 			const viewQuery = getViewQuery(query, filtersToAdd, key);
 
 			let queryParams = {
 				[QueryParams.compositeQuery]: JSON.stringify(viewQuery),
+				...(timeRange && {
+					[QueryParams.startTime]: timeRange?.startTime.toString(),
+					[QueryParams.endTime]: timeRange?.endTime.toString(),
+				}),
 			} as Record<string, string>;
 
 			if (route === ROUTES.METRICS_EXPLORER) {

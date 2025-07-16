@@ -24,6 +24,7 @@ import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import { PanelWrapperProps } from './panelWrapper.types';
+import { getTimeRangeFromUplotAxis } from './utils';
 
 function UplotPanelWrapper({
 	queryResponse,
@@ -147,6 +148,7 @@ function UplotPanelWrapper({
 				queryData,
 				absoluteMouseX,
 				absoluteMouseY,
+				axesData,
 			] = args;
 			const data = getUplotClickData({
 				metric,
@@ -155,8 +157,15 @@ function UplotPanelWrapper({
 				absoluteMouseY,
 			});
 			console.log('onClickData: ', data);
+			// Compute time range if needed and if axes data is available
+			let timeRange;
+			if (axesData) {
+				const { xAxis } = axesData;
+				timeRange = getTimeRangeFromUplotAxis(xAxis, xValue);
+			}
+
 			if (data && data?.record?.queryName) {
-				onClick(data.coord, data.record);
+				onClick(data.coord, { ...data.record, timeRange });
 			}
 			onClickHandler?.(
 				xValue,
