@@ -2,15 +2,14 @@ import './StepsContent.styles.scss';
 
 import { Button, Steps } from 'antd';
 import logEvent from 'api/common/logEvent';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { PlusIcon, Undo2 } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import FunnelStep from './FunnelStep';
 import InterStepConfig from './InterStepConfig';
-
-const { Step } = Steps;
 
 function StepsContent({
 	isTraceDetailsPage,
@@ -34,48 +33,50 @@ function StepsContent({
 		);
 	}, [span, handleAddStep, handleReplaceStep, steps.length]);
 
+	const stepItems = useMemo(
+		() =>
+			steps.map((step, index) => ({
+				key: `step-${index + 1}`,
+				description: (
+					<div className="steps-content__description">
+						<div className="funnel-step-wrapper">
+							<FunnelStep stepData={step} index={index} stepsCount={steps.length} />
+							{isTraceDetailsPage && span && (
+								<Button
+									type="default"
+									className="funnel-step-wrapper__replace-button"
+									icon={<Undo2 size={12} />}
+									disabled={
+										step.service_name === span.serviceName && step.span_name === span.name
+									}
+									onClick={(): void =>
+										handleReplaceStep(index, span.serviceName, span.name)
+									}
+								>
+									Replace
+								</Button>
+							)}
+						</div>
+						{/* Display InterStepConfig only between steps */}
+						{index < steps.length - 1 && (
+							<InterStepConfig index={index} step={step} />
+						)}
+					</div>
+				),
+			})),
+		[steps, isTraceDetailsPage, span, handleReplaceStep],
+	);
+
 	return (
 		<div className="steps-content">
-			<Steps direction="vertical">
-				{steps.map((step, index) => (
-					<Step
-						key={`step-${index + 1}`}
-						description={
-							<div className="steps-content__description">
-								<div className="funnel-step-wrapper">
-									<FunnelStep stepData={step} index={index} stepsCount={steps.length} />
-									{isTraceDetailsPage && span && (
-										<Button
-											type="default"
-											className="funnel-step-wrapper__replace-button"
-											icon={<Undo2 size={12} />}
-											disabled={
-												step.service_name === span.serviceName &&
-												step.span_name === span.name
-											}
-											onClick={(): void =>
-												handleReplaceStep(index, span.serviceName, span.name)
-											}
-										>
-											Replace
-										</Button>
-									)}
-								</div>
-								{/* Display InterStepConfig only between steps */}
-								{index < steps.length - 1 && (
-									// the latency type should be sent with the n+1th step
-									<InterStepConfig index={index + 1} step={steps[index + 1]} />
-								)}
-							</div>
-						}
-					/>
-				))}
-				{/* For now we are only supporting 3 steps */}
-				{steps.length < 3 && (
-					<Step
-						className="steps-content__add-step"
-						description={
-							!isTraceDetailsPage ? (
+			<OverlayScrollbar>
+				<>
+					<Steps direction="vertical" items={stepItems} />
+
+					{/* For now we are only supporting 3 steps */}
+					{steps.length < 3 && (
+						<div className="steps-content__add-step">
+							{!isTraceDetailsPage ? (
 								<Button
 									type="default"
 									className="steps-content__add-btn"
@@ -93,11 +94,11 @@ function StepsContent({
 								>
 									Add for new Step
 								</Button>
-							)
-						}
-					/>
-				)}
-			</Steps>
+							)}
+						</div>
+					)}
+				</>
+			</OverlayScrollbar>
 		</div>
 	);
 }

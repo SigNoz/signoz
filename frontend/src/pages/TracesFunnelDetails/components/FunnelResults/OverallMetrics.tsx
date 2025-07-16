@@ -12,6 +12,7 @@ function OverallMetrics(): JSX.Element {
 	return (
 		<FunnelMetricsTable
 			title="Overall Funnel Metrics"
+			testId="overall-funnel-metrics"
 			subtitle={{
 				label: 'Conversion rate',
 				value: `${conversionRate.toFixed(2)}%`,
