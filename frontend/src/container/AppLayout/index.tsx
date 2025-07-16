@@ -185,7 +185,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		if (!changelog && !getChangelogByVersionResponse.isLoading && isVisible) {
 			getChangelogByVersionResponse.refetch();
 		}
-	}, [isVisible, changelog, getChangelogByVersionResponse]);
+		/* eslint-disable react-hooks/exhaustive-deps */
+	}, [isVisible]);
 
 	useEffect(() => {
 		let timer: ReturnType<typeof setTimeout>;
