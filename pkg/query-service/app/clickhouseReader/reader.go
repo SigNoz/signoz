@@ -1587,9 +1587,9 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	resourceMultiIfExpr := r.buildMultiIfExpression(params.TTLConditions, params.DefaultTTLDays, true)
 
 	ttlPayload := map[string]string{
-		tableNames[0]: fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 MATERIALIZED %s`,
+		tableNames[0]: fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT %s`,
 			tableNames[0], r.cluster, multiIfExpr),
-		tableNames[1]: fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 MATERIALIZED %s`,
+		tableNames[1]: fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT %s`,
 			tableNames[1], r.cluster, resourceMultiIfExpr),
 	}
 
@@ -1598,46 +1598,51 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 		return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error marshalling TTL condition")
 	}
 
-	// Execute the TTL modifications asynchronously
-	go func(ttlPayload map[string]string, ttlConditionsJSON string, defaultTTLDays int) {
-		for tableName, query := range ttlPayload {
-			// Store the operation in the database
-			customTTL := types.TTLSetting{
-				Identifiable: types.Identifiable{
-					ID: valuer.GenerateUUID(),
-				},
-				TimeAuditable: types.TimeAuditable{
-					CreatedAt: time.Now(),
-					UpdatedAt: time.Now(),
-				},
-				TransactionID: uuid,
-				TableName:     tableName,
-				TTL:           defaultTTLDays,
-				ResourceRules: ttlConditionsJSON,
-				Status:        constants.StatusPending,
-				OrgID:         orgID,
-			}
-
-			// Use context.Background() for async operation
-			_, dbErr := r.sqlDB.BunDB().NewInsert().Model(&customTTL).Exec(context.Background())
-			if dbErr != nil {
-				zap.L().Error("error in inserting to custom_retention_ttl_settings table", zap.Error(dbErr))
-				return
-			}
-
-			zap.L().Debug("Executing custom retention TTL request: ", zap.String("request", query))
-
-			if err := r.db.Exec(context.Background(), query); err != nil {
-				zap.L().Error("error while setting custom retention ttl", zap.Error(err))
-				r.updateCustomRetentionTTLStatus(context.Background(), orgID, tableName, constants.StatusFailed)
-				return
-			}
-
-			r.updateCustomRetentionTTLStatus(context.Background(), orgID, tableName, constants.StatusSuccess)
+	// Execute the TTL modifications synchronously
+	for tableName, query := range ttlPayload {
+		// Store the operation in the database
+		customTTL := types.TTLSetting{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
+			TransactionID: uuid,
+			TableName:     tableName,
+			TTL:           params.DefaultTTLDays,
+			ResourceRules: string(ttlConditionsJSON),
+			Status:        constants.StatusPending,
+			OrgID:         orgID,
 		}
-	}(ttlPayload, string(ttlConditionsJSON), params.DefaultTTLDays)
 
-	return &model.CustomRetentionTTLResponse{Message: "custom retention TTL has been successfully set up"}, nil
+		// Insert TTL setting record
+		_, dbErr := r.sqlDB.BunDB().NewInsert().Model(&customTTL).Exec(ctx)
+		if dbErr != nil {
+			zap.L().Error("error in inserting to custom_retention_ttl_settings table", zap.Error(dbErr))
+			return nil, errorsV2.Wrapf(dbErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "error inserting TTL settings")
+		}
+
+		zap.L().Debug("Executing custom retention TTL request: ", zap.String("request", query))
+
+		// Execute the ALTER TABLE query
+		if err := r.db.Exec(ctx, query); err != nil {
+			zap.L().Error("error while setting custom retention ttl", zap.Error(err))
+
+			// Update status to failed
+			r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusFailed)
+
+			return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting custom retention TTL for table %s", tableName)
+		}
+
+		// Update status to success
+		r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusSuccess)
+	}
+
+	return &model.CustomRetentionTTLResponse{
+		Message: "custom retention TTL has been successfully set up",
+	}, nil
 }
 
 // New method to build multiIf expressions with support for multiple AND conditions
