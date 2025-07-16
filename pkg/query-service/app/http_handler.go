@@ -1875,24 +1875,20 @@ func (aH *APIHandler) setCustomRetentionTTL(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	claims, errv2 := authtypes.ClaimsFromContext(ctx)
 	if errv2 != nil {
-		RespondError(w, &model.ApiError{Err: errors.New("failed to get org id from context"), Typ: model.ErrorInternal}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get org id from context"))
 		return
 	}
 
 	var params model.CustomRetentionTTLParams
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "Invalid data"))
 		return
 	}
 
 	// Context is not used here as TTL is long duration DB operation
 	result, apiErr := aH.reader.SetCustomRetentionTTL(context.Background(), claims.OrgID, &params)
 	if apiErr != nil {
-		if apiErr.Typ == model.ErrorConflict {
-			aH.HandleError(w, apiErr.Err, http.StatusConflict)
-		} else {
-			aH.HandleError(w, apiErr.Err, http.StatusInternalServerError)
-		}
+		aH.HandleError(w, apiErr, http.StatusInternalServerError)
 		return
 	}
 
@@ -1903,12 +1899,12 @@ func (aH *APIHandler) getCustomRetentionTTL(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	claims, errv2 := authtypes.ClaimsFromContext(ctx)
 	if errv2 != nil {
-		RespondError(w, &model.ApiError{Err: errors.New("failed to get org id from context"), Typ: model.ErrorInternal}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get org id from context"))
 		return
 	}
 
 	result, apiErr := aH.reader.GetCustomRetentionTTL(r.Context(), claims.OrgID)
-	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
+	if apiErr != nil && aH.HandleError(w, apiErr, http.StatusInternalServerError) {
 		return
 	}
 

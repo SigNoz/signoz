@@ -1551,19 +1551,19 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
 
-func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID string, params *model.CustomRetentionTTLParams) (*model.CustomRetentionTTLResponse, *model.ApiError) {
+func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID string, params *model.CustomRetentionTTLParams) (*model.CustomRetentionTTLResponse, error) {
 	// Keep only latest 100 transactions/requests
 	r.deleteTtlTransactions(ctx, orgID, 100)
 
-	uuidWithHyphen := uuid.New()
+	uuidWithHyphen := valuer.GenerateUUID()
 	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
 
 	if params.Type != constants.LogsTTL {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("custom retention TTL only supported for logs")}
+		return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "custom retention TTL only supported for logs")
 	}
 
-	// Validate resource rules
-	if err := r.validateResourceRules(ctx, params.ResourceRules); err != nil {
+	// Validate TTL conditions
+	if err := r.validateTTLConditions(ctx, params.TTLConditions); err != nil {
 		return nil, err
 	}
 
@@ -1575,16 +1575,16 @@ func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID stri
 	for _, tableName := range tableNames {
 		statusItem, err := r.checkCustomRetentionTTLStatusItem(ctx, orgID, tableName)
 		if err != nil {
-			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing custom_retention_ttl_status check sql query")}
+			return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error in processing custom_retention_ttl_status check sql query")
 		}
 		if statusItem.Status == constants.StatusPending {
-			return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("custom retention TTL is already running")}
+			return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "custom retention TTL is already running")
 		}
 	}
 
 	// Build multiIf expressions for both tables
-	multiIfExpr := r.buildMultiIfExpression(params.ResourceRules, params.DefaultTTLDays, false)
-	resourceMultiIfExpr := r.buildMultiIfExpression(params.ResourceRules, params.DefaultTTLDays, true)
+	multiIfExpr := r.buildMultiIfExpression(params.TTLConditions, params.DefaultTTLDays, false)
+	resourceMultiIfExpr := r.buildMultiIfExpression(params.TTLConditions, params.DefaultTTLDays, true)
 
 	ttlPayload := map[string]string{
 		tableNames[0]: fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 MATERIALIZED %s`,
@@ -1593,13 +1593,13 @@ func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID stri
 			tableNames[1], r.cluster, resourceMultiIfExpr),
 	}
 
-	resourceRulesJSON, err := json.Marshal(params.ResourceRules)
+	ttlConditionsJSON, err := json.Marshal(params.TTLConditions)
 	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error marshaling resource rules: %v", err)}
+		return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error marshalling TTL condition")
 	}
 
 	// Execute the TTL modifications asynchronously
-	go func(ttlPayload map[string]string, resourceRulesJSON string, defaultTTLDays int) {
+	go func(ttlPayload map[string]string, ttlConditionsJSON string, defaultTTLDays int) {
 		for tableName, query := range ttlPayload {
 			// Store the operation in the database
 			customTTL := types.TTLSetting{
@@ -1613,7 +1613,7 @@ func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID stri
 				TransactionID: uuid,
 				TableName:     tableName,
 				TTL:           defaultTTLDays,
-				ResourceRules: resourceRulesJSON,
+				ResourceRules: ttlConditionsJSON,
 				Status:        constants.StatusPending,
 				OrgID:         orgID,
 			}
@@ -1625,7 +1625,7 @@ func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID stri
 				return
 			}
 
-			zap.L().Info("Executing custom retention TTL request: ", zap.String("request", query))
+			zap.L().Debug("Executing custom retention TTL request: ", zap.String("request", query))
 
 			if err := r.db.Exec(context.Background(), query); err != nil {
 				zap.L().Error("error while setting custom retention ttl", zap.Error(err))
@@ -1635,17 +1635,17 @@ func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID stri
 
 			r.updateCustomRetentionTTLStatus(context.Background(), orgID, tableName, constants.StatusSuccess)
 		}
-	}(ttlPayload, string(resourceRulesJSON), params.DefaultTTLDays)
+	}(ttlPayload, string(ttlConditionsJSON), params.DefaultTTLDays)
 
 	return &model.CustomRetentionTTLResponse{Message: "custom retention TTL has been successfully set up"}, nil
 }
 
 // New method to build multiIf expressions with support for multiple AND conditions
-func (r *ClickHouseReader) buildMultiIfExpression(resourceRules []model.CustomRetentionRule, defaultTTLDays int, isResourceTable bool) string {
+func (r *ClickHouseReader) buildMultiIfExpression(ttlConditions []model.CustomRetentionRule, defaultTTLDays int, isResourceTable bool) string {
 	var conditions []string
 
-	for i, rule := range resourceRules {
-		zap.L().Info("Processing rule", zap.Int("ruleIndex", i), zap.Int("ttlDays", rule.TTLDays), zap.Int("conditionsCount", len(rule.Conditions)))
+	for i, rule := range ttlConditions {
+		zap.L().Debug("Processing rule", zap.Int("ruleIndex", i), zap.Int("ttlDays", rule.TTLDays), zap.Int("conditionsCount", len(rule.Conditions)))
 
 		if len(rule.Conditions) == 0 {
 			zap.L().Warn("Rule has no conditions, skipping", zap.Int("ruleIndex", i))
@@ -1655,33 +1655,28 @@ func (r *ClickHouseReader) buildMultiIfExpression(resourceRules []model.CustomRe
 		// Build AND conditions for this rule
 		var andConditions []string
 		for j, condition := range rule.Conditions {
-			zap.L().Info("Processing condition", zap.Int("ruleIndex", i), zap.Int("conditionIndex", j), zap.String("key", condition.Key), zap.Strings("values", condition.Values))
+			zap.L().Debug("Processing condition", zap.Int("ruleIndex", i), zap.Int("conditionIndex", j), zap.String("key", condition.Key), zap.Strings("values", condition.Values))
 
+			// This should not happen as validation should catch it
 			if len(condition.Values) == 0 {
-				zap.L().Warn("Condition has no values, skipping", zap.Int("ruleIndex", i), zap.Int("conditionIndex", j))
+				zap.L().Error("Condition has no values - this should have been caught in validation", zap.Int("ruleIndex", i), zap.Int("conditionIndex", j))
 				continue
-			}
-
-			// Quote the values
-			quoted := make([]string, len(condition.Values))
-			for k, v := range condition.Values {
-				quoted[k] = fmt.Sprintf("'%s'", v)
 			}
 
 			var conditionExpr string
 			if isResourceTable {
 				// For resource table, use JSONExtractString
 				conditionExpr = fmt.Sprintf(
-					"JSONExtractString(labels, '%s') IN (%s)",
+					"JSONExtractString(labels, '%s') IN ('%s')",
 					condition.Key,
-					strings.Join(quoted, ", "),
+					strings.Join(condition.Values, "','"),
 				)
 			} else {
 				// For main logs table, use resources_string
 				conditionExpr = fmt.Sprintf(
-					"resources_string['%s'] IN (%s)",
+					"resources_string['%s'] IN ('%s')",
 					condition.Key,
-					strings.Join(quoted, ", "),
+					strings.Join(condition.Values, "','"),
 				)
 			}
 			andConditions = append(andConditions, conditionExpr)
@@ -1691,7 +1686,7 @@ func (r *ClickHouseReader) buildMultiIfExpression(resourceRules []model.CustomRe
 			// Join all conditions with AND
 			fullCondition := strings.Join(andConditions, " AND ")
 			conditionWithTTL := fmt.Sprintf("%s, %d", fullCondition, rule.TTLDays)
-			zap.L().Info("Adding condition to multiIf", zap.String("condition", conditionWithTTL))
+			zap.L().Debug("Adding condition to multiIf", zap.String("condition", conditionWithTTL))
 			conditions = append(conditions, conditionWithTTL)
 		}
 	}
@@ -1702,11 +1697,11 @@ func (r *ClickHouseReader) buildMultiIfExpression(resourceRules []model.CustomRe
 		defaultTTLDays,
 	)
 
-	zap.L().Info("Final multiIf expression", zap.String("expression", result))
+	zap.L().Debug("Final multiIf expression", zap.String("expression", result))
 	return result
 }
 
-func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID string) (*model.GetCustomRetentionTTLResponse, *model.ApiError) {
+func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID string) (*model.GetCustomRetentionTTLResponse, error) {
 	// Get the latest custom retention TTL setting
 	customTTL := new(types.TTLSetting)
 	err := r.sqlDB.BunDB().NewSelect().
@@ -1719,33 +1714,33 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 
 	if err != nil && err != sql.ErrNoRows {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing get custom retention ttl query")}
+		return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error in processing get custom ttl query")
 	}
 
 	if err == sql.ErrNoRows {
 		return &model.GetCustomRetentionTTLResponse{
 			DefaultTTLDays: 15,
-			ResourceRules:  []model.CustomRetentionRule{},
+			TTLConditions:  []model.CustomRetentionRule{},
 			Status:         constants.StatusFailed,
 		}, nil
 	}
 
-	var resourceRules []model.CustomRetentionRule
+	var ttlConditions []model.CustomRetentionRule
 	if customTTL.ResourceRules != "" {
-		if err := json.Unmarshal([]byte(customTTL.ResourceRules), &resourceRules); err != nil {
-			zap.L().Error("Error parsing resource rules", zap.Error(err))
-			resourceRules = []model.CustomRetentionRule{}
+		if err := json.Unmarshal([]byte(customTTL.ResourceRules), &ttlConditions); err != nil {
+			zap.L().Error("Error parsing TTL conditions", zap.Error(err))
+			ttlConditions = []model.CustomRetentionRule{}
 		}
 	}
 
 	return &model.GetCustomRetentionTTLResponse{
 		DefaultTTLDays: customTTL.TTL,
-		ResourceRules:  resourceRules,
+		TTLConditions:  ttlConditions,
 		Status:         customTTL.Status,
 	}, nil
 }
 
-func (r *ClickHouseReader) checkCustomRetentionTTLStatusItem(ctx context.Context, orgID string, tableName string) (*types.TTLSetting, *model.ApiError) {
+func (r *ClickHouseReader) checkCustomRetentionTTLStatusItem(ctx context.Context, orgID string, tableName string) (*types.TTLSetting, error) {
 	ttl := new(types.TTLSetting)
 	err := r.sqlDB.BunDB().NewSelect().
 		Model(ttl).
@@ -1757,7 +1752,7 @@ func (r *ClickHouseReader) checkCustomRetentionTTLStatusItem(ctx context.Context
 
 	if err != nil && err != sql.ErrNoRows {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return ttl, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing custom_retention_ttl_status check sql query")}
+		return ttl, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error in processing custom_retention_ttl_status check sql query")
 	}
 	return ttl, nil
 }
@@ -1777,60 +1772,99 @@ func (r *ClickHouseReader) updateCustomRetentionTTLStatus(ctx context.Context, o
 	}
 }
 
-// Enhanced validation function to handle multiple conditions
-func (r *ClickHouseReader) validateResourceRules(ctx context.Context, resourceRules []model.CustomRetentionRule) *model.ApiError {
-	if len(resourceRules) == 0 {
+// Enhanced validation function with duplicate detection and efficient key validation
+func (r *ClickHouseReader) validateTTLConditions(ctx context.Context, ttlConditions []model.CustomRetentionRule) error {
+	if len(ttlConditions) == 0 {
 		return nil
 	}
 
-	// Collect all unique keys from all conditions
+	// Collect all unique keys and detect duplicates
 	var allKeys []string
 	keySet := make(map[string]struct{})
+	conditionSignatures := make(map[string]bool)
 
-	for _, rule := range resourceRules {
-		for _, condition := range rule.Conditions {
+	for i, rule := range ttlConditions {
+		if len(rule.Conditions) == 0 {
+			return errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "rule at index %d has no conditions", i)
+		}
+
+		// Create a signature for this rule's conditions to detect duplicates
+		var conditionKeys []string
+		var conditionValues []string
+
+		for j, condition := range rule.Conditions {
+			if len(condition.Values) == 0 {
+				return errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "condition at rule %d, condition %d has no values", i, j)
+			}
+
+			// Collect unique keys
 			if _, exists := keySet[condition.Key]; !exists {
 				allKeys = append(allKeys, condition.Key)
 				keySet[condition.Key] = struct{}{}
 			}
+
+			// Build signature for duplicate detection
+			conditionKeys = append(conditionKeys, condition.Key)
+			conditionValues = append(conditionValues, strings.Join(condition.Values, ","))
 		}
+
+		// Create signature by sorting keys and values to handle order-independent comparison
+		sort.Strings(conditionKeys)
+		sort.Strings(conditionValues)
+		signature := strings.Join(conditionKeys, "|") + ":" + strings.Join(conditionValues, "|")
+
+		if conditionSignatures[signature] {
+			return errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "duplicate rule detected at index %d: rules with identical conditions are not allowed", i)
+		}
+		conditionSignatures[signature] = true
 	}
 
 	if len(allKeys) == 0 {
 		return nil
 	}
 
-	// Query all valid resource keys once
-	validResourceKeys := make(map[string]struct{})
-	query := fmt.Sprintf("SELECT DISTINCT name FROM %s.%s", r.logsDB, r.logsResourceKeys)
+	// Create placeholders for IN query
+	placeholders := make([]string, len(allKeys))
+	for i := range allKeys {
+		placeholders[i] = "?"
+	}
 
-	rows, err := r.db.Query(ctx, query)
+	// Efficient validation using IN query
+	query := fmt.Sprintf("SELECT name FROM %s.%s WHERE name IN (%s)",
+		r.logsDB, r.logsResourceKeys, strings.Join(placeholders, ", "))
+
+	// Convert keys to interface{} for query parameters
+	params := make([]interface{}, len(allKeys))
+	for i, key := range allKeys {
+		params[i] = key
+	}
+
+	rows, err := r.db.Query(ctx, query, params...)
 	if err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to fetch valid resource keys: %v", err)}
+		return errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to validate resource keys: %v")
 	}
 	defer rows.Close()
 
+	// Collect valid keys
+	validKeys := make(map[string]struct{})
 	for rows.Next() {
 		var name string
 		if err := rows.Scan(&name); err != nil {
-			return &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to scan resource keys: %v", err)}
+			return errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to scan resource keys: %v")
 		}
-		validResourceKeys[name] = struct{}{}
+		validKeys[name] = struct{}{}
 	}
 
-	// Validate each key
+	// Find invalid keys
 	var invalidKeys []string
 	for _, key := range allKeys {
-		if _, exists := validResourceKeys[key]; !exists {
+		if _, exists := validKeys[key]; !exists {
 			invalidKeys = append(invalidKeys, key)
 		}
 	}
 
 	if len(invalidKeys) > 0 {
-		return &model.ApiError{
-			Typ: model.ErrorBadData,
-			Err: fmt.Errorf("invalid resource keys found: %v. Please check logs_resource_keys table for valid keys", invalidKeys),
-		}
+		return errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "invalid resource keys found: %v. Please check logs_resource_keys table for valid keys", invalidKeys)
 	}
 
 	return nil

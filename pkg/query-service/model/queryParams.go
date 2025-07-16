@@ -407,7 +407,7 @@ type TTLParams struct {
 type CustomRetentionTTLParams struct {
 	Type           string                `json:"type"`
 	DefaultTTLDays int                   `json:"defaultTTLDays"`
-	ResourceRules  []CustomRetentionRule `json:"resourceRules"`
+	TTLConditions  []CustomRetentionRule `json:"ttlConditions"`
 }
 
 type CustomRetentionRule struct {
@@ -422,7 +422,7 @@ type FilterCondition struct {
 
 type GetCustomRetentionTTLResponse struct {
 	DefaultTTLDays int                   `json:"defaultTTLDays"`
-	ResourceRules  []CustomRetentionRule `json:"resourceRules"`
+	TTLConditions  []CustomRetentionRule `json:"ttlConditions"`
 	Status         string                `json:"status"`
 }
 
