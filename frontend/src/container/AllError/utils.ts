@@ -18,6 +18,7 @@ export const urlKey = {
 	pageSize: 'pageSize',
 	exceptionType: 'exceptionType',
 	serviceName: 'serviceName',
+	resourceAttribute: 'resourceAttribute',
 };
 
 export const isOrderParams = (orderBy: string | null): orderBy is OrderBy =>
@@ -181,4 +182,14 @@ export const extractFilterValues = (
 		);
 	}
 	return filterValues;
+};
+
+export const getResourceAttributeString = (
+	resourceAttribute: string | null,
+): string => {
+	if (resourceAttribute) {
+		return resourceAttribute;
+	}
+
+	return '';
 };
