@@ -1886,7 +1886,7 @@ func (aH *APIHandler) setCustomRetentionTTL(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Context is not used here as TTL is long duration DB operation
-	result, apiErr := aH.reader.SetCustomRetentionTTL(context.Background(), claims.OrgID, &params)
+	result, apiErr := aH.reader.SetTTLV2(context.Background(), claims.OrgID, &params)
 	if apiErr != nil {
 		aH.HandleError(w, apiErr, http.StatusInternalServerError)
 		return

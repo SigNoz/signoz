@@ -1551,7 +1551,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
 
-func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID string, params *model.CustomRetentionTTLParams) (*model.CustomRetentionTTLResponse, error) {
+func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *model.CustomRetentionTTLParams) (*model.CustomRetentionTTLResponse, error) {
 	// Keep only latest 100 transactions/requests
 	r.deleteTtlTransactions(ctx, orgID, 100)
 
@@ -1645,16 +1645,16 @@ func (r *ClickHouseReader) buildMultiIfExpression(ttlConditions []model.CustomRe
 	var conditions []string
 
 	for i, rule := range ttlConditions {
-		zap.L().Debug("Processing rule", zap.Int("ruleIndex", i), zap.Int("ttlDays", rule.TTLDays), zap.Int("conditionsCount", len(rule.Conditions)))
+		zap.L().Debug("Processing rule", zap.Int("ruleIndex", i), zap.Int("ttlDays", rule.TTLDays), zap.Int("conditionsCount", len(rule.Filters)))
 
-		if len(rule.Conditions) == 0 {
+		if len(rule.Filters) == 0 {
 			zap.L().Warn("Rule has no conditions, skipping", zap.Int("ruleIndex", i))
 			continue
 		}
 
 		// Build AND conditions for this rule
 		var andConditions []string
-		for j, condition := range rule.Conditions {
+		for j, condition := range rule.Filters {
 			zap.L().Debug("Processing condition", zap.Int("ruleIndex", i), zap.Int("conditionIndex", j), zap.String("key", condition.Key), zap.Strings("values", condition.Values))
 
 			// This should not happen as validation should catch it
@@ -1784,7 +1784,7 @@ func (r *ClickHouseReader) validateTTLConditions(ctx context.Context, ttlConditi
 	conditionSignatures := make(map[string]bool)
 
 	for i, rule := range ttlConditions {
-		if len(rule.Conditions) == 0 {
+		if len(rule.Filters) == 0 {
 			return errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "rule at index %d has no conditions", i)
 		}
 
@@ -1792,7 +1792,7 @@ func (r *ClickHouseReader) validateTTLConditions(ctx context.Context, ttlConditi
 		var conditionKeys []string
 		var conditionValues []string
 
-		for j, condition := range rule.Conditions {
+		for j, condition := range rule.Filters {
 			if len(condition.Values) == 0 {
 				return errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "condition at rule %d, condition %d has no values", i, j)
 			}
