@@ -104,6 +104,12 @@ func detectPlatform() string {
 		return "heroku"
 	case os.Getenv("RENDER") != "" || os.Getenv("RENDER_SERVICE_ID") != "":
 		return "render"
+	case os.Getenv("COOLIFY_RESOURCE_UUID") != "":
+		return "coolify"
+	case os.Getenv("RAILWAY_SERVICE_ID") != "":
+		return "railway"
+	case os.Getenv("ECS_CONTAINER_METADATA_URI_V4") != "":
+		return "ecs"
 	}
 
 	// Try to detect cloud provider through metadata endpoints
@@ -147,6 +153,16 @@ func detectPlatform() string {
 			resp.Body.Close()
 			if resp.StatusCode == 200 {
 				return "digitalocean"
+			}
+		}
+	}
+
+	// Hetzner metadata
+	if req, err := http.NewRequest(http.MethodGet, "http://169.254.169.254/hetzner/v1/metadata", nil); err == nil {
+		if resp, err := client.Do(req); err == nil {
+			resp.Body.Close()
+			if resp.StatusCode == 200 {
+				return "hetzner"
 			}
 		}
 	}

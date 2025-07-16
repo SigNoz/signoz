@@ -2,7 +2,7 @@
 import './Home.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Alert, Button, Popover } from 'antd';
+import { Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
@@ -319,8 +319,6 @@ export default function Home(): JSX.Element {
 			handleUpdateChecklistDoneItem('SEND_INFRA_METRICS');
 		}
 	}, [hostData, k8sPodsData, handleUpdateChecklistDoneItem]);
-
-	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	useEffect(() => {
 		logEvent('Homepage: Visited', {});
@@ -706,33 +704,6 @@ export default function Home(): JSX.Element {
 					)}
 				</div>
 				<div className="home-right-content">
-					{(isCloudUser || isEnterpriseSelfHostedUser) && (
-						<div className="home-notifications-container">
-							<div className="notification">
-								<Alert
-									message={
-										<>
-											We&apos;re updating our metric ingestion processing pipeline.
-											Currently, metric names and labels are normalized to replace dots and
-											other special characters with underscores (_). This restriction will
-											soon be removed. Learn more{' '}
-											<a
-												href="https://signoz.io/guides/metrics-migration-cloud-users"
-												target="_blank"
-												rel="noopener noreferrer"
-											>
-												here
-											</a>
-											.
-										</>
-									}
-									type="warning"
-									showIcon
-								/>
-							</div>
-						</div>
-					)}
-
 					{!isWelcomeChecklistSkipped && !loadingUserPreferences && (
 						<AnimatePresence initial={false}>
 							<Card className="checklist-card">

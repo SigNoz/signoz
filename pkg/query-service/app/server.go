@@ -162,19 +162,9 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 	s.opampServer = opamp.InitializeServer(
 		&opAmpModel.AllAgents,
 		agentConfMgr,
+		signoz.Instrumentation,
 	)
-
-	orgs, err := apiHandler.Signoz.Modules.OrgGetter.ListByOwnedKeyRange(context.Background())
-	if err != nil {
-		return nil, err
-	}
-	for _, org := range orgs {
-		errorList := reader.PreloadMetricsMetadata(context.Background(), org.ID)
-		for _, er := range errorList {
-			zap.L().Error("failed to preload metrics metadata", zap.Error(er))
-		}
-	}
-
+	
 	return s, nil
 }
 

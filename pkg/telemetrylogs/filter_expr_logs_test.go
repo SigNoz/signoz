@@ -2130,7 +2130,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:      "Common filters",
 			query:         "status IN (\"pending\", \"processing\", \"completed\") AND NOT is_deleted=true",
 			shouldPass:    true,
-			expectedQuery: "WHERE (((attributes_number['status'] = ? OR attributes_number['status'] = ? OR attributes_number['status'] = ?) AND mapContains(attributes_number, 'status') = ?) AND NOT ((attributes_bool['is_deleted'] = ? AND mapContains(attributes_bool, 'is_deleted') = ?)))",
+			expectedQuery: "WHERE (((toString(attributes_number['status']) = ? OR toString(attributes_number['status']) = ? OR toString(attributes_number['status']) = ?) AND mapContains(attributes_number, 'status') = ?) AND NOT ((attributes_bool['is_deleted'] = ? AND mapContains(attributes_bool, 'is_deleted') = ?)))",
 			expectedArgs:  []any{"pending", "processing", "completed", true, true, true},
 		},
 		{

@@ -2,14 +2,13 @@ package rediscache
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"time"
 
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/cache"
-	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -48,10 +47,12 @@ func (c *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey string, 
 	err := c.client.Get(ctx, strings.Join([]string{orgID.StringValue(), cacheKey}, "::")).Scan(dest)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return errorsV2.Newf(errorsV2.TypeNotFound, errorsV2.CodeNotFound, "key miss")
+			return errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "key miss")
 		}
+
 		return err
 	}
+
 	return nil
 }
 

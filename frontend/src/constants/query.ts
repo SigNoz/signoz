@@ -48,4 +48,5 @@ export enum QueryParams {
 	kindString = 'kindString',
 	selectedExplorerView = 'selectedExplorerView',
 	summaryFilters = 'summaryFilters',
+	tab = 'tab',
 }

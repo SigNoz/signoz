@@ -2,8 +2,10 @@ package opamp
 
 import (
 	"context"
+	"net/http"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation"
 	model "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/open-telemetry/opamp-go/protobufs"
@@ -30,7 +32,9 @@ const capabilities = protobufs.ServerCapabilities_ServerCapabilities_AcceptsEffe
 	protobufs.ServerCapabilities_ServerCapabilities_AcceptsStatus
 
 func InitializeServer(
-	agents *model.Agents, agentConfigProvider AgentConfigProvider,
+	agents *model.Agents,
+	agentConfigProvider AgentConfigProvider,
+	instrumentation instrumentation.Instrumentation,
 ) *Server {
 	if agents == nil {
 		agents = &model.AllAgents
@@ -40,16 +44,23 @@ func InitializeServer(
 		agents:              agents,
 		agentConfigProvider: agentConfigProvider,
 	}
-	opAmpServer.server = server.New(zap.L().Sugar())
+	opAmpServer.server = server.New(wrappedLogger(instrumentation.Logger()))
 	return opAmpServer
 }
 
 func (srv *Server) Start(listener string) error {
 	settings := server.StartSettings{
 		Settings: server.Settings{
-			Callbacks: server.CallbacksStruct{
-				OnMessageFunc:         srv.OnMessage,
-				OnConnectionCloseFunc: srv.onDisconnect,
+			Callbacks: types.Callbacks{
+				OnConnecting: func(request *http.Request) types.ConnectionResponse {
+					return types.ConnectionResponse{
+						Accept: true,
+						ConnectionCallbacks: types.ConnectionCallbacks{
+							OnMessage:         srv.OnMessage,
+							OnConnectionClose: srv.onDisconnect,
+						},
+					}
+				},
 			},
 		},
 		ListenEndpoint: listener,
@@ -86,8 +97,8 @@ func (srv *Server) onDisconnect(conn types.Connection) {
 // but we keep them in context mapped which is mapped to the instanceID, so we would know the
 // orgID from the context
 // note :- there can only be 50 agents in the db for a given orgID, we don't have a check in-memory but we delete from the db after insert.
-func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
-	agentID := msg.InstanceUid
+func (srv *Server) OnMessage(ctx context.Context, conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
+	agentID, _ := valuer.NewUUIDFromBytes(msg.GetInstanceUid())
 
 	// find the orgID, if nothing is found keep it empty.
 	// the find or create agent will return an error if orgID is empty
@@ -98,13 +109,16 @@ func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer
 		orgID = orgIDs[0].ID
 	}
 
-	agent, created, err := srv.agents.FindOrCreateAgent(agentID, conn, orgID)
+	// when a new org is created and the agent is not able to register
+	// the changes in pkg/query-service/app/opamp/model/agent.go 270 - 277 takes care that
+	// agents sends the effective config when we processStatusUpdate.
+	agent, created, err := srv.agents.FindOrCreateAgent(agentID.String(), conn, orgID)
 	if err != nil {
-		zap.L().Error("Failed to find or create agent", zap.String("agentID", agentID), zap.Error(err))
+		zap.L().Error("Failed to find or create agent", zap.String("agentID", agentID.String()), zap.Error(err))
 
 		// Return error response according to OpAMP protocol
 		return &protobufs.ServerToAgent{
-			InstanceUid: agentID,
+			InstanceUid: msg.GetInstanceUid(),
 			ErrorResponse: &protobufs.ServerErrorResponse{
 				Type: protobufs.ServerErrorResponseType_ServerErrorResponseType_Unavailable,
 				Details: &protobufs.ServerErrorResponse_RetryInfo{
@@ -113,6 +127,8 @@ func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer
 					},
 				},
 			},
+			// Note: refer to opamp/model/agent.go; look for `Flags` keyword
+			// Flags: uint64(protobufs.ServerToAgentFlags_ServerToAgentFlags_ReportFullState),
 		}
 	}
 
@@ -126,7 +142,7 @@ func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer
 	}
 
 	response := &protobufs.ServerToAgent{
-		InstanceUid:  agentID,
+		InstanceUid:  msg.GetInstanceUid(),
 		Capabilities: uint64(capabilities),
 	}
 

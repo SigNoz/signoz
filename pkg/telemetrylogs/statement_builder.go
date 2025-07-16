@@ -270,10 +270,11 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 
 		// Constrain the main query to the rows that appear in the CTE.
 		tuple := fmt.Sprintf("(%s)", strings.Join(fieldNames, ", "))
-		sb.Where(fmt.Sprintf("%s IN (SELECT %s FROM __limit_cte)", tuple, strings.Join(fieldNames, ", ")))
+		sb.Where(fmt.Sprintf("%s GLOBAL IN (SELECT %s FROM __limit_cte)", tuple, strings.Join(fieldNames, ", ")))
 
 		// Group by all dimensions
-		sb.GroupBy("ALL")
+		sb.GroupBy("ts")
+		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 		if query.Having != nil && query.Having.Expression != "" {
 			// Rewrite having expression to use SQL column names
 			rewriter := querybuilder.NewHavingExpressionRewriter()
@@ -290,7 +291,8 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		finalArgs = querybuilder.PrependArgs(cteArgs, mainArgs)
 
 	} else {
-		sb.GroupBy("ALL")
+		sb.GroupBy("ts")
+		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
 			rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
@@ -380,7 +382,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	}
 
 	// Group by dimensions
-	sb.GroupBy("ALL")
+	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
 	// Add having clause if needed
 	if query.Having != nil && query.Having.Expression != "" {
@@ -492,7 +494,7 @@ func (b *logQueryStatementBuilder) maybeAttachResourceFilter(
 		return "", nil, err
 	}
 
-	sb.Where("resource_fingerprint IN (SELECT fingerprint FROM __resource_filter)")
+	sb.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
 
 	return fmt.Sprintf("__resource_filter AS (%s)", stmt.Query), stmt.Args, nil
 }

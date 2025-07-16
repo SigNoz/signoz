@@ -59,8 +59,8 @@ export const getNamespaceMetricsQueryPayload = (
 	const getKey = (dotKey: string, underscoreKey: string): string =>
 		dotMetricsEnabled ? dotKey : underscoreKey;
 	const k8sPodCpuUtilizationKey = getKey(
-		'k8s.pod.cpu.utilization',
-		'k8s_pod_cpu_utilization',
+		'k8s.pod.cpu.usage',
+		'k8s_pod_cpu_usage',
 	);
 	const k8sContainerCpuRequestKey = getKey(
 		'k8s.container.cpu_request',

@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/promql"
 )
 
@@ -25,9 +24,4 @@ func NewEngine(logger *slog.Logger, cfg Config) *Engine {
 		Timeout:            time.Duration(2 * time.Minute),
 		ActiveQueryTracker: activeQueryTracker,
 	})
-}
-
-// init initializes the prometheus model with UTF8 validation
-func init() {
-	model.NameValidationScheme = model.UTF8Validation
 }

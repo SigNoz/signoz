@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -13,6 +14,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
+	"golang.org/x/exp/maps"
 )
 
 var (
@@ -171,19 +173,25 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	// Select default columns
-	sb.Select(
-		"timestamp",
-		"trace_id",
-		"span_id",
-		"name",
-		sqlbuilder.Escape("resource_string_service$$name"),
-		"duration_nano",
-		"response_status_code",
-	)
+	selectedFields := query.SelectFields
+
+	if len(selectedFields) == 0 {
+		selectedFields = maps.Values(DefaultFields)
+	}
+
+	selectFieldKeys := []string{}
+	for _, field := range selectedFields {
+		selectFieldKeys = append(selectFieldKeys, field.Name)
+	}
+
+	for _, x := range []string{"timestamp", "span_id", "trace_id"} {
+		if !slices.Contains(selectFieldKeys, x) {
+			selectedFields = append(selectedFields, DefaultFields[x])
+		}
+	}
 
 	// TODO: should we deprecate `SelectFields` and return everything from a span like we do for logs?
-	for _, field := range query.SelectFields {
+	for _, field := range selectedFields {
 		colExpr, err := b.fm.ColumnExpressionFor(ctx, &field, keys)
 		if err != nil {
 			return nil, err
@@ -310,10 +318,11 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 
 		// Constrain the main query to the rows that appear in the CTE.
 		tuple := fmt.Sprintf("(%s)", strings.Join(fieldNames, ", "))
-		sb.Where(fmt.Sprintf("%s IN (SELECT %s FROM __limit_cte)", tuple, strings.Join(fieldNames, ", ")))
+		sb.Where(fmt.Sprintf("%s GLOBAL IN (SELECT %s FROM __limit_cte)", tuple, strings.Join(fieldNames, ", ")))
 
 		// Group by all dimensions
-		sb.GroupBy("ALL")
+		sb.GroupBy("ts")
+		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
 			rewrittenExpr := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
@@ -328,7 +337,8 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		finalArgs = querybuilder.PrependArgs(cteArgs, mainArgs)
 
 	} else {
-		sb.GroupBy("ALL")
+		sb.GroupBy("ts")
+		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
 			rewrittenExpr := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
@@ -417,7 +427,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	}
 
 	// Group by dimensions
-	sb.GroupBy("ALL")
+	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
 	// Add having clause if needed
 	if query.Having != nil && query.Having.Expression != "" && !skipHaving {
@@ -526,7 +536,7 @@ func (b *traceQueryStatementBuilder) maybeAttachResourceFilter(
 		return "", nil, err
 	}
 
-	sb.Where("resource_fingerprint IN (SELECT fingerprint FROM __resource_filter)")
+	sb.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
 
 	return fmt.Sprintf("__resource_filter AS (%s)", stmt.Query), stmt.Args, nil
 }
