@@ -14,16 +14,16 @@ function TracesFunnelDetails(): JSX.Element {
 	const { funnelId } = useParams<{ funnelId: string }>();
 	const { data, isLoading, isError } = useFunnelDetails({ funnelId });
 
-	if (isLoading || !data?.payload) {
-		return <Spinner size="large" />;
-	}
-
 	if (isError) {
 		return (
 			<NotFoundContainer>
 				<Typography>Error loading funnel details</Typography>
 			</NotFoundContainer>
 		);
+	}
+
+	if (isLoading || !data?.payload) {
+		return <Spinner size="large" />;
 	}
 
 	return (

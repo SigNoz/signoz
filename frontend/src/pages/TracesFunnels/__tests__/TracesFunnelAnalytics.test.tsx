@@ -11,11 +11,18 @@ import * as FunnelContextModule from 'pages/TracesFunnels/FunnelContext';
 import { act } from 'react-dom/test-utils';
 
 import { renderTraceFunnelRoutes } from './CreateFunnel.test';
-import { defaultMockFunnelContext, mockStepsData } from './mockFunnelsData';
+import {
+	defaultMockFunnelContext,
+	mockErrorTracesData,
+	mockOverviewData,
+	mockSlowTracesData,
+	mockStepsData,
+	mockStepsOverviewData,
+} from './mockFunnelsData';
 
 jest.mock('react-redux', () => ({
 	...jest.requireActual('react-redux'),
-	useSelector: (): any => ({
+	useSelector: (): { selectedTime: string; loading: boolean } => ({
 		selectedTime: '1h',
 		loading: false,
 	}),
@@ -59,7 +66,8 @@ describe('Viewing Funnel Details', () => {
 			),
 			// Mock validate endpoint as it might be called on load
 			rest.post(
-				`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.funnel_id}/analytics/validate`,
+				// eslint-disable-next-line sonarjs/no-duplicate-string
+				'http://localhost/api/v1/trace-funnels/analytics/validate',
 				(_, res, ctx) => res(ctx.status(200), ctx.json({ data: [] })),
 			),
 		);
@@ -71,7 +79,7 @@ describe('Viewing Funnel Details', () => {
 		await waitFor(() => {
 			expect(screen.getByText(/all funnels/i)).toBeInTheDocument();
 		});
-		await screen.findByText(mockSingleFunnelData.funnel_name);
+		await screen.findAllByText(mockSingleFunnelData.funnel_name);
 	});
 
 	it('should display the total number of steps based on the fetched funnel data', async () => {
@@ -83,7 +91,7 @@ describe('Viewing Funnel Details', () => {
 					res(ctx.status(200), ctx.json({ data: mockSingleFunnelData })),
 			),
 			rest.post(
-				`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.funnel_id}/analytics/validate`,
+				'http://localhost/api/v1/trace-funnels/analytics/validate',
 				(_, res, ctx) => res(ctx.status(200), ctx.json({ data: [] })),
 			),
 		);
@@ -113,7 +121,7 @@ describe('Viewing Funnel Details', () => {
 
 			server.use(
 				rest.post(
-					`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.funnel_id}/analytics/validate`,
+					'http://localhost/api/v1/trace-funnels/analytics/validate',
 					(_, res, ctx) => res(ctx.status(200), ctx.json({ data: [] })),
 				),
 				rest.get(
@@ -194,6 +202,35 @@ describe('Viewing Funnel Details', () => {
 					isValidateStepsLoading: false,
 				});
 
+				// Mock all the API endpoints that the components will call
+				server.use(
+					// Mock funnel overview endpoint
+					rest.post(
+						'http://localhost/api/v1/trace-funnels/analytics/overview',
+						(_, res, ctx) => res(ctx.status(200), ctx.json(mockOverviewData)),
+					),
+					// Mock funnel steps overview endpoint
+					rest.post(
+						'http://localhost/api/v1/trace-funnels/analytics/steps/overview',
+						(_, res, ctx) => res(ctx.status(200), ctx.json(mockStepsOverviewData)),
+					),
+					// Mock funnel slow traces endpoint
+					rest.post(
+						'http://localhost/api/v1/trace-funnels/analytics/slow-traces',
+						(_, res, ctx) => res(ctx.status(200), ctx.json(mockSlowTracesData)),
+					),
+					// Mock funnel error traces endpoint
+					rest.post(
+						'http://localhost/api/v1/trace-funnels/analytics/error-traces',
+						(_, res, ctx) => res(ctx.status(200), ctx.json(mockErrorTracesData)),
+					),
+					// Mock funnel steps graph data endpoint
+					rest.post(
+						'http://localhost/api/v1/trace-funnels/analytics/steps',
+						(_, res, ctx) => res(ctx.status(200), ctx.json(mockStepsData)),
+					),
+				);
+
 				// eslint-disable-next-line sonarjs/no-identical-functions
 				await act(async () => {
 					renderTraceFunnelRoutes([
@@ -225,9 +262,9 @@ describe('Viewing Funnel Details', () => {
 						'Errors',
 						'2',
 						'Avg. Duration',
-						'123 ns',
+						'123 ms',
 						'P99 Latency',
-						'250 ns',
+						'250 ms',
 					];
 
 					expectedTexts.forEach((text) => {
@@ -251,9 +288,9 @@ describe('Viewing Funnel Details', () => {
 						'Errors',
 						'1',
 						'Avg. Duration',
-						'55 ms',
+						'55 µs',
 						'P99 Latency',
-						'150 ms',
+						'150 µs',
 					];
 
 					expectedTexts.forEach((text) => {
@@ -268,11 +305,9 @@ describe('Viewing Funnel Details', () => {
 					const expectedTexts = [
 						'Slowest 5 traces',
 						'TRACE ID',
-						'DURATION',
-						'SPAN COUNT',
+						'STEP TRANSITION DURATION',
 						'slow-trace-1',
 						'500 ms',
-						'15',
 					];
 
 					expectedTexts.forEach((text) => {
@@ -289,11 +324,9 @@ describe('Viewing Funnel Details', () => {
 					const expectedTexts = [
 						'Traces with errors',
 						'TRACE ID',
-						'DURATION',
-						'SPAN COUNT',
+						'STEP TRANSITION DURATION',
 						'error-trace-1',
 						'151 ms',
-						'10',
 					];
 
 					expectedTexts.forEach((text) => {
