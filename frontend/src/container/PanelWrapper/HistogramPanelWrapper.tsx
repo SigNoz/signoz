@@ -23,12 +23,12 @@ function HistogramPanelWrapper({
 	isFullViewMode,
 	onToggleModelHandler,
 	onClickHandler,
+	enableDrillDown = false,
 }: PanelWrapperProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const isDarkMode = useIsDarkMode();
 	const containerDimensions = useResizeObserver(graphRef);
-
 	const {
 		coordinates,
 		popoverPosition,
@@ -50,16 +50,7 @@ function HistogramPanelWrapper({
 
 	const clickHandlerWithContextMenu = useCallback(
 		(...args: any[]) => {
-			const [
-				xValue,
-				yValue,
-				mouseX,
-				mouseY,
-				metric,
-				queryData,
-				absoluteMouseX,
-				absoluteMouseY,
-			] = args;
+			const [, , , , metric, queryData, absoluteMouseX, absoluteMouseY] = args;
 			const data = getUplotClickData({
 				metric,
 				queryData,
@@ -69,18 +60,8 @@ function HistogramPanelWrapper({
 			if (data && data?.record?.queryName) {
 				onClick(data.coord, data.record);
 			}
-			onClickHandler?.(
-				xValue,
-				yValue,
-				mouseX,
-				mouseY,
-				metric,
-				queryData,
-				absoluteMouseX,
-				absoluteMouseY,
-			);
 		},
-		[onClick, onClickHandler],
+		[onClick],
 	);
 
 	const histogramData = buildHistogramData(
@@ -130,7 +111,9 @@ function HistogramPanelWrapper({
 				setGraphsVisibilityStates: setGraphVisibility,
 				graphsVisibilityStates: graphVisibility,
 				mergeAllQueries: widget.mergeAllActiveQueries,
-				onClickHandler: clickHandlerWithContextMenu || _noop,
+				onClickHandler: enableDrillDown
+					? clickHandlerWithContextMenu
+					: onClickHandler ?? _noop,
 			}),
 		[
 			containerDimensions,
@@ -143,6 +126,8 @@ function HistogramPanelWrapper({
 			widget.mergeAllActiveQueries,
 			widget.panelTypes,
 			clickHandlerWithContextMenu,
+			enableDrillDown,
+			onClickHandler,
 		],
 	);
 

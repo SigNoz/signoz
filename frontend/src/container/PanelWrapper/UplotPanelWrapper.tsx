@@ -38,6 +38,7 @@ function UplotPanelWrapper({
 	selectedGraph,
 	customTooltipElement,
 	customSeries,
+	enableDrillDown = false,
 }: PanelWrapperProps): JSX.Element {
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const isDarkMode = useIsDarkMode();
@@ -141,9 +142,9 @@ function UplotPanelWrapper({
 		(...args: any[]) => {
 			const [
 				xValue,
-				yValue,
-				mouseX,
-				mouseY,
+				,
+				,
+				,
 				metric,
 				queryData,
 				absoluteMouseX,
@@ -167,18 +168,8 @@ function UplotPanelWrapper({
 			if (data && data?.record?.queryName) {
 				onClick(data.coord, { ...data.record, timeRange });
 			}
-			onClickHandler?.(
-				xValue,
-				yValue,
-				mouseX,
-				mouseY,
-				metric,
-				queryData,
-				absoluteMouseX,
-				absoluteMouseY,
-			);
 		},
-		[onClick, onClickHandler],
+		[onClick],
 	);
 
 	const options = useMemo(
@@ -190,7 +181,9 @@ function UplotPanelWrapper({
 				isDarkMode,
 				onDragSelect,
 				yAxisUnit: widget?.yAxisUnit,
-				onClickHandler: clickHandlerWithContextMenu || _noop,
+				onClickHandler: enableDrillDown
+					? clickHandlerWithContextMenu
+					: onClickHandler ?? _noop,
 				thresholds: widget.thresholds,
 				minTimeScale,
 				maxTimeScale,
@@ -239,6 +232,8 @@ function UplotPanelWrapper({
 			widget?.isLogScale,
 			widget?.legendPosition,
 			widget?.customLegendColors,
+			enableDrillDown,
+			onClickHandler,
 		],
 	);
 

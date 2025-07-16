@@ -32,7 +32,6 @@ import {
 import { useLocation } from 'react-router-dom';
 import { Props } from 'types/api/dashboard/update';
 import { DataSource } from 'types/common/queryBuilder';
-import { shouldEnableDrilldown } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
 
 import { useGraphClickToShowButton } from '../useGraphClickToShowButton';
@@ -63,6 +62,7 @@ function WidgetGraphComponent({
 	customErrorMessage,
 	customOnRowClick,
 	customTimeRangeWindowForCoRelation,
+	enableDrillDown,
 }: WidgetGraphComponentProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const [deleteModal, setDeleteModal] = useState(false);
@@ -356,7 +356,7 @@ function WidgetGraphComponent({
 					onClickHandler={onClickHandler ?? graphClickHandler}
 					customOnDragSelect={customOnDragSelect}
 					setCurrentGraphRef={setCurrentGraphRef}
-					enableDrillDown={shouldEnableDrilldown(widget.panelTypes)}
+					enableDrillDown={enableDrillDown}
 				/>
 			</Modal>
 
@@ -408,6 +408,7 @@ function WidgetGraphComponent({
 						onOpenTraceBtnClick={onOpenTraceBtnClick}
 						customSeries={customSeries}
 						customOnRowClick={customOnRowClick}
+						enableDrillDown={enableDrillDown}
 					/>
 				</div>
 			)}
@@ -420,6 +421,7 @@ WidgetGraphComponent.defaultProps = {
 	setLayout: undefined,
 	onClickHandler: undefined,
 	customTimeRangeWindowForCoRelation: undefined,
+	enableDrillDown: false,
 };
 
 export default WidgetGraphComponent;

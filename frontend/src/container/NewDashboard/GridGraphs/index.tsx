@@ -11,7 +11,7 @@ function GridGraphs(props: GridGraphsProps): JSX.Element {
 	const { handle } = props;
 	return (
 		<GridComponentSliderContainer>
-			<GridGraphLayout handle={handle} />
+			<GridGraphLayout handle={handle} enableDrillDown />
 		</GridComponentSliderContainer>
 	);
 }

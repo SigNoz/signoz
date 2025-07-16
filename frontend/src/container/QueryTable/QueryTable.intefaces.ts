@@ -21,4 +21,5 @@ export type QueryTableProps = Omit<
 	sticky?: TableProps<RowData>['sticky'];
 	searchTerm?: string;
 	widgetId?: string;
+	enableDrillDown?: boolean;
 };

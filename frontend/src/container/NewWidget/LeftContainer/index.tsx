@@ -27,6 +27,7 @@ function LeftContainer({
 	setRequestData,
 	isLoadingPanelData,
 	setQueryResponse,
+	enableDrillDown = false,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
 	// const { selectedDashboard } = useDashboard();
@@ -65,6 +66,7 @@ function LeftContainer({
 				setRequestData={setRequestData}
 				selectedWidget={selectedWidget}
 				isLoadingPanelData={isLoadingPanelData}
+				enableDrillDown={enableDrillDown}
 			/>
 			<QueryContainer className="query-section-left-container">
 				<QuerySection selectedGraph={selectedGraph} queryResponse={queryResponse} />

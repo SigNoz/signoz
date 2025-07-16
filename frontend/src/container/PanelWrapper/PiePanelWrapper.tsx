@@ -22,6 +22,7 @@ import { lightenColor, tooltipStyles } from './utils';
 function PiePanelWrapper({
 	queryResponse,
 	widget,
+	enableDrillDown = false,
 }: PanelWrapperProps): JSX.Element {
 	const [active, setActive] = useState<{
 		label: string;
@@ -252,9 +253,11 @@ function PiePanelWrapper({
 															setActive(null);
 														}}
 														onClick={(e): void => {
-															const data = getPieChartClickData(arc);
-															if (data && data?.queryName) {
-																onClick({ x: e.clientX, y: e.clientY }, data);
+															if (enableDrillDown) {
+																const data = getPieChartClickData(arc);
+																if (data && data?.queryName) {
+																	onClick({ x: e.clientX, y: e.clientY }, data);
+																}
 															}
 														}}
 													>

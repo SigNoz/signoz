@@ -2,7 +2,6 @@ import './QueryTable.styles.scss';
 
 import cx from 'classnames';
 import { ResizeTable } from 'components/ResizeTable';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import Download from 'container/Download/Download';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
 import {
@@ -12,7 +11,6 @@ import {
 import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { shouldEnableDrilldown } from 'utils/dashboard/generateExportToDashboardLink';
 
 import useTableContextMenu from './Drilldown/useTableContextMenu';
 import { QueryTableProps } from './QueryTable.intefaces';
@@ -33,12 +31,11 @@ export function QueryTable({
 	...props
 }: QueryTableProps): JSX.Element {
 	const { isDownloadEnabled = false, fileName = '' } = downloadOption || {};
-	const isDrilldownEnabled = shouldEnableDrilldown(PANEL_TYPES.TABLE);
 	const isQueryTypeBuilder = query.queryType === 'builder';
 
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
-	const { loading } = props;
+	const { loading, enableDrillDown = false } = props;
 
 	const {
 		coordinates,
@@ -90,11 +87,11 @@ export function QueryTable({
 			tableColumns: any,
 		): void => {
 			e.stopPropagation();
-			if (isQueryTypeBuilder && isDrilldownEnabled) {
+			if (isQueryTypeBuilder && enableDrillDown) {
 				onClick({ x: e.clientX, y: e.clientY }, { record, column, tableColumns });
 			}
 		},
-		[isQueryTypeBuilder, isDrilldownEnabled, onClick],
+		[isQueryTypeBuilder, enableDrillDown, onClick],
 	);
 
 	// Click handler to columns to capture clicked data
@@ -112,7 +109,7 @@ export function QueryTable({
 						<div
 							role="button"
 							className={cx({
-								'clickable-cell': isQueryTypeBuilder && isDrilldownEnabled,
+								'clickable-cell': isQueryTypeBuilder && enableDrillDown,
 							})}
 							tabIndex={0}
 							onClick={(e): void => {
@@ -125,7 +122,7 @@ export function QueryTable({
 					);
 				},
 			})),
-		[tableColumns, isQueryTypeBuilder, isDrilldownEnabled, handleColumnClick],
+		[tableColumns, isQueryTypeBuilder, enableDrillDown, handleColumnClick],
 	);
 
 	const paginationConfig = {

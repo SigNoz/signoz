@@ -74,7 +74,7 @@ import {
 
 function NewWidget({
 	selectedGraph,
-	enableDrilldown = false,
+	enableDrillDown = false,
 }: NewWidgetProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const {
@@ -692,7 +692,7 @@ function NewWidget({
 	}, [selectedLogFields, selectedTracesFields, currentQuery, selectedGraph]);
 
 	const showSwitchToViewModeButton =
-		enableDrilldown && !isNewDashboard && !!query.get('widgetId');
+		enableDrillDown && !isNewDashboard && !!query.get('widgetId');
 
 	const handleSwitchToViewMode = useCallback(() => {
 		if (!query.get('widgetId')) return;
@@ -781,6 +781,7 @@ function NewWidget({
 								setRequestData={setRequestData}
 								isLoadingPanelData={isLoadingPanelData}
 								setQueryResponse={setQueryResponse}
+								enableDrillDown={enableDrillDown}
 							/>
 						)}
 					</OverlayScrollbar>

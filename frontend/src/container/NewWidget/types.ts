@@ -12,7 +12,7 @@ export interface NewWidgetProps {
 	selectedGraph: PANEL_TYPES;
 	yAxisUnit: Widgets['yAxisUnit'];
 	fillSpans: Widgets['fillSpans'];
-	enableDrilldown?: boolean;
+	enableDrillDown?: boolean;
 }
 
 export interface WidgetGraphProps {
@@ -33,6 +33,7 @@ export interface WidgetGraphProps {
 			UseQueryResult<SuccessResponse<MetricRangePayloadProps, unknown>, Error>
 		>
 	>;
+	enableDrillDown?: boolean;
 }
 
 export type WidgetGraphContainerProps = {
@@ -44,4 +45,5 @@ export type WidgetGraphContainerProps = {
 	selectedGraph: PANEL_TYPES;
 	selectedWidget: Widgets;
 	isLoadingPanelData: boolean;
+	enableDrillDown?: boolean;
 };
