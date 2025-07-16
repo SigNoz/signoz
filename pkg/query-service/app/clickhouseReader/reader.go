@@ -1648,7 +1648,7 @@ func (r *ClickHouseReader) buildMultiIfExpression(ttlConditions []model.CustomRe
 		zap.L().Debug("Processing rule", zap.Int("ruleIndex", i), zap.Int("ttlDays", rule.TTLDays), zap.Int("conditionsCount", len(rule.Filters)))
 
 		if len(rule.Filters) == 0 {
-			zap.L().Warn("Rule has no conditions, skipping", zap.Int("ruleIndex", i))
+			zap.L().Warn("Rule has no filters, skipping", zap.Int("ruleIndex", i))
 			continue
 		}
 
@@ -1663,20 +1663,26 @@ func (r *ClickHouseReader) buildMultiIfExpression(ttlConditions []model.CustomRe
 				continue
 			}
 
+			// Properly quote values for IN clause
+			quotedValues := make([]string, len(condition.Values))
+			for k, v := range condition.Values {
+				quotedValues[k] = fmt.Sprintf("'%s'", v)
+			}
+
 			var conditionExpr string
 			if isResourceTable {
 				// For resource table, use JSONExtractString
 				conditionExpr = fmt.Sprintf(
-					"JSONExtractString(labels, '%s') IN ('%s')",
+					"JSONExtractString(labels, '%s') IN (%s)",
 					condition.Key,
-					strings.Join(condition.Values, "','"),
+					strings.Join(quotedValues, ", "),
 				)
 			} else {
 				// For main logs table, use resources_string
 				conditionExpr = fmt.Sprintf(
-					"resources_string['%s'] IN ('%s')",
+					"resources_string['%s'] IN (%s)",
 					condition.Key,
-					strings.Join(condition.Values, "','"),
+					strings.Join(quotedValues, ", "),
 				)
 			}
 			andConditions = append(andConditions, conditionExpr)
@@ -1689,6 +1695,12 @@ func (r *ClickHouseReader) buildMultiIfExpression(ttlConditions []model.CustomRe
 			zap.L().Debug("Adding condition to multiIf", zap.String("condition", conditionWithTTL))
 			conditions = append(conditions, conditionWithTTL)
 		}
+	}
+
+	// Handle case where no valid conditions were found
+	if len(conditions) == 0 {
+		zap.L().Info("No valid conditions found, returning default TTL", zap.Int("defaultTTLDays", defaultTTLDays))
+		return fmt.Sprintf("%d", defaultTTLDays)
 	}
 
 	result := fmt.Sprintf(
@@ -1785,7 +1797,7 @@ func (r *ClickHouseReader) validateTTLConditions(ctx context.Context, ttlConditi
 
 	for i, rule := range ttlConditions {
 		if len(rule.Filters) == 0 {
-			return errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "rule at index %d has no conditions", i)
+			return errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "rule at index %d has no filters", i)
 		}
 
 		// Create a signature for this rule's conditions to detect duplicates
@@ -1841,7 +1853,7 @@ func (r *ClickHouseReader) validateTTLConditions(ctx context.Context, ttlConditi
 
 	rows, err := r.db.Query(ctx, query, params...)
 	if err != nil {
-		return errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to validate resource keys: %v")
+		return errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to validate resource keys")
 	}
 	defer rows.Close()
 
@@ -1850,7 +1862,7 @@ func (r *ClickHouseReader) validateTTLConditions(ctx context.Context, ttlConditi
 	for rows.Next() {
 		var name string
 		if err := rows.Scan(&name); err != nil {
-			return errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to scan resource keys: %v")
+			return errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to scan resource keys")
 		}
 		validKeys[name] = struct{}{}
 	}
