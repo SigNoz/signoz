@@ -52,7 +52,7 @@ jest.mock('hooks/useNotifications', () => ({
 const mockNavigate = jest.fn();
 
 jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): any => ({
+	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
 		safeNavigate: mockNavigate,
 	}),
 }));
@@ -84,7 +84,7 @@ jest.mock('react-router-dom', () => ({
 
 jest.mock('react-redux', () => ({
 	...jest.requireActual('react-redux'),
-	useSelector: (): any => ({
+	useSelector: (): { selectedTime: string; loading: boolean } => ({
 		selectedTime: '1h',
 		loading: false,
 	}),
@@ -188,7 +188,7 @@ describe('Funnel Creation Flow', () => {
 			// Mock specific API calls for successful creation
 			server.use(
 				rest.post(CREATE_FUNNEL_URL, async (_, res, ctx) =>
-					res(ctx.status(200), ctx.json({ funnel_id: createdFunnelId })),
+					res(ctx.status(200), ctx.json({ data: { funnel_id: createdFunnelId } })),
 				),
 			);
 

@@ -95,11 +95,11 @@ export const mockOverviewData: FunnelOverviewResponse = {
 		{
 			timestamp: '1678886400000',
 			data: {
-				avg_duration: 123.45,
+				avg_duration: 123, // in milliseconds for proper formatting
 				avg_rate: 10.5,
 				conversion_rate: 80.0,
 				errors: 2,
-				latency: 250.0,
+				latency: 250, // in milliseconds for proper formatting
 			},
 		},
 	],
@@ -112,9 +112,25 @@ export const mockStepsData: FunnelStepsResponse = {
 			timestamp: '1678886400000',
 			data: {
 				total_s1_spans: 100,
-				total_s1_errored_spans: 5,
+				total_s1_errored_spans: 10,
 				total_s2_spans: 80,
-				total_s2_errored_spans: 2,
+				total_s2_errored_spans: 8,
+			},
+		},
+	],
+};
+
+export const mockStepsOverviewData = {
+	status: 'success',
+	data: [
+		{
+			timestamp: '1678886400000',
+			data: {
+				avg_duration: 0.055, // in milliseconds for steps overview
+				avg_rate: 8.5,
+				conversion_rate: 92.0,
+				errors: 1,
+				latency: 0.15, // in milliseconds for steps overview
 			},
 		},
 	],

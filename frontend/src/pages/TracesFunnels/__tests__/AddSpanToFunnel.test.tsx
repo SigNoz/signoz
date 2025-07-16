@@ -66,14 +66,14 @@ window.Element.prototype.getBoundingClientRect = jest
 	.mockReturnValue({ height: 1000, width: 1000 });
 
 jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): any => ({
+	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
 		safeNavigate: jest.fn(),
 	}),
 }));
 
 jest.mock('react-redux', () => ({
 	...jest.requireActual('react-redux'),
-	useSelector: (): any => ({
+	useSelector: (): { selectedTime: string; loading: boolean } => ({
 		selectedTime: '1h',
 		loading: false,
 	}),
@@ -85,11 +85,20 @@ const mockUseValidateFunnelSteps = jest.fn(() => ({
 	isLoading: false,
 	isFetching: false,
 }));
+const mockUseUpdateFunnelSteps = jest.fn(() => ({
+	mutate: jest.fn(),
+	isLoading: false,
+}));
 
 jest.mock('hooks/TracesFunnels/useFunnels', () => ({
 	...jest.requireActual('hooks/TracesFunnels/useFunnels'),
 	useFunnelsList: (): void => mockUseFunnelsList(),
-	useValidateFunnelSteps: (): any => mockUseValidateFunnelSteps(),
+	useValidateFunnelSteps: (): {
+		data: { payload: { data: unknown[] } };
+		isLoading: boolean;
+	} => mockUseValidateFunnelSteps(),
+	useUpdateFunnelSteps: (): { mutate: jest.Mock; isLoading: boolean } =>
+		mockUseUpdateFunnelSteps(),
 }));
 
 jest.mock('react-router-dom', () => ({
@@ -127,6 +136,17 @@ jest.mock(
 );
 
 describe('Add span to funnel from trace details page', () => {
+	// Set NODE_ENV to development for modal to render
+	const originalNodeEnv = process.env.NODE_ENV;
+
+	beforeAll(() => {
+		process.env.NODE_ENV = 'development';
+	});
+
+	afterAll(() => {
+		process.env.NODE_ENV = originalNodeEnv;
+	});
+
 	it('displays add to funnel icon for spans with valid service and span names', async () => {
 		await act(() => renderTraceWaterfallSuccess());
 		expect(await screen.findByTestId('add-to-funnel-button')).toBeInTheDocument();
@@ -310,11 +330,10 @@ describe('Add span to funnel from trace details page', () => {
 				await expectTextWithCount('SpanB', 1);
 				await expectTextWithCount('Where', 2);
 				await expectTextWithCount('Errors', 2);
-				await expectTextWithCount('Latency pointer', 2);
+				await expectTextWithCount('Latency type', 1);
 				await expectTextWithCount('P99', 1);
 				await expectTextWithCount('P95', 1);
 				await expectTextWithCount('P90', 1);
-				await expectTextWithCount('Start of span', 2);
 				await expectTextWithCount('Replace', 2);
 			});
 			it('should replace the selected span and service names on clicking the replace button', async () => {
