@@ -1,36 +1,10 @@
-import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
-import {
-	initialQueryBuilderFormValuesMap,
-	OPERATORS,
-} from 'constants/queryBuilder';
+import { OPERATORS } from 'constants/queryBuilder';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
-import { v4 as uuid } from 'uuid';
 
-import {
-	addFilterToSelectedQuery,
-	FilterData,
-	getBaseMeta,
-} from './drilldownUtils';
+import { addFilterToSelectedQuery, FilterData } from './drilldownUtils';
 import { AggregateData } from './useAggregateDrilldown';
-/**
- * Gets the query data that matches the aggregate data's queryName
- */
-export const getQueryData = (
-	query: Query,
-	aggregateData: AggregateData | null,
-): IBuilderQuery => {
-	if (!aggregateData) {
-		console.warn('aggregateData is null in getQueryData');
-		return initialQueryBuilderFormValuesMap.logs;
-	}
-
-	const queryData = query?.builder?.queryData?.filter(
-		(item: IBuilderQuery) => item.queryName === aggregateData.queryName,
-	);
-	return queryData[0];
-};
 
 export const isEmptyFilterValue = (value: any): boolean =>
 	value === '' || value === null || value === undefined || value === 'n/a';
@@ -66,53 +40,6 @@ export const getFiltersToAddToView = (clickedData: any): FilterData[] => {
 				];
 			}, []) || []
 	);
-};
-
-const VIEW_QUERY_MAP: Record<string, IBuilderQuery> = {
-	view_logs: initialQueryBuilderFormValuesMap.logs,
-	view_metrics: initialQueryBuilderFormValuesMap.metrics,
-	view_traces: initialQueryBuilderFormValuesMap.traces,
-};
-
-export const getViewQuery = (
-	query: Query,
-	filtersToAdd: FilterData[],
-	key: string,
-): Query | null => {
-	const newQuery = cloneDeep(query);
-
-	const queryBuilderData = VIEW_QUERY_MAP[key];
-
-	if (!queryBuilderData) return null;
-
-	newQuery.builder.queryData = [queryBuilderData];
-
-	const filters = filtersToAdd.reduce((acc: any[], filter) => {
-		// use existing query to get baseMeta
-		const baseMeta = getBaseMeta(query, filter.filterKey);
-		if (!baseMeta) return acc;
-
-		acc.push({
-			id: uuid(),
-			key: baseMeta,
-			op: filter.operator,
-			value: filter.filterValue,
-		});
-
-		return acc;
-	}, []);
-
-	newQuery.builder.queryData[0].filters = {
-		items: filters,
-		op: 'AND',
-	};
-
-	newQuery.builder.queryData[0].filter = convertFiltersToExpression({
-		items: filters,
-		op: 'AND',
-	});
-
-	return newQuery;
 };
 
 /**

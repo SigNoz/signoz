@@ -1,3 +1,5 @@
+/* eslint-disable sonarjs/cognitive-complexity */
+import { getSeriesIndexFromPixel } from 'lib/uPlotLib/utils/getSeriesIndexFromPixel';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 export interface OnClickPluginOpts {
@@ -15,6 +17,10 @@ export interface OnClickPluginOpts {
 		},
 		absoluteMouseX?: number,
 		absoluteMouseY?: number,
+		axesData?: {
+			xAxis: any;
+			yAxis: any;
+		},
 	) => void;
 	apiResponse?: MetricRangePayloadProps;
 }
@@ -61,6 +67,25 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 					});
 				}
 
+				if (!outputMetric.queryName) {
+					// // Get the series index based on pixel coordinates
+					const seriesIndex = getSeriesIndexFromPixel(event, u);
+
+					// If we found a valid series, get its data
+					if (seriesIndex > 0 && seriesIndex <= apiResult.length) {
+						const { metric: focusedMetric, queryName } =
+							apiResult[seriesIndex - 1] || [];
+						metric = focusedMetric;
+						outputMetric.queryName = queryName;
+						outputMetric.inFocusOrNot = true;
+					}
+				}
+
+				const axesData = {
+					xAxis: u.axes[0],
+					yAxis: u.axes[1],
+				};
+
 				opts.onClick(
 					xValue,
 					yValue,
@@ -70,6 +95,7 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 					outputMetric,
 					absoluteMouseX,
 					absoluteMouseY,
+					axesData,
 				);
 			};
 			u.over.addEventListener('click', handleClick);
