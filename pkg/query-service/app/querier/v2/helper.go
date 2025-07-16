@@ -280,6 +280,7 @@ func (q *querier) runBuilderQuery(
 
 // ValidateMetricNames function is used to print all those queries who are still using old normalized metrics and not new metrics.
 func (q *querier) ValidateMetricNames(ctx context.Context, query *v3.CompositeQuery, orgID valuer.UUID) {
+	var metricNames []string
 	switch query.QueryType {
 	case v3.QueryTypePromQL:
 		for _, query := range query.PromQueries {
@@ -292,36 +293,41 @@ func (q *querier) ValidateMetricNames(ctx context.Context, query *v3.CompositeQu
 				if vs, ok := node.(*parser.VectorSelector); ok {
 					for _, m := range vs.LabelMatchers {
 						if m.Name == "__name__" {
-							metricName := m.Value
-							normalizedMetrics, unNormalizedMetrics, err := q.reader.GetCorrespondingNormalizedMetrics(ctx, orgID, metricName)
-							if err != nil {
-								zap.L().Debug("error getting corresponding normalized metrics", zap.Error(err))
-								continue
-							}
-							if unNormalizedMetrics == metricName {
-								continue
-							} else if normalizedMetrics == metricName {
-								zap.L().Warn("using normalized metric name", zap.String("metrics", metricName))
-								continue
-							}
+							metricNames = append(metricNames, m.Value)
 						}
 					}
 				}
 				return nil
 			})
 		}
+		metrics, err := q.reader.GetCorrespondingNormalizedMetrics(ctx, orgID, metricNames)
+		if err != nil {
+			zap.L().Debug("error getting corresponding normalized metrics", zap.Error(err))
+			return
+		}
+		for k, m := range metrics {
+			if m.UnNormalizedMetricName == k {
+				continue
+			} else if m.NormalizedMetricName == k {
+				zap.L().Warn("using normalized metric name", zap.String("metrics", k))
+				continue
+			}
+		}
 	case v3.QueryTypeBuilder:
 		for _, query := range query.BuilderQueries {
 			metricName := query.AggregateAttribute.Key
-			normalizedMetrics, unNormalizedMetrics, err := q.reader.GetCorrespondingNormalizedMetrics(ctx, orgID, metricName)
-			if err != nil {
-				zap.L().Debug("error getting corresponding normalized metrics", zap.Error(err))
+			metricNames = append(metricNames, metricName)
+		}
+		metrics, err := q.reader.GetCorrespondingNormalizedMetrics(ctx, orgID, metricNames)
+		if err != nil {
+			zap.L().Debug("error getting corresponding normalized metrics", zap.Error(err))
+			return
+		}
+		for k, m := range metrics {
+			if m.UnNormalizedMetricName == k {
 				continue
-			}
-			if unNormalizedMetrics == metricName {
-				continue
-			} else if normalizedMetrics == metricName {
-				zap.L().Warn("using normalized metric name", zap.String("metrics", metricName))
+			} else if m.NormalizedMetricName == k {
+				zap.L().Warn("using normalized metric name", zap.String("metrics", k))
 				continue
 			}
 		}
