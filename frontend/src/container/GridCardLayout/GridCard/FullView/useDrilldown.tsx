@@ -54,12 +54,14 @@ const useDrilldown = ({
 		isMounted.current = true;
 	}, [widget, enableDrillDown, compositeQuery, redirectWithQueryBuilderData]);
 
-	const dashboardEditView = generateExportToDashboardLink({
-		query: currentQuery,
-		panelType: widget.panelTypes,
-		dashboardId: selectedDashboard?.id || '',
-		widgetId: widget.id,
-	});
+	const dashboardEditView = selectedDashboard?.id
+		? generateExportToDashboardLink({
+				query: currentQuery,
+				panelType: widget.panelTypes,
+				dashboardId: selectedDashboard?.id || '',
+				widgetId: widget.id,
+		  })
+		: '';
 
 	const showResetQuery = useMemo(
 		() =>

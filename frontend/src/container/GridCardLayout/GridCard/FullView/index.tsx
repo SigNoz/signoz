@@ -235,7 +235,9 @@ function FullView({
 											className="switch-edit-btn"
 											disabled={response.isFetching || response.isLoading}
 											onClick={(): void => {
-												safeNavigate(dashboardEditView);
+												if (dashboardEditView) {
+													safeNavigate(dashboardEditView);
+												}
 											}}
 										>
 											Switch to Edit Mode
