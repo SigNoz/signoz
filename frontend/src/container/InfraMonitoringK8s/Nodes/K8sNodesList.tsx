@@ -184,6 +184,32 @@ function K8sNodesList({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData, groupBy]);
 
+	const groupedByRowDataQueryKey = useMemo(() => {
+		if (selectedNodeUID) {
+			return [
+				'nodeList',
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(selectedRowData),
+			];
+		}
+		return [
+			'nodeList',
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(selectedRowData),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		queryFilters,
+		orderBy,
+		selectedNodeUID,
+		minTime,
+		maxTime,
+		selectedRowData,
+	]);
+
 	const {
 		data: groupedByRowData,
 		isFetching: isFetchingGroupedByRowData,
@@ -193,7 +219,7 @@ function K8sNodesList({
 	} = useGetK8sNodesList(
 		fetchGroupedByRowDataQuery as K8sNodesListPayload,
 		{
-			queryKey: ['nodeList', fetchGroupedByRowDataQuery],
+			queryKey: groupedByRowDataQueryKey,
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
 		undefined,
@@ -249,11 +275,44 @@ function K8sNodesList({
 		[groupedByRowData, groupBy],
 	);
 
+	const queryKey = useMemo(() => {
+		if (selectedNodeUID) {
+			return [
+				'nodeList',
+				String(pageSize),
+				String(currentPage),
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(groupBy),
+			];
+		}
+		return [
+			'nodeList',
+			String(pageSize),
+			String(currentPage),
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(groupBy),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		selectedNodeUID,
+		pageSize,
+		currentPage,
+		queryFilters,
+		orderBy,
+		groupBy,
+		minTime,
+		maxTime,
+	]);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sNodesList(
 		query as K8sNodesListPayload,
 		{
-			queryKey: ['nodeList', query],
+			queryKey,
 			enabled: !!query,
+			keepPreviousData: true,
 		},
 		undefined,
 		dotMetricsEnabled,
@@ -571,6 +630,9 @@ function K8sNodesList({
 		});
 	};
 
+	const showTableLoadingState =
+		(isFetching || isLoading) && formattedNodesData.length === 0;
+
 	return (
 		<div className="k8s-list">
 			<K8sHeader
@@ -583,12 +645,13 @@ function K8sNodesList({
 				handleGroupByChange={handleGroupByChange}
 				selectedGroupBy={groupBy}
 				entity={K8sCategory.NODES}
+				showAutoRefresh={!selectedNodeData}
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
 			<Table
 				className="k8s-list-table nodes-list-table"
-				dataSource={isFetching || isLoading ? [] : formattedNodesData}
+				dataSource={showTableLoadingState ? [] : formattedNodesData}
 				columns={columns}
 				pagination={{
 					current: currentPage,
@@ -600,26 +663,25 @@ function K8sNodesList({
 				}}
 				scroll={{ x: true }}
 				loading={{
-					spinning: isFetching || isLoading,
+					spinning: showTableLoadingState,
 					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 				}}
 				locale={{
-					emptyText:
-						isFetching || isLoading ? null : (
-							<div className="no-filtered-hosts-message-container">
-								<div className="no-filtered-hosts-message-content">
-									<img
-										src="/Icons/emptyState.svg"
-										alt="thinking-emoji"
-										className="empty-state-svg"
-									/>
+					emptyText: showTableLoadingState ? null : (
+						<div className="no-filtered-hosts-message-container">
+							<div className="no-filtered-hosts-message-content">
+								<img
+									src="/Icons/emptyState.svg"
+									alt="thinking-emoji"
+									className="empty-state-svg"
+								/>
 
-									<Typography.Text className="no-filtered-hosts-message">
-										This query had no results. Edit your query and try again!
-									</Typography.Text>
-								</div>
+								<Typography.Text className="no-filtered-hosts-message">
+									This query had no results. Edit your query and try again!
+								</Typography.Text>
 							</div>
-						),
+						</div>
+					),
 				}}
 				tableLayout="fixed"
 				onChange={handleTableChange}

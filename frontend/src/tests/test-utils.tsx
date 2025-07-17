@@ -234,11 +234,13 @@ export function getAppContextMock(
 		isFetchingOrgPreferences: false,
 		orgPreferencesFetchError: null,
 		isLoggedIn: true,
+		showChangelogModal: false,
 		updateUser: jest.fn(),
 		updateOrg: jest.fn(),
 		updateOrgPreferences: jest.fn(),
 		activeLicenseRefetch: jest.fn(),
 		updateChangelog: jest.fn(),
+		toggleChangelogModal: jest.fn(),
 		versionData: {
 			version: '1.0.0',
 			ee: 'Y',

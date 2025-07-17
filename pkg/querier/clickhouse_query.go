@@ -63,7 +63,7 @@ func (q *chSQLQuery) Window() (uint64, uint64) { return q.fromMS, q.toMS }
 func (q *chSQLQuery) renderVars(query string, vars map[string]qbtypes.VariableItem, start, end uint64) (string, error) {
 	varsData := map[string]any{}
 	for k, v := range vars {
-		varsData[k] = formatValueForCH(v)
+		varsData[k] = formatValueForCH(v.Value)
 	}
 
 	querybuilder.AssignReservedVars(varsData, start, end)

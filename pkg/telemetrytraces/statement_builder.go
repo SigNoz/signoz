@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -13,6 +14,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
+	"golang.org/x/exp/maps"
 )
 
 var (
@@ -174,7 +176,18 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	selectedFields := query.SelectFields
 
 	if len(selectedFields) == 0 {
-		selectedFields = DefaultFields
+		selectedFields = maps.Values(DefaultFields)
+	}
+
+	selectFieldKeys := []string{}
+	for _, field := range selectedFields {
+		selectFieldKeys = append(selectFieldKeys, field.Name)
+	}
+
+	for _, x := range []string{"timestamp", "span_id", "trace_id"} {
+		if !slices.Contains(selectFieldKeys, x) {
+			selectedFields = append(selectedFields, DefaultFields[x])
+		}
 	}
 
 	// TODO: should we deprecate `SelectFields` and return everything from a span like we do for logs?
