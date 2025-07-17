@@ -8,5 +8,6 @@
 	"actNow": "Act now to avoid any disruptions and continue where you left off.",
 	"contactAdmin": "Contact your admin to proceed with the upgrade.",
 	"continueMyJourney": "Settle your bill to continue",
-	"somethingWentWrong": "Something went wrong"
+	"somethingWentWrong": "Something went wrong",
+	"refreshPaymentStatus": "Refresh Status"
 }
