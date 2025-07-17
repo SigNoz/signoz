@@ -118,7 +118,7 @@ exports[`PipelinePage container test should render PipelinePageLayout section 1`
                 learn_more 
                 <a
                   href="https://signoz.io/docs/logs-pipelines/introduction/?utm_source=product&utm_medium=pipelines-tab"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   target="_blank"
                 >
                   here

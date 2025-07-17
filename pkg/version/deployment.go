@@ -106,6 +106,10 @@ func detectPlatform() string {
 		return "render"
 	case os.Getenv("COOLIFY_RESOURCE_UUID") != "":
 		return "coolify"
+	case os.Getenv("RAILWAY_SERVICE_ID") != "":
+		return "railway"
+	case os.Getenv("ECS_CONTAINER_METADATA_URI_V4") != "":
+		return "ecs"
 	}
 
 	// Try to detect cloud provider through metadata endpoints
@@ -162,7 +166,6 @@ func detectPlatform() string {
 			}
 		}
 	}
-
 
 	return "unknown"
 }

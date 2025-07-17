@@ -60,6 +60,7 @@
 
 		&-ctas {
 			display: flex;
+			margin-left: auto;
 
 			& svg {
 				font-size: 14px;
@@ -110,7 +111,7 @@
 	&-content {
 		max-height: calc(100vh - 300px);
 		overflow-y: auto;
-		padding: 16px;
+		padding: 16px 16px 18px 16px;
 		border: 1px solid var(--bg-slate-500, #161922);
 		border-top-width: 0;
 		border-bottom-width: 0;

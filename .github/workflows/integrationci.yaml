@@ -22,7 +22,7 @@ jobs:
           - 24.1.2-alpine
           - 24.12-alpine
         schema-migrator-version:
-          - v0.128.0
+          - v0.128.1
         postgres-version:
           - 15
     if: |
