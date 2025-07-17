@@ -1,7 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import { getSeriesIndexFromPixel } from 'lib/uPlotLib/utils/getSeriesIndexFromPixel';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-
-import { getSeriesIndexFromPixel } from '../utils/getSeriesIndexFromPixel';
 
 export interface OnClickPluginOpts {
 	onClick: (
