@@ -163,11 +163,26 @@ func DataTypeCollisionHandledFieldName(key *TelemetryFieldKey, value any, tblFie
 
 	case FieldDataTypeFloat64, FieldDataTypeInt64, FieldDataTypeNumber:
 		switch v := value.(type) {
+		// why? ; CH returns an error for a simple check
+		// attributes_number['http.status_code'] = 200 but not for attributes_number['http.status_code'] >= 200
+		// DB::Exception: Bad get: has UInt64, requested Float64.
+		// How is it working in v4? v4 prepares the full query with values in query string
+		// When we format the float it becomes attributes_number['http.status_code'] = 200.000
+		// Which CH gladly accepts and doesn't throw error
+		// However, when passed as query args, the default formatter
+		// https://github.com/ClickHouse/clickhouse-go/blob/757e102f6d8c6059d564ce98795b4ce2a101b1a5/bind.go#L393
+		// is used which prepares the
+		// final query as attributes_number['http.status_code'] = 200 giving this error
+		// This following is one way to workaround it
+		case float32, float64:
+			tblFieldName = castFloatHack(tblFieldName)
 		case string:
 			// try to convert the number attribute to string
 			tblFieldName = castString(tblFieldName) // numeric col vs string literal
 		case []any:
-			if hasString(v) {
+			if allFloats(v) {
+				tblFieldName = castFloatHack(tblFieldName)
+			} else if hasString(v) {
 				tblFieldName, value = castString(tblFieldName), toStrings(v)
 			}
 		}
@@ -185,8 +200,9 @@ func DataTypeCollisionHandledFieldName(key *TelemetryFieldKey, value any, tblFie
 	return tblFieldName, value
 }
 
-func castFloat(col string) string  { return fmt.Sprintf("toFloat64OrNull(%s)", col) }
-func castString(col string) string { return fmt.Sprintf("toString(%s)", col) }
+func castFloat(col string) string     { return fmt.Sprintf("toFloat64OrNull(%s)", col) }
+func castFloatHack(col string) string { return fmt.Sprintf("toFloat64(%s)", col) }
+func castString(col string) string    { return fmt.Sprintf("toString(%s)", col) }
 
 func allFloats(in []any) bool {
 	for _, x := range in {

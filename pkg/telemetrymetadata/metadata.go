@@ -159,7 +159,9 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 			dataTypes = append(dataTypes, fieldKeySelector.FieldDataType)
 		}
 		// now look at the field context
-		if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified {
+		if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified &&
+			(fieldKeySelector.FieldContext == telemetrytypes.FieldContextAttribute ||
+				fieldKeySelector.FieldContext == telemetrytypes.FieldContextResource) {
 			fieldKeyConds = append(fieldKeyConds, sb.E("tag_type", fieldKeySelector.FieldContext.TagType()))
 		}
 
@@ -349,7 +351,9 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		}
 
 		// now look at the field context
-		if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified {
+		if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified &&
+			(fieldKeySelector.FieldContext == telemetrytypes.FieldContextAttribute ||
+				fieldKeySelector.FieldContext == telemetrytypes.FieldContextResource) {
 			fieldKeyConds = append(fieldKeyConds, sb.E("tag_type", fieldKeySelector.FieldContext.TagType()))
 		}
 

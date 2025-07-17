@@ -74,6 +74,8 @@ func (b *traceQueryStatementBuilder) Build(
 		return nil, err
 	}
 
+	b.adjustKeys(ctx, keys, query)
+
 	// Check if filter contains trace_id(s) and optimize time range if needed
 	if query.Filter != nil && query.Filter.Expression != "" && b.telemetryStore != nil {
 		traceIDs, found := ExtractTraceIDsFromFilter(query.Filter.Expression)
@@ -128,19 +130,17 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 
 	for idx := range query.SelectFields {
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          query.SelectFields[idx].Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  query.SelectFields[idx].FieldContext,
-			FieldDataType: query.SelectFields[idx].FieldDataType,
+			Name:         query.SelectFields[idx].Name,
+			Signal:       telemetrytypes.SignalTraces,
+			FieldContext: query.SelectFields[idx].FieldContext,
 		})
 	}
 
 	for idx := range query.Order {
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          query.Order[idx].Key.Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  query.Order[idx].Key.FieldContext,
-			FieldDataType: query.Order[idx].Key.FieldDataType,
+			Name:         query.Order[idx].Key.Name,
+			Signal:       telemetrytypes.SignalTraces,
+			FieldContext: query.Order[idx].Key.FieldContext,
 		})
 	}
 
@@ -149,6 +149,76 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 	}
 
 	return keySelectors
+}
+
+func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) {
+	// for group by / order by / selected fields, if there is a key
+	// that exactly matches the name of intrinsic / calculated field but has
+	// a field context or data type that doesn't match the field context or data type of the
+	// intrinsic field,
+	// and there is no additional key present in the data with the incoming key match,
+	// then override the given context with
+	// intrinsic / calculated field context and data type
+	// Why does that happen? Because we have a lot of assets created by users and shared over web
+	// that has incorrect context or data type populated so we fix it
+	// note: this override happens only when there is no match; if there is a match,
+	// we can't make decision on behalf of users so we let it use unmodified
+
+	checkMatch := func(k *telemetrytypes.TelemetryFieldKey) bool {
+		findMatch := func(staticKeys map[string]telemetrytypes.TelemetryFieldKey) {
+			match := false
+			for _, mapKey := range keys[k.Name] {
+				if mapKey.FieldContext == k.FieldContext && mapKey.FieldDataType == k.FieldDataType {
+					match = true
+				}
+			}
+			if !match {
+				b.logger.InfoContext(ctx, "overriding the field context and data type", "field.name", k.Name)
+				k.FieldContext = staticKeys[k.Name].FieldContext
+				k.FieldDataType = staticKeys[k.Name].FieldDataType
+			}
+		}
+
+		if _, ok := IntrinsicFields[k.Name]; ok {
+			findMatch(IntrinsicFields)
+		}
+		if _, ok := CalculatedFields[k.Name]; ok {
+			findMatch(CalculatedFields)
+		}
+		if _, ok := IntrinsicFieldsDeprecated[k.Name]; ok {
+			findMatch(IntrinsicFieldsDeprecated)
+		}
+		if _, ok := CalculatedFieldsDeprecated[k.Name]; ok {
+			findMatch(CalculatedFieldsDeprecated)
+		}
+		return false
+	}
+
+	for idx := range query.GroupBy {
+		checkMatch(&query.GroupBy[idx].TelemetryFieldKey)
+	}
+	for idx := range query.Order {
+		checkMatch(&query.Order[idx].Key.TelemetryFieldKey)
+	}
+	for idx := range query.SelectFields {
+		checkMatch(&query.SelectFields[idx])
+	}
+
+	// add deprecated fields only during statement building
+	for fieldKeyName, fieldKey := range IntrinsicFieldsDeprecated {
+		if _, ok := keys[fieldKeyName]; !ok {
+			keys[fieldKeyName] = []*telemetrytypes.TelemetryFieldKey{&fieldKey}
+		} else {
+			keys[fieldKeyName] = append(keys[fieldKeyName], &fieldKey)
+		}
+	}
+	for fieldKeyName, fieldKey := range CalculatedFieldsDeprecated {
+		if _, ok := keys[fieldKeyName]; !ok {
+			keys[fieldKeyName] = []*telemetrytypes.TelemetryFieldKey{&fieldKey}
+		} else {
+			keys[fieldKeyName] = append(keys[fieldKeyName], &fieldKey)
+		}
+	}
 }
 
 // buildListQuery builds a query for list panel type
@@ -196,7 +266,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		if err != nil {
 			return nil, err
 		}
-		sb.SelectMore(sqlbuilder.Escape(colExpr))
+		sb.SelectMore(colExpr)
 	}
 
 	// From table
@@ -277,7 +347,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		}
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
-		sb.SelectMore(sqlbuilder.Escape(colExpr))
+		sb.SelectMore(colExpr)
 		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
 	}
 
@@ -394,7 +464,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 		}
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
-		sb.SelectMore(sqlbuilder.Escape(colExpr))
+		sb.SelectMore(colExpr)
 	}
 
 	// for scalar queries, the rate would be end-start

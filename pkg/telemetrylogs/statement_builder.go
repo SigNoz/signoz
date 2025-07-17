@@ -73,6 +73,15 @@ func (b *logQueryStatementBuilder) Build(
 		return nil, err
 	}
 
+	keys["id"] = []*telemetrytypes.TelemetryFieldKey{
+		{
+			Name:          "id",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+	}
+
 	// Create SQL builder
 	q := sqlbuilder.NewSelectBuilder()
 
@@ -229,7 +238,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		}
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
-		sb.SelectMore(sqlbuilder.Escape(colExpr))
+		sb.SelectMore(colExpr)
 		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
 	}
 
@@ -349,7 +358,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		}
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
-		sb.SelectMore(sqlbuilder.Escape(colExpr))
+		sb.SelectMore(colExpr)
 	}
 
 	// for scalar queries, the rate would be end-start

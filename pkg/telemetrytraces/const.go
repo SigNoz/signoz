@@ -270,6 +270,60 @@ var (
 			FieldContext:  telemetrytypes.FieldContextSpan,
 			FieldDataType: telemetrytypes.FieldDataTypeBool,
 		},
+		"serviceName": {
+			Name:          "serviceName",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"httpRoute": {
+			Name:          "httpRoute",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"msgSystem": {
+			Name:          "msgSystem",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"msgOperation": {
+			Name:          "msgOperation",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"dbSystem": {
+			Name:          "dbSystem",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"rpcSystem": {
+			Name:          "rpcSystem",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"rpcService": {
+			Name:          "rpcService",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"rpcMethod": {
+			Name:          "rpcMethod",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"peerService": {
+			Name:          "peerService",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
 	}
 	SpanSearchScopeRoot       = "isroot"
 	SpanSearchScopeEntryPoint = "isentrypoint"
