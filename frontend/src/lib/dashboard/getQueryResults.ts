@@ -97,11 +97,13 @@ export const getLegend = (
 	const totalQueries =
 		(payloadQuery?.builder?.queryData?.length || 0) +
 		(payloadQuery?.builder?.queryFormulas?.length || 0);
-	const isSingleQuery = totalQueries === 1;
+	const showSingleAggregationName =
+		totalQueries === 1 && labelName === metaData?.queryName;
 
 	if (aggregationName) {
-		// If only one query, return aggregationName without the labelName suffix
-		return isSingleQuery ? aggregationName : `${aggregationName}-${labelName}`;
+		return showSingleAggregationName
+			? aggregationName
+			: `${aggregationName}-${labelName}`;
 	}
 	return labelName || metaData?.queryName;
 };
