@@ -90,11 +90,18 @@ export const getLegend = (
 	const metaData = queryData?.metaData;
 	const aggregation =
 		aggregationPerQuery?.[metaData?.queryName]?.[metaData?.index];
-	// const legend = legendMap[metaData?.queryName];
+
 	const aggregationName = aggregation?.alias || aggregation?.expression || '';
 
-	if (aggregationName && aggregationPerQuery[metaData?.queryName].length > 1) {
-		return `${aggregationName}-${labelName}`;
+	// Check if there's only one total query (queryData + queryFormulas)
+	const totalQueries =
+		(payloadQuery?.builder?.queryData?.length || 0) +
+		(payloadQuery?.builder?.queryFormulas?.length || 0);
+	const isSingleQuery = totalQueries === 1;
+
+	if (aggregationName) {
+		// If only one query, return aggregationName without the labelName suffix
+		return isSingleQuery ? aggregationName : `${aggregationName}-${labelName}`;
 	}
 	return labelName || metaData?.queryName;
 };

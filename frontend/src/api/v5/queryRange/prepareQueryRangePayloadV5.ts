@@ -146,12 +146,14 @@ export function parseAggregations(
 	expression: string,
 ): { expression: string; alias?: string }[] {
 	const result: { expression: string; alias?: string }[] = [];
-	const regex = /([a-zA-Z0-9_]+\([^)]*\))(?:\s*as\s+([a-zA-Z0-9_]+))?/g;
+	const regex = /([a-zA-Z0-9_]+\([^)]*\))(?:\s*as\s+((?:'[^']*'|"[^"]*"|[a-zA-Z0-9_-]+)))?/g;
 	let match = regex.exec(expression);
 	while (match !== null) {
 		const expr = match[1];
-		const alias = match[2];
+		let alias = match[2];
 		if (alias) {
+			// Remove quotes if present
+			alias = alias.replace(/^['"]|['"]$/g, '');
 			result.push({ expression: expr, alias });
 		} else {
 			result.push({ expression: expr });
