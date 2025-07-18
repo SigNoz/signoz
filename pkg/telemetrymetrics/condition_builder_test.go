@@ -118,8 +118,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorIn,
 			value:         []any{"http.server.duration", "http.server.request.duration", "http.server.response.duration"},
-			expectedSQL:   "(metric_name = ? OR metric_name = ? OR metric_name = ?)",
-			expectedArgs:  []any{"http.server.duration", "http.server.request.duration", "http.server.response.duration"},
+			expectedSQL:   "metric_name IN (?)",
+			expectedArgs:  []any{[]any{"http.server.duration", "http.server.request.duration", "http.server.response.duration"}},
 			expectedError: nil,
 		},
 		{
@@ -141,8 +141,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotIn,
 			value:         []any{"debug", "info", "trace"},
-			expectedSQL:   "(metric_name <> ? AND metric_name <> ? AND metric_name <> ?)",
-			expectedArgs:  []any{"debug", "info", "trace"},
+			expectedSQL:   "metric_name NOT IN (?)",
+			expectedArgs:  []any{[]any{"debug", "info", "trace"}},
 			expectedError: nil,
 		},
 		{
