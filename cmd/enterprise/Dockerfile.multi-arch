@@ -11,10 +11,10 @@ RUN apk update && \
     apk add ca-certificates && \
     rm -rf /var/cache/apk/*
 
-COPY ./target/${OS}-${ARCH}/signoz-community /root/signoz-community
+COPY ./target/${OS}-${ARCH}/signoz /root/signoz
 COPY ./templates/email /root/templates
 COPY frontend/build/ /etc/signoz/web/
 
-RUN chmod 755 /root /root/signoz-community
+RUN chmod 755 /root /root/signoz
 
-ENTRYPOINT ["./signoz-community"]
+ENTRYPOINT ["./signoz", "server"]

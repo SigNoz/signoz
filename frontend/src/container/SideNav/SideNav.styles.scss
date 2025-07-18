@@ -133,12 +133,6 @@
 				margin-right: 4px;
 			}
 
-			&.cloud-user {
-				.version {
-					cursor: default;
-				}
-			}
-
 			&.version-update-notification {
 				.license-type {
 					background: var(--bg-robin-500);
@@ -826,6 +820,20 @@
 				}
 			}
 		}
+	}
+}
+
+.nav-item-label-container {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+
+	& span {
+		display: block;
+		max-width: 170px;
+		white-space: nowrap; /* Prevents line breaks */
+		overflow: hidden; /* Hides overflowing content */
+		text-overflow: ellipsis;
 	}
 }
 

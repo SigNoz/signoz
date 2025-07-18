@@ -135,6 +135,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 									fontSize={tableViewProps?.fontSize}
 									// eslint-disable-next-line react/jsx-props-no-spreading
 									{...(isDragColumn && { className: 'dragHandler' })}
+									columnKey={column.key as string}
 								>
 									{(column.title as string).replace(/^\w/, (c) => c.toUpperCase())}
 								</TableHeaderCellStyled>

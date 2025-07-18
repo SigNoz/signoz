@@ -31,6 +31,13 @@ export interface ProcessorData {
 	// time parser fields
 	layout_type?: string;
 	layout?: string;
+
+	// json flattening fields
+	enable_flattening?: boolean;
+	enable_paths?: boolean;
+	path_prefix?: string;
+	enable_mapping?: boolean;
+	mapping?: Record<string, string[]>;
 }
 
 export interface PipelineData {
