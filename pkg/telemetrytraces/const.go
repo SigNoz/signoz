@@ -108,7 +108,7 @@ var (
 			Name:          "spanKind",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
-			FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
 		"durationNano": {
 			Name:          "durationNano",
@@ -142,7 +142,7 @@ var (
 			Description:   "Derived response status code from the HTTP/RPC status code attributes. Learn more [here](https://signoz.io/docs/traces-management/guides/derived-fields-spans/#response_status_code)",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
-			FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
 		"external_http_url": {
 			Name:          "external_http_url",
@@ -205,7 +205,7 @@ var (
 			Description:   "Whether the span is remote. Learn more [here](https://signoz.io/docs/traces-management/guides/derived-fields-spans/#is_remote)",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
-			FieldDataType: telemetrytypes.FieldDataTypeBool,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
 	}
 
@@ -214,7 +214,7 @@ var (
 			Name:          "responseStatusCode",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
-			FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
 		"externalHttpUrl": {
 			Name:          "externalHttpUrl",
@@ -268,7 +268,7 @@ var (
 			Name:          "isRemote",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
-			FieldDataType: telemetrytypes.FieldDataTypeBool,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
 		"serviceName": {
 			Name:          "serviceName",

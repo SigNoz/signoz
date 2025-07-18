@@ -160,7 +160,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 			// is it a static field?
 			if _, ok := logsV2Columns[field.Name]; ok {
 				// if it is, attach the column name directly
-				field.FieldContext = telemetrytypes.FieldContextSpan
+				field.FieldContext = telemetrytypes.FieldContextLog
 				colName, _ = m.FieldFor(ctx, field)
 			} else {
 				// - the context is not provided

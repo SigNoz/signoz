@@ -164,34 +164,55 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 	// note: this override happens only when there is no match; if there is a match,
 	// we can't make decision on behalf of users so we let it use unmodified
 
+	// example: {"key": "httpRoute","type": "tag","dataType": "string"}
+	// This is sent as "tag", when it's not, this was earlier managed with
+	// `isColumn`, which we don't have in v5 (because it's not a user concern whether it's mat col or not)
+	// Such requests as-is look for attributes, the following code exists to handle them
 	checkMatch := func(k *telemetrytypes.TelemetryFieldKey) bool {
-		findMatch := func(staticKeys map[string]telemetrytypes.TelemetryFieldKey) {
+		var overallMatch bool
+
+		findMatch := func(staticKeys map[string]telemetrytypes.TelemetryFieldKey) bool {
+			// for a given key `k`, iterate over the metadata keys `keys`
+			// and see if there is any exact match
 			match := false
 			for _, mapKey := range keys[k.Name] {
 				if mapKey.FieldContext == k.FieldContext && mapKey.FieldDataType == k.FieldDataType {
 					match = true
 				}
 			}
+			// we don't have exact match, then it's doesn't exist in attribute or resource attribute
+			// use the intrinsic/calculated field
 			if !match {
 				b.logger.InfoContext(ctx, "overriding the field context and data type", "field.name", k.Name)
 				k.FieldContext = staticKeys[k.Name].FieldContext
 				k.FieldDataType = staticKeys[k.Name].FieldDataType
 			}
+			return match
 		}
 
 		if _, ok := IntrinsicFields[k.Name]; ok {
-			findMatch(IntrinsicFields)
+			overallMatch = overallMatch || findMatch(IntrinsicFields)
 		}
 		if _, ok := CalculatedFields[k.Name]; ok {
-			findMatch(CalculatedFields)
+			overallMatch = overallMatch || findMatch(CalculatedFields)
 		}
 		if _, ok := IntrinsicFieldsDeprecated[k.Name]; ok {
-			findMatch(IntrinsicFieldsDeprecated)
+			overallMatch = overallMatch || findMatch(IntrinsicFieldsDeprecated)
 		}
 		if _, ok := CalculatedFieldsDeprecated[k.Name]; ok {
-			findMatch(CalculatedFieldsDeprecated)
+			overallMatch = overallMatch || findMatch(CalculatedFieldsDeprecated)
 		}
-		return false
+
+		if !overallMatch {
+			// check if all the key for the given field have been materialized, if so
+			// set the key to materialized
+			materilized := true
+			for _, key := range keys[k.Name] {
+				materilized = materilized && key.Materialized
+			}
+			k.Materialized = materilized
+		}
+		return overallMatch
 	}
 
 	for idx := range query.GroupBy {
@@ -205,6 +226,10 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 	}
 
 	// add deprecated fields only during statement building
+	// why?
+	// 1. to not fail filter expression that use deprecated cols
+	// 2. this could have been moved to metadata fetching itself, however, that
+	// would mean, they also show up in suggestions we we don't want to do
 	for fieldKeyName, fieldKey := range IntrinsicFieldsDeprecated {
 		if _, ok := keys[fieldKeyName]; !ok {
 			keys[fieldKeyName] = []*telemetrytypes.TelemetryFieldKey{&fieldKey}
@@ -246,7 +271,11 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	selectedFields := query.SelectFields
 
 	if len(selectedFields) == 0 {
-		selectedFields = maps.Values(DefaultFields)
+		sortedKeys := maps.Keys(DefaultFields)
+		slices.Sort(sortedKeys)
+		for _, key := range sortedKeys {
+			selectedFields = append(selectedFields, DefaultFields[key])
+		}
 	}
 
 	selectFieldKeys := []string{}

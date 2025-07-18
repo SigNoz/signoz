@@ -36,6 +36,9 @@ func (f TelemetryFieldKey) String() string {
 	if f.FieldDataType != FieldDataTypeUnspecified {
 		sb.WriteString(fmt.Sprintf(",type=%s", f.FieldDataType.StringValue()))
 	}
+	if f.Materialized {
+		sb.WriteString(",materialized")
+	}
 	return sb.String()
 }
 
