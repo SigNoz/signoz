@@ -19,17 +19,17 @@
 			display: flex;
 			flex-direction: row;
 			align-items: center;
-			gap: 8px;
+			gap: 16px;
 		}
 
 		.brand-logo {
-			width: 24px;
-			height: 24px;
+			width: 32px;
+			height: 32px;
 		}
 
 		.brand-title {
-			font-size: 16px;
-			font-weight: 700;
+			font-size: 24px;
+			font-weight: 500;
 
 			color: var(--text-vanilla-300);
 		}

@@ -14,7 +14,6 @@ import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import APIError from 'types/api/error';
 import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck';
@@ -40,7 +39,6 @@ function Login({
 	ssoerror = '',
 	withPassword = '0',
 }: LoginProps): JSX.Element {
-	const { t } = useTranslation(['login']);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const { user } = useAppContext();
 
@@ -107,16 +105,16 @@ function Login({
 	useEffect(() => {
 		if (ssoerror !== '') {
 			notifications.error({
-				message: t('failed_to_login'),
+				message: 'sorry, failed to login',
 			});
 		}
-	}, [ssoerror, t, notifications]);
+	}, [ssoerror, notifications]);
 
 	const onNextHandler = async (): Promise<void> => {
 		const email = form.getFieldValue('email');
 		if (!email) {
 			notifications.error({
-				message: t('invalid_email'),
+				message: 'Please enter a valid email address',
 			});
 			return;
 		}
@@ -134,17 +132,19 @@ function Login({
 					setPrecheckComplete(true);
 				} else {
 					notifications.error({
-						message: t('invalid_account'),
+						message:
+							'This account does not exist. To create a new account, contact your admin to get an invite link',
 					});
 				}
 			} else {
 				notifications.error({
-					message: t('invalid_config'),
+					message:
+						'Invalid configuration detected, please contact your administrator',
 				});
 			}
 		} catch (e) {
 			console.log('failed to call precheck Api', e);
-			notifications.error({ message: t('unexpected_error') });
+			notifications.error({ message: 'Sorry, something went wrong' });
 		}
 		setPrecheckInProcess(false);
 	};
@@ -193,7 +193,7 @@ function Login({
 			disabled={isLoading}
 			href={precheckResult.ssoUrl}
 		>
-			{t('login_with_sso')}
+			Login with SSO
 		</Button>
 	);
 
@@ -204,14 +204,14 @@ function Login({
 
 		return (
 			<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
-				{t('prompt_on_sso_error')}{' '}
-				<a href="/login?password=Y">{t('login_with_pwd')}</a>.
+				Are you trying to resolve SSO configuration issue?{' '}
+				<a href="/login?password=Y">Login with password</a>.
 			</Typography.Paragraph>
 		);
 	};
 
 	return (
-		<div className="login-form-container">
+		<div className="login-form-container moving-border">
 			<FormContainer form={form} onFinish={onSubmitHandler}>
 				<div className="login-form-header">
 					<Title
@@ -239,7 +239,7 @@ function Login({
 							id="loginEmail"
 							data-testid="email"
 							required
-							placeholder={t('placeholder_email')}
+							placeholder="name@yourcompany.com"
 							autoFocus
 							disabled={isLoading}
 							className="login-form-input"
@@ -260,8 +260,8 @@ function Login({
 						</FormContainer.Item>
 
 						<div style={{ marginTop: 8 }}>
-							<Tooltip title={t('prompt_forgot_password')}>
-								<Typography.Link>{t('forgot_password')}</Typography.Link>
+							<Tooltip title="Ask your admin to reset your password and send you a new invite link">
+								<Typography.Link>Forgot password?</Typography.Link>
 							</Tooltip>
 						</div>
 					</ParentContainer>
@@ -282,7 +282,7 @@ function Login({
 							className="periscope-btn primary next-btn"
 							icon={<ArrowRight size={12} />}
 						>
-							{t('button_initiate_login')}
+							Next
 						</Button>
 					)}
 					{precheckComplete && !sso && (
@@ -295,7 +295,7 @@ function Login({
 							className="periscope-btn primary next-btn"
 							icon={<ArrowRight size={12} />}
 						>
-							{t('button_login')}
+							Login
 						</Button>
 					)}
 
@@ -310,20 +310,21 @@ function Login({
 								marginTop: 16,
 							}}
 						>
-							{t('prompt_no_account')}
+							Don&apos;t have an account? Contact your admin to send you an invite
+							link.
 						</Typography.Paragraph>
 					)}
 
 					{canSelfRegister && (
 						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
-							{t('prompt_if_admin')}{' '}
+							If you are admin,{' '}
 							<Typography.Link
 								onClick={(): void => {
 									history.push(ROUTES.SIGN_UP);
 								}}
 								style={{ fontWeight: 700 }}
 							>
-								{t('create_an_account')}
+								Create an account
 							</Typography.Link>
 						</Typography.Paragraph>
 					)}
