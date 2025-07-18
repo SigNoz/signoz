@@ -261,6 +261,7 @@ function GridCardGraph({
 				getGraphData?.(data?.payload?.data);
 				setDashboardQueryRangeCalled(true);
 			},
+			showErrorModal: false,
 		},
 	);
 
