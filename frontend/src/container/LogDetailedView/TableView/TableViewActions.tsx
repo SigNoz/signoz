@@ -2,7 +2,6 @@
 import './TableViewActions.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import Convert from 'ansi-to-html';
 import { Button, Popover, Spin, Tooltip, Tree } from 'antd';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import cx from 'classnames';
@@ -11,22 +10,19 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
-import dompurify from 'dompurify';
 import { ArrowDownToDot, ArrowUpFromDot, Ellipsis } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import { DataType } from '../TableView';
 import {
-	escapeHtml,
 	filterKeyForField,
 	getFieldAttributes,
+	getSanitizedLogBody,
 	parseFieldValue,
 	removeEscapeCharacters,
-	unescapeString,
 } from '../utils';
 import useAsyncJSONProcessing from './useAsyncJSONProcessing';
 
@@ -49,8 +45,6 @@ interface ITableViewActionsProps {
 	) => () => void;
 }
 
-const convert = new Convert();
-
 // Memoized Tree Component
 const MemoizedTree = React.memo<{ treeData: any[] }>(({ treeData }) => (
 	<Tree
@@ -69,6 +63,7 @@ const BodyContent: React.FC<{
 	record: DataType;
 	bodyHtml: { __html: string };
 }> = React.memo(({ fieldData, record, bodyHtml }) => {
+	console.log('bodyHtml', bodyHtml);
 	const { isLoading, treeData, error } = useAsyncJSONProcessing(
 		fieldData.value,
 		record.field === 'body',
@@ -144,11 +139,7 @@ export default function TableViewActions(
 		if (record.field !== 'body') return { __html: '' };
 
 		return {
-			__html: convert.toHtml(
-				dompurify.sanitize(unescapeString(escapeHtml(record.value)), {
-					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
-				}),
-			),
+			__html: getSanitizedLogBody(record.value, { shouldEscapeHtml: true }),
 		};
 	}, [record.field, record.value]);
 
