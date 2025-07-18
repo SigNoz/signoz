@@ -32,7 +32,6 @@ import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5'
  * Validates if metric name is available for METRICS data source
  */
 function validateMetricNameForMetricsDataSource(query: Query): boolean {
-	console.log('validateMetricNameForMetricsDataSource', query);
 	if (query.queryType !== 'builder') {
 		return true; // Non-builder queries don't need this validation
 	}

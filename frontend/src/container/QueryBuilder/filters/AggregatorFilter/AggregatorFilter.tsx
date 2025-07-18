@@ -164,8 +164,6 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				value,
 			);
 
-			console.log('customAttribute', customAttribute);
-
 			onChange(customAttribute);
 		},
 		[onChange],
@@ -192,8 +190,6 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 					(item) => item.id === currentOption.key,
 				);
 
-				console.log('attribute', attribute);
-
 				if (attribute) {
 					onChange(attribute);
 				}
@@ -217,7 +213,6 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 					(item) => item.id === currentOption.key,
 				);
 
-				console.log('attribute-select', attribute);
 				if (attribute && onSelect) {
 					onSelect(attribute);
 				}

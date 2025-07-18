@@ -69,7 +69,6 @@ function GridCardGraph({
 		GlobalReducer
 	>((state) => state.globalTime);
 	const queryClient = useQueryClient();
-	console.log('widget', widget.title, widget.query);
 
 	const handleBackNavigation = (): void => {
 		const searchParams = new URLSearchParams(window.location.search);

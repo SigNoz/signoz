@@ -102,7 +102,6 @@ function GridTableComponent({
 		[columnUnits],
 	);
 
-	console.log('columnUnits', columnUnits, originalDataSource);
 	const dataSource = useMemo(() => applyColumnUnits(originalDataSource), [
 		applyColumnUnits,
 		originalDataSource,

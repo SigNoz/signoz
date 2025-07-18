@@ -589,7 +589,6 @@ export function getQueryLabelWithAggregation(
 
 export const adjustQueryForV5 = (currentQuery: Query): Query => {
 	if (currentQuery.queryType === EQueryType.QUERY_BUILDER) {
-		console.log('currentQuery', currentQuery);
 		const newQueryData = currentQuery.builder.queryData.map((query) => {
 			const aggregations = query.aggregations?.map((aggregation) => {
 				if (query.dataSource === DataSource.METRICS) {

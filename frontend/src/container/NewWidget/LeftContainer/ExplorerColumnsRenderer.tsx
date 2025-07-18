@@ -118,7 +118,7 @@ function ExplorerColumnsRenderer({
 			const selectedField = Object.values(data?.data?.data?.keys || {})
 				?.flat()
 				?.find((attributeKey) => attributeKey.name === key);
-			console.log('selectedField', selectedField);
+
 			if (selectedTracesFields) {
 				if (isAttributeKeySelected(key)) {
 					setSelectedTracesFields(
@@ -246,8 +246,6 @@ function ExplorerColumnsRenderer({
 	};
 
 	const isDarkMode = useIsDarkMode();
-
-	console.log('selectedTracesFields', selectedTracesFields, selectedLogFields);
 
 	return (
 		<div className="explorer-columns-renderer">
