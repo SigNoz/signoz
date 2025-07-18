@@ -9,7 +9,7 @@ import { ReduceToFilter } from 'container/QueryBuilder/filters/ReduceToFilter/Re
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { isEmpty } from 'lodash-es';
-import { BarChart2, ScrollText, X } from 'lucide-react';
+import { BarChart2, ChevronUp, ScrollText } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
@@ -225,7 +225,7 @@ function QueryAddOns({
 								</div>
 								<Button
 									className="close-btn periscope-btn ghost"
-									icon={<X size={16} />}
+									icon={<ChevronUp size={16} />}
 									onClick={(): void => handleRemoveView('group_by')}
 								/>
 							</div>
@@ -259,6 +259,7 @@ function QueryAddOns({
 								onClose={(): void => {
 									setSelectedViews(selectedViews.filter((view) => view.key !== 'limit'));
 								}}
+								closeIcon={<ChevronUp size={16} />}
 							/>
 						</div>
 					)}
@@ -278,7 +279,7 @@ function QueryAddOns({
 								{!isListViewPanel && (
 									<Button
 										className="close-btn periscope-btn ghost"
-										icon={<X size={16} />}
+										icon={<ChevronUp size={16} />}
 										onClick={(): void => handleRemoveView('order_by')}
 									/>
 								)}
@@ -296,7 +297,7 @@ function QueryAddOns({
 
 								<Button
 									className="close-btn periscope-btn ghost"
-									icon={<X size={16} />}
+									icon={<ChevronUp size={16} />}
 									onClick={(): void => handleRemoveView('reduce_to')}
 								/>
 							</div>
@@ -315,6 +316,7 @@ function QueryAddOns({
 										selectedViews.filter((view) => view.key !== 'legend_format'),
 									);
 								}}
+								closeIcon={<ChevronUp size={16} />}
 							/>
 						</div>
 					)}

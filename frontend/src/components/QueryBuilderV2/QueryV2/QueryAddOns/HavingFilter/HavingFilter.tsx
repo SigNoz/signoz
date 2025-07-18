@@ -14,7 +14,7 @@ import { copilot } from '@uiw/codemirror-theme-copilot';
 import CodeMirror, { EditorView, keymap } from '@uiw/react-codemirror';
 import { Button } from 'antd';
 import { useQueryBuilderV2Context } from 'components/QueryBuilderV2/QueryBuilderV2Context';
-import { X } from 'lucide-react';
+import { ChevronUp } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -364,7 +364,7 @@ function HavingFilter({
 				/>
 				<Button
 					className="close-btn periscope-btn ghost"
-					icon={<X size={16} />}
+					icon={<ChevronUp size={16} />}
 					onClick={onClose}
 				/>
 			</div>
