@@ -11,6 +11,9 @@ import BodyTitleRenderer from './BodyTitleRenderer';
 import { typeToArrayTypeMapper } from './config';
 import { AnyObject, IFieldAttributes } from './LogDetailedView.types';
 
+// Cache the Convert instance for better performance
+const convertInstance = new Convert();
+
 export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 	try {
 		const value = JSON.parse(obj);
@@ -344,11 +347,10 @@ export const getSanitizedLogBody = (
 	text: string,
 	options: { shouldEscapeHtml?: boolean } = {},
 ): string => {
-	const convert = new Convert();
 	const { shouldEscapeHtml = false } = options;
 	const escapedText = shouldEscapeHtml ? escapeHtml(text) : text;
 	try {
-		return convert.toHtml(
+		return convertInstance.toHtml(
 			dompurify.sanitize(unescapeString(escapedText), {
 				FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
 			}),
