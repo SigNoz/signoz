@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
+	"time"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -43,7 +45,24 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
+	// TODO(srikanthccv): maybe extend this to every possible attribute
+	if key.Name == "duration_nano" || key.Name == "durationNano" { // QoL improvement
+		if strDuration, ok := value.(string); ok {
+			duration, err := time.ParseDuration(strDuration)
+			if err == nil {
+				value = duration.Nanoseconds()
+			} else {
+				duration, err := strconv.ParseFloat(strDuration, 64)
+				if err == nil {
+					value = duration
+				} else {
+					return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid duration value: %s", strDuration)
+				}
+			}
+		}
+	} else {
+		tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
+	}
 
 	// regular operators
 	switch operator {
