@@ -159,6 +159,9 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 			dataTypes = append(dataTypes, fieldKeySelector.FieldDataType)
 		}
 		// now look at the field context
+		// we don't write most of intrinsic fields to tag attributes table
+		// for this reason we don't want to apply tag_type if the field context
+		// if not attribute or resource attribute
 		if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified &&
 			(fieldKeySelector.FieldContext == telemetrytypes.FieldContextAttribute ||
 				fieldKeySelector.FieldContext == telemetrytypes.FieldContextResource) {
@@ -351,6 +354,9 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		}
 
 		// now look at the field context
+		// we don't write most of intrinsic fields to tag attributes table
+		// for this reason we don't want to apply tag_type if the field context
+		// if not attribute or resource attribute
 		if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified &&
 			(fieldKeySelector.FieldContext == telemetrytypes.FieldContextAttribute ||
 				fieldKeySelector.FieldContext == telemetrytypes.FieldContextResource) {

@@ -169,7 +169,6 @@ func (q *QueryBuilderQuery[T]) validateSignal() error {
 }
 
 func (q *QueryBuilderQuery[T]) validateAggregations() error {
-	fmt.Println("validate aggregations")
 	// At least one aggregation required for non-disabled queries
 	if len(q.Aggregations) == 0 && !q.Disabled {
 		return errors.NewInvalidInputf(
@@ -185,7 +184,6 @@ func (q *QueryBuilderQuery[T]) validateAggregations() error {
 		// Type-specific validation based on T
 		switch v := any(agg).(type) {
 		case MetricAggregation:
-			fmt.Println("inside metric aggregation")
 			if v.MetricName == "" {
 				aggId := fmt.Sprintf("aggregation #%d", i+1)
 				if q.Name != "" {
@@ -199,7 +197,6 @@ func (q *QueryBuilderQuery[T]) validateAggregations() error {
 			}
 			// Validate metric-specific aggregations
 			if err := validateMetricAggregation(v); err != nil {
-				fmt.Println("error from validateMetricAggregation")
 				aggId := fmt.Sprintf("aggregation #%d", i+1)
 				if q.Name != "" {
 					aggId = fmt.Sprintf("aggregation #%d in query '%s'", i+1, q.Name)

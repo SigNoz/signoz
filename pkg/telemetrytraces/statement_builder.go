@@ -168,7 +168,7 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 	// This is sent as "tag", when it's not, this was earlier managed with
 	// `isColumn`, which we don't have in v5 (because it's not a user concern whether it's mat col or not)
 	// Such requests as-is look for attributes, the following code exists to handle them
-	checkMatch := func(k *telemetrytypes.TelemetryFieldKey) bool {
+	checkMatch := func(k *telemetrytypes.TelemetryFieldKey) {
 		var overallMatch bool
 
 		findMatch := func(staticKeys map[string]telemetrytypes.TelemetryFieldKey) bool {
@@ -183,7 +183,7 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 			// we don't have exact match, then it's doesn't exist in attribute or resource attribute
 			// use the intrinsic/calculated field
 			if !match {
-				b.logger.InfoContext(ctx, "overriding the field context and data type", "field.name", k.Name)
+				b.logger.InfoContext(ctx, "overriding the field context and data type", "key", k.Name)
 				k.FieldContext = staticKeys[k.Name].FieldContext
 				k.FieldDataType = staticKeys[k.Name].FieldDataType
 			}
@@ -212,7 +212,6 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 			}
 			k.Materialized = materilized
 		}
-		return overallMatch
 	}
 
 	for idx := range query.GroupBy {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -44,14 +45,20 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	// TODO(srikanthccv): extend this to every possible attribute
-	if key.Name == "duration_nano" || key.Name == "durationNano" { // QOL improvement
+	// TODO(srikanthccv): maybe extend this to every possible attribute
+	if key.Name == "duration_nano" || key.Name == "durationNano" { // QoL improvement
 		if strDuration, ok := value.(string); ok {
 			duration, err := time.ParseDuration(strDuration)
-			if err != nil {
-				return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid duration value: %s", strDuration)
+			if err == nil {
+				value = duration.Nanoseconds()
+			} else {
+				duration, err := strconv.ParseFloat(strDuration, 64)
+				if err == nil {
+					value = duration
+				} else {
+					return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid duration value: %s", strDuration)
+				}
 			}
-			value = duration.Nanoseconds()
 		}
 	} else {
 		tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)

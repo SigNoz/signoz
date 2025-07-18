@@ -179,7 +179,7 @@ func matchesKey(selector *telemetrytypes.FieldKeySelector, key *telemetrytypes.T
 	}
 
 	// Check field context
-	// check for the context filter only for attribute and resource attribue
+	// check for the context filter only for attribute and resource attribute
 	if selector.FieldContext != telemetrytypes.FieldContextUnspecified &&
 		(selector.FieldContext == telemetrytypes.FieldContextAttribute ||
 			selector.FieldContext == telemetrytypes.FieldContextResource) &&

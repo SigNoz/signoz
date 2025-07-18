@@ -69,7 +69,9 @@ func StepIntervalForQuery(req *qbtypes.QueryRangeRequest, name string) int64 {
 	for _, query := range req.CompositeQuery.Queries {
 		switch spec := query.Spec.(type) {
 		case qbtypes.QueryBuilderFormula:
-			exprStr = spec.Expression
+			if spec.Name == name {
+				exprStr = spec.Expression
+			}
 		}
 	}
 
