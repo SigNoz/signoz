@@ -15,6 +15,7 @@ import {
 	FieldDataType,
 	FunctionName,
 	GroupByKey,
+	Having,
 	LogAggregation,
 	MetricAggregation,
 	OrderBy,
@@ -114,9 +115,7 @@ function createBaseSpec(
 				  )
 				: undefined,
 		// legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
-		having: isEmpty(queryData.havingExpression)
-			? undefined
-			: queryData?.havingExpression,
+		having: isEmpty(queryData.having) ? undefined : (queryData?.having as Having),
 		functions: isEmpty(queryData.functions)
 			? undefined
 			: queryData.functions.map(

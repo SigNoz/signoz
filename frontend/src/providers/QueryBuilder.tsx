@@ -874,7 +874,6 @@ export function QueryBuilderProvider({
 								items: [],
 								op: 'AND',
 							},
-							having: [],
 						})),
 					},
 				};
