@@ -23,6 +23,7 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
+COPY ./cmd/ ./cmd/
 COPY ./ee/ ./ee/
 COPY ./pkg/ ./pkg/
 COPY ./templates/email /root/templates
@@ -33,4 +34,4 @@ RUN mv /root/linux-${TARGETARCH}/signoz /root/signoz
 
 RUN chmod 755 /root /root/signoz
 
-ENTRYPOINT ["/root/signoz"]
+ENTRYPOINT ["/root/signoz", "server"]
