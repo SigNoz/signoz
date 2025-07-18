@@ -1,7 +1,8 @@
+import './Login.styles.scss';
+
 import { Typography } from 'antd';
 import getUserVersion from 'api/v1/version/getVersion';
 import Spinner from 'components/Spinner';
-import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import LoginContainer from 'container/Login';
 import useURLQuery from 'hooks/useUrlQuery';
 import { useAppContext } from 'providers/App/App';
@@ -43,18 +44,29 @@ function Login(): JSX.Element {
 		return <Spinner tip="Loading..." />;
 	}
 
-	const { version } = versionResult.data.payload;
-
 	return (
-		<WelcomeLeftContainer version={version}>
-			<LoginContainer
-				ssoerror={ssoerror}
-				jwt={jwt}
-				refreshjwt={refreshJwt}
-				userId={userId}
-				withPassword={withPassword}
-			/>
-		</WelcomeLeftContainer>
+		<div className="login-page-container">
+			<div className="perilin-bg" />
+			<div className="login-page-content">
+				<div className="brand-container">
+					<img
+						src="/Logos/signoz-brand-logo.svg"
+						alt="logo"
+						className="brand-logo"
+					/>
+
+					<div className="brand-title">SigNoz</div>
+				</div>
+
+				<LoginContainer
+					ssoerror={ssoerror}
+					jwt={jwt}
+					refreshjwt={refreshJwt}
+					userId={userId}
+					withPassword={withPassword}
+				/>
+			</div>
+		</div>
 	);
 }
 

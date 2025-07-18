@@ -1,3 +1,5 @@
+import './Login.styles.scss';
+
 import { Button, Form, Input, Space, Tooltip, Typography } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -9,6 +11,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { ArrowRight } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +19,7 @@ import { useQuery } from 'react-query';
 import APIError from 'types/api/error';
 import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck';
 
-import { FormContainer, FormWrapper, Label, ParentContainer } from './styles';
+import { FormContainer, Label, ParentContainer } from './styles';
 
 const { Title } = Typography;
 
@@ -208,11 +211,28 @@ function Login({
 	};
 
 	return (
-		<FormWrapper>
+		<div className="login-form-container">
 			<FormContainer form={form} onFinish={onSubmitHandler}>
-				<Title level={4}>{t('login_page_title')}</Title>
+				<div className="login-form-header">
+					<Title
+						level={4}
+						style={{
+							marginTop: 0,
+						}}
+					>
+						Welcome to SigNoz
+					</Title>
+
+					<Typography.Paragraph style={{ color: 'var(--text-vanilla-300)' }}>
+						Sign in to monitor, trace, and troubleshoot your applications
+						effortlessly.
+					</Typography.Paragraph>
+				</div>
+
 				<ParentContainer>
-					<Label htmlFor="signupEmail">{t('label_email')}</Label>
+					<Label htmlFor="signupEmail" style={{ marginTop: 0 }}>
+						Email
+					</Label>
 					<FormContainer.Item name="email">
 						<Input
 							type="email"
@@ -222,27 +242,32 @@ function Login({
 							placeholder={t('placeholder_email')}
 							autoFocus
 							disabled={isLoading}
+							className="login-form-input"
 						/>
 					</FormContainer.Item>
 				</ParentContainer>
 				{precheckComplete && !sso && (
 					<ParentContainer>
-						<Label htmlFor="Password">{t('label_password')}</Label>
+						<Label htmlFor="Password">Password</Label>
 						<FormContainer.Item name="password">
 							<Input.Password
 								required
 								id="currentPassword"
 								data-testid="password"
 								disabled={isLoading}
+								className="login-form-input"
 							/>
 						</FormContainer.Item>
-						<Tooltip title={t('prompt_forgot_password')}>
-							<Typography.Link>{t('forgot_password')}</Typography.Link>
-						</Tooltip>
+
+						<div style={{ marginTop: 8 }}>
+							<Tooltip title={t('prompt_forgot_password')}>
+								<Typography.Link>{t('forgot_password')}</Typography.Link>
+							</Tooltip>
+						</div>
 					</ParentContainer>
 				)}
 				<Space
-					style={{ marginTop: '1.3125rem' }}
+					style={{ marginTop: 16 }}
 					align="start"
 					direction="vertical"
 					size={20}
@@ -254,6 +279,8 @@ function Login({
 							type="primary"
 							onClick={onNextHandler}
 							data-testid="initiate_login"
+							className="periscope-btn primary next-btn"
+							icon={<ArrowRight size={12} />}
 						>
 							{t('button_initiate_login')}
 						</Button>
@@ -265,6 +292,8 @@ function Login({
 							type="primary"
 							htmlType="submit"
 							data-attr="signup"
+							className="periscope-btn primary next-btn"
+							icon={<ArrowRight size={12} />}
 						>
 							{t('button_login')}
 						</Button>
@@ -274,7 +303,13 @@ function Login({
 					{!precheckComplete && ssoerror && renderOnSsoError()}
 
 					{!canSelfRegister && (
-						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
+						<Typography.Paragraph
+							style={{
+								color: 'var(--text-vanilla-300)',
+								fontSize: 12,
+								marginTop: 16,
+							}}
+						>
 							{t('prompt_no_account')}
 						</Typography.Paragraph>
 					)}
@@ -294,7 +329,7 @@ function Login({
 					)}
 				</Space>
 			</FormContainer>
-		</FormWrapper>
+		</div>
 	);
 }
 
