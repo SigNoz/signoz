@@ -1,0 +1,19 @@
+.login-form-container {
+	display: flex;
+	justify-content: center;
+	width: 100%;
+	align-items: flex-start;
+	margin-top: 16px;
+
+	.login-form-header {
+		margin-bottom: 16px;
+	}
+
+	.next-btn {
+		padding: 0px 16px;
+	}
+
+	.login-form-input {
+		height: 40px;
+	}
+}
