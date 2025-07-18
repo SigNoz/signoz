@@ -33,7 +33,7 @@ const useAsyncJSONProcessing = (
 			return (): void => {};
 		}
 
-		// Check if the string is too large
+		// Avoid processing if the json is too large
 		const byteSize = new Blob([value]).size;
 		if (byteSize > MAX_BODY_BYTES) {
 			return (): void => {};

@@ -63,7 +63,6 @@ const BodyContent: React.FC<{
 	record: DataType;
 	bodyHtml: { __html: string };
 }> = React.memo(({ fieldData, record, bodyHtml }) => {
-	console.log('bodyHtml', bodyHtml);
 	const { isLoading, treeData, error } = useAsyncJSONProcessing(
 		fieldData.value,
 		record.field === 'body',

@@ -11,7 +11,6 @@ import BodyTitleRenderer from './BodyTitleRenderer';
 import { typeToArrayTypeMapper } from './config';
 import { AnyObject, IFieldAttributes } from './LogDetailedView.types';
 
-// Cache the Convert instance for better performance
 const convertInstance = new Convert();
 
 export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
