@@ -1140,6 +1140,9 @@ func (b *BuilderQuery) Validate(panelType PanelType) error {
 				_, ok := function.Args[0].(float64)
 				if !ok {
 					// if string, attempt to convert to float
+					if _, ok := function.Args[0].(string); !ok {
+						return fmt.Errorf("threshold param should be a float")
+					}
 					threshold, err := strconv.ParseFloat(function.Args[0].(string), 64)
 					if err != nil {
 						return fmt.Errorf("threshold param should be a float")
