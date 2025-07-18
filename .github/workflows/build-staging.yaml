@@ -95,7 +95,7 @@ jobs:
       GO_VERSION: 1.23
       GO_INPUT_ARTIFACT_CACHE_KEY: staging-jsbuild-${{ github.sha }}
       GO_INPUT_ARTIFACT_PATH: frontend/build
-      GO_BUILD_CONTEXT: ./ee/query-service
+      GO_BUILD_CONTEXT: ./cmd/enterprise
       GO_BUILD_FLAGS: >-
         -tags timetzdata
         -ldflags='-linkmode external -extldflags \"-static\" -s -w
@@ -111,7 +111,7 @@ jobs:
         -X github.com/SigNoz/signoz/pkg/analytics.key=9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr'
       GO_CGO_ENABLED: 1
       DOCKER_BASE_IMAGES: '{"alpine": "alpine:3.20.3"}'
-      DOCKER_DOCKERFILE_PATH: ./ee/query-service/Dockerfile.multi-arch
+      DOCKER_DOCKERFILE_PATH: ./cmd/enterprise/Dockerfile.multi-arch
       DOCKER_MANIFEST: true
       DOCKER_PROVIDERS: gcp
   staging:

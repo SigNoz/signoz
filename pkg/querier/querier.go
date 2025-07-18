@@ -162,6 +162,17 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)),
 					}
 				}
+
+				req.CompositeQuery.Queries[idx].Spec = spec
+			}
+		} else if query.Type == qbtypes.QueryTypePromQL {
+			switch spec := query.Spec.(type) {
+			case qbtypes.PromQuery:
+				if spec.Step.Seconds() == 0 {
+					spec.Step = qbtypes.Step{
+						Duration: time.Second * time.Duration(querybuilder.RecommendedStepIntervalForMetric(req.Start, req.End)),
+					}
+				}
 				req.CompositeQuery.Queries[idx].Spec = spec
 			}
 		}

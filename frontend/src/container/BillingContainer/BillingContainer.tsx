@@ -20,6 +20,7 @@ import getUsage, { UsageResponsePayloadProps } from 'api/billing/getUsage';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
 import manageCreditCardApi from 'api/v1/portal/create';
+import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -440,14 +441,15 @@ export default function BillingContainer(): JSX.Element {
 							</Typography.Text>
 						) : null}
 					</Flex>
-					<Flex gap={20}>
+					<Flex gap={8}>
 						<Button
-							type="dashed"
+							type="default"
 							size="middle"
 							loading={isLoadingBilling || isLoadingManageBilling}
 							disabled={isLoading || isFetchingBillingData}
 							onClick={handleCsvDownload}
 							icon={<CloudDownloadOutlined />}
+							className="periscope-btn"
 						>
 							Download CSV
 						</Button>
@@ -463,6 +465,8 @@ export default function BillingContainer(): JSX.Element {
 								? t('manage_billing')
 								: t('upgrade_plan')}
 						</Button>
+
+						<RefreshPaymentStatus type="tooltip" />
 					</Flex>
 				</Flex>
 
