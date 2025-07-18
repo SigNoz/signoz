@@ -106,6 +106,36 @@ const formatValuesForFilter = (value: string | string[]): string | string[] => {
 	return String(value);
 };
 
+export const convertExpressionToFilters = (
+	expression: string,
+): TagFilterItem[] => {
+	if (!expression) return [];
+
+	const queryPairs = extractQueryPairs(expression);
+
+	const filters: TagFilterItem[] = [];
+
+	queryPairs.forEach((pair) => {
+		const operator = pair.hasNegation
+			? getOperatorValue(`NOT_${pair.operator}`.toUpperCase())
+			: getOperatorValue(pair.operator.toUpperCase());
+		filters.push({
+			id: uuid(),
+			op: operator,
+			key: {
+				id: pair.key,
+				key: pair.key,
+				type: '',
+			},
+			value: pair.isMultiValue
+				? formatValuesForFilter(pair.valueList as string[]) ?? []
+				: formatValuesForFilter(pair.value as string) ?? '',
+		});
+	});
+
+	return filters;
+};
+
 export const convertFiltersToExpressionWithExistingQuery = (
 	filters: TagFilter,
 	existingQuery: string | undefined,
