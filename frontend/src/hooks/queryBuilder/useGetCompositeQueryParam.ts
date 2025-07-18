@@ -40,9 +40,9 @@ export const useGetCompositeQueryParam = (): Query | null => {
 						convertedQuery.filters = convertedFilter.filters;
 
 						// Convert having if needed
-						if (query.having?.length > 0 && !query.havingExpression?.expression) {
+						if (Array.isArray(query.having)) {
 							const convertedHaving = convertHavingToExpression(query.having);
-							convertedQuery.havingExpression = convertedHaving;
+							convertedQuery.having = convertedHaving;
 						}
 
 						// Convert aggregation if needed

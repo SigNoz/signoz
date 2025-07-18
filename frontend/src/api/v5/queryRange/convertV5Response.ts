@@ -16,22 +16,39 @@ function getColName(
 	legendMap: Record<string, string>,
 	aggregationPerQuery: Record<string, any>,
 ): string {
-	const aggregation =
-		aggregationPerQuery?.[col.queryName]?.[col.aggregationIndex];
-	const legend = legendMap[col.queryName];
-	const aggregationName = aggregation?.alias || aggregation?.expression || '';
-
 	if (col.columnType === 'group') {
 		return col.name;
 	}
 
-	if (aggregationName && aggregationPerQuery[col.queryName].length > 1) {
-		if (legend) {
-			return `${aggregationName}-${legend}`;
-		}
-		return `${col.queryName}.${aggregationName}`;
+	const aggregation =
+		aggregationPerQuery?.[col.queryName]?.[col.aggregationIndex];
+	const legend = legendMap[col.queryName];
+	const alias = aggregation?.alias;
+	const expression = aggregation?.expression || '';
+	const aggregationsCount = aggregationPerQuery[col.queryName]?.length || 0;
+	const isSingleAggregation = aggregationsCount === 1;
+
+	// Single aggregation: Priority is alias > legend > expression
+	if (isSingleAggregation) {
+		return alias || legend || expression;
 	}
-	return legend || col.queryName;
+
+	// Multiple aggregations: Each follows single rules BUT never shows legend
+	// Priority: alias > expression (legend is ignored for multiple aggregations)
+	return alias || expression;
+}
+
+function getColId(
+	col: ScalarData['columns'][number],
+	aggregationPerQuery: Record<string, any>,
+): string {
+	if (col.columnType === 'group') {
+		return col.name;
+	}
+	const aggregation =
+		aggregationPerQuery?.[col.queryName]?.[col.aggregationIndex];
+	const expression = aggregation?.expression || '';
+	return `${col.queryName}.${expression}`;
 }
 
 /**
@@ -112,6 +129,7 @@ function convertScalarDataArrayToTable(
 			name: getColName(col, legendMap, aggregationPerQuery),
 			queryName: col.queryName,
 			isValueColumn: col.columnType === 'aggregation',
+			id: getColId(col, aggregationPerQuery),
 		}));
 
 		// Process rows for this specific query
@@ -120,7 +138,8 @@ function convertScalarDataArrayToTable(
 
 			scalarData?.columns?.forEach((col, colIndex) => {
 				const columnName = getColName(col, legendMap, aggregationPerQuery);
-				rowData[columnName] = dataRow[colIndex];
+				const columnId = getColId(col, aggregationPerQuery);
+				rowData[columnId || columnName] = dataRow[colIndex];
 			});
 
 			return { data: rowData };
@@ -157,6 +176,7 @@ function convertScalarWithFormatForWeb(
 					name: colName,
 					queryName: col.queryName,
 					isValueColumn: col.columnType === 'aggregation',
+					id: getColId(col, aggregationPerQuery),
 				};
 			}) || [];
 
@@ -164,7 +184,7 @@ function convertScalarWithFormatForWeb(
 			scalarData.data?.map((dataRow) => {
 				const rowData: Record<string, any> = {};
 				columns?.forEach((col, colIndex) => {
-					rowData[col.name] = dataRow[colIndex];
+					rowData[col.id || col.name] = dataRow[colIndex];
 				});
 				return { data: rowData };
 			}) || [];

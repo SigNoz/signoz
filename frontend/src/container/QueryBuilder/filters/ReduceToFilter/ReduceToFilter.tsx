@@ -19,12 +19,6 @@ export const ReduceToFilter = memo(function ReduceToFilter({
 		REDUCE_TO_VALUES.find((option) => option.value === reduceToValue) ||
 		REDUCE_TO_VALUES[0];
 
-	console.log(
-		'query-reduce-to',
-		query,
-		currentValue,
-		(query.aggregations?.[0] as MetricAggregation)?.reduceTo,
-	);
 	const handleChange = (
 		newValue: SelectOption<ReduceOperators, string>,
 	): void => {

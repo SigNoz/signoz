@@ -32,7 +32,6 @@ import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5'
  * Validates if metric name is available for METRICS data source
  */
 function validateMetricNameForMetricsDataSource(query: Query): boolean {
-	console.log('validateMetricNameForMetricsDataSource', query);
 	if (query.queryType !== 'builder') {
 		return true; // Non-builder queries don't need this validation
 	}
@@ -91,11 +90,20 @@ export const getLegend = (
 	const metaData = queryData?.metaData;
 	const aggregation =
 		aggregationPerQuery?.[metaData?.queryName]?.[metaData?.index];
-	// const legend = legendMap[metaData?.queryName];
+
 	const aggregationName = aggregation?.alias || aggregation?.expression || '';
 
-	if (aggregationName && aggregationPerQuery[metaData?.queryName].length > 1) {
-		return `${aggregationName}-${labelName}`;
+	// Check if there's only one total query (queryData + queryFormulas)
+	const totalQueries =
+		(payloadQuery?.builder?.queryData?.length || 0) +
+		(payloadQuery?.builder?.queryFormulas?.length || 0);
+	const showSingleAggregationName =
+		totalQueries === 1 && labelName === metaData?.queryName;
+
+	if (aggregationName) {
+		return showSingleAggregationName
+			? aggregationName
+			: `${aggregationName}-${labelName}`;
 	}
 	return labelName || metaData?.queryName;
 };

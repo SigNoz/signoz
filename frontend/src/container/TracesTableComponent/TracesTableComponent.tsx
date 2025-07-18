@@ -42,8 +42,6 @@ function TracesTableComponent({
 	});
 	const { safeNavigate } = useSafeNavigate();
 
-	console.log('widget.selectedTracesFields', widget.selectedTracesFields);
-
 	useEffect(() => {
 		setRequestData((prev) => ({
 			...prev,
@@ -81,7 +79,6 @@ function TracesTableComponent({
 		[queryTableData],
 	);
 
-	console.log('transformedQueryTableData', transformedQueryTableData, columns);
 	const handleRow = useCallback(
 		(record: RowData): HTMLAttributes<RowData> => ({
 			onClick: (event): void => {

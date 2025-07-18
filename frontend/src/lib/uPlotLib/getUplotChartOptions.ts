@@ -208,6 +208,7 @@ export const getUPlotChartOptions = ({
 				),
 		  )
 		: [];
+
 	const legendConfig = enhancedLegend
 		? calculateEnhancedLegendConfig(
 				dimensions,
@@ -307,6 +308,7 @@ export const getUPlotChartOptions = ({
 				timezone,
 				colorMapping,
 				customTooltipElement,
+				query: query || currentQuery,
 			}),
 			onClickPlugin({
 				onClick: onClickHandler,
@@ -656,7 +658,7 @@ export const getUPlotChartOptions = ({
 					widgetMetaData: apiResponse?.data?.result || [],
 					graphsVisibilityStates,
 					panelType,
-					currentQuery,
+					currentQuery: query || currentQuery,
 					stackBarChart,
 					hiddenGraph,
 					isDarkMode,

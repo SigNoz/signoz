@@ -230,7 +230,7 @@ export function HavingFilter({
 	}, [searchText, parseSearchText]);
 
 	useEffect(() => {
-		setLocalValues(transformHavingToStringValue(having));
+		setLocalValues(transformHavingToStringValue(having as Having[]));
 	}, [having]);
 
 	const isMetricsDataSource = query.dataSource === DataSource.METRICS;

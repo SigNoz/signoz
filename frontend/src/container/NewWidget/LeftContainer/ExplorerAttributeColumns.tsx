@@ -38,7 +38,6 @@ function ExplorerAttributeColumns({
 		);
 	}
 
-	console.log('filteredAttributeKeys', filteredAttributeKeys, data);
 	return (
 		<div className="attribute-columns">
 			{filteredAttributeKeys.map((attributeKey: any) => (

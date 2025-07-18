@@ -470,7 +470,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		}
 
 		const adjustedQueryForV5 = adjustQueryForV5(currentQuery);
-		console.log('adjustedQueryForV5', adjustedQueryForV5);
 
 		const dashboard: Props = {
 			id: selectedDashboard.id,
