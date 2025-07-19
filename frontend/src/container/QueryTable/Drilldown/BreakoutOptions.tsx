@@ -1,11 +1,11 @@
 import './Breakoutoptions.styles.scss';
 
-import { Skeleton } from 'antd';
+import { Input, Skeleton } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { useGetAggregateKeys } from 'hooks/infraMonitoring/useGetAggregateKeys';
-import { ChartBar } from 'lucide-react';
+import useDebounce from 'hooks/useDebounce';
 import { ContextMenu } from 'periscope/components/ContextMenu';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { BreakoutOptionsProps } from './contextConfig';
@@ -30,18 +30,30 @@ function BreakoutOptions({
 	onColumnClick,
 }: BreakoutOptionsProps): JSX.Element {
 	const { groupBy = [] } = queryData;
+	const [searchText, setSearchText] = useState<string>('');
+	const debouncedSearchText = useDebounce(searchText, 400);
+
+	const handleInputChange = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>): void => {
+			const value = e.target.value.trim().toLowerCase();
+			setSearchText(value);
+		},
+		[],
+	);
+
 	const { isFetching, data } = useGetAggregateKeys(
 		{
 			aggregateAttribute: queryData.aggregateAttribute.key,
 			dataSource: queryData.dataSource,
 			aggregateOperator: queryData.aggregateOperator,
-			searchText: '',
+			searchText: debouncedSearchText,
 		},
 		{
 			queryKey: [
 				queryData.aggregateAttribute.key,
 				queryData.dataSource,
 				queryData.aggregateOperator,
+				debouncedSearchText,
 			],
 			enabled: !!queryData,
 		},
@@ -59,31 +71,40 @@ function BreakoutOptions({
 	console.log('>> breakoutOptions', breakoutOptions);
 
 	return (
-		<div style={{ height: '200px' }}>
-			<OverlayScrollbar
-				options={{
-					overflow: {
-						x: 'hidden',
-					},
-				}}
-			>
-				{/* eslint-disable-next-line react/jsx-no-useless-fragment */}
-				<>
-					{isFetching ? (
-						<OptionsSkeleton />
-					) : (
-						breakoutOptions?.map((item: BaseAutocompleteData) => (
-							<ContextMenu.Item
-								key={item.key}
-								icon={<ChartBar size={16} />}
-								onClick={(): void => onColumnClick(item)}
-							>
-								{item.key}
-							</ContextMenu.Item>
-						))
-					)}
-				</>
-			</OverlayScrollbar>
+		<div>
+			<section className="search" style={{ padding: '8px 0' }}>
+				<Input
+					type="text"
+					value={searchText}
+					placeholder="Search for breakout options..."
+					onChange={handleInputChange}
+				/>
+			</section>
+			<div style={{ height: '200px' }}>
+				<OverlayScrollbar
+					options={{
+						overflow: {
+							x: 'hidden',
+						},
+					}}
+				>
+					{/* eslint-disable-next-line react/jsx-no-useless-fragment */}
+					<>
+						{isFetching ? (
+							<OptionsSkeleton />
+						) : (
+							breakoutOptions?.map((item: BaseAutocompleteData) => (
+								<ContextMenu.Item
+									key={item.key}
+									onClick={(): void => onColumnClick(item)}
+								>
+									{item.key}
+								</ContextMenu.Item>
+							))
+						)}
+					</>
+				</OverlayScrollbar>
+			</div>
 		</div>
 	);
 }
