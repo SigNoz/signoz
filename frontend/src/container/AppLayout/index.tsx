@@ -16,6 +16,7 @@ import cx from 'classnames';
 import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
 import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import { Events } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -181,11 +182,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	]);
 
 	useEffect(() => {
-		// refetch the changelog only when the current tab becomes active + there isn't an active request + no changelog already available
-		if (!changelog && !getChangelogByVersionResponse.isLoading && isVisible) {
+		// refetch the changelog only when the current tab becomes active + there isn't an active request
+		if (!getChangelogByVersionResponse.isLoading && isVisible) {
 			getChangelogByVersionResponse.refetch();
 		}
-	}, [isVisible, changelog, getChangelogByVersionResponse]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isVisible]);
 
 	useEffect(() => {
 		let timer: ReturnType<typeof setTimeout>;
@@ -664,6 +666,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 										upgrade
 									</a>
 									to continue using SigNoz features.
+									<span className="refresh-payment-status">
+										{' '}
+										| Already upgraded? <RefreshPaymentStatus type="text" />
+									</span>
 								</span>
 							) : (
 								'Please contact your administrator for upgrading to a paid plan.'
@@ -690,6 +696,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 										pay the bill
 									</a>
 									to continue using SigNoz features.
+									<span className="refresh-payment-status">
+										{' '}
+										| Already paid? <RefreshPaymentStatus type="text" />
+									</span>
 								</span>
 							) : (
 								' Please contact your administrator to pay the bill.'

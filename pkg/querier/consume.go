@@ -5,6 +5,7 @@ import (
 	"math"
 	"reflect"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -17,6 +18,10 @@ import (
 
 var (
 	aggRe = regexp.MustCompile(`^__result_(\d+)$`)
+	// legacyReservedColumnTargetAliases identifies result value from a user
+	// written clickhouse query. The column alias indcate which value is
+	// to be considered as final result (or target)
+	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
 )
 
 // consume reads every row and shapes it into the payload expected for the
@@ -131,6 +136,9 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 				} else if numericColsCount == 1 { // classic single-value query
 					fallbackValue = val
 					fallbackSeen = true
+				} else if slices.Contains(legacyReservedColumnTargetAliases, name) {
+					fallbackValue = val
+					fallbackSeen = true
 				} else {
 					// numeric label
 					lblVals = append(lblVals, fmt.Sprint(val))
@@ -148,6 +156,9 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 						id, _ := strconv.Atoi(m[1])
 						aggValues[id] = val
 					} else if numericColsCount == 1 { // classic single-value query
+						fallbackValue = val
+						fallbackSeen = true
+					} else if slices.Contains(legacyReservedColumnTargetAliases, name) {
 						fallbackValue = val
 						fallbackSeen = true
 					} else {

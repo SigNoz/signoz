@@ -8,6 +8,7 @@ import (
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/huandu/go-sqlbuilder"
 )
 
 var (
@@ -100,5 +101,5 @@ func (m *fieldMapper) ColumnExpressionFor(
 		return "", err
 	}
 
-	return fmt.Sprintf("%s AS `%s`", colName, field.Name), nil
+	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(colName), field.Name), nil
 }

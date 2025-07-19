@@ -37,6 +37,7 @@ export interface IAppContext {
 	updateChangelog(payload: ChangelogSchema): void;
 	toggleChangelogModal(): void;
 	versionData: PayloadProps | null;
+	hasEditPermission: boolean;
 }
 
 // User
