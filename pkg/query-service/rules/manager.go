@@ -330,6 +330,22 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 	if err != nil {
 		return err
 	}
+	if len(parsedRule.PreferredChannels) == 0 {
+		channels, err := m.alertmanager.ListChannels(ctx, claims.OrgID)
+		if err != nil {
+			return err
+		}
+
+		for _, channel := range channels {
+			parsedRule.PreferredChannels = append(parsedRule.PreferredChannels, channel.Name)
+		}
+		newRuleStr, err := json.Marshal(parsedRule)
+		if err != nil {
+			return err
+		}
+
+		ruleStr = string(newRuleStr)
+	}
 
 	existingRule, err := m.ruleStore.GetStoredRule(ctx, id)
 	if err != nil {
@@ -346,21 +362,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 			return err
 		}
 
-		var preferredChannels []string
-		if len(parsedRule.PreferredChannels) == 0 {
-			channels, err := m.alertmanager.ListChannels(ctx, claims.OrgID)
-			if err != nil {
-				return err
-			}
-
-			for _, channel := range channels {
-				preferredChannels = append(preferredChannels, channel.Name)
-			}
-		} else {
-			preferredChannels = parsedRule.PreferredChannels
-		}
-
-		err = cfg.UpdateRuleIDMatcher(id.StringValue(), preferredChannels)
+		err = cfg.UpdateRuleIDMatcher(id.StringValue(), parsedRule.PreferredChannels)
 		if err != nil {
 			return err
 		}
@@ -507,6 +509,23 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 		return nil, err
 	}
 
+	if len(parsedRule.PreferredChannels) == 0 {
+		channels, err := m.alertmanager.ListChannels(ctx, claims.OrgID)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, channel := range channels {
+			parsedRule.PreferredChannels = append(parsedRule.PreferredChannels, channel.Name)
+		}
+		newRuleStr, err := json.Marshal(parsedRule)
+		if err != nil {
+			return nil, err
+		}
+
+		ruleStr = string(newRuleStr)
+	}
+
 	now := time.Now()
 	storedRule := &ruletypes.Rule{
 		Identifiable: types.Identifiable{
@@ -530,21 +549,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 			return err
 		}
 
-		var preferredChannels []string
-		if len(parsedRule.PreferredChannels) == 0 {
-			channels, err := m.alertmanager.ListChannels(ctx, claims.OrgID)
-			if err != nil {
-				return err
-			}
-
-			for _, channel := range channels {
-				preferredChannels = append(preferredChannels, channel.Name)
-			}
-		} else {
-			preferredChannels = parsedRule.PreferredChannels
-		}
-
-		err = cfg.CreateRuleIDMatcher(id.StringValue(), preferredChannels)
+		err = cfg.CreateRuleIDMatcher(id.StringValue(), parsedRule.PreferredChannels)
 		if err != nil {
 			return err
 		}
