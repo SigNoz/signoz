@@ -30,6 +30,7 @@ export type PanelWrapperProps = {
 	onOpenTraceBtnClick?: (record: RowData) => void;
 	customOnRowClick?: (record: RowData) => void;
 	customSeries?: (data: QueryData[]) => uPlot.Series[];
+	enableDrillDown?: boolean;
 };
 
 export type TooltipData = {

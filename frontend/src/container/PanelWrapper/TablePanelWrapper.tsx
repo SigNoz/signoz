@@ -12,6 +12,7 @@ function TablePanelWrapper({
 	openTracesButton,
 	onOpenTraceBtnClick,
 	customOnRowClick,
+	enableDrillDown = false,
 }: PanelWrapperProps): JSX.Element {
 	const panelData =
 		(queryResponse.data?.payload?.data?.result?.[0] as any)?.table || [];
@@ -31,6 +32,7 @@ function TablePanelWrapper({
 			widgetId={widget.id}
 			renderColumnCell={widget.renderColumnCell}
 			customColTitles={widget.customColTitles}
+			enableDrillDown={enableDrillDown}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...GRID_TABLE_CONFIG}
 		/>

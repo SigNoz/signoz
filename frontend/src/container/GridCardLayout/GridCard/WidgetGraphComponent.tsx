@@ -62,6 +62,7 @@ function WidgetGraphComponent({
 	customErrorMessage,
 	customOnRowClick,
 	customTimeRangeWindowForCoRelation,
+	enableDrillDown,
 }: WidgetGraphComponentProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const [deleteModal, setDeleteModal] = useState(false);
@@ -226,6 +227,7 @@ function WidgetGraphComponent({
 	const onToggleModelHandler = (): void => {
 		const existingSearchParams = new URLSearchParams(search);
 		existingSearchParams.delete(QueryParams.expandedWidgetId);
+		existingSearchParams.delete(QueryParams.compositeQuery);
 		const updatedQueryParams = Object.fromEntries(existingSearchParams.entries());
 		if (queryResponse.data?.payload) {
 			const {
@@ -354,6 +356,7 @@ function WidgetGraphComponent({
 					onClickHandler={onClickHandler ?? graphClickHandler}
 					customOnDragSelect={customOnDragSelect}
 					setCurrentGraphRef={setCurrentGraphRef}
+					enableDrillDown={enableDrillDown}
 				/>
 			</Modal>
 
@@ -405,6 +408,7 @@ function WidgetGraphComponent({
 						onOpenTraceBtnClick={onOpenTraceBtnClick}
 						customSeries={customSeries}
 						customOnRowClick={customOnRowClick}
+						enableDrillDown={enableDrillDown}
 					/>
 				</div>
 			)}
@@ -417,6 +421,7 @@ WidgetGraphComponent.defaultProps = {
 	setLayout: undefined,
 	onClickHandler: undefined,
 	customTimeRangeWindowForCoRelation: undefined,
+	enableDrillDown: false,
 };
 
 export default WidgetGraphComponent;

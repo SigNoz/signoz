@@ -22,6 +22,7 @@ export type GridTableComponentProps = {
 	widgetId?: string;
 	renderColumnCell?: QueryTableProps['renderColumnCell'];
 	customColTitles?: Record<string, string>;
+	enableDrillDown?: boolean;
 } & Pick<LogsExplorerTableProps, 'data'> &
 	Omit<TableProps<RowData>, 'columns' | 'dataSource'>;
 
