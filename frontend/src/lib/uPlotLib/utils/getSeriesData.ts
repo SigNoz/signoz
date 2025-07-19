@@ -60,8 +60,8 @@ const getSeries = ({
 				isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
 			);
 
-		const pointSize = seriesList[i].values.length > 1 ? 5 : 10;
-		const showPoints = !(seriesList[i].values.length > 1);
+		const pointSize = seriesList[i]?.values?.length > 1 ? 5 : 10;
+		const showPoints = !(seriesList[i]?.values?.length > 1);
 
 		const seriesObj: any = {
 			paths,

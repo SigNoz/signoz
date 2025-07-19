@@ -3,14 +3,12 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import React from 'react';
 import { DropResult } from 'react-beautiful-dnd';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
 import ExplorerColumnsRenderer from '../ExplorerColumnsRenderer';
@@ -321,7 +319,11 @@ describe('ExplorerColumnsRenderer', () => {
 					selectedLogFields={[]}
 					setSelectedLogFields={mockSetSelectedLogFields}
 					selectedTracesFields={[
-						{ key: 'trace_attribute1', dataType: DataTypes.String, type: 'tag' },
+						{
+							name: 'trace_attribute1',
+							fieldDataType: DataTypes.String,
+							fieldContext: '',
+						},
 					]}
 					setSelectedTracesFields={mockSetSelectedTracesFields}
 				/>,
@@ -340,7 +342,11 @@ describe('ExplorerColumnsRenderer', () => {
 					selectedLogFields={[]}
 					setSelectedLogFields={mockSetSelectedLogFields}
 					selectedTracesFields={[
-						{ key: 'trace_attribute1', dataType: DataTypes.String, type: 'tag' },
+						{
+							name: 'trace_attribute1',
+							fieldDataType: DataTypes.String,
+							fieldContext: '',
+						},
 					]}
 					setSelectedTracesFields={mockSetSelectedTracesFields}
 				/>,
@@ -355,15 +361,15 @@ describe('ExplorerColumnsRenderer', () => {
 
 		it('reorders trace fields on drag and drop', () => {
 			const initialSelectedFields = [
-				{ key: 'trace_field1', dataType: 'string', type: 'tag' },
-				{ key: 'trace_field2', dataType: 'string', type: 'tag' },
+				{ name: 'trace_field1', fieldDataType: 'string', fieldContext: 'tag' },
+				{ name: 'trace_field2', fieldDataType: 'string', fieldContext: 'tag' },
 			];
 
 			render(
 				<ExplorerColumnsRenderer
 					selectedLogFields={[]}
 					setSelectedLogFields={mockSetSelectedLogFields}
-					selectedTracesFields={initialSelectedFields as BaseAutocompleteData[]}
+					selectedTracesFields={initialSelectedFields as TelemetryFieldKey[]}
 					setSelectedTracesFields={mockSetSelectedTracesFields}
 				/>,
 			);
@@ -383,8 +389,8 @@ describe('ExplorerColumnsRenderer', () => {
 				});
 
 				expect(mockSetSelectedTracesFields).toHaveBeenCalledWith([
-					{ key: 'trace_field2', dataType: 'string', type: 'tag' },
-					{ key: 'trace_field1', dataType: 'string', type: 'tag' },
+					{ name: 'trace_field2', fieldDataType: 'string', fieldContext: 'tag' },
+					{ name: 'trace_field1', fieldDataType: 'string', fieldContext: 'tag' },
 				]);
 			} else {
 				fail('DragDropContext or onDragEndMock not found');

@@ -1,11 +1,10 @@
 import './LeftContainer.styles.scss';
 
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -30,7 +29,7 @@ function LeftContainer({
 	setQueryResponse,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
-	const { selectedDashboard } = useDashboard();
+	// const { selectedDashboard } = useDashboard();
 
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -38,7 +37,8 @@ function LeftContainer({
 	>((state) => state.globalTime);
 	const queryResponse = useGetQueryRange(
 		requestData,
-		selectedDashboard?.data?.version || DEFAULT_ENTITY_VERSION,
+		// selectedDashboard?.data?.version || DEFAULT_ENTITY_VERSION,
+		ENTITY_VERSION_V5,
 		{
 			enabled: !!stagedQuery,
 			retry: false,

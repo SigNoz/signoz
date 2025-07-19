@@ -2,6 +2,7 @@ import { Select, Spin } from 'antd';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useMemo } from 'react';
 import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
+import { getParsedAggregationOptionsForOrderBy } from 'utils/aggregationConverter';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
@@ -13,6 +14,7 @@ export function OrderByFilter({
 	onChange,
 	isListViewPanel = false,
 	entityVersion,
+	isNewQueryV2 = false,
 }: OrderByFilterProps): JSX.Element {
 	const {
 		debouncedSearchText,
@@ -37,22 +39,35 @@ export function OrderByFilter({
 		},
 	);
 
+	// Get parsed aggregation options using createAggregation only for QueryV2
+	const parsedAggregationOptions = useMemo(
+		() => (isNewQueryV2 ? getParsedAggregationOptionsForOrderBy(query) : []),
+		[query, isNewQueryV2],
+	);
+
 	const optionsData = useMemo(() => {
 		const keyOptions = createOptions(data?.payload?.attributeKeys || []);
 		const groupByOptions = createOptions(query.groupBy);
+		const aggregationOptionsFromParsed = createOptions(parsedAggregationOptions);
+
 		const options =
 			query.aggregateOperator === MetricAggregateOperator.NOOP
 				? keyOptions
-				: [...groupByOptions, ...aggregationOptions];
+				: [
+						...groupByOptions,
+						...(isNewQueryV2 ? aggregationOptionsFromParsed : aggregationOptions),
+				  ];
 
 		return generateOptions(options);
 	}, [
-		aggregationOptions,
 		createOptions,
 		data?.payload?.attributeKeys,
-		generateOptions,
-		query.aggregateOperator,
 		query.groupBy,
+		query.aggregateOperator,
+		parsedAggregationOptions,
+		aggregationOptions,
+		generateOptions,
+		isNewQueryV2,
 	]);
 
 	const isDisabledSelect =

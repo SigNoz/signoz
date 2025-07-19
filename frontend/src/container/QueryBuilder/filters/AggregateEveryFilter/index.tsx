@@ -29,7 +29,7 @@ function AggregateEveryFilter({
 			placeholder="Enter in seconds"
 			disabled={isDisabled}
 			style={selectStyle}
-			value={query.stepInterval}
+			value={query?.stepInterval}
 			onChange={onChangeHandler}
 			min={0}
 		/>

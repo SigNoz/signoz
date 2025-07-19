@@ -46,6 +46,7 @@ function useUpdatedQuery(): UseUpdatedQueryResult {
 				selectedTime: widgetConfig.timePreferance,
 				globalSelectedInterval,
 				variables: getDashboardVariables(selectedDashboard?.data?.variables),
+				originalGraphType: widgetConfig.panelTypes,
 			});
 
 			// Execute query and process results
