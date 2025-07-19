@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
@@ -6045,4 +6046,138 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano / 1000000)
 
 	return &searchSpansResult, nil
+}
+
+func (r *ClickHouseReader) GetCorrespondingNormalizedMetrics(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]model.NormalizedMetricsMap, error) {
+	if len(metricNames) == 0 {
+		return make(map[string]model.NormalizedMetricsMap), nil
+	}
+
+	result := make(map[string]model.NormalizedMetricsMap)
+
+	sanitize := func(s string) string {
+		return constants.NormalizedMetricsMapRegex.ReplaceAllString(s, "")
+	}
+	stripQuantile := func(s string) string {
+		return constants.NormalizedMetricsMapQuantileRegex.ReplaceAllString(s, "")
+	}
+
+	metricsToRegex := func(name string) string {
+		tokens := strings.FieldsFunc(strings.ToLower(name), func(r rune) bool {
+			return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+		})
+		if len(tokens) == 0 {
+			return "^$"
+		}
+		return "^" + strings.Join(tokens, "[^a-z0-9]*")
+	}
+
+	uncachedMetrics := make([]string, 0)
+	for _, metricName := range metricNames {
+		if metricName == "" {
+			result[metricName] = model.NormalizedMetricsMap{}
+			continue
+		}
+
+		resultDto := new(model.NormalizedMetricsMap)
+		cacheKey := constants.NormalizedMetricsMapCacheKey + stripQuantile(sanitize(metricName))
+
+		if err := r.cache.Get(ctx, orgID, cacheKey, resultDto, true); err == nil {
+			result[metricName] = *resultDto
+		} else {
+			uncachedMetrics = append(uncachedMetrics, metricName)
+		}
+	}
+
+	if len(uncachedMetrics) == 0 {
+		return result, nil
+	}
+
+	regexPatterns := make([]string, 0)
+	metricToRegex := make(map[string]string)
+
+	for _, metricName := range uncachedMetrics {
+		processedMetricName := stripQuantile(metricName)
+		regex := metricsToRegex(processedMetricName)
+		regexPatterns = append(regexPatterns, regex)
+		metricToRegex[metricName] = regex
+	}
+
+	combinedPattern := strings.Join(regexPatterns, "|")
+
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.NormalizedMetricsMapQueryThreads)
+	query := "SELECT metric_name, toUInt8(__normalized), any(type) FROM %s.%s WHERE  lower(metric_name) REGEXP ? group by metric_name, __normalized;"
+	rows, err := r.db.Query(valueCtx, fmt.Sprintf(query, signozMetricDBName, signozTSTableNameV41Day), combinedPattern)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	foundMetrics := make(map[string]map[string]string) // inputMetric -> (normalized/unnormalized -> actualName)
+
+	for _, metricName := range uncachedMetrics {
+		foundMetrics[metricName] = make(map[string]string)
+	}
+
+	wantKeys := make(map[string]string) // inputMetric -> wantKey
+	for _, metricName := range uncachedMetrics {
+		wantKeys[metricName] = stripQuantile(sanitize(metricName))
+	}
+
+	for rows.Next() {
+
+		var name, metricType string
+		var normalized uint8
+		var processed string
+		if err := rows.Scan(&name, &normalized, &metricType); err != nil {
+			return nil, err
+		}
+
+		processed = name
+		if metricType == "Summary" && normalized == 0 {
+			processed = stripQuantile(name)
+		}
+
+		processedSanitized := sanitize(processed)
+
+		for _, metricName := range uncachedMetrics {
+			if processedSanitized == wantKeys[metricName] {
+				if normalized == 1 {
+					foundMetrics[metricName]["normalized"] = name
+				} else {
+					foundMetrics[metricName]["unnormalized"] = name
+				}
+				break
+			}
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for _, metricName := range uncachedMetrics {
+		normalizedName := foundMetrics[metricName]["normalized"]
+		unnormalizedName := foundMetrics[metricName]["unnormalized"]
+
+		if normalizedName == "" || unnormalizedName == "" {
+			err := fmt.Errorf("no matching metrics found for %s", metricName)
+			zap.L().Debug("normalized metrics doesnt exist", zap.String("metric_name", metricName), zap.Any("error", err))
+			return nil, fmt.Errorf("no matching metrics found for %s", metricName)
+		}
+
+		// Cache the result
+		resultDto := &model.NormalizedMetricsMap{
+			NormalizedMetricName:   normalizedName,
+			UnNormalizedMetricName: unnormalizedName,
+		}
+
+		result[metricName] = *resultDto
+		cacheKey := constants.NormalizedMetricsMapCacheKey + stripQuantile(sanitize(metricName))
+		if err := r.cache.Set(ctx, orgID, cacheKey, resultDto, 0); err != nil {
+			zap.L().Error("failed to cache normalized metric pair", zap.Error(err))
+		}
+	}
+
+	return result, nil
 }
