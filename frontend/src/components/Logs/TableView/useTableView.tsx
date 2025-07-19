@@ -1,17 +1,14 @@
 import './useTableView.styles.scss';
 
-import Convert from 'ansi-to-html';
 import { Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { unescapeString } from 'container/LogDetailedView/utils';
-import dompurify from 'dompurify';
+import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { useTimezone } from 'providers/Timezone';
 import { useMemo } from 'react';
-import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
 import { getLogIndicatorTypeForTable } from '../LogStateIndicator/utils';
@@ -26,8 +23,6 @@ import {
 	UseTableViewProps,
 	UseTableViewResult,
 } from './types';
-
-const convert = new Convert();
 
 export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 	const {
@@ -149,11 +144,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 								children: (
 									<TableBodyContent
 										dangerouslySetInnerHTML={{
-											__html: convert.toHtml(
-												dompurify.sanitize(unescapeString(field as string), {
-													FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
-												}),
-											),
+											__html: getSanitizedLogBody(field as string),
 										}}
 										fontSize={fontSize}
 										linesPerRow={linesPerRow}
