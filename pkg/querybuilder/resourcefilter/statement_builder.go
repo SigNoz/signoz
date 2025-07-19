@@ -155,6 +155,8 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			JsonKeyToKey:       b.jsonKeyToKey,
 			SkipFullTextFilter: true,
 			SkipFunctionCalls:  true,
+			// there is no need for "key" not found error for resource filtering
+			IgnoreNotFoundKeys: true,
 			Variables:          variables,
 		})
 

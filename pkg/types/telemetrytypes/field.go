@@ -36,6 +36,9 @@ func (f TelemetryFieldKey) String() string {
 	if f.FieldDataType != FieldDataTypeUnspecified {
 		sb.WriteString(fmt.Sprintf(",type=%s", f.FieldDataType.StringValue()))
 	}
+	if f.Materialized {
+		sb.WriteString(",materialized")
+	}
 	return sb.String()
 }
 
@@ -146,41 +149,86 @@ func DataTypeCollisionHandledFieldName(key *TelemetryFieldKey, value any, tblFie
 	// So we handle the data type collisions here
 	switch key.FieldDataType {
 	case FieldDataTypeString:
-		switch value.(type) {
+		switch v := value.(type) {
 		case float64:
 			// try to convert the string value to to number
-			tblFieldName = fmt.Sprintf(`toFloat64OrNull(%s)`, tblFieldName)
+			tblFieldName = castFloat(tblFieldName)
 		case []any:
-			areFloats := true
-			for _, v := range value.([]any) {
-				if _, ok := v.(float64); !ok {
-					areFloats = false
-					break
-				}
-			}
-			if areFloats {
-				tblFieldName = fmt.Sprintf(`toFloat64OrNull(%s)`, tblFieldName)
+			if allFloats(v) {
+				tblFieldName = castFloat(tblFieldName)
+			} else if hasString(v) {
+				_, value = castString(tblFieldName), toStrings(v)
 			}
 		case bool:
 			// we don't have a toBoolOrNull in ClickHouse, so we need to convert the bool to a string
-			value = fmt.Sprintf("%t", value)
-		case string:
-			// nothing to do
+			value = fmt.Sprintf("%t", v)
 		}
+
 	case FieldDataTypeFloat64, FieldDataTypeInt64, FieldDataTypeNumber:
-		switch value.(type) {
+		switch v := value.(type) {
+		// why? ; CH returns an error for a simple check
+		// attributes_number['http.status_code'] = 200 but not for attributes_number['http.status_code'] >= 200
+		// DB::Exception: Bad get: has UInt64, requested Float64.
+		// How is it working in v4? v4 prepares the full query with values in query string
+		// When we format the float it becomes attributes_number['http.status_code'] = 200.000
+		// Which CH gladly accepts and doesn't throw error
+		// However, when passed as query args, the default formatter
+		// https://github.com/ClickHouse/clickhouse-go/blob/757e102f6d8c6059d564ce98795b4ce2a101b1a5/bind.go#L393
+		// is used which prepares the
+		// final query as attributes_number['http.status_code'] = 200 giving this error
+		// This following is one way to workaround it
+		case float32, float64:
+			tblFieldName = castFloatHack(tblFieldName)
 		case string:
-			// try to convert the string value to to number
-			tblFieldName = fmt.Sprintf(`toString(%s)`, tblFieldName)
-		case float64:
-			// nothing to do
+			// try to convert the number attribute to string
+			tblFieldName = castString(tblFieldName) // numeric col vs string literal
+		case []any:
+			if allFloats(v) {
+				tblFieldName = castFloatHack(tblFieldName)
+			} else if hasString(v) {
+				tblFieldName, value = castString(tblFieldName), toStrings(v)
+			}
 		}
+
 	case FieldDataTypeBool:
-		switch value.(type) {
+		switch v := value.(type) {
 		case string:
-			// try to convert the string value to to number
-			tblFieldName = fmt.Sprintf(`toString(%s)`, tblFieldName)
+			tblFieldName = castString(tblFieldName)
+		case []any:
+			if hasString(v) {
+				tblFieldName, value = castString(tblFieldName), toStrings(v)
+			}
 		}
 	}
 	return tblFieldName, value
+}
+
+func castFloat(col string) string     { return fmt.Sprintf("toFloat64OrNull(%s)", col) }
+func castFloatHack(col string) string { return fmt.Sprintf("toFloat64(%s)", col) }
+func castString(col string) string    { return fmt.Sprintf("toString(%s)", col) }
+
+func allFloats(in []any) bool {
+	for _, x := range in {
+		if _, ok := x.(float64); !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func hasString(in []any) bool {
+	for _, x := range in {
+		if _, ok := x.(string); ok {
+			return true
+		}
+	}
+	return false
+}
+
+func toStrings(in []any) []any {
+	out := make([]any, len(in))
+	for i, x := range in {
+		out[i] = fmt.Sprintf("%v", x)
+	}
+	return out
 }

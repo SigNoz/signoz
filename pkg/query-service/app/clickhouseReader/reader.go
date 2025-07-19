@@ -2858,11 +2858,11 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.U
 			WHERE metric_name = $1
 				AND unix_milli >= $2
 				AND type = 'Histogram'
-				AND JSONExtractString(labels, 'service_name') = $3
+				AND (JSONExtractString(labels, 'service_name') = $3 OR JSONExtractString(labels, 'service.name') = $4)
 			GROUP BY le
 			ORDER BY le`, signozMetricDBName, signozTSTableNameV41Day)
 
-		rows, err := r.db.Query(ctx, query, metricName, unixMilli, serviceName)
+		rows, err := r.db.Query(ctx, query, metricName, unixMilli, serviceName, serviceName)
 		if err != nil {
 			zap.L().Error("Error while querying histogram buckets", zap.Error(err))
 			return nil, fmt.Errorf("error while querying histogram buckets: %s", err.Error())
