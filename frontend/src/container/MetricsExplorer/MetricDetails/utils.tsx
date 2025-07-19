@@ -108,6 +108,7 @@ export function getMetricDetailsQuery(
 						id: `${metricName}----${metricType}---string--`,
 						isColumn: true,
 						isJSON: false,
+						dataType: DataTypes.String,
 					},
 					aggregateOperator,
 					timeAggregation,

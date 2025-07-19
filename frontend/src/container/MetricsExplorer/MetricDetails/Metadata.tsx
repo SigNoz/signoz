@@ -104,6 +104,7 @@ function Metadata({
 					if (field.key === 'metric_type') {
 						return (
 							<Select
+								data-testid="metric-type-select"
 								options={Object.entries(METRIC_TYPE_VALUES_MAP).map(([key]) => ({
 									value: key,
 									label: METRIC_TYPE_LABEL_MAP[key as MetricType],
@@ -121,6 +122,7 @@ function Metadata({
 					if (field.key === 'temporality') {
 						return (
 							<Select
+								data-testid="temporality-select"
 								options={Object.values(Temporality).map((key) => ({
 									value: key,
 									label: key,
@@ -137,6 +139,7 @@ function Metadata({
 					}
 					return (
 						<Input
+							data-testid="description-input"
 							name={field.key}
 							defaultValue={
 								metricMetadata[
