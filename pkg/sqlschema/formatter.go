@@ -29,6 +29,8 @@ func (formatter Formatter) DataTypeOf(dataType string) DataType {
 	switch strings.ToUpper(dataType) {
 	case "TEXT":
 		return DataTypeText
+	case "VARCHAR":
+		return DataTypeVarchar
 	case "BIGINT":
 		return DataTypeBigInt
 	case "INTEGER":

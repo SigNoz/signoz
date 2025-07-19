@@ -700,3 +700,144 @@ func TestOperatorDropConstraint(t *testing.T) {
 		})
 	}
 }
+
+func TestOperatorConvertTable(t *testing.T) {
+	testCases := []struct {
+		name              string
+		table             *Table
+		uniqueConstraints []*UniqueConstraint
+		newTable          *Table
+		support           OperatorSupport
+		expectedSQLs      [][]byte
+	}{
+		{
+			name: "NoOperation",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+			},
+			newTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+			},
+			support:      OperatorSupport{},
+			expectedSQLs: [][]byte{},
+		},
+		{
+			name: "AddColumn_NullableNoDefault_ColumnIfNotExistsExistsTrue",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+			},
+			newTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+					{Name: "age", DataType: DataTypeInteger, Nullable: true, Default: ""},
+				},
+			},
+			support: OperatorSupport{
+				ColumnIfNotExistsExists: true,
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "age" INTEGER`),
+			},
+		},
+		{
+			name: "AddColumn_NullableNoDefault_ColumnIfNotExistsExistsFalse",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+			},
+			newTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+					{Name: "age", DataType: DataTypeInteger, Nullable: true, Default: ""},
+				},
+			},
+			support: OperatorSupport{
+				ColumnIfNotExistsExists: false,
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`ALTER TABLE "users" ADD COLUMN "age" INTEGER`),
+			},
+		},
+		{
+			name: "CreatePrimaryKeyConstraint_CreateConstraintTrue",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+			},
+			newTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				PrimaryKeyConstraint: &PrimaryKeyConstraint{
+					ColumnNames: []ColumnName{"id"},
+				},
+			},
+			support: OperatorSupport{
+				CreateConstraint: true,
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`ALTER TABLE "users" ADD CONSTRAINT "pk_users" PRIMARY KEY ("id")`),
+			},
+		},
+		{
+			name: "CreatePrimaryKeyConstraint_CreateConstraintFalse",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+			},
+			newTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				PrimaryKeyConstraint: &PrimaryKeyConstraint{
+					ColumnNames: []ColumnName{"id"},
+				},
+			},
+			support: OperatorSupport{
+				CreateConstraint: false,
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, CONSTRAINT "pk_users" PRIMARY KEY ("id"))`),
+				[]byte(`INSERT INTO "users__temp" ("id") SELECT "id" FROM "users"`),
+				[]byte(`DROP TABLE IF EXISTS "users"`),
+				[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			fmter := NewFormatter(schema.NewNopFormatter().Dialect())
+			operator := NewOperator(fmter, testCase.support)
+
+			actuals := operator.ConvertTable(testCase.table, testCase.uniqueConstraints, testCase.newTable)
+			assert.Equal(t, testCase.expectedSQLs, actuals)
+			assert.Equal(t, testCase.newTable, testCase.table)
+		})
+	}
+}

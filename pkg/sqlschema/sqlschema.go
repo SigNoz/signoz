@@ -34,6 +34,9 @@ type SQLOperator interface {
 	// Returns a list of SQL statements to rename a table.
 	RenameTable(*Table, TableName) [][]byte
 
+	// Returns a list of SQL statements to convert a table to a new table.
+	ConvertTable(*Table, []*UniqueConstraint, *Table) [][]byte
+
 	// Returns a list of SQL statements to recreate a table.
 	RecreateTable(*Table, []*UniqueConstraint) [][]byte
 
@@ -47,8 +50,14 @@ type SQLOperator interface {
 	// If the column is not nullable, the column is added with the input value, then the column is made non-nullable.
 	AddColumn(*Table, []*UniqueConstraint, *Column, any) [][]byte
 
+	// Returns a list of SQL statements to alter a column.
+	AlterColumn(*Table, []*UniqueConstraint, *Column) [][]byte
+
 	// Returns a list of SQL statements to drop a column from a table.
 	DropColumn(*Table, *Column) [][]byte
+
+	// Returns a list of SQL statements to create a constraint on a table.
+	CreateConstraint(*Table, []*UniqueConstraint, Constraint) [][]byte
 
 	// Returns a list of SQL statements to drop a constraint from a table.
 	DropConstraint(*Table, []*UniqueConstraint, Constraint) [][]byte
