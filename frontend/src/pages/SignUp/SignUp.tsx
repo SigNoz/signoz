@@ -10,6 +10,7 @@ import afterLogin from 'AppRoutes/utils';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
@@ -382,6 +383,8 @@ function SignUp(): JSX.Element {
 							data-attr="signup"
 							loading={loading}
 							disabled={isValidForm()}
+							className="periscope-btn primary next-btn"
+							icon={<ArrowRight size={12} />}
 						>
 							Sign Up
 						</Button>
