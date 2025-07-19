@@ -1,7 +1,7 @@
 import { FunnelStepData, LatencyOptions } from 'types/api/traceFunnels';
 import { v4 } from 'uuid';
 
-export const initialStepsData: FunnelStepData[] = [
+export const createInitialStepsData = (): FunnelStepData[] => [
 	{
 		id: v4(),
 		step_order: 1,
@@ -12,7 +12,6 @@ export const initialStepsData: FunnelStepData[] = [
 			op: 'and',
 		},
 		latency_pointer: 'start',
-		latency_type: undefined,
 		has_errors: false,
 	},
 	{
@@ -26,6 +25,21 @@ export const initialStepsData: FunnelStepData[] = [
 		},
 		latency_pointer: 'start',
 		latency_type: LatencyOptions.P95,
+		has_errors: false,
+	},
+];
+
+export const createSingleStepData = (): FunnelStepData[] => [
+	{
+		id: v4(),
+		step_order: 1,
+		service_name: '',
+		span_name: '',
+		filters: {
+			items: [],
+			op: 'and',
+		},
+		latency_pointer: 'start',
 		has_errors: false,
 	},
 ];
