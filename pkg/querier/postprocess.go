@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/govaluate"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -42,6 +43,73 @@ func getqueryInfo(spec any) queryInfo {
 // getQueryName is a convenience function when only name is needed
 func getQueryName(spec any) string {
 	return getqueryInfo(spec).Name
+}
+
+func StepIntervalForQuery(req *qbtypes.QueryRangeRequest, name string) int64 {
+	stepsMap := make(map[string]int64)
+	for _, query := range req.CompositeQuery.Queries {
+		switch spec := query.Spec.(type) {
+		case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+			stepsMap[spec.Name] = int64(spec.StepInterval.Seconds())
+		case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+			stepsMap[spec.Name] = int64(spec.StepInterval.Seconds())
+		case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+			stepsMap[spec.Name] = int64(spec.StepInterval.Seconds())
+		case qbtypes.PromQuery:
+			stepsMap[spec.Name] = int64(spec.Step.Seconds())
+		}
+	}
+
+	if step, ok := stepsMap[name]; ok {
+		return step
+	}
+
+	exprStr := ""
+
+	for _, query := range req.CompositeQuery.Queries {
+		switch spec := query.Spec.(type) {
+		case qbtypes.QueryBuilderFormula:
+			if spec.Name == name {
+				exprStr = spec.Expression
+			}
+		}
+	}
+
+	expression, _ := govaluate.NewEvaluableExpressionWithFunctions(exprStr, qbtypes.EvalFuncs())
+
+	steps := []int64{}
+
+	for _, v := range expression.Vars() {
+		steps = append(steps, stepsMap[v])
+	}
+
+	return querybuilder.LCMList(steps)
+}
+
+func NumAggregationForQuery(req *qbtypes.QueryRangeRequest, name string) int64 {
+	numAgg := 0
+	for _, query := range req.CompositeQuery.Queries {
+		switch spec := query.Spec.(type) {
+		case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+			if spec.Name == name {
+				numAgg += 1
+			}
+		case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+			if spec.Name == name {
+				numAgg += 1
+			}
+		case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+			if spec.Name == name {
+				numAgg += 1
+			}
+		case qbtypes.QueryBuilderFormula:
+			if spec.Name == name {
+				numAgg += 1
+			}
+		}
+	}
+
+	return int64(numAgg)
 }
 
 func (q *querier) postProcessResults(ctx context.Context, results map[string]any, req *qbtypes.QueryRangeRequest) (map[string]any, error) {
@@ -81,6 +149,18 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 
 	// Apply table formatting for UI if requested
 	if req.FormatOptions != nil && req.FormatOptions.FormatTableResultForUI && req.RequestType == qbtypes.RequestTypeScalar {
+
+		// merge result only needed for non-CH query
+		if len(req.CompositeQuery.Queries) == 1 {
+			if req.CompositeQuery.Queries[0].Type == qbtypes.QueryTypeClickHouseSQL {
+				retResult := map[string]any{}
+				for name, v := range typedResults {
+					retResult[name] = v.Value
+				}
+				return retResult, nil
+			}
+		}
+
 		// Format results as a table - this merges all queries into a single table
 		tableResult := q.formatScalarResultsAsTable(typedResults, req)
 
@@ -94,6 +174,36 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 		}
 
 		return tableResult, nil
+	}
+
+	if req.RequestType == qbtypes.RequestTypeTimeSeries && req.FormatOptions != nil && req.FormatOptions.FillGaps {
+		for name := range typedResults {
+			funcs := []qbtypes.Function{{Name: qbtypes.FunctionNameFillZero}}
+			funcs = q.prepareFillZeroArgsWithStep(funcs, req, StepIntervalForQuery(req, name))
+			// empty time series if it doesn't exist
+			tsData, ok := typedResults[name].Value.(*qbtypes.TimeSeriesData)
+			if !ok {
+				tsData = &qbtypes.TimeSeriesData{}
+			}
+
+			if len(tsData.Aggregations) == 0 {
+				numAgg := NumAggregationForQuery(req, name)
+				tsData.Aggregations = make([]*qbtypes.AggregationBucket, numAgg)
+				for idx := range numAgg {
+					tsData.Aggregations[idx] = &qbtypes.AggregationBucket{
+						Index: int(idx),
+						Series: []*qbtypes.TimeSeries{
+							{
+								Labels: make([]*qbtypes.Label, 0),
+								Values: make([]*qbtypes.TimeSeriesValue, 0),
+							},
+						},
+					}
+				}
+			}
+
+			typedResults[name] = q.applyFunctions(typedResults[name], funcs)
+		}
 	}
 
 	// Convert back to map[string]any
@@ -130,6 +240,19 @@ func postProcessMetricQuery(
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
+
+	config := query.Aggregations[0]
+	spaceAggOrderBy := fmt.Sprintf("%s(%s)", config.SpaceAggregation.StringValue(), config.MetricName)
+	timeAggOrderBy := fmt.Sprintf("%s(%s)", config.TimeAggregation.StringValue(), config.MetricName)
+	timeSpaceAggOrderBy := fmt.Sprintf("%s(%s(%s))", config.SpaceAggregation.StringValue(), config.TimeAggregation.StringValue(), config.MetricName)
+
+	for idx := range query.Order {
+		if query.Order[idx].Key.Name == spaceAggOrderBy ||
+			query.Order[idx].Key.Name == timeAggOrderBy ||
+			query.Order[idx].Key.Name == timeSpaceAggOrderBy {
+			query.Order[idx].Key.Name = qbtypes.DefaultOrderByKey
+		}
+	}
 
 	if query.Limit > 0 {
 		result = q.applySeriesLimit(result, query.Limit, query.Order)
@@ -224,6 +347,13 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 
 	// Process each formula
 	for name, formula := range formulaQueries {
+
+		for idx := range formula.Order {
+			if formula.Order[idx].Key.Name == formula.Name || formula.Order[idx].Key.Name == formula.Expression {
+				formula.Order[idx].Key.Name = qbtypes.DefaultOrderByKey
+			}
+		}
+
 		// Check if we're dealing with time series or scalar data
 		if req.RequestType == qbtypes.RequestTypeTimeSeries {
 			result := q.processTimeSeriesFormula(ctx, results, formula, req)
