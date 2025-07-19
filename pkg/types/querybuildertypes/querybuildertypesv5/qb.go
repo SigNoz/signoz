@@ -16,6 +16,13 @@ var (
 	ErrUnsupportedOperator = errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unsupported operator")
 )
 
+type ContextKey string
+
+const (
+	// CompositeQueryContextKey is used to store composite query in context
+	CompositeQueryContextKey ContextKey = "compositeQuery"
+)
+
 type JsonKeyToFieldFunc func(context.Context, *telemetrytypes.TelemetryFieldKey, FilterOperator, any) (string, any)
 
 // FieldMapper maps the telemetry field key to the table field name.
@@ -50,4 +57,9 @@ type Statement struct {
 type StatementBuilder[T any] interface {
 	// Build builds the query.
 	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderQuery[T], variables map[string]VariableItem) (*Statement, error)
+}
+
+type TraceOperatorStatementBuilder interface {
+	// Build builds the trace operator query.
+	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderTraceOperator) (*Statement, error)
 }
