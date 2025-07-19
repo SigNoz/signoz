@@ -169,6 +169,17 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 	aggregateAttribute: initialAutocompleteData,
 	timeAggregation: MetricAggregateOperator.RATE,
 	spaceAggregation: MetricAggregateOperator.SUM,
+	filter: { expression: '' },
+	aggregations: [
+		{
+			metricName: '',
+			temporality: '',
+			timeAggregation: MetricAggregateOperator.COUNT,
+			spaceAggregation: MetricAggregateOperator.SUM,
+			reduceTo: 'avg',
+		},
+	],
+	havingExpression: { expression: '' },
 	functions: [],
 	filters: { items: [], op: 'AND' },
 	expression: createNewBuilderItemName({
@@ -176,7 +187,7 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 		sourceNames: alphabet,
 	}),
 	disabled: false,
-	stepInterval: 60,
+	stepInterval: undefined,
 	having: [],
 	limit: null,
 	orderBy: [],
@@ -188,12 +199,14 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 const initialQueryBuilderFormLogsValues: IBuilderQuery = {
 	...initialQueryBuilderFormValues,
 	aggregateOperator: LogsAggregatorOperator.COUNT,
+	aggregations: [{ expression: 'count() ' }],
 	dataSource: DataSource.LOGS,
 };
 
 const initialQueryBuilderFormTracesValues: IBuilderQuery = {
 	...initialQueryBuilderFormValues,
 	aggregateOperator: TracesAggregatorOperator.COUNT,
+	aggregations: [{ expression: 'count() ' }],
 	dataSource: DataSource.TRACES,
 };
 

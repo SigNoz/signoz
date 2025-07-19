@@ -63,7 +63,7 @@ function ExpandedRow({
 						(queryData) => ({
 							...queryData,
 							filters: {
-								items: [...(queryData.filters?.items || []), ...filters.items],
+								items: [...(queryData.filters?.items || []), ...(filters?.items || [])],
 								op: 'AND',
 							},
 						}),

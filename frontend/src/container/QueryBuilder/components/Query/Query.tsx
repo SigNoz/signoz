@@ -350,6 +350,7 @@ export const Query = memo(function Query({
 				showDeleteButton={currentQuery.builder.queryData.length > 1}
 				isListViewPanel={isListViewPanel}
 				index={index}
+				queryVariant={queryVariant}
 			/>
 
 			{!isCollapse && (
@@ -394,7 +395,7 @@ export const Query = memo(function Query({
 													}
 												>
 													<OperatorsSelect
-														value={query.aggregateOperator}
+														value={query.aggregateOperator || ''}
 														onChange={handleChangeOperator}
 														operators={operators}
 													/>
@@ -433,7 +434,7 @@ export const Query = memo(function Query({
 														}
 													>
 														<OperatorsSelect
-															value={query.aggregateOperator}
+															value={query.aggregateOperator || ''}
 															onChange={handleChangeOperator}
 															operators={operators}
 															disabled={disableOperatorSelector}
@@ -493,7 +494,7 @@ export const Query = memo(function Query({
 										}
 									>
 										<OperatorsSelect
-											value={query.aggregateOperator}
+											value={query.aggregateOperator || ''}
 											onChange={handleChangeOperator}
 											operators={operators}
 										/>
@@ -520,7 +521,7 @@ export const Query = memo(function Query({
 											panelType={panelType}
 											key={`${panelType}${query.spaceAggregation}${query.timeAggregation}`}
 											aggregatorAttributeType={
-												query?.aggregateAttribute.type as ATTRIBUTE_TYPES
+												query?.aggregateAttribute?.type as ATTRIBUTE_TYPES
 											}
 											selectedValue={query.spaceAggregation}
 											disabled={disableOperatorSelector}
@@ -548,7 +549,7 @@ export const Query = memo(function Query({
 										</Row>
 									) : (
 										<GroupByFilter
-											disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+											disabled={isMetricsDataSource && !query.aggregateAttribute?.key}
 											query={query}
 											onChange={handleChangeGroupByKeys}
 										/>

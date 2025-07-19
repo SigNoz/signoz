@@ -178,7 +178,7 @@ export const useLogsData = ({
 		if (!stagedQuery) return;
 
 		const newRequestData = getRequestData(stagedQuery, {
-			filters,
+			filters: filters || { items: [], op: 'AND' },
 			page: page + 1,
 			log: orderByTimestamp ? lastLog : null,
 			pageSize: nextPageSize,

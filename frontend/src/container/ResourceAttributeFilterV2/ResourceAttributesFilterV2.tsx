@@ -21,21 +21,26 @@ function ResourceAttributesFilter(): JSX.Element | null {
 
 	// initialise tab with default query.
 	useShareBuilderUrl({
-		...initialQueriesMap.traces,
-		builder: {
-			...initialQueriesMap.traces.builder,
-			queryData: [
-				{
-					...initialQueriesMap.traces.builder.queryData[0],
-					dataSource: DataSource.TRACES,
-					aggregateOperator: 'noop',
-					aggregateAttribute: {
-						...initialQueriesMap.traces.builder.queryData[0].aggregateAttribute,
-						type: 'resource',
+		defaultValue: {
+			...initialQueriesMap.traces,
+			builder: {
+				...initialQueriesMap.traces.builder,
+				queryData: [
+					{
+						...initialQueriesMap.traces.builder.queryData[0],
+						dataSource: DataSource.TRACES,
+						aggregateOperator: 'noop',
+						aggregateAttribute: {
+							...initialQueriesMap.traces.builder.queryData[0].aggregateAttribute,
+							key:
+								initialQueriesMap.traces.builder.queryData[0].aggregateAttribute?.key ||
+								'',
+							type: 'resource',
+						},
+						queryName: '',
 					},
-					queryName: '',
-				},
-			],
+				],
+			},
 		},
 	});
 

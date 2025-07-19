@@ -21,6 +21,7 @@ import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -54,19 +55,22 @@ function DomainList(): JSX.Element {
 
 	// initialise tab with default query.
 	useShareBuilderUrl({
-		...initialQueriesMap.traces,
-		builder: {
-			...initialQueriesMap.traces.builder,
-			queryData: [
-				{
-					...initialQueriesMap.traces.builder.queryData[0],
-					dataSource: DataSource.TRACES,
-					aggregateOperator: 'noop',
-					aggregateAttribute: {
-						...initialQueriesMap.traces.builder.queryData[0].aggregateAttribute,
+		defaultValue: {
+			...initialQueriesMap.traces,
+			builder: {
+				...initialQueriesMap.traces.builder,
+				queryData: [
+					{
+						...initialQueriesMap.traces.builder.queryData[0],
+						dataSource: DataSource.TRACES,
+						aggregateOperator: 'noop',
+						aggregateAttribute: {
+							...(initialQueriesMap.traces.builder.queryData[0]
+								.aggregateAttribute as BaseAutocompleteData),
+						},
 					},
-				},
-			],
+				],
+			},
 		},
 	});
 
@@ -101,7 +105,7 @@ function DomainList(): JSX.Element {
 						op: '=',
 						value: 'Client',
 					},
-					...(compositeData?.builder?.queryData[0]?.filters.items || []),
+					...(compositeData?.builder?.queryData[0]?.filters?.items || []),
 				],
 			},
 		};

@@ -90,9 +90,14 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				...currentQuery.builder,
 				queryData: currentQuery.builder.queryData.map((item, idx) => ({
 					...item,
+					filter: {
+						...item.filter,
+						expression: '',
+					},
 					filters: {
 						...item.filters,
-						items: idx === lastUsedQuery ? [] : [...item.filters.items],
+						items: idx === lastUsedQuery ? [] : [...(item.filters?.items || [])],
+						op: item.filters?.op || 'AND',
 					},
 				})),
 			},

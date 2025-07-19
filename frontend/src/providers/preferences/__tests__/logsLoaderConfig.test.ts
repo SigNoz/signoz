@@ -150,7 +150,7 @@ describe('logsLoaderConfig', () => {
 		const result = await logsLoaderConfig.default();
 
 		expect(result).toEqual({
-			columns: defaultLogsSelectedColumns as BaseAutocompleteData[],
+			columns: defaultLogsSelectedColumns,
 			formatting: {
 				maxLines: 2,
 				format: 'table' as LogViewMode,

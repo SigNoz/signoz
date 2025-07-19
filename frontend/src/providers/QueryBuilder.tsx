@@ -42,6 +42,7 @@ import {
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 // ** Types
 import {
 	IBuilderFormula,
@@ -141,10 +142,10 @@ export function QueryBuilderProvider({
 
 			const isCurrentOperatorAvailableInList = initialOperators
 				.map((operator) => operator.value)
-				.includes(queryData.aggregateOperator);
+				.includes(queryData.aggregateOperator || '');
 
 			if (!isCurrentOperatorAvailableInList) {
-				return { ...queryData, aggregateOperator: initialOperators[0].value };
+				return { ...queryData, aggregateOperator: initialOperators[0]?.value };
 			}
 
 			return queryData;
@@ -177,10 +178,10 @@ export function QueryBuilderProvider({
 					aggregateAttribute: {
 						...item.aggregateAttribute,
 						id: createIdFromObjectFields(
-							item.aggregateAttribute,
+							item.aggregateAttribute as BaseAutocompleteData,
 							baseAutoCompleteIdKeysOrder,
 						),
-					},
+					} as BaseAutocompleteData,
 				};
 
 				return currentElement;
@@ -247,6 +248,8 @@ export function QueryBuilderProvider({
 				getElementWithActualOperator(item, dataSource, panelType),
 			);
 
+			console.log('queryData', queryData, panelType, dataSource);
+
 			return { ...query, builder: { ...query.builder, queryData } };
 		},
 
@@ -280,7 +283,7 @@ export function QueryBuilderProvider({
 				aggregateAttribute: {
 					...aggregateAttribute,
 					id: '',
-				},
+				} as BaseAutocompleteData,
 				timeAggregation,
 				spaceAggregation,
 				functions,
@@ -853,18 +856,42 @@ export function QueryBuilderProvider({
 	);
 
 	const handleRunQuery = useCallback(
-		(shallUpdateStepInterval?: boolean) => {
+		(shallUpdateStepInterval?: boolean, newQBQuery?: boolean) => {
+			let currentQueryData = currentQuery;
+			if (newQBQuery) {
+				currentQueryData = {
+					...currentQueryData,
+					builder: {
+						...currentQueryData.builder,
+						queryData: currentQueryData.builder.queryData.map((item) => ({
+							...item,
+							filter: {
+								...item.filter,
+								expression:
+									item.filter?.expression.trim() === ''
+										? ''
+										: item.filter?.expression ?? '',
+							},
+							filters: {
+								items: [],
+								op: 'AND',
+							},
+							having: [],
+						})),
+					},
+				};
+			}
 			redirectWithQueryBuilderData({
 				...{
-					...currentQuery,
+					...currentQueryData,
 					...updateStepInterval(
 						{
-							builder: currentQuery.builder,
-							clickhouse_sql: currentQuery.clickhouse_sql,
-							promql: currentQuery.promql,
-							id: currentQuery.id,
+							builder: currentQueryData.builder,
+							clickhouse_sql: currentQueryData.clickhouse_sql,
+							promql: currentQueryData.promql,
+							id: currentQueryData.id,
 							queryType,
-							unit: currentQuery.unit,
+							unit: currentQueryData.unit,
 						},
 						maxTime,
 						minTime,

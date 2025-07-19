@@ -40,9 +40,9 @@ export const GroupByFilter = memo(function GroupByFilter({
 
 	const { isFetching } = useGetAggregateKeys(
 		{
-			aggregateAttribute: query.aggregateAttribute.key,
+			aggregateAttribute: query.aggregateAttribute?.key || '',
 			dataSource: query.dataSource,
-			aggregateOperator: query.aggregateOperator,
+			aggregateOperator: query.aggregateOperator || '',
 			searchText: debouncedValue,
 		},
 		{
@@ -94,9 +94,9 @@ export const GroupByFilter = memo(function GroupByFilter({
 			[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchText, isFocused],
 			async () =>
 				getAggregateKeys({
-					aggregateAttribute: query.aggregateAttribute.key,
+					aggregateAttribute: query.aggregateAttribute?.key || '',
 					dataSource: query.dataSource,
-					aggregateOperator: query.aggregateOperator,
+					aggregateOperator: query.aggregateOperator || '',
 					searchText,
 				}),
 		);
@@ -104,7 +104,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 		return response.payload?.attributeKeys || [];
 	}, [
 		isFocused,
-		query.aggregateAttribute.key,
+		query.aggregateAttribute?.key,
 		query.aggregateOperator,
 		query.dataSource,
 		queryClient,
