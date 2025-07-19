@@ -117,17 +117,19 @@ func buildResourceIndexFilter(key string, op v3.FilterOperator, value interface{
 	// add index filters
 	switch op {
 	case v3.FilterOperatorEqual:
-		return fmt.Sprintf("labels like '%%%s%%%s%%'", key, fmtValEscapedForContains)
+		return fmt.Sprintf("labels like '%%%s\":\"%s%%'", key, fmtValEscapedForContains)
 	case v3.FilterOperatorNotEqual:
-		return fmt.Sprintf("labels not like '%%%s%%%s%%'", key, fmtValEscapedForContains)
+		return fmt.Sprintf("labels not like '%%%s\":\"%s%%'", key, fmtValEscapedForContains)
 	case v3.FilterOperatorLike:
 		return fmt.Sprintf("lower(labels) like '%%%s%%%s%%'", key, fmtValEscapedLower)
 	case v3.FilterOperatorNotLike:
-		return fmt.Sprintf("lower(labels) not like '%%%s%%%s%%'", key, fmtValEscapedLower)
+		// cannot apply not contains x%y as y can be somewhere else
+		return ""
 	case v3.FilterOperatorContains:
 		return fmt.Sprintf("lower(labels) like '%%%s%%%s%%'", key, fmtValEscapedForContainsLower)
 	case v3.FilterOperatorNotContains:
-		return fmt.Sprintf("lower(labels) not like '%%%s%%%s%%'", key, fmtValEscapedForContainsLower)
+		// cannot apply not contains x%y as y can be somewhere else
+		return ""
 	case v3.FilterOperatorExists:
 		return fmt.Sprintf("lower(labels) like '%%%s%%'", key)
 	case v3.FilterOperatorNotExists:
