@@ -345,7 +345,7 @@ function K8sVolumesList({
 				setFiltersInitialised(true);
 			}
 
-			if (value.items.length > 0) {
+			if (value?.items && value?.items?.length > 0) {
 				logEvent(InfraMonitoringEvents.FilterApplied, {
 					entity: InfraMonitoringEvents.K8sEntity,
 					page: InfraMonitoringEvents.ListPage,

@@ -60,7 +60,7 @@ export const useHandleLogsPagination = ({
 	const [isPaginating, setIsPaginating] = useState(false);
 
 	const { shouldResetPage, newRestFilters } = useMemo(() => {
-		const newRestFilters = filters.items.filter((item) => {
+		const newRestFilters = filters?.items?.filter((item) => {
 			const keyToCheck = item.key?.key ?? '';
 			return (
 				!queryKeyFilters.includes(keyToCheck) &&
@@ -132,7 +132,7 @@ export const useHandleLogsPagination = ({
 		}
 
 		setPrevTimeRange(timeRange);
-		setRestFilters(newRestFilters);
+		setRestFilters(newRestFilters || []);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [shouldResetPage, timeRange]);
 

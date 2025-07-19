@@ -24,7 +24,8 @@ const useInitialQuery = (log: ILog): Query => {
 				...item,
 				filters: {
 					...item.filters,
-					items: [...item.filters.items, ...resourcesFilters],
+					items: [...(item.filters?.items || []), ...resourcesFilters],
+					op: item.filters?.op || 'AND',
 				},
 			})),
 		},

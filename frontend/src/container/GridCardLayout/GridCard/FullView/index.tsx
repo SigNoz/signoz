@@ -10,9 +10,10 @@ import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import {
 	timeItems,
 	timePreferance,
@@ -122,7 +123,8 @@ function FullView({
 
 	const response = useGetQueryRange(
 		requestData,
-		selectedDashboard?.data?.version || version || DEFAULT_ENTITY_VERSION,
+		// selectedDashboard?.data?.version || version || DEFAULT_ENTITY_VERSION,
+		ENTITY_VERSION_V5,
 		{
 			queryKey: [widget?.query, widget?.panelTypes, requestData, version],
 			enabled: !isDependedDataLoaded,
@@ -176,6 +178,12 @@ function FullView({
 			response.data?.payload.data.result,
 		);
 		response.data.payload.data.result = sortedSeriesData;
+	}
+
+	if (response.data && widget.panelTypes === PANEL_TYPES.PIE) {
+		const transformedData = populateMultipleResults(response?.data);
+		// eslint-disable-next-line no-param-reassign
+		response.data = transformedData;
 	}
 
 	useEffect(() => {

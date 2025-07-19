@@ -1,6 +1,9 @@
+import './ListView.styles.scss';
+
 import logEvent from 'api/common/logEvent';
+import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ResizeTable } from 'components/ResizeTable';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -18,8 +21,10 @@ import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { cloneDeep } from 'lodash-es';
+import { ArrowUp10, Minus } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import { memo, useCallback, useEffect, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
@@ -41,6 +46,8 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 	} = useQueryBuilder();
 
 	const panelType = panelTypeFromQueryBuilder || PANEL_TYPES.LIST;
+
+	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
 
 	const {
 		selectedTime: globalSelectedTime,
@@ -68,6 +75,23 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 	const paginationConfig =
 		paginationQueryData ?? getDefaultPaginationConfig(PER_PAGE_OPTIONS);
 
+	const requestQuery = useMemo(() => {
+		const query = stagedQuery
+			? cloneDeep(stagedQuery)
+			: cloneDeep(initialQueriesMap.traces);
+
+		if (query.builder.queryData[0]) {
+			query.builder.queryData[0].orderBy = [
+				{
+					columnName: orderBy.split(':')[0],
+					order: orderBy.split(':')[1] as 'asc' | 'desc',
+				},
+			];
+		}
+
+		return query;
+	}, [stagedQuery, orderBy]);
+
 	const queryKey = useMemo(
 		() => [
 			REACT_QUERY_KEY.GET_QUERY_RANGE,
@@ -78,6 +102,7 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 			panelType,
 			paginationConfig,
 			options?.selectColumns,
+			orderBy,
 		],
 		[
 			stagedQuery,
@@ -87,12 +112,13 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 			options?.selectColumns,
 			maxTime,
 			minTime,
+			orderBy,
 		],
 	);
 
 	const { data, isFetching, isLoading, isError } = useGetQueryRange(
 		{
-			query: stagedQuery || initialQueriesMap.traces,
+			query: requestQuery,
 			graphType: panelType,
 			selectedTime: 'GLOBAL_TIME' as const,
 			globalSelectedInterval: globalSelectedTime as CustomTimeType,
@@ -104,7 +130,8 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 				selectColumns: options?.selectColumns,
 			},
 		},
-		ENTITY_VERSION_V4,
+		// ENTITY_VERSION_V4,
+		ENTITY_VERSION_V5,
 		{
 			queryKey,
 			enabled:
@@ -146,6 +173,10 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 		[columns, onDragColumns],
 	);
 
+	const handleOrderChange = useCallback((value: string) => {
+		setOrderBy(value);
+	}, []);
+
 	const isDataAbsent =
 		!isLoading &&
 		!isFetching &&
@@ -167,12 +198,26 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 	return (
 		<Container>
 			{transformedQueryTableData.length !== 0 && (
-				<TraceExplorerControls
-					isLoading={isFetching}
-					totalCount={totalCount}
-					config={config}
-					perPageOptions={PER_PAGE_OPTIONS}
-				/>
+				<div className="trace-explorer-controls">
+					<div className="order-by-container">
+						<div className="order-by-label">
+							Order by <Minus size={14} /> <ArrowUp10 size={14} />
+						</div>
+
+						<ListViewOrderBy
+							value={orderBy}
+							onChange={handleOrderChange}
+							dataSource={DataSource.TRACES}
+						/>
+					</div>
+
+					<TraceExplorerControls
+						isLoading={isFetching}
+						totalCount={totalCount}
+						config={config}
+						perPageOptions={PER_PAGE_OPTIONS}
+					/>
+				</div>
 			)}
 
 			{isError && <ErrorText>{data?.error || 'Something went wrong'}</ErrorText>}

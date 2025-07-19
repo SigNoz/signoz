@@ -57,7 +57,8 @@ export const getPaginationQueryData: SetupPaginationQueryData = ({
 
 	const updatedFilters: TagFilter = {
 		...filters,
-		items: filters?.items?.filter((item) => item.key?.key !== 'id'),
+		items: filters?.items?.filter((item) => item.key?.key !== 'id') || [],
+		op: filters?.op || 'AND',
 	};
 
 	const tagFilters: TagFilter = {
@@ -82,6 +83,7 @@ export const getPaginationQueryData: SetupPaginationQueryData = ({
 						...updatedFilters.items,
 				  ]
 				: updatedFilters.items,
+		op: filters?.op || 'AND',
 	};
 
 	const chunkOfQueryData: Partial<IBuilderQuery> = {
