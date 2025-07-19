@@ -59,6 +59,8 @@ export interface GraphProps {
 	containerHeight?: string | number;
 	onDragSelect?: (start: number, end: number) => void;
 	dragSelectColor?: string;
+	minTime?: number;
+	maxTime?: number;
 	ref?: ForwardedRef<ToggleGraphProps | undefined>;
 }
 
