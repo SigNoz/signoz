@@ -76,7 +76,7 @@ function BreakoutOptions({
 				<Input
 					type="text"
 					value={searchText}
-					placeholder="Search for breakout options..."
+					placeholder="Search breakout options..."
 					onChange={handleInputChange}
 				/>
 			</section>

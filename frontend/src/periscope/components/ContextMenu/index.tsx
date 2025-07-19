@@ -2,6 +2,7 @@ import './styles.scss';
 
 import { Popover } from 'antd';
 import { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 import { Coordinates, PopoverPosition } from './types';
 import { useCoordinates } from './useCoordinates';
@@ -68,40 +69,61 @@ export function ContextMenu({
 		placement: 'right',
 	};
 
-	return (
-		<Popover
-			content={items}
-			title={title}
-			open={Boolean(coordinates)}
-			onOpenChange={(open: boolean): void => {
-				if (!open) {
+	// Render backdrop using portal to ensure it covers the entire viewport
+	const backdrop = createPortal(
+		<div
+			className="context-menu-backdrop"
+			onClick={onClose}
+			onKeyDown={(e): void => {
+				if (e.key === 'Escape') {
 					onClose();
 				}
 			}}
-			trigger="click"
-			overlayStyle={{
-				position: 'fixed',
-				left: position.left,
-				top: position.top,
-				width: 180,
-				maxHeight: 254,
-			}}
-			arrow={false}
-			placement={position.placement}
-			rootClassName="context-menu"
-		>
-			{children}
-			{/* phantom span to force Popover to position relative to viewport */}
-			<span
-				style={{
+			role="button"
+			tabIndex={0}
+			aria-label="Close context menu"
+		/>,
+		document.body,
+	);
+
+	return (
+		<>
+			{backdrop}
+			<Popover
+				content={items}
+				title={title}
+				open={Boolean(coordinates)}
+				onOpenChange={(open: boolean): void => {
+					if (!open) {
+						onClose();
+					}
+				}}
+				trigger="click"
+				overlayStyle={{
 					position: 'fixed',
 					left: position.left,
 					top: position.top,
-					width: 0,
-					height: 0,
+					width: 210,
+					maxHeight: 254,
 				}}
-			/>
-		</Popover>
+				arrow={false}
+				placement={position.placement}
+				rootClassName="context-menu"
+				zIndex={10000}
+			>
+				{children}
+				{/* phantom span to force Popover to position relative to viewport */}
+				<span
+					style={{
+						position: 'fixed',
+						left: position.left,
+						top: position.top,
+						width: 0,
+						height: 0,
+					}}
+				/>
+			</Popover>
+		</>
 	);
 }
 
@@ -126,5 +148,4 @@ ContextMenu.defaultProps = {
 export default ContextMenu;
 
 // ENHANCEMENT:
-// 1. Adjust postion based on variable height of items. Currently hardcoded to 254px
-// 2. Disable scrolling outside of the menu when open.
+// 1. Adjust postion based on variable height of items. Currently hardcoded to 254px. Same for width.
