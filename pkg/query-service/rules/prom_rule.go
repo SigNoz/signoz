@@ -118,8 +118,6 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		return nil, err
 	}
 
-	res = removeExtraLabels(res)
-
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
