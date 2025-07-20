@@ -527,6 +527,97 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 		},
 	}
 
+	indices := []sqlschema.Index{
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("organizations"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("name")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("organizations"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("alias")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("organizations"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("key")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("users"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("email"), sqlschema.ColumnName("org_id")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("alertmanager_config"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("org_id")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("alertmanager_state"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("org_id")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("org_preference"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("preference_id"), sqlschema.ColumnName("org_id")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("user_preference"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("preference_id"), sqlschema.ColumnName("user_id")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("installed_integration"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("type"), sqlschema.ColumnName("org_id")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("cloud_integration_service"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("type"), sqlschema.ColumnName("cloud_integration_id")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("quick_filter"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("org_id"), sqlschema.ColumnName("signal")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("factor_password"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("user_id")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("reset_password_token"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("password_id")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("reset_password_token"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("token")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("factor_api_key"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("token")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("license"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("key")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("agent"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("agent_id")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("agent_config_version"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("org_id"), sqlschema.ColumnName("version"), sqlschema.ColumnName("element_type")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("agent_config_element"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("element_id"), sqlschema.ColumnName("element_type"), sqlschema.ColumnName("version_id")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("user_invite"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("email"), sqlschema.ColumnName("org_id")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("user_invite"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("token")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("org_domains"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("name"), sqlschema.ColumnName("org_id")},
+		},
+	}
+
 	if err := migration.sqlschema.ToggleFKEnforcement(ctx, db, false); err != nil {
 		return err
 	}
@@ -542,6 +633,7 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 
 	sqls := [][]byte{}
 
+	// Alter or create tables.
 	for _, table := range tables {
 		existingTable, existingUniqueConstraints, err := migration.sqlschema.GetTable(ctx, table.Name)
 		if err != nil {
@@ -554,6 +646,11 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 		}
 
 		sqls = append(sqls, migration.sqlschema.Operator().ConvertTable(existingTable, existingUniqueConstraints, table)...)
+	}
+
+	// Create indices.
+	for _, index := range indices {
+		sqls = append(sqls, migration.sqlschema.Operator().CreateIndex(index)...)
 	}
 
 	for _, sql := range sqls {
