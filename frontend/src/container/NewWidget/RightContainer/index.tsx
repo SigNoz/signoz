@@ -6,6 +6,7 @@ import { Color } from '@signozhq/design-tokens';
 import type { InputRef } from 'antd';
 import {
 	AutoComplete,
+	Button,
 	Input,
 	InputNumber,
 	Select,
@@ -258,19 +259,21 @@ function RightContainer({
 		>
 			<section className="header">
 				{isPanelDetailsOpen ? (
-					<PanelRightClose
+					<Button
+						color={Color.BG_ROBIN_400}
+						className="hide-button"
 						onClick={(): void => setIsPanelDetailsOpen(false)}
-						color={Color.BG_ROBIN_400}
-						className="hide-button"
-						size={16}
-					/>
+					>
+						<PanelRightClose size={16} />
+					</Button>
 				) : (
-					<PanelRightOpen
-						onClick={(): void => setIsPanelDetailsOpen(true)}
+					<Button
 						color={Color.BG_ROBIN_400}
 						className="hide-button"
-						size={16}
-					/>
+						onClick={(): void => setIsPanelDetailsOpen(true)}
+					>
+						<PanelRightOpen size={16} />
+					</Button>
 				)}
 				{isPanelDetailsOpen && (
 					<>
