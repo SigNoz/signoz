@@ -48,7 +48,6 @@ function LogsExplorerList({
 	isFilterApplied,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
-
 	const { activeLogId } = useCopyLogLink();
 
 	const {
@@ -219,6 +218,7 @@ function LogsExplorerList({
 					filters: {
 						...item.filters,
 						items: idx === queryIndex ? [] : [...(item.filters?.items || [])],
+						op: item.filters?.op || 'AND',
 					},
 				})),
 			},
