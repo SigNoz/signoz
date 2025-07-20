@@ -192,8 +192,8 @@ describe('Add span to funnel from trace details page', () => {
 				fireEvent.click(addFunnelButton);
 			});
 
-			await screen.findByRole('dialog');
-			await screen.findByText(firstFunnel.funnel_name);
+			expect(await screen.findByRole('dialog')).toBeInTheDocument();
+			expect(await screen.findByText(firstFunnel.funnel_name)).toBeInTheDocument();
 		});
 
 		it('should display the add to funnel modal when the add to funnel icon is clicked', async () => {
