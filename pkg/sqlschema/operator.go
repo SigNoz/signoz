@@ -67,12 +67,20 @@ func (operator *Operator) AlterTable(oldTable *Table, oldTableUniqueConstraints 
 		sql = append(sql, operator.AlterColumn(oldTable, oldTableUniqueConstraints, column)...)
 	}
 
-	// Primary key constraints
-	if oldTable.PrimaryKeyConstraint != newTable.PrimaryKeyConstraint {
+	// If the old table does not have a primary key constraint and the new table does, we need to create it.
+	if oldTable.PrimaryKeyConstraint == nil {
+		if newTable.PrimaryKeyConstraint != nil {
+			sql = append(sql, operator.CreateConstraint(oldTable, oldTableUniqueConstraints, newTable.PrimaryKeyConstraint)...)
+		}
+	}
+
+	if oldTable.PrimaryKeyConstraint != nil {
 		if newTable.PrimaryKeyConstraint == nil {
 			sql = append(sql, operator.DropConstraint(oldTable, oldTableUniqueConstraints, oldTable.PrimaryKeyConstraint)...)
 		} else {
-			sql = append(sql, operator.CreateConstraint(oldTable, oldTableUniqueConstraints, newTable.PrimaryKeyConstraint)...)
+			if !oldTable.PrimaryKeyConstraint.Equals(newTable.PrimaryKeyConstraint) {
+				sql = append(sql, operator.CreateConstraint(oldTable, oldTableUniqueConstraints, newTable.PrimaryKeyConstraint)...)
+			}
 		}
 	}
 
@@ -248,6 +256,8 @@ func (operator *Operator) CreateConstraint(table *Table, uniqueConstraints []*Un
 	if constraint.Type() == ConstraintTypePrimaryKey {
 		if operator.support.SCreateAndDropConstraint {
 			if table.PrimaryKeyConstraint != nil {
+				// TODO(grandwizard28): this is a hack to drop the primary key constraint.
+				// We need to find a better way to do this.
 				sqls = append(sqls, table.PrimaryKeyConstraint.ToDropSQL(operator.fmter, table.Name))
 			}
 		}

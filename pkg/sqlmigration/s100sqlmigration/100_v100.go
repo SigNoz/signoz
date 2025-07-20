@@ -467,7 +467,7 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 				{Name: sqlschema.ColumnName("org_id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
 				{Name: sqlschema.ColumnName("version"), DataType: sqlschema.DataTypeInteger, Nullable: true, Default: ""},
 				{Name: sqlschema.ColumnName("element_type"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("deploy_status"), DataType: sqlschema.DataTypeText, Nullable: false, Default: "dirty"},
+				{Name: sqlschema.ColumnName("deploy_status"), DataType: sqlschema.DataTypeText, Nullable: false, Default: "'dirty'"},
 				{Name: sqlschema.ColumnName("deploy_sequence"), DataType: sqlschema.DataTypeInteger, Nullable: true, Default: ""},
 				{Name: sqlschema.ColumnName("deploy_result"), DataType: sqlschema.DataTypeText, Nullable: true, Default: ""},
 				{Name: sqlschema.ColumnName("hash"), DataType: sqlschema.DataTypeText, Nullable: true, Default: ""},

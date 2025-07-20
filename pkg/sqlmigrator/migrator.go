@@ -54,7 +54,7 @@ func (migrator *migrator) Migrate(ctx context.Context) error {
 
 	group, err := migrator.migrator.Migrate(ctx)
 	if err != nil {
-		migrator.settings.Logger().ErrorContext(ctx, "failed to run sqlstore migrations", "error", err, "dialect", migrator.dialect, "group", group.String(), "applied", group.Migrations.Applied())
+		migrator.settings.Logger().ErrorContext(ctx, "failed to run sqlstore migrations", "error", err, "dialect", migrator.dialect, "group", group.String(), "applied", group.Migrations.Applied().String())
 		return err
 	}
 
@@ -83,7 +83,7 @@ func (migrator *migrator) Rollback(ctx context.Context) error {
 		return nil
 	}
 
-	migrator.settings.Logger().InfoContext(ctx, "rolled back", "group", group.String(), "dialect", migrator.dialect)
+	migrator.settings.Logger().InfoContext(ctx, "rolled back", "group", group.String(), "dialect", migrator.dialect, "applied", group.Migrations.Applied().String())
 	return nil
 }
 
