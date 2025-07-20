@@ -292,25 +292,6 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 	return len(r.Active), nil
 }
 
-func removeExtraLabels(res promql.Matrix) promql.Matrix {
-	for _, series := range res {
-		fingerprintIndex := -1
-		for i, label := range series.Metric {
-			if label.Name == prometheus.FingerprintAsPromLabelName {
-				fingerprintIndex = i
-			}
-		}
-		if fingerprintIndex >= 0 {
-			if fingerprintIndex == 0 {
-				series.Metric = series.Metric[1:]
-			} else {
-				series.Metric = append(series.Metric[:fingerprintIndex:fingerprintIndex], series.Metric[fingerprintIndex+1:]...)
-			}
-		}
-	}
-	return nil
-}
-
 func (r *PromRule) String() string {
 
 	ar := ruletypes.PostableRule{
