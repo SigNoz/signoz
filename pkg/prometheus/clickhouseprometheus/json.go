@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strconv"
 
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/prometheus/prometheus/prompb"
 )
 
@@ -26,7 +27,7 @@ func unmarshalLabels(s string, fingerprint uint64) ([]prompb.Label, string, erro
 		})
 	}
 	res = append(res, prompb.Label{
-		Name:  FingerprintAsPromLabelName,
+		Name:  prometheus.FingerprintAsPromLabelName,
 		Value: strconv.FormatUint(fingerprint, 10),
 	})
 	return res, metricName, nil

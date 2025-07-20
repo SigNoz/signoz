@@ -3,7 +3,6 @@ package v2
 import (
 	"context"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"strings"
 	"sync"
 	"time"
@@ -141,9 +140,6 @@ func (q *querier) execPromQuery(ctx context.Context, params *model.QueryRangePar
 	for _, v := range matrix {
 		var s v3.Series
 		s.Labels = v.Metric.Copy().Map()
-		if s.Labels != nil {
-			delete(s.Labels, clickhouseprometheus.FingerprintAsPromLabelName)
-		}
 		for idx := range v.Floats {
 			p := v.Floats[idx]
 			s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.F})

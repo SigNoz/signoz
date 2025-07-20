@@ -1,3 +1,3 @@
-package clickhouseprometheus
+package prometheus
 
 const FingerprintAsPromLabelName = "fingerprint"
