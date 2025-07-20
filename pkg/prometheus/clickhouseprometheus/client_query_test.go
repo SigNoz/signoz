@@ -140,7 +140,7 @@ func TestClient_getFingerprintsFromClickhouseQuery(t *testing.T) {
 		wantErr    bool
 	}{
 		{
-			name:       "happy‑path – two fingerprints",
+			name:       "happy-path - two fingerprints",
 			start:      1000,
 			end:        2000,
 			metricName: "cpu_usage",
