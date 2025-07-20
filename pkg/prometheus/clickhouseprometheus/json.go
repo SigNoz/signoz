@@ -26,7 +26,7 @@ func unmarshalLabels(s string, fingerprint uint64) ([]prompb.Label, string, erro
 		})
 	}
 	res = append(res, prompb.Label{
-		Name:  "fingerprint",
+		Name:  FingerprintAsPromLabelName,
 		Value: strconv.FormatUint(fingerprint, 10),
 	})
 	return res, metricName, nil
