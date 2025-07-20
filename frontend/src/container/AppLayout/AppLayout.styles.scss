@@ -4,6 +4,21 @@
 .app-banner-wrapper {
 	position: relative;
 	width: 100%;
+
+	.refresh-payment-status {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		margin-left: 4px;
+
+		.refresh-payment-status-btn-wrapper {
+			display: inline-block;
+
+			&:hover {
+				text-decoration: underline;
+			}
+		}
+	}
 }
 
 .app-layout {
@@ -12,24 +27,24 @@
 	width: 100%;
 
 	&.isWorkspaceRestricted {
-		height: calc(100% - 32px);
+		height: calc(100% - 48px);
 
 		// same styles as its either trial expired or payment failed
 		&.isTrialExpired {
-			height: calc(100% - 64px);
+			height: calc(100% - 96px);
 		}
 
 		&.isPaymentFailed {
-			height: calc(100% - 64px);
+			height: calc(100% - 96px);
 		}
 	}
 
 	&.isTrialExpired {
-		height: calc(100% - 32px);
+		height: calc(100% - 48px);
 	}
 
 	&.isPaymentFailed {
-		height: calc(100% - 32px);
+		height: calc(100% - 48px);
 	}
 
 	.app-content {
@@ -196,5 +211,5 @@
 .workspace-restricted-banner,
 .trial-expiry-banner,
 .payment-failed-banner {
-	height: 32px;
+	height: 48px;
 }

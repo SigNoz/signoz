@@ -11,6 +11,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
+	"golang.org/x/exp/slices"
 )
 
 const (
@@ -84,6 +85,8 @@ func (b *metricQueryStatementBuilder) Build(
 		return nil, err
 	}
 
+	start, end = querybuilder.AdjustedMetricTimeRange(start, end, uint64(query.StepInterval.Seconds()), query)
+
 	return b.buildPipelineStatement(ctx, start, end, query, keys, variables)
 }
 
@@ -149,7 +152,7 @@ func (b *metricQueryStatementBuilder) buildPipelineStatement(
 
 	origSpaceAgg := query.Aggregations[0].SpaceAggregation
 	origTimeAgg := query.Aggregations[0].TimeAggregation
-	origGroupBy := query.GroupBy
+	origGroupBy := slices.Clone(query.GroupBy)
 
 	if query.Aggregations[0].SpaceAggregation.IsPercentile() &&
 		query.Aggregations[0].Type != metrictypes.ExpHistogramType {
@@ -162,8 +165,20 @@ func (b *metricQueryStatementBuilder) buildPipelineStatement(
 			}
 		}
 
-		// we need to add le in the group by if it doesn't exist
-		if !leExists {
+		if leExists {
+			// if the user themselves adds `le`, then we remove it from the original group by
+			// this is to avoid preparing a query that returns `nan`s, see following query
+			// SELECT
+			// 		ts,
+			// 		le,
+			// 		histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.99) AS value
+			// FROM __spatial_aggregation_cte
+			// GROUP BY
+			// 		le,
+			// 		ts
+
+			origGroupBy = slices.DeleteFunc(origGroupBy, func(k qbtypes.GroupByKey) bool { return k.Name == "le" })
+		} else {
 			query.GroupBy = append(query.GroupBy, qbtypes.GroupByKey{
 				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "le"},
 			})
