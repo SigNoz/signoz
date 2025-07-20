@@ -16,8 +16,6 @@ var dotMetricMap = map[string]string{
 	"host_name":                             "host.name",
 	"k8s_cluster_name":                      "k8s.cluster.name",
 	"k8s_node_name":                         "k8s.node.name",
-	"k8s_node_cpu_utilization":              "k8s.node.cpu.utilization",
-	"k8s_pod_cpu_utilization":               "k8s.pod.cpu.utilization",
 	"k8s_pod_memory_usage":                  "k8s.pod.memory.usage",
 	"k8s_pod_cpu_request_utilization":       "k8s.pod.cpu_request_utilization",
 	"k8s_pod_memory_request_utilization":    "k8s.pod.memory_request_utilization",
@@ -107,7 +105,6 @@ var dotMetricMap = map[string]string{
 	"k8s_pod_uptime":                   "k8s.pod.uptime",
 
 	"container_cpu_usage":                      "container.cpu.usage",
-	"container_cpu_utilization":                "container.cpu.utilization",
 	"container_cpu_time":                       "container.cpu.time",
 	"container_memory_available":               "container.memory.available",
 	"container_memory_usage":                   "container.memory.usage",
@@ -209,7 +206,7 @@ WHERE metric_name IN (%s)
 var (
 	// TODO(srikanthccv): import metadata yaml from receivers and use generated files to check the metrics
 	podMetricNamesToCheck = []string{
-		GetDotMetrics("k8s_pod_cpu_utilization"),
+		GetDotMetrics("k8s_pod_cpu_usage"),
 		GetDotMetrics("k8s_pod_memory_usage"),
 		GetDotMetrics("k8s_pod_cpu_request_utilization"),
 		GetDotMetrics("k8s_pod_memory_request_utilization"),
@@ -219,7 +216,7 @@ var (
 		GetDotMetrics("k8s_pod_phase"),
 	}
 	nodeMetricNamesToCheck = []string{
-		GetDotMetrics("k8s_node_cpu_utilization"),
+		GetDotMetrics("k8s_node_cpu_usage"),
 		GetDotMetrics("k8s_node_allocatable_cpu"),
 		GetDotMetrics("k8s_node_memory_usage"),
 		GetDotMetrics("k8s_node_allocatable_memory"),

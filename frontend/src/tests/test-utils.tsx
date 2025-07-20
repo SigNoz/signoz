@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import { FeatureKeys } from 'constants/features';
+import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { AppContext } from 'providers/App/App';
@@ -21,7 +22,7 @@ import {
 	LicenseState,
 	LicenseStatus,
 } from 'types/api/licensesV3/getActive';
-import { ROLES } from 'types/roles';
+import { ROLES, USER_ROLES } from 'types/roles';
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -142,6 +143,7 @@ export function getAppContextMock(
 		},
 		isFetchingActiveLicense: false,
 		activeLicenseFetchError: null,
+		changelog: null,
 		user: {
 			accessJwt: 'some-token',
 			refreshJwt: 'some-refresh-token',
@@ -160,6 +162,7 @@ export function getAppContextMock(
 				displayName: 'Pentagon',
 			},
 		],
+		hasEditPermission: role === USER_ROLES.ADMIN || role === USER_ROLES.EDITOR,
 		isFetchingUser: false,
 		userFetchError: null,
 		featureFlags: [
@@ -217,7 +220,7 @@ export function getAppContextMock(
 		featureFlagsFetchError: null,
 		orgPreferences: [
 			{
-				name: 'org_onboarding',
+				name: ORG_PREFERENCES.ORG_ONBOARDING,
 				description: 'Organisation Onboarding',
 				valueType: 'boolean',
 				defaultValue: false,
@@ -226,13 +229,18 @@ export function getAppContextMock(
 				value: false,
 			},
 		],
+		userPreferences: [],
+		updateUserPreferenceInContext: jest.fn(),
 		isFetchingOrgPreferences: false,
 		orgPreferencesFetchError: null,
 		isLoggedIn: true,
+		showChangelogModal: false,
 		updateUser: jest.fn(),
 		updateOrg: jest.fn(),
 		updateOrgPreferences: jest.fn(),
 		activeLicenseRefetch: jest.fn(),
+		updateChangelog: jest.fn(),
+		toggleChangelogModal: jest.fn(),
 		versionData: {
 			version: '1.0.0',
 			ee: 'Y',

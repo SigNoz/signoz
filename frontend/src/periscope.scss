@@ -38,12 +38,34 @@
 	}
 
 	&.link {
-		color: var(--bg-vanilla-400);
+		color: var(--Vanilla-400, #c0c1c3);
+
 		border: none;
 		box-shadow: none;
 		background: transparent;
-		font-size: 11px;
+		font-size: 12px;
 		font-weight: 400;
+		letter-spacing: -0.07px;
+		line-height: 20px;
+
+		&:hover {
+			color: var(--bg-vanilla-100) !important;
+			background-color: transparent !important;
+		}
+	}
+
+	&.text {
+		color: var(--bg-vanilla-100) !important;
+		background-color: transparent !important;
+		border: none;
+		box-shadow: none;
+		box-shadow: none;
+		padding: 4px 4px;
+
+		&:hover {
+			color: var(--bg-vanilla-300) !important;
+			background-color: transparent !important;
+		}
 	}
 
 	&.success {

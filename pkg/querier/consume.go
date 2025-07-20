@@ -5,6 +5,7 @@ import (
 	"math"
 	"reflect"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -17,6 +18,10 @@ import (
 
 var (
 	aggRe = regexp.MustCompile(`^__result_(\d+)$`)
+	// legacyReservedColumnTargetAliases identifies result value from a user
+	// written clickhouse query. The column alias indcate which value is
+	// to be considered as final result (or target)
+	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
 )
 
 // consume reads every row and shapes it into the payload expected for the
@@ -131,6 +136,9 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 				} else if numericColsCount == 1 { // classic single-value query
 					fallbackValue = val
 					fallbackSeen = true
+				} else if slices.Contains(legacyReservedColumnTargetAliases, name) {
+					fallbackValue = val
+					fallbackSeen = true
 				} else {
 					// numeric label
 					lblVals = append(lblVals, fmt.Sprint(val))
@@ -148,6 +156,9 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 						id, _ := strconv.Atoi(m[1])
 						aggValues[id] = val
 					} else if numericColsCount == 1 { // classic single-value query
+						fallbackValue = val
+						fallbackSeen = true
+					} else if slices.Contains(legacyReservedColumnTargetAliases, name) {
 						fallbackValue = val
 						fallbackSeen = true
 					} else {
@@ -176,7 +187,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 				lblVals = append(lblVals, *val)
 				lblObjs = append(lblObjs, &qbtypes.Label{
 					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
-					Value: val,
+					Value: *val,
 				})
 
 			default:
@@ -227,8 +238,9 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		}
 	}
 	if maxAgg < 0 {
-		//nolint:nilnil
-		return nil, nil // empty result-set
+		return &qbtypes.TimeSeriesData{
+			QueryName: queryName,
+		}, nil
 	}
 
 	buckets := make([]*qbtypes.AggregationBucket, maxAgg+1)
@@ -305,12 +317,7 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 		// 2. deref each slot into the output row
 		row := make([]any, len(scan))
 		for i, cell := range scan {
-			valPtr := reflect.ValueOf(cell)
-			if valPtr.Kind() == reflect.Pointer && !valPtr.IsNil() {
-				row[i] = valPtr.Elem().Interface()
-			} else {
-				row[i] = nil // Nullable columns come back as nil pointers
-			}
+			row[i] = derefValue(cell)
 		}
 		data = append(data, row)
 	}
@@ -319,9 +326,27 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 	}
 
 	return &qbtypes.ScalarData{
-		Columns: cd,
-		Data:    data,
+		QueryName: queryName,
+		Columns:   cd,
+		Data:      data,
 	}, nil
+}
+
+func derefValue(v interface{}) interface{} {
+	if v == nil {
+		return nil
+	}
+
+	val := reflect.ValueOf(v)
+
+	for val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return nil
+		}
+		val = val.Elem()
+	}
+
+	return val.Interface()
 }
 
 func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {

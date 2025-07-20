@@ -17,8 +17,8 @@ export const getPodQueryPayload = (
 		: 'k8s_cluster_name';
 	const k8sPodNameKey = dotMetricsEnabled ? 'k8s.pod.name' : 'k8s_pod_name';
 	const containerCpuUtilKey = dotMetricsEnabled
-		? 'container.cpu.utilization'
-		: 'container_cpu_utilization';
+		? 'container.cpu.usage'
+		: 'container_cpu_usage';
 	const containerMemUsageKey = dotMetricsEnabled
 		? 'container.memory.usage'
 		: 'container_memory_usage';
@@ -63,7 +63,7 @@ export const getPodQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'container_cpu_utilization--float64--Gauge--true',
+								id: 'container_cpu_usage--float64--Gauge--true',
 								isColumn: true,
 								isJSON: false,
 								key: containerCpuUtilKey,
@@ -231,7 +231,7 @@ export const getPodQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'container_cpu_utilization--float64--Gauge--true',
+								id: 'container_cpu_usage--float64--Gauge--true',
 								isColumn: true,
 								isJSON: false,
 								key: containerCpuUtilKey,
@@ -385,7 +385,7 @@ export const getPodQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'container_cpu_utilization--float64--Gauge--true',
+								id: 'container_cpu_usage--float64--Gauge--true',
 								isColumn: true,
 								isJSON: false,
 								key: containerCpuUtilKey,
@@ -2463,7 +2463,7 @@ export const getHostQueryPayload = (
 							functions: [],
 							groupBy: [],
 							having: [],
-							legend: '',
+							legend: 'system disk io',
 							limit: null,
 							orderBy: [],
 							queryName: 'A',

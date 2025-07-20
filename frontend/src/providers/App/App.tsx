@@ -1,6 +1,7 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import { Logout } from 'api/utils';
 import listOrgPreferences from 'api/v1/org/preferences/list';
+import listUserPreferences from 'api/v1/user/preferences/list';
 import getUserVersion from 'api/v1/version/getVersion';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs from 'dayjs';
@@ -18,6 +19,7 @@ import {
 	useState,
 } from 'react';
 import { useQuery } from 'react-query';
+import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
 import {
 	LicensePlatform,
@@ -25,7 +27,10 @@ import {
 	LicenseState,
 	TrialInfo,
 } from 'types/api/licensesV3/getActive';
-import { OrgPreference } from 'types/api/preferences/preference';
+import {
+	OrgPreference,
+	UserPreference,
+} from 'types/api/preferences/preference';
 import { Organization } from 'types/api/user/getOrganization';
 import { USER_ROLES } from 'types/roles';
 
@@ -45,10 +50,18 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	const [orgPreferences, setOrgPreferences] = useState<OrgPreference[] | null>(
 		null,
 	);
+
+	const [userPreferences, setUserPreferences] = useState<
+		UserPreference[] | null
+	>(null);
+
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(
 		(): boolean => getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
 	);
 	const [org, setOrg] = useState<Organization[] | null>(null);
+	const [changelog, setChangelog] = useState<ChangelogSchema | null>(null);
+
+	const [showChangelogModal, setShowChangelogModal] = useState<boolean>(false);
 
 	// if the user.id is not present, for migration older cases then we need to logout only for current logged in users!
 	useEffect(() => {
@@ -168,12 +181,49 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		}
 	}, [orgPreferencesData, isFetchingOrgPreferences]);
 
+	// now since org preferences data is dependent on user being loaded as well so we added extra safety net for user.email to be set as well
+	const {
+		data: userPreferencesData,
+		isFetching: isFetchingUserPreferences,
+	} = useQuery({
+		queryFn: () => listUserPreferences(),
+		queryKey: ['getAllUserPreferences', 'app-context'],
+		enabled: !!isLoggedIn && !!user.email,
+	});
+
+	useEffect(() => {
+		if (
+			userPreferencesData &&
+			userPreferencesData.data &&
+			!isFetchingUserPreferences
+		) {
+			setUserPreferences(userPreferencesData.data);
+		}
+	}, [userPreferencesData, isFetchingUserPreferences, isLoggedIn]);
+
 	function updateUser(user: IUser): void {
 		setUser((prev) => ({
 			...prev,
 			...user,
 		}));
 	}
+
+	const updateUserPreferenceInContext = useCallback(
+		(userPreference: UserPreference): void => {
+			setUserPreferences((prev) => {
+				const index = prev?.findIndex((e) => e.name === userPreference.name);
+				if (index !== undefined) {
+					return [
+						...(prev?.slice(0, index) || []),
+						userPreference,
+						...(prev?.slice(index + 1, prev.length) || []),
+					];
+				}
+				return prev;
+			});
+		},
+		[],
+	);
 
 	function updateOrgPreferences(orgPreferences: OrgPreference[]): void {
 		setOrgPreferences(orgPreferences);
@@ -207,6 +257,17 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		[org],
 	);
 
+	const updateChangelog = useCallback(
+		(payload: ChangelogSchema): void => {
+			setChangelog(payload);
+		},
+		[setChangelog],
+	);
+
+	const toggleChangelogModal = useCallback(() => {
+		setShowChangelogModal((prev) => !prev);
+	}, []);
+
 	// global event listener for AFTER_LOGIN event to start the user fetch post all actions are complete
 	useGlobalEventListener('AFTER_LOGIN', (event) => {
 		if (event.detail) {
@@ -235,7 +296,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	const value: IAppContext = useMemo(
 		() => ({
 			user,
-			activeLicense,
+			userPreferences,
 			featureFlags,
 			trialInfo,
 			orgPreferences,
@@ -249,16 +310,25 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			activeLicenseFetchError,
 			featureFlagsFetchError,
 			orgPreferencesFetchError,
+			activeLicense,
+			changelog,
+			showChangelogModal,
 			activeLicenseRefetch,
 			updateUser,
 			updateOrgPreferences,
+			updateUserPreferenceInContext,
 			updateOrg,
+			updateChangelog,
+			toggleChangelogModal,
 			versionData: versionData?.payload || null,
+			hasEditPermission:
+				user?.role === USER_ROLES.ADMIN || user?.role === USER_ROLES.EDITOR,
 		}),
 		[
 			trialInfo,
 			activeLicense,
 			activeLicenseFetchError,
+			userPreferences,
 			featureFlags,
 			featureFlagsFetchError,
 			isFetchingActiveLicense,
@@ -268,9 +338,14 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			isLoggedIn,
 			org,
 			orgPreferences,
-			orgPreferencesFetchError,
 			activeLicenseRefetch,
+			orgPreferencesFetchError,
+			changelog,
+			showChangelogModal,
+			updateUserPreferenceInContext,
 			updateOrg,
+			updateChangelog,
+			toggleChangelogModal,
 			user,
 			userFetchError,
 			versionData,

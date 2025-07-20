@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing/smtpemailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -25,6 +26,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/sharder/singlesharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
+	"github.com/SigNoz/signoz/pkg/sqlschema"
+	"github.com/SigNoz/signoz/pkg/sqlschema/sqlitesqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlitesqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
@@ -68,7 +71,13 @@ func NewSQLStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[sql
 	)
 }
 
-func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]] {
+func NewSQLSchemaProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]] {
+	return factory.MustNewNamedMap(
+		sqlitesqlschema.NewFactory(sqlstore),
+	)
+}
+
+func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]] {
 	return factory.MustNewNamedMap(
 		sqlmigration.NewAddDataMigrationsFactory(),
 		sqlmigration.NewAddOrganizationFactory(),
@@ -110,6 +119,11 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 		sqlmigration.NewUpdateDashboardFactory(sqlstore),
 		sqlmigration.NewDropFeatureSetFactory(),
 		sqlmigration.NewDropDeprecatedTablesFactory(),
+		sqlmigration.NewUpdateAgentsFactory(sqlstore),
+		sqlmigration.NewUpdateUsersFactory(sqlstore, sqlschema),
+		sqlmigration.NewUpdateUserInviteFactory(sqlstore, sqlschema),
+		sqlmigration.NewUpdateOrgDomainFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddFactorIndexesFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -152,9 +166,9 @@ func NewSharderProviderFactories() factory.NamedMap[factory.ProviderFactory[shar
 	)
 }
 
-func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, build version.Build, analyticsConfig analytics.Config) factory.NamedMap[factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config]] {
+func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, userGetter user.Getter, build version.Build, analyticsConfig analytics.Config) factory.NamedMap[factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config]] {
 	return factory.MustNewNamedMap(
-		analyticsstatsreporter.NewFactory(telemetryStore, collectors, orgGetter, build, analyticsConfig),
+		analyticsstatsreporter.NewFactory(telemetryStore, collectors, orgGetter, userGetter, build, analyticsConfig),
 		noopstatsreporter.NewFactory(),
 	)
 }

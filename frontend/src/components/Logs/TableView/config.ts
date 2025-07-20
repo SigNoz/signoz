@@ -15,11 +15,13 @@ export function getDefaultCellStyle(isDarkMode?: boolean): CSSProperties {
 		letterSpacing: '-0.07px',
 		marginBottom: '0px',
 		minWidth: '10rem',
+		width: '10rem',
 	};
 }
 
 export const defaultTableStyle: CSSProperties = {
 	minWidth: '40rem',
+	maxWidth: '60rem',
 };
 
 export const defaultListViewPanelStyle: CSSProperties = {

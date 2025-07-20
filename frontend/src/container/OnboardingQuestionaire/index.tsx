@@ -8,6 +8,7 @@ import updateOrgPreferenceAPI from 'api/v1/org/preferences/name/update';
 import { AxiosError } from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
+import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { InviteTeamMembersProps } from 'container/OrganizationSettings/PendingInvitesContainer';
 import { useNotifications } from 'hooks/useNotifications';
@@ -41,14 +42,13 @@ const INITIAL_ORG_DETAILS: OrgDetails = {
 	usesObservability: true,
 	observabilityTool: '',
 	otherTool: '',
-	familiarity: '',
+	usesOtel: null,
 };
 
 const INITIAL_SIGNOZ_DETAILS: SignozDetails = {
-	hearAboutSignoz: '',
 	interestInSignoz: '',
 	otherInterestInSignoz: '',
-	otherAboutSignoz: '',
+	discoverSignoz: '',
 };
 
 const INITIAL_OPTIMISE_SIGNOZ_DETAILS: OptimiseSignozDetails = {
@@ -167,22 +167,17 @@ function OnboardingQuestionaire(): JSX.Element {
 		});
 
 		updateProfile({
-			familiarity_with_observability: orgDetails?.familiarity as string,
+			uses_otel: orgDetails?.usesOtel as boolean,
 			has_existing_observability_tool: orgDetails?.usesObservability as boolean,
 			existing_observability_tool:
 				orgDetails?.observabilityTool === 'Others'
 					? (orgDetails?.otherTool as string)
 					: (orgDetails?.observabilityTool as string),
-
+			where_did_you_discover_signoz: signozDetails?.discoverSignoz as string,
 			reasons_for_interest_in_signoz:
 				signozDetails?.interestInSignoz === 'Others'
 					? (signozDetails?.otherInterestInSignoz as string)
 					: (signozDetails?.interestInSignoz as string),
-			where_did_you_hear_about_signoz:
-				signozDetails?.hearAboutSignoz === 'Others'
-					? (signozDetails?.otherAboutSignoz as string)
-					: (signozDetails?.hearAboutSignoz as string),
-
 			logs_scale_per_day_in_gb: optimiseSignozDetails?.logsPerDay as number,
 			number_of_hosts: optimiseSignozDetails?.hostsPerDay as number,
 			number_of_services: optimiseSignozDetails?.services as number,
@@ -196,7 +191,7 @@ function OnboardingQuestionaire(): JSX.Element {
 
 		setUpdatingOrgOnboardingStatus(true);
 		updateOrgPreference({
-			name: 'org_onboarding',
+			name: ORG_PREFERENCES.ORG_ONBOARDING,
 			value: true,
 		});
 	};
@@ -259,7 +254,7 @@ function OnboardingQuestionaire(): JSX.Element {
 							setCurrentStep(2);
 						}}
 						onNext={handleUpdateProfile}
-						onWillDoLater={(): void => setCurrentStep(4)}
+						onWillDoLater={handleUpdateProfile}
 					/>
 				)}
 

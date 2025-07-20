@@ -205,11 +205,44 @@ function K8sPodsList({
 		return queryPayload;
 	}, [pageSize, currentPage, queryFilters, minTime, maxTime, orderBy, groupBy]);
 
+	const queryKey = useMemo(() => {
+		if (selectedPodUID) {
+			return [
+				'podList',
+				String(pageSize),
+				String(currentPage),
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(groupBy),
+			];
+		}
+		return [
+			'podList',
+			String(pageSize),
+			String(currentPage),
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(groupBy),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		selectedPodUID,
+		pageSize,
+		currentPage,
+		queryFilters,
+		orderBy,
+		groupBy,
+		minTime,
+		maxTime,
+	]);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sPodsList(
 		query as K8sPodsListPayload,
 		{
-			queryKey: ['hostList', query],
+			queryKey,
 			enabled: !!query,
+			keepPreviousData: true,
 		},
 		undefined,
 		dotMetricsEnabled,
@@ -261,6 +294,25 @@ function K8sPodsList({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData]);
 
+	const groupedByRowDataQueryKey = useMemo(() => {
+		if (selectedPodUID) {
+			return [
+				'podList',
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(selectedRowData),
+			];
+		}
+		return [
+			'podList',
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(selectedRowData),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [queryFilters, orderBy, selectedPodUID, minTime, maxTime, selectedRowData]);
+
 	const {
 		data: groupedByRowData,
 		isFetching: isFetchingGroupedByRowData,
@@ -270,7 +322,7 @@ function K8sPodsList({
 	} = useGetK8sPodsList(
 		fetchGroupedByRowDataQuery as K8sPodsListPayload,
 		{
-			queryKey: ['hostList', fetchGroupedByRowDataQuery],
+			queryKey: groupedByRowDataQueryKey,
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
 		undefined,
@@ -629,6 +681,9 @@ function K8sPodsList({
 		});
 	};
 
+	const showTableLoadingState =
+		(isFetching || isLoading) && formattedPodsData.length === 0;
+
 	return (
 		<div className="k8s-list">
 			<K8sHeader
@@ -645,6 +700,7 @@ function K8sPodsList({
 				onAddColumn={handleAddColumn}
 				onRemoveColumn={handleRemoveColumn}
 				entity={K8sCategory.PODS}
+				showAutoRefresh={!selectedPodData}
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
@@ -652,7 +708,7 @@ function K8sPodsList({
 				className={classNames('k8s-list-table', {
 					'expanded-k8s-list-table': isGroupedByAttribute,
 				})}
-				dataSource={isFetching || isLoading ? [] : formattedPodsData}
+				dataSource={showTableLoadingState ? [] : formattedPodsData}
 				columns={columns}
 				pagination={{
 					current: currentPage,
@@ -663,26 +719,25 @@ function K8sPodsList({
 					onChange: onPaginationChange,
 				}}
 				loading={{
-					spinning: isFetching || isLoading,
+					spinning: showTableLoadingState,
 					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 				}}
 				locale={{
-					emptyText:
-						isFetching || isLoading ? null : (
-							<div className="no-filtered-hosts-message-container">
-								<div className="no-filtered-hosts-message-content">
-									<img
-										src="/Icons/emptyState.svg"
-										alt="thinking-emoji"
-										className="empty-state-svg"
-									/>
+					emptyText: showTableLoadingState ? null : (
+						<div className="no-filtered-hosts-message-container">
+							<div className="no-filtered-hosts-message-content">
+								<img
+									src="/Icons/emptyState.svg"
+									alt="thinking-emoji"
+									className="empty-state-svg"
+								/>
 
-									<Typography.Text className="no-filtered-hosts-message">
-										This query had no results. Edit your query and try again!
-									</Typography.Text>
-								</div>
+								<Typography.Text className="no-filtered-hosts-message">
+									This query had no results. Edit your query and try again!
+								</Typography.Text>
 							</div>
-						),
+						</div>
+					),
 				}}
 				scroll={{ x: true }}
 				tableLayout="fixed"

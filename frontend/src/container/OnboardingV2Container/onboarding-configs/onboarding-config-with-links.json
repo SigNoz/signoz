@@ -34,6 +34,60 @@
 		"link": "https://signoz.io/docs/migration/migrate-from-grafana/"
 	},
 	{
+		"dataSource": "migrate-from-elk",
+		"label": "From ELK",
+		"tags": ["migrate to SigNoz"],
+		"module": "home",
+		"relatedSearchKeywords": [
+			"elk",
+			"elasticsearch",
+			"logstash",
+			"kibana",
+			"elastic stack",
+			"migration",
+			"elastic",
+			"opentelemetry"
+		],
+		"imgUrl": "/Logos/elk.svg",
+		"link": "https://signoz.io/docs/migration/migrate-from-elk-to-signoz/"
+	},
+	{
+		"dataSource": "migrate-from-newrelic",
+		"label": "From New Relic",
+		"tags": ["migrate to SigNoz"],
+		"module": "home",
+		"relatedSearchKeywords": [
+			"new relic",
+			"newrelic",
+			"apm migration",
+			"opentelemetry",
+			"migration guide",
+			"migrate",
+			"migration"
+		],
+		"imgUrl": "/Logos/newrelic.svg",
+		"link": "https://signoz.io/docs/migration/migrate-from-newrelic-to-signoz/"
+	},
+	{
+		"dataSource": "migrate-signoz-self-host-to-cloud",
+		"label": "From SigNoz Self-Host",
+		"tags": ["migrate to SigNoz"],
+		"module": "home",
+		"relatedSearchKeywords": [
+			"signoz self-hosted",
+			"signoz cloud",
+			"migration",
+			"self-host to cloud",
+			"data migration",
+			"migrate",
+			"migration",
+			"selfhosted signoz",
+			"self-host"
+		],
+		"imgUrl": "/Logos/signoz-brand-logo.svg",
+		"link": "https://signoz.io/docs/migration/migrate-from-signoz-self-host-to-signoz-cloud/"
+	},
+	{
 		"dataSource": "java",
 		"entityID": "dataSource",
 		"label": "Java",
@@ -1140,6 +1194,57 @@
 		"id": "nginx-tracing",
 		"link": "https://signoz.io/docs/instrumentation/opentelemetry-nginx/"
 	},
+		{
+		"dataSource": "opentelemetry-wordpress",
+		"label": "WordPress",
+		"imgUrl": "/Logos/wordpress.svg",
+		"tags": ["apm"],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"wordpress",
+			"wordpress monitoring",
+			"wordpress tracing",
+			"wordpress performance",
+			"wordpress observability",
+			"opentelemetry wordpress",
+			"otel wordpress",
+			"wordpress instrumentation",
+			"monitor wordpress site",
+			"wordpress apm",
+			"wordpress metrics",
+			"wordpress php monitoring",
+			"wordpress plugin monitoring",
+			"wordpress to signoz"
+		],
+		"id": "opentelemetry-wordpress",
+		"link": "https://signoz.io/docs/instrumentation/opentelemetry-wordpress/"
+	},
+	{
+		"dataSource": "opentelemetry-cloudflare",
+		"label": "Cloudflare",
+		"imgUrl": "/Logos/cloudflare.svg",
+		"tags": ["apm"],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"cloudflare",
+			"cloudflare workers",
+			"cloudflare monitoring",
+			"cloudflare tracing",
+			"cloudflare observability",
+			"opentelemetry cloudflare",
+			"otel cloudflare",
+			"cloudflare instrumentation",
+			"monitor cloudflare workers",
+			"cloudflare apm",
+			"cloudflare metrics",
+			"edge computing monitoring",
+			"cloudflare to signoz"
+		],
+		"id": "opentelemetry-cloudflare",
+		"link": "https://signoz.io/docs/instrumentation/opentelemetry-cloudflare/"
+	},
 	{
 		"dataSource": "kubernetes-pod-logs",
 		"label": "Kubernetes Pod Logs",
@@ -1265,6 +1370,29 @@
 		],
 		"id": "syslogs",
 		"link": "https://signoz.io/docs/userguide/collecting_syslogs/"
+	},
+	{
+		"dataSource": "systemd-logs",
+		"label": "Systemd Logs",
+		"imgUrl": "/Logos/systemd.svg",
+		"tags": ["logs"],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"systemd logs",
+			"journalctl logs",
+			"collect systemd logs",
+			"systemd log monitoring",
+			"systemd log collection",
+			"systemd opentelemetry",
+			"systemd to otel",
+			"linux systemd monitoring",
+			"journald logs",
+			"systemd logs to signoz",
+			"systemctl",
+			"journald"
+		],
+		"id": "systemd-logs",
+		"link": "https://signoz.io/docs/logs-management/send-logs/collect-systemd-logs/"
 	},
 	{
 		"dataSource": "fluentd",
@@ -1617,7 +1745,7 @@
 		"dataSource": "docker-container-metrics",
 		"label": "Docker Container Metrics",
 		"tags": ["metrics"],
-		"module": "metrics",
+		"module": "dashboards",
 		"relatedSearchKeywords": [
 			"docker container metrics",
 			"monitor docker containers",
@@ -1631,7 +1759,7 @@
 			"docker metrics to signoz"
 		],
 		"imgUrl": "/Logos/docker.svg",
-		"link": "https://signoz.io/docs/userguide/k8s-metrics/"
+		"link": "https://signoz.io/docs/metrics-management/docker-container-metrics/"
 	},
 	{
 		"dataSource": "ec2-application-logs",
@@ -1657,7 +1785,7 @@
 		"dataSource": "ec2-infrastructure-metrics",
 		"label": "EC2 Infra Metrics",
 		"tags": ["AWS"],
-		"module": "metrics",
+		"module": "infra-monitoring-hosts",
 		"relatedSearchKeywords": [
 			"ec2 infrastructure metrics",
 			"monitor aws ec2",
@@ -1677,7 +1805,7 @@
 		"dataSource": "ecs-ec2",
 		"label": "ECS EC2",
 		"tags": ["AWS"],
-		"module": "metrics",
+		"module": "dashboards",
 		"relatedSearchKeywords": [
 			"ecs ec2 monitoring",
 			"ecs ec2 logs and metrics",
@@ -1697,7 +1825,7 @@
 		"dataSource": "ecs-external",
 		"label": "ECS External",
 		"tags": ["AWS"],
-		"module": "metrics",
+		"module": "dashboards",
 		"relatedSearchKeywords": [
 			"ecs external monitoring",
 			"external ecs observability",
@@ -1717,7 +1845,7 @@
 		"dataSource": "ecs-fargate",
 		"label": "ECS Fargate",
 		"tags": ["AWS"],
-		"module": "metrics",
+		"module": "dashboards",
 		"relatedSearchKeywords": [
 			"ecs fargate monitoring",
 			"fargate logs and metrics",
@@ -2064,6 +2192,26 @@
 				}
 			]
 		}
+	},
+	{
+		"dataSource": "azure-mysql-flexible-server",
+		"label": "Azure MySQL Flexible Server",
+		"tags": ["Azure"],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"azure mysql flexible server",
+			"mysql flexible server monitoring",
+			"azure mysql metrics",
+			"mysql database monitoring azure",
+			"opentelemetry mysql azure",
+			"azure mysql observability",
+			"mysql flexible server logs",
+			"azure mysql telemetry",
+			"mysql azure performance monitoring",
+			"azure mysql to signoz"
+		],
+		"imgUrl": "/Logos/azure-mysql.svg",
+		"link": "https://signoz.io/docs/azure-monitoring/mysql-flexible-server/"
 	},
 	{
 		"dataSource": "cloud-functions",
@@ -2466,6 +2614,29 @@
 		}
 	},
 	{
+		"dataSource": "openai-monitoring",
+		"label": "OpenAI Monitoring",
+		"imgUrl": "/Logos/openai.svg",
+		"tags": ["LLM Monitoring"],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"openai monitoring",
+			"openai tracing",
+			"openai observability",
+			"monitor openai api",
+			"openai performance monitoring",
+			"openai instrumentation",
+			"opentelemetry openai",
+			"otel openai",
+			"openai metrics",
+			"openai to signoz",
+			"openai logs",
+			"open ai",
+			"llm"
+		],
+		"link": "https://signoz.io/docs/llm/opentelemetry-openai-monitoring/"
+	},
+	{
 		"dataSource": "llm-monitoring",
 		"label": "LLM Monitoring",
 		"imgUrl": "/Logos/llm-monitoring.svg",
@@ -2484,6 +2655,226 @@
 			"llm monitoring with signoz"
 		],
 		"link": "https://signoz.io/docs/community/llm-monitoring/"
+	},
+	{
+		"dataSource": "http-endpoints-monitoring",
+		"label": "HTTP Endpoints Monitoring",
+		"imgUrl": "/Logos/http-monitoring.svg",
+		"tags": ["Synthetic Monitoring"],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"http endpoints monitoring",
+			"synthetic monitoring",
+			"uptime monitoring",
+			"endpoint health checks",
+			"api monitoring",
+			"website monitoring",
+			"http response monitoring",
+			"endpoint performance monitoring",
+			"synthetic tests",
+			"monitor http endpoints"
+		],
+		"link": "https://signoz.io/docs/monitor-http-endpoints/"
+	},
+	{
+		"dataSource": "external-api-monitoring-setup",
+		"label": "External API Monitoring Setup",
+		"imgUrl": "/Logos/external-api-monitoring.svg",
+		"tags": ["api-monitoring"],
+		"module": "api-monitoring",
+		"relatedSearchKeywords": [
+			"external api monitoring",
+			"api monitoring setup",
+			"monitor external apis",
+			"api observability",
+			"api performance monitoring",
+			"api health monitoring",
+			"third party api monitoring",
+			"api endpoint monitoring",
+			"api latency monitoring",
+			"api uptime monitoring",
+			"rest api monitoring",
+			"api metrics",
+			"api telemetry",
+			"monitor api calls",
+			"api monitoring configuration"
+		],
+		"link": "https://signoz.io/docs/external-api-monitoring/setup/"
+	},
+	{
+		"dataSource": "github-metrics",
+		"label": "GitHub Metrics",
+		"imgUrl": "/Logos/github.svg",
+		"tags": ["CICD"],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"github metrics",
+			"github monitoring",
+			"github observability",
+			"monitor github repos",
+			"github telemetry",
+			"github api metrics",
+			"github repository monitoring",
+			"github to signoz",
+			"github cicd monitoring",
+			"github actions metrics"
+		],
+		"link": "https://signoz.io/docs/cicd/github/github-metrics/"
+	},
+	{
+		"dataSource": "github-actions-traces",
+		"label": "GitHub Actions Traces",
+		"imgUrl": "/Logos/github.svg",
+		"tags": ["CICD"],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"github actions traces",
+			"github actions monitoring",
+			"github actions observability",
+			"github actions tracing",
+			"monitor github actions",
+			"github workflow monitoring",
+			"github cicd tracing",
+			"github actions to signoz",
+			"github actions telemetry",
+			"github workflow observability"
+		],
+		"link": "https://signoz.io/docs/cicd/github/github-actions-traces/"
+	},
+	{
+		"dataSource": "jenkins-agent-node-monitoring",
+		"label": "Jenkins Agent Node Monitoring",
+		"imgUrl": "/Logos/jenkins.svg",
+		"tags": ["CICD"],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"jenkins agent monitoring",
+			"jenkins node monitoring",
+			"jenkins observability",
+			"monitor jenkins agents",
+			"jenkins telemetry",
+			"jenkins infrastructure monitoring",
+			"jenkins agent metrics",
+			"jenkins to signoz",
+			"jenkins cicd monitoring",
+			"jenkins build agents"
+		],
+		"link": "https://signoz.io/docs/cicd/jenkins/agent-node-monitoring/"
+	},
+	{
+		"dataSource": "jenkins-tracing",
+		"label": "Jenkins Tracing",
+		"imgUrl": "/Logos/jenkins.svg",
+		"tags": ["CICD"],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"jenkins tracing",
+			"jenkins monitoring",
+			"jenkins observability",
+			"jenkins pipeline tracing",
+			"monitor jenkins builds",
+			"jenkins workflow monitoring",
+			"jenkins cicd tracing",
+			"jenkins to signoz",
+			"jenkins telemetry",
+			"jenkins pipeline observability"
+		],
+		"link": "https://signoz.io/docs/cicd/jenkins/jenkins-tracing/"
+	},
+	{
+		"dataSource": "argocd-metrics",
+		"label": "ArgoCD Metrics",
+		"imgUrl": "/Logos/argocd.svg",
+		"tags": ["CICD"],
+		"module": "dashboards",
+		"relatedSearchKeywords": [
+			"argocd metrics",
+			"argocd monitoring",
+			"argocd observability",
+			"monitor argocd",
+			"argocd telemetry",
+			"argocd gitops monitoring",
+			"argocd deployment monitoring",
+			"argocd to signoz",
+			"argocd cicd monitoring",
+			"gitops monitoring"
+		],
+		"link": "https://signoz.io/docs/cicd/argocd/argocd-metrics/"
+	},
+	{
+		"dataSource": "self-hosted-kafka",
+		"label": "Self-Hosted Kafka",
+		"imgUrl": "/Logos/kafka.svg",
+		"tags": ["Messaging Queues"],
+		"module": "messaging-queues-kafka",
+		"relatedSearchKeywords": [
+			"self hosted kafka",
+			"kafka setup",
+			"kafka open source",
+			"kafka observability",
+			"kafka integration"
+		],
+		"link": "https://signoz.io/docs/messaging-queues/kafka/"
+	},
+	{
+		"dataSource": "amazon-msk",
+		"label": "Amazon MSK",
+		"imgUrl": "/Logos/amazon-msk.svg",
+		"tags": ["Messaging Queues"],
+		"module": "messaging-queues-kafka",
+		"relatedSearchKeywords": [
+			"amazon msk",
+			"msk kafka",
+			"aws kafka",
+			"msk tracing",
+			"msk monitoring"
+		],
+		"link": "https://signoz.io/docs/messaging-queues/msk/"
+	},
+	{
+		"dataSource": "confluent-kafka",
+		"label": "Confluent Kafka",
+		"imgUrl": "/Logos/confluent-kafka.svg",
+		"tags": ["Messaging Queues"],
+		"module": "messaging-queues-kafka",
+		"relatedSearchKeywords": [
+			"confluent kafka",
+			"confluent cloud",
+			"kafka tracing",
+			"kafka cloud",
+			"kafka monitoring"
+		],
+		"link": "https://signoz.io/docs/messaging-queues/confluent-kafka/"
+	},
+	{
+		"dataSource": "strimzi-kafka",
+		"label": "Strimzi Kafka",
+		"imgUrl": "/Logos/strimzi.svg",
+		"tags": ["Messaging Queues"],
+		"module": "messaging-queues-kafka",
+		"relatedSearchKeywords": [
+			"strimzi kafka",
+			"kafka on kubernetes",
+			"strimzi operator",
+			"kafka helm chart",
+			"monitor kafka strimzi"
+		],
+		"link": "https://signoz.io/docs/messaging-queues/strimzi/"
+	},
+	{
+		"dataSource": "celery",
+		"label": "Celery",
+		"imgUrl": "/Logos/celery.svg",
+		"tags": ["Messaging Queues"],
+		"module": "messaging-queues-celery",
+		"relatedSearchKeywords": [
+			"celery python",
+			"celery tracing",
+			"celery monitoring",
+			"task queue tracing",
+			"celery opentelemetry"
+		],
+		"link": "https://signoz.io/docs/messaging-queues/celery-setup/"
 	},
 	{
 		"dataSource": "android-java",
@@ -2606,86 +2997,16 @@
 		"link": "https://signoz.io/docs/frontend-monitoring/document-load/"
 	},
 	{
-		"dataSource": "self-hosted-kafka",
-		"label": "Self-Hosted Kafka",
-		"imgUrl": "/Logos/kafka.svg",
-		"tags": ["Messaging Queues"],
-		"module": "messaging-queues-kafka",
-		"relatedSearchKeywords": [
-			"self hosted kafka",
-			"kafka setup",
-			"kafka open source",
-			"kafka observability",
-			"kafka integration"
-		],
-		"link": "https://signoz.io/docs/messaging-queues/kafka/"
-	},
-	{
-		"dataSource": "amazon-msk",
-		"label": "Amazon MSK",
-		"imgUrl": "/Logos/amazon-msk.svg",
-		"tags": ["Messaging Queues"],
-		"module": "messaging-queues-kafka",
-		"relatedSearchKeywords": [
-			"amazon msk",
-			"msk kafka",
-			"aws kafka",
-			"msk tracing",
-			"msk monitoring"
-		],
-		"link": "https://signoz.io/docs/messaging-queues/msk/"
-	},
-	{
-		"dataSource": "confluent-kafka",
-		"label": "Confluent Kafka",
-		"imgUrl": "/Logos/confluent-kafka.svg",
-		"tags": ["Messaging Queues"],
-		"module": "messaging-queues-kafka",
-		"relatedSearchKeywords": [
-			"confluent kafka",
-			"confluent cloud",
-			"kafka tracing",
-			"kafka cloud",
-			"kafka monitoring"
-		],
-		"link": "https://signoz.io/docs/messaging-queues/confluent-kafka/"
-	},
-	{
-		"dataSource": "strimzi-kafka",
-		"label": "Strimzi Kafka",
-		"imgUrl": "/Logos/strimzi.svg",
-		"tags": ["Messaging Queues"],
-		"module": "messaging-queues-kafka",
-		"relatedSearchKeywords": [
-			"strimzi kafka",
-			"kafka on kubernetes",
-			"strimzi operator",
-			"kafka helm chart",
-			"monitor kafka strimzi"
-		],
-		"link": "https://signoz.io/docs/messaging-queues/strimzi/"
-	},
-	{
-		"dataSource": "celery",
-		"label": "Celery",
-		"imgUrl": "/Logos/celery.svg",
-		"tags": ["Messaging Queues"],
-		"module": "messaging-queues-celery",
-		"relatedSearchKeywords": [
-			"celery python",
-			"celery tracing",
-			"celery monitoring",
-			"task queue tracing",
-			"celery opentelemetry"
-		],
-		"link": "https://signoz.io/docs/messaging-queues/celery-setup/"
-	},
-	{
 		"dataSource": "redis",
 		"label": "Redis",
 		"tags": ["integrations", "database"],
 		"module": "integrations",
-		"relatedSearchKeywords": ["redis", "redis logs", "redis metrics", "database"],
+		"relatedSearchKeywords": [
+			"redis", 
+			"redis logs", 
+			"redis metrics", 
+			"database"
+		],
 		"imgUrl": "/Logos/redis.svg",
 		"link": "/integrations?integration=builtin-redis",
 		"internalRedirect": true
@@ -2749,6 +3070,24 @@
 		"internalRedirect": true
 	},
 	{
+		"dataSource": "snowflake",
+		"label": "Snowflake",
+		"tags": ["integrations", "metrics"],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"snowflake",
+			"snowflake metrics",
+			"snowflake monitoring",
+			"snowflake observability",
+			"data warehouse monitoring",
+			"snowflake telemetry",
+			"snowflake performance monitoring",
+			"snowflake to signoz"
+		],
+		"imgUrl": "/Logos/snowflake.svg",
+		"link": "https://signoz.io/docs/integrations/snowflake/"
+	},
+	{
 		"dataSource": "aws-rds-postgresql",
 		"label": "AWS RDS (PostgreSQL)",
 		"tags": ["integrations", "database"],
@@ -2802,7 +3141,7 @@
 	{
 		"dataSource": "aws-alb",
 		"label": "AWS ALB - One Click",
-		"tags": ["integrations"],
+		"tags": ["integrations", "AWS"],
 		"module": "integrations",
 		"relatedSearchKeywords": [
 			"alb",
@@ -2819,7 +3158,7 @@
 	{
 		"dataSource": "api-gateway",
 		"label": "AWS API Gateway - One Click",
-		"tags": ["integrations"],
+		"tags": ["integrations", "AWS"],
 		"module": "integrations",
 		"relatedSearchKeywords": [
 			"api gateway",
@@ -2833,9 +3172,26 @@
 		"internalRedirect": true
 	},
 	{
+		"dataSource": "aws-dynamodb",
+		"label": "DynamoDB - One Click",
+		"tags": ["integrations", "AWS"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"dynamodb",
+			"aws dynamodb",
+			"dynamodb logs",
+			"dynamodb metrics",
+			"nosql database",
+			"dynamodb monitoring"
+		],
+		"imgUrl": "/Logos/dynamodb.svg",
+		"link": "/integrations?integration=aws-integration&service=dynamodb",
+		"internalRedirect": true
+	},
+	{
 		"dataSource": "ec2",
 		"label": "EC2 - One Click",
-		"tags": ["integrations"],
+		"tags": ["integrations", "AWS"],
 		"module": "integrations",
 		"relatedSearchKeywords": [
 			"ec2",
@@ -2849,9 +3205,60 @@
 		"internalRedirect": true
 	},
 	{
+		"dataSource": "aws-ecs-one-click",
+		"label": "ECS - One Click",
+		"tags": ["integrations", "AWS"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"ecs",
+			"aws ecs",
+			"ecs logs",
+			"ecs metrics",
+			"container service",
+			"ecs monitoring"
+		],
+		"imgUrl": "/Logos/ecs.svg",
+		"link": "/integrations?integration=aws-integration&service=ecs",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "aws-eks-one-click",
+		"label": "EKS - One Click",
+		"tags": ["integrations", "AWS"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"eks",
+			"aws eks",
+			"eks logs",
+			"eks metrics",
+			"kubernetes service",
+			"eks monitoring"
+		],
+		"imgUrl": "/Logos/eks.svg",
+		"link": "/integrations?integration=aws-integration&service=eks",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "aws-elasticache-one-click",
+		"label": "ElastiCache - One Click",
+		"tags": ["integrations", "AWS"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"elasticache",
+			"aws elasticache",
+			"elasticache logs",
+			"elasticache metrics",
+			"cache service",
+			"elasticache monitoring"
+		],
+		"imgUrl": "/Logos/elasticache.svg",
+		"link": "/integrations?integration=aws-integration&service=elasticache",
+		"internalRedirect": true
+	},
+	{
 		"dataSource": "aws-lambda",
 		"label": "AWS Lambda - One Click",
-		"tags": ["integrations"],
+		"tags": ["integrations", "AWS"],
 		"module": "integrations",
 		"relatedSearchKeywords": [
 			"aws lambda",
@@ -2867,7 +3274,7 @@
 	{
 		"dataSource": "amazon-msk",
 		"label": "Amazon MSK - One Click",
-		"tags": ["integrations"],
+		"tags": ["integrations", "AWS"],
 		"module": "integrations",
 		"relatedSearchKeywords": [
 			"amazon msk",
@@ -2883,7 +3290,7 @@
 	{
 		"dataSource": "amazon-rds",
 		"label": "Amazon RDS - One Click",
-		"tags": ["integrations"],
+		"tags": ["integrations", "AWS"],
 		"module": "integrations",
 		"relatedSearchKeywords": [
 			"amazon rds",
@@ -2894,6 +3301,57 @@
 		],
 		"imgUrl": "/Logos/rds.svg",
 		"link": "/integrations?integration=aws-integration&service=rds",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "aws-s3-sync",
+		"label": "S3 Sync - One Click",
+		"tags": ["integrations", "AWS"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"s3 sync",
+			"aws s3",
+			"s3 logs",
+			"s3 metrics",
+			"object storage",
+			"s3 monitoring"
+		],
+		"imgUrl": "/Logos/s3.svg",
+		"link": "/integrations?integration=aws-integration&service=s3sync",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "aws-sns",
+		"label": "SNS - One Click",
+		"tags": ["integrations", "AWS"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"sns",
+			"aws sns",
+			"sns logs",
+			"sns metrics",
+			"notification service",
+			"sns monitoring"
+		],
+		"imgUrl": "/Logos/sns.svg",
+		"link": "/integrations?integration=aws-integration&service=sns",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "aws-sqs",
+		"label": "SQS - One Click",
+		"tags": ["integrations", "AWS"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"sqs",
+			"aws sqs",
+			"sqs logs",
+			"sqs metrics",
+			"queue service",
+			"sqs monitoring"
+		],
+		"imgUrl": "/Logos/sqs.svg",
+		"link": "/integrations?integration=aws-integration&service=sqs",
 		"internalRedirect": true
 	},
 	{

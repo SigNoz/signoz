@@ -22,6 +22,7 @@ import {
 	ChevronRight,
 	Leaf,
 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import {
 	Dispatch,
 	SetStateAction,
@@ -70,10 +71,10 @@ function SpanOverview({
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
-
 	handleAddSpanToFunnel: (span: Span) => void;
 }): JSX.Element {
 	const isRootSpan = span.level === 0;
+	const { hasEditPermission } = useAppContext();
 
 	let color = generateColor(span.serviceName, themeColors.traceDetailColors);
 	if (span.hasError) {
@@ -149,11 +150,16 @@ function SpanOverview({
 					<Typography.Text className="service-name">
 						{span.serviceName}
 					</Typography.Text>
-					{!!span.serviceName &&
-						!!span.name &&
-						process.env.NODE_ENV === 'development' && (
-							<div className="add-funnel-button">
-								<span className="add-funnel-button__separator">·</span>
+					{!!span.serviceName && !!span.name && (
+						<div className="add-funnel-button">
+							<span className="add-funnel-button__separator">·</span>
+							<Tooltip
+								title={
+									!hasEditPermission
+										? 'You need editor or admin access to add spans to funnels'
+										: ''
+								}
+							>
 								<Button
 									type="text"
 									size="small"
@@ -163,6 +169,7 @@ function SpanOverview({
 										e.stopPropagation();
 										handleAddSpanToFunnel(span);
 									}}
+									disabled={!hasEditPermission}
 									icon={
 										<img
 											className="add-funnel-button__icon"
@@ -171,8 +178,9 @@ function SpanOverview({
 										/>
 									}
 								/>
-							</div>
-						)}
+							</Tooltip>
+						</div>
+					)}
 				</section>
 			</div>
 		</div>
@@ -217,6 +225,27 @@ export function SpanDuration({
 		setHasActionButtons(false);
 	};
 
+	// Calculate text positioning to handle overflow cases
+	const textStyle = useMemo(() => {
+		const spanRightEdge = leftOffset + width;
+		const textWidthApprox = 8; // Approximate text width in percentage
+
+		// If span would cause text overflow, right-align text to span end
+		if (leftOffset > 100 - textWidthApprox) {
+			return {
+				right: `${100 - spanRightEdge}%`,
+				color,
+				textAlign: 'right' as const,
+			};
+		}
+
+		// Default: left-align text to span start
+		return {
+			left: `${leftOffset}%`,
+			color,
+		};
+	}, [leftOffset, width, color]);
+
 	return (
 		<div
 			className={cx(
@@ -240,14 +269,39 @@ export function SpanDuration({
 					left: `${leftOffset}%`,
 					width: `${width}%`,
 					backgroundColor: color,
+					position: 'relative',
 				}}
-			/>
+			>
+				{span.event?.map((event) => {
+					const eventTimeMs = event.timeUnixNano / 1e6;
+					const eventOffsetPercent =
+						((eventTimeMs - span.timestamp) / (span.durationNano / 1e6)) * 100;
+					const clampedOffset = Math.max(1, Math.min(eventOffsetPercent, 99));
+					const { isError } = event;
+					const { time, timeUnitName } = convertTimeToRelevantUnit(
+						eventTimeMs - span.timestamp,
+					);
+					return (
+						<Tooltip
+							key={`${span.spanId}-event-${event.name}-${event.timeUnixNano}`}
+							title={`${event.name} @ ${toFixed(time, 2)} ${timeUnitName}`}
+						>
+							<div
+								className={`event-dot ${isError ? 'error' : ''}`}
+								style={{
+									left: `${clampedOffset}%`,
+								}}
+							/>
+						</Tooltip>
+					);
+				})}
+			</div>
 			{hasActionButtons && <SpanLineActionButtons span={span} />}
 			<Tooltip title={`${toFixed(time, 2)} ${timeUnitName}`}>
 				<Typography.Text
 					className="span-line-text"
 					ellipsis
-					style={{ left: `${leftOffset}%`, color }}
+					style={textStyle}
 				>{`${toFixed(time, 2)} ${timeUnitName}`}</Typography.Text>
 			</Tooltip>
 		</div>
@@ -288,6 +342,16 @@ function getWaterfallColumns({
 				/>
 			),
 			size: 450,
+			/**
+			 * Note: The TanStack table currently does not support percentage-based column sizing.
+			 * Therefore, we specify both `minSize` and `maxSize` for the "span-name" column to ensure
+			 * that its width remains between 240px and 900px. Setting a `maxSize` here is important
+			 * because the "span-duration" column has column resizing disabled, making it difficult
+			 * to enforce a minimum width for that column. By constraining the "span-name" column,
+			 * we indirectly control the minimum width available for the "span-duration" column.
+			 */
+			minSize: 240,
+			maxSize: 900,
 		}),
 		columnDefHelper.display({
 			id: 'span-duration',
@@ -450,7 +514,7 @@ function Success(props: ISuccessProps): JSX.Element {
 				virtualiserRef={virtualizerRef}
 				setColumnWidths={setTraceFlamegraphStatsWidth}
 			/>
-			{selectedSpanToAddToFunnel && process.env.NODE_ENV === 'development' && (
+			{selectedSpanToAddToFunnel && (
 				<AddSpanToFunnelModal
 					span={selectedSpanToAddToFunnel}
 					isOpen={isAddSpanToFunnelModalOpen}

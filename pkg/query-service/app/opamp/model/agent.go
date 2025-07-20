@@ -4,36 +4,24 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"log/slog"
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/opamptypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/open-telemetry/opamp-go/protobufs"
-	"github.com/open-telemetry/opamp-go/server/types"
+	opampTypes "github.com/open-telemetry/opamp-go/server/types"
 )
-
-type AgentStatus int
-
-const (
-	AgentStatusUnknown AgentStatus = iota
-	AgentStatusConnected
-	AgentStatusDisconnected
-)
-
-// set in agent description when agent is capable of supporting
-// lb exporter configuration. values: 1 (true) or 0 (false)
-const lbExporterFlag = "capabilities.lbexporter"
 
 type Agent struct {
-	ID              string      `json:"agentId" yaml:"agentId" db:"agent_id"`
-	StartedAt       time.Time   `json:"startedAt" yaml:"startedAt" db:"started_at"`
-	TerminatedAt    time.Time   `json:"terminatedAt" yaml:"terminatedAt" db:"terminated_at"`
-	EffectiveConfig string      `json:"effectiveConfig" yaml:"effectiveConfig" db:"effective_config"`
-	CurrentStatus   AgentStatus `json:"currentStatus" yaml:"currentStatus" db:"current_status"`
-	remoteConfig    *protobufs.AgentRemoteConfig
-	Status          *protobufs.AgentToServer
+	opamptypes.StorableAgent
+	remoteConfig *protobufs.AgentRemoteConfig
+	Status       *protobufs.AgentToServer
 
 	// can this agent be load balancer
 	CanLB bool
@@ -41,13 +29,24 @@ type Agent struct {
 	// is this agent setup as load balancer
 	IsLb bool
 
-	conn      types.Connection
+	conn      opampTypes.Connection
 	connMutex sync.Mutex
 	mux       sync.RWMutex
+	store     sqlstore.SQLStore
+	logger    *slog.Logger
 }
 
-func New(ID string, conn types.Connection) *Agent {
-	return &Agent{ID: ID, StartedAt: time.Now(), CurrentStatus: AgentStatusConnected, conn: conn}
+// set in agent description when agent is capable of supporting
+// lb exporter configuration. values: 1 (true) or 0 (false)
+const lbExporterFlag = "capabilities.lbexporter"
+
+func New(store sqlstore.SQLStore, logger *slog.Logger, orgID valuer.UUID, agentID string, conn opampTypes.Connection) *Agent {
+	return &Agent{
+		StorableAgent: opamptypes.NewStorableAgent(store, orgID, agentID, opamptypes.AgentStatusConnected),
+		conn:          conn,
+		store:         store,
+		logger:        logger,
+	}
 }
 
 // Upsert inserts or updates the agent in the database.
@@ -55,22 +54,39 @@ func (agent *Agent) Upsert() error {
 	agent.mux.Lock()
 	defer agent.mux.Unlock()
 
-	_, err := db.NamedExec(`INSERT OR REPLACE INTO agents (
-		agent_id,
-		started_at,
-		effective_config,
-		current_status
-	) VALUES (
-		:agent_id,
-		:started_at,
-		:effective_config,
-		:current_status
-	)`, agent)
+	_, err := agent.store.BunDB().NewInsert().
+		Model(&agent.StorableAgent).
+		On("CONFLICT (agent_id) DO UPDATE").
+		Set("updated_at = EXCLUDED.updated_at").
+		Set("config = EXCLUDED.config").
+		Set("status = EXCLUDED.status").
+		Exec(context.Background())
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// keep only the last 50 agents in the database
+func (agent *Agent) KeepOnlyLast50Agents(ctx context.Context) {
+	// Delete all agents except the last 50 in a single query
+	_, err := agent.store.BunDB().
+		NewDelete().
+		Model(new(opamptypes.StorableAgent)).
+		Where("org_id = ?", agent.OrgID).
+		Where("agent_id NOT IN (?)",
+			agent.store.BunDB().
+				NewSelect().
+				ColumnExpr("distinct(agent_id)").
+				Model(new(opamptypes.StorableAgent)).
+				Where("org_id = ?", agent.OrgID).
+				OrderExpr("created_at DESC").
+				Limit(50)).
+		Exec(ctx)
+	if err != nil {
+		agent.logger.Error("failed to delete old agents", "error", err)
+	}
 }
 
 // extracts lb exporter support flag from agent description. the flag
@@ -135,11 +151,11 @@ func (agent *Agent) updateAgentDescription(newStatus *protobufs.AgentToServer) (
 			// todo: need to address multiple agent scenario here
 			// for now, the first response will be sent back to the UI
 			if agent.Status.RemoteConfigStatus.Status == protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED {
-				onConfigSuccess(agent.ID, string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash))
+				onConfigSuccess(agent.OrgID, agent.AgentID, string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash))
 			}
 
 			if agent.Status.RemoteConfigStatus.Status == protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED {
-				onConfigFailure(agent.ID, string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash), agent.Status.RemoteConfigStatus.ErrorMessage)
+				onConfigFailure(agent.OrgID, agent.AgentID, string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash), agent.Status.RemoteConfigStatus.ErrorMessage)
 			}
 		}
 	}
@@ -159,7 +175,7 @@ func (agent *Agent) updateHealth(newStatus *protobufs.AgentToServer) {
 	agent.Status.Health = newStatus.Health
 
 	if agent.Status != nil && agent.Status.Health != nil && agent.Status.Health.Healthy {
-		agent.StartedAt = time.Unix(0, int64(agent.Status.Health.StartTimeUnixNano)).UTC()
+		agent.TimeAuditable.UpdatedAt = time.Unix(0, int64(agent.Status.Health.StartTimeUnixNano)).UTC()
 	}
 }
 
@@ -190,10 +206,10 @@ func (agent *Agent) updateEffectiveConfig(newStatus *protobufs.AgentToServer, re
 			agent.Status.EffectiveConfig = newStatus.EffectiveConfig
 
 			// Convert to string for displaying purposes.
-			agent.EffectiveConfig = ""
+			agent.Config = ""
 			// There should be only one config in the map.
 			for _, cfg := range newStatus.EffectiveConfig.ConfigMap.ConfigMap {
-				agent.EffectiveConfig = string(cfg.Body)
+				agent.Config = string(cfg.Body)
 			}
 		}
 	}
@@ -249,7 +265,16 @@ func (agent *Agent) processStatusUpdate(
 
 	configChanged := false
 	if agentDescrChanged {
-		// Agent description is changed.
+		// Agent description is changed, but effective config is missing, force request agent to send Config
+		//
+		// Note: ideally this flag should be sent along side ErrorResponse;
+		// but OpAMP agent prioritizes Flags before ErrorResponse hence sending
+		// requests consequently without respecting the retry cooldown, if in future that changes,
+		// it should be shifted there; To test uncomment Flags added in opamp_server.go
+		if newStatus.EffectiveConfig == nil || newStatus.EffectiveConfig.ConfigMap == nil {
+			response.Flags = uint64(protobufs.ServerToAgentFlags_ServerToAgentFlags_ReportFullState)
+			return
+		}
 
 		//Get the default org ID
 		// agent.
@@ -269,7 +294,8 @@ func (agent *Agent) processStatusUpdate(
 		agent.SendToAgent(response)
 
 		ListenToConfigUpdate(
-			agent.ID,
+			agent.OrgID,
+			agent.AgentID,
 			string(response.RemoteConfig.ConfigHash),
 			configProvider.ReportConfigDeploymentStatus,
 		)
@@ -277,9 +303,9 @@ func (agent *Agent) processStatusUpdate(
 }
 
 func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool {
-	recommendedConfig, confId, err := configProvider.RecommendAgentConfig([]byte(agent.EffectiveConfig))
+	recommendedConfig, confId, err := configProvider.RecommendAgentConfig(agent.OrgID, []byte(agent.Config))
 	if err != nil {
-		zap.L().Error("could not generate config recommendation for agent", zap.String("agentID", agent.ID), zap.Error(err))
+		zap.L().Error("could not generate config recommendation for agent", zap.String("agentID", agent.AgentID), zap.Error(err))
 		return false
 	}
 

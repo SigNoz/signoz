@@ -1,6 +1,12 @@
 .signoz-radio-group.ant-radio-group {
 	color: var(--text-vanilla-400);
 
+	&.ant-radio-group-disabled {
+		opacity: 0.5;
+		pointer-events: none;
+		cursor: not-allowed;
+	}
+
 	.view-title {
 		display: flex;
 		gap: var(--margin-2);
@@ -37,6 +43,22 @@
 // Light mode styles
 .lightMode {
 	.signoz-radio-group {
+		&.ant-radio-group-disabled {
+			.tab,
+			.selected_view {
+				background: var(--bg-vanilla-200) !important;
+				border-color: var(--bg-vanilla-400) !important;
+				color: var(--text-ink-400) !important;
+			}
+
+			.tab:hover,
+			.selected_view:hover {
+				background: var(--bg-vanilla-200) !important;
+				border-color: var(--bg-vanilla-400) !important;
+				color: var(--text-ink-400) !important;
+			}
+		}
+
 		.tab {
 			background: var(--bg-vanilla-100);
 		}

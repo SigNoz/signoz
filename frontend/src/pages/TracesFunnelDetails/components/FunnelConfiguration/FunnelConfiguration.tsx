@@ -6,7 +6,9 @@ import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import useFunnelConfiguration from 'hooks/TracesFunnels/useFunnelConfiguration';
 import { PencilLine } from 'lucide-react';
 import FunnelItemPopover from 'pages/TracesFunnels/components/FunnelsList/FunnelItemPopover';
+import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
+import { useAppContext } from 'providers/App/App';
 import { memo, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { FunnelData } from 'types/api/traceFunnels';
@@ -21,7 +23,6 @@ interface FunnelConfigurationProps {
 	funnel: FunnelData;
 	isTraceDetailsPage?: boolean;
 	span?: Span;
-	disableAutoSave?: boolean;
 	triggerAutoSave?: boolean;
 	showNotifications?: boolean;
 }
@@ -30,15 +31,20 @@ function FunnelConfiguration({
 	funnel,
 	isTraceDetailsPage,
 	span,
-	disableAutoSave,
 	triggerAutoSave,
 	showNotifications,
 }: FunnelConfigurationProps): JSX.Element {
-	const { isPopoverOpen, setIsPopoverOpen, steps } = useFunnelConfiguration({
+	const { hasEditPermission } = useAppContext();
+	const { triggerSave } = useFunnelContext();
+	const {
+		isPopoverOpen,
+		setIsPopoverOpen,
+		steps,
+		isSaving,
+	} = useFunnelConfiguration({
 		funnel,
-		disableAutoSave,
-		triggerAutoSave,
-		showNotifications,
+		triggerAutoSave: triggerAutoSave || triggerSave,
+		showNotifications: showNotifications || triggerSave,
 	});
 	const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState<boolean>(
 		false,
@@ -58,7 +64,10 @@ function FunnelConfiguration({
 					<div className="funnel-configuration__header-right">
 						<Tooltip
 							title={
-								funnel?.description
+								// eslint-disable-next-line no-nested-ternary
+								!hasEditPermission
+									? 'You need editor or admin access to edit funnel description'
+									: funnel?.description
 									? 'Edit funnel description'
 									: 'Add funnel description'
 							}
@@ -69,6 +78,7 @@ function FunnelConfiguration({
 								icon={<PencilLine size={14} />}
 								onClick={(): void => setIsDescriptionModalOpen(true)}
 								aria-label="Edit Funnel Description"
+								disabled={!hasEditPermission}
 							/>
 						</Tooltip>
 						<CopyToClipboard textToCopy={window.location.href} />
@@ -106,7 +116,7 @@ function FunnelConfiguration({
 
 			{!isTraceDetailsPage && (
 				<>
-					<StepsFooter stepsCount={steps.length} />
+					<StepsFooter stepsCount={steps.length} isSaving={isSaving || false} />
 					<AddFunnelDescriptionModal
 						isOpen={isDescriptionModalOpen}
 						onClose={handleDescriptionModalClose}
@@ -122,7 +132,6 @@ function FunnelConfiguration({
 FunnelConfiguration.defaultProps = {
 	isTraceDetailsPage: false,
 	span: undefined,
-	disableAutoSave: false,
 	triggerAutoSave: false,
 	showNotifications: false,
 };

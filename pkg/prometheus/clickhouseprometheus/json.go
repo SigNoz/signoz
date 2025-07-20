@@ -18,6 +18,7 @@ func unmarshalLabels(s string) ([]prompb.Label, string, error) {
 		if n == "__name__" {
 			metricName = v
 		}
+
 		res = append(res, prompb.Label{
 			Name:  n,
 			Value: v,

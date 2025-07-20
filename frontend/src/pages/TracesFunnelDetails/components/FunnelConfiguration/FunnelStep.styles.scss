@@ -9,6 +9,38 @@
 	color: var(--bg-vanilla-400);
 	border: 1px solid var(--bg-slate-500);
 	border-radius: 6px;
+	width: 100%;
+
+	&--readonly {
+		opacity: 0.7;
+
+		.filters {
+			pointer-events: none;
+			.ant-select-selector {
+				cursor: not-allowed;
+			}
+
+			.ant-select {
+				cursor: not-allowed;
+			}
+
+			.query-builder-search-v2 {
+				.ant-select-selector {
+					cursor: not-allowed;
+				}
+
+				.ant-select {
+					cursor: not-allowed;
+				}
+			}
+		}
+
+		.error__switch {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+	}
+
 	.step-popover {
 		opacity: 0;
 		width: 22px;

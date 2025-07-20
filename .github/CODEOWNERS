@@ -7,9 +7,38 @@
 /frontend/src/container/NewWidget/RightContainer/types.ts @srikanthccv
 /deploy/ @SigNoz/devops
 .github @SigNoz/devops
+
+# Scaffold Owners
 /pkg/config/ @grandwizard28
 /pkg/errors/ @grandwizard28
 /pkg/factory/ @grandwizard28
 /pkg/types/ @grandwizard28
+/pkg/valuer/ @grandwizard28
+/cmd/ @grandwizard28
 .golangci.yml @grandwizard28
-**/(zeus|licensing|sqlmigration)/ @vikrantgupta25
+
+# Zeus Owners
+/pkg/zeus/ @vikrantgupta25
+/ee/zeus/ @vikrantgupta25
+/pkg/licensing/ @vikrantgupta25
+/ee/licensing/ @vikrantgupta25
+
+# SQL Owners
+/pkg/sqlmigration/ @vikrantgupta25
+/ee/sqlmigration/ @vikrantgupta25
+/pkg/sqlschema/ @vikrantgupta25
+/ee/sqlschema/ @vikrantgupta25
+
+# Analytics Owners
+/pkg/analytics/ @vikrantgupta25
+/pkg/statsreporter/ @vikrantgupta25
+
+# Querier Owners
+/pkg/querier/ @srikanthccv
+/pkg/variables/ @srikanthccv
+/pkg/types/querybuildertypes/ @srikanthccv
+/pkg/querybuilder/ @srikanthccv
+/pkg/telemetrylogs/ @srikanthccv
+/pkg/telemetrymetadata/ @srikanthccv
+/pkg/telemetrymetrics/ @srikanthccv
+/pkg/telemetrytraces/ @srikanthccv
