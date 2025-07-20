@@ -8,12 +8,14 @@ import (
 var _ SQLOperator = (*Operator)(nil)
 
 type OperatorSupport struct {
-	CreateConstraint        bool
-	DropConstraint          bool
-	ColumnIfNotExistsExists bool
-	AlterColumnSetNotNull   bool
-	AlterColumnSetDataType  bool
-	AlterColumnSetDefault   bool
+	// Support for creating and dropping constraints.
+	SCreateAndDropConstraint bool
+
+	// Support for `IF EXISTS` and `IF NOT EXISTS` in `ALTER TABLE ADD COLUMN` and `ALTER TABLE DROP COLUMN`.
+	SAlterTableAddDropColumnIfNotExistsAndExists bool
+
+	// Support for altering columns such as `ALTER TABLE ALTER COLUMN SET NOT NULL`.
+	SAlterTableAlterColumnSetAndDrop bool
 }
 
 type Operator struct {
@@ -38,7 +40,7 @@ func (operator *Operator) RenameTable(table *Table, newName TableName) [][]byte 
 }
 
 // Returns a list of SQL statements to convert the table to the new table.
-func (operator *Operator) ConvertTable(oldTable *Table, oldTableUniqueConstraints []*UniqueConstraint, newTable *Table) [][]byte {
+func (operator *Operator) AlterTable(oldTable *Table, oldTableUniqueConstraints []*UniqueConstraint, newTable *Table) [][]byte {
 	sql := [][]byte{}
 
 	// Check if the name has changed
@@ -66,7 +68,13 @@ func (operator *Operator) ConvertTable(oldTable *Table, oldTableUniqueConstraint
 	}
 
 	// Primary key constraints
-	sql = append(sql, operator.CreateConstraint(oldTable, oldTableUniqueConstraints, newTable.PrimaryKeyConstraint)...)
+	if oldTable.PrimaryKeyConstraint != newTable.PrimaryKeyConstraint {
+		if newTable.PrimaryKeyConstraint == nil {
+			sql = append(sql, operator.DropConstraint(oldTable, oldTableUniqueConstraints, oldTable.PrimaryKeyConstraint)...)
+		} else {
+			sql = append(sql, operator.CreateConstraint(oldTable, oldTableUniqueConstraints, newTable.PrimaryKeyConstraint)...)
+		}
+	}
 
 	// Drop foreign key constraints that are in the old table but not in the new table.
 	for _, fkConstraint := range oldTable.ForeignKeyConstraints {
@@ -127,7 +135,7 @@ func (operator *Operator) AddColumn(table *Table, uniqueConstraints []*UniqueCon
 	table.Columns = append(table.Columns, column)
 
 	sqls := [][]byte{
-		column.ToAddSQL(operator.fmter, table.Name, operator.support.ColumnIfNotExistsExists),
+		column.ToAddSQL(operator.fmter, table.Name, operator.support.SAlterTableAddDropColumnIfNotExistsAndExists),
 	}
 
 	if !column.Nullable {
@@ -136,7 +144,7 @@ func (operator *Operator) AddColumn(table *Table, uniqueConstraints []*UniqueCon
 		}
 		sqls = append(sqls, column.ToUpdateSQL(operator.fmter, table.Name, val))
 
-		if operator.support.AlterColumnSetNotNull {
+		if operator.support.SAlterTableAlterColumnSetAndDrop {
 			sqls = append(sqls, column.ToSetNotNullSQL(operator.fmter, table.Name))
 		} else {
 			sqls = append(sqls, operator.RecreateTable(table, uniqueConstraints)...)
@@ -163,7 +171,7 @@ func (operator *Operator) AlterColumn(table *Table, uniqueConstraints []*UniqueC
 	var recreateTable bool
 
 	if oldColumn.DataType != column.DataType {
-		if operator.support.AlterColumnSetDataType {
+		if operator.support.SAlterTableAlterColumnSetAndDrop {
 			sqls = append(sqls, column.ToSetDataTypeSQL(operator.fmter, table.Name))
 		} else {
 			recreateTable = true
@@ -171,7 +179,7 @@ func (operator *Operator) AlterColumn(table *Table, uniqueConstraints []*UniqueC
 	}
 
 	if oldColumn.Nullable != column.Nullable {
-		if operator.support.AlterColumnSetNotNull {
+		if operator.support.SAlterTableAlterColumnSetAndDrop {
 			if column.Nullable {
 				sqls = append(sqls, column.ToDropNotNullSQL(operator.fmter, table.Name))
 			} else {
@@ -183,7 +191,7 @@ func (operator *Operator) AlterColumn(table *Table, uniqueConstraints []*UniqueC
 	}
 
 	if oldColumn.Default != column.Default {
-		if operator.support.AlterColumnSetDefault {
+		if operator.support.SAlterTableAlterColumnSetAndDrop {
 			if column.Default != "" {
 				sqls = append(sqls, column.ToSetDefaultSQL(operator.fmter, table.Name))
 			} else {
@@ -211,7 +219,7 @@ func (operator *Operator) DropColumn(table *Table, column *Column) [][]byte {
 
 	table.Columns = append(table.Columns[:index], table.Columns[index+1:]...)
 
-	return [][]byte{column.ToDropSQL(operator.fmter, table.Name, operator.support.ColumnIfNotExistsExists)}
+	return [][]byte{column.ToDropSQL(operator.fmter, table.Name, operator.support.SAlterTableAddDropColumnIfNotExistsAndExists)}
 }
 
 func (operator *Operator) CreateConstraint(table *Table, uniqueConstraints []*UniqueConstraint, constraint Constraint) [][]byte {
@@ -238,7 +246,7 @@ func (operator *Operator) CreateConstraint(table *Table, uniqueConstraints []*Un
 
 	sqls := [][]byte{}
 	if constraint.Type() == ConstraintTypePrimaryKey {
-		if operator.support.DropConstraint {
+		if operator.support.SCreateAndDropConstraint {
 			if table.PrimaryKeyConstraint != nil {
 				sqls = append(sqls, table.PrimaryKeyConstraint.ToDropSQL(operator.fmter, table.Name))
 			}
@@ -246,7 +254,7 @@ func (operator *Operator) CreateConstraint(table *Table, uniqueConstraints []*Un
 		table.PrimaryKeyConstraint = constraint.(*PrimaryKeyConstraint)
 	}
 
-	if operator.support.CreateConstraint {
+	if operator.support.SCreateAndDropConstraint {
 		return append(sqls, constraint.ToCreateSQL(operator.fmter, table.Name))
 	}
 
@@ -263,14 +271,14 @@ func (operator *Operator) DropConstraint(table *Table, uniqueConstraints []*Uniq
 			return [][]byte{}
 		}
 
-		if operator.support.DropConstraint {
+		if operator.support.SCreateAndDropConstraint {
 			return [][]byte{uniqueConstraints[uniqueConstraintIndex].ToDropSQL(operator.fmter, table.Name)}
 		}
 
 		return operator.RecreateTable(table, append(uniqueConstraints[:uniqueConstraintIndex], uniqueConstraints[uniqueConstraintIndex+1:]...))
 	}
 
-	if operator.support.DropConstraint {
+	if operator.support.SCreateAndDropConstraint {
 		return [][]byte{toDropConstraint.ToDropSQL(operator.fmter, table.Name)}
 	}
 

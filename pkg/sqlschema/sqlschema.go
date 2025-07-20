@@ -34,10 +34,10 @@ type SQLOperator interface {
 	// Returns a list of SQL statements to rename a table.
 	RenameTable(*Table, TableName) [][]byte
 
-	// Returns a list of SQL statements to convert a table to a new table.
-	ConvertTable(*Table, []*UniqueConstraint, *Table) [][]byte
+	// Returns a list of SQL statements to alter the input table to the new table.
+	AlterTable(*Table, []*UniqueConstraint, *Table) [][]byte
 
-	// Returns a list of SQL statements to recreate a table.
+	// Returns a list of SQL statements to recreate a table. In recreating the table, it converts all unqiue constraints to indices and copies data from the old table.
 	RecreateTable(*Table, []*UniqueConstraint) [][]byte
 
 	// Returns a list of SQL statements to create an index.

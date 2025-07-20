@@ -33,12 +33,9 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		fmter:    fmter,
 		settings: settings,
 		operator: sqlschema.NewOperator(fmter, sqlschema.OperatorSupport{
-			CreateConstraint:        true,
-			DropConstraint:          true,
-			ColumnIfNotExistsExists: true,
-			AlterColumnSetNotNull:   true,
-			AlterColumnSetDefault:   true,
-			AlterColumnSetDataType:  true,
+			SCreateAndDropConstraint:                     true,
+			SAlterTableAddDropColumnIfNotExistsAndExists: true,
+			SAlterTableAlterColumnSetAndDrop:             true,
 		}),
 	}, nil
 }

@@ -59,7 +59,7 @@ func TestOperatorAddColumn(t *testing.T) {
 		expectedTable     *Table
 	}{
 		{
-			name: "NullableNoDefault_DoesNotExist",
+			name: "NullableNoDefault_DoesNotExist_SAlterTableAddDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -69,8 +69,8 @@ func TestOperatorAddColumn(t *testing.T) {
 			column: &Column{Name: "name", DataType: DataTypeText, Nullable: true, Default: ""},
 			val:    nil,
 			support: OperatorSupport{
-				ColumnIfNotExistsExists: true,
-				AlterColumnSetNotNull:   true,
+				SAlterTableAddDropColumnIfNotExistsAndExists: true,
+				SAlterTableAlterColumnSetAndDrop:             true,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "name" TEXT`),
@@ -84,7 +84,7 @@ func TestOperatorAddColumn(t *testing.T) {
 			},
 		},
 		{
-			name: "MismatchingDataType_DoesExist",
+			name: "MismatchingDataType_DoesExist_SAlterTableAddDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -95,8 +95,8 @@ func TestOperatorAddColumn(t *testing.T) {
 			column: &Column{Name: "name", DataType: DataTypeBigInt, Nullable: true, Default: ""},
 			val:    nil,
 			support: OperatorSupport{
-				ColumnIfNotExistsExists: true,
-				AlterColumnSetNotNull:   true,
+				SAlterTableAddDropColumnIfNotExistsAndExists: true,
+				SAlterTableAlterColumnSetAndDrop:             true,
 			},
 			expectedSQLs: [][]byte{},
 			expectedTable: &Table{
@@ -108,7 +108,7 @@ func TestOperatorAddColumn(t *testing.T) {
 			},
 		},
 		{
-			name: "NotNullableNoDefaultNoVal_DoesNotExist",
+			name: "NotNullableNoDefaultNoVal_DoesNotExist_SAlterTableAddDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -118,8 +118,8 @@ func TestOperatorAddColumn(t *testing.T) {
 			column: &Column{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
 			val:    nil,
 			support: OperatorSupport{
-				ColumnIfNotExistsExists: true,
-				AlterColumnSetNotNull:   true,
+				SAlterTableAddDropColumnIfNotExistsAndExists: true,
+				SAlterTableAlterColumnSetAndDrop:             true,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "name" TEXT`),
@@ -135,7 +135,7 @@ func TestOperatorAddColumn(t *testing.T) {
 			},
 		},
 		{
-			name: "NotNullableNoDefault_DoesNotExist",
+			name: "NotNullableNoDefault_DoesNotExist_SAlterTableAddDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -145,8 +145,8 @@ func TestOperatorAddColumn(t *testing.T) {
 			column: &Column{Name: "num", DataType: DataTypeInteger, Nullable: false, Default: ""},
 			val:    int64(100),
 			support: OperatorSupport{
-				ColumnIfNotExistsExists: true,
-				AlterColumnSetNotNull:   true,
+				SAlterTableAddDropColumnIfNotExistsAndExists: true,
+				SAlterTableAlterColumnSetAndDrop:             true,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "num" INTEGER`),
@@ -162,7 +162,7 @@ func TestOperatorAddColumn(t *testing.T) {
 			},
 		},
 		{
-			name: "NotNullableNoDefault_DoesNotExist_AlterColumnSetNotNullFalse",
+			name: "NotNullableNoDefault_DoesNotExist_SAlterTableAddDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropFalse",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -176,8 +176,8 @@ func TestOperatorAddColumn(t *testing.T) {
 				{ColumnNames: []ColumnName{"name"}},
 			},
 			support: OperatorSupport{
-				ColumnIfNotExistsExists: true,
-				AlterColumnSetNotNull:   false,
+				SAlterTableAddDropColumnIfNotExistsAndExists: true,
+				SAlterTableAlterColumnSetAndDrop:             false,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "num" INTEGER`),
@@ -198,7 +198,7 @@ func TestOperatorAddColumn(t *testing.T) {
 			},
 		},
 		{
-			name: "MismatchingDataType_DoesExist_AlterColumnSetNotNullFalse",
+			name: "MismatchingDataType_DoesExist_SAlterTableAddDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropFalse",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -209,8 +209,8 @@ func TestOperatorAddColumn(t *testing.T) {
 			column: &Column{Name: "name", DataType: DataTypeBigInt, Nullable: false, Default: ""},
 			val:    nil,
 			support: OperatorSupport{
-				ColumnIfNotExistsExists: true,
-				AlterColumnSetNotNull:   false,
+				SAlterTableAddDropColumnIfNotExistsAndExists: true,
+				SAlterTableAlterColumnSetAndDrop:             false,
 			},
 			expectedSQLs: [][]byte{},
 			expectedTable: &Table{
@@ -246,7 +246,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 		expectedTable     *Table
 	}{
 		{
-			name: "PrimaryKeyConstraint_DoesExist_DropConstraintTrue",
+			name: "PrimaryKeyConstraint_DoesExist_SCreateAndDropConstraintTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -260,7 +260,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 				ColumnNames: []ColumnName{"id"},
 			},
 			support: OperatorSupport{
-				DropConstraint: true,
+				SCreateAndDropConstraint: true,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "pk_users"`),
@@ -273,7 +273,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 			},
 		},
 		{
-			name: "PrimaryKeyConstraint_DoesNotExist_DropConstraintTrue",
+			name: "PrimaryKeyConstraint_DoesNotExist_SCreateAndDropConstraintTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -284,7 +284,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 				ColumnNames: []ColumnName{"id"},
 			},
 			support: OperatorSupport{
-				DropConstraint: true,
+				SCreateAndDropConstraint: true,
 			},
 			expectedSQLs: [][]byte{},
 			expectedTable: &Table{
@@ -295,7 +295,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 			},
 		},
 		{
-			name: "PrimaryKeyConstraintDifferentName_DoesExist_DropConstraintTrue",
+			name: "PrimaryKeyConstraintDifferentName_DoesExist_SCreateAndDropConstraintTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -310,7 +310,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 				ColumnNames: []ColumnName{"id"},
 			},
 			support: OperatorSupport{
-				DropConstraint: true,
+				SCreateAndDropConstraint: true,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "pk_users_different_name"`),
@@ -323,7 +323,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 			},
 		},
 		{
-			name: "PrimaryKeyConstraint_DoesExist_DropConstraintFalse",
+			name: "PrimaryKeyConstraint_DoesExist_SCreateAndDropConstraintFalse",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -337,7 +337,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 				ColumnNames: []ColumnName{"id"},
 			},
 			support: OperatorSupport{
-				DropConstraint: false,
+				SCreateAndDropConstraint: false,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL)`),
@@ -353,7 +353,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 			},
 		},
 		{
-			name: "PrimaryKeyConstraint_DoesNotExist_DropConstraintFalse",
+			name: "PrimaryKeyConstraint_DoesNotExist_SCreateAndDropConstraintFalse",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -364,7 +364,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 				ColumnNames: []ColumnName{"id"},
 			},
 			support: OperatorSupport{
-				DropConstraint: false,
+				SCreateAndDropConstraint: false,
 			},
 			expectedSQLs: [][]byte{},
 			expectedTable: &Table{
@@ -375,7 +375,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 			},
 		},
 		{
-			name: "UniqueConstraint_DoesExist_DropConstraintTrue",
+			name: "UniqueConstraint_DoesExist_SCreateAndDropConstraintTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -390,7 +390,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 				{ColumnNames: []ColumnName{"name"}},
 			},
 			support: OperatorSupport{
-				DropConstraint: true,
+				SCreateAndDropConstraint: true,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "uq_users_name"`),
@@ -404,7 +404,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 			},
 		},
 		{
-			name: "UniqueConstraint_DoesNotExist_DropConstraintTrue",
+			name: "UniqueConstraint_DoesNotExist_SCreateAndDropConstraintTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -419,7 +419,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 				{ColumnNames: []ColumnName{"id"}},
 			},
 			support: OperatorSupport{
-				DropConstraint: true,
+				SCreateAndDropConstraint: true,
 			},
 			expectedSQLs: [][]byte{},
 			expectedTable: &Table{
@@ -431,7 +431,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 			},
 		},
 		{
-			name: "UniqueConstraint_DoesExist_DropConstraintFalse",
+			name: "UniqueConstraint_DoesExist_SCreateAndDropConstraintFalse",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -446,7 +446,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 				{ColumnNames: []ColumnName{"name"}},
 			},
 			support: OperatorSupport{
-				DropConstraint: false,
+				SCreateAndDropConstraint: false,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "name" TEXT NOT NULL)`),
@@ -463,7 +463,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 			},
 		},
 		{
-			name: "UniqueConstraint_DoesNotExist_DropConstraintFalse",
+			name: "UniqueConstraint_DoesNotExist_SCreateAndDropConstraintFalse",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -478,7 +478,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 				{ColumnNames: []ColumnName{"id"}},
 			},
 			support: OperatorSupport{
-				DropConstraint: false,
+				SCreateAndDropConstraint: false,
 			},
 			expectedSQLs: [][]byte{},
 			expectedTable: &Table{
@@ -490,7 +490,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 			},
 		},
 		{
-			name: "ForeignKeyConstraint_DoesExist_DropConstraintTrue",
+			name: "ForeignKeyConstraint_DoesExist_SCreateAndDropConstraintTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -506,7 +506,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 				{ColumnNames: []ColumnName{"id"}},
 			},
 			support: OperatorSupport{
-				DropConstraint: true,
+				SCreateAndDropConstraint: true,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "fk_users_org_id"`),
@@ -521,7 +521,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 			},
 		},
 		{
-			name: "ForeignKeyConstraintDifferentName_DoesExist_DropConstraintTrue",
+			name: "ForeignKeyConstraintDifferentName_DoesExist_SCreateAndDropConstraintTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -537,7 +537,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 				{ColumnNames: []ColumnName{"id"}},
 			},
 			support: OperatorSupport{
-				DropConstraint: true,
+				SCreateAndDropConstraint: true,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "my_fk"`),
@@ -552,7 +552,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 			},
 		},
 		{
-			name: "ForeignKeyConstraint_DoesNotExist_DropConstraintTrue",
+			name: "ForeignKeyConstraint_DoesNotExist_SCreateAndDropConstraintTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -569,7 +569,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 				{ColumnNames: []ColumnName{"id"}},
 			},
 			support: OperatorSupport{
-				DropConstraint: true,
+				SCreateAndDropConstraint: true,
 			},
 			expectedSQLs: [][]byte{},
 			expectedTable: &Table{
@@ -584,7 +584,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 			},
 		},
 		{
-			name: "ForeignKeyConstraint_DoesExist_DropConstraintFalse",
+			name: "ForeignKeyConstraint_DoesExist_SCreateAndDropConstraintFalse",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -600,7 +600,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 				{ColumnNames: []ColumnName{"id"}},
 			},
 			support: OperatorSupport{
-				DropConstraint: false,
+				SCreateAndDropConstraint: false,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "org_id" INTEGER NOT NULL)`),
@@ -620,7 +620,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 			},
 		},
 		{
-			name: "ForeignKeyConstraintDifferentName_DoesExist_DropConstraintFalse",
+			name: "ForeignKeyConstraintDifferentName_DoesExist_SCreateAndDropConstraintFalse",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -636,7 +636,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 				{ColumnNames: []ColumnName{"id"}},
 			},
 			support: OperatorSupport{
-				DropConstraint: false,
+				SCreateAndDropConstraint: false,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "org_id" INTEGER NOT NULL)`),
@@ -656,7 +656,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 			},
 		},
 		{
-			name: "ForeignKeyConstraint_DoesNotExist_DropConstraintFalse",
+			name: "ForeignKeyConstraint_DoesNotExist_SCreateAndDropConstraintFalse",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -673,7 +673,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 				{ColumnNames: []ColumnName{"id"}},
 			},
 			support: OperatorSupport{
-				DropConstraint: false,
+				SCreateAndDropConstraint: false,
 			},
 			expectedSQLs: [][]byte{},
 			expectedTable: &Table{
@@ -701,7 +701,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 	}
 }
 
-func TestOperatorConvertTable(t *testing.T) {
+func TestOperatorAlterTable(t *testing.T) {
 	testCases := []struct {
 		name              string
 		table             *Table
@@ -730,7 +730,7 @@ func TestOperatorConvertTable(t *testing.T) {
 			expectedSQLs: [][]byte{},
 		},
 		{
-			name: "AddColumn_NullableNoDefault_ColumnIfNotExistsExistsTrue",
+			name: "AddColumn_NullableNoDefault_SAlterTableAddDropColumnIfNotExistsAndExistsTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -747,14 +747,14 @@ func TestOperatorConvertTable(t *testing.T) {
 				},
 			},
 			support: OperatorSupport{
-				ColumnIfNotExistsExists: true,
+				SAlterTableAddDropColumnIfNotExistsAndExists: true,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "age" INTEGER`),
 			},
 		},
 		{
-			name: "AddColumn_NullableNoDefault_ColumnIfNotExistsExistsFalse",
+			name: "AddColumn_NullableNoDefault_SAlterTableAddDropColumnIfNotExistsAndExistsFalse",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -771,14 +771,14 @@ func TestOperatorConvertTable(t *testing.T) {
 				},
 			},
 			support: OperatorSupport{
-				ColumnIfNotExistsExists: false,
+				SAlterTableAddDropColumnIfNotExistsAndExists: false,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" ADD COLUMN "age" INTEGER`),
 			},
 		},
 		{
-			name: "CreatePrimaryKeyConstraint_CreateConstraintTrue",
+			name: "CreatePrimaryKeyConstraint_SCreateAndDropConstraintTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -795,14 +795,14 @@ func TestOperatorConvertTable(t *testing.T) {
 				},
 			},
 			support: OperatorSupport{
-				CreateConstraint: true,
+				SCreateAndDropConstraint: true,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" ADD CONSTRAINT "pk_users" PRIMARY KEY ("id")`),
 			},
 		},
 		{
-			name: "CreatePrimaryKeyConstraint_CreateConstraintFalse",
+			name: "CreatePrimaryKeyConstraint_SCreateAndDropConstrainttFalse",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -819,13 +819,75 @@ func TestOperatorConvertTable(t *testing.T) {
 				},
 			},
 			support: OperatorSupport{
-				CreateConstraint: false,
+				SCreateAndDropConstraint: false,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, CONSTRAINT "pk_users" PRIMARY KEY ("id"))`),
 				[]byte(`INSERT INTO "users__temp" ("id") SELECT "id" FROM "users"`),
 				[]byte(`DROP TABLE IF EXISTS "users"`),
 				[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
+			},
+		},
+		{
+			name: "DropPrimaryKeyConstraint_AlterColumn_SAlterTableAddDropColumnIfNotExistsAndExistsFalse_SAlterTableAlterColumnSetAndDropFalse_SCreateAndDropConstraintFalse",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: true, Default: ""},
+				},
+				PrimaryKeyConstraint: &PrimaryKeyConstraint{ColumnNames: []ColumnName{"id"}},
+			},
+			newTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+			},
+			support: OperatorSupport{
+				SAlterTableAddDropColumnIfNotExistsAndExists: false,
+				SAlterTableAlterColumnSetAndDrop:             false,
+				SCreateAndDropConstraint:                     false,
+			},
+			expectedSQLs: [][]byte{
+				// first drop to make the column nullable
+				[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "name" TEXT NOT NULL, CONSTRAINT "pk_users" PRIMARY KEY ("id"))`),
+				[]byte(`INSERT INTO "users__temp" ("id", "name") SELECT "id", "name" FROM "users"`),
+				[]byte(`DROP TABLE IF EXISTS "users"`),
+				[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
+				// second drop to remove the primary key constraint
+				[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "name" TEXT NOT NULL)`),
+				[]byte(`INSERT INTO "users__temp" ("id", "name") SELECT "id", "name" FROM "users"`),
+				[]byte(`DROP TABLE IF EXISTS "users"`),
+				[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
+			},
+		},
+		{
+			name: "DropPrimaryKeyConstraint_AlterColumn_SAlterTableAddDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropTrue_SCreateAndDropConstraintTrue",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: true, Default: ""},
+				},
+				PrimaryKeyConstraint: &PrimaryKeyConstraint{ColumnNames: []ColumnName{"id"}},
+			},
+			newTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+			},
+			support: OperatorSupport{
+				SAlterTableAddDropColumnIfNotExistsAndExists: true,
+				SAlterTableAlterColumnSetAndDrop:             true,
+				SCreateAndDropConstraint:                     true,
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`ALTER TABLE "users" ALTER COLUMN "name" SET NOT NULL`),
+				[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "pk_users"`),
 			},
 		},
 	}
@@ -835,7 +897,7 @@ func TestOperatorConvertTable(t *testing.T) {
 			fmter := NewFormatter(schema.NewNopFormatter().Dialect())
 			operator := NewOperator(fmter, testCase.support)
 
-			actuals := operator.ConvertTable(testCase.table, testCase.uniqueConstraints, testCase.newTable)
+			actuals := operator.AlterTable(testCase.table, testCase.uniqueConstraints, testCase.newTable)
 			assert.Equal(t, testCase.expectedSQLs, actuals)
 			assert.Equal(t, testCase.newTable, testCase.table)
 		})

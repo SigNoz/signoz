@@ -645,7 +645,7 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 			return err
 		}
 
-		sqls = append(sqls, migration.sqlschema.Operator().ConvertTable(existingTable, existingUniqueConstraints, table)...)
+		sqls = append(sqls, migration.sqlschema.Operator().AlterTable(existingTable, existingUniqueConstraints, table)...)
 	}
 
 	// Create indices.
