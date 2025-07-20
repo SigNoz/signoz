@@ -20,7 +20,6 @@ type provider struct {
 	settings  factory.ScopedProviderSettings
 	sqldb     *sql.DB
 	bundb     *sqlstore.BunDB
-	dialect   *dialect
 	formatter sqlstore.SQLFormatter
 }
 
@@ -57,11 +56,11 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 	sqliteDialect := sqlitedialect.New()
 	bunDB := sqlstore.NewBunDB(settings, sqldb, sqliteDialect, hooks)
+
 	return &provider{
 		settings:  settings,
 		sqldb:     sqldb,
 		bundb:     bunDB,
-		dialect:   new(dialect),
 		formatter: newFormatter(bunDB.Dialect()),
 	}, nil
 }
@@ -72,10 +71,6 @@ func (provider *provider) BunDB() *bun.DB {
 
 func (provider *provider) SQLDB() *sql.DB {
 	return provider.sqldb
-}
-
-func (provider *provider) Dialect() sqlstore.SQLDialect {
-	return provider.dialect
 }
 
 func (provider *provider) Formatter() sqlstore.SQLFormatter {
