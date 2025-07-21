@@ -1,0 +1,152 @@
+.app-loading-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100vh;
+	background-color: var(--bg-ink-400, #121317); // Dark theme background
+
+	.app-loading-content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		height: 100%;
+
+		.brand {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 12px;
+
+			margin-bottom: 12px;
+
+			.brand-logo {
+				width: 40px;
+				height: 40px;
+			}
+
+			.brand-title {
+				font-size: 20px;
+				font-weight: 600;
+				color: var(--bg-vanilla-100, #ffffff); // White text for dark theme
+				margin: 0;
+			}
+		}
+
+		.brand-tagline {
+			margin-bottom: 24px;
+
+			.ant-typography {
+				color: var(--bg-vanilla-400, #c0c1c3); // Light gray text for dark theme
+			}
+		}
+
+		/* HTML: <div class="loader"></div> */
+		.loader {
+			width: 150px;
+			height: 12px;
+			border-radius: 2px;
+			color: var(--bg-robin-500, #4e74f8); // Primary blue color
+			border: 2px solid;
+			position: relative;
+		}
+		.loader::before {
+			content: '';
+			position: absolute;
+			margin: 2px;
+			inset: 0 100% 0 0;
+			border-radius: inherit;
+			background: currentColor;
+			animation: l6 2s infinite;
+		}
+		@keyframes l6 {
+			100% {
+				inset: 0;
+			}
+		}
+	}
+}
+
+// Light theme styles - more specific selector
+.app-loading-container.lightMode {
+	background-color: var(
+		--bg-vanilla-100,
+		#ffffff
+	) !important; // White background for light theme
+
+	.app-loading-content {
+		.brand {
+			.brand-title {
+				color: var(--bg-ink-400, #121317) !important; // Dark text for light theme
+			}
+		}
+
+		.brand-tagline {
+			.ant-typography {
+				color: var(
+					--bg-ink-300,
+					#6b7280
+				) !important; // Dark gray text for light theme
+			}
+		}
+
+		.loader {
+			color: var(
+				--bg-robin-500,
+				#4e74f8
+			) !important; // Keep primary blue color for consistency
+		}
+	}
+}
+
+.perilin-bg {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+
+	background: radial-gradient(circle, #fff 10%, transparent 0);
+	background-size: 12px 12px;
+	opacity: 1;
+
+	mask-image: radial-gradient(
+		circle at 50% 0,
+		rgba(11, 12, 14, 0.1) 0,
+		rgba(11, 12, 14, 0) 100%
+	);
+	-webkit-mask-image: radial-gradient(
+		circle at 50% 0,
+		rgba(11, 12, 14, 0.1) 0,
+		rgba(11, 12, 14, 0) 100%
+	);
+}
+
+// Dark theme styles - ensure dark theme is properly applied
+.app-loading-container.dark {
+	background-color: var(--bg-ink-400, #121317) !important; // Dark background
+
+	.app-loading-content {
+		.brand {
+			.brand-title {
+				color: var(
+					--bg-vanilla-100,
+					#ffffff
+				) !important; // White text for dark theme
+			}
+		}
+
+		.brand-tagline {
+			.ant-typography {
+				color: var(
+					--bg-vanilla-400,
+					#c0c1c3
+				) !important; // Light gray text for dark theme
+			}
+		}
+
+		.loader {
+			color: var(--bg-robin-500, #4e74f8) !important; // Primary blue color
+		}
+	}
+}

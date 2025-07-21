@@ -7,8 +7,11 @@ const logEventFunction = jest.fn();
 jest.mock('hooks/useDarkMode', () => ({
 	__esModule: true,
 	useIsDarkMode: jest.fn(() => true),
+	useSystemTheme: jest.fn(() => 'dark'),
 	default: jest.fn(() => ({
 		toggleTheme: toggleThemeFunction,
+		autoSwitch: false,
+		setAutoSwitch: jest.fn(),
 	})),
 }));
 
@@ -45,7 +48,7 @@ describe('MySettings Flows', () => {
 	});
 
 	describe('Dark/Light Theme Switch', () => {
-		it('Should display Dark and Light theme options properly', async () => {
+		it('Should display Dark, Light, and Auto theme options properly', async () => {
 			// Check Dark theme option
 			expect(screen.getByText('Dark')).toBeInTheDocument();
 			const darkThemeIcon = screen.getByTestId('dark-theme-icon');
@@ -58,6 +61,13 @@ describe('MySettings Flows', () => {
 			expect(lightThemeIcon).toBeInTheDocument();
 			expect(lightThemeIcon.tagName).toBe('svg');
 			expect(screen.getByText('Beta')).toBeInTheDocument();
+
+			// Check Auto theme option
+			expect(screen.getByText('Auto')).toBeInTheDocument();
+			const autoThemeIcon = screen.getByTestId('auto-theme-icon');
+			expect(autoThemeIcon).toBeInTheDocument();
+			expect(autoThemeIcon.tagName).toBe('svg');
+			expect(screen.getByText('New')).toBeInTheDocument();
 		});
 
 		it('Should have Dark theme selected by default', async () => {
