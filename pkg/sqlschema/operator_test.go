@@ -795,291 +795,291 @@ func TestOperatorAlterTable(t *testing.T) {
 		newTable          *Table
 		expected          map[OperatorSupport][][]byte
 	}{
-		// {
-		// 	name: "NoOperation",
-		// 	table: &Table{
-		// 		Name: "users",
-		// 		Columns: []*Column{
-		// 			{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 			{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
-		// 		},
-		// 	},
-		// 	newTable: &Table{
-		// 		Name: "users",
-		// 		Columns: []*Column{
-		// 			{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 			{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
-		// 		},
-		// 		ForeignKeyConstraints: []*ForeignKeyConstraint{},
-		// 	},
-		// 	expected: map[OperatorSupport][][]byte{
-		// 		{SCreateAndDropConstraint: false, SAlterTableAddAndDropColumnIfNotExistsAndExists: false, SAlterTableAlterColumnSetAndDrop: false}: {},
-		// 		{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}:    {},
-		// 	},
-		// },
-		// {
-		// 	name: "RenameTable",
-		// 	table: &Table{
-		// 		Name: "users",
-		// 		Columns: []*Column{
-		// 			{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 		},
-		// 	},
-		// 	newTable: &Table{
-		// 		Name: "users_new",
-		// 		Columns: []*Column{
-		// 			{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 		},
-		// 		ForeignKeyConstraints: []*ForeignKeyConstraint{},
-		// 	},
-		// 	expected: map[OperatorSupport][][]byte{
-		// 		{SCreateAndDropConstraint: false, SAlterTableAddAndDropColumnIfNotExistsAndExists: false, SAlterTableAlterColumnSetAndDrop: false}: {
-		// 			[]byte(`ALTER TABLE "users" RENAME TO "users_new"`),
-		// 		},
-		// 		{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}: {
-		// 			[]byte(`ALTER TABLE "users" RENAME TO "users_new"`),
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	name: "AddColumn_NullableNoDefault_SAlterTableAddAndDropColumnIfNotExistsAndExistsTrue",
-		// 	table: &Table{
-		// 		Name: "users",
-		// 		Columns: []*Column{
-		// 			{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 			{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
-		// 		},
-		// 	},
-		// 	newTable: &Table{
-		// 		Name: "users",
-		// 		Columns: []*Column{
-		// 			{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 			{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
-		// 			{Name: "age", DataType: DataTypeInteger, Nullable: true, Default: ""},
-		// 		},
-		// 		ForeignKeyConstraints: []*ForeignKeyConstraint{},
-		// 	},
-		// 	expected: map[OperatorSupport][][]byte{
-		// 		{SCreateAndDropConstraint: false, SAlterTableAddAndDropColumnIfNotExistsAndExists: false, SAlterTableAlterColumnSetAndDrop: false}: {
-		// 			[]byte(`ALTER TABLE "users" ADD COLUMN "age" INTEGER`),
-		// 		},
-		// 		{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}: {
-		// 			[]byte(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "age" INTEGER`),
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	name: "CreatePrimaryKeyConstraint",
-		// 	table: &Table{
-		// 		Name: "users",
-		// 		Columns: []*Column{
-		// 			{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 		},
-		// 	},
-		// 	newTable: &Table{
-		// 		Name: "users",
-		// 		Columns: []*Column{
-		// 			{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 		},
-		// 		PrimaryKeyConstraint: &PrimaryKeyConstraint{
-		// 			ColumnNames: []ColumnName{"id"},
-		// 		},
-		// 		ForeignKeyConstraints: []*ForeignKeyConstraint{},
-		// 	},
-		// 	expected: map[OperatorSupport][][]byte{
-		// 		{SCreateAndDropConstraint: false, SAlterTableAddAndDropColumnIfNotExistsAndExists: false, SAlterTableAlterColumnSetAndDrop: false}: {
-		// 			[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, CONSTRAINT "pk_users" PRIMARY KEY ("id"))`),
-		// 			[]byte(`INSERT INTO "users__temp" ("id") SELECT "id" FROM "users"`),
-		// 			[]byte(`DROP TABLE IF EXISTS "users"`),
-		// 			[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
-		// 		},
-		// 		{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}: {
-		// 			[]byte(`ALTER TABLE "users" ADD CONSTRAINT "pk_users" PRIMARY KEY ("id")`),
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	name: "DropPrimaryKeyConstraint_AlterColumnNullable",
-		// 	table: &Table{
-		// 		Name: "users",
-		// 		Columns: []*Column{
-		// 			{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 			{Name: "name", DataType: DataTypeText, Nullable: true, Default: ""},
-		// 		},
-		// 		PrimaryKeyConstraint: &PrimaryKeyConstraint{ColumnNames: []ColumnName{"id"}},
-		// 	},
-		// 	newTable: &Table{
-		// 		Name: "users",
-		// 		Columns: []*Column{
-		// 			{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 			{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
-		// 		},
-		// 		ForeignKeyConstraints: []*ForeignKeyConstraint{},
-		// 	},
-		// 	expected: map[OperatorSupport][][]byte{
-		// 		{SCreateAndDropConstraint: false, SAlterTableAddAndDropColumnIfNotExistsAndExists: false, SAlterTableAlterColumnSetAndDrop: false}: {
-		// 			// first drop to remove the primary key constraint
-		// 			[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "name" TEXT)`),
-		// 			[]byte(`INSERT INTO "users__temp" ("id", "name") SELECT "id", "name" FROM "users"`),
-		// 			[]byte(`DROP TABLE IF EXISTS "users"`),
-		// 			[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
-		// 			// second drop to make the column nullable
-		// 			[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "name" TEXT NOT NULL)`),
-		// 			[]byte(`INSERT INTO "users__temp" ("id", "name") SELECT "id", "name" FROM "users"`),
-		// 			[]byte(`DROP TABLE IF EXISTS "users"`),
-		// 			[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
-		// 		},
-		// 		{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}: {
-		// 			[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "pk_users"`),
-		// 			[]byte(`ALTER TABLE "users" ALTER COLUMN "name" SET NOT NULL`),
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	name: "DropForeignKeyConstraint_DropColumn",
-		// 	table: &Table{
-		// 		Name: "users",
-		// 		Columns: []*Column{
-		// 			{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 			{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 		},
-		// 		ForeignKeyConstraints: []*ForeignKeyConstraint{
-		// 			{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
-		// 		},
-		// 	},
-		// 	newTable: &Table{
-		// 		Name: "users",
-		// 		Columns: []*Column{
-		// 			{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 		},
-		// 		ForeignKeyConstraints: []*ForeignKeyConstraint{},
-		// 	},
-		// 	expected: map[OperatorSupport][][]byte{
-		// 		{SCreateAndDropConstraint: false, SAlterTableAddAndDropColumnIfNotExistsAndExists: false, SAlterTableAlterColumnSetAndDrop: false}: {
-		// 			// first drop to remove the foreign key constraint
-		// 			[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "org_id" INTEGER NOT NULL)`),
-		// 			[]byte(`INSERT INTO "users__temp" ("id", "org_id") SELECT "id", "org_id" FROM "users"`),
-		// 			[]byte(`DROP TABLE IF EXISTS "users"`),
-		// 			[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
-		// 			// second drop to remove the column
-		// 			[]byte(`ALTER TABLE "users" DROP COLUMN "org_id"`),
-		// 		},
-		// 		{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}: {
-		// 			// first drop to remove the foreign key constraint
-		// 			[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "fk_users_org_id"`),
-		// 			// second drop to remove the column
-		// 			[]byte(`ALTER TABLE "users" DROP COLUMN IF EXISTS "org_id"`),
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	name: "DropMultipleConstraints",
-		// 	table: &Table{
-		// 		Name: "users",
-		// 		Columns: []*Column{
-		// 			{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 			{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
-		// 			{Name: "age", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 			{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 			{Name: "team_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 		},
-		// 		PrimaryKeyConstraint: &PrimaryKeyConstraint{ColumnNames: []ColumnName{"id"}},
-		// 		ForeignKeyConstraints: []*ForeignKeyConstraint{
-		// 			{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
-		// 			{ReferencingColumnName: "team_id", ReferencedTableName: "teams", ReferencedColumnName: "id"},
-		// 		},
-		// 	},
-		// 	uniqueConstraints: []*UniqueConstraint{
-		// 		{ColumnNames: []ColumnName{"name", "age"}},
-		// 	},
-		// 	newTable: &Table{
-		// 		Name: "users",
-		// 		Columns: []*Column{
-		// 			{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 			{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
-		// 			{Name: "age", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 			{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 			{Name: "team_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 		},
-		// 		ForeignKeyConstraints: []*ForeignKeyConstraint{
-		// 			{ReferencingColumnName: "team_id", ReferencedTableName: "teams", ReferencedColumnName: "id"},
-		// 		},
-		// 	},
-		// 	expected: map[OperatorSupport][][]byte{
-		// 		{SCreateAndDropConstraint: false, SAlterTableAddAndDropColumnIfNotExistsAndExists: false, SAlterTableAlterColumnSetAndDrop: false}: {
-		// 			[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "name" TEXT NOT NULL, "age" INTEGER NOT NULL, "org_id" INTEGER NOT NULL, "team_id" INTEGER NOT NULL, CONSTRAINT "fk_users_team_id" FOREIGN KEY ("team_id") REFERENCES "teams" ("id"))`),
-		// 			[]byte(`INSERT INTO "users__temp" ("id", "name", "age", "org_id", "team_id") SELECT "id", "name", "age", "org_id", "team_id" FROM "users"`),
-		// 			[]byte(`DROP TABLE IF EXISTS "users"`),
-		// 			[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
-		// 			[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "uq_users_name_age" ON "users" ("name", "age")`),
-		// 		},
-		// 		{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}: {
-		// 			[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "pk_users"`),
-		// 			[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "fk_users_org_id"`),
-		// 			[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "uq_users_name_age"`),
-		// 			[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "uq_users_name_age" ON "users" ("name", "age")`),
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	name: "DropUniqueConstraints_AlterMultipleColumns",
-		// 	table: &Table{
-		// 		Name: "users",
-		// 		Columns: []*Column{
-		// 			{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 			{Name: "name", DataType: DataTypeText, Nullable: true, Default: ""},
-		// 			{Name: "age", DataType: DataTypeInteger, Nullable: true, Default: ""},
-		// 			{Name: "email", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 		},
-		// 		PrimaryKeyConstraint: &PrimaryKeyConstraint{ColumnNames: []ColumnName{"id"}},
-		// 		ForeignKeyConstraints: []*ForeignKeyConstraint{
-		// 			{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
-		// 		},
-		// 	},
-		// 	uniqueConstraints: []*UniqueConstraint{
-		// 		{ColumnNames: []ColumnName{"email"}},
-		// 		{name: "my_name_constraint", ColumnNames: []ColumnName{"name"}},
-		// 	},
-		// 	newTable: &Table{
-		// 		Name: "users",
-		// 		Columns: []*Column{
-		// 			{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 			{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
-		// 			{Name: "age", DataType: DataTypeInteger, Nullable: false, Default: "0"},
-		// 			{Name: "email", DataType: DataTypeInteger, Nullable: false, Default: ""},
-		// 		},
-		// 		PrimaryKeyConstraint: &PrimaryKeyConstraint{ColumnNames: []ColumnName{"id"}},
-		// 		ForeignKeyConstraints: []*ForeignKeyConstraint{
-		// 			{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
-		// 		},
-		// 	},
-		// 	expected: map[OperatorSupport][][]byte{
-		// 		{SCreateAndDropConstraint: false, SAlterTableAddAndDropColumnIfNotExistsAndExists: false, SAlterTableAlterColumnSetAndDrop: false}: {
-		// 			// first drop to remove unique constraint
-		// 			[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "name" TEXT, "age" INTEGER, "email" INTEGER NOT NULL, CONSTRAINT "pk_users" PRIMARY KEY ("id"), CONSTRAINT "fk_users_org_id" FOREIGN KEY ("org_id") REFERENCES "orgs" ("id"))`),
-		// 			[]byte(`INSERT INTO "users__temp" ("id", "name", "age", "email") SELECT "id", "name", "age", "email" FROM "users"`),
-		// 			[]byte(`DROP TABLE IF EXISTS "users"`),
-		// 			[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
-		// 			// second drop to change all columns
-		// 			[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "name" TEXT NOT NULL, "age" INTEGER NOT NULL DEFAULT 0, "email" INTEGER NOT NULL, CONSTRAINT "pk_users" PRIMARY KEY ("id"), CONSTRAINT "fk_users_org_id" FOREIGN KEY ("org_id") REFERENCES "orgs" ("id"))`),
-		// 			[]byte(`INSERT INTO "users__temp" ("id", "name", "age", "email") SELECT "id", "name", "age", "email" FROM "users"`),
-		// 			[]byte(`DROP TABLE IF EXISTS "users"`),
-		// 			[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
-		// 			// create unique index for the constraint
-		// 			[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "uq_users_email" ON "users" ("email")`),
-		// 			[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "uq_users_name" ON "users" ("name")`),
-		// 		},
-		// 		{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}: {
-		// 			[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "uq_users_email"`),
-		// 			[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "my_name_constraint"`),
-		// 			[]byte(`ALTER TABLE "users" ALTER COLUMN "name" SET NOT NULL`),
-		// 			[]byte(`ALTER TABLE "users" ALTER COLUMN "age" SET NOT NULL`),
-		// 			[]byte(`ALTER TABLE "users" ALTER COLUMN "age" SET DEFAULT 0`),
-		// 			[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "uq_users_email" ON "users" ("email")`),
-		// 			[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "uq_users_name" ON "users" ("name")`),
-		// 		},
-		// 	},
-		// },
+		{
+			name: "NoOperation",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+			},
+			newTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{},
+			},
+			expected: map[OperatorSupport][][]byte{
+				{SCreateAndDropConstraint: false, SAlterTableAddAndDropColumnIfNotExistsAndExists: false, SAlterTableAlterColumnSetAndDrop: false}: {},
+				{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}:    {},
+			},
+		},
+		{
+			name: "RenameTable",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+			},
+			newTable: &Table{
+				Name: "users_new",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{},
+			},
+			expected: map[OperatorSupport][][]byte{
+				{SCreateAndDropConstraint: false, SAlterTableAddAndDropColumnIfNotExistsAndExists: false, SAlterTableAlterColumnSetAndDrop: false}: {
+					[]byte(`ALTER TABLE "users" RENAME TO "users_new"`),
+				},
+				{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}: {
+					[]byte(`ALTER TABLE "users" RENAME TO "users_new"`),
+				},
+			},
+		},
+		{
+			name: "AddColumn_NullableNoDefault_SAlterTableAddAndDropColumnIfNotExistsAndExistsTrue",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+			},
+			newTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+					{Name: "age", DataType: DataTypeInteger, Nullable: true, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{},
+			},
+			expected: map[OperatorSupport][][]byte{
+				{SCreateAndDropConstraint: false, SAlterTableAddAndDropColumnIfNotExistsAndExists: false, SAlterTableAlterColumnSetAndDrop: false}: {
+					[]byte(`ALTER TABLE "users" ADD COLUMN "age" INTEGER`),
+				},
+				{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}: {
+					[]byte(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "age" INTEGER`),
+				},
+			},
+		},
+		{
+			name: "CreatePrimaryKeyConstraint",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+			},
+			newTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				PrimaryKeyConstraint: &PrimaryKeyConstraint{
+					ColumnNames: []ColumnName{"id"},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{},
+			},
+			expected: map[OperatorSupport][][]byte{
+				{SCreateAndDropConstraint: false, SAlterTableAddAndDropColumnIfNotExistsAndExists: false, SAlterTableAlterColumnSetAndDrop: false}: {
+					[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, CONSTRAINT "pk_users" PRIMARY KEY ("id"))`),
+					[]byte(`INSERT INTO "users__temp" ("id") SELECT "id" FROM "users"`),
+					[]byte(`DROP TABLE IF EXISTS "users"`),
+					[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
+				},
+				{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}: {
+					[]byte(`ALTER TABLE "users" ADD CONSTRAINT "pk_users" PRIMARY KEY ("id")`),
+				},
+			},
+		},
+		{
+			name: "DropPrimaryKeyConstraint_AlterColumnNullable",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: true, Default: ""},
+				},
+				PrimaryKeyConstraint: &PrimaryKeyConstraint{ColumnNames: []ColumnName{"id"}},
+			},
+			newTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{},
+			},
+			expected: map[OperatorSupport][][]byte{
+				{SCreateAndDropConstraint: false, SAlterTableAddAndDropColumnIfNotExistsAndExists: false, SAlterTableAlterColumnSetAndDrop: false}: {
+					// first drop to remove the primary key constraint
+					[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "name" TEXT)`),
+					[]byte(`INSERT INTO "users__temp" ("id", "name") SELECT "id", "name" FROM "users"`),
+					[]byte(`DROP TABLE IF EXISTS "users"`),
+					[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
+					// second drop to make the column nullable
+					[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "name" TEXT NOT NULL)`),
+					[]byte(`INSERT INTO "users__temp" ("id", "name") SELECT "id", "name" FROM "users"`),
+					[]byte(`DROP TABLE IF EXISTS "users"`),
+					[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
+				},
+				{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}: {
+					[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "pk_users"`),
+					[]byte(`ALTER TABLE "users" ALTER COLUMN "name" SET NOT NULL`),
+				},
+			},
+		},
+		{
+			name: "DropForeignKeyConstraint_DropColumn",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{
+					{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
+				},
+			},
+			newTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{},
+			},
+			expected: map[OperatorSupport][][]byte{
+				{SCreateAndDropConstraint: false, SAlterTableAddAndDropColumnIfNotExistsAndExists: false, SAlterTableAlterColumnSetAndDrop: false}: {
+					// first drop to remove the foreign key constraint
+					[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "org_id" INTEGER NOT NULL)`),
+					[]byte(`INSERT INTO "users__temp" ("id", "org_id") SELECT "id", "org_id" FROM "users"`),
+					[]byte(`DROP TABLE IF EXISTS "users"`),
+					[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
+					// second drop to remove the column
+					[]byte(`ALTER TABLE "users" DROP COLUMN "org_id"`),
+				},
+				{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}: {
+					// first drop to remove the foreign key constraint
+					[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "fk_users_org_id"`),
+					// second drop to remove the column
+					[]byte(`ALTER TABLE "users" DROP COLUMN IF EXISTS "org_id"`),
+				},
+			},
+		},
+		{
+			name: "DropMultipleConstraints",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+					{Name: "age", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "team_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				PrimaryKeyConstraint: &PrimaryKeyConstraint{ColumnNames: []ColumnName{"id"}},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{
+					{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
+					{ReferencingColumnName: "team_id", ReferencedTableName: "teams", ReferencedColumnName: "id"},
+				},
+			},
+			uniqueConstraints: []*UniqueConstraint{
+				{ColumnNames: []ColumnName{"name", "age"}},
+			},
+			newTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+					{Name: "age", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "team_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{
+					{ReferencingColumnName: "team_id", ReferencedTableName: "teams", ReferencedColumnName: "id"},
+				},
+			},
+			expected: map[OperatorSupport][][]byte{
+				{SCreateAndDropConstraint: false, SAlterTableAddAndDropColumnIfNotExistsAndExists: false, SAlterTableAlterColumnSetAndDrop: false}: {
+					[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "name" TEXT NOT NULL, "age" INTEGER NOT NULL, "org_id" INTEGER NOT NULL, "team_id" INTEGER NOT NULL, CONSTRAINT "fk_users_team_id" FOREIGN KEY ("team_id") REFERENCES "teams" ("id"))`),
+					[]byte(`INSERT INTO "users__temp" ("id", "name", "age", "org_id", "team_id") SELECT "id", "name", "age", "org_id", "team_id" FROM "users"`),
+					[]byte(`DROP TABLE IF EXISTS "users"`),
+					[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
+					[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "uq_users_name_age" ON "users" ("name", "age")`),
+				},
+				{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}: {
+					[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "pk_users"`),
+					[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "fk_users_org_id"`),
+					[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "uq_users_name_age"`),
+					[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "uq_users_name_age" ON "users" ("name", "age")`),
+				},
+			},
+		},
+		{
+			name: "DropUniqueConstraints_AlterMultipleColumns",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: true, Default: ""},
+					{Name: "age", DataType: DataTypeInteger, Nullable: true, Default: ""},
+					{Name: "email", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				PrimaryKeyConstraint: &PrimaryKeyConstraint{ColumnNames: []ColumnName{"id"}},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{
+					{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
+				},
+			},
+			uniqueConstraints: []*UniqueConstraint{
+				{ColumnNames: []ColumnName{"email"}},
+				{name: "my_name_constraint", ColumnNames: []ColumnName{"name"}},
+			},
+			newTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+					{Name: "age", DataType: DataTypeInteger, Nullable: false, Default: "0"},
+					{Name: "email", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				PrimaryKeyConstraint: &PrimaryKeyConstraint{ColumnNames: []ColumnName{"id"}},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{
+					{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
+				},
+			},
+			expected: map[OperatorSupport][][]byte{
+				{SCreateAndDropConstraint: false, SAlterTableAddAndDropColumnIfNotExistsAndExists: false, SAlterTableAlterColumnSetAndDrop: false}: {
+					// first drop to remove unique constraint
+					[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "name" TEXT, "age" INTEGER, "email" INTEGER NOT NULL, CONSTRAINT "pk_users" PRIMARY KEY ("id"), CONSTRAINT "fk_users_org_id" FOREIGN KEY ("org_id") REFERENCES "orgs" ("id"))`),
+					[]byte(`INSERT INTO "users__temp" ("id", "name", "age", "email") SELECT "id", "name", "age", "email" FROM "users"`),
+					[]byte(`DROP TABLE IF EXISTS "users"`),
+					[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
+					// second drop to change all columns
+					[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "name" TEXT NOT NULL, "age" INTEGER NOT NULL DEFAULT 0, "email" INTEGER NOT NULL, CONSTRAINT "pk_users" PRIMARY KEY ("id"), CONSTRAINT "fk_users_org_id" FOREIGN KEY ("org_id") REFERENCES "orgs" ("id"))`),
+					[]byte(`INSERT INTO "users__temp" ("id", "name", "age", "email") SELECT "id", "name", "age", "email" FROM "users"`),
+					[]byte(`DROP TABLE IF EXISTS "users"`),
+					[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
+					// create unique index for the constraint
+					[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "uq_users_email" ON "users" ("email")`),
+					[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "uq_users_name" ON "users" ("name")`),
+				},
+				{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}: {
+					[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "uq_users_email"`),
+					[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "my_name_constraint"`),
+					[]byte(`ALTER TABLE "users" ALTER COLUMN "name" SET NOT NULL`),
+					[]byte(`ALTER TABLE "users" ALTER COLUMN "age" SET NOT NULL`),
+					[]byte(`ALTER TABLE "users" ALTER COLUMN "age" SET DEFAULT 0`),
+					[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "uq_users_email" ON "users" ("email")`),
+					[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "uq_users_name" ON "users" ("name")`),
+				},
+			},
+		},
 		{
 			name: "ChangePrimaryKeyConstraint",
 			table: &Table{
