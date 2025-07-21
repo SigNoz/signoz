@@ -1559,40 +1559,23 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 }
 
 func (r *ClickHouseReader) hasCustomRetentionColumn(ctx context.Context) (bool, error) {
-	// Check if the _retention_days column exists in the logs table
-	query := fmt.Sprintf("DESCRIBE TABLE %s.%s", r.logsDB, r.logsLocalTableV2)
+	// Directly query for the _retention_days column existence
+	query := fmt.Sprintf("SELECT 1 FROM system.columns WHERE database = '%s' AND table = '%s' AND name = '_retention_days' LIMIT 1", r.logsDB, r.logsLocalTableV2)
 
-	rows, err := r.db.Query(ctx, query)
+	var exists int
+	err := r.db.QueryRow(ctx, query).Scan(&exists)
 	if err != nil {
-		zap.L().Error("Error checking table schema", zap.Error(err))
-		return false, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "Error checking table schema")
-	}
-	defer rows.Close()
-
-	// Scan through the table description to find the _retention_days column
-	for rows.Next() {
-		var name, type_, defaultType, defaultExpression, comment, codecExpression, ttlExpression string
-
-		err := rows.Scan(&name, &type_, &defaultType, &defaultExpression, &comment, &codecExpression, &ttlExpression)
-		if err != nil {
-			zap.L().Error("Error scanning table description", zap.Error(err))
-			return false, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "Error scanning table description")
+		if err == sql.ErrNoRows {
+			// Column doesn't exist
+			zap.L().Debug("_retention_days column not found in logs table", zap.String("table", r.logsLocalTableV2))
+			return false, nil
 		}
-
-		// Check if this row describes the _retention_days column
-		if name == "_retention_days" {
-			zap.L().Debug("Found _retention_days column in logs table", zap.String("table", r.logsLocalTableV2))
-			return true, nil
-		}
+		zap.L().Error("Error checking for _retention_days column", zap.Error(err))
+		return false, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error checking columns")
 	}
 
-	if err := rows.Err(); err != nil {
-		zap.L().Error("Error iterating over table description", zap.Error(err))
-		return false, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "Error iterating table description")
-	}
-
-	zap.L().Debug("_retention_days column not found in logs table", zap.String("table", r.logsLocalTableV2))
-	return false, nil
+	zap.L().Debug("Found _retention_days column in logs table", zap.String("table", r.logsLocalTableV2))
+	return true, nil
 }
 
 func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *model.CustomRetentionTTLParams) (*model.CustomRetentionTTLResponse, error) {
