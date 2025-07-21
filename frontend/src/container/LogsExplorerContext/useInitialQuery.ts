@@ -6,6 +6,9 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { getFiltersFromResources } from './utils';
 
+const RESOURCE_STARTS_WITH_REGEX = /^(k8s|cloud|host|deployment)/; // regex to filter out resources that start with the specified keywords
+const RESOURCE_CONTAINS_REGEX = /(env|service|file|container|tenant)/; // regex to filter out resources that contains the spefied keywords
+
 const useInitialQuery = (log: ILog): Query => {
 	const { updateAllQueriesOperators } = useQueryBuilder();
 	const resourcesFilters = getFiltersFromResources(log.resources_string);
@@ -16,20 +19,15 @@ const useInitialQuery = (log: ILog): Query => {
 		DataSource.LOGS,
 	);
 
-	const updateFilters = (filters: TagFilter): TagFilter => {
-		const startsWithRegex = /^(k8s|cloud|host|deployment)/;
-		const containsRegex = /(env|service|file|container|tenant)/;
-
-		return {
-			...filters,
-			items: filters.items.filter(
-				(filterItem) =>
-					filterItem.key?.key &&
-					(startsWithRegex.test(filterItem.key.key) ||
-						containsRegex.test(filterItem.key.key)),
-			),
-		};
-	};
+	const updateFilters = (filters: TagFilter): TagFilter => ({
+		...filters,
+		items: filters.items.filter(
+			(filterItem) =>
+				filterItem.key?.key &&
+				(RESOURCE_STARTS_WITH_REGEX.test(filterItem.key.key) ||
+					RESOURCE_CONTAINS_REGEX.test(filterItem.key.key)),
+		),
+	});
 
 	const data: Query = {
 		...updatedAllQueriesOperator,
