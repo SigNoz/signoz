@@ -1,9 +1,10 @@
 import './StepsContent.styles.scss';
 
-import { Button, Steps } from 'antd';
+import { Button, Steps, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { PlusIcon, Undo2 } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
+import { useAppContext } from 'providers/App/App';
 import { memo, useCallback } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 
@@ -20,9 +21,10 @@ function StepsContent({
 	span?: Span;
 }): JSX.Element {
 	const { steps, handleAddStep, handleReplaceStep } = useFunnelContext();
+	const { hasEditPermission } = useAppContext();
 
 	const handleAddForNewStep = useCallback(() => {
-		if (!span) return;
+		if (!span || !hasEditPermission) return;
 
 		const stepWasAdded = handleAddStep();
 		if (stepWasAdded) {
@@ -32,7 +34,7 @@ function StepsContent({
 			'Trace Funnels: span added for a new step from trace details page',
 			{},
 		);
-	}, [span, handleAddStep, handleReplaceStep, steps.length]);
+	}, [span, handleAddStep, handleReplaceStep, steps.length, hasEditPermission]);
 
 	return (
 		<div className="steps-content">
@@ -45,20 +47,29 @@ function StepsContent({
 								<div className="funnel-step-wrapper">
 									<FunnelStep stepData={step} index={index} stepsCount={steps.length} />
 									{isTraceDetailsPage && span && (
-										<Button
-											type="default"
-											className="funnel-step-wrapper__replace-button"
-											icon={<Undo2 size={12} />}
-											disabled={
-												step.service_name === span.serviceName &&
-												step.span_name === span.name
-											}
-											onClick={(): void =>
-												handleReplaceStep(index, span.serviceName, span.name)
+										<Tooltip
+											title={
+												!hasEditPermission
+													? 'You need editor or admin access to replace steps'
+													: ''
 											}
 										>
-											Replace
-										</Button>
+											<Button
+												type="default"
+												className="funnel-step-wrapper__replace-button"
+												icon={<Undo2 size={12} />}
+												disabled={
+													(step.service_name === span.serviceName &&
+														step.span_name === span.name) ||
+													!hasEditPermission
+												}
+												onClick={(): void =>
+													handleReplaceStep(index, span.serviceName, span.name)
+												}
+											>
+												Replace
+											</Button>
+										</Tooltip>
 									)}
 								</div>
 								{/* Display InterStepConfig only between steps */}
@@ -76,23 +87,41 @@ function StepsContent({
 						className="steps-content__add-step"
 						description={
 							!isTraceDetailsPage ? (
-								<Button
-									type="default"
-									className="steps-content__add-btn"
-									onClick={handleAddStep}
-									icon={<PlusIcon size={14} />}
+								<Tooltip
+									title={
+										!hasEditPermission
+											? 'You need editor or admin access to add steps'
+											: ''
+									}
 								>
-									Add Funnel Step
-								</Button>
+									<Button
+										type="default"
+										className="steps-content__add-btn"
+										onClick={handleAddStep}
+										icon={<PlusIcon size={14} />}
+										disabled={!hasEditPermission}
+									>
+										Add Funnel Step
+									</Button>
+								</Tooltip>
 							) : (
-								<Button
-									type="default"
-									className="steps-content__add-btn"
-									onClick={handleAddForNewStep}
-									icon={<PlusIcon size={14} />}
+								<Tooltip
+									title={
+										!hasEditPermission
+											? 'You need editor or admin access to add steps'
+											: ''
+									}
 								>
-									Add for new Step
-								</Button>
+									<Button
+										type="default"
+										className="steps-content__add-btn"
+										onClick={handleAddForNewStep}
+										icon={<PlusIcon size={14} />}
+										disabled={!hasEditPermission}
+									>
+										Add for new Step
+									</Button>
+								</Tooltip>
 							)
 						}
 					/>
