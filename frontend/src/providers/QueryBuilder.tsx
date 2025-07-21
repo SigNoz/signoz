@@ -248,8 +248,6 @@ export function QueryBuilderProvider({
 				getElementWithActualOperator(item, dataSource, panelType),
 			);
 
-			console.log('queryData', queryData, panelType, dataSource);
-
 			return { ...query, builder: { ...query.builder, queryData } };
 		},
 
@@ -876,7 +874,6 @@ export function QueryBuilderProvider({
 								items: [],
 								op: 'AND',
 							},
-							having: [],
 						})),
 					},
 				};

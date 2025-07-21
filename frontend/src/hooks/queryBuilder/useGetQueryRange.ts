@@ -15,10 +15,17 @@ import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
+type UseGetQueryRangeOptions = UseQueryOptions<
+	SuccessResponse<MetricRangePayloadProps>,
+	Error
+> & {
+	showErrorModal?: boolean;
+};
+
 type UseGetQueryRange = (
 	requestData: GetQueryResultsProps,
 	version: string,
-	options?: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
+	options?: UseGetQueryRangeOptions,
 	headers?: Record<string, string>,
 ) => UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error>;
 
@@ -28,7 +35,7 @@ export const useGetQueryRange: UseGetQueryRange = (
 	options,
 	headers,
 ) => {
-	const { showErrorModal } = useErrorModal();
+	const { showErrorModal: showErrorModalFn } = useErrorModal();
 	const newRequestData: GetQueryResultsProps = useMemo(() => {
 		const firstQueryData = requestData.query.builder?.queryData[0];
 		const isListWithSingleTimestampOrder =
@@ -133,7 +140,9 @@ export const useGetQueryRange: UseGetQueryRange = (
 		...options,
 		retry,
 		onError: (error) => {
-			showErrorModal(error as APIError);
+			if (options?.showErrorModal !== false) {
+				showErrorModalFn(error as APIError);
+			}
 			options?.onError?.(error);
 		},
 		queryKey,
