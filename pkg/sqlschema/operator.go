@@ -59,7 +59,7 @@ func (operator *Operator) AlterTable(oldTable *Table, oldTableUniqueConstraints 
 
 	// Drop primary key constraint if it is in the old table and the new table but they are different.
 	if oldTable.PrimaryKeyConstraint != nil && newTable.PrimaryKeyConstraint != nil && !oldTable.PrimaryKeyConstraint.Equals(newTable.PrimaryKeyConstraint) {
-		sql = append(sql, operator.DropConstraint(oldTable, oldTableUniqueConstraints, newTable.PrimaryKeyConstraint)...)
+		sql = append(sql, operator.DropConstraint(oldTable, oldTableUniqueConstraints, oldTable.PrimaryKeyConstraint)...)
 	}
 
 	// Drop foreign key constraints that are in the old table but not in the new table.
@@ -90,7 +90,7 @@ func (operator *Operator) AlterTable(oldTable *Table, oldTableUniqueConstraints 
 	// Add columns that are in the new table but not in the old table.
 	for _, column := range newTable.Columns {
 		if index := operator.findColumnByName(oldTable, column.Name); index == -1 {
-			sql = append(sql, operator.AddColumn(oldTable, oldTableUniqueConstraints, column, column.Default)...)
+			sql = append(sql, operator.AddColumn(oldTable, oldTableUniqueConstraints, column, nil)...)
 		}
 	}
 
@@ -183,12 +183,19 @@ func (operator *Operator) AddColumn(table *Table, uniqueConstraints []*UniqueCon
 		column.ToAddSQL(operator.fmter, table.Name, operator.support.SAlterTableAddAndDropColumnIfNotExistsAndExists),
 	}
 
-	if !column.Nullable {
-		if val == nil {
-			val = column.DataType.z
-		}
+	// If the value is not nil, always try to update the column.
+	if val != nil {
 		sqls = append(sqls, column.ToUpdateSQL(operator.fmter, table.Name, val))
+	}
 
+	// If the column is not nullable and does not have a default value and no value is provided, we need to set something.
+	// So we set it to the zero value of the column's data type.
+	if !column.Nullable && column.Default == "" && val == nil {
+		sqls = append(sqls, column.ToUpdateSQL(operator.fmter, table.Name, column.DataType.z))
+	}
+
+	// If the column is not nullable, we need to set it to not null.
+	if !column.Nullable {
 		if operator.support.SAlterTableAlterColumnSetAndDrop {
 			sqls = append(sqls, column.ToSetNotNullSQL(operator.fmter, table.Name))
 		} else {
