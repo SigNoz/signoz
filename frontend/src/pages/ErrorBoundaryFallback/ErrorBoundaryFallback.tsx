@@ -1,12 +1,16 @@
 import './ErrorBoundaryFallback.styles.scss';
 
-import { BugOutlined, UndoOutlined } from '@ant-design/icons';
+import { BugOutlined } from '@ant-design/icons';
 import { Button, Typography } from 'antd';
+import ROUTES from 'constants/routes';
 import Slack from 'container/SideNav/Slack';
-import { TriangleAlert } from 'lucide-react';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { Home, TriangleAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 function ErrorBoundaryFallback(): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
+
 	const { t } = useTranslation(['errorDetails']);
 
 	const onClickSlackHandler = (): void => {
@@ -14,14 +18,9 @@ function ErrorBoundaryFallback(): JSX.Element {
 	};
 
 	const handleReload = (): void => {
-		// try accessing the previous page - related to the signoz domain
-		const previousPage = window?.history?.state?.back;
+		// Go to home page
 
-		if (previousPage?.includes('signoz.io')) {
-			window.location.href = previousPage;
-		} else {
-			window.location.reload();
-		}
+		safeNavigate(ROUTES.HOME);
 	};
 	return (
 		<div className="error-boundary-fallback-container">
@@ -41,19 +40,19 @@ function ErrorBoundaryFallback(): JSX.Element {
 				<Button
 					type="primary"
 					onClick={handleReload}
-					icon={<UndoOutlined />}
+					icon={<Home size={16} />}
 					className="periscope-btn primary"
 				>
-					Reload
+					Go Home
 				</Button>
 
 				<Button
-					className="periscope-btn"
+					className="periscope-btn secondary"
 					type="default"
 					onClick={onClickSlackHandler}
 					icon={<Slack />}
 				>
-					&nbsp; Support
+					Slack Support
 				</Button>
 			</div>
 		</div>
