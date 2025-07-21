@@ -130,7 +130,7 @@ type Reader interface {
 	GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]*model.UpdateMetricsMetadata, *model.ApiError)
 
 	CheckForLabelsInMetric(ctx context.Context, metricName string, labels []string) (bool, *model.ApiError)
-	GetCorrespondingNormalizedMetrics(ctx context.Context, orgID valuer.UUID, metricName []string) (map[string]model.NormalizedMetricsMap, error)
+	GetNormalizedStatus(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]bool, error)
 }
 
 type Querier interface {

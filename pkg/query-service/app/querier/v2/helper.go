@@ -300,15 +300,15 @@ func (q *querier) ValidateMetricNames(ctx context.Context, query *v3.CompositeQu
 				return nil
 			})
 		}
-		metrics, err := q.reader.GetCorrespondingNormalizedMetrics(ctx, orgID, metricNames)
+		metrics, err := q.reader.GetNormalizedStatus(ctx, orgID, metricNames)
 		if err != nil {
 			zap.L().Debug("error getting corresponding normalized metrics", zap.Error(err))
 			return
 		}
 		for k, m := range metrics {
-			if m.UnNormalizedMetricName == k {
+			if m {
 				continue
-			} else if m.NormalizedMetricName == k {
+			} else {
 				zap.L().Warn("using normalized metric name", zap.String("metrics", k))
 				continue
 			}
@@ -318,15 +318,15 @@ func (q *querier) ValidateMetricNames(ctx context.Context, query *v3.CompositeQu
 			metricName := query.AggregateAttribute.Key
 			metricNames = append(metricNames, metricName)
 		}
-		metrics, err := q.reader.GetCorrespondingNormalizedMetrics(ctx, orgID, metricNames)
+		metrics, err := q.reader.GetNormalizedStatus(ctx, orgID, metricNames)
 		if err != nil {
 			zap.L().Debug("error getting corresponding normalized metrics", zap.Error(err))
 			return
 		}
 		for k, m := range metrics {
-			if m.UnNormalizedMetricName == k {
+			if m {
 				continue
-			} else if m.NormalizedMetricName == k {
+			} else {
 				zap.L().Warn("using normalized metric name", zap.String("metrics", k))
 				continue
 			}

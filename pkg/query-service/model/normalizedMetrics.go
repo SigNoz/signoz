@@ -2,14 +2,14 @@ package model
 
 import "encoding/json"
 
-type NormalizedMetricsMap struct {
-	NormalizedMetricName   string `json:"normalizedMetricName"`
-	UnNormalizedMetricName string `json:"unNormalizedMetricName"`
+type MetricsNormalizedMap struct {
+	MetricName     string `json:"metricName"`
+	IsUnNormalized bool   `json:"isUnNormalized"`
 }
 
-func (c *NormalizedMetricsMap) MarshalBinary() (data []byte, err error) {
+func (c *MetricsNormalizedMap) MarshalBinary() (data []byte, err error) {
 	return json.Marshal(c)
 }
-func (c *NormalizedMetricsMap) UnmarshalBinary(data []byte) error {
+func (c *MetricsNormalizedMap) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, c)
 }
