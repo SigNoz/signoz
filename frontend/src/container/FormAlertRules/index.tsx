@@ -766,7 +766,12 @@ function FormAlertRules({
 		<>
 			{Element}
 
-			<div id="top">
+			<div
+				id="top"
+				className={`form-alert-rules-container ${
+					isRuleCreated ? 'create-mode' : 'edit-mode'
+				}`}
+			>
 				<div className="overview-header">
 					<div className="alert-type-container">
 						{isNewRule && (
