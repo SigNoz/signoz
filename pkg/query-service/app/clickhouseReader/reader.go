@@ -1267,6 +1267,13 @@ func getLocalTableName(tableName string) string {
 }
 
 func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+	hasCustomRetention, err := r.hasCustomRetentionColumn(ctx)
+	if hasCustomRetention {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("SetTTLV2 only supported")}
+	}
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing TTL")}
+	}
 	// uuid is used as transaction id
 	uuidWithHyphen := uuid.New()
 	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
@@ -1551,7 +1558,52 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
 
+func (r *ClickHouseReader) hasCustomRetentionColumn(ctx context.Context) (bool, error) {
+	// Check if the _retention_days column exists in the logs table
+	query := fmt.Sprintf("DESCRIBE TABLE %s.%s", r.logsDB, r.logsLocalTableV2)
+
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		zap.L().Error("Error checking table schema", zap.Error(err))
+		return false, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "Error checking table schema")
+	}
+	defer rows.Close()
+
+	// Scan through the table description to find the _retention_days column
+	for rows.Next() {
+		var name, type_, defaultType, defaultExpression, comment, codecExpression, ttlExpression string
+
+		err := rows.Scan(&name, &type_, &defaultType, &defaultExpression, &comment, &codecExpression, &ttlExpression)
+		if err != nil {
+			zap.L().Error("Error scanning table description", zap.Error(err))
+			return false, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "Error scanning table description")
+		}
+
+		// Check if this row describes the _retention_days column
+		if name == "_retention_days" {
+			zap.L().Debug("Found _retention_days column in logs table", zap.String("table", r.logsLocalTableV2))
+			return true, nil
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		zap.L().Error("Error iterating over table description", zap.Error(err))
+		return false, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "Error iterating table description")
+	}
+
+	zap.L().Debug("_retention_days column not found in logs table", zap.String("table", r.logsLocalTableV2))
+	return false, nil
+}
+
 func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *model.CustomRetentionTTLParams) (*model.CustomRetentionTTLResponse, error) {
+
+	hasCustomRetention, err := r.hasCustomRetentionColumn(ctx)
+	if !hasCustomRetention {
+		return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "custom retention not supported")
+	}
+	if err != nil {
+		return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "custom retention not supported")
+	}
 	// Keep only latest 100 transactions/requests
 	r.deleteTtlTransactions(ctx, orgID, 100)
 
