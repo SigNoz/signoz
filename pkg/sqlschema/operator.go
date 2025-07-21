@@ -12,7 +12,7 @@ type OperatorSupport struct {
 	SCreateAndDropConstraint bool
 
 	// Support for `IF EXISTS` and `IF NOT EXISTS` in `ALTER TABLE ADD COLUMN` and `ALTER TABLE DROP COLUMN`.
-	SAlterTableAddDropColumnIfNotExistsAndExists bool
+	SAlterTableAddAndDropColumnIfNotExistsAndExists bool
 
 	// Support for altering columns such as `ALTER TABLE ALTER COLUMN SET NOT NULL`.
 	SAlterTableAlterColumnSetAndDrop bool
@@ -35,8 +35,10 @@ func (operator *Operator) CreateTable(table *Table) [][]byte {
 }
 
 func (operator *Operator) RenameTable(table *Table, newName TableName) [][]byte {
+	sql := table.ToRenameSQL(operator.fmter, newName)
 	table.Name = newName
-	return [][]byte{table.ToRenameSQL(operator.fmter, newName)}
+
+	return [][]byte{sql}
 }
 
 func (operator *Operator) AlterTable(oldTable *Table, oldTableUniqueConstraints []*UniqueConstraint, newTable *Table) [][]byte {
@@ -142,7 +144,7 @@ func (operator *Operator) AddColumn(table *Table, uniqueConstraints []*UniqueCon
 	table.Columns = append(table.Columns, column)
 
 	sqls := [][]byte{
-		column.ToAddSQL(operator.fmter, table.Name, operator.support.SAlterTableAddDropColumnIfNotExistsAndExists),
+		column.ToAddSQL(operator.fmter, table.Name, operator.support.SAlterTableAddAndDropColumnIfNotExistsAndExists),
 	}
 
 	if !column.Nullable {
@@ -226,7 +228,7 @@ func (operator *Operator) DropColumn(table *Table, column *Column) [][]byte {
 
 	table.Columns = append(table.Columns[:index], table.Columns[index+1:]...)
 
-	return [][]byte{column.ToDropSQL(operator.fmter, table.Name, operator.support.SAlterTableAddDropColumnIfNotExistsAndExists)}
+	return [][]byte{column.ToDropSQL(operator.fmter, table.Name, operator.support.SAlterTableAddAndDropColumnIfNotExistsAndExists)}
 }
 
 func (operator *Operator) CreateConstraint(table *Table, uniqueConstraints []*UniqueConstraint, constraint Constraint) [][]byte {

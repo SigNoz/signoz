@@ -59,7 +59,7 @@ func TestOperatorAddColumn(t *testing.T) {
 		expectedTable     *Table
 	}{
 		{
-			name: "NullableNoDefault_DoesNotExist_SAlterTableAddDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropTrue",
+			name: "NullableNoDefault_DoesNotExist_SAlterTableAddAndDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -69,8 +69,8 @@ func TestOperatorAddColumn(t *testing.T) {
 			column: &Column{Name: "name", DataType: DataTypeText, Nullable: true, Default: ""},
 			val:    nil,
 			support: OperatorSupport{
-				SAlterTableAddDropColumnIfNotExistsAndExists: true,
-				SAlterTableAlterColumnSetAndDrop:             true,
+				SAlterTableAddAndDropColumnIfNotExistsAndExists: true,
+				SAlterTableAlterColumnSetAndDrop:                true,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "name" TEXT`),
@@ -84,7 +84,7 @@ func TestOperatorAddColumn(t *testing.T) {
 			},
 		},
 		{
-			name: "MismatchingDataType_DoesExist_SAlterTableAddDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropTrue",
+			name: "MismatchingDataType_DoesExist_SAlterTableAddAndDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -95,8 +95,8 @@ func TestOperatorAddColumn(t *testing.T) {
 			column: &Column{Name: "name", DataType: DataTypeBigInt, Nullable: true, Default: ""},
 			val:    nil,
 			support: OperatorSupport{
-				SAlterTableAddDropColumnIfNotExistsAndExists: true,
-				SAlterTableAlterColumnSetAndDrop:             true,
+				SAlterTableAddAndDropColumnIfNotExistsAndExists: true,
+				SAlterTableAlterColumnSetAndDrop:                true,
 			},
 			expectedSQLs: [][]byte{},
 			expectedTable: &Table{
@@ -108,7 +108,7 @@ func TestOperatorAddColumn(t *testing.T) {
 			},
 		},
 		{
-			name: "NotNullableNoDefaultNoVal_DoesNotExist_SAlterTableAddDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropTrue",
+			name: "NotNullableNoDefaultNoVal_DoesNotExist_SAlterTableAddAndDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -118,8 +118,8 @@ func TestOperatorAddColumn(t *testing.T) {
 			column: &Column{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
 			val:    nil,
 			support: OperatorSupport{
-				SAlterTableAddDropColumnIfNotExistsAndExists: true,
-				SAlterTableAlterColumnSetAndDrop:             true,
+				SAlterTableAddAndDropColumnIfNotExistsAndExists: true,
+				SAlterTableAlterColumnSetAndDrop:                true,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "name" TEXT`),
@@ -135,7 +135,7 @@ func TestOperatorAddColumn(t *testing.T) {
 			},
 		},
 		{
-			name: "NotNullableNoDefault_DoesNotExist_SAlterTableAddDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropTrue",
+			name: "NotNullableNoDefault_DoesNotExist_SAlterTableAddAndDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -145,8 +145,8 @@ func TestOperatorAddColumn(t *testing.T) {
 			column: &Column{Name: "num", DataType: DataTypeInteger, Nullable: false, Default: ""},
 			val:    int64(100),
 			support: OperatorSupport{
-				SAlterTableAddDropColumnIfNotExistsAndExists: true,
-				SAlterTableAlterColumnSetAndDrop:             true,
+				SAlterTableAddAndDropColumnIfNotExistsAndExists: true,
+				SAlterTableAlterColumnSetAndDrop:                true,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "num" INTEGER`),
@@ -162,7 +162,7 @@ func TestOperatorAddColumn(t *testing.T) {
 			},
 		},
 		{
-			name: "NotNullableNoDefault_DoesNotExist_SAlterTableAddDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropFalse",
+			name: "NotNullableNoDefault_DoesNotExist_SAlterTableAddAndDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropFalse",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -176,8 +176,8 @@ func TestOperatorAddColumn(t *testing.T) {
 				{ColumnNames: []ColumnName{"name"}},
 			},
 			support: OperatorSupport{
-				SAlterTableAddDropColumnIfNotExistsAndExists: true,
-				SAlterTableAlterColumnSetAndDrop:             false,
+				SAlterTableAddAndDropColumnIfNotExistsAndExists: true,
+				SAlterTableAlterColumnSetAndDrop:                false,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "num" INTEGER`),
@@ -198,7 +198,7 @@ func TestOperatorAddColumn(t *testing.T) {
 			},
 		},
 		{
-			name: "MismatchingDataType_DoesExist_SAlterTableAddDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropFalse",
+			name: "MismatchingDataType_DoesExist_SAlterTableAddAndDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropFalse",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -209,8 +209,8 @@ func TestOperatorAddColumn(t *testing.T) {
 			column: &Column{Name: "name", DataType: DataTypeBigInt, Nullable: false, Default: ""},
 			val:    nil,
 			support: OperatorSupport{
-				SAlterTableAddDropColumnIfNotExistsAndExists: true,
-				SAlterTableAlterColumnSetAndDrop:             false,
+				SAlterTableAddAndDropColumnIfNotExistsAndExists: true,
+				SAlterTableAlterColumnSetAndDrop:                false,
 			},
 			expectedSQLs: [][]byte{},
 			expectedTable: &Table{
@@ -730,7 +730,26 @@ func TestOperatorAlterTable(t *testing.T) {
 			expectedSQLs: [][]byte{},
 		},
 		{
-			name: "AddColumn_NullableNoDefault_SAlterTableAddDropColumnIfNotExistsAndExistsTrue",
+			name: "RenameTable",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+			},
+			newTable: &Table{
+				Name: "users_new",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+			},
+			support: OperatorSupport{},
+			expectedSQLs: [][]byte{
+				[]byte(`ALTER TABLE "users" RENAME TO "users_new"`),
+			},
+		},
+		{
+			name: "AddColumn_NullableNoDefault_SAlterTableAddAndDropColumnIfNotExistsAndExistsTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -747,14 +766,14 @@ func TestOperatorAlterTable(t *testing.T) {
 				},
 			},
 			support: OperatorSupport{
-				SAlterTableAddDropColumnIfNotExistsAndExists: true,
+				SAlterTableAddAndDropColumnIfNotExistsAndExists: true,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "age" INTEGER`),
 			},
 		},
 		{
-			name: "AddColumn_NullableNoDefault_SAlterTableAddDropColumnIfNotExistsAndExistsFalse",
+			name: "AddColumn_NullableNoDefault_SAlterTableAddAndDropColumnIfNotExistsAndExistsFalse",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -771,7 +790,7 @@ func TestOperatorAlterTable(t *testing.T) {
 				},
 			},
 			support: OperatorSupport{
-				SAlterTableAddDropColumnIfNotExistsAndExists: false,
+				SAlterTableAddAndDropColumnIfNotExistsAndExists: false,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" ADD COLUMN "age" INTEGER`),
@@ -829,7 +848,7 @@ func TestOperatorAlterTable(t *testing.T) {
 			},
 		},
 		{
-			name: "DropPrimaryKeyConstraint_AlterColumn_SAlterTableAddDropColumnIfNotExistsAndExistsFalse_SAlterTableAlterColumnSetAndDropFalse_SCreateAndDropConstraintFalse",
+			name: "DropPrimaryKeyConstraint_AlterColumnNullable_SAlterTableAddAndDropColumnIfNotExistsAndExistsFalse_SAlterTableAlterColumnSetAndDropFalse_SCreateAndDropConstraintFalse",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -846,9 +865,9 @@ func TestOperatorAlterTable(t *testing.T) {
 				},
 			},
 			support: OperatorSupport{
-				SAlterTableAddDropColumnIfNotExistsAndExists: false,
-				SAlterTableAlterColumnSetAndDrop:             false,
-				SCreateAndDropConstraint:                     false,
+				SAlterTableAddAndDropColumnIfNotExistsAndExists: false,
+				SAlterTableAlterColumnSetAndDrop:                false,
+				SCreateAndDropConstraint:                        false,
 			},
 			expectedSQLs: [][]byte{
 				// first drop to make the column nullable
@@ -864,7 +883,7 @@ func TestOperatorAlterTable(t *testing.T) {
 			},
 		},
 		{
-			name: "DropPrimaryKeyConstraint_AlterColumn_SAlterTableAddDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropTrue_SCreateAndDropConstraintTrue",
+			name: "DropPrimaryKeyConstraint_AlterColumnNullable_SAlterTableAddAndDropColumnIfNotExistsAndExistsTrue_SAlterTableAlterColumnSetAndDropTrue_SCreateAndDropConstraintTrue",
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -881,9 +900,9 @@ func TestOperatorAlterTable(t *testing.T) {
 				},
 			},
 			support: OperatorSupport{
-				SAlterTableAddDropColumnIfNotExistsAndExists: true,
-				SAlterTableAlterColumnSetAndDrop:             true,
-				SCreateAndDropConstraint:                     true,
+				SAlterTableAddAndDropColumnIfNotExistsAndExists: true,
+				SAlterTableAlterColumnSetAndDrop:                true,
+				SCreateAndDropConstraint:                        true,
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" ALTER COLUMN "name" SET NOT NULL`),

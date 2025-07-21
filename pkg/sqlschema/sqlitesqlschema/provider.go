@@ -33,9 +33,9 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		settings: settings,
 		sqlstore: sqlstore,
 		operator: sqlschema.NewOperator(fmter, sqlschema.OperatorSupport{
-			SCreateAndDropConstraint:                     false,
-			SAlterTableAddDropColumnIfNotExistsAndExists: false,
-			SAlterTableAlterColumnSetAndDrop:             false,
+			SCreateAndDropConstraint:                        false,
+			SAlterTableAddAndDropColumnIfNotExistsAndExists: false,
+			SAlterTableAlterColumnSetAndDrop:                false,
 		}),
 	}, nil
 }
