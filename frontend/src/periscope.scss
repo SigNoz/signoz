@@ -54,6 +54,20 @@
 		}
 	}
 
+	&.text {
+		color: var(--bg-vanilla-100) !important;
+		background-color: transparent !important;
+		border: none;
+		box-shadow: none;
+		box-shadow: none;
+		padding: 4px 4px;
+
+		&:hover {
+			color: var(--bg-vanilla-300) !important;
+			background-color: transparent !important;
+		}
+	}
+
 	&.success {
 		color: var(--bg-forest-400) !important;
 		border-radius: 2px;

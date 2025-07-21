@@ -56,6 +56,16 @@ func CollisionHandledFinalExpr(
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
 		keysForField := keys[field.Name]
+
+		if len(keysForField) == 0 {
+			// check if the key exists with {fieldContext}.{key}
+			// because the context could be legitimate prefix in user data, example `metric.max`
+			keyWithContext := fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), field.Name)
+			if len(keys[keyWithContext]) > 0 {
+				keysForField = keys[keyWithContext]
+			}
+		}
+
 		if len(keysForField) == 0 {
 			// - the context is not provided
 			// - there are not keys for the field
@@ -68,7 +78,7 @@ func CollisionHandledFinalExpr(
 				return "", nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
 			} else {
 				// not even a close match, return an error
-				return "", nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field %s not found", field.Name)
+				return "", nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name)
 			}
 		} else {
 			for _, key := range keysForField {
@@ -88,6 +98,10 @@ func CollisionHandledFinalExpr(
 		}
 		colName, _ = telemetrytypes.DataTypeCollisionHandledFieldName(field, dummyValue, colName)
 		stmts = append(stmts, colName)
+	}
+
+	for idx := range stmts {
+		stmts[idx] = sqlbuilder.Escape(stmts[idx])
 	}
 
 	multiIfStmt := fmt.Sprintf("multiIf(%s, NULL)", strings.Join(stmts, ", "))
