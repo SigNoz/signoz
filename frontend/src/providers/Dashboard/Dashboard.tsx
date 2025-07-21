@@ -291,7 +291,6 @@ export function DashboardProvider({
 			},
 			onSuccess: (data: SuccessResponseV2<Dashboard>) => {
 				const updatedDashboardData = transformDashboardVariables(data?.data);
-				console.log('updatedDashboardData', updatedDashboardData, data?.data);
 				const updatedDate = dayjs(updatedDashboardData?.updatedAt);
 
 				setIsDashboardLocked(updatedDashboardData?.locked || false);

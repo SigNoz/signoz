@@ -179,7 +179,6 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 			reduceTo: 'avg',
 		},
 	],
-	havingExpression: { expression: '' },
 	functions: [],
 	filters: { items: [], op: 'AND' },
 	expression: createNewBuilderItemName({

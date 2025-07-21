@@ -198,7 +198,7 @@ function QueryAddOns({
 
 	const handleChangeHaving = useCallback(
 		(value: string) => {
-			handleChangeQueryData('havingExpression', {
+			handleChangeQueryData('having', {
 				expression: value,
 			});
 		},
