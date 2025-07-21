@@ -42,11 +42,42 @@ func (operator *Operator) RenameTable(table *Table, newName TableName) [][]byte 
 }
 
 func (operator *Operator) AlterTable(oldTable *Table, oldTableUniqueConstraints []*UniqueConstraint, newTable *Table) [][]byte {
+	// The following has to be done in order:
+	// 		- Drop constraints
+	// 		- Drop columns (some columns might be part of constraints therefore this depends on Step 1)
+	// 		- Add columns, then modify columns
+	// 		- Rename table
+	// 		- Add constraints (some constraints might be part of columns therefore this depends on Step 3, constraint names also depend on table name which is changed in Step 4)
+	// 		- Create unique indices from unique constraints for the new table
+
 	sql := [][]byte{}
 
-	// Check if the name has changed
-	if oldTable.Name != newTable.Name {
-		sql = append(sql, operator.RenameTable(oldTable, newTable.Name)...)
+	// Drop primary key constraint if it is in the old table but not in the new table.
+	if oldTable.PrimaryKeyConstraint != nil && newTable.PrimaryKeyConstraint == nil {
+		sql = append(sql, operator.DropConstraint(oldTable, oldTableUniqueConstraints, oldTable.PrimaryKeyConstraint)...)
+	}
+
+	// Drop primary key constraint if it is in the old table and the new table but they are different.
+	if oldTable.PrimaryKeyConstraint != nil && newTable.PrimaryKeyConstraint != nil && !oldTable.PrimaryKeyConstraint.Equals(newTable.PrimaryKeyConstraint) {
+		sql = append(sql, operator.DropConstraint(oldTable, oldTableUniqueConstraints, newTable.PrimaryKeyConstraint)...)
+	}
+
+	// Drop foreign key constraints that are in the old table but not in the new table.
+	for _, fkConstraint := range oldTable.ForeignKeyConstraints {
+		if index := operator.findForeignKeyConstraint(newTable, fkConstraint); index == -1 {
+			sql = append(sql, operator.DropConstraint(oldTable, oldTableUniqueConstraints, fkConstraint)...)
+		}
+	}
+
+	// Drop all unique constraints.
+	for _, uniqueConstraint := range oldTableUniqueConstraints {
+		sql = append(sql, operator.DropConstraint(oldTable, oldTableUniqueConstraints, uniqueConstraint)...)
+	}
+
+	// Reduce number of drops for engines with no SCreateAndDropConstraint.
+	if !operator.support.SCreateAndDropConstraint && len(sql) > 0 {
+		// Do not send the unique constraints to recreate table. We will change them to indexes at the end.
+		sql = operator.RecreateTable(oldTable, nil)
 	}
 
 	// Drop columns that are in the old table but not in the new table.
@@ -64,8 +95,24 @@ func (operator *Operator) AlterTable(oldTable *Table, oldTableUniqueConstraints 
 	}
 
 	// Modify columns that are in the new table and in the old table
+	alterColumnSQLs := [][]byte{}
 	for _, column := range newTable.Columns {
-		sql = append(sql, operator.AlterColumn(oldTable, oldTableUniqueConstraints, column)...)
+		alterColumnSQLs = append(alterColumnSQLs, operator.AlterColumn(oldTable, oldTableUniqueConstraints, column)...)
+	}
+
+	// Reduce number of drops for engines with no SAlterTableAlterColumnSetAndDrop.
+	if !operator.support.SAlterTableAlterColumnSetAndDrop && len(alterColumnSQLs) > 0 {
+		// Do not send the unique constraints to recreate table. We will change them to indexes at the end.
+		sql = append(sql, operator.RecreateTable(oldTable, nil)...)
+	}
+
+	if operator.support.SAlterTableAlterColumnSetAndDrop && len(alterColumnSQLs) > 0 {
+		sql = append(sql, alterColumnSQLs...)
+	}
+
+	// Check if the name has changed
+	if oldTable.Name != newTable.Name {
+		sql = append(sql, operator.RenameTable(oldTable, newTable.Name)...)
 	}
 
 	// If the old table does not have a primary key constraint and the new table does, we need to create it.
@@ -76,19 +123,8 @@ func (operator *Operator) AlterTable(oldTable *Table, oldTableUniqueConstraints 
 	}
 
 	if oldTable.PrimaryKeyConstraint != nil {
-		if newTable.PrimaryKeyConstraint == nil {
-			sql = append(sql, operator.DropConstraint(oldTable, oldTableUniqueConstraints, oldTable.PrimaryKeyConstraint)...)
-		} else {
-			if !oldTable.PrimaryKeyConstraint.Equals(newTable.PrimaryKeyConstraint) {
-				sql = append(sql, operator.CreateConstraint(oldTable, oldTableUniqueConstraints, newTable.PrimaryKeyConstraint)...)
-			}
-		}
-	}
-
-	// Drop foreign key constraints that are in the old table but not in the new table.
-	for _, fkConstraint := range oldTable.ForeignKeyConstraints {
-		if index := operator.findForeignKeyConstraint(newTable, fkConstraint); index == -1 {
-			sql = append(sql, operator.DropConstraint(oldTable, oldTableUniqueConstraints, fkConstraint)...)
+		if !oldTable.PrimaryKeyConstraint.Equals(newTable.PrimaryKeyConstraint) {
+			sql = append(sql, operator.CreateConstraint(oldTable, oldTableUniqueConstraints, newTable.PrimaryKeyConstraint)...)
 		}
 	}
 
@@ -99,12 +135,12 @@ func (operator *Operator) AlterTable(oldTable *Table, oldTableUniqueConstraints 
 		}
 	}
 
-	// Drop all unique constraints and create indices for the new table.
+	// Create indices for the new table.
 	for _, uniqueConstraint := range oldTableUniqueConstraints {
-		sql = append(sql, operator.DropConstraint(oldTable, oldTableUniqueConstraints, uniqueConstraint)...)
 		sql = append(sql, uniqueConstraint.ToIndex(oldTable.Name).ToCreateSQL(operator.fmter))
 	}
 
+	// Remove duplicate SQLs.
 	return slices.CompactFunc(sql, func(a, b []byte) bool {
 		return string(a) == string(b)
 	})
@@ -286,7 +322,11 @@ func (operator *Operator) DropConstraint(table *Table, uniqueConstraints []*Uniq
 			return [][]byte{uniqueConstraints[uniqueConstraintIndex].ToDropSQL(operator.fmter, table.Name)}
 		}
 
-		return operator.RecreateTable(table, append(uniqueConstraints[:uniqueConstraintIndex], uniqueConstraints[uniqueConstraintIndex+1:]...))
+		var copyOfUniqueConstraints []*UniqueConstraint
+		copyOfUniqueConstraints = append(copyOfUniqueConstraints, uniqueConstraints[:uniqueConstraintIndex]...)
+		copyOfUniqueConstraints = append(copyOfUniqueConstraints, uniqueConstraints[uniqueConstraintIndex+1:]...)
+
+		return operator.RecreateTable(table, copyOfUniqueConstraints)
 	}
 
 	if operator.support.SCreateAndDropConstraint {
