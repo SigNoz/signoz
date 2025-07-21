@@ -145,6 +145,8 @@ export function parseAggregations(
 	expression: string,
 ): { expression: string; alias?: string }[] {
 	const result: { expression: string; alias?: string }[] = [];
+	// Matches function calls like "count()" or "sum(field)" with optional alias like "as 'alias'"
+	// Handles quoted ('alias'), dash-separated (field-name), and unquoted values after "as" keyword
 	const regex = /([a-zA-Z0-9_]+\([^)]*\))(?:\s*as\s+((?:'[^']*'|"[^"]*"|[a-zA-Z0-9_-]+)))?/g;
 	let match = regex.exec(expression);
 	while (match !== null) {
