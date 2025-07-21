@@ -233,7 +233,7 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 				{Name: sqlschema.ColumnName("id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
 				{Name: sqlschema.ColumnName("type"), DataType: sqlschema.DataTypeText, Nullable: true, Default: ""},
 				{Name: sqlschema.ColumnName("config"), DataType: sqlschema.DataTypeText, Nullable: true, Default: ""},
-				{Name: sqlschema.ColumnName("installed_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: true, Default: "current_timestamp"},
+				{Name: sqlschema.ColumnName("installed_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: true, Default: "CURRENT_TIMESTAMP"},
 				{Name: sqlschema.ColumnName("org_id"), DataType: sqlschema.DataTypeText, Nullable: true, Default: ""},
 			},
 			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("id")}},
@@ -631,29 +631,47 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 		_ = tx.Rollback()
 	}()
 
-	sqls := [][]byte{}
+	tableSQLs := [][]byte{}
 
 	// Alter or create tables.
 	for _, table := range tables {
 		existingTable, existingUniqueConstraints, err := migration.sqlschema.GetTable(ctx, table.Name)
 		if err != nil {
 			if errors.Ast(err, errors.TypeNotFound) {
-				sqls = append(sqls, migration.sqlschema.Operator().CreateTable(table)...)
+				tableSQLs = append(tableSQLs, migration.sqlschema.Operator().CreateTable(table)...)
 				continue
 			}
 
 			return err
 		}
 
-		sqls = append(sqls, migration.sqlschema.Operator().AlterTable(existingTable, existingUniqueConstraints, table)...)
+		tableSQLs = append(tableSQLs, migration.sqlschema.Operator().AlterTable(existingTable, existingUniqueConstraints, table)...)
 	}
 
-	// Create indices.
-	for _, index := range indices {
-		sqls = append(sqls, migration.sqlschema.Operator().CreateIndex(index)...)
+	// First, create/alter all tables. This is to ensure that the indices are created/altered after the tables are created/altered.
+	for _, sql := range tableSQLs {
+		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
+			return err
+		}
 	}
 
-	for _, sql := range sqls {
+	var existingIndices []sqlschema.Index
+	for _, table := range tables {
+		indices, err := migration.sqlschema.GetIndices(ctx, table.Name)
+		if err != nil {
+			if errors.Ast(err, errors.TypeNotFound) {
+				continue
+			}
+
+			return err
+		}
+
+		existingIndices = append(existingIndices, indices...)
+	}
+
+	indexSQLs := migration.sqlschema.Operator().DiffIndices(existingIndices, indices)
+
+	for _, sql := range indexSQLs {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
 		}

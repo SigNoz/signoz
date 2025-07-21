@@ -39,7 +39,6 @@ func (operator *Operator) RenameTable(table *Table, newName TableName) [][]byte 
 	return [][]byte{table.ToRenameSQL(operator.fmter, newName)}
 }
 
-// Returns a list of SQL statements to convert the table to the new table.
 func (operator *Operator) AlterTable(oldTable *Table, oldTableUniqueConstraints []*UniqueConstraint, newTable *Table) [][]byte {
 	sql := [][]byte{}
 
@@ -295,6 +294,30 @@ func (operator *Operator) DropConstraint(table *Table, uniqueConstraints []*Uniq
 	return operator.RecreateTable(table, uniqueConstraints)
 }
 
+func (operator *Operator) DiffIndices(oldIndices []Index, newIndices []Index) [][]byte {
+	sqls := [][]byte{}
+
+	for i, oldIndex := range oldIndices {
+		if index := operator.findIndex(newIndices, oldIndex); index == -1 {
+			sqls = append(sqls, oldIndex.ToDropSQL(operator.fmter))
+			continue
+		}
+
+		if oldIndex.IsNamed() {
+			sqls = append(sqls, oldIndex.ToDropSQL(operator.fmter))
+			sqls = append(sqls, newIndices[i].ToCreateSQL(operator.fmter))
+		}
+	}
+
+	for _, newIndex := range newIndices {
+		if index := operator.findIndex(oldIndices, newIndex); index == -1 {
+			sqls = append(sqls, newIndex.ToCreateSQL(operator.fmter))
+		}
+	}
+
+	return sqls
+}
+
 func (*Operator) findColumnByName(table *Table, columnName ColumnName) int {
 	for i, column := range table.Columns {
 		if column.Name == columnName {
@@ -326,6 +349,16 @@ func (*Operator) findForeignKeyConstraint(table *Table, constraint Constraint) i
 
 	for i, fkConstraint := range table.ForeignKeyConstraints {
 		if fkConstraint.Equals(constraint) {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func (*Operator) findIndex(indices []Index, index Index) int {
+	for i, inputIndex := range indices {
+		if index.Equals(inputIndex) {
 			return i
 		}
 	}

@@ -73,7 +73,7 @@ func (provider *provider) GetIndices(ctx context.Context, tableName sqlschema.Ta
 		BunDB().
 		QueryContext(ctx, "SELECT * FROM PRAGMA_index_list(?)", string(tableName))
 	if err != nil {
-		return nil, err
+		return nil, provider.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "no indices for table (%s) found", tableName)
 	}
 
 	defer func() {
@@ -115,10 +115,16 @@ func (provider *provider) GetIndices(ctx context.Context, tableName sqlschema.Ta
 		}
 
 		if unique {
-			indices = append(indices, (&sqlschema.UniqueIndex{
+			index := &sqlschema.UniqueIndex{
 				TableName:   tableName,
 				ColumnNames: columns,
-			}).Named(name).(*sqlschema.UniqueIndex))
+			}
+
+			if index.Name() == name {
+				indices = append(indices, index)
+			} else {
+				indices = append(indices, index.Named(name))
+			}
 		}
 	}
 
