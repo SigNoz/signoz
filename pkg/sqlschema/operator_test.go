@@ -1,6 +1,7 @@
 package sqlschema
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -1094,7 +1095,8 @@ func TestOperatorAlterTable(t *testing.T) {
 				Columns: []*Column{
 					{Name: "uuid", DataType: DataTypeText, Nullable: false, Default: ""},
 				},
-				PrimaryKeyConstraint: &PrimaryKeyConstraint{ColumnNames: []ColumnName{"uuid"}},
+				PrimaryKeyConstraint:  &PrimaryKeyConstraint{ColumnNames: []ColumnName{"uuid"}},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{},
 			},
 			expected: map[OperatorSupport][][]byte{
 				{SCreateAndDropConstraint: false, SAlterTableAddAndDropColumnIfNotExistsAndExists: false, SAlterTableAlterColumnSetAndDrop: false}: {
@@ -1114,10 +1116,18 @@ func TestOperatorAlterTable(t *testing.T) {
 					[]byte(`DROP TABLE IF EXISTS "users"`),
 					[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
 					// third drop to add the primary key constraint
-					[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" TEXT NOT NULL, "uuid" TEXT NOT NULL DEFAULT '', CONSTRAINT "pk_users" PRIMARY KEY ("uuid"))`),
-					[]byte(`INSERT INTO "users__temp" ("id", "uuid") SELECT "id", "uuid" FROM "users"`),
+					[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("uuid" TEXT NOT NULL, CONSTRAINT "pk_users" PRIMARY KEY ("uuid"))`),
+					[]byte(`INSERT INTO "users__temp" ("uuid") SELECT "uuid" FROM "users"`),
 					[]byte(`DROP TABLE IF EXISTS "users"`),
 					[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
+				},
+				{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}: {
+					[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "pk_users"`),
+					[]byte(`ALTER TABLE "users" DROP COLUMN IF EXISTS "id"`),
+					[]byte(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "uuid" TEXT`),
+					[]byte(`UPDATE "users" SET "uuid" = ''`),
+					[]byte(`ALTER TABLE "users" ALTER COLUMN "uuid" SET NOT NULL`),
+					[]byte(`ALTER TABLE "users" ADD CONSTRAINT "pk_users" PRIMARY KEY ("uuid")`),
 				},
 			},
 		},
@@ -1131,6 +1141,9 @@ func TestOperatorAlterTable(t *testing.T) {
 				clonedTable := testCase.table.Clone()
 
 				actuals := operator.AlterTable(clonedTable, testCase.uniqueConstraints, testCase.newTable)
+				for _, sql := range actuals {
+					fmt.Println(string(sql))
+				}
 				assert.Equal(t, sqls, actuals)
 				assert.EqualValues(t, testCase.newTable, clonedTable)
 			}
