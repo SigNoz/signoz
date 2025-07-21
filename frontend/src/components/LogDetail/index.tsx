@@ -72,7 +72,7 @@ function LogDetailInner({
 	const [, copyToClipboard] = useCopyToClipboard();
 	const [selectedView, setSelectedView] = useState<VIEWS>(selectedTab);
 
-	const [isFilterVisibile, setIsFilterVisible] = useState<boolean>(false);
+	const [isFilterVisible, setIsFilterVisible] = useState<boolean>(false);
 
 	const [filters, setFilters] = useState<TagFilter | null>(null);
 	const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -109,7 +109,7 @@ function LogDetailInner({
 	};
 
 	const handleFilterVisible = (): void => {
-		setIsFilterVisible(!isFilterVisibile);
+		setIsFilterVisible(!isFilterVisible);
 		setIsEdit(!isEdit);
 	};
 
@@ -309,7 +309,7 @@ function LogDetailInner({
 					/>
 				)}
 			</div>
-			{isFilterVisibile && contextQuery?.builder.queryData[0] && (
+			{isFilterVisible && contextQuery?.builder.queryData[0] && (
 				<div className="log-detail-drawer-query-container">
 					<QuerySearch
 						onChange={() => {}}
