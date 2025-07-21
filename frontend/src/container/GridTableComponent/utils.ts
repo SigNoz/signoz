@@ -1,7 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { ColumnsType, ColumnType } from 'antd/es/table';
-import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { convertUnit } from 'container/NewWidget/RightContainer/dataFormatCategories';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
@@ -100,7 +98,12 @@ export function findMatchingThreshold(
 }
 
 export interface TableData {
-	columns: { name: string; queryName: string; isValueColumn: boolean }[];
+	columns: {
+		name: string;
+		queryName: string;
+		isValueColumn: boolean;
+		id: string;
+	}[];
 	rows: { data: any }[];
 }
 
@@ -185,20 +188,15 @@ export function createColumnsAndDataSource(
 				? getQueryLegend(currentQuery, item.queryName)
 				: undefined;
 
-			const isMultipleAggregations =
-				createAggregation(
-					currentQuery.queryType === EQueryType.QUERY_BUILDER
-						? currentQuery.builder?.queryData?.find(
-								(query) => query.queryName === item.queryName,
-						  )
-						: undefined,
-					PANEL_TYPES.TABLE,
-				)?.length > 1;
+			const isNewAggregation =
+				currentQuery?.builder?.queryData?.find(
+					(query) => query.queryName === item.queryName,
+				)?.aggregations?.length || 0;
 
 			const column: ColumnType<RowData> = {
-				dataIndex: item.name,
+				dataIndex: item.id || item.name,
 				// if no legend present then rely on the column name value
-				title: !isMultipleAggregations && !isEmpty(legend) ? legend : item.name,
+				title: !isNewAggregation && !isEmpty(legend) ? legend : item.name,
 				width: QUERY_TABLE_CONFIG.width,
 				render: renderColumnCell && renderColumnCell[item.name],
 				sorter: (a: RowData, b: RowData): number => sortFunction(a, b, item),

@@ -571,10 +571,16 @@ export const getQueryTitles = (currentQuery: Query): string[] => {
 	return currentQuery.promql.map((q) => q.name);
 };
 
+function getColId(
+	queryName: string,
+	aggregation: { alias?: string; expression?: string },
+): string {
+	return `${queryName}.${aggregation.expression}`;
+}
+
 // function to give you label value for query name taking multiaggregation into account
 export function getQueryLabelWithAggregation(
 	queryData: IBuilderQuery[],
-	legendMap: Record<string, string> = {},
 ): { label: string; value: string }[] {
 	const labels: { label: string; value: string }[] = [];
 
@@ -590,28 +596,21 @@ export function getQueryLabelWithAggregation(
 		}, {} as Record<string, any>) || {};
 
 	Object.entries(aggregationPerQuery).forEach(([queryName, aggregations]) => {
-		const legend = legendMap[queryName];
+		const isMultipleAggregations = aggregations.length > 1;
 
-		if (aggregations.length > 1) {
-			aggregations.forEach((agg: any, index: number) => {
-				const aggregationName = agg.alias || agg.expression || '';
-				const label = `${queryName}.${index}`;
-				const value = legend
-					? `${aggregationName}-${legend}`
-					: `${queryName}.${aggregationName}`;
-				labels.push({
-					label,
-					value,
-				});
-			});
-		} else if (aggregations.length === 1) {
-			const label = legend || queryName;
-			const value = legend || queryName;
+		aggregations.forEach((agg: any, index: number) => {
+			const columnId = getColId(queryName, agg);
+
+			// For display purposes, show the aggregation index for multiple aggregations
+			const displayLabel = isMultipleAggregations
+				? `${queryName}.${index}`
+				: queryName;
+
 			labels.push({
-				label,
-				value,
+				label: displayLabel,
+				value: columnId, // This matches the ID format used in table columns
 			});
-		}
+		});
 	});
 
 	return labels;
@@ -619,7 +618,6 @@ export function getQueryLabelWithAggregation(
 
 export const adjustQueryForV5 = (currentQuery: Query): Query => {
 	if (currentQuery.queryType === EQueryType.QUERY_BUILDER) {
-		console.log('currentQuery', currentQuery);
 		const newQueryData = currentQuery.builder.queryData.map((query) => {
 			const aggregations = query.aggregations?.map((aggregation) => {
 				if (query.dataSource === DataSource.METRICS) {

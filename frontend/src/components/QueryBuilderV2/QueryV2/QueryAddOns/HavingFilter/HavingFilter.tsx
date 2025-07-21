@@ -13,6 +13,7 @@ import { javascript } from '@codemirror/lang-javascript';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import CodeMirror, { EditorView, keymap } from '@uiw/react-codemirror';
 import { Button } from 'antd';
+import { Having } from 'api/v5/v5';
 import { useQueryBuilderV2Context } from 'components/QueryBuilderV2/QueryBuilderV2Context';
 import { X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -92,13 +93,12 @@ function HavingFilter({
 	queryData: IBuilderQuery;
 }): JSX.Element {
 	const { aggregationOptions } = useQueryBuilderV2Context();
-	const [input, setInput] = useState(
-		queryData?.havingExpression?.expression || '',
-	);
+	const having = queryData?.having as Having;
+	const [input, setInput] = useState(having?.expression || '');
 
 	useEffect(() => {
-		setInput(queryData?.havingExpression?.expression || '');
-	}, [queryData?.havingExpression?.expression]);
+		setInput(having?.expression || '');
+	}, [having?.expression]);
 
 	const [isFocused, setIsFocused] = useState(false);
 

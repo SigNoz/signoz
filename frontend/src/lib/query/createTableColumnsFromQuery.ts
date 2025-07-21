@@ -93,7 +93,10 @@ const getQueryByName = <T extends keyof QueryBuilderData>(
 		);
 	}
 	if (query.queryType === EQueryType.QUERY_BUILDER) {
-		const queryArray = query.builder[type];
+		const queryArray = (query.builder[type] || []) as (
+			| IBuilderQuery
+			| IBuilderFormula
+		)[];
 		const defaultValue =
 			type === 'queryData'
 				? initialQueryBuilderFormValues

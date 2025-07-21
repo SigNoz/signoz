@@ -77,7 +77,7 @@ function WidgetGraphContainer({
 			</NotFoundContainer>
 		);
 	}
-	console.log('queryResponse-widget', queryResponse);
+
 	return (
 		<WidgetGraph
 			selectedWidget={selectedWidget}
