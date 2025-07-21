@@ -33,7 +33,6 @@ import {
 	Compass,
 	Copy,
 	Filter,
-	HardHat,
 	Table,
 	TextSelect,
 	X,
@@ -48,12 +47,15 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
-import { LogDetailProps } from './LogDetail.interfaces';
-import QueryBuilderSearchWrapper from './QueryBuilderSearchWrapper';
+import { LogDetailProps, LogDetailInnerProps } from './LogDetail.interfaces';
+import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
+import useInitialQuery from 'container/LogsExplorerContext/useInitialQuery';
+import { cloneDeep } from 'lodash-es';
+import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 
 const convert = new Convert();
 
-function LogDetail({
+function LogDetailInner({
 	log,
 	onClose,
 	onAddToQuery,
@@ -62,13 +64,16 @@ function LogDetail({
 	selectedTab,
 	isListViewPanel = false,
 	listViewPanelSelectedFields,
-}: LogDetailProps): JSX.Element {
+}: LogDetailInnerProps): JSX.Element {
+	const initialContextQuery = useInitialQuery(log);
+	const [contextQuery, setContextQuery] = useState<Query | undefined>(
+		initialContextQuery,
+	);
 	const [, copyToClipboard] = useCopyToClipboard();
 	const [selectedView, setSelectedView] = useState<VIEWS>(selectedTab);
 
-	const [isFilterVisibile, setIsFilterVisible] = useState<boolean>(false);
+	const [isFilterVisible, setIsFilterVisible] = useState<boolean>(false);
 
-	const [contextQuery, setContextQuery] = useState<Query | undefined>();
 	const [filters, setFilters] = useState<TagFilter | null>(null);
 	const [isEdit, setIsEdit] = useState<boolean>(false);
 	const { stagedQuery } = useQueryBuilder();
@@ -104,7 +109,7 @@ function LogDetail({
 	};
 
 	const handleFilterVisible = (): void => {
-		setIsFilterVisible(!isFilterVisibile);
+		setIsFilterVisible(!isFilterVisible);
 		setIsEdit(!isEdit);
 	};
 
@@ -142,17 +147,52 @@ function LogDetail({
 		safeNavigate(`${ROUTES.LOGS_EXPLORER}?${urlQuery.toString()}`);
 	};
 
+	const handleRunQuery = (expression: string): void => {
+		let updatedContextQuery = cloneDeep(contextQuery);
+
+		if (!updatedContextQuery || !updatedContextQuery.builder) {
+			return;
+		}
+
+		const newFilters: TagFilter = {
+			items: expression ? convertExpressionToFilters(expression) : [],
+			op: 'AND',
+		};
+
+		updatedContextQuery = {
+			...updatedContextQuery,
+			builder: {
+				...updatedContextQuery?.builder,
+				queryData: updatedContextQuery?.builder.queryData.map((queryData) => {
+					return {
+						...queryData,
+						filter: {
+							...queryData.filter,
+							expression: expression,
+						},
+						filters: {
+							...queryData.filters,
+							...newFilters,
+							op: queryData.filters?.op ?? 'AND',
+						},
+					};
+				}),
+			},
+		};
+
+		setContextQuery(updatedContextQuery);
+
+		if (newFilters) {
+			setFilters(newFilters);
+		}
+	};
+
 	// Only show when opened from infra monitoring page
 	const showOpenInExplorerBtn = useMemo(
 		() => location.pathname?.includes('/infrastructure-monitoring'),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[],
 	);
-
-	if (!log) {
-		// eslint-disable-next-line react/jsx-no-useless-fragment
-		return <></>;
-	}
 
 	const logType = log?.attributes_string?.log_level || LogType.INFO;
 
@@ -269,18 +309,16 @@ function LogDetail({
 					/>
 				)}
 			</div>
-
-			<QueryBuilderSearchWrapper
-				isEdit={isEdit}
-				log={log}
-				filters={filters}
-				setContextQuery={setContextQuery}
-				setFilters={setFilters}
-				contextQuery={contextQuery}
-				suffixIcon={
-					<HardHat size={12} style={{ paddingRight: Spacing.PADDING_2 }} />
-				}
-			/>
+			{isFilterVisible && contextQuery?.builder.queryData[0] && (
+				<div className="log-detail-drawer-query-container">
+					<QuerySearch
+						onChange={() => {}}
+						dataSource={DataSource.LOGS}
+						queryData={contextQuery?.builder.queryData[0]}
+						onRun={handleRunQuery}
+					/>
+				</div>
+			)}
 
 			{selectedView === VIEW_TYPES.OVERVIEW && (
 				<Overview
@@ -314,6 +352,15 @@ function LogDetail({
 			)}
 		</Drawer>
 	);
+}
+
+function LogDetail(props: LogDetailProps): JSX.Element {
+	if (!props.log) {
+		// eslint-disable-next-line react/jsx-no-useless-fragment
+		return <></>;
+	}
+
+	return <LogDetailInner {...(props as LogDetailInnerProps)} />;
 }
 
 export default LogDetail;

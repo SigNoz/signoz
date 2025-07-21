@@ -76,10 +76,12 @@ function QuerySearch({
 	onChange,
 	queryData,
 	dataSource,
+	onRun,
 }: {
 	onChange: (value: string) => void;
 	queryData: IBuilderQuery;
 	dataSource: DataSource;
+	onRun?: (query: string) => void;
 }): JSX.Element {
 	const [query, setQuery] = useState<string>(queryData.filter?.expression || '');
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([
@@ -1164,7 +1166,11 @@ function QuerySearch({
 									// and instead run a custom action
 									// Mod-Enter is usually Ctrl-Enter or Cmd-Enter based on OS
 									run: (): boolean => {
-										handleRunQuery(true, true);
+										if (onRun && typeof onRun === 'function') {
+											onRun(query);
+										} else {
+											handleRunQuery(true, true);
+										}
 										return true;
 									},
 								},
