@@ -1177,7 +1177,7 @@ function QuerySearch({
 							]),
 						),
 					]}
-					placeholder="Enter your query (e.g., status = 'error' AND service = 'frontend')"
+					placeholder="Enter your filter query (e.g., status = 'error' AND service = 'frontend')"
 					basicSetup={{
 						lineNumbers: false,
 					}}
