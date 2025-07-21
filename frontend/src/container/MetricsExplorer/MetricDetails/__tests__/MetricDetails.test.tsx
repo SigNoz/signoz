@@ -1,16 +1,16 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { MetricDetails } from 'api/metricsExplorer/getMetricDetails';
+import { MetricDetails as MetricDetailsType } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import ROUTES from 'constants/routes';
 import * as useGetMetricDetails from 'hooks/metricsExplorer/useGetMetricDetails';
 import * as useUpdateMetricMetadata from 'hooks/metricsExplorer/useUpdateMetricMetadata';
 import * as useHandleExplorerTabChange from 'hooks/useHandleExplorerTabChange';
 
-import MetricDetailsView from '../MetricDetails';
+import MetricDetails from '../MetricDetails';
 
 const mockMetricName = 'test-metric';
 const mockMetricDescription = 'description for a test metric';
-const mockMetricData: MetricDetails = {
+const mockMetricData: MetricDetailsType = {
 	name: mockMetricName,
 	description: mockMetricDescription,
 	unit: 'count',
@@ -84,7 +84,7 @@ jest.mock('hooks/useSafeNavigate', () => ({
 describe('MetricDetails', () => {
 	it('renders metric details correctly', () => {
 		render(
-			<MetricDetailsView
+			<MetricDetails
 				onClose={mockOnClose}
 				isOpen
 				isModalTimeSelection
@@ -114,7 +114,7 @@ describe('MetricDetails', () => {
 			},
 		} as any);
 		render(
-			<MetricDetailsView
+			<MetricDetails
 				onClose={mockOnClose}
 				isOpen
 				metricName={mockMetricName}
@@ -143,7 +143,7 @@ describe('MetricDetails', () => {
 		} as any);
 
 		render(
-			<MetricDetailsView
+			<MetricDetails
 				onClose={mockOnClose}
 				isOpen
 				metricName={mockMetricName}
@@ -162,7 +162,7 @@ describe('MetricDetails', () => {
 		} as any);
 
 		render(
-			<MetricDetailsView
+			<MetricDetails
 				onClose={mockOnClose}
 				isOpen
 				metricName={mockMetricName}
@@ -179,7 +179,7 @@ describe('MetricDetails', () => {
 			.spyOn(useGetMetricDetails, 'useGetMetricDetails')
 			.mockReturnValue(mockUseGetMetricDetailsData as any);
 		render(
-			<MetricDetailsView
+			<MetricDetails
 				onClose={mockOnClose}
 				isOpen
 				metricName={mockMetricName}
@@ -204,7 +204,7 @@ describe('MetricDetails', () => {
 			},
 		} as any);
 		render(
-			<MetricDetailsView
+			<MetricDetails
 				onClose={mockOnClose}
 				isOpen
 				metricName={mockMetricName}
