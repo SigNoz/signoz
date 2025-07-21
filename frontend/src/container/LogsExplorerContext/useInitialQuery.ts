@@ -1,3 +1,4 @@
+import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ILog } from 'types/api/logs/log';
@@ -39,11 +40,13 @@ const useInitialQuery = (log: ILog): Query => {
 					items: [...(item.filters?.items || []), ...resourcesFilters],
 					op: item.filters?.op || 'AND',
 				};
-
 				const updatedFilters = updateFilters(filters);
-
+				const { expression } = convertFiltersToExpression(updatedFilters);
 				return {
 					...item,
+					filter: {
+						expression,
+					},
 					filters: updatedFilters,
 				};
 			}),
