@@ -2,6 +2,7 @@ package sqlschema
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/uptrace/bun/schema"
@@ -270,6 +271,35 @@ func TestOperatorAddColumn(t *testing.T) {
 				},
 				{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}: {
 					[]byte(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "is_admin" BOOLEAN DEFAULT TRUE`),
+				},
+			},
+		},
+		{
+			name: "TimestampNullableDefaultValAndVal_DoesNotExist",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+			},
+			column: &Column{Name: "created_at", DataType: DataTypeTimestamp, Nullable: true, Default: "CURRENT_TIMESTAMP"},
+			val:    time.Time{},
+			expectedTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "created_at", DataType: DataTypeTimestamp, Nullable: true, Default: "CURRENT_TIMESTAMP"},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{},
+			},
+			expected: map[OperatorSupport][][]byte{
+				{SCreateAndDropConstraint: false, SAlterTableAddAndDropColumnIfNotExistsAndExists: false, SAlterTableAlterColumnSetAndDrop: false}: {
+					[]byte(`ALTER TABLE "users" ADD COLUMN "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP`),
+					[]byte(`UPDATE "users" SET "created_at" = '0001-01-01 00:00:00+00:00'`),
+				},
+				{SCreateAndDropConstraint: true, SAlterTableAddAndDropColumnIfNotExistsAndExists: true, SAlterTableAlterColumnSetAndDrop: true}: {
+					[]byte(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP`),
+					[]byte(`UPDATE "users" SET "created_at" = '0001-01-01 00:00:00+00:00'`),
 				},
 			},
 		},
