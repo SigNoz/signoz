@@ -46,6 +46,15 @@ function ListViewOrderBy({
 		},
 	});
 
+	useEffect(
+		() => (): void => {
+			if (debounceTimer.current) {
+				clearTimeout(debounceTimer.current);
+			}
+		},
+		[],
+	);
+
 	// Update options when API data changes
 	useEffect(() => {
 		const rawKeys: QueryKeyDataSuggestionsProps[] = data?.data.keys
@@ -63,12 +72,6 @@ function ListViewOrderBy({
 		]);
 
 		setSelectOptions(updatedOptions);
-
-		return (): void => {
-			if (debounceTimer.current) {
-				clearTimeout(debounceTimer.current);
-			}
-		};
 	}, [data, searchInput]);
 
 	// Handle search input with debounce
