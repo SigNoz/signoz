@@ -14,6 +14,7 @@ function InputWithLabel({
 	labelAfter,
 	onChange,
 	className,
+	closeIcon,
 }: {
 	label: string;
 	initialValue?: string | number;
@@ -23,6 +24,7 @@ function InputWithLabel({
 	labelAfter?: boolean;
 	onChange: (value: string) => void;
 	className?: string;
+	closeIcon?: React.ReactNode;
 }): JSX.Element {
 	const [inputValue, setInputValue] = useState<string>(
 		initialValue ? initialValue.toString() : '',
@@ -52,7 +54,7 @@ function InputWithLabel({
 			{onClose && (
 				<Button
 					className="periscope-btn ghost close-btn"
-					icon={<X size={16} />}
+					icon={closeIcon || <X size={16} />}
 					onClick={onClose}
 				/>
 			)}
@@ -66,6 +68,7 @@ InputWithLabel.defaultProps = {
 	labelAfter: false,
 	initialValue: undefined,
 	className: undefined,
+	closeIcon: undefined,
 };
 
 export default InputWithLabel;

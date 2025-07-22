@@ -65,7 +65,6 @@ function QueryAggregationOptions({
 								type="number"
 								onChange={handleAggregationIntervalChange}
 								labelAfter
-								onClose={(): void => {}}
 							/>
 						</div>
 					</div>
