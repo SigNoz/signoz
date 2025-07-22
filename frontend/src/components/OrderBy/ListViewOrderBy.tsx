@@ -63,6 +63,12 @@ function ListViewOrderBy({
 		]);
 
 		setSelectOptions(updatedOptions);
+
+		return (): void => {
+			if (debounceTimer.current) {
+				clearTimeout(debounceTimer.current);
+			}
+		};
 	}, [data, searchInput]);
 
 	// Handle search input with debounce
