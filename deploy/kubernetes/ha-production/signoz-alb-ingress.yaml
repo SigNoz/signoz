@@ -1,0 +1,36 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: signoz-alb-ingress
+  namespace: signoz
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTP":443}]'
+    alb.ingress.kubernetes.io/healthcheck-path: /api/v1/health
+    alb.ingress.kubernetes.io/healthcheck-port: traffic-port
+    alb.ingress.kubernetes.io/tags: Environment=production,Application=signoz
+    # CloudFront compatibility
+    alb.ingress.kubernetes.io/group.name: signoz-alb
+    alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=60
+spec:
+  rules:
+  - http:
+      paths:
+      # OTLP HTTP endpoint for all telemetry data (logs/traces/metrics)
+      - path: /v1/
+        pathType: Prefix
+        backend:
+          service:
+            name: signoz-otel-collector
+            port:
+              number: 4318
+      # SigNoz UI (everything else)
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: signoz
+            port:
+              number: 8080
