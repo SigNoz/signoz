@@ -4,13 +4,10 @@ import { BugOutlined } from '@ant-design/icons';
 import { Button, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import Slack from 'container/SideNav/Slack';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Home, TriangleAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 function ErrorBoundaryFallback(): JSX.Element {
-	const { safeNavigate } = useSafeNavigate();
-
 	const { t } = useTranslation(['errorDetails']);
 
 	const onClickSlackHandler = (): void => {
@@ -19,8 +16,7 @@ function ErrorBoundaryFallback(): JSX.Element {
 
 	const handleReload = (): void => {
 		// Go to home page
-
-		safeNavigate(ROUTES.HOME);
+		window.location.href = ROUTES.HOME;
 	};
 	return (
 		<div className="error-boundary-fallback-container">
