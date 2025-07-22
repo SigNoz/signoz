@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
+import { AppProvider } from 'providers/App/App';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import { MemoryRouter, Route } from 'react-router-dom';
 
@@ -49,15 +50,17 @@ describe('Viewing and Navigating Funnels', () => {
 		const renderListComponent = (): RenderResult =>
 			render(
 				<MockQueryClientProvider>
-					<MemoryRouter initialEntries={[ROUTES.TRACES_FUNNELS]}>
-						<Route path={ROUTES.TRACES_FUNNELS}>
-							<TracesFunnels />
-						</Route>
-						{/* Add a dummy route for detail page to test navigation link */}
-						<Route path={ROUTES.TRACES_FUNNELS_DETAIL}>
-							<div>Mock Details Page</div>
-						</Route>
-					</MemoryRouter>
+					<AppProvider>
+						<MemoryRouter initialEntries={[ROUTES.TRACES_FUNNELS]}>
+							<Route path={ROUTES.TRACES_FUNNELS}>
+								<TracesFunnels />
+							</Route>
+							{/* Add a dummy route for detail page to test navigation link */}
+							<Route path={ROUTES.TRACES_FUNNELS_DETAIL}>
+								<div>Mock Details Page</div>
+							</Route>
+						</MemoryRouter>
+					</AppProvider>
 				</MockQueryClientProvider>,
 			);
 

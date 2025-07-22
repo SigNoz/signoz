@@ -10,6 +10,7 @@ import ROUTES from 'constants/routes';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import TracesFunnelDetails from 'pages/TracesFunnelDetails';
+import { AppProvider } from 'providers/App/App';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter, Route } from 'react-router-dom';
 
@@ -35,6 +36,20 @@ jest.mock('uplot', () => {
 		default: uplotMock,
 	};
 });
+
+jest.mock('providers/App/utils', () => ({
+	getUserDefaults: jest.fn(() => ({
+		accessJwt: 'mock-access-token',
+		refreshJwt: 'mock-refresh-token',
+		id: 'mock-user-id',
+		email: 'editor@example.com',
+		displayName: 'Test Editor',
+		createdAt: Date.now(),
+		organization: 'Test Organization',
+		orgId: 'mock-org-id',
+		role: 'EDITOR',
+	})),
+}));
 
 const successNotification = jest.fn();
 const errorNotification = jest.fn();
@@ -115,14 +130,16 @@ export const renderTraceFunnelRoutes = (
 ): RenderResult =>
 	render(
 		<QueryClientProvider client={queryClient}>
-			<MemoryRouter initialEntries={initialEntries}>
-				<Route path={ROUTES.TRACES_FUNNELS} exact>
-					<TracesFunnels />
-				</Route>
-				<Route path={ROUTES.TRACES_FUNNELS_DETAIL}>
-					<TracesFunnelDetails />
-				</Route>
-			</MemoryRouter>
+			<AppProvider>
+				<MemoryRouter initialEntries={initialEntries}>
+					<Route path={ROUTES.TRACES_FUNNELS} exact>
+						<TracesFunnels />
+					</Route>
+					<Route path={ROUTES.TRACES_FUNNELS_DETAIL}>
+						<TracesFunnelDetails />
+					</Route>
+				</MemoryRouter>
+			</AppProvider>
 		</QueryClientProvider>,
 	);
 
@@ -161,7 +178,7 @@ describe('Funnel Creation Flow', () => {
 			await screen.findByText(/no funnels yet/i);
 		});
 
-		it('should render the "New Funnel" button when the funnel list is empty', () => {
+		it('should render the "New Funnel" button when the funnel list is empty', async () => {
 			expect(screen.getAllByText(/new funnel/i).length).toBe(2);
 		});
 

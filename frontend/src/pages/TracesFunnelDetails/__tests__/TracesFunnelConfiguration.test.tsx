@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import ROUTES from 'constants/routes';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
+import { AppProvider } from 'providers/App/App';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter, Route } from 'react-router-dom';
 
@@ -101,6 +102,20 @@ jest.mock(REACT_ROUTER_DOM, () => ({
 	}),
 }));
 
+jest.mock('providers/App/utils', () => ({
+	getUserDefaults: jest.fn(() => ({
+		accessJwt: 'mock-access-token',
+		refreshJwt: 'mock-refresh-token',
+		id: 'mock-user-id',
+		email: 'editor@example.com',
+		displayName: 'Test Editor',
+		createdAt: Date.now(),
+		organization: 'Test Organization',
+		orgId: 'mock-org-id',
+		role: 'EDITOR',
+	})),
+}));
+
 // Mock data
 const mockFunnelId = 'test-funnel-id';
 const MOCK_FUNNEL_NAME = 'Test Funnel';
@@ -156,11 +171,13 @@ const queryClient = new QueryClient({
 const renderTracesFunnelDetails = (): ReturnType<typeof render> =>
 	render(
 		<QueryClientProvider client={queryClient}>
-			<MemoryRouter initialEntries={[`/traces/funnels/${mockFunnelId}`]}>
-				<Route path={ROUTES.TRACES_FUNNELS_DETAIL}>
-					<TracesFunnelDetails />
-				</Route>
-			</MemoryRouter>
+			<AppProvider>
+				<MemoryRouter initialEntries={[`/traces/funnels/${mockFunnelId}`]}>
+					<Route path={ROUTES.TRACES_FUNNELS_DETAIL}>
+						<TracesFunnelDetails />
+					</Route>
+				</MemoryRouter>
+			</AppProvider>
 		</QueryClientProvider>,
 	);
 

@@ -14,6 +14,7 @@ import Success, {
 } from 'container/TraceWaterfall/TraceWaterfallStates/Success/Success';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
+import { AppProvider } from 'providers/App/App';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import { act } from 'react-dom/test-utils';
 import { MemoryRouter } from 'react-router-dom';
@@ -53,11 +54,13 @@ const renderTraceWaterfallSuccess = (
 ): RenderResult =>
 	render(
 		<MockQueryClientProvider>
-			<FunnelProvider funnelId={firstFunnel.funnel_id}>
-				<MemoryRouter initialEntries={[ROUTES.TRACES_FUNNELS_DETAIL]}>
-					<Success {...mockSpanSuccessComponentProps} {...props} />
-				</MemoryRouter>
-			</FunnelProvider>
+			<AppProvider>
+				<FunnelProvider funnelId={firstFunnel.funnel_id}>
+					<MemoryRouter initialEntries={[ROUTES.TRACES_FUNNELS_DETAIL]}>
+						<Success {...mockSpanSuccessComponentProps} {...props} />
+					</MemoryRouter>
+				</FunnelProvider>
+			</AppProvider>
 		</MockQueryClientProvider>,
 	);
 
@@ -134,6 +137,20 @@ jest.mock(
 			return children;
 		},
 );
+
+jest.mock('providers/App/utils', () => ({
+	getUserDefaults: jest.fn(() => ({
+		accessJwt: 'mock-access-token',
+		refreshJwt: 'mock-refresh-token',
+		id: 'mock-user-id',
+		email: 'editor@example.com',
+		displayName: 'Test Editor',
+		createdAt: Date.now(),
+		organization: 'Test Organization',
+		orgId: 'mock-org-id',
+		role: 'EDITOR',
+	})),
+}));
 
 describe('Add span to funnel from trace details page', () => {
 	// Set NODE_ENV to development for modal to render
