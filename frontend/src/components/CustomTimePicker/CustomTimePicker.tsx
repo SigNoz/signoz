@@ -370,6 +370,7 @@ function CustomTimePicker({
 					onFocus={handleFocus}
 					onBlur={handleBlur}
 					onChange={handleInputChange}
+					data-1p-ignore
 					prefix={
 						inputValue && inputStatus === 'success' ? (
 							<CheckCircle size={14} color="#51E7A8" />
