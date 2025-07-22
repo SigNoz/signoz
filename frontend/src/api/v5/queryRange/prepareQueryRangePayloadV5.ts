@@ -15,6 +15,7 @@ import {
 	FieldDataType,
 	FunctionName,
 	GroupByKey,
+	Having,
 	LogAggregation,
 	MetricAggregation,
 	OrderBy,
@@ -114,9 +115,7 @@ function createBaseSpec(
 				  )
 				: undefined,
 		// legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
-		having: isEmpty(queryData.havingExpression)
-			? undefined
-			: queryData?.havingExpression,
+		having: isEmpty(queryData.having) ? undefined : (queryData?.having as Having),
 		functions: isEmpty(queryData.functions)
 			? undefined
 			: queryData.functions.map(
@@ -146,12 +145,16 @@ export function parseAggregations(
 	expression: string,
 ): { expression: string; alias?: string }[] {
 	const result: { expression: string; alias?: string }[] = [];
-	const regex = /([a-zA-Z0-9_]+\([^)]*\))(?:\s*as\s+([a-zA-Z0-9_]+))?/g;
+	// Matches function calls like "count()" or "sum(field)" with optional alias like "as 'alias'"
+	// Handles quoted ('alias'), dash-separated (field-name), and unquoted values after "as" keyword
+	const regex = /([a-zA-Z0-9_]+\([^)]*\))(?:\s*as\s+((?:'[^']*'|"[^"]*"|[a-zA-Z0-9_-]+)))?/g;
 	let match = regex.exec(expression);
 	while (match !== null) {
 		const expr = match[1];
-		const alias = match[2];
+		let alias = match[2];
 		if (alias) {
+			// Remove quotes if present
+			alias = alias.replace(/^['"]|['"]$/g, '');
 			result.push({ expression: expr, alias });
 		} else {
 			result.push({ expression: expr });

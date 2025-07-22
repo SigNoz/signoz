@@ -77,8 +77,7 @@ export type IBuilderQuery = {
 	groupBy: BaseAutocompleteData[];
 	expression: string;
 	disabled: boolean;
-	having: Having[];
-	havingExpression?: HavingV5;
+	having: Having[] | HavingV5;
 	limit: number | null;
 	stepInterval: number | undefined;
 	orderBy: OrderByPayload[];
