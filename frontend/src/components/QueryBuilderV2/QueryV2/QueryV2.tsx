@@ -116,6 +116,7 @@ export const QueryV2 = memo(function QueryV2({
 									showFunctions={
 										(version && version === ENTITY_VERSION_V4) ||
 										query.dataSource === DataSource.LOGS ||
+										query.dataSource === DataSource.METRICS ||
 										showFunctions ||
 										false
 									}
