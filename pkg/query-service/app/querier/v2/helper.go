@@ -305,11 +305,11 @@ func (q *querier) ValidateMetricNames(ctx context.Context, query *v3.CompositeQu
 			zap.L().Debug("error getting corresponding normalized metrics", zap.Error(err))
 			return
 		}
-		for k, m := range metrics {
-			if m {
+		for metricName, metricPresent := range metrics {
+			if metricPresent {
 				continue
 			} else {
-				zap.L().Warn("using normalized metric name", zap.String("metrics", k))
+				zap.L().Warn("using normalized metric name", zap.String("metrics", metricName))
 				continue
 			}
 		}
@@ -323,11 +323,11 @@ func (q *querier) ValidateMetricNames(ctx context.Context, query *v3.CompositeQu
 			zap.L().Debug("error getting corresponding normalized metrics", zap.Error(err))
 			return
 		}
-		for k, m := range metrics {
-			if m {
+		for metricName, metricPresent := range metrics {
+			if metricPresent {
 				continue
 			} else {
-				zap.L().Warn("using normalized metric name", zap.String("metrics", k))
+				zap.L().Warn("using normalized metric name", zap.String("metrics", metricName))
 				continue
 			}
 		}

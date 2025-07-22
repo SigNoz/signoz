@@ -6085,12 +6085,7 @@ func (r *ClickHouseReader) GetNormalizedStatus(
 		signozMetricDBName, signozTSTableNameV41Day, placeholders,
 	)
 
-	args := make([]any, len(uncached))
-	for i, v := range uncached {
-		args[i] = v
-	}
-
-	rows, err := r.db.Query(ctx, q, args...)
+	rows, err := r.db.Query(ctx, q)
 	if err != nil {
 		return nil, err
 	}
