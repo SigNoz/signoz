@@ -2318,6 +2318,20 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *
 		return &model.GetTTLResponseItem{MetricsTime: delTTL, MetricsMoveTime: moveTTL, ExpectedMetricsTime: ttlQuery.TTL, ExpectedMetricsMoveTime: ttlQuery.ColdStorageTTL, Status: status}, nil
 
 	case constants.LogsTTL:
+		hasCustomRetention, customRetentionErr := r.hasCustomRetentionColumn(ctx)
+		if customRetentionErr != nil {
+			zap.L().Error("Error checking for custom retention support", zap.Error(customRetentionErr))
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error checking for custom retention support: %v", customRetentionErr)}
+		}
+
+		if hasCustomRetention {
+			// Table has custom retention column, GetTTL is not supported for custom retention tables
+			zap.L().Error("GetTTL is not supported for logs tables with custom retention. Use GetTTLV2 instead")
+			return nil, &model.ApiError{
+				Typ: model.ErrorBadData,
+				Err: fmt.Errorf("GetTTL is not supported for logs tables with custom retention. Please use GetTTLV2 instead"),
+			}
+		}
 		tableNameArray := []string{r.logsDB + "." + r.logsTableName}
 		tableNameArray = getLocalTableNameArray(tableNameArray)
 		status, err := r.setTTLQueryStatus(ctx, orgID, tableNameArray)
