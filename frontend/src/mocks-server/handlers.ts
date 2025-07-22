@@ -5,6 +5,7 @@ import {
 import { rest } from 'msw';
 import {
 	mockErrorTracesData,
+	mockFunnelsListData,
 	mockOverviewData,
 	mockSlowTracesData,
 	mockStepsData,
@@ -291,6 +292,12 @@ export const handlers = [
 	),
 	rest.get('http://localhost/locales/en-US/common.json', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(commonEnTranslation)),
+	),
+	rest.get('http://localhost/api/v1/trace-funnels/list', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({ status: 'success', payload: mockFunnelsListData }),
+		),
 	),
 	rest.get(
 		'http://localhost/api/v1/trace-funnels/get/:funnelId',
