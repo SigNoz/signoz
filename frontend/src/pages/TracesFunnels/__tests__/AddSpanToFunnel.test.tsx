@@ -214,6 +214,8 @@ describe('Add span to funnel from trace details page', () => {
 		});
 
 		it('should display the add to funnel modal when the add to funnel icon is clicked', async () => {
+			expect(await screen.findByRole('dialog')).toBeInTheDocument();
+
 			const addSpanToFunnelModal = await screen.findByRole('dialog');
 
 			expect(
@@ -267,6 +269,8 @@ describe('Add span to funnel from trace details page', () => {
 		});
 		describe('funnel details view tests', () => {
 			beforeEach(async () => {
+				expect(await screen.findByRole('dialog')).toBeInTheDocument();
+
 				const addSpanToFunnelModal = await screen.findByRole('dialog');
 
 				const firstFunnelButton = await within(addSpanToFunnelModal).findByText(
@@ -281,6 +285,7 @@ describe('Add span to funnel from trace details page', () => {
 				});
 			});
 			it('should go to funnels details view of modal when a funnel is clicked, and go back to list view on clicking all funnels button', async () => {
+				expect(await screen.findByRole('dialog')).toBeInTheDocument();
 				const addSpanToFunnelModal = await screen.findByRole('dialog');
 
 				expect(
@@ -318,6 +323,7 @@ describe('Add span to funnel from trace details page', () => {
 			});
 
 			it('should render the funnel preview card correctly', async () => {
+				expect(await screen.findByRole('dialog')).toBeInTheDocument();
 				const addSpanToFunnelModal = await screen.findByRole('dialog');
 
 				expect(
@@ -328,6 +334,7 @@ describe('Add span to funnel from trace details page', () => {
 				).toBeInTheDocument();
 			});
 			it('should render the funnel steps correctly', async () => {
+				expect(await screen.findByRole('dialog')).toBeInTheDocument();
 				const addSpanToFunnelModal = await screen.findByRole('dialog');
 
 				const expectTextWithCount = async (
@@ -354,6 +361,7 @@ describe('Add span to funnel from trace details page', () => {
 				await expectTextWithCount('Replace', 2);
 			});
 			it('should replace the selected span and service names on clicking the replace button', async () => {
+				expect(await screen.findByRole('dialog')).toBeInTheDocument();
 				const addSpanToFunnelModal = await screen.findByRole('dialog');
 
 				expect(within(addSpanToFunnelModal).getByText('SpanA')).toBeInTheDocument();
@@ -378,6 +386,7 @@ describe('Add span to funnel from trace details page', () => {
 				expect(replaceButtons[0]).toBeDisabled();
 			});
 			it('should add the span as a new step on clicking the add for a new step button', async () => {
+				expect(await screen.findByRole('dialog')).toBeInTheDocument();
 				const addSpanToFunnelModal = await screen.findByRole('dialog');
 
 				const addNewStepButton = await within(
