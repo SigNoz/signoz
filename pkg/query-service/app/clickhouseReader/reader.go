@@ -239,6 +239,10 @@ func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, que
 	}
 
 	qry.Close()
+	err = prometheus.RemoveExtraLabels(res, prometheus.FingerprintAsPromLabelName)
+	if err != nil {
+		return nil, nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
 	return res, &qs, nil
 
 }
@@ -259,6 +263,10 @@ func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model
 	}
 
 	qry.Close()
+	err = prometheus.RemoveExtraLabels(res, prometheus.FingerprintAsPromLabelName)
+	if err != nil {
+		return nil, nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
 	return res, &qs, nil
 }
 
