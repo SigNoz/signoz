@@ -30,6 +30,7 @@ type filterExpressionVisitor struct {
 	skipResourceFilter bool
 	skipFullTextFilter bool
 	skipFunctionCalls  bool
+	ignoreNotFoundKeys bool
 	variables          map[string]qbtypes.VariableItem
 
 	keysWithWarnings map[string]bool
@@ -46,6 +47,7 @@ type FilterExprVisitorOpts struct {
 	SkipResourceFilter bool
 	SkipFullTextFilter bool
 	SkipFunctionCalls  bool
+	IgnoreNotFoundKeys bool
 	Variables          map[string]qbtypes.VariableItem
 }
 
@@ -62,6 +64,7 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		skipResourceFilter: opts.SkipResourceFilter,
 		skipFullTextFilter: opts.SkipFullTextFilter,
 		skipFunctionCalls:  opts.SkipFunctionCalls,
+		ignoreNotFoundKeys: opts.IgnoreNotFoundKeys,
 		variables:          opts.Variables,
 		keysWithWarnings:   make(map[string]bool),
 	}
@@ -292,6 +295,15 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 	keys := v.Visit(ctx.Key()).([]*telemetrytypes.TelemetryFieldKey)
 
+	// if key is missing and can be ignored, the condition is ignored
+	if len(keys) == 0 && v.ignoreNotFoundKeys {
+		// Why do we return "true"? to prevent from create a empty tuple
+		// example, if the condition is (x AND (y OR z))
+		// if we find ourselves ignoring all, then it creates and invalid
+		// condition (()) which throws invalid tuples error
+		return "true"
+	}
+
 	// this is used to skip the resource filtering on main table if
 	// the query may use the resources table sub-query filter
 	if v.skipResourceFilter {
@@ -302,6 +314,13 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			}
 		}
 		keys = filteredKeys
+		if len(keys) == 0 {
+			// Why do we return "true"? to prevent from create a empty tuple
+			// example, if the condition is (resource.service.name='api' AND (env='prod' OR env='production'))
+			// if we find ourselves skipping all, then it creates and invalid
+			// condition (()) which throws invalid tuples error
+			return "true"
+		}
 	}
 
 	// Handle EXISTS specially
@@ -429,7 +448,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			var varItem qbtypes.VariableItem
 			varItem, ok = v.variables[var_]
 			// if not present, try without `$` prefix
-			if !ok {
+			if !ok && len(var_) > 0 {
 				varItem, ok = v.variables[var_[1:]]
 			}
 
@@ -680,6 +699,19 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 
 	fieldKeysForName := v.fieldKeys[keyName]
 
+	// if the context is explicitly provided, filter out the remaining
+	// example, resource.attr = 'value', then we don't want to search on
+	// anything other than the resource attributes
+	if fieldKey.FieldContext != telemetrytypes.FieldContextUnspecified {
+		filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
+		for _, item := range fieldKeysForName {
+			if item.FieldContext == fieldKey.FieldContext {
+				filteredKeys = append(filteredKeys, item)
+			}
+		}
+		fieldKeysForName = filteredKeys
+	}
+
 	// for the body json search, we need to add search on the body field even
 	// if there is a field with the same name as attribute/resource attribute
 	// Since it will ORed with the fieldKeysForName, it will not result empty
@@ -691,9 +723,16 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	}
 
 	if len(fieldKeysForName) == 0 {
+		// check if the key exists with {fieldContext}.{key}
+		// because the context could be legitimate prefix in user data, example `span.div_num = 20`
+		keyWithContext := fmt.Sprintf("%s.%s", fieldKey.FieldContext.StringValue(), fieldKey.Name)
+		if len(v.fieldKeys[keyWithContext]) > 0 {
+			return v.fieldKeys[keyWithContext]
+		}
+
 		if strings.HasPrefix(fieldKey.Name, v.jsonBodyPrefix) && v.jsonBodyPrefix != "" && keyName == "" {
 			v.errors = append(v.errors, "missing key for body json search - expected key of the form `body.key` (ex: `body.status`)")
-		} else {
+		} else if !v.ignoreNotFoundKeys {
 			// TODO(srikanthccv): do we want to return an error here?
 			// should we infer the type and auto-magically build a key for expression?
 			v.errors = append(v.errors, fmt.Sprintf("key `%s` not found", fieldKey.Name))
@@ -718,8 +757,13 @@ func trimQuotes(txt string) string {
 	if len(txt) >= 2 {
 		if (txt[0] == '"' && txt[len(txt)-1] == '"') ||
 			(txt[0] == '\'' && txt[len(txt)-1] == '\'') {
-			return txt[1 : len(txt)-1]
+			txt = txt[1 : len(txt)-1]
 		}
 	}
+
+	// unescape so clickhouse-go can escape it
+	// https://github.com/ClickHouse/clickhouse-go/blob/6c5ddb38dd2edc841a3b927711b841014759bede/bind.go#L278
+	txt = strings.ReplaceAll(txt, `\\`, `\`)
+	txt = strings.ReplaceAll(txt, `\'`, `'`)
 	return txt
 }

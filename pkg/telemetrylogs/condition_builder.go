@@ -148,11 +148,6 @@ func (c *conditionBuilder) conditionFor(
 			}
 		}
 
-		// if the field is intrinsic, it always exists
-		if slices.Contains(maps.Keys(IntrinsicFields), key.Name) {
-			return "true", nil
-		}
-
 		var value any
 		switch column.Type {
 		case schema.ColumnTypeString, schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}:

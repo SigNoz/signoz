@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import * as useHandleExplorerTabChange from 'hooks/useHandleExplorerTabChange';
+import * as reactUseHooks from 'react-use';
 
 import { MetricDetailsAttribute } from '../../../../api/metricsExplorer/getMetricDetails';
 import ROUTES from '../../../../constants/routes';
@@ -33,6 +34,11 @@ const mockAttributes: MetricDetailsAttribute[] = [
 		valueCount: 1,
 	},
 ];
+
+const mockUseCopyToClipboard = jest.fn();
+jest
+	.spyOn(reactUseHooks, 'useCopyToClipboard')
+	.mockReturnValue([{ value: 'value1' }, mockUseCopyToClipboard] as any);
 
 describe('AllAttributes', () => {
 	it('renders attributes section with title', () => {
@@ -164,5 +170,43 @@ describe('AllAttributesValue', () => {
 			/>,
 		);
 		expect(screen.queryByText('Show More')).not.toBeInTheDocument();
+	});
+
+	it('copy button should copy the attribute value to the clipboard', () => {
+		render(
+			<AllAttributesValue
+				filterKey="attribute1"
+				filterValue={['value1', 'value2']}
+				goToMetricsExploreWithAppliedAttribute={
+					mockGoToMetricsExploreWithAppliedAttribute
+				}
+			/>,
+		);
+		expect(screen.getByText('value1')).toBeInTheDocument();
+		fireEvent.click(screen.getByText('value1'));
+		expect(screen.getByText('Copy Attribute')).toBeInTheDocument();
+		fireEvent.click(screen.getByText('Copy Attribute'));
+		expect(mockUseCopyToClipboard).toHaveBeenCalledWith('value1');
+	});
+
+	it('explorer button should go to metrics explore with the attribute filter applied', () => {
+		render(
+			<AllAttributesValue
+				filterKey="attribute1"
+				filterValue={['value1', 'value2']}
+				goToMetricsExploreWithAppliedAttribute={
+					mockGoToMetricsExploreWithAppliedAttribute
+				}
+			/>,
+		);
+		expect(screen.getByText('value1')).toBeInTheDocument();
+		fireEvent.click(screen.getByText('value1'));
+
+		expect(screen.getByText('Open in Explorer')).toBeInTheDocument();
+		fireEvent.click(screen.getByText('Open in Explorer'));
+		expect(mockGoToMetricsExploreWithAppliedAttribute).toHaveBeenCalledWith(
+			'attribute1',
+			'value1',
+		);
 	});
 });

@@ -96,11 +96,41 @@ function HostsList(): JSX.Element {
 		};
 	}, [pageSize, currentPage, filters, minTime, maxTime, orderBy]);
 
+	const queryKey = useMemo(() => {
+		if (selectedHostName) {
+			return [
+				'hostList',
+				String(pageSize),
+				String(currentPage),
+				JSON.stringify(filters),
+				JSON.stringify(orderBy),
+			];
+		}
+		return [
+			'hostList',
+			String(pageSize),
+			String(currentPage),
+			JSON.stringify(filters),
+			JSON.stringify(orderBy),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		pageSize,
+		currentPage,
+		filters,
+		orderBy,
+		selectedHostName,
+		minTime,
+		maxTime,
+	]);
+
 	const { data, isFetching, isLoading, isError } = useGetHostList(
 		query as HostListPayload,
 		{
-			queryKey: ['hostList', query],
+			queryKey,
 			enabled: !!query,
+			keepPreviousData: true,
 		},
 	);
 
@@ -212,6 +242,7 @@ function HostsList(): JSX.Element {
 						<HostsListControls
 							filters={filters}
 							handleFiltersChange={handleFiltersChange}
+							showAutoRefresh={!selectedHostData}
 						/>
 					</div>
 					<HostsListTable

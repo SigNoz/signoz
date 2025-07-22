@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -13,6 +14,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
+	"golang.org/x/exp/maps"
 )
 
 var (
@@ -72,6 +74,8 @@ func (b *traceQueryStatementBuilder) Build(
 		return nil, err
 	}
 
+	b.adjustKeys(ctx, keys, query)
+
 	// Check if filter contains trace_id(s) and optimize time range if needed
 	if query.Filter != nil && query.Filter.Expression != "" && b.telemetryStore != nil {
 		traceIDs, found := ExtractTraceIDsFromFilter(query.Filter.Expression)
@@ -126,19 +130,17 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 
 	for idx := range query.SelectFields {
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          query.SelectFields[idx].Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  query.SelectFields[idx].FieldContext,
-			FieldDataType: query.SelectFields[idx].FieldDataType,
+			Name:         query.SelectFields[idx].Name,
+			Signal:       telemetrytypes.SignalTraces,
+			FieldContext: query.SelectFields[idx].FieldContext,
 		})
 	}
 
 	for idx := range query.Order {
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          query.Order[idx].Key.Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  query.Order[idx].Key.FieldContext,
-			FieldDataType: query.Order[idx].Key.FieldDataType,
+			Name:         query.Order[idx].Key.Name,
+			Signal:       telemetrytypes.SignalTraces,
+			FieldContext: query.Order[idx].Key.FieldContext,
 		})
 	}
 
@@ -147,6 +149,100 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 	}
 
 	return keySelectors
+}
+
+func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) {
+	// for group by / order by / selected fields, if there is a key
+	// that exactly matches the name of intrinsic / calculated field but has
+	// a field context or data type that doesn't match the field context or data type of the
+	// intrinsic field,
+	// and there is no additional key present in the data with the incoming key match,
+	// then override the given context with
+	// intrinsic / calculated field context and data type
+	// Why does that happen? Because we have a lot of assets created by users and shared over web
+	// that has incorrect context or data type populated so we fix it
+	// note: this override happens only when there is no match; if there is a match,
+	// we can't make decision on behalf of users so we let it use unmodified
+
+	// example: {"key": "httpRoute","type": "tag","dataType": "string"}
+	// This is sent as "tag", when it's not, this was earlier managed with
+	// `isColumn`, which we don't have in v5 (because it's not a user concern whether it's mat col or not)
+	// Such requests as-is look for attributes, the following code exists to handle them
+	checkMatch := func(k *telemetrytypes.TelemetryFieldKey) {
+		var overallMatch bool
+
+		findMatch := func(staticKeys map[string]telemetrytypes.TelemetryFieldKey) bool {
+			// for a given key `k`, iterate over the metadata keys `keys`
+			// and see if there is any exact match
+			match := false
+			for _, mapKey := range keys[k.Name] {
+				if mapKey.FieldContext == k.FieldContext && mapKey.FieldDataType == k.FieldDataType {
+					match = true
+				}
+			}
+			// we don't have exact match, then it's doesn't exist in attribute or resource attribute
+			// use the intrinsic/calculated field
+			if !match {
+				b.logger.InfoContext(ctx, "overriding the field context and data type", "key", k.Name)
+				k.FieldContext = staticKeys[k.Name].FieldContext
+				k.FieldDataType = staticKeys[k.Name].FieldDataType
+			}
+			return match
+		}
+
+		if _, ok := IntrinsicFields[k.Name]; ok {
+			overallMatch = overallMatch || findMatch(IntrinsicFields)
+		}
+		if _, ok := CalculatedFields[k.Name]; ok {
+			overallMatch = overallMatch || findMatch(CalculatedFields)
+		}
+		if _, ok := IntrinsicFieldsDeprecated[k.Name]; ok {
+			overallMatch = overallMatch || findMatch(IntrinsicFieldsDeprecated)
+		}
+		if _, ok := CalculatedFieldsDeprecated[k.Name]; ok {
+			overallMatch = overallMatch || findMatch(CalculatedFieldsDeprecated)
+		}
+
+		if !overallMatch {
+			// check if all the key for the given field have been materialized, if so
+			// set the key to materialized
+			materilized := true
+			for _, key := range keys[k.Name] {
+				materilized = materilized && key.Materialized
+			}
+			k.Materialized = materilized
+		}
+	}
+
+	for idx := range query.GroupBy {
+		checkMatch(&query.GroupBy[idx].TelemetryFieldKey)
+	}
+	for idx := range query.Order {
+		checkMatch(&query.Order[idx].Key.TelemetryFieldKey)
+	}
+	for idx := range query.SelectFields {
+		checkMatch(&query.SelectFields[idx])
+	}
+
+	// add deprecated fields only during statement building
+	// why?
+	// 1. to not fail filter expression that use deprecated cols
+	// 2. this could have been moved to metadata fetching itself, however, that
+	// would mean, they also show up in suggestions we we don't want to do
+	for fieldKeyName, fieldKey := range IntrinsicFieldsDeprecated {
+		if _, ok := keys[fieldKeyName]; !ok {
+			keys[fieldKeyName] = []*telemetrytypes.TelemetryFieldKey{&fieldKey}
+		} else {
+			keys[fieldKeyName] = append(keys[fieldKeyName], &fieldKey)
+		}
+	}
+	for fieldKeyName, fieldKey := range CalculatedFieldsDeprecated {
+		if _, ok := keys[fieldKeyName]; !ok {
+			keys[fieldKeyName] = []*telemetrytypes.TelemetryFieldKey{&fieldKey}
+		} else {
+			keys[fieldKeyName] = append(keys[fieldKeyName], &fieldKey)
+		}
+	}
 }
 
 // buildListQuery builds a query for list panel type
@@ -174,7 +270,22 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	selectedFields := query.SelectFields
 
 	if len(selectedFields) == 0 {
-		selectedFields = DefaultFields
+		sortedKeys := maps.Keys(DefaultFields)
+		slices.Sort(sortedKeys)
+		for _, key := range sortedKeys {
+			selectedFields = append(selectedFields, DefaultFields[key])
+		}
+	}
+
+	selectFieldKeys := []string{}
+	for _, field := range selectedFields {
+		selectFieldKeys = append(selectFieldKeys, field.Name)
+	}
+
+	for _, x := range []string{"timestamp", "span_id", "trace_id"} {
+		if !slices.Contains(selectFieldKeys, x) {
+			selectedFields = append(selectedFields, DefaultFields[x])
+		}
 	}
 
 	// TODO: should we deprecate `SelectFields` and return everything from a span like we do for logs?
@@ -183,7 +294,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		if err != nil {
 			return nil, err
 		}
-		sb.SelectMore(sqlbuilder.Escape(colExpr))
+		sb.SelectMore(colExpr)
 	}
 
 	// From table
@@ -264,7 +375,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		}
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
-		sb.SelectMore(sqlbuilder.Escape(colExpr))
+		sb.SelectMore(colExpr)
 		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
 	}
 
@@ -381,7 +492,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 		}
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
-		sb.SelectMore(sqlbuilder.Escape(colExpr))
+		sb.SelectMore(colExpr)
 	}
 
 	// for scalar queries, the rate would be end-start

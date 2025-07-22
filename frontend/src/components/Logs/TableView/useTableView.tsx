@@ -47,6 +47,14 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
+	const bodyColumnStyle = useMemo(
+		() => ({
+			...defaultTableStyle,
+			...(fields.length > 2 ? { width: '50rem' } : {}),
+		}),
+		[fields.length],
+	);
+
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
 			.filter((e) => !['id', 'body', 'timestamp'].includes(e.name))
@@ -136,7 +144,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 								field: string | number,
 							): ColumnTypeRender<Record<string, unknown>> => ({
 								props: {
-									style: defaultTableStyle,
+									style: bodyColumnStyle,
 								},
 								children: (
 									<TableBodyContent
@@ -166,6 +174,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		linesPerRow,
 		fontSize,
 		formatTimezoneAdjustedTimestamp,
+		bodyColumnStyle,
 	]);
 
 	return { columns, dataSource: flattenLogData };
