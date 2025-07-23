@@ -58,6 +58,7 @@ export interface ActionItemProps {
 		operator: string,
 		isJSON?: boolean,
 		dataType?: DataTypes,
+		fieldType?: string,
 	) => void;
 }
 

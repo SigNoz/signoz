@@ -16,6 +16,25 @@ body {
 	box-sizing: border-box;
 }
 
+// Theme transition animations
+* {
+	transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease,
+		box-shadow 0.3s ease;
+}
+
+// For components that shouldn't transition (like loading spinners, animations)
+.no-transition,
+.no-transition * {
+	transition: none !important;
+}
+
+// Respect user's reduced motion preference
+@media (prefers-reduced-motion: reduce) {
+	* {
+		transition: none !important;
+	}
+}
+
 .u-legend {
 	max-height: 30px; // Default height for backward compatibility
 	overflow-y: auto;

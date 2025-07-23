@@ -99,6 +99,9 @@ func newProvider(
 		resourceFilterFieldMapper,
 		resourceFilterConditionBuilder,
 		telemetryMetadataStore,
+		telemetrylogs.DefaultFullTextColumn,
+		telemetrylogs.BodyJSONStringSearchPrefix,
+		telemetrylogs.GetBodyJSONKey,
 	)
 	logAggExprRewriter := querybuilder.NewAggExprRewriter(
 		telemetrylogs.DefaultFullTextColumn,

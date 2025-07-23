@@ -3,6 +3,10 @@ package inframetrics
 import (
 	"context"
 	"fmt"
+	"math"
+	"sort"
+	"strings"
+
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
@@ -12,13 +16,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
-	"math"
-	"sort"
-	"strings"
 )
 
 var (
-	metricToUseForNodes = GetDotMetrics("k8s_node_cpu_utilization")
+	metricToUseForNodes = GetDotMetrics("k8s_node_cpu_usage")
 
 	nodeAttrsToEnrich = []string{GetDotMetrics("k8s_node_name"), GetDotMetrics("k8s_node_uid"), GetDotMetrics("k8s_cluster_name")}
 
@@ -33,7 +34,7 @@ var (
 	nodeQueryNames = []string{"A", "B", "C", "D", "E", "F"}
 
 	metricNamesForNodes = map[string]string{
-		"cpu":                GetDotMetrics("k8s_node_cpu_utilization"),
+		"cpu":                GetDotMetrics("k8s_node_cpu_usage"),
 		"cpu_allocatable":    GetDotMetrics("k8s_node_allocatable_cpu"),
 		"memory":             GetDotMetrics("k8s_node_memory_usage"),
 		"memory_allocatable": GetDotMetrics("k8s_node_allocatable_memory"),

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -88,6 +89,12 @@ func (q *builderQuery[T]) Fingerprint() string {
 	// Add filter if present
 	if q.spec.Filter != nil && q.spec.Filter.Expression != "" {
 		parts = append(parts, fmt.Sprintf("filter=%s", q.spec.Filter.Expression))
+
+		for name, item := range q.variables {
+			if strings.Contains(q.spec.Filter.Expression, "$"+name) {
+				parts = append(parts, fmt.Sprintf("%s=%s", name, fmt.Sprint(item.Value)))
+			}
+		}
 	}
 
 	// Add group by keys
@@ -205,6 +212,19 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 
 	rows, err := q.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return nil, errors.Newf(errors.TypeTimeout, errors.CodeTimeout, "Query timed out").
+				WithAdditional("Try refining your search by adding relevant resource attributes filtering")
+		}
+
+		if !errors.Is(err, context.Canceled) {
+			return nil, errors.Newf(
+				errors.TypeInternal,
+				errors.CodeInternal,
+				"Something went wrong on our end. It's not you, it's us. Our team is notified about it. Reach out to support if issue persists.",
+			)
+		}
+
 		return nil, err
 	}
 	defer rows.Close()

@@ -1,12 +1,14 @@
 import './FunnelStep.styles.scss';
 
 import { Button, Divider, Form, Switch, Tooltip } from 'antd';
+import cx from 'classnames';
 import { FilterSelect } from 'components/CeleryOverview/CeleryOverviewConfigOptions/CeleryOverviewConfigOptions';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { HardHat, PencilLine } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
+import { useAppContext } from 'providers/App/App';
 import { useMemo, useState } from 'react';
 import { FunnelStepData } from 'types/api/traceFunnels';
 import { DataSource } from 'types/common/queryBuilder';
@@ -69,8 +71,14 @@ function FunnelStep({
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
+	const { hasEditPermission } = useAppContext();
+
 	return (
-		<div className="funnel-step">
+		<div
+			className={cx('funnel-step', {
+				'funnel-step--readonly': !hasEditPermission,
+			})}
+		>
 			<Form form={form}>
 				<div className="funnel-step__header">
 					<div className="funnel-step-details">
@@ -92,12 +100,19 @@ function FunnelStep({
 						)}
 					</div>
 					<div className="funnel-step-actions">
-						<Tooltip title="Add details to step">
+						<Tooltip
+							title={
+								!hasEditPermission
+									? 'You need editor or admin access to add details to step'
+									: 'Add details to step'
+							}
+						>
 							<Button
 								type="text"
 								className="funnel-item__action-btn"
 								icon={<PencilLine size={14} />}
 								onClick={(): void => setIsAddDetailsModalOpen(true)}
+								disabled={!hasEditPermission}
 							/>
 						</Tooltip>
 
@@ -129,9 +144,13 @@ function FunnelStep({
 										shouldSetQueryParams={false}
 										values={stepData.service_name}
 										isMultiple={false}
-										onChange={(v): void => {
-											onStepChange(index, { service_name: (v ?? '') as string });
-										}}
+										onChange={
+											hasEditPermission
+												? (v): void => {
+														onStepChange(index, { service_name: (v ?? '') as string });
+												  }
+												: undefined
+										}
 									/>
 								</Form.Item>
 							</div>
@@ -144,8 +163,11 @@ function FunnelStep({
 										shouldSetQueryParams={false}
 										values={stepData.span_name}
 										isMultiple={false}
-										onChange={(v): void =>
-											onStepChange(index, { span_name: (v ?? '') as string })
+										onChange={
+											hasEditPermission
+												? (v): void =>
+														onStepChange(index, { span_name: (v ?? '') as string })
+												: undefined
 										}
 									/>
 								</Form.Item>
@@ -156,7 +178,11 @@ function FunnelStep({
 							<Form.Item name={['steps', stepData.id, 'filters']}>
 								<QueryBuilderSearchV2
 									query={query}
-									onChange={(query): void => onStepChange(index, { filters: query })}
+									onChange={
+										hasEditPermission
+											? (query): void => onStepChange(index, { filters: query })
+											: (): void => {}
+									}
 									hasPopupContainer={false}
 									placeholder="Search for filters..."
 									suffixIcon={<HardHat size={12} color="var(--bg-vanilla-400)" />}
@@ -172,6 +198,7 @@ function FunnelStep({
 							className="error__switch"
 							size="small"
 							checked={stepData.has_errors}
+							disabled={!hasEditPermission}
 							onChange={(): void =>
 								onStepChange(index, { has_errors: !stepData.has_errors })
 							}

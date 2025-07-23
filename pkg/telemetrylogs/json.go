@@ -61,7 +61,7 @@ func inferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytyp
 	}
 
 	// check if it is array
-	if strings.HasSuffix(key.Name, "[*]") {
+	if strings.HasSuffix(key.Name, "[*]") || strings.HasSuffix(key.Name, "[]") {
 		valueType = telemetrytypes.FieldDataType{String: valuer.NewString(fmt.Sprintf("[]%s", valueType.StringValue()))}
 	}
 
@@ -74,6 +74,8 @@ func getBodyJSONPath(key *telemetrytypes.TelemetryFieldKey) string {
 	for _, part := range parts {
 		if strings.HasSuffix(part, "[*]") {
 			newParts = append(newParts, fmt.Sprintf(`"%s"[*]`, strings.TrimSuffix(part, "[*]")))
+		} else if strings.HasSuffix(part, "[]") {
+			newParts = append(newParts, fmt.Sprintf(`"%s"[*]`, strings.TrimSuffix(part, "[]")))
 		} else {
 			newParts = append(newParts, fmt.Sprintf(`"%s"`, part))
 		}
@@ -94,8 +96,12 @@ func GetBodyJSONKey(_ context.Context, key *telemetrytypes.TelemetryFieldKey, op
 		return fmt.Sprintf("JSONExtract(JSON_QUERY(body, '$.%s'), '%s')", getBodyJSONPath(key), dataType.CHDataType()), value
 	}
 
-	// for all other types, we need to extract the value from the JSON_VALUE
-	return fmt.Sprintf("JSONExtract(JSON_VALUE(body, '$.%s'), '%s')", getBodyJSONPath(key), dataType.CHDataType()), value
+	if dataType != telemetrytypes.FieldDataTypeString {
+		// for all types except strings, we need to extract the value from the JSON_VALUE
+		return fmt.Sprintf("JSONExtract(JSON_VALUE(body, '$.%s'), '%s')", getBodyJSONPath(key), dataType.CHDataType()), value
+	}
+	// for string types, we should compare with the JSON_VALUE
+	return fmt.Sprintf("JSON_VALUE(body, '$.%s')", getBodyJSONPath(key)), value
 }
 
 func GetBodyJSONKeyForExists(_ context.Context, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, _ any) string {

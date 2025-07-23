@@ -39,7 +39,7 @@ import {
 	ScrollText,
 	X,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
@@ -89,8 +89,12 @@ function PodDetails({
 		endTime: endMs,
 	}));
 
+	const lastSelectedInterval = useRef<Time | null>(null);
+
 	const [selectedInterval, setSelectedInterval] = useState<Time>(
-		selectedTime as Time,
+		lastSelectedInterval.current
+			? lastSelectedInterval.current
+			: (selectedTime as Time),
 	);
 
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -212,10 +216,11 @@ function PodDetails({
 	}, [initialFilters, initialEventsFilters]);
 
 	useEffect(() => {
-		setSelectedInterval(selectedTime as Time);
+		const currentSelectedInterval = lastSelectedInterval.current || selectedTime;
+		setSelectedInterval(currentSelectedInterval as Time);
 
-		if (selectedTime !== 'custom') {
-			const { maxTime, minTime } = GetMinMax(selectedTime);
+		if (currentSelectedInterval !== 'custom') {
+			const { maxTime, minTime } = GetMinMax(currentSelectedInterval);
 
 			setModalTimeRange({
 				startTime: Math.floor(minTime / TimeRangeOffset),
@@ -243,6 +248,7 @@ function PodDetails({
 
 	const handleTimeChange = useCallback(
 		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
+			lastSelectedInterval.current = interval as Time;
 			setSelectedInterval(interval as Time);
 
 			if (interval === 'custom' && dateTimeRange) {
@@ -485,6 +491,7 @@ function PodDetails({
 	};
 
 	const handleClose = (): void => {
+		lastSelectedInterval.current = null;
 		setSelectedInterval(selectedTime as Time);
 
 		if (selectedTime !== 'custom') {

@@ -160,6 +160,7 @@ function AddNewProcessor({
 			width={800}
 			footer={null}
 			onCancel={onCancelModal}
+			destroyOnClose
 		>
 			<Divider plain />
 			<Form
@@ -171,7 +172,11 @@ function AddNewProcessor({
 				onValuesChange={onFormValuesChanged}
 			>
 				<TypeSelect value={processorType} onChange={handleProcessorType} />
-				<ProcessorForm processorType={processorType} />
+				<ProcessorForm
+					processorType={processorType}
+					selectedProcessorData={selectedProcessorData}
+					isAdd={isAdd}
+				/>
 				<Divider plain />
 				<Form.Item>
 					<ModalButtonWrapper>

@@ -5,9 +5,9 @@ import logEvent from 'api/common/logEvent';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
 import { AxiosError } from 'axios';
 import { USER_PREFERENCES } from 'constants/userPreferences';
-import useThemeMode, { useIsDarkMode } from 'hooks/useDarkMode';
+import useThemeMode, { useIsDarkMode, useSystemTheme } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
-import { Moon, Sun } from 'lucide-react';
+import { MonitorCog, Moon, Sun } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
@@ -19,8 +19,9 @@ import UserInfo from './UserInfo';
 
 function MySettings(): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const { toggleTheme } = useThemeMode();
 	const { userPreferences, updateUserPreferenceInContext } = useAppContext();
+	const { toggleTheme, autoSwitch, setAutoSwitch } = useThemeMode();
+	const systemTheme = useSystemTheme();
 	const { notifications } = useNotifications();
 
 	const [sideNavPinned, setSideNavPinned] = useState(false);
@@ -68,16 +69,37 @@ function MySettings(): JSX.Element {
 			),
 			value: 'light',
 		},
+		{
+			label: (
+				<div className="theme-option">
+					<MonitorCog size={12} data-testid="auto-theme-icon" /> System{' '}
+				</div>
+			),
+			value: 'auto',
+		},
 	];
 
-	const [theme, setTheme] = useState(isDarkMode ? 'dark' : 'light');
+	const [theme, setTheme] = useState(() => {
+		if (autoSwitch) return 'auto';
+		return isDarkMode ? 'dark' : 'light';
+	});
 
 	const handleThemeChange = ({ target: { value } }: RadioChangeEvent): void => {
 		logEvent('Account Settings: Theme Changed', {
 			theme: value,
 		});
 		setTheme(value);
-		toggleTheme();
+
+		if (value === 'auto') {
+			setAutoSwitch(true);
+		} else {
+			setAutoSwitch(false);
+			// Only toggle if the current theme is different from the target
+			const targetIsDark = value === 'dark';
+			if (targetIsDark !== isDarkMode) {
+				toggleTheme();
+			}
+		}
 	};
 
 	const handleSideNavPinnedChange = (checked: boolean): void => {
@@ -150,13 +172,23 @@ function MySettings(): JSX.Element {
 								optionType="button"
 								buttonStyle="solid"
 								data-testid="theme-selector"
-								size="small"
+								size="middle"
 							/>
 						</div>
 
 						<div className="user-preference-section-content-item-description">
-							Select if SigNoz&apos;s appearance should be light or dark
+							Select if SigNoz&apos;s appearance should be light, dark, or
+							automatically follow your system preference
 						</div>
+
+						{autoSwitch && (
+							<div className="auto-theme-info">
+								<div className="auto-theme-status">
+									Currently following system theme:{' '}
+									<strong>{systemTheme === 'dark' ? 'Dark' : 'Light'}</strong>
+								</div>
+							</div>
+						)}
 					</div>
 
 					<TimezoneAdaptation />
