@@ -36,6 +36,7 @@
 		"@mdx-js/loader": "2.3.0",
 		"@mdx-js/react": "2.3.0",
 		"@monaco-editor/react": "^4.3.1",
+		"@playwright/test": "1.54.1",
 		"@radix-ui/react-tabs": "1.0.4",
 		"@radix-ui/react-tooltip": "1.0.7",
 		"@sentry/react": "8.41.0",
