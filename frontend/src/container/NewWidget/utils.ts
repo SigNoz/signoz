@@ -6,9 +6,12 @@ import {
 } from 'constants/queryBuilder';
 import {
 	listViewInitialLogQuery,
-	listViewInitialTraceQuery,
 	PANEL_TYPES_INITIAL_QUERY,
 } from 'container/NewDashboard/ComponentsSlider/constants';
+import {
+	defaultLogsSelectedColumns,
+	defaultTraceSelectedColumns,
+} from 'container/OptionsMenu/constants';
 import { categoryToSupport } from 'container/QueryBuilder/filters/BuilderUnitsFilter/config';
 import { cloneDeep, defaultTo, isEmpty, isEqual, set, unset } from 'lodash-es';
 import { Layout } from 'react-grid-layout';
@@ -56,6 +59,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateAttribute',
 					'aggregateOperator',
 					'filters',
+					'filter',
 					'groupBy',
 					'limit',
 					'having',
@@ -66,6 +70,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'queryName',
 					'legend',
 					'expression',
+					'aggregations',
 				],
 			},
 		},
@@ -76,6 +81,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateOperator',
 					'timeAggregation',
 					'filters',
+					'filter',
 					'spaceAggregation',
 					'groupBy',
 					'limit',
@@ -87,6 +93,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'disabled',
 					'functions',
 					'expression',
+					'aggregations',
 				],
 			},
 		},
@@ -96,6 +103,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateAttribute',
 					'aggregateOperator',
 					'filters',
+					'filter',
 					'groupBy',
 					'limit',
 					'having',
@@ -106,6 +114,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'queryName',
 					'legend',
 					'expression',
+					'aggregations',
 				],
 			},
 		},
@@ -117,6 +126,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateAttribute',
 					'aggregateOperator',
 					'filters',
+					'filter',
 					'groupBy',
 					'limit',
 					'having',
@@ -127,6 +137,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'queryName',
 					'legend',
 					'expression',
+					'aggregations',
 				],
 			},
 		},
@@ -137,6 +148,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateOperator',
 					'timeAggregation',
 					'filters',
+					'filter',
 					'spaceAggregation',
 					'groupBy',
 					'limit',
@@ -148,6 +160,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'disabled',
 					'functions',
 					'expression',
+					'aggregations',
 				],
 			},
 		},
@@ -157,6 +170,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateAttribute',
 					'aggregateOperator',
 					'filters',
+					'filter',
 					'groupBy',
 					'limit',
 					'having',
@@ -167,6 +181,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'queryName',
 					'legend',
 					'expression',
+					'aggregations',
 				],
 			},
 		},
@@ -178,6 +193,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateAttribute',
 					'aggregateOperator',
 					'filters',
+					'filter',
 					'groupBy',
 					'limit',
 					'having',
@@ -188,6 +204,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'queryName',
 					'legend',
 					'expression',
+					'aggregations',
 				],
 			},
 		},
@@ -198,6 +215,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateOperator',
 					'timeAggregation',
 					'filters',
+					'filter',
 					'spaceAggregation',
 					'groupBy',
 					'limit',
@@ -209,6 +227,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'disabled',
 					'functions',
 					'expression',
+					'aggregations',
 				],
 			},
 		},
@@ -218,6 +237,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateAttribute',
 					'aggregateOperator',
 					'filters',
+					'filter',
 					'groupBy',
 					'limit',
 					'having',
@@ -228,6 +248,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'queryName',
 					'legend',
 					'expression',
+					'aggregations',
 				],
 			},
 		},
@@ -239,6 +260,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateAttribute',
 					'aggregateOperator',
 					'filters',
+					'filter',
 					'groupBy',
 					'limit',
 					'having',
@@ -249,6 +271,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'queryName',
 					'expression',
 					'legend',
+					'aggregations',
 				],
 			},
 		},
@@ -259,6 +282,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateOperator',
 					'timeAggregation',
 					'filters',
+					'filter',
 					'spaceAggregation',
 					'groupBy',
 					'reduceTo',
@@ -271,6 +295,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'expression',
 					'disabled',
 					'functions',
+					'aggregations',
 				],
 			},
 		},
@@ -280,6 +305,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateAttribute',
 					'aggregateOperator',
 					'filters',
+					'filter',
 					'groupBy',
 					'limit',
 					'having',
@@ -290,6 +316,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'queryName',
 					'expression',
 					'legend',
+					'aggregations',
 				],
 			},
 		},
@@ -301,6 +328,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateAttribute',
 					'aggregateOperator',
 					'filters',
+					'filter',
 					'groupBy',
 					'limit',
 					'having',
@@ -311,6 +339,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'queryName',
 					'expression',
 					'legend',
+					'aggregations',
 				],
 			},
 		},
@@ -321,6 +350,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateOperator',
 					'timeAggregation',
 					'filters',
+					'filter',
 					'spaceAggregation',
 					'groupBy',
 					'reduceTo',
@@ -333,6 +363,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'expression',
 					'disabled',
 					'functions',
+					'aggregations',
 				],
 			},
 		},
@@ -342,6 +373,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateAttribute',
 					'aggregateOperator',
 					'filters',
+					'filter',
 					'groupBy',
 					'limit',
 					'having',
@@ -352,6 +384,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'queryName',
 					'expression',
 					'legend',
+					'aggregations',
 				],
 			},
 		},
@@ -359,17 +392,31 @@ export const panelTypeDataSourceFormValuesMap: Record<
 	[PANEL_TYPES.LIST]: {
 		[DataSource.LOGS]: {
 			builder: {
-				queryData: ['filters', 'limit', 'orderBy', 'functions'],
+				queryData: [
+					'filters',
+					'filter',
+					'limit',
+					'orderBy',
+					'functions',
+					'aggregations',
+				],
 			},
 		},
 		[DataSource.METRICS]: {
 			builder: {
-				queryData: [],
+				queryData: ['filters', 'filter', 'aggregations'],
 			},
 		},
 		[DataSource.TRACES]: {
 			builder: {
-				queryData: ['filters', 'limit', 'orderBy', 'functions'],
+				queryData: [
+					'filters',
+					'filter',
+					'limit',
+					'orderBy',
+					'functions',
+					'aggregations',
+				],
 			},
 		},
 	},
@@ -380,6 +427,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateAttribute',
 					'aggregateOperator',
 					'filters',
+					'filter',
 					'reduceTo',
 					'having',
 					'functions',
@@ -388,6 +436,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'expression',
 					'disabled',
 					'legend',
+					'aggregations',
 				],
 			},
 		},
@@ -398,6 +447,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateOperator',
 					'timeAggregation',
 					'filters',
+					'filter',
 					'spaceAggregation',
 					'having',
 					'reduceTo',
@@ -407,6 +457,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'expression',
 					'disabled',
 					'functions',
+					'aggregations',
 				],
 			},
 		},
@@ -416,6 +467,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateAttribute',
 					'aggregateOperator',
 					'filters',
+					'filter',
 					'reduceTo',
 					'having',
 					'functions',
@@ -424,6 +476,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'expression',
 					'disabled',
 					'legend',
+					'aggregations',
 				],
 			},
 		},
@@ -433,6 +486,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 export function handleQueryChange(
 	newPanelType: keyof PartialPanelTypes,
 	supersetQuery: Query,
+	currentPanelType: PANEL_TYPES,
 ): Query {
 	return {
 		...supersetQuery,
@@ -454,12 +508,20 @@ export function handleQueryChange(
 					set(tempQuery, 'aggregateOperator', 'noop');
 					set(tempQuery, 'offset', 0);
 					set(tempQuery, 'pageSize', 10);
+					set(tempQuery, 'orderBy', undefined);
 				} else if (tempQuery.aggregateOperator === 'noop') {
 					// this condition takes care of the part where we start with the list panel type and then shift to other panels
 					// because in other cases we never set list operator and other fields in superset query rather just update in the current / staged query
 					set(tempQuery, 'aggregateOperator', 'count');
 					unset(tempQuery, 'offset');
 					unset(tempQuery, 'pageSize');
+				}
+
+				if (
+					currentPanelType === PANEL_TYPES.LIST &&
+					newPanelType !== PANEL_TYPES.LIST
+				) {
+					set(tempQuery, 'orderBy', undefined);
 				}
 
 				return tempQuery;
@@ -486,21 +548,12 @@ export const getDefaultWidgetData = (
 	timePreferance: 'GLOBAL_TIME',
 	softMax: null,
 	softMin: null,
-	selectedLogFields: [
-		{
-			dataType: 'string',
-			type: '',
-			name: 'body',
-		},
-		{
-			dataType: 'string',
-			type: '',
-			name: 'timestamp',
-		},
-	],
-	selectedTracesFields: [
-		...listViewInitialTraceQuery.builder.queryData[0].selectColumns,
-	],
+	selectedLogFields: defaultLogsSelectedColumns.map((field) => ({
+		...field,
+		type: field.fieldContext ?? '',
+		dataType: field.fieldDataType ?? '',
+	})),
+	selectedTracesFields: defaultTraceSelectedColumns,
 });
 
 export const PANEL_TYPE_TO_QUERY_TYPES: Record<PANEL_TYPES, EQueryType[]> = {

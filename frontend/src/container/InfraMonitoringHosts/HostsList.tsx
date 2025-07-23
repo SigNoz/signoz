@@ -153,7 +153,7 @@ function HostsList(): JSX.Element {
 
 	const handleFiltersChange = useCallback(
 		(value: IBuilderQuery['filters']): void => {
-			const isNewFilterAdded = value.items.length !== filters.items.length;
+			const isNewFilterAdded = value?.items?.length !== filters?.items?.length;
 			setFilters(value);
 			handleChangeQueryData('filters', value);
 			setSearchParams({
@@ -163,7 +163,7 @@ function HostsList(): JSX.Element {
 			if (isNewFilterAdded) {
 				setCurrentPage(1);
 
-				if (value.items.length > 0) {
+				if (value?.items && value?.items?.length > 0) {
 					logEvent(InfraMonitoringEvents.FilterApplied, {
 						entity: InfraMonitoringEvents.HostEntity,
 						page: InfraMonitoringEvents.ListPage,
@@ -251,7 +251,7 @@ function HostsList(): JSX.Element {
 						isError={isError}
 						tableData={data}
 						hostMetricsData={hostMetricsData}
-						filters={filters}
+						filters={filters || { items: [], op: 'AND' }}
 						currentPage={currentPage}
 						setCurrentPage={setCurrentPage}
 						onHostClick={handleHostClick}

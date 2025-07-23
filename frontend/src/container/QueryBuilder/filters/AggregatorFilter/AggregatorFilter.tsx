@@ -20,6 +20,7 @@ import {
 	BaseAutocompleteData,
 	IQueryAutocompleteResponse,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { ExtendedSelectOption } from 'types/common/select';
 import { popupContainer } from 'utils/selectPopupContainer';
@@ -42,6 +43,12 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	const [optionsData, setOptionsData] = useState<ExtendedSelectOption[]>([]);
 	const [searchText, setSearchText] = useState<string>('');
 
+	// this function is only relevant for metrics and now operators are part of aggregations
+	const queryAggregation = useMemo(
+		() => query.aggregations?.[0] as MetricAggregation,
+		[query.aggregations],
+	);
+
 	const debouncedSearchText = useMemo(() => {
 		// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars
 		const [_, value] = getAutocompleteValueAndType(searchText);
@@ -54,19 +61,19 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		[
 			QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
 			debouncedValue,
-			query.aggregateOperator,
+			queryAggregation.timeAggregation,
 			query.dataSource,
 		],
 		async () =>
 			getAggregateAttribute({
 				searchText: debouncedValue,
-				aggregateOperator: query.aggregateOperator,
+				aggregateOperator: queryAggregation.timeAggregation,
 				dataSource: query.dataSource,
 			}),
 		{
 			enabled:
 				query.dataSource === DataSource.METRICS ||
-				(!!query.aggregateOperator && !!query.dataSource),
+				(!!queryAggregation.timeAggregation && !!query.dataSource),
 			onSuccess: (data) => {
 				const options: ExtendedSelectOption[] =
 					data?.payload?.attributeKeys?.map(({ id: _, ...item }) => ({
@@ -115,10 +122,15 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 			queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>([
 				QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
 				debouncedValue,
-				query.aggregateOperator,
+				queryAggregation.timeAggregation,
 				query.dataSource,
 			])?.payload?.attributeKeys || [],
-		[debouncedValue, query.aggregateOperator, query.dataSource, queryClient],
+		[
+			debouncedValue,
+			queryAggregation.timeAggregation,
+			query.dataSource,
+			queryClient,
+		],
 	);
 
 	const getResponseAttributes = useCallback(async () => {
@@ -126,19 +138,24 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 			[
 				QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
 				searchText,
-				query.aggregateOperator,
+				queryAggregation.timeAggregation,
 				query.dataSource,
 			],
 			async () =>
 				getAggregateAttribute({
 					searchText,
-					aggregateOperator: query.aggregateOperator,
+					aggregateOperator: queryAggregation.timeAggregation,
 					dataSource: query.dataSource,
 				}),
 		);
 
 		return response.payload?.attributeKeys || [];
-	}, [query.aggregateOperator, query.dataSource, queryClient, searchText]);
+	}, [
+		queryAggregation.timeAggregation,
+		query.dataSource,
+		queryClient,
+		searchText,
+	]);
 
 	const handleChangeCustomValue = useCallback(
 		async (value: string, attributes: BaseAutocompleteData[]) => {
@@ -208,12 +225,15 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 
 	const value = removePrefix(
 		transformStringWithPrefix({
-			str: query.aggregateAttribute.key,
-			prefix: query.aggregateAttribute.type || '',
-			condition: !query.aggregateAttribute.isColumn,
+			str:
+				(query.aggregations?.[0] as MetricAggregation)?.metricName ||
+				query.aggregateAttribute?.key ||
+				'',
+			prefix: query.aggregateAttribute?.type || '',
+			condition: !query.aggregateAttribute?.isColumn,
 		}),
-		!query.aggregateAttribute.isColumn && query.aggregateAttribute.type
-			? query.aggregateAttribute.type
+		!query.aggregateAttribute?.isColumn && query.aggregateAttribute?.type
+			? query.aggregateAttribute?.type
 			: '',
 	);
 

@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
+import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
 import { isUndefined } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -35,6 +36,7 @@ const getSeries = ({
 	hiddenGraph,
 	isDarkMode,
 	colorMapping,
+	currentQuery,
 }: GetSeriesProps): uPlot.Options['series'] => {
 	const configurations: uPlot.Series[] = [
 		{ label: 'Timestamp', stroke: 'purple' },
@@ -47,11 +49,15 @@ const getSeries = ({
 	for (let i = 0; i < seriesList?.length; i += 1) {
 		const { metric = {}, queryName = '', legend = '' } = widgetMetaData[i] || {};
 
-		const label = getLabelName(
+		const baseLabelName = getLabelName(
 			metric,
 			queryName || '', // query
 			legend || '',
 		);
+
+		const label = currentQuery
+			? getLegend(widgetMetaData[i], currentQuery, baseLabelName)
+			: baseLabelName;
 
 		const color =
 			colorMapping?.[label] ||
@@ -60,8 +66,8 @@ const getSeries = ({
 				isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
 			);
 
-		const pointSize = seriesList[i].values.length > 1 ? 5 : 10;
-		const showPoints = !(seriesList[i].values.length > 1);
+		const pointSize = seriesList[i]?.values?.length > 1 ? 5 : 10;
+		const showPoints = !(seriesList[i]?.values?.length > 1);
 
 		const seriesObj: any = {
 			paths,

@@ -10,4 +10,5 @@ export type FormulaProps = {
 	query: IBuilderQuery;
 	filterConfigs: Partial<QueryBuilderProps['filterConfigs']>;
 	isAdditionalFilterEnable: boolean;
+	isQBV2?: boolean;
 };

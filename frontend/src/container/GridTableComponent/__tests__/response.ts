@@ -4,16 +4,19 @@ export const tableDataMultipleQueriesSuccessResponse = {
 			name: 'service_name',
 			queryName: '',
 			isValueColumn: false,
+			id: 'service_name',
 		},
 		{
 			name: 'A',
 			queryName: 'A',
 			isValueColumn: true,
+			id: 'A',
 		},
 		{
 			name: 'B',
 			queryName: 'B',
 			isValueColumn: true,
+			id: 'B',
 		},
 	],
 	rows: [

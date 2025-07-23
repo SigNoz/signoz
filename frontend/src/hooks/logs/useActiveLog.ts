@@ -35,6 +35,7 @@ export function getOldLogsOperatorFromNew(operator: string): string {
 			return operator;
 	}
 }
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export const useActiveLog = (): UseActiveLog => {
 	const dispatch = useDispatch();
 
@@ -91,10 +92,11 @@ export const useActiveLog = (): UseActiveLog => {
 					async () =>
 						getAggregateKeys({
 							searchText: fieldKey,
-							aggregateOperator: currentQuery.builder.queryData[0].aggregateOperator,
+							aggregateOperator:
+								currentQuery.builder.queryData[0].aggregateOperator || '',
 							dataSource: currentQuery.builder.queryData[0].dataSource,
 							aggregateAttribute:
-								currentQuery.builder.queryData[0].aggregateAttribute.key,
+								currentQuery.builder.queryData[0].aggregateAttribute?.key || '',
 						}),
 				);
 
@@ -120,7 +122,7 @@ export const useActiveLog = (): UseActiveLog => {
 							filters: {
 								...item.filters,
 								items: [
-									...item.filters.items,
+									...(item.filters?.items || []),
 									{
 										id: uuid(),
 										key: existAutocompleteKey,
@@ -128,6 +130,7 @@ export const useActiveLog = (): UseActiveLog => {
 										value: fieldValue,
 									},
 								],
+								op: item.filters?.op || 'AND',
 							},
 						})),
 					},
@@ -154,10 +157,11 @@ export const useActiveLog = (): UseActiveLog => {
 					async () =>
 						getAggregateKeys({
 							searchText: fieldKey,
-							aggregateOperator: currentQuery.builder.queryData[0].aggregateOperator,
+							aggregateOperator:
+								currentQuery.builder.queryData[0].aggregateOperator || '',
 							dataSource: currentQuery.builder.queryData[0].dataSource,
 							aggregateAttribute:
-								currentQuery.builder.queryData[0].aggregateAttribute.key,
+								currentQuery.builder.queryData[0].aggregateAttribute?.key || '',
 						}),
 				);
 

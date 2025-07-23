@@ -55,9 +55,10 @@ export const useTag = (
 	setSearchKey: (value: string) => void,
 	whereClauseConfig?: WhereClauseConfig,
 ): IUseTag => {
-	const initTagsData = useMemo(() => queryFilterTags(query?.filters), [
-		query?.filters,
-	]);
+	const initTagsData = useMemo(
+		() => queryFilterTags(query?.filters || { items: [], op: 'AND' }),
+		[query?.filters],
+	);
 
 	const [tags, setTags] = useState<string[]>(initTagsData);
 
