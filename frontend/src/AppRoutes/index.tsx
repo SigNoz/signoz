@@ -3,6 +3,7 @@ import { ConfigProvider } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
+import AppLoading from 'components/AppLoading/AppLoading';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import UserpilotRouteTracker from 'components/UserpilotRouteTracker/UserpilotRouteTracker';
@@ -342,7 +343,7 @@ function App(): JSX.Element {
 	if (isLoggedInState) {
 		// if the setup calls are loading then return a spinner
 		if (isFetchingActiveLicense || isFetchingUser || isFetchingFeatureFlags) {
-			return <Spinner tip="Loading..." />;
+			return <AppLoading />;
 		}
 
 		// if the required calls fails then return a something went wrong error
