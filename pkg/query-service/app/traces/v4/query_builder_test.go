@@ -532,7 +532,7 @@ func Test_buildTracesQuery(t *testing.T) {
 			want: "SELECT  resources_number['host'] as `host`, toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_number['bytes'] > 100 AND " +
 				"(resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND " +
-				"(seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'service.name') = 'myService' AND labels like '%service.name%myService%' AND " +
+				"(seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'service.name') = 'myService' AND labels like '%service.name\":\"myService%' AND " +
 				"( (simpleJSONHas(labels, 'host') AND labels like '%host%') ))) " +
 				"group by `host` order by `host` ASC",
 		},
@@ -614,7 +614,7 @@ func Test_buildTracesQuery(t *testing.T) {
 				},
 			},
 			want: "SELECT timestamp as timestamp_datetime, spanID, traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'service.name') = 'cartservice' AND labels like '%service.name%cartservice%')) AND parent_span_id = ''  order by timestamp ASC",
+				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'service.name') = 'cartservice' AND labels like '%service.name\":\"cartservice%')) AND parent_span_id = ''  order by timestamp ASC",
 		},
 		{
 			name: "test noop list view-without ts",
@@ -649,7 +649,7 @@ func Test_buildTracesQuery(t *testing.T) {
 			},
 			want: "SELECT subQuery.serviceName as `subQuery.serviceName`, subQuery.name as `subQuery.name`, count() AS span_count, subQuery.durationNano as `subQuery.durationNano`, subQuery.traceID FROM " +
 				"(SELECT traceID AS dist_traceID, timestamp, ts_bucket_start FROM signoz_traces.distributed_signoz_index_v3 WHERE (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_string['method'] = 'GET' " +
-				"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'service.name') = 'myService' AND labels like '%service.name%myService%'))) as dist_table " +
+				"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'service.name') = 'myService' AND labels like '%service.name\":\"myService%'))) as dist_table " +
 				"INNER JOIN " +
 				"( SELECT * FROM (SELECT traceID, durationNano, serviceName, name FROM signoz_traces.signoz_index_v3 WHERE parentSpanID = '' AND (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
 				"ORDER BY durationNano DESC LIMIT 1 BY traceID) AS inner_subquery ) AS subQuery ON dist_table.dist_traceID = subQuery.traceID " +
@@ -676,7 +676,7 @@ func Test_buildTracesQuery(t *testing.T) {
 			want: "SELECT serviceName, name, subQuery.span_count as span_count, durationNano, trace_id as traceID from signoz_traces.distributed_signoz_index_v3 GLOBAL INNER JOIN " +
 				"( SELECT * FROM (SELECT trace_id, count() as span_count FROM signoz_traces.signoz_index_v3 WHERE (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  " +
 				"AND attributes_string['method'] = 'GET' AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE " +
-				"(seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'service.name') = 'myService' AND labels like '%service.name%myService%')) " +
+				"(seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'service.name') = 'myService' AND labels like '%service.name\":\"myService%')) " +
 				"GROUP BY trace_id ORDER BY span_count DESC LIMIT 1 BY trace_id LIMIT 100) AS inner_subquery ) AS subQuery ON signoz_traces.distributed_signoz_index_v3.trace_id = subQuery.trace_id " +
 				"WHERE parent_span_id = '' AND (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
 				"ORDER BY subQuery.span_count DESC LIMIT 100 settings distributed_product_mode='allow', max_memory_usage=10000000000",
@@ -863,7 +863,7 @@ func TestPrepareTracesQuery(t *testing.T) {
 			want: "SELECT `function`,`service.name` from (SELECT `attribute_string_function` as `function`, `resource_string_service$$name` as `service.name`, toFloat64(count(distinct(name))) as value " +
 				"from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
 				"AND attributes_number['line'] = 100 AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE " +
-				"(seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'hostname') = 'server1' AND labels like '%hostname%server1%' AND " +
+				"(seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'hostname') = 'server1' AND labels like '%hostname\":\"server1%' AND " +
 				"( (simpleJSONHas(labels, 'service.name') AND labels like '%service.name%') ))) group by `function`,`service.name` order by value DESC) LIMIT 10",
 		},
 		{
@@ -905,7 +905,7 @@ func TestPrepareTracesQuery(t *testing.T) {
 			want: "SELECT  `attribute_string_function` as `function`, serviceName as `serviceName`, toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 " +
 				"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_number['line'] = 100 " +
 				"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) " +
-				"AND simpleJSONExtractString(labels, 'hostname') = 'server1' AND labels like '%hostname%server1%')) AND (`function`,`serviceName`) GLOBAL IN (#LIMIT_PLACEHOLDER) group by `function`,`serviceName` order by value DESC",
+				"AND simpleJSONExtractString(labels, 'hostname') = 'server1' AND labels like '%hostname\":\"server1%')) AND (`function`,`serviceName`) GLOBAL IN (#LIMIT_PLACEHOLDER) group by `function`,`serviceName` order by value DESC",
 		},
 	}
 
