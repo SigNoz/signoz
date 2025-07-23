@@ -50,7 +50,7 @@ jobs:
           - ubuntu-latest
           - macos-latest
     env:
-      CONFIG_PATH: ee/query-service/.goreleaser.yaml
+      CONFIG_PATH: cmd/enterprise/.goreleaser.yaml
     runs-on: ${{ matrix.os }}
     steps:
       - name: checkout

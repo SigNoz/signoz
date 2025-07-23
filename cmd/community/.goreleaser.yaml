@@ -11,7 +11,7 @@ before:
 builds:
   - id: signoz
     binary: bin/signoz
-    main: pkg/query-service/main.go
+    main: cmd/community
     env:
       - CGO_ENABLED=1
       - >-
