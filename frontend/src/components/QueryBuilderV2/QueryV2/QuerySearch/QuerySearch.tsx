@@ -1327,4 +1327,8 @@ function QuerySearch({
 	);
 }
 
+QuerySearch.defaultProps = {
+	onRun: undefined,
+};
+
 export default QuerySearch;
