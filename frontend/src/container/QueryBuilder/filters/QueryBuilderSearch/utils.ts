@@ -82,7 +82,7 @@ export function getOperatorValue(op: string): string {
 		case 'ILIKE':
 			return 'ilike';
 		case 'NOT_ILIKE':
-			return 'notILike';
+			return 'notilike';
 		default:
 			return op;
 	}
