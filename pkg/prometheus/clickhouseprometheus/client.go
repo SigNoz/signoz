@@ -151,7 +151,7 @@ func (client *client) getFingerprintsFromClickhouseQuery(ctx context.Context, qu
 			return nil, err
 		}
 
-		labels, _, err := unmarshalLabels(labelString)
+		labels, _, err := unmarshalLabels(labelString, fingerprint)
 		if err != nil {
 			return nil, err
 		}
