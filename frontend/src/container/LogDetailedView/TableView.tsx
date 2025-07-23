@@ -14,6 +14,7 @@ import { ResizeTable } from 'components/ResizeTable';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
+import { MetricsType } from 'container/MetricsApplication/constant';
 import { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
@@ -32,8 +33,13 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { ActionItemProps } from './ActionItem';
 import FieldRenderer from './FieldRenderer';
-import { TableViewActions } from './TableView/TableViewActions';
-import { filterKeyForField, findKeyPath, flattenObject } from './utils';
+import TableViewActions from './TableView/TableViewActions';
+import {
+	filterKeyForField,
+	findKeyPath,
+	flattenObject,
+	getFieldAttributes,
+} from './utils';
 
 interface TableViewProps {
 	logData: ILog;
@@ -107,10 +113,19 @@ function TableView({
 		operator: string,
 		fieldKey: string,
 		fieldValue: string,
+		dataType: string | undefined,
+		fieldType: string | undefined,
 	): void => {
 		const validatedFieldValue = removeJSONStringifyQuotes(fieldValue);
 		if (onClickActionItem) {
-			onClickActionItem(fieldKey, validatedFieldValue, operator);
+			onClickActionItem(
+				fieldKey,
+				validatedFieldValue,
+				operator,
+				undefined,
+				dataType as DataTypes,
+				fieldType,
+			);
 		}
 	};
 
@@ -118,8 +133,10 @@ function TableView({
 		operator: string,
 		fieldKey: string,
 		fieldValue: string,
+		dataType: string | undefined,
+		fieldType: MetricsType | undefined,
 	) => (): void => {
-		handleClick(operator, fieldKey, fieldValue);
+		handleClick(operator, fieldKey, fieldValue, dataType, fieldType);
 		if (operator === OPERATORS['=']) {
 			setIsFilterInLoading(true);
 		}
@@ -247,6 +264,7 @@ function TableView({
 				}
 
 				const fieldFilterKey = filterKeyForField(field);
+				const { dataType } = getFieldAttributes(field);
 				if (!RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey)) {
 					return (
 						<AddToQueryHOC
@@ -254,6 +272,7 @@ function TableView({
 							fieldValue={flattenLogData[field]}
 							onAddToQuery={onAddToQuery}
 							fontSize={FontSize.SMALL}
+							dataType={dataType as DataTypes}
 						>
 							{renderedField}
 						</AddToQueryHOC>

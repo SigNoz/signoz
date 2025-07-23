@@ -79,11 +79,13 @@ comparison
 inClause
     : IN LPAREN valueList RPAREN
     | IN LBRACK valueList RBRACK
+    | IN value
     ;
 
 notInClause
     : NOT IN LPAREN valueList RPAREN
     | NOT IN LBRACK valueList RBRACK
+    | NOT IN value
     ;
 
 // List of values for in(...) or in[...]
@@ -206,7 +208,7 @@ QUOTED_TEXT
         )
     ;
 
-fragment SEGMENT      : [a-zA-Z] [a-zA-Z0-9_:\-]* ;
+fragment SEGMENT      : [a-zA-Z$_] [a-zA-Z0-9$_:\-/]* ;
 fragment EMPTY_BRACKS : '[' ']' ;
 fragment OLD_JSON_BRACKS: '[' '*' ']';
 

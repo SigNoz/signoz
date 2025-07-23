@@ -29,6 +29,11 @@ type filterExpressionVisitor struct {
 	jsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	skipResourceFilter bool
 	skipFullTextFilter bool
+	skipFunctionCalls  bool
+	ignoreNotFoundKeys bool
+	variables          map[string]qbtypes.VariableItem
+
+	keysWithWarnings map[string]bool
 }
 
 type FilterExprVisitorOpts struct {
@@ -41,6 +46,9 @@ type FilterExprVisitorOpts struct {
 	JsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	SkipResourceFilter bool
 	SkipFullTextFilter bool
+	SkipFunctionCalls  bool
+	IgnoreNotFoundKeys bool
+	Variables          map[string]qbtypes.VariableItem
 }
 
 // newFilterExpressionVisitor creates a new filterExpressionVisitor
@@ -55,6 +63,10 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		jsonKeyToKey:       opts.JsonKeyToKey,
 		skipResourceFilter: opts.SkipResourceFilter,
 		skipFullTextFilter: opts.SkipFullTextFilter,
+		skipFunctionCalls:  opts.SkipFunctionCalls,
+		ignoreNotFoundKeys: opts.IgnoreNotFoundKeys,
+		variables:          opts.Variables,
+		keysWithWarnings:   make(map[string]bool),
 	}
 }
 
@@ -283,6 +295,15 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 	keys := v.Visit(ctx.Key()).([]*telemetrytypes.TelemetryFieldKey)
 
+	// if key is missing and can be ignored, the condition is ignored
+	if len(keys) == 0 && v.ignoreNotFoundKeys {
+		// Why do we return "true"? to prevent from create a empty tuple
+		// example, if the condition is (x AND (y OR z))
+		// if we find ourselves ignoring all, then it creates and invalid
+		// condition (()) which throws invalid tuples error
+		return "true"
+	}
+
 	// this is used to skip the resource filtering on main table if
 	// the query may use the resources table sub-query filter
 	if v.skipResourceFilter {
@@ -293,6 +314,13 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			}
 		}
 		keys = filteredKeys
+		if len(keys) == 0 {
+			// Why do we return "true"? to prevent from create a empty tuple
+			// example, if the condition is (resource.service.name='api' AND (env='prod' OR env='production'))
+			// if we find ourselves skipping all, then it creates and invalid
+			// condition (()) which throws invalid tuples error
+			return "true"
+		}
 	}
 
 	// Handle EXISTS specially
@@ -320,10 +348,46 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 	if ctx.InClause() != nil || ctx.NotInClause() != nil {
 
 		var values []any
+		var retValue any
 		if ctx.InClause() != nil {
-			values = v.Visit(ctx.InClause()).([]any)
+			retValue = v.Visit(ctx.InClause())
 		} else if ctx.NotInClause() != nil {
-			values = v.Visit(ctx.NotInClause()).([]any)
+			retValue = v.Visit(ctx.NotInClause())
+		}
+		switch ret := retValue.(type) {
+		case []any:
+			values = ret
+		case any:
+			values = []any{ret}
+		}
+
+		if len(values) == 1 {
+			if var_, ok := values[0].(string); ok {
+				// check if this is a variables
+				var ok bool
+				var varItem qbtypes.VariableItem
+				varItem, ok = v.variables[var_]
+				// if not present, try without `$` prefix
+				if !ok {
+					varItem, ok = v.variables[var_[1:]]
+				}
+
+				if ok {
+					// we have a variable, now check for dynamic variable
+					if varItem.Type == qbtypes.DynamicVariableType {
+						// check if it is special value to skip entire filter, if so skip it
+						if all_, ok := varItem.Value.(string); ok && all_ == "__all__" {
+							return ""
+						}
+					}
+					switch varValues := varItem.Value.(type) {
+					case []any:
+						values = varValues
+					case any:
+						values = []any{varValues}
+					}
+				}
+			}
 		}
 
 		op := qbtypes.FilterOperatorIn
@@ -377,6 +441,26 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 	values := ctx.AllValue()
 	if len(values) > 0 {
 		value := v.Visit(values[0])
+
+		if var_, ok := value.(string); ok {
+			// check if this is a variables
+			var ok bool
+			var varItem qbtypes.VariableItem
+			varItem, ok = v.variables[var_]
+			// if not present, try without `$` prefix
+			if !ok && len(var_) > 0 {
+				varItem, ok = v.variables[var_[1:]]
+			}
+
+			if ok {
+				switch varValues := varItem.Value.(type) {
+				case []any:
+					value = varValues[0]
+				case any:
+					value = varValues
+				}
+			}
+		}
 
 		var op qbtypes.FilterOperator
 
@@ -433,12 +517,18 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 
 // VisitInClause handles IN expressions
 func (v *filterExpressionVisitor) VisitInClause(ctx *grammar.InClauseContext) any {
-	return v.Visit(ctx.ValueList())
+	if ctx.ValueList() != nil {
+		return v.Visit(ctx.ValueList())
+	}
+	return v.Visit(ctx.Value())
 }
 
 // VisitNotInClause handles NOT IN expressions
 func (v *filterExpressionVisitor) VisitNotInClause(ctx *grammar.NotInClauseContext) any {
-	return v.Visit(ctx.ValueList())
+	if ctx.ValueList() != nil {
+		return v.Visit(ctx.ValueList())
+	}
+	return v.Visit(ctx.Value())
 }
 
 // VisitValueList handles comma-separated value lists
@@ -482,6 +572,10 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 
 // VisitFunctionCall handles function calls like has(), hasAny(), etc.
 func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallContext) any {
+	if v.skipFunctionCalls {
+		return "true"
+	}
+
 	// Get function name based on which token is present
 	var functionName string
 	if ctx.HAS() != nil {
@@ -605,6 +699,19 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 
 	fieldKeysForName := v.fieldKeys[keyName]
 
+	// if the context is explicitly provided, filter out the remaining
+	// example, resource.attr = 'value', then we don't want to search on
+	// anything other than the resource attributes
+	if fieldKey.FieldContext != telemetrytypes.FieldContextUnspecified {
+		filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
+		for _, item := range fieldKeysForName {
+			if item.FieldContext == fieldKey.FieldContext {
+				filteredKeys = append(filteredKeys, item)
+			}
+		}
+		fieldKeysForName = filteredKeys
+	}
+
 	// for the body json search, we need to add search on the body field even
 	// if there is a field with the same name as attribute/resource attribute
 	// Since it will ORed with the fieldKeysForName, it will not result empty
@@ -616,16 +723,23 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	}
 
 	if len(fieldKeysForName) == 0 {
+		// check if the key exists with {fieldContext}.{key}
+		// because the context could be legitimate prefix in user data, example `span.div_num = 20`
+		keyWithContext := fmt.Sprintf("%s.%s", fieldKey.FieldContext.StringValue(), fieldKey.Name)
+		if len(v.fieldKeys[keyWithContext]) > 0 {
+			return v.fieldKeys[keyWithContext]
+		}
+
 		if strings.HasPrefix(fieldKey.Name, v.jsonBodyPrefix) && v.jsonBodyPrefix != "" && keyName == "" {
 			v.errors = append(v.errors, "missing key for body json search - expected key of the form `body.key` (ex: `body.status`)")
-		} else {
+		} else if !v.ignoreNotFoundKeys {
 			// TODO(srikanthccv): do we want to return an error here?
 			// should we infer the type and auto-magically build a key for expression?
 			v.errors = append(v.errors, fmt.Sprintf("key `%s` not found", fieldKey.Name))
 		}
 	}
 
-	if len(fieldKeysForName) > 1 {
+	if len(fieldKeysForName) > 1 && !v.keysWithWarnings[keyName] {
 		// this is warning state, we must have a unambiguous key
 		v.warnings = append(v.warnings, fmt.Sprintf(
 			"key `%s` is ambiguous, found %d different combinations of field context and data type: %v",
@@ -633,6 +747,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 			len(fieldKeysForName),
 			fieldKeysForName,
 		))
+		v.keysWithWarnings[keyName] = true
 	}
 
 	return fieldKeysForName
@@ -642,8 +757,13 @@ func trimQuotes(txt string) string {
 	if len(txt) >= 2 {
 		if (txt[0] == '"' && txt[len(txt)-1] == '"') ||
 			(txt[0] == '\'' && txt[len(txt)-1] == '\'') {
-			return txt[1 : len(txt)-1]
+			txt = txt[1 : len(txt)-1]
 		}
 	}
+
+	// unescape so clickhouse-go can escape it
+	// https://github.com/ClickHouse/clickhouse-go/blob/6c5ddb38dd2edc841a3b927711b841014759bede/bind.go#L278
+	txt = strings.ReplaceAll(txt, `\\`, `\`)
+	txt = strings.ReplaceAll(txt, `\'`, `'`)
 	return txt
 }

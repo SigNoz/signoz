@@ -4,14 +4,17 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
+	"golang.org/x/exp/maps"
 )
 
 var (
@@ -25,6 +28,7 @@ type traceQueryStatementBuilder struct {
 	cb                        qbtypes.ConditionBuilder
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
+	telemetryStore            telemetrystore.TelemetryStore
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*traceQueryStatementBuilder)(nil)
@@ -36,6 +40,7 @@ func NewTraceQueryStatementBuilder(
 	conditionBuilder qbtypes.ConditionBuilder,
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	aggExprRewriter qbtypes.AggExprRewriter,
+	telemetryStore telemetrystore.TelemetryStore,
 ) *traceQueryStatementBuilder {
 	tracesSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrytraces")
 	return &traceQueryStatementBuilder{
@@ -45,6 +50,7 @@ func NewTraceQueryStatementBuilder(
 		cb:                        conditionBuilder,
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		aggExprRewriter:           aggExprRewriter,
+		telemetryStore:            telemetryStore,
 	}
 }
 
@@ -55,6 +61,7 @@ func (b *traceQueryStatementBuilder) Build(
 	end uint64,
 	requestType qbtypes.RequestType,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
+	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 
 	start = querybuilder.ToNanoSecs(start)
@@ -67,16 +74,35 @@ func (b *traceQueryStatementBuilder) Build(
 		return nil, err
 	}
 
+	b.adjustKeys(ctx, keys, query)
+
+	// Check if filter contains trace_id(s) and optimize time range if needed
+	if query.Filter != nil && query.Filter.Expression != "" && b.telemetryStore != nil {
+		traceIDs, found := ExtractTraceIDsFromFilter(query.Filter.Expression)
+		if found && len(traceIDs) > 0 {
+			finder := NewTraceTimeRangeFinder(b.telemetryStore)
+
+			traceStart, traceEnd, err := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
+			if err != nil {
+				b.logger.DebugContext(ctx, "failed to get trace time range", "trace_ids", traceIDs, "error", err)
+			} else if traceStart > 0 && traceEnd > 0 {
+				start = uint64(traceStart)
+				end = uint64(traceEnd)
+				b.logger.DebugContext(ctx, "optimized time range for traces", "trace_ids", traceIDs, "start", start, "end", end)
+			}
+		}
+	}
+
 	// Create SQL builder
 	q := sqlbuilder.NewSelectBuilder()
 
 	switch requestType {
 	case qbtypes.RequestTypeRaw:
-		return b.buildListQuery(ctx, q, query, start, end, keys)
+		return b.buildListQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeTimeSeries:
-		return b.buildTimeSeriesQuery(ctx, q, query, start, end, keys)
+		return b.buildTimeSeriesQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeScalar:
-		return b.buildScalarQuery(ctx, q, query, start, end, keys, false)
+		return b.buildScalarQuery(ctx, q, query, start, end, keys, variables, false, false)
 	}
 
 	return nil, fmt.Errorf("unsupported request type: %s", requestType)
@@ -104,19 +130,17 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 
 	for idx := range query.SelectFields {
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          query.SelectFields[idx].Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  query.SelectFields[idx].FieldContext,
-			FieldDataType: query.SelectFields[idx].FieldDataType,
+			Name:         query.SelectFields[idx].Name,
+			Signal:       telemetrytypes.SignalTraces,
+			FieldContext: query.SelectFields[idx].FieldContext,
 		})
 	}
 
 	for idx := range query.Order {
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          query.Order[idx].Key.Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  query.Order[idx].Key.FieldContext,
-			FieldDataType: query.Order[idx].Key.FieldDataType,
+			Name:         query.Order[idx].Key.Name,
+			Signal:       telemetrytypes.SignalTraces,
+			FieldContext: query.Order[idx].Key.FieldContext,
 		})
 	}
 
@@ -127,6 +151,100 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 	return keySelectors
 }
 
+func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) {
+	// for group by / order by / selected fields, if there is a key
+	// that exactly matches the name of intrinsic / calculated field but has
+	// a field context or data type that doesn't match the field context or data type of the
+	// intrinsic field,
+	// and there is no additional key present in the data with the incoming key match,
+	// then override the given context with
+	// intrinsic / calculated field context and data type
+	// Why does that happen? Because we have a lot of assets created by users and shared over web
+	// that has incorrect context or data type populated so we fix it
+	// note: this override happens only when there is no match; if there is a match,
+	// we can't make decision on behalf of users so we let it use unmodified
+
+	// example: {"key": "httpRoute","type": "tag","dataType": "string"}
+	// This is sent as "tag", when it's not, this was earlier managed with
+	// `isColumn`, which we don't have in v5 (because it's not a user concern whether it's mat col or not)
+	// Such requests as-is look for attributes, the following code exists to handle them
+	checkMatch := func(k *telemetrytypes.TelemetryFieldKey) {
+		var overallMatch bool
+
+		findMatch := func(staticKeys map[string]telemetrytypes.TelemetryFieldKey) bool {
+			// for a given key `k`, iterate over the metadata keys `keys`
+			// and see if there is any exact match
+			match := false
+			for _, mapKey := range keys[k.Name] {
+				if mapKey.FieldContext == k.FieldContext && mapKey.FieldDataType == k.FieldDataType {
+					match = true
+				}
+			}
+			// we don't have exact match, then it's doesn't exist in attribute or resource attribute
+			// use the intrinsic/calculated field
+			if !match {
+				b.logger.InfoContext(ctx, "overriding the field context and data type", "key", k.Name)
+				k.FieldContext = staticKeys[k.Name].FieldContext
+				k.FieldDataType = staticKeys[k.Name].FieldDataType
+			}
+			return match
+		}
+
+		if _, ok := IntrinsicFields[k.Name]; ok {
+			overallMatch = overallMatch || findMatch(IntrinsicFields)
+		}
+		if _, ok := CalculatedFields[k.Name]; ok {
+			overallMatch = overallMatch || findMatch(CalculatedFields)
+		}
+		if _, ok := IntrinsicFieldsDeprecated[k.Name]; ok {
+			overallMatch = overallMatch || findMatch(IntrinsicFieldsDeprecated)
+		}
+		if _, ok := CalculatedFieldsDeprecated[k.Name]; ok {
+			overallMatch = overallMatch || findMatch(CalculatedFieldsDeprecated)
+		}
+
+		if !overallMatch {
+			// check if all the key for the given field have been materialized, if so
+			// set the key to materialized
+			materilized := true
+			for _, key := range keys[k.Name] {
+				materilized = materilized && key.Materialized
+			}
+			k.Materialized = materilized
+		}
+	}
+
+	for idx := range query.GroupBy {
+		checkMatch(&query.GroupBy[idx].TelemetryFieldKey)
+	}
+	for idx := range query.Order {
+		checkMatch(&query.Order[idx].Key.TelemetryFieldKey)
+	}
+	for idx := range query.SelectFields {
+		checkMatch(&query.SelectFields[idx])
+	}
+
+	// add deprecated fields only during statement building
+	// why?
+	// 1. to not fail filter expression that use deprecated cols
+	// 2. this could have been moved to metadata fetching itself, however, that
+	// would mean, they also show up in suggestions we we don't want to do
+	for fieldKeyName, fieldKey := range IntrinsicFieldsDeprecated {
+		if _, ok := keys[fieldKeyName]; !ok {
+			keys[fieldKeyName] = []*telemetrytypes.TelemetryFieldKey{&fieldKey}
+		} else {
+			keys[fieldKeyName] = append(keys[fieldKeyName], &fieldKey)
+		}
+	}
+	for fieldKeyName, fieldKey := range CalculatedFieldsDeprecated {
+		if _, ok := keys[fieldKeyName]; !ok {
+			keys[fieldKeyName] = []*telemetrytypes.TelemetryFieldKey{&fieldKey}
+		} else {
+			keys[fieldKeyName] = append(keys[fieldKeyName], &fieldKey)
+		}
+	}
+}
+
 // buildListQuery builds a query for list panel type
 func (b *traceQueryStatementBuilder) buildListQuery(
 	ctx context.Context,
@@ -134,6 +252,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 
 	var (
@@ -141,38 +260,48 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		cteArgs      [][]any
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end); err != nil {
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
 		return nil, err
 	} else if frag != "" {
 		cteFragments = append(cteFragments, frag)
 		cteArgs = append(cteArgs, args)
 	}
 
-	// Select default columns
-	sb.Select(
-		"timestamp",
-		"trace_id",
-		"span_id",
-		"name",
-		sqlbuilder.Escape("resource_string_service$$name"),
-		"duration_nano",
-		"response_status_code",
-	)
+	selectedFields := query.SelectFields
+
+	if len(selectedFields) == 0 {
+		sortedKeys := maps.Keys(DefaultFields)
+		slices.Sort(sortedKeys)
+		for _, key := range sortedKeys {
+			selectedFields = append(selectedFields, DefaultFields[key])
+		}
+	}
+
+	selectFieldKeys := []string{}
+	for _, field := range selectedFields {
+		selectFieldKeys = append(selectFieldKeys, field.Name)
+	}
+
+	for _, x := range []string{"timestamp", "span_id", "trace_id"} {
+		if !slices.Contains(selectFieldKeys, x) {
+			selectedFields = append(selectedFields, DefaultFields[x])
+		}
+	}
 
 	// TODO: should we deprecate `SelectFields` and return everything from a span like we do for logs?
-	for _, field := range query.SelectFields {
+	for _, field := range selectedFields {
 		colExpr, err := b.fm.ColumnExpressionFor(ctx, &field, keys)
 		if err != nil {
 			return nil, err
 		}
-		sb.SelectMore(sqlbuilder.Escape(colExpr))
+		sb.SelectMore(colExpr)
 	}
 
 	// From table
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -215,6 +344,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 
 	var (
@@ -222,7 +352,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		cteArgs      [][]any
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end); err != nil {
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
 		return nil, err
 	} else if frag != "" {
 		cteFragments = append(cteFragments, frag)
@@ -245,7 +375,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		}
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
-		sb.SelectMore(sqlbuilder.Escape(colExpr))
+		sb.SelectMore(colExpr)
 		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
 	}
 
@@ -265,7 +395,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -273,10 +403,10 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	var finalSQL string
 	var finalArgs []any
 
-	if query.Limit > 0 {
+	if query.Limit > 0 && len(query.GroupBy) > 0 {
 		// build the scalar “top/bottom-N” query in its own builder.
 		cteSB := sqlbuilder.NewSelectBuilder()
-		cteStmt, err := b.buildScalarQuery(ctx, cteSB, query, start, end, keys, true)
+		cteStmt, err := b.buildScalarQuery(ctx, cteSB, query, start, end, keys, variables, true, true)
 		if err != nil {
 			return nil, err
 		}
@@ -286,12 +416,15 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 
 		// Constrain the main query to the rows that appear in the CTE.
 		tuple := fmt.Sprintf("(%s)", strings.Join(fieldNames, ", "))
-		sb.Where(fmt.Sprintf("%s IN (SELECT %s FROM __limit_cte)", tuple, strings.Join(fieldNames, ", ")))
+		sb.Where(fmt.Sprintf("%s GLOBAL IN (SELECT %s FROM __limit_cte)", tuple, strings.Join(fieldNames, ", ")))
 
 		// Group by all dimensions
-		sb.GroupBy("ALL")
+		sb.GroupBy("ts")
+		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 		if query.Having != nil && query.Having.Expression != "" {
-			sb.Having(query.Having.Expression)
+			rewriter := querybuilder.NewHavingExpressionRewriter()
+			rewrittenExpr := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+			sb.Having(rewrittenExpr)
 		}
 
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
@@ -302,9 +435,12 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		finalArgs = querybuilder.PrependArgs(cteArgs, mainArgs)
 
 	} else {
-		sb.GroupBy("ALL")
+		sb.GroupBy("ts")
+		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 		if query.Having != nil && query.Having.Expression != "" {
-			sb.Having(query.Having.Expression)
+			rewriter := querybuilder.NewHavingExpressionRewriter()
+			rewrittenExpr := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+			sb.Having(rewrittenExpr)
 		}
 
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
@@ -329,7 +465,9 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
 	skipResourceCTE bool,
+	skipHaving bool,
 ) (*qbtypes.Statement, error) {
 
 	var (
@@ -337,7 +475,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 		cteArgs      [][]any
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end); err != nil {
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
 		return nil, err
 	} else if frag != "" && !skipResourceCTE {
 		cteFragments = append(cteFragments, frag)
@@ -354,7 +492,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 		}
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
-		sb.SelectMore(sqlbuilder.Escape(colExpr))
+		sb.SelectMore(colExpr)
 	}
 
 	// for scalar queries, the rate would be end-start
@@ -381,17 +519,19 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 	if err != nil {
 		return nil, err
 	}
 
 	// Group by dimensions
-	sb.GroupBy("ALL")
+	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
 	// Add having clause if needed
-	if query.Having != nil && query.Having.Expression != "" {
-		sb.Having(query.Having.Expression)
+	if query.Having != nil && query.Having.Expression != "" && !skipHaving {
+		rewriter := querybuilder.NewHavingExpressionRewriter()
+		rewrittenExpr := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+		sb.Having(rewrittenExpr)
 	}
 
 	// Add order by
@@ -435,6 +575,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
 ) ([]string, error) {
 
 	var filterWhereClause *sqlbuilder.WhereClause
@@ -448,6 +589,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
 			SkipResourceFilter: true,
+			Variables:          variables,
 		})
 
 		if err != nil {
@@ -484,14 +626,15 @@ func (b *traceQueryStatementBuilder) maybeAttachResourceFilter(
 	sb *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	start, end uint64,
+	variables map[string]qbtypes.VariableItem,
 ) (cteSQL string, cteArgs []any, err error) {
 
-	stmt, err := b.buildResourceFilterCTE(ctx, query, start, end)
+	stmt, err := b.buildResourceFilterCTE(ctx, query, start, end, variables)
 	if err != nil {
 		return "", nil, err
 	}
 
-	sb.Where("resource_fingerprint IN (SELECT fingerprint FROM __resource_filter)")
+	sb.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
 
 	return fmt.Sprintf("__resource_filter AS (%s)", stmt.Query), stmt.Args, nil
 }
@@ -500,6 +643,7 @@ func (b *traceQueryStatementBuilder) buildResourceFilterCTE(
 	ctx context.Context,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	start, end uint64,
+	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 
 	return b.resourceFilterStmtBuilder.Build(
@@ -508,5 +652,6 @@ func (b *traceQueryStatementBuilder) buildResourceFilterCTE(
 		end,
 		qbtypes.RequestTypeRaw,
 		query,
+		variables,
 	)
 }

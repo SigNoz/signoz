@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/exp/maps"
 )
 
@@ -119,6 +120,41 @@ var (
 		"attribute_string_rpc$$method_exists":          {Name: "attribute_string_rpc$$method_exists", Type: schema.ColumnTypeBool},
 		"attribute_string_peer$$service_exists":        {Name: "attribute_string_peer$$service_exists", Type: schema.ColumnTypeBool},
 	}
+
+	// TODO(srikanthccv): remove this mapping
+	oldToNew = map[string]string{
+		// deprecated intrinsic -> new intrinsic
+		"traceID":          "trace_id",
+		"spanID":           "span_id",
+		"parentSpanID":     "parent_span_id",
+		"spanKind":         "kind_string",
+		"durationNano":     "duration_nano",
+		"statusCode":       "status_code",
+		"statusMessage":    "status_message",
+		"statusCodeString": "status_code_string",
+
+		// deprecated derived -> new derived / materialized
+		"references":         "links",
+		"responseStatusCode": "response_status_code",
+		"externalHttpUrl":    "external_http_url",
+		"httpUrl":            "http_url",
+		"externalHttpMethod": "external_http_method",
+		"httpMethod":         "http_method",
+		"httpHost":           "http_host",
+		"dbName":             "db_name",
+		"dbOperation":        "db_operation",
+		"hasError":           "has_error",
+		"isRemote":           "is_remote",
+		"serviceName":        "resource_string_service$$name",
+		"httpRoute":          "attribute_string_http$$route",
+		"msgSystem":          "attribute_string_messaging$$system",
+		"msgOperation":       "attribute_string_messaging$$operation",
+		"dbSystem":           "attribute_string_db$$system",
+		"rpcSystem":          "attribute_string_rpc$$system",
+		"rpcService":         "attribute_string_rpc$$service",
+		"rpcMethod":          "attribute_string_rpc$$method",
+		"peerService":        "attribute_string_peer$$service",
+	}
 )
 
 type defaultFieldMapper struct{}
@@ -150,6 +186,21 @@ func (m *defaultFieldMapper) getColumn(
 			return indexV3Columns["attributes_bool"], nil
 		}
 	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextUnspecified:
+		// Check if this is a span scope field
+		if strings.ToLower(key.Name) == SpanSearchScopeRoot || strings.ToLower(key.Name) == SpanSearchScopeEntryPoint {
+			// The actual SQL will be generated in the condition builder
+			return &schema.Column{Name: key.Name, Type: schema.ColumnTypeBool}, nil
+		}
+
+		// TODO(srikanthccv): remove this when it's safe to remove
+		// issue with CH aliasing
+		if _, ok := CalculatedFieldsDeprecated[key.Name]; ok {
+			return indexV3Columns[oldToNew[key.Name]], nil
+		}
+		if _, ok := IntrinsicFieldsDeprecated[key.Name]; ok {
+			return indexV3Columns[oldToNew[key.Name]], nil
+		}
+
 		if col, ok := indexV3Columns[key.Name]; ok {
 			return col, nil
 		}
@@ -171,6 +222,13 @@ func (m *defaultFieldMapper) FieldFor(
 	ctx context.Context,
 	key *telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
+	// Special handling for span scope fields
+	if key.FieldContext == telemetrytypes.FieldContextSpan &&
+		(strings.ToLower(key.Name) == SpanSearchScopeRoot || strings.ToLower(key.Name) == SpanSearchScopeEntryPoint) {
+		// Return the field name as-is, the condition builder will handle the SQL generation
+		return key.Name, nil
+	}
+
 	column, err := m.getColumn(ctx, key)
 	if err != nil {
 		return "", err
@@ -247,10 +305,10 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 				correction, found := telemetrytypes.SuggestCorrection(field.Name, maps.Keys(keys))
 				if found {
 					// we found a close match, in the error message send the suggestion
-					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
+					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "%s", correction)
 				} else {
 					// not even a close match, return an error
-					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field %s not found", field.Name)
+					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name)
 				}
 			}
 		} else if len(keysForField) == 1 {
@@ -267,5 +325,5 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 		}
 	}
 
-	return fmt.Sprintf("%s AS `%s`", colName, field.Name), nil
+	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(colName), field.Name), nil
 }

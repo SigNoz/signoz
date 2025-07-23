@@ -1,6 +1,5 @@
 .edit-alert-channels-container {
-	width: 90%;
-	margin: 12px auto;
+	margin: 12px;
 
 	border: 1px solid var(--Slate-500, #161922);
 	background: var(--Ink-400, #121317);
@@ -11,5 +10,16 @@
 	.form-alert-channels-title {
 		margin-top: 0px;
 		margin-bottom: 16px;
+	}
+}
+
+.lightMode {
+	.edit-alert-channels-container {
+		background: var(--bg-vanilla-100);
+		border-color: var(--bg-vanilla-300);
+
+		.form-alert-channels-title {
+			color: var(--bg-ink-100);
+		}
 	}
 }

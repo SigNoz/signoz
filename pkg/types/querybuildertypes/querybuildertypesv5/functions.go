@@ -30,6 +30,7 @@ var (
 	FunctionNameMedian7       = FunctionName{valuer.NewString("median7")}
 	FunctionNameTimeShift     = FunctionName{valuer.NewString("timeShift")}
 	FunctionNameAnomaly       = FunctionName{valuer.NewString("anomaly")}
+	FunctionNameFillZero      = FunctionName{valuer.NewString("fillZero")}
 )
 
 // ApplyFunction applies the given function to the result data
@@ -89,6 +90,24 @@ func ApplyFunction(fn Function, result *TimeSeries) *TimeSeries {
 		// Placeholder for anomaly detection as function that can be used in dashboards other than
 		// the anomaly alert
 		return result
+	case FunctionNameFillZero:
+		// fillZero expects 3 arguments: start, end, step (all in milliseconds)
+		if len(args) < 3 {
+			return result
+		}
+		start, err := parseFloat64Arg(args[0].Value)
+		if err != nil {
+			return result
+		}
+		end, err := parseFloat64Arg(args[1].Value)
+		if err != nil {
+			return result
+		}
+		step, err := parseFloat64Arg(args[2].Value)
+		if err != nil || step <= 0 {
+			return result
+		}
+		return funcFillZero(result, int64(start), int64(end), int64(step))
 	}
 	return result
 }
@@ -347,6 +366,39 @@ func funcTimeShift(result *TimeSeries, shift float64) *TimeSeries {
 		result.Values[idx] = point
 	}
 
+	return result
+}
+
+// funcFillZero fills gaps in time series with zeros at regular step intervals
+// It takes start, end, and step parameters (all in milliseconds) to ensure consistent filling
+func funcFillZero(result *TimeSeries, start, end, step int64) *TimeSeries {
+	if step <= 0 {
+		return result
+	}
+
+	alignedStart := start - (start % (step * 1000))
+	alignedEnd := end
+
+	existingValues := make(map[int64]*TimeSeriesValue)
+	for _, v := range result.Values {
+		existingValues[v.Timestamp] = v
+	}
+
+	filledValues := make([]*TimeSeriesValue, 0)
+
+	for ts := alignedStart; ts <= alignedEnd; ts += step * 1000 {
+		if val, exists := existingValues[ts]; exists {
+			filledValues = append(filledValues, val)
+		} else {
+			filledValues = append(filledValues, &TimeSeriesValue{
+				Timestamp: ts,
+				Value:     0,
+				Partial:   false,
+			})
+		}
+	}
+
+	result.Values = filledValues
 	return result
 }
 

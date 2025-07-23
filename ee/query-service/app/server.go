@@ -6,14 +6,10 @@ import (
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
-	"time"
 
 	"github.com/gorilla/handlers"
-	"github.com/jmoiron/sqlx"
 
 	"github.com/SigNoz/signoz/ee/query-service/app/api"
-	"github.com/SigNoz/signoz/ee/query-service/app/db"
-	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
 	"github.com/SigNoz/signoz/ee/query-service/rules"
 	"github.com/SigNoz/signoz/ee/query-service/usage"
@@ -32,6 +28,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
+	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
@@ -41,7 +38,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
 	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
-	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 )
@@ -59,62 +55,55 @@ type ServerOptions struct {
 	Jwt                        *authtypes.JWT
 }
 
-// Server runs HTTP api service
+// Server runs HTTP, Mux and a grpc server
 type Server struct {
-	serverOptions *ServerOptions
-	ruleManager   *baserules.Manager
+	config      signoz.Config
+	signoz      *signoz.SigNoz
+	jwt         *authtypes.JWT
+	ruleManager *baserules.Manager
 
 	// public http router
-	httpConn   net.Listener
-	httpServer *http.Server
+	httpConn     net.Listener
+	httpServer   *http.Server
+	httpHostPort string
 
 	// private http
-	privateConn net.Listener
-	privateHTTP *http.Server
+	privateConn     net.Listener
+	privateHTTP     *http.Server
+	privateHostPort string
+
+	opampServer *opamp.Server
 
 	// Usage manager
 	usageManager *usage.Manager
 
-	opampServer *opamp.Server
-
 	unavailableChannel chan healthcheck.Status
 }
 
-// HealthCheckStatus returns health check status channel a client can subscribe to
-func (s Server) HealthCheckStatus() chan healthcheck.Status {
-	return s.unavailableChannel
-}
-
 // NewServer creates and initializes Server
-func NewServer(serverOptions *ServerOptions) (*Server, error) {
-	gatewayProxy, err := gateway.NewProxy(serverOptions.GatewayUrl, gateway.RoutePrefix)
+func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) (*Server, error) {
+	gatewayProxy, err := gateway.NewProxy(config.Gateway.URL.String(), gateway.RoutePrefix)
 	if err != nil {
 		return nil, err
 	}
 
-	fluxIntervalForTraceDetail, err := time.ParseDuration(serverOptions.FluxIntervalForTraceDetail)
-	if err != nil {
-		return nil, err
-	}
-
-	reader := db.NewDataConnector(
-		serverOptions.SigNoz.SQLStore,
-		serverOptions.SigNoz.TelemetryStore,
-		serverOptions.SigNoz.Prometheus,
-		serverOptions.Cluster,
-		fluxIntervalForTraceDetail,
-		serverOptions.SigNoz.Cache,
+	reader := clickhouseReader.NewReader(
+		signoz.SQLStore,
+		signoz.TelemetryStore,
+		signoz.Prometheus,
+		signoz.TelemetryStore.Cluster(),
+		config.Querier.FluxInterval,
+		signoz.Cache,
 	)
 
 	rm, err := makeRulesManager(
-		serverOptions.SigNoz.SQLStore.SQLxDB(),
 		reader,
-		serverOptions.SigNoz.Cache,
-		serverOptions.SigNoz.Alertmanager,
-		serverOptions.SigNoz.SQLStore,
-		serverOptions.SigNoz.TelemetryStore,
-		serverOptions.SigNoz.Prometheus,
-		serverOptions.SigNoz.Modules.OrgGetter,
+		signoz.Cache,
+		signoz.Alertmanager,
+		signoz.SQLStore,
+		signoz.TelemetryStore,
+		signoz.Prometheus,
+		signoz.Modules.OrgGetter,
 	)
 
 	if err != nil {
@@ -122,16 +111,16 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// initiate opamp
-	opAmpModel.InitDB(serverOptions.SigNoz.SQLStore, serverOptions.SigNoz.Instrumentation.Logger(), serverOptions.SigNoz.Modules.OrgGetter)
+	opAmpModel.Init(signoz.SQLStore, signoz.Instrumentation.Logger(), signoz.Modules.OrgGetter)
 
-	integrationsController, err := integrations.NewController(serverOptions.SigNoz.SQLStore)
+	integrationsController, err := integrations.NewController(signoz.SQLStore)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't create integrations controller: %w", err,
 		)
 	}
 
-	cloudIntegrationsController, err := cloudintegrations.NewController(serverOptions.SigNoz.SQLStore)
+	cloudIntegrationsController, err := cloudintegrations.NewController(signoz.SQLStore)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't create cloud provider integrations controller: %w", err,
@@ -140,7 +129,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
-		serverOptions.SigNoz.SQLStore,
+		signoz.SQLStore,
 		integrationsController.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
@@ -149,7 +138,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	// initiate agent config handler
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		Store:         serverOptions.SigNoz.SQLStore,
+		Store:         signoz.SQLStore,
 		AgentFeatures: []agentConf.AgentFeature{logParsingPipelineController},
 	})
 	if err != nil {
@@ -157,7 +146,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// start the usagemanager
-	usageManager, err := usage.New(serverOptions.SigNoz.Licensing, serverOptions.SigNoz.TelemetryStore.ClickhouseDB(), serverOptions.SigNoz.Zeus, serverOptions.SigNoz.Modules.OrgGetter)
+	usageManager, err := usage.New(signoz.Licensing, signoz.TelemetryStore.ClickhouseDB(), signoz.Zeus, signoz.Modules.OrgGetter)
 	if err != nil {
 		return nil, err
 	}
@@ -166,47 +155,36 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	telemetry.GetInstance().SetReader(reader)
-	telemetry.GetInstance().SetSqlStore(serverOptions.SigNoz.SQLStore)
-	telemetry.GetInstance().SetSaasOperator(constants.SaasSegmentKey)
-	telemetry.GetInstance().SetSavedViewsInfoCallback(telemetry.GetSavedViewsInfo)
-	telemetry.GetInstance().SetAlertsInfoCallback(telemetry.GetAlertsInfo)
-	telemetry.GetInstance().SetGetUsersCallback(telemetry.GetUsers)
-	telemetry.GetInstance().SetUserCountCallback(telemetry.GetUserCount)
-	telemetry.GetInstance().SetDashboardsInfoCallback(telemetry.GetDashboardsInfo)
-
-	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
-	if err != nil {
-		return nil, err
-	}
-
 	apiOpts := api.APIHandlerOptions{
 		DataConnector:                 reader,
-		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
 		RulesManager:                  rm,
 		UsageManager:                  usageManager,
 		IntegrationsController:        integrationsController,
 		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
-		FluxInterval:                  fluxInterval,
+		FluxInterval:                  config.Querier.FluxInterval,
 		Gateway:                       gatewayProxy,
-		GatewayUrl:                    serverOptions.GatewayUrl,
-		JWT:                           serverOptions.Jwt,
+		GatewayUrl:                    config.Gateway.URL.String(),
+		JWT:                           jwt,
 	}
 
-	apiHandler, err := api.NewAPIHandler(apiOpts, serverOptions.SigNoz)
+	apiHandler, err := api.NewAPIHandler(apiOpts, signoz)
 	if err != nil {
 		return nil, err
 	}
 
 	s := &Server{
+		config:             config,
+		signoz:             signoz,
+		jwt:                jwt,
 		ruleManager:        rm,
-		serverOptions:      serverOptions,
+		httpHostPort:       baseconst.HTTPHostPort,
+		privateHostPort:    baseconst.PrivateHostPort,
 		unavailableChannel: make(chan healthcheck.Status),
 		usageManager:       usageManager,
 	}
 
-	httpServer, err := s.createPublicServer(apiHandler, serverOptions.SigNoz.Web)
+	httpServer, err := s.createPublicServer(apiHandler, signoz.Web)
 
 	if err != nil {
 		return nil, err
@@ -222,35 +200,28 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	s.privateHTTP = privateServer
 
 	s.opampServer = opamp.InitializeServer(
-		&opAmpModel.AllAgents, agentConfMgr,
+		&opAmpModel.AllAgents, agentConfMgr, signoz.Instrumentation,
 	)
 
-	orgs, err := apiHandler.Signoz.Modules.OrgGetter.ListByOwnedKeyRange(context.Background())
-	if err != nil {
-		return nil, err
-	}
-	for _, org := range orgs {
-		errorList := reader.PreloadMetricsMetadata(context.Background(), org.ID)
-		for _, er := range errorList {
-			zap.L().Error("failed to preload metrics metadata", zap.Error(er))
-		}
-	}
-
 	return s, nil
+}
+
+// HealthCheckStatus returns health check status channel a client can subscribe to
+func (s Server) HealthCheckStatus() chan healthcheck.Status {
+	return s.unavailableChannel
 }
 
 func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, error) {
 	r := baseapp.NewRouter()
 
-	r.Use(middleware.NewAuth(s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.serverOptions.SigNoz.Sharder, s.serverOptions.SigNoz.Instrumentation.Logger()).Wrap)
-	r.Use(middleware.NewAPIKey(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.serverOptions.SigNoz.Instrumentation.Logger(), s.serverOptions.SigNoz.Sharder).Wrap)
-	r.Use(middleware.NewTimeout(s.serverOptions.SigNoz.Instrumentation.Logger(),
-		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
-		s.serverOptions.Config.APIServer.Timeout.Default,
-		s.serverOptions.Config.APIServer.Timeout.Max,
+	r.Use(middleware.NewAuth(s.jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
+	r.Use(middleware.NewAPIKey(s.signoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.signoz.Instrumentation.Logger(), s.signoz.Sharder).Wrap)
+	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
+		s.config.APIServer.Timeout.ExcludedRoutes,
+		s.config.APIServer.Timeout.Default,
+		s.config.APIServer.Timeout.Max,
 	).Wrap)
-	r.Use(middleware.NewAnalytics().Wrap)
-	r.Use(middleware.NewLogging(s.serverOptions.SigNoz.Instrumentation.Logger(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
+	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
 
 	apiHandler.RegisterPrivateRoutes(r)
 
@@ -272,17 +243,16 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 
 func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*http.Server, error) {
 	r := baseapp.NewRouter()
-	am := middleware.NewAuthZ(s.serverOptions.SigNoz.Instrumentation.Logger())
+	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger())
 
-	r.Use(middleware.NewAuth(s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.serverOptions.SigNoz.Sharder, s.serverOptions.SigNoz.Instrumentation.Logger()).Wrap)
-	r.Use(middleware.NewAPIKey(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.serverOptions.SigNoz.Instrumentation.Logger(), s.serverOptions.SigNoz.Sharder).Wrap)
-	r.Use(middleware.NewTimeout(s.serverOptions.SigNoz.Instrumentation.Logger(),
-		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
-		s.serverOptions.Config.APIServer.Timeout.Default,
-		s.serverOptions.Config.APIServer.Timeout.Max,
+	r.Use(middleware.NewAuth(s.jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
+	r.Use(middleware.NewAPIKey(s.signoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.signoz.Instrumentation.Logger(), s.signoz.Sharder).Wrap)
+	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
+		s.config.APIServer.Timeout.ExcludedRoutes,
+		s.config.APIServer.Timeout.Default,
+		s.config.APIServer.Timeout.Max,
 	).Wrap)
-	r.Use(middleware.NewAnalytics().Wrap)
-	r.Use(middleware.NewLogging(s.serverOptions.SigNoz.Instrumentation.Logger(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
+	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
 
 	apiHandler.RegisterRoutes(r, am)
 	apiHandler.RegisterLogsRoutes(r, am)
@@ -323,7 +293,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 func (s *Server) initListeners() error {
 	// listen on public port
 	var err error
-	publicHostPort := s.serverOptions.HTTPHostPort
+	publicHostPort := s.httpHostPort
 	if publicHostPort == "" {
 		return fmt.Errorf("baseconst.HTTPHostPort is required")
 	}
@@ -333,10 +303,10 @@ func (s *Server) initListeners() error {
 		return err
 	}
 
-	zap.L().Info(fmt.Sprintf("Query server started listening on %s...", s.serverOptions.HTTPHostPort))
+	zap.L().Info(fmt.Sprintf("Query server started listening on %s...", s.httpHostPort))
 
 	// listen on private port to support internal services
-	privateHostPort := s.serverOptions.PrivateHostPort
+	privateHostPort := s.privateHostPort
 
 	if privateHostPort == "" {
 		return fmt.Errorf("baseconst.PrivateHostPort is required")
@@ -346,7 +316,7 @@ func (s *Server) initListeners() error {
 	if err != nil {
 		return err
 	}
-	zap.L().Info(fmt.Sprintf("Query server started listening on private port %s...", s.serverOptions.PrivateHostPort))
+	zap.L().Info(fmt.Sprintf("Query server started listening on private port %s...", s.privateHostPort))
 
 	return nil
 }
@@ -366,7 +336,7 @@ func (s *Server) Start(ctx context.Context) error {
 	}
 
 	go func() {
-		zap.L().Info("Starting HTTP server", zap.Int("port", httpPort), zap.String("addr", s.serverOptions.HTTPHostPort))
+		zap.L().Info("Starting HTTP server", zap.Int("port", httpPort), zap.String("addr", s.httpHostPort))
 
 		switch err := s.httpServer.Serve(s.httpConn); err {
 		case nil, http.ErrServerClosed, cmux.ErrListenerClosed:
@@ -392,7 +362,7 @@ func (s *Server) Start(ctx context.Context) error {
 	}
 
 	go func() {
-		zap.L().Info("Starting Private HTTP server", zap.Int("port", privatePort), zap.String("addr", s.serverOptions.PrivateHostPort))
+		zap.L().Info("Starting Private HTTP server", zap.Int("port", privatePort), zap.String("addr", s.privateHostPort))
 
 		switch err := s.privateHTTP.Serve(s.privateConn); err {
 		case nil, http.ErrServerClosed, cmux.ErrListenerClosed:
@@ -444,7 +414,6 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func makeRulesManager(
-	db *sqlx.DB,
 	ch baseint.Reader,
 	cache cache.Cache,
 	alertmanager alertmanager.Alertmanager,
@@ -457,7 +426,6 @@ func makeRulesManager(
 	managerOpts := &baserules.ManagerOptions{
 		TelemetryStore:      telemetryStore,
 		Prometheus:          prometheus,
-		DBConn:              db,
 		Context:             context.Background(),
 		Logger:              zap.L(),
 		Reader:              ch,

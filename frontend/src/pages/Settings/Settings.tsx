@@ -110,7 +110,7 @@ function SettingsPage(): JSX.Element {
 							item.key === ROUTES.INTEGRATIONS ||
 							item.key === ROUTES.API_KEYS ||
 							item.key === ROUTES.ORG_SETTINGS ||
-							item.key === ROUTES.SHORTCUTS
+							item.key === ROUTES.INGESTION_SETTINGS
 								? true
 								: item.isEnabled,
 					}));
@@ -120,7 +120,11 @@ function SettingsPage(): JSX.Element {
 					// eslint-disable-next-line sonarjs/no-identical-functions
 					updatedItems = updatedItems.map((item) => ({
 						...item,
-						isEnabled: item.key === ROUTES.INTEGRATIONS ? true : item.isEnabled,
+						isEnabled:
+							item.key === ROUTES.INTEGRATIONS ||
+							item.key === ROUTES.INGESTION_SETTINGS
+								? true
+								: item.isEnabled,
 					}));
 				}
 			}
@@ -130,9 +134,7 @@ function SettingsPage(): JSX.Element {
 					updatedItems = updatedItems.map((item) => ({
 						...item,
 						isEnabled:
-							item.key === ROUTES.API_KEYS ||
-							item.key === ROUTES.ORG_SETTINGS ||
-							item.key === ROUTES.SHORTCUTS
+							item.key === ROUTES.API_KEYS || item.key === ROUTES.ORG_SETTINGS
 								? true
 								: item.isEnabled,
 					}));
@@ -214,6 +216,13 @@ function SettingsPage(): JSX.Element {
 
 	const isActiveNavItem = (key: string): boolean => {
 		if (pathname.startsWith(ROUTES.ALL_CHANNELS) && key === ROUTES.ALL_CHANNELS) {
+			return true;
+		}
+
+		if (
+			pathname.startsWith(ROUTES.CHANNELS_EDIT) &&
+			key === ROUTES.ALL_CHANNELS
+		) {
 			return true;
 		}
 

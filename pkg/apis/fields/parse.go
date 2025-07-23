@@ -70,7 +70,7 @@ func parseFieldKeyRequest(r *http.Request) (*telemetrytypes.FieldKeySelector, er
 		}
 	}
 
-	name := r.URL.Query().Get("name")
+	name := r.URL.Query().Get("searchText")
 
 	req = telemetrytypes.FieldKeySelector{
 		StartUnixMilli:    startUnixMilli,
@@ -92,8 +92,10 @@ func parseFieldValueRequest(r *http.Request) (*telemetrytypes.FieldValueSelector
 		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse field key request")
 	}
 
+	name := r.URL.Query().Get("name")
+	keySelector.Name = name
 	existingQuery := r.URL.Query().Get("existingQuery")
-	value := r.URL.Query().Get("value")
+	value := r.URL.Query().Get("searchText")
 
 	// Parse limit for fieldValue request, fallback to default 50 if parsing fails.
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))

@@ -53,7 +53,7 @@ def signoz(
     # Build the image
     self = DockerImage(
         path="../../",
-        dockerfile_path="ee/query-service/Dockerfile.integration",
+        dockerfile_path="cmd/enterprise/Dockerfile.integration",
         tag="signoz:integration",
     )
 

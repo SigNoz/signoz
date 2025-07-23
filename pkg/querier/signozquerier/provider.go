@@ -79,6 +79,7 @@ func newProvider(
 		traceConditionBuilder,
 		resourceFilterStmtBuilder,
 		traceAggExprRewriter,
+		telemetryStore,
 	)
 
 	// Create log statement builder
@@ -88,6 +89,9 @@ func newProvider(
 		resourceFilterFieldMapper,
 		resourceFilterConditionBuilder,
 		telemetryMetadataStore,
+		telemetrylogs.DefaultFullTextColumn,
+		telemetrylogs.BodyJSONStringSearchPrefix,
+		telemetrylogs.GetBodyJSONKey,
 	)
 	logAggExprRewriter := querybuilder.NewAggExprRewriter(
 		telemetrylogs.DefaultFullTextColumn,

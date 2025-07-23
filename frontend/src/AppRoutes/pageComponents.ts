@@ -131,10 +131,6 @@ export const CreateAlertChannelAlerts = Loadable(
 	() => import(/* webpackChunkName: "Create Channels" */ 'pages/Settings'),
 );
 
-export const EditAlertChannelsAlerts = Loadable(
-	() => import(/* webpackChunkName: "Edit Channels" */ 'pages/Settings'),
-);
-
 export const AllAlertChannels = Loadable(
 	() => import(/* webpackChunkName: "All Channels" */ 'pages/Settings'),
 );

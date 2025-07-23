@@ -18,6 +18,7 @@ import {
 } from 'antd';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
+import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -289,26 +290,28 @@ export default function WorkspaceBlocked(): JSX.Element {
 						</span>
 						<span className="workspace-locked__modal__header__actions">
 							{isAdmin && (
-								<Button
-									className="workspace-locked__modal__header__actions__billing"
-									type="link"
-									size="small"
-									role="button"
-									onClick={handleViewBilling}
-								>
-									View Billing
-								</Button>
+								<Flex gap={8} justify="center" align="center">
+									<Button
+										className="workspace-locked__modal__header__actions__billing"
+										type="link"
+										size="small"
+										role="button"
+										onClick={handleViewBilling}
+									>
+										View Billing
+									</Button>
+
+									<RefreshPaymentStatus btnShape="round" />
+								</Flex>
 							)}
 
-							<Typography.Text className="workspace-locked__modal__title">
-								Got Questions?
-							</Typography.Text>
 							<Button
 								type="default"
 								shape="round"
 								size="middle"
 								href="mailto:cloud-support@signoz.io"
 								role="button"
+								className="periscope-btn"
 								onClick={handleContactUsClick}
 							>
 								Contact Us
@@ -349,7 +352,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 									justify="center"
 									align="middle"
 									className="workspace-locked__modal__cta"
-									gutter={[16, 16]}
+									gutter={[8, 8]}
 								>
 									<Col>
 										<Alert
@@ -360,34 +363,37 @@ export default function WorkspaceBlocked(): JSX.Element {
 								</Row>
 							)}
 							{isAdmin && (
-								<Row
-									justify="center"
-									align="middle"
-									className="workspace-locked__modal__cta"
-									gutter={[16, 16]}
-								>
-									<Col>
-										<Button
-											type="primary"
-											shape="round"
-											size="middle"
-											loading={isLoading}
-											onClick={handleUpdateCreditCard}
-										>
-											Continue my Journey
-										</Button>
-									</Col>
-									<Col>
-										<Button
-											type="default"
-											shape="round"
-											size="middle"
-											onClick={handleExtendTrial}
-										>
-											{t('needMoreTime')}
-										</Button>
-									</Col>
-								</Row>
+								<Flex gap={8} vertical justify="center" align="center">
+									<Row
+										justify="center"
+										align="middle"
+										className="workspace-locked__modal__cta"
+										gutter={[8, 8]}
+									>
+										<Col>
+											<Button
+												type="primary"
+												shape="round"
+												size="middle"
+												loading={isLoading}
+												onClick={handleUpdateCreditCard}
+											>
+												Continue my Journey
+											</Button>
+										</Col>
+										<Col>
+											<Button
+												type="default"
+												shape="round"
+												size="middle"
+												className="periscope-btn"
+												onClick={handleExtendTrial}
+											>
+												{t('needMoreTime')}
+											</Button>
+										</Col>
+									</Row>
+								</Flex>
 							)}
 
 							<div className="workspace-locked__tabs">

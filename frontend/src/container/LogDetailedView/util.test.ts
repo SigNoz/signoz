@@ -1,6 +1,11 @@
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import { flattenObject, getDataTypes, recursiveParseJSON } from './utils';
+import {
+	flattenObject,
+	getDataTypes,
+	getSanitizedLogBody,
+	recursiveParseJSON,
+} from './utils';
 
 describe('recursiveParseJSON', () => {
 	it('should return an empty object if the input is not valid JSON', () => {
@@ -185,3 +190,146 @@ describe('Get Data Types utils', () => {
 		expect(getDataTypes([2.5, 3, 1])).toBe(DataTypes.ArrayFloat64);
 	});
 });
+
+describe('getSanitizedLogBody', () => {
+	it('should return sanitized HTML with default options (shouldEscapeHtml: false)', () => {
+		const input = '<script>alert("xss")</script>Hello World';
+		const result = getSanitizedLogBody(input);
+
+		// Should remove script tags and return sanitized HTML
+		expect(result).not.toContain('<script>');
+		expect(result).toContain('Hello World');
+	});
+
+	it('should escape HTML when shouldEscapeHtml is true', () => {
+		const input = '<script>alert("xss")</script>Hello World';
+		const result = getSanitizedLogBody(input, { shouldEscapeHtml: true });
+
+		// Should escape HTML entities
+		expect(result).toContain('&lt;script&gt;');
+		expect(result).toContain('&lt;/script&gt;');
+		expect(result).toContain('Hello World');
+	});
+
+	it('should handle ANSI color codes correctly', () => {
+		const input = '\x1b[32mHello\x1b[0m World';
+		const result = getSanitizedLogBody(input);
+
+		// Should convert ANSI codes to HTML spans
+		expect(result).toContain('<span');
+		expect(result).toContain('Hello');
+		expect(result).toContain('World');
+	});
+
+	it('should handle unescaped strings correctly', () => {
+		const input = 'Hello\\nWorld\\tTab';
+		const result = getSanitizedLogBody(input);
+
+		// Should unescape the string
+		expect(result).toContain('Hello');
+		expect(result).toContain('World');
+	});
+
+	it('should handle empty string input', () => {
+		const result = getSanitizedLogBody('');
+		expect(result).toBe('');
+	});
+
+	it('should handle null/undefined input gracefully', () => {
+		const result1 = getSanitizedLogBody(null as any);
+		const result2 = getSanitizedLogBody(undefined as any);
+
+		expect(result1).toBe('');
+		expect(result2).toBe('');
+	});
+
+	it('should handle special characters and entities', () => {
+		const input = '& < > " \' &amp; &lt; &gt;';
+		const result = getSanitizedLogBody(input, { shouldEscapeHtml: true });
+
+		// Should escape HTML entities
+		expect(result).toContain('&amp;');
+		expect(result).toContain('&lt;');
+		expect(result).toContain('&gt;');
+		expect(result).toContain('&quot;');
+	});
+
+	it('should handle complex HTML with mixed content', () => {
+		const input =
+			'<div><p>Hello <strong>World</strong></p><script>alert("xss")</script></div>';
+		const result = getSanitizedLogBody(input);
+
+		// Should keep safe HTML but remove script tags
+		expect(result).toContain('<div>');
+		expect(result).toContain('<p>');
+		expect(result).toContain('<strong>');
+		expect(result).toContain('Hello');
+		expect(result).toContain('World');
+		expect(result).not.toContain('<script>');
+	});
+
+	it('should handle JSON-like strings', () => {
+		const input = '{"key": "value", "nested": {"inner": "data"}}';
+		const result = getSanitizedLogBody(input);
+
+		// Should preserve JSON structure
+		expect(result).toContain('{');
+		expect(result).toContain('}');
+		expect(result).toContain('key');
+		expect(result).toContain('value');
+	});
+
+	it('should handle URLs and links', () => {
+		const input = 'Visit https://example.com for more info';
+		const result = getSanitizedLogBody(input);
+
+		// Should preserve the URL text
+		expect(result).toContain('https://example.com');
+		expect(result).toContain('Visit');
+		expect(result).toContain('info');
+	});
+
+	it('should handle error cases and return fallback', () => {
+		// Mock console.error to avoid noise in tests
+		const originalConsoleError = console.error;
+		console.error = jest.fn();
+
+		// Create a scenario that might cause an error
+		const input = 'Normal text';
+		const result = getSanitizedLogBody(input);
+
+		// Should return the processed text normally
+		expect(result).toContain('Normal text');
+
+		// Restore console.error
+		console.error = originalConsoleError;
+	});
+
+	it('should handle different escape scenarios correctly', () => {
+		const input1 = '<div>Hello</div>';
+		const result1 = getSanitizedLogBody(input1, { shouldEscapeHtml: false });
+		const result2 = getSanitizedLogBody(input1, { shouldEscapeHtml: true });
+
+		// Without escaping, should keep HTML structure
+		expect(result1).toContain('<div>');
+		expect(result1).toContain('</div>');
+
+		// With escaping, should escape HTML entities
+		expect(result2).toContain('&lt;div&gt;');
+		expect(result2).toContain('&lt;/div&gt;');
+	});
+
+	it('should handle ANSI codes with HTML escaping', () => {
+		const input = '\x1b[32mHello\x1b[0m <script>World</script>';
+		const result = getSanitizedLogBody(input, { shouldEscapeHtml: true });
+
+		// Should handle both ANSI codes and HTML escaping
+		expect(result).toContain('<span');
+		expect(result).toContain('Hello');
+		expect(result).toContain('&lt;script&gt;');
+		expect(result).toContain('World');
+		expect(result).toContain('&lt;/script&gt;');
+	});
+});
+
+//

@@ -39,7 +39,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/open-telemetry/opamp-go/protobufs"
@@ -468,6 +467,7 @@ type LogPipelinesTestBed struct {
 	opampClientConn *opamp.MockOpAmpConnection
 	store           sqlstore.SQLStore
 	userModule      user.Module
+	JWT             *authtypes.JWT
 }
 
 // testDB can be injected for sharing a DB across multiple integration testbeds.
@@ -489,10 +489,10 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 	}
 
 	providerSettings := instrumentationtest.New().ToProviderSettings()
-	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
+	sharder, err := noopsharder.New(context.Background(), providerSettings, sharder.Config{})
 	require.NoError(t, err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlStore), sharder)
-	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter)
+	alertmanager, err := signozalertmanager.New(context.Background(), providerSettings, alertmanager.Config{Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter)
 	require.NoError(t, err)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
@@ -502,7 +502,6 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		LogsParsingPipelineController: controller,
-		JWT:                           jwt,
 		Signoz: &signoz.SigNoz{
 			Modules:  modules,
 			Handlers: handlers,
@@ -535,6 +534,7 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 		agentConfMgr: agentConfMgr,
 		store:        sqlStore,
 		userModule:   modules.User,
+		JWT:          jwt,
 	}
 }
 
@@ -542,12 +542,13 @@ func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore, agentID stri
 	testbed := NewTestbedWithoutOpamp(t, testDB)
 
 	providerSettings := instrumentationtest.New().ToProviderSettings()
-	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
+	sharder, err := noopsharder.New(context.Background(), providerSettings, sharder.Config{})
+	require.Nil(t, err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(testbed.store), sharder)
 
-	model.InitDB(testbed.store, slog.Default(), orgGetter)
+	model.Init(testbed.store, slog.Default(), orgGetter)
 
-	opampServer := opamp.InitializeServer(nil, testbed.agentConfMgr)
+	opampServer := opamp.InitializeServer(nil, testbed.agentConfMgr, instrumentationtest.New())
 	err = opampServer.Start(opamp.GetAvailableLocalAddress())
 	require.Nil(t, err, "failed to start opamp server")
 
@@ -557,9 +558,10 @@ func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore, agentID stri
 
 	opampClientConnection := &opamp.MockOpAmpConnection{}
 	opampServer.OnMessage(
+		context.Background(),
 		opampClientConnection,
 		&protobufs.AgentToServer{
-			InstanceUid: agentID,
+			InstanceUid: []byte(agentID),
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: newInitialAgentConfigMap(),
 			},
@@ -586,7 +588,7 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 
 	respWriter := httptest.NewRecorder()
 
-	ctx, err := tb.apiHandler.JWT.ContextFromRequest(req.Context(), req.Header.Get("Authorization"))
+	ctx, err := tb.JWT.ContextFromRequest(req.Context(), req.Header.Get("Authorization"))
 	if err != nil {
 		tb.t.Fatalf("couldn't get jwt from request: %v", err)
 	}
@@ -756,8 +758,8 @@ func assertPipelinesRecommendedInRemoteConfig(
 
 func (tb *LogPipelinesTestBed) simulateOpampClientAcknowledgementForLatestConfig(agentID string) {
 	lastMsg := tb.opampClientConn.LatestMsgFromServer()
-	tb.opampServer.OnMessage(tb.opampClientConn, &protobufs.AgentToServer{
-		InstanceUid: agentID,
+	tb.opampServer.OnMessage(context.Background(), tb.opampClientConn, &protobufs.AgentToServer{
+		InstanceUid: []byte(agentID),
 		EffectiveConfig: &protobufs.EffectiveConfig{
 			ConfigMap: lastMsg.RemoteConfig.Config,
 		},
@@ -772,10 +774,14 @@ func (tb *LogPipelinesTestBed) assertNewAgentGetsPipelinesOnConnection(
 	pipelines []pipelinetypes.GettablePipeline,
 ) {
 	newAgentConn := &opamp.MockOpAmpConnection{}
+	agentIDUUID := valuer.GenerateUUID()
+	agentID, err := agentIDUUID.MarshalBinary()
+	require.Nil(tb.t, err)
 	tb.opampServer.OnMessage(
+		context.Background(),
 		newAgentConn,
 		&protobufs.AgentToServer{
-			InstanceUid: uuid.NewString(),
+			InstanceUid: agentID,
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: newInitialAgentConfigMap(),
 			},

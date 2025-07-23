@@ -38,6 +38,7 @@ import dayjs from 'dayjs';
 import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
 import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { isNil, isUndefined } from 'lodash-es';
 import {
@@ -71,7 +72,7 @@ import {
 	PaginationProps,
 } from 'types/api/ingestionKeys/types';
 import { USER_ROLES } from 'types/roles';
-import { hasDatePassed } from 'utils/timeUtils';
+import { getDaysUntilExpiry } from 'utils/timeUtils';
 
 const { Option } = Select;
 
@@ -166,6 +167,8 @@ function MultiIngestionSettings(): JSX.Element {
 	});
 
 	const [totalIngestionKeys, setTotalIngestionKeys] = useState(0);
+
+	const { isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const [
 		hasCreateLimitForIngestionKeyError,
@@ -293,7 +296,7 @@ function MultiIngestionSettings(): JSX.Element {
 		isLoading: isLoadingDeploymentsData,
 		isFetching: isFetchingDeploymentsData,
 		isError: isErrorDeploymentsData,
-	} = useGetDeploymentsData(true);
+	} = useGetDeploymentsData(!isEnterpriseSelfHostedUser);
 
 	const {
 		mutate: createIngestionKey,
@@ -1242,23 +1245,37 @@ function MultiIngestionSettings(): JSX.Element {
 
 						<div className="ingestion-key-details">
 							<div className="ingestion-key-last-used-at">
-								<CalendarClock size={14} />
+								{((): JSX.Element | null => {
+									const daysToExpiry = getDaysUntilExpiry(expiresOn);
+									const isNoExpiry = expiresOn === 'No Expiry';
 
-								{hasDatePassed(expiresOn) ? (
-									<>
-										Expired on <Minus size={12} />
-										<Typography.Text>{expiresOn}</Typography.Text>
-									</>
-								) : (
-									<>
-										{expiresOn !== 'No Expiry' && (
-											<>
-												Expires on <Minus size={12} />
-											</>
-										)}
-										<Typography.Text>{expiresOn}</Typography.Text>
-									</>
-								)}
+									if (!isNoExpiry && daysToExpiry < 0) {
+										return (
+											<div className="ingestion-key-expires-in danger">
+												<CalendarClock size={14} /> Expired on
+												<Minus size={12} /> {expiresOn}
+											</div>
+										);
+									}
+									if (!isNoExpiry && daysToExpiry <= 3) {
+										return (
+											<div className="ingestion-key-expires-in warning">
+												<CalendarClock size={14} /> Expires on
+												<Minus size={12} /> {expiresOn}
+											</div>
+										);
+									}
+									return (
+										<>
+											{!isNoExpiry && (
+												<>
+													<CalendarClock size={14} /> Expires on <Minus size={12} />
+												</>
+											)}
+											<Typography.Text>{expiresOn}</Typography.Text>
+										</>
+									);
+								})()}
 							</div>
 						</div>
 					</div>
@@ -1294,7 +1311,8 @@ function MultiIngestionSettings(): JSX.Element {
 
 				{!isErrorDeploymentsData &&
 					!isLoadingDeploymentsData &&
-					!isFetchingDeploymentsData && (
+					!isFetchingDeploymentsData &&
+					deploymentsData && (
 						<div className="ingestion-setup-details-links">
 							<div className="ingestion-key-url-container">
 								<div className="ingestion-key-url-label">Ingestion URL</div>

@@ -3,9 +3,11 @@ import {
 	render,
 	RenderResult,
 	screen,
+	within,
 } from '@testing-library/react';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import {
 	IBuilderQuery,
 	Query,
@@ -13,6 +15,7 @@ import {
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
 
+import QueryBuilderSearchV2 from '../QueryBuilderSearchV2';
 import SpanScopeSelector from '../SpanScopeSelector';
 
 const mockRedirectWithQueryBuilderData = jest.fn();
@@ -48,6 +51,14 @@ const defaultQuery = {
 	},
 };
 
+const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			refetchOnWindowFocus: false,
+		},
+	},
+});
+
 const defaultQueryBuilderQuery: IBuilderQuery = {
 	...initialQueriesMap.traces.builder.queryData[0],
 	queryName: 'A',
@@ -76,6 +87,7 @@ const renderWithContext = (
 	initialQuery = defaultQuery,
 	onChangeProp?: (value: TagFilter) => void,
 	queryProp?: IBuilderQuery,
+	skipQueryBuilderRedirect = false,
 ): RenderResult =>
 	render(
 		<QueryBuilderContext.Provider
@@ -87,12 +99,19 @@ const renderWithContext = (
 				} as any
 			}
 		>
-			<SpanScopeSelector onChange={onChangeProp} query={queryProp} />
+			<SpanScopeSelector
+				onChange={onChangeProp}
+				query={queryProp}
+				skipQueryBuilderRedirect={skipQueryBuilderRedirect}
+			/>
 		</QueryBuilderContext.Provider>,
 	);
 
 const selectOption = async (optionText: string): Promise<void> => {
-	const selector = screen.getByRole('combobox');
+	const selector = within(screen.getByTestId('span-scope-selector')).getByRole(
+		'combobox',
+	);
+
 	fireEvent.mouseDown(selector);
 
 	// Wait for dropdown to appear
@@ -264,6 +283,7 @@ describe('SpanScopeSelector', () => {
 				defaultQuery,
 				mockOnChange,
 				localQuery,
+				true,
 			);
 			expect(await screen.findByText('All Spans')).toBeInTheDocument();
 
@@ -283,6 +303,7 @@ describe('SpanScopeSelector', () => {
 				defaultQuery,
 				mockOnChange,
 				localQuery,
+				true,
 			);
 			expect(await screen.findByText('Root Spans')).toBeInTheDocument();
 
@@ -303,6 +324,7 @@ describe('SpanScopeSelector', () => {
 				defaultQuery,
 				mockOnChange,
 				localQuery,
+				true,
 			);
 			expect(await screen.findByText('Root Spans')).toBeInTheDocument();
 
@@ -324,6 +346,7 @@ describe('SpanScopeSelector', () => {
 				defaultQuery,
 				mockOnChange,
 				localQuery,
+				true,
 			);
 			expect(await screen.findByText('Root Spans')).toBeInTheDocument();
 
@@ -350,6 +373,7 @@ describe('SpanScopeSelector', () => {
 				defaultQuery,
 				mockOnChange,
 				localQuery,
+				true,
 			);
 			expect(await screen.findByText('Entrypoint Spans')).toBeInTheDocument();
 
@@ -360,6 +384,61 @@ describe('SpanScopeSelector', () => {
 			expect(
 				container.querySelector('span[title="All Spans"]'),
 			).toBeInTheDocument();
+		});
+
+		it('should not duplicate non-scope filters when changing span scope', async () => {
+			const query = {
+				...defaultQuery,
+				builder: {
+					...defaultQuery.builder,
+					queryData: [
+						{
+							...defaultQuery.builder.queryData[0],
+							filters: {
+								items: [createNonScopeFilter('service', 'checkout')],
+								op: 'AND',
+							},
+						},
+					],
+				},
+			};
+			render(
+				<QueryClientProvider client={queryClient}>
+					<QueryBuilderContext.Provider
+						value={
+							{
+								currentQuery: query,
+								redirectWithQueryBuilderData: mockRedirectWithQueryBuilderData,
+							} as any
+						}
+					>
+						<QueryBuilderSearchV2
+							query={query.builder.queryData[0] as any}
+							onChange={mockOnChange}
+							hideSpanScopeSelector={false}
+						/>
+					</QueryBuilderContext.Provider>
+				</QueryClientProvider>,
+			);
+
+			expect(await screen.findByText('All Spans')).toBeInTheDocument();
+
+			await selectOption('Entrypoint Spans');
+
+			expect(mockRedirectWithQueryBuilderData).toHaveBeenCalled();
+
+			const redirectQueryArg = mockRedirectWithQueryBuilderData.mock
+				.calls[0][0] as Query;
+			const { items } = redirectQueryArg.builder.queryData[0].filters;
+			// Count non-scope filters
+			const nonScopeFilters = items.filter(
+				(filter) => filter.key?.type !== 'spanSearchScope',
+			);
+			expect(nonScopeFilters).toHaveLength(1);
+
+			expect(nonScopeFilters).toContainEqual(
+				createNonScopeFilter('service', 'checkout'),
+			);
 		});
 	});
 });

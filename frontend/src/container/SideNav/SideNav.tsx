@@ -34,16 +34,20 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isArray } from 'lodash-es';
 import {
+	ArrowUpRight,
 	Check,
 	ChevronDown,
 	ChevronsDown,
 	ChevronUp,
 	Cog,
 	Ellipsis,
+	GitCommitVertical,
 	GripVertical,
+	LampDesk,
 	Logs,
 	MousePointerClick,
 	PackagePlus,
+	ScrollText,
 	X,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
@@ -73,7 +77,11 @@ import {
 	primaryMenuItems,
 } from './menuItems';
 import NavItem from './NavItem/NavItem';
-import { SidebarItem } from './sideNav.types';
+import {
+	CHANGELOG_LABEL,
+	DropdownSeparator,
+	SidebarItem,
+} from './sideNav.types';
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
 
 function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
@@ -124,6 +132,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		trialInfo,
 		isLoggedIn,
 		userPreferences,
+		changelog,
+		toggleChangelogModal,
 		updateUserPreferenceInContext,
 	} = useAppContext();
 
@@ -141,7 +151,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const [
 		helpSupportDropdownMenuItems,
 		setHelpSupportDropdownMenuItems,
-	] = useState<SidebarItem[]>(DefaultHelpSupportDropdownMenuItems);
+	] = useState<(SidebarItem | DropdownSeparator)[]>(
+		DefaultHelpSupportDropdownMenuItems,
+	);
 
 	const [pinnedMenuItems, setPinnedMenuItems] = useState<SidebarItem[]>([]);
 
@@ -192,10 +204,24 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		};
 	}, [checkScroll]);
 
+	const {
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isCommunityUser,
+		isCommunityEnterpriseUser,
+	} = useGetTenantLicense();
+
+	const [licenseTag, setLicenseTag] = useState('');
+	const isAdmin = user.role === USER_ROLES.ADMIN;
+	const isEditor = user.role === USER_ROLES.EDITOR;
+
 	useEffect(() => {
 		const navShortcuts = (userPreferences?.find(
 			(preference) => preference.name === USER_PREFERENCES.NAV_SHORTCUTS,
 		)?.value as unknown) as string[];
+
+		const shouldShowIntegrations =
+			(isCloudUser || isEnterpriseSelfHostedUser) && (isAdmin || isEditor);
 
 		if (navShortcuts && isArray(navShortcuts) && navShortcuts.length > 0) {
 			// nav shortcuts is array of strings
@@ -208,11 +234,14 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			// Set pinned items in the order they were stored
 			setPinnedMenuItems(pinnedItems);
 
-			// Set secondary items with proper isPinned state
 			setSecondaryMenuItems(
 				defaultMoreMenuItems.map((item) => ({
 					...item,
 					isPinned: pinnedItems.some((pinned) => pinned.itemKey === item.itemKey),
+					isEnabled:
+						item.key === ROUTES.INTEGRATIONS
+							? shouldShowIntegrations
+							: item.isEnabled,
 				})),
 			);
 		} else {
@@ -222,17 +251,26 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			);
 			setPinnedMenuItems(defaultPinnedItems);
 
-			// Set secondary items with proper isPinned state
 			setSecondaryMenuItems(
 				defaultMoreMenuItems.map((item) => ({
 					...item,
 					isPinned: defaultPinnedItems.some(
 						(pinned) => pinned.itemKey === item.itemKey,
 					),
+					isEnabled:
+						item.key === ROUTES.INTEGRATIONS
+							? shouldShowIntegrations
+							: item.isEnabled,
 				})),
 			);
 		}
-	}, [userPreferences]);
+	}, [
+		userPreferences,
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isAdmin,
+		isEditor,
+	]);
 
 	const isOnboardingV3Enabled = featureFlags?.find(
 		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
@@ -245,10 +283,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const isPremiumSupportEnabled = featureFlags?.find(
 		(flag) => flag.name === FeatureKeys.PREMIUM_SUPPORT,
 	)?.active;
-
-	const [licenseTag, setLicenseTag] = useState('');
-	const isAdmin = user.role === USER_ROLES.ADMIN;
-	const isEditor = user.role === USER_ROLES.EDITOR;
 
 	const userSettingsMenuItem = {
 		key: ROUTES.SETTINGS,
@@ -372,13 +406,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	const {
-		isCloudUser,
-		isEnterpriseSelfHostedUser,
-		isCommunityUser,
-		isCommunityEnterpriseUser,
-	} = useGetTenantLicense();
-
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
 	const openInNewTab = (path: string): void => {
@@ -493,7 +520,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	useEffect(() => {
 		if (!isAdmin) {
 			setHelpSupportDropdownMenuItems((prevState) =>
-				prevState.filter((item) => item.key !== 'invite-collaborators'),
+				prevState.filter(
+					(item) => !('key' in item) || item.key !== 'invite-collaborators',
+				),
 			);
 		}
 
@@ -509,8 +538,63 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			)
 		) {
 			setHelpSupportDropdownMenuItems((prevState) =>
-				prevState.filter((item) => item.key !== 'chat-support'),
+				prevState.filter((item) => !('key' in item) || item.key !== 'chat-support'),
 			);
+		}
+
+		if (changelog) {
+			const firstTwoFeatures = changelog.features.slice(0, 2);
+			const dropdownItems: SidebarItem[] = firstTwoFeatures.map(
+				(feature, idx) => ({
+					key: `changelog-${idx + 1}`,
+					label: (
+						<div className="nav-item-label-container">
+							<span>{feature.title}</span>
+						</div>
+					),
+					icon: idx === 0 ? <LampDesk size={14} /> : <GitCommitVertical size={14} />,
+					itemKey: `changelog-${idx + 1}`,
+				}),
+			);
+			const changelogKey = CHANGELOG_LABEL.toLowerCase().replace(' ', '-');
+			setHelpSupportDropdownMenuItems((prevState) => {
+				if (dropdownItems.length === 0) {
+					return [
+						...prevState,
+						{
+							key: changelogKey,
+							label: (
+								<div className="nav-item-label-container">
+									<span>{CHANGELOG_LABEL}</span>
+									<ArrowUpRight size={14} />
+								</div>
+							),
+							icon: <ScrollText size={14} />,
+							itemKey: changelogKey,
+						},
+					];
+				}
+
+				return [
+					...prevState,
+					{
+						type: 'group',
+						label: "WHAT's NEW",
+					},
+					...dropdownItems,
+					{
+						key: changelogKey,
+						label: (
+							<div className="nav-item-label-container">
+								<span>{CHANGELOG_LABEL}</span>
+								<ArrowUpRight size={14} />
+							</div>
+						),
+						icon: <ScrollText size={14} />,
+						itemKey: changelogKey,
+					},
+				];
+			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
@@ -519,6 +603,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		isPremiumSupportEnabled,
 		isCloudUser,
 		trialInfo,
+		changelog,
 	]);
 
 	const [isCurrentOrgSettings] = useComponentPermission(
@@ -650,34 +735,41 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const handleHelpSupportMenuItemClick = (info: SidebarItem): void => {
 		const item = helpSupportDropdownMenuItems.find(
-			(item) => item.key === info.key,
+			(item) => !('type' in item) && item.key === info.key,
 		);
 
-		if (item?.isExternal && item?.url) {
+		if (item && !('type' in item) && item.isExternal && item.url) {
 			window.open(item.url, '_blank');
 		}
 
-		logEvent('Help Popover: Item clicked', {
-			menuRoute: item?.key,
-			menuLabel: item?.label,
-		});
+		if (item && !('type' in item)) {
+			logEvent('Help Popover: Item clicked', {
+				menuRoute: item.key,
+				menuLabel: String(item.label),
+			});
 
-		switch (item?.key) {
-			case ROUTES.SHORTCUTS:
-				history.push(ROUTES.SHORTCUTS);
-				break;
-			case 'invite-collaborators':
-				history.push(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
-				break;
-			case 'chat-support':
-				if (window.pylon) {
-					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					// @ts-ignore
-					window.Pylon('show');
-				}
-				break;
-			default:
-				break;
+			switch (item.key) {
+				case ROUTES.SHORTCUTS:
+					history.push(ROUTES.SHORTCUTS);
+					break;
+				case 'invite-collaborators':
+					history.push(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
+					break;
+				case 'chat-support':
+					if (window.pylon) {
+						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+						// @ts-ignore
+						window.Pylon('show');
+					}
+					break;
+				case 'changelog-1':
+				case 'changelog-2':
+				case CHANGELOG_LABEL.toLowerCase().replace(' ', '-'):
+					toggleChangelogModal();
+					break;
+				default:
+					break;
+			}
 		}
 	};
 
@@ -715,42 +807,13 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		}
 	};
 
-	useEffect(() => {
-		if ((isCloudUser || isEnterpriseSelfHostedUser) && (isAdmin || isEditor)) {
-			// enable integrations for cloud users
-			setSecondaryMenuItems((prevItems) =>
-				prevItems.map((item) => ({
-					...item,
-					isEnabled: item.key === ROUTES.INTEGRATIONS ? true : item.isEnabled,
-				})),
-			);
-
-			// enable integrations for pinned menu items
-			// eslint-disable-next-line sonarjs/no-identical-functions
-			setPinnedMenuItems((prevItems) =>
-				prevItems.map((item) => ({
-					...item,
-					isEnabled: item.key === ROUTES.INTEGRATIONS ? true : item.isEnabled,
-				})),
-			);
+	const onClickVersionHandler = useCallback((): void => {
+		if (!changelog) {
+			return;
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isCloudUser, isEnterpriseSelfHostedUser]);
 
-	const onClickVersionHandler = useCallback(
-		(event: MouseEvent): void => {
-			if (isCloudUser) {
-				return;
-			}
-
-			if (isCtrlMetaKey(event)) {
-				openInNewTab(ROUTES.VERSION);
-			} else {
-				history.push(ROUTES.VERSION);
-			}
-		},
-		[isCloudUser],
-	);
+		toggleChangelogModal();
+	}, [changelog, toggleChangelogModal]);
 
 	useEffect(() => {
 		if (!isLatestVersion && !isCloudUser) {
@@ -790,7 +853,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										'brand-title-section',
 										isCommunityEnterpriseUser && 'community-enterprise-user',
 										isCloudUser && 'cloud-user',
-										showVersionUpdateNotification && 'version-update-notification',
+										showVersionUpdateNotification &&
+											changelog &&
+											'version-update-notification',
 									)}
 								>
 									<span className="license-type"> {licenseTag} </span>
@@ -801,7 +866,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 											overlayClassName="version-tooltip-overlay"
 											arrow={false}
 											overlay={
-												showVersionUpdateNotification && (
+												showVersionUpdateNotification &&
+												changelog && (
 													<div className="version-update-notification-tooltip">
 														<div className="version-update-notification-tooltip-title">
 															There&apos;s a new version available.
@@ -815,11 +881,14 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 											}
 										>
 											<div className="version-container">
-												<span className="version" onClick={onClickVersionHandler}>
+												<span
+													className={cx('version', changelog && 'version-clickable')}
+													onClick={onClickVersionHandler}
+												>
 													{currentVersion}
 												</span>
 
-												{showVersionUpdateNotification && (
+												{showVersionUpdateNotification && changelog && (
 													<span className="version-update-notification-dot-icon" />
 												)}
 											</div>

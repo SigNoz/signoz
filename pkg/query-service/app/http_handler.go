@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"math/rand/v2"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -29,6 +30,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
+	"github.com/SigNoz/signoz/pkg/query-service/transition"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
@@ -38,7 +40,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 
-	"github.com/SigNoz/signoz/pkg/cache"
 	traceFunnelsModule "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
@@ -65,6 +66,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 
@@ -75,7 +77,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
-	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/version"
 
 	querierAPI "github.com/SigNoz/signoz/pkg/querier"
@@ -96,12 +97,11 @@ func NewRouter() *mux.Router {
 
 // APIHandler implements the query service public API
 type APIHandler struct {
-	reader            interfaces.Reader
-	ruleManager       *rules.Manager
-	querier           interfaces.Querier
-	querierV2         interfaces.Querier
-	queryBuilder      *queryBuilder.QueryBuilder
-	preferSpanMetrics bool
+	reader       interfaces.Reader
+	ruleManager  *rules.Manager
+	querier      interfaces.Querier
+	querierV2    interfaces.Querier
+	queryBuilder *queryBuilder.QueryBuilder
 
 	// temporalityMap is a map of metric name to temporality
 	// to avoid fetching temporality for the same metric multiple times
@@ -140,8 +140,6 @@ type APIHandler struct {
 
 	pvcsRepo *inframetrics.PvcsRepo
 
-	JWT *authtypes.JWT
-
 	AlertmanagerAPI *alertmanager.API
 
 	LicensingAPI licensing.API
@@ -154,11 +152,8 @@ type APIHandler struct {
 }
 
 type APIHandlerOpts struct {
-
 	// business data reader e.g. clickhouse
 	Reader interfaces.Reader
-
-	PreferSpanMetrics bool
 
 	// rule manager handles rule crud operations
 	RuleManager *rules.Manager
@@ -172,13 +167,8 @@ type APIHandlerOpts struct {
 	// Log parsing pipelines
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
-	// cache
-	Cache cache.Cache
-
-	// Querier Influx Interval
+	// Flux Interval
 	FluxInterval time.Duration
-
-	JWT *authtypes.JWT
 
 	AlertmanagerAPI *alertmanager.API
 
@@ -195,14 +185,14 @@ type APIHandlerOpts struct {
 func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	querierOpts := querier.QuerierOptions{
 		Reader:       opts.Reader,
-		Cache:        opts.Cache,
+		Cache:        opts.Signoz.Cache,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
 		FluxInterval: opts.FluxInterval,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
 		Reader:       opts.Reader,
-		Cache:        opts.Cache,
+		Cache:        opts.Signoz.Cache,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
 		FluxInterval: opts.FluxInterval,
 	}
@@ -226,7 +216,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
-		preferSpanMetrics:             opts.PreferSpanMetrics,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		ruleManager:                   opts.RuleManager,
 		IntegrationsController:        opts.IntegrationsController,
@@ -245,7 +234,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		statefulsetsRepo:              statefulsetsRepo,
 		jobsRepo:                      jobsRepo,
 		pvcsRepo:                      pvcsRepo,
-		JWT:                           opts.JWT,
 		SummaryService:                summaryService,
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
 		LicensingAPI:                  opts.LicensingAPI,
@@ -541,8 +529,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.Signoz.Handlers.SavedView.Get)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.Signoz.Handlers.SavedView.Update)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.Signoz.Handlers.SavedView.Delete)).Methods(http.MethodDelete)
-
-	router.HandleFunc("/api/v1/feedback", am.OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/event", am.ViewAccess(aH.registerEvent)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost)
@@ -973,7 +959,7 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *ruletypes.Gettable
 	keys := make(map[string]v3.AttributeKey)
 
 	if rule.AlertType == ruletypes.AlertTypeLogs {
-		logFields, err := aH.reader.GetLogFields(ctx)
+		logFields, err := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(rule.PostableRule.RuleCondition.CompositeQuery))
 		if err == nil {
 			params := &v3.QueryRangeParamsV3{
 				CompositeQuery: rule.RuleCondition.CompositeQuery,
@@ -983,7 +969,7 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *ruletypes.Gettable
 			zap.L().Error("failed to get log fields using empty keys; the link might not work as expected", zap.Error(err))
 		}
 	} else if rule.AlertType == ruletypes.AlertTypeTraces {
-		traceFields, err := aH.reader.GetSpanAttributeKeys(ctx)
+		traceFields, err := aH.reader.GetSpanAttributeKeysByNames(ctx, logsv3.GetFieldNames(rule.PostableRule.RuleCondition.CompositeQuery))
 		if err == nil {
 			keys = traceFields
 		} else {
@@ -1543,38 +1529,6 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
-
-	var postData map[string]interface{}
-	err := json.NewDecoder(r.Body).Decode(&postData)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
-		return
-	}
-
-	message, ok := postData["message"]
-	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("message not present in request body")}, "Error reading message from request body")
-		return
-	}
-	messageStr := fmt.Sprintf("%s", message)
-	if len(messageStr) == 0 {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("empty message in request body")}, "empty message in request body")
-		return
-	}
-
-	email := postData["email"]
-
-	data := map[string]interface{}{
-		"email":   email,
-		"message": message,
-	}
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 == nil {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, claims.Email, true, false)
-	}
-}
-
 func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 	request, err := parseRegisterEventRequest(r)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
@@ -1584,12 +1538,7 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 	if errv2 == nil {
 		switch request.EventType {
 		case model.TrackEvent:
-			telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, claims.Email, request.RateLimited, true)
 			aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, request.EventName, request.Attributes)
-		case model.GroupEvent:
-			telemetry.GetInstance().SendGroupEvent(request.Attributes, claims.Email)
-		case model.IdentifyEvent:
-			telemetry.GetInstance().SendIdentifyEvent(request.Attributes, claims.Email)
 		}
 		aH.WriteJSON(w, r, map[string]string{"data": "Event Processed Successfully"})
 	} else {
@@ -1696,7 +1645,6 @@ func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Requ
 }
 
 func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
-
 	query, err := parseGetServicesRequest(r)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
@@ -1705,18 +1653,6 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	result, apiErr := aH.reader.GetServices(r.Context(), query)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
-	}
-
-	data := map[string]interface{}{
-		"number": len(*result),
-	}
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 == nil {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, claims.Email, true, false)
-	}
-
-	if (data["number"] != 0) && (data["number"] != telemetry.DEFAULT_NUMBER_OF_SERVICES) {
-		telemetry.GetInstance().AddActiveTracesUser()
 	}
 
 	aH.WriteJSON(w, r, result)
@@ -1980,7 +1916,7 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if aH.preferSpanMetrics {
+	if constants.PreferSpanMetrics {
 		for idx, feature := range featureSet {
 			if feature.Name == licensetypes.UseSpanMetrics {
 				featureSet[idx].Active = true
@@ -2096,7 +2032,7 @@ func (aH *APIHandler) receiveGoogleAuth(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	nextPage, err := aH.Signoz.Modules.User.PrepareSsoRedirect(ctx, redirectUri, identity.Email, aH.JWT)
+	nextPage, err := aH.Signoz.Modules.User.PrepareSsoRedirect(ctx, redirectUri, identity.Email)
 	if err != nil {
 		zap.L().Error("[receiveGoogleAuth] failed to generate redirect URI after successful login ", zap.String("domain", domain.String()), zap.Error(err))
 		handleSsoError(w, r, redirectUri)
@@ -4070,78 +4006,15 @@ func (aH *APIHandler) logFieldUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getLogs(w http.ResponseWriter, r *http.Request) {
-	params, err := logs.ParseLogFilterParams(r)
-	if err != nil {
-		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErr, "Incorrect params")
-		return
-	}
-	res, apiErr := aH.reader.GetLogs(r.Context(), params)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch logs from the DB")
-		return
-	}
-	aH.WriteJSON(w, r, map[string]interface{}{"results": res})
+	aH.WriteJSON(w, r, map[string]interface{}{"results": []model.SignozLog{}})
 }
 
 func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
-	params, err := logs.ParseLogFilterParams(r)
-	if err != nil {
-		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErr, "Incorrect params")
-		return
-	}
-
-	// create the client
-	client := &model.LogsTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error), Filter: *params}
-	go aH.reader.TailLogs(r.Context(), client)
-
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.WriteHeader(200)
-
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		err := model.ApiError{Typ: model.ErrorStreamingNotSupported, Err: nil}
-		RespondError(w, &err, "streaming is not supported")
-		return
-	}
-	// flush the headers
-	flusher.Flush()
-
-	for {
-		select {
-		case log := <-client.Logs:
-			var buf bytes.Buffer
-			enc := json.NewEncoder(&buf)
-			enc.Encode(log)
-			fmt.Fprintf(w, "data: %v\n\n", buf.String())
-			flusher.Flush()
-		case <-client.Done:
-			zap.L().Debug("done!")
-			return
-		case err := <-client.Error:
-			zap.L().Error("error occured", zap.Error(err))
-			return
-		}
-	}
+	return
 }
 
 func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
-	params, err := logs.ParseLogAggregateParams(r)
-	if err != nil {
-		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErr, "Incorrect params")
-		return
-	}
-	res, apiErr := aH.reader.AggregateLogs(r.Context(), params)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch logs aggregate from the DB")
-		return
-	}
-	aH.WriteJSON(w, r, res)
+	aH.WriteJSON(w, r, model.GetLogsAggregatesResponse{})
 }
 
 func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
@@ -4475,7 +4348,7 @@ func (aH *APIHandler) getSpanKeysV3(ctx context.Context, queryRangeParams *v3.Qu
 	data := map[string]v3.AttributeKey{}
 	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
 		if query.DataSource == v3.DataSourceTraces {
-			spanKeys, err := aH.reader.GetSpanAttributeKeys(ctx)
+			spanKeys, err := aH.reader.GetSpanAttributeKeysByNames(ctx, logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
 			if err != nil {
 				return nil, err
 			}
@@ -4519,9 +4392,19 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	var errQuriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		hasLogsQuery := false
+		hasTracesQuery := false
+		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+			if query.DataSource == v3.DataSourceLogs {
+				hasLogsQuery = true
+			}
+			if query.DataSource == v3.DataSourceTraces {
+				hasTracesQuery = true
+			}
+		}
 		// check if any enrichment is required for logs if yes then enrich them
-		if logsv3.EnrichmentRequired(queryRangeParams) {
-			logsFields, err := aH.reader.GetLogFields(ctx)
+		if logsv3.EnrichmentRequired(queryRangeParams) && hasLogsQuery {
+			logsFields, err := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, errQuriesByName)
@@ -4531,15 +4414,15 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			fields := model.GetLogFieldsV3(ctx, queryRangeParams, logsFields)
 			logsv3.Enrich(queryRangeParams, fields)
 		}
-
-		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
-		if err != nil {
-			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-			RespondError(w, apiErrObj, errQuriesByName)
-			return
+		if hasTracesQuery {
+			spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, errQuriesByName)
+				return
+			}
+			tracesV4.Enrich(queryRangeParams, spanKeys)
 		}
-		tracesV4.Enrich(queryRangeParams, spanKeys)
-
 	}
 
 	// WARN: Only works for AND operator in traces query
@@ -4595,7 +4478,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	postprocess.ApplyHavingClause(result, queryRangeParams)
 	postprocess.ApplyMetricLimit(result, queryRangeParams)
 
-	sendQueryResultEvents(r, result, queryRangeParams)
+	aH.sendQueryResultEvents(r, result, queryRangeParams, "v3")
 	// only adding applyFunctions instead of postProcess since experssion are
 	// are executed in clickhouse directly and we wanted to add support for timeshift
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
@@ -4631,96 +4514,95 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	aH.Respond(w, resp)
 }
 
-func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3, version string) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		return
+	}
+
+	queryInfoResult := NewQueryInfoResult(queryRangeParams, version)
+
+	if !(queryInfoResult.LogsUsed || queryInfoResult.MetricsUsed || queryInfoResult.TracesUsed) {
+		return
+	}
+
+	properties := queryInfoResult.ToMap()
 	referrer := r.Header.Get("Referer")
 
-	dashboardMatched, err := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
-	if err != nil {
-		zap.L().Error("error while matching the referrer", zap.Error(err))
-	}
-	alertMatched, err := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
-	if err != nil {
-		zap.L().Error("error while matching the alert: ", zap.Error(err))
+	if referrer == "" {
+		return
 	}
 
-	if alertMatched || dashboardMatched {
+	properties["referrer"] = referrer
 
-		if len(result) > 0 && (len(result[0].Series) > 0 || len(result[0].List) > 0) {
+	logsExplorerMatched, _ := regexp.MatchString(`/logs/logs-explorer(?:\?.*)?$`, referrer)
+	traceExplorerMatched, _ := regexp.MatchString(`/traces-explorer(?:\?.*)?$`, referrer)
+	metricsExplorerMatched, _ := regexp.MatchString(`/metrics-explorer/explorer(?:\?.*)?$`, referrer)
+	dashboardMatched, _ := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
+	alertMatched, _ := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
 
-			claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-			if errv2 == nil {
-				queryInfoResult := telemetry.GetInstance().CheckQueryInfo(queryRangeParams)
-				if queryInfoResult.LogsUsed || queryInfoResult.MetricsUsed || queryInfoResult.TracesUsed {
+	switch {
+	case dashboardMatched:
+		properties["module_name"] = "dashboard"
+	case alertMatched:
+		properties["module_name"] = "rule"
+	case metricsExplorerMatched:
+		properties["module_name"] = "metrics-explorer"
+	case logsExplorerMatched:
+		properties["module_name"] = "logs-explorer"
+	case traceExplorerMatched:
+		properties["module_name"] = "traces-explorer"
+	default:
+		return
+	}
 
-					if dashboardMatched {
-						var dashboardID, widgetID string
-						var dashboardIDMatch, widgetIDMatch []string
-						dashboardIDRegex, err := regexp.Compile(`/dashboard/([a-f0-9\-]+)/`)
-						if err == nil {
-							dashboardIDMatch = dashboardIDRegex.FindStringSubmatch(referrer)
-						} else {
-							zap.S().Errorf("error while matching the dashboardIDRegex: %v", err)
-						}
-						widgetIDRegex, err := regexp.Compile(`widgetId=([a-f0-9\-]+)`)
-						if err == nil {
-							widgetIDMatch = widgetIDRegex.FindStringSubmatch(referrer)
-						} else {
-							zap.S().Errorf("error while matching the widgetIDRegex: %v", err)
-						}
+	if dashboardMatched {
+		if dashboardIDRegex, err := regexp.Compile(`/dashboard/([a-f0-9\-]+)/`); err == nil {
+			if matches := dashboardIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
+				properties["dashboard_id"] = matches[1]
+			}
+		}
 
-						if len(dashboardIDMatch) > 1 {
-							dashboardID = dashboardIDMatch[1]
-						}
-
-						if len(widgetIDMatch) > 1 {
-							widgetID = widgetIDMatch[1]
-						}
-						telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_SUCCESSFUL_DASHBOARD_PANEL_QUERY, map[string]interface{}{
-							"queryType":             queryRangeParams.CompositeQuery.QueryType,
-							"panelType":             queryRangeParams.CompositeQuery.PanelType,
-							"tracesUsed":            queryInfoResult.TracesUsed,
-							"logsUsed":              queryInfoResult.LogsUsed,
-							"metricsUsed":           queryInfoResult.MetricsUsed,
-							"numberOfQueries":       queryInfoResult.NumberOfQueries,
-							"groupByApplied":        queryInfoResult.GroupByApplied,
-							"aggregateOperator":     queryInfoResult.AggregateOperator,
-							"aggregateAttributeKey": queryInfoResult.AggregateAttributeKey,
-							"filterApplied":         queryInfoResult.FilterApplied,
-							"dashboardId":           dashboardID,
-							"widgetId":              widgetID,
-						}, claims.Email, true, false)
-					}
-					if alertMatched {
-						var alertID string
-						var alertIDMatch []string
-						alertIDRegex, err := regexp.Compile(`ruleId=(\d+)`)
-						if err != nil {
-							zap.S().Errorf("error while matching the alertIDRegex: %v", err)
-						} else {
-							alertIDMatch = alertIDRegex.FindStringSubmatch(referrer)
-						}
-
-						if len(alertIDMatch) > 1 {
-							alertID = alertIDMatch[1]
-						}
-						telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_SUCCESSFUL_ALERT_QUERY, map[string]interface{}{
-							"queryType":             queryRangeParams.CompositeQuery.QueryType,
-							"panelType":             queryRangeParams.CompositeQuery.PanelType,
-							"tracesUsed":            queryInfoResult.TracesUsed,
-							"logsUsed":              queryInfoResult.LogsUsed,
-							"metricsUsed":           queryInfoResult.MetricsUsed,
-							"numberOfQueries":       queryInfoResult.NumberOfQueries,
-							"groupByApplied":        queryInfoResult.GroupByApplied,
-							"aggregateOperator":     queryInfoResult.AggregateOperator,
-							"aggregateAttributeKey": queryInfoResult.AggregateAttributeKey,
-							"filterApplied":         queryInfoResult.FilterApplied,
-							"alertId":               alertID,
-						}, claims.Email, true, false)
-					}
-				}
+		if widgetIDRegex, err := regexp.Compile(`widgetId=([a-f0-9\-]+)`); err == nil {
+			if matches := widgetIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
+				properties["widget_id"] = matches[1]
 			}
 		}
 	}
+
+	if alertMatched {
+		if alertIDRegex, err := regexp.Compile(`ruleId=(\d+)`); err == nil {
+			if matches := alertIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
+				properties["rule_id"] = matches[1]
+			}
+		}
+	}
+
+	// Check if result is empty or has no data
+	if len(result) == 0 {
+		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+		return
+	}
+
+	// Check if first result has no series data
+	if len(result[0].Series) == 0 {
+		// Check if first result has no list data
+		if len(result[0].List) == 0 {
+			// Check if first result has no table data
+			if result[0].Table == nil {
+				aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+				return
+			}
+
+			if len(result[0].Table.Rows) == 0 {
+				aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+				return
+			}
+		}
+	}
+
+	aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
+
 }
 
 func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
@@ -4845,7 +4727,7 @@ func (aH *APIHandler) liveTailLogsV2(w http.ResponseWriter, r *http.Request) {
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
 			// get the fields if any logs query is present
-			logsFields, err := aH.reader.GetLogFields(r.Context())
+			logsFields, err := aH.reader.GetLogFieldsFromNames(r.Context(), logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, nil)
@@ -4950,10 +4832,21 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	var errQuriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		hasLogsQuery := false
+		hasTracesQuery := false
+		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+			if query.DataSource == v3.DataSourceLogs {
+				hasLogsQuery = true
+			}
+			if query.DataSource == v3.DataSourceTraces {
+				hasTracesQuery = true
+			}
+		}
+
 		// check if any enrichment is required for logs if yes then enrich them
-		if logsv3.EnrichmentRequired(queryRangeParams) {
+		if logsv3.EnrichmentRequired(queryRangeParams) && hasLogsQuery {
 			// get the fields if any logs query is present
-			logsFields, err := aH.reader.GetLogFields(r.Context())
+			logsFields, err := aH.reader.GetLogFieldsFromNames(r.Context(), logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, nil)
@@ -4963,13 +4856,15 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
-		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
-		if err != nil {
-			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-			RespondError(w, apiErrObj, errQuriesByName)
-			return
+		if hasTracesQuery {
+			spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, errQuriesByName)
+				return
+			}
+			tracesV4.Enrich(queryRangeParams, spanKeys)
 		}
-		tracesV4.Enrich(queryRangeParams, spanKeys)
 	}
 
 	// WARN: Only works for AND operator in traces query
@@ -5012,9 +4907,48 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		RespondError(w, apiErrObj, errQuriesByName)
 		return
 	}
-	sendQueryResultEvents(r, result, queryRangeParams)
+	aH.sendQueryResultEvents(r, result, queryRangeParams, "v4")
 	resp := v3.QueryRangeResponse{
 		Result: result,
+	}
+
+	if rand.Float64() < (1.0/30.0) &&
+		queryRangeParams.CompositeQuery.PanelType != v3.PanelTypeList &&
+		queryRangeParams.CompositeQuery.PanelType != v3.PanelTypeTrace {
+		v4JSON, _ := json.Marshal(queryRangeParams)
+		func() {
+			defer func() {
+				if rr := recover(); rr != nil {
+					zap.L().Warn(
+						"unexpected panic while converting to v5",
+						zap.Any("panic", rr),
+						zap.String("v4_payload", string(v4JSON)),
+					)
+				}
+			}()
+			v5Req, err := transition.ConvertV3ToV5(queryRangeParams)
+			if err != nil {
+				zap.L().Warn("unable to convert to v5 request payload", zap.Error(err), zap.String("v4_payload", string(v4JSON)))
+				return
+			}
+			v5ReqJSON, _ := json.Marshal(v5Req)
+
+			v3Resp := v3.QueryRangeResponse{
+				Result: result,
+			}
+
+			v5Resp, err := transition.ConvertV3ResponseToV5(&v3Resp, querybuildertypesv5.RequestTypeTimeSeries)
+			if err != nil {
+				zap.L().Warn("unable to convert to v5 response payload", zap.Error(err))
+				return
+			}
+
+			v5RespJSON, _ := json.Marshal(v5Resp)
+			zap.L().Info("v5 request and expected response",
+				zap.String("request_payload", string(v5ReqJSON)),
+				zap.String("response_payload", string(v5RespJSON)),
+			)
+		}()
 	}
 
 	aH.Respond(w, resp)
