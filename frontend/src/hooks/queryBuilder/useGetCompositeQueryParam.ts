@@ -1,3 +1,8 @@
+import {
+	convertAggregationToExpression,
+	convertFiltersToExpression,
+	convertHavingToExpression,
+} from 'components/QueryBuilderV2/utils';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useMemo } from 'react';
@@ -18,6 +23,41 @@ export const useGetCompositeQueryParam = (): Query | null => {
 			parsedCompositeQuery = JSON.parse(
 				decodeURIComponent(compositeQuery.replace(/\+/g, ' ')),
 			);
+
+			// Convert old format to new format for each query in builder.queryData
+			if (parsedCompositeQuery?.builder?.queryData) {
+				parsedCompositeQuery.builder.queryData = parsedCompositeQuery.builder.queryData.map(
+					(query) => {
+						const convertedQuery = { ...query };
+
+						// Convert filters if needed
+						if (query.filters?.items?.length > 0 && !query.filter?.expression) {
+							const convertedFilter = convertFiltersToExpression(query.filters);
+							convertedQuery.filter = convertedFilter;
+						}
+
+						// Convert having if needed
+						if (query.having?.length > 0 && !query.havingExpression?.expression) {
+							const convertedHaving = convertHavingToExpression(query.having);
+							convertedQuery.havingExpression = convertedHaving;
+						}
+
+						// Convert aggregation if needed
+						if (!query.aggregations && query.aggregateOperator) {
+							const convertedAggregation = convertAggregationToExpression(
+								query.aggregateOperator,
+								query.aggregateAttribute,
+								query.dataSource,
+								query.timeAggregation,
+								query.spaceAggregation,
+							) as any; // Type assertion to handle union type
+							convertedQuery.aggregations = convertedAggregation;
+						}
+
+						return convertedQuery;
+					},
+				);
+			}
 		} catch (e) {
 			parsedCompositeQuery = null;
 		}

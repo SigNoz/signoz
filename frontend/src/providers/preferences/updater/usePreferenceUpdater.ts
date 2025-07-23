@@ -1,3 +1,4 @@
+import { TelemetryFieldKey } from 'api/v5/v5';
 import {
 	defaultOptionsQuery,
 	URL_OPTIONS,
@@ -5,7 +6,6 @@ import {
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { Dispatch, SetStateAction } from 'react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
 import getLogsUpdaterConfig from '../configs/logsUpdaterConfig';
@@ -24,7 +24,7 @@ const getUpdaterConfig = (
 ): Record<
 	DataSource,
 	{
-		updateColumns: (newColumns: BaseAutocompleteData[], mode: string) => void;
+		updateColumns: (newColumns: TelemetryFieldKey[], mode: string) => void;
 		updateFormatting: (newFormatting: FormattingOptions, mode: string) => void;
 	}
 > => ({
@@ -53,7 +53,7 @@ export function usePreferenceUpdater({
 	setReSync: Dispatch<SetStateAction<boolean>>;
 	setSavedViewPreferences: Dispatch<SetStateAction<Preferences | null>>;
 }): {
-	updateColumns: (newColumns: BaseAutocompleteData[]) => void;
+	updateColumns: (newColumns: TelemetryFieldKey[]) => void;
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 } {
 	const {
@@ -66,7 +66,7 @@ export function usePreferenceUpdater({
 	)[dataSource];
 
 	return {
-		updateColumns: (newColumns: BaseAutocompleteData[]): void => {
+		updateColumns: (newColumns: TelemetryFieldKey[]): void => {
 			updater.updateColumns(newColumns, mode);
 			setReSync(true);
 		},

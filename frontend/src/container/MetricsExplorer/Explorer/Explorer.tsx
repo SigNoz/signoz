@@ -3,9 +3,11 @@ import './Explorer.styles.scss';
 import * as Sentry from '@sentry/react';
 import { Switch } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
+import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
@@ -20,7 +22,7 @@ import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToD
 import { v4 as uuid } from 'uuid';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
-import QuerySection from './QuerySection';
+// import QuerySection from './QuerySection';
 import TimeSeries from './TimeSeries';
 import { ExplorerTabs } from './types';
 import { splitQueryIntoOneChartPerQuery } from './utils';
@@ -53,6 +55,16 @@ function Explorer(): JSX.Element {
 		});
 	};
 
+	const defaultQuery = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				initialQueriesMap[DataSource.METRICS],
+				PANEL_TYPES.TIME_SERIES,
+				DataSource.METRICS,
+			),
+		[updateAllQueriesOperators],
+	);
+
 	const exportDefaultQuery = useMemo(
 		() =>
 			updateAllQueriesOperators(
@@ -63,7 +75,7 @@ function Explorer(): JSX.Element {
 		[currentQuery, updateAllQueriesOperators],
 	);
 
-	useShareBuilderUrl(exportDefaultQuery);
+	useShareBuilderUrl({ defaultValue: defaultQuery });
 
 	const handleExport = useCallback(
 		(
@@ -101,6 +113,11 @@ function Explorer(): JSX.Element {
 		});
 	}, []);
 
+	const queryComponents = useMemo(
+		(): QueryBuilderProps['queryComponents'] => ({}),
+		[],
+	);
+
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-explore-container">
@@ -115,10 +132,19 @@ function Explorer(): JSX.Element {
 					</div>
 					<div className="explore-header-right-actions">
 						<DateTimeSelector showAutoRefresh />
-						<RightToolbarActions onStageRunQuery={handleRunQuery} />
+						<RightToolbarActions
+							onStageRunQuery={(): void => handleRunQuery(true, true)}
+						/>
 					</div>
 				</div>
-				<QuerySection />
+				{/* <QuerySection /> */}
+				<QueryBuilderV2
+					config={{ initialDataSource: DataSource.METRICS, queryVariant: 'static' }}
+					panelType={PANEL_TYPES.TIME_SERIES}
+					queryComponents={queryComponents}
+					showFunctions={false}
+					version="v3"
+				/>
 				{/* TODO: Enable once we have resolved all related metrics issues */}
 				{/* <Button.Group className="explore-tabs">
 					<Button

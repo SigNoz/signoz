@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable react/jsx-props-no-spreading */
 import './ExplorerColumnsRenderer.styles.scss';
@@ -5,9 +6,10 @@ import './ExplorerColumnsRenderer.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Divider, Dropdown, Input, Tooltip, Typography } from 'antd';
 import { MenuProps } from 'antd/lib';
+import { FieldDataType } from 'api/v5/v5';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import {
@@ -49,13 +51,27 @@ function ExplorerColumnsRenderer({
 
 	const initialDataSource = currentQuery.builder.queryData[0].dataSource;
 
-	const { data, isLoading, isError } = useGetAggregateKeys(
+	// const { data, isLoading, isError } = useGetAggregateKeys(
+	// 	{
+	// 		aggregateAttribute: '',
+	// 		dataSource: currentQuery.builder.queryData[0].dataSource,
+	// 		aggregateOperator: currentQuery.builder.queryData[0].aggregateOperator,
+	// 		searchText: querySearchText,
+	// 		tagType: '',
+	// 	},
+	// 	{
+	// 		queryKey: [
+	// 			currentQuery.builder.queryData[0].dataSource,
+	// 			currentQuery.builder.queryData[0].aggregateOperator,
+	// 			querySearchText,
+	// 		],
+	// 	},
+	// );
+
+	const { data, isLoading, isError } = useGetQueryKeySuggestions(
 		{
-			aggregateAttribute: '',
-			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateOperator: currentQuery.builder.queryData[0].aggregateOperator,
 			searchText: querySearchText,
-			tagType: '',
+			signal: currentQuery.builder.queryData[0].dataSource,
 		},
 		{
 			queryKey: [
@@ -71,7 +87,7 @@ function ExplorerColumnsRenderer({
 			return selectedLogFields.some((field) => field.name === key);
 		}
 		if (initialDataSource === DataSource.TRACES && selectedTracesFields) {
-			return selectedTracesFields.some((field) => field.key === key);
+			return selectedTracesFields.some((field) => field.name === key);
 		}
 		return false;
 	};
@@ -99,18 +115,31 @@ function ExplorerColumnsRenderer({
 			initialDataSource === DataSource.TRACES &&
 			setSelectedTracesFields !== undefined
 		) {
-			const selectedField = data?.payload?.attributeKeys?.find(
-				(attributeKey) => attributeKey.key === key,
-			);
+			const selectedField = Object.values(data?.data?.data?.keys || {})
+				?.flat()
+				?.find((attributeKey) => attributeKey.name === key);
+			console.log('selectedField', selectedField);
 			if (selectedTracesFields) {
 				if (isAttributeKeySelected(key)) {
 					setSelectedTracesFields(
-						selectedTracesFields.filter((field) => field.key !== key),
+						selectedTracesFields.filter((field) => field.name !== key),
 					);
 				} else if (selectedField) {
-					setSelectedTracesFields([...selectedTracesFields, selectedField]);
+					setSelectedTracesFields([
+						...selectedTracesFields,
+						{
+							...selectedField,
+							fieldDataType: selectedField.fieldDataType as FieldDataType,
+						},
+					]);
 				}
-			} else if (selectedField) setSelectedTracesFields([selectedField]);
+			} else if (selectedField)
+				setSelectedTracesFields([
+					{
+						...selectedField,
+						fieldDataType: selectedField.fieldDataType as FieldDataType,
+					},
+				]);
 		}
 		setOpen(false);
 	};
@@ -175,7 +204,7 @@ function ExplorerColumnsRenderer({
 			selectedTracesFields
 		) {
 			setSelectedTracesFields(
-				selectedTracesFields.filter((field) => field.key !== name),
+				selectedTracesFields.filter((field) => field.name !== name),
 			);
 		}
 	};
@@ -217,6 +246,8 @@ function ExplorerColumnsRenderer({
 	};
 
 	const isDarkMode = useIsDarkMode();
+
+	console.log('selectedTracesFields', selectedTracesFields, selectedLogFields);
 
 	return (
 		<div className="explorer-columns-renderer">
@@ -279,12 +310,14 @@ function ExplorerColumnsRenderer({
 													>
 														<div className="explorer-column-title">
 															<GripVertical size={12} color="#5A5A5A" />
-															{field.key}
+															{field?.name || (field as any)?.key}
 														</div>
 														<Trash2
 															size={12}
 															color="red"
-															onClick={(): void => removeSelectedLogField(field.key)}
+															onClick={(): void =>
+																removeSelectedLogField(field?.name || (field as any)?.key)
+															}
 															data-testid="trash-icon"
 														/>
 													</div>
