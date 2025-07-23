@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 
 import { jsonToDataNodes, recursiveParseJSON } from '../utils';
 
+const MAX_BODY_BYTES = 100 * 1024; // 100 KB
+
 // Hook for async JSON processing
 const useAsyncJSONProcessing = (
 	value: string,
@@ -28,6 +30,12 @@ const useAsyncJSONProcessing = (
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect((): (() => void) => {
 		if (!shouldProcess || processingRef.current) {
+			return (): void => {};
+		}
+
+		// Avoid processing if the json is too large
+		const byteSize = new Blob([value]).size;
+		if (byteSize > MAX_BODY_BYTES) {
 			return (): void => {};
 		}
 
