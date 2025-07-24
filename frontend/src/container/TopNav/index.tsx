@@ -12,13 +12,18 @@ import { routesToDisable, routesToSkip } from './DateTimeSelectionV2/config';
 function TopNav(): JSX.Element | null {
 	const location = useLocation();
 
+	console.log({
+		location,
+		match: matchPath(location.pathname, '/settings/channels/edit/:channelId'),
+	});
+
 	const isRouteToSkip = useMemo(
-		() => routesToSkip.some((route) => matchPath(location.pathname, route)),
+		() => routesToSkip.some((route) => matchPath(route, location.pathname)),
 		[location.pathname],
 	);
 
 	const isDisabled = useMemo(
-		() => routesToDisable.some((route) => matchPath(location.pathname, route)),
+		() => routesToDisable.some((route) => matchPath(route, location.pathname)),
 		[location.pathname],
 	);
 

@@ -6,7 +6,7 @@ import { RouteProps } from 'react-router-dom-v5-compat';
 import {
 	AlertHistory,
 	AlertOverview,
-	AllAlertChannels,
+	AllAlertChannelsPage,
 	AllErrors,
 	ApiMonitoring,
 	CreateAlertChannelAlerts,
@@ -54,6 +54,15 @@ import {
 	WorkspaceAccessRestricted,
 	WorkspaceBlocked,
 	WorkspaceSuspended,
+	MySettings,
+	CustomDomainSettings,
+	GeneralSettings,
+	IngestionSettings,
+	APIKeys,
+	BillingPage,
+	ShortcutsPage,
+	OrganizationSettingsPage,
+	ChannelsEditPage,
 } from './pageComponents';
 
 const routes: AppRoutes[] = [
@@ -134,6 +143,74 @@ const routes: AppRoutes[] = [
 		element: SettingsPage,
 		isPrivate: true,
 		key: 'SETTINGS',
+		children: [
+			{
+				path: '', // Route for /settings
+				element: GeneralSettings,
+				isPrivate: true,
+				key: 'SETTINGS',
+			},
+			{
+				path: 'my-settings',
+				element: MySettings,
+				isPrivate: true,
+				key: 'MY_SETTINGS',
+			},
+			{
+				path: 'custom-domain-settings',
+				element: CustomDomainSettings,
+				isPrivate: true,
+				key: 'CUSTOM_DOMAIN_SETTINGS',
+			},
+			{
+				path: 'org-settings',
+				element: OrganizationSettingsPage,
+				isPrivate: true,
+				key: 'ORG_SETTINGS',
+			},
+			{
+				path: 'channels',
+				element: AllAlertChannelsPage,
+				isPrivate: true,
+				key: 'ALL_CHANNELS',
+			},
+			{
+				path: 'ingestion-settings',
+				element: IngestionSettings,
+				isPrivate: true,
+				key: 'INGESTION_SETTINGS',
+			},
+			{
+				path: 'api-keys',
+				element: APIKeys,
+				isPrivate: true,
+				key: 'API_KEYS',
+			},
+			{
+				path: 'billing',
+				element: BillingPage,
+				isPrivate: true,
+				key: 'BILLING',
+			},
+			{
+				path: 'shortcuts',
+				element: ShortcutsPage,
+				isPrivate: true,
+				key: 'SHORTCUTS',
+			},
+			{
+				path: 'channels/new',
+				element: CreateAlertChannelAlerts,
+				isPrivate: true,
+				key: 'CHANNELS_NEW',
+			},
+			{
+				path: 'channels/edit/:channelId',
+				element: ChannelsEditPage,
+				isPrivate: true,
+				key: 'CHANNELS_EDIT',
+			},
+		],
 	},
 	{
 		path: ROUTES.USAGE_EXPLORER,
@@ -218,18 +295,6 @@ const routes: AppRoutes[] = [
 		element: TracesFunnelDetails,
 		isPrivate: true,
 		key: 'TRACES_FUNNELS_DETAIL',
-	},
-	{
-		path: ROUTES.CHANNELS_NEW,
-		element: CreateAlertChannelAlerts,
-		isPrivate: true,
-		key: 'CHANNELS_NEW',
-	},
-	{
-		path: ROUTES.ALL_CHANNELS,
-		element: AllAlertChannels,
-		isPrivate: true,
-		key: 'ALL_CHANNELS',
 	},
 	{
 		path: ROUTES.ALL_ERROR,
@@ -437,6 +502,7 @@ export interface AppRoutes {
 	path: RouteProps['path'];
 	isPrivate: boolean;
 	key: keyof typeof ROUTES;
+	children?: AppRoutes[];
 }
 
 export default routes;

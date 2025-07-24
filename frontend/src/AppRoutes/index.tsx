@@ -12,6 +12,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
+import { useAppRoutes } from 'hooks/useAppRoutes';
 import { useThemeConfig } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
@@ -35,11 +36,7 @@ import { extractDomain } from 'utils/app';
 
 import { Home } from './pageComponents';
 import PrivateRoute from './Private';
-import defaultRoutes, {
-	AppRoutes,
-	LIST_LICENSES,
-	SUPPORT_ROUTE,
-} from './routes';
+import { AppRoutes, LIST_LICENSES, SUPPORT_ROUTE } from './routes';
 
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
@@ -57,6 +54,7 @@ function App(): JSX.Element {
 		featureFlags,
 		org,
 	} = useAppContext();
+	const { routes: defaultRoutes } = useAppRoutes();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
 
 	const { hostname, pathname } = window.location;
@@ -213,6 +211,7 @@ function App(): JSX.Element {
 			}
 			setRoutes(updatedRoutes);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		isLoggedInState,
 		user,
@@ -363,6 +362,17 @@ function App(): JSX.Element {
 		}
 	}
 
+	const renderRoutes = (routes: AppRoutes[]): JSX.Element | JSX.Element[] => {
+		if (!routes || routes.length === 0) {
+			return <></>;
+		}
+		return routes.map(({ path, element: Component, children }: AppRoutes) => (
+			<Route key={`${path}`} path={path as string} element={<Component />}>
+				{children && renderRoutes(children)}
+			</Route>
+		));
+	};
+
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<ConfigProvider theme={themeConfig}>
@@ -380,13 +390,7 @@ function App(): JSX.Element {
 														<AppLayout>
 															<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
 																<Routes>
-																	{routes.map(({ path, element: Component }) => (
-																		<Route
-																			key={`${path}`}
-																			path={path as string}
-																			element={<Component />}
-																		/>
-																	))}
+																	{routes && renderRoutes(routes)}
 																	<Route path="/" element={<Home />} />
 																	<Route path="*" element={<NotFound />} />
 																</Routes>
