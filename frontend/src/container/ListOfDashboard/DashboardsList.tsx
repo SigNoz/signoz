@@ -165,15 +165,21 @@ function DashboardsList(): JSX.Element {
 
 	const handlePinToggle = async (dashboardId: string, pin: boolean) => {
 		setUpdatingPinned(dashboardId);
-		const newPinned = pin
-			? [...pinnedDashboardIds, dashboardId]
-			: pinnedDashboardIds.filter((id) => id !== dashboardId);
-		await updateUserPreference({
-			name: USER_PREFERENCES.PINNED_DASHBOARDS,
-			value: newPinned,
-		});
-		setUpdatingPinned(null);
-		refetchDashboardList(); // Optionally refetch dashboards if needed
+		try {
+			const newPinned = pin
+				? [...pinnedDashboardIds, dashboardId]
+				: pinnedDashboardIds.filter((id) => id !== dashboardId);
+			await updateUserPreference({
+				name: USER_PREFERENCES.PINNED_DASHBOARDS,
+				value: newPinned,
+			});
+			refetchDashboardList(); // Optionally refetch dashboards if needed
+		} catch (error) {
+			// Optionally, show a notification or log the error
+			console.error('Failed to update pinned dashboards', error);
+		} finally {
+			setUpdatingPinned(null);
+		}
 	};
 
 	const getLocalStorageDynamicColumns = (): DashboardDynamicColumns => {
@@ -477,7 +483,7 @@ function DashboardsList(): JSX.Element {
 								e.stopPropagation();
 								handlePinToggle(dashboard.id, !pinnedDashboardIds.includes(dashboard.id));
 							}}
-							style={{ marginRight: 8 }}
+							className="dashboard-pin-btn"
 						>
 							{pinnedDashboardIds.includes(dashboard.id) ? 'Unpin' : 'Pin'}
 						</Button>
