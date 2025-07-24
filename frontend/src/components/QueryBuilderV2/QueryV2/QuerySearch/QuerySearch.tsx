@@ -26,6 +26,7 @@ import {
 	queryOperatorSuggestions,
 } from 'constants/antlrQueryConstants';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
 import { TriangleAlert } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -163,11 +164,17 @@ function QuerySearch({
 			})),
 		);
 
+	// Debounce the metric name to prevent API calls on every keystroke
+	const debouncedMetricName = useDebounce(
+		queryData.aggregateAttribute?.key || '',
+		500,
+	);
+
 	const fetchKeySuggestions = async (searchText?: string): Promise<void> => {
 		const response = await getKeySuggestions({
 			signal: dataSource,
 			searchText: searchText || '',
-			metricName: queryData.aggregateAttribute?.key ?? undefined,
+			metricName: debouncedMetricName ?? undefined,
 		});
 
 		if (response.data.data) {
@@ -188,7 +195,7 @@ function QuerySearch({
 		setKeySuggestions([]);
 		fetchKeySuggestions();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dataSource, queryData.aggregateAttribute?.key]);
+	}, [dataSource, debouncedMetricName]);
 
 	// Add a state for tracking editing mode
 	const [editingMode, setEditingMode] = useState<
