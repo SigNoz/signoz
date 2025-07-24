@@ -1,4 +1,5 @@
 import ROUTES from 'constants/routes';
+import * as usePrefillAlertConditions from 'container/FormAlertRules/usePrefillAlertConditions';
 import CreateAlertPage from 'pages/CreateAlert';
 import { MemoryRouter, Route } from 'react-router-dom';
 import { act, fireEvent, render } from 'tests/test-utils';
@@ -41,6 +42,15 @@ jest.mock('hooks/useSafeNavigate', () => ({
 		safeNavigate: jest.fn(),
 	}),
 }));
+jest
+	.spyOn(usePrefillAlertConditions, 'usePrefillAlertConditions')
+	.mockReturnValue({
+		matchType: '3',
+		op: '1',
+		target: 100,
+		targetUnit: 'rpm',
+	});
+
 describe('Anomaly Alert Documentation Redirection', () => {
 	let mockWindowOpen: jest.Mock;
 
