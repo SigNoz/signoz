@@ -1,12 +1,17 @@
+import Convert from 'ansi-to-html';
 import { DataNode } from 'antd/es/tree';
 import { MetricsType } from 'container/MetricsApplication/constant';
+import dompurify from 'dompurify';
 import { uniqueId } from 'lodash-es';
 import { ILog, ILogAggregateAttributesResources } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import BodyTitleRenderer from './BodyTitleRenderer';
 import { typeToArrayTypeMapper } from './config';
 import { AnyObject, IFieldAttributes } from './LogDetailedView.types';
+
+const convertInstance = new Convert();
 
 export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 	try {
@@ -336,3 +341,21 @@ export function findKeyPath(
 	});
 	return finalPath;
 }
+
+export const getSanitizedLogBody = (
+	text: string,
+	options: { shouldEscapeHtml?: boolean } = {},
+): string => {
+	const { shouldEscapeHtml = false } = options;
+	const escapedText = shouldEscapeHtml ? escapeHtml(text) : text;
+	try {
+		return convertInstance.toHtml(
+			dompurify.sanitize(unescapeString(escapedText), {
+				FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+			}),
+		);
+	} catch (error) {
+		console.error('Error sanitizing text', error, text);
+		return '{}';
+	}
+};
