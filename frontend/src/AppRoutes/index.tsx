@@ -362,9 +362,9 @@ function App(): JSX.Element {
 		}
 	}
 
-	const renderRoutes = (routes: AppRoutes[]): JSX.Element | JSX.Element[] => {
+	const renderRoutes = (routes: AppRoutes[]): JSX.Element[] | null => {
 		if (!routes || routes.length === 0) {
-			return <></>;
+			return null;
 		}
 		return routes.map(({ path, element: Component, children }: AppRoutes) => (
 			<Route key={`${path}`} path={path as string} element={<Component />}>
