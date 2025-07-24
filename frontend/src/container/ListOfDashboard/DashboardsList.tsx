@@ -440,13 +440,7 @@ function DashboardsList(): JSX.Element {
 									placement="left"
 									overlayClassName="title-toolip"
 								>
-									<div
-										className="title-link"
-										onClick={(e): void => {
-											e.stopPropagation();
-											safeNavigate(getLink());
-										}}
-									>
+									<div className="title-link">
 										<img
 											src={dashboard?.image || Base64Icons[0]}
 											alt="dashboard-image"
