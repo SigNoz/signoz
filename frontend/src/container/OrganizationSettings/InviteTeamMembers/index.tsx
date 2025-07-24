@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 import { InviteMemberFormValues } from '../PendingInvitesContainer/index';
-import { SelectDrawer, SpaceContainer, TitleWrapper } from './styles';
+import { SelectDrawer, SpaceContainer, TitleWrapper, RemoveButton } from './styles';
 
 function InviteTeamMembers({ form, onFinish }: Props): JSX.Element {
 	const { t } = useTranslation('organizationsettings');
@@ -59,13 +59,12 @@ function InviteTeamMembers({ form, onFinish }: Props): JSX.Element {
 									</Form.Item>
 									{fields.length > 1 && (
 										<Form.Item>
-											<Button
+											<RemoveButton
 												type="text"
 												danger
 												icon={<MinusCircleOutlined />}
 												onClick={() => remove(name)}
-												style={{ margin: '0 8px' }}
-												title="Remove member"
+												title={t('remove_member')}
 											/>
 										</Form.Item>
 									)}
