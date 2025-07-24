@@ -1,10 +1,10 @@
-import { AppRoutes } from 'AppRoutes/routes';
-import routes from 'AppRoutes/routes';
+import routes, { AppRoutes } from 'AppRoutes/routes';
+import { FeatureKeys } from 'constants/features';
 import { getRoutes } from 'pages/Settings/utils';
 import { useAppContext } from 'providers/App/App';
 import { useMemo } from 'react';
+
 import useComponentPermission from './useComponentPermission';
-import { FeatureKeys } from 'constants/features';
 import { useGetTenantLicense } from './useGetTenantLicense';
 
 export const useAppRoutes = (): { routes: AppRoutes[] } => {

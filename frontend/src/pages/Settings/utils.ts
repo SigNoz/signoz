@@ -1,5 +1,5 @@
-import { ROLES, USER_ROLES } from 'types/roles';
 import ROUTES, { SETTINGS_NESTED_ROUTES } from 'constants/routes';
+import { ROLES, USER_ROLES } from 'types/roles';
 
 export const getRoutes = (
 	userRole: ROLES | null,
