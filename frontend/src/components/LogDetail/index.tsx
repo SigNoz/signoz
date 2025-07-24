@@ -2,13 +2,13 @@
 import './LogDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
-import Convert from 'ansi-to-html';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import ContextView from 'container/LogDetailedView/ContextView/ContextView';
 import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
@@ -16,17 +16,15 @@ import JSONView from 'container/LogDetailedView/JsonView';
 import Overview from 'container/LogDetailedView/Overview';
 import {
 	aggregateAttributesResourcesToString,
-	escapeHtml,
+	getSanitizedLogBody,
 	removeEscapeCharacters,
-	unescapeString,
 } from 'container/LogDetailedView/utils';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import dompurify from 'dompurify';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
+import createQueryParams from 'lib/createQueryParams';
 import {
 	BarChart2,
 	Braces,
@@ -45,13 +43,10 @@ import { AppState } from 'store/reducers';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailProps } from './LogDetail.interfaces';
 import QueryBuilderSearchWrapper from './QueryBuilderSearchWrapper';
-
-const convert = new Convert();
 
 function LogDetail({
 	log,
@@ -71,7 +66,7 @@ function LogDetail({
 	const [contextQuery, setContextQuery] = useState<Query | undefined>();
 	const [filters, setFilters] = useState<TagFilter | null>(null);
 	const [isEdit, setIsEdit] = useState<boolean>(false);
-	const { stagedQuery } = useQueryBuilder();
+	const { stagedQuery, updateAllQueriesOperators } = useQueryBuilder();
 
 	const listQuery = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
@@ -88,7 +83,6 @@ function LogDetail({
 	const isDarkMode = useIsDarkMode();
 	const location = useLocation();
 	const { safeNavigate } = useSafeNavigate();
-	const urlQuery = useUrlQuery();
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -118,11 +112,7 @@ function LogDetail({
 
 	const htmlBody = useMemo(
 		() => ({
-			__html: convert.toHtml(
-				dompurify.sanitize(unescapeString(escapeHtml(log?.body || '')), {
-					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
-				}),
-			),
+			__html: getSanitizedLogBody(log?.body || '', { shouldEscapeHtml: true }),
 		}),
 		[log?.body],
 	);
@@ -136,10 +126,19 @@ function LogDetail({
 
 	// Go to logs explorer page with the log data
 	const handleOpenInExplorer = (): void => {
-		urlQuery.set(QueryParams.activeLogId, `"${log?.id}"`);
-		urlQuery.set(QueryParams.startTime, minTime?.toString() || '');
-		urlQuery.set(QueryParams.endTime, maxTime?.toString() || '');
-		safeNavigate(`${ROUTES.LOGS_EXPLORER}?${urlQuery.toString()}`);
+		const queryParams = {
+			[QueryParams.activeLogId]: `"${log?.id}"`,
+			[QueryParams.startTime]: minTime?.toString() || '',
+			[QueryParams.endTime]: maxTime?.toString() || '',
+			[QueryParams.compositeQuery]: JSON.stringify(
+				updateAllQueriesOperators(
+					initialQueriesMap[DataSource.LOGS],
+					PANEL_TYPES.LIST,
+					DataSource.LOGS,
+				),
+			),
+		};
+		safeNavigate(`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`);
 	};
 
 	// Only show when opened from infra monitoring page

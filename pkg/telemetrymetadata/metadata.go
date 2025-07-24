@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -133,6 +134,7 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 	var limit int
 
 	searchTexts := []string{}
+	dataTypes := []telemetrytypes.FieldDataType{}
 
 	conds := []string{}
 	for _, fieldKeySelector := range fieldKeySelectors {
@@ -153,9 +155,16 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		}
 
 		searchTexts = append(searchTexts, fieldKeySelector.Name)
-
+		if fieldKeySelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+			dataTypes = append(dataTypes, fieldKeySelector.FieldDataType)
+		}
 		// now look at the field context
-		if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified {
+		// we don't write most of intrinsic fields to tag attributes table
+		// for this reason we don't want to apply tag_type if the field context
+		// if not attribute or resource attribute
+		if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified &&
+			(fieldKeySelector.FieldContext == telemetrytypes.FieldContextAttribute ||
+				fieldKeySelector.FieldContext == telemetrytypes.FieldContextResource) {
 			fieldKeyConds = append(fieldKeyConds, sb.E("tag_type", fieldKeySelector.FieldContext.TagType()))
 		}
 
@@ -216,7 +225,7 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		return nil, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
 	}
 
-	staticKeys := []string{"isRoot", "isEntrypoint"}
+	staticKeys := []string{"isRoot", "isEntryPoint"}
 	staticKeys = append(staticKeys, maps.Keys(telemetrytraces.IntrinsicFields)...)
 	staticKeys = append(staticKeys, maps.Keys(telemetrytraces.CalculatedFields)...)
 
@@ -229,6 +238,24 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 				break
 			}
 		}
+
+		// skip the keys that don't match data type
+		if field, exists := telemetrytraces.IntrinsicFields[key]; exists {
+			if len(dataTypes) > 0 &&
+				slices.Index(dataTypes, field.FieldDataType) == -1 &&
+				field.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+				continue
+			}
+		}
+
+		if field, exists := telemetrytraces.CalculatedFields[key]; exists {
+			if len(dataTypes) > 0 &&
+				slices.Index(dataTypes, field.FieldDataType) == -1 &&
+				field.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+				continue
+			}
+		}
+
 		if found {
 			if field, exists := telemetrytraces.IntrinsicFields[key]; exists {
 				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
@@ -303,6 +330,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 
 	conds := []string{}
 	searchTexts := []string{}
+	dataTypes := []telemetrytypes.FieldDataType{}
 
 	for _, fieldKeySelector := range fieldKeySelectors {
 
@@ -321,9 +349,17 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			fieldKeyConds = append(fieldKeyConds, sb.Like("tag_key", "%"+fieldKeySelector.Name+"%"))
 		}
 		searchTexts = append(searchTexts, fieldKeySelector.Name)
+		if fieldKeySelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+			dataTypes = append(dataTypes, fieldKeySelector.FieldDataType)
+		}
 
 		// now look at the field context
-		if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified {
+		// we don't write most of intrinsic fields to tag attributes table
+		// for this reason we don't want to apply tag_type if the field context
+		// if not attribute or resource attribute
+		if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified &&
+			(fieldKeySelector.FieldContext == telemetrytypes.FieldContextAttribute ||
+				fieldKeySelector.FieldContext == telemetrytypes.FieldContextResource) {
 			fieldKeyConds = append(fieldKeyConds, sb.E("tag_type", fieldKeySelector.FieldContext.TagType()))
 		}
 
@@ -395,6 +431,16 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 				break
 			}
 		}
+
+		// skip the keys that don't match data type
+		if field, exists := telemetrylogs.IntrinsicFields[key]; exists {
+			if len(dataTypes) > 0 &&
+				slices.Index(dataTypes, field.FieldDataType) == -1 &&
+				field.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+				continue
+			}
+		}
+
 		if found {
 			if field, exists := telemetrylogs.IntrinsicFields[key]; exists {
 				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {

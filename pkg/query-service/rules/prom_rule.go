@@ -321,6 +321,11 @@ func (r *PromRule) RunAlertQuery(ctx context.Context, qs string, start, end time
 		return nil, res.Err
 	}
 
+	err = prometheus.RemoveExtraLabels(res, prometheus.FingerprintAsPromLabelName)
+	if err != nil {
+		return nil, err
+	}
+
 	switch typ := res.Value.(type) {
 	case promql.Vector:
 		series := make([]promql.Series, 0, len(typ))

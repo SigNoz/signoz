@@ -3,6 +3,7 @@ package constants
 import (
 	"maps"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -32,6 +33,12 @@ var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templa
 
 var MetricsExplorerClickhouseThreads = GetOrDefaultEnvInt("METRICS_EXPLORER_CLICKHOUSE_THREADS", 8)
 var UpdatedMetricsMetadataCachePrefix = GetOrDefaultEnv("METRICS_UPDATED_METADATA_CACHE_KEY", "UPDATED_METRICS_METADATA")
+
+const NormalizedMetricsMapCacheKey = "NORMALIZED_METRICS_MAP_CACHE_KEY"
+const NormalizedMetricsMapQueryThreads = 10
+
+var NormalizedMetricsMapRegex = regexp.MustCompile(`[^a-zA-Z0-9]`)
+var NormalizedMetricsMapQuantileRegex = regexp.MustCompile(`(?i)([._-]?quantile.*)$`)
 
 // TODO(srikanthccv): remove after backfilling is done
 func UseMetricsPreAggregation() bool {
@@ -604,6 +611,7 @@ var StaticFieldsTraces = map[string]v3.AttributeKey{}
 
 var IsDotMetricsEnabled = false
 var PreferSpanMetrics = false
+var MaxJSONFlatteningDepth = 1
 
 func init() {
 	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)
@@ -613,6 +621,12 @@ func init() {
 	}
 	if GetOrDefaultEnv("USE_SPAN_METRICS", "false") == "true" {
 		PreferSpanMetrics = true
+	}
+
+	// set max flattening depth
+	depth, err := strconv.Atoi(GetOrDefaultEnv(maxJSONFlatteningDepth, "1"))
+	if err == nil {
+		MaxJSONFlatteningDepth = depth
 	}
 }
 
@@ -641,3 +655,4 @@ func GetDefaultSiteURL() string {
 }
 
 const DotMetricsEnabled = "DOT_METRICS_ENABLED"
+const maxJSONFlatteningDepth = "MAX_JSON_FLATTENING_DEPTH"

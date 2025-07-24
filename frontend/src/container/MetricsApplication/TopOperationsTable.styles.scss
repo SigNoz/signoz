@@ -1,9 +1,24 @@
 .top-operation {
 	position: relative;
-	.top-operation--download {
+
+	&__controls {
+		display: flex;
+		justify-content: flex-end;
+		align-items: center;
 		position: absolute;
 		top: 15px;
 		right: 0px;
 		z-index: 1;
+		gap: 8px;
+	}
+	&__entry-point {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+	&__download {
+		.ant-btn-icon {
+			margin: 0 !important;
+		}
 	}
 }

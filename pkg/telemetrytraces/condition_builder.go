@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
+	"time"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -43,7 +45,24 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
+	// TODO(srikanthccv): maybe extend this to every possible attribute
+	if key.Name == "duration_nano" || key.Name == "durationNano" { // QoL improvement
+		if strDuration, ok := value.(string); ok {
+			duration, err := time.ParseDuration(strDuration)
+			if err == nil {
+				value = duration.Nanoseconds()
+			} else {
+				duration, err := strconv.ParseFloat(strDuration, 64)
+				if err == nil {
+					value = duration
+				} else {
+					return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid duration value: %s", strDuration)
+				}
+			}
+		}
+	} else {
+		tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
+	}
 
 	// regular operators
 	switch operator {
@@ -129,13 +148,6 @@ func (c *conditionBuilder) conditionFor(
 	// in the query builder, `exists` and `not exists` are used for
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-		// if the field is intrinsic, it always exists
-		if slices.Contains(maps.Keys(IntrinsicFields), tblFieldName) ||
-			slices.Contains(maps.Keys(CalculatedFields), tblFieldName) ||
-			slices.Contains(maps.Keys(IntrinsicFieldsDeprecated), tblFieldName) ||
-			slices.Contains(maps.Keys(CalculatedFieldsDeprecated), tblFieldName) {
-			return "true", nil
-		}
 
 		var value any
 		switch column.Type {
@@ -251,7 +263,7 @@ func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.Telemetry
 	case SpanSearchScopeRoot:
 		return "parent_span_id = ''", nil
 	case SpanSearchScopeEntryPoint:
-		return fmt.Sprintf("((name, resource_string_service$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s)) AND parent_span_id != ''",
+		return fmt.Sprintf("((name, resource_string_service$$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s)) AND parent_span_id != ''",
 			DBName, TopLevelOperationsTableName), nil
 	default:
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid span search scope: %s", key.Name)
