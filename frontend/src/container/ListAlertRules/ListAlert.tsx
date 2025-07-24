@@ -341,7 +341,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		defaultCurrent: Number(paginationParam) || 1,
 	};
 	return (
-		<>
+		<div className="alert-rules-list-container">
 			<SearchContainer>
 				<Search
 					placeholder="Search by Alert Name, Severity and Labels"
@@ -378,7 +378,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				onChange={handleChange}
 				pagination={paginationConfig}
 			/>
-		</>
+		</div>
 	);
 }
 
