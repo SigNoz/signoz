@@ -95,6 +95,9 @@ import {
 	DynamicColumns,
 	filterDashboard,
 } from './utils';
+import { USER_PREFERENCES } from 'constants/userPreferences';
+import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
+import updateUserPreference from 'api/v1/user/preferences/name/update';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function DashboardsList(): JSX.Element {
@@ -140,6 +143,38 @@ function DashboardsList(): JSX.Element {
 	const [isConfigureMetadataOpen, setIsConfigureMetadata] = useState<boolean>(
 		false,
 	);
+
+	const { preferences, loading: preferencesLoading } = usePreferenceContext();
+	const [updatingPinned, setUpdatingPinned] = useState<string | null>(null);
+
+	// Get pinned dashboard IDs from preferences
+	const pinnedDashboardIds: string[] =
+		(Array.isArray(
+			preferences?.[USER_PREFERENCES.PINNED_DASHBOARDS]?.value,
+		)
+			? preferences[USER_PREFERENCES.PINNED_DASHBOARDS].value
+			: []) as string[];
+
+	// Split dashboards into pinned and unpinned
+	const pinnedDashboards = dashboardListResponse?.data?.filter((d) =>
+		pinnedDashboardIds.includes(d.id),
+	);
+	const unpinnedDashboards = dashboardListResponse?.data?.filter(
+		(d) => !pinnedDashboardIds.includes(d.id),
+	);
+
+	const handlePinToggle = async (dashboardId: string, pin: boolean) => {
+		setUpdatingPinned(dashboardId);
+		const newPinned = pin
+			? [...pinnedDashboardIds, dashboardId]
+			: pinnedDashboardIds.filter((id) => id !== dashboardId);
+		await updateUserPreference({
+			name: USER_PREFERENCES.PINNED_DASHBOARDS,
+			value: newPinned,
+		});
+		setUpdatingPinned(null);
+		refetchDashboardList(); // Optionally refetch dashboards if needed
+	};
 
 	const getLocalStorageDynamicColumns = (): DashboardDynamicColumns => {
 		const dashboardDynamicColumnsString = localStorage.getItem('dashboard');
@@ -433,6 +468,19 @@ function DashboardsList(): JSX.Element {
 
 				return (
 					<div className="dashboard-list-item" onClick={onClickHandler}>
+						{/* Pin/Unpin Button */}
+						<Button
+							type="text"
+							loading={updatingPinned === dashboard.id}
+							icon={pinnedDashboardIds.includes(dashboard.id) ? '📌' : '📍'}
+							onClick={(e) => {
+								e.stopPropagation();
+								handlePinToggle(dashboard.id, !pinnedDashboardIds.includes(dashboard.id));
+							}}
+							style={{ marginRight: 8 }}
+						>
+							{pinnedDashboardIds.includes(dashboard.id) ? 'Unpin' : 'Pin'}
+						</Button>
 						<div className="title-with-action">
 							<div className="dashboard-title">
 								<Tooltip
@@ -738,178 +786,95 @@ function DashboardsList(): JSX.Element {
 							<ArrowUpRight size={16} className="learn-more-arrow" />
 						</section>
 					</div>
-				) : dashboards?.length === 0 && !searchString ? (
-					<div className="dashboard-empty-state">
-						<img
-							src="/Icons/dashboards.svg"
-							alt="dashboards"
-							className="dashboard-img"
-						/>
-						<section className="text">
-							<Typography.Text className="no-dashboard">
-								No dashboards yet.{' '}
-							</Typography.Text>
-							<Typography.Text className="info">
-								Create a dashboard to start visualizing your data
-							</Typography.Text>
-						</section>
-
-						{createNewDashboard && (
-							<section className="actions">
-								<Dropdown
-									overlayClassName="new-dashboard-menu"
-									menu={{ items: getCreateDashboardItems }}
-									placement="bottomRight"
-									trigger={['click']}
-								>
-									<Button
-										type="text"
-										className="new-dashboard"
-										icon={<Plus size={14} />}
-										onClick={(): void => {
-											logEvent('Dashboard List: New dashboard clicked', {});
-										}}
-									>
-										New Dashboard
-									</Button>
-								</Dropdown>
-								<Button
-									type="text"
-									className="learn-more"
-									data-testid="learn-more"
-									onClick={(): void => {
-										window.open(
-											'https://signoz.io/docs/userguide/manage-dashboards?utm_source=product&utm_medium=dashboard-list-empty-state',
-											'_blank',
-										);
-									}}
-								>
-									Learn more
-								</Button>
-								<ArrowUpRight size={16} className="learn-more-arrow" />
-							</section>
-						)}
-					</div>
+				) : preferencesLoading ? (
+					<Skeleton active />
 				) : (
 					<>
-						<div className="dashboards-list-header-container">
-							<Input
-								placeholder="Search by name, description, or tags..."
-								prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
-								value={searchString}
-								onChange={handleSearch}
-							/>
-							{createNewDashboard && (
-								<Dropdown
-									overlayClassName="new-dashboard-menu"
-									menu={{ items: getCreateDashboardItems }}
-									placement="bottomRight"
-									trigger={['click']}
-								>
-									<Button
-										type="primary"
-										className="periscope-btn primary btn"
-										icon={<Plus size={14} />}
-										onClick={(): void => {
-											logEvent('Dashboard List: New dashboard clicked', {});
-										}}
-									>
-										New dashboard
-									</Button>
-								</Dropdown>
-							)}
-						</div>
-
-						{dashboards?.length === 0 ? (
-							<div className="no-search">
-								<img src="/Icons/emptyState.svg" alt="img" className="img" />
-								<Typography.Text className="text">
-									No dashboards found for {searchString}. Create a new dashboard?
-								</Typography.Text>
-							</div>
-						) : (
-							<>
-								<div className="all-dashboards-header">
-									<Typography.Text className="typography">
-										All Dashboards
-									</Typography.Text>
-									<section className="right-actions">
-										<Tooltip title="Sort">
-											<Popover
-												trigger="click"
-												content={
-													<div className="sort-content">
-														<Typography.Text className="sort-heading">
-															Sort By
-														</Typography.Text>
-														<Button
-															type="text"
-															className={cx('sort-btns')}
-															onClick={(): void => sortHandle('createdAt')}
-															data-testid="sort-by-last-created"
-														>
-															Last created
-															{sortOrder.columnKey === 'createdAt' && <Check size={14} />}
-														</Button>
-														<Button
-															type="text"
-															className={cx('sort-btns')}
-															onClick={(): void => sortHandle('updatedAt')}
-															data-testid="sort-by-last-updated"
-														>
-															Last updated
-															{sortOrder.columnKey === 'updatedAt' && <Check size={14} />}
-														</Button>
-													</div>
-												}
-												rootClassName="sort-dashboards"
-												placement="bottomRight"
-												arrow={false}
-											>
-												<ArrowDownWideNarrow size={14} data-testid="sort-by" />
-											</Popover>
-										</Tooltip>
-										<Popover
-											trigger="click"
-											content={
-												<div className="configure-content">
-													<Button
-														type="text"
-														icon={<HdmiPort size={14} />}
-														className="configure-btn"
-														onClick={(e): void => {
-															e.preventDefault();
-															e.stopPropagation();
-															setIsConfigureMetadata(true);
-														}}
-													>
-														Configure metadata
-													</Button>
-												</div>
-											}
-											rootClassName="configure-group"
-											placement="bottomRight"
-											arrow={false}
-										>
-											<Ellipsis size={14} />
-										</Popover>
-									</section>
-								</div>
-
+						{/* Pinned Dashboards Section */}
+						{pinnedDashboards && pinnedDashboards.length > 0 && (
+							<div className="pinned-dashboards-section">
+								<Typography.Title level={5}>Pinned Dashboards</Typography.Title>
 								<Table
 									columns={columns}
-									dataSource={data}
-									showSorterTooltip
-									loading={
-										isDashboardListLoading ||
-										isFilteringDashboards ||
-										isDashboardListRefetching
-									}
+									dataSource={pinnedDashboards.map((d) => ({ ...d, key: d.id }))}
 									showHeader={false}
-									pagination={paginationConfig}
+									pagination={false}
 								/>
-							</>
+							</div>
 						)}
+						{/* All Dashboards Section (excluding pinned) */}
+						<div className="all-dashboards-header">
+							<Typography.Text className="typography">
+								All Dashboards
+							</Typography.Text>
+							<section className="right-actions">
+								<Tooltip title="Sort">
+									<Popover
+										trigger="click"
+										content={
+											<div className="sort-content">
+												<Typography.Text className="sort-heading">
+													Sort By
+												</Typography.Text>
+												<Button
+													type="text"
+													className={cx('sort-btns')}
+													onClick={(): void => sortHandle('createdAt')}
+													data-testid="sort-by-last-created"
+												>
+													Last created
+													{sortOrder.columnKey === 'createdAt' && <Check size={14} />}
+												</Button>
+												<Button
+													type="text"
+													className={cx('sort-btns')}
+													onClick={(): void => sortHandle('updatedAt')}
+													data-testid="sort-by-last-updated"
+												>
+													Last updated
+													{sortOrder.columnKey === 'updatedAt' && <Check size={14} />}
+												</Button>
+											</div>
+										}
+										rootClassName="sort-dashboards"
+										placement="bottomRight"
+										arrow={false}
+									>
+										<ArrowDownWideNarrow size={14} data-testid="sort-by" />
+									</Popover>
+								</Tooltip>
+								<Popover
+									trigger="click"
+									content={
+										<div className="configure-content">
+											<Button
+												type="text"
+												icon={<HdmiPort size={14} />}
+												className="configure-btn"
+												onClick={(e): void => {
+													e.preventDefault();
+													e.stopPropagation();
+													setIsConfigureMetadata(true);
+												}}
+											>
+												Configure metadata
+											</Button>
+										</div>
+									}
+									rootClassName="configure-group"
+									placement="bottomRight"
+									arrow={false}
+								>
+									<Ellipsis size={14} />
+								</Popover>
+							</section>
+						</div>
+						<Table
+							columns={columns}
+							dataSource={unpinnedDashboards?.map((d) => ({ ...d, key: d.id }))}
+							showHeader={false}
+							pagination={paginationConfig}
+						/>
 					</>
 				)}
 				<ImportJSON
