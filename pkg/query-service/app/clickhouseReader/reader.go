@@ -2106,51 +2106,50 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, orgID stri
 
 // checkTTLStatusItem checks if ttl_status table has an entry for the given table name
 func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, orgID string, tableName string) (*types.TTLSetting, *model.ApiError) {
-	zap.L().Info("checkTTLStatusItem query", zap.String("tableName", tableName))
-	ttl := new(types.TTLSetting)
-	err := r.
-		sqlDB.
-		BunDB().
-		NewSelect().
-		Model(ttl).
-		Where("table_name = ?", tableName).
-		Where("org_id = ?", orgID).
-		OrderExpr("created_at DESC").
-		Limit(1).
-		Scan(ctx)
-	if err != nil && err != sql.ErrNoRows {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return ttl, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
-	}
-	return ttl, nil
+    zap.L().Info("checkTTLStatusItem query", zap.String("tableName", tableName))
+    ttl := new(types.TTLSetting)
+    err := r.sqlDB.BunDB().NewSelect().
+        Model(ttl).
+        Where("table_name = ?", tableName).
+        Where("org_id = ?", orgID).
+        OrderExpr("created_at DESC").
+        Limit(1).
+        Scan(ctx)
+        
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return nil, nil  // Return nil when no rows found
+        }
+        zap.L().Error("Error in processing sql query", zap.Error(err))
+        return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
+    }
+    return ttl, nil
 }
 
 // setTTLQueryStatus fetches ttl_status table status from DB
 func (r *ClickHouseReader) setTTLQueryStatus(ctx context.Context, orgID string, tableNameArray []string) (string, *model.ApiError) {
-	failFlag := false
-	status := constants.StatusSuccess
-	for _, tableName := range tableNameArray {
-		statusItem, err := r.checkTTLStatusItem(ctx, orgID, tableName)
-		emptyStatusStruct := new(types.TTLSetting)
-		if statusItem == emptyStatusStruct {
-			return "", nil
-		}
-		if err != nil {
-			return "", &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
-		}
-		if statusItem.Status == constants.StatusPending && statusItem.UpdatedAt.Unix()-time.Now().Unix() < 3600 {
-			status = constants.StatusPending
-			return status, nil
-		}
-		if statusItem.Status == constants.StatusFailed {
-			failFlag = true
-		}
-	}
-	if failFlag {
-		status = constants.StatusFailed
-	}
-
-	return status, nil
+    failFlag := false
+    status := constants.StatusSuccess
+    for _, tableName := range tableNameArray {
+        statusItem, err := r.checkTTLStatusItem(ctx, orgID, tableName)
+        if err != nil {
+            return "", err
+        }
+        if statusItem == nil {  // Now this works correctly
+            return "", nil
+        }
+        if statusItem.Status == constants.StatusPending && statusItem.UpdatedAt.Unix()-time.Now().Unix() < 3600 {
+            status = constants.StatusPending
+            return status, nil
+        }
+        if statusItem.Status == constants.StatusFailed {
+            failFlag = true
+        }
+    }
+    if failFlag {
+        status = constants.StatusFailed
+    }
+    return status, nil
 }
 
 func (r *ClickHouseReader) setColdStorage(ctx context.Context, tableName string, coldStorageVolume string) *model.ApiError {
