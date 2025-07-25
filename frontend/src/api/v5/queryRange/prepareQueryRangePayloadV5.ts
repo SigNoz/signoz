@@ -39,7 +39,7 @@ type PrepareQueryRangePayloadV5Result = {
 /**
  * Maps panel types to V5 request types
  */
-function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
+export function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
 	switch (panelType) {
 		case PANEL_TYPES.TIME_SERIES:
 		case PANEL_TYPES.BAR:
@@ -213,7 +213,7 @@ export function createAggregation(
 /**
  * Converts query builder data to V5 builder queries
  */
-function convertBuilderQueriesToV5(
+export function convertBuilderQueriesToV5(
 	builderQueries: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
 	requestType: RequestType,
 	panelType?: PANEL_TYPES,
@@ -266,7 +266,7 @@ function convertBuilderQueriesToV5(
 /**
  * Converts PromQL queries to V5 format
  */
-function convertPromQueriesToV5(
+export function convertPromQueriesToV5(
 	promQueries: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
 ): QueryEnvelope[] {
 	return Object.entries(promQueries).map(
@@ -286,7 +286,7 @@ function convertPromQueriesToV5(
 /**
  * Converts ClickHouse queries to V5 format
  */
-function convertClickHouseQueriesToV5(
+export function convertClickHouseQueriesToV5(
 	chQueries: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
 ): QueryEnvelope[] {
 	return Object.entries(chQueries).map(

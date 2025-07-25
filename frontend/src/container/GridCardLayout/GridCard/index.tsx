@@ -1,5 +1,5 @@
 import logEvent from 'api/common/logEvent';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { DEFAULT_ENTITY_VERSION, ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
@@ -17,6 +17,7 @@ import { useQueryClient } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
+import APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
@@ -25,7 +26,7 @@ import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import EmptyWidget from '../EmptyWidget';
 import { MenuItemKeys } from '../WidgetHeader/contants';
 import { GridCardGraphProps } from './types';
-import { isDataAvailableByPanelType } from './utils';
+import { errorDetails, isDataAvailableByPanelType } from './utils';
 import WidgetGraphComponent from './WidgetGraphComponent';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -241,7 +242,12 @@ function GridCardGraph({
 			enabled: queryEnabledCondition,
 			refetchOnMount: false,
 			onError: (error) => {
-				setErrorMessage(error.message);
+				const errorMessage =
+					version === ENTITY_VERSION_V5
+						? errorDetails(error as APIError)
+						: error.message;
+
+				setErrorMessage(errorMessage);
 				if (customErrorMessage) {
 					setIsInternalServerError(
 						String(error.message).includes('API responded with 500'),
