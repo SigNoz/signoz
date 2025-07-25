@@ -2171,11 +2171,12 @@ func (r *ClickHouseReader) setTTLQueryStatus(ctx context.Context, orgID string, 
 	status := constants.StatusSuccess
 	for _, tableName := range tableNameArray {
 		statusItem, err := r.checkTTLStatusItem(ctx, orgID, tableName)
-		if err != nil {
-			return "", err
-		}
-		if statusItem == nil { // Now this works correctly
+		emptyStatusStruct := new(types.TTLSetting)
+		if statusItem == emptyStatusStruct {
 			return "", nil
+		}
+		if err != nil {
+			return "", &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
 		}
 		if statusItem.Status == constants.StatusPending && statusItem.UpdatedAt.Unix()-time.Now().Unix() < 3600 {
 			status = constants.StatusPending
@@ -2188,6 +2189,7 @@ func (r *ClickHouseReader) setTTLQueryStatus(ctx context.Context, orgID string, 
 	if failFlag {
 		status = constants.StatusFailed
 	}
+
 	return status, nil
 }
 
