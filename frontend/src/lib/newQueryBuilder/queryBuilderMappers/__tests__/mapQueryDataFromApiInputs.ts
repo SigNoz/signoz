@@ -465,6 +465,16 @@ export const defaultOutput = {
 					key: 'system_disk_operations',
 					type: 'Sum',
 				},
+				aggregations: [
+					{
+						metricName: '',
+						reduceTo: 'avg',
+						spaceAggregation: 'sum',
+						temporality: '',
+						timeAggregation: 'count',
+					},
+				],
+				filter: { expression: '' },
 				aggregateOperator: 'rate',
 				dataSource: 'metrics',
 				disabled: false,
