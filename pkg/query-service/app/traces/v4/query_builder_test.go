@@ -89,7 +89,8 @@ func Test_getClickHouseTracesColumnDataType(t *testing.T) {
 
 func Test_getColumnName(t *testing.T) {
 	type args struct {
-		key v3.AttributeKey
+		key          v3.AttributeKey
+		replaceAlias bool
 	}
 	tests := []struct {
 		name string
@@ -113,7 +114,8 @@ func Test_getColumnName(t *testing.T) {
 		{
 			name: "static column",
 			args: args{
-				key: v3.AttributeKey{Key: "spanKind", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+				key:          v3.AttributeKey{Key: "spanKind", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+				replaceAlias: false,
 			},
 			want: "spanKind",
 		},
@@ -145,10 +147,26 @@ func Test_getColumnName(t *testing.T) {
 			},
 			want: "`attribute_string_http$$route`",
 		},
+		{
+			name: "static column with replace alias",
+			args: args{
+				key:          v3.AttributeKey{Key: "spanKind", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+				replaceAlias: true,
+			},
+			want: "kind_string",
+		},
+		{
+			name: "static column with replace alias 2",
+			args: args{
+				key:          v3.AttributeKey{Key: "serviceName", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+				replaceAlias: true,
+			},
+			want: "resource_string_service$$name",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := getColumnName(tt.args.key); got != tt.want {
+			if got := getColumnName(tt.args.key, tt.args.replaceAlias); got != tt.want {
 				t.Errorf("getColumnName() = %v, want %v", got, tt.want)
 			}
 		})
@@ -180,6 +198,30 @@ func Test_getSelectLabels(t *testing.T) {
 				},
 			},
 			want: " name as `name`, `resource_string_service_name` as `service_name`",
+		},
+		{
+			name: "depricated Columns",
+			args: args{
+				groupBy: []v3.AttributeKey{
+					{Key: "spanKind", DataType: v3.AttributeKeyDataTypeString},
+					{Key: "statusMessage", DataType: v3.AttributeKeyDataTypeString},
+					{Key: "traceID", DataType: v3.AttributeKeyDataTypeString},
+					{Key: "spanID", DataType: v3.AttributeKeyDataTypeString},
+					{Key: "serviceName", DataType: v3.AttributeKeyDataTypeString},
+					{Key: "httpRoute", DataType: v3.AttributeKeyDataTypeString},
+				},
+			},
+			want: " kind_string as `spanKind`, status_message as `statusMessage`, trace_id as `traceID`, span_id as `spanID`, resource_string_service$$name as `serviceName`, attribute_string_http$$route as `httpRoute`",
+		},
+		{
+			name: "non depricated Columns",
+			args: args{
+				groupBy: []v3.AttributeKey{
+					{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+					{Key: "kind", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+				},
+			},
+			want: " name as `name`, kind as `kind`",
 		},
 	}
 	for _, tt := range tests {
@@ -274,7 +316,7 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := BuildTracesFilterQuery(tt.args.fs)
+			got, err := BuildTracesFilterQuery(tt.args.fs, true)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("BuildTracesFilterQuery() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -400,6 +442,18 @@ func Test_orderByAttributeKeyTags(t *testing.T) {
 				tags:      []v3.AttributeKey{},
 			},
 			want: "value DESC",
+		},
+		{
+			name: "test",
+			args: args{
+				panelType: v3.PanelTypeList,
+				items: []v3.OrderBy{
+					{ColumnName: "spanKind", Order: "DESC", DataType: v3.AttributeKeyDataTypeString},
+					{ColumnName: "statusMessage", Order: "DESC", DataType: v3.AttributeKeyDataTypeString},
+					{ColumnName: "traceID", Order: "DESC", DataType: v3.AttributeKeyDataTypeString},
+				},
+			},
+			want: "spanKind DESC,statusMessage DESC,traceID DESC",
 		},
 	}
 	for _, tt := range tests {
@@ -549,7 +603,7 @@ func Test_buildTracesQuery(t *testing.T) {
 					OrderBy:           []v3.OrderBy{{ColumnName: "timestamp", Order: "ASC"}},
 				},
 			},
-			want: "SELECT timestamp as timestamp_datetime, spanID, traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+			want: "SELECT timestamp as timestamp_datetime, span_id as spanID, trace_id as traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  order by timestamp ASC",
 		},
 		{
@@ -565,7 +619,7 @@ func Test_buildTracesQuery(t *testing.T) {
 					OrderBy:           []v3.OrderBy{{ColumnName: "timestamp", Order: "ASC"}},
 				},
 			},
-			want: "SELECT timestamp as timestamp_datetime, spanID, traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+			want: "SELECT timestamp as timestamp_datetime, span_id as spanID, trace_id as traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  AND ((name, `resource_string_service$$name`) GLOBAL IN ( SELECT DISTINCT name, serviceName from signoz_traces.distributed_top_level_operations )) AND parent_span_id != ''  order by timestamp ASC",
 		},
 		{
@@ -581,7 +635,7 @@ func Test_buildTracesQuery(t *testing.T) {
 					OrderBy:           []v3.OrderBy{{ColumnName: "timestamp", Order: "ASC"}},
 				},
 			},
-			want: "SELECT timestamp as timestamp_datetime, spanID, traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+			want: "SELECT timestamp as timestamp_datetime, span_id as spanID, trace_id as traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  AND parent_span_id = ''  order by timestamp ASC",
 		},
 		{
@@ -597,7 +651,7 @@ func Test_buildTracesQuery(t *testing.T) {
 					OrderBy:           []v3.OrderBy{{ColumnName: "timestamp", Order: "ASC"}},
 				},
 			},
-			want: "SELECT timestamp as timestamp_datetime, spanID, traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+			want: "SELECT timestamp as timestamp_datetime, span_id as spanID, trace_id as traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  AND parent_span_id = ''  order by timestamp ASC",
 		},
 		{
@@ -613,7 +667,7 @@ func Test_buildTracesQuery(t *testing.T) {
 					OrderBy:           []v3.OrderBy{{ColumnName: "timestamp", Order: "ASC"}},
 				},
 			},
-			want: "SELECT timestamp as timestamp_datetime, spanID, traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+			want: "SELECT timestamp as timestamp_datetime, span_id as spanID, trace_id as traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'service.name') = 'cartservice' AND labels like '%service.name\":\"cartservice%')) AND parent_span_id = ''  order by timestamp ASC",
 		},
 		{
@@ -628,7 +682,7 @@ func Test_buildTracesQuery(t *testing.T) {
 					SelectColumns:     []v3.AttributeKey{{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
 				},
 			},
-			want: "SELECT timestamp as timestamp_datetime, spanID, traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+			want: "SELECT timestamp as timestamp_datetime, span_id as spanID, trace_id as traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  order by timestamp DESC",
 		},
 		{
@@ -902,7 +956,7 @@ func TestPrepareTracesQuery(t *testing.T) {
 					GraphLimitQtype: constants.SecondQueryGraphLimit,
 				},
 			},
-			want: "SELECT  `attribute_string_function` as `function`, serviceName as `serviceName`, toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 " +
+			want: "SELECT  `attribute_string_function` as `function`, resource_string_service$$name as `serviceName`, toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 " +
 				"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_number['line'] = 100 " +
 				"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) " +
 				"AND simpleJSONExtractString(labels, 'hostname') = 'server1' AND labels like '%hostname\":\"server1%')) AND (`function`,`serviceName`) GLOBAL IN (#LIMIT_PLACEHOLDER) group by `function`,`serviceName` order by value DESC",
