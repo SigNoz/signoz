@@ -125,9 +125,6 @@ function QuerySearch({
 	const [isFocused, setIsFocused] = useState(false);
 
 	const [isCompleteKeysList, setIsCompleteKeysList] = useState(false);
-	const [isCompleteValuesList, setIsCompleteValuesList] = useState<boolean>(
-		false,
-	);
 	const [
 		isFetchingCompleteValuesList,
 		setIsFetchingCompleteValuesList,
@@ -327,10 +324,6 @@ function QuerySearch({
 				const values = responseData.data?.values || {};
 				const stringValues = values.stringValues || [];
 				const numberValues = values.numberValues || [];
-
-				if (responseData.data?.complete) {
-					setIsCompleteValuesList(responseData.data.complete);
-				}
 
 				// Generate options from string values - explicitly handle empty strings
 				const stringOptions = stringValues
@@ -691,15 +684,18 @@ function QuerySearch({
 				option.label.toLowerCase().includes(searchText),
 			);
 
-			if (
+			const shouldFetch =
+				// Fetch only if key is available
 				keyName &&
+				// Fetch if either there's no suggestion left with the current searchText or searchText is empty
 				(((options.length === 0 || searchText === '') &&
-					(!isCompleteValuesList || lastValueRef.current !== searchText) &&
+					lastValueRef.current !== searchText &&
 					!isFetchingCompleteValuesList) ||
 					keyName !== activeKey ||
 					isLoadingSuggestions) &&
-				!(isLoadingSuggestions && lastKeyRef.current === keyName)
-			) {
+				!(isLoadingSuggestions && lastKeyRef.current === keyName);
+
+			if (shouldFetch) {
 				debouncedFetchValueSuggestions({
 					key: keyName,
 					searchText,
@@ -720,10 +716,8 @@ function QuerySearch({
 				// For strings, just wrap in quotes (no brackets needed)
 				if (option.type === 'value' || option.type === 'keyword') {
 					processedOption.apply = wrapStringValueInQuotes(option.label);
-					processedOption.info = `Value for ${keyName} IN list`;
 				} else {
 					processedOption.apply = option.label;
-					processedOption.info = `Value for ${keyName} IN list`;
 				}
 
 				return processedOption;
@@ -885,15 +879,18 @@ function QuerySearch({
 			);
 
 			// Trigger fetch only if needed
-			if (
+			const shouldFetch =
+				// Fetch only if key is available
 				keyName &&
+				// Fetch if either there's no suggestion left with the current searchText or searchText is empty
 				(((options.length === 0 || searchText === '') &&
-					(!isCompleteValuesList || lastValueRef.current !== searchText) &&
+					lastValueRef.current !== searchText &&
 					!isFetchingCompleteValuesList) ||
 					keyName !== activeKey ||
 					isLoadingSuggestions) &&
-				!(isLoadingSuggestions && lastKeyRef.current === keyName)
-			) {
+				!(isLoadingSuggestions && lastKeyRef.current === keyName);
+
+			if (shouldFetch) {
 				// eslint-disable-next-line sonarjs/no-identical-functions
 				debouncedFetchValueSuggestions({
 					key: keyName,
@@ -920,11 +917,6 @@ function QuerySearch({
 						operatorName,
 						option.type,
 					);
-
-					// Add context info to the suggestion
-					if (keyName && operatorName) {
-						processedOption.info = `Value for ${keyName} ${operatorName}`;
-					}
 				} else if (option.type === 'number') {
 					// Numbers don't get quoted but may need brackets for IN operators
 					if (isListOperator(operatorName)) {
@@ -932,27 +924,12 @@ function QuerySearch({
 					} else {
 						processedOption.apply = option.label;
 					}
-
-					// Add context info to the suggestion
-					if (keyName && operatorName) {
-						processedOption.info = `Numeric value for ${keyName} ${operatorName}`;
-					}
 				} else if (option.type === 'boolean') {
 					// Boolean values don't get quoted
 					processedOption.apply = option.label;
-
-					// Add context info
-					if (keyName && operatorName) {
-						processedOption.info = `Boolean value for ${keyName} ${operatorName}`;
-					}
 				} else if (option.type === 'array') {
 					// Arrays are already formatted as arrays
 					processedOption.apply = option.label;
-
-					// Add context info
-					if (keyName && operatorName) {
-						processedOption.info = `Array value for ${keyName} ${operatorName}`;
-					}
 				}
 
 				return processedOption;
