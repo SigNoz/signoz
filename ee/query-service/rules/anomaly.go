@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"math"
 	"strings"
 	"sync"
@@ -15,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/transition"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
@@ -30,6 +32,11 @@ import (
 
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 
+	querierV5 "github.com/SigNoz/signoz/pkg/querier"
+
+	anomalyV2 "github.com/SigNoz/signoz/ee/anomaly"
+
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -47,7 +54,13 @@ type AnomalyRule struct {
 	// querierV2 is used for alerts created after the introduction of new metrics query builder
 	querierV2 interfaces.Querier
 
-	provider anomaly.Provider
+	// querierV5 is used for alerts migrated after the introduction of new query builder
+	querierV5 querierV5.Querier
+
+	provider   anomaly.Provider
+	providerV2 anomalyV2.Provider
+
+	version string
 
 	seasonality anomaly.Seasonality
 }
@@ -57,6 +70,8 @@ func NewAnomalyRule(
 	orgID valuer.UUID,
 	p *ruletypes.PostableRule,
 	reader interfaces.Reader,
+	querierV5 querierV5.Querier,
+	logger *slog.Logger,
 	cache cache.Cache,
 	opts ...baserules.RuleOption,
 ) (*AnomalyRule, error) {
@@ -117,6 +132,26 @@ func NewAnomalyRule(
 			anomaly.WithReader[*anomaly.WeeklyProvider](reader),
 		)
 	}
+
+	if t.seasonality == anomaly.SeasonalityHourly {
+		t.providerV2 = anomalyV2.NewHourlyProvider(
+			anomalyV2.WithQuerier[*anomalyV2.HourlyProvider](querierV5),
+			anomalyV2.WithLogger[*anomalyV2.HourlyProvider](logger),
+		)
+	} else if t.seasonality == anomaly.SeasonalityDaily {
+		t.providerV2 = anomalyV2.NewDailyProvider(
+			anomalyV2.WithQuerier[*anomalyV2.DailyProvider](querierV5),
+			anomalyV2.WithLogger[*anomalyV2.DailyProvider](logger),
+		)
+	} else if t.seasonality == anomaly.SeasonalityWeekly {
+		t.providerV2 = anomalyV2.NewWeeklyProvider(
+			anomalyV2.WithQuerier[*anomalyV2.WeeklyProvider](querierV5),
+			anomalyV2.WithLogger[*anomalyV2.WeeklyProvider](logger),
+		)
+	}
+
+	t.querierV5 = querierV5
+	t.version = p.Version
 	return &t, nil
 }
 
@@ -153,6 +188,24 @@ func (r *AnomalyRule) prepareQueryRange(ts time.Time) (*v3.QueryRangeParamsV3, e
 		CompositeQuery: compositeQuery,
 		Variables:      make(map[string]interface{}, 0),
 		NoCache:        false,
+	}, nil
+}
+
+func (r *AnomalyRule) prepareQueryRangeV5(ts time.Time) (*qbtypes.QueryRangeRequest, error) {
+
+	zap.L().Info("prepareQueryRangeV5", zap.Int64("ts", ts.UnixMilli()), zap.Int64("evalWindow", r.EvalWindow().Milliseconds()), zap.Int64("evalDelay", r.EvalDelay().Milliseconds()))
+
+	startTs, endTs := r.Timestamps(ts)
+	start, end := startTs.UnixMilli(), endTs.UnixMilli()
+
+	return &qbtypes.QueryRangeRequest{
+		Start:       uint64(start),
+		End:         uint64(end),
+		RequestType: qbtypes.RequestTypeTimeSeries,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: r.Condition().CompositeQuery.Queries,
+		},
+		NoCache: true,
 	}, nil
 }
 
@@ -201,13 +254,59 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 	return resultVector, nil
 }
 
+func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
+
+	params, err := r.prepareQueryRangeV5(ts)
+	if err != nil {
+		return nil, err
+	}
+
+	anomalies, err := r.providerV2.GetAnomalies(ctx, orgID, &anomalyV2.AnomaliesRequest{
+		Params:      *params,
+		Seasonality: anomalyV2.Seasonality{valuer.NewString(r.seasonality.String())},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var qbResult *qbtypes.TimeSeriesData
+	for _, result := range anomalies.Results {
+		if result.QueryName == r.GetSelectedQuery() {
+			qbResult = result
+			break
+		}
+	}
+
+	queryResult := transition.ConvertV5TimeSeriesDataToV4Result(qbResult)
+
+	var resultVector ruletypes.Vector
+
+	scoresJSON, _ := json.Marshal(queryResult.AnomalyScores)
+	zap.L().Info("anomaly scores", zap.String("scores", string(scoresJSON)))
+
+	for _, series := range queryResult.AnomalyScores {
+		smpl, shouldAlert := r.ShouldAlert(*series)
+		if shouldAlert {
+			resultVector = append(resultVector, smpl)
+		}
+	}
+	return resultVector, nil
+}
+
 func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
 
 	prevState := r.State()
 
 	valueFormatter := formatter.FromUnit(r.Unit())
-	res, err := r.buildAndRunQuery(ctx, r.OrgID(), ts)
 
+	var res ruletypes.Vector
+	var err error
+
+	if r.version == "v5" {
+		res, err = r.buildAndRunQueryV5(ctx, r.OrgID(), ts)
+	} else {
+		res, err = r.buildAndRunQuery(ctx, r.OrgID(), ts)
+	}
 	if err != nil {
 		return nil, err
 	}

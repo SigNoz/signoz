@@ -8,6 +8,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/formatter"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -20,10 +21,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
 	yaml "gopkg.in/yaml.v2"
+
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 type PromRule struct {
 	*BaseRule
+	version    string
 	prometheus prometheus.Prometheus
 }
 
@@ -44,6 +48,7 @@ func NewPromRule(
 
 	p := PromRule{
 		BaseRule:   baseRule,
+		version:    postableRule.Version,
 		prometheus: prometheus,
 	}
 	p.logger = logger
@@ -79,6 +84,25 @@ func (r *PromRule) GetSelectedQuery() string {
 }
 
 func (r *PromRule) getPqlQuery() (string, error) {
+
+	if r.version == "v5" {
+		if len(r.ruleCondition.CompositeQuery.Queries) > 0 {
+			selectedQuery := r.GetSelectedQuery()
+			for _, item := range r.ruleCondition.CompositeQuery.Queries {
+				switch item.Type {
+				case qbtypes.QueryTypePromQL:
+					promQuery, ok := item.Spec.(qbtypes.PromQuery)
+					if !ok {
+						return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query spec %T", item.Spec)
+					}
+					if promQuery.Name == selectedQuery {
+						return promQuery.Query, nil
+					}
+				}
+			}
+		}
+		return "", fmt.Errorf("invalid promql rule setup")
+	}
 
 	if r.ruleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
 		if len(r.ruleCondition.CompositeQuery.PromQueries) > 0 {

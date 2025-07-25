@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/SigNoz/govaluate"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -43,73 +42,6 @@ func getqueryInfo(spec any) queryInfo {
 // getQueryName is a convenience function when only name is needed
 func getQueryName(spec any) string {
 	return getqueryInfo(spec).Name
-}
-
-func StepIntervalForQuery(req *qbtypes.QueryRangeRequest, name string) int64 {
-	stepsMap := make(map[string]int64)
-	for _, query := range req.CompositeQuery.Queries {
-		switch spec := query.Spec.(type) {
-		case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
-			stepsMap[spec.Name] = int64(spec.StepInterval.Seconds())
-		case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
-			stepsMap[spec.Name] = int64(spec.StepInterval.Seconds())
-		case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
-			stepsMap[spec.Name] = int64(spec.StepInterval.Seconds())
-		case qbtypes.PromQuery:
-			stepsMap[spec.Name] = int64(spec.Step.Seconds())
-		}
-	}
-
-	if step, ok := stepsMap[name]; ok {
-		return step
-	}
-
-	exprStr := ""
-
-	for _, query := range req.CompositeQuery.Queries {
-		switch spec := query.Spec.(type) {
-		case qbtypes.QueryBuilderFormula:
-			if spec.Name == name {
-				exprStr = spec.Expression
-			}
-		}
-	}
-
-	expression, _ := govaluate.NewEvaluableExpressionWithFunctions(exprStr, qbtypes.EvalFuncs())
-
-	steps := []int64{}
-
-	for _, v := range expression.Vars() {
-		steps = append(steps, stepsMap[v])
-	}
-
-	return querybuilder.LCMList(steps)
-}
-
-func NumAggregationForQuery(req *qbtypes.QueryRangeRequest, name string) int64 {
-	numAgg := 0
-	for _, query := range req.CompositeQuery.Queries {
-		switch spec := query.Spec.(type) {
-		case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
-			if spec.Name == name {
-				numAgg += 1
-			}
-		case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
-			if spec.Name == name {
-				numAgg += 1
-			}
-		case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
-			if spec.Name == name {
-				numAgg += 1
-			}
-		case qbtypes.QueryBuilderFormula:
-			if spec.Name == name {
-				numAgg += 1
-			}
-		}
-	}
-
-	return int64(numAgg)
 }
 
 func (q *querier) postProcessResults(ctx context.Context, results map[string]any, req *qbtypes.QueryRangeRequest) (map[string]any, error) {
@@ -179,7 +111,7 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 	if req.RequestType == qbtypes.RequestTypeTimeSeries && req.FormatOptions != nil && req.FormatOptions.FillGaps {
 		for name := range typedResults {
 			funcs := []qbtypes.Function{{Name: qbtypes.FunctionNameFillZero}}
-			funcs = q.prepareFillZeroArgsWithStep(funcs, req, StepIntervalForQuery(req, name))
+			funcs = q.prepareFillZeroArgsWithStep(funcs, req, req.StepIntervalForQuery(name))
 			// empty time series if it doesn't exist
 			tsData, ok := typedResults[name].Value.(*qbtypes.TimeSeriesData)
 			if !ok {
@@ -187,7 +119,7 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 			}
 
 			if len(tsData.Aggregations) == 0 {
-				numAgg := NumAggregationForQuery(req, name)
+				numAgg := req.NumAggregationForQuery(name)
 				tsData.Aggregations = make([]*qbtypes.AggregationBucket, numAgg)
 				for idx := range numAgg {
 					tsData.Aggregations[idx] = &qbtypes.AggregationBucket{

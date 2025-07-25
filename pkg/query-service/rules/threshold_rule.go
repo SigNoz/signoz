@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"math/rand/v2"
+	"reflect"
 	"text/template"
 	"time"
 
@@ -16,8 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/contextlinks"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
-	"github.com/SigNoz/signoz/pkg/query-service/transition"
-	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/transition"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
@@ -36,6 +35,10 @@ import (
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/formatter"
 
+	querierV5 "github.com/SigNoz/signoz/pkg/querier"
+
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -52,6 +55,9 @@ type ThresholdRule struct {
 	// querierV2 is used for alerts created after the introduction of new metrics query builder
 	querierV2 interfaces.Querier
 
+	// querierV5 is used for alerts migrated after the introduction of new query builder
+	querierV5 querierV5.Querier
+
 	// used for attribute metadata enrichment for logs and traces
 	logsKeys  map[string]v3.AttributeKey
 	spansKeys map[string]v3.AttributeKey
@@ -65,6 +71,7 @@ func NewThresholdRule(
 	orgID valuer.UUID,
 	p *ruletypes.PostableRule,
 	reader interfaces.Reader,
+	querierV5 querierV5.Querier,
 	opts ...RuleOption,
 ) (*ThresholdRule, error) {
 
@@ -94,6 +101,7 @@ func NewThresholdRule(
 
 	t.querier = querier.NewQuerier(querierOption)
 	t.querierV2 = querierV2.NewQuerier(querierOptsV2)
+	t.querierV5 = querierV5
 	t.reader = reader
 	return &t, nil
 }
@@ -182,6 +190,24 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) (*v3.QueryRangeParamsV3,
 		CompositeQuery: r.ruleCondition.CompositeQuery,
 		Variables:      make(map[string]interface{}, 0),
 		NoCache:        true,
+	}, nil
+}
+
+func (r *ThresholdRule) prepareQueryRangeV5(ts time.Time) (*qbtypes.QueryRangeRequest, error) {
+
+	zap.L().Info("prepareQueryRangeV5", zap.Int64("ts", ts.UnixMilli()), zap.Int64("evalWindow", r.evalWindow.Milliseconds()), zap.Int64("evalDelay", r.evalDelay.Milliseconds()))
+
+	startTs, endTs := r.Timestamps(ts)
+	start, end := startTs.UnixMilli(), endTs.UnixMilli()
+
+	return &qbtypes.QueryRangeRequest{
+		Start:       uint64(start),
+		End:         uint64(end),
+		RequestType: qbtypes.RequestTypeTimeSeries,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: r.Condition().CompositeQuery.Queries,
+		},
+		NoCache: true,
 	}, nil
 }
 
@@ -355,51 +381,86 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		return resultVector, nil
 	}
 
-	shouldLog := false
-
 	for _, series := range queryResult.Series {
 		smpl, shouldAlert := r.ShouldAlert(*series)
 		if shouldAlert {
-			shouldLog = true
 			resultVector = append(resultVector, smpl)
 		}
 	}
 
-	if (shouldLog && r.triggerCnt < 100) || rand.Float64() < (1.0/30.0) {
-		func(ts time.Time) {
-			r.triggerCnt++
-			defer func() {
-				if rr := recover(); rr != nil {
-					zap.L().Warn("unexpected panic while converting to v5",
-						zap.Any("panic", rr),
-						zap.String("ruleid", r.ID()),
-					)
-				}
-			}()
-			v5Req, err := transition.ConvertV3ToV5(params)
-			if err != nil {
-				zap.L().Warn("unable to convert to v5 request payload", zap.Error(err), zap.String("ruleid", r.ID()))
-				return
-			}
-			v5ReqJSON, _ := json.Marshal(v5Req)
+	return resultVector, nil
+}
 
-			v3Resp := v3.QueryRangeResponse{
-				Result: results,
-			}
+func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
 
-			v5Resp, err := transition.ConvertV3ResponseToV5(&v3Resp, querybuildertypesv5.RequestTypeTimeSeries)
-			if err != nil {
-				zap.L().Warn("unable to convert to v5 response payload", zap.Error(err), zap.String("ruleid", r.ID()))
-				return
-			}
+	params, err := r.prepareQueryRangeV5(ts)
+	if err != nil {
+		return nil, err
+	}
 
-			v5RespJSON, _ := json.Marshal(v5Resp)
-			zap.L().Info("v5 request and expected response for triggered alert",
-				zap.String("request_payload", string(v5ReqJSON)),
-				zap.String("response_payload", string(v5RespJSON)),
-				zap.String("ruleid", r.ID()),
-			)
-		}(ts)
+	var results []*v3.Result
+	var queryErrors map[string]error
+
+	v5Result, err := r.querierV5.QueryRange(ctx, orgID, params)
+
+	data, ok := v5Result.Data.(struct {
+		Results  []any    `json:"results"`
+		Warnings []string `json:"warnings"`
+	})
+
+	if !ok {
+
+		return nil, fmt.Errorf("upexpected result from v5 querier")
+	}
+
+	for _, item := range data.Results {
+		if tsData, ok := item.(*qbtypes.TimeSeriesData); ok {
+			results = append(results, transition.ConvertV5TimeSeriesDataToV4Result(tsData))
+		} else {
+			zap.L().Warn("expected qbtypes.TimeSeriesData but got", zap.Any("item_type", reflect.TypeOf(item)))
+		}
+	}
+
+	if err != nil {
+		zap.L().Error("failed to get alert query result", zap.String("rule", r.Name()), zap.Error(err), zap.Any("errors", queryErrors))
+		return nil, fmt.Errorf("internal error while querying")
+	}
+
+	selectedQuery := r.GetSelectedQuery()
+
+	var queryResult *v3.Result
+	for _, res := range results {
+		if res.QueryName == selectedQuery {
+			queryResult = res
+			break
+		}
+	}
+
+	if queryResult != nil && len(queryResult.Series) > 0 {
+		r.lastTimestampWithDatapoints = time.Now()
+	}
+
+	var resultVector ruletypes.Vector
+
+	// if the data is missing for `For` duration then we should send alert
+	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(time.Duration(r.Condition().AbsentFor)*time.Minute).Before(time.Now()) {
+		zap.L().Info("no data found for rule condition", zap.String("ruleid", r.ID()))
+		lbls := labels.NewBuilder(labels.Labels{})
+		if !r.lastTimestampWithDatapoints.IsZero() {
+			lbls.Set("lastSeen", r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
+		}
+		resultVector = append(resultVector, ruletypes.Sample{
+			Metric:    lbls.Labels(),
+			IsMissing: true,
+		})
+		return resultVector, nil
+	}
+
+	for _, series := range queryResult.Series {
+		smpl, shouldAlert := r.ShouldAlert(*series)
+		if shouldAlert {
+			resultVector = append(resultVector, smpl)
+		}
 	}
 
 	return resultVector, nil
@@ -410,7 +471,15 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 	prevState := r.State()
 
 	valueFormatter := formatter.FromUnit(r.Unit())
-	res, err := r.buildAndRunQuery(ctx, r.orgID, ts)
+
+	var res ruletypes.Vector
+	var err error
+
+	if r.version == "v5" {
+		res, err = r.buildAndRunQueryV5(ctx, r.orgID, ts)
+	} else {
+		res, err = r.buildAndRunQuery(ctx, r.orgID, ts)
+	}
 
 	if err != nil {
 		return nil, err

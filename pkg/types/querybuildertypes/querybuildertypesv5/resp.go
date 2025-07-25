@@ -31,6 +31,11 @@ type AggregationBucket struct {
 		Unit string `json:"unit,omitempty"`
 	} `json:"meta,omitempty"`
 	Series []*TimeSeries `json:"series"` // no extra nesting
+
+	PredictedSeries  []*TimeSeries `json:"predictedSeries,omitempty"`
+	UpperBoundSeries []*TimeSeries `json:"upperBoundSeries,omitempty"`
+	LowerBoundSeries []*TimeSeries `json:"lowerBoundSeries,omitempty"`
+	AnomalyScores    []*TimeSeries `json:"anomalyScores,omitempty"`
 }
 
 type TimeSeries struct {
