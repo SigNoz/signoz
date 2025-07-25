@@ -2,7 +2,6 @@
 import './LogDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
-import Convert from 'ansi-to-html';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';
@@ -17,12 +16,10 @@ import JSONView from 'container/LogDetailedView/JsonView';
 import Overview from 'container/LogDetailedView/Overview';
 import {
 	aggregateAttributesResourcesToString,
-	escapeHtml,
+	getSanitizedLogBody,
 	removeEscapeCharacters,
-	unescapeString,
 } from 'container/LogDetailedView/utils';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import dompurify from 'dompurify';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
@@ -46,13 +43,10 @@ import { AppState } from 'store/reducers';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailProps } from './LogDetail.interfaces';
 import QueryBuilderSearchWrapper from './QueryBuilderSearchWrapper';
-
-const convert = new Convert();
 
 function LogDetail({
 	log,
@@ -118,11 +112,7 @@ function LogDetail({
 
 	const htmlBody = useMemo(
 		() => ({
-			__html: convert.toHtml(
-				dompurify.sanitize(unescapeString(escapeHtml(log?.body || '')), {
-					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
-				}),
-			),
+			__html: getSanitizedLogBody(log?.body || '', { shouldEscapeHtml: true }),
 		}),
 		[log?.body],
 	);

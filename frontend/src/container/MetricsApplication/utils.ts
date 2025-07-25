@@ -19,6 +19,7 @@ export const navigateToTrace = ({
 	selectedTraceTags,
 	apmToTraceQuery,
 	safeNavigate,
+	openInNewTab = false,
 }: NavigateToTraceProps): void => {
 	const urlParams = new URLSearchParams();
 	urlParams.set(
@@ -35,7 +36,11 @@ export const navigateToTrace = ({
 		QueryParams.compositeQuery
 	}=${JSONCompositeQuery}`;
 
-	safeNavigate(newTraceExplorerPath);
+	if (openInNewTab) {
+		window.open(newTraceExplorerPath, '_blank');
+	} else {
+		safeNavigate(newTraceExplorerPath);
+	}
 };
 
 export const getNearestHighestBucketValue = (
