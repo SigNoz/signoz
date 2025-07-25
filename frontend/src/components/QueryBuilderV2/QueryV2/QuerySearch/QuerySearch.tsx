@@ -753,9 +753,6 @@ function QuerySearch({
 				options = options.map((option) => ({
 					...option,
 					boost: usedKeys.includes(option.label) ? -10 : 10,
-					// info: usedKeys.includes(option.label)
-					// 	? `${option.info || ''} (already used in query)`
-					// 	: option.info,
 				}));
 			}
 
@@ -840,12 +837,6 @@ function QuerySearch({
 							}));
 					}
 				}
-
-				// Add key info to all operators
-				// options = options.map((op) => ({
-				// 	...op,
-				// 	info: `${op.info || ''} (for ${keyName})`,
-				// }));
 			}
 
 			// Add space after selection for operators
