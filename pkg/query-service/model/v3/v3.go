@@ -1459,28 +1459,6 @@ type MetricMetadataResponse struct {
 	Temporality string    `json:"temporality"`
 }
 
-type URLShareableTimeRange struct {
-	Start    int64 `json:"start"`
-	End      int64 `json:"end"`
-	PageSize int64 `json:"pageSize"`
-}
-
-type URLShareableBuilderQuery struct {
-	QueryData     []BuilderQuery `json:"queryData"`
-	QueryFormulas []string       `json:"queryFormulas"`
-}
-
-type URLShareableCompositeQuery struct {
-	QueryType string                   `json:"queryType"`
-	Builder   URLShareableBuilderQuery `json:"builder"`
-}
-
-type URLShareableOptions struct {
-	MaxLines      int            `json:"maxLines"`
-	Format        string         `json:"format"`
-	SelectColumns []AttributeKey `json:"selectColumns"`
-}
-
 type QBOptions struct {
 	GraphLimitQtype string
 	IsLivetailQuery bool

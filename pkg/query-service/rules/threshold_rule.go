@@ -12,12 +12,13 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/SigNoz/signoz/pkg/contextlinks"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
-	"github.com/SigNoz/signoz/pkg/query-service/contextlinks"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/transition"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/querier"
@@ -200,18 +201,25 @@ func (r *ThresholdRule) prepareQueryRangeV5(ts time.Time) (*qbtypes.QueryRangeRe
 	startTs, endTs := r.Timestamps(ts)
 	start, end := startTs.UnixMilli(), endTs.UnixMilli()
 
-	return &qbtypes.QueryRangeRequest{
+	req := &qbtypes.QueryRangeRequest{
 		Start:       uint64(start),
 		End:         uint64(end),
 		RequestType: qbtypes.RequestTypeTimeSeries,
 		CompositeQuery: qbtypes.CompositeQuery{
-			Queries: r.Condition().CompositeQuery.Queries,
+			Queries: make([]qbtypes.QueryEnvelope, 0),
 		},
 		NoCache: true,
-	}, nil
+	}
+	copy(r.Condition().CompositeQuery.Queries, req.CompositeQuery.Queries)
+	return req, nil
 }
 
 func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) string {
+
+	if r.version == "v5" {
+		return r.prepareLinksToLogsV5(ts, lbls)
+	}
+
 	selectedQuery := r.GetSelectedQuery()
 
 	qr, err := r.prepareQueryRange(ts)
@@ -246,6 +254,11 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 }
 
 func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) string {
+
+	if r.version == "v5" {
+		return r.prepareLinksToTracesV5(ts, lbls)
+	}
+
 	selectedQuery := r.GetSelectedQuery()
 
 	qr, err := r.prepareQueryRange(ts)
@@ -277,6 +290,86 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 	filterItems := contextlinks.PrepareFilters(lbls.Map(), queryFilter, q.GroupBy, r.spansKeys)
 
 	return contextlinks.PrepareLinksToTraces(start, end, filterItems)
+}
+
+func (r *ThresholdRule) prepareLinksToLogsV5(ts time.Time, lbls labels.Labels) string {
+	selectedQuery := r.GetSelectedQuery()
+
+	qr, err := r.prepareQueryRangeV5(ts)
+	if err != nil {
+		return ""
+	}
+	start := time.UnixMilli(int64(qr.Start))
+	end := time.UnixMilli(int64(qr.End))
+
+	// TODO(srikanthccv): handle formula queries
+	if selectedQuery < "A" || selectedQuery > "Z" {
+		return ""
+	}
+
+	var q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+
+	for _, query := range r.ruleCondition.CompositeQuery.Queries {
+		if query.Type == qbtypes.QueryTypeBuilder {
+			switch spec := query.Spec.(type) {
+			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+				q = spec
+			}
+		}
+	}
+
+	if q.Signal != telemetrytypes.SignalLogs {
+		return ""
+	}
+
+	filterExpr := ""
+	if q.Filter != nil && q.Filter.Expression != "" {
+		filterExpr = q.Filter.Expression
+	}
+
+	whereClause := contextlinks.PrepareFilterExpression(lbls.Map(), filterExpr, q.GroupBy)
+
+	return contextlinks.PrepareLinksToLogsV5(start, end, whereClause)
+}
+
+func (r *ThresholdRule) prepareLinksToTracesV5(ts time.Time, lbls labels.Labels) string {
+	selectedQuery := r.GetSelectedQuery()
+
+	qr, err := r.prepareQueryRangeV5(ts)
+	if err != nil {
+		return ""
+	}
+	start := time.UnixMilli(int64(qr.Start))
+	end := time.UnixMilli(int64(qr.End))
+
+	// TODO(srikanthccv): handle formula queries
+	if selectedQuery < "A" || selectedQuery > "Z" {
+		return ""
+	}
+
+	var q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
+
+	for _, query := range r.ruleCondition.CompositeQuery.Queries {
+		if query.Type == qbtypes.QueryTypeBuilder {
+			switch spec := query.Spec.(type) {
+			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+				q = spec
+			}
+		}
+	}
+
+	if q.Signal != telemetrytypes.SignalTraces {
+		return ""
+	}
+
+	filterExpr := ""
+	if q.Filter != nil && q.Filter.Expression != "" {
+		filterExpr = q.Filter.Expression
+	}
+
+	whereClause := contextlinks.PrepareFilterExpression(lbls.Map(), filterExpr, q.GroupBy)
+
+	return contextlinks.PrepareLinksToTracesV5(start, end, whereClause)
 }
 
 func (r *ThresholdRule) GetSelectedQuery() string {
@@ -399,9 +492,13 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 	}
 
 	var results []*v3.Result
-	var queryErrors map[string]error
 
 	v5Result, err := r.querierV5.QueryRange(ctx, orgID, params)
+
+	if err != nil {
+		zap.L().Error("failed to get alert query result", zap.String("rule", r.Name()), zap.Error(err), zap.Error(err))
+		return nil, fmt.Errorf("internal error while querying")
+	}
 
 	data, ok := v5Result.Data.(struct {
 		Results  []any    `json:"results"`
@@ -409,7 +506,6 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 	})
 
 	if !ok {
-
 		return nil, fmt.Errorf("upexpected result from v5 querier")
 	}
 
@@ -419,11 +515,6 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 		} else {
 			zap.L().Warn("expected qbtypes.TimeSeriesData but got", zap.Any("item_type", reflect.TypeOf(item)))
 		}
-	}
-
-	if err != nil {
-		zap.L().Error("failed to get alert query result", zap.String("rule", r.Name()), zap.Error(err), zap.Any("errors", queryErrors))
-		return nil, fmt.Errorf("internal error while querying")
 	}
 
 	selectedQuery := r.GetSelectedQuery()
@@ -476,8 +567,10 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 	var err error
 
 	if r.version == "v5" {
+		zap.L().Info("running v5 query")
 		res, err = r.buildAndRunQueryV5(ctx, r.orgID, ts)
 	} else {
+		zap.L().Info("running v4 query")
 		res, err = r.buildAndRunQuery(ctx, r.orgID, ts)
 	}
 

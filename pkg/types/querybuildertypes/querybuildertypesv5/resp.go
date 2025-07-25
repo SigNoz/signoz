@@ -13,10 +13,25 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+type QBEvent struct {
+	Version         string `json:"version"`
+	LogsUsed        bool   `json:"logs_used,omitempty"`
+	MetricsUsed     bool   `json:"metrics_used,omitempty"`
+	TracesUsed      bool   `json:"traces_used,omitempty"`
+	FilterApplied   bool   `json:"filter_applied,omitempty"`
+	GroupByApplied  bool   `json:"group_by_applied,omitempty"`
+	QueryType       string `json:"query_type,omitempty"`
+	PanelType       string `json:"panel_type,omitempty"`
+	NumberOfQueries int    `json:"number_of_queries,omitempty"`
+	HasData         bool   `json:"-"`
+}
+
 type QueryRangeResponse struct {
 	Type RequestType `json:"type"`
 	Data any         `json:"data"`
 	Meta ExecStats   `json:"meta"`
+
+	QBEvent *QBEvent `json:"-"`
 }
 
 type TimeSeriesData struct {

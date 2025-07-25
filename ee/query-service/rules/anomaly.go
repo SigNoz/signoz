@@ -198,15 +198,17 @@ func (r *AnomalyRule) prepareQueryRangeV5(ts time.Time) (*qbtypes.QueryRangeRequ
 	startTs, endTs := r.Timestamps(ts)
 	start, end := startTs.UnixMilli(), endTs.UnixMilli()
 
-	return &qbtypes.QueryRangeRequest{
+	req := &qbtypes.QueryRangeRequest{
 		Start:       uint64(start),
 		End:         uint64(end),
 		RequestType: qbtypes.RequestTypeTimeSeries,
 		CompositeQuery: qbtypes.CompositeQuery{
-			Queries: r.Condition().CompositeQuery.Queries,
+			Queries: make([]qbtypes.QueryEnvelope, 0),
 		},
 		NoCache: true,
-	}, nil
+	}
+	copy(r.Condition().CompositeQuery.Queries, req.CompositeQuery.Queries)
+	return req, nil
 }
 
 func (r *AnomalyRule) GetSelectedQuery() string {
@@ -263,7 +265,7 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 
 	anomalies, err := r.providerV2.GetAnomalies(ctx, orgID, &anomalyV2.AnomaliesRequest{
 		Params:      *params,
-		Seasonality: anomalyV2.Seasonality{valuer.NewString(r.seasonality.String())},
+		Seasonality: anomalyV2.Seasonality{String: valuer.NewString(r.seasonality.String())},
 	})
 	if err != nil {
 		return nil, err
@@ -303,8 +305,10 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 	var err error
 
 	if r.version == "v5" {
+		zap.L().Info("running v5 query")
 		res, err = r.buildAndRunQueryV5(ctx, r.OrgID(), ts)
 	} else {
+		zap.L().Info("running v4 query")
 		res, err = r.buildAndRunQuery(ctx, r.OrgID(), ts)
 	}
 	if err != nil {
