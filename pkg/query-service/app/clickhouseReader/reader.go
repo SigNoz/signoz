@@ -2148,20 +2148,19 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, orgID stri
 func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, orgID string, tableName string) (*types.TTLSetting, *model.ApiError) {
 	zap.L().Info("checkTTLStatusItem query", zap.String("tableName", tableName))
 	ttl := new(types.TTLSetting)
-	err := r.sqlDB.BunDB().NewSelect().
+	err := r.
+		sqlDB.
+		BunDB().
+		NewSelect().
 		Model(ttl).
 		Where("table_name = ?", tableName).
 		Where("org_id = ?", orgID).
 		OrderExpr("created_at DESC").
 		Limit(1).
 		Scan(ctx)
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // Return nil when no rows found
-		}
+	if err != nil && err != sql.ErrNoRows {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
+		return ttl, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
 	}
 	return ttl, nil
 }
