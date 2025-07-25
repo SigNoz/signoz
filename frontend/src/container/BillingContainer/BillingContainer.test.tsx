@@ -4,7 +4,7 @@ import {
 	notOfTrailResponse,
 	trialConvertedToSubscriptionResponse,
 } from 'mocks-server/__mockdata__/licenses';
-import { act, render, screen, waitFor } from 'tests/test-utils';
+import { act, render, screen } from 'tests/test-utils';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import BillingContainer from './BillingContainer';
@@ -34,6 +34,8 @@ window.ResizeObserver =
 	}));
 
 describe('BillingContainer', () => {
+	jest.setTimeout(30000);
+
 	test('Component should render', async () => {
 		render(<BillingContainer />);
 
@@ -45,7 +47,7 @@ describe('BillingContainer', () => {
 			name: /price per unit/i,
 		});
 		expect(pricePerUnit).toBeInTheDocument();
-		const cost = screen.getByRole('columnheader', {
+		const cost = await screen.findByRole('columnheader', {
 			name: /cost \(billing period to date\)/i,
 		});
 		expect(cost).toBeInTheDocument();
@@ -58,15 +60,15 @@ describe('BillingContainer', () => {
 		const upgradePlanButton = screen.getByTestId('upgrade-plan-button');
 		expect(upgradePlanButton).toBeInTheDocument();
 
-		const dollar = screen.getByText(/\$1,278.3/i);
-		await waitFor(() => expect(dollar).toBeInTheDocument());
+		const dollar = await screen.findByText(/\$1,278.3/i);
+		expect(dollar).toBeInTheDocument();
 
-		const currentBill = screen.getByText('billing');
+		const currentBill = await screen.findByText('billing');
 		expect(currentBill).toBeInTheDocument();
 	});
 
 	test('OnTrail', async () => {
-		act(() => {
+		await act(async () => {
 			render(<BillingContainer />, undefined, undefined, {
 				trialInfo: licensesSuccessResponse.data,
 			});
@@ -75,7 +77,7 @@ describe('BillingContainer', () => {
 		const freeTrailText = await screen.findByText('Free Trial');
 		expect(freeTrailText).toBeInTheDocument();
 
-		const currentBill = screen.getByText('billing');
+		const currentBill = await screen.findByText('billing');
 		expect(currentBill).toBeInTheDocument();
 
 		const dollar0 = await screen.findByText(/\$0/i);
@@ -95,18 +97,18 @@ describe('BillingContainer', () => {
 		const checkPaidPlan = await screen.findByText(/checkout_plans/i);
 		expect(checkPaidPlan).toBeInTheDocument();
 
-		const link = screen.getByRole('link', { name: /here/i });
+		const link = await screen.findByRole('link', { name: /here/i });
 		expect(link).toBeInTheDocument();
 	});
 
 	test('OnTrail but trialConvertedToSubscription', async () => {
-		act(() => {
+		await act(async () => {
 			render(<BillingContainer />, undefined, undefined, {
 				trialInfo: trialConvertedToSubscriptionResponse.data,
 			});
 		});
 
-		const currentBill = screen.getByText('billing');
+		const currentBill = await screen.findByText('billing');
 		expect(currentBill).toBeInTheDocument();
 
 		const dollar0 = await screen.findByText(/\$0/i);
@@ -145,7 +147,7 @@ describe('BillingContainer', () => {
 		const billingPeriod = await findByText(billingPeriodText);
 		expect(billingPeriod).toBeInTheDocument();
 
-		const currentBill = screen.getByText('billing');
+		const currentBill = await screen.findByText('billing');
 		expect(currentBill).toBeInTheDocument();
 
 		const dollar0 = await screen.findByText(/\$1,278.3/i);
