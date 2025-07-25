@@ -253,7 +253,8 @@ function LogsExplorerViewsContainer({
 		// ENTITY_VERSION_V4,
 		ENTITY_VERSION_V5,
 		{
-			enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
+			enabled:
+				showFrequencyChart && !!listChartQuery && panelType === PANEL_TYPES.LIST,
 		},
 		{},
 		undefined,
