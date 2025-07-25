@@ -3,7 +3,7 @@
 <body>
     <p>Hi {{.CustomerName}},</p>
 
-    <p>We wanted to inform you that your role in the <strong>SigNoz</strong> project has been updated by <strong>{{.UpdatedByEmail}}</strong>.</p>
+    <p>Your role in <strong>SigNoz</strong> has been updated by {{.UpdatedByEmail}}.</p>
 
     <p>
         <strong>Previous Role:</strong> {{.OldRole}}<br>
@@ -11,13 +11,19 @@
     </p>
 
     <p>
-        Please note that you will need to <strong>log out and log back in</strong> for the changes to take effect.
+        Please note that you will need to log out and log back in for the changes to take effect.
     </p>
 
-    <p>
-        If you were not expecting this change or have any questions, please reach out to your project administrator or contact us at <a href="mailto:support@signoz.io">support@signoz.io</a>.
-    </p>
+    {{if eq .OldRole "Admin"}}
+        <p>
+            If you were not expecting this change or have any questions, please contact us at <a href="mailto:support@signoz.io">support@signoz.io</a>.
+        </p>
+    {{else}}
+        <p>
+            If you were not expecting this change or have any questions, please reach out to your administrator.
+        </p>
+    {{end}}
 
-    <p>Thanks,<br/>The SigNoz Team</p>
+    <p>Best regards,<br>The SigNoz Team</p>
 </body>
 </html>

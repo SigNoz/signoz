@@ -21,6 +21,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 type Module struct {
@@ -228,11 +230,11 @@ func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *
 
 	// if the role is updated then send an email
 	if existingUser.Role != updatedUser.Role {
-		if err := m.emailing.SendHTML(ctx, existingUser.Email, "Your Role is updated in SigNoz", emailtypes.TemplateNameUpdateRole, map[string]any{
+		if err := m.emailing.SendHTML(ctx, existingUser.Email, "Your Role Has Been Updated in SigNoz", emailtypes.TemplateNameUpdateRole, map[string]any{
 			"CustomerName":   existingUser.DisplayName,
 			"UpdatedByEmail": requestor.Email,
-			"OldRole":        existingUser.Role,
-			"NewRole":        updatedUser.Role,
+			"OldRole":        cases.Title(language.English).String(strings.ToLower(existingUser.Role)),
+			"NewRole":        cases.Title(language.English).String(strings.ToLower(updatedUser.Role)),
 		}); err != nil {
 			m.settings.Logger().ErrorContext(ctx, "failed to send email", "error", err)
 		}
