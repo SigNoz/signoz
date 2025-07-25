@@ -88,12 +88,9 @@ func (q *traceOperatorQuery) Window() (uint64, uint64) {
 }
 
 func (q *traceOperatorQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
-	// Define context key type locally to avoid linting issues
-	type contextKey string
-	const compositeQueryKey contextKey = "compositeQuery"
 
 	// Pass composite query in context
-	ctx = context.WithValue(ctx, compositeQueryKey, q.compositeQuery)
+	ctx = context.WithValue(ctx, qbtypes.CompositeQueryContextKey, q.compositeQuery)
 
 	stmt, err := q.stmtBuilder.Build(ctx, q.fromMS, q.toMS, q.kind, q.spec)
 	if err != nil {

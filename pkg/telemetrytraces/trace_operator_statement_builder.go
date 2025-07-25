@@ -10,11 +10,6 @@ import (
 	"log/slog"
 )
 
-// Define context key type locally to match trace_operator_query.go
-type contextKey string
-
-const compositeQueryKey contextKey = "compositeQuery"
-
 type traceOperatorStatementBuilder struct {
 	logger           *slog.Logger
 	metadataStore    telemetrytypes.MetadataStore
@@ -64,7 +59,7 @@ func (b *traceOperatorStatementBuilder) Build(
 	}
 
 	// Retrieve composite query from context using the same context key type
-	compositeQuery, ok := ctx.Value(compositeQueryKey).(*qbtypes.CompositeQuery)
+	compositeQuery, ok := ctx.Value(qbtypes.CompositeQueryContextKey).(*qbtypes.CompositeQuery)
 	if !ok {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "composite query not found in context")
 	}

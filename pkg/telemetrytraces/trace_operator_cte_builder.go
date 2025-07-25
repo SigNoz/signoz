@@ -3,12 +3,11 @@ package telemetrytraces
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/huandu/go-sqlbuilder"
+	"strings"
 )
 
 type cteNode struct {
@@ -141,7 +140,6 @@ func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() {
 	for _, field := range b.operator.SelectFields {
 		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(b.ctx, &field, nil)
 		if err != nil {
-			// Skip fields that can't be mapped
 			continue
 		}
 		sb.SelectMore(sqlbuilder.Escape(colExpr))
@@ -149,25 +147,18 @@ func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() {
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
-	// Convert nanoseconds to seconds for DateTime64 comparison
-	startSeconds := float64(b.start) / 1e9
-	endSeconds := float64(b.end) / 1e9
-
-	// Add time filter
 	startBucket := b.start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
 	endBucket := b.end / querybuilder.NsToSeconds
 
 	sb.Where(
-		sb.GE("timestamp", fmt.Sprintf("toDateTime64(%.9f, 9)", startSeconds)),
-		sb.L("timestamp", fmt.Sprintf("toDateTime64(%.9f, 9)", endSeconds)),
+		sb.GE("timestamp", fmt.Sprintf("%d", b.start)), // Direct nanosecond value
+		sb.L("timestamp", fmt.Sprintf("%d", b.end)),    // Direct nanosecond value
 		sb.GE("ts_bucket_start", startBucket),
 		sb.LE("ts_bucket_start", endBucket),
 	)
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-
 	b.addCTE("base_spans", sql, args, nil)
-
 }
 
 func (b *traceOperatorCTEBuilder) buildExpressionCTEs(expr *qbtypes.TraceOperand) (string, error) {
@@ -260,10 +251,28 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 	return cteName, nil
 }
 
-func (b *traceOperatorCTEBuilder) buildOperatorCTE(op qbtypes.TraceOperatorType, leftCTE, rightCTE string) (string, error) {
-	cteName := fmt.Sprintf("%s_%s_%s", leftCTE, strings.ReplaceAll(op.StringValue(), " ", "_"), rightCTE)
+func sanitizeForSQL(s string) string {
+	// Replace special characters with safe alternatives
+	replacements := map[string]string{
+		"=>":  "DIRECT_DESC",
+		"->":  "INDIRECT_DESC",
+		"&&":  "AND",
+		"||":  "OR",
+		"NOT": "NOT",
+		" ":   "_",
+	}
 
-	// Check if already built
+	result := s
+	for old, new := range replacements {
+		result = strings.ReplaceAll(result, old, new)
+	}
+	return result
+}
+
+func (b *traceOperatorCTEBuilder) buildOperatorCTE(op qbtypes.TraceOperatorType, leftCTE, rightCTE string) (string, error) {
+	sanitizedOp := sanitizeForSQL(op.StringValue())
+	cteName := fmt.Sprintf("%s_%s_%s", leftCTE, sanitizedOp, rightCTE)
+
 	if _, exists := b.cteNameToIndex[cteName]; exists {
 		return cteName, nil
 	}
