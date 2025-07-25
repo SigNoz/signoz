@@ -1570,7 +1570,7 @@ func (r *ClickHouseReader) hasCustomRetentionColumn(ctx context.Context) (bool, 
 	// Directly query for the _retention_days column existence
 	query := fmt.Sprintf("SELECT 1 FROM system.columns WHERE database = '%s' AND table = '%s' AND name = '_retention_days' LIMIT 1", r.logsDB, r.logsLocalTableV2)
 
-	var exists int
+	var exists uint8 // Changed from int to uint8 to match ClickHouse's UInt8 type
 	err := r.db.QueryRow(ctx, query).Scan(&exists)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -1762,42 +1762,82 @@ func (r *ClickHouseReader) buildMultiIfExpression(ttlConditions []model.CustomRe
 }
 
 func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID string) (*model.GetCustomRetentionTTLResponse, error) {
-	// Get the latest custom retention TTL setting
-	customTTL := new(types.TTLSetting)
-	err := r.sqlDB.BunDB().NewSelect().
-		Model(customTTL).
-		Where("org_id = ?", orgID).
-		Where("table_name = ?", r.logsDB+"."+r.logsLocalTableV2).
-		OrderExpr("created_at DESC").
-		Limit(1).
-		Scan(ctx)
-
-	if err != nil && err != sql.ErrNoRows {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error in processing get custom ttl query")
+	// Check if V2 (custom retention) is supported
+	hasCustomRetention, err := r.hasCustomRetentionColumn(ctx)
+	if err != nil {
+		// If there's an error checking, assume V1 and proceed
+		zap.L().Warn("Error checking for custom retention column, assuming V1", zap.Error(err))
+		hasCustomRetention = false
 	}
 
-	if err == sql.ErrNoRows {
-		return &model.GetCustomRetentionTTLResponse{
-			DefaultTTLDays: 15,
-			TTLConditions:  []model.CustomRetentionRule{},
-			Status:         constants.StatusFailed,
-		}, nil
-	}
+	response := &model.GetCustomRetentionTTLResponse{}
 
-	var ttlConditions []model.CustomRetentionRule
-	if customTTL.ResourceRules != "" {
-		if err := json.Unmarshal([]byte(customTTL.ResourceRules), &ttlConditions); err != nil {
-			zap.L().Error("Error parsing TTL conditions", zap.Error(err))
-			ttlConditions = []model.CustomRetentionRule{}
+	if hasCustomRetention {
+		// V2 - Custom retention is supported
+		response.Version = "v2"
+
+		// Get the latest custom retention TTL setting
+		customTTL := new(types.TTLSetting)
+		err := r.sqlDB.BunDB().NewSelect().
+			Model(customTTL).
+			Where("org_id = ?", orgID).
+			Where("table_name = ?", r.logsDB+"."+r.logsLocalTableV2).
+			OrderExpr("created_at DESC").
+			Limit(1).
+			Scan(ctx)
+
+		if err != nil && err != sql.ErrNoRows {
+			zap.L().Error("Error in processing sql query", zap.Error(err))
+			return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error in processing get custom ttl query")
 		}
+
+		if err == sql.ErrNoRows {
+			// No V2 configuration found, return defaults
+			response.DefaultTTLDays = 15
+			response.TTLConditions = []model.CustomRetentionRule{}
+			response.Status = constants.StatusFailed
+			return response, nil
+		}
+
+		// Parse TTL conditions from ResourceRules
+		var ttlConditions []model.CustomRetentionRule
+		if customTTL.ResourceRules != "" {
+			if err := json.Unmarshal([]byte(customTTL.ResourceRules), &ttlConditions); err != nil {
+				zap.L().Error("Error parsing TTL conditions", zap.Error(err))
+				ttlConditions = []model.CustomRetentionRule{}
+			}
+		}
+
+		response.DefaultTTLDays = customTTL.TTL
+		response.TTLConditions = ttlConditions
+		response.Status = customTTL.Status
+
+	} else {
+		// V1 - Traditional TTL
+		response.Version = "v1"
+
+		// Get V1 TTL configuration
+		ttlParams := &model.GetTTLParams{
+			Type: constants.LogsTTL,
+		}
+
+		ttlResult, apiErr := r.GetTTL(ctx, orgID, ttlParams)
+		if apiErr != nil {
+			return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error getting V1 TTL: %s", apiErr.Error())
+		}
+
+		// Map V1 fields to response
+		response.LogsTime = ttlResult.LogsTime
+		response.LogsMoveTime = ttlResult.LogsMoveTime
+		response.ExpectedLogsTime = ttlResult.ExpectedLogsTime
+		response.ExpectedLogsMoveTime = ttlResult.ExpectedLogsMoveTime
+		response.Status = ttlResult.Status
+
+		// For V1, we don't have TTL conditions
+		response.TTLConditions = []model.CustomRetentionRule{}
 	}
 
-	return &model.GetCustomRetentionTTLResponse{
-		DefaultTTLDays: customTTL.TTL,
-		TTLConditions:  ttlConditions,
-		Status:         customTTL.Status,
-	}, nil
+	return response, nil
 }
 
 func (r *ClickHouseReader) checkCustomRetentionTTLStatusItem(ctx context.Context, orgID string, tableName string) (*types.TTLSetting, error) {
@@ -2106,50 +2146,50 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, orgID stri
 
 // checkTTLStatusItem checks if ttl_status table has an entry for the given table name
 func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, orgID string, tableName string) (*types.TTLSetting, *model.ApiError) {
-    zap.L().Info("checkTTLStatusItem query", zap.String("tableName", tableName))
-    ttl := new(types.TTLSetting)
-    err := r.sqlDB.BunDB().NewSelect().
-        Model(ttl).
-        Where("table_name = ?", tableName).
-        Where("org_id = ?", orgID).
-        OrderExpr("created_at DESC").
-        Limit(1).
-        Scan(ctx)
-        
-    if err != nil {
-        if err == sql.ErrNoRows {
-            return nil, nil  // Return nil when no rows found
-        }
-        zap.L().Error("Error in processing sql query", zap.Error(err))
-        return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
-    }
-    return ttl, nil
+	zap.L().Info("checkTTLStatusItem query", zap.String("tableName", tableName))
+	ttl := new(types.TTLSetting)
+	err := r.sqlDB.BunDB().NewSelect().
+		Model(ttl).
+		Where("table_name = ?", tableName).
+		Where("org_id = ?", orgID).
+		OrderExpr("created_at DESC").
+		Limit(1).
+		Scan(ctx)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // Return nil when no rows found
+		}
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
+	}
+	return ttl, nil
 }
 
 // setTTLQueryStatus fetches ttl_status table status from DB
 func (r *ClickHouseReader) setTTLQueryStatus(ctx context.Context, orgID string, tableNameArray []string) (string, *model.ApiError) {
-    failFlag := false
-    status := constants.StatusSuccess
-    for _, tableName := range tableNameArray {
-        statusItem, err := r.checkTTLStatusItem(ctx, orgID, tableName)
-        if err != nil {
-            return "", err
-        }
-        if statusItem == nil {  // Now this works correctly
-            return "", nil
-        }
-        if statusItem.Status == constants.StatusPending && statusItem.UpdatedAt.Unix()-time.Now().Unix() < 3600 {
-            status = constants.StatusPending
-            return status, nil
-        }
-        if statusItem.Status == constants.StatusFailed {
-            failFlag = true
-        }
-    }
-    if failFlag {
-        status = constants.StatusFailed
-    }
-    return status, nil
+	failFlag := false
+	status := constants.StatusSuccess
+	for _, tableName := range tableNameArray {
+		statusItem, err := r.checkTTLStatusItem(ctx, orgID, tableName)
+		if err != nil {
+			return "", err
+		}
+		if statusItem == nil { // Now this works correctly
+			return "", nil
+		}
+		if statusItem.Status == constants.StatusPending && statusItem.UpdatedAt.Unix()-time.Now().Unix() < 3600 {
+			status = constants.StatusPending
+			return status, nil
+		}
+		if statusItem.Status == constants.StatusFailed {
+			failFlag = true
+		}
+	}
+	if failFlag {
+		status = constants.StatusFailed
+	}
+	return status, nil
 }
 
 func (r *ClickHouseReader) setColdStorage(ctx context.Context, tableName string, coldStorageVolume string) *model.ApiError {
@@ -2325,20 +2365,6 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *
 		return &model.GetTTLResponseItem{MetricsTime: delTTL, MetricsMoveTime: moveTTL, ExpectedMetricsTime: ttlQuery.TTL, ExpectedMetricsMoveTime: ttlQuery.ColdStorageTTL, Status: status}, nil
 
 	case constants.LogsTTL:
-		hasCustomRetention, customRetentionErr := r.hasCustomRetentionColumn(ctx)
-		if customRetentionErr != nil {
-			zap.L().Error("Error checking for custom retention support", zap.Error(customRetentionErr))
-			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error checking for custom retention support: %v", customRetentionErr)}
-		}
-
-		if hasCustomRetention {
-			// Table has custom retention column, GetTTL is not supported for custom retention tables
-			zap.L().Error("GetTTL is not supported for logs tables with custom retention. Use GetTTLV2 instead")
-			return nil, &model.ApiError{
-				Typ: model.ErrorBadData,
-				Err: fmt.Errorf("GetTTL is not supported for logs tables with custom retention. Please use GetTTLV2 instead"),
-			}
-		}
 		tableNameArray := []string{r.logsDB + "." + r.logsTableName}
 		tableNameArray = getLocalTableNameArray(tableNameArray)
 		status, err := r.setTTLQueryStatus(ctx, orgID, tableNameArray)

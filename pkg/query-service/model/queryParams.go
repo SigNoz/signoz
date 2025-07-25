@@ -421,9 +421,18 @@ type FilterCondition struct {
 }
 
 type GetCustomRetentionTTLResponse struct {
-	DefaultTTLDays int                   `json:"defaultTTLDays"`
-	TTLConditions  []CustomRetentionRule `json:"ttlConditions"`
-	Status         string                `json:"status"`
+	Version string `json:"version"`
+	Status  string `json:"status"`
+
+	// V1 fields
+	LogsTime             int `json:"logs_ttl_duration_hrs,omitempty"`
+	LogsMoveTime         int `json:"logs_move_ttl_duration_hrs,omitempty"`
+	ExpectedLogsTime     int `json:"expected_logs_ttl_duration_hrs,omitempty"`
+	ExpectedLogsMoveTime int `json:"expected_logs_move_ttl_duration_hrs,omitempty"`
+
+	// V2 fields
+	DefaultTTLDays int                   `json:"default_ttl_days,omitempty"`
+	TTLConditions  []CustomRetentionRule `json:"ttl_conditions,omitempty"`
 }
 
 type CustomRetentionTTLResponse struct {
