@@ -210,7 +210,7 @@ func (aH *APIHandler) queryRangeV5(rw http.ResponseWriter, req *http.Request) {
 
 	var queryRangeRequest qbtypes.QueryRangeRequest
 	if err := json.NewDecoder(req.Body).Decode(&queryRangeRequest); err != nil {
-		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to decode request body:", err))
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to decode request body: %v", err))
 		return
 	}
 

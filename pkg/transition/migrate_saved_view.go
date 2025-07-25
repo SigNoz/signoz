@@ -1,6 +1,10 @@
 package transition
 
-import "log/slog"
+import (
+	"log/slog"
+
+	"golang.org/x/net/context"
+)
 
 type savedViewMigrateV5 struct {
 	migrateCommon
@@ -13,7 +17,7 @@ func NewSavedViewMigrateV5(logger *slog.Logger, logsDuplicateKeys []string, trac
 	}
 }
 
-func (m *savedViewMigrateV5) Migrate(data map[string]any) bool {
+func (m *savedViewMigrateV5) Migrate(ctx context.Context, data map[string]any) bool {
 	updated := false
 
 	if builderQueries, ok := data["builderQueries"].(map[string]any); ok {
@@ -23,7 +27,7 @@ func (m *savedViewMigrateV5) Migrate(data map[string]any) bool {
 				if _, ok := data["panelType"].(string); ok {
 					panelType = data["panelType"].(string)
 				}
-				if m.updateQueryData(queryMap, "v4", panelType) {
+				if m.updateQueryData(ctx, queryMap, "v4", panelType) {
 					updated = true
 				}
 			}

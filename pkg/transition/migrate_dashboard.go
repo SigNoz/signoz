@@ -1,6 +1,7 @@
 package transition
 
 import (
+	"context"
 	"log/slog"
 	"strings"
 )
@@ -24,7 +25,7 @@ func NewDashboardMigrateV5(logger *slog.Logger, logsDuplicateKeys []string, trac
 	}
 }
 
-func (m *dashboardMigrateV5) Migrate(dashboardData map[string]any) bool {
+func (m *dashboardMigrateV5) Migrate(ctx context.Context, dashboardData map[string]any) bool {
 
 	updated := false
 
@@ -40,7 +41,7 @@ func (m *dashboardMigrateV5) Migrate(dashboardData map[string]any) bool {
 				name, ok := varMap["name"].(string)
 				if ok {
 					if strings.Contains(name, " ") {
-						m.logger.Info("found a variable with space in map, replacing it")
+						m.logger.InfoContext(ctx, "found a variable with space in map, replacing it", "name", name)
 						name = strings.ReplaceAll(name, " ", "")
 						updated = true
 						varMap["name"] = name
@@ -53,7 +54,7 @@ func (m *dashboardMigrateV5) Migrate(dashboardData map[string]any) bool {
 	if widgets, ok := dashboardData["widgets"].([]any); ok {
 		for _, widget := range widgets {
 			if widgetMap, ok := widget.(map[string]any); ok {
-				if m.updateWidget(widgetMap, version) {
+				if m.updateWidget(ctx, widgetMap, version) {
 					updated = true
 				}
 			}
@@ -63,7 +64,7 @@ func (m *dashboardMigrateV5) Migrate(dashboardData map[string]any) bool {
 
 }
 
-func (migration *dashboardMigrateV5) updateWidget(widget map[string]any, version string) bool {
+func (migration *dashboardMigrateV5) updateWidget(ctx context.Context, widget map[string]any, version string) bool {
 	query, ok := widget["query"].(map[string]any)
 	if !ok {
 		return false
@@ -84,7 +85,7 @@ func (migration *dashboardMigrateV5) updateWidget(widget map[string]any, version
 	updated := false
 	for _, qd := range queryData {
 		if queryDataMap, ok := qd.(map[string]any); ok {
-			if migration.updateQueryData(queryDataMap, version, widgetType) {
+			if migration.updateQueryData(ctx, queryDataMap, version, widgetType) {
 				updated = true
 			}
 		}

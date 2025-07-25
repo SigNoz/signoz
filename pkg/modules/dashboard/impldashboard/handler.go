@@ -53,7 +53,7 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 	if querybuilder.QBV5Enabled {
 		dashboardMigrator := transition.NewDashboardMigrateV5(handler.providerSettings.Logger, nil, nil)
 		if req["version"] != "v5" {
-			dashboardMigrator.Migrate(req)
+			dashboardMigrator.Migrate(ctx, req)
 		}
 	}
 

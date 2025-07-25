@@ -25,23 +25,20 @@ type queryBuilderV5Migration struct {
 func NewQueryBuilderV5MigrationFactory(
 	store sqlstore.SQLStore,
 	telemetryStore telemetrystore.TelemetryStore,
-	logger *slog.Logger,
 ) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
 		factory.MustNewName("query_builder_v5_migration"),
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-			return newQueryBuilderV5Migration(ctx, ps, c, store, telemetryStore, logger)
+			return newQueryBuilderV5Migration(ctx, c, store, telemetryStore, ps.Logger)
 		})
 }
 
 func newQueryBuilderV5Migration(
 	_ context.Context,
-	settings factory.ProviderSettings,
 	_ Config, store sqlstore.SQLStore,
 	telemetryStore telemetrystore.TelemetryStore,
 	logger *slog.Logger,
 ) (SQLMigration, error) {
-
 	return &queryBuilderV5Migration{store: store, telemetryStore: telemetryStore, logger: logger}, nil
 }
 
@@ -177,7 +174,7 @@ func (migration *queryBuilderV5Migration) migrateDashboards(
 
 	for _, dashboard := range dashboards {
 
-		updated := dashboardMigrator.Migrate(dashboard.Data)
+		updated := dashboardMigrator.Migrate(ctx, dashboard.Data)
 
 		if updated {
 			dataJSON, err := json.Marshal(dashboard.Data)
@@ -225,7 +222,7 @@ func (migration *queryBuilderV5Migration) migrateSavedViews(
 			continue // invalid JSON
 		}
 
-		updated := savedViewsMigrator.Migrate(data)
+		updated := savedViewsMigrator.Migrate(ctx, data)
 
 		if updated {
 			dataJSON, err := json.Marshal(data)
@@ -274,9 +271,9 @@ func (migration *queryBuilderV5Migration) migrateRules(
 	alertsMigrator := transition.NewAlertMigrateV5(migration.logger, logsKeys, tracesKeys)
 
 	for _, rule := range rules {
-		migration.logger.Info("migrating rule", "rule.id", rule.ID)
+		migration.logger.InfoContext(ctx, "migrating rule", "rule.id", rule.ID)
 
-		updated := alertsMigrator.Migrate(rule.Data)
+		updated := alertsMigrator.Migrate(ctx, rule.Data)
 
 		if updated {
 			rule.Data["version"] = "v5"

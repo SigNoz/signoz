@@ -2,6 +2,8 @@ package transition
 
 import (
 	"log/slog"
+
+	"golang.org/x/net/context"
 )
 
 type alertMigrateV5 struct {
@@ -24,50 +26,50 @@ func NewAlertMigrateV5(logger *slog.Logger, logsDuplicateKeys []string, tracesDu
 	}
 }
 
-func (m *alertMigrateV5) Migrate(ruleData map[string]any) bool {
+func (m *alertMigrateV5) Migrate(ctx context.Context, ruleData map[string]any) bool {
 
 	updated := false
 
 	ruleCondition, ok := ruleData["condition"].(map[string]any)
 	if !ok {
-		m.logger.Info("didn't find condition")
+		m.logger.InfoContext(ctx, "didn't find condition")
 		return updated
 	}
 
 	compositeQuery, ok := ruleCondition["compositeQuery"].(map[string]any)
 	if !ok {
-		m.logger.Info("didn't find composite query")
+		m.logger.InfoContext(ctx, "didn't find composite query")
 		return updated
 	}
 
 	if compositeQuery["queries"] == nil {
 		compositeQuery["queries"] = []any{}
 	}
-	m.logger.Info("setup empty list", compositeQuery["queries"])
+	m.logger.InfoContext(ctx, "setup empty list")
 
 	queryType := compositeQuery["queryType"]
 
 	// Migrate builder queries
 	if builderQueries, ok := compositeQuery["builderQueries"].(map[string]any); ok && len(builderQueries) > 0 && queryType == "builder" {
-		m.logger.Info("found builderQueries")
+		m.logger.InfoContext(ctx, "found builderQueries")
 		queryType, _ := compositeQuery["queryType"].(string)
 		if queryType == "builder" {
 			for name, query := range builderQueries {
 				if queryMap, ok := query.(map[string]any); ok {
-					m.logger.Info("mapping builder query")
+					m.logger.InfoContext(ctx, "mapping builder query")
 					var panelType string
 					if pt, ok := compositeQuery["panelType"].(string); ok {
 						panelType = pt
 					}
 
-					if m.updateQueryData(queryMap, "v4", panelType) {
+					if m.updateQueryData(ctx, queryMap, "v4", panelType) {
 						updated = true
 					}
-					m.logger.Info("migrated querymap")
+					m.logger.InfoContext(ctx, "migrated querymap")
 
 					// wrap it in the v5 envelope
 					envelope := m.wrapInV5Envelope(name, queryMap, "builder_query")
-					m.logger.Info("", "envelope", envelope)
+					m.logger.InfoContext(ctx, "envelope after wrap", "envelope", envelope)
 					compositeQuery["queries"] = append(compositeQuery["queries"].([]any), envelope)
 				}
 			}

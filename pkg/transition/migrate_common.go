@@ -1,6 +1,7 @@
 package transition
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"regexp"
@@ -130,17 +131,17 @@ func (migration *migrateCommon) wrapInV5Envelope(name string, queryMap map[strin
 	}
 }
 
-func (mc *migrateCommon) updateQueryData(queryData map[string]any, version, widgetType string) bool {
+func (mc *migrateCommon) updateQueryData(ctx context.Context, queryData map[string]any, version, widgetType string) bool {
 	updated := false
 
 	aggregateOp, _ := queryData["aggregateOperator"].(string)
 	hasAggregation := aggregateOp != "" && aggregateOp != "noop"
 
-	if mc.createAggregations(queryData, version, widgetType) {
+	if mc.createAggregations(ctx, queryData, version, widgetType) {
 		updated = true
 	}
 
-	if mc.createFilterExpression(queryData) {
+	if mc.createFilterExpression(ctx, queryData) {
 		updated = true
 	}
 
@@ -148,7 +149,7 @@ func (mc *migrateCommon) updateQueryData(queryData map[string]any, version, widg
 		updated = true
 	}
 
-	if mc.createHavingExpression(queryData) {
+	if mc.createHavingExpression(ctx, queryData) {
 		updated = true
 	}
 
@@ -188,7 +189,7 @@ func (mc *migrateCommon) updateQueryData(queryData map[string]any, version, widg
 							}
 
 							if !present {
-								mc.logger.Info("found a order by without group by, skipping", "order.col_name", columnName)
+								mc.logger.InfoContext(ctx, "found a order by without group by, skipping", "order.col_name", columnName)
 								continue
 							}
 						}
@@ -209,7 +210,7 @@ func (mc *migrateCommon) updateQueryData(queryData map[string]any, version, widg
 					columnName, _ := orderMap["columnName"].(string)
 					// skip id for (traces)
 					if columnName == "id" && dataSource == "traces" {
-						mc.logger.Info("skipping `id` order by for traces")
+						mc.logger.InfoContext(ctx, "skipping `id` order by for traces")
 						continue
 					}
 
@@ -334,7 +335,7 @@ func (mc *migrateCommon) orderByExpr(queryData map[string]any) (string, bool) {
 	return expr, has
 }
 
-func (mc *migrateCommon) createAggregations(queryData map[string]any, version, widgetType string) bool {
+func (mc *migrateCommon) createAggregations(ctx context.Context, queryData map[string]any, version, widgetType string) bool {
 	aggregateOp, hasOp := queryData["aggregateOperator"].(string)
 	aggregateAttr, hasAttr := queryData["aggregateAttribute"].(map[string]any)
 	dataSource, _ := queryData["dataSource"].(string)
@@ -408,7 +409,7 @@ func (mc *migrateCommon) createAggregations(queryData map[string]any, version, w
 				spaceAgg = "sum"
 				reduceTo = "sum"
 			case "p99", "p90", "p75", "p50", "p25", "p20", "p10", "p05":
-				mc.logger.Info("found invalid config")
+				mc.logger.InfoContext(ctx, "found invalid config")
 				timeAgg = "avg"
 				spaceAgg = "avg"
 				reduceTo = "avg"
@@ -437,7 +438,7 @@ func (mc *migrateCommon) createAggregations(queryData map[string]any, version, w
 				spaceAgg = "sum"
 				reduceTo = "sum"
 			case "noop":
-				mc.logger.Info("noop found in the data")
+				mc.logger.InfoContext(ctx, "noop found in the data")
 				timeAgg = "max"
 				spaceAgg = "max"
 				reduceTo = "max"
@@ -477,7 +478,7 @@ func (mc *migrateCommon) createAggregations(queryData map[string]any, version, w
 	return true
 }
 
-func (mc *migrateCommon) createFilterExpression(queryData map[string]any) bool {
+func (mc *migrateCommon) createFilterExpression(ctx context.Context, queryData map[string]any) bool {
 	filters, ok := queryData["filters"].(map[string]any)
 	if !ok {
 		return false
@@ -495,7 +496,7 @@ func (mc *migrateCommon) createFilterExpression(queryData map[string]any) bool {
 
 	dataSource, _ := queryData["dataSource"].(string)
 
-	expression := mc.buildExpression(items, op, dataSource)
+	expression := mc.buildExpression(ctx, items, op, dataSource)
 	if expression != "" {
 		queryData["filter"] = map[string]any{
 			"expression": expression,
@@ -539,7 +540,7 @@ func (mc *migrateCommon) fixGroupBy(queryData map[string]any) bool {
 	return false
 }
 
-func (mc *migrateCommon) createHavingExpression(queryData map[string]any) bool {
+func (mc *migrateCommon) createHavingExpression(ctx context.Context, queryData map[string]any) bool {
 	having, ok := queryData["having"].([]any)
 	if !ok || len(having) == 0 {
 		queryData["having"] = map[string]any{
@@ -561,17 +562,17 @@ func (mc *migrateCommon) createHavingExpression(queryData map[string]any) bool {
 		}
 	}
 
-	mc.logger.Info("having before expression", "having", having)
+	mc.logger.InfoContext(ctx, "having before expression", "having", having)
 
-	expression := mc.buildExpression(having, "AND", dataSource)
-	mc.logger.Info("having expression after building", "expression", expression, "having", having)
+	expression := mc.buildExpression(ctx, having, "AND", dataSource)
+	mc.logger.InfoContext(ctx, "having expression after building", "expression", expression, "having", having)
 	queryData["having"] = map[string]any{
 		"expression": expression,
 	}
 	return true
 }
 
-func (mc *migrateCommon) buildExpression(items []any, op, dataSource string) string {
+func (mc *migrateCommon) buildExpression(ctx context.Context, items []any, op, dataSource string) string {
 	if len(items) == 0 {
 		return ""
 	}
@@ -589,7 +590,7 @@ func (mc *migrateCommon) buildExpression(items []any, op, dataSource string) str
 		value, valueOk := itemMap["value"]
 
 		if !keyOk || !opOk || !valueOk {
-			mc.logger.Info("didn't find either key, op, or value; continuing")
+			mc.logger.InfoContext(ctx, "didn't find either key, op, or value; continuing")
 			continue
 		}
 
@@ -599,7 +600,7 @@ func (mc *migrateCommon) buildExpression(items []any, op, dataSource string) str
 		}
 
 		if slices.Contains(mc.ambiguity[dataSource], keyStr) {
-			mc.logger.Info("ambiguity found for a key", "ambiguity.key", keyStr)
+			mc.logger.InfoContext(ctx, "ambiguity found for a key", "ambiguity.key", keyStr)
 			typeStr, ok := key["type"].(string)
 			if ok {
 				if typeStr == "tag" {
@@ -611,7 +612,7 @@ func (mc *migrateCommon) buildExpression(items []any, op, dataSource string) str
 			}
 		}
 
-		condition := mc.buildCondition(keyStr, operator, value, key)
+		condition := mc.buildCondition(ctx, keyStr, operator, value, key)
 		if condition != "" {
 			conditions = append(conditions, condition)
 		}
@@ -629,10 +630,10 @@ func (mc *migrateCommon) buildExpression(items []any, op, dataSource string) str
 	return "(" + strings.Join(conditions, " "+op+" ") + ")"
 }
 
-func (mc *migrateCommon) buildCondition(key, operator string, value any, keyMetadata map[string]any) string {
+func (mc *migrateCommon) buildCondition(ctx context.Context, key, operator string, value any, keyMetadata map[string]any) string {
 	dataType, _ := keyMetadata["dataType"].(string)
 
-	formattedValue := mc.formatValue(value, dataType)
+	formattedValue := mc.formatValue(ctx, value, dataType)
 
 	switch operator {
 	case "=":
@@ -786,12 +787,12 @@ func (mc *migrateCommon) buildAggregationExpression(operator string, attribute m
 	}
 }
 
-func (mc *migrateCommon) formatValue(value any, dataType string) string {
+func (mc *migrateCommon) formatValue(ctx context.Context, value any, dataType string) string {
 	switch v := value.(type) {
 	case string:
 		if mc.isVariable(v) {
-			mc.logger.Info("found a variable", "dashboard.variable", v)
-			return mc.normalizeVariable(v)
+			mc.logger.InfoContext(ctx, "found a variable", "dashboard.variable", v)
+			return mc.normalizeVariable(ctx, v)
 		}
 
 		if mc.isNumericType(dataType) {
@@ -811,11 +812,11 @@ func (mc *migrateCommon) formatValue(value any, dataType string) string {
 		return fmt.Sprintf("%t", v)
 	case []any:
 		if len(v) == 1 {
-			return mc.formatValue(v[0], dataType)
+			return mc.formatValue(ctx, v[0], dataType)
 		}
 		var values []string
 		for _, item := range v {
-			values = append(values, mc.formatValue(item, dataType))
+			values = append(values, mc.formatValue(ctx, item, dataType))
 		}
 		return "[" + strings.Join(values, ", ") + "]"
 	default:
@@ -855,7 +856,7 @@ func (mc *migrateCommon) isVariable(s string) bool {
 	return false
 }
 
-func (mc *migrateCommon) normalizeVariable(s string) string {
+func (mc *migrateCommon) normalizeVariable(ctx context.Context, s string) string {
 	s = strings.TrimSpace(s)
 
 	var varName string
@@ -882,7 +883,7 @@ func (mc *migrateCommon) normalizeVariable(s string) string {
 	}
 
 	if strings.Contains(varName, " ") {
-		mc.logger.Info("found white space in var name, replacing it", "dashboard.var_name", varName)
+		mc.logger.InfoContext(ctx, "found white space in var name, replacing it", "dashboard.var_name", varName)
 		varName = strings.ReplaceAll(varName, " ", "")
 	}
 
