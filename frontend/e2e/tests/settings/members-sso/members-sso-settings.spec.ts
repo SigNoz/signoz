@@ -1,17 +1,24 @@
 import { expect, test } from '@playwright/test';
 
-import { ensureLoggedIn } from '../../utils/login.util';
+import { ensureLoggedIn } from '../../../utils/login.util';
 
 test('Members & SSO Settings - View and Interact', async ({ page }) => {
-	// Ensure user is logged in
 	await ensureLoggedIn(page);
 
-	// Open settings menu via cog icon
-	await page.locator('svg.lucide-cog').first().click();
-	// Click Workspace Settings in the menu
-	await page.getByRole('menuitem', { name: 'Workspace Settings' }).click();
-	// Click Members & SSO tab in the sidebar
-	await page.getByText('Members & SSO').click();
+	// 1. Open the sidebar settings menu using data-testid
+	await page.getByTestId('settings-nav-item').click();
+
+	// 2. Click Account Settings in the dropdown (by role/name or data-testid if available)
+	await page.getByRole('menuitem', { name: 'Account Settings' }).click();
+
+	// Assert the main tabpanel/heading (confirmed by DOM)
+	await expect(page.getByTestId('settings-page-title')).toBeVisible();
+
+	// Focus on the settings page sidenav
+	await page.getByTestId('settings-page-sidenav').focus();
+
+	// Click Members & SSO tab in the settings sidebar (by data-testid)
+	await page.getByTestId('members-sso').click();
 
 	// Assert headings and tables
 	await expect(

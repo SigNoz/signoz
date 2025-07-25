@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { ensureLoggedIn } from '../../utils/login.util';
+import { ensureLoggedIn } from '../../../utils/login.util';
 
 // E2E: Billing Settings - View Billing Information and Button Actions
 
@@ -11,12 +11,20 @@ test('View Billing Information and Button Actions', async ({
 	// Ensure user is logged in
 	await ensureLoggedIn(page);
 
-	// Open settings menu via cog icon
-	await page.locator('svg.lucide-cog').first().click();
-	// Click Workspace Settings in the menu
-	await page.getByRole('menuitem', { name: 'Workspace Settings' }).click();
-	// Click Billing tab in the sidebar
-	await page.getByText('Billing', { exact: true }).click();
+	// 1. Open the sidebar settings menu using data-testid
+	await page.getByTestId('settings-nav-item').click();
+
+	// 2. Click Account Settings in the dropdown (by role/name or data-testid if available)
+	await page.getByRole('menuitem', { name: 'Account Settings' }).click();
+
+	// Assert the main tabpanel/heading (confirmed by DOM)
+	await expect(page.getByTestId('settings-page-title')).toBeVisible();
+
+	// Focus on the settings page sidenav
+	await page.getByTestId('settings-page-sidenav').focus();
+
+	// Click Billing tab in the settings sidebar (by data-testid)
+	await page.getByTestId('billing').click();
 
 	// Wait for billing chart/data to finish loading
 	await page.getByText('loading').first().waitFor({ state: 'hidden' });

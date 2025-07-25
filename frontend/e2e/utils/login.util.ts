@@ -3,6 +3,7 @@ import { Page } from '@playwright/test';
 // Read credentials from environment variables
 const username = process.env.SIGNOZ_E2E_USERNAME;
 const password = process.env.SIGNOZ_E2E_PASSWORD;
+const baseURL = process.env.SIGNOZ_E2E_BASE_URL;
 
 /**
  * Ensures the user is logged in. If not, performs the login steps.
@@ -20,7 +21,7 @@ export async function ensureLoggedIn(page: Page): Promise<void> {
 		);
 	}
 
-	await page.goto('https://app.us.staging.signoz.cloud/login');
+	await page.goto(`${baseURL}/login`);
 	await page.getByTestId('email').click();
 	await page.getByTestId('email').fill(username);
 	await page.getByTestId('initiate_login').click();

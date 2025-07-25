@@ -1,19 +1,26 @@
 import { expect, test } from '@playwright/test';
 
-import { ensureLoggedIn } from '../../utils/login.util';
+import { ensureLoggedIn } from '../../../utils/login.util';
 
-test('Ingestion Settings - View and Interact', async ({ page }) => {
-	// Ensure user is logged in
+test('Integrations Settings - View and Interact', async ({ page }) => {
 	await ensureLoggedIn(page);
 
-	// Open settings menu via cog icon
-	await page.locator('svg.lucide-cog').first().click();
-	// Click Workspace Settings in the menu
-	await page.getByRole('menuitem', { name: 'Workspace Settings' }).click();
-	// Click Ingestion tab in the sidebar
-	await page.getByText('Ingestion', { exact: true }).click();
+	// 1. Open the sidebar settings menu using data-testid
+	await page.getByTestId('settings-nav-item').click();
 
-	// Assert heading and subheading (Integrations page)
+	// 2. Click Account Settings in the dropdown (by role/name or data-testid if available)
+	await page.getByRole('menuitem', { name: 'Account Settings' }).click();
+
+	// Assert the main tabpanel/heading (confirmed by DOM)
+	await expect(page.getByTestId('settings-page-title')).toBeVisible();
+
+	// Focus on the settings page sidenav
+	await page.getByTestId('settings-page-sidenav').focus();
+
+	// Click Integrations tab in the settings sidebar (by data-testid)
+	await page.getByTestId('integrations').click();
+
+	// Assert heading and subheading
 	await expect(
 		page.getByRole('heading', { name: 'Integrations' }),
 	).toBeVisible();
@@ -26,7 +33,7 @@ test('Ingestion Settings - View and Interact', async ({ page }) => {
 		page.getByPlaceholder('Search for an integration...'),
 	).toBeVisible();
 
-	// Assert at least one data source with Configure button
+	// Assert at least one integration with Configure button
 	const configureBtn = page.getByRole('button', { name: 'Configure' }).first();
 	await expect(configureBtn).toBeVisible();
 
