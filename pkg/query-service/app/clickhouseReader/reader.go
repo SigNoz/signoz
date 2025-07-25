@@ -1854,6 +1854,7 @@ func (r *ClickHouseReader) checkCustomRetentionTTLStatusItem(ctx context.Context
 		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return ttl, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error in processing custom_retention_ttl_status check sql query")
 	}
+
 	return ttl, nil
 }
 
