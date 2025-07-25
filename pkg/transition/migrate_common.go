@@ -188,7 +188,7 @@ func (mc *migrateCommon) updateQueryData(queryData map[string]any, version, widg
 							}
 
 							if !present {
-								mc.logger.Info("found a order by without group by, skipping", columnName)
+								mc.logger.Info("found a order by without group by, skipping", "order.col_name", columnName)
 								continue
 							}
 						}
@@ -561,10 +561,10 @@ func (mc *migrateCommon) createHavingExpression(queryData map[string]any) bool {
 		}
 	}
 
-	mc.logger.Info("having before expression", having)
+	mc.logger.Info("having before expression", "having", having)
 
 	expression := mc.buildExpression(having, "AND", dataSource)
-	mc.logger.Info("having expression after building", expression, "having", having)
+	mc.logger.Info("having expression after building", "expression", expression, "having", having)
 	queryData["having"] = map[string]any{
 		"expression": expression,
 	}
@@ -589,7 +589,7 @@ func (mc *migrateCommon) buildExpression(items []any, op, dataSource string) str
 		value, valueOk := itemMap["value"]
 
 		if !keyOk || !opOk || !valueOk {
-			mc.logger.Info("continuing")
+			mc.logger.Info("didn't find either key, op, or value; continuing")
 			continue
 		}
 
@@ -597,10 +597,9 @@ func (mc *migrateCommon) buildExpression(items []any, op, dataSource string) str
 		if !ok {
 			continue
 		}
-		mc.logger.Info("found keyStr", keyStr)
 
 		if slices.Contains(mc.ambiguity[dataSource], keyStr) {
-			mc.logger.Info("ambiguity found", keyStr)
+			mc.logger.Info("ambiguity found for a key", "ambiguity.key", keyStr)
 			typeStr, ok := key["type"].(string)
 			if ok {
 				if typeStr == "tag" {
@@ -614,7 +613,6 @@ func (mc *migrateCommon) buildExpression(items []any, op, dataSource string) str
 
 		condition := mc.buildCondition(keyStr, operator, value, key)
 		if condition != "" {
-			mc.logger.Info("condition", condition)
 			conditions = append(conditions, condition)
 		}
 
@@ -792,7 +790,7 @@ func (mc *migrateCommon) formatValue(value any, dataType string) string {
 	switch v := value.(type) {
 	case string:
 		if mc.isVariable(v) {
-			mc.logger.Info("found a variable", v)
+			mc.logger.Info("found a variable", "dashboard.variable", v)
 			return mc.normalizeVariable(v)
 		}
 
@@ -884,7 +882,7 @@ func (mc *migrateCommon) normalizeVariable(s string) string {
 	}
 
 	if strings.Contains(varName, " ") {
-		mc.logger.Info("found white space in var name, replacing it", varName)
+		mc.logger.Info("found white space in var name, replacing it", "dashboard.var_name", varName)
 		varName = strings.ReplaceAll(varName, " ", "")
 	}
 

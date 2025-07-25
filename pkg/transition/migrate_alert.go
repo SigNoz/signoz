@@ -67,7 +67,7 @@ func (m *alertMigrateV5) Migrate(ruleData map[string]any) bool {
 
 					// wrap it in the v5 envelope
 					envelope := m.wrapInV5Envelope(name, queryMap, "builder_query")
-					m.logger.Info("envelope", envelope)
+					m.logger.Info("", "envelope", envelope)
 					compositeQuery["queries"] = append(compositeQuery["queries"].([]any), envelope)
 				}
 			}
