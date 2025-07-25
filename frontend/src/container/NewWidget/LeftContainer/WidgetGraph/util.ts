@@ -21,13 +21,13 @@ export function populateMultipleResults(
 		rows?.forEach((row) => {
 			const metric: Record<string, string> = {};
 			labelCols?.forEach((col) => {
-				metric[col.name] = String(row.data[col.name]);
+				metric[col.name] = String(row.data[col.id || col.name]);
 			});
 
 			let colValue;
 
 			if (valueCol) {
-				colValue = row.data[valueCol.name];
+				colValue = row.data[valueCol.id || valueCol.name];
 			} else {
 				colValue = '';
 			}

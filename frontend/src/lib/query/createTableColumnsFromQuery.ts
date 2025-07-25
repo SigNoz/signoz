@@ -41,6 +41,7 @@ export type DynamicColumn = {
 	title: string;
 	data: (string | number)[];
 	type: 'field' | 'operator' | 'formula';
+	id?: string;
 };
 
 type DynamicColumns = DynamicColumn[];
@@ -122,6 +123,7 @@ const addLabels = (
 	query: IBuilderQuery | IBuilderFormula | IClickHouseQuery | IPromQLQuery,
 	label: string,
 	dynamicColumns: DynamicColumns,
+	columnId?: string,
 ): void => {
 	if (isValueExist('dataIndex', label, dynamicColumns)) return;
 
@@ -132,6 +134,7 @@ const addLabels = (
 		title: label,
 		data: [],
 		type: 'field',
+		id: columnId,
 	};
 
 	dynamicColumns.push(fieldObj);
@@ -142,6 +145,7 @@ const addOperatorFormulaColumns = (
 	dynamicColumns: DynamicColumns,
 	queryType: EQueryType,
 	customLabel?: string,
+	columnId?: string,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): void => {
 	if (isFormula(get(query, 'queryName', ''))) {
@@ -159,6 +163,7 @@ const addOperatorFormulaColumns = (
 			title: customLabel || formulaLabel,
 			data: [],
 			type: 'formula',
+			id: columnId,
 		};
 
 		dynamicColumns.push(formulaColumn);
@@ -184,6 +189,7 @@ const addOperatorFormulaColumns = (
 			title: customLabel || operatorLabel,
 			data: [],
 			type: 'operator',
+			id: columnId,
 		};
 
 		dynamicColumns.push(operatorColumn);
@@ -224,6 +230,7 @@ const addOperatorFormulaColumns = (
 			title: customLabel || operatorLabel,
 			data: [],
 			type: 'operator',
+			id: columnId,
 		};
 
 		dynamicColumns.push(operatorColumn);
@@ -279,10 +286,11 @@ const processTableColumns = (
 				dynamicColumns,
 				queryType,
 				column.name,
+				column.id,
 			);
 		} else {
 			// For non-value columns, add as field/label column
-			addLabels(currentStagedQuery, column.name, dynamicColumns);
+			addLabels(currentStagedQuery, column.name, dynamicColumns, column.id);
 		}
 	});
 };
@@ -557,12 +565,12 @@ const fillDataFromTable = (
 
 	table.rows.forEach((row) => {
 		const unusedColumnsKeys = new Set<keyof RowData>(
-			columns.map((item) => item.title),
+			columns.map((item) => item.id || item.title),
 		);
 
 		columns.forEach((column) => {
 			const rowData = row.data;
-			const columnField = column.title || column.field;
+			const columnField = column.id || column.title || column.field;
 
 			if (Object.prototype.hasOwnProperty.call(rowData, columnField)) {
 				const value = rowData[columnField];
@@ -576,7 +584,9 @@ const fillDataFromTable = (
 
 		// Fill any remaining unused columns with N/A
 		unusedColumnsKeys.forEach((key) => {
-			const unusedCol = columns.find((item) => item.title === key);
+			const unusedCol = columns.find(
+				(item) => item.id === key || item.title === key,
+			);
 			if (unusedCol) {
 				unusedCol.data.push('N/A');
 			}
