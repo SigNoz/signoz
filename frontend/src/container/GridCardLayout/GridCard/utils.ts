@@ -5,6 +5,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import getLabelName from 'lib/getLabelName';
 import { Widgets } from 'types/api/dashboard/getAll';
+import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
@@ -245,4 +246,15 @@ export const handleGraphClick = async ({
 				error instanceof Error ? error.message : 'Unknown error occurred',
 		});
 	}
+};
+
+export const errorDetails = (error: APIError): string => {
+	const { message, errors } = error.getErrorDetails()?.error || {};
+
+	const details =
+		errors?.length > 0
+			? `\n\nDetails: ${errors.map((e) => e.message).join('\n')}`
+			: '';
+	const errorDetails = `${message} ${details}`;
+	return errorDetails || 'Unknown error occurred';
 };
