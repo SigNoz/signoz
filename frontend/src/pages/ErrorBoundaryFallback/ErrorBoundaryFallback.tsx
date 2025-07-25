@@ -1,8 +1,10 @@
 import './ErrorBoundaryFallback.styles.scss';
 
-import { BugOutlined, UndoOutlined } from '@ant-design/icons';
-import { Button, Card, Typography } from 'antd';
+import { BugOutlined } from '@ant-design/icons';
+import { Button, Typography } from 'antd';
+import ROUTES from 'constants/routes';
 import Slack from 'container/SideNav/Slack';
+import { Home, TriangleAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 function ErrorBoundaryFallback(): JSX.Element {
@@ -13,10 +15,14 @@ function ErrorBoundaryFallback(): JSX.Element {
 	};
 
 	const handleReload = (): void => {
-		window.location.reload();
+		// Go to home page
+		window.location.href = ROUTES.HOME;
 	};
 	return (
-		<Card size="small" className="error-boundary-fallback-container">
+		<div className="error-boundary-fallback-container">
+			<div className="error-icon">
+				<TriangleAlert size={48} />
+			</div>
 			<div className="title">
 				<BugOutlined />
 				<Typography.Title type="danger" level={4} style={{ margin: 0 }}>
@@ -24,30 +30,28 @@ function ErrorBoundaryFallback(): JSX.Element {
 				</Typography.Title>
 			</div>
 
-			<>
-				<p>{t('contact_if_issue_exists')}</p>
+			<p>{t('contact_if_issue_exists')}</p>
 
-				<div className="actions">
-					<Button
-						className="actionBtn"
-						type="default"
-						onClick={handleReload}
-						icon={<UndoOutlined />}
-					>
-						Reload
-					</Button>
+			<div className="actions">
+				<Button
+					type="primary"
+					onClick={handleReload}
+					icon={<Home size={16} />}
+					className="periscope-btn primary"
+				>
+					Go Home
+				</Button>
 
-					<Button
-						className="actionBtn"
-						type="default"
-						onClick={onClickSlackHandler}
-						icon={<Slack />}
-					>
-						&nbsp; Support
-					</Button>
-				</div>
-			</>
-		</Card>
+				<Button
+					className="periscope-btn secondary"
+					type="default"
+					onClick={onClickSlackHandler}
+					icon={<Slack />}
+				>
+					Slack Support
+				</Button>
+			</div>
+		</div>
 	);
 }
 

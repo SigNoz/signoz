@@ -8,6 +8,7 @@
 	.top-level-tab.periscope-tab {
 		padding: 2px 0;
 	}
+
 	.ant-tabs {
 		&-nav {
 			margin-bottom: 0 !important;
@@ -22,13 +23,7 @@
 			&:not(:first-of-type) {
 				margin-left: 24px !important;
 			}
-			.periscope-tab {
-				font-size: 14px;
-				color: var(--text-vanilla-100);
-				line-height: 20px;
-				letter-spacing: -0.07px;
-				gap: 10px;
-			}
+
 			[aria-selected='false'] {
 				.periscope-tab {
 					color: var(--text-vanilla-400);

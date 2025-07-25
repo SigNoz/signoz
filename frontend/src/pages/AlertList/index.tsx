@@ -43,8 +43,11 @@ function AllAlertList(): JSX.Element {
 				</div>
 			),
 			key: 'AlertRules',
-			children:
-				isAlertHistory || isAlertOverview ? <AlertDetails /> : <AllAlertRules />,
+			children: (
+				<div className="alert-rules-container">
+					{isAlertHistory || isAlertOverview ? <AlertDetails /> : <AllAlertRules />}
+				</div>
+			),
 		},
 		{
 			label: (
@@ -54,7 +57,11 @@ function AllAlertList(): JSX.Element {
 				</div>
 			),
 			key: 'Configuration',
-			children: <PlannedDowntime />,
+			children: (
+				<div className="planned-downtime-container">
+					<PlannedDowntime />
+				</div>
+			),
 		},
 	];
 

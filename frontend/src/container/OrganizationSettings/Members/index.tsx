@@ -115,12 +115,23 @@ function UserFunction({
 				role,
 			});
 			onUpdateDetailsHandler();
-			notifications.success({
-				message: t('success', {
-					ns: 'common',
-				}),
-			});
+
+			if (role !== accessLevel) {
+				notifications.success({
+					message: 'User details updated successfully',
+					description:
+						'The user details have been updated successfully. Please request the user to logout and login again to access the platform with updated privileges.',
+				});
+			} else {
+				notifications.success({
+					message: t('success', {
+						ns: 'common',
+					}),
+				});
+			}
+
 			setIsUpdateLoading(false);
+			setIsModalVisible(false);
 		} catch (error) {
 			notifications.error({
 				message: (error as APIError).getErrorCode(),

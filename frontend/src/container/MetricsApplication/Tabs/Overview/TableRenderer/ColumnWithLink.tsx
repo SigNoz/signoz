@@ -36,7 +36,7 @@ function ColumnWithLink({
 		],
 	});
 
-	const handleOnClick = (operation: string) => (): void => {
+	const handleOnClick = (operation: string, openInNewTab: boolean): void => {
 		navigateToTrace({
 			servicename,
 			operation,
@@ -45,12 +45,17 @@ function ColumnWithLink({
 			selectedTraceTags,
 			apmToTraceQuery,
 			safeNavigate,
+			openInNewTab,
 		});
 	};
 
 	return (
 		<Tooltip placement="topLeft" title={text}>
-			<Typography.Link onClick={handleOnClick(text)}>{text}</Typography.Link>
+			<Typography.Link
+				onClick={(e): void => handleOnClick(text, e.metaKey || e.ctrlKey)}
+			>
+				{text}
+			</Typography.Link>
 		</Tooltip>
 	);
 }

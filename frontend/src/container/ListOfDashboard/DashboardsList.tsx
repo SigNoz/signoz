@@ -57,6 +57,7 @@ import {
 	Radius,
 	RotateCw,
 	Search,
+	SquareArrowOutUpRight,
 } from 'lucide-react';
 // #TODO: lucide will be removing brand icons like Github in future, in that case we can use simple icons
 // see more: https://github.com/lucide-icons/lucide/issues/94
@@ -440,13 +441,7 @@ function DashboardsList(): JSX.Element {
 									placement="left"
 									overlayClassName="title-toolip"
 								>
-									<div
-										className="title-link"
-										onClick={(e): void => {
-											e.stopPropagation();
-											safeNavigate(getLink());
-										}}
-									>
+									<div className="title-link" onClick={onClickHandler}>
 										<img
 											src={dashboard?.image || Base64Icons[0]}
 											alt="dashboard-image"
@@ -493,6 +488,18 @@ function DashboardsList(): JSX.Element {
 													onClick={onClickHandler}
 												>
 													View
+												</Button>
+												<Button
+													type="text"
+													className="action-btn"
+													icon={<SquareArrowOutUpRight size={12} />}
+													onClick={(e): void => {
+														e.stopPropagation();
+														e.preventDefault();
+														window.open(getLink(), '_blank');
+													}}
+												>
+													Open in New Tab
 												</Button>
 												<Button
 													type="text"

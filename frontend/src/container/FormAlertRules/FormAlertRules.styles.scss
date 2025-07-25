@@ -21,6 +21,24 @@
 	}
 }
 
+.form-alert-rules-container {
+	&.create-mode {
+		padding: 16px;
+	}
+}
+
+.triggered-alerts-container {
+	padding: 8px;
+}
+
+.alert-rules-list-container {
+	padding: 8px;
+}
+
+.planned-downtime-container {
+	padding: 8px;
+}
+
 .steps-container {
 	width: 80%;
 }
