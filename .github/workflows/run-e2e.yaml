@@ -41,8 +41,8 @@ jobs:
         run: |
           echo "::add-mask::${{ github.event.inputs.baseUrl }}"
           echo "::add-mask::${{ github.event.inputs.userRole }}"
-          echo "::add-mask::${{ secrets.LOGIN_USERNAME }}"
-          echo "::add-mask::${{ secrets.LOGIN_PASSWORD }}"
+          echo "::add-mask::${{ secrets.E2E_USER_EMAIL }}"
+          echo "::add-mask::${{ secrets.E2E_USER_PASSWORD }}"
 
       - name: Run Playwright Tests
         run: |
