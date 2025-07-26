@@ -7,27 +7,18 @@ on:
         description: "Base URL of the app (e.g., https://app.us.staging.signoz.cloud)"
         required: true
         type: string
-      username:
-        description: "Username for login"
-        required: true
-        type: string
-      password:
-        description: "Password for login"
-        required: true
-        type: string
       userRole:
-        description: "Role of the user (ADMIN, EDITOR, VIEWER, SIGNOZ_ADMIN)"
+        description: "Role of the user (ADMIN, EDITOR, VIEWER)"
         required: true
         type: choice
         options:
           - ADMIN
           - EDITOR
           - VIEWER
-          - SIGNOZ_ADMIN
 
 jobs:
   test:
-    name: Run Playwright Tests Manually
+    name: Run Playwright Tests
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -46,16 +37,20 @@ jobs:
       - name: Install Playwright Browsers
         run: yarn playwright install --with-deps
 
+      - name: Mask sensitive inputs and secrets
+        run: |
+          echo "::add-mask::${{ github.event.inputs.baseUrl }}"
+          echo "::add-mask::${{ github.event.inputs.userRole }}"
+          echo "::add-mask::${{ secrets.LOGIN_USERNAME }}"
+          echo "::add-mask::${{ secrets.LOGIN_PASSWORD }}"
+
       - name: Run Playwright Tests
         run: |
-          echo "Running Playwright tests..."
-          echo "BASE_URL: ${{ github.event.inputs.baseUrl }}"
-          echo "USER_ROLE: ${{ github.event.inputs.userRole }}"
+          echo "✅ Starting Playwright tests..."
 
           BASE_URL="${{ github.event.inputs.baseUrl }}" \
-          LOGIN_USERNAME="${{ github.event.inputs.username }}" \
-          LOGIN_PASSWORD="${{ github.event.inputs.password }}" \
           USER_ROLE="${{ github.event.inputs.userRole }}" \
+
           yarn playwright test
 
       - name: Upload Playwright Report
