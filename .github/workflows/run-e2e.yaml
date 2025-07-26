@@ -52,15 +52,15 @@ jobs:
           echo "BASE_URL: ${{ github.event.inputs.baseUrl }}"
           echo "USER_ROLE: ${{ github.event.inputs.userRole }}"
 
-          BASE_URL=${{ github.event.inputs.baseUrl }} \
-          LOGIN_USERNAME=${{ github.event.inputs.username }} \
-          LOGIN_PASSWORD=${{ github.event.inputs.password }} \
-          USER_ROLE=${{ github.event.inputs.userRole }} \
+          BASE_URL="${{ github.event.inputs.baseUrl }}" \
+          LOGIN_USERNAME="${{ github.event.inputs.username }}" \
+          LOGIN_PASSWORD="${{ github.event.inputs.password }}" \
+          USER_ROLE="${{ github.event.inputs.userRole }}" \
           yarn playwright test
 
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
+        if: always()
         with:
           name: playwright-report
           path: playwright-report/
