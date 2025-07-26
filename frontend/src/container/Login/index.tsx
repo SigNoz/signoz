@@ -20,8 +20,6 @@ import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck
 
 import { FormContainer, Label, ParentContainer } from './styles';
 
-const { Title } = Typography;
-
 interface LoginProps {
 	jwt: string;
 	refreshjwt: string;
@@ -211,18 +209,9 @@ function Login({
 	};
 
 	return (
-		<div className="login-form-container moving-border">
+		<div className="login-form-container">
 			<FormContainer form={form} onFinish={onSubmitHandler}>
 				<div className="login-form-header">
-					<Title
-						level={4}
-						style={{
-							marginTop: 0,
-						}}
-					>
-						Welcome to SigNoz
-					</Title>
-
 					<Typography.Paragraph style={{ color: 'var(--text-vanilla-300)' }}>
 						Sign in to monitor, trace, and troubleshoot your applications
 						effortlessly.
