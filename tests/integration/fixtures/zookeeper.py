@@ -29,14 +29,14 @@ def zookeeper(
         return types.TestContainerDocker(
             id=container.get_wrapped_container().id,
             host_configs={
-                2181: types.TestContainerUrlConfig(
+                "2181": types.TestContainerUrlConfig(
                     scheme="tcp",
                     address=container.get_container_host_ip(),
                     port=container.get_exposed_port(2181),
                 )
             },
             container_configs={
-                2181: types.TestContainerUrlConfig(
+                "2181": types.TestContainerUrlConfig(
                     scheme="tcp",
                     address=container.get_wrapped_container().name,
                     port=2181,

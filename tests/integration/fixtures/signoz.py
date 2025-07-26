@@ -103,14 +103,14 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
             self=types.TestContainerDocker(
                 id=container.get_wrapped_container().id,
                 host_configs={
-                    8080: types.TestContainerUrlConfig(
+                    "8080": types.TestContainerUrlConfig(
                         "http",
                         container.get_container_host_ip(),
                         container.get_exposed_port(8080),
                     )
                 },
                 container_configs={
-                    8080: types.TestContainerUrlConfig(
+                    "8080": types.TestContainerUrlConfig(
                         "http",
                         container.get_wrapped_container().name,
                         8080,

@@ -39,8 +39,8 @@ class TestContainerUrlConfig:
 class TestContainerDocker:
     __test__ = False
     id: str
-    host_configs: Dict[int, TestContainerUrlConfig]
-    container_configs: Dict[int, TestContainerUrlConfig]
+    host_configs: Dict[str, TestContainerUrlConfig]
+    container_configs: Dict[str, TestContainerUrlConfig]
 
     @staticmethod
     def from_cache(cache: dict) -> "TestContainerDocker":

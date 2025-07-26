@@ -31,5 +31,5 @@ def test_telemetry_databases_exist(signoz: types.SigNoz) -> None:
         ), f"Database {db_name} not found"
 
 
-def test_teardown(signoz: types.SigNoz) -> None: # pylint: disable=unused-argument
+def test_teardown(signoz: types.SigNoz) -> None:  # pylint: disable=unused-argument
     pass
