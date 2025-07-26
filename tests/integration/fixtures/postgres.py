@@ -68,7 +68,6 @@ def postgres(
         )
 
     def delete(container: types.TestContainerSQL):
-        container.conn.close()
         client = docker.from_env()
         try:
             client.containers.get(container_id=container.container.id).stop()

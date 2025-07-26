@@ -5,6 +5,7 @@ import clickhouse_connect
 import clickhouse_connect.driver
 import clickhouse_connect.driver.client
 import docker
+import docker.errors
 import pytest
 from testcontainers.clickhouse import ClickHouseContainer
 from testcontainers.core.container import Network
@@ -135,8 +136,8 @@ def clickhouse(
     def delete(container: types.TestContainerClickhouse) -> None:
         client = docker.from_env()
         try:
-            client.containers.get(container_id=container.id).stop()
-            client.containers.get(container_id=container.id).remove(v=True)
+            client.containers.get(container_id=container.container.id).stop()
+            client.containers.get(container_id=container.container.id).remove(v=True)
         except docker.errors.NotFound:
             logger.info(
                 "Skipping removal of Clickhouse, Clickhouse(%s) not found. Maybe it was manually removed?",

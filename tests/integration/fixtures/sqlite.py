@@ -37,8 +37,8 @@ def sqlite(
             },
         )
 
-    def delete(container: types.TestContainerSQL):
-        container.conn.close()
+    def delete(_: types.TestContainerSQL):
+        pass
 
     def restore(cache: dict) -> types.TestContainerSQL:
         path = cache["env"].get("SIGNOZ_SQLSTORE_SQLITE_PATH")
