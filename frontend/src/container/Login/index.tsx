@@ -212,7 +212,7 @@ function Login({
 		<div className="login-form-container">
 			<FormContainer form={form} onFinish={onSubmitHandler}>
 				<div className="login-form-header">
-					<Typography.Paragraph style={{ color: 'var(--text-vanilla-300)' }}>
+					<Typography.Paragraph className="login-form-header-text">
 						Sign in to monitor, trace, and troubleshoot your applications
 						effortlessly.
 					</Typography.Paragraph>
@@ -292,13 +292,7 @@ function Login({
 					{!precheckComplete && ssoerror && renderOnSsoError()}
 
 					{!canSelfRegister && (
-						<Typography.Paragraph
-							style={{
-								color: 'var(--text-vanilla-300)',
-								fontSize: 12,
-								marginTop: 16,
-							}}
-						>
+						<Typography.Paragraph className="no-acccount">
 							Don&apos;t have an account? Contact your admin to send you an invite
 							link.
 						</Typography.Paragraph>

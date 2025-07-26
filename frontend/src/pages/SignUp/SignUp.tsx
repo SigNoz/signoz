@@ -286,10 +286,8 @@ function SignUp(): JSX.Element {
 					form={form}
 					className="signup-form"
 				>
-					<div className="login-form-header">
-						<Typography.Paragraph
-							style={{ color: 'var(--text-vanilla-300)', marginTop: 0 }}
-						>
+					<div className="signup-form-header">
+						<Typography.Paragraph className="signup-form-header-text">
 							Create your account to monitor, trace, and troubleshoot your applications
 							effortlessly.
 						</Typography.Paragraph>
