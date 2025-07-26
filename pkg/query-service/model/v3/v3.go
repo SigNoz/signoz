@@ -1227,6 +1227,9 @@ const (
 
 	FilterOperatorHas    FilterOperator = "has"
 	FilterOperatorNotHas FilterOperator = "nhas"
+
+	FilterOperatorILike    FilterOperator = "ilike"
+	FilterOperatorNotILike FilterOperator = "notilike"
 )
 
 type FilterItem struct {

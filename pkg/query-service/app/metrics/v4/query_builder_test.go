@@ -140,6 +140,54 @@ func TestPrepareTimeseriesFilterQuery(t *testing.T) {
 			},
 			expectedQueryContains: "SELECT DISTINCT JSONExtractString(labels, 'service_name') as service_name, fingerprint FROM signoz_metrics.time_series_v4 WHERE metric_name IN ['http_requests'] AND temporality = 'Cumulative' AND __normalized = true AND unix_milli >= 1706428800000 AND unix_milli < 1706434026000 AND JSONExtractString(labels, 'service_name') != 'payment_service' AND JSONExtractString(labels, 'endpoint') IN ['/paycallback','/payme','/paypal']",
 		},
+		{
+			name: "test prepare time series with filters and multiple group by",
+			builderQuery: &v3.BuilderQuery{
+				QueryName:    "A",
+				StepInterval: 60,
+				DataSource:   v3.DataSourceMetrics,
+				AggregateAttribute: v3.AttributeKey{
+					Key:      "http_requests",
+					DataType: v3.AttributeKeyDataTypeFloat64,
+					Type:     v3.AttributeKeyTypeUnspecified,
+					IsColumn: true,
+					IsJSON:   false,
+				},
+				Temporality: v3.Cumulative,
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
+						{
+							Key: v3.AttributeKey{
+								Key:      "service_name",
+								Type:     v3.AttributeKeyTypeTag,
+								DataType: v3.AttributeKeyDataTypeString,
+							},
+							Operator: v3.FilterOperatorILike,
+							Value:    "payment_service",
+						},
+						{
+							Key: v3.AttributeKey{
+								Key:      "endpoint",
+								Type:     v3.AttributeKeyTypeTag,
+								DataType: v3.AttributeKeyDataTypeString,
+							},
+							Operator: v3.FilterOperatorNotILike,
+							Value:    "payment_service",
+						},
+					},
+				},
+				GroupBy: []v3.AttributeKey{{
+					Key:      "service_name",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeTag,
+				}},
+				Expression: "A",
+				Disabled:   false,
+				// remaining struct fields are not needed here
+			},
+			expectedQueryContains: "SELECT DISTINCT JSONExtractString(labels, 'service_name') as service_name, fingerprint FROM signoz_metrics.time_series_v4 WHERE metric_name IN ['http_requests'] AND temporality = 'Cumulative' AND __normalized = true AND unix_milli >= 1706428800000 AND unix_milli < 1706434026000 AND ilike(JSONExtractString(labels, 'service_name'), 'payment_service') AND notILike(JSONExtractString(labels, 'endpoint'), 'payment_service')",
+		},
 	}
 
 	for _, testCase := range testCases {
