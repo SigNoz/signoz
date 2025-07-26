@@ -16,7 +16,7 @@ node_modules/
 e2e/test-plan/alerts/
 e2e/test-plan/dashboards/
 e2e/test-plan/exceptions/
-e2e/test-plan/eternal-apis/
+e2e/test-plan/external-apis/
 e2e/test-plan/help-support/
 e2e/test-plan/infrastructure/
 e2e/test-plan/logs/
