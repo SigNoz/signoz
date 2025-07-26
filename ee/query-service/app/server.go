@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
@@ -18,6 +19,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -104,6 +106,8 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		signoz.TelemetryStore,
 		signoz.Prometheus,
 		signoz.Modules.OrgGetter,
+		signoz.Querier,
+		signoz.Instrumentation.Logger(),
 	)
 
 	if err != nil {
@@ -421,6 +425,8 @@ func makeRulesManager(
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
 	orgGetter organization.Getter,
+	querier querier.Querier,
+	logger *slog.Logger,
 ) (*baserules.Manager, error) {
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
@@ -429,6 +435,8 @@ func makeRulesManager(
 		Context:             context.Background(),
 		Logger:              zap.L(),
 		Reader:              ch,
+		Querier:             querier,
+		SLogger:             logger,
 		Cache:               cache,
 		EvalDelay:           baseconst.GetEvalDelay(),
 		PrepareTaskFunc:     rules.PrepareTaskFunc,

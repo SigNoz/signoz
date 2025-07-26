@@ -201,7 +201,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.SQLMigration,
-		NewSQLMigrationProviderFactories(sqlstore, sqlschema),
+		NewSQLMigrationProviderFactories(sqlstore, sqlschema, telemetrystore, providerSettings),
 	)
 	if err != nil {
 		return nil, err
@@ -268,7 +268,7 @@ func New(
 	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
 
 	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules)
+	handlers := NewHandlers(modules, providerSettings)
 
 	// Create a list of all stats collectors
 	statsCollectors := []statsreporter.StatsCollector{

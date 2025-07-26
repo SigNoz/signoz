@@ -48,6 +48,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 			opts.OrgID,
 			parsedRule,
 			opts.Reader,
+			opts.Querier,
 			WithSendAlways(),
 			WithSendUnmatched(),
 			WithSQLStore(opts.SQLStore),

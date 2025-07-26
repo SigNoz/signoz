@@ -33,6 +33,8 @@ type QueryBuilderFormula struct {
 
 	// functions to apply to the formula result
 	Functions []Function `json:"functions,omitempty"`
+
+	Legend string `json:"legend,omitempty"`
 }
 
 // UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields

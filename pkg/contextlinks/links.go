@@ -14,13 +14,13 @@ import (
 func PrepareLinksToTraces(start, end time.Time, filterItems []v3.FilterItem) string {
 
 	// Traces list view expects time in nanoseconds
-	tr := v3.URLShareableTimeRange{
+	tr := URLShareableTimeRange{
 		Start:    start.UnixNano(),
 		End:      end.UnixNano(),
 		PageSize: 100,
 	}
 
-	options := v3.URLShareableOptions{
+	options := URLShareableOptions{
 		MaxLines:      2,
 		Format:        "list",
 		SelectColumns: tracesV3.TracesListViewDefaultSelectedColumns,
@@ -29,32 +29,34 @@ func PrepareLinksToTraces(start, end time.Time, filterItems []v3.FilterItem) str
 	period, _ := json.Marshal(tr)
 	urlEncodedTimeRange := url.QueryEscape(string(period))
 
-	builderQuery := v3.BuilderQuery{
-		DataSource:         v3.DataSourceTraces,
-		QueryName:          "A",
-		AggregateOperator:  v3.AggregateOperatorNoOp,
-		AggregateAttribute: v3.AttributeKey{},
-		Filters: &v3.FilterSet{
-			Items:    filterItems,
-			Operator: "AND",
-		},
-		Expression:   "A",
-		Disabled:     false,
-		Having:       []v3.Having{},
-		StepInterval: 60,
-		OrderBy: []v3.OrderBy{
-			{
-				ColumnName: "timestamp",
-				Order:      "desc",
+	linkQuery := LinkQuery{
+		BuilderQuery: v3.BuilderQuery{
+			DataSource:         v3.DataSourceTraces,
+			QueryName:          "A",
+			AggregateOperator:  v3.AggregateOperatorNoOp,
+			AggregateAttribute: v3.AttributeKey{},
+			Filters: &v3.FilterSet{
+				Items:    filterItems,
+				Operator: "AND",
+			},
+			Expression:   "A",
+			Disabled:     false,
+			Having:       []v3.Having{},
+			StepInterval: 60,
+			OrderBy: []v3.OrderBy{
+				{
+					ColumnName: "timestamp",
+					Order:      "desc",
+				},
 			},
 		},
 	}
 
-	urlData := v3.URLShareableCompositeQuery{
+	urlData := URLShareableCompositeQuery{
 		QueryType: string(v3.QueryTypeBuilder),
-		Builder: v3.URLShareableBuilderQuery{
-			QueryData: []v3.BuilderQuery{
-				builderQuery,
+		Builder: URLShareableBuilderQuery{
+			QueryData: []LinkQuery{
+				linkQuery,
 			},
 			QueryFormulas: make([]string, 0),
 		},
@@ -72,13 +74,13 @@ func PrepareLinksToTraces(start, end time.Time, filterItems []v3.FilterItem) str
 func PrepareLinksToLogs(start, end time.Time, filterItems []v3.FilterItem) string {
 
 	// Logs list view expects time in milliseconds
-	tr := v3.URLShareableTimeRange{
+	tr := URLShareableTimeRange{
 		Start:    start.UnixMilli(),
 		End:      end.UnixMilli(),
 		PageSize: 100,
 	}
 
-	options := v3.URLShareableOptions{
+	options := URLShareableOptions{
 		MaxLines:      2,
 		Format:        "list",
 		SelectColumns: []v3.AttributeKey{},
@@ -87,32 +89,34 @@ func PrepareLinksToLogs(start, end time.Time, filterItems []v3.FilterItem) strin
 	period, _ := json.Marshal(tr)
 	urlEncodedTimeRange := url.QueryEscape(string(period))
 
-	builderQuery := v3.BuilderQuery{
-		DataSource:         v3.DataSourceLogs,
-		QueryName:          "A",
-		AggregateOperator:  v3.AggregateOperatorNoOp,
-		AggregateAttribute: v3.AttributeKey{},
-		Filters: &v3.FilterSet{
-			Items:    filterItems,
-			Operator: "AND",
-		},
-		Expression:   "A",
-		Disabled:     false,
-		Having:       []v3.Having{},
-		StepInterval: 60,
-		OrderBy: []v3.OrderBy{
-			{
-				ColumnName: "timestamp",
-				Order:      "desc",
+	linkQuery := LinkQuery{
+		BuilderQuery: v3.BuilderQuery{
+			DataSource:         v3.DataSourceLogs,
+			QueryName:          "A",
+			AggregateOperator:  v3.AggregateOperatorNoOp,
+			AggregateAttribute: v3.AttributeKey{},
+			Filters: &v3.FilterSet{
+				Items:    filterItems,
+				Operator: "AND",
+			},
+			Expression:   "A",
+			Disabled:     false,
+			Having:       []v3.Having{},
+			StepInterval: 60,
+			OrderBy: []v3.OrderBy{
+				{
+					ColumnName: "timestamp",
+					Order:      "desc",
+				},
 			},
 		},
 	}
 
-	urlData := v3.URLShareableCompositeQuery{
+	urlData := URLShareableCompositeQuery{
 		QueryType: string(v3.QueryTypeBuilder),
-		Builder: v3.URLShareableBuilderQuery{
-			QueryData: []v3.BuilderQuery{
-				builderQuery,
+		Builder: URLShareableBuilderQuery{
+			QueryData: []LinkQuery{
+				linkQuery,
 			},
 			QueryFormulas: make([]string, 0),
 		},
@@ -219,4 +223,112 @@ func PrepareFilters(labels map[string]string, whereClauseItems []v3.FilterItem, 
 	}
 
 	return filterItems
+}
+
+func PrepareLinksToTracesV5(start, end time.Time, whereClause string) string {
+
+	// Traces list view expects time in nanoseconds
+	tr := URLShareableTimeRange{
+		Start:    start.UnixNano(),
+		End:      end.UnixNano(),
+		PageSize: 100,
+	}
+
+	options := URLShareableOptions{
+		MaxLines:      2,
+		Format:        "list",
+		SelectColumns: tracesV3.TracesListViewDefaultSelectedColumns,
+	}
+
+	period, _ := json.Marshal(tr)
+	urlEncodedTimeRange := url.QueryEscape(string(period))
+
+	linkQuery := LinkQuery{
+		BuilderQuery: v3.BuilderQuery{
+			DataSource:         v3.DataSourceTraces,
+			QueryName:          "A",
+			AggregateOperator:  v3.AggregateOperatorNoOp,
+			AggregateAttribute: v3.AttributeKey{},
+			Expression:         "A",
+			Disabled:           false,
+			Having:             []v3.Having{},
+			StepInterval:       60,
+			OrderBy: []v3.OrderBy{
+				{
+					ColumnName: "timestamp",
+					Order:      "desc",
+				},
+			},
+		},
+		Filter: &FilterExpression{Expression: whereClause},
+	}
+
+	urlData := URLShareableCompositeQuery{
+		QueryType: string(v3.QueryTypeBuilder),
+		Builder: URLShareableBuilderQuery{
+			QueryData: []LinkQuery{
+				linkQuery,
+			},
+			QueryFormulas: make([]string, 0),
+		},
+	}
+
+	data, _ := json.Marshal(urlData)
+	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
+
+	optionsData, _ := json.Marshal(options)
+	urlEncodedOptions := url.QueryEscape(string(optionsData))
+
+	return fmt.Sprintf("compositeQuery=%s&timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
+}
+
+func PrepareLinksToLogsV5(start, end time.Time, whereClause string) string {
+
+	// Logs list view expects time in milliseconds
+	tr := URLShareableTimeRange{
+		Start:    start.UnixMilli(),
+		End:      end.UnixMilli(),
+		PageSize: 100,
+	}
+
+	options := URLShareableOptions{
+		MaxLines:      2,
+		Format:        "list",
+		SelectColumns: []v3.AttributeKey{},
+	}
+
+	period, _ := json.Marshal(tr)
+	urlEncodedTimeRange := url.QueryEscape(string(period))
+
+	linkQuery := LinkQuery{
+		BuilderQuery: v3.BuilderQuery{
+			DataSource:         v3.DataSourceLogs,
+			QueryName:          "A",
+			AggregateOperator:  v3.AggregateOperatorNoOp,
+			AggregateAttribute: v3.AttributeKey{},
+			Expression:         "A",
+			Disabled:           false,
+			Having:             []v3.Having{},
+			StepInterval:       60,
+		},
+		Filter: &FilterExpression{Expression: whereClause},
+	}
+
+	urlData := URLShareableCompositeQuery{
+		QueryType: string(v3.QueryTypeBuilder),
+		Builder: URLShareableBuilderQuery{
+			QueryData: []LinkQuery{
+				linkQuery,
+			},
+			QueryFormulas: make([]string, 0),
+		},
+	}
+
+	data, _ := json.Marshal(urlData)
+	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
+
+	optionsData, _ := json.Marshal(options)
+	urlEncodedOptions := url.QueryEscape(string(optionsData))
+
+	return fmt.Sprintf("compositeQuery=%s&timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
 }
