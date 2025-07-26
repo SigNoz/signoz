@@ -53,6 +53,8 @@ export const getGraphOptions = (
 	onClickHandler: GraphOnClickHandler | undefined,
 	data: ChartData,
 	timezone: Timezone,
+	minTime?: number,
+	maxTime?: number,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): CustomChartOptions => ({
 	animation: {
@@ -169,6 +171,12 @@ export const getGraphOptions = (
 			},
 			type: 'time',
 			ticks: { color: getAxisLabelColor(currentTheme) },
+			...(minTime && {
+				min: dayjs(minTime).tz(timezone.value).format(),
+			}),
+			...(maxTime && {
+				max: dayjs(maxTime).tz(timezone.value).format(),
+			}),
 		},
 		y: {
 			stacked: isStacked,
