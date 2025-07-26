@@ -45,14 +45,14 @@ def postgres(
             container=types.TestContainerDocker(
                 id=container.get_wrapped_container().id,
                 host_configs={
-                    5432: types.TestContainerUrlConfig(
+                    "5432": types.TestContainerUrlConfig(
                         "postgresql",
                         container.get_container_host_ip(),
                         container.get_exposed_port(5432),
                     )
                 },
                 container_configs={
-                    5432: types.TestContainerUrlConfig(
+                    "5432": types.TestContainerUrlConfig(
                         "postgresql", container.get_wrapped_container().name, 5432
                     )
                 },

@@ -103,22 +103,22 @@ def clickhouse(
             container=types.TestContainerDocker(
                 id=container.get_wrapped_container().id,
                 host_configs={
-                    9000: types.TestContainerUrlConfig(
+                    "9000": types.TestContainerUrlConfig(
                         "tcp",
                         container.get_container_host_ip(),
                         container.get_exposed_port(9000),
                     ),
-                    8123: types.TestContainerUrlConfig(
+                    "8123": types.TestContainerUrlConfig(
                         "tcp",
                         container.get_container_host_ip(),
                         container.get_exposed_port(8123),
                     ),
                 },
                 container_configs={
-                    9000: types.TestContainerUrlConfig(
+                    "9000": types.TestContainerUrlConfig(
                         "tcp", container.get_wrapped_container().name, 9000
                     ),
-                    8123: types.TestContainerUrlConfig(
+                    "8123": types.TestContainerUrlConfig(
                         "tcp", container.get_wrapped_container().name, 8123
                     ),
                 },
