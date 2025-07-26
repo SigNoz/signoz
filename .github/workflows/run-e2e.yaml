@@ -1,5 +1,4 @@
-name: Run E2E (Playwright) Tests
-
+name: e2eci
 on:
   workflow_dispatch:
     inputs:
