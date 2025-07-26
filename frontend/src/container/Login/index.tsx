@@ -1,3 +1,5 @@
+import './Login.styles.scss';
+
 import { Button, Form, Input, Space, Tooltip, Typography } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -9,16 +11,14 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { ArrowRight } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import APIError from 'types/api/error';
 import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck';
 
-import { FormContainer, FormWrapper, Label, ParentContainer } from './styles';
-
-const { Title } = Typography;
+import { FormContainer, Label, ParentContainer } from './styles';
 
 interface LoginProps {
 	jwt: string;
@@ -37,7 +37,6 @@ function Login({
 	ssoerror = '',
 	withPassword = '0',
 }: LoginProps): JSX.Element {
-	const { t } = useTranslation(['login']);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const { user } = useAppContext();
 
@@ -104,16 +103,16 @@ function Login({
 	useEffect(() => {
 		if (ssoerror !== '') {
 			notifications.error({
-				message: t('failed_to_login'),
+				message: 'sorry, failed to login',
 			});
 		}
-	}, [ssoerror, t, notifications]);
+	}, [ssoerror, notifications]);
 
 	const onNextHandler = async (): Promise<void> => {
 		const email = form.getFieldValue('email');
 		if (!email) {
 			notifications.error({
-				message: t('invalid_email'),
+				message: 'Please enter a valid email address',
 			});
 			return;
 		}
@@ -131,17 +130,19 @@ function Login({
 					setPrecheckComplete(true);
 				} else {
 					notifications.error({
-						message: t('invalid_account'),
+						message:
+							'This account does not exist. To create a new account, contact your admin to get an invite link',
 					});
 				}
 			} else {
 				notifications.error({
-					message: t('invalid_config'),
+					message:
+						'Invalid configuration detected, please contact your administrator',
 				});
 			}
 		} catch (e) {
 			console.log('failed to call precheck Api', e);
-			notifications.error({ message: t('unexpected_error') });
+			notifications.error({ message: 'Sorry, something went wrong' });
 		}
 		setPrecheckInProcess(false);
 	};
@@ -190,7 +191,7 @@ function Login({
 			disabled={isLoading}
 			href={precheckResult.ssoUrl}
 		>
-			{t('login_with_sso')}
+			Login with SSO
 		</Button>
 	);
 
@@ -201,48 +202,61 @@ function Login({
 
 		return (
 			<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
-				{t('prompt_on_sso_error')}{' '}
-				<a href="/login?password=Y">{t('login_with_pwd')}</a>.
+				Are you trying to resolve SSO configuration issue?{' '}
+				<a href="/login?password=Y">Login with password</a>.
 			</Typography.Paragraph>
 		);
 	};
 
 	return (
-		<FormWrapper>
+		<div className="login-form-container">
 			<FormContainer form={form} onFinish={onSubmitHandler}>
-				<Title level={4}>{t('login_page_title')}</Title>
+				<div className="login-form-header">
+					<Typography.Paragraph className="login-form-header-text">
+						Sign in to monitor, trace, and troubleshoot your applications
+						effortlessly.
+					</Typography.Paragraph>
+				</div>
+
 				<ParentContainer>
-					<Label htmlFor="signupEmail">{t('label_email')}</Label>
+					<Label htmlFor="signupEmail" style={{ marginTop: 0 }}>
+						Email
+					</Label>
 					<FormContainer.Item name="email">
 						<Input
 							type="email"
 							id="loginEmail"
 							data-testid="email"
 							required
-							placeholder={t('placeholder_email')}
+							placeholder="name@yourcompany.com"
 							autoFocus
 							disabled={isLoading}
+							className="login-form-input"
 						/>
 					</FormContainer.Item>
 				</ParentContainer>
 				{precheckComplete && !sso && (
 					<ParentContainer>
-						<Label htmlFor="Password">{t('label_password')}</Label>
+						<Label htmlFor="Password">Password</Label>
 						<FormContainer.Item name="password">
 							<Input.Password
 								required
 								id="currentPassword"
 								data-testid="password"
 								disabled={isLoading}
+								className="login-form-input"
 							/>
 						</FormContainer.Item>
-						<Tooltip title={t('prompt_forgot_password')}>
-							<Typography.Link>{t('forgot_password')}</Typography.Link>
-						</Tooltip>
+
+						<div style={{ marginTop: 8 }}>
+							<Tooltip title="Ask your admin to reset your password and send you a new invite link">
+								<Typography.Link>Forgot password?</Typography.Link>
+							</Tooltip>
+						</div>
 					</ParentContainer>
 				)}
 				<Space
-					style={{ marginTop: '1.3125rem' }}
+					style={{ marginTop: 16 }}
 					align="start"
 					direction="vertical"
 					size={20}
@@ -254,8 +268,10 @@ function Login({
 							type="primary"
 							onClick={onNextHandler}
 							data-testid="initiate_login"
+							className="periscope-btn primary next-btn"
+							icon={<ArrowRight size={12} />}
 						>
-							{t('button_initiate_login')}
+							Next
 						</Button>
 					)}
 					{precheckComplete && !sso && (
@@ -265,8 +281,10 @@ function Login({
 							type="primary"
 							htmlType="submit"
 							data-attr="signup"
+							className="periscope-btn primary next-btn"
+							icon={<ArrowRight size={12} />}
 						>
-							{t('button_login')}
+							Login
 						</Button>
 					)}
 
@@ -274,27 +292,28 @@ function Login({
 					{!precheckComplete && ssoerror && renderOnSsoError()}
 
 					{!canSelfRegister && (
-						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
-							{t('prompt_no_account')}
+						<Typography.Paragraph className="no-acccount">
+							Don&apos;t have an account? Contact your admin to send you an invite
+							link.
 						</Typography.Paragraph>
 					)}
 
 					{canSelfRegister && (
 						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
-							{t('prompt_if_admin')}{' '}
+							If you are admin,{' '}
 							<Typography.Link
 								onClick={(): void => {
 									history.push(ROUTES.SIGN_UP);
 								}}
 								style={{ fontWeight: 700 }}
 							>
-								{t('create_an_account')}
+								Create an account
 							</Typography.Link>
 						</Typography.Paragraph>
 					)}
 				</Space>
 			</FormContainer>
-		</FormWrapper>
+		</div>
 	);
 }
 
