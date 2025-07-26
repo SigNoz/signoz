@@ -1,9 +1,9 @@
 import { Page } from '@playwright/test';
 
 // Read credentials from environment variables
-const username = process.env.SIGNOZ_E2E_USERNAME;
-const password = process.env.SIGNOZ_E2E_PASSWORD;
-const baseURL = process.env.SIGNOZ_E2E_BASE_URL;
+const username = process.env.LOGIN_USERNAME;
+const password = process.env.LOGIN_PASSWORD;
+const baseURL = process.env.BASE_URL;
 
 /**
  * Ensures the user is logged in. If not, performs the login steps.
