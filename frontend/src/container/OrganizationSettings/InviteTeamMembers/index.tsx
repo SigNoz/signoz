@@ -1,4 +1,4 @@
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import {
 	Button,
 	Form,
@@ -12,26 +12,27 @@ import { useTranslation } from 'react-i18next';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 import { InviteMemberFormValues } from '../PendingInvitesContainer/index';
-import { SelectDrawer, SpaceContainer, TitleWrapper } from './styles';
+import { SelectDrawer, SpaceContainer, TitleWrapper, RemoveButton } from './styles';
 
 function InviteTeamMembers({ form, onFinish }: Props): JSX.Element {
 	const { t } = useTranslation('organizationsettings');
 
 	return (
 		<>
-			<TitleWrapper>
-				<Typography>{t('email_address')}</Typography>
-				<Typography>{t('name_optional')}</Typography>
-				<Typography>{t('role')}</Typography>
-			</TitleWrapper>
 			<Form
 				form={form}
 				onFinish={onFinish}
 				initialValues={{ members: [{ email: '', name: '', role: 'VIEWER' }] }}
 			>
 				<Form.List name="members">
-					{(fields, { add }): JSX.Element => (
+					{(fields, { add, remove }): JSX.Element => (
 						<SpaceContainer direction="vertical" align="center" size="middle">
+							<TitleWrapper>
+								<Typography>{t('email_address')}</Typography>
+								<Typography>{t('name_optional')}</Typography>
+								<Typography>{t('role')}</Typography>
+								{fields.length > 1 && <Typography>{t('actions', { ns: 'common' })}</Typography>}
+							</TitleWrapper>
 							{fields.map(({ key, name }) => (
 								<Space key={key} direction="horizontal" align="start">
 									<Form.Item
@@ -56,6 +57,17 @@ function InviteTeamMembers({ form, onFinish }: Props): JSX.Element {
 											<Select.Option value="EDITOR">EDITOR</Select.Option>
 										</SelectDrawer>
 									</Form.Item>
+									{fields.length > 1 && (
+										<Form.Item>
+											<RemoveButton
+												type="text"
+												danger
+												icon={<MinusCircleOutlined />}
+												onClick={() => remove(name)}
+												title={t('remove_member')}
+											/>
+										</Form.Item>
+									)}
 								</Space>
 							))}
 							<Form.Item>
