@@ -52,6 +52,7 @@ function TimezoneAdaptation(): JSX.Element {
 					checked={isAdaptationEnabled}
 					onChange={handleSwitchChange}
 					style={getSwitchStyles()}
+					data-testid="timezone-adaptation-switch"
 				/>
 			</div>
 
