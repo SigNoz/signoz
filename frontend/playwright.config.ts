@@ -31,7 +31,8 @@ export default defineConfig({
 	/* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
 	use: {
 		/* Base URL to use in actions like `await page.goto('/')`. */
-		baseURL: 'https://app.us.staging.signoz.cloud',
+		baseURL:
+			process.env.SIGNOZ_E2E_BASE_URL || 'https://app.us.staging.signoz.cloud',
 
 		/* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
 		trace: 'on-first-retry',
