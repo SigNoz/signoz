@@ -128,11 +128,23 @@ export const AlertOverview = Loadable(
 );
 
 export const CreateAlertChannelAlerts = Loadable(
-	() => import(/* webpackChunkName: "Create Channels" */ 'pages/Settings'),
+	() =>
+		import(/* webpackChunkName: "Create Channels" */ 'pages/CreateAlertChannels'),
 );
 
-export const AllAlertChannels = Loadable(
-	() => import(/* webpackChunkName: "All Channels" */ 'pages/Settings'),
+export const AllAlertChannelsPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "All Alert Channels" */ 'pages/AllAlertChannelsSettings'
+		),
+);
+
+export const ChannelsEditPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "Channels Edit Page" */
+			'pages/ChannelsEdit'
+		),
 );
 
 export const AllErrors = Loadable(
@@ -147,25 +159,40 @@ export const StatusPage = Loadable(
 	() => import(/* webpackChunkName: "All Status" */ 'pages/Status'),
 );
 
-export const OrganizationSettings = Loadable(
-	() => import(/* webpackChunkName: "All Settings" */ 'pages/Settings'),
+export const OrganizationSettingsPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "Organization Settings" */ 'pages/OrganizationSettings'
+		),
 );
 
 export const IngestionSettings = Loadable(
-	() => import(/* webpackChunkName: "Ingestion Settings" */ 'pages/Settings'),
+	() =>
+		import(
+			/* webpackChunkName: "Ingestion Settings" */ 'pages/IngestionSettings'
+		),
 );
 
 export const APIKeys = Loadable(
-	() => import(/* webpackChunkName: "All Settings" */ 'pages/Settings'),
+	() => import(/* webpackChunkName: "API Keys Settings" */ 'pages/APIKeys'),
 );
 
 export const MySettings = Loadable(
-	() => import(/* webpackChunkName: "All MySettings" */ 'pages/Settings'),
+	() => import(/* webpackChunkName: "All MySettings" */ 'pages/MySettings'),
+);
+
+export const GeneralSettings = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "General MySettings" */ 'pages/Settings/GeneralSettings'
+		),
 );
 
 export const CustomDomainSettings = Loadable(
 	() =>
-		import(/* webpackChunkName: "Custom Domain Settings" */ 'pages/Settings'),
+		import(
+			/* webpackChunkName: "Custom Domain Settings" */ 'pages/CustomDomainSettings'
+		),
 );
 
 export const Logs = Loadable(
@@ -217,7 +244,7 @@ export const LogsIndexToFields = Loadable(
 );
 
 export const BillingPage = Loadable(
-	() => import(/* webpackChunkName: "BillingPage" */ 'pages/Settings'),
+	() => import(/* webpackChunkName: "BillingPage" */ 'pages/Billing'),
 );
 
 export const SupportPage = Loadable(
@@ -244,7 +271,7 @@ export const WorkspaceAccessRestricted = Loadable(
 );
 
 export const ShortcutsPage = Loadable(
-	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Settings'),
+	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Shortcuts'),
 );
 
 export const InstalledIntegrations = Loadable(
