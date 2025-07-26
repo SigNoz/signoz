@@ -78,13 +78,12 @@ All tables follow a consistent primary key pattern using a `id` column (referenc
 
 ## How to write migrations?
 
-For schema migrations, use the [SQLMigration](/pkg/sqlmigration/sqlmigration.go) interface and write the migration in the same package. When creating migrations, adhere to these guidelines:
+For schema migrations, use the [SQLMigration](/pkg/sqlmigration/sqlmigration.go) interface. The migrations are split into multiple packages based on the starting number of the series of the migration. For example, migrations with starting number `100` are in the `s100sqlmigration` package (read as series 100 sql migrations), migrations with starting number `200` are in the `s200sqlmigration` package, and so on. When creating migrations, adhere to these guidelines:
 
-- Do not implement **`ON CASCADE` foreign key constraints**. Deletion operations should be handled explicitly in application logic rather than delegated to the database.
+- Use the [SQLSchema](/pkg/sqlschema/sqlschema.go) interface to write migrations. SQLSchema is responsible for generating idempotent SQL statements to alter the database schema. For instance, if you want to add a column to the `users` table, you can use the `AddColumn` method to add the column. If the column already exists, the method will return no SQL statements.
 - Do not **import types from the types package** in the `sqlmigration` package. Instead, define the required types within the migration package itself. This practice ensures migration stability as the core types evolve over time.
 - Do not implement **`Down` migrations**. As the codebase matures, we may introduce this capability, but for now, the `Down` function should remain empty.
 - Always write **idempotent** migrations. This means that if the migration is run multiple times, it should not cause an error.
-- A migration which is **dependent on the underlying dialect** (sqlite, postgres, etc) should be written as part of the [SQLDialect](/pkg/sqlstore/sqlstore.go) interface. The implementation needs to go in the dialect specific package of the respective database.
 
 ## What should I remember?
 

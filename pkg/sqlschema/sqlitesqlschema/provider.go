@@ -33,9 +33,9 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		settings: settings,
 		sqlstore: sqlstore,
 		operator: sqlschema.NewOperator(fmter, sqlschema.OperatorSupport{
-			DropConstraint:          false,
-			ColumnIfNotExistsExists: false,
-			AlterColumnSetNotNull:   false,
+			SCreateAndDropConstraint:                        false,
+			SAlterTableAddAndDropColumnIfNotExistsAndExists: false,
+			SAlterTableAlterColumnSetAndDrop:                false,
 		}),
 	}, nil
 }
@@ -56,7 +56,7 @@ func (provider *provider) GetTable(ctx context.Context, tableName sqlschema.Tabl
 		BunDB().
 		NewRaw("SELECT sql FROM sqlite_master WHERE type IN (?) AND tbl_name = ? AND sql IS NOT NULL", bun.In([]string{"table"}), string(tableName)).
 		Scan(ctx, &sql); err != nil {
-		return nil, nil, err
+		return nil, nil, provider.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "table (%s) not found", tableName)
 	}
 
 	table, uniqueConstraints, err := parseCreateTable(sql, provider.fmter)
@@ -73,7 +73,7 @@ func (provider *provider) GetIndices(ctx context.Context, tableName sqlschema.Ta
 		BunDB().
 		QueryContext(ctx, "SELECT * FROM PRAGMA_index_list(?)", string(tableName))
 	if err != nil {
-		return nil, err
+		return nil, provider.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "no indices for table (%s) found", tableName)
 	}
 
 	defer func() {
@@ -115,10 +115,16 @@ func (provider *provider) GetIndices(ctx context.Context, tableName sqlschema.Ta
 		}
 
 		if unique {
-			indices = append(indices, (&sqlschema.UniqueIndex{
+			index := &sqlschema.UniqueIndex{
 				TableName:   tableName,
 				ColumnNames: columns,
-			}).Named(name).(*sqlschema.UniqueIndex))
+			}
+
+			if index.Name() == name {
+				indices = append(indices, index)
+			} else {
+				indices = append(indices, index.Named(name))
+			}
 		}
 	}
 

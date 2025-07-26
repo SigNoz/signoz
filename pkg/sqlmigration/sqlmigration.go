@@ -2,7 +2,6 @@ package sqlmigration
 
 import (
 	"context"
-	"errors"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/uptrace/bun"
@@ -21,19 +20,6 @@ type SQLMigration interface {
 	// Down rolls back the migration.
 	Down(context.Context, *bun.DB) error
 }
-
-var (
-	ErrNoExecute = errors.New("no execute")
-)
-
-var (
-	OrgReference                = "org"
-	UserReference               = "user"
-	UserReferenceNoCascade      = "user_no_cascade"
-	FactorPasswordReference     = "factor_password"
-	CloudIntegrationReference   = "cloud_integration"
-	AgentConfigVersionReference = "agent_config_version"
-)
 
 func New(
 	ctx context.Context,
