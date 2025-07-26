@@ -12,15 +12,22 @@ pytest_plugins = [
     "fixtures.sqlite",
     "fixtures.zookeeper",
     "fixtures.signoz",
+    "fixtures.logs",
 ]
 
 
 def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
-        "--dev",
-        action="store",
+        "--reuse",
+        action="store_true",
         default=False,
-        help="Run in dev mode. In this mode, the containers are not torn down after test run and are reused in subsequent test runs.",
+        help="Reuse environment. Use pytest --basetemp=./tmp/ -vv --reuse src/bootstrap/setup::test_setup to setup your local dev environment for writing tests.",  # pylint: disable=line-too-long
+    )
+    parser.addoption(
+        "--teardown",
+        action="store_true",
+        default=False,
+        help="Teardown environment. Run pytest --basetemp=./tmp/ -vv --teardown src/bootstrap/setup::test_teardown to teardown your local dev environment.",  # pylint: disable=line-too-long
     )
     parser.addoption(
         "--sqlstore-provider",

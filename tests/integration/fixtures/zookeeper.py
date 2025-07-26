@@ -1,9 +1,12 @@
-import dataclasses
-
+import docker
+import docker.errors
 import pytest
 from testcontainers.core.container import DockerContainer, Network
 
-from fixtures import types
+from fixtures import dev, types
+from fixtures.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 
 @pytest.fixture(name="zookeeper", scope="package")
@@ -14,54 +17,53 @@ def zookeeper(
     Package-scoped fixture for Zookeeper TestContainer.
     """
 
-    dev = request.config.getoption("--dev")
-    if dev:
-        cached_zookeeper = pytestconfig.cache.get("zookeeper", None)
-        if cached_zookeeper:
-            return types.TestContainerDocker(
-                host_config=types.TestContainerUrlConfig(
-                    cached_zookeeper["host_config"]["scheme"],
-                    cached_zookeeper["host_config"]["address"],
-                    cached_zookeeper["host_config"]["port"],
-                ),
-                container_config=types.TestContainerUrlConfig(
-                    cached_zookeeper["container_config"]["scheme"],
-                    cached_zookeeper["container_config"]["address"],
-                    cached_zookeeper["container_config"]["port"],
-                ),
+    def create() -> types.TestContainerDocker:
+        version = request.config.getoption("--zookeeper-version")
+
+        container = DockerContainer(image=f"bitnami/zookeeper:{version}")
+        container.with_env("ALLOW_ANONYMOUS_LOGIN", "yes")
+        container.with_exposed_ports(2181)
+        container.with_network(network=network)
+
+        container.start()
+        return types.TestContainerDocker(
+            id=container.get_wrapped_container().id,
+            host_configs={
+                2181: types.TestContainerUrlConfig(
+                    scheme="tcp",
+                    address=container.get_container_host_ip(),
+                    port=container.get_exposed_port(2181),
+                )
+            },
+            container_configs={
+                2181: types.TestContainerUrlConfig(
+                    scheme="tcp",
+                    address=container.get_wrapped_container().name,
+                    port=2181,
+                )
+            },
+        )
+
+    def delete(container: types.TestContainerDocker):
+        client = docker.from_env()
+        try:
+            client.containers.get(container_id=container.id).stop()
+            client.containers.get(container_id=container.id).remove(v=True)
+        except docker.errors.NotFound:
+            logger.info(
+                "Skipping removal of Zookeeper, Zookeeper(%s) not found. Maybe it was manually removed?",
+                {"id": container.id},
             )
 
-    version = request.config.getoption("--zookeeper-version")
+    def restore(cache: dict) -> types.TestContainerDocker:
+        return types.TestContainerDocker.from_cache(cache)
 
-    container = DockerContainer(image=f"bitnami/zookeeper:{version}")
-    container.with_env("ALLOW_ANONYMOUS_LOGIN", "yes")
-    container.with_exposed_ports(2181)
-    container.with_network(network=network)
-
-    container.start()
-
-    def stop():
-        if dev:
-            return
-
-        container.stop(delete_volume=True)
-
-    request.addfinalizer(stop)
-
-    cached_zookeeper = types.TestContainerDocker(
-        host_config=types.TestContainerUrlConfig(
-            "tcp",
-            container.get_container_host_ip(),
-            container.get_exposed_port(2181),
-        ),
-        container_config=types.TestContainerUrlConfig(
-            "tcp",
-            container.get_wrapped_container().name,
-            2181,
-        ),
+    return dev.wrap(
+        request,
+        pytestconfig,
+        "zookeeper",
+        lambda: types.TestContainerDocker(id="", host_configs={}, container_configs={}),
+        create,
+        delete,
+        restore,
     )
-
-    if dev:
-        pytestconfig.cache.set("zookeeper", dataclasses.asdict(cached_zookeeper))
-
-    return cached_zookeeper

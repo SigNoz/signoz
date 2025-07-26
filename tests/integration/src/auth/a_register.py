@@ -9,13 +9,15 @@ logger = setup_logger(__name__)
 
 
 def test_register(signoz: types.SigNoz, get_jwt_token) -> None:
-    response = requests.get(signoz.self.host_config.get("/api/v1/version"), timeout=2)
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/version"), timeout=2
+    )
 
     assert response.status_code == HTTPStatus.OK
     assert response.json()["setupCompleted"] is False
 
     response = requests.post(
-        signoz.self.host_config.get("/api/v1/register"),
+        signoz.self.host_configs["8080"].get("/api/v1/register"),
         json={
             "name": "admin",
             "orgId": "",
@@ -27,7 +29,9 @@ def test_register(signoz: types.SigNoz, get_jwt_token) -> None:
     )
     assert response.status_code == HTTPStatus.OK
 
-    response = requests.get(signoz.self.host_config.get("/api/v1/version"), timeout=2)
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/version"), timeout=2
+    )
 
     assert response.status_code == HTTPStatus.OK
     assert response.json()["setupCompleted"] is True
@@ -35,7 +39,7 @@ def test_register(signoz: types.SigNoz, get_jwt_token) -> None:
     admin_token = get_jwt_token("admin@integration.test", "password")
 
     response = requests.get(
-        signoz.self.host_config.get("/api/v1/user"),
+        signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
         headers={"Authorization": f"Bearer {admin_token}"},
     )
@@ -52,7 +56,7 @@ def test_register(signoz: types.SigNoz, get_jwt_token) -> None:
     assert found_user["role"] == "ADMIN"
 
     response = requests.get(
-        signoz.self.host_config.get(f"/api/v1/user/{found_user["id"]}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/user/{found_user["id"]}"),
         timeout=2,
         headers={"Authorization": f"Bearer {admin_token}"},
     )
@@ -64,7 +68,7 @@ def test_register(signoz: types.SigNoz, get_jwt_token) -> None:
 def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
     # Generate an invite token for the editor user
     response = requests.post(
-        signoz.self.host_config.get("/api/v1/invite"),
+        signoz.self.host_configs["8080"].get("/api/v1/invite"),
         json={"email": "editor@integration.test", "role": "EDITOR"},
         timeout=2,
         headers={
@@ -75,7 +79,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
     assert response.status_code == HTTPStatus.CREATED
 
     response = requests.get(
-        signoz.self.host_config.get("/api/v1/invite"),
+        signoz.self.host_configs["8080"].get("/api/v1/invite"),
         timeout=2,
         headers={
             "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password")}"  # pylint: disable=line-too-long
@@ -84,13 +88,17 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
 
     invite_response = response.json()["data"]
     found_invite = next(
-        (invite for invite in invite_response if invite["email"] == "editor@integration.test"),
+        (
+            invite
+            for invite in invite_response
+            if invite["email"] == "editor@integration.test"
+        ),
         None,
     )
 
     # Register the editor user using the invite token
     response = requests.post(
-        signoz.self.host_config.get("/api/v1/invite/accept"),
+        signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
         json={
             "password": "password",
             "displayName": "editor",
@@ -102,7 +110,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
 
     # Verify that the invite token has been deleted
     response = requests.get(
-        signoz.self.host_config.get(
+        signoz.self.host_configs["8080"].get(
             f"/api/v1/invite/{found_invite['token']}"
         ),  # pylint: disable=line-too-long
         timeout=2,
@@ -112,7 +120,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
 
     # Verify that an admin endpoint cannot be called by the editor user
     response = requests.get(
-        signoz.self.host_config.get("/api/v1/user"),
+        signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
         headers={
             "Authorization": f"Bearer {get_jwt_token("editor@integration.test", "password")}"  # pylint: disable=line-too-long
@@ -123,7 +131,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
 
     # Verify that the editor has been created
     response = requests.get(
-        signoz.self.host_config.get("/api/v1/user"),
+        signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
         headers={
             "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password")}"  # pylint: disable=line-too-long
@@ -148,7 +156,7 @@ def test_revoke_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None
     admin_token = get_jwt_token("admin@integration.test", "password")
     # Generate an invite token for the viewer user
     response = requests.post(
-        signoz.self.host_config.get("/api/v1/invite"),
+        signoz.self.host_configs["8080"].get("/api/v1/invite"),
         json={"email": "viewer@integration.test", "role": "VIEWER"},
         timeout=2,
         headers={
@@ -159,7 +167,7 @@ def test_revoke_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None
     assert response.status_code == HTTPStatus.CREATED
 
     response = requests.get(
-        signoz.self.host_config.get("/api/v1/invite"),
+        signoz.self.host_configs["8080"].get("/api/v1/invite"),
         timeout=2,
         headers={
             "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password")}"  # pylint: disable=line-too-long
@@ -168,12 +176,16 @@ def test_revoke_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None
 
     invite_response = response.json()["data"]
     found_invite = next(
-        (invite for invite in invite_response if invite["email"] == "viewer@integration.test"),
+        (
+            invite
+            for invite in invite_response
+            if invite["email"] == "viewer@integration.test"
+        ),
         None,
     )
 
     response = requests.delete(
-        signoz.self.host_config.get(f"/api/v1/invite/{found_invite['id']}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/invite/{found_invite['id']}"),
         timeout=2,
         headers={"Authorization": f"Bearer {admin_token}"},
     )
@@ -182,7 +194,7 @@ def test_revoke_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None
 
     # Try registering the viewer user with the invite token
     response = requests.post(
-        signoz.self.host_config.get("/api/v1/invite/accept"),
+        signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
         json={
             "password": "password",
             "displayName": "viewer",
@@ -198,7 +210,7 @@ def test_self_access(signoz: types.SigNoz, get_jwt_token) -> None:
     admin_token = get_jwt_token("admin@integration.test", "password")
 
     response = requests.get(
-        signoz.self.host_config.get("/api/v1/user"),
+        signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
         headers={"Authorization": f"Bearer {admin_token}"},
     )
@@ -212,7 +224,7 @@ def test_self_access(signoz: types.SigNoz, get_jwt_token) -> None:
     )
 
     response = requests.get(
-        signoz.self.host_config.get(f"/api/v1/user/{found_user['id']}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/user/{found_user['id']}"),
         timeout=2,
         headers={"Authorization": f"Bearer {admin_token}"},
     )
