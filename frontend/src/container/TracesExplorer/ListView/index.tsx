@@ -1,6 +1,9 @@
+import './ListView.styles.scss';
+
+import { Select } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ResizeTable } from 'components/ResizeTable';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -18,8 +21,9 @@ import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { ArrowUp10, Minus } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import { memo, useCallback, useEffect, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
@@ -41,6 +45,8 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 	} = useQueryBuilder();
 
 	const panelType = panelTypeFromQueryBuilder || PANEL_TYPES.LIST;
+
+	const [orderDirection, setOrderDirection] = useState<string>('asc');
 
 	const {
 		selectedTime: globalSelectedTime,
@@ -104,7 +110,8 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 				selectColumns: options?.selectColumns,
 			},
 		},
-		ENTITY_VERSION_V4,
+		// ENTITY_VERSION_V4,
+		ENTITY_VERSION_V5,
 		{
 			queryKey,
 			enabled:
@@ -167,12 +174,32 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 	return (
 		<Container>
 			{transformedQueryTableData.length !== 0 && (
-				<TraceExplorerControls
-					isLoading={isFetching}
-					totalCount={totalCount}
-					config={config}
-					perPageOptions={PER_PAGE_OPTIONS}
-				/>
+				<div className="trace-explorer-controls">
+					<div className="order-by-container">
+						<div className="order-by-label">
+							Order by <Minus size={14} /> <ArrowUp10 size={14} />
+						</div>
+
+						<Select
+							placeholder="Select order by"
+							className="order-by-select"
+							style={{ width: 100 }}
+							value={orderDirection}
+							onChange={(value): void => setOrderDirection(value)}
+							options={[
+								{ label: 'Ascending', value: 'asc' },
+								{ label: 'Descending', value: 'desc' },
+							]}
+						/>
+					</div>
+
+					<TraceExplorerControls
+						isLoading={isFetching}
+						totalCount={totalCount}
+						config={config}
+						perPageOptions={PER_PAGE_OPTIONS}
+					/>
+				</div>
 			)}
 
 			{isError && <ErrorText>{data?.error || 'Something went wrong'}</ErrorText>}

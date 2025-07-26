@@ -6,6 +6,12 @@ import {
 	IBuilderQuery,
 	QueryFunctionProps,
 } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	BaseBuilderQuery,
+	LogBuilderQuery,
+	MetricBuilderQuery,
+	TraceBuilderQuery,
+} from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { SelectOption } from './select';
@@ -17,13 +23,22 @@ type UseQueryOperationsParams = Pick<QueryProps, 'index' | 'query'> &
 		entityVersion: string;
 	};
 
-export type HandleChangeQueryData = <
-	Key extends keyof IBuilderQuery,
-	Value extends IBuilderQuery[Key]
+// Generic type that can work with both legacy and V5 query types
+export type HandleChangeQueryData<T = IBuilderQuery> = <
+	Key extends keyof T,
+	Value extends T[Key]
 >(
 	key: Key,
 	value: Value,
 ) => void;
+
+// Legacy version for backward compatibility
+export type HandleChangeQueryDataLegacy = HandleChangeQueryData<IBuilderQuery>;
+
+// V5 version for new API
+export type HandleChangeQueryDataV5 = HandleChangeQueryData<
+	BaseBuilderQuery & (TraceBuilderQuery | LogBuilderQuery | MetricBuilderQuery)
+>;
 
 export type HandleChangeFormulaData = <
 	Key extends keyof IBuilderFormula,

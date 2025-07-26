@@ -782,18 +782,22 @@ function DateTimeSelection({
 					</Button>
 				</FormItem>
 			)}
+
 			{showOldExplorerCTA && (
 				<div style={{ marginRight: 12 }}>
 					<NewExplorerCTA />
 				</div>
 			)}
+
 			{!hasSelectedTimeError && !refreshButtonHidden && showRefreshText && (
-				<RefreshText
-					{...{
-						onLastRefreshHandler,
-					}}
-					refreshButtonHidden={refreshButtonHidden}
-				/>
+				<div className="refresh-text-container">
+					<RefreshText
+						{...{
+							onLastRefreshHandler,
+						}}
+						refreshButtonHidden={refreshButtonHidden}
+					/>
+				</div>
 			)}
 			<Form
 				form={formSelector}

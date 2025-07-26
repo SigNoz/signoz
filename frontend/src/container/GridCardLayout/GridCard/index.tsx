@@ -2,6 +2,7 @@ import logEvent from 'api/common/logEvent';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
@@ -51,6 +52,7 @@ function GridCardGraph({
 	customTimeRange,
 	customOnRowClick,
 	customTimeRangeWindowForCoRelation,
+	enableDrillDown,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -271,6 +273,12 @@ function GridCardGraph({
 		queryResponse.data.payload.data.result = sortedSeriesData;
 	}
 
+	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.PIE) {
+		const transformedData = populateMultipleResults(queryResponse?.data);
+		// eslint-disable-next-line no-param-reassign
+		queryResponse.data = transformedData;
+	}
+
 	const menuList =
 		widget.panelTypes === PANEL_TYPES.TABLE ||
 		widget.panelTypes === PANEL_TYPES.LIST ||
@@ -303,6 +311,7 @@ function GridCardGraph({
 					customErrorMessage={isInternalServerError ? customErrorMessage : undefined}
 					customOnRowClick={customOnRowClick}
 					customTimeRangeWindowForCoRelation={customTimeRangeWindowForCoRelation}
+					enableDrillDown={enableDrillDown}
 				/>
 			)}
 		</div>
@@ -318,6 +327,7 @@ GridCardGraph.defaultProps = {
 	version: 'v3',
 	analyticsEvent: undefined,
 	customTimeRangeWindowForCoRelation: undefined,
+	enableDrillDown: false,
 };
 
 export default memo(GridCardGraph);

@@ -69,7 +69,7 @@ function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 			}
 		>
 			<Button
-				className="periscope-btn"
+				className="periscope-btn ghost"
 				loading={isLoading}
 				icon={<FileDown size={14} />}
 			/>

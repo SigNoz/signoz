@@ -71,3 +71,21 @@ export const lightenColor = (color: string, opacity: number): string => {
 	// Create a new RGBA color string with the specified opacity
 	return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 };
+
+export const getTimeRangeFromUplotAxis = (
+	axis: any,
+	xValue: number,
+): { startTime: number; endTime: number } => {
+	// Use splits if available, otherwise fallback to 10 minutes (600000 milliseconds)
+	let gap =
+		(axis as any)._splits && (axis as any)._splits.length > 1
+			? (axis as any)._splits[1] - (axis as any)._splits[0]
+			: 600000; // 10 minutes in milliseconds
+
+	gap = Math.max(gap, 600000); // Minimum gap of 10 minutes in milliseconds
+
+	const startTime = xValue - gap;
+	const endTime = xValue + gap;
+
+	return { startTime, endTime };
+};

@@ -4,7 +4,9 @@
 	overflow-y: hidden;
 
 	.full-view-header-container {
-		height: 40px;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
 	}
 
 	.graph-container {
