@@ -41,17 +41,17 @@ func ValidateTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefunn
 	}
 
 	// Build filter clauses for each step
-	clauseStep1, err := tracev4.BuildTracesFilter(funnelSteps[0].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[0].Filters, false)
 	if err != nil {
 		return nil, err
 	}
-	clauseStep2, err := tracev4.BuildTracesFilter(funnelSteps[1].Filters)
+	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[1].Filters, false)
 	if err != nil {
 		return nil, err
 	}
 	clauseStep3 := ""
 	if len(funnel.Steps) > 2 {
-		clauseStep3, err = tracev4.BuildTracesFilter(funnelSteps[2].Filters)
+		clauseStep3, err = tracev4.BuildTracesFilterQuery(funnelSteps[2].Filters, false)
 		if err != nil {
 			return nil, err
 		}
@@ -125,17 +125,17 @@ func GetFunnelAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange trace
 	}
 
 	// Build filter clauses for each step
-	clauseStep1, err := tracev4.BuildTracesFilter(funnelSteps[0].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[0].Filters, false)
 	if err != nil {
 		return nil, err
 	}
-	clauseStep2, err := tracev4.BuildTracesFilter(funnelSteps[1].Filters)
+	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[1].Filters, false)
 	if err != nil {
 		return nil, err
 	}
 	clauseStep3 := ""
 	if len(funnel.Steps) > 2 {
-		clauseStep3, err = tracev4.BuildTracesFilter(funnelSteps[2].Filters)
+		clauseStep3, err = tracev4.BuildTracesFilterQuery(funnelSteps[2].Filters, false)
 		if err != nil {
 			return nil, err
 		}
@@ -238,17 +238,17 @@ func GetFunnelStepAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange t
 	}
 
 	// Build filter clauses for each step
-	clauseStep1, err := tracev4.BuildTracesFilter(funnelSteps[0].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[0].Filters, false)
 	if err != nil {
 		return nil, err
 	}
-	clauseStep2, err := tracev4.BuildTracesFilter(funnelSteps[1].Filters)
+	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[1].Filters, false)
 	if err != nil {
 		return nil, err
 	}
 	clauseStep3 := ""
 	if len(funnel.Steps) > 2 {
-		clauseStep3, err = tracev4.BuildTracesFilter(funnelSteps[2].Filters)
+		clauseStep3, err = tracev4.BuildTracesFilterQuery(funnelSteps[2].Filters, false)
 		if err != nil {
 			return nil, err
 		}
@@ -322,17 +322,17 @@ func GetStepAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange tracefu
 	}
 
 	// Build filter clauses for each step
-	clauseStep1, err := tracev4.BuildTracesFilter(funnelSteps[0].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[0].Filters, false)
 	if err != nil {
 		return nil, err
 	}
-	clauseStep2, err := tracev4.BuildTracesFilter(funnelSteps[1].Filters)
+	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[1].Filters, false)
 	if err != nil {
 		return nil, err
 	}
 	clauseStep3 := ""
 	if len(funnel.Steps) > 2 {
-		clauseStep3, err = tracev4.BuildTracesFilter(funnelSteps[2].Filters)
+		clauseStep3, err = tracev4.BuildTracesFilterQuery(funnelSteps[2].Filters, false)
 		if err != nil {
 			return nil, err
 		}
@@ -399,11 +399,11 @@ func GetSlowestTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefu
 	}
 
 	// Build filter clauses for the steps
-	clauseStep1, err := tracev4.BuildTracesFilter(funnelSteps[stepStartOrder].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[stepStartOrder].Filters, false)
 	if err != nil {
 		return nil, err
 	}
-	clauseStep2, err := tracev4.BuildTracesFilter(funnelSteps[stepEndOrder].Filters)
+	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[stepEndOrder].Filters, false)
 	if err != nil {
 		return nil, err
 	}
@@ -446,11 +446,11 @@ func GetErroredTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefu
 	}
 
 	// Build filter clauses for the steps
-	clauseStep1, err := tracev4.BuildTracesFilter(funnelSteps[stepStartOrder].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[stepStartOrder].Filters, false)
 	if err != nil {
 		return nil, err
 	}
-	clauseStep2, err := tracev4.BuildTracesFilter(funnelSteps[stepEndOrder].Filters)
+	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[stepEndOrder].Filters, false)
 	if err != nil {
 		return nil, err
 	}
