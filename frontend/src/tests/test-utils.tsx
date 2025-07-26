@@ -7,6 +7,7 @@ import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
+import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import TimezoneProvider from 'providers/Timezone';
 import React, { ReactElement } from 'react';
@@ -267,7 +268,9 @@ export function AllTheProviders({
 						<ErrorModalProvider>
 							<BrowserRouter>
 								<TimezoneProvider>
-									<QueryBuilderProvider>{children}</QueryBuilderProvider>
+									<PreferenceContextProvider>
+										<QueryBuilderProvider>{children}</QueryBuilderProvider>
+									</PreferenceContextProvider>
 								</TimezoneProvider>
 							</BrowserRouter>
 						</ErrorModalProvider>

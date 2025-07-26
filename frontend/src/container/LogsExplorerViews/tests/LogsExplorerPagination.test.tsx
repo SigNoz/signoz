@@ -1,4 +1,6 @@
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { noop } from 'lodash-es';
 import {
 	logsPaginationQueryRangeSuccessResponse,
 	PAGE_SIZE,
@@ -6,6 +8,7 @@ import {
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import LogsExplorer from 'pages/LogsExplorer';
+import { QueryBuilderContext } from 'providers/QueryBuilder';
 import React from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { VirtuosoMockContext } from 'react-virtuoso';
@@ -19,9 +22,67 @@ import {
 	waitFor,
 } from 'tests/test-utils';
 import { QueryRangePayload } from 'types/api/metrics/getQueryRange';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import { v4 as uuid } from 'uuid';
 
 const API_ENDPOINT = 'http://localhost/api/v4/query_range';
+
+// State to track when UpdateTimeInterval has been called and what the updated times should be
+let mockGlobalTimeState: {
+	minTime: number;
+	maxTime: number;
+	selectedTime: any;
+} | null = null;
+
+// Mock UpdateTimeInterval to update the mock state that useSelector will use
+jest.mock('store/actions', () => {
+	const originalModule = jest.requireActual('store/actions');
+	const GetMinMax = jest.requireActual('lib/getMinMax').default;
+
+	return {
+		...originalModule,
+		UpdateTimeInterval: (
+			interval: any,
+			dateTimeRange: [number, number] = [0, 0],
+		): ((dispatch: any) => void) => (): void => {
+			// Get the original min and max times
+			const { maxTime: originalMaxTime, minTime: originalMinTime } = GetMinMax(
+				interval,
+				dateTimeRange,
+			);
+
+			// Add 5 minutes to both times to ensure they are different
+			const fiveMinutesInNanoseconds = 5 * 60 * 1000 * 1000000;
+			const maxTime = originalMaxTime + fiveMinutesInNanoseconds;
+			const minTime = originalMinTime + fiveMinutesInNanoseconds;
+
+			// Update the mock state
+			mockGlobalTimeState = { minTime, maxTime, selectedTime: interval };
+		},
+	};
+});
+
+// Mock the Redux store's getState method to return updated global time
+const store = jest.requireActual('store').default;
+const originalGetState = store.getState;
+const getStateSpy = jest.spyOn(store, 'getState');
+
+getStateSpy.mockImplementation(() => {
+	const originalState = originalGetState();
+
+	// If we have mock global time state, update the globalTime in the store state
+	if (mockGlobalTimeState) {
+		return {
+			...originalState,
+			globalTime: {
+				...originalState.globalTime,
+				...mockGlobalTimeState,
+			},
+		};
+	}
+
+	return originalState;
+});
 
 jest.mock('uplot', () => {
 	const paths = {
@@ -66,6 +127,7 @@ jest.mock(
 			return <div>MockLogsExplorerChart</div>;
 		},
 );
+
 jest.mock(
 	'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2',
 	() =>
@@ -169,24 +231,28 @@ export const verifyFiltersAndOrderBy = (queryData: IBuilderQuery): void => {
 	}
 };
 
+let capturedPayloads: QueryRangePayload[];
 describe.skip('LogsExplorerViews Pagination', () => {
 	// Array to store captured API request payloads
-	let capturedPayloads: QueryRangePayload[];
 
 	beforeEach(() => {
 		// Use real timers for test setup, especially for server delays
 		jest.useRealTimers();
 		// Reset captured payloads array before each test
 		capturedPayloads = [];
+		// Reset mock call count for consistent test behavior
+		mockGlobalTimeState = null; // Reset mock state
 		// Setup the mock server to intercept and capture requests
 		setupServer(capturedPayloads);
 	});
 
-	afterAll(() => {
+	afterAll((): void => {
 		// Use fake timers after the tests are done.
 		jest.useFakeTimers();
 		// Explicitly set the fake system time if needed by other tests
 		jest.setSystemTime(new Date('2023-10-20'));
+		// Clean up mock state completely
+		mockGlobalTimeState = null;
 	});
 
 	it('should fetch next page with correct payload when scrolled to end', async () => {
@@ -297,5 +363,181 @@ describe.skip('LogsExplorerViews Pagination', () => {
 		});
 
 		verifyFiltersAndOrderBy(thirdQueryData);
+	});
+});
+
+interface LogsExplorerWithMockContextProps {
+	initialStagedQuery: Query;
+	initialCurrentQuery: Query;
+	onStateChange?: (stagedQuery: Query, currentQuery: Query) => void;
+}
+
+function LogsExplorerWithMockContext({
+	initialStagedQuery,
+	initialCurrentQuery,
+	onStateChange,
+}: LogsExplorerWithMockContextProps): JSX.Element {
+	const [stagedQuery, setStagedQuery] = React.useState(initialStagedQuery);
+	const [currentQuery, setCurrentQuery] = React.useState(initialCurrentQuery);
+
+	// Notify parent component when state changes
+	React.useEffect(() => {
+		if (onStateChange) {
+			onStateChange(stagedQuery, currentQuery);
+		}
+	}, [stagedQuery, currentQuery, onStateChange]);
+
+	const handleRunQuery = React.useCallback((): void => {
+		// Generate new IDs for both queries
+		const newStagedQueryId = uuid();
+		const newCurrentQueryId = uuid();
+
+		// Update the queries with new IDs
+		const updatedStagedQuery = {
+			...stagedQuery,
+			id: newStagedQueryId,
+		};
+		const updatedCurrentQuery = {
+			...currentQuery,
+			id: newCurrentQueryId,
+		};
+
+		setStagedQuery(updatedStagedQuery);
+		setCurrentQuery(updatedCurrentQuery);
+	}, [stagedQuery, currentQuery]);
+
+	const contextValue = React.useMemo(
+		() => ({
+			isDefaultQuery: (): boolean => false,
+			currentQuery,
+			stagedQuery,
+			setSupersetQuery: jest.fn(),
+			supersetQuery: initialQueriesMap.logs,
+			initialDataSource: null,
+			panelType: PANEL_TYPES.LIST,
+			lastUsedQuery: 0,
+			setLastUsedQuery: noop,
+			handleSetQueryData: noop,
+			handleSetFormulaData: noop,
+			handleSetQueryItemData: noop,
+			removeQueryBuilderEntityByIndex: noop,
+			removeQueryTypeItemByIndex: noop,
+			addNewBuilderQuery: noop,
+			cloneQuery: noop,
+			addNewFormula: noop,
+			addNewQueryItem: noop,
+			handleRunQuery,
+			resetQuery: noop,
+			updateAllQueriesOperators: (): Query => initialQueriesMap.logs,
+			updateQueriesData: (): Query => initialQueriesMap.logs,
+			initQueryBuilderData: noop,
+			handleOnUnitsChange: noop,
+			isStagedQueryUpdated: (): boolean => false,
+		}),
+		[currentQuery, stagedQuery, handleRunQuery],
+	);
+
+	const virtuosoContextValue = React.useMemo(
+		() => ({
+			viewportHeight: 500,
+			itemHeight: 100,
+		}),
+		[],
+	);
+
+	return (
+		<QueryBuilderContext.Provider value={contextValue as any}>
+			<VirtuosoMockContext.Provider value={virtuosoContextValue}>
+				<LogsExplorer />
+			</VirtuosoMockContext.Provider>
+		</QueryBuilderContext.Provider>
+	);
+}
+
+LogsExplorerWithMockContext.defaultProps = {
+	onStateChange: undefined,
+};
+
+describe('Logs Explorer -> stage and run query', () => {
+	let mockStagedQuery: Query;
+	let mockCurrentQuery: Query;
+
+	beforeEach(() => {
+		// Use real timers for test setup, especially for server delays
+		jest.useRealTimers();
+		// Reset captured payloads array before each test
+		capturedPayloads = [];
+		// Reset mock call count for consistent test behavior
+		mockGlobalTimeState = null; // Reset mock state
+
+		// Setup the mock server to intercept and capture requests
+		setupServer(capturedPayloads);
+
+		// Initialize mock queries with initial IDs
+		mockStagedQuery = {
+			...initialQueriesMap.logs,
+			id: uuid(),
+		};
+		mockCurrentQuery = {
+			...initialQueriesMap.logs,
+			id: uuid(),
+		};
+	});
+
+	it('should recalculate the start and end timestamps for list and graph queries in logs explorer', async () => {
+		// Setup the mock server to intercept and capture requests
+
+		// Store initial IDs for comparison
+		const initialStagedQueryId = mockStagedQuery.id;
+		const initialCurrentQueryId = mockCurrentQuery.id;
+
+		let currentStagedQuery = mockStagedQuery;
+		let currentCurrentQuery = mockCurrentQuery;
+
+		const handleStateChange = (stagedQuery: Query, currentQuery: Query): void => {
+			currentStagedQuery = stagedQuery;
+			currentCurrentQuery = currentQuery;
+		};
+
+		render(
+			<LogsExplorerWithMockContext
+				initialStagedQuery={mockStagedQuery}
+				initialCurrentQuery={mockCurrentQuery}
+				onStateChange={handleStateChange}
+			/>,
+		);
+
+		await waitFor(() => {
+			expect(
+				screen.queryByText('pending_data_placeholder'),
+			).not.toBeInTheDocument();
+		});
+
+		// check for no data state to not be present
+		await waitFor(() => {
+			expect(screen.queryByText(/No logs yet/)).not.toBeInTheDocument();
+		});
+
+		await act(async () => {
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: /stage & run query/i,
+				}),
+			);
+		});
+
+		await waitFor(() => {
+			expect(capturedPayloads.length).toBe(2);
+		});
+
+		// Verify that the IDs have changed
+		expect(currentStagedQuery.id).not.toBe(initialStagedQueryId);
+		expect(currentCurrentQuery.id).not.toBe(initialCurrentQueryId);
+
+		const firstPayload = capturedPayloads[0];
+		const secondPayload = capturedPayloads[1];
+
+		expect(firstPayload.start).not.toEqual(secondPayload.start);
+		expect(firstPayload.end).not.toEqual(secondPayload.end);
 	});
 });
