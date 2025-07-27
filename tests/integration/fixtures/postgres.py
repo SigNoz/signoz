@@ -60,7 +60,7 @@ def postgres(
             conn=connection,
             env={
                 "SIGNOZ_SQLSTORE_PROVIDER": "postgres",
-                "SIGNOZ_SQLSTORE_POSTGRES_DSN": f"postgresql://{container.username}:{container.password}@{container.get_wrapped_container().name}:{5432}/{container.dbname}",  # pylint: disable=line-too-long
+                "SIGNOZ_SQLSTORE_POSTGRES_DSN": f"postgresql://{container.username}:{container.password}@{container.get_wrapped_container().name}:{5432}/{container.dbname}",
                 "SIGNOZ_SQLSTORE_POSTGRES_DBNAME": container.dbname,
                 "SIGNOZ_SQLSTORE_POSTGRES_USER": container.username,
                 "SIGNOZ_SQLSTORE_POSTGRES_PASSWORD": container.password,

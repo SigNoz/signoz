@@ -25,7 +25,7 @@ def migrator(
 
         container = client.containers.run(
             image=f"signoz/signoz-schema-migrator:{version}",
-            command=f"sync --replication=true --cluster-name=cluster --up= --dsn={clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN"]}",  # pylint: disable=line-too-long
+            command=f"sync --replication=true --cluster-name=cluster --up= --dsn={clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN"]}",
             detach=True,
             auto_remove=False,
             network=network.id,
@@ -43,7 +43,7 @@ def migrator(
 
         container = client.containers.run(
             image=f"signoz/signoz-schema-migrator:{version}",
-            command=f"async --replication=true --cluster-name=cluster --up= --dsn={clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN"]}",  # pylint: disable=line-too-long
+            command=f"async --replication=true --cluster-name=cluster --up= --dsn={clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN"]}",
             detach=True,
             auto_remove=False,
             network=network.id,

@@ -72,7 +72,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
         json={"email": "editor@integration.test", "role": "EDITOR"},
         timeout=2,
         headers={
-            "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password")}"  # pylint: disable=line-too-long
+            "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password")}"
         },
     )
 
@@ -82,7 +82,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
         timeout=2,
         headers={
-            "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password")}"  # pylint: disable=line-too-long
+            "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password")}"
         },
     )
 
@@ -110,9 +110,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
 
     # Verify that the invite token has been deleted
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/invite/{found_invite['token']}"
-        ),  # pylint: disable=line-too-long
+        signoz.self.host_configs["8080"].get(f"/api/v1/invite/{found_invite['token']}"),
         timeout=2,
     )
 
@@ -123,7 +121,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
         signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
         headers={
-            "Authorization": f"Bearer {get_jwt_token("editor@integration.test", "password")}"  # pylint: disable=line-too-long
+            "Authorization": f"Bearer {get_jwt_token("editor@integration.test", "password")}"
         },
     )
 
@@ -134,7 +132,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
         signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
         headers={
-            "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password")}"  # pylint: disable=line-too-long
+            "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password")}"
         },
     )
 
@@ -159,9 +157,7 @@ def test_revoke_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
         json={"email": "viewer@integration.test", "role": "VIEWER"},
         timeout=2,
-        headers={
-            "Authorization": f"Bearer {admin_token}"  # pylint: disable=line-too-long
-        },
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == HTTPStatus.CREATED
@@ -170,7 +166,7 @@ def test_revoke_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
         timeout=2,
         headers={
-            "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password")}"  # pylint: disable=line-too-long
+            "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password")}"
         },
     )
 

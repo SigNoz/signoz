@@ -126,7 +126,7 @@ def clickhouse(
             ),
             conn=connection,
             env={
-                "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN": f"tcp://{container.username}:{container.password}@{container.get_wrapped_container().name}:{9000}",  # pylint: disable=line-too-long
+                "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN": f"tcp://{container.username}:{container.password}@{container.get_wrapped_container().name}:{9000}",
                 "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_USERNAME": container.username,
                 "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PASSWORD": container.password,
                 "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER": "cluster",

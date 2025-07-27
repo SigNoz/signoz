@@ -1,16 +1,17 @@
-import time
-from datetime import datetime, timezone, timedelta
-from typing import Callable, List
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
-from fixtures import types
-from fixtures.logs import Logs
+from typing import Callable, List
+
 import requests
+
+from fixtures import types
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.logs import Logs
 
 
 def test_logs_list(
     signoz: types.SigNoz,
-    create_user_admin: None,
+    create_user_admin: None,  # pylint: disable=unused-argument
     get_jwt_token: Callable[[], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
@@ -66,6 +67,7 @@ def test_logs_list(
     # Query Logs for the last 10 seconds and check if the logs are returned in the correct order
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
         headers={
             "authorization": f"Bearer {token}",
         },
@@ -154,6 +156,7 @@ def test_logs_list(
     # Query values of severity_text attribute
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v3/autocomplete/attribute_values"),
+        timeout=2,
         headers={
             "authorization": f"Bearer {token}",
         },
@@ -171,14 +174,15 @@ def test_logs_list(
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
 
-    stringAttributeValues = response.json()["data"]["stringAttributeValues"]
-    assert len(stringAttributeValues) == 2
-    assert "DEBUG" in stringAttributeValues
-    assert "INFO" in stringAttributeValues
+    values = response.json()["data"]["stringAttributeValues"]
+    assert len(values) == 2
+    assert "DEBUG" in values
+    assert "INFO" in values
 
     # Query values of code.file attribute
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v3/autocomplete/attribute_values"),
+        timeout=2,
         headers={
             "authorization": f"Bearer {token}",
         },
@@ -196,14 +200,15 @@ def test_logs_list(
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
 
-    stringAttributeValues = response.json()["data"]["stringAttributeValues"]
-    assert len(stringAttributeValues) == 2
-    assert "/opt/Integration.java" in stringAttributeValues
-    assert "/opt/integration.go" in stringAttributeValues
+    values = response.json()["data"]["stringAttributeValues"]
+    assert len(values) == 2
+    assert "/opt/Integration.java" in values
+    assert "/opt/integration.go" in values
 
     # Query values of code.line attribute
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v3/autocomplete/attribute_values"),
+        timeout=2,
         headers={
             "authorization": f"Bearer {token}",
         },
@@ -222,6 +227,6 @@ def test_logs_list(
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
 
-    numberAttributeValues = response.json()["data"]["numberAttributeValues"]
-    assert len(numberAttributeValues) == 1
-    assert 120 in numberAttributeValues
+    values = response.json()["data"]["numberAttributeValues"]
+    assert len(values) == 1
+    assert 120 in values

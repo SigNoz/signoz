@@ -38,7 +38,7 @@ addopts = "-ra"
 ignore = [".venv"]
 
 [tool.pylint.format]
-max-line-length = "120"
+max-line-length = "400"
 
 [tool.pylint."messages control"]
 disable = ["missing-module-docstring", "missing-function-docstring", "missing-class-docstring", "duplicate-code", "dangerous-default-value", "too-many-positional-arguments","too-many-arguments","too-few-public-methods","too-many-instance-attributes","too-many-locals"]

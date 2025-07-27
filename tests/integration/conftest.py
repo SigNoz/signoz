@@ -21,13 +21,13 @@ def pytest_addoption(parser: pytest.Parser):
         "--reuse",
         action="store_true",
         default=False,
-        help="Reuse environment. Use pytest --basetemp=./tmp/ -vv --reuse src/bootstrap/setup::test_setup to setup your local dev environment for writing tests.",  # pylint: disable=line-too-long
+        help="Reuse environment. Use pytest --basetemp=./tmp/ -vv --reuse src/bootstrap/setup::test_setup to setup your local dev environment for writing tests.",
     )
     parser.addoption(
         "--teardown",
         action="store_true",
         default=False,
-        help="Teardown environment. Run pytest --basetemp=./tmp/ -vv --teardown src/bootstrap/setup::test_teardown to teardown your local dev environment.",  # pylint: disable=line-too-long
+        help="Teardown environment. Run pytest --basetemp=./tmp/ -vv --teardown src/bootstrap/setup::test_teardown to teardown your local dev environment.",
     )
     parser.addoption(
         "--sqlstore-provider",

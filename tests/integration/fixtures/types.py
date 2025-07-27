@@ -69,7 +69,7 @@ class TestContainerDocker:
         }
 
     def __log__(self) -> str:
-        return f"TestContainerDocker(id={self.id}, host_configs={', '.join(host_config.__log__() for host_config in self.host_configs.values())}, container_configs={', '.join(container_config.__log__() for container_config in self.container_configs.values())})"  # pylint: disable=line-too-long
+        return f"TestContainerDocker(id={self.id}, host_configs={', '.join(host_config.__log__() for host_config in self.host_configs.values())}, container_configs={', '.join(container_config.__log__() for container_config in self.container_configs.values())})"
 
 
 @dataclass
@@ -118,7 +118,7 @@ class SigNoz:
         return self.self.__cache__()
 
     def __log__(self) -> str:
-        return f"SigNoz(self={self.self.__log__()}, sqlstore={self.sqlstore.__log__()}, telemetrystore={self.telemetrystore.__log__()}, zeus={self.zeus.__log__()})"  # pylint: disable=line-too-long
+        return f"SigNoz(self={self.self.__log__()}, sqlstore={self.sqlstore.__log__()}, telemetrystore={self.telemetrystore.__log__()}, zeus={self.zeus.__log__()})"
 
 
 @dataclass

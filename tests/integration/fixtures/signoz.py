@@ -81,13 +81,13 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
             for attempt in range(10):
                 try:
                     response = requests.get(
-                        f"http://{container.get_container_host_ip()}:{container.get_exposed_port(8080)}/api/v1/health",  # pylint: disable=line-too-long
+                        f"http://{container.get_container_host_ip()}:{container.get_exposed_port(8080)}/api/v1/health",
                         timeout=2,
                     )
                     return response.status_code == HTTPStatus.OK
                 except Exception:  # pylint: disable=broad-exception-caught
                     logger.info(
-                        "Attempt %s at readiness check for SigNoz container %s failed, going to retry ...",  # pylint: disable=line-too-long
+                        "Attempt %s at readiness check for SigNoz container %s failed, going to retry ...",
                         attempt + 1,
                         container,
                     )
