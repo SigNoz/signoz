@@ -304,3 +304,189 @@ def test_logs_list(
     values = response.json()["data"]["values"]["numberValues"]
     assert len(values) == 1
     assert 120 in values
+
+
+def test_logs_time_series(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_jwt_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+) -> None:
+    """
+    Setup:
+    Insert 17 logs with service.name attribute set to "java" and severity_text attribute set to "DEBUG", 23 logs with service.name attribute set to "erlang" and severity_text attribute set to "ERROR", 29 logs with service.name attribute set to "go" and severity_text attribute set to "WARNING".
+    All logs have incrementing code.line attribute, modulo 2 for host.name and cloud.account.id.
+
+    Tests:
+    1. Query Count of all logs for the last 10 seconds
+    """
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    logs: List[Logs] = []
+    for i in range(17):
+        logs.append(
+            Logs(
+                timestamp=now - timedelta(microseconds=i + 1),
+                resources={
+                    "deployment.environment": "production",
+                    "service.name": "java",
+                    "os.type": "linux",
+                    "host.name": f"linux-00{i%2}",
+                    "cloud.provider": "integration",
+                    "cloud.account.id": f"00{i%2}",
+                },
+                attributes={
+                    "log.iostream": "stdout",
+                    "logtag": "F",
+                    "code.file": "/opt/Integration.java",
+                    "code.function": "com.example.Integration.process",
+                    "code.line": i + 1,
+                    "telemetry.sdk.language": "java",
+                },
+                body=f"This is a log message, number {i+1} coming from a java application",
+                severity_text="DEBUG",
+            )
+        )
+    for i in range(23):
+        logs.append(
+            Logs(
+                timestamp=now - timedelta(minutes=1) - timedelta(microseconds=i + 1),
+                resources={
+                    "deployment.environment": "production",
+                    "service.name": "erlang",
+                    "os.type": "linux",
+                    "host.name": f"linux-00{i%2}",
+                    "cloud.provider": "integration",
+                    "cloud.account.id": f"00{i%2}",
+                },
+                attributes={
+                    "log.iostream": "stdout",
+                    "logtag": "F",
+                    "code.file": "/opt/Integration.erlang",
+                    "code.function": "com.example.Integration.process",
+                    "code.line": i + 1,
+                    "telemetry.sdk.language": "erlang",
+                },
+                body=f"This is a log message, number {i+1} coming from a erlang application",
+                severity_text="ERROR",
+            )
+        )
+    for i in range(29):
+        logs.append(
+            Logs(
+                timestamp=now - timedelta(minutes=2) - timedelta(microseconds=i + 1),
+                resources={
+                    "deployment.environment": "production",
+                    "service.name": "go",
+                    "os.type": "linux",
+                    "host.name": f"linux-00{i%2}",
+                    "cloud.provider": "integration",
+                    "cloud.account.id": f"00{i%2}",
+                },
+                attributes={
+                    "log.iostream": "stdout",
+                    "logtag": "F",
+                    "code.file": "/opt/Integration.go",
+                    "code.function": "com.example.Integration.process",
+                    "code.line": i + 1,
+                    "telemetry.sdk.language": "go",
+                },
+                body=f"This is a log message, number {i+1} coming from a go application",
+                severity_text="WARNING",
+            )
+        )
+    insert_logs(logs)
+
+    token = get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+
+    # Query Count of all logs for the last 3 minutes
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json={
+            "schemaVersion": "v1",
+            "start": int(
+                (
+                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+                    - timedelta(minutes=5)
+                ).timestamp()
+                * 1000
+            ),
+            "end": int(
+                datetime.now(tz=timezone.utc)
+                .replace(second=0, microsecond=0)
+                .timestamp()
+                * 1000
+            ),
+            "requestType": "time_series",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": False,
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+    print(response.json())
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+
+    aggregations = results[0]["aggregations"]
+    assert len(aggregations) == 1
+
+    series = aggregations[0]["series"]
+    assert len(series) == 1
+
+    values = series[0]["values"]
+    assert len(values) == 3
+
+    assert [
+        i
+        for i in values
+        if i
+        not in [
+            {
+                "timestamp": int(
+                    (now - timedelta(minutes=3))
+                    .replace(second=0, microsecond=0)
+                    .timestamp()
+                    * 1000
+                ),
+                "value": 29,
+            },
+            {
+                "timestamp": int(
+                    (now - timedelta(minutes=2))
+                    .replace(second=0, microsecond=0)
+                    .timestamp()
+                    * 1000
+                ),
+                "value": 23,
+            },
+            {
+                "timestamp": int(
+                    (now - timedelta(minutes=1))
+                    .replace(second=0, microsecond=0)
+                    .timestamp()
+                    * 1000
+                ),
+                "value": 17,
+            },
+        ]
+    ] == []

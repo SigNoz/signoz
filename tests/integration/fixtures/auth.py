@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from typing import Callable
 
 import pytest
 import requests
@@ -49,7 +50,7 @@ def create_user_admin(
 
 
 @pytest.fixture(name="get_jwt_token", scope="module")
-def get_jwt_token(signoz: types.SigNoz) -> str:
+def get_jwt_token(signoz: types.SigNoz) -> Callable[[str, str], str]:
     def _get_jwt_token(email: str, password: str) -> str:
         response = requests.post(
             signoz.self.host_configs["8080"].get("/api/v1/login"),

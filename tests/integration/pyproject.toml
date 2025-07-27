@@ -41,7 +41,7 @@ ignore = [".venv"]
 max-line-length = "400"
 
 [tool.pylint."messages control"]
-disable = ["missing-module-docstring", "missing-function-docstring", "missing-class-docstring", "duplicate-code", "dangerous-default-value", "too-many-positional-arguments","too-many-arguments","too-few-public-methods","too-many-instance-attributes","too-many-locals"]
+disable = ["missing-module-docstring", "missing-function-docstring", "missing-class-docstring", "duplicate-code", "dangerous-default-value", "too-many-positional-arguments", "too-many-arguments", "too-few-public-methods", "too-many-instance-attributes", "too-many-locals", "too-many-statements"]
 
 [tool.isort]
 profile = "black"
