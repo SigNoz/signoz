@@ -371,7 +371,7 @@ export const helpSupportDropdownMenuItems: SidebarItem[] = [
 		key: 'github',
 		label: (
 			<div className="nav-item-label-container">
-				<span>Github</span>
+				<span>GitHub</span>
 				<ArrowUpRight size={14} />
 			</div>
 		),
