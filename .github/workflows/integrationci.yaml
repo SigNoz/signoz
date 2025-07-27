@@ -16,6 +16,7 @@ jobs:
         src:
           - bootstrap
           - auth
+          - querier
         sqlstore-provider:
           - postgres
           - sqlite
