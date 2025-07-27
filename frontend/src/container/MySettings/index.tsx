@@ -200,6 +200,7 @@ function MySettings(): JSX.Element {
 								checked={sideNavPinned}
 								onChange={handleSideNavPinnedChange}
 								loading={isUpdatingUserPreference}
+								data-testid="side-nav-pinned-switch"
 							/>
 						</div>
 
