@@ -111,6 +111,27 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		(state) => state.app,
 	);
 
+	const isWorkspaceAccessRestricted = useMemo(() => {
+		if (!activeLicense) {
+			return false;
+		}
+
+		const isTerminated = activeLicense.state === LicenseState.TERMINATED;
+		const isExpired = activeLicense.state === LicenseState.EXPIRED;
+		const isCancelled = activeLicense.state === LicenseState.CANCELLED;
+		const isDefaulted = activeLicense.state === LicenseState.DEFAULTED;
+		const isEvaluationExpired =
+			activeLicense.state === LicenseState.EVALUATION_EXPIRED;
+
+		return (
+			isTerminated ||
+			isExpired ||
+			isCancelled ||
+			isDefaulted ||
+			isEvaluationExpired
+		);
+	}, [activeLicense]);
+
 	const handleBillingOnSuccess = (
 		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,
 	): void => {
@@ -200,7 +221,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		if (
 			isCloudUserVal &&
 			Boolean(latestVersion) &&
-			latestVersion !== seenChangelogVersion
+			latestVersion !== seenChangelogVersion &&
+			!isWorkspaceAccessRestricted
 		) {
 			// Automatically open the changelog modal for cloud users after 1s, if they've not seen this version before.
 			timer = setTimeout(() => {
@@ -216,6 +238,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		latestVersion,
 		seenChangelogVersion,
 		toggleChangelogModal,
+		isWorkspaceAccessRestricted,
 	]);
 
 	useEffect(() => {
@@ -370,20 +393,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	useEffect(() => {
 		if (!isFetchingActiveLicense && activeLicense) {
-			const isTerminated = activeLicense.state === LicenseState.TERMINATED;
-			const isExpired = activeLicense.state === LicenseState.EXPIRED;
-			const isCancelled = activeLicense.state === LicenseState.CANCELLED;
-			const isDefaulted = activeLicense.state === LicenseState.DEFAULTED;
-			const isEvaluationExpired =
-				activeLicense.state === LicenseState.EVALUATION_EXPIRED;
-
-			const isWorkspaceAccessRestricted =
-				isTerminated ||
-				isExpired ||
-				isCancelled ||
-				isDefaulted ||
-				isEvaluationExpired;
-
 			const { platform } = activeLicense;
 
 			if (
@@ -393,7 +402,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				setShowWorkspaceRestricted(true);
 			}
 		}
-	}, [isFetchingActiveLicense, activeLicense]);
+	}, [isFetchingActiveLicense, activeLicense, isWorkspaceAccessRestricted]);
 
 	useEffect(() => {
 		if (
