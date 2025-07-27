@@ -183,7 +183,13 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	useEffect(() => {
 		// refetch the changelog only when the current tab becomes active + there isn't an active request
-		if (!getChangelogByVersionResponse.isLoading && isVisible) {
+		if (
+			isVisible &&
+			!changelog &&
+			!getChangelogByVersionResponse.isLoading &&
+			isLoggedIn &&
+			Boolean(latestVersion)
+		) {
 			getChangelogByVersionResponse.refetch();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
