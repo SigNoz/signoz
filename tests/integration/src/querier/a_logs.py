@@ -15,6 +15,16 @@ def test_logs_list(
     get_jwt_token: Callable[[], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
+    """
+    1. Insert 2 logs with different attributes
+    2. Query logs for the last 10 seconds and check if the logs are returned in the correct order
+    3. Query values of severity_text attribute from the autocomplete API
+    4. Query values of severity_text attribute from the fields API
+    5. Query values of code.file attribute from the autocomplete API
+    6. Query values of code.file attribute from the fields API
+    7. Query values of code.line attribute from the autocomplete API
+    8. Query values of code.line attribute from the fields API
+    """
     insert_logs(
         [
             Logs(
@@ -153,7 +163,7 @@ def test_logs_list(
     }
     assert rows[1]["data"]["attributes_number"] == {"code.line": 120}
 
-    # Query values of severity_text attribute
+    # Query values of severity_text attribute from the autocomplete API
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v3/autocomplete/attribute_values"),
         timeout=2,
@@ -179,7 +189,29 @@ def test_logs_list(
     assert "DEBUG" in values
     assert "INFO" in values
 
-    # Query values of code.file attribute
+    # Query values of severity_text attribute from the fields API
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/values"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "logs",
+            "name": "severity_text",
+            "searchText": "",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    values = response.json()["data"]["values"]["stringValues"]
+    assert len(values) == 2
+    assert "DEBUG" in values
+    assert "INFO" in values
+
+    # Query values of code.file attribute from the autocomplete API
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v3/autocomplete/attribute_values"),
         timeout=2,
@@ -205,7 +237,29 @@ def test_logs_list(
     assert "/opt/Integration.java" in values
     assert "/opt/integration.go" in values
 
-    # Query values of code.line attribute
+    # Query values of code.file attribute from the fields API
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/values"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "logs",
+            "name": "code.file",
+            "searchText": "",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    values = response.json()["data"]["values"]["stringValues"]
+    assert len(values) == 2
+    assert "/opt/Integration.java" in values
+    assert "/opt/integration.go" in values
+
+    # Query values of code.line attribute from the autocomplete API
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v3/autocomplete/attribute_values"),
         timeout=2,
@@ -223,10 +277,30 @@ def test_logs_list(
         },
     )
 
-    print(response.json())
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
 
     values = response.json()["data"]["numberAttributeValues"]
+    assert len(values) == 1
+    assert 120 in values
+
+    # Query values of code.line attribute from the fields API
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/values"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "logs",
+            "name": "code.line",
+            "searchText": "",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    values = response.json()["data"]["values"]["numberValues"]
     assert len(values) == 1
     assert 120 in values
