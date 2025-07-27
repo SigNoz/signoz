@@ -318,14 +318,15 @@ def test_logs_time_series(
     All logs have incrementing code.line attribute, modulo 2 for host.name and cloud.account.id.
 
     Tests:
-    1. Query Count of all logs for the last 10 seconds
+    1. count() of all logs for the last 5 minutes
     """
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     logs: List[Logs] = []
+
     for i in range(17):
         logs.append(
             Logs(
-                timestamp=now - timedelta(microseconds=i + 1),
+                timestamp=now - timedelta(microseconds=i + 1), # These logs will be grouped in the now - 1 minute bucket
                 resources={
                     "deployment.environment": "production",
                     "service.name": "java",
@@ -349,7 +350,7 @@ def test_logs_time_series(
     for i in range(23):
         logs.append(
             Logs(
-                timestamp=now - timedelta(minutes=1) - timedelta(microseconds=i + 1),
+                timestamp=now - timedelta(minutes=1) - timedelta(microseconds=i + 1), # These logs will be grouped in the now - 2 minute bucket
                 resources={
                     "deployment.environment": "production",
                     "service.name": "erlang",
@@ -373,7 +374,7 @@ def test_logs_time_series(
     for i in range(29):
         logs.append(
             Logs(
-                timestamp=now - timedelta(minutes=2) - timedelta(microseconds=i + 1),
+                timestamp=now - timedelta(minutes=2) - timedelta(microseconds=i + 1), # These logs will be grouped in the now - 3 minute bucket
                 resources={
                     "deployment.environment": "production",
                     "service.name": "go",
@@ -398,7 +399,7 @@ def test_logs_time_series(
 
     token = get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
-    # Query Count of all logs for the last 3 minutes
+    # Query Count of all logs for the last 5 minutes
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -442,7 +443,6 @@ def test_logs_time_series(
 
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
-    print(response.json())
 
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
