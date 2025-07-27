@@ -567,6 +567,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					return [
 						...prevState,
 						{
+							type: 'divider',
+						},
+						{
 							key: changelogKey,
 							label: (
 								<div className="nav-item-label-container">
@@ -576,12 +579,17 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 							),
 							icon: <ScrollText size={14} />,
 							itemKey: changelogKey,
+							isExternal: true,
+							url: 'https://signoz.io/changelog/',
 						},
 					];
 				}
 
 				return [
 					...prevState,
+					{
+						type: 'divider',
+					},
 					{
 						type: 'group',
 						label: "WHAT's NEW",
@@ -597,6 +605,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 						),
 						icon: <ScrollText size={14} />,
 						itemKey: changelogKey,
+						isExternal: true,
+						url: 'https://signoz.io/changelog/',
 					},
 				];
 			});
@@ -769,7 +779,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					break;
 				case 'changelog-1':
 				case 'changelog-2':
-				case CHANGELOG_LABEL.toLowerCase().replace(' ', '-'):
 					toggleChangelogModal();
 					break;
 				default:
