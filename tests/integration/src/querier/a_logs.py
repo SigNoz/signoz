@@ -71,7 +71,10 @@ def test_logs_list(
         },
         json={
             "schemaVersion": "v1",
-            "start": int((datetime.now(tz=timezone.utc) - timedelta(seconds=10)).timestamp() * 1000),
+            "start": int(
+                (datetime.now(tz=timezone.utc) - timedelta(seconds=10)).timestamp()
+                * 1000
+            ),
             "end": int(datetime.now(tz=timezone.utc).timestamp() * 1000),
             "requestType": "raw",
             "compositeQuery": {
@@ -107,15 +110,46 @@ def test_logs_list(
     rows = results[0]["rows"]
     assert len(rows) == 2
 
-    assert rows[0]["data"]["body"] == "This is a log message, coming from a go application"
-    assert rows[0]["data"]["resources_string"] == {'cloud.account.id': '001', 'cloud.provider': 'integration', 'deployment.environment': 'production', 'host.name': 'linux-001', 'os.type': 'linux', 'service.name': 'go'}
-    assert rows[0]["data"]["attributes_string"] == {'code.file': '/opt/integration.go', 'code.function': 'com.example.Integration.process', 'log.iostream': 'stdout', 'logtag': 'F', 'telemetry.sdk.language': 'go'}
-    assert rows[0]["data"]["attributes_number"] == {'code.line': 120}
+    assert (
+        rows[0]["data"]["body"] == "This is a log message, coming from a go application"
+    )
+    assert rows[0]["data"]["resources_string"] == {
+        "cloud.account.id": "001",
+        "cloud.provider": "integration",
+        "deployment.environment": "production",
+        "host.name": "linux-001",
+        "os.type": "linux",
+        "service.name": "go",
+    }
+    assert rows[0]["data"]["attributes_string"] == {
+        "code.file": "/opt/integration.go",
+        "code.function": "com.example.Integration.process",
+        "log.iostream": "stdout",
+        "logtag": "F",
+        "telemetry.sdk.language": "go",
+    }
+    assert rows[0]["data"]["attributes_number"] == {"code.line": 120}
 
-    assert rows[1]["data"]["body"] == "This is a log message, coming from a java application"
-    assert rows[1]["data"]["resources_string"] == {'cloud.account.id': '001', 'cloud.provider': 'integration', 'deployment.environment': 'production', 'host.name': 'linux-001', 'os.type': 'linux', 'service.name': 'java'}
-    assert rows[1]["data"]["attributes_string"] == {'code.file': '/opt/Integration.java', 'code.function': 'com.example.Integration.process', 'log.iostream': 'stdout', 'logtag': 'F', 'telemetry.sdk.language': 'java'}
-    assert rows[1]["data"]["attributes_number"] == {'code.line': 120}
+    assert (
+        rows[1]["data"]["body"]
+        == "This is a log message, coming from a java application"
+    )
+    assert rows[1]["data"]["resources_string"] == {
+        "cloud.account.id": "001",
+        "cloud.provider": "integration",
+        "deployment.environment": "production",
+        "host.name": "linux-001",
+        "os.type": "linux",
+        "service.name": "java",
+    }
+    assert rows[1]["data"]["attributes_string"] == {
+        "code.file": "/opt/Integration.java",
+        "code.function": "com.example.Integration.process",
+        "log.iostream": "stdout",
+        "logtag": "F",
+        "telemetry.sdk.language": "java",
+    }
+    assert rows[1]["data"]["attributes_number"] == {"code.line": 120}
 
     # Query values of severity_text attribute
     response = requests.get(
@@ -123,7 +157,15 @@ def test_logs_list(
         headers={
             "authorization": f"Bearer {token}",
         },
-        params={"aggregateOperator": "noop", "dataSource": "logs", "aggregateAttribute": "", "attributeKey": "severity_text", "searchText": "", "filterAttributeKeyDataType": "string", "tagType": "resource"},
+        params={
+            "aggregateOperator": "noop",
+            "dataSource": "logs",
+            "aggregateAttribute": "",
+            "attributeKey": "severity_text",
+            "searchText": "",
+            "filterAttributeKeyDataType": "string",
+            "tagType": "resource",
+        },
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -140,7 +182,15 @@ def test_logs_list(
         headers={
             "authorization": f"Bearer {token}",
         },
-        params={"aggregateOperator": "noop", "dataSource": "logs", "aggregateAttribute": "", "attributeKey": "code.file", "searchText": "", "filterAttributeKeyDataType": "string", "tagType": "tag"},
+        params={
+            "aggregateOperator": "noop",
+            "dataSource": "logs",
+            "aggregateAttribute": "",
+            "attributeKey": "code.file",
+            "searchText": "",
+            "filterAttributeKeyDataType": "string",
+            "tagType": "tag",
+        },
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -157,7 +207,15 @@ def test_logs_list(
         headers={
             "authorization": f"Bearer {token}",
         },
-        params={"aggregateOperator": "noop", "dataSource": "logs", "aggregateAttribute": "", "attributeKey": "code.line", "searchText": "", "filterAttributeKeyDataType": "float64", "tagType": "tag"},
+        params={
+            "aggregateOperator": "noop",
+            "dataSource": "logs",
+            "aggregateAttribute": "",
+            "attributeKey": "code.line",
+            "searchText": "",
+            "filterAttributeKeyDataType": "float64",
+            "tagType": "tag",
+        },
     )
 
     print(response.json())
