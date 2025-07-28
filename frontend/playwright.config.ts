@@ -39,6 +39,7 @@ export default defineConfig({
 		colorScheme: 'dark',
 		locale: 'en-US',
 		viewport: { width: 1280, height: 720 },
+		screenshot: 'only-on-failure',
 	},
 
 	/* Configure projects for major browsers */
@@ -59,7 +60,6 @@ export default defineConfig({
 			name: 'firefox',
 			use: { ...devices['Desktop Firefox'] },
 		},
-
 		{
 			name: 'webkit',
 			use: { ...devices['Desktop Safari'] },
