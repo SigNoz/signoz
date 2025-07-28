@@ -64,33 +64,35 @@ export const getGraphOptions = (
 	maintainAspectRatio: false,
 	interaction: {
 		mode: 'index',
-		intersect: false,
+		intersect: true,
 	},
 	plugins: {
-		annotation: staticLine
+		...(staticLine
 			? {
-					annotations: [
-						{
-							type: 'line',
-							yMin: staticLine.yMin,
-							yMax: staticLine.yMax,
-							borderColor: staticLine.borderColor,
-							borderWidth: staticLine.borderWidth,
-							label: {
-								content: staticLine.lineText,
-								enabled: true,
-								font: {
-									size: 10,
+					annotation: {
+						annotations: [
+							{
+								type: 'line',
+								yMin: staticLine.yMin,
+								yMax: staticLine.yMax,
+								borderColor: staticLine.borderColor,
+								borderWidth: staticLine.borderWidth,
+								label: {
+									content: staticLine.lineText,
+									enabled: true,
+									font: {
+										size: 10,
+									},
+									borderWidth: 0,
+									position: 'start',
+									backgroundColor: 'transparent',
+									color: staticLine.textColor,
 								},
-								borderWidth: 0,
-								position: 'start',
-								backgroundColor: 'transparent',
-								color: staticLine.textColor,
 							},
-						},
-					],
+						],
+					},
 			  }
-			: undefined,
+			: {}),
 		title: {
 			display: title !== undefined,
 			text: title,
@@ -233,3 +235,9 @@ export const getGraphOptions = (
 		}
 	},
 });
+
+declare module 'chart.js' {
+	interface TooltipPositionerMap {
+		custom: TooltipPositionerFunction<ChartType>;
+	}
+}
