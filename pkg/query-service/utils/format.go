@@ -245,7 +245,7 @@ func ClickHouseFormattedMetricNames(v interface{}) string {
 }
 
 func AddBackTickToFormatTag(str string) string {
-	if strings.Contains(str, ".") {
+	if strings.Contains(str, ".") || strings.Contains(str, "-") {
 		return "`" + str + "`"
 	} else {
 		return str
