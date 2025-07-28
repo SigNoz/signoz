@@ -133,26 +133,11 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [activeLicense]);
 
 	const userAgeInDays = useMemo(() => {
-		const userCreationDate = new Date(user.createdAt);
-		const currentDate = new Date();
-		const msPerDay = 1000 * 60 * 60 * 24; // Miliseconds in a Day
+		const userCreationDate = dayjs(user.createdAt);
+		const currentDate = dayjs();
 
-		// Strip the time part using UTC to avoid time zone issues
-		const userCreationDateInMS = Date.UTC(
-			userCreationDate.getFullYear(),
-			userCreationDate.getMonth(),
-			userCreationDate.getDate(),
-		);
-		const currentDateInMS = Date.UTC(
-			currentDate.getFullYear(),
-			currentDate.getMonth(),
-			currentDate.getDate(),
-		);
-
-		return Math.abs((currentDateInMS - userCreationDateInMS) / msPerDay);
+		return Math.abs(currentDate.diff(userCreationDate, 'day'));
 	}, [user.createdAt]);
-
-	console.log({ userAgeInDays });
 
 	const handleBillingOnSuccess = (
 		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,
