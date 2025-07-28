@@ -30,6 +30,8 @@ func getqueryInfo(spec any) queryInfo {
 		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval}
 	case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
 		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval}
+	case qbtypes.QueryBuilderTraceOperator:
+		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval}
 	case qbtypes.QueryBuilderFormula:
 		return queryInfo{Name: s.Name, Disabled: s.Disabled}
 	case qbtypes.PromQuery:
@@ -136,6 +138,10 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 		case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
 			if result, ok := typedResults[spec.Name]; ok {
 				result = postProcessMetricQuery(q, result, spec, req)
+				typedResults[spec.Name] = result
+			}
+		case qbtypes.QueryBuilderTraceOperator:
+			if result, ok := typedResults[spec.Name]; ok {
 				typedResults[spec.Name] = result
 			}
 		}
