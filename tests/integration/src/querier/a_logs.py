@@ -16,14 +16,17 @@ def test_logs_list(
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
     """
-    1. Insert 2 logs with different attributes
-    2. Query logs for the last 10 seconds and check if the logs are returned in the correct order
-    3. Query values of severity_text attribute from the autocomplete API
-    4. Query values of severity_text attribute from the fields API
-    5. Query values of code.file attribute from the autocomplete API
-    6. Query values of code.file attribute from the fields API
-    7. Query values of code.line attribute from the autocomplete API
-    8. Query values of code.line attribute from the fields API
+    Setup:
+    Insert 2 logs with different attributes
+
+    Tests:
+    1. Query logs for the last 10 seconds and check if the logs are returned in the correct order
+    2. Query values of severity_text attribute from the autocomplete API
+    3. Query values of severity_text attribute from the fields API
+    4. Query values of code.file attribute from the autocomplete API
+    5. Query values of code.file attribute from the fields API
+    6. Query values of code.line attribute from the autocomplete API
+    7. Query values of code.line attribute from the fields API
     """
     insert_logs(
         [
@@ -306,7 +309,7 @@ def test_logs_list(
     assert 120 in values
 
 
-def test_logs_time_series(
+def test_logs_time_series_count(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_jwt_token: Callable[[str, str], str],
@@ -319,6 +322,8 @@ def test_logs_time_series(
 
     Tests:
     1. count() of all logs for the last 5 minutes
+    2. count() of all logs where code.line = 7 for last 5 minutes
+    3. count() of all logs grouped by host.name for the last 5 minutes
     """
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     logs: List[Logs] = []
@@ -326,7 +331,10 @@ def test_logs_time_series(
     for i in range(17):
         logs.append(
             Logs(
-                timestamp=now - timedelta(microseconds=i + 1), # These logs will be grouped in the now - 1 minute bucket
+                timestamp=now
+                - timedelta(
+                    microseconds=i + 1
+                ),  # These logs will be grouped in the now - 1 minute bucket
                 resources={
                     "deployment.environment": "production",
                     "service.name": "java",
@@ -350,7 +358,11 @@ def test_logs_time_series(
     for i in range(23):
         logs.append(
             Logs(
-                timestamp=now - timedelta(minutes=1) - timedelta(microseconds=i + 1), # These logs will be grouped in the now - 2 minute bucket
+                timestamp=now
+                - timedelta(minutes=1)
+                - timedelta(
+                    microseconds=i + 1
+                ),  # These logs will be grouped in the now - 2 minute bucket
                 resources={
                     "deployment.environment": "production",
                     "service.name": "erlang",
@@ -374,7 +386,11 @@ def test_logs_time_series(
     for i in range(29):
         logs.append(
             Logs(
-                timestamp=now - timedelta(minutes=2) - timedelta(microseconds=i + 1), # These logs will be grouped in the now - 3 minute bucket
+                timestamp=now
+                - timedelta(minutes=2)
+                - timedelta(
+                    microseconds=i + 1
+                ),  # These logs will be grouped in the now - 3 minute bucket
                 resources={
                     "deployment.environment": "production",
                     "service.name": "go",
@@ -399,7 +415,7 @@ def test_logs_time_series(
 
     token = get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
-    # Query Count of all logs for the last 5 minutes
+    # count() of all logs for the last 5 minutes
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -456,6 +472,7 @@ def test_logs_time_series(
     values = series[0]["values"]
     assert len(values) == 3
 
+    # Care about the order of the values
     assert [
         i
         for i in values
@@ -490,3 +507,228 @@ def test_logs_time_series(
             },
         ]
     ] == []
+
+    #  count() of all logs where cloud.account.id is 000 or service.name is erlang for the last 5 minutes
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json={
+            "schemaVersion": "v1",
+            "start": int(
+                (
+                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+                    - timedelta(minutes=5)
+                ).timestamp()
+                * 1000
+            ),
+            "end": int(
+                datetime.now(tz=timezone.utc)
+                .replace(second=0, microsecond=0)
+                .timestamp()
+                * 1000
+            ),
+            "requestType": "time_series",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": False,
+                            "filter": {"expression": "code.line = 7"},
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+
+    aggregations = results[0]["aggregations"]
+    assert len(aggregations) == 1
+
+    series = aggregations[0]["series"]
+    assert len(series) == 1
+
+    values = series[0]["values"]
+    assert len(values) == 3
+
+    # Care about the order of the values
+    assert [
+        i
+        for i in values
+        if i
+        not in [
+            {
+                "timestamp": int(
+                    (now - timedelta(minutes=3))
+                    .replace(second=0, microsecond=0)
+                    .timestamp()
+                    * 1000
+                ),
+                "value": 1,
+            },
+            {
+                "timestamp": int(
+                    (now - timedelta(minutes=2))
+                    .replace(second=0, microsecond=0)
+                    .timestamp()
+                    * 1000
+                ),
+                "value": 1,
+            },
+            {
+                "timestamp": int(
+                    (now - timedelta(minutes=1))
+                    .replace(second=0, microsecond=0)
+                    .timestamp()
+                    * 1000
+                ),
+                "value": 1,
+            },
+        ]
+    ] == []
+
+    # count() of all logs grouped by host.name for the last 5 minutes
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json={
+            "schemaVersion": "v1",
+            "start": int(
+                (
+                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+                    - timedelta(minutes=5)
+                ).timestamp()
+                * 1000
+            ),
+            "end": int(
+                datetime.now(tz=timezone.utc)
+                .replace(second=0, microsecond=0)
+                .timestamp()
+                * 1000
+            ),
+            "requestType": "time_series",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": False,
+                            "groupBy": [
+                                {
+                                    "name": "host.name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "resource",
+                                }
+                            ],
+                            "order": [
+                                {"key": {"name": "host.name"}, "direction": "desc"}
+                            ],
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+
+    aggregations = results[0]["aggregations"]
+    assert len(aggregations) == 1
+
+    series = aggregations[0]["series"]
+    assert len(series) == 2
+
+    # Care about the order of the values
+    assert series[0]["labels"] == [
+        {
+            "key": {
+                "name": "host.name",
+                "signal": "",
+                "fieldContext": "",
+                "fieldDataType": "",
+            },
+            "value": "linux-001",
+        }
+    ]
+    assert {
+        "timestamp": int(
+            (now - timedelta(minutes=3)).replace(second=0, microsecond=0).timestamp()
+            * 1000
+        ),
+        "value": 14,
+    } in series[0]["values"]
+    assert {
+        "timestamp": int(
+            (now - timedelta(minutes=2)).replace(second=0, microsecond=0).timestamp()
+            * 1000
+        ),
+        "value": 11,
+    } in series[0]["values"]
+    assert {
+        "timestamp": int(
+            (now - timedelta(minutes=1)).replace(second=0, microsecond=0).timestamp()
+            * 1000
+        ),
+        "value": 8,
+    } in series[0]["values"]
+
+    assert series[1]["labels"] == [
+        {
+            "key": {
+                "name": "host.name",
+                "signal": "",
+                "fieldContext": "",
+                "fieldDataType": "",
+            },
+            "value": "linux-000",
+        }
+    ]
+    assert {
+        "timestamp": int(
+            (now - timedelta(minutes=3)).replace(second=0, microsecond=0).timestamp()
+            * 1000
+        ),
+        "value": 15,
+    } in series[1]["values"]
+    assert {
+        "timestamp": int(
+            (now - timedelta(minutes=2)).replace(second=0, microsecond=0).timestamp()
+            * 1000
+        ),
+        "value": 12,
+    } in series[1]["values"]
+    assert {
+        "timestamp": int(
+            (now - timedelta(minutes=1)).replace(second=0, microsecond=0).timestamp()
+            * 1000
+        ),
+        "value": 9,
+    } in series[1]["values"]
