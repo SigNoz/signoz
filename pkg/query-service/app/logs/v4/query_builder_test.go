@@ -313,7 +313,7 @@ func Test_buildAttributeFilter(t *testing.T) {
 			want: "body ILIKE 'test'",
 		},
 		{
-			name: "build attribute filter like-body",
+			name: "build attribute filter not ilike-body",
 			args: args{
 				item: v3.FilterItem{
 					Key: v3.AttributeKey{
