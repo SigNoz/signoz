@@ -115,7 +115,6 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		tmplVars = make(map[string]qbtypes.VariableItem)
 	}
 
-	// OPTIMIZATION 1: Identify trace operators and their dependencies first
 	dependencyQueries := make(map[string]bool)
 	traceOperatorQueries := make(map[string]qbtypes.QueryBuilderTraceOperator)
 
@@ -218,12 +217,10 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	queries := make(map[string]qbtypes.Query)
 	steps := make(map[string]qbtypes.Step)
 
-	// OPTIMIZATION 2: Only process queries that are not dependencies OR are trace operators
 	for _, query := range req.CompositeQuery.Queries {
 		var queryName string
 		var isTraceOperator bool
 
-		// Determine query name and if it's a trace operator
 		switch query.Type {
 		case qbtypes.QueryTypeTraceOperator:
 			if spec, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator); ok {
@@ -249,7 +246,6 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 			}
 		}
 
-		// Skip if this query is a dependency (unless it's a trace operator)
 		if !isTraceOperator && dependencyQueries[queryName] {
 			continue
 		}
