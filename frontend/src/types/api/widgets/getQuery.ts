@@ -54,6 +54,7 @@ export interface Column {
 	name: string;
 	queryName: string;
 	isValueColumn: boolean;
+	id?: string;
 }
 
 export interface QueryDataV3 {
