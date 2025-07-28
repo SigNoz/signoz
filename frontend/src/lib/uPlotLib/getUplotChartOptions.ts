@@ -151,50 +151,6 @@ function getBands(series): any[] {
 	return bands;
 }
 
-/**
- * Sanitizes data for log scale plotting
- * - Handles null/undefined values
- * - Preserves very small positive numbers
- * - Replaces invalid values with appropriate defaults
- */
-function sanitizeForLogScale(rawSeries: QueryData[]): QueryData[] {
-	if (!rawSeries) return [];
-
-	// Find minimum non-zero value in the data
-	let minValue = Number.MAX_VALUE;
-	rawSeries.forEach((series) => {
-		series.values?.forEach(([, val]) => {
-			const num = Number(val);
-			if (Number.isFinite(num) && num > 0) {
-				minValue = Math.min(minValue, num);
-			}
-		});
-	});
-
-	// Set floor to 1/10th of minimum value or 1e-6 if no valid values found
-	const MIN_LOG_VALUE = minValue !== Number.MAX_VALUE ? minValue / 10 : 1e-6;
-
-	return rawSeries.map((series) => ({
-		...series,
-		values: series.values.map(([ts, val]) => {
-			// Handle null/undefined/empty
-			if (val == null || val === '') {
-				return [ts, String(MIN_LOG_VALUE)];
-			}
-
-			const num = Number(val);
-
-			// Keep valid positive numbers
-			if (Number.isFinite(num) && num > 0) {
-				return [ts, String(num)];
-			}
-
-			// Replace invalid values with MIN_LOG_VALUE
-			return [ts, String(MIN_LOG_VALUE)];
-		}),
-	}));
-}
-
 function getMinMaxValues(series: QueryData[]): [number, number] {
 	let min = Number.MAX_VALUE;
 	let max = Number.MIN_VALUE;
@@ -243,11 +199,6 @@ export const getUPlotChartOptions = ({
 	legendPosition = LegendPosition.BOTTOM,
 	enableZoom,
 }: GetUPlotChartOptions): uPlot.Options => {
-	const dataResult =
-		isLogScale && apiResponse?.data?.result
-			? sanitizeForLogScale(apiResponse.data.result)
-			: apiResponse?.data?.result;
-
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
 	const stackBarChart = stackChart && isUndefined(hiddenGraph);
@@ -255,14 +206,14 @@ export const getUPlotChartOptions = ({
 	const isAnomalyRule =
 		apiResponse?.data?.newResult?.data?.result[0]?.isAnomaly || false;
 
-	const series = getStackedSeries(dataResult || []);
+	const series = getStackedSeries(apiResponse?.data?.result || []);
 
 	const bands = stackBarChart ? getBands(series) : null;
 
 	// Calculate dynamic legend configuration based on panel dimensions and series count
-	const seriesCount = (dataResult || []).length;
+	const seriesCount = (apiResponse?.data?.result || []).length;
 	const seriesLabels = enhancedLegend
-		? (dataResult || []).map((item) =>
+		? (apiResponse?.data?.result || []).map((item) =>
 				getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
 		  )
 		: [];
@@ -356,7 +307,7 @@ export const getUPlotChartOptions = ({
 					});
 
 					if (isLogScale) {
-						const [minVal, maxVal] = getMinMaxValues(dataResult || []);
+						const [minVal, maxVal] = getMinMaxValues(apiResponse?.data?.result || []);
 						// Round down min to nearest power of 10 below the data
 						const minPow = Math.floor(Math.log10(minVal));
 						// Round up max to nearest power of 10 above the data
@@ -374,10 +325,7 @@ export const getUPlotChartOptions = ({
 		},
 		plugins: [
 			tooltipPlugin({
-				apiResponse: {
-					...apiResponse,
-					data: { ...apiResponse?.data, result: dataResult },
-				},
+				apiResponse,
 				yAxisUnit,
 				isDarkMode,
 				stackBarChart,
@@ -387,10 +335,7 @@ export const getUPlotChartOptions = ({
 			}),
 			onClickPlugin({
 				onClick: onClickHandler,
-				apiResponse: {
-					...apiResponse,
-					data: { ...apiResponse?.data, result: dataResult },
-				},
+				apiResponse,
 			}),
 			{
 				hooks: {
@@ -727,13 +672,13 @@ export const getUPlotChartOptions = ({
 			],
 		},
 		series: customSeries
-			? customSeries(dataResult || [])
+			? customSeries(apiResponse?.data?.result || [])
 			: getSeries({
 					series:
 						stackBarChart && isUndefined(hiddenGraph)
 							? series || []
-							: dataResult || [],
-					widgetMetaData: dataResult || [],
+							: apiResponse?.data?.result || [],
+					widgetMetaData: apiResponse?.data?.result || [],
 					graphsVisibilityStates,
 					panelType,
 					currentQuery,
