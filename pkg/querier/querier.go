@@ -115,6 +115,27 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		tmplVars = make(map[string]qbtypes.VariableItem)
 	}
 
+	// OPTIMIZATION 1: Identify trace operators and their dependencies first
+	dependencyQueries := make(map[string]bool)
+	traceOperatorQueries := make(map[string]qbtypes.QueryBuilderTraceOperator)
+
+	for _, query := range req.CompositeQuery.Queries {
+		if query.Type == qbtypes.QueryTypeTraceOperator {
+			if spec, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator); ok {
+				// Parse expression to find dependencies
+				if err := spec.ParseExpression(); err != nil {
+					return nil, fmt.Errorf("failed to parse trace operator expression: %w", err)
+				}
+
+				deps := spec.CollectReferencedQueries(spec.ParsedExpression)
+				for _, dep := range deps {
+					dependencyQueries[dep] = true
+				}
+				traceOperatorQueries[spec.Name] = spec
+			}
+		}
+	}
+
 	// First pass: collect all metric names that need temporality
 	metricNames := make([]string, 0)
 	for idx, query := range req.CompositeQuery.Queries {
@@ -197,7 +218,42 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	queries := make(map[string]qbtypes.Query)
 	steps := make(map[string]qbtypes.Step)
 
+	// OPTIMIZATION 2: Only process queries that are not dependencies OR are trace operators
 	for _, query := range req.CompositeQuery.Queries {
+		var queryName string
+		var isTraceOperator bool
+
+		// Determine query name and if it's a trace operator
+		switch query.Type {
+		case qbtypes.QueryTypeTraceOperator:
+			if spec, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator); ok {
+				queryName = spec.Name
+				isTraceOperator = true
+			}
+		case qbtypes.QueryTypePromQL:
+			if spec, ok := query.Spec.(qbtypes.PromQuery); ok {
+				queryName = spec.Name
+			}
+		case qbtypes.QueryTypeClickHouseSQL:
+			if spec, ok := query.Spec.(qbtypes.ClickHouseQuery); ok {
+				queryName = spec.Name
+			}
+		case qbtypes.QueryTypeBuilder:
+			switch spec := query.Spec.(type) {
+			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+				queryName = spec.Name
+			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+				queryName = spec.Name
+			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+				queryName = spec.Name
+			}
+		}
+
+		// Skip if this query is a dependency (unless it's a trace operator)
+		if !isTraceOperator && dependencyQueries[queryName] {
+			continue
+		}
+
 		switch query.Type {
 		case qbtypes.QueryTypePromQL:
 			promQuery, ok := query.Spec.(qbtypes.PromQuery)

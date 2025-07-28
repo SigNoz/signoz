@@ -126,6 +126,8 @@ func (b *traceOperatorCTEBuilder) buildTimeConstantsCTE() string {
 
 func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() {
 	sb := sqlbuilder.NewSelectBuilder()
+
+	// Select core span columns
 	sb.Select(
 		"trace_id",
 		"span_id",
@@ -133,30 +135,38 @@ func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() {
 		"name",
 		"timestamp",
 		"duration_nano AS durationNano",
+		// Include BOTH the alias AND the original column for compatibility
 		sqlbuilder.Escape("resource_string_service$$name")+" AS serviceName",
+		sqlbuilder.Escape("resource_string_service$$name"),        // Original column name for filters
+		sqlbuilder.Escape("resource_string_service$$name_exists"), // Exists flag column for filters
 	)
 
-	// Add any additional fields requested
+	// Add any additional fields requested by the user
 	for _, field := range b.operator.SelectFields {
 		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(b.ctx, &field, nil)
 		if err != nil {
+			// Skip fields that can't be mapped
 			continue
 		}
 		sb.SelectMore(sqlbuilder.Escape(colExpr))
 	}
 
+	// Set the table to query from
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
+	// Calculate bucket ranges for time-based partitioning
 	startBucket := b.start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
 	endBucket := b.end / querybuilder.NsToSeconds
 
+	// Add time and bucket filters
 	sb.Where(
-		sb.GE("timestamp", fmt.Sprintf("%d", b.start)), // Direct nanosecond value
-		sb.L("timestamp", fmt.Sprintf("%d", b.end)),    // Direct nanosecond value
+		sb.GE("timestamp", fmt.Sprintf("%d", b.start)),
+		sb.L("timestamp", fmt.Sprintf("%d", b.end)),
 		sb.GE("ts_bucket_start", startBucket),
 		sb.LE("ts_bucket_start", endBucket),
 	)
 
+	// Build the SQL and add as CTE
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	b.addCTE("base_spans", sql, args, nil)
 }
