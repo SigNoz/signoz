@@ -151,6 +151,67 @@ function getBands(series): any[] {
 	return bands;
 }
 
+/**
+ * Sanitizes data for log scale plotting
+ * - Handles null/undefined values
+ * - Preserves very small positive numbers
+ * - Replaces invalid values with appropriate defaults
+ */
+function sanitizeForLogScale(rawSeries: QueryData[]): QueryData[] {
+	if (!rawSeries) return [];
+
+	// Find minimum non-zero value in the data
+	let minValue = Number.MAX_VALUE;
+	rawSeries.forEach((series) => {
+		series.values?.forEach(([, val]) => {
+			const num = Number(val);
+			if (Number.isFinite(num) && num > 0) {
+				minValue = Math.min(minValue, num);
+			}
+		});
+	});
+
+	// Set floor to 1/10th of minimum value or 1e-6 if no valid values found
+	const MIN_LOG_VALUE = minValue !== Number.MAX_VALUE ? minValue / 10 : 1e-6;
+
+	return rawSeries.map((series) => ({
+		...series,
+		values: series.values.map(([ts, val]) => {
+			// Handle null/undefined/empty
+			if (val == null || val === '') {
+				return [ts, String(MIN_LOG_VALUE)];
+			}
+
+			const num = Number(val);
+
+			// Keep valid positive numbers
+			if (Number.isFinite(num) && num > 0) {
+				return [ts, String(num)];
+			}
+
+			// Replace invalid values with MIN_LOG_VALUE
+			return [ts, String(MIN_LOG_VALUE)];
+		}),
+	}));
+}
+
+function getMinMaxValues(series: QueryData[]): [number, number] {
+	let min = Number.MAX_VALUE;
+	let max = Number.MIN_VALUE;
+
+	series.forEach((s) => {
+		s.values?.forEach(([, val]) => {
+			const num = Number(val);
+			if (Number.isFinite(num) && num > 0) {
+				min = Math.min(min, num);
+				max = Math.max(max, num);
+			}
+		});
+	});
+
+	return [min, max];
+}
+
 export const getUPlotChartOptions = ({
 	id,
 	dimensions,
@@ -182,6 +243,11 @@ export const getUPlotChartOptions = ({
 	legendPosition = LegendPosition.BOTTOM,
 	enableZoom,
 }: GetUPlotChartOptions): uPlot.Options => {
+	const dataResult =
+		isLogScale && apiResponse?.data?.result
+			? sanitizeForLogScale(apiResponse.data.result)
+			: apiResponse?.data?.result;
+
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
 	const stackBarChart = stackChart && isUndefined(hiddenGraph);
@@ -189,14 +255,14 @@ export const getUPlotChartOptions = ({
 	const isAnomalyRule =
 		apiResponse?.data?.newResult?.data?.result[0]?.isAnomaly || false;
 
-	const series = getStackedSeries(apiResponse?.data?.result || []);
+	const series = getStackedSeries(dataResult || []);
 
 	const bands = stackBarChart ? getBands(series) : null;
 
 	// Calculate dynamic legend configuration based on panel dimensions and series count
-	const seriesCount = (apiResponse?.data?.result || []).length;
+	const seriesCount = (dataResult || []).length;
 	const seriesLabels = enhancedLegend
-		? (apiResponse?.data?.result || []).map((item) =>
+		? (dataResult || []).map((item) =>
 				getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
 		  )
 		: [];
@@ -278,21 +344,40 @@ export const getUPlotChartOptions = ({
 				...timeScaleProps,
 			},
 			y: {
-				...getYAxisScale({
-					thresholds,
-					series: stackBarChart
-						? getStackedSeriesYAxis(apiResponse?.data?.newResult?.data?.result || [])
-						: apiResponse?.data?.newResult?.data?.result || [],
-					yAxisUnit,
-					softMax,
-					softMin,
-				}),
-				distr: isLogScale ? 3 : 1,
+				...(((): { auto?: boolean; range?: uPlot.Scale.Range; distr?: number } => {
+					const yAxisConfig = getYAxisScale({
+						thresholds,
+						series: stackBarChart
+							? getStackedSeriesYAxis(apiResponse?.data?.newResult?.data?.result || [])
+							: apiResponse?.data?.newResult?.data?.result || [],
+						yAxisUnit,
+						softMax,
+						softMin,
+					});
+
+					if (isLogScale) {
+						const [minVal, maxVal] = getMinMaxValues(dataResult || []);
+						// Round down min to nearest power of 10 below the data
+						const minPow = Math.floor(Math.log10(minVal));
+						// Round up max to nearest power of 10 above the data
+						const maxPow = Math.ceil(Math.log10(maxVal));
+
+						return {
+							range: [10 ** minPow, 10 ** maxPow],
+							distr: 3, // log distribution
+						};
+					}
+
+					return yAxisConfig;
+				})() as { auto?: boolean; range?: uPlot.Scale.Range; distr?: number }),
 			},
 		},
 		plugins: [
 			tooltipPlugin({
-				apiResponse,
+				apiResponse: {
+					...apiResponse,
+					data: { ...apiResponse?.data, result: dataResult },
+				},
 				yAxisUnit,
 				isDarkMode,
 				stackBarChart,
@@ -302,7 +387,10 @@ export const getUPlotChartOptions = ({
 			}),
 			onClickPlugin({
 				onClick: onClickHandler,
-				apiResponse,
+				apiResponse: {
+					...apiResponse,
+					data: { ...apiResponse?.data, result: dataResult },
+				},
 			}),
 			{
 				hooks: {
@@ -639,13 +727,13 @@ export const getUPlotChartOptions = ({
 			],
 		},
 		series: customSeries
-			? customSeries(apiResponse?.data?.result || [])
+			? customSeries(dataResult || [])
 			: getSeries({
 					series:
 						stackBarChart && isUndefined(hiddenGraph)
 							? series || []
-							: apiResponse?.data?.result || [],
-					widgetMetaData: apiResponse?.data?.result || [],
+							: dataResult || [],
+					widgetMetaData: dataResult || [],
 					graphsVisibilityStates,
 					panelType,
 					currentQuery,
