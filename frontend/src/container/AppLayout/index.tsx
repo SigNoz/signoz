@@ -132,6 +132,28 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		);
 	}, [activeLicense]);
 
+	const userAgeInDays = useMemo(() => {
+		const userCreationDate = new Date(user.createdAt);
+		const currentDate = new Date();
+		const msPerDay = 1000 * 60 * 60 * 24; // Miliseconds in a Day
+
+		// Strip the time part using UTC to avoid time zone issues
+		const userCreationDateInMS = Date.UTC(
+			userCreationDate.getFullYear(),
+			userCreationDate.getMonth(),
+			userCreationDate.getDate(),
+		);
+		const currentDateInMS = Date.UTC(
+			currentDate.getFullYear(),
+			currentDate.getMonth(),
+			currentDate.getDate(),
+		);
+
+		return Math.abs((currentDateInMS - userCreationDateInMS) / msPerDay);
+	}, [user.createdAt]);
+
+	console.log({ userAgeInDays });
+
 	const handleBillingOnSuccess = (
 		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,
 	): void => {
@@ -222,6 +244,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			isCloudUserVal &&
 			Boolean(latestVersion) &&
 			latestVersion !== seenChangelogVersion &&
+			userAgeInDays > 14 && // Show to only users older than 2 weeks
 			!isWorkspaceAccessRestricted
 		) {
 			// Automatically open the changelog modal for cloud users after 1s, if they've not seen this version before.
@@ -233,6 +256,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		return (): void => {
 			clearInterval(timer);
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		isCloudUserVal,
 		latestVersion,
