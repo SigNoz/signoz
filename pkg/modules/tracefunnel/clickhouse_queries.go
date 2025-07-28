@@ -104,8 +104,14 @@ func BuildFunnelOverviewQuery(
 	// Build funnel CTE select fields
 	funnelSelectFields := []string{"trace_id"}
 	for i := 0; i < numSteps; i++ {
-		funnelSelectFields = append(funnelSelectFields, 
-			fmt.Sprintf("minIf(timestamp, serviceName = step%d.1 AND name = step%d.2) AS t%d_time", i+1, i+1, i+1))
+		// Check if latency_pointer is 'end' for this step
+		if steps[i].LatencyPointer == "end" {
+			funnelSelectFields = append(funnelSelectFields,
+				fmt.Sprintf("minIf(timestamp, serviceName = step%d.1 AND name = step%d.2) + toIntervalNanosecond(minIf(durationNano, serviceName = step%d.1 AND name = step%d.2)) AS t%d_time", i+1, i+1, i+1, i+1, i+1))
+		} else {
+			funnelSelectFields = append(funnelSelectFields, 
+				fmt.Sprintf("minIf(timestamp, serviceName = step%d.1 AND name = step%d.2) AS t%d_time", i+1, i+1, i+1))
+		}
 		funnelSelectFields = append(funnelSelectFields,
 			fmt.Sprintf("toUInt8(anyIf(has_error, serviceName = step%d.1 AND name = step%d.2)) AS s%d_error", i+1, i+1, i+1))
 	}
@@ -238,6 +244,7 @@ func BuildFunnelCountQuery(
 	// Build funnel subquery select fields
 	funnelSelectFields := []string{"trace_id"}
 	for i := 0; i < numSteps; i++ {
+		// No LatencyPointer for this function, keeping original behavior
 		funnelSelectFields = append(funnelSelectFields,
 			fmt.Sprintf("minIf(timestamp, serviceName = step%d.1 AND name = step%d.2) AS t%d_time", i+1, i+1, i+1))
 		funnelSelectFields = append(funnelSelectFields,
@@ -349,8 +356,14 @@ func BuildFunnelStepOverviewQuery(
 	// Build funnel CTE select fields
 	funnelSelectFields := []string{"trace_id"}
 	for i := 0; i < numSteps; i++ {
-		funnelSelectFields = append(funnelSelectFields,
-			fmt.Sprintf("minIf(timestamp, serviceName = step%d.1 AND name = step%d.2) AS t%d_time", i+1, i+1, i+1))
+		// Check if latency_pointer is 'end' for this step
+		if steps[i].LatencyPointer == "end" {
+			funnelSelectFields = append(funnelSelectFields,
+				fmt.Sprintf("minIf(timestamp, serviceName = step%d.1 AND name = step%d.2) + toIntervalNanosecond(minIf(durationNano, serviceName = step%d.1 AND name = step%d.2)) AS t%d_time", i+1, i+1, i+1, i+1, i+1))
+		} else {
+			funnelSelectFields = append(funnelSelectFields,
+				fmt.Sprintf("minIf(timestamp, serviceName = step%d.1 AND name = step%d.2) AS t%d_time", i+1, i+1, i+1))
+		}
 		funnelSelectFields = append(funnelSelectFields,
 			fmt.Sprintf("toUInt8(anyIf(has_error, serviceName = step%d.1 AND name = step%d.2)) AS s%d_error", i+1, i+1, i+1))
 	}
@@ -459,7 +472,20 @@ func BuildFunnelTopSlowTracesQuery(
 	spanNameT2 string,
 	clauseStep1 string,
 	clauseStep2 string,
+	latencyPointerT1 string,
+	latencyPointerT2 string,
 ) string {
+	// Build time expressions based on latency pointers
+	t1TimeExpr := "minIf(timestamp, serviceName = step1.1 AND name = step1.2)"
+	if latencyPointerT1 == "end" {
+		t1TimeExpr = "minIf(timestamp, serviceName = step1.1 AND name = step1.2) + toIntervalNanosecond(minIf(durationNano, serviceName = step1.1 AND name = step1.2))"
+	}
+	
+	t2TimeExpr := "minIf(timestamp, serviceName = step2.1 AND name = step2.2)"
+	if latencyPointerT2 == "end" {
+		t2TimeExpr = "minIf(timestamp, serviceName = step2.1 AND name = step2.2) + toIntervalNanosecond(minIf(durationNano, serviceName = step2.1 AND name = step2.2))"
+	}
+	
 	queryTemplate := `
 WITH
     %[1]d AS contains_error_t1,
@@ -477,8 +503,8 @@ SELECT
 FROM (
     SELECT
         trace_id,
-        minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
-        minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
+        %[11]s AS t1_time,
+        %[12]s AS t2_time,
         count() AS span_count
     FROM signoz_traces.distributed_signoz_index_v3
     WHERE
@@ -505,6 +531,8 @@ LIMIT 5;
 		spanNameT2,
 		clauseStep1,
 		clauseStep2,
+		t1TimeExpr,
+		t2TimeExpr,
 	)
 }
 
@@ -520,7 +548,20 @@ func BuildFunnelTopSlowErrorTracesQuery(
 	spanNameT2 string,
 	clauseStep1 string,
 	clauseStep2 string,
+	latencyPointerT1 string,
+	latencyPointerT2 string,
 ) string {
+	// Build time expressions based on latency pointers
+	t1TimeExpr := "minIf(timestamp, serviceName = step1.1 AND name = step1.2)"
+	if latencyPointerT1 == "end" {
+		t1TimeExpr = "minIf(timestamp, serviceName = step1.1 AND name = step1.2) + toIntervalNanosecond(minIf(durationNano, serviceName = step1.1 AND name = step1.2))"
+	}
+	
+	t2TimeExpr := "minIf(timestamp, serviceName = step2.1 AND name = step2.2)"
+	if latencyPointerT2 == "end" {
+		t2TimeExpr = "minIf(timestamp, serviceName = step2.1 AND name = step2.2) + toIntervalNanosecond(minIf(durationNano, serviceName = step2.1 AND name = step2.2))"
+	}
+	
 	queryTemplate := `
 WITH
     %[1]d AS contains_error_t1,
@@ -538,8 +579,8 @@ SELECT
 FROM (
     SELECT
         trace_id,
-        minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
-        minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
+        %[11]s AS t1_time,
+        %[12]s AS t2_time,
         toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS t1_error,
         toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS t2_error,
         count() AS span_count
@@ -570,5 +611,7 @@ LIMIT 5;
 		spanNameT2,
 		clauseStep1,
 		clauseStep2,
+		t1TimeExpr,
+		t2TimeExpr,
 	)
 }
