@@ -168,6 +168,10 @@ function QuerySearch({
 	);
 
 	const fetchKeySuggestions = async (searchText?: string): Promise<void> => {
+		if (dataSource === DataSource.METRICS && !queryData.aggregateAttribute?.key) {
+			setKeySuggestions([]);
+			return;
+		}
 		const response = await getKeySuggestions({
 			signal: dataSource,
 			searchText: searchText || '',
@@ -180,9 +184,11 @@ function QuerySearch({
 			// Use a Map to deduplicate by label and preserve order: new options take precedence
 			const merged = new Map<string, QueryKeyDataSuggestionsProps>();
 			options.forEach((opt) => merged.set(opt.label, opt));
-			(keySuggestions || []).forEach((opt) => {
-				if (!merged.has(opt.label)) merged.set(opt.label, opt);
-			});
+			if (searchText && lastKeyRef.current !== searchText) {
+				(keySuggestions || []).forEach((opt) => {
+					if (!merged.has(opt.label)) merged.set(opt.label, opt);
+				});
+			}
 			setKeySuggestions(Array.from(merged.values()));
 			setIsCompleteKeysList(complete);
 		}
@@ -754,9 +760,6 @@ function QuerySearch({
 				options = options.map((option) => ({
 					...option,
 					boost: usedKeys.includes(option.label) ? -10 : 10,
-					info: usedKeys.includes(option.label)
-						? `${option.info || ''} (already used in query)`
-						: option.info,
 				}));
 			}
 
@@ -841,12 +844,6 @@ function QuerySearch({
 							}));
 					}
 				}
-
-				// Add key info to all operators
-				options = options.map((op) => ({
-					...op,
-					info: `${op.info || ''} (for ${keyName})`,
-				}));
 			}
 
 			// Add space after selection for operators
