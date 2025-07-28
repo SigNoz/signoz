@@ -88,12 +88,10 @@ func (a *API) QueryRange(rw http.ResponseWriter, req *http.Request) {
 func (a *API) logEvent(ctx context.Context, referrer string, event *qbtypes.QBEvent) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
-		a.set.Logger.DebugContext(ctx, "couldn't get claims from context")
 		return
 	}
 
 	if !(event.LogsUsed || event.MetricsUsed || event.TracesUsed) {
-		a.set.Logger.DebugContext(ctx, "no data source in request, dubious?")
 		return
 	}
 
@@ -110,7 +108,6 @@ func (a *API) logEvent(ctx context.Context, referrer string, event *qbtypes.QBEv
 	}
 
 	if referrer == "" {
-		a.set.Logger.DebugContext(ctx, "no referrer, we don't ball non-UI requests")
 		return
 	}
 
@@ -134,7 +131,6 @@ func (a *API) logEvent(ctx context.Context, referrer string, event *qbtypes.QBEv
 	case traceExplorerMatched:
 		properties["module_name"] = "traces-explorer"
 	default:
-		a.set.Logger.DebugContext(ctx, "nothing matches referrer", "referrer", referrer)
 		return
 	}
 
@@ -159,8 +155,6 @@ func (a *API) logEvent(ctx context.Context, referrer string, event *qbtypes.QBEv
 			}
 		}
 	}
-
-	a.set.Logger.DebugContext(ctx, "sending analytics events", "analytics_event_properties", properties)
 
 	if !event.HasData {
 		a.analytics.TrackUser(ctx, claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
