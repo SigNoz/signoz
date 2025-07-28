@@ -240,6 +240,16 @@ func GetSlowestTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefu
 	clauseStep1 = sanitizeClause(clauseStep1)
 	clauseStep2 = sanitizeClause(clauseStep2)
 
+	// Get latency pointers with defaults
+	latencyPointerT1 := funnelSteps[stepStartOrder].LatencyPointer
+	if latencyPointerT1 == "" {
+		latencyPointerT1 = "start"
+	}
+	latencyPointerT2 := funnelSteps[stepEndOrder].LatencyPointer
+	if latencyPointerT2 == "" {
+		latencyPointerT2 = "start"
+	}
+
 	query := BuildFunnelTopSlowTracesQuery(
 		containsErrorT1,
 		containsErrorT2,
@@ -251,6 +261,8 @@ func GetSlowestTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefu
 		funnelSteps[stepEndOrder].SpanName,
 		clauseStep1,
 		clauseStep2,
+		latencyPointerT1,
+		latencyPointerT2,
 	)
 	return &v3.ClickHouseQuery{Query: query}, nil
 }
@@ -287,6 +299,16 @@ func GetErroredTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefu
 	clauseStep1 = sanitizeClause(clauseStep1)
 	clauseStep2 = sanitizeClause(clauseStep2)
 
+	// Get latency pointers with defaults
+	latencyPointerT1 := funnelSteps[stepStartOrder].LatencyPointer
+	if latencyPointerT1 == "" {
+		latencyPointerT1 = "start"
+	}
+	latencyPointerT2 := funnelSteps[stepEndOrder].LatencyPointer
+	if latencyPointerT2 == "" {
+		latencyPointerT2 = "start"
+	}
+
 	query := BuildFunnelTopSlowErrorTracesQuery(
 		containsErrorT1,
 		containsErrorT2,
@@ -298,6 +320,8 @@ func GetErroredTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefu
 		funnelSteps[stepEndOrder].SpanName,
 		clauseStep1,
 		clauseStep2,
+		latencyPointerT1,
+		latencyPointerT2,
 	)
 	return &v3.ClickHouseQuery{Query: query}, nil
 }
