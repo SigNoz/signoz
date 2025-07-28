@@ -160,7 +160,7 @@ func (a *API) logEvent(ctx context.Context, referrer string, event *qbtypes.QBEv
 		}
 	}
 
-	a.set.Logger.DebugContext(ctx, "sending analytics events", "analytics.event.properties", properties)
+	a.set.Logger.DebugContext(ctx, "sending analytics events", "analytics_event_properties", properties)
 
 	if !event.HasData {
 		a.analytics.TrackUser(ctx, claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
