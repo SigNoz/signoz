@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"math/rand/v2"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -30,7 +29,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
-	"github.com/SigNoz/signoz/pkg/query-service/transition"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
@@ -40,6 +38,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/SigNoz/signoz/pkg/contextlinks"
 	traceFunnelsModule "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
@@ -57,7 +56,6 @@ import (
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/contextlinks"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -66,7 +64,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
-	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 
@@ -4910,45 +4907,6 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	aH.sendQueryResultEvents(r, result, queryRangeParams, "v4")
 	resp := v3.QueryRangeResponse{
 		Result: result,
-	}
-
-	if rand.Float64() < (1.0/30.0) &&
-		queryRangeParams.CompositeQuery.PanelType != v3.PanelTypeList &&
-		queryRangeParams.CompositeQuery.PanelType != v3.PanelTypeTrace {
-		v4JSON, _ := json.Marshal(queryRangeParams)
-		func() {
-			defer func() {
-				if rr := recover(); rr != nil {
-					zap.L().Warn(
-						"unexpected panic while converting to v5",
-						zap.Any("panic", rr),
-						zap.String("v4_payload", string(v4JSON)),
-					)
-				}
-			}()
-			v5Req, err := transition.ConvertV3ToV5(queryRangeParams)
-			if err != nil {
-				zap.L().Warn("unable to convert to v5 request payload", zap.Error(err), zap.String("v4_payload", string(v4JSON)))
-				return
-			}
-			v5ReqJSON, _ := json.Marshal(v5Req)
-
-			v3Resp := v3.QueryRangeResponse{
-				Result: result,
-			}
-
-			v5Resp, err := transition.ConvertV3ResponseToV5(&v3Resp, querybuildertypesv5.RequestTypeTimeSeries)
-			if err != nil {
-				zap.L().Warn("unable to convert to v5 response payload", zap.Error(err))
-				return
-			}
-
-			v5RespJSON, _ := json.Marshal(v5Resp)
-			zap.L().Info("v5 request and expected response",
-				zap.String("request_payload", string(v5ReqJSON)),
-				zap.String("response_payload", string(v5RespJSON)),
-			)
-		}()
 	}
 
 	aH.Respond(w, resp)
