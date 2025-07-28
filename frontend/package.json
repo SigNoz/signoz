@@ -36,6 +36,7 @@
 		"@mdx-js/loader": "2.3.0",
 		"@mdx-js/react": "2.3.0",
 		"@monaco-editor/react": "^4.3.1",
+		"@playwright/test": "1.54.1",
 		"@radix-ui/react-tabs": "1.0.4",
 		"@radix-ui/react-tooltip": "1.0.7",
 		"@sentry/react": "8.41.0",
@@ -235,7 +236,7 @@
 		"sharp": "^0.33.4",
 		"ts-jest": "^27.1.5",
 		"ts-node": "^10.2.1",
-		"typescript-plugin-css-modules": "5.0.1",
+		"typescript-plugin-css-modules": "5.2.0",
 		"webpack-bundle-analyzer": "^4.5.0",
 		"webpack-cli": "^5.1.4"
 	},
@@ -258,7 +259,6 @@
 		"cookie": "^0.7.1",
 		"serialize-javascript": "6.0.2",
 		"prismjs": "1.30.0",
-		"got": "11.8.5",
-		"stylus": "0.0.1-security"
+		"got": "11.8.5"
 	}
 }

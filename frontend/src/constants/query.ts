@@ -47,4 +47,5 @@ export enum QueryParams {
 	destination = 'destination',
 	kindString = 'kindString',
 	tab = 'tab',
+	thresholds = 'thresholds',
 }

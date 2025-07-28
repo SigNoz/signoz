@@ -57,6 +57,7 @@ import {
 	StepContainer,
 	StepHeading,
 } from './styles';
+import { usePrefillAlertConditions } from './usePrefillAlertConditions';
 import { getSelectedQueryOptions } from './utils';
 
 export enum AlertDetectionTypes {
@@ -113,6 +114,9 @@ function FormAlertRules({
 		handleSetConfig,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
+	const { matchType, op, target, targetUnit } = usePrefillAlertConditions(
+		stagedQuery,
+	);
 
 	useEffect(() => {
 		handleSetConfig(panelType || PANEL_TYPES.TIME_SERIES, dataSource);
@@ -266,6 +270,13 @@ function FormAlertRules({
 			...initialValue,
 			broadcastToAll: !broadcastToSpecificChannels,
 			ruleType,
+			condition: {
+				...initialValue.condition,
+				matchType: matchType || initialValue.condition.matchType,
+				op: op || initialValue.condition.op,
+				target: target || initialValue.condition.target,
+				targetUnit: targetUnit || initialValue.condition.targetUnit,
+			},
 		});
 
 		setDetectionMethod(ruleType);
@@ -755,7 +766,12 @@ function FormAlertRules({
 		<>
 			{Element}
 
-			<div id="top">
+			<div
+				id="top"
+				className={`form-alert-rules-container ${
+					isRuleCreated ? 'create-mode' : 'edit-mode'
+				}`}
+			>
 				<div className="overview-header">
 					<div className="alert-type-container">
 						{isNewRule && (
