@@ -86,9 +86,9 @@ func getSelectLabels(groupBy []v3.AttributeKey) string {
 func existsSubQueryForFixedColumn(key v3.AttributeKey, op v3.FilterOperator) (string, error) {
 	if key.DataType == v3.AttributeKeyDataTypeString {
 		if op == v3.FilterOperatorExists {
-			return fmt.Sprintf("%s %s ''", getColumnName(key, false), tracesOperatorMappingV3[v3.FilterOperatorNotEqual]), nil
+			return fmt.Sprintf("%s %s ''", getColumnName(key, true), tracesOperatorMappingV3[v3.FilterOperatorNotEqual]), nil
 		} else {
-			return fmt.Sprintf("%s %s ''", getColumnName(key, false), tracesOperatorMappingV3[v3.FilterOperatorEqual]), nil
+			return fmt.Sprintf("%s %s ''", getColumnName(key, true), tracesOperatorMappingV3[v3.FilterOperatorEqual]), nil
 		}
 	} else {
 		return "", fmt.Errorf("unsupported operation, exists and not exists can only be applied on custom attributes or string type columns")

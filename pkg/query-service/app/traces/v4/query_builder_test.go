@@ -313,6 +313,16 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 			},
 			want: "mapContains(attributes_string, 'host') AND mapContains(attributes_number, 'duration') AND NOT mapContains(attributes_bool, 'isDone') AND NOT mapContains(attributes_string, 'host1') AND `attribute_string_path` = '' AND http_url = '' AND `attribute_string_http$$route` = ''",
 		},
+		{
+			name: "Test exists, nexists",
+			args: args{
+				fs: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+					{Key: v3.AttributeKey{Key: "httpMethod", DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Operator: v3.FilterOperatorExists},
+					{Key: v3.AttributeKey{Key: "serviceName", DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Operator: v3.FilterOperatorExists},
+				}},
+			},
+			want: "http_method != '' AND resource_string_service$$name != ''",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
