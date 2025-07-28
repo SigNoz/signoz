@@ -161,8 +161,6 @@ export function FunnelProvider({
 	);
 
 	const addNewStep = useCallback(() => {
-		if (steps.length >= 3) return false;
-
 		setSteps((prev) => [
 			...prev,
 			{
@@ -172,7 +170,7 @@ export function FunnelProvider({
 			},
 		]);
 		return true;
-	}, [steps.length]);
+	}, []);
 
 	const handleStepRemoval = useCallback((index: number) => {
 		setSteps((prev) =>

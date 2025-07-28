@@ -81,51 +81,48 @@ function StepsContent({
 						}
 					/>
 				))}
-				{/* For now we are only supporting 3 steps */}
-				{steps.length < 3 && (
-					<Step
-						className="steps-content__add-step"
-						description={
-							!isTraceDetailsPage ? (
-								<Tooltip
-									title={
-										!hasEditPermission
-											? 'You need editor or admin access to add steps'
-											: ''
-									}
+				<Step
+					className="steps-content__add-step"
+					description={
+						!isTraceDetailsPage ? (
+							<Tooltip
+								title={
+									!hasEditPermission
+										? 'You need editor or admin access to add steps'
+										: ''
+								}
+							>
+								<Button
+									type="default"
+									className="steps-content__add-btn"
+									onClick={handleAddStep}
+									icon={<PlusIcon size={14} />}
+									disabled={!hasEditPermission}
 								>
-									<Button
-										type="default"
-										className="steps-content__add-btn"
-										onClick={handleAddStep}
-										icon={<PlusIcon size={14} />}
-										disabled={!hasEditPermission}
-									>
-										Add Funnel Step
-									</Button>
-								</Tooltip>
-							) : (
-								<Tooltip
-									title={
-										!hasEditPermission
-											? 'You need editor or admin access to add steps'
-											: ''
-									}
+									Add Funnel Step
+								</Button>
+							</Tooltip>
+						) : (
+							<Tooltip
+								title={
+									!hasEditPermission
+										? 'You need editor or admin access to add steps'
+										: ''
+								}
+							>
+								<Button
+									type="default"
+									className="steps-content__add-btn"
+									onClick={handleAddForNewStep}
+									icon={<PlusIcon size={14} />}
+									disabled={!hasEditPermission}
 								>
-									<Button
-										type="default"
-										className="steps-content__add-btn"
-										onClick={handleAddForNewStep}
-										icon={<PlusIcon size={14} />}
-										disabled={!hasEditPermission}
-									>
-										Add for new Step
-									</Button>
-								</Tooltip>
-							)
-						}
-					/>
-				)}
+									Add for new Step
+								</Button>
+							</Tooltip>
+						)
+					}
+				/>
 			</Steps>
 		</div>
 	);
