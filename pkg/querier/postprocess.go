@@ -223,6 +223,8 @@ func postProcessBuilderQuery[T any](
 	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
 
+	result = q.applySeriesLimit(result, query.Limit, query.Order)
+
 	// Apply functions
 	if len(query.Functions) > 0 {
 		step := query.StepInterval.Duration.Milliseconds()
@@ -254,9 +256,7 @@ func postProcessMetricQuery(
 		}
 	}
 
-	if query.Limit > 0 {
-		result = q.applySeriesLimit(result, query.Limit, query.Order)
-	}
+	result = q.applySeriesLimit(result, query.Limit, query.Order)
 
 	if len(query.Functions) > 0 {
 		step := query.StepInterval.Duration.Milliseconds()
