@@ -118,12 +118,6 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 				<div
 					className={cx('changelog-modal-footer', hasScroll && 'scroll-available')}
 				>
-					{changelog?.features && changelog.features.length > 0 && (
-						<span className="changelog-modal-footer-label">
-							{changelog.features.length} new&nbsp;
-							{changelog.features.length > 1 ? 'features' : 'feature'}
-						</span>
-					)}
 					{!isCloudUser && (
 						<div className="changelog-modal-footer-ctas">
 							<Button type="default" icon={<CloseOutlined />} onClick={onClose}>
