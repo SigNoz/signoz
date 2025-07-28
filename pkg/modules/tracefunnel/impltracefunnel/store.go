@@ -31,7 +31,8 @@ func (store *store) Create(ctx context.Context, funnel *traceFunnels.StorableFun
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to check for existing funnel")
 	}
 	if exists {
-		return store.sqlstore.WrapAlreadyExistsErrf(nil, traceFunnels.ErrFunnelAlreadyExists, "a funnel with name '%s' already exists in this organization", funnel.Name)
+		return errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "a funnel with name '%s' already exists in this organization", funnel.Name)
+
 	}
 
 	_, err = store.
@@ -78,7 +79,7 @@ func (store *store) Update(ctx context.Context, funnel *traceFunnels.StorableFun
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to check for existing funnel")
 	}
 	if exists {
-		return store.sqlstore.WrapAlreadyExistsErrf(nil, traceFunnels.ErrFunnelAlreadyExists, "a funnel with name '%s' already exists in this organization", funnel.Name)
+		return errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "a funnel with name '%s' already exists in this organization", funnel.Name)
 	}
 
 	funnel.UpdatedAt = time.Now()
