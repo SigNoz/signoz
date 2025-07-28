@@ -17,6 +17,7 @@ import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
 import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
+import { MIN_ACCOUNT_AGE_FOR_CHANGELOG } from 'constants/changelog';
 import { Events } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -132,7 +133,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		);
 	}, [activeLicense]);
 
-	const userAgeInDays = useMemo(() => {
+	const daysSinceAccountCreation = useMemo(() => {
 		const userCreationDate = dayjs(user.createdAt);
 		const currentDate = dayjs();
 
@@ -229,7 +230,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			isCloudUserVal &&
 			Boolean(latestVersion) &&
 			latestVersion !== seenChangelogVersion &&
-			userAgeInDays > 14 && // Show to only users older than 2 weeks
+			daysSinceAccountCreation > MIN_ACCOUNT_AGE_FOR_CHANGELOG && // Show to only users older than 2 weeks
 			!isWorkspaceAccessRestricted
 		) {
 			// Automatically open the changelog modal for cloud users after 1s, if they've not seen this version before.
