@@ -11,8 +11,8 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/SigNoz/signoz/pkg/contextlinks"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
-	"github.com/SigNoz/signoz/pkg/query-service/contextlinks"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
