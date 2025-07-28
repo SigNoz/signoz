@@ -272,10 +272,10 @@ function FormAlertRules({
 			ruleType,
 			condition: {
 				...initialValue.condition,
-				matchType: initialValue.condition.matchType || matchType || '',
-				op: initialValue.condition.op || op || '',
-				target: initialValue.condition.target || target,
-				targetUnit: initialValue.condition.targetUnit || targetUnit,
+				matchType: initialValue.condition.matchType ?? matchType ?? '',
+				op: initialValue.condition.op ?? op ?? '',
+				target: initialValue.condition.target ?? target ?? 0,
+				targetUnit: initialValue.condition.targetUnit ?? targetUnit ?? '',
 			},
 		});
 
