@@ -56,6 +56,8 @@ type QueryBuilderQuery[T any] struct {
 	// functions to apply to the query
 	Functions []Function `json:"functions,omitempty"`
 
+	Legend string `json:"legend,omitempty"`
+
 	// ShiftBy is extracted from timeShift function for internal use
 	// This field is not serialized to JSON
 	ShiftBy int64 `json:"-"`
