@@ -28,7 +28,7 @@ func (store *store) Create(ctx context.Context, funnel *traceFunnels.StorableFun
 		Where("name = ? AND org_id = ?", funnel.Name, funnel.OrgID.String()).
 		Exists(ctx)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to check for existing funnelr")
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to check for existing funnel")
 	}
 	if exists {
 		return store.sqlstore.WrapAlreadyExistsErrf(nil, traceFunnels.ErrFunnelAlreadyExists, "a funnel with name '%s' already exists in this organization", funnel.Name)
@@ -66,9 +66,24 @@ func (store *store) Get(ctx context.Context, uuid valuer.UUID, orgID valuer.UUID
 
 // Update updates an existing funnel
 func (store *store) Update(ctx context.Context, funnel *traceFunnels.StorableFunnel) error {
+	// Check if a funnel with the same name already exists in the organization (excluding current funnel)
+	exists, err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(new(traceFunnels.StorableFunnel)).
+		Where("name = ? AND org_id = ? AND id != ?", funnel.Name, funnel.OrgID.String(), funnel.ID.String()).
+		Exists(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to check for existing funnel")
+	}
+	if exists {
+		return store.sqlstore.WrapAlreadyExistsErrf(nil, traceFunnels.ErrFunnelAlreadyExists, "a funnel with name '%s' already exists in this organization", funnel.Name)
+	}
+
 	funnel.UpdatedAt = time.Now()
 
-	_, err := store.
+	_, err = store.
 		sqlstore.
 		BunDB().
 		NewUpdate().
@@ -76,7 +91,7 @@ func (store *store) Update(ctx context.Context, funnel *traceFunnels.StorableFun
 		WherePK().
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, traceFunnels.ErrFunnelAlreadyExists, "a funnel with name '%s' already exists in this organization", funnel.Name)
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to update funnel")
 	}
 	return nil
 }
