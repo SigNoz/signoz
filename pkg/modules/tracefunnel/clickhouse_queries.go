@@ -105,7 +105,7 @@ func BuildFunnelOverviewQuery(
 	funnelSelectFields := []string{"trace_id"}
 	for i := 0; i < numSteps; i++ {
 		// Check if latency_pointer is 'end' for this step
-		if steps[i].LatencyPointer == "end" {
+		if strings.ToLower(steps[i].LatencyPointer) == "end" {
 			funnelSelectFields = append(funnelSelectFields,
 				fmt.Sprintf("minIf(timestamp, serviceName = step%d.1 AND name = step%d.2) + toIntervalNanosecond(minIf(durationNano, serviceName = step%d.1 AND name = step%d.2)) AS t%d_time", i+1, i+1, i+1, i+1, i+1))
 		} else {
