@@ -2,7 +2,6 @@ package anomaly
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"math"
 
@@ -49,29 +48,31 @@ func (p *BaseSeasonalProvider) getQueryParams(req *AnomaliesRequest) *anomalyQue
 	return prepareAnomalyQueryParams(req.Params, req.Seasonality)
 }
 
-func toTSResults(resp *qbtypes.QueryRangeResponse) []*qbtypes.TimeSeriesData {
+func (p *BaseSeasonalProvider) toTSResults(ctx context.Context, resp *qbtypes.QueryRangeResponse) []*qbtypes.TimeSeriesData {
+
+	if resp == nil || resp.Data == nil {
+		p.logger.InfoContext(ctx, "nil response from query range")
+	}
 
 	data, ok := resp.Data.(struct {
 		Results  []any    `json:"results"`
 		Warnings []string `json:"warnings"`
 	})
 	if !ok {
-		fmt.Println("something wrong with data", data, resp.Data)
 		return nil
 	}
-	tsDatum := []*qbtypes.TimeSeriesData{}
+	tsData := []*qbtypes.TimeSeriesData{}
 	for _, item := range data.Results {
-		if tsData, ok := item.(*qbtypes.TimeSeriesData); ok {
-			tsDatum = append(tsDatum, tsData)
-		} else {
-			fmt.Println("something wrong", item)
+		if resultData, ok := item.(*qbtypes.TimeSeriesData); ok {
+			tsData = append(tsData, resultData)
 		}
 	}
 
-	return tsDatum
+	return tsData
 }
 
 func (p *BaseSeasonalProvider) getResults(ctx context.Context, orgID valuer.UUID, params *anomalyQueryParams) (*anomalyQueryResults, error) {
+	// TODO(srikanthccv): parallelize this?
 	p.logger.InfoContext(ctx, "fetching results for current period", "anomaly.current_period_query", params.CurrentPeriodQuery)
 	currentPeriodResults, err := p.querier.QueryRange(ctx, orgID, &params.CurrentPeriodQuery)
 	if err != nil {
@@ -109,18 +110,18 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, orgID valuer.UUID
 	}
 
 	return &anomalyQueryResults{
-		CurrentPeriodResults: toTSResults(currentPeriodResults),
-		PastPeriodResults:    toTSResults(pastPeriodResults),
-		CurrentSeasonResults: toTSResults(currentSeasonResults),
-		PastSeasonResults:    toTSResults(pastSeasonResults),
-		Past2SeasonResults:   toTSResults(past2SeasonResults),
-		Past3SeasonResults:   toTSResults(past3SeasonResults),
+		CurrentPeriodResults: p.toTSResults(ctx, currentPeriodResults),
+		PastPeriodResults:    p.toTSResults(ctx, pastPeriodResults),
+		CurrentSeasonResults: p.toTSResults(ctx, currentSeasonResults),
+		PastSeasonResults:    p.toTSResults(ctx, pastSeasonResults),
+		Past2SeasonResults:   p.toTSResults(ctx, past2SeasonResults),
+		Past3SeasonResults:   p.toTSResults(ctx, past3SeasonResults),
 	}, nil
 }
 
 // getMatchingSeries gets the matching series from the query result
 // for the given series
-func (p *BaseSeasonalProvider) getMatchingSeries(queryResult *qbtypes.TimeSeriesData, series *qbtypes.TimeSeries) *qbtypes.TimeSeries {
+func (p *BaseSeasonalProvider) getMatchingSeries(_ context.Context, queryResult *qbtypes.TimeSeriesData, series *qbtypes.TimeSeries) *qbtypes.TimeSeries {
 	if queryResult == nil || len(queryResult.Aggregations) == 0 || len(queryResult.Aggregations[0].Series) == 0 {
 		return nil
 	}
@@ -321,37 +322,37 @@ func (p *BaseSeasonalProvider) getAnomalies(ctx context.Context, orgID valuer.UU
 		return nil, err
 	}
 
-	currentPeriodResultsMap := make(map[string]*qbtypes.TimeSeriesData)
+	currentPeriodResults := make(map[string]*qbtypes.TimeSeriesData)
 	for _, result := range anomalyQueryResults.CurrentPeriodResults {
-		currentPeriodResultsMap[result.QueryName] = result
+		currentPeriodResults[result.QueryName] = result
 	}
 
-	pastPeriodResultsMap := make(map[string]*qbtypes.TimeSeriesData)
+	pastPeriodResults := make(map[string]*qbtypes.TimeSeriesData)
 	for _, result := range anomalyQueryResults.PastPeriodResults {
-		pastPeriodResultsMap[result.QueryName] = result
+		pastPeriodResults[result.QueryName] = result
 	}
 
-	currentSeasonResultsMap := make(map[string]*qbtypes.TimeSeriesData)
+	currentSeasonResults := make(map[string]*qbtypes.TimeSeriesData)
 	for _, result := range anomalyQueryResults.CurrentSeasonResults {
-		currentSeasonResultsMap[result.QueryName] = result
+		currentSeasonResults[result.QueryName] = result
 	}
 
-	pastSeasonResultsMap := make(map[string]*qbtypes.TimeSeriesData)
+	pastSeasonResults := make(map[string]*qbtypes.TimeSeriesData)
 	for _, result := range anomalyQueryResults.PastSeasonResults {
-		pastSeasonResultsMap[result.QueryName] = result
+		pastSeasonResults[result.QueryName] = result
 	}
 
-	past2SeasonResultsMap := make(map[string]*qbtypes.TimeSeriesData)
+	past2SeasonResults := make(map[string]*qbtypes.TimeSeriesData)
 	for _, result := range anomalyQueryResults.Past2SeasonResults {
-		past2SeasonResultsMap[result.QueryName] = result
+		past2SeasonResults[result.QueryName] = result
 	}
 
-	past3SeasonResultsMap := make(map[string]*qbtypes.TimeSeriesData)
+	past3SeasonResults := make(map[string]*qbtypes.TimeSeriesData)
 	for _, result := range anomalyQueryResults.Past3SeasonResults {
-		past3SeasonResultsMap[result.QueryName] = result
+		past3SeasonResults[result.QueryName] = result
 	}
 
-	for _, result := range currentPeriodResultsMap {
+	for _, result := range currentPeriodResults {
 		funcs := req.Params.FuncsForQuery(result.QueryName)
 
 		var zScoreThreshold float64
@@ -373,23 +374,23 @@ func (p *BaseSeasonalProvider) getAnomalies(ctx context.Context, orgID valuer.UU
 			}
 		}
 
-		pastPeriodResult, ok := pastPeriodResultsMap[result.QueryName]
+		pastPeriodResult, ok := pastPeriodResults[result.QueryName]
 		if !ok {
 			continue
 		}
-		currentSeasonResult, ok := currentSeasonResultsMap[result.QueryName]
+		currentSeasonResult, ok := currentSeasonResults[result.QueryName]
 		if !ok {
 			continue
 		}
-		pastSeasonResult, ok := pastSeasonResultsMap[result.QueryName]
+		pastSeasonResult, ok := pastSeasonResults[result.QueryName]
 		if !ok {
 			continue
 		}
-		past2SeasonResult, ok := past2SeasonResultsMap[result.QueryName]
+		past2SeasonResult, ok := past2SeasonResults[result.QueryName]
 		if !ok {
 			continue
 		}
-		past3SeasonResult, ok := past3SeasonResultsMap[result.QueryName]
+		past3SeasonResult, ok := past3SeasonResults[result.QueryName]
 		if !ok {
 			continue
 		}
@@ -400,11 +401,11 @@ func (p *BaseSeasonalProvider) getAnomalies(ctx context.Context, orgID valuer.UU
 			stdDev := p.getStdDev(series)
 			p.logger.InfoContext(ctx, "calculated standard deviation for series", "anomaly.std_dev", stdDev, "anomaly.labels", series.Labels)
 
-			pastPeriodSeries := p.getMatchingSeries(pastPeriodResult, series)
-			currentSeasonSeries := p.getMatchingSeries(currentSeasonResult, series)
-			pastSeasonSeries := p.getMatchingSeries(pastSeasonResult, series)
-			past2SeasonSeries := p.getMatchingSeries(past2SeasonResult, series)
-			past3SeasonSeries := p.getMatchingSeries(past3SeasonResult, series)
+			pastPeriodSeries := p.getMatchingSeries(ctx, pastPeriodResult, series)
+			currentSeasonSeries := p.getMatchingSeries(ctx, currentSeasonResult, series)
+			pastSeasonSeries := p.getMatchingSeries(ctx, pastSeasonResult, series)
+			past2SeasonSeries := p.getMatchingSeries(ctx, past2SeasonResult, series)
+			past3SeasonSeries := p.getMatchingSeries(ctx, past3SeasonResult, series)
 
 			prevSeriesAvg := p.getAvg(pastPeriodSeries)
 			currentSeasonSeriesAvg := p.getAvg(currentSeasonSeries)
@@ -451,8 +452,8 @@ func (p *BaseSeasonalProvider) getAnomalies(ctx context.Context, orgID valuer.UU
 		}
 	}
 
-	results := make([]*qbtypes.TimeSeriesData, 0, len(currentPeriodResultsMap))
-	for _, result := range currentPeriodResultsMap {
+	results := make([]*qbtypes.TimeSeriesData, 0, len(currentPeriodResults))
+	for _, result := range currentPeriodResults {
 		results = append(results, result)
 	}
 

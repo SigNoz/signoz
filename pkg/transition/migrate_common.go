@@ -498,6 +498,11 @@ func (mc *migrateCommon) createFilterExpression(ctx context.Context, queryData m
 
 	expression := mc.buildExpression(ctx, items, op, dataSource)
 	if expression != "" {
+		if groupByExists := mc.groupByExistsExpr(queryData); groupByExists != "" {
+			mc.logger.InfoContext(ctx, "adding default exists for old qb", "group_by_exists", groupByExists)
+			expression += groupByExists
+		}
+
 		queryData["filter"] = map[string]any{
 			"expression": expression,
 		}
@@ -506,6 +511,41 @@ func (mc *migrateCommon) createFilterExpression(ctx context.Context, queryData m
 	}
 
 	return false
+}
+
+func (mc *migrateCommon) groupByExistsExpr(queryData map[string]any) string {
+	expr := []string{}
+	groupBy, ok := queryData["groupBy"].([]any)
+	if !ok {
+		return strings.Join(expr, " AND ")
+	}
+
+	for idx := range groupBy {
+		item, ok := groupBy[idx].(map[string]any)
+		if !ok {
+			continue
+		}
+		key, ok := item["key"].(string)
+		if !ok {
+			continue
+		}
+		expr = append(expr, fmt.Sprintf("%s EXISTS", key))
+
+		if _, ok := telemetrytraces.IntrinsicFields[key]; ok {
+			delete(item, "type")
+		}
+		if _, ok := telemetrytraces.CalculatedFields[key]; ok {
+			delete(item, "type")
+		}
+		if _, ok := telemetrytraces.IntrinsicFieldsDeprecated[key]; ok {
+			delete(item, "type")
+		}
+		if _, ok := telemetrytraces.CalculatedFieldsDeprecated[key]; ok {
+			delete(item, "type")
+		}
+	}
+
+	return strings.Join(expr, " AND ")
 }
 
 func (mc *migrateCommon) fixGroupBy(queryData map[string]any) bool {

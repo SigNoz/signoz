@@ -234,11 +234,7 @@ func PrepareLinksToTracesV5(start, end time.Time, whereClause string) string {
 		PageSize: 100,
 	}
 
-	options := URLShareableOptions{
-		MaxLines:      2,
-		Format:        "list",
-		SelectColumns: tracesV3.TracesListViewDefaultSelectedColumns,
-	}
+	options := URLShareableOptions{}
 
 	period, _ := json.Marshal(tr)
 	urlEncodedTimeRange := url.QueryEscape(string(period))
@@ -253,12 +249,6 @@ func PrepareLinksToTracesV5(start, end time.Time, whereClause string) string {
 			Disabled:           false,
 			Having:             []v3.Having{},
 			StepInterval:       60,
-			OrderBy: []v3.OrderBy{
-				{
-					ColumnName: "timestamp",
-					Order:      "desc",
-				},
-			},
 		},
 		Filter: &FilterExpression{Expression: whereClause},
 	}
@@ -291,11 +281,7 @@ func PrepareLinksToLogsV5(start, end time.Time, whereClause string) string {
 		PageSize: 100,
 	}
 
-	options := URLShareableOptions{
-		MaxLines:      2,
-		Format:        "list",
-		SelectColumns: []v3.AttributeKey{},
-	}
+	options := URLShareableOptions{}
 
 	period, _ := json.Marshal(tr)
 	urlEncodedTimeRange := url.QueryEscape(string(period))

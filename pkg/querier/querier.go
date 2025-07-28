@@ -298,15 +298,15 @@ func (q *querier) run(
 		}
 		switch result.Type {
 		case qbtypes.RequestTypeScalar:
-			if val, ok := result.Value.(*qbtypes.ScalarData); ok {
+			if val, ok := result.Value.(*qbtypes.ScalarData); ok && val != nil {
 				return len(val.Data) != 0
 			}
 		case qbtypes.RequestTypeRaw:
-			if val, ok := result.Value.(*qbtypes.RawData); ok {
+			if val, ok := result.Value.(*qbtypes.RawData); ok && val != nil {
 				return len(val.Rows) != 0
 			}
 		case qbtypes.RequestTypeTimeSeries:
-			if val, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
+			if val, ok := result.Value.(*qbtypes.TimeSeriesData); ok && val != nil {
 				if len(val.Aggregations) != 0 {
 					anyNonEmpty := false
 					for _, aggBucket := range val.Aggregations {

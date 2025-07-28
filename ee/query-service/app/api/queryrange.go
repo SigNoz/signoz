@@ -263,7 +263,8 @@ func (aH *APIHandler) queryRangeV5(rw http.ResponseWriter, req *http.Request) {
 				Results  []any    `json:"results"`
 				Warnings []string `json:"warnings"`
 			}{
-				Results: results,
+				Results:  results,
+				Warnings: make([]string, 0), // TODO(srikanthccv): will there be any warnings here?
 			},
 			Meta: struct {
 				RowsScanned  uint64 `json:"rowsScanned"`

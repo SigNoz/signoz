@@ -21,7 +21,7 @@ func (m *savedViewMigrateV5) Migrate(ctx context.Context, data map[string]any) b
 	updated := false
 
 	if builderQueries, ok := data["builderQueries"].(map[string]any); ok {
-		for _, query := range builderQueries {
+		for name, query := range builderQueries {
 			if queryMap, ok := query.(map[string]any); ok {
 				var panelType string
 				if _, ok := data["panelType"].(string); ok {
@@ -30,6 +30,13 @@ func (m *savedViewMigrateV5) Migrate(ctx context.Context, data map[string]any) b
 				if m.updateQueryData(ctx, queryMap, "v4", panelType) {
 					updated = true
 				}
+
+				m.logger.InfoContext(ctx, "migrated querymap")
+
+				// wrap it in the v5 envelope
+				envelope := m.wrapInV5Envelope(name, queryMap, "builder_query")
+				m.logger.InfoContext(ctx, "envelope after wrap", "envelope", envelope)
+				data["queries"] = append(data["queries"].([]any), envelope)
 			}
 		}
 	}

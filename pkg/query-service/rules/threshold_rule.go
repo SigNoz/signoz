@@ -513,6 +513,7 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 		if tsData, ok := item.(*qbtypes.TimeSeriesData); ok {
 			results = append(results, transition.ConvertV5TimeSeriesDataToV4Result(tsData))
 		} else {
+			// NOTE: should not happen but just to ensure we don't miss it if it happens for some reason
 			zap.L().Warn("expected qbtypes.TimeSeriesData but got", zap.Any("item_type", reflect.TypeOf(item)))
 		}
 	}

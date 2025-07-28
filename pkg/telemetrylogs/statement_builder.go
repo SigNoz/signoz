@@ -355,6 +355,17 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 			sb.Having(rewrittenExpr)
 		}
 
+		if len(query.Order) != 0 {
+			// Add order by
+			for _, orderBy := range query.Order {
+				_, ok := aggOrderBy(orderBy, query)
+				if !ok {
+					sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+				}
+			}
+			sb.OrderBy("ts desc")
+		}
+
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
 		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
@@ -372,6 +383,16 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 			sb.Having(rewrittenExpr)
 		}
 
+		if len(query.Order) != 0 {
+			// Add order by
+			for _, orderBy := range query.Order {
+				_, ok := aggOrderBy(orderBy, query)
+				if !ok {
+					sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+				}
+			}
+			sb.OrderBy("ts desc")
+		}
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
 		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)

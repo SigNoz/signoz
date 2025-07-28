@@ -177,6 +177,7 @@ func (migration *queryBuilderV5Migration) migrateDashboards(
 		updated := dashboardMigrator.Migrate(ctx, dashboard.Data)
 
 		if updated {
+			dashboard.Data["version"] = "v5"
 			dataJSON, err := json.Marshal(dashboard.Data)
 			if err != nil {
 				return err
