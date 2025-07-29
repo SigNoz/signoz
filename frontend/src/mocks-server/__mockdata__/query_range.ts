@@ -207,6 +207,70 @@ export const queryRangeForTableView = {
 	},
 };
 
+export const queryRangeForTableViewV5 = {
+	payload: {
+		data: {
+			resultType: 'scalar',
+			result: [
+				{
+					queryName: 'A',
+					legend: 'A',
+					series: null,
+					list: null,
+					table: {
+						columns: [
+							{
+								name: 'count()',
+								queryName: 'A',
+								isValueColumn: true,
+								id: 'A.count()',
+							},
+						],
+						rows: [
+							{
+								data: {
+									'A.count()': 400599,
+								},
+							},
+						],
+					},
+				},
+			],
+		},
+	},
+	params: {
+		schemaVersion: 'v1',
+		start: 1753777929000,
+		end: 1753779729000,
+		requestType: 'scalar',
+		compositeQuery: {
+			queries: [
+				{
+					type: 'builder_query',
+					spec: {
+						name: 'A',
+						signal: 'traces',
+						disabled: false,
+						having: {
+							expression: '',
+						},
+						aggregations: [
+							{
+								expression: 'count()',
+							},
+						],
+					},
+				},
+			],
+		},
+		formatOptions: {
+			formatTableResultForUI: true,
+			fillGaps: false,
+		},
+		variables: {},
+	},
+};
+
 export const queryRangeForTraceView = {
 	status: 'success',
 	data: {
