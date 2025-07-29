@@ -227,11 +227,11 @@ func GetSlowestTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefu
 	}
 
 	// Build filter clauses for the steps
-	clauseStep1, err := tracev4.BuildTracesFilter(funnelSteps[stepStartOrder].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[stepStartOrder].Filters, false)
 	if err != nil {
 		return nil, err
 	}
-	clauseStep2, err := tracev4.BuildTracesFilter(funnelSteps[stepEndOrder].Filters)
+	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[stepEndOrder].Filters, false)
 	if err != nil {
 		return nil, err
 	}
@@ -286,11 +286,11 @@ func GetErroredTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefu
 	}
 
 	// Build filter clauses for the steps
-	clauseStep1, err := tracev4.BuildTracesFilter(funnelSteps[stepStartOrder].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[stepStartOrder].Filters, false)
 	if err != nil {
 		return nil, err
 	}
-	clauseStep2, err := tracev4.BuildTracesFilter(funnelSteps[stepEndOrder].Filters)
+	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[stepEndOrder].Filters, false)
 	if err != nil {
 		return nil, err
 	}
