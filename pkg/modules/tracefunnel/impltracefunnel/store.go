@@ -25,9 +25,7 @@ func (store *store) Create(ctx context.Context, funnel *traceFunnels.StorableFun
 	}
 	defer func() {
 		if err != nil {
-			tx.Rollback()
-		} else {
-			tx.Commit()
+			_ = tx.Rollback()
 		}
 	}()
 
@@ -49,7 +47,12 @@ func (store *store) Create(ctx context.Context, funnel *traceFunnels.StorableFun
 		Model(funnel).
 		Exec(ctx)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create funnels")
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create funnel")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to commit transaction")
 	}
 
 	return nil
@@ -80,9 +83,7 @@ func (store *store) Update(ctx context.Context, funnel *traceFunnels.StorableFun
 	}
 	defer func() {
 		if err != nil {
-			tx.Rollback()
-		} else {
-			tx.Commit()
+			_ = tx.Rollback()
 		}
 	}()
 
@@ -109,6 +110,12 @@ func (store *store) Update(ctx context.Context, funnel *traceFunnels.StorableFun
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to update funnel")
 	}
+	
+	err = tx.Commit()
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to commit transaction")
+	}
+	
 	return nil
 }
 
