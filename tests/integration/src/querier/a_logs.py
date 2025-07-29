@@ -3,6 +3,7 @@ from http import HTTPStatus
 from typing import Callable, List
 
 import requests
+import time
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
@@ -323,7 +324,8 @@ def test_logs_time_series_count(
     Tests:
     1. count() of all logs for the last 5 minutes
     2. count() of all logs where code.line = 7 for last 5 minutes
-    3. count() of all logs grouped by host.name for the last 5 minutes
+    3. count() of all logs where service.name = "erlang" OR cloud.account.id = "000" for last 5 minutes
+    4. count() of all logs grouped by host.name for the last 5 minutes
     """
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     logs: List[Logs] = []
@@ -508,7 +510,7 @@ def test_logs_time_series_count(
         ]
     ] == []
 
-    #  count() of all logs where cloud.account.id is 000 or service.name is erlang for the last 5 minutes
+    # count() of all logs where code.line = 7 for last 5 minutes
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -601,6 +603,87 @@ def test_logs_time_series_count(
             },
         ]
     ] == []
+
+    # count() of all logs where service.name = "erlang" OR cloud.account.id = "000" for last 5 minutes
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json={
+            "schemaVersion": "v1",
+            "start": int(
+                (
+                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+                    - timedelta(minutes=5)
+                ).timestamp()
+                * 1000
+            ),
+            "end": int(
+                datetime.now(tz=timezone.utc)
+                .replace(second=0, microsecond=0)
+                .timestamp()
+                * 1000
+            ),
+            "requestType": "time_series",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": False,
+                            "filter": {"expression": "service.name = 'erlang' OR cloud.account.id = '000'"},
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+
+    aggregations = results[0]["aggregations"]
+    assert len(aggregations) == 1
+
+    series = aggregations[0]["series"]
+    assert len(series) == 1
+
+    values = series[0]["values"]
+    assert len(values) == 3
+
+    # Do not care about the order of the values
+    assert {
+        "timestamp": int(
+            (now - timedelta(minutes=3)).replace(second=0, microsecond=0).timestamp()
+            * 1000
+        ),
+        "value": 15,
+    } in values
+    assert {
+        "timestamp": int(
+            (now - timedelta(minutes=2)).replace(second=0, microsecond=0).timestamp()
+            * 1000
+        ),
+        "value": 23,
+    } in values
+    assert {
+        "timestamp": int(
+            (now - timedelta(minutes=1)).replace(second=0, microsecond=0).timestamp()
+            * 1000
+        ),
+        "value": 9,
+    } in values
 
     # count() of all logs grouped by host.name for the last 5 minutes
     response = requests.post(
