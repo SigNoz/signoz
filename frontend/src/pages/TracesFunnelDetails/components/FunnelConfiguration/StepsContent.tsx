@@ -84,43 +84,21 @@ function StepsContent({
 				<Step
 					className="steps-content__add-step"
 					description={
-						!isTraceDetailsPage ? (
-							<Tooltip
-								title={
-									!hasEditPermission
-										? 'You need editor or admin access to add steps'
-										: ''
-								}
+						<Tooltip
+							title={
+								!hasEditPermission ? 'You need editor or admin access to add steps' : ''
+							}
+						>
+							<Button
+								type="default"
+								className="steps-content__add-btn"
+								onClick={isTraceDetailsPage ? handleAddForNewStep : handleAddStep}
+								icon={<PlusIcon size={14} />}
+								disabled={!hasEditPermission}
 							>
-								<Button
-									type="default"
-									className="steps-content__add-btn"
-									onClick={handleAddStep}
-									icon={<PlusIcon size={14} />}
-									disabled={!hasEditPermission}
-								>
-									Add Funnel Step
-								</Button>
-							</Tooltip>
-						) : (
-							<Tooltip
-								title={
-									!hasEditPermission
-										? 'You need editor or admin access to add steps'
-										: ''
-								}
-							>
-								<Button
-									type="default"
-									className="steps-content__add-btn"
-									onClick={handleAddForNewStep}
-									icon={<PlusIcon size={14} />}
-									disabled={!hasEditPermission}
-								>
-									Add for new Step
-								</Button>
-							</Tooltip>
-						)
+								{isTraceDetailsPage ? 'Add for new Step' : 'Add Funnel Step'}
+							</Button>
+						</Tooltip>
 					}
 				/>
 			</Steps>
