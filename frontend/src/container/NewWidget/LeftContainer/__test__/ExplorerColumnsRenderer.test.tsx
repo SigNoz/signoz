@@ -4,10 +4,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TelemetryFieldKey } from 'api/v5/v5';
-import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import React from 'react';
 import { DropResult } from 'react-beautiful-dnd';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -15,7 +16,7 @@ import ExplorerColumnsRenderer from '../ExplorerColumnsRenderer';
 
 // Mock hooks
 jest.mock('hooks/queryBuilder/useQueryBuilder');
-jest.mock('hooks/queryBuilder/useGetAggregateKeys');
+jest.mock('hooks/querySuggestions/useGetQueryKeySuggestions');
 
 // Mock react-beautiful-dnd
 let onDragEndMock: ((result: DropResult) => void) | undefined;
@@ -51,13 +52,33 @@ jest.mock('react-beautiful-dnd', () => ({
 	),
 }));
 
+// Create a wrapper component with QueryClient
+const createWrapper = (): React.FC<{ children: React.ReactNode }> => {
+	const queryClient = new QueryClient({
+		defaultOptions: {
+			queries: {
+				retry: false,
+			},
+		},
+	});
+
+	function Wrapper({ children }: { children: React.ReactNode }): JSX.Element {
+		return (
+			<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+		);
+	}
+
+	return Wrapper;
+};
+
 describe('ExplorerColumnsRenderer', () => {
 	const mockSetSelectedLogFields = jest.fn();
 	const mockSetSelectedTracesFields = jest.fn();
+	const Wrapper = createWrapper();
 
 	beforeEach(() => {
 		jest.clearAllMocks();
-		// Reset mock implementations for useQueryBuilder and useGetAggregateKeys before each test
+		// Reset mock implementations for useQueryBuilder and useGetQueryKeySuggestions before each test
 		// to ensure a clean state for each test case unless explicitly overridden.
 		(useQueryBuilder as jest.Mock).mockReturnValue({
 			currentQuery: {
@@ -71,14 +92,18 @@ describe('ExplorerColumnsRenderer', () => {
 				},
 			},
 		});
-		(useGetAggregateKeys as jest.Mock).mockReturnValue({
+		(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
 			data: {
-				payload: {
-					attributeKeys: [
-						{ key: 'attribute1', dataType: 'string', type: '' },
-						{ key: 'attribute2', dataType: 'string', type: '' },
-						{ key: 'another_attribute', dataType: 'string', type: '' },
-					],
+				data: {
+					data: {
+						keys: {
+							attributeKeys: [
+								{ name: 'attribute1', dataType: 'string', type: '' },
+								{ name: 'attribute2', dataType: 'string', type: '' },
+								{ name: 'another_attribute', dataType: 'string', type: '' },
+							],
+						},
+					},
 				},
 			},
 			isLoading: false,
@@ -88,12 +113,14 @@ describe('ExplorerColumnsRenderer', () => {
 
 	it('renders correctly with default props and displays "Columns" title', () => {
 		render(
-			<ExplorerColumnsRenderer
-				selectedLogFields={[]}
-				setSelectedLogFields={mockSetSelectedLogFields}
-				selectedTracesFields={[]}
-				setSelectedTracesFields={mockSetSelectedTracesFields}
-			/>,
+			<Wrapper>
+				<ExplorerColumnsRenderer
+					selectedLogFields={[]}
+					setSelectedLogFields={mockSetSelectedLogFields}
+					selectedTracesFields={[]}
+					setSelectedTracesFields={mockSetSelectedTracesFields}
+				/>
+			</Wrapper>,
 		);
 
 		expect(screen.getByText('Columns')).toBeInTheDocument();
@@ -101,19 +128,21 @@ describe('ExplorerColumnsRenderer', () => {
 	});
 
 	it('displays error message when data fetching fails', () => {
-		(useGetAggregateKeys as jest.Mock).mockReturnValueOnce({
+		(useGetQueryKeySuggestions as jest.Mock).mockReturnValueOnce({
 			data: undefined,
 			isLoading: false,
 			isError: true,
 		});
 
 		render(
-			<ExplorerColumnsRenderer
-				selectedLogFields={[]}
-				setSelectedLogFields={mockSetSelectedLogFields}
-				selectedTracesFields={[]}
-				setSelectedTracesFields={mockSetSelectedTracesFields}
-			/>,
+			<Wrapper>
+				<ExplorerColumnsRenderer
+					selectedLogFields={[]}
+					setSelectedLogFields={mockSetSelectedLogFields}
+					selectedTracesFields={[]}
+					setSelectedTracesFields={mockSetSelectedTracesFields}
+				/>
+			</Wrapper>,
 		);
 
 		expect(screen.getByTestId('alert-circle-icon')).toBeInTheDocument();
@@ -121,12 +150,14 @@ describe('ExplorerColumnsRenderer', () => {
 
 	it('opens and closes the dropdown', async () => {
 		render(
-			<ExplorerColumnsRenderer
-				selectedLogFields={[]}
-				setSelectedLogFields={mockSetSelectedLogFields}
-				selectedTracesFields={[]}
-				setSelectedTracesFields={mockSetSelectedTracesFields}
-			/>,
+			<Wrapper>
+				<ExplorerColumnsRenderer
+					selectedLogFields={[]}
+					setSelectedLogFields={mockSetSelectedLogFields}
+					selectedTracesFields={[]}
+					setSelectedTracesFields={mockSetSelectedTracesFields}
+				/>
+			</Wrapper>,
 		);
 
 		const addButton = screen.getByTestId('add-columns-button');
@@ -143,12 +174,14 @@ describe('ExplorerColumnsRenderer', () => {
 
 	it('filters attribute keys based on search text', async () => {
 		render(
-			<ExplorerColumnsRenderer
-				selectedLogFields={[]}
-				setSelectedLogFields={mockSetSelectedLogFields}
-				selectedTracesFields={[]}
-				setSelectedTracesFields={mockSetSelectedTracesFields}
-			/>,
+			<Wrapper>
+				<ExplorerColumnsRenderer
+					selectedLogFields={[]}
+					setSelectedLogFields={mockSetSelectedLogFields}
+					selectedTracesFields={[]}
+					setSelectedTracesFields={mockSetSelectedTracesFields}
+				/>
+			</Wrapper>,
 		);
 
 		await userEvent.click(screen.getByTestId('add-columns-button'));
@@ -174,12 +207,14 @@ describe('ExplorerColumnsRenderer', () => {
 	describe('Log Data Source', () => {
 		it('adds a log field when checkbox is checked', async () => {
 			render(
-				<ExplorerColumnsRenderer
-					selectedLogFields={[]}
-					setSelectedLogFields={mockSetSelectedLogFields}
-					selectedTracesFields={[]}
-					setSelectedTracesFields={mockSetSelectedTracesFields}
-				/>,
+				<Wrapper>
+					<ExplorerColumnsRenderer
+						selectedLogFields={[]}
+						setSelectedLogFields={mockSetSelectedLogFields}
+						selectedTracesFields={[]}
+						setSelectedTracesFields={mockSetSelectedTracesFields}
+					/>
+				</Wrapper>,
 			);
 
 			await userEvent.click(screen.getByTestId('add-columns-button'));
@@ -193,12 +228,14 @@ describe('ExplorerColumnsRenderer', () => {
 
 		it('removes a log field when checkbox is unchecked', async () => {
 			render(
-				<ExplorerColumnsRenderer
-					selectedLogFields={[{ dataType: 'string', name: 'attribute1', type: '' }]}
-					setSelectedLogFields={mockSetSelectedLogFields}
-					selectedTracesFields={[]}
-					setSelectedTracesFields={mockSetSelectedTracesFields}
-				/>,
+				<Wrapper>
+					<ExplorerColumnsRenderer
+						selectedLogFields={[{ dataType: 'string', name: 'attribute1', type: '' }]}
+						setSelectedLogFields={mockSetSelectedLogFields}
+						selectedTracesFields={[]}
+						setSelectedTracesFields={mockSetSelectedTracesFields}
+					/>
+				</Wrapper>,
 			);
 
 			await userEvent.click(screen.getByTestId('add-columns-button'));
@@ -210,12 +247,14 @@ describe('ExplorerColumnsRenderer', () => {
 
 		it('removes a log field using the trash icon', async () => {
 			render(
-				<ExplorerColumnsRenderer
-					selectedLogFields={[{ dataType: 'string', name: 'attribute1', type: '' }]}
-					setSelectedLogFields={mockSetSelectedLogFields}
-					selectedTracesFields={[]}
-					setSelectedTracesFields={mockSetSelectedTracesFields}
-				/>,
+				<Wrapper>
+					<ExplorerColumnsRenderer
+						selectedLogFields={[{ dataType: 'string', name: 'attribute1', type: '' }]}
+						setSelectedLogFields={mockSetSelectedLogFields}
+						selectedTracesFields={[]}
+						setSelectedTracesFields={mockSetSelectedTracesFields}
+					/>
+				</Wrapper>,
 			);
 
 			expect(screen.getByText('attribute1')).toBeInTheDocument();
@@ -232,12 +271,14 @@ describe('ExplorerColumnsRenderer', () => {
 			];
 
 			render(
-				<ExplorerColumnsRenderer
-					selectedLogFields={initialSelectedFields}
-					setSelectedLogFields={mockSetSelectedLogFields}
-					selectedTracesFields={[]}
-					setSelectedTracesFields={mockSetSelectedTracesFields}
-				/>,
+				<Wrapper>
+					<ExplorerColumnsRenderer
+						selectedLogFields={initialSelectedFields}
+						setSelectedLogFields={mockSetSelectedLogFields}
+						selectedTracesFields={[]}
+						setSelectedTracesFields={mockSetSelectedTracesFields}
+					/>
+				</Wrapper>,
 			);
 
 			const field1Element = screen.getByText('field1');
@@ -280,13 +321,17 @@ describe('ExplorerColumnsRenderer', () => {
 				},
 			});
 
-			(useGetAggregateKeys as jest.Mock).mockReturnValue({
+			(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
 				data: {
-					payload: {
-						attributeKeys: [
-							{ key: 'trace_attribute1', dataType: 'string', type: 'tag' },
-							{ key: 'trace_attribute2', dataType: 'string', type: 'tag' },
-						],
+					data: {
+						data: {
+							keys: {
+								attributeKeys: [
+									{ name: 'trace_attribute1', dataType: 'string', type: 'tag' },
+									{ name: 'trace_attribute2', dataType: 'string', type: 'tag' },
+								],
+							},
+						},
 					},
 				},
 				isLoading: false,
@@ -296,12 +341,14 @@ describe('ExplorerColumnsRenderer', () => {
 
 		it('adds a trace field when checkbox is checked', async () => {
 			render(
-				<ExplorerColumnsRenderer
-					selectedLogFields={[]}
-					setSelectedLogFields={mockSetSelectedLogFields}
-					selectedTracesFields={[]}
-					setSelectedTracesFields={mockSetSelectedTracesFields}
-				/>,
+				<Wrapper>
+					<ExplorerColumnsRenderer
+						selectedLogFields={[]}
+						setSelectedLogFields={mockSetSelectedLogFields}
+						selectedTracesFields={[]}
+						setSelectedTracesFields={mockSetSelectedTracesFields}
+					/>
+				</Wrapper>,
 			);
 
 			await userEvent.click(screen.getByTestId('add-columns-button'));
@@ -309,24 +356,26 @@ describe('ExplorerColumnsRenderer', () => {
 			await userEvent.click(checkbox);
 
 			expect(mockSetSelectedTracesFields).toHaveBeenCalledWith([
-				{ key: 'trace_attribute1', dataType: 'string', type: 'tag' },
+				{ name: 'trace_attribute1', dataType: 'string', type: 'tag' },
 			]);
 		});
 
 		it('removes a trace field when checkbox is unchecked', async () => {
 			render(
-				<ExplorerColumnsRenderer
-					selectedLogFields={[]}
-					setSelectedLogFields={mockSetSelectedLogFields}
-					selectedTracesFields={[
-						{
-							name: 'trace_attribute1',
-							fieldDataType: DataTypes.String,
-							fieldContext: '',
-						},
-					]}
-					setSelectedTracesFields={mockSetSelectedTracesFields}
-				/>,
+				<Wrapper>
+					<ExplorerColumnsRenderer
+						selectedLogFields={[]}
+						setSelectedLogFields={mockSetSelectedLogFields}
+						selectedTracesFields={[
+							{
+								name: 'trace_attribute1',
+								fieldDataType: DataTypes.String,
+								fieldContext: '',
+							},
+						]}
+						setSelectedTracesFields={mockSetSelectedTracesFields}
+					/>
+				</Wrapper>,
 			);
 
 			await userEvent.click(screen.getByTestId('add-columns-button'));
@@ -338,18 +387,20 @@ describe('ExplorerColumnsRenderer', () => {
 
 		it('removes a trace field using the trash icon', async () => {
 			render(
-				<ExplorerColumnsRenderer
-					selectedLogFields={[]}
-					setSelectedLogFields={mockSetSelectedLogFields}
-					selectedTracesFields={[
-						{
-							name: 'trace_attribute1',
-							fieldDataType: DataTypes.String,
-							fieldContext: '',
-						},
-					]}
-					setSelectedTracesFields={mockSetSelectedTracesFields}
-				/>,
+				<Wrapper>
+					<ExplorerColumnsRenderer
+						selectedLogFields={[]}
+						setSelectedLogFields={mockSetSelectedLogFields}
+						selectedTracesFields={[
+							{
+								name: 'trace_attribute1',
+								fieldDataType: DataTypes.String,
+								fieldContext: '',
+							},
+						]}
+						setSelectedTracesFields={mockSetSelectedTracesFields}
+					/>
+				</Wrapper>,
 			);
 
 			expect(screen.getByText('trace_attribute1')).toBeInTheDocument();
@@ -366,12 +417,14 @@ describe('ExplorerColumnsRenderer', () => {
 			];
 
 			render(
-				<ExplorerColumnsRenderer
-					selectedLogFields={[]}
-					setSelectedLogFields={mockSetSelectedLogFields}
-					selectedTracesFields={initialSelectedFields as TelemetryFieldKey[]}
-					setSelectedTracesFields={mockSetSelectedTracesFields}
-				/>,
+				<Wrapper>
+					<ExplorerColumnsRenderer
+						selectedLogFields={[]}
+						setSelectedLogFields={mockSetSelectedLogFields}
+						selectedTracesFields={initialSelectedFields as TelemetryFieldKey[]}
+						setSelectedTracesFields={mockSetSelectedTracesFields}
+					/>
+				</Wrapper>,
 			);
 
 			const traceField1Element = screen.getByText('trace_field1');
