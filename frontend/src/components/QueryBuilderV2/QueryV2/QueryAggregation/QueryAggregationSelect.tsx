@@ -18,7 +18,7 @@ import {
 import { javascript } from '@codemirror/lang-javascript';
 import { EditorState, RangeSetBuilder, Transaction } from '@codemirror/state';
 import { Color } from '@signozhq/design-tokens';
-import { copilot } from '@uiw/codemirror-theme-copilot';
+import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, {
 	Decoration,
 	EditorView,
@@ -31,6 +31,7 @@ import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { TriangleAlert } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
@@ -149,6 +150,7 @@ function QueryAggregationSelect({
 	queryData: IBuilderQuery;
 	maxAggregations?: number;
 }): JSX.Element {
+	const isDarkMode = useIsDarkMode();
 	const { setAggregationOptions } = useQueryBuilderV2Context();
 
 	const [input, setInput] = useState(
@@ -594,7 +596,7 @@ function QueryAggregationSelect({
 				className={`query-aggregation-select-editor ${
 					validationError ? 'error' : ''
 				}`}
-				theme={copilot}
+				theme={isDarkMode ? githubDark : githubLight}
 				extensions={[
 					chipPlugin,
 					aggregatorAutocomplete,

@@ -13,7 +13,7 @@ import {
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
 import { Color } from '@signozhq/design-tokens';
-import { copilot } from '@uiw/codemirror-theme-copilot';
+import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
 import { Button, Card, Collapse, Popover, Tag } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
@@ -26,6 +26,7 @@ import {
 	queryOperatorSuggestions,
 } from 'constants/antlrQueryConstants';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
 import { TriangleAlert } from 'lucide-react';
@@ -84,6 +85,7 @@ function QuerySearch({
 	dataSource: DataSource;
 	onRun?: (query: string) => void;
 }): JSX.Element {
+	const isDarkMode = useIsDarkMode();
 	const [query, setQuery] = useState<string>(queryData.filter?.expression || '');
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([
 		{ label: 'error', type: 'value' },
@@ -1108,7 +1110,7 @@ function QuerySearch({
 			<div className="query-where-clause-editor-container">
 				<CodeMirror
 					value={query}
-					theme={copilot}
+					theme={isDarkMode ? githubDark : githubLight}
 					onChange={handleChange}
 					onUpdate={handleUpdate}
 					className={cx('query-where-clause-editor', {
@@ -1245,7 +1247,7 @@ function QuerySearch({
 									>
 										<CodeMirror
 											value={example.query}
-											theme={copilot}
+											theme={isDarkMode ? githubDark : githubLight}
 											extensions={[
 												javascript({ jsx: false, typescript: false }),
 												EditorView.editable.of(false),

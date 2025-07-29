@@ -10,11 +10,12 @@ import {
 	startCompletion,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
-import { copilot } from '@uiw/codemirror-theme-copilot';
+import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorView, keymap } from '@uiw/react-codemirror';
 import { Button } from 'antd';
 import { Having } from 'api/v5/v5';
 import { useQueryBuilderV2Context } from 'components/QueryBuilderV2/QueryBuilderV2Context';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronUp } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -92,6 +93,7 @@ function HavingFilter({
 	onChange: (value: string) => void;
 	queryData: IBuilderQuery;
 }): JSX.Element {
+	const isDarkMode = useIsDarkMode();
 	const { aggregationOptions } = useQueryBuilderV2Context();
 	const having = queryData?.having as Having;
 	const [input, setInput] = useState(having?.expression || '');
@@ -324,7 +326,7 @@ function HavingFilter({
 				<CodeMirror
 					value={input}
 					onChange={handleChange}
-					theme={copilot}
+					theme={isDarkMode ? githubDark : githubLight}
 					className="having-filter-select-editor"
 					width="100%"
 					extensions={[
