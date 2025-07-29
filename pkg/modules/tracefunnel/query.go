@@ -23,7 +23,7 @@ func sanitizeClause(clause string) string {
 
 func ValidateTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefunneltypes.TimeRange) (*v3.ClickHouseQuery, error) {
 	funnelSteps := funnel.Steps
-	
+
 	// Build step data for the dynamic query builder
 	steps := make([]struct {
 		ServiceName   string
@@ -31,14 +31,14 @@ func ValidateTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefunn
 		ContainsError int
 		Clause        string
 	}, len(funnelSteps))
-	
+
 	for i, step := range funnelSteps {
 		// Build filter clause
 		clause, err := tracev4.BuildTracesFilterQuery(step.Filters, false)
 		if err != nil {
 			return nil, err
 		}
-		
+
 		steps[i] = struct {
 			ServiceName   string
 			SpanName      string
@@ -50,14 +50,14 @@ func ValidateTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefunn
 			ContainsError: 0,
 			Clause:        sanitizeClause(clause),
 		}
-		
+
 		if step.HasErrors {
 			steps[i].ContainsError = 1
 		}
 	}
-	
+
 	query := BuildFunnelValidationQuery(steps, timeRange.StartTime, timeRange.EndTime)
-	
+
 	return &v3.ClickHouseQuery{
 		Query: query,
 	}, nil
@@ -65,7 +65,7 @@ func ValidateTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefunn
 
 func GetFunnelAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange tracefunneltypes.TimeRange) (*v3.ClickHouseQuery, error) {
 	funnelSteps := funnel.Steps
-	
+
 	// Build step data for the dynamic query builder
 	steps := make([]struct {
 		ServiceName    string
@@ -74,19 +74,19 @@ func GetFunnelAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange trace
 		LatencyPointer string
 		Clause         string
 	}, len(funnelSteps))
-	
+
 	for i, step := range funnelSteps {
 		// Build filter clause
 		clause, err := tracev4.BuildTracesFilterQuery(step.Filters, false)
 		if err != nil {
 			return nil, err
 		}
-		
+
 		latencyPointer := step.LatencyPointer
 		if latencyPointer == "" {
 			latencyPointer = "start"
 		}
-		
+
 		steps[i] = struct {
 			ServiceName    string
 			SpanName       string
@@ -100,14 +100,14 @@ func GetFunnelAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange trace
 			LatencyPointer: latencyPointer,
 			Clause:         sanitizeClause(clause),
 		}
-		
+
 		if step.HasErrors {
 			steps[i].ContainsError = 1
 		}
 	}
-	
+
 	query := BuildFunnelOverviewQuery(steps, timeRange.StartTime, timeRange.EndTime)
-	
+
 	return &v3.ClickHouseQuery{Query: query}, nil
 }
 
@@ -117,7 +117,7 @@ func GetFunnelStepAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange t
 	}
 
 	funnelSteps := funnel.Steps
-	
+
 	// Build step data for the dynamic query builder
 	steps := make([]struct {
 		ServiceName    string
@@ -127,19 +127,19 @@ func GetFunnelStepAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange t
 		LatencyType    string
 		Clause         string
 	}, len(funnelSteps))
-	
+
 	for i, step := range funnelSteps {
 		// Build filter clause
 		clause, err := tracev4.BuildTracesFilterQuery(step.Filters, false)
 		if err != nil {
 			return nil, err
 		}
-		
+
 		latencyPointer := step.LatencyPointer
 		if latencyPointer == "" {
 			latencyPointer = "start"
 		}
-		
+
 		steps[i] = struct {
 			ServiceName    string
 			SpanName       string
@@ -155,20 +155,20 @@ func GetFunnelStepAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange t
 			LatencyType:    step.LatencyType,
 			Clause:         sanitizeClause(clause),
 		}
-		
+
 		if step.HasErrors {
 			steps[i].ContainsError = 1
 		}
 	}
-	
+
 	query := BuildFunnelStepOverviewQuery(steps, timeRange.StartTime, timeRange.EndTime, stepStart, stepEnd)
-	
+
 	return &v3.ClickHouseQuery{Query: query}, nil
 }
 
 func GetStepAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange tracefunneltypes.TimeRange) (*v3.ClickHouseQuery, error) {
 	funnelSteps := funnel.Steps
-	
+
 	// Build step data for the dynamic query builder
 	steps := make([]struct {
 		ServiceName   string
@@ -176,14 +176,14 @@ func GetStepAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange tracefu
 		ContainsError int
 		Clause        string
 	}, len(funnelSteps))
-	
+
 	for i, step := range funnelSteps {
 		// Build filter clause
 		clause, err := tracev4.BuildTracesFilterQuery(step.Filters, false)
 		if err != nil {
 			return nil, err
 		}
-		
+
 		steps[i] = struct {
 			ServiceName   string
 			SpanName      string
@@ -195,14 +195,14 @@ func GetStepAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange tracefu
 			ContainsError: 0,
 			Clause:        sanitizeClause(clause),
 		}
-		
+
 		if step.HasErrors {
 			steps[i].ContainsError = 1
 		}
 	}
-	
+
 	query := BuildFunnelCountQuery(steps, timeRange.StartTime, timeRange.EndTime)
-	
+
 	return &v3.ClickHouseQuery{
 		Query: query,
 	}, nil
@@ -267,6 +267,7 @@ func GetSlowestTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefu
 	return &v3.ClickHouseQuery{Query: query}, nil
 }
 
+// TODO: Showing traces with error which are slow makes little sense as a product. We should show the error spans directly in the funnel chart. Rather showing traces which has drop between steps will be more relevant
 func GetErroredTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefunneltypes.TimeRange, stepStart, stepEnd int64) (*v3.ClickHouseQuery, error) {
 	funnelSteps := funnel.Steps
 	containsErrorT1 := 0
