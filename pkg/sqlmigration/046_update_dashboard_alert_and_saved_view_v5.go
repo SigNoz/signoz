@@ -271,7 +271,7 @@ func (migration *queryBuilderV5Migration) migrateRules(
 	alertsMigrator := transition.NewAlertMigrateV5(migration.logger, logsKeys, tracesKeys)
 
 	for _, rule := range rules {
-		migration.logger.InfoContext(ctx, "migrating rule", "rule.id", rule.ID)
+		migration.logger.InfoContext(ctx, "migrating rule", "rule_id", rule.ID)
 
 		updated := alertsMigrator.Migrate(ctx, rule.Data)
 
