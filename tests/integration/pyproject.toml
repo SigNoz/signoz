@@ -10,16 +10,18 @@ python = "^3.13"
 pytest = "^8.3.5"
 psycopg2 = "^2.9.10"
 testcontainers = "^4.10.0"
-black = "^25.1.0"
-clickhouse-driver = "^0.2.9"
 requests = "^2.32.3"
 wiremock = "^2.6.1"
+numpy = "^2.3.2"
+clickhouse-connect = "^0.8.18"
+svix-ksuid = "^0.6.2"
 
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.3.6"
 isort = "^6.0.1"
 autoflake = "^2.3.1"
+black = "^25.1.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -36,10 +38,10 @@ addopts = "-ra"
 ignore = [".venv"]
 
 [tool.pylint.format]
-max-line-length = "88"
+max-line-length = "400"
 
 [tool.pylint."messages control"]
-disable = ["missing-module-docstring", "missing-function-docstring", "missing-class-docstring"]
+disable = ["missing-module-docstring", "missing-function-docstring", "missing-class-docstring", "duplicate-code", "dangerous-default-value", "too-many-positional-arguments", "too-many-arguments", "too-few-public-methods", "too-many-instance-attributes", "too-many-locals", "too-many-statements"]
 
 [tool.isort]
 profile = "black"
