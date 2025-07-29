@@ -465,22 +465,26 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 						</div>
 					),
 					disabled: true,
+					dataTestId: 'logged-in-as-nav-item',
 				},
 				{ type: 'divider' as const },
 				{
 					key: 'account',
 					label: 'Account Settings',
+					dataTestId: 'account-settings-nav-item',
 				},
 				{
 					key: 'workspace',
 					label: 'Workspace Settings',
 					disabled: isWorkspaceBlocked,
+					dataTestId: 'workspace-settings-nav-item',
 				},
 				...(isEnterpriseSelfHostedUser || isCommunityEnterpriseUser
 					? [
 							{
 								key: 'license',
 								label: 'Manage License',
+								dataTestId: 'manage-license-nav-item',
 							},
 					  ]
 					: []),
@@ -490,6 +494,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					label: (
 						<span className="user-settings-dropdown-logout-section">Sign out</span>
 					),
+					dataTestId: 'logout-nav-item',
 				},
 			].filter(Boolean),
 		[
@@ -562,6 +567,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					return [
 						...prevState,
 						{
+							type: 'divider',
+						},
+						{
 							key: changelogKey,
 							label: (
 								<div className="nav-item-label-container">
@@ -571,12 +579,17 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 							),
 							icon: <ScrollText size={14} />,
 							itemKey: changelogKey,
+							isExternal: true,
+							url: 'https://signoz.io/changelog/',
 						},
 					];
 				}
 
 				return [
 					...prevState,
+					{
+						type: 'divider',
+					},
 					{
 						type: 'group',
 						label: "WHAT's NEW",
@@ -592,6 +605,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 						),
 						icon: <ScrollText size={14} />,
 						itemKey: changelogKey,
+						isExternal: true,
+						url: 'https://signoz.io/changelog/',
 					},
 				];
 			});
@@ -764,7 +779,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					break;
 				case 'changelog-1':
 				case 'changelog-2':
-				case CHANGELOG_LABEL.toLowerCase().replace(' ', '-'):
 					toggleChangelogModal();
 					break;
 				default:
@@ -1035,7 +1049,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 									trigger={['click']}
 								>
 									<div className="nav-item">
-										<div className="nav-item-data">
+										<div className="nav-item-data" data-testid="help-support-nav-item">
 											<div className="nav-item-icon">{helpSupportMenuItem.icon}</div>
 
 											<div className="nav-item-label">{helpSupportMenuItem.label}</div>
@@ -1055,7 +1069,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 									trigger={['click']}
 								>
 									<div className="nav-item">
-										<div className="nav-item-data">
+										<div className="nav-item-data" data-testid="settings-nav-item">
 											<div className="nav-item-icon">{userSettingsMenuItem.icon}</div>
 
 											<div className="nav-item-label">{userSettingsMenuItem.label}</div>
