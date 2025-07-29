@@ -18,15 +18,6 @@ var RootCmd = &cobra.Command{
 	CompletionOptions: cobra.CompletionOptions{DisableDefaultCmd: true},
 }
 
-// Add config flag
-var configPath string
-var clusterName string
-
-func init() {
-	RootCmd.Flags().StringVarP(&configPath, "config", "c", "./conf/prometheus.yml", "Path to the configuration file")
-	RootCmd.Flags().StringVarP(&clusterName, "cluster", "l", "cluster", "Name of the cluster")
-}
-
 func Execute(logger *slog.Logger) {
 	zapLogger := newZapLogger()
 	zap.ReplaceGlobals(zapLogger)
