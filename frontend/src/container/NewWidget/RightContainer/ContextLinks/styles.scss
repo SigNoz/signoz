@@ -49,6 +49,7 @@
 
     .drag-handle-icon {
         flex-shrink: 0;
+        color: var(--bg-vanilla-400);
     }
 
     .context-link-content {
@@ -94,9 +95,8 @@
 
     .delete-context-link-btn {
         &:hover {
-            color: var(--bg-cherry-400);
-            border-color: var(--bg-cherry-400);
-            background-color: var(--bg-cherry-100);
+            color: var(--bg-cherry-400) !important;
+            border-color: var(--bg-cherry-400) !important;
         }
     }
 
@@ -131,6 +131,10 @@
         }
 
         .context-link-url {
+            color: var(--bg-slate-400);
+        }
+
+        .drag-handle-icon {
             color: var(--bg-slate-400);
         }
 
