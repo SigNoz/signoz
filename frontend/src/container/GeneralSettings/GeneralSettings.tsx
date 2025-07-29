@@ -127,7 +127,7 @@ function GeneralSettings({
 
 	useEffect(() => {
 		if (logsCurrentTTLValues) {
-			setLogsTotalRetentionPeriod(logsCurrentTTLValues.logs_ttl_duration_hrs);
+			setLogsTotalRetentionPeriod(logsCurrentTTLValues.default_ttl_days * 24);
 			setLogsS3RetentionPeriod(
 				logsCurrentTTLValues.logs_move_ttl_duration_hrs
 					? logsCurrentTTLValues.logs_move_ttl_duration_hrs
@@ -376,11 +376,14 @@ function GeneralSettings({
 				logsTtlValuesRefetch();
 				if (!hasSetTTLFailed)
 					// Updates the currentTTL Values in order to avoid pushing the same values.
-					setLogsCurrentTTLValues({
+					setLogsCurrentTTLValues((prev) => ({
+						...prev,
 						logs_ttl_duration_hrs: logsTotalRetentionPeriod || -1,
 						logs_move_ttl_duration_hrs: logsS3RetentionPeriod || -1,
-						status: '',
-					});
+						default_ttl_days: logsTotalRetentionPeriod
+							? logsTotalRetentionPeriod / 24 // convert Hours to days
+							: -1,
+					}));
 			}
 		} catch (error) {
 			notifications.error({

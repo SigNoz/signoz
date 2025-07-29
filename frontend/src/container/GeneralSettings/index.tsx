@@ -1,6 +1,7 @@
 import { Typography } from 'antd';
 import getDisks from 'api/disks/getDisks';
 import getRetentionPeriodApi from 'api/settings/getRetention';
+import getRetentionPeriodApiV2 from 'api/settings/getRetentionV2';
 import Spinner from 'components/Spinner';
 import { useAppContext } from 'providers/App/App';
 import { useTranslation } from 'react-i18next';
@@ -36,7 +37,7 @@ function GeneralSettings(): JSX.Element {
 			queryKey: ['getRetentionPeriodApiTraces', user?.accessJwt],
 		},
 		{
-			queryFn: (): TRetentionAPIReturn<'logs'> => getRetentionPeriodApi('logs'),
+			queryFn: (): TRetentionAPIReturn<'logs'> => getRetentionPeriodApiV2(), // Only works for logs
 			queryKey: ['getRetentionPeriodApiLogs', user?.accessJwt],
 		},
 		{
