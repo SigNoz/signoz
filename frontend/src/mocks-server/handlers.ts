@@ -1,4 +1,16 @@
+import {
+	FunnelOverviewPayload,
+	FunnelOverviewResponse,
+} from 'api/traceFunnels';
 import { rest } from 'msw';
+import {
+	mockErrorTracesData,
+	mockFunnelsListData,
+	mockOverviewData,
+	mockSlowTracesData,
+	mockStepsData,
+} from 'pages/TracesFunnels/__tests__/mockFunnelsData';
+import { FunnelData } from 'types/api/traceFunnels';
 
 import commonEnTranslation from '../../public/locales/en/common.json';
 import enTranslation from '../../public/locales/en/translation.json';
@@ -15,7 +27,25 @@ import { membersResponse } from './__mockdata__/members';
 import { queryRangeSuccessResponse } from './__mockdata__/query_range';
 import { serviceSuccessResponse } from './__mockdata__/services';
 import { topLevelOperationSuccessResponse } from './__mockdata__/top_level_operations';
+import { mockSingleFunnelData } from './__mockdata__/trace_funnels';
 import { traceDetailResponse } from './__mockdata__/tracedetail';
+
+// Define mock data specifically for step transitions
+const mockStepTransitionOverviewData: FunnelOverviewResponse = {
+	status: 'success',
+	data: [
+		{
+			timestamp: '2024-01-01T00:00:00Z',
+			data: {
+				avg_duration: 55000000,
+				avg_rate: 8.5,
+				conversion_rate: 92.0,
+				errors: 1,
+				latency: 150000000,
+			},
+		},
+	],
+};
 
 export const handlers = [
 	rest.post('http://localhost/api/v3/query_range', (req, res, ctx) =>
@@ -262,5 +292,55 @@ export const handlers = [
 	),
 	rest.get('http://localhost/locales/en-US/common.json', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(commonEnTranslation)),
+	),
+	rest.get('http://localhost/api/v1/trace-funnels/list', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({ status: 'success', payload: mockFunnelsListData }),
+		),
+	),
+	rest.get(
+		'http://localhost/api/v1/trace-funnels/get/:funnelId',
+		(req, res, ctx) => {
+			const { funnelId } = req.params;
+
+			// Ensure the mock data always uses the requested funnelId
+			const responseData: FunnelData = {
+				...mockSingleFunnelData,
+				funnel_id: funnelId as string,
+			};
+
+			return res(ctx.status(200), ctx.json(responseData));
+		},
+	),
+
+	rest.post<FunnelOverviewPayload, { funnelId: string }, FunnelOverviewResponse>(
+		`http://localhost/api/v1/trace-funnels/:funnelId/analytics/overview`,
+		async (req, res, ctx) => {
+			const body = await req.json<FunnelOverviewPayload>();
+
+			// Check if step_start and step_end are provided in the payload
+			if (body.step_start !== undefined && body.step_end !== undefined) {
+				// Return mock data for step transition
+				return res(ctx.status(200), ctx.json(mockStepTransitionOverviewData));
+			}
+			// Otherwise, return the default overall mock data
+			return res(ctx.status(200), ctx.json(mockOverviewData));
+		},
+	),
+	rest.post(
+		// Use :funnelId to match any funnel ID requested in tests
+		`http://localhost/api/v1/trace-funnels/:funnelId/analytics/steps`,
+		(_, res, ctx) => res(ctx.status(200), ctx.json(mockStepsData)),
+	),
+	rest.post(
+		// Use :funnelId
+		`http://localhost/api/v1/trace-funnels/:funnelId/analytics/slow-traces`,
+		(_, res, ctx) => res(ctx.status(200), ctx.json(mockSlowTracesData)),
+	),
+	rest.post(
+		// Use :funnelId
+		`http://localhost/api/v1/trace-funnels/:funnelId/analytics/error-traces`,
+		(_, res, ctx) => res(ctx.status(200), ctx.json(mockErrorTracesData)),
 	),
 ];

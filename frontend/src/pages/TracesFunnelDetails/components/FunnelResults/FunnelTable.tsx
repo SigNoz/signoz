@@ -9,6 +9,7 @@ interface FunnelTableProps {
 	columns: Array<ColumnProps<any>>;
 	title: string;
 	tooltip?: string;
+	testId: string;
 }
 
 function FunnelTable({
@@ -17,9 +18,10 @@ function FunnelTable({
 	columns = [],
 	title,
 	tooltip,
+	testId,
 }: FunnelTableProps): JSX.Element {
 	return (
-		<div className="funnel-table">
+		<div className="funnel-table" data-testid={testId}>
 			<div className="funnel-table__header">
 				<div className="funnel-table__title">{title}</div>
 				<div className="funnel-table__actions">
@@ -41,6 +43,7 @@ function FunnelTable({
 				rowClassName={(_, index): string =>
 					index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
 				}
+				rowKey={(record): string => record.id}
 			/>
 		</div>
 	);
