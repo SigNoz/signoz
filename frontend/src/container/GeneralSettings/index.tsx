@@ -6,7 +6,7 @@ import Spinner from 'components/Spinner';
 import { useAppContext } from 'providers/App/App';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { ErrorResponse, SuccessResponse, SuccessResponseV2 } from 'types/api';
 import { TTTLType } from 'types/api/settings/common';
 import { PayloadProps as GetRetentionPeriodAPIPayloadProps } from 'types/api/settings/getRetention';
 
@@ -14,6 +14,10 @@ import GeneralSettingsContainer from './GeneralSettings';
 
 type TRetentionAPIReturn<T extends TTTLType> = Promise<
 	SuccessResponse<GetRetentionPeriodAPIPayloadProps<T>> | ErrorResponse
+>;
+
+type TRetentionAPIReturnV2<T extends TTTLType> = Promise<
+	SuccessResponseV2<GetRetentionPeriodAPIPayloadProps<T>>
 >;
 
 function GeneralSettings(): JSX.Element {
@@ -37,7 +41,7 @@ function GeneralSettings(): JSX.Element {
 			queryKey: ['getRetentionPeriodApiTraces', user?.accessJwt],
 		},
 		{
-			queryFn: (): TRetentionAPIReturn<'logs'> => getRetentionPeriodApiV2(), // Only works for logs
+			queryFn: (): TRetentionAPIReturnV2<'logs'> => getRetentionPeriodApiV2(), // Only works for logs
 			queryKey: ['getRetentionPeriodApiLogs', user?.accessJwt],
 		},
 		{
@@ -71,8 +75,8 @@ function GeneralSettings(): JSX.Element {
 	if (getRetentionPeriodLogsApiResponse.isError || getDisksResponse.isError) {
 		return (
 			<Typography>
-				{getRetentionPeriodLogsApiResponse.data?.error ||
-					getDisksResponse.data?.error ||
+				{getRetentionPeriodLogsApiResponse.isError ||
+					getDisksResponse.error ||
 					t('something_went_wrong')}
 			</Typography>
 		);
@@ -87,7 +91,7 @@ function GeneralSettings(): JSX.Element {
 		getRetentionPeriodTracesApiResponse.isLoading ||
 		!getRetentionPeriodTracesApiResponse.data?.payload ||
 		getRetentionPeriodLogsApiResponse.isLoading ||
-		!getRetentionPeriodLogsApiResponse.data?.payload
+		!getRetentionPeriodLogsApiResponse.data?.data
 	) {
 		return <Spinner tip="Loading.." height="70vh" />;
 	}
@@ -100,7 +104,7 @@ function GeneralSettings(): JSX.Element {
 				metricsTtlValuesRefetch: getRetentionPeriodMetricsApiResponse.refetch,
 				tracesTtlValuesPayload: getRetentionPeriodTracesApiResponse.data?.payload,
 				tracesTtlValuesRefetch: getRetentionPeriodTracesApiResponse.refetch,
-				logsTtlValuesPayload: getRetentionPeriodLogsApiResponse.data?.payload,
+				logsTtlValuesPayload: getRetentionPeriodLogsApiResponse.data?.data,
 				logsTtlValuesRefetch: getRetentionPeriodLogsApiResponse.refetch,
 			}}
 		/>

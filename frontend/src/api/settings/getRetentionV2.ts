@@ -1,12 +1,12 @@
 import { ApiV2Instance } from 'api';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 import { PayloadProps } from 'types/api/settings/getRetention';
 
 // Only works for logs
 const getRetentionV2 = async (): Promise<
-	SuccessResponse<PayloadProps<'logs'>> | ErrorResponse
+	SuccessResponseV2<PayloadProps<'logs'>>
 > => {
 	try {
 		const response = await ApiV2Instance.get<PayloadProps<'logs'>>(
@@ -14,13 +14,11 @@ const getRetentionV2 = async (): Promise<
 		);
 
 		return {
-			statusCode: 200,
-			error: null,
-			message: 'Success',
-			payload: response.data,
+			httpStatusCode: response.status,
+			data: response.data,
 		};
 	} catch (error) {
-		return ErrorResponseHandler(error as AxiosError);
+		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 	}
 };
 

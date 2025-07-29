@@ -13,7 +13,12 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { useInterval } from 'react-use';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import {
+	ErrorResponse,
+	ErrorResponseV2,
+	SuccessResponse,
+	SuccessResponseV2,
+} from 'types/api';
 import {
 	IDiskType,
 	PayloadProps as GetDisksPayload,
@@ -628,7 +633,7 @@ interface GeneralSettingsProps {
 		ErrorResponse | SuccessResponse<GetRetentionPeriodTracesPayload>
 	>['refetch'];
 	logsTtlValuesRefetch: UseQueryResult<
-		ErrorResponse | SuccessResponse<GetRetentionPeriodLogsPayload>
+		ErrorResponseV2 | SuccessResponseV2<GetRetentionPeriodLogsPayload>
 	>['refetch'];
 }
 
