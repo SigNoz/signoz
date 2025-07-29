@@ -24,15 +24,13 @@ type traceOperatorQuery struct {
 var _ qbtypes.Query = (*traceOperatorQuery)(nil)
 
 func (q *traceOperatorQuery) Fingerprint() string {
-	// No caching for raw queries
+
 	if q.kind == qbtypes.RequestTypeRaw {
 		return ""
 	}
 
-	// Create a deterministic fingerprint for trace operator queries
 	parts := []string{"trace_operator"}
 
-	// Add expression
 	parts = append(parts, fmt.Sprintf("expr=%s", q.spec.Expression))
 
 	// Add returnSpansFrom if specified
@@ -88,11 +86,14 @@ func (q *traceOperatorQuery) Window() (uint64, uint64) {
 }
 
 func (q *traceOperatorQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
-
-	// Pass composite query in context
-	ctx = context.WithValue(ctx, qbtypes.CompositeQueryContextKey, q.compositeQuery)
-
-	stmt, err := q.stmtBuilder.Build(ctx, q.fromMS, q.toMS, q.kind, q.spec)
+	stmt, err := q.stmtBuilder.Build(
+		ctx,
+		q.fromMS,
+		q.toMS,
+		q.kind,
+		q.spec,
+		q.compositeQuery,
+	)
 	if err != nil {
 		return nil, err
 	}

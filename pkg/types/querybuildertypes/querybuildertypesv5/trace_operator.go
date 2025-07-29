@@ -173,6 +173,15 @@ func (q *QueryBuilderTraceOperator) ValidateTraceOperator(queries []QueryEnvelop
 		}
 	}
 
+	if q.StepInterval.Seconds() < 0 {
+		return errors.WrapInvalidInputf(
+			nil,
+			errors.CodeInvalidInput,
+			"stepInterval cannot be negative, got %f seconds",
+			q.StepInterval.Seconds(),
+		)
+	}
+
 	// Validate ReturnSpansFrom if specified
 	if q.ReturnSpansFrom != "" {
 		if _, exists := availableQueries[q.ReturnSpansFrom]; !exists {

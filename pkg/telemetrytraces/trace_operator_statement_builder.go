@@ -40,12 +40,14 @@ func NewTraceOperatorStatementBuilder(
 	}
 }
 
+// Build builds a SQL query based on the given parameters.
 func (b *traceOperatorStatementBuilder) Build(
 	ctx context.Context,
 	start uint64,
 	end uint64,
 	requestType qbtypes.RequestType,
 	query qbtypes.QueryBuilderTraceOperator,
+	compositeQuery *qbtypes.CompositeQuery,
 ) (*qbtypes.Statement, error) {
 
 	start = querybuilder.ToNanoSecs(start)
@@ -58,10 +60,9 @@ func (b *traceOperatorStatementBuilder) Build(
 		}
 	}
 
-	// Retrieve composite query from context using the same context key type
-	compositeQuery, ok := ctx.Value(qbtypes.CompositeQueryContextKey).(*qbtypes.CompositeQuery)
-	if !ok {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "composite query not found in context")
+	// Validate compositeQuery parameter
+	if compositeQuery == nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "compositeQuery cannot be nil")
 	}
 
 	// Build the CTE-based query
@@ -75,7 +76,7 @@ func (b *traceOperatorStatementBuilder) Build(
 		ctes:           []cteNode{}, // Use slice to maintain order
 		cteNameToIndex: make(map[string]int),
 		queryToCTEName: make(map[string]string),
-		compositeQuery: compositeQuery,
+		compositeQuery: compositeQuery, // Now passed as explicit parameter
 	}
 
 	// Collect all referenced queries
