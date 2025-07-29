@@ -209,6 +209,15 @@ func Test_buildResourceIndexFilter(t *testing.T) {
 			want: `lower(labels) like '%service.name%application%_test%'`,
 		},
 		{
+			name: "test not like with % and _",
+			args: args{
+				key:   "service.name",
+				op:    v3.FilterOperatorILike,
+				value: "application%_test",
+			},
+			want: `lower(labels) like '%service.name%application%_test%'`,
+		},
+		{
 			name: "test contains",
 			args: args{
 				key:   "service.name",
