@@ -178,3 +178,17 @@ export const panelTypeVsLegendColors: {
 	[PANEL_TYPES.HISTOGRAM]: true,
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
 } as const;
+
+export const panelTypeVsContextLinks: {
+	[key in PANEL_TYPES]: boolean;
+} = {
+	[PANEL_TYPES.TIME_SERIES]: true,
+	[PANEL_TYPES.VALUE]: false,
+	[PANEL_TYPES.TABLE]: true,
+	[PANEL_TYPES.LIST]: false,
+	[PANEL_TYPES.PIE]: false,
+	[PANEL_TYPES.BAR]: false,
+	[PANEL_TYPES.HISTOGRAM]: false,
+	[PANEL_TYPES.TRACE]: false,
+	[PANEL_TYPES.EMPTY_WIDGET]: false,
+} as const;

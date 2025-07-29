@@ -16,10 +16,14 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button, Typography } from 'antd';
+import { Button, Modal, Typography } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { GripVertical, Pencil, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Dispatch, SetStateAction } from 'react';
+import { ContextLinkProps } from 'types/api/dashboard/getAll';
+
+import UpdateContextLinks from './UpdateContextLinks';
+import useContextLinkModal from './useContextLinkModal';
 
 interface ContextLink {
 	id: string;
@@ -87,74 +91,22 @@ function SortableContextLink({
 	);
 }
 
-function ContextLinks(): JSX.Element {
-	// Dummy state for context links
-	const [contextLinks, setContextLinks] = useState<ContextLink[]>([
-		{
-			id: '1',
-			label: 'Dashboard',
-			url: 'https://dashboard.example.com',
-			openInNewTab: true,
-		},
-		{
-			id: '2',
-			label: 'Documentation',
-			url: 'https://docs.example.com',
-			openInNewTab: false,
-		},
-		{
-			id: '3',
-			label: 'Support',
-			url: 'https://support.example.com',
-			openInNewTab: true,
-		},
-		{
-			id: '4',
-			label:
-				'Very Long Label That Exceeds Normal Length and Should Test Text Overflow',
-			url:
-				'https://very-long-url-that-might-cause-layout-issues.example.com/very/deep/path/with/many/segments',
-			openInNewTab: true,
-		},
-		{
-			id: '5',
-			label: 'Short',
-			url: 'https://short.com',
-			openInNewTab: false,
-		},
-		{
-			id: '6',
-			label: 'API Documentation',
-			url:
-				'https://api-docs.example.com/v1/reference/endpoints/authentication/oauth2/token/refresh',
-			openInNewTab: true,
-		},
-		{
-			id: '7',
-			label: 'GitHub Repository',
-			url: 'https://github.com/signozhq/signoz',
-			openInNewTab: true,
-		},
-		{
-			id: '8',
-			label: 'Community Forum',
-			url: 'https://community.example.com/discussions/general/feature-requests',
-			openInNewTab: false,
-		},
-		{
-			id: '9',
-			label: 'Status Page',
-			url: 'https://status.example.com',
-			openInNewTab: true,
-		},
-		{
-			id: '10',
-			label: 'Another Very Long Label With Special Characters & Numbers 123',
-			url:
-				'https://another-very-long-url-with-special-characters-and-numbers-123.example.com/path/to/resource',
-			openInNewTab: false,
-		},
-	]);
+function ContextLinks({
+	contextLinks,
+	setContextLinks,
+}: {
+	contextLinks: ContextLinkProps[];
+	setContextLinks: Dispatch<SetStateAction<ContextLinkProps[]>>;
+}): JSX.Element {
+	// Use the custom hook for modal functionality
+	const {
+		isModalOpen,
+		selectedContextLink,
+		handleEditContextLink,
+		handleAddContextLink,
+		handleCancelModal,
+		handleSaveContextLink,
+	} = useContextLinkModal();
 
 	const sensors = useSensors(useSensor(PointerSensor));
 
@@ -173,12 +125,6 @@ function ContextLinks(): JSX.Element {
 
 	const handleDeleteContextLink = (contextLink: ContextLink): void => {
 		setContextLinks((prev) => prev.filter((link) => link.id !== contextLink.id));
-	};
-
-	const handleEditContextLink = (contextLink: ContextLink): void => {
-		// Dummy edit function - for now just log the context link
-		console.log('Edit context link:', contextLink);
-		// TODO: Implement edit functionality
 	};
 
 	return (
@@ -215,10 +161,23 @@ function ContextLinks(): JSX.Element {
 					type="primary"
 					className="add-context-link-button"
 					icon={<Plus size={12} />}
+					onClick={handleAddContextLink}
 				>
 					Context Link
 				</Button>
 			</div>
+
+			<Modal
+				title={selectedContextLink ? 'Edit context link' : 'Add a context link'}
+				open={isModalOpen}
+				onOk={handleSaveContextLink}
+				onCancel={handleCancelModal}
+				okText="Save"
+				cancelText="Cancel"
+				width={600}
+			>
+				<UpdateContextLinks selectedContextLink={selectedContextLink} />
+			</Modal>
 		</div>
 	);
 }
