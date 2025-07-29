@@ -34,7 +34,7 @@ func ValidateTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefunn
 	
 	for i, step := range funnelSteps {
 		// Build filter clause
-		clause, err := tracev4.BuildTracesFilter(step.Filters)
+		clause, err := tracev4.BuildTracesFilterQuery(step.Filters, false)
 		if err != nil {
 			return nil, err
 		}
@@ -77,7 +77,7 @@ func GetFunnelAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange trace
 	
 	for i, step := range funnelSteps {
 		// Build filter clause
-		clause, err := tracev4.BuildTracesFilter(step.Filters)
+		clause, err := tracev4.BuildTracesFilterQuery(step.Filters, false)
 		if err != nil {
 			return nil, err
 		}
@@ -130,7 +130,7 @@ func GetFunnelStepAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange t
 	
 	for i, step := range funnelSteps {
 		// Build filter clause
-		clause, err := tracev4.BuildTracesFilter(step.Filters)
+		clause, err := tracev4.BuildTracesFilterQuery(step.Filters, false)
 		if err != nil {
 			return nil, err
 		}
@@ -179,7 +179,7 @@ func GetStepAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange tracefu
 	
 	for i, step := range funnelSteps {
 		// Build filter clause
-		clause, err := tracev4.BuildTracesFilter(step.Filters)
+		clause, err := tracev4.BuildTracesFilterQuery(step.Filters, false)
 		if err != nil {
 			return nil, err
 		}

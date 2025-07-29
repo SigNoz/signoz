@@ -263,9 +263,9 @@ func TestGetFunnelStepAnalyticsMultipleSteps(t *testing.T) {
 	}
 }
 
-// Mock the tracev4.BuildTracesFilter function since it's external
+// Mock the tracev4.BuildTracesFilterQuery function since it's external
 func init() {
 	// This would normally be handled by the actual implementation
 	// For testing purposes, we'll assume it returns an empty string
-	_ = tracev4.BuildTracesFilter
+	_ = tracev4.BuildTracesFilterQuery
 }

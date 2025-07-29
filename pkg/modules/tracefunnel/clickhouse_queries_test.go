@@ -36,8 +36,8 @@ func TestBuildFunnelValidationQuery(t *testing.T) {
 				"('service2','span2') AS step2",
 				"0 AS contains_error_t1",
 				"1 AS contains_error_t2",
-				"minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time",
-				"minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time",
+				"minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) AS t1_time",
+				"minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) AS t2_time",
 				"AND attr1 = 'value1'",
 				"AND attr2 = 'value2'",
 			},
@@ -60,7 +60,7 @@ func TestBuildFunnelValidationQuery(t *testing.T) {
 				"('service1','span1') AS step1",
 				"('service2','span2') AS step2",
 				"('service3','span3') AS step3",
-				"minIf(timestamp, serviceName = step3.1 AND name = step3.2) AS t3_time",
+				"minIf(timestamp, resource_string_service$$name = step3.1 AND name = step3.2) AS t3_time",
 			},
 		},
 		{
@@ -81,7 +81,7 @@ func TestBuildFunnelValidationQuery(t *testing.T) {
 			endTs:   2000000000,
 			wantContains: []string{
 				"('service5','span5') AS step5",
-				"minIf(timestamp, serviceName = step5.1 AND name = step5.2) AS t5_time",
+				"minIf(timestamp, resource_string_service$$name = step5.1 AND name = step5.2) AS t5_time",
 				"1 AS contains_error_t5",
 			},
 		},
@@ -233,7 +233,7 @@ func TestBuildFunnelCountQuery(t *testing.T) {
 			endTs:   2000000000,
 			wantContains: []string{
 				"count(DISTINCT CASE WHEN t2_time > t1_time AND t3_time > t2_time AND t4_time > t3_time AND t5_time > t4_time THEN trace_id END) AS total_s5_spans",
-				"toUInt8(anyIf(has_error, serviceName = step5.1 AND name = step5.2)) AS t5_error",
+				"toUInt8(anyIf(has_error, resource_string_service$$name = step5.1 AND name = step5.2)) AS t5_error",
 			},
 		},
 	}
