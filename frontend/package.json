@@ -259,6 +259,7 @@
 		"cookie": "^0.7.1",
 		"serialize-javascript": "6.0.2",
 		"prismjs": "1.30.0",
-		"got": "11.8.5"
+		"got": "11.8.5",
+		"form-data": "4.0.4"
 	}
 }
