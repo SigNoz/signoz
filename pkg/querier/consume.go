@@ -283,7 +283,6 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.RawData, error) 
 	colTypes := rows.ColumnTypes()
 	colCnt := len(colNames)
 
-	// Build a template slice of correctly-typed pointers once
 	scanTpl := make([]any, colCnt)
 	for i, ct := range colTypes {
 		scanTpl[i] = reflect.New(ct.ScanType()).Interface()
@@ -292,7 +291,6 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.RawData, error) 
 	var outRows []*qbtypes.RawRow
 
 	for rows.Next() {
-		// fresh copy of the scan slice (otherwise the driver reuses pointers)
 		scan := make([]any, colCnt)
 		for i := range scanTpl {
 			scan[i] = reflect.New(colTypes[i].ScanType()).Interface()
@@ -309,10 +307,8 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.RawData, error) 
 		for i, cellPtr := range scan {
 			name := colNames[i]
 
-			// de-reference the typed pointer to any
 			val := reflect.ValueOf(cellPtr).Elem().Interface()
 
-			// special-case: timestamp column
 			if name == "timestamp" || name == "timestamp_datetime" {
 				switch t := val.(type) {
 				case time.Time:

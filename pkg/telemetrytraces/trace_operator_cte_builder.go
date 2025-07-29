@@ -135,7 +135,6 @@ func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() error {
 		"name",
 		"timestamp",
 		"duration_nano AS durationNano",
-		// Include BOTH the alias AND the original column for compatibility
 		sqlbuilder.Escape("resource_string_service$$name")+" AS serviceName",
 		sqlbuilder.Escape("resource_string_service$$name"),        // Original column name for filters
 		sqlbuilder.Escape("resource_string_service$$name_exists"), // Exists flag column for filters
@@ -616,10 +615,8 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(selectFromCTE string) (*qbtyp
 		sb.SelectMore(colExpr)
 	}
 
-	// For scalar queries, the rate interval is the entire time range
 	rateInterval := (b.end - b.start) / querybuilder.NsToSeconds
 
-	// Add aggregations using proper aggregation expression rewriter
 	var allAggChArgs []any
 	for i, agg := range b.operator.Aggregations {
 		rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
@@ -647,10 +644,8 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(selectFromCTE string) (*qbtyp
 		sb.SelectMore(fmt.Sprintf("%s AS %s", rewritten, alias))
 	}
 
-	// Base trace aggregation query structure for scalar
 	traceSubquery := fmt.Sprintf("SELECT DISTINCT trace_id FROM %s", selectFromCTE)
 
-	// Select trace-level aggregated fields INCLUDING timestamp for proper response formatting
 	sb.Select(
 		"any(root.timestamp) as timestamp", // Add timestamp for consistent response structure
 		"any(root.serviceName) as `subQuery.serviceName`",
@@ -705,9 +700,6 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(selectFromCTE string) (*qbtyp
 				sb.OrderBy(fmt.Sprintf("%s %s", alias, orderBy.Direction.StringValue()))
 				orderApplied = true
 			} else {
-				// For other fields, we need to check if they're available in the scalar context
-				// Most fields won't be available since we're aggregating by trace_id
-				// We should either ignore them or provide a meaningful error
 				b.stmtBuilder.logger.WarnContext(b.ctx,
 					"ignoring order by field that's not available in scalar trace context",
 					"field", orderBy.Key.Name)
