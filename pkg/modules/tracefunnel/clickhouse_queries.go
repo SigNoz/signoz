@@ -31,15 +31,15 @@ SELECT
 FROM (
     SELECT
         trace_id,
-        minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
-        minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time
+        minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) AS t1_time,
+        minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) AS t2_time
     FROM signoz_traces.distributed_signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
-            (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[9]s)
+            (resource_string_service$$name = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[9]s)
          OR
-            (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[10]s)
+            (resource_string_service$$name = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[10]s)
         )
     GROUP BY trace_id
     HAVING t1_time > 0
@@ -93,16 +93,16 @@ SELECT
 FROM (
     SELECT
         trace_id,
-        minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
-        minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
-        minIf(timestamp, serviceName = step3.1 AND name = step3.2) AS t3_time
+        minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) AS t1_time,
+        minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) AS t2_time,
+        minIf(timestamp, resource_string_service$$name = step3.1 AND name = step3.2) AS t3_time
     FROM signoz_traces.distributed_signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
-            (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[12]s)
-         OR (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[13]s)
-         OR (serviceName = step3.1 AND name = step3.2 AND (contains_error_t3 = 0 OR has_error = true) %[14]s)
+            (resource_string_service$$name = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[12]s)
+         OR (resource_string_service$$name = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[13]s)
+         OR (resource_string_service$$name = step3.1 AND name = step3.2 AND (contains_error_t3 = 0 OR has_error = true) %[14]s)
         )
     GROUP BY trace_id
     HAVING t1_time > 0
@@ -157,17 +157,17 @@ WITH
 , funnel AS (
     SELECT
         trace_id,
-        minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
-        minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
-        toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS s1_error,
-        toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS s2_error
+        minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) AS t1_time,
+        minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) AS t2_time,
+        toUInt8(anyIf(has_error, resource_string_service$$name = step1.1 AND name = step1.2)) AS s1_error,
+        toUInt8(anyIf(has_error, resource_string_service$$name = step2.1 AND name = step2.2)) AS s2_error
     FROM signoz_traces.distributed_signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
-            (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[11]s)
+            (resource_string_service$$name = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[11]s)
          OR
-            (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[12]s)
+            (resource_string_service$$name = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[12]s)
         )
     GROUP BY trace_id
     HAVING t1_time > 0
@@ -246,19 +246,19 @@ WITH
 , funnel AS (
     SELECT
         trace_id,
-        minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
-        minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
-        minIf(timestamp, serviceName = step3.1 AND name = step3.2) AS t3_time,
-        toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS s1_error,
-        toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS s2_error,
-        toUInt8(anyIf(has_error, serviceName = step3.1 AND name = step3.2)) AS s3_error
+        minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) AS t1_time,
+        minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) AS t2_time,
+        minIf(timestamp, resource_string_service$$name = step3.1 AND name = step3.2) AS t3_time,
+        toUInt8(anyIf(has_error, resource_string_service$$name = step1.1 AND name = step1.2)) AS s1_error,
+        toUInt8(anyIf(has_error, resource_string_service$$name = step2.1 AND name = step2.2)) AS s2_error,
+        toUInt8(anyIf(has_error, resource_string_service$$name = step3.1 AND name = step3.2)) AS s3_error
     FROM signoz_traces.distributed_signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
-            (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[15]s)
-         OR (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[16]s)
-         OR (serviceName = step3.1 AND name = step3.2 AND (contains_error_t3 = 0 OR has_error = true) %[17]s)
+            (resource_string_service$$name = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[15]s)
+         OR (resource_string_service$$name = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[16]s)
+         OR (resource_string_service$$name = step3.1 AND name = step3.2 AND (contains_error_t3 = 0 OR has_error = true) %[17]s)
         )
     GROUP BY trace_id
     HAVING t1_time > 0
@@ -341,17 +341,17 @@ SELECT
 FROM (
     SELECT
         trace_id,
-        minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
-        minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
-        toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS t1_error,
-        toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS t2_error
+        minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) AS t1_time,
+        minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) AS t2_time,
+        toUInt8(anyIf(has_error, resource_string_service$$name = step1.1 AND name = step1.2)) AS t1_error,
+        toUInt8(anyIf(has_error, resource_string_service$$name = step2.1 AND name = step2.2)) AS t2_error
     FROM signoz_traces.distributed_signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
-            (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[9]s)
+            (resource_string_service$$name = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[9]s)
          OR
-            (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[10]s)
+            (resource_string_service$$name = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[10]s)
         )
     GROUP BY trace_id
     HAVING t1_time > 0
@@ -409,19 +409,19 @@ SELECT
 FROM (
     SELECT
         trace_id,
-        minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
-        minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
-        minIf(timestamp, serviceName = step3.1 AND name = step3.2) AS t3_time,
-        toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS t1_error,
-        toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS t2_error,
-        toUInt8(anyIf(has_error, serviceName = step3.1 AND name = step3.2)) AS t3_error
+        minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) AS t1_time,
+        minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) AS t2_time,
+        minIf(timestamp, resource_string_service$$name = step3.1 AND name = step3.2) AS t3_time,
+        toUInt8(anyIf(has_error, resource_string_service$$name = step1.1 AND name = step1.2)) AS t1_error,
+        toUInt8(anyIf(has_error, resource_string_service$$name = step2.1 AND name = step2.2)) AS t2_error,
+        toUInt8(anyIf(has_error, resource_string_service$$name = step3.1 AND name = step3.2)) AS t3_error
     FROM signoz_traces.distributed_signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
-            (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[12]s)
-         OR (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[13]s)
-         OR (serviceName = step3.1 AND name = step3.2 AND (contains_error_t3 = 0 OR has_error = true) %[14]s)
+            (resource_string_service$$name = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[12]s)
+         OR (resource_string_service$$name = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[13]s)
+         OR (resource_string_service$$name = step3.1 AND name = step3.2 AND (contains_error_t3 = 0 OR has_error = true) %[14]s)
         )
     GROUP BY trace_id
     HAVING t1_time > 0
@@ -474,16 +474,16 @@ SELECT
 FROM (
     SELECT
         trace_id,
-        minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
-        minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
+        minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) AS t1_time,
+        minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) AS t2_time,
         count() AS span_count
     FROM signoz_traces.distributed_signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
-            (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[9]s)
+            (resource_string_service$$name = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[9]s)
          OR
-            (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[10]s)
+            (resource_string_service$$name = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[10]s)
         )
     GROUP BY trace_id
     HAVING t1_time > 0 AND t2_time > t1_time
@@ -534,18 +534,18 @@ SELECT
 FROM (
     SELECT
         trace_id,
-        minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
-        minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
-        toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS t1_error,
-        toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS t2_error,
+        minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) AS t1_time,
+        minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) AS t2_time,
+        toUInt8(anyIf(has_error, resource_string_service$$name = step1.1 AND name = step1.2)) AS t1_error,
+        toUInt8(anyIf(has_error, resource_string_service$$name = step2.1 AND name = step2.2)) AS t2_error,
         count() AS span_count
     FROM signoz_traces.distributed_signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
-            (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[9]s)
+            (resource_string_service$$name = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[9]s)
          OR
-            (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[10]s)
+            (resource_string_service$$name = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[10]s)
         )
     GROUP BY trace_id
     HAVING t1_time > 0 AND t2_time > t1_time
@@ -621,17 +621,17 @@ FROM (
     FROM (
         SELECT
             trace_id,
-            minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
-            minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
-            toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS s1_error,
-            toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS s2_error
+            minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) AS t1_time,
+            minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) AS t2_time,
+            toUInt8(anyIf(has_error, resource_string_service$$name = step1.1 AND name = step1.2)) AS s1_error,
+            toUInt8(anyIf(has_error, resource_string_service$$name = step2.1 AND name = step2.2)) AS s2_error
         FROM signoz_traces.distributed_signoz_index_v3
         WHERE
             timestamp BETWEEN start_ts AND end_ts
             AND (
-                (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[11]s)
+                (resource_string_service$$name = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[11]s)
              OR
-                (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[12]s)
+                (resource_string_service$$name = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[12]s)
             )
         GROUP BY trace_id
         HAVING t1_time > 0
@@ -696,19 +696,19 @@ WITH
     funnel AS (
         SELECT
             trace_id,
-            minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
-            minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
-            minIf(timestamp, serviceName = step3.1 AND name = step3.2) AS t3_time,
-            toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS s1_error,
-            toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS s2_error,
-            toUInt8(anyIf(has_error, serviceName = step3.1 AND name = step3.2)) AS s3_error
+            minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) AS t1_time,
+            minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) AS t2_time,
+            minIf(timestamp, resource_string_service$$name = step3.1 AND name = step3.2) AS t3_time,
+            toUInt8(anyIf(has_error, resource_string_service$$name = step1.1 AND name = step1.2)) AS s1_error,
+            toUInt8(anyIf(has_error, resource_string_service$$name = step2.1 AND name = step2.2)) AS s2_error,
+            toUInt8(anyIf(has_error, resource_string_service$$name = step3.1 AND name = step3.2)) AS s3_error
         FROM signoz_traces.distributed_signoz_index_v3
         WHERE
             timestamp BETWEEN start_ts AND end_ts
             AND (
-                (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[15]s)
-             OR (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[16]s)
-             OR (serviceName = step3.1 AND name = step3.2 AND (contains_error_t3 = 0 OR has_error = true) %[17]s)
+                (resource_string_service$$name = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[15]s)
+             OR (resource_string_service$$name = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[16]s)
+             OR (resource_string_service$$name = step3.1 AND name = step3.2 AND (contains_error_t3 = 0 OR has_error = true) %[17]s)
             )
         GROUP BY trace_id
         HAVING t1_time > 0

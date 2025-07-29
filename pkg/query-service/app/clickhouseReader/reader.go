@@ -897,7 +897,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	if err != nil {
 		zap.L().Info("cache miss for getWaterfallSpansForTraceWithMetadata", zap.String("traceID", traceID))
 
-		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, references, attributes_string, attributes_number, attributes_bool, resources_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
+		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, links as references, attributes_string, attributes_number, attributes_bool, resources_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
 		if err != nil {
 			return nil, err
 		}
@@ -1104,7 +1104,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 	if err != nil {
 		zap.L().Info("cache miss for getFlamegraphSpansForTrace", zap.String("traceID", traceID))
 
-		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error,references, resource_string_service$$name, name, events FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
+		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error,links as references, resource_string_service$$name, name, events FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
 		if err != nil {
 			return nil, err
 		}
@@ -5977,7 +5977,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	var startTime, endTime, durationNano uint64
 	var searchScanResponses []model.SpanItemV2
 
-	query := fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, references, attributes_string, attributes_number, attributes_bool, resources_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3", r.TraceDB, r.traceTableName)
+	query := fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, links as references, attributes_string, attributes_number, attributes_bool, resources_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3", r.TraceDB, r.traceTableName)
 	err = r.db.Select(ctx, &searchScanResponses, query, params.TraceID, strconv.FormatInt(traceSummary.Start.Unix()-1800, 10), strconv.FormatInt(traceSummary.End.Unix(), 10))
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
@@ -6053,4 +6053,91 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano / 1000000)
 
 	return &searchSpansResult, nil
+}
+
+func (r *ClickHouseReader) GetNormalizedStatus(
+	ctx context.Context,
+	orgID valuer.UUID,
+	metricNames []string,
+) (map[string]bool, error) {
+
+	if len(metricNames) == 0 {
+		return map[string]bool{}, nil
+	}
+
+	result := make(map[string]bool, len(metricNames))
+	buildKey := func(name string) string {
+		return constants.NormalizedMetricsMapCacheKey + ":" + name
+	}
+
+	uncached := make([]string, 0, len(metricNames))
+	for _, m := range metricNames {
+		var status model.MetricsNormalizedMap
+		if err := r.cache.Get(ctx, orgID, buildKey(m), &status, true); err == nil {
+			result[m] = status.IsUnNormalized
+		} else {
+			uncached = append(uncached, m)
+		}
+	}
+	if len(uncached) == 0 {
+		return result, nil
+	}
+
+	placeholders := "'" + strings.Join(uncached, "', '") + "'"
+
+	q := fmt.Sprintf(
+		`SELECT metric_name, toUInt8(__normalized)
+           FROM %s.%s
+          WHERE metric_name IN (%s)
+          GROUP BY metric_name, __normalized`,
+		signozMetricDBName, signozTSTableNameV41Day, placeholders,
+	)
+
+	rows, err := r.db.Query(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// tmp[m] collects the set {0,1} for a metric name, truth table
+	tmp := make(map[string]map[uint8]struct{}, len(uncached))
+
+	for rows.Next() {
+		var (
+			name       string
+			normalized uint8
+		)
+		if err := rows.Scan(&name, &normalized); err != nil {
+			return nil, err
+		}
+		if _, ok := tmp[name]; !ok {
+			tmp[name] = make(map[uint8]struct{}, 2)
+		}
+		tmp[name][normalized] = struct{}{}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for _, m := range uncached {
+		set := tmp[m]
+		switch {
+		case len(set) == 0:
+			return nil, fmt.Errorf("metric %q not found in ClickHouse", m)
+
+		case len(set) == 2:
+			result[m] = true
+
+		default:
+			_, hasUnnorm := set[0]
+			result[m] = hasUnnorm
+		}
+		status := model.MetricsNormalizedMap{
+			MetricName:     m,
+			IsUnNormalized: result[m],
+		}
+		_ = r.cache.Set(ctx, orgID, buildKey(m), &status, 0)
+	}
+
+	return result, nil
 }

@@ -31,7 +31,7 @@ func TestConditionBuilder(t *testing.T) {
 			op:           querybuildertypesv5.FilterOperatorEqual,
 			value:        "watch",
 			expected:     "simpleJSONExtractString(labels, 'k8s.namespace.name') = ? AND labels LIKE ? AND labels LIKE ?",
-			expectedArgs: []any{"watch", "%k8s.namespace.name%", `%k8s.namespace.name%watch%`},
+			expectedArgs: []any{"watch", "%k8s.namespace.name%", `%k8s.namespace.name":"watch%`},
 		},
 		{
 			name: "string_not_equal",
@@ -42,7 +42,7 @@ func TestConditionBuilder(t *testing.T) {
 			op:           querybuildertypesv5.FilterOperatorNotEqual,
 			value:        "redis",
 			expected:     "simpleJSONExtractString(labels, 'k8s.namespace.name') <> ? AND labels NOT LIKE ?",
-			expectedArgs: []any{"redis", `%k8s.namespace.name%redis%`},
+			expectedArgs: []any{"redis", `%k8s.namespace.name":"redis%`},
 		},
 		{
 			name: "string_like",
@@ -63,8 +63,8 @@ func TestConditionBuilder(t *testing.T) {
 			},
 			op:           querybuildertypesv5.FilterOperatorNotLike,
 			value:        "_mango%",
-			expected:     "LOWER(simpleJSONExtractString(labels, 'k8s.namespace.name')) NOT LIKE LOWER(?) AND LOWER(labels) NOT LIKE LOWER(?)",
-			expectedArgs: []any{"_mango%", `%k8s.namespace.name%_mango%%`},
+			expected:     "LOWER(simpleJSONExtractString(labels, 'k8s.namespace.name')) NOT LIKE LOWER(?)",
+			expectedArgs: []any{"_mango%"},
 		},
 		{
 			name: "string_contains",
@@ -85,8 +85,8 @@ func TestConditionBuilder(t *testing.T) {
 			},
 			op:           querybuildertypesv5.FilterOperatorNotContains,
 			value:        "banana",
-			expected:     "LOWER(simpleJSONExtractString(labels, 'k8s.namespace.name')) NOT LIKE LOWER(?) AND LOWER(labels) NOT LIKE LOWER(?)",
-			expectedArgs: []any{"%banana%", `%k8s.namespace.name%banana%`},
+			expected:     "LOWER(simpleJSONExtractString(labels, 'k8s.namespace.name')) NOT LIKE LOWER(?)",
+			expectedArgs: []any{"%banana%"},
 		},
 		{
 			name: "string_in",
@@ -97,7 +97,7 @@ func TestConditionBuilder(t *testing.T) {
 			op:           querybuildertypesv5.FilterOperatorIn,
 			value:        []any{"watch", "redis"},
 			expected:     "(simpleJSONExtractString(labels, 'k8s.namespace.name') = ? OR simpleJSONExtractString(labels, 'k8s.namespace.name') = ?) AND labels LIKE ? AND (labels LIKE ? OR labels LIKE ?)",
-			expectedArgs: []any{"watch", "redis", "%k8s.namespace.name%", "%k8s.namespace.name%watch%", "%k8s.namespace.name%redis%"},
+			expectedArgs: []any{"watch", "redis", "%k8s.namespace.name%", "%k8s.namespace.name\":\"watch%", "%k8s.namespace.name\":\"redis%"},
 		},
 		{
 			name: "string_not_in",
@@ -108,7 +108,7 @@ func TestConditionBuilder(t *testing.T) {
 			op:           querybuildertypesv5.FilterOperatorNotIn,
 			value:        []any{"watch", "redis"},
 			expected:     "(simpleJSONExtractString(labels, 'k8s.namespace.name') <> ? AND simpleJSONExtractString(labels, 'k8s.namespace.name') <> ?) AND (labels NOT LIKE ? AND labels NOT LIKE ?)",
-			expectedArgs: []any{"watch", "redis", "%k8s.namespace.name%watch%", "%k8s.namespace.name%redis%"},
+			expectedArgs: []any{"watch", "redis", "%k8s.namespace.name\":\"watch%", "%k8s.namespace.name\":\"redis%"},
 		},
 		{
 			name: "string_exists",
