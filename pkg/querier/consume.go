@@ -278,57 +278,75 @@ func numericKind(k reflect.Kind) bool {
 	}
 }
 
-func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, error) {
+func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 	colNames := rows.Columns()
 	colTypes := rows.ColumnTypes()
+	colCnt := len(colNames)
 
-	cd := make([]*qbtypes.ColumnDescriptor, len(colNames))
-
-	var aggIndex int64
-	for i, name := range colNames {
-		colType := qbtypes.ColumnTypeGroup
-		if aggRe.MatchString(name) {
-			colType = qbtypes.ColumnTypeAggregation
-		}
-		cd[i] = &qbtypes.ColumnDescriptor{
-			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: name},
-			QueryName:         queryName,
-			AggregationIndex:  aggIndex,
-			Type:              colType,
-		}
-		if colType == qbtypes.ColumnTypeAggregation {
-			aggIndex++
-		}
+	// Build a template slice of correctly-typed pointers once
+	scanTpl := make([]any, colCnt)
+	for i, ct := range colTypes {
+		scanTpl[i] = reflect.New(ct.ScanType()).Interface()
 	}
 
-	// Pre-allocate scan slots once
-	scan := make([]any, len(colTypes))
-	for i := range scan {
-		scan[i] = reflect.New(colTypes[i].ScanType()).Interface()
-	}
-
-	var data [][]any
+	var outRows []*qbtypes.RawRow
 
 	for rows.Next() {
+		// fresh copy of the scan slice (otherwise the driver reuses pointers)
+		scan := make([]any, colCnt)
+		for i := range scanTpl {
+			scan[i] = reflect.New(colTypes[i].ScanType()).Interface()
+		}
+
 		if err := rows.Scan(scan...); err != nil {
 			return nil, err
 		}
 
-		// 2. deref each slot into the output row
-		row := make([]any, len(scan))
-		for i, cell := range scan {
-			row[i] = derefValue(cell)
+		rr := qbtypes.RawRow{
+			Data: make(map[string]*any, colCnt),
 		}
-		data = append(data, row)
+
+		for i, cellPtr := range scan {
+			name := colNames[i]
+
+			// de-reference the typed pointer to any
+			val := reflect.ValueOf(cellPtr).Elem().Interface()
+
+			// special-case: timestamp column
+			if name == "timestamp" || name == "timestamp_datetime" {
+				switch t := val.(type) {
+				case time.Time:
+					rr.Timestamp = t
+				case uint64: // epoch-ns stored as integer
+					rr.Timestamp = time.Unix(0, int64(t))
+				case int64:
+					rr.Timestamp = time.Unix(0, t)
+				case string: // Handle timestamp strings (ISO format)
+					if parsedTime, err := time.Parse(time.RFC3339, t); err == nil {
+						rr.Timestamp = parsedTime
+					} else if parsedTime, err := time.Parse("2006-01-02T15:04:05.999999999Z", t); err == nil {
+						rr.Timestamp = parsedTime
+					} else {
+						// leave zero time if unrecognised
+					}
+				default:
+					// leave zero time if unrecognised
+				}
+			}
+
+			// store value in map as *any, to match the schema
+			v := any(val)
+			rr.Data[name] = &v
+		}
+		outRows = append(outRows, &rr)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return &qbtypes.ScalarData{
+	return &qbtypes.RawData{
 		QueryName: queryName,
-		Columns:   cd,
-		Data:      data,
+		Rows:      outRows,
 	}, nil
 }
 
