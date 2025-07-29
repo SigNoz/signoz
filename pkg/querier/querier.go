@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"slices"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -114,6 +115,11 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	if tmplVars == nil {
 		tmplVars = make(map[string]qbtypes.VariableItem)
 	}
+	event := &qbtypes.QBEvent{
+		Version:         "v5",
+		NumberOfQueries: len(req.CompositeQuery.Queries),
+		PanelType:       req.RequestType.StringValue(),
+	}
 
 	dependencyQueries := make(map[string]bool)
 	traceOperatorQueries := make(map[string]qbtypes.QueryBuilderTraceOperator)
@@ -138,6 +144,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	// First pass: collect all metric names that need temporality
 	metricNames := make([]string, 0)
 	for idx, query := range req.CompositeQuery.Queries {
+		event.QueryType = query.Type.StringValue()
 		if query.Type == qbtypes.QueryTypeBuilder {
 			if spec, ok := query.Spec.(qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]); ok {
 				for _, agg := range spec.Aggregations {
@@ -151,6 +158,9 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 			// allowed, we override it.
 			switch spec := query.Spec.(type) {
 			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+				event.TracesUsed = true
+				event.FilterApplied = spec.Filter != nil && spec.Filter.Expression != ""
+				event.GroupByApplied = len(spec.GroupBy) > 0
 				if spec.StepInterval.Seconds() == 0 {
 					spec.StepInterval = qbtypes.Step{
 						Duration: time.Second * time.Duration(querybuilder.RecommendedStepInterval(req.Start, req.End)),
@@ -163,6 +173,9 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
 			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+				event.LogsUsed = true
+				event.FilterApplied = spec.Filter != nil && spec.Filter.Expression != ""
+				event.GroupByApplied = len(spec.GroupBy) > 0
 				if spec.StepInterval.Seconds() == 0 {
 					spec.StepInterval = qbtypes.Step{
 						Duration: time.Second * time.Duration(querybuilder.RecommendedStepInterval(req.Start, req.End)),
@@ -175,6 +188,9 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
 			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+				event.MetricsUsed = true
+				event.FilterApplied = spec.Filter != nil && spec.Filter.Expression != ""
+				event.GroupByApplied = len(spec.GroupBy) > 0
 				if spec.StepInterval.Seconds() == 0 {
 					spec.StepInterval = qbtypes.Step{
 						Duration: time.Second * time.Duration(querybuilder.RecommendedStepIntervalForMetric(req.Start, req.End)),
@@ -189,6 +205,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				req.CompositeQuery.Queries[idx].Spec = spec
 			}
 		} else if query.Type == qbtypes.QueryTypePromQL {
+			event.MetricsUsed = true
 			switch spec := query.Spec.(type) {
 			case qbtypes.PromQuery:
 				if spec.Step.Seconds() == 0 {
@@ -197,6 +214,15 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					}
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
+			}
+		} else if query.Type == qbtypes.QueryTypeClickHouseSQL {
+			switch spec := query.Spec.(type) {
+			case qbtypes.ClickHouseQuery:
+				if strings.TrimSpace(spec.Query) != "" {
+					event.MetricsUsed = strings.Contains(spec.Query, "signoz_metrics")
+					event.LogsUsed = strings.Contains(spec.Query, "signoz_logs")
+					event.TracesUsed = strings.Contains(spec.Query, "signoz_traces")
+				}
 			}
 		}
 	}
@@ -318,13 +344,55 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 			}
 		}
 	}
-	return q.run(ctx, orgID, queries, req, steps)
+	qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event)
+	if qbResp != nil {
+		qbResp.QBEvent = event
+	}
+	return qbResp, qbErr
 }
 
-func (q *querier) run(ctx context.Context, orgID valuer.UUID, qs map[string]qbtypes.Query, req *qbtypes.QueryRangeRequest, steps map[string]qbtypes.Step) (*qbtypes.QueryRangeResponse, error) {
+func (q *querier) run(
+	ctx context.Context,
+	orgID valuer.UUID,
+	qs map[string]qbtypes.Query,
+	req *qbtypes.QueryRangeRequest,
+	steps map[string]qbtypes.Step,
+	qbEvent *qbtypes.QBEvent,
+) (*qbtypes.QueryRangeResponse, error) {
 	results := make(map[string]any)
 	warnings := make([]string, 0)
 	stats := qbtypes.ExecStats{}
+
+	hasData := func(result *qbtypes.Result) bool {
+		if result == nil || result.Value == nil {
+			return false
+		}
+		switch result.Type {
+		case qbtypes.RequestTypeScalar:
+			if val, ok := result.Value.(*qbtypes.ScalarData); ok && val != nil {
+				return len(val.Data) != 0
+			}
+		case qbtypes.RequestTypeRaw:
+			if val, ok := result.Value.(*qbtypes.RawData); ok && val != nil {
+				return len(val.Rows) != 0
+			}
+		case qbtypes.RequestTypeTimeSeries:
+			if val, ok := result.Value.(*qbtypes.TimeSeriesData); ok && val != nil {
+				if len(val.Aggregations) != 0 {
+					anyNonEmpty := false
+					for _, aggBucket := range val.Aggregations {
+						if len(aggBucket.Series) != 0 {
+							anyNonEmpty = true
+							break
+						}
+					}
+					return anyNonEmpty
+				}
+				return false
+			}
+		}
+		return false
+	}
 
 	for name, query := range qs {
 		// Skip cache if NoCache is set, or if cache is not available
@@ -335,6 +403,7 @@ func (q *querier) run(ctx context.Context, orgID valuer.UUID, qs map[string]qbty
 				q.logger.InfoContext(ctx, "no bucket cache or fingerprint, executing query", "fingerprint", query.Fingerprint())
 			}
 			result, err := query.Execute(ctx)
+			qbEvent.HasData = qbEvent.HasData || hasData(result)
 			if err != nil {
 				return nil, err
 			}
@@ -345,6 +414,7 @@ func (q *querier) run(ctx context.Context, orgID valuer.UUID, qs map[string]qbty
 			stats.DurationMS += result.Stats.DurationMS
 		} else {
 			result, err := q.executeWithCache(ctx, orgID, query, steps[name], req.NoCache)
+			qbEvent.HasData = qbEvent.HasData || hasData(result)
 			if err != nil {
 				return nil, err
 			}

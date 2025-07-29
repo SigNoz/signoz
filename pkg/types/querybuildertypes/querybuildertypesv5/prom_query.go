@@ -11,4 +11,6 @@ type PromQuery struct {
 	Step Step `json:"step"`
 	// stats if true, the query will return stats
 	Stats bool `json:"stats"`
+
+	Legend string `json:"legend,omitempty"`
 }
