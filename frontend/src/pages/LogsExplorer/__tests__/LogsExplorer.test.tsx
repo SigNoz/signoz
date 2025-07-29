@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 import {
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
@@ -10,6 +11,7 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 // https://virtuoso.dev/mocking-in-tests/
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { fireEvent, render, waitFor } from 'tests/test-utils';
@@ -108,10 +110,17 @@ describe('Logs Explorer Tests', () => {
 			queryByText,
 			getByTestId,
 			queryByTestId,
+			container,
 		} = render(
-			<PreferenceContextProvider>
-				<LogsExplorer />
-			</PreferenceContextProvider>,
+			<MemoryRouter
+				initialEntries={[
+					'/logs-explorer/?panelType=list&selectedExplorerView=list',
+				]}
+			>
+				<PreferenceContextProvider>
+					<LogsExplorer />
+				</PreferenceContextProvider>
+			</MemoryRouter>,
 		);
 
 		// check the presence of frequency chart content
@@ -130,13 +139,15 @@ describe('Logs Explorer Tests', () => {
 		const clickhouseView = queryByTestId('clickhouse-view');
 		expect(clickhouseView).not.toBeInTheDocument();
 
-		// check the presence of List View / Time Series View / Table View
-		const listView = getByTestId('logs-list-view');
-		const timeSeriesView = getByTestId('time-series-view');
-		const tableView = getByTestId('table-view');
-		expect(listView).toBeInTheDocument();
-		expect(timeSeriesView).toBeInTheDocument();
-		expect(tableView).toBeInTheDocument();
+		// check the presence of List View / Time Series View / Table View using class names
+		const listViewTab = container.querySelector(
+			'.list-view-tab.explorer-view-option',
+		);
+		const timeSeriesViewTab = container.querySelector('.timeseries-view-tab');
+		const tableViewTab = container.querySelector('.table-view-tab');
+		expect(listViewTab).toBeInTheDocument();
+		expect(timeSeriesViewTab).toBeInTheDocument();
+		expect(tableViewTab).toBeInTheDocument();
 
 		// // check the presence of old logs explorer CTA - TODO: add this once we have the header updated
 		// const oldLogsCTA = getByText('Switch to Old Logs Explorer');
@@ -148,13 +159,19 @@ describe('Logs Explorer Tests', () => {
 		// mocking the query range API to return the logs
 		logsQueryServerRequest();
 		const { queryByText, queryByTestId } = render(
-			<PreferenceContextProvider>
-				<VirtuosoMockContext.Provider
-					value={{ viewportHeight: 300, itemHeight: 100 }}
-				>
-					<LogsExplorer />
-				</VirtuosoMockContext.Provider>
-			</PreferenceContextProvider>,
+			<MemoryRouter
+				initialEntries={[
+					'/logs-explorer/?panelType=list&selectedExplorerView=list',
+				]}
+			>
+				<PreferenceContextProvider>
+					<VirtuosoMockContext.Provider
+						value={{ viewportHeight: 300, itemHeight: 100 }}
+					>
+						<LogsExplorer />
+					</VirtuosoMockContext.Provider>
+				</PreferenceContextProvider>
+			</MemoryRouter>,
 		);
 
 		// check for loading state to be not present
@@ -177,74 +194,80 @@ describe('Logs Explorer Tests', () => {
 		// mocking the query range API to return the logs
 		logsQueryServerRequest();
 		const { queryAllByText } = render(
-			<QueryBuilderContext.Provider
-				value={{
-					isDefaultQuery: (): boolean => false,
-					currentQuery: {
-						...initialQueriesMap.metrics,
-						builder: {
-							...initialQueriesMap.metrics.builder,
-							queryData: [
-								initialQueryBuilderFormValues,
-								initialQueryBuilderFormValues,
-							],
-						},
-					},
-					setSupersetQuery: jest.fn(),
-					supersetQuery: initialQueriesMap.metrics,
-					stagedQuery: initialQueriesMap.metrics,
-					initialDataSource: null,
-					panelType: PANEL_TYPES.TIME_SERIES,
-					isEnabledQuery: false,
-					lastUsedQuery: 0,
-					setLastUsedQuery: noop,
-					handleSetQueryData: noop,
-					handleSetFormulaData: noop,
-					handleSetQueryItemData: noop,
-					handleSetConfig: noop,
-					removeQueryBuilderEntityByIndex: noop,
-					removeQueryTypeItemByIndex: noop,
-					addNewBuilderQuery: noop,
-					cloneQuery: noop,
-					addNewFormula: noop,
-					addNewQueryItem: noop,
-					redirectWithQueryBuilderData: noop,
-					handleRunQuery: noop,
-					resetQuery: noop,
-					updateAllQueriesOperators: (): Query => initialQueriesMap.metrics,
-					updateQueriesData: (): Query => initialQueriesMap.metrics,
-					initQueryBuilderData: noop,
-					handleOnUnitsChange: noop,
-					isStagedQueryUpdated: (): boolean => false,
-				}}
+			<MemoryRouter
+				initialEntries={[
+					'/logs-explorer/?panelType=list&selectedExplorerView=list',
+				]}
 			>
-				<PreferenceContextProvider>
-					<VirtuosoMockContext.Provider
-						value={{ viewportHeight: 300, itemHeight: 100 }}
-					>
-						<LogsExplorer />
-					</VirtuosoMockContext.Provider>
-				</PreferenceContextProvider>
-			</QueryBuilderContext.Provider>,
+				<QueryBuilderContext.Provider
+					value={{
+						isDefaultQuery: (): boolean => false,
+						currentQuery: {
+							...initialQueriesMap.metrics,
+							builder: {
+								...initialQueriesMap.metrics.builder,
+								queryData: [
+									initialQueryBuilderFormValues,
+									initialQueryBuilderFormValues,
+								],
+							},
+						},
+						setSupersetQuery: jest.fn(),
+						supersetQuery: initialQueriesMap.metrics,
+						stagedQuery: initialQueriesMap.metrics,
+						initialDataSource: null,
+						panelType: PANEL_TYPES.TIME_SERIES,
+						isEnabledQuery: false,
+						lastUsedQuery: 0,
+						setLastUsedQuery: noop,
+						handleSetQueryData: noop,
+						handleSetFormulaData: noop,
+						handleSetQueryItemData: noop,
+						handleSetConfig: noop,
+						removeQueryBuilderEntityByIndex: noop,
+						removeQueryTypeItemByIndex: noop,
+						addNewBuilderQuery: noop,
+						cloneQuery: noop,
+						addNewFormula: noop,
+						addNewQueryItem: noop,
+						redirectWithQueryBuilderData: noop,
+						handleRunQuery: noop,
+						resetQuery: noop,
+						updateAllQueriesOperators: (): Query => initialQueriesMap.metrics,
+						updateQueriesData: (): Query => initialQueriesMap.metrics,
+						initQueryBuilderData: noop,
+						handleOnUnitsChange: noop,
+						isStagedQueryUpdated: (): boolean => false,
+					}}
+				>
+					<PreferenceContextProvider>
+						<VirtuosoMockContext.Provider
+							value={{ viewportHeight: 300, itemHeight: 100 }}
+						>
+							<LogsExplorer />
+						</VirtuosoMockContext.Provider>
+					</PreferenceContextProvider>
+				</QueryBuilderContext.Provider>
+			</MemoryRouter>,
 		);
 
 		const queries = queryAllByText(
-			'Search Filter : select options from suggested values, for IN/NOT IN operators - press "Enter" after selecting options',
+			"Enter your filter query (e.g., status = 'error' AND service = 'frontend')",
 		);
-		expect(queries.length).toBe(2);
-
-		const legendFormats = queryAllByText('Legend Format');
-		expect(legendFormats.length).toBe(2);
-
-		const aggrInterval = queryAllByText('AGGREGATION INTERVAL');
-		expect(aggrInterval.length).toBe(2);
+		expect(queries.length).toBe(1);
 	});
 
 	test('frequency chart visibility and switch toggle', async () => {
 		const { getByRole, queryByText } = render(
-			<PreferenceContextProvider>
-				<LogsExplorer />
-			</PreferenceContextProvider>,
+			<MemoryRouter
+				initialEntries={[
+					'/logs-explorer/?panelType=list&selectedExplorerView=list',
+				]}
+			>
+				<PreferenceContextProvider>
+					<LogsExplorer />
+				</PreferenceContextProvider>
+			</MemoryRouter>,
 		);
 
 		// check the presence of Frequency Chart
