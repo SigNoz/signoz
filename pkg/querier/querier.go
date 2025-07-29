@@ -224,6 +224,21 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					event.TracesUsed = strings.Contains(spec.Query, "signoz_traces")
 				}
 			}
+		} else if query.Type == qbtypes.QueryTypeTraceOperator {
+			if spec, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator); ok {
+				if spec.StepInterval.Seconds() == 0 {
+					spec.StepInterval = qbtypes.Step{
+						Duration: time.Second * time.Duration(querybuilder.RecommendedStepInterval(req.Start, req.End)),
+					}
+				}
+
+				if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepInterval(req.Start, req.End)) {
+					spec.StepInterval = qbtypes.Step{
+						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepInterval(req.Start, req.End)),
+					}
+				}
+				req.CompositeQuery.Queries[idx].Spec = spec
+			}
 		}
 	}
 
