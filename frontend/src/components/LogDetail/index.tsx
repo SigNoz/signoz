@@ -50,8 +50,6 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
 
-const convert = new Convert();
-
 function LogDetailInner({
 	log,
 	onClose,
