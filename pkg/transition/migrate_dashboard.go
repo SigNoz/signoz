@@ -8,7 +8,6 @@ import (
 
 type dashboardMigrateV5 struct {
 	migrateCommon
-	logger *slog.Logger
 }
 
 func NewDashboardMigrateV5(logger *slog.Logger, logsDuplicateKeys []string, tracesDuplicateKeys []string) *dashboardMigrateV5 {
@@ -21,7 +20,6 @@ func NewDashboardMigrateV5(logger *slog.Logger, logsDuplicateKeys []string, trac
 			ambiguity: ambiguity,
 			logger:    logger,
 		},
-		logger: logger,
 	}
 }
 

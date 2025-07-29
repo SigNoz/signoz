@@ -8,17 +8,18 @@ import (
 
 type savedViewMigrateV5 struct {
 	migrateCommon
-	logger *slog.Logger
 }
 
 func NewSavedViewMigrateV5(logger *slog.Logger, logsDuplicateKeys []string, tracesDuplicateKeys []string) *savedViewMigrateV5 {
 	return &savedViewMigrateV5{
-		logger: logger,
+		migrateCommon: migrateCommon{ambiguity: make(map[string][]string), logger: logger},
 	}
 }
 
 func (m *savedViewMigrateV5) Migrate(ctx context.Context, data map[string]any) bool {
 	updated := false
+
+	data["queries"] = make([]any, 0)
 
 	if builderQueries, ok := data["builderQueries"].(map[string]any); ok {
 		for name, query := range builderQueries {
@@ -40,5 +41,6 @@ func (m *savedViewMigrateV5) Migrate(ctx context.Context, data map[string]any) b
 			}
 		}
 	}
+	delete(data, "builderQueries")
 	return updated
 }

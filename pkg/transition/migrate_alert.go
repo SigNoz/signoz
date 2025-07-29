@@ -8,7 +8,6 @@ import (
 
 type alertMigrateV5 struct {
 	migrateCommon
-	logger *slog.Logger
 }
 
 func NewAlertMigrateV5(logger *slog.Logger, logsDuplicateKeys []string, tracesDuplicateKeys []string) *alertMigrateV5 {
@@ -22,7 +21,6 @@ func NewAlertMigrateV5(logger *slog.Logger, logsDuplicateKeys []string, tracesDu
 			ambiguity: ambiguity,
 			logger:    logger,
 		},
-		logger: logger,
 	}
 }
 
