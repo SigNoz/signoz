@@ -65,8 +65,8 @@ function GeneralSettings(): JSX.Element {
 	if (getRetentionPeriodTracesApiResponse.isError || getDisksResponse.isError) {
 		return (
 			<Typography>
-				{getRetentionPeriodTracesApiResponse.data?.error ||
-					getDisksResponse.data?.error ||
+				{getRetentionPeriodTracesApiResponse.isError ||
+					getDisksResponse.isError ||
 					t('something_went_wrong')}
 			</Typography>
 		);
