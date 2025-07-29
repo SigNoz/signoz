@@ -86,6 +86,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 	rm, err := makeRulesManager(
 		reader,
 		signoz.Cache,
+		signoz.Alertmanager,
 		signoz.SQLStore,
 		signoz.TelemetryStore,
 		signoz.Prometheus,
@@ -114,7 +115,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		LicensingAPI:                  nooplicensing.NewLicenseAPI(),
 		FieldsAPI:                     fields.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.TelemetryStore),
 		Signoz:                        signoz,
-		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier),
+		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier, signoz.Analytics),
 	})
 	if err != nil {
 		return nil, err
@@ -164,7 +165,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		agentConfMgr,
 		signoz.Instrumentation,
 	)
-	
+
 	return s, nil
 }
 
@@ -377,6 +378,7 @@ func (s *Server) Stop(ctx context.Context) error {
 func makeRulesManager(
 	ch interfaces.Reader,
 	cache cache.Cache,
+	alertmanager alertmanager.Alertmanager,
 	sqlstore sqlstore.SQLStore,
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
@@ -393,6 +395,7 @@ func makeRulesManager(
 		EvalDelay:      constants.GetEvalDelay(),
 		SQLStore:       sqlstore,
 		OrgGetter:      orgGetter,
+		Alertmanager:   alertmanager,
 	}
 
 	// create Manager

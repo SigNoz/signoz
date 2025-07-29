@@ -17,6 +17,7 @@ import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
 import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
+import { MIN_ACCOUNT_AGE_FOR_CHANGELOG } from 'constants/changelog';
 import { Events } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -111,6 +112,34 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		(state) => state.app,
 	);
 
+	const isWorkspaceAccessRestricted = useMemo(() => {
+		if (!activeLicense) {
+			return false;
+		}
+
+		const isTerminated = activeLicense.state === LicenseState.TERMINATED;
+		const isExpired = activeLicense.state === LicenseState.EXPIRED;
+		const isCancelled = activeLicense.state === LicenseState.CANCELLED;
+		const isDefaulted = activeLicense.state === LicenseState.DEFAULTED;
+		const isEvaluationExpired =
+			activeLicense.state === LicenseState.EVALUATION_EXPIRED;
+
+		return (
+			isTerminated ||
+			isExpired ||
+			isCancelled ||
+			isDefaulted ||
+			isEvaluationExpired
+		);
+	}, [activeLicense]);
+
+	const daysSinceAccountCreation = useMemo(() => {
+		const userCreationDate = dayjs(user.createdAt);
+		const currentDate = dayjs();
+
+		return Math.abs(currentDate.diff(userCreationDate, 'day'));
+	}, [user.createdAt]);
+
 	const handleBillingOnSuccess = (
 		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,
 	): void => {
@@ -183,7 +212,13 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	useEffect(() => {
 		// refetch the changelog only when the current tab becomes active + there isn't an active request
-		if (!getChangelogByVersionResponse.isLoading && isVisible) {
+		if (
+			isVisible &&
+			!changelog &&
+			!getChangelogByVersionResponse.isLoading &&
+			isLoggedIn &&
+			Boolean(latestVersion)
+		) {
 			getChangelogByVersionResponse.refetch();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -194,7 +229,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		if (
 			isCloudUserVal &&
 			Boolean(latestVersion) &&
-			latestVersion !== seenChangelogVersion
+			latestVersion !== seenChangelogVersion &&
+			daysSinceAccountCreation > MIN_ACCOUNT_AGE_FOR_CHANGELOG && // Show to only users older than 2 weeks
+			!isWorkspaceAccessRestricted
 		) {
 			// Automatically open the changelog modal for cloud users after 1s, if they've not seen this version before.
 			timer = setTimeout(() => {
@@ -205,11 +242,13 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		return (): void => {
 			clearInterval(timer);
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		isCloudUserVal,
 		latestVersion,
 		seenChangelogVersion,
 		toggleChangelogModal,
+		isWorkspaceAccessRestricted,
 	]);
 
 	useEffect(() => {
@@ -364,20 +403,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	useEffect(() => {
 		if (!isFetchingActiveLicense && activeLicense) {
-			const isTerminated = activeLicense.state === LicenseState.TERMINATED;
-			const isExpired = activeLicense.state === LicenseState.EXPIRED;
-			const isCancelled = activeLicense.state === LicenseState.CANCELLED;
-			const isDefaulted = activeLicense.state === LicenseState.DEFAULTED;
-			const isEvaluationExpired =
-				activeLicense.state === LicenseState.EVALUATION_EXPIRED;
-
-			const isWorkspaceAccessRestricted =
-				isTerminated ||
-				isExpired ||
-				isCancelled ||
-				isDefaulted ||
-				isEvaluationExpired;
-
 			const { platform } = activeLicense;
 
 			if (
@@ -387,7 +412,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				setShowWorkspaceRestricted(true);
 			}
 		}
-	}, [isFetchingActiveLicense, activeLicense]);
+	}, [isFetchingActiveLicense, activeLicense, isWorkspaceAccessRestricted]);
 
 	useEffect(() => {
 		if (

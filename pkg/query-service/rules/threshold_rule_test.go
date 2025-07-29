@@ -1320,7 +1320,6 @@ func TestThresholdRuleNoData(t *testing.T) {
 	for idx, c := range cases {
 		rows := cmock.NewRows(cols, c.values)
 
-
 		// We are testing the eval logic after the query is run
 		// so we don't care about the query string here
 		queryString := "SELECT any"
@@ -1514,11 +1513,11 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 
 	attrMetaCols := make([]cmock.ColumnType, 0)
 	attrMetaCols = append(attrMetaCols, cmock.ColumnType{Name: "name", Type: "String"})
-	attrMetaCols = append(attrMetaCols, cmock.ColumnType{Name: "dataType", Type: "String"})
+	attrMetaCols = append(attrMetaCols, cmock.ColumnType{Name: "datatype", Type: "String"})
 
 	resourceMetaCols := make([]cmock.ColumnType, 0)
 	resourceMetaCols = append(resourceMetaCols, cmock.ColumnType{Name: "name", Type: "String"})
-	resourceMetaCols = append(resourceMetaCols, cmock.ColumnType{Name: "dataType", Type: "String"})
+	resourceMetaCols = append(resourceMetaCols, cmock.ColumnType{Name: "datatype", Type: "String"})
 
 	createTableCols := make([]cmock.ColumnType, 0)
 	createTableCols = append(createTableCols, cmock.ColumnType{Name: "statement", Type: "String"})
@@ -1531,12 +1530,12 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 	for idx, c := range testCases {
 		attrMetaRows := cmock.NewRows(attrMetaCols, c.attrMetaValues)
 		telemetryStore.Mock().
-			ExpectSelect("SELECT DISTINCT name, datatype from signoz_logs.distributed_logs_attribute_keys group by name, datatype").
+			ExpectSelect("SELECT DISTINCT name, datatype from signoz_logs.distributed_logs_attribute_keys where name in ('component','k8s.container.name') group by name, datatype").
 			WillReturnRows(attrMetaRows)
 
 		resourceMetaRows := cmock.NewRows(resourceMetaCols, c.resourceMetaValues)
 		telemetryStore.Mock().
-			ExpectSelect("SELECT DISTINCT name, datatype from signoz_logs.distributed_logs_resource_keys group by name, datatype").
+			ExpectSelect("SELECT DISTINCT name, datatype from signoz_logs.distributed_logs_resource_keys where name in ('component','k8s.container.name') group by name, datatype").
 			WillReturnRows(resourceMetaRows)
 
 		createTableRows := cmock.NewRows(createTableCols, c.createTableValues)
