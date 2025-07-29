@@ -35,7 +35,7 @@ func TestBuildFunnelOverviewQuery_WithLatencyPointer(t *testing.T) {
 			startTs: 1000000000,
 			endTs:   2000000000,
 			wantContains: []string{
-				"minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) + toIntervalNanosecond(minIf(durationNano, resource_string_service$$name = step1.1 AND name = step1.2)) AS t1_time",
+				"minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) + toIntervalNanosecond(minIf(duration_nano, resource_string_service$$name = step1.1 AND name = step1.2)) AS t1_time",
 				"minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) AS t2_time",
 			},
 		},
@@ -55,9 +55,9 @@ func TestBuildFunnelOverviewQuery_WithLatencyPointer(t *testing.T) {
 			startTs: 1000000000,
 			endTs:   2000000000,
 			wantContains: []string{
-				"minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) + toIntervalNanosecond(minIf(durationNano, resource_string_service$$name = step1.1 AND name = step1.2)) AS t1_time",
-				"minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) + toIntervalNanosecond(minIf(durationNano, resource_string_service$$name = step2.1 AND name = step2.2)) AS t2_time",
-				"minIf(timestamp, resource_string_service$$name = step3.1 AND name = step3.2) + toIntervalNanosecond(minIf(durationNano, resource_string_service$$name = step3.1 AND name = step3.2)) AS t3_time",
+				"minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) + toIntervalNanosecond(minIf(duration_nano, resource_string_service$$name = step1.1 AND name = step1.2)) AS t1_time",
+				"minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) + toIntervalNanosecond(minIf(duration_nano, resource_string_service$$name = step2.1 AND name = step2.2)) AS t2_time",
+				"minIf(timestamp, resource_string_service$$name = step3.1 AND name = step3.2) + toIntervalNanosecond(minIf(duration_nano, resource_string_service$$name = step3.1 AND name = step3.2)) AS t3_time",
 			},
 		},
 		{
@@ -77,7 +77,7 @@ func TestBuildFunnelOverviewQuery_WithLatencyPointer(t *testing.T) {
 			endTs:   2000000000,
 			wantContains: []string{
 				"minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) AS t1_time",
-				"minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) + toIntervalNanosecond(minIf(durationNano, resource_string_service$$name = step2.1 AND name = step2.2)) AS t2_time",
+				"minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) + toIntervalNanosecond(minIf(duration_nano, resource_string_service$$name = step2.1 AND name = step2.2)) AS t2_time",
 				"minIf(timestamp, resource_string_service$$name = step3.1 AND name = step3.2) AS t3_time",
 			},
 		},
@@ -133,8 +133,8 @@ func TestBuildFunnelStepOverviewQuery_WithLatencyPointer(t *testing.T) {
 			stepStart: 1,
 			stepEnd:   2,
 			wantContains: []string{
-				"minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) + toIntervalNanosecond(minIf(durationNano, resource_string_service$$name = step1.1 AND name = step1.2)) AS t1_time",
-				"minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) + toIntervalNanosecond(minIf(durationNano, resource_string_service$$name = step2.1 AND name = step2.2)) AS t2_time",
+				"minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) + toIntervalNanosecond(minIf(duration_nano, resource_string_service$$name = step1.1 AND name = step1.2)) AS t1_time",
+				"minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) + toIntervalNanosecond(minIf(duration_nano, resource_string_service$$name = step2.1 AND name = step2.2)) AS t2_time",
 			},
 		},
 	}
@@ -164,8 +164,8 @@ func TestBuildFunnelTopSlowTracesQuery_WithLatencyPointer(t *testing.T) {
 			latencyPointerT1: "end",
 			latencyPointerT2: "end",
 			wantContains: []string{
-				"minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) + toIntervalNanosecond(minIf(durationNano, resource_string_service$$name = step1.1 AND name = step1.2)) AS t1_time",
-				"minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) + toIntervalNanosecond(minIf(durationNano, resource_string_service$$name = step2.1 AND name = step2.2)) AS t2_time",
+				"minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) + toIntervalNanosecond(minIf(duration_nano, resource_string_service$$name = step1.1 AND name = step1.2)) AS t1_time",
+				"minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) + toIntervalNanosecond(minIf(duration_nano, resource_string_service$$name = step2.1 AND name = step2.2)) AS t2_time",
 			},
 		},
 		{
@@ -173,7 +173,7 @@ func TestBuildFunnelTopSlowTracesQuery_WithLatencyPointer(t *testing.T) {
 			latencyPointerT1: "end",
 			latencyPointerT2: "start",
 			wantContains: []string{
-				"minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) + toIntervalNanosecond(minIf(durationNano, resource_string_service$$name = step1.1 AND name = step1.2)) AS t1_time",
+				"minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) + toIntervalNanosecond(minIf(duration_nano, resource_string_service$$name = step1.1 AND name = step1.2)) AS t1_time",
 				"minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) AS t2_time",
 			},
 		},
@@ -221,8 +221,8 @@ func TestBuildFunnelTopSlowErrorTracesQuery_WithLatencyPointer(t *testing.T) {
 			latencyPointerT1: "end",
 			latencyPointerT2: "end",
 			wantContains: []string{
-				"minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) + toIntervalNanosecond(minIf(durationNano, resource_string_service$$name = step1.1 AND name = step1.2)) AS t1_time",
-				"minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) + toIntervalNanosecond(minIf(durationNano, resource_string_service$$name = step2.1 AND name = step2.2)) AS t2_time",
+				"minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) + toIntervalNanosecond(minIf(duration_nano, resource_string_service$$name = step1.1 AND name = step1.2)) AS t1_time",
+				"minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) + toIntervalNanosecond(minIf(duration_nano, resource_string_service$$name = step2.1 AND name = step2.2)) AS t2_time",
 			},
 		},
 		{
@@ -231,7 +231,7 @@ func TestBuildFunnelTopSlowErrorTracesQuery_WithLatencyPointer(t *testing.T) {
 			latencyPointerT2: "end",
 			wantContains: []string{
 				"minIf(timestamp, resource_string_service$$name = step1.1 AND name = step1.2) AS t1_time",
-				"minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) + toIntervalNanosecond(minIf(durationNano, resource_string_service$$name = step2.1 AND name = step2.2)) AS t2_time",
+				"minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) + toIntervalNanosecond(minIf(duration_nano, resource_string_service$$name = step2.1 AND name = step2.2)) AS t2_time",
 			},
 		},
 	}
