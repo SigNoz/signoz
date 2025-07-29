@@ -108,6 +108,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					logs={tableViewProps.logs}
 					hasActions
 					fontSize={tableViewProps.fontSize}
+					onShowLogDetails={onSetActiveLog}
 				/>
 			),
 			[
@@ -115,6 +116,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 				tableColumns,
 				tableViewProps.fontSize,
 				tableViewProps.logs,
+				onSetActiveLog,
 			],
 		);
 
@@ -145,12 +147,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			),
 			[tableColumns, isDarkMode, tableViewProps?.fontSize],
 		);
-
-		const handleClickExpand = (index: number): void => {
-			if (!onSetActiveLog) return;
-
-			onSetActiveLog(tableViewProps.logs[index]);
-		};
 
 		return (
 			<>
@@ -183,9 +179,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					{...(infitiyTableProps?.onEndReached
 						? { endReached: infitiyTableProps.onEndReached }
 						: {})}
-					onClick={(event: any): void => {
-						handleClickExpand(event.target.parentElement.parentElement.dataset.index);
-					}}
 				/>
 
 				{activeContextLog && (
