@@ -41,6 +41,7 @@ import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import {
 	ColumnUnit,
+	ContextLinkProps,
 	LegendPosition,
 	Widgets,
 } from 'types/api/dashboard/getAll';
@@ -240,6 +241,10 @@ function NewWidget({
 
 	const [columnUnits, setColumnUnits] = useState<ColumnUnit>(
 		selectedWidget?.columnUnits || {},
+	);
+
+	const [contextLinks, setContextLinks] = useState<ContextLinkProps[]>(
+		selectedWidget?.contextLinks || [],
 	);
 
 	useEffect(() => {
@@ -832,6 +837,8 @@ function NewWidget({
 							setSoftMin={setSoftMin}
 							softMax={softMax}
 							setSoftMax={setSoftMax}
+							contextLinks={contextLinks}
+							setContextLinks={setContextLinks}
 						/>
 					</OverlayScrollbar>
 				</RightContainerWrapper>
