@@ -1832,6 +1832,7 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 		response.ExpectedLogsTime = ttlResult.ExpectedLogsTime
 		response.ExpectedLogsMoveTime = ttlResult.ExpectedLogsMoveTime
 		response.Status = ttlResult.Status
+		response.DefaultTTLDays = ttlResult.LogsTime / 24
 
 		// For V1, we don't have TTL conditions
 		response.TTLConditions = []model.CustomRetentionRule{}
