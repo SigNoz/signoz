@@ -18,7 +18,8 @@ import {
 import { javascript } from '@codemirror/lang-javascript';
 import { EditorState, RangeSetBuilder, Transaction } from '@codemirror/state';
 import { Color } from '@signozhq/design-tokens';
-import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
+import { copilot } from '@uiw/codemirror-theme-copilot';
+import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, {
 	Decoration,
 	EditorView,
@@ -596,7 +597,7 @@ function QueryAggregationSelect({
 				className={`query-aggregation-select-editor ${
 					validationError ? 'error' : ''
 				}`}
-				theme={isDarkMode ? githubDark : githubLight}
+				theme={isDarkMode ? copilot : githubLight}
 				extensions={[
 					chipPlugin,
 					aggregatorAutocomplete,

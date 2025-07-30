@@ -13,7 +13,8 @@ import {
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
 import { Color } from '@signozhq/design-tokens';
-import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
+import { copilot } from '@uiw/codemirror-theme-copilot';
+import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
 import { Button, Card, Collapse, Popover, Tag } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
@@ -1110,7 +1111,7 @@ function QuerySearch({
 			<div className="query-where-clause-editor-container">
 				<CodeMirror
 					value={query}
-					theme={isDarkMode ? githubDark : githubLight}
+					theme={isDarkMode ? copilot : githubLight}
 					onChange={handleChange}
 					onUpdate={handleUpdate}
 					className={cx('query-where-clause-editor', {
@@ -1247,7 +1248,7 @@ function QuerySearch({
 									>
 										<CodeMirror
 											value={example.query}
-											theme={isDarkMode ? githubDark : githubLight}
+											theme={isDarkMode ? copilot : githubLight}
 											extensions={[
 												javascript({ jsx: false, typescript: false }),
 												EditorView.editable.of(false),
