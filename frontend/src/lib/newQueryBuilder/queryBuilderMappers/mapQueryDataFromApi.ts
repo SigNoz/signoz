@@ -13,13 +13,13 @@ import {
 	PromQuery,
 	QueryBuilderFormula,
 } from 'types/api/v5/queryRange';
-import { v4 as uuid } from 'uuid';
-
-import { transformQueryBuilderDataModel } from '../transformQueryBuilderDataModel';
 import {
 	convertBuilderQueryToIBuilderQuery,
 	convertQueryBuilderFormulaToIBuilderFormula,
-} from './convertNewToOldQueryBuilder';
+} from 'utils/convertNewToOldQueryBuilder';
+import { v4 as uuid } from 'uuid';
+
+import { transformQueryBuilderDataModel } from '../transformQueryBuilderDataModel';
 
 const mapQueryFromV5 = (
 	compositeQuery: ICompositeMetricQuery,
