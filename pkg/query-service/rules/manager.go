@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"sort"
 	"strings"
 	"sync"
@@ -19,6 +20,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	querierV5 "github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
@@ -38,6 +40,8 @@ type PrepareTaskOptions struct {
 	MaintenanceStore ruletypes.MaintenanceStore
 	Logger           *zap.Logger
 	Reader           interfaces.Reader
+	Querier          querierV5.Querier
+	SLogger          *slog.Logger
 	Cache            cache.Cache
 	ManagerOpts      *ManagerOptions
 	NotifyFunc       NotifyFunc
@@ -51,6 +55,8 @@ type PrepareTestRuleOptions struct {
 	MaintenanceStore ruletypes.MaintenanceStore
 	Logger           *zap.Logger
 	Reader           interfaces.Reader
+	Querier          querierV5.Querier
+	SLogger          *slog.Logger
 	Cache            cache.Cache
 	ManagerOpts      *ManagerOptions
 	NotifyFunc       NotifyFunc
@@ -84,6 +90,8 @@ type ManagerOptions struct {
 	Logger      *zap.Logger
 	ResendDelay time.Duration
 	Reader      interfaces.Reader
+	Querier     querierV5.Querier
+	SLogger     *slog.Logger
 	Cache       cache.Cache
 
 	EvalDelay time.Duration
@@ -146,6 +154,8 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			opts.OrgID,
 			opts.Rule,
 			opts.Reader,
+			opts.Querier,
+			opts.SLogger,
 			WithEvalDelay(opts.ManagerOpts.EvalDelay),
 			WithSQLStore(opts.SQLStore),
 		)
@@ -166,7 +176,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			ruleId,
 			opts.OrgID,
 			opts.Rule,
-			opts.Logger,
+			opts.SLogger,
 			opts.Reader,
 			opts.ManagerOpts.Prometheus,
 			WithSQLStore(opts.SQLStore),
@@ -392,6 +402,8 @@ func (m *Manager) editTask(_ context.Context, orgID valuer.UUID, rule *ruletypes
 		MaintenanceStore: m.maintenanceStore,
 		Logger:           m.logger,
 		Reader:           m.reader,
+		Querier:          m.opts.Querier,
+		SLogger:          m.opts.SLogger,
 		Cache:            m.cache,
 		ManagerOpts:      m.opts,
 		NotifyFunc:       m.prepareNotifyFunc(),
@@ -583,6 +595,8 @@ func (m *Manager) addTask(_ context.Context, orgID valuer.UUID, rule *ruletypes.
 		MaintenanceStore: m.maintenanceStore,
 		Logger:           m.logger,
 		Reader:           m.reader,
+		Querier:          m.opts.Querier,
+		SLogger:          m.opts.SLogger,
 		Cache:            m.cache,
 		ManagerOpts:      m.opts,
 		NotifyFunc:       m.prepareNotifyFunc(),
