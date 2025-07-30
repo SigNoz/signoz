@@ -7,8 +7,7 @@ export const checkListStepToPreferenceKeyMap = {
 	WILL_DO_LATER: ORG_PREFERENCES.WELCOME_CHECKLIST_DO_LATER,
 	SEND_LOGS: ORG_PREFERENCES.WELCOME_CHECKLIST_SEND_LOGS_SKIPPED,
 	SEND_TRACES: ORG_PREFERENCES.WELCOME_CHECKLIST_SEND_TRACES_SKIPPED,
-	SEND_INFRA_METRICS:
-		ORG_PREFERENCES.WELCOME_CHECKLIST_SEND_INFRA_METRICS_SKIPPED,
+	SEND_METRICS: ORG_PREFERENCES.WELCOME_CHECKLIST_SEND_METRICS_SKIPPED,
 	SETUP_DASHBOARDS: ORG_PREFERENCES.WELCOME_CHECKLIST_SETUP_DASHBOARDS_SKIPPED,
 	SETUP_ALERTS: ORG_PREFERENCES.WELCOME_CHECKLIST_SETUP_ALERTS_SKIPPED,
 	SETUP_SAVED_VIEWS: ORG_PREFERENCES.WELCOME_CHECKLIST_SETUP_SAVED_VIEW_SKIPPED,
@@ -20,8 +19,7 @@ export const DOCS_LINKS = {
 	ADD_DATA_SOURCE: 'https://signoz.io/docs/instrumentation/overview/',
 	SEND_LOGS: 'https://signoz.io/docs/userguide/logs/',
 	SEND_TRACES: 'https://signoz.io/docs/userguide/traces/',
-	SEND_INFRA_METRICS:
-		'https://signoz.io/docs/infrastructure-monitoring/overview/',
+	SEND_METRICS: 'https://signoz.io/docs/metrics-management/metrics-explorer/',
 	SETUP_ALERTS: 'https://signoz.io/docs/userguide/alerts-management/',
 	SETUP_SAVED_VIEWS:
 		'https://signoz.io/docs/product-features/saved-view/#step-2-save-your-view',
@@ -74,16 +72,16 @@ export const defaultChecklistItemsState: ChecklistItem[] = [
 		docsLink: DOCS_LINKS.SEND_TRACES,
 	},
 	{
-		id: 'SEND_INFRA_METRICS',
-		title: 'Send your infra metrics',
+		id: 'SEND_METRICS',
+		title: 'Send your metrics',
 		description:
-			'Send your infra metrics to SigNoz to get more visibility into your infrastructure.',
+			'Send your metrics to SigNoz to get more visibility into how your resources interact.',
 		completed: false,
 		isSkipped: false,
 		isSkippable: true,
-		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SEND_INFRA_METRICS,
+		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SEND_METRICS,
 		toRoute: ROUTES.GET_STARTED_WITH_CLOUD,
-		docsLink: DOCS_LINKS.SEND_INFRA_METRICS,
+		docsLink: DOCS_LINKS.SEND_METRICS,
 	},
 	{
 		id: 'SETUP_ALERTS',

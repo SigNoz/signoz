@@ -7,6 +7,7 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import {
 	ArrowRight,
 	ArrowUpRight,
+	BarChart,
 	CompassIcon,
 	DraftingCompass,
 } from 'lucide-react';
@@ -42,6 +43,12 @@ export default function SavedViews({
 		isError: tracesViewsError,
 	} = useGetAllViews(DataSource.TRACES);
 
+	const {
+		data: metricsViewsData,
+		isLoading: metricsViewsLoading,
+		isError: metricsViewsError,
+	} = useGetAllViews(DataSource.METRICS);
+
 	const logsViews = useMemo(() => [...(logsViewsData?.data.data || [])], [
 		logsViewsData,
 	]);
@@ -50,14 +57,25 @@ export default function SavedViews({
 		tracesViewsData,
 	]);
 
+	const metricsViews = useMemo(() => [...(metricsViewsData?.data.data || [])], [
+		metricsViewsData,
+	]);
+
 	useEffect(() => {
-		setSelectedEntityViews(selectedEntity === 'logs' ? logsViews : tracesViews);
-	}, [selectedEntity, logsViews, tracesViews]);
+		if (selectedEntity === 'logs') {
+			setSelectedEntityViews(logsViews);
+		} else if (selectedEntity === 'traces') {
+			setSelectedEntityViews(tracesViews);
+		} else if (selectedEntity === 'metrics') {
+			setSelectedEntityViews(metricsViews);
+		}
+	}, [selectedEntity, logsViews, tracesViews, metricsViews]);
 
 	const hasTracesViews = tracesViews.length > 0;
 	const hasLogsViews = logsViews.length > 0;
+	const hasMetricsViews = metricsViews.length > 0;
 
-	const hasSavedViews = hasTracesViews || hasLogsViews;
+	const hasSavedViews = hasTracesViews || hasLogsViews || hasMetricsViews;
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
@@ -68,10 +86,16 @@ export default function SavedViews({
 			entity: selectedEntity,
 		});
 
-		const currentViewDetails = getViewDetailsUsingViewKey(
-			view.id,
-			selectedEntity === 'logs' ? logsViews : tracesViews,
-		);
+		let currentViews: ViewProps[] = [];
+		if (selectedEntity === 'logs') {
+			currentViews = logsViews;
+		} else if (selectedEntity === 'traces') {
+			currentViews = tracesViews;
+		} else if (selectedEntity === 'metrics') {
+			currentViews = metricsViews;
+		}
+
+		const currentViewDetails = getViewDetailsUsingViewKey(view.id, currentViews);
 		if (!currentViewDetails) return;
 		const { query, name, id, panelType: currentPanelType } = currentViewDetails;
 
@@ -94,6 +118,32 @@ export default function SavedViews({
 		}
 	}, [hasSavedViews, onUpdateChecklistDoneItem, loadingUserPreferences]);
 
+	const footerLink = useMemo(() => {
+		if (selectedEntity === 'logs') {
+			return ROUTES.LOGS_SAVE_VIEWS;
+		}
+		if (selectedEntity === 'traces') {
+			return ROUTES.TRACES_SAVE_VIEWS;
+		}
+		if (selectedEntity === 'metrics') {
+			return ROUTES.METRICS_EXPLORER_VIEWS;
+		}
+		return '';
+	}, [selectedEntity]);
+
+	const getStartedLink = useMemo(() => {
+		if (selectedEntity === 'logs') {
+			return ROUTES.LOGS_EXPLORER;
+		}
+		if (selectedEntity === 'traces') {
+			return ROUTES.TRACES_EXPLORER;
+		}
+		if (selectedEntity === 'metrics') {
+			return ROUTES.METRICS_EXPLORER_EXPLORER;
+		}
+		return '';
+	}, [selectedEntity]);
+
 	const emptyStateCard = (): JSX.Element => (
 		<div className="empty-state-container">
 			<div className="empty-state-content-container">
@@ -115,13 +165,7 @@ export default function SavedViews({
 
 				{user?.role !== USER_ROLES.VIEWER && (
 					<div className="empty-actions-container">
-						<Link
-							to={
-								selectedEntity === 'logs'
-									? ROUTES.LOGS_EXPLORER
-									: ROUTES.TRACES_EXPLORER
-							}
-						>
+						<Link to={getStartedLink}>
 							<Button
 								type="default"
 								className="periscope-btn secondary"
@@ -238,6 +282,14 @@ export default function SavedViews({
 						</div>
 					</div>
 				)}
+
+				{selectedEntity === 'metrics' && metricsViewsError && (
+					<div className="metrics-saved-views-error-container">
+						<div className="metrics-saved-views-error-message">
+							Oops, something went wrong while loading your saved views.
+						</div>
+					</div>
+				)}
 			</div>
 		</div>
 	);
@@ -246,11 +298,19 @@ export default function SavedViews({
 		logEvent('Homepage: Saved views switched', {
 			tab,
 		});
-		setSelectedEntityViews(tab === 'logs' ? logsViews : tracesViews);
+		let currentViews: ViewProps[] = [];
+		if (tab === 'logs') {
+			currentViews = logsViews;
+		} else if (tab === 'traces') {
+			currentViews = tracesViews;
+		} else if (tab === 'metrics') {
+			currentViews = metricsViews;
+		}
+		setSelectedEntityViews(currentViews);
 		setSelectedEntity(tab);
 	};
 
-	if (logsViewsLoading || tracesViewsLoading) {
+	if (logsViewsLoading || tracesViewsLoading || metricsViewsLoading) {
 		return (
 			<Card className="saved-views-list-card home-data-card loading-card">
 				<Card.Content>
@@ -260,7 +320,7 @@ export default function SavedViews({
 		);
 	}
 
-	if (logsViewsError || tracesViewsError) {
+	if (logsViewsError || tracesViewsError || metricsViewsError) {
 		return (
 			<Card className="saved-views-list-card home-data-card error-card">
 				<Card.Content>
@@ -299,6 +359,16 @@ export default function SavedViews({
 								>
 									<DraftingCompass size={14} /> Traces
 								</Button>
+								<Button
+									value="metrics"
+									className={
+										// eslint-disable-next-line sonarjs/no-duplicate-string
+										selectedEntity === 'metrics' ? 'selected tab' : 'tab'
+									}
+									onClick={(): void => handleTabChange('metrics')}
+								>
+									<BarChart size={14} /> Metrics
+								</Button>
 							</Button.Group>
 						</div>
 					</div>
@@ -312,13 +382,7 @@ export default function SavedViews({
 			{selectedEntityViews.length > 0 && (
 				<Card.Footer>
 					<div className="services-footer home-data-card-footer">
-						<Link
-							to={
-								selectedEntity === 'logs'
-									? ROUTES.LOGS_SAVE_VIEWS
-									: ROUTES.TRACES_SAVE_VIEWS
-							}
-						>
+						<Link to={footerLink}>
 							<Button
 								type="link"
 								className="periscope-btn link learn-more-link"
