@@ -53,6 +53,8 @@ func newProvider(
 		telemetrytraces.SpanIndexV3TableName,
 		telemetrymetrics.DBName,
 		telemetrymetrics.AttributesMetadataTableName,
+		telemetrymeter.DBName,
+		telemetrymeter.AttributesMetadataTableName,
 		telemetrylogs.DBName,
 		telemetrylogs.LogsV2TableName,
 		telemetrylogs.TagAttributesV2TableName,

@@ -171,17 +171,21 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				event.MetricsUsed = true
 				event.FilterApplied = spec.Filter != nil && spec.Filter.Expression != ""
 				event.GroupByApplied = len(spec.GroupBy) > 0
-				if spec.StepInterval.Seconds() == 0 {
-					spec.StepInterval = qbtypes.Step{
-						Duration: time.Second * time.Duration(querybuilder.RecommendedStepIntervalForMetric(req.Start, req.End)),
-					}
-				}
-				if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)) {
-					spec.StepInterval = qbtypes.Step{
-						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)),
-					}
-				}
 
+				if spec.Signal == telemetrytypes.SignalMeter {
+					spec.StepInterval = qbtypes.Step{Duration: time.Hour * 24}
+				} else {
+					if spec.StepInterval.Seconds() == 0 {
+						spec.StepInterval = qbtypes.Step{
+							Duration: time.Second * time.Duration(querybuilder.RecommendedStepIntervalForMetric(req.Start, req.End)),
+						}
+					}
+					if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)) {
+						spec.StepInterval = qbtypes.Step{
+							Duration: time.Second * time.Duration(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)),
+						}
+					}
+				}
 				req.CompositeQuery.Queries[idx].Spec = spec
 			}
 		} else if query.Type == qbtypes.QueryTypePromQL {

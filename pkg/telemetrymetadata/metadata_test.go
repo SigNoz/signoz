@@ -8,6 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
@@ -42,6 +43,8 @@ func TestGetKeys(t *testing.T) {
 		telemetrytraces.SpanIndexV3TableName,
 		telemetrymetrics.DBName,
 		telemetrymetrics.AttributesMetadataTableName,
+		telemetrymeter.DBName,
+		telemetrymeter.AttributesMetadataTableName,
 		telemetrylogs.DBName,
 		telemetrylogs.LogsV2TableName,
 		telemetrylogs.TagAttributesV2TableName,

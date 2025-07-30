@@ -93,7 +93,7 @@ func TestStatementBuilder(t *testing.T) {
 			requestType: qbtypes.RequestTypeTimeSeries,
 			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
 				Signal:       telemetrytypes.SignalMetrics,
-				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				StepInterval: qbtypes.Step{Duration: 24 * time.Hour},
 				Aggregations: []qbtypes.MetricAggregation{
 					{
 						MetricName:       "signoz_calls_total",
