@@ -258,7 +258,7 @@ class Traces(ABC):
         self.flags = flags
         self.name = name
         self.kind = kind
-        self.span_kind = self._kind_to_string(kind)
+        self.kind_string = self._kind_to_string(kind)
         self.status_code = status_code
         self.status_message = status_message
         self.status_code_string = self._status_code_to_string(status_code)
@@ -541,7 +541,7 @@ class Traces(ABC):
                 self.flags,
                 self.name,
                 self.kind,
-                self.span_kind,
+                self.kind_string,
                 self.duration_nano,
                 self.status_code,
                 self.status_message,
