@@ -227,6 +227,7 @@
 				font-size: 12px;
 				font-family: 'Space Mono', monospace !important;
 				color: var(--bg-cherry-500);
+				padding: 8px;
 			}
 		}
 	}
@@ -592,16 +593,16 @@
 				background-color: var(--bg-vanilla-100) !important;
 
 				::-moz-selection {
-					background: var(--bg-vanilla-100) !important;
+					background: #b3d4fc !important;
 				}
 
 				::selection {
-					background: var(--bg-vanilla-100) !important;
+					background: #b3d4fc !important;
 				}
 			}
 
 			.cm-selectionBackground {
-				background: var(--bg-vanilla-100) !important;
+				background: #b3d4fc !important;
 			}
 		}
 
