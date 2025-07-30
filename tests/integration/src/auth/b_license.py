@@ -55,7 +55,7 @@ def test_apply_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
     access_token = get_jwt_token("admin@integration.test", "password")
 
     response = requests.post(
-        url=signoz.self.host_config.get("/api/v3/licenses"),
+        url=signoz.self.host_configs["8080"].get("/api/v3/licenses"),
         json={"key": "secret-key"},
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,
@@ -64,7 +64,7 @@ def test_apply_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
     assert response.status_code == http.HTTPStatus.ACCEPTED
 
     response = requests.post(
-        url=signoz.zeus.host_config.get("/__admin/requests/count"),
+        url=signoz.zeus.host_configs["8080"].get("/__admin/requests/count"),
         json={"method": "GET", "url": "/v2/licenses/me"},
         timeout=5,
     )
@@ -114,7 +114,7 @@ def test_refresh_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None
     access_token = get_jwt_token("admin@integration.test", "password")
 
     response = requests.put(
-        url=signoz.self.host_config.get("/api/v3/licenses"),
+        url=signoz.self.host_configs["8080"].get("/api/v3/licenses"),
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,
     )
@@ -129,7 +129,7 @@ def test_refresh_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None
     assert json.loads(record)["valid_from"] == 1732146922
 
     response = requests.post(
-        url=signoz.zeus.host_config.get("/__admin/requests/count"),
+        url=signoz.zeus.host_configs["8080"].get("/__admin/requests/count"),
         json={"method": "GET", "url": "/v2/licenses/me"},
         timeout=5,
     )
@@ -166,7 +166,7 @@ def test_license_checkout(signoz: SigNoz, make_http_mocks, get_jwt_token) -> Non
     access_token = get_jwt_token("admin@integration.test", "password")
 
     response = requests.post(
-        url=signoz.self.host_config.get("/api/v1/checkout"),
+        url=signoz.self.host_configs["8080"].get("/api/v1/checkout"),
         json={"url": "https://integration-signoz.com"},
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,
@@ -176,7 +176,7 @@ def test_license_checkout(signoz: SigNoz, make_http_mocks, get_jwt_token) -> Non
     assert response.json()["data"]["redirectURL"] == "https://signoz.checkout.com"
 
     response = requests.post(
-        url=signoz.zeus.host_config.get("/__admin/requests/count"),
+        url=signoz.zeus.host_configs["8080"].get("/__admin/requests/count"),
         json={"method": "POST", "url": "/v2/subscriptions/me/sessions/checkout"},
         timeout=5,
     )
@@ -213,7 +213,7 @@ def test_license_portal(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
     access_token = get_jwt_token("admin@integration.test", "password")
 
     response = requests.post(
-        url=signoz.self.host_config.get("/api/v1/portal"),
+        url=signoz.self.host_configs["8080"].get("/api/v1/portal"),
         json={"url": "https://integration-signoz.com"},
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,
@@ -223,7 +223,7 @@ def test_license_portal(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
     assert response.json()["data"]["redirectURL"] == "https://signoz.portal.com"
 
     response = requests.post(
-        url=signoz.zeus.host_config.get("/__admin/requests/count"),
+        url=signoz.zeus.host_configs["8080"].get("/__admin/requests/count"),
         json={"method": "POST", "url": "/v2/subscriptions/me/sessions/portal"},
         timeout=5,
     )

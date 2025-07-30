@@ -229,6 +229,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		if (
 			isCloudUserVal &&
 			Boolean(latestVersion) &&
+			seenChangelogVersion != null &&
 			latestVersion !== seenChangelogVersion &&
 			daysSinceAccountCreation > MIN_ACCOUNT_AGE_FOR_CHANGELOG && // Show to only users older than 2 weeks
 			!isWorkspaceAccessRestricted

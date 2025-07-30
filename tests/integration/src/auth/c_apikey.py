@@ -9,13 +9,14 @@ def test_api_key(signoz: types.SigNoz, get_jwt_token) -> None:
     admin_token = get_jwt_token("admin@integration.test", "password")
 
     response = requests.post(
-        signoz.self.host_config.get("/api/v1/pats"),
+        signoz.self.host_configs["8080"].get("/api/v1/pats"),
         headers={"Authorization": f"Bearer {admin_token}"},
         json={
             "name": "admin",
             "role": "ADMIN",
             "expiresInDays": 1,
         },
+        timeout=2,
     )
 
     assert response.status_code == HTTPStatus.CREATED
@@ -24,7 +25,7 @@ def test_api_key(signoz: types.SigNoz, get_jwt_token) -> None:
     assert "token" in pat_response["data"]
 
     response = requests.get(
-        signoz.self.host_config.get("/api/v1/user"),
+        signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
         headers={"SIGNOZ-API-KEY": f"{pat_response["data"]["token"]}"},
     )
@@ -33,13 +34,18 @@ def test_api_key(signoz: types.SigNoz, get_jwt_token) -> None:
 
     user_response = response.json()
     found_user = next(
-        (user for user in user_response["data"] if user["email"] == "admin@integration.test"),
+        (
+            user
+            for user in user_response["data"]
+            if user["email"] == "admin@integration.test"
+        ),
         None,
     )
 
     response = requests.get(
-        signoz.self.host_config.get("/api/v1/pats"),
+        signoz.self.host_configs["8080"].get("/api/v1/pats"),
         headers={"SIGNOZ-API-KEY": f"{pat_response["data"]["token"]}"},
+        timeout=2,
     )
 
     assert response.status_code == HTTPStatus.OK
