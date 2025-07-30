@@ -1,12 +1,14 @@
 import datetime
+import hashlib
 import json
 import secrets
+import uuid
 from abc import ABC
 from typing import Any, Callable, Generator, List
+from urllib.parse import urlparse
 
 import numpy as np
 import pytest
-from ksuid import KsuidMs
 
 from fixtures import types
 from fixtures.fingerprint import LogsOrTracesFingerprint
@@ -31,7 +33,9 @@ class TracesResource(ABC):
         fingerprint: str,
         seen_at_ts_bucket_start: np.int64,
     ) -> None:
-        self.labels = json.dumps(labels, separators=(',', ':')) # clickhouse treats {"a": "b"} differently from {"a":"b"}. In the first case it is not able to run json functions
+        self.labels = json.dumps(
+            labels, separators=(",", ":")
+        )  # clickhouse treats {"a": "b"} differently from {"a":"b"}. In the first case it is not able to run json functions
         self.fingerprint = fingerprint
         self.seen_at_ts_bucket_start = seen_at_ts_bucket_start
 
@@ -223,7 +227,7 @@ class Traces(ABC):
         events: List[TracesEvent] = [],
         links: List[dict] = [],
         trace_state: str = "",
-        flags: np.uint32 = 0
+        flags: np.uint32 = 0,
     ) -> None:
         self.tag_attributes = []
         self.attribute_keys = []
@@ -301,7 +305,9 @@ class Traces(ABC):
             )
 
         # Calculate resource fingerprint
-        self.resource_fingerprint = LogsOrTracesFingerprint(self.resources_string).calculate()
+        self.resource_fingerprint = LogsOrTracesFingerprint(
+            self.resources_string
+        ).calculate()
 
         # Process attributes by type and populate custom fields
         self.attribute_string = {}
@@ -397,9 +403,7 @@ class Traces(ABC):
 
             # Create error events for exception events (following Go exporter logic)
             if event.name == "exception":
-                error_event = self._create_error_event(
-                    event
-                )
+                error_event = self._create_error_event(event)
                 self.error_events.append(error_event)
 
         # Process links to create references
@@ -436,13 +440,8 @@ class Traces(ABC):
         }
         return status_map.get(int(status_code), "STATUS_CODE_UNSET")
 
-    def _create_error_event(
-        self, event: TracesEvent
-    ) -> TracesErrorEvent:
+    def _create_error_event(self, event: TracesEvent) -> TracesErrorEvent:
         """Create error event from exception event (following Go exporter logic)"""
-        import hashlib
-        import uuid
-
         error_id = str(uuid.uuid4()).replace("-", "")
 
         # Create error group ID based on exception type and message
@@ -462,7 +461,7 @@ class Traces(ABC):
     def _create_references(self, links: List[dict]) -> str:
         """Create references from span links (simplified version)"""
         # For now, return empty string. This can be extended to handle actual link processing
-        return json.dumps(links, separators=(',', ':'))
+        return json.dumps(links, separators=(",", ":"))
 
     def _determine_is_remote(self, flags: np.uint32) -> str:
         """Determine if span is remote based on flags (following Go exporter logic)"""
@@ -472,11 +471,13 @@ class Traces(ABC):
         if flags & has_is_remote_mask != 0:
             if flags & is_remote_mask != 0:
                 return "yes"
-            else:
-                return "no"
+
+            return "no"
         return "unknown"
 
-    def _populate_custom_attrs(self, key: str, value: Any) -> None:
+    def _populate_custom_attrs(  # pylint: disable=too-many-branches
+        self, key: str, value: Any
+    ) -> None:
         """Populate custom attributes based on attribute keys (following Go exporter logic)"""
         str_value = str(value)
 
@@ -490,12 +491,10 @@ class Traces(ABC):
         elif key in ["http.url", "url.full"] and self.kind == 3:  # SPAN_KIND_CLIENT
             # For client spans, extract hostname for external URL
             try:
-                from urllib.parse import urlparse
-
                 parsed = urlparse(str_value)
                 self.external_http_url = parsed.hostname or str_value
                 self.http_url = str_value
-            except:
+            except Exception:  # pylint: disable=broad-exception-caught
                 self.external_http_url = str_value
                 self.http_url = str_value
         elif (
@@ -530,7 +529,8 @@ class Traces(ABC):
 
     def np_arr(self) -> np.array:
         """Return span data as numpy array for database insertion"""
-        return np.array([
+        return np.array(
+            [
                 self.ts_bucket_start,
                 self.resource_fingerprint,
                 self.timestamp,
@@ -562,7 +562,9 @@ class Traces(ABC):
                 self.db_operation,
                 self.has_error,
                 self.is_remote,
-        ], dtype=object)
+            ],
+            dtype=object,
+        )
 
 
 @pytest.fixture(name="insert_traces", scope="function")
@@ -616,7 +618,39 @@ def insert_traces(
         clickhouse.conn.insert(
             database="signoz_traces",
             table="distributed_signoz_index_v3",
-            column_names=["ts_bucket_start", "resource_fingerprint", "timestamp", "trace_id", "span_id", "trace_state", "parent_span_id", "flags", "name", "kind", "kind_string", "duration_nano", "status_code", "status_message", "status_code_string", "attributes_string", "attributes_number", "attributes_bool", "resources_string", "events", "links", "response_status_code", "external_http_url", "http_url", "external_http_method", "http_method", "http_host", "db_name", "db_operation", "has_error", "is_remote"],
+            column_names=[
+                "ts_bucket_start",
+                "resource_fingerprint",
+                "timestamp",
+                "trace_id",
+                "span_id",
+                "trace_state",
+                "parent_span_id",
+                "flags",
+                "name",
+                "kind",
+                "kind_string",
+                "duration_nano",
+                "status_code",
+                "status_message",
+                "status_code_string",
+                "attributes_string",
+                "attributes_number",
+                "attributes_bool",
+                "resources_string",
+                "events",
+                "links",
+                "response_status_code",
+                "external_http_url",
+                "http_url",
+                "external_http_method",
+                "http_method",
+                "http_host",
+                "db_name",
+                "db_operation",
+                "has_error",
+                "is_remote",
+            ],
             data=[span.np_arr() for span in traces],
         )
 

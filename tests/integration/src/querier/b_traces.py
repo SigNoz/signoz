@@ -1,12 +1,12 @@
+from datetime import datetime, timedelta, timezone
+from http import HTTPStatus
 from typing import Callable, List
 
-from fixtures import types
-from fixtures.traces import Traces, generate_trace_id, generate_span_id
-from datetime import datetime, timedelta, timezone
-import time
 import requests
+
+from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from http import HTTPStatus
+from fixtures.traces import Traces, generate_span_id, generate_trace_id
 
 
 def test_traces_list(
@@ -16,7 +16,11 @@ def test_traces_list(
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
     """
-    
+    Setup:
+    Insert 2 traces with different attributes
+
+    Tests:
+    1. Query traces for the last 5 minutes and check if the traces are returned in the correct order
     """
     http_service_trace_id = generate_trace_id()
     http_service_span_id = generate_span_id()
@@ -74,7 +78,7 @@ def test_traces_list(
                     "messaging.operation": "publish",
                     "messaging.message.id": "001",
                 },
-            )
+            ),
         ]
     )
 
@@ -109,11 +113,36 @@ def test_traces_list(
                                 {"key": {"name": "timestamp"}, "direction": "desc"},
                             ],
                             "selectFields": [
-                                {"name": "service.name", "fieldDataType": "string", "fieldContext": "resource", "signal": "traces"},
-                                {"name": "name", "fieldDataType": "string", "fieldContext": "span", "signal": "traces"},
-                                {"name": "duration_nano", "fieldDataType": "", "fieldContext": "span", "signal": "traces"},
-                                {"name": "http_method", "fieldDataType": "", "fieldContext": "span", "signal": "traces"},
-                                {"name": "response_status_code", "fieldDataType": "", "fieldContext": "span", "signal": "traces"},
+                                {
+                                    "name": "service.name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "resource",
+                                    "signal": "traces",
+                                },
+                                {
+                                    "name": "name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "span",
+                                    "signal": "traces",
+                                },
+                                {
+                                    "name": "duration_nano",
+                                    "fieldDataType": "",
+                                    "fieldContext": "span",
+                                    "signal": "traces",
+                                },
+                                {
+                                    "name": "http_method",
+                                    "fieldDataType": "",
+                                    "fieldContext": "span",
+                                    "signal": "traces",
+                                },
+                                {
+                                    "name": "response_status_code",
+                                    "fieldDataType": "",
+                                    "fieldContext": "span",
+                                    "signal": "traces",
+                                },
                             ],
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
@@ -124,7 +153,6 @@ def test_traces_list(
             "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
         },
     )
-
 
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
