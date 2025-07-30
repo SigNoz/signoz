@@ -40,10 +40,22 @@
                 &:hover {
                     color: var(--bg-cherry-400) !important;
                     border-color: var(--bg-cherry-400) !important;
-                    background-color: var(--bg-slate-500) !important;
                 }
             }
         }
+    }
+
+    .params-container {
+        margin-left: 16px;
+    }
+
+    .context-link-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px solid var(--bg-slate-400);
     }
 }
 
@@ -57,9 +69,14 @@
                     &:hover {
                         color: var(--bg-cherry-500) !important;
                         border-color: var(--bg-cherry-500) !important;
+                        background-color: var(--bg-cherry-100);
                     }
                 }
             }
+        }
+
+        .context-link-footer {
+            border-top-color: var(--bg-vanilla-200);
         }
     }
 }

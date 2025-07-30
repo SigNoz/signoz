@@ -99,7 +99,7 @@ function ContextLinks({
 		handleAddContextLink,
 		handleCancelModal,
 		handleSaveContextLink,
-	} = useContextLinkModal();
+	} = useContextLinkModal({ setContextLinks });
 
 	const sensors = useSensors(useSensor(PointerSensor));
 
@@ -163,14 +163,16 @@ function ContextLinks({
 			<Modal
 				title={selectedContextLink ? 'Edit context link' : 'Add a context link'}
 				open={isModalOpen}
-				onOk={handleSaveContextLink}
 				onCancel={handleCancelModal}
-				okText="Save"
 				destroyOnClose
-				cancelText="Cancel"
-				width={600}
+				width={672}
+				footer={null}
 			>
-				<UpdateContextLinks selectedContextLink={selectedContextLink} />
+				<UpdateContextLinks
+					selectedContextLink={selectedContextLink}
+					onSave={handleSaveContextLink}
+					onCancel={handleCancelModal}
+				/>
 			</Modal>
 		</div>
 	);
