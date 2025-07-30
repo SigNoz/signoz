@@ -351,6 +351,33 @@ function DateTimeSelection({
 		return `Refreshed ${secondsDiff} sec ago`;
 	}, [maxTime, minTime, selectedTime]);
 
+	const getUpdatedCompositeQuery = useCallback((): string => {
+		let updatedCompositeQuery = cloneDeep(currentQuery);
+		updatedCompositeQuery.id = uuid();
+		// Remove the filters
+		updatedCompositeQuery = {
+			...updatedCompositeQuery,
+			builder: {
+				...updatedCompositeQuery.builder,
+				queryData: updatedCompositeQuery.builder.queryData.map((item) => ({
+					...item,
+					filter: {
+						...item.filter,
+						expression:
+							item.filter?.expression.trim() === ''
+								? ''
+								: item.filter?.expression ?? '',
+					},
+					filters: {
+						items: [],
+						op: 'AND',
+					},
+				})),
+			},
+		};
+		return JSON.stringify(updatedCompositeQuery);
+	}, [currentQuery]);
+
 	const onSelectHandler = useCallback(
 		(value: Time | CustomTimeType): void => {
 			if (isModalTimeSelection) {
@@ -386,33 +413,8 @@ function DateTimeSelection({
 			// Remove Hidden Filters from URL query parameters on time change
 			urlQuery.delete(QueryParams.activeLogId);
 
-			let updatedCompositeQuery = cloneDeep(currentQuery);
-			updatedCompositeQuery.id = uuid();
-			// Remove the filters
-			updatedCompositeQuery = {
-				...updatedCompositeQuery,
-				builder: {
-					...updatedCompositeQuery.builder,
-					queryData: updatedCompositeQuery.builder.queryData.map((item) => ({
-						...item,
-						filter: {
-							...item.filter,
-							expression:
-								item.filter?.expression.trim() === ''
-									? ''
-									: item.filter?.expression ?? '',
-						},
-						filters: {
-							items: [],
-							op: 'AND',
-						},
-					})),
-				},
-			};
-			urlQuery.set(
-				QueryParams.compositeQuery,
-				JSON.stringify(updatedCompositeQuery),
-			);
+			const updatedCompositeQuery = getUpdatedCompositeQuery();
+			urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
 
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 			safeNavigate(generatedUrl);
@@ -425,7 +427,7 @@ function DateTimeSelection({
 			onTimeChange,
 			refreshButtonHidden,
 			safeNavigate,
-			currentQuery,
+			getUpdatedCompositeQuery,
 			updateLocalStorageForRoutes,
 			updateTimeInterval,
 			urlQuery,
@@ -488,6 +490,10 @@ function DateTimeSelection({
 				);
 				urlQuery.set(QueryParams.endTime, endTime?.toDate().getTime().toString());
 				urlQuery.delete(QueryParams.relativeTime);
+
+				const updatedCompositeQuery = getUpdatedCompositeQuery();
+				urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
+
 				const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 				safeNavigate(generatedUrl);
 			}
