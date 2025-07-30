@@ -91,7 +91,7 @@ export const TableHeaderCellStyled = styled.th<TableHeaderCellStyledProps>`
 	line-height: 18px;
 	letter-spacing: -0.07px;
 	background: ${(props): string => (props.$isDarkMode ? '#0b0c0d' : '#fdfdfd')};
-	${({ $isDragColumn }): string => ($isDragColumn ? 'cursor: col-resize;' : '')}
+	${({ $isDragColumn }): string => ($isDragColumn ? 'cursor: grab;' : '')}
 
 	${({ fontSize }): string =>
 		fontSize === FontSize.SMALL
