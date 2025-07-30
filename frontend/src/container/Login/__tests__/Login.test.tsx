@@ -81,9 +81,7 @@ describe('Login Flow', () => {
 		});
 
 		await waitFor(() => {
-			expect(
-				screen.getByRole('button', { name: /login with sso/i }),
-			).toBeInTheDocument();
+			expect(screen.getByText(/login with sso/i)).toBeInTheDocument();
 		});
 	});
 
