@@ -4,6 +4,7 @@ import json
 import secrets
 import uuid
 from abc import ABC
+from enum import Enum
 from typing import Any, Callable, Generator, List
 from urllib.parse import urlparse
 
@@ -14,12 +15,34 @@ from fixtures import types
 from fixtures.fingerprint import LogsOrTracesFingerprint
 
 
-def generate_trace_id() -> str:
-    return secrets.token_hex(16)
+class TracesKind(Enum):
+    SPAN_KIND_UNSPECIFIED = 0
+    SPAN_KIND_INTERNAL = 1
+    SPAN_KIND_SERVER = 2
+    SPAN_KIND_CLIENT = 3
+    SPAN_KIND_PRODUCER = 4
+    SPAN_KIND_CONSUMER = 5
 
 
-def generate_span_id() -> str:
-    return secrets.token_hex(8)
+class TracesStatusCode(Enum):
+    STATUS_CODE_UNSET = 0
+    STATUS_CODE_OK = 1
+    STATUS_CODE_ERROR = 2
+
+
+class TracesRefType(Enum):
+    REF_TYPE_CHILD_OF = "CHILD_OF"
+    REF_TYPE_FOLLOWS_FROM = "FOLLOWS_FROM"
+
+
+class TraceIdGenerator(ABC):
+    @staticmethod
+    def trace_id() -> str:
+        return secrets.token_hex(16)
+
+    @staticmethod
+    def span_id() -> str:
+        return secrets.token_hex(8)
 
 
 class TracesResource(ABC):
@@ -171,6 +194,24 @@ class TracesSpanAttribute(ABC):
         self.is_column = is_column
 
 
+class TracesLink(ABC):
+    trace_id: str
+    span_id: str
+    ref_type: TracesRefType
+
+    def __init__(self, trace_id: str, span_id: str, ref_type: TracesRefType) -> None:
+        self.trace_id = trace_id
+        self.span_id = span_id
+        self.ref_type = ref_type
+
+    def __dict__(self) -> dict[str, Any]:
+        return {
+            "traceId": self.trace_id,
+            "spanId": self.span_id,
+            "refType": self.ref_type.value,
+        }
+
+
 class Traces(ABC):
     ts_bucket_start: np.uint64
     resource_fingerprint: str
@@ -219,13 +260,13 @@ class Traces(ABC):
         span_id: str = "",
         parent_span_id: str = "",
         name: str = "default span",
-        kind: np.int8 = 1,  # SPAN_KIND_INTERNAL
-        status_code: np.int16 = 1,  # STATUS_CODE_UNSET
+        kind: TracesKind = TracesKind.SPAN_KIND_INTERNAL,
+        status_code: TracesStatusCode = TracesStatusCode.STATUS_CODE_UNSET,
         status_message: str = "",
         resources: dict[str, Any] = {},
         attributes: dict[str, Any] = {},
         events: List[TracesEvent] = [],
-        links: List[dict] = [],
+        links: List[TracesLink] = [],
         trace_state: str = "",
         flags: np.uint32 = 0,
     ) -> None:
@@ -257,12 +298,12 @@ class Traces(ABC):
         self.trace_state = trace_state
         self.flags = flags
         self.name = name
-        self.kind = kind
-        self.kind_string = self._kind_to_string(kind)
-        self.status_code = status_code
+        self.kind = kind.value
+        self.kind_string = kind.name
+        self.status_code = status_code.value
         self.status_message = status_message
-        self.status_code_string = self._status_code_to_string(status_code)
-        self.has_error = status_code == 2  # STATUS_CODE_ERROR
+        self.status_code_string = status_code.name
+        self.has_error = status_code == TracesStatusCode.STATUS_CODE_ERROR
         self.is_remote = self._determine_is_remote(flags)
 
         # Initialize custom fields to empty values
@@ -406,8 +447,24 @@ class Traces(ABC):
                 error_event = self._create_error_event(event)
                 self.error_events.append(error_event)
 
-        # Process links to create references
-        self.references = self._create_references(links)
+        # In Python, when you define a function with a mutable default argument (like a list []), that default object is created once when the function is defined,
+        # not each time the function is called.
+        # This means all calls to the function share the same default object.
+        # https://stackoverflow.com/questions/1132941/least-astonishment-in-python-the-mutable-default-argument
+        links_copy = links.copy() if links else []
+        if self.parent_span_id != "":
+            links_copy.insert(
+                0,
+                TracesLink(
+                    trace_id=self.trace_id,
+                    span_id=self.parent_span_id,
+                    ref_type=TracesRefType.REF_TYPE_CHILD_OF,
+                ),
+            )
+
+        self.links = json.dumps(
+            [link.__dict__() for link in links_copy], separators=(",", ":")
+        )
 
         # Initialize resource
         self.resource = []
@@ -418,27 +475,6 @@ class Traces(ABC):
                 seen_at_ts_bucket_start=self.ts_bucket_start,
             )
         )
-
-    def _kind_to_string(self, kind: np.int8) -> str:
-        """Convert span kind to string representation"""
-        kind_map = {
-            0: "SPAN_KIND_UNSPECIFIED",
-            1: "SPAN_KIND_INTERNAL",
-            2: "SPAN_KIND_SERVER",
-            3: "SPAN_KIND_CLIENT",
-            4: "SPAN_KIND_PRODUCER",
-            5: "SPAN_KIND_CONSUMER",
-        }
-        return kind_map.get(int(kind), "SPAN_KIND_UNSPECIFIED")
-
-    def _status_code_to_string(self, status_code: np.int16) -> str:
-        """Convert status code to string representation"""
-        status_map = {
-            0: "STATUS_CODE_UNSET",
-            1: "STATUS_CODE_OK",
-            2: "STATUS_CODE_ERROR",
-        }
-        return status_map.get(int(status_code), "STATUS_CODE_UNSET")
 
     def _create_error_event(self, event: TracesEvent) -> TracesErrorEvent:
         """Create error event from exception event (following Go exporter logic)"""
@@ -457,11 +493,6 @@ class Traces(ABC):
             error_id=error_id,
             error_group_id=error_group_id,
         )
-
-    def _create_references(self, links: List[dict]) -> str:
-        """Create references from span links (simplified version)"""
-        # For now, return empty string. This can be extended to handle actual link processing
-        return json.dumps(links, separators=(",", ":"))
 
     def _determine_is_remote(self, flags: np.uint32) -> str:
         """Determine if span is remote based on flags (following Go exporter logic)"""
@@ -551,7 +582,7 @@ class Traces(ABC):
                 self.attributes_bool,
                 self.resources_string,
                 self.events,
-                self.references,
+                self.links,
                 self.response_status_code,
                 self.external_http_url,
                 self.http_url,
@@ -582,8 +613,8 @@ def insert_traces(
         - distributed_signoz_error_index_v2 (error events)
         """
         resources: List[TracesResource] = []
-        for span in traces:
-            resources.extend(span.resource)
+        for trace in traces:
+            resources.extend(trace.resource)
 
         if len(resources) > 0:
             clickhouse.conn.insert(
@@ -593,8 +624,8 @@ def insert_traces(
             )
 
         tag_attributes: List[TracesTagAttributes] = []
-        for span in traces:
-            tag_attributes.extend(span.tag_attributes)
+        for trace in traces:
+            tag_attributes.extend(trace.tag_attributes)
 
         if len(tag_attributes) > 0:
             clickhouse.conn.insert(
@@ -604,8 +635,8 @@ def insert_traces(
             )
 
         attribute_keys: List[TracesResourceOrAttributeKeys] = []
-        for span in traces:
-            attribute_keys.extend(span.attribute_keys)
+        for trace in traces:
+            attribute_keys.extend(trace.attribute_keys)
 
         if len(attribute_keys) > 0:
             clickhouse.conn.insert(
@@ -651,13 +682,13 @@ def insert_traces(
                 "has_error",
                 "is_remote",
             ],
-            data=[span.np_arr() for span in traces],
+            data=[trace.np_arr() for trace in traces],
         )
 
         # Insert error events
         error_events: List[TracesErrorEvent] = []
-        for span in traces:
-            error_events.extend(span.error_events)
+        for trace in traces:
+            error_events.extend(trace.error_events)
 
         if len(error_events) > 0:
             clickhouse.conn.insert(
