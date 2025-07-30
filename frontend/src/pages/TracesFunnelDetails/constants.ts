@@ -23,7 +23,7 @@ export const createInitialStepsData = (): FunnelStepData[] => [
 			items: [],
 			op: 'and',
 		},
-		latency_pointer: 'start',
+		latency_pointer: 'end',
 		latency_type: LatencyOptions.P95,
 		has_errors: false,
 	},

@@ -28,6 +28,8 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotIn:           "NOT IN",
 	v3.FilterOperatorExists:          "mapContains(%s_%s, '%s')",
 	v3.FilterOperatorNotExists:       "not mapContains(%s_%s, '%s')",
+	v3.FilterOperatorILike:           "ILIKE",
+	v3.FilterOperatorNotILike:        "NOT ILIKE",
 }
 
 var skipExistsFilter = map[v3.FilterOperator]struct{}{
@@ -175,6 +177,9 @@ func buildAttributeFilter(item v3.FilterItem) (string, error) {
 			} else {
 				return fmt.Sprintf("%s %s '%s'", keyName, logsOp, val), nil
 			}
+		case v3.FilterOperatorILike, v3.FilterOperatorNotILike:
+			val := utils.QuoteEscapedString(fmt.Sprintf("%s", item.Value))
+			return fmt.Sprintf("%s %s '%s'", keyName, logsOp, val), nil
 		default:
 			return fmt.Sprintf("%s %s %s", keyName, logsOp, fmtVal), nil
 		}
