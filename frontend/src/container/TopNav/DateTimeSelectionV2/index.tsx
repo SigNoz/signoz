@@ -386,8 +386,29 @@ function DateTimeSelection({
 			// Remove Hidden Filters from URL query parameters on time change
 			urlQuery.delete(QueryParams.activeLogId);
 
-			const updatedCompositeQuery = cloneDeep(currentQuery);
+			let updatedCompositeQuery = cloneDeep(currentQuery);
 			updatedCompositeQuery.id = uuid();
+			// Remove the filters
+			updatedCompositeQuery = {
+				...updatedCompositeQuery,
+				builder: {
+					...updatedCompositeQuery.builder,
+					queryData: updatedCompositeQuery.builder.queryData.map((item) => ({
+						...item,
+						filter: {
+							...item.filter,
+							expression:
+								item.filter?.expression.trim() === ''
+									? ''
+									: item.filter?.expression ?? '',
+						},
+						filters: {
+							items: [],
+							op: 'AND',
+						},
+					})),
+				},
+			};
 			urlQuery.set(
 				QueryParams.compositeQuery,
 				JSON.stringify(updatedCompositeQuery),
@@ -396,7 +417,7 @@ function DateTimeSelection({
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 			safeNavigate(generatedUrl);
 
-			// For logs explorer - time range handling is managed in useCopyLogLink.ts:52
+			// // For logs explorer - time range handling is managed in useCopyLogLink.ts:52
 		},
 		[
 			isModalTimeSelection,
