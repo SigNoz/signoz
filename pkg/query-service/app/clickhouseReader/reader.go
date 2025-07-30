@@ -272,7 +272,7 @@ func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model
 
 func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, error) {
 	services := []string{}
-	rows, err := r.db.Query(ctx, fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s WHERE ts_bucket_start > (toUnixTimestamp(now() - INTERVAL 1 DAY) - 1800) AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, r.traceTableName))
+	rows, err := r.db.Query(ctx, fmt.Sprintf(`SELECT DISTINCT resource_string_service$$name FROM %s.%s WHERE ts_bucket_start > (toUnixTimestamp(now() - INTERVAL 1 DAY) - 1800) AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, r.traceTableName))
 	if err != nil {
 		return nil, fmt.Errorf("error in processing sql query")
 	}
@@ -426,18 +426,18 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 
 			query := fmt.Sprintf(
 				`SELECT
-					quantile(0.99)(durationNano) as p99,
-					avg(durationNano) as avgDuration,
+					quantile(0.99)(duration_nano) as p99,
+					avg(duration_nano) as avgDuration,
 					count(*) as numCalls
 				FROM %s.%s
-				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end`,
+				WHERE resource_string_service$$name = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end`,
 				r.TraceDB, r.traceTableName,
 			)
 			errorQuery := fmt.Sprintf(
 				`SELECT
 					count(*) as numErrors
 				FROM %s.%s
-				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
+				WHERE resource_string_service$$name = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
 				r.TraceDB, r.traceTableName,
 			)
 
@@ -757,10 +757,10 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 			quantile(0.95)(durationNano) as p95,
 			quantile(0.99)(durationNano) as p99,
 			COUNT(*) as numCalls,
-			countIf(statusCode=2) as errorCount,
+			countIf(status_code=2) as errorCount,
 			name
 		FROM %s.%s
-		WHERE serviceName = @serviceName AND timestamp>= @start AND timestamp<= @end`,
+		WHERE resource_string_service$$name = @serviceName AND timestamp>= @start AND timestamp<= @end`,
 		r.TraceDB, r.traceTableName,
 	)
 
