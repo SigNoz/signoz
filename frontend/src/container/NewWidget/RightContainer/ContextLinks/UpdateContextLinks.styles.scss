@@ -1,0 +1,66 @@
+.context-link-form-container {
+
+    .add-url-parameter-btn {
+        display: flex;
+        align-items: center;
+        width: fit-content;
+        margin-top: 16px;
+    }
+
+    .url-parameters-section {
+        margin-top: 16px;
+        margin-bottom: 16px;
+        
+        .parameter-header {
+            margin-bottom: 8px;
+            
+            strong {
+                color: #666;
+                font-size: 14px;
+            }
+        }
+        
+        .parameter-row {
+            margin-bottom: 8px;
+            align-items: center;
+            
+            .ant-input {
+                border-radius: 4px;
+            }
+            
+            .delete-parameter-btn {
+                color: var(--bg-vanilla-400);
+                padding: 4px;
+                height: 32px;
+                width: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                
+                &:hover {
+                    color: var(--bg-cherry-400) !important;
+                    border-color: var(--bg-cherry-400) !important;
+                    background-color: var(--bg-slate-500) !important;
+                }
+            }
+        }
+    }
+}
+
+.lightMode {
+    .context-link-form-container {
+        .url-parameters-section {
+            .parameter-row {
+                .delete-parameter-btn {
+                    color: var(--bg-slate-400);
+                    
+                    &:hover {
+                        color: var(--bg-cherry-500) !important;
+                        border-color: var(--bg-cherry-500) !important;
+                    }
+                }
+            }
+        }
+    }
+}
+

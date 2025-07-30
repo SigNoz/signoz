@@ -143,5 +143,5 @@ export interface ContextLinkProps {
 	id: string;
 	url: string;
 	label: string;
-	openInNewTab: boolean;
+	// openInNewTab: boolean;
 }

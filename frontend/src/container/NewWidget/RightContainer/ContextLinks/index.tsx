@@ -25,21 +25,14 @@ import { ContextLinkProps } from 'types/api/dashboard/getAll';
 import UpdateContextLinks from './UpdateContextLinks';
 import useContextLinkModal from './useContextLinkModal';
 
-interface ContextLink {
-	id: string;
-	label: string;
-	url: string;
-	openInNewTab: boolean;
-}
-
 function SortableContextLink({
 	contextLink,
 	onDelete,
 	onEdit,
 }: {
-	contextLink: ContextLink;
-	onDelete: (contextLink: ContextLink) => void;
-	onEdit: (contextLink: ContextLink) => void;
+	contextLink: ContextLinkProps;
+	onDelete: (contextLink: ContextLinkProps) => void;
+	onEdit: (contextLink: ContextLinkProps) => void;
 }): JSX.Element {
 	const {
 		attributes,
@@ -123,7 +116,7 @@ function ContextLinks({
 		}
 	};
 
-	const handleDeleteContextLink = (contextLink: ContextLink): void => {
+	const handleDeleteContextLink = (contextLink: ContextLinkProps): void => {
 		setContextLinks((prev) => prev.filter((link) => link.id !== contextLink.id));
 	};
 
@@ -173,6 +166,7 @@ function ContextLinks({
 				onOk={handleSaveContextLink}
 				onCancel={handleCancelModal}
 				okText="Save"
+				destroyOnClose
 				cancelText="Cancel"
 				width={600}
 			>
