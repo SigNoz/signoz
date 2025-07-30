@@ -27,7 +27,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax, { isValidTimeFormat } from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
-import { isObject } from 'lodash-es';
+import { cloneDeep, isObject } from 'lodash-es';
 import { Check, Copy, Info, Send, Undo } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import { useCallback, useEffect, useState } from 'react';
@@ -45,6 +45,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { normalizeTimeToMs } from 'utils/timeUtils';
+import { v4 as uuid } from 'uuid';
 
 import AutoRefresh from '../AutoRefreshV2';
 import { DateTimeRangeType } from '../CustomDateTimeModal';
@@ -185,7 +186,12 @@ function DateTimeSelection({
 		false,
 	);
 
-	const { stagedQuery, initQueryBuilderData, panelType } = useQueryBuilder();
+	const {
+		stagedQuery,
+		currentQuery,
+		initQueryBuilderData,
+		panelType,
+	} = useQueryBuilder();
 
 	const handleGoLive = useCallback(() => {
 		if (!stagedQuery) return;
@@ -380,26 +386,25 @@ function DateTimeSelection({
 			// Remove Hidden Filters from URL query parameters on time change
 			urlQuery.delete(QueryParams.activeLogId);
 
+			const updatedCompositeQuery = cloneDeep(currentQuery);
+			updatedCompositeQuery.id = uuid();
+			urlQuery.set(
+				QueryParams.compositeQuery,
+				JSON.stringify(updatedCompositeQuery),
+			);
+
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 			safeNavigate(generatedUrl);
 
 			// For logs explorer - time range handling is managed in useCopyLogLink.ts:52
-
-			if (!stagedQuery) {
-				return;
-			}
-			// the second boolean param directs the qb about the time change so to merge the query and retain the current state
-			// we removed update step interval to stop auto updating the value on time change
-			initQueryBuilderData(stagedQuery, true);
 		},
 		[
-			initQueryBuilderData,
 			isModalTimeSelection,
 			location.pathname,
 			onTimeChange,
 			refreshButtonHidden,
 			safeNavigate,
-			stagedQuery,
+			currentQuery,
 			updateLocalStorageForRoutes,
 			updateTimeInterval,
 			urlQuery,
