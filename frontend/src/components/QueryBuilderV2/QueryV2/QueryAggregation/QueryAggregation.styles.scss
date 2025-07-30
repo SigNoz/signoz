@@ -305,7 +305,7 @@
 							}
 
 							.chip-decorator {
-								background: var(--bg-robin-500) !important;
+								background: var(--bg-vanilla-300) !important;
 								color: var(--bg-ink-400) !important;
 							}
 						}
@@ -322,6 +322,13 @@
 					background: var(--bg-vanilla-100) !important;
 				}
 			}
+		}
+	}
+	.query-aggregation-error-popover {
+		.ant-popover-inner {
+			background-color: var(--bg-vanilla-100);
+			border: none;
+			box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
 		}
 	}
 }

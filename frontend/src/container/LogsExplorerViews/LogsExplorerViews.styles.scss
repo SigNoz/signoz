@@ -100,7 +100,6 @@
 
 			border-top: 1px solid var(--Slate-500, #161922);
 			border-bottom: 1px solid var(--Slate-500, #161922);
-			box-shadow: 0px 8px 6px 0px #0b0c0e;
 
 			.tab-options {
 				display: flex;
@@ -260,10 +259,7 @@
 		}
 
 		.logs-actions-container {
-			.tab-options {
-				border-top: 1px solid var(--text-vanilla-300);
-				border-bottom: 1px solid var(--text-vanilla-300);
-			}
+			border-color: var(--bg-vanilla-300);
 
 			.query-stats {
 				.rows {
