@@ -47,8 +47,9 @@ export function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
 		case PANEL_TYPES.TABLE:
 		case PANEL_TYPES.PIE:
 		case PANEL_TYPES.VALUE:
-		case PANEL_TYPES.TRACE:
 			return 'scalar';
+		case PANEL_TYPES.TRACE:
+			return 'trace';
 		case PANEL_TYPES.LIST:
 			return 'raw';
 		case PANEL_TYPES.HISTOGRAM:
@@ -102,7 +103,10 @@ function createBaseSpec(
 			panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.LIST
 				? queryData.limit || queryData.pageSize || undefined
 				: queryData.limit || undefined,
-		offset: requestType === 'raw' ? queryData.offset : undefined,
+		offset:
+			requestType === 'raw' || requestType === 'trace'
+				? queryData.offset
+				: undefined,
 		order:
 			queryData.orderBy?.length > 0
 				? queryData.orderBy.map(

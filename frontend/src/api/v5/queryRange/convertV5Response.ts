@@ -309,6 +309,13 @@ function convertV5DataByType(
 				result: rawData.map((raw) => convertRawData(raw, legendMap)),
 			};
 		}
+		case 'trace': {
+			const traceData = v5Data.data.results as RawData[];
+			return {
+				resultType: 'trace',
+				result: traceData.map((trace) => convertRawData(trace, legendMap)),
+			};
+		}
 		case 'distribution': {
 			const distributionData = v5Data.data.results as DistributionData[];
 			return {

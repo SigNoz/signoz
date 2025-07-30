@@ -5,6 +5,7 @@ export type Step = string | number; // Duration string (e.g., "30s") or seconds 
 export type RequestType =
 	| 'scalar'
 	| 'time_series'
+	| 'trace'
 	| 'raw'
 	| 'distribution'
 	| '';
