@@ -509,7 +509,7 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 	})
 
 	if !ok {
-		return nil, fmt.Errorf("upexpected result from v5 querier")
+		return nil, fmt.Errorf("unexpected result from v5 querier")
 	}
 
 	for _, item := range data.Results {
