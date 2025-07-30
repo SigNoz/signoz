@@ -151,6 +151,23 @@ function getBands(series): any[] {
 	return bands;
 }
 
+function getMinMaxValues(series: QueryData[]): [number, number] {
+	let min = Number.MAX_VALUE;
+	let max = Number.MIN_VALUE;
+
+	series.forEach((s) => {
+		s.values?.forEach(([, val]) => {
+			const num = Number(val);
+			if (Number.isFinite(num) && num > 0) {
+				min = Math.min(min, num);
+				max = Math.max(max, num);
+			}
+		});
+	});
+
+	return [min, max];
+}
+
 export const getUPlotChartOptions = ({
 	id,
 	dimensions,
@@ -278,16 +295,32 @@ export const getUPlotChartOptions = ({
 				...timeScaleProps,
 			},
 			y: {
-				...getYAxisScale({
-					thresholds,
-					series: stackBarChart
-						? getStackedSeriesYAxis(apiResponse?.data?.newResult?.data?.result || [])
-						: apiResponse?.data?.newResult?.data?.result || [],
-					yAxisUnit,
-					softMax,
-					softMin,
-				}),
-				distr: isLogScale ? 3 : 1,
+				...(((): { auto?: boolean; range?: uPlot.Scale.Range; distr?: number } => {
+					const yAxisConfig = getYAxisScale({
+						thresholds,
+						series: stackBarChart
+							? getStackedSeriesYAxis(apiResponse?.data?.newResult?.data?.result || [])
+							: apiResponse?.data?.newResult?.data?.result || [],
+						yAxisUnit,
+						softMax,
+						softMin,
+					});
+
+					if (isLogScale) {
+						const [minVal, maxVal] = getMinMaxValues(apiResponse?.data?.result || []);
+						// Round down min to nearest power of 10 below the data
+						const minPow = Math.floor(Math.log10(minVal));
+						// Round up max to nearest power of 10 above the data
+						const maxPow = Math.ceil(Math.log10(maxVal));
+
+						return {
+							range: [10 ** minPow, 10 ** maxPow],
+							distr: 3, // log distribution
+						};
+					}
+
+					return yAxisConfig;
+				})() as { auto?: boolean; range?: uPlot.Scale.Range; distr?: number }),
 			},
 		},
 		plugins: [
