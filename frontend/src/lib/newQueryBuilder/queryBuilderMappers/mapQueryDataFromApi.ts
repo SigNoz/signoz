@@ -1,6 +1,7 @@
 import { initialQueryState } from 'constants/queryBuilder';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import {
+	IBuilderFormula,
 	IBuilderQuery,
 	IClickHouseQuery,
 	IPromQLQuery,
@@ -10,24 +11,37 @@ import {
 	BuilderQuery,
 	ClickHouseQuery,
 	PromQuery,
+	QueryBuilderFormula,
 } from 'types/api/v5/queryRange';
 import { v4 as uuid } from 'uuid';
 
 import { transformQueryBuilderDataModel } from '../transformQueryBuilderDataModel';
+import {
+	convertBuilderQueryToIBuilderQuery,
+	convertQueryBuilderFormulaToIBuilderFormula,
+} from './convertNewToOldQueryBuilder';
 
 const mapQueryFromV5 = (
 	compositeQuery: ICompositeMetricQuery,
 	query?: Query,
 ): Query => {
-	const builderQueries: Record<string, IBuilderQuery> = {};
+	const builderQueries: Record<string, IBuilderQuery | IBuilderFormula> = {};
 	const promQueries: IPromQLQuery[] = [];
 	const clickhouseQueries: IClickHouseQuery[] = [];
 
 	compositeQuery.queries?.forEach((q) => {
 		const spec = q.spec as BuilderQuery | PromQuery | ClickHouseQuery;
-		if (q.type === 'builder_query' || q.type === 'builder_formula') {
+		if (q.type === 'builder_query') {
 			if (spec.name) {
-				builderQueries[spec.name] = q.spec as any;
+				builderQueries[spec.name] = convertBuilderQueryToIBuilderQuery(
+					spec as BuilderQuery,
+				);
+			}
+		} else if (q.type === 'builder_formula') {
+			if (spec.name) {
+				builderQueries[spec.name] = convertQueryBuilderFormulaToIBuilderFormula(
+					(spec as unknown) as QueryBuilderFormula,
+				);
 			}
 		} else if (q.type === 'promql') {
 			const promSpec = spec as PromQuery;

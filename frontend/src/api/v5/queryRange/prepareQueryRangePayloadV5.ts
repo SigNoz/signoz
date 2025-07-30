@@ -121,10 +121,14 @@ function createBaseSpec(
 			: queryData.functions.map(
 					(func: QueryFunctionProps): QueryFunction => ({
 						name: func.name as FunctionName,
-						args: func.args.map((arg) => ({
-							// name: arg.name,
-							value: arg,
-						})),
+						args: isEmpty(func.namedArgs)
+							? func.args.map((arg) => ({
+									value: arg,
+							  }))
+							: Object.entries(func.namedArgs).map(([name, value]) => ({
+									name,
+									value,
+							  })),
 					}),
 			  ),
 		selectFields: isEmpty(nonEmptySelectColumns)

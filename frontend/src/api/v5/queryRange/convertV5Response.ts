@@ -60,26 +60,34 @@ function convertTimeSeriesData(
 ): QueryDataV3 {
 	// Convert V5 time series format to legacy QueryDataV3 format
 
-	return {
-		queryName: timeSeriesData.queryName,
-		legend: legendMap[timeSeriesData.queryName] || timeSeriesData.queryName,
-		series: timeSeriesData?.aggregations?.flatMap((aggregation) => {
-			const { index, alias, series } = aggregation;
+	// Helper function to process series data
+	const processSeriesData = (
+		aggregations: any[],
+		seriesKey:
+			| 'series'
+			| 'predictedSeries'
+			| 'upperBoundSeries'
+			| 'lowerBoundSeries'
+			| 'anomalyScores',
+	): any[] =>
+		aggregations?.flatMap((aggregation) => {
+			const { index, alias } = aggregation;
+			const seriesData = aggregation[seriesKey];
 
-			if (!series || !series.length) {
+			if (!seriesData || !seriesData.length) {
 				return [];
 			}
 
-			return series.map((series) => ({
+			return seriesData.map((series: any) => ({
 				labels: series.labels
 					? Object.fromEntries(
-							series.labels.map((label) => [label.key.name, label.value]),
+							series.labels.map((label: any) => [label.key.name, label.value]),
 					  )
 					: {},
 				labelsArray: series.labels
-					? series.labels.map((label) => ({ [label.key.name]: label.value }))
+					? series.labels.map((label: any) => ({ [label.key.name]: label.value }))
 					: [],
-				values: series.values.map((value) => ({
+				values: series.values.map((value: any) => ({
 					timestamp: value.timestamp,
 					value: String(value.value),
 				})),
@@ -89,7 +97,28 @@ function convertTimeSeriesData(
 					queryName: timeSeriesData.queryName,
 				},
 			}));
-		}),
+		});
+
+	return {
+		queryName: timeSeriesData.queryName,
+		legend: legendMap[timeSeriesData.queryName] || timeSeriesData.queryName,
+		series: processSeriesData(timeSeriesData?.aggregations, 'series'),
+		predictedSeries: processSeriesData(
+			timeSeriesData?.aggregations,
+			'predictedSeries',
+		),
+		upperBoundSeries: processSeriesData(
+			timeSeriesData?.aggregations,
+			'upperBoundSeries',
+		),
+		lowerBoundSeries: processSeriesData(
+			timeSeriesData?.aggregations,
+			'lowerBoundSeries',
+		),
+		anomalyScores: processSeriesData(
+			timeSeriesData?.aggregations,
+			'anomalyScores',
+		),
 		list: null,
 	};
 }

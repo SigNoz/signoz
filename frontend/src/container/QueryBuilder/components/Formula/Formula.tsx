@@ -243,7 +243,7 @@ export function Formula({
 								<InputWithLabel
 									label="Limit"
 									onChange={(value): void => handleChangeLimit(Number(value))}
-									initialValue={query?.limit ?? undefined}
+									initialValue={formula?.limit ?? undefined}
 									placeholder="Enter limit"
 								/>
 							</div>

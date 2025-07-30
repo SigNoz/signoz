@@ -346,6 +346,10 @@ export interface AggregationBucket {
 	alias: string;
 	meta: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 	series: TimeSeries[];
+	predictedSeries?: TimeSeries[];
+	upperBoundSeries?: TimeSeries[];
+	lowerBoundSeries?: TimeSeries[];
+	anomalyScores?: TimeSeries[];
 }
 
 export interface TimeSeriesData {

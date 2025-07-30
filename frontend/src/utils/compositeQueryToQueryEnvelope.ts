@@ -35,7 +35,13 @@ function convertFormulasToV5(
 export function compositeQueryToQueryEnvelope(
 	compositeQuery: ICompositeMetricQuery,
 ): ICompositeMetricQuery {
-	const { builderQueries, promQueries, chQueries, panelType } = compositeQuery;
+	const {
+		builderQueries,
+		promQueries,
+		chQueries,
+		panelType,
+		queryType,
+	} = compositeQuery;
 
 	const regularQueries: BuilderQueryDataResourse = {};
 	const formulaQueries: BuilderQueryDataResourse = {};
@@ -60,12 +66,28 @@ export function compositeQueryToQueryEnvelope(
 	const promQueriesV5 = convertPromQueriesToV5(promQueries || {});
 	const chQueriesV5 = convertClickHouseQueriesToV5(chQueries || {});
 
-	const queries: QueryEnvelope[] = [
-		...builderQueriesV5,
-		...formulaQueriesV5,
-		...promQueriesV5,
-		...chQueriesV5,
-	];
+	// Conditionally include queries based on queryType
+	let queries: QueryEnvelope[] = [];
+
+	switch (queryType) {
+		case 'builder':
+			queries = [...builderQueriesV5, ...formulaQueriesV5];
+			break;
+		case 'promql':
+			queries = [...promQueriesV5];
+			break;
+		case 'clickhouse_sql':
+			queries = [...chQueriesV5];
+			break;
+		default:
+			// Fallback to include all queries if queryType is not recognized
+			queries = [
+				...builderQueriesV5,
+				...formulaQueriesV5,
+				...promQueriesV5,
+				...chQueriesV5,
+			];
+	}
 
 	return {
 		...compositeQuery,

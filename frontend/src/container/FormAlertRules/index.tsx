@@ -273,6 +273,9 @@ function FormAlertRules({
 			ruleType,
 			condition: {
 				...initialValue.condition,
+				compositeQuery: compositeQueryToQueryEnvelope(
+					initialValue.condition.compositeQuery,
+				),
 				matchType: initialValue.condition.matchType ?? matchType ?? '',
 				op: initialValue.condition.op ?? op ?? '',
 				target: initialValue.condition.target ?? target ?? 0,
