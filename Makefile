@@ -92,7 +92,7 @@ go-run-community: ## Runs the community go backend server
 	SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
 	go run -race \
-		$(GO_BUILD_CONTEXT_COMMUNITY)/*.go \
+		$(GO_BUILD_CONTEXT_COMMUNITY)/*.go server \
 		--config ./conf/prometheus.yml \
 		--cluster cluster
 
