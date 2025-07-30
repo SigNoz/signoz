@@ -10,7 +10,8 @@ import {
 	startCompletion,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
-import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
+import { copilot } from '@uiw/codemirror-theme-copilot';
+import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorView, keymap } from '@uiw/react-codemirror';
 import { Button } from 'antd';
 import { Having } from 'api/v5/v5';
@@ -326,7 +327,7 @@ function HavingFilter({
 				<CodeMirror
 					value={input}
 					onChange={handleChange}
-					theme={isDarkMode ? githubDark : githubLight}
+					theme={isDarkMode ? copilot : githubLight}
 					className="having-filter-select-editor"
 					width="100%"
 					extensions={[
