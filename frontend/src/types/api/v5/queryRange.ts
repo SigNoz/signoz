@@ -246,6 +246,7 @@ export interface QueryBuilderFormula {
 	order?: OrderBy[];
 	limit?: number;
 	having?: Having;
+	legend?: string;
 }
 
 export interface QueryBuilderJoin {
@@ -272,12 +273,14 @@ export interface PromQuery {
 	disabled?: boolean;
 	step?: Step;
 	stats?: boolean;
+	legend?: string;
 }
 
 export interface ClickHouseQuery {
 	name: string;
 	query: string;
 	disabled?: boolean;
+	legend?: string;
 }
 
 // ===================== Query Envelope =====================

@@ -114,7 +114,7 @@ function createBaseSpec(
 						}),
 				  )
 				: undefined,
-		// legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
+		legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
 		having: isEmpty(queryData.having) ? undefined : (queryData?.having as Having),
 		functions: isEmpty(queryData.functions)
 			? undefined
@@ -281,6 +281,7 @@ export function convertPromQueriesToV5(
 				query: queryData.query,
 				disabled: queryData.disabled || false,
 				step: queryData?.stepInterval,
+				legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
 				stats: false, // PromQL specific field
 			},
 		}),
@@ -300,6 +301,7 @@ export function convertClickHouseQueriesToV5(
 				name: queryName,
 				query: queryData.query,
 				disabled: queryData.disabled || false,
+				legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
 				// ClickHouse doesn't have step or stats like PromQL
 			},
 		}),
@@ -372,6 +374,7 @@ export const prepareQueryRangePayloadV5 = ({
 						expression: formulaData.expression || '',
 						disabled: formulaData.disabled,
 						limit: formulaData.limit ?? undefined,
+						legend: isEmpty(formulaData.legend) ? undefined : formulaData.legend,
 						order: formulaData.orderBy?.map(
 							// eslint-disable-next-line sonarjs/no-identical-functions
 							(order: any): OrderBy => ({

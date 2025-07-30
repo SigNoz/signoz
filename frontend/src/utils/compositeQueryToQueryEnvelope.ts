@@ -19,6 +19,7 @@ function convertFormulasToV5(
 				expression: formulaData.expression || '',
 				disabled: formulaData.disabled,
 				limit: formulaData.limit ?? undefined,
+				legend: formulaData.legend,
 				order: formulaData.orderBy?.map(
 					(order: any): OrderBy => ({
 						key: {

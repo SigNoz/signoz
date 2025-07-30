@@ -48,7 +48,7 @@ const mapQueryFromV5 = (
 			promQueries.push({
 				name: promSpec.name,
 				query: promSpec.query || '',
-				legend: '',
+				legend: promSpec.legend || '',
 				disabled: promSpec.disabled || false,
 			});
 		} else if (q.type === 'clickhouse_sql') {
@@ -56,7 +56,7 @@ const mapQueryFromV5 = (
 			clickhouseQueries.push({
 				name: chSpec.name,
 				query: chSpec.query,
-				legend: '',
+				legend: chSpec.legend || '',
 				disabled: chSpec.disabled || false,
 			});
 		}

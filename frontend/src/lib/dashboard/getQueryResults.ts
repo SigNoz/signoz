@@ -155,6 +155,28 @@ export async function GetMetricQueryRange(
 		const v5Result = prepareQueryRangePayloadV5(props);
 		legendMap = v5Result.legendMap;
 
+		// atleast one query should be there to make call to v5 api
+		if (v5Result.queryPayload.compositeQuery.queries.length === 0) {
+			return {
+				statusCode: 200,
+				error: null,
+				message: 'At least one query is required',
+				payload: {
+					data: {
+						result: [],
+						resultType: '',
+						newResult: {
+							data: {
+								result: [],
+								resultType: '',
+							},
+						},
+					},
+				},
+				params: props,
+			};
+		}
+
 		const v5Response = await getQueryRangeV5(
 			v5Result.queryPayload,
 			version,
