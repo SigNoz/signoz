@@ -169,6 +169,9 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 	aggregateAttribute: initialAutocompleteData,
 	timeAggregation: MetricAggregateOperator.RATE,
 	spaceAggregation: MetricAggregateOperator.SUM,
+	filter: { expression: '' },
+	aggregations: [{ expression: 'count() ' }],
+	havingExpression: { expression: '' },
 	functions: [],
 	filters: { items: [], op: 'AND' },
 	expression: createNewBuilderItemName({

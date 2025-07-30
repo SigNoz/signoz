@@ -59,6 +59,7 @@ export interface FullViewProps {
 	isDependedDataLoaded?: boolean;
 	onToggleModelHandler?: GraphManagerProps['onToggleModelHandler'];
 	setCurrentGraphRef: Dispatch<SetStateAction<RefObject<HTMLDivElement> | null>>;
+	enableDrillDown?: boolean;
 }
 
 export interface GraphManagerProps extends UplotProps {

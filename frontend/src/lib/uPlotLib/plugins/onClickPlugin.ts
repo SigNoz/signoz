@@ -1,3 +1,5 @@
+/* eslint-disable sonarjs/cognitive-complexity */
+import { getSeriesIndexFromPixel } from 'lib/uPlotLib/utils/getSeriesIndexFromPixel';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 export interface OnClickPluginOpts {
@@ -13,6 +15,12 @@ export interface OnClickPluginOpts {
 			queryName: string;
 			inFocusOrNot: boolean;
 		},
+		absoluteMouseX?: number,
+		absoluteMouseY?: number,
+		axesData?: {
+			xAxis: any;
+			yAxis: any;
+		},
 	) => void;
 	apiResponse?: MetricRangePayloadProps;
 }
@@ -24,8 +32,13 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 		init: (u: uPlot) => {
 			// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 			handleClick = function (event: MouseEvent) {
+				// relative coordinates
 				const mouseX = event.offsetX + 40;
 				const mouseY = event.offsetY + 40;
+
+				// absolute coordinates
+				const absoluteMouseX = event.clientX;
+				const absoluteMouseY = event.clientY;
 
 				// Convert pixel positions to data values
 				// do not use mouseX and mouseY here as it offsets the timestamp as well
@@ -54,7 +67,36 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 					});
 				}
 
-				opts.onClick(xValue, yValue, mouseX, mouseY, metric, outputMetric);
+				if (!outputMetric.queryName) {
+					// // Get the series index based on pixel coordinates
+					const seriesIndex = getSeriesIndexFromPixel(event, u);
+
+					// If we found a valid series, get its data
+					if (seriesIndex > 0 && seriesIndex <= apiResult.length) {
+						const { metric: focusedMetric, queryName } =
+							apiResult[seriesIndex - 1] || [];
+						metric = focusedMetric;
+						outputMetric.queryName = queryName;
+						outputMetric.inFocusOrNot = true;
+					}
+				}
+
+				const axesData = {
+					xAxis: u.axes[0],
+					yAxis: u.axes[1],
+				};
+
+				opts.onClick(
+					xValue,
+					yValue,
+					mouseX,
+					mouseY,
+					metric,
+					outputMetric,
+					absoluteMouseX,
+					absoluteMouseY,
+					axesData,
+				);
 			};
 			u.over.addEventListener('click', handleClick);
 		},

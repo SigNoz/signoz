@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
 interface NavigateOptions {
 	replace?: boolean;
 	state?: any;
+	newTab?: boolean;
 }
 
 interface SafeNavigateParams {
@@ -111,6 +112,16 @@ export const useSafeNavigate = (
 					`${to.pathname || location.pathname}${to.search || ''}`,
 					window.location.origin,
 				);
+			}
+
+			// If newTab is true, open in new tab and return early
+			if (options?.newTab) {
+				const targetPath =
+					typeof to === 'string'
+						? to
+						: `${to.pathname || location.pathname}${to.search || ''}`;
+				window.open(targetPath, '_blank');
+				return;
 			}
 
 			const urlsAreSame = areUrlsEffectivelySame(currentUrl, targetUrl);

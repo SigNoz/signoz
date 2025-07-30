@@ -9,7 +9,7 @@ import { useEffect } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 function LiveLogs(): JSX.Element {
-	useShareBuilderUrl(liveLogsCompositeQuery);
+	useShareBuilderUrl({ defaultValue: liveLogsCompositeQuery });
 	const { handleSetConfig } = useQueryBuilder();
 
 	useEffect(() => {

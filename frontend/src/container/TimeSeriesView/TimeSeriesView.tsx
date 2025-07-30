@@ -33,8 +33,6 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
 
-import { Container } from './styles';
-
 function TimeSeriesView({
 	data,
 	isLoading,
@@ -162,7 +160,7 @@ function TimeSeriesView({
 	});
 
 	return (
-		<Container>
+		<div className="time-series-view">
 			{isError && <LogsError />}
 			<div
 				className="graph-container"
@@ -204,7 +202,7 @@ function TimeSeriesView({
 					!isEmpty(chartData?.[0]) &&
 					chartOptions && <Uplot data={chartData} options={chartOptions} />}
 			</div>
-		</Container>
+		</div>
 	);
 }
 
