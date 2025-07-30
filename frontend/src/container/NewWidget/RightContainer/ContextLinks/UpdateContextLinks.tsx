@@ -1,6 +1,14 @@
 import './UpdateContextLinks.styles.scss';
 
-import { Button, Col, Form, Input as AntInput, Input, Row } from 'antd';
+import {
+	Button,
+	Col,
+	Form,
+	Input as AntInput,
+	Input,
+	Row,
+	Typography,
+} from 'antd';
 import { CONTEXT_LINK_FIELDS } from 'container/NewWidget/RightContainer/ContextLinks/constants';
 import {
 	getInitialValues,
@@ -54,7 +62,9 @@ function UpdateContextLinks({
 			await form.validateFields();
 			const newContextLink = {
 				id: form.getFieldValue(CONTEXT_LINK_FIELDS.ID),
-				label: form.getFieldValue(CONTEXT_LINK_FIELDS.LABEL),
+				label:
+					form.getFieldValue(CONTEXT_LINK_FIELDS.LABEL) ||
+					form.getFieldValue(CONTEXT_LINK_FIELDS.URL),
 				url: form.getFieldValue(CONTEXT_LINK_FIELDS.URL),
 			};
 			// If validation passes, call onSave
@@ -114,17 +124,20 @@ function UpdateContextLinks({
 				// onFinish={() => {}}
 			>
 				{/* //label */}
+				<Typography.Text className="form-label">Label</Typography.Text>
 				<Form.Item
 					name={CONTEXT_LINK_FIELDS.LABEL}
-					label="Label"
 					rules={[{ required: false, message: 'Please input the label' }]}
 				>
 					<Input />
 				</Form.Item>
 				{/* //url */}
+				<Typography.Text className="form-label">
+					URL <span className="required-asterisk">*</span>
+				</Typography.Text>
 				<Form.Item
 					name={CONTEXT_LINK_FIELDS.URL}
-					label="URL"
+					// label="URL"
 					rules={[
 						{ required: true, message: 'Please input the URL' },
 						{

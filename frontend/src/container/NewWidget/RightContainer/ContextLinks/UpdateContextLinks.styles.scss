@@ -1,4 +1,9 @@
 .context-link-form-container {
+    margin-top: 16px;
+
+    .form-label {
+        margin-left: 4px;
+    }
 
     .add-url-parameter-btn {
         display: flex;
