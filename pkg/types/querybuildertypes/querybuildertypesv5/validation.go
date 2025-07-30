@@ -150,11 +150,12 @@ func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
 
 func (q *QueryBuilderQuery[T]) validateSignal() error {
 	// Signal validation is handled during unmarshaling in req.go
-	// Valid signals are: metrics, traces, logs
+	// Valid signals are: metrics, traces, logs,meter
 	switch q.Signal {
 	case telemetrytypes.SignalMetrics,
 		telemetrytypes.SignalTraces,
 		telemetrytypes.SignalLogs,
+		telemetrytypes.SignalMeter,
 		telemetrytypes.SignalUnspecified: // Empty is allowed for backward compatibility
 		return nil
 	default:

@@ -62,6 +62,12 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 				return wrapUnmarshalError(err, "invalid metric builder query spec: %v", err)
 			}
 			q.Spec = spec
+		case telemetrytypes.SignalMeter:
+			var spec QueryBuilderQuery[MetricAggregation]
+			if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "query spec"); err != nil {
+				return wrapUnmarshalError(err, "invalid meter builder query spec: %v", err)
+			}
+			q.Spec = spec
 		default:
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput,

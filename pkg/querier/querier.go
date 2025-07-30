@@ -31,6 +31,7 @@ type querier struct {
 	traceStmtBuilder  qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	logStmtBuilder    qbtypes.StatementBuilder[qbtypes.LogAggregation]
 	metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation]
+	meterStmtBuilder  qbtypes.StatementBuilder[qbtypes.MetricAggregation]
 	bucketCache       BucketCache
 }
 
@@ -44,6 +45,7 @@ func New(
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	logStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
+	meterStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
 	bucketCache BucketCache,
 ) *querier {
 	querierSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier")
@@ -55,6 +57,7 @@ func New(
 		traceStmtBuilder:  traceStmtBuilder,
 		logStmtBuilder:    logStmtBuilder,
 		metricStmtBuilder: metricStmtBuilder,
+		meterStmtBuilder:  meterStmtBuilder,
 		bucketCache:       bucketCache,
 	}
 }

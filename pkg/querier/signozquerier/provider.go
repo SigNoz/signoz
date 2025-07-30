@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
+	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
@@ -122,6 +123,16 @@ func newProvider(
 		metricConditionBuilder,
 	)
 
+	// Create meter statement builder
+	meterFieldMapper := telemetrymetrics.NewFieldMapper()
+	meterConditionBuilder := telemetrymetrics.NewConditionBuilder(metricFieldMapper)
+	meterStmtBuilder := telemetrymeter.NewMeterQueryStatementBuilder(
+		settings,
+		telemetryMetadataStore,
+		meterFieldMapper,
+		meterConditionBuilder,
+	)
+
 	// Create bucket cache
 	bucketCache := querier.NewBucketCache(
 		settings,
@@ -139,6 +150,7 @@ func newProvider(
 		traceStmtBuilder,
 		logStmtBuilder,
 		metricStmtBuilder,
+		meterStmtBuilder,
 		bucketCache,
 	), nil
 }
