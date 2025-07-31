@@ -45,6 +45,7 @@ import {
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { compositeQueryToQueryEnvelope } from 'utils/compositeQueryToQueryEnvelope';
 
 import BasicInfo from './BasicInfo';
 import ChartPreview from './ChartPreview';
@@ -166,7 +167,7 @@ function FormAlertRules({
 
 	const sq = useMemo(() => mapQueryDataFromApi(initQuery), [initQuery]);
 
-	useShareBuilderUrl(sq);
+	useShareBuilderUrl({ defaultValue: sq });
 
 	const handleDetectionMethodChange = (value: string): void => {
 		setAlertDef((def) => ({
@@ -272,6 +273,9 @@ function FormAlertRules({
 			ruleType,
 			condition: {
 				...initialValue.condition,
+				compositeQuery: compositeQueryToQueryEnvelope(
+					initialValue.condition.compositeQuery,
+				),
 				matchType: initialValue.condition.matchType ?? matchType ?? '',
 				op: initialValue.condition.op ?? op ?? '',
 				target: initialValue.condition.target ?? target ?? 0,
@@ -447,7 +451,7 @@ function FormAlertRules({
 					: alertDef.ruleType,
 			condition: {
 				...alertDef.condition,
-				compositeQuery: {
+				compositeQuery: compositeQueryToQueryEnvelope({
 					builderQueries: {
 						...mapQueryDataToApi(currentQuery.builder.queryData, 'queryName').data,
 						...mapQueryDataToApi(currentQuery.builder.queryFormulas, 'queryName')
@@ -458,7 +462,7 @@ function FormAlertRules({
 					queryType: currentQuery.queryType,
 					panelType: panelType || initQuery.panelType,
 					unit: currentQuery.unit,
-				},
+				}),
 			},
 		};
 
@@ -848,7 +852,7 @@ function FormAlertRules({
 							queryCategory={currentQuery.queryType}
 							setQueryCategory={onQueryCategoryChange}
 							alertType={alertType || AlertTypes.METRICS_BASED_ALERT}
-							runQuery={(): void => handleRunQuery(true)}
+							runQuery={(): void => handleRunQuery(true, true)}
 							alertDef={alertDef}
 							panelType={panelType || PANEL_TYPES.TIME_SERIES}
 							key={currentQuery.queryType}

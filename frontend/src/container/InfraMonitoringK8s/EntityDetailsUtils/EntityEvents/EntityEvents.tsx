@@ -108,7 +108,7 @@ export default function Events({
 							...currentQuery.builder.queryData[0].aggregateAttribute,
 						},
 						filters: {
-							items: filters.items.filter(
+							items: filters?.items?.filter(
 								(item) =>
 									item.key?.key !== QUERY_KEYS.K8S_OBJECT_KIND &&
 									item.key?.key !== QUERY_KEYS.K8S_OBJECT_NAME,
@@ -251,7 +251,7 @@ export default function Events({
 				<div className="filter-section">
 					{query && (
 						<QueryBuilderSearch
-							query={query}
+							query={query as IBuilderQuery}
 							onChange={(value): void => handleChangeEventFilters(value, VIEWS.EVENTS)}
 							disableNavigationShortcuts
 						/>

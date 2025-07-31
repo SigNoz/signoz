@@ -47,7 +47,7 @@ function Create({
 					buttonText: ConfigureButtonText,
 					Icon: <GoogleSquareFilled style={{ fontSize: '37px' }} />,
 					title: 'Google Apps Authentication',
-					subTitle: 'Let members sign-in with a Google account',
+					subTitle: 'Let members sign-in with a Google workspace account',
 					onClickHandler: onGoogleAuthClickHandler,
 					isDisabled: false,
 				},
@@ -55,7 +55,18 @@ function Create({
 					buttonText: ConfigureButtonText,
 					Icon: <KeyOutlined style={{ fontSize: '37px' }} />,
 					onClickHandler: onEditSAMLHandler,
-					subTitle: 'Azure, Active Directory, Okta or your custom SAML 2.0 solution',
+					subTitle: (
+						<>
+							Azure, Active Directory, Okta or your custom SAML 2.0 solution{' '}
+							<a
+								href="https://github.com/SigNoz/signoz/issues/8647"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								(Unsupported SAMLs)
+							</a>
+						</>
+					),
 					title: 'SAML Authentication',
 					isDisabled: false,
 				},

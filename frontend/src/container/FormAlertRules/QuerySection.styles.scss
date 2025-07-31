@@ -1,4 +1,6 @@
 .alert-tabs {
+	padding: 0px 8px;
+
 	.ant-tabs-tab {
 		border: none !important;
 		margin-left: 0px !important;
@@ -45,6 +47,30 @@
 
 	.ant-tabs-tab-btn {
 		padding: 0 !important;
+	}
+}
+
+.alert-query-section-container {
+	.ant-card-body {
+		padding: 0px;
+
+		.alert-tabs {
+			padding: 0px;
+
+			.ant-tabs {
+				.ant-tabs-nav {
+					padding: 8px 0;
+
+					.ant-tabs-nav-wrap {
+						padding: 0px;
+					}
+				}
+
+				.ant-tabs-extra-content {
+					padding: 0px;
+				}
+			}
+		}
 	}
 }
 
