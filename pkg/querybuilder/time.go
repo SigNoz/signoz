@@ -61,6 +61,23 @@ func MinAllowedStepInterval(start, end uint64) uint64 {
 	return step - step%5
 }
 
+func RecommendedStepIntervalForMeter(start, end uint64) uint64 {
+	start = ToNanoSecs(start)
+	end = ToNanoSecs(end)
+
+	step := (end - start) / RecommendedNumberOfPoints / 1e9
+
+	// for meter queries the minimum step interval allowed is 1 day as this is our granularity
+	if step < 86400 {
+		return 86400
+	}
+
+	// return the nearest lower multiple of 86400 ( 1 day )
+	recommended := step - step%86400
+
+	return recommended
+}
+
 func RecommendedStepIntervalForMetric(start, end uint64) uint64 {
 	start = ToNanoSecs(start)
 	end = ToNanoSecs(end)

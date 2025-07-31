@@ -126,13 +126,11 @@ func newProvider(
 	)
 
 	// Create meter statement builder
-	meterFieldMapper := telemetrymetrics.NewFieldMapper()
-	meterConditionBuilder := telemetrymetrics.NewConditionBuilder(metricFieldMapper)
 	meterStmtBuilder := telemetrymeter.NewMeterQueryStatementBuilder(
 		settings,
 		telemetryMetadataStore,
-		meterFieldMapper,
-		meterConditionBuilder,
+		metricFieldMapper,
+		metricConditionBuilder,
 	)
 
 	// Create bucket cache

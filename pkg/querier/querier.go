@@ -173,7 +173,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				event.GroupByApplied = len(spec.GroupBy) > 0
 
 				if spec.Signal == telemetrytypes.SignalMeter {
-					spec.StepInterval = qbtypes.Step{Duration: time.Hour * 24}
+					spec.StepInterval = qbtypes.Step{Duration: time.Second * time.Duration(querybuilder.RecommendedStepIntervalForMeter(req.Start, req.End))}
 				} else {
 					if spec.StepInterval.Seconds() == 0 {
 						spec.StepInterval = qbtypes.Step{
