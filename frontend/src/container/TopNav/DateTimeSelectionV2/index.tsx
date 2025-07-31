@@ -363,10 +363,7 @@ function DateTimeSelection({
 					...item,
 					filter: {
 						...item.filter,
-						expression:
-							item.filter?.expression.trim() === ''
-								? ''
-								: item.filter?.expression ?? '',
+						expression: item.filter?.expression?.trim() || '',
 					},
 					filters: {
 						items: [],
