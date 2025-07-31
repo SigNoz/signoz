@@ -20,7 +20,7 @@ import { Button, Modal, Typography } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { GripVertical, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
-import { ContextLinkProps } from 'types/api/dashboard/getAll';
+import { ContextLinkProps, ContextLinksData } from 'types/api/dashboard/getAll';
 
 import UpdateContextLinks from './UpdateContextLinks';
 import useContextLinkModal from './useContextLinkModal';
@@ -88,8 +88,8 @@ function ContextLinks({
 	contextLinks,
 	setContextLinks,
 }: {
-	contextLinks: ContextLinkProps[];
-	setContextLinks: Dispatch<SetStateAction<ContextLinkProps[]>>;
+	contextLinks: ContextLinksData;
+	setContextLinks: Dispatch<SetStateAction<ContextLinksData>>;
 }): JSX.Element {
 	// Use the custom hook for modal functionality
 	const {
@@ -107,17 +107,24 @@ function ContextLinks({
 		const { active, over } = event;
 
 		if (over && active.id !== over.id) {
-			setContextLinks((items) => {
+			setContextLinks((prev) => {
+				const items = [...prev.linksData];
 				const oldIndex = items.findIndex((item) => item.id === active.id);
 				const newIndex = items.findIndex((item) => item.id === over.id);
 
-				return arrayMove(items, oldIndex, newIndex);
+				return {
+					...prev,
+					linksData: arrayMove(items, oldIndex, newIndex),
+				};
 			});
 		}
 	};
 
 	const handleDeleteContextLink = (contextLink: ContextLinkProps): void => {
-		setContextLinks((prev) => prev.filter((link) => link.id !== contextLink.id));
+		setContextLinks((prev) => ({
+			...prev,
+			linksData: prev.linksData.filter((link) => link.id !== contextLink.id),
+		}));
 	};
 
 	return (
@@ -134,10 +141,10 @@ function ContextLinks({
 						onDragEnd={handleDragEnd}
 					>
 						<SortableContext
-							items={contextLinks.map((link) => link.id)}
+							items={contextLinks.linksData.map((link) => link.id)}
 							strategy={verticalListSortingStrategy}
 						>
-							{contextLinks.map((contextLink) => (
+							{contextLinks.linksData.map((contextLink) => (
 								<SortableContextLink
 									key={contextLink.id}
 									contextLink={contextLink}

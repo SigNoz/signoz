@@ -34,7 +34,7 @@ import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import {
 	ColumnUnit,
-	ContextLinkProps,
+	ContextLinksData,
 	LegendPosition,
 	Widgets,
 } from 'types/api/dashboard/getAll';
@@ -569,8 +569,8 @@ interface RightContainerProps {
 		SuccessResponse<MetricRangePayloadProps, unknown>,
 		Error
 	>;
-	contextLinks: ContextLinkProps[];
-	setContextLinks: Dispatch<SetStateAction<ContextLinkProps[]>>;
+	contextLinks: ContextLinksData;
+	setContextLinks: Dispatch<SetStateAction<ContextLinksData>>;
 }
 
 RightContainer.defaultProps = {

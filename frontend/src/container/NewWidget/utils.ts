@@ -579,7 +579,7 @@ export const getDefaultWidgetData = (
 	selectedTracesFields: [
 		...listViewInitialTraceQuery.builder.queryData[0].selectColumns,
 	],
-	contextLinks: [],
+	contextLinks: { linksData: [] },
 });
 
 export const PANEL_TYPE_TO_QUERY_TYPES: Record<PANEL_TYPES, EQueryType[]> = {

@@ -120,7 +120,7 @@ export interface IBaseWidget {
 	columnWidths?: Record<string, number>;
 	legendPosition?: LegendPosition;
 	customLegendColors?: Record<string, string>;
-	contextLinks: ContextLinkProps[];
+	contextLinks: ContextLinksData;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;
@@ -144,4 +144,8 @@ export interface ContextLinkProps {
 	url: string;
 	label: string;
 	// openInNewTab: boolean;
+}
+
+export interface ContextLinksData {
+	linksData: ContextLinkProps[];
 }
