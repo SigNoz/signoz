@@ -618,7 +618,7 @@ func (t *telemetryMetaStore) getMeterKeys(ctx context.Context, fieldKeySelectors
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMeterKeys.Error())
 	}
 	defer rows.Close()
 
@@ -630,7 +630,7 @@ func (t *telemetryMetaStore) getMeterKeys(ctx context.Context, fieldKeySelectors
 		var priority uint8
 		err = rows.Scan(&name, &fieldContext, &fieldDataType, &priority)
 		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMeterKeys.Error())
 		}
 		keys = append(keys, &telemetrytypes.TelemetryFieldKey{
 			Name:          name,
@@ -641,7 +641,7 @@ func (t *telemetryMetaStore) getMeterKeys(ctx context.Context, fieldKeySelectors
 	}
 
 	if rows.Err() != nil {
-		return nil, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+		return nil, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMeterKeys.Error())
 	}
 
 	return keys, nil
@@ -1222,7 +1222,7 @@ func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, databa
 	sb := sqlbuilder.Select(
 		"metric_name",
 		"argMax(temporality, last_reported_unix_milli) as temporality",
-	).From(t.metricsDBName + "." + t.metricsFieldsTblName)
+	).From(database + "." + table)
 
 	// Filter by metric names (in the temporality column due to data mix-up)
 	sb.Where(sb.In("metric_name", metricNames))
