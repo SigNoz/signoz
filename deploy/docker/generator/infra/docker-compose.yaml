@@ -11,7 +11,7 @@ x-common: &common
   restart: unless-stopped
 services:
   otel-agent:
-    <<: *common
+    !!merge <<: *common
     image: otel/opentelemetry-collector-contrib:0.111.0
     command:
       - --config=/etc/otel-collector-config.yaml
@@ -20,15 +20,15 @@ services:
       - /:/hostfs:ro
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - SIGNOZ_COLLECTOR_ENDPOINT=http://host.docker.internal:4317    # In case of external SigNoz or cloud, update the endpoint and access token
-      - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux  # Replace signoz-host with the actual hostname
+      - SIGNOZ_COLLECTOR_ENDPOINT=http://host.docker.internal:4317 # In case of external SigNoz or cloud, update the endpoint and access token
+      - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux # Replace signoz-host with the actual hostname
       # - SIGNOZ_ACCESS_TOKEN="<your-access-token>"
     # Before exposing the ports, make sure the ports are not used by other services
     # ports:
     #   - "4317:4317"
     #   - "4318:4318"
   logspout:
-    <<: *common
+    !!merge <<: *common
     image: "gliderlabs/logspout:v3.2.14"
     volumes:
       - /etc/hostname:/etc/host_hostname:ro
