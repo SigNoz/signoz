@@ -59,31 +59,14 @@ const updateUrlWithParams = (url: string, params: UrlParam[]): string => {
 	// Get base URL without query parameters
 	const [baseUrl] = url.split('?');
 
-	// Helper function to check if string is valid JSON
-	const isValidJson = (str: string): boolean => {
-		try {
-			JSON.parse(str);
-			return true;
-		} catch {
-			return false;
-		}
-	};
-
-	// Helper function to encode value based on whether it's JSON
-	const encodeValue = (value: string): string => {
-		const trimmedValue = value.trim();
-		if (isValidJson(trimmedValue)) {
-			return encodeURIComponent(encodeURIComponent(trimmedValue));
-		}
-		return encodeURIComponent(trimmedValue);
-	};
-
 	// Create query parameter string from current parameters
 	const validParams = params.filter((param) => param.key.trim() !== '');
 	const queryString = validParams
 		.map(
 			(param) =>
-				`${encodeURIComponent(param.key.trim())}=${encodeValue(param.value)}`,
+				`${encodeURIComponent(param.key.trim())}=${encodeURIComponent(
+					param.value,
+				)}`,
 		)
 		.join('&');
 
