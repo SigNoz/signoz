@@ -283,19 +283,21 @@ function DeploymentDetails({
 	const handleChangeLogFilters = useCallback(
 		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogAndTracesFilters((prevFilters) => {
-				const primaryFilters = prevFilters.items.filter((item) =>
+				const primaryFilters = prevFilters?.items?.filter((item) =>
 					[QUERY_KEYS.K8S_DEPLOYMENT_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
 						item.key?.key ?? '',
 					),
 				);
-				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
-				const newFilters = value.items.filter(
+				const paginationFilter = value?.items?.find(
+					(item) => item.key?.key === 'id',
+				);
+				const newFilters = value?.items?.filter(
 					(item) =>
 						item.key?.key !== 'id' &&
 						item.key?.key !== QUERY_KEYS.K8S_DEPLOYMENT_NAME,
 				);
 
-				if (value.items.length > 0) {
+				if (value?.items && value?.items?.length > 0) {
 					logEvent(InfraMonitoringEvents.FilterApplied, {
 						entity: InfraMonitoringEvents.K8sEntity,
 						page: InfraMonitoringEvents.DetailedPage,
@@ -308,8 +310,8 @@ function DeploymentDetails({
 					op: 'AND',
 					items: filterDuplicateFilters(
 						[
-							...primaryFilters,
-							...newFilters,
+							...(primaryFilters || []),
+							...(newFilters || []),
 							...(paginationFilter ? [paginationFilter] : []),
 						].filter((item): item is TagFilterItem => item !== undefined),
 					),
@@ -333,13 +335,13 @@ function DeploymentDetails({
 	const handleChangeTracesFilters = useCallback(
 		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogAndTracesFilters((prevFilters) => {
-				const primaryFilters = prevFilters.items.filter((item) =>
+				const primaryFilters = prevFilters?.items?.filter((item) =>
 					[QUERY_KEYS.K8S_DEPLOYMENT_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
 						item.key?.key ?? '',
 					),
 				);
 
-				if (value.items.length > 0) {
+				if (value?.items && value?.items?.length > 0) {
 					logEvent(InfraMonitoringEvents.FilterApplied, {
 						entity: InfraMonitoringEvents.K8sEntity,
 						page: InfraMonitoringEvents.DetailedPage,
@@ -352,10 +354,10 @@ function DeploymentDetails({
 					op: 'AND',
 					items: filterDuplicateFilters(
 						[
-							...primaryFilters,
-							...value.items.filter(
+							...(primaryFilters || []),
+							...(value?.items?.filter(
 								(item) => item.key?.key !== QUERY_KEYS.K8S_DEPLOYMENT_NAME,
-							),
+							) || []),
 						].filter((item): item is TagFilterItem => item !== undefined),
 					),
 				};
@@ -378,14 +380,14 @@ function DeploymentDetails({
 	const handleChangeEventsFilters = useCallback(
 		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setEventsFilters((prevFilters) => {
-				const deploymentKindFilter = prevFilters.items.find(
+				const deploymentKindFilter = prevFilters?.items?.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_KIND,
 				);
-				const deploymentNameFilter = prevFilters.items.find(
+				const deploymentNameFilter = prevFilters?.items?.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				if (value.items.length > 0) {
+				if (value?.items && value?.items?.length > 0) {
 					logEvent(InfraMonitoringEvents.FilterApplied, {
 						entity: InfraMonitoringEvents.K8sEntity,
 						page: InfraMonitoringEvents.DetailedPage,
@@ -400,11 +402,11 @@ function DeploymentDetails({
 						[
 							deploymentKindFilter,
 							deploymentNameFilter,
-							...value.items.filter(
+							...(value?.items?.filter(
 								(item) =>
 									item.key?.key !== QUERY_KEYS.K8S_OBJECT_KIND &&
 									item.key?.key !== QUERY_KEYS.K8S_OBJECT_NAME,
-							),
+							) || []),
 						].filter((item): item is TagFilterItem => item !== undefined),
 					),
 				};
@@ -443,7 +445,7 @@ function DeploymentDetails({
 		if (selectedView === VIEW_TYPES.LOGS) {
 			const filtersWithoutPagination = {
 				...logAndTracesFilters,
-				items: logAndTracesFilters.items.filter((item) => item.key?.key !== 'id'),
+				items: logAndTracesFilters?.items?.filter((item) => item.key?.key !== 'id'),
 			};
 
 			const compositeQuery = {

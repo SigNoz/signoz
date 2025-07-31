@@ -145,15 +145,9 @@ function UplotPanelWrapper({
 				colorMapping: widget?.customLegendColors,
 				enhancedLegend: true, // Enable enhanced legend
 				legendPosition: widget?.legendPosition,
+				query: widget?.query || currentQuery,
 			}),
 		[
-			widget?.id,
-			widget?.yAxisUnit,
-			widget.thresholds,
-			widget.softMax,
-			widget.softMin,
-			widget.panelTypes,
-			widget?.stackedBarChart,
 			queryResponse.data?.payload,
 			containerDimensions,
 			isDarkMode,
@@ -169,9 +163,7 @@ function UplotPanelWrapper({
 			customTooltipElement,
 			timezone.value,
 			customSeries,
-			widget?.isLogScale,
-			widget?.legendPosition,
-			widget?.customLegendColors,
+			widget,
 		],
 	);
 

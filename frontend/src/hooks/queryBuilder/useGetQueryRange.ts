@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { updateStepInterval } from 'container/GridCardLayout/utils';
@@ -6,16 +7,25 @@ import {
 	GetQueryResultsProps,
 } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
+import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
+
+type UseGetQueryRangeOptions = UseQueryOptions<
+	SuccessResponse<MetricRangePayloadProps>,
+	APIError | Error
+> & {
+	showErrorModal?: boolean;
+};
 
 type UseGetQueryRange = (
 	requestData: GetQueryResultsProps,
 	version: string,
-	options?: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
+	options?: UseGetQueryRangeOptions,
 	headers?: Record<string, string>,
 ) => UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error>;
 
@@ -25,13 +35,14 @@ export const useGetQueryRange: UseGetQueryRange = (
 	options,
 	headers,
 ) => {
+	const { showErrorModal: showErrorModalFn } = useErrorModal();
 	const newRequestData: GetQueryResultsProps = useMemo(() => {
 		const firstQueryData = requestData.query.builder?.queryData[0];
 		const isListWithSingleTimestampOrder =
 			requestData.graphType === PANEL_TYPES.LIST &&
 			firstQueryData?.orderBy?.length === 1 &&
 			// exclude list with id filter (i.e. context logs)
-			!firstQueryData?.filters.items.some((filter) => filter.key?.key === 'id') &&
+			!firstQueryData?.filters?.items.some((filter) => filter.key?.key === 'id') &&
 			firstQueryData?.orderBy[0].columnName === 'timestamp';
 
 		const modifiedRequestData = {
@@ -102,10 +113,38 @@ export const useGetQueryRange: UseGetQueryRange = (
 		return requestData;
 	}, [requestData]);
 
-	return useQuery<SuccessResponse<MetricRangePayloadProps>, Error>({
+	const retry = useMemo(() => {
+		if (options?.retry !== undefined) {
+			return options.retry;
+		}
+		return (failureCount: number, error: Error): boolean => {
+			let status: number | undefined;
+
+			if (error instanceof APIError) {
+				status = error.getHttpStatusCode();
+			} else if (isAxiosError(error)) {
+				status = error.response?.status;
+			}
+
+			if (status && status >= 400 && status < 500) {
+				return false;
+			}
+
+			return failureCount < 3;
+		};
+	}, [options?.retry]);
+
+	return useQuery<SuccessResponse<MetricRangePayloadProps>, APIError | Error>({
 		queryFn: async ({ signal }) =>
 			GetMetricQueryRange(modifiedRequestData, version, signal, headers),
 		...options,
+		retry,
+		onError: (error) => {
+			if (options?.showErrorModal !== false) {
+				showErrorModalFn(error as APIError);
+			}
+			options?.onError?.(error);
+		},
 		queryKey,
 	});
 };

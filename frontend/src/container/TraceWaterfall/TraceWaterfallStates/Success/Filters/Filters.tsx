@@ -60,7 +60,9 @@ function Filters({
 	endTime: number;
 	traceID: string;
 }): JSX.Element {
-	const [filters, setFilters] = useState<TagFilter>(BASE_FILTER_QUERY.filters);
+	const [filters, setFilters] = useState<TagFilter>(
+		BASE_FILTER_QUERY.filters || { items: [], op: 'AND' },
+	);
 	const [noData, setNoData] = useState<boolean>(false);
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
 	const handleFilterChange = (value: TagFilter): void => {

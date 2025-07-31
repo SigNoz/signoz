@@ -3,6 +3,7 @@ import './GridTableComponent.styles.scss';
 
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Space, Tooltip } from 'antd';
+import { ColumnType } from 'antd/es/table';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Events } from 'constants/events';
 import { QueryTable } from 'container/QueryTable';
@@ -84,11 +85,12 @@ function GridTableComponent({
 					const newValue = { ...val };
 					Object.keys(val).forEach((k) => {
 						if (columnUnits[k]) {
-							// the check below takes care of not adding units for rows that have n/a values
-							newValue[k] =
-								val[k] !== 'n/a'
-									? getYAxisFormattedValue(String(val[k]), columnUnits[k])
-									: val[k];
+							// the check below takes care of not adding units for rows that have n/a or null values
+							if (val[k] !== 'n/a' && val[k] !== null) {
+								newValue[k] = getYAxisFormattedValue(String(val[k]), columnUnits[k]);
+							} else if (val[k] === null) {
+								newValue[k] = 'n/a';
+							}
 							newValue[`${k}_without_unit`] = val[k];
 						}
 					});
@@ -113,25 +115,27 @@ function GridTableComponent({
 		}
 	}, [createDataInCorrectFormat, dataSource, tableProcessedDataRef]);
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const newColumnData = columns.map((e) => ({
 		...e,
 		render: (text: string, ...rest: any): ReactNode => {
 			let textForThreshold = text;
-			if (columnUnits && columnUnits?.[e.title as string]) {
-				textForThreshold = rest[0][`${e.title}_without_unit`];
+			const dataIndex = (e as ColumnType<RowData>)?.dataIndex || e.title;
+			if (columnUnits && columnUnits?.[dataIndex as string]) {
+				textForThreshold = rest[0][`${dataIndex}_without_unit`];
 			}
 			const isNumber = !Number.isNaN(Number(textForThreshold));
 
 			if (thresholds && isNumber) {
 				const { hasMultipleMatches, threshold } = findMatchingThreshold(
 					thresholds,
-					e.title as string,
+					dataIndex as string,
 					Number(textForThreshold),
-					columnUnits?.[e.title as string],
+					columnUnits?.[dataIndex as string],
 				);
 
 				const idx = thresholds.findIndex(
-					(t) => t.thresholdTableOptions === e.title,
+					(t) => t.thresholdTableOptions === dataIndex,
 				);
 				if (threshold && idx !== -1) {
 					return (

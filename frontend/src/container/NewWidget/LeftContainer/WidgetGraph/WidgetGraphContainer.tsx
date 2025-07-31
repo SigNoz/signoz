@@ -5,6 +5,7 @@ import { WidgetGraphContainerProps } from 'container/NewWidget/types';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
 import { NotFoundContainer } from './styles';
+import { populateMultipleResults } from './util';
 import WidgetGraph from './WidgetGraphs';
 
 function WidgetGraphContainer({
@@ -20,6 +21,12 @@ function WidgetGraphContainer({
 		);
 		// eslint-disable-next-line no-param-reassign
 		queryResponse.data.payload.data.result = sortedSeriesData;
+	}
+
+	if (queryResponse.data && selectedGraph === PANEL_TYPES.PIE) {
+		const transformedData = populateMultipleResults(queryResponse?.data);
+		// eslint-disable-next-line no-param-reassign
+		queryResponse.data = transformedData;
 	}
 
 	if (selectedWidget === undefined) {
@@ -43,6 +50,7 @@ function WidgetGraphContainer({
 
 	if (
 		selectedGraph !== PANEL_TYPES.LIST &&
+		selectedGraph !== PANEL_TYPES.VALUE &&
 		queryResponse.data?.payload.data?.result?.length === 0
 	) {
 		return (
@@ -52,7 +60,7 @@ function WidgetGraphContainer({
 		);
 	}
 	if (
-		selectedGraph === PANEL_TYPES.LIST &&
+		(selectedGraph === PANEL_TYPES.LIST || selectedGraph === PANEL_TYPES.VALUE) &&
 		queryResponse.data?.payload?.data?.newResult?.data?.result?.length === 0
 	) {
 		return (

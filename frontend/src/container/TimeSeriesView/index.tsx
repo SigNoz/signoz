@@ -1,4 +1,6 @@
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import './TimeSeriesView.styles.scss';
+
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
@@ -29,8 +31,8 @@ function TimeSeriesViewContainer({
 		currentQuery.builder.queryData.forEach(
 			({ aggregateAttribute, aggregateOperator }) => {
 				const isExistDurationNanoAttribute =
-					aggregateAttribute.key === 'durationNano' ||
-					aggregateAttribute.key === 'duration_nano';
+					aggregateAttribute?.key === 'durationNano' ||
+					aggregateAttribute?.key === 'duration_nano';
 
 				const isCountOperator =
 					aggregateOperator === 'count' || aggregateOperator === 'count_distinct';
@@ -52,7 +54,8 @@ function TimeSeriesViewContainer({
 				dataSource,
 			},
 		},
-		ENTITY_VERSION_V4,
+		// ENTITY_VERSION_V4,
+		ENTITY_VERSION_V5,
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,

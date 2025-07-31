@@ -64,7 +64,7 @@ function AllEndPoints({
 			return params.allEndpointsLocalFilters;
 		}
 		// Initialize filters based on the initial endPointName prop
-		const initialItems = [...initialFilters.items];
+		const initialItems = [...(initialFilters?.items || [])];
 		return { op: 'AND', items: initialItems };
 	});
 
@@ -204,8 +204,8 @@ function AllEndPoints({
 			setSelectedEndPointName(props[SPAN_ATTRIBUTES.URL_PATH] as string);
 			setSelectedView(VIEWS.ENDPOINT_STATS);
 			const initialItems = [
-				...filters.items,
-				...getGroupByFiltersFromGroupByValues(props, groupBy).items,
+				...(filters?.items || []),
+				...(getGroupByFiltersFromGroupByValues(props, groupBy)?.items || []),
 			];
 			setInitialFiltersEndPointStats({
 				items: initialItems,

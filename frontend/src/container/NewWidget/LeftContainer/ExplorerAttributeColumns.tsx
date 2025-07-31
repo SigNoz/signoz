@@ -25,9 +25,11 @@ function ExplorerAttributeColumns({
 	}
 
 	const filteredAttributeKeys =
-		data?.payload?.attributeKeys?.filter((attributeKey: any) =>
-			attributeKey.key.toLowerCase().includes(searchText.toLowerCase()),
-		) || [];
+		Object.values(data?.data?.data?.keys || {})
+			?.flat()
+			?.filter((attributeKey: any) =>
+				attributeKey.name.toLowerCase().includes(searchText.toLowerCase()),
+			) || [];
 	if (filteredAttributeKeys.length === 0) {
 		return (
 			<div className="attribute-columns">
@@ -40,12 +42,12 @@ function ExplorerAttributeColumns({
 		<div className="attribute-columns">
 			{filteredAttributeKeys.map((attributeKey: any) => (
 				<Checkbox
-					checked={isAttributeKeySelected(attributeKey.key)}
-					onChange={(): void => handleCheckboxChange(attributeKey.key)}
+					checked={isAttributeKeySelected(attributeKey.name)}
+					onChange={(): void => handleCheckboxChange(attributeKey.name)}
 					style={{ padding: 0 }}
-					key={attributeKey.key}
+					key={attributeKey.name}
 				>
-					{attributeKey.key}
+					{attributeKey.name}
 				</Checkbox>
 			))}
 		</div>
