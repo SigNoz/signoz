@@ -291,7 +291,8 @@ func (r *ThresholdRule) prepareQueryRangeV5(ctx context.Context, ts time.Time) (
 		},
 		NoCache: true,
 	}
-	copy(r.Condition().CompositeQuery.Queries, req.CompositeQuery.Queries)
+	req.CompositeQuery.Queries = make([]qbtypes.QueryEnvelope, len(r.Condition().CompositeQuery.Queries))
+	copy(req.CompositeQuery.Queries, r.Condition().CompositeQuery.Queries)
 	return req, nil
 }
 

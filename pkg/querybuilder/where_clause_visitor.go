@@ -126,6 +126,10 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*sqlbuilder.W
 		return nil, nil, combinedErrors.WithAdditional(visitor.errors...)
 	}
 
+	if cond == "" {
+		cond = "true"
+	}
+
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
 
 	return whereClause, visitor.warnings, nil
@@ -194,7 +198,13 @@ func (v *filterExpressionVisitor) VisitOrExpression(ctx *grammar.OrExpressionCon
 
 	andExpressionConditions := make([]string, len(andExpressions))
 	for i, expr := range andExpressions {
-		andExpressionConditions[i] = v.Visit(expr).(string)
+		if condExpr, ok := v.Visit(expr).(string); ok && condExpr != "" {
+			andExpressionConditions[i] = condExpr
+		}
+	}
+
+	if len(andExpressionConditions) == 0 {
+		return ""
 	}
 
 	if len(andExpressionConditions) == 1 {
@@ -210,7 +220,13 @@ func (v *filterExpressionVisitor) VisitAndExpression(ctx *grammar.AndExpressionC
 
 	unaryExpressionConditions := make([]string, len(unaryExpressions))
 	for i, expr := range unaryExpressions {
-		unaryExpressionConditions[i] = v.Visit(expr).(string)
+		if condExpr, ok := v.Visit(expr).(string); ok && condExpr != "" {
+			unaryExpressionConditions[i] = condExpr
+		}
+	}
+
+	if len(unaryExpressionConditions) == 0 {
+		return ""
 	}
 
 	if len(unaryExpressionConditions) == 1 {
@@ -236,7 +252,10 @@ func (v *filterExpressionVisitor) VisitUnaryExpression(ctx *grammar.UnaryExpress
 func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 	if ctx.OrExpression() != nil {
 		// This is a parenthesized expression
-		return fmt.Sprintf("(%s)", v.Visit(ctx.OrExpression()).(string))
+		if condExpr, ok := v.Visit(ctx.OrExpression()).(string); ok && condExpr != "" {
+			return fmt.Sprintf("(%s)", v.Visit(ctx.OrExpression()).(string))
+		}
+		return ""
 	} else if ctx.Comparison() != nil {
 		return v.Visit(ctx.Comparison())
 	} else if ctx.FunctionCall() != nil {
@@ -248,7 +267,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 	// Handle standalone key/value as a full text search term
 	if ctx.GetChildCount() == 1 {
 		if v.skipFullTextFilter {
-			return "true"
+			return ""
 		}
 
 		if v.fullTextColumn == nil {
@@ -297,11 +316,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 
 	// if key is missing and can be ignored, the condition is ignored
 	if len(keys) == 0 && v.ignoreNotFoundKeys {
-		// Why do we return "true"? to prevent from create a empty tuple
-		// example, if the condition is (x AND (y OR z))
-		// if we find ourselves ignoring all, then it creates and invalid
-		// condition (()) which throws invalid tuples error
-		return "true"
+		return ""
 	}
 
 	// this is used to skip the resource filtering on main table if
@@ -315,11 +330,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		}
 		keys = filteredKeys
 		if len(keys) == 0 {
-			// Why do we return "true"? to prevent from create a empty tuple
-			// example, if the condition is (resource.service.name='api' AND (env='prod' OR env='production'))
-			// if we find ourselves skipping all, then it creates and invalid
-			// condition (()) which throws invalid tuples error
-			return "true"
+			return ""
 		}
 	}
 
@@ -368,7 +379,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 				var varItem qbtypes.VariableItem
 				varItem, ok = v.variables[var_]
 				// if not present, try without `$` prefix
-				if !ok {
+				if !ok && len(var_) > 0 {
 					varItem, ok = v.variables[var_[1:]]
 				}
 
@@ -547,7 +558,7 @@ func (v *filterExpressionVisitor) VisitValueList(ctx *grammar.ValueListContext) 
 func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
 
 	if v.skipFullTextFilter {
-		return "true"
+		return ""
 	}
 
 	var text string
@@ -573,7 +584,7 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 // VisitFunctionCall handles function calls like has(), hasAny(), etc.
 func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallContext) any {
 	if v.skipFunctionCalls {
-		return "true"
+		return ""
 	}
 
 	// Get function name based on which token is present
@@ -742,7 +753,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	if len(fieldKeysForName) > 1 && !v.keysWithWarnings[keyName] {
 		// this is warning state, we must have a unambiguous key
 		v.warnings = append(v.warnings, fmt.Sprintf(
-			"key `%s` is ambiguous, found %d different combinations of field context and data type: %v",
+			"key `%s` is ambiguous, found %d different combinations of field context and data type: %v. Learn more [here](https://signoz.io/docs/userguide/search-syntax/#field-context)",
 			fieldKey.Name,
 			len(fieldKeysForName),
 			fieldKeysForName,

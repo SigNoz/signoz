@@ -395,6 +395,11 @@ func (p *BaseSeasonalProvider) getAnomalies(ctx context.Context, orgID valuer.UU
 			continue
 		}
 
+		// no data;
+		if len(result.Aggregations) == 0 {
+			continue
+		}
+
 		aggOfInterest := result.Aggregations[0]
 
 		for _, series := range aggOfInterest.Series {

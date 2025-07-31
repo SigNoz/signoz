@@ -194,6 +194,7 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 	if err != nil {
 		return nil, err
 	}
+
 	result.Warnings = stmt.Warnings
 	return result, nil
 }
@@ -297,6 +298,8 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		}
 	}
 
+	var warnings []string
+
 	for _, r := range buckets {
 		q.spec.Offset = 0
 		q.spec.Limit = need
@@ -305,6 +308,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		if err != nil {
 			return nil, err
 		}
+		warnings = stmt.Warnings
 
 		// Execute with proper context for partial value detection
 		res, err := q.executeWithContext(ctx, stmt.Query, stmt.Args)
@@ -345,6 +349,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 			Rows:       rows,
 			NextCursor: nextCursor,
 		},
+		Warnings: warnings,
 		Stats: qbtypes.ExecStats{
 			RowsScanned:  totalRows,
 			BytesScanned: totalBytes,

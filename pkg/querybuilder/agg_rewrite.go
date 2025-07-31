@@ -152,7 +152,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 
 	aggFunc, ok := AggreFuncMap[valuer.NewString(name)]
 	if !ok {
-		return nil
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "unrecognized function: %s", name)
 	}
 
 	var args []chparser.Expr

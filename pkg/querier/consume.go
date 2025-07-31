@@ -332,7 +332,7 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 	}, nil
 }
 
-func derefValue(v interface{}) interface{} {
+func derefValue(v any) any {
 	if v == nil {
 		return nil
 	}
