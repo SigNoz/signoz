@@ -111,7 +111,7 @@ function AlertActionButtons({
 	return (
 		<>
 			<div className="alert-action-buttons">
-				<Tooltip title={alertRuleState ? 'Enable alert' : 'Disable alert'}>
+				<Tooltip title={isAlertRuleDisabled ? 'Enable alert' : 'Disable alert'}>
 					{isAlertRuleDisabled !== undefined && (
 						<Switch
 							size="small"
