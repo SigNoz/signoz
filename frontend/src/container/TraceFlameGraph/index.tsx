@@ -1,6 +1,7 @@
 /* eslint-disable react/no-unstable-nested-components */
 import Color from 'color';
 import { ITraceMetaData } from 'container/GantChart';
+import { getTreeLevelsCount } from 'container/TraceDetail/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
 	Dispatch,
@@ -102,13 +103,14 @@ function TraceFlameGraph(props: {
 	missingSpanTree: boolean;
 }): JSX.Element {
 	const { treeData, traceMetaData, onSpanHover, missingSpanTree } = props;
+	const levels = useMemo(() => getTreeLevelsCount(treeData), [treeData]);
 
 	if (!treeData || treeData.id === 'empty' || !traceMetaData) {
 		return <div />;
 	}
 	const { onSpanSelect, hoveredSpanId, selectedSpanId } = props;
 
-	const { globalStart, spread, levels } = traceMetaData;
+	const { globalStart, spread } = traceMetaData;
 	function RenderSpanRecursive({
 		level = 0,
 		spanData,
