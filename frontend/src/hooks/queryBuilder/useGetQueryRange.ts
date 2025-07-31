@@ -17,7 +17,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 type UseGetQueryRangeOptions = UseQueryOptions<
 	SuccessResponse<MetricRangePayloadProps>,
-	Error
+	APIError | Error
 > & {
 	showErrorModal?: boolean;
 };
@@ -134,7 +134,7 @@ export const useGetQueryRange: UseGetQueryRange = (
 		};
 	}, [options?.retry]);
 
-	return useQuery<SuccessResponse<MetricRangePayloadProps>, Error>({
+	return useQuery<SuccessResponse<MetricRangePayloadProps>, APIError | Error>({
 		queryFn: async ({ signal }) =>
 			GetMetricQueryRange(modifiedRequestData, version, signal, headers),
 		...options,

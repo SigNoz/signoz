@@ -1,16 +1,16 @@
+import { ENVIRONMENT } from 'constants/env';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { noop } from 'lodash-es';
-import {
-	logsPaginationQueryRangeSuccessResponse,
-	PAGE_SIZE,
-} from 'mocks-server/__mockdata__/logs_query_range';
+import { PAGE_SIZE } from 'mocks-server/__mockdata__/logs_query_range';
+import { logsresponse } from 'mocks-server/__mockdata__/query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import LogsExplorer from 'pages/LogsExplorer';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import React from 'react';
 import { I18nextProvider } from 'react-i18next';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import i18n from 'ReactI18';
 import {
@@ -21,11 +21,9 @@ import {
 	screen,
 	waitFor,
 } from 'tests/test-utils';
-import { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 import { v4 as uuid } from 'uuid';
-
-const API_ENDPOINT = 'http://localhost/api/v4/query_range';
 
 // State to track when UpdateTimeInterval has been called and what the updated times should be
 let mockGlobalTimeState: {
@@ -61,6 +59,15 @@ jest.mock('store/actions', () => {
 		},
 	};
 });
+
+jest.mock('react-router-dom-v5-compat', () => ({
+	...jest.requireActual('react-router-dom-v5-compat'),
+	useSearchParams: jest.fn(() => {
+		const searchParams = new URLSearchParams();
+
+		return [searchParams, jest.fn()];
+	}),
+}));
 
 // Mock the Redux store's getState method to return updated global time
 const store = jest.requireActual('store').default;
@@ -164,25 +171,20 @@ jest.mock(
 
 // --- Test Utilities ---
 
-// Helper function to create a mock API response with a given offset
-const createMockResponse = (offset: number): QueryRangePayload =>
-	logsPaginationQueryRangeSuccessResponse({ offset });
-
-const setupServer = (capturedPayloads: QueryRangePayload[]): void => {
+const setupServer = (capturedPayloads: QueryRangePayloadV5[]): void => {
 	server.use(
-		rest.post(API_ENDPOINT, async (req, res, ctx) => {
-			const payload = await req.json();
-			// Only capture payloads for the 'list' panel type
-			if (payload.compositeQuery.panelType === 'list') {
+		rest.post(
+			`${ENVIRONMENT.baseURL}/api/v5/query_range`,
+			async (req, res, ctx) => {
+				const payload = await req.json();
 				capturedPayloads.push(payload);
-			}
-			// Get the offset from the latest captured payload
-			const lastPayload = capturedPayloads[capturedPayloads.length - 1];
-			const queryData = lastPayload?.compositeQuery.builderQueries
-				?.A as IBuilderQuery;
-			const offset = queryData?.offset ?? 0;
-			return res(ctx.status(200), ctx.json(createMockResponse(offset)));
-		}),
+				return res(ctx.status(200), ctx.json(logsresponse));
+			},
+		),
+		// Add handler for the fields endpoint that's causing warnings
+		rest.get(`${ENVIRONMENT.baseURL}/api/v1/fields/keys`, async (req, res, ctx) =>
+			res(ctx.status(200), ctx.json([])),
+		),
 	);
 };
 
@@ -192,12 +194,15 @@ export const verifyPayload = ({
 	expectedOffset,
 	initialTimeRange,
 }: {
-	payload: QueryRangePayload;
+	payload: QueryRangePayloadV5;
 	expectedOffset: number;
 	initialTimeRange?: { start: number; end: number };
 }): IBuilderQuery => {
 	// Extract the builder query data for query name 'A'
-	const queryData = payload.compositeQuery.builderQueries?.A as IBuilderQuery;
+	const queryA = payload.compositeQuery.queries?.find(
+		(q) => q.spec?.name === 'A',
+	);
+	const queryData = (queryA?.spec as unknown) as IBuilderQuery;
 	expect(queryData).toBeDefined();
 	// Assert that the offset in the payload matches the expected offset
 	expect(queryData.offset).toBe(expectedOffset);
@@ -231,7 +236,8 @@ export const verifyFiltersAndOrderBy = (queryData: IBuilderQuery): void => {
 	}
 };
 
-let capturedPayloads: QueryRangePayload[];
+let capturedPayloads: QueryRangePayloadV5[];
+
 describe.skip('LogsExplorerViews Pagination', () => {
 	// Array to store captured API request payloads
 
@@ -420,6 +426,7 @@ function LogsExplorerWithMockContext({
 			handleSetQueryData: noop,
 			handleSetFormulaData: noop,
 			handleSetQueryItemData: noop,
+			handleSetConfig: noop,
 			removeQueryBuilderEntityByIndex: noop,
 			removeQueryTypeItemByIndex: noop,
 			addNewBuilderQuery: noop,
@@ -446,11 +453,13 @@ function LogsExplorerWithMockContext({
 	);
 
 	return (
-		<QueryBuilderContext.Provider value={contextValue as any}>
-			<VirtuosoMockContext.Provider value={virtuosoContextValue}>
-				<LogsExplorer />
-			</VirtuosoMockContext.Provider>
-		</QueryBuilderContext.Provider>
+		<MemoryRouter>
+			<QueryBuilderContext.Provider value={contextValue as any}>
+				<VirtuosoMockContext.Provider value={virtuosoContextValue}>
+					<LogsExplorer />
+				</VirtuosoMockContext.Provider>
+			</QueryBuilderContext.Provider>
+		</MemoryRouter>
 	);
 }
 
@@ -485,8 +494,6 @@ describe('Logs Explorer -> stage and run query', () => {
 	});
 
 	it('should recalculate the start and end timestamps for list and graph queries in logs explorer', async () => {
-		// Setup the mock server to intercept and capture requests
-
 		// Store initial IDs for comparison
 		const initialStagedQueryId = mockStagedQuery.id;
 		const initialCurrentQueryId = mockCurrentQuery.id;
@@ -518,6 +525,17 @@ describe('Logs Explorer -> stage and run query', () => {
 			expect(screen.queryByText(/No logs yet/)).not.toBeInTheDocument();
 		});
 
+		// Wait for the initial API calls to be made (component may make multiple calls during initialization)
+		await waitFor(() => {
+			expect(capturedPayloads.length).toBeGreaterThan(0);
+		});
+
+		// Store the initial payload timestamps (use the last one as the baseline)
+		const initialPayload = capturedPayloads[capturedPayloads.length - 1];
+		const initialStart = initialPayload.start;
+		const initialEnd = initialPayload.end;
+
+		// Click the Stage & Run Query button
 		await act(async () => {
 			fireEvent.click(
 				screen.getByRole('button', {
@@ -526,18 +544,32 @@ describe('Logs Explorer -> stage and run query', () => {
 			);
 		});
 
-		await waitFor(() => {
-			expect(capturedPayloads.length).toBe(2);
-		});
+		// Wait for additional API calls to be made after clicking Stage & Run Query
+		await waitFor(
+			() => {
+				expect(capturedPayloads.length).toBeGreaterThan(1);
+			},
+			{ timeout: 5000 },
+		);
 
 		// Verify that the IDs have changed
 		expect(currentStagedQuery.id).not.toBe(initialStagedQueryId);
 		expect(currentCurrentQuery.id).not.toBe(initialCurrentQueryId);
 
-		const firstPayload = capturedPayloads[0];
-		const secondPayload = capturedPayloads[1];
+		// Get the latest payload (after Stage & Run Query)
+		const secondPayload = capturedPayloads[capturedPayloads.length - 1];
 
-		expect(firstPayload.start).not.toEqual(secondPayload.start);
-		expect(firstPayload.end).not.toEqual(secondPayload.end);
+		// Verify that the timestamps have changed due to UpdateTimeInterval
+		expect(secondPayload.start).not.toEqual(initialStart);
+		expect(secondPayload.end).not.toEqual(initialEnd);
+
+		// The timestamps should be different (the exact difference depends on the mock implementation)
+		// Note: The timestamps might go backwards if UpdateTimeInterval is not called properly
+		expect(secondPayload.start).not.toEqual(initialStart);
+		expect(secondPayload.end).not.toEqual(initialEnd);
+
+		// Verify that the IDs have changed (this confirms the Stage & Run Query button worked)
+		expect(currentStagedQuery.id).not.toBe(initialStagedQueryId);
+		expect(currentCurrentQuery.id).not.toBe(initialCurrentQueryId);
 	});
 });

@@ -45,6 +45,7 @@ function QuerySection({
 	const {
 		currentQuery,
 		handleRunQuery: handleRunQueryFromQueryBuilder,
+		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 	const urlQuery = useUrlQuery();
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -113,13 +114,13 @@ function QuerySection({
 
 	const handleQueryCategoryChange = useCallback(
 		(qCategory: string): void => {
-			const currentQueryType = qCategory;
-			handleStageQuery({
+			const currentQueryType = qCategory as EQueryType;
+			redirectWithQueryBuilderData({
 				...currentQuery,
-				queryType: currentQueryType as EQueryType,
+				queryType: currentQueryType,
 			});
 		},
-		[currentQuery, handleStageQuery],
+		[currentQuery, redirectWithQueryBuilderData],
 	);
 
 	const handleRunQuery = (): void => {

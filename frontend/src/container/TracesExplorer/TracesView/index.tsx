@@ -1,5 +1,6 @@
-import { Select, Typography } from 'antd';
+import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
+import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ResizeTable } from 'components/ResizeTable';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
@@ -12,7 +13,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { ArrowUp10, Minus } from 'lucide-react';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
@@ -31,7 +32,7 @@ interface TracesViewProps {
 
 function TracesView({ isFilterApplied }: TracesViewProps): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
-	const [orderDirection, setOrderDirection] = useState<string>('asc');
+	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
 
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
 		AppState,
@@ -47,13 +48,17 @@ function TracesView({ isFilterApplied }: TracesViewProps): JSX.Element {
 			transformBuilderQueryFields(stagedQuery || initialQueriesMap.traces, {
 				orderBy: [
 					{
-						columnName: 'timestamp',
-						order: 'desc',
+						columnName: orderBy.split(':')[0],
+						order: orderBy.split(':')[1] as 'asc' | 'desc',
 					},
 				],
 			}),
-		[stagedQuery],
+		[stagedQuery, orderBy],
 	);
+
+	const handleOrderChange = useCallback((value: string) => {
+		setOrderBy(value);
+	}, []);
 
 	const { data, isLoading, isFetching, isError } = useGetQueryRange(
 		{
@@ -68,7 +73,6 @@ function TracesView({ isFilterApplied }: TracesViewProps): JSX.Element {
 				pagination: paginationQueryData,
 			},
 		},
-		// ENTITY_VERSION_V4,
 		ENTITY_VERSION_V5,
 		{
 			queryKey: [
@@ -79,6 +83,7 @@ function TracesView({ isFilterApplied }: TracesViewProps): JSX.Element {
 				stagedQuery,
 				panelType,
 				paginationQueryData,
+				orderBy,
 			],
 			enabled: !!stagedQuery && panelType === PANEL_TYPES.TRACE,
 		},
@@ -116,16 +121,10 @@ function TracesView({ isFilterApplied }: TracesViewProps): JSX.Element {
 								Order by <Minus size={14} /> <ArrowUp10 size={14} />
 							</div>
 
-							<Select
-								placeholder="Select order by"
-								className="order-by-select"
-								style={{ width: 100 }}
-								value={orderDirection}
-								onChange={(value): void => setOrderDirection(value)}
-								options={[
-									{ label: 'Ascending', value: 'asc' },
-									{ label: 'Descending', value: 'desc' },
-								]}
+							<ListViewOrderBy
+								value={orderBy}
+								onChange={handleOrderChange}
+								dataSource={DataSource.TRACES}
 							/>
 						</div>
 

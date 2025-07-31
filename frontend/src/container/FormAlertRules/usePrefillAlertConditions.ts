@@ -20,10 +20,10 @@ export const usePrefillAlertConditions = (
 		if (!stagedQuery) return null;
 		const isSameTimeAggregation = stagedQuery.builder.queryData.every(
 			(queryData) =>
-				queryData.reduceTo === stagedQuery.builder.queryData[0].reduceTo,
+				queryData?.reduceTo === stagedQuery.builder.queryData[0]?.reduceTo,
 		);
 		return isSameTimeAggregation
-			? stagedQuery.builder.queryData[0].reduceTo
+			? stagedQuery.builder.queryData[0]?.reduceTo
 			: null;
 	}, [stagedQuery]);
 

@@ -5,6 +5,7 @@ export type Step = string | number; // Duration string (e.g., "30s") or seconds 
 export type RequestType =
 	| 'scalar'
 	| 'time_series'
+	| 'trace'
 	| 'raw'
 	| 'distribution'
 	| '';
@@ -246,6 +247,7 @@ export interface QueryBuilderFormula {
 	order?: OrderBy[];
 	limit?: number;
 	having?: Having;
+	legend?: string;
 }
 
 export interface QueryBuilderJoin {
@@ -272,12 +274,14 @@ export interface PromQuery {
 	disabled?: boolean;
 	step?: Step;
 	stats?: boolean;
+	legend?: string;
 }
 
 export interface ClickHouseQuery {
 	name: string;
 	query: string;
 	disabled?: boolean;
+	legend?: string;
 }
 
 // ===================== Query Envelope =====================
@@ -346,6 +350,10 @@ export interface AggregationBucket {
 	alias: string;
 	meta: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 	series: TimeSeries[];
+	predictedSeries?: TimeSeries[];
+	upperBoundSeries?: TimeSeries[];
+	lowerBoundSeries?: TimeSeries[];
+	anomalyScores?: TimeSeries[];
 }
 
 export interface TimeSeriesData {

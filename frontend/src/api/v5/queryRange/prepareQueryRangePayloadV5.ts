@@ -39,7 +39,7 @@ type PrepareQueryRangePayloadV5Result = {
 /**
  * Maps panel types to V5 request types
  */
-function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
+export function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
 	switch (panelType) {
 		case PANEL_TYPES.TIME_SERIES:
 		case PANEL_TYPES.BAR:
@@ -47,8 +47,9 @@ function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
 		case PANEL_TYPES.TABLE:
 		case PANEL_TYPES.PIE:
 		case PANEL_TYPES.VALUE:
-		case PANEL_TYPES.TRACE:
 			return 'scalar';
+		case PANEL_TYPES.TRACE:
+			return 'trace';
 		case PANEL_TYPES.LIST:
 			return 'raw';
 		case PANEL_TYPES.HISTOGRAM:
@@ -102,7 +103,10 @@ function createBaseSpec(
 			panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.LIST
 				? queryData.limit || queryData.pageSize || undefined
 				: queryData.limit || undefined,
-		offset: requestType === 'raw' ? queryData.offset : undefined,
+		offset:
+			requestType === 'raw' || requestType === 'trace'
+				? queryData.offset
+				: undefined,
 		order:
 			queryData.orderBy?.length > 0
 				? queryData.orderBy.map(
@@ -114,17 +118,21 @@ function createBaseSpec(
 						}),
 				  )
 				: undefined,
-		// legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
+		legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
 		having: isEmpty(queryData.having) ? undefined : (queryData?.having as Having),
 		functions: isEmpty(queryData.functions)
 			? undefined
 			: queryData.functions.map(
 					(func: QueryFunctionProps): QueryFunction => ({
 						name: func.name as FunctionName,
-						args: func.args.map((arg) => ({
-							// name: arg.name,
-							value: arg,
-						})),
+						args: isEmpty(func.namedArgs)
+							? func.args.map((arg) => ({
+									value: arg,
+							  }))
+							: Object.entries(func.namedArgs).map(([name, value]) => ({
+									name,
+									value,
+							  })),
 					}),
 			  ),
 		selectFields: isEmpty(nonEmptySelectColumns)
@@ -213,7 +221,7 @@ export function createAggregation(
 /**
  * Converts query builder data to V5 builder queries
  */
-function convertBuilderQueriesToV5(
+export function convertBuilderQueriesToV5(
 	builderQueries: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
 	requestType: RequestType,
 	panelType?: PANEL_TYPES,
@@ -268,7 +276,7 @@ function convertBuilderQueriesToV5(
 /**
  * Converts PromQL queries to V5 format
  */
-function convertPromQueriesToV5(
+export function convertPromQueriesToV5(
 	promQueries: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
 ): QueryEnvelope[] {
 	return Object.entries(promQueries).map(
@@ -279,6 +287,7 @@ function convertPromQueriesToV5(
 				query: queryData.query,
 				disabled: queryData.disabled || false,
 				step: queryData?.stepInterval,
+				legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
 				stats: false, // PromQL specific field
 			},
 		}),
@@ -288,7 +297,7 @@ function convertPromQueriesToV5(
 /**
  * Converts ClickHouse queries to V5 format
  */
-function convertClickHouseQueriesToV5(
+export function convertClickHouseQueriesToV5(
 	chQueries: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
 ): QueryEnvelope[] {
 	return Object.entries(chQueries).map(
@@ -298,6 +307,7 @@ function convertClickHouseQueriesToV5(
 				name: queryName,
 				query: queryData.query,
 				disabled: queryData.disabled || false,
+				legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
 				// ClickHouse doesn't have step or stats like PromQL
 			},
 		}),
@@ -370,6 +380,7 @@ export const prepareQueryRangePayloadV5 = ({
 						expression: formulaData.expression || '',
 						disabled: formulaData.disabled,
 						limit: formulaData.limit ?? undefined,
+						legend: isEmpty(formulaData.legend) ? undefined : formulaData.legend,
 						order: formulaData.orderBy?.map(
 							// eslint-disable-next-line sonarjs/no-identical-functions
 							(order: any): OrderBy => ({

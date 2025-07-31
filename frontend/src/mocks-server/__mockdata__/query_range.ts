@@ -207,6 +207,91 @@ export const queryRangeForTableView = {
 	},
 };
 
+export const logsresponse = {
+	status: 'success',
+	data: {
+		type: 'raw',
+		meta: {
+			rowsScanned: 32880,
+			bytesScanned: 41962053,
+			durationMs: 1121,
+		},
+		data: {
+			results: [
+				{
+					queryName: 'A',
+					nextCursor: 'MTc1MzkyMzM4OTc0OA==',
+					rows: [
+						{
+							timestamp: '2025-07-31T00:56:48.40583808Z',
+							data: {
+								attributes_bool: {
+									otelTraceSampled: true,
+								},
+								attributes_number: {
+									'code.lineno': 47,
+								},
+								attributes_string: {
+									'code.filepath': '/usr/src/app/demo_service.py',
+									'code.function': 'ProcessRequest',
+									otelServiceName: 'demo-service',
+									otelSpanID: 'a1b2c3d4e5f67890',
+									otelTraceID: '12345678abcdef',
+								},
+								body:
+									"Processing request for items:['ITEM001', 'ITEM002', 'ITEM003', 'ITEM004', 'ITEM005']",
+								id: 'demo-log-id-001',
+								resources_string: {},
+								scope_name: 'opentelemetry.sdk._logs._internal',
+								scope_string: {},
+								scope_version: '',
+								severity_number: 9,
+								severity_text: 'INFO',
+								span_id: 'a1b2c3d4e5f67890',
+								timestamp: 1753923408405838080,
+								trace_flags: 1,
+								trace_id: '1234567890abcdef1234567890abcdef',
+							},
+						},
+						{
+							timestamp: '2025-07-31T00:56:48.404301056Z',
+							data: {
+								attributes_bool: {
+									otelTraceSampled: true,
+								},
+								attributes_number: {
+									'code.lineno': 47,
+								},
+								attributes_string: {
+									'code.filepath': '/usr/src/app/demo_service.py',
+									'code.function': 'ProcessRequest',
+									otelServiceName: 'demo-service',
+									otelSpanID: 'b2c3d4e5f678901a',
+									otelTraceID: 'abcdef1234567890',
+								},
+								body:
+									"Processing request for items:['ITEM006', 'ITEM007', 'ITEM008', 'ITEM009', 'ITEM010']",
+								id: 'demo-log-id-002',
+								resources_string: {},
+								scope_name: 'opeinternal',
+								scope_string: {},
+								scope_version: '',
+								severity_number: 9,
+								severity_text: 'INFO',
+								span_id: 'b2c3d4e5f678901a',
+								timestamp: 1753923408404301056,
+								trace_flags: 1,
+								trace_id: 'abcdef12234567890',
+							},
+						},
+					],
+				},
+			],
+			warnings: [],
+		},
+	},
+};
+
 export const queryRangeForTableViewV5 = {
 	payload: {
 		data: {

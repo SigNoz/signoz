@@ -322,7 +322,7 @@ function ChartPreview({
 					{chartDataAvailable &&
 						isAnomalyDetectionAlert &&
 						isAnomalyDetectionEnabled &&
-						queryResponse?.data?.payload?.data?.resultType === 'anomaly' && (
+						queryResponse?.data?.payload?.data?.resultType === 'time_series' && (
 							<AnomalyAlertEvaluationView
 								data={queryResponse?.data?.payload}
 								yAxisUnit={yAxisUnit}

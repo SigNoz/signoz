@@ -155,6 +155,28 @@ export async function GetMetricQueryRange(
 		const v5Result = prepareQueryRangePayloadV5(props);
 		legendMap = v5Result.legendMap;
 
+		// atleast one query should be there to make call to v5 api
+		if (v5Result.queryPayload.compositeQuery.queries.length === 0) {
+			return {
+				statusCode: 200,
+				error: null,
+				message: 'At least one query is required',
+				payload: {
+					data: {
+						result: [],
+						resultType: '',
+						newResult: {
+							data: {
+								result: [],
+								resultType: '',
+							},
+						},
+					},
+				},
+				params: props,
+			};
+		}
+
 		const v5Response = await getQueryRangeV5(
 			v5Result.queryPayload,
 			version,
@@ -183,16 +205,7 @@ export async function GetMetricQueryRange(
 		);
 	}
 
-	// todo: Sagar
-	if (response.statusCode >= 400 && version === ENTITY_VERSION_V5) {
-		let error = `API responded with ${response.statusCode} -  ${response.error?.message} status: ${response?.status}`;
-		if (response.body && !isEmpty(response.body)) {
-			error = `${error}, errors: ${response.body}`;
-		}
-		throw new Error(error);
-	}
-
-	if (response.statusCode >= 400) {
+	if (response.statusCode >= 400 && version !== ENTITY_VERSION_V5) {
 		let error = `API responded with ${response.statusCode} -  ${response.error} status: ${response.message}`;
 		if (response.body && !isEmpty(response.body)) {
 			error = `${error}, errors: ${response.body}`;
