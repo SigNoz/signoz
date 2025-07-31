@@ -57,8 +57,8 @@ function ListViewOrderBy({
 
 	// Update options when API data changes
 	useEffect(() => {
-		const rawKeys: QueryKeyDataSuggestionsProps[] = data?.data.keys
-			? Object.values(data.data.keys).flat()
+		const rawKeys: QueryKeyDataSuggestionsProps[] = data?.data?.keys
+			? Object.values(data.data?.keys).flat()
 			: [];
 
 		const keyNames = rawKeys.map((key) => key.name);

@@ -29,8 +29,6 @@ export const convertBuilderQueryToIBuilderQuery = (
 	// Determine data source based on signal
 	const dataSource = getDataSourceFromSignal(builderQuery.signal);
 
-	console.log('builderQuery', builderQuery);
-
 	const result: IBuilderQuery = ({
 		...builderQuery,
 		dataSource,
@@ -39,7 +37,7 @@ export const convertBuilderQueryToIBuilderQuery = (
 			key: group?.name,
 			dataType: group?.fieldDataType,
 			type: group?.fieldContext,
-			isColumn: group?.isColumn || true,
+			isColumn: group?.isColumn ?? true,
 			isJSON: group?.isJSON || false,
 			id: `${group?.name}--${group?.fieldDataType}--${group?.fieldContext}--${group?.isColumn}`,
 		})),
