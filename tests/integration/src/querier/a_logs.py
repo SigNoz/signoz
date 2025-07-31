@@ -3,7 +3,6 @@ from http import HTTPStatus
 from typing import Callable, List
 
 import requests
-import time
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
@@ -636,7 +635,9 @@ def test_logs_time_series_count(
                             "signal": "logs",
                             "stepInterval": 60,
                             "disabled": False,
-                            "filter": {"expression": "service.name = 'erlang' OR cloud.account.id = '000'"},
+                            "filter": {
+                                "expression": "service.name = 'erlang' OR cloud.account.id = '000'"
+                            },
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
