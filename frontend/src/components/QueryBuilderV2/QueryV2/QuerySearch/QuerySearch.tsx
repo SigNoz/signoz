@@ -40,11 +40,11 @@ import {
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
-import { validateQuery } from 'utils/antlrQueryUtils';
 import {
 	getCurrentValueIndexAtCursor,
 	getQueryContextAtCursor,
 } from 'utils/queryContextUtils';
+import { validateQuery } from 'utils/queryValidationUtils';
 import { unquote } from 'utils/stringUtils';
 
 import { queryExamples } from './constants';
