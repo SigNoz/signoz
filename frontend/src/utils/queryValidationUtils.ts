@@ -110,7 +110,7 @@ class QueryErrorListener {
 }
 
 export const validateQuery = (query: string): IValidationResult => {
-	// Empty query is considered invalid
+	// Empty query is considered valid
 	if (!query.trim()) {
 		return {
 			isValid: true,
