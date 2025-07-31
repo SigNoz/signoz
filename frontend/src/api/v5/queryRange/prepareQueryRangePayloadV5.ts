@@ -224,7 +224,9 @@ function convertBuilderQueriesToV5(
 			const baseSpec = createBaseSpec(queryData, requestType, panelType);
 			let spec: QueryEnvelope['spec'];
 
-			const aggregations = createAggregation(queryData, panelType);
+			// Skip aggregation for raw request type
+			const aggregations =
+				requestType === 'raw' ? undefined : createAggregation(queryData, panelType);
 
 			switch (signal) {
 				case 'traces':
