@@ -15,98 +15,104 @@ describe('Login Flow', () => {
 	test('Login form is rendered correctly', async () => {
 		render(<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="" />);
 
-		const headingElement = screen.getByRole('heading', {
-			name: 'login_page_title',
-		});
-		expect(headingElement).toBeInTheDocument();
+		// Check for the main description
+		expect(
+			screen.getByText(
+				'Sign in to monitor, trace, and troubleshoot your applications effortlessly.',
+			),
+		).toBeInTheDocument();
 
-		const textboxElement = screen.getByRole('textbox');
-		expect(textboxElement).toBeInTheDocument();
+		// Email input
+		const emailInput = screen.getByTestId('email');
+		expect(emailInput).toBeInTheDocument();
+		expect(emailInput).toHaveAttribute('type', 'email');
 
-		const buttonElement = screen.getByRole('button', {
-			name: 'button_initiate_login',
-		});
-		expect(buttonElement).toBeInTheDocument();
+		// Next button
+		const nextButton = screen.getByRole('button', { name: /next/i });
+		expect(nextButton).toBeInTheDocument();
 
-		const noAccountPromptElement = screen.getByText('prompt_no_account');
-		expect(noAccountPromptElement).toBeInTheDocument();
+		// No account prompt (default: canSelfRegister is false)
+		expect(
+			screen.getByText(
+				"Don't have an account? Contact your admin to send you an invite link.",
+			),
+		).toBeInTheDocument();
 	});
 
-	test(`Display "invalid_email" if email is not provided`, async () => {
+	test('Display error if email is not provided', async () => {
 		render(<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="" />);
 
-		const buttonElement = screen.getByText('button_initiate_login');
-		fireEvent.click(buttonElement);
+		const nextButton = screen.getByRole('button', { name: /next/i });
+		fireEvent.click(nextButton);
 
 		await waitFor(() =>
 			expect(errorNotification).toHaveBeenCalledWith({
-				message: 'invalid_email',
+				message: 'Please enter a valid email address',
 			}),
 		);
 	});
 
-	test('Display invalid_config if invalid email is provided and next clicked', async () => {
+	test('Display error if invalid email is provided and next clicked', async () => {
 		render(<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="" />);
 
-		const textboxElement = screen.getByRole('textbox');
-		fireEvent.change(textboxElement, {
+		const emailInput = screen.getByTestId('email');
+		fireEvent.change(emailInput, {
 			target: { value: 'failEmail@signoz.io' },
 		});
 
-		const buttonElement = screen.getByRole('button', {
-			name: 'button_initiate_login',
-		});
-		fireEvent.click(buttonElement);
+		const nextButton = screen.getByRole('button', { name: /next/i });
+		fireEvent.click(nextButton);
 
 		await waitFor(() =>
 			expect(errorNotification).toHaveBeenCalledWith({
-				message: 'invalid_config',
+				message:
+					'Invalid configuration detected, please contact your administrator',
 			}),
 		);
 	});
 
-	test('providing shaheer@signoz.io as email and pressing next, should make the login_with_sso button visible', async () => {
+	test('providing shaheer@signoz.io as email and pressing next, should make the Login with SSO button visible', async () => {
 		render(<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="" />);
 		act(() => {
 			fireEvent.change(screen.getByTestId('email'), {
 				target: { value: 'shaheer@signoz.io' },
 			});
-
 			fireEvent.click(screen.getByTestId('initiate_login'));
 		});
 
 		await waitFor(() => {
-			expect(screen.getByText('login_with_sso')).toBeInTheDocument();
+			expect(screen.getByText(/login with sso/i)).toBeInTheDocument();
 		});
 	});
 
 	test('Display email, password, forgot password if password=Y', () => {
 		render(<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="Y" />);
 
-		const emailTextBox = screen.getByTestId('email');
-		expect(emailTextBox).toBeInTheDocument();
+		const emailInput = screen.getByTestId('email');
+		expect(emailInput).toBeInTheDocument();
 
-		const passwordTextBox = screen.getByTestId('password');
-		expect(passwordTextBox).toBeInTheDocument();
+		const passwordInput = screen.getByTestId('password');
+		expect(passwordInput).toBeInTheDocument();
 
-		const forgotPasswordLink = screen.getByText('forgot_password');
+		const forgotPasswordLink = screen.getByText('Forgot password?');
 		expect(forgotPasswordLink).toBeInTheDocument();
 	});
 
-	test('Display tooltip with "prompt_forgot_password" if forgot password is clicked while password=Y', async () => {
+	test('Display tooltip with correct message if forgot password is hovered while password=Y', async () => {
 		render(<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="Y" />);
-		const forgotPasswordLink = screen.getByText('forgot_password');
+		const forgotPasswordLink = screen.getByText('Forgot password?');
 
 		act(() => {
 			fireEvent.mouseOver(forgotPasswordLink);
 		});
 
 		await waitFor(() => {
-			const forgotPasswordTooltip = screen.getByRole('tooltip', {
-				name: 'prompt_forgot_password',
-			});
-			expect(forgotPasswordLink).toBeInTheDocument();
-			expect(forgotPasswordTooltip).toBeInTheDocument();
+			// Tooltip text is static in the new UI
+			expect(
+				screen.getByText(
+					'Ask your admin to reset your password and send you a new invite link',
+				),
+			).toBeInTheDocument();
 		});
 	});
 });

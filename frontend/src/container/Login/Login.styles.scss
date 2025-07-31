@@ -1,0 +1,44 @@
+.login-form-container {
+	display: flex;
+	justify-content: center;
+	width: 100%;
+	align-items: flex-start;
+
+	.login-form-header {
+		margin-bottom: 16px;
+	}
+
+	.login-form-header-text {
+		color: var(--text-vanilla-300);
+	}
+
+	.next-btn {
+		padding: 0px 16px;
+	}
+
+	.login-form-input {
+		height: 40px;
+	}
+
+	.no-acccount {
+		color: var(--text-vanilla-300);
+		font-size: 12px;
+		margin-top: 16px;
+	}
+}
+
+.lightMode {
+	.login-form-container {
+		.login-form-header {
+			color: var(--text-ink-500);
+		}
+
+		.login-form-header-text {
+			color: var(--text-ink-500);
+		}
+
+		.no-acccount {
+			color: var(--text-ink-500);
+		}
+	}
+}

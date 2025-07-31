@@ -22,7 +22,9 @@ class LogsResource(ABC):
         fingerprint: str,
         seen_at_ts_bucket_start: np.int64,
     ) -> None:
-        self.labels = json.dumps(labels, separators=(',', ':')) # clickhouse treats {"a": "b"} differently from {"a":"b"}. In the first case it is not able to run json functions
+        self.labels = json.dumps(
+            labels, separators=(",", ":")
+        )  # clickhouse treats {"a": "b"} differently from {"a":"b"}. In the first case it is not able to run json functions
         self.fingerprint = fingerprint
         self.seen_at_ts_bucket_start = seen_at_ts_bucket_start
 
