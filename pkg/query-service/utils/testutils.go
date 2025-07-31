@@ -8,7 +8,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
+	"github.com/SigNoz/signoz/pkg/sqlmigration/s100sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
+	"github.com/SigNoz/signoz/pkg/sqlschema"
+	"github.com/SigNoz/signoz/pkg/sqlschema/sqlitesqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlitesqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -30,48 +33,17 @@ func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath s
 		t.Fatalf("could not create test db sqlite store: %v", err)
 	}
 
+	sqlSchema, err := sqlitesqlschema.New(context.Background(), factorytest.NewSettings(), sqlschema.Config{}, sqlStore)
+	if err != nil {
+		t.Fatalf("could not create test db sqlite schema: %v", err)
+	}
+
 	sqlmigrations, err := sqlmigration.New(
 		context.Background(),
 		factorytest.NewSettings(),
 		sqlmigration.Config{},
 		factory.MustNewNamedMap(
-			sqlmigration.NewAddDataMigrationsFactory(),
-			sqlmigration.NewAddOrganizationFactory(),
-			sqlmigration.NewAddPreferencesFactory(),
-			sqlmigration.NewAddDashboardsFactory(),
-			sqlmigration.NewAddSavedViewsFactory(),
-			sqlmigration.NewAddAgentsFactory(),
-			sqlmigration.NewAddPipelinesFactory(),
-			sqlmigration.NewAddIntegrationsFactory(),
-			sqlmigration.NewAddLicensesFactory(),
-			sqlmigration.NewAddPatsFactory(),
-			sqlmigration.NewModifyDatetimeFactory(),
-			sqlmigration.NewModifyOrgDomainFactory(),
-			sqlmigration.NewUpdateOrganizationFactory(sqlStore),
-			sqlmigration.NewAddAlertmanagerFactory(sqlStore),
-			sqlmigration.NewUpdateDashboardAndSavedViewsFactory(sqlStore),
-			sqlmigration.NewUpdatePatAndOrgDomainsFactory(sqlStore),
-			sqlmigration.NewUpdatePipelines(sqlStore),
-			sqlmigration.NewDropLicensesSitesFactory(sqlStore),
-			sqlmigration.NewUpdateInvitesFactory(sqlStore),
-			sqlmigration.NewUpdatePatFactory(sqlStore),
-			sqlmigration.NewUpdateAlertmanagerFactory(sqlStore),
-			sqlmigration.NewUpdatePreferencesFactory(sqlStore),
-			sqlmigration.NewUpdateApdexTtlFactory(sqlStore),
-			sqlmigration.NewUpdateResetPasswordFactory(sqlStore),
-			sqlmigration.NewUpdateRulesFactory(sqlStore),
-			sqlmigration.NewAddVirtualFieldsFactory(),
-			sqlmigration.NewUpdateIntegrationsFactory(sqlStore),
-			sqlmigration.NewUpdateOrganizationsFactory(sqlStore),
-			sqlmigration.NewDropGroupsFactory(sqlStore),
-			sqlmigration.NewCreateQuickFiltersFactory(sqlStore),
-			sqlmigration.NewUpdateQuickFiltersFactory(sqlStore),
-			sqlmigration.NewAuthRefactorFactory(sqlStore),
-			sqlmigration.NewMigratePATToFactorAPIKey(sqlStore),
-			sqlmigration.NewUpdateApiMonitoringFiltersFactory(sqlStore),
-			sqlmigration.NewAddKeyOrganizationFactory(sqlStore),
-			sqlmigration.NewUpdateDashboardFactory(sqlStore),
-			sqlmigration.NewUpdateAgentsFactory(sqlStore),
+			s100sqlmigration.NewV100Factory(sqlStore, sqlSchema),
 		),
 	)
 	if err != nil {
