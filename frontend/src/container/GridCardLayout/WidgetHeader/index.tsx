@@ -211,6 +211,15 @@ function WidgetHeader({
 		maxLength: 100,
 	});
 
+	const renderErrorMessage = useMemo(
+		() =>
+			errorMessage
+				?.split('\n')
+				// eslint-disable-next-line react/no-array-index-key
+				.map((item, i) => <p key={i}>{item}</p>),
+		[errorMessage],
+	);
+
 	if (widget.id === PANEL_TYPES.EMPTY_WIDGET) {
 		return null;
 	}
@@ -270,7 +279,7 @@ function WidgetHeader({
 						)}
 						{queryResponse.isError && (
 							<Tooltip
-								title={errorMessage}
+								title={renderErrorMessage}
 								placement={errorTooltipPosition}
 								className="widget-api-actions"
 							>

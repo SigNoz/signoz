@@ -11,6 +11,7 @@ import { MetricsLoading } from 'container/MetricsExplorer/MetricsLoading/Metrics
 import NoLogs from 'container/NoLogs/NoLogs';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -33,8 +34,6 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
 
-import { Container } from './styles';
-
 function TimeSeriesView({
 	data,
 	isLoading,
@@ -48,6 +47,7 @@ function TimeSeriesView({
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 	const location = useLocation();
+	const { currentQuery } = useQueryBuilder();
 
 	const chartData = useMemo(() => getUPlotChartData(data?.payload), [
 		data?.payload,
@@ -159,10 +159,12 @@ function TimeSeriesView({
 		tzDate: (timestamp: number) =>
 			uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 		timezone: timezone.value,
+		currentQuery,
+		query: currentQuery,
 	});
 
 	return (
-		<Container>
+		<div className="time-series-view">
 			{isError && <LogsError />}
 			<div
 				className="graph-container"
@@ -204,7 +206,7 @@ function TimeSeriesView({
 					!isEmpty(chartData?.[0]) &&
 					chartOptions && <Uplot data={chartData} options={chartOptions} />}
 			</div>
-		</Container>
+		</div>
 	);
 }
 

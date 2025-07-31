@@ -18,7 +18,7 @@ function ErrorContent({ error }: ErrorContentProps): JSX.Element {
 		errors: errorMessages,
 		code: errorCode,
 		message: errorMessage,
-	} = error.error.error;
+	} = error?.error?.error || {};
 	return (
 		<section className="error-content">
 			{/* Summary Header */}

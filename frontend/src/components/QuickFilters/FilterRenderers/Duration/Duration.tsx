@@ -178,10 +178,12 @@ function Duration({
 			...data,
 			filters: {
 				...data.filters,
-				items: data.filters?.items?.map((item) => ({
-					...item,
-					id: '',
-				})),
+				items:
+					data.filters?.items?.map((item) => ({
+						...item,
+						id: '',
+					})) || [],
+				op: data.filters?.op || 'AND',
 			},
 		}));
 		return clonedQuery;
@@ -199,11 +201,12 @@ function Duration({
 							...item.filters,
 							items: props?.resetAll
 								? []
-								: (unionTagFilterItems(item.filters?.items, preparePostData())
+								: (unionTagFilterItems(item.filters?.items || [], preparePostData())
 										.map((item) =>
 											item.key?.key === props?.clearByType ? undefined : item,
 										)
 										.filter((i) => i) as TagFilterItem[]),
+							op: item.filters?.op || 'AND',
 						},
 					})),
 				},

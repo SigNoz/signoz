@@ -257,6 +257,10 @@
 }
 
 .lightMode {
+	.explorer-options-container {
+		background: var(--bg-vanilla-100);
+	}
+
 	.explorer-options {
 		background: transparent;
 		box-shadow: none;
