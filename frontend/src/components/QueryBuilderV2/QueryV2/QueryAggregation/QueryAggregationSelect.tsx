@@ -68,7 +68,7 @@ const operatorArgMeta: Record<
 	[TracesAggregatorOperator.P90]: { acceptsArgs: true, multiple: false },
 	[TracesAggregatorOperator.P95]: { acceptsArgs: true, multiple: false },
 	[TracesAggregatorOperator.P99]: { acceptsArgs: true, multiple: false },
-	[TracesAggregatorOperator.RATE]: { acceptsArgs: true, multiple: false },
+	[TracesAggregatorOperator.RATE]: { acceptsArgs: false, multiple: false },
 	[TracesAggregatorOperator.RATE_SUM]: { acceptsArgs: true, multiple: false },
 	[TracesAggregatorOperator.RATE_AVG]: { acceptsArgs: true, multiple: false },
 	[TracesAggregatorOperator.RATE_MIN]: { acceptsArgs: true, multiple: false },
