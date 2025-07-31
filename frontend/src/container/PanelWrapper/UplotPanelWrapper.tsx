@@ -87,6 +87,7 @@ function UplotPanelWrapper({
 		coordinates,
 		subMenu,
 		setSubMenu,
+		contextLinks: widget.contextLinks,
 	});
 
 	useEffect(() => {

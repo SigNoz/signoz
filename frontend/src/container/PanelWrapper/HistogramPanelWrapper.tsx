@@ -46,6 +46,7 @@ function HistogramPanelWrapper({
 		coordinates,
 		subMenu,
 		setSubMenu,
+		contextLinks: widget.contextLinks,
 	});
 
 	const clickHandlerWithContextMenu = useCallback(

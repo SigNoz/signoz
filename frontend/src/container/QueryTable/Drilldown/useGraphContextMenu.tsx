@@ -1,5 +1,6 @@
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useMemo } from 'react';
+import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import useAggregateDrilldown, { AggregateData } from './useAggregateDrilldown';
@@ -12,6 +13,7 @@ interface UseGraphContextMenuProps {
 	coordinates: { x: number; y: number } | null;
 	subMenu: string;
 	setSubMenu: (subMenu: string) => void;
+	contextLinks?: ContextLinksData;
 }
 
 export function useGraphContextMenu({
@@ -22,6 +24,7 @@ export function useGraphContextMenu({
 	coordinates,
 	subMenu,
 	setSubMenu,
+	contextLinks,
 }: UseGraphContextMenuProps): {
 	menuItemsConfig: {
 		header?: string | React.ReactNode;
@@ -37,6 +40,7 @@ export function useGraphContextMenu({
 		subMenu,
 		setSubMenu,
 		aggregateData: graphData,
+		contextLinks,
 	});
 
 	const menuItemsConfig = useMemo(() => {

@@ -166,6 +166,7 @@ function PiePanelWrapper({
 		coordinates,
 		subMenu,
 		setSubMenu,
+		contextLinks: widget.contextLinks,
 	});
 
 	return (

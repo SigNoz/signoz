@@ -1,6 +1,7 @@
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { ClickedData } from 'periscope/components/ContextMenu/types';
 import { useMemo } from 'react';
+import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { ConfigType } from './contextConfig';
@@ -16,6 +17,7 @@ interface UseTableContextMenuProps {
 	coordinates: { x: number; y: number } | null;
 	subMenu: string;
 	setSubMenu: (subMenu: string) => void;
+	contextLinks?: ContextLinksData;
 }
 
 export function useTableContextMenu({
@@ -26,6 +28,7 @@ export function useTableContextMenu({
 	coordinates,
 	subMenu,
 	setSubMenu,
+	contextLinks,
 }: UseTableContextMenuProps): {
 	menuItemsConfig: {
 		header?: string | React.ReactNode;
@@ -56,6 +59,7 @@ export function useTableContextMenu({
 		subMenu,
 		setSubMenu,
 		aggregateData,
+		contextLinks,
 	});
 
 	const menuItemsConfig = useMemo(() => {

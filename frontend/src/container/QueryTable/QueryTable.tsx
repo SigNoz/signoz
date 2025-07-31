@@ -35,7 +35,7 @@ export function QueryTable({
 
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
-	const { loading, enableDrillDown = false } = props;
+	const { loading, enableDrillDown = false, contextLinks } = props;
 
 	const {
 		coordinates,
@@ -54,6 +54,7 @@ export function QueryTable({
 		coordinates,
 		subMenu,
 		setSubMenu,
+		contextLinks,
 	});
 
 	const { columns: newColumns, dataSource: newDataSource } = useMemo(() => {
