@@ -1072,14 +1072,6 @@ func (t *telemetryMetaStore) getMeterFieldValues(ctx context.Context, fieldValue
 		sb.Where(sb.E("metric_name", fieldValueSelector.MetricContext.MetricName))
 	}
 
-	if fieldValueSelector.StartUnixMilli > 0 {
-		sb.Where(sb.GE("last_reported_unix_milli", fieldValueSelector.StartUnixMilli))
-	}
-
-	if fieldValueSelector.EndUnixMilli > 0 {
-		sb.Where(sb.LE("first_reported_unix_milli", fieldValueSelector.EndUnixMilli))
-	}
-
 	if fieldValueSelector.Value != "" {
 		if fieldValueSelector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
 			sb.Where(sb.E("attr_string_value", fieldValueSelector.Value))
@@ -1195,6 +1187,33 @@ func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, metricNa
 	}
 
 	result := make(map[string]metrictypes.Temporality)
+	metricsTemporality, err := t.fetchMetricsTemporality(ctx, t.metricsDBName, t.metricsFieldsTblName, metricNames...)
+	if err != nil {
+		return nil, err
+	}
+	meterMetricsTemporality, err := t.fetchMetricsTemporality(ctx, t.meterDBName, t.meterFieldsTblName, metricNames...)
+	if err != nil {
+		return nil, err
+	}
+
+	// For metrics not found in the database, set to Unknown
+	for _, metricName := range metricNames {
+		if temporality, exists := metricsTemporality[metricName]; exists {
+			result[metricName] = temporality
+			continue
+		}
+		if temporality, exists := meterMetricsTemporality[metricName]; exists {
+			result[metricName] = temporality
+			continue
+		}
+		result[metricName] = metrictypes.Unknown
+	}
+
+	return result, nil
+}
+
+func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, database string, table string, metricNames ...string) (map[string]metrictypes.Temporality, error) {
+	result := make(map[string]metrictypes.Temporality)
 
 	// Build query to fetch temporality for all metrics
 	// We use attr_string_value where attr_name = '__temporality__'
@@ -1243,13 +1262,6 @@ func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, metricNa
 		}
 
 		result[metricName] = temporality
-	}
-
-	// For metrics not found in the database, set to Unknown
-	for _, metricName := range metricNames {
-		if _, exists := result[metricName]; !exists {
-			result[metricName] = metrictypes.Unknown
-		}
 	}
 
 	return result, nil

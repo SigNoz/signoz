@@ -133,7 +133,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	}
 
 	sb.SelectMore(fmt.Sprintf("%s AS value", aggCol))
-	sb.From(fmt.Sprintf("%s.%s AS points", DBName, SamplesTableName))
+	sb.From(fmt.Sprintf("%s.%s AS points", DBName, SamplesV4Agg1dTableName))
 	sb.Where(
 		sb.In("metric_name", query.Aggregations[0].MetricName),
 		sb.GTE("unix_milli", start),
@@ -213,7 +213,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 
 	sb.SelectMore(fmt.Sprintf("%s AS per_series_value", aggCol))
 
-	sb.From(fmt.Sprintf("%s.%s AS points", DBName, SamplesTableName))
+	sb.From(fmt.Sprintf("%s.%s AS points", DBName, SamplesV4Agg1dTableName))
 	sb.Where(
 		sb.In("metric_name", query.Aggregations[0].MetricName),
 		sb.GTE("unix_milli", start),
@@ -276,7 +276,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	aggCol := AggregationColumnForSamplesTable(query.Aggregations[0].Temporality, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	baseSb.SelectMore(fmt.Sprintf("%s AS per_series_value", aggCol))
 
-	baseSb.From(fmt.Sprintf("%s.%s AS points", DBName, SamplesTableName))
+	baseSb.From(fmt.Sprintf("%s.%s AS points", DBName, SamplesV4Agg1dTableName))
 	baseSb.Where(
 		baseSb.In("metric_name", query.Aggregations[0].MetricName),
 		baseSb.GTE("unix_milli", start),
