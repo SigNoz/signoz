@@ -199,6 +199,7 @@ function GridCardGraph({
 		[requestData.query],
 	);
 
+	console.log('requestData', requestData);
 	const queryResponse = useGetQueryRange(
 		{
 			...requestData,
