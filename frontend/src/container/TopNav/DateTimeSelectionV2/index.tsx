@@ -27,7 +27,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax, { isValidTimeFormat } from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
-import { isObject } from 'lodash-es';
+import { cloneDeep, isObject } from 'lodash-es';
 import { Check, Copy, Info, Send, Undo } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import { useCallback, useEffect, useState } from 'react';
@@ -45,6 +45,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { normalizeTimeToMs } from 'utils/timeUtils';
+import { v4 as uuid } from 'uuid';
 
 import AutoRefresh from '../AutoRefreshV2';
 import { DateTimeRangeType } from '../CustomDateTimeModal';
@@ -185,7 +186,12 @@ function DateTimeSelection({
 		false,
 	);
 
-	const { stagedQuery, initQueryBuilderData, panelType } = useQueryBuilder();
+	const {
+		stagedQuery,
+		currentQuery,
+		initQueryBuilderData,
+		panelType,
+	} = useQueryBuilder();
 
 	const handleGoLive = useCallback(() => {
 		if (!stagedQuery) return;
@@ -345,6 +351,30 @@ function DateTimeSelection({
 		return `Refreshed ${secondsDiff} sec ago`;
 	}, [maxTime, minTime, selectedTime]);
 
+	const getUpdatedCompositeQuery = useCallback((): string => {
+		let updatedCompositeQuery = cloneDeep(currentQuery);
+		updatedCompositeQuery.id = uuid();
+		// Remove the filters
+		updatedCompositeQuery = {
+			...updatedCompositeQuery,
+			builder: {
+				...updatedCompositeQuery.builder,
+				queryData: updatedCompositeQuery.builder.queryData.map((item) => ({
+					...item,
+					filter: {
+						...item.filter,
+						expression: item.filter?.expression?.trim() || '',
+					},
+					filters: {
+						items: [],
+						op: 'AND',
+					},
+				})),
+			},
+		};
+		return JSON.stringify(updatedCompositeQuery);
+	}, [currentQuery]);
+
 	const onSelectHandler = useCallback(
 		(value: Time | CustomTimeType): void => {
 			if (isModalTimeSelection) {
@@ -380,26 +410,21 @@ function DateTimeSelection({
 			// Remove Hidden Filters from URL query parameters on time change
 			urlQuery.delete(QueryParams.activeLogId);
 
+			const updatedCompositeQuery = getUpdatedCompositeQuery();
+			urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
+
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 			safeNavigate(generatedUrl);
 
-			// For logs explorer - time range handling is managed in useCopyLogLink.ts:52
-
-			if (!stagedQuery) {
-				return;
-			}
-			// the second boolean param directs the qb about the time change so to merge the query and retain the current state
-			// we removed update step interval to stop auto updating the value on time change
-			initQueryBuilderData(stagedQuery, true);
+			// // For logs explorer - time range handling is managed in useCopyLogLink.ts:52
 		},
 		[
-			initQueryBuilderData,
 			isModalTimeSelection,
 			location.pathname,
 			onTimeChange,
 			refreshButtonHidden,
 			safeNavigate,
-			stagedQuery,
+			getUpdatedCompositeQuery,
 			updateLocalStorageForRoutes,
 			updateTimeInterval,
 			urlQuery,
@@ -462,6 +487,10 @@ function DateTimeSelection({
 				);
 				urlQuery.set(QueryParams.endTime, endTime?.toDate().getTime().toString());
 				urlQuery.delete(QueryParams.relativeTime);
+
+				const updatedCompositeQuery = getUpdatedCompositeQuery();
+				urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
+
 				const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 				safeNavigate(generatedUrl);
 			}
