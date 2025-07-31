@@ -209,8 +209,14 @@ func (mc *migrateCommon) updateQueryData(ctx context.Context, queryData map[stri
 				if orderMap, ok := order.(map[string]any); ok {
 					columnName, _ := orderMap["columnName"].(string)
 					// skip id for (traces)
-					if columnName == "id" && dataSource == "traces" {
+					if (columnName == "id" || columnName == "timestamp") && dataSource == "traces" {
 						mc.logger.InfoContext(ctx, "skipping `id` order by for traces")
+						continue
+					}
+
+					// skip id for (traces)
+					if (columnName == "id" || columnName == "timestamp") && dataSource == "logs" {
+						mc.logger.InfoContext(ctx, "skipping `id`/`timestamp` order by for logs")
 						continue
 					}
 
@@ -498,9 +504,9 @@ func (mc *migrateCommon) createFilterExpression(ctx context.Context, queryData m
 
 	expression := mc.buildExpression(ctx, items, op, dataSource)
 	if expression != "" {
-		if groupByExists := mc.groupByExistsExpr(queryData); groupByExists != "" {
+		if groupByExists := mc.groupByExistsExpr(queryData); groupByExists != "" && dataSource != "metrics" {
 			mc.logger.InfoContext(ctx, "adding default exists for old qb", "group_by_exists", groupByExists)
-			expression += groupByExists
+			expression += " " + groupByExists
 		}
 
 		queryData["filter"] = map[string]any{
