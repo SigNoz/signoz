@@ -1,0 +1,95 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: signoz-schema-migrator-fixed
+  namespace: signoz
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      initContainers:
+      - name: clickhouse-ready-check
+        image: docker.io/clickhouse/clickhouse-server:24.1.2-alpine
+        command:
+        - sh
+        - -c
+        - |
+          echo "Running clickhouse ready check"
+          while true
+          do
+            version="$(CLICKHOUSE_VERSION)"
+            shards="$(CLICKHOUSE_SHARDS)"
+            replicas="$(CLICKHOUSE_REPLICAS)"
+            current_version="$(clickhouse client --host ${CLICKHOUSE_HOST} --port ${CLICKHOUSE_PORT} --user "${CLICKHOUSE_USER}" --password "${CLICKHOUSE_PASSWORD}" -q "SELECT version()")"
+            if [ -z "$current_version" ]; then
+              echo "waiting for clickhouse to be ready"
+              sleep 5
+              continue
+            fi
+            if [ -z "$(echo "$current_version" | grep "$version")" ]; then
+              echo "expected version: $version, current version: $current_version"
+              echo "waiting for clickhouse with correct version"
+              sleep 5
+              continue
+            fi
+            current_shards="$(clickhouse client --host ${CLICKHOUSE_HOST} --port ${CLICKHOUSE_PORT} --user "${CLICKHOUSE_USER}" --password "${CLICKHOUSE_PASSWORD}" -q "SELECT count(DISTINCT(shard_num)) FROM system.clusters WHERE cluster = 'prod'")"
+            if [ -z "$current_shards" ]; then
+              echo "waiting for clickhouse to be ready"
+              sleep 5
+              continue
+            fi
+            if [ "$current_shards" -ne "$shards" ]; then
+              echo "expected shard count: $shards, current shard count: $current_shards"
+              echo "waiting for clickhouse with correct shard count"
+              sleep 5
+              continue
+            fi
+            current_replicas="$(clickhouse client --host ${CLICKHOUSE_HOST} --port ${CLICKHOUSE_PORT} --user "${CLICKHOUSE_USER}" --password "${CLICKHOUSE_PASSWORD}" -q "SELECT count(DISTINCT(replica_num)) FROM system.clusters WHERE cluster = 'prod'")"
+            if [ -z "$current_replicas" ]; then
+              echo "waiting for clickhouse to be ready"
+              sleep 5
+              continue
+            fi
+            if [ "$current_replicas" -ne "$replicas" ]; then
+              echo "expected replica count: $replicas, current replica count: $current_replicas"
+              echo "waiting for clickhouse with correct replica count"
+              sleep 5
+              continue
+            fi
+            break
+          done
+          echo "clickhouse ready, starting schema migrator now"
+        env:
+        - name: CLICKHOUSE_HOST
+          value: "signoz-clickhouse"
+        - name: CLICKHOUSE_PORT
+          value: "9000"
+        - name: CLICKHOUSE_USER
+          value: "admin"
+        - name: CLICKHOUSE_PASSWORD
+          value: "27ff0399-0d3a-4bd8-919d-17c2181e6fb9"
+        - name: CLICKHOUSE_VERSION
+          value: "24.1.2"
+        - name: CLICKHOUSE_SHARDS
+          value: "2"
+        - name: CLICKHOUSE_REPLICAS
+          value: "2"
+      containers:
+      - name: schema-migrator
+        image: docker.io/signoz/signoz-schema-migrator:v0.128.2
+        args:
+        - "sync"
+        - "--cluster-name"
+        - "prod"
+        - "--dsn"
+        - "tcp://admin:27ff0399-0d3a-4bd8-919d-17c2181e6fb9@signoz-clickhouse:9000"
+        - "--up="
+        env:
+        - name: CLICKHOUSE_HOST
+          value: "signoz-clickhouse"
+        - name: CLICKHOUSE_PORT
+          value: "9000"
+        - name: CLICKHOUSE_USER
+          value: "admin"
+        - name: CLICKHOUSE_PASSWORD
+          value: "27ff0399-0d3a-4bd8-919d-17c2181e6fb9"
