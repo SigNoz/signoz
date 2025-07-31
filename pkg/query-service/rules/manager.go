@@ -363,6 +363,10 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 				return err
 			}
 
+			if len(channels) == 0 {
+				return errors.New("no channels found for this org, please set channels first")
+			}
+
 			for _, channel := range channels {
 				preferredChannels = append(preferredChannels, channel.Name)
 			}
@@ -547,6 +551,9 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 			channels, err := m.alertmanager.ListChannels(ctx, claims.OrgID)
 			if err != nil {
 				return err
+			}
+			if len(channels) == 0 {
+				return errors.New("no channels found for this org, please set channels first")
 			}
 
 			for _, channel := range channels {
