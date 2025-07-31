@@ -24,7 +24,7 @@ const verifyEntityLogsPayload = ({
 	expectedOffset,
 	initialTimeRange,
 }: {
-	payload: any; // Using any to handle the actual payload structure
+	payload: QueryRangePayload;
 	expectedOffset: number;
 	initialTimeRange?: { start: number; end: number };
 }): IBuilderQuery => {
