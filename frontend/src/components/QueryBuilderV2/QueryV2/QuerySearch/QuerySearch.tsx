@@ -317,6 +317,7 @@ function QuerySearch({
 					key,
 					searchText: sanitizedSearchText,
 					signal: dataSource,
+					metricName: debouncedMetricName ?? undefined,
 				});
 
 				// Skip updates if component unmounted or key changed
@@ -408,7 +409,7 @@ function QuerySearch({
 				setIsFetchingCompleteValuesList(false);
 			}
 		},
-		[activeKey, dataSource, isLoadingSuggestions],
+		[activeKey, dataSource, isLoadingSuggestions, debouncedMetricName],
 	);
 
 	const debouncedFetchValueSuggestions = useMemo(

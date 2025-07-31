@@ -44,4 +44,5 @@ export interface QueryKeyValueRequestProps {
 	signal: 'traces' | 'logs' | 'metrics';
 	key: string;
 	searchText: string;
+	metricName?: string;
 }
