@@ -55,6 +55,7 @@ module.exports = {
 			},
 		],
 		'react/prop-types': 'off',
+		'react/require-default-props': 'off',
 		'@typescript-eslint/explicit-function-return-type': 'error',
 		'@typescript-eslint/no-var-requires': 'error',
 		'react/no-array-index-key': 'error',
