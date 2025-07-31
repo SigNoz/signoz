@@ -6,6 +6,9 @@ import { useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { Tooltip } from 'antd';
+
+
 import QueryAggregationSelect from './QueryAggregationSelect';
 
 function QueryAggregationOptions({
@@ -53,7 +56,28 @@ function QueryAggregationOptions({
 
 				{showAggregationInterval && (
 					<div className="query-aggregation-interval">
-						<div className="query-aggregation-interval-label">every</div>
+						<Tooltip
+							title={
+								<div>
+									Set the time interval for aggregation
+									<br />
+									<a
+										href="https://signoz.io/docs/userguide/query-builder/#step-interval"
+										target="_blank"
+										rel="noopener noreferrer"
+										style={{ color: '#1890ff', textDecoration: 'underline' }}
+									>
+										Learn about step intervals
+									</a>
+								</div>
+							}
+							placement="top"
+						>
+							<div className="metrics-aggregation-section-content-item-label" style={{ cursor: 'help' }}>
+								every
+							</div>
+						</Tooltip>
+
 						<div className="query-aggregation-interval-input-container">
 							<InputWithLabel
 								initialValue={

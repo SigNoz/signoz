@@ -24,7 +24,6 @@ import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { ExtendedSelectOption } from 'types/common/select';
 import { popupContainer } from 'utils/selectPopupContainer';
-import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 import { removePrefix } from '../GroupByFilter/utils';
 import { selectStyle } from '../QueryBuilderSearch/config';
@@ -114,7 +113,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 
 	const placeholder: string =
 		query.dataSource === DataSource.METRICS
-			? `${transformToUpperCase(query.dataSource)} name`
+			? `Search metric name`
 			: 'Aggregate attribute';
 
 	const getAttributesData = useCallback(

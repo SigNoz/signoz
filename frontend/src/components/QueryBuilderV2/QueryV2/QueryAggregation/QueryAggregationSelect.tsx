@@ -27,7 +27,7 @@ import CodeMirror, {
 	ViewPlugin,
 	ViewUpdate,
 } from '@uiw/react-codemirror';
-import { Button, Popover } from 'antd';
+import { Button, Popover, Tooltip } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
@@ -40,6 +40,9 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';
 
 import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
+
+import { Info } from 'lucide-react';
+
 
 const chipDecoration = Decoration.mark({
 	class: 'chip-decorator',
@@ -639,6 +642,47 @@ function QueryAggregationSelect({
 					}
 				}}
 			/>
+
+			<Tooltip
+				title={
+					<div>
+					Aggregation functions:
+					<br />
+					<span style={{ fontSize: '12px', lineHeight: '1.4' }}>
+						• <strong>count</strong> - number of occurrences<br />
+						• <strong>sum/avg</strong> - sum/average of values<br />
+						• <strong>min/max</strong> - minimum/maximum value<br />
+						• <strong>p50/p90/p99</strong> - percentiles<br />
+						• <strong>count_distinct</strong> - unique values<br />
+						• <strong>rate</strong> - per-interval rate
+					</span>
+					<br />
+					<a
+						href="https://signoz.io/docs/userguide/query-builder/#aggregation-functions"
+						target="_blank"
+						rel="noopener noreferrer"
+						style={{ color: '#1890ff', textDecoration: 'underline' }}
+					>
+						View documentation
+					</a>
+					</div>
+				}
+				placement="left"
+			>
+				<div
+					style={{
+					position: 'absolute',
+					top: '8px', // Match the error icon's top position
+					right: validationError ? '40px' : '8px', // Move left when error icon is shown
+					cursor: 'help',
+					zIndex: 10,
+					transition: 'right 0.2s ease'
+					}}
+				>
+					<Info size={14} style={{ opacity: 0.6, color: 'currentColor' }} />
+				</div>
+			</Tooltip>
+
 			{validationError && (
 				<div className="query-aggregation-error-container">
 					<Popover
