@@ -1,11 +1,11 @@
 import './TimeSeriesView.styles.scss';
 
 import logEvent from 'api/common/logEvent';
+import ErrorStateComponent from 'components/Common/ErrorStateComponent';
 import Uplot from 'components/Uplot';
 import { QueryParams } from 'constants/query';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import { getLocalStorageGraphVisibilityState } from 'container/GridCardLayout/GridCard/utils';
-import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import EmptyMetricsSearch from 'container/MetricsExplorer/Explorer/EmptyMetricsSearch';
 import { MetricsLoading } from 'container/MetricsExplorer/MetricsLoading/MetricsLoading';
@@ -30,6 +30,7 @@ import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { LegendPosition } from 'types/api/dashboard/getAll';
+import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -43,6 +44,7 @@ function TimeSeriesView({
 	yAxisUnit,
 	isFilterApplied,
 	dataSource,
+	error,
 }: TimeSeriesViewProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -186,7 +188,7 @@ function TimeSeriesView({
 
 	return (
 		<div className="time-series-view">
-			{isError && <LogsError />}
+			{isError && <ErrorStateComponent error={error as APIError} />}
 			<div
 				className="graph-container"
 				style={{ height: '100%', width: '100%' }}
@@ -238,11 +240,13 @@ interface TimeSeriesViewProps {
 	isError: boolean;
 	isFilterApplied: boolean;
 	dataSource: DataSource;
+	error?: APIError;
 }
 
 TimeSeriesView.defaultProps = {
 	data: undefined,
 	yAxisUnit: 'short',
+	error: undefined,
 };
 
 export default TimeSeriesView;
