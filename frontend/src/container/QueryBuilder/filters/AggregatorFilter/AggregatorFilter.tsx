@@ -77,6 +77,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		{
 			enabled:
 				query.dataSource === DataSource.METRICS ||
+				query.dataSource === DataSource.METER ||
 				(!!queryAggregation.timeAggregation && !!query.dataSource),
 			onSuccess: (data) => {
 				const options: ExtendedSelectOption[] =

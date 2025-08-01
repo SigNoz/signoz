@@ -47,7 +47,7 @@ function TimeSeriesViewContainer({
 		return isValid.every(Boolean);
 	}, [currentQuery]);
 
-	const { data, isLoading, isError, error } = useGetQueryRange(
+	const { data, isLoading, isFetching, isError } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap[dataSource],
 			graphType: panelType || PANEL_TYPES.TIME_SERIES,
@@ -88,7 +88,7 @@ function TimeSeriesViewContainer({
 			isFilterApplied={isFilterApplied}
 			isError={isError}
 			error={error as APIError}
-			isLoading={isLoading}
+			isLoading={isLoading || isFetching}
 			data={responseData}
 			yAxisUnit={isValidToConvertToMs ? 'ms' : 'short'}
 			dataSource={dataSource}

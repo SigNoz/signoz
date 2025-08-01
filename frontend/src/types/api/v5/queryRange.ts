@@ -24,7 +24,7 @@ export type OrderDirection = 'asc' | 'desc';
 
 export type JoinType = 'inner' | 'left' | 'right' | 'full' | 'cross';
 
-export type SignalType = 'traces' | 'logs' | 'metrics';
+export type SignalType = 'traces' | 'logs' | 'metrics' | 'meter';
 
 export type DataType = 'string' | 'number' | 'boolean' | 'array';
 
@@ -239,10 +239,16 @@ export interface MetricBuilderQuery extends BaseBuilderQuery {
 	aggregations?: MetricAggregation[];
 }
 
+export interface MeterBuilderQuery extends BaseBuilderQuery {
+	signal: 'meter';
+	aggregations?: MetricAggregation[];
+}
+
 export type BuilderQuery =
 	| TraceBuilderQuery
 	| LogBuilderQuery
-	| MetricBuilderQuery;
+	| MetricBuilderQuery
+	| MeterBuilderQuery;
 
 export interface QueryBuilderFormula {
 	name: string;

@@ -64,9 +64,9 @@
 
 .explorer-options {
 	padding: 10px 12px;
-	border: 1px solid var(--bg-slate-400);
-	border-radius: 50px;
-	background: rgba(22, 24, 29, 0.6);
+	border-radius: 4px;
+	border: 1px solid var(--bg-slate-500);
+	background: var(--bg-ink-400);
 	backdrop-filter: blur(20px);
 
 	cursor: default;

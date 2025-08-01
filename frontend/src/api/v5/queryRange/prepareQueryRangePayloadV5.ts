@@ -60,9 +60,12 @@ export function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
 /**
  * Gets signal type from data source
  */
-function getSignalType(dataSource: string): 'traces' | 'logs' | 'metrics' {
+function getSignalType(
+	dataSource: string,
+): 'traces' | 'logs' | 'metrics' | 'meter' {
 	if (dataSource === 'traces') return 'traces';
 	if (dataSource === 'logs') return 'logs';
+	if (dataSource === 'meter') return 'meter';
 	return 'metrics';
 }
 
@@ -183,13 +186,17 @@ export function createAggregation(
 	}
 
 	const haveReduceTo =
-		queryData.dataSource === DataSource.METRICS &&
+		(queryData.dataSource === DataSource.METRICS ||
+			queryData.dataSource === DataSource.METER) &&
 		panelType &&
 		(panelType === PANEL_TYPES.TABLE ||
 			panelType === PANEL_TYPES.PIE ||
 			panelType === PANEL_TYPES.VALUE);
 
-	if (queryData.dataSource === DataSource.METRICS) {
+	if (
+		queryData.dataSource === DataSource.METRICS ||
+		queryData.dataSource === DataSource.METER
+	) {
 		return [
 			{
 				metricName:
@@ -253,6 +260,14 @@ export function convertBuilderQueriesToV5(
 						signal: 'logs' as const,
 						...baseSpec,
 						aggregations: aggregations as LogAggregation[],
+					};
+					break;
+				case 'meter':
+					spec = {
+						name: queryName,
+						signal: 'meter' as const,
+						...baseSpec,
+						aggregations: aggregations as MetricAggregation[],
 					};
 					break;
 				case 'metrics':

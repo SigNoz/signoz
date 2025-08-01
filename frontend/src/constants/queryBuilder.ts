@@ -23,6 +23,7 @@ import {
 	BoolOperators,
 	DataSource,
 	LogsAggregatorOperator,
+	MeterAggregateOperator,
 	MetricAggregateOperator,
 	NumberOperators,
 	QueryAdditionalFilter,
@@ -36,6 +37,7 @@ import { v4 as uuid } from 'uuid';
 
 import {
 	logsAggregateOperatorOptions,
+	meterAggregateOperatorOptions,
 	metricAggregateOperatorOptions,
 	metricsGaugeAggregateOperatorOptions,
 	metricsGaugeSpaceAggregateOperatorOptions,
@@ -79,6 +81,7 @@ export const mapOfOperators = {
 	metrics: metricAggregateOperatorOptions,
 	logs: logsAggregateOperatorOptions,
 	traces: tracesAggregateOperatorOptions,
+	meter: meterAggregateOperatorOptions,
 };
 
 export const metricsOperatorsByType = {
@@ -111,6 +114,10 @@ export const mapOfQueryFilters: Record<DataSource, QueryAdditionalFilter[]> = {
 		{ text: 'Having', field: 'having' },
 		{ text: 'Aggregation interval', field: 'stepInterval' },
 	],
+	meter: [
+		{ text: 'Aggregation interval', field: 'stepInterval' },
+		{ text: 'Having', field: 'having' },
+	],
 };
 
 const commonFormulaFilters: QueryAdditionalFilter[] = [
@@ -129,6 +136,7 @@ export const mapOfFormulaToFilters: Record<
 	metrics: commonFormulaFilters,
 	logs: commonFormulaFilters,
 	traces: commonFormulaFilters,
+	meter: commonFormulaFilters,
 };
 
 export const REDUCE_TO_VALUES: SelectOption<ReduceOperators, string>[] = [
@@ -209,6 +217,39 @@ const initialQueryBuilderFormTracesValues: IBuilderQuery = {
 	dataSource: DataSource.TRACES,
 };
 
+export const initialQueryBuilderFormMeterValues: IBuilderQuery = {
+	dataSource: DataSource.METER,
+	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
+	aggregateOperator: MeterAggregateOperator.COUNT,
+	aggregateAttribute: initialAutocompleteData,
+	timeAggregation: MeterAggregateOperator.RATE,
+	spaceAggregation: MeterAggregateOperator.SUM,
+	filter: { expression: '' },
+	aggregations: [
+		{
+			metricName: '',
+			temporality: '',
+			timeAggregation: MeterAggregateOperator.COUNT,
+			spaceAggregation: MeterAggregateOperator.SUM,
+			reduceTo: 'avg',
+		},
+	],
+	functions: [],
+	filters: { items: [], op: 'AND' },
+	expression: createNewBuilderItemName({
+		existNames: [],
+		sourceNames: alphabet,
+	}),
+	disabled: false,
+	stepInterval: undefined,
+	having: [],
+	limit: null,
+	orderBy: [],
+	groupBy: [],
+	legend: '',
+	reduceTo: 'avg',
+};
+
 export const initialQueryBuilderFormValuesMap: Record<
 	DataSource,
 	IBuilderQuery
@@ -216,6 +257,7 @@ export const initialQueryBuilderFormValuesMap: Record<
 	metrics: initialQueryBuilderFormValues,
 	logs: initialQueryBuilderFormLogsValues,
 	traces: initialQueryBuilderFormTracesValues,
+	meter: initialQueryBuilderFormMeterValues,
 };
 
 export const initialFormulaBuilderFormValues: IBuilderFormula = {
@@ -279,10 +321,19 @@ const initialQueryTracesWithType: Query = {
 	},
 };
 
+const initialQueryMeterWithType: Query = {
+	...initialQueryWithType,
+	builder: {
+		...initialQueryWithType.builder,
+		queryData: [initialQueryBuilderFormValuesMap.meter],
+	},
+};
+
 export const initialQueriesMap: Record<DataSource, Query> = {
 	metrics: initialQueryWithType,
 	logs: initialQueryLogsWithType,
 	traces: initialQueryTracesWithType,
+	meter: initialQueryMeterWithType,
 };
 
 export const operatorsByTypes: Record<LocalDataType, string[]> = {

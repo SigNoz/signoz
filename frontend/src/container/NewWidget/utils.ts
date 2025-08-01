@@ -97,6 +97,29 @@ export const panelTypeDataSourceFormValuesMap: Record<
 				],
 			},
 		},
+		[DataSource.METER]: {
+			builder: {
+				queryData: [
+					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'filter',
+					'spaceAggregation',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'stepInterval',
+					'legend',
+					'queryName',
+					'disabled',
+					'functions',
+					'expression',
+					'aggregations',
+				],
+			},
+		},
 		[DataSource.TRACES]: {
 			builder: {
 				queryData: [
@@ -142,6 +165,29 @@ export const panelTypeDataSourceFormValuesMap: Record<
 			},
 		},
 		[DataSource.METRICS]: {
+			builder: {
+				queryData: [
+					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'filter',
+					'spaceAggregation',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'stepInterval',
+					'legend',
+					'queryName',
+					'disabled',
+					'functions',
+					'expression',
+					'aggregations',
+				],
+			},
+		},
+		[DataSource.METER]: {
 			builder: {
 				queryData: [
 					'aggregateAttribute',
@@ -231,6 +277,29 @@ export const panelTypeDataSourceFormValuesMap: Record<
 				],
 			},
 		},
+		[DataSource.METER]: {
+			builder: {
+				queryData: [
+					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'filter',
+					'spaceAggregation',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'stepInterval',
+					'legend',
+					'queryName',
+					'disabled',
+					'functions',
+					'expression',
+					'aggregations',
+				],
+			},
+		},
 		[DataSource.TRACES]: {
 			builder: {
 				queryData: [
@@ -276,6 +345,30 @@ export const panelTypeDataSourceFormValuesMap: Record<
 			},
 		},
 		[DataSource.METRICS]: {
+			builder: {
+				queryData: [
+					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'filter',
+					'spaceAggregation',
+					'groupBy',
+					'reduceTo',
+					'limit',
+					'having',
+					'orderBy',
+					'stepInterval',
+					'legend',
+					'queryName',
+					'expression',
+					'disabled',
+					'functions',
+					'aggregations',
+				],
+			},
+		},
+		[DataSource.METER]: {
 			builder: {
 				queryData: [
 					'aggregateAttribute',
@@ -367,6 +460,30 @@ export const panelTypeDataSourceFormValuesMap: Record<
 				],
 			},
 		},
+		[DataSource.METER]: {
+			builder: {
+				queryData: [
+					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'filter',
+					'spaceAggregation',
+					'groupBy',
+					'reduceTo',
+					'limit',
+					'having',
+					'orderBy',
+					'stepInterval',
+					'legend',
+					'queryName',
+					'expression',
+					'disabled',
+					'functions',
+					'aggregations',
+				],
+			},
+		},
 		[DataSource.TRACES]: {
 			builder: {
 				queryData: [
@@ -407,6 +524,11 @@ export const panelTypeDataSourceFormValuesMap: Record<
 				queryData: ['filters', 'filter', 'aggregations'],
 			},
 		},
+		[DataSource.METER]: {
+			builder: {
+				queryData: ['filters', 'filter', 'aggregations'],
+			},
+		},
 		[DataSource.TRACES]: {
 			builder: {
 				queryData: [
@@ -441,6 +563,27 @@ export const panelTypeDataSourceFormValuesMap: Record<
 			},
 		},
 		[DataSource.METRICS]: {
+			builder: {
+				queryData: [
+					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'filter',
+					'spaceAggregation',
+					'having',
+					'reduceTo',
+					'stepInterval',
+					'legend',
+					'queryName',
+					'expression',
+					'disabled',
+					'functions',
+					'aggregations',
+				],
+			},
+		},
+		[DataSource.METER]: {
 			builder: {
 				queryData: [
 					'aggregateAttribute',

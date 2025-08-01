@@ -15,6 +15,8 @@ const getDataSourceFromSignal = (signal: string): DataSource => {
 			return DataSource.LOGS;
 		case 'traces':
 			return DataSource.TRACES;
+		case 'meter':
+			return DataSource.METER;
 		default:
 			return DataSource.METRICS;
 	}

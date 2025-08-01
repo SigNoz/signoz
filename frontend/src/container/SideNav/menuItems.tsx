@@ -8,6 +8,7 @@ import {
 	Book,
 	Boxes,
 	BugIcon,
+	ChartArea,
 	Cloudy,
 	DraftingCompass,
 	FileKey2,
@@ -263,6 +264,14 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		isNew: true,
 		isEnabled: true,
 		itemKey: 'external-apis',
+	},
+	{
+		key: ROUTES.METER_EXPLORER,
+		label: 'Meter Explorer',
+		icon: <ChartArea size={16} />,
+		isNew: true,
+		isEnabled: true,
+		itemKey: 'meter-explorer',
 	},
 	{
 		key: ROUTES.MESSAGING_QUEUES_OVERVIEW,
