@@ -1,5 +1,6 @@
 import ROUTES from 'constants/routes';
 import MessagingQueues from 'pages/MessagingQueues';
+import MeterExplorer from 'pages/MeterExplorer';
 import { RouteProps } from 'react-router-dom';
 
 import {
@@ -432,6 +433,28 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: MetricsExplorer,
 		key: 'METRICS_EXPLORER_VIEWS',
+		isPrivate: true,
+	},
+
+	{
+		path: ROUTES.METER_EXPLORER_BASE,
+		exact: true,
+		component: MeterExplorer,
+		key: 'METER_EXPLORER_BASE',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.METER_EXPLORER,
+		exact: true,
+		component: MeterExplorer,
+		key: 'METER_EXPLORER',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.METER_EXPLORER_VIEWS,
+		exact: true,
+		component: MeterExplorer,
+		key: 'METER_EXPLORER_VIEWS',
 		isPrivate: true,
 	},
 	{

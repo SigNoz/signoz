@@ -29,6 +29,7 @@ export function convertAggregationsToBaseAutocompleteData(
 	if (!aggregations || aggregations.length === 0) {
 		switch (dataSource) {
 			case DataSource.METRICS:
+			case DataSource.METER:
 				return [
 					{
 						id: uuid(),

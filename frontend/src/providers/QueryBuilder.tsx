@@ -854,6 +854,7 @@ export function QueryBuilderProvider({
 	const handleRunQuery = useCallback(
 		(shallUpdateStepInterval?: boolean, newQBQuery?: boolean) => {
 			let currentQueryData = currentQuery;
+
 			if (newQBQuery) {
 				currentQueryData = {
 					...currentQueryData,

@@ -829,7 +829,7 @@ function ExplorerOptions({
 					style={{
 						background: extraData
 							? `linear-gradient(90deg, rgba(0,0,0,0) -5%, ${rgbaColor} 9%, rgba(0,0,0,0) 30%)`
-							: 'transparent',
+							: 'initial',
 					}}
 				>
 					<div className="view-options">

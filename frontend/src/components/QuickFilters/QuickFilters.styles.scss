@@ -1,6 +1,8 @@
 .quick-filters-container {
 	display: flex;
 	height: 100%;
+	position: relative;
+
 	.quick-filters-settings-container {
 		position: relative;
 	}
@@ -102,6 +104,40 @@
 			margin: 8px 12px;
 		}
 	}
+
+	.no-filters-container {
+		display: flex;
+		height: 100%;
+
+		display: flex;
+		height: 100%;
+		gap: 8px;
+		align-items: center;
+		padding: 8px;
+	}
+}
+
+.perilin-bg {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+
+	background: radial-gradient(circle, #fff 10%, transparent 0);
+	background-size: 12px 12px;
+	opacity: 1;
+
+	mask-image: radial-gradient(
+		circle at 50% 0,
+		rgba(11, 12, 14, 0.1) 0,
+		rgba(11, 12, 14, 0) 100%
+	);
+	-webkit-mask-image: radial-gradient(
+		circle at 50% 0,
+		rgba(11, 12, 14, 0.1) 0,
+		rgba(11, 12, 14, 0) 100%
+	);
 }
 
 .lightMode {

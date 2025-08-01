@@ -9,7 +9,7 @@ export interface QueryKeyDataSuggestionsProps {
 	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span';
 	fieldDataType?: QUERY_BUILDER_KEY_TYPES;
 	name: string;
-	signal: 'traces' | 'logs' | 'metrics';
+	signal: 'traces' | 'logs' | 'metrics' | 'meter';
 }
 
 export interface QueryKeySuggestionsResponseProps {
@@ -23,7 +23,7 @@ export interface QueryKeySuggestionsResponseProps {
 }
 
 export interface QueryKeyRequestProps {
-	signal: 'traces' | 'logs' | 'metrics';
+	signal: 'traces' | 'logs' | 'metrics' | 'meter';
 	searchText: string;
 	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span';
 	fieldDataType?: QUERY_BUILDER_KEY_TYPES;
@@ -41,7 +41,9 @@ export interface QueryKeyValueSuggestionsResponseProps {
 }
 
 export interface QueryKeyValueRequestProps {
-	signal: 'traces' | 'logs' | 'metrics';
+	signal: 'traces' | 'logs' | 'metrics' | 'meter';
 	key: string;
 	searchText: string;
 }
+
+export type SignalType = 'traces' | 'logs' | 'metrics' | 'meter';

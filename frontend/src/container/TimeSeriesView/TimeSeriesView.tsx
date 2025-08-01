@@ -1,11 +1,13 @@
 import './TimeSeriesView.styles.scss';
 
 import logEvent from 'api/common/logEvent';
+import { PanelDataLoading } from 'components/PanelDataLoading/PanelDataLoading';
 import Uplot from 'components/Uplot';
 import { QueryParams } from 'constants/query';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
+import NoData from 'container/MeterExplorer/Explorer/NoData';
 import EmptyMetricsSearch from 'container/MetricsExplorer/Explorer/EmptyMetricsSearch';
 import { MetricsLoading } from 'container/MetricsExplorer/MetricsLoading/MetricsLoading';
 import NoLogs from 'container/NoLogs/NoLogs';
@@ -137,6 +139,10 @@ function TimeSeriesView({
 				logEvent('Metrics Explorer: Data present', {
 					panelType: 'TIME_SERIES',
 				});
+			} else if (dataSource === DataSource.METER) {
+				logEvent('Meter Explorer: Data present', {
+					panelType: 'TIME_SERIES',
+				});
 			}
 		}
 	}, [isLoading, isError, chartData, dataSource]);
@@ -175,6 +181,7 @@ function TimeSeriesView({
 				{isLoading && dataSource === DataSource.LOGS && <LogsLoading />}
 				{isLoading && dataSource === DataSource.TRACES && <TracesLoading />}
 				{isLoading && dataSource === DataSource.METRICS && <MetricsLoading />}
+				{isLoading && dataSource === DataSource.METER && <PanelDataLoading />}
 
 				{chartData &&
 					chartData[0] &&
@@ -191,7 +198,8 @@ function TimeSeriesView({
 					!isLoading &&
 					!isError &&
 					!isFilterApplied &&
-					dataSource !== DataSource.METRICS && <NoLogs dataSource={dataSource} />}
+					dataSource !== DataSource.METRICS &&
+					dataSource !== DataSource.METER && <NoLogs dataSource={dataSource} />}
 
 				{chartData &&
 					chartData[0] &&
@@ -199,6 +207,13 @@ function TimeSeriesView({
 					!isLoading &&
 					!isError &&
 					dataSource === DataSource.METRICS && <EmptyMetricsSearch />}
+
+				{chartData &&
+					chartData[0] &&
+					chartData[0]?.length === 0 &&
+					!isLoading &&
+					!isError &&
+					dataSource === DataSource.METER && <NoData />}
 
 				{!isLoading &&
 					!isError &&

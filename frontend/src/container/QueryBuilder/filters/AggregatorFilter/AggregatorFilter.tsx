@@ -73,6 +73,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		{
 			enabled:
 				query.dataSource === DataSource.METRICS ||
+				query.dataSource === DataSource.METER ||
 				(!!queryAggregation.timeAggregation && !!query.dataSource),
 			onSuccess: (data) => {
 				const options: ExtendedSelectOption[] =
@@ -113,7 +114,8 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	}, []);
 
 	const placeholder: string =
-		query.dataSource === DataSource.METRICS
+		query.dataSource === DataSource.METRICS ||
+		query.dataSource === DataSource.METER
 			? `${transformToUpperCase(query.dataSource)} name`
 			: 'Aggregate attribute';
 
