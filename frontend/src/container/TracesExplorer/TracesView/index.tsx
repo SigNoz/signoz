@@ -179,6 +179,10 @@ function TracesView({
 					<EmptyLogsSearch dataSource={DataSource.TRACES} panelType="TRACE" />
 				)}
 
+			{isError && !isLoading && !isFetching && (
+				<ErrorStateComponent error={error as APIError} />
+			)}
+
 			{(tableData || []).length !== 0 && (
 				<ResizeTable
 					loading={isLoading}

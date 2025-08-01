@@ -11,4 +11,5 @@ export type LogsExplorerListProps = {
 	isError: boolean;
 	error?: Error | APIError;
 	isFilterApplied: boolean;
+	error: APIError;
 };
