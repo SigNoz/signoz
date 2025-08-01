@@ -111,18 +111,22 @@ func (a *API) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 				}
 				queryRangeRequest.CompositeQuery.Queries[idx].Spec = spec
 			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
-				replaced, err := variables.ReplaceVariablesInExpression(spec.Filter.Expression, queryRangeRequest.Variables)
-				if err != nil {
-					errs = append(errs, err)
+				if spec.Filter != nil && spec.Filter.Expression != "" {
+					replaced, err := variables.ReplaceVariablesInExpression(spec.Filter.Expression, queryRangeRequest.Variables)
+					if err != nil {
+						errs = append(errs, err)
+					}
+					spec.Filter.Expression = replaced
 				}
-				spec.Filter.Expression = replaced
 				queryRangeRequest.CompositeQuery.Queries[idx].Spec = spec
 			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
-				replaced, err := variables.ReplaceVariablesInExpression(spec.Filter.Expression, queryRangeRequest.Variables)
-				if err != nil {
-					errs = append(errs, err)
+				if spec.Filter != nil && spec.Filter.Expression != "" {
+					replaced, err := variables.ReplaceVariablesInExpression(spec.Filter.Expression, queryRangeRequest.Variables)
+					if err != nil {
+						errs = append(errs, err)
+					}
+					spec.Filter.Expression = replaced
 				}
-				spec.Filter.Expression = replaced
 				queryRangeRequest.CompositeQuery.Queries[idx].Spec = spec
 			}
 		}

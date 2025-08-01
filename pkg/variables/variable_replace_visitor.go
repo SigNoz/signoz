@@ -41,7 +41,6 @@ const specialSkipMarker = "__SKIP_CONDITION__"
 
 // ReplaceVariablesInExpression takes a filter expression and returns it with variables replaced
 func ReplaceVariablesInExpression(expression string, variables map[string]qbtypes.VariableItem) (string, error) {
-	// Setup the ANTLR parsing pipeline
 	input := antlr.NewInputStream(expression)
 	lexer := grammar.NewFilterQueryLexer(input)
 
@@ -50,7 +49,6 @@ func ReplaceVariablesInExpression(expression string, variables map[string]qbtype
 		errors:    []string{},
 	}
 
-	// Set up error handling
 	lexerErrorListener := NewErrorListener()
 	lexer.RemoveErrorListeners()
 	lexer.AddErrorListener(lexerErrorListener)
@@ -61,15 +59,12 @@ func ReplaceVariablesInExpression(expression string, variables map[string]qbtype
 	parser.RemoveErrorListeners()
 	parser.AddErrorListener(parserErrorListener)
 
-	// Parse the query
 	tree := parser.Query()
 
-	// Handle syntax errors
 	if len(parserErrorListener.SyntaxErrors) > 0 {
 		return "", fmt.Errorf("syntax errors in expression: %v", parserErrorListener.SyntaxErrors)
 	}
 
-	// Visit the parse tree
 	result := visitor.Visit(tree).(string)
 
 	if len(visitor.errors) > 0 {
