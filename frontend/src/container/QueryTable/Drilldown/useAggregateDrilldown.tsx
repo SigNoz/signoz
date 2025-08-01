@@ -1,16 +1,10 @@
-import { QueryParams } from 'constants/query';
-import ROUTES from 'constants/routes';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import createQueryParams from 'lib/createQueryParams';
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import {
-	ContextMenuItem,
-	getAggregateContextMenuConfig,
-} from './contextConfig';
-import { FilterData, getViewQuery } from './drilldownUtils';
+import { ContextMenuItem } from './contextConfig';
+import { FilterData } from './drilldownUtils';
+import useBaseAggregateOptions from './useBaseAggregateOptions';
+import useBreakout from './useBreakout';
 
 // Type for aggregate data
 export interface AggregateData {
@@ -21,19 +15,6 @@ export interface AggregateData {
 		endTime: number;
 	};
 }
-
-const getRoute = (key: string): string => {
-	switch (key) {
-		case 'view_logs':
-			return ROUTES.LOGS_EXPLORER;
-		case 'view_metrics':
-			return ROUTES.METRICS_EXPLORER;
-		case 'view_traces':
-			return ROUTES.TRACES_EXPLORER;
-		default:
-			return '';
-	}
-};
 
 const useAggregateDrilldown = ({
 	query,
@@ -55,93 +36,126 @@ const useAggregateDrilldown = ({
 		items?: ContextMenuItem;
 	};
 } => {
-	const { redirectWithQueryBuilderData } = useQueryBuilder();
+	// const { redirectWithQueryBuilderData } = useQueryBuilder();
 
-	const redirectToViewMode = useCallback(
-		(query: Query): void => {
-			redirectWithQueryBuilderData(
-				query,
-				{ [QueryParams.expandedWidgetId]: widgetId }, // add only if view mode
-				undefined,
-				true,
-			);
-		},
-		[widgetId, redirectWithQueryBuilderData],
-	);
-	const { safeNavigate } = useSafeNavigate();
+	// const redirectToViewMode = useCallback(
+	// 	(query: Query): void => {
+	// 		redirectWithQueryBuilderData(
+	// 			query,
+	// 			{ [QueryParams.expandedWidgetId]: widgetId }, // add only if view mode
+	// 			undefined,
+	// 			true,
+	// 		);
+	// 	},
+	// 	[widgetId, redirectWithQueryBuilderData],
+	// );
+	// const { safeNavigate } = useSafeNavigate();
 
-	const handleAggregateDrilldown = useCallback(
-		(key: string, drilldownQuery?: Query): void => {
-			console.log('Aggregate drilldown:', { widgetId, query, key, aggregateData });
+	// const handleAggregateDrilldown = useCallback(
+	// 	(key: string, drilldownQuery?: Query): void => {
+	// 		console.log('Aggregate drilldown:', { widgetId, query, key, aggregateData });
 
-			if (key === 'breakout') {
-				if (!drilldownQuery) {
-					setSubMenu(key);
-				} else {
-					redirectToViewMode(drilldownQuery);
-					onClose();
-				}
-				return;
-			}
+	// 		if (key === 'breakout') {
+	// 			if (!drilldownQuery) {
+	// 				setSubMenu(key);
+	// 			} else {
+	// 				redirectToViewMode(drilldownQuery);
+	// 				onClose();
+	// 			}
+	// 			return;
+	// 		}
 
-			const route = getRoute(key);
-			const timeRange = aggregateData?.timeRange;
-			const filtersToAdd = aggregateData?.filters || [];
-			const viewQuery = getViewQuery(
-				query,
-				filtersToAdd,
-				key,
-				aggregateData?.queryName || '',
-			);
+	// 		const route = getRoute(key);
+	// 		const timeRange = aggregateData?.timeRange;
+	// 		const filtersToAdd = aggregateData?.filters || [];
+	// 		const viewQuery = getViewQuery(
+	// 			query,
+	// 			filtersToAdd,
+	// 			key,
+	// 			aggregateData?.queryName || '',
+	// 		);
 
-			let queryParams = {
-				[QueryParams.compositeQuery]: JSON.stringify(viewQuery),
-				...(timeRange && {
-					[QueryParams.startTime]: timeRange?.startTime.toString(),
-					[QueryParams.endTime]: timeRange?.endTime.toString(),
-				}),
-			} as Record<string, string>;
+	// 		let queryParams = {
+	// 			[QueryParams.compositeQuery]: JSON.stringify(viewQuery),
+	// 			...(timeRange && {
+	// 				[QueryParams.startTime]: timeRange?.startTime.toString(),
+	// 				[QueryParams.endTime]: timeRange?.endTime.toString(),
+	// 			}),
+	// 		} as Record<string, string>;
 
-			if (route === ROUTES.METRICS_EXPLORER) {
-				queryParams = {
-					...queryParams,
-					[QueryParams.summaryFilters]: JSON.stringify(
-						viewQuery?.builder.queryData[0].filters,
-					),
-				};
-			}
+	// 		if (route === ROUTES.METRICS_EXPLORER) {
+	// 			queryParams = {
+	// 				...queryParams,
+	// 				[QueryParams.summaryFilters]: JSON.stringify(
+	// 					viewQuery?.builder.queryData[0].filters,
+	// 				),
+	// 			};
+	// 		}
 
-			if (route) {
-				safeNavigate(`${route}?${createQueryParams(queryParams)}`, {
-					newTab: true,
-				});
-			}
+	// 		if (route) {
+	// 			safeNavigate(`${route}?${createQueryParams(queryParams)}`, {
+	// 				newTab: true,
+	// 			});
+	// 		}
 
-			onClose();
-		},
-		[
-			query,
-			widgetId,
-			safeNavigate,
-			onClose,
-			redirectToViewMode,
-			setSubMenu,
-			aggregateData,
-		],
-	);
+	// 		onClose();
+	// 	},
+	// 	[
+	// 		query,
+	// 		widgetId,
+	// 		safeNavigate,
+	// 		onClose,
+	// 		redirectToViewMode,
+	// 		setSubMenu,
+	// 		aggregateData,
+	// 	],
+	// );
+
+	// const aggregateDrilldownConfig = useMemo(() => {
+	// 	if (!aggregateData) {
+	// 		console.warn('aggregateData is null in aggregateDrilldownConfig');
+	// 		return {};
+	// 	}
+	// 	return getAggregateContextMenuConfig({
+	// 		subMenu,
+	// 		query,
+	// 		onColumnClick: handleAggregateDrilldown,
+	// 		aggregateData,
+	// 	});
+	// }, [handleAggregateDrilldown, query, subMenu, aggregateData]);
+
+	// New function to test useBreakout hook
+	const { breakoutConfig } = useBreakout({
+		query,
+		widgetId,
+		onClose,
+		aggregateData,
+	});
+
+	const { baseAggregateOptionsConfig } = useBaseAggregateOptions({
+		query,
+		widgetId,
+		onClose,
+		aggregateData,
+		subMenu,
+		setSubMenu,
+	});
 
 	const aggregateDrilldownConfig = useMemo(() => {
 		if (!aggregateData) {
-			console.warn('aggregateData is null in aggregateDrilldownConfig');
+			console.warn('aggregateData is null in testBreakoutConfig');
 			return {};
 		}
-		return getAggregateContextMenuConfig({
-			subMenu,
-			query,
-			onColumnClick: handleAggregateDrilldown,
-			aggregateData,
-		});
-	}, [handleAggregateDrilldown, query, subMenu, aggregateData]);
+
+		// If subMenu is breakout, use the new breakout hook
+		if (subMenu === 'breakout') {
+			return breakoutConfig;
+		}
+
+		// Otherwise, use the existing getAggregateContextMenuConfig
+		return baseAggregateOptionsConfig;
+	}, [subMenu, aggregateData, breakoutConfig, baseAggregateOptionsConfig]);
+
 	return { aggregateDrilldownConfig };
 };
 
