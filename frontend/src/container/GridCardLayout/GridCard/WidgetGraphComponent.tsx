@@ -193,7 +193,7 @@ function WidgetGraphComponent({
 					const queryParams = {
 						[QueryParams.graphType]: clonedWidget?.panelTypes,
 						[QueryParams.widgetId]: uuid,
-						...(clonedWidget.query && {
+						...(clonedWidget?.query && {
 							[QueryParams.compositeQuery]: encodeURIComponent(
 								JSON.stringify(clonedWidget.query),
 							),
