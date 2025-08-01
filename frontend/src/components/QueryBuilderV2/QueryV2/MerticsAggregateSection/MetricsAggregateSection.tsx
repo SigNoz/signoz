@@ -102,7 +102,21 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 							<div className="metrics-aggregation-section-content-item">
 								<div className="metrics-aggregation-section-content-item-label main-label">
 									AGGREGATE BY TIME{' '}
-									<Tooltip title="AGGREGATE BY TIME">
+									<Tooltip
+										overlay={
+											<div>
+												Learn more about temporal aggregation{' '}
+												<a
+													href="https://signoz.io/docs/metrics-management/types-and-aggregation/#aggregation"
+													target="_blank"
+													rel="noopener noreferrer"
+													onClick={(e): void => e.stopPropagation()}
+												>
+													here
+												</a>
+											</div>
+										}
+									>
 										<Info size={12} />
 									</Tooltip>
 								</div>
@@ -140,7 +154,21 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 							<div className="metrics-aggregation-section-content-item">
 								<div className="metrics-aggregation-section-content-item-label main-label">
 									AGGREGATE LABELS
-									<Tooltip title="AGGREGATE LABELS">
+									<Tooltip
+										overlay={
+											<div>
+												Learn more about spatial aggregation{' '}
+												<a
+													href="https://signoz.io/docs/metrics-management/types-and-aggregation/#aggregation"
+													target="_blank"
+													rel="noopener noreferrer"
+													onClick={(e): void => e.stopPropagation()}
+												>
+													here
+												</a>
+											</div>
+										}
+									>
 										<Info size={12} />
 									</Tooltip>
 								</div>
