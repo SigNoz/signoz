@@ -102,7 +102,7 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*sqlbuilder.W
 		combinedErrors := errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"found %d syntax errors while parsing the filter expression",
+			"Found %d syntax errors while parsing the search expression. Refer to the troubleshooting guide <a href=\"https://signoz.io/docs/userguide/search-troubleshooting/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>",
 			len(parserErrorListener.SyntaxErrors),
 		)
 		additionals := make([]string, len(parserErrorListener.SyntaxErrors))
@@ -120,7 +120,7 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*sqlbuilder.W
 		combinedErrors := errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"found %d errors while parsing the search expression",
+			"Found %d errors while parsing the search expression. Refer to the troubleshooting guide <a href=\"https://signoz.io/docs/userguide/search-troubleshooting/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>",
 			len(visitor.errors),
 		)
 		return nil, nil, combinedErrors.WithAdditional(visitor.errors...)
@@ -620,7 +620,8 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		if strings.HasPrefix(key.Name, v.jsonBodyPrefix) {
 			fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
 		} else {
-			v.errors = append(v.errors, fmt.Sprintf("function `%s` supports only body JSON search", functionName))
+			// TODO(add docs for json body search)
+			v.errors = append(v.errors, fmt.Sprintf("function `%s` supports only body JSON search. Learn more <a href=\"https://signoz.io/docs/userguide/search-troubleshooting/#function-supports-only-body-json-search\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>", functionName))
 			return ""
 		}
 
@@ -746,14 +747,14 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 		} else if !v.ignoreNotFoundKeys {
 			// TODO(srikanthccv): do we want to return an error here?
 			// should we infer the type and auto-magically build a key for expression?
-			v.errors = append(v.errors, fmt.Sprintf("key `%s` not found", fieldKey.Name))
+			v.errors = append(v.errors, fmt.Sprintf("key `%s` not found. Learn more <a href=\"https://signoz.io/docs/userguide/search-troubleshooting/#key-fieldname-not-found\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>", fieldKey.Name))
 		}
 	}
 
 	if len(fieldKeysForName) > 1 && !v.keysWithWarnings[keyName] {
 		// this is warning state, we must have a unambiguous key
 		v.warnings = append(v.warnings, fmt.Sprintf(
-			"key `%s` is ambiguous, found %d different combinations of field context and data type: %v. Learn more [here](https://signoz.io/docs/userguide/search-syntax/#field-context)",
+			"key `%s` is ambiguous, found %d different combinations of field context and data type: %v. Learn more <a href=\"https://signoz.io/docs/userguide/field-context-data-types/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>",
 			fieldKey.Name,
 			len(fieldKeysForName),
 			fieldKeysForName,
