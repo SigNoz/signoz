@@ -114,11 +114,12 @@ export async function GetMetricQueryRange(
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
 	isInfraMonitoring?: boolean,
-): Promise<SuccessResponse<MetricRangePayloadProps>> {
+): Promise<SuccessResponse<MetricRangePayloadProps> & { warnings?: string[] }> {
 	let legendMap: Record<string, string>;
 	let response:
 		| SuccessResponse<MetricRangePayloadProps>
 		| SuccessResponseV2<MetricRangePayloadV5>;
+	let warnings: string[] = [];
 
 	const panelType = props.originalGraphType || props.graphType;
 
@@ -148,6 +149,7 @@ export async function GetMetricQueryRange(
 				},
 			},
 			params: props,
+			warnings: [],
 		};
 	}
 
@@ -174,6 +176,7 @@ export async function GetMetricQueryRange(
 					},
 				},
 				params: props,
+				warnings: [],
 			};
 		}
 
