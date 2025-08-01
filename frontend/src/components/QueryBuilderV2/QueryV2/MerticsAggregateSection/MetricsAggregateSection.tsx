@@ -45,8 +45,10 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 	);
 
 	const isHistogram = useMemo(
-		() => query.aggregateAttribute?.type === ATTRIBUTE_TYPES.HISTOGRAM,
-		[query.aggregateAttribute?.type],
+		() =>
+			query.aggregateAttribute?.type === ATTRIBUTE_TYPES.HISTOGRAM ||
+			queryAggregation.metricName?.endsWith('.bucket'),
+		[query.aggregateAttribute?.type, queryAggregation.metricName],
 	);
 
 	useEffect(() => {
