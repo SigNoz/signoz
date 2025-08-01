@@ -900,27 +900,42 @@ export function QueryBuilderProvider({
 	);
 
 	useEffect(() => {
+		if (location.pathname !== currentPathnameRef.current) {
+			currentPathnameRef.current = location.pathname;
+
+			setStagedQuery(null);
+			// reset the last used query to 0 when navigating away from the page
+			setLastUsedQuery(0);
+		}
+	}, [location.pathname]);
+
+	// Separate useEffect to handle initQueryBuilderData after pathname changes
+	useEffect(() => {
 		if (!compositeQueryParam) return;
 
-		if (stagedQuery && stagedQuery.id === compositeQueryParam.id) {
-			return;
-		}
+		// Only run initQueryBuilderData if we're not in the middle of a pathname change
+		if (location.pathname === currentPathnameRef.current) {
+			if (stagedQuery && stagedQuery.id === compositeQueryParam.id) {
+				return;
+			}
 
-		const { isValid, validData } = replaceIncorrectObjectFields(
-			compositeQueryParam,
-			initialQueriesMap.metrics,
-		);
+			const { isValid, validData } = replaceIncorrectObjectFields(
+				compositeQueryParam,
+				initialQueriesMap.metrics,
+			);
 
-		if (!isValid) {
-			redirectWithQueryBuilderData(validData);
-		} else {
-			initQueryBuilderData(compositeQueryParam);
+			if (!isValid) {
+				redirectWithQueryBuilderData(validData);
+			} else {
+				initQueryBuilderData(compositeQueryParam);
+			}
 		}
 	}, [
 		initQueryBuilderData,
 		redirectWithQueryBuilderData,
 		compositeQueryParam,
 		stagedQuery,
+		location.pathname,
 	]);
 
 	const resetQuery = (newCurrentQuery?: QueryState): void => {
@@ -931,16 +946,6 @@ export function QueryBuilderProvider({
 			setSupersetQuery(newCurrentQuery);
 		}
 	};
-
-	useEffect(() => {
-		if (location.pathname !== currentPathnameRef.current) {
-			currentPathnameRef.current = location.pathname;
-
-			setStagedQuery(null);
-			// reset the last used query to 0 when navigating away from the page
-			setLastUsedQuery(0);
-		}
-	}, [location.pathname]);
 
 	const handleOnUnitsChange = useCallback(
 		(unit: string) => {
