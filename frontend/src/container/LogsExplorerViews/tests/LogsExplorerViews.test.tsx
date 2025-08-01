@@ -9,6 +9,7 @@ import { PreferenceContextProvider } from 'providers/preferences/context/Prefere
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { fireEvent, render, RenderResult, waitFor } from 'tests/test-utils';
+import APIError from 'types/api/error';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
 import LogsExplorerViews from '..';
@@ -81,6 +82,48 @@ jest.mock('hooks/queryBuilder/useGetExplorerQueryRange', () => ({
 	__esModule: true,
 	useGetExplorerQueryRange: jest.fn(),
 }));
+
+// Mock ErrorStateComponent to handle APIError properly
+jest.mock(
+	'components/Common/ErrorStateComponent',
+	() =>
+		function MockErrorStateComponent({ error, message }: any): JSX.Element {
+			if (error) {
+				// Mock the getErrorMessage and getErrorDetails methods
+				const getErrorMessage = jest
+					.fn()
+					.mockReturnValue(
+						error.error?.message ||
+							'Something went wrong. Please try again or contact support.',
+					);
+				const getErrorDetails = jest.fn().mockReturnValue(error);
+
+				// Add the methods to the error object
+				const errorWithMethods = {
+					...error,
+					getErrorMessage,
+					getErrorDetails,
+				};
+
+				return (
+					<div data-testid="error-state-component">
+						<div>{errorWithMethods.getErrorMessage()}</div>
+						{errorWithMethods.getErrorDetails().error?.errors?.map((err: any) => (
+							<div key={`error-${err.message}`}>• {err.message}</div>
+						))}
+					</div>
+				);
+			}
+
+			return (
+				<div data-testid="error-state-component">
+					<div>
+						{message || 'Something went wrong. Please try again or contact support.'}
+					</div>
+				</div>
+			);
+		},
+);
 
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
