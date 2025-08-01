@@ -198,9 +198,6 @@ function WidgetGraphComponent({
 								JSON.stringify(clonedWidget.query),
 							),
 						}),
-						// [QueryParams.compositeQuery]: encodeURIComponent(
-						// 	JSON.stringify(clonedWidget?.query),
-						// ),
 					};
 					safeNavigate(`${pathname}/new?${createQueryParams(queryParams)}`);
 				},
