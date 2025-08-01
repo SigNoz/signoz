@@ -4,6 +4,7 @@ import logEvent from 'api/common/logEvent';
 import Uplot from 'components/Uplot';
 import { QueryParams } from 'constants/query';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
+import { getLocalStorageGraphVisibilityState } from 'container/GridCardLayout/GridCard/utils';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import EmptyMetricsSearch from 'container/MetricsExplorer/Explorer/EmptyMetricsSearch';
@@ -28,6 +29,7 @@ import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
+import { LegendPosition } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -58,6 +60,7 @@ function TimeSeriesView({
 
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
+	const [graphVisibility, setGraphVisibility] = useState<boolean[]>([]);
 
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -70,6 +73,19 @@ function TimeSeriesView({
 		setMinTimeScale(startTime);
 		setMaxTimeScale(endTime);
 	}, [maxTime, minTime, globalSelectedInterval, data]);
+
+	// Initialize graph visibility from localStorage
+	useEffect(() => {
+		if (data?.payload?.data?.result) {
+			const {
+				graphVisibilityStates: localStoredVisibilityState,
+			} = getLocalStorageGraphVisibilityState({
+				apiResponse: data.payload.data.result,
+				name: 'time-series-explorer',
+			});
+			setGraphVisibility(localStoredVisibilityState);
+		}
+	}, [data?.payload?.data?.result]);
 
 	const onDragSelect = useCallback(
 		(start: number, end: number): void => {
@@ -144,6 +160,7 @@ function TimeSeriesView({
 	const { timezone } = useTimezone();
 
 	const chartOptions = getUPlotChartOptions({
+		id: 'time-series-explorer',
 		onDragSelect,
 		yAxisUnit: yAxisUnit || '',
 		apiResponse: data?.payload,
@@ -161,6 +178,10 @@ function TimeSeriesView({
 		timezone: timezone.value,
 		currentQuery,
 		query: currentQuery,
+		graphsVisibilityStates: graphVisibility,
+		setGraphsVisibilityStates: setGraphVisibility,
+		enhancedLegend: true,
+		legendPosition: LegendPosition.BOTTOM,
 	});
 
 	return (
