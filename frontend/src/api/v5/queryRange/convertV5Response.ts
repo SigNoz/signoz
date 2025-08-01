@@ -373,6 +373,7 @@ export function convertV5ResponseToLegacy(
 				data: {
 					resultType: 'scalar',
 					result: webTables,
+					warnings: v5Data?.data?.warnings || [],
 				},
 			},
 		};
@@ -389,7 +390,10 @@ export function convertV5ResponseToLegacy(
 	const legacyResponse: SuccessResponse<MetricRangePayloadV3> = {
 		...v5Response,
 		payload: {
-			data: convertedData,
+			data: {
+				...convertedData,
+				warnings: v5Data?.data?.warnings || [],
+			},
 		},
 	};
 

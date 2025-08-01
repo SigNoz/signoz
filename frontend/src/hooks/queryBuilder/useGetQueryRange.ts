@@ -2,6 +2,7 @@ import { isAxiosError } from 'axios';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { updateStepInterval } from 'container/GridCardLayout/utils';
+import { useNotifications } from 'hooks/useNotifications';
 import {
 	GetMetricQueryRange,
 	GetQueryResultsProps,
@@ -16,7 +17,7 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 type UseGetQueryRangeOptions = UseQueryOptions<
-	SuccessResponse<MetricRangePayloadProps>,
+	SuccessResponse<MetricRangePayloadProps> & { warnings?: string[] },
 	APIError | Error
 > & {
 	showErrorModal?: boolean;
@@ -27,7 +28,10 @@ type UseGetQueryRange = (
 	version: string,
 	options?: UseGetQueryRangeOptions,
 	headers?: Record<string, string>,
-) => UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error>;
+) => UseQueryResult<
+	SuccessResponse<MetricRangePayloadProps> & { warnings?: string[] },
+	Error
+>;
 
 export const useGetQueryRange: UseGetQueryRange = (
 	requestData,
@@ -36,7 +40,8 @@ export const useGetQueryRange: UseGetQueryRange = (
 	headers,
 ) => {
 	const { showErrorModal: showErrorModalFn } = useErrorModal();
-	const newRequestData: GetQueryResultsProps = useMemo(() => {
+	const { notifications } = useNotifications();
+	const newRequestData = useMemo(() => {
 		const firstQueryData = requestData.query.builder?.queryData[0];
 		const isListWithSingleTimestampOrder =
 			requestData.graphType === PANEL_TYPES.LIST &&
@@ -139,6 +144,43 @@ export const useGetQueryRange: UseGetQueryRange = (
 			GetMetricQueryRange(modifiedRequestData, version, signal, headers),
 		...options,
 		retry,
+		onSuccess: (data) => {
+			// Check for warnings in response
+			if (data.payload?.data?.warnings && data.payload.data.warnings.length > 0) {
+				const { warnings } = data.payload.data;
+
+				if (warnings.length === 1) {
+					// Single warning - show as simple message
+					notifications.warning({
+						message: warnings[0].replace(/\\n/g, '\n'),
+						key: 'query-warning-single',
+						duration: 6,
+					});
+				} else {
+					// Multiple warnings - show as formatted list
+					const formattedWarnings = warnings
+						.map((warning) => {
+							// Clean up the warning message
+							const cleanWarning = warning
+								.replace(/\\n/g, '\n') // Convert literal \n to actual newlines
+								.replace(/\[/g, '\n  [') // Add line breaks before brackets
+								.replace(/\]/g, ']\n') // Add line breaks after brackets
+								.replace(/,/g, ',\n  '); // Add line breaks after commas
+
+							return `• ${cleanWarning}`;
+						})
+						.join('\n');
+
+					notifications.warning({
+						message: `Query Warnings (${warnings.length}):\n\n${formattedWarnings}`,
+						key: 'query-warning-multiple',
+						duration: 10, // Show for 10 seconds for multiple warnings
+						style: { whiteSpace: 'pre-line' }, // Preserve line breaks
+					});
+				}
+			}
+			options?.onSuccess?.(data);
+		},
 		onError: (error) => {
 			if (options?.showErrorModal !== false) {
 				showErrorModalFn(error as APIError);

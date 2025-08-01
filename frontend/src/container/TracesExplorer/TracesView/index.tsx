@@ -1,5 +1,6 @@
 import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
+import ErrorStateComponent from 'components/Common/ErrorStateComponent';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ResizeTable } from 'components/ResizeTable';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -16,6 +17,7 @@ import { ArrowUp10, Minus } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import DOCLINKS from 'utils/docLinks';
@@ -60,7 +62,7 @@ function TracesView({ isFilterApplied }: TracesViewProps): JSX.Element {
 		setOrderBy(value);
 	}, []);
 
-	const { data, isLoading, isFetching, isError } = useGetQueryRange(
+	const { data, isLoading, isFetching, isError, error } = useGetQueryRange(
 		{
 			query: transformedQuery,
 			graphType: panelType || PANEL_TYPES.TRACE,
@@ -154,6 +156,10 @@ function TracesView({ isFilterApplied }: TracesViewProps): JSX.Element {
 				isFilterApplied && (
 					<EmptyLogsSearch dataSource={DataSource.TRACES} panelType="TRACE" />
 				)}
+
+			{isError && !isLoading && !isFetching && (
+				<ErrorStateComponent error={error as APIError} />
+			)}
 
 			{(tableData || []).length !== 0 && (
 				<ResizeTable

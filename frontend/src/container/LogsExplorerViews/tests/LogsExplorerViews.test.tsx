@@ -9,6 +9,7 @@ import { PreferenceContextProvider } from 'providers/preferences/context/Prefere
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { fireEvent, render, RenderResult, waitFor } from 'tests/test-utils';
+import APIError from 'types/api/error';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
 import LogsExplorerViews from '..';
@@ -81,6 +82,48 @@ jest.mock('hooks/queryBuilder/useGetExplorerQueryRange', () => ({
 	__esModule: true,
 	useGetExplorerQueryRange: jest.fn(),
 }));
+
+// Mock ErrorStateComponent to handle APIError properly
+jest.mock(
+	'components/Common/ErrorStateComponent',
+	() =>
+		function MockErrorStateComponent({ error, message }: any): JSX.Element {
+			if (error) {
+				// Mock the getErrorMessage and getErrorDetails methods
+				const getErrorMessage = jest
+					.fn()
+					.mockReturnValue(
+						error.error?.message ||
+							'Something went wrong. Please try again or contact support.',
+					);
+				const getErrorDetails = jest.fn().mockReturnValue(error);
+
+				// Add the methods to the error object
+				const errorWithMethods = {
+					...error,
+					getErrorMessage,
+					getErrorDetails,
+				};
+
+				return (
+					<div data-testid="error-state-component">
+						<div>{errorWithMethods.getErrorMessage()}</div>
+						{errorWithMethods.getErrorDetails().error?.errors?.map((err: any) => (
+							<div key={`error-${err.message}`}>• {err.message}</div>
+						))}
+					</div>
+				);
+			}
+
+			return (
+				<div data-testid="error-state-component">
+					<div>
+						{message || 'Something went wrong. Please try again or contact support.'}
+					</div>
+				</div>
+			);
+		},
+);
 
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
@@ -174,17 +217,36 @@ describe('LogsExplorerViews -', () => {
 
 	it('check error state', async () => {
 		lodsQueryServerRequest();
+
+		// Create APIError instance
+		const apiError = new APIError({
+			httpStatusCode: 400,
+			error: {
+				code: 'invalid_input',
+				message: 'found 1 errors while parsing the search expression',
+				url: '',
+				errors: [
+					{
+						message: 'key `abc` not found',
+					},
+				],
+			},
+		});
+
+		// Mock the hook to return the APIError instance
 		(useGetExplorerQueryRange as jest.Mock).mockReturnValue({
-			data: { payload: logsQueryRangeSuccessNewFormatResponse },
+			data: undefined,
 			isLoading: false,
 			isFetching: false,
 			isError: true,
+			error: apiError,
+			isSuccess: false,
 		});
-		const { queryByText } = renderer();
 
-		expect(
-			queryByText('Something went wrong. Please try again or contact support.'),
-		).toBeInTheDocument();
+		const { queryByTestId } = renderer();
+
+		// Verify that the error state component is rendered
+		expect(queryByTestId('error-state-component')).toBeInTheDocument();
 	});
 
 	it('should add activeLogId filter when present in URL', async () => {

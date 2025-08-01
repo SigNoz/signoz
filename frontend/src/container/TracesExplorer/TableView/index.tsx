@@ -1,4 +1,5 @@
 import { Space } from 'antd';
+import ErrorStateComponent from 'components/Common/ErrorStateComponent';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -8,6 +9,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { memo, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import APIError from 'types/api/error';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -19,7 +21,7 @@ function TableView(): JSX.Element {
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const { data, isLoading } = useGetQueryRange(
+	const { data, isLoading, error, isError } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap.traces,
 			graphType: panelType || PANEL_TYPES.TABLE,
@@ -50,6 +52,10 @@ function TableView(): JSX.Element {
 			[],
 		[data],
 	);
+
+	if (isError) {
+		return <ErrorStateComponent error={error as APIError} />;
+	}
 
 	return (
 		<Space.Compact block direction="vertical">

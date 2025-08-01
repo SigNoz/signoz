@@ -8,6 +8,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -44,7 +45,7 @@ function TimeSeriesViewContainer({
 		return isValid.every(Boolean);
 	}, [currentQuery]);
 
-	const { data, isLoading, isError } = useGetQueryRange(
+	const { data, isLoading, isError, error } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap[dataSource],
 			graphType: panelType || PANEL_TYPES.TIME_SERIES,
@@ -81,6 +82,7 @@ function TimeSeriesViewContainer({
 			data={responseData}
 			yAxisUnit={isValidToConvertToMs ? 'ms' : 'short'}
 			dataSource={dataSource}
+			error={error as APIError}
 		/>
 	);
 }

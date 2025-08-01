@@ -30,6 +30,7 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
+import { Widgets } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
@@ -184,9 +185,19 @@ function WidgetGraphComponent({
 					notifications.success({
 						message: 'Panel cloned successfully, redirecting to new copy.',
 					});
+
+					const clonedWidget = updatedDashboard.data?.data?.widgets?.find(
+						(w) => w.id === uuid,
+					) as Widgets;
+
 					const queryParams = {
-						graphType: widget?.panelTypes,
-						widgetId: uuid,
+						[QueryParams.graphType]: clonedWidget?.panelTypes,
+						[QueryParams.widgetId]: uuid,
+						...(clonedWidget?.query && {
+							[QueryParams.compositeQuery]: encodeURIComponent(
+								JSON.stringify(clonedWidget.query),
+							),
+						}),
 					};
 					safeNavigate(`${pathname}/new?${createQueryParams(queryParams)}`);
 				},

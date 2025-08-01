@@ -19,6 +19,7 @@ export interface NavigateToExplorerProps {
 	endTime?: number;
 	sameTab?: boolean;
 	shouldResolveQuery?: boolean;
+	widgetQuery?: Query;
 }
 
 export function useNavigateToExplorer(): (
@@ -30,27 +31,34 @@ export function useNavigateToExplorer(): (
 	);
 
 	const prepareQuery = useCallback(
-		(selectedFilters: TagFilterItem[], dataSource: DataSource): Query => ({
-			...currentQuery,
-			builder: {
-				...currentQuery.builder,
-				queryData: currentQuery.builder.queryData
-					.map((item) => ({
-						...item,
-						dataSource,
-						aggregateOperator: MetricAggregateOperator.NOOP,
-						filters: {
-							...item.filters,
-							items: [...(item.filters?.items || []), ...selectedFilters],
-							op: item.filters?.op || 'AND',
-						},
-						groupBy: [],
-						disabled: false,
-					}))
-					.slice(0, 1),
-				queryFormulas: [],
-			},
-		}),
+		(
+			selectedFilters: TagFilterItem[],
+			dataSource: DataSource,
+			query?: Query,
+		): Query => {
+			const widgetQuery = query || currentQuery;
+			return {
+				...widgetQuery,
+				builder: {
+					...widgetQuery.builder,
+					queryData: widgetQuery.builder.queryData
+						.map((item) => ({
+							...item,
+							dataSource,
+							aggregateOperator: MetricAggregateOperator.NOOP,
+							filters: {
+								...item.filters,
+								items: [...(item.filters?.items || []), ...selectedFilters],
+								op: item.filters?.op || 'AND',
+							},
+							groupBy: [],
+							disabled: false,
+						}))
+						.slice(0, 1),
+					queryFormulas: [],
+				},
+			};
+		},
 		[currentQuery],
 	);
 
@@ -67,6 +75,7 @@ export function useNavigateToExplorer(): (
 				endTime,
 				sameTab,
 				shouldResolveQuery,
+				widgetQuery,
 			} = props;
 			const urlParams = new URLSearchParams();
 			if (startTime && endTime) {
@@ -77,7 +86,7 @@ export function useNavigateToExplorer(): (
 				urlParams.set(QueryParams.endTime, (maxTime / 1000000).toString());
 			}
 
-			let preparedQuery = prepareQuery(filters, dataSource);
+			let preparedQuery = prepareQuery(filters, dataSource, widgetQuery);
 
 			if (shouldResolveQuery) {
 				await getUpdatedQuery({

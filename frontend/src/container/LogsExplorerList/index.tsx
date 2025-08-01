@@ -2,6 +2,7 @@ import './LogsExplorerList.style.scss';
 
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
+import ErrorStateComponent from 'components/Common/ErrorStateComponent';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 // components
@@ -12,7 +13,6 @@ import Spinner from 'components/Spinner';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
-import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { FontSize } from 'container/OptionsMenu/types';
@@ -46,6 +46,7 @@ function LogsExplorerList({
 	onEndReached,
 	isError,
 	isFilterApplied,
+	error,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
 
@@ -256,7 +257,10 @@ function LogsExplorerList({
 					/>
 				)}
 
-			{isError && !isLoading && !isFetching && <LogsError />}
+			{/** Using No data as we have error modal working on top of this hence just showing no data */}
+			{isError && !isLoading && !isFetching && (
+				<ErrorStateComponent error={error} />
+			)}
 
 			{!isLoading && !isError && logs.length > 0 && (
 				<>
