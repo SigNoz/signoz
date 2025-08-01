@@ -151,6 +151,7 @@ export async function GetMetricQueryRange(
 				warning: undefined,
 			},
 			params: props,
+			warnings: [],
 		};
 	}
 
@@ -178,6 +179,7 @@ export async function GetMetricQueryRange(
 				},
 				warning: undefined,
 				params: props,
+				warnings: [],
 			};
 		}
 

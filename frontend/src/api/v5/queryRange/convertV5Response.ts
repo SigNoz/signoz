@@ -374,6 +374,7 @@ export function convertV5ResponseToLegacy(
 				data: {
 					resultType: 'scalar',
 					result: webTables,
+					warnings: v5Data?.data?.warnings || [],
 				},
 				warning: v5Data?.warning || undefined,
 			},
