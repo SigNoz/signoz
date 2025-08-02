@@ -44,8 +44,10 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 	);
 
 	const isHistogram = useMemo(
-		() => query.aggregateAttribute?.type === ATTRIBUTE_TYPES.HISTOGRAM,
-		[query.aggregateAttribute?.type],
+		() =>
+			query.aggregateAttribute?.type === ATTRIBUTE_TYPES.HISTOGRAM ||
+			queryAggregation.metricName?.endsWith('.bucket'),
+		[query.aggregateAttribute?.type, queryAggregation.metricName],
 	);
 
 	useEffect(() => {
@@ -134,7 +136,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 												Set the time interval for aggregation
 												<br />
 												<a
-													href="https://signoz.io/docs/userguide/query-builder/#step-interval"
+													href="https://signoz.io/docs/userguide/query-builder-v5/#time-aggregation-windows"
 													target="_blank"
 													rel="noopener noreferrer"
 													style={{ color: '#1890ff', textDecoration: 'underline' }}
@@ -252,7 +254,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 										Set the time interval for aggregation
 										<br />
 										<a
-											href="https://signoz.io/docs/userguide/query-builder/#step-interval"
+											href="https://signoz.io/docs/userguide/query-builder-v5/#time-aggregation-windows"
 											target="_blank"
 											rel="noopener noreferrer"
 											style={{ color: '#1890ff', textDecoration: 'underline' }}

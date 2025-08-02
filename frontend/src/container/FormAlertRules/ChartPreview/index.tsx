@@ -7,6 +7,7 @@ import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import AnomalyAlertEvaluationView from 'container/AnomalyAlertEvaluationView';
+import { getLocalStorageGraphVisibilityState } from 'container/GridCardLayout/GridCard/utils';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { getFormatNameByOptionId } from 'container/NewWidget/RightContainer/alertFomatCategories';
@@ -35,6 +36,7 @@ import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { AlertDef } from 'types/api/alerts/def';
+import { LegendPosition } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -80,6 +82,7 @@ function ChartPreview({
 	const threshold = alertDef?.condition.target || 0;
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
+	const [graphVisibility, setGraphVisibility] = useState<boolean[]>([]);
 	const { currentQuery } = useQueryBuilder();
 
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
@@ -171,6 +174,19 @@ function ChartPreview({
 		setMaxTimeScale(endTime);
 	}, [maxTime, minTime, globalSelectedInterval, queryResponse, setQueryStatus]);
 
+	// Initialize graph visibility from localStorage
+	useEffect(() => {
+		if (queryResponse?.data?.payload?.data?.result) {
+			const {
+				graphVisibilityStates: localStoredVisibilityState,
+			} = getLocalStorageGraphVisibilityState({
+				apiResponse: queryResponse.data.payload.data.result,
+				name: 'alert-chart-preview',
+			});
+			setGraphVisibility(localStoredVisibilityState);
+		}
+	}, [queryResponse?.data?.payload?.data?.result]);
+
 	if (queryResponse.data && graphType === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(
 			queryResponse.data?.payload.data.result,
@@ -257,6 +273,10 @@ function ChartPreview({
 				timezone: timezone.value,
 				currentQuery,
 				query: query || currentQuery,
+				graphsVisibilityStates: graphVisibility,
+				setGraphsVisibilityStates: setGraphVisibility,
+				enhancedLegend: true,
+				legendPosition: LegendPosition.BOTTOM,
 			}),
 		[
 			yAxisUnit,
@@ -274,6 +294,7 @@ function ChartPreview({
 			timezone.value,
 			currentQuery,
 			query,
+			graphVisibility,
 		],
 	);
 

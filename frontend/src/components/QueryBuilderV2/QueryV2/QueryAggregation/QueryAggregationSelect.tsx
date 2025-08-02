@@ -658,7 +658,7 @@ function QueryAggregationSelect({
 					</span>
 					<br />
 					<a
-						href="https://signoz.io/docs/userguide/query-builder/#aggregation-functions"
+						href="https://signoz.io/docs/userguide/query-builder-v5/#core-aggregation-functions"
 						target="_blank"
 						rel="noopener noreferrer"
 						style={{ color: '#1890ff', textDecoration: 'underline' }}
@@ -679,7 +679,7 @@ function QueryAggregationSelect({
 					transition: 'right 0.2s ease'
 					}}
 				>
-					<Info size={14} style={{ opacity: 0.6, color: 'currentColor' }} />
+						<Info size={14} style={{ opacity: 0.9, color: isDarkMode ? '#ffffff' : '#000000' }} />
 				</div>
 			</Tooltip>
 

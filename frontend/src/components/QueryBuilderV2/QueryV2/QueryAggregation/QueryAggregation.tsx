@@ -62,7 +62,7 @@ function QueryAggregationOptions({
 									Set the time interval for aggregation
 									<br />
 									<a
-										href="https://signoz.io/docs/userguide/query-builder/#step-interval"
+										href="https://signoz.io/docs/userguide/query-builder-v5/#time-aggregation-windows"
 										target="_blank"
 										rel="noopener noreferrer"
 										style={{ color: '#1890ff', textDecoration: 'underline' }}
