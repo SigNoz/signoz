@@ -331,7 +331,6 @@ type MetricAggregation struct {
 	// reduce to operator for metric scalar requests
 	ReduceTo ReduceTo `json:"reduceTo,omitempty"`
 }
-
 type Filter struct {
 	// expression to filter by following the filter syntax
 	Expression string `json:"expression"`

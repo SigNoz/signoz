@@ -31,6 +31,7 @@ type querier struct {
 	traceStmtBuilder  qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	logStmtBuilder    qbtypes.StatementBuilder[qbtypes.LogAggregation]
 	metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation]
+	meterStmtBuilder  qbtypes.StatementBuilder[qbtypes.MetricAggregation]
 	bucketCache       BucketCache
 }
 
@@ -44,6 +45,7 @@ func New(
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	logStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
+	meterStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
 	bucketCache BucketCache,
 ) *querier {
 	querierSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier")
@@ -55,6 +57,7 @@ func New(
 		traceStmtBuilder:  traceStmtBuilder,
 		logStmtBuilder:    logStmtBuilder,
 		metricStmtBuilder: metricStmtBuilder,
+		meterStmtBuilder:  meterStmtBuilder,
 		bucketCache:       bucketCache,
 	}
 }
@@ -168,17 +171,21 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				event.MetricsUsed = true
 				event.FilterApplied = spec.Filter != nil && spec.Filter.Expression != ""
 				event.GroupByApplied = len(spec.GroupBy) > 0
-				if spec.StepInterval.Seconds() == 0 {
-					spec.StepInterval = qbtypes.Step{
-						Duration: time.Second * time.Duration(querybuilder.RecommendedStepIntervalForMetric(req.Start, req.End)),
-					}
-				}
-				if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)) {
-					spec.StepInterval = qbtypes.Step{
-						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)),
-					}
-				}
 
+				if strings.HasPrefix(spec.Aggregations[0].MetricName, "signoz.meter") {
+					spec.StepInterval = qbtypes.Step{Duration: time.Second * time.Duration(querybuilder.RecommendedStepIntervalForMeter(req.Start, req.End))}
+				} else {
+					if spec.StepInterval.Seconds() == 0 {
+						spec.StepInterval = qbtypes.Step{
+							Duration: time.Second * time.Duration(querybuilder.RecommendedStepIntervalForMetric(req.Start, req.End)),
+						}
+					}
+					if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)) {
+						spec.StepInterval = qbtypes.Step{
+							Duration: time.Second * time.Duration(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)),
+						}
+					}
+				}
 				req.CompositeQuery.Queries[idx].Spec = spec
 			}
 		} else if query.Type == qbtypes.QueryTypePromQL {
@@ -265,7 +272,14 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				}
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
-				bq := newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
+				var bq *builderQuery[qbtypes.MetricAggregation]
+
+				if strings.HasPrefix(spec.Aggregations[0].MetricName, "signoz.meter") {
+					bq = newBuilderQuery(q.telemetryStore, q.meterStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
+				} else {
+					bq = newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
+				}
+
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			default:
