@@ -26,6 +26,7 @@ var (
 	ErrFailedToGetTblStatement  = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get tbl statement")
 	ErrFailedToGetMetricsKeys   = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get metrics keys")
 	ErrFailedToGetMeterKeys     = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get meter keys")
+	ErrFailedToGetMeterValues   = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get meter values")
 	ErrFailedToGetRelatedValues = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get related values")
 )
 
@@ -1022,7 +1023,7 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 }
 
 func (t *telemetryMetaStore) getMeterFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
-	sb := sqlbuilder.Select("DISTINCT arrayJoin(JSONExtractKeysAndValues(labels, 'String')) AS attr, attr.2 AS attr_string_value").
+	sb := sqlbuilder.Select("DISTINCT arrayJoin(JSONExtractKeysAndValues(labels, 'String')) AS attr").
 		From(t.meterDBName + "." + t.meterFieldsTblName)
 
 	if fieldValueSelector.Name != "" {
@@ -1032,12 +1033,12 @@ func (t *telemetryMetaStore) getMeterFieldValues(ctx context.Context, fieldValue
 
 	if fieldValueSelector.Value != "" {
 		if fieldValueSelector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
-			sb.Where(sb.E("attr_string_value", fieldValueSelector.Value))
+			sb.Where(sb.E("attr.2", fieldValueSelector.Value))
 		} else {
-			sb.Where(sb.Like("attr_string_value", "%"+fieldValueSelector.Value+"%"))
+			sb.Where(sb.Like("attr.2", "%"+fieldValueSelector.Value+"%"))
 		}
 	}
-	sb.Where(sb.NE("attr_string_value", ""))
+	sb.Where(sb.NE("attr.2", ""))
 
 	if fieldValueSelector.Limit > 0 {
 		sb.Limit(fieldValueSelector.Limit)
@@ -1046,21 +1047,21 @@ func (t *telemetryMetaStore) getMeterFieldValues(ctx context.Context, fieldValue
 	}
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMeterValues.Error())
 	}
 	defer rows.Close()
 
 	values := &telemetrytypes.TelemetryFieldValues{}
 	for rows.Next() {
-		var attribute []any
-		var stringValue string
-		if err := rows.Scan(&attribute, &stringValue); err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+		var attribute []string
+		if err := rows.Scan(&attribute); err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMeterValues.Error())
 		}
-		values.StringValues = append(values.StringValues, stringValue)
+		if len(attribute) > 1 {
+			values.StringValues = append(values.StringValues, attribute[1])
+		}
 	}
 	return values, nil
 }
