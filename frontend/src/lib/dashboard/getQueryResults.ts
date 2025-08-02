@@ -40,7 +40,9 @@ function validateMetricNameForMetricsDataSource(query: Query): boolean {
 
 	// Check if any METRICS data source queries exist
 	const metricsQueries = queryData.filter(
-		(queryItem) => queryItem.dataSource === DataSource.METRICS,
+		(queryItem) =>
+			queryItem.dataSource === DataSource.METRICS ||
+			queryItem.dataSource === DataSource.METER,
 	);
 
 	// If no METRICS queries, validation passes

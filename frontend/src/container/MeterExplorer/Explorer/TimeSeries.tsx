@@ -75,7 +75,7 @@ function TimeSeries(): JSX.Element {
 					},
 					ENTITY_VERSION_V5,
 				),
-			enabled: !!payload, // enabled only if meter name is present
+			enabled: !!payload,
 			retry: (failureCount: number, error: Error): boolean => {
 				let status: number | undefined;
 

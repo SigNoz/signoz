@@ -172,55 +172,57 @@ function TimeSeriesView({
 	return (
 		<div className="time-series-view">
 			{isError && <LogsError />}
-			<div
-				className="graph-container"
-				style={{ height: '100%', width: '100%' }}
-				ref={graphRef}
-				data-testid="time-series-graph"
-			>
-				{isLoading && dataSource === DataSource.LOGS && <LogsLoading />}
-				{isLoading && dataSource === DataSource.TRACES && <TracesLoading />}
-				{isLoading && dataSource === DataSource.METRICS && <MetricsLoading />}
-				{isLoading && dataSource === DataSource.METER && <PanelDataLoading />}
+			{!isError && (
+				<div
+					className="graph-container"
+					style={{ height: '100%', width: '100%' }}
+					ref={graphRef}
+					data-testid="time-series-graph"
+				>
+					{isLoading && dataSource === DataSource.LOGS && <LogsLoading />}
+					{isLoading && dataSource === DataSource.TRACES && <TracesLoading />}
+					{isLoading && dataSource === DataSource.METRICS && <MetricsLoading />}
+					{isLoading && dataSource === DataSource.METER && <PanelDataLoading />}
 
-				{chartData &&
-					chartData[0] &&
-					chartData[0]?.length === 0 &&
-					!isLoading &&
-					!isError &&
-					isFilterApplied && (
-						<EmptyLogsSearch dataSource={dataSource} panelType="TIME_SERIES" />
-					)}
+					{chartData &&
+						chartData[0] &&
+						chartData[0]?.length === 0 &&
+						!isLoading &&
+						!isError &&
+						isFilterApplied && (
+							<EmptyLogsSearch dataSource={dataSource} panelType="TIME_SERIES" />
+						)}
 
-				{chartData &&
-					chartData[0] &&
-					chartData[0]?.length === 0 &&
-					!isLoading &&
-					!isError &&
-					!isFilterApplied &&
-					dataSource !== DataSource.METRICS &&
-					dataSource !== DataSource.METER && <NoLogs dataSource={dataSource} />}
+					{chartData &&
+						chartData[0] &&
+						chartData[0]?.length === 0 &&
+						!isLoading &&
+						!isError &&
+						!isFilterApplied &&
+						dataSource !== DataSource.METRICS &&
+						dataSource !== DataSource.METER && <NoLogs dataSource={dataSource} />}
 
-				{chartData &&
-					chartData[0] &&
-					chartData[0]?.length === 0 &&
-					!isLoading &&
-					!isError &&
-					dataSource === DataSource.METRICS && <EmptyMetricsSearch />}
+					{chartData &&
+						chartData[0] &&
+						chartData[0]?.length === 0 &&
+						!isLoading &&
+						!isError &&
+						dataSource === DataSource.METRICS && <EmptyMetricsSearch />}
 
-				{chartData &&
-					chartData[0] &&
-					chartData[0]?.length === 0 &&
-					!isLoading &&
-					!isError &&
-					dataSource === DataSource.METER && <NoData />}
+					{chartData &&
+						chartData[0] &&
+						chartData[0]?.length === 0 &&
+						!isLoading &&
+						!isError &&
+						dataSource === DataSource.METER && <NoData />}
 
-				{!isLoading &&
-					!isError &&
-					chartData &&
-					!isEmpty(chartData?.[0]) &&
-					chartOptions && <Uplot data={chartData} options={chartOptions} />}
-			</div>
+					{!isLoading &&
+						!isError &&
+						chartData &&
+						!isEmpty(chartData?.[0]) &&
+						chartOptions && <Uplot data={chartData} options={chartOptions} />}
+				</div>
+			)}
 		</div>
 	);
 }
