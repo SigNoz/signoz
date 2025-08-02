@@ -5,13 +5,11 @@ import (
 )
 
 const (
-	DBName                           = "signoz_meter"
-	SamplesTableName                 = "distributed_samples"
-	SamplesLocalTableName            = "samples"
-	SamplesV4Agg1dTableName          = "distributed_samples_agg_1d"
-	SamplesV4Agg1dLocalTableName     = "samples_agg_1d"
-	AttributesMetadataTableName      = "distributed_metadata"
-	AttributesMetadataLocalTableName = "metadata"
+	DBName                       = "signoz_meter"
+	SamplesTableName             = "distributed_samples"
+	SamplesLocalTableName        = "samples"
+	SamplesV4Agg1dTableName      = "distributed_samples_agg_1d"
+	SamplesV4Agg1dLocalTableName = "samples_agg_1d"
 )
 
 func AggregationColumnForSamplesTable(

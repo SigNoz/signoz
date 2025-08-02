@@ -64,6 +64,8 @@ const (
 	signozTraceLocalTableName = "signoz_index_v2"
 	signozMetricDBName        = "signoz_metrics"
 	signozMetadataDbName      = "signoz_metadata"
+	signozMeterDBName         = "signoz_meter"
+	signozMeterSamplesName    = "samples_agg_1d"
 
 	signozSampleLocalTableName = "samples_v4"
 	signozSampleTableName      = "distributed_samples_v4"
@@ -2735,6 +2737,54 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, org
 			continue
 		}
 		seen[name+typ] = struct{}{}
+		response.AttributeKeys = append(response.AttributeKeys, key)
+	}
+
+	return &response, nil
+}
+
+func (r *ClickHouseReader) GetMeterAggregateAttributes(ctx context.Context, orgID valuer.UUID, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
+	var response v3.AggregateAttributeResponse
+	// Query all relevant metric names from time_series_v4, but leave metadata retrieval to cache/db
+	query := fmt.Sprintf(
+		`SELECT metric_name,type,temporality,is_monotonic 
+		 FROM %s.%s 
+		 WHERE metric_name ILIKE $1
+		 GROUP BY metric_name,type,temporality,is_monotonic`,
+		signozMeterDBName, signozMeterSamplesName)
+
+	if req.Limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
+	}
+
+	rows, err := r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
+	if err != nil {
+		zap.L().Error("Error while querying meter names", zap.Error(err))
+		return nil, fmt.Errorf("error while executing meter name query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var name string
+		var typ string
+		var temporality string
+		var isMonotonic bool
+		if err := rows.Scan(&name, &typ, &temporality, &isMonotonic); err != nil {
+			return nil, fmt.Errorf("error while scanning meter name: %s", err.Error())
+		}
+
+		// Non-monotonic cumulative sums are treated as gauges
+		if typ == "Sum" && !isMonotonic && temporality == string(v3.Cumulative) {
+			typ = "Gauge"
+		}
+
+		// unlike traces/logs `tag`/`resource` type, the `Type` will be metric type
+		key := v3.AttributeKey{
+			Key:      name,
+			DataType: v3.AttributeKeyDataTypeFloat64,
+			Type:     v3.AttributeKeyType(typ),
+			IsColumn: true,
+		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
 
