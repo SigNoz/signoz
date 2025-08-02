@@ -28,6 +28,9 @@ function getColName(
 	const aggregationsCount = aggregationPerQuery[col.queryName]?.length || 0;
 	const isSingleAggregation = aggregationsCount === 1;
 
+	if (aggregationsCount === 0) {
+		return legend || col.queryName;
+	}
 	// Single aggregation: Priority is alias > legend > expression
 	if (isSingleAggregation) {
 		return alias || legend || expression;
@@ -48,7 +51,7 @@ function getColId(
 	const aggregation =
 		aggregationPerQuery?.[col.queryName]?.[col.aggregationIndex];
 	const expression = aggregation?.expression || '';
-	return `${col.queryName}.${expression}`;
+	return expression ? `${col.queryName}.${expression}` : col.queryName;
 }
 
 /**
