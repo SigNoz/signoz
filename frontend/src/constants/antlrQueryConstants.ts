@@ -15,6 +15,12 @@ export const OPERATORS = {
 	'<': '<',
 };
 
+export const QUERY_BUILDER_FUNCTIONS = {
+	HAS: 'has',
+	HASANY: 'hasAny',
+	HASALL: 'hasAll',
+};
+
 export const NON_VALUE_OPERATORS = [OPERATORS.EXISTS];
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -76,3 +82,15 @@ export const queryOperatorSuggestions = [
 	{ label: OPERATORS.NOT, type: 'operator', info: 'Not' },
 	...negationQueryOperatorSuggestions,
 ];
+
+export function negateOperator(operatorOrFunction: string): string {
+	// Special cases for equals/not equals
+	if (operatorOrFunction === OPERATORS['=']) {
+		return OPERATORS['!='];
+	}
+	if (operatorOrFunction === OPERATORS['!=']) {
+		return OPERATORS['='];
+	}
+	// For all other operators and functions, add NOT in front
+	return `${OPERATORS.NOT} ${operatorOrFunction}`;
+}
