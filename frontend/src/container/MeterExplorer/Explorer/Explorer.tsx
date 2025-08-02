@@ -1,12 +1,12 @@
 import './Explorer.styles.scss';
 
 import * as Sentry from '@sentry/react';
-import { Button, Tooltip } from 'antd';
+// import { Button, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
-import QuickFilters from 'components/QuickFilters/QuickFilters';
-import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
+// import QuickFilters from 'components/QuickFilters/QuickFilters';
+// import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
@@ -15,9 +15,9 @@ import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { Filter } from 'lucide-react';
+// import { Filter } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -38,7 +38,7 @@ function Explorer(): JSX.Element {
 	} = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
 
-	const [showQuickFilters, setShowQuickFilters] = useState(true);
+	// const [showQuickFilters, setShowQuickFilters] = useState(false);
 
 	const defaultQuery = useMemo(
 		() =>
@@ -107,10 +107,10 @@ function Explorer(): JSX.Element {
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div
 				className={cx('meter-explorer-container', {
-					'quick-filters-open': showQuickFilters,
+					// 'quick-filters-open': showQuickFilters,
 				})}
 			>
-				<div
+				{/* <div
 					className={cx('meter-explorer-quick-filters-section', {
 						hidden: !showQuickFilters,
 					})}
@@ -125,12 +125,12 @@ function Explorer(): JSX.Element {
 							setShowQuickFilters(!showQuickFilters);
 						}}
 					/>
-				</div>
+				</div> */}
 
 				<div className="meter-explorer-content-section">
 					<div className="meter-explorer-explore-content">
 						<div className="explore-header">
-							<div className="explore-header-left-actions">
+							{/* <div className="explore-header-left-actions">
 								{!showQuickFilters && (
 									<Tooltip title="Show Quick Filters" placement="right" arrow={false}>
 										<Button
@@ -140,7 +140,7 @@ function Explorer(): JSX.Element {
 										/>
 									</Tooltip>
 								)}
-							</div>
+							</div> */}
 
 							<div className="explore-header-right-actions">
 								<DateTimeSelector showAutoRefresh />
