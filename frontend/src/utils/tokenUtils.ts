@@ -99,14 +99,15 @@ export function isQueryPairComplete(queryPair: Partial<IQueryPair>): boolean {
 export function isFunctionOperator(operator: string): boolean {
 	const functionOperators = Object.values(QUERY_BUILDER_FUNCTIONS);
 
+	const sanitizedOperator = operator.trim();
 	// Check if it's a direct function operator
-	if (functionOperators.includes(operator)) {
+	if (functionOperators.includes(sanitizedOperator)) {
 		return true;
 	}
 
 	// Check if it's a NOT function operator (e.g., "NOT has")
-	if (operator.toUpperCase().startsWith(OPERATORS.NOT)) {
-		const operatorWithoutNot = operator.substring(4).toLowerCase();
+	if (sanitizedOperator.toUpperCase().startsWith(OPERATORS.NOT)) {
+		const operatorWithoutNot = sanitizedOperator.substring(4).toLowerCase();
 		return functionOperators.includes(operatorWithoutNot);
 	}
 
