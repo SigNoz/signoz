@@ -54,7 +54,7 @@ func newProvider(
 		telemetrymetrics.DBName,
 		telemetrymetrics.AttributesMetadataTableName,
 		telemetrymeter.DBName,
-		telemetrymeter.SamplesV4Agg1dTableName,
+		telemetrymeter.SamplesAgg1dTableName,
 		telemetrylogs.DBName,
 		telemetrylogs.LogsV2TableName,
 		telemetrylogs.TagAttributesV2TableName,

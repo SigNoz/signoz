@@ -555,6 +555,12 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 		return nil, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
 	}
 
+	meterKeys, err := t.getMeterKeys(ctx, fieldKeySelectors)
+	if err != nil {
+		return nil, err
+	}
+
+	keys = append(keys, meterKeys...)
 	return keys, nil
 }
 
@@ -606,7 +612,7 @@ func (t *telemetryMetaStore) getMeterKeys(ctx context.Context, fieldKeySelectors
 		}
 		keys = append(keys, &telemetrytypes.TelemetryFieldKey{
 			Name:   name,
-			Signal: telemetrytypes.SignalMeter,
+			Signal: telemetrytypes.SignalMetrics,
 		})
 	}
 
@@ -634,8 +640,6 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *tele
 		keys, err = t.getLogsKeys(ctx, selectors)
 	case telemetrytypes.SignalMetrics:
 		keys, err = t.getMetricsKeys(ctx, selectors)
-	case telemetrytypes.SignalMeter:
-		keys, err = t.getMeterKeys(ctx, selectors)
 	case telemetrytypes.SignalUnspecified:
 		// get traces keys
 		tracesKeys, err := t.getTracesKeys(ctx, selectors)
@@ -1019,6 +1023,13 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 		}
 		values.StringValues = append(values.StringValues, stringValue)
 	}
+
+	meterFieldValues, err := t.getMeterFieldValues(ctx, fieldValueSelector)
+	if err != nil {
+		return nil, err
+	}
+
+	values.StringValues = append(values.StringValues, meterFieldValues.StringValues...)
 	return values, nil
 }
 
@@ -1098,8 +1109,6 @@ func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelecto
 		values, err = t.getLogFieldValues(ctx, fieldValueSelector)
 	case telemetrytypes.SignalMetrics:
 		values, err = t.getMetricFieldValues(ctx, fieldValueSelector)
-	case telemetrytypes.SignalMeter:
-		values, err = t.getMeterFieldValues(ctx, fieldValueSelector)
 	case telemetrytypes.SignalUnspecified:
 		mapOfValues := make(map[any]bool)
 		mapOfRelatedValues := make(map[any]bool)

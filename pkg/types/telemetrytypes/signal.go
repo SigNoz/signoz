@@ -10,6 +10,5 @@ var (
 	SignalTraces      = Signal{valuer.NewString("traces")}
 	SignalLogs        = Signal{valuer.NewString("logs")}
 	SignalMetrics     = Signal{valuer.NewString("metrics")}
-	SignalMeter       = Signal{valuer.NewString("meter")}
 	SignalUnspecified = Signal{valuer.NewString("")}
 )

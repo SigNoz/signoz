@@ -26,7 +26,7 @@ func TestStatementBuilder(t *testing.T) {
 			name:        "test_cumulative_rate_sum",
 			requestType: qbtypes.RequestTypeTimeSeries,
 			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-				Signal:       telemetrytypes.SignalMeter,
+				Signal:       telemetrytypes.SignalMetrics,
 				StepInterval: qbtypes.Step{Duration: 24 * time.Hour},
 				Aggregations: []qbtypes.MetricAggregation{
 					{
@@ -59,7 +59,7 @@ func TestStatementBuilder(t *testing.T) {
 			name:        "test_delta_rate_sum",
 			requestType: qbtypes.RequestTypeTimeSeries,
 			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-				Signal:       telemetrytypes.SignalMeter,
+				Signal:       telemetrytypes.SignalMetrics,
 				StepInterval: qbtypes.Step{Duration: 24 * time.Hour},
 				Aggregations: []qbtypes.MetricAggregation{
 					{
@@ -92,7 +92,7 @@ func TestStatementBuilder(t *testing.T) {
 			name:        "test_delta_rate_avg",
 			requestType: qbtypes.RequestTypeTimeSeries,
 			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-				Signal:       telemetrytypes.SignalMeter,
+				Signal:       telemetrytypes.SignalMetrics,
 				StepInterval: qbtypes.Step{Duration: 24 * time.Hour},
 				Aggregations: []qbtypes.MetricAggregation{
 					{
@@ -125,7 +125,7 @@ func TestStatementBuilder(t *testing.T) {
 			name:        "test_gauge_avg_sum",
 			requestType: qbtypes.RequestTypeTimeSeries,
 			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-				Signal:       telemetrytypes.SignalMeter,
+				Signal:       telemetrytypes.SignalMetrics,
 				StepInterval: qbtypes.Step{Duration: 24 * time.Hour},
 				Aggregations: []qbtypes.MetricAggregation{
 					{

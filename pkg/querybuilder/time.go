@@ -68,12 +68,21 @@ func RecommendedStepIntervalForMeter(start, end uint64) uint64 {
 	step := (end - start) / RecommendedNumberOfPoints / 1e9
 
 	// for meter queries the minimum step interval allowed is 1 day as this is our granularity
-	if step < 86400 {
-		return 86400
+	if step < 3600 {
+		return 3600
 	}
 
-	// return the nearest lower multiple of 86400 ( 1 day )
-	recommended := step - step%86400
+	// return the nearest lower multiple of 3600 ( 1 hour )
+	recommended := step - step%3600
+
+	// if the time range is greater than 1 month set the step interval to be multiple of 1 day
+	if end-start >= uint64(30*24*time.Hour.Nanoseconds()) {
+		if recommended < 86400 {
+			recommended = 86400
+		} else {
+			recommended = uint64(math.Round(float64(recommended)/86400)) * 86400
+		}
+	}
 
 	return recommended
 }

@@ -155,7 +155,6 @@ func (q *QueryBuilderQuery[T]) validateSignal() error {
 	case telemetrytypes.SignalMetrics,
 		telemetrytypes.SignalTraces,
 		telemetrytypes.SignalLogs,
-		telemetrytypes.SignalMeter,
 		telemetrytypes.SignalUnspecified: // Empty is allowed for backward compatibility
 		return nil
 	default:

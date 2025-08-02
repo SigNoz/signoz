@@ -56,7 +56,6 @@ func (b *meterQueryStatementBuilder) Build(
 		return nil, err
 	}
 
-	// TODO[vikrantgupta25]: need to adjust this properly for meter metrics (scrape interval for 1D default so step interval should never be less than that!)
 	start, end = querybuilder.AdjustedMetricTimeRange(start, end, uint64(query.StepInterval.Seconds()), query)
 
 	return b.buildPipelineStatement(ctx, start, end, query, keys, variables)
@@ -127,13 +126,14 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 		sb.SelectMore(col)
 	}
 
-	aggCol := AggregationColumnForSamplesTable(query.Aggregations[0].Temporality, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	tbl := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	aggCol := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, query.Aggregations[0].Temporality, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	if query.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationRate {
 		aggCol = fmt.Sprintf("%s/%d", aggCol, stepSec)
 	}
 
 	sb.SelectMore(fmt.Sprintf("%s AS value", aggCol))
-	sb.From(fmt.Sprintf("%s.%s AS points", DBName, SamplesV4Agg1dTableName))
+	sb.From(fmt.Sprintf("%s.%s AS points", DBName, tbl))
 	sb.Where(
 		sb.In("metric_name", query.Aggregations[0].MetricName),
 		sb.GTE("unix_milli", start),
@@ -205,7 +205,8 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 		sb.SelectMore(col)
 	}
 
-	aggCol := AggregationColumnForSamplesTable(query.Aggregations[0].Temporality,
+	tbl := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	aggCol := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, query.Aggregations[0].Temporality,
 		query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	if query.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationRate {
 		aggCol = fmt.Sprintf("%s/%d", aggCol, stepSec)
@@ -213,7 +214,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 
 	sb.SelectMore(fmt.Sprintf("%s AS per_series_value", aggCol))
 
-	sb.From(fmt.Sprintf("%s.%s AS points", DBName, SamplesV4Agg1dTableName))
+	sb.From(fmt.Sprintf("%s.%s AS points", DBName, tbl))
 	sb.Where(
 		sb.In("metric_name", query.Aggregations[0].MetricName),
 		sb.GTE("unix_milli", start),
@@ -273,10 +274,11 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		baseSb.SelectMore(col)
 	}
 
-	aggCol := AggregationColumnForSamplesTable(query.Aggregations[0].Temporality, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	tbl := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	aggCol := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, query.Aggregations[0].Temporality, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	baseSb.SelectMore(fmt.Sprintf("%s AS per_series_value", aggCol))
 
-	baseSb.From(fmt.Sprintf("%s.%s AS points", DBName, SamplesV4Agg1dTableName))
+	baseSb.From(fmt.Sprintf("%s.%s AS points", DBName, tbl))
 	baseSb.Where(
 		baseSb.In("metric_name", query.Aggregations[0].MetricName),
 		baseSb.GTE("unix_milli", start),

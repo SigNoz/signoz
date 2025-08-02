@@ -22,12 +22,11 @@ const (
 	DataSourceTraces  DataSource = "traces"
 	DataSourceLogs    DataSource = "logs"
 	DataSourceMetrics DataSource = "metrics"
-	DataSourceMeter   DataSource = "meter"
 )
 
 func (d DataSource) Validate() error {
 	switch d {
-	case DataSourceTraces, DataSourceLogs, DataSourceMetrics, DataSourceMeter:
+	case DataSourceTraces, DataSourceLogs, DataSourceMetrics:
 		return nil
 	default:
 		return fmt.Errorf("invalid data source: %s", d)

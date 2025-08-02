@@ -2740,10 +2740,16 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, org
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
 
+	meterAggregateAttributes, err := r.getMeterAggregateAttributes(ctx, orgID, req)
+	if err != nil {
+		return nil, err
+	}
+
+	response.AttributeKeys = append(response.AttributeKeys, meterAggregateAttributes.AttributeKeys...)
 	return &response, nil
 }
 
-func (r *ClickHouseReader) GetMeterAggregateAttributes(ctx context.Context, orgID valuer.UUID, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
+func (r *ClickHouseReader) getMeterAggregateAttributes(ctx context.Context, orgID valuer.UUID, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
 	var response v3.AggregateAttributeResponse
 	// Query all relevant metric names from time_series_v4, but leave metadata retrieval to cache/db
 	query := fmt.Sprintf(
@@ -2792,7 +2798,6 @@ func (r *ClickHouseReader) GetMeterAggregateAttributes(ctx context.Context, orgI
 }
 
 func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
-
 	var query string
 	var err error
 	var rows driver.Rows
@@ -2809,6 +2814,47 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
 	rows, err = r.db.Query(ctx, query, req.AggregateAttribute, common.PastDayRoundOff(), normalized, fmt.Sprintf("%%%s%%", req.SearchText))
+	if err != nil {
+		zap.L().Error("Error while executing query", zap.Error(err))
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var attributeKey string
+	for rows.Next() {
+		if err := rows.Scan(&attributeKey); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		key := v3.AttributeKey{
+			Key:      attributeKey,
+			DataType: v3.AttributeKeyDataTypeString, // https://github.com/OpenObservability/OpenMetrics/blob/main/proto/openmetrics_data_model.proto#L64-L72.
+			Type:     v3.AttributeKeyTypeTag,
+			IsColumn: false,
+		}
+		response.AttributeKeys = append(response.AttributeKeys, key)
+	}
+
+	meterKeys, err := r.getMeterAttributeKeys(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	response.AttributeKeys = append(response.AttributeKeys, meterKeys.AttributeKeys...)
+	return &response, nil
+}
+
+func (r *ClickHouseReader) getMeterAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+	var query string
+	var err error
+	var rows driver.Rows
+	var response v3.FilterAttributeKeyResponse
+
+	// skips the internal attributes i.e attributes starting with __
+	query = fmt.Sprintf("SELECT DISTINCT arrayJoin(JSONExtractKeys(labels)) as attr_name FROM %s.%s WHERE metric_name=$1 AND attr_name ILIKE $2 AND attr_name NOT LIKE '\\_\\_%%'", signozMeterDBName, signozMeterSamplesName)
+	if req.Limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
+	}
+	rows, err = r.db.Query(ctx, query, req.AggregateAttribute, fmt.Sprintf("%%%s%%", req.SearchText))
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
