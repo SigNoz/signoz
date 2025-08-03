@@ -71,6 +71,25 @@ const useBaseAggregateOptions = ({
 
 	const { safeNavigate } = useSafeNavigate();
 
+	const fieldVariables = useMemo(() => {
+		if (!aggregateData?.filters) return {};
+
+		// Extract field variables from aggregation data filters
+		const fieldVars: Record<string, string | number | boolean> = {};
+
+		aggregateData.filters.forEach((filter) => {
+			if (filter.filterKey && filter.filterValue !== undefined) {
+				fieldVars[filter.filterKey] = filter.filterValue;
+			}
+		});
+
+		console.log(
+			'Field variables extracted from filters (will be prefixed with "_"):',
+			fieldVars,
+		);
+		return fieldVars;
+	}, [aggregateData?.filters]);
+
 	// Use the new useContextVariables hook
 	const {
 		variables,
@@ -78,6 +97,7 @@ const useBaseAggregateOptions = ({
 		getVariableByName,
 	} = useContextVariables({
 		maxValues: 2,
+		customVariables: fieldVariables,
 	});
 
 	// Console.log the results
@@ -86,6 +106,8 @@ const useBaseAggregateOptions = ({
 		processedVariables,
 		getVariableByName: getVariableByName('timestamp_start'),
 	});
+
+	console.log('aggregateData', aggregateData);
 
 	const getContextLinksItems = useCallback(() => {
 		if (!contextLinks?.linksData) return [];

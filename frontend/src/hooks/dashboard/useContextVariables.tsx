@@ -1,5 +1,5 @@
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { ReactNode, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -14,6 +14,7 @@ interface ContextVariable {
 
 interface UseContextVariablesProps {
 	maxValues?: number;
+	customVariables?: Record<string, string | number | boolean>;
 }
 
 interface UseContextVariablesResult {
@@ -24,19 +25,20 @@ interface UseContextVariablesResult {
 
 // Utility interfaces for text resolution
 interface ResolveTextUtilsProps {
-	texts: (string | ReactNode)[];
+	texts: string[];
 	processedVariables: Record<string, string>;
 	maxLength?: number;
 	matcher?: string;
 }
 
 interface ResolvedTextUtilsResult {
-	fullTexts: (string | ReactNode)[];
-	truncatedTexts: (string | ReactNode)[];
+	fullTexts: string[];
+	truncatedTexts: string[];
 }
 
 function useContextVariables({
 	maxValues = 2,
+	customVariables,
 }: UseContextVariablesProps): UseContextVariablesResult {
 	const { selectedDashboard } = useDashboard();
 	const globalTime = useSelector<AppState, GlobalReducer>(
@@ -91,10 +93,22 @@ function useContextVariables({
 		[globalTime.minTime, globalTime.maxTime],
 	);
 
+	// Extract custom variables with '_' prefix to avoid conflicts
+	const customVariablesList = useMemo(() => {
+		if (!customVariables) return [];
+
+		return Object.entries(customVariables).map(([name, value]) => ({
+			name: `_${name}`, // Add '_' prefix to avoid conflicts
+			value,
+			source: 'custom' as const,
+			originalValue: value,
+		}));
+	}, [customVariables]);
+
 	// Combine all variables
 	const allVariables = useMemo(
-		() => [...dashboardVariables, ...globalVariables],
-		[dashboardVariables, globalVariables],
+		() => [...dashboardVariables, ...globalVariables, ...customVariablesList],
+		[dashboardVariables, globalVariables, customVariablesList],
 	);
 
 	// Create processed variables with truncation logic
@@ -199,12 +213,10 @@ const extractVarName = (
 
 // Utility function to resolve text with processed variables
 const resolveText = (
-	text: string | ReactNode,
+	text: string,
 	processedVariables: Record<string, string>,
 	matcher = '$',
-): string | ReactNode => {
-	if (typeof text !== 'string') return text;
-
+): string => {
 	const combinedPattern = createCombinedPattern(matcher);
 
 	return text.replace(combinedPattern, (match) => {
@@ -221,13 +233,11 @@ const resolveText = (
 
 // Utility function to resolve text with truncation
 const resolveTextWithTruncation = (
-	text: string | ReactNode,
+	text: string,
 	processedVariables: Record<string, string>,
 	maxLength?: number,
 	matcher = '$',
-): string | ReactNode => {
-	if (typeof text !== 'string') return text;
-
+): string => {
 	const combinedPattern = createCombinedPattern(matcher);
 
 	const result = text.replace(combinedPattern, (match) => {
@@ -241,7 +251,7 @@ const resolveTextWithTruncation = (
 		return match;
 	});
 
-	if (maxLength && typeof result === 'string' && result.length > maxLength) {
+	if (maxLength && result.length > maxLength) {
 		// For the specific test case
 		if (maxLength === 20 && result.startsWith('Logs count in')) {
 			return 'Logs count in test, a...';
