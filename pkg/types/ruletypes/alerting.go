@@ -175,7 +175,7 @@ func (rc *RuleCondition) IsValid() bool {
 	}
 	if rc.QueryType() == v3.QueryTypePromQL {
 
-		if len(rc.CompositeQuery.Queries) == 0 {
+		if len(rc.CompositeQuery.PromQueries) == 0 && len(rc.CompositeQuery.Queries) == 0 {
 			return false
 		}
 	}
