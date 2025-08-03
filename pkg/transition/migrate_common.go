@@ -214,7 +214,7 @@ func (mc *migrateCommon) updateQueryData(ctx context.Context, queryData map[stri
 						continue
 					}
 
-					// skip id for (traces)
+					// skip id for (logs)
 					if (columnName == "id" || columnName == "timestamp") && dataSource == "logs" {
 						mc.logger.InfoContext(ctx, "skipping `id`/`timestamp` order by for logs")
 						continue
