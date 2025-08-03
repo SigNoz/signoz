@@ -172,7 +172,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				event.FilterApplied = spec.Filter != nil && spec.Filter.Expression != ""
 				event.GroupByApplied = len(spec.GroupBy) > 0
 
-				if strings.HasPrefix(spec.Aggregations[0].MetricName, "signoz.meter") {
+				if spec.Source == telemetrytypes.SourceMeter {
 					spec.StepInterval = qbtypes.Step{Duration: time.Second * time.Duration(querybuilder.RecommendedStepIntervalForMeter(req.Start, req.End))}
 				} else {
 					if spec.StepInterval.Seconds() == 0 {
@@ -274,7 +274,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
 				var bq *builderQuery[qbtypes.MetricAggregation]
 
-				if strings.HasPrefix(spec.Aggregations[0].MetricName, "signoz.meter") {
+				if spec.Source == telemetrytypes.SourceMeter {
 					bq = newBuilderQuery(q.telemetryStore, q.meterStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
 				} else {
 					bq = newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, spec, timeRange, req.RequestType, tmplVars)

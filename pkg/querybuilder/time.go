@@ -67,7 +67,7 @@ func RecommendedStepIntervalForMeter(start, end uint64) uint64 {
 
 	step := (end - start) / RecommendedNumberOfPoints / 1e9
 
-	// for meter queries the minimum step interval allowed is 1 day as this is our granularity
+	// for meter queries the minimum step interval allowed is 1 hour as this is our granularity
 	if step < 3600 {
 		return 3600
 	}

@@ -555,12 +555,6 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 		return nil, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
 	}
 
-	meterKeys, err := t.getMeterKeys(ctx, fieldKeySelectors)
-	if err != nil {
-		return nil, err
-	}
-
-	keys = append(keys, meterKeys...)
 	return keys, nil
 }
 
@@ -639,7 +633,11 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *tele
 	case telemetrytypes.SignalLogs:
 		keys, err = t.getLogsKeys(ctx, selectors)
 	case telemetrytypes.SignalMetrics:
-		keys, err = t.getMetricsKeys(ctx, selectors)
+		if fieldKeySelector.Source == telemetrytypes.SourceMeter {
+			keys, err = t.getMeterKeys(ctx, selectors)
+		} else {
+			keys, err = t.getMetricsKeys(ctx, selectors)
+		}
 	case telemetrytypes.SignalUnspecified:
 		// get traces keys
 		tracesKeys, err := t.getTracesKeys(ctx, selectors)
@@ -661,6 +659,14 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *tele
 			return nil, err
 		}
 		keys = append(keys, metricsKeys...)
+
+		// get meter metrics keys
+		meterSourceMetricsKeys, err := t.getMeterKeys(ctx, selectors)
+		if err != nil {
+			return nil, err
+		}
+
+		keys = append(keys, meterSourceMetricsKeys...)
 	}
 	if err != nil {
 		return nil, err
@@ -679,6 +685,7 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors
 	logsSelectors := []*telemetrytypes.FieldKeySelector{}
 	tracesSelectors := []*telemetrytypes.FieldKeySelector{}
 	metricsSelectors := []*telemetrytypes.FieldKeySelector{}
+	meterSourceMetricsSelectors := []*telemetrytypes.FieldKeySelector{}
 
 	for _, fieldKeySelector := range fieldKeySelectors {
 		switch fieldKeySelector.Signal {
@@ -687,11 +694,16 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors
 		case telemetrytypes.SignalTraces:
 			tracesSelectors = append(tracesSelectors, fieldKeySelector)
 		case telemetrytypes.SignalMetrics:
-			metricsSelectors = append(metricsSelectors, fieldKeySelector)
+			if fieldKeySelector.Source == telemetrytypes.SourceMeter {
+				meterSourceMetricsSelectors = append(meterSourceMetricsSelectors, fieldKeySelector)
+			} else {
+				metricsSelectors = append(metricsSelectors, fieldKeySelector)
+			}
 		case telemetrytypes.SignalUnspecified:
 			logsSelectors = append(logsSelectors, fieldKeySelector)
 			tracesSelectors = append(tracesSelectors, fieldKeySelector)
 			metricsSelectors = append(metricsSelectors, fieldKeySelector)
+			meterSourceMetricsSelectors = append(meterSourceMetricsSelectors, fieldKeySelector)
 		}
 	}
 
@@ -708,6 +720,11 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors
 		return nil, err
 	}
 
+	meterSourceMetricsKeys, err := t.getMeterKeys(ctx, meterSourceMetricsSelectors)
+	if err != nil {
+		return nil, err
+	}
+
 	mapOfKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 	for _, key := range logsKeys {
 		mapOfKeys[key.Name] = append(mapOfKeys[key.Name], key)
@@ -716,6 +733,9 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors
 		mapOfKeys[key.Name] = append(mapOfKeys[key.Name], key)
 	}
 	for _, key := range metricsKeys {
+		mapOfKeys[key.Name] = append(mapOfKeys[key.Name], key)
+	}
+	for _, key := range meterSourceMetricsKeys {
 		mapOfKeys[key.Name] = append(mapOfKeys[key.Name], key)
 	}
 
@@ -1024,12 +1044,6 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 		values.StringValues = append(values.StringValues, stringValue)
 	}
 
-	meterFieldValues, err := t.getMeterFieldValues(ctx, fieldValueSelector)
-	if err != nil {
-		return nil, err
-	}
-
-	values.StringValues = append(values.StringValues, meterFieldValues.StringValues...)
 	return values, nil
 }
 
@@ -1108,7 +1122,11 @@ func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelecto
 	case telemetrytypes.SignalLogs:
 		values, err = t.getLogFieldValues(ctx, fieldValueSelector)
 	case telemetrytypes.SignalMetrics:
-		values, err = t.getMetricFieldValues(ctx, fieldValueSelector)
+		if fieldValueSelector.Source == telemetrytypes.SourceMeter {
+			values, err = t.getMeterFieldValues(ctx, fieldValueSelector)
+		} else {
+			values, err = t.getMetricFieldValues(ctx, fieldValueSelector)
+		}
 	case telemetrytypes.SignalUnspecified:
 		mapOfValues := make(map[any]bool)
 		mapOfRelatedValues := make(map[any]bool)

@@ -2740,16 +2740,10 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, org
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
 
-	meterAggregateAttributes, err := r.getMeterAggregateAttributes(ctx, orgID, req)
-	if err != nil {
-		return nil, err
-	}
-
-	response.AttributeKeys = append(response.AttributeKeys, meterAggregateAttributes.AttributeKeys...)
 	return &response, nil
 }
 
-func (r *ClickHouseReader) getMeterAggregateAttributes(ctx context.Context, orgID valuer.UUID, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
+func (r *ClickHouseReader) GetMeterAggregateAttributes(ctx context.Context, orgID valuer.UUID, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
 	var response v3.AggregateAttributeResponse
 	// Query all relevant metric names from time_series_v4, but leave metadata retrieval to cache/db
 	query := fmt.Sprintf(
@@ -2834,16 +2828,10 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
 
-	meterKeys, err := r.getMeterAttributeKeys(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	response.AttributeKeys = append(response.AttributeKeys, meterKeys.AttributeKeys...)
 	return &response, nil
 }
 
-func (r *ClickHouseReader) getMeterAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+func (r *ClickHouseReader) GetMeterAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	var query string
 	var err error
 	var rows driver.Rows
