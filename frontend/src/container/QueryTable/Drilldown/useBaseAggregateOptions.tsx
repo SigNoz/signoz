@@ -1,9 +1,14 @@
+import { LinkOutlined } from '@ant-design/icons';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { processContextLinks } from 'container/NewWidget/RightContainer/ContextLinks/utils';
+import useContextVariables from 'hooks/dashboard/useContextVariables';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
 import ContextMenu from 'periscope/components/ContextMenu';
 import { useCallback, useMemo } from 'react';
+import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { ContextMenuItem } from './contextConfig';
@@ -18,6 +23,7 @@ interface UseBaseAggregateOptionsProps {
 	subMenu: string;
 	setSubMenu: (subMenu: string) => void;
 	aggregateData: AggregateData | null;
+	contextLinks?: ContextLinksData;
 }
 
 interface BaseAggregateOptionsConfig {
@@ -45,9 +51,9 @@ const useBaseAggregateOptions = ({
 	subMenu,
 	setSubMenu,
 	aggregateData,
+	contextLinks,
 }: UseBaseAggregateOptionsProps): {
 	baseAggregateOptionsConfig: BaseAggregateOptionsConfig;
-	handleBaseDrilldown: (key: string, drilldownQuery?: Query) => void;
 } => {
 	// const { redirectWithQueryBuilderData } = useQueryBuilder();
 
@@ -64,6 +70,54 @@ const useBaseAggregateOptions = ({
 	// );
 
 	const { safeNavigate } = useSafeNavigate();
+
+	// Use the new useContextVariables hook
+	const {
+		variables,
+		processedVariables,
+		getVariableByName,
+	} = useContextVariables({
+		maxValues: 2,
+	});
+
+	// Console.log the results
+	console.log('useContextVariables results:', {
+		variables,
+		processedVariables,
+		getVariableByName: getVariableByName('timestamp_start'),
+	});
+
+	const getContextLinksItems = useCallback(() => {
+		if (!contextLinks?.linksData) return [];
+		console.log('contextLinks', contextLinks);
+
+		try {
+			const processedLinks = processContextLinks(
+				contextLinks.linksData,
+				processedVariables,
+				50, // maxLength for labels
+			);
+
+			console.log('Processed context links:', {
+				originalLinks: contextLinks.linksData,
+				processedLinks,
+			});
+
+			return processedLinks.map(({ id, label, url }) => (
+				<ContextMenu.Item
+					key={id}
+					icon={<LinkOutlined />}
+					onClick={(): void => {
+						window.open(url, '_blank');
+					}}
+				>
+					{label}
+				</ContextMenu.Item>
+			));
+		} catch (error) {
+			return [];
+		}
+	}, [contextLinks, processedVariables]);
 
 	const handleBaseDrilldown = useCallback(
 		(key: string): void => {
@@ -142,17 +196,36 @@ const useBaseAggregateOptions = ({
 					<div>{aggregations}</div>
 				</div>
 			),
-			items: getBaseContextConfig({ handleBaseDrilldown }).map(
-				({ key, label, icon, onClick }) => (
-					<ContextMenu.Item key={key} icon={icon} onClick={(): void => onClick()}>
-						{label}
-					</ContextMenu.Item>
-				),
+			items: (
+				<div style={{ height: '200px' }}>
+					<OverlayScrollbar
+						options={{
+							overflow: {
+								x: 'hidden',
+							},
+						}}
+					>
+						<>
+							{getBaseContextConfig({ handleBaseDrilldown }).map(
+								({ key, label, icon, onClick }) => (
+									<ContextMenu.Item
+										key={key}
+										icon={icon}
+										onClick={(): void => onClick()}
+									>
+										{label}
+									</ContextMenu.Item>
+								),
+							)}
+							{getContextLinksItems()}
+						</>
+					</OverlayScrollbar>
+				</div>
 			),
 		};
-	}, [subMenu, query, handleBaseDrilldown, aggregateData]);
+	}, [subMenu, query, handleBaseDrilldown, aggregateData, getContextLinksItems]);
 
-	return { baseAggregateOptionsConfig, handleBaseDrilldown };
+	return { baseAggregateOptionsConfig };
 };
 
 export default useBaseAggregateOptions;
