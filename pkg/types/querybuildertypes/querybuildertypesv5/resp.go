@@ -164,7 +164,7 @@ type RawData struct {
 }
 
 type RawRow struct {
-	Timestamp time.Time       `json:"timestamp"`
+	Timestamp time.Time       `json:"timestamp,omitempty"`
 	Data      map[string]*any `json:"data"`
 }
 
