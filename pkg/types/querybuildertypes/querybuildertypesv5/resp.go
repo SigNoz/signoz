@@ -164,8 +164,8 @@ type RawData struct {
 }
 
 type RawRow struct {
-	Timestamp time.Time       `json:"timestamp,omitempty"`
-	Data      map[string]*any `json:"data"`
+	Timestamp time.Time      `json:"timestamp"`
+	Data      map[string]any `json:"data"`
 }
 
 func sanitizeValue(v any) any {
@@ -255,22 +255,24 @@ func (s ScalarData) MarshalJSON() ([]byte, error) {
 
 func (r RawRow) MarshalJSON() ([]byte, error) {
 	type Alias RawRow
-	sanitizedData := make(map[string]*any)
+	sanitizedData := make(map[string]any)
 	for k, v := range r.Data {
-		if v != nil {
-			sanitized := sanitizeValue(*v)
-			sanitizedData[k] = &sanitized
-		} else {
-			sanitizedData[k] = nil
-		}
+		sanitizedData[k] = sanitizeValue(v)
+	}
+
+	var timestamp *time.Time
+	if !r.Timestamp.IsZero() {
+		timestamp = &r.Timestamp
 	}
 
 	return json.Marshal(&struct {
 		*Alias
-		Data map[string]*any `json:"data"`
+		Data      map[string]any `json:"data"`
+		Timestamp *time.Time     `json:"timestamp,omitempty"`
 	}{
-		Alias: (*Alias)(&r),
-		Data:  sanitizedData,
+		Alias:     (*Alias)(&r),
+		Data:      sanitizedData,
+		Timestamp: timestamp,
 	})
 }
 
