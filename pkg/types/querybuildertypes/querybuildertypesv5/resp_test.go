@@ -312,6 +312,9 @@ func TestSanitizeValue(t *testing.T) {
 }
 
 func TestRawData_MarshalJSON(t *testing.T) {
+	str1 := "val1"
+	num1 := float64(1.1)
+
 	tests := []struct {
 		name     string
 		data     RawData
@@ -368,6 +371,19 @@ func TestRawData_MarshalJSON(t *testing.T) {
 				},
 			},
 			expected: `{"nextCursor":"","queryName":"test_query","rows":[{"data":{"value":"val1"}}]}`,
+		},
+		{
+			name: "WithTimestamp_WithPointerData",
+			data: RawData{
+				QueryName: "test_query",
+				Rows: []*RawRow{
+					{
+						Timestamp: time.Unix(1717334400, 0).UTC(),
+						Data:      map[string]any{"str1": &str1, "num1": &num1},
+					},
+				},
+			},
+			expected: `{"nextCursor":"","queryName":"test_query","rows":[{"data":{"num1":1.1,"str1":"val1"},"timestamp":"2024-06-02T13:20:00Z"}]}`,
 		},
 	}
 
