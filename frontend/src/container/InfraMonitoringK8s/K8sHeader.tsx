@@ -111,7 +111,7 @@ function K8sHeader({
 
 				<div className="k8s-qb-search-container">
 					<QueryBuilderSearch
-						query={query}
+						query={query as IBuilderQuery}
 						onChange={handleChangeTagFilters}
 						isInfraMonitoring
 						disableNavigationShortcuts

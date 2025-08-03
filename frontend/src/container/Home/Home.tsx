@@ -9,7 +9,7 @@ import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
 import Header from 'components/Header/Header';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
@@ -33,6 +33,7 @@ import { useMutation, useQuery } from 'react-query';
 import { UserPreference } from 'types/api/preferences/preference';
 import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
+import { isIngestionActive } from 'utils/app';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import AlertRules from './AlertRules/AlertRules';
@@ -85,14 +86,15 @@ export default function Home(): JSX.Element {
 	const { data: logsData, isLoading: isLogsLoading } = useGetQueryRange(
 		{
 			query: initialQueriesMap[DataSource.LOGS],
-			graphType: PANEL_TYPES.TABLE,
+			graphType: PANEL_TYPES.VALUE,
 			selectedTime: 'GLOBAL_TIME',
 			globalSelectedInterval: '30m',
 			params: {
 				dataSource: DataSource.LOGS,
 			},
+			formatForWeb: false,
 		},
-		DEFAULT_ENTITY_VERSION,
+		ENTITY_VERSION_V5,
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
@@ -109,14 +111,15 @@ export default function Home(): JSX.Element {
 	const { data: tracesData, isLoading: isTracesLoading } = useGetQueryRange(
 		{
 			query: initialQueriesMap[DataSource.TRACES],
-			graphType: PANEL_TYPES.TABLE,
+			graphType: PANEL_TYPES.VALUE,
 			selectedTime: 'GLOBAL_TIME',
 			globalSelectedInterval: '30m',
 			params: {
 				dataSource: DataSource.TRACES,
 			},
+			formatForWeb: false,
 		},
-		DEFAULT_ENTITY_VERSION,
+		ENTITY_VERSION_V5,
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
@@ -282,13 +285,9 @@ export default function Home(): JSX.Element {
 	}, []);
 
 	useEffect(() => {
-		const logsDataTotal = parseInt(
-			logsData?.payload?.data?.newResult?.data?.result?.[0]?.series?.[0]
-				?.values?.[0]?.value || '0',
-			10,
-		);
+		const isLogsIngestionActive = isIngestionActive(logsData?.payload);
 
-		if (logsDataTotal > 0) {
+		if (isLogsIngestionActive) {
 			setIsLogsIngestionActive(true);
 			handleUpdateChecklistDoneItem('SEND_LOGS');
 			handleUpdateChecklistDoneItem('ADD_DATA_SOURCE');
@@ -296,13 +295,9 @@ export default function Home(): JSX.Element {
 	}, [logsData, handleUpdateChecklistDoneItem]);
 
 	useEffect(() => {
-		const tracesDataTotal = parseInt(
-			tracesData?.payload?.data?.newResult?.data?.result?.[0]?.series?.[0]
-				?.values?.[0]?.value || '0',
-			10,
-		);
+		const isTracesIngestionActive = isIngestionActive(tracesData?.payload);
 
-		if (tracesDataTotal > 0) {
+		if (isTracesIngestionActive) {
 			setIsTracesIngestionActive(true);
 			handleUpdateChecklistDoneItem('SEND_TRACES');
 			handleUpdateChecklistDoneItem('ADD_DATA_SOURCE');

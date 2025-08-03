@@ -1,6 +1,12 @@
+import {
+	convertAggregationToExpression,
+	convertFiltersToExpressionWithExistingQuery,
+	convertHavingToExpression,
+} from 'components/QueryBuilderV2/utils';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useMemo } from 'react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export const useGetCompositeQueryParam = (): Query | null => {
@@ -18,6 +24,42 @@ export const useGetCompositeQueryParam = (): Query | null => {
 			parsedCompositeQuery = JSON.parse(
 				decodeURIComponent(compositeQuery.replace(/\+/g, ' ')),
 			);
+
+			// Convert old format to new format for each query in builder.queryData
+			if (parsedCompositeQuery?.builder?.queryData) {
+				parsedCompositeQuery.builder.queryData = parsedCompositeQuery.builder.queryData.map(
+					(query) => {
+						const existingExpression = query.filter?.expression || '';
+						const convertedQuery = { ...query };
+
+						const convertedFilter = convertFiltersToExpressionWithExistingQuery(
+							query.filters || { items: [], op: 'AND' },
+							existingExpression,
+						);
+						convertedQuery.filter = convertedFilter.filter;
+						convertedQuery.filters = convertedFilter.filters;
+
+						// Convert having if needed
+						if (Array.isArray(query.having)) {
+							const convertedHaving = convertHavingToExpression(query.having);
+							convertedQuery.having = convertedHaving;
+						}
+
+						// Convert aggregation if needed
+						if (!query.aggregations && query.aggregateOperator) {
+							const convertedAggregation = convertAggregationToExpression(
+								query.aggregateOperator,
+								query.aggregateAttribute as BaseAutocompleteData,
+								query.dataSource,
+								query.timeAggregation,
+								query.spaceAggregation,
+							) as any; // Type assertion to handle union type
+							convertedQuery.aggregations = convertedAggregation;
+						}
+						return convertedQuery;
+					},
+				);
+			}
 		} catch (e) {
 			parsedCompositeQuery = null;
 		}

@@ -41,6 +41,7 @@ export type DynamicColumn = {
 	title: string;
 	data: (string | number)[];
 	type: 'field' | 'operator' | 'formula';
+	id?: string;
 };
 
 type DynamicColumns = DynamicColumn[];
@@ -93,7 +94,10 @@ const getQueryByName = <T extends keyof QueryBuilderData>(
 		);
 	}
 	if (query.queryType === EQueryType.QUERY_BUILDER) {
-		const queryArray = query.builder[type];
+		const queryArray = (query.builder[type] || []) as (
+			| IBuilderQuery
+			| IBuilderFormula
+		)[];
 		const defaultValue =
 			type === 'queryData'
 				? initialQueryBuilderFormValues
@@ -119,6 +123,7 @@ const addLabels = (
 	query: IBuilderQuery | IBuilderFormula | IClickHouseQuery | IPromQLQuery,
 	label: string,
 	dynamicColumns: DynamicColumns,
+	columnId?: string,
 ): void => {
 	if (isValueExist('dataIndex', label, dynamicColumns)) return;
 
@@ -129,6 +134,7 @@ const addLabels = (
 		title: label,
 		data: [],
 		type: 'field',
+		id: columnId,
 	};
 
 	dynamicColumns.push(fieldObj);
@@ -139,6 +145,7 @@ const addOperatorFormulaColumns = (
 	dynamicColumns: DynamicColumns,
 	queryType: EQueryType,
 	customLabel?: string,
+	columnId?: string,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): void => {
 	if (isFormula(get(query, 'queryName', ''))) {
@@ -156,6 +163,7 @@ const addOperatorFormulaColumns = (
 			title: customLabel || formulaLabel,
 			data: [],
 			type: 'formula',
+			id: columnId,
 		};
 
 		dynamicColumns.push(formulaColumn);
@@ -166,8 +174,8 @@ const addOperatorFormulaColumns = (
 	if (queryType === EQueryType.QUERY_BUILDER) {
 		const currentQueryData = query as IBuilderQuery;
 		let operatorLabel = `${currentQueryData.aggregateOperator}`;
-		if (currentQueryData.aggregateAttribute.key) {
-			operatorLabel += `(${currentQueryData.aggregateAttribute.key})`;
+		if (currentQueryData.aggregateAttribute?.key) {
+			operatorLabel += `(${currentQueryData.aggregateAttribute?.key})`;
 		}
 
 		if (currentQueryData.legend) {
@@ -177,10 +185,11 @@ const addOperatorFormulaColumns = (
 		const operatorColumn: DynamicColumn = {
 			query,
 			field: currentQueryData.queryName,
-			dataIndex: currentQueryData.queryName,
+			dataIndex: customLabel || currentQueryData.queryName,
 			title: customLabel || operatorLabel,
 			data: [],
 			type: 'operator',
+			id: columnId,
 		};
 
 		dynamicColumns.push(operatorColumn);
@@ -221,6 +230,7 @@ const addOperatorFormulaColumns = (
 			title: customLabel || operatorLabel,
 			data: [],
 			type: 'operator',
+			id: columnId,
 		};
 
 		dynamicColumns.push(operatorColumn);
@@ -258,17 +268,79 @@ const transformColumnTitles = (
 		return item;
 	});
 
+const processTableColumns = (
+	table: NonNullable<QueryDataV3['table']>,
+	currentStagedQuery:
+		| IBuilderQuery
+		| IBuilderFormula
+		| IClickHouseQuery
+		| IPromQLQuery,
+	dynamicColumns: DynamicColumns,
+	queryType: EQueryType,
+): void => {
+	table.columns.forEach((column) => {
+		if (column.isValueColumn) {
+			// For value columns, add as operator/formula column
+			addOperatorFormulaColumns(
+				currentStagedQuery,
+				dynamicColumns,
+				queryType,
+				column.name,
+				column.id,
+			);
+		} else {
+			// For non-value columns, add as field/label column
+			addLabels(currentStagedQuery, column.name, dynamicColumns, column.id);
+		}
+	});
+};
+
+const processSeriesColumns = (
+	series: NonNullable<QueryDataV3['series']>,
+	currentStagedQuery:
+		| IBuilderQuery
+		| IBuilderFormula
+		| IClickHouseQuery
+		| IPromQLQuery,
+	dynamicColumns: DynamicColumns,
+	queryType: EQueryType,
+	currentQuery: QueryDataV3,
+): void => {
+	const isValuesColumnExist = series.some((item) => item.values.length > 0);
+	const isEveryValuesExist = series.every((item) => item.values.length > 0);
+
+	if (isValuesColumnExist) {
+		addOperatorFormulaColumns(
+			currentStagedQuery,
+			dynamicColumns,
+			queryType,
+			isEveryValuesExist ? undefined : get(currentStagedQuery, 'queryName', ''),
+		);
+	}
+
+	series.forEach((seria) => {
+		seria.labelsArray?.forEach((lab) => {
+			Object.keys(lab).forEach((label) => {
+				if (label === currentQuery?.queryName) return;
+
+				addLabels(currentStagedQuery, label, dynamicColumns);
+			});
+		});
+	});
+};
+
 const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 	const dynamicColumns: DynamicColumns = [];
 
 	queryTableData.forEach((currentQuery) => {
-		const { series, queryName, list } = currentQuery;
+		const { series, queryName, list, table } = currentQuery;
 
 		const currentStagedQuery = getQueryByName(
 			query,
 			queryName,
 			isFormula(queryName) ? 'queryFormulas' : 'queryData',
 		);
+
 		if (list) {
 			list.forEach((listItem) => {
 				Object.keys(listItem.data).forEach((label) => {
@@ -277,28 +349,23 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 			});
 		}
 
+		if (table) {
+			processTableColumns(
+				table,
+				currentStagedQuery,
+				dynamicColumns,
+				query.queryType,
+			);
+		}
+
 		if (series) {
-			const isValuesColumnExist = series.some((item) => item.values.length > 0);
-			const isEveryValuesExist = series.every((item) => item.values.length > 0);
-
-			if (isValuesColumnExist) {
-				addOperatorFormulaColumns(
-					currentStagedQuery,
-					dynamicColumns,
-					query.queryType,
-					isEveryValuesExist ? undefined : get(currentStagedQuery, 'queryName', ''),
-				);
-			}
-
-			series.forEach((seria) => {
-				seria.labelsArray?.forEach((lab) => {
-					Object.keys(lab).forEach((label) => {
-						if (label === currentQuery?.queryName) return;
-
-						addLabels(currentStagedQuery, label, dynamicColumns);
-					});
-				});
-			});
+			processSeriesColumns(
+				series,
+				currentStagedQuery,
+				dynamicColumns,
+				query.queryType,
+				currentQuery,
+			);
 		}
 	});
 
@@ -474,6 +541,59 @@ const fillDataFromList = (
 	});
 };
 
+const processTableRowValue = (value: any, column: DynamicColumn): void => {
+	if (value !== null && value !== undefined && value !== '') {
+		if (isObject(value)) {
+			column.data.push(JSON.stringify(value));
+		} else if (typeof value === 'number' || !isNaN(Number(value))) {
+			column.data.push(Number(value));
+		} else {
+			column.data.push(value.toString());
+		}
+	} else {
+		column.data.push('N/A');
+	}
+};
+
+const fillDataFromTable = (
+	currentQuery: QueryDataV3,
+	columns: DynamicColumns,
+): void => {
+	const { table } = currentQuery;
+
+	if (!table || !table.rows) return;
+
+	table.rows.forEach((row) => {
+		const unusedColumnsKeys = new Set<keyof RowData>(
+			columns.map((item) => item.id || item.title),
+		);
+
+		columns.forEach((column) => {
+			const rowData = row.data;
+			const columnField = column.id || column.title || column.field;
+
+			if (Object.prototype.hasOwnProperty.call(rowData, columnField)) {
+				const value = rowData[columnField];
+				processTableRowValue(value, column);
+				unusedColumnsKeys.delete(columnField);
+			} else {
+				column.data.push('N/A');
+				unusedColumnsKeys.delete(columnField);
+			}
+		});
+
+		// Fill any remaining unused columns with N/A
+		unusedColumnsKeys.forEach((key) => {
+			const unusedCol = columns.find(
+				(item) => item.id === key || item.title === key,
+			);
+			if (unusedCol) {
+				unusedCol.data.push('N/A');
+			}
+		});
+	});
+};
+
 const fillColumnsData: FillColumnData = (queryTableData, cols) => {
 	const fields = cols.filter((item) => item.type === 'field');
 	const operators = cols.filter((item) => item.type === 'operator');
@@ -497,6 +617,8 @@ const fillColumnsData: FillColumnData = (queryTableData, cols) => {
 				fillDataFromList(listItem, resultColumns);
 			});
 		}
+
+		fillDataFromTable(currentQuery, resultColumns);
 	});
 
 	const rowsLength = resultColumns.length > 0 ? resultColumns[0].data.length : 0;

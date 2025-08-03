@@ -66,9 +66,9 @@ function TopErrors({
 									op: '=',
 									value: endPointName,
 								},
-								...initialFilters.items,
+								...(initialFilters?.items || []),
 						  ]
-						: [...initialFilters.items],
+						: [...(initialFilters?.items || [])],
 					op: 'AND',
 				},
 				showStatusCodeErrors,
@@ -236,7 +236,7 @@ function TopErrors({
 								record.statusCode,
 							);
 							navigateToExplorer({
-								filters: [...filters.items],
+								filters: [...(filters?.items || [])],
 								dataSource: DataSource.TRACES,
 								startTime: minTime,
 								endTime: maxTime,

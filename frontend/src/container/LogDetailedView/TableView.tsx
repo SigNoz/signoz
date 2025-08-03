@@ -88,8 +88,9 @@ function TableView({
 				}
 			});
 		} else {
+			// eslint-disable-next-line sonarjs/no-identical-functions
 			selectedOptions.selectColumns.forEach((val) => {
-				const path = findKeyPath(logData, val.key, '');
+				const path = findKeyPath(logData, val.name, '');
 				if (path) {
 					pinnedAttributes[path] = true;
 				}

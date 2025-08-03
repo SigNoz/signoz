@@ -63,6 +63,7 @@ const useCreateAlerts = (
 			graphType: getGraphType(widget.panelTypes),
 			selectedTime: widget.timePreferance,
 			variables: getDashboardVariables(selectedDashboard?.data.variables),
+			originalGraphType: widget.panelTypes,
 		});
 		queryRangeMutation.mutate(queryPayload, {
 			onSuccess: (data) => {

@@ -139,7 +139,7 @@ describe('SpanScopeSelector', () => {
 			updatedQuery: Query,
 			expectedKey: string,
 		): void => {
-			const filters = updatedQuery.builder.queryData[0].filters.items;
+			const filters = updatedQuery.builder.queryData[0].filters?.items || [];
 			expect(filters).toContainEqual(
 				expect.objectContaining({
 					key: expect.objectContaining({
@@ -429,7 +429,9 @@ describe('SpanScopeSelector', () => {
 
 			const redirectQueryArg = mockRedirectWithQueryBuilderData.mock
 				.calls[0][0] as Query;
-			const { items } = redirectQueryArg.builder.queryData[0].filters;
+			const { items } = redirectQueryArg.builder.queryData[0].filters || {
+				items: [],
+			};
 			// Count non-scope filters
 			const nonScopeFilters = items.filter(
 				(filter) => filter.key?.type !== 'spanSearchScope',

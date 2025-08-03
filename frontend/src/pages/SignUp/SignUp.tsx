@@ -1,3 +1,5 @@
+import './SignUp.styles.scss';
+
 import { Button, Form, Input, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import accept from 'api/v1/invite/id/accept';
@@ -5,12 +7,11 @@ import getInviteDetails from 'api/v1/invite/id/get';
 import loginApi from 'api/v1/login/login';
 import signUpApi from 'api/v1/register/signup';
 import afterLogin from 'AppRoutes/utils';
-import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { SuccessResponseV2 } from 'types/api';
@@ -18,10 +19,8 @@ import APIError from 'types/api/error';
 import { InviteDetails } from 'types/api/user/getInviteDetails';
 import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
 
-import { ButtonContainer, FormContainer, FormWrapper, Label } from './styles';
+import { FormContainer, Label } from './styles';
 import { isPasswordNotValidMessage, isPasswordValid } from './utils';
-
-const { Title } = Typography;
 
 type FormValues = {
 	firstName: string;
@@ -33,8 +32,7 @@ type FormValues = {
 	isAnonymous: boolean;
 };
 
-function SignUp({ version }: SignUpProps): JSX.Element {
-	const { t } = useTranslation(['signup']);
+function SignUp(): JSX.Element {
 	const [loading, setLoading] = useState(false);
 
 	const [precheck, setPrecheck] = useState<LoginPrecheckPayloadProps>({
@@ -167,7 +165,8 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	const handleSubmitSSO = async (): Promise<void> => {
 		if (!params.get('token')) {
 			notifications.error({
-				message: t('token_required'),
+				message:
+					'Invite token is required for signup, please request one from your admin',
 			});
 			return;
 		}
@@ -184,7 +183,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					window.location.href = response.data?.ssoUrl;
 				} else {
 					notifications.error({
-						message: t('failed_to_initiate_login'),
+						message: 'Signup completed but failed to initiate login',
 					});
 					// take user to login page as there is nothing to do here
 					history.push(ROUTES.LOGIN);
@@ -192,7 +191,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			}
 		} catch (error) {
 			notifications.error({
-				message: t('unexpected_error'),
+				message: 'Something went wrong',
 			});
 		}
 
@@ -229,7 +228,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				setLoading(false);
 			} catch (error) {
 				notifications.error({
-					message: t('unexpected_error'),
+					message: 'Something went wrong',
 				});
 				setLoading(false);
 			}
@@ -268,19 +267,37 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	};
 
 	return (
-		<WelcomeLeftContainer version={version}>
-			<FormWrapper>
+		<div className="signup-page-container">
+			<div className="perilin-bg" />
+			<div className="signup-page-content">
+				<div className="brand-container">
+					<img
+						src="/Logos/signoz-brand-logo.svg"
+						alt="logo"
+						className="brand-logo"
+					/>
+
+					<div className="brand-title">SigNoz</div>
+				</div>
+
 				<FormContainer
 					onFinish={!precheck.sso ? handleSubmit : handleSubmitSSO}
 					onValuesChange={handleValuesChange}
 					form={form}
+					className="signup-form"
 				>
-					<Title level={4}>Create your account</Title>
-					<div>
-						<Label htmlFor="signupEmail">{t('label_email')}</Label>
+					<div className="signup-form-header">
+						<Typography.Paragraph className="signup-form-header-text">
+							Create your account to monitor, trace, and troubleshoot your applications
+							effortlessly.
+						</Typography.Paragraph>
+					</div>
+
+					<div className="email-container">
+						<Label htmlFor="signupEmail">Email</Label>
 						<FormContainer.Item noStyle name="email">
 							<Input
-								placeholder={t('placeholder_email')}
+								placeholder="name@yourcompany.com"
 								type="email"
 								autoFocus
 								required
@@ -291,11 +308,11 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					</div>
 
 					{isNameVisible && (
-						<div>
-							<Label htmlFor="signupFirstName">{t('label_firstname')}</Label>{' '}
+						<div className="first-name-container">
+							<Label htmlFor="signupFirstName">Name</Label>{' '}
 							<FormContainer.Item noStyle name="firstName">
 								<Input
-									placeholder={t('placeholder_firstname')}
+									placeholder="Your Name"
 									required
 									id="signupFirstName"
 									disabled={isDetailsDisable && form.getFieldValue('firstName')}
@@ -304,87 +321,76 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						</div>
 					)}
 
-					<div>
-						<Label htmlFor="organizationName">{t('label_orgname')}</Label>{' '}
+					<div className="org-name-container">
+						<Label htmlFor="organizationName">Organization Name</Label>{' '}
 						<FormContainer.Item noStyle name="organizationName">
 							<Input
-								placeholder={t('placeholder_orgname')}
+								placeholder="Your Company"
 								id="organizationName"
 								disabled={isDetailsDisable}
 							/>
 						</FormContainer.Item>
 					</div>
+
 					{!precheck.sso && (
-						<div>
-							<Label htmlFor="Password">{t('label_password')}</Label>{' '}
-							<FormContainer.Item noStyle name="password">
-								<Input.Password required id="currentPassword" />
-							</FormContainer.Item>
+						<div className="password-section">
+							<div className="password-container">
+								<label htmlFor="Password">Password</label>{' '}
+								<FormContainer.Item noStyle name="password">
+									<Input.Password required id="currentPassword" />
+								</FormContainer.Item>
+							</div>
+
+							<div className="password-container">
+								<label htmlFor="ConfirmPassword">Confirm Password</label>{' '}
+								<FormContainer.Item noStyle name="confirmPassword">
+									<Input.Password required id="confirmPassword" />
+								</FormContainer.Item>
+							</div>
 						</div>
 					)}
-					{!precheck.sso && (
-						<div>
-							<Label htmlFor="ConfirmPassword">{t('label_confirm_password')}</Label>{' '}
-							<FormContainer.Item noStyle name="confirmPassword">
-								<Input.Password required id="confirmPassword" />
-							</FormContainer.Item>
-							{confirmPasswordError && (
-								<Typography.Paragraph
-									italic
-									id="password-confirm-error"
-									style={{
-										color: '#D89614',
-										marginTop: '0.50rem',
-									}}
-								>
-									{t('failed_confirm_password')}
-								</Typography.Paragraph>
-							)}
-							{isPasswordPolicyError && (
-								<Typography.Paragraph
-									italic
-									style={{
-										color: '#D89614',
-										marginTop: '0.50rem',
-									}}
-								>
-									{isPasswordNotValidMessage}
-								</Typography.Paragraph>
-							)}
-						</div>
-					)}
+
+					<div className="password-error-container">
+						{confirmPasswordError && (
+							<Typography.Paragraph
+								id="password-confirm-error"
+								className="password-error-message"
+							>
+								Passwords don’t match. Please try again
+							</Typography.Paragraph>
+						)}
+
+						{isPasswordPolicyError && (
+							<Typography.Paragraph className="password-error-message">
+								{isPasswordNotValidMessage}
+							</Typography.Paragraph>
+						)}
+					</div>
+
 					{isSignUp && (
-						<Typography.Paragraph
-							italic
-							style={{
-								color: '#D89614',
-								marginTop: '0.50rem',
-							}}
-						>
-							This will create an admin account. If you are not an admin, please ask
+						<Typography.Paragraph className="signup-info-message">
+							* This will create an admin account. If you are not an admin, please ask
 							your admin for an invite link
 						</Typography.Paragraph>
 					)}
 
-					<ButtonContainer>
+					<div className="signup-button-container">
 						<Button
 							type="primary"
 							htmlType="submit"
 							data-attr="signup"
 							loading={loading}
 							disabled={isValidForm()}
+							className="periscope-btn primary next-btn"
+							icon={<ArrowRight size={12} />}
 						>
-							{t('button_get_started')}
+							Sign Up
 						</Button>
-					</ButtonContainer>
+					</div>
 				</FormContainer>
-			</FormWrapper>
-		</WelcomeLeftContainer>
+			</div>
+		</div>
 	);
-}
-
-interface SignUpProps {
-	version: string;
 }
 
 export default SignUp;
