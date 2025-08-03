@@ -559,7 +559,7 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 }
 
 // getMeterKeys returns the keys from the meter metrics that match the field selection criteria
-func (t *telemetryMetaStore) getMeterKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
+func (t *telemetryMetaStore) getMeterSourceMetricKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	if len(fieldKeySelectors) == 0 {
 		return nil, nil
 	}
@@ -634,7 +634,7 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *tele
 		keys, err = t.getLogsKeys(ctx, selectors)
 	case telemetrytypes.SignalMetrics:
 		if fieldKeySelector.Source == telemetrytypes.SourceMeter {
-			keys, err = t.getMeterKeys(ctx, selectors)
+			keys, err = t.getMeterSourceMetricKeys(ctx, selectors)
 		} else {
 			keys, err = t.getMetricsKeys(ctx, selectors)
 		}
@@ -661,7 +661,7 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *tele
 		keys = append(keys, metricsKeys...)
 
 		// get meter metrics keys
-		meterSourceMetricsKeys, err := t.getMeterKeys(ctx, selectors)
+		meterSourceMetricsKeys, err := t.getMeterSourceMetricKeys(ctx, selectors)
 		if err != nil {
 			return nil, err
 		}
@@ -720,7 +720,7 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors
 		return nil, err
 	}
 
-	meterSourceMetricsKeys, err := t.getMeterKeys(ctx, meterSourceMetricsSelectors)
+	meterSourceMetricsKeys, err := t.getMeterSourceMetricKeys(ctx, meterSourceMetricsSelectors)
 	if err != nil {
 		return nil, err
 	}
@@ -1047,7 +1047,7 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 	return values, nil
 }
 
-func (t *telemetryMetaStore) getMeterFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
+func (t *telemetryMetaStore) getMeterSourceMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
 	sb := sqlbuilder.Select("DISTINCT arrayJoin(JSONExtractKeysAndValues(labels, 'String')) AS attr").
 		From(t.meterDBName + "." + t.meterFieldsTblName)
 
@@ -1123,7 +1123,7 @@ func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelecto
 		values, err = t.getLogFieldValues(ctx, fieldValueSelector)
 	case telemetrytypes.SignalMetrics:
 		if fieldValueSelector.Source == telemetrytypes.SourceMeter {
-			values, err = t.getMeterFieldValues(ctx, fieldValueSelector)
+			values, err = t.getMeterSourceMetricFieldValues(ctx, fieldValueSelector)
 		} else {
 			values, err = t.getMetricFieldValues(ctx, fieldValueSelector)
 		}
@@ -1142,6 +1142,10 @@ func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelecto
 		metricsValues, err := t.getMetricFieldValues(ctx, fieldValueSelector)
 		if err == nil {
 			populateAllUnspecifiedValues(allUnspecifiedValues, mapOfValues, mapOfRelatedValues, metricsValues)
+		}
+		meterSourceMetricsValues, err := t.getMeterSourceMetricFieldValues(ctx, fieldValueSelector)
+		if err == nil {
+			populateAllUnspecifiedValues(allUnspecifiedValues, mapOfValues, mapOfRelatedValues, meterSourceMetricsValues)
 		}
 		values = allUnspecifiedValues
 	}
@@ -1179,7 +1183,7 @@ func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, metricNa
 	if err != nil {
 		return nil, err
 	}
-	meterMetricsTemporality, err := t.fetchMeterMetricsTemporality(ctx, metricNames...)
+	meterMetricsTemporality, err := t.fetchMeterSourceMetricsTemporality(ctx, metricNames...)
 	if err != nil {
 		return nil, err
 	}
@@ -1255,7 +1259,7 @@ func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, metric
 	return result, nil
 }
 
-func (t *telemetryMetaStore) fetchMeterMetricsTemporality(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error) {
+func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporality(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error) {
 	result := make(map[string]metrictypes.Temporality)
 
 	sb := sqlbuilder.Select(
