@@ -228,7 +228,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	// Add filter conditions
-	preparedWhereCaluse, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 
 	if err != nil {
 		return nil, err
@@ -263,9 +263,9 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		Query: finalSQL,
 		Args:  finalArgs,
 	}
-	if preparedWhereCaluse != nil {
-		stmt.Warnings = preparedWhereCaluse.Warnings
-		stmt.WarningsDocURL = preparedWhereCaluse.WarningsDocURL
+	if preparedWhereClause != nil {
+		stmt.Warnings = preparedWhereClause.Warnings
+		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
 	}
 
 	return stmt, nil
@@ -328,7 +328,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
-	preparedWhereCaluse, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 
 	if err != nil {
 		return nil, err
@@ -412,9 +412,9 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		Query: finalSQL,
 		Args:  finalArgs,
 	}
-	if preparedWhereCaluse != nil {
-		stmt.Warnings = preparedWhereCaluse.Warnings
-		stmt.WarningsDocURL = preparedWhereCaluse.WarningsDocURL
+	if preparedWhereClause != nil {
+		stmt.Warnings = preparedWhereClause.Warnings
+		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
 	}
 
 	return stmt, nil
@@ -481,7 +481,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	// Add filter conditions
-	preparedWhereCaluse, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 
 	if err != nil {
 		return nil, err
@@ -528,9 +528,9 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		Query: finalSQL,
 		Args:  finalArgs,
 	}
-	if preparedWhereCaluse != nil {
-		stmt.Warnings = preparedWhereCaluse.Warnings
-		stmt.WarningsDocURL = preparedWhereCaluse.WarningsDocURL
+	if preparedWhereClause != nil {
+		stmt.Warnings = preparedWhereClause.Warnings
+		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
 	}
 
 	return stmt, nil
@@ -546,12 +546,12 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 	variables map[string]qbtypes.VariableItem,
 ) (*querybuilder.PreparedWhereClause, error) {
 
-	var preparedWhereCaluse *querybuilder.PreparedWhereClause
+	var preparedWhereClause *querybuilder.PreparedWhereClause
 	var err error
 
 	if query.Filter != nil && query.Filter.Expression != "" {
 		// add filter expression
-		preparedWhereCaluse, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			FieldMapper:        b.fm,
 			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
@@ -567,8 +567,8 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 		}
 	}
 
-	if preparedWhereCaluse != nil {
-		sb.AddWhereClause(preparedWhereCaluse.WhereClause)
+	if preparedWhereClause != nil {
+		sb.AddWhereClause(preparedWhereClause.WhereClause)
 	}
 
 	// add time filter
@@ -577,7 +577,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 
 	sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.L("timestamp", fmt.Sprintf("%d", end)), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
 
-	return preparedWhereCaluse, nil
+	return preparedWhereClause, nil
 }
 
 func aggOrderBy(k qbtypes.OrderBy, q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) (int, bool) {
