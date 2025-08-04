@@ -31,14 +31,15 @@ function getColName(
 	if (aggregationsCount === 0) {
 		return legend || col.queryName;
 	}
+
 	// Single aggregation: Priority is alias > legend > expression
 	if (isSingleAggregation) {
-		return alias || legend || expression;
+		return alias || legend || expression || col.queryName;
 	}
 
 	// Multiple aggregations: Each follows single rules BUT never shows legend
 	// Priority: alias > expression (legend is ignored for multiple aggregations)
-	return alias || expression;
+	return alias || expression || col.queryName;
 }
 
 function getColId(
