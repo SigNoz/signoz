@@ -580,7 +580,9 @@ function getColId(
 	queryName: string,
 	aggregation: { alias?: string; expression?: string },
 ): string {
-	return `${queryName}.${aggregation.expression}`;
+	return aggregation.expression
+		? `${queryName}.${aggregation.expression}`
+		: queryName;
 }
 
 // function to give you label value for query name taking multiaggregation into account
