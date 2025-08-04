@@ -13,6 +13,8 @@ import {
 	WarningOutlined,
 } from '@ant-design/icons';
 import { Dropdown, Input, MenuProps, Tooltip, Typography } from 'antd';
+import ErrorContent from 'components/ErrorModal/components/ErrorContent';
+import ErrorPopover from 'components/ErrorPopover/ErrorPopover';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -30,6 +32,7 @@ import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
+import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { errorTooltipPosition, WARNING_MESSAGE } from './config';
@@ -47,7 +50,6 @@ interface IWidgetHeaderProps {
 	queryResponse: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
 	>;
-	errorMessage: string | undefined;
 	threshold?: ReactNode;
 	headerMenuList?: MenuItemKeys[];
 	isWarning: boolean;
@@ -64,7 +66,6 @@ function WidgetHeader({
 	onClone,
 	parentHover,
 	queryResponse,
-	errorMessage,
 	threshold,
 	headerMenuList,
 	isWarning,
@@ -212,12 +213,8 @@ function WidgetHeader({
 	});
 
 	const renderErrorMessage = useMemo(
-		() =>
-			errorMessage
-				?.split('\n')
-				// eslint-disable-next-line react/no-array-index-key
-				.map((item, i) => <p key={i}>{item}</p>),
-		[errorMessage],
+		() => <ErrorContent error={queryResponse.error as APIError} />,
+		[queryResponse.error],
 	);
 
 	if (widget.id === PANEL_TYPES.EMPTY_WIDGET) {
@@ -278,13 +275,14 @@ function WidgetHeader({
 							<Spinner style={{ paddingRight: '0.25rem' }} />
 						)}
 						{queryResponse.isError && (
-							<Tooltip
-								title={renderErrorMessage}
+							<ErrorPopover
+								content={renderErrorMessage}
 								placement={errorTooltipPosition}
-								className="widget-api-actions"
+								overlayStyle={{ padding: 0 }}
+								overlayInnerStyle={{ padding: 0 }}
 							>
-								<CircleX size={20} />
-							</Tooltip>
+								<CircleX size={16} style={{ cursor: 'pointer' }} />
+							</ErrorPopover>
 						)}
 
 						{isWarning && (

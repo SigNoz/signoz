@@ -1,6 +1,7 @@
 import './ListView.styles.scss';
 
 import logEvent from 'api/common/logEvent';
+import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ResizeTable } from 'components/ResizeTable';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -27,12 +28,13 @@ import { useTimezone } from 'providers/Timezone';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { TracesLoading } from '../TraceLoading/TraceLoading';
 import { defaultSelectedColumns, PER_PAGE_OPTIONS } from './configs';
-import { Container, ErrorText, tableStyles } from './styles';
+import { Container, tableStyles } from './styles';
 import { getListColumns, transformDataWithDate } from './utils';
 
 interface ListViewProps {
@@ -116,7 +118,7 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 		],
 	);
 
-	const { data, isFetching, isLoading, isError } = useGetQueryRange(
+	const { data, isFetching, isLoading, isError, error } = useGetQueryRange(
 		{
 			query: requestQuery,
 			graphType: panelType,
@@ -220,7 +222,7 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 				</div>
 			)}
 
-			{isError && <ErrorText>{data?.error || 'Something went wrong'}</ErrorText>}
+			{isError && error && <ErrorInPlace error={error as APIError} />}
 
 			{(isLoading || (isFetching && transformedQueryTableData.length === 0)) && (
 				<TracesLoading />

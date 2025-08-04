@@ -63,6 +63,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import APIError from 'types/api/error';
 import { ILog } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -269,6 +270,7 @@ function LogsExplorerViewsContainer({
 		isFetching,
 		isError,
 		isSuccess,
+		error,
 	} = useGetExplorerQueryRange(
 		requestData,
 		panelType,
@@ -771,6 +773,7 @@ function LogsExplorerViewsContainer({
 							logs={logs}
 							onEndReached={handleEndReached}
 							isError={isError}
+							error={error as APIError}
 							isFilterApplied={!isEmpty(listQuery?.filters?.items)}
 						/>
 					)}
@@ -780,6 +783,7 @@ function LogsExplorerViewsContainer({
 							isLoading={isLoading || isFetching}
 							data={data}
 							isError={isError}
+							error={error as APIError}
 							isFilterApplied={!isEmpty(listQuery?.filters?.items)}
 							dataSource={DataSource.LOGS}
 						/>
@@ -794,6 +798,7 @@ function LogsExplorerViewsContainer({
 							}
 							isLoading={isLoading || isFetching}
 							isError={isError}
+							error={error as APIError}
 						/>
 					)}
 				</div>
