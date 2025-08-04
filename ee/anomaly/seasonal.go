@@ -50,11 +50,13 @@ func (p *BaseSeasonalProvider) getQueryParams(req *AnomaliesRequest) *anomalyQue
 
 func (p *BaseSeasonalProvider) toTSResults(ctx context.Context, resp *qbtypes.QueryRangeResponse) []*qbtypes.TimeSeriesData {
 
+	tsData := []*qbtypes.TimeSeriesData{}
+
 	if resp == nil {
 		p.logger.InfoContext(ctx, "nil response from query range")
+		return tsData
 	}
 
-	tsData := []*qbtypes.TimeSeriesData{}
 	for _, item := range resp.Data.Results {
 		if resultData, ok := item.(*qbtypes.TimeSeriesData); ok {
 			tsData = append(tsData, resultData)
