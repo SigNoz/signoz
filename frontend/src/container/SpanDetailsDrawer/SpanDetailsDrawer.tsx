@@ -63,7 +63,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			{
 				label: (
 					<Button type="text" icon={<Anvil size="14" />} className="events-tab-btn">
-						Events
+						{`Events (${span.event?.length || 0})`}
 					</Button>
 				),
 				key: 'events',
