@@ -229,7 +229,6 @@ func (b *logQueryStatementBuilder) buildListQuery(
 
 	// Add filter conditions
 	preparedWhereCaluse, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
-	fmt.Println("preparedWhereCaluse", preparedWhereCaluse, "err", err)
 
 	if err != nil {
 		return nil, err
@@ -330,7 +329,6 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 	preparedWhereCaluse, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
-	fmt.Println("preparedWhereCaluse", preparedWhereCaluse, "err", err)
 
 	if err != nil {
 		return nil, err
@@ -484,7 +482,6 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 
 	// Add filter conditions
 	preparedWhereCaluse, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
-	fmt.Println("preparedWhereCaluse", preparedWhereCaluse, "err", err)
 
 	if err != nil {
 		return nil, err

@@ -2,7 +2,6 @@ package querybuilder
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -729,9 +728,6 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	fieldKey := telemetrytypes.GetFieldKeyFromKeyText(ctx.GetText())
 
 	keyName := strings.TrimPrefix(fieldKey.Name, v.jsonBodyPrefix)
-
-	jsun, err := json.Marshal(v.fieldKeys)
-	fmt.Println("field keys", string(jsun), err)
 
 	fieldKeysForName := v.fieldKeys[keyName]
 
