@@ -371,9 +371,11 @@ function RuleOptions({
 		selectedCategory?.name,
 	);
 
+	const step3Label = alertDef.alertType === 'METRIC_BASED_ALERT' ? '3' : '2';
+
 	return (
 		<>
-			<StepHeading>{t('alert_form_step3')}</StepHeading>
+			<StepHeading>{t('alert_form_step3', { step: step3Label })}</StepHeading>
 			<FormContainer>
 				{queryCategory === EQueryType.PROM && renderPromRuleOptions()}
 				{queryCategory !== EQueryType.PROM &&
@@ -388,7 +390,7 @@ function RuleOptions({
 				<Space direction="vertical" size="large">
 					{ruleType !== AlertDetectionTypes.ANOMALY_DETECTION_ALERT && (
 						<Space direction="horizontal" align="center">
-							<Form.Item noStyle name={['condition', 'target']}>
+							<Form.Item noStyle>
 								<InputNumber
 									addonBefore={t('field_threshold')}
 									value={alertDef?.condition?.target}

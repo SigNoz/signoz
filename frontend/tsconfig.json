@@ -48,6 +48,8 @@
 		"./webpack.config.prod.js",
 		"./jest.setup.ts",
 		"./tests/**.ts",
-		"./**/*.d.ts"
+		"./**/*.d.ts",
+		"./playwright.config.ts",
+		"./e2e/**/*.ts"
 	]
 }

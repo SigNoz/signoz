@@ -48,8 +48,8 @@ function ChannelSelect({
 
 	if (hasError) {
 		notifications.error({
-			message: error.getErrorCode(),
-			description: error.getErrorMessage(),
+			message: error?.getErrorCode?.() || 'Error',
+			description: error?.getErrorMessage?.() || 'Something went wrong',
 		});
 	}
 

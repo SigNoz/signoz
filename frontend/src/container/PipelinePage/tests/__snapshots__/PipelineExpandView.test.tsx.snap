@@ -124,6 +124,37 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       </div>
                     </td>
                   </tr>
+                  <tr
+                    class="ant-table-row ant-table-row-level-0"
+                    data-row-key="jsonparser"
+                    draggable="true"
+                  >
+                    <td
+                      class="ant-table-cell"
+                      style="text-align: right;"
+                    >
+                      <span
+                        class="ant-avatar ant-avatar-circle c1 css-dev-only-do-not-override-2i2tap"
+                      >
+                        <span
+                          class="ant-avatar-string"
+                          style="transform: scale(1) translateX(-50%);"
+                        >
+                          3
+                        </span>
+                      </span>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                      style="text-align: left;"
+                    >
+                      <div
+                        class="c2"
+                      >
+                        json parser
+                      </div>
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>

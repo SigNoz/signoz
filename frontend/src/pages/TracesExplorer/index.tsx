@@ -51,6 +51,7 @@ function TracesExplorer(): JSX.Element {
 		handleRunQuery,
 		stagedQuery,
 		handleSetConfig,
+		updateQueriesData,
 	} = useQueryBuilder();
 
 	const { options } = useOptionsMenu({
@@ -94,6 +95,14 @@ function TracesExplorer(): JSX.Element {
 
 	const [shouldReset, setShouldReset] = useState(false);
 
+	const [defaultQuery, setDefaultQuery] = useState<Query>(() =>
+		updateAllQueriesOperators(
+			initialQueriesMap.traces,
+			PANEL_TYPES.LIST,
+			DataSource.TRACES,
+		),
+	);
+
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews): void => {
 			if (selectedView === ExplorerViews.LIST) {
@@ -101,6 +110,30 @@ function TracesExplorer(): JSX.Element {
 			}
 
 			if (view === ExplorerViews.LIST) {
+				if (
+					selectedView !== ExplorerViews.LIST &&
+					currentQuery?.builder?.queryData?.[0]
+				) {
+					const filterToRetain = currentQuery.builder.queryData[0].filter;
+
+					const newDefaultQuery = updateAllQueriesOperators(
+						initialQueriesMap.traces,
+						PANEL_TYPES.LIST,
+						DataSource.TRACES,
+					);
+
+					const newListQuery = updateQueriesData(
+						newDefaultQuery,
+						'queryData',
+						(item, index) => {
+							if (index === 0) {
+								return { ...item, filter: filterToRetain };
+							}
+							return item;
+						},
+					);
+					setDefaultQuery(newListQuery);
+				}
 				setShouldReset(true);
 			}
 
@@ -109,7 +142,15 @@ function TracesExplorer(): JSX.Element {
 				view === ExplorerViews.TIMESERIES ? PANEL_TYPES.TIME_SERIES : view,
 			);
 		},
-		[handleSetConfig, handleExplorerTabChange, selectedView],
+		[
+			handleSetConfig,
+			handleExplorerTabChange,
+			selectedView,
+			currentQuery,
+			updateAllQueriesOperators,
+			updateQueriesData,
+			setSelectedView,
+		],
 	);
 
 	const listQuery = useMemo(() => {
@@ -117,16 +158,6 @@ function TracesExplorer(): JSX.Element {
 
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);
-
-	const defaultQuery = useMemo(
-		() =>
-			updateAllQueriesOperators(
-				initialQueriesMap.traces,
-				PANEL_TYPES.LIST,
-				DataSource.TRACES,
-			),
-		[updateAllQueriesOperators],
-	);
 
 	const exportDefaultQuery = useMemo(
 		() =>
@@ -186,8 +217,17 @@ function TracesExplorer(): JSX.Element {
 	useShareBuilderUrl({ defaultValue: defaultQuery, forceReset: shouldReset });
 
 	useEffect(() => {
-		if (shouldReset) setShouldReset(false);
-	}, [shouldReset]);
+		if (shouldReset) {
+			setShouldReset(false);
+			setDefaultQuery(
+				updateAllQueriesOperators(
+					initialQueriesMap.traces,
+					PANEL_TYPES.LIST,
+					DataSource.TRACES,
+				),
+			);
+		}
+	}, [shouldReset, updateAllQueriesOperators]);
 
 	const [isOpen, setOpen] = useState<boolean>(true);
 	const logEventCalledRef = useRef(false);
@@ -239,7 +279,7 @@ function TracesExplorer(): JSX.Element {
 		[],
 	);
 
-	const isFilterApplied = useMemo(() => !isEmpty(listQuery?.filters.items), [
+	const isFilterApplied = useMemo(() => !isEmpty(listQuery?.filters?.items), [
 		listQuery,
 	]);
 

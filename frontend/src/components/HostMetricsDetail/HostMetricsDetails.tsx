@@ -37,7 +37,7 @@ import {
 	ScrollText,
 	X,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
@@ -86,8 +86,12 @@ function HostMetricsDetails({
 		endTime: endMs,
 	}));
 
+	const lastSelectedInterval = useRef<Time | null>(null);
+
 	const [selectedInterval, setSelectedInterval] = useState<Time>(
-		selectedTime as Time,
+		lastSelectedInterval.current
+			? lastSelectedInterval.current
+			: (selectedTime as Time),
 	);
 
 	const [selectedView, setSelectedView] = useState<VIEWS>(
@@ -150,10 +154,11 @@ function HostMetricsDetails({
 	}, [initialFilters]);
 
 	useEffect(() => {
-		setSelectedInterval(selectedTime as Time);
+		const currentSelectedInterval = lastSelectedInterval.current || selectedTime;
+		setSelectedInterval(currentSelectedInterval as Time);
 
-		if (selectedTime !== 'custom') {
-			const { maxTime, minTime } = GetMinMax(selectedTime);
+		if (currentSelectedInterval !== 'custom') {
+			const { maxTime, minTime } = GetMinMax(currentSelectedInterval);
 
 			setModalTimeRange({
 				startTime: Math.floor(minTime / 1000000000),
@@ -181,6 +186,7 @@ function HostMetricsDetails({
 
 	const handleTimeChange = useCallback(
 		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
+			lastSelectedInterval.current = interval as Time;
 			setSelectedInterval(interval as Time);
 
 			if (interval === 'custom' && dateTimeRange) {
@@ -210,15 +216,17 @@ function HostMetricsDetails({
 	const handleChangeLogFilters = useCallback(
 		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogFilters((prevFilters) => {
-				const hostNameFilter = prevFilters.items.find(
+				const hostNameFilter = prevFilters?.items?.find(
 					(item) => item.key?.key === 'host.name',
 				);
-				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
-				const newFilters = value.items.filter(
+				const paginationFilter = value?.items?.find(
+					(item) => item.key?.key === 'id',
+				);
+				const newFilters = value?.items?.filter(
 					(item) => item.key?.key !== 'id' && item.key?.key !== 'host.name',
 				);
 
-				if (newFilters.length > 0) {
+				if (newFilters && newFilters?.length > 0) {
 					logEvent(InfraMonitoringEvents.FilterApplied, {
 						entity: InfraMonitoringEvents.HostEntity,
 						view: InfraMonitoringEvents.LogsView,
@@ -230,7 +238,7 @@ function HostMetricsDetails({
 					op: 'AND',
 					items: [
 						hostNameFilter,
-						...newFilters,
+						...(newFilters || []),
 						...(paginationFilter ? [paginationFilter] : []),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
@@ -252,11 +260,11 @@ function HostMetricsDetails({
 	const handleChangeTracesFilters = useCallback(
 		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setTracesFilters((prevFilters) => {
-				const hostNameFilter = prevFilters.items.find(
+				const hostNameFilter = prevFilters?.items?.find(
 					(item) => item.key?.key === 'host.name',
 				);
 
-				if (value.items.length > 0) {
+				if (value?.items && value?.items?.length > 0) {
 					logEvent(InfraMonitoringEvents.FilterApplied, {
 						entity: InfraMonitoringEvents.HostEntity,
 						view: InfraMonitoringEvents.TracesView,
@@ -268,7 +276,7 @@ function HostMetricsDetails({
 					op: 'AND',
 					items: [
 						hostNameFilter,
-						...value.items.filter((item) => item.key?.key !== 'host.name'),
+						...(value?.items?.filter((item) => item.key?.key !== 'host.name') || []),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
 
@@ -305,7 +313,7 @@ function HostMetricsDetails({
 		if (selectedView === VIEW_TYPES.LOGS) {
 			const filtersWithoutPagination = {
 				...logFilters,
-				items: logFilters.items.filter((item) => item.key?.key !== 'id'),
+				items: logFilters?.items?.filter((item) => item.key?.key !== 'id') || [],
 			};
 
 			const compositeQuery = {
@@ -356,6 +364,7 @@ function HostMetricsDetails({
 
 	const handleClose = (): void => {
 		setSelectedInterval(selectedTime as Time);
+		lastSelectedInterval.current = null;
 		setSearchParams({});
 
 		if (selectedTime !== 'custom') {
@@ -430,9 +439,13 @@ function HostMetricsDetails({
 								>
 									{host.active ? 'ACTIVE' : 'INACTIVE'}
 								</Tag>
-								<Tag className="infra-monitoring-tags" bordered>
-									{host.os}
-								</Tag>
+								{host.os ? (
+									<Tag className="infra-monitoring-tags" bordered>
+										{host.os}
+									</Tag>
+								) : (
+									<Typography.Text>-</Typography.Text>
+								)}
 								<div className="progress-container">
 									<Progress
 										percent={Number((host.cpu * 100).toFixed(1))}

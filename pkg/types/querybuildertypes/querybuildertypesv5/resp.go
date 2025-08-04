@@ -13,10 +13,25 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+type QBEvent struct {
+	Version         string `json:"version"`
+	LogsUsed        bool   `json:"logs_used,omitempty"`
+	MetricsUsed     bool   `json:"metrics_used,omitempty"`
+	TracesUsed      bool   `json:"traces_used,omitempty"`
+	FilterApplied   bool   `json:"filter_applied,omitempty"`
+	GroupByApplied  bool   `json:"group_by_applied,omitempty"`
+	QueryType       string `json:"query_type,omitempty"`
+	PanelType       string `json:"panel_type,omitempty"`
+	NumberOfQueries int    `json:"number_of_queries,omitempty"`
+	HasData         bool   `json:"-"`
+}
+
 type QueryRangeResponse struct {
 	Type RequestType `json:"type"`
 	Data any         `json:"data"`
 	Meta ExecStats   `json:"meta"`
+
+	QBEvent *QBEvent `json:"-"`
 }
 
 type TimeSeriesData struct {
@@ -31,6 +46,11 @@ type AggregationBucket struct {
 		Unit string `json:"unit,omitempty"`
 	} `json:"meta,omitempty"`
 	Series []*TimeSeries `json:"series"` // no extra nesting
+
+	PredictedSeries  []*TimeSeries `json:"predictedSeries,omitempty"`
+	UpperBoundSeries []*TimeSeries `json:"upperBoundSeries,omitempty"`
+	LowerBoundSeries []*TimeSeries `json:"lowerBoundSeries,omitempty"`
+	AnomalyScores    []*TimeSeries `json:"anomalyScores,omitempty"`
 }
 
 type TimeSeries struct {
@@ -144,8 +164,8 @@ type RawData struct {
 }
 
 type RawRow struct {
-	Timestamp time.Time       `json:"timestamp"`
-	Data      map[string]*any `json:"data"`
+	Timestamp time.Time      `json:"timestamp"`
+	Data      map[string]any `json:"data"`
 }
 
 func sanitizeValue(v any) any {
@@ -235,22 +255,24 @@ func (s ScalarData) MarshalJSON() ([]byte, error) {
 
 func (r RawRow) MarshalJSON() ([]byte, error) {
 	type Alias RawRow
-	sanitizedData := make(map[string]*any)
+	sanitizedData := make(map[string]any)
 	for k, v := range r.Data {
-		if v != nil {
-			sanitized := sanitizeValue(*v)
-			sanitizedData[k] = &sanitized
-		} else {
-			sanitizedData[k] = nil
-		}
+		sanitizedData[k] = sanitizeValue(v)
+	}
+
+	var timestamp *time.Time
+	if !r.Timestamp.IsZero() {
+		timestamp = &r.Timestamp
 	}
 
 	return json.Marshal(&struct {
 		*Alias
-		Data map[string]*any `json:"data"`
+		Data      map[string]any `json:"data"`
+		Timestamp *time.Time     `json:"timestamp,omitempty"`
 	}{
-		Alias: (*Alias)(&r),
-		Data:  sanitizedData,
+		Alias:     (*Alias)(&r),
+		Data:      sanitizedData,
+		Timestamp: timestamp,
 	})
 }
 

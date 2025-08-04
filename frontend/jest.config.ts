@@ -25,7 +25,7 @@ const config: Config.InitialOptions = {
 		'^.+\\.(js|jsx)$': 'babel-jest',
 	},
 	transformIgnorePatterns: [
-		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios|@signozhq/design-tokens|d3-interpolate|d3-color|api)/)',
+		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios|@signozhq/design-tokens|d3-interpolate|d3-color|api|@codemirror|@lezer|@marijn)/)',
 	],
 	setupFilesAfterEnv: ['<rootDir>jest.setup.ts'],
 	testPathIgnorePatterns: ['/node_modules/', '/public/'],

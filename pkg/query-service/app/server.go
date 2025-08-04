@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
@@ -15,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/querier"
 	querierAPI "github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
@@ -86,10 +88,13 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 	rm, err := makeRulesManager(
 		reader,
 		signoz.Cache,
+		signoz.Alertmanager,
 		signoz.SQLStore,
 		signoz.TelemetryStore,
 		signoz.Prometheus,
 		signoz.Modules.OrgGetter,
+		signoz.Querier,
+		signoz.Instrumentation.Logger(),
 	)
 	if err != nil {
 		return nil, err
@@ -114,7 +119,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		LicensingAPI:                  nooplicensing.NewLicenseAPI(),
 		FieldsAPI:                     fields.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.TelemetryStore),
 		Signoz:                        signoz,
-		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier),
+		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier, signoz.Analytics),
 	})
 	if err != nil {
 		return nil, err
@@ -162,18 +167,8 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 	s.opampServer = opamp.InitializeServer(
 		&opAmpModel.AllAgents,
 		agentConfMgr,
+		signoz.Instrumentation,
 	)
-
-	orgs, err := apiHandler.Signoz.Modules.OrgGetter.ListByOwnedKeyRange(context.Background())
-	if err != nil {
-		return nil, err
-	}
-	for _, org := range orgs {
-		errorList := reader.PreloadMetricsMetadata(context.Background(), org.ID)
-		for _, er := range errorList {
-			zap.L().Error("failed to preload metrics metadata", zap.Error(er))
-		}
-	}
 
 	return s, nil
 }
@@ -387,10 +382,13 @@ func (s *Server) Stop(ctx context.Context) error {
 func makeRulesManager(
 	ch interfaces.Reader,
 	cache cache.Cache,
+	alertmanager alertmanager.Alertmanager,
 	sqlstore sqlstore.SQLStore,
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
 	orgGetter organization.Getter,
+	querier querier.Querier,
+	logger *slog.Logger,
 ) (*rules.Manager, error) {
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
@@ -399,10 +397,13 @@ func makeRulesManager(
 		Context:        context.Background(),
 		Logger:         zap.L(),
 		Reader:         ch,
+		Querier:        querier,
+		SLogger:        logger,
 		Cache:          cache,
 		EvalDelay:      constants.GetEvalDelay(),
 		SQLStore:       sqlstore,
 		OrgGetter:      orgGetter,
+		Alertmanager:   alertmanager,
 	}
 
 	// create Manager

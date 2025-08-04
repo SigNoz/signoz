@@ -103,7 +103,12 @@ export function findMatchingThreshold(
 }
 
 export interface TableData {
-	columns: { name: string; queryName: string; isValueColumn: boolean }[];
+	columns: {
+		name: string;
+		queryName: string;
+		isValueColumn: boolean;
+		id: string;
+	}[];
 	rows: { data: any }[];
 }
 
@@ -188,10 +193,15 @@ export function createColumnsAndDataSource(
 				? getQueryLegend(currentQuery, item.queryName)
 				: undefined;
 
+			const isNewAggregation =
+				currentQuery?.builder?.queryData?.find(
+					(query) => query.queryName === item.queryName,
+				)?.aggregations?.length || 0;
+
 			const column: CustomDataColumnType<RowData> = {
-				dataIndex: item.name,
+				dataIndex: item.id || item.name,
 				// if no legend present then rely on the column name value
-				title: !isEmpty(legend) ? legend : item.name,
+				title: !isNewAggregation && !isEmpty(legend) ? legend : item.name,
 				width: QUERY_TABLE_CONFIG.width,
 				isValueColumn: item.isValueColumn,
 				render: renderColumnCell && renderColumnCell[item.name],

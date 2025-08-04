@@ -5,6 +5,7 @@ import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
+import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { useNotifications } from 'hooks/useNotifications';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { prepareQueryRangePayload } from 'lib/dashboard/prepareQueryRangePayload';
@@ -19,7 +20,11 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 
-const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
+const useCreateAlerts = (
+	widget?: Widgets,
+	caller?: string,
+	thresholds?: ThresholdProps[],
+): VoidFunction => {
 	const queryRangeMutation = useMutation(getQueryRangeFormat);
 
 	const { selectedTime: globalSelectedInterval } = useSelector<
@@ -58,6 +63,7 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 			graphType: getGraphType(widget.panelTypes),
 			selectedTime: widget.timePreferance,
 			variables: getDashboardVariables(selectedDashboard?.data.variables),
+			originalGraphType: widget.panelTypes,
 		});
 		queryRangeMutation.mutate(queryPayload, {
 			onSuccess: (data) => {
@@ -66,13 +72,17 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 					widget?.query,
 				);
 
-				history.push(
-					`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
-						JSON.stringify(updatedQuery),
-					)}&${QueryParams.panelTypes}=${widget.panelTypes}&version=${
-						selectedDashboard?.data.version || DEFAULT_ENTITY_VERSION
-					}`,
-				);
+				const url = `${ROUTES.ALERTS_NEW}?${
+					QueryParams.compositeQuery
+				}=${encodeURIComponent(JSON.stringify(updatedQuery))}&${
+					QueryParams.panelTypes
+				}=${widget.panelTypes}&version=${
+					selectedDashboard?.data.version || DEFAULT_ENTITY_VERSION
+				}`;
+
+				history.push(url, {
+					thresholds,
+				});
 			},
 			onError: () => {
 				notifications.error({

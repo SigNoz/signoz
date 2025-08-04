@@ -128,13 +128,13 @@ export const useOrderByFilter = ({
 			{
 				label: `${
 					entityVersion === 'v4' ? query.spaceAggregation : query.aggregateOperator
-				}(${query.aggregateAttribute.key}) ${ORDERBY_FILTERS.ASC}`,
+				}(${query.aggregateAttribute?.key}) ${ORDERBY_FILTERS.ASC}`,
 				value: `${SIGNOZ_VALUE}${orderByValueDelimiter}${ORDERBY_FILTERS.ASC}`,
 			},
 			{
 				label: `${
 					entityVersion === 'v4' ? query.spaceAggregation : query.aggregateOperator
-				}(${query.aggregateAttribute.key}) ${ORDERBY_FILTERS.DESC}`,
+				}(${query.aggregateAttribute?.key}) ${ORDERBY_FILTERS.DESC}`,
 				value: `${SIGNOZ_VALUE}${orderByValueDelimiter}${ORDERBY_FILTERS.DESC}`,
 			},
 		],

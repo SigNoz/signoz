@@ -11,10 +11,13 @@ import {
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
 import { copilot } from '@uiw/codemirror-theme-copilot';
+import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorView, keymap } from '@uiw/react-codemirror';
 import { Button } from 'antd';
+import { Having } from 'api/v5/v5';
 import { useQueryBuilderV2Context } from 'components/QueryBuilderV2/QueryBuilderV2Context';
-import { X } from 'lucide-react';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { ChevronUp } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -51,17 +54,6 @@ const havingOperators = [
 		label: 'NOT_IN',
 		value: 'NOT_IN',
 	},
-];
-
-// Add common value suggestions
-const commonValues = [
-	{ label: '0', value: '0 ' },
-	{ label: '1', value: '1 ' },
-	{ label: '5', value: '5 ' },
-	{ label: '10', value: '10 ' },
-	{ label: '50', value: '50 ' },
-	{ label: '100', value: '100 ' },
-	{ label: '1000', value: '1000 ' },
 ];
 
 const conjunctions = [
@@ -102,14 +94,14 @@ function HavingFilter({
 	onChange: (value: string) => void;
 	queryData: IBuilderQuery;
 }): JSX.Element {
+	const isDarkMode = useIsDarkMode();
 	const { aggregationOptions } = useQueryBuilderV2Context();
-	const [input, setInput] = useState(
-		queryData?.havingExpression?.expression || '',
-	);
+	const having = queryData?.having as Having;
+	const [input, setInput] = useState(having?.expression || '');
 
 	useEffect(() => {
-		setInput(queryData?.havingExpression?.expression || '');
-	}, [queryData?.havingExpression?.expression]);
+		setInput(having?.expression || '');
+	}, [having?.expression]);
 
 	const [isFocused, setIsFocused] = useState(false);
 
@@ -250,22 +242,18 @@ function HavingFilter({
 						};
 					}
 
-					// Show value suggestions after operator
+					// Close dropdown after operator to allow custom value entry
 					if (isAfterOperator(tokens)) {
-						return {
-							from: context.pos,
-							options: [
-								...commonValues.map((value) => ({
-									...value,
-									apply: applyValueCompletion,
-								})),
-								{
-									label: 'Enter a custom number value',
-									type: 'text',
-									apply: applyValueCompletion,
-								},
-							],
-						};
+						return null;
+					}
+
+					// Hide suggestions while typing a value after an operator
+					if (
+						!text.endsWith(' ') &&
+						tokens.length >= 2 &&
+						havingOperators.some((op) => op.value === tokens[tokens.length - 2])
+					) {
+						return null;
 					}
 
 					// Suggest key/operator pairs and ( for grouping
@@ -339,13 +327,14 @@ function HavingFilter({
 				<CodeMirror
 					value={input}
 					onChange={handleChange}
-					theme={copilot}
+					theme={isDarkMode ? copilot : githubLight}
 					className="having-filter-select-editor"
 					width="100%"
 					extensions={[
 						havingAutocomplete,
 						javascript({ jsx: false, typescript: false }),
 						stopEventsExtension,
+						EditorView.lineWrapping,
 						keymap.of([
 							...completionKeymap,
 							{
@@ -378,7 +367,7 @@ function HavingFilter({
 				/>
 				<Button
 					className="close-btn periscope-btn ghost"
-					icon={<X size={16} />}
+					icon={<ChevronUp size={16} />}
 					onClick={onClose}
 				/>
 			</div>

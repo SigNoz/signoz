@@ -248,9 +248,9 @@ export function findKeyOperatorValueTriplet(
 					FilterQueryLexer.GT,
 					FilterQueryLexer.GE,
 					FilterQueryLexer.LIKE,
-					FilterQueryLexer.NOT_LIKE,
+					// FilterQueryLexer.NOT_LIKE,
 					FilterQueryLexer.ILIKE,
-					FilterQueryLexer.NOT_ILIKE,
+					// FilterQueryLexer.NOT_ILIKE,
 					FilterQueryLexer.BETWEEN,
 					FilterQueryLexer.EXISTS,
 					FilterQueryLexer.REGEXP,
@@ -375,6 +375,7 @@ export function getQueryContextAtCursor(
 					currentToken: '',
 					isInValue: false,
 					isInKey: true, // Default to key context when input is empty
+					isInNegation: false,
 					isInOperator: false,
 					isInFunction: false,
 					isInConjunction: false,
@@ -388,6 +389,7 @@ export function getQueryContextAtCursor(
 				stop: cursorIndex,
 				currentToken: '',
 				isInValue: false,
+				isInNegation: false,
 				isInKey: false,
 				isInOperator: false,
 				isInFunction: false,
@@ -418,6 +420,8 @@ export function getQueryContextAtCursor(
 
 		const isInKey = currentToken.type === FilterQueryLexer.KEY;
 
+		const isInNegation = currentToken.type === FilterQueryLexer.NOT;
+
 		const isInOperator = [
 			FilterQueryLexer.EQUALS,
 			FilterQueryLexer.NOT_EQUALS,
@@ -427,9 +431,9 @@ export function getQueryContextAtCursor(
 			FilterQueryLexer.GT,
 			FilterQueryLexer.GE,
 			FilterQueryLexer.LIKE,
-			FilterQueryLexer.NOT_LIKE,
+			// FilterQueryLexer.NOT_LIKE,
 			FilterQueryLexer.ILIKE,
-			FilterQueryLexer.NOT_ILIKE,
+			// FilterQueryLexer.NOT_ILIKE,
 			FilterQueryLexer.BETWEEN,
 			FilterQueryLexer.EXISTS,
 			FilterQueryLexer.REGEXP,
@@ -442,7 +446,7 @@ export function getQueryContextAtCursor(
 			FilterQueryLexer.HAS,
 			FilterQueryLexer.HASANY,
 			FilterQueryLexer.HASALL,
-			FilterQueryLexer.HASNONE,
+			// FilterQueryLexer.HASNONE,
 		].includes(currentToken.type);
 
 		// Get the context-related tokens (key, operator, value)
@@ -473,6 +477,7 @@ export function getQueryContextAtCursor(
 					currentToken: currentToken.text,
 					isInValue: false,
 					isInKey: false,
+					isInNegation: false,
 					isInOperator: true,
 					isInFunction: false,
 					isInConjunction: false,
@@ -491,6 +496,7 @@ export function getQueryContextAtCursor(
 					currentToken: currentToken.text,
 					isInValue: true,
 					isInKey: false,
+					isInNegation: false,
 					isInOperator: false,
 					isInFunction: false,
 					isInConjunction: false,
@@ -509,6 +515,7 @@ export function getQueryContextAtCursor(
 					currentToken: currentToken.text,
 					isInValue: false,
 					isInKey: false,
+					isInNegation: false,
 					isInOperator: false,
 					isInFunction: false,
 					isInConjunction: true,
@@ -526,6 +533,7 @@ export function getQueryContextAtCursor(
 					stop: currentToken.stop,
 					currentToken: currentToken.text,
 					isInValue: false,
+					isInNegation: false,
 					isInKey: true,
 					isInOperator: false,
 					isInFunction: false,
@@ -546,6 +554,7 @@ export function getQueryContextAtCursor(
 						stop: currentToken.stop,
 						currentToken: currentToken.text,
 						isInValue: false,
+						isInNegation: false,
 						isInKey: true,
 						isInOperator: false,
 						isInFunction: false,
@@ -567,6 +576,7 @@ export function getQueryContextAtCursor(
 						stop: currentToken.stop,
 						currentToken: currentToken.text,
 						isInValue: false,
+						isInNegation: false,
 						isInKey: false,
 						isInOperator: false,
 						isInFunction: false,
@@ -585,6 +595,7 @@ export function getQueryContextAtCursor(
 						stop: currentToken.stop,
 						currentToken: currentToken.text,
 						isInValue: true,
+						isInNegation: false,
 						isInKey: false,
 						isInOperator: false,
 						isInFunction: false,
@@ -612,6 +623,25 @@ export function getQueryContextAtCursor(
 					currentToken: currentToken.text,
 					isInValue: false,
 					isInKey: true,
+					isInNegation: false,
+					isInOperator: false,
+					isInFunction: false,
+					isInConjunction: false,
+					isInParenthesis: false,
+					...relationTokens, // Include related tokens
+				};
+			}
+
+			if (isInNegation && nextToken.type === FilterQueryLexer.NOT) {
+				return {
+					tokenType: currentToken.type,
+					text: currentToken.text,
+					start: currentToken.start,
+					stop: currentToken.stop,
+					currentToken: currentToken.text,
+					isInValue: false,
+					isInKey: false,
+					isInNegation: true,
 					isInOperator: false,
 					isInFunction: false,
 					isInConjunction: false,
@@ -636,6 +666,7 @@ export function getQueryContextAtCursor(
 					currentToken: currentToken.text,
 					isInValue: false,
 					isInKey: false,
+					isInNegation: false,
 					isInOperator: true,
 					isInFunction: false,
 					isInConjunction: false,
@@ -660,6 +691,7 @@ export function getQueryContextAtCursor(
 					currentToken: currentToken.text,
 					isInValue: true,
 					isInKey: false,
+					isInNegation: false,
 					isInOperator: false,
 					isInFunction: false,
 					isInConjunction: false,
@@ -684,6 +716,7 @@ export function getQueryContextAtCursor(
 					currentToken: currentToken.text,
 					isInValue: false,
 					isInKey: false,
+					isInNegation: false,
 					isInOperator: false,
 					isInFunction: false,
 					isInConjunction: true,
@@ -703,6 +736,25 @@ export function getQueryContextAtCursor(
 					currentToken: '',
 					isInValue: false,
 					isInKey: true,
+					isInNegation: false,
+					isInOperator: false,
+					isInFunction: false,
+					isInConjunction: false,
+					isInParenthesis: false,
+					...relationTokens, // Include related tokens
+				};
+			}
+
+			if (nextToken.type === FilterQueryLexer.NOT) {
+				return {
+					tokenType: -1,
+					text: '',
+					start: cursorIndex,
+					stop: cursorIndex,
+					currentToken: '',
+					isInValue: false,
+					isInKey: false,
+					isInNegation: true,
 					isInOperator: false,
 					isInFunction: false,
 					isInConjunction: false,
@@ -729,6 +781,7 @@ export function getQueryContextAtCursor(
 					currentToken: '',
 					isInValue: false,
 					isInKey: false,
+					isInNegation: false,
 					isInOperator: true,
 					isInFunction: false,
 					isInConjunction: false,
@@ -750,6 +803,7 @@ export function getQueryContextAtCursor(
 					start: cursorIndex,
 					stop: cursorIndex,
 					currentToken: '',
+					isInNegation: false,
 					isInValue: true,
 					isInKey: false,
 					isInOperator: false,
@@ -769,6 +823,7 @@ export function getQueryContextAtCursor(
 					currentToken: '',
 					isInValue: false,
 					isInKey: false,
+					isInNegation: false,
 					isInOperator: false,
 					isInFunction: false,
 					isInConjunction: true,
@@ -794,6 +849,7 @@ export function getQueryContextAtCursor(
 					currentToken: '',
 					isInValue: false,
 					isInKey: false,
+					isInNegation: false,
 					isInOperator: false,
 					isInFunction: false,
 					isInConjunction: false,
@@ -812,6 +868,7 @@ export function getQueryContextAtCursor(
 			currentToken: currentToken.text,
 			isInValue,
 			isInKey,
+			isInNegation,
 			isInOperator,
 			isInFunction,
 			isInConjunction,
@@ -828,6 +885,7 @@ export function getQueryContextAtCursor(
 			currentToken: '',
 			isInValue: false,
 			isInKey: false,
+			isInNegation: false,
 			isInOperator: false,
 			isInFunction: false,
 			isInConjunction: false,
@@ -835,23 +893,3 @@ export function getQueryContextAtCursor(
 		};
 	}
 }
-
-export const queryOperatorSuggestions = [
-	{ label: '=', type: 'operator', info: 'Equal to' },
-	{ label: '!=', type: 'operator', info: 'Not equal to' },
-	{ label: '>', type: 'operator', info: 'Greater than' },
-	{ label: '<', type: 'operator', info: 'Less than' },
-	{ label: '>=', type: 'operator', info: 'Greater than or equal to' },
-	{ label: '<=', type: 'operator', info: 'Less than or equal to' },
-	{ label: 'LIKE', type: 'operator', info: 'Like' },
-	{ label: 'ILIKE', type: 'operator', info: 'Case insensitive like' },
-	{ label: 'BETWEEN', type: 'operator', info: 'Between' },
-	{ label: 'EXISTS', type: 'operator', info: 'Exists' },
-	{ label: 'REGEXP', type: 'operator', info: 'Regular expression' },
-	{ label: 'CONTAINS', type: 'operator', info: 'Contains' },
-	{ label: 'IN', type: 'operator', info: 'In' },
-	{ label: 'NOT', type: 'operator', info: 'Not' },
-	{ label: 'NOT_LIKE', type: 'operator', info: 'Not like' },
-	{ label: 'IS_NULL', type: 'operator', info: 'Is null' },
-	{ label: 'IS_NOT_NULL', type: 'operator', info: 'Is not null' },
-];

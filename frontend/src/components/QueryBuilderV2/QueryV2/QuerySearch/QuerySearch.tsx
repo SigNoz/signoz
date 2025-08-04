@@ -1,3 +1,5 @@
+/* eslint-disable sonarjs/no-identical-functions */
+/* eslint-disable sonarjs/cognitive-complexity */
 import './QuerySearch.styles.scss';
 
 import { CheckCircleFilled } from '@ant-design/icons';
@@ -12,17 +14,24 @@ import {
 import { javascript } from '@codemirror/lang-javascript';
 import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
-import CodeMirror, {
-	EditorView,
-	Extension,
-	keymap,
-} from '@uiw/react-codemirror';
+import { githubLight } from '@uiw/codemirror-theme-github';
+import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
 import { Button, Card, Collapse, Popover, Tag } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import cx from 'classnames';
+import {
+	negationQueryOperatorSuggestions,
+	QUERY_BUILDER_KEY_TYPES,
+	QUERY_BUILDER_OPERATORS_BY_KEY_TYPE,
+	queryOperatorSuggestions,
+} from 'constants/antlrQueryConstants';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import useDebounce from 'hooks/useDebounce';
+import { debounce, isNull } from 'lodash-es';
 import { TriangleAlert } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	IDetailedError,
 	IQueryContext,
@@ -31,8 +40,12 @@ import {
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
-import { queryOperatorSuggestions, validateQuery } from 'utils/antlrQueryUtils';
-import { getQueryContextAtCursor } from 'utils/queryContextUtils';
+import { validateQuery } from 'utils/antlrQueryUtils';
+import {
+	getCurrentValueIndexAtCursor,
+	getQueryContextAtCursor,
+} from 'utils/queryContextUtils';
+import { unquote } from 'utils/stringUtils';
 
 import { queryExamples } from './constants';
 
@@ -62,27 +75,18 @@ const stopEventsExtension = EditorView.domEventHandlers({
 	},
 });
 
-const disallowMultipleSpaces: Extension = EditorView.inputHandler.of(
-	(view, from, to, text) => {
-		const currentLine = view.state.doc.lineAt(from);
-		const before = currentLine.text.slice(0, from - currentLine.from);
-		const after = currentLine.text.slice(to - currentLine.from);
-
-		const newText = before + text + after;
-
-		return /\s{2,}/.test(newText);
-	},
-);
-
 function QuerySearch({
 	onChange,
 	queryData,
 	dataSource,
+	onRun,
 }: {
 	onChange: (value: string) => void;
 	queryData: IBuilderQuery;
 	dataSource: DataSource;
+	onRun?: (query: string) => void;
 }): JSX.Element {
+	const isDarkMode = useIsDarkMode();
 	const [query, setQuery] = useState<string>(queryData.filter?.expression || '');
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([
 		{ label: 'error', type: 'value' },
@@ -96,6 +100,19 @@ function QuerySearch({
 		message: '',
 		errors: [],
 	});
+
+	const handleQueryValidation = (newQuery: string): void => {
+		try {
+			const validationResponse = validateQuery(newQuery);
+			setValidation(validationResponse);
+		} catch (error) {
+			setValidation({
+				isValid: false,
+				message: 'Failed to process query',
+				errors: [error as IDetailedError],
+			});
+		}
+	};
 
 	useEffect(() => {
 		setQuery(queryData.filter?.expression || '');
@@ -111,13 +128,20 @@ function QuerySearch({
 	const [isFocused, setIsFocused] = useState(false);
 
 	const [isCompleteKeysList, setIsCompleteKeysList] = useState(false);
+	const [
+		isFetchingCompleteValuesList,
+		setIsFetchingCompleteValuesList,
+	] = useState<boolean>(false);
 
 	const lastPosRef = useRef<{ line: number; ch: number }>({ line: 0, ch: 0 });
 
 	// Reference to the editor view for programmatic autocompletion
 	const editorRef = useRef<EditorView | null>(null);
 	const lastKeyRef = useRef<string>('');
+	const lastValueRef = useRef<string>('');
 	const isMountedRef = useRef<boolean>(true);
+
+	const { handleRunQuery } = useQueryBuilder();
 
 	// const {
 	// 	data: queryKeySuggestions,
@@ -140,16 +164,35 @@ function QuerySearch({
 			})),
 		);
 
+	// Debounce the metric name to prevent API calls on every keystroke
+	const debouncedMetricName = useDebounce(
+		queryData.aggregateAttribute?.key || '',
+		500,
+	);
+
 	const fetchKeySuggestions = async (searchText?: string): Promise<void> => {
+		if (dataSource === DataSource.METRICS && !queryData.aggregateAttribute?.key) {
+			setKeySuggestions([]);
+			return;
+		}
 		const response = await getKeySuggestions({
 			signal: dataSource,
-			name: searchText || '',
+			searchText: searchText || '',
+			metricName: debouncedMetricName ?? undefined,
 		});
 
 		if (response.data.data) {
 			const { complete, keys } = response.data.data;
 			const options = generateOptions(keys);
-			setKeySuggestions((prev) => [...(prev || []), ...options]);
+			// Use a Map to deduplicate by label and preserve order: new options take precedence
+			const merged = new Map<string, QueryKeyDataSuggestionsProps>();
+			options.forEach((opt) => merged.set(opt.label, opt));
+			if (searchText && lastKeyRef.current !== searchText) {
+				(keySuggestions || []).forEach((opt) => {
+					if (!merged.has(opt.label)) merged.set(opt.label, opt);
+				});
+			}
+			setKeySuggestions(Array.from(merged.values()));
 			setIsCompleteKeysList(complete);
 		}
 	};
@@ -158,7 +201,7 @@ function QuerySearch({
 		setKeySuggestions([]);
 		fetchKeySuggestions();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dataSource]);
+	}, [dataSource, debouncedMetricName]);
 
 	// Add a state for tracking editing mode
 	const [editingMode, setEditingMode] = useState<
@@ -196,7 +239,6 @@ function QuerySearch({
 		return op.toUpperCase() === 'IN' || op.toUpperCase() === 'NOT IN';
 	};
 
-	// Helper function to format value based on operator type and value type
 	const formatValueForOperator = (
 		value: string,
 		operatorToken: string | undefined,
@@ -234,17 +276,29 @@ function QuerySearch({
 	// Use callback to prevent dependency changes on each render
 	const fetchValueSuggestions = useCallback(
 		// eslint-disable-next-line sonarjs/cognitive-complexity
-		async (key: string): Promise<void> => {
+		async ({
+			key,
+			searchText,
+			fetchingComplete = false,
+		}: {
+			key: string;
+			searchText?: string;
+			fetchingComplete?: boolean;
+		}): Promise<void> => {
 			if (
 				!key ||
-				(key === activeKey && !isLoadingSuggestions) ||
+				(key === activeKey && !isLoadingSuggestions && !fetchingComplete) ||
 				!isMountedRef.current
 			)
 				return;
 
 			// Set loading state and store the key we're fetching for
 			setIsLoadingSuggestions(true);
+			if (fetchingComplete) {
+				setIsFetchingCompleteValuesList(true);
+			}
 			lastKeyRef.current = key;
+			lastValueRef.current = searchText || '';
 			setActiveKey(key);
 
 			setValueSuggestions([
@@ -256,14 +310,21 @@ function QuerySearch({
 				},
 			]);
 
+			const sanitizedSearchText = searchText ? searchText?.trim() : '';
+
 			try {
 				const response = await getValueSuggestions({
 					key,
+					searchText: sanitizedSearchText,
 					signal: dataSource,
 				});
 
 				// Skip updates if component unmounted or key changed
-				if (!isMountedRef.current || lastKeyRef.current !== key) {
+				if (
+					!isMountedRef.current ||
+					lastKeyRef.current !== key ||
+					lastValueRef.current !== sanitizedSearchText
+				) {
 					return; // Skip updating if key has changed or component unmounted
 				}
 
@@ -283,6 +344,7 @@ function QuerySearch({
 					.map((value: string) => ({
 						label: value,
 						type: 'value',
+						apply: value,
 					}));
 
 				// Generate options from number values
@@ -294,6 +356,7 @@ function QuerySearch({
 					.map((value: number) => ({
 						label: value.toString(),
 						type: 'number',
+						apply: value,
 					}));
 
 				// Combine all options and make sure we don't have duplicate labels
@@ -327,7 +390,6 @@ function QuerySearch({
 							}
 						}, 10);
 					}
-					setIsLoadingSuggestions(false);
 				}
 			} catch (error) {
 				console.error('Error fetching suggestions:', error);
@@ -340,11 +402,18 @@ function QuerySearch({
 							apply: (): boolean => false, // Prevent selection
 						},
 					]);
-					setIsLoadingSuggestions(false);
 				}
+			} finally {
+				setIsLoadingSuggestions(false);
+				setIsFetchingCompleteValuesList(false);
 			}
 		},
 		[activeKey, dataSource, isLoadingSuggestions],
+	);
+
+	const debouncedFetchValueSuggestions = useMemo(
+		() => debounce(fetchValueSuggestions, 300),
+		[fetchValueSuggestions],
 	);
 
 	const handleUpdate = useCallback((viewUpdate: { view: EditorView }): void => {
@@ -409,31 +478,21 @@ function QuerySearch({
 		onChange(value);
 	};
 
-	const handleQueryValidation = (newQuery: string): void => {
-		try {
-			const validationResponse = validateQuery(newQuery);
-			setValidation(validationResponse);
-		} catch (error) {
-			setValidation({
-				isValid: false,
-				message: 'Failed to process query',
-				errors: [error as IDetailedError],
-			});
-		}
-	};
-
 	const handleBlur = (): void => {
 		handleQueryValidation(query);
 		setIsFocused(false);
-		if (editorRef.current) {
-			closeCompletion(editorRef.current);
-		}
 	};
 
 	useEffect(() => {
 		if (query) {
 			handleQueryValidation(query);
 		}
+
+		return (): void => {
+			if (debouncedFetchValueSuggestions) {
+				debouncedFetchValueSuggestions.cancel();
+			}
+		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
@@ -471,7 +530,9 @@ function QuerySearch({
 	// Enhanced myCompletions function to better use context including query pairs
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	function autoSuggestions(context: CompletionContext): CompletionResult | null {
-		const word = context.matchBefore(/[.\w]*/);
+		// This matches words before the cursor position
+		// eslint-disable-next-line no-useless-escape
+		const word = context.matchBefore(/[a-zA-Z0-9_.:/?&=#%\-\[\]]*/);
 		if (word?.from === word?.to && !context.explicit) return null;
 
 		// Get the query context at the cursor position
@@ -495,10 +556,19 @@ function QuerySearch({
 			completion: any,
 			from: number,
 			to: number,
+			shouldAddSpace = true,
 		): void => {
 			view.dispatch({
-				changes: { from, to, insert: `${completion.apply} ` },
-				selection: { anchor: from + completion.apply.length + 1 },
+				changes: {
+					from,
+					to,
+					insert: shouldAddSpace ? `${completion.apply} ` : `${completion.apply}`,
+				},
+				selection: {
+					anchor:
+						from +
+						(shouldAddSpace ? completion.apply.length + 1 : completion.apply.length),
+				},
 			});
 		};
 
@@ -514,7 +584,83 @@ function QuerySearch({
 						from: number,
 						to: number,
 					): void => {
-						addSpaceAfterSelection(view, { apply: originalApply }, from, to);
+						let shouldDefaultApply = true;
+
+						// Changes to replace the value in-place with the existing value
+						const isValueType = queryContext.isInValue && option.type === 'value';
+						const isOperatorType =
+							queryContext.isInOperator && option.type === 'operator';
+						const pair = queryContext.currentPair;
+
+						if (isValueType) {
+							if (queryContext.isInBracketList && pair?.valuesPosition) {
+								const idx = getCurrentValueIndexAtCursor(
+									pair.valuesPosition,
+									cursorPos.ch,
+								);
+								if (!isNull(idx)) {
+									const { start, end } = pair.valuesPosition[idx];
+									if (
+										typeof start === 'number' &&
+										typeof end === 'number' &&
+										cursorPos.ch >= start &&
+										cursorPos.ch <= end + 1
+									) {
+										shouldDefaultApply = false;
+										addSpaceAfterSelection(
+											view,
+											{ apply: originalApply },
+											start,
+											end + 1,
+											false,
+										);
+									}
+								}
+							} else if (pair?.position) {
+								const { valueStart, valueEnd } = pair.position;
+								if (
+									typeof valueStart === 'number' &&
+									typeof valueEnd === 'number' &&
+									cursorPos.ch >= valueStart &&
+									cursorPos.ch <= valueEnd + 1
+								) {
+									shouldDefaultApply = false;
+									addSpaceAfterSelection(
+										view,
+										{ apply: originalApply },
+										valueStart,
+										valueEnd + 1,
+										false,
+									);
+								}
+							}
+						}
+
+						// Changes to replace the operator in-place with the existing operator
+						if (isOperatorType && pair?.position) {
+							const { operatorStart, operatorEnd } = pair.position;
+							if (
+								typeof operatorStart === 'number' &&
+								typeof operatorEnd === 'number' &&
+								operatorStart !== 0 &&
+								operatorEnd !== 0 &&
+								cursorPos.ch >= operatorStart &&
+								cursorPos.ch <= operatorEnd + 1
+							) {
+								shouldDefaultApply = false;
+								addSpaceAfterSelection(
+									view,
+									{ apply: originalApply },
+									operatorStart,
+									operatorEnd + 1,
+									false,
+								);
+							}
+						}
+
+						if (shouldDefaultApply) {
+							addSpaceAfterSelection(view, { apply: originalApply }, from, to);
+						}
 					},
 				};
 			});
@@ -529,31 +675,58 @@ function QuerySearch({
 				return null;
 			}
 
+			let searchText = '';
+
 			if (
-				keyName &&
-				(keyName !== activeKey || isLoadingSuggestions) &&
-				!(isLoadingSuggestions && lastKeyRef.current === keyName)
+				queryContext.currentPair &&
+				queryContext.currentPair.valuesPosition &&
+				queryContext.currentPair.valueList
 			) {
-				fetchValueSuggestions(keyName);
+				const { valuesPosition, valueList } = queryContext.currentPair;
+				const idx = getCurrentValueIndexAtCursor(valuesPosition, cursorPos.ch);
+				searchText = isNull(idx)
+					? ''
+					: unquote(valueList[idx]).toLowerCase().trim();
+			}
+
+			options = (valueSuggestions || []).filter((option) =>
+				option.label.toLowerCase().includes(searchText),
+			);
+
+			const shouldFetch =
+				// Fetch only if key is available
+				keyName &&
+				// Fetch if either there's no suggestion left with the current searchText or searchText is empty
+				(((options.length === 0 || searchText === '') &&
+					lastValueRef.current !== searchText &&
+					!isFetchingCompleteValuesList) ||
+					keyName !== activeKey ||
+					isLoadingSuggestions) &&
+				!(isLoadingSuggestions && lastKeyRef.current === keyName);
+
+			if (shouldFetch) {
+				debouncedFetchValueSuggestions({
+					key: keyName,
+					searchText,
+					fetchingComplete: true,
+				});
 			}
 
 			// For values in bracket list, just add quotes without enclosing in brackets
-			const processedOptions = valueSuggestions.map((option) => {
+			const processedOptions = options.map((option) => {
 				// Clone the option to avoid modifying the original
 				const processedOption = { ...option };
 
 				// Skip processing for non-selectable items
-				if (option.apply === false || typeof option.apply === 'function') {
+				if (!option.apply || typeof option.apply === 'function') {
 					return option;
 				}
 
 				// For strings, just wrap in quotes (no brackets needed)
 				if (option.type === 'value' || option.type === 'keyword') {
 					processedOption.apply = wrapStringValueInQuotes(option.label);
-					processedOption.info = `Value for ${keyName} IN list`;
 				} else {
 					processedOption.apply = option.label;
-					processedOption.info = `Value for ${keyName} IN list`;
 				}
 
 				return processedOption;
@@ -590,9 +763,6 @@ function QuerySearch({
 				options = options.map((option) => ({
 					...option,
 					boost: usedKeys.includes(option.label) ? -10 : 10,
-					info: usedKeys.includes(option.label)
-						? `${option.info || ''} (already used in query)`
-						: option.info,
 				}));
 			}
 
@@ -620,6 +790,10 @@ function QuerySearch({
 			// Get key information from context or current pair
 			const keyName = queryContext.keyToken || queryContext.currentPair?.key;
 
+			if (queryContext.currentPair?.hasNegation) {
+				options = negationQueryOperatorSuggestions;
+			}
+
 			// If we have a key context, add that info to the operator suggestions
 			if (keyName) {
 				// Find the key details from suggestions
@@ -628,36 +802,51 @@ function QuerySearch({
 
 				// Filter operators based on key type
 				if (keyType) {
-					if (keyType === 'number') {
+					if (keyType === QUERY_BUILDER_KEY_TYPES.NUMBER) {
 						// Prioritize numeric operators
-						options = options.map((op) => ({
-							...op,
-							boost: ['>', '<', '>=', '<=', '=', '!=', 'BETWEEN'].includes(op.label)
-								? 100
-								: 0,
-						}));
-					} else if (keyType === 'string' || keyType === 'keyword') {
+						options = options
+							.filter((op) =>
+								QUERY_BUILDER_OPERATORS_BY_KEY_TYPE[
+									QUERY_BUILDER_KEY_TYPES.NUMBER
+								].includes(op.label),
+							)
+							.map((op) => ({
+								...op,
+								boost: ['>', '<', '>=', '<=', '=', '!=', 'BETWEEN'].includes(op.label)
+									? 100
+									: 0,
+							}));
+					} else if (
+						keyType === QUERY_BUILDER_KEY_TYPES.STRING ||
+						keyType === 'keyword'
+					) {
 						// Prioritize string operators
-						options = options.map((op) => ({
-							...op,
-							boost: ['=', '!=', 'LIKE', 'ILIKE', 'CONTAINS', 'IN'].includes(op.label)
-								? 100
-								: 0,
-						}));
-					} else if (keyType === 'boolean') {
+						options = options
+							.filter((op) =>
+								QUERY_BUILDER_OPERATORS_BY_KEY_TYPE[
+									QUERY_BUILDER_KEY_TYPES.STRING
+								].includes(op.label),
+							)
+							.map((op) => ({
+								...op,
+								boost: ['=', '!=', 'LIKE', 'ILIKE', 'CONTAINS', 'IN'].includes(op.label)
+									? 100
+									: 0,
+							}));
+					} else if (keyType === QUERY_BUILDER_KEY_TYPES.BOOLEAN) {
 						// Prioritize boolean operators
-						options = options.map((op) => ({
-							...op,
-							boost: ['=', '!='].includes(op.label) ? 100 : 0,
-						}));
+						options = options
+							.filter((op) =>
+								QUERY_BUILDER_OPERATORS_BY_KEY_TYPE[
+									QUERY_BUILDER_KEY_TYPES.BOOLEAN
+								].includes(op.label),
+							)
+							.map((op) => ({
+								...op,
+								boost: ['=', '!='].includes(op.label) ? 100 : 0,
+							}));
 					}
 				}
-
-				// Add key info to all operators
-				options = options.map((op) => ({
-					...op,
-					info: `${op.info || ''} (for ${keyName})`,
-				}));
 			}
 
 			// Add space after selection for operators
@@ -679,23 +868,44 @@ function QuerySearch({
 			if (!keyName) {
 				return null;
 			}
+			let searchText = '';
+
+			if (queryContext.currentPair && queryContext.currentPair.value) {
+				searchText = unquote(queryContext.currentPair.value).toLowerCase().trim();
+			}
+
+			options = (valueSuggestions || []).filter((option) =>
+				option.label.toLowerCase().includes(searchText),
+			);
 
 			// Trigger fetch only if needed
-			if (
+			const shouldFetch =
+				// Fetch only if key is available
 				keyName &&
-				(keyName !== activeKey || isLoadingSuggestions) &&
-				!(isLoadingSuggestions && lastKeyRef.current === keyName)
-			) {
-				fetchValueSuggestions(keyName);
+				// Fetch if either there's no suggestion left with the current searchText or searchText is empty
+				(((options.length === 0 || searchText === '') &&
+					lastValueRef.current !== searchText &&
+					!isFetchingCompleteValuesList) ||
+					keyName !== activeKey ||
+					isLoadingSuggestions) &&
+				!(isLoadingSuggestions && lastKeyRef.current === keyName);
+
+			if (shouldFetch) {
+				// eslint-disable-next-line sonarjs/no-identical-functions
+				debouncedFetchValueSuggestions({
+					key: keyName,
+					searchText,
+					fetchingComplete: true,
+				});
 			}
 
 			// Process options to add appropriate formatting when selected
-			const processedOptions = valueSuggestions.map((option) => {
+			const processedOptions = options.map((option) => {
 				// Clone the option to avoid modifying the original
 				const processedOption = { ...option };
 
 				// Skip processing for non-selectable items
-				if (option.apply === false || typeof option.apply === 'function') {
+				if (!option.apply || typeof option.apply === 'function') {
 					return option;
 				}
 
@@ -707,11 +917,6 @@ function QuerySearch({
 						operatorName,
 						option.type,
 					);
-
-					// Add context info to the suggestion
-					if (keyName && operatorName) {
-						processedOption.info = `Value for ${keyName} ${operatorName}`;
-					}
 				} else if (option.type === 'number') {
 					// Numbers don't get quoted but may need brackets for IN operators
 					if (isListOperator(operatorName)) {
@@ -719,27 +924,12 @@ function QuerySearch({
 					} else {
 						processedOption.apply = option.label;
 					}
-
-					// Add context info to the suggestion
-					if (keyName && operatorName) {
-						processedOption.info = `Numeric value for ${keyName} ${operatorName}`;
-					}
 				} else if (option.type === 'boolean') {
 					// Boolean values don't get quoted
 					processedOption.apply = option.label;
-
-					// Add context info
-					if (keyName && operatorName) {
-						processedOption.info = `Boolean value for ${keyName} ${operatorName}`;
-					}
 				} else if (option.type === 'array') {
 					// Arrays are already formatted as arrays
 					processedOption.apply = option.label;
-
-					// Add context info
-					if (keyName && operatorName) {
-						processedOption.info = `Array value for ${keyName} ${operatorName}`;
-					}
 				}
 
 				return processedOption;
@@ -760,7 +950,6 @@ function QuerySearch({
 				{ label: 'HAS', type: 'function' },
 				{ label: 'HASANY', type: 'function' },
 				{ label: 'HASALL', type: 'function' },
-				{ label: 'HASNONE', type: 'function' },
 			];
 
 			// Add space after selection for functions
@@ -836,27 +1025,21 @@ function QuerySearch({
 			}
 		}
 
-		// If no specific context is detected, provide general suggestions
-		options = [
-			...(keySuggestions || []),
-			{ label: 'AND', type: 'conjunction', boost: -10 },
-			{ label: 'OR', type: 'conjunction', boost: -10 },
-			{ label: '(', type: 'parenthesis', info: 'Open group', boost: -20 },
-		];
-
-		// Add space after selection for general context
-		const optionsWithSpace = addSpaceToOptions(options);
-
+		// Don't show anything if no context detected
 		return {
 			from: word?.from ?? 0,
-			options: optionsWithSpace,
+			options: [],
 		};
 	}
 
 	// Effect to handle focus state and trigger suggestions
 	useEffect(() => {
-		if (isFocused && editorRef.current) {
-			startCompletion(editorRef.current);
+		if (editorRef.current) {
+			if (!isFocused) {
+				closeCompletion(editorRef.current);
+			} else {
+				startCompletion(editorRef.current);
+			}
 		}
 	}, [isFocused]);
 
@@ -880,7 +1063,7 @@ function QuerySearch({
 
 			// Only fetch if needed and if we have a valid key
 			if (key && key !== activeKey && !isLoadingSuggestions) {
-				fetchValueSuggestions(key);
+				fetchValueSuggestions({ key });
 			}
 		}
 	}, [queryContext, activeKey, isLoadingSuggestions, fetchValueSuggestions]);
@@ -928,7 +1111,7 @@ function QuerySearch({
 			<div className="query-where-clause-editor-container">
 				<CodeMirror
 					value={query}
-					theme={copilot}
+					theme={isDarkMode ? copilot : githubLight}
 					onChange={handleChange}
 					onUpdate={handleUpdate}
 					className={cx('query-where-clause-editor', {
@@ -946,24 +1129,50 @@ function QuerySearch({
 						javascript({ jsx: false, typescript: false }),
 						EditorView.lineWrapping,
 						stopEventsExtension,
-						disallowMultipleSpaces,
-						keymap.of([
-							...completionKeymap,
-							{
-								key: 'Escape',
-								run: closeCompletion,
-							},
-						]),
+						Prec.highest(
+							keymap.of([
+								...completionKeymap,
+								{
+									key: 'Escape',
+									run: closeCompletion,
+								},
+								{
+									key: 'Enter',
+									preventDefault: true,
+									// Prevent default behavior of Enter to add new line
+									// and instead run a custom action
+									run: (): boolean => true,
+								},
+								{
+									key: 'Mod-Enter',
+									preventDefault: true,
+									// Prevent default behavior of Mod-Enter to add new line
+									// and instead run a custom action
+									// Mod-Enter is usually Ctrl-Enter or Cmd-Enter based on OS
+									run: (): boolean => {
+										if (onRun && typeof onRun === 'function') {
+											onRun(query);
+										} else {
+											handleRunQuery(true, true);
+										}
+										return true;
+									},
+								},
+								{
+									key: 'Shift-Enter',
+									preventDefault: true,
+									// Prevent default behavior of Shift-Enter to add new line
+									run: (): boolean => true,
+								},
+							]),
+						),
 					]}
-					placeholder="Enter your query (e.g., status = 'error' AND service = 'frontend')"
+					placeholder="Enter your filter query (e.g., status = 'error' AND service = 'frontend')"
 					basicSetup={{
 						lineNumbers: false,
 					}}
 					onFocus={(): void => {
 						setIsFocused(true);
-						if (editorRef.current) {
-							startCompletion(editorRef.current);
-						}
 					}}
 					onBlur={handleBlur}
 				/>
@@ -1039,7 +1248,7 @@ function QuerySearch({
 									>
 										<CodeMirror
 											value={example.query}
-											theme={copilot}
+											theme={isDarkMode ? copilot : githubLight}
 											extensions={[
 												javascript({ jsx: false, typescript: false }),
 												EditorView.editable.of(false),
@@ -1054,8 +1263,8 @@ function QuerySearch({
 					</Collapse>
 				</Card>
 			)}
-			{/* 
-			{queryContext && (
+
+			{/* {queryContext && (
 				<Card size="small" title="Current Context" className="query-context">
 					<div className="context-details">
 						<Space direction="vertical" size={4}>
@@ -1101,5 +1310,9 @@ function QuerySearch({
 		</div>
 	);
 }
+
+QuerySearch.defaultProps = {
+	onRun: undefined,
+};
 
 export default QuerySearch;

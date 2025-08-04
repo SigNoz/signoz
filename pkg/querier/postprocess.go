@@ -30,7 +30,7 @@ func getqueryInfo(spec any) queryInfo {
 	case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
 		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval}
 	case qbtypes.QueryBuilderFormula:
-		return queryInfo{Name: s.Name, Disabled: false}
+		return queryInfo{Name: s.Name, Disabled: s.Disabled}
 	case qbtypes.PromQuery:
 		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.Step}
 	case qbtypes.ClickHouseQuery:
@@ -81,6 +81,18 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 
 	// Apply table formatting for UI if requested
 	if req.FormatOptions != nil && req.FormatOptions.FormatTableResultForUI && req.RequestType == qbtypes.RequestTypeScalar {
+
+		// merge result only needed for non-CH query
+		if len(req.CompositeQuery.Queries) == 1 {
+			if req.CompositeQuery.Queries[0].Type == qbtypes.QueryTypeClickHouseSQL {
+				retResult := map[string]any{}
+				for name, v := range typedResults {
+					retResult[name] = v.Value
+				}
+				return retResult, nil
+			}
+		}
+
 		// Format results as a table - this merges all queries into a single table
 		tableResult := q.formatScalarResultsAsTable(typedResults, req)
 
@@ -94,6 +106,36 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 		}
 
 		return tableResult, nil
+	}
+
+	if req.RequestType == qbtypes.RequestTypeTimeSeries && req.FormatOptions != nil && req.FormatOptions.FillGaps {
+		for name := range typedResults {
+			funcs := []qbtypes.Function{{Name: qbtypes.FunctionNameFillZero}}
+			funcs = q.prepareFillZeroArgsWithStep(funcs, req, req.StepIntervalForQuery(name))
+			// empty time series if it doesn't exist
+			tsData, ok := typedResults[name].Value.(*qbtypes.TimeSeriesData)
+			if !ok {
+				tsData = &qbtypes.TimeSeriesData{}
+			}
+
+			if len(tsData.Aggregations) == 0 {
+				numAgg := req.NumAggregationForQuery(name)
+				tsData.Aggregations = make([]*qbtypes.AggregationBucket, numAgg)
+				for idx := range numAgg {
+					tsData.Aggregations[idx] = &qbtypes.AggregationBucket{
+						Index: int(idx),
+						Series: []*qbtypes.TimeSeries{
+							{
+								Labels: make([]*qbtypes.Label, 0),
+								Values: make([]*qbtypes.TimeSeriesValue, 0),
+							},
+						},
+					}
+				}
+			}
+
+			typedResults[name] = q.applyFunctions(typedResults[name], funcs)
+		}
 	}
 
 	// Convert back to map[string]any
@@ -113,6 +155,8 @@ func postProcessBuilderQuery[T any](
 	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
 
+	result = q.applySeriesLimit(result, query.Limit, query.Order)
+
 	// Apply functions
 	if len(query.Functions) > 0 {
 		step := query.StepInterval.Duration.Milliseconds()
@@ -131,9 +175,20 @@ func postProcessMetricQuery(
 	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
 
-	if query.Limit > 0 {
-		result = q.applySeriesLimit(result, query.Limit, query.Order)
+	config := query.Aggregations[0]
+	spaceAggOrderBy := fmt.Sprintf("%s(%s)", config.SpaceAggregation.StringValue(), config.MetricName)
+	timeAggOrderBy := fmt.Sprintf("%s(%s)", config.TimeAggregation.StringValue(), config.MetricName)
+	timeSpaceAggOrderBy := fmt.Sprintf("%s(%s(%s))", config.SpaceAggregation.StringValue(), config.TimeAggregation.StringValue(), config.MetricName)
+
+	for idx := range query.Order {
+		if query.Order[idx].Key.Name == spaceAggOrderBy ||
+			query.Order[idx].Key.Name == timeAggOrderBy ||
+			query.Order[idx].Key.Name == timeSpaceAggOrderBy {
+			query.Order[idx].Key.Name = qbtypes.DefaultOrderByKey
+		}
 	}
+
+	result = q.applySeriesLimit(result, query.Limit, query.Order)
 
 	if len(query.Functions) > 0 {
 		step := query.StepInterval.Duration.Milliseconds()
@@ -224,6 +279,13 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 
 	// Process each formula
 	for name, formula := range formulaQueries {
+
+		for idx := range formula.Order {
+			if formula.Order[idx].Key.Name == formula.Name || formula.Order[idx].Key.Name == formula.Expression {
+				formula.Order[idx].Key.Name = qbtypes.DefaultOrderByKey
+			}
+		}
+
 		// Check if we're dealing with time series or scalar data
 		if req.RequestType == qbtypes.RequestTypeTimeSeries {
 			result := q.processTimeSeriesFormula(ctx, results, formula, req)

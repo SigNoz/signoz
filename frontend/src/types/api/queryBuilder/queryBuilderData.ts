@@ -1,3 +1,4 @@
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { Format } from 'container/NewWidget/RightContainer/types';
 import { EQueryType } from 'types/common/dashboard';
 import {
@@ -64,28 +65,27 @@ export interface QueryFunctionProps {
 export type IBuilderQuery = {
 	queryName: string;
 	dataSource: DataSource;
-	aggregateOperator: string;
-	aggregateAttribute: BaseAutocompleteData;
+	aggregateOperator?: string;
+	aggregateAttribute?: BaseAutocompleteData;
 	aggregations?: TraceAggregation[] | LogAggregation[] | MetricAggregation[];
-	timeAggregation: string;
+	timeAggregation?: string;
 	spaceAggregation?: string;
 	temporality?: string;
 	functions: QueryFunctionProps[];
 	filter?: Filter;
-	filters: TagFilter;
+	filters?: TagFilter;
 	groupBy: BaseAutocompleteData[];
 	expression: string;
 	disabled: boolean;
-	having: Having[];
-	havingExpression?: HavingV5;
+	having: Having[] | HavingV5;
 	limit: number | null;
-	stepInterval: number;
+	stepInterval: number | undefined;
 	orderBy: OrderByPayload[];
-	reduceTo: ReduceOperators;
+	reduceTo?: ReduceOperators;
 	legend: string;
 	pageSize?: number;
 	offset?: number;
-	selectColumns?: BaseAutocompleteData[];
+	selectColumns?: BaseAutocompleteData[] | TelemetryFieldKey[];
 };
 
 export interface IClickHouseQuery {

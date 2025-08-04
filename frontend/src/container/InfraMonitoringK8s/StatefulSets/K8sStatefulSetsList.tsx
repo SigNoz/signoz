@@ -191,6 +191,32 @@ function K8sStatefulSetsList({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData, groupBy]);
 
+	const groupedByRowDataQueryKey = useMemo(() => {
+		if (selectedStatefulSetUID) {
+			return [
+				'statefulSetList',
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(selectedRowData),
+			];
+		}
+		return [
+			'statefulSetList',
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(selectedRowData),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		queryFilters,
+		orderBy,
+		selectedStatefulSetUID,
+		minTime,
+		maxTime,
+		selectedRowData,
+	]);
+
 	const {
 		data: groupedByRowData,
 		isFetching: isFetchingGroupedByRowData,
@@ -200,7 +226,7 @@ function K8sStatefulSetsList({
 	} = useGetK8sStatefulSetsList(
 		fetchGroupedByRowDataQuery as K8sStatefulSetsListPayload,
 		{
-			queryKey: ['statefulSetList', fetchGroupedByRowDataQuery],
+			queryKey: groupedByRowDataQueryKey,
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
 		undefined,
@@ -256,11 +282,44 @@ function K8sStatefulSetsList({
 		return groupedByRowData?.payload?.data?.records || [];
 	}, [groupedByRowData, selectedRowData]);
 
+	const queryKey = useMemo(() => {
+		if (selectedStatefulSetUID) {
+			return [
+				'statefulSetList',
+				String(pageSize),
+				String(currentPage),
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(groupBy),
+			];
+		}
+		return [
+			'statefulSetList',
+			String(pageSize),
+			String(currentPage),
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(groupBy),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		selectedStatefulSetUID,
+		pageSize,
+		currentPage,
+		queryFilters,
+		orderBy,
+		groupBy,
+		minTime,
+		maxTime,
+	]);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sStatefulSetsList(
 		query as K8sStatefulSetsListPayload,
 		{
-			queryKey: ['statefulSetList', query],
+			queryKey,
 			enabled: !!query,
+			keepPreviousData: true,
 		},
 		undefined,
 		dotMetricsEnabled,
@@ -351,7 +410,7 @@ function K8sStatefulSetsList({
 				setFiltersInitialised(true);
 			}
 
-			if (value.items.length > 0) {
+			if (value?.items && value?.items?.length > 0) {
 				logEvent(InfraMonitoringEvents.FilterApplied, {
 					entity: InfraMonitoringEvents.K8sEntity,
 					page: InfraMonitoringEvents.ListPage,
@@ -592,6 +651,9 @@ function K8sStatefulSetsList({
 		});
 	};
 
+	const showTableLoadingState =
+		(isFetching || isLoading) && formattedStatefulSetsData.length === 0;
+
 	return (
 		<div className="k8s-list">
 			<K8sHeader
@@ -604,6 +666,7 @@ function K8sStatefulSetsList({
 				handleGroupByChange={handleGroupByChange}
 				selectedGroupBy={groupBy}
 				entity={K8sCategory.STATEFULSETS}
+				showAutoRefresh={!selectedStatefulSetData}
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
@@ -611,7 +674,7 @@ function K8sStatefulSetsList({
 				className={classNames('k8s-list-table', 'statefulSets-list-table', {
 					'expanded-statefulsets-list-table': isGroupedByAttribute,
 				})}
-				dataSource={isFetching || isLoading ? [] : formattedStatefulSetsData}
+				dataSource={showTableLoadingState ? [] : formattedStatefulSetsData}
 				columns={columns}
 				pagination={{
 					current: currentPage,
@@ -623,26 +686,25 @@ function K8sStatefulSetsList({
 				}}
 				scroll={{ x: true }}
 				loading={{
-					spinning: isFetching || isLoading,
+					spinning: showTableLoadingState,
 					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 				}}
 				locale={{
-					emptyText:
-						isFetching || isLoading ? null : (
-							<div className="no-filtered-hosts-message-container">
-								<div className="no-filtered-hosts-message-content">
-									<img
-										src="/Icons/emptyState.svg"
-										alt="thinking-emoji"
-										className="empty-state-svg"
-									/>
+					emptyText: showTableLoadingState ? null : (
+						<div className="no-filtered-hosts-message-container">
+							<div className="no-filtered-hosts-message-content">
+								<img
+									src="/Icons/emptyState.svg"
+									alt="thinking-emoji"
+									className="empty-state-svg"
+								/>
 
-									<Typography.Text className="no-filtered-hosts-message">
-										This query had no results. Edit your query and try again!
-									</Typography.Text>
-								</div>
+								<Typography.Text className="no-filtered-hosts-message">
+									This query had no results. Edit your query and try again!
+								</Typography.Text>
 							</div>
-						),
+						</div>
+					),
 				}}
 				tableLayout="fixed"
 				onChange={handleTableChange}

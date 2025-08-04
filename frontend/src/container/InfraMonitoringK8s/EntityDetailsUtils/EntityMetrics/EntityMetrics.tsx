@@ -15,6 +15,7 @@ import {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/config';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import {
@@ -24,12 +25,13 @@ import {
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQueries, UseQueryResult } from 'react-query';
+import { QueryFunctionContext, useQueries, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Options } from 'uplot';
 
 import { FeatureKeys } from '../../../../constants/features';
+import { useMultiIntersectionObserver } from '../../../../hooks/useMultiIntersectionObserver';
 import { useAppContext } from '../../../../providers/App/App';
 
 interface EntityMetricsProps<T> {
@@ -73,6 +75,12 @@ function EntityMetrics<T>({
 	const dotMetricsEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
 			?.active || false;
+
+	const {
+		visibilities,
+		setElement,
+	} = useMultiIntersectionObserver(entityWidgetInfo.length, { threshold: 0.1 });
+
 	const queryPayloads = useMemo(
 		() =>
 			getEntityQueryPayload(
@@ -91,17 +99,22 @@ function EntityMetrics<T>({
 	);
 
 	const queries = useQueries(
-		queryPayloads.map((payload) => ({
+		queryPayloads.map((payload, index) => ({
 			queryKey: [queryKey, payload, ENTITY_VERSION_V4, category],
-			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
-			enabled: !!payload,
+			queryFn: ({
+				signal,
+			}: QueryFunctionContext): Promise<
+				SuccessResponse<MetricRangePayloadProps>
+			> => GetMetricQueryRange(payload, ENTITY_VERSION_V4, signal),
+			enabled: !!payload && visibilities[index],
+			keepPreviousData: true,
 		})),
 	);
 
 	const isDarkMode = useIsDarkMode();
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
+	const { currentQuery } = useQueryBuilder();
 
 	const chartData = useMemo(
 		() =>
@@ -170,6 +183,7 @@ function EntityMetrics<T>({
 					minTimeScale: graphTimeIntervals[idx].start,
 					maxTimeScale: graphTimeIntervals[idx].end,
 					onDragSelect: (start, end) => onDragSelect(start, end, idx),
+					query: currentQuery,
 				});
 			}),
 		[
@@ -179,6 +193,7 @@ function EntityMetrics<T>({
 			entityWidgetInfo,
 			graphTimeIntervals,
 			onDragSelect,
+			currentQuery,
 		],
 	);
 
@@ -186,7 +201,7 @@ function EntityMetrics<T>({
 		query: UseQueryResult<SuccessResponse<MetricRangePayloadProps>, unknown>,
 		idx: number,
 	): JSX.Element => {
-		if (query.isLoading) {
+		if ((!query.data && query.isLoading) || !visibilities[idx]) {
 			return <Skeleton />;
 		}
 
@@ -196,7 +211,7 @@ function EntityMetrics<T>({
 			return <div>{errorMessage}</div>;
 		}
 
-		const { panelType } = (query.data?.params as any).compositeQuery;
+		const panelType = (query.data?.params as any)?.compositeQuery?.panelType;
 
 		return (
 			<div
@@ -234,7 +249,7 @@ function EntityMetrics<T>({
 			</div>
 			<Row gutter={24} className="entity-metrics-container">
 				{queries.map((query, idx) => (
-					<Col span={12} key={entityWidgetInfo[idx].title}>
+					<Col ref={setElement(idx)} span={12} key={entityWidgetInfo[idx].title}>
 						<Typography.Text>{entityWidgetInfo[idx].title}</Typography.Text>
 						<Card bordered className="entity-metrics-card" ref={graphRef}>
 							{renderCardContent(query, idx)}

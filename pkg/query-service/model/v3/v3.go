@@ -12,6 +12,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 type DataSource string
@@ -510,8 +512,11 @@ type CompositeQuery struct {
 	BuilderQueries    map[string]*BuilderQuery    `json:"builderQueries,omitempty"`
 	ClickHouseQueries map[string]*ClickHouseQuery `json:"chQueries,omitempty"`
 	PromQueries       map[string]*PromQuery       `json:"promQueries,omitempty"`
-	PanelType         PanelType                   `json:"panelType"`
-	QueryType         QueryType                   `json:"queryType"`
+
+	Queries []qbtypes.QueryEnvelope `json:"queries,omitempty"`
+
+	PanelType PanelType `json:"panelType"`
+	QueryType QueryType `json:"queryType"`
 	// Unit for the time series data shown in the graph
 	// This is used in alerts to format the value and threshold
 	Unit string `json:"unit,omitempty"`
@@ -1140,6 +1145,9 @@ func (b *BuilderQuery) Validate(panelType PanelType) error {
 				_, ok := function.Args[0].(float64)
 				if !ok {
 					// if string, attempt to convert to float
+					if _, ok := function.Args[0].(string); !ok {
+						return fmt.Errorf("threshold param should be a float")
+					}
 					threshold, err := strconv.ParseFloat(function.Args[0].(string), 64)
 					if err != nil {
 						return fmt.Errorf("threshold param should be a float")
@@ -1224,6 +1232,9 @@ const (
 
 	FilterOperatorHas    FilterOperator = "has"
 	FilterOperatorNotHas FilterOperator = "nhas"
+
+	FilterOperatorILike    FilterOperator = "ilike"
+	FilterOperatorNotILike FilterOperator = "notilike"
 )
 
 type FilterItem struct {
@@ -1449,28 +1460,6 @@ type MetricMetadataResponse struct {
 	Type        string    `json:"type"`
 	IsMonotonic bool      `json:"isMonotonic"`
 	Temporality string    `json:"temporality"`
-}
-
-type URLShareableTimeRange struct {
-	Start    int64 `json:"start"`
-	End      int64 `json:"end"`
-	PageSize int64 `json:"pageSize"`
-}
-
-type URLShareableBuilderQuery struct {
-	QueryData     []BuilderQuery `json:"queryData"`
-	QueryFormulas []string       `json:"queryFormulas"`
-}
-
-type URLShareableCompositeQuery struct {
-	QueryType string                   `json:"queryType"`
-	Builder   URLShareableBuilderQuery `json:"builder"`
-}
-
-type URLShareableOptions struct {
-	MaxLines      int            `json:"maxLines"`
-	Format        string         `json:"format"`
-	SelectColumns []AttributeKey `json:"selectColumns"`
 }
 
 type QBOptions struct {

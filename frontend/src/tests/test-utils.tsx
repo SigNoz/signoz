@@ -7,6 +7,7 @@ import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
+import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import TimezoneProvider from 'providers/Timezone';
 import React, { ReactElement } from 'react';
@@ -22,7 +23,7 @@ import {
 	LicenseState,
 	LicenseStatus,
 } from 'types/api/licensesV3/getActive';
-import { ROLES } from 'types/roles';
+import { ROLES, USER_ROLES } from 'types/roles';
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -162,6 +163,7 @@ export function getAppContextMock(
 				displayName: 'Pentagon',
 			},
 		],
+		hasEditPermission: role === USER_ROLES.ADMIN || role === USER_ROLES.EDITOR,
 		isFetchingUser: false,
 		userFetchError: null,
 		featureFlags: [
@@ -233,11 +235,13 @@ export function getAppContextMock(
 		isFetchingOrgPreferences: false,
 		orgPreferencesFetchError: null,
 		isLoggedIn: true,
+		showChangelogModal: false,
 		updateUser: jest.fn(),
 		updateOrg: jest.fn(),
 		updateOrgPreferences: jest.fn(),
 		activeLicenseRefetch: jest.fn(),
 		updateChangelog: jest.fn(),
+		toggleChangelogModal: jest.fn(),
 		versionData: {
 			version: '1.0.0',
 			ee: 'Y',
@@ -264,7 +268,9 @@ export function AllTheProviders({
 						<ErrorModalProvider>
 							<BrowserRouter>
 								<TimezoneProvider>
-									<QueryBuilderProvider>{children}</QueryBuilderProvider>
+									<PreferenceContextProvider>
+										<QueryBuilderProvider>{children}</QueryBuilderProvider>
+									</PreferenceContextProvider>
 								</TimezoneProvider>
 							</BrowserRouter>
 						</ErrorModalProvider>

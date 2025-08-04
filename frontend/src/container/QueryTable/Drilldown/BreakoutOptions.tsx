@@ -41,16 +41,17 @@ function BreakoutOptions({
 		[],
 	);
 
+	// TODO: change the api call to get the keys
 	const { isFetching, data } = useGetAggregateKeys(
 		{
-			aggregateAttribute: queryData.aggregateAttribute.key,
+			aggregateAttribute: queryData.aggregateAttribute?.key || '',
 			dataSource: queryData.dataSource,
-			aggregateOperator: queryData.aggregateOperator,
+			aggregateOperator: queryData?.aggregateOperator || '',
 			searchText: debouncedSearchText,
 		},
 		{
 			queryKey: [
-				queryData.aggregateAttribute.key,
+				queryData?.aggregateAttribute?.key,
 				queryData.dataSource,
 				queryData.aggregateOperator,
 				debouncedSearchText,

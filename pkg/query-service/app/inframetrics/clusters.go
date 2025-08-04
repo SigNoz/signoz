@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	metricToUseForClusters = GetDotMetrics("k8s_node_cpu_utilization")
+	metricToUseForClusters = GetDotMetrics("k8s_node_cpu_usage")
 
 	clusterAttrsToEnrich = []string{GetDotMetrics("k8s_cluster_name")}
 

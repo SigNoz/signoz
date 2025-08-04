@@ -41,6 +41,7 @@ export type DynamicColumn = {
 	title: string;
 	data: (string | number)[];
 	type: 'field' | 'operator' | 'formula';
+	id?: string;
 };
 
 type DynamicColumns = DynamicColumn[];
@@ -93,7 +94,10 @@ const getQueryByName = <T extends keyof QueryBuilderData>(
 		);
 	}
 	if (query.queryType === EQueryType.QUERY_BUILDER) {
-		const queryArray = query.builder[type];
+		const queryArray = (query.builder[type] || []) as (
+			| IBuilderQuery
+			| IBuilderFormula
+		)[];
 		const defaultValue =
 			type === 'queryData'
 				? initialQueryBuilderFormValues
@@ -119,6 +123,7 @@ const addLabels = (
 	query: IBuilderQuery | IBuilderFormula | IClickHouseQuery | IPromQLQuery,
 	label: string,
 	dynamicColumns: DynamicColumns,
+	columnId?: string,
 ): void => {
 	if (isValueExist('dataIndex', label, dynamicColumns)) return;
 
@@ -129,6 +134,7 @@ const addLabels = (
 		title: label,
 		data: [],
 		type: 'field',
+		id: columnId,
 	};
 
 	dynamicColumns.push(fieldObj);
@@ -139,6 +145,7 @@ const addOperatorFormulaColumns = (
 	dynamicColumns: DynamicColumns,
 	queryType: EQueryType,
 	customLabel?: string,
+	columnId?: string,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): void => {
 	if (isFormula(get(query, 'queryName', ''))) {
@@ -156,6 +163,7 @@ const addOperatorFormulaColumns = (
 			title: customLabel || formulaLabel,
 			data: [],
 			type: 'formula',
+			id: columnId,
 		};
 
 		dynamicColumns.push(formulaColumn);
@@ -166,8 +174,8 @@ const addOperatorFormulaColumns = (
 	if (queryType === EQueryType.QUERY_BUILDER) {
 		const currentQueryData = query as IBuilderQuery;
 		let operatorLabel = `${currentQueryData.aggregateOperator}`;
-		if (currentQueryData.aggregateAttribute.key) {
-			operatorLabel += `(${currentQueryData.aggregateAttribute.key})`;
+		if (currentQueryData.aggregateAttribute?.key) {
+			operatorLabel += `(${currentQueryData.aggregateAttribute?.key})`;
 		}
 
 		if (currentQueryData.legend) {
@@ -177,10 +185,11 @@ const addOperatorFormulaColumns = (
 		const operatorColumn: DynamicColumn = {
 			query,
 			field: currentQueryData.queryName,
-			dataIndex: currentQueryData.queryName,
+			dataIndex: customLabel || currentQueryData.queryName,
 			title: customLabel || operatorLabel,
 			data: [],
 			type: 'operator',
+			id: columnId,
 		};
 
 		dynamicColumns.push(operatorColumn);
@@ -221,6 +230,7 @@ const addOperatorFormulaColumns = (
 			title: customLabel || operatorLabel,
 			data: [],
 			type: 'operator',
+			id: columnId,
 		};
 
 		dynamicColumns.push(operatorColumn);
@@ -276,10 +286,11 @@ const processTableColumns = (
 				dynamicColumns,
 				queryType,
 				column.name,
+				column.id,
 			);
 		} else {
 			// For non-value columns, add as field/label column
-			addLabels(currentStagedQuery, column.name, dynamicColumns);
+			addLabels(currentStagedQuery, column.name, dynamicColumns, column.id);
 		}
 	});
 };
@@ -554,25 +565,28 @@ const fillDataFromTable = (
 
 	table.rows.forEach((row) => {
 		const unusedColumnsKeys = new Set<keyof RowData>(
-			columns.map((item) => item.field),
+			columns.map((item) => item.id || item.title),
 		);
 
 		columns.forEach((column) => {
 			const rowData = row.data;
+			const columnField = column.id || column.title || column.field;
 
-			if (Object.prototype.hasOwnProperty.call(rowData, column.field)) {
-				const value = rowData[column.field];
+			if (Object.prototype.hasOwnProperty.call(rowData, columnField)) {
+				const value = rowData[columnField];
 				processTableRowValue(value, column);
-				unusedColumnsKeys.delete(column.field);
+				unusedColumnsKeys.delete(columnField);
 			} else {
 				column.data.push('N/A');
-				unusedColumnsKeys.delete(column.field);
+				unusedColumnsKeys.delete(columnField);
 			}
 		});
 
 		// Fill any remaining unused columns with N/A
 		unusedColumnsKeys.forEach((key) => {
-			const unusedCol = columns.find((item) => item.field === key);
+			const unusedCol = columns.find(
+				(item) => item.id === key || item.title === key,
+			);
 			if (unusedCol) {
 				unusedCol.data.push('N/A');
 			}

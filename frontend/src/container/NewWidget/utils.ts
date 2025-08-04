@@ -6,9 +6,12 @@ import {
 } from 'constants/queryBuilder';
 import {
 	listViewInitialLogQuery,
-	listViewInitialTraceQuery,
 	PANEL_TYPES_INITIAL_QUERY,
 } from 'container/NewDashboard/ComponentsSlider/constants';
+import {
+	defaultLogsSelectedColumns,
+	defaultTraceSelectedColumns,
+} from 'container/OptionsMenu/constants';
 import { categoryToSupport } from 'container/QueryBuilder/filters/BuilderUnitsFilter/config';
 import { cloneDeep, defaultTo, isEmpty, isEqual, set, unset } from 'lodash-es';
 import { Layout } from 'react-grid-layout';
@@ -564,21 +567,12 @@ export const getDefaultWidgetData = (
 	timePreferance: 'GLOBAL_TIME',
 	softMax: null,
 	softMin: null,
-	selectedLogFields: [
-		{
-			dataType: 'string',
-			type: '',
-			name: 'body',
-		},
-		{
-			dataType: 'string',
-			type: '',
-			name: 'timestamp',
-		},
-	],
-	selectedTracesFields: [
-		...listViewInitialTraceQuery.builder.queryData[0].selectColumns,
-	],
+	selectedLogFields: defaultLogsSelectedColumns.map((field) => ({
+		...field,
+		type: field.fieldContext ?? '',
+		dataType: field.fieldDataType ?? '',
+	})),
+	selectedTracesFields: defaultTraceSelectedColumns,
 });
 
 export const PANEL_TYPE_TO_QUERY_TYPES: Record<PANEL_TYPES, EQueryType[]> = {

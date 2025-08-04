@@ -6,14 +6,17 @@ import { QueryKeyValueSuggestionsResponseProps } from 'types/api/querySuggestion
 export const useGetQueryKeyValueSuggestions = ({
 	key,
 	signal,
+	searchText,
 }: {
 	key: string;
-	signal: string;
+	signal: 'traces' | 'logs' | 'metrics';
+	searchText?: string;
 }): UseQueryResult<
 	AxiosResponse<QueryKeyValueSuggestionsResponseProps>,
 	AxiosError
 > =>
 	useQuery<AxiosResponse<QueryKeyValueSuggestionsResponseProps>, AxiosError>({
-		queryKey: ['queryKeyValueSuggestions', key, signal],
-		queryFn: () => getValueSuggestions({ signal, key }),
+		queryKey: ['queryKeyValueSuggestions', key, signal, searchText],
+		queryFn: () =>
+			getValueSuggestions({ signal, key, searchText: searchText || '' }),
 	});

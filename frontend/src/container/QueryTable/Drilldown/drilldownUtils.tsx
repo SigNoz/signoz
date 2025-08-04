@@ -76,7 +76,8 @@ function addFiltersToQuerySteps(
 		// 3) build the new filters array
 		const newFilters = {
 			...step.filters,
-			items: [...step.filters.items],
+			op: step?.filters?.op || 'AND',
+			items: [...(step?.filters?.items || [])],
 		};
 
 		// Add each filter to the items array
@@ -255,7 +256,7 @@ export const getViewQuery = (
 	let existingFilters: TagFilterItem[] = [];
 	if (queryName) {
 		const queryData = getQueryData(query, queryName);
-		existingFilters = queryData.filters.items;
+		existingFilters = queryData?.filters?.items || [];
 	}
 
 	console.log('existingFilters', { existingFilters, query });

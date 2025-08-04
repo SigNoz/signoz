@@ -136,6 +136,13 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			name: 'parse_to',
 			initialValue: 'attributes',
 		},
+		{
+			id: 4,
+			fieldName: 'Enable Flattening',
+			placeholder: '',
+			name: 'enable_flattening',
+			initialValue: false,
+		},
 	],
 	regex_parser: [
 		{
@@ -457,4 +464,15 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			name: 'to',
 		},
 	],
+};
+
+export const PREDEFINED_MAPPING = {
+	environment: ['service.env', 'environment', 'env'],
+	host: ['host', 'hostname', 'host.name'],
+	message: ['message', 'msg', 'log'],
+	service: ['service', 'appname'],
+	severity: ['status', 'severity', 'level'],
+	span_id: ['span_id', 'span.id'],
+	trace_flags: ['flags'],
+	trace_id: ['trace_id', 'trace.id'],
 };

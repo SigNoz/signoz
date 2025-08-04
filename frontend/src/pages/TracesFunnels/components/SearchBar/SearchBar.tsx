@@ -1,6 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
-import { Button, Input, Popover, Typography } from 'antd';
+import { Button, Input, Popover, Tooltip, Typography } from 'antd';
 import { ArrowDownWideNarrow, Check, Plus, Search } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { ChangeEvent } from 'react';
 
 interface SearchBarProps {
@@ -21,6 +22,8 @@ function SearchBar({
 	onSort,
 	onCreateFunnel,
 }: SearchBarProps): JSX.Element {
+	const { hasEditPermission } = useAppContext();
+
 	return (
 		<div className="search">
 			<Popover
@@ -70,14 +73,23 @@ function SearchBar({
 				value={searchQuery}
 				onChange={onSearch}
 			/>
-			<Button
-				type="primary"
-				icon={<Plus size={16} />}
-				className="search__new-btn"
-				onClick={onCreateFunnel}
+			<Tooltip
+				title={
+					!hasEditPermission
+						? 'You need editor or admin access to create funnels'
+						: ''
+				}
 			>
-				New funnel
-			</Button>
+				<Button
+					type="primary"
+					icon={<Plus size={16} />}
+					className="search__new-btn"
+					onClick={onCreateFunnel}
+					disabled={!hasEditPermission}
+				>
+					New funnel
+				</Button>
+			</Tooltip>
 		</div>
 	);
 }
