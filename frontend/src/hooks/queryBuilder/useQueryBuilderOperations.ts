@@ -30,10 +30,10 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import {
 	IBuilderFormula,
 	IBuilderQuery,
-	QueryFunctionProps,
 } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	MetricAggregation,
+	QueryFunction,
 	SpaceAggregation,
 	TimeAggregation,
 } from 'types/api/v5/queryRange';
@@ -414,7 +414,7 @@ export const useQueryOperations: UseQueryOperations = ({
 	);
 
 	const handleQueryFunctionsUpdates = useCallback(
-		(functions: QueryFunctionProps[]): void => {
+		(functions: QueryFunction[]): void => {
 			const newQuery: IBuilderQuery = {
 				...query,
 			};
