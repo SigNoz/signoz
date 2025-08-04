@@ -16,7 +16,7 @@ import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
-import { Button, Card, Collapse, Popover, Tag } from 'antd';
+import { Button, Card, Collapse, Popover, Tag, Tooltip } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import cx from 'classnames';
@@ -30,7 +30,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
-import { TriangleAlert } from 'lucide-react';
+import { Info, TriangleAlert } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	IDetailedError,
@@ -1068,6 +1068,22 @@ function QuerySearch({
 		}
 	}, [queryContext, activeKey, isLoadingSuggestions, fetchValueSuggestions]);
 
+
+	const getTooltipContent = () => (
+		<div>
+		  Need help with search syntax?
+		  <br />
+		  <a
+			href="https://signoz.io/docs/userguide/search-syntax/"
+			target="_blank"
+			rel="noopener noreferrer"
+			style={{ color: '#1890ff', textDecoration: 'underline' }}
+		  >
+			View documentation
+		  </a>
+		</div>
+	  );
+
 	return (
 		<div className="code-mirror-where-clause">
 			{editingMode && (
@@ -1109,6 +1125,32 @@ function QuerySearch({
 			)}
 
 			<div className="query-where-clause-editor-container">
+
+				<Tooltip
+					title={getTooltipContent()}
+					placement="left"
+				>
+					<a
+						href="https://signoz.io/docs/userguide/search-syntax/"
+						target="_blank"
+						rel="noopener noreferrer"
+						style={{
+							position: 'absolute',
+							top: 8,
+							right: validation.isValid === false && query ? 40 : 8, // Move left when error shown
+							cursor: 'help',
+							zIndex: 10,
+							transition: 'right 0.2s ease',
+							display: 'inline-flex',
+							alignItems: 'center',
+							color: '#8c8c8c'
+						}}
+						onClick={(e) => e.stopPropagation()}
+					>
+						<Info size={14} style={{ opacity: 0.9, color: isDarkMode ? '#ffffff' : '#000000' }} />
+					</a>
+				</Tooltip>
+
 				<CodeMirror
 					value={query}
 					theme={isDarkMode ? copilot : githubLight}
@@ -1167,7 +1209,7 @@ function QuerySearch({
 							]),
 						),
 					]}
-					placeholder="Enter your filter query (e.g., status = 'error' AND service = 'frontend')"
+					placeholder="Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')"
 					basicSetup={{
 						lineNumbers: false,
 					}}

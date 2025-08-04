@@ -195,6 +195,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}
 			data-testid="group-by"
+			placeholder={localValues.length === 0 ? 'Everything (no breakdown)' : ''}
 		/>
 	);
 });
