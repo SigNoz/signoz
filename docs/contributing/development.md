@@ -75,17 +75,22 @@ This command:
 
 ### 3. Setting up the Frontend
 
-1. Install dependencies:
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies:
    ```bash
    yarn install
    ```
 
-2. Create a `.env` file in the `frontend` directory:
+3. Create a `.env` file in this directory:
    ```env
    FRONTEND_API_ENDPOINT=http://localhost:8080
    ```
 
-3. Start the development server:
+4. Start the development server:
    ```bash
    yarn dev
    ```
