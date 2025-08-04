@@ -21,6 +21,7 @@ import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 import { unquote } from 'utils/stringUtils';
+import { isFunctionOperator } from 'utils/tokenUtils';
 import { v4 as uuid } from 'uuid';
 
 /**
@@ -84,6 +85,10 @@ export const convertFiltersToExpression = (
 			// Skip if key is not defined
 			if (!key?.key) {
 				return '';
+			}
+
+			if (isFunctionOperator(op)) {
+				return `${op}(${key.key}, ${value})`;
 			}
 
 			const formattedValue = formatValueForExpression(value, op);
