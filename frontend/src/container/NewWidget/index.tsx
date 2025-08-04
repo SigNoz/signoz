@@ -276,6 +276,7 @@ function NewWidget({
 				legendPosition,
 				customLegendColors,
 				columnWidths: columnWidths?.[selectedWidget?.id],
+				contextLinks,
 			};
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -302,6 +303,7 @@ function NewWidget({
 		legendPosition,
 		customLegendColors,
 		columnWidths,
+		contextLinks,
 	]);
 
 	const closeModal = (): void => {
@@ -510,6 +512,7 @@ function NewWidget({
 								selectedTracesFields: selectedWidget?.selectedTracesFields || [],
 								legendPosition: selectedWidget?.legendPosition || LegendPosition.BOTTOM,
 								customLegendColors: selectedWidget?.customLegendColors || {},
+								contextLinks: selectedWidget?.contextLinks || { linksData: [] },
 							},
 					  ]
 					: [
@@ -539,6 +542,7 @@ function NewWidget({
 								selectedTracesFields: selectedWidget?.selectedTracesFields || [],
 								legendPosition: selectedWidget?.legendPosition || LegendPosition.BOTTOM,
 								customLegendColors: selectedWidget?.customLegendColors || {},
+								contextLinks: selectedWidget?.contextLinks || { linksData: [] },
 							},
 							...afterWidgets,
 					  ],
