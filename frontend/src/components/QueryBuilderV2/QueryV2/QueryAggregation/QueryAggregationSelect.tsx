@@ -263,7 +263,7 @@ function QueryAggregationSelect({
 
 		setValidationError(validateAggregations());
 		setFunctionArgPairs(pairs);
-		setAggregationOptions(pairs);
+		setAggregationOptions(queryData.queryName, pairs);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [input, maxAggregations, validFunctions]);
 

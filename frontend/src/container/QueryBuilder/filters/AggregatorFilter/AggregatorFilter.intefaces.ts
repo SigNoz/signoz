@@ -7,4 +7,5 @@ export type AgregatorFilterProps = Pick<AutoCompleteProps, 'disabled'> & {
 	onChange: (value: BaseAutocompleteData) => void;
 	defaultValue?: string;
 	onSelect?: (value: BaseAutocompleteData) => void;
+	index?: number;
 };

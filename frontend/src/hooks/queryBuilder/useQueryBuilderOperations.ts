@@ -138,7 +138,6 @@ export const useQueryOperations: UseQueryOperations = ({
 						timeAggregation: value as TimeAggregation,
 					},
 				],
-				having: [],
 				limit: null,
 				...(shouldResetAggregateAttribute
 					? { aggregateAttribute: initialAutocompleteData }
@@ -217,7 +216,6 @@ export const useQueryOperations: UseQueryOperations = ({
 			const newQuery: IBuilderQuery = {
 				...query,
 				aggregateAttribute: value,
-				having: [],
 			};
 
 			if (
