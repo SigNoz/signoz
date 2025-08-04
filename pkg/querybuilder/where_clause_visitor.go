@@ -2,6 +2,7 @@ package querybuilder
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -15,14 +16,18 @@ import (
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )
 
+var searchTroubleshootingGuideURL = "https://signoz.io/docs/userguide/search-troubleshooting/"
+
 // filterExpressionVisitor implements the FilterQueryVisitor interface
 // to convert the parsed filter expressions into ClickHouse WHERE clause
 type filterExpressionVisitor struct {
 	fieldMapper        qbtypes.FieldMapper
 	conditionBuilder   qbtypes.ConditionBuilder
 	warnings           []string
+	mainWarnURL        string
 	fieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
 	errors             []string
+	mainErrorURL       string
 	builder            *sqlbuilder.SelectBuilder
 	fullTextColumn     *telemetrytypes.TelemetryFieldKey
 	jsonBodyPrefix     string
@@ -70,8 +75,14 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 	}
 }
 
+type PreparedWhereClause struct {
+	WhereClause    *sqlbuilder.WhereClause
+	Warnings       []string
+	WarningsDocURL string
+}
+
 // PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query
-func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*sqlbuilder.WhereClause, []string, error) {
+func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWhereClause, error) {
 	// Setup the ANTLR parsing pipeline
 	input := antlr.NewInputStream(query)
 	lexer := grammar.NewFilterQueryLexer(input)
@@ -102,14 +113,17 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*sqlbuilder.W
 		combinedErrors := errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"Found %d syntax errors while parsing the search expression. Refer to the troubleshooting guide <a href=\"https://signoz.io/docs/userguide/search-troubleshooting/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>",
+			"Found %d syntax errors while parsing the search expression.",
 			len(parserErrorListener.SyntaxErrors),
 		)
 		additionals := make([]string, len(parserErrorListener.SyntaxErrors))
 		for _, err := range parserErrorListener.SyntaxErrors {
-			additionals = append(additionals, err.Error())
+			if err.Error() != "" {
+				additionals = append(additionals, err.Error())
+			}
 		}
-		return nil, nil, combinedErrors.WithAdditional(additionals...)
+
+		return nil, combinedErrors.WithAdditional(additionals...).WithUrl(searchTroubleshootingGuideURL)
 	}
 
 	// Visit the parse tree with our ClickHouse visitor
@@ -120,10 +134,14 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*sqlbuilder.W
 		combinedErrors := errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"Found %d errors while parsing the search expression. Refer to the troubleshooting guide <a href=\"https://signoz.io/docs/userguide/search-troubleshooting/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>",
+			"Found %d errors while parsing the search expression.",
 			len(visitor.errors),
 		)
-		return nil, nil, combinedErrors.WithAdditional(visitor.errors...)
+		url := visitor.mainErrorURL
+		if url == "" {
+			url = searchTroubleshootingGuideURL
+		}
+		return nil, combinedErrors.WithAdditional(visitor.errors...).WithUrl(url)
 	}
 
 	if cond == "" {
@@ -132,7 +150,7 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*sqlbuilder.W
 
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
 
-	return whereClause, visitor.warnings, nil
+	return &PreparedWhereClause{whereClause, visitor.warnings, visitor.mainWarnURL}, nil
 }
 
 // Visit dispatches to the specific visit method based on node type
@@ -621,7 +639,10 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 			fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
 		} else {
 			// TODO(add docs for json body search)
-			v.errors = append(v.errors, fmt.Sprintf("function `%s` supports only body JSON search. Learn more <a href=\"https://signoz.io/docs/userguide/search-troubleshooting/#function-supports-only-body-json-search\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>", functionName))
+			if v.mainErrorURL == "" {
+				v.mainErrorURL = "https://signoz.io/docs/userguide/search-troubleshooting/#function-supports-only-body-json-search"
+			}
+			v.errors = append(v.errors, fmt.Sprintf("function `%s` supports only body JSON search", functionName))
 			return ""
 		}
 
@@ -709,6 +730,9 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 
 	keyName := strings.TrimPrefix(fieldKey.Name, v.jsonBodyPrefix)
 
+	jsun, err := json.Marshal(v.fieldKeys)
+	fmt.Println("field keys", string(jsun), err)
+
 	fieldKeysForName := v.fieldKeys[keyName]
 
 	// if the context is explicitly provided, filter out the remaining
@@ -747,14 +771,16 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 		} else if !v.ignoreNotFoundKeys {
 			// TODO(srikanthccv): do we want to return an error here?
 			// should we infer the type and auto-magically build a key for expression?
-			v.errors = append(v.errors, fmt.Sprintf("key `%s` not found. Learn more <a href=\"https://signoz.io/docs/userguide/search-troubleshooting/#key-fieldname-not-found\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>", fieldKey.Name))
+			v.errors = append(v.errors, fmt.Sprintf("key `%s` not found", fieldKey.Name))
+			v.mainErrorURL = "https://signoz.io/docs/userguide/search-troubleshooting/#key-fieldname-not-found"
 		}
 	}
 
 	if len(fieldKeysForName) > 1 && !v.keysWithWarnings[keyName] {
+		v.mainWarnURL = "https://signoz.io/docs/userguide/field-context-data-types/"
 		// this is warning state, we must have a unambiguous key
 		v.warnings = append(v.warnings, fmt.Sprintf(
-			"key `%s` is ambiguous, found %d different combinations of field context and data type: %v. Learn more <a href=\"https://signoz.io/docs/userguide/field-context-data-types/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>",
+			"key `%s` is ambiguous, found %d different combinations of field context / data type: %v",
 			fieldKey.Name,
 			len(fieldKeysForName),
 			fieldKeysForName,

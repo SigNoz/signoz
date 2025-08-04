@@ -289,11 +289,11 @@ func (b *metricQueryStatementBuilder) buildTimeSeriesCTE(
 ) (string, []any, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
-	var filterWhere *sqlbuilder.WhereClause
+	var preparedWhereCaluse *querybuilder.PreparedWhereClause
 	var err error
 
 	if query.Filter != nil && query.Filter.Expression != "" {
-		filterWhere, _, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		preparedWhereCaluse, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,
@@ -332,8 +332,8 @@ func (b *metricQueryStatementBuilder) buildTimeSeriesCTE(
 		sb.EQ("__normalized", false),
 	)
 
-	if filterWhere != nil {
-		sb.AddWhereClause(filterWhere)
+	if preparedWhereCaluse != nil {
+		sb.AddWhereClause(preparedWhereCaluse.WhereClause)
 	}
 
 	sb.GroupBy("fingerprint")

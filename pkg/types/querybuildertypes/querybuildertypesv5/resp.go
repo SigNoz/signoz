@@ -27,10 +27,26 @@ type QBEvent struct {
 	HasData         bool   `json:"-"`
 }
 
+type QueryWarnData struct {
+	Message  string                    `json:"message"`
+	Url      string                    `json:"url,omitempty"`
+	Warnings []QueryWarnDataAdditional `json:"warnings,omitempty"`
+}
+
+type QueryWarnDataAdditional struct {
+	Message string `json:"message"`
+}
+
+type QueryData struct {
+	Results []any `json:"results"`
+}
+
 type QueryRangeResponse struct {
 	Type RequestType `json:"type"`
-	Data any         `json:"data"`
+	Data QueryData   `json:"data"`
 	Meta ExecStats   `json:"meta"`
+
+	Warning QueryWarnData `json:"warning,omitempty"`
 
 	QBEvent *QBEvent `json:"-"`
 }
