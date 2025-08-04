@@ -54,7 +54,10 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 						icon={<Bookmark size="14" />}
 						className="attributes-tab-btn"
 					>
-						Attributes
+						<span className="tab-label">Attributes</span>
+						<span className="count-badge">
+							{Object.keys(span.tagMap || {}).length}
+						</span>
 					</Button>
 				),
 				key: 'attributes',
@@ -63,7 +66,8 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			{
 				label: (
 					<Button type="text" icon={<Anvil size="14" />} className="events-tab-btn">
-						{`Events (${span.event?.length || 0})`}
+						<span className="tab-label">Events</span>
+						<span className="count-badge">{span.event?.length || 0}</span>
 					</Button>
 				),
 				key: 'events',
@@ -82,7 +86,14 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 						icon={<Link2 size="14" />}
 						className="linked-spans-tab-btn"
 					>
-						Links
+						<span className="tab-label">Links</span>
+						<span className="count-badge">
+							{
+								(
+									span.references?.filter((ref: any) => ref.refType !== 'CHILD_OF') || []
+								).length
+							}
+						</span>
 					</Button>
 				),
 				key: 'linked-spans',
