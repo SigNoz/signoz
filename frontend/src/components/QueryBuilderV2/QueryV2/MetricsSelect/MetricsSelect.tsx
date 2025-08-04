@@ -22,7 +22,11 @@ export const MetricsSelect = memo(function MetricsSelect({
 
 	return (
 		<div className="metrics-select-container">
-			<AggregatorFilter onChange={handleChangeAggregatorAttribute} query={query} />
+			<AggregatorFilter
+				onChange={handleChangeAggregatorAttribute}
+				query={query}
+				index={index}
+			/>
 		</div>
 	);
 });

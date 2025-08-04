@@ -44,24 +44,22 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 	);
 
 	const isHistogram = useMemo(
-		() =>
-			query.aggregateAttribute?.type === ATTRIBUTE_TYPES.HISTOGRAM ||
-			queryAggregation.metricName?.endsWith('.bucket'),
-		[query.aggregateAttribute?.type, queryAggregation.metricName],
+		() => query.aggregateAttribute?.type === ATTRIBUTE_TYPES.HISTOGRAM,
+		[query.aggregateAttribute?.type],
 	);
 
 	useEffect(() => {
-		setAggregationOptions([
+		setAggregationOptions(query.queryName, [
 			{
 				func: queryAggregation.spaceAggregation || 'count',
 				arg: queryAggregation.metricName || '',
 			},
 		]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		queryAggregation.spaceAggregation,
 		queryAggregation.metricName,
-		setAggregationOptions,
-		query,
+		query.queryName,
 	]);
 
 	const handleChangeGroupByKeys = useCallback(

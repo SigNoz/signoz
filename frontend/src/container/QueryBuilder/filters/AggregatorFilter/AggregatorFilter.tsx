@@ -13,7 +13,7 @@ import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { getAutocompleteValueAndType } from 'lib/newQueryBuilder/getAutocompleteValueAndType';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import {
@@ -37,6 +37,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	onChange,
 	defaultValue,
 	onSelect,
+	index,
 }: AgregatorFilterProps): JSX.Element {
 	const queryClient = useQueryClient();
 	const [optionsData, setOptionsData] = useState<ExtendedSelectOption[]>([]);
@@ -56,12 +57,13 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	}, [searchText]);
 
 	const debouncedValue = useDebounce(debouncedSearchText, DEBOUNCE_DELAY);
-	const { isFetching } = useQuery(
+	const { isFetching, data: aggregateAttributeData } = useQuery(
 		[
 			QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
 			debouncedValue,
 			queryAggregation.timeAggregation,
 			query.dataSource,
+			index,
 		],
 		async () =>
 			getAggregateAttribute({
@@ -107,6 +109,42 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		},
 	);
 
+	// Handle edit mode: update aggregateAttribute type when data is available
+	useEffect(() => {
+		const metricName = queryAggregation?.metricName;
+		const hasAggregateAttributeType = query.aggregateAttribute?.type;
+
+		// Check if we're in edit mode and have data from the existing query
+		// Also ensure this is for the correct query by checking the metric name matches
+		if (
+			query.dataSource === DataSource.METRICS &&
+			metricName &&
+			!hasAggregateAttributeType &&
+			aggregateAttributeData?.payload?.attributeKeys &&
+			// Only update if the data contains the metric we're looking for
+			aggregateAttributeData.payload.attributeKeys.some(
+				(item) => item.key === metricName,
+			)
+		) {
+			const metricData = aggregateAttributeData.payload.attributeKeys.find(
+				(item) => item.key === metricName,
+			);
+
+			if (metricData) {
+				// Update the aggregateAttribute with the fetched type information
+				onChange(metricData);
+			}
+		}
+	}, [
+		query.dataSource,
+		queryAggregation?.metricName,
+		query.aggregateAttribute?.type,
+		aggregateAttributeData,
+		onChange,
+		index,
+		query,
+	]);
+
 	const handleSearchText = useCallback((text: string): void => {
 		setSearchText(text);
 	}, []);
@@ -123,12 +161,14 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				debouncedValue,
 				queryAggregation.timeAggregation,
 				query.dataSource,
+				index,
 			])?.payload?.attributeKeys || [],
 		[
 			debouncedValue,
 			queryAggregation.timeAggregation,
 			query.dataSource,
 			queryClient,
+			index,
 		],
 	);
 
@@ -139,6 +179,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				searchText,
 				queryAggregation.timeAggregation,
 				query.dataSource,
+				index,
 			],
 			async () =>
 				getAggregateAttribute({
@@ -154,6 +195,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		query.dataSource,
 		queryClient,
 		searchText,
+		index,
 	]);
 
 	const handleChangeCustomValue = useCallback(
