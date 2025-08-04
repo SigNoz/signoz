@@ -260,11 +260,9 @@ func (aH *APIHandler) queryRangeV5(rw http.ResponseWriter, req *http.Request) {
 		finalResp := &qbtypes.QueryRangeResponse{
 			Type: queryRangeRequest.RequestType,
 			Data: struct {
-				Results  []any    `json:"results"`
-				Warnings []string `json:"warnings"`
+				Results []any `json:"results"`
 			}{
-				Results:  results,
-				Warnings: make([]string, 0), // TODO(srikanthccv): will there be any warnings here?
+				Results: results,
 			},
 			Meta: struct {
 				RowsScanned  uint64 `json:"rowsScanned"`
