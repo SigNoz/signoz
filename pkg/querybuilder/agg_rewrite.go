@@ -152,7 +152,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 
 	aggFunc, ok := AggreFuncMap[valuer.NewString(name)]
 	if !ok {
-		return nil
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "unrecognized function: %s", name)
 	}
 
 	var args []chparser.Expr
@@ -180,7 +180,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 	if aggFunc.FuncCombinator {
 		// Map the predicate (last argument)
 		origPred := args[len(args)-1].String()
-		whereClause, _, err := PrepareWhereClause(
+		whereClause, err := PrepareWhereClause(
 			origPred,
 			FilterExprVisitorOpts{
 				FieldKeys:        v.fieldKeys,
@@ -195,7 +195,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 			return err
 		}
 
-		newPred, chArgs := whereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
+		newPred, chArgs := whereClause.WhereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
 		newPred = strings.TrimPrefix(newPred, "WHERE")
 		parsedPred, err := parseFragment(newPred)
 		if err != nil {
