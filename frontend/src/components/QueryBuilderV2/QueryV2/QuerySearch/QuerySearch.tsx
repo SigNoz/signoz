@@ -114,9 +114,27 @@ function QuerySearch({
 		}
 	};
 
+	// Track if the query was changed externally (from queryData) vs internally (user input)
+	const [isExternalQueryChange, setIsExternalQueryChange] = useState(false);
+	const [lastExternalQuery, setLastExternalQuery] = useState<string>('');
+
 	useEffect(() => {
-		setQuery(queryData.filter?.expression || '');
-	}, [queryData.filter?.expression]);
+		const newQuery = queryData.filter?.expression || '';
+		// Only mark as external change if the query actually changed from external source
+		if (newQuery !== lastExternalQuery) {
+			setQuery(newQuery);
+			setIsExternalQueryChange(true);
+			setLastExternalQuery(newQuery);
+		}
+	}, [queryData.filter?.expression, lastExternalQuery]);
+
+	// Validate query when it changes externally (from queryData)
+	useEffect(() => {
+		if (isExternalQueryChange && query) {
+			handleQueryValidation(query);
+			setIsExternalQueryChange(false);
+		}
+	}, [isExternalQueryChange, query]);
 
 	const [keySuggestions, setKeySuggestions] = useState<
 		QueryKeyDataSuggestionsProps[] | null
@@ -476,6 +494,10 @@ function QuerySearch({
 		setQuery(value);
 		handleQueryChange(value);
 		onChange(value);
+		// Mark as internal change to avoid triggering external validation
+		setIsExternalQueryChange(false);
+		// Update lastExternalQuery to prevent external validation trigger
+		setLastExternalQuery(value);
 	};
 
 	const handleBlur = (): void => {
@@ -483,24 +505,25 @@ function QuerySearch({
 		setIsFocused(false);
 	};
 
-	useEffect(() => {
-		if (query) {
-			handleQueryValidation(query);
-		}
-
-		return (): void => {
+	useEffect(
+		() => (): void => {
 			if (debouncedFetchValueSuggestions) {
 				debouncedFetchValueSuggestions.cancel();
 			}
-		};
+		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+		[],
+	);
 
 	const handleExampleClick = (exampleQuery: string): void => {
 		// If there's an existing query, append the example with AND
 		const newQuery = query ? `${query} AND ${exampleQuery}` : exampleQuery;
 		setQuery(newQuery);
 		handleQueryChange(newQuery);
+		// Mark as internal change to avoid triggering external validation
+		setIsExternalQueryChange(false);
+		// Update lastExternalQuery to prevent external validation trigger
+		setLastExternalQuery(newQuery);
 	};
 
 	// Helper function to render a badge for the current context mode
