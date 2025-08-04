@@ -170,6 +170,7 @@ export interface FunctionArg {
 export interface QueryFunction {
 	name: FunctionName;
 	args?: FunctionArg[];
+	namedArgs?: Record<string, string | number>;
 }
 
 // ===================== Aggregation Types =====================

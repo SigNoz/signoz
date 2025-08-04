@@ -95,7 +95,8 @@ function HavingFilter({
 	queryData: IBuilderQuery;
 }): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const { aggregationOptions } = useQueryBuilderV2Context();
+	const { getAggregationOptions } = useQueryBuilderV2Context();
+	const aggregationOptions = getAggregationOptions(queryData.queryName);
 	const having = queryData?.having as Having;
 	const [input, setInput] = useState(having?.expression || '');
 

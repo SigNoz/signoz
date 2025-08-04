@@ -28,17 +28,18 @@ function getColName(
 	const aggregationsCount = aggregationPerQuery[col.queryName]?.length || 0;
 	const isSingleAggregation = aggregationsCount === 1;
 
-	if (aggregationsCount === 0) {
-		return legend || col.queryName;
-	}
-	// Single aggregation: Priority is alias > legend > expression
-	if (isSingleAggregation) {
-		return alias || legend || expression;
+	if (aggregationsCount > 0) {
+		// Single aggregation: Priority is alias > legend > expression
+		if (isSingleAggregation) {
+			return alias || legend || expression || col.queryName;
+		}
+
+		// Multiple aggregations: Each follows single rules BUT never shows legend
+		// Priority: alias > expression (legend is ignored for multiple aggregations)
+		return alias || expression || col.queryName;
 	}
 
-	// Multiple aggregations: Each follows single rules BUT never shows legend
-	// Priority: alias > expression (legend is ignored for multiple aggregations)
-	return alias || expression;
+	return legend || col.queryName;
 }
 
 function getColId(
@@ -51,7 +52,12 @@ function getColId(
 	const aggregation =
 		aggregationPerQuery?.[col.queryName]?.[col.aggregationIndex];
 	const expression = aggregation?.expression || '';
-	return expression ? `${col.queryName}.${expression}` : col.queryName;
+
+	if (aggregationPerQuery?.[col.queryName]?.length > 0 && expression) {
+		return `${col.queryName}.${expression}`;
+	}
+
+	return col.queryName;
 }
 
 /**
