@@ -41,7 +41,7 @@ import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import {
 	ColumnUnit,
-	ContextLinkProps,
+	ContextLinksData,
 	LegendPosition,
 	Widgets,
 } from 'types/api/dashboard/getAll';
@@ -243,8 +243,8 @@ function NewWidget({
 		selectedWidget?.columnUnits || {},
 	);
 
-	const [contextLinks, setContextLinks] = useState<ContextLinkProps[]>(
-		selectedWidget?.contextLinks || [],
+	const [contextLinks, setContextLinks] = useState<ContextLinksData>(
+		selectedWidget?.contextLinks || { linksData: [] },
 	);
 
 	useEffect(() => {
