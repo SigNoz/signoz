@@ -72,6 +72,70 @@ const getQueryDataSource = (
 	return queryItem?.dataSource || null;
 };
 
+const getLegendForSingleAggregation = (
+	queryData: QueryData,
+	payloadQuery: Query,
+	aggregationAlias: string,
+	aggregationExpression: string,
+	labelName: string,
+	singleAggregation: boolean,
+) => {
+	// Find the corresponding query in payloadQuery
+	const queryItem = payloadQuery.builder?.queryData.find(
+		(query) => query.queryName === queryData.queryName,
+	);
+
+	const legend = queryItem?.legend;
+	// Check if groupBy exists and has items
+	const hasGroupBy = queryItem?.groupBy && queryItem.groupBy.length > 0;
+
+	if (hasGroupBy) {
+		if (singleAggregation) {
+			return labelName;
+		} else {
+			return `${aggregationAlias || aggregationExpression}-${labelName}`;
+		}
+	} else {
+		if (singleAggregation) {
+			return aggregationAlias || legend || aggregationExpression;
+		} else {
+			return aggregationAlias || aggregationExpression;
+		}
+	}
+};
+
+const getLegendForMultipleAggregations = (
+	queryData: QueryData,
+	payloadQuery: Query,
+	aggregationAlias: string,
+	aggregationExpression: string,
+	labelName: string,
+	singleAggregation: boolean,
+) => {
+	// Find the corresponding query in payloadQuery
+	const queryItem = payloadQuery.builder?.queryData.find(
+		(query) => query.queryName === queryData.queryName,
+	);
+
+	const legend = queryItem?.legend;
+	// Check if groupBy exists and has items
+	const hasGroupBy = queryItem?.groupBy && queryItem.groupBy.length > 0;
+
+	if (hasGroupBy) {
+		if (singleAggregation) {
+			return labelName;
+		} else {
+			return `${aggregationAlias || aggregationExpression}-${labelName}`;
+		}
+	} else {
+		if (singleAggregation) {
+			return aggregationAlias || labelName || aggregationExpression;
+		} else {
+			return `${aggregationAlias || aggregationExpression}-${labelName}`;
+		}
+	}
+};
+
 export const getLegend = (
 	queryData: QueryData,
 	payloadQuery: Query,
@@ -91,21 +155,34 @@ export const getLegend = (
 	const aggregation =
 		aggregationPerQuery?.[metaData?.queryName]?.[metaData?.index];
 
-	const aggregationName = aggregation?.alias || aggregation?.expression || '';
+	const aggregationAlias = aggregation?.alias || '';
+	const aggregationExpression = aggregation?.expression || '';
 
-	// Check if there's only one total query (queryData + queryFormulas)
-	const totalQueries =
-		(payloadQuery?.builder?.queryData?.length || 0) +
-		(payloadQuery?.builder?.queryFormulas?.length || 0);
-	const showSingleAggregationName =
-		totalQueries === 1 && labelName === metaData?.queryName;
+	// Check if there's only one total query (queryData)
+	const singleQuery = payloadQuery?.builder?.queryData?.length === 1;
+	const singleAggregation =
+		aggregationPerQuery?.[metaData?.queryName]?.length === 1;
 
-	if (aggregationName) {
-		return showSingleAggregationName
-			? aggregationName
-			: `${aggregationName}-${labelName}`;
+	if (aggregationAlias || aggregationExpression) {
+		return singleQuery
+			? getLegendForSingleAggregation(
+					queryData,
+					payloadQuery,
+					aggregationAlias,
+					aggregationExpression,
+					labelName,
+					singleAggregation,
+			  )
+			: getLegendForMultipleAggregations(
+					queryData,
+					payloadQuery,
+					aggregationAlias,
+					aggregationExpression,
+					labelName,
+					singleAggregation,
+			  );
 	}
-	return labelName || metaData?.queryName;
+	return labelName || metaData?.queryName || queryData.queryName;
 };
 
 export async function GetMetricQueryRange(
