@@ -33,6 +33,10 @@ function AddNewProcessor({
 	const isAdd = isActionType === 'add-processor';
 
 	useEffect(() => {
+		if (isEdit || isAdd) {
+			// Reset form first to clear any stale fields from previous processors
+			form.resetFields();
+		}
 		if (isEdit && selectedProcessorData && expandedPipelineData?.config) {
 			const findRecordIndex = getRecordIndex(
 				expandedPipelineData?.config,
@@ -45,9 +49,6 @@ function AddNewProcessor({
 			};
 			setProcessorType(updatedProcessorData.type);
 			form.setFieldsValue(updatedProcessorData);
-		}
-		if (isAdd) {
-			form.resetFields();
 		}
 	}, [form, isEdit, isAdd, selectedProcessorData, expandedPipelineData?.config]);
 
