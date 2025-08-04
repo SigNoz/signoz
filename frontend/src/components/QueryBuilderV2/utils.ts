@@ -539,45 +539,15 @@ export const convertAggregationToExpression = (
 	];
 };
 
-export const getQueryTitles = (currentQuery: Query): string[] => {
-	if (currentQuery.queryType === EQueryType.QUERY_BUILDER) {
-		const queryTitles: string[] = [];
-
-		// Handle builder queries with multiple aggregations
-		currentQuery.builder.queryData.forEach((q) => {
-			const aggregationCount = q.aggregations?.length || 1;
-
-			if (aggregationCount > 1) {
-				// If multiple aggregations, create titles like A.0, A.1, A.2
-				for (let i = 0; i < aggregationCount; i++) {
-					queryTitles.push(`${q.queryName}.${i}`);
-				}
-			} else {
-				// Single aggregation, just use query name
-				queryTitles.push(q.queryName);
-			}
-		});
-
-		// Handle formulas (they don't have aggregations, so just use query name)
-		const formulas = currentQuery.builder.queryFormulas.map((q) => q.queryName);
-
-		return [...queryTitles, ...formulas];
-	}
-
-	if (currentQuery.queryType === EQueryType.CLICKHOUSE) {
-		return currentQuery.clickhouse_sql.map((q) => q.name);
-	}
-
-	return currentQuery.promql.map((q) => q.name);
-};
-
 function getColId(
 	queryName: string,
 	aggregation: { alias?: string; expression?: string },
 ): string {
-	return aggregation.expression
-		? `${queryName}.${aggregation.expression}`
-		: queryName;
+	if (aggregation.expression) {
+		return `${queryName}.${aggregation.expression}`;
+	}
+
+	return queryName;
 }
 
 // function to give you label value for query name taking multiaggregation into account
