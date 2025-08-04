@@ -124,6 +124,7 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore, sqlschema sqls
 		sqlmigration.NewUpdateUserInviteFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateOrgDomainFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddFactorIndexesFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddMeterQuickFiltersFactory(sqlstore, sqlschema),
 	)
 }
 
