@@ -125,6 +125,7 @@ export interface VariableItem {
 
 export interface TelemetryFieldKey {
 	name: string;
+	key?: string;
 	description?: string;
 	unit?: string;
 	signal?: SignalType;
