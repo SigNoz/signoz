@@ -125,7 +125,6 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 								</div>
 							</div>
 
-
 							{showAggregationInterval && (
 								<div className="metrics-aggregation-section-content-item">
 									<Tooltip
@@ -145,7 +144,10 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 										}
 										placement="top"
 									>
-										<div className="metrics-aggregation-section-content-item-label" style={{ cursor: 'help' }}>
+										<div
+											className="metrics-aggregation-section-content-item-label"
+											style={{ cursor: 'help' }}
+										>
 											every
 										</div>
 									</Tooltip>
@@ -166,22 +168,22 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 					<div className="metrics-space-aggregation-section">
 						<div className="metrics-aggregation-section-content">
 							<div className="metrics-aggregation-section-content-item">
-									<Tooltip
-										title={
-											<a
-												href="https://signoz.io/docs/metrics-management/types-and-aggregation/#aggregation"
-												target="_blank"
-												rel="noopener noreferrer"
-												style={{ color: '#1890ff', textDecoration: 'underline' }}
-											>
-												Learn more about spatial aggregation
-											</a>
-										}
+								<Tooltip
+									title={
+										<a
+											href="https://signoz.io/docs/metrics-management/types-and-aggregation/#aggregation"
+											target="_blank"
+											rel="noopener noreferrer"
+											style={{ color: '#1890ff', textDecoration: 'underline' }}
 										>
-										<div className="metrics-aggregation-section-content-item-label main-label">
-											AGGREGATE ACROSS TIME SERIES
-										</div>
-									</Tooltip>
+											Learn more about spatial aggregation
+										</a>
+									}
+								>
+									<div className="metrics-aggregation-section-content-item-label main-label">
+										AGGREGATE ACROSS TIME SERIES
+									</div>
+								</Tooltip>
 								<div className="metrics-aggregation-section-content-item-value">
 									<SpaceAggregationOptions
 										panelType={panelType}
@@ -263,7 +265,10 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 								}
 								placement="top"
 							>
-								<div className="metrics-aggregation-section-content-item-label" style={{ cursor: 'help' }}>
+								<div
+									className="metrics-aggregation-section-content-item-label"
+									style={{ cursor: 'help' }}
+								>
 									every
 								</div>
 							</Tooltip>

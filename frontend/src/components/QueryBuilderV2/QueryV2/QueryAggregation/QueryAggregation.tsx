@@ -1,13 +1,11 @@
 import './QueryAggregation.styles.scss';
 
+import { Tooltip } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-
-import { Tooltip } from 'antd';
-
 
 import QueryAggregationSelect from './QueryAggregationSelect';
 
@@ -73,7 +71,10 @@ function QueryAggregationOptions({
 							}
 							placement="top"
 						>
-							<div className="metrics-aggregation-section-content-item-label" style={{ cursor: 'help' }}>
+							<div
+								className="metrics-aggregation-section-content-item-label"
+								style={{ cursor: 'help' }}
+							>
 								every
 							</div>
 						</Tooltip>

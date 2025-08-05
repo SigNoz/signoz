@@ -12,13 +12,7 @@ export default function QueryFooter({
 		<div className="qb-footer">
 			<div className="qb-footer-container">
 				<div className="qb-add-new-query">
-					<Tooltip
-						title={
-							<div style={{ textAlign: 'center' }}>
-								Add New Query
-							</div>
-						}
-					>
+					<Tooltip title={<div style={{ textAlign: 'center' }}>Add New Query</div>}>
 						<Button
 							className="add-new-query-button periscope-btn secondary"
 							type="text"
