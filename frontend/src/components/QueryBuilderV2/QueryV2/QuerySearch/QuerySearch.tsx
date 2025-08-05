@@ -541,6 +541,9 @@ function QuerySearch({
 			if (debouncedFetchValueSuggestions) {
 				debouncedFetchValueSuggestions.cancel();
 			}
+			if (debouncedFetchKeySuggestions) {
+				debouncedFetchKeySuggestions.cancel();
+			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[],
