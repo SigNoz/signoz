@@ -48,7 +48,6 @@ function LogsExplorerList({
 	isError,
 	error,
 	isFilterApplied,
-	error,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
 

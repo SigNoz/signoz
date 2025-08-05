@@ -2,7 +2,6 @@ import { isAxiosError } from 'axios';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { updateStepInterval } from 'container/GridCardLayout/utils';
-import { useNotifications } from 'hooks/useNotifications';
 import {
 	GetMetricQueryRange,
 	GetQueryResultsProps,

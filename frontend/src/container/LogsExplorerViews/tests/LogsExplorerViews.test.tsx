@@ -9,7 +9,6 @@ import { PreferenceContextProvider } from 'providers/preferences/context/Prefere
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { fireEvent, render, RenderResult, waitFor } from 'tests/test-utils';
-import APIError from 'types/api/error';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
 import LogsExplorerViews from '..';
