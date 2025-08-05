@@ -547,8 +547,9 @@ export const convertAggregationToExpression = (
 function getColId(
 	queryName: string,
 	aggregation: { alias?: string; expression?: string },
+	isMultipleAggregations: boolean,
 ): string {
-	if (aggregation.expression) {
+	if (isMultipleAggregations && aggregation.expression) {
 		return `${queryName}.${aggregation.expression}`;
 	}
 
@@ -576,7 +577,7 @@ export function getQueryLabelWithAggregation(
 		const isMultipleAggregations = aggregations.length > 1;
 
 		aggregations.forEach((agg: any, index: number) => {
-			const columnId = getColId(queryName, agg);
+			const columnId = getColId(queryName, agg, isMultipleAggregations);
 
 			// For display purposes, show the aggregation index for multiple aggregations
 			const displayLabel = isMultipleAggregations

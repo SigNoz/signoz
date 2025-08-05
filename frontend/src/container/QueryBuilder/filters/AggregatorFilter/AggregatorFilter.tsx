@@ -41,12 +41,15 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 }: AgregatorFilterProps): JSX.Element {
 	const queryClient = useQueryClient();
 	const [optionsData, setOptionsData] = useState<ExtendedSelectOption[]>([]);
-	const [searchText, setSearchText] = useState<string>('');
 
 	// this function is only relevant for metrics and now operators are part of aggregations
 	const queryAggregation = useMemo(
 		() => query.aggregations?.[0] as MetricAggregation,
 		[query.aggregations],
+	);
+
+	const [searchText, setSearchText] = useState<string>(
+		(query.aggregations?.[0] as MetricAggregation)?.metricName || '',
 	);
 
 	const debouncedSearchText = useMemo(() => {

@@ -52,8 +52,10 @@ function getColId(
 	const aggregation =
 		aggregationPerQuery?.[col.queryName]?.[col.aggregationIndex];
 	const expression = aggregation?.expression || '';
+	const aggregationsCount = aggregationPerQuery[col.queryName]?.length || 0;
+	const isMultipleAggregations = aggregationsCount > 1;
 
-	if (aggregationPerQuery?.[col.queryName]?.length > 0 && expression) {
+	if (isMultipleAggregations && expression) {
 		return `${col.queryName}.${expression}`;
 	}
 
