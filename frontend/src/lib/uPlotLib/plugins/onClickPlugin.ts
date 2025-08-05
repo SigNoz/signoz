@@ -1,7 +1,38 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
-import { getSeriesIndexFromPixel } from '../utils/getSeriesIndexFromPixel';
+// Helper function to get series index from pixel coordinates
+export const getSeriesIndexFromPixel = (e: MouseEvent, u: uPlot): number => {
+	const bbox = u.over.getBoundingClientRect();
+	const left = e.clientX - bbox.left;
+	const top = e.clientY - bbox.top;
+
+	const timestampIndex = u.posToIdx(left);
+	let seriesIndex = -1;
+	let closestPixelDiff = Infinity;
+
+	// Check all series (skip index 0 which is the x-axis)
+	for (let i = 1; i < u.data.length; i++) {
+		const series = u.data[i];
+		const seriesValue = series[timestampIndex];
+
+		if (
+			seriesValue !== undefined &&
+			seriesValue !== null &&
+			!Number.isNaN(seriesValue)
+		) {
+			const seriesYPx = u.valToPos(seriesValue, 'y');
+			const pixelDiff = Math.abs(seriesYPx - top);
+
+			if (pixelDiff < closestPixelDiff) {
+				closestPixelDiff = pixelDiff;
+				seriesIndex = i;
+			}
+		}
+	}
+
+	return seriesIndex;
+};
 
 export interface OnClickPluginOpts {
 	onClick: (
