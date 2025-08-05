@@ -85,6 +85,9 @@ type BaseRule struct {
 	TemporalityMap map[string]map[v3.Temporality]bool
 
 	sqlstore sqlstore.SQLStore
+
+	cronExpression string
+	cronEnabled    bool
 }
 
 type RuleOption func(*BaseRule)
@@ -208,6 +211,10 @@ func (r *BaseRule) HoldDuration() time.Duration {
 
 func (r *BaseRule) TargetVal() float64 {
 	return r.targetVal()
+}
+
+func (r *BaseRule) Thresholds() []ruletypes.RuleThreshold {
+	return r.ruleCondition.Thresholds
 }
 
 func (r *ThresholdRule) hostFromSource() string {
