@@ -22,6 +22,7 @@ import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import cx from 'classnames';
 import {
 	negationQueryOperatorSuggestions,
+	OPERATORS,
 	QUERY_BUILDER_KEY_TYPES,
 	QUERY_BUILDER_OPERATORS_BY_KEY_TYPE,
 	queryOperatorSuggestions,
@@ -877,12 +878,32 @@ function QuerySearch({
 									QUERY_BUILDER_KEY_TYPES.STRING
 								].includes(op.label),
 							)
-							.map((op) => ({
-								...op,
-								boost: ['=', '!=', 'LIKE', 'ILIKE', 'CONTAINS', 'IN'].includes(op.label)
-									? 100
-									: 0,
-							}));
+							.map((op) => {
+								if (op.label === OPERATORS['=']) {
+									return {
+										...op,
+										boost: 200,
+									};
+								}
+								if (
+									[
+										OPERATORS['!='],
+										OPERATORS.LIKE,
+										OPERATORS.ILIKE,
+										OPERATORS.CONTAINS,
+										OPERATORS.IN,
+									].includes(op.label)
+								) {
+									return {
+										...op,
+										boost: 100,
+									};
+								}
+								return {
+									...op,
+									boost: 0,
+								};
+							});
 					} else if (keyType === QUERY_BUILDER_KEY_TYPES.BOOLEAN) {
 						// Prioritize boolean operators
 						options = options
@@ -891,10 +912,24 @@ function QuerySearch({
 									QUERY_BUILDER_KEY_TYPES.BOOLEAN
 								].includes(op.label),
 							)
-							.map((op) => ({
-								...op,
-								boost: ['=', '!='].includes(op.label) ? 100 : 0,
-							}));
+							.map((op) => {
+								if (op.label === OPERATORS['=']) {
+									return {
+										...op,
+										boost: 200,
+									};
+								}
+								if (op.label === OPERATORS['!=']) {
+									return {
+										...op,
+										boost: 100,
+									};
+								}
+								return {
+									...op,
+									boost: 0,
+								};
+							});
 					}
 				}
 			}
