@@ -71,6 +71,12 @@
 	}
 }
 
+.context-menu-header {
+	padding-bottom: 4px;
+	border-bottom: 1px solid var(--bg-vanilla-400);
+	color: var(--bg-slate-400);
+}
+
 // Target the popover inner specifically for context menu
 .context-menu .ant-popover-inner {
 	padding: 12px 8px !important;
@@ -104,6 +110,11 @@
 		.icon {
 			color: var(--bg-robin-400);
 		}
+	}
+
+	.context-menu-header {
+		border-bottom: 1px solid var(--bg-slate-400);
+		color: var(--bg-vanilla-400);
 	}
 
 	// Set the menu popover background

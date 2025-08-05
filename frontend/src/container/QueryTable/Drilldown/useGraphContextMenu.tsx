@@ -2,6 +2,7 @@ import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQue
 import { useMemo } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import { isValidQueryName } from './drilldownUtils';
 import useAggregateDrilldown, { AggregateData } from './useAggregateDrilldown';
 
 interface UseGraphContextMenuProps {
@@ -40,11 +41,16 @@ export function useGraphContextMenu({
 	});
 
 	const menuItemsConfig = useMemo(() => {
-		if (!coordinates) {
+		if (!coordinates || !graphData) {
 			return {};
 		}
+		// Check if queryName is valid for drilldown
+		if (!isValidQueryName(graphData.queryName)) {
+			return {};
+		}
+
 		return aggregateDrilldownConfig;
-	}, [coordinates, aggregateDrilldownConfig]);
+	}, [coordinates, aggregateDrilldownConfig, graphData]);
 
 	return { menuItemsConfig };
 }

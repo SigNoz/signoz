@@ -12,6 +12,7 @@ import { EQueryType } from 'types/common/dashboard';
 // Custom column type that extends ColumnType to include isValueColumn
 export interface CustomDataColumnType<T> extends ColumnType<T> {
 	isValueColumn?: boolean;
+	queryName?: string;
 }
 
 // Helper function to evaluate the condition based on the operator
@@ -204,6 +205,7 @@ export function createColumnsAndDataSource(
 				title: !isNewAggregation && !isEmpty(legend) ? legend : item.name,
 				width: QUERY_TABLE_CONFIG.width,
 				isValueColumn: item.isValueColumn,
+				queryName: item.queryName,
 				render: renderColumnCell && renderColumnCell[item.name],
 				sorter: (a: RowData, b: RowData): number => sortFunction(a, b, item),
 			};

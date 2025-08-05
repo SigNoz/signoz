@@ -256,7 +256,10 @@ function PiePanelWrapper({
 															if (enableDrillDown) {
 																const data = getPieChartClickData(arc);
 																if (data && data?.queryName) {
-																	onClick({ x: e.clientX, y: e.clientY }, data);
+																	onClick(
+																		{ x: e.clientX, y: e.clientY },
+																		{ ...data, label: data.label },
+																	);
 																}
 															}
 														}}

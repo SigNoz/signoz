@@ -150,12 +150,14 @@ function UplotPanelWrapper({
 				absoluteMouseX,
 				absoluteMouseY,
 				axesData,
+				focusedSeries,
 			] = args;
 			const data = getUplotClickData({
 				metric,
 				queryData,
 				absoluteMouseX,
 				absoluteMouseY,
+				focusedSeries,
 			});
 			console.log('onClickData: ', data);
 			// Compute time range if needed and if axes data is available
@@ -166,7 +168,7 @@ function UplotPanelWrapper({
 			}
 
 			if (data && data?.record?.queryName) {
-				onClick(data.coord, { ...data.record, timeRange });
+				onClick(data.coord, { ...data.record, label: data.label, timeRange });
 			}
 		},
 		[onClick],

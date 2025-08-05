@@ -1,14 +1,26 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import { themeColors } from 'constants/theme';
+import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
-// Helper function to get series index from pixel coordinates
-export const getSeriesIndexFromPixel = (e: MouseEvent, u: uPlot): number => {
+// Helper function to get the focused/highlighted series at a specific position
+export const getFocusedSeriesAtPosition = (
+	e: MouseEvent,
+	u: uPlot,
+): {
+	seriesIndex: number;
+	seriesName: string;
+	value: number;
+	color: string;
+	show: boolean;
+	isFocused: boolean;
+} | null => {
 	const bbox = u.over.getBoundingClientRect();
 	const left = e.clientX - bbox.left;
 	const top = e.clientY - bbox.top;
 
 	const timestampIndex = u.posToIdx(left);
-	let seriesIndex = -1;
+	let focusedSeriesIndex = -1;
 	let closestPixelDiff = Infinity;
 
 	// Check all series (skip index 0 which is the x-axis)
@@ -26,12 +38,46 @@ export const getSeriesIndexFromPixel = (e: MouseEvent, u: uPlot): number => {
 
 			if (pixelDiff < closestPixelDiff) {
 				closestPixelDiff = pixelDiff;
-				seriesIndex = i;
+				focusedSeriesIndex = i;
 			}
 		}
 	}
 
-	return seriesIndex;
+	// If we found a focused series, return its data
+	if (focusedSeriesIndex > 0) {
+		const series = u.series[focusedSeriesIndex];
+		const seriesValue = u.data[focusedSeriesIndex][timestampIndex];
+
+		// Ensure we have a valid value
+		if (
+			seriesValue !== undefined &&
+			seriesValue !== null &&
+			!Number.isNaN(seriesValue)
+		) {
+			// Get color - try series stroke first, then generate based on label
+			let color = '#000000';
+			if (typeof series.stroke === 'string') {
+				color = series.stroke;
+			} else if (typeof series.fill === 'string') {
+				color = series.fill;
+			} else {
+				// Generate color based on series label (like the tooltip plugin does)
+				const seriesLabel = series.label || `Series ${focusedSeriesIndex}`;
+				color = generateColor(seriesLabel, themeColors.chartcolors);
+			}
+
+			return {
+				seriesIndex: focusedSeriesIndex,
+				seriesName: series.label || `Series ${focusedSeriesIndex}`,
+				value: seriesValue as number,
+				color,
+				show: series.show !== false,
+				isFocused: true, // This indicates it's the highlighted/bold one
+			};
+		}
+	}
+
+	return null;
 };
 
 export interface OnClickPluginOpts {
@@ -53,6 +99,14 @@ export interface OnClickPluginOpts {
 			xAxis: any;
 			yAxis: any;
 		},
+		focusedSeries?: {
+			seriesIndex: number;
+			seriesName: string;
+			value: number;
+			color: string;
+			show: boolean;
+			isFocused: boolean;
+		} | null,
 	) => void;
 	apiResponse?: MetricRangePayloadProps;
 }
@@ -77,6 +131,9 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 				const xValue = u.posToVal(event.offsetX, 'x');
 				const yValue = u.posToVal(event.offsetY, 'y');
 
+				// Get the focused/highlighted series (the one that would be bold in hover)
+				const focusedSeries = getFocusedSeriesAtPosition(event, u);
+
 				let metric = {};
 				const { series } = u;
 				const apiResult = opts.apiResponse?.data?.result || [];
@@ -91,6 +148,8 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 						// @ts-ignore
 						if (item?.show && item?._focus) {
+							console.log('>> outputMetric', apiResult[index - 1]);
+
 							const { metric: focusedMetric, queryName } = apiResult[index - 1] || [];
 							metric = focusedMetric;
 							outputMetric.queryName = queryName;
@@ -100,13 +159,20 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 				}
 
 				if (!outputMetric.queryName) {
-					// // Get the series index based on pixel coordinates
-					const seriesIndex = getSeriesIndexFromPixel(event, u);
+					// Get the focused series data
+					const focusedSeriesData = getFocusedSeriesAtPosition(event, u);
 
-					// If we found a valid series, get its data
-					if (seriesIndex > 0 && seriesIndex <= apiResult.length) {
+					// If we found a valid focused series, get its data
+					if (
+						focusedSeriesData &&
+						focusedSeriesData.seriesIndex <= apiResult.length
+					) {
+						console.log(
+							'>> outputMetric',
+							apiResult[focusedSeriesData.seriesIndex - 1],
+						);
 						const { metric: focusedMetric, queryName } =
-							apiResult[seriesIndex - 1] || [];
+							apiResult[focusedSeriesData.seriesIndex - 1] || [];
 						metric = focusedMetric;
 						outputMetric.queryName = queryName;
 						outputMetric.inFocusOrNot = true;
@@ -118,6 +184,19 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 					yAxis: u.axes[1],
 				};
 
+				console.log('>> graph click', {
+					xValue,
+					yValue,
+					mouseX,
+					mouseY,
+					metric,
+					outputMetric,
+					absoluteMouseX,
+					absoluteMouseY,
+					axesData,
+					focusedSeries,
+				});
+
 				opts.onClick(
 					xValue,
 					yValue,
@@ -128,6 +207,7 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 					absoluteMouseX,
 					absoluteMouseY,
 					axesData,
+					focusedSeries,
 				);
 			};
 			u.over.addEventListener('click', handleClick);

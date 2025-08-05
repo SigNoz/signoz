@@ -169,20 +169,31 @@ export const getUplotClickData = ({
 	queryData,
 	absoluteMouseX,
 	absoluteMouseY,
+	focusedSeries,
 }: {
 	metric?: { [key: string]: string };
 	queryData?: { queryName: string; inFocusOrNot: boolean };
 	absoluteMouseX: number;
 	absoluteMouseY: number;
+	focusedSeries?: {
+		seriesIndex: number;
+		seriesName: string;
+		value: number;
+		color: string;
+		show: boolean;
+		isFocused: boolean;
+	} | null;
 }): {
 	coord: { x: number; y: number };
 	record: { queryName: string; filters: FilterData[] };
+	label: string | React.ReactNode;
 } | null => {
 	console.log('on Click', {
 		metric,
 		queryData,
 		absoluteMouseX,
 		absoluteMouseY,
+		focusedSeries,
 	});
 
 	if (!queryData?.queryName || !metric) {
@@ -194,6 +205,16 @@ export const getUplotClickData = ({
 		filters: getFiltersFromMetric(metric),
 	};
 
+	// Generate label from focusedSeries data
+	let label: string | React.ReactNode = '';
+	if (focusedSeries && focusedSeries.seriesName) {
+		label = (
+			<span style={{ color: focusedSeries.color }}>
+				{focusedSeries.seriesName}
+			</span>
+		);
+	}
+
 	console.log('CLICKED DATA: ', record);
 
 	return {
@@ -202,6 +223,7 @@ export const getUplotClickData = ({
 			y: absoluteMouseY,
 		},
 		record,
+		label,
 	};
 };
 
@@ -212,13 +234,20 @@ export const getPieChartClickData = (
 		color: string;
 		record: any;
 	}>,
-): { queryName: string; filters: FilterData[] } | null => {
+): {
+	queryName: string;
+	filters: FilterData[];
+	label: string | React.ReactNode;
+} | null => {
 	console.log('arc ->', arc.data);
 	const { metric, queryName } = arc.data.record;
 	if (!queryName || !metric) return null;
+
+	const label = <span style={{ color: arc.data.color }}>{arc.data.label}</span>;
 	return {
 		queryName,
 		filters: getFiltersFromMetric(metric), // TODO: add where clause query as well.
+		label,
 	};
 };
 
@@ -233,6 +262,18 @@ export const getQueryData = (
 		(item: IBuilderQuery) => item.queryName === queryName,
 	);
 	return queryData[0];
+};
+
+/**
+ * Checks if a query name is valid for drilldown operations
+ * Returns false if queryName is empty or starts with 'F'
+ * Note: Checking if queryName starts with 'F' is a hack to know if it's a Formulae based query
+ */
+export const isValidQueryName = (queryName: string): boolean => {
+	if (!queryName || queryName.trim() === '') {
+		return false;
+	}
+	return !queryName.startsWith('F');
 };
 
 const VIEW_QUERY_MAP: Record<string, IBuilderQuery> = {
