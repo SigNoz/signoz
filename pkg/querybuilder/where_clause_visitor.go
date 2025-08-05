@@ -15,14 +15,18 @@ import (
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )
 
+var searchTroubleshootingGuideURL = "https://signoz.io/docs/userguide/search-troubleshooting/"
+
 // filterExpressionVisitor implements the FilterQueryVisitor interface
 // to convert the parsed filter expressions into ClickHouse WHERE clause
 type filterExpressionVisitor struct {
 	fieldMapper        qbtypes.FieldMapper
 	conditionBuilder   qbtypes.ConditionBuilder
 	warnings           []string
+	mainWarnURL        string
 	fieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
 	errors             []string
+	mainErrorURL       string
 	builder            *sqlbuilder.SelectBuilder
 	fullTextColumn     *telemetrytypes.TelemetryFieldKey
 	jsonBodyPrefix     string
@@ -70,8 +74,14 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 	}
 }
 
+type PreparedWhereClause struct {
+	WhereClause    *sqlbuilder.WhereClause
+	Warnings       []string
+	WarningsDocURL string
+}
+
 // PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query
-func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*sqlbuilder.WhereClause, []string, error) {
+func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWhereClause, error) {
 	// Setup the ANTLR parsing pipeline
 	input := antlr.NewInputStream(query)
 	lexer := grammar.NewFilterQueryLexer(input)
@@ -102,14 +112,17 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*sqlbuilder.W
 		combinedErrors := errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"found %d syntax errors while parsing the filter expression",
+			"Found %d syntax errors while parsing the search expression.",
 			len(parserErrorListener.SyntaxErrors),
 		)
 		additionals := make([]string, len(parserErrorListener.SyntaxErrors))
 		for _, err := range parserErrorListener.SyntaxErrors {
-			additionals = append(additionals, err.Error())
+			if err.Error() != "" {
+				additionals = append(additionals, err.Error())
+			}
 		}
-		return nil, nil, combinedErrors.WithAdditional(additionals...)
+
+		return nil, combinedErrors.WithAdditional(additionals...).WithUrl(searchTroubleshootingGuideURL)
 	}
 
 	// Visit the parse tree with our ClickHouse visitor
@@ -120,15 +133,23 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*sqlbuilder.W
 		combinedErrors := errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"found %d errors while parsing the search expression",
+			"Found %d errors while parsing the search expression.",
 			len(visitor.errors),
 		)
-		return nil, nil, combinedErrors.WithAdditional(visitor.errors...)
+		url := visitor.mainErrorURL
+		if url == "" {
+			url = searchTroubleshootingGuideURL
+		}
+		return nil, combinedErrors.WithAdditional(visitor.errors...).WithUrl(url)
+	}
+
+	if cond == "" {
+		cond = "true"
 	}
 
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
 
-	return whereClause, visitor.warnings, nil
+	return &PreparedWhereClause{whereClause, visitor.warnings, visitor.mainWarnURL}, nil
 }
 
 // Visit dispatches to the specific visit method based on node type
@@ -194,7 +215,13 @@ func (v *filterExpressionVisitor) VisitOrExpression(ctx *grammar.OrExpressionCon
 
 	andExpressionConditions := make([]string, len(andExpressions))
 	for i, expr := range andExpressions {
-		andExpressionConditions[i] = v.Visit(expr).(string)
+		if condExpr, ok := v.Visit(expr).(string); ok && condExpr != "" {
+			andExpressionConditions[i] = condExpr
+		}
+	}
+
+	if len(andExpressionConditions) == 0 {
+		return ""
 	}
 
 	if len(andExpressionConditions) == 1 {
@@ -210,7 +237,13 @@ func (v *filterExpressionVisitor) VisitAndExpression(ctx *grammar.AndExpressionC
 
 	unaryExpressionConditions := make([]string, len(unaryExpressions))
 	for i, expr := range unaryExpressions {
-		unaryExpressionConditions[i] = v.Visit(expr).(string)
+		if condExpr, ok := v.Visit(expr).(string); ok && condExpr != "" {
+			unaryExpressionConditions[i] = condExpr
+		}
+	}
+
+	if len(unaryExpressionConditions) == 0 {
+		return ""
 	}
 
 	if len(unaryExpressionConditions) == 1 {
@@ -236,7 +269,10 @@ func (v *filterExpressionVisitor) VisitUnaryExpression(ctx *grammar.UnaryExpress
 func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 	if ctx.OrExpression() != nil {
 		// This is a parenthesized expression
-		return fmt.Sprintf("(%s)", v.Visit(ctx.OrExpression()).(string))
+		if condExpr, ok := v.Visit(ctx.OrExpression()).(string); ok && condExpr != "" {
+			return fmt.Sprintf("(%s)", v.Visit(ctx.OrExpression()).(string))
+		}
+		return ""
 	} else if ctx.Comparison() != nil {
 		return v.Visit(ctx.Comparison())
 	} else if ctx.FunctionCall() != nil {
@@ -248,7 +284,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 	// Handle standalone key/value as a full text search term
 	if ctx.GetChildCount() == 1 {
 		if v.skipFullTextFilter {
-			return "true"
+			return ""
 		}
 
 		if v.fullTextColumn == nil {
@@ -297,11 +333,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 
 	// if key is missing and can be ignored, the condition is ignored
 	if len(keys) == 0 && v.ignoreNotFoundKeys {
-		// Why do we return "true"? to prevent from create a empty tuple
-		// example, if the condition is (x AND (y OR z))
-		// if we find ourselves ignoring all, then it creates and invalid
-		// condition (()) which throws invalid tuples error
-		return "true"
+		return ""
 	}
 
 	// this is used to skip the resource filtering on main table if
@@ -315,11 +347,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		}
 		keys = filteredKeys
 		if len(keys) == 0 {
-			// Why do we return "true"? to prevent from create a empty tuple
-			// example, if the condition is (resource.service.name='api' AND (env='prod' OR env='production'))
-			// if we find ourselves skipping all, then it creates and invalid
-			// condition (()) which throws invalid tuples error
-			return "true"
+			return ""
 		}
 	}
 
@@ -368,7 +396,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 				var varItem qbtypes.VariableItem
 				varItem, ok = v.variables[var_]
 				// if not present, try without `$` prefix
-				if !ok {
+				if !ok && len(var_) > 0 {
 					varItem, ok = v.variables[var_[1:]]
 				}
 
@@ -547,7 +575,7 @@ func (v *filterExpressionVisitor) VisitValueList(ctx *grammar.ValueListContext) 
 func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
 
 	if v.skipFullTextFilter {
-		return "true"
+		return ""
 	}
 
 	var text string
@@ -573,7 +601,7 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 // VisitFunctionCall handles function calls like has(), hasAny(), etc.
 func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallContext) any {
 	if v.skipFunctionCalls {
-		return "true"
+		return ""
 	}
 
 	// Get function name based on which token is present
@@ -609,6 +637,10 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		if strings.HasPrefix(key.Name, v.jsonBodyPrefix) {
 			fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
 		} else {
+			// TODO(add docs for json body search)
+			if v.mainErrorURL == "" {
+				v.mainErrorURL = "https://signoz.io/docs/userguide/search-troubleshooting/#function-supports-only-body-json-search"
+			}
 			v.errors = append(v.errors, fmt.Sprintf("function `%s` supports only body JSON search", functionName))
 			return ""
 		}
@@ -736,13 +768,15 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 			// TODO(srikanthccv): do we want to return an error here?
 			// should we infer the type and auto-magically build a key for expression?
 			v.errors = append(v.errors, fmt.Sprintf("key `%s` not found", fieldKey.Name))
+			v.mainErrorURL = "https://signoz.io/docs/userguide/search-troubleshooting/#key-fieldname-not-found"
 		}
 	}
 
 	if len(fieldKeysForName) > 1 && !v.keysWithWarnings[keyName] {
+		v.mainWarnURL = "https://signoz.io/docs/userguide/field-context-data-types/"
 		// this is warning state, we must have a unambiguous key
 		v.warnings = append(v.warnings, fmt.Sprintf(
-			"key `%s` is ambiguous, found %d different combinations of field context and data type: %v",
+			"key `%s` is ambiguous, found %d different combinations of field context / data type: %v",
 			fieldKey.Name,
 			len(fieldKeysForName),
 			fieldKeysForName,

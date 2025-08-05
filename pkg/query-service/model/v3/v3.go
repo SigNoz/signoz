@@ -604,7 +604,7 @@ func (c *CompositeQuery) Validate() error {
 		return fmt.Errorf("composite query is required")
 	}
 
-	if c.BuilderQueries == nil && c.ClickHouseQueries == nil && c.PromQueries == nil {
+	if c.BuilderQueries == nil && c.ClickHouseQueries == nil && c.PromQueries == nil && len(c.Queries) == 0 {
 		return fmt.Errorf("composite query must contain at least one query type")
 	}
 
