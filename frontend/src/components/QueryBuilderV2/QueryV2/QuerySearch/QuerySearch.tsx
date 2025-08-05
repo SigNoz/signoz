@@ -88,10 +88,7 @@ function QuerySearch({
 }): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [query, setQuery] = useState<string>(queryData.filter?.expression || '');
-	const [valueSuggestions, setValueSuggestions] = useState<any[]>([
-		{ label: 'error', type: 'value' },
-		{ label: 'frontend', type: 'value' },
-	]);
+	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
 	const [activeKey, setActiveKey] = useState<string>('');
 	const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 	const [queryContext, setQueryContext] = useState<IQueryContext | null>(null);
@@ -187,6 +184,22 @@ function QuerySearch({
 		500,
 	);
 
+	const toggleSuggestions = useCallback(
+		(timeout?: number) => {
+			const timeoutId = setTimeout(() => {
+				if (!editorRef.current) return;
+				if (isFocused) {
+					startCompletion(editorRef.current);
+				} else {
+					closeCompletion(editorRef.current);
+				}
+			}, timeout);
+
+			return (): void => clearTimeout(timeoutId);
+		},
+		[isFocused],
+	);
+
 	const fetchKeySuggestions = useCallback(
 		async (searchText?: string): Promise<void> => {
 			if (
@@ -214,12 +227,18 @@ function QuerySearch({
 					});
 				}
 				setKeySuggestions(Array.from(merged.values()));
+
+				// Force reopen the completion if editor is available and focused
+				if (editorRef.current) {
+					toggleSuggestions(10);
+				}
 			}
 		},
 		[
 			dataSource,
 			debouncedMetricName,
 			keySuggestions,
+			toggleSuggestions,
 			queryData.aggregateAttribute?.key,
 		],
 	);
@@ -342,6 +361,11 @@ function QuerySearch({
 				},
 			]);
 
+			// Force reopen the completion if editor is available and focused
+			if (editorRef.current) {
+				toggleSuggestions(10);
+			}
+
 			const sanitizedSearchText = searchText ? searchText?.trim() : '';
 
 			try {
@@ -414,13 +438,9 @@ function QuerySearch({
 						]);
 					}
 
-					// Force reopen the completion if editor is available
+					// Force reopen the completion if editor is available and focused
 					if (editorRef.current) {
-						setTimeout(() => {
-							if (isMountedRef.current && editorRef.current) {
-								startCompletion(editorRef.current);
-							}
-						}, 10);
+						toggleSuggestions(10);
 					}
 				}
 			} catch (error) {
@@ -441,7 +461,7 @@ function QuerySearch({
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[activeKey, dataSource],
+		[activeKey, dataSource, isFocused],
 	);
 
 	const debouncedFetchValueSuggestions = useMemo(
@@ -501,13 +521,8 @@ function QuerySearch({
 		}
 	}, []);
 
-	const handleQueryChange = useCallback(async (newQuery: string) => {
-		setQuery(newQuery);
-	}, []);
-
 	const handleChange = (value: string): void => {
 		setQuery(value);
-		handleQueryChange(value);
 		onChange(value);
 		// Mark as internal change to avoid triggering external validation
 		setIsExternalQueryChange(false);
@@ -534,7 +549,6 @@ function QuerySearch({
 		// If there's an existing query, append the example with AND
 		const newQuery = query ? `${query} AND ${exampleQuery}` : exampleQuery;
 		setQuery(newQuery);
-		handleQueryChange(newQuery);
 		// Mark as internal change to avoid triggering external validation
 		setIsExternalQueryChange(false);
 		// Update lastExternalQuery to prevent external validation trigger
@@ -1070,39 +1084,17 @@ function QuerySearch({
 
 	// Effect to handle focus state and trigger suggestions
 	useEffect(() => {
-		if (editorRef.current) {
-			if (!isFocused) {
-				closeCompletion(editorRef.current);
-			} else {
-				startCompletion(editorRef.current);
-			}
-		}
-	}, [isFocused]);
+		const clearTimeout = toggleSuggestions(10);
+		return (): void => clearTimeout();
+	}, [isFocused, toggleSuggestions]);
 
 	useEffect(() => {
 		if (!queryContext) return;
-
 		// Trigger suggestions based on context
 		if (editorRef.current) {
-			// Small delay to ensure the context is fully updated
-			setTimeout(() => {
-				if (editorRef.current) {
-					startCompletion(editorRef.current);
-				}
-			}, 50);
+			toggleSuggestions(10);
 		}
-
-		// Handle value suggestions for value context
-		if (queryContext.isInValue) {
-			const { keyToken, currentToken } = queryContext;
-			const key = keyToken || currentToken;
-
-			// Only fetch if needed and if we have a valid key
-			if (key && key !== activeKey && !isLoadingSuggestions) {
-				fetchValueSuggestions({ key });
-			}
-		}
-	}, [queryContext, activeKey, isLoadingSuggestions, fetchValueSuggestions]);
+	}, [queryContext, toggleSuggestions]);
 
 	const getTooltipContent = (): JSX.Element => (
 		<div>
