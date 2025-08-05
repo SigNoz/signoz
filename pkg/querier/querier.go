@@ -531,6 +531,9 @@ func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtyp
 	case *builderQuery[qbtypes.MetricAggregation]:
 		qt.spec.ShiftBy = extractShiftFromBuilderQuery(qt.spec)
 		adjustedTimeRange := adjustTimeRangeForShift(qt.spec, timeRange, qt.kind)
+		if qt.spec.Source == telemetrytypes.SourceMeter {
+			return newBuilderQuery(q.telemetryStore, q.meterStmtBuilder, qt.spec, adjustedTimeRange, qt.kind, qt.variables)
+		}
 		return newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, qt.spec, adjustedTimeRange, qt.kind, qt.variables)
 	default:
 		return nil
