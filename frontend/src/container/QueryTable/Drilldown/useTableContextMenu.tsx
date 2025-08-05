@@ -67,14 +67,17 @@ export function useTableContextMenu({
 			return {};
 		}
 
-		// Check if queryName is valid for drilldown
-		if (!isValidQueryName(aggregateData.queryName)) {
-			return {};
-		}
-
 		const columnType = clickedData?.column?.isValueColumn
 			? ConfigType.AGGREGATE
 			: ConfigType.GROUP;
+
+		// Check if queryName is valid for drilldown
+		if (
+			columnType === ConfigType.AGGREGATE &&
+			!isValidQueryName(aggregateData?.queryName || '')
+		) {
+			return {};
+		}
 
 		switch (columnType) {
 			case ConfigType.AGGREGATE:
