@@ -14,9 +14,18 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { ArrowUp10, Minus } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+	Dispatch,
+	memo,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { Warning } from 'types/api';
 import APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -30,9 +39,13 @@ import { ActionsContainer, Container } from './styles';
 
 interface TracesViewProps {
 	isFilterApplied: boolean;
+	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 }
 
-function TracesView({ isFilterApplied }: TracesViewProps): JSX.Element {
+function TracesView({
+	isFilterApplied,
+	setWarning,
+}: TracesViewProps): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
 
@@ -90,6 +103,13 @@ function TracesView({ isFilterApplied }: TracesViewProps): JSX.Element {
 			enabled: !!stagedQuery && panelType === PANEL_TYPES.TRACE,
 		},
 	);
+
+	useEffect(() => {
+		if (data?.payload) {
+			setWarning(data?.warning);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data?.payload, data?.warning]);
 
 	const responseData = data?.payload?.data?.newResult?.data?.result[0]?.list;
 	const tableData = useMemo(

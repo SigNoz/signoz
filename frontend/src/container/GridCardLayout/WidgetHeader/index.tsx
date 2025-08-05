@@ -16,9 +16,7 @@ import { Dropdown, Input, MenuProps, Tooltip, Typography } from 'antd';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import ErrorPopover from 'components/ErrorPopover/ErrorPopover';
 import Spinner from 'components/Spinner';
-import WarningPopover, {
-	WarningContent,
-} from 'components/WarningPopover/WarningPopover';
+import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import useGetResolvedText from 'hooks/dashboard/useGetResolvedText';
@@ -28,7 +26,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
-import { CircleX, TriangleAlert, X } from 'lucide-react';
+import { CircleX, X } from 'lucide-react';
 import { unparse } from 'papaparse';
 import { useAppContext } from 'providers/App/App';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
@@ -223,11 +221,6 @@ function WidgetHeader({
 		[queryResponse.error],
 	);
 
-	const renderWarningMessage = useMemo(
-		() => <WarningContent warning={queryResponse.data?.warning as Warning} />,
-		[queryResponse.data?.warning],
-	);
-
 	if (widget.id === PANEL_TYPES.EMPTY_WIDGET) {
 		return null;
 	}
@@ -302,19 +295,7 @@ function WidgetHeader({
 						)}
 
 						{isWarning && queryResponse.data?.warning && (
-							<WarningPopover
-								content={renderWarningMessage}
-								placement={errorTooltipPosition}
-								overlayStyle={{ padding: 0, maxWidth: '600px' }}
-								overlayInnerStyle={{ padding: 0 }}
-								autoAdjustOverflow
-							>
-								<TriangleAlert
-									size={16}
-									style={{ cursor: 'pointer' }}
-									color={Color.BG_AMBER_500}
-								/>
-							</WarningPopover>
+							<WarningPopover warningData={queryResponse.data?.warning as Warning} />
 						)}
 						{globalSearchAvailable && (
 							<SearchOutlined

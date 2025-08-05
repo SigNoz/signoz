@@ -133,7 +133,10 @@ export const useGetQueryRange: UseGetQueryRange = (
 		};
 	}, [options?.retry]);
 
-	return useQuery<SuccessResponse<MetricRangePayloadProps>, APIError | Error>({
+	return useQuery<
+		SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
+		APIError | Error
+	>({
 		queryFn: async ({ signal }) =>
 			GetMetricQueryRange(modifiedRequestData, version, signal, headers),
 		...options,

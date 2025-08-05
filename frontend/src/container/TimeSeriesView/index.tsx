@@ -5,9 +5,10 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useMemo } from 'react';
+import { Dispatch, SetStateAction, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { Warning } from 'types/api';
 import APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -18,6 +19,7 @@ import { convertDataValueToMs } from './utils';
 function TimeSeriesViewContainer({
 	dataSource = DataSource.TRACES,
 	isFilterApplied,
+	setWarning,
 }: TimeSeriesViewProps): JSX.Element {
 	const { stagedQuery, currentQuery, panelType } = useQueryBuilder();
 
@@ -69,6 +71,13 @@ function TimeSeriesViewContainer({
 		},
 	);
 
+	useEffect(() => {
+		if (data?.payload) {
+			setWarning(data?.warning);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data?.payload, data?.warning]);
+
 	const responseData = useMemo(
 		() => (isValidToConvertToMs ? convertDataValueToMs(data) : data),
 		[data, isValidToConvertToMs],
@@ -83,6 +92,7 @@ function TimeSeriesViewContainer({
 			data={responseData}
 			yAxisUnit={isValidToConvertToMs ? 'ms' : 'short'}
 			dataSource={dataSource}
+			setWarning={setWarning}
 		/>
 	);
 }
@@ -90,6 +100,7 @@ function TimeSeriesViewContainer({
 interface TimeSeriesViewProps {
 	dataSource?: DataSource;
 	isFilterApplied: boolean;
+	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 }
 
 TimeSeriesViewContainer.defaultProps = {

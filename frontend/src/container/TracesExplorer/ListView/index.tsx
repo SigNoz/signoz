@@ -25,9 +25,18 @@ import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { cloneDeep } from 'lodash-es';
 import { ArrowUp10, Minus } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+	Dispatch,
+	memo,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { Warning } from 'types/api';
 import APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -39,9 +48,10 @@ import { getListColumns, transformDataWithDate } from './utils';
 
 interface ListViewProps {
 	isFilterApplied: boolean;
+	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 }
 
-function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
+function ListView({ isFilterApplied, setWarning }: ListViewProps): JSX.Element {
 	const {
 		stagedQuery,
 		panelType: panelTypeFromQueryBuilder,
@@ -144,6 +154,13 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 				!!options?.selectColumns?.length,
 		},
 	);
+
+	useEffect(() => {
+		if (data?.payload) {
+			setWarning(data?.warning);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data?.payload, data?.warning]);
 
 	const dataLength =
 		data?.payload?.data?.newResult?.data?.result[0]?.list?.length;

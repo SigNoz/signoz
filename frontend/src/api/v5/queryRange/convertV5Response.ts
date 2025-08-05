@@ -1,5 +1,5 @@
 import { cloneDeep, isEmpty } from 'lodash-es';
-import { SuccessResponse } from 'types/api';
+import { SuccessResponse, Warning } from 'types/api';
 import { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import {
 	DistributionData,
@@ -341,7 +341,7 @@ export function convertV5ResponseToLegacy(
 	v5Response: SuccessResponse<MetricRangePayloadV5>,
 	legendMap: Record<string, string>,
 	formatForWeb?: boolean,
-): SuccessResponse<MetricRangePayloadV3> {
+): SuccessResponse<MetricRangePayloadV3> & { warning?: Warning } {
 	const { payload, params } = v5Response;
 	const v5Data = payload?.data;
 
@@ -367,6 +367,7 @@ export function convertV5ResponseToLegacy(
 			legendMap,
 			aggregationPerQuery,
 		);
+
 		return {
 			...v5Response,
 			payload: {
@@ -376,6 +377,7 @@ export function convertV5ResponseToLegacy(
 				},
 				warning: v5Data?.warning || undefined,
 			},
+			warning: v5Data?.warning || undefined,
 		};
 	}
 

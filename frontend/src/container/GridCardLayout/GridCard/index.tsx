@@ -301,7 +301,7 @@ function GridCardGraph({
 					widget={widget}
 					queryResponse={queryResponse}
 					errorMessage={errorMessage}
-					isWarning={!!queryResponse.data?.warning}
+					isWarning={!!queryResponse.data?.warning?.message}
 					version={version}
 					threshold={threshold}
 					headerMenuList={menuList}

@@ -5,7 +5,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Popover, PopoverProps } from 'antd';
 import ErrorIcon from 'assets/Error';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { BookOpenText, ChevronsDown } from 'lucide-react';
+import { BookOpenText, ChevronsDown, TriangleAlert } from 'lucide-react';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { ReactNode } from 'react';
 import { Warning } from 'types/api';
@@ -21,6 +21,11 @@ export function WarningContent({ warning }: WarningContentProps): JSX.Element {
 		code: warningCode,
 		message: warningMessage,
 	} = warning || {};
+
+	if (!warning) {
+		return <div />;
+	}
+
 	return (
 		<section className="warning-content">
 			{/* Summary Header */}
@@ -101,23 +106,37 @@ export function WarningContent({ warning }: WarningContentProps): JSX.Element {
 	);
 }
 
-interface WarningPopoverProps extends Omit<PopoverProps, 'content'> {
-	/** Content to display in the popover */
-	content: ReactNode;
-	/** Element that triggers the popover */
-	children: ReactNode;
+interface WarningPopoverProps extends PopoverProps {
+	children?: ReactNode;
+	warningData: Warning;
 }
 
 function WarningPopover({
-	content,
 	children,
+	warningData,
 	...popoverProps
 }: WarningPopoverProps): JSX.Element {
 	return (
-		<Popover content={content} {...popoverProps}>
-			{children}
+		<Popover
+			content={<WarningContent warning={warningData} />}
+			overlayStyle={{ padding: 0, maxWidth: '600px' }}
+			overlayInnerStyle={{ padding: 0 }}
+			autoAdjustOverflow
+			{...popoverProps}
+		>
+			{children || (
+				<TriangleAlert
+					size={16}
+					style={{ cursor: 'pointer' }}
+					color={Color.BG_AMBER_500}
+				/>
+			)}
 		</Popover>
 	);
 }
+
+WarningPopover.defaultProps = {
+	children: undefined,
+};
 
 export default WarningPopover;

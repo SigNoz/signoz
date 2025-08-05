@@ -21,7 +21,10 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { TimeSeriesProps } from './types';
 import { splitQueryIntoOneChartPerQuery } from './utils';
 
-function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
+function TimeSeries({
+	showOneChartPerQuery,
+	setWarning,
+}: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
@@ -145,6 +148,7 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 							yAxisUnit={yAxisUnit}
 							dataSource={DataSource.METRICS}
 							error={queries[index].error as APIError}
+							setWarning={setWarning}
 						/>
 					</div>
 				))}

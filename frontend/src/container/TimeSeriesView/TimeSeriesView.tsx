@@ -22,12 +22,20 @@ import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { isEmpty } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
-import { SuccessResponse } from 'types/api';
+import { SuccessResponse, Warning } from 'types/api';
 import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
@@ -43,6 +51,7 @@ function TimeSeriesView({
 	yAxisUnit,
 	isFilterApplied,
 	dataSource,
+	setWarning,
 }: TimeSeriesViewProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -54,6 +63,13 @@ function TimeSeriesView({
 	const chartData = useMemo(() => getUPlotChartData(data?.payload), [
 		data?.payload,
 	]);
+
+	useEffect(() => {
+		if (data?.payload) {
+			setWarning?.(data?.warning);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data?.payload, data?.warning]);
 
 	const isDarkMode = useIsDarkMode();
 	const containerDimensions = useResizeObserver(graphRef);
@@ -213,19 +229,21 @@ function TimeSeriesView({
 }
 
 interface TimeSeriesViewProps {
-	data?: SuccessResponse<MetricRangePayloadProps>;
+	data?: SuccessResponse<MetricRangePayloadProps> & { warning?: Warning };
 	yAxisUnit?: string;
 	isLoading: boolean;
 	isError: boolean;
 	error?: Error | APIError;
 	isFilterApplied: boolean;
 	dataSource: DataSource;
+	setWarning?: Dispatch<SetStateAction<Warning | undefined>>;
 }
 
 TimeSeriesView.defaultProps = {
 	data: undefined,
 	yAxisUnit: 'short',
 	error: undefined,
+	setWarning: undefined,
 };
 
 export default TimeSeriesView;
