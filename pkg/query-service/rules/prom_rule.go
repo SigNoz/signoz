@@ -151,84 +151,86 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 	var alerts = make(map[uint64]*ruletypes.Alert, len(res))
 
 	for _, series := range res {
-		l := make(map[string]string, len(series.Metric))
-		for _, lbl := range series.Metric {
-			l[lbl.Name] = lbl.Value
-		}
-
-		if len(series.Floats) == 0 {
-			continue
-		}
-
-		alertSmpl, shouldAlert := r.ShouldAlert(toCommonSeries(series))
-		if !shouldAlert {
-			continue
-		}
-		r.logger.DebugContext(ctx, "alerting for series", "rule_name", r.Name(), "series", series)
-
-		threshold := valueFormatter.Format(r.targetVal(), r.Unit())
-
-		tmplData := ruletypes.AlertTemplateData(l, valueFormatter.Format(alertSmpl.V, r.Unit()), threshold)
-		// Inject some convenience variables that are easier to remember for users
-		// who are not used to Go's templating system.
-		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
-
-		expand := func(text string) string {
-
-			tmpl := ruletypes.NewTemplateExpander(
-				ctx,
-				defs+text,
-				"__alert_"+r.Name(),
-				tmplData,
-				times.Time(timestamp.FromTime(ts)),
-				nil,
-			)
-			result, err := tmpl.Expand()
-			if err != nil {
-				result = fmt.Sprintf("<error expanding template: %s>", err)
-				r.logger.WarnContext(ctx, "Expanding alert template failed", "rule_name", r.Name(), "error", err, "data", tmplData)
+		for _, ruleThreshold := range r.Thresholds() {
+			l := make(map[string]string, len(series.Metric))
+			for _, lbl := range series.Metric {
+				l[lbl.Name] = lbl.Value
 			}
-			return result
-		}
 
-		lb := qslabels.NewBuilder(alertSmpl.Metric).Del(qslabels.MetricNameLabel)
-		resultLabels := qslabels.NewBuilder(alertSmpl.Metric).Del(qslabels.MetricNameLabel).Labels()
+			if len(series.Floats) == 0 {
+				continue
+			}
 
-		for name, value := range r.labels.Map() {
-			lb.Set(name, expand(value))
-		}
+			alertSmpl, shouldAlert := ruleThreshold.ShouldAlert(toCommonSeries(series))
+			if !shouldAlert {
+				continue
+			}
+			r.logger.DebugContext(ctx, "alerting for series", "rule_name", r.Name(), "series", series)
 
-		lb.Set(qslabels.AlertNameLabel, r.Name())
-		lb.Set(qslabels.AlertRuleIdLabel, r.ID())
-		lb.Set(qslabels.RuleSourceLabel, r.GeneratorURL())
+			threshold := valueFormatter.Format(r.targetVal(), r.Unit())
 
-		annotations := make(qslabels.Labels, 0, len(r.annotations.Map()))
-		for name, value := range r.annotations.Map() {
-			annotations = append(annotations, qslabels.Label{Name: name, Value: expand(value)})
-		}
+			tmplData := ruletypes.AlertTemplateData(l, valueFormatter.Format(alertSmpl.V, r.Unit()), threshold)
+			// Inject some convenience variables that are easier to remember for users
+			// who are not used to Go's templating system.
+			defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 
-		lbs := lb.Labels()
-		h := lbs.Hash()
-		resultFPs[h] = struct{}{}
+			expand := func(text string) string {
 
-		if _, ok := alerts[h]; ok {
-			err = fmt.Errorf("vector contains metrics with the same labelset after applying alert labels")
-			// We have already acquired the lock above hence using SetHealth and
-			// SetLastError will deadlock.
-			r.health = ruletypes.HealthBad
-			r.lastError = err
-			return nil, err
-		}
+				tmpl := ruletypes.NewTemplateExpander(
+					ctx,
+					defs+text,
+					"__alert_"+r.Name(),
+					tmplData,
+					times.Time(timestamp.FromTime(ts)),
+					nil,
+				)
+				result, err := tmpl.Expand()
+				if err != nil {
+					result = fmt.Sprintf("<error expanding template: %s>", err)
+					r.logger.WarnContext(ctx, "Expanding alert template failed", "rule_name", r.Name(), "error", err, "data", tmplData)
+				}
+				return result
+			}
 
-		alerts[h] = &ruletypes.Alert{
-			Labels:            lbs,
-			QueryResultLables: resultLabels,
-			Annotations:       annotations,
-			ActiveAt:          ts,
-			State:             model.StatePending,
-			Value:             alertSmpl.V,
-			GeneratorURL:      r.GeneratorURL(),
-			Receivers:         r.preferredChannels,
+			lb := qslabels.NewBuilder(alertSmpl.Metric).Del(qslabels.MetricNameLabel)
+			resultLabels := qslabels.NewBuilder(alertSmpl.Metric).Del(qslabels.MetricNameLabel).Labels()
+
+			for name, value := range r.labels.Map() {
+				lb.Set(name, expand(value))
+			}
+
+			lb.Set(qslabels.AlertNameLabel, r.Name())
+			lb.Set(qslabels.AlertRuleIdLabel, r.ID())
+			lb.Set(qslabels.RuleSourceLabel, r.GeneratorURL())
+
+			annotations := make(qslabels.Labels, 0, len(r.annotations.Map()))
+			for name, value := range r.annotations.Map() {
+				annotations = append(annotations, qslabels.Label{Name: name, Value: expand(value)})
+			}
+
+			lbs := lb.Labels()
+			h := lbs.Hash()
+			resultFPs[h] = struct{}{}
+
+			if _, ok := alerts[h]; ok {
+				err = fmt.Errorf("vector contains metrics with the same labelset after applying alert labels")
+				// We have already acquired the lock above hence using SetHealth and
+				// SetLastError will deadlock.
+				r.health = ruletypes.HealthBad
+				r.lastError = err
+				return nil, err
+			}
+
+			alerts[h] = &ruletypes.Alert{
+				Labels:            lbs,
+				QueryResultLables: resultLabels,
+				Annotations:       annotations,
+				ActiveAt:          ts,
+				State:             model.StatePending,
+				Value:             alertSmpl.V,
+				GeneratorURL:      r.GeneratorURL(),
+				Receivers:         r.preferredChannels,
+			}
 		}
 	}
 

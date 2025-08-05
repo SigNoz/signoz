@@ -140,6 +140,10 @@ func ParseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*P
 		return nil, err
 	}
 
+	//added alerts v2 fields
+	rule.RuleCondition.Thresholds = append(rule.RuleCondition.Thresholds,
+		NewBasicRuleThreshold(rule.AlertName, rule.RuleCondition.Target, nil, rule.RuleCondition.MatchType, rule.RuleCondition.CompareOp, rule.RuleCondition.SelectedQuery, rule.RuleCondition.TargetUnit, rule.RuleCondition.CompositeQuery.Unit))
+
 	return rule, nil
 }
 
