@@ -38,7 +38,9 @@ function WidgetGraph({
 			<div className="header">
 				<div className="header-left">
 					<PlotTag queryType={currentQuery.queryType} panelType={selectedGraph} />
-					<WarningPopover warningData={queryResponse.data?.warning as Warning} />
+					{queryResponse.data?.warning?.message && (
+						<WarningPopover warningData={queryResponse.data?.warning as Warning} />
+					)}
 				</div>
 				<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
 			</div>

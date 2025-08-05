@@ -131,6 +131,7 @@ const renderer = (): RenderResult =>
 					setIsLoadingQueries={(): void => {}}
 					listQueryKeyRef={{ current: {} }}
 					chartQueryKeyRef={{ current: {} }}
+					setWarning={(): void => {}}
 				/>
 			</PreferenceContextProvider>
 		</VirtuosoMockContext.Provider>,
@@ -206,6 +207,7 @@ describe('LogsExplorerViews -', () => {
 						setIsLoadingQueries={(): void => {}}
 						listQueryKeyRef={{ current: {} }}
 						chartQueryKeyRef={{ current: {} }}
+						setWarning={(): void => {}}
 					/>
 				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,
