@@ -168,6 +168,7 @@ function Explorer(): JSX.Element {
 						disabled={!stagedQuery}
 						query={exportDefaultQuery}
 						sourcepage={DataSource.METRICS}
+						signalSource="meter"
 						onExport={handleExport}
 						isOneChartPerQuery={false}
 						splitedQueries={splitedQueries}

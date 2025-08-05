@@ -25,6 +25,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 	query,
 	onChange,
 	disabled,
+	signalSource,
 }: GroupByFilterProps): JSX.Element {
 	const queryClient = useQueryClient();
 	const [searchText, setSearchText] = useState<string>('');
@@ -44,6 +45,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			dataSource: query.dataSource,
 			aggregateOperator: query.aggregateOperator || '',
 			searchText: debouncedValue,
+			signalSource: signalSource as 'meter' | '',
 		},
 		{
 			queryKey: [debouncedValue, isFocused],

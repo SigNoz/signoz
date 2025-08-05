@@ -221,6 +221,7 @@ export const QueryV2 = memo(function QueryV2({
 								index={index}
 								key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}`}
 								version="v4"
+								signalSource={signalSource as 'meter' | ''}
 							/>
 						)}
 

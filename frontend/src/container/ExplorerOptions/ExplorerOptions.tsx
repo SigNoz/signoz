@@ -93,6 +93,7 @@ function ExplorerOptions({
 	onExport,
 	query,
 	sourcepage,
+	signalSource,
 	isExplorerOptionHidden = false,
 	setIsExplorerOptionHidden,
 	isOneChartPerQuery = false,
@@ -504,6 +505,11 @@ function ExplorerOptions({
 					? defaultTraceSelectedColumns
 					: defaultLogsSelectedColumns,
 		});
+
+		if (signalSource === 'meter') {
+			history.replace(ROUTES.METER_EXPLORER);
+			return;
+		}
 
 		history.replace(DATASOURCE_VS_ROUTES[sourcepage]);
 	};
@@ -993,6 +999,7 @@ export interface ExplorerOptionsProps {
 	query: Query | null;
 	disabled: boolean;
 	sourcepage: DataSource;
+	signalSource?: string;
 	isExplorerOptionHidden?: boolean;
 	setIsExplorerOptionHidden?: Dispatch<SetStateAction<boolean>>;
 	isOneChartPerQuery?: boolean;
@@ -1005,6 +1012,7 @@ ExplorerOptions.defaultProps = {
 	setIsExplorerOptionHidden: undefined,
 	isOneChartPerQuery: false,
 	splitedQueries: [],
+	signalSource: '',
 };
 
 export default ExplorerOptions;

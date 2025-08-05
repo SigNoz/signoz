@@ -114,7 +114,7 @@ const menuItems: SidebarItem[] = [
 		key: ROUTES.METRICS_EXPLORER,
 		label: 'Metrics',
 		icon: <BarChart2 size={16} />,
-		isNew: true,
+		isNew: false,
 		itemKey: 'metrics',
 	},
 	{
@@ -231,7 +231,7 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		key: ROUTES.METRICS_EXPLORER,
 		label: 'Metrics',
 		icon: <BarChart2 size={16} />,
-		isNew: true,
+		isNew: false,
 		isEnabled: true,
 		itemKey: 'metrics',
 	},
