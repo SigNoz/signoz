@@ -466,8 +466,7 @@ function QuerySearch({
 	);
 
 	const debouncedFetchValueSuggestions = useMemo(
-		() =>
-			debounce(fetchValueSuggestions, 300, { leading: true, trailing: false }),
+		() => debounce(fetchValueSuggestions, 300),
 		[fetchValueSuggestions],
 	);
 
@@ -1130,7 +1129,24 @@ function QuerySearch({
 		if (editorRef.current) {
 			toggleSuggestions(10);
 		}
-	}, [queryContext, toggleSuggestions]);
+
+		// Handle value suggestions for value context
+		if (queryContext.isInValue) {
+			const { keyToken, currentToken } = queryContext;
+			const key = keyToken || currentToken;
+
+			// Only fetch if needed and if we have a valid key
+			if (key && key !== activeKey && !isLoadingSuggestions) {
+				fetchValueSuggestions({ key });
+			}
+		}
+	}, [
+		queryContext,
+		toggleSuggestions,
+		isLoadingSuggestions,
+		activeKey,
+		fetchValueSuggestions,
+	]);
 
 	const getTooltipContent = (): JSX.Element => (
 		<div>
