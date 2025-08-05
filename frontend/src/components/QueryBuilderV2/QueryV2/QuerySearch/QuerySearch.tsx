@@ -145,7 +145,6 @@ function QuerySearch({
 	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
 	const [isFocused, setIsFocused] = useState(false);
 
-	const [isCompleteKeysList, setIsCompleteKeysList] = useState(false);
 	const [
 		isFetchingCompleteValuesList,
 		setIsFetchingCompleteValuesList,
@@ -188,36 +187,51 @@ function QuerySearch({
 		500,
 	);
 
-	const fetchKeySuggestions = async (searchText?: string): Promise<void> => {
-		if (dataSource === DataSource.METRICS && !queryData.aggregateAttribute?.key) {
-			setKeySuggestions([]);
-			return;
-		}
-		const response = await getKeySuggestions({
-			signal: dataSource,
-			searchText: searchText || '',
-			metricName: debouncedMetricName ?? undefined,
-		});
-
-		if (response.data.data) {
-			const { complete, keys } = response.data.data;
-			const options = generateOptions(keys);
-			// Use a Map to deduplicate by label and preserve order: new options take precedence
-			const merged = new Map<string, QueryKeyDataSuggestionsProps>();
-			options.forEach((opt) => merged.set(opt.label, opt));
-			if (searchText && lastKeyRef.current !== searchText) {
-				(keySuggestions || []).forEach((opt) => {
-					if (!merged.has(opt.label)) merged.set(opt.label, opt);
-				});
+	const fetchKeySuggestions = useCallback(
+		async (searchText?: string): Promise<void> => {
+			if (
+				dataSource === DataSource.METRICS &&
+				!queryData.aggregateAttribute?.key
+			) {
+				setKeySuggestions([]);
+				return;
 			}
-			setKeySuggestions(Array.from(merged.values()));
-			setIsCompleteKeysList(complete);
-		}
-	};
+			const response = await getKeySuggestions({
+				signal: dataSource,
+				searchText: searchText || '',
+				metricName: debouncedMetricName ?? undefined,
+			});
+
+			if (response.data.data) {
+				const { keys } = response.data.data;
+				const options = generateOptions(keys);
+				// Use a Map to deduplicate by label and preserve order: new options take precedence
+				const merged = new Map<string, QueryKeyDataSuggestionsProps>();
+				options.forEach((opt) => merged.set(opt.label, opt));
+				if (searchText && lastKeyRef.current !== searchText) {
+					(keySuggestions || []).forEach((opt) => {
+						if (!merged.has(opt.label)) merged.set(opt.label, opt);
+					});
+				}
+				setKeySuggestions(Array.from(merged.values()));
+			}
+		},
+		[
+			dataSource,
+			debouncedMetricName,
+			keySuggestions,
+			queryData.aggregateAttribute?.key,
+		],
+	);
+
+	const debouncedFetchKeySuggestions = useMemo(
+		() => debounce(fetchKeySuggestions, 300),
+		[fetchKeySuggestions],
+	);
 
 	useEffect(() => {
 		setKeySuggestions([]);
-		fetchKeySuggestions();
+		debouncedFetchKeySuggestions();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [dataSource, debouncedMetricName]);
 
@@ -426,7 +440,8 @@ function QuerySearch({
 				setIsFetchingCompleteValuesList(false);
 			}
 		},
-		[activeKey, dataSource, isLoadingSuggestions],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[activeKey, dataSource],
 	);
 
 	const debouncedFetchValueSuggestions = useMemo(
@@ -766,16 +781,14 @@ function QuerySearch({
 		}
 
 		if (queryContext.isInKey) {
-			const searchText = word?.text.toLowerCase() ?? '';
+			const searchText = word?.text.toLowerCase().trim() ?? '';
 
 			options = (keySuggestions || []).filter((option) =>
 				option.label.toLowerCase().includes(searchText),
 			);
 
-			if (!isCompleteKeysList && options.length === 0) {
-				setTimeout(() => {
-					fetchKeySuggestions(searchText);
-				}, 300);
+			if (options.length === 0 && lastKeyRef.current !== searchText) {
+				debouncedFetchKeySuggestions(searchText);
 			}
 
 			// If we have previous pairs, we can prioritize keys that haven't been used yet
@@ -1091,21 +1104,20 @@ function QuerySearch({
 		}
 	}, [queryContext, activeKey, isLoadingSuggestions, fetchValueSuggestions]);
 
-
-	const getTooltipContent = () => (
+	const getTooltipContent = (): JSX.Element => (
 		<div>
-		  Need help with search syntax?
-		  <br />
-		  <a
-			href="https://signoz.io/docs/userguide/search-syntax/"
-			target="_blank"
-			rel="noopener noreferrer"
-			style={{ color: '#1890ff', textDecoration: 'underline' }}
-		  >
-			View documentation
-		  </a>
+			Need help with search syntax?
+			<br />
+			<a
+				href="https://signoz.io/docs/userguide/search-syntax/"
+				target="_blank"
+				rel="noopener noreferrer"
+				style={{ color: '#1890ff', textDecoration: 'underline' }}
+			>
+				View documentation
+			</a>
 		</div>
-	  );
+	);
 
 	return (
 		<div className="code-mirror-where-clause">
@@ -1148,11 +1160,7 @@ function QuerySearch({
 			)}
 
 			<div className="query-where-clause-editor-container">
-
-				<Tooltip
-					title={getTooltipContent()}
-					placement="left"
-				>
+				<Tooltip title={getTooltipContent()} placement="left">
 					<a
 						href="https://signoz.io/docs/userguide/search-syntax/"
 						target="_blank"
@@ -1166,11 +1174,14 @@ function QuerySearch({
 							transition: 'right 0.2s ease',
 							display: 'inline-flex',
 							alignItems: 'center',
-							color: '#8c8c8c'
+							color: '#8c8c8c',
 						}}
-						onClick={(e) => e.stopPropagation()}
+						onClick={(e): void => e.stopPropagation()}
 					>
-						<Info size={14} style={{ opacity: 0.9, color: isDarkMode ? '#ffffff' : '#000000' }} />
+						<Info
+							size={14}
+							style={{ opacity: 0.9, color: isDarkMode ? '#ffffff' : '#000000' }}
+						/>
 					</a>
 				</Tooltip>
 
