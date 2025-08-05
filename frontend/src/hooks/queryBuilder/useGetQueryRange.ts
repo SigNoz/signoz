@@ -9,13 +9,13 @@ import {
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
-import { SuccessResponse } from 'types/api';
+import { SuccessResponse, Warning } from 'types/api';
 import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 type UseGetQueryRangeOptions = UseQueryOptions<
-	SuccessResponse<MetricRangePayloadProps>,
+	SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
 	APIError | Error
 >;
 
@@ -24,7 +24,10 @@ type UseGetQueryRange = (
 	version: string,
 	options?: UseGetQueryRangeOptions,
 	headers?: Record<string, string>,
-) => UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error>;
+) => UseQueryResult<
+	SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
+	Error
+>;
 
 export const useGetQueryRange: UseGetQueryRange = (
 	requestData,

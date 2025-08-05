@@ -1,5 +1,7 @@
 // ===================== Base Types =====================
 
+import { Warning } from '..';
+
 export type Step = string | number; // Duration string (e.g., "30s") or seconds as number
 
 export type RequestType =
@@ -418,6 +420,7 @@ export interface QueryRangeResponseV5 {
 	type: RequestType;
 	data: QueryRangeDataV5;
 	meta: ExecStats;
+	warning?: Warning;
 }
 
 // ===================== Payload Types for API Functions =====================

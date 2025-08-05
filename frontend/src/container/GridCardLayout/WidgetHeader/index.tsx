@@ -12,10 +12,14 @@ import {
 	SearchOutlined,
 	WarningOutlined,
 } from '@ant-design/icons';
+import { Color } from '@signozhq/design-tokens';
 import { Dropdown, Input, MenuProps, Tooltip, Typography } from 'antd';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import ErrorPopover from 'components/ErrorPopover/ErrorPopover';
 import Spinner from 'components/Spinner';
+import WarningPopover, {
+	WarningContent,
+} from 'components/WarningPopover/WarningPopover';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import useGetResolvedText from 'hooks/dashboard/useGetResolvedText';
@@ -30,12 +34,12 @@ import { unparse } from 'papaparse';
 import { useAppContext } from 'providers/App/App';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { SuccessResponse, Warning } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
-import { errorTooltipPosition, WARNING_MESSAGE } from './config';
+import { errorTooltipPosition } from './config';
 import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
 import { MenuItem } from './types';
 import { generateMenuList, isTWidgetOptions } from './utils';
@@ -48,7 +52,10 @@ interface IWidgetHeaderProps {
 	onClone?: VoidFunction;
 	parentHover: boolean;
 	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
+		SuccessResponse<MetricRangePayloadProps, unknown> & {
+			warning?: Warning;
+		},
+		Error
 	>;
 	threshold?: ReactNode;
 	headerMenuList?: MenuItemKeys[];
@@ -217,6 +224,11 @@ function WidgetHeader({
 		[queryResponse.error],
 	);
 
+	const renderWarningMessage = useMemo(
+		() => <WarningContent warning={queryResponse.data?.warning as Warning} />,
+		[queryResponse.data?.warning],
+	);
+
 	if (widget.id === PANEL_TYPES.EMPTY_WIDGET) {
 		return null;
 	}
@@ -278,21 +290,32 @@ function WidgetHeader({
 							<ErrorPopover
 								content={renderErrorMessage}
 								placement={errorTooltipPosition}
-								overlayStyle={{ padding: 0 }}
+								overlayStyle={{ padding: 0, maxWidth: '600px' }}
 								overlayInnerStyle={{ padding: 0 }}
+								autoAdjustOverflow
 							>
-								<CircleX size={16} style={{ cursor: 'pointer' }} />
+								<CircleX
+									size={16}
+									style={{ cursor: 'pointer' }}
+									color={Color.BG_CHERRY_500}
+								/>
 							</ErrorPopover>
 						)}
 
-						{isWarning && (
-							<Tooltip
-								title={WARNING_MESSAGE}
+						{isWarning && queryResponse.data?.warning && (
+							<WarningPopover
+								content={renderWarningMessage}
 								placement={errorTooltipPosition}
-								className="widget-api-actions"
+								overlayStyle={{ padding: 0, maxWidth: '600px' }}
+								overlayInnerStyle={{ padding: 0 }}
+								autoAdjustOverflow
 							>
-								<WarningOutlined />
-							</Tooltip>
+								<WarningOutlined
+									size={16}
+									style={{ cursor: 'pointer' }}
+									color={Color.BG_AMBER_500}
+								/>
+							</WarningPopover>
 						)}
 						{globalSearchAvailable && (
 							<SearchOutlined

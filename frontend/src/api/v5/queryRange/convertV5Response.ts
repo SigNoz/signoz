@@ -374,6 +374,7 @@ export function convertV5ResponseToLegacy(
 					resultType: 'scalar',
 					result: webTables,
 				},
+				warning: v5Data?.warning || undefined,
 			},
 		};
 	}
@@ -390,6 +391,7 @@ export function convertV5ResponseToLegacy(
 		...v5Response,
 		payload: {
 			data: convertedData,
+			warning: v5Response.payload?.data?.warning || undefined,
 		},
 	};
 
