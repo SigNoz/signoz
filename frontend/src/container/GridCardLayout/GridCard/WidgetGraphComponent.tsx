@@ -45,7 +45,6 @@ import { getLocalStorageGraphVisibilityState, handleGraphClick } from './utils';
 function WidgetGraphComponent({
 	widget,
 	queryResponse,
-	errorMessage,
 	version,
 	threshold,
 	headerMenuList,
@@ -366,7 +365,6 @@ function WidgetGraphComponent({
 					onDelete={handleOnDelete}
 					onClone={onCloneHandler}
 					queryResponse={queryResponse}
-					errorMessage={errorMessage}
 					threshold={threshold}
 					headerMenuList={headerMenuList}
 					isWarning={isWarning}

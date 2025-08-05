@@ -19,7 +19,7 @@ import {
 import { Pagination } from 'hooks/queryPagination';
 import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
 import { isEmpty } from 'lodash-es';
-import { SuccessResponse } from 'types/api';
+import { SuccessResponse, SuccessResponseV2, Warning } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -114,11 +114,13 @@ export async function GetMetricQueryRange(
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
 	isInfraMonitoring?: boolean,
-): Promise<SuccessResponse<MetricRangePayloadProps>> {
+): Promise<SuccessResponse<MetricRangePayloadProps> & { warning?: Warning }> {
 	let legendMap: Record<string, string>;
 	let response:
 		| SuccessResponse<MetricRangePayloadProps>
-		| SuccessResponseV2<MetricRangePayloadV5>;
+		| SuccessResponseV2<MetricRangePayloadV5>
+		| (SuccessResponse<MetricRangePayloadProps> & { warning?: Warning });
+	let warning: Warning | undefined;
 
 	const panelType = props.originalGraphType || props.graphType;
 
@@ -146,6 +148,7 @@ export async function GetMetricQueryRange(
 						},
 					},
 				},
+				warning: undefined,
 			},
 			params: props,
 		};
@@ -173,6 +176,7 @@ export async function GetMetricQueryRange(
 						},
 					},
 				},
+				warning: undefined,
 				params: props,
 			};
 		}
@@ -193,6 +197,8 @@ export async function GetMetricQueryRange(
 			legendMap,
 			finalFormatForWeb,
 		);
+
+		warning = response.payload.warning || undefined;
 	} else {
 		const legacyResult = prepareQueryRangePayload(props);
 		legendMap = legacyResult.legendMap;
@@ -255,7 +261,10 @@ export async function GetMetricQueryRange(
 		);
 	}
 
-	return response;
+	return {
+		...response,
+		warning,
+	};
 }
 
 export interface GetQueryResultsProps {

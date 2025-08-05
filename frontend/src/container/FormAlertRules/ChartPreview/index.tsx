@@ -1,7 +1,8 @@
 import './ChartPreview.styles.scss';
 
-import { InfoCircleOutlined } from '@ant-design/icons';
+import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import Spinner from 'components/Spinner';
+import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
@@ -34,7 +35,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
+import { Warning } from 'types/api';
 import { AlertDef } from 'types/api/alerts/def';
+import APIError from 'types/api/error';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -44,7 +47,7 @@ import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import { AlertDetectionTypes } from '..';
-import { ChartContainer, FailedMessageContainer } from './styles';
+import { ChartContainer } from './styles';
 import { getThresholdLabel } from './utils';
 
 export interface ChartPreviewProps {
@@ -289,20 +292,23 @@ function ChartPreview({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
 			?.active || false;
 
+	const isWarning = !!queryResponse.data?.warning?.message;
 	return (
 		<div className="alert-chart-container" ref={graphRef}>
 			<ChartContainer>
-				{headline}
+				<div className="chart-preview-header">
+					{headline}
+					{isWarning && (
+						<WarningPopover warningData={queryResponse.data?.warning as Warning} />
+					)}
+				</div>
 
 				<div className="threshold-alert-uplot-chart-container">
 					{queryResponse.isLoading && (
 						<Spinner size="large" tip="Loading..." height="100%" />
 					)}
 					{(queryResponse?.isError || queryResponse?.error) && (
-						<FailedMessageContainer color="red" title="Failed to refresh the chart">
-							<InfoCircleOutlined />
-							{queryResponse.error.message || t('preview_chart_unexpected_error')}
-						</FailedMessageContainer>
+						<ErrorInPlace error={queryResponse.error as APIError} />
 					)}
 
 					{chartDataAvailable && !isAnomalyDetectionAlert && (
