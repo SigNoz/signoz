@@ -108,7 +108,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 ) (string, []any) {
-	var filterWhere *sqlbuilder.WhereClause
+	var filterWhere *querybuilder.PreparedWhereClause
 	var err error
 	stepSec := int64(query.StepInterval.Seconds())
 
@@ -140,7 +140,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 		sb.LT("unix_milli", end),
 	)
 	if query.Filter != nil && query.Filter.Expression != "" {
-		filterWhere, _, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		filterWhere, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,
@@ -152,7 +152,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 		}
 	}
 	if filterWhere != nil {
-		sb.AddWhereClause(filterWhere)
+		sb.AddWhereClause(filterWhere.WhereClause)
 	}
 
 	if query.Aggregations[0].Temporality != metrictypes.Unknown {
@@ -185,7 +185,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 ) (string, []any, error) {
-	var filterWhere *sqlbuilder.WhereClause
+	var filterWhere *querybuilder.PreparedWhereClause
 	var err error
 
 	stepSec := int64(query.StepInterval.Seconds())
@@ -222,7 +222,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 	)
 
 	if query.Filter != nil && query.Filter.Expression != "" {
-		filterWhere, _, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		filterWhere, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,
@@ -234,7 +234,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 		}
 	}
 	if filterWhere != nil {
-		sb.AddWhereClause(filterWhere)
+		sb.AddWhereClause(filterWhere.WhereClause)
 	}
 
 	if query.Aggregations[0].Temporality != metrictypes.Unknown {
@@ -256,7 +256,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 ) (string, []any, error) {
-	var filterWhere *sqlbuilder.WhereClause
+	var filterWhere *querybuilder.PreparedWhereClause
 	var err error
 	stepSec := int64(query.StepInterval.Seconds())
 
@@ -285,7 +285,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		baseSb.LT("unix_milli", end),
 	)
 	if query.Filter != nil && query.Filter.Expression != "" {
-		filterWhere, _, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		filterWhere, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,
@@ -297,7 +297,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		}
 	}
 	if filterWhere != nil {
-		baseSb.AddWhereClause(filterWhere)
+		baseSb.AddWhereClause(filterWhere.WhereClause)
 	}
 
 	if query.Aggregations[0].Temporality != metrictypes.Unknown {
