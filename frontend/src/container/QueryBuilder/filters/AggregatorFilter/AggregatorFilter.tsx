@@ -38,6 +38,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	defaultValue,
 	onSelect,
 	index,
+	signalSource,
 }: AgregatorFilterProps): JSX.Element {
 	const queryClient = useQueryClient();
 	const [optionsData, setOptionsData] = useState<ExtendedSelectOption[]>([]);
@@ -73,11 +74,11 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				searchText: debouncedValue,
 				aggregateOperator: queryAggregation.timeAggregation,
 				dataSource: query.dataSource,
+				source: signalSource || '',
 			}),
 		{
 			enabled:
 				query.dataSource === DataSource.METRICS ||
-				query.dataSource === DataSource.METER ||
 				(!!queryAggregation.timeAggregation && !!query.dataSource),
 			onSuccess: (data) => {
 				const options: ExtendedSelectOption[] =
@@ -153,10 +154,17 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		setSearchText(text);
 	}, []);
 
-	const placeholder: string =
-		query.dataSource === DataSource.METRICS
-			? `Search metric name`
-			: 'Aggregate attribute';
+	const getPlaceholder = useCallback(() => {
+		if (signalSource === 'meter') {
+			return 'Meter name';
+		}
+
+		if (query.dataSource === DataSource.METRICS) {
+			return 'Metric name';
+		}
+
+		return 'Aggregate attribute';
+	}, [signalSource, query.dataSource]);
 
 	const getAttributesData = useCallback(
 		(): BaseAutocompleteData[] =>
@@ -285,7 +293,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	return (
 		<AutoComplete
 			getPopupContainer={popupContainer}
-			placeholder={placeholder}
+			placeholder={getPlaceholder()}
 			style={selectStyle}
 			filterOption={false}
 			onSearch={handleSearchText}

@@ -18,7 +18,6 @@ export const DATASOURCE_VS_ROUTES: Record<DataSource, string> = {
 	[DataSource.METRICS]: ROUTES.METRICS_EXPLORER,
 	[DataSource.TRACES]: ROUTES.TRACES_EXPLORER,
 	[DataSource.LOGS]: ROUTES.LOGS_EXPLORER,
-	[DataSource.METER]: ROUTES.METER_EXPLORER,
 };
 
 export const saveNewViewHandler = ({

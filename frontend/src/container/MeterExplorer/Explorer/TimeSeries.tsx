@@ -1,6 +1,6 @@
 import { isAxiosError } from 'axios';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
@@ -45,7 +45,7 @@ function TimeSeries(): JSX.Element {
 	}, [currentQuery]);
 
 	const queryPayloads = useMemo(
-		() => [stagedQuery || initialQueriesMap[DataSource.METER]],
+		() => [stagedQuery || initialQueryMeterWithType],
 		[stagedQuery],
 	);
 
@@ -70,7 +70,7 @@ function TimeSeries(): JSX.Element {
 						selectedTime: 'GLOBAL_TIME',
 						globalSelectedInterval: globalSelectedTime,
 						params: {
-							dataSource: DataSource.METER,
+							dataSource: DataSource.METRICS,
 						},
 					},
 					ENTITY_VERSION_V5,
@@ -120,7 +120,7 @@ function TimeSeries(): JSX.Element {
 						isError={queries[index].isError}
 						isLoading={queries[index].isLoading}
 						data={datapoint}
-						dataSource={DataSource.METER}
+						dataSource={DataSource.METRICS}
 					/>
 				</div>
 			))}

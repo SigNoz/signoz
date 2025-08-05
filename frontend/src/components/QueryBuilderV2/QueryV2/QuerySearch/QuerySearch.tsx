@@ -81,10 +81,12 @@ function QuerySearch({
 	queryData,
 	dataSource,
 	onRun,
+	signalSource,
 }: {
 	onChange: (value: string) => void;
 	queryData: IBuilderQuery;
 	dataSource: DataSource;
+	signalSource?: string;
 	onRun?: (query: string) => void;
 }): JSX.Element {
 	const isDarkMode = useIsDarkMode();
@@ -214,6 +216,7 @@ function QuerySearch({
 				signal: dataSource,
 				searchText: searchText || '',
 				metricName: debouncedMetricName ?? undefined,
+				signalSource: signalSource as 'meter' | '',
 			});
 
 			if (response.data.data) {
@@ -374,6 +377,7 @@ function QuerySearch({
 					key,
 					searchText: sanitizedSearchText,
 					signal: dataSource,
+					signalSource: signalSource as 'meter' | '',
 				});
 
 				// Skip updates if component unmounted or key changed
@@ -461,8 +465,13 @@ function QuerySearch({
 				setIsFetchingCompleteValuesList(false);
 			}
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[activeKey, dataSource, isFocused],
+		[
+			activeKey,
+			dataSource,
+			isLoadingSuggestions,
+			signalSource,
+			toggleSuggestions,
+		],
 	);
 
 	const debouncedFetchValueSuggestions = useMemo(
@@ -1436,6 +1445,7 @@ function QuerySearch({
 
 QuerySearch.defaultProps = {
 	onRun: undefined,
+	signalSource: '',
 };
 
 export default QuerySearch;

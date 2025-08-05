@@ -188,7 +188,7 @@ function Explorer(): JSX.Element {
 				query={exportDefaultQuery}
 				sourcepage={DataSource.METRICS}
 				onExport={handleExport}
-				isOneChartPerQuery={showOneChartPerQuery}
+				isOneChartPerQuery={false}
 				splitedQueries={splitedQueries}
 			/>
 		</Sentry.ErrorBoundary>

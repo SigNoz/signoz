@@ -513,7 +513,7 @@ export const convertAggregationToExpression = (
 		spaceAggregation === 'noop' ? 'count' : spaceAggregation;
 
 	// For metrics, use the MetricAggregation format
-	if (dataSource === DataSource.METRICS || dataSource === DataSource.METER) {
+	if (dataSource === DataSource.METRICS) {
 		return [
 			{
 				metricName: aggregateAttribute.key,
@@ -598,10 +598,7 @@ export const adjustQueryForV5 = (currentQuery: Query): Query => {
 	if (currentQuery.queryType === EQueryType.QUERY_BUILDER) {
 		const newQueryData = currentQuery.builder.queryData.map((query) => {
 			const aggregations = query.aggregations?.map((aggregation) => {
-				if (
-					query.dataSource === DataSource.METRICS ||
-					query.dataSource === DataSource.METER
-				) {
+				if (query.dataSource === DataSource.METRICS) {
 					const metricAggregation = aggregation as MetricAggregation;
 					return {
 						...aggregation,
@@ -628,8 +625,7 @@ export const adjustQueryForV5 = (currentQuery: Query): Query => {
 			} = query;
 
 			const newAggregations =
-				query.dataSource === DataSource.METRICS ||
-				query.dataSource === DataSource.METER
+				query.dataSource === DataSource.METRICS
 					? (aggregations as MetricAggregation[])
 					: (aggregations as (TraceAggregation | LogAggregation)[]);
 

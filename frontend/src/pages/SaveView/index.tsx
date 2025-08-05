@@ -167,7 +167,7 @@ function SaveView(): JSX.Element {
 				logEvent(MetricsExplorerEvents.TabChanged, {
 					[MetricsExplorerEventKeys.Tab]: 'views',
 				});
-			} else if (sourcepage === DataSource.METER) {
+			} else if (sourcepage === 'meter') {
 				logEvent(MeterExplorerEvents.TabChanged, {
 					[MeterExplorerEventKeys.Tab]: 'views',
 				});

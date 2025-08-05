@@ -185,10 +185,7 @@ function QueryAddOns({
 			filteredAddOns = Object.values(ADD_ONS);
 
 			// Filter out group_by for metrics data source
-			if (
-				query.dataSource === DataSource.METRICS ||
-				query.dataSource === DataSource.METER
-			) {
+			if (query.dataSource === DataSource.METRICS) {
 				filteredAddOns = filteredAddOns.filter(
 					(addOn) => addOn.key !== ADD_ONS_KEYS.GROUP_BY,
 				);
@@ -305,8 +302,7 @@ function QueryAddOns({
 								<div className="input">
 									<GroupByFilter
 										disabled={
-											(query.dataSource === DataSource.METRICS ||
-												query.dataSource === DataSource.METER) &&
+											query.dataSource === DataSource.METRICS &&
 											!(query.aggregations?.[0] as MetricAggregation)?.metricName
 										}
 										query={query}

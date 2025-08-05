@@ -2,13 +2,11 @@ import './TimeSeriesView.styles.scss';
 
 import logEvent from 'api/common/logEvent';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import { PanelDataLoading } from 'components/PanelDataLoading/PanelDataLoading';
 import Uplot from 'components/Uplot';
 import { QueryParams } from 'constants/query';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import { getLocalStorageGraphVisibilityState } from 'container/GridCardLayout/GridCard/utils';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
-import NoData from 'container/MeterExplorer/Explorer/NoData';
 import EmptyMetricsSearch from 'container/MetricsExplorer/Explorer/EmptyMetricsSearch';
 import { MetricsLoading } from 'container/MetricsExplorer/MetricsLoading/MetricsLoading';
 import NoLogs from 'container/NoLogs/NoLogs';
@@ -173,10 +171,6 @@ function TimeSeriesView({
 				logEvent('Metrics Explorer: Data present', {
 					panelType: 'TIME_SERIES',
 				});
-			} else if (dataSource === DataSource.METER) {
-				logEvent('Meter Explorer: Data present', {
-					panelType: 'TIME_SERIES',
-				});
 			}
 		}
 	}, [isLoading, isError, chartData, dataSource]);
@@ -211,6 +205,7 @@ function TimeSeriesView({
 	return (
 		<div className="time-series-view">
 			{isError && error && <ErrorInPlace error={error as APIError} />}
+
 			<div
 				className="graph-container"
 				style={{ height: '100%', width: '100%' }}
@@ -220,7 +215,6 @@ function TimeSeriesView({
 				{isLoading && dataSource === DataSource.LOGS && <LogsLoading />}
 				{isLoading && dataSource === DataSource.TRACES && <TracesLoading />}
 				{isLoading && dataSource === DataSource.METRICS && <MetricsLoading />}
-				{isLoading && dataSource === DataSource.METER && <PanelDataLoading />}
 
 				{chartData &&
 					chartData[0] &&
@@ -237,8 +231,7 @@ function TimeSeriesView({
 					!isLoading &&
 					!isError &&
 					!isFilterApplied &&
-					dataSource !== DataSource.METRICS &&
-					dataSource !== DataSource.METER && <NoLogs dataSource={dataSource} />}
+					dataSource !== DataSource.METRICS && <NoLogs dataSource={dataSource} />}
 
 				{chartData &&
 					chartData[0] &&
@@ -246,13 +239,6 @@ function TimeSeriesView({
 					!isLoading &&
 					!isError &&
 					dataSource === DataSource.METRICS && <EmptyMetricsSearch />}
-
-				{chartData &&
-					chartData[0] &&
-					chartData[0]?.length === 0 &&
-					!isLoading &&
-					!isError &&
-					dataSource === DataSource.METER && <NoData />}
 
 				{!isLoading &&
 					!isError &&

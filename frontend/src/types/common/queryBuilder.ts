@@ -19,7 +19,6 @@ export enum DataSource {
 	METRICS = 'metrics',
 	TRACES = 'traces',
 	LOGS = 'logs',
-	METER = 'meter',
 }
 
 export enum StringOperators {
@@ -274,6 +273,7 @@ export type QueryBuilderContextType = {
 		queryData: Query,
 		panelType: PANEL_TYPES,
 		dataSource: DataSource,
+		signalSource?: 'meter' | '',
 	) => Query;
 	updateQueriesData: <T extends keyof QueryBuilderData>(
 		query: Query,

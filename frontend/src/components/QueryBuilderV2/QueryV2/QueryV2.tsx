@@ -28,6 +28,7 @@ export const QueryV2 = memo(function QueryV2({
 	isListViewPanel = false,
 	version,
 	showOnlyWhereClause = false,
+	signalSource = '',
 }: QueryProps & { ref: React.RefObject<HTMLDivElement> }): JSX.Element {
 	const { cloneQuery, panelType } = useQueryBuilder();
 
@@ -63,7 +64,7 @@ export const QueryV2 = memo(function QueryV2({
 
 	const showReduceTo = useMemo(
 		() =>
-			(dataSource === DataSource.METRICS || dataSource === DataSource.METER) &&
+			dataSource === DataSource.METRICS &&
 			(panelType === PANEL_TYPES.TABLE ||
 				panelType === PANEL_TYPES.PIE ||
 				panelType === PANEL_TYPES.VALUE),
@@ -112,14 +113,11 @@ export const QueryV2 = memo(function QueryV2({
 						<div className="query-actions-container">
 							<div className="query-actions-left-container">
 								<QBEntityOptions
-									isMetricsDataSource={
-										dataSource === DataSource.METRICS || dataSource === DataSource.METER
-									}
+									isMetricsDataSource={dataSource === DataSource.METRICS}
 									showFunctions={
 										(version && version === ENTITY_VERSION_V4) ||
 										query.dataSource === DataSource.LOGS ||
 										query.dataSource === DataSource.METRICS ||
-										query.dataSource === DataSource.METER ||
 										showFunctions ||
 										false
 									}
@@ -172,13 +170,13 @@ export const QueryV2 = memo(function QueryV2({
 				{!isCollapsed && (
 					<div className="qb-elements-container">
 						<div className="qb-search-container">
-							{(dataSource === DataSource.METRICS ||
-								dataSource === DataSource.METER) && (
+							{dataSource === DataSource.METRICS && (
 								<div className="metrics-select-container">
 									<MetricsSelect
 										query={query}
 										index={index}
 										version={ENTITY_VERSION_V5}
+										signalSource={signalSource as 'meter' | ''}
 									/>
 								</div>
 							)}
@@ -190,6 +188,7 @@ export const QueryV2 = memo(function QueryV2({
 										onChange={handleSearchChange}
 										queryData={query}
 										dataSource={dataSource}
+										signalSource={signalSource}
 									/>
 								</div>
 
@@ -204,8 +203,7 @@ export const QueryV2 = memo(function QueryV2({
 
 						{!showOnlyWhereClause &&
 							!isListViewPanel &&
-							dataSource !== DataSource.METRICS &&
-							dataSource !== DataSource.METER && (
+							dataSource !== DataSource.METRICS && (
 								<QueryAggregation
 									dataSource={dataSource}
 									key={`query-search-${query.queryName}-${query.dataSource}`}
@@ -216,17 +214,15 @@ export const QueryV2 = memo(function QueryV2({
 								/>
 							)}
 
-						{!showOnlyWhereClause &&
-							(dataSource === DataSource.METRICS ||
-								dataSource === DataSource.METER) && (
-								<MetricsAggregateSection
-									panelType={panelType}
-									query={query}
-									index={index}
-									key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}`}
-									version="v4"
-								/>
-							)}
+						{!showOnlyWhereClause && dataSource === DataSource.METRICS && (
+							<MetricsAggregateSection
+								panelType={panelType}
+								query={query}
+								index={index}
+								key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}`}
+								version="v4"
+							/>
+						)}
 
 						{!showOnlyWhereClause && (
 							<QueryAddOns

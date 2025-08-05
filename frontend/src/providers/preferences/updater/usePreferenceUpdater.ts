@@ -38,7 +38,6 @@ const getUpdaterConfig = (
 		setSavedViewPreferences,
 	),
 	[DataSource.METRICS]: metricsUpdater,
-	[DataSource.METER]: metricsUpdater,
 });
 
 export function usePreferenceUpdater({
