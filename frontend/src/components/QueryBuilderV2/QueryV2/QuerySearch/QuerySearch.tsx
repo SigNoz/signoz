@@ -1130,24 +1130,7 @@ function QuerySearch({
 		if (editorRef.current) {
 			toggleSuggestions(10);
 		}
-
-		// // Handle value suggestions for value context
-		// if (queryContext.isInValue) {
-		// 	const { keyToken, currentToken } = queryContext;
-		// 	const key = keyToken || currentToken;
-
-		// 	// Only fetch if needed and if we have a valid key
-		// 	if (key && key !== activeKey && !isLoadingSuggestions) {
-		// 		fetchValueSuggestions({ key });
-		// 	}
-		// }
-	}, [
-		queryContext,
-		toggleSuggestions,
-		// isLoadingSuggestions,
-		// activeKey,
-		// fetchValueSuggestions,
-	]);
+	}, [queryContext, toggleSuggestions]);
 
 	const getTooltipContent = (): JSX.Element => (
 		<div>
