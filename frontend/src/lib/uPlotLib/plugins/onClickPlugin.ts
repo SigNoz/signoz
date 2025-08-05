@@ -63,7 +63,12 @@ export const getFocusedSeriesAtPosition = (
 			} else {
 				// Generate color based on series label (like the tooltip plugin does)
 				const seriesLabel = series.label || `Series ${focusedSeriesIndex}`;
-				color = generateColor(seriesLabel, themeColors.chartcolors);
+				// Detect theme mode by checking body class
+				const isDarkMode = !document.body.classList.contains('lightMode');
+				color = generateColor(
+					seriesLabel,
+					isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+				);
 			}
 
 			return {
