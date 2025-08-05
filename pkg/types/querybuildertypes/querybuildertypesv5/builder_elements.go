@@ -47,8 +47,7 @@ func (s *Step) UnmarshalJSON(b []byte) error {
 }
 
 func (s Step) MarshalJSON() ([]byte, error) {
-	// Emit human‑friendly string → "30s"
-	return json.Marshal(s.Duration.String())
+	return json.Marshal(s.Duration.Seconds())
 }
 
 // FilterOperator is the operator for the filter.
