@@ -1,5 +1,5 @@
 import { cloneDeep, isEmpty } from 'lodash-es';
-import { SuccessResponse } from 'types/api';
+import { SuccessResponse, Warning } from 'types/api';
 import { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import {
 	DistributionData,
@@ -28,14 +28,18 @@ function getColName(
 	const aggregationsCount = aggregationPerQuery[col.queryName]?.length || 0;
 	const isSingleAggregation = aggregationsCount === 1;
 
-	// Single aggregation: Priority is alias > legend > expression
-	if (isSingleAggregation) {
-		return alias || legend || expression;
+	if (aggregationsCount > 0) {
+		// Single aggregation: Priority is alias > legend > expression
+		if (isSingleAggregation) {
+			return alias || legend || expression || col.queryName;
+		}
+
+		// Multiple aggregations: Each follows single rules BUT never shows legend
+		// Priority: alias > expression (legend is ignored for multiple aggregations)
+		return alias || expression || col.queryName;
 	}
 
-	// Multiple aggregations: Each follows single rules BUT never shows legend
-	// Priority: alias > expression (legend is ignored for multiple aggregations)
-	return alias || expression;
+	return legend || col.queryName;
 }
 
 function getColId(
@@ -48,7 +52,14 @@ function getColId(
 	const aggregation =
 		aggregationPerQuery?.[col.queryName]?.[col.aggregationIndex];
 	const expression = aggregation?.expression || '';
-	return `${col.queryName}.${expression}`;
+	const aggregationsCount = aggregationPerQuery[col.queryName]?.length || 0;
+	const isMultipleAggregations = aggregationsCount > 1;
+
+	if (isMultipleAggregations && expression) {
+		return `${col.queryName}.${expression}`;
+	}
+
+	return col.queryName;
 }
 
 /**
@@ -341,7 +352,7 @@ export function convertV5ResponseToLegacy(
 	v5Response: SuccessResponse<MetricRangePayloadV5>,
 	legendMap: Record<string, string>,
 	formatForWeb?: boolean,
-): SuccessResponse<MetricRangePayloadV3> {
+): SuccessResponse<MetricRangePayloadV3> & { warning?: Warning } {
 	const { payload, params } = v5Response;
 	const v5Data = payload?.data;
 
@@ -367,14 +378,18 @@ export function convertV5ResponseToLegacy(
 			legendMap,
 			aggregationPerQuery,
 		);
+
 		return {
 			...v5Response,
 			payload: {
 				data: {
 					resultType: 'scalar',
 					result: webTables,
+					warnings: v5Data?.data?.warnings || [],
 				},
+				warning: v5Data?.warning || undefined,
 			},
+			warning: v5Data?.warning || undefined,
 		};
 	}
 
@@ -390,6 +405,7 @@ export function convertV5ResponseToLegacy(
 		...v5Response,
 		payload: {
 			data: convertedData,
+			warning: v5Response.payload?.data?.warning || undefined,
 		},
 	};
 

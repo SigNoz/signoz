@@ -44,3 +44,14 @@ export interface SuccessResponseV2<T> {
 	httpStatusCode: StatusCodes;
 	data: T;
 }
+
+export interface AdditionalWarnings {
+	message: string;
+}
+
+export interface Warning {
+	code: string;
+	message: string;
+	url: string;
+	warnings: AdditionalWarnings[];
+}
