@@ -10,7 +10,6 @@ import {
 	InfoCircleOutlined,
 	MoreOutlined,
 	SearchOutlined,
-	WarningOutlined,
 } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Dropdown, Input, MenuProps, Tooltip, Typography } from 'antd';
@@ -29,7 +28,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
-import { CircleX, X } from 'lucide-react';
+import { CircleX, TriangleAlert, X } from 'lucide-react';
 import { unparse } from 'papaparse';
 import { useAppContext } from 'providers/App/App';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
@@ -310,7 +309,7 @@ function WidgetHeader({
 								overlayInnerStyle={{ padding: 0 }}
 								autoAdjustOverflow
 							>
-								<WarningOutlined
+								<TriangleAlert
 									size={16}
 									style={{ cursor: 'pointer' }}
 									color={Color.BG_AMBER_500}
