@@ -33,6 +33,7 @@ export interface MetricRangePayloadProps {
 		result: QueryData[];
 		resultType: string;
 		newResult: MetricRangePayloadV3;
+		warnings?: string[];
 	};
 }
 
@@ -40,6 +41,7 @@ export interface MetricRangePayloadV3 {
 	data: {
 		result: QueryDataV3[];
 		resultType: string;
+		warnings?: string[];
 	};
 	warning?: Warning;
 }

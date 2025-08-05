@@ -127,6 +127,7 @@ export interface VariableItem {
 
 export interface TelemetryFieldKey {
 	name: string;
+	key?: string;
 	description?: string;
 	unit?: string;
 	signal?: SignalType;
@@ -170,6 +171,7 @@ export interface FunctionArg {
 export interface QueryFunction {
 	name: FunctionName;
 	args?: FunctionArg[];
+	namedArgs?: Record<string, string | number>;
 }
 
 // ===================== Aggregation Types =====================
@@ -418,7 +420,7 @@ export type QueryRangeDataV5 =
 
 export interface QueryRangeResponseV5 {
 	type: RequestType;
-	data: QueryRangeDataV5;
+	data: QueryRangeDataV5 & { warnings?: string[] };
 	meta: ExecStats;
 	warning?: Warning;
 }
