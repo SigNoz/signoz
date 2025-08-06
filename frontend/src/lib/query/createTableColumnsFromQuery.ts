@@ -237,37 +237,6 @@ const addOperatorFormulaColumns = (
 	}
 };
 
-const transformColumnTitles = (
-	dynamicColumns: DynamicColumns,
-): DynamicColumns =>
-	dynamicColumns.map((item) => {
-		if (isFormula(item.field as string)) {
-			return item;
-		}
-
-		const sameValues = dynamicColumns.filter(
-			(column) => column.title === item.title,
-		);
-
-		if (sameValues.length > 1) {
-			return {
-				...item,
-				dataIndex: `${item.title} - ${get(
-					item.query,
-					'queryName',
-					get(item.query, 'name', ''),
-				)}`,
-				title: `${item.title} - ${get(
-					item.query,
-					'queryName',
-					get(item.query, 'name', ''),
-				)}`,
-			};
-		}
-
-		return item;
-	});
-
 const processTableColumns = (
 	table: NonNullable<QueryDataV3['table']>,
 	currentStagedQuery:
@@ -369,7 +338,7 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 		}
 	});
 
-	return transformColumnTitles(dynamicColumns);
+	return dynamicColumns;
 };
 
 const fillEmptyRowCells = (
@@ -634,9 +603,9 @@ const generateData = (
 
 	for (let i = 0; i < rowsLength; i += 1) {
 		const rowData: RowData = dynamicColumns.reduce((acc, item) => {
-			const { dataIndex } = item;
+			const { dataIndex, id } = item;
 
-			acc[dataIndex] = item.data[i];
+			acc[id || dataIndex] = item.data[i];
 			acc.key = uuid();
 
 			return acc;
@@ -655,25 +624,22 @@ const generateTableColumns = (
 	const columns: ColumnsType<RowData> = dynamicColumns.reduce<
 		ColumnsType<RowData>
 	>((acc, item) => {
+		const dataIndex = item.id || item.dataIndex;
 		const column: ColumnType<RowData> = {
-			dataIndex: item.dataIndex,
+			dataIndex,
 			title: item.title,
 			width: QUERY_TABLE_CONFIG.width,
-			render: renderColumnCell && renderColumnCell[item.dataIndex],
+			render: renderColumnCell && renderColumnCell[dataIndex],
 			sorter: (a: RowData, b: RowData): number => {
-				const valueA = Number(
-					a[`${item.dataIndex}_without_unit`] ?? a[item.dataIndex],
-				);
-				const valueB = Number(
-					b[`${item.dataIndex}_without_unit`] ?? b[item.dataIndex],
-				);
+				const valueA = Number(a[`${dataIndex}_without_unit`] ?? a[dataIndex]);
+				const valueB = Number(b[`${dataIndex}_without_unit`] ?? b[dataIndex]);
 
 				if (!isNaN(valueA) && !isNaN(valueB)) {
 					return valueA - valueB;
 				}
 
-				return ((a[item.dataIndex] as string) || '').localeCompare(
-					(b[item.dataIndex] as string) || '',
+				return ((a[dataIndex] as string) || '').localeCompare(
+					(b[dataIndex] as string) || '',
 				);
 			},
 		};
@@ -682,6 +648,70 @@ const generateTableColumns = (
 	}, []);
 
 	return columns;
+};
+
+/**
+ * Gets the appropriate column unit with fallback logic
+ * New syntax: queryName.expression -> unit
+ * Old syntax: queryName -> unit (fallback)
+ *
+ * Examples:
+ * - New syntax: "A.count()" -> looks for "A.count()" first, then falls back to "A"
+ * - Old syntax: "A" -> looks for "A" directly
+ * - Mixed: "A.avg(test)" -> looks for "A.avg(test)" first, then falls back to "A"
+ *
+ * @param columnKey - The column identifier (could be queryName.expression or queryName)
+ * @param columnUnits - The column units mapping
+ * @returns The unit string or undefined if not found
+ */
+export const getColumnUnit = (
+	columnKey: string,
+	columnUnits: Record<string, string>,
+): string | undefined => {
+	// First try the exact match (new syntax: queryName.expression)
+	if (columnUnits[columnKey]) {
+		return columnUnits[columnKey];
+	}
+
+	// Fallback to old syntax: extract queryName from queryName.expression
+	if (columnKey.includes('.')) {
+		const queryName = columnKey.split('.')[0];
+		return columnUnits[queryName];
+	}
+
+	return undefined;
+};
+
+/**
+ * Gets the appropriate column width with fallback logic
+ * New syntax: queryName.expression -> width
+ * Old syntax: queryName -> width (fallback)
+ *
+ * Examples:
+ * - New syntax: "A.count()" -> looks for "A.count()" first, then falls back to "A"
+ * - Old syntax: "A" -> looks for "A" directly
+ * - Mixed: "A.avg(test)" -> looks for "A.avg(test)" first, then falls back to "A"
+ *
+ * @param columnKey - The column identifier (could be queryName.expression or queryName)
+ * @param columnWidths - The column widths mapping
+ * @returns The width number or undefined if not found
+ */
+export const getColumnWidth = (
+	columnKey: string,
+	columnWidths: Record<string, number>,
+): number | undefined => {
+	// First try the exact match (new syntax: queryName.expression)
+	if (columnWidths[columnKey]) {
+		return columnWidths[columnKey];
+	}
+
+	// Fallback to old syntax: extract queryName from queryName.expression
+	if (columnKey.includes('.')) {
+		const queryName = columnKey.split('.')[0];
+		return columnWidths[queryName];
+	}
+
+	return undefined;
 };
 
 export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
