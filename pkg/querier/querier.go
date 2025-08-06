@@ -387,7 +387,7 @@ func (q *querier) run(
 			}
 		}
 
-		resp.Warning = qbtypes.QueryWarnData{
+		resp.Warning = &qbtypes.QueryWarnData{
 			Message:  "Encountered warnings",
 			Url:      warningsDocURL,
 			Warnings: warns,
@@ -501,23 +501,36 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 
 // createRangedQuery creates a copy of the query with a different time range
 func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtypes.TimeRange) qbtypes.Query {
+	// this is called in a goroutine, so we create a copy of the query to avoid race conditions
 	switch qt := originalQuery.(type) {
 	case *promqlQuery:
-		return newPromqlQuery(q.logger, q.promEngine, qt.query, timeRange, qt.requestType, qt.vars)
+		queryCopy := qt.query.Copy()
+		return newPromqlQuery(q.logger, q.promEngine, queryCopy, timeRange, qt.requestType, qt.vars)
+
 	case *chSQLQuery:
-		return newchSQLQuery(q.logger, q.telemetryStore, qt.query, qt.args, timeRange, qt.kind, qt.vars)
+		queryCopy := qt.query.Copy()
+		argsCopy := make([]any, len(qt.args))
+		copy(argsCopy, qt.args)
+		return newchSQLQuery(q.logger, q.telemetryStore, queryCopy, argsCopy, timeRange, qt.kind, qt.vars)
+
 	case *builderQuery[qbtypes.TraceAggregation]:
-		qt.spec.ShiftBy = extractShiftFromBuilderQuery(qt.spec)
-		adjustedTimeRange := adjustTimeRangeForShift(qt.spec, timeRange, qt.kind)
-		return newBuilderQuery(q.telemetryStore, q.traceStmtBuilder, qt.spec, adjustedTimeRange, qt.kind, qt.variables)
+		specCopy := qt.spec.Copy()
+		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
+		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
+		return newBuilderQuery(q.telemetryStore, q.traceStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
+
 	case *builderQuery[qbtypes.LogAggregation]:
-		qt.spec.ShiftBy = extractShiftFromBuilderQuery(qt.spec)
-		adjustedTimeRange := adjustTimeRangeForShift(qt.spec, timeRange, qt.kind)
-		return newBuilderQuery(q.telemetryStore, q.logStmtBuilder, qt.spec, adjustedTimeRange, qt.kind, qt.variables)
+		specCopy := qt.spec.Copy()
+		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
+		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
+		return newBuilderQuery(q.telemetryStore, q.logStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
+
 	case *builderQuery[qbtypes.MetricAggregation]:
-		qt.spec.ShiftBy = extractShiftFromBuilderQuery(qt.spec)
-		adjustedTimeRange := adjustTimeRangeForShift(qt.spec, timeRange, qt.kind)
-		return newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, qt.spec, adjustedTimeRange, qt.kind, qt.variables)
+		specCopy := qt.spec.Copy()
+		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
+		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
+		return newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
+
 	default:
 		return nil
 	}

@@ -1,3 +1,4 @@
+// nolint
 package transition
 
 import (
@@ -189,7 +190,7 @@ func (mc *migrateCommon) updateQueryData(ctx context.Context, queryData map[stri
 							}
 
 							if !present {
-								mc.logger.InfoContext(ctx, "found a order by without group by, skipping", "order_col_name", columnName)
+								mc.logger.WarnContext(ctx, "found a order by without group by, skipping", "order_col_name", columnName)
 								continue
 							}
 						}
@@ -444,7 +445,7 @@ func (mc *migrateCommon) createAggregations(ctx context.Context, queryData map[s
 				spaceAgg = "sum"
 				reduceTo = "sum"
 			case "noop":
-				mc.logger.InfoContext(ctx, "noop found in the data")
+				mc.logger.WarnContext(ctx, "noop found in the aggregation data")
 				timeAgg = "max"
 				spaceAgg = "max"
 				reduceTo = "max"
@@ -636,7 +637,7 @@ func (mc *migrateCommon) buildExpression(ctx context.Context, items []any, op, d
 		value, valueOk := itemMap["value"]
 
 		if !keyOk || !opOk || !valueOk {
-			mc.logger.InfoContext(ctx, "didn't find either key, op, or value; continuing")
+			mc.logger.WarnContext(ctx, "didn't find either key, op, or value; continuing")
 			continue
 		}
 
@@ -646,7 +647,7 @@ func (mc *migrateCommon) buildExpression(ctx context.Context, items []any, op, d
 		}
 
 		if slices.Contains(mc.ambiguity[dataSource], keyStr) {
-			mc.logger.InfoContext(ctx, "ambiguity found for a key", "ambiguity_key", keyStr)
+			mc.logger.WarnContext(ctx, "ambiguity found for a key", "ambiguity_key", keyStr)
 			typeStr, ok := key["type"].(string)
 			if ok {
 				if typeStr == "tag" {
@@ -839,6 +840,11 @@ func (mc *migrateCommon) formatValue(ctx context.Context, value any, dataType st
 		if mc.isVariable(v) {
 			mc.logger.InfoContext(ctx, "found a variable", "dashboard_variable", v)
 			return mc.normalizeVariable(ctx, v)
+		} else {
+			// if we didn't recognize something as variable but looks like has variable like value, double check
+			if strings.Contains(v, "{") || strings.Contains(v, "[") || strings.Contains(v, "$") {
+				mc.logger.WarnContext(ctx, "variable like string found", "dashboard_variable", v)
+			}
 		}
 
 		if mc.isNumericType(dataType) {

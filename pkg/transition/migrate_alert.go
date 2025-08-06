@@ -31,13 +31,13 @@ func (m *alertMigrateV5) Migrate(ctx context.Context, ruleData map[string]any) b
 
 	ruleCondition, ok := ruleData["condition"].(map[string]any)
 	if !ok {
-		m.logger.InfoContext(ctx, "didn't find condition")
+		m.logger.WarnContext(ctx, "didn't find condition")
 		return updated
 	}
 
 	compositeQuery, ok := ruleCondition["compositeQuery"].(map[string]any)
 	if !ok {
-		m.logger.InfoContext(ctx, "didn't find composite query")
+		m.logger.WarnContext(ctx, "didn't find composite query")
 		return updated
 	}
 
@@ -72,8 +72,6 @@ func (m *alertMigrateV5) Migrate(ctx context.Context, ruleData map[string]any) b
 					compositeQuery["queries"] = append(compositeQuery["queries"].([]any), envelope)
 				}
 			}
-			// Clear old field after migration
-			delete(compositeQuery, "builderQueries")
 		}
 	}
 
@@ -94,8 +92,6 @@ func (m *alertMigrateV5) Migrate(ctx context.Context, ruleData map[string]any) b
 				updated = true
 			}
 		}
-		// Clear old field after migration
-		delete(compositeQuery, "promQueries")
 	}
 
 	// Migrate clickhouse queries
@@ -115,9 +111,11 @@ func (m *alertMigrateV5) Migrate(ctx context.Context, ruleData map[string]any) b
 				updated = true
 			}
 		}
-		// Clear old field after migration
-		delete(compositeQuery, "chQueries")
 	}
+
+	delete(compositeQuery, "builderQueries")
+	delete(compositeQuery, "chQueries")
+	delete(compositeQuery, "promQueries")
 
 	ruleData["version"] = "v5"
 

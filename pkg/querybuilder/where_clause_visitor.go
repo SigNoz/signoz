@@ -744,6 +744,19 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 		fieldKeysForName = filteredKeys
 	}
 
+	// if the data type is explicitly provided, filter out the remaining
+	// example, level:string = 'value', then we don't want to search on
+	// anything other than the string attributes
+	if fieldKey.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+		filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
+		for _, item := range fieldKeysForName {
+			if item.FieldDataType == fieldKey.FieldDataType {
+				filteredKeys = append(filteredKeys, item)
+			}
+		}
+		fieldKeysForName = filteredKeys
+	}
+
 	// for the body json search, we need to add search on the body field even
 	// if there is a field with the same name as attribute/resource attribute
 	// Since it will ORed with the fieldKeysForName, it will not result empty

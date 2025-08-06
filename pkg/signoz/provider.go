@@ -129,6 +129,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewUpdateUserInviteFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateOrgDomainFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddFactorIndexesFactory(sqlstore, sqlschema),
+		sqlmigration.NewQueryBuilderV5MigrationFactory(sqlstore, telemetryStore),
 	)
 }
 
