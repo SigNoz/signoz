@@ -271,16 +271,13 @@
 
 							ul {
 								li {
-									&:hover {
-										background-color: var(--bg-vanilla-300) !important;
-										color: var(--bg-ink-500) !important;
-										font-weight: 600;
-									}
+									color: var(--bg-ink-300) !important;
 
+									&:hover,
 									&[aria-selected='true'] {
 										background: var(--bg-vanilla-300) !important;
 										color: var(--bg-ink-500) !important;
-										font-weight: 600;
+										font-weight: 600 !important;
 									}
 								}
 							}
