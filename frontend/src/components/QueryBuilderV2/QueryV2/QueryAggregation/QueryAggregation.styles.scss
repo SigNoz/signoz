@@ -78,6 +78,7 @@
 						) !important;
 						backdrop-filter: blur(20px);
 						box-sizing: border-box;
+						box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
 						font-family: 'Space Mono', monospace !important;
 
 						ul {
@@ -266,6 +267,7 @@
 							background: var(--bg-vanilla-100) !important;
 							border: 1px solid var(--bg-vanilla-300) !important;
 							color: var(--bg-ink-500) !important;
+							box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
 
 							ul {
 								li {
