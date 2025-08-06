@@ -187,6 +187,9 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 
 		conds = append(conds, sb.And(fieldKeyConds...))
 		limit += fieldKeySelector.Limit
+		if strings.TrimSpace(fieldKeySelector.Name) == "" {
+			sb.Limit(200)
+		}
 	}
 	sb.Where(sb.Or(conds...))
 	sb.GroupBy("tag_key", "tag_type", "tag_data_type")
@@ -395,6 +398,9 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 
 		conds = append(conds, sb.And(fieldKeyConds...))
 		limit += fieldKeySelector.Limit
+		if strings.TrimSpace(fieldKeySelector.Name) == "" {
+			sb.Limit(200)
+		}
 	}
 	sb.Where(sb.Or(conds...))
 	sb.GroupBy("tag_key", "tag_type", "tag_data_type")
