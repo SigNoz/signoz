@@ -51,15 +51,27 @@ function HistogramPanelWrapper({
 
 	const clickHandlerWithContextMenu = useCallback(
 		(...args: any[]) => {
-			const [, , , , metric, queryData, absoluteMouseX, absoluteMouseY] = args;
+			const [
+				,
+				,
+				,
+				,
+				metric,
+				queryData,
+				absoluteMouseX,
+				absoluteMouseY,
+				,
+				focusedSeries,
+			] = args;
 			const data = getUplotClickData({
 				metric,
 				queryData,
 				absoluteMouseX,
 				absoluteMouseY,
+				focusedSeries,
 			});
 			if (data && data?.record?.queryName) {
-				onClick(data.coord, data.record);
+				onClick(data.coord, { ...data.record, label: data.label });
 			}
 		},
 		[onClick],

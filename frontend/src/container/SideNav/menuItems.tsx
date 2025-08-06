@@ -1,6 +1,7 @@
 import { RocketOutlined } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
 import {
+	ArrowUpRight,
 	BarChart2,
 	BellDot,
 	Binoculars,
@@ -355,7 +356,12 @@ export const settingsMenuItems: SidebarItem[] = [
 export const helpSupportDropdownMenuItems: SidebarItem[] = [
 	{
 		key: 'documentation',
-		label: 'Documentation',
+		label: (
+			<div className="nav-item-label-container">
+				<span>Documentation</span>
+				<ArrowUpRight size={14} />
+			</div>
+		),
 		icon: <Book size={14} />,
 		isExternal: true,
 		url: 'https://signoz.io/docs',
@@ -363,7 +369,13 @@ export const helpSupportDropdownMenuItems: SidebarItem[] = [
 	},
 	{
 		key: 'github',
-		label: 'GitHub',
+		label: (
+			<div className="nav-item-label-container">
+				<span>GitHub</span>
+				<ArrowUpRight size={14} />
+			</div>
+		),
+
 		icon: <Github size={14} />,
 		isExternal: true,
 		url: 'https://github.com/signoz/signoz',
@@ -371,7 +383,12 @@ export const helpSupportDropdownMenuItems: SidebarItem[] = [
 	},
 	{
 		key: 'slack',
-		label: 'Community Slack',
+		label: (
+			<div className="nav-item-label-container">
+				<span>Community Slack</span>
+				<ArrowUpRight size={14} />
+			</div>
+		),
 		icon: <Slack size={14} />,
 		isExternal: true,
 		url: 'https://signoz.io/slack',

@@ -65,7 +65,7 @@ export function RequestDashboardBtn(): JSX.Element {
 				>
 					Browse dashboard templates
 				</a>{' '}
-				or Request new template →
+				or request a new template →
 			</Typography.Text>
 
 			<div className="form-section">

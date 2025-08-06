@@ -66,11 +66,7 @@ export function getGroupContextMenuConfig({
 		(operator) => SUPPORTED_OPERATORS[operator],
 	);
 
-	if (
-		panelType === 'table' &&
-		clickedData?.column &&
-		!(clickedData.column as any).queryName
-	) {
+	if (panelType === 'table' && clickedData?.column) {
 		return {
 			header,
 			items: filterOperators.map((operator) => (

@@ -13,13 +13,15 @@ import {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/config';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
+import { useMultiIntersectionObserver } from 'hooks/useMultiIntersectionObserver';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQueries, UseQueryResult } from 'react-query';
+import { QueryFunctionContext, useQueries, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
@@ -53,6 +55,11 @@ function Metrics({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
 			?.active || false;
 
+	const {
+		visibilities,
+		setElement,
+	} = useMultiIntersectionObserver(hostWidgetInfo.length, { threshold: 0.1 });
+
 	const queryPayloads = useMemo(
 		() =>
 			getHostQueryPayload(
@@ -65,17 +72,22 @@ function Metrics({
 	);
 
 	const queries = useQueries(
-		queryPayloads.map((payload) => ({
+		queryPayloads.map((payload, index) => ({
 			queryKey: ['host-metrics', payload, ENTITY_VERSION_V4, 'HOST'],
-			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
-			enabled: !!payload,
+			queryFn: ({
+				signal,
+			}: QueryFunctionContext): Promise<
+				SuccessResponse<MetricRangePayloadProps>
+			> => GetMetricQueryRange(payload, ENTITY_VERSION_V4, signal),
+			enabled: !!payload && visibilities[index],
+			keepPreviousData: true,
 		})),
 	);
 
 	const isDarkMode = useIsDarkMode();
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
+	const { currentQuery } = useQueryBuilder();
 
 	const chartData = useMemo(
 		() => queries.map(({ data }) => getUPlotChartData(data?.payload)),
@@ -134,16 +146,24 @@ function Metrics({
 					minTimeScale: graphTimeIntervals[idx].start,
 					maxTimeScale: graphTimeIntervals[idx].end,
 					onDragSelect: (start, end) => onDragSelect(start, end, idx),
+					query: currentQuery,
 				}),
 			),
-		[queries, isDarkMode, dimensions, graphTimeIntervals, onDragSelect],
+		[
+			queries,
+			isDarkMode,
+			dimensions,
+			graphTimeIntervals,
+			onDragSelect,
+			currentQuery,
+		],
 	);
 
 	const renderCardContent = (
 		query: UseQueryResult<SuccessResponse<MetricRangePayloadProps>, unknown>,
 		idx: number,
 	): JSX.Element => {
-		if (query.isLoading) {
+		if ((!query.data && query.isLoading) || !visibilities[idx]) {
 			return <Skeleton />;
 		}
 
@@ -181,7 +201,7 @@ function Metrics({
 			</div>
 			<Row gutter={24} className="host-metrics-container">
 				{queries.map((query, idx) => (
-					<Col span={12} key={hostWidgetInfo[idx].title}>
+					<Col ref={setElement(idx)} span={12} key={hostWidgetInfo[idx].title}>
 						<Typography.Text>{hostWidgetInfo[idx].title}</Typography.Text>
 						<Card bordered className="host-metrics-card" ref={graphRef}>
 							{renderCardContent(query, idx)}

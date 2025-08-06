@@ -15,14 +15,16 @@ jobs:
       matrix:
         src:
           - bootstrap
+          - auth
+          - querier
         sqlstore-provider:
           - postgres
           - sqlite
         clickhouse-version:
           - 24.1.2-alpine
-          - 24.12-alpine
+          - 25.5.6
         schema-migrator-version:
-          - v0.111.38
+          - v0.128.1
         postgres-version:
           - 15
     if: |

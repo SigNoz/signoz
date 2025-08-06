@@ -73,7 +73,7 @@ func TestFilterExprLogsBodyJSON(t *testing.T) {
 			category:              "json",
 			query:                 "body.message = hello",
 			shouldPass:            true,
-			expectedQuery:         `WHERE (JSONExtract(JSON_VALUE(body, '$."message"'), 'String') = ? AND JSON_EXISTS(body, '$."message"'))`,
+			expectedQuery:         `WHERE (JSON_VALUE(body, '$."message"') = ? AND JSON_EXISTS(body, '$."message"'))`,
 			expectedArgs:          []any{"hello"},
 			expectedErrorContains: "",
 		},
@@ -113,7 +113,7 @@ func TestFilterExprLogsBodyJSON(t *testing.T) {
 			category:              "json",
 			query:                 "body.message REGEXP 'a*'",
 			shouldPass:            true,
-			expectedQuery:         `WHERE (match(JSONExtract(JSON_VALUE(body, '$."message"'), 'String'), ?) AND JSON_EXISTS(body, '$."message"'))`,
+			expectedQuery:         `WHERE (match(JSON_VALUE(body, '$."message"'), ?) AND JSON_EXISTS(body, '$."message"'))`,
 			expectedArgs:          []any{"a*"},
 			expectedErrorContains: "",
 		},
@@ -121,7 +121,7 @@ func TestFilterExprLogsBodyJSON(t *testing.T) {
 			category:              "json",
 			query:                 `body.message CONTAINS "hello 'world'"`,
 			shouldPass:            true,
-			expectedQuery:         `WHERE (LOWER(JSONExtract(JSON_VALUE(body, '$."message"'), 'String')) LIKE LOWER(?) AND JSON_EXISTS(body, '$."message"'))`,
+			expectedQuery:         `WHERE (LOWER(JSON_VALUE(body, '$."message"')) LIKE LOWER(?) AND JSON_EXISTS(body, '$."message"'))`,
 			expectedArgs:          []any{"%hello 'world'%"},
 			expectedErrorContains: "",
 		},
@@ -136,7 +136,7 @@ func TestFilterExprLogsBodyJSON(t *testing.T) {
 			category:              "json",
 			query:                 `body.name IN ('hello', 'world')`,
 			shouldPass:            true,
-			expectedQuery:         `WHERE ((JSONExtract(JSON_VALUE(body, '$."name"'), 'String') = ? OR JSONExtract(JSON_VALUE(body, '$."name"'), 'String') = ?) AND JSON_EXISTS(body, '$."name"'))`,
+			expectedQuery:         `WHERE ((JSON_VALUE(body, '$."name"') = ? OR JSON_VALUE(body, '$."name"') = ?) AND JSON_EXISTS(body, '$."name"'))`,
 			expectedArgs:          []any{"hello", "world"},
 			expectedErrorContains: "",
 		},
@@ -161,7 +161,7 @@ func TestFilterExprLogsBodyJSON(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-			clause, _, err := querybuilder.PrepareWhereClause(tc.query, opts)
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts)
 
 			if tc.shouldPass {
 				if err != nil {
@@ -175,7 +175,7 @@ func TestFilterExprLogsBodyJSON(t *testing.T) {
 				}
 
 				// Build the SQL and print it for debugging
-				sql, args := clause.BuildWithFlavor(sqlbuilder.ClickHouse)
+				sql, args := clause.WhereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 				require.Equal(t, tc.expectedQuery, sql)
 				require.Equal(t, tc.expectedArgs, args)

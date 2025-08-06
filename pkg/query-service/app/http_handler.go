@@ -38,6 +38,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/SigNoz/signoz/pkg/contextlinks"
 	traceFunnelsModule "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
@@ -55,7 +56,6 @@ import (
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/contextlinks"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -470,6 +470,7 @@ func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *middlew
 func (aH *APIHandler) RegisterQueryRangeV5Routes(router *mux.Router, am *middleware.AuthZ) {
 	subRouter := router.PathPrefix("/api/v5").Subrouter()
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QuerierAPI.QueryRange)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/substitute_vars", am.ViewAccess(aH.QuerierAPI.ReplaceVariables)).Methods(http.MethodPost)
 }
 
 // todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
@@ -966,7 +967,7 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *ruletypes.Gettable
 			zap.L().Error("failed to get log fields using empty keys; the link might not work as expected", zap.Error(err))
 		}
 	} else if rule.AlertType == ruletypes.AlertTypeTraces {
-		traceFields, err := aH.reader.GetSpanAttributeKeys(ctx)
+		traceFields, err := aH.reader.GetSpanAttributeKeysByNames(ctx, logsv3.GetFieldNames(rule.PostableRule.RuleCondition.CompositeQuery))
 		if err == nil {
 			keys = traceFields
 		} else {
@@ -4345,7 +4346,7 @@ func (aH *APIHandler) getSpanKeysV3(ctx context.Context, queryRangeParams *v3.Qu
 	data := map[string]v3.AttributeKey{}
 	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
 		if query.DataSource == v3.DataSourceTraces {
-			spanKeys, err := aH.reader.GetSpanAttributeKeys(ctx)
+			spanKeys, err := aH.reader.GetSpanAttributeKeysByNames(ctx, logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
 			if err != nil {
 				return nil, err
 			}
@@ -4389,8 +4390,18 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	var errQuriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		hasLogsQuery := false
+		hasTracesQuery := false
+		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+			if query.DataSource == v3.DataSourceLogs {
+				hasLogsQuery = true
+			}
+			if query.DataSource == v3.DataSourceTraces {
+				hasTracesQuery = true
+			}
+		}
 		// check if any enrichment is required for logs if yes then enrich them
-		if logsv3.EnrichmentRequired(queryRangeParams) {
+		if logsv3.EnrichmentRequired(queryRangeParams) && hasLogsQuery {
 			logsFields, err := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -4401,15 +4412,15 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			fields := model.GetLogFieldsV3(ctx, queryRangeParams, logsFields)
 			logsv3.Enrich(queryRangeParams, fields)
 		}
-
-		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
-		if err != nil {
-			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-			RespondError(w, apiErrObj, errQuriesByName)
-			return
+		if hasTracesQuery {
+			spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, errQuriesByName)
+				return
+			}
+			tracesV4.Enrich(queryRangeParams, spanKeys)
 		}
-		tracesV4.Enrich(queryRangeParams, spanKeys)
-
 	}
 
 	// WARN: Only works for AND operator in traces query
@@ -4508,25 +4519,42 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 	}
 
 	queryInfoResult := NewQueryInfoResult(queryRangeParams, version)
-	if !(len(result) > 0 && (len(result[0].Series) > 0 || len(result[0].List) > 0)) {
-		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", queryInfoResult.ToMap())
-		return
-	}
-
-	aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", queryInfoResult.ToMap())
 
 	if !(queryInfoResult.LogsUsed || queryInfoResult.MetricsUsed || queryInfoResult.TracesUsed) {
 		return
 	}
 
+	properties := queryInfoResult.ToMap()
 	referrer := r.Header.Get("Referer")
+
 	if referrer == "" {
 		return
 	}
 
-	if matched, _ := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer); matched {
-		properties := queryInfoResult.ToMap()
+	properties["referrer"] = referrer
 
+	logsExplorerMatched, _ := regexp.MatchString(`/logs/logs-explorer(?:\?.*)?$`, referrer)
+	traceExplorerMatched, _ := regexp.MatchString(`/traces-explorer(?:\?.*)?$`, referrer)
+	metricsExplorerMatched, _ := regexp.MatchString(`/metrics-explorer/explorer(?:\?.*)?$`, referrer)
+	dashboardMatched, _ := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
+	alertMatched, _ := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
+
+	switch {
+	case dashboardMatched:
+		properties["module_name"] = "dashboard"
+	case alertMatched:
+		properties["module_name"] = "rule"
+	case metricsExplorerMatched:
+		properties["module_name"] = "metrics-explorer"
+	case logsExplorerMatched:
+		properties["module_name"] = "logs-explorer"
+	case traceExplorerMatched:
+		properties["module_name"] = "traces-explorer"
+	default:
+		return
+	}
+
+	if dashboardMatched {
 		if dashboardIDRegex, err := regexp.Compile(`/dashboard/([a-f0-9\-]+)/`); err == nil {
 			if matches := dashboardIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
 				properties["dashboard_id"] = matches[1]
@@ -4538,25 +4566,40 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 				properties["widget_id"] = matches[1]
 			}
 		}
-
-		properties["referrer"] = referrer
-		properties["module_name"] = "dashboard"
-		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
 	}
 
-	if matched, _ := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer); matched {
-		properties := queryInfoResult.ToMap()
-
+	if alertMatched {
 		if alertIDRegex, err := regexp.Compile(`ruleId=(\d+)`); err == nil {
 			if matches := alertIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
-				properties["alert_id"] = matches[1]
+				properties["rule_id"] = matches[1]
 			}
 		}
-
-		properties["referrer"] = referrer
-		properties["module_name"] = "rule"
-		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
 	}
+
+	// Check if result is empty or has no data
+	if len(result) == 0 {
+		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+		return
+	}
+
+	// Check if first result has no series data
+	if len(result[0].Series) == 0 {
+		// Check if first result has no list data
+		if len(result[0].List) == 0 {
+			// Check if first result has no table data
+			if result[0].Table == nil {
+				aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+				return
+			}
+
+			if len(result[0].Table.Rows) == 0 {
+				aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+				return
+			}
+		}
+	}
+
+	aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
 
 }
 
@@ -4787,8 +4830,19 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	var errQuriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		hasLogsQuery := false
+		hasTracesQuery := false
+		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+			if query.DataSource == v3.DataSourceLogs {
+				hasLogsQuery = true
+			}
+			if query.DataSource == v3.DataSourceTraces {
+				hasTracesQuery = true
+			}
+		}
+
 		// check if any enrichment is required for logs if yes then enrich them
-		if logsv3.EnrichmentRequired(queryRangeParams) {
+		if logsv3.EnrichmentRequired(queryRangeParams) && hasLogsQuery {
 			// get the fields if any logs query is present
 			logsFields, err := aH.reader.GetLogFieldsFromNames(r.Context(), logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
 			if err != nil {
@@ -4800,13 +4854,15 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
-		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
-		if err != nil {
-			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-			RespondError(w, apiErrObj, errQuriesByName)
-			return
+		if hasTracesQuery {
+			spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, errQuriesByName)
+				return
+			}
+			tracesV4.Enrich(queryRangeParams, spanKeys)
 		}
-		tracesV4.Enrich(queryRangeParams, spanKeys)
 	}
 
 	// WARN: Only works for AND operator in traces query

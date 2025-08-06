@@ -7,6 +7,7 @@ import {
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import { compositeQueryToQueryEnvelope } from 'utils/compositeQueryToQueryEnvelope';
 
 import { mapQueryDataToApi } from './mapQueryDataToApi';
 
@@ -17,6 +18,7 @@ const defaultCompositeQuery: ICompositeMetricQuery = {
 	chQueries: {},
 	promQueries: {},
 	unit: undefined,
+	queries: [],
 };
 
 const buildBuilderQuery = (
@@ -94,7 +96,8 @@ export const mapCompositeQueryFromQuery = (
 		const functionToBuildQuery = queryTypeMethodMapping[query.queryType];
 
 		if (functionToBuildQuery && typeof functionToBuildQuery === 'function') {
-			return functionToBuildQuery(query, panelType);
+			const compositeQuery = functionToBuildQuery(query, panelType);
+			return compositeQueryToQueryEnvelope(compositeQuery);
 		}
 	}
 
@@ -105,5 +108,6 @@ export const mapCompositeQueryFromQuery = (
 		chQueries: {},
 		promQueries: {},
 		unit: undefined,
+		queries: [],
 	};
 };

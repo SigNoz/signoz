@@ -29,7 +29,11 @@ import NoLogs from '../NoLogs/NoLogs';
 import InfinityTableView from './InfinityTableView';
 import { LogsExplorerListProps } from './LogsExplorerList.interfaces';
 import { InfinityWrapperStyled } from './styles';
-import { convertKeysToColumnFields } from './utils';
+import {
+	convertKeysToColumnFields,
+	getEmptyLogsListConfig,
+	isTraceToLogsQuery,
+} from './utils';
 
 function Footer(): JSX.Element {
 	return <Spinner height={20} tip="Getting Logs" />;
@@ -44,7 +48,6 @@ function LogsExplorerList({
 	isFilterApplied,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
-	const { initialDataSource } = useQueryBuilder();
 	const { activeLogId } = useCopyLogLink();
 
 	const {
@@ -57,10 +60,16 @@ function LogsExplorerList({
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: initialDataSource || DataSource.METRICS,
+		dataSource: DataSource.LOGS,
 		aggregateOperator:
 			currentStagedQueryData?.aggregateOperator || StringOperators.NOOP,
 	});
+
+	const {
+		currentQuery,
+		lastUsedQuery,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
 
 	const activeLogIndex = useMemo(
 		() => logs.findIndex(({ id }) => id === activeLogId),
@@ -185,6 +194,45 @@ function LogsExplorerList({
 		selectedFields,
 	]);
 
+	const isTraceToLogsNavigation = useMemo(() => {
+		if (!currentStagedQueryData) return false;
+		return isTraceToLogsQuery(currentStagedQueryData);
+	}, [currentStagedQueryData]);
+
+	const handleClearFilters = useCallback((): void => {
+		const queryIndex = lastUsedQuery ?? 0;
+		const updatedQuery = currentQuery?.builder.queryData?.[queryIndex];
+
+		if (!updatedQuery) return;
+
+		if (updatedQuery?.filters?.items) {
+			updatedQuery.filters.items = [];
+		}
+
+		const preparedQuery = {
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: currentQuery.builder.queryData.map((item, idx: number) => ({
+					...item,
+					filters: {
+						...item.filters,
+						items: idx === queryIndex ? [] : [...(item.filters?.items || [])],
+						op: item.filters?.op || 'AND',
+					},
+				})),
+			},
+		};
+
+		redirectWithQueryBuilderData(preparedQuery);
+	}, [currentQuery, lastUsedQuery, redirectWithQueryBuilderData]);
+
+	const getEmptyStateMessage = useMemo(() => {
+		if (!isTraceToLogsNavigation) return;
+
+		return getEmptyLogsListConfig(handleClearFilters);
+	}, [isTraceToLogsNavigation, handleClearFilters]);
+
 	return (
 		<div className="logs-list-view-container">
 			{(isLoading || (isFetching && logs.length === 0)) && <LogsLoading />}
@@ -200,7 +248,11 @@ function LogsExplorerList({
 				logs.length === 0 &&
 				!isError &&
 				isFilterApplied && (
-					<EmptyLogsSearch dataSource={DataSource.LOGS} panelType="LIST" />
+					<EmptyLogsSearch
+						dataSource={DataSource.LOGS}
+						panelType="LIST"
+						customMessage={getEmptyStateMessage}
+					/>
 				)}
 
 			{isError && !isLoading && !isFetching && <LogsError />}

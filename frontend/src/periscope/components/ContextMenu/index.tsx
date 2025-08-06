@@ -51,6 +51,14 @@ function ContextMenuItem({
 	);
 }
 
+interface ContextMenuHeaderProps {
+	children: ReactNode;
+}
+
+function ContextMenuHeader({ children }: ContextMenuHeaderProps): JSX.Element {
+	return <div className="context-menu-header">{children}</div>;
+}
+
 export function ContextMenu({
 	coordinates,
 	popoverPosition,
@@ -129,6 +137,7 @@ export function ContextMenu({
 
 // Attach Item component to ContextMenu
 ContextMenu.Item = ContextMenuItem;
+ContextMenu.Header = ContextMenuHeader;
 
 // default props for ContextMenuItem
 ContextMenuItem.defaultProps = {

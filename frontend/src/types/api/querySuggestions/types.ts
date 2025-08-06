@@ -1,13 +1,15 @@
+import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
+
 export interface QueryKeyDataSuggestionsProps {
 	label: string;
 	type: string;
 	info?: string;
 	apply?: string;
 	detail?: string;
-	fieldContext: string;
-	fieldDataType: string;
+	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span';
+	fieldDataType?: QUERY_BUILDER_KEY_TYPES;
 	name: string;
-	signal: string;
+	signal: 'traces' | 'logs' | 'metrics';
 }
 
 export interface QueryKeySuggestionsResponseProps {
@@ -21,8 +23,11 @@ export interface QueryKeySuggestionsResponseProps {
 }
 
 export interface QueryKeyRequestProps {
-	signal: string;
-	name: string;
+	signal: 'traces' | 'logs' | 'metrics';
+	searchText: string;
+	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span';
+	fieldDataType?: QUERY_BUILDER_KEY_TYPES;
+	metricName?: string;
 }
 
 export interface QueryKeyValueSuggestionsProps {
@@ -36,6 +41,7 @@ export interface QueryKeyValueSuggestionsResponseProps {
 }
 
 export interface QueryKeyValueRequestProps {
-	signal: string;
+	signal: 'traces' | 'logs' | 'metrics';
 	key: string;
+	searchText: string;
 }

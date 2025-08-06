@@ -41,7 +41,15 @@ function QueryAggregationOptions({
 	return (
 		<div className="query-aggregation-container">
 			<div className="aggregation-container">
-				<QueryAggregationSelect onChange={onChange} queryData={queryData} />
+				<QueryAggregationSelect
+					onChange={onChange}
+					queryData={queryData}
+					maxAggregations={
+						panelType === PANEL_TYPES.VALUE || panelType === PANEL_TYPES.PIE
+							? 1
+							: undefined
+					}
+				/>
 
 				{showAggregationInterval && (
 					<div className="query-aggregation-interval">
@@ -49,7 +57,7 @@ function QueryAggregationOptions({
 						<div className="query-aggregation-interval-input-container">
 							<InputWithLabel
 								initialValue={
-									queryData.stepInterval ? queryData.stepInterval : undefined
+									queryData?.stepInterval ? queryData?.stepInterval : undefined
 								}
 								className="query-aggregation-interval-input"
 								label="Seconds"
@@ -57,7 +65,6 @@ function QueryAggregationOptions({
 								type="number"
 								onChange={handleAggregationIntervalChange}
 								labelAfter
-								onClose={(): void => {}}
 							/>
 						</div>
 					</div>

@@ -5,6 +5,7 @@ import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { ConfigType } from './contextConfig';
+import { isValidQueryName } from './drilldownUtils';
 import { getFiltersToAddToView } from './tableDrilldownUtils';
 import useAggregateDrilldown from './useAggregateDrilldown';
 import useFilterDrilldown from './useFilterDrilldown';
@@ -47,7 +48,7 @@ export function useTableContextMenu({
 		if (!clickedData?.column?.isValueColumn) return null;
 
 		return {
-			queryName: String(clickedData.column.dataIndex || ''),
+			queryName: String(clickedData.column.queryName || ''),
 			filters: getFiltersToAddToView(clickedData) || [],
 		};
 	}, [clickedData]);
@@ -63,15 +64,24 @@ export function useTableContextMenu({
 	});
 
 	const menuItemsConfig = useMemo(() => {
-		if (!coordinates || !clickedData) {
+		if (!coordinates || (!clickedData && !aggregateData)) {
 			if (!clickedData) {
 				console.warn('clickedData is null in menuItemsConfig');
 			}
 			return {};
 		}
+
 		const columnType = clickedData?.column?.isValueColumn
 			? ConfigType.AGGREGATE
 			: ConfigType.GROUP;
+
+		// Check if queryName is valid for drilldown
+		if (
+			columnType === ConfigType.AGGREGATE &&
+			!isValidQueryName(aggregateData?.queryName || '')
+		) {
+			return {};
+		}
 
 		switch (columnType) {
 			case ConfigType.AGGREGATE:
@@ -86,6 +96,7 @@ export function useTableContextMenu({
 		filterDrilldownConfig,
 		coordinates,
 		aggregateDrilldownConfig,
+		aggregateData,
 	]);
 
 	return { menuItemsConfig };

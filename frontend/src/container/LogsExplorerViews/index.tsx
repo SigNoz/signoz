@@ -1,11 +1,12 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './LogsExplorerViews.styles.scss';
 
-import { Button, Select, Switch, Typography } from 'antd';
+import { Button, Switch, Typography } from 'antd';
 import { getQueryStats, WsDataEvent } from 'api/common/getQueryStats';
 import logEvent from 'api/common/logEvent';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
+import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -69,6 +70,7 @@ import {
 	Query,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import {
 	DataSource,
 	LogsAggregatorOperator,
@@ -138,7 +140,7 @@ function LogsExplorerViewsContainer({
 	const [queryStats, setQueryStats] = useState<WsDataEvent>();
 	const [listChartQuery, setListChartQuery] = useState<Query | null>(null);
 
-	const [orderDirection, setOrderDirection] = useState<string>('desc');
+	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
 
 	const listQuery = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
@@ -154,13 +156,13 @@ function LogsExplorerViewsContainer({
 
 	const isMultipleQueries = useMemo(
 		() =>
-			currentQuery.builder.queryData.length > 1 ||
-			currentQuery.builder.queryFormulas.length > 0,
+			currentQuery?.builder?.queryData?.length > 1 ||
+			currentQuery?.builder?.queryFormulas?.length > 0,
 		[currentQuery],
 	);
 
 	const isGroupByExist = useMemo(() => {
-		const groupByCount: number = currentQuery.builder.queryData.reduce<number>(
+		const groupByCount: number = currentQuery?.builder?.queryData?.reduce<number>(
 			(acc, query) => acc + query.groupBy.length,
 			0,
 		);
@@ -251,7 +253,8 @@ function LogsExplorerViewsContainer({
 		// ENTITY_VERSION_V4,
 		ENTITY_VERSION_V5,
 		{
-			enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
+			enabled:
+				showFrequencyChart && !!listChartQuery && panelType === PANEL_TYPES.LIST,
 		},
 		{},
 		undefined,
@@ -332,9 +335,11 @@ function LogsExplorerViewsContainer({
 			}
 
 			// Create orderBy array based on orderDirection
-			const orderBy = [
-				{ columnName: 'timestamp', order: orderDirection },
-				{ columnName: 'id', order: orderDirection },
+			const [columnName, order] = orderBy.split(':');
+
+			const newOrderBy = [
+				{ columnName: columnName || 'timestamp', order: order || 'desc' },
+				{ columnName: 'id', order: order || 'desc' },
 			];
 
 			const queryData: IBuilderQuery[] =
@@ -349,7 +354,7 @@ function LogsExplorerViewsContainer({
 								...paginateData,
 								...(updatedFilters ? { filters: updatedFilters } : {}),
 								...(selectedView === ExplorerViews.LIST
-									? { order: orderBy, orderBy }
+									? { order: newOrderBy, orderBy: newOrderBy }
 									: { order: [] }),
 							},
 					  ];
@@ -364,7 +369,7 @@ function LogsExplorerViewsContainer({
 
 			return data;
 		},
-		[activeLogId, orderDirection, listQuery, selectedView],
+		[activeLogId, orderBy, listQuery, selectedView],
 	);
 
 	const handleEndReached = useCallback(() => {
@@ -383,7 +388,7 @@ function LogsExplorerViewsContainer({
 		if (!stagedQuery) return;
 
 		const newRequestData = getRequestData(stagedQuery, {
-			filters,
+			filters: filters || { items: [], op: 'AND' },
 			page: page + 1,
 			pageSize: nextPageSize,
 		});
@@ -508,18 +513,17 @@ function LogsExplorerViewsContainer({
 	}, [data]);
 
 	// Store previous orderDirection to detect changes
-	const prevOrderDirectionRef = useRef(orderDirection);
+	const prevOrderByRef = useRef(orderBy);
 
 	useEffect(() => {
-		const orderDirectionChanged =
-			prevOrderDirectionRef.current !== orderDirection &&
-			selectedPanelType === PANEL_TYPES.LIST;
-		prevOrderDirectionRef.current = orderDirection;
+		const orderByChanged =
+			prevOrderByRef.current !== orderBy && selectedPanelType === PANEL_TYPES.LIST;
+		prevOrderByRef.current = orderBy;
 
 		if (
 			requestData?.id !== stagedQuery?.id ||
 			currentMinTimeRef.current !== minTime ||
-			orderDirectionChanged
+			orderByChanged
 		) {
 			// Recalculate global time when query changes i.e. stage and run query clicked
 			if (
@@ -555,7 +559,7 @@ function LogsExplorerViewsContainer({
 		dispatch,
 		selectedTime,
 		maxTime,
-		orderDirection,
+		orderBy,
 		selectedPanelType,
 	]);
 
@@ -563,19 +567,19 @@ function LogsExplorerViewsContainer({
 		if (!stagedQuery) return [];
 
 		if (panelType === PANEL_TYPES.LIST) {
-			if (listChartData && listChartData.payload.data.result.length > 0) {
+			if (listChartData && listChartData.payload.data?.result.length > 0) {
 				return listChartData.payload.data.result;
 			}
 			return [];
 		}
 
-		if (!data || data.payload.data.result.length === 0) return [];
+		if (!data || data.payload.data?.result.length === 0) return [];
 
 		const isGroupByExist = stagedQuery.builder.queryData.some(
 			(queryData) => queryData.groupBy.length > 0,
 		);
 
-		const firstPayloadQuery = data.payload.data.result.find(
+		const firstPayloadQuery = data.payload.data?.result.find(
 			(item) => item.queryName === listQuery?.queryName,
 		);
 
@@ -688,16 +692,10 @@ function LogsExplorerViewsContainer({
 											Order by <Minus size={14} /> <ArrowUp10 size={14} />
 										</div>
 
-										<Select
-											placeholder="Select order by"
-											className="order-by-select"
-											style={{ width: 100 }}
-											value={orderDirection}
-											onChange={(value): void => setOrderDirection(value)}
-											options={[
-												{ label: 'Ascending', value: 'asc' },
-												{ label: 'Descending', value: 'desc' },
-											]}
+										<ListViewOrderBy
+											value={orderBy}
+											onChange={(value): void => setOrderBy(value)}
+											dataSource={DataSource.LOGS}
 										/>
 									</div>
 									<Download
@@ -773,7 +771,7 @@ function LogsExplorerViewsContainer({
 							logs={logs}
 							onEndReached={handleEndReached}
 							isError={isError}
-							isFilterApplied={!isEmpty(listQuery?.filters.items)}
+							isFilterApplied={!isEmpty(listQuery?.filters?.items)}
 						/>
 					)}
 
@@ -782,14 +780,18 @@ function LogsExplorerViewsContainer({
 							isLoading={isLoading || isFetching}
 							data={data}
 							isError={isError}
-							isFilterApplied={!isEmpty(listQuery?.filters.items)}
+							isFilterApplied={!isEmpty(listQuery?.filters?.items)}
 							dataSource={DataSource.LOGS}
 						/>
 					)}
 
 					{selectedPanelType === PANEL_TYPES.TABLE && (
 						<LogsExplorerTable
-							data={data?.payload?.data?.newResult?.data?.result || []}
+							data={
+								(data?.payload?.data?.newResult?.data?.result ||
+									data?.payload?.data?.result ||
+									[]) as QueryDataV3[]
+							}
 							isLoading={isLoading || isFetching}
 							isError={isError}
 						/>

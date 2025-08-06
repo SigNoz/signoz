@@ -15,6 +15,7 @@ export interface AggregateData {
 		startTime: number;
 		endTime: number;
 	};
+	label?: string | React.ReactNode;
 }
 
 const useAggregateDrilldown = ({

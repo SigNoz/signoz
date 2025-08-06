@@ -15,21 +15,29 @@ import (
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )
 
+var searchTroubleshootingGuideURL = "https://signoz.io/docs/userguide/search-troubleshooting/"
+
 // filterExpressionVisitor implements the FilterQueryVisitor interface
 // to convert the parsed filter expressions into ClickHouse WHERE clause
 type filterExpressionVisitor struct {
 	fieldMapper        qbtypes.FieldMapper
 	conditionBuilder   qbtypes.ConditionBuilder
 	warnings           []string
+	mainWarnURL        string
 	fieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
 	errors             []string
+	mainErrorURL       string
 	builder            *sqlbuilder.SelectBuilder
 	fullTextColumn     *telemetrytypes.TelemetryFieldKey
 	jsonBodyPrefix     string
 	jsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	skipResourceFilter bool
 	skipFullTextFilter bool
+	skipFunctionCalls  bool
+	ignoreNotFoundKeys bool
 	variables          map[string]qbtypes.VariableItem
+
+	keysWithWarnings map[string]bool
 }
 
 type FilterExprVisitorOpts struct {
@@ -42,6 +50,8 @@ type FilterExprVisitorOpts struct {
 	JsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	SkipResourceFilter bool
 	SkipFullTextFilter bool
+	SkipFunctionCalls  bool
+	IgnoreNotFoundKeys bool
 	Variables          map[string]qbtypes.VariableItem
 }
 
@@ -57,12 +67,21 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		jsonKeyToKey:       opts.JsonKeyToKey,
 		skipResourceFilter: opts.SkipResourceFilter,
 		skipFullTextFilter: opts.SkipFullTextFilter,
+		skipFunctionCalls:  opts.SkipFunctionCalls,
+		ignoreNotFoundKeys: opts.IgnoreNotFoundKeys,
 		variables:          opts.Variables,
+		keysWithWarnings:   make(map[string]bool),
 	}
 }
 
+type PreparedWhereClause struct {
+	WhereClause    *sqlbuilder.WhereClause
+	Warnings       []string
+	WarningsDocURL string
+}
+
 // PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query
-func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*sqlbuilder.WhereClause, []string, error) {
+func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWhereClause, error) {
 	// Setup the ANTLR parsing pipeline
 	input := antlr.NewInputStream(query)
 	lexer := grammar.NewFilterQueryLexer(input)
@@ -93,14 +112,17 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*sqlbuilder.W
 		combinedErrors := errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"found %d syntax errors while parsing the filter expression",
+			"Found %d syntax errors while parsing the search expression.",
 			len(parserErrorListener.SyntaxErrors),
 		)
 		additionals := make([]string, len(parserErrorListener.SyntaxErrors))
 		for _, err := range parserErrorListener.SyntaxErrors {
-			additionals = append(additionals, err.Error())
+			if err.Error() != "" {
+				additionals = append(additionals, err.Error())
+			}
 		}
-		return nil, nil, combinedErrors.WithAdditional(additionals...)
+
+		return nil, combinedErrors.WithAdditional(additionals...).WithUrl(searchTroubleshootingGuideURL)
 	}
 
 	// Visit the parse tree with our ClickHouse visitor
@@ -111,15 +133,23 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*sqlbuilder.W
 		combinedErrors := errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"found %d errors while parsing the search expression",
+			"Found %d errors while parsing the search expression.",
 			len(visitor.errors),
 		)
-		return nil, nil, combinedErrors.WithAdditional(visitor.errors...)
+		url := visitor.mainErrorURL
+		if url == "" {
+			url = searchTroubleshootingGuideURL
+		}
+		return nil, combinedErrors.WithAdditional(visitor.errors...).WithUrl(url)
+	}
+
+	if cond == "" {
+		cond = "true"
 	}
 
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
 
-	return whereClause, visitor.warnings, nil
+	return &PreparedWhereClause{whereClause, visitor.warnings, visitor.mainWarnURL}, nil
 }
 
 // Visit dispatches to the specific visit method based on node type
@@ -185,7 +215,13 @@ func (v *filterExpressionVisitor) VisitOrExpression(ctx *grammar.OrExpressionCon
 
 	andExpressionConditions := make([]string, len(andExpressions))
 	for i, expr := range andExpressions {
-		andExpressionConditions[i] = v.Visit(expr).(string)
+		if condExpr, ok := v.Visit(expr).(string); ok && condExpr != "" {
+			andExpressionConditions[i] = condExpr
+		}
+	}
+
+	if len(andExpressionConditions) == 0 {
+		return ""
 	}
 
 	if len(andExpressionConditions) == 1 {
@@ -201,7 +237,13 @@ func (v *filterExpressionVisitor) VisitAndExpression(ctx *grammar.AndExpressionC
 
 	unaryExpressionConditions := make([]string, len(unaryExpressions))
 	for i, expr := range unaryExpressions {
-		unaryExpressionConditions[i] = v.Visit(expr).(string)
+		if condExpr, ok := v.Visit(expr).(string); ok && condExpr != "" {
+			unaryExpressionConditions[i] = condExpr
+		}
+	}
+
+	if len(unaryExpressionConditions) == 0 {
+		return ""
 	}
 
 	if len(unaryExpressionConditions) == 1 {
@@ -227,7 +269,10 @@ func (v *filterExpressionVisitor) VisitUnaryExpression(ctx *grammar.UnaryExpress
 func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 	if ctx.OrExpression() != nil {
 		// This is a parenthesized expression
-		return fmt.Sprintf("(%s)", v.Visit(ctx.OrExpression()).(string))
+		if condExpr, ok := v.Visit(ctx.OrExpression()).(string); ok && condExpr != "" {
+			return fmt.Sprintf("(%s)", v.Visit(ctx.OrExpression()).(string))
+		}
+		return ""
 	} else if ctx.Comparison() != nil {
 		return v.Visit(ctx.Comparison())
 	} else if ctx.FunctionCall() != nil {
@@ -239,7 +284,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 	// Handle standalone key/value as a full text search term
 	if ctx.GetChildCount() == 1 {
 		if v.skipFullTextFilter {
-			return "true"
+			return ""
 		}
 
 		if v.fullTextColumn == nil {
@@ -286,6 +331,11 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 	keys := v.Visit(ctx.Key()).([]*telemetrytypes.TelemetryFieldKey)
 
+	// if key is missing and can be ignored, the condition is ignored
+	if len(keys) == 0 && v.ignoreNotFoundKeys {
+		return ""
+	}
+
 	// this is used to skip the resource filtering on main table if
 	// the query may use the resources table sub-query filter
 	if v.skipResourceFilter {
@@ -296,6 +346,9 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			}
 		}
 		keys = filteredKeys
+		if len(keys) == 0 {
+			return ""
+		}
 	}
 
 	// Handle EXISTS specially
@@ -343,7 +396,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 				var varItem qbtypes.VariableItem
 				varItem, ok = v.variables[var_]
 				// if not present, try without `$` prefix
-				if !ok {
+				if !ok && len(var_) > 0 {
 					varItem, ok = v.variables[var_[1:]]
 				}
 
@@ -423,7 +476,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			var varItem qbtypes.VariableItem
 			varItem, ok = v.variables[var_]
 			// if not present, try without `$` prefix
-			if !ok {
+			if !ok && len(var_) > 0 {
 				varItem, ok = v.variables[var_[1:]]
 			}
 
@@ -522,7 +575,7 @@ func (v *filterExpressionVisitor) VisitValueList(ctx *grammar.ValueListContext) 
 func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
 
 	if v.skipFullTextFilter {
-		return "true"
+		return ""
 	}
 
 	var text string
@@ -547,6 +600,10 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 
 // VisitFunctionCall handles function calls like has(), hasAny(), etc.
 func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallContext) any {
+	if v.skipFunctionCalls {
+		return ""
+	}
+
 	// Get function name based on which token is present
 	var functionName string
 	if ctx.HAS() != nil {
@@ -580,6 +637,10 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		if strings.HasPrefix(key.Name, v.jsonBodyPrefix) {
 			fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
 		} else {
+			// TODO(add docs for json body search)
+			if v.mainErrorURL == "" {
+				v.mainErrorURL = "https://signoz.io/docs/userguide/search-troubleshooting/#function-supports-only-body-json-search"
+			}
 			v.errors = append(v.errors, fmt.Sprintf("function `%s` supports only body JSON search", functionName))
 			return ""
 		}
@@ -670,6 +731,19 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 
 	fieldKeysForName := v.fieldKeys[keyName]
 
+	// if the context is explicitly provided, filter out the remaining
+	// example, resource.attr = 'value', then we don't want to search on
+	// anything other than the resource attributes
+	if fieldKey.FieldContext != telemetrytypes.FieldContextUnspecified {
+		filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
+		for _, item := range fieldKeysForName {
+			if item.FieldContext == fieldKey.FieldContext {
+				filteredKeys = append(filteredKeys, item)
+			}
+		}
+		fieldKeysForName = filteredKeys
+	}
+
 	// for the body json search, we need to add search on the body field even
 	// if there is a field with the same name as attribute/resource attribute
 	// Since it will ORed with the fieldKeysForName, it will not result empty
@@ -681,23 +755,33 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	}
 
 	if len(fieldKeysForName) == 0 {
+		// check if the key exists with {fieldContext}.{key}
+		// because the context could be legitimate prefix in user data, example `span.div_num = 20`
+		keyWithContext := fmt.Sprintf("%s.%s", fieldKey.FieldContext.StringValue(), fieldKey.Name)
+		if len(v.fieldKeys[keyWithContext]) > 0 {
+			return v.fieldKeys[keyWithContext]
+		}
+
 		if strings.HasPrefix(fieldKey.Name, v.jsonBodyPrefix) && v.jsonBodyPrefix != "" && keyName == "" {
 			v.errors = append(v.errors, "missing key for body json search - expected key of the form `body.key` (ex: `body.status`)")
-		} else {
+		} else if !v.ignoreNotFoundKeys {
 			// TODO(srikanthccv): do we want to return an error here?
 			// should we infer the type and auto-magically build a key for expression?
 			v.errors = append(v.errors, fmt.Sprintf("key `%s` not found", fieldKey.Name))
+			v.mainErrorURL = "https://signoz.io/docs/userguide/search-troubleshooting/#key-fieldname-not-found"
 		}
 	}
 
-	if len(fieldKeysForName) > 1 {
+	if len(fieldKeysForName) > 1 && !v.keysWithWarnings[keyName] {
+		v.mainWarnURL = "https://signoz.io/docs/userguide/field-context-data-types/"
 		// this is warning state, we must have a unambiguous key
 		v.warnings = append(v.warnings, fmt.Sprintf(
-			"key `%s` is ambiguous, found %d different combinations of field context and data type: %v",
+			"key `%s` is ambiguous, found %d different combinations of field context / data type: %v",
 			fieldKey.Name,
 			len(fieldKeysForName),
 			fieldKeysForName,
 		))
+		v.keysWithWarnings[keyName] = true
 	}
 
 	return fieldKeysForName
@@ -707,8 +791,13 @@ func trimQuotes(txt string) string {
 	if len(txt) >= 2 {
 		if (txt[0] == '"' && txt[len(txt)-1] == '"') ||
 			(txt[0] == '\'' && txt[len(txt)-1] == '\'') {
-			return txt[1 : len(txt)-1]
+			txt = txt[1 : len(txt)-1]
 		}
 	}
+
+	// unescape so clickhouse-go can escape it
+	// https://github.com/ClickHouse/clickhouse-go/blob/6c5ddb38dd2edc841a3b927711b841014759bede/bind.go#L278
+	txt = strings.ReplaceAll(txt, `\\`, `\`)
+	txt = strings.ReplaceAll(txt, `\'`, `'`)
 	return txt
 }

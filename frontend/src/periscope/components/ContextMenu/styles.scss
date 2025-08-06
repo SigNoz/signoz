@@ -71,13 +71,18 @@
 	}
 }
 
+.context-menu-header {
+	padding-bottom: 4px;
+	border-bottom: 1px solid var(--bg-vanilla-400);
+	color: var(--bg-slate-400);
+}
+
 // Target the popover inner specifically for context menu
 .context-menu .ant-popover-inner {
 	padding: 12px 8px !important;
-	max-height: 254px !important;	
+	max-height: 254px !important;
 	max-width: 210px !important;
 }
-
 
 // Dark mode support
 .darkMode {
@@ -107,6 +112,11 @@
 		}
 	}
 
+	.context-menu-header {
+		border-bottom: 1px solid var(--bg-slate-400);
+		color: var(--bg-vanilla-400);
+	}
+
 	// Set the menu popover background
 	.context-menu .ant-popover-inner {
 		background: var(--bg-ink-500) !important;
@@ -124,11 +134,11 @@
 	z-index: 9999;
 	background: transparent;
 	cursor: default;
-	
+
 	// Prevent any pointer events from reaching elements behind
 	pointer-events: auto;
-	
+
 	// Ensure it covers the entire viewport including any scrollable areas
 	position: fixed !important;
 	inset: 0;
-} 
+}

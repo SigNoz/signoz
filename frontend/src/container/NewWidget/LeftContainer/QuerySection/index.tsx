@@ -42,7 +42,11 @@ function QuerySection({
 	selectedGraph,
 	queryResponse,
 }: QueryProps): JSX.Element {
-	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+	const {
+		currentQuery,
+		handleRunQuery: handleRunQueryFromQueryBuilder,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
 	const urlQuery = useUrlQuery();
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -98,25 +102,25 @@ function QuerySection({
 					],
 				},
 			});
-			redirectWithQueryBuilderData(query);
+			handleRunQueryFromQueryBuilder(false, true);
 		},
 		[
 			selectedDashboard,
 			selectedWidget,
 			setSelectedDashboard,
-			redirectWithQueryBuilderData,
+			handleRunQueryFromQueryBuilder,
 		],
 	);
 
 	const handleQueryCategoryChange = useCallback(
 		(qCategory: string): void => {
-			const currentQueryType = qCategory;
-			handleStageQuery({
+			const currentQueryType = qCategory as EQueryType;
+			redirectWithQueryBuilderData({
 				...currentQuery,
-				queryType: currentQueryType as EQueryType,
+				queryType: currentQueryType,
 			});
 		},
-		[currentQuery, handleStageQuery],
+		[currentQuery, redirectWithQueryBuilderData],
 	);
 
 	const handleRunQuery = (): void => {

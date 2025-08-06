@@ -73,6 +73,8 @@ func (b *logQueryStatementBuilder) Build(
 		return nil, err
 	}
 
+	b.adjustKeys(ctx, keys, query)
+
 	// Create SQL builder
 	q := sqlbuilder.NewSelectBuilder()
 
@@ -124,6 +126,77 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []
 	return keySelectors
 }
 
+func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) {
+	// for group by / order by, if there is a key
+	// that exactly matches the name of intrinsic field but has
+	// a field context or data type that doesn't match the field context or data type of the
+	// intrinsic field,
+	// and there is no additional key present in the data with the incoming key match,
+	// then override the given context with
+	// intrinsic field context and data type
+	// Why does that happen? Because we have a lot of dashboards created by users and shared over web
+	// that has incorrect context or data type populated so we fix it
+	// note: this override happens only when there is no match; if there is a match,
+	// we can't make decision on behalf of users so we let it use unmodified
+
+	// example: {"key": "severity_text","type": "tag","dataType": "string"}
+	// This is sent as "tag", when it's not, this was earlier managed with
+	// `isColumn`, which we don't have in v5 (because it's not a user concern whether it's mat col or not)
+	// Such requests as-is look for attributes, the following code exists to handle them
+	checkMatch := func(k *telemetrytypes.TelemetryFieldKey) {
+		var overallMatch bool
+
+		findMatch := func(staticKeys map[string]telemetrytypes.TelemetryFieldKey) bool {
+			// for a given key `k`, iterate over the metadata keys `keys`
+			// and see if there is any exact match
+			match := false
+			for _, mapKey := range keys[k.Name] {
+				if mapKey.FieldContext == k.FieldContext && mapKey.FieldDataType == k.FieldDataType {
+					match = true
+				}
+			}
+			// we don't have exact match, then it's doesn't exist in attribute or resource attribute
+			// use the intrinsic/calculated field
+			if !match {
+				b.logger.InfoContext(ctx, "overriding the field context and data type", "key", k.Name)
+				k.FieldContext = staticKeys[k.Name].FieldContext
+				k.FieldDataType = staticKeys[k.Name].FieldDataType
+			}
+			return match
+		}
+
+		if _, ok := IntrinsicFields[k.Name]; ok {
+			overallMatch = overallMatch || findMatch(IntrinsicFields)
+		}
+
+		if !overallMatch {
+			// check if all the key for the given field have been materialized, if so
+			// set the key to materialized
+			materilized := true
+			for _, key := range keys[k.Name] {
+				materilized = materilized && key.Materialized
+			}
+			k.Materialized = materilized
+		}
+	}
+
+	for idx := range query.GroupBy {
+		checkMatch(&query.GroupBy[idx].TelemetryFieldKey)
+	}
+	for idx := range query.Order {
+		checkMatch(&query.Order[idx].Key.TelemetryFieldKey)
+	}
+
+	keys["id"] = []*telemetrytypes.TelemetryFieldKey{
+		{
+			Name:          "id",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+	}
+}
+
 // buildListQuery builds a query for list panel type
 func (b *logQueryStatementBuilder) buildListQuery(
 	ctx context.Context,
@@ -155,7 +228,8 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+
 	if err != nil {
 		return nil, err
 	}
@@ -185,11 +259,16 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
 
-	return &qbtypes.Statement{
-		Query:    finalSQL,
-		Args:     finalArgs,
-		Warnings: warnings,
-	}, nil
+	stmt := &qbtypes.Statement{
+		Query: finalSQL,
+		Args:  finalArgs,
+	}
+	if preparedWhereClause != nil {
+		stmt.Warnings = preparedWhereClause.Warnings
+		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+	}
+
+	return stmt, nil
 }
 
 func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
@@ -229,7 +308,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		}
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
-		sb.SelectMore(sqlbuilder.Escape(colExpr))
+		sb.SelectMore(colExpr)
 		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
 	}
 
@@ -249,7 +328,8 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+
 	if err != nil {
 		return nil, err
 	}
@@ -270,15 +350,26 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 
 		// Constrain the main query to the rows that appear in the CTE.
 		tuple := fmt.Sprintf("(%s)", strings.Join(fieldNames, ", "))
-		sb.Where(fmt.Sprintf("%s IN (SELECT %s FROM __limit_cte)", tuple, strings.Join(fieldNames, ", ")))
+		sb.Where(fmt.Sprintf("%s GLOBAL IN (SELECT %s FROM __limit_cte)", tuple, strings.Join(fieldNames, ", ")))
 
 		// Group by all dimensions
-		sb.GroupBy("ALL")
+		sb.GroupBy("ts")
+		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 		if query.Having != nil && query.Having.Expression != "" {
 			// Rewrite having expression to use SQL column names
 			rewriter := querybuilder.NewHavingExpressionRewriter()
 			rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
 			sb.Having(rewrittenExpr)
+		}
+
+		if len(query.Order) != 0 {
+			for _, orderBy := range query.Order {
+				_, ok := aggOrderBy(orderBy, query)
+				if !ok {
+					sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+				}
+			}
+			sb.OrderBy("ts desc")
 		}
 
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
@@ -290,11 +381,22 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		finalArgs = querybuilder.PrependArgs(cteArgs, mainArgs)
 
 	} else {
-		sb.GroupBy("ALL")
+		sb.GroupBy("ts")
+		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
 			rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
 			sb.Having(rewrittenExpr)
+		}
+
+		if len(query.Order) != 0 {
+			for _, orderBy := range query.Order {
+				_, ok := aggOrderBy(orderBy, query)
+				if !ok {
+					sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+				}
+			}
+			sb.OrderBy("ts desc")
 		}
 
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
@@ -306,11 +408,16 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		finalArgs = querybuilder.PrependArgs(cteArgs, mainArgs)
 	}
 
-	return &qbtypes.Statement{
-		Query:    finalSQL,
-		Args:     finalArgs,
-		Warnings: warnings,
-	}, nil
+	stmt := &qbtypes.Statement{
+		Query: finalSQL,
+		Args:  finalArgs,
+	}
+	if preparedWhereClause != nil {
+		stmt.Warnings = preparedWhereClause.Warnings
+		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+	}
+
+	return stmt, nil
 }
 
 // buildScalarQuery builds a query for scalar panel type
@@ -347,7 +454,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		}
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
-		sb.SelectMore(sqlbuilder.Escape(colExpr))
+		sb.SelectMore(colExpr)
 	}
 
 	// for scalar queries, the rate would be end-start
@@ -374,13 +481,14 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+
 	if err != nil {
 		return nil, err
 	}
 
 	// Group by dimensions
-	sb.GroupBy("ALL")
+	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
 	// Add having clause if needed
 	if query.Having != nil && query.Having.Expression != "" {
@@ -416,11 +524,16 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
 
-	return &qbtypes.Statement{
-		Query:    finalSQL,
-		Args:     finalArgs,
-		Warnings: warnings,
-	}, nil
+	stmt := &qbtypes.Statement{
+		Query: finalSQL,
+		Args:  finalArgs,
+	}
+	if preparedWhereClause != nil {
+		stmt.Warnings = preparedWhereClause.Warnings
+		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+	}
+
+	return stmt, nil
 }
 
 // buildFilterCondition builds SQL condition from filter expression
@@ -431,15 +544,14 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
-) ([]string, error) {
+) (*querybuilder.PreparedWhereClause, error) {
 
-	var filterWhereClause *sqlbuilder.WhereClause
-	var warnings []string
+	var preparedWhereClause *querybuilder.PreparedWhereClause
 	var err error
 
 	if query.Filter != nil && query.Filter.Expression != "" {
 		// add filter expression
-		filterWhereClause, warnings, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			FieldMapper:        b.fm,
 			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
@@ -455,8 +567,8 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 		}
 	}
 
-	if filterWhereClause != nil {
-		sb.AddWhereClause(filterWhereClause)
+	if preparedWhereClause != nil {
+		sb.AddWhereClause(preparedWhereClause.WhereClause)
 	}
 
 	// add time filter
@@ -465,7 +577,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 
 	sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.L("timestamp", fmt.Sprintf("%d", end)), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
 
-	return warnings, nil
+	return preparedWhereClause, nil
 }
 
 func aggOrderBy(k qbtypes.OrderBy, q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) (int, bool) {
@@ -492,7 +604,7 @@ func (b *logQueryStatementBuilder) maybeAttachResourceFilter(
 		return "", nil, err
 	}
 
-	sb.Where("resource_fingerprint IN (SELECT fingerprint FROM __resource_filter)")
+	sb.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
 
 	return fmt.Sprintf("__resource_filter AS (%s)", stmt.Query), stmt.Args, nil
 }

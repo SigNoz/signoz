@@ -6,9 +6,12 @@ import {
 } from 'constants/queryBuilder';
 import {
 	listViewInitialLogQuery,
-	listViewInitialTraceQuery,
 	PANEL_TYPES_INITIAL_QUERY,
 } from 'container/NewDashboard/ComponentsSlider/constants';
+import {
+	defaultLogsSelectedColumns,
+	defaultTraceSelectedColumns,
+} from 'container/OptionsMenu/constants';
 import { categoryToSupport } from 'container/QueryBuilder/filters/BuilderUnitsFilter/config';
 import { cloneDeep, defaultTo, isEmpty, isEqual, set, unset } from 'lodash-es';
 import { Layout } from 'react-grid-layout';
@@ -60,7 +63,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'groupBy',
 					'limit',
 					'having',
-					'havingExpression',
 					'orderBy',
 					'functions',
 					'stepInterval',
@@ -84,7 +86,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'groupBy',
 					'limit',
 					'having',
-					'havingExpression',
 					'orderBy',
 					'stepInterval',
 					'legend',
@@ -106,7 +107,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'groupBy',
 					'limit',
 					'having',
-					'havingExpression',
 					'orderBy',
 					'functions',
 					'stepInterval',
@@ -130,7 +130,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'groupBy',
 					'limit',
 					'having',
-					'havingExpression',
 					'orderBy',
 					'functions',
 					'stepInterval',
@@ -154,7 +153,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'groupBy',
 					'limit',
 					'having',
-					'havingExpression',
 					'orderBy',
 					'stepInterval',
 					'legend',
@@ -176,7 +174,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'groupBy',
 					'limit',
 					'having',
-					'havingExpression',
 					'orderBy',
 					'functions',
 					'stepInterval',
@@ -200,7 +197,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'groupBy',
 					'limit',
 					'having',
-					'havingExpression',
 					'orderBy',
 					'functions',
 					'stepInterval',
@@ -224,7 +220,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'groupBy',
 					'limit',
 					'having',
-					'havingExpression',
 					'orderBy',
 					'stepInterval',
 					'legend',
@@ -246,7 +241,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'groupBy',
 					'limit',
 					'having',
-					'havingExpression',
 					'orderBy',
 					'functions',
 					'stepInterval',
@@ -270,7 +264,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'groupBy',
 					'limit',
 					'having',
-					'havingExpression',
 					'orderBy',
 					'functions',
 					'stepInterval',
@@ -295,7 +288,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'reduceTo',
 					'limit',
 					'having',
-					'havingExpression',
 					'orderBy',
 					'stepInterval',
 					'legend',
@@ -317,7 +309,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'groupBy',
 					'limit',
 					'having',
-					'havingExpression',
 					'orderBy',
 					'functions',
 					'stepInterval',
@@ -341,7 +332,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'groupBy',
 					'limit',
 					'having',
-					'havingExpression',
 					'orderBy',
 					'functions',
 					'stepInterval',
@@ -366,7 +356,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'reduceTo',
 					'limit',
 					'having',
-					'havingExpression',
 					'orderBy',
 					'stepInterval',
 					'legend',
@@ -388,7 +377,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'groupBy',
 					'limit',
 					'having',
-					'havingExpression',
 					'orderBy',
 					'functions',
 					'stepInterval',
@@ -442,7 +430,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'filter',
 					'reduceTo',
 					'having',
-					'havingExpression',
 					'functions',
 					'stepInterval',
 					'queryName',
@@ -463,7 +450,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'filter',
 					'spaceAggregation',
 					'having',
-					'havingExpression',
 					'reduceTo',
 					'stepInterval',
 					'legend',
@@ -484,7 +470,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'filter',
 					'reduceTo',
 					'having',
-					'havingExpression',
 					'functions',
 					'stepInterval',
 					'queryName',
@@ -503,7 +488,6 @@ export function handleQueryChange(
 	supersetQuery: Query,
 	currentPanelType: PANEL_TYPES,
 ): Query {
-	console.log('supersetQuery', supersetQuery);
 	return {
 		...supersetQuery,
 		builder: {
@@ -564,21 +548,12 @@ export const getDefaultWidgetData = (
 	timePreferance: 'GLOBAL_TIME',
 	softMax: null,
 	softMin: null,
-	selectedLogFields: [
-		{
-			dataType: 'string',
-			type: '',
-			name: 'body',
-		},
-		{
-			dataType: 'string',
-			type: '',
-			name: 'timestamp',
-		},
-	],
-	selectedTracesFields: [
-		...listViewInitialTraceQuery.builder.queryData[0].selectColumns,
-	],
+	selectedLogFields: defaultLogsSelectedColumns.map((field) => ({
+		...field,
+		type: field.fieldContext ?? '',
+		dataType: field.fieldDataType ?? '',
+	})),
+	selectedTracesFields: defaultTraceSelectedColumns,
 	contextLinks: { linksData: [] },
 });
 

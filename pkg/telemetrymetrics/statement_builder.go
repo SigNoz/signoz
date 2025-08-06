@@ -11,6 +11,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
+	"golang.org/x/exp/slices"
 )
 
 const (
@@ -84,6 +85,8 @@ func (b *metricQueryStatementBuilder) Build(
 		return nil, err
 	}
 
+	start, end = querybuilder.AdjustedMetricTimeRange(start, end, uint64(query.StepInterval.Seconds()), query)
+
 	return b.buildPipelineStatement(ctx, start, end, query, keys, variables)
 }
 
@@ -149,7 +152,7 @@ func (b *metricQueryStatementBuilder) buildPipelineStatement(
 
 	origSpaceAgg := query.Aggregations[0].SpaceAggregation
 	origTimeAgg := query.Aggregations[0].TimeAggregation
-	origGroupBy := query.GroupBy
+	origGroupBy := slices.Clone(query.GroupBy)
 
 	if query.Aggregations[0].SpaceAggregation.IsPercentile() &&
 		query.Aggregations[0].Type != metrictypes.ExpHistogramType {
@@ -162,8 +165,20 @@ func (b *metricQueryStatementBuilder) buildPipelineStatement(
 			}
 		}
 
-		// we need to add le in the group by if it doesn't exist
-		if !leExists {
+		if leExists {
+			// if the user themselves adds `le`, then we remove it from the original group by
+			// this is to avoid preparing a query that returns `nan`s, see following query
+			// SELECT
+			// 		ts,
+			// 		le,
+			// 		histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.99) AS value
+			// FROM __spatial_aggregation_cte
+			// GROUP BY
+			// 		le,
+			// 		ts
+
+			origGroupBy = slices.DeleteFunc(origGroupBy, func(k qbtypes.GroupByKey) bool { return k.Name == "le" })
+		} else {
 			query.GroupBy = append(query.GroupBy, qbtypes.GroupByKey{
 				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "le"},
 			})
@@ -258,7 +273,8 @@ func (b *metricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 		sb.GTE("unix_milli", start),
 		sb.LT("unix_milli", end),
 	)
-	sb.GroupBy("ALL")
+	sb.GroupBy("ts")
+	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
 	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args
@@ -273,11 +289,11 @@ func (b *metricQueryStatementBuilder) buildTimeSeriesCTE(
 ) (string, []any, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
-	var filterWhere *sqlbuilder.WhereClause
+	var preparedWhereClause *querybuilder.PreparedWhereClause
 	var err error
 
 	if query.Filter != nil && query.Filter.Expression != "" {
-		filterWhere, _, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,
@@ -316,11 +332,12 @@ func (b *metricQueryStatementBuilder) buildTimeSeriesCTE(
 		sb.EQ("__normalized", false),
 	)
 
-	if filterWhere != nil {
-		sb.AddWhereClause(filterWhere)
+	if preparedWhereClause != nil {
+		sb.AddWhereClause(preparedWhereClause.WhereClause)
 	}
 
-	sb.GroupBy("ALL")
+	sb.GroupBy("fingerprint")
+	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return fmt.Sprintf("(%s) AS filtered_time_series", q), args, nil
@@ -375,7 +392,8 @@ func (b *metricQueryStatementBuilder) buildTemporalAggDelta(
 		sb.GTE("unix_milli", start),
 		sb.LT("unix_milli", end),
 	)
-	sb.GroupBy("ALL")
+	sb.GroupBy("fingerprint", "ts")
+	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 	sb.OrderBy("fingerprint", "ts")
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
@@ -412,7 +430,8 @@ func (b *metricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		baseSb.GTE("unix_milli", start),
 		baseSb.LT("unix_milli", end),
 	)
-	baseSb.GroupBy("ALL")
+	baseSb.GroupBy("fingerprint", "ts")
+	baseSb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 	baseSb.OrderBy("fingerprint", "ts")
 
 	innerQuery, innerArgs := baseSb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
@@ -438,7 +457,7 @@ func (b *metricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 			wrapped.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 		}
 		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", incExpr))
-		wrapped.From(fmt.Sprintf("(%s) WINDOW increase_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", innerQuery))
+		wrapped.From(fmt.Sprintf("(%s) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", innerQuery))
 		q, args := wrapped.BuildWithFlavor(sqlbuilder.ClickHouse, innerArgs...)
 		return fmt.Sprintf("__temporal_aggregation_cte AS (%s)", q), args, nil
 	default:
@@ -465,7 +484,8 @@ func (b *metricQueryStatementBuilder) buildSpatialAggregationCTE(
 	if query.Aggregations[0].ValueFilter != nil {
 		sb.Where(sb.EQ("per_series_value", query.Aggregations[0].ValueFilter.Value))
 	}
-	sb.GroupBy("ALL")
+	sb.GroupBy("ts")
+	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args

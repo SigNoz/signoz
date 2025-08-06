@@ -137,7 +137,6 @@ function Explorer(): JSX.Element {
 						/>
 					</div>
 				</div>
-				{/* <QuerySection /> */}
 				<QueryBuilderV2
 					config={{ initialDataSource: DataSource.METRICS, queryVariant: 'static' }}
 					panelType={PANEL_TYPES.TIME_SERIES}

@@ -75,6 +75,10 @@ func (agents *Agents) FindAgent(agentID string) *Agent {
 // If the Agent instance does not exist, it is created and added to the list of
 // Agent instances.
 func (agents *Agents) FindOrCreateAgent(agentID string, conn types.Connection, orgID valuer.UUID) (*Agent, bool, error) {
+	if agentID == "" {
+		return nil, false, errors.New("cannot create agent without agentID")
+	}
+
 	agents.mux.Lock()
 	defer agents.mux.Unlock()
 	agent, ok := agents.agentsById[agentID]

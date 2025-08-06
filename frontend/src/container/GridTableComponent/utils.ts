@@ -12,6 +12,7 @@ import { EQueryType } from 'types/common/dashboard';
 // Custom column type that extends ColumnType to include isValueColumn
 export interface CustomDataColumnType<T> extends ColumnType<T> {
 	isValueColumn?: boolean;
+	queryName?: string;
 }
 
 // Helper function to evaluate the condition based on the operator
@@ -103,7 +104,12 @@ export function findMatchingThreshold(
 }
 
 export interface TableData {
-	columns: { name: string; queryName: string; isValueColumn: boolean }[];
+	columns: {
+		name: string;
+		queryName: string;
+		isValueColumn: boolean;
+		id: string;
+	}[];
 	rows: { data: any }[];
 }
 
@@ -188,12 +194,18 @@ export function createColumnsAndDataSource(
 				? getQueryLegend(currentQuery, item.queryName)
 				: undefined;
 
+			const isNewAggregation =
+				currentQuery?.builder?.queryData?.find(
+					(query) => query.queryName === item.queryName,
+				)?.aggregations?.length || 0;
+
 			const column: CustomDataColumnType<RowData> = {
-				dataIndex: item.name,
+				dataIndex: item.id || item.name,
 				// if no legend present then rely on the column name value
-				title: !isEmpty(legend) ? legend : item.name,
+				title: !isNewAggregation && !isEmpty(legend) ? legend : item.name,
 				width: QUERY_TABLE_CONFIG.width,
 				isValueColumn: item.isValueColumn,
+				queryName: item.queryName,
 				render: renderColumnCell && renderColumnCell[item.name],
 				sorter: (a: RowData, b: RowData): number => sortFunction(a, b, item),
 			};

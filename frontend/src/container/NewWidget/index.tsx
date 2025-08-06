@@ -5,6 +5,7 @@ import { WarningOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import { adjustQueryForV5 } from 'components/QueryBuilderV2/utils';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueriesMap,
@@ -479,6 +480,8 @@ function NewWidget({
 			updatedLayout = newLayoutItem;
 		}
 
+		const adjustedQueryForV5 = adjustQueryForV5(currentQuery);
+
 		const dashboard: Props = {
 			id: selectedDashboard.id,
 
@@ -498,7 +501,7 @@ function NewWidget({
 								stackedBarChart: selectedWidget?.stackedBarChart || false,
 								yAxisUnit: selectedWidget?.yAxisUnit,
 								panelTypes: graphType,
-								query: currentQuery,
+								query: adjustedQueryForV5,
 								thresholds: selectedWidget?.thresholds,
 								columnUnits: selectedWidget?.columnUnits,
 								softMin: selectedWidget?.softMin || 0,
@@ -528,7 +531,7 @@ function NewWidget({
 								stackedBarChart: selectedWidget?.stackedBarChart || false,
 								yAxisUnit: selectedWidget?.yAxisUnit,
 								panelTypes: graphType,
-								query: currentQuery,
+								query: adjustedQueryForV5,
 								thresholds: selectedWidget?.thresholds,
 								columnUnits: selectedWidget?.columnUnits,
 								softMin: selectedWidget?.softMin || 0,

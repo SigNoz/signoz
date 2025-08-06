@@ -35,7 +35,7 @@ import {
 	ScrollText,
 	X,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
@@ -85,8 +85,12 @@ function NamespaceDetails({
 		endTime: endMs,
 	}));
 
+	const lastSelectedInterval = useRef<Time | null>(null);
+
 	const [selectedInterval, setSelectedInterval] = useState<Time>(
-		selectedTime as Time,
+		lastSelectedInterval.current
+			? lastSelectedInterval.current
+			: (selectedTime as Time),
 	);
 
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -195,10 +199,11 @@ function NamespaceDetails({
 	}, [initialFilters, initialEventsFilters]);
 
 	useEffect(() => {
-		setSelectedInterval(selectedTime as Time);
+		const currentSelectedInterval = lastSelectedInterval.current || selectedTime;
+		setSelectedInterval(currentSelectedInterval as Time);
 
-		if (selectedTime !== 'custom') {
-			const { maxTime, minTime } = GetMinMax(selectedTime);
+		if (currentSelectedInterval !== 'custom') {
+			const { maxTime, minTime } = GetMinMax(currentSelectedInterval);
 
 			setModalTimeRange({
 				startTime: Math.floor(minTime / 1000000000),
@@ -226,6 +231,7 @@ function NamespaceDetails({
 
 	const handleTimeChange = useCallback(
 		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
+			lastSelectedInterval.current = interval as Time;
 			setSelectedInterval(interval as Time);
 
 			if (interval === 'custom' && dateTimeRange) {
@@ -257,18 +263,20 @@ function NamespaceDetails({
 	const handleChangeLogFilters = useCallback(
 		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogAndTracesFilters((prevFilters) => {
-				const primaryFilters = prevFilters.items.filter((item) =>
+				const primaryFilters = prevFilters?.items?.filter((item) =>
 					[QUERY_KEYS.K8S_NAMESPACE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME].includes(
 						item.key?.key ?? '',
 					),
 				);
-				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
-				const newFilters = value.items.filter(
+				const paginationFilter = value?.items?.find(
+					(item) => item.key?.key === 'id',
+				);
+				const newFilters = value?.items?.filter(
 					(item) =>
 						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_NAMESPACE_NAME,
 				);
 
-				if (newFilters.length > 0) {
+				if (newFilters && newFilters?.length > 0) {
 					logEvent(InfraMonitoringEvents.FilterApplied, {
 						entity: InfraMonitoringEvents.K8sEntity,
 						page: InfraMonitoringEvents.DetailedPage,
@@ -280,8 +288,8 @@ function NamespaceDetails({
 				const updatedFilters = {
 					op: 'AND',
 					items: [
-						...primaryFilters,
-						...newFilters,
+						...(primaryFilters || []),
+						...(newFilters || []),
 						...(paginationFilter ? [paginationFilter] : []),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
@@ -305,13 +313,13 @@ function NamespaceDetails({
 	const handleChangeTracesFilters = useCallback(
 		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogAndTracesFilters((prevFilters) => {
-				const primaryFilters = prevFilters.items.filter((item) =>
+				const primaryFilters = prevFilters?.items?.filter((item) =>
 					[QUERY_KEYS.K8S_NAMESPACE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME].includes(
 						item.key?.key ?? '',
 					),
 				);
 
-				if (value.items.length > 0) {
+				if (value?.items && value?.items?.length > 0) {
 					logEvent(InfraMonitoringEvents.FilterApplied, {
 						entity: InfraMonitoringEvents.K8sEntity,
 						page: InfraMonitoringEvents.DetailedPage,
@@ -323,10 +331,10 @@ function NamespaceDetails({
 				const updatedFilters = {
 					op: 'AND',
 					items: [
-						...primaryFilters,
-						...value.items.filter(
+						...(primaryFilters || []),
+						...(value?.items?.filter(
 							(item) => item.key?.key !== QUERY_KEYS.K8S_NAMESPACE_NAME,
-						),
+						) || []),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
 
@@ -348,14 +356,14 @@ function NamespaceDetails({
 	const handleChangeEventsFilters = useCallback(
 		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setEventsFilters((prevFilters) => {
-				const namespaceKindFilter = prevFilters.items.find(
+				const namespaceKindFilter = prevFilters?.items?.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_KIND,
 				);
-				const namespaceNameFilter = prevFilters.items.find(
+				const namespaceNameFilter = prevFilters?.items?.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				if (value.items.length > 0) {
+				if (value?.items && value?.items?.length > 0) {
 					logEvent(InfraMonitoringEvents.FilterApplied, {
 						entity: InfraMonitoringEvents.K8sEntity,
 						page: InfraMonitoringEvents.DetailedPage,
@@ -369,11 +377,11 @@ function NamespaceDetails({
 					items: [
 						namespaceKindFilter,
 						namespaceNameFilter,
-						...value.items.filter(
+						...(value?.items?.filter(
 							(item) =>
 								item.key?.key !== QUERY_KEYS.K8S_OBJECT_KIND &&
 								item.key?.key !== QUERY_KEYS.K8S_OBJECT_NAME,
-						),
+						) || []),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
 
@@ -411,7 +419,8 @@ function NamespaceDetails({
 		if (selectedView === VIEW_TYPES.LOGS) {
 			const filtersWithoutPagination = {
 				...logAndTracesFilters,
-				items: logAndTracesFilters.items.filter((item) => item.key?.key !== 'id'),
+				items:
+					logAndTracesFilters?.items?.filter((item) => item.key?.key !== 'id') || [],
 			};
 
 			const compositeQuery = {
@@ -461,6 +470,7 @@ function NamespaceDetails({
 	};
 
 	const handleClose = (): void => {
+		lastSelectedInterval.current = null;
 		setSelectedInterval(selectedTime as Time);
 
 		if (selectedTime !== 'custom') {

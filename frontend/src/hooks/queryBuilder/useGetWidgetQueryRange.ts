@@ -41,7 +41,6 @@ export const useGetWidgetQueryRange = (
 		version,
 		{
 			enabled: !!stagedQuery,
-			retry: false,
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
 				selectedTime,

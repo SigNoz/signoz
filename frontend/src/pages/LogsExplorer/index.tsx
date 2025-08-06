@@ -3,6 +3,7 @@ import './LogsExplorer.styles.scss';
 import * as Sentry from '@sentry/react';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
+import { TelemetryFieldKey } from 'api/v5/v5';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
@@ -31,7 +32,7 @@ import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFall
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import {
 	getExplorerViewForPanelType,
@@ -82,6 +83,8 @@ function LogsExplorer(): JSX.Element {
 		handleRunQuery,
 		handleSetConfig,
 		updateAllQueriesOperators,
+		currentQuery,
+		updateQueriesData,
 	} = useQueryBuilder();
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
@@ -94,6 +97,14 @@ function LogsExplorer(): JSX.Element {
 
 	const [shouldReset, setShouldReset] = useState(false);
 
+	const [defaultQuery, setDefaultQuery] = useState<Query>(() =>
+		updateAllQueriesOperators(
+			initialQueriesMap.logs,
+			PANEL_TYPES.LIST,
+			DataSource.LOGS,
+		),
+	);
+
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews): void => {
 			if (selectedView === ExplorerViews.LIST) {
@@ -101,6 +112,30 @@ function LogsExplorer(): JSX.Element {
 			}
 
 			if (view === ExplorerViews.LIST) {
+				if (
+					selectedView !== ExplorerViews.LIST &&
+					currentQuery?.builder?.queryData?.[0]
+				) {
+					const filterToRetain = currentQuery.builder.queryData[0].filter;
+
+					const newDefaultQuery = updateAllQueriesOperators(
+						initialQueriesMap.logs,
+						PANEL_TYPES.LIST,
+						DataSource.LOGS,
+					);
+
+					const newListQuery = updateQueriesData(
+						newDefaultQuery,
+						'queryData',
+						(item, index) => {
+							if (index === 0) {
+								return { ...item, filter: filterToRetain };
+							}
+							return item;
+						},
+					);
+					setDefaultQuery(newListQuery);
+				}
 				setShouldReset(true);
 			}
 
@@ -109,27 +144,34 @@ function LogsExplorer(): JSX.Element {
 				view === ExplorerViews.TIMESERIES ? PANEL_TYPES.TIME_SERIES : view,
 			);
 		},
-		[handleSetConfig, handleExplorerTabChange, selectedView],
-	);
-
-	const defaultListQuery = useMemo(
-		() =>
-			updateAllQueriesOperators(
-				initialQueriesMap.logs,
-				PANEL_TYPES.LIST,
-				DataSource.LOGS,
-			),
-		[updateAllQueriesOperators],
+		[
+			handleSetConfig,
+			handleExplorerTabChange,
+			selectedView,
+			currentQuery,
+			updateAllQueriesOperators,
+			updateQueriesData,
+			setSelectedView,
+		],
 	);
 
 	useShareBuilderUrl({
-		defaultValue: defaultListQuery,
+		defaultValue: defaultQuery,
 		forceReset: shouldReset,
 	});
 
 	useEffect(() => {
-		if (shouldReset) setShouldReset(false);
-	}, [shouldReset]);
+		if (shouldReset) {
+			setShouldReset(false);
+			setDefaultQuery(
+				updateAllQueriesOperators(
+					initialQueriesMap.logs,
+					PANEL_TYPES.LIST,
+					DataSource.LOGS,
+				),
+			);
+		}
+	}, [shouldReset, updateAllQueriesOperators]);
 
 	const handleFilterVisibilityChange = (): void => {
 		setLocalStorageApi(
@@ -158,11 +200,11 @@ function LogsExplorer(): JSX.Element {
 
 	// Check if the columns have the required columns (timestamp, body)
 	const hasRequiredColumns = useCallback(
-		(columns?: Array<{ key: string }> | null): boolean => {
+		(columns?: TelemetryFieldKey[] | null): boolean => {
 			if (!columns?.length) return false;
 
-			const hasTimestamp = columns.some((col) => col.key === 'timestamp');
-			const hasBody = columns.some((col) => col.key === 'body');
+			const hasTimestamp = columns.some((col) => col.name === 'timestamp');
+			const hasBody = columns.some((col) => col.name === 'body');
 
 			return hasTimestamp && hasBody;
 		},
@@ -171,7 +213,7 @@ function LogsExplorer(): JSX.Element {
 
 	// Merge the columns with the required columns (timestamp, body) if missing
 	const mergeWithRequiredColumns = useCallback(
-		(columns: BaseAutocompleteData[]): BaseAutocompleteData[] => [
+		(columns: TelemetryFieldKey[]): TelemetryFieldKey[] => [
 			// Add required columns (timestamp, body) if missing
 			...(!hasRequiredColumns(columns) ? defaultLogsSelectedColumns : []),
 			...columns,

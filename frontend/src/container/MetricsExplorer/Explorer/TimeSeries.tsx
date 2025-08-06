@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios';
 import classNames from 'classnames';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -7,11 +8,13 @@ import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
+import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -33,8 +36,8 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 		currentQuery.builder.queryData.forEach(
 			({ aggregateAttribute, aggregateOperator }) => {
 				const isExistDurationNanoAttribute =
-					aggregateAttribute.key === 'durationNano' ||
-					aggregateAttribute.key === 'duration_nano';
+					aggregateAttribute?.key === 'durationNano' ||
+					aggregateAttribute?.key === 'duration_nano';
 
 				const isCountOperator =
 					aggregateOperator === 'count' || aggregateOperator === 'count_distinct';
@@ -57,6 +60,8 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 	);
 
 	const [yAxisUnit, setYAxisUnit] = useState<string>('');
+
+	const { showErrorModal } = useErrorModal();
 
 	const queries = useQueries(
 		queryPayloads.map((payload, index) => ({
@@ -84,6 +89,24 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 					ENTITY_VERSION_V5,
 				),
 			enabled: !!payload,
+			retry: (failureCount: number, error: Error): boolean => {
+				let status: number | undefined;
+
+				if (error instanceof APIError) {
+					status = error.getHttpStatusCode();
+				} else if (isAxiosError(error)) {
+					status = error.response?.status;
+				}
+
+				if (status && status >= 400 && status < 500) {
+					return false;
+				}
+
+				return failureCount < 3;
+			},
+			onError: (error: APIError): void => {
+				showErrorModal(error);
+			},
 		})),
 	);
 

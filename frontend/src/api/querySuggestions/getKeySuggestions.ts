@@ -7,5 +7,22 @@ import {
 
 export const getKeySuggestions = (
 	props: QueryKeyRequestProps,
-): Promise<AxiosResponse<QueryKeySuggestionsResponseProps>> =>
-	axios.get(`/fields/keys?signal=${props.signal}&name=${props.name}`);
+): Promise<AxiosResponse<QueryKeySuggestionsResponseProps>> => {
+	const {
+		signal = '',
+		searchText = '',
+		metricName = '',
+		fieldContext = '',
+		fieldDataType = '',
+	} = props;
+
+	const encodedSignal = encodeURIComponent(signal);
+	const encodedSearchText = encodeURIComponent(searchText);
+	const encodedMetricName = encodeURIComponent(metricName);
+	const encodedFieldContext = encodeURIComponent(fieldContext);
+	const encodedFieldDataType = encodeURIComponent(fieldDataType);
+
+	return axios.get(
+		`/fields/keys?signal=${encodedSignal}&searchText=${encodedSearchText}&metricName=${encodedMetricName}&fieldContext=${encodedFieldContext}&fieldDataType=${encodedFieldDataType}`,
+	);
+};

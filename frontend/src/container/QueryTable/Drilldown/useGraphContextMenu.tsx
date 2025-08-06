@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import { isValidQueryName } from './drilldownUtils';
 import useAggregateDrilldown, { AggregateData } from './useAggregateDrilldown';
 
 interface UseGraphContextMenuProps {
@@ -33,6 +34,8 @@ export function useGraphContextMenu({
 } {
 	const drilldownQuery = useGetCompositeQueryParam() || query;
 
+	const isQueryTypeBuilder = drilldownQuery?.queryType === 'builder';
+
 	const { aggregateDrilldownConfig } = useAggregateDrilldown({
 		query: drilldownQuery,
 		widgetId,
@@ -44,11 +47,16 @@ export function useGraphContextMenu({
 	});
 
 	const menuItemsConfig = useMemo(() => {
-		if (!coordinates) {
+		if (!coordinates || !graphData || !isQueryTypeBuilder) {
 			return {};
 		}
+		// Check if queryName is valid for drilldown
+		if (!isValidQueryName(graphData.queryName)) {
+			return {};
+		}
+
 		return aggregateDrilldownConfig;
-	}, [coordinates, aggregateDrilldownConfig]);
+	}, [coordinates, aggregateDrilldownConfig, graphData, isQueryTypeBuilder]);
 
 	return { menuItemsConfig };
 }

@@ -208,15 +208,23 @@ const useBaseAggregateOptions = ({
 			queryName as string,
 		);
 
-		console.log('dataSource', dataSource);
-		console.log('aggregations', aggregations);
+		console.log('Header', { aggregateData });
 
 		return {
 			header: (
-				<div>
+				<ContextMenu.Header>
 					<div style={{ textTransform: 'capitalize' }}>{dataSource}</div>
-					<div>{aggregations}</div>
-				</div>
+					<div
+						style={{
+							fontWeight: 'normal',
+							overflow: 'hidden',
+							textOverflow: 'ellipsis',
+							whiteSpace: 'nowrap',
+						}}
+					>
+						{aggregateData?.label || aggregations}
+					</div>
+				</ContextMenu.Header>
 			),
 			items: (
 				<div style={{ height: '200px' }}>

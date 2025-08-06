@@ -38,6 +38,10 @@ type resourceFilterStatementBuilder[T any] struct {
 	conditionBuilder qbtypes.ConditionBuilder
 	metadataStore    telemetrytypes.MetadataStore
 	signal           telemetrytypes.Signal
+
+	fullTextColumn *telemetrytypes.TelemetryFieldKey
+	jsonBodyPrefix string
+	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
 }
 
 // Ensure interface compliance at compile time
@@ -64,12 +68,18 @@ func NewLogResourceFilterStatementBuilder(
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 	metadataStore telemetrytypes.MetadataStore,
+	fullTextColumn *telemetrytypes.TelemetryFieldKey,
+	jsonBodyPrefix string,
+	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *resourceFilterStatementBuilder[qbtypes.LogAggregation] {
 	return &resourceFilterStatementBuilder[qbtypes.LogAggregation]{
 		fieldMapper:      fieldMapper,
 		conditionBuilder: conditionBuilder,
 		metadataStore:    metadataStore,
 		signal:           telemetrytypes.SignalLogs,
+		fullTextColumn:   fullTextColumn,
+		jsonBodyPrefix:   jsonBodyPrefix,
+		jsonKeyToKey:     jsonKeyToKey,
 	}
 }
 
@@ -136,11 +146,17 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 	if query.Filter != nil && query.Filter.Expression != "" {
 
 		// warnings would be encountered as part of the main condition already
-		filterWhereClause, _, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		filterWhereClause, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			FieldMapper:        b.fieldMapper,
 			ConditionBuilder:   b.conditionBuilder,
 			FieldKeys:          keys,
+			FullTextColumn:     b.fullTextColumn,
+			JsonBodyPrefix:     b.jsonBodyPrefix,
+			JsonKeyToKey:       b.jsonKeyToKey,
 			SkipFullTextFilter: true,
+			SkipFunctionCalls:  true,
+			// there is no need for "key" not found error for resource filtering
+			IgnoreNotFoundKeys: true,
 			Variables:          variables,
 		})
 
@@ -148,7 +164,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			return err
 		}
 		if filterWhereClause != nil {
-			sb.AddWhereClause(filterWhereClause)
+			sb.AddWhereClause(filterWhereClause.WhereClause)
 		}
 	}
 

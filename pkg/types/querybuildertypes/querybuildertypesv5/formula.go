@@ -20,6 +20,8 @@ type QueryBuilderFormula struct {
 	// expression to apply to the query
 	Expression string `json:"expression"`
 
+	Disabled bool `json:"disabled,omitempty"`
+
 	// order by keys and directions
 	Order []OrderBy `json:"order,omitempty"`
 
@@ -31,6 +33,8 @@ type QueryBuilderFormula struct {
 
 	// functions to apply to the formula result
 	Functions []Function `json:"functions,omitempty"`
+
+	Legend string `json:"legend,omitempty"`
 }
 
 // UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields

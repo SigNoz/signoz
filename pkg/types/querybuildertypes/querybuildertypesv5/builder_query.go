@@ -37,7 +37,7 @@ type QueryBuilderQuery[T any] struct {
 	Limit int `json:"limit,omitempty"`
 
 	// limitBy fields to limit by
-	LimitBy LimitBy `json:"limitBy,omitempty"`
+	LimitBy *LimitBy `json:"limitBy,omitempty"`
 
 	// offset the number of rows to skip
 	// TODO: remove this once we have cursor-based pagination everywhere?
@@ -55,6 +55,8 @@ type QueryBuilderQuery[T any] struct {
 
 	// functions to apply to the query
 	Functions []Function `json:"functions,omitempty"`
+
+	Legend string `json:"legend,omitempty"`
 
 	// ShiftBy is extracted from timeShift function for internal use
 	// This field is not serialized to JSON

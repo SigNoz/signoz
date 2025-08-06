@@ -7,7 +7,7 @@ import { Layout } from 'react-grid-layout';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { IField } from '../logs/fields';
-import { BaseAutocompleteData } from '../queryBuilder/queryAutocompleteResponse';
+import { TelemetryFieldKey } from '../v5/queryRange';
 
 export const VariableQueryTypeArr = ['QUERY', 'TEXTBOX', 'CUSTOM'] as const;
 export type TVariableQueryType = typeof VariableQueryTypeArr[number];
@@ -115,12 +115,12 @@ export interface IBaseWidget {
 	fillSpans?: boolean;
 	columnUnits?: ColumnUnit;
 	selectedLogFields: IField[] | null;
-	selectedTracesFields: BaseAutocompleteData[] | null;
+	selectedTracesFields: TelemetryFieldKey[] | null;
 	isLogScale?: boolean;
 	columnWidths?: Record<string, number>;
 	legendPosition?: LegendPosition;
 	customLegendColors?: Record<string, string>;
-	contextLinks: ContextLinksData;
+	contextLinks?: ContextLinksData;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;
