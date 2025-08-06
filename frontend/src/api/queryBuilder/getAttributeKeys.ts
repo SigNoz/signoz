@@ -17,7 +17,6 @@ export const getAggregateKeys = async ({
 	dataSource,
 	aggregateAttribute,
 	tagType,
-	signalSource,
 }: IGetAttributeKeysPayload): Promise<
 	SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse
 > => {
@@ -30,7 +29,6 @@ export const getAggregateKeys = async ({
 				searchText,
 				dataSource,
 				aggregateAttribute,
-				source: signalSource,
 			})}&tagType=${tagType}`,
 		);
 
