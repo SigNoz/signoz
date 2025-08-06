@@ -345,7 +345,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 				WHEN tag_type = 'scope' THEN 3
 				WHEN tag_type = 'tag' THEN 4
 				ELSE 5
-			END as priority`).From(t.logsDBName + "." + t.logsFieldsTblName)
+			END as priority`).From(t.logsDBName + "." + "distributed_tag_attributes_keys_mv")
 	var limit int
 
 	conds := []string{}
