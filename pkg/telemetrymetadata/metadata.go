@@ -46,6 +46,10 @@ type telemetryMetaStore struct {
 	conditionBuilder qbtypes.ConditionBuilder
 }
 
+func escapeForLike(s string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(s, `_`, `\_`), `%`, `\%`)
+}
+
 func NewTelemetryMetaStore(
 	settings factory.ProviderSettings,
 	telemetrystore telemetrystore.TelemetryStore,
@@ -108,15 +112,15 @@ func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) 
 }
 
 // getTracesKeys returns the keys from the spans that match the field selection criteria
-func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
+func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	if len(fieldKeySelectors) == 0 {
-		return nil, nil
+		return nil, true, nil
 	}
 
 	// pre-fetch the materialised keys from the traces table
 	matKeys, err := t.tracesTblStatementToFieldKeys(ctx)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	mapOfKeys := make(map[string]*telemetrytypes.TelemetryFieldKey)
 	for _, key := range matKeys {
@@ -151,7 +155,7 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		if fieldKeySelector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
 			fieldKeyConds = append(fieldKeyConds, sb.E("tag_key", fieldKeySelector.Name))
 		} else {
-			fieldKeyConds = append(fieldKeyConds, sb.Like("tag_key", "%"+fieldKeySelector.Name+"%"))
+			fieldKeyConds = append(fieldKeyConds, sb.ILike("tag_key", "%"+escapeForLike(fieldKeySelector.Name)+"%"))
 		}
 
 		searchTexts = append(searchTexts, fieldKeySelector.Name)
@@ -177,6 +181,7 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		limit += fieldKeySelector.Limit
 	}
 	sb.Where(sb.Or(conds...))
+	sb.GroupBy("tag_key", "tag_type", "tag_data_type")
 
 	if limit == 0 {
 		limit = 1000
@@ -186,24 +191,32 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 	mainSb.From(mainSb.BuilderAs(sb, "sub_query"))
 	mainSb.GroupBy("tag_key", "tag_type", "tag_data_type")
 	mainSb.OrderBy("priority")
-	mainSb.Limit(limit)
+	// query one extra to check if we hit the limit
+	mainSb.Limit(limit + 1)
 
 	query, args := mainSb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
+		return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
 	}
 	defer rows.Close()
 	keys := []*telemetrytypes.TelemetryFieldKey{}
+	rowCount := 0
 	for rows.Next() {
+		rowCount++
+		// reached the limit, we know there are more results
+		if rowCount > limit {
+			break
+		}
+
 		var name string
 		var fieldContext telemetrytypes.FieldContext
 		var fieldDataType telemetrytypes.FieldDataType
 		var priority uint8
 		err = rows.Scan(&name, &fieldContext, &fieldDataType, &priority)
 		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
+			return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
 		}
 		key, ok := mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()]
 
@@ -222,14 +235,18 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 	}
 
 	if rows.Err() != nil {
-		return nil, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
+		return nil, false, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
 	}
+
+	// hit the limit? (only counting DB results)
+	complete := rowCount <= limit
 
 	staticKeys := []string{"isRoot", "isEntryPoint"}
 	staticKeys = append(staticKeys, maps.Keys(telemetrytraces.IntrinsicFields)...)
 	staticKeys = append(staticKeys, maps.Keys(telemetrytraces.CalculatedFields)...)
 
-	// add matching intrinsic and matching calculated fields
+	// Add matching intrinsic and matching calculated fields
+	// These don't count towards the limit
 	for _, key := range staticKeys {
 		found := false
 		for _, v := range searchTexts {
@@ -278,7 +295,7 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		}
 	}
 
-	return keys, nil
+	return keys, complete, nil
 }
 
 // logsTblStatementToFieldKeys returns materialised attribute/resource/scope keys from the logs table
@@ -303,15 +320,15 @@ func (t *telemetryMetaStore) logsTblStatementToFieldKeys(ctx context.Context) ([
 }
 
 // getLogsKeys returns the keys from the spans that match the field selection criteria
-func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
+func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	if len(fieldKeySelectors) == 0 {
-		return nil, nil
+		return nil, true, nil
 	}
 
 	// pre-fetch the materialised keys from the logs table
 	matKeys, err := t.logsTblStatementToFieldKeys(ctx)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	mapOfKeys := make(map[string]*telemetrytypes.TelemetryFieldKey)
 	for _, key := range matKeys {
@@ -346,7 +363,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		if fieldKeySelector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
 			fieldKeyConds = append(fieldKeyConds, sb.E("tag_key", fieldKeySelector.Name))
 		} else {
-			fieldKeyConds = append(fieldKeyConds, sb.Like("tag_key", "%"+fieldKeySelector.Name+"%"))
+			fieldKeyConds = append(fieldKeyConds, sb.ILike("tag_key", "%"+escapeForLike(fieldKeySelector.Name)+"%"))
 		}
 		searchTexts = append(searchTexts, fieldKeySelector.Name)
 		if fieldKeySelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
@@ -372,6 +389,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		limit += fieldKeySelector.Limit
 	}
 	sb.Where(sb.Or(conds...))
+	sb.GroupBy("tag_key", "tag_type", "tag_data_type")
 	if limit == 0 {
 		limit = 1000
 	}
@@ -380,24 +398,32 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	mainSb.From(mainSb.BuilderAs(sb, "sub_query"))
 	mainSb.GroupBy("tag_key", "tag_type", "tag_data_type")
 	mainSb.OrderBy("priority")
-	mainSb.Limit(limit)
+	// query one extra to check if we hit the limit
+	mainSb.Limit(limit + 1)
 
 	query, args := mainSb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
+		return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 	}
 	defer rows.Close()
 	keys := []*telemetrytypes.TelemetryFieldKey{}
+	rowCount := 0
 	for rows.Next() {
+		rowCount++
+		// reached the limit, we know there are more results
+		if rowCount > limit {
+			break
+		}
+
 		var name string
 		var fieldContext telemetrytypes.FieldContext
 		var fieldDataType telemetrytypes.FieldDataType
 		var priority uint8
 		err = rows.Scan(&name, &fieldContext, &fieldDataType, &priority)
 		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
+			return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 		}
 		key, ok := mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()]
 
@@ -416,13 +442,17 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	}
 
 	if rows.Err() != nil {
-		return nil, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
+		return nil, false, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 	}
+
+	// hit the limit? (only counting DB results)
+	complete := rowCount <= limit
 
 	staticKeys := []string{}
 	staticKeys = append(staticKeys, maps.Keys(telemetrylogs.IntrinsicFields)...)
 
-	// add matching intrinsic and matching calculated fields
+	// Add matching intrinsic and matching calculated fields
+	// These don't count towards the limit
 	for _, key := range staticKeys {
 		found := false
 		for _, v := range searchTexts {
@@ -457,13 +487,13 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		}
 	}
 
-	return keys, nil
+	return keys, complete, nil
 }
 
 // getMetricsKeys returns the keys from the metrics that match the field selection criteria
-func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
+func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	if len(fieldKeySelectors) == 0 {
-		return nil, nil
+		return nil, true, nil
 	}
 
 	sb := sqlbuilder.
@@ -484,7 +514,7 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 		if fieldKeySelector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
 			fieldConds = append(fieldConds, sb.E("attr_name", fieldKeySelector.Name))
 		} else {
-			fieldConds = append(fieldConds, sb.Like("attr_name", "%"+fieldKeySelector.Name+"%"))
+			fieldConds = append(fieldConds, sb.ILike("attr_name", "%"+escapeForLike(fieldKeySelector.Name)+"%"))
 		}
 		fieldConds = append(fieldConds, sb.NotLike("attr_name", "\\_\\_%"))
 
@@ -506,6 +536,7 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 		limit += fieldKeySelector.Limit
 	}
 	sb.Where(sb.Or(conds...))
+	sb.GroupBy("name", "field_context", "field_data_type")
 
 	if limit == 0 {
 		limit = 1000
@@ -515,25 +546,33 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 	mainSb.From(mainSb.BuilderAs(sb, "sub_query"))
 	mainSb.GroupBy("name", "field_context", "field_data_type")
 	mainSb.OrderBy("priority")
-	mainSb.Limit(limit)
+	// query one extra to check if we hit the limit
+	mainSb.Limit(limit + 1)
 
 	query, args := mainSb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+		return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
 	}
 	defer rows.Close()
 
 	keys := []*telemetrytypes.TelemetryFieldKey{}
+	rowCount := 0
 	for rows.Next() {
+		rowCount++
+		// reached the limit, we know there are more results
+		if rowCount > limit {
+			break
+		}
+
 		var name string
 		var fieldContext telemetrytypes.FieldContext
 		var fieldDataType telemetrytypes.FieldDataType
 		var priority uint8
 		err = rows.Scan(&name, &fieldContext, &fieldDataType, &priority)
 		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+			return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
 		}
 		keys = append(keys, &telemetrytypes.TelemetryFieldKey{
 			Name:          name,
@@ -544,14 +583,18 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 	}
 
 	if rows.Err() != nil {
-		return nil, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+		return nil, false, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
 	}
 
-	return keys, nil
+	// hit the limit?
+	complete := rowCount <= limit
+
+	return keys, complete, nil
 }
 
-func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, error) {
+func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	var keys []*telemetrytypes.TelemetryFieldKey
+	var complete bool = true
 	var err error
 	selectors := []*telemetrytypes.FieldKeySelector{}
 
@@ -561,35 +604,38 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *tele
 
 	switch fieldKeySelector.Signal {
 	case telemetrytypes.SignalTraces:
-		keys, err = t.getTracesKeys(ctx, selectors)
+		keys, complete, err = t.getTracesKeys(ctx, selectors)
 	case telemetrytypes.SignalLogs:
-		keys, err = t.getLogsKeys(ctx, selectors)
+		keys, complete, err = t.getLogsKeys(ctx, selectors)
 	case telemetrytypes.SignalMetrics:
-		keys, err = t.getMetricsKeys(ctx, selectors)
+		keys, complete, err = t.getMetricsKeys(ctx, selectors)
 	case telemetrytypes.SignalUnspecified:
 		// get traces keys
-		tracesKeys, err := t.getTracesKeys(ctx, selectors)
+		tracesKeys, tracesComplete, err := t.getTracesKeys(ctx, selectors)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		keys = append(keys, tracesKeys...)
 
 		// get logs keys
-		logsKeys, err := t.getLogsKeys(ctx, selectors)
+		logsKeys, logsComplete, err := t.getLogsKeys(ctx, selectors)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		keys = append(keys, logsKeys...)
 
 		// get metrics keys
-		metricsKeys, err := t.getMetricsKeys(ctx, selectors)
+		metricsKeys, metricsComplete, err := t.getMetricsKeys(ctx, selectors)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		keys = append(keys, metricsKeys...)
+
+		// Complete only if all signals are complete
+		complete = tracesComplete && logsComplete && metricsComplete
 	}
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	mapOfKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey)
@@ -597,10 +643,10 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *tele
 		mapOfKeys[key.Name] = append(mapOfKeys[key.Name], key)
 	}
 
-	return mapOfKeys, nil
+	return mapOfKeys, complete, nil
 }
 
-func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, error) {
+func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
 
 	logsSelectors := []*telemetrytypes.FieldKeySelector{}
 	tracesSelectors := []*telemetrytypes.FieldKeySelector{}
@@ -621,18 +667,21 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors
 		}
 	}
 
-	logsKeys, err := t.getLogsKeys(ctx, logsSelectors)
+	logsKeys, logsComplete, err := t.getLogsKeys(ctx, logsSelectors)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	tracesKeys, err := t.getTracesKeys(ctx, tracesSelectors)
+	tracesKeys, tracesComplete, err := t.getTracesKeys(ctx, tracesSelectors)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	metricsKeys, err := t.getMetricsKeys(ctx, metricsSelectors)
+	metricsKeys, metricsComplete, err := t.getMetricsKeys(ctx, metricsSelectors)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
+
+	// Complete only if all queries are complete
+	complete := logsComplete && tracesComplete && metricsComplete
 
 	mapOfKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 	for _, key := range logsKeys {
@@ -645,22 +694,22 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors
 		mapOfKeys[key.Name] = append(mapOfKeys[key.Name], key)
 	}
 
-	return mapOfKeys, nil
+	return mapOfKeys, complete, nil
 }
 
 func (t *telemetryMetaStore) GetKey(ctx context.Context, fieldKeySelector *telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
-	keys, err := t.GetKeys(ctx, fieldKeySelector)
+	keys, _, err := t.GetKeys(ctx, fieldKeySelector)
 	if err != nil {
 		return nil, err
 	}
 	return keys[fieldKeySelector.Name], nil
 }
 
-func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, error) {
+func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
 
 	// nothing to return as "related" value if there is nothing to filter on
 	if fieldValueSelector.ExistingQuery == "" {
-		return nil, nil
+		return nil, true, nil
 	}
 
 	key := &telemetrytypes.TelemetryFieldKey{
@@ -696,9 +745,9 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 		for _, keySelector := range keySelectors {
 			keySelector.Signal = fieldValueSelector.Signal
 		}
-		keys, err := t.GetKeysMulti(ctx, keySelectors)
+		keys, _, err := t.GetKeysMulti(ctx, keySelectors)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		whereClause, err := querybuilder.PrepareWhereClause(fieldValueSelector.ExistingQuery, querybuilder.FilterExprVisitorOpts{
@@ -721,11 +770,12 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 		sb.Where(sb.LE("unix_milli", fieldValueSelector.EndUnixMilli))
 	}
 
-	if fieldValueSelector.Limit != 0 {
-		sb.Limit(fieldValueSelector.Limit)
-	} else {
-		sb.Limit(50)
+	limit := fieldValueSelector.Limit
+	if limit == 0 {
+		limit = 50
 	}
+	// query one extra to check if we hit the limit
+	sb.Limit(limit + 1)
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
@@ -733,31 +783,44 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, ErrFailedToGetRelatedValues
+		return nil, false, ErrFailedToGetRelatedValues
 	}
 	defer rows.Close()
 
 	var attributeValues []string
+	rowCount := 0
 	for rows.Next() {
+		rowCount++
+		// reached the limit, we know there are more results
+		if rowCount > limit {
+			break
+		}
+
 		var value string
 		if err := rows.Scan(&value); err != nil {
-			return nil, ErrFailedToGetRelatedValues
+			return nil, false, ErrFailedToGetRelatedValues
 		}
 		if value != "" {
 			attributeValues = append(attributeValues, value)
 		}
 	}
 
-	return attributeValues, nil
+	// hit the limit?
+	complete := rowCount <= limit
+
+	return attributeValues, complete, nil
 }
 
-func (t *telemetryMetaStore) GetRelatedValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, error) {
+func (t *telemetryMetaStore) GetRelatedValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
 	return t.getRelatedValues(ctx, fieldValueSelector)
 }
 
-func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
+func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	// build the query to get the keys from the spans that match the field selection criteria
-	var limit int
+	limit := fieldValueSelector.Limit
+	if limit == 0 {
+		limit = 50
+	}
 
 	sb := sqlbuilder.Select("DISTINCT string_value, number_value").From(t.tracesDBName + "." + t.tracesFieldsTblName)
 
@@ -777,56 +840,71 @@ func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueS
 
 	if fieldValueSelector.Value != "" {
 		if fieldValueSelector.FieldDataType == telemetrytypes.FieldDataTypeString {
-			sb.Where(sb.Like("string_value", "%"+fieldValueSelector.Value+"%"))
+			sb.Where(sb.ILike("string_value", "%"+escapeForLike(fieldValueSelector.Value)+"%"))
 		} else if fieldValueSelector.FieldDataType == telemetrytypes.FieldDataTypeNumber {
 			sb.Where(sb.IsNotNull("number_value"))
-			sb.Where(sb.Like("toString(number_value)", "%"+fieldValueSelector.Value+"%"))
+			sb.Where(sb.ILike("toString(number_value)", "%"+escapeForLike(fieldValueSelector.Value)+"%"))
 		} else if fieldValueSelector.FieldDataType == telemetrytypes.FieldDataTypeUnspecified {
 			// or b/w string and number
 			sb.Where(sb.Or(
-				sb.Like("string_value", "%"+fieldValueSelector.Value+"%"),
-				sb.Like("toString(number_value)", "%"+fieldValueSelector.Value+"%"),
+				sb.ILike("string_value", "%"+escapeForLike(fieldValueSelector.Value)+"%"),
+				sb.ILike("toString(number_value)", "%"+escapeForLike(fieldValueSelector.Value)+"%"),
 			))
 		}
 	}
 
-	if limit == 0 {
-		limit = 50
-	}
-	sb.Limit(limit)
+	// query one extra to check if we hit the limit
+	sb.Limit(limit + 1)
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
+		return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 	}
 	defer rows.Close()
 
 	values := &telemetrytypes.TelemetryFieldValues{}
 	seen := make(map[string]bool)
+	rowCount := 0
+	totalCount := 0 // Track total unique values
+
 	for rows.Next() {
+		rowCount++
+
 		var stringValue string
 		var numberValue float64
 		if err := rows.Scan(&stringValue, &numberValue); err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
+			return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 		}
-		if _, ok := seen[stringValue]; !ok {
-			values.StringValues = append(values.StringValues, stringValue)
-			seen[stringValue] = true
-		}
-		if _, ok := seen[fmt.Sprintf("%f", numberValue)]; !ok && numberValue != 0 {
-			values.NumberValues = append(values.NumberValues, numberValue)
-			seen[fmt.Sprintf("%f", numberValue)] = true
+
+		// Only add values if we haven't hit the limit yet
+		if totalCount < limit {
+			if _, ok := seen[stringValue]; !ok && stringValue != "" {
+				values.StringValues = append(values.StringValues, stringValue)
+				seen[stringValue] = true
+				totalCount++
+			}
+			if _, ok := seen[fmt.Sprintf("%f", numberValue)]; !ok && numberValue != 0 && totalCount < limit {
+				values.NumberValues = append(values.NumberValues, numberValue)
+				seen[fmt.Sprintf("%f", numberValue)] = true
+				totalCount++
+			}
 		}
 	}
 
-	return values, nil
+	// hit the limit?
+	complete := rowCount <= limit
+
+	return values, complete, nil
 }
 
-func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
+func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	// build the query to get the keys from the spans that match the field selection criteria
-	var limit int
+	limit := fieldValueSelector.Limit
+	if limit == 0 {
+		limit = 50
+	}
 
 	sb := sqlbuilder.Select("DISTINCT string_value, number_value").From(t.logsDBName + "." + t.logsFieldsTblName)
 
@@ -844,53 +922,67 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 
 	if fieldValueSelector.Value != "" {
 		if fieldValueSelector.FieldDataType == telemetrytypes.FieldDataTypeString {
-			sb.Where(sb.Like("string_value", "%"+fieldValueSelector.Value+"%"))
+			sb.Where(sb.ILike("string_value", "%"+escapeForLike(fieldValueSelector.Value)+"%"))
 		} else if fieldValueSelector.FieldDataType == telemetrytypes.FieldDataTypeNumber {
 			sb.Where(sb.IsNotNull("number_value"))
-			sb.Where(sb.Like("toString(number_value)", "%"+fieldValueSelector.Value+"%"))
+			sb.Where(sb.ILike("toString(number_value)", "%"+escapeForLike(fieldValueSelector.Value)+"%"))
 		} else if fieldValueSelector.FieldDataType == telemetrytypes.FieldDataTypeUnspecified {
 			// or b/w string and number
 			sb.Where(sb.Or(
-				sb.Like("string_value", "%"+fieldValueSelector.Value+"%"),
-				sb.Like("toString(number_value)", "%"+fieldValueSelector.Value+"%"),
+				sb.ILike("string_value", "%"+escapeForLike(fieldValueSelector.Value)+"%"),
+				sb.ILike("toString(number_value)", "%"+escapeForLike(fieldValueSelector.Value)+"%"),
 			))
 		}
 	}
 
-	if limit == 0 {
-		limit = 50
-	}
-	sb.Limit(limit)
+	// query one extra to check if we hit the limit
+	sb.Limit(limit + 1)
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
+		return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 	}
 	defer rows.Close()
 
 	values := &telemetrytypes.TelemetryFieldValues{}
 	seen := make(map[string]bool)
+	rowCount := 0
+	totalCount := 0 // Track total unique values
+
 	for rows.Next() {
+		rowCount++
+
 		var stringValue string
 		var numberValue float64
 		if err := rows.Scan(&stringValue, &numberValue); err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
+			return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 		}
-		if _, ok := seen[stringValue]; !ok {
-			values.StringValues = append(values.StringValues, stringValue)
-			seen[stringValue] = true
-		}
-		if _, ok := seen[fmt.Sprintf("%f", numberValue)]; !ok && numberValue != 0 {
-			values.NumberValues = append(values.NumberValues, numberValue)
-			seen[fmt.Sprintf("%f", numberValue)] = true
+
+		// Only add values if we haven't hit the limit yet
+		if totalCount < limit {
+			if _, ok := seen[stringValue]; !ok && stringValue != "" {
+				values.StringValues = append(values.StringValues, stringValue)
+				seen[stringValue] = true
+				totalCount++
+			}
+			if _, ok := seen[fmt.Sprintf("%f", numberValue)]; !ok && numberValue != 0 && totalCount < limit {
+				values.NumberValues = append(values.NumberValues, numberValue)
+				seen[fmt.Sprintf("%f", numberValue)] = true
+				totalCount++
+			}
 		}
 	}
-	return values, nil
+
+	// hit the limit?
+	complete := rowCount <= limit
+
+	return values, complete, nil
 }
 
-func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
+// getMetricFieldValues returns field values and whether the result is complete
+func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	sb := sqlbuilder.
 		Select("DISTINCT attr_string_value").
 		From(t.metricsDBName + "." + t.metricsFieldsTblName)
@@ -923,89 +1015,138 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 		if fieldValueSelector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
 			sb.Where(sb.E("attr_string_value", fieldValueSelector.Value))
 		} else {
-			sb.Where(sb.Like("attr_string_value", "%"+fieldValueSelector.Value+"%"))
+			sb.Where(sb.ILike("attr_string_value", "%"+escapeForLike(fieldValueSelector.Value)+"%"))
 		}
 	}
 
-	if fieldValueSelector.Limit > 0 {
-		sb.Limit(fieldValueSelector.Limit)
-	} else {
-		sb.Limit(50)
+	limit := fieldValueSelector.Limit
+	if limit == 0 {
+		limit = 50
 	}
+	// query one extra to check if we hit the limit
+	sb.Limit(limit + 1)
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+		return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
 	}
 	defer rows.Close()
 
 	values := &telemetrytypes.TelemetryFieldValues{}
+	rowCount := 0
 	for rows.Next() {
+		rowCount++
+		// reached the limit, we know there are more results
+		if rowCount > limit {
+			break
+		}
+
 		var stringValue string
 		if err := rows.Scan(&stringValue); err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+			return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
 		}
 		values.StringValues = append(values.StringValues, stringValue)
 	}
-	return values, nil
+
+	// hit the limit?
+	complete := rowCount <= limit
+
+	return values, complete, nil
 }
 
-func populateAllUnspecifiedValues(allUnspecifiedValues *telemetrytypes.TelemetryFieldValues, mapOfValues map[any]bool, mapOfRelatedValues map[any]bool, values *telemetrytypes.TelemetryFieldValues) {
+func populateAllUnspecifiedValues(allUnspecifiedValues *telemetrytypes.TelemetryFieldValues, mapOfValues map[any]bool, mapOfRelatedValues map[any]bool, values *telemetrytypes.TelemetryFieldValues, limit int) bool {
+	complete := true
+	totalCount := len(mapOfValues) + len(mapOfRelatedValues)
+
 	for _, value := range values.StringValues {
+		if totalCount >= limit {
+			complete = false
+			break
+		}
 		if _, ok := mapOfValues[value]; !ok {
 			mapOfValues[value] = true
 			allUnspecifiedValues.StringValues = append(allUnspecifiedValues.StringValues, value)
+			totalCount++
 		}
 	}
+
 	for _, value := range values.NumberValues {
+		if totalCount >= limit {
+			complete = false
+			break
+		}
 		if _, ok := mapOfValues[value]; !ok {
 			mapOfValues[value] = true
 			allUnspecifiedValues.NumberValues = append(allUnspecifiedValues.NumberValues, value)
+			totalCount++
 		}
 	}
 
 	for _, value := range values.RelatedValues {
+		if totalCount >= limit {
+			complete = false
+			break
+		}
 		if _, ok := mapOfRelatedValues[value]; !ok {
 			mapOfRelatedValues[value] = true
 			allUnspecifiedValues.RelatedValues = append(allUnspecifiedValues.RelatedValues, value)
+			totalCount++
 		}
 	}
+
+	return complete
 }
 
-func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
+// GetAllValues returns all values and whether the result is complete
+func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	values := &telemetrytypes.TelemetryFieldValues{}
+	var complete bool = true
 	var err error
+
+	limit := fieldValueSelector.Limit
+	if limit == 0 {
+		limit = 50
+	}
+
 	switch fieldValueSelector.Signal {
 	case telemetrytypes.SignalTraces:
-		values, err = t.getSpanFieldValues(ctx, fieldValueSelector)
+		values, complete, err = t.getSpanFieldValues(ctx, fieldValueSelector)
 	case telemetrytypes.SignalLogs:
-		values, err = t.getLogFieldValues(ctx, fieldValueSelector)
+		values, complete, err = t.getLogFieldValues(ctx, fieldValueSelector)
 	case telemetrytypes.SignalMetrics:
-		values, err = t.getMetricFieldValues(ctx, fieldValueSelector)
+		values, complete, err = t.getMetricFieldValues(ctx, fieldValueSelector)
 	case telemetrytypes.SignalUnspecified:
 		mapOfValues := make(map[any]bool)
 		mapOfRelatedValues := make(map[any]bool)
 		allUnspecifiedValues := &telemetrytypes.TelemetryFieldValues{}
-		tracesValues, err := t.getSpanFieldValues(ctx, fieldValueSelector)
+
+		tracesValues, tracesComplete, err := t.getSpanFieldValues(ctx, fieldValueSelector)
 		if err == nil {
-			populateAllUnspecifiedValues(allUnspecifiedValues, mapOfValues, mapOfRelatedValues, tracesValues)
+			populateComplete := populateAllUnspecifiedValues(allUnspecifiedValues, mapOfValues, mapOfRelatedValues, tracesValues, limit)
+			complete = complete && tracesComplete && populateComplete
 		}
-		logsValues, err := t.getLogFieldValues(ctx, fieldValueSelector)
+
+		logsValues, logsComplete, err := t.getLogFieldValues(ctx, fieldValueSelector)
 		if err == nil {
-			populateAllUnspecifiedValues(allUnspecifiedValues, mapOfValues, mapOfRelatedValues, logsValues)
+			populateComplete := populateAllUnspecifiedValues(allUnspecifiedValues, mapOfValues, mapOfRelatedValues, logsValues, limit)
+			complete = complete && logsComplete && populateComplete
 		}
-		metricsValues, err := t.getMetricFieldValues(ctx, fieldValueSelector)
+
+		metricsValues, metricsComplete, err := t.getMetricFieldValues(ctx, fieldValueSelector)
 		if err == nil {
-			populateAllUnspecifiedValues(allUnspecifiedValues, mapOfValues, mapOfRelatedValues, metricsValues)
+			populateComplete := populateAllUnspecifiedValues(allUnspecifiedValues, mapOfValues, mapOfRelatedValues, metricsValues, limit)
+			complete = complete && metricsComplete && populateComplete
 		}
+
 		values = allUnspecifiedValues
 	}
+
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	return values, nil
+	return values, complete, nil
 }
 
 func (t *telemetryMetaStore) FetchTemporality(ctx context.Context, metricName string) (metrictypes.Temporality, error) {
