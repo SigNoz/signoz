@@ -603,7 +603,7 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 // getMeterKeys returns the keys from the meter metrics that match the field selection criteria
 func (t *telemetryMetaStore) getMeterSourceMetricKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	if len(fieldKeySelectors) == 0 {
-		return nil, false, nil
+		return nil, true, nil
 	}
 
 	sb := sqlbuilder.Select("DISTINCT arrayJoin(JSONExtractKeys(labels)) as attr_name").From(t.meterDBName + "." + t.meterFieldsTblName)
@@ -713,15 +713,7 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *tele
 		}
 		keys = append(keys, metricsKeys...)
 
-		// get meter metrics keys
-		meterSourceMetricsKeys, meterSourceMetricsComplete, err := t.getMeterSourceMetricKeys(ctx, selectors)
-		if err != nil {
-			return nil, false, err
-		}
-
-		keys = append(keys, meterSourceMetricsKeys...)
-		// Complete only if all signals are complete
-		complete = tracesComplete && logsComplete && metricsComplete && meterSourceMetricsComplete
+		complete = tracesComplete && logsComplete && metricsComplete
 	}
 	if err != nil {
 		return nil, false, err
@@ -758,7 +750,6 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors
 			logsSelectors = append(logsSelectors, fieldKeySelector)
 			tracesSelectors = append(tracesSelectors, fieldKeySelector)
 			metricsSelectors = append(metricsSelectors, fieldKeySelector)
-			meterSourceMetricsSelectors = append(meterSourceMetricsSelectors, fieldKeySelector)
 		}
 	}
 
@@ -775,12 +766,12 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors
 		return nil, false, err
 	}
 
-	meterSourceMetricsKeys, meterSourceMetricsComplete, err := t.getMeterSourceMetricKeys(ctx, meterSourceMetricsSelectors)
+	meterSourceMetricsKeys, _, err := t.getMeterSourceMetricKeys(ctx, meterSourceMetricsSelectors)
 	if err != nil {
 		return nil, false, err
 	}
 	// Complete only if all queries are complete
-	complete := logsComplete && tracesComplete && metricsComplete && meterSourceMetricsComplete
+	complete := logsComplete && tracesComplete && metricsComplete
 
 	mapOfKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 	for _, key := range logsKeys {
@@ -1299,11 +1290,6 @@ func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelecto
 		if err == nil {
 			populateComplete := populateAllUnspecifiedValues(allUnspecifiedValues, mapOfValues, mapOfRelatedValues, metricsValues, limit)
 			complete = complete && metricsComplete && populateComplete
-		}
-		meterSourceMetricsValues, meterSourceMetricsComplete, err := t.getMeterSourceMetricFieldValues(ctx, fieldValueSelector)
-		if err == nil {
-			populateComplete := populateAllUnspecifiedValues(allUnspecifiedValues, mapOfValues, mapOfRelatedValues, meterSourceMetricsValues, limit)
-			complete = complete && meterSourceMetricsComplete && populateComplete
 		}
 
 		values = allUnspecifiedValues
