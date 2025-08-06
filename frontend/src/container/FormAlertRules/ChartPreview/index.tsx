@@ -28,6 +28,7 @@ import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
+import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -313,7 +314,7 @@ function ChartPreview({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
 			?.active || false;
 
-	const isWarning = !!queryResponse.data?.warning?.message;
+	const isWarning = !isEmpty(queryResponse.data?.warning);
 	return (
 		<div className="alert-chart-container" ref={graphRef}>
 			<ChartContainer>
