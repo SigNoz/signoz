@@ -1,12 +1,16 @@
 import './Breakoutoptions.styles.scss';
 
 import { Input, Skeleton } from 'antd';
+import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { useGetAggregateKeys } from 'hooks/infraMonitoring/useGetAggregateKeys';
 import useDebounce from 'hooks/useDebounce';
 import { ContextMenu } from 'periscope/components/ContextMenu';
 import { useCallback, useMemo, useState } from 'react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { useQuery } from 'react-query';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { BreakoutOptionsProps } from './contextConfig';
 
@@ -41,28 +45,48 @@ function BreakoutOptions({
 		[],
 	);
 
-	// TODO: change the api call to get the keys
-	const { isFetching, data } = useGetAggregateKeys(
+	// Using getKeySuggestions directly like in QuerySearch
+	const { data, isFetching } = useQuery(
+		[
+			'keySuggestions',
+			queryData.dataSource,
+			debouncedSearchText,
+			queryData.aggregateAttribute?.key,
+		],
+		() =>
+			getKeySuggestions({
+				signal: queryData.dataSource,
+				searchText: debouncedSearchText,
+				metricName: queryData.aggregateAttribute?.key,
+			}),
 		{
-			aggregateAttribute: queryData.aggregateAttribute?.key || '',
-			dataSource: queryData.dataSource,
-			aggregateOperator: queryData?.aggregateOperator || '',
-			searchText: debouncedSearchText,
-		},
-		{
-			queryKey: [
-				queryData?.aggregateAttribute?.key,
-				queryData.dataSource,
-				queryData.aggregateOperator,
-				debouncedSearchText,
-			],
 			enabled: !!queryData,
 		},
 	);
 
 	const breakoutOptions = useMemo(() => {
+		if (!data?.data?.data?.keys) {
+			return [];
+		}
+
+		const { keys } = data.data.data;
+		const transformedOptions: BaseAutocompleteData[] = [];
+
+		// Transform the response to match BaseAutocompleteData format
+		Object.values(keys).forEach((keyArray) => {
+			keyArray.forEach((keyData) => {
+				transformedOptions.push({
+					key: keyData.name,
+					dataType: DataTypes.EMPTY,
+					type: '',
+					isColumn: true,
+				});
+			});
+		});
+
+		// Filter out already selected groupBy keys
 		const groupByKeys = groupBy.map((item: BaseAutocompleteData) => item.key);
-		return data?.payload?.attributeKeys?.filter(
+		return transformedOptions.filter(
 			(item: BaseAutocompleteData) => !groupByKeys.includes(item.key),
 		);
 	}, [data, groupBy]);
