@@ -111,6 +111,7 @@ function ExplorerOptions({
 
 	const isLogsExplorer = sourcepage === DataSource.LOGS;
 	const isMetricsExplorer = sourcepage === DataSource.METRICS;
+	const isMeterExplorer = signalSource === 'meter';
 
 	const PRESERVED_VIEW_LOCAL_STORAGE_KEY = LOCALSTORAGE.LAST_USED_SAVED_VIEWS;
 
@@ -121,8 +122,11 @@ function ExplorerOptions({
 		if (isMetricsExplorer) {
 			return PreservedViewsTypes.METRICS;
 		}
+		if (isMeterExplorer) {
+			return PreservedViewsTypes.METER;
+		}
 		return PreservedViewsTypes.TRACES;
-	}, [isLogsExplorer, isMetricsExplorer]);
+	}, [isLogsExplorer, isMetricsExplorer, isMeterExplorer]);
 
 	const onModalToggle = useCallback((value: boolean) => {
 		setIsExport(value);
@@ -149,6 +153,10 @@ function ExplorerOptions({
 			logEvent(MetricsExplorerEvents.SaveViewClicked, {
 				[MetricsExplorerEventKeys.Tab]: 'explorer',
 				[MetricsExplorerEventKeys.OneChartPerQueryEnabled]: isOneChartPerQuery,
+				panelType,
+			});
+		} else if (isMeterExplorer) {
+			logEvent('Meter Explorer: Save view clicked', {
 				panelType,
 			});
 		}
@@ -244,7 +252,7 @@ function ExplorerOptions({
 		error,
 		isRefetching,
 		refetch: refetchAllView,
-	} = useGetAllViews(sourcepage);
+	} = useGetAllViews(isMeterExplorer ? 'meter' : sourcepage);
 
 	const compositeQuery = mapCompositeQueryFromQuery(currentQuery, panelType);
 
@@ -317,7 +325,7 @@ function ExplorerOptions({
 		compositeQuery,
 		viewKey,
 		extraData: updatedExtraData,
-		sourcePage: sourcepage,
+		sourcePage: isMeterExplorer ? 'meter' : sourcepage,
 		viewName,
 	});
 
@@ -333,7 +341,7 @@ function ExplorerOptions({
 				compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),
 				viewKey,
 				extraData: updatedExtraData,
-				sourcePage: sourcepage,
+				sourcePage: isMeterExplorer ? 'meter' : sourcepage,
 				viewName,
 			},
 			{
@@ -460,6 +468,11 @@ function ExplorerOptions({
 				panelType,
 				viewName: option?.value,
 			});
+		} else if (isMeterExplorer) {
+			logEvent('Meter Explorer: Select view', {
+				panelType,
+				viewName: option?.value,
+			});
 		}
 
 		updatePreservedViewInLocalStorage(option);
@@ -555,7 +568,7 @@ function ExplorerOptions({
 			redirectWithQueryBuilderData,
 			refetchAllView,
 			saveViewAsync,
-			sourcePage: sourcepage,
+			sourcePage: isMeterExplorer ? 'meter' : sourcepage,
 			viewName: newViewName,
 			setNewViewName,
 		});
@@ -674,7 +687,7 @@ function ExplorerOptions({
 		return `Query ${query.builder.queryData[0].queryName}`;
 	};
 
-	const alertButton = useMemo(() => {
+	const CreateAlertButton = useMemo(() => {
 		if (isOneChartPerQuery) {
 			const selectLabel = (
 				<Button
@@ -727,7 +740,7 @@ function ExplorerOptions({
 		splitedQueries,
 	]);
 
-	const dashboardButton = useMemo(() => {
+	const AddToDashboardButton = useMemo(() => {
 		if (isOneChartPerQuery) {
 			const selectLabel = (
 				<Button
@@ -890,10 +903,13 @@ function ExplorerOptions({
 
 					<hr className={isEditDeleteSupported ? '' : 'hidden'} />
 
-					<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
-						{alertButton}
-						{dashboardButton}
-					</div>
+					{signalSource !== 'meter' && (
+						<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
+							{CreateAlertButton}
+							{AddToDashboardButton}
+						</div>
+					)}
+
 					<div className="actions">
 						{/* Hide the info icon for metrics explorer until we get the docs link */}
 						{!isMetricsExplorer && (

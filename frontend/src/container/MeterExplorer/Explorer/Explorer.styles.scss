@@ -173,6 +173,22 @@
 	padding-bottom: 80px;
 }
 
+.meter-time-series-container {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+
+	.builder-units-filter {
+		padding: 0 8px;
+		margin-bottom: 0px !important;
+
+		.builder-units-filter-label {
+			margin-bottom: 0px !important;
+			font-size: 13px;
+		}
+	}
+}
+
 .lightMode {
 	.metrics-explorer-explore-container {
 		.explore-tabs {

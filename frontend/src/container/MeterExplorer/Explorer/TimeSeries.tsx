@@ -2,12 +2,13 @@ import { isAxiosError } from 'axios';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -24,6 +25,8 @@ function TimeSeries(): JSX.Element {
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const [yAxisUnit, setYAxisUnit] = useState<string>('');
 
 	const isValidToConvertToMs = useMemo(() => {
 		const isValid: boolean[] = [];
@@ -107,23 +110,31 @@ function TimeSeries(): JSX.Element {
 		[data, isValidToConvertToMs],
 	);
 
+	const onUnitChangeHandler = (value: string): void => {
+		setYAxisUnit(value);
+	};
+
 	return (
-		<div className="time-series-container">
-			{responseData.map((datapoint, index) => (
-				<div
-					className="time-series-view-panel"
-					// eslint-disable-next-line react/no-array-index-key
-					key={index}
-				>
-					<TimeSeriesView
-						isFilterApplied={false}
-						isError={queries[index].isError}
-						isLoading={queries[index].isLoading}
-						data={datapoint}
-						dataSource={DataSource.METRICS}
-					/>
-				</div>
-			))}
+		<div className="meter-time-series-container">
+			<BuilderUnitsFilter onChange={onUnitChangeHandler} yAxisUnit={yAxisUnit} />
+			<div className="time-series-container">
+				{responseData.map((datapoint, index) => (
+					<div
+						className="time-series-view-panel"
+						// eslint-disable-next-line react/no-array-index-key
+						key={index}
+					>
+						<TimeSeriesView
+							isFilterApplied={false}
+							isError={queries[index].isError}
+							isLoading={queries[index].isLoading}
+							data={datapoint}
+							dataSource={DataSource.METRICS}
+							yAxisUnit={yAxisUnit}
+						/>
+					</div>
+				))}
+			</div>
 		</div>
 	);
 }

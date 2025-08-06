@@ -269,8 +269,9 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		key: ROUTES.METER_EXPLORER,
 		label: 'Meter Explorer',
 		icon: <ChartArea size={16} />,
-		isNew: true,
-		isEnabled: true,
+		isNew: false,
+		isEnabled: false,
+		isBeta: true,
 		itemKey: 'meter-explorer',
 	},
 	{
