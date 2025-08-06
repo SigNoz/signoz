@@ -127,7 +127,7 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		mapOfKeys[key.Name+";"+key.FieldContext.StringValue()+";"+key.FieldDataType.StringValue()] = key
 	}
 
-	sb := sqlbuilder.Select("DISTINCT tag_key", "tag_type", "tag_data_type", `
+	sb := sqlbuilder.Select("tag_key", "tag_type", "tag_data_type", `
 			CASE
 				WHEN tag_type = 'spanfield' THEN 1
 				WHEN tag_type = 'resource' THEN 2
@@ -181,6 +181,7 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		limit += fieldKeySelector.Limit
 	}
 	sb.Where(sb.Or(conds...))
+	sb.GroupBy("tag_key", "tag_type", "tag_data_type")
 
 	if limit == 0 {
 		limit = 1000
@@ -334,7 +335,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		mapOfKeys[key.Name+";"+key.FieldContext.StringValue()+";"+key.FieldDataType.StringValue()] = key
 	}
 
-	sb := sqlbuilder.Select("DISTINCT tag_key", "tag_type", "tag_data_type", `
+	sb := sqlbuilder.Select("tag_key", "tag_type", "tag_data_type", `
 			CASE
 				WHEN tag_type = 'logfield' THEN 1
 				WHEN tag_type = 'resource' THEN 2
@@ -388,6 +389,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		limit += fieldKeySelector.Limit
 	}
 	sb.Where(sb.Or(conds...))
+	sb.GroupBy("tag_key", "tag_type", "tag_data_type")
 	if limit == 0 {
 		limit = 1000
 	}
@@ -534,6 +536,7 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 		limit += fieldKeySelector.Limit
 	}
 	sb.Where(sb.Or(conds...))
+	sb.GroupBy("name", "field_context", "field_data_type")
 
 	if limit == 0 {
 		limit = 1000
