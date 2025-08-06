@@ -244,6 +244,7 @@ function QuerySearch({
 			keySuggestions,
 			toggleSuggestions,
 			queryData.aggregateAttribute?.key,
+			signalSource,
 		],
 	);
 

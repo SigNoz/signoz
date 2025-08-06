@@ -47,7 +47,7 @@ function TimeSeriesViewContainer({
 		return isValid.every(Boolean);
 	}, [currentQuery]);
 
-	const { data, isLoading, isFetching, isError } = useGetQueryRange(
+	const { data, isLoading, isFetching, isError, error } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap[dataSource],
 			graphType: panelType || PANEL_TYPES.TIME_SERIES,
