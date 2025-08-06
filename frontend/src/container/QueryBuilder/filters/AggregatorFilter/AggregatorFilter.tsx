@@ -135,7 +135,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 
 			if (metricData) {
 				// Update the aggregateAttribute with the fetched type information
-				onChange(metricData);
+				onChange(metricData, true);
 			}
 		}
 	}, [
@@ -214,11 +214,16 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	);
 
 	const handleBlur = useCallback(async () => {
-		if (searchText) {
+		if (searchText && searchText !== queryAggregation.metricName) {
 			const aggregateAttributes = await getResponseAttributes();
 			handleChangeCustomValue(searchText, aggregateAttributes);
 		}
-	}, [getResponseAttributes, handleChangeCustomValue, searchText]);
+	}, [
+		getResponseAttributes,
+		handleChangeCustomValue,
+		searchText,
+		queryAggregation?.metricName,
+	]);
 
 	const handleChange = useCallback(
 		(

@@ -212,7 +212,7 @@ export const useQueryOperations: UseQueryOperations = ({
 	);
 
 	const handleChangeAggregatorAttribute = useCallback(
-		(value: BaseAutocompleteData): void => {
+		(value: BaseAutocompleteData, isEditMode?: boolean): void => {
 			const newQuery: IBuilderQuery = {
 				...query,
 				aggregateAttribute: value,
@@ -226,30 +226,32 @@ export const useQueryOperations: UseQueryOperations = ({
 					handleMetricAggregateAtributeTypes(newQuery.aggregateAttribute);
 				}
 
-				if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.SUM) {
-					newQuery.aggregateOperator = MetricAggregateOperator.RATE;
-					newQuery.timeAggregation = MetricAggregateOperator.RATE;
-				} else if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.GAUGE) {
-					newQuery.aggregateOperator = MetricAggregateOperator.AVG;
-					newQuery.timeAggregation = MetricAggregateOperator.AVG;
-				} else {
-					newQuery.timeAggregation = '';
-				}
-
-				newQuery.spaceAggregation = '';
-
-				// Handled query with unknown metric to avoid 400 and 500 errors
-				// With metric value typed and not available then - time - 'avg', space - 'avg'
-				// If not typed - time - 'rate', space - 'sum', op - 'count'
-				if (isEmpty(newQuery.aggregateAttribute?.type)) {
-					if (!isEmpty(newQuery.aggregateAttribute?.key)) {
+				if (!isEditMode) {
+					if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.SUM) {
+						newQuery.aggregateOperator = MetricAggregateOperator.RATE;
+						newQuery.timeAggregation = MetricAggregateOperator.RATE;
+					} else if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.GAUGE) {
 						newQuery.aggregateOperator = MetricAggregateOperator.AVG;
 						newQuery.timeAggregation = MetricAggregateOperator.AVG;
-						newQuery.spaceAggregation = MetricAggregateOperator.AVG;
 					} else {
-						newQuery.aggregateOperator = MetricAggregateOperator.COUNT;
-						newQuery.timeAggregation = MetricAggregateOperator.RATE;
-						newQuery.spaceAggregation = MetricAggregateOperator.SUM;
+						newQuery.timeAggregation = '';
+					}
+
+					newQuery.spaceAggregation = '';
+
+					// Handled query with unknown metric to avoid 400 and 500 errors
+					// With metric value typed and not available then - time - 'avg', space - 'avg'
+					// If not typed - time - 'rate', space - 'sum', op - 'count'
+					if (isEmpty(newQuery.aggregateAttribute?.type)) {
+						if (!isEmpty(newQuery.aggregateAttribute?.key)) {
+							newQuery.aggregateOperator = MetricAggregateOperator.AVG;
+							newQuery.timeAggregation = MetricAggregateOperator.AVG;
+							newQuery.spaceAggregation = MetricAggregateOperator.AVG;
+						} else {
+							newQuery.aggregateOperator = MetricAggregateOperator.COUNT;
+							newQuery.timeAggregation = MetricAggregateOperator.RATE;
+							newQuery.spaceAggregation = MetricAggregateOperator.SUM;
+						}
 					}
 				}
 			}
@@ -262,60 +264,62 @@ export const useQueryOperations: UseQueryOperations = ({
 					handleMetricAggregateAtributeTypes(newQuery.aggregateAttribute);
 				}
 
-				if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.SUM) {
-					newQuery.aggregations = [
-						{
-							timeAggregation: MetricAggregateOperator.RATE,
-							metricName: newQuery.aggregateAttribute?.key || '',
-							temporality: '',
-							spaceAggregation: '',
-						},
-					];
-				} else if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.GAUGE) {
-					newQuery.aggregations = [
-						{
-							timeAggregation: MetricAggregateOperator.AVG,
-							metricName: newQuery.aggregateAttribute?.key || '',
-							temporality: '',
-							spaceAggregation: '',
-						},
-					];
-				} else {
-					newQuery.aggregations = [
-						{
-							timeAggregation: '',
-							metricName: newQuery.aggregateAttribute?.key || '',
-							temporality: '',
-							spaceAggregation: '',
-						},
-					];
-				}
-
-				newQuery.aggregateOperator = '';
-				newQuery.spaceAggregation = '';
-
-				// Handled query with unknown metric to avoid 400 and 500 errors
-				// With metric value typed and not available then - time - 'avg', space - 'avg'
-				// If not typed - time - 'rate', space - 'sum', op - 'count'
-				if (isEmpty(newQuery.aggregateAttribute?.type)) {
-					if (!isEmpty(newQuery.aggregateAttribute?.key)) {
+				if (!isEditMode) {
+					if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.SUM) {
+						newQuery.aggregations = [
+							{
+								timeAggregation: MetricAggregateOperator.RATE,
+								metricName: newQuery.aggregateAttribute?.key || '',
+								temporality: '',
+								spaceAggregation: '',
+							},
+						];
+					} else if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.GAUGE) {
 						newQuery.aggregations = [
 							{
 								timeAggregation: MetricAggregateOperator.AVG,
 								metricName: newQuery.aggregateAttribute?.key || '',
 								temporality: '',
-								spaceAggregation: MetricAggregateOperator.AVG,
+								spaceAggregation: '',
 							},
 						];
 					} else {
 						newQuery.aggregations = [
 							{
-								timeAggregation: MetricAggregateOperator.COUNT,
+								timeAggregation: '',
 								metricName: newQuery.aggregateAttribute?.key || '',
 								temporality: '',
-								spaceAggregation: MetricAggregateOperator.SUM,
+								spaceAggregation: '',
 							},
 						];
+					}
+
+					newQuery.aggregateOperator = '';
+					newQuery.spaceAggregation = '';
+
+					// Handled query with unknown metric to avoid 400 and 500 errors
+					// With metric value typed and not available then - time - 'avg', space - 'avg'
+					// If not typed - time - 'rate', space - 'sum', op - 'count'
+					if (isEmpty(newQuery.aggregateAttribute?.type)) {
+						if (!isEmpty(newQuery.aggregateAttribute?.key)) {
+							newQuery.aggregations = [
+								{
+									timeAggregation: MetricAggregateOperator.AVG,
+									metricName: newQuery.aggregateAttribute?.key || '',
+									temporality: '',
+									spaceAggregation: MetricAggregateOperator.AVG,
+								},
+							];
+						} else {
+							newQuery.aggregations = [
+								{
+									timeAggregation: MetricAggregateOperator.COUNT,
+									metricName: newQuery.aggregateAttribute?.key || '',
+									temporality: '',
+									spaceAggregation: MetricAggregateOperator.SUM,
+								},
+							];
+						}
 					}
 				}
 			}

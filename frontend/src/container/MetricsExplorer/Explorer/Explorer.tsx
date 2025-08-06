@@ -13,6 +13,7 @@ import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
@@ -135,7 +136,7 @@ function Explorer(): JSX.Element {
 						/>
 					</div>
 					<div className="explore-header-right-actions">
-						{warning?.message && <WarningPopover warningData={warning} />}
+						{!isEmpty(warning) && <WarningPopover warningData={warning} />}
 						<DateTimeSelector showAutoRefresh />
 						<RightToolbarActions
 							onStageRunQuery={(): void => handleRunQuery(true, true)}
