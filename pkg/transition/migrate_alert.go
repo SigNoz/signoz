@@ -29,6 +29,16 @@ func (m *alertMigrateV5) Migrate(ctx context.Context, ruleData map[string]any) b
 
 	updated := false
 
+	var version string
+	if _, ok := ruleData["version"].(string); ok {
+		version = ruleData["version"].(string)
+	}
+
+	if version == "v5" {
+		m.logger.InfoContext(ctx, "alert is already migrated to v5, skipping", "alert_name", ruleData["alert"])
+		return false
+	}
+
 	ruleCondition, ok := ruleData["condition"].(map[string]any)
 	if !ok {
 		m.logger.WarnContext(ctx, "didn't find condition")
@@ -43,8 +53,8 @@ func (m *alertMigrateV5) Migrate(ctx context.Context, ruleData map[string]any) b
 
 	if compositeQuery["queries"] == nil {
 		compositeQuery["queries"] = []any{}
+		m.logger.InfoContext(ctx, "setup empty list")
 	}
-	m.logger.InfoContext(ctx, "setup empty list")
 
 	queryType := compositeQuery["queryType"]
 

@@ -20,6 +20,16 @@ func NewSavedViewMigrateV5(logger *slog.Logger, logsDuplicateKeys []string, trac
 func (m *savedViewMigrateV5) Migrate(ctx context.Context, data map[string]any) bool {
 	updated := false
 
+	var version string
+	if _, ok := data["version"].(string); ok {
+		version = data["version"].(string)
+	}
+
+	if version == "v5" {
+		m.logger.InfoContext(ctx, "saved view is already migrated to v5, skipping")
+		return false
+	}
+
 	data["queries"] = make([]any, 0)
 
 	if builderQueries, ok := data["builderQueries"].(map[string]any); ok {
@@ -43,5 +53,8 @@ func (m *savedViewMigrateV5) Migrate(ctx context.Context, data map[string]any) b
 		}
 	}
 	delete(data, "builderQueries")
+
+	data["version"] = "v5"
+
 	return updated
 }

@@ -25,12 +25,16 @@ func NewDashboardMigrateV5(logger *slog.Logger, logsDuplicateKeys []string, trac
 }
 
 func (m *dashboardMigrateV5) Migrate(ctx context.Context, dashboardData map[string]any) bool {
-
 	updated := false
 
 	var version string
 	if _, ok := dashboardData["version"].(string); ok {
 		version = dashboardData["version"].(string)
+	}
+
+	if version == "v5" {
+		m.logger.InfoContext(ctx, "dashboard is already migrated to v5, skipping", "dashboard_name", dashboardData["title"])
+		return false
 	}
 
 	// if there is a white space in variable, replace it
