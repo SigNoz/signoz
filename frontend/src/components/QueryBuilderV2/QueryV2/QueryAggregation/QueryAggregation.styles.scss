@@ -63,17 +63,14 @@
 						border-radius: 2px !important;
 						font-size: 12px !important;
 						font-weight: 500 !important;
-						margin-top: 8px !important;
 						min-width: 400px !important;
 						position: absolute !important;
+						top: calc(100% + 6px) !important;
 						left: 0px !important;
-						width: 100% !important;
+						right: 0px !important;
 
 						border-radius: 4px;
 						border: 1px solid var(--bg-slate-200, #1d212d);
-						border-top: none !important;
-						border-top-left-radius: 0px !important;
-						border-top-right-radius: 0px !important;
 						background: linear-gradient(
 							139deg,
 							rgba(18, 19, 23, 0.8) 0%,
