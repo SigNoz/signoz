@@ -240,8 +240,18 @@ function FormAlertRules({
 			const queryData = currentQuery.builder.queryData[index];
 
 			const updatedFunctions = updateFunctions(queryData);
-			queryData.functions = updatedFunctions;
-			handleSetQueryData(index, queryData);
+
+			// Only update if functions actually changed to avoid resetting aggregateAttribute
+			const currentFunctions = queryData.functions || [];
+			const functionsChanged = !isEqual(currentFunctions, updatedFunctions);
+
+			if (functionsChanged) {
+				const updatedQueryData = {
+					...queryData,
+					functions: updatedFunctions,
+				};
+				handleSetQueryData(index, updatedQueryData);
+			}
 		}
 	};
 

@@ -28,7 +28,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { isEqual, isNull } from 'lodash-es';
+import { isEmpty, isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -361,7 +361,7 @@ function LogsExplorer(): JSX.Element {
 							/>
 						}
 						warningElement={
-							warning?.message ? <WarningPopover warningData={warning} /> : <div />
+							!isEmpty(warning) ? <WarningPopover warningData={warning} /> : <div />
 						}
 						rightActions={
 							<RightToolbarActions

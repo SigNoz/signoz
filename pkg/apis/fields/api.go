@@ -66,7 +66,7 @@ func (api *API) GetFieldsKeys(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	keys, err := api.telemetryMetadataStore.GetKeys(ctx, fieldKeySelector)
+	keys, complete, err := api.telemetryMetadataStore.GetKeys(ctx, fieldKeySelector)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -74,7 +74,7 @@ func (api *API) GetFieldsKeys(w http.ResponseWriter, r *http.Request) {
 
 	response := fieldKeysResponse{
 		Keys:     keys,
-		Complete: len(keys) < fieldKeySelector.Limit,
+		Complete: complete,
 	}
 
 	render.Success(w, http.StatusOK, response)
@@ -97,13 +97,13 @@ func (api *API) GetFieldsValues(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	allValues, err := api.telemetryMetadataStore.GetAllValues(ctx, fieldValueSelector)
+	allValues, allComplete, err := api.telemetryMetadataStore.GetAllValues(ctx, fieldValueSelector)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	relatedValues, err := api.telemetryMetadataStore.GetRelatedValues(ctx, fieldValueSelector)
+	relatedValues, relatedComplete, err := api.telemetryMetadataStore.GetRelatedValues(ctx, fieldValueSelector)
 	if err != nil {
 		// we don't want to return error if we fail to get related values for some reason
 		relatedValues = []string{}
@@ -116,11 +116,8 @@ func (api *API) GetFieldsValues(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := fieldValuesResponse{
-		Values: values,
-		Complete: len(values.StringValues) < fieldValueSelector.Limit &&
-			len(values.BoolValues) < fieldValueSelector.Limit &&
-			len(values.NumberValues) < fieldValueSelector.Limit &&
-			len(values.RelatedValues) < fieldValueSelector.Limit,
+		Values:   values,
+		Complete: allComplete && relatedComplete,
 	}
 
 	render.Success(w, http.StatusOK, response)

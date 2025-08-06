@@ -420,7 +420,7 @@ export type QueryRangeDataV5 =
 
 export interface QueryRangeResponseV5 {
 	type: RequestType;
-	data: QueryRangeDataV5 & { warnings?: string[] };
+	data: QueryRangeDataV5 & { warning?: string[] };
 	meta: ExecStats;
 	warning?: Warning;
 }
