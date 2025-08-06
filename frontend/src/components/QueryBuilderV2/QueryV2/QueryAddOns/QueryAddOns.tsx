@@ -1,6 +1,7 @@
+/* eslint-disable react/require-default-props */
 import './QueryAddOns.styles.scss';
 
-import { Button, Radio, RadioChangeEvent } from 'antd';
+import { Button, Radio, RadioChangeEvent, Tooltip } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
@@ -9,7 +10,7 @@ import { ReduceToFilter } from 'container/QueryBuilder/filters/ReduceToFilter/Re
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { isEmpty } from 'lodash-es';
-import { BarChart2, ChevronUp, ScrollText } from 'lucide-react';
+import { BarChart2, ChevronUp, ExternalLink, ScrollText } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
@@ -21,6 +22,8 @@ interface AddOn {
 	icon: React.ReactNode;
 	label: string;
 	key: string;
+	description?: string;
+	docLink?: string;
 }
 
 const ADD_ONS_KEYS = {
@@ -36,26 +39,45 @@ const ADD_ONS = [
 		icon: <BarChart2 size={14} />,
 		label: 'Group By',
 		key: 'group_by',
+		description:
+			'Break down data by attributes like service name, endpoint, status code, or region. Essential for spotting patterns and comparing performance across different segments.',
+		docLink: 'https://signoz.io/docs/userguide/query-builder-v5/#grouping',
 	},
 	{
 		icon: <ScrollText size={14} />,
 		label: 'Having',
 		key: 'having',
+		description:
+			'Filter grouped results based on aggregate conditions. Show only groups meeting specific criteria, like error rates > 5% or p99 latency > 500',
+		docLink:
+			'https://signoz.io/docs/userguide/query-builder-v5/#conditional-filtering-with-having',
 	},
 	{
 		icon: <ScrollText size={14} />,
 		label: 'Order By',
 		key: 'order_by',
+		description:
+			'Sort results to surface what matters most. Quickly identify slowest operations, most frequent errors, or highest resource consumers.',
+		docLink:
+			'https://signoz.io/docs/userguide/query-builder-v5/#sorting--limiting',
 	},
 	{
 		icon: <ScrollText size={14} />,
 		label: 'Limit',
 		key: 'limit',
+		description:
+			'Show only the top/bottom N results. Perfect for focusing on outliers, reducing noise, and improving dashboard performance.',
+		docLink:
+			'https://signoz.io/docs/userguide/query-builder-v5/#sorting--limiting',
 	},
 	{
 		icon: <ScrollText size={14} />,
 		label: 'Legend format',
 		key: 'legend_format',
+		description:
+			'Customize series labels using variables like {{service.name}}-{{endpoint}}. Makes charts readable at a glance during incident investigation.',
+		docLink:
+			'https://signoz.io/docs/userguide/query-builder-v5/#legend-formatting',
 	},
 ];
 
@@ -63,7 +85,57 @@ const REDUCE_TO = {
 	icon: <ScrollText size={14} />,
 	label: 'Reduce to',
 	key: 'reduce_to',
+	description:
+		'Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value.',
+	docLink:
+		'https://signoz.io/docs/userguide/query-builder-v5/#reduce-operations',
 };
+
+// Custom tooltip content component
+function TooltipContent({
+	label,
+	description,
+	docLink,
+}: {
+	label: string;
+	description?: string;
+	docLink?: string;
+}): JSX.Element {
+	return (
+		<div
+			style={{
+				display: 'flex',
+				flexDirection: 'column',
+				gap: '8px',
+				maxWidth: '300px',
+			}}
+		>
+			<strong style={{ fontSize: '14px' }}>{label}</strong>
+			{description && (
+				<span style={{ fontSize: '12px', lineHeight: '1.5' }}>{description}</span>
+			)}
+			{docLink && (
+				<a
+					href={docLink}
+					target="_blank"
+					rel="noopener noreferrer"
+					onClick={(e): void => e.stopPropagation()}
+					style={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: '4px',
+						color: '#4096ff',
+						fontSize: '12px',
+						marginTop: '4px',
+					}}
+				>
+					Learn more
+					<ExternalLink size={12} />
+				</a>
+			)}
+		</div>
+	);
+}
 
 function QueryAddOns({
 	query,
@@ -212,7 +284,21 @@ function QueryAddOns({
 					{selectedViews.find((view) => view.key === 'group_by') && (
 						<div className="add-on-content">
 							<div className="periscope-input-with-label">
-								<div className="label">Group By</div>
+								<Tooltip
+									title={
+										<TooltipContent
+											label="Group By"
+											description="Break down data by attributes like service name, endpoint, status code, or region. Essential for spotting patterns and comparing performance across different segments."
+											docLink="https://signoz.io/docs/userguide/query-builder-v5/#grouping"
+										/>
+									}
+									placement="top"
+									mouseEnterDelay={0.5}
+								>
+									<div className="label" style={{ cursor: 'help' }}>
+										Group By
+									</div>
+								</Tooltip>
 								<div className="input">
 									<GroupByFilter
 										disabled={
@@ -234,7 +320,21 @@ function QueryAddOns({
 					{selectedViews.find((view) => view.key === 'having') && (
 						<div className="add-on-content">
 							<div className="periscope-input-with-label">
-								<div className="label">Having</div>
+								<Tooltip
+									title={
+										<TooltipContent
+											label="Having"
+											description="Filter grouped results based on aggregate conditions. Show only groups meeting specific criteria, like error rates > 5% or p99 latency > 500"
+											docLink="https://signoz.io/docs/userguide/query-builder-v5/#conditional-filtering-with-having"
+										/>
+									}
+									placement="top"
+									mouseEnterDelay={0.5}
+								>
+									<div className="label" style={{ cursor: 'help' }}>
+										Having
+									</div>
+								</Tooltip>
 								<div className="input">
 									<HavingFilter
 										onClose={(): void => {
@@ -266,7 +366,21 @@ function QueryAddOns({
 					{selectedViews.find((view) => view.key === 'order_by') && (
 						<div className="add-on-content">
 							<div className="periscope-input-with-label">
-								<div className="label">Order By</div>
+								<Tooltip
+									title={
+										<TooltipContent
+											label="Order By"
+											description="Sort results to surface what matters most. Quickly identify slowest operations, most frequent errors, or highest resource consumers."
+											docLink="https://signoz.io/docs/userguide/query-builder-v5/#sorting--limiting"
+										/>
+									}
+									placement="top"
+									mouseEnterDelay={0.5}
+								>
+									<div className="label" style={{ cursor: 'help' }}>
+										Order By
+									</div>
+								</Tooltip>
 								<div className="input">
 									<OrderByFilter
 										entityVersion={version}
@@ -290,7 +404,21 @@ function QueryAddOns({
 					{selectedViews.find((view) => view.key === 'reduce_to') && showReduceTo && (
 						<div className="add-on-content">
 							<div className="periscope-input-with-label">
-								<div className="label">Reduce to</div>
+								<Tooltip
+									title={
+										<TooltipContent
+											label="Reduce to"
+											description="Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value."
+											docLink="https://signoz.io/docs/userguide/query-builder-v5/#reduce-operations"
+										/>
+									}
+									placement="top"
+									mouseEnterDelay={0.5}
+								>
+									<div className="label" style={{ cursor: 'help' }}>
+										Reduce to
+									</div>
+								</Tooltip>
 								<div className="input">
 									<ReduceToFilter query={query} onChange={handleChangeReduceToV5} />
 								</div>
@@ -330,20 +458,32 @@ function QueryAddOns({
 					value={selectedViews}
 				>
 					{addOns.map((addOn) => (
-						<Radio.Button
-							key={addOn.label}
-							className={
-								selectedViews.find((view) => view.key === addOn.key)
-									? 'selected-view tab'
-									: 'tab'
+						<Tooltip
+							key={addOn.key}
+							title={
+								<TooltipContent
+									label={addOn.label}
+									description={addOn.description}
+									docLink={addOn.docLink}
+								/>
 							}
-							value={addOn}
+							placement="top"
+							mouseEnterDelay={0.5}
 						>
-							<div className="add-on-tab-title">
-								{addOn.icon}
-								{addOn.label}
-							</div>
-						</Radio.Button>
+							<Radio.Button
+								className={
+									selectedViews.find((view) => view.key === addOn.key)
+										? 'selected-view tab'
+										: 'tab'
+								}
+								value={addOn}
+							>
+								<div className="add-on-tab-title">
+									{addOn.icon}
+									{addOn.label}
+								</div>
+							</Radio.Button>
+						</Tooltip>
 					))}
 				</Radio.Group>
 			</div>

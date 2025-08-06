@@ -1,7 +1,9 @@
 import { Card, Typography } from 'antd';
+import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import Spinner from 'components/Spinner';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WidgetGraphContainerProps } from 'container/NewWidget/types';
+import APIError from 'types/api/error';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
 import { NotFoundContainer } from './styles';
@@ -37,7 +39,7 @@ function WidgetGraphContainer({
 	if (queryResponse?.error) {
 		return (
 			<NotFoundContainer>
-				<Typography>{queryResponse.error.message}</Typography>
+				<ErrorInPlace error={queryResponse.error as APIError} />
 			</NotFoundContainer>
 		);
 	}

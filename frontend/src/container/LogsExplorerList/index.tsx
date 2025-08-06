@@ -2,6 +2,7 @@ import './LogsExplorerList.style.scss';
 
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
+import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 // components
@@ -12,7 +13,6 @@ import Spinner from 'components/Spinner';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
-import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { FontSize } from 'container/OptionsMenu/types';
@@ -21,6 +21,7 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
+import APIError from 'types/api/error';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
@@ -45,6 +46,7 @@ function LogsExplorerList({
 	logs,
 	onEndReached,
 	isError,
+	error,
 	isFilterApplied,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
@@ -255,7 +257,9 @@ function LogsExplorerList({
 					/>
 				)}
 
-			{isError && !isLoading && !isFetching && <LogsError />}
+			{isError && !isLoading && !isFetching && error && (
+				<ErrorInPlace error={error as APIError} />
+			)}
 
 			{!isLoading && !isError && logs.length > 0 && (
 				<>

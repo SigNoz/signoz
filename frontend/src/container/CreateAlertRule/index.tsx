@@ -1,6 +1,6 @@
 import { Form, Row } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import FormAlertRules, { AlertDetectionTypes } from 'container/FormAlertRules';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
@@ -71,14 +71,14 @@ function CreateRules(): JSX.Element {
 			case AlertTypes.ANOMALY_BASED_ALERT:
 				setInitValues({
 					...anamolyAlertDefaults,
-					version: version || ENTITY_VERSION_V4,
+					version: version || ENTITY_VERSION_V5,
 					ruleType: AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
 				});
 				break;
 			default:
 				setInitValues({
 					...alertDefaults,
-					version: version || ENTITY_VERSION_V4,
+					version: version || ENTITY_VERSION_V5,
 					ruleType: AlertDetectionTypes.THRESHOLD_ALERT,
 				});
 		}
