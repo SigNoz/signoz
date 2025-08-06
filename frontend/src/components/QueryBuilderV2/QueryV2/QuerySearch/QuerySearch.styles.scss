@@ -585,7 +585,7 @@
 						&:hover,
 						&[aria-selected='true'] {
 							background-color: var(--bg-vanilla-300) !important;
-							font-weight: 600;
+							font-weight: 600 !important;
 						}
 					}
 				}
