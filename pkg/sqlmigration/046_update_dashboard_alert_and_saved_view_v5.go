@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/transition"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 )
@@ -202,11 +201,15 @@ func (migration *queryBuilderV5Migration) migrateSavedViews(
 	logsKeys []string,
 	tracesKeys []string,
 ) error {
-	var savedViews []*types.SavedView
+	var savedViews []struct {
+		ID   string `bun:"id"`
+		Data string `bun:"data"`
+	}
 
 	err := tx.NewSelect().
-		Model(&savedViews).
-		Scan(ctx)
+		Table("saved_views").
+		Column("id", "data").
+		Scan(ctx, &savedViews)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil
@@ -232,7 +235,7 @@ func (migration *queryBuilderV5Migration) migrateSavedViews(
 			}
 
 			_, err = tx.NewUpdate().
-				Model((*types.SavedView)(nil)).
+				Table("saved_views").
 				Set("data = ?", string(dataJSON)).
 				Where("id = ?", savedView.ID).
 				Exec(ctx)
