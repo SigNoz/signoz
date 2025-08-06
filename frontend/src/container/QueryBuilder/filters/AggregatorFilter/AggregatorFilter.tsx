@@ -13,7 +13,7 @@ import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { getAutocompleteValueAndType } from 'lib/newQueryBuilder/getAutocompleteValueAndType';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import {
@@ -24,7 +24,6 @@ import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { ExtendedSelectOption } from 'types/common/select';
 import { popupContainer } from 'utils/selectPopupContainer';
-import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 import { removePrefix } from '../GroupByFilter/utils';
 import { selectStyle } from '../QueryBuilderSearch/config';
@@ -38,15 +37,19 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	onChange,
 	defaultValue,
 	onSelect,
+	index,
 }: AgregatorFilterProps): JSX.Element {
 	const queryClient = useQueryClient();
 	const [optionsData, setOptionsData] = useState<ExtendedSelectOption[]>([]);
-	const [searchText, setSearchText] = useState<string>('');
 
 	// this function is only relevant for metrics and now operators are part of aggregations
 	const queryAggregation = useMemo(
 		() => query.aggregations?.[0] as MetricAggregation,
 		[query.aggregations],
+	);
+
+	const [searchText, setSearchText] = useState<string>(
+		(query.aggregations?.[0] as MetricAggregation)?.metricName || '',
 	);
 
 	const debouncedSearchText = useMemo(() => {
@@ -57,12 +60,13 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	}, [searchText]);
 
 	const debouncedValue = useDebounce(debouncedSearchText, DEBOUNCE_DELAY);
-	const { isFetching } = useQuery(
+	const { isFetching, data: aggregateAttributeData } = useQuery(
 		[
 			QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
 			debouncedValue,
 			queryAggregation.timeAggregation,
 			query.dataSource,
+			index,
 		],
 		async () =>
 			getAggregateAttribute({
@@ -108,13 +112,49 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		},
 	);
 
+	// Handle edit mode: update aggregateAttribute type when data is available
+	useEffect(() => {
+		const metricName = queryAggregation?.metricName;
+		const hasAggregateAttributeType = query.aggregateAttribute?.type;
+
+		// Check if we're in edit mode and have data from the existing query
+		// Also ensure this is for the correct query by checking the metric name matches
+		if (
+			query.dataSource === DataSource.METRICS &&
+			metricName &&
+			!hasAggregateAttributeType &&
+			aggregateAttributeData?.payload?.attributeKeys &&
+			// Only update if the data contains the metric we're looking for
+			aggregateAttributeData.payload.attributeKeys.some(
+				(item) => item.key === metricName,
+			)
+		) {
+			const metricData = aggregateAttributeData.payload.attributeKeys.find(
+				(item) => item.key === metricName,
+			);
+
+			if (metricData) {
+				// Update the aggregateAttribute with the fetched type information
+				onChange(metricData);
+			}
+		}
+	}, [
+		query.dataSource,
+		queryAggregation?.metricName,
+		query.aggregateAttribute?.type,
+		aggregateAttributeData,
+		onChange,
+		index,
+		query,
+	]);
+
 	const handleSearchText = useCallback((text: string): void => {
 		setSearchText(text);
 	}, []);
 
 	const placeholder: string =
 		query.dataSource === DataSource.METRICS
-			? `${transformToUpperCase(query.dataSource)} name`
+			? `Search metric name`
 			: 'Aggregate attribute';
 
 	const getAttributesData = useCallback(
@@ -124,12 +164,14 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				debouncedValue,
 				queryAggregation.timeAggregation,
 				query.dataSource,
+				index,
 			])?.payload?.attributeKeys || [],
 		[
 			debouncedValue,
 			queryAggregation.timeAggregation,
 			query.dataSource,
 			queryClient,
+			index,
 		],
 	);
 
@@ -140,6 +182,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				searchText,
 				queryAggregation.timeAggregation,
 				query.dataSource,
+				index,
 			],
 			async () =>
 				getAggregateAttribute({
@@ -155,6 +198,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		query.dataSource,
 		queryClient,
 		searchText,
+		index,
 	]);
 
 	const handleChangeCustomValue = useCallback(

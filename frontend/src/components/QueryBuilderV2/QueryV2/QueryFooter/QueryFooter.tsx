@@ -12,22 +12,7 @@ export default function QueryFooter({
 		<div className="qb-footer">
 			<div className="qb-footer-container">
 				<div className="qb-add-new-query">
-					<Tooltip
-						title={
-							<div style={{ textAlign: 'center' }}>
-								Add New Query
-								<Typography.Link
-									href="https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=query-builder#multiple-queries-and-functions"
-									target="_blank"
-									style={{ textDecoration: 'underline' }}
-								>
-									{' '}
-									<br />
-									Learn more
-								</Typography.Link>
-							</div>
-						}
-					>
+					<Tooltip title={<div style={{ textAlign: 'center' }}>Add New Query</div>}>
 						<Button
 							className="add-new-query-button periscope-btn secondary"
 							type="text"
@@ -43,7 +28,7 @@ export default function QueryFooter({
 							<div style={{ textAlign: 'center' }}>
 								Add New Formula
 								<Typography.Link
-									href="https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=query-builder#multiple-queries-and-functions"
+									href="https://signoz.io/docs/userguide/query-builder-v5/#multi-query-analysis-advanced-comparisons"
 									target="_blank"
 									style={{ textDecoration: 'underline' }}
 								>

@@ -339,6 +339,7 @@ function RightContainer({
 					<YAxisUnitSelector
 						defaultValue={yAxisUnit}
 						onSelect={setYAxisUnit}
+						value={yAxisUnit || ''}
 						fieldLabel={
 							selectedGraphType === PanelDisplay.VALUE ||
 							selectedGraphType === PanelDisplay.PIE

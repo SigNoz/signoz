@@ -12,6 +12,7 @@ import {
 	Having as HavingV5,
 	LogAggregation,
 	MetricAggregation,
+	QueryFunction,
 	TraceAggregation,
 } from '../v5/queryRange';
 import { BaseAutocompleteData } from './queryAutocompleteResponse';
@@ -71,7 +72,7 @@ export type IBuilderQuery = {
 	timeAggregation?: string;
 	spaceAggregation?: string;
 	temporality?: string;
-	functions: QueryFunctionProps[];
+	functions: QueryFunction[];
 	filter?: Filter;
 	filters?: TagFilter;
 	groupBy: BaseAutocompleteData[];

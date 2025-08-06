@@ -8,7 +8,6 @@ import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -22,7 +21,10 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { TimeSeriesProps } from './types';
 import { splitQueryIntoOneChartPerQuery } from './utils';
 
-function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
+function TimeSeries({
+	showOneChartPerQuery,
+	setWarning,
+}: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
@@ -60,8 +62,6 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 	);
 
 	const [yAxisUnit, setYAxisUnit] = useState<string>('');
-
-	const { showErrorModal } = useErrorModal();
 
 	const queries = useQueries(
 		queryPayloads.map((payload, index) => ({
@@ -103,9 +103,6 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 				}
 
 				return failureCount < 3;
-			},
-			onError: (error: APIError): void => {
-				showErrorModal(error);
 			},
 		})),
 	);
@@ -150,6 +147,8 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 							data={datapoint}
 							yAxisUnit={yAxisUnit}
 							dataSource={DataSource.METRICS}
+							error={queries[index].error as APIError}
+							setWarning={setWarning}
 						/>
 					</div>
 				))}

@@ -16,10 +16,8 @@ import {
 	Trash2,
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
-import {
-	IBuilderQuery,
-	QueryFunctionProps,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { DataSourceDropdown } from '..';
@@ -36,7 +34,7 @@ interface QBEntityOptionsProps {
 	onCloneQuery?: (type: string, query: IBuilderQuery) => void;
 	onToggleVisibility: () => void;
 	onCollapseEntity: () => void;
-	onQueryFunctionsUpdates?: (functions: QueryFunctionProps[]) => void;
+	onQueryFunctionsUpdates?: (functions: QueryFunction[]) => void;
 	showDeleteButton?: boolean;
 	showCloneOption?: boolean;
 	isListViewPanel?: boolean;

@@ -701,13 +701,13 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 			return nil, err
 		}
 
-		whereClause, _, err := querybuilder.PrepareWhereClause(fieldValueSelector.ExistingQuery, querybuilder.FilterExprVisitorOpts{
+		whereClause, err := querybuilder.PrepareWhereClause(fieldValueSelector.ExistingQuery, querybuilder.FilterExprVisitorOpts{
 			FieldMapper:      t.fm,
 			ConditionBuilder: t.conditionBuilder,
 			FieldKeys:        keys,
 		})
 		if err == nil {
-			sb.AddWhereClause(whereClause)
+			sb.AddWhereClause(whereClause.WhereClause)
 		} else {
 			t.logger.WarnContext(ctx, "error parsing existing query for related values", "error", err)
 		}

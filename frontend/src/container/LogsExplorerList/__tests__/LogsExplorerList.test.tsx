@@ -141,6 +141,7 @@ describe('LogsExplorerList - empty states', () => {
 						setIsLoadingQueries={(): void => {}}
 						listQueryKeyRef={{ current: {} }}
 						chartQueryKeyRef={{ current: {} }}
+						setWarning={(): void => {}}
 					/>
 				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,
@@ -205,6 +206,7 @@ describe('LogsExplorerList - empty states', () => {
 						setIsLoadingQueries={(): void => {}}
 						listQueryKeyRef={{ current: {} }}
 						chartQueryKeyRef={{ current: {} }}
+						setWarning={(): void => {}}
 					/>
 				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,

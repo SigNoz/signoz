@@ -146,7 +146,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 	if query.Filter != nil && query.Filter.Expression != "" {
 
 		// warnings would be encountered as part of the main condition already
-		filterWhereClause, _, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		filterWhereClause, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			FieldMapper:        b.fieldMapper,
 			ConditionBuilder:   b.conditionBuilder,
 			FieldKeys:          keys,
@@ -164,7 +164,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			return err
 		}
 		if filterWhereClause != nil {
-			sb.AddWhereClause(filterWhereClause)
+			sb.AddWhereClause(filterWhereClause.WhereClause)
 		}
 	}
 

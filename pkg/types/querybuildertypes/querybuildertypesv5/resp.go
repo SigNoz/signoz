@@ -6,6 +6,7 @@ import (
 	"math"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -26,10 +27,26 @@ type QBEvent struct {
 	HasData         bool   `json:"-"`
 }
 
+type QueryWarnData struct {
+	Message  string                    `json:"message"`
+	Url      string                    `json:"url,omitempty"`
+	Warnings []QueryWarnDataAdditional `json:"warnings,omitempty"`
+}
+
+type QueryWarnDataAdditional struct {
+	Message string `json:"message"`
+}
+
+type QueryData struct {
+	Results []any `json:"results"`
+}
+
 type QueryRangeResponse struct {
 	Type RequestType `json:"type"`
-	Data any         `json:"data"`
+	Data QueryData   `json:"data"`
 	Meta ExecStats   `json:"meta"`
+
+	Warning QueryWarnData `json:"warning,omitempty"`
 
 	QBEvent *QBEvent `json:"-"`
 }
@@ -164,8 +181,43 @@ type RawData struct {
 }
 
 type RawRow struct {
-	Timestamp time.Time       `json:"timestamp"`
-	Data      map[string]*any `json:"data"`
+	Timestamp time.Time      `json:"timestamp"`
+	Data      map[string]any `json:"data"`
+}
+
+func roundToNonZeroDecimals(val float64, n int) float64 {
+	if val == 0 || math.IsNaN(val) || math.IsInf(val, 0) {
+		return val
+	}
+
+	absVal := math.Abs(val)
+
+	// For numbers >= 1, we want to round to n decimal places total
+	if absVal >= 1 {
+		// Round to n decimal places
+		multiplier := math.Pow(10, float64(n))
+		rounded := math.Round(val*multiplier) / multiplier
+
+		// If the result is a whole number, return it as such
+		if rounded == math.Trunc(rounded) {
+			return rounded
+		}
+
+		// Remove trailing zeros by converting to string and back
+		str := strconv.FormatFloat(rounded, 'f', -1, 64)
+		result, _ := strconv.ParseFloat(str, 64)
+		return result
+	}
+
+	// For numbers < 1, count n significant figures after first non-zero digit
+	order := math.Floor(math.Log10(absVal))
+	scale := math.Pow(10, -order+float64(n)-1)
+	rounded := math.Round(val*scale) / scale
+
+	// Clean up floating point precision
+	str := strconv.FormatFloat(rounded, 'f', -1, 64)
+	result, _ := strconv.ParseFloat(str, 64)
+	return result
 }
 
 func sanitizeValue(v any) any {
@@ -181,7 +233,7 @@ func sanitizeValue(v any) any {
 		} else if math.IsInf(f, -1) {
 			return "-Inf"
 		}
-		return f
+		return roundToNonZeroDecimals(f, 3)
 	}
 
 	if f, ok := v.(float32); ok {
@@ -193,7 +245,7 @@ func sanitizeValue(v any) any {
 		} else if math.IsInf(f64, -1) {
 			return "-Inf"
 		}
-		return f
+		return float32(roundToNonZeroDecimals(f64, 3)) // ADD ROUNDING HERE
 	}
 
 	rv := reflect.ValueOf(v)
@@ -255,22 +307,24 @@ func (s ScalarData) MarshalJSON() ([]byte, error) {
 
 func (r RawRow) MarshalJSON() ([]byte, error) {
 	type Alias RawRow
-	sanitizedData := make(map[string]*any)
+	sanitizedData := make(map[string]any)
 	for k, v := range r.Data {
-		if v != nil {
-			sanitized := sanitizeValue(*v)
-			sanitizedData[k] = &sanitized
-		} else {
-			sanitizedData[k] = nil
-		}
+		sanitizedData[k] = sanitizeValue(v)
+	}
+
+	var timestamp *time.Time
+	if !r.Timestamp.IsZero() {
+		timestamp = &r.Timestamp
 	}
 
 	return json.Marshal(&struct {
 		*Alias
-		Data map[string]*any `json:"data"`
+		Data      map[string]any `json:"data"`
+		Timestamp *time.Time     `json:"timestamp,omitempty"`
 	}{
-		Alias: (*Alias)(&r),
-		Data:  sanitizedData,
+		Alias:     (*Alias)(&r),
+		Data:      sanitizedData,
+		Timestamp: timestamp,
 	})
 }
 
