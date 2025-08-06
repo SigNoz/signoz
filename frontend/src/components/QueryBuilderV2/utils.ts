@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
-import { OPERATORS } from 'constants/antlrQueryConstants';
+import { NON_VALUE_OPERATORS, OPERATORS } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { cloneDeep } from 'lodash-es';
 import { IQueryPair } from 'types/antlrQueryTypes';
@@ -21,7 +21,6 @@ import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 import { unquote } from 'utils/stringUtils';
-import { isFunctionOperator } from 'utils/tokenUtils';
 import { v4 as uuid } from 'uuid';
 
 /**
@@ -87,8 +86,8 @@ export const convertFiltersToExpression = (
 				return '';
 			}
 
-			if (isFunctionOperator(op)) {
-				return `${op}(${key.key}, ${value})`;
+			if (NON_VALUE_OPERATORS.includes(op.toUpperCase())) {
+				return `${key.key} ${op.toUpperCase()}`;
 			}
 
 			const formattedValue = formatValueForExpression(value, op);

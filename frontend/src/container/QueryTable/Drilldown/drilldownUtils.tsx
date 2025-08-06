@@ -1,5 +1,5 @@
 import { PieArcDatum } from '@visx/shape/lib/shapes/Pie';
-import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
+import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
 import {
 	initialQueryBuilderFormValuesMap,
 	OPERATORS,
@@ -94,15 +94,15 @@ function addFiltersToQuerySteps(
 			});
 		});
 
-		const newFilterExpression = convertFiltersToExpression(newFilters);
-
-		console.log('BASE META', { filters, newFilters, ...newFilterExpression });
+		const resolvedFilters = convertFiltersToExpressionWithExistingQuery(
+			newFilters,
+			step.filter?.expression,
+		);
 
 		// 4) return a new step object with updated filters
 		return {
 			...step,
-			filters: newFilters,
-			filter: newFilterExpression,
+			...resolvedFilters,
 		};
 	});
 
@@ -295,9 +295,11 @@ export const getViewQuery = (
 	if (!queryBuilderData) return null;
 
 	let existingFilters: TagFilterItem[] = [];
+	let existingFilterExpression: string | undefined;
 	if (queryName) {
 		const queryData = getQueryData(query, queryName);
 		existingFilters = queryData?.filters?.items || [];
+		existingFilterExpression = queryData?.filter?.expression;
 	}
 
 	console.log('existingFilters', { existingFilters, query });
@@ -321,15 +323,20 @@ export const getViewQuery = (
 
 	const allFilters = [...existingFilters, ...filters];
 
-	newQuery.builder.queryData[0].filters = {
-		items: allFilters,
-		op: 'AND',
-	};
+	const {
+		filters: newFilters,
+		filter: newFilterExpression,
+	} = convertFiltersToExpressionWithExistingQuery(
+		{
+			items: allFilters,
+			op: 'AND',
+		},
+		existingFilterExpression,
+	);
 
-	newQuery.builder.queryData[0].filter = convertFiltersToExpression({
-		items: allFilters,
-		op: 'AND',
-	});
+	newQuery.builder.queryData[0].filters = newFilters;
+
+	newQuery.builder.queryData[0].filter = newFilterExpression;
 
 	return newQuery;
 };

@@ -23,43 +23,53 @@ const getInitialValues = (
 });
 
 const getUrlParams = (url: string): UrlParam[] => {
-	const [, queryString] = url.split('?');
+	try {
+		const [, queryString] = url.split('?');
 
-	if (!queryString) {
+		if (!queryString) {
+			return [];
+		}
+
+		const paramPairs = queryString.split('&');
+		const params: UrlParam[] = [];
+
+		paramPairs.forEach((pair) => {
+			try {
+				const [key, value] = pair.split('=');
+				if (key) {
+					const decodedKey = decodeURIComponent(key);
+					const decodedValue = decodeURIComponent(value || '');
+
+					// Double decode the value for display
+					let displayValue = decodedValue;
+					try {
+						// Try to double decode if it looks like it was double encoded
+						const doubleDecoded = decodeURIComponent(decodedValue);
+						// Check if double decoding produced a different result
+						if (doubleDecoded !== decodedValue) {
+							displayValue = doubleDecoded;
+						}
+					} catch {
+						// If double decoding fails, use single decoded value
+						displayValue = decodedValue;
+					}
+
+					params.push({
+						key: decodedKey,
+						value: displayValue,
+					});
+				}
+			} catch (paramError) {
+				// Skip malformed parameters and continue processing
+				console.warn('Failed to parse URL parameter:', pair, paramError);
+			}
+		});
+
+		return params;
+	} catch (error) {
+		console.warn('Failed to parse URL parameters, returning empty array:', error);
 		return [];
 	}
-
-	const paramPairs = queryString.split('&');
-	const params: UrlParam[] = [];
-
-	paramPairs.forEach((pair) => {
-		const [key, value] = pair.split('=');
-		if (key) {
-			const decodedKey = decodeURIComponent(key);
-			const decodedValue = decodeURIComponent(value || '');
-
-			// Double decode the value for display
-			let displayValue = decodedValue;
-			try {
-				// Try to double decode if it looks like it was double encoded
-				const doubleDecoded = decodeURIComponent(decodedValue);
-				// Check if double decoding produced a different result
-				if (doubleDecoded !== decodedValue) {
-					displayValue = doubleDecoded;
-				}
-			} catch {
-				// If double decoding fails, use single decoded value
-				displayValue = decodedValue;
-			}
-
-			params.push({
-				key: decodedKey,
-				value: displayValue,
-			});
-		}
-	});
-
-	return params;
 };
 
 const updateUrlWithParams = (url: string, params: UrlParam[]): string => {
@@ -105,7 +115,14 @@ const processContextLinks = (
 		try {
 			// 1. Get the URL and extract base URL and query string
 			const [baseUrl, queryString] = url.split('?');
-			if (!queryString) return url;
+			// Resolve variables in base URL.
+			const resolvedBaseUrlResult = resolveTexts({
+				texts: [baseUrl],
+				processedVariables,
+			});
+			const resolvedBaseUrl = resolvedBaseUrlResult.fullTexts[0];
+
+			if (!queryString) return resolvedBaseUrl;
 
 			// 2. Extract all query params using URLSearchParams
 			const searchParams = new URLSearchParams(queryString);
@@ -141,7 +158,7 @@ const processContextLinks = (
 				.map(([key, value]) => `${encodeURIComponent(key)}=${value}`)
 				.join('&');
 
-			return `${baseUrl}?${newQueryString}`;
+			return `${resolvedBaseUrl}?${newQueryString}`;
 		} catch (error) {
 			console.warn('Failed to process URL, using original URL:', error);
 			return url;

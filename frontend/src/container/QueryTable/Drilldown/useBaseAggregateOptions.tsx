@@ -3,9 +3,12 @@ import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { processContextLinks } from 'container/NewWidget/RightContainer/ContextLinks/utils';
-import useContextVariables from 'hooks/dashboard/useContextVariables';
+import useContextVariables, {
+	resolveTexts,
+} from 'hooks/dashboard/useContextVariables';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
+import { cloneDeep } from 'lodash-es';
 import ContextMenu from 'periscope/components/ContextMenu';
 import { useCallback, useMemo } from 'react';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
@@ -100,6 +103,39 @@ const useBaseAggregateOptions = ({
 		customVariables: fieldVariables,
 	});
 
+	// Local function to resolve variables in query without API call
+	const resolveQueryVariables = useCallback(
+		(query: Query): Query => {
+			const resolvedQuery = cloneDeep(query);
+
+			// Resolve variables in filter expressions
+			if (resolvedQuery.builder?.queryData) {
+				resolvedQuery.builder.queryData = resolvedQuery.builder.queryData.map(
+					(queryData) => {
+						// eslint-disable-next-line no-param-reassign
+						if (queryData.filter?.expression) {
+							const resolvedExpression = resolveTexts({
+								texts: [queryData.filter.expression],
+								processedVariables,
+							}).fullTexts[0];
+
+							// eslint-disable-next-line no-param-reassign
+							queryData.filter.expression = resolvedExpression;
+						}
+
+						// eslint-disable-next-line no-param-reassign
+						queryData.filters = undefined;
+
+						return queryData;
+					},
+				);
+			}
+
+			return resolvedQuery;
+		},
+		[processedVariables],
+	);
+
 	// Console.log the results
 	console.log('useContextVariables results:', {
 		variables,
@@ -155,12 +191,16 @@ const useBaseAggregateOptions = ({
 			const route = getRoute(key);
 			const timeRange = aggregateData?.timeRange;
 			const filtersToAdd = aggregateData?.filters || [];
-			const viewQuery = getViewQuery(
+			let viewQuery = getViewQuery(
 				query,
 				filtersToAdd,
 				key,
 				aggregateData?.queryName || '',
 			);
+
+			if (viewQuery) {
+				viewQuery = resolveQueryVariables(viewQuery);
+			}
 
 			let queryParams = {
 				[QueryParams.compositeQuery]: JSON.stringify(viewQuery),
@@ -187,7 +227,15 @@ const useBaseAggregateOptions = ({
 
 			onClose();
 		},
-		[query, widgetId, safeNavigate, onClose, setSubMenu, aggregateData],
+		[
+			query,
+			widgetId,
+			safeNavigate,
+			onClose,
+			setSubMenu,
+			aggregateData,
+			resolveQueryVariables,
+		],
 	);
 
 	const baseAggregateOptionsConfig = useMemo(() => {

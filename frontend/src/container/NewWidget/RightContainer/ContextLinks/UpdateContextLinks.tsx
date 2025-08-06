@@ -146,7 +146,12 @@ function UpdateContextLinks({
 						},
 					]}
 				>
-					<Input />
+					<Input
+						autoComplete="off"
+						autoCorrect="off"
+						autoCapitalize="off"
+						spellCheck="false"
+					/>
 				</Form.Item>
 			</Form>
 			<div className="params-container">
