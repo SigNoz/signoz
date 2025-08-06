@@ -49,6 +49,9 @@ type Constraint interface {
 
 	// The SQL representation of the constraint.
 	ToDropSQL(fmter SQLFormatter, tableName TableName) []byte
+
+	// The SQL representation of the constraint.
+	ToCreateSQL(fmter SQLFormatter, tableName TableName) []byte
 }
 
 type PrimaryKeyConstraint struct {
@@ -139,6 +142,27 @@ func (constraint *PrimaryKeyConstraint) ToDropSQL(fmter SQLFormatter, tableName 
 	return sql
 }
 
+func (constraint *PrimaryKeyConstraint) ToCreateSQL(fmter SQLFormatter, tableName TableName) []byte {
+	sql := []byte{}
+
+	sql = append(sql, "ALTER TABLE "...)
+	sql = fmter.AppendIdent(sql, string(tableName))
+	sql = append(sql, " ADD CONSTRAINT "...)
+	sql = fmter.AppendIdent(sql, constraint.Name(tableName))
+	sql = append(sql, " PRIMARY KEY ("...)
+
+	for i, column := range constraint.ColumnNames {
+		if i > 0 {
+			sql = append(sql, ", "...)
+		}
+		sql = fmter.AppendIdent(sql, string(column))
+	}
+
+	sql = append(sql, ")"...)
+
+	return sql
+}
+
 type ForeignKeyConstraint struct {
 	ReferencingColumnName ColumnName
 	ReferencedTableName   TableName
@@ -216,6 +240,24 @@ func (constraint *ForeignKeyConstraint) ToDropSQL(fmter SQLFormatter, tableName 
 	sql = fmter.AppendIdent(sql, string(tableName))
 	sql = append(sql, " DROP CONSTRAINT IF EXISTS "...)
 	sql = fmter.AppendIdent(sql, constraint.Name(tableName))
+
+	return sql
+}
+
+func (constraint *ForeignKeyConstraint) ToCreateSQL(fmter SQLFormatter, tableName TableName) []byte {
+	sql := []byte{}
+
+	sql = append(sql, "ALTER TABLE "...)
+	sql = fmter.AppendIdent(sql, string(tableName))
+	sql = append(sql, " ADD CONSTRAINT "...)
+	sql = fmter.AppendIdent(sql, constraint.Name(tableName))
+	sql = append(sql, " FOREIGN KEY ("...)
+	sql = fmter.AppendIdent(sql, string(constraint.ReferencingColumnName))
+	sql = append(sql, ") REFERENCES "...)
+	sql = fmter.AppendIdent(sql, string(constraint.ReferencedTableName))
+	sql = append(sql, " ("...)
+	sql = fmter.AppendIdent(sql, string(constraint.ReferencedColumnName))
+	sql = append(sql, ")"...)
 
 	return sql
 }
@@ -322,4 +364,8 @@ func (constraint *UniqueConstraint) ToDropSQL(fmter SQLFormatter, tableName Tabl
 	sql = fmter.AppendIdent(sql, constraint.Name(tableName))
 
 	return sql
+}
+
+func (constraint *UniqueConstraint) ToCreateSQL(fmter SQLFormatter, tableName TableName) []byte {
+	return []byte{}
 }
