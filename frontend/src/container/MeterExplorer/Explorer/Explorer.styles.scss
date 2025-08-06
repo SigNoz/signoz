@@ -74,7 +74,7 @@
 				margin-bottom: 20px;
 			}
 
-			.empty-metrics-search {
+			.empty-meter-search {
 				display: flex;
 				flex-direction: column;
 				justify-content: center;
@@ -100,66 +100,6 @@
 				gap: 16px;
 				width: 100%;
 				height: fit-content;
-			}
-
-			.related-metrics-container {
-				width: 100%;
-				min-height: 300px;
-				display: flex;
-				flex-direction: column;
-				gap: 10px;
-
-				.related-metrics-header {
-					display: flex;
-					align-items: center;
-					justify-content: flex-start;
-
-					.metric-name-select {
-						width: 20%;
-						margin-right: 10px;
-					}
-
-					.related-metrics-input {
-						width: 40%;
-
-						.ant-input-wrapper {
-							.ant-input-group-addon {
-								.related-metrics-select {
-									width: 250px;
-									border: 1px solid var(--bg-slate-500) !important;
-
-									.ant-select-selector {
-										text-align: left;
-										color: var(--text-vanilla-500) !important;
-									}
-								}
-							}
-						}
-					}
-				}
-
-				.related-metrics-body {
-					margin-top: 20px;
-					max-height: 650px;
-					overflow-y: scroll;
-
-					.related-metrics-card-container {
-						margin-bottom: 20px;
-						min-height: 640px;
-
-						.related-metrics-card {
-							display: flex;
-							flex-direction: column;
-							gap: 16px;
-
-							.related-metrics-card-error {
-								padding-top: 10px;
-								height: fit-content;
-								width: fit-content;
-							}
-						}
-					}
-				}
 			}
 		}
 	}
@@ -190,7 +130,7 @@
 }
 
 .lightMode {
-	.metrics-explorer-explore-container {
+	.meter-explorer-container {
 		.explore-tabs {
 			.tab {
 				background-color: var(--bg-vanilla-100);

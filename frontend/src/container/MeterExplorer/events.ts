@@ -1,10 +1,10 @@
 /**
- * This file contains all analytics events for the Metrics Explorer.
+ * This file contains all analytics events for the Meter Explorer.
  */
 export enum MeterExplorerEvents {
 	TabChanged = 'Meter Explorer: Tab visited',
-	ModalOpened = 'Metrics Explorer: Modal opened',
-	MetricClicked = 'Meter Explorer: Metric clicked',
+	ModalOpened = 'Meter Explorer: Modal opened',
+	MeterClicked = 'Meter Explorer: Meter clicked',
 	FilterApplied = 'Meter Explorer: Filter applied',
 	TreemapViewChanged = 'Meter Explorer: Treemap view changed',
 	PageNumberChanged = 'Meter Explorer: Page number changed',
