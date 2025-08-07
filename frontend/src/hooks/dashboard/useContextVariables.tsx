@@ -72,7 +72,7 @@ function useContextVariables({
 					originalValue: value.selectedValue,
 				};
 			});
-	}, [selectedDashboard?.data.variables]);
+	}, [selectedDashboard]);
 
 	// Extract global variables
 	const globalVariables = useMemo(
