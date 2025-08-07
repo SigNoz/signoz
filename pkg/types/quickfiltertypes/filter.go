@@ -35,7 +35,7 @@ var (
 	SignalLogs          = Signal{valuer.NewString("logs")}
 	SignalApiMonitoring = Signal{valuer.NewString("api_monitoring")}
 	SignalExceptions    = Signal{valuer.NewString("exceptions")}
-	SignalMeterExplorer = Signal{valuer.NewString("meter_explorer")}
+	SignalMeter         = Signal{valuer.NewString("meter")}
 )
 
 // NewSignal creates a Signal from a string
@@ -49,8 +49,8 @@ func NewSignal(s string) (Signal, error) {
 		return SignalApiMonitoring, nil
 	case "exceptions":
 		return SignalExceptions, nil
-	case "meter_explorer":
-		return SignalMeterExplorer, nil
+	case "meter":
+		return SignalMeter, nil
 	default:
 		return Signal{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid signal: %s", s)
 	}
@@ -181,7 +181,7 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 		{"key": "k8s.pod.name", "dataType": "string", "type": "resource"},
 	}
 
-	meterExplorerFilters := []map[string]interface{}{
+	meterFilters := []map[string]interface{}{
 		{"key": "deployment.environment", "dataType": "float64", "type": "Sum"},
 		{"key": "service.name", "dataType": "float64", "type": "Sum"},
 		{"key": "host.name", "dataType": "float64", "type": "Sum"},
@@ -207,9 +207,9 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal exceptions filters")
 	}
 
-	meterExplorerJSON, err := json.Marshal(meterExplorerFilters)
+	meterJSON, err := json.Marshal(meterFilters)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal meter explorer filters")
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal meter filters")
 	}
 
 	timeRightNow := time.Now()
@@ -268,8 +268,8 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 				ID: valuer.GenerateUUID(),
 			},
 			OrgID:  orgID,
-			Filter: string(meterExplorerJSON),
-			Signal: SignalMeterExplorer,
+			Filter: string(meterJSON),
+			Signal: SignalMeter,
 			TimeAuditable: types.TimeAuditable{
 				CreatedAt: timeRightNow,
 				UpdatedAt: timeRightNow,

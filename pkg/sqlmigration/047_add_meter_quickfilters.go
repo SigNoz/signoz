@@ -106,7 +106,7 @@ func (migration *addMeterQuickFilters) Up(ctx context.Context, db *bun.DB) error
 			},
 			OrgID:  orgID,
 			Filter: string(meterJSON),
-			Signal: signal{valuer.NewString("meter_explorer")},
+			Signal: signal{valuer.NewString("meter")},
 			timeAuditable: timeAuditable{
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
@@ -114,13 +114,15 @@ func (migration *addMeterQuickFilters) Up(ctx context.Context, db *bun.DB) error
 		})
 	}
 
-	_, err = tx.NewInsert().
-		Model(&meterFiltersToInsert).
-		On("CONFLICT (org_id, signal) DO UPDATE").
-		Set("filter = EXCLUDED.filter, updated_at = EXCLUDED.updated_at").
-		Exec(ctx)
-	if err != nil {
-		return err
+	if len(meterFiltersToInsert) > 0 {
+		_, err = tx.NewInsert().
+			Model(&meterFiltersToInsert).
+			On("CONFLICT (org_id, signal) DO UPDATE").
+			Set("filter = EXCLUDED.filter, updated_at = EXCLUDED.updated_at").
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
