@@ -76,13 +76,12 @@ export const getTimeRangeFromUplotAxis = (
 	axis: any,
 	xValue: number,
 ): { startTime: number; endTime: number } => {
-	// Use splits if available, otherwise fallback to 10 minutes (600000 milliseconds)
 	let gap =
 		(axis as any)._splits && (axis as any)._splits.length > 1
 			? (axis as any)._splits[1] - (axis as any)._splits[0]
-			: 600000; // 10 minutes in milliseconds
+			: 600; // 10 minutes in seconds
 
-	gap = Math.max(gap, 600000); // Minimum gap of 10 minutes in milliseconds
+	gap = Math.max(gap, 600); // Minimum gap of 10 minutes in seconds
 
 	const startTime = xValue - gap;
 	const endTime = xValue + gap;

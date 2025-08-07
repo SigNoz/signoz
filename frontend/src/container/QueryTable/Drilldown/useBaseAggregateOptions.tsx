@@ -1,16 +1,16 @@
-import { LinkOutlined } from '@ant-design/icons';
+import { LinkOutlined, LoadingOutlined } from '@ant-design/icons';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import useUpdatedQuery from 'container/GridCardLayout/useResolveQuery';
 import { processContextLinks } from 'container/NewWidget/RightContainer/ContextLinks/utils';
-import useContextVariables, {
-	resolveTexts,
-} from 'hooks/dashboard/useContextVariables';
+import useContextVariables from 'hooks/dashboard/useContextVariables';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
-import { cloneDeep } from 'lodash-es';
 import ContextMenu from 'periscope/components/ContextMenu';
-import { useCallback, useMemo } from 'react';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -58,19 +58,29 @@ const useBaseAggregateOptions = ({
 }: UseBaseAggregateOptionsProps): {
 	baseAggregateOptionsConfig: BaseAggregateOptionsConfig;
 } => {
-	// const { redirectWithQueryBuilderData } = useQueryBuilder();
+	const [resolvedQuery, setResolvedQuery] = useState<Query>(query);
+	const {
+		getUpdatedQuery,
+		isLoading: isResolveQueryLoading,
+	} = useUpdatedQuery();
+	const { selectedDashboard } = useDashboard();
 
-	// const redirectToViewMode = useCallback(
-	// 	(query: Query): void => {
-	// 		redirectWithQueryBuilderData(
-	// 			query,
-	// 			{ [QueryParams.expandedWidgetId]: widgetId },
-	// 			undefined,
-	// 			true,
-	// 		);
-	// 	},
-	// 	[widgetId, redirectWithQueryBuilderData],
-	// );
+	useEffect(() => {
+		if (!aggregateData) return;
+		const resolveQuery = async (): Promise<void> => {
+			const updatedQuery = await getUpdatedQuery({
+				widgetConfig: {
+					query,
+					panelTypes: PANEL_TYPES.TIME_SERIES, // change by passing panel type from widget config
+					timePreferance: 'GLOBAL_TIME',
+				},
+				selectedDashboard,
+			});
+			setResolvedQuery(updatedQuery);
+		};
+		resolveQuery();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [query, aggregateData]);
 
 	const { safeNavigate } = useSafeNavigate();
 
@@ -103,38 +113,38 @@ const useBaseAggregateOptions = ({
 		customVariables: fieldVariables,
 	});
 
-	// Local function to resolve variables in query without API call
-	const resolveQueryVariables = useCallback(
-		(query: Query): Query => {
-			const resolvedQuery = cloneDeep(query);
+	// // Local function to resolve variables in query without API call
+	// const resolveQueryVariables = useCallback(
+	// 	(query: Query): Query => {
+	// 		const resolvedQuery = cloneDeep(query);
 
-			// Resolve variables in filter expressions
-			if (resolvedQuery.builder?.queryData) {
-				resolvedQuery.builder.queryData = resolvedQuery.builder.queryData.map(
-					(queryData) => {
-						// eslint-disable-next-line no-param-reassign
-						if (queryData.filter?.expression) {
-							const resolvedExpression = resolveTexts({
-								texts: [queryData.filter.expression],
-								processedVariables,
-							}).fullTexts[0];
+	// 		// Resolve variables in filter expressions
+	// 		if (resolvedQuery.builder?.queryData) {
+	// 			resolvedQuery.builder.queryData = resolvedQuery.builder.queryData.map(
+	// 				(queryData) => {
+	// 					// eslint-disable-next-line no-param-reassign
+	// 					if (queryData.filter?.expression) {
+	// 						const resolvedExpression = resolveTexts({
+	// 							texts: [queryData.filter.expression],
+	// 							processedVariables,
+	// 						}).fullTexts[0];
 
-							// eslint-disable-next-line no-param-reassign
-							queryData.filter.expression = resolvedExpression;
-						}
+	// 						// eslint-disable-next-line no-param-reassign
+	// 						queryData.filter.expression = resolvedExpression;
+	// 					}
 
-						// eslint-disable-next-line no-param-reassign
-						queryData.filters = undefined;
+	// 					// eslint-disable-next-line no-param-reassign
+	// 					queryData.filters = undefined;
 
-						return queryData;
-					},
-				);
-			}
+	// 					return queryData;
+	// 				},
+	// 			);
+	// 		}
 
-			return resolvedQuery;
-		},
-		[processedVariables],
-	);
+	// 		return resolvedQuery;
+	// 	},
+	// 	[processedVariables],
+	// );
 
 	// Console.log the results
 	console.log('useContextVariables results:', {
@@ -191,16 +201,16 @@ const useBaseAggregateOptions = ({
 			const route = getRoute(key);
 			const timeRange = aggregateData?.timeRange;
 			const filtersToAdd = aggregateData?.filters || [];
-			let viewQuery = getViewQuery(
-				query,
+			const viewQuery = getViewQuery(
+				resolvedQuery,
 				filtersToAdd,
 				key,
 				aggregateData?.queryName || '',
 			);
 
-			if (viewQuery) {
-				viewQuery = resolveQueryVariables(viewQuery);
-			}
+			// if (viewQuery) {
+			// 	viewQuery = resolveQueryVariables(viewQuery);
+			// }
 
 			let queryParams = {
 				[QueryParams.compositeQuery]: JSON.stringify(viewQuery),
@@ -229,12 +239,12 @@ const useBaseAggregateOptions = ({
 		},
 		[
 			query,
+			resolvedQuery,
 			widgetId,
 			safeNavigate,
 			onClose,
 			setSubMenu,
 			aggregateData,
-			resolveQueryVariables,
 		],
 	);
 
@@ -252,11 +262,9 @@ const useBaseAggregateOptions = ({
 		// Extract the non-breakout logic from getAggregateContextMenuConfig
 		const { queryName } = aggregateData;
 		const { dataSource, aggregations } = getAggregateColumnHeader(
-			query,
+			resolvedQuery,
 			queryName as string,
 		);
-
-		console.log('Header', { aggregateData });
 
 		return {
 			items: (
@@ -285,15 +293,19 @@ const useBaseAggregateOptions = ({
 						>
 							<>
 								{getBaseContextConfig({ handleBaseDrilldown }).map(
-									({ key, label, icon, onClick }) => (
-										<ContextMenu.Item
-											key={key}
-											icon={icon}
-											onClick={(): void => onClick()}
-										>
-											{label}
-										</ContextMenu.Item>
-									),
+									({ key, label, icon, onClick }) => {
+										const isLoading = isResolveQueryLoading && key !== 'breakout';
+										return (
+											<ContextMenu.Item
+												key={key}
+												icon={isLoading ? <LoadingOutlined spin /> : icon}
+												onClick={(): void => onClick()}
+												disabled={isLoading}
+											>
+												{label}
+											</ContextMenu.Item>
+										);
+									},
 								)}
 								{getContextLinksItems()}
 							</>
@@ -302,7 +314,14 @@ const useBaseAggregateOptions = ({
 				</>
 			),
 		};
-	}, [subMenu, query, handleBaseDrilldown, aggregateData, getContextLinksItems]);
+	}, [
+		subMenu,
+		handleBaseDrilldown,
+		aggregateData,
+		getContextLinksItems,
+		isResolveQueryLoading,
+		resolvedQuery,
+	]);
 
 	return { baseAggregateOptionsConfig };
 };
