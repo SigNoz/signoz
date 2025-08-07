@@ -105,8 +105,9 @@ function BreakoutOptions({
 					onChange={handleInputChange}
 				/>
 			</section>
-			<div style={{ height: '200px' }}>
+			<div>
 				<OverlayScrollbar
+					style={{ maxHeight: '200px' }}
 					options={{
 						overflow: {
 							x: 'hidden',

@@ -15,8 +15,10 @@
 	background: transparent;
 	width: 100%;
 	text-align: left;
-	white-space: normal;
-	word-break: break-all;
+	height: 33px; /* Fixed height: 8px padding top + 17px line-height + 8px padding bottom */
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 
 	&:hover {
 		background-color: var(--bg-vanilla-200);
@@ -63,9 +65,9 @@
 		font-weight: var(--font-weight-normal);
 		line-height: 17px;
 		letter-spacing: 0.01em;
-		white-space: normal;
-		word-break: break-all;
-		overflow-wrap: anywhere;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 		display: block;
 		max-width: 100%;
 	}
@@ -80,7 +82,7 @@
 // Target the popover inner specifically for context menu
 .context-menu .ant-popover-inner {
 	padding: 12px 8px !important;
-	max-height: 254px !important;
+	// max-height: 254px !important;
 	max-width: 210px !important;
 }
 

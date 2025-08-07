@@ -1,5 +1,6 @@
 import { QueryParams } from 'constants/query';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import ContextMenu from 'periscope/components/ContextMenu';
 import { useCallback, useMemo } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -76,12 +77,17 @@ const useBreakout = ({
 		const queryData = getQueryData(query, aggregateData.queryName || '');
 
 		return {
-			header: 'Breakout by',
+			// header: 'Breakout by',
 			items: (
-				<BreakoutOptions
-					queryData={queryData}
-					onColumnClick={handleBreakoutClick}
-				/>
+				<>
+					<ContextMenu.Header>
+						<div>Breakout by</div>
+					</ContextMenu.Header>
+					<BreakoutOptions
+						queryData={queryData}
+						onColumnClick={handleBreakoutClick}
+					/>
+				</>
 			),
 		};
 	}, [query, aggregateData, handleBreakoutClick]);

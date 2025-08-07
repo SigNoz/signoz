@@ -24,7 +24,7 @@ export const useCoordinates = (): {
 			const windowWidth = window.innerWidth;
 			const windowHeight = window.innerHeight;
 			const popoverWidth = 210;
-			const popoverHeight = 254;
+			const popoverHeight = 254; // to change
 			const offset = 10;
 
 			let left = x + offset;

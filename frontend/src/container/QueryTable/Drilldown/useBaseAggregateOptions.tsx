@@ -259,46 +259,47 @@ const useBaseAggregateOptions = ({
 		console.log('Header', { aggregateData });
 
 		return {
-			header: (
-				<ContextMenu.Header>
-					<div style={{ textTransform: 'capitalize' }}>{dataSource}</div>
-					<div
-						style={{
-							fontWeight: 'normal',
-							overflow: 'hidden',
-							textOverflow: 'ellipsis',
-							whiteSpace: 'nowrap',
-						}}
-					>
-						{aggregateData?.label || aggregations}
-					</div>
-				</ContextMenu.Header>
-			),
 			items: (
-				<div style={{ height: '200px' }}>
-					<OverlayScrollbar
-						options={{
-							overflow: {
-								x: 'hidden',
-							},
-						}}
-					>
-						<>
-							{getBaseContextConfig({ handleBaseDrilldown }).map(
-								({ key, label, icon, onClick }) => (
-									<ContextMenu.Item
-										key={key}
-										icon={icon}
-										onClick={(): void => onClick()}
-									>
-										{label}
-									</ContextMenu.Item>
-								),
-							)}
-							{getContextLinksItems()}
-						</>
-					</OverlayScrollbar>
-				</div>
+				<>
+					<ContextMenu.Header>
+						<div style={{ textTransform: 'capitalize' }}>{dataSource}</div>
+						<div
+							style={{
+								fontWeight: 'normal',
+								overflow: 'hidden',
+								textOverflow: 'ellipsis',
+								whiteSpace: 'nowrap',
+							}}
+						>
+							{aggregateData?.label || aggregations}
+						</div>
+					</ContextMenu.Header>
+					<div>
+						<OverlayScrollbar
+							style={{ maxHeight: '200px' }}
+							options={{
+								overflow: {
+									x: 'hidden',
+								},
+							}}
+						>
+							<>
+								{getBaseContextConfig({ handleBaseDrilldown }).map(
+									({ key, label, icon, onClick }) => (
+										<ContextMenu.Item
+											key={key}
+											icon={icon}
+											onClick={(): void => onClick()}
+										>
+											{label}
+										</ContextMenu.Item>
+									),
+								)}
+								{getContextLinksItems()}
+							</>
+						</OverlayScrollbar>
+					</div>
+				</>
 			),
 		};
 	}, [subMenu, query, handleBaseDrilldown, aggregateData, getContextLinksItems]);

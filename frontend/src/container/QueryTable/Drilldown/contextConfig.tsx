@@ -52,7 +52,6 @@ export function getGroupContextMenuConfig({
 	onColumnClick,
 }: Omit<ContextMenuConfigParams, 'configType'>): GroupContextMenuConfig {
 	const filterKey = clickedData?.column?.dataIndex;
-	const header = `Filter by ${filterKey}`;
 
 	const filterDataType =
 		getBaseMeta(query, filterKey as string)?.dataType || 'string';
@@ -68,16 +67,22 @@ export function getGroupContextMenuConfig({
 
 	if (panelType === 'table' && clickedData?.column) {
 		return {
-			header,
-			items: filterOperators.map((operator) => (
-				<ContextMenu.Item
-					key={operator}
-					icon={SUPPORTED_OPERATORS[operator].icon}
-					onClick={(): void => onColumnClick(SUPPORTED_OPERATORS[operator].value)}
-				>
-					{SUPPORTED_OPERATORS[operator].label}
-				</ContextMenu.Item>
-			)),
+			items: (
+				<>
+					<ContextMenu.Header>
+						<div>Filter by {filterKey}</div>
+					</ContextMenu.Header>
+					{filterOperators.map((operator) => (
+						<ContextMenu.Item
+							key={operator}
+							icon={SUPPORTED_OPERATORS[operator].icon}
+							onClick={(): void => onColumnClick(SUPPORTED_OPERATORS[operator].value)}
+						>
+							{SUPPORTED_OPERATORS[operator].label}
+						</ContextMenu.Item>
+					))}
+				</>
+			),
 		};
 	}
 
