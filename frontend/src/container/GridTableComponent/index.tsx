@@ -7,7 +7,7 @@ import { ColumnType } from 'antd/es/table';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Events } from 'constants/events';
 import { QueryTable } from 'container/QueryTable';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { getColumnUnit, RowData } from 'lib/query/createTableColumnsFromQuery';
 import { cloneDeep, get, isEmpty } from 'lodash-es';
 import { Compass } from 'lucide-react';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
@@ -84,10 +84,11 @@ function GridTableComponent({
 				(val): RowData => {
 					const newValue = { ...val };
 					Object.keys(val).forEach((k) => {
-						if (columnUnits[k]) {
+						const unit = getColumnUnit(k, columnUnits);
+						if (unit) {
 							// the check below takes care of not adding units for rows that have n/a or null values
 							if (val[k] !== 'n/a' && val[k] !== null) {
-								newValue[k] = getYAxisFormattedValue(String(val[k]), columnUnits[k]);
+								newValue[k] = getYAxisFormattedValue(String(val[k]), unit);
 							} else if (val[k] === null) {
 								newValue[k] = 'n/a';
 							}
@@ -121,7 +122,8 @@ function GridTableComponent({
 		render: (text: string, ...rest: any): ReactNode => {
 			let textForThreshold = text;
 			const dataIndex = (e as ColumnType<RowData>)?.dataIndex || e.title;
-			if (columnUnits && columnUnits?.[dataIndex as string]) {
+			const unit = getColumnUnit(dataIndex as string, columnUnits || {});
+			if (unit) {
 				textForThreshold = rest[0][`${dataIndex}_without_unit`];
 			}
 			const isNumber = !Number.isNaN(Number(textForThreshold));
@@ -131,7 +133,7 @@ function GridTableComponent({
 					thresholds,
 					dataIndex as string,
 					Number(textForThreshold),
-					columnUnits?.[dataIndex as string],
+					unit,
 				);
 
 				const idx = thresholds.findIndex(

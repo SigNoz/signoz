@@ -60,9 +60,9 @@ const getSeries = ({
 			: baseLabelName;
 
 		const color =
-			colorMapping?.[label] ||
+			colorMapping?.[label || ''] ||
 			generateColor(
-				label,
+				label || '',
 				isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
 			);
 

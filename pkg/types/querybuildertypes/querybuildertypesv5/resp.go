@@ -46,7 +46,7 @@ type QueryRangeResponse struct {
 	Data QueryData   `json:"data"`
 	Meta ExecStats   `json:"meta"`
 
-	Warning QueryWarnData `json:"warning,omitempty"`
+	Warning *QueryWarnData `json:"warning,omitempty"`
 
 	QBEvent *QBEvent `json:"-"`
 }

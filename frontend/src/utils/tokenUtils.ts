@@ -1,4 +1,8 @@
-import { NON_VALUE_OPERATORS } from 'constants/antlrQueryConstants';
+import {
+	NON_VALUE_OPERATORS,
+	OPERATORS,
+	QUERY_BUILDER_FUNCTIONS,
+} from 'constants/antlrQueryConstants';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import { IQueryPair } from 'types/antlrQueryTypes';
 
@@ -90,4 +94,22 @@ export function isQueryPairComplete(queryPair: Partial<IQueryPair>): boolean {
 	}
 	// For other operators, we need a value as well
 	return Boolean(queryPair.key && queryPair.operator && queryPair.value);
+}
+
+export function isFunctionOperator(operator: string): boolean {
+	const functionOperators = Object.values(QUERY_BUILDER_FUNCTIONS);
+
+	const sanitizedOperator = operator.trim();
+	// Check if it's a direct function operator
+	if (functionOperators.includes(sanitizedOperator)) {
+		return true;
+	}
+
+	// Check if it's a NOT function operator (e.g., "NOT has")
+	if (sanitizedOperator.toUpperCase().startsWith(OPERATORS.NOT)) {
+		const operatorWithoutNot = sanitizedOperator.substring(4).toLowerCase();
+		return functionOperators.includes(operatorWithoutNot);
+	}
+
+	return false;
 }

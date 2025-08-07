@@ -1,5 +1,7 @@
 // ===================== Base Types =====================
 
+import { Warning } from '..';
+
 export type Step = string | number; // Duration string (e.g., "30s") or seconds as number
 
 export type RequestType =
@@ -125,6 +127,7 @@ export interface VariableItem {
 
 export interface TelemetryFieldKey {
 	name: string;
+	key?: string;
 	description?: string;
 	unit?: string;
 	signal?: SignalType;
@@ -168,6 +171,7 @@ export interface FunctionArg {
 export interface QueryFunction {
 	name: FunctionName;
 	args?: FunctionArg[];
+	namedArgs?: Record<string, string | number>;
 }
 
 // ===================== Aggregation Types =====================
@@ -416,8 +420,9 @@ export type QueryRangeDataV5 =
 
 export interface QueryRangeResponseV5 {
 	type: RequestType;
-	data: QueryRangeDataV5;
+	data: QueryRangeDataV5 & { warning?: string[] };
 	meta: ExecStats;
+	warning?: Warning;
 }
 
 // ===================== Payload Types for API Functions =====================

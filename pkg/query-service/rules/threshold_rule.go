@@ -545,6 +545,11 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 		return resultVector, nil
 	}
 
+	if queryResult == nil {
+		r.logger.WarnContext(ctx, "query result is nil", "rule_name", r.Name(), "query_name", selectedQuery)
+		return resultVector, nil
+	}
+
 	for _, series := range queryResult.Series {
 		for _, threshold := range r.Thresholds() {
 			smpl, shouldAlert := threshold.ShouldAlert(*series)
