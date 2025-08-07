@@ -213,7 +213,7 @@ export function createAggregation(
 	}
 
 	if (queryData.aggregations?.length > 0) {
-		return queryData.aggregations.flatMap((agg: any) => {
+		return queryData.aggregations.flatMap((agg: { expression: string; alias?: string }) => {
 			const parsedAggregations = parseAggregations(agg.expression, agg?.alias);
 			return isEmpty(parsedAggregations)
 				? [{ expression: 'count()' }]
