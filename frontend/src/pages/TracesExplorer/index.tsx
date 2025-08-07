@@ -318,7 +318,7 @@ function TracesExplorer(): JSX.Element {
 								/>
 							}
 							warningElement={
-								warning?.message ? <WarningPopover warningData={warning} /> : <div />
+								!isEmpty(warning) ? <WarningPopover warningData={warning} /> : <div />
 							}
 							rightActions={
 								<RightToolbarActions

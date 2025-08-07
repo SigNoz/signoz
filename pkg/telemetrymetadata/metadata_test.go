@@ -60,14 +60,14 @@ func TestGetKeys(t *testing.T) {
 	query := `SELECT.*`
 
 	mock.ExpectQuery(query).
-		WithArgs("%http.method%", telemetrytypes.FieldDataTypeString.TagDataType(), 10).
+		WithArgs("%http.method%", telemetrytypes.FieldDataTypeString.TagDataType(), 11).
 		WillReturnRows(cmock.NewRows([]cmock.ColumnType{
 			{Name: "tag_key", Type: "String"},
 			{Name: "tag_type", Type: "String"},
 			{Name: "tag_data_type", Type: "String"},
 			{Name: "priority", Type: "UInt8"},
 		}, [][]any{{"http.method", "tag", "String", 1}, {"http.method", "tag", "String", 1}}))
-	keys, err := metadata.GetKeys(context.Background(), &telemetrytypes.FieldKeySelector{
+	keys, _, err := metadata.GetKeys(context.Background(), &telemetrytypes.FieldKeySelector{
 		Signal:        telemetrytypes.SignalTraces,
 		FieldContext:  telemetrytypes.FieldContextSpan,
 		FieldDataType: telemetrytypes.FieldDataTypeString,

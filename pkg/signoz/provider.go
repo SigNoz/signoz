@@ -77,7 +77,12 @@ func NewSQLSchemaProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[
 	)
 }
 
-func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]] {
+func NewSQLMigrationProviderFactories(
+	sqlstore sqlstore.SQLStore,
+	sqlschema sqlschema.SQLSchema,
+	telemetryStore telemetrystore.TelemetryStore,
+	providerSettings factory.ProviderSettings,
+) factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]] {
 	return factory.MustNewNamedMap(
 		sqlmigration.NewAddDataMigrationsFactory(),
 		sqlmigration.NewAddOrganizationFactory(),
@@ -124,6 +129,7 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore, sqlschema sqls
 		sqlmigration.NewUpdateUserInviteFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateOrgDomainFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddFactorIndexesFactory(sqlstore, sqlschema),
+		sqlmigration.NewQueryBuilderV5MigrationFactory(sqlstore, telemetryStore),
 	)
 }
 

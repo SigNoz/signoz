@@ -69,7 +69,7 @@ func (b *traceQueryStatementBuilder) Build(
 
 	keySelectors := getKeySelectors(query)
 
-	keys, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
 	}
@@ -148,6 +148,7 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 
 	for idx := range keySelectors {
 		keySelectors[idx].Signal = telemetrytypes.SignalTraces
+		keySelectors[idx].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
 	}
 
 	return keySelectors
