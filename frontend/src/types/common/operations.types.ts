@@ -4,12 +4,12 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import {
 	IBuilderFormula,
 	IBuilderQuery,
-	QueryFunctionProps,
 } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	BaseBuilderQuery,
 	LogBuilderQuery,
 	MetricBuilderQuery,
+	QueryFunction,
 	TraceBuilderQuery,
 } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
@@ -63,6 +63,6 @@ export type UseQueryOperations = (
 	handleDeleteQuery: () => void;
 	handleChangeQueryData: HandleChangeQueryData;
 	handleChangeFormulaData: HandleChangeFormulaData;
-	handleQueryFunctionsUpdates: (functions: QueryFunctionProps[]) => void;
+	handleQueryFunctionsUpdates: (functions: QueryFunction[]) => void;
 	listOfAdditionalFormulaFilters: string[];
 };

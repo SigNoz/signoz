@@ -4,6 +4,7 @@ import { Button, Collapse, ColorPicker, Tooltip, Typography } from 'antd';
 import { themeColors } from 'constants/theme';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { Palette } from 'lucide-react';
@@ -69,7 +70,11 @@ function LegendColors({
 	const legendLabels = useMemo(() => {
 		if (queryResponse?.data?.payload?.data?.result) {
 			return queryResponse.data.payload.data.result.map((item: any) =>
-				getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
+				getLegend(
+					item,
+					currentQuery,
+					getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
+				),
 			);
 		}
 

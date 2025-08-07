@@ -63,6 +63,64 @@ type QueryBuilderQuery[T any] struct {
 	ShiftBy int64 `json:"-"`
 }
 
+// Copy creates a deep copy of the QueryBuilderQuery
+func (q QueryBuilderQuery[T]) Copy() QueryBuilderQuery[T] {
+	// start with a shallow copy
+	c := q
+
+	if q.Aggregations != nil {
+		c.Aggregations = make([]T, len(q.Aggregations))
+		copy(c.Aggregations, q.Aggregations)
+	}
+
+	if q.GroupBy != nil {
+		c.GroupBy = make([]GroupByKey, len(q.GroupBy))
+		for i, gb := range q.GroupBy {
+			c.GroupBy[i] = gb.Copy()
+		}
+	}
+
+	if q.Order != nil {
+		c.Order = make([]OrderBy, len(q.Order))
+		for i, o := range q.Order {
+			c.Order[i] = o.Copy()
+		}
+	}
+
+	if q.SelectFields != nil {
+		c.SelectFields = make([]telemetrytypes.TelemetryFieldKey, len(q.SelectFields))
+		copy(c.SelectFields, q.SelectFields)
+	}
+
+	if q.SecondaryAggregations != nil {
+		c.SecondaryAggregations = make([]SecondaryAggregation, len(q.SecondaryAggregations))
+		for i, sa := range q.SecondaryAggregations {
+			c.SecondaryAggregations[i] = sa.Copy()
+		}
+	}
+
+	if q.Functions != nil {
+		c.Functions = make([]Function, len(q.Functions))
+		for i, f := range q.Functions {
+			c.Functions[i] = f.Copy()
+		}
+	}
+
+	if q.Filter != nil {
+		c.Filter = q.Filter.Copy()
+	}
+
+	if q.LimitBy != nil {
+		c.LimitBy = q.LimitBy.Copy()
+	}
+
+	if q.Having != nil {
+		c.Having = q.Having.Copy()
+	}
+
+	return c
+}
+
 // UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
 func (q *QueryBuilderQuery[T]) UnmarshalJSON(data []byte) error {
 	// Define a type alias to avoid infinite recursion

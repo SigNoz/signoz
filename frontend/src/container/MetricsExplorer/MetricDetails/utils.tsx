@@ -1,5 +1,6 @@
 import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { SpaceAggregation, TimeAggregation } from 'api/v5/v5';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -110,6 +111,15 @@ export function getMetricDetailsQuery(
 						isJSON: false,
 						dataType: DataTypes.String,
 					},
+					aggregations: [
+						{
+							metricName,
+							timeAggregation: timeAggregation as TimeAggregation,
+							spaceAggregation: spaceAggregation as SpaceAggregation,
+							reduceTo: 'avg',
+							temporality: '',
+						},
+					],
 					aggregateOperator,
 					timeAggregation,
 					spaceAggregation,

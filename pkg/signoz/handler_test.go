@@ -35,7 +35,7 @@ func TestNewHandlers(t *testing.T) {
 	emailing := emailingtest.New()
 	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, nil)
 
-	handlers := NewHandlers(modules)
+	handlers := NewHandlers(modules, providerSettings)
 
 	reflectVal := reflect.ValueOf(handlers)
 	for i := 0; i < reflectVal.NumField(); i++ {
