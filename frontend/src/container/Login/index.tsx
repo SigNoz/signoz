@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import APIError from 'types/api/error';
 import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck';
+import { normalizeEmail } from 'utils/emailUtils';
 
 import { FormContainer, Label, ParentContainer } from './styles';
 
@@ -116,10 +117,11 @@ function Login({
 			});
 			return;
 		}
+		const normalizedEmail = normalizeEmail(email);
 		setPrecheckInProcess(true);
 		try {
 			const response = await loginPrecheckApi({
-				email,
+				email: normalizedEmail,
 			});
 
 			if (response.statusCode === 200) {
@@ -165,7 +167,7 @@ function Login({
 			setIsLoading(true);
 
 			const response = await loginApi({
-				email,
+				email: normalizeEmail(email),
 				password,
 			});
 
@@ -232,6 +234,10 @@ function Login({
 							autoFocus
 							disabled={isLoading}
 							className="login-form-input"
+							onChange={(e): void => {
+								const normalizedEmail = normalizeEmail(e.target.value);
+								form.setFieldValue('email', normalizedEmail);
+							}}
 						/>
 					</FormContainer.Item>
 				</ParentContainer>

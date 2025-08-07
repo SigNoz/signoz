@@ -18,6 +18,7 @@ import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { InviteDetails } from 'types/api/user/getInviteDetails';
 import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
+import { normalizeEmail } from 'utils/emailUtils';
 
 import { FormContainer, Label } from './styles';
 import { isPasswordNotValidMessage, isPasswordValid } from './utils';
@@ -74,12 +75,12 @@ function SignUp(): JSX.Element {
 			const responseDetails = getInviteDetailsResponse.data.data;
 			if (responseDetails.precheck) setPrecheck(responseDetails.precheck);
 			form.setFieldValue('firstName', responseDetails.name);
-			form.setFieldValue('email', responseDetails.email);
+			form.setFieldValue('email', normalizeEmail(responseDetails.email));
 			form.setFieldValue('organizationName', responseDetails.organization);
 			setIsDetailsDisable(true);
 
 			logEvent('Account Creation Page Visited', {
-				email: responseDetails.email,
+				email: normalizeEmail(responseDetails.email),
 				name: responseDetails.name,
 				company_name: responseDetails.organization,
 				source: 'SigNoz Cloud',
@@ -115,8 +116,9 @@ function SignUp(): JSX.Element {
 	const signUp = async (values: FormValues): Promise<void> => {
 		try {
 			const { organizationName, password, firstName, email } = values;
+			const normalizedEmail = normalizeEmail(email);
 			const response = await signUpApi({
-				email,
+				email: normalizedEmail,
 				name: firstName,
 				orgDisplayName: organizationName,
 				password,
@@ -125,7 +127,7 @@ function SignUp(): JSX.Element {
 
 			if (response.statusCode === 200) {
 				const loginResponse = await loginApi({
-					email,
+					email: normalizedEmail,
 					password,
 				});
 
@@ -143,13 +145,14 @@ function SignUp(): JSX.Element {
 	const acceptInvite = async (values: FormValues): Promise<void> => {
 		try {
 			const { password, email, firstName } = values;
+			const normalizedEmail = normalizeEmail(email);
 			await accept({
 				password,
 				token: params.get('token') || '',
 				displayName: firstName,
 			});
 			const loginResponse = await loginApi({
-				email,
+				email: normalizedEmail,
 				password,
 			});
 			const { data } = loginResponse;
@@ -207,7 +210,7 @@ function SignUp(): JSX.Element {
 
 				if (!isPasswordValid(values.password)) {
 					logEvent('Account Creation Page - Invalid Password', {
-						email: values.email,
+						email: normalizeEmail(values.email),
 						name: values.firstName,
 					});
 					setIsPasswordPolicyError(true);
@@ -218,7 +221,7 @@ function SignUp(): JSX.Element {
 				if (isSignUp) {
 					await signUp(values);
 					logEvent('Account Created Successfully', {
-						email: values.email,
+						email: normalizeEmail(values.email),
 						name: values.firstName,
 					});
 				} else {
@@ -303,6 +306,10 @@ function SignUp(): JSX.Element {
 								required
 								id="signupEmail"
 								disabled={isDetailsDisable}
+								onChange={(e): void => {
+									const normalizedEmail = normalizeEmail(e.target.value);
+									form.setFieldValue('email', normalizedEmail);
+								}}
 							/>
 						</FormContainer.Item>
 					</div>
