@@ -43,6 +43,9 @@ function UpdateContextLinks({
 		}[]
 	>([]);
 
+	// Function to get current domain
+	const getCurrentDomain = (): string => window.location.origin;
+
 	console.log('FORM VALUES', { label, url });
 	useEffect(() => {
 		((window as unknown) as Record<string, unknown>).form = form;
@@ -129,7 +132,7 @@ function UpdateContextLinks({
 					name={CONTEXT_LINK_FIELDS.LABEL}
 					rules={[{ required: false, message: 'Please input the label' }]}
 				>
-					<Input />
+					<Input placeholder="View Traces details: {{_traceId}}" />
 				</Form.Item>
 				{/* //url */}
 				<Typography.Text className="form-label">
@@ -151,6 +154,7 @@ function UpdateContextLinks({
 						autoCorrect="off"
 						autoCapitalize="off"
 						spellCheck="false"
+						placeholder={`${getCurrentDomain()}/trace/{{_traceId}}`}
 					/>
 				</Form.Item>
 			</Form>

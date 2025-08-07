@@ -40,7 +40,6 @@ const useAggregateDrilldown = ({
 		items?: ContextMenuItem;
 	};
 } => {
-	// New function to test useBreakout hook
 	const { breakoutConfig } = useBreakout({
 		query,
 		widgetId,
@@ -61,16 +60,14 @@ const useAggregateDrilldown = ({
 
 	const aggregateDrilldownConfig = useMemo(() => {
 		if (!aggregateData) {
-			console.warn('aggregateData is null in testBreakoutConfig');
+			console.warn('aggregateData is null in aggregateDrilldownConfig');
 			return {};
 		}
 
-		// If subMenu is breakout, use the new breakout hook
 		if (subMenu === 'breakout') {
 			return breakoutConfig;
 		}
 
-		// Otherwise, use the existing getAggregateContextMenuConfig
 		return baseAggregateOptionsConfig;
 	}, [subMenu, aggregateData, breakoutConfig, baseAggregateOptionsConfig]);
 
