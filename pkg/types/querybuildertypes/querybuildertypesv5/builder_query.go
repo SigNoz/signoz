@@ -14,6 +14,9 @@ type QueryBuilderQuery[T any] struct {
 	// signal to query
 	Signal telemetrytypes.Signal `json:"signal,omitempty"`
 
+	// source for query
+	Source telemetrytypes.Source `json:"source,omitempty"`
+
 	// we want to support multiple aggregations
 	// currently supported: []Aggregation, []MetricAggregation
 	Aggregations []T `json:"aggregations,omitempty"`

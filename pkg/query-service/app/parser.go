@@ -484,7 +484,7 @@ func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequ
 		limit = 50
 	}
 
-	if dataSource != v3.DataSourceMetrics {
+	if dataSource != v3.DataSourceMetrics && dataSource != v3.DataSourceMeter {
 		if err := aggregateOperator.Validate(); err != nil {
 			return nil, err
 		}
@@ -604,7 +604,7 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 		return nil, err
 	}
 
-	if dataSource != v3.DataSourceMetrics {
+	if dataSource != v3.DataSourceMetrics && dataSource != v3.DataSourceMeter {
 		if err := aggregateOperator.Validate(); err != nil {
 			return nil, err
 		}
