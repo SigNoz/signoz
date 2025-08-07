@@ -54,5 +54,5 @@ export enum QuickFiltersSource {
 	TRACES_EXPLORER = 'traces-explorer',
 	API_MONITORING = 'api-monitoring',
 	EXCEPTIONS = 'exceptions',
-	METER_EXPLORER = 'meter-explorer',
+	METER_EXPLORER = 'meter',
 }
