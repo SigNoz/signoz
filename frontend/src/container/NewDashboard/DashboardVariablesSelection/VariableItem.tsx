@@ -137,17 +137,6 @@ function VariableItem({
 						) {
 							const value = variableData.selectedValue;
 							let allSelected = false;
-							// The default value for multi-select is ALL and first value for
-							// single select
-							// console.log(valueNotInList);
-							// if (valueNotInList) {
-							// 	if (variableData.multiSelect) {
-							// 		value = newOptionsData;
-							// 		allSelected = true;
-							// 	} else {
-							// 		[value] = newOptionsData;
-							// 	}
-							// } else
 
 							if (variableData.multiSelect) {
 								const { selectedValue } = variableData;

@@ -542,7 +542,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							// Create a unique key that doesn't rely on array index
 							const uniqueKey = `${text.substring(0, 3)}-${part.substring(0, 3)}-${i}`;
 
-							return part.toLowerCase() === searchQuery.toLowerCase() ? (
+							return part.trim().toLowerCase() === searchQuery.trim().toLowerCase() ? (
 								<span key={uniqueKey} className="highlight-text">
 									{part}
 								</span>
@@ -554,7 +554,6 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				);
 			} catch (error) {
 				// If regex fails, return the original text without highlighting
-				console.error('Error in text highlighting:', error);
 				return text;
 			}
 		},
