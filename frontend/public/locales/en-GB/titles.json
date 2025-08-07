@@ -46,5 +46,8 @@
 	"ALERT_HISTORY": "SigNoz | Alert Rule History",
 	"ALERT_OVERVIEW": "SigNoz | Alert Rule Overview",
 	"INFRASTRUCTURE_MONITORING_HOSTS": "SigNoz | Infra Monitoring",
-	"INFRASTRUCTURE_MONITORING_KUBERNETES": "SigNoz | Infra Monitoring"
+	"INFRASTRUCTURE_MONITORING_KUBERNETES": "SigNoz | Infra Monitoring",
+	"METER_EXPLORER": "SigNoz | Meter Explorer",
+	"METER_EXPLORER_VIEWS": "SigNoz | Meter Explorer",
+	"METER_EXPLORER_BASE": "SigNoz | Meter Explorer"
 }

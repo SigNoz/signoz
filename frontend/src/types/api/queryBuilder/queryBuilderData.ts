@@ -87,6 +87,7 @@ export type IBuilderQuery = {
 	pageSize?: number;
 	offset?: number;
 	selectColumns?: BaseAutocompleteData[] | TelemetryFieldKey[];
+	source?: 'meter' | '';
 };
 
 export interface IClickHouseQuery {
