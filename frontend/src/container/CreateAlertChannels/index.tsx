@@ -571,7 +571,7 @@ function CreateAlertChannels({
 }
 
 interface CreateAlertChannelsProps {
-	preType: ChannelType;
+	preType?: ChannelType;
 }
 
 export default CreateAlertChannels;

@@ -1,35 +1,25 @@
 import './Settings.styles.scss';
 
 import logEvent from 'api/common/logEvent';
-import RouteTab from 'components/RouteTab';
-import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
 import { settingsMenuItems as defaultSettingsMenuItems } from 'container/SideNav/menuItems';
 import NavItem from 'container/SideNav/NavItem/NavItem';
 import { SidebarItem } from 'container/SideNav/sideNav.types';
-import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { Wrench } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { Outlet } from 'react-router-dom-v5-compat';
 import { USER_ROLES } from 'types/roles';
-
-import { getRoutes } from './utils';
 
 function SettingsPage(): JSX.Element {
 	const { pathname, search } = useLocation();
 
-	const {
-		user,
-		featureFlags,
-		trialInfo,
-		isFetchingActiveLicense,
-	} = useAppContext();
+	const { user, trialInfo, isFetchingActiveLicense } = useAppContext();
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const [settingsMenuItems, setSettingsMenuItems] = useState<SidebarItem[]>(
@@ -38,18 +28,6 @@ function SettingsPage(): JSX.Element {
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const isEditor = user.role === USER_ROLES.EDITOR;
-
-	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
-
-	const [isCurrentOrgSettings] = useComponentPermission(
-		['current_org_settings'],
-		user.role,
-	);
-	const { t } = useTranslation(['routes']);
-
-	const isGatewayEnabled =
-		featureFlags?.find((feature) => feature.name === FeatureKeys.GATEWAY)
-			?.active || false;
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
@@ -162,28 +140,6 @@ function SettingsPage(): JSX.Element {
 		pathname,
 	]);
 
-	const routes = useMemo(
-		() =>
-			getRoutes(
-				user.role,
-				isCurrentOrgSettings,
-				isGatewayEnabled,
-				isWorkspaceBlocked,
-				isCloudUser,
-				isEnterpriseSelfHostedUser,
-				t,
-			),
-		[
-			user.role,
-			isCurrentOrgSettings,
-			isGatewayEnabled,
-			isWorkspaceBlocked,
-			isCloudUser,
-			isEnterpriseSelfHostedUser,
-			t,
-		],
-	);
-
 	const isCtrlMetaKey = (e: MouseEvent): boolean => e.ctrlKey || e.metaKey;
 
 	const openInNewTab = (path: string): void => {
@@ -265,12 +221,7 @@ function SettingsPage(): JSX.Element {
 				</div>
 
 				<div className="settings-page-content">
-					<RouteTab
-						routes={routes}
-						activeKey={pathname}
-						history={history}
-						tabBarStyle={{ display: 'none' }}
-					/>
+					<Outlet />
 				</div>
 			</div>
 		</div>

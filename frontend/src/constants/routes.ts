@@ -27,18 +27,23 @@ const ROUTES = {
 	ALERTS_NEW: '/alerts/new',
 	ALERT_HISTORY: '/alerts/history',
 	ALERT_OVERVIEW: '/alerts/overview',
-	ALL_CHANNELS: '/settings/channels',
-	CHANNELS_NEW: '/settings/channels/new',
-	CHANNELS_EDIT: '/settings/channels/edit/:channelId',
-	ALL_ERROR: '/exceptions',
-	ERROR_DETAIL: '/error-detail',
-	VERSION: '/status',
+
+	// Setting routes
 	SETTINGS: '/settings',
 	MY_SETTINGS: '/settings/my-settings',
 	ORG_SETTINGS: '/settings/org-settings',
 	CUSTOM_DOMAIN_SETTINGS: '/settings/custom-domain-settings',
 	API_KEYS: '/settings/api-keys',
 	INGESTION_SETTINGS: '/settings/ingestion-settings',
+	ALL_CHANNELS: '/settings/channels',
+	CHANNELS_NEW: '/settings/channels/new',
+	CHANNELS_EDIT: '/settings/channels/edit/:channelId',
+	BILLING: '/settings/billing',
+	SHORTCUTS: '/settings/shortcuts',
+
+	ALL_ERROR: '/exceptions',
+	ERROR_DETAIL: '/error-detail',
+	VERSION: '/status',
 	SOMETHING_WENT_WRONG: '/something-went-wrong',
 	UN_AUTHORIZED: '/un-authorized',
 	NOT_FOUND: '/not-found',
@@ -52,7 +57,6 @@ const ROUTES = {
 	LIST_LICENSES: '/licenses',
 	LOGS_INDEX_FIELDS: '/logs-explorer/index-fields',
 	TRACE_EXPLORER: '/trace-explorer',
-	BILLING: '/settings/billing',
 	SUPPORT: '/support',
 	LOGS_SAVE_VIEWS: '/logs/saved-views',
 	TRACES_SAVE_VIEWS: '/traces/saved-views',
@@ -60,7 +64,6 @@ const ROUTES = {
 	TRACES_FUNNELS_DETAIL: '/traces/funnels/:funnelId',
 	WORKSPACE_LOCKED: '/workspace-locked',
 	WORKSPACE_SUSPENDED: '/workspace-suspended',
-	SHORTCUTS: '/settings/shortcuts',
 	INTEGRATIONS: '/integrations',
 	MESSAGING_QUEUES_BASE: '/messaging-queues',
 	MESSAGING_QUEUES_KAFKA: '/messaging-queues/kafka',
@@ -79,5 +82,18 @@ const ROUTES = {
 	WORKSPACE_ACCESS_RESTRICTED: '/workspace-access-restricted',
 	HOME_PAGE: '/',
 } as const;
+
+export const SETTINGS_NESTED_ROUTES = {
+	MY_SETTINGS: 'my-settings',
+	ORG_SETTINGS: 'org-settings',
+	CUSTOM_DOMAIN_SETTINGS: 'custom-domain-settings',
+	API_KEYS: 'api-keys',
+	INGESTION_SETTINGS: 'ingestion-settings',
+	ALL_CHANNELS: 'channels',
+	CHANNELS_NEW: 'channels/new',
+	CHANNELS_EDIT: 'channels/edit/:channelId',
+	BILLING: 'billing',
+	SHORTCUTS: 'shortcuts',
+};
 
 export default ROUTES;

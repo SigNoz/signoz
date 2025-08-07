@@ -12,6 +12,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
+import { useAppRoutes } from 'hooks/useAppRoutes';
 import { useThemeConfig } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
@@ -27,19 +28,15 @@ import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
-import { Route, Router, Switch } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
+import { Router } from 'react-router-dom';
+import { CompatRouter, Route, Routes } from 'react-router-dom-v5-compat';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { Userpilot } from 'userpilot';
 import { extractDomain } from 'utils/app';
 
 import { Home } from './pageComponents';
 import PrivateRoute from './Private';
-import defaultRoutes, {
-	AppRoutes,
-	LIST_LICENSES,
-	SUPPORT_ROUTE,
-} from './routes';
+import { AppRoutes, LIST_LICENSES, SUPPORT_ROUTE } from './routes';
 
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
@@ -57,6 +54,7 @@ function App(): JSX.Element {
 		featureFlags,
 		org,
 	} = useAppContext();
+	const { routes: defaultRoutes } = useAppRoutes();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
 
 	const { hostname, pathname } = window.location;
@@ -213,6 +211,7 @@ function App(): JSX.Element {
 			}
 			setRoutes(updatedRoutes);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		isLoggedInState,
 		user,
@@ -363,6 +362,17 @@ function App(): JSX.Element {
 		}
 	}
 
+	const renderRoutes = (routes: AppRoutes[]): JSX.Element[] | null => {
+		if (!routes || routes.length === 0) {
+			return null;
+		}
+		return routes.map(({ path, element: Component, children }: AppRoutes) => (
+			<Route key={`${path}`} path={path as string} element={<Component />}>
+				{children && renderRoutes(children)}
+			</Route>
+		));
+	};
+
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<ConfigProvider theme={themeConfig}>
@@ -379,18 +389,11 @@ function App(): JSX.Element {
 													<AlertRuleProvider>
 														<AppLayout>
 															<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-																<Switch>
-																	{routes.map(({ path, component, exact }) => (
-																		<Route
-																			key={`${path}`}
-																			exact={exact}
-																			path={path}
-																			component={component}
-																		/>
-																	))}
-																	<Route exact path="/" component={Home} />
-																	<Route path="*" component={NotFound} />
-																</Switch>
+																<Routes>
+																	{routes && renderRoutes(routes)}
+																	<Route path="/" element={<Home />} />
+																	<Route path="*" element={<NotFound />} />
+																</Routes>
 															</Suspense>
 														</AppLayout>
 													</AlertRuleProvider>
