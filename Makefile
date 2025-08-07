@@ -61,24 +61,16 @@ devenv-postgres: ## Run postgres in devenv
 	@cd .devenv/docker/postgres; \
 	docker compose -f compose.yaml up -d
 
-.PHONY: devenv-otel-collector
-devenv-otel-collector: ## Run otel-collector in devenv (requires clickhouse to be running)
-	@cd .devenv/docker/otel-collector; \
+.PHONY: devenv-signoz-otel-collector
+devenv-signoz-otel-collector: ## Run otel-collector in devenv (requires clickhouse to be running)
+	@cd .devenv/docker/signoz-otel-collector; \
 	docker compose -f compose.yaml up -d
 
 .PHONY: devenv-up
-devenv-up: ## Start both clickhouse and otel-collector for local development
-	@echo "Starting ClickHouse..."
-	@cd .devenv/docker/clickhouse; \
-	docker compose -f compose.yaml up -d
-	@echo "Waiting for ClickHouse to be ready..."
-	@sleep 10
-	@echo "Starting OTel Collector..."
-	@cd .devenv/docker/otel-collector; \
-	docker compose -f compose.yaml up -d
-	@echo "✅ Development environment is ready!"
+devenv-up: devenv-clickhouse devenv-signoz-otel-collector ## Start both clickhouse and signoz-otel-collector for local development
+	@echo "Development environment is ready!"
 	@echo "   - ClickHouse: http://localhost:8123"
-	@echo "   - OTel Collector: grpc://localhost:4317, http://localhost:4318"
+	@echo "   - Signoz OTel Collector: grpc://localhost:4317, http://localhost:4318"
 
 ##############################################################
 # go commands

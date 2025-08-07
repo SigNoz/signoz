@@ -57,12 +57,12 @@ This command:
 - Sets up Zookeeper
 - Runs the latest schema migrations
 
-### 2. Setting up OpenTelemetry Collector
+### 2. Setting up SigNoz OpenTelemetry Collector
 
 Next, start the OpenTelemetry Collector to receive telemetry data:
 
 ```bash
-make devenv-otel-collector
+make devenv-signoz-otel-collector
 ```
 
 This command:
@@ -114,8 +114,7 @@ This command:
 
 Now you're all set to start developing! Happy coding! 🎉
 
-## Testing Your Setup
-
+## Verifying Your Setup
 To verify everything is working correctly:
 
 1. **Check ClickHouse**: `curl http://localhost:8123/ping` (should return "Ok.")
@@ -123,7 +122,7 @@ To verify everything is working correctly:
 3. **Check Backend**: `curl http://localhost:8080/api/v1/health` (should return `{"status":"ok"}`)
 4. **Check Frontend**: Open `http://localhost:3301` in your browser
 
-## Sending Test Data
+## How to send test data?
 
 You can now send telemetry data to your local SigNoz instance:
 
