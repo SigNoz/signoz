@@ -167,16 +167,9 @@ func (r *AnomalyRule) prepareQueryRange(ctx context.Context, ts time.Time) (*v3.
 		ctx, "prepare query range request v4", "ts", ts.UnixMilli(), "eval_window", r.EvalWindow().Milliseconds(), "eval_delay", r.EvalDelay().Milliseconds(),
 	)
 
-	start := ts.Add(-time.Duration(r.EvalWindow())).UnixMilli()
-	end := ts.UnixMilli()
-
-	if r.EvalDelay() > 0 {
-		start = start - int64(r.EvalDelay().Milliseconds())
-		end = end - int64(r.EvalDelay().Milliseconds())
-	}
-	// round to minute otherwise we could potentially miss data
-	start = start - (start % (60 * 1000))
-	end = end - (end % (60 * 1000))
+	st, en := r.Timestamps(ts)
+	start := st.UnixMilli()
+	end := en.UnixMilli()
 
 	compositeQuery := r.Condition().CompositeQuery
 

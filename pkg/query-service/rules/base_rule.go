@@ -86,8 +86,7 @@ type BaseRule struct {
 
 	sqlstore sqlstore.SQLStore
 
-	cronExpression string
-	cronEnabled    bool
+	evaluation ruletypes.Evaluation
 }
 
 type RuleOption func(*BaseRule)
@@ -142,6 +141,7 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 		Active:            map[uint64]*ruletypes.Alert{},
 		reader:            reader,
 		TemporalityMap:    make(map[string]map[v3.Temporality]bool),
+		evaluation:        p.Evaluation,
 	}
 
 	if baseRule.evalWindow == 0 {
@@ -248,8 +248,10 @@ func (r *BaseRule) Unit() string {
 }
 
 func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time) {
-	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli()
-	end := ts.UnixMilli()
+
+	st, en := r.evaluation.EvaluationTime(ts)
+	start := st.UnixMilli()
+	end := en.UnixMilli()
 
 	if r.evalDelay > 0 {
 		start = start - int64(r.evalDelay.Milliseconds())
