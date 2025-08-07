@@ -7,7 +7,7 @@
 import './DashboardVariableSelection.styles.scss';
 
 import { orange } from '@ant-design/colors';
-import { WarningOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined, WarningOutlined } from '@ant-design/icons';
 import { Input, Popover, Tooltip, Typography } from 'antd';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
