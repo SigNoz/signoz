@@ -46,6 +46,7 @@ const useAggregateDrilldown = ({
 		widgetId,
 		onClose,
 		aggregateData,
+		setSubMenu,
 	});
 
 	const { baseAggregateOptionsConfig } = useBaseAggregateOptions({

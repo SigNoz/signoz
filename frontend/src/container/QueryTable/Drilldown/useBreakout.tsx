@@ -1,5 +1,6 @@
 import { QueryParams } from 'constants/query';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { ArrowLeft } from 'lucide-react';
 import ContextMenu from 'periscope/components/ContextMenu';
 import { useCallback, useMemo } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -15,6 +16,7 @@ interface UseBreakoutProps {
 	widgetId: string;
 	onClose: () => void;
 	aggregateData: AggregateData | null;
+	setSubMenu: (subMenu: string) => void;
 }
 
 interface BreakoutConfig {
@@ -27,6 +29,7 @@ const useBreakout = ({
 	widgetId,
 	onClose,
 	aggregateData,
+	setSubMenu,
 }: UseBreakoutProps): {
 	breakoutConfig: BreakoutConfig;
 	handleBreakoutClick: (groupBy: BaseAutocompleteData) => void;
@@ -68,6 +71,10 @@ const useBreakout = ({
 		[query, widgetId, aggregateData, redirectToViewMode, onClose],
 	);
 
+	const handleBackClick = useCallback(() => {
+		setSubMenu('');
+	}, [setSubMenu]);
+
 	const breakoutConfig = useMemo(() => {
 		if (!aggregateData) {
 			console.warn('aggregateData is null in breakoutConfig');
@@ -81,7 +88,14 @@ const useBreakout = ({
 			items: (
 				<>
 					<ContextMenu.Header>
-						<div>Breakout by</div>
+						<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+							<ArrowLeft
+								size={14}
+								style={{ cursor: 'pointer' }}
+								onClick={handleBackClick}
+							/>
+							<span>Breakout by</span>
+						</div>
 					</ContextMenu.Header>
 					<BreakoutOptions
 						queryData={queryData}
@@ -90,7 +104,7 @@ const useBreakout = ({
 				</>
 			),
 		};
-	}, [query, aggregateData, handleBreakoutClick]);
+	}, [query, aggregateData, handleBreakoutClick, handleBackClick]);
 
 	return { breakoutConfig, handleBreakoutClick };
 };
