@@ -1,6 +1,7 @@
 import './MySettings.styles.scss';
 
 import { Radio, RadioChangeEvent, Switch, Tag } from 'antd';
+import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
 import { AxiosError } from 'axios';
@@ -109,6 +110,9 @@ function MySettings(): JSX.Element {
 		// Optimistically update the UI
 		setSideNavPinned(checked);
 
+		// Save to localStorage immediately for instant feedback
+		setLocalStorageApi(USER_PREFERENCES.SIDENAV_PINNED, checked.toString());
+
 		// Update the context immediately
 		const save = {
 			name: USER_PREFERENCES.SIDENAV_PINNED,
@@ -130,6 +134,8 @@ function MySettings(): JSX.Element {
 						name: USER_PREFERENCES.SIDENAV_PINNED,
 						value: !checked,
 					} as UserPreference);
+					// Also revert localStorage
+					setLocalStorageApi(USER_PREFERENCES.SIDENAV_PINNED, (!checked).toString());
 					showErrorNotification(notifications, error as AxiosError);
 				},
 			},
