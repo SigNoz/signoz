@@ -168,7 +168,9 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 
 		// create ch rule task for evalution
 		task = newTask(TaskTypeCh, opts.TaskName, taskNamesuffix, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
-
+		if tr.IsScheduled() {
+			task.SetSchedule(tr.GetSchedule())
+		}
 	} else if opts.Rule.RuleType == ruletypes.RuleTypeProm {
 
 		// create promql rule
@@ -190,7 +192,9 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 
 		// create promql rule task for evalution
 		task = newTask(TaskTypeProm, opts.TaskName, taskNamesuffix, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
-
+		if pr.IsScheduled() {
+			task.SetSchedule(pr.GetSchedule())
+		}
 	} else {
 		return nil, fmt.Errorf("unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, ruletypes.RuleTypeProm, ruletypes.RuleTypeThreshold)
 	}

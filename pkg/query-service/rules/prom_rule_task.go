@@ -39,6 +39,8 @@ type PromRuleTask struct {
 
 	maintenanceStore ruletypes.MaintenanceStore
 	orgID            valuer.UUID
+	schedule         string
+	scheduleStartsAt time.Time
 }
 
 // newPromRuleTask holds rules that have promql condition
@@ -75,6 +77,10 @@ func (g *PromRuleTask) Key() string {
 	return g.name + ";" + g.file
 }
 
+func (g *PromRuleTask) IsCronSchedule() bool {
+	return g.schedule != ""
+}
+
 func (g *PromRuleTask) Type() TaskType { return TaskTypeProm }
 
 // Rules returns the group's rules.
@@ -91,36 +97,6 @@ func (g *PromRuleTask) Pause(b bool) {
 
 func (g *PromRuleTask) Run(ctx context.Context) {
 	defer close(g.terminated)
-
-	// Wait an initial amount to have consistently slotted intervals.
-	evalTimestamp := g.EvalTimestamp(time.Now().UnixNano()).Add(g.frequency)
-	select {
-	case <-time.After(time.Until(evalTimestamp)):
-	case <-g.done:
-		return
-	}
-
-	ctx = NewQueryOriginContext(ctx, map[string]interface{}{
-		"ruleGroup": map[string]string{
-			"name": g.Name(),
-		},
-	})
-
-	iter := func() {
-
-		start := time.Now()
-		g.Eval(ctx, evalTimestamp)
-		timeSinceStart := time.Since(start)
-
-		g.setEvaluationTime(timeSinceStart)
-		g.setLastEvaluation(start)
-	}
-
-	// The assumption here is that since the ticker was started after having
-	// waited for `evalTimestamp` to pass, the ticks will trigger soon
-	// after each `evalTimestamp + N * g.frequency` occurrence.
-	tick := time.NewTicker(g.frequency)
-	defer tick.Stop()
 
 	// defer cleanup
 	defer func() {
@@ -140,23 +116,33 @@ func (g *PromRuleTask) Run(ctx context.Context) {
 
 	}()
 
-	iter()
+	ctx = NewQueryOriginContext(ctx, map[string]interface{}{
+		"ruleGroup": map[string]string{
+			"name": g.Name(),
+		},
+	})
 
-	// let the group iterate and run
-	for {
-		select {
-		case <-g.done:
-			return
-		default:
-			select {
-			case <-g.done:
-				return
-			case <-tick.C:
-				missed := (time.Since(evalTimestamp) / g.frequency) - 1
-				evalTimestamp = evalTimestamp.Add((missed + 1) * g.frequency)
-				iter()
-			}
-		}
+	if g.IsCronSchedule() {
+		evalFunc := createCronEvalFunction(&g.pause, g.Eval, g.setEvaluationTime, g.setLastEvaluation, ctx)
+		runCronScheduledTask(g.schedule, g.scheduleStartsAt, g.done, evalFunc)
+	} else {
+		evalTimestamp := g.EvalTimestamp(time.Now().UnixNano()).Add(g.frequency)
+
+		evalFunc := createIntervalEvalFunction(
+			&g.pause,
+			g.Eval,
+			g.setEvaluationTime,
+			g.setLastEvaluation,
+			ctx,
+			func() time.Time { return evalTimestamp },
+		)
+
+		runIntervalScheduledTask(
+			g.frequency,
+			g.done,
+			func() time.Time { return evalTimestamp },
+			evalFunc,
+		)
 	}
 }
 
@@ -243,6 +229,12 @@ func (g *PromRuleTask) setLastEvaluation(ts time.Time) {
 	g.mtx.Lock()
 	defer g.mtx.Unlock()
 	g.lastEvaluation = ts
+}
+
+func (g *PromRuleTask) SetSchedule(schedule string, t time.Time) {
+	g.mtx.Lock()
+	defer g.mtx.Unlock()
+	g.schedule = schedule
 }
 
 // EvalTimestamp returns the immediately preceding consistently slotted evaluation time.
