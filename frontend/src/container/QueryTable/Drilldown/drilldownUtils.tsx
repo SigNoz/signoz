@@ -324,7 +324,7 @@ export const getViewQuery = (
 	const allFilters = [...existingFilters, ...filters];
 
 	const {
-		filters: newFilters,
+		// filters: newFilters,
 		filter: newFilterExpression,
 	} = convertFiltersToExpressionWithExistingQuery(
 		{
@@ -334,7 +334,7 @@ export const getViewQuery = (
 		existingFilterExpression,
 	);
 
-	newQuery.builder.queryData[0].filters = newFilters;
+	// newQuery.builder.queryData[0].filters = newFilters;
 
 	newQuery.builder.queryData[0].filter = newFilterExpression;
 
