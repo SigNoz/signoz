@@ -4,6 +4,6 @@ import { AllViewsProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
 
 export const getAllViews = (
-	sourcepage: DataSource,
+	sourcepage: DataSource | 'meter',
 ): Promise<AxiosResponse<AllViewsProps>> =>
 	axios.get(`/explorer/views?sourcePage=${sourcepage}`);

@@ -1,12 +1,21 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable no-empty */
 import { TelemetryFieldKey } from 'api/v5/v5';
+import { has } from 'lodash-es';
 import { useEffect, useState } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import logsLoaderConfig from '../configs/logsLoaderConfig';
 import tracesLoaderConfig from '../configs/tracesLoaderConfig';
 import { FormattingOptions, Preferences } from '../types';
+
+const migrateColumns = (columns: any): any =>
+	columns.map((column: any) => {
+		if (has(column, 'key') && !has(column, 'name')) {
+			return { ...column, name: column.key };
+		}
+		return column;
+	});
 
 // Generic preferences loader that works with any config
 async function preferencesLoader<T>(config: {
@@ -26,11 +35,16 @@ async function preferencesLoader<T>(config: {
 		const validColumnsResult = results.find(
 			({ result }) => result.columns?.length,
 		);
+
 		const validFormattingResult = results.find(({ result }) => result.formatting);
+
+		const migratedColumns = validColumnsResult?.result.columns
+			? migrateColumns(validColumnsResult?.result.columns)
+			: undefined;
 
 		// Combine valid results or fallback to default
 		const finalResult = {
-			columns: validColumnsResult?.result.columns || config.default().columns,
+			columns: migratedColumns || config.default().columns,
 			formatting:
 				validFormattingResult?.result.formatting || config.default().formatting,
 		};

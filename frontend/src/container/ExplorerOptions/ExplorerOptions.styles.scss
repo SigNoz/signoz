@@ -1,12 +1,12 @@
 .explorer-options-container {
 	position: fixed;
-	bottom: 24px;
+	bottom: 8px;
 	left: calc(50% + 240px);
 	transform: translate(calc(-50% - 120px), 0);
 	transition: left 0.2s linear;
 
 	display: flex;
-	gap: 16px;
+	gap: 8px;
 	background-color: transparent;
 
 	.multi-alert-button,
@@ -33,11 +33,12 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 12px;
-	padding: 10px 10px;
-	border-radius: 50px;
-	border: 1px solid var(--bg-slate-400);
+	padding: 10px 12px;
 	background: rgba(22, 24, 29, 0.6);
+	border: 1px solid var(--bg-slate-500);
+	border-radius: 4px;
 	backdrop-filter: blur(20px);
+	box-sizing: border-box;
 
 	.action-icon {
 		display: flex;
@@ -64,9 +65,9 @@
 
 .explorer-options {
 	padding: 10px 12px;
-	border: 1px solid var(--bg-slate-400);
-	border-radius: 50px;
-	background: rgba(22, 24, 29, 0.6);
+	border-radius: 4px;
+	border: 1px solid var(--bg-slate-500);
+	background: var(--bg-ink-400);
 	backdrop-filter: blur(20px);
 
 	cursor: default;
