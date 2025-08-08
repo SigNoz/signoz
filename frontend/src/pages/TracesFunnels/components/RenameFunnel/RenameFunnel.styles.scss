@@ -63,6 +63,18 @@
 		font-weight: 400;
 		line-height: 18px;
 		letter-spacing: -0.07px;
+
+		&--error {
+			border-color: var(--bg-cherry-500);
+		}
+	}
+
+	&__error {
+		color: var(--bg-cherry-500);
+		font-size: 12px;
+		font-weight: 400;
+		line-height: 16px;
+		margin-top: 4px;
 	}
 }
 
@@ -82,6 +94,14 @@
 			&:focus {
 				border-color: var(--bg-robin-500);
 			}
+
+			&--error {
+				border-color: var(--bg-cherry-500);
+			}
+		}
+
+		&__error {
+			color: var(--bg-cherry-500);
 		}
 	}
 	.funnel-modal__cancel-btn {

@@ -113,6 +113,8 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	// v5
 	router.HandleFunc("/api/v5/query_range", am.ViewAccess(ah.queryRangeV5)).Methods(http.MethodPost)
 
+	router.HandleFunc("/api/v5/substitute_vars", am.ViewAccess(ah.QuerierAPI.ReplaceVariables)).Methods(http.MethodPost)
+
 	// Gateway
 	router.PathPrefix(gateway.RoutePrefix).HandlerFunc(am.EditAccess(ah.ServeGatewayHTTP))
 

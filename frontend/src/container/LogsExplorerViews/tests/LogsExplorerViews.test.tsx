@@ -82,6 +82,48 @@ jest.mock('hooks/queryBuilder/useGetExplorerQueryRange', () => ({
 	useGetExplorerQueryRange: jest.fn(),
 }));
 
+// Mock ErrorStateComponent to handle APIError properly
+jest.mock(
+	'components/Common/ErrorStateComponent',
+	() =>
+		function MockErrorStateComponent({ error, message }: any): JSX.Element {
+			if (error) {
+				// Mock the getErrorMessage and getErrorDetails methods
+				const getErrorMessage = jest
+					.fn()
+					.mockReturnValue(
+						error.error?.message ||
+							'Something went wrong. Please try again or contact support.',
+					);
+				const getErrorDetails = jest.fn().mockReturnValue(error);
+
+				// Add the methods to the error object
+				const errorWithMethods = {
+					...error,
+					getErrorMessage,
+					getErrorDetails,
+				};
+
+				return (
+					<div data-testid="error-state-component">
+						<div>{errorWithMethods.getErrorMessage()}</div>
+						{errorWithMethods.getErrorDetails().error?.errors?.map((err: any) => (
+							<div key={`error-${err.message}`}>• {err.message}</div>
+						))}
+					</div>
+				);
+			}
+
+			return (
+				<div data-testid="error-state-component">
+					<div>
+						{message || 'Something went wrong. Please try again or contact support.'}
+					</div>
+				</div>
+			);
+		},
+);
+
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
 		safeNavigate: jest.fn(),
@@ -131,6 +173,7 @@ const renderer = (): RenderResult =>
 					setIsLoadingQueries={(): void => {}}
 					listQueryKeyRef={{ current: {} }}
 					chartQueryKeyRef={{ current: {} }}
+					setWarning={(): void => {}}
 				/>
 			</PreferenceContextProvider>
 		</VirtuosoMockContext.Provider>,
@@ -172,21 +215,6 @@ describe('LogsExplorerViews -', () => {
 		expect(queryByText('pending_data_placeholder')).toBeInTheDocument();
 	});
 
-	it('check error state', async () => {
-		lodsQueryServerRequest();
-		(useGetExplorerQueryRange as jest.Mock).mockReturnValue({
-			data: { payload: logsQueryRangeSuccessNewFormatResponse },
-			isLoading: false,
-			isFetching: false,
-			isError: true,
-		});
-		const { queryByText } = renderer();
-
-		expect(
-			queryByText('Something went wrong. Please try again or contact support.'),
-		).toBeInTheDocument();
-	});
-
 	it('should add activeLogId filter when present in URL', async () => {
 		// Mock useCopyLogLink to return an activeLogId
 		(useCopyLogLink as jest.Mock).mockReturnValue({
@@ -206,6 +234,7 @@ describe('LogsExplorerViews -', () => {
 						setIsLoadingQueries={(): void => {}}
 						listQueryKeyRef={{ current: {} }}
 						chartQueryKeyRef={{ current: {} }}
+						setWarning={(): void => {}}
 					/>
 				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,

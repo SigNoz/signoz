@@ -33,6 +33,8 @@ func ToNanoSecs(epoch uint64) uint64 {
 	return temp * uint64(math.Pow(10, float64(19-count)))
 }
 
+// TODO(srikanthccv): should these be rounded to nearest multiple of 60 instead of 5 if step > 60?
+// That would make graph look nice but "nice" but should be less important than the usefulness
 func RecommendedStepInterval(start, end uint64) uint64 {
 	start = ToNanoSecs(start)
 	end = ToNanoSecs(end)
@@ -59,6 +61,32 @@ func MinAllowedStepInterval(start, end uint64) uint64 {
 
 	// return the nearest lower multiple of 5
 	return step - step%5
+}
+
+func RecommendedStepIntervalForMeter(start, end uint64) uint64 {
+	start = ToNanoSecs(start)
+	end = ToNanoSecs(end)
+
+	step := (end - start) / RecommendedNumberOfPoints / 1e9
+
+	// for meter queries the minimum step interval allowed is 1 hour as this is our granularity
+	if step < 3600 {
+		return 3600
+	}
+
+	// return the nearest lower multiple of 3600 ( 1 hour )
+	recommended := step - step%3600
+
+	// if the time range is greater than 1 month set the step interval to be multiple of 1 day
+	if end-start >= uint64(30*24*time.Hour.Nanoseconds()) {
+		if recommended < 86400 {
+			recommended = 86400
+		} else {
+			recommended = uint64(math.Round(float64(recommended)/86400)) * 86400
+		}
+	}
+
+	return recommended
 }
 
 func RecommendedStepIntervalForMetric(start, end uint64) uint64 {
@@ -132,29 +160,6 @@ func AdjustedMetricTimeRange(start, end, step uint64, mq qbtypes.QueryBuilderQue
 	adjustStep := uint64(math.Min(float64(step), 60))
 	end = end - (end % (adjustStep * 1000))
 	return start, end
-}
-
-func GCD(a, b int64) int64 {
-	for b != 0 {
-		a, b = b, a%b
-	}
-	return a
-}
-
-func LCM(a, b int64) int64 {
-	return (a * b) / GCD(a, b)
-}
-
-// LCMList computes the LCM of a list of int64 numbers.
-func LCMList(nums []int64) int64 {
-	if len(nums) == 0 {
-		return 1
-	}
-	result := nums[0]
-	for _, num := range nums[1:] {
-		result = LCM(result, num)
-	}
-	return result
 }
 
 func AssignReservedVars(vars map[string]any, start, end uint64) {

@@ -37,11 +37,8 @@ import {
 	defaultEvalWindow,
 	defaultMatchType,
 } from 'types/api/alerts/def';
-import {
-	IBuilderQuery,
-	Query,
-	QueryFunctionProps,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryFunction } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -182,12 +179,17 @@ function FormAlertRules({
 		setDetectionMethod(value);
 	};
 
-	const updateFunctions = (data: IBuilderQuery): QueryFunctionProps[] => {
-		const anomalyFunction = {
-			name: 'anomaly',
-			args: [],
-			namedArgs: { z_score_threshold: alertDef.condition.target || 3 },
+	const updateFunctions = (data: IBuilderQuery): QueryFunction[] => {
+		const anomalyFunction: QueryFunction = {
+			name: 'anomaly' as any,
+			args: [
+				{
+					name: 'z_score_threshold',
+					value: alertDef.condition.target || 3,
+				},
+			],
 		};
+
 		const functions = data.functions || [];
 
 		if (alertDef.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT) {
@@ -238,8 +240,18 @@ function FormAlertRules({
 			const queryData = currentQuery.builder.queryData[index];
 
 			const updatedFunctions = updateFunctions(queryData);
-			queryData.functions = updatedFunctions;
-			handleSetQueryData(index, queryData);
+
+			// Only update if functions actually changed to avoid resetting aggregateAttribute
+			const currentFunctions = queryData.functions || [];
+			const functionsChanged = !isEqual(currentFunctions, updatedFunctions);
+
+			if (functionsChanged) {
+				const updatedQueryData = {
+					...queryData,
+					functions: updatedFunctions,
+				};
+				handleSetQueryData(index, updatedQueryData);
+			}
 		}
 	};
 

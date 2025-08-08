@@ -235,6 +235,7 @@ export const handleGraphClick = async ({
 						? customTracesTimeRange?.end
 						: xValue + (stepInterval ?? 60),
 					shouldResolveQuery: true,
+					widgetQuery: widget?.query,
 				}),
 		}));
 

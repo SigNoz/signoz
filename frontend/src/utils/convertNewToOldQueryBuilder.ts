@@ -31,6 +31,7 @@ export const convertBuilderQueryToIBuilderQuery = (
 
 	const result: IBuilderQuery = ({
 		...builderQuery,
+		queryName: builderQuery.name,
 		dataSource,
 		legend: builderQuery.legend,
 		groupBy: builderQuery.groupBy?.map((group) => ({

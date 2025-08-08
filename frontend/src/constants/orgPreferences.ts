@@ -7,8 +7,8 @@ export const ORG_PREFERENCES = {
 		'welcome_checklist_setup_alerts_skipped',
 	WELCOME_CHECKLIST_SETUP_SAVED_VIEW_SKIPPED:
 		'welcome_checklist_setup_saved_view_skipped',
-	WELCOME_CHECKLIST_SEND_INFRA_METRICS_SKIPPED:
-		'welcome_checklist_send_infra_metrics_skipped',
+	WELCOME_CHECKLIST_SEND_METRICS_SKIPPED:
+		'welcome_checklist_send_metrics_skipped',
 	WELCOME_CHECKLIST_SETUP_DASHBOARDS_SKIPPED:
 		'welcome_checklist_setup_dashboards_skipped',
 	WELCOME_CHECKLIST_SETUP_WORKSPACE_SKIPPED:
