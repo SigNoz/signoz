@@ -490,6 +490,7 @@ export const defaultOutput = {
 				pageSize: 0,
 				queryName: 'A',
 				reduceTo: 'avg',
+				source: '',
 				spaceAggregation: 'sum',
 				stepInterval: 240,
 				timeAggregation: 'rate',
