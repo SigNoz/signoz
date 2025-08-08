@@ -67,6 +67,8 @@ type PostableRule struct {
 	// legacy
 	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
 	OldYaml string `json:"yaml,omitempty"`
+
+	Evaluation Evaluation `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
 }
 
 func ParsePostableRule(content []byte) (*PostableRule, error) {
@@ -140,6 +142,10 @@ func ParseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*P
 		return nil, err
 	}
 
+	//added alerts v2 fields
+	rule.RuleCondition.Thresholds = append(rule.RuleCondition.Thresholds,
+		NewBasicRuleThreshold(rule.AlertName, rule.RuleCondition.Target, nil, rule.RuleCondition.MatchType, rule.RuleCondition.CompareOp, rule.RuleCondition.SelectedQuery, rule.RuleCondition.TargetUnit, rule.RuleCondition.CompositeQuery.Unit))
+	rule.Evaluation = NewEvaluation("rolling", RollingWindow{EvalWindow: rule.EvalWindow, Frequency: rule.Frequency, RequiredNumPoints: rule.RuleCondition.RequiredNumPoints, RequireMinPoints: rule.RuleCondition.RequireMinPoints})
 	return rule, nil
 }
 
