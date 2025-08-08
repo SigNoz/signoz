@@ -37,7 +37,7 @@ export const saveNewViewHandler = ({
 		{
 			viewName,
 			compositeQuery,
-			sourcePage,
+			sourcePage: sourcePage as DataSource,
 			extraData,
 		},
 		{

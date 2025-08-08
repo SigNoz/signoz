@@ -205,6 +205,7 @@ function TimeSeriesView({
 	return (
 		<div className="time-series-view">
 			{isError && error && <ErrorInPlace error={error as APIError} />}
+
 			<div
 				className="graph-container"
 				style={{ height: '100%', width: '100%' }}

@@ -28,6 +28,7 @@ export const QueryV2 = memo(function QueryV2({
 	isListViewPanel = false,
 	version,
 	showOnlyWhereClause = false,
+	signalSource = '',
 }: QueryProps & { ref: React.RefObject<HTMLDivElement> }): JSX.Element {
 	const { cloneQuery, panelType } = useQueryBuilder();
 
@@ -175,6 +176,7 @@ export const QueryV2 = memo(function QueryV2({
 										query={query}
 										index={index}
 										version={ENTITY_VERSION_V5}
+										signalSource={signalSource as 'meter' | ''}
 									/>
 								</div>
 							)}
@@ -186,6 +188,7 @@ export const QueryV2 = memo(function QueryV2({
 										onChange={handleSearchChange}
 										queryData={query}
 										dataSource={dataSource}
+										signalSource={signalSource}
 									/>
 								</div>
 
@@ -218,6 +221,7 @@ export const QueryV2 = memo(function QueryV2({
 								index={index}
 								key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}`}
 								version="v4"
+								signalSource={signalSource as 'meter' | ''}
 							/>
 						)}
 
