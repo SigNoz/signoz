@@ -110,6 +110,7 @@ export const stepIntervalUnchanged = {
 				dataSource: 'metrics',
 				disabled: false,
 				expression: 'A',
+				filter: undefined,
 				filters: {
 					items: [],
 					op: 'AND',
@@ -362,6 +363,7 @@ export const replaceVariables = {
 				dataSource: 'metrics',
 				disabled: false,
 				expression: 'A',
+				filter: undefined,
 				filters: {
 					items: [
 						{
@@ -697,6 +699,7 @@ export const outputWithFunctions = {
 				expression: 'A',
 				disabled: false,
 				stepInterval: 120,
+				filter: undefined,
 				having: [],
 				limit: null,
 				orderBy: [],
@@ -726,6 +729,7 @@ export const outputWithFunctions = {
 				expression: 'B',
 				disabled: false,
 				stepInterval: 120,
+				filter: undefined,
 				having: [],
 				limit: null,
 				orderBy: [],
