@@ -1341,10 +1341,8 @@ func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, metricNa
 	if err != nil {
 		return nil, err
 	}
-	meterMetricsTemporality, err := t.fetchMeterSourceMetricsTemporality(ctx, metricNames...)
-	if err != nil {
-		return nil, err
-	}
+	// TODO: return error after table migration are run
+	meterMetricsTemporality, _ := t.fetchMeterSourceMetricsTemporality(ctx, metricNames...)
 
 	// For metrics not found in the database, set to Unknown
 	for _, metricName := range metricNames {
