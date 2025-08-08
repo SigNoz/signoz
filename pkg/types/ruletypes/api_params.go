@@ -65,10 +65,12 @@ type PostableRule struct {
 	Version string `json:"version,omitempty"`
 
 	// legacy
-	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
-	OldYaml string `json:"yaml,omitempty"`
-
+	Expr       string     `yaml:"expr,omitempty" json:"expr,omitempty"`
+	OldYaml    string     `json:"yaml,omitempty"`
+	EvalType   string     `yaml:"evalType,omitempty" json:"evalType,omitempty"`
 	Evaluation Evaluation `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
+	StartsAt   int64      `yaml:"startsAt,omitempty" json:"startsAt,omitempty"`
+	Schedule   string     `json:"schedule,omitempty"`
 }
 
 func ParsePostableRule(content []byte) (*PostableRule, error) {
@@ -145,7 +147,12 @@ func ParseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*P
 	//added alerts v2 fields
 	rule.RuleCondition.Thresholds = append(rule.RuleCondition.Thresholds,
 		NewBasicRuleThreshold(rule.AlertName, rule.RuleCondition.Target, nil, rule.RuleCondition.MatchType, rule.RuleCondition.CompareOp, rule.RuleCondition.SelectedQuery, rule.RuleCondition.TargetUnit, rule.RuleCondition.CompositeQuery.Unit))
-	rule.Evaluation = NewEvaluation("rolling", RollingWindow{EvalWindow: rule.EvalWindow, Frequency: rule.Frequency, RequiredNumPoints: rule.RuleCondition.RequiredNumPoints, RequireMinPoints: rule.RuleCondition.RequireMinPoints})
+	if rule.EvalType == "" || rule.EvalType == "rolling" {
+		rule.EvalType = "rolling"
+		rule.Evaluation = NewEvaluation(rule.EvalType, RollingWindow{EvalWindow: rule.EvalWindow, Frequency: rule.Frequency, RequiredNumPoints: rule.RuleCondition.RequiredNumPoints, RequireMinPoints: rule.RuleCondition.RequireMinPoints})
+	} else if rule.EvalType == "cumulative" {
+		rule.Evaluation = NewEvaluation(rule.EvalType, CumulativeWindow{EvalWindow: rule.EvalWindow, StartsAt: time.UnixMilli(rule.StartsAt), RequiredNumPoints: rule.RuleCondition.RequiredNumPoints, RequireMinPoints: rule.RuleCondition.RequireMinPoints})
+	}
 	return rule, nil
 }
 

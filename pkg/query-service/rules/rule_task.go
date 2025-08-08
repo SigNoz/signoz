@@ -12,6 +12,7 @@ import (
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/teambition/rrule-go"
 	"go.uber.org/zap"
 )
 
@@ -36,6 +37,10 @@ type RuleTask struct {
 
 	maintenanceStore ruletypes.MaintenanceStore
 	orgID            valuer.UUID
+
+	// New field for rrule-based scheduling
+	schedule         string
+	scheduleStartsAt time.Time
 }
 
 const DefaultFrequency = 1 * time.Minute
@@ -71,6 +76,10 @@ func (g *RuleTask) Key() string {
 	return g.name + ";" + g.file
 }
 
+func (g *RuleTask) IsCronSchedule() bool {
+	return g.schedule != ""
+}
+
 // Name returns the group name.
 func (g *RuleTask) Type() TaskType { return TaskTypeCh }
 
@@ -95,56 +104,119 @@ func NewQueryOriginContext(ctx context.Context, data map[string]interface{}) con
 func (g *RuleTask) Run(ctx context.Context) {
 	defer close(g.terminated)
 
-	// Wait an initial amount to have consistently slotted intervals.
-	evalTimestamp := g.EvalTimestamp(time.Now().UnixNano()).Add(g.frequency)
-	zap.L().Debug("group run to begin at", zap.Time("evalTimestamp", evalTimestamp))
-	select {
-	case <-time.After(time.Until(evalTimestamp)):
-	case <-g.done:
-		return
-	}
-
-	ctx = NewQueryOriginContext(ctx, map[string]interface{}{
-		"ruleRuleTask": map[string]string{
-			"name": g.Name(),
-		},
-	})
-
-	iter := func() {
-		if g.pause {
-			// todo(amol): remove in memory active alerts
-			// and last series state
+	if g.IsCronSchedule() {
+		schedule, err := rrule.StrToRRule("DTSTART=" + g.scheduleStartsAt.UTC().Format("20060102T150405Z") + "\nRRULE:" + g.schedule) // assuming g.cronExpr contains the cron expression
+		if err != nil {
+			zap.L().Error("failed to parse rrule expression", zap.String("rrule", g.schedule), zap.Error(err))
 			return
 		}
-		start := time.Now()
-		g.Eval(ctx, evalTimestamp)
-		timeSinceStart := time.Since(start)
+		now := time.Now()
+		nextRun := schedule.After(now, false)
 
-		g.setEvaluationTime(timeSinceStart)
-		g.setLastEvaluation(start)
-	}
-
-	// The assumption here is that since the ticker was started after having
-	// waited for `evalTimestamp` to pass, the ticks will trigger soon
-	// after each `evalTimestamp + N * g.frequency` occurrence.
-	tick := time.NewTicker(g.frequency)
-	defer tick.Stop()
-
-	iter()
-
-	// let the group iterate and run
-	for {
 		select {
+		case <-time.After(time.Until(nextRun)):
 		case <-g.done:
 			return
-		default:
+		}
+
+		ctx = NewQueryOriginContext(ctx, map[string]interface{}{
+			"ruleRuleTask": map[string]string{
+				"name": g.Name(),
+			},
+		})
+
+		iter := func() {
+			if g.pause {
+				return
+			}
+			start := time.Now()
+			g.Eval(ctx, start) // using current time instead of evalTimestamp
+			timeSinceStart := time.Since(start)
+
+			g.setEvaluationTime(timeSinceStart)
+			g.setLastEvaluation(start)
+		}
+
+		iter()
+		currentRun := nextRun
+
+		for {
+			// Calculate the next run time
+			nextRun = schedule.After(currentRun, false)
+
 			select {
 			case <-g.done:
 				return
-			case <-tick.C:
-				missed := (time.Since(evalTimestamp) / g.frequency) - 1
-				evalTimestamp = evalTimestamp.Add((missed + 1) * g.frequency)
-				iter()
+			default:
+				select {
+				case <-g.done:
+					return
+				case <-time.After(time.Until(nextRun)):
+					// Check if we missed any scheduled runs
+					now := time.Now()
+					if now.After(nextRun.Add(time.Minute)) { // Allow 1 minute tolerance
+						zap.L().Warn("missed scheduled run",
+							zap.Time("scheduled", nextRun),
+							zap.Time("actual", now))
+					}
+
+					currentRun = nextRun
+					iter()
+				}
+			}
+		}
+	} else {
+		// Wait an initial amount to have consistently slotted intervals.
+		evalTimestamp := g.EvalTimestamp(time.Now().UnixNano()).Add(g.frequency)
+		zap.L().Debug("group run to begin at", zap.Time("evalTimestamp", evalTimestamp))
+		select {
+		case <-time.After(time.Until(evalTimestamp)):
+		case <-g.done:
+			return
+		}
+
+		ctx = NewQueryOriginContext(ctx, map[string]interface{}{
+			"ruleRuleTask": map[string]string{
+				"name": g.Name(),
+			},
+		})
+
+		iter := func() {
+			if g.pause {
+				// todo(amol): remove in memory active alerts
+				// and last series state
+				return
+			}
+			start := time.Now()
+			g.Eval(ctx, evalTimestamp)
+			timeSinceStart := time.Since(start)
+
+			g.setEvaluationTime(timeSinceStart)
+			g.setLastEvaluation(start)
+		}
+
+		// The assumption here is that since the ticker was started after having
+		// waited for `evalTimestamp` to pass, the ticks will trigger soon
+		// after each `evalTimestamp + N * g.frequency` occurrence.
+		tick := time.NewTicker(g.frequency)
+		defer tick.Stop()
+
+		iter()
+
+		// let the group iterate and run
+		for {
+			select {
+			case <-g.done:
+				return
+			default:
+				select {
+				case <-g.done:
+					return
+				case <-tick.C:
+					missed := (time.Since(evalTimestamp) / g.frequency) - 1
+					evalTimestamp = evalTimestamp.Add((missed + 1) * g.frequency)
+					iter()
+				}
 			}
 		}
 	}
@@ -298,6 +370,13 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 	return nil
 }
 
+func (g *RuleTask) SetSchedule(schedule string, t time.Time) {
+	g.mtx.Lock()
+	defer g.mtx.Unlock()
+	g.schedule = schedule
+	g.scheduleStartsAt = t
+}
+
 // Eval runs a single evaluation cycle in which all rules are evaluated sequentially.
 func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
@@ -378,4 +457,42 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 		}(i, rule)
 	}
+}
+
+// Helper to convert ruletypes.Schedule/Recurrence to rrule.ROption
+func recurrenceToROption(s *ruletypes.Schedule) rrule.ROption {
+	// Only basic mapping for daily/weekly/monthly, can be extended
+	opt := rrule.ROption{
+		Dtstart: s.Recurrence.StartTime,
+	}
+	switch s.Recurrence.RepeatType {
+	case ruletypes.RepeatTypeDaily:
+		opt.Freq = rrule.DAILY
+	case ruletypes.RepeatTypeWeekly:
+		opt.Freq = rrule.WEEKLY
+		for _, day := range s.Recurrence.RepeatOn {
+			switch day {
+			case ruletypes.RepeatOnSunday:
+				opt.Byweekday = append(opt.Byweekday, rrule.SU)
+			case ruletypes.RepeatOnMonday:
+				opt.Byweekday = append(opt.Byweekday, rrule.MO)
+			case ruletypes.RepeatOnTuesday:
+				opt.Byweekday = append(opt.Byweekday, rrule.TU)
+			case ruletypes.RepeatOnWednesday:
+				opt.Byweekday = append(opt.Byweekday, rrule.WE)
+			case ruletypes.RepeatOnThursday:
+				opt.Byweekday = append(opt.Byweekday, rrule.TH)
+			case ruletypes.RepeatOnFriday:
+				opt.Byweekday = append(opt.Byweekday, rrule.FR)
+			case ruletypes.RepeatOnSaturday:
+				opt.Byweekday = append(opt.Byweekday, rrule.SA)
+			}
+		}
+	case ruletypes.RepeatTypeMonthly:
+		opt.Freq = rrule.MONTHLY
+	}
+	if s.Recurrence.EndTime != nil {
+		opt.Until = *s.Recurrence.EndTime
+	}
+	return opt
 }

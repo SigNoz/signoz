@@ -210,6 +210,7 @@ require (
 	github.com/smarty/assertions v1.15.0 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/teambition/rrule-go v1.8.2 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.15 // indirect

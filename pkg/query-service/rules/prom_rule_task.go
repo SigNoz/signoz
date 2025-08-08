@@ -39,6 +39,8 @@ type PromRuleTask struct {
 
 	maintenanceStore ruletypes.MaintenanceStore
 	orgID            valuer.UUID
+	schedule         string
+	scheduleStartsAt time.Time
 }
 
 // newPromRuleTask holds rules that have promql condition
@@ -73,6 +75,10 @@ func (g *PromRuleTask) Name() string { return g.name }
 // Key returns the group key
 func (g *PromRuleTask) Key() string {
 	return g.name + ";" + g.file
+}
+
+func (g *PromRuleTask) IsCronSchedule() bool {
+	return g.schedule != ""
 }
 
 func (g *PromRuleTask) Type() TaskType { return TaskTypeProm }
@@ -243,6 +249,12 @@ func (g *PromRuleTask) setLastEvaluation(ts time.Time) {
 	g.mtx.Lock()
 	defer g.mtx.Unlock()
 	g.lastEvaluation = ts
+}
+
+func (g *PromRuleTask) SetSchedule(schedule string, t time.Time) {
+	g.mtx.Lock()
+	defer g.mtx.Unlock()
+	g.schedule = schedule
 }
 
 // EvalTimestamp returns the immediately preceding consistently slotted evaluation time.
