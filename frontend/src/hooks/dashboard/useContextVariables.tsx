@@ -47,7 +47,7 @@ function useContextVariables({
 
 	// Extract dashboard variables
 	const dashboardVariables = useMemo(() => {
-		if (!selectedDashboard?.data.variables) return [];
+		if (!selectedDashboard?.data?.variables) return [];
 
 		return Object.entries(selectedDashboard.data.variables)
 			.filter(([, value]) => value.name)
