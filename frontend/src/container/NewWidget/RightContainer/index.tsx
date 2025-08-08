@@ -34,6 +34,7 @@ import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import {
 	ColumnUnit,
+	ContextLinksData,
 	LegendPosition,
 	Widgets,
 } from 'types/api/dashboard/getAll';
@@ -45,6 +46,7 @@ import { ColumnUnitSelector } from './ColumnUnitSelector/ColumnUnitSelector';
 import {
 	panelTypeVsBucketConfig,
 	panelTypeVsColumnUnitPreferences,
+	panelTypeVsContextLinks,
 	panelTypeVsCreateAlert,
 	panelTypeVsFillSpan,
 	panelTypeVsLegendColors,
@@ -56,6 +58,7 @@ import {
 	panelTypeVsThreshold,
 	panelTypeVsYAxisUnit,
 } from './constants';
+import ContextLinks from './ContextLinks';
 import LegendColors from './LegendColors/LegendColors';
 import ThresholdSelector from './Threshold/ThresholdSelector';
 import { ThresholdProps } from './Threshold/types';
@@ -113,6 +116,8 @@ function RightContainer({
 	customLegendColors,
 	setCustomLegendColors,
 	queryResponse,
+	contextLinks,
+	setContextLinks,
 }: RightContainerProps): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 	const [inputValue, setInputValue] = useState(title);
@@ -152,6 +157,7 @@ function RightContainer({
 
 	const allowPanelColumnPreference =
 		panelTypeVsColumnUnitPreferences[selectedGraph];
+	const allowContextLinks = panelTypeVsContextLinks[selectedGraph];
 
 	const { currentQuery } = useQueryBuilder();
 
@@ -498,6 +504,15 @@ function RightContainer({
 				</section>
 			)}
 
+			{allowContextLinks && (
+				<section className="context-links">
+					<ContextLinks
+						contextLinks={contextLinks}
+						setContextLinks={setContextLinks}
+					/>
+				</section>
+			)}
+
 			{allowThreshold && (
 				<section>
 					<ThresholdSelector
@@ -559,6 +574,8 @@ interface RightContainerProps {
 		SuccessResponse<MetricRangePayloadProps, unknown>,
 		Error
 	>;
+	contextLinks: ContextLinksData;
+	setContextLinks: Dispatch<SetStateAction<ContextLinksData>>;
 }
 
 RightContainer.defaultProps = {

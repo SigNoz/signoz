@@ -3,6 +3,7 @@ import { ColumnsType } from 'antd/es/table';
 import { DownloadOptions } from 'container/Download/Download.types';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { ReactNode } from 'react';
+import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
@@ -21,4 +22,6 @@ export type QueryTableProps = Omit<
 	sticky?: TableProps<RowData>['sticky'];
 	searchTerm?: string;
 	widgetId?: string;
+	enableDrillDown?: boolean;
+	contextLinks?: ContextLinksData;
 };

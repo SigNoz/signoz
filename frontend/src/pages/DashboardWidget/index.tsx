@@ -58,6 +58,7 @@ function DashboardWidget(): JSX.Element | null {
 				yAxisUnit={selectedWidget?.yAxisUnit}
 				selectedGraph={selectedGraph}
 				fillSpans={selectedWidget?.fillSpans}
+				enableDrillDown
 			/>
 		</PreferenceContextProvider>
 	);
