@@ -202,7 +202,11 @@ function SignUp(): JSX.Element {
 	const handleSubmit = (): void => {
 		(async (): Promise<void> => {
 			try {
-				const values = form.getFieldsValue();
+				const values = {
+					...form.getFieldsValue(),
+					email: form.getFieldValue('email')?.toLowerCase(),
+				};
+
 				setLoading(true);
 
 				if (!isPasswordValid(values.password)) {

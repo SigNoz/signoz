@@ -109,7 +109,7 @@ function Login({
 	}, [ssoerror, notifications]);
 
 	const onNextHandler = async (): Promise<void> => {
-		const email = form.getFieldValue('email');
+		const email = form.getFieldValue('email')?.toLowerCase();
 		if (!email) {
 			notifications.error({
 				message: 'Please enter a valid email address',
