@@ -1,5 +1,5 @@
 services:
-  otel-collector:
+  signoz-otel-collector:
     image: signoz/signoz-otel-collector:v0.128.2
     container_name: signoz-otel-collector-dev
     command:
