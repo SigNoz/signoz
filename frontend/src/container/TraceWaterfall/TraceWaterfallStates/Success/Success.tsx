@@ -6,6 +6,7 @@ import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { Virtualizer } from '@tanstack/react-virtual';
 import { Button, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
+import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import { TableV3 } from 'components/TableV3/TableV3';
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
@@ -143,6 +144,7 @@ function SpanOverview({
 							</Button>
 						)}
 						<Typography.Text className="span-name">{span.name}</Typography.Text>
+						<HttpStatusBadge statusCode={span.tagMap?.['http.status_code']} />
 					</div>
 				</section>
 				<section className="second-row">
