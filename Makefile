@@ -62,7 +62,7 @@ devenv-postgres: ## Run postgres in devenv
 	docker compose -f compose.yaml up -d
 
 .PHONY: devenv-signoz-otel-collector
-devenv-signoz-otel-collector: ## Run otel-collector in devenv (requires clickhouse to be running)
+devenv-signoz-otel-collector: ## Run signoz-otel-collector in devenv (requires clickhouse to be running)
 	@cd .devenv/docker/signoz-otel-collector; \
 	docker compose -f compose.yaml up -d
 
