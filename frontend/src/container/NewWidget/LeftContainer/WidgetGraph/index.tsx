@@ -6,6 +6,7 @@ import { Card } from 'container/GridCardLayout/styles';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { isEmpty } from 'lodash-es';
 import { memo } from 'react';
 import { Warning } from 'types/api';
 
@@ -39,7 +40,7 @@ function WidgetGraph({
 			<div className="header">
 				<div className="header-left">
 					<PlotTag queryType={currentQuery.queryType} panelType={selectedGraph} />
-					{queryResponse.data?.warning?.message && (
+					{!isEmpty(queryResponse.data?.warning) && (
 						<WarningPopover warningData={queryResponse.data?.warning as Warning} />
 					)}
 				</div>

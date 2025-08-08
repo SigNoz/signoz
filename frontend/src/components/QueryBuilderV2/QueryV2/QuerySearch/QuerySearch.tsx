@@ -153,6 +153,7 @@ function QuerySearch({
 	// Reference to the editor view for programmatic autocompletion
 	const editorRef = useRef<EditorView | null>(null);
 	const lastKeyRef = useRef<string>('');
+	const lastFetchedKeyRef = useRef<string>('');
 	const lastValueRef = useRef<string>('');
 	const isMountedRef = useRef<boolean>(true);
 
@@ -210,6 +211,9 @@ function QuerySearch({
 				setKeySuggestions([]);
 				return;
 			}
+
+			lastFetchedKeyRef.current = searchText || '';
+
 			const response = await getKeySuggestions({
 				signal: dataSource,
 				searchText: searchText || '',
@@ -805,7 +809,7 @@ function QuerySearch({
 				option.label.toLowerCase().includes(searchText),
 			);
 
-			if (options.length === 0 && lastKeyRef.current !== searchText) {
+			if (options.length === 0 && lastFetchedKeyRef.current !== searchText) {
 				debouncedFetchKeySuggestions(searchText);
 			}
 

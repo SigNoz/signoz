@@ -8,6 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
@@ -42,6 +43,8 @@ func TestGetKeys(t *testing.T) {
 		telemetrytraces.SpanIndexV3TableName,
 		telemetrymetrics.DBName,
 		telemetrymetrics.AttributesMetadataTableName,
+		telemetrymeter.DBName,
+		telemetrymeter.SamplesAgg1dTableName,
 		telemetrylogs.DBName,
 		telemetrylogs.LogsV2TableName,
 		telemetrylogs.TagAttributesV2TableName,
@@ -60,14 +63,14 @@ func TestGetKeys(t *testing.T) {
 	query := `SELECT.*`
 
 	mock.ExpectQuery(query).
-		WithArgs("%http.method%", telemetrytypes.FieldDataTypeString.TagDataType(), 10).
+		WithArgs("%http.method%", telemetrytypes.FieldDataTypeString.TagDataType(), 11).
 		WillReturnRows(cmock.NewRows([]cmock.ColumnType{
 			{Name: "tag_key", Type: "String"},
 			{Name: "tag_type", Type: "String"},
 			{Name: "tag_data_type", Type: "String"},
 			{Name: "priority", Type: "UInt8"},
 		}, [][]any{{"http.method", "tag", "String", 1}, {"http.method", "tag", "String", 1}}))
-	keys, err := metadata.GetKeys(context.Background(), &telemetrytypes.FieldKeySelector{
+	keys, _, err := metadata.GetKeys(context.Background(), &telemetrytypes.FieldKeySelector{
 		Signal:        telemetrytypes.SignalTraces,
 		FieldContext:  telemetrytypes.FieldContextSpan,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
