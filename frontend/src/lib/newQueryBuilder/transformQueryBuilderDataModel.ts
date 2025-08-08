@@ -45,6 +45,7 @@ export const transformQueryBuilderDataModel = (
 				queryData.push({
 					...baseQuery,
 					filters: queryFromData.filters,
+					filter: queryFromData.filter,
 				});
 			} else {
 				queryData.push({
