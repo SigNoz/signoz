@@ -1,6 +1,7 @@
 import { Form, Input } from 'antd';
 import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
+import { normalizeEmail } from 'utils/emailUtils';
 
 import { EmailChannel } from '../../CreateAlertChannels/config';
 
@@ -10,9 +11,11 @@ function EmailForm({ setSelectedConfig }: EmailFormProps): JSX.Element {
 	const handleInputChange = (field: string) => (
 		event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
 	): void => {
-		setSelectedConfig((value) => ({
-			...value,
-			[field]: event.target.value,
+		const value =
+			field === 'to' ? normalizeEmail(event.target.value) : event.target.value;
+		setSelectedConfig((prev) => ({
+			...prev,
+			[field]: value,
 		}));
 	};
 
