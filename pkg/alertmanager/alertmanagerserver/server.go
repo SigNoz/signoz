@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	signozDispatcher "github.com/SigNoz/signoz/pkg/alertmanager/dispatch"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/dispatch"
@@ -51,8 +52,8 @@ type Server struct {
 	// alertmanager primitives from upstream alertmanager
 	alerts            *mem.Alerts
 	nflog             *nflog.Log
-	dispatcher        *dispatch.Dispatcher
-	dispatcherMetrics *dispatch.DispatcherMetrics
+	dispatcher        *signozDispatcher.Dispatcher
+	dispatcherMetrics *signozDispatcher.DispatcherMetrics
 	inhibitor         *inhibit.Inhibitor
 	silencer          *silence.Silencer
 	silences          *silence.Silences
@@ -187,7 +188,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 	}
 
 	server.pipelineBuilder = notify.NewPipelineBuilder(server.registry, featurecontrol.NoopFlags{})
-	server.dispatcherMetrics = dispatch.NewDispatcherMetrics(false, server.registry)
+	server.dispatcherMetrics = signozDispatcher.NewDispatcherMetrics(false, server.registry)
 
 	return server, nil
 }
@@ -292,7 +293,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		return d
 	}
 
-	server.dispatcher = dispatch.NewDispatcher(
+	server.dispatcher = signozDispatcher.NewDispatcher(
 		server.alerts,
 		routes,
 		pipeline,
