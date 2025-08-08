@@ -71,7 +71,6 @@ const useCreateAlerts = (
 					data.data.compositeQuery,
 					widget?.query,
 				);
-
 				const url = `${ROUTES.ALERTS_NEW}?${
 					QueryParams.compositeQuery
 				}=${encodeURIComponent(JSON.stringify(updatedQuery))}&${

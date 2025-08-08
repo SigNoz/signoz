@@ -46,6 +46,8 @@ export const convertBuilderQueryToIBuilderQuery = (
 			columnName: order?.key?.name,
 			order: order?.direction,
 		})),
+		aggregations: builderQuery.aggregations,
+		having: builderQuery.having,
 	} as unknown) as IBuilderQuery;
 
 	return result;

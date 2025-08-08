@@ -154,15 +154,23 @@ function QueryAggregationSelect({
 	const isDarkMode = useIsDarkMode();
 	const { setAggregationOptions } = useQueryBuilderV2Context();
 
+	const formatAggregations = useCallback(
+		(aggregations: any[] | undefined): string =>
+			aggregations
+				?.map(({ expression, alias }: any) =>
+					alias ? `${expression} as ${alias}` : expression,
+				)
+				.join(' ') || '',
+		[],
+	);
+
 	const [input, setInput] = useState(
-		queryData?.aggregations?.map((i: any) => i.expression).join(' ') || '',
+		formatAggregations(queryData?.aggregations),
 	);
 
 	useEffect(() => {
-		setInput(
-			queryData?.aggregations?.map((i: any) => i.expression).join(' ') || '',
-		);
-	}, [queryData?.aggregations]);
+		setInput(formatAggregations(queryData?.aggregations));
+	}, [queryData?.aggregations, formatAggregations]);
 
 	const [cursorPos, setCursorPos] = useState(0);
 	const [functionArgPairs, setFunctionArgPairs] = useState<

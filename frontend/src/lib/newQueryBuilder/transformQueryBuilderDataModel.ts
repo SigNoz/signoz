@@ -45,6 +45,9 @@ export const transformQueryBuilderDataModel = (
 				queryData.push({
 					...baseQuery,
 					filters: queryFromData.filters,
+					filter: queryFromData.filter,
+					aggregations: queryFromData.aggregations,
+					having: queryFromData.having,
 				});
 			} else {
 				queryData.push({
