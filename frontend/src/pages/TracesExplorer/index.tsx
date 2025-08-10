@@ -89,10 +89,13 @@ function TracesExplorer(): JSX.Element {
 
 	// Update URL when selectedView changes
 	useEffect(() => {
-		setSearchParams((prev: URLSearchParams) => {
-			prev.set(QueryParams.selectedExplorerView, selectedView);
-			return prev;
-		});
+		setSearchParams(
+			(prev: URLSearchParams) => {
+				prev.set(QueryParams.selectedExplorerView, selectedView);
+				return prev;
+			},
+			{ replace: true },
+		);
 	}, [selectedView, setSearchParams]);
 
 	const [shouldReset, setShouldReset] = useState(false);
