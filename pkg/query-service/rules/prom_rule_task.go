@@ -98,6 +98,22 @@ func (g *PromRuleTask) Pause(b bool) {
 
 func (g *PromRuleTask) Run(ctx context.Context) {
 	defer close(g.terminated)
+	defer func() {
+		if !g.markStale {
+			return
+		}
+		go func(now time.Time) {
+			for _, rule := range g.seriesInPreviousEval {
+				for _, r := range rule {
+					g.staleSeries = append(g.staleSeries, r)
+				}
+			}
+			// That can be garbage collected at this point.
+			g.seriesInPreviousEval = nil
+
+		}(time.Now())
+
+	}()
 	if g.IsCronSchedule() {
 		schedule, err := rrule.StrToRRule("DTSTART=" + g.scheduleStartsAt.UTC().Format("20060102T150405Z") + "\nRRULE:" + g.schedule) // assuming g.cronExpr contains the cron expression
 		if err != nil {
@@ -189,24 +205,6 @@ func (g *PromRuleTask) Run(ctx context.Context) {
 		// after each `evalTimestamp + N * g.frequency` occurrence.
 		tick := time.NewTicker(g.frequency)
 		defer tick.Stop()
-
-		// defer cleanup
-		defer func() {
-			if !g.markStale {
-				return
-			}
-			go func(now time.Time) {
-				for _, rule := range g.seriesInPreviousEval {
-					for _, r := range rule {
-						g.staleSeries = append(g.staleSeries, r)
-					}
-				}
-				// That can be garbage collected at this point.
-				g.seriesInPreviousEval = nil
-
-			}(time.Now())
-
-		}()
 
 		iter()
 
@@ -318,6 +316,7 @@ func (g *PromRuleTask) SetSchedule(schedule string, t time.Time) {
 	g.mtx.Lock()
 	defer g.mtx.Unlock()
 	g.schedule = schedule
+	g.scheduleStartsAt = t
 }
 
 // EvalTimestamp returns the immediately preceding consistently slotted evaluation time.
