@@ -17,6 +17,7 @@ export const getAggregateAttribute = async ({
 	aggregateOperator,
 	searchText,
 	dataSource,
+	source,
 }: IGetAggregateAttributePayload): Promise<
 	SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse
 > => {
@@ -27,7 +28,7 @@ export const getAggregateAttribute = async ({
 			`/autocomplete/aggregate_attributes?${createQueryParams({
 				aggregateOperator,
 				searchText,
-				dataSource,
+				dataSource: source === 'meter' ? 'meter' : dataSource,
 			})}`,
 		);
 

@@ -7,6 +7,7 @@ import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
+import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
@@ -33,6 +34,7 @@ import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFall
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
+import { Warning } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -283,6 +285,8 @@ function TracesExplorer(): JSX.Element {
 		listQuery,
 	]);
 
+	const [warning, setWarning] = useState<Warning | undefined>(undefined);
+
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="trace-explorer-page">
@@ -313,6 +317,9 @@ function TracesExplorer(): JSX.Element {
 									onChangeSelectedView={handleChangeSelectedView}
 								/>
 							}
+							warningElement={
+								!isEmpty(warning) ? <WarningPopover warningData={warning} /> : <div />
+							}
 							rightActions={
 								<RightToolbarActions
 									onStageRunQuery={(): void => handleRunQuery(true, true)}
@@ -337,13 +344,13 @@ function TracesExplorer(): JSX.Element {
 
 						{selectedView === ExplorerViews.LIST && (
 							<div className="trace-explorer-list-view">
-								<ListView isFilterApplied={isFilterApplied} />
+								<ListView isFilterApplied={isFilterApplied} setWarning={setWarning} />
 							</div>
 						)}
 
 						{selectedView === ExplorerViews.TRACE && (
 							<div className="trace-explorer-traces-view">
-								<TracesView isFilterApplied={isFilterApplied} />
+								<TracesView isFilterApplied={isFilterApplied} setWarning={setWarning} />
 							</div>
 						)}
 
@@ -352,13 +359,14 @@ function TracesExplorer(): JSX.Element {
 								<TimeSeriesView
 									dataSource={DataSource.TRACES}
 									isFilterApplied={isFilterApplied}
+									setWarning={setWarning}
 								/>
 							</div>
 						)}
 
 						{selectedView === ExplorerViews.TABLE && (
 							<div className="trace-explorer-table-view">
-								<TableView />
+								<TableView setWarning={setWarning} />
 							</div>
 						)}
 					</div>

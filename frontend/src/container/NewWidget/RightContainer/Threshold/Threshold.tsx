@@ -5,6 +5,7 @@ import { Button, Input, InputNumber, Select, Space, Typography } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { unitOptions } from 'container/NewWidget/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { getColumnUnit } from 'lib/query/createTableColumnsFromQuery';
 import { Check, Pencil, Trash2, X } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { useDrag, useDrop, XYCoord } from 'react-dnd';
@@ -197,7 +198,11 @@ function Threshold({
 	const isInvalidUnitComparison = useMemo(
 		() =>
 			unit !== 'none' &&
-			convertUnit(value, unit, columnUnits?.[tableSelectedOption]) === null,
+			convertUnit(
+				value,
+				unit,
+				getColumnUnit(tableSelectedOption, columnUnits || {}),
+			) === null,
 		[unit, value, columnUnits, tableSelectedOption],
 	);
 
@@ -312,7 +317,9 @@ function Threshold({
 					{isEditMode ? (
 						<Select
 							defaultValue={unit}
-							options={unitOptions(columnUnits?.[tableSelectedOption] || '')}
+							options={unitOptions(
+								getColumnUnit(tableSelectedOption, columnUnits || {}) || '',
+							)}
 							onChange={handleUnitChange}
 							showSearch
 							className="unit-selection"
@@ -351,7 +358,7 @@ function Threshold({
 				{isInvalidUnitComparison && (
 					<Typography.Text className="invalid-unit">
 						Threshold unit ({unit}) is not valid in comparison with the column unit (
-						{columnUnits?.[tableSelectedOption] || 'none'})
+						{getColumnUnit(tableSelectedOption, columnUnits || {}) || 'none'})
 					</Typography.Text>
 				)}
 				{isEditMode && (

@@ -13,7 +13,7 @@ import { PreservedViewsTypes } from './constants';
 export interface SaveNewViewHandlerProps {
 	viewName: string;
 	compositeQuery: ICompositeMetricQuery;
-	sourcePage: DataSource;
+	sourcePage: DataSource | 'meter';
 	extraData: SaveViewProps['extraData'];
 	panelType: PANEL_TYPES | null;
 	notifications: NotificationInstance;
@@ -32,7 +32,8 @@ export interface SaveNewViewHandlerProps {
 export type PreservedViewType =
 	| PreservedViewsTypes.LOGS
 	| PreservedViewsTypes.TRACES
-	| PreservedViewsTypes.METRICS;
+	| PreservedViewsTypes.METRICS
+	| PreservedViewsTypes.METER;
 
 export type PreservedViewsInLocalStorage = Partial<
 	Record<PreservedViewType, { key: string; value: string }>

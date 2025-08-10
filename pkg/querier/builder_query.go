@@ -62,6 +62,9 @@ func (q *builderQuery[T]) Fingerprint() string {
 	// Add signal type
 	parts = append(parts, fmt.Sprintf("signal=%s", q.spec.Signal.StringValue()))
 
+	// Add source type
+	parts = append(parts, fmt.Sprintf("source=%s", q.spec.Source.StringValue()))
+
 	// Add step interval if present
 	parts = append(parts, fmt.Sprintf("step=%s", q.spec.StepInterval.String()))
 
@@ -194,7 +197,9 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 	if err != nil {
 		return nil, err
 	}
+
 	result.Warnings = stmt.Warnings
+	result.WarningsDocURL = stmt.WarningsDocURL
 	return result, nil
 }
 
@@ -297,6 +302,9 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		}
 	}
 
+	var warnings []string
+	var warningsDocURL string
+
 	for _, r := range buckets {
 		q.spec.Offset = 0
 		q.spec.Limit = need
@@ -305,7 +313,8 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		if err != nil {
 			return nil, err
 		}
-
+		warnings = stmt.Warnings
+		warningsDocURL = stmt.WarningsDocURL
 		// Execute with proper context for partial value detection
 		res, err := q.executeWithContext(ctx, stmt.Query, stmt.Args)
 		if err != nil {
@@ -345,6 +354,8 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 			Rows:       rows,
 			NextCursor: nextCursor,
 		},
+		Warnings:       warnings,
+		WarningsDocURL: warningsDocURL,
 		Stats: qbtypes.ExecStats{
 			RowsScanned:  totalRows,
 			BytesScanned: totalBytes,

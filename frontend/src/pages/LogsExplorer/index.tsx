@@ -8,6 +8,7 @@ import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
+import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -27,11 +28,12 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { isEqual, isNull } from 'lodash-es';
+import { isEmpty, isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
+import { Warning } from 'types/api';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import {
@@ -94,6 +96,8 @@ function LogsExplorer(): JSX.Element {
 	const chartQueryKeyRef = useRef<any>();
 
 	const [isLoadingQueries, setIsLoadingQueries] = useState<boolean>(false);
+
+	const [warning, setWarning] = useState<Warning | undefined>(undefined);
 
 	const [shouldReset, setShouldReset] = useState(false);
 
@@ -356,6 +360,9 @@ function LogsExplorer(): JSX.Element {
 								onChangeSelectedView={handleChangeSelectedView}
 							/>
 						}
+						warningElement={
+							!isEmpty(warning) ? <WarningPopover warningData={warning} /> : <div />
+						}
 						rightActions={
 							<RightToolbarActions
 								onStageRunQuery={(): void => handleRunQuery(true, true)}
@@ -378,6 +385,7 @@ function LogsExplorer(): JSX.Element {
 								listQueryKeyRef={listQueryKeyRef}
 								chartQueryKeyRef={chartQueryKeyRef}
 								setIsLoadingQueries={setIsLoadingQueries}
+								setWarning={setWarning}
 							/>
 						</div>
 					</div>
