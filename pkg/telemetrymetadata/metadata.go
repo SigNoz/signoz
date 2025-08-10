@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 	"slices"
 	"strings"
 
@@ -346,6 +347,11 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		mapOfKeys[key.Name+";"+key.FieldContext.StringValue()+";"+key.FieldDataType.StringValue()] = key
 	}
 
+	tblName := t.logsFieldsTblName
+	if os.Getenv("LOGS_TAG_ATTRS_KEYS_TABLE") != "" {
+		tblName = os.Getenv("LOGS_TAG_ATTRS_KEYS_TABLE")
+	}
+
 	sb := sqlbuilder.Select("tag_key", "tag_type", "tag_data_type", `
 			CASE
 				WHEN tag_type = 'logfield' THEN 1
@@ -353,7 +359,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 				WHEN tag_type = 'scope' THEN 3
 				WHEN tag_type = 'tag' THEN 4
 				ELSE 5
-			END as priority`).From(t.logsDBName + "." + t.logsFieldsTblName)
+			END as priority`).From(t.logsDBName + "." + tblName)
 	var limit int
 
 	conds := []string{}
@@ -1335,10 +1341,8 @@ func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, metricNa
 	if err != nil {
 		return nil, err
 	}
-	meterMetricsTemporality, err := t.fetchMeterSourceMetricsTemporality(ctx, metricNames...)
-	if err != nil {
-		return nil, err
-	}
+	// TODO: return error after table migration are run
+	meterMetricsTemporality, _ := t.fetchMeterSourceMetricsTemporality(ctx, metricNames...)
 
 	// For metrics not found in the database, set to Unknown
 	for _, metricName := range metricNames {
