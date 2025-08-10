@@ -73,6 +73,8 @@ export default function TableRow({
 			{tableColumns.map((column) => {
 				if (!column.render) return <td>Empty</td>;
 
+				if (!column.key) return null;
+
 				const element: ColumnTypeRender<Record<string, unknown>> = column.render(
 					log[column.key as keyof Record<string, unknown>],
 					log,
@@ -97,6 +99,7 @@ export default function TableRow({
 						fontSize={fontSize}
 						columnKey={column.key as string}
 						onClick={handleShowLogDetails}
+						className={column.key as string}
 					>
 						{cloneElement(children, props)}
 					</TableCellStyled>

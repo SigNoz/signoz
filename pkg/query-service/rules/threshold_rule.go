@@ -291,7 +291,8 @@ func (r *ThresholdRule) prepareQueryRangeV5(ctx context.Context, ts time.Time) (
 		},
 		NoCache: true,
 	}
-	copy(r.Condition().CompositeQuery.Queries, req.CompositeQuery.Queries)
+	req.CompositeQuery.Queries = make([]qbtypes.QueryEnvelope, len(r.Condition().CompositeQuery.Queries))
+	copy(req.CompositeQuery.Queries, r.Condition().CompositeQuery.Queries)
 	return req, nil
 }
 
@@ -503,16 +504,7 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 		return nil, fmt.Errorf("internal error while querying")
 	}
 
-	data, ok := v5Result.Data.(struct {
-		Results  []any    `json:"results"`
-		Warnings []string `json:"warnings"`
-	})
-
-	if !ok {
-		return nil, fmt.Errorf("unexpected result from v5 querier")
-	}
-
-	for _, item := range data.Results {
+	for _, item := range v5Result.Data.Results {
 		if tsData, ok := item.(*qbtypes.TimeSeriesData); ok {
 			results = append(results, transition.ConvertV5TimeSeriesDataToV4Result(tsData))
 		} else {
@@ -548,6 +540,11 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 			Metric:    lbls.Labels(),
 			IsMissing: true,
 		})
+		return resultVector, nil
+	}
+
+	if queryResult == nil {
+		r.logger.WarnContext(ctx, "query result is nil", "rule_name", r.Name(), "query_name", selectedQuery)
 		return resultVector, nil
 	}
 

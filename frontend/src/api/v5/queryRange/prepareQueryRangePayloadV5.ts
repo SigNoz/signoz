@@ -5,10 +5,7 @@ import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
-	IBuilderQuery,
-	QueryFunctionProps,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	BaseBuilderQuery,
 	FieldContext,
@@ -30,6 +27,7 @@ import {
 } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
+import { normalizeFunctionName } from 'utils/functionNameNormalizer';
 
 type PrepareQueryRangePayloadV5Result = {
 	queryPayload: QueryRangePayloadV5;
@@ -123,17 +121,21 @@ function createBaseSpec(
 		functions: isEmpty(queryData.functions)
 			? undefined
 			: queryData.functions.map(
-					(func: QueryFunctionProps): QueryFunction => ({
-						name: func.name as FunctionName,
-						args: isEmpty(func.namedArgs)
-							? func.args.map((arg) => ({
-									value: arg,
-							  }))
-							: Object.entries(func.namedArgs).map(([name, value]) => ({
-									name,
-									value,
-							  })),
-					}),
+					(func: QueryFunction): QueryFunction => {
+						// Normalize function name to handle case sensitivity
+						const normalizedName = normalizeFunctionName(func?.name);
+						return {
+							name: normalizedName as FunctionName,
+							args: isEmpty(func.namedArgs)
+								? func.args?.map((arg) => ({
+										value: arg?.value,
+								  }))
+								: Object.entries(func?.namedArgs || {}).map(([name, value]) => ({
+										name,
+										value,
+								  })),
+						};
+					},
 			  ),
 		selectFields: isEmpty(nonEmptySelectColumns)
 			? undefined
@@ -258,6 +260,7 @@ export function convertBuilderQueriesToV5(
 					spec = {
 						name: queryName,
 						signal: 'metrics' as const,
+						source: queryData.source || '',
 						...baseSpec,
 						aggregations: aggregations as MetricAggregation[],
 						// reduceTo: queryData.reduceTo,

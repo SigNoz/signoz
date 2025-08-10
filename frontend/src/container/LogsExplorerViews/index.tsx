@@ -51,8 +51,10 @@ import { ArrowUp10, Minus, Sliders } from 'lucide-react';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { useTimezone } from 'providers/Timezone';
 import {
+	Dispatch,
 	memo,
 	MutableRefObject,
+	SetStateAction,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -62,7 +64,9 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
+import { Warning } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import APIError from 'types/api/error';
 import { ILog } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -87,6 +91,7 @@ function LogsExplorerViewsContainer({
 	setIsLoadingQueries,
 	listQueryKeyRef,
 	chartQueryKeyRef,
+	setWarning,
 }: {
 	selectedView: ExplorerViews;
 	setIsLoadingQueries: React.Dispatch<React.SetStateAction<boolean>>;
@@ -94,6 +99,7 @@ function LogsExplorerViewsContainer({
 	listQueryKeyRef: MutableRefObject<any>;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	chartQueryKeyRef: MutableRefObject<any>;
+	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 }): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const dispatch = useDispatch();
@@ -269,6 +275,7 @@ function LogsExplorerViewsContainer({
 		isFetching,
 		isError,
 		isSuccess,
+		error,
 	} = useGetExplorerQueryRange(
 		requestData,
 		panelType,
@@ -371,6 +378,13 @@ function LogsExplorerViewsContainer({
 		},
 		[activeLogId, orderBy, listQuery, selectedView],
 	);
+
+	useEffect(() => {
+		if (data?.payload) {
+			setWarning(data?.warning);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data?.payload, data?.warning]);
 
 	const handleEndReached = useCallback(() => {
 		if (!listQuery) return;
@@ -771,6 +785,7 @@ function LogsExplorerViewsContainer({
 							logs={logs}
 							onEndReached={handleEndReached}
 							isError={isError}
+							error={error as APIError}
 							isFilterApplied={!isEmpty(listQuery?.filters?.items)}
 						/>
 					)}
@@ -780,8 +795,10 @@ function LogsExplorerViewsContainer({
 							isLoading={isLoading || isFetching}
 							data={data}
 							isError={isError}
+							error={error as APIError}
 							isFilterApplied={!isEmpty(listQuery?.filters?.items)}
 							dataSource={DataSource.LOGS}
+							setWarning={setWarning}
 						/>
 					)}
 
@@ -794,6 +811,7 @@ function LogsExplorerViewsContainer({
 							}
 							isLoading={isLoading || isFetching}
 							isError={isError}
+							error={error as APIError}
 						/>
 					)}
 				</div>

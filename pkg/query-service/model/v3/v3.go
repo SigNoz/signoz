@@ -22,11 +22,12 @@ const (
 	DataSourceTraces  DataSource = "traces"
 	DataSourceLogs    DataSource = "logs"
 	DataSourceMetrics DataSource = "metrics"
+	DataSourceMeter   DataSource = "meter"
 )
 
 func (d DataSource) Validate() error {
 	switch d {
-	case DataSourceTraces, DataSourceLogs, DataSourceMetrics:
+	case DataSourceTraces, DataSourceLogs, DataSourceMetrics, DataSourceMeter:
 		return nil
 	default:
 		return fmt.Errorf("invalid data source: %s", d)
@@ -603,7 +604,7 @@ func (c *CompositeQuery) Validate() error {
 		return fmt.Errorf("composite query is required")
 	}
 
-	if c.BuilderQueries == nil && c.ClickHouseQueries == nil && c.PromQueries == nil {
+	if c.BuilderQueries == nil && c.ClickHouseQueries == nil && c.PromQueries == nil && len(c.Queries) == 0 {
 		return fmt.Errorf("composite query must contain at least one query type")
 	}
 

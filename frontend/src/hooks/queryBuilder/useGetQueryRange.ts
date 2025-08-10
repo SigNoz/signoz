@@ -7,27 +7,27 @@ import {
 	GetQueryResultsProps,
 } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
-import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
-import { SuccessResponse } from 'types/api';
+import { SuccessResponse, Warning } from 'types/api';
 import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 type UseGetQueryRangeOptions = UseQueryOptions<
-	SuccessResponse<MetricRangePayloadProps>,
+	SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
 	APIError | Error
-> & {
-	showErrorModal?: boolean;
-};
+>;
 
 type UseGetQueryRange = (
 	requestData: GetQueryResultsProps,
 	version: string,
 	options?: UseGetQueryRangeOptions,
 	headers?: Record<string, string>,
-) => UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error>;
+) => UseQueryResult<
+	SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
+	Error
+>;
 
 export const useGetQueryRange: UseGetQueryRange = (
 	requestData,
@@ -35,7 +35,6 @@ export const useGetQueryRange: UseGetQueryRange = (
 	options,
 	headers,
 ) => {
-	const { showErrorModal: showErrorModalFn } = useErrorModal();
 	const newRequestData: GetQueryResultsProps = useMemo(() => {
 		const firstQueryData = requestData.query.builder?.queryData[0];
 		const isListWithSingleTimestampOrder =
@@ -134,17 +133,14 @@ export const useGetQueryRange: UseGetQueryRange = (
 		};
 	}, [options?.retry]);
 
-	return useQuery<SuccessResponse<MetricRangePayloadProps>, APIError | Error>({
+	return useQuery<
+		SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
+		APIError | Error
+	>({
 		queryFn: async ({ signal }) =>
 			GetMetricQueryRange(modifiedRequestData, version, signal, headers),
 		...options,
 		retry,
-		onError: (error) => {
-			if (options?.showErrorModal !== false) {
-				showErrorModalFn(error as APIError);
-			}
-			options?.onError?.(error);
-		},
 		queryKey,
 	});
 };

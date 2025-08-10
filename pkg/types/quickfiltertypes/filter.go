@@ -35,6 +35,7 @@ var (
 	SignalLogs          = Signal{valuer.NewString("logs")}
 	SignalApiMonitoring = Signal{valuer.NewString("api_monitoring")}
 	SignalExceptions    = Signal{valuer.NewString("exceptions")}
+	SignalMeter         = Signal{valuer.NewString("meter")}
 )
 
 // NewSignal creates a Signal from a string
@@ -48,6 +49,8 @@ func NewSignal(s string) (Signal, error) {
 		return SignalApiMonitoring, nil
 	case "exceptions":
 		return SignalExceptions, nil
+	case "meter":
+		return SignalMeter, nil
 	default:
 		return Signal{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid signal: %s", s)
 	}
@@ -178,6 +181,12 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 		{"key": "k8s.pod.name", "dataType": "string", "type": "resource"},
 	}
 
+	meterFilters := []map[string]interface{}{
+		{"key": "deployment.environment", "dataType": "float64", "type": "Sum"},
+		{"key": "service.name", "dataType": "float64", "type": "Sum"},
+		{"key": "host.name", "dataType": "float64", "type": "Sum"},
+	}
+
 	tracesJSON, err := json.Marshal(tracesFilters)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal traces filters")
@@ -190,12 +199,19 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 
 	apiMonitoringJSON, err := json.Marshal(apiMonitoringFilters)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal Api Monitoring filters")
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal api monitoring filters")
 	}
+
 	exceptionsJSON, err := json.Marshal(exceptionsFilters)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal Exceptions filters")
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal exceptions filters")
 	}
+
+	meterJSON, err := json.Marshal(meterFilters)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal meter filters")
+	}
+
 	timeRightNow := time.Now()
 
 	return []*StorableQuickFilter{
@@ -242,6 +258,18 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 			OrgID:  orgID,
 			Filter: string(exceptionsJSON),
 			Signal: SignalExceptions,
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: timeRightNow,
+				UpdatedAt: timeRightNow,
+			},
+		},
+		{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			OrgID:  orgID,
+			Filter: string(meterJSON),
+			Signal: SignalMeter,
 			TimeAuditable: types.TimeAuditable{
 				CreatedAt: timeRightNow,
 				UpdatedAt: timeRightNow,

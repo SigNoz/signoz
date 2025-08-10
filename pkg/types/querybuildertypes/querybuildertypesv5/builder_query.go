@@ -14,6 +14,9 @@ type QueryBuilderQuery[T any] struct {
 	// signal to query
 	Signal telemetrytypes.Signal `json:"signal,omitempty"`
 
+	// source for query
+	Source telemetrytypes.Source `json:"source,omitempty"`
+
 	// we want to support multiple aggregations
 	// currently supported: []Aggregation, []MetricAggregation
 	Aggregations []T `json:"aggregations,omitempty"`
@@ -37,7 +40,7 @@ type QueryBuilderQuery[T any] struct {
 	Limit int `json:"limit,omitempty"`
 
 	// limitBy fields to limit by
-	LimitBy LimitBy `json:"limitBy,omitempty"`
+	LimitBy *LimitBy `json:"limitBy,omitempty"`
 
 	// offset the number of rows to skip
 	// TODO: remove this once we have cursor-based pagination everywhere?
@@ -61,6 +64,64 @@ type QueryBuilderQuery[T any] struct {
 	// ShiftBy is extracted from timeShift function for internal use
 	// This field is not serialized to JSON
 	ShiftBy int64 `json:"-"`
+}
+
+// Copy creates a deep copy of the QueryBuilderQuery
+func (q QueryBuilderQuery[T]) Copy() QueryBuilderQuery[T] {
+	// start with a shallow copy
+	c := q
+
+	if q.Aggregations != nil {
+		c.Aggregations = make([]T, len(q.Aggregations))
+		copy(c.Aggregations, q.Aggregations)
+	}
+
+	if q.GroupBy != nil {
+		c.GroupBy = make([]GroupByKey, len(q.GroupBy))
+		for i, gb := range q.GroupBy {
+			c.GroupBy[i] = gb.Copy()
+		}
+	}
+
+	if q.Order != nil {
+		c.Order = make([]OrderBy, len(q.Order))
+		for i, o := range q.Order {
+			c.Order[i] = o.Copy()
+		}
+	}
+
+	if q.SelectFields != nil {
+		c.SelectFields = make([]telemetrytypes.TelemetryFieldKey, len(q.SelectFields))
+		copy(c.SelectFields, q.SelectFields)
+	}
+
+	if q.SecondaryAggregations != nil {
+		c.SecondaryAggregations = make([]SecondaryAggregation, len(q.SecondaryAggregations))
+		for i, sa := range q.SecondaryAggregations {
+			c.SecondaryAggregations[i] = sa.Copy()
+		}
+	}
+
+	if q.Functions != nil {
+		c.Functions = make([]Function, len(q.Functions))
+		for i, f := range q.Functions {
+			c.Functions[i] = f.Copy()
+		}
+	}
+
+	if q.Filter != nil {
+		c.Filter = q.Filter.Copy()
+	}
+
+	if q.LimitBy != nil {
+		c.LimitBy = q.LimitBy.Copy()
+	}
+
+	if q.Having != nil {
+		c.Having = q.Having.Copy()
+	}
+
+	return c
 }
 
 // UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields

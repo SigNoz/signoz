@@ -1,0 +1,16 @@
+.meter-explorer-page {
+	.ant-tabs-nav {
+		margin-bottom: 0;
+	}
+
+	.ant-tabs-tab {
+		padding: 8px 16px;
+		margin: 0 8px 0 0 !important;
+
+		.tab-item {
+			display: flex;
+			gap: 8px;
+			align-items: center;
+		}
+	}
+}

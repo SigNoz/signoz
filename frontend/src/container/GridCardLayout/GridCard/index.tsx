@@ -267,7 +267,6 @@ function GridCardGraph({
 				getGraphData?.(data?.payload?.data);
 				setDashboardQueryRangeCalled(true);
 			},
-			showErrorModal: false,
 		},
 	);
 
@@ -302,7 +301,7 @@ function GridCardGraph({
 					widget={widget}
 					queryResponse={queryResponse}
 					errorMessage={errorMessage}
-					isWarning={false}
+					isWarning={!isEmpty(queryResponse.data?.warning)}
 					version={version}
 					threshold={threshold}
 					headerMenuList={menuList}

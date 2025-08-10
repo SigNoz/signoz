@@ -93,6 +93,7 @@ func (b *resourceFilterStatementBuilder[T]) getKeySelectors(query qbtypes.QueryB
 
 	for idx := range keySelectors {
 		keySelectors[idx].Signal = b.signal
+		keySelectors[idx].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
 	}
 
 	return keySelectors
@@ -117,7 +118,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 	q.From(fmt.Sprintf("%s.%s", config.dbName, config.tableName))
 
 	keySelectors := b.getKeySelectors(query)
-	keys, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +147,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 	if query.Filter != nil && query.Filter.Expression != "" {
 
 		// warnings would be encountered as part of the main condition already
-		filterWhereClause, _, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		filterWhereClause, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			FieldMapper:        b.fieldMapper,
 			ConditionBuilder:   b.conditionBuilder,
 			FieldKeys:          keys,
@@ -164,7 +165,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			return err
 		}
 		if filterWhereClause != nil {
-			sb.AddWhereClause(filterWhereClause)
+			sb.AddWhereClause(filterWhereClause.WhereClause)
 		}
 	}
 
