@@ -1,20 +1,32 @@
 import './Attributes.styles.scss';
 
-import { Input, Tooltip, Typography } from 'antd';
+import { Input } from 'antd';
 import cx from 'classnames';
 import { flattenObject } from 'container/LogDetailedView/utils';
 import { useMemo, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import NoData from '../NoData/NoData';
+import SpanTableView from './SpanTableView';
 
 interface IAttributesProps {
 	span: Span;
 	isSearchVisible: boolean;
+	onAddToQuery: (key: string, value: string, operator: string) => void;
+	onGroupByAttribute: (fieldKey: string) => void;
+	onCopyFieldName: (fieldName: string) => void;
+	onCopyFieldValue: (fieldValue: string) => void;
 }
 
 function Attributes(props: IAttributesProps): JSX.Element {
-	const { span, isSearchVisible } = props;
+	const {
+		span,
+		isSearchVisible,
+		onAddToQuery,
+		onGroupByAttribute,
+		onCopyFieldName,
+		onCopyFieldValue,
+	} = props;
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
 
 	const flattenSpanData: Record<string, string> = useMemo(
@@ -22,45 +34,34 @@ function Attributes(props: IAttributesProps): JSX.Element {
 		[span],
 	);
 
-	const datasource = Object.keys(flattenSpanData)
-		.filter((attribute) =>
-			attribute.toLowerCase().includes(fieldSearchInput.toLowerCase()),
-		)
-		.map((key) => ({ field: key, value: flattenSpanData[key] }));
+	const hasAttributes = Object.keys(flattenSpanData).length > 0;
 
 	return (
 		<div className="attributes-corner">
-			{isSearchVisible &&
-				(datasource.length > 0 || fieldSearchInput.length > 0) && (
-					<Input
-						autoFocus
-						placeholder="Search for attribute..."
-						className="search-input"
-						value={fieldSearchInput}
-						onChange={(e): void => setFieldSearchInput(e.target.value)}
-					/>
-				)}
-			{datasource.length === 0 && fieldSearchInput.length === 0 && (
-				<NoData name="attributes" />
+			{isSearchVisible && hasAttributes && (
+				<Input
+					autoFocus
+					placeholder="Search for attribute..."
+					className="search-input"
+					value={fieldSearchInput}
+					onChange={(e): void => setFieldSearchInput(e.target.value)}
+				/>
 			)}
-			<section
-				className={cx('attributes-container', isSearchVisible ? 'border-top' : '')}
-			>
-				{datasource.map((item) => (
-					<div className="item" key={`${item.field} + ${item.value}`}>
-						<Typography.Text className="item-key" ellipsis>
-							{item.field}
-						</Typography.Text>
-						<div className="value-wrapper">
-							<Tooltip title={item.value}>
-								<Typography.Text className="item-value" ellipsis>
-									{item.value}
-								</Typography.Text>
-							</Tooltip>
-						</div>
-					</div>
-				))}
-			</section>
+			{!hasAttributes && <NoData name="attributes" />}
+			{hasAttributes && (
+				<section
+					className={cx('attributes-container', isSearchVisible ? 'border-top' : '')}
+				>
+					<SpanTableView
+						span={span}
+						fieldSearchInput={fieldSearchInput}
+						onAddToQuery={onAddToQuery}
+						onGroupByAttribute={onGroupByAttribute}
+						onCopyFieldName={onCopyFieldName}
+						onCopyFieldValue={onCopyFieldValue}
+					/>
+				</section>
+			)}
 		</div>
 	);
 }

@@ -124,7 +124,7 @@ function TraceDetailsV2(): JSX.Element {
 		<div className="trace-layout">
 			<div
 				className="trace-left-content"
-				style={{ width: `calc(100% - ${isSpanDetailsDocked ? 48 : 330}px)` }}
+				style={{ width: `calc(100% - ${isSpanDetailsDocked ? 48 : 720}px)` }}
 			>
 				<TraceMetadata
 					traceID={traceId}

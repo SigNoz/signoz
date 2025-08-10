@@ -45,6 +45,19 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		themeColors.traceDetailColors,
 	);
 
+	const onAddToQuery = (key: string, value: string, operator: string): void => {
+		console.log('onAddToQuery', key, value, operator);
+	};
+	const onGroupByAttribute = (fieldKey: string): void => {
+		console.log('onGroupByAttribute', fieldKey);
+	};
+	const onCopyFieldName = (fieldName: string): void => {
+		console.log('onCopyFieldName', fieldName);
+	};
+	const onCopyFieldValue = (fieldValue: string): void => {
+		console.log('onCopyFieldValue', fieldValue);
+	};
+
 	function getItems(span: Span, startTime: number): TabsProps['items'] {
 		return [
 			{
@@ -61,7 +74,16 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 					</Button>
 				),
 				key: 'attributes',
-				children: <Attributes span={span} isSearchVisible={isSearchVisible} />,
+				children: (
+					<Attributes
+						span={span}
+						isSearchVisible={isSearchVisible}
+						onAddToQuery={onAddToQuery}
+						onGroupByAttribute={onGroupByAttribute}
+						onCopyFieldName={onCopyFieldName}
+						onCopyFieldValue={onCopyFieldValue}
+					/>
+				),
 			},
 			{
 				label: (

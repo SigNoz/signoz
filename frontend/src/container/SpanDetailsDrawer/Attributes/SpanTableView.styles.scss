@@ -1,0 +1,129 @@
+.span-attribute-table-container {
+	.ant-table {
+		background: var(--bg-ink-400);
+
+		.ant-table-row:hover {
+			.ant-table-cell {
+				.value-field {
+					.action-btn {
+						display: flex;
+						position: absolute;
+						top: 50%;
+						right: 16px;
+						transform: translateY(-50%);
+						gap: 4px;
+					}
+				}
+			}
+		}
+
+		.ant-table-cell {
+			border: 1px solid var(--bg-slate-500);
+		}
+
+		.attribute-name {
+			.field-name {
+				color: var(--text-secondary);
+				font-weight: 500;
+			}
+
+			.ant-btn {
+				&:hover {
+					background-color: none !important;
+				}
+			}
+		}
+
+		.value-field-container {
+			background: rgba(22, 25, 34, 0.4);
+
+			.value-field {
+				font-family: 'Geist Mono';
+				position: relative;
+			}
+
+			.action-btn {
+				display: none;
+				width: max-content;
+				position: absolute;
+				padding: 0 16px;
+				right: 0;
+
+				.filter-btn {
+					display: flex;
+					align-items: center;
+					border: none;
+					box-shadow: none;
+					border-radius: 2px;
+					background: var(--bg-slate-400);
+					padding: 2px 3px;
+					gap: 3px;
+					height: 18px;
+					width: 20px;
+				}
+			}
+		}
+	}
+}
+
+.span-table-actions-menu {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+
+	.ant-btn {
+		text-align: left;
+		height: auto;
+		padding: 6px 12px;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+
+		&:hover {
+			background-color: var(--bg-slate-400);
+		}
+	}
+
+	.group-by-clause {
+		color: var(--text-primary);
+	}
+}
+
+.span-table-view-actions-content {
+	.ant-popover-inner {
+		padding: 8px;
+		min-width: 160px;
+	}
+}
+
+.lightMode {
+	.span-attribute-table-container {
+		.ant-table {
+			background: var(--bg-vanilla-100);
+		}
+
+		.ant-table-cell {
+			border: 1px solid var(--bg-vanilla-200);
+		}
+
+		.value-field-container {
+			background: var(--bg-vanilla-300);
+
+			.action-btn {
+				background: rgba(255, 255, 255, 0.1);
+
+				.filter-btn {
+					background: var(--bg-vanilla-300);
+				}
+			}
+		}
+	}
+
+	.span-table-actions-menu {
+		.ant-btn {
+			&:hover {
+				background-color: var(--bg-vanilla-200);
+			}
+		}
+	}
+}
