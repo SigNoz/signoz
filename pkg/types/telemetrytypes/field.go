@@ -121,6 +121,7 @@ type FieldKeySelector struct {
 	StartUnixMilli    int64                  `json:"startUnixMilli"`
 	EndUnixMilli      int64                  `json:"endUnixMilli"`
 	Signal            Signal                 `json:"signal"`
+	Source            Source                 `json:"source"`
 	FieldContext      FieldContext           `json:"fieldContext"`
 	FieldDataType     FieldDataType          `json:"fieldDataType"`
 	Name              string                 `json:"name"`

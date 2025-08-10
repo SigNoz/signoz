@@ -1,7 +1,7 @@
 .span-details-drawer {
 	display: flex;
 	flex-direction: column;
-	width: 330px;
+	width: 450px;
 	border-left: 1px solid var(--bg-slate-400);
 	overflow-y: auto;
 
@@ -176,6 +176,34 @@
 				justify-content: center;
 				width: 100%;
 				padding: 4px 8px;
+				margin-right: 8px;
+				gap: 4px;
+
+				.tab-label {
+					display: flex;
+					align-items: center;
+				}
+
+				.count-badge {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					min-width: 20px;
+					height: 20px;
+					padding: 0 6px;
+					border-radius: 10px;
+					background: rgba(171, 189, 255, 0.1);
+					color: var(--bg-vanilla-400);
+					font-variant-numeric: lining-nums tabular-nums slashed-zero;
+					font-feature-settings: 'dlig' on, 'salt' on;
+					font-family: Inter;
+					font-size: 13px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 20px;
+					letter-spacing: -0.065px;
+					text-transform: uppercase;
+				}
 			}
 
 			.attributes-tab-btn:hover,
