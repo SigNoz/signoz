@@ -383,6 +383,7 @@ function QuerySearch({
 					searchText: sanitizedSearchText,
 					signal: dataSource,
 					signalSource: signalSource as 'meter' | '',
+					metricName: debouncedMetricName ?? undefined,
 				});
 
 				// Skip updates if component unmounted or key changed
@@ -474,6 +475,7 @@ function QuerySearch({
 			activeKey,
 			dataSource,
 			isLoadingSuggestions,
+			debouncedMetricName,
 			signalSource,
 			toggleSuggestions,
 		],
