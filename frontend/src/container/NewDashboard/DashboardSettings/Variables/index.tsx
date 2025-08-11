@@ -15,6 +15,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Button, Modal, Row, Space, Table, Typography } from 'antd';
 import { RowProps } from 'antd/lib';
 import { convertVariablesToDbFormat } from 'container/NewDashboard/DashboardVariablesSelection/util';
+import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { PenLine, Trash2 } from 'lucide-react';
@@ -162,19 +163,30 @@ function VariablesSetting({
 		setExistingVariableNamesMap(variableNamesMap);
 	}, [variables]);
 
+	const addDynamicVariableToPanels = useAddDynamicVariableToPanels();
+
 	const updateVariables = (
 		updatedVariablesData: Dashboard['data']['variables'],
+		currentRequestedId?: string,
 	): void => {
 		if (!selectedDashboard) {
 			return;
 		}
+
+		const newDashboard =
+			(currentRequestedId &&
+				addDynamicVariableToPanels(
+					selectedDashboard,
+					updatedVariablesData[currentRequestedId || ''],
+				)) ||
+			selectedDashboard;
 
 		updateMutation.mutateAsync(
 			{
 				id: selectedDashboard.id,
 
 				data: {
-					...selectedDashboard.data,
+					...newDashboard.data,
 					variables: updatedVariablesData,
 				},
 			},
@@ -225,7 +237,7 @@ function VariablesSetting({
 		const variables = convertVariablesToDbFormat(newVariablesArr);
 
 		setVariablesTableData(newVariablesArr);
-		updateVariables(variables);
+		updateVariables(variables, variableData?.id);
 		onDoneVariableViewMode();
 	};
 
