@@ -397,8 +397,10 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(selectFromCTE string, requestT
 		return b.buildListQuery(selectFromCTE)
 	case qbtypes.RequestTypeTimeSeries:
 		return b.buildTimeSeriesQuery(selectFromCTE)
+	case qbtypes.RequestTypeTrace:
+		return b.buildTraceQuery(selectFromCTE)
 	case qbtypes.RequestTypeScalar:
-		return b.buildScalarQuery(selectFromCTE)
+		return b.buildTraceQuery(selectFromCTE)
 	default:
 		return nil, fmt.Errorf("unsupported request type: %s", requestType)
 	}
@@ -595,7 +597,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*q
 	}, nil
 }
 
-func (b *traceOperatorCTEBuilder) buildScalarQuery(selectFromCTE string) (*qbtypes.Statement, error) {
+func (b *traceOperatorCTEBuilder) buildTraceQuery(selectFromCTE string) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
 	// Get keys for field mapping
@@ -695,7 +697,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(selectFromCTE string) (*qbtyp
 			sb.OrderBy(fmt.Sprintf("span_count %s", orderBy.Direction.StringValue()))
 			orderApplied = true
 		case "timestamp":
-			// For timestamp ordering in scalar queries, use timestamp field
+			// For timestamp ordering in trace queries, use timestamp field
 			sb.OrderBy(fmt.Sprintf("timestamp %s", orderBy.Direction.StringValue()))
 			orderApplied = true
 		default:
@@ -716,7 +718,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(selectFromCTE string) (*qbtyp
 				orderApplied = true
 			} else {
 				b.stmtBuilder.logger.WarnContext(b.ctx,
-					"ignoring order by field that's not available in scalar trace context",
+					"ignoring order by field that's not available in trace context",
 					"field", orderBy.Key.Name)
 			}
 		}

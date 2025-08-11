@@ -42,8 +42,10 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 		payload, err = readAsTimeSeries(rows, queryWindow, step, queryName)
 	case qbtypes.RequestTypeScalar:
 		payload, err = readAsScalar(rows, queryName)
-	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace:
+	case qbtypes.RequestTypeRaw:
 		payload, err = readAsRaw(rows, queryName)
+	case qbtypes.RequestTypeTrace:
+		payload, err = readAsTrace(rows, queryName)
 		// TODO: add support for other request types
 	}
 
@@ -278,7 +280,61 @@ func numericKind(k reflect.Kind) bool {
 	}
 }
 
-func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
+func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, error) {
+	colNames := rows.Columns()
+	colTypes := rows.ColumnTypes()
+
+	cd := make([]*qbtypes.ColumnDescriptor, len(colNames))
+
+	var aggIndex int64
+	for i, name := range colNames {
+		colType := qbtypes.ColumnTypeGroup
+		if aggRe.MatchString(name) {
+			colType = qbtypes.ColumnTypeAggregation
+		}
+		cd[i] = &qbtypes.ColumnDescriptor{
+			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: name},
+			QueryName:         queryName,
+			AggregationIndex:  aggIndex,
+			Type:              colType,
+		}
+		if colType == qbtypes.ColumnTypeAggregation {
+			aggIndex++
+		}
+	}
+
+	// Pre-allocate scan slots once
+	scan := make([]any, len(colTypes))
+	for i := range scan {
+		scan[i] = reflect.New(colTypes[i].ScanType()).Interface()
+	}
+
+	var data [][]any
+
+	for rows.Next() {
+		if err := rows.Scan(scan...); err != nil {
+			return nil, err
+		}
+
+		// 2. deref each slot into the output row
+		row := make([]any, len(scan))
+		for i, cell := range scan {
+			row[i] = derefValue(cell)
+		}
+		data = append(data, row)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return &qbtypes.ScalarData{
+		QueryName: queryName,
+		Columns:   cd,
+		Data:      data,
+	}, nil
+}
+
+func readAsTrace(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 	colNames := rows.Columns()
 	colTypes := rows.ColumnTypes()
 	colCnt := len(colNames)
