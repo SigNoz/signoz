@@ -32,7 +32,9 @@ function LiveLogsListChart({
 					aggregateOperator: LogsAggregatorOperator.COUNT,
 					filters: {
 						...item.filters,
-						items: item.filters.items.filter((item) => item.key?.key !== 'id'),
+						items:
+							item.filters?.items?.filter((item) => item.key?.key !== 'id') || [],
+						op: item.filters?.op || 'AND',
 					},
 				})),
 			},

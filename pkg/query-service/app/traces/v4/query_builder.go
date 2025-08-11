@@ -30,6 +30,8 @@ var tracesOperatorMappingV3 = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotContains:     "NOT ILIKE",
 	v3.FilterOperatorExists:          "mapContains(%s, '%s')",
 	v3.FilterOperatorNotExists:       "NOT mapContains(%s, '%s')",
+	v3.FilterOperatorILike:           "ILIKE",
+	v3.FilterOperatorNotILike:        "NOT ILIKE",
 }
 
 func getClickHouseTracesColumnType(columnType v3.AttributeKeyType) string {

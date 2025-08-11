@@ -37,6 +37,31 @@ type QueryBuilderFormula struct {
 	Legend string `json:"legend,omitempty"`
 }
 
+// Copy creates a deep copy of the QueryBuilderFormula
+func (f QueryBuilderFormula) Copy() QueryBuilderFormula {
+	c := f
+
+	if f.Order != nil {
+		c.Order = make([]OrderBy, len(f.Order))
+		for i, o := range f.Order {
+			c.Order[i] = o.Copy()
+		}
+	}
+
+	if f.Functions != nil {
+		c.Functions = make([]Function, len(f.Functions))
+		for i, fn := range f.Functions {
+			c.Functions[i] = fn.Copy()
+		}
+	}
+
+	if f.Having != nil {
+		c.Having = f.Having.Copy()
+	}
+
+	return c
+}
+
 // UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
 func (f *QueryBuilderFormula) UnmarshalJSON(data []byte) error {
 	type Alias QueryBuilderFormula

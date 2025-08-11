@@ -284,7 +284,7 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Test contains, ncontains, like, nlike, regex, nregex",
+			name: "Test contains, ncontains, like, nlike, regex, nregex, ilike, nilike",
 			args: args{
 				fs: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.%", Operator: v3.FilterOperatorContains},
@@ -293,10 +293,12 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102", Operator: v3.FilterOperatorNotLike},
 					{Key: v3.AttributeKey{Key: "path", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "/mypath", Operator: v3.FilterOperatorRegex},
 					{Key: v3.AttributeKey{Key: "path", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "/health.*", Operator: v3.FilterOperatorNotRegex},
+					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: v3.FilterOperatorILike},
+					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102", Operator: v3.FilterOperatorNotLike},
 				}},
 			},
 			want: "attributes_string['host'] ILIKE '%102.\\%%' AND attributes_string['host'] NOT ILIKE '%103\\_%' AND attributes_string['host'] ILIKE '102.' AND attributes_string['host'] NOT ILIKE '102' AND " +
-				"match(`attribute_string_path`, '/mypath') AND NOT match(`attribute_string_path`, '/health.*')",
+				"match(`attribute_string_path`, '/mypath') AND NOT match(`attribute_string_path`, '/health.*') AND attributes_string['host'] ILIKE '102.' AND attributes_string['host'] NOT ILIKE '102'",
 		},
 		{
 			name: "Test exists, nexists",

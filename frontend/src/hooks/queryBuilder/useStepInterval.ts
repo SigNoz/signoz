@@ -31,7 +31,7 @@ export const updateStepInterval = (
 			queryData:
 				query?.builder?.queryData?.map((item) => ({
 					...item,
-					stepInterval: getStepInterval(item.stepInterval),
+					stepInterval: getStepInterval(item?.stepInterval ?? 60),
 				})) || [],
 		},
 	};

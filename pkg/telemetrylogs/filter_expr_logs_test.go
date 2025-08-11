@@ -2297,7 +2297,7 @@ func TestFilterExprLogs(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-			clause, _, err := querybuilder.PrepareWhereClause(tc.query, opts)
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts)
 
 			if tc.shouldPass {
 				if err != nil {
@@ -2311,7 +2311,7 @@ func TestFilterExprLogs(t *testing.T) {
 				}
 
 				// Build the SQL and print it for debugging
-				sql, args := clause.BuildWithFlavor(sqlbuilder.ClickHouse)
+				sql, args := clause.WhereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 				require.Equal(t, tc.expectedQuery, sql)
 				require.Equal(t, tc.expectedArgs, args)

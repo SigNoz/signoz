@@ -29,7 +29,7 @@ export const CompositeQueryOperatorsConfig: Array<{
 		traceValue: 'In',
 	},
 	{
-		label: 'nin',
+		label: 'not in',
 		metricValue: '!~',
 		traceValue: 'NotIn',
 	},
@@ -49,7 +49,7 @@ export const CompositeQueryOperatorsConfig: Array<{
 		traceValue: 'Exists',
 	},
 	{
-		label: 'nexists',
+		label: 'not exists',
 		metricValue: '!~',
 		traceValue: 'NotExists',
 	},
@@ -59,7 +59,7 @@ export const CompositeQueryOperatorsConfig: Array<{
 		traceValue: 'Contains',
 	},
 	{
-		label: 'ncontains',
+		label: 'not contains',
 		metricValue: '!~',
 		traceValue: 'NotContains',
 	},

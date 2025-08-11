@@ -50,19 +50,14 @@ func (p *BaseSeasonalProvider) getQueryParams(req *AnomaliesRequest) *anomalyQue
 
 func (p *BaseSeasonalProvider) toTSResults(ctx context.Context, resp *qbtypes.QueryRangeResponse) []*qbtypes.TimeSeriesData {
 
-	if resp == nil || resp.Data == nil {
+	tsData := []*qbtypes.TimeSeriesData{}
+
+	if resp == nil {
 		p.logger.InfoContext(ctx, "nil response from query range")
+		return tsData
 	}
 
-	data, ok := resp.Data.(struct {
-		Results  []any    `json:"results"`
-		Warnings []string `json:"warnings"`
-	})
-	if !ok {
-		return nil
-	}
-	tsData := []*qbtypes.TimeSeriesData{}
-	for _, item := range data.Results {
+	for _, item := range resp.Data.Results {
 		if resultData, ok := item.(*qbtypes.TimeSeriesData); ok {
 			tsData = append(tsData, resultData)
 		}
@@ -392,6 +387,11 @@ func (p *BaseSeasonalProvider) getAnomalies(ctx context.Context, orgID valuer.UU
 		}
 		past3SeasonResult, ok := past3SeasonResults[result.QueryName]
 		if !ok {
+			continue
+		}
+
+		// no data;
+		if len(result.Aggregations) == 0 {
 			continue
 		}
 

@@ -31,7 +31,7 @@ export interface RowProps {
 	onClickHandler: VoidFunction;
 	Icon: ReactNode;
 	title: string;
-	subTitle: string;
+	subTitle: ReactNode;
 	buttonText: string;
 	isDisabled: boolean;
 }

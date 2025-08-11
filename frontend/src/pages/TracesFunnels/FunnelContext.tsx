@@ -161,18 +161,20 @@ export function FunnelProvider({
 	);
 
 	const addNewStep = useCallback(() => {
-		if (steps.length >= 3) return false;
-
-		setSteps((prev) => [
-			...prev,
-			{
-				...createInitialStepsData()[0],
-				id: v4(),
-				step_order: prev.length + 1,
-			},
-		]);
+		setSteps((prev) => {
+			const newStepOrder = prev.length + 1;
+			return [
+				...prev,
+				{
+					...createInitialStepsData()[0],
+					id: v4(),
+					step_order: newStepOrder,
+					latency_pointer: newStepOrder === 1 ? 'start' : 'end',
+				},
+			];
+		});
 		return true;
-	}, [steps.length]);
+	}, []);
 
 	const handleStepRemoval = useCallback((index: number) => {
 		setSteps((prev) =>

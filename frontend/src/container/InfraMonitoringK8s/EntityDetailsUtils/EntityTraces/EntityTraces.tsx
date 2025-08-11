@@ -84,14 +84,17 @@ function EntityTraces({
 							...currentQuery.builder.queryData[0].aggregateAttribute,
 						},
 						filters: {
-							items: filterOutPrimaryFilters(tracesFilters.items, queryKeyFilters),
+							items: filterOutPrimaryFilters(
+								tracesFilters?.items || [],
+								queryKeyFilters,
+							),
 							op: 'AND',
 						},
 					},
 				],
 			},
 		}),
-		[currentQuery, queryKeyFilters, tracesFilters.items],
+		[currentQuery, queryKeyFilters, tracesFilters?.items],
 	);
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
@@ -148,7 +151,8 @@ function EntityTraces({
 
 	const isDataEmpty =
 		!isLoading && !isFetching && !isError && traces.length === 0;
-	const hasAdditionalFilters = tracesFilters.items.length > 1;
+	const hasAdditionalFilters =
+		tracesFilters?.items && tracesFilters?.items?.length > 1;
 
 	const totalCount =
 		data?.payload?.data?.newResult?.data?.result?.[0]?.list?.length || 0;
@@ -167,7 +171,7 @@ function EntityTraces({
 				<div className="filter-section">
 					{query && (
 						<QueryBuilderSearch
-							query={query}
+							query={query as IBuilderQuery}
 							onChange={(value): void =>
 								handleChangeTracesFilters(value, VIEWS.TRACES)
 							}

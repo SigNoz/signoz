@@ -191,17 +191,21 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				event.MetricsUsed = true
 				event.FilterApplied = spec.Filter != nil && spec.Filter.Expression != ""
 				event.GroupByApplied = len(spec.GroupBy) > 0
-				if spec.StepInterval.Seconds() == 0 {
-					spec.StepInterval = qbtypes.Step{
-						Duration: time.Second * time.Duration(querybuilder.RecommendedStepIntervalForMetric(req.Start, req.End)),
-					}
-				}
-				if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)) {
-					spec.StepInterval = qbtypes.Step{
-						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)),
-					}
-				}
 
+				if spec.Source == telemetrytypes.SourceMeter {
+					spec.StepInterval = qbtypes.Step{Duration: time.Second * time.Duration(querybuilder.RecommendedStepIntervalForMeter(req.Start, req.End))}
+				} else {
+					if spec.StepInterval.Seconds() == 0 {
+						spec.StepInterval = qbtypes.Step{
+							Duration: time.Second * time.Duration(querybuilder.RecommendedStepIntervalForMetric(req.Start, req.End)),
+						}
+					}
+					if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)) {
+						spec.StepInterval = qbtypes.Step{
+							Duration: time.Second * time.Duration(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)),
+						}
+					}
+				}
 				req.CompositeQuery.Queries[idx].Spec = spec
 			}
 		} else if query.Type == qbtypes.QueryTypePromQL {
@@ -351,7 +355,14 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				}
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
-				bq := newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
+				var bq *builderQuery[qbtypes.MetricAggregation]
+
+				if spec.Source == telemetrytypes.SourceMeter {
+					bq = newBuilderQuery(q.telemetryStore, q.meterStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
+				} else {
+					bq = newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
+				}
+
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			default:
@@ -376,6 +387,7 @@ func (q *querier) run(
 ) (*qbtypes.QueryRangeResponse, error) {
 	results := make(map[string]any)
 	warnings := make([]string, 0)
+	warningsDocURL := ""
 	stats := qbtypes.ExecStats{}
 
 	hasData := func(result *qbtypes.Result) bool {
@@ -424,6 +436,7 @@ func (q *querier) run(
 			}
 			results[name] = result.Value
 			warnings = append(warnings, result.Warnings...)
+			warningsDocURL = result.WarningsDocURL
 			stats.RowsScanned += result.Stats.RowsScanned
 			stats.BytesScanned += result.Stats.BytesScanned
 			stats.DurationMS += result.Stats.DurationMS
@@ -435,6 +448,7 @@ func (q *querier) run(
 			}
 			results[name] = result.Value
 			warnings = append(warnings, result.Warnings...)
+			warningsDocURL = result.WarningsDocURL
 			stats.RowsScanned += result.Stats.RowsScanned
 			stats.BytesScanned += result.Stats.BytesScanned
 			stats.DurationMS += result.Stats.DurationMS
@@ -446,14 +460,10 @@ func (q *querier) run(
 		return nil, err
 	}
 
-	return &qbtypes.QueryRangeResponse{
+	resp := &qbtypes.QueryRangeResponse{
 		Type: req.RequestType,
-		Data: struct {
-			Results  []any    `json:"results"`
-			Warnings []string `json:"warnings"`
-		}{
-			Results:  maps.Values(processedResults),
-			Warnings: warnings,
+		Data: qbtypes.QueryData{
+			Results: maps.Values(processedResults),
 		},
 		Meta: struct {
 			RowsScanned  uint64 `json:"rowsScanned"`
@@ -464,7 +474,23 @@ func (q *querier) run(
 			BytesScanned: stats.BytesScanned,
 			DurationMS:   stats.DurationMS,
 		},
-	}, nil
+	}
+
+	if len(warnings) != 0 {
+		warns := make([]qbtypes.QueryWarnDataAdditional, len(warnings))
+		for i, warning := range warnings {
+			warns[i] = qbtypes.QueryWarnDataAdditional{
+				Message: warning,
+			}
+		}
+
+		resp.Warning = &qbtypes.QueryWarnData{
+			Message:  "Encountered warnings",
+			Url:      warningsDocURL,
+			Warnings: warns,
+		}
+	}
+	return resp, nil
 }
 
 // executeWithCache executes a query using the bucket cache
@@ -572,6 +598,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 
 // createRangedQuery creates a copy of the query with a different time range
 func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtypes.TimeRange) qbtypes.Query {
+	// this is called in a goroutine, so we create a copy of the query to avoid race conditions
 	switch qt := originalQuery.(type) {
 	case *promqlQuery:
 		queryCopy := qt.query.Copy()
@@ -621,9 +648,10 @@ func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) 
 		// If cached is nil but we have multiple fresh results, we need to merge them
 		// We need to merge all fresh results properly to avoid duplicates
 		merged := &qbtypes.Result{
-			Type:     fresh[0].Type,
-			Stats:    fresh[0].Stats,
-			Warnings: fresh[0].Warnings,
+			Type:           fresh[0].Type,
+			Stats:          fresh[0].Stats,
+			Warnings:       fresh[0].Warnings,
+			WarningsDocURL: fresh[0].WarningsDocURL,
 		}
 
 		// Merge all fresh results including the first one
@@ -638,10 +666,11 @@ func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) 
 
 	// Start with cached result
 	merged := &qbtypes.Result{
-		Type:     cached.Type,
-		Value:    cached.Value,
-		Stats:    cached.Stats,
-		Warnings: cached.Warnings,
+		Type:           cached.Type,
+		Value:          cached.Value,
+		Stats:          cached.Stats,
+		Warnings:       cached.Warnings,
+		WarningsDocURL: cached.WarningsDocURL,
 	}
 
 	// If no fresh results, return cached

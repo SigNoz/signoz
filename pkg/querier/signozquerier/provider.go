@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
+	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
@@ -52,6 +53,8 @@ func newProvider(
 		telemetrytraces.SpanIndexV3TableName,
 		telemetrymetrics.DBName,
 		telemetrymetrics.AttributesMetadataTableName,
+		telemetrymeter.DBName,
+		telemetrymeter.SamplesAgg1dTableName,
 		telemetrylogs.DBName,
 		telemetrylogs.LogsV2TableName,
 		telemetrylogs.TagAttributesV2TableName,
@@ -126,6 +129,14 @@ func newProvider(
 	metricFieldMapper := telemetrymetrics.NewFieldMapper()
 	metricConditionBuilder := telemetrymetrics.NewConditionBuilder(metricFieldMapper)
 	metricStmtBuilder := telemetrymetrics.NewMetricQueryStatementBuilder(
+		settings,
+		telemetryMetadataStore,
+		metricFieldMapper,
+		metricConditionBuilder,
+	)
+
+	// Create meter statement builder
+	meterStmtBuilder := telemetrymeter.NewMeterQueryStatementBuilder(
 		settings,
 		telemetryMetadataStore,
 		metricFieldMapper,

@@ -9,15 +9,14 @@ import {
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { debounce, isNil } from 'lodash-es';
 import { X } from 'lucide-react';
-import {
-	IBuilderQuery,
-	QueryFunctionProps,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
+import { normalizeFunctionName } from 'utils/functionNameNormalizer';
 
 interface FunctionProps {
 	query: IBuilderQuery;
-	funcData: QueryFunctionProps;
+	funcData: QueryFunction;
 	index: any;
 	handleUpdateFunctionArgs: any;
 	handleUpdateFunctionName: any;
@@ -33,17 +32,19 @@ export default function Function({
 	handleDeleteFunction,
 }: FunctionProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const { showInput, disabled } = queryFunctionsTypesConfig[funcData.name];
+	// Normalize function name to handle backend response case sensitivity
+	const normalizedFunctionName = normalizeFunctionName(funcData.name);
+	const { showInput, disabled } = queryFunctionsTypesConfig[
+		normalizedFunctionName
+	];
 
 	let functionValue;
 
-	const hasValue = !isNil(
-		funcData.args && funcData.args.length > 0 && funcData.args[0],
-	);
+	const hasValue = !isNil(funcData.args?.[0]?.value);
 
 	if (hasValue) {
 		// eslint-disable-next-line prefer-destructuring
-		functionValue = funcData.args[0];
+		functionValue = funcData.args?.[0]?.value;
 	}
 
 	const debouncedhandleUpdateFunctionArgs = debounce(
@@ -57,9 +58,10 @@ export default function Function({
 			? logsQueryFunctionOptions
 			: metricQueryFunctionOptions;
 
-	const disableRemoveFunction = funcData.name === QueryFunctionsTypes.ANOMALY;
+	const disableRemoveFunction =
+		normalizedFunctionName === QueryFunctionsTypes.ANOMALY;
 
-	if (funcData.name === QueryFunctionsTypes.ANOMALY) {
+	if (normalizedFunctionName === QueryFunctionsTypes.ANOMALY) {
 		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
 	}
@@ -68,7 +70,7 @@ export default function Function({
 		<Flex className="query-function">
 			<Select
 				className={cx('query-function-name-selector', showInput ? 'showInput' : '')}
-				value={funcData.name}
+				value={normalizedFunctionName}
 				disabled={disabled}
 				style={{ minWidth: '100px' }}
 				onChange={(value): void => {

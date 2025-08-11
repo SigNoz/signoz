@@ -20,7 +20,7 @@ export const transformToOrderByStringValues = (
 			return {
 				label: `${
 					entityVersion === 'v4' ? query.spaceAggregation : query.aggregateOperator
-				}(${query.aggregateAttribute.key}) ${item.order}`,
+				}(${query.aggregateAttribute?.key || ''}) ${item.order}`,
 				value: `${item.columnName}${orderByValueDelimiter}${item.order}`,
 			};
 		}

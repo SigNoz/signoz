@@ -1,8 +1,9 @@
+/* eslint-disable sonarjs/cognitive-complexity */
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { defaultSelectedColumns as defaultTracesSelectedColumns } from 'container/TracesExplorer/ListView/configs';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
 import { useEffect, useState } from 'react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
@@ -21,7 +22,7 @@ export function usePreferenceSync({
 	preferences: Preferences | null;
 	loading: boolean;
 	error: Error | null;
-	updateColumns: (newColumns: BaseAutocompleteData[]) => void;
+	updateColumns: (newColumns: TelemetryFieldKey[]) => void;
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 } {
 	const { data: viewsData } = useGetAllViews(dataSource);
@@ -31,16 +32,28 @@ export function usePreferenceSync({
 		setSavedViewPreferences,
 	] = useState<Preferences | null>(null);
 
+	const updateExtraDataSelectColumns = (
+		columns: TelemetryFieldKey[],
+	): TelemetryFieldKey[] | null => {
+		if (!columns) return null;
+		return columns.map((column) => ({
+			...column,
+			name: column.name ?? column.key,
+		}));
+	};
+
 	useEffect(() => {
 		const extraData = viewsData?.data?.data?.find(
 			(view) => view.id === savedViewId,
 		)?.extraData;
 
 		const parsedExtraData = JSON.parse(extraData || '{}');
-		let columns: BaseAutocompleteData[] = [];
+		let columns: TelemetryFieldKey[] = [];
 		let formatting: FormattingOptions | undefined;
 		if (dataSource === DataSource.LOGS) {
-			columns = parsedExtraData?.selectColumns || defaultLogsSelectedColumns;
+			columns =
+				updateExtraDataSelectColumns(parsedExtraData?.selectColumns) ||
+				defaultLogsSelectedColumns;
 			formatting = {
 				maxLines: parsedExtraData?.maxLines ?? 2,
 				format: parsedExtraData?.format ?? 'table',

@@ -216,15 +216,17 @@ function HostMetricsDetails({
 	const handleChangeLogFilters = useCallback(
 		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogFilters((prevFilters) => {
-				const hostNameFilter = prevFilters.items.find(
+				const hostNameFilter = prevFilters?.items?.find(
 					(item) => item.key?.key === 'host.name',
 				);
-				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
-				const newFilters = value.items.filter(
+				const paginationFilter = value?.items?.find(
+					(item) => item.key?.key === 'id',
+				);
+				const newFilters = value?.items?.filter(
 					(item) => item.key?.key !== 'id' && item.key?.key !== 'host.name',
 				);
 
-				if (newFilters.length > 0) {
+				if (newFilters && newFilters?.length > 0) {
 					logEvent(InfraMonitoringEvents.FilterApplied, {
 						entity: InfraMonitoringEvents.HostEntity,
 						view: InfraMonitoringEvents.LogsView,
@@ -236,7 +238,7 @@ function HostMetricsDetails({
 					op: 'AND',
 					items: [
 						hostNameFilter,
-						...newFilters,
+						...(newFilters || []),
 						...(paginationFilter ? [paginationFilter] : []),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
@@ -258,11 +260,11 @@ function HostMetricsDetails({
 	const handleChangeTracesFilters = useCallback(
 		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setTracesFilters((prevFilters) => {
-				const hostNameFilter = prevFilters.items.find(
+				const hostNameFilter = prevFilters?.items?.find(
 					(item) => item.key?.key === 'host.name',
 				);
 
-				if (value.items.length > 0) {
+				if (value?.items && value?.items?.length > 0) {
 					logEvent(InfraMonitoringEvents.FilterApplied, {
 						entity: InfraMonitoringEvents.HostEntity,
 						view: InfraMonitoringEvents.TracesView,
@@ -274,7 +276,7 @@ function HostMetricsDetails({
 					op: 'AND',
 					items: [
 						hostNameFilter,
-						...value.items.filter((item) => item.key?.key !== 'host.name'),
+						...(value?.items?.filter((item) => item.key?.key !== 'host.name') || []),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
 
@@ -311,7 +313,7 @@ function HostMetricsDetails({
 		if (selectedView === VIEW_TYPES.LOGS) {
 			const filtersWithoutPagination = {
 				...logFilters,
-				items: logFilters.items.filter((item) => item.key?.key !== 'id'),
+				items: logFilters?.items?.filter((item) => item.key?.key !== 'id') || [],
 			};
 
 			const compositeQuery = {

@@ -134,7 +134,7 @@ function AllErrors(): JSX.Element {
 					exceptionType: getUpdatedExceptionType,
 					serviceName: getUpdatedServiceName,
 					tags: convertCompositeQueryToTraceSelectedTags(
-						compositeData?.builder.queryData?.[0]?.filters.items,
+						compositeData?.builder.queryData?.[0]?.filters?.items || [],
 					),
 				}),
 			enabled: !loading,
@@ -155,7 +155,7 @@ function AllErrors(): JSX.Element {
 					exceptionType: getUpdatedExceptionType,
 					serviceName: getUpdatedServiceName,
 					tags: convertCompositeQueryToTraceSelectedTags(
-						compositeData?.builder.queryData?.[0]?.filters.items,
+						compositeData?.builder.queryData?.[0]?.filters?.items || [],
 					),
 				}),
 			enabled: !loading,
@@ -461,10 +461,11 @@ function AllErrors(): JSX.Element {
 			logEvent('Exception: List page visited', {
 				numberOfExceptions: errorCountResponse?.data?.payload,
 				selectedEnvironments,
-				resourceAttributeUsed: !!compositeData?.builder.queryData?.[0]?.filters
-					.items?.length,
+				resourceAttributeUsed: !!(
+					compositeData?.builder.queryData?.[0]?.filters?.items?.length || 0
+				),
 				tags: convertCompositeQueryToTraceSelectedTags(
-					compositeData?.builder.queryData?.[0]?.filters.items,
+					compositeData?.builder.queryData?.[0]?.filters?.items || [],
 				),
 			});
 		}

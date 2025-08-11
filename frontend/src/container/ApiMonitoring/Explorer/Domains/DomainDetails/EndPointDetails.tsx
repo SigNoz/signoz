@@ -68,8 +68,8 @@ function EndPointDetails({
 	const [filters, setFilters] = useState<IBuilderQuery['filters']>(() => {
 		// Initialize filters based on the initial endPointName prop
 		const initialItems = params.endPointDetailsLocalFilters
-			? [...params.endPointDetailsLocalFilters.items]
-			: [...initialFilters.items];
+			? [...(params.endPointDetailsLocalFilters?.items || [])]
+			: [...(initialFilters?.items || [])];
 		if (endPointName) {
 			initialItems.push({
 				id: '92b8a1c1',
@@ -84,7 +84,7 @@ function EndPointDetails({
 	// Effect to synchronize local filters when the endPointName prop changes (e.g., from dropdown)
 	useEffect(() => {
 		setFilters((currentFilters) => {
-			const existingHttpUrlFilter = currentFilters.items.find(
+			const existingHttpUrlFilter = currentFilters?.items?.find(
 				(item) => item.key?.key === httpUrlKey.key,
 			);
 			const existingHttpUrlValue = (existingHttpUrlFilter?.value as string) || '';
@@ -95,10 +95,10 @@ function EndPointDetails({
 			}
 
 			// Rebuild filters: Keep non-http.url filters and add/update http.url filter based on prop
-			const otherFilters = currentFilters.items.filter(
+			const otherFilters = currentFilters?.items?.filter(
 				(item) => item.key?.key !== httpUrlKey.key,
 			);
-			const newItems = [...otherFilters];
+			const newItems = [...(otherFilters || [])];
 			if (endPointName) {
 				newItems.push({
 					id: '92b8a1c1',
@@ -115,7 +115,8 @@ function EndPointDetails({
 	useEffect(() => {
 		const filtersWithoutHttpUrl = {
 			op: 'AND',
-			items: filters.items.filter((item) => item.key?.key !== httpUrlKey.key),
+			items:
+				filters?.items?.filter((item) => item.key?.key !== httpUrlKey.key) || [],
 		};
 		setParams({ endPointDetailsLocalFilters: filtersWithoutHttpUrl });
 	}, [filters, setParams]);
@@ -128,12 +129,14 @@ function EndPointDetails({
 			// Filter out http.url filter before saving to params
 			const filteredNewFilters = {
 				op: 'AND',
-				items: newFilters.items.filter((item) => item.key?.key !== httpUrlKey.key),
+				items:
+					newFilters?.items?.filter((item) => item.key?.key !== httpUrlKey.key) ||
+					[],
 			};
 			setParams({ endPointDetailsLocalFilters: filteredNewFilters });
 
 			// 2. Derive the endpoint name from the *new* filters state
-			const httpUrlFilter = newFilters.items.find(
+			const httpUrlFilter = newFilters?.items?.find(
 				(item) => item.key?.key === httpUrlKey.key,
 			);
 			const derivedEndPointName = (httpUrlFilter?.value as string) || '';
@@ -168,7 +171,7 @@ function EndPointDetails({
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
 	const isServicesFilterApplied = useMemo(
-		() => filters.items.some((item) => item.key?.key === 'service.name'),
+		() => filters?.items?.some((item) => item.key?.key === 'service.name'),
 		[filters],
 	);
 
@@ -182,7 +185,7 @@ function EndPointDetails({
 			queryKey: [
 				END_POINT_DETAILS_QUERY_KEYS_ARRAY[index],
 				payload,
-				filters.items, // Include filters.items in queryKey for better caching
+				filters?.items, // Include filters.items in queryKey for better caching
 				ENTITY_VERSION_V4,
 			],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
