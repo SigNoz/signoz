@@ -846,6 +846,7 @@ function NewWidget({
 							setSoftMax={setSoftMax}
 							contextLinks={contextLinks}
 							setContextLinks={setContextLinks}
+							enableDrillDown={enableDrillDown}
 						/>
 					</OverlayScrollbar>
 				</RightContainerWrapper>

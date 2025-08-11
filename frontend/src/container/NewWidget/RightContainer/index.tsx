@@ -118,6 +118,7 @@ function RightContainer({
 	queryResponse,
 	contextLinks,
 	setContextLinks,
+	enableDrillDown = false,
 }: RightContainerProps): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 	const [inputValue, setInputValue] = useState(title);
@@ -157,7 +158,8 @@ function RightContainer({
 
 	const allowPanelColumnPreference =
 		panelTypeVsColumnUnitPreferences[selectedGraph];
-	const allowContextLinks = panelTypeVsContextLinks[selectedGraph];
+	const allowContextLinks =
+		panelTypeVsContextLinks[selectedGraph] && enableDrillDown;
 
 	const { currentQuery } = useQueryBuilder();
 
@@ -576,11 +578,13 @@ interface RightContainerProps {
 	>;
 	contextLinks: ContextLinksData;
 	setContextLinks: Dispatch<SetStateAction<ContextLinksData>>;
+	enableDrillDown?: boolean;
 }
 
 RightContainer.defaultProps = {
 	selectedWidget: undefined,
 	queryResponse: null,
+	enableDrillDown: false,
 };
 
 export default RightContainer;
