@@ -32,8 +32,8 @@ type querier struct {
 	logStmtBuilder           qbtypes.StatementBuilder[qbtypes.LogAggregation]
 	metricStmtBuilder        qbtypes.StatementBuilder[qbtypes.MetricAggregation]
 	meterStmtBuilder         qbtypes.StatementBuilder[qbtypes.MetricAggregation]
-	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder
 	bucketCache              BucketCache
+	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder
 }
 
 var _ Querier = (*querier)(nil)
@@ -47,8 +47,8 @@ func New(
 	logStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
 	meterStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
-	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder,
 	bucketCache BucketCache,
+	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder,
 ) *querier {
 	querierSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier")
 	return &querier{
@@ -60,8 +60,8 @@ func New(
 		logStmtBuilder:           logStmtBuilder,
 		metricStmtBuilder:        metricStmtBuilder,
 		meterStmtBuilder:         meterStmtBuilder,
-		traceOperatorStmtBuilder: traceOperatorStmtBuilder,
 		bucketCache:              bucketCache,
+		traceOperatorStmtBuilder: traceOperatorStmtBuilder,
 	}
 }
 
@@ -606,16 +606,6 @@ func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtyp
 			return newBuilderQuery(q.telemetryStore, q.meterStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
 		}
 		return newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
-	case *traceOperatorQuery:
-		return &traceOperatorQuery{
-			telemetryStore: q.telemetryStore,
-			stmtBuilder:    q.traceOperatorStmtBuilder,
-			spec:           qt.spec,
-			fromMS:         uint64(timeRange.From),
-			toMS:           uint64(timeRange.To),
-			compositeQuery: qt.compositeQuery,
-			kind:           qt.kind,
-		}
 	default:
 		return nil
 	}
