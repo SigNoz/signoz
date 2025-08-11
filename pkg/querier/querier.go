@@ -31,6 +31,7 @@ type querier struct {
 	traceStmtBuilder         qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	logStmtBuilder           qbtypes.StatementBuilder[qbtypes.LogAggregation]
 	metricStmtBuilder        qbtypes.StatementBuilder[qbtypes.MetricAggregation]
+	meterStmtBuilder         qbtypes.StatementBuilder[qbtypes.MetricAggregation]
 	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder
 	bucketCache              BucketCache
 }
@@ -45,6 +46,7 @@ func New(
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	logStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
+	meterStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
 	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder,
 	bucketCache BucketCache,
 ) *querier {
@@ -57,6 +59,7 @@ func New(
 		traceStmtBuilder:         traceStmtBuilder,
 		logStmtBuilder:           logStmtBuilder,
 		metricStmtBuilder:        metricStmtBuilder,
+		meterStmtBuilder:         meterStmtBuilder,
 		traceOperatorStmtBuilder: traceOperatorStmtBuilder,
 		bucketCache:              bucketCache,
 	}
@@ -574,21 +577,35 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtypes.TimeRange) qbtypes.Query {
 	switch qt := originalQuery.(type) {
 	case *promqlQuery:
-		return newPromqlQuery(q.logger, q.promEngine, qt.query, timeRange, qt.requestType, qt.vars)
+		queryCopy := qt.query.Copy()
+		return newPromqlQuery(q.logger, q.promEngine, queryCopy, timeRange, qt.requestType, qt.vars)
+
 	case *chSQLQuery:
-		return newchSQLQuery(q.logger, q.telemetryStore, qt.query, qt.args, timeRange, qt.kind, qt.vars)
+		queryCopy := qt.query.Copy()
+		argsCopy := make([]any, len(qt.args))
+		copy(argsCopy, qt.args)
+		return newchSQLQuery(q.logger, q.telemetryStore, queryCopy, argsCopy, timeRange, qt.kind, qt.vars)
+
 	case *builderQuery[qbtypes.TraceAggregation]:
-		qt.spec.ShiftBy = extractShiftFromBuilderQuery(qt.spec)
-		adjustedTimeRange := adjustTimeRangeForShift(qt.spec, timeRange, qt.kind)
-		return newBuilderQuery(q.telemetryStore, q.traceStmtBuilder, qt.spec, adjustedTimeRange, qt.kind, qt.variables)
+		specCopy := qt.spec.Copy()
+		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
+		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
+		return newBuilderQuery(q.telemetryStore, q.traceStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
+
 	case *builderQuery[qbtypes.LogAggregation]:
-		qt.spec.ShiftBy = extractShiftFromBuilderQuery(qt.spec)
-		adjustedTimeRange := adjustTimeRangeForShift(qt.spec, timeRange, qt.kind)
-		return newBuilderQuery(q.telemetryStore, q.logStmtBuilder, qt.spec, adjustedTimeRange, qt.kind, qt.variables)
+		specCopy := qt.spec.Copy()
+		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
+		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
+		return newBuilderQuery(q.telemetryStore, q.logStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
+
 	case *builderQuery[qbtypes.MetricAggregation]:
-		qt.spec.ShiftBy = extractShiftFromBuilderQuery(qt.spec)
-		adjustedTimeRange := adjustTimeRangeForShift(qt.spec, timeRange, qt.kind)
-		return newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, qt.spec, adjustedTimeRange, qt.kind, qt.variables)
+		specCopy := qt.spec.Copy()
+		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
+		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
+		if qt.spec.Source == telemetrytypes.SourceMeter {
+			return newBuilderQuery(q.telemetryStore, q.meterStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
+		}
+		return newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
 	case *traceOperatorQuery:
 		return &traceOperatorQuery{
 			telemetryStore: q.telemetryStore,
