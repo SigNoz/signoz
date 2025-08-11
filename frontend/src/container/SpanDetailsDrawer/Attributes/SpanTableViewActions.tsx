@@ -8,9 +8,11 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { SpanDataType } from './SpanTableView';
 
+type FilterOperator = '=' | '!=';
+
 interface SpanTableViewActionsProps {
 	record: SpanDataType;
-	onAddToQuery?: (key: string, value: string, operator: string) => void;
+	onAddToQuery?: (key: string, value: string, operator: FilterOperator) => void;
 	onGroupByAttribute?: (fieldKey: string) => void;
 	onCopyFieldName?: (fieldName: string) => void;
 	onCopyFieldValue?: (fieldValue: string) => void;
@@ -28,33 +30,34 @@ export default function SpanTableViewActions({
 	const [isFilterOutLoading, setIsFilterOutLoading] = useState<boolean>(false);
 
 	const textToCopy = useMemo(() => {
-		let text = record.value;
-		try {
-			text = text.replace(/^"|"$/g, '');
-		} catch (error) {
-			console.error(
-				'Failed to remove starting and ending quotes from the value',
-				error,
-			);
-		}
-		return text;
+		const str = record.value == null ? '' : String(record.value);
+		// Remove surrounding double-quotes only (e.g., JSON-encoded string values)
+		return str.replace(/^"|"$/g, '');
 	}, [record.value]);
 
-	const handleFilterIn = useCallback((): void => {
-		if (onAddToQuery) {
-			setIsFilterInLoading(true);
-			onAddToQuery(record.field, record.value, '=');
-			setTimeout(() => setIsFilterInLoading(false), 1000);
+	const handleFilterIn = useCallback(async (): Promise<void> => {
+		if (!onAddToQuery || isFilterInLoading) return;
+		setIsFilterInLoading(true);
+		try {
+			await Promise.resolve(
+				onAddToQuery(record.field, record.value, '=' as const),
+			);
+		} finally {
+			setIsFilterInLoading(false);
 		}
-	}, [onAddToQuery, record.field, record.value]);
+	}, [onAddToQuery, record.field, record.value, isFilterInLoading]);
 
-	const handleFilterOut = useCallback((): void => {
-		if (onAddToQuery) {
-			setIsFilterOutLoading(true);
-			onAddToQuery(record.field, record.value, '!=');
-			setTimeout(() => setIsFilterOutLoading(false), 1000);
+	const handleFilterOut = useCallback(async (): Promise<void> => {
+		if (!onAddToQuery || isFilterOutLoading) return;
+		setIsFilterOutLoading(true);
+		try {
+			await Promise.resolve(
+				onAddToQuery(record.field, record.value, '!=' as const),
+			);
+		} finally {
+			setIsFilterOutLoading(false);
 		}
-	}, [onAddToQuery, record.field, record.value]);
+	}, [onAddToQuery, record.field, record.value, isFilterOutLoading]);
 
 	const handleGroupBy = useCallback((): void => {
 		if (onGroupByAttribute) {
@@ -72,10 +75,10 @@ export default function SpanTableViewActions({
 
 	const handleCopyFieldValue = useCallback((): void => {
 		if (onCopyFieldValue) {
-			onCopyFieldValue(record.value);
+			onCopyFieldValue(textToCopy);
 		}
 		setIsOpen(false);
-	}, [onCopyFieldValue, record.value]);
+	}, [onCopyFieldValue, textToCopy]);
 
 	const renderFieldContent = useCallback(
 		(): JSX.Element => (
@@ -131,6 +134,8 @@ export default function SpanTableViewActions({
 				<Tooltip title="Filter for value">
 					<Button
 						className="filter-btn periscope-btn"
+						aria-label="Filter for value"
+						disabled={isFilterInLoading}
 						icon={
 							isFilterInLoading ? (
 								<Spin size="small" />
@@ -144,6 +149,8 @@ export default function SpanTableViewActions({
 				<Tooltip title="Filter out value">
 					<Button
 						className="filter-btn periscope-btn"
+						aria-label="Filter out value"
+						disabled={isFilterOutLoading}
 						icon={
 							isFilterOutLoading ? (
 								<Spin size="small" />

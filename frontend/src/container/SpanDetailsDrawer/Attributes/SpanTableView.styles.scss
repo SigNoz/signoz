@@ -29,7 +29,7 @@
 
 			.ant-btn {
 				&:hover {
-					background-color: none !important;
+					background-color: transparent !important;
 				}
 			}
 		}
@@ -56,10 +56,10 @@
 					box-shadow: none;
 					border-radius: 2px;
 					background: var(--bg-slate-400);
-					padding: 2px 3px;
+					padding: 4px;
 					gap: 3px;
-					height: 18px;
-					width: 20px;
+					height: 24px;
+					width: 24px;
 				}
 			}
 		}
