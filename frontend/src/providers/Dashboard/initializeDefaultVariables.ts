@@ -1,3 +1,4 @@
+import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { commaValuesParser } from '../../lib/dashbaordVariables/customCommaValuesParser';
@@ -18,28 +19,29 @@ export const initializeDefaultVariables = (
 	variables: Record<string, IDashboardVariable>,
 	getUrlVariables: () => UrlVariables | undefined,
 	updateUrlVariable: (
-		id: string,
+		name: string,
 		selectedValue: IDashboardVariable['selectedValue'],
-		allSelected: boolean,
 	) => void,
 ): void => {
 	if (!variables) return;
 
 	Object.values(variables).forEach((variable) => {
-		const { id, name } = variable;
+		const { id, name, allSelected, showALLOption } = variable;
 		const urlVariables = getUrlVariables();
 
 		// Check if either id or name is available in URL variables
 		const existsInUrl =
 			(id && urlVariables?.[id]) || (name && urlVariables?.[name]);
 
+		const value =
+			variable.type === 'CUSTOM'
+				? commaValuesParser(variable?.customValue || '')
+				: variable?.selectedValue || variable?.defaultValue;
+
 		if (!existsInUrl) {
 			updateUrlVariable(
-				id,
-				variable.type === 'CUSTOM'
-					? commaValuesParser(variable?.customValue || '')
-					: variable?.selectedValue || variable?.defaultValue,
-				variable.allSelected || false,
+				name || id,
+				allSelected && showALLOption ? ALL_SELECTED_VALUE : value,
 			);
 		}
 	});
