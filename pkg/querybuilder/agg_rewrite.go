@@ -3,10 +3,12 @@ package querybuilder
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	chparser "github.com/AfterShip/clickhouse-sql-parser/parser"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -14,6 +16,7 @@ import (
 )
 
 type aggExprRewriter struct {
+	logger           *slog.Logger
 	fullTextColumn   *telemetrytypes.TelemetryFieldKey
 	fieldMapper      qbtypes.FieldMapper
 	conditionBuilder qbtypes.ConditionBuilder
@@ -24,13 +27,17 @@ type aggExprRewriter struct {
 var _ qbtypes.AggExprRewriter = (*aggExprRewriter)(nil)
 
 func NewAggExprRewriter(
+	settings factory.ProviderSettings,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 	jsonBodyPrefix string,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *aggExprRewriter {
+	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querybuilder/agg_rewrite")
+
 	return &aggExprRewriter{
+		logger:           set.Logger(),
 		fullTextColumn:   fullTextColumn,
 		fieldMapper:      fieldMapper,
 		conditionBuilder: conditionBuilder,
@@ -70,7 +77,7 @@ func (r *aggExprRewriter) Rewrite(
 		return "", nil, errors.NewInternalf(errors.CodeInternal, "no SELECT items for %q", expr)
 	}
 
-	visitor := newExprVisitor(keys,
+	visitor := newExprVisitor(r.logger, keys,
 		r.fullTextColumn,
 		r.fieldMapper,
 		r.conditionBuilder,
@@ -117,6 +124,7 @@ func (r *aggExprRewriter) RewriteMulti(
 // exprVisitor walks FunctionExpr nodes and applies the mappers.
 type exprVisitor struct {
 	chparser.DefaultASTVisitor
+	logger           *slog.Logger
 	fieldKeys        map[string][]*telemetrytypes.TelemetryFieldKey
 	fullTextColumn   *telemetrytypes.TelemetryFieldKey
 	fieldMapper      qbtypes.FieldMapper
@@ -129,6 +137,7 @@ type exprVisitor struct {
 }
 
 func newExprVisitor(
+	logger *slog.Logger,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	fieldMapper qbtypes.FieldMapper,
@@ -137,6 +146,7 @@ func newExprVisitor(
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *exprVisitor {
 	return &exprVisitor{
+		logger:           logger,
 		fieldKeys:        fieldKeys,
 		fullTextColumn:   fullTextColumn,
 		fieldMapper:      fieldMapper,
@@ -183,6 +193,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		whereClause, err := PrepareWhereClause(
 			origPred,
 			FilterExprVisitorOpts{
+				Logger:           v.logger,
 				FieldKeys:        v.fieldKeys,
 				FieldMapper:      v.fieldMapper,
 				ConditionBuilder: v.conditionBuilder,
