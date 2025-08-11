@@ -223,7 +223,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 
 	// Get key selectors for the query
 	keySelectors := getKeySelectors(*query)
-	keys, err := b.stmtBuilder.metadataStore.GetKeysMulti(b.ctx, keySelectors)
+	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(b.ctx, keySelectors)
 	if err != nil {
 		return "", err
 	}
@@ -243,7 +243,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 
 	// Add filter conditions if present
 	if query.Filter != nil && query.Filter.Expression != "" {
-		filterWhereClause, _, err := querybuilder.PrepareWhereClause(
+		filterWhereClause, err := querybuilder.PrepareWhereClause(
 			query.Filter.Expression,
 			querybuilder.FilterExprVisitorOpts{
 				FieldMapper:      b.stmtBuilder.fm,
@@ -255,7 +255,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 			return "", err
 		}
 		if filterWhereClause != nil {
-			sb.AddWhereClause(filterWhereClause)
+			sb.AddWhereClause(filterWhereClause.WhereClause)
 		}
 	}
 
@@ -515,7 +515,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*q
 
 	// Get keys for field mapping
 	keySelectors := b.getKeySelectors()
-	keys, err := b.stmtBuilder.metadataStore.GetKeysMulti(b.ctx, keySelectors)
+	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(b.ctx, keySelectors)
 	if err != nil {
 		return nil, err
 	}
@@ -600,7 +600,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(selectFromCTE string) (*qbtyp
 
 	// Get keys for field mapping
 	keySelectors := b.getKeySelectors()
-	keys, err := b.stmtBuilder.metadataStore.GetKeysMulti(b.ctx, keySelectors)
+	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(b.ctx, keySelectors)
 	if err != nil {
 		return nil, err
 	}

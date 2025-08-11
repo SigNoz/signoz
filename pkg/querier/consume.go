@@ -301,7 +301,7 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.RawData, error) 
 		}
 
 		rr := qbtypes.RawRow{
-			Data: make(map[string]*any, colCnt),
+			Data: make(map[string]any, colCnt),
 		}
 
 		for i, cellPtr := range scan {
