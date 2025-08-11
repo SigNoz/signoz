@@ -1,5 +1,4 @@
 import { cloneDeep } from 'lodash-es';
-import { useMemo } from 'react';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import {
 	IBuilderQuery,
@@ -16,7 +15,8 @@ const updateQueryFilters = (
 	...queryData,
 	filters: {
 		...queryData.filters,
-		items: [...queryData.filters.items, ...filters],
+		items: [...(queryData.filters?.items || []), ...filters],
+		op: queryData.filters?.op || 'AND',
 	},
 });
 
@@ -46,7 +46,7 @@ const updateSingleWidget = (
 };
 
 /**
- * A hook that takes a dashboard configuration and a list of tag filters
+ * A function that takes a dashboard configuration and a list of tag filters
  * and returns an updated dashboard with the filters appended to widget queries.
  *
  * @param dashboard The dashboard configuration
@@ -54,35 +54,34 @@ const updateSingleWidget = (
  * @param widgetIds Optional array of widget IDs to filter which widgets get updated
  * @returns Updated dashboard configuration with filters applied
  */
-export const useAddTagFiltersToDashboard = (
+export const addTagFiltersToDashboard = (
 	dashboard: Dashboard | undefined,
 	filters: TagFilterItem[],
 	widgetIds?: string[],
-): Dashboard | undefined =>
-	useMemo(() => {
-		if (!dashboard || !filters.length) {
-			return dashboard;
-		}
+): Dashboard | undefined => {
+	if (!dashboard || !filters.length) {
+		return dashboard;
+	}
 
-		// Create a deep copy to avoid mutating the original dashboard
-		const updatedDashboard = cloneDeep(dashboard);
+	// Create a deep copy to avoid mutating the original dashboard
+	const updatedDashboard = cloneDeep(dashboard);
 
-		// Process each widget to add filters
-		if (updatedDashboard.data.widgets) {
-			updatedDashboard.data.widgets = updatedDashboard.data.widgets.map(
-				(widget) => {
-					// Only apply to widgets with 'query' property
-					if ('query' in widget) {
-						// If widgetIds is provided, only update widgets with matching IDs
-						if (widgetIds && !widgetIds.includes(widget.id)) {
-							return widget;
-						}
-						return updateSingleWidget(widget as Widgets, filters);
+	// Process each widget to add filters
+	if (updatedDashboard.data.widgets) {
+		updatedDashboard.data.widgets = updatedDashboard.data.widgets.map(
+			(widget) => {
+				// Only apply to widgets with 'query' property
+				if ('query' in widget) {
+					// If widgetIds is provided, only update widgets with matching IDs
+					if (widgetIds && !widgetIds.includes(widget.id)) {
+						return widget;
 					}
-					return widget;
-				},
-			);
-		}
+					return updateSingleWidget(widget as Widgets, filters);
+				}
+				return widget;
+			},
+		);
+	}
 
-		return updatedDashboard;
-	}, [dashboard, filters, widgetIds]);
+	return updatedDashboard;
+};
