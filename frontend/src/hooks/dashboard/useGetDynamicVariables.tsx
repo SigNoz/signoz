@@ -1,4 +1,4 @@
-import getDashboard from 'api/dashboard/get';
+import getDashboard from 'api/v1/dashboards/id/get';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useMemo } from 'react';
@@ -29,21 +29,21 @@ export const useGetDynamicVariables = (
 	const dashboardId = dashboardIdFromProps || dashboardIdFromDashboard;
 
 	const { data: dashboard, isLoading, isError, refetch } = useQuery({
-		queryFn: () => getDashboard({ uuid: dashboardId }),
+		queryFn: () => getDashboard({ id: dashboardId }),
 		queryKey: [REACT_QUERY_KEY.DASHBOARD_BY_ID, dashboardId],
 	});
 
 	const dynamicVariables = useMemo(() => {
-		if (!dashboard?.data?.variables) return [];
+		if (!dashboard?.data?.data?.variables) return [];
 
 		const variables: DynamicVariable[] = [];
 
-		Object.entries(dashboard.data.variables).forEach(([, variable]) => {
+		Object.entries(dashboard.data?.data?.variables).forEach(([, variable]) => {
 			if (variable.type === 'DYNAMIC') {
 				variables.push({
 					...variable,
-					dashboardName: dashboard.data.title,
-					dashboardId: dashboard.uuid,
+					dashboardName: dashboard.data?.data?.title,
+					dashboardId: dashboard?.data?.id,
 				});
 			}
 		});
