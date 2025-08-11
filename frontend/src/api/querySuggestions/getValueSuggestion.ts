@@ -17,6 +17,6 @@ export const getValueSuggestions = (
 	const encodedSource = encodeURIComponent(signalSource || '');
 
 	return axios.get(
-		`/fields/values?signal=${encodedSignal}&name=${encodedKey}&searchText=${encodedSearchText}&metricName=${encodedMetricName}`,
+		`/fields/values?signal=${encodedSignal}&name=${encodedKey}&searchText=${encodedSearchText}&metricName=${encodedMetricName}&source=${encodedSource}`,
 	);
 };
