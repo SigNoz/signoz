@@ -790,16 +790,35 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	}
 
 	if len(fieldKeysForName) > 1 && !v.keysWithWarnings[keyName] {
-		v.logger.Warn("ambiguous key", "field_key_name", fieldKey.Name)
-		v.mainWarnURL = "https://signoz.io/docs/userguide/field-context-data-types/"
-		// this is warning state, we must have a unambiguous key
-		v.warnings = append(v.warnings, fmt.Sprintf(
-			"key `%s` is ambiguous, found %d different combinations of field context / data type: %v",
+		warnMsg := fmt.Sprintf(
+			"Key `%s` is ambiguous, found %d different combinations of field context / data type: %v.",
 			fieldKey.Name,
 			len(fieldKeysForName),
 			fieldKeysForName,
-		))
+		)
+		mixedFieldContext := map[string]bool{}
+		for _, item := range fieldKeysForName {
+			mixedFieldContext[item.FieldContext.StringValue()] = true
+		}
+
+		if mixedFieldContext[telemetrytypes.FieldContextResource.StringValue()] &&
+			mixedFieldContext[telemetrytypes.FieldContextAttribute.StringValue()] {
+			filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
+			for _, item := range fieldKeysForName {
+				if item.FieldContext != telemetrytypes.FieldContextResource {
+					continue
+				}
+				filteredKeys = append(filteredKeys, item)
+			}
+			fieldKeysForName = filteredKeys
+			warnMsg += " " + "Using `resource` context by default. To query attributes explicitly, " +
+				fmt.Sprintf("use the fully qualified name (e.g., 'attribute.%s')", fieldKey.Name)
+		}
+		v.mainWarnURL = "https://signoz.io/docs/userguide/field-context-data-types/"
+		// this is warning state, we must have a unambiguous key
+		v.warnings = append(v.warnings, warnMsg)
 		v.keysWithWarnings[keyName] = true
+		v.logger.Warn("ambiguous key", "field_key_name", fieldKey.Name) //nolint:sloglint
 	}
 
 	return fieldKeysForName
