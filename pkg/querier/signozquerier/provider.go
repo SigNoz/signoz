@@ -161,7 +161,7 @@ func newProvider(
 		logStmtBuilder,
 		metricStmtBuilder,
 		meterStmtBuilder,
-		bucketCache,
 		traceOperatorStmtBuilder,
+		bucketCache,
 	), nil
 }
