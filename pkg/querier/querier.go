@@ -24,16 +24,15 @@ import (
 )
 
 type querier struct {
-	logger                   *slog.Logger
-	telemetryStore           telemetrystore.TelemetryStore
-	metadataStore            telemetrytypes.MetadataStore
-	promEngine               prometheus.Prometheus
-	traceStmtBuilder         qbtypes.StatementBuilder[qbtypes.TraceAggregation]
-	logStmtBuilder           qbtypes.StatementBuilder[qbtypes.LogAggregation]
-	metricStmtBuilder        qbtypes.StatementBuilder[qbtypes.MetricAggregation]
-	meterStmtBuilder         qbtypes.StatementBuilder[qbtypes.MetricAggregation]
-	bucketCache              BucketCache
-	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder
+	logger            *slog.Logger
+	telemetryStore    telemetrystore.TelemetryStore
+	metadataStore     telemetrytypes.MetadataStore
+	promEngine        prometheus.Prometheus
+	traceStmtBuilder  qbtypes.StatementBuilder[qbtypes.TraceAggregation]
+	logStmtBuilder    qbtypes.StatementBuilder[qbtypes.LogAggregation]
+	metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation]
+	meterStmtBuilder  qbtypes.StatementBuilder[qbtypes.MetricAggregation]
+	bucketCache       BucketCache
 }
 
 var _ Querier = (*querier)(nil)
@@ -48,20 +47,18 @@ func New(
 	metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
 	meterStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
 	bucketCache BucketCache,
-	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder,
 ) *querier {
 	querierSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier")
 	return &querier{
-		logger:                   querierSettings.Logger(),
-		telemetryStore:           telemetryStore,
-		metadataStore:            metadataStore,
-		promEngine:               promEngine,
-		traceStmtBuilder:         traceStmtBuilder,
-		logStmtBuilder:           logStmtBuilder,
-		metricStmtBuilder:        metricStmtBuilder,
-		meterStmtBuilder:         meterStmtBuilder,
-		bucketCache:              bucketCache,
-		traceOperatorStmtBuilder: traceOperatorStmtBuilder,
+		logger:            querierSettings.Logger(),
+		telemetryStore:    telemetryStore,
+		metadataStore:     metadataStore,
+		promEngine:        promEngine,
+		traceStmtBuilder:  traceStmtBuilder,
+		logStmtBuilder:    logStmtBuilder,
+		metricStmtBuilder: metricStmtBuilder,
+		meterStmtBuilder:  meterStmtBuilder,
+		bucketCache:       bucketCache,
 	}
 }
 
@@ -606,6 +603,7 @@ func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtyp
 			return newBuilderQuery(q.telemetryStore, q.meterStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
 		}
 		return newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
+
 	default:
 		return nil
 	}
