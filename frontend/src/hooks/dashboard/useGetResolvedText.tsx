@@ -82,12 +82,11 @@ function useGetResolvedText({
 
 	const combinedPattern = useMemo(() => {
 		const escapedMatcher = matcher.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-		const varNamePattern = '[a-zA-Z_\\-][a-zA-Z0-9_.\\-]*';
 		const variablePatterns = [
-			`\\{\\{\\s*?\\.(${varNamePattern})\\s*?\\}\\}`, // {{.var}}
-			`\\{\\{\\s*(${varNamePattern})\\s*\\}\\}`, // {{var}}
-			`${escapedMatcher}(${varNamePattern})`, // matcher + var.name
-			`\\[\\[\\s*(${varNamePattern})\\s*\\]\\]`, // [[var]]
+			`\\{\\{\\s*?\\.([^\\s}]+)\\s*?\\}\\}`, // {{.var}}
+			`\\{\\{\\s*([^\\s}]+)\\s*\\}\\}`, // {{var}}
+			`${escapedMatcher}([^\\s]+)`, // matcher + var.name
+			`\\[\\[\\s*([^\\s\\]]+)\\s*\\]\\]`, // [[var]]
 		];
 		return new RegExp(variablePatterns.join('|'), 'g');
 	}, [matcher]);
