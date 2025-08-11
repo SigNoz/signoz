@@ -149,9 +149,9 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		"tagType AS tag_type",
 		"dataType AS tag_data_type",
 		`CASE
-			WHEN tagType = 'spanfield' THEN 1
+			// WHEN tagType = 'spanfield' THEN 1
 			WHEN tagType = 'resource' THEN 2
-			WHEN tagType = 'scope' THEN 3
+			// WHEN tagType = 'scope' THEN 3
 			WHEN tagType = 'tag' THEN 4
 			ELSE 5
 		END as priority`,

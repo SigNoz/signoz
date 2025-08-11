@@ -68,6 +68,9 @@ func GetKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation])
 	for idx := range keySelectors {
 		keySelectors[idx].Signal = telemetrytypes.SignalMetrics
 		keySelectors[idx].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
+		keySelectors[idx].MetricContext = &telemetrytypes.MetricContext{
+			MetricName: query.Aggregations[0].MetricName,
+		}
 	}
 	return keySelectors
 }
