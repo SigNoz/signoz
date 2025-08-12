@@ -3,6 +3,7 @@ package querybuilder
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 
@@ -20,6 +21,7 @@ var searchTroubleshootingGuideURL = "https://signoz.io/docs/userguide/search-tro
 // filterExpressionVisitor implements the FilterQueryVisitor interface
 // to convert the parsed filter expressions into ClickHouse WHERE clause
 type filterExpressionVisitor struct {
+	logger             *slog.Logger
 	fieldMapper        qbtypes.FieldMapper
 	conditionBuilder   qbtypes.ConditionBuilder
 	warnings           []string
@@ -41,6 +43,7 @@ type filterExpressionVisitor struct {
 }
 
 type FilterExprVisitorOpts struct {
+	Logger             *slog.Logger
 	FieldMapper        qbtypes.FieldMapper
 	ConditionBuilder   qbtypes.ConditionBuilder
 	FieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
@@ -58,6 +61,7 @@ type FilterExprVisitorOpts struct {
 // newFilterExpressionVisitor creates a new filterExpressionVisitor
 func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVisitor {
 	return &filterExpressionVisitor{
+		logger:             opts.Logger,
 		fieldMapper:        opts.FieldMapper,
 		conditionBuilder:   opts.ConditionBuilder,
 		fieldKeys:          opts.FieldKeys,
@@ -786,15 +790,35 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	}
 
 	if len(fieldKeysForName) > 1 && !v.keysWithWarnings[keyName] {
-		v.mainWarnURL = "https://signoz.io/docs/userguide/field-context-data-types/"
-		// this is warning state, we must have a unambiguous key
-		v.warnings = append(v.warnings, fmt.Sprintf(
-			"key `%s` is ambiguous, found %d different combinations of field context / data type: %v",
+		warnMsg := fmt.Sprintf(
+			"Key `%s` is ambiguous, found %d different combinations of field context / data type: %v.",
 			fieldKey.Name,
 			len(fieldKeysForName),
 			fieldKeysForName,
-		))
+		)
+		mixedFieldContext := map[string]bool{}
+		for _, item := range fieldKeysForName {
+			mixedFieldContext[item.FieldContext.StringValue()] = true
+		}
+
+		if mixedFieldContext[telemetrytypes.FieldContextResource.StringValue()] &&
+			mixedFieldContext[telemetrytypes.FieldContextAttribute.StringValue()] {
+			filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
+			for _, item := range fieldKeysForName {
+				if item.FieldContext != telemetrytypes.FieldContextResource {
+					continue
+				}
+				filteredKeys = append(filteredKeys, item)
+			}
+			fieldKeysForName = filteredKeys
+			warnMsg += " " + "Using `resource` context by default. To query attributes explicitly, " +
+				fmt.Sprintf("use the fully qualified name (e.g., 'attribute.%s')", fieldKey.Name)
+		}
+		v.mainWarnURL = "https://signoz.io/docs/userguide/field-context-data-types/"
+		// this is warning state, we must have a unambiguous key
+		v.warnings = append(v.warnings, warnMsg)
 		v.keysWithWarnings[keyName] = true
+		v.logger.Warn("ambiguous key", "field_key_name", fieldKey.Name) //nolint:sloglint
 	}
 
 	return fieldKeysForName
