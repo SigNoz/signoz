@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
@@ -76,6 +77,18 @@ func TestConditionBuilder(t *testing.T) {
 			value:        "banana",
 			expected:     "LOWER(simpleJSONExtractString(labels, 'k8s.namespace.name')) LIKE LOWER(?) AND labels LIKE ? AND LOWER(labels) LIKE LOWER(?)",
 			expectedArgs: []any{"%banana%", "%k8s.namespace.name%", `%k8s.namespace.name%banana%`},
+		},
+		{
+			name: "Contains operator - string attribute number value",
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:          "company.id",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			op:           qbtypes.FilterOperatorContains,
+			value:        521509198310,
+			expected:     "LOWER(simpleJSONExtractString(labels, 'company.id')) LIKE LOWER(?) AND labels LIKE ? AND LOWER(labels) LIKE LOWER(?)",
+			expectedArgs: []any{"%521509198310%", "%company.id%", `%company.id%521509198310%`},
 		},
 		{
 			name: "string_not_contains",
