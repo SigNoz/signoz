@@ -1,30 +1,30 @@
-import { Color } from '@signozhq/design-tokens';
 import { Button, Popover, Spin, Tooltip } from 'antd';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
-import cx from 'classnames';
-import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { ArrowDownToDot, ArrowUpFromDot, Copy, Ellipsis } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { SpanDataType } from './SpanTableView';
-
 type FilterOperator = '=' | '!=';
 
-interface SpanTableViewActionsProps {
-	record: SpanDataType;
+interface AttributeRecord {
+	field: string;
+	value: string;
+}
+
+interface AttributeActionsProps {
+	record: AttributeRecord;
 	onAddToQuery?: (key: string, value: string, operator: FilterOperator) => void;
 	onGroupByAttribute?: (fieldKey: string) => void;
 	onCopyFieldName?: (fieldName: string) => void;
 	onCopyFieldValue?: (fieldValue: string) => void;
 }
 
-export default function SpanTableViewActions({
+export default function AttributeActions({
 	record,
 	onAddToQuery,
 	onGroupByAttribute,
 	onCopyFieldName,
 	onCopyFieldValue,
-}: SpanTableViewActionsProps): JSX.Element {
+}: AttributeActionsProps): JSX.Element {
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [isFilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
 	const [isFilterOutLoading, setIsFilterOutLoading] = useState<boolean>(false);
@@ -80,23 +80,8 @@ export default function SpanTableViewActions({
 		setIsOpen(false);
 	}, [onCopyFieldValue, textToCopy]);
 
-	const renderFieldContent = useCallback(
-		(): JSX.Element => (
-			<span
-				style={{
-					color: Color.BG_SIENNA_400,
-					whiteSpace: 'pre-wrap',
-					wordBreak: 'break-word',
-				}}
-			>
-				{record.value}
-			</span>
-		),
-		[record.value],
-	);
-
 	const moreActionsContent = (
-		<div className="span-table-actions-menu">
+		<div className="attribute-actions-menu">
 			<Button
 				className="group-by-clause"
 				type="text"
@@ -126,61 +111,56 @@ export default function SpanTableViewActions({
 	);
 
 	return (
-		<div className={cx('value-field', isOpen ? 'open-popover' : '')}>
-			<CopyClipboardHOC entityKey={record.field} textToCopy={textToCopy}>
-				{renderFieldContent()}
-			</CopyClipboardHOC>
-			<span className="action-btn">
-				<Tooltip title="Filter for value">
-					<Button
-						className="filter-btn periscope-btn"
-						aria-label="Filter for value"
-						disabled={isFilterInLoading}
-						icon={
-							isFilterInLoading ? (
-								<Spin size="small" />
-							) : (
-								<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
-							)
-						}
-						onClick={handleFilterIn}
-					/>
-				</Tooltip>
-				<Tooltip title="Filter out value">
-					<Button
-						className="filter-btn periscope-btn"
-						aria-label="Filter out value"
-						disabled={isFilterOutLoading}
-						icon={
-							isFilterOutLoading ? (
-								<Spin size="small" />
-							) : (
-								<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
-							)
-						}
-						onClick={handleFilterOut}
-					/>
-				</Tooltip>
-				<Popover
-					open={isOpen}
-					onOpenChange={setIsOpen}
-					arrow={false}
-					content={moreActionsContent}
-					rootClassName="span-table-view-actions-content"
-					trigger="hover"
-					placement="bottomLeft"
-				>
-					<Button
-						icon={<Ellipsis size={14} />}
-						className="filter-btn periscope-btn"
-					/>
-				</Popover>
-			</span>
+		<div className="action-btn">
+			<Tooltip title="Filter for value">
+				<Button
+					className="filter-btn periscope-btn"
+					aria-label="Filter for value"
+					disabled={isFilterInLoading}
+					icon={
+						isFilterInLoading ? (
+							<Spin size="small" />
+						) : (
+							<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
+						)
+					}
+					onClick={handleFilterIn}
+				/>
+			</Tooltip>
+			<Tooltip title="Filter out value">
+				<Button
+					className="filter-btn periscope-btn"
+					aria-label="Filter out value"
+					disabled={isFilterOutLoading}
+					icon={
+						isFilterOutLoading ? (
+							<Spin size="small" />
+						) : (
+							<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
+						)
+					}
+					onClick={handleFilterOut}
+				/>
+			</Tooltip>
+			<Popover
+				open={isOpen}
+				onOpenChange={setIsOpen}
+				arrow={false}
+				content={moreActionsContent}
+				rootClassName="attribute-actions-content"
+				trigger="hover"
+				placement="bottomLeft"
+			>
+				<Button
+					icon={<Ellipsis size={14} />}
+					className="filter-btn periscope-btn"
+				/>
+			</Popover>
 		</div>
 	);
 }
 
-SpanTableViewActions.defaultProps = {
+AttributeActions.defaultProps = {
 	onAddToQuery: undefined,
 	onGroupByAttribute: undefined,
 	onCopyFieldName: undefined,
