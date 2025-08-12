@@ -3,11 +3,18 @@ import './Attributes.styles.scss';
 import { Input, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { flattenObject } from 'container/LogDetailedView/utils';
-import { useMemo, useState } from 'react';
+import { usePinnedAttributes } from 'hooks/spanDetails/usePinnedAttributes';
+import { Pin } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import NoData from '../NoData/NoData';
 import AttributeActions from './AttributeActions';
+
+interface AttributeRecord {
+	field: string;
+	value: string;
+}
 
 interface IAttributesProps {
 	span: Span;
@@ -34,11 +41,38 @@ function Attributes(props: IAttributesProps): JSX.Element {
 		[span],
 	);
 
-	const datasource = Object.keys(flattenSpanData)
-		.filter((attribute) =>
-			attribute.toLowerCase().includes(fieldSearchInput.toLowerCase()),
-		)
-		.map((key) => ({ field: key, value: flattenSpanData[key] }));
+	const availableAttributes = useMemo(() => Object.keys(flattenSpanData), [
+		flattenSpanData,
+	]);
+
+	const { pinnedAttributes, togglePin } = usePinnedAttributes(
+		availableAttributes,
+	);
+
+	const sortPinnedAttributes = useCallback(
+		(data: AttributeRecord[]): AttributeRecord[] =>
+			data.sort((a, b) => {
+				const aIsPinned = pinnedAttributes[a.field];
+				const bIsPinned = pinnedAttributes[b.field];
+
+				if (aIsPinned && !bIsPinned) return -1;
+				if (!aIsPinned && bIsPinned) return 1;
+
+				// Within same pinning status, maintain alphabetical order
+				return a.field.localeCompare(b.field);
+			}),
+		[pinnedAttributes],
+	);
+
+	const datasource = useMemo(() => {
+		const filtered = Object.keys(flattenSpanData)
+			.filter((attribute) =>
+				attribute.toLowerCase().includes(fieldSearchInput.toLowerCase()),
+			)
+			.map((key) => ({ field: key, value: flattenSpanData[key] }));
+
+		return sortPinnedAttributes(filtered);
+	}, [flattenSpanData, fieldSearchInput, sortPinnedAttributes]);
 
 	return (
 		<div className="attributes-corner">
@@ -59,10 +93,18 @@ function Attributes(props: IAttributesProps): JSX.Element {
 				className={cx('attributes-container', isSearchVisible ? 'border-top' : '')}
 			>
 				{datasource.map((item) => (
-					<div className="item" key={`${item.field} + ${item.value}`}>
-						<Typography.Text className="item-key" ellipsis>
-							{item.field}
-						</Typography.Text>
+					<div
+						className={cx('item', { pinned: pinnedAttributes[item.field] })}
+						key={`${item.field} + ${item.value}`}
+					>
+						<div className="item-key-wrapper">
+							<Typography.Text className="item-key" ellipsis>
+								{item.field}
+							</Typography.Text>
+							{pinnedAttributes[item.field] && (
+								<Pin size={14} className="pin-icon" fill="currentColor" />
+							)}
+						</div>
 						<div className="value-wrapper">
 							<Tooltip title={item.value}>
 								<Typography.Text className="item-value" ellipsis>
@@ -71,10 +113,12 @@ function Attributes(props: IAttributesProps): JSX.Element {
 							</Tooltip>
 							<AttributeActions
 								record={item}
+								isPinned={pinnedAttributes[item.field]}
 								onAddToQuery={onAddToQuery}
 								onGroupByAttribute={onGroupByAttribute}
 								onCopyFieldName={onCopyFieldName}
 								onCopyFieldValue={onCopyFieldValue}
+								onTogglePin={togglePin}
 							/>
 						</div>
 					</div>
