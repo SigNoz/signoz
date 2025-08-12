@@ -242,8 +242,14 @@ describe('EntityEvents', () => {
 		});
 	});
 
-	it('should render events list', () => {
+	it('should render events list with data', () => {
 		renderEntityEvents();
+		expect(screen.getByText('Prev')).toBeInTheDocument();
+		expect(screen.getByText('Next')).toBeInTheDocument();
+		expect(screen.getByText('Test event 1')).toBeInTheDocument();
+		expect(screen.getByText('Test event 2')).toBeInTheDocument();
+		expect(screen.getByText('INFO')).toBeInTheDocument();
+		expect(screen.getByText('WARN')).toBeInTheDocument();
 	});
 
 	it('renders empty state when no events are found', () => {
