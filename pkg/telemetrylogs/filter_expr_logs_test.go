@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/require"
@@ -20,6 +21,7 @@ func TestFilterExprLogs(t *testing.T) {
 	keys := buildCompleteFieldKeyMap()
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
