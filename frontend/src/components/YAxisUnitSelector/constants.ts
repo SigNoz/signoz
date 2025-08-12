@@ -262,7 +262,7 @@ export const Y_AXIS_UNIT_NAMES: Record<UniversalYAxisUnit, string> = {
 // Splitting the universal y-axis units into categories
 export const Y_AXIS_CATEGORIES = [
 	{
-		name: 'Time ',
+		name: 'Time',
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.SECONDS],
@@ -295,7 +295,7 @@ export const Y_AXIS_CATEGORIES = [
 		],
 	},
 	{
-		name: 'Data ',
+		name: 'Data',
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.BYTES],
