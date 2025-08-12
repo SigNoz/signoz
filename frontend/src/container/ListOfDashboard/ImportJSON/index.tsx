@@ -84,6 +84,7 @@ function ImportJSON({
 			logEvent('Dashboard List: Import and next clicked', {});
 
 			const dashboardData = JSON.parse(editorValue) as DashboardData;
+			dashboardData.pinned = false;
 
 			if (dashboardData?.layout) {
 				dashboardData.layout = getUpdatedLayout(dashboardData.layout);
