@@ -8,6 +8,7 @@ export interface YAxisUnitSelectorProps {
 
 export enum UniversalYAxisUnit {
 	// Time
+	WEEKS = 'wk',
 	DAYS = 'd',
 	HOURS = 'h',
 	MINUTES = 'min',
@@ -23,6 +24,9 @@ export enum UniversalYAxisUnit {
 	GIGABYTES = 'GBy',
 	TERABYTES = 'TBy',
 	PETABYTES = 'PBy',
+	EXABYTES = 'EBy',
+	ZETTABYTES = 'ZBy',
+	YOTTABYTES = 'YBy',
 
 	// Data Rate
 	BYTES_SECOND = 'By/s',
@@ -31,6 +35,9 @@ export enum UniversalYAxisUnit {
 	GIGABYTES_SECOND = 'GBy/s',
 	TERABYTES_SECOND = 'TBy/s',
 	PETABYTES_SECOND = 'PBy/s',
+	EXABYTES_SECOND = 'EBy/s',
+	ZETTABYTES_SECOND = 'ZBy/s',
+	YOTTABYTES_SECOND = 'YBy/s',
 
 	// Bits
 	BITS = 'bit',
@@ -39,6 +46,9 @@ export enum UniversalYAxisUnit {
 	GIGABITS = 'Gbit',
 	TERABITS = 'Tbit',
 	PETABITS = 'Pbit',
+	EXABITS = 'Ebit',
+	ZETTABITS = 'Zbit',
+	YOTTABITS = 'Ybit',
 
 	// Bit Rate
 	BITS_SECOND = 'bit/s',
@@ -47,6 +57,9 @@ export enum UniversalYAxisUnit {
 	GIGABITS_SECOND = 'Gbit/s',
 	TERABITS_SECOND = 'Tbit/s',
 	PETABITS_SECOND = 'Pbit/s',
+	EXABITS_SECOND = 'Ebit/s',
+	ZETTABITS_SECOND = 'Zbit/s',
+	YOTTABITS_SECOND = 'Ybit/s',
 
 	// Count
 	COUNT = '{count}',
@@ -59,6 +72,7 @@ export enum UniversalYAxisUnit {
 
 	// Requests
 	REQUESTS_SECOND = '{req}/s',
+	REQUESTS_MINUTE = '{req}/min',
 
 	// Reads/Writes
 	READS_SECOND = '{read}/s',
@@ -108,6 +122,22 @@ export enum YAxisUnit {
 	UCUM_TERABYTES = 'TBy',
 	OPEN_METRICS_TERABYTES = 'terabytes',
 
+	AWS_PETABYTES = 'Petabytes',
+	UCUM_PETABYTES = 'PBy',
+	OPEN_METRICS_PETABYTES = 'petabytes',
+
+	AWS_EXABYTES = 'Exabytes',
+	UCUM_EXABYTES = 'EBy',
+	OPEN_METRICS_EXABYTES = 'exabytes',
+
+	AWS_ZETTABYTES = 'Zettabytes',
+	UCUM_ZETTABYTES = 'ZBy',
+	OPEN_METRICS_ZETTABYTES = 'zettabytes',
+
+	AWS_YOTTABYTES = 'Yottabytes',
+	UCUM_YOTTABYTES = 'YBy',
+	OPEN_METRICS_YOTTABYTES = 'yottabytes',
+
 	AWS_BYTES_SECOND = 'Bytes/Second',
 	UCUM_BYTES_SECOND = 'By/s',
 	OPEN_METRICS_BYTES_SECOND = 'bytes_per_second',
@@ -127,6 +157,22 @@ export enum YAxisUnit {
 	AWS_TERABYTES_SECOND = 'Terabytes/Second',
 	UCUM_TERABYTES_SECOND = 'TBy/s',
 	OPEN_METRICS_TERABYTES_SECOND = 'terabytes_per_second',
+
+	AWS_PETABYTES_SECOND = 'Petabytes/Second',
+	UCUM_PETABYTES_SECOND = 'PBy/s',
+	OPEN_METRICS_PETABYTES_SECOND = 'petabytes_per_second',
+
+	AWS_EXABYTES_SECOND = 'Exabytes/Second',
+	UCUM_EXABYTES_SECOND = 'EBy/s',
+	OPEN_METRICS_EXABYTES_SECOND = 'exabytes_per_second',
+
+	AWS_ZETTABYTES_SECOND = 'Zettabytes/Second',
+	UCUM_ZETTABYTES_SECOND = 'ZBy/s',
+	OPEN_METRICS_ZETTABYTES_SECOND = 'zettabytes_per_second',
+
+	AWS_YOTTABYTES_SECOND = 'Yottabytes/Second',
+	UCUM_YOTTABYTES_SECOND = 'YBy/s',
+	OPEN_METRICS_YOTTABYTES_SECOND = 'yottabytes_per_second',
 
 	AWS_BITS = 'Bits',
 	UCUM_BITS = 'bit',
@@ -148,7 +194,21 @@ export enum YAxisUnit {
 	UCUM_TERABITS = 'Tbit',
 	OPEN_METRICS_TERABITS = 'terabits',
 
+	AWS_PETABITS = 'Petabits',
 	UCUM_PETABITS = 'Pbit',
+	OPEN_METRICS_PETABITS = 'petabits',
+
+	AWS_EXABITS = 'Exabits',
+	UCUM_EXABITS = 'Ebit',
+	OPEN_METRICS_EXABITS = 'exabits',
+
+	AWS_ZETTABITS = 'Zettabits',
+	UCUM_ZETTABITS = 'Zbit',
+	OPEN_METRICS_ZETTABITS = 'zettabits',
+
+	AWS_YOTTABITS = 'Yottabits',
+	UCUM_YOTTABITS = 'Ybit',
+	OPEN_METRICS_YOTTABITS = 'yottabits',
 
 	AWS_BITS_SECOND = 'Bits/Second',
 	UCUM_BITS_SECOND = 'bit/s',
@@ -169,6 +229,22 @@ export enum YAxisUnit {
 	AWS_TERABITS_SECOND = 'Terabits/Second',
 	UCUM_TERABITS_SECOND = 'Tbit/s',
 	OPEN_METRICS_TERABITS_SECOND = 'terabits_per_second',
+
+	AWS_PETABITS_SECOND = 'Petabits/Second',
+	UCUM_PETABITS_SECOND = 'Pbit/s',
+	OPEN_METRICS_PETABITS_SECOND = 'petabits_per_second',
+
+	AWS_EXABITS_SECOND = 'Exabits/Second',
+	UCUM_EXABITS_SECOND = 'Ebit/s',
+	OPEN_METRICS_EXABITS_SECOND = 'exabits_per_second',
+
+	AWS_ZETTABITS_SECOND = 'Zettabits/Second',
+	UCUM_ZETTABITS_SECOND = 'Zbit/s',
+	OPEN_METRICS_ZETTABITS_SECOND = 'zettabits_per_second',
+
+	AWS_YOTTABITS_SECOND = 'Yottabits/Second',
+	UCUM_YOTTABITS_SECOND = 'Ybit/s',
+	OPEN_METRICS_YOTTABITS_SECOND = 'yottabits_per_second',
 
 	AWS_COUNT = 'Count',
 	UCUM_COUNT = '{count}',
@@ -197,6 +273,9 @@ export enum YAxisUnit {
 
 	UCUM_DAYS = 'd',
 	OPEN_METRICS_DAYS = 'days',
+
+	UCUM_WEEKS = 'wk',
+	OPEN_METRICS_WEEKS = 'weeks',
 
 	UCUM_KIBIBYTES = 'KiBy',
 	OPEN_METRICS_KIBIBYTES = 'kibibytes',
@@ -258,6 +337,9 @@ export enum YAxisUnit {
 	UCUM_REQUESTS_SECOND = '{requests}/s',
 	OPEN_METRICS_REQUESTS_SECOND = 'requests_per_second',
 
+	UCUM_REQUESTS_MINUTE = '{requests}/min',
+	OPEN_METRICS_REQUESTS_MINUTE = 'requests_per_minute',
+
 	UCUM_READS_SECOND = '{reads}/s',
 	OPEN_METRICS_READS_SECOND = 'reads_per_second',
 
@@ -278,9 +360,6 @@ export enum YAxisUnit {
 
 	UCUM_WRITES_MINUTE = '{writes}/min',
 	OPEN_METRICS_WRITES_MINUTE = 'writes_per_minute',
-
-	UCUM_PETABYTES = 'PBy',
-	OPEN_METRICS_PETABYTES = 'petabytes',
 
 	OPEN_METRICS_PERCENT_UNIT = 'percentunit',
 }
