@@ -10,7 +10,14 @@ import { getTraceToLogsQuery } from 'container/TraceDetail/SelectedSpanDetails/c
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { Anvil, Bookmark, Link2, PanelRight, Search } from 'lucide-react';
+import {
+	Anvil,
+	Bookmark,
+	FileText,
+	Link2,
+	PanelRight,
+	Search,
+} from 'lucide-react';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { formatEpochTimestamp } from 'utils/timeUtils';
@@ -18,6 +25,7 @@ import { formatEpochTimestamp } from 'utils/timeUtils';
 import Attributes from './Attributes/Attributes';
 import Events from './Events/Events';
 import LinkedSpans from './LinkedSpans/LinkedSpans';
+import SpanLogs from './SpanLogs/SpanLogs';
 
 const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
 interface ISpanDetailsDrawerProps {
@@ -98,6 +106,25 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 				),
 				key: 'linked-spans',
 				children: <LinkedSpans span={span} />,
+			},
+			{
+				label: (
+					<Button type="text" icon={<FileText size="14" />} className="logs-tab-btn">
+						<span className="tab-label">Logs</span>
+						<span className="count-badge">?</span>
+					</Button>
+				),
+				key: 'logs',
+				children: (
+					<SpanLogs
+						traceId={span.traceId}
+						spanId={span.spanId}
+						timeRange={{
+							startTime: startTime - FIVE_MINUTES_IN_MS,
+							endTime: traceEndTime + FIVE_MINUTES_IN_MS,
+						}}
+					/>
+				),
 			},
 		];
 	}
