@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 
@@ -27,6 +28,16 @@ func (c *conditionBuilder) conditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
+
+	switch operator {
+	case qbtypes.FilterOperatorContains,
+		qbtypes.FilterOperatorNotContains,
+		qbtypes.FilterOperatorILike,
+		qbtypes.FilterOperatorNotILike,
+		qbtypes.FilterOperatorLike,
+		qbtypes.FilterOperatorNotLike:
+		value = querybuilder.FormatValueForContains(value)
+	}
 
 	tblFieldName, err := c.fm.FieldFor(ctx, key)
 	if err != nil {

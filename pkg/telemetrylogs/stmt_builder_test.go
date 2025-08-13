@@ -27,6 +27,7 @@ func resourceFilterStmtBuilder() qbtypes.StatementBuilder[qbtypes.LogAggregation
 	mockMetadataStore.KeysMap = keysMap
 
 	return resourcefilter.NewLogResourceFilterStatementBuilder(
+		instrumentationtest.New().ToProviderSettings(),
 		fm,
 		cb,
 		mockMetadataStore,
@@ -119,7 +120,7 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -212,7 +213,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -321,7 +322,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 

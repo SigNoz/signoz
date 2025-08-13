@@ -141,6 +141,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	)
 	if query.Filter != nil && query.Filter.Expression != "" {
 		filterWhere, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			Logger:           b.logger,
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,
@@ -223,6 +224,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 
 	if query.Filter != nil && query.Filter.Expression != "" {
 		filterWhere, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			Logger:           b.logger,
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,
@@ -286,6 +288,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	)
 	if query.Filter != nil && query.Filter.Expression != "" {
 		filterWhere, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			Logger:           b.logger,
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,
