@@ -5,10 +5,10 @@ export const UniversalYAxisUnitMappings: Record<
 	UniversalYAxisUnit,
 	Set<YAxisUnit>
 > = {
-	[UniversalYAxisUnit.SECONDS]: new Set([
-		YAxisUnit.AWS_SECONDS,
-		YAxisUnit.UCUM_SECONDS,
-		YAxisUnit.OPEN_METRICS_SECONDS,
+	// Time
+	[UniversalYAxisUnit.NANOSECONDS]: new Set([
+		YAxisUnit.UCUM_NANOSECONDS,
+		YAxisUnit.OPEN_METRICS_NANOSECONDS,
 	]),
 	[UniversalYAxisUnit.MICROSECONDS]: new Set([
 		YAxisUnit.AWS_MICROSECONDS,
@@ -20,6 +20,26 @@ export const UniversalYAxisUnitMappings: Record<
 		YAxisUnit.UCUM_MILLISECONDS,
 		YAxisUnit.OPEN_METRICS_MILLISECONDS,
 	]),
+	[UniversalYAxisUnit.SECONDS]: new Set([
+		YAxisUnit.AWS_SECONDS,
+		YAxisUnit.UCUM_SECONDS,
+		YAxisUnit.OPEN_METRICS_SECONDS,
+	]),
+	[UniversalYAxisUnit.MINUTES]: new Set([
+		YAxisUnit.UCUM_MINUTES,
+		YAxisUnit.OPEN_METRICS_MINUTES,
+	]),
+	[UniversalYAxisUnit.HOURS]: new Set([
+		YAxisUnit.UCUM_HOURS,
+		YAxisUnit.OPEN_METRICS_HOURS,
+	]),
+	[UniversalYAxisUnit.DAYS]: new Set([
+		YAxisUnit.UCUM_DAYS,
+		YAxisUnit.OPEN_METRICS_DAYS,
+	]),
+	[UniversalYAxisUnit.WEEKS]: new Set([YAxisUnit.UCUM_WEEKS]),
+
+	// Data
 	[UniversalYAxisUnit.BYTES]: new Set([
 		YAxisUnit.AWS_BYTES,
 		YAxisUnit.UCUM_BYTES,
@@ -45,6 +65,28 @@ export const UniversalYAxisUnitMappings: Record<
 		YAxisUnit.UCUM_TERABYTES,
 		YAxisUnit.OPEN_METRICS_TERABYTES,
 	]),
+	[UniversalYAxisUnit.PETABYTES]: new Set([
+		YAxisUnit.AWS_PETABYTES,
+		YAxisUnit.UCUM_PEBIBYTES,
+		YAxisUnit.OPEN_METRICS_PEBIBYTES,
+	]),
+	[UniversalYAxisUnit.EXABYTES]: new Set([
+		YAxisUnit.AWS_EXABYTES,
+		YAxisUnit.UCUM_EXABYTES,
+		YAxisUnit.OPEN_METRICS_EXABYTES,
+	]),
+	[UniversalYAxisUnit.ZETTABYTES]: new Set([
+		YAxisUnit.AWS_ZETTABYTES,
+		YAxisUnit.UCUM_ZETTABYTES,
+		YAxisUnit.OPEN_METRICS_ZETTABYTES,
+	]),
+	[UniversalYAxisUnit.YOTTABYTES]: new Set([
+		YAxisUnit.AWS_YOTTABYTES,
+		YAxisUnit.UCUM_YOTTABYTES,
+		YAxisUnit.OPEN_METRICS_YOTTABYTES,
+	]),
+
+	// Data Rate
 	[UniversalYAxisUnit.BYTES_SECOND]: new Set([
 		YAxisUnit.AWS_BYTES_SECOND,
 		YAxisUnit.UCUM_BYTES_SECOND,
@@ -70,6 +112,28 @@ export const UniversalYAxisUnitMappings: Record<
 		YAxisUnit.UCUM_TERABYTES_SECOND,
 		YAxisUnit.OPEN_METRICS_TERABYTES_SECOND,
 	]),
+	[UniversalYAxisUnit.PETABYTES_SECOND]: new Set([
+		YAxisUnit.AWS_PETABYTES_SECOND,
+		YAxisUnit.UCUM_PETABYTES_SECOND,
+		YAxisUnit.OPEN_METRICS_PETABYTES_SECOND,
+	]),
+	[UniversalYAxisUnit.EXABYTES_SECOND]: new Set([
+		YAxisUnit.AWS_EXABYTES_SECOND,
+		YAxisUnit.UCUM_EXABYTES_SECOND,
+		YAxisUnit.OPEN_METRICS_EXABYTES_SECOND,
+	]),
+	[UniversalYAxisUnit.ZETTABYTES_SECOND]: new Set([
+		YAxisUnit.AWS_ZETTABYTES_SECOND,
+		YAxisUnit.UCUM_ZETTABYTES_SECOND,
+		YAxisUnit.OPEN_METRICS_ZETTABYTES_SECOND,
+	]),
+	[UniversalYAxisUnit.YOTTABYTES_SECOND]: new Set([
+		YAxisUnit.AWS_YOTTABYTES_SECOND,
+		YAxisUnit.UCUM_YOTTABYTES_SECOND,
+		YAxisUnit.OPEN_METRICS_YOTTABYTES_SECOND,
+	]),
+
+	// Bits
 	[UniversalYAxisUnit.BITS]: new Set([
 		YAxisUnit.AWS_BITS,
 		YAxisUnit.UCUM_BITS,
@@ -95,6 +159,28 @@ export const UniversalYAxisUnitMappings: Record<
 		YAxisUnit.UCUM_TERABITS,
 		YAxisUnit.OPEN_METRICS_TERABITS,
 	]),
+	[UniversalYAxisUnit.PETABITS]: new Set([
+		YAxisUnit.AWS_PETABITS,
+		YAxisUnit.UCUM_PETABITS,
+		YAxisUnit.OPEN_METRICS_PETABITS,
+	]),
+	[UniversalYAxisUnit.EXABITS]: new Set([
+		YAxisUnit.AWS_EXABITS,
+		YAxisUnit.UCUM_EXABITS,
+		YAxisUnit.OPEN_METRICS_EXABITS,
+	]),
+	[UniversalYAxisUnit.ZETTABITS]: new Set([
+		YAxisUnit.AWS_ZETTABITS,
+		YAxisUnit.UCUM_ZETTABITS,
+		YAxisUnit.OPEN_METRICS_ZETTABITS,
+	]),
+	[UniversalYAxisUnit.YOTTABITS]: new Set([
+		YAxisUnit.AWS_YOTTABITS,
+		YAxisUnit.UCUM_YOTTABITS,
+		YAxisUnit.OPEN_METRICS_YOTTABITS,
+	]),
+
+	// Bit Rate
 	[UniversalYAxisUnit.BITS_SECOND]: new Set([
 		YAxisUnit.AWS_BITS_SECOND,
 		YAxisUnit.UCUM_BITS_SECOND,
@@ -120,6 +206,28 @@ export const UniversalYAxisUnitMappings: Record<
 		YAxisUnit.UCUM_TERABITS_SECOND,
 		YAxisUnit.OPEN_METRICS_TERABITS_SECOND,
 	]),
+	[UniversalYAxisUnit.PETABITS_SECOND]: new Set([
+		YAxisUnit.AWS_PETABITS_SECOND,
+		YAxisUnit.UCUM_PETABITS_SECOND,
+		YAxisUnit.OPEN_METRICS_PETABITS_SECOND,
+	]),
+	[UniversalYAxisUnit.EXABITS_SECOND]: new Set([
+		YAxisUnit.AWS_EXABITS_SECOND,
+		YAxisUnit.UCUM_EXABITS_SECOND,
+		YAxisUnit.OPEN_METRICS_EXABITS_SECOND,
+	]),
+	[UniversalYAxisUnit.ZETTABITS_SECOND]: new Set([
+		YAxisUnit.AWS_ZETTABITS_SECOND,
+		YAxisUnit.UCUM_ZETTABITS_SECOND,
+		YAxisUnit.OPEN_METRICS_ZETTABITS_SECOND,
+	]),
+	[UniversalYAxisUnit.YOTTABITS_SECOND]: new Set([
+		YAxisUnit.AWS_YOTTABITS_SECOND,
+		YAxisUnit.UCUM_YOTTABITS_SECOND,
+		YAxisUnit.OPEN_METRICS_YOTTABITS_SECOND,
+	]),
+
+	// Count
 	[UniversalYAxisUnit.COUNT]: new Set([
 		YAxisUnit.AWS_COUNT,
 		YAxisUnit.UCUM_COUNT,
@@ -130,6 +238,8 @@ export const UniversalYAxisUnitMappings: Record<
 		YAxisUnit.UCUM_COUNT_SECOND,
 		YAxisUnit.OPEN_METRICS_COUNT_SECOND,
 	]),
+
+	// Percent
 	[UniversalYAxisUnit.PERCENT]: new Set([
 		YAxisUnit.AWS_PERCENT,
 		YAxisUnit.UCUM_PERCENT,
@@ -140,35 +250,11 @@ export const UniversalYAxisUnitMappings: Record<
 		YAxisUnit.UCUM_NONE,
 		YAxisUnit.OPEN_METRICS_NONE,
 	]),
-	[UniversalYAxisUnit.DAYS]: new Set([
-		YAxisUnit.UCUM_DAYS,
-		YAxisUnit.OPEN_METRICS_DAYS,
+	[UniversalYAxisUnit.PERCENT_UNIT]: new Set([
+		YAxisUnit.OPEN_METRICS_PERCENT_UNIT,
 	]),
-	[UniversalYAxisUnit.HOURS]: new Set([
-		YAxisUnit.UCUM_HOURS,
-		YAxisUnit.OPEN_METRICS_HOURS,
-	]),
-	[UniversalYAxisUnit.MINUTES]: new Set([
-		YAxisUnit.UCUM_MINUTES,
-		YAxisUnit.OPEN_METRICS_MINUTES,
-	]),
-	[UniversalYAxisUnit.NANOSECONDS]: new Set([
-		YAxisUnit.UCUM_NANOSECONDS,
-		YAxisUnit.OPEN_METRICS_NANOSECONDS,
-	]),
-	[UniversalYAxisUnit.PETABYTES]: new Set([
-		YAxisUnit.UCUM_PEBIBYTES,
-		YAxisUnit.OPEN_METRICS_PEBIBYTES,
-	]),
-	[UniversalYAxisUnit.PETABYTES_SECOND]: new Set([
-		YAxisUnit.UCUM_PEBIBYTES_SECOND,
-		YAxisUnit.OPEN_METRICS_PEBIBYTES_SECOND,
-	]),
-	[UniversalYAxisUnit.PETABITS]: new Set([YAxisUnit.UCUM_PETABITS]),
-	[UniversalYAxisUnit.PETABITS_SECOND]: new Set([
-		YAxisUnit.UCUM_PEBIBITS_SECOND,
-		YAxisUnit.OPEN_METRICS_PEBIBITS_SECOND,
-	]),
+
+	// Count Rate
 	[UniversalYAxisUnit.COUNT_MINUTE]: new Set([
 		YAxisUnit.UCUM_COUNTS_MINUTE,
 		YAxisUnit.OPEN_METRICS_COUNTS_MINUTE,
@@ -184,6 +270,10 @@ export const UniversalYAxisUnitMappings: Record<
 	[UniversalYAxisUnit.REQUESTS_SECOND]: new Set([
 		YAxisUnit.UCUM_REQUESTS_SECOND,
 		YAxisUnit.OPEN_METRICS_REQUESTS_SECOND,
+	]),
+	[UniversalYAxisUnit.REQUESTS_MINUTE]: new Set([
+		YAxisUnit.UCUM_REQUESTS_MINUTE,
+		YAxisUnit.OPEN_METRICS_REQUESTS_MINUTE,
 	]),
 	[UniversalYAxisUnit.READS_SECOND]: new Set([
 		YAxisUnit.UCUM_READS_SECOND,
@@ -205,9 +295,6 @@ export const UniversalYAxisUnitMappings: Record<
 		YAxisUnit.UCUM_IOPS_SECOND,
 		YAxisUnit.OPEN_METRICS_IOPS_SECOND,
 	]),
-	[UniversalYAxisUnit.PERCENT_UNIT]: new Set([
-		YAxisUnit.OPEN_METRICS_PERCENT_UNIT,
-	]),
 };
 
 // Mapping of universal y-axis units to their display labels
@@ -221,28 +308,41 @@ export const Y_AXIS_UNIT_NAMES: Record<UniversalYAxisUnit, string> = {
 	[UniversalYAxisUnit.GIGABYTES]: 'Gigabytes (GB)',
 	[UniversalYAxisUnit.TERABYTES]: 'Terabytes (TB)',
 	[UniversalYAxisUnit.PETABYTES]: 'Petabytes (PB)',
+	[UniversalYAxisUnit.EXABYTES]: 'Exabytes (EB)',
+	[UniversalYAxisUnit.ZETTABYTES]: 'Zettabytes (ZB)',
+	[UniversalYAxisUnit.YOTTABYTES]: 'Yottabytes (YB)',
 	[UniversalYAxisUnit.BITS]: 'Bits (b)',
 	[UniversalYAxisUnit.KILOBITS]: 'Kilobits (Kb)',
 	[UniversalYAxisUnit.MEGABITS]: 'Megabits (Mb)',
 	[UniversalYAxisUnit.GIGABITS]: 'Gigabits (Gb)',
 	[UniversalYAxisUnit.TERABITS]: 'Terabits (Tb)',
 	[UniversalYAxisUnit.PETABITS]: 'Petabits (Pb)',
+	[UniversalYAxisUnit.EXABITS]: 'Exabits (Eb)',
+	[UniversalYAxisUnit.ZETTABITS]: 'Zettabits (Zb)',
+	[UniversalYAxisUnit.YOTTABITS]: 'Yottabits (Yb)',
 	[UniversalYAxisUnit.BYTES_SECOND]: 'Bytes/sec',
 	[UniversalYAxisUnit.KILOBYTES_SECOND]: 'Kilobytes/sec',
 	[UniversalYAxisUnit.MEGABYTES_SECOND]: 'Megabytes/sec',
 	[UniversalYAxisUnit.GIGABYTES_SECOND]: 'Gigabytes/sec',
 	[UniversalYAxisUnit.TERABYTES_SECOND]: 'Terabytes/sec',
 	[UniversalYAxisUnit.PETABYTES_SECOND]: 'Petabytes/sec',
+	[UniversalYAxisUnit.EXABYTES_SECOND]: 'Exabytes/sec',
+	[UniversalYAxisUnit.ZETTABYTES_SECOND]: 'Zettabytes/sec',
+	[UniversalYAxisUnit.YOTTABYTES_SECOND]: 'Yottabytes/sec',
 	[UniversalYAxisUnit.BITS_SECOND]: 'Bits/sec',
 	[UniversalYAxisUnit.KILOBITS_SECOND]: 'Kilobits/sec',
 	[UniversalYAxisUnit.MEGABITS_SECOND]: 'Megabits/sec',
 	[UniversalYAxisUnit.GIGABITS_SECOND]: 'Gigabits/sec',
 	[UniversalYAxisUnit.TERABITS_SECOND]: 'Terabits/sec',
 	[UniversalYAxisUnit.PETABITS_SECOND]: 'Petabits/sec',
+	[UniversalYAxisUnit.EXABITS_SECOND]: 'Exabits/sec',
+	[UniversalYAxisUnit.ZETTABITS_SECOND]: 'Zettabits/sec',
+	[UniversalYAxisUnit.YOTTABITS_SECOND]: 'Yottabits/sec',
 	[UniversalYAxisUnit.COUNT]: 'Count',
 	[UniversalYAxisUnit.COUNT_SECOND]: 'Count/sec',
 	[UniversalYAxisUnit.PERCENT]: 'Percent (0 - 100)',
 	[UniversalYAxisUnit.NONE]: 'None',
+	[UniversalYAxisUnit.WEEKS]: 'Weeks',
 	[UniversalYAxisUnit.DAYS]: 'Days',
 	[UniversalYAxisUnit.HOURS]: 'Hours',
 	[UniversalYAxisUnit.MINUTES]: 'Minutes',
@@ -251,6 +351,7 @@ export const Y_AXIS_UNIT_NAMES: Record<UniversalYAxisUnit, string> = {
 	[UniversalYAxisUnit.OPS_SECOND]: 'Ops/sec',
 	[UniversalYAxisUnit.OPS_MINUTE]: 'Ops/min',
 	[UniversalYAxisUnit.REQUESTS_SECOND]: 'Requests/sec',
+	[UniversalYAxisUnit.REQUESTS_MINUTE]: 'Requests/min',
 	[UniversalYAxisUnit.READS_SECOND]: 'Reads/sec',
 	[UniversalYAxisUnit.WRITES_SECOND]: 'Writes/sec',
 	[UniversalYAxisUnit.READS_MINUTE]: 'Reads/min',
@@ -292,6 +393,10 @@ export const Y_AXIS_CATEGORIES = [
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.DAYS],
 				id: UniversalYAxisUnit.DAYS,
 			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.WEEKS],
+				id: UniversalYAxisUnit.WEEKS,
+			},
 		],
 	},
 	{
@@ -322,6 +427,18 @@ export const Y_AXIS_CATEGORIES = [
 				id: UniversalYAxisUnit.PETABYTES,
 			},
 			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXABYTES],
+				id: UniversalYAxisUnit.EXABYTES,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZETTABYTES],
+				id: UniversalYAxisUnit.ZETTABYTES,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOTTABYTES],
+				id: UniversalYAxisUnit.YOTTABYTES,
+			},
+			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.BITS],
 				id: UniversalYAxisUnit.BITS,
 			},
@@ -344,6 +461,18 @@ export const Y_AXIS_CATEGORIES = [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.PETABITS],
 				id: UniversalYAxisUnit.PETABITS,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXABITS],
+				id: UniversalYAxisUnit.EXABITS,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZETTABITS],
+				id: UniversalYAxisUnit.ZETTABITS,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOTTABITS],
+				id: UniversalYAxisUnit.YOTTABITS,
 			},
 		],
 	},
@@ -375,6 +504,18 @@ export const Y_AXIS_CATEGORIES = [
 				id: UniversalYAxisUnit.PETABYTES_SECOND,
 			},
 			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXABYTES_SECOND],
+				id: UniversalYAxisUnit.EXABYTES_SECOND,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZETTABYTES_SECOND],
+				id: UniversalYAxisUnit.ZETTABYTES_SECOND,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOTTABYTES_SECOND],
+				id: UniversalYAxisUnit.YOTTABYTES_SECOND,
+			},
+			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.BITS_SECOND],
 				id: UniversalYAxisUnit.BITS_SECOND,
 			},
@@ -397,6 +538,18 @@ export const Y_AXIS_CATEGORIES = [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.PETABITS_SECOND],
 				id: UniversalYAxisUnit.PETABITS_SECOND,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXABITS_SECOND],
+				id: UniversalYAxisUnit.EXABITS_SECOND,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZETTABITS_SECOND],
+				id: UniversalYAxisUnit.ZETTABITS_SECOND,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOTTABITS_SECOND],
+				id: UniversalYAxisUnit.YOTTABITS_SECOND,
 			},
 		],
 	},
@@ -431,6 +584,10 @@ export const Y_AXIS_CATEGORIES = [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.REQUESTS_SECOND],
 				id: UniversalYAxisUnit.REQUESTS_SECOND,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.REQUESTS_MINUTE],
+				id: UniversalYAxisUnit.REQUESTS_MINUTE,
 			},
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.READS_SECOND],
@@ -468,87 +625,3 @@ export const Y_AXIS_CATEGORIES = [
 		],
 	},
 ];
-
-// Mapping of universal y-axis units to their Grafana equivalents
-export const UniversalUnitToGrafanaUnit: Record<UniversalYAxisUnit, string> = {
-	// Time
-	[UniversalYAxisUnit.DAYS]: 'd',
-	[UniversalYAxisUnit.HOURS]: 'h',
-	[UniversalYAxisUnit.MINUTES]: 'm',
-	[UniversalYAxisUnit.SECONDS]: 's',
-	[UniversalYAxisUnit.MILLISECONDS]: 'ms',
-	[UniversalYAxisUnit.MICROSECONDS]: 'µs',
-	[UniversalYAxisUnit.NANOSECONDS]: 'ns',
-
-	// Data (Grafana uses 1024-based IEC format)
-	[UniversalYAxisUnit.BYTES]: 'decbytes',
-	[UniversalYAxisUnit.KILOBYTES]: 'deckbytes',
-	[UniversalYAxisUnit.MEGABYTES]: 'decmbytes',
-	[UniversalYAxisUnit.GIGABYTES]: 'decgbytes',
-	[UniversalYAxisUnit.TERABYTES]: 'dectbytes',
-	[UniversalYAxisUnit.PETABYTES]: 'decpbytes',
-
-	// Data Rate
-	[UniversalYAxisUnit.BYTES_SECOND]: 'Bps',
-	[UniversalYAxisUnit.KILOBYTES_SECOND]: 'KBs',
-	[UniversalYAxisUnit.MEGABYTES_SECOND]: 'MBs',
-	[UniversalYAxisUnit.GIGABYTES_SECOND]: 'GBs',
-	[UniversalYAxisUnit.TERABYTES_SECOND]: 'TBs',
-	[UniversalYAxisUnit.PETABYTES_SECOND]: 'PBs',
-
-	// Bits
-	[UniversalYAxisUnit.BITS]: 'bits',
-	[UniversalYAxisUnit.KILOBITS]: 'kbytes',
-	[UniversalYAxisUnit.MEGABITS]: 'mbytes',
-	[UniversalYAxisUnit.GIGABITS]: 'gbytes',
-	[UniversalYAxisUnit.TERABITS]: 'tbytes',
-	[UniversalYAxisUnit.PETABITS]: 'pbytes',
-
-	// Bit Rate
-	[UniversalYAxisUnit.BITS_SECOND]: 'bps',
-	[UniversalYAxisUnit.KILOBITS_SECOND]: 'Kbits',
-	[UniversalYAxisUnit.MEGABITS_SECOND]: 'Mbits',
-	[UniversalYAxisUnit.GIGABITS_SECOND]: 'Gbits',
-	[UniversalYAxisUnit.TERABITS_SECOND]: 'Tbits',
-	[UniversalYAxisUnit.PETABITS_SECOND]: 'Pbits',
-
-	// Count
-	[UniversalYAxisUnit.COUNT]: 'short',
-	[UniversalYAxisUnit.COUNT_SECOND]: 'cps',
-	[UniversalYAxisUnit.COUNT_MINUTE]: 'cpm',
-
-	// Operations
-	[UniversalYAxisUnit.OPS_SECOND]: 'ops',
-	[UniversalYAxisUnit.OPS_MINUTE]: 'opm',
-
-	// Requests
-	[UniversalYAxisUnit.REQUESTS_SECOND]: 'reqps',
-
-	// Reads/Writes
-	[UniversalYAxisUnit.READS_SECOND]: 'rps',
-	[UniversalYAxisUnit.WRITES_SECOND]: 'wps',
-	[UniversalYAxisUnit.READS_MINUTE]: 'rpm',
-	[UniversalYAxisUnit.WRITES_MINUTE]: 'wpm',
-
-	// IO Operations
-	[UniversalYAxisUnit.IOOPS_SECOND]: 'iops',
-
-	// Percent
-	[UniversalYAxisUnit.PERCENT]: 'percent',
-	[UniversalYAxisUnit.PERCENT_UNIT]: 'percentunit',
-
-	// None
-	[UniversalYAxisUnit.NONE]: 'none',
-};
-
-// Mapping of custom graph units to their universal equivalents for graphs
-export const CustomGraphUnitToUniversalUnit: Record<
-	string,
-	UniversalYAxisUnit
-> = {
-	KiB: UniversalYAxisUnit.KILOBITS,
-	MiB: UniversalYAxisUnit.MEGABITS,
-	GiB: UniversalYAxisUnit.GIGABITS,
-	TiB: UniversalYAxisUnit.TERABITS,
-	PiB: UniversalYAxisUnit.PETABITS,
-};
