@@ -4,6 +4,7 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import NewWidget from 'container/NewWidget';
+import { isDrilldownEnabled } from 'container/QueryTable/Drilldown/drilldownUtils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -58,7 +59,7 @@ function DashboardWidget(): JSX.Element | null {
 				yAxisUnit={selectedWidget?.yAxisUnit}
 				selectedGraph={selectedGraph}
 				fillSpans={selectedWidget?.fillSpans}
-				enableDrillDown
+				enableDrillDown={isDrilldownEnabled()}
 			/>
 		</PreferenceContextProvider>
 	);

@@ -340,3 +340,11 @@ export const getViewQuery = (
 
 	return newQuery;
 };
+
+export function isDrilldownEnabled(): boolean {
+	return true;
+	// temp code
+	// if (typeof window === 'undefined') return false;
+	// const drilldownValue = window.localStorage.getItem('drilldown');
+	// return drilldownValue === 'true';
+}

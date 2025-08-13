@@ -73,6 +73,7 @@ export const getBreakoutQuery = (
 				return {
 					...item,
 					groupBy: [groupBy],
+					orderBy: [],
 				};
 			}
 			return item;
