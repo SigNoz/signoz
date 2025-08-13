@@ -1,7 +1,12 @@
+networks:
+  signoz-net:
+    external: true
 services:
   signoz-otel-collector:
     image: signoz/signoz-otel-collector:v0.128.2
     container_name: signoz-otel-collector-dev
+    networks:
+      - signoz-net
     command:
       - --config=/etc/otel-collector-config.yaml
       - --feature-gates=-pkg.translator.prometheus.NormalizeName
@@ -24,6 +29,7 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 10s # Delaying healthcheck for 10s to make sure container started properly
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"

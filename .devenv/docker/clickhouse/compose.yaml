@@ -1,7 +1,13 @@
+networks:
+  signoz-net:
+    driver: bridge
+    name: signoz-net
 services:
   clickhouse:
     image: clickhouse/clickhouse-server:24.1.2-alpine
     container_name: clickhouse
+    networks:
+      - signoz-net
     volumes:
       - ${PWD}/fs/etc/clickhouse-server/config.d/config.xml:/etc/clickhouse-server/config.d/config.xml
       - ${PWD}/fs/etc/clickhouse-server/users.d/users.xml:/etc/clickhouse-server/users.d/users.xml
@@ -26,6 +32,8 @@ services:
   zookeeper:
     image: bitnami/zookeeper:3.7.1
     container_name: zookeeper
+    networks:
+      - signoz-net
     volumes:
       - ${PWD}/fs/tmp/zookeeper:/bitnami/zookeeper
     ports:
@@ -42,6 +50,8 @@ services:
   schema-migrator-sync:
     image: signoz/signoz-schema-migrator:v0.129.0
     container_name: schema-migrator-sync
+    networks:
+      - signoz-net
     command:
       - sync
       - --cluster-name=cluster
@@ -55,6 +65,8 @@ services:
   schema-migrator-async:
     image: signoz/signoz-schema-migrator:v0.129.0
     container_name: schema-migrator-async
+    networks:
+      - signoz-net
     command:
       - async
       - --cluster-name=cluster
