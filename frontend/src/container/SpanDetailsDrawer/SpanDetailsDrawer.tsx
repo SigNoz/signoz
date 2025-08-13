@@ -111,7 +111,6 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 				label: (
 					<Button type="text" icon={<FileText size="14" />} className="logs-tab-btn">
 						<span className="tab-label">Logs</span>
-						<span className="count-badge">?</span>
 					</Button>
 				),
 				key: 'logs',
