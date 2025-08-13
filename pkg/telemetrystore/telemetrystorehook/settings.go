@@ -81,7 +81,7 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 	}
 
 	// ClickHouse version check is added since this setting is not support on version below 25.5
-	if strings.Contains(h.clickHouseVersion, "25") && !h.settings.SecondaryIndicesEnableBulkFiltering {
+	if strings.HasPrefix(h.clickHouseVersion, "25") && !h.settings.SecondaryIndicesEnableBulkFiltering {
 		// TODO(srikanthccv): enable it when the "Cannot read all data" issue is fixed
 		// https://github.com/ClickHouse/ClickHouse/issues/82283
 		settings["secondary_indices_enable_bulk_filtering"] = false
