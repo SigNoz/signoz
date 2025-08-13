@@ -14,6 +14,8 @@ var (
 	RequestTypeTimeSeries = RequestType{valuer.NewString("time_series")}
 	// [][]any, SQL result set, but paginated, example: list view
 	RequestTypeRaw = RequestType{valuer.NewString("raw")}
+	// [][]any, Specialized SQL result set, paginated
+	RequestTypeTrace = RequestType{valuer.NewString("trace")}
 	// []Bucket (struct{Lower,Upper,Count float64}), example: histogram
 	RequestTypeDistribution = RequestType{valuer.NewString("distribution")}
 )

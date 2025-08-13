@@ -29,7 +29,7 @@ function MetricsExplorerPage(): JSX.Element {
 		[updateAllQueriesOperators],
 	);
 
-	useShareBuilderUrl(defaultQuery);
+	useShareBuilderUrl({ defaultValue: defaultQuery });
 
 	return (
 		<div className="metrics-explorer-page">

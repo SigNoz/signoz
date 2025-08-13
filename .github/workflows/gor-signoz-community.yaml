@@ -36,7 +36,7 @@ jobs:
           - ubuntu-latest
           - macos-latest
     env:
-      CONFIG_PATH: pkg/query-service/.goreleaser.yaml
+      CONFIG_PATH: cmd/community/.goreleaser.yaml
     runs-on: ${{ matrix.os }}
     steps:
       - name: checkout
@@ -100,7 +100,7 @@ jobs:
     needs: build
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
-      WORKDIR: pkg/query-service
+      WORKDIR: cmd/community
     steps:
       - name: checkout
         uses: actions/checkout@v4

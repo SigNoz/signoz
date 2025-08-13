@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -19,18 +20,23 @@ func NewConditionBuilder(fm qbtypes.FieldMapper) *defaultConditionBuilder {
 	return &defaultConditionBuilder{fm: fm}
 }
 
-func valueForIndexFilter(key *telemetrytypes.TelemetryFieldKey, value any) any {
+func valueForIndexFilter(op qbtypes.FilterOperator, key *telemetrytypes.TelemetryFieldKey, value any) any {
 	switch v := value.(type) {
 	case string:
+		if op == qbtypes.FilterOperatorEqual || op == qbtypes.FilterOperatorNotEqual {
+			return fmt.Sprintf(`%%%s":"%s%%`, key.Name, v)
+		}
 		return fmt.Sprintf(`%%%s%%%s%%`, key.Name, v)
 	case []any:
+		// assuming array will always be for in and not in
 		values := make([]string, 0, len(v))
 		for _, v := range v {
-			values = append(values, fmt.Sprintf(`%%%s%%%s%%`, key.Name, v))
+			values = append(values, fmt.Sprintf(`%%%s":"%s%%`, key.Name, v))
 		}
 		return values
 	}
-	return value
+	// resource table expects string value
+	return fmt.Sprintf(`%%%v%%`, value)
 }
 
 func keyIndexFilter(key *telemetrytypes.TelemetryFieldKey) any {
@@ -49,13 +55,23 @@ func (b *defaultConditionBuilder) ConditionFor(
 		return "true", nil
 	}
 
+	switch op {
+	case qbtypes.FilterOperatorContains,
+		qbtypes.FilterOperatorNotContains,
+		qbtypes.FilterOperatorILike,
+		qbtypes.FilterOperatorNotILike,
+		qbtypes.FilterOperatorLike,
+		qbtypes.FilterOperatorNotLike:
+		value = querybuilder.FormatValueForContains(value)
+	}
+
 	column, err := b.fm.ColumnFor(ctx, key)
 	if err != nil {
 		return "", err
 	}
 
 	keyIdxFilter := sb.Like(column.Name, keyIndexFilter(key))
-	valueForIndexFilter := valueForIndexFilter(key, value)
+	valueForIndexFilter := valueForIndexFilter(op, key, value)
 
 	fieldName, err := b.fm.FieldFor(ctx, key)
 	if err != nil {
@@ -90,9 +106,9 @@ func (b *defaultConditionBuilder) ConditionFor(
 			sb.ILike(column.Name, valueForIndexFilter),
 		), nil
 	case qbtypes.FilterOperatorNotLike, qbtypes.FilterOperatorNotILike:
+		// no index filter: as cannot apply `not contains x%y` as y can be somewhere else
 		return sb.And(
 			sb.NotILike(fieldName, value),
-			sb.NotILike(column.Name, valueForIndexFilter),
 		), nil
 
 	case qbtypes.FilterOperatorBetween:
@@ -179,9 +195,9 @@ func (b *defaultConditionBuilder) ConditionFor(
 			sb.ILike(column.Name, valueForIndexFilter),
 		), nil
 	case qbtypes.FilterOperatorNotContains:
+		// no index filter: as cannot apply `not contains x%y` as y can be somewhere else
 		return sb.And(
 			sb.NotILike(fieldName, fmt.Sprintf(`%%%s%%`, value)),
-			sb.NotILike(column.Name, valueForIndexFilter),
 		), nil
 	}
 	return "", qbtypes.ErrUnsupportedOperator

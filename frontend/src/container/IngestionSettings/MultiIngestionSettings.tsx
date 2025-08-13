@@ -38,6 +38,7 @@ import dayjs from 'dayjs';
 import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
 import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { isNil, isUndefined } from 'lodash-es';
 import {
@@ -167,6 +168,8 @@ function MultiIngestionSettings(): JSX.Element {
 
 	const [totalIngestionKeys, setTotalIngestionKeys] = useState(0);
 
+	const { isEnterpriseSelfHostedUser } = useGetTenantLicense();
+
 	const [
 		hasCreateLimitForIngestionKeyError,
 		setHasCreateLimitForIngestionKeyError,
@@ -293,7 +296,7 @@ function MultiIngestionSettings(): JSX.Element {
 		isLoading: isLoadingDeploymentsData,
 		isFetching: isFetchingDeploymentsData,
 		isError: isErrorDeploymentsData,
-	} = useGetDeploymentsData(true);
+	} = useGetDeploymentsData(!isEnterpriseSelfHostedUser);
 
 	const {
 		mutate: createIngestionKey,
@@ -1308,7 +1311,8 @@ function MultiIngestionSettings(): JSX.Element {
 
 				{!isErrorDeploymentsData &&
 					!isLoadingDeploymentsData &&
-					!isFetchingDeploymentsData && (
+					!isFetchingDeploymentsData &&
+					deploymentsData && (
 						<div className="ingestion-setup-details-links">
 							<div className="ingestion-key-url-container">
 								<div className="ingestion-key-url-label">Ingestion URL</div>

@@ -1,9 +1,5 @@
 .alerts-container {
-	.ant-tabs-nav-wrap {
+	.ant-tabs-nav-wrap:first-of-type {
 		padding-left: 16px;
-	}
-
-	.ant-tabs-content-holder {
-		padding: 8px;
 	}
 }

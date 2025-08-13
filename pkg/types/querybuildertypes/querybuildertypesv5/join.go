@@ -20,6 +20,11 @@ type QueryRef struct {
 	Name string `json:"name"`
 }
 
+// Copy creates a deep copy of QueryRef
+func (q QueryRef) Copy() QueryRef {
+	return q
+}
+
 type QueryBuilderJoin struct {
 	Name     string `json:"name"`
 	Disabled bool   `json:"disabled,omitempty"`
@@ -46,4 +51,61 @@ type QueryBuilderJoin struct {
 	Limit                 int                    `json:"limit,omitempty"`
 	SecondaryAggregations []SecondaryAggregation `json:"secondaryAggregations,omitempty"`
 	Functions             []Function             `json:"functions,omitempty"`
+}
+
+// Copy creates a deep copy of QueryBuilderJoin
+func (q QueryBuilderJoin) Copy() QueryBuilderJoin {
+	c := q
+
+	// deep copy value types
+	c.Left = q.Left.Copy()
+	c.Right = q.Right.Copy()
+
+	if q.Aggregations != nil {
+		c.Aggregations = make([]any, len(q.Aggregations))
+		copy(c.Aggregations, q.Aggregations)
+	}
+
+	if q.SelectFields != nil {
+		c.SelectFields = make([]telemetrytypes.TelemetryFieldKey, len(q.SelectFields))
+		copy(c.SelectFields, q.SelectFields)
+	}
+
+	if q.GroupBy != nil {
+		c.GroupBy = make([]GroupByKey, len(q.GroupBy))
+		for i, gb := range q.GroupBy {
+			c.GroupBy[i] = gb.Copy()
+		}
+	}
+
+	if q.Order != nil {
+		c.Order = make([]OrderBy, len(q.Order))
+		for i, o := range q.Order {
+			c.Order[i] = o.Copy()
+		}
+	}
+
+	if q.SecondaryAggregations != nil {
+		c.SecondaryAggregations = make([]SecondaryAggregation, len(q.SecondaryAggregations))
+		for i, sa := range q.SecondaryAggregations {
+			c.SecondaryAggregations[i] = sa.Copy()
+		}
+	}
+
+	if q.Functions != nil {
+		c.Functions = make([]Function, len(q.Functions))
+		for i, f := range q.Functions {
+			c.Functions[i] = f.Copy()
+		}
+	}
+
+	if q.Filter != nil {
+		c.Filter = q.Filter.Copy()
+	}
+
+	if q.Having != nil {
+		c.Having = q.Having.Copy()
+	}
+
+	return c
 }

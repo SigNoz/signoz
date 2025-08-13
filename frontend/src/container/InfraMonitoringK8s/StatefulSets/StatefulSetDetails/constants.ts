@@ -49,8 +49,8 @@ export const getStatefulSetMetricsQueryPayload = (
 	const k8sPodNameKey = dotMetricsEnabled ? 'k8s.pod.name' : 'k8s_pod_name';
 
 	const k8sPodCpuUtilKey = dotMetricsEnabled
-		? 'k8s.pod.cpu.utilization'
-		: 'k8s_pod_cpu_utilization';
+		? 'k8s.pod.cpu.usage'
+		: 'k8s_pod_cpu_usage';
 	const k8sContainerCpuRequestKey = dotMetricsEnabled
 		? 'k8s.container.cpu_request'
 		: 'k8s_container_cpu_request';

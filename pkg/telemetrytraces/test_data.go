@@ -34,6 +34,28 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
 		},
+		"metric.max_count": {
+			{
+				Name:          "metric.max_count",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+			},
+		},
+		"cart.items_count": {
+			{
+				Name:          "cart.items_count",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+				Materialized:  true,
+			},
+		},
+		"user.id": {
+			{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
 	}
 	for _, keys := range keysMap {
 		for _, key := range keys {

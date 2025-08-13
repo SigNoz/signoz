@@ -16,12 +16,11 @@ import {
 	Trash2,
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
-import {
-	IBuilderQuery,
-	QueryFunctionProps,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { DataSourceDropdown } from '..';
 import QueryFunctions from '../QueryFunctions/QueryFunctions';
 
 interface QBEntityOptionsProps {
@@ -31,16 +30,20 @@ interface QBEntityOptionsProps {
 	isCollapsed: boolean;
 	entityType: string;
 	entityData: any;
-	onDelete: () => void;
+	onDelete?: () => void;
 	onCloneQuery?: (type: string, query: IBuilderQuery) => void;
 	onToggleVisibility: () => void;
 	onCollapseEntity: () => void;
-	onQueryFunctionsUpdates?: (functions: QueryFunctionProps[]) => void;
-	showDeleteButton: boolean;
+	onQueryFunctionsUpdates?: (functions: QueryFunction[]) => void;
+	showDeleteButton?: boolean;
+	showCloneOption?: boolean;
 	isListViewPanel?: boolean;
 	index?: number;
+	queryVariant?: 'dropdown' | 'static';
+	onChangeDataSource?: (value: DataSource) => void;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function QBEntityOptions({
 	query,
 	isMetricsDataSource,
@@ -48,14 +51,17 @@ export default function QBEntityOptions({
 	showFunctions,
 	entityType,
 	entityData,
-	onDelete,
-	onCloneQuery,
 	onToggleVisibility,
 	onCollapseEntity,
-	showDeleteButton,
 	onQueryFunctionsUpdates,
 	isListViewPanel,
+	onDelete,
+	showDeleteButton,
+	showCloneOption,
+	onCloneQuery,
 	index,
+	queryVariant,
+	onChangeDataSource,
 }: QBEntityOptionsProps): JSX.Element {
 	const handleCloneEntity = (): void => {
 		if (isFunction(onCloneQuery)) {
@@ -97,7 +103,7 @@ export default function QBEntityOptions({
 								</Button>
 							</Tooltip>
 
-							{entityType === 'query' && (
+							{entityType === 'query' && showCloneOption && (
 								<Tooltip title={`Clone Query ${entityData.queryName}`}>
 									<Button className={cx('periscope-btn')} onClick={handleCloneEntity}>
 										<Copy size={14} />
@@ -115,7 +121,23 @@ export default function QBEntityOptions({
 								{entityData.queryName}
 							</Button>
 
+							{queryVariant === 'dropdown' && (
+								<div className="query-data-source">
+									<DataSourceDropdown
+										onChange={(value): void => {
+											if (onChangeDataSource) {
+												onChangeDataSource(value);
+											}
+										}}
+										value={query?.dataSource || DataSource.METRICS}
+										isListViewPanel={isListViewPanel}
+										className="query-data-source-dropdown"
+									/>
+								</div>
+							)}
+
 							{showFunctions &&
+								!isListViewPanel &&
 								(isMetricsDataSource || isLogsDataSource) &&
 								query &&
 								onQueryFunctionsUpdates && (
@@ -138,7 +160,7 @@ export default function QBEntityOptions({
 					)}
 				</div>
 
-				{showDeleteButton && (
+				{showDeleteButton && !isListViewPanel && (
 					<Button className="periscope-btn ghost" onClick={onDelete}>
 						<Trash2 size={14} />
 					</Button>
@@ -156,4 +178,9 @@ QBEntityOptions.defaultProps = {
 	showFunctions: false,
 	onCloneQuery: noop,
 	index: 0,
+	onDelete: noop,
+	showDeleteButton: false,
+	showCloneOption: true,
+	queryVariant: 'static',
+	onChangeDataSource: noop,
 };

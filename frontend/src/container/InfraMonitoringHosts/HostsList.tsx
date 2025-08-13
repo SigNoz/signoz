@@ -96,11 +96,41 @@ function HostsList(): JSX.Element {
 		};
 	}, [pageSize, currentPage, filters, minTime, maxTime, orderBy]);
 
+	const queryKey = useMemo(() => {
+		if (selectedHostName) {
+			return [
+				'hostList',
+				String(pageSize),
+				String(currentPage),
+				JSON.stringify(filters),
+				JSON.stringify(orderBy),
+			];
+		}
+		return [
+			'hostList',
+			String(pageSize),
+			String(currentPage),
+			JSON.stringify(filters),
+			JSON.stringify(orderBy),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		pageSize,
+		currentPage,
+		filters,
+		orderBy,
+		selectedHostName,
+		minTime,
+		maxTime,
+	]);
+
 	const { data, isFetching, isLoading, isError } = useGetHostList(
 		query as HostListPayload,
 		{
-			queryKey: ['hostList', query],
+			queryKey,
 			enabled: !!query,
+			keepPreviousData: true,
 		},
 	);
 
@@ -123,7 +153,7 @@ function HostsList(): JSX.Element {
 
 	const handleFiltersChange = useCallback(
 		(value: IBuilderQuery['filters']): void => {
-			const isNewFilterAdded = value.items.length !== filters.items.length;
+			const isNewFilterAdded = value?.items?.length !== filters?.items?.length;
 			setFilters(value);
 			handleChangeQueryData('filters', value);
 			setSearchParams({
@@ -133,7 +163,7 @@ function HostsList(): JSX.Element {
 			if (isNewFilterAdded) {
 				setCurrentPage(1);
 
-				if (value.items.length > 0) {
+				if (value?.items && value?.items?.length > 0) {
 					logEvent(InfraMonitoringEvents.FilterApplied, {
 						entity: InfraMonitoringEvents.HostEntity,
 						page: InfraMonitoringEvents.ListPage,
@@ -212,6 +242,7 @@ function HostsList(): JSX.Element {
 						<HostsListControls
 							filters={filters}
 							handleFiltersChange={handleFiltersChange}
+							showAutoRefresh={!selectedHostData}
 						/>
 					</div>
 					<HostsListTable
@@ -220,7 +251,7 @@ function HostsList(): JSX.Element {
 						isError={isError}
 						tableData={data}
 						hostMetricsData={hostMetricsData}
-						filters={filters}
+						filters={filters || { items: [], op: 'AND' }}
 						currentPage={currentPage}
 						setCurrentPage={setCurrentPage}
 						onHostClick={handleHostClick}

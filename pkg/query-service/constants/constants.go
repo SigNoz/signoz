@@ -3,6 +3,7 @@ package constants
 import (
 	"maps"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -32,6 +33,12 @@ var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templa
 
 var MetricsExplorerClickhouseThreads = GetOrDefaultEnvInt("METRICS_EXPLORER_CLICKHOUSE_THREADS", 8)
 var UpdatedMetricsMetadataCachePrefix = GetOrDefaultEnv("METRICS_UPDATED_METADATA_CACHE_KEY", "UPDATED_METRICS_METADATA")
+
+const NormalizedMetricsMapCacheKey = "NORMALIZED_METRICS_MAP_CACHE_KEY"
+const NormalizedMetricsMapQueryThreads = 10
+
+var NormalizedMetricsMapRegex = regexp.MustCompile(`[^a-zA-Z0-9]`)
+var NormalizedMetricsMapQuantileRegex = regexp.MustCompile(`(?i)([._-]?quantile.*)$`)
 
 // TODO(srikanthccv): remove after backfilling is done
 func UseMetricsPreAggregation() bool {
@@ -437,8 +444,53 @@ var NewStaticFieldsTraces = map[string]v3.AttributeKey{
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
-	// the simple attributes are not present here as
-	// they are taken care by new format <attribute_type>_<attribute_datatype>_'<attribute_key>'
+
+	// these are just added so that we don't use the aliased columns
+	"resource_string_service$$name": {
+		Key:      "resource_string_service$$name",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"attribute_string_http$$route": {
+		Key:      "attribute_string_http$$route",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"attribute_string_messaging$$system": {
+		Key:      "attribute_string_messaging$$system",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"attribute_string_messaging$$operation": {
+		Key:      "attribute_string_messaging$$operation",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"attribute_string_db$$system": {
+		Key:      "attribute_string_db$$system",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"attribute_string_rpc$$system": {
+		Key:      "attribute_string_rpc$$system",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"attribute_string_rpc$$service": {
+		Key:      "attribute_string_rpc$$service",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"attribute_string_rpc$$method": {
+		Key:      "attribute_string_rpc$$method",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"attribute_string_peer$$service": {
+		Key:      "attribute_string_peer$$service",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
 }
 
 var DeprecatedStaticFieldsTraces = map[string]v3.AttributeKey{
@@ -600,10 +652,46 @@ var DeprecatedStaticFieldsTraces = map[string]v3.AttributeKey{
 	},
 }
 
+// TODO(nitya): remove this later
+var OldToNewTraceFieldsMap = map[string]string{
+	// deprecated intrinsic -> new intrinsic
+	"traceID":          "trace_id",
+	"spanID":           "span_id",
+	"parentSpanID":     "parent_span_id",
+	"spanKind":         "kind_string",
+	"durationNano":     "duration_nano",
+	"statusCode":       "status_code",
+	"statusMessage":    "status_message",
+	"statusCodeString": "status_code_string",
+
+	// deprecated derived -> new derived / materialized
+	"references":         "links",
+	"responseStatusCode": "response_status_code",
+	"externalHttpUrl":    "external_http_url",
+	"httpUrl":            "http_url",
+	"externalHttpMethod": "external_http_method",
+	"httpMethod":         "http_method",
+	"httpHost":           "http_host",
+	"dbName":             "db_name",
+	"dbOperation":        "db_operation",
+	"hasError":           "has_error",
+	"isRemote":           "is_remote",
+	"serviceName":        "resource_string_service$$name",
+	"httpRoute":          "attribute_string_http$$route",
+	"msgSystem":          "attribute_string_messaging$$system",
+	"msgOperation":       "attribute_string_messaging$$operation",
+	"dbSystem":           "attribute_string_db$$system",
+	"rpcSystem":          "attribute_string_rpc$$system",
+	"rpcService":         "attribute_string_rpc$$service",
+	"rpcMethod":          "attribute_string_rpc$$method",
+	"peerService":        "attribute_string_peer$$service",
+}
+
 var StaticFieldsTraces = map[string]v3.AttributeKey{}
 
 var IsDotMetricsEnabled = false
 var PreferSpanMetrics = false
+var MaxJSONFlatteningDepth = 1
 
 func init() {
 	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)
@@ -613,6 +701,12 @@ func init() {
 	}
 	if GetOrDefaultEnv("USE_SPAN_METRICS", "false") == "true" {
 		PreferSpanMetrics = true
+	}
+
+	// set max flattening depth
+	depth, err := strconv.Atoi(GetOrDefaultEnv(maxJSONFlatteningDepth, "1"))
+	if err == nil {
+		MaxJSONFlatteningDepth = depth
 	}
 }
 
@@ -641,3 +735,4 @@ func GetDefaultSiteURL() string {
 }
 
 const DotMetricsEnabled = "DOT_METRICS_ENABLED"
+const maxJSONFlatteningDepth = "MAX_JSON_FLATTENING_DEPTH"

@@ -151,7 +151,7 @@ func (client *client) getFingerprintsFromClickhouseQuery(ctx context.Context, qu
 			return nil, err
 		}
 
-		labels, _, err := unmarshalLabels(labelString)
+		labels, _, err := unmarshalLabels(labelString, fingerprint)
 		if err != nil {
 			return nil, err
 		}
@@ -188,9 +188,11 @@ func (client *client) querySamples(ctx context.Context, start int64, end int64, 
 	var res []*prompb.TimeSeries
 	var ts *prompb.TimeSeries
 	var fingerprint, prevFingerprint uint64
-	var timestampMs int64
+	var timestampMs, prevTimestamp int64
 	var value float64
 	var flags uint32
+
+	prevTimestamp = math.MinInt64
 
 	for rows.Next() {
 		if err := rows.Scan(&metricName, &fingerprint, &timestampMs, &value, &flags); err != nil {
@@ -209,11 +211,17 @@ func (client *client) querySamples(ctx context.Context, start int64, end int64, 
 			ts = &prompb.TimeSeries{
 				Labels: labels,
 			}
+			prevTimestamp = math.MinInt64
 		}
 
 		if flags&1 == 1 {
 			value = math.Float64frombits(promValue.StaleNaN)
 		}
+
+		if timestampMs == prevTimestamp {
+			continue
+		}
+		prevTimestamp = timestampMs
 
 		// add samples to current time series
 		ts.Samples = append(ts.Samples, prompb.Sample{

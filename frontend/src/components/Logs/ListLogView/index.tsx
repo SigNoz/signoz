@@ -1,15 +1,13 @@
 import './ListLogView.styles.scss';
 
 import { blue } from '@ant-design/colors';
-import Convert from 'ansi-to-html';
 import { Typography } from 'antd';
 import cx from 'classnames';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { escapeHtml, unescapeString } from 'container/LogDetailedView/utils';
+import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
 import { FontSize } from 'container/OptionsMenu/types';
-import dompurify from 'dompurify';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -20,7 +18,6 @@ import { useCallback, useMemo, useState } from 'react';
 // interfaces
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
-import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 // components
 import AddToQueryHOC, { AddToQueryHOCProps } from '../AddToQueryHOC';
@@ -36,8 +33,6 @@ import {
 	TextContainer,
 } from './styles';
 import { isValidLogField } from './util';
-
-const convert = new Convert();
 
 interface LogFieldProps {
 	fieldKey: string;
@@ -57,11 +52,7 @@ function LogGeneralField({
 }: LogFieldProps): JSX.Element {
 	const html = useMemo(
 		() => ({
-			__html: convert.toHtml(
-				dompurify.sanitize(unescapeString(escapeHtml(fieldValue)), {
-					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
-				}),
-			),
+			__html: getSanitizedLogBody(fieldValue, { shouldEscapeHtml: true }),
 		}),
 		[fieldValue],
 	);

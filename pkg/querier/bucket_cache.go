@@ -629,7 +629,7 @@ func (bc *bucketCache) isEmptyResult(result *qbtypes.Result) (isEmpty bool, isFi
 			return !hasValues, !hasValues && totalSeries > 0
 		}
 
-	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeScalar:
+	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeScalar, qbtypes.RequestTypeTrace:
 		// Raw and scalar data are not cached
 		return true, false
 	}
@@ -775,7 +775,7 @@ func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, fluxBoun
 			trimmedResult.Value = trimmedData
 		}
 
-	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeScalar:
+	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeScalar, qbtypes.RequestTypeTrace:
 		// Don't cache raw or scalar data
 		return nil
 	}

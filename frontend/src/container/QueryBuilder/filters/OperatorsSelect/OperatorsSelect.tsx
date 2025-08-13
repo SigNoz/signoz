@@ -9,6 +9,7 @@ export const OperatorsSelect = memo(function OperatorsSelect({
 	operators,
 	value,
 	onChange,
+	className,
 	...props
 }: OperatorsSelectProps): JSX.Element {
 	return (
@@ -20,6 +21,7 @@ export const OperatorsSelect = memo(function OperatorsSelect({
 			showSearch
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...props}
+			popupClassName={className}
 		/>
 	);
 });

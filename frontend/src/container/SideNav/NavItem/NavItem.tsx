@@ -16,6 +16,7 @@ export default function NavItem({
 	onTogglePin,
 	isPinned,
 	showIcon,
+	dataTestId,
 }: {
 	item: SidebarItem;
 	isActive: boolean;
@@ -24,6 +25,7 @@ export default function NavItem({
 	onTogglePin?: (item: SidebarItem) => void;
 	isPinned?: boolean;
 	showIcon?: boolean;
+	dataTestId?: string;
 }): JSX.Element {
 	const { label, icon, isBeta, isNew } = item;
 
@@ -47,6 +49,7 @@ export default function NavItem({
 				}
 				onClick(event);
 			}}
+			data-testid={dataTestId}
 		>
 			{showIcon && <div className="nav-item-active-marker" />}
 			<div className={cx('nav-item-data', isBeta ? 'beta-tag' : '')}>
@@ -96,4 +99,5 @@ NavItem.defaultProps = {
 	onTogglePin: undefined,
 	isPinned: false,
 	showIcon: false,
+	dataTestId: undefined,
 };

@@ -5,9 +5,12 @@ import set from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import {
 	createContext,
+	Dispatch,
 	ReactNode,
+	SetStateAction,
 	useCallback,
 	useContext,
+	useEffect,
 	useMemo,
 	useState,
 } from 'react';
@@ -16,13 +19,54 @@ import { THEME_MODE } from './constant';
 
 export const ThemeContext = createContext({
 	theme: THEME_MODE.DARK,
-	toggleTheme: () => {},
+	toggleTheme: (): void => {},
+	autoSwitch: false,
+	setAutoSwitch: ((): void => {}) as Dispatch<SetStateAction<boolean>>,
 });
+
+// Hook to detect system theme preference
+export const useSystemTheme = (): 'light' | 'dark' => {
+	const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('dark');
+
+	useEffect(() => {
+		const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+		setSystemTheme(mediaQuery.matches ? 'dark' : 'light');
+
+		const handler = (e: MediaQueryListEvent): void => {
+			setSystemTheme(e.matches ? 'dark' : 'light');
+		};
+
+		mediaQuery.addEventListener('change', handler);
+		return (): void => mediaQuery.removeEventListener('change', handler);
+	}, []);
+
+	return systemTheme;
+};
 
 export function ThemeProvider({ children }: ThemeProviderProps): JSX.Element {
 	const [theme, setTheme] = useState(get(LOCALSTORAGE.THEME) || THEME_MODE.DARK);
+	const [autoSwitch, setAutoSwitch] = useState(
+		get(LOCALSTORAGE.THEME_AUTO_SWITCH) === 'true',
+	);
+	const systemTheme = useSystemTheme();
 
-	const toggleTheme = useCallback(() => {
+	// Handle auto-switch functionality
+	useEffect(() => {
+		if (autoSwitch) {
+			const newTheme = systemTheme === 'dark' ? THEME_MODE.DARK : THEME_MODE.LIGHT;
+			if (newTheme !== theme) {
+				setTheme(newTheme);
+				set(LOCALSTORAGE.THEME, newTheme);
+			}
+		}
+	}, [systemTheme, autoSwitch, theme]);
+
+	// Save auto-switch preference
+	useEffect(() => {
+		set(LOCALSTORAGE.THEME_AUTO_SWITCH, autoSwitch.toString());
+	}, [autoSwitch]);
+
+	const toggleTheme = useCallback((): void => {
 		if (theme === THEME_MODE.LIGHT) {
 			setTheme(THEME_MODE.DARK);
 			set(LOCALSTORAGE.THEME, THEME_MODE.DARK);
@@ -37,8 +81,10 @@ export function ThemeProvider({ children }: ThemeProviderProps): JSX.Element {
 		() => ({
 			theme,
 			toggleTheme,
+			autoSwitch,
+			setAutoSwitch,
 		}),
-		[theme, toggleTheme],
+		[theme, toggleTheme, autoSwitch, setAutoSwitch],
 	);
 
 	return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
@@ -51,12 +97,16 @@ interface ThemeProviderProps {
 interface ThemeMode {
 	theme: string;
 	toggleTheme: () => void;
+	autoSwitch: boolean;
+	setAutoSwitch: Dispatch<SetStateAction<boolean>>;
 }
 
 export const useThemeMode = (): ThemeMode => {
-	const { theme, toggleTheme } = useContext(ThemeContext);
+	const { theme, toggleTheme, autoSwitch, setAutoSwitch } = useContext(
+		ThemeContext,
+	);
 
-	return { theme, toggleTheme };
+	return { theme, toggleTheme, autoSwitch, setAutoSwitch };
 };
 
 export const useIsDarkMode = (): boolean => {

@@ -1,9 +1,6 @@
 import { ENVIRONMENT } from 'constants/env';
 import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
-import {
-	verifyFiltersAndOrderBy,
-	verifyPayload,
-} from 'container/LogsExplorerViews/tests/LogsExplorerPagination.test';
+import { verifyFiltersAndOrderBy } from 'container/LogsExplorerViews/tests/LogsExplorerPagination.test';
 import { logsPaginationQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
@@ -20,6 +17,32 @@ import { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import EntityLogs from '../EntityLogs';
+
+// Custom verifyPayload function for EntityLogs that works with the correct payload structure
+const verifyEntityLogsPayload = ({
+	payload,
+	expectedOffset,
+	initialTimeRange,
+}: {
+	payload: QueryRangePayload;
+	expectedOffset: number;
+	initialTimeRange?: { start: number; end: number };
+}): IBuilderQuery => {
+	// Extract the builder query data from the correct path
+	const queryData = payload?.compositeQuery?.builderQueries?.A as IBuilderQuery;
+
+	expect(queryData).toBeDefined();
+	// Assert that the offset in the payload matches the expected offset
+	expect(queryData.offset).toBe(expectedOffset);
+
+	// If initial time range is provided, assert that the payload start and end match
+	if (initialTimeRange) {
+		expect(payload.start).toBe(initialTimeRange.start);
+		expect(payload.end).toBe(initialTimeRange.end);
+	}
+
+	return queryData;
+};
 
 jest.mock('uplot', () => {
 	const paths = {
@@ -61,7 +84,7 @@ describe('EntityLogs', () => {
 					const lastPayload =
 						capturedQueryRangePayloads[capturedQueryRangePayloads.length - 1];
 
-					const queryData = lastPayload?.compositeQuery.builderQueries
+					const queryData = (lastPayload as any)?.compositeQuery?.builderQueries
 						?.A as IBuilderQuery;
 
 					const offset = queryData?.offset ?? 0;
@@ -126,7 +149,7 @@ describe('EntityLogs', () => {
 		});
 
 		const firstPayload = capturedQueryRangePayloads[0];
-		verifyPayload({
+		verifyEntityLogsPayload({
 			payload: firstPayload,
 			expectedOffset: 0,
 		});
@@ -138,7 +161,7 @@ describe('EntityLogs', () => {
 		};
 
 		const secondPayload = capturedQueryRangePayloads[1];
-		const secondQueryData = verifyPayload({
+		const secondQueryData = verifyEntityLogsPayload({
 			payload: secondPayload,
 			expectedOffset: 100,
 			initialTimeRange,
@@ -169,7 +192,7 @@ describe('EntityLogs', () => {
 		});
 
 		const thirdPayload = capturedQueryRangePayloads[2];
-		const thirdQueryData = verifyPayload({
+		const thirdQueryData = verifyEntityLogsPayload({
 			payload: thirdPayload,
 			expectedOffset: 200,
 			initialTimeRange,

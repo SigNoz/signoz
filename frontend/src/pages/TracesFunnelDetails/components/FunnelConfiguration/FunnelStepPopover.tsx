@@ -1,6 +1,7 @@
 import { Button, Popover, Tooltip } from 'antd';
 import cx from 'classnames';
 import { Ellipsis, PencilLine, Trash2 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { useState } from 'react';
 import { FunnelStepData } from 'types/api/traceFunnels';
 
@@ -27,6 +28,7 @@ interface FunnelStepActionsProps {
 	setIsAddDetailsModalOpen: (isOpen: boolean) => void;
 	setIsDeleteModalOpen: (isOpen: boolean) => void;
 	stepsCount: number;
+	hasEditPermission: boolean;
 }
 
 function FunnelStepActions({
@@ -34,6 +36,7 @@ function FunnelStepActions({
 	setIsAddDetailsModalOpen,
 	setIsDeleteModalOpen,
 	stepsCount,
+	hasEditPermission,
 }: FunnelStepActionsProps): JSX.Element {
 	return (
 		<div className="funnel-item__actions">
@@ -41,6 +44,7 @@ function FunnelStepActions({
 				type="text"
 				className="funnel-item__action-btn"
 				icon={<PencilLine size={14} />}
+				disabled={!hasEditPermission}
 				onClick={(): void => {
 					setIsPopoverOpen(false);
 					setIsAddDetailsModalOpen(true);
@@ -49,12 +53,21 @@ function FunnelStepActions({
 				Add details
 			</Button>
 
-			<Tooltip title={stepsCount <= 2 ? 'Minimum 2 steps required' : 'Delete'}>
+			<Tooltip
+				title={
+					// eslint-disable-next-line no-nested-ternary
+					!hasEditPermission
+						? 'You need editor or admin access to delete steps'
+						: stepsCount <= 2
+						? 'Minimum 2 steps required'
+						: 'Delete'
+				}
+			>
 				<Button
 					type="text"
 					className="funnel-item__action-btn funnel-item__action-btn--delete"
 					icon={<Trash2 size={14} />}
-					disabled={stepsCount <= 2}
+					disabled={stepsCount <= 2 || !hasEditPermission}
 					onClick={(): void => {
 						if (stepsCount > 2) {
 							setIsPopoverOpen(false);
@@ -80,11 +93,25 @@ function FunnelStepPopover({
 	setIsAddDetailsModalOpen,
 }: FunnelStepPopoverProps): JSX.Element {
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+	const { hasEditPermission } = useAppContext();
 
 	const preventDefault = (e: React.MouseEvent | React.KeyboardEvent): void => {
 		e.preventDefault();
 		e.stopPropagation();
 	};
+
+	if (!hasEditPermission) {
+		return (
+			<Tooltip title="You need editor or admin access to add details to step">
+				<Button
+					type="text"
+					className="funnel-item__action-btn"
+					icon={<Ellipsis size={14} />}
+					disabled
+				/>
+			</Tooltip>
+		);
+	}
 
 	return (
 		// eslint-disable-next-line jsx-a11y/click-events-have-key-events
@@ -100,6 +127,7 @@ function FunnelStepPopover({
 						setIsPopoverOpen={setIsPopoverOpen}
 						setIsAddDetailsModalOpen={setIsAddDetailsModalOpen}
 						stepsCount={stepsCount}
+						hasEditPermission={hasEditPermission}
 					/>
 				}
 				placement="bottomRight"

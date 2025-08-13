@@ -19,6 +19,7 @@ import apiV1, {
 	apiV2,
 	apiV3,
 	apiV4,
+	apiV5,
 	gatewayApiV1,
 	gatewayApiV2,
 } from './apiV1';
@@ -169,6 +170,18 @@ ApiV4Instance.interceptors.response.use(
 	interceptorRejected,
 );
 ApiV4Instance.interceptors.request.use(interceptorsRequestResponse);
+//
+
+// axios V5
+export const ApiV5Instance = axios.create({
+	baseURL: `${ENVIRONMENT.baseURL}${apiV5}`,
+});
+
+ApiV5Instance.interceptors.response.use(
+	interceptorsResponse,
+	interceptorRejected,
+);
+ApiV5Instance.interceptors.request.use(interceptorsRequestResponse);
 //
 
 // axios Base

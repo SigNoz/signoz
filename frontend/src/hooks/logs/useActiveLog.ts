@@ -2,6 +2,7 @@ import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { OPERATORS, QueryBuilderKeys } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { MetricsType } from 'container/MetricsApplication/constant';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
@@ -34,6 +35,7 @@ export function getOldLogsOperatorFromNew(operator: string): string {
 			return operator;
 	}
 }
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export const useActiveLog = (): UseActiveLog => {
 	const dispatch = useDispatch();
 
@@ -82,6 +84,7 @@ export const useActiveLog = (): UseActiveLog => {
 			operator: string,
 			isJSON?: boolean,
 			dataType?: DataTypes,
+			fieldType?: MetricsType | undefined,
 		): Promise<void> => {
 			try {
 				const keysAutocompleteResponse = await queryClient.fetchQuery(
@@ -89,10 +92,11 @@ export const useActiveLog = (): UseActiveLog => {
 					async () =>
 						getAggregateKeys({
 							searchText: fieldKey,
-							aggregateOperator: currentQuery.builder.queryData[0].aggregateOperator,
+							aggregateOperator:
+								currentQuery.builder.queryData[0].aggregateOperator || '',
 							dataSource: currentQuery.builder.queryData[0].dataSource,
 							aggregateAttribute:
-								currentQuery.builder.queryData[0].aggregateAttribute.key,
+								currentQuery.builder.queryData[0].aggregateAttribute?.key || '',
 						}),
 				);
 
@@ -104,6 +108,7 @@ export const useActiveLog = (): UseActiveLog => {
 					fieldKey,
 					isJSON,
 					dataType,
+					fieldType,
 				);
 
 				const currentOperator = getOperatorValue(operator);
@@ -117,7 +122,7 @@ export const useActiveLog = (): UseActiveLog => {
 							filters: {
 								...item.filters,
 								items: [
-									...item.filters.items,
+									...(item.filters?.items || []),
 									{
 										id: uuid(),
 										key: existAutocompleteKey,
@@ -125,6 +130,7 @@ export const useActiveLog = (): UseActiveLog => {
 										value: fieldValue,
 									},
 								],
+								op: item.filters?.op || 'AND',
 							},
 						})),
 					},
@@ -151,10 +157,11 @@ export const useActiveLog = (): UseActiveLog => {
 					async () =>
 						getAggregateKeys({
 							searchText: fieldKey,
-							aggregateOperator: currentQuery.builder.queryData[0].aggregateOperator,
+							aggregateOperator:
+								currentQuery.builder.queryData[0].aggregateOperator || '',
 							dataSource: currentQuery.builder.queryData[0].dataSource,
 							aggregateAttribute:
-								currentQuery.builder.queryData[0].aggregateAttribute.key,
+								currentQuery.builder.queryData[0].aggregateAttribute?.key || '',
 						}),
 				);
 

@@ -120,6 +120,28 @@
 				line-height: 20px; /* 142.857% */
 				letter-spacing: -0.07px;
 			}
+
+			.auto-theme-info {
+				margin-top: 8px;
+				padding: 8px 12px;
+				border-radius: 4px;
+				background: var(--bg-slate-400, #1d212d);
+				border: 1px solid var(--bg-slate-500, #161922);
+
+				.auto-theme-status {
+					color: var(--bg-vanilla-400, #c0c1c3);
+					font-family: Inter;
+					font-size: 11px;
+					font-style: normal;
+					line-height: 16px;
+					letter-spacing: -0.07px;
+
+					strong {
+						color: var(--bg-robin-400, #4e74f8);
+						font-weight: 600;
+					}
+				}
+			}
 		}
 	}
 }
@@ -167,6 +189,19 @@
 
 				.user-preference-section-content-item-description {
 					color: var(--bg-ink-300);
+				}
+
+				.auto-theme-info {
+					background: var(--bg-vanilla-200);
+					border: 1px solid var(--bg-vanilla-300);
+
+					.auto-theme-status {
+						color: var(--bg-ink-300);
+
+						strong {
+							color: var(--bg-robin-500);
+						}
+					}
 				}
 			}
 		}

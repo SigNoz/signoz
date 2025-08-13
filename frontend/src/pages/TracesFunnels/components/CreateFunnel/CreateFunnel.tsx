@@ -2,7 +2,7 @@ import '../RenameFunnel/RenameFunnel.styles.scss';
 
 import { Input } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { AxiosError } from 'axios';
+import axios from 'axios';
 import SignozModal from 'components/SignozModal/SignozModal';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
@@ -26,6 +26,7 @@ function CreateFunnel({
 	redirectToDetails,
 }: CreateFunnelProps): JSX.Element {
 	const [funnelName, setFunnelName] = useState<string>('');
+	const [inputError, setInputError] = useState<string>('');
 	const createFunnelMutation = useCreateFunnel();
 	const { notifications } = useNotifications();
 	const queryClient = useQueryClient();
@@ -51,6 +52,7 @@ function CreateFunnel({
 					logEvent(eventMessage, {});
 
 					setFunnelName('');
+					setInputError('');
 					queryClient.invalidateQueries([REACT_QUERY_KEY.GET_FUNNELS_LIST]);
 
 					const funnelId = data?.payload?.funnel_id;
@@ -65,11 +67,17 @@ function CreateFunnel({
 					}
 				},
 				onError: (error) => {
-					notifications.error({
-						message:
-							((error as AxiosError)?.response?.data as string) ||
-							'Failed to create funnel',
-					});
+					if (axios.isAxiosError(error) && error.response?.status === 400) {
+						const errorMessage =
+							error.response?.data?.error?.message || 'Invalid funnel name';
+						setInputError(errorMessage);
+					} else {
+						notifications.error({
+							message: axios.isAxiosError(error)
+								? error.response?.data?.error?.message
+								: 'Failed to create funnel',
+						});
+					}
 				},
 			},
 		);
@@ -77,7 +85,15 @@ function CreateFunnel({
 
 	const handleCancel = (): void => {
 		setFunnelName('');
+		setInputError('');
 		onClose();
+	};
+
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+		setFunnelName(e.target.value);
+		if (inputError) {
+			setInputError('');
+		}
 	};
 
 	return (
@@ -109,12 +125,18 @@ function CreateFunnel({
 			<div className="funnel-modal-content">
 				<span className="funnel-modal-content__label">Enter funnel name</span>
 				<Input
-					className="funnel-modal-content__input"
+					className={`funnel-modal-content__input${
+						inputError ? ' funnel-modal-content__input--error' : ''
+					}`}
 					value={funnelName}
-					onChange={(e): void => setFunnelName(e.target.value)}
+					onChange={handleInputChange}
 					placeholder="Eg. checkout dropoff funnel"
 					autoFocus
+					status={inputError && 'error'}
 				/>
+				{inputError && (
+					<span className="funnel-modal-content__error">{inputError}</span>
+				)}
 			</div>
 		</SignozModal>
 	);

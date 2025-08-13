@@ -119,24 +119,8 @@ const config = {
 				],
 			},
 			{
-				test: /\.(png|jpe?g|gif|svg)$/i,
-				use: [
-					{
-						loader: 'file-loader',
-					},
-					{
-						loader: 'image-webpack-loader',
-						options: {
-							bypassOnDebug: true,
-							optipng: {
-								optimizationLevel: 7,
-							},
-							gifsicle: {
-								interlaced: false,
-							},
-						},
-					},
-				],
+				test: /\.(jpe?g|png|gif|svg)$/i,
+				type: 'asset',
 			},
 			{
 				test: /\.(ttf|eot|woff|woff2)$/,

@@ -17,8 +17,9 @@ export type QueryBuilderConfig =
 	| {
 			queryVariant: 'static';
 			initialDataSource: DataSource;
+			signalSource?: string;
 	  }
-	| { queryVariant: 'dropdown' };
+	| { queryVariant: 'dropdown'; signalSource?: string };
 
 export type QueryBuilderProps = {
 	config?: QueryBuilderConfig;
@@ -28,5 +29,6 @@ export type QueryBuilderProps = {
 	queryComponents?: { renderOrderBy?: (props: OrderByFilterProps) => ReactNode };
 	isListViewPanel?: boolean;
 	showFunctions?: boolean;
+	showOnlyWhereClause?: boolean;
 	version: string;
 };

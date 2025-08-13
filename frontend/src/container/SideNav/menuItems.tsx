@@ -1,12 +1,14 @@
 import { RocketOutlined } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
 import {
+	ArrowUpRight,
 	BarChart2,
 	BellDot,
 	Binoculars,
 	Book,
 	Boxes,
 	BugIcon,
+	ChartArea,
 	Cloudy,
 	DraftingCompass,
 	FileKey2,
@@ -112,7 +114,7 @@ const menuItems: SidebarItem[] = [
 		key: ROUTES.METRICS_EXPLORER,
 		label: 'Metrics',
 		icon: <BarChart2 size={16} />,
-		isNew: true,
+		isNew: false,
 		itemKey: 'metrics',
 	},
 	{
@@ -229,7 +231,7 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		key: ROUTES.METRICS_EXPLORER,
 		label: 'Metrics',
 		icon: <BarChart2 size={16} />,
-		isNew: true,
+		isNew: false,
 		isEnabled: true,
 		itemKey: 'metrics',
 	},
@@ -262,6 +264,15 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		isNew: true,
 		isEnabled: true,
 		itemKey: 'external-apis',
+	},
+	{
+		key: ROUTES.METER_EXPLORER,
+		label: 'Meter Explorer',
+		icon: <ChartArea size={16} />,
+		isNew: false,
+		isEnabled: false,
+		isBeta: true,
+		itemKey: 'meter-explorer',
 	},
 	{
 		key: ROUTES.MESSAGING_QUEUES_OVERVIEW,
@@ -355,7 +366,12 @@ export const settingsMenuItems: SidebarItem[] = [
 export const helpSupportDropdownMenuItems: SidebarItem[] = [
 	{
 		key: 'documentation',
-		label: 'Documentation',
+		label: (
+			<div className="nav-item-label-container">
+				<span>Documentation</span>
+				<ArrowUpRight size={14} />
+			</div>
+		),
 		icon: <Book size={14} />,
 		isExternal: true,
 		url: 'https://signoz.io/docs',
@@ -363,7 +379,13 @@ export const helpSupportDropdownMenuItems: SidebarItem[] = [
 	},
 	{
 		key: 'github',
-		label: 'GitHub',
+		label: (
+			<div className="nav-item-label-container">
+				<span>GitHub</span>
+				<ArrowUpRight size={14} />
+			</div>
+		),
+
 		icon: <Github size={14} />,
 		isExternal: true,
 		url: 'https://github.com/signoz/signoz',
@@ -371,7 +393,12 @@ export const helpSupportDropdownMenuItems: SidebarItem[] = [
 	},
 	{
 		key: 'slack',
-		label: 'Community Slack',
+		label: (
+			<div className="nav-item-label-container">
+				<span>Community Slack</span>
+				<ArrowUpRight size={14} />
+			</div>
+		),
 		icon: <Slack size={14} />,
 		isExternal: true,
 		url: 'https://signoz.io/slack',

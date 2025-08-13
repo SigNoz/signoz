@@ -30,6 +30,7 @@ interface K8sHeaderProps {
 	handleFilterVisibilityChange: () => void;
 	isFiltersVisible: boolean;
 	entity: K8sCategory;
+	showAutoRefresh: boolean;
 }
 
 function K8sHeader({
@@ -46,6 +47,7 @@ function K8sHeader({
 	handleFilterVisibilityChange,
 	isFiltersVisible,
 	entity,
+	showAutoRefresh,
 }: K8sHeaderProps): JSX.Element {
 	const [isFiltersSidePanelOpen, setIsFiltersSidePanelOpen] = useState(false);
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -109,7 +111,7 @@ function K8sHeader({
 
 				<div className="k8s-qb-search-container">
 					<QueryBuilderSearch
-						query={query}
+						query={query as IBuilderQuery}
 						onChange={handleChangeTagFilters}
 						isInfraMonitoring
 						disableNavigationShortcuts
@@ -136,7 +138,7 @@ function K8sHeader({
 
 			<div className="k8s-list-controls-right">
 				<DateTimeSelectionV2
-					showAutoRefresh
+					showAutoRefresh={showAutoRefresh}
 					showRefreshText={false}
 					hideShareModal
 				/>

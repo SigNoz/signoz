@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"math/rand/v2"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -30,7 +29,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
-	"github.com/SigNoz/signoz/pkg/query-service/transition"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
@@ -40,6 +38,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/SigNoz/signoz/pkg/contextlinks"
 	traceFunnelsModule "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
@@ -57,7 +56,6 @@ import (
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/contextlinks"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -66,7 +64,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
-	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 
@@ -473,6 +470,7 @@ func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *middlew
 func (aH *APIHandler) RegisterQueryRangeV5Routes(router *mux.Router, am *middleware.AuthZ) {
 	subRouter := router.PathPrefix("/api/v5").Subrouter()
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QuerierAPI.QueryRange)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/substitute_vars", am.ViewAccess(aH.QuerierAPI.ReplaceVariables)).Methods(http.MethodPost)
 }
 
 // todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
@@ -4220,6 +4218,8 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 		response, err = aH.reader.GetLogAggregateAttributes(r.Context(), req)
 	case v3.DataSourceTraces:
 		response, err = aH.reader.GetTraceAggregateAttributes(r.Context(), req)
+	case v3.DataSourceMeter:
+		response, err = aH.reader.GetMeterAggregateAttributes(r.Context(), orgID, req)
 	default:
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
 		return
@@ -4269,6 +4269,8 @@ func (aH *APIHandler) autoCompleteAttributeKeys(w http.ResponseWriter, r *http.R
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
 		response, err = aH.reader.GetMetricAttributeKeys(r.Context(), req)
+	case v3.DataSourceMeter:
+		response, err = aH.reader.GetMeterAttributeKeys(r.Context(), req)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAttributeKeys(r.Context(), req)
 	case v3.DataSourceTraces:
@@ -4527,6 +4529,56 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 	}
 
 	properties := queryInfoResult.ToMap()
+	referrer := r.Header.Get("Referer")
+
+	if referrer == "" {
+		return
+	}
+
+	properties["referrer"] = referrer
+
+	logsExplorerMatched, _ := regexp.MatchString(`/logs/logs-explorer(?:\?.*)?$`, referrer)
+	traceExplorerMatched, _ := regexp.MatchString(`/traces-explorer(?:\?.*)?$`, referrer)
+	metricsExplorerMatched, _ := regexp.MatchString(`/metrics-explorer/explorer(?:\?.*)?$`, referrer)
+	dashboardMatched, _ := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
+	alertMatched, _ := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
+
+	switch {
+	case dashboardMatched:
+		properties["module_name"] = "dashboard"
+	case alertMatched:
+		properties["module_name"] = "rule"
+	case metricsExplorerMatched:
+		properties["module_name"] = "metrics-explorer"
+	case logsExplorerMatched:
+		properties["module_name"] = "logs-explorer"
+	case traceExplorerMatched:
+		properties["module_name"] = "traces-explorer"
+	default:
+		return
+	}
+
+	if dashboardMatched {
+		if dashboardIDRegex, err := regexp.Compile(`/dashboard/([a-f0-9\-]+)/`); err == nil {
+			if matches := dashboardIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
+				properties["dashboard_id"] = matches[1]
+			}
+		}
+
+		if widgetIDRegex, err := regexp.Compile(`widgetId=([a-f0-9\-]+)`); err == nil {
+			if matches := widgetIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
+				properties["widget_id"] = matches[1]
+			}
+		}
+	}
+
+	if alertMatched {
+		if alertIDRegex, err := regexp.Compile(`ruleId=(\d+)`); err == nil {
+			if matches := alertIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
+				properties["rule_id"] = matches[1]
+			}
+		}
+	}
 
 	// Check if result is empty or has no data
 	if len(result) == 0 {
@@ -4549,47 +4601,6 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 				return
 			}
 		}
-	}
-
-	referrer := r.Header.Get("Referer")
-
-	if referrer == "" {
-		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
-		return
-	}
-
-	properties["referrer"] = referrer
-
-	if matched, _ := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer); matched {
-
-		if dashboardIDRegex, err := regexp.Compile(`/dashboard/([a-f0-9\-]+)/`); err == nil {
-			if matches := dashboardIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
-				properties["dashboard_id"] = matches[1]
-			}
-		}
-
-		if widgetIDRegex, err := regexp.Compile(`widgetId=([a-f0-9\-]+)`); err == nil {
-			if matches := widgetIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
-				properties["widget_id"] = matches[1]
-			}
-		}
-
-		properties["module_name"] = "dashboard"
-		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
-		return
-	}
-
-	if matched, _ := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer); matched {
-
-		if alertIDRegex, err := regexp.Compile(`ruleId=(\d+)`); err == nil {
-			if matches := alertIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
-				properties["alert_id"] = matches[1]
-			}
-		}
-
-		properties["module_name"] = "rule"
-		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
-		return
 	}
 
 	aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
@@ -4901,45 +4912,6 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	aH.sendQueryResultEvents(r, result, queryRangeParams, "v4")
 	resp := v3.QueryRangeResponse{
 		Result: result,
-	}
-
-	if rand.Float64() < (1.0/30.0) &&
-		queryRangeParams.CompositeQuery.PanelType != v3.PanelTypeList &&
-		queryRangeParams.CompositeQuery.PanelType != v3.PanelTypeTrace {
-		v4JSON, _ := json.Marshal(queryRangeParams)
-		func() {
-			defer func() {
-				if rr := recover(); rr != nil {
-					zap.L().Warn(
-						"unexpected panic while converting to v5",
-						zap.Any("panic", rr),
-						zap.String("v4_payload", string(v4JSON)),
-					)
-				}
-			}()
-			v5Req, err := transition.ConvertV3ToV5(queryRangeParams)
-			if err != nil {
-				zap.L().Warn("unable to convert to v5 request payload", zap.Error(err), zap.String("v4_payload", string(v4JSON)))
-				return
-			}
-			v5ReqJSON, _ := json.Marshal(v5Req)
-
-			v3Resp := v3.QueryRangeResponse{
-				Result: result,
-			}
-
-			v5Resp, err := transition.ConvertV3ResponseToV5(&v3Resp, querybuildertypesv5.RequestTypeTimeSeries)
-			if err != nil {
-				zap.L().Warn("unable to convert to v5 response payload", zap.Error(err))
-				return
-			}
-
-			v5RespJSON, _ := json.Marshal(v5Resp)
-			zap.L().Info("v5 request and expected response",
-				zap.String("request_payload", string(v5ReqJSON)),
-				zap.String("response_payload", string(v5RespJSON)),
-			)
-		}()
 	}
 
 	aH.Respond(w, resp)

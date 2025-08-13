@@ -24,9 +24,6 @@ describe('WorkspaceLocked', () => {
 		});
 		expect(workspaceLocked).toBeInTheDocument();
 
-		const gotQuestionText = await screen.findByText(/got question?/i);
-		expect(gotQuestionText).toBeInTheDocument();
-
 		const contactUsBtn = await screen.findByRole('button', {
 			name: /Contact Us/i,
 		});

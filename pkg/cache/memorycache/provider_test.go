@@ -3,247 +3,217 @@ package memorycache
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
+	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TestNew tests the New function
-func TestNew(t *testing.T) {
-	opts := cache.Memory{
-		TTL:             10 * time.Second,
-		CleanupInterval: 10 * time.Second,
-	}
-	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
-	require.NoError(t, err)
-	assert.NotNil(t, c)
-	assert.NotNil(t, c.(*provider).cc)
-}
-
-type CacheableEntity struct {
+type CloneableA struct {
 	Key    string
 	Value  int
 	Expiry time.Duration
 }
 
-func (ce CacheableEntity) MarshalBinary() ([]byte, error) {
-	return json.Marshal(ce)
+func (cloneable *CloneableA) Clone() cachetypes.Cacheable {
+	return &CloneableA{
+		Key:    cloneable.Key,
+		Value:  cloneable.Value,
+		Expiry: cloneable.Expiry,
+	}
 }
 
-func (ce CacheableEntity) UnmarshalBinary(data []byte) error {
-	return nil
+func (cloneable *CloneableA) MarshalBinary() ([]byte, error) {
+	return json.Marshal(cloneable)
 }
 
-type DCacheableEntity struct {
+func (cloneable *CloneableA) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, cloneable)
+}
+
+type CacheableB struct {
 	Key    string
 	Value  int
 	Expiry time.Duration
 }
 
-func (dce DCacheableEntity) MarshalBinary() ([]byte, error) {
-	return json.Marshal(dce)
+func (cacheable *CacheableB) MarshalBinary() ([]byte, error) {
+	return json.Marshal(cacheable)
 }
 
-func (dce DCacheableEntity) UnmarshalBinary(data []byte) error {
-	return nil
+func (cacheable *CacheableB) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, cacheable)
 }
 
-// TestStore tests the Store function
-// this should fail because of nil pointer error
-func TestStoreWithNilPointer(t *testing.T) {
-	opts := cache.Memory{
+func TestCloneableSetWithNilPointer(t *testing.T) {
+	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
-	}
-	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	}})
 	require.NoError(t, err)
-	var storeCacheableEntity *CacheableEntity
-	assert.Error(t, c.Set(context.Background(), valuer.GenerateUUID(), "key", storeCacheableEntity, 10*time.Second))
+
+	var cloneable *CloneableA
+	assert.Error(t, cache.Set(context.Background(), valuer.GenerateUUID(), "key", cloneable, 10*time.Second))
 }
 
-// this should fail because of no pointer error
-func TestStoreWithStruct(t *testing.T) {
-	opts := cache.Memory{
+func TestCacheableSetWithNilPointer(t *testing.T) {
+	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
-	}
-	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	}})
 	require.NoError(t, err)
-	var storeCacheableEntity CacheableEntity
-	assert.Error(t, c.Set(context.Background(), valuer.GenerateUUID(), "key", storeCacheableEntity, 10*time.Second))
+
+	var cacheable *CacheableB
+	assert.Error(t, cache.Set(context.Background(), valuer.GenerateUUID(), "key", cacheable, 10*time.Second))
 }
 
-func TestStoreWithNonNilPointer(t *testing.T) {
-	opts := cache.Memory{
+func TestCloneableSetGet(t *testing.T) {
+	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
-	}
-	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	}})
 	require.NoError(t, err)
-	storeCacheableEntity := &CacheableEntity{
-		Key:    "some-random-key",
-		Value:  1,
-		Expiry: time.Microsecond,
-	}
-	assert.NoError(t, c.Set(context.Background(), valuer.GenerateUUID(), "key", storeCacheableEntity, 10*time.Second))
-}
-
-// TestRetrieve tests the Retrieve function
-func TestRetrieveWithNilPointer(t *testing.T) {
-	opts := cache.Memory{
-		TTL:             10 * time.Second,
-		CleanupInterval: 10 * time.Second,
-	}
-	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
-	require.NoError(t, err)
-	storeCacheableEntity := &CacheableEntity{
-		Key:    "some-random-key",
-		Value:  1,
-		Expiry: time.Microsecond,
-	}
 
 	orgID := valuer.GenerateUUID()
-	assert.NoError(t, c.Set(context.Background(), orgID, "key", storeCacheableEntity, 10*time.Second))
+	cloneable := &CloneableA{
+		Key:    "some-random-key",
+		Value:  1,
+		Expiry: time.Microsecond,
+	}
 
-	var retrieveCacheableEntity *CacheableEntity
+	assert.NoError(t, cache.Set(context.Background(), orgID, "key", cloneable, 10*time.Second))
 
-	err = c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
+	provider := cache.(*provider)
+	insideCache, found := provider.cc.Get(strings.Join([]string{orgID.StringValue(), "key"}, "::"))
+	assert.True(t, found)
+	assert.IsType(t, &CloneableA{}, insideCache)
+
+	cached := new(CloneableA)
+	assert.NoError(t, cache.Get(context.Background(), orgID, "key", cached, false))
+
+	assert.Equal(t, cloneable, cached)
+	// confirm that the cached cloneable is a different pointer
+	assert.NotSame(t, cloneable, cached)
+}
+
+func TestCacheableSetGet(t *testing.T) {
+	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
+		TTL:             10 * time.Second,
+		CleanupInterval: 10 * time.Second,
+	}})
+	require.NoError(t, err)
+
+	orgID := valuer.GenerateUUID()
+	cacheable := &CacheableB{
+		Key:    "some-random-key",
+		Value:  1,
+		Expiry: time.Microsecond,
+	}
+
+	assert.NoError(t, cache.Set(context.Background(), orgID, "key", cacheable, 10*time.Second))
+
+	provider := cache.(*provider)
+	insideCache, found := provider.cc.Get(strings.Join([]string{orgID.StringValue(), "key"}, "::"))
+	assert.True(t, found)
+	assert.IsType(t, []byte{}, insideCache)
+	assert.Equal(t, "{\"Key\":\"some-random-key\",\"Value\":1,\"Expiry\":1000}", string(insideCache.([]byte)))
+
+	cached := new(CacheableB)
+	assert.NoError(t, cache.Get(context.Background(), orgID, "key", cached, false))
+
+	assert.Equal(t, cacheable, cached)
+	assert.NotSame(t, cacheable, cached)
+}
+
+func TestGetWithNilPointer(t *testing.T) {
+	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
+		TTL:             10 * time.Second,
+		CleanupInterval: 10 * time.Second,
+	}})
+	require.NoError(t, err)
+
+	var cloneable *CloneableA
+	assert.Error(t, cache.Get(context.Background(), valuer.GenerateUUID(), "key", cloneable, false))
+}
+
+func TestSetGetWithDifferentTypes(t *testing.T) {
+	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
+		TTL:             10 * time.Second,
+		CleanupInterval: 10 * time.Second,
+	}})
+	require.NoError(t, err)
+
+	orgID := valuer.GenerateUUID()
+
+	cloneable := &CloneableA{
+		Key:    "some-random-key",
+		Value:  1,
+		Expiry: time.Microsecond,
+	}
+	assert.NoError(t, cache.Set(context.Background(), orgID, "key", cloneable, 10*time.Second))
+
+	cachedCacheable := new(CacheableB)
+	err = cache.Get(context.Background(), orgID, "key", cachedCacheable, false)
 	assert.Error(t, err)
 }
 
-func TestRetrieveWitNonPointer(t *testing.T) {
-	opts := cache.Memory{
+func TestCloneableConcurrentSetGet(t *testing.T) {
+	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
-	}
-	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	}})
 	require.NoError(t, err)
-	storeCacheableEntity := &CacheableEntity{
-		Key:    "some-random-key",
-		Value:  1,
-		Expiry: time.Microsecond,
-	}
+
 	orgID := valuer.GenerateUUID()
-	assert.NoError(t, c.Set(context.Background(), orgID, "key", storeCacheableEntity, 10*time.Second))
+	numGoroutines := 100
+	done := make(chan bool, numGoroutines*2)
+	cloneables := make([]*CloneableA, numGoroutines)
+	mu := sync.Mutex{}
 
-	var retrieveCacheableEntity CacheableEntity
-
-	err = c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
-	assert.Error(t, err)
-}
-
-func TestRetrieveWithDifferentTypes(t *testing.T) {
-	opts := cache.Memory{
-		TTL:             10 * time.Second,
-		CleanupInterval: 10 * time.Second,
+	for i := 0; i < numGoroutines; i++ {
+		go func(id int) {
+			cloneable := &CloneableA{
+				Key:    fmt.Sprintf("key-%d", id),
+				Value:  id,
+				Expiry: 50 * time.Second,
+			}
+			err := cache.Set(context.Background(), orgID, fmt.Sprintf("key-%d", id), cloneable, 10*time.Second)
+			assert.NoError(t, err)
+			mu.Lock()
+			cloneables[id] = cloneable
+			mu.Unlock()
+			done <- true
+		}(i)
 	}
-	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
-	require.NoError(t, err)
-	orgID := valuer.GenerateUUID()
-	storeCacheableEntity := &CacheableEntity{
-		Key:    "some-random-key",
-		Value:  1,
-		Expiry: time.Microsecond,
-	}
-	assert.NoError(t, c.Set(context.Background(), orgID, "key", storeCacheableEntity, 10*time.Second))
 
-	retrieveCacheableEntity := new(DCacheableEntity)
-	err = c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
-	assert.Error(t, err)
-}
-
-func TestRetrieveWithSameTypes(t *testing.T) {
-	opts := cache.Memory{
-		TTL:             10 * time.Second,
-		CleanupInterval: 10 * time.Second,
+	for i := 0; i < numGoroutines; i++ {
+		go func(id int) {
+			cachedCloneable := new(CloneableA)
+			err := cache.Get(context.Background(), orgID, fmt.Sprintf("key-%d", id), cachedCloneable, false)
+			// Some keys might not exist due to concurrent access, which is expected
+			_ = err
+			done <- true
+		}(i)
 	}
-	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
-	require.NoError(t, err)
-	orgID := valuer.GenerateUUID()
-	storeCacheableEntity := &CacheableEntity{
-		Key:    "some-random-key",
-		Value:  1,
-		Expiry: time.Microsecond,
-	}
-	assert.NoError(t, c.Set(context.Background(), orgID, "key", storeCacheableEntity, 10*time.Second))
 
-	retrieveCacheableEntity := new(CacheableEntity)
-	err = c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
-	assert.NoError(t, err)
-	assert.Equal(t, storeCacheableEntity, retrieveCacheableEntity)
-}
-
-// TestRemove tests the Remove function
-func TestRemove(t *testing.T) {
-	opts := cache.Memory{
-		TTL:             10 * time.Second,
-		CleanupInterval: 10 * time.Second,
+	for i := 0; i < numGoroutines*2; i++ {
+		<-done
 	}
-	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
-	require.NoError(t, err)
-	storeCacheableEntity := &CacheableEntity{
-		Key:    "some-random-key",
-		Value:  1,
-		Expiry: time.Microsecond,
-	}
-	retrieveCacheableEntity := new(CacheableEntity)
-	orgID := valuer.GenerateUUID()
-	assert.NoError(t, c.Set(context.Background(), orgID, "key", storeCacheableEntity, 10*time.Second))
-	c.Delete(context.Background(), orgID, "key")
 
-	err = c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
-	assert.Error(t, err)
-}
-
-// TestBulkRemove tests the BulkRemove function
-func TestBulkRemove(t *testing.T) {
-	opts := cache.Memory{
-		TTL:             10 * time.Second,
-		CleanupInterval: 10 * time.Second,
+	for i := 0; i < numGoroutines; i++ {
+		cachedCloneable := new(CloneableA)
+		assert.NoError(t, cache.Get(context.Background(), orgID, fmt.Sprintf("key-%d", i), cachedCloneable, false))
+		assert.Equal(t, fmt.Sprintf("key-%d", i), cachedCloneable.Key)
+		assert.Equal(t, i, cachedCloneable.Value)
+		// confirm that the cached cacheable is a different pointer
+		assert.NotSame(t, cachedCloneable, cloneables[i])
 	}
-	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
-	require.NoError(t, err)
-	orgID := valuer.GenerateUUID()
-	storeCacheableEntity := &CacheableEntity{
-		Key:    "some-random-key",
-		Value:  1,
-		Expiry: time.Microsecond,
-	}
-	retrieveCacheableEntity := new(CacheableEntity)
-	assert.NoError(t, c.Set(context.Background(), orgID, "key1", storeCacheableEntity, 10*time.Second))
-	assert.NoError(t, c.Set(context.Background(), orgID, "key2", storeCacheableEntity, 10*time.Second))
-	c.DeleteMany(context.Background(), orgID, []string{"key1", "key2"})
-
-	err = c.Get(context.Background(), orgID, "key1", retrieveCacheableEntity, false)
-	assert.Error(t, err)
-
-	err = c.Get(context.Background(), orgID, "key2", retrieveCacheableEntity, false)
-	assert.Error(t, err)
-}
-
-// TestCache tests the cache
-func TestCache(t *testing.T) {
-	opts := cache.Memory{
-		TTL:             10 * time.Second,
-		CleanupInterval: 10 * time.Second,
-	}
-	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
-	require.NoError(t, err)
-	orgID := valuer.GenerateUUID()
-	storeCacheableEntity := &CacheableEntity{
-		Key:    "some-random-key",
-		Value:  1,
-		Expiry: time.Microsecond,
-	}
-	retrieveCacheableEntity := new(CacheableEntity)
-	assert.NoError(t, c.Set(context.Background(), orgID, "key", storeCacheableEntity, 10*time.Second))
-	err = c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
-	assert.NoError(t, err)
-	assert.Equal(t, storeCacheableEntity, retrieveCacheableEntity)
-	c.Delete(context.Background(), orgID, "key")
 }

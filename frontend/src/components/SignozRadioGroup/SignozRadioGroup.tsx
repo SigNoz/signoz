@@ -13,6 +13,7 @@ interface SignozRadioGroupProps {
 	options: Option[];
 	onChange: (e: RadioChangeEvent) => void;
 	className?: string;
+	disabled?: boolean;
 }
 
 function SignozRadioGroup({
@@ -20,6 +21,7 @@ function SignozRadioGroup({
 	options,
 	onChange,
 	className = '',
+	disabled = false,
 }: SignozRadioGroupProps): JSX.Element {
 	return (
 		<Radio.Group
@@ -27,6 +29,7 @@ function SignozRadioGroup({
 			buttonStyle="solid"
 			className={`signoz-radio-group ${className}`}
 			onChange={onChange}
+			disabled={disabled}
 		>
 			{options.map((option) => (
 				<Radio.Button
@@ -43,6 +46,7 @@ function SignozRadioGroup({
 
 SignozRadioGroup.defaultProps = {
 	className: '',
+	disabled: false,
 };
 
 export default SignozRadioGroup;

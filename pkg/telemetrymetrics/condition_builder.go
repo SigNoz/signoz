@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 
@@ -27,6 +28,16 @@ func (c *conditionBuilder) conditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
+
+	switch operator {
+	case qbtypes.FilterOperatorContains,
+		qbtypes.FilterOperatorNotContains,
+		qbtypes.FilterOperatorILike,
+		qbtypes.FilterOperatorNotILike,
+		qbtypes.FilterOperatorLike,
+		qbtypes.FilterOperatorNotLike:
+		value = querybuilder.FormatValueForContains(value)
+	}
 
 	tblFieldName, err := c.fm.FieldFor(ctx, key)
 	if err != nil {
@@ -93,23 +104,13 @@ func (c *conditionBuilder) conditionFor(
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		// instead of using IN, we use `=` + `OR` to make use of index
-		conditions := []string{}
-		for _, value := range values {
-			conditions = append(conditions, sb.E(tblFieldName, value))
-		}
-		return sb.Or(conditions...), nil
+		return sb.In(tblFieldName, values), nil
 	case qbtypes.FilterOperatorNotIn:
 		values, ok := value.([]any)
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		// instead of using NOT IN, we use `!=` + `AND` to make use of index
-		conditions := []string{}
-		for _, value := range values {
-			conditions = append(conditions, sb.NE(tblFieldName, value))
-		}
-		return sb.And(conditions...), nil
+		return sb.NotIn(tblFieldName, values), nil
 
 	// exists and not exists
 	// in the UI based query builder, `exists` and `not exists` are used for

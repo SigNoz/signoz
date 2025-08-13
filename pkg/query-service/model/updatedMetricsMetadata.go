@@ -2,8 +2,9 @@ package model
 
 import (
 	"encoding/json"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"time"
+
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
 type UpdateMetricsMetadata struct {

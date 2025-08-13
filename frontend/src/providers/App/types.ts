@@ -28,13 +28,16 @@ export interface IAppContext {
 	featureFlagsFetchError: unknown;
 	orgPreferencesFetchError: unknown;
 	changelog: ChangelogSchema | null;
+	showChangelogModal: boolean;
 	activeLicenseRefetch: () => void;
 	updateUser: (user: IUser) => void;
 	updateOrgPreferences: (orgPreferences: OrgPreference[]) => void;
 	updateUserPreferenceInContext: (userPreference: UserPreference) => void;
 	updateOrg(orgId: string, updatedOrgName: string): void;
 	updateChangelog(payload: ChangelogSchema): void;
+	toggleChangelogModal(): void;
 	versionData: PayloadProps | null;
+	hasEditPermission: boolean;
 }
 
 // User

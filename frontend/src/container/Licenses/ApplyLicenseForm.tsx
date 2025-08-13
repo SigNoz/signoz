@@ -1,5 +1,5 @@
 import { Button, Form, Input } from 'antd';
-import apply from 'api/v3/licenses/put';
+import apply from 'api/v3/licenses/post';
 import { useNotifications } from 'hooks/useNotifications';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

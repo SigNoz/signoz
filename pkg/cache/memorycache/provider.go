@@ -11,11 +11,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	go_cache "github.com/patrickmn/go-cache"
+	gocache "github.com/patrickmn/go-cache"
 )
 
 type provider struct {
-	cc       *go_cache.Cache
+	cc       *gocache.Cache
 	config   cache.Config
 	settings factory.ScopedProviderSettings
 }
@@ -26,50 +26,75 @@ func NewFactory() factory.ProviderFactory[cache.Cache, cache.Config] {
 
 func New(ctx context.Context, settings factory.ProviderSettings, config cache.Config) (cache.Cache, error) {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/cache/memorycache")
-	return &provider{cc: go_cache.New(config.Memory.TTL, config.Memory.CleanupInterval), settings: scopedProviderSettings, config: config}, nil
+
+	return &provider{
+		cc:       gocache.New(config.Memory.TTL, config.Memory.CleanupInterval),
+		settings: scopedProviderSettings,
+		config:   config,
+	}, nil
 }
 
 func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey string, data cachetypes.Cacheable, ttl time.Duration) error {
-	// check if the data being passed is a pointer and is not nil
-	err := cachetypes.ValidatePointer(data, "inmemory")
+	err := cachetypes.CheckCacheablePointer(data)
 	if err != nil {
 		return err
 	}
 
-	if ttl == 0 {
-		provider.settings.Logger().WarnContext(ctx, "zero value for TTL found. defaulting to the base TTL", "cache_key", cacheKey, "default_ttl", provider.config.Memory.TTL)
+	if cloneable, ok := data.(cachetypes.Cloneable); ok {
+		toCache := cloneable.Clone()
+		provider.cc.Set(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, ttl)
+		return nil
 	}
-	provider.cc.Set(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), data, ttl)
+
+	toCache, err := data.MarshalBinary()
+	if err != nil {
+		return err
+	}
+
+	provider.cc.Set(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, ttl)
 	return nil
 }
 
 func (provider *provider) Get(_ context.Context, orgID valuer.UUID, cacheKey string, dest cachetypes.Cacheable, allowExpired bool) error {
-	// check if the destination being passed is a pointer and is not nil
-	err := cachetypes.ValidatePointer(dest, "inmemory")
+	err := cachetypes.CheckCacheablePointer(dest)
 	if err != nil {
 		return err
 	}
 
-	// check if the destination value is settable
-	dstv := reflect.ValueOf(dest)
-	if !dstv.Elem().CanSet() {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "destination value is not settable, %s", dstv.Elem())
-	}
-
-	data, found := provider.cc.Get(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
+	cachedData, found := provider.cc.Get(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
 	if !found {
 		return errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "key miss")
 	}
 
-	// check the type compatbility between the src and dest
-	srcv := reflect.ValueOf(data)
-	if !srcv.Type().AssignableTo(dstv.Type()) {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "src type is not assignable to dst type")
+	if cloneable, ok := cachedData.(cachetypes.Cloneable); ok {
+		// check if the destination value is settable
+		dstv := reflect.ValueOf(dest)
+		if !dstv.Elem().CanSet() {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unsettable: (value: \"%s\")", dstv.Elem())
+		}
+
+		fromCache := cloneable.Clone()
+
+		// check the type compatbility between the src and dest
+		srcv := reflect.ValueOf(fromCache)
+		if !srcv.Type().AssignableTo(dstv.Type()) {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unassignable: (src: \"%s\", dst: \"%s\")", srcv.Type().String(), dstv.Type().String())
+		}
+
+		// set the value to from src to dest
+		dstv.Elem().Set(srcv.Elem())
+		return nil
 	}
 
-	// set the value to from src to dest
-	dstv.Elem().Set(srcv.Elem())
-	return nil
+	if fromCache, ok := cachedData.([]byte); ok {
+		if err = dest.UnmarshalBinary(fromCache); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return errors.NewInternalf(errors.CodeInternal, "unrecognized: (value: \"%s\")", reflect.TypeOf(cachedData).String())
 }
 
 func (provider *provider) Delete(_ context.Context, orgID valuer.UUID, cacheKey string) {
