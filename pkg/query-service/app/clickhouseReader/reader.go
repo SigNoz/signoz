@@ -1589,12 +1589,31 @@ func (r *ClickHouseReader) hasCustomRetentionColumn(ctx context.Context) (bool, 
 func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *model.CustomRetentionTTLParams) (*model.CustomRetentionTTLResponse, error) {
 
 	hasCustomRetention, err := r.hasCustomRetentionColumn(ctx)
-	if !hasCustomRetention {
-		return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "custom retention not supported")
-	}
 	if err != nil {
 		return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "custom retention not supported")
 	}
+
+	if !hasCustomRetention {
+		zap.L().Info("Custom retention not supported, falling back to standard TTL method",
+			zap.String("orgID", orgID))
+
+		ttlParams := &model.TTLParams{
+			Type:                  params.Type,
+			DelDuration:           int64(params.DefaultTTLDays * 24 * 3600),
+			ColdStorageVolume:     params.ColdStorageVolume,
+			ToColdStorageDuration: params.ToColdStorageDuration,
+		}
+
+		ttlResult, apiErr := r.SetTTL(ctx, orgID, ttlParams)
+		if apiErr != nil {
+			return nil, errorsV2.Wrapf(apiErr.Err, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to set standard TTL")
+		}
+
+		return &model.CustomRetentionTTLResponse{
+			Message: fmt.Sprintf("Custom retention not supported, applied standard TTL of %d days. %s", params.DefaultTTLDays, ttlResult.Message),
+		}, nil
+	}
+
 	// Keep only latest 100 transactions/requests
 	r.deleteTtlTransactions(ctx, orgID, 100)
 
