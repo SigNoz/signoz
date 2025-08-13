@@ -132,7 +132,6 @@ export const getAggregateColumnHeader = (
 		return { dataSource: '', aggregations: '' };
 	}
 
-	console.log('queryStep', queryStep);
 	const { dataSource, aggregations } = queryStep; // TODO: check if this is correct
 
 	// Extract aggregation expressions based on data source type
@@ -188,14 +187,6 @@ export const getUplotClickData = ({
 	record: { queryName: string; filters: FilterData[] };
 	label: string | React.ReactNode;
 } | null => {
-	console.log('on Click', {
-		metric,
-		queryData,
-		absoluteMouseX,
-		absoluteMouseY,
-		focusedSeries,
-	});
-
 	if (!queryData?.queryName || !metric) {
 		return null;
 	}
@@ -214,8 +205,6 @@ export const getUplotClickData = ({
 			</span>
 		);
 	}
-
-	console.log('CLICKED DATA: ', record);
 
 	return {
 		coord: {
@@ -239,7 +228,6 @@ export const getPieChartClickData = (
 	filters: FilterData[];
 	label: string | React.ReactNode;
 } | null => {
-	console.log('arc ->', arc.data);
 	const { metric, queryName } = arc.data.record;
 	if (!queryName || !metric) return null;
 
@@ -302,8 +290,6 @@ export const getViewQuery = (
 		existingFilterExpression = queryData?.filter?.expression;
 	}
 
-	console.log('existingFilters', { existingFilters, query });
-
 	newQuery.builder.queryData = [queryBuilderData];
 
 	const filters = filtersToAdd.reduce((acc: any[], filter) => {
@@ -340,3 +326,11 @@ export const getViewQuery = (
 
 	return newQuery;
 };
+
+export function isDrilldownEnabled(): boolean {
+	return true;
+	// temp code
+	// if (typeof window === 'undefined') return false;
+	// const drilldownValue = window.localStorage.getItem('drilldown');
+	// return drilldownValue === 'true';
+}

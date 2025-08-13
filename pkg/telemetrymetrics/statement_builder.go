@@ -68,6 +68,9 @@ func GetKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation])
 	for idx := range keySelectors {
 		keySelectors[idx].Signal = telemetrytypes.SignalMetrics
 		keySelectors[idx].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
+		keySelectors[idx].MetricContext = &telemetrytypes.MetricContext{
+			MetricName: query.Aggregations[0].MetricName,
+		}
 	}
 	return keySelectors
 }
@@ -295,6 +298,7 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 
 	if query.Filter != nil && query.Filter.Expression != "" {
 		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			Logger:           b.logger,
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,

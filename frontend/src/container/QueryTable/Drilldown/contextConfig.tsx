@@ -1,4 +1,7 @@
-import { QUERY_BUILDER_OPERATORS_BY_TYPES } from 'constants/queryBuilder';
+import {
+	PANEL_TYPES,
+	QUERY_BUILDER_OPERATORS_BY_TYPES,
+} from 'constants/queryBuilder';
 import ContextMenu, { ClickedData } from 'periscope/components/ContextMenu';
 import { ReactNode } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -65,7 +68,7 @@ export function getGroupContextMenuConfig({
 		(operator) => SUPPORTED_OPERATORS[operator],
 	);
 
-	if (panelType === 'table' && clickedData?.column) {
+	if (panelType === PANEL_TYPES.TABLE && clickedData?.column) {
 		return {
 			items: (
 				<>
@@ -100,8 +103,6 @@ export function getAggregateContextMenuConfig({
 	onColumnClick: (key: string, query?: Query) => void;
 	aggregateData: AggregateData | null;
 }): AggregateContextMenuConfig {
-	console.log('getAggregateContextMenuConfig', { query, aggregateData });
-
 	if (subMenu === 'breakout') {
 		const queryData = getQueryData(query, aggregateData?.queryName || '');
 		return {
@@ -131,9 +132,6 @@ export function getAggregateContextMenuConfig({
 		query,
 		queryName as string,
 	);
-
-	console.log('dataSource', dataSource);
-	console.log('aggregations', aggregations);
 
 	return {
 		header: (

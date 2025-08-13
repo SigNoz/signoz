@@ -56,10 +56,6 @@ export const getBreakoutQuery = (
 		return query;
 	}
 
-	console.log('>> groupBy', groupBy);
-	console.log('>> aggregateData', aggregateData);
-	console.log('>> query', query);
-
 	const queryWithFilters = addFilterToSelectedQuery(
 		query,
 		filtersToAdd,
@@ -73,12 +69,12 @@ export const getBreakoutQuery = (
 				return {
 					...item,
 					groupBy: [groupBy],
+					orderBy: [],
 				};
 			}
 			return item;
 		},
 	);
 
-	console.log('>> breakoutQuery', newQuery);
 	return newQuery;
 };

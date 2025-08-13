@@ -50,8 +50,6 @@ const useBreakout = ({
 
 	const handleBreakoutClick = useCallback(
 		(groupBy: BaseAutocompleteData): void => {
-			console.log('Breakout click:', { widgetId, query, groupBy, aggregateData });
-
 			if (!aggregateData) {
 				console.warn('aggregateData is null in handleBreakoutClick');
 				return;
@@ -68,7 +66,7 @@ const useBreakout = ({
 			redirectToViewMode(breakoutQuery);
 			onClose();
 		},
-		[query, widgetId, aggregateData, redirectToViewMode, onClose],
+		[query, aggregateData, redirectToViewMode, onClose],
 	);
 
 	const handleBackClick = useCallback(() => {

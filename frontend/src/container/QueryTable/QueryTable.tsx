@@ -28,6 +28,7 @@ export function QueryTable({
 	sticky,
 	searchTerm,
 	widgetId,
+	panelType,
 	...props
 }: QueryTableProps): JSX.Element {
 	const { isDownloadEnabled = false, fileName = '' } = downloadOption || {};
@@ -55,6 +56,7 @@ export function QueryTable({
 		subMenu,
 		setSubMenu,
 		contextLinks,
+		panelType,
 	});
 
 	const { columns: newColumns, dataSource: newDataSource } = useMemo(() => {

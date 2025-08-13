@@ -1,3 +1,4 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { ClickedData } from 'periscope/components/ContextMenu/types';
 import { useMemo } from 'react';
@@ -19,6 +20,7 @@ interface UseTableContextMenuProps {
 	subMenu: string;
 	setSubMenu: (subMenu: string) => void;
 	contextLinks?: ContextLinksData;
+	panelType?: PANEL_TYPES;
 }
 
 export function useTableContextMenu({
@@ -30,6 +32,7 @@ export function useTableContextMenu({
 	subMenu,
 	setSubMenu,
 	contextLinks,
+	panelType,
 }: UseTableContextMenuProps): {
 	menuItemsConfig: {
 		header?: string | React.ReactNode;
@@ -61,6 +64,7 @@ export function useTableContextMenu({
 		setSubMenu,
 		aggregateData,
 		contextLinks,
+		panelType,
 	});
 
 	const menuItemsConfig = useMemo(() => {

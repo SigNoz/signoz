@@ -1,3 +1,4 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useMemo } from 'react';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
@@ -15,6 +16,7 @@ interface UseGraphContextMenuProps {
 	subMenu: string;
 	setSubMenu: (subMenu: string) => void;
 	contextLinks?: ContextLinksData;
+	panelType?: PANEL_TYPES;
 }
 
 export function useGraphContextMenu({
@@ -26,6 +28,7 @@ export function useGraphContextMenu({
 	subMenu,
 	setSubMenu,
 	contextLinks,
+	panelType,
 }: UseGraphContextMenuProps): {
 	menuItemsConfig: {
 		header?: string | React.ReactNode;
@@ -44,6 +47,7 @@ export function useGraphContextMenu({
 		setSubMenu,
 		aggregateData: graphData,
 		contextLinks,
+		panelType,
 	});
 
 	const menuItemsConfig = useMemo(() => {

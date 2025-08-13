@@ -11,6 +11,7 @@ import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { MetricAggregation } from 'types/api/v5/queryRange';
 
 import { BreakoutOptionsProps } from './contextConfig';
 
@@ -57,7 +58,9 @@ function BreakoutOptions({
 			getKeySuggestions({
 				signal: queryData.dataSource,
 				searchText: debouncedSearchText,
-				metricName: queryData.aggregateAttribute?.key,
+				metricName:
+					(queryData.aggregations?.[0] as MetricAggregation)?.metricName ||
+					queryData.aggregateAttribute?.key,
 			}),
 		{
 			enabled: !!queryData,
@@ -90,10 +93,6 @@ function BreakoutOptions({
 			(item: BaseAutocompleteData) => !groupByKeys.includes(item.key),
 		);
 	}, [data, groupBy]);
-
-	console.log('>> queryData', queryData);
-	console.log('>> groupBy', groupBy);
-	console.log('>> breakoutOptions', breakoutOptions);
 
 	return (
 		<div>
