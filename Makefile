@@ -53,6 +53,7 @@ help: ## Displays help.
 ##############################################################
 .PHONY: devenv-clickhouse
 devenv-clickhouse: ## Run clickhouse in devenv
+	@docker network create signoz-dev-network 2>/dev/null || true
 	@cd .devenv/docker/clickhouse; \
 	docker compose -f compose.yaml up -d
 
@@ -63,6 +64,7 @@ devenv-postgres: ## Run postgres in devenv
 
 .PHONY: devenv-signoz-otel-collector
 devenv-signoz-otel-collector: ## Run signoz-otel-collector in devenv (requires clickhouse to be running)
+	@docker network create signoz-dev-network 2>/dev/null || true
 	@cd .devenv/docker/signoz-otel-collector; \
 	docker compose -f compose.yaml up -d
 
