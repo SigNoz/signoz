@@ -30,7 +30,7 @@ function getStatusCodeColor(statusCode: number): BadgeColor {
 	if (statusCode >= 100 && statusCode < 200) {
 		return 'vanilla'; // Informational - neutral
 	}
-	return 'vanilla'; // Default fallback
+	return 'robin'; // Default fallback
 }
 
 function HttpStatusBadge({
