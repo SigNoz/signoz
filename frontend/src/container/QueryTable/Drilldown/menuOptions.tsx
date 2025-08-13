@@ -1,5 +1,5 @@
 import { OPERATORS } from 'constants/queryBuilder';
-import { ChartBar, DraftingCompass, ScrollText } from 'lucide-react';
+import { Braces, ChartBar, DraftingCompass, ScrollText } from 'lucide-react';
 
 /**
  * Supported operators for filtering with their display properties
@@ -64,14 +64,26 @@ export const AGGREGATE_OPTIONS = [
  */
 export const getBaseContextConfig = ({
 	handleBaseDrilldown,
+	setSubMenu,
+	showDashboardVariablesOption,
 }: {
 	handleBaseDrilldown: (key: string) => void;
+	setSubMenu: (subMenu: string) => void;
+	showDashboardVariablesOption: boolean;
 }): {
 	key: string;
 	icon: React.ReactNode;
 	label: string;
 	onClick: () => void;
+	hidden?: boolean;
 }[] => [
+	{
+		key: 'dashboard_variables',
+		icon: <Braces size={16} />,
+		label: 'Dashboard Variables',
+		onClick: (): void => setSubMenu('dashboard_variables'),
+		hidden: !showDashboardVariablesOption,
+	},
 	{
 		key: 'view_logs',
 		icon: <ScrollText size={16} />,
@@ -94,6 +106,6 @@ export const getBaseContextConfig = ({
 		key: 'breakout',
 		icon: <ChartBar size={16} />,
 		label: 'Breakout by ..',
-		onClick: (): void => handleBaseDrilldown('breakout'),
+		onClick: (): void => setSubMenu('breakout'),
 	},
 ];

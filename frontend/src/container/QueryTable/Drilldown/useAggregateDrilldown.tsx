@@ -1,4 +1,5 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import useDashboardVarConfig from 'container/QueryTable/Drilldown/useDashboardVarConfig';
 import { useMemo } from 'react';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -51,6 +52,30 @@ const useAggregateDrilldown = ({
 		setSubMenu,
 	});
 
+	const fieldVariables = useMemo(() => {
+		if (!aggregateData?.filters) return {};
+
+		// Extract field variables from aggregation data filters
+		const fieldVars: Record<string, string | number | boolean> = {};
+
+		aggregateData.filters.forEach((filter) => {
+			if (filter.filterKey && filter.filterValue !== undefined) {
+				fieldVars[filter.filterKey] = filter.filterValue;
+			}
+		});
+
+		console.log(
+			'Field variables extracted from filters (will be prefixed with "_"):',
+			fieldVars,
+		);
+		return fieldVars;
+	}, [aggregateData?.filters]);
+
+	const { dashbaordVariablesConfig } = useDashboardVarConfig({
+		setSubMenu,
+		fieldVariables,
+	});
+
 	const { baseAggregateOptionsConfig } = useBaseAggregateOptions({
 		query,
 		onClose,
@@ -59,6 +84,7 @@ const useAggregateDrilldown = ({
 		setSubMenu,
 		contextLinks,
 		panelType,
+		fieldVariables,
 	});
 
 	const aggregateDrilldownConfig = useMemo(() => {
@@ -68,11 +94,22 @@ const useAggregateDrilldown = ({
 		}
 
 		if (subMenu === 'breakout') {
+			// todo: declare keys in constants
 			return breakoutConfig;
 		}
 
+		if (subMenu === 'dashboard_variables') {
+			return dashbaordVariablesConfig;
+		}
+
 		return baseAggregateOptionsConfig;
-	}, [subMenu, aggregateData, breakoutConfig, baseAggregateOptionsConfig]);
+	}, [
+		subMenu,
+		aggregateData,
+		breakoutConfig,
+		baseAggregateOptionsConfig,
+		dashbaordVariablesConfig,
+	]);
 
 	return { aggregateDrilldownConfig };
 };
