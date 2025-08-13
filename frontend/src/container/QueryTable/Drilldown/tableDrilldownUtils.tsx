@@ -56,10 +56,6 @@ export const getBreakoutQuery = (
 		return query;
 	}
 
-	console.log('>> groupBy', groupBy);
-	console.log('>> aggregateData', aggregateData);
-	console.log('>> query', query);
-
 	const queryWithFilters = addFilterToSelectedQuery(
 		query,
 		filtersToAdd,
@@ -80,6 +76,5 @@ export const getBreakoutQuery = (
 		},
 	);
 
-	console.log('>> breakoutQuery', newQuery);
 	return newQuery;
 };

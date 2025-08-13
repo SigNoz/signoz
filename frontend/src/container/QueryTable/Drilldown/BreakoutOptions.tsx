@@ -94,10 +94,6 @@ function BreakoutOptions({
 		);
 	}, [data, groupBy]);
 
-	console.log('>> queryData', queryData);
-	console.log('>> groupBy', groupBy);
-	console.log('>> breakoutOptions', breakoutOptions);
-
 	return (
 		<div>
 			<section className="search" style={{ padding: '8px 0' }}>

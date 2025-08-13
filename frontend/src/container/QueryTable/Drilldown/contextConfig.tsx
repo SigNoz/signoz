@@ -100,8 +100,6 @@ export function getAggregateContextMenuConfig({
 	onColumnClick: (key: string, query?: Query) => void;
 	aggregateData: AggregateData | null;
 }): AggregateContextMenuConfig {
-	console.log('getAggregateContextMenuConfig', { query, aggregateData });
-
 	if (subMenu === 'breakout') {
 		const queryData = getQueryData(query, aggregateData?.queryName || '');
 		return {
@@ -131,9 +129,6 @@ export function getAggregateContextMenuConfig({
 		query,
 		queryName as string,
 	);
-
-	console.log('dataSource', dataSource);
-	console.log('aggregations', aggregations);
 
 	return {
 		header: (

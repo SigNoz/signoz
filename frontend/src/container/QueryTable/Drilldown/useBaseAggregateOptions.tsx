@@ -49,7 +49,6 @@ const getRoute = (key: string): string => {
 
 const useBaseAggregateOptions = ({
 	query,
-	widgetId,
 	onClose,
 	subMenu,
 	setSubMenu,
@@ -96,68 +95,17 @@ const useBaseAggregateOptions = ({
 			}
 		});
 
-		console.log(
-			'Field variables extracted from filters (will be prefixed with "_"):',
-			fieldVars,
-		);
 		return fieldVars;
 	}, [aggregateData?.filters]);
 
 	// Use the new useContextVariables hook
-	const {
-		variables,
-		processedVariables,
-		getVariableByName,
-	} = useContextVariables({
+	const { processedVariables } = useContextVariables({
 		maxValues: 2,
 		customVariables: fieldVariables,
 	});
 
-	// // Local function to resolve variables in query without API call
-	// const resolveQueryVariables = useCallback(
-	// 	(query: Query): Query => {
-	// 		const resolvedQuery = cloneDeep(query);
-
-	// 		// Resolve variables in filter expressions
-	// 		if (resolvedQuery.builder?.queryData) {
-	// 			resolvedQuery.builder.queryData = resolvedQuery.builder.queryData.map(
-	// 				(queryData) => {
-	// 					// eslint-disable-next-line no-param-reassign
-	// 					if (queryData.filter?.expression) {
-	// 						const resolvedExpression = resolveTexts({
-	// 							texts: [queryData.filter.expression],
-	// 							processedVariables,
-	// 						}).fullTexts[0];
-
-	// 						// eslint-disable-next-line no-param-reassign
-	// 						queryData.filter.expression = resolvedExpression;
-	// 					}
-
-	// 					// eslint-disable-next-line no-param-reassign
-	// 					queryData.filters = undefined;
-
-	// 					return queryData;
-	// 				},
-	// 			);
-	// 		}
-
-	// 		return resolvedQuery;
-	// 	},
-	// 	[processedVariables],
-	// );
-
-	// Console.log the results
-	console.log('useContextVariables results:', {
-		variables,
-		processedVariables,
-		getVariableByName: getVariableByName('timestamp_start'),
-	});
-
-	console.log('aggregateData', aggregateData);
-
 	const getContextLinksItems = useCallback(() => {
 		if (!contextLinks?.linksData) return [];
-		console.log('contextLinks', contextLinks);
 
 		try {
 			const processedLinks = processContextLinks(
@@ -165,11 +113,6 @@ const useBaseAggregateOptions = ({
 				processedVariables,
 				50, // maxLength for labels
 			);
-
-			console.log('Processed context links:', {
-				originalLinks: contextLinks.linksData,
-				processedLinks,
-			});
 
 			return processedLinks.map(({ id, label, url }) => (
 				<ContextMenu.Item
@@ -189,8 +132,6 @@ const useBaseAggregateOptions = ({
 
 	const handleBaseDrilldown = useCallback(
 		(key: string): void => {
-			console.log('Base drilldown:', { widgetId, query, key, aggregateData });
-
 			if (key === 'breakout') {
 				// if (!drilldownQuery) {
 				setSubMenu(key);
@@ -237,15 +178,7 @@ const useBaseAggregateOptions = ({
 
 			onClose();
 		},
-		[
-			query,
-			resolvedQuery,
-			widgetId,
-			safeNavigate,
-			onClose,
-			setSubMenu,
-			aggregateData,
-		],
+		[resolvedQuery, safeNavigate, onClose, setSubMenu, aggregateData],
 	);
 
 	const baseAggregateOptionsConfig = useMemo(() => {
