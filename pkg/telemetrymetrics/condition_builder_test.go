@@ -134,6 +134,19 @@ func TestConditionFor(t *testing.T) {
 			expectedError: qbtypes.ErrInValues,
 		},
 		{
+			name: "Contains operator - string attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorContains,
+			value:         521509198310,
+			expectedSQL:   "LOWER(JSONExtractString(labels, 'user.id')) LIKE LOWER(?)",
+			expectedArgs:  []any{"%521509198310%"},
+			expectedError: nil,
+		},
+		{
 			name: "Not In operator - metric_name",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "metric_name",
