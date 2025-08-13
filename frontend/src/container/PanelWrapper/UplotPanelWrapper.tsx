@@ -88,6 +88,7 @@ function UplotPanelWrapper({
 		subMenu,
 		setSubMenu,
 		contextLinks: widget.contextLinks,
+		panelType: widget.panelTypes,
 	});
 
 	useEffect(() => {

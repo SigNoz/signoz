@@ -1,4 +1,5 @@
 import { TableProps } from 'antd';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { LogsExplorerTableProps } from 'container/LogsExplorerTable/LogsExplorerTable.interfaces';
 import {
 	ThresholdOperators,
@@ -24,6 +25,7 @@ export type GridTableComponentProps = {
 	customColTitles?: Record<string, string>;
 	enableDrillDown?: boolean;
 	contextLinks?: ContextLinksData;
+	panelType?: PANEL_TYPES;
 } & Pick<LogsExplorerTableProps, 'data'> &
 	Omit<TableProps<RowData>, 'columns' | 'dataSource'>;
 

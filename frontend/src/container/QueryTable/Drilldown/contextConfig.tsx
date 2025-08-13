@@ -1,4 +1,7 @@
-import { QUERY_BUILDER_OPERATORS_BY_TYPES } from 'constants/queryBuilder';
+import {
+	PANEL_TYPES,
+	QUERY_BUILDER_OPERATORS_BY_TYPES,
+} from 'constants/queryBuilder';
 import ContextMenu, { ClickedData } from 'periscope/components/ContextMenu';
 import { ReactNode } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -65,7 +68,7 @@ export function getGroupContextMenuConfig({
 		(operator) => SUPPORTED_OPERATORS[operator],
 	);
 
-	if (panelType === 'table' && clickedData?.column) {
+	if (panelType === PANEL_TYPES.TABLE && clickedData?.column) {
 		return {
 			items: (
 				<>

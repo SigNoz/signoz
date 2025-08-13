@@ -21,12 +21,12 @@ import { AggregateData } from './useAggregateDrilldown';
 
 interface UseBaseAggregateOptionsProps {
 	query: Query;
-	widgetId: string;
 	onClose: () => void;
 	subMenu: string;
 	setSubMenu: (subMenu: string) => void;
 	aggregateData: AggregateData | null;
 	contextLinks?: ContextLinksData;
+	panelType?: PANEL_TYPES;
 }
 
 interface BaseAggregateOptionsConfig {
@@ -54,6 +54,7 @@ const useBaseAggregateOptions = ({
 	setSubMenu,
 	aggregateData,
 	contextLinks,
+	panelType,
 }: UseBaseAggregateOptionsProps): {
 	baseAggregateOptionsConfig: BaseAggregateOptionsConfig;
 } => {
@@ -70,7 +71,7 @@ const useBaseAggregateOptions = ({
 			const updatedQuery = await getUpdatedQuery({
 				widgetConfig: {
 					query,
-					panelTypes: PANEL_TYPES.TIME_SERIES, // change by passing panel type from widget config
+					panelTypes: panelType || PANEL_TYPES.TIME_SERIES,
 					timePreferance: 'GLOBAL_TIME',
 				},
 				selectedDashboard,
@@ -79,7 +80,7 @@ const useBaseAggregateOptions = ({
 		};
 		resolveQuery();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [query, aggregateData]);
+	}, [query, aggregateData, panelType]);
 
 	const { safeNavigate } = useSafeNavigate();
 

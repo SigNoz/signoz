@@ -34,6 +34,7 @@ function TablePanelWrapper({
 			customColTitles={widget.customColTitles}
 			contextLinks={widget.contextLinks}
 			enableDrillDown={enableDrillDown}
+			panelType={widget.panelTypes}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...GRID_TABLE_CONFIG}
 		/>

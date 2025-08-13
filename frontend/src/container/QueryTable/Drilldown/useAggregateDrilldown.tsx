@@ -1,3 +1,4 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useMemo } from 'react';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -26,6 +27,7 @@ const useAggregateDrilldown = ({
 	setSubMenu,
 	aggregateData,
 	contextLinks,
+	panelType,
 }: {
 	query: Query;
 	widgetId: string;
@@ -34,6 +36,7 @@ const useAggregateDrilldown = ({
 	setSubMenu: (subMenu: string) => void;
 	aggregateData: AggregateData | null;
 	contextLinks?: ContextLinksData;
+	panelType?: PANEL_TYPES;
 }): {
 	aggregateDrilldownConfig: {
 		header?: string | React.ReactNode;
@@ -50,12 +53,12 @@ const useAggregateDrilldown = ({
 
 	const { baseAggregateOptionsConfig } = useBaseAggregateOptions({
 		query,
-		widgetId,
 		onClose,
 		aggregateData,
 		subMenu,
 		setSubMenu,
 		contextLinks,
+		panelType,
 	});
 
 	const aggregateDrilldownConfig = useMemo(() => {
