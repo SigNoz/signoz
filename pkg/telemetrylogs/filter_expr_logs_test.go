@@ -8,7 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/require"
 )
@@ -26,11 +25,9 @@ func TestFilterExprLogs(t *testing.T) {
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
-		FullTextColumn: &telemetrytypes.TelemetryFieldKey{
-			Name: "body",
-		},
-		JsonBodyPrefix: "body",
-		JsonKeyToKey:   GetBodyJSONKey,
+		FullTextColumn:   DefaultFullTextColumn,
+		JsonBodyPrefix:   BodyJSONStringSearchPrefix,
+		JsonKeyToKey:     GetBodyJSONKey,
 	}
 
 	testCases := []struct {
@@ -1406,6 +1403,14 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            true,
 			expectedQuery:         "WHERE (LOWER(attributes_string['message']) LIKE LOWER(?) AND mapContains(attributes_string, 'message') = ?)",
 			expectedArgs:          []any{"%error%", true},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "number contains body",
+			query:                 "body CONTAINS 521509198310",
+			shouldPass:            true,
+			expectedQuery:         "WHERE LOWER(body) LIKE LOWER(?)",
+			expectedArgs:          []any{"%521509198310%"},
 			expectedErrorContains: "",
 		},
 		{
