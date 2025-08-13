@@ -112,6 +112,30 @@ func TestConditionFor(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			name: "Contains operator - string attribute number value",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorContains,
+			value:         521509198310,
+			expectedSQL:   "LOWER(attributes_string['user.id']) LIKE LOWER(?)",
+			expectedArgs:  []any{"%521509198310%", true},
+			expectedError: nil,
+		},
+		{
+			name: "Contains operator - body",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body",
+			},
+			operator:      qbtypes.FilterOperatorContains,
+			value:         521509198310,
+			expectedSQL:   "LOWER(body) LIKE LOWER(?)",
+			expectedArgs:  []any{"%521509198310%"},
+			expectedError: nil,
+		},
+		{
 			name: "Contains operator - string attribute",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:          "user.id",
