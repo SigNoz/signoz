@@ -69,6 +69,7 @@ function TracesExplorer(): JSX.Element {
 
 	// Get panel type from URL
 	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
+	const [isLoadingQueries, setIsLoadingQueries] = useState<boolean>(false);
 
 	const [selectedView, setSelectedView] = useState<ExplorerViews>(() =>
 		getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
@@ -323,6 +324,7 @@ function TracesExplorer(): JSX.Element {
 							rightActions={
 								<RightToolbarActions
 									onStageRunQuery={(): void => handleRunQuery(true, true)}
+									isLoadingQueries={isLoadingQueries}
 								/>
 							}
 						/>
@@ -344,13 +346,21 @@ function TracesExplorer(): JSX.Element {
 
 						{selectedView === ExplorerViews.LIST && (
 							<div className="trace-explorer-list-view">
-								<ListView isFilterApplied={isFilterApplied} setWarning={setWarning} />
+								<ListView
+									isFilterApplied={isFilterApplied}
+									setWarning={setWarning}
+									setIsLoadingQueries={setIsLoadingQueries}
+								/>
 							</div>
 						)}
 
 						{selectedView === ExplorerViews.TRACE && (
 							<div className="trace-explorer-traces-view">
-								<TracesView isFilterApplied={isFilterApplied} setWarning={setWarning} />
+								<TracesView
+									isFilterApplied={isFilterApplied}
+									setWarning={setWarning}
+									setIsLoadingQueries={setIsLoadingQueries}
+								/>
 							</div>
 						)}
 
@@ -360,13 +370,17 @@ function TracesExplorer(): JSX.Element {
 									dataSource={DataSource.TRACES}
 									isFilterApplied={isFilterApplied}
 									setWarning={setWarning}
+									setIsLoadingQueries={setIsLoadingQueries}
 								/>
 							</div>
 						)}
 
 						{selectedView === ExplorerViews.TABLE && (
 							<div className="trace-explorer-table-view">
-								<TableView setWarning={setWarning} />
+								<TableView
+									setWarning={setWarning}
+									setIsLoadingQueries={setIsLoadingQueries}
+								/>
 							</div>
 						)}
 					</div>
