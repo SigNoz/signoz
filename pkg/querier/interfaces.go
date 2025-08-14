@@ -10,6 +10,7 @@ import (
 // Querier interface defines the contract for querying data
 type Querier interface {
 	QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error)
+	QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, client *qbtypes.RawStream)
 }
 
 // BucketCache is the interface for bucket-based caching

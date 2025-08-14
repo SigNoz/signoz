@@ -79,7 +79,7 @@ func (b *logQueryStatementBuilder) Build(
 	q := sqlbuilder.NewSelectBuilder()
 
 	switch requestType {
-	case qbtypes.RequestTypeRaw:
+	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeRawStream:
 		return b.buildListQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeTimeSeries:
 		return b.buildTimeSeriesQuery(ctx, q, query, start, end, keys, variables)
@@ -575,9 +575,17 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 
 	// add time filter
 	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
-	endBucket := end / querybuilder.NsToSeconds
+	var endBucket uint64
+	if end != 0 {
+		endBucket = end / querybuilder.NsToSeconds
+	}
 
-	sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.L("timestamp", fmt.Sprintf("%d", end)), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
+	if start != 0 {
+		sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.GE("ts_bucket_start", startBucket))
+	}
+	if end != 0 {
+		sb.Where(sb.L("timestamp", fmt.Sprintf("%d", end)), sb.LE("ts_bucket_start", endBucket))
+	}
 
 	return preparedWhereClause, nil
 }

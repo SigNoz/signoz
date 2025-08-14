@@ -386,7 +386,7 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *middlew
 	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
 
 	// live logs
-	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.QuerierAPI.QueryRawStream)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) RegisterFieldsRoutes(router *mux.Router, am *middleware.AuthZ) {
@@ -4004,7 +4004,7 @@ func (aH *APIHandler) logFieldUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getLogs(w http.ResponseWriter, r *http.Request) {
-	aH.WriteJSON(w, r, map[string]interface{}{"results": []model.SignozLog{}})
+	aH.WriteJSON(w, r, map[string]interface{}{"results": []interface{}{}})
 }
 
 func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
@@ -4707,92 +4707,6 @@ func (aH *APIHandler) GetQueryProgressUpdates(w http.ResponseWriter, r *http.Req
 			)
 		}
 	}
-}
-
-func (aH *APIHandler) liveTailLogsV2(w http.ResponseWriter, r *http.Request) {
-
-	// get the param from url and add it to body
-	stringReader := strings.NewReader(r.URL.Query().Get("q"))
-	r.Body = io.NopCloser(stringReader)
-
-	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
-	if apiErrorObj != nil {
-		zap.L().Error(apiErrorObj.Err.Error())
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-
-	var err error
-	var queryString string
-	switch queryRangeParams.CompositeQuery.QueryType {
-	case v3.QueryTypeBuilder:
-		// check if any enrichment is required for logs if yes then enrich them
-		if logsv3.EnrichmentRequired(queryRangeParams) {
-			// get the fields if any logs query is present
-			logsFields, err := aH.reader.GetLogFieldsFromNames(r.Context(), logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
-			if err != nil {
-				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, nil)
-				return
-			}
-			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
-			logsv3.Enrich(queryRangeParams, fields)
-		}
-
-		queryString, err = aH.queryBuilder.PrepareLiveTailQuery(queryRangeParams)
-		if err != nil {
-			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-			return
-		}
-
-	default:
-		err = fmt.Errorf("invalid query type")
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.WriteHeader(200)
-
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		err := model.ApiError{Typ: model.ErrorStreamingNotSupported, Err: nil}
-		RespondError(w, &err, "streaming is not supported")
-		return
-	}
-
-	// flush the headers
-	flusher.Flush()
-
-	// create the client
-	client := &model.LogsLiveTailClientV2{Name: r.RemoteAddr, Logs: make(chan *model.SignozLogV2, 1000), Done: make(chan *bool), Error: make(chan error)}
-	go aH.reader.LiveTailLogsV4(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
-	for {
-		select {
-		case log := <-client.Logs:
-			var buf bytes.Buffer
-			enc := json.NewEncoder(&buf)
-			enc.Encode(log)
-			fmt.Fprintf(w, "data: %v\n\n", buf.String())
-			flusher.Flush()
-		case <-client.Done:
-			zap.L().Debug("done!")
-			return
-		case err := <-client.Error:
-			zap.L().Error("error occurred", zap.Error(err))
-			fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
-			flusher.Flush()
-			return
-		}
-	}
-
-}
-
-func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
-	aH.liveTailLogsV2(w, r)
 }
 
 func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) {
