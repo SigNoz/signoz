@@ -109,6 +109,8 @@ func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 				{
 					Type: qbtypes.QueryTypeBuilder,
 					Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+						Signal: telemetrytypes.SignalLogs,
+						Name:   "raw_stream",
 						Filter: &qbtypes.Filter{
 							Expression: filterQ,
 						},
@@ -165,8 +167,6 @@ func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 		}
 	}()
 
-	// just for validation as we don't use end
-	queryRangeRequest.End = queryRangeRequest.Start + 1
 	// Validate the query request
 	if err := queryRangeRequest.Validate(); err != nil {
 		render.Error(rw, err)
@@ -193,7 +193,7 @@ func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 	flusher.Flush()
 
 	client := &qbtypes.RawStream{Name: req.RemoteAddr, Logs: make(chan *qbtypes.RawRow, 1000), Done: make(chan *bool), Error: make(chan error)}
-	go a.querier.QueryRangeRawStream(ctx, orgID, &queryRangeRequest, client)
+	go a.querier.QueryRawStream(ctx, orgID, &queryRangeRequest, client)
 
 	for {
 		select {

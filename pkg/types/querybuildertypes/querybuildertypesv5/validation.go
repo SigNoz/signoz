@@ -431,7 +431,7 @@ func (q *QueryBuilderQuery[T]) validateHaving() error {
 // ValidateQueryRangeRequest validates the entire query range request
 func (r *QueryRangeRequest) Validate() error {
 	// Validate time range
-	if r.Start >= r.End {
+	if r.RequestType != RequestTypeRawStream && r.Start >= r.End {
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"start time must be before end time",

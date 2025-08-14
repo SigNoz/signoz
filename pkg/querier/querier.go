@@ -297,7 +297,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	return qbResp, qbErr
 }
 
-func (q *querier) QueryRangeRawStream(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, client *qbtypes.RawStream) {
+func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, client *qbtypes.RawStream) {
 
 	event := &qbtypes.QBEvent{
 		Version:         "v5",
@@ -305,13 +305,12 @@ func (q *querier) QueryRangeRawStream(ctx context.Context, orgID valuer.UUID, re
 		PanelType:       req.RequestType.StringValue(),
 	}
 
-	for idx, query := range req.CompositeQuery.Queries {
+	for _, query := range req.CompositeQuery.Queries {
 		event.QueryType = query.Type.StringValue()
 		if query.Type == qbtypes.QueryTypeBuilder {
 			switch spec := query.Spec.(type) {
 			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
 				event.FilterApplied = spec.Filter != nil && spec.Filter.Expression != ""
-				req.CompositeQuery.Queries[idx].Spec = spec
 			default:
 				// return if it's not log aggregation
 				client.Error <- errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported builder spec type %T", query.Spec)
@@ -325,7 +324,6 @@ func (q *querier) QueryRangeRawStream(ctx context.Context, orgID valuer.UUID, re
 	}
 
 	queries := make(map[string]qbtypes.Query)
-	steps := make(map[string]qbtypes.Step)
 	query := req.CompositeQuery.Queries[0]
 	spec := query.Spec.(qbtypes.QueryBuilderQuery[qbtypes.LogAggregation])
 	// add the new id to the id filter
@@ -370,9 +368,8 @@ func (q *querier) QueryRangeRawStream(ctx context.Context, orgID valuer.UUID, re
 				},
 			})
 			queries[spec.Name] = bq
-			steps[spec.Name] = spec.StepInterval
 
-			qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event)
+			qbResp, qbErr := q.run(ctx, orgID, queries, req, nil, event)
 			if qbErr != nil {
 				client.Error <- qbErr
 				return
