@@ -39,9 +39,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { AppState } from 'store/reducers';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 // ** Types
 import {
@@ -60,7 +58,6 @@ import {
 	QueryBuilderContextType,
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
@@ -101,10 +98,6 @@ export function QueryBuilderProvider({
 	const location = useLocation();
 
 	const currentPathnameRef = useRef<string | null>(location.pathname);
-
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
 
 	const compositeQueryParam = useGetCompositeQueryParam();
 	const { queryType: queryTypeParam, ...queryState } =
@@ -865,54 +858,43 @@ export function QueryBuilderProvider({
 		[],
 	);
 
-	const handleRunQuery = useCallback(
-		(shallUpdateStepInterval?: boolean, newQBQuery?: boolean) => {
-			let currentQueryData = currentQuery;
-
-			if (newQBQuery) {
-				currentQueryData = {
-					...currentQueryData,
-					builder: {
-						...currentQueryData.builder,
-						queryData: currentQueryData.builder.queryData.map((item) => ({
-							...item,
-							filter: {
-								...item.filter,
-								expression:
-									item.filter?.expression.trim() === ''
-										? ''
-										: item.filter?.expression ?? '',
-							},
-							filters: {
-								items: [],
-								op: 'AND',
-							},
-						})),
+	const handleRunQuery = useCallback(() => {
+		const currentQueryData = {
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: currentQuery.builder.queryData.map((item) => ({
+					...item,
+					filter: {
+						...item.filter,
+						expression:
+							item.filter?.expression.trim() === ''
+								? ''
+								: item.filter?.expression ?? '',
 					},
-				};
-			}
-			redirectWithQueryBuilderData({
-				...{
-					...currentQueryData,
-					...updateStepInterval(
-						{
-							builder: currentQueryData.builder,
-							clickhouse_sql: currentQueryData.clickhouse_sql,
-							promql: currentQueryData.promql,
-							id: currentQueryData.id,
-							queryType,
-							unit: currentQueryData.unit,
-						},
-						maxTime,
-						minTime,
-						!!shallUpdateStepInterval,
-					),
-				},
-				queryType,
-			});
-		},
-		[currentQuery, queryType, maxTime, minTime, redirectWithQueryBuilderData],
-	);
+					filters: {
+						items: [],
+						op: 'AND',
+					},
+				})),
+			},
+		};
+
+		redirectWithQueryBuilderData({
+			...{
+				...currentQueryData,
+				...updateStepInterval({
+					builder: currentQueryData.builder,
+					clickhouse_sql: currentQueryData.clickhouse_sql,
+					promql: currentQueryData.promql,
+					id: currentQueryData.id,
+					queryType,
+					unit: currentQueryData.unit,
+				}),
+			},
+			queryType,
+		});
+	}, [currentQuery, queryType, redirectWithQueryBuilderData]);
 
 	useEffect(() => {
 		if (location.pathname !== currentPathnameRef.current) {

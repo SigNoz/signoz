@@ -102,7 +102,7 @@ function QuerySection({
 					],
 				},
 			});
-			handleRunQueryFromQueryBuilder(true, true);
+			handleRunQueryFromQueryBuilder();
 		},
 		[
 			selectedDashboard,
