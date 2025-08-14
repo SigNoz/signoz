@@ -27,7 +27,7 @@ services:
     image: signoz/zookeeper:3.7.1
     container_name: zookeeper
     volumes:
-      - ${PWD}/fs/tmp/zookeeper:/signoz/zookeeper
+      - ${PWD}/fs/tmp/zookeeper:/bitnami/zookeeper
     ports:
       - '127.0.0.1:2181:2181'
     environment:
