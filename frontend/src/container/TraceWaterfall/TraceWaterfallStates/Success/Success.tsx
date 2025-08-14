@@ -144,8 +144,8 @@ function SpanOverview({
 							</Button>
 						)}
 						<Typography.Text className="span-name">{span.name}</Typography.Text>
-						<HttpStatusBadge statusCode={span.tagMap?.['http.status_code']} />
 					</div>
+					<HttpStatusBadge statusCode={span.tagMap?.['http.status_code']} />
 				</section>
 				<section className="second-row">
 					<div style={{ width: '2px', background: color, height: '100%' }} />
