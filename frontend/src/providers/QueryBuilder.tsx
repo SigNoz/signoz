@@ -61,6 +61,7 @@ import {
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { sanitizeOrderByForExplorer } from 'utils/sanitizeOrderBy';
 import { v4 as uuid } from 'uuid';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
@@ -101,6 +102,7 @@ export function QueryBuilderProvider({
 	const location = useLocation();
 
 	const currentPathnameRef = useRef<string | null>(location.pathname);
+	const [hasRunOnExplorer, setHasRunOnExplorer] = useState<boolean>(false);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -184,6 +186,17 @@ export function QueryBuilderProvider({
 					} as BaseAutocompleteData,
 				};
 
+				// Explorer pages: sanitize stale orderBy before first query
+				const isExplorer =
+					location.pathname === ROUTES.LOGS_EXPLORER ||
+					location.pathname === ROUTES.TRACES_EXPLORER;
+				if (isExplorer) {
+					const sanitizedOrderBy = sanitizeOrderByForExplorer(currentElement);
+					return hasRunOnExplorer
+						? currentElement
+						: { ...currentElement, orderBy: sanitizedOrderBy };
+				}
+
 				return currentElement;
 			});
 
@@ -215,7 +228,7 @@ export function QueryBuilderProvider({
 
 			return nextQuery;
 		},
-		[initialDataSource],
+		[initialDataSource, location.pathname, hasRunOnExplorer],
 	);
 
 	const initQueryBuilderData = useCallback(
@@ -867,6 +880,12 @@ export function QueryBuilderProvider({
 
 	const handleRunQuery = useCallback(
 		(shallUpdateStepInterval?: boolean, newQBQuery?: boolean) => {
+			const isExplorer =
+				location.pathname === ROUTES.LOGS_EXPLORER ||
+				location.pathname === ROUTES.TRACES_EXPLORER;
+			if (isExplorer) {
+				setHasRunOnExplorer(true);
+			}
 			let currentQueryData = currentQuery;
 
 			if (newQBQuery) {
@@ -911,7 +930,14 @@ export function QueryBuilderProvider({
 				queryType,
 			});
 		},
-		[currentQuery, queryType, maxTime, minTime, redirectWithQueryBuilderData],
+		[
+			location.pathname,
+			currentQuery,
+			queryType,
+			maxTime,
+			minTime,
+			redirectWithQueryBuilderData,
+		],
 	);
 
 	useEffect(() => {
@@ -921,6 +947,7 @@ export function QueryBuilderProvider({
 			setStagedQuery(null);
 			// reset the last used query to 0 when navigating away from the page
 			setLastUsedQuery(0);
+			setHasRunOnExplorer(false);
 		}
 	}, [location.pathname]);
 
