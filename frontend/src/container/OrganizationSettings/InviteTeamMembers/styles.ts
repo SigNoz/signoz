@@ -20,6 +20,13 @@ export const SpaceContainer = styled(Space)`
 	}
 `;
 
+export const TeamMemberRow = styled.div`
+	display: flex;
+	align-items: center;
+	gap: 8px;
+`;
+
 export const RemoveButton = styled(Button)`
-	margin: 0 8px;
+	margin-left: 8px;
+	vertical-align: middle;
 `;
