@@ -21,10 +21,7 @@ import { v4 as uuid } from 'uuid';
 
 import { transformQueryBuilderDataModel } from '../transformQueryBuilderDataModel';
 
-const mapQueryFromV5 = (
-	compositeQuery: ICompositeMetricQuery,
-	query?: Query,
-): Query => {
+const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 	const builderQueries: Record<string, IBuilderQuery | IBuilderFormula> = {};
 	const promQueries: IPromQLQuery[] = [];
 	const clickhouseQueries: IClickHouseQuery[] = [];
@@ -62,7 +59,7 @@ const mapQueryFromV5 = (
 		}
 	});
 	return {
-		builder: transformQueryBuilderDataModel(builderQueries, query?.builder),
+		builder: transformQueryBuilderDataModel(builderQueries),
 		promql: promQueries,
 		clickhouse_sql: clickhouseQueries,
 		queryType: compositeQuery.queryType,
@@ -71,15 +68,9 @@ const mapQueryFromV5 = (
 	};
 };
 
-const mapQueryFromV3 = (
-	compositeQuery: ICompositeMetricQuery,
-	query?: Query,
-): Query => {
+const mapQueryFromV3 = (compositeQuery: ICompositeMetricQuery): Query => {
 	const builder = compositeQuery.builderQueries
-		? transformQueryBuilderDataModel(
-				compositeQuery.builderQueries,
-				query?.builder,
-		  )
+		? transformQueryBuilderDataModel(compositeQuery.builderQueries)
 		: initialQueryState.builder;
 
 	const promql = compositeQuery.promQueries
@@ -109,10 +100,9 @@ const mapQueryFromV3 = (
 
 export const mapQueryDataFromApi = (
 	compositeQuery: ICompositeMetricQuery,
-	query?: Query,
 ): Query => {
 	if (compositeQuery.queries && compositeQuery.queries.length > 0) {
-		return mapQueryFromV5(compositeQuery, query);
+		return mapQueryFromV5(compositeQuery);
 	}
-	return mapQueryFromV3(compositeQuery, query);
+	return mapQueryFromV3(compositeQuery);
 };

@@ -138,9 +138,7 @@ function Explorer(): JSX.Element {
 					<div className="explore-header-right-actions">
 						{!isEmpty(warning) && <WarningPopover warningData={warning} />}
 						<DateTimeSelector showAutoRefresh />
-						<RightToolbarActions
-							onStageRunQuery={(): void => handleRunQuery(true, true)}
-						/>
+						<RightToolbarActions onStageRunQuery={(): void => handleRunQuery()} />
 					</div>
 				</div>
 				<QueryBuilderV2

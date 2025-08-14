@@ -238,8 +238,6 @@ function DateTimeSelection({
 			setCustomDTPickerVisible(true);
 		}
 
-		const { maxTime, minTime } = GetMinMax(value, getTime());
-
 		if (!isLogsExplorerPage) {
 			urlQuery.set(QueryParams.startTime, minTime.toString());
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
@@ -250,7 +248,7 @@ function DateTimeSelection({
 		if (!stagedQuery) {
 			return;
 		}
-		initQueryBuilderData(updateStepInterval(stagedQuery, maxTime, minTime));
+		initQueryBuilderData(updateStepInterval(stagedQuery));
 	};
 
 	const onRefreshHandler = (): void => {

@@ -220,18 +220,10 @@ function ServiceMetrics({
 		() =>
 			getQueryRangeRequestData({
 				topLevelOperations,
-				minTime: timeRange.startTime * 1e6,
-				maxTime: timeRange.endTime * 1e6,
 				globalSelectedInterval,
 				dotMetricsEnabled,
 			}),
-		[
-			globalSelectedInterval,
-			timeRange.endTime,
-			timeRange.startTime,
-			topLevelOperations,
-			dotMetricsEnabled,
-		],
+		[globalSelectedInterval, topLevelOperations, dotMetricsEnabled],
 	);
 
 	const dataQueries = useGetQueriesRange(
