@@ -19,7 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/variables"
-	"go.uber.org/zap"
 )
 
 type API struct {
@@ -207,7 +206,6 @@ func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 		case <-client.Done:
 			return
 		case err := <-client.Error:
-			zap.L().Error("error occurred", zap.Error(err))
 			fmt.Fprintf(rw, "event: error\ndata: %v\n\n", err.Error())
 			flusher.Flush()
 			return
