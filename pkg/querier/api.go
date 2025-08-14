@@ -93,10 +93,10 @@ func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
 	// get the param from url and add it to body
-	startQ := req.URL.Query().Get("start")
-	filterQ := req.URL.Query().Get("filter")
+	startParam := req.URL.Query().Get("start")
+	filterParam := req.URL.Query().Get("filter")
 
-	start, err := strconv.ParseUint(startQ, 10, 64)
+	start, err := strconv.ParseUint(startParam, 10, 64)
 	if err != nil {
 		start = 0
 	}
@@ -112,7 +112,7 @@ func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 						Signal: telemetrytypes.SignalLogs,
 						Name:   "raw_stream",
 						Filter: &qbtypes.Filter{
-							Expression: filterQ,
+							Expression: filterParam,
 						},
 						Limit: 500,
 						Order: []qbtypes.OrderBy{
