@@ -1,4 +1,5 @@
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
+import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -101,18 +102,19 @@ export const useTraceActions = (): UseTraceActionsReturn => {
 								},
 							];
 
-							return {
-								...item,
-								dataSource: DataSource.TRACES,
-								filters: {
-									...item.filters,
+							const convertedFilter = convertFiltersToExpressionWithExistingQuery(
+								{
 									items: newFilters,
 									op: item.filters?.op || 'AND',
 								},
-								filter: {
-									...item.filter,
-									expression: '',
-								},
+								item.filter?.expression || '',
+							);
+
+							return {
+								...item,
+								dataSource: DataSource.TRACES,
+								filters: convertedFilter.filters,
+								filter: convertedFilter.filter,
 							};
 						}),
 					},
