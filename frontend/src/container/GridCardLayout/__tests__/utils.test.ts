@@ -109,7 +109,7 @@ describe('GridCardLayout Utils', () => {
 			builder: {
 				queryData: [
 					{
-						stepInterval: 60,
+						stepInterval: null,
 						aggregateOperator: 'avg',
 						dataSource: DataSource.METRICS,
 						queryName: 'A',
