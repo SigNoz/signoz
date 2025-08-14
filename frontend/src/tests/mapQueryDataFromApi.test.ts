@@ -2,7 +2,6 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	BuilderQuery,
 	QueryEnvelope,
@@ -74,83 +73,7 @@ describe('mapQueryDataFromApi', (): void => {
 			],
 		};
 
-		const baseQuery: Query = {
-			id: '139dbe9d-0e5a-40b1-88c5-9bad700f1db0',
-			queryType: EQueryType.QUERY_BUILDER,
-			unit: undefined,
-			promql: [
-				{
-					name: 'A',
-					query: '',
-					legend: '',
-					disabled: false,
-				},
-			],
-			clickhouse_sql: [
-				{
-					name: 'A',
-					legend: '',
-					disabled: false,
-					query: '',
-				},
-			],
-			builder: {
-				queryData: [
-					{
-						dataSource: DataSource.TRACES,
-						queryName: 'A',
-						aggregateOperator: 'count',
-						aggregateAttribute: {
-							id: '------false',
-							dataType: DataTypes.EMPTY,
-							key: '',
-							isColumn: false,
-							type: '',
-							isJSON: false,
-						},
-						timeAggregation: 'rate',
-						spaceAggregation: 'sum',
-						filter: { expression: "service.name = 'adservice' " },
-						aggregations: [
-							{ expression: 'count() avg(app.ads.count) as avtv' } as TraceAggregation,
-						],
-						functions: [],
-						filters: {
-							items: [
-								{
-									id: '8012d11b-50b7-4183-88c7-4c4438d04de8',
-									op: '=',
-									key: { id: 'service.name', key: 'service.name', type: '' },
-									value: 'adservice',
-								},
-							],
-							op: 'AND',
-						},
-						expression: 'A',
-						disabled: false,
-						stepInterval: 60,
-						having: { expression: 'avg(app.ads.count) != 0' },
-						limit: null,
-						orderBy: [{ columnName: 'avg(app.ads.count)', order: 'asc' }],
-						groupBy: [
-							{
-								dataType: DataTypes.String,
-								isColumn: true,
-								isJSON: false,
-								key: 'service.name',
-								type: 'resource',
-								id: 'service.name--string--resource--true',
-							},
-						],
-						legend: '',
-						reduceTo: 'avg',
-					},
-				],
-				queryFormulas: [],
-			},
-		};
-
-		const result = mapQueryDataFromApi(compositeQuery, baseQuery);
+		const result = mapQueryDataFromApi(compositeQuery);
 
 		expect(result.queryType).toBe(EQueryType.QUERY_BUILDER);
 		expect(result.promql).toEqual([]);
@@ -227,57 +150,7 @@ describe('mapQueryDataFromApi', (): void => {
 			queries: [{ type: 'builder_query', spec: builderSpec } as QueryEnvelope],
 		};
 
-		const baseQuery: Query = {
-			id: 'seed-id',
-			queryType: EQueryType.QUERY_BUILDER,
-			unit: undefined,
-			promql: [],
-			clickhouse_sql: [],
-			builder: {
-				queryData: [
-					{
-						dataSource: DataSource.TRACES,
-						queryName: 'A',
-						aggregateOperator: 'count',
-						aggregateAttribute: {
-							id: '------false',
-							dataType: DataTypes.EMPTY,
-							key: '',
-							isColumn: false,
-							type: '',
-							isJSON: false,
-						},
-						timeAggregation: 'rate',
-						spaceAggregation: 'sum',
-						filter: { expression: "service.name = 'adservice' " },
-						aggregations: [
-							{ expression: 'count() avg(app.ads.count) as avtv' } as TraceAggregation,
-						],
-						functions: [],
-						expression: 'A',
-						disabled: false,
-						stepInterval: 60,
-						limit: null,
-						orderBy: [{ columnName: 'avg(app.ads.count)', order: 'asc' }],
-						groupBy: [
-							{
-								dataType: DataTypes.String,
-								isColumn: true,
-								isJSON: false,
-								key: 'service.name',
-								type: 'resource',
-								id: 'service.name--string--resource--true',
-							},
-						],
-						legend: '',
-						having: { expression: 'avg(app.ads.count) != 0' },
-					},
-				],
-				queryFormulas: [],
-			},
-		};
-
-		const result = mapQueryDataFromApi(compositeQuery, baseQuery);
+		const result = mapQueryDataFromApi(compositeQuery);
 
 		const projected = {
 			builder: {
