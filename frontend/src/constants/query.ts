@@ -49,4 +49,5 @@ export enum QueryParams {
 	tab = 'tab',
 	thresholds = 'thresholds',
 	selectedExplorerView = 'selectedExplorerView',
+	variableConfigs = 'variableConfigs',
 }
