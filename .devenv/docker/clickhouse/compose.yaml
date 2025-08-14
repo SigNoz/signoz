@@ -23,6 +23,8 @@ services:
       retries: 3
     depends_on:
       - zookeeper
+    networks:
+      - signoz-dev-network
   zookeeper:
     image: bitnami/zookeeper:3.7.1
     container_name: zookeeper
@@ -30,6 +32,8 @@ services:
       - ${PWD}/fs/tmp/zookeeper:/bitnami/zookeeper
     ports:
       - '127.0.0.1:2181:2181'
+    networks:
+      - signoz-dev-network
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
     healthcheck:
@@ -52,6 +56,8 @@ services:
       clickhouse:
         condition: service_healthy
     restart: on-failure
+    networks:
+      - signoz-dev-network
   schema-migrator-async:
     image: signoz/signoz-schema-migrator:v0.129.0
     container_name: schema-migrator-async
@@ -67,3 +73,9 @@ services:
       schema-migrator-sync:
         condition: service_completed_successfully
     restart: on-failure
+    networks:
+      - signoz-dev-network
+
+networks:
+  signoz-dev-network:
+    external: true
