@@ -13,21 +13,10 @@ import AttributeActions from './AttributeActions';
 interface IAttributesProps {
 	span: Span;
 	isSearchVisible: boolean;
-	onAddToQuery: (key: string, value: string, operator: string) => void;
-	onGroupByAttribute: (fieldKey: string) => void;
-	onCopyFieldName: (fieldName: string) => void;
-	onCopyFieldValue: (fieldValue: string) => void;
 }
 
 function Attributes(props: IAttributesProps): JSX.Element {
-	const {
-		span,
-		isSearchVisible,
-		onAddToQuery,
-		onGroupByAttribute,
-		onCopyFieldName,
-		onCopyFieldValue,
-	} = props;
+	const { span, isSearchVisible } = props;
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
 
 	const flattenSpanData: Record<string, string> = useMemo(
@@ -72,13 +61,7 @@ function Attributes(props: IAttributesProps): JSX.Element {
 									</Typography.Text>
 								</CopyClipboardHOC>
 							</Tooltip>
-							<AttributeActions
-								record={item}
-								onAddToQuery={onAddToQuery}
-								onGroupByAttribute={onGroupByAttribute}
-								onCopyFieldName={onCopyFieldName}
-								onCopyFieldValue={onCopyFieldValue}
-							/>
+							<AttributeActions record={item} />
 						</div>
 					</div>
 				))}

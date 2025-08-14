@@ -7,7 +7,6 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { themeColors } from 'constants/theme';
 import { getTraceToLogsQuery } from 'container/TraceDetail/SelectedSpanDetails/config';
-import { useTraceActions } from 'hooks/trace/useTraceActions';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
@@ -46,13 +45,6 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		themeColors.traceDetailColors,
 	);
 
-	const {
-		onAddToQuery,
-		onGroupByAttribute,
-		onCopyFieldName,
-		onCopyFieldValue,
-	} = useTraceActions();
-
 	function getItems(span: Span, startTime: number): TabsProps['items'] {
 		return [
 			{
@@ -69,16 +61,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 					</Button>
 				),
 				key: 'attributes',
-				children: (
-					<Attributes
-						span={span}
-						isSearchVisible={isSearchVisible}
-						onAddToQuery={onAddToQuery}
-						onGroupByAttribute={onGroupByAttribute}
-						onCopyFieldName={onCopyFieldName}
-						onCopyFieldValue={onCopyFieldValue}
-					/>
-				),
+				children: <Attributes span={span} isSearchVisible={isSearchVisible} />,
 			},
 			{
 				label: (

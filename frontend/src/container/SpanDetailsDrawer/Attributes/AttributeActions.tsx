@@ -1,9 +1,9 @@
 import { Button, Popover, Spin, Tooltip } from 'antd';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
+import { OPERATORS } from 'constants/antlrQueryConstants';
+import { useTraceActions } from 'hooks/trace/useTraceActions';
 import { ArrowDownToDot, ArrowUpFromDot, Copy, Ellipsis } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
-
-type FilterOperator = '=' | '!=';
 
 interface AttributeRecord {
 	field: string;
@@ -12,22 +12,21 @@ interface AttributeRecord {
 
 interface AttributeActionsProps {
 	record: AttributeRecord;
-	onAddToQuery?: (key: string, value: string, operator: FilterOperator) => void;
-	onGroupByAttribute?: (fieldKey: string) => void;
-	onCopyFieldName?: (fieldName: string) => void;
-	onCopyFieldValue?: (fieldValue: string) => void;
 }
 
 export default function AttributeActions({
 	record,
-	onAddToQuery,
-	onGroupByAttribute,
-	onCopyFieldName,
-	onCopyFieldValue,
 }: AttributeActionsProps): JSX.Element {
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [isFilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
 	const [isFilterOutLoading, setIsFilterOutLoading] = useState<boolean>(false);
+
+	const {
+		onAddToQuery,
+		onGroupByAttribute,
+		onCopyFieldName,
+		onCopyFieldValue,
+	} = useTraceActions();
 
 	const textToCopy = useMemo(() => {
 		const str = record.value == null ? '' : String(record.value);
@@ -40,7 +39,7 @@ export default function AttributeActions({
 		setIsFilterInLoading(true);
 		try {
 			await Promise.resolve(
-				onAddToQuery(record.field, record.value, '=' as const),
+				onAddToQuery(record.field, record.value, OPERATORS['=']),
 			);
 		} finally {
 			setIsFilterInLoading(false);
@@ -52,7 +51,7 @@ export default function AttributeActions({
 		setIsFilterOutLoading(true);
 		try {
 			await Promise.resolve(
-				onAddToQuery(record.field, record.value, '!=' as const),
+				onAddToQuery(record.field, record.value, OPERATORS['!=']),
 			);
 		} finally {
 			setIsFilterOutLoading(false);
@@ -159,10 +158,3 @@ export default function AttributeActions({
 		</div>
 	);
 }
-
-AttributeActions.defaultProps = {
-	onAddToQuery: undefined,
-	onGroupByAttribute: undefined,
-	onCopyFieldName: undefined,
-	onCopyFieldValue: undefined,
-};
