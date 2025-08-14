@@ -101,7 +101,7 @@ func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		start = 0
 	}
-	// make changes to parse it as qb v5 params
+	// create the v5 request param
 	queryRangeRequest := qbtypes.QueryRangeRequest{
 		Start:       start,
 		RequestType: qbtypes.RequestTypeRawStream,

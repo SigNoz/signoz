@@ -314,10 +314,12 @@ func (q *querier) QueryRangeRawStream(ctx context.Context, orgID valuer.UUID, re
 				req.CompositeQuery.Queries[idx].Spec = spec
 			default:
 				// return if it's not log aggregation
+				client.Error <- errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported builder spec type %T", query.Spec)
 				return
 			}
 		} else {
 			// return if it's not of type query builder
+			client.Error <- errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported query type %s", query.Type)
 			return
 		}
 	}
@@ -344,7 +346,7 @@ func (q *querier) QueryRangeRawStream(ctx context.Context, orgID valuer.UUID, re
 	ticker := time.NewTicker(time.Duration(q.liveDataRefreshSeconds) * time.Second)
 	defer ticker.Stop()
 
-	// we are
+	// we are creating a custom ticker wrapper to trigger it instantly
 	tick := make(chan time.Time, 1)
 	tick <- time.Now() // initial tick
 	go func() {
