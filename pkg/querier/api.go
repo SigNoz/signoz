@@ -200,7 +200,12 @@ func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 		case log := <-client.Logs:
 			var buf bytes.Buffer
 			enc := json.NewEncoder(&buf)
-			enc.Encode(log)
+			err := enc.Encode(log)
+			if err != nil {
+				fmt.Fprintf(rw, "event: error\ndata: %v\n\n", err.Error())
+				flusher.Flush()
+				return
+			}
 			fmt.Fprintf(rw, "data: %v\n\n", buf.String())
 			flusher.Flush()
 		case <-client.Done:
