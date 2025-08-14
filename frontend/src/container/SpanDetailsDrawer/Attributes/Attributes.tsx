@@ -1,9 +1,11 @@
 import './Attributes.styles.scss';
 
-import { Input, Tooltip, Typography } from 'antd';
+import { CopyOutlined } from '@ant-design/icons';
+import { Button, Input, message, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { flattenObject } from 'container/LogDetailedView/utils';
 import { useMemo, useState } from 'react';
+import { useCopyToClipboard } from 'react-use';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import NoData from '../NoData/NoData';
@@ -21,6 +23,8 @@ function Attributes(props: IAttributesProps): JSX.Element {
 		() => (span.tagMap ? flattenObject(span.tagMap) : {}),
 		[span],
 	);
+
+	const [, copy] = useCopyToClipboard();
 
 	const datasource = Object.keys(flattenSpanData)
 		.filter((attribute) =>
@@ -57,6 +61,14 @@ function Attributes(props: IAttributesProps): JSX.Element {
 									{item.value}
 								</Typography.Text>
 							</Tooltip>
+							<Button
+								type="text"
+								icon={<CopyOutlined />}
+								onClick={(): void => {
+									copy(item.value);
+									message.success(`${item.field} copied to clipboard`);
+								}}
+							/>
 						</div>
 					</div>
 				))}
