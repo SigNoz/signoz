@@ -10,6 +10,7 @@ import { ArrowRight, CheckCircle, Plus, TriangleAlert, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import APIError from 'types/api/error';
+import { isValidEmailFormat, normalizeEmail } from 'utils/emailUtils';
 import { v4 as uuid } from 'uuid';
 
 interface TeamMember {
@@ -91,12 +92,14 @@ function InviteTeamMembers({
 		const updatedValidity: Record<string, boolean> = {};
 
 		teamMembersToInvite?.forEach((member) => {
-			const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member.email);
+			const emailValid = isValidEmailFormat(member.email);
 			if (!emailValid || !member.email) {
 				isValid = false;
 				setHasInvalidEmails(true);
 			}
-			updatedValidity[member.id!] = emailValid;
+			if (member.id) {
+				updatedValidity[member.id] = emailValid;
+			}
 		});
 
 		setEmailValidity(updatedValidity);
@@ -162,7 +165,7 @@ function InviteTeamMembers({
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const debouncedValidateEmail = useCallback(
 		debounce((email: string, memberId: string) => {
-			const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+			const isValid = isValidEmailFormat(email);
 			setEmailValidity((prev) => ({ ...prev, [memberId]: isValid }));
 		}, 500),
 		[],
@@ -173,13 +176,14 @@ function InviteTeamMembers({
 		member: TeamMember,
 	): void => {
 		const { value } = e.target;
+		const normalizedEmail = normalizeEmail(value);
 		const updatedMembers = cloneDeep(teamMembersToInvite || []);
 
 		const memberToUpdate = updatedMembers.find((m) => m.id === member.id);
-		if (memberToUpdate) {
-			memberToUpdate.email = value;
+		if (memberToUpdate && member.id) {
+			memberToUpdate.email = normalizedEmail;
 			setTeamMembersToInvite(updatedMembers);
-			debouncedValidateEmail(value, member.id!);
+			debouncedValidateEmail(normalizedEmail, member.id);
 		}
 	};
 
@@ -212,8 +216,9 @@ function InviteTeamMembers({
 									}
 									addonAfter={
 										// eslint-disable-next-line no-nested-ternary
-										emailValidity[member.id!] === undefined ? null : emailValidity[
-												member.id!
+										!member.id ||
+										emailValidity[member.id] === undefined ? null : emailValidity[
+												member.id
 										  ] ? (
 											<CheckCircle size={14} color={Color.BG_FOREST_500} />
 										) : (
