@@ -102,6 +102,7 @@ export function QueryBuilderProvider({
 	const location = useLocation();
 
 	const currentPathnameRef = useRef<string | null>(location.pathname);
+	const [hasRunOnExplorer, setHasRunOnExplorer] = useState<boolean>(false);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -191,7 +192,9 @@ export function QueryBuilderProvider({
 					location.pathname === ROUTES.TRACES_EXPLORER;
 				if (isExplorer) {
 					const sanitizedOrderBy = sanitizeOrderByForExplorer(currentElement);
-					return { ...currentElement, orderBy: sanitizedOrderBy };
+					return hasRunOnExplorer
+						? currentElement
+						: { ...currentElement, orderBy: sanitizedOrderBy };
 				}
 
 				return currentElement;
@@ -225,7 +228,7 @@ export function QueryBuilderProvider({
 
 			return nextQuery;
 		},
-		[initialDataSource, location.pathname],
+		[initialDataSource, location.pathname, hasRunOnExplorer],
 	);
 
 	const initQueryBuilderData = useCallback(
@@ -877,6 +880,12 @@ export function QueryBuilderProvider({
 
 	const handleRunQuery = useCallback(
 		(shallUpdateStepInterval?: boolean, newQBQuery?: boolean) => {
+			const isExplorer =
+				location.pathname === ROUTES.LOGS_EXPLORER ||
+				location.pathname === ROUTES.TRACES_EXPLORER;
+			if (isExplorer) {
+				setHasRunOnExplorer(true);
+			}
 			let currentQueryData = currentQuery;
 
 			if (newQBQuery) {
@@ -921,7 +930,14 @@ export function QueryBuilderProvider({
 				queryType,
 			});
 		},
-		[currentQuery, queryType, maxTime, minTime, redirectWithQueryBuilderData],
+		[
+			location.pathname,
+			currentQuery,
+			queryType,
+			maxTime,
+			minTime,
+			redirectWithQueryBuilderData,
+		],
 	);
 
 	useEffect(() => {
@@ -931,6 +947,7 @@ export function QueryBuilderProvider({
 			setStagedQuery(null);
 			// reset the last used query to 0 when navigating away from the page
 			setLastUsedQuery(0);
+			setHasRunOnExplorer(false);
 		}
 	}, [location.pathname]);
 
