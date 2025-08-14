@@ -2,7 +2,7 @@
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
 import { OPERATORS } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep, isEqual, sortBy } from 'lodash-es';
 import { IQueryPair } from 'types/antlrQueryTypes';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -201,6 +201,30 @@ export const convertFiltersToExpressionWithExistingQuery = (
 				existingPair.position?.valueEnd
 			) {
 				visitedPairs.add(`${key.key}-${op}`.trim().toLowerCase());
+
+				if (existingPair.valueList && filter.value && Array.isArray(filter.value)) {
+					// Remove quotes from values before comparison
+					const cleanExistingValues = existingPair.valueList.map((val) =>
+						typeof val === 'string' ? val.replace(/^['"]|['"]$/g, '') : val,
+					);
+					const cleanFilterValues = filter.value.map((val) =>
+						typeof val === 'string' ? val.replace(/^['"]|['"]$/g, '') : val,
+					);
+
+					// Check if the value arrays are the same (order-independent)
+					if (
+						cleanExistingValues.length === cleanFilterValues.length &&
+						isEqual(sortBy(cleanExistingValues), sortBy(cleanFilterValues))
+					) {
+						// Use existingPair.value instead of formattedValue
+						modifiedQuery =
+							modifiedQuery.slice(0, existingPair.position.valueStart) +
+							existingPair.value +
+							modifiedQuery.slice(existingPair.position.valueEnd + 1);
+						return;
+					}
+				}
+
 				modifiedQuery =
 					modifiedQuery.slice(0, existingPair.position.valueStart) +
 					formattedValue +
