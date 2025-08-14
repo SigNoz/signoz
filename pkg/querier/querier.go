@@ -360,7 +360,7 @@ func (q *querier) QueryRangeRawStream(ctx context.Context, orgID valuer.UUID, re
 		case <-ctx.Done():
 			done := true
 			client.Done <- &done
-			q.logger.Debug("closing go routine : " + client.Name)
+			q.logger.Debug("closing goroutine : " + client.Name)
 			return
 		case <-tick:
 			// timestamp end is not specified here
