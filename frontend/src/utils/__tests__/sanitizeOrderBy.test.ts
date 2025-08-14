@@ -1,4 +1,6 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+import { act, renderHook } from '@testing-library/react';
+import { useSanitizeOrderBy } from 'hooks/queryBuilder/useSanitizeOrderBy';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
@@ -12,32 +14,30 @@ jest.mock('utils/aggregationConverter', () => ({
 	getParsedAggregationOptionsForOrderBy: jest.fn(),
 }));
 
-describe('sanitizeOrderByForExplorer', () => {
-	const buildQuery = (
-		overrides: Partial<IBuilderQuery> = {},
-	): IBuilderQuery => ({
-		queryName: 'A',
-		dataSource: DataSource.TRACES,
-		aggregateOperator: '',
-		aggregateAttribute: undefined,
-		aggregations: [],
-		timeAggregation: '',
-		spaceAggregation: '',
-		temporality: '',
-		functions: [],
-		filter: { expression: '' } as any,
-		filters: { items: [], op: 'AND' } as any,
-		groupBy: [],
-		expression: '',
-		disabled: false,
-		having: [] as any,
-		limit: null,
-		stepInterval: 60 as any,
-		orderBy: [],
-		legend: '',
-		...overrides,
-	});
+const buildQuery = (overrides: Partial<IBuilderQuery> = {}): IBuilderQuery => ({
+	queryName: 'A',
+	dataSource: DataSource.TRACES,
+	aggregateOperator: '',
+	aggregateAttribute: undefined,
+	aggregations: [],
+	timeAggregation: '',
+	spaceAggregation: '',
+	temporality: '',
+	functions: [],
+	filter: { expression: '' } as any,
+	filters: { items: [], op: 'AND' } as any,
+	groupBy: [],
+	expression: '',
+	disabled: false,
+	having: [] as any,
+	limit: null,
+	stepInterval: 60 as any,
+	orderBy: [],
+	legend: '',
+	...overrides,
+});
 
+describe('sanitizeOrderByForExplorer', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 	});
@@ -128,5 +128,157 @@ describe('sanitizeOrderByForExplorer', () => {
 		const query = buildQuery({ orderBy: [] });
 		const result = sanitizeOrderByForExplorer(query);
 		expect(result).toEqual([]);
+	});
+});
+
+describe('useSanitizeOrderBy', () => {
+	it('returns only allowed orderBy based on groupBy and aggregation options', () => {
+		(getParsedAggregationOptionsForOrderBy as jest.Mock).mockReturnValue([
+			{
+				key: 'count()',
+				dataType: DataTypes.Float64,
+				isColumn: false,
+				type: '',
+				isJSON: false,
+			},
+			{
+				key: 'avg(duration)',
+				dataType: DataTypes.Float64,
+				isColumn: false,
+				type: '',
+				isJSON: false,
+			},
+			{
+				key: 'latency',
+				dataType: DataTypes.Float64,
+				isColumn: false,
+				type: '',
+				isJSON: false,
+			},
+		]);
+
+		const orderBy: OrderByPayload[] = [
+			{ columnName: 'service.name', order: 'asc' },
+			{ columnName: 'count()', order: 'desc' },
+			{ columnName: 'avg(duration)', order: 'asc' },
+			{ columnName: 'latency', order: 'asc' },
+			{ columnName: 'not-allowed', order: 'desc' },
+			{ columnName: 'timestamp', order: 'desc' },
+		];
+
+		const query = buildQuery({
+			groupBy: [
+				{
+					key: 'service.name',
+					dataType: DataTypes.String,
+					isColumn: true,
+					type: 'resource',
+					isJSON: false,
+				},
+			] as any,
+			orderBy,
+		});
+
+		const { result } = renderHook(
+			(props: { query: IBuilderQuery }) => useSanitizeOrderBy(props.query),
+			{
+				initialProps: { query },
+			},
+		);
+
+		const sanitize = result.current;
+		const filtered = sanitize();
+		expect(filtered).toEqual([
+			{ columnName: 'service.name', order: 'asc' },
+			{ columnName: 'count()', order: 'desc' },
+			{ columnName: 'avg(duration)', order: 'asc' },
+			{ columnName: 'latency', order: 'asc' },
+		]);
+	});
+
+	it('returns empty when none of the orderBy items are allowed', () => {
+		(getParsedAggregationOptionsForOrderBy as jest.Mock).mockReturnValue([
+			{
+				key: 'count()',
+				dataType: DataTypes.Float64,
+				isColumn: false,
+				type: '',
+				isJSON: false,
+			},
+		]);
+
+		const query = buildQuery({
+			groupBy: [],
+			orderBy: [
+				{ columnName: 'foo', order: 'asc' },
+				{ columnName: 'bar', order: 'desc' },
+			],
+		});
+
+		const { result } = renderHook(
+			(props: { query: IBuilderQuery }) => useSanitizeOrderBy(props.query),
+			{
+				initialProps: { query },
+			},
+		);
+
+		expect(result.current()).toEqual([]);
+	});
+
+	it('recomputes when query changes', () => {
+		(getParsedAggregationOptionsForOrderBy as jest.Mock).mockReturnValue([
+			{
+				key: 'count()',
+				dataType: DataTypes.Float64,
+				isColumn: false,
+				type: '',
+				isJSON: false,
+			},
+		]);
+
+		const initial = buildQuery({
+			groupBy: [],
+			orderBy: [{ columnName: 'foo', order: 'asc' }],
+		});
+
+		const { result, rerender } = renderHook(
+			(props: { query: IBuilderQuery }) => useSanitizeOrderBy(props.query),
+			{ initialProps: { query: initial } },
+		);
+
+		expect(result.current()).toEqual([]);
+
+		// Update query to include groupBy and a valid orderBy
+		(getParsedAggregationOptionsForOrderBy as jest.Mock).mockReturnValue([
+			{
+				key: 'count()',
+				dataType: DataTypes.Float64,
+				isColumn: false,
+				type: '',
+				isJSON: false,
+			},
+		]);
+
+		const updated = buildQuery({
+			groupBy: [
+				{
+					key: 'service.name',
+					dataType: DataTypes.String,
+					isColumn: true,
+					type: 'resource',
+				} as any,
+			],
+			orderBy: [
+				{ columnName: 'service.name', order: 'desc' },
+				{ columnName: 'count()', order: 'asc' },
+			],
+		});
+
+		act(() => rerender({ query: updated }));
+
+		expect(result.current()).toEqual([
+			{ columnName: 'service.name', order: 'desc' },
+			{ columnName: 'count()', order: 'asc' },
+		]);
 	});
 });
