@@ -149,6 +149,11 @@
 					background-color: #0b0c0e;
 					height: 100%;
 					justify-content: center;
+					&:not(:first-child) {
+						.first-row {
+							width: calc(100% - 28px);
+						}
+					}
 
 					.first-row {
 						display: flex;
