@@ -224,5 +224,61 @@ describe('GridCardLayout Utils', () => {
 			// Should calculate appropriate interval for 30 days
 			expect(result.builder.queryData[0].stepInterval).toBeGreaterThan(180);
 		});
+
+		it('should handle stepInterval as 0', () => {
+			const queryWithZeroStep: Query = {
+				...mockQuery,
+				builder: {
+					queryData: [
+						{
+							...mockQuery.builder.queryData[0],
+							stepInterval: 0,
+						},
+					],
+					queryFormulas: [],
+				},
+			};
+
+			const minTime = Date.now();
+			let maxTime = minTime + 1 * 60 * 60 * 1000;
+
+			const result = updateStepInterval(queryWithZeroStep, minTime, maxTime);
+
+			expect(result.builder.queryData[0].stepInterval).toBe(60);
+
+			maxTime = minTime + 30 * 24 * 60 * 60 * 1000; // 30 days
+
+			const result1 = updateStepInterval(queryWithZeroStep, minTime, maxTime);
+
+			expect(result1.builder.queryData[0].stepInterval).toBe(32400);
+		});
+
+		it('should respect user entered inputs', () => {
+			const queryWithUserStep: Query = {
+				...mockQuery,
+				builder: {
+					queryData: [
+						{
+							...mockQuery.builder.queryData[0],
+							stepInterval: 120,
+						},
+					],
+					queryFormulas: [],
+				},
+			};
+
+			const minTime = Date.now();
+			let maxTime = minTime + 1 * 60 * 60 * 1000;
+
+			const result = updateStepInterval(queryWithUserStep, minTime, maxTime);
+
+			expect(result.builder.queryData[0].stepInterval).toBe(120); // not 60
+
+			maxTime = minTime + 30 * 24 * 60 * 60 * 1000; // 30 days
+
+			const result1 = updateStepInterval(queryWithUserStep, minTime, maxTime);
+
+			expect(result1.builder.queryData[0].stepInterval).toBe(120); // not 32400
+		});
 	});
 });
