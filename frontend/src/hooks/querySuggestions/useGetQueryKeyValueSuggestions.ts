@@ -10,6 +10,7 @@ export const useGetQueryKeyValueSuggestions = ({
 	signal,
 	searchText,
 	signalSource,
+	metricName,
 }: {
 	key: string;
 	signal: 'traces' | 'logs' | 'metrics';
@@ -18,17 +19,26 @@ export const useGetQueryKeyValueSuggestions = ({
 	options?: UseQueryOptions<
 		SuccessResponse<QueryKeyValueSuggestionsResponseProps> | ErrorResponse
 	>;
+	metricName?: string;
 }): UseQueryResult<
 	AxiosResponse<QueryKeyValueSuggestionsResponseProps>,
 	AxiosError
 > =>
 	useQuery<AxiosResponse<QueryKeyValueSuggestionsResponseProps>, AxiosError>({
-		queryKey: ['queryKeyValueSuggestions', key, signal, searchText, signalSource],
+		queryKey: [
+			'queryKeyValueSuggestions',
+			key,
+			signal,
+			searchText,
+			signalSource,
+			metricName,
+		],
 		queryFn: () =>
 			getValueSuggestions({
 				signal,
 				key,
 				searchText: searchText || '',
 				signalSource: signalSource as 'meter' | '',
+				metricName: metricName || '',
 			}),
 	});
