@@ -41,6 +41,7 @@ export interface WidgetGraphComponentProps {
 	customErrorMessage?: string;
 	customOnRowClick?: (record: RowData) => void;
 	customTimeRangeWindowForCoRelation?: string | undefined;
+	enableDrillDown?: boolean;
 }
 
 export interface GridCardGraphProps {
@@ -69,6 +70,7 @@ export interface GridCardGraphProps {
 	};
 	customOnRowClick?: (record: RowData) => void;
 	customTimeRangeWindowForCoRelation?: string | undefined;
+	enableDrillDown?: boolean;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

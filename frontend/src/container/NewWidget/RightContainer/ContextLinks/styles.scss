@@ -1,0 +1,149 @@
+.context-links-container {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin: 12px;
+}
+
+.context-links-text {
+	color: var(--bg-vanilla-400);
+	font-family: 'Space Mono';
+	font-size: 13px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 18px;
+	letter-spacing: 0.52px;
+	text-transform: uppercase;
+}
+
+.context-links-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	max-height: 300px;
+}
+
+.context-link-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 8px;
+	border-radius: 4px;
+	user-select: none;
+	transition: background-color 0.2s ease-in-out;
+	width: 100%;
+	min-width: 0;
+
+	.drag-handle {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		flex-grow: 1;
+		cursor: grab;
+		min-width: 0;
+
+		&:active {
+			cursor: grabbing;
+		}
+	}
+
+	.drag-handle-icon {
+		flex-shrink: 0;
+		color: var(--bg-vanilla-400);
+	}
+
+	.context-link-content {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		flex-grow: 1;
+		min-width: 0;
+		overflow: hidden;
+	}
+
+	.context-link-label {
+		color: var(--bg-vanilla-100);
+		font-size: 12px;
+		font-weight: 500;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.context-link-url {
+		color: var(--bg-vanilla-400);
+		font-size: 12px;
+		font-weight: 400;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.context-link-actions {
+		display: flex;
+		gap: 4px;
+		opacity: 0;
+		transition: opacity 0.2s ease-in-out;
+		flex-shrink: 0;
+	}
+
+	.edit-context-link-btn,
+	.delete-context-link-btn {
+		padding: 6px 12px;
+		flex-shrink: 0;
+	}
+
+	.delete-context-link-btn {
+		&:hover {
+			color: var(--bg-cherry-400) !important;
+			border-color: var(--bg-cherry-400) !important;
+		}
+	}
+
+	&:hover {
+		background-color: var(--bg-slate-400);
+
+		.context-link-actions {
+			opacity: 1;
+		}
+	}
+}
+
+.add-context-link-button {
+	display: flex;
+	align-items: center;
+	margin: auto;
+	width: fit-content;
+}
+
+.lightMode {
+	.context-links-text {
+		color: var(--bg-ink-400);
+	}
+
+	.context-link-item {
+		&:hover {
+			background-color: var(--bg-vanilla-200);
+		}
+
+		.context-link-label {
+			color: var(--bg-slate-500);
+		}
+
+		.context-link-url {
+			color: var(--bg-slate-400);
+		}
+
+		.drag-handle-icon {
+			color: var(--bg-slate-400);
+		}
+
+		.delete-context-link-btn {
+			&:hover {
+				color: var(--bg-cherry-500);
+				border-color: var(--bg-cherry-500);
+				background-color: var(--bg-cherry-100);
+			}
+		}
+	}
+}
