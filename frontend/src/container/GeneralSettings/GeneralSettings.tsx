@@ -13,7 +13,12 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { useInterval } from 'react-use';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import {
+	ErrorResponse,
+	ErrorResponseV2,
+	SuccessResponse,
+	SuccessResponseV2,
+} from 'types/api';
 import {
 	IDiskType,
 	PayloadProps as GetDisksPayload,
@@ -127,7 +132,7 @@ function GeneralSettings({
 
 	useEffect(() => {
 		if (logsCurrentTTLValues) {
-			setLogsTotalRetentionPeriod(logsCurrentTTLValues.logs_ttl_duration_hrs);
+			setLogsTotalRetentionPeriod(logsCurrentTTLValues.default_ttl_days * 24);
 			setLogsS3RetentionPeriod(
 				logsCurrentTTLValues.logs_move_ttl_duration_hrs
 					? logsCurrentTTLValues.logs_move_ttl_duration_hrs
@@ -376,11 +381,14 @@ function GeneralSettings({
 				logsTtlValuesRefetch();
 				if (!hasSetTTLFailed)
 					// Updates the currentTTL Values in order to avoid pushing the same values.
-					setLogsCurrentTTLValues({
+					setLogsCurrentTTLValues((prev) => ({
+						...prev,
 						logs_ttl_duration_hrs: logsTotalRetentionPeriod || -1,
 						logs_move_ttl_duration_hrs: logsS3RetentionPeriod || -1,
-						status: '',
-					});
+						default_ttl_days: logsTotalRetentionPeriod
+							? logsTotalRetentionPeriod / 24 // convert Hours to days
+							: -1,
+					}));
 			}
 		} catch (error) {
 			notifications.error({
@@ -625,7 +633,7 @@ interface GeneralSettingsProps {
 		ErrorResponse | SuccessResponse<GetRetentionPeriodTracesPayload>
 	>['refetch'];
 	logsTtlValuesRefetch: UseQueryResult<
-		ErrorResponse | SuccessResponse<GetRetentionPeriodLogsPayload>
+		ErrorResponseV2 | SuccessResponseV2<GetRetentionPeriodLogsPayload>
 	>['refetch'];
 }
 
