@@ -372,7 +372,7 @@ function DateTimeSelection({
 				})),
 			},
 		};
-		return JSON.stringify(updatedCompositeQuery);
+		return encodeURIComponent(JSON.stringify(updatedCompositeQuery));
 	}, [currentQuery]);
 
 	const onSelectHandler = useCallback(

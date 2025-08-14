@@ -62,6 +62,9 @@ func (q *builderQuery[T]) Fingerprint() string {
 	// Add signal type
 	parts = append(parts, fmt.Sprintf("signal=%s", q.spec.Signal.StringValue()))
 
+	// Add source type
+	parts = append(parts, fmt.Sprintf("source=%s", q.spec.Source.StringValue()))
+
 	// Add step interval if present
 	parts = append(parts, fmt.Sprintf("step=%s", q.spec.StepInterval.String()))
 

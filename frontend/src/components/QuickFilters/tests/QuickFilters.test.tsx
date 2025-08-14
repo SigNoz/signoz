@@ -54,6 +54,7 @@ const quickFiltersListURL = `${BASE_URL}/api/v1/orgs/me/filters/${SIGNAL}`;
 const saveQuickFiltersURL = `${BASE_URL}/api/v1/orgs/me/filters`;
 const quickFiltersSuggestionsURL = `${BASE_URL}/api/v3/filter_suggestions`;
 const quickFiltersAttributeValuesURL = `${BASE_URL}/api/v3/autocomplete/attribute_values`;
+const fieldsValuesURL = `${BASE_URL}/api/v1/fields/values`;
 
 const FILTER_OS_DESCRIPTION = 'os.description';
 const FILTER_K8S_DEPLOYMENT_NAME = 'k8s.deployment.name';
@@ -77,7 +78,11 @@ const setupServer = (): void => {
 			putHandler(await req.json());
 			return res(ctx.status(200), ctx.json({}));
 		}),
-		rest.get(quickFiltersAttributeValuesURL, (_, res, ctx) =>
+
+		rest.get(quickFiltersAttributeValuesURL, (req, res, ctx) =>
+			res(ctx.status(200), ctx.json(quickFiltersAttributeValuesResponse)),
+		),
+		rest.get(fieldsValuesURL, (req, res, ctx) =>
 			res(ctx.status(200), ctx.json(quickFiltersAttributeValuesResponse)),
 		),
 	);

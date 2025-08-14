@@ -69,5 +69,8 @@
 	"METRICS_EXPLORER": "SigNoz | Metrics Explorer",
 	"METRICS_EXPLORER_EXPLORER": "SigNoz | Metrics Explorer",
 	"METRICS_EXPLORER_VIEWS": "SigNoz | Metrics Explorer",
-	"API_MONITORING": "SigNoz | External APIs"
+	"API_MONITORING": "SigNoz | External APIs",
+	"METER_EXPLORER": "SigNoz | Meter Explorer",
+	"METER_EXPLORER_VIEWS": "SigNoz | Meter Explorer",
+	"METER_EXPLORER_BASE": "SigNoz | Meter Explorer"
 }

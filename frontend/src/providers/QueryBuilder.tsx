@@ -241,12 +241,26 @@ export function QueryBuilderProvider({
 	);
 
 	const updateAllQueriesOperators = useCallback(
-		(query: Query, panelType: PANEL_TYPES, dataSource: DataSource): Query => {
+		(
+			query: Query,
+			panelType: PANEL_TYPES,
+			dataSource: DataSource,
+			signalSource?: 'meter' | '',
+		): Query => {
 			const queryData = query.builder.queryData?.map((item) =>
 				getElementWithActualOperator(item, dataSource, panelType),
 			);
 
-			return { ...query, builder: { ...query.builder, queryData } };
+			return {
+				...query,
+				builder: {
+					...query.builder,
+					queryData: queryData.map((item) => ({
+						...item,
+						source: signalSource,
+					})),
+				},
+			};
 		},
 
 		[getElementWithActualOperator],
@@ -854,6 +868,7 @@ export function QueryBuilderProvider({
 	const handleRunQuery = useCallback(
 		(shallUpdateStepInterval?: boolean, newQBQuery?: boolean) => {
 			let currentQueryData = currentQuery;
+
 			if (newQBQuery) {
 				currentQueryData = {
 					...currentQueryData,
