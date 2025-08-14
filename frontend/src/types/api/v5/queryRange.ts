@@ -206,7 +206,7 @@ export interface SecondaryAggregation {
 
 export interface BaseBuilderQuery {
 	name?: string;
-	stepInterval?: Step;
+	stepInterval?: Step | null;
 	disabled?: boolean;
 	filter?: Filter;
 	groupBy?: GroupByKey[];

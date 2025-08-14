@@ -100,10 +100,10 @@ export function updateStepInterval(
 	const stepIntervalPoints = getStepIntervalPoints(minTime, maxTime);
 
 	// if user haven't enter anything manually, that is we have default value of 60 then do the interval adjustment for bar otherwise apply the user's value
-	const getSteps = (queryData: IBuilderQuery): number =>
-		queryData?.stepInterval === 60
-			? stepIntervalPoints || 60
-			: queryData?.stepInterval || 60;
+	const getSteps = (queryData: IBuilderQuery): number | null =>
+		!queryData.stepInterval
+			? stepIntervalPoints || null
+			: queryData?.stepInterval;
 
 	return {
 		...query,
