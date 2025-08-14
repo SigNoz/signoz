@@ -40,7 +40,9 @@ export const convertBuilderQueryToIBuilderQuery = (
 			type: group?.fieldContext,
 			isColumn: group?.isColumn ?? true,
 			isJSON: group?.isJSON || false,
-			id: `${group?.name}--${group?.fieldDataType}--${group?.fieldContext}--${group?.isColumn}`,
+			id: `${group?.name}--${group?.fieldDataType}--${group?.fieldContext}--${
+				group?.isColumn ?? true
+			}`,
 		})),
 		orderBy: builderQuery.order?.map((order) => ({
 			columnName: order?.key?.name,
