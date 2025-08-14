@@ -18,7 +18,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -359,7 +358,7 @@ func (q *querier) QueryRangeRawStream(ctx context.Context, orgID valuer.UUID, re
 		case <-ctx.Done():
 			done := true
 			client.Done <- &done
-			zap.L().Debug("closing go routine : " + client.Name)
+			q.logger.Debug("closing go routine : " + client.Name)
 			return
 		case <-tick:
 			// timestamp end is not specified here
@@ -374,6 +373,7 @@ func (q *querier) QueryRangeRawStream(ctx context.Context, orgID valuer.UUID, re
 
 			qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event)
 			if qbErr != nil {
+				client.Error <- qbErr
 				return
 			}
 

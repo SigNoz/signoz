@@ -152,7 +152,7 @@ func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 
 			queryJSON, _ := json.Marshal(queryRangeRequest)
 
-			a.set.Logger.ErrorContext(ctx, "panic in QueryRange",
+			a.set.Logger.ErrorContext(ctx, "panic in QueryRawStream",
 				"error", r,
 				"user", claims.UserID,
 				"payload", string(queryJSON),
@@ -205,7 +205,6 @@ func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 			fmt.Fprintf(rw, "data: %v\n\n", buf.String())
 			flusher.Flush()
 		case <-client.Done:
-			zap.L().Debug("done!")
 			return
 		case err := <-client.Error:
 			zap.L().Error("error occurred", zap.Error(err))
