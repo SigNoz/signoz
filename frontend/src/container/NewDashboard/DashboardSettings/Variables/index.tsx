@@ -15,13 +15,20 @@ import { CSS } from '@dnd-kit/utilities';
 import { Button, Modal, Row, Space, Table, Typography } from 'antd';
 import { RowProps } from 'antd/lib';
 import { convertVariablesToDbFormat } from 'container/NewDashboard/DashboardVariablesSelection/util';
+import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
+import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { createDynamicVariableToWidgetsMap } from 'hooks/dashboard/utils';
 import { useNotifications } from 'hooks/useNotifications';
 import { PenLine, Trash2 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
+import {
+	Dashboard,
+	IDashboardVariable,
+	Widgets,
+} from 'types/api/dashboard/getAll';
 
 import { TVariableMode } from './types';
 import VariableItem from './VariableItem/VariableItem';
@@ -88,7 +95,7 @@ function VariablesSetting({
 
 	const { notifications } = useNotifications();
 
-	const { variables = {} } = selectedDashboard?.data || {};
+	const { variables = {}, widgets = [] } = selectedDashboard?.data || {};
 
 	const [variablesTableData, setVariablesTableData] = useState<any>([]);
 	const [variblesOrderArr, setVariablesOrderArr] = useState<number[]>([]);
@@ -162,19 +169,61 @@ function VariablesSetting({
 		setExistingVariableNamesMap(variableNamesMap);
 	}, [variables]);
 
+	const addDynamicVariableToPanels = useAddDynamicVariableToPanels();
+
+	const { dynamicVariables } = useGetDynamicVariables();
+
+	const dynamicVariableToWidgetsMap = useMemo(
+		() =>
+			createDynamicVariableToWidgetsMap(
+				dynamicVariables,
+				(widgets as Widgets[]) || [],
+			),
+		[dynamicVariables, widgets],
+	);
+
+	// initialize and adjust dynamicVariablesWidgetIds values for all variables
+	useEffect(() => {
+		const newVariablesArr = Object.values(variables).map(
+			(variable: IDashboardVariable) => {
+				if (variable.type === 'DYNAMIC') {
+					return {
+						...variable,
+						dynamicVariablesWidgetIds: dynamicVariableToWidgetsMap[variable.id] || [],
+					};
+				}
+
+				return variable;
+			},
+		);
+
+		setVariablesTableData(newVariablesArr);
+	}, [variables, dynamicVariableToWidgetsMap]);
+
 	const updateVariables = (
 		updatedVariablesData: Dashboard['data']['variables'],
+		currentRequestedId?: string,
+		applyToAll?: boolean,
 	): void => {
 		if (!selectedDashboard) {
 			return;
 		}
+
+		const newDashboard =
+			(currentRequestedId &&
+				addDynamicVariableToPanels(
+					selectedDashboard,
+					updatedVariablesData[currentRequestedId || ''],
+					applyToAll,
+				)) ||
+			selectedDashboard;
 
 		updateMutation.mutateAsync(
 			{
 				id: selectedDashboard.id,
 
 				data: {
-					...selectedDashboard.data,
+					...newDashboard.data,
 					variables: updatedVariablesData,
 				},
 			},
@@ -202,6 +251,7 @@ function VariablesSetting({
 	const onVariableSaveHandler = (
 		mode: TVariableMode,
 		variableData: IDashboardVariable,
+		applyToAll?: boolean,
 	): void => {
 		const updatedVariableData = {
 			...variableData,
@@ -225,7 +275,7 @@ function VariablesSetting({
 		const variables = convertVariablesToDbFormat(newVariablesArr);
 
 		setVariablesTableData(newVariablesArr);
-		updateVariables(variables);
+		updateVariables(variables, variableData?.id, applyToAll);
 		onDoneVariableViewMode();
 	};
 
@@ -271,6 +321,18 @@ function VariablesSetting({
 						{variable.description}
 					</Typography.Text>
 					<Space className="actions-btns">
+						{variable.type === 'DYNAMIC' && (
+							<Button
+								type="text"
+								onClick={(): void =>
+									onVariableSaveHandler(variableViewMode || 'EDIT', variable, true)
+								}
+								className="apply-to-all-button"
+								loading={updateMutation.isLoading}
+							>
+								<Typography.Text>Apply to all</Typography.Text>
+							</Button>
+						)}
 						<Button
 							type="text"
 							onClick={(): void => onVariableViewModeEnter('EDIT', variable)}

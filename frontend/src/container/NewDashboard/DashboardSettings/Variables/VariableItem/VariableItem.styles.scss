@@ -213,6 +213,22 @@
 			}
 		}
 
+		.dynamic-variable-section {
+			justify-content: space-between;
+			margin-bottom: 0;
+
+			.typography-variables {
+				color: var(--bg-vanilla-400);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+				width: 339px;
+			}
+		}
+
 		.variable-textbox-section {
 			justify-content: space-between;
 			margin-bottom: 0;
@@ -455,6 +471,18 @@
 			}
 
 			.all-option-section {
+				.typography-variables {
+					color: var(--bg-ink-400);
+				}
+			}
+
+			.default-value-section {
+				.default-value-description {
+					color: var(--bg-ink-400);
+				}
+			}
+
+			.dynamic-variable-section {
 				.typography-variables {
 					color: var(--bg-ink-400);
 				}
