@@ -61,6 +61,7 @@ import {
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { sanitizeOrderByForExplorer } from 'utils/sanitizeOrderBy';
 import { v4 as uuid } from 'uuid';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
@@ -184,6 +185,15 @@ export function QueryBuilderProvider({
 					} as BaseAutocompleteData,
 				};
 
+				// Explorer pages: sanitize stale orderBy before first query
+				const isExplorer =
+					location.pathname === ROUTES.LOGS_EXPLORER ||
+					location.pathname === ROUTES.TRACES_EXPLORER;
+				if (isExplorer) {
+					const sanitizedOrderBy = sanitizeOrderByForExplorer(currentElement);
+					return { ...currentElement, orderBy: sanitizedOrderBy };
+				}
+
 				return currentElement;
 			});
 
@@ -215,7 +225,7 @@ export function QueryBuilderProvider({
 
 			return nextQuery;
 		},
-		[initialDataSource],
+		[initialDataSource, location.pathname],
 	);
 
 	const initQueryBuilderData = useCallback(
