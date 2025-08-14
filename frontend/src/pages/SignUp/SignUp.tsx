@@ -22,7 +22,6 @@ import { FormContainer, Label } from './styles';
 import { isPasswordNotValidMessage, isPasswordValid } from './utils';
 
 type FormValues = {
-	firstName: string;
 	email: string;
 	organizationName: string;
 	password: string;
@@ -113,10 +112,9 @@ function SignUp(): JSX.Element {
 
 	const signUp = async (values: FormValues): Promise<void> => {
 		try {
-			const { organizationName, password, firstName, email } = values;
+			const { organizationName, password, email } = values;
 			const response = await signUpApi({
 				email,
-				name: firstName,
 				orgDisplayName: organizationName,
 				password,
 				token: params.get('token') || undefined,
@@ -141,11 +139,10 @@ function SignUp(): JSX.Element {
 
 	const acceptInvite = async (values: FormValues): Promise<void> => {
 		try {
-			const { password, email, firstName } = values;
+			const { password, email } = values;
 			await accept({
 				password,
 				token: params.get('token') || '',
-				displayName: firstName,
 			});
 			const loginResponse = await loginApi({
 				email,
@@ -207,7 +204,6 @@ function SignUp(): JSX.Element {
 				if (!isPasswordValid(values.password)) {
 					logEvent('Account Creation Page - Invalid Password', {
 						email: values.email,
-						name: values.firstName,
 					});
 					setIsPasswordPolicyError(true);
 					setLoading(false);
@@ -218,7 +214,6 @@ function SignUp(): JSX.Element {
 					await signUp(values);
 					logEvent('Account Created Successfully', {
 						email: values.email,
-						name: values.firstName,
 					});
 				} else {
 					await acceptInvite(values);
@@ -254,7 +249,6 @@ function SignUp(): JSX.Element {
 			loading ||
 			!values.email ||
 			(!precheck.sso && (!values.password || !values.confirmPassword)) ||
-			(!isDetailsDisable && !values.firstName) ||
 			confirmPasswordError ||
 			isPasswordPolicyError
 		);
