@@ -42,7 +42,7 @@ x-clickhouse-defaults: &clickhouse-defaults
       hard: 262144
 x-zookeeper-defaults: &zookeeper-defaults
   !!merge <<: *common
-  image: bitnami/zookeeper:3.7.1
+  image: signoz/zookeeper:3.7.1
   user: root
   labels:
     signoz.io/scrape: "true"
@@ -90,7 +90,7 @@ services:
     #   - "2888:2888"
     #   - "3888:3888"
     volumes:
-      - zookeeper-1:/bitnami/zookeeper
+      - zookeeper-1:/signoz/zookeeper
     environment:
       - ZOO_SERVER_ID=1
       - ZOO_SERVERS=0.0.0.0:2888:3888,zookeeper-2:2888:3888,zookeeper-3:2888:3888
@@ -106,7 +106,7 @@ services:
     #   - "2889:2888"
     #   - "3889:3888"
     volumes:
-      - zookeeper-2:/bitnami/zookeeper
+      - zookeeper-2:/signoz/zookeeper
     environment:
       - ZOO_SERVER_ID=2
       - ZOO_SERVERS=zookeeper-1:2888:3888,0.0.0.0:2888:3888,zookeeper-3:2888:3888
@@ -122,7 +122,7 @@ services:
     #   - "2890:2888"
     #   - "3890:3888"
     volumes:
-      - zookeeper-3:/bitnami/zookeeper
+      - zookeeper-3:/signoz/zookeeper
     environment:
       - ZOO_SERVER_ID=3
       - ZOO_SERVERS=zookeeper-1:2888:3888,zookeeper-2:2888:3888,0.0.0.0:2888:3888

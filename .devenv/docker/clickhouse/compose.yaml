@@ -24,10 +24,10 @@ services:
     depends_on:
       - zookeeper
   zookeeper:
-    image: bitnami/zookeeper:3.7.1
+    image: signoz/zookeeper:3.7.1
     container_name: zookeeper
     volumes:
-      - ${PWD}/fs/tmp/zookeeper:/bitnami/zookeeper
+      - ${PWD}/fs/tmp/zookeeper:/signoz/zookeeper
     ports:
       - '127.0.0.1:2181:2181'
     environment:
