@@ -3,6 +3,7 @@ package rules
 import (
 	"context"
 	"fmt"
+	"github.com/teambition/rrule-go"
 	"sort"
 	"sync"
 	"time"
@@ -39,6 +40,8 @@ type PromRuleTask struct {
 
 	maintenanceStore ruletypes.MaintenanceStore
 	orgID            valuer.UUID
+	schedule         string
+	scheduleStartsAt time.Time
 }
 
 // newPromRuleTask holds rules that have promql condition
@@ -75,6 +78,10 @@ func (g *PromRuleTask) Key() string {
 	return g.name + ";" + g.file
 }
 
+func (g *PromRuleTask) IsCronSchedule() bool {
+	return g.schedule != ""
+}
+
 func (g *PromRuleTask) Type() TaskType { return TaskTypeProm }
 
 // Rules returns the group's rules.
@@ -91,38 +98,6 @@ func (g *PromRuleTask) Pause(b bool) {
 
 func (g *PromRuleTask) Run(ctx context.Context) {
 	defer close(g.terminated)
-
-	// Wait an initial amount to have consistently slotted intervals.
-	evalTimestamp := g.EvalTimestamp(time.Now().UnixNano()).Add(g.frequency)
-	select {
-	case <-time.After(time.Until(evalTimestamp)):
-	case <-g.done:
-		return
-	}
-
-	ctx = NewQueryOriginContext(ctx, map[string]interface{}{
-		"ruleGroup": map[string]string{
-			"name": g.Name(),
-		},
-	})
-
-	iter := func() {
-
-		start := time.Now()
-		g.Eval(ctx, evalTimestamp)
-		timeSinceStart := time.Since(start)
-
-		g.setEvaluationTime(timeSinceStart)
-		g.setLastEvaluation(start)
-	}
-
-	// The assumption here is that since the ticker was started after having
-	// waited for `evalTimestamp` to pass, the ticks will trigger soon
-	// after each `evalTimestamp + N * g.frequency` occurrence.
-	tick := time.NewTicker(g.frequency)
-	defer tick.Stop()
-
-	// defer cleanup
 	defer func() {
 		if !g.markStale {
 			return
@@ -139,22 +114,114 @@ func (g *PromRuleTask) Run(ctx context.Context) {
 		}(time.Now())
 
 	}()
+	if g.IsCronSchedule() {
+		schedule, err := rrule.StrToRRule("DTSTART=" + g.scheduleStartsAt.UTC().Format("20060102T150405Z") + "\nRRULE:" + g.schedule) // assuming g.cronExpr contains the cron expression
+		if err != nil {
+			zap.L().Error("failed to parse rrule expression", zap.String("rrule", g.schedule), zap.Error(err))
+			return
+		}
+		now := time.Now()
+		nextRun := schedule.After(now, false)
 
-	iter()
-
-	// let the group iterate and run
-	for {
 		select {
+		case <-time.After(time.Until(nextRun)):
 		case <-g.done:
 			return
-		default:
+		}
+
+		ctx = NewQueryOriginContext(ctx, map[string]interface{}{
+			"ruleRuleTask": map[string]string{
+				"name": g.Name(),
+			},
+		})
+
+		iter := func() {
+			if g.pause {
+				return
+			}
+			start := time.Now()
+			g.Eval(ctx, start) // using current time instead of evalTimestamp
+			timeSinceStart := time.Since(start)
+
+			g.setEvaluationTime(timeSinceStart)
+			g.setLastEvaluation(start)
+		}
+
+		iter()
+		currentRun := nextRun
+
+		for {
+			// Calculate the next run time
+			nextRun = schedule.After(currentRun, false)
+
 			select {
 			case <-g.done:
 				return
-			case <-tick.C:
-				missed := (time.Since(evalTimestamp) / g.frequency) - 1
-				evalTimestamp = evalTimestamp.Add((missed + 1) * g.frequency)
-				iter()
+			default:
+				select {
+				case <-g.done:
+					return
+				case <-time.After(time.Until(nextRun)):
+					// Check if we missed any scheduled runs
+					now := time.Now()
+					if now.After(nextRun.Add(time.Minute)) { // Allow 1 minute tolerance
+						zap.L().Warn("missed scheduled run",
+							zap.Time("scheduled", nextRun),
+							zap.Time("actual", now))
+					}
+
+					currentRun = nextRun
+					iter()
+				}
+			}
+		}
+	} else {
+		// Wait an initial amount to have consistently slotted intervals.
+		evalTimestamp := g.EvalTimestamp(time.Now().UnixNano()).Add(g.frequency)
+		select {
+		case <-time.After(time.Until(evalTimestamp)):
+		case <-g.done:
+			return
+		}
+
+		ctx = NewQueryOriginContext(ctx, map[string]interface{}{
+			"ruleGroup": map[string]string{
+				"name": g.Name(),
+			},
+		})
+
+		iter := func() {
+
+			start := time.Now()
+			g.Eval(ctx, evalTimestamp)
+			timeSinceStart := time.Since(start)
+
+			g.setEvaluationTime(timeSinceStart)
+			g.setLastEvaluation(start)
+		}
+
+		// The assumption here is that since the ticker was started after having
+		// waited for `evalTimestamp` to pass, the ticks will trigger soon
+		// after each `evalTimestamp + N * g.frequency` occurrence.
+		tick := time.NewTicker(g.frequency)
+		defer tick.Stop()
+
+		iter()
+
+		// let the group iterate and run
+		for {
+			select {
+			case <-g.done:
+				return
+			default:
+				select {
+				case <-g.done:
+					return
+				case <-tick.C:
+					missed := (time.Since(evalTimestamp) / g.frequency) - 1
+					evalTimestamp = evalTimestamp.Add((missed + 1) * g.frequency)
+					iter()
+				}
 			}
 		}
 	}
@@ -243,6 +310,13 @@ func (g *PromRuleTask) setLastEvaluation(ts time.Time) {
 	g.mtx.Lock()
 	defer g.mtx.Unlock()
 	g.lastEvaluation = ts
+}
+
+func (g *PromRuleTask) SetSchedule(schedule string, t time.Time) {
+	g.mtx.Lock()
+	defer g.mtx.Unlock()
+	g.schedule = schedule
+	g.scheduleStartsAt = t
 }
 
 // EvalTimestamp returns the immediately preceding consistently slotted evaluation time.
