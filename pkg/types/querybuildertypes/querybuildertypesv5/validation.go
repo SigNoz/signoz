@@ -108,7 +108,7 @@ func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
 	}
 
 	// Validate aggregations only for non-raw request types
-	if requestType != RequestTypeRaw && requestType != RequestTypeTrace {
+	if requestType != RequestTypeRaw && requestType != RequestTypeRawStream && requestType != RequestTypeTrace {
 		if err := q.validateAggregations(); err != nil {
 			return err
 		}
@@ -440,7 +440,7 @@ func (r *QueryRangeRequest) Validate() error {
 
 	// Validate request type
 	switch r.RequestType {
-	case RequestTypeRaw, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeTrace:
+	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeTrace:
 		// Valid request types
 	default:
 		return errors.NewInvalidInputf(

@@ -1,11 +1,14 @@
 package querier
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"regexp"
 	"runtime/debug"
+	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -13,8 +16,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/variables"
+	"go.uber.org/zap"
 )
 
 type API struct {
@@ -84,6 +89,131 @@ func (a *API) QueryRange(rw http.ResponseWriter, req *http.Request) {
 	a.logEvent(req.Context(), req.Header.Get("Referer"), queryRangeResponse.QBEvent)
 
 	render.Success(rw, http.StatusOK, queryRangeResponse)
+}
+func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	// get the param from url and add it to body
+	startQ := req.URL.Query().Get("start")
+	filterQ := req.URL.Query().Get("filter")
+
+	start, err := strconv.ParseUint(startQ, 10, 64)
+	if err != nil {
+		start = 0
+	}
+	// make changes to parse it as qb v5 params
+	queryRangeRequest := qbtypes.QueryRangeRequest{
+		Start:       start,
+		RequestType: qbtypes.RequestTypeRawStream,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: []qbtypes.QueryEnvelope{
+				{
+					Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+						Filter: &qbtypes.Filter{
+							Expression: filterQ,
+						},
+						Limit: 500,
+						Order: []qbtypes.OrderBy{
+							{
+								Direction: qbtypes.OrderDirectionDesc,
+								Key: qbtypes.OrderByKey{
+									TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+										Name:         "timestamp",
+										Materialized: true,
+									},
+								},
+							},
+							{
+								Direction: qbtypes.OrderDirectionDesc,
+								Key: qbtypes.OrderByKey{
+									TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+										Name:         "id",
+										Materialized: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			stackTrace := string(debug.Stack())
+
+			queryJSON, _ := json.Marshal(queryRangeRequest)
+
+			a.set.Logger.ErrorContext(ctx, "panic in QueryRange",
+				"error", r,
+				"user", claims.UserID,
+				"payload", string(queryJSON),
+				"stacktrace", stackTrace,
+			)
+
+			render.Error(rw, errors.NewInternalf(
+				errors.CodeInternal,
+				"Something went wrong on our end. It's not you, it's us. Our team is notified about it. Reach out to support if issue persists.",
+			))
+		}
+	}()
+
+	// just for validation as we don't use end
+	queryRangeRequest.End = queryRangeRequest.Start + 1
+	// Validate the query request
+	if err := queryRangeRequest.Validate(); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	rw.Header().Set("Connection", "keep-alive")
+	rw.Header().Set("Content-Type", "text/event-stream")
+	rw.Header().Set("Cache-Control", "no-cache")
+	rw.Header().Set("Access-Control-Allow-Origin", "*")
+	rw.WriteHeader(200)
+
+	flusher, ok := rw.(http.Flusher)
+	if !ok {
+		render.Error(rw, errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "streaming is not supported"))
+		return
+	}
+	flusher.Flush()
+
+	client := &qbtypes.RawStream{Name: req.RemoteAddr, Logs: make(chan *qbtypes.RawRow, 1000), Done: make(chan *bool), Error: make(chan error)}
+	go a.querier.QueryRangeRawStream(ctx, orgID, &queryRangeRequest, client)
+
+	for {
+		select {
+		case log := <-client.Logs:
+			var buf bytes.Buffer
+			enc := json.NewEncoder(&buf)
+			enc.Encode(log)
+			fmt.Fprintf(rw, "data: %v\n\n", buf.String())
+			flusher.Flush()
+		case <-client.Done:
+			zap.L().Debug("done!")
+			return
+		case err := <-client.Error:
+			zap.L().Error("error occurred", zap.Error(err))
+			fmt.Fprintf(rw, "event: error\ndata: %v\n\n", err.Error())
+			flusher.Flush()
+			return
+		}
+	}
 }
 
 // TODO(srikanthccv): everything done here can be done on frontend as well
