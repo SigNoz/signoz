@@ -293,9 +293,11 @@ func (m *Manager) initiate(ctx context.Context) error {
 				}
 			}
 			if !parsedRule.Disabled {
-				err = m.NotificationGroup.SetGroupLabels(org.ID.StringValue(), rec.ID.StringValue(), parsedRule.NotificationGroups)
-				if err != nil {
-					zap.L().Error("failed to load the notification group definition", zap.String("name", rec.ID.StringValue()), zap.Error(err))
+				if parsedRule.NotificationGroups != nil {
+					err = m.NotificationGroup.SetGroupLabels(org.ID.StringValue(), rec.ID.StringValue(), parsedRule.NotificationGroups)
+					if err != nil {
+						zap.L().Error("failed to load the notification group definition", zap.String("name", rec.ID.StringValue()), zap.Error(err))
+					}
 				}
 				err := m.addTask(ctx, org.ID, parsedRule, taskName)
 				if err != nil {
@@ -378,9 +380,11 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 			preferredChannels = parsedRule.PreferredChannels
 		}
 
-		err = m.NotificationGroup.SetGroupLabels(claims.OrgID, id.StringValue(), parsedRule.NotificationGroups)
-		if err != nil {
-			return err
+		if parsedRule.NotificationGroups != nil {
+			err = m.NotificationGroup.SetGroupLabels(claims.OrgID, id.StringValue(), parsedRule.NotificationGroups)
+			if err != nil {
+				return err
+			}
 		}
 
 		err = cfg.UpdateRuleIDMatcher(id.StringValue(), preferredChannels)
@@ -579,9 +583,11 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 		}
 
 		taskName := prepareTaskName(id.StringValue())
-		err = m.NotificationGroup.SetGroupLabels(claims.OrgID, id.StringValue(), parsedRule.NotificationGroups)
-		if err != nil {
-			return err
+		if parsedRule.NotificationGroups != nil {
+			err = m.NotificationGroup.SetGroupLabels(claims.OrgID, id.StringValue(), parsedRule.NotificationGroups)
+			if err != nil {
+				return err
+			}
 		}
 		if err = m.addTask(ctx, orgID, parsedRule, taskName); err != nil {
 			return err
