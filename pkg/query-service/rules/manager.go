@@ -308,6 +308,9 @@ func (m *Manager) initiate(ctx context.Context) error {
 			}
 			if !parsedRule.Disabled {
 				if parsedRule.NotificationGroups != nil {
+					zap.L().Info("org id :  " + org.ID.StringValue())
+					zap.L().Info("rule id :  " + rec.ID.StringValue())
+					zap.L().Info("parsedRule ", zap.Any("parsedRule", *parsedRule))
 					err = m.NotificationGroup.SetGroupLabels(org.ID.StringValue(), rec.ID.StringValue(), parsedRule.NotificationGroups)
 					if err != nil {
 						zap.L().Error("failed to load the notification group definition", zap.String("name", rec.ID.StringValue()), zap.Error(err))
