@@ -388,13 +388,12 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 				// message should only be logged at the debug level.
 				logger.DebugContext(ctx, "Notify for alerts failed")
 			} else {
-				logger.Error("Notify for alerts failed")
+				logger.ErrorContext(ctx, "Notify for alerts failed")
 			}
 		}
 		return err == nil
 	})
 }
-
 
 // aggrGroup aggregates alert fingerprints into groups to which a
 // common set of routing options applies.
@@ -508,7 +507,7 @@ func (ag *aggrGroup) stop() {
 // insert inserts the alert into the aggregation group.
 func (ag *aggrGroup) insert(alert *types.Alert) {
 	if err := ag.alerts.Set(alert); err != nil {
-		ag.logger.Error("error on set alert", "err", err)
+		ag.logger.ErrorContext(ag.ctx, "error on set alert", "err", err)
 	}
 
 	// Immediately trigger a flush if the wait duration for this
@@ -556,7 +555,7 @@ func (ag *aggrGroup) flush(notify func(...*types.Alert) bool) {
 		// that each resolved alert has not fired again during the flush as then
 		// we would delete an active alert thinking it was resolved.
 		if err := ag.alerts.DeleteIfNotModified(resolvedSlice); err != nil {
-			ag.logger.Error("error on delete alerts", "err", err)
+			ag.logger.ErrorContext(ag.ctx, "error on delete alerts", "err", err)
 		}
 	}
 }
