@@ -1,6 +1,7 @@
 package signoz
 
 import (
+	"context"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -56,7 +57,7 @@ func TestNewProviderFactories(t *testing.T) {
 
 	assert.NotPanics(t, func() {
 		orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)), nil)
-		notificationGroups, _ := notificationgroupingtest.New(nil, instrumentationtest.New().ToProviderSettings(), notificationgrouping.Config{})
+		notificationGroups, _ := notificationgroupingtest.New(context.TODO(), instrumentationtest.New().ToProviderSettings(), notificationgrouping.Config{})
 		NewAlertmanagerProviderFactories(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual), orgGetter, notificationGroups)
 	})
 

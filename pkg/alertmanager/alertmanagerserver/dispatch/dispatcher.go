@@ -163,16 +163,16 @@ func (d *Dispatcher) run(it provider.AlertIterator) {
 			if !ok {
 				// Iterator exhausted for some reason.
 				if err := it.Err(); err != nil {
-					d.logger.Error("Error on alert update", "err", err)
+					d.logger.ErrorContext(d.ctx, "Error on alert update", "err", err)
 				}
 				return
 			}
 
-			d.logger.Debug("SigNoz Custom Dispatcher: Received alert", "alert", alert)
+			d.logger.DebugContext(d.ctx, "SigNoz Custom Dispatcher: Received alert", "alert", alert)
 
 			// Log errors but keep trying.
 			if err := it.Err(); err != nil {
-				d.logger.Error("Error on alert update", "err", err)
+				d.logger.ErrorContext(d.ctx, "Error on alert update", "err", err)
 				continue
 			}
 
@@ -364,7 +364,7 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 	// If the group does not exist, create it. But check the limit first.
 	if limit := d.limits.MaxNumberOfAggregationGroups(); limit > 0 && d.aggrGroupsNum >= limit {
 		d.metrics.aggrGroupLimitReached.Inc()
-		d.logger.Error("Too many aggregation groups, cannot create new group for alert", "groups", d.aggrGroupsNum, "limit", limit, "alert", alert.Name())
+		d.logger.ErrorContext(d.ctx, "Too many aggregation groups, cannot create new group for alert", "groups", d.aggrGroupsNum, "limit", limit, "alert", alert.Name())
 		return
 	}
 
@@ -386,7 +386,7 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 				// It is expected for the context to be canceled on
 				// configuration reload or shutdown. In this case, the
 				// message should only be logged at the debug level.
-				logger.Debug("Notify for alerts failed")
+				logger.DebugContext(ctx, "Notify for alerts failed")
 			} else {
 				logger.Error("Notify for alerts failed")
 			}
@@ -395,16 +395,6 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 	})
 }
 
-func getGroupLabels(alert *types.Alert, route *dispatch.Route) model.LabelSet {
-	groupLabels := model.LabelSet{}
-	for ln, lv := range alert.Labels {
-		if _, ok := route.RouteOpts.GroupBy[ln]; ok || route.RouteOpts.GroupByAll {
-			groupLabels[ln] = lv
-		}
-	}
-
-	return groupLabels
-}
 
 // aggrGroup aggregates alert fingerprints into groups to which a
 // common set of routing options applies.
@@ -443,7 +433,7 @@ func newAggrGroup(ctx context.Context, labels model.LabelSet, r *dispatch.Route,
 	}
 	ag.ctx, ag.cancel = context.WithCancel(ctx)
 
-	ag.logger = logger.With("aggrGroup", ag)
+	ag.logger = logger.With("aggr_group", ag)
 
 	// Set an initial one-time wait before flushing
 	// the first batch of notifications.
@@ -558,7 +548,7 @@ func (ag *aggrGroup) flush(notify func(...*types.Alert) bool) {
 	}
 	sort.Stable(alertsSlice)
 
-	ag.logger.Debug("flushing", "alerts", fmt.Sprintf("%v", alertsSlice))
+	ag.logger.DebugContext(ag.ctx, "flushing", "alerts", fmt.Sprintf("%v", alertsSlice))
 
 	if notify(alertsSlice...) {
 		// Delete all resolved alerts as we just sent a notification for them,
