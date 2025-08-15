@@ -67,6 +67,8 @@ type PostableRule struct {
 	// legacy
 	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
 	OldYaml string `json:"yaml,omitempty"`
+
+	NotificationGroups []string `yaml:"notificationGroups,omitempty" json:"notificationGroups,omitempty"`
 }
 
 func ParsePostableRule(content []byte) (*PostableRule, error) {

@@ -84,7 +84,8 @@ type BaseRule struct {
 	// should be fast but we can still avoid the query if we have the data in memory
 	TemporalityMap map[string]map[v3.Temporality]bool
 
-	sqlstore sqlstore.SQLStore
+	sqlstore            sqlstore.SQLStore
+	NotificationGroupBy []string
 }
 
 type RuleOption func(*BaseRule)
@@ -125,20 +126,21 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	}
 
 	baseRule := &BaseRule{
-		id:                id,
-		orgID:             orgID,
-		name:              p.AlertName,
-		source:            p.Source,
-		typ:               p.AlertType,
-		ruleCondition:     p.RuleCondition,
-		evalWindow:        time.Duration(p.EvalWindow),
-		labels:            qslabels.FromMap(p.Labels),
-		annotations:       qslabels.FromMap(p.Annotations),
-		preferredChannels: p.PreferredChannels,
-		health:            ruletypes.HealthUnknown,
-		Active:            map[uint64]*ruletypes.Alert{},
-		reader:            reader,
-		TemporalityMap:    make(map[string]map[v3.Temporality]bool),
+		id:                  id,
+		orgID:               orgID,
+		name:                p.AlertName,
+		source:              p.Source,
+		typ:                 p.AlertType,
+		ruleCondition:       p.RuleCondition,
+		evalWindow:          time.Duration(p.EvalWindow),
+		labels:              qslabels.FromMap(p.Labels),
+		annotations:         qslabels.FromMap(p.Annotations),
+		preferredChannels:   p.PreferredChannels,
+		health:              ruletypes.HealthUnknown,
+		Active:              map[uint64]*ruletypes.Alert{},
+		reader:              reader,
+		TemporalityMap:      make(map[string]map[v3.Temporality]bool),
+		NotificationGroupBy: p.NotificationGroups,
 	}
 
 	if baseRule.evalWindow == 0 {

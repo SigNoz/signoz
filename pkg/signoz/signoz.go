@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
+	"github.com/SigNoz/signoz/pkg/notificationgrouping"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
@@ -32,23 +33,24 @@ import (
 
 type SigNoz struct {
 	*factory.Registry
-	Instrumentation instrumentation.Instrumentation
-	Analytics       analytics.Analytics
-	Cache           cache.Cache
-	Web             web.Web
-	SQLStore        sqlstore.SQLStore
-	TelemetryStore  telemetrystore.TelemetryStore
-	Prometheus      prometheus.Prometheus
-	Alertmanager    alertmanager.Alertmanager
-	Querier         querier.Querier
-	Rules           ruler.Ruler
-	Zeus            zeus.Zeus
-	Licensing       licensing.Licensing
-	Emailing        emailing.Emailing
-	Sharder         sharder.Sharder
-	StatsReporter   statsreporter.StatsReporter
-	Modules         Modules
-	Handlers        Handlers
+	Instrumentation    instrumentation.Instrumentation
+	Analytics          analytics.Analytics
+	Cache              cache.Cache
+	Web                web.Web
+	SQLStore           sqlstore.SQLStore
+	TelemetryStore     telemetrystore.TelemetryStore
+	Prometheus         prometheus.Prometheus
+	Alertmanager       alertmanager.Alertmanager
+	Querier            querier.Querier
+	Rules              ruler.Ruler
+	Zeus               zeus.Zeus
+	Licensing          licensing.Licensing
+	Emailing           emailing.Emailing
+	Sharder            sharder.Sharder
+	StatsReporter      statsreporter.StatsReporter
+	Modules            Modules
+	Handlers           Handlers
+	NotificationGroups notificationgrouping.NotificationGroups
 }
 
 func New(
@@ -230,12 +232,27 @@ func New(
 	// Initialize user getter
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 
+	// shared NotificationGroups instance for both alertmanager and rules
+	notificationGroups, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		notificationgrouping.Config{
+			Provider:        "rulebased",
+			DefaultStrategy: "standard",
+		},
+		NewNotificationGroupingProviderFactories(),
+		"rulebased",
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize alertmanager from the available alertmanager provider factories
 	alertmanager, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		config.Alertmanager,
-		NewAlertmanagerProviderFactories(sqlstore, orgGetter),
+		NewAlertmanagerProviderFactories(sqlstore, orgGetter, notificationGroups),
 		config.Alertmanager.Provider,
 	)
 	if err != nil {
@@ -305,21 +322,23 @@ func New(
 	}
 
 	return &SigNoz{
-		Registry:        registry,
-		Analytics:       analytics,
-		Instrumentation: instrumentation,
-		Cache:           cache,
-		Web:             web,
-		SQLStore:        sqlstore,
-		TelemetryStore:  telemetrystore,
-		Prometheus:      prometheus,
-		Alertmanager:    alertmanager,
-		Querier:         querier,
-		Zeus:            zeus,
-		Licensing:       licensing,
-		Emailing:        emailing,
-		Sharder:         sharder,
-		Modules:         modules,
-		Handlers:        handlers,
+		Registry:           registry,
+		Analytics:          analytics,
+		Instrumentation:    instrumentation,
+		Cache:              cache,
+		Web:                web,
+		SQLStore:           sqlstore,
+		TelemetryStore:     telemetrystore,
+		Prometheus:         prometheus,
+		Alertmanager:       alertmanager,
+		Querier:            querier,
+		Rules:              ruler,
+		Zeus:               zeus,
+		Licensing:          licensing,
+		Emailing:           emailing,
+		Sharder:            sharder,
+		Modules:            modules,
+		Handlers:           handlers,
+		NotificationGroups: notificationGroups,
 	}, nil
 }

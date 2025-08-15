@@ -16,6 +16,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/notificationgrouping"
+	"github.com/SigNoz/signoz/pkg/notificationgrouping/notificationgroupingtest"
+	"github.com/SigNoz/signoz/pkg/notificationgrouping/rulebasedgrouping"
+	"github.com/SigNoz/signoz/pkg/notificationgrouping/standardgrouping"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -146,10 +150,18 @@ func NewPrometheusProviderFactories(telemetryStore telemetrystore.TelemetryStore
 	)
 }
 
-func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter organization.Getter) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
+func NewNotificationGroupingProviderFactories() factory.NamedMap[factory.ProviderFactory[notificationgrouping.NotificationGroups, notificationgrouping.Config]] {
+	return factory.MustNewNamedMap(
+		rulebasedgrouping.NewFactory(),
+		standardgrouping.NewFactory(),
+		notificationgroupingtest.NewFactory(),
+	)
+}
+
+func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationGroups notificationgrouping.NotificationGroups) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
 	return factory.MustNewNamedMap(
 		legacyalertmanager.NewFactory(sqlstore, orgGetter),
-		signozalertmanager.NewFactory(sqlstore, orgGetter),
+		signozalertmanager.NewFactory(sqlstore, orgGetter, notificationGroups),
 	)
 }
 

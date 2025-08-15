@@ -23,7 +23,7 @@ import (
 )
 
 func TestServerSetConfigAndStop(t *testing.T) {
-	server, err := New(context.Background(), slog.New(slog.NewTextHandler(io.Discard, nil)), prometheus.NewRegistry(), NewConfig(), "1", alertmanagertypestest.NewStateStore())
+	server, err := New(context.Background(), slog.New(slog.NewTextHandler(io.Discard, nil)), prometheus.NewRegistry(), NewConfig(), "1", alertmanagertypestest.NewStateStore(), nil)
 	require.NoError(t, err)
 
 	amConfig, err := alertmanagertypes.NewDefaultConfig(alertmanagertypes.GlobalConfig{}, alertmanagertypes.RouteConfig{GroupInterval: 1 * time.Minute, RepeatInterval: 1 * time.Minute, GroupWait: 1 * time.Minute}, "1")
@@ -34,7 +34,7 @@ func TestServerSetConfigAndStop(t *testing.T) {
 }
 
 func TestServerTestReceiverTypeWebhook(t *testing.T) {
-	server, err := New(context.Background(), slog.New(slog.NewTextHandler(io.Discard, nil)), prometheus.NewRegistry(), NewConfig(), "1", alertmanagertypestest.NewStateStore())
+	server, err := New(context.Background(), slog.New(slog.NewTextHandler(io.Discard, nil)), prometheus.NewRegistry(), NewConfig(), "1", alertmanagertypestest.NewStateStore(), nil)
 	require.NoError(t, err)
 
 	amConfig, err := alertmanagertypes.NewDefaultConfig(alertmanagertypes.GlobalConfig{}, alertmanagertypes.RouteConfig{GroupInterval: 1 * time.Minute, RepeatInterval: 1 * time.Minute, GroupWait: 1 * time.Minute}, "1")
@@ -81,7 +81,7 @@ func TestServerPutAlerts(t *testing.T) {
 	stateStore := alertmanagertypestest.NewStateStore()
 	srvCfg := NewConfig()
 	srvCfg.Route.GroupInterval = 1 * time.Second
-	server, err := New(context.Background(), slog.New(slog.NewTextHandler(io.Discard, nil)), prometheus.NewRegistry(), srvCfg, "1", stateStore)
+	server, err := New(context.Background(), slog.New(slog.NewTextHandler(io.Discard, nil)), prometheus.NewRegistry(), srvCfg, "1", stateStore, nil)
 	require.NoError(t, err)
 
 	amConfig, err := alertmanagertypes.NewDefaultConfig(srvCfg.Global, srvCfg.Route, "1")

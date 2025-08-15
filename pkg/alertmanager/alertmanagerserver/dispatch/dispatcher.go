@@ -24,6 +24,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/notificationgrouping"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
@@ -94,7 +95,9 @@ type Dispatcher struct {
 	ctx    context.Context
 	cancel func()
 
-	logger *slog.Logger
+	logger             *slog.Logger
+	notificationGroups notificationgrouping.NotificationGroups
+	orgID              string
 }
 
 // We use the upstream Limits interface from Prometheus
@@ -110,6 +113,8 @@ func NewDispatcher(
 	lim Limits,
 	l *slog.Logger,
 	m *DispatcherMetrics,
+	n notificationgrouping.NotificationGroups,
+	orgID string,
 ) *Dispatcher {
 	if lim == nil {
 		// Use a simple implementation when no limits are provided
@@ -117,14 +122,16 @@ func NewDispatcher(
 	}
 
 	disp := &Dispatcher{
-		alerts:  ap,
-		stage:   s,
-		route:   r,
-		marker:  mk,
-		timeout: to,
-		logger:  l.With("component", "signoz-dispatcher"),
-		metrics: m,
-		limits:  lim,
+		alerts:             ap,
+		stage:              s,
+		route:              r,
+		marker:             mk,
+		timeout:            to,
+		logger:             l.With("component", "signoz-dispatcher"),
+		metrics:            m,
+		limits:             lim,
+		notificationGroups: n,
+		orgID:              orgID,
 	}
 	return disp
 }
@@ -335,7 +342,7 @@ type notifyFunc func(context.Context, ...*types.Alert) bool
 // processAlert determines in which aggregation group the alert falls
 // and inserts it.
 func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
-	groupLabels := getGroupLabels(alert, route)
+	groupLabels := d.notificationGroups.GetGroupLabels(d.orgID, alert, route)
 
 	fp := groupLabels.Fingerprint()
 

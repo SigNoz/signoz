@@ -9,27 +9,29 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/notificationgrouping"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type provider struct {
-	service     *alertmanager.Service
-	config      alertmanager.Config
-	settings    factory.ScopedProviderSettings
-	configStore alertmanagertypes.ConfigStore
-	stateStore  alertmanagertypes.StateStore
-	stopC       chan struct{}
+	service            *alertmanager.Service
+	config             alertmanager.Config
+	settings           factory.ScopedProviderSettings
+	configStore        alertmanagertypes.ConfigStore
+	stateStore         alertmanagertypes.StateStore
+	notificationGroups notificationgrouping.NotificationGroups
+	stopC              chan struct{}
 }
 
-func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
+func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationGroups notificationgrouping.NotificationGroups) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, settings factory.ProviderSettings, config alertmanager.Config) (alertmanager.Alertmanager, error) {
-		return New(ctx, settings, config, sqlstore, orgGetter)
+		return New(ctx, settings, config, sqlstore, orgGetter, notificationGroups)
 	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore, orgGetter organization.Getter) (*provider, error) {
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationGroups notificationgrouping.NotificationGroups) (*provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
@@ -42,12 +44,14 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 			stateStore,
 			configStore,
 			orgGetter,
+			notificationGroups,
 		),
-		settings:    settings,
-		config:      config,
-		configStore: configStore,
-		stateStore:  stateStore,
-		stopC:       make(chan struct{}),
+		settings:           settings,
+		config:             config,
+		configStore:        configStore,
+		stateStore:         stateStore,
+		notificationGroups: notificationGroups,
+		stopC:              make(chan struct{}),
 	}
 
 	return p, nil
