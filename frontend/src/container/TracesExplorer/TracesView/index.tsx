@@ -40,11 +40,13 @@ import { ActionsContainer, Container } from './styles';
 interface TracesViewProps {
 	isFilterApplied: boolean;
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
+	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
 }
 
 function TracesView({
 	isFilterApplied,
 	setWarning,
+	setIsLoadingQueries,
 }: TracesViewProps): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
@@ -116,6 +118,14 @@ function TracesView({
 		() => responseData?.map((listItem) => listItem.data),
 		[responseData],
 	);
+
+	useEffect(() => {
+		if (isLoading || isFetching) {
+			setIsLoadingQueries(true);
+		} else {
+			setIsLoadingQueries(false);
+		}
+	}, [isLoading, isFetching, setIsLoadingQueries]);
 
 	useEffect(() => {
 		if (!isLoading && !isFetching && !isError && (tableData || []).length !== 0) {

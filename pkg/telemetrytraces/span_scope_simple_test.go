@@ -3,6 +3,7 @@ package telemetrytraces
 import (
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -64,6 +65,7 @@ func TestSpanScopeFilterExpression(t *testing.T) {
 			}}
 
 			whereClause, err := querybuilder.PrepareWhereClause(tt.expression, querybuilder.FilterExprVisitorOpts{
+				Logger:           instrumentationtest.New().Logger(),
 				FieldMapper:      fm,
 				ConditionBuilder: cb,
 				FieldKeys:        fieldKeys,
@@ -130,6 +132,7 @@ func TestSpanScopeWithResourceFilter(t *testing.T) {
 			}}
 
 			_, err := querybuilder.PrepareWhereClause(tt.expression, querybuilder.FilterExprVisitorOpts{
+				Logger:             instrumentationtest.New().Logger(),
 				FieldMapper:        fm,
 				ConditionBuilder:   cb,
 				FieldKeys:          fieldKeys,

@@ -3,6 +3,7 @@ package telemetrystorehook
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -11,16 +12,20 @@ import (
 )
 
 type provider struct {
-	settings telemetrystore.QuerySettings
+	clickHouseVersion string
+	settings          telemetrystore.QuerySettings
 }
 
-func NewSettingsFactory() factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config] {
-	return factory.NewProviderFactory(factory.MustNewName("settings"), NewSettings)
+func NewSettingsFactory(version string) factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("settings"), func(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config) (telemetrystore.TelemetryStoreHook, error) {
+		return NewSettings(ctx, providerSettings, config, version)
+	})
 }
 
-func NewSettings(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config) (telemetrystore.TelemetryStoreHook, error) {
+func NewSettings(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config, version string) (telemetrystore.TelemetryStoreHook, error) {
 	return &provider{
-		settings: config.Clickhouse.QuerySettings,
+		clickHouseVersion: version,
+		settings:          config.Clickhouse.QuerySettings,
 	}, nil
 }
 
@@ -73,6 +78,13 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 	if ctx.Value("max_rows_to_group_by") != nil && ctx.Value("result_overflow_mode") != nil {
 		settings["max_rows_to_group_by"] = ctx.Value("max_rows_to_group_by").(int)
 		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
+	}
+
+	// ClickHouse version check is added since this setting is not support on version below 25.5
+	if strings.HasPrefix(h.clickHouseVersion, "25") && !h.settings.SecondaryIndicesEnableBulkFiltering {
+		// TODO(srikanthccv): enable it when the "Cannot read all data" issue is fixed
+		// https://github.com/ClickHouse/ClickHouse/issues/82283
+		settings["secondary_indices_enable_bulk_filtering"] = false
 	}
 
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
