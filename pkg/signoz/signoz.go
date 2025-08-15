@@ -2,7 +2,6 @@ package signoz
 
 import (
 	"context"
-	"fmt"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/cache"
@@ -245,10 +244,6 @@ func New(
 	)
 	if err != nil {
 		return nil, err
-	}
-
-	if notificationGroups == nil {
-		fmt.Printf("notification group is nil")
 	}
 
 	// Initialize alertmanager from the available alertmanager provider factories

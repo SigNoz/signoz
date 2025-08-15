@@ -267,13 +267,6 @@ func (m *Manager) Pause(b bool) {
 }
 
 func (m *Manager) initiate(ctx context.Context) error {
-	// Add debugging to understand the NotificationGroup state at initiate time
-	if m.NotificationGroup == nil {
-		zap.L().Error("CRITICAL: NotificationGroup is nil in initiate method - this will cause a panic")
-		return fmt.Errorf("NotificationGroup is nil in initiate method")
-	}
-	zap.L().Debug("NotificationGroup is properly initialized in initiate method")
-
 	orgs, err := m.orgGetter.ListByOwnedKeyRange(ctx)
 	if err != nil {
 		return err
@@ -281,7 +274,6 @@ func (m *Manager) initiate(ctx context.Context) error {
 
 	var loadErrors []error
 	for _, org := range orgs {
-		zap.L().Info("code reached here -13 ")
 		storedRules, err := m.ruleStore.GetStoredRules(ctx, org.ID.StringValue())
 		if err != nil {
 			return err
@@ -292,14 +284,11 @@ func (m *Manager) initiate(ctx context.Context) error {
 
 		for _, rec := range storedRules {
 			taskName := fmt.Sprintf("%s-groupname", rec.ID.StringValue())
-			zap.L().Info("code reached here -12 ")
 			parsedRule, err := ruletypes.ParsePostableRule([]byte(rec.Data))
-			zap.L().Info("code reached here -1 ")
 			if err != nil {
 				if errors.Is(err, ruletypes.ErrFailedToParseJSON) {
 					zap.L().Info("failed to load rule in json format, trying yaml now:", zap.String("name", taskName))
 
-					zap.L().Info("code reached here -2")
 					// see if rule is stored in yaml format
 					parsedRule, err = ruletypes.ParsePostableRuleWithKind([]byte(rec.Data), ruletypes.RuleDataKindYaml)
 
@@ -316,12 +305,8 @@ func (m *Manager) initiate(ctx context.Context) error {
 					continue
 				}
 			}
-			zap.L().Info("code reached here -3")
 			if !parsedRule.Disabled {
 				if parsedRule.NotificationGroups != nil {
-					zap.L().Info("org id :  " + org.ID.StringValue())
-					zap.L().Info("rule id :  " + rec.ID.StringValue())
-					zap.L().Info("parsedRule ", zap.Any("parsedRule", *parsedRule))
 					err = m.NotificationGroup.SetGroupLabels(org.ID.StringValue(), rec.ID.StringValue(), parsedRule.NotificationGroups)
 					if err != nil {
 						zap.L().Error("failed to load the notification group definition", zap.String("name", rec.ID.StringValue()), zap.Error(err))
