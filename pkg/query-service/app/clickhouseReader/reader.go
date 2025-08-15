@@ -386,6 +386,8 @@ func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc
 
 func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceItem, *model.ApiError) {
 
+	fmt.Printf("Inside GetServices\n")
+
 	if r.indexTable == "" {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
 	}
@@ -395,6 +397,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 		return nil, apiErr
 	}
 
+	fmt.Printf("TopLevelOps: %v\n", topLevelOps)
 	// Collect all operations from all services for the single query
 	var allOperations []string
 	serviceOperationsMap := make(map[string][]string)
@@ -416,6 +419,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 		}
 	}
 
+	fmt.Printf("UniqueOps: %v\n", uniqueOps)
 	// Build the optimized single query with GROUP BY
 	query := fmt.Sprintf(`
 		SELECT 
@@ -443,6 +447,8 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 	query += ` AND (resource_fingerprint GLOBAL IN ` + resourceSubQuery + `)`
 	query += ` GROUP BY serviceName ORDER BY numCalls DESC`
 
+	fmt.Printf("Query: %s\n", query)
+
 	args := []interface{}{
 		clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
 		clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
@@ -450,6 +456,8 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 		clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
 		clickhouse.Named("allOperations", uniqueOps),
 	}
+
+	fmt.Printf("query: %s\n", query)
 
 	// Execute the single optimized query
 	rows, err := r.db.Query(ctx, query, args...)
@@ -490,6 +498,8 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 		zap.L().Error("Error iterating over service results", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
+
+	fmt.Printf("ServiceItems: %v\n", serviceItems)
 
 	return &serviceItems, nil
 }
