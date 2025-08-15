@@ -315,9 +315,7 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	require.NoError(t, err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(testDB), sharder)
 	notificationGroups, err := notificationgroupingtest.New(context.TODO(), providerSettings, notificationgrouping.Config{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, testDB, orgGetter, notificationGroups)
 	require.NoError(t, err)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)

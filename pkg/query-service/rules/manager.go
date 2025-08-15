@@ -206,12 +206,6 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 func NewManager(o *ManagerOptions) (*Manager, error) {
 	o = defaultOptions(o)
 
-	// Validate that NotificationGroups is properly initialized
-	if o.NotificationGroups == nil {
-		zap.L().Error("NotificationGroups is nil during Manager creation, this will cause panics")
-		return nil, fmt.Errorf("NotificationGroups is required but was nil")
-	}
-
 	ruleStore := sqlrulestore.NewRuleStore(o.SQLStore)
 	maintenanceStore := sqlrulestore.NewMaintenanceStore(o.SQLStore)
 
@@ -231,12 +225,6 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		sqlstore:            o.SQLStore,
 		orgGetter:           o.OrgGetter,
 		NotificationGroup:   o.NotificationGroups,
-	}
-
-	// Double-check that NotificationGroup was properly assigned
-	if m.NotificationGroup == nil {
-		zap.L().Error("NotificationGroup is nil after assignment, this should not happen")
-		return nil, fmt.Errorf("NotificationGroup assignment failed")
 	}
 
 	zap.L().Debug("Manager created successfully with NotificationGroup")
