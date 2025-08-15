@@ -12,6 +12,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/notificationgrouping"
+	"github.com/SigNoz/signoz/pkg/notificationgrouping/notificationgroupingtest"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -29,7 +31,8 @@ func TestIntegrationLifecycle(t *testing.T) {
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	sharder, _ := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(store), sharder)
-	alertmanager, _ := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, store, orgGetter)
+	notificationGroups, _ := notificationgroupingtest.New(context.TODO(), providerSettings, notificationgrouping.Config{})
+	alertmanager, _ := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, store, orgGetter, notificationGroups)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
 	analytics := analyticstest.New()

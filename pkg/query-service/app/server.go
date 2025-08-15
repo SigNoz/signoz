@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/notificationgrouping"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	querierAPI "github.com/SigNoz/signoz/pkg/querier"
@@ -95,6 +96,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		signoz.Modules.OrgGetter,
 		signoz.Querier,
 		signoz.Instrumentation.Logger(),
+		signoz.NotificationGroups,
 	)
 	if err != nil {
 		return nil, err
@@ -389,21 +391,23 @@ func makeRulesManager(
 	orgGetter organization.Getter,
 	querier querier.Querier,
 	logger *slog.Logger,
+	groups notificationgrouping.NotificationGroups,
 ) (*rules.Manager, error) {
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
-		TelemetryStore: telemetryStore,
-		Prometheus:     prometheus,
-		Context:        context.Background(),
-		Logger:         zap.L(),
-		Reader:         ch,
-		Querier:        querier,
-		SLogger:        logger,
-		Cache:          cache,
-		EvalDelay:      constants.GetEvalDelay(),
-		SQLStore:       sqlstore,
-		OrgGetter:      orgGetter,
-		Alertmanager:   alertmanager,
+		TelemetryStore:     telemetryStore,
+		Prometheus:         prometheus,
+		Context:            context.Background(),
+		Logger:             zap.L(),
+		Reader:             ch,
+		Querier:            querier,
+		SLogger:            logger,
+		Cache:              cache,
+		EvalDelay:          constants.GetEvalDelay(),
+		SQLStore:           sqlstore,
+		OrgGetter:          orgGetter,
+		Alertmanager:       alertmanager,
+		NotificationGroups: groups,
 	}
 
 	// create Manager
