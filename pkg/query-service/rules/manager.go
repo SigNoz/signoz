@@ -281,6 +281,7 @@ func (m *Manager) initiate(ctx context.Context) error {
 
 	var loadErrors []error
 	for _, org := range orgs {
+		zap.L().Info("code reached here -13 ")
 		storedRules, err := m.ruleStore.GetStoredRules(ctx, org.ID.StringValue())
 		if err != nil {
 			return err
@@ -291,6 +292,7 @@ func (m *Manager) initiate(ctx context.Context) error {
 
 		for _, rec := range storedRules {
 			taskName := fmt.Sprintf("%s-groupname", rec.ID.StringValue())
+			zap.L().Info("code reached here -12 ")
 			parsedRule, err := ruletypes.ParsePostableRule([]byte(rec.Data))
 			zap.L().Info("code reached here -1 ")
 			if err != nil {
