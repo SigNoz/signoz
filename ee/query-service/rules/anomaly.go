@@ -257,6 +257,7 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 			smpl, shouldAlert := threshold.ShouldAlert(*series)
 			if shouldAlert {
 				resultVector = append(resultVector, smpl)
+				break //return when one threshold is alerted
 			}
 		}
 	}

@@ -410,6 +410,108 @@ type RuleCondition struct {
 	Thresholds        []RuleThreshold    `yaml:"thresholds,omitempty" json:"thresholds,omitempty"`
 }
 
+// RuleThresholdData represents the raw threshold data from JSON
+type RuleThresholdData struct {
+	Kind string          `json:"kind"`
+	Spec json.RawMessage `json:"spec"`
+}
+
+// BasicRuleThresholdJSON represents the JSON structure for BasicRuleThreshold
+type BasicRuleThresholdJSON struct {
+	Name           string    `json:"name"`
+	Target         *float64  `json:"target"`
+	TargetUnit     string    `json:"targetUnit,omitempty"`
+	RuleUnit       string    `json:"ruleUnit,omitempty"`
+	RecoveryTarget *float64  `json:"recoveryTarget,omitempty"`
+	MatchType      MatchType `json:"matchType"`
+	CompareOp      CompareOp `json:"op"` // Note: using "op" to match existing format
+	SelectedQuery  string    `json:"selectedQuery,omitempty"`
+}
+
+// UnmarshalJSON implements custom unmarshalling for RuleCondition to handle thresholds based on kind
+func (rc *RuleCondition) UnmarshalJSON(data []byte) error {
+	// Define a temporary struct to unmarshal into, excluding Thresholds
+	type Alias RuleCondition
+	aux := &struct {
+		Thresholds []RuleThresholdData `json:"thresholds,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(rc),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	// Handle threshold unmarshalling based on kind and spec
+	rc.Thresholds = make([]RuleThreshold, 0, len(aux.Thresholds))
+	for _, thresholdData := range aux.Thresholds {
+		switch thresholdData.Kind {
+		case "basic", "": // Default to basic if kind is not specified
+			var basicThreshold BasicRuleThresholdJSON
+			if err := json.Unmarshal(thresholdData.Spec, &basicThreshold); err != nil {
+				return fmt.Errorf("failed to unmarshal basic threshold: %w", err)
+			}
+			rc.Thresholds = append(rc.Thresholds, NewBasicRuleThreshold(
+				basicThreshold.Name,
+				basicThreshold.Target,
+				basicThreshold.RecoveryTarget,
+				basicThreshold.MatchType,
+				basicThreshold.CompareOp,
+				basicThreshold.SelectedQuery,
+				basicThreshold.TargetUnit,
+				basicThreshold.RuleUnit,
+			))
+		default:
+			return fmt.Errorf("unsupported threshold kind: %s", thresholdData.Kind)
+		}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements custom marshalling for RuleCondition to handle thresholds with kind
+func (rc *RuleCondition) MarshalJSON() ([]byte, error) {
+	// Define a temporary struct to marshal from, excluding Thresholds
+	type Alias RuleCondition
+	aux := &struct {
+		Thresholds []RuleThresholdData `json:"thresholds,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(rc),
+	}
+
+	// Convert RuleThreshold interface to RuleThresholdData with kind
+	aux.Thresholds = make([]RuleThresholdData, 0, len(rc.Thresholds))
+	for _, threshold := range rc.Thresholds {
+		switch t := threshold.(type) {
+		case *BasicRuleThreshold:
+			basicJSON := BasicRuleThresholdJSON{
+				Name:           t.name,
+				Target:         t.target,
+				TargetUnit:     t.targetUnit,
+				RuleUnit:       t.ruleUnit,
+				RecoveryTarget: t.recoveryTarget,
+				MatchType:      t.matchType,
+				CompareOp:      t.compareOp,
+				SelectedQuery:  t.selectedQuery,
+			}
+			spec, err := json.Marshal(basicJSON)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal basic threshold: %w", err)
+			}
+			aux.Thresholds = append(aux.Thresholds, RuleThresholdData{
+				Kind: "basic",
+				Spec: spec,
+			})
+		default:
+			return nil, fmt.Errorf("unsupported threshold type: %T", threshold)
+		}
+	}
+
+	return json.Marshal(aux)
+}
+
 func (rc *RuleCondition) GetSelectedQueryName() string {
 	if rc != nil {
 		if rc.SelectedQuery != "" {

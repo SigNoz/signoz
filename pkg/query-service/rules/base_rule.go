@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"math"
 	"net/url"
+	"sort"
 	"sync"
 	"time"
 
@@ -214,7 +215,29 @@ func (r *BaseRule) TargetVal() float64 {
 }
 
 func (r *BaseRule) Thresholds() []ruletypes.RuleThreshold {
-	return r.ruleCondition.Thresholds
+	thresholds := make([]ruletypes.RuleThreshold, len(r.ruleCondition.Thresholds))
+	copy(thresholds, r.ruleCondition.Thresholds)
+
+	// Sort thresholds by target value based on compare operation
+	sort.Slice(thresholds, func(i, j int) bool {
+		compareOp := thresholds[i].CompareOp()
+		targetI := thresholds[i].Target()
+		targetJ := thresholds[j].Target()
+
+		switch compareOp {
+		case ruletypes.ValueIsAbove, ruletypes.ValueAboveOrEq, ruletypes.ValueOutsideBounds:
+			// For "above" operations, sort descending (higher values first)
+			return targetI > targetJ
+		case ruletypes.ValueIsBelow, ruletypes.ValueBelowOrEq:
+			// For "below" operations, sort ascending (lower values first)
+			return targetI < targetJ
+		default:
+			// For equal/not equal operations, use descending as default
+			return targetI > targetJ
+		}
+	})
+
+	return thresholds
 }
 
 func (r *ThresholdRule) hostFromSource() string {
