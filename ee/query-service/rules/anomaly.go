@@ -253,9 +253,12 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 	r.logger.InfoContext(ctx, "anomaly scores", "scores", string(scoresJSON))
 
 	for _, series := range queryResult.AnomalyScores {
-		smpl, shouldAlert := r.ShouldAlert(*series)
-		if shouldAlert {
-			resultVector = append(resultVector, smpl)
+		for _, threshold := range r.Thresholds() {
+			smpl, shouldAlert := threshold.ShouldAlert(*series)
+			if shouldAlert {
+				resultVector = append(resultVector, smpl)
+				break //return when one threshold is alerted
+			}
 		}
 	}
 	return resultVector, nil
@@ -296,9 +299,11 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 	r.logger.InfoContext(ctx, "anomaly scores", "scores", string(scoresJSON))
 
 	for _, series := range queryResult.AnomalyScores {
-		smpl, shouldAlert := r.ShouldAlert(*series)
-		if shouldAlert {
-			resultVector = append(resultVector, smpl)
+		for _, threshold := range r.Thresholds() {
+			smpl, shouldAlert := threshold.ShouldAlert(*series)
+			if shouldAlert {
+				resultVector = append(resultVector, smpl)
+			}
 		}
 	}
 	return resultVector, nil
