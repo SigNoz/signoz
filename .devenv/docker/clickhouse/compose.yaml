@@ -24,7 +24,7 @@ services:
     depends_on:
       - zookeeper
   zookeeper:
-    image: bitnami/zookeeper:3.7.1
+    image: signoz/zookeeper:3.7.1
     container_name: zookeeper
     volumes:
       - ${PWD}/fs/tmp/zookeeper:/bitnami/zookeeper
