@@ -206,9 +206,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 				if (existingPair.valueList && filter.value && Array.isArray(filter.value)) {
 					// Clean quotes from string values for comparison
 					const cleanValues = (values: any[]): any[] =>
-						values.map((val) =>
-							typeof val === 'string' ? val.replace(/^['"]|['"]$/g, '') : val,
-						);
+						values.map((val) => (typeof val === 'string' ? unquote(val) : val));
 
 					const cleanExistingValues = cleanValues(existingPair.valueList);
 					const cleanFilterValues = cleanValues(filter.value);
