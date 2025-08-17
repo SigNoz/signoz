@@ -86,7 +86,7 @@ describe('convertFiltersToExpressionWithExistingQuery', () => {
 					operatorStart: 13,
 					operatorEnd: 13,
 					valueStart: 15,
-					valueEnd: 26,
+					valueEnd: 28,
 				},
 			},
 		]);
@@ -123,20 +123,28 @@ describe('convertFiltersToExpressionWithExistingQuery', () => {
 		mockExtractQueryPairs.mockReturnValue([
 			{
 				key: 'service.name',
-				operator: OPERATORS.IN,
+				operator: 'IN',
 				value: "['old-service']",
-				valueList: ['old-service'],
+				valueList: ["'old-service'"],
+				valuesPosition: [
+					{
+						start: 17,
+						end: 29,
+					},
+				],
 				hasNegation: false,
 				isMultiValue: true,
-				isComplete: true,
 				position: {
 					keyStart: 0,
 					keyEnd: 11,
 					operatorStart: 13,
 					operatorEnd: 14,
 					valueStart: 16,
-					valueEnd: 28,
+					valueEnd: 30,
+					negationStart: 0,
+					negationEnd: 0,
 				},
+				isComplete: true,
 			},
 		]);
 
@@ -149,7 +157,7 @@ describe('convertFiltersToExpressionWithExistingQuery', () => {
 		expect(result.filter).toBeDefined();
 		// The function is currently returning the new value but with extra characters
 		expect(result.filter.expression).toBe(
-			"service.name IN ['service1', 'service2']']",
+			"service.name IN ['service1', 'service2']",
 		);
 	});
 
@@ -182,7 +190,7 @@ describe('convertFiltersToExpressionWithExistingQuery', () => {
 					operatorStart: 13,
 					operatorEnd: 13,
 					valueStart: 15,
-					valueEnd: 26,
+					valueEnd: 28,
 				},
 			},
 		]);
@@ -195,7 +203,7 @@ describe('convertFiltersToExpressionWithExistingQuery', () => {
 		expect(result.filters.items).toHaveLength(1);
 		// The function is currently returning the new value but with extra characters
 		expect(result.filter.expression).toBe(
-			"service.name IN ['service1', 'service2'] '",
+			"service.name IN ['service1', 'service2'] ",
 		);
 	});
 
@@ -219,7 +227,6 @@ describe('convertFiltersToExpressionWithExistingQuery', () => {
 				key: 'service.name',
 				operator: OPERATORS['!='],
 				value: "'old-service'",
-				valueList: ['old-service'],
 				hasNegation: false,
 				isMultiValue: false,
 				isComplete: true,
@@ -229,7 +236,7 @@ describe('convertFiltersToExpressionWithExistingQuery', () => {
 					operatorStart: 13,
 					operatorEnd: 14,
 					valueStart: 16,
-					valueEnd: 26,
+					valueEnd: 28,
 				},
 			},
 		]);
@@ -242,7 +249,7 @@ describe('convertFiltersToExpressionWithExistingQuery', () => {
 		expect(result.filters.items).toHaveLength(1);
 		// The function is currently returning the new value but with extra characters
 		expect(result.filter.expression).toBe(
-			"service.name NOT IN ['service1', 'service2'] e'",
+			"service.name NOT IN ['service1', 'service2'] ",
 		);
 	});
 
@@ -275,7 +282,7 @@ describe('convertFiltersToExpressionWithExistingQuery', () => {
 					operatorStart: 13,
 					operatorEnd: 13,
 					valueStart: 15,
-					valueEnd: 26,
+					valueEnd: 28,
 				},
 			},
 		]);
@@ -320,7 +327,7 @@ describe('convertFiltersToExpressionWithExistingQuery', () => {
 					operatorStart: 8,
 					operatorEnd: 8,
 					valueStart: 10,
-					valueEnd: 18,
+					valueEnd: 19,
 				},
 			},
 		]);
@@ -364,7 +371,7 @@ describe('convertFiltersToExpressionWithExistingQuery', () => {
 					operatorStart: 13,
 					operatorEnd: 13,
 					valueStart: 15,
-					valueEnd: 26,
+					valueEnd: 28,
 				},
 			},
 		]);
