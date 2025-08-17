@@ -148,7 +148,7 @@ func (b BasicRuleThreshold) Target() float64 {
 }
 
 func (b BasicRuleThreshold) RecoveryTarget() float64 {
-	return *b.recoveryTarget
+	if b.recoveryTarget == nil { return 0 } else { return *b.recoveryTarget }
 }
 
 func (b BasicRuleThreshold) MatchType() MatchType {
