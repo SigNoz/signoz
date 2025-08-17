@@ -4,20 +4,23 @@ import logEvent from 'api/common/logEvent';
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import classNames from 'classnames';
+import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
+import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { AggregatorFilter } from 'container/QueryBuilder/filters';
-import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
-import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { HardHat } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	TagFilter,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
+import { areAllFiltersComplete } from '../Summary/utils';
 import {
 	SPACE_AGGREGATION_OPTIONS,
 	TIME_AGGREGATION_OPTIONS,
@@ -106,12 +109,6 @@ export function MetricFilters({
 	metricName,
 	metricType,
 }: MetricFiltersProps): JSX.Element {
-	const { handleChangeQueryData } = useQueryOperations({
-		index: 0,
-		query: searchQuery,
-		entityVersion: '',
-	});
-
 	const aggregateAttribute = useMemo(
 		() => ({
 			key: metricName ?? '',
@@ -124,30 +121,49 @@ export function MetricFilters({
 		[metricName, metricType],
 	);
 
+	const [currentQuery, setCurrentQuery] = useState<IBuilderQuery>({
+		...searchQuery,
+		aggregateAttribute,
+	});
+
+	const handleOnChange = (expression: string): void => {
+		logEvent(MetricsExplorerEvents.FilterApplied, {
+			[MetricsExplorerEventKeys.Modal]: 'inspect',
+		});
+		const tagFilter = {
+			items: convertExpressionToFilters(expression),
+			op: 'AND',
+		};
+		setCurrentQuery({
+			...currentQuery,
+			filters: tagFilter,
+			filter: {
+				...currentQuery.filter,
+				expression,
+			},
+			expression,
+		});
+		if (areAllFiltersComplete(tagFilter)) {
+			dispatchMetricInspectionOptions({
+				type: 'SET_FILTERS',
+				payload: tagFilter,
+			});
+		}
+	};
+
 	return (
 		<div
 			data-testid="metric-filters"
 			className="inspect-metrics-input-group metric-filters"
 		>
 			<Typography.Text>Where</Typography.Text>
-			<QueryBuilderSearch
-				query={{
-					...searchQuery,
-					aggregateAttribute,
-				}}
-				onChange={(value): void => {
-					handleChangeQueryData('filters', value);
-					logEvent(MetricsExplorerEvents.FilterApplied, {
-						[MetricsExplorerEventKeys.Modal]: 'inspect',
-					});
-					dispatchMetricInspectionOptions({
-						type: 'SET_FILTERS',
-						payload: value,
-					});
-				}}
-				suffixIcon={<HardHat size={16} />}
-				disableNavigationShortcuts
-			/>
+			{searchQuery && (
+				<QuerySearch
+					queryData={currentQuery}
+					onChange={handleOnChange}
+					dataSource={DataSource.METRICS}
+				/>
+			)}
 		</div>
 	);
 }
