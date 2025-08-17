@@ -91,8 +91,6 @@ function OtherFilters({
 			{
 				key: filter.key,
 				dataType: filter.dataType,
-				isColumn: filter.isColumn,
-				isJSON: filter.isJSON,
 				type: filter.type,
 			},
 		]);

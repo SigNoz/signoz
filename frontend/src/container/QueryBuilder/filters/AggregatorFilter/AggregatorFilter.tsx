@@ -88,15 +88,15 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 								label={transformStringWithPrefix({
 									str: item.key,
 									prefix: item.type || '',
-									condition: !item.isColumn,
+									condition: false,
 								})}
 								value={removePrefix(
 									transformStringWithPrefix({
 										str: item.key,
 										prefix: item.type || '',
-										condition: !item.isColumn,
+										condition: false,
 									}),
-									!item.isColumn && item.type ? item.type : '',
+									item.type || '',
 								)}
 								dataType={item.dataType}
 								type={item.type || ''}
@@ -288,11 +288,9 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				query.aggregateAttribute?.key ||
 				'',
 			prefix: query.aggregateAttribute?.type || '',
-			condition: !query.aggregateAttribute?.isColumn,
+			condition: false,
 		}),
-		!query.aggregateAttribute?.isColumn && query.aggregateAttribute?.type
-			? query.aggregateAttribute?.type
-			: '',
+		query.aggregateAttribute?.type ? query.aggregateAttribute?.type : '',
 	);
 
 	return (

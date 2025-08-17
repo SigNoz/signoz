@@ -30,8 +30,6 @@ describe('mapQueryDataFromApi', (): void => {
 					signal: undefined,
 					fieldContext: 'resource',
 					fieldDataType: 'string',
-					isColumn: true,
-					isJSON: false,
 				},
 			],
 			order: [
@@ -102,8 +100,6 @@ describe('mapQueryDataFromApi', (): void => {
 				key: 'service.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				isColumn: true,
-				isJSON: false,
 				id: 'service.name--string--resource--true',
 			},
 		]);
@@ -195,8 +191,6 @@ describe('mapQueryDataFromApi', (): void => {
 							{
 								dataType: 'string',
 								id: 'service.name--string--resource--true',
-								isColumn: true,
-								isJSON: false,
 								key: 'service.name',
 								type: 'resource',
 							},
