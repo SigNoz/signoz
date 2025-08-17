@@ -1,11 +1,76 @@
 import { Tooltip } from 'antd';
-import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
+import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
+import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import { HardHat, Info } from 'lucide-react';
+import { cloneDeep } from 'lodash-es';
+import { Info } from 'lucide-react';
+import { useState } from 'react';
+import {
+	IBuilderQuery,
+	TagFilter,
+} from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { MetricsSearchProps } from './types';
+import { areAllFiltersComplete } from './utils';
 
-function MetricsSearch({ query, onChange }: MetricsSearchProps): JSX.Element {
+function MetricsSearch({ onChange, query }: MetricsSearchProps): JSX.Element {
+	const [contextQuery, setContextQuery] = useState<IBuilderQuery | undefined>(
+		query,
+	);
+
+	const handleRunQuery = (expression: string): void => {
+		let updatedContextQuery = cloneDeep(contextQuery);
+		if (!updatedContextQuery) {
+			return;
+		}
+
+		const newFilters: TagFilter = {
+			items: expression ? convertExpressionToFilters(expression) : [],
+			op: 'AND',
+		};
+		updatedContextQuery = {
+			...updatedContextQuery,
+			filter: {
+				...updatedContextQuery.filter,
+				expression,
+			},
+			filters: {
+				...updatedContextQuery.filters,
+				...newFilters,
+				op: updatedContextQuery.filters?.op ?? 'AND',
+			},
+		};
+		setContextQuery(updatedContextQuery);
+
+		if (newFilters) {
+			onChange(newFilters);
+		}
+	};
+
+	const handleOnChange = (expression: string): void => {
+		let updatedContextQuery = cloneDeep(contextQuery);
+		if (updatedContextQuery) {
+			updatedContextQuery = {
+				...updatedContextQuery,
+				filter: {
+					...updatedContextQuery.filter,
+					expression,
+				},
+			};
+			setContextQuery(updatedContextQuery);
+		}
+
+		const newFilters: TagFilter = {
+			items: expression ? convertExpressionToFilters(expression) : [],
+			op: 'AND',
+		};
+		// If all filters are complete, run the query
+		if (areAllFiltersComplete(newFilters)) {
+			onChange(newFilters);
+		}
+	};
+
 	return (
 		<div className="metrics-search-container">
 			<div className="qb-search-container">
@@ -15,12 +80,14 @@ function MetricsSearch({ query, onChange }: MetricsSearchProps): JSX.Element {
 				>
 					<Info size={16} />
 				</Tooltip>
-				<QueryBuilderSearch
-					query={query}
-					onChange={onChange}
-					suffixIcon={<HardHat size={16} />}
-					isMetricsExplorer
-				/>
+				{contextQuery && (
+					<QuerySearch
+						onChange={handleOnChange}
+						dataSource={DataSource.METRICS}
+						queryData={contextQuery}
+						onRun={handleRunQuery}
+					/>
+				)}
 			</div>
 			<div className="metrics-search-options">
 				<DateTimeSelectionV2

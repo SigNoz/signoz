@@ -206,14 +206,6 @@ function QuerySearch({
 
 	const fetchKeySuggestions = useCallback(
 		async (searchText?: string): Promise<void> => {
-			if (
-				dataSource === DataSource.METRICS &&
-				!queryData.aggregateAttribute?.key
-			) {
-				setKeySuggestions([]);
-				return;
-			}
-
 			lastFetchedKeyRef.current = searchText || '';
 
 			const response = await getKeySuggestions({
@@ -247,7 +239,6 @@ function QuerySearch({
 			debouncedMetricName,
 			keySuggestions,
 			toggleSuggestions,
-			queryData.aggregateAttribute?.key,
 			signalSource,
 		],
 	);

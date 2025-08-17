@@ -290,3 +290,13 @@ export const getTreemapTileTextStyle = (): React.CSSProperties => ({
 
 export const convertNanoToMilliseconds = (time: number): number =>
 	Math.floor(time / 1000000);
+
+// To check if all filters are complete (have a valid key, operator and value)
+export const areAllFiltersComplete = (filters: TagFilter): boolean =>
+	filters.items.every(
+		(filter) =>
+			filter.value !== 'undefined' &&
+			filter.value !== '' &&
+			filter.value !== null &&
+			!!filter.op,
+	);
