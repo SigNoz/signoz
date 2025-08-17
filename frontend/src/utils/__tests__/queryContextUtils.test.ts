@@ -113,10 +113,6 @@ jest.mock('../tokenUtils', () => ({
 	}),
 }));
 
-jest.mock('constants/antlrQueryConstants', () => ({
-	NON_VALUE_OPERATORS: ['EXISTS'],
-}));
-
 describe('extractQueryPairs', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
