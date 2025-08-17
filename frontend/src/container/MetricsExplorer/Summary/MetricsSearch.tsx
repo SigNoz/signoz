@@ -86,6 +86,7 @@ function MetricsSearch({ onChange, query }: MetricsSearchProps): JSX.Element {
 						dataSource={DataSource.METRICS}
 						queryData={contextQuery}
 						onRun={handleRunQuery}
+						isMetricsExplorer
 					/>
 				)}
 			</div>
