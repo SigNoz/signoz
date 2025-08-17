@@ -1,4 +1,9 @@
+/* eslint-disable */
+
 // Mock all dependencies before importing the function
+// Global variable to store the current test input
+let currentTestInput = '';
+
 // Now import the function after all mocks are set up
 // Import the mocked antlr4 to access CharStreams
 import * as antlr4 from 'antlr4';
@@ -12,43 +17,145 @@ import {
 
 jest.mock('antlr4', () => ({
 	CharStreams: {
-		fromString: jest.fn().mockReturnValue({}),
+		fromString: jest.fn().mockImplementation((input: string) => {
+			currentTestInput = input;
+			return {
+				inputSource: { strdata: input },
+			};
+		}),
 	},
-	CommonTokenStream: jest.fn().mockImplementation(() => ({
-		fill: jest.fn(),
-		tokens: [
-			// service.name
-			{ type: 29, text: 'service.name', start: 0, stop: 11, channel: 0 },
-			// IN
-			{ type: 19, text: 'IN', start: 13, stop: 14, channel: 0 },
-			// [
-			{ type: 3, text: '[', start: 16, stop: 16, channel: 0 },
-			// 'adservice'
-			{ type: 28, text: "'adservice'", start: 17, stop: 27, channel: 0 },
-			// ,
-			{ type: 5, text: ',', start: 28, stop: 28, channel: 0 },
-			// 'consumer-svc-1'
-			{ type: 28, text: "'consumer-svc-1'", start: 30, stop: 45, channel: 0 },
-			// ]
-			{ type: 4, text: ']', start: 46, stop: 46, channel: 0 },
-			// AND
-			{ type: 21, text: 'AND', start: 48, stop: 50, channel: 0 },
-			// cloud.account.id
-			{ type: 29, text: 'cloud.account.id', start: 52, stop: 67, channel: 0 },
-			// =
-			{ type: 6, text: '=', start: 69, stop: 69, channel: 0 },
-			// 'signoz-staging'
-			{ type: 28, text: "'signoz-staging'", start: 71, stop: 86, channel: 0 },
-			// code.lineno
-			{ type: 29, text: 'code.lineno', start: 88, stop: 98, channel: 0 },
-			// <
-			{ type: 9, text: '<', start: 100, stop: 100, channel: 0 },
-			// 172
-			{ type: 27, text: '172', start: 102, stop: 104, channel: 0 },
-			// EOF
-			{ type: -1, text: '', start: 0, stop: 0, channel: 0 },
-		],
-	})),
+	CommonTokenStream: jest.fn().mockImplementation(() => {
+		// Use the dynamically captured input string from the current test
+		const input = currentTestInput;
+
+		// Generate tokens dynamically based on the input
+		const tokens = [];
+		let currentPos = 0;
+		let i = 0;
+
+		while (i < input.length) {
+			// Skip whitespace
+			while (i < input.length && /\s/.test(input[i])) {
+				i++;
+				currentPos++;
+			}
+			if (i >= input.length) break;
+
+			// Handle array brackets
+			if (input[i] === '[') {
+				tokens.push({
+					type: 3, // LBRACK
+					text: '[',
+					start: currentPos,
+					stop: currentPos,
+					channel: 0,
+				});
+				i++;
+				currentPos++;
+				continue;
+			}
+
+			if (input[i] === ']') {
+				tokens.push({
+					type: 4, // RBRACK
+					text: ']',
+					start: currentPos,
+					stop: currentPos,
+					channel: 0,
+				});
+				i++;
+				currentPos++;
+				continue;
+			}
+
+			if (input[i] === ',') {
+				tokens.push({
+					type: 5, // COMMA
+					text: ',',
+					start: currentPos,
+					stop: currentPos,
+					channel: 0,
+				});
+				i++;
+				currentPos++;
+				continue;
+			}
+
+			// Find the end of the current token
+			let tokenEnd = i;
+			let inQuotes = false;
+			let quoteChar = '';
+
+			while (tokenEnd < input.length) {
+				const char = input[tokenEnd];
+
+				if (
+					!inQuotes &&
+					(char === ' ' || char === '[' || char === ']' || char === ',')
+				) {
+					break;
+				}
+
+				if ((char === '"' || char === "'") && !inQuotes) {
+					inQuotes = true;
+					quoteChar = char;
+				} else if (char === quoteChar && inQuotes) {
+					inQuotes = false;
+					quoteChar = '';
+				}
+
+				tokenEnd++;
+			}
+
+			const tokenText = input.substring(i, tokenEnd);
+
+			// Determine token type
+			let tokenType = 28; // Default to QUOTED_TEXT
+
+			if (tokenText === 'IN') {
+				tokenType = 19;
+			} else if (tokenText === 'AND') {
+				tokenType = 21;
+			} else if (tokenText === '=') {
+				tokenType = 6;
+			} else if (tokenText === '<') {
+				tokenType = 9;
+			} else if (tokenText === '>') {
+				tokenType = 10;
+			} else if (tokenText === '!=') {
+				tokenType = 7;
+			} else if (tokenText.includes('.')) {
+				tokenType = 29; // KEY
+			} else if (/^\d+$/.test(tokenText)) {
+				tokenType = 27; // NUMBER
+			} else if (
+				(tokenText.startsWith("'") && tokenText.endsWith("'")) ||
+				(tokenText.startsWith('"') && tokenText.endsWith('"'))
+			) {
+				tokenType = 28; // QUOTED_TEXT
+			}
+
+			tokens.push({
+				type: tokenType,
+				text: tokenText,
+				start: currentPos,
+				stop: currentPos + tokenText.length - 1,
+				channel: 0,
+			});
+
+			currentPos += tokenText.length;
+			i = tokenEnd;
+		}
+
+		return {
+			fill: jest.fn(),
+			tokens: [
+				...tokens,
+				// EOF
+				{ type: -1, text: '', start: 0, stop: 0, channel: 0 },
+			],
+		};
+	}),
 	Token: {
 		EOF: -1,
 	},
@@ -189,6 +296,80 @@ describe('extractQueryPairs', () => {
 					operatorEnd: 100,
 					valueStart: 102,
 					valueEnd: 104,
+					negationStart: 0,
+					negationEnd: 0,
+				},
+				isComplete: true,
+			},
+		]);
+	});
+
+	test('should extract query pairs from complex query with IN operator without brackets', () => {
+		const input =
+			"service.name IN 'adservice' AND cloud.account.id = 'signoz-staging' code.lineno < 172";
+
+		const result = extractQueryPairs(input);
+		expect(result).toEqual([
+			{
+				key: 'service.name',
+				operator: 'IN',
+				value: "'adservice'",
+				valueList: ["'adservice'"],
+				valuesPosition: [
+					{
+						start: 16,
+						end: 26,
+					},
+				],
+				hasNegation: false,
+				isMultiValue: true,
+				position: {
+					keyStart: 0,
+					keyEnd: 11,
+					operatorStart: 13,
+					operatorEnd: 14,
+					valueStart: 16,
+					valueEnd: 26,
+					negationStart: 0,
+					negationEnd: 0,
+				},
+				isComplete: true,
+			},
+			{
+				key: 'cloud.account.id',
+				operator: '=',
+				value: "'signoz-staging'",
+				valueList: [],
+				valuesPosition: [],
+				hasNegation: false,
+				isMultiValue: false,
+				position: {
+					keyStart: 32,
+					keyEnd: 47,
+					operatorStart: 49,
+					operatorEnd: 49,
+					valueStart: 51,
+					valueEnd: 66,
+					negationStart: 0,
+					negationEnd: 0,
+				},
+				isComplete: true,
+			},
+			{
+				key: 'code.lineno',
+				operator: '<',
+				value: '172',
+				valueList: [],
+				valuesPosition: [],
+				hasNegation: false,
+				isMultiValue: false,
+				position: {
+					keyStart: 68,
+					keyEnd: 78,
+					operatorStart: 80,
+					operatorEnd: 80,
+					valueStart: 82,
+					valueEnd: 84,
 					negationStart: 0,
 					negationEnd: 0,
 				},
