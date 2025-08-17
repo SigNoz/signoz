@@ -202,21 +202,24 @@ export const convertFiltersToExpressionWithExistingQuery = (
 			) {
 				visitedPairs.add(`${key.key}-${op}`.trim().toLowerCase());
 
+				// Check if existing values match current filter values (for array-based operators)
 				if (existingPair.valueList && filter.value && Array.isArray(filter.value)) {
-					// Remove quotes from values before comparison
-					const cleanExistingValues = existingPair.valueList.map((val) =>
-						typeof val === 'string' ? val.replace(/^['"]|['"]$/g, '') : val,
-					);
-					const cleanFilterValues = filter.value.map((val) =>
-						typeof val === 'string' ? val.replace(/^['"]|['"]$/g, '') : val,
-					);
+					// Clean quotes from string values for comparison
+					const cleanValues = (values: any[]): any[] =>
+						values.map((val) =>
+							typeof val === 'string' ? val.replace(/^['"]|['"]$/g, '') : val,
+						);
 
-					// Check if the value arrays are the same (order-independent)
-					if (
+					const cleanExistingValues = cleanValues(existingPair.valueList);
+					const cleanFilterValues = cleanValues(filter.value);
+
+					// Compare arrays (order-independent) - if identical, keep existing value
+					const isSameValues =
 						cleanExistingValues.length === cleanFilterValues.length &&
-						isEqual(sortBy(cleanExistingValues), sortBy(cleanFilterValues))
-					) {
-						// Use existingPair.value instead of formattedValue
+						isEqual(sortBy(cleanExistingValues), sortBy(cleanFilterValues));
+
+					if (isSameValues) {
+						// Values are identical, preserve existing formatting
 						modifiedQuery =
 							modifiedQuery.slice(0, existingPair.position.valueStart) +
 							existingPair.value +
