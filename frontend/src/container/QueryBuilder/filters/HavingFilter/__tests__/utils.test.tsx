@@ -18,7 +18,6 @@ const valueWithAttributeAndOperator: IBuilderQuery = {
 	...initialQueryBuilderFormValuesMap.logs,
 	aggregateOperator: 'SUM',
 	aggregateAttribute: {
-		isColumn: false,
 		key: 'bytes',
 		type: 'tag',
 		dataType: DataTypes.Float64,

@@ -83,15 +83,15 @@ export const GroupByFilter = memo(function GroupByFilter({
 								label={transformStringWithPrefix({
 									str: item.key,
 									prefix: item.type || '',
-									condition: !item.isColumn,
+									condition: false,
 								})}
 								value={removePrefix(
 									transformStringWithPrefix({
 										str: item.key,
 										prefix: item.type || '',
-										condition: !item.isColumn,
+										condition: false,
 									}),
-									!item.isColumn && item.type ? item.type : '',
+									item.type || '',
 								)}
 								dataType={item.dataType || ''}
 								type={item.type || ''}
@@ -182,9 +182,9 @@ export const GroupByFilter = memo(function GroupByFilter({
 					transformStringWithPrefix({
 						str: item.key,
 						prefix: item.type || '',
-						condition: !item.isColumn,
+						condition: false,
 					}),
-					!item.isColumn && item.type ? item.type : '',
+					item.type || '',
 				)}`,
 				value: `${item.id}`,
 			}),

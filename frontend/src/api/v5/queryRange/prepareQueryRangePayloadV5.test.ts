@@ -531,12 +531,9 @@ describe('prepareQueryRangePayloadV5', () => {
 							queryName: 'A',
 							aggregateOperator: 'count',
 							aggregateAttribute: {
-								id: '------false',
-								dataType: DataTypes.EMPTY,
 								key: '',
-								isColumn: false,
+								dataType: DataTypes.EMPTY,
 								type: '',
-								isJSON: false,
 							},
 							timeAggregation: 'rate',
 							spaceAggregation: 'sum',
@@ -564,11 +561,8 @@ describe('prepareQueryRangePayloadV5', () => {
 							orderBy: [{ columnName: 'service.name', order: 'desc' }],
 							groupBy: [
 								{
-									dataType: DataTypes.EMPTY,
 									key: 'service.name',
-									isColumn: false,
 									type: '',
-									id: 'service.name------false',
 								},
 							],
 							legend: '{{service.name}}',
