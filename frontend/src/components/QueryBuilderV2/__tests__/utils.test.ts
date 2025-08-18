@@ -208,7 +208,7 @@ describe('convertFiltersToExpression', () => {
 		const result = convertFiltersToExpression(filters);
 		expect(result).toEqual({
 			expression:
-				"service NOT IN ['api-gateway', 'user-service'] AND message NOT LIKE 'error' AND path NOT REGEXP '/api/.*' AND service NOT IN ['api-gateway'] AND user_id NOT EXISTS '' AND description NOT CONTAINS 'error' AND NOT has(tags, production) AND labels NOT hasAny ['env:prod', 'service:api']",
+				"service NOT IN ['api-gateway', 'user-service'] AND message NOT LIKE 'error' AND path NOT REGEXP '/api/.*' AND service NOT IN ['api-gateway'] AND user_id NOT EXISTS '' AND description NOT CONTAINS 'error' AND NOT has(tags, 'production') AND NOT hasAny(labels, ['env:prod', 'service:api'])",
 		});
 	});
 
@@ -252,7 +252,7 @@ describe('convertFiltersToExpression', () => {
 		const result = convertFiltersToExpression(filters);
 		expect(result).toEqual({
 			expression:
-				"user_id exists AND user_id exists AND has(tags, production) AND tags hasany ['production', 'staging'] AND tags hasall ['production', 'monitoring']",
+				"user_id exists AND user_id exists AND has(tags, 'production') AND hasAny(tags, ['production', 'staging']) AND hasAll(tags, ['production', 'monitoring'])",
 		});
 	});
 
@@ -346,7 +346,7 @@ describe('convertFiltersToExpression', () => {
 		const result = convertFiltersToExpression(filters);
 		expect(result).toEqual({
 			expression:
-				"service in ['api-gateway', 'user-service'] AND user_id exists AND has(tags, production) AND duration > 100 AND status NOT IN ['error', 'timeout'] AND method = 'POST'",
+				"service in ['api-gateway', 'user-service'] AND user_id exists AND has(tags, 'production') AND duration > 100 AND status NOT IN ['error', 'timeout'] AND method = 'POST'",
 		});
 	});
 
@@ -490,7 +490,7 @@ describe('convertFiltersToExpression', () => {
 		const result = convertFiltersToExpression(filters);
 		expect(result).toEqual({
 			expression:
-				"has(tags, production) AND labels hasany ['env:prod', 'service:api'] AND metadata hasall ['version:1.0', 'team:backend'] AND services in ['api-gateway', 'user-service', 'auth-service', 'payment-service'] AND excluded_services NOT IN ['legacy-service', 'deprecated-service'] AND status_codes in ['200', '201', '400', '500']",
+				"has(tags, 'production') AND hasAny(labels, ['env:prod', 'service:api']) AND hasAll(metadata, ['version:1.0', 'team:backend']) AND services in ['api-gateway', 'user-service', 'auth-service', 'payment-service'] AND excluded_services NOT IN ['legacy-service', 'deprecated-service'] AND status_codes in ['200', '201', '400', '500']",
 		});
 	});
 
@@ -528,7 +528,7 @@ describe('convertFiltersToExpression', () => {
 		const result = convertFiltersToExpression(filters);
 		expect(result).toEqual({
 			expression:
-				"user_id NOT EXISTS '' AND description NOT CONTAINS 'error' AND NOT has(tags, production) AND labels NOT hasAny ['env:prod', 'service:api']",
+				"user_id NOT EXISTS '' AND description NOT CONTAINS 'error' AND NOT has(tags, 'production') AND NOT hasAny(labels, ['env:prod', 'service:api'])",
 		});
 	});
 });

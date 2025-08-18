@@ -100,15 +100,21 @@ export function isFunctionOperator(operator: string): boolean {
 	const functionOperators = Object.values(QUERY_BUILDER_FUNCTIONS);
 
 	const sanitizedOperator = operator.trim();
-	// Check if it's a direct function operator
-	if (functionOperators.includes(sanitizedOperator)) {
+	// Check if it's a direct function operator (case-insensitive)
+	if (
+		functionOperators.some(
+			(func) => func.toLowerCase() === sanitizedOperator.toLowerCase(),
+		)
+	) {
 		return true;
 	}
 
 	// Check if it's a NOT function operator (e.g., "NOT has")
 	if (sanitizedOperator.toUpperCase().startsWith(OPERATORS.NOT)) {
 		const operatorWithoutNot = sanitizedOperator.substring(4).toLowerCase();
-		return functionOperators.includes(operatorWithoutNot);
+		return functionOperators.some(
+			(func) => func.toLowerCase() === operatorWithoutNot,
+		);
 	}
 
 	return false;

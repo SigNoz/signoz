@@ -4,6 +4,7 @@ import {
 	DEPRECATED_OPERATORS_MAP,
 	NON_VALUE_OPERATORS,
 	OPERATORS,
+	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { cloneDeep } from 'lodash-es';
@@ -104,7 +105,15 @@ export const convertFiltersToExpression = (
 			}
 
 			if (isFunctionOperator(operator)) {
-				return `${operator}(${key.key}, ${value})`;
+				// Get the proper function name from QUERY_BUILDER_FUNCTIONS
+				const functionOperators = Object.values(QUERY_BUILDER_FUNCTIONS);
+				const properFunctionName =
+					functionOperators.find(
+						(func: string) => func.toLowerCase() === operator.toLowerCase(),
+					) || operator;
+
+				const formattedValue = formatValueForExpression(value, operator);
+				return `${properFunctionName}(${key.key}, ${formattedValue})`;
 			}
 
 			const formattedValue = formatValueForExpression(value, operator);
