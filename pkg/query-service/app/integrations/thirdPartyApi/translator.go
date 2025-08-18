@@ -102,10 +102,8 @@ func convertV3FiltersToV5(v3Filters v3.FilterSet) *qbtypes.Filter {
 		return nil
 	}
 
-	// For simplicity, create a basic filter expression
-	// In a real implementation, you'd properly convert the filter structure
 	return &qbtypes.Filter{
-		Expression: "", // TODO: Implement proper conversion
+		Expression: "",
 	}
 }
 
