@@ -511,17 +511,32 @@ func (r *ClickHouseReader) buildResourceSubQueryForServices(tags []model.TagQuer
 	}
 
 	if len(tags) == 0 {
-		// If no tags, return a simple query that includes only our target services
-		return fmt.Sprintf(`
-			(SELECT DISTINCT fingerprint 
-			 FROM %s.%s 
-			 WHERE seen_at_ts_bucket_start >= %d 
-			   AND seen_at_ts_bucket_start <= %d
-			   AND simpleJSONExtractString(labels, 'service.name') IN (%s))`,
-			r.TraceDB, r.traceResourceTableV3,
-			start.Unix()-1800, end.Unix(),
-			r.buildServiceInClause(targetServices),
-		), nil
+		// For exact parity with per-service behavior, build via resource builder with only service filter
+		filterSet := v3.FilterSet{}
+		filterSet.Items = append(filterSet.Items, v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "service.name",
+				DataType: v3.AttributeKeyDataTypeString,
+				Type:     v3.AttributeKeyTypeResource,
+			},
+			Operator: v3.FilterOperatorIn,
+			Value:    targetServices,
+		})
+
+		resourceSubQuery, err := resource.BuildResourceSubQuery(
+			r.TraceDB,
+			r.traceResourceTableV3,
+			start.Unix()-1800,
+			end.Unix(),
+			&filterSet,
+			[]v3.AttributeKey{},
+			v3.AttributeKey{},
+			false)
+		if err != nil {
+			zap.L().Error("Error building resource subquery for services", zap.Error(err))
+			return "", err
+		}
+		return resourceSubQuery, nil
 	}
 
 	// Convert tags to filter set
@@ -768,7 +783,6 @@ func addExistsOperator(item model.TagQuery, tagMapType string, not bool) (string
 	}
 	return fmt.Sprintf(" AND %s (%s)", notStr, strings.Join(tagOperatorPair, " OR ")), args
 }
-
 func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, error) {
 	// Step 1: Get top operations for the given service
 	topOps, err := r.GetTopOperations(ctx, queryParams)
@@ -1498,7 +1512,6 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 	}(ttlPayload)
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
-
 func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 	// uuid is used as transaction id
 	uuidWithHyphen := uuid.New()
@@ -2251,7 +2264,6 @@ func (r *ClickHouseReader) GetNextPrevErrorIDs(ctx context.Context, queryParams 
 	return &getNextPrevErrorIDsResponse, nil
 
 }
-
 func (r *ClickHouseReader) getNextErrorID(ctx context.Context, queryParams *model.GetErrorParams) (string, time.Time, *model.ApiError) {
 
 	var getNextErrorIDReponse []model.NextPrevErrorIDsDBResponse
@@ -2987,7 +2999,6 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 
 	return &attributeValues, nil
 }
-
 func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.UUID, metricName, serviceName string) (*v3.MetricMetadataResponse, error) {
 
 	unixMilli := common.PastDayRoundOff()
@@ -5262,7 +5273,6 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 
 	return &response, nil
 }
-
 func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, req *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.TreeMapResponseItem, *model.ApiError) {
 	var args []interface{}
 
@@ -6015,7 +6025,6 @@ func (r *ClickHouseReader) CheckForLabelsInMetric(ctx context.Context, metricNam
 	}
 	return hasLE, nil
 }
-
 func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]*model.UpdateMetricsMetadata, *model.ApiError) {
 	cachedMetadata := make(map[string]*model.UpdateMetricsMetadata)
 	var missingMetrics []string
