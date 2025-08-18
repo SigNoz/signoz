@@ -104,7 +104,9 @@ func CollisionHandledFinalExpr(
 		}
 
 		if strings.HasPrefix(field.Name, jsonBodyPrefix) && jsonBodyPrefix != "" && jsonKeyToKey != nil {
-			colName, _ = jsonKeyToKey(context.Background(), field, qbtypes.FilterOperatorUnknown, dummyValue)
+			// TODO(nitya): enable group by on body column?
+			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the body column")
+			// colName, _ = jsonKeyToKey(context.Background(), field, qbtypes.FilterOperatorUnknown, dummyValue)
 		} else {
 			colName, _ = telemetrytypes.DataTypeCollisionHandledFieldName(field, dummyValue, colName)
 		}

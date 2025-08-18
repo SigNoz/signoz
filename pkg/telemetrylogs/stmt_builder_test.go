@@ -358,11 +358,11 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 
 func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 	cases := []struct {
-		name        string
-		requestType qbtypes.RequestType
-		query       qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
-		expected    qbtypes.Statement
-		expectedErr error
+		name                string
+		requestType         qbtypes.RequestType
+		query               qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+		expected            qbtypes.Statement
+		expectedErrContains string
 	}{
 		{
 			name:        "Time series with limit and body group by",
@@ -387,11 +387,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 					},
 				},
 			},
-			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(multiIf(JSON_EXISTS(body, '$.\"status\"'), JSON_VALUE(body, '$.\"status\"'), NULL)) AS `body.status`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `body.status` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(JSON_EXISTS(body, '$.\"status\"'), JSON_VALUE(body, '$.\"status\"'), NULL)) AS `body.status`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`body.status`) GLOBAL IN (SELECT `body.status` FROM __limit_cte) GROUP BY ts, `body.status`",
-				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
-			},
-			expectedErr: nil,
+			expectedErrContains: "Group by/Aggregation isn't available for the body column",
 		},
 	}
 
@@ -421,9 +417,9 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 
 			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
 
-			if c.expectedErr != nil {
+			if c.expectedErrContains != "" {
 				require.Error(t, err)
-				require.Contains(t, err.Error(), c.expectedErr.Error())
+				require.Contains(t, err.Error(), c.expectedErrContains)
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, c.expected.Query, q.Query)

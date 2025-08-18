@@ -240,7 +240,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(orig)
 			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonBodyPrefix, v.jsonKeyToKey)
 			if err != nil {
-				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to get table field name for %q", orig)
+				return err
 			}
 			v.chArgs = append(v.chArgs, exprArgs...)
 			newCol := expr
