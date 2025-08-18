@@ -428,7 +428,7 @@ func (r *ClickHouseReader) GetServicesOG(ctx context.Context, queryParams *model
 
 			query := fmt.Sprintf(
 				`SELECT
-					quantile(0.99)(duration_nano) as p99,
+					quantileExact(0.99)(duration_nano) as p99,
 					avg(duration_nano) as avgDuration,
 					count(*) as numCalls
 				FROM %s.%s
@@ -553,7 +553,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 	query := fmt.Sprintf(`
 		SELECT 
 			resource_string_service$$name AS serviceName,
-			quantile(0.99)(duration_nano) AS p99,
+			quantileExact(0.99)(duration_nano) AS p99,
 			avg(duration_nano) AS avgDuration,
 			count(*) AS numCalls,
 			countIf(statusCode = 2) AS numErrors
@@ -797,7 +797,6 @@ func getStatusFilters(query string, statusParams []string, excludeMap map[string
 	}
 	return query
 }
-
 func createTagQueryFromTagQueryParams(queryParams []model.TagQueryParam) []model.TagQuery {
 	tags := []model.TagQuery{}
 	for _, tag := range queryParams {
@@ -1023,8 +1022,8 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 	query := fmt.Sprintf(`
 		SELECT
 			quantile(0.5)(durationNano) as p50,
-			quantile(0.95)(durationNano) as p95,
-			quantile(0.99)(durationNano) as p99,
+			quantileExact(0.95)(durationNano) as p95,
+			quantileExact(0.99)(durationNano) as p99,
 			COUNT(*) as numCalls,
 			countIf(status_code=2) as errorCount,
 			name
@@ -1542,7 +1541,6 @@ func getLocalTableName(tableName string) string {
 	return tableNameSplit[0] + "." + strings.Split(tableNameSplit[1], "distributed_")[1]
 
 }
-
 func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 	// uuid is used as transaction id
 	uuidWithHyphen := uuid.New()
@@ -2323,7 +2321,6 @@ func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.Li
 
 	return &getErrorResponses, nil
 }
-
 func (r *ClickHouseReader) CountErrors(ctx context.Context, queryParams *model.CountErrorsParams) (uint64, *model.ApiError) {
 
 	var errorCount uint64
@@ -3095,7 +3092,6 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 
 	return &response, nil
 }
-
 func (r *ClickHouseReader) GetMeterAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	var query string
 	var err error
@@ -3841,7 +3837,6 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 	}
 	return groupBy, groupAttributes, groupAttributesArray, nil
 }
-
 func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNames []string, countOfNumberCols int) ([]*v3.Series, error) {
 	// when groupBy is applied, each combination of cartesian product
 	// of attribute values is a separate series. Each item in seriesToPoints
@@ -4637,7 +4632,6 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 
 	return timeline, nil
 }
-
 func (r *ClickHouseReader) ReadRuleStateHistoryTopContributorsByRuleID(
 	ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) ([]model.RuleStateHistoryContributor, error) {
 	query := fmt.Sprintf(`SELECT
@@ -5226,7 +5220,6 @@ func (r *ClickHouseReader) GetActiveTimeSeriesForMetricName(ctx context.Context,
 	}
 	return timeSeries, nil
 }
-
 func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.UUID, req *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError) {
 	var args []interface{}
 
@@ -6023,7 +6016,6 @@ func (r *ClickHouseReader) GetInspectMetrics(ctx context.Context, req *metrics_e
 		Series: &seriesList,
 	}, nil
 }
-
 func (r *ClickHouseReader) GetInspectMetricsFingerprints(ctx context.Context, attributes []string, req *metrics_explorer.InspectMetricsRequest) ([]string, *model.ApiError) {
 	// Build dynamic key selections and JSON extracts
 	var jsonExtracts []string
