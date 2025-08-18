@@ -99,7 +99,7 @@ export const convertFiltersToExpression = (
 					];
 			}
 
-			if (NON_VALUE_OPERATORS.includes(operator)) {
+			if (NON_VALUE_OPERATORS.includes(operator.toUpperCase())) {
 				return `${key.key} ${operator}`;
 			}
 
