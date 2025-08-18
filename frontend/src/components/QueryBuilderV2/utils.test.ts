@@ -96,7 +96,6 @@ describe('convertFiltersToExpressionWithExistingQuery', () => {
 			existingQuery,
 		);
 
-		// The function should return the original expression for now (until we fix the replacement logic)
 		expect(result.filters).toBeDefined();
 		expect(result.filter).toBeDefined();
 		expect(result.filter.expression).toBe("service.name = 'old-service'");
@@ -161,7 +160,7 @@ describe('convertFiltersToExpressionWithExistingQuery', () => {
 		);
 	});
 
-	test('should handle NOT IN operator conversion from equals', () => {
+	test('should handle IN operator conversion from equals', () => {
 		const filters = {
 			items: [
 				{
