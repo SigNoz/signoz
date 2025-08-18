@@ -600,6 +600,11 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 			continue
 		}
 
+		// Skip services with zero calls (match original behavior)
+		if serviceItem.NumCalls == 0 {
+			continue
+		}
+
 		// Add data warning for this service
 		if ops, exists := serviceOperationsMap[serviceItem.ServiceName]; exists {
 			serviceItem.DataWarning = model.DataWarning{
