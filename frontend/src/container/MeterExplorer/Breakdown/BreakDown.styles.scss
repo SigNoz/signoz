@@ -61,6 +61,10 @@
 			.meter-column-graph {
 				.meter-page-grid {
 					grid-template-columns: repeat(3, 1fr);
+
+					.meter-graph {
+						height: 200px;
+					}
 				}
 			}
 		}
