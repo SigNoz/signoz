@@ -36,6 +36,7 @@ export function negateOperator(operatorOrFunction: string): string {
 }
 
 export enum DEPRECATED_OPERATORS {
+	REGEX = 'regex',
 	NIN = 'nin',
 	NREGEX = 'nregex',
 	NLIKE = 'nlike',
@@ -47,6 +48,7 @@ export enum DEPRECATED_OPERATORS {
 }
 
 export const DEPRECATED_OPERATORS_MAP = {
+	[DEPRECATED_OPERATORS.REGEX]: OPERATORS.REGEXP,
 	[DEPRECATED_OPERATORS.NIN]: negateOperator(OPERATORS.IN),
 	[DEPRECATED_OPERATORS.NREGEX]: negateOperator(OPERATORS.REGEXP),
 	[DEPRECATED_OPERATORS.NLIKE]: negateOperator(OPERATORS.LIKE),
