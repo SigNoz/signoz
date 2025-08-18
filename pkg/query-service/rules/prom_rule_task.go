@@ -235,6 +235,7 @@ func (g *PromRuleTask) SetSchedule(schedule string, t time.Time) {
 	g.mtx.Lock()
 	defer g.mtx.Unlock()
 	g.schedule = schedule
+	g.scheduleStartsAt = t
 }
 
 // EvalTimestamp returns the immediately preceding consistently slotted evaluation time.
