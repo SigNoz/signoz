@@ -58,6 +58,11 @@ func (b *traceOperatorCTEBuilder) collectQueries() error {
 }
 
 func (b *traceOperatorCTEBuilder) build(requestType qbtypes.RequestType) (*qbtypes.Statement, error) {
+	if len(b.queries) == 0 {
+		if err := b.collectQueries(); err != nil {
+			return nil, err
+		}
+	}
 
 	err := b.buildBaseSpansCTE()
 	if err != nil {
@@ -127,7 +132,6 @@ func (b *traceOperatorCTEBuilder) buildTimeConstantsCTE() string {
 func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() error {
 	sb := sqlbuilder.NewSelectBuilder()
 
-	// Select core span columns
 	sb.Select(
 		"trace_id",
 		"span_id",
@@ -136,25 +140,31 @@ func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() error {
 		"timestamp",
 		"duration_nano AS durationNano",
 		sqlbuilder.Escape("resource_string_service$$name")+" AS serviceName",
-		sqlbuilder.Escape("resource_string_service$$name"),        // Original column name for filters
-		sqlbuilder.Escape("resource_string_service$$name_exists"), // Exists flag column for filters
+		sqlbuilder.Escape("resource_string_service$$name"),
+		sqlbuilder.Escape("resource_string_service$$name_exists"),
 	)
 
-	// Add any additional fields requested by the user
-	for _, field := range b.operator.SelectFields {
-		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(b.ctx, &field, nil)
-		if err != nil {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"failed to map select field '%s': %v",
-				field.Name,
-				err,
-			)
+	requiredFields := make(map[string]bool)
+	for _, query := range b.queries {
+		if query.Filter != nil && query.Filter.Expression != "" {
+			selectors := querybuilder.QueryStringToKeysSelectors(query.Filter.Expression)
+			for _, selector := range selectors {
+				requiredFields[selector.Name] = true
+			}
 		}
-		sb.SelectMore(sqlbuilder.Escape(colExpr))
 	}
 
-	// Set the table to query from
+	for _, field := range b.operator.SelectFields {
+		requiredFields[field.Name] = true
+	}
+
+	for fieldName := range requiredFields {
+		if fieldName == "service.name" {
+			continue
+		}
+		sb.SelectMore(sqlbuilder.Escape(fieldName))
+	}
+
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
 	// Calculate bucket ranges for time-based partitioning
@@ -665,23 +675,26 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(selectFromCTE string) (*qbtype
 		sb.SelectMore(fmt.Sprintf("%s AS %s", rewritten, alias))
 	}
 
+	// Get distinct trace IDs from the result and aggregate trace info efficiently
 	traceSubquery := fmt.Sprintf("SELECT DISTINCT trace_id FROM %s", selectFromCTE)
 
 	sb.Select(
-		"any(root.timestamp) as timestamp", // Add timestamp for consistent response structure
-		"any(root.serviceName) as `service.name`",
-		"any(root.name) as `name`",
-		"count(bs.span_id) as span_count",
-		"any(root.durationNano) as `duration_nano`",
-		"result.trace_id as `trace_id`",
+		"any(timestamp) as timestamp",
+		"any(serviceName) as `service.name`",
+		"any(name) as `name`",
+		"count() as span_count",
+		"any(durationNano) as `duration_nano`",
+		"trace_id as `trace_id`",
 	)
 
-	sb.From(fmt.Sprintf("(%s) result", traceSubquery))
-	sb.JoinWithOption(sqlbuilder.InnerJoin, "base_spans bs", "result.trace_id = bs.trace_id")
-	sb.JoinWithOption(sqlbuilder.InnerJoin, "base_spans root",
-		"result.trace_id = root.trace_id AND root.parent_span_id = ''")
+	// Use a more efficient approach: select from base_spans but only for matching traces
+	sb.From("base_spans")
+	sb.Where(
+		fmt.Sprintf("trace_id GLOBAL IN (%s)", traceSubquery),
+		"parent_span_id = ''", // Only root spans for trace aggregation
+	)
 
-	sb.GroupBy("result.trace_id")
+	sb.GroupBy("trace_id")
 	if len(b.operator.GroupBy) > 0 {
 		groupByKeys := make([]string, len(b.operator.GroupBy))
 		for i, gb := range b.operator.GroupBy {
