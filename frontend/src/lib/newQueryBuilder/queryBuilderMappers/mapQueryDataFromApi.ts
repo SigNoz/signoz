@@ -23,6 +23,10 @@ import { transformQueryBuilderDataModel } from '../transformQueryBuilderDataMode
 
 const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 	const builderQueries: Record<string, IBuilderQuery | IBuilderFormula> = {};
+	const builderQueryTypes: Record<
+		string,
+		'builder_query' | 'builder_formula'
+	> = {};
 	const promQueries: IPromQLQuery[] = [];
 	const clickhouseQueries: IClickHouseQuery[] = [];
 
@@ -33,12 +37,14 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 				builderQueries[spec.name] = convertBuilderQueryToIBuilderQuery(
 					spec as BuilderQuery,
 				);
+				builderQueryTypes[spec.name] = 'builder_query';
 			}
 		} else if (q.type === 'builder_formula') {
 			if (spec.name) {
 				builderQueries[spec.name] = convertQueryBuilderFormulaToIBuilderFormula(
 					(spec as unknown) as QueryBuilderFormula,
 				);
+				builderQueryTypes[spec.name] = 'builder_formula';
 			}
 		} else if (q.type === 'promql') {
 			const promSpec = spec as PromQuery;
@@ -59,7 +65,7 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 		}
 	});
 	return {
-		builder: transformQueryBuilderDataModel(builderQueries),
+		builder: transformQueryBuilderDataModel(builderQueries, builderQueryTypes),
 		promql: promQueries,
 		clickhouse_sql: clickhouseQueries,
 		queryType: compositeQuery.queryType,

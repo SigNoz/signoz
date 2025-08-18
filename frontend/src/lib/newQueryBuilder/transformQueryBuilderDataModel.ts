@@ -12,12 +12,17 @@ import { QueryBuilderData } from 'types/common/queryBuilder';
 
 export const transformQueryBuilderDataModel = (
 	data: BuilderQueryDataResourse,
+	queryTypes?: Record<string, 'builder_query' | 'builder_formula'>,
 ): QueryBuilderData => {
 	const queryData: QueryBuilderData['queryData'] = [];
 	const queryFormulas: QueryBuilderData['queryFormulas'] = [];
 
-	Object.entries(data).forEach(([, value]) => {
-		if (FORMULA_REGEXP.test(value.queryName)) {
+	Object.entries(data).forEach(([key, value]) => {
+		const isFormula = queryTypes
+			? queryTypes[key] === 'builder_formula'
+			: FORMULA_REGEXP.test(value.queryName);
+
+		if (isFormula) {
 			const formula = value as IBuilderFormula;
 			queryFormulas.push({ ...initialFormulaBuilderFormValues, ...formula });
 		} else {
