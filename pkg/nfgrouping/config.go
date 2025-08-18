@@ -1,4 +1,4 @@
-package notificationgrouping
+package nfgrouping
 
 import (
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -12,7 +12,7 @@ type Config struct {
 }
 
 func NewConfigFactory() factory.ConfigFactory {
-	return factory.NewConfigFactory(factory.MustNewName("notificationgrouping"), newConfig)
+	return factory.NewConfigFactory(factory.MustNewName("nfgrouping"), newConfig)
 }
 
 // newConfig creates a new default configuration for notification grouping.

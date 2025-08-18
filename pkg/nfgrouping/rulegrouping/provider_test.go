@@ -1,4 +1,4 @@
-package rulebasedgrouping
+package rulegrouping
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
-	"github.com/SigNoz/signoz/pkg/notificationgrouping"
+	"github.com/SigNoz/signoz/pkg/nfgrouping"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -28,20 +28,20 @@ func TestNewFactory(t *testing.T) {
 func TestNew(t *testing.T) {
 	ctx := context.Background()
 	providerSettings := createTestProviderSettings()
-	config := notificationgrouping.Config{}
+	config := nfgrouping.Config{}
 
 	provider, err := New(ctx, providerSettings, config)
 	require.NoError(t, err)
 	assert.NotNil(t, provider)
 
 	// Verify provider implements the interface correctly
-	assert.Implements(t, (*notificationgrouping.NotificationGroups)(nil), provider)
+	assert.Implements(t, (*nfgrouping.NotificationGroups)(nil), provider)
 }
 
 func TestProvider_SetGroupLabels(t *testing.T) {
 	ctx := context.Background()
 	providerSettings := createTestProviderSettings()
-	config := notificationgrouping.Config{}
+	config := nfgrouping.Config{}
 
 	provider, err := New(ctx, providerSettings, config)
 	require.NoError(t, err)
@@ -133,7 +133,7 @@ func TestProvider_SetGroupLabels(t *testing.T) {
 func TestProvider_SetGroupLabels_VerifyIsolatedStorage(t *testing.T) {
 	ctx := context.Background()
 	providerSettings := createTestProviderSettings()
-	config := notificationgrouping.Config{}
+	config := nfgrouping.Config{}
 
 	provider, err := New(ctx, providerSettings, config)
 	require.NoError(t, err)
@@ -214,7 +214,7 @@ func TestProvider_SetGroupLabels_VerifyIsolatedStorage(t *testing.T) {
 func TestProvider_GetGroupLabels_WithRuleSpecificGrouping(t *testing.T) {
 	ctx := context.Background()
 	providerSettings := createTestProviderSettings()
-	config := notificationgrouping.Config{}
+	config := nfgrouping.Config{}
 
 	provider, err := New(ctx, providerSettings, config)
 	require.NoError(t, err)
@@ -259,7 +259,7 @@ func TestProvider_GetGroupLabels_WithRuleSpecificGrouping(t *testing.T) {
 func TestProvider_GetGroupLabels_FallbackToStandardGrouping(t *testing.T) {
 	ctx := context.Background()
 	providerSettings := createTestProviderSettings()
-	config := notificationgrouping.Config{}
+	config := nfgrouping.Config{}
 
 	provider, err := New(ctx, providerSettings, config)
 	require.NoError(t, err)
@@ -297,7 +297,7 @@ func TestProvider_GetGroupLabels_FallbackToStandardGrouping(t *testing.T) {
 func TestProvider_GetGroupLabels_NoRuleId(t *testing.T) {
 	ctx := context.Background()
 	providerSettings := createTestProviderSettings()
-	config := notificationgrouping.Config{}
+	config := nfgrouping.Config{}
 
 	provider, err := New(ctx, providerSettings, config)
 	require.NoError(t, err)
@@ -338,7 +338,7 @@ func TestProvider_GetGroupLabels_NoRuleId(t *testing.T) {
 func TestProvider_GetGroupLabels_PartialLabelMatch(t *testing.T) {
 	ctx := context.Background()
 	providerSettings := createTestProviderSettings()
-	config := notificationgrouping.Config{}
+	config := nfgrouping.Config{}
 
 	provider, err := New(ctx, providerSettings, config)
 	require.NoError(t, err)
@@ -440,7 +440,7 @@ func TestGetRuleIDFromRoute(t *testing.T) {
 func TestProvider_ConcurrentAccess(t *testing.T) {
 	ctx := context.Background()
 	providerSettings := createTestProviderSettings()
-	config := notificationgrouping.Config{}
+	config := nfgrouping.Config{}
 
 	provider, err := New(ctx, providerSettings, config)
 	require.NoError(t, err)
@@ -489,7 +489,7 @@ func TestProvider_ConcurrentAccess(t *testing.T) {
 func TestProvider_MultipleOrgsAndRules(t *testing.T) {
 	ctx := context.Background()
 	providerSettings := createTestProviderSettings()
-	config := notificationgrouping.Config{}
+	config := nfgrouping.Config{}
 
 	provider, err := New(ctx, providerSettings, config)
 	require.NoError(t, err)

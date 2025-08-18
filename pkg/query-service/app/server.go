@@ -15,7 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/notificationgrouping"
+	"github.com/SigNoz/signoz/pkg/nfgrouping"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	querierAPI "github.com/SigNoz/signoz/pkg/querier"
@@ -391,7 +391,7 @@ func makeRulesManager(
 	orgGetter organization.Getter,
 	querier querier.Querier,
 	logger *slog.Logger,
-	groups notificationgrouping.NotificationGroups,
+	groups nfgrouping.NotificationGroups,
 ) (*rules.Manager, error) {
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{

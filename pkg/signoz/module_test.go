@@ -10,10 +10,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
-	"github.com/SigNoz/signoz/pkg/notificationgrouping"
-	"github.com/SigNoz/signoz/pkg/notificationgrouping/notificationgroupingtest"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/nfgrouping"
+	"github.com/SigNoz/signoz/pkg/nfgrouping/nfgroupingtest"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -31,7 +31,7 @@ func TestNewModules(t *testing.T) {
 	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	require.NoError(t, err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstore), sharder)
-	notificationGroups, err := notificationgroupingtest.New(context.TODO(), providerSettings, notificationgrouping.Config{})
+	notificationGroups, err := nfgroupingtest.New(context.TODO(), providerSettings, nfgrouping.Config{})
 	require.NoError(t, err)
 	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{}, sqlstore, orgGetter, notificationGroups)
 	require.NoError(t, err)

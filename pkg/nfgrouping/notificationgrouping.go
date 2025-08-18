@@ -1,6 +1,6 @@
-// Package notificationgrouping provides interfaces and implementations for alert notification grouping strategies.
+// Package nfgrouping provides interfaces and implementations for alert notification grouping strategies.
 // It supports multi-tenancy and rule-based grouping configurations.
-package notificationgrouping
+package nfgrouping
 
 import (
 	"github.com/prometheus/alertmanager/dispatch"

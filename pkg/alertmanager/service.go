@@ -8,7 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/notificationgrouping"
+	"github.com/SigNoz/signoz/pkg/nfgrouping"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 )
 
@@ -34,7 +34,7 @@ type Service struct {
 	// Mutex to protect the servers map
 	serversMtx sync.RWMutex
 
-	notificationGroups notificationgrouping.NotificationGroups
+	notificationGroups nfgrouping.NotificationGroups
 }
 
 func New(
@@ -44,7 +44,7 @@ func New(
 	stateStore alertmanagertypes.StateStore,
 	configStore alertmanagertypes.ConfigStore,
 	orgGetter organization.Getter,
-	groups notificationgrouping.NotificationGroups,
+	groups nfgrouping.NotificationGroups,
 ) *Service {
 	service := &Service{
 		config:             config,

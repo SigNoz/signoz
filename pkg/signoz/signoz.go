@@ -12,7 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
-	"github.com/SigNoz/signoz/pkg/notificationgrouping"
+	"github.com/SigNoz/signoz/pkg/nfgrouping"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
@@ -49,7 +49,7 @@ type SigNoz struct {
 	StatsReporter      statsreporter.StatsReporter
 	Modules            Modules
 	Handlers           Handlers
-	NotificationGroups notificationgrouping.NotificationGroups
+	NotificationGroups nfgrouping.NotificationGroups
 }
 
 func New(
@@ -235,7 +235,7 @@ func New(
 	notificationGroups, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
-		notificationgrouping.Config{
+		nfgrouping.Config{
 			Provider:        "rulebased",
 			DefaultStrategy: "standard",
 		},

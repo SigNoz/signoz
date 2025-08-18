@@ -19,7 +19,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/notificationgrouping"
+	"github.com/SigNoz/signoz/pkg/nfgrouping"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	querierV5 "github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -102,7 +102,7 @@ type ManagerOptions struct {
 	Alertmanager        alertmanager.Alertmanager
 	SQLStore            sqlstore.SQLStore
 	OrgGetter           organization.Getter
-	NotificationGroups  notificationgrouping.NotificationGroups
+	NotificationGroups  nfgrouping.NotificationGroups
 }
 
 // The Manager manages recording and alerting rules.
@@ -125,7 +125,7 @@ type Manager struct {
 	alertmanager      alertmanager.Alertmanager
 	sqlstore          sqlstore.SQLStore
 	orgGetter         organization.Getter
-	NotificationGroup notificationgrouping.NotificationGroups
+	NotificationGroup nfgrouping.NotificationGroups
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {

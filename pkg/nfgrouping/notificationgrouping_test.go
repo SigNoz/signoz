@@ -1,4 +1,4 @@
-package notificationgrouping
+package nfgrouping
 
 import (
 	"testing"

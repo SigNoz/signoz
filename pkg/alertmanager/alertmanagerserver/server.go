@@ -7,10 +7,8 @@ import (
 	"sync"
 	"time"
 
-	signozDispatcher "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver/dispatch"
-
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/notificationgrouping"
+	"github.com/SigNoz/signoz/pkg/nfgrouping"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/featurecontrol"
@@ -54,8 +52,8 @@ type Server struct {
 	// alertmanager primitives from upstream alertmanager
 	alerts             *mem.Alerts
 	nflog              *nflog.Log
-	dispatcher         *signozDispatcher.Dispatcher
-	dispatcherMetrics  *signozDispatcher.DispatcherMetrics
+	dispatcher         *Dispatcher
+	dispatcherMetrics  *DispatcherMetrics
 	inhibitor          *inhibit.Inhibitor
 	silencer           *silence.Silencer
 	silences           *silence.Silences
@@ -65,10 +63,10 @@ type Server struct {
 	tmpl               *template.Template
 	wg                 sync.WaitGroup
 	stopc              chan struct{}
-	notificationGroups notificationgrouping.NotificationGroups
+	notificationGroups nfgrouping.NotificationGroups
 }
 
-func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore, groups notificationgrouping.NotificationGroups) (*Server, error) {
+func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore, groups nfgrouping.NotificationGroups) (*Server, error) {
 	server := &Server{
 		logger:             logger.With("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver"),
 		registry:           registry,
@@ -192,7 +190,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 	}
 
 	server.pipelineBuilder = notify.NewPipelineBuilder(server.registry, featurecontrol.NoopFlags{})
-	server.dispatcherMetrics = signozDispatcher.NewDispatcherMetrics(false, server.registry)
+	server.dispatcherMetrics = NewDispatcherMetrics(false, server.registry)
 
 	return server, nil
 }
@@ -297,7 +295,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		return d
 	}
 
-	server.dispatcher = signozDispatcher.NewDispatcher(
+	server.dispatcher = NewDispatcher(
 		server.alerts,
 		routes,
 		pipeline,
