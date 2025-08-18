@@ -533,6 +533,8 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*q
 			b.stmtBuilder.cb,
 			keys,
 			telemetrytypes.FieldDataTypeString,
+			"",
+			nil,
 		)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
@@ -618,6 +620,8 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(selectFromCTE string) (*qbtype
 			b.stmtBuilder.cb,
 			keys,
 			telemetrytypes.FieldDataTypeString,
+			"",
+			nil,
 		)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
