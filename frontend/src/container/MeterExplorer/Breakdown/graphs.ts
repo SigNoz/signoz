@@ -77,6 +77,122 @@ export function getWidgetQuery(
 		},
 	};
 }
+export const getTotalLogSizeWidgetData = (): Widgets =>
+	getWidgetQueryBuilder(
+		getWidgetQuery({
+			queryData: [
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.Float64,
+						key: 'signoz.meter.log.size',
+						id: 'signoz.meter.log.size--float64--Sum--true',
+						isColumn: true,
+						isJSON: false,
+						type: 'Sum',
+					},
+					aggregateOperator: 'increase',
+					dataSource: DataSource.METRICS,
+					source: 'meter',
+					disabled: false,
+					expression: 'A',
+					filters: { items: [], op: 'AND' },
+					functions: [],
+					groupBy: [],
+					having: [],
+					legend: 'count',
+					limit: null,
+					orderBy: [],
+					queryName: 'A',
+					reduceTo: 'sum',
+					spaceAggregation: 'sum',
+					stepInterval: 60,
+					timeAggregation: 'increase',
+				},
+			],
+			title: 'Total size of log records ingested',
+			description: '',
+			panelTypes: PANEL_TYPES.VALUE,
+			yAxisUnit: 'bytes',
+		}),
+	);
+
+export const getTotalTraceSizeWidgetData = (): Widgets =>
+	getWidgetQueryBuilder(
+		getWidgetQuery({
+			queryData: [
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.Float64,
+						key: 'signoz.meter.span.size',
+						id: 'signoz.meter.span.size--float64--Sum--true',
+						isColumn: true,
+						isJSON: false,
+						type: 'Sum',
+					},
+					aggregateOperator: 'increase',
+					dataSource: DataSource.METRICS,
+					source: 'meter',
+					disabled: false,
+					expression: 'A',
+					filters: { items: [], op: 'AND' },
+					functions: [],
+					groupBy: [],
+					having: [],
+					legend: 'count',
+					limit: null,
+					orderBy: [],
+					queryName: 'A',
+					reduceTo: 'sum',
+					spaceAggregation: 'sum',
+					stepInterval: 60,
+					timeAggregation: 'increase',
+				},
+			],
+			title: 'Total size of spans ingested',
+			description: '',
+			panelTypes: PANEL_TYPES.VALUE,
+			yAxisUnit: 'bytes',
+		}),
+	);
+
+export const getTotalMetricDatapointCountWidgetData = (): Widgets =>
+	getWidgetQueryBuilder(
+		getWidgetQuery({
+			queryData: [
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.Float64,
+						key: 'signoz.meter.metric.datapoint.count',
+						id: 'signoz.meter.metric.datapoint.count--float64--Sum--true',
+						isColumn: true,
+						isJSON: false,
+						type: 'Sum',
+					},
+					aggregateOperator: 'increase',
+					dataSource: DataSource.METRICS,
+					source: 'meter',
+					disabled: false,
+					expression: 'A',
+					filters: { items: [], op: 'AND' },
+					functions: [],
+					groupBy: [],
+					having: [],
+					legend: 'count',
+					limit: null,
+					orderBy: [],
+					queryName: 'A',
+					reduceTo: 'sum',
+					spaceAggregation: 'sum',
+					stepInterval: 60,
+					timeAggregation: 'increase',
+				},
+			],
+			title: 'Total metric datapoints ingested',
+			description: '',
+			panelTypes: PANEL_TYPES.VALUE,
+			yAxisUnit: 'short',
+		}),
+	);
 
 export const getLogCountWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
@@ -110,9 +226,8 @@ export const getLogCountWidgetData = (): Widgets =>
 					timeAggregation: 'increase',
 				},
 			],
-			title: 'Count of log records Ingested',
-			description:
-				'Depicts the count of log records received by signoz system in a given time range',
+			title: 'Count of log records ingested',
+			description: '',
 			panelTypes: PANEL_TYPES.BAR,
 			yAxisUnit: 'short',
 		}),
@@ -151,8 +266,7 @@ export const getLogSizeWidgetData = (): Widgets =>
 				},
 			],
 			title: 'Size of log records ingested',
-			description:
-				'Depicts the size of log records (in bytes) received by signoz system in a given time range',
+			description: '',
 			panelTypes: PANEL_TYPES.BAR,
 			yAxisUnit: 'bytes',
 		}),
@@ -191,8 +305,7 @@ export const getSpanCountWidgetData = (): Widgets =>
 				},
 			],
 			title: 'Count of spans ingested',
-			description:
-				'Depicts the count of spans received by signoz system in a given time range',
+			description: '',
 			panelTypes: PANEL_TYPES.BAR,
 			yAxisUnit: 'short',
 		}),
@@ -231,8 +344,7 @@ export const getSpanSizeWidgetData = (): Widgets =>
 				},
 			],
 			title: 'Size of spans ingested',
-			description:
-				'Depicts the size of spans (in bytes) received by signoz system in a given time range',
+			description: '',
 			panelTypes: PANEL_TYPES.BAR,
 			yAxisUnit: 'bytes',
 		}),
@@ -271,8 +383,7 @@ export const getMetricCountWidgetData = (): Widgets =>
 				},
 			],
 			title: 'Count of metric datapoints ingested',
-			description:
-				'Depicts the count of samples of metrics received by signoz system in a given time range',
+			description: '',
 			panelTypes: PANEL_TYPES.BAR,
 			yAxisUnit: 'short',
 		}),

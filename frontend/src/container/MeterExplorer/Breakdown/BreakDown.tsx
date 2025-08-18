@@ -25,35 +25,40 @@ import {
 	getMetricCountWidgetData,
 	getSpanCountWidgetData,
 	getSpanSizeWidgetData,
+	getTotalLogSizeWidgetData,
+	getTotalMetricDatapointCountWidgetData,
+	getTotalTraceSizeWidgetData,
 } from './graphs';
 
 type MetricSection = {
 	id: string;
 	title: string;
-	description: string;
 	graphs: Widgets[];
 };
 
 const sections: MetricSection[] = [
 	{
 		id: uuid(),
+		title: 'Total',
+		graphs: [
+			getTotalLogSizeWidgetData(),
+			getTotalTraceSizeWidgetData(),
+			getTotalMetricDatapointCountWidgetData(),
+		],
+	},
+	{
+		id: uuid(),
 		title: 'Logs',
-		description:
-			'Log Meter provides insights for the size (in bytes) and count of log records ingested in SigNoz',
 		graphs: [getLogCountWidgetData(), getLogSizeWidgetData()],
 	},
 	{
 		id: uuid(),
 		title: 'Traces',
-		description:
-			'Span Meter provides insights for the size (in bytes) and count of spans ingested in SigNoz',
 		graphs: [getSpanCountWidgetData(), getSpanSizeWidgetData()],
 	},
 	{
 		id: uuid(),
 		title: 'Metrics',
-		description:
-			'Metric Meter depicts the count of metric datapoints ingested in SigNoz',
 		graphs: [getMetricCountWidgetData()],
 	},
 ];
@@ -166,15 +171,27 @@ function BreakDown(): JSX.Element {
 				<DateTimeSelectionV2 showAutoRefresh={false} />
 			</section>
 			<section className="meter-explorer-graphs">
-				{sections.map((section) => (
+				<section className="total">
 					<Section
-						key={section.id}
-						id={section.id}
-						title={section.title}
-						description={section.description}
-						graphs={section.graphs}
+						id={sections[0].id}
+						title={sections[0].title}
+						graphs={sections[0].graphs}
 					/>
-				))}
+				</section>
+				{sections.map((section, idx) => {
+					if (idx === 0) {
+						return;
+					}
+
+					return (
+						<Section
+							key={section.id}
+							id={section.id}
+							title={section.title}
+							graphs={section.graphs}
+						/>
+					);
+				})}
 			</section>
 		</div>
 	);

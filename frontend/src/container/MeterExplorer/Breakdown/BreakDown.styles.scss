@@ -56,5 +56,33 @@
 				}
 			}
 		}
+
+		.total {
+			.meter-column-graph {
+				.meter-page-grid {
+					grid-template-columns: repeat(3, 1fr);
+				}
+			}
+		}
+	}
+}
+
+.lightMode {
+	.meter-explorer-breakdown {
+		.meter-explorer-date-time {
+			border-bottom: none;
+		}
+
+		.meter-explorer-graphs {
+			.meter-column-graph {
+				.row-card {
+					background-color: var(--bg-vanilla-300);
+
+					.section-title {
+						color: var(--bg-ink-400);
+					}
+				}
+			}
+		}
 	}
 }
