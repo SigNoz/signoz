@@ -1,6 +1,7 @@
 package thirdPartyApi
 
 import (
+	"encoding/json"
 	"net"
 	"time"
 
@@ -18,6 +19,152 @@ const (
 )
 
 var defaultStepInterval = 60 * time.Second
+
+func createDualSemconvGroupByKeysServerKey() []qbtypes.GroupByKey {
+	return []qbtypes.GroupByKey{
+		{
+			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+				Name:          serverNameKeyNew,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				Signal:        telemetrytypes.SignalTraces,
+			},
+		},
+		{
+			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+				Name:          serverNameKey,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				Signal:        telemetrytypes.SignalTraces,
+			},
+		},
+	}
+}
+
+func createDualSemconvGroupByKeysUrlPathKey() []qbtypes.GroupByKey {
+	return []qbtypes.GroupByKey{
+		{
+			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+				Name:          urlPathKeyNew,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				Signal:        telemetrytypes.SignalTraces,
+			},
+		},
+		{
+			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+				Name:          urlPathKey,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				Signal:        telemetrytypes.SignalTraces,
+			},
+		},
+	}
+}
+
+func MergeSemconvColumns(result *qbtypes.QueryRangeResponse) *qbtypes.QueryRangeResponse {
+	if result == nil || result.Data.Results == nil {
+		return result
+	}
+	for _, res := range result.Data.Results {
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			continue
+		}
+
+		var resMap map[string]interface{}
+		if err := json.Unmarshal(resBytes, &resMap); err != nil {
+			continue
+		}
+
+		if columns, hasColumns := resMap["columns"]; hasColumns {
+			if colSlice, ok := columns.([]interface{}); ok {
+				serverAddrIdx := -1
+				netPeerIdx := -1
+
+				for i, col := range colSlice {
+					if colMap, ok := col.(map[string]interface{}); ok {
+						if name, ok := colMap["name"].(string); ok {
+							if name == serverNameKeyNew {
+								serverAddrIdx = i
+							} else if name == serverNameKey {
+								netPeerIdx = i
+							}
+						}
+					}
+				}
+
+				if serverAddrIdx != -1 && netPeerIdx != -1 {
+					if dataRows, hasData := resMap["data"]; hasData {
+						if rowsSlice, ok := dataRows.([]interface{}); ok {
+							var newRows []interface{}
+
+							for _, row := range rowsSlice {
+								if rowArray, ok := row.([]interface{}); ok {
+									if len(rowArray) <= serverAddrIdx || len(rowArray) <= netPeerIdx {
+										continue
+									}
+
+									var serverName interface{}
+									if rowArray[serverAddrIdx] != nil && rowArray[serverAddrIdx] != "" && rowArray[serverAddrIdx] != "n/a" {
+										serverName = rowArray[serverAddrIdx]
+									} else if rowArray[netPeerIdx] != nil && rowArray[netPeerIdx] != "" && rowArray[netPeerIdx] != "n/a" {
+										serverName = rowArray[netPeerIdx]
+									}
+
+									if serverName != nil {
+										newRow := make([]interface{}, len(rowArray)-1)
+										newRow[0] = serverName
+
+										targetIdx := 1
+										for i, val := range rowArray {
+											if i != netPeerIdx && i != serverAddrIdx {
+												if targetIdx < len(newRow) {
+													newRow[targetIdx] = val
+													targetIdx++
+												}
+											}
+										}
+
+										newRows = append(newRows, newRow)
+									}
+								}
+							}
+							newColumns := make([]interface{}, len(colSlice)-1)
+							targetIdx := 0
+							for i, col := range colSlice {
+								if i == serverAddrIdx {
+									if colMap, ok := col.(map[string]interface{}); ok {
+										newCol := make(map[string]interface{})
+										for k, v := range colMap {
+											newCol[k] = v
+										}
+										newCol["name"] = "net.peer.name"
+										newColumns[targetIdx] = newCol
+										targetIdx++
+									}
+								} else if i != netPeerIdx {
+									newColumns[targetIdx] = col
+									targetIdx++
+								}
+							}
+
+							resMap["columns"] = newColumns
+							resMap["data"] = newRows
+
+							updatedBytes, err := json.Marshal(resMap)
+							if err == nil {
+								json.Unmarshal(updatedBytes, &res)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return result
+}
 
 func FilterResponse(results []*qbtypes.QueryRangeResponse) []*qbtypes.QueryRangeResponse {
 	filteredResults := make([]*qbtypes.QueryRangeResponse, 0, len(results))
@@ -71,7 +218,7 @@ func FilterResponse(results []*qbtypes.QueryRangeResponse) []*qbtypes.QueryRange
 // shouldIncludeSeries checks if a series should be included based on IP filtering
 func shouldIncludeSeries(series *qbtypes.TimeSeries) bool {
 	for _, label := range series.Labels {
-		if label.Key.Name == serverNameKey {
+		if label.Key.Name == serverNameKey || label.Key.Name == serverNameKeyNew {
 			if strVal, ok := label.Value.(string); ok {
 				if net.ParseIP(strVal) != nil {
 					return false // Skip IP addresses
@@ -82,13 +229,14 @@ func shouldIncludeSeries(series *qbtypes.TimeSeries) bool {
 	return true
 }
 
-// shouldIncludeRow checks if a row should be included based on IP filtering
 func shouldIncludeRow(row *qbtypes.RawRow) bool {
 	if row.Data != nil {
-		if domainVal, ok := row.Data[serverNameKey]; ok {
-			if domainStr, ok := domainVal.(string); ok {
-				if net.ParseIP(domainStr) != nil {
-					return false // Skip IP addresses
+		for _, key := range []string{serverNameKey, serverNameKeyNew} {
+			if domainVal, ok := row.Data[key]; ok {
+				if domainStr, ok := domainVal.(string); ok {
+					if net.ParseIP(domainStr) != nil {
+						return false // Skip IP addresses
+					}
 				}
 			}
 		}
@@ -97,6 +245,7 @@ func shouldIncludeRow(row *qbtypes.RawRow) bool {
 }
 
 // convertV3FiltersToV5 converts v3 FilterSet to v5 Filter
+// TODO : Add filters
 func convertV3FiltersToV5(v3Filters v3.FilterSet) *qbtypes.Filter {
 	if len(v3Filters.Items) == 0 {
 		return nil
@@ -171,17 +320,8 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*qbtypes.QueryRangeRequest
 				Expression: "count_distinct(http.url)",
 			},
 		},
-		Filter: buildBaseFilter(additionalFilters),
-		GroupBy: mergeGroupBy([]qbtypes.GroupByKey{
-			{
-				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-					Name:          serverNameKey,
-					FieldDataType: telemetrytypes.FieldDataTypeString,
-					FieldContext:  telemetrytypes.FieldContextAttribute,
-					Signal:        telemetrytypes.SignalTraces,
-				},
-			},
-		}, additionalGroupBy),
+		Filter:  buildBaseFilter(additionalFilters),
+		GroupBy: mergeGroupBy(createDualSemconvGroupByKeysServerKey(), additionalGroupBy),
 	}
 
 	// Build the trace aggregation query for last seen
@@ -194,17 +334,8 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*qbtypes.QueryRangeRequest
 				Expression: "max(timestamp)",
 			},
 		},
-		Filter: buildBaseFilter(additionalFilters),
-		GroupBy: mergeGroupBy([]qbtypes.GroupByKey{
-			{
-				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-					Name:          serverNameKey,
-					FieldDataType: telemetrytypes.FieldDataTypeString,
-					FieldContext:  telemetrytypes.FieldContextAttribute,
-					Signal:        telemetrytypes.SignalTraces,
-				},
-			},
-		}, additionalGroupBy),
+		Filter:  buildBaseFilter(additionalFilters),
+		GroupBy: mergeGroupBy(createDualSemconvGroupByKeysServerKey(), additionalGroupBy),
 	}
 
 	// Build the trace aggregation query for RPS
@@ -217,17 +348,8 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*qbtypes.QueryRangeRequest
 				Expression: "rate()",
 			},
 		},
-		Filter: buildBaseFilter(additionalFilters),
-		GroupBy: mergeGroupBy([]qbtypes.GroupByKey{
-			{
-				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-					Name:          serverNameKey,
-					FieldDataType: telemetrytypes.FieldDataTypeString,
-					FieldContext:  telemetrytypes.FieldContextAttribute,
-					Signal:        telemetrytypes.SignalTraces,
-				},
-			},
-		}, additionalGroupBy),
+		Filter:  buildBaseFilter(additionalFilters),
+		GroupBy: mergeGroupBy(createDualSemconvGroupByKeysServerKey(), additionalGroupBy),
 	}
 
 	// Build the trace aggregation query for errors
@@ -240,17 +362,8 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*qbtypes.QueryRangeRequest
 				Expression: "count()",
 			},
 		},
-		Filter: buildErrorFilter(additionalFilters),
-		GroupBy: mergeGroupBy([]qbtypes.GroupByKey{
-			{
-				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-					Name:          serverNameKey,
-					FieldDataType: telemetrytypes.FieldDataTypeString,
-					FieldContext:  telemetrytypes.FieldContextAttribute,
-					Signal:        telemetrytypes.SignalTraces,
-				},
-			},
-		}, additionalGroupBy),
+		Filter:  buildErrorFilter(additionalFilters),
+		GroupBy: mergeGroupBy(createDualSemconvGroupByKeysServerKey(), additionalGroupBy),
 	}
 
 	// Build the trace aggregation query for total spans
@@ -263,17 +376,8 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*qbtypes.QueryRangeRequest
 				Expression: "count()",
 			},
 		},
-		Filter: buildBaseFilter(additionalFilters),
-		GroupBy: mergeGroupBy([]qbtypes.GroupByKey{
-			{
-				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-					Name:          serverNameKey,
-					FieldDataType: telemetrytypes.FieldDataTypeString,
-					FieldContext:  telemetrytypes.FieldContextAttribute,
-					Signal:        telemetrytypes.SignalTraces,
-				},
-			},
-		}, additionalGroupBy),
+		Filter:  buildBaseFilter(additionalFilters),
+		GroupBy: mergeGroupBy(createDualSemconvGroupByKeysServerKey(), additionalGroupBy),
 	}
 
 	// Build the trace aggregation query for P99 latency
@@ -286,17 +390,8 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*qbtypes.QueryRangeRequest
 				Expression: "p99(duration_nano)",
 			},
 		},
-		Filter: buildBaseFilter(additionalFilters),
-		GroupBy: mergeGroupBy([]qbtypes.GroupByKey{
-			{
-				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-					Name:          serverNameKey,
-					FieldDataType: telemetrytypes.FieldDataTypeString,
-					FieldContext:  telemetrytypes.FieldContextAttribute,
-					Signal:        telemetrytypes.SignalTraces,
-				},
-			},
-		}, additionalGroupBy),
+		Filter:  buildBaseFilter(additionalFilters),
+		GroupBy: mergeGroupBy(createDualSemconvGroupByKeysServerKey(), additionalGroupBy),
 	}
 
 	// Build the formula query for error rate
@@ -368,17 +463,8 @@ func BuildDomainInfo(thirdPartyApis *ThirdPartyApis) (*qbtypes.QueryRangeRequest
 				Expression: "rate(http.url)",
 			},
 		},
-		Filter: buildBaseFilter(additionalFilters),
-		GroupBy: mergeGroupBy([]qbtypes.GroupByKey{
-			{
-				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-					Name:          urlPathKey,
-					FieldDataType: telemetrytypes.FieldDataTypeString,
-					FieldContext:  telemetrytypes.FieldContextAttribute,
-					Signal:        telemetrytypes.SignalTraces,
-				},
-			},
-		}, additionalGroupBy),
+		Filter:  buildBaseFilter(additionalFilters),
+		GroupBy: mergeGroupBy(createDualSemconvGroupByKeysUrlPathKey(), additionalGroupBy),
 	}
 
 	// Build the trace aggregation query for P99 latency

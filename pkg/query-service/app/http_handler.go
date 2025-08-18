@@ -5053,6 +5053,8 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	result = thirdPartyApi.MergeSemconvColumns(result)
+
 	// Filter IP addresses if ShowIp is false
 	var finalResult *qbtypes.QueryRangeResponse = result
 	if !thirdPartyQueryRequest.ShowIp {
@@ -5114,6 +5116,8 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, apiErrObj, nil)
 		return
 	}
+
+	result = thirdPartyApi.MergeSemconvColumns(result)
 
 	// Filter IP addresses if ShowIp is false
 	var finalResult *qbtypes.QueryRangeResponse = result
