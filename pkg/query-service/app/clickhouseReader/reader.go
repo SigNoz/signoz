@@ -531,7 +531,7 @@ func (r *ClickHouseReader) GetServicesOptimized(ctx context.Context, queryParams
 		return nil, apiErr
 	}
 	// Collect (name, serviceName) pairs to maintain service context
-	var serviceOperationPairs [][]interface{}
+	var serviceOperationPairs [][2]string
 	serviceOperationsMap := make(map[string][]string)
 
 	for svc, ops := range *topLevelOps {
@@ -541,7 +541,7 @@ func (r *ClickHouseReader) GetServicesOptimized(ctx context.Context, queryParams
 
 		// Create (name, serviceName) pairs for this service
 		for _, op := range cappedOps {
-			serviceOperationPairs = append(serviceOperationPairs, []interface{}{op, svc})
+			serviceOperationPairs = append(serviceOperationPairs, [2]string{op, svc})
 		}
 	}
 
