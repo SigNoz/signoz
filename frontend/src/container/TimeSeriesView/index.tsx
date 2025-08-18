@@ -20,6 +20,7 @@ function TimeSeriesViewContainer({
 	dataSource = DataSource.TRACES,
 	isFilterApplied,
 	setWarning,
+	setIsLoadingQueries,
 }: TimeSeriesViewProps): JSX.Element {
 	const { stagedQuery, currentQuery, panelType } = useQueryBuilder();
 
@@ -83,6 +84,14 @@ function TimeSeriesViewContainer({
 		[data, isValidToConvertToMs],
 	);
 
+	useEffect(() => {
+		if (isLoading || isFetching) {
+			setIsLoadingQueries(true);
+		} else {
+			setIsLoadingQueries(false);
+		}
+	}, [isLoading, isFetching, setIsLoadingQueries]);
+
 	return (
 		<TimeSeriesView
 			isFilterApplied={isFilterApplied}
@@ -101,6 +110,7 @@ interface TimeSeriesViewProps {
 	dataSource?: DataSource;
 	isFilterApplied: boolean;
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
+	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
 }
 
 TimeSeriesViewContainer.defaultProps = {
