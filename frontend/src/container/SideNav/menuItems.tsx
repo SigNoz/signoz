@@ -266,8 +266,8 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		itemKey: 'external-apis',
 	},
 	{
-		key: ROUTES.METER_EXPLORER,
-		label: 'Meter Explorer',
+		key: ROUTES.METER,
+		label: 'Cost Meter',
 		icon: <ChartArea size={16} />,
 		isNew: false,
 		isEnabled: false,

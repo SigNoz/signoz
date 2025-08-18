@@ -1,4 +1,4 @@
-import './Cost.styles.scss';
+import './BreakDown.styles.scss';
 
 import { Typography } from 'antd';
 // import useFilterConfig from 'components/QuickFilters/hooks/useFilterConfig';
@@ -151,14 +151,14 @@ function Section(section: MetricSection): JSX.Element {
 // 	);
 // }
 
-function Cost(): JSX.Element {
+function BreakDown(): JSX.Element {
 	// const { customFilters } = useFilterConfig({
 	// 	signal: SignalType.METER_EXPLORER,
 	// 	config: [],
 	// });
 
 	return (
-		<div className="meter-explorer-cost">
+		<div className="meter-explorer-breakdown">
 			<section className="meter-explorer-date-time">
 				{/* {customFilters.map((filter) => (
 					<FilterDropdown key={filter.key} attrKey={filter.key} />
@@ -180,4 +180,4 @@ function Cost(): JSX.Element {
 	);
 }
 
-export default Cost;
+export default BreakDown;

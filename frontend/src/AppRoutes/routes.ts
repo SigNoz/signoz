@@ -437,10 +437,10 @@ const routes: AppRoutes[] = [
 	},
 
 	{
-		path: ROUTES.METER_EXPLORER_BASE,
+		path: ROUTES.METER,
 		exact: true,
 		component: MeterExplorer,
-		key: 'METER_EXPLORER_BASE',
+		key: 'METER',
 		isPrivate: true,
 	},
 	{
@@ -455,13 +455,6 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: MeterExplorer,
 		key: 'METER_EXPLORER_VIEWS',
-		isPrivate: true,
-	},
-	{
-		path: ROUTES.METER_EXPLORER_COST,
-		exact: true,
-		component: MeterExplorer,
-		key: 'METER_EXPLORER_COST',
 		isPrivate: true,
 	},
 	{

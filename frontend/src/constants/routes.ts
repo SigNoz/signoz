@@ -77,10 +77,9 @@ const ROUTES = {
 	API_MONITORING: '/api-monitoring/explorer',
 	METRICS_EXPLORER_BASE: '/metrics-explorer',
 	WORKSPACE_ACCESS_RESTRICTED: '/workspace-access-restricted',
-	METER_EXPLORER_BASE: '/meter-explorer',
-	METER_EXPLORER: '/meter-explorer',
-	METER_EXPLORER_VIEWS: '/meter-explorer/views',
-	METER_EXPLORER_COST: '/meter-explorer/cost',
+	METER: '/meter',
+	METER_EXPLORER: '/meter/explorer',
+	METER_EXPLORER_VIEWS: '/meter/explorer/views',
 	HOME_PAGE: '/',
 } as const;
 
