@@ -129,7 +129,25 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	}
 	intervalWarnings := []string{}
 
-	intervalWarnings := []string{}
+	dependencyQueries := make(map[string]bool)
+	traceOperatorQueries := make(map[string]qbtypes.QueryBuilderTraceOperator)
+
+	for _, query := range req.CompositeQuery.Queries {
+		if query.Type == qbtypes.QueryTypeTraceOperator {
+			if spec, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator); ok {
+				// Parse expression to find dependencies
+				if err := spec.ParseExpression(); err != nil {
+					return nil, fmt.Errorf("failed to parse trace operator expression: %w", err)
+				}
+
+				deps := spec.CollectReferencedQueries(spec.ParsedExpression)
+				for _, dep := range deps {
+					dependencyQueries[dep] = true
+				}
+				traceOperatorQueries[spec.Name] = spec
+			}
+		}
+	}
 
 	// First pass: collect all metric names that need temporality
 	metricNames := make([]string, 0)

@@ -46,7 +46,7 @@ type QueryBuilderTraceOperator struct {
 	ReturnSpansFrom string `json:"returnSpansFrom,omitempty"`
 
 	// Trace-specific ordering (only span_count and trace_duration allowed)
-	Order []OrderBy `json:"orderBy,omitempty"`
+	Order []OrderBy `json:"order,omitempty"`
 
 	Aggregations []TraceAggregation `json:"aggregations,omitempty"`
 	StepInterval Step               `json:"stepInterval,omitempty"`
