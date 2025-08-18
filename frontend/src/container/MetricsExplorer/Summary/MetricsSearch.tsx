@@ -4,7 +4,7 @@ import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { cloneDeep } from 'lodash-es';
 import { Info, Play } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -17,6 +17,10 @@ function MetricsSearch({ onChange, query }: MetricsSearchProps): JSX.Element {
 	const [contextQuery, setContextQuery] = useState<IBuilderQuery | undefined>(
 		query,
 	);
+
+	useEffect(() => {
+		setContextQuery(query);
+	}, [query]);
 
 	const handleRunQuery = (expression: string): void => {
 		let updatedContextQuery = cloneDeep(contextQuery);
@@ -42,9 +46,7 @@ function MetricsSearch({ onChange, query }: MetricsSearchProps): JSX.Element {
 		};
 		setContextQuery(updatedContextQuery);
 
-		if (newFilters) {
-			onChange(newFilters);
-		}
+		onChange(newFilters);
 	};
 
 	const handleOnChange = (expression: string): void => {
@@ -65,7 +67,7 @@ function MetricsSearch({ onChange, query }: MetricsSearchProps): JSX.Element {
 		handleRunQuery(contextQuery?.filter?.expression || '');
 	return (
 		<div className="metrics-search-container">
-			<div className="qb-search-container">
+			<div data-testid="qb-search-container" className="qb-search-container">
 				<Tooltip
 					title="Use filters to refine metrics based on attributes. Example: service_name=api - Shows all metrics associated with the API service"
 					placement="right"
