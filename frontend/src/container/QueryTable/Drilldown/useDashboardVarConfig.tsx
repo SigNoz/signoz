@@ -40,7 +40,7 @@ const useDashboardVarConfig = ({
 
 	const dynamicDashboardVariables = useMemo(
 		(): [string, IDashboardVariable][] =>
-			Object.entries(selectedDashboard?.data.variables || {}).filter(
+			Object.entries(selectedDashboard?.data?.variables || {}).filter(
 				([, value]) => value.name && value.type === 'DYNAMIC',
 			),
 		[selectedDashboard],
