@@ -669,11 +669,11 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(selectFromCTE string) (*qbtype
 
 	sb.Select(
 		"any(root.timestamp) as timestamp", // Add timestamp for consistent response structure
-		"any(root.serviceName) as `subQuery.serviceName`",
-		"any(root.name) as `subQuery.name`",
+		"any(root.serviceName) as `service.name`",
+		"any(root.name) as `name`",
 		"count(bs.span_id) as span_count",
-		"any(root.durationNano) as `subQuery.durationNano`",
-		"result.trace_id as `subQuery.traceID`",
+		"any(root.durationNano) as `duration_nano`",
+		"result.trace_id as `trace_id`",
 	)
 
 	sb.From(fmt.Sprintf("(%s) result", traceSubquery))
@@ -695,7 +695,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(selectFromCTE string) (*qbtype
 	for _, orderBy := range b.operator.Order {
 		switch orderBy.Key.Name {
 		case qbtypes.OrderByTraceDuration.StringValue():
-			sb.OrderBy(fmt.Sprintf("`subQuery.durationNano` %s", orderBy.Direction.StringValue()))
+			sb.OrderBy(fmt.Sprintf("`duration_nano` %s", orderBy.Direction.StringValue()))
 			orderApplied = true
 		case qbtypes.OrderBySpanCount.StringValue():
 			sb.OrderBy(fmt.Sprintf("span_count %s", orderBy.Direction.StringValue()))
@@ -730,7 +730,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(selectFromCTE string) (*qbtype
 
 	// Default order by trace duration DESC if no order specified
 	if !orderApplied {
-		sb.OrderBy("`subQuery.durationNano` DESC")
+		sb.OrderBy("`duration_nano` DESC")
 	}
 
 	// Add limit if specified
