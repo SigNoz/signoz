@@ -116,6 +116,10 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 
 	if req.RequestType == qbtypes.RequestTypeTimeSeries && req.FormatOptions != nil && req.FormatOptions.FillGaps {
 		for name := range typedResults {
+			if req.SkipFillGaps(name) {
+				continue
+			}
+
 			funcs := []qbtypes.Function{{Name: qbtypes.FunctionNameFillZero}}
 			funcs = q.prepareFillZeroArgsWithStep(funcs, req, req.StepIntervalForQuery(name))
 			// empty time series if it doesn't exist

@@ -38,7 +38,7 @@ x-clickhouse-defaults: &clickhouse-defaults
       hard: 262144
 x-zookeeper-defaults: &zookeeper-defaults
   !!merge <<: *common
-  image: bitnami/zookeeper:3.7.1
+  image: signoz/zookeeper:3.7.1
   user: root
   labels:
     signoz.io/scrape: "true"
@@ -110,7 +110,7 @@ services:
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
     !!merge <<: *db-depend
-    image: signoz/signoz:${VERSION:-v0.91.0}
+    image: signoz/signoz:${VERSION:-v0.92.1}
     container_name: signoz
     command:
       - --config=/root/config/prometheus.yml
@@ -143,7 +143,7 @@ services:
       retries: 3
   otel-collector:
     !!merge <<: *db-depend
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.128.2}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.129.0}
     container_name: signoz-otel-collector
     command:
       - --config=/etc/otel-collector-config.yaml
@@ -165,7 +165,7 @@ services:
         condition: service_healthy
   schema-migrator-sync:
     !!merge <<: *common
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.128.2}
+    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.129.0}
     container_name: schema-migrator-sync
     command:
       - sync
@@ -177,7 +177,7 @@ services:
     restart: on-failure
   schema-migrator-async:
     !!merge <<: *db-depend
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.128.2}
+    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.129.0}
     container_name: schema-migrator-async
     command:
       - async

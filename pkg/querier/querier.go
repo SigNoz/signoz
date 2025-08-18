@@ -23,6 +23,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+var (
+	intervalWarn = "Query %s is requesting aggregation interval %v seconds, which is smaller than the minimum allowed interval of %v seconds for selected time range. Using the minimum instead"
+)
+
 type querier struct {
 	logger                   *slog.Logger
 	telemetryStore           telemetrystore.TelemetryStore
@@ -125,6 +129,8 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	}
 	intervalWarnings := []string{}
 
+	intervalWarnings := []string{}
+
 	// First pass: collect all metric names that need temporality
 	metricNames := make([]string, 0)
 	for idx, query := range req.CompositeQuery.Queries {
@@ -151,9 +157,11 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					}
 				}
 				if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepInterval(req.Start, req.End)) {
-					spec.StepInterval = qbtypes.Step{
+					newStep := qbtypes.Step{
 						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepInterval(req.Start, req.End)),
 					}
+					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
+					spec.StepInterval = newStep
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
 			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
@@ -166,9 +174,11 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					}
 				}
 				if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepInterval(req.Start, req.End)) {
-					spec.StepInterval = qbtypes.Step{
+					newStep := qbtypes.Step{
 						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepInterval(req.Start, req.End)),
 					}
+					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
+					spec.StepInterval = newStep
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
 			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
@@ -185,9 +195,11 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 						}
 					}
 					if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)) {
-						spec.StepInterval = qbtypes.Step{
+						newStep := qbtypes.Step{
 							Duration: time.Second * time.Duration(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)),
 						}
+						intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
+						spec.StepInterval = newStep
 					}
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
@@ -357,6 +369,16 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event)
 	if qbResp != nil {
 		qbResp.QBEvent = event
+		if len(intervalWarnings) != 0 && req.RequestType == qbtypes.RequestTypeTimeSeries {
+			if qbResp.Warning == nil {
+				qbResp.Warning = &qbtypes.QueryWarnData{
+					Warnings: make([]qbtypes.QueryWarnDataAdditional, len(intervalWarnings)),
+				}
+				for idx := range intervalWarnings {
+					qbResp.Warning.Warnings[idx] = qbtypes.QueryWarnDataAdditional{Message: intervalWarnings[idx]}
+				}
+			}
+		}
 	}
 	return qbResp, qbErr
 }
