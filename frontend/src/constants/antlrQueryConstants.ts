@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+
 export const OPERATORS = {
 	IN: 'IN',
 	LIKE: 'LIKE',
@@ -19,6 +21,40 @@ export const QUERY_BUILDER_FUNCTIONS = {
 	HAS: 'has',
 	HASANY: 'hasAny',
 	HASALL: 'hasAll',
+};
+
+export function negateOperator(operatorOrFunction: string): string {
+	// Special cases for equals/not equals
+	if (operatorOrFunction === OPERATORS['=']) {
+		return OPERATORS['!='];
+	}
+	if (operatorOrFunction === OPERATORS['!=']) {
+		return OPERATORS['='];
+	}
+	// For all other operators and functions, add NOT in front
+	return `${OPERATORS.NOT} ${operatorOrFunction}`;
+}
+
+export enum DEPRECATED_OPERATORS {
+	NIN = 'nin',
+	NREGEX = 'nregex',
+	NLIKE = 'nlike',
+	NILIKE = 'nilike',
+	NEXTISTS = 'nexists',
+	NCONTAINS = 'ncontains',
+	NHAS = 'nhas',
+	NHASANY = 'nhasany',
+}
+
+export const DEPRECATED_OPERATORS_MAP = {
+	[DEPRECATED_OPERATORS.NIN]: negateOperator(OPERATORS.IN),
+	[DEPRECATED_OPERATORS.NREGEX]: negateOperator(OPERATORS.REGEXP),
+	[DEPRECATED_OPERATORS.NLIKE]: negateOperator(OPERATORS.LIKE),
+	[DEPRECATED_OPERATORS.NILIKE]: negateOperator(OPERATORS.ILIKE),
+	[DEPRECATED_OPERATORS.NEXTISTS]: negateOperator(OPERATORS.EXISTS),
+	[DEPRECATED_OPERATORS.NCONTAINS]: negateOperator(OPERATORS.CONTAINS),
+	[DEPRECATED_OPERATORS.NHAS]: negateOperator(QUERY_BUILDER_FUNCTIONS.HAS),
+	[DEPRECATED_OPERATORS.NHASANY]: negateOperator(QUERY_BUILDER_FUNCTIONS.HASANY),
 };
 
 export const NON_VALUE_OPERATORS = [OPERATORS.EXISTS];
@@ -82,15 +118,3 @@ export const queryOperatorSuggestions = [
 	{ label: OPERATORS.NOT, type: 'operator', info: 'Not' },
 	...negationQueryOperatorSuggestions,
 ];
-
-export function negateOperator(operatorOrFunction: string): string {
-	// Special cases for equals/not equals
-	if (operatorOrFunction === OPERATORS['=']) {
-		return OPERATORS['!='];
-	}
-	if (operatorOrFunction === OPERATORS['!=']) {
-		return OPERATORS['='];
-	}
-	// For all other operators and functions, add NOT in front
-	return `${OPERATORS.NOT} ${operatorOrFunction}`;
-}
