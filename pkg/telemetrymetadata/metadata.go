@@ -202,7 +202,8 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		conds = append(conds, sb.And(fieldKeyConds...))
 		limit += fieldKeySelector.Limit
 	}
-	sb.Where(sb.Or(conds...))
+	// the span_attribute_keys has historically pushed the top level column as attributes
+	sb.Where(sb.Or(conds...)).Where("isColumn = false")
 	sb.GroupBy("tagKey", "tagType", "dataType")
 	if limit == 0 {
 		limit = 1000
@@ -403,7 +404,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		sb := sqlbuilder.Select(
 			"name AS tag_key",
 			fmt.Sprintf("'%s' AS tag_type", fieldContext.TagType()),
-			"datatype AS tag_data_type",
+			"lower(datatype) AS tag_data_type", // in logs, we had some historical data with capital and small case
 			fmt.Sprintf(`%d AS priority`, getPriorityForContext(fieldContext)),
 		).From(tblName)
 
