@@ -102,7 +102,12 @@ export function QueryBuilderProvider({
 	const location = useLocation();
 
 	const currentPathnameRef = useRef<string | null>(location.pathname);
-	const [hasRunOnExplorer, setHasRunOnExplorer] = useState<boolean>(false);
+
+	// This is used to determine if the query was called from the handleRunQuery function - which means manual trigger from Stage and Run button
+	const [
+		calledFromHandleRunQuery,
+		setCalledFromHandleRunQuery,
+	] = useState<boolean>(false);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -192,7 +197,7 @@ export function QueryBuilderProvider({
 					location.pathname === ROUTES.TRACES_EXPLORER;
 				if (isExplorer) {
 					const sanitizedOrderBy = sanitizeOrderByForExplorer(currentElement);
-					return hasRunOnExplorer
+					return calledFromHandleRunQuery
 						? currentElement
 						: { ...currentElement, orderBy: sanitizedOrderBy };
 				}
@@ -228,7 +233,7 @@ export function QueryBuilderProvider({
 
 			return nextQuery;
 		},
-		[initialDataSource, location.pathname, hasRunOnExplorer],
+		[initialDataSource, location.pathname, calledFromHandleRunQuery],
 	);
 
 	const initQueryBuilderData = useCallback(
@@ -884,7 +889,7 @@ export function QueryBuilderProvider({
 				location.pathname === ROUTES.LOGS_EXPLORER ||
 				location.pathname === ROUTES.TRACES_EXPLORER;
 			if (isExplorer) {
-				setHasRunOnExplorer(true);
+				setCalledFromHandleRunQuery(true);
 			}
 			let currentQueryData = currentQuery;
 
@@ -947,7 +952,7 @@ export function QueryBuilderProvider({
 			setStagedQuery(null);
 			// reset the last used query to 0 when navigating away from the page
 			setLastUsedQuery(0);
-			setHasRunOnExplorer(false);
+			setCalledFromHandleRunQuery(false);
 		}
 	}, [location.pathname]);
 

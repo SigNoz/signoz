@@ -4,17 +4,14 @@ import './QueryAddOns.styles.scss';
 import { Button, Radio, RadioChangeEvent, Tooltip } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import ROUTES from 'constants/routes';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
 import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter';
 import { ReduceToFilter } from 'container/QueryBuilder/filters/ReduceToFilter/ReduceToFilter';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { useSanitizeOrderBy } from 'hooks/queryBuilder/useSanitizeOrderBy';
 import { isEmpty } from 'lodash-es';
 import { BarChart2, ChevronUp, ExternalLink, ScrollText } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
@@ -167,9 +164,6 @@ function QueryAddOns({
 
 	const { handleSetQueryData } = useQueryBuilder();
 
-	const location = useLocation();
-	const isExplorerPage = location.pathname === ROUTES.LOGS_EXPLORER;
-
 	useEffect(() => {
 		if (isListViewPanel) {
 			setAddOns([]);
@@ -213,17 +207,6 @@ function QueryAddOns({
 		);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [panelType, isListViewPanel, query.dataSource]);
-
-	// Sanitize orderBy and apply on usage (here: initial usage on mount)
-	const sanitizeOrderBy = useSanitizeOrderBy(query);
-	useEffect(() => {
-		if (!isExplorerPage || isListViewPanel) return;
-		const sanitized = sanitizeOrderBy();
-		if ((query.orderBy || []).length !== sanitized.length) {
-			handleSetQueryData(index, { ...query, orderBy: sanitized });
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
 
 	const handleOptionClick = (e: RadioChangeEvent): void => {
 		if (selectedViews.find((view) => view.key === e.target.value.key)) {
