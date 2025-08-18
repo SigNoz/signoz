@@ -74,6 +74,11 @@ const useAggregateDrilldown = ({
 	const { dashbaordVariablesConfig } = useDashboardVarConfig({
 		setSubMenu,
 		fieldVariables,
+		query,
+		// panelType,
+		aggregateData,
+		widgetId,
+		onClose,
 	});
 
 	const { baseAggregateOptionsConfig } = useBaseAggregateOptions({
