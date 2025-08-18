@@ -1,7 +1,6 @@
 package thirdPartyApi
 
 import (
-	"encoding/json"
 	"net"
 	"time"
 
@@ -66,104 +65,97 @@ func MergeSemconvColumns(result *qbtypes.QueryRangeResponse) *qbtypes.QueryRange
 	if result == nil || result.Data.Results == nil {
 		return result
 	}
+
 	for _, res := range result.Data.Results {
-		resBytes, err := json.Marshal(res)
-		if err != nil {
+		scalarData, ok := res.(*qbtypes.ScalarData)
+		if !ok {
 			continue
 		}
 
-		var resMap map[string]interface{}
-		if err := json.Unmarshal(resBytes, &resMap); err != nil {
-			continue
-		}
+		serverAddrIdx := -1
+		netPeerIdx := -1
 
-		if columns, hasColumns := resMap["columns"]; hasColumns {
-			if colSlice, ok := columns.([]interface{}); ok {
-				serverAddrIdx := -1
-				netPeerIdx := -1
-
-				for i, col := range colSlice {
-					if colMap, ok := col.(map[string]interface{}); ok {
-						if name, ok := colMap["name"].(string); ok {
-							if name == serverNameKeyNew {
-								serverAddrIdx = i
-							} else if name == serverNameKey {
-								netPeerIdx = i
-							}
-						}
-					}
-				}
-
-				if serverAddrIdx != -1 && netPeerIdx != -1 {
-					if dataRows, hasData := resMap["data"]; hasData {
-						if rowsSlice, ok := dataRows.([]interface{}); ok {
-							var newRows []interface{}
-
-							for _, row := range rowsSlice {
-								if rowArray, ok := row.([]interface{}); ok {
-									if len(rowArray) <= serverAddrIdx || len(rowArray) <= netPeerIdx {
-										continue
-									}
-
-									var serverName interface{}
-									if rowArray[serverAddrIdx] != nil && rowArray[serverAddrIdx] != "" && rowArray[serverAddrIdx] != "n/a" {
-										serverName = rowArray[serverAddrIdx]
-									} else if rowArray[netPeerIdx] != nil && rowArray[netPeerIdx] != "" && rowArray[netPeerIdx] != "n/a" {
-										serverName = rowArray[netPeerIdx]
-									}
-
-									if serverName != nil {
-										newRow := make([]interface{}, len(rowArray)-1)
-										newRow[0] = serverName
-
-										targetIdx := 1
-										for i, val := range rowArray {
-											if i != netPeerIdx && i != serverAddrIdx {
-												if targetIdx < len(newRow) {
-													newRow[targetIdx] = val
-													targetIdx++
-												}
-											}
-										}
-
-										newRows = append(newRows, newRow)
-									}
-								}
-							}
-							newColumns := make([]interface{}, len(colSlice)-1)
-							targetIdx := 0
-							for i, col := range colSlice {
-								if i == serverAddrIdx {
-									if colMap, ok := col.(map[string]interface{}); ok {
-										newCol := make(map[string]interface{})
-										for k, v := range colMap {
-											newCol[k] = v
-										}
-										newCol["name"] = "net.peer.name"
-										newColumns[targetIdx] = newCol
-										targetIdx++
-									}
-								} else if i != netPeerIdx {
-									newColumns[targetIdx] = col
-									targetIdx++
-								}
-							}
-
-							resMap["columns"] = newColumns
-							resMap["data"] = newRows
-
-							updatedBytes, err := json.Marshal(resMap)
-							if err == nil {
-								json.Unmarshal(updatedBytes, &res)
-							}
-						}
-					}
-				}
+		for i, col := range scalarData.Columns {
+			if col.Name == serverNameKeyNew {
+				serverAddrIdx = i
+			} else if col.Name == serverNameKey {
+				netPeerIdx = i
 			}
 		}
+
+		if serverAddrIdx == -1 || netPeerIdx == -1 {
+			continue
+		}
+
+		var newRows [][]any
+		for _, row := range scalarData.Data {
+			if len(row) <= serverAddrIdx || len(row) <= netPeerIdx {
+				continue
+			}
+
+			var serverName any
+			if isValidValue(row[serverAddrIdx]) {
+				serverName = row[serverAddrIdx]
+			} else if isValidValue(row[netPeerIdx]) {
+				serverName = row[netPeerIdx]
+			}
+
+			if serverName != nil {
+				newRow := make([]any, len(row)-1)
+				newRow[0] = serverName
+
+				targetIdx := 1
+				for i, val := range row {
+					if i != netPeerIdx && i != serverAddrIdx {
+						if targetIdx < len(newRow) {
+							newRow[targetIdx] = val
+							targetIdx++
+						}
+					}
+				}
+				newRows = append(newRows, newRow)
+			}
+		}
+
+		newColumns := make([]*qbtypes.ColumnDescriptor, len(scalarData.Columns)-1)
+		targetIdx := 0
+		for i, col := range scalarData.Columns {
+			if i == serverAddrIdx {
+				newCol := &qbtypes.ColumnDescriptor{
+					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+						Name:          serverNameKey,
+						FieldDataType: col.FieldDataType,
+						FieldContext:  col.FieldContext,
+						Signal:        col.Signal,
+					},
+					QueryName:        col.QueryName,
+					AggregationIndex: col.AggregationIndex,
+					Meta:             col.Meta,
+					Type:             col.Type,
+				}
+				newColumns[targetIdx] = newCol
+				targetIdx++
+			} else if i != netPeerIdx {
+				newColumns[targetIdx] = col
+				targetIdx++
+			}
+		}
+
+		scalarData.Columns = newColumns
+		scalarData.Data = newRows
 	}
 
 	return result
+}
+
+func isValidValue(val any) bool {
+	if val == nil {
+		return false
+	}
+	if str, ok := val.(string); ok {
+		return str != "" && str != "n/a"
+	}
+	return true
 }
 
 func FilterResponse(results []*qbtypes.QueryRangeResponse) []*qbtypes.QueryRangeResponse {
