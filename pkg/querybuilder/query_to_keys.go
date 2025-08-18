@@ -43,13 +43,16 @@ func QueryStringToKeysSelectors(query string) []*telemetrytypes.FieldKeySelector
 				FieldDataType: key.FieldDataType,
 			})
 
-			if key.FieldContext != telemetrytypes.FieldContextUnspecified {
+			if key.FieldContext == telemetrytypes.FieldContextLog ||
+				key.FieldContext == telemetrytypes.FieldContextSpan ||
+				key.FieldContext == telemetrytypes.FieldContextMetric ||
+				key.FieldContext == telemetrytypes.FieldContextTrace {
 				// span.kind in metrics or metric.max_count in span etc.. should get the search on span.kind
 				// see note in where_clause_visitor.go in VisitKey(...)
 				keys = append(keys, &telemetrytypes.FieldKeySelector{
 					Name:          key.FieldContext.StringValue() + "." + key.Name,
 					Signal:        key.Signal,
-					FieldContext:  key.FieldContext,
+					FieldContext:  telemetrytypes.FieldContextAttribute, // do not keep the original context because this is attribute
 					FieldDataType: key.FieldDataType,
 				})
 			}
