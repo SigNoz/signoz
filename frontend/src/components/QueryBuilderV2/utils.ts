@@ -2,6 +2,7 @@
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
 import {
 	DEPRECATED_OPERATORS_MAP,
+	NON_VALUE_OPERATORS,
 	OPERATORS,
 } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
@@ -96,6 +97,10 @@ export const convertFiltersToExpression = (
 					DEPRECATED_OPERATORS_MAP[
 						operator as keyof typeof DEPRECATED_OPERATORS_MAP
 					];
+			}
+
+			if (NON_VALUE_OPERATORS.includes(operator)) {
+				return `${key.key} ${operator}`;
 			}
 
 			if (isFunctionOperator(operator)) {
