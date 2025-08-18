@@ -99,7 +99,7 @@ export function isQueryPairComplete(queryPair: Partial<IQueryPair>): boolean {
 export function isFunctionOperator(operator: string): boolean {
 	const functionOperators = Object.values(QUERY_BUILDER_FUNCTIONS);
 
-	const sanitizedOperator = operator.trim();
+	const sanitizedOperator = operator.trim().toLowerCase();
 	// Check if it's a direct function operator
 	if (functionOperators.includes(sanitizedOperator)) {
 		return true;
