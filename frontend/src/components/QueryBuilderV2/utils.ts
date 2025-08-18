@@ -170,10 +170,9 @@ export const convertFiltersToExpressionWithExistingQuery = (
 			if (Object.keys(DEPRECATED_OPERATORS_MAP).includes(opLower)) {
 				return {
 					...item,
-					op:
-						DEPRECATED_OPERATORS_MAP[
-							opLower as keyof typeof DEPRECATED_OPERATORS_MAP
-						],
+					op: DEPRECATED_OPERATORS_MAP[
+						opLower as keyof typeof DEPRECATED_OPERATORS_MAP
+					].toLowerCase(),
 				};
 			}
 			return item;
