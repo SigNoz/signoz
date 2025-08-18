@@ -43,7 +43,7 @@ function Explorer(): JSX.Element {
 		() =>
 			updateAllQueriesOperators(
 				initialQueryMeterWithType,
-				PANEL_TYPES.TIME_SERIES,
+				PANEL_TYPES.BAR,
 				DataSource.METRICS,
 				'meter' as 'meter' | '',
 			),
@@ -54,7 +54,7 @@ function Explorer(): JSX.Element {
 		() =>
 			updateAllQueriesOperators(
 				currentQuery || initialQueryMeterWithType,
-				PANEL_TYPES.TIME_SERIES,
+				PANEL_TYPES.BAR,
 				DataSource.METRICS,
 				'meter' as 'meter' | '',
 			),
@@ -75,7 +75,7 @@ function Explorer(): JSX.Element {
 
 			const dashboardEditView = generateExportToDashboardLink({
 				query: queryToExport || exportDefaultQuery,
-				panelType: PANEL_TYPES.TIME_SERIES,
+				panelType: PANEL_TYPES.BAR,
 				dashboardId: dashboard.id,
 				widgetId,
 			});

@@ -80,6 +80,7 @@ const ROUTES = {
 	METER_EXPLORER_BASE: '/meter-explorer',
 	METER_EXPLORER: '/meter-explorer',
 	METER_EXPLORER_VIEWS: '/meter-explorer/views',
+	METER_EXPLORER_COST: '/meter-explorer/cost',
 	HOME_PAGE: '/',
 } as const;
 

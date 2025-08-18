@@ -5,12 +5,12 @@ import { TabRoutes } from 'components/RouteTab/types';
 import history from 'lib/history';
 import { useLocation } from 'react-use';
 
-import { Explorer, Views } from './constants';
+import { Cost, Explorer, Views } from './constants';
 
 function MeterExplorerPage(): JSX.Element {
 	const { pathname } = useLocation();
 
-	const routes: TabRoutes[] = [Explorer, Views];
+	const routes: TabRoutes[] = [Cost, Explorer, Views];
 
 	return (
 		<div className="meter-explorer-page">

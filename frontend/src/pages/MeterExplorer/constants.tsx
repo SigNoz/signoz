@@ -1,5 +1,6 @@
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
+import CostPage from 'container/MeterExplorer/Cost/Cost';
 import ExplorerPage from 'container/MeterExplorer/Explorer';
 import { Compass, TowerControl } from 'lucide-react';
 import SaveView from 'pages/SaveView';
@@ -29,4 +30,15 @@ export const Views: TabRoutes = {
 	),
 	route: ROUTES.METER_EXPLORER_VIEWS,
 	key: ROUTES.METER_EXPLORER_VIEWS,
+};
+
+export const Cost: TabRoutes = {
+	Component: CostPage,
+	name: (
+		<div className="tab-item">
+			<TowerControl size={16} /> Breakdown
+		</div>
+	),
+	route: ROUTES.METER_EXPLORER_COST,
+	key: ROUTES.METER_EXPLORER_COST,
 };

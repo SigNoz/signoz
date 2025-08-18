@@ -458,6 +458,13 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 	},
 	{
+		path: ROUTES.METER_EXPLORER_COST,
+		exact: true,
+		component: MeterExplorer,
+		key: 'METER_EXPLORER_COST',
+		isPrivate: true,
+	},
+	{
 		path: ROUTES.API_MONITORING,
 		exact: true,
 		component: ApiMonitoring,
