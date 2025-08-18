@@ -385,9 +385,6 @@ func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc
 }
 
 func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceItem, *model.ApiError) {
-
-	fmt.Printf("Inside GetServices\n")
-
 	if r.indexTable == "" {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
 	}
@@ -396,8 +393,6 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 	if apiErr != nil {
 		return nil, apiErr
 	}
-
-	fmt.Printf("TopLevelOps: %v\n", topLevelOps)
 	// Collect (name, serviceName) pairs to maintain service context
 	var serviceOperationPairs [][]interface{}
 	serviceOperationsMap := make(map[string][]string)
@@ -492,8 +487,6 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 		zap.L().Error("Error iterating over service results", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
-
-	fmt.Printf("ServiceItems: %v\n", serviceItems)
 
 	return &serviceItems, nil
 }
