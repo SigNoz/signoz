@@ -428,7 +428,7 @@ func (r *ClickHouseReader) GetServicesOG(ctx context.Context, queryParams *model
 
 			query := fmt.Sprintf(
 				`SELECT
-					quantileExact(0.99)(duration_nano) as p99,
+					toFloat64(quantileExact(0.99)(duration_nano)) as p99,
 					avg(duration_nano) as avgDuration,
 					count(*) as numCalls
 				FROM %s.%s
@@ -553,7 +553,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 	query := fmt.Sprintf(`
 		SELECT 
 			resource_string_service$$name AS serviceName,
-			quantileExact(0.99)(duration_nano) AS p99,
+			toFloat64(quantileExact(0.99)(duration_nano)) AS p99,
 			avg(duration_nano) AS avgDuration,
 			count(*) AS numCalls,
 			countIf(statusCode = 2) AS numErrors
@@ -1021,9 +1021,9 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 
 	query := fmt.Sprintf(`
 		SELECT
-			quantile(0.5)(durationNano) as p50,
-			quantileExact(0.95)(durationNano) as p95,
-			quantileExact(0.99)(durationNano) as p99,
+			toFloat64(quantileExact(0.5)(durationNano)) as p50,
+			toFloat64(quantileExact(0.95)(durationNano)) as p95,
+			toFloat64(quantileExact(0.99)(durationNano)) as p99,
 			COUNT(*) as numCalls,
 			countIf(status_code=2) as errorCount,
 			name
@@ -1505,11 +1505,11 @@ func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *
 		SELECT
 			src as parent,
 			dest as child,
-			result[1] AS p50,
-			result[2] AS p75,
-			result[3] AS p90,
-			result[4] AS p95,
-			result[5] AS p99,
+			toFloat64(result[1]) AS p50,
+			toFloat64(result[2]) AS p75,
+			toFloat64(result[3]) AS p90,
+			toFloat64(result[4]) AS p95,
+			toFloat64(result[5]) AS p99,
 			sum(total_count) as callCount,
 			sum(total_count)/ @duration AS callRate,
 			sum(error_count)/sum(total_count) * 100 as errorRate
