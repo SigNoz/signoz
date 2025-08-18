@@ -131,7 +131,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 								"filter": {
 									"expression": "trace_duration > 200ms AND span_count >= 5"
 								},
-								"orderBy": [{
+								"order": [{
 									"key": {
 										"name": "trace_duration"
 									},
@@ -230,7 +230,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 								"name": "complex_trace_analysis",
 								"expression": "A => (B && NOT C)",
 								"filter": { "expression": "trace_duration BETWEEN 100ms AND 5s AND span_count IN (5, 10, 15)" },
-								"orderBy": [{
+								"order": [{
 									"key": { "name": "span_count" },
 									"direction": "asc"
 								}],
