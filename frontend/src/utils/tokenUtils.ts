@@ -119,3 +119,17 @@ export function isFunctionOperator(operator: string): boolean {
 
 	return false;
 }
+
+export function isNonValueOperator(operator: string): boolean {
+	const upperOperator = operator.toUpperCase();
+	// Check if it's a direct non-value operator
+	if (NON_VALUE_OPERATORS.includes(upperOperator)) {
+		return true;
+	}
+	// Check if it's a NOT non-value operator (e.g., "NOT EXISTS")
+	if (upperOperator.startsWith(OPERATORS.NOT)) {
+		const operatorWithoutNot = upperOperator.substring(4).trim(); // Remove "NOT " prefix
+		return NON_VALUE_OPERATORS.includes(operatorWithoutNot);
+	}
+	return false;
+}

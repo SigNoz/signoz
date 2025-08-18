@@ -2,7 +2,6 @@
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
 import {
 	DEPRECATED_OPERATORS_MAP,
-	NON_VALUE_OPERATORS,
 	OPERATORS,
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
@@ -26,7 +25,7 @@ import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 import { unquote } from 'utils/stringUtils';
-import { isFunctionOperator } from 'utils/tokenUtils';
+import { isFunctionOperator, isNonValueOperator } from 'utils/tokenUtils';
 import { v4 as uuid } from 'uuid';
 
 /**
@@ -100,7 +99,7 @@ export const convertFiltersToExpression = (
 					];
 			}
 
-			if (NON_VALUE_OPERATORS.includes(operator.toUpperCase())) {
+			if (isNonValueOperator(operator)) {
 				return `${key.key} ${operator}`;
 			}
 
