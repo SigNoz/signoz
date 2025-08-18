@@ -530,38 +530,24 @@ func (r *ClickHouseReader) GetServicesOptimized(ctx context.Context, queryParams
 	if apiErr != nil {
 		return nil, apiErr
 	}
-	// Collect (name, serviceName) pairs to maintain service context
-	var serviceOperationPairs [][2]string
+	// Build parallel arrays for arrayZip approach
+	var ops []string
+	var svcs []string
 	serviceOperationsMap := make(map[string][]string)
 
-	for svc, ops := range *topLevelOps {
+	for svc, opsList := range *topLevelOps {
 		// Cap operations to 1500 per service (same as original logic)
-		cappedOps := ops[:int(math.Min(1500, float64(len(ops))))]
+		cappedOps := opsList[:int(math.Min(1500, float64(len(opsList))))]
 		serviceOperationsMap[svc] = cappedOps
 
-		// Create (name, serviceName) pairs for this service
+		// Add to parallel arrays
 		for _, op := range cappedOps {
-			serviceOperationPairs = append(serviceOperationPairs, [2]string{op, svc})
+			ops = append(ops, op)
+			svcs = append(svcs, svc)
 		}
 	}
 
-	fmt.Printf("ServiceOperationPairs count: %d\n", len(serviceOperationPairs))
-	// Build the optimized single query with GROUP BY using (name, serviceName) pairs
-	query := fmt.Sprintf(`
-		SELECT 
-			resource_string_service$$name as serviceName,
-			quantile(0.99)(duration_nano) as p99,
-			avg(duration_nano) as avgDuration,
-			count(*) as numCalls,
-			countIf(statusCode = 2) as numErrors
-		FROM %s.%s
-		WHERE (name, resource_string_service$$name) IN @serviceOperationPairs 
-			AND timestamp >= @start 
-			AND timestamp <= @end
-			AND ts_bucket_start >= @start_bucket 
-			AND ts_bucket_start <= @end_bucket`,
-		r.TraceDB, r.traceTableName,
-	)
+	fmt.Printf("Operation pairs count: %d\n", len(ops))
 
 	// Build resource subquery for all services
 	resourceSubQuery, err := r.buildResourceSubQueryForAllServices(queryParams.Tags, *queryParams.Start, *queryParams.End)
@@ -570,20 +556,37 @@ func (r *ClickHouseReader) GetServicesOptimized(ctx context.Context, queryParams
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
-	query += ` AND (resource_fingerprint GLOBAL IN ` + resourceSubQuery + `)`
-	query += ` GROUP BY serviceName ORDER BY numCalls DESC`
-
-	fmt.Printf("Query: %s\n", query)
+	// Build the optimized single query using arrayZip for tuple creation
+	query := fmt.Sprintf(`
+		SELECT 
+			resource_string_service$$name AS serviceName,
+			quantile(0.99)(duration_nano) AS p99,
+			avg(duration_nano) AS avgDuration,
+			count(*) AS numCalls,
+			countIf(statusCode = 2) AS numErrors
+		FROM %s.%s
+		WHERE (name, resource_string_service$$name) IN arrayZip(@ops, @svcs)
+			AND timestamp >= @start 
+			AND timestamp <= @end
+			AND ts_bucket_start >= @start_bucket 
+			AND ts_bucket_start <= @end_bucket
+			AND (resource_fingerprint GLOBAL IN %s)
+		GROUP BY serviceName
+		ORDER BY numCalls DESC`,
+		r.TraceDB, r.traceTableName, resourceSubQuery,
+	)
 
 	args := []interface{}{
 		clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
 		clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
 		clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
 		clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
-		clickhouse.Named("serviceOperationPairs", serviceOperationPairs),
+		// Important: wrap slices with clickhouse.Array for IN/array params
+		clickhouse.Named("ops", ops),
+		clickhouse.Named("svcs", svcs),
 	}
 
-	fmt.Printf("query: %s\n", query)
+	fmt.Printf("Query: %s\n", query)
 
 	// Execute the single optimized query
 	rows, err := r.db.Query(ctx, query, args...)
