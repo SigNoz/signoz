@@ -88,8 +88,8 @@ function createBaseSpec(
 				? queryData.groupBy.map(
 						(item: any): GroupByKey => ({
 							name: item.key,
-							fieldDataType: item?.dataType,
-							fieldContext: item?.type,
+							fieldDataType: item?.dataType || '',
+							fieldContext: item?.type || '',
 							description: item?.description,
 							unit: item?.unit,
 							signal: item?.signal,

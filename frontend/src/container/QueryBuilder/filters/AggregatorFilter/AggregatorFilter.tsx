@@ -88,13 +88,11 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 								label={transformStringWithPrefix({
 									str: item.key,
 									prefix: item.type || '',
-									condition: false,
 								})}
 								value={removePrefix(
 									transformStringWithPrefix({
 										str: item.key,
 										prefix: item.type || '',
-										condition: false,
 									}),
 									item.type || '',
 								)}
@@ -288,7 +286,6 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				query.aggregateAttribute?.key ||
 				'',
 			prefix: query.aggregateAttribute?.type || '',
-			condition: false,
 		}),
 		query.aggregateAttribute?.type ? query.aggregateAttribute?.type : '',
 	);

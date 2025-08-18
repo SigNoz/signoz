@@ -47,7 +47,6 @@ export function HavingFilter({
 			transformStringWithPrefix({
 				str: query.aggregateAttribute?.key || '',
 				prefix: query.aggregateAttribute?.type || '',
-				condition: false,
 			}),
 		[query],
 	);

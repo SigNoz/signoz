@@ -100,7 +100,7 @@ describe('mapQueryDataFromApi', (): void => {
 				key: 'service.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: 'service.name--string--resource--true',
+				id: 'service.name--string--resource',
 			},
 		]);
 		// aggregations replaced with array from V5 spec
@@ -190,7 +190,7 @@ describe('mapQueryDataFromApi', (): void => {
 						groupBy: [
 							{
 								dataType: 'string',
-								id: 'service.name--string--resource--true',
+								id: 'service.name--string--resource',
 								key: 'service.name',
 								type: 'resource',
 							},
