@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -384,6 +385,131 @@ func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc
 	return resourceSubQuery, nil
 }
 
+func (r *ClickHouseReader) GetServicesOG(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceItem, *model.ApiError) {
+
+	if r.indexTable == "" {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
+	}
+
+	topLevelOps, apiErr := r.GetTopLevelOperations(ctx, *queryParams.Start, *queryParams.End, nil)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	serviceItems := []model.ServiceItem{}
+	var wg sync.WaitGroup
+	// limit the number of concurrent queries to not overload the clickhouse server
+	sem := make(chan struct{}, 10)
+	var mtx sync.RWMutex
+
+	for svc, ops := range *topLevelOps {
+		sem <- struct{}{}
+		wg.Add(1)
+		go func(svc string, ops []string) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			var serviceItem model.ServiceItem
+			var numErrors uint64
+
+			// Even if the total number of operations within the time range is less and the all
+			// the top level operations are high, we want to warn to let user know the issue
+			// with the instrumentation
+			serviceItem.DataWarning = model.DataWarning{
+				TopLevelOps: (*topLevelOps)[svc],
+			}
+
+			// default max_query_size = 262144
+			// Let's assume the average size of the item in `ops` is 50 bytes
+			// We can have 262144/50 = 5242 items in the `ops` array
+			// Although we have make it as big as 5k, We cap the number of items
+			// in the `ops` array to 1500
+
+			ops = ops[:int(math.Min(1500, float64(len(ops))))]
+
+			query := fmt.Sprintf(
+				`SELECT
+					quantile(0.99)(duration_nano) as p99,
+					avg(duration_nano) as avgDuration,
+					count(*) as numCalls
+				FROM %s.%s
+				WHERE resource_string_service$$name = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end`,
+				r.TraceDB, r.traceTableName,
+			)
+			errorQuery := fmt.Sprintf(
+				`SELECT
+					count(*) as numErrors
+				FROM %s.%s
+				WHERE resource_string_service$$name = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
+				r.TraceDB, r.traceTableName,
+			)
+
+			args := []interface{}{}
+			args = append(args,
+				clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
+				clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
+				clickhouse.Named("serviceName", svc),
+				clickhouse.Named("names", ops),
+			)
+
+			resourceSubQuery, err := r.buildResourceSubQuery(queryParams.Tags, svc, *queryParams.Start, *queryParams.End)
+			if err != nil {
+				zap.L().Error("Error in processing sql query", zap.Error(err))
+				return
+			}
+			query += `
+					AND (
+						resource_fingerprint GLOBAL IN ` +
+				resourceSubQuery +
+				`) AND ts_bucket_start >= @start_bucket AND ts_bucket_start <= @end_bucket`
+
+			args = append(args,
+				clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
+				clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
+			)
+
+			err = r.db.QueryRow(
+				ctx,
+				query,
+				args...,
+			).ScanStruct(&serviceItem)
+
+			if serviceItem.NumCalls == 0 {
+				return
+			}
+
+			if err != nil {
+				zap.L().Error("Error in processing sql query", zap.Error(err))
+				return
+			}
+
+			errorQuery += `
+					AND (
+						resource_fingerprint GLOBAL IN ` +
+				resourceSubQuery +
+				`) AND ts_bucket_start >= @start_bucket AND ts_bucket_start <= @end_bucket`
+
+			err = r.db.QueryRow(ctx, errorQuery, args...).Scan(&numErrors)
+			if err != nil {
+				zap.L().Error("Error in processing sql query", zap.Error(err))
+				return
+			}
+
+			serviceItem.ServiceName = svc
+			serviceItem.NumErrors = numErrors
+			mtx.Lock()
+			serviceItems = append(serviceItems, serviceItem)
+			mtx.Unlock()
+		}(svc, ops)
+	}
+	wg.Wait()
+
+	for idx := range serviceItems {
+		serviceItems[idx].CallRate = float64(serviceItems[idx].NumCalls) / float64(queryParams.Period)
+		serviceItems[idx].ErrorRate = float64(serviceItems[idx].NumErrors) * 100 / float64(serviceItems[idx].NumCalls)
+	}
+	return &serviceItems, nil
+}
+
 func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceItem, *model.ApiError) {
 	if r.indexTable == "" {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
@@ -498,6 +624,51 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 	if err = rows.Err(); err != nil {
 		zap.L().Error("Error iterating over service results", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	// Fetch results from the original GetServicesOG for comparison
+	ogResults, ogErr := r.GetServicesOG(ctx, queryParams)
+	if ogErr != nil {
+		zap.L().Error("Error fetching OG service results", zap.Error(ogErr))
+	} else {
+		// Compare the optimized results with OG results
+		ogMap := make(map[string]model.ServiceItem)
+		for _, ogItem := range *ogResults {
+			ogMap[ogItem.ServiceName] = ogItem
+		}
+
+		for _, optItem := range serviceItems {
+			if ogItem, exists := ogMap[optItem.ServiceName]; exists {
+				// Compare key fields (NumCalls, NumErrors, etc.)
+				if optItem.NumCalls != ogItem.NumCalls ||
+					optItem.NumErrors != ogItem.NumErrors ||
+					int64(optItem.Percentile99) != int64(ogItem.Percentile99) ||
+					int64(optItem.AvgDuration) != int64(ogItem.AvgDuration) {
+					fmt.Printf(
+						"[Discrepancy] Service: %s | optNumCalls: %d, ogNumCalls: %d | optNumErrors: %d, ogNumErrors: %d | optP99: %.2f, ogP99: %.2f | optAvgDuration: %.2f, ogAvgDuration: %.2f\n",
+						optItem.ServiceName,
+						optItem.NumCalls, ogItem.NumCalls,
+						optItem.NumErrors, ogItem.NumErrors,
+						optItem.Percentile99, ogItem.Percentile99,
+						optItem.AvgDuration, ogItem.AvgDuration,
+					)
+				}
+			} else {
+				zap.L().Warn("Service present in optimized results but missing in OG results",
+					zap.String("service", optItem.ServiceName))
+			}
+		}
+
+		// Check for services present in OG but missing in optimized
+		optMap := make(map[string]struct{})
+		for _, optItem := range serviceItems {
+			optMap[optItem.ServiceName] = struct{}{}
+		}
+		for _, ogItem := range *ogResults {
+			if _, exists := optMap[ogItem.ServiceName]; !exists {
+				fmt.Printf("Service present in OG results but missing in optimized results: %s\n", ogItem.ServiceName)
+			}
+		}
 	}
 
 	return &serviceItems, nil
