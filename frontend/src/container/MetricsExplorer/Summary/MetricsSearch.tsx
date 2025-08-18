@@ -1,9 +1,9 @@
-import { Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { cloneDeep } from 'lodash-es';
-import { Info } from 'lucide-react';
+import { Info, Play } from 'lucide-react';
 import { useState } from 'react';
 import {
 	IBuilderQuery,
@@ -12,7 +12,6 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 
 import { MetricsSearchProps } from './types';
-import { areAllFiltersComplete } from './utils';
 
 function MetricsSearch({ onChange, query }: MetricsSearchProps): JSX.Element {
 	const [contextQuery, setContextQuery] = useState<IBuilderQuery | undefined>(
@@ -60,17 +59,10 @@ function MetricsSearch({ onChange, query }: MetricsSearchProps): JSX.Element {
 			};
 			setContextQuery(updatedContextQuery);
 		}
-
-		const newFilters: TagFilter = {
-			items: expression ? convertExpressionToFilters(expression) : [],
-			op: 'AND',
-		};
-		// If all filters are complete, run the query
-		if (areAllFiltersComplete(newFilters)) {
-			onChange(newFilters);
-		}
 	};
 
+	const handleStageAndRunQuery = (): void =>
+		handleRunQuery(contextQuery?.filter?.expression || '');
 	return (
 		<div className="metrics-search-container">
 			<div className="qb-search-container">
@@ -90,6 +82,14 @@ function MetricsSearch({ onChange, query }: MetricsSearchProps): JSX.Element {
 					/>
 				)}
 			</div>
+			<Button
+				type="primary"
+				onClick={handleStageAndRunQuery}
+				className="stage-run-query"
+				icon={<Play size={14} />}
+			>
+				Stage & Run Query
+			</Button>
 			<div className="metrics-search-options">
 				<DateTimeSelectionV2
 					showAutoRefresh={false}
