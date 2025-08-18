@@ -398,29 +398,23 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 	}
 
 	fmt.Printf("TopLevelOps: %v\n", topLevelOps)
-	// Collect all operations from all services for the single query
-	var allOperations []string
+	// Collect (name, serviceName) pairs to maintain service context
+	var serviceOperationPairs [][]interface{}
 	serviceOperationsMap := make(map[string][]string)
 
 	for svc, ops := range *topLevelOps {
 		// Cap operations to 1500 per service (same as original logic)
 		cappedOps := ops[:int(math.Min(1500, float64(len(ops))))]
 		serviceOperationsMap[svc] = cappedOps
-		allOperations = append(allOperations, cappedOps...)
-	}
 
-	// Remove duplicates from allOperations
-	uniqueOps := make([]string, 0, len(allOperations))
-	seen := make(map[string]bool)
-	for _, op := range allOperations {
-		if !seen[op] {
-			seen[op] = true
-			uniqueOps = append(uniqueOps, op)
+		// Create (name, serviceName) pairs for this service
+		for _, op := range cappedOps {
+			serviceOperationPairs = append(serviceOperationPairs, []interface{}{op, svc})
 		}
 	}
 
-	fmt.Printf("UniqueOps: %v\n", uniqueOps)
-	// Build the optimized single query with GROUP BY
+	fmt.Printf("ServiceOperationPairs count: %d\n", len(serviceOperationPairs))
+	// Build the optimized single query with GROUP BY using (name, serviceName) pairs
 	query := fmt.Sprintf(`
 		SELECT 
 			resource_string_service$$name as serviceName,
@@ -429,7 +423,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 			count(*) as numCalls,
 			countIf(statusCode = 2) as numErrors
 		FROM %s.%s
-		WHERE name IN @allOperations 
+		WHERE (name, resource_string_service$$name) IN @serviceOperationPairs 
 			AND timestamp >= @start 
 			AND timestamp <= @end
 			AND ts_bucket_start >= @start_bucket 
@@ -454,7 +448,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 		clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
 		clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
 		clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
-		clickhouse.Named("allOperations", uniqueOps),
+		clickhouse.Named("serviceOperationPairs", serviceOperationPairs),
 	}
 
 	fmt.Printf("query: %s\n", query)
