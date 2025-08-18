@@ -117,7 +117,7 @@ function createBaseSpec(
 	)[])?.filter((c) => ('key' in c ? c?.key : c?.name));
 
 	return {
-		stepInterval: queryData?.stepInterval || undefined,
+		stepInterval: queryData?.stepInterval || null,
 		disabled: queryData.disabled,
 		filter: queryData?.filter?.expression ? queryData.filter : undefined,
 		groupBy:
