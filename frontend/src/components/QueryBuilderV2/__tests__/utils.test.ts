@@ -63,6 +63,12 @@ describe('convertFiltersToExpression', () => {
 					op: '=',
 					value: 0,
 				},
+				{
+					id: '7',
+					key: { key: 'regex', type: 'string' },
+					op: 'regex',
+					value: '.*',
+				},
 			],
 			op: 'AND',
 		};
@@ -70,7 +76,7 @@ describe('convertFiltersToExpression', () => {
 		const result = convertFiltersToExpression(filters);
 		expect(result).toEqual({
 			expression:
-				"service = 'api-gateway' AND status != 'error' AND duration > 100 AND count <= 50 AND is_active = true AND enabled = false AND count = 0",
+				"service = 'api-gateway' AND status != 'error' AND duration > 100 AND count <= 50 AND is_active = true AND enabled = false AND count = 0 AND regex REGEXP '.*'",
 		});
 	});
 
