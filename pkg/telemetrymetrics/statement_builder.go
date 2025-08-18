@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -17,6 +18,48 @@ import (
 const (
 	RateWithoutNegative     = `If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, per_series_value / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window), (per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))`
 	IncreaseWithoutNegative = `If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, per_series_value, ((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window)) * (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))`
+
+	RateWithInterpolation = `
+		CASE 
+			WHEN row_number() OVER rate_window = 1 THEN 
+				-- First row: try to interpolate using next value
+				CASE 
+					WHEN leadInFrame(per_series_value, 1) OVER rate_window IS NOT NULL THEN
+						-- Assume linear growth to next point
+						(leadInFrame(per_series_value, 1) OVER rate_window - per_series_value) / 
+						(leadInFrame(ts, 1) OVER rate_window - ts)
+					ELSE 
+						0  -- No next value either, can't interpolate
+				END
+			WHEN (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) < 0 THEN
+				-- Counter reset detected
+				per_series_value / (ts - lagInFrame(ts, 1) OVER rate_window)
+			ELSE 
+				-- Normal case: calculate rate
+				(per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) / 
+				(ts - lagInFrame(ts, 1) OVER rate_window)
+		END`
+
+	IncreaseWithInterpolation = `
+		CASE 
+			WHEN row_number() OVER rate_window = 1 THEN 
+				-- First row: try to interpolate using next value
+				CASE 
+					WHEN leadInFrame(per_series_value, 1) OVER rate_window IS NOT NULL THEN
+						-- Calculate the interpolated increase for this interval
+						((leadInFrame(per_series_value, 1) OVER rate_window - per_series_value) / 
+						 (leadInFrame(ts, 1) OVER rate_window - ts)) * 
+						(leadInFrame(ts, 1) OVER rate_window - ts)
+					ELSE 
+						0  -- No next value either, can't interpolate
+				END
+			WHEN (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) < 0 THEN
+				-- Counter reset detected: the increase is the current value
+				per_series_value
+			ELSE 
+				-- Normal case: calculate increase
+				(per_series_value - lagInFrame(per_series_value, 1) OVER rate_window)
+		END`
 )
 
 type MetricQueryStatementBuilder struct {
@@ -444,6 +487,9 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	switch query.Aggregations[0].TimeAggregation {
 	case metrictypes.TimeAggregationRate:
 		rateExpr := fmt.Sprintf(RateWithoutNegative, start, start)
+		if os.Getenv("INTERPOLATION_ENABLED") == "true" {
+			rateExpr = RateWithInterpolation
+		}
 		wrapped := sqlbuilder.NewSelectBuilder()
 		wrapped.Select("ts")
 		for _, g := range query.GroupBy {
@@ -456,6 +502,9 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 
 	case metrictypes.TimeAggregationIncrease:
 		incExpr := fmt.Sprintf(IncreaseWithoutNegative, start, start)
+		if os.Getenv("INTERPOLATION_ENABLED") == "true" {
+			incExpr = IncreaseWithInterpolation
+		}
 		wrapped := sqlbuilder.NewSelectBuilder()
 		wrapped.Select("ts")
 		for _, g := range query.GroupBy {
