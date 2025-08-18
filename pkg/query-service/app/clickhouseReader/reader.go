@@ -412,8 +412,12 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 
 	fmt.Printf("Operation pairs count: %d\n", len(ops))
 
-	// Build resource subquery for all services
-	resourceSubQuery, err := r.buildResourceSubQueryForAllServices(queryParams.Tags, *queryParams.Start, *queryParams.End)
+	// Build resource subquery for all services, but only include our target services
+	targetServices := make([]string, 0, len(*topLevelOps))
+	for svc := range *topLevelOps {
+		targetServices = append(targetServices, svc)
+	}
+	resourceSubQuery, err := r.buildResourceSubQueryForServices(queryParams.Tags, targetServices, *queryParams.Start, *queryParams.End)
 	if err != nil {
 		zap.L().Error("Error building resource subquery", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
@@ -494,24 +498,35 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 	return &serviceItems, nil
 }
 
-// buildResourceSubQueryForAllServices builds a resource subquery that includes all services
-// This is optimized to avoid building individual subqueries for each service
-func (r *ClickHouseReader) buildResourceSubQueryForAllServices(tags []model.TagQueryParam, start, end time.Time) (string, error) {
+// buildResourceSubQueryForServices builds a resource subquery that includes only specific services
+// This maintains service context while optimizing for multiple services in a single query
+func (r *ClickHouseReader) buildResourceSubQueryForServices(tags []model.TagQueryParam, targetServices []string, start, end time.Time) (string, error) {
+	if len(targetServices) == 0 {
+		return "", fmt.Errorf("no target services provided")
+	}
+
 	if len(tags) == 0 {
-		// If no tags, return a simple query that includes all services
+		// If no tags, return a simple query that includes only our target services
 		return fmt.Sprintf(`
 			(SELECT DISTINCT fingerprint 
 			 FROM %s.%s 
 			 WHERE seen_at_ts_bucket_start >= %d 
-			   AND seen_at_ts_bucket_start <= %d)`,
+			   AND seen_at_ts_bucket_start <= %d
+			   AND simpleJSONExtractString(labels, 'service.name') IN (%s))`,
 			r.TraceDB, r.traceResourceTableV3,
 			start.Unix()-1800, end.Unix(),
+			r.buildServiceInClause(targetServices),
 		), nil
 	}
 
 	// Convert tags to filter set
 	filterSet := v3.FilterSet{}
 	for _, tag := range tags {
+		// Skip the collector id as we don't add it to traces
+		if tag.Key == "signoz.collector.id" {
+			continue
+		}
+
 		var it v3.FilterItem
 		it.Key = v3.AttributeKey{
 			Key:      tag.Key,
@@ -533,7 +548,18 @@ func (r *ClickHouseReader) buildResourceSubQueryForAllServices(tags []model.TagQ
 		filterSet.Items = append(filterSet.Items, it)
 	}
 
-	// Build resource subquery without service-specific filtering
+	// Add service filter to limit to our target services
+	filterSet.Items = append(filterSet.Items, v3.FilterItem{
+		Key: v3.AttributeKey{
+			Key:      "service.name",
+			DataType: v3.AttributeKeyDataTypeString,
+			Type:     v3.AttributeKeyTypeResource,
+		},
+		Operator: v3.FilterOperatorIn,
+		Value:    targetServices,
+	})
+
+	// Build resource subquery with service-specific filtering
 	resourceSubQuery, err := resource.BuildResourceSubQuery(
 		r.TraceDB,
 		r.traceResourceTableV3,
@@ -544,10 +570,21 @@ func (r *ClickHouseReader) buildResourceSubQueryForAllServices(tags []model.TagQ
 		v3.AttributeKey{},
 		false)
 	if err != nil {
-		zap.L().Error("Error building resource subquery for all services", zap.Error(err))
+		zap.L().Error("Error building resource subquery for services", zap.Error(err))
 		return "", err
 	}
 	return resourceSubQuery, nil
+}
+
+// buildServiceInClause creates a properly quoted IN clause for service names
+func (r *ClickHouseReader) buildServiceInClause(services []string) string {
+	var quotedServices []string
+	for _, svc := range services {
+		// Escape single quotes and wrap in quotes
+		escapedSvc := strings.ReplaceAll(svc, "'", "\\'")
+		quotedServices = append(quotedServices, fmt.Sprintf("'%s'", escapedSvc))
+	}
+	return strings.Join(quotedServices, ", ")
 }
 
 func getStatusFilters(query string, statusParams []string, excludeMap map[string]struct{}) string {
