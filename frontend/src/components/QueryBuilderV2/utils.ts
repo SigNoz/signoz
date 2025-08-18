@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
-import { OPERATORS } from 'constants/antlrQueryConstants';
+import { NON_VALUE_OPERATORS, OPERATORS } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { cloneDeep } from 'lodash-es';
 import { IQueryPair } from 'types/antlrQueryTypes';
@@ -87,6 +87,10 @@ export const convertFiltersToExpression = (
 				return '';
 			}
 
+			if (NON_VALUE_OPERATORS.includes(op.trim().toUpperCase())) {
+				return `${key.key} ${op}`;
+			}
+
 			if (isFunctionOperator(op)) {
 				return `${op}(${key.key}, ${value})`;
 			}
@@ -140,6 +144,19 @@ export const convertExpressionToFilters = (
 
 	return filters;
 };
+const getQueryPairsMap = (query: string): Map<string, IQueryPair> => {
+	const queryPairs = extractQueryPairs(query);
+	const queryPairsMap: Map<string, IQueryPair> = new Map();
+
+	queryPairs.forEach((pair) => {
+		const key = pair.hasNegation
+			? `${pair.key}-not ${pair.operator}`.trim().toLowerCase()
+			: `${pair.key}-${pair.operator}`.trim().toLowerCase();
+		queryPairsMap.set(key, pair);
+	});
+
+	return queryPairsMap;
+};
 
 export const convertFiltersToExpressionWithExistingQuery = (
 	filters: TagFilter,
@@ -153,26 +170,13 @@ export const convertFiltersToExpressionWithExistingQuery = (
 		};
 	}
 
-	// Extract query pairs from the existing query
-	const queryPairs = extractQueryPairs(existingQuery.trim());
-	let queryPairsMap: Map<string, IQueryPair> = new Map();
-
 	const updatedFilters = cloneDeep(filters); // Clone filters to avoid direct mutation
 	const nonExistingFilters: TagFilterItem[] = [];
 	let modifiedQuery = existingQuery; // We'll modify this query as we proceed
 	const visitedPairs: Set<string> = new Set(); // Set to track visited query pairs
 
 	// Map extracted query pairs to key-specific pair information for faster access
-	if (queryPairs.length > 0) {
-		queryPairsMap = new Map(
-			queryPairs.map((pair) => {
-				const key = pair.hasNegation
-					? `${pair.key}-not ${pair.operator}`.trim().toLowerCase()
-					: `${pair.key}-${pair.operator}`.trim().toLowerCase();
-				return [key, pair];
-			}),
-		);
-	}
+	let queryPairsMap = getQueryPairsMap(existingQuery.trim());
 
 	filters?.items?.forEach((filter) => {
 		const { key, op, value } = filter;
@@ -205,6 +209,8 @@ export const convertFiltersToExpressionWithExistingQuery = (
 					modifiedQuery.slice(0, existingPair.position.valueStart) +
 					formattedValue +
 					modifiedQuery.slice(existingPair.position.valueEnd + 1);
+
+				queryPairsMap = getQueryPairsMap(modifiedQuery);
 				return;
 			}
 
@@ -230,6 +236,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 							)}${OPERATORS.IN} ${formattedValue} ${modifiedQuery.slice(
 								notInPair.position.valueEnd + 1,
 							)}`;
+							queryPairsMap = getQueryPairsMap(modifiedQuery.trim());
 						}
 						shouldAddToNonExisting = false; // Don't add this to non-existing filters
 					} else if (
@@ -246,6 +253,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 							)}${OPERATORS.IN} ${formattedValue} ${modifiedQuery.slice(
 								equalsPair.position.valueEnd + 1,
 							)}`;
+							queryPairsMap = getQueryPairsMap(modifiedQuery);
 						}
 						shouldAddToNonExisting = false; // Don't add this to non-existing filters
 					} else if (
@@ -262,6 +270,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 							)}${OPERATORS.IN} ${formattedValue} ${modifiedQuery.slice(
 								notEqualsPair.position.valueEnd + 1,
 							)}`;
+							queryPairsMap = getQueryPairsMap(modifiedQuery);
 						}
 						shouldAddToNonExisting = false; // Don't add this to non-existing filters
 					}
@@ -283,6 +292,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 							} ${formattedValue} ${modifiedQuery.slice(
 								notEqualsPair.position.valueEnd + 1,
 							)}`;
+							queryPairsMap = getQueryPairsMap(modifiedQuery);
 						}
 						shouldAddToNonExisting = false; // Don't add this to non-existing filters
 					}
