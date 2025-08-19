@@ -110,6 +110,11 @@ func (comment *Comment) Set(key, value string) {
 }
 
 func (comment *Comment) Merge(vals map[string]string) {
+	// If vals is nil, do nothing. Comment should not panic.
+	if vals == nil {
+		return
+	}
+
 	comment.mtx.Lock()
 	defer comment.mtx.Unlock()
 
