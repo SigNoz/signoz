@@ -20,7 +20,7 @@ func TestCommentFromHTTPRequest(t *testing.T) {
 			expected: map[string]string{"http_path": "/logs/logs-explorer", "module_name": "logs-explorer"},
 		},
 		{
-			name:     "TraceExplorer",
+			name:     "TracesExplorer",
 			req:      &http.Request{Header: http.Header{"Referer": {"https://signoz.io/traces-explorer"}}},
 			expected: map[string]string{"http_path": "/traces-explorer", "module_name": "traces-explorer"},
 		},
