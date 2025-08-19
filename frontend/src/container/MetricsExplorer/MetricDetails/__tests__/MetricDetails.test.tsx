@@ -81,6 +81,12 @@ jest.mock('hooks/useSafeNavigate', () => ({
 		safeNavigate: jest.fn(),
 	}),
 }));
+jest.mock('react-query', () => ({
+	...jest.requireActual('react-query'),
+	useQueryClient: (): { invalidateQueries: () => void } => ({
+		invalidateQueries: jest.fn(),
+	}),
+}));
 
 describe('MetricDetails', () => {
 	it('renders metric details correctly', () => {
