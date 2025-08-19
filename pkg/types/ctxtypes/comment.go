@@ -97,6 +97,7 @@ func CommentFromHTTPRequest(req *http.Request) map[string]string {
 	return comments
 }
 
+// NewComment creates a new Comment with an empty map. It is safe to use concurrently.
 func NewComment() *Comment {
 	return &Comment{vals: map[string]string{}}
 }
