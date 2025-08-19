@@ -34,7 +34,7 @@ export const useAddDynamicVariableToPanels = (): ((
 				`$${name}`,
 				'',
 				'IN',
-			); // todo - Sagar: make a logic to have correct type and other details
+			);
 
 			return addTagFiltersToDashboard(
 				dashboard,
