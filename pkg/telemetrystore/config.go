@@ -46,6 +46,7 @@ type QuerySettings struct {
 	MaxBytesToRead                      int    `mapstructure:"max_bytes_to_read"`
 	MaxResultRows                       int    `mapstructure:"max_result_rows"`
 	IgnoreDataSkippingIndices           string `mapstructure:"ignore_data_skipping_indices"`
+	SecondaryIndicesEnableBulkFiltering bool   `mapstructure:"secondary_indices_enable_bulk_filtering"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {

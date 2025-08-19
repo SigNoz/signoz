@@ -2,7 +2,11 @@ package querybuilder
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"math"
+	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -19,6 +23,8 @@ func CollisionHandledFinalExpr(
 	cb qbtypes.ConditionBuilder,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	requiredDataType telemetrytypes.FieldDataType,
+	jsonBodyPrefix string,
+	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) (string, []any, error) {
 
 	if requiredDataType != telemetrytypes.FieldDataTypeString &&
@@ -96,7 +102,15 @@ func CollisionHandledFinalExpr(
 		if err != nil {
 			return "", nil, err
 		}
-		colName, _ = telemetrytypes.DataTypeCollisionHandledFieldName(field, dummyValue, colName)
+
+		if strings.HasPrefix(field.Name, jsonBodyPrefix) && jsonBodyPrefix != "" && jsonKeyToKey != nil {
+			// TODO(nitya): enable group by on body column?
+			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the body column")
+			// colName, _ = jsonKeyToKey(context.Background(), field, qbtypes.FilterOperatorUnknown, dummyValue)
+		} else {
+			colName, _ = telemetrytypes.DataTypeCollisionHandledFieldName(field, dummyValue, colName)
+		}
+
 		stmts = append(stmts, colName)
 	}
 
@@ -115,4 +129,59 @@ func GroupByKeys(keys []qbtypes.GroupByKey) []string {
 		k = append(k, "`"+key.Name+"`")
 	}
 	return k
+}
+
+func FormatValueForContains(value any) string {
+	if value == nil {
+		return ""
+	}
+
+	switch v := value.(type) {
+	case string:
+		return v
+	case []byte:
+		return string(v)
+
+	case json.Number:
+		return v.String()
+
+	case float64:
+		if v == math.Trunc(v) && v >= -1e15 && v <= 1e15 {
+			return fmt.Sprintf("%.0f", v)
+		}
+		return strconv.FormatFloat(v, 'f', -1, 64)
+
+	case float32:
+		return strconv.FormatFloat(float64(v), 'f', -1, 32)
+
+	case int, int8, int16, int32, int64:
+		return fmt.Sprintf("%d", v)
+
+	case uint, uint8, uint16, uint32, uint64:
+		return fmt.Sprintf("%d", v)
+
+	case bool:
+		return strconv.FormatBool(v)
+
+	case fmt.Stringer:
+		return v.String()
+
+	default:
+		// fallback - try to convert through reflection
+		rv := reflect.ValueOf(value)
+		switch rv.Kind() {
+		case reflect.Float32, reflect.Float64:
+			f := rv.Float()
+			if f == math.Trunc(f) && f >= -1e15 && f <= 1e15 {
+				return fmt.Sprintf("%.0f", f)
+			}
+			return strconv.FormatFloat(f, 'f', -1, 64)
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return strconv.FormatInt(rv.Int(), 10)
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return strconv.FormatUint(rv.Uint(), 10)
+		default:
+			return fmt.Sprintf("%v", value)
+		}
+	}
 }
