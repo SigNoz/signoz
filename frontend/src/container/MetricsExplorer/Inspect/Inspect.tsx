@@ -11,6 +11,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Compass } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
@@ -128,12 +129,30 @@ function Inspect({
 		[metricDetailsData],
 	);
 
+	const aggregateAttribute = useMemo(
+		() => ({
+			key: currentMetricName ?? '',
+			dataType: DataTypes.String,
+			type: selectedMetricType as string,
+			isColumn: true,
+			isJSON: false,
+			id: `${currentMetricName}--${DataTypes.String}--${selectedMetricType}--true`,
+		}),
+		[currentMetricName, selectedMetricType],
+	);
+
+	const [currentQueryData, setCurrentQueryData] = useState<IBuilderQuery>({
+		...searchQuery,
+		aggregateAttribute,
+	});
+
 	const resetInspection = useCallback(() => {
 		setShowExpandedView(false);
 		setPopoverOptions(null);
 		setExpandedViewOptions(null);
+		setCurrentQueryData(searchQuery as IBuilderQuery);
 		reset();
-	}, [reset]);
+	}, [reset, searchQuery]);
 
 	// Hide expanded view whenever inspection step changes
 	useEffect(() => {
@@ -204,13 +223,13 @@ function Inspect({
 						currentMetricName={currentMetricName}
 						setCurrentMetricName={setCurrentMetricName}
 						setAppliedMetricName={setAppliedMetricName}
-						metricType={selectedMetricType}
 						spaceAggregationLabels={spaceAggregationLabels}
 						currentMetricInspectionOptions={metricInspectionOptions.currentOptions}
 						dispatchMetricInspectionOptions={handleDispatchMetricInspectionOptions}
 						inspectionStep={inspectionStep}
 						inspectMetricsTimeSeries={inspectMetricsTimeSeries}
-						searchQuery={searchQuery as IBuilderQuery}
+						currentQuery={currentQueryData}
+						setCurrentQuery={setCurrentQueryData}
 					/>
 				</div>
 				<div className="inspect-metrics-content-second-col">
@@ -240,19 +259,20 @@ function Inspect({
 		formattedInspectMetricsTimeSeries,
 		resetInspection,
 		appliedMetricName,
-		currentMetricName,
-		setCurrentMetricName,
-		setAppliedMetricName,
 		selectedMetricUnit,
 		selectedMetricType,
 		spaceAggregationSeriesMap,
 		inspectionStep,
 		showExpandedView,
 		popoverOptions,
-		metricInspectionOptions,
+		metricInspectionOptions.appliedOptions,
+		metricInspectionOptions.currentOptions,
+		currentMetricName,
+		setCurrentMetricName,
+		setAppliedMetricName,
 		spaceAggregationLabels,
 		handleDispatchMetricInspectionOptions,
-		searchQuery,
+		currentQueryData,
 		expandedViewOptions,
 		timeAggregatedSeriesMap,
 	]);

@@ -19,8 +19,8 @@ function QueryBuilder({
 	dispatchMetricInspectionOptions,
 	inspectionStep,
 	inspectMetricsTimeSeries,
-	searchQuery,
-	metricType,
+	currentQuery,
+	setCurrentQuery,
 }: QueryBuilderProps): JSX.Element {
 	const applyInspectionOptions = useCallback(() => {
 		setAppliedMetricName(currentMetricName ?? '');
@@ -57,9 +57,8 @@ function QueryBuilder({
 				/>
 				<MetricFilters
 					dispatchMetricInspectionOptions={dispatchMetricInspectionOptions}
-					searchQuery={searchQuery}
-					currentMetricName={currentMetricName}
-					metricType={metricType || null}
+					currentQuery={currentQuery}
+					setCurrentQuery={setCurrentQuery}
 				/>
 				<MetricTimeAggregation
 					inspectionStep={inspectionStep}

@@ -51,13 +51,13 @@ export interface QueryBuilderProps {
 	currentMetricName: string | null;
 	setCurrentMetricName: (metricName: string) => void;
 	setAppliedMetricName: (metricName: string) => void;
-	metricType: MetricType | undefined;
 	spaceAggregationLabels: string[];
 	currentMetricInspectionOptions: InspectOptions;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
 	inspectionStep: InspectionStep;
 	inspectMetricsTimeSeries: InspectMetricsSeries[];
-	searchQuery: IBuilderQuery;
+	currentQuery: IBuilderQuery;
+	setCurrentQuery: (query: IBuilderQuery) => void;
 }
 
 export interface MetricNameSearchProps {
@@ -66,10 +66,9 @@ export interface MetricNameSearchProps {
 }
 
 export interface MetricFiltersProps {
-	searchQuery: IBuilderQuery;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
-	currentMetricName: string | null;
-	metricType: MetricType | null;
+	currentQuery: IBuilderQuery;
+	setCurrentQuery: (query: IBuilderQuery) => void;
 }
 
 export interface MetricTimeAggregationProps {

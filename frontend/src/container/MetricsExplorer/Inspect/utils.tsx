@@ -9,14 +9,8 @@ import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { AggregatorFilter } from 'container/QueryBuilder/filters';
 import { useMemo, useState } from 'react';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
-	IBuilderQuery,
-	TagFilter,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
@@ -104,27 +98,9 @@ export function MetricNameSearch({
 
 export function MetricFilters({
 	dispatchMetricInspectionOptions,
-	searchQuery,
-	currentMetricName,
-	metricType,
+	currentQuery,
+	setCurrentQuery,
 }: MetricFiltersProps): JSX.Element {
-	const aggregateAttribute = useMemo(
-		() => ({
-			key: currentMetricName ?? '',
-			dataType: DataTypes.String,
-			type: metricType,
-			isColumn: true,
-			isJSON: false,
-			id: `${currentMetricName}--${DataTypes.String}--${metricType}--true`,
-		}),
-		[currentMetricName, metricType],
-	);
-
-	const [currentQuery, setCurrentQuery] = useState<IBuilderQuery>({
-		...searchQuery,
-		aggregateAttribute,
-	});
-
 	const handleOnChange = (expression: string): void => {
 		logEvent(MetricsExplorerEvents.FilterApplied, {
 			[MetricsExplorerEventKeys.Modal]: 'inspect',
@@ -154,7 +130,7 @@ export function MetricFilters({
 			className="inspect-metrics-input-group metric-filters"
 		>
 			<Typography.Text>Where</Typography.Text>
-			{searchQuery && (
+			{currentQuery && (
 				<QuerySearch
 					queryData={currentQuery}
 					onChange={handleOnChange}
