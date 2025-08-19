@@ -138,8 +138,8 @@ func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() error {
 		"parent_span_id",
 		"name",
 		"timestamp",
-		"duration_nano AS durationNano",
-		sqlbuilder.Escape("resource_string_service$$name")+" AS serviceName",
+		"duration_nano",
+		sqlbuilder.Escape("resource_string_service$$name")+" AS `service.name`",
 		sqlbuilder.Escape("resource_string_service$$name"),
 		sqlbuilder.Escape("resource_string_service$$name_exists"),
 	)
@@ -245,8 +245,8 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 		"parent_span_id",
 		"name",
 		"timestamp",
-		"durationNano",
-		"serviceName",
+		"duration_nano",
+		"`service.name`",
 		fmt.Sprintf("'%s' AS level", cteName),
 	)
 	sb.From("base_spans AS s")
@@ -331,8 +331,8 @@ func (b *traceOperatorCTEBuilder) buildDirectDescendantCTE(parentCTE, childCTE s
 		"c.parent_span_id",
 		"c.name",
 		"c.timestamp",
-		"c.durationNano",
-		"c.serviceName",
+		"c.duration_nano",
+		"c.`service.name`",
 		fmt.Sprintf("'%s' AS level", childCTE),
 	)
 	sb.From(fmt.Sprintf("%s AS c", childCTE))
@@ -354,8 +354,8 @@ func (b *traceOperatorCTEBuilder) buildAndCTE(leftCTE, rightCTE string) (string,
 		"l.parent_span_id",
 		"l.name",
 		"l.timestamp",
-		"l.durationNano",
-		"l.serviceName",
+		"l.duration_nano",
+		"l.`service.name`",
 		"l.level",
 	)
 	sb.From(fmt.Sprintf("%s AS l", leftCTE))
@@ -387,8 +387,8 @@ func (b *traceOperatorCTEBuilder) buildNotCTE(leftCTE, rightCTE string) (string,
 		"l.parent_span_id",
 		"l.name",
 		"l.timestamp",
-		"l.durationNano",
-		"l.serviceName",
+		"l.duration_nano",
+		"l.`service.name`",
 		"l.level",
 	)
 	sb.From(fmt.Sprintf("%s AS l", leftCTE))
@@ -419,14 +419,13 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(selectFromCTE string, requestT
 func (b *traceOperatorCTEBuilder) buildListQuery(selectFromCTE string) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
-	// Select default columns
 	sb.Select(
 		"timestamp",
 		"trace_id",
 		"span_id",
 		"name",
-		"serviceName",
-		"durationNano",
+		"service.name",
+		"duration_nano",
 		"parent_span_id",
 	)
 
@@ -680,10 +679,10 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(selectFromCTE string) (*qbtype
 
 	sb.Select(
 		"any(timestamp) as timestamp",
-		"any(serviceName) as `service.name`",
+		"any(`service.name`) as `service.name`",
 		"any(name) as `name`",
 		"count() as span_count",
-		"any(durationNano) as `duration_nano`",
+		"any(duration_nano) as `duration_nano`",
 		"trace_id as `trace_id`",
 	)
 
