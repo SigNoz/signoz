@@ -163,32 +163,32 @@ describe('formatDataForMetricsTable', () => {
 	it('should handle empty/null values', () => {
 		const mockData = [
 			{
-				metric_name: 'test-metric',
-				description: 'test-description',
+				metric_name: undefined,
+				description: undefined,
 				type: MetricType.GAUGE,
-				unit: 'ms',
+				unit: undefined,
 				[TreemapViewType.SAMPLES]: 0,
 				[TreemapViewType.TIMESERIES]: 0,
 				lastReceived: '2023-01-01T00:00:00Z',
 			},
 		];
 
-		const result = formatDataForMetricsTable(mockData);
+		const result = formatDataForMetricsTable(mockData as any);
 
 		// Verify empty metric name rendering
 		const metricNameElement = result[0].metric_name as JSX.Element;
 		const { container: metricNameWrapper } = render(metricNameElement);
-		expect(metricNameWrapper.textContent).toBe('test-metric');
+		expect(metricNameWrapper.textContent).toBe('-');
 
 		// Verify null description rendering
 		const descriptionElement = result[0].description as JSX.Element;
 		const { container: descriptionWrapper } = render(descriptionElement);
-		expect(descriptionWrapper.textContent).toBe('test-description');
+		expect(descriptionWrapper.textContent).toBe('-');
 
 		// Verify unit rendering
 		const unitElement = result[0].unit as JSX.Element;
 		const { container: unitWrapper } = render(unitElement);
-		expect(unitWrapper.textContent).toBe(getUniversalNameFromMetricUnit('ms'));
+		expect(unitWrapper.textContent).toBe('-');
 
 		// Verify zero samples rendering
 		const samplesElement = result[0][TreemapViewType.SAMPLES] as JSX.Element;
