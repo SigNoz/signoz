@@ -7,6 +7,8 @@ export interface RawLogViewProps {
 	isActiveLog?: boolean;
 	isReadOnly?: boolean;
 	isTextOverflowEllipsisDisabled?: boolean;
+	isHighlighted?: boolean;
+	helpTooltip?: string;
 	data: ILog;
 	linesPerRow: number;
 	fontSize: FontSize;

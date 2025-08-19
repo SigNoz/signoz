@@ -83,21 +83,8 @@ function SpanRelatedSignals({
 				op: 'IN',
 				value: selectedSpan.traceId,
 			},
-			{
-				id: 'span-id-filter',
-				key: {
-					key: 'span_id',
-					id: 'span-id-key',
-					dataType: 'string' as const,
-					isColumn: true,
-					type: '',
-					isJSON: false,
-				} as BaseAutocompleteData,
-				op: 'IN',
-				value: selectedSpan.spanId,
-			},
 		],
-		[selectedSpan.traceId, selectedSpan.spanId],
+		[selectedSpan.traceId],
 	);
 
 	return (
