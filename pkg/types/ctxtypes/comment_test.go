@@ -15,6 +15,16 @@ func TestCommentFromHTTPRequest(t *testing.T) {
 		expected map[string]string
 	}{
 		{
+			name:     "EmptyReferer",
+			req:      &http.Request{Header: http.Header{"Referer": {""}}},
+			expected: map[string]string{},
+		},
+		{
+			name:     "ControlCharacterInReferer",
+			req:      &http.Request{Header: http.Header{"Referer": {"https://signoz.io/logs/logs-explorer\x00"}}},
+			expected: map[string]string{},
+		},
+		{
 			name:     "LogsExplorer",
 			req:      &http.Request{Header: http.Header{"Referer": {"https://signoz.io/logs/logs-explorer"}}},
 			expected: map[string]string{"http_path": "/logs/logs-explorer", "module_name": "logs-explorer"},
