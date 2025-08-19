@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -369,12 +369,11 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetEvaluationTimestamp(t)
 			}(time.Now())
 
-			kvs := map[string]string{
-				"alertID": rule.ID(),
-				"source":  "alerts",
-				"client":  "query-service",
-			}
-			ctx = context.WithValue(ctx, common.LogCommentKey, kvs)
+			comment := ctxtypes.CommentFromContext(ctx)
+			comment.Set("alertID", rule.ID())
+			comment.Set("source", "alerts")
+			comment.Set("client", "query-service")
+			ctx = ctxtypes.NewContextWithComment(ctx, comment)
 
 			_, err := rule.Eval(ctx, ts)
 			if err != nil {
