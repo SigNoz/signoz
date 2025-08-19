@@ -92,12 +92,13 @@ describe('QueryBuilder', () => {
 		metricType: MetricType.SUM,
 		inspectionStep: InspectionStep.TIME_AGGREGATION,
 		inspectMetricsTimeSeries: [],
-		searchQuery: {
+		currentQuery: {
 			filters: {
 				items: [],
 				op: 'and',
 			},
 		} as any,
+		setCurrentQuery: jest.fn(),
 	};
 
 	beforeEach(() => {
