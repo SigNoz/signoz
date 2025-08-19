@@ -446,6 +446,7 @@ export function QueryBuilderProvider({
 
 			const newQuery: IBuilderQuery = {
 				...initialBuilderQuery,
+				source: queries?.[0]?.source || '',
 				queryName: createNewBuilderItemName({ existNames, sourceNames: alphabet }),
 				expression: createNewBuilderItemName({
 					existNames,
@@ -540,6 +541,8 @@ export function QueryBuilderProvider({
 		setCurrentQuery((prevState) => {
 			if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;
 
+			console.log('prevState', prevState.builder.queryData);
+
 			const newQuery = createNewBuilderQuery(prevState.builder.queryData);
 
 			return {
@@ -550,6 +553,7 @@ export function QueryBuilderProvider({
 				},
 			};
 		});
+
 		// eslint-disable-next-line sonarjs/no-identical-functions
 		setSupersetQuery((prevState) => {
 			if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;

@@ -1,6 +1,10 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
-import { OPERATORS } from 'constants/antlrQueryConstants';
+import {
+	DEPRECATED_OPERATORS_MAP,
+	OPERATORS,
+	QUERY_BUILDER_FUNCTIONS,
+} from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { cloneDeep } from 'lodash-es';
 import { IQueryPair } from 'types/antlrQueryTypes';
@@ -21,7 +25,7 @@ import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 import { unquote } from 'utils/stringUtils';
-import { isFunctionOperator } from 'utils/tokenUtils';
+import { isFunctionOperator, isNonValueOperator } from 'utils/tokenUtils';
 import { v4 as uuid } from 'uuid';
 
 /**
@@ -87,12 +91,32 @@ export const convertFiltersToExpression = (
 				return '';
 			}
 
-			if (isFunctionOperator(op)) {
-				return `${op}(${key.key}, ${value})`;
+			let operator = op.trim().toLowerCase();
+			if (Object.keys(DEPRECATED_OPERATORS_MAP).includes(operator)) {
+				operator =
+					DEPRECATED_OPERATORS_MAP[
+						operator as keyof typeof DEPRECATED_OPERATORS_MAP
+					];
 			}
 
-			const formattedValue = formatValueForExpression(value, op);
-			return `${key.key} ${op} ${formattedValue}`;
+			if (isNonValueOperator(operator)) {
+				return `${key.key} ${operator}`;
+			}
+
+			if (isFunctionOperator(operator)) {
+				// Get the proper function name from QUERY_BUILDER_FUNCTIONS
+				const functionOperators = Object.values(QUERY_BUILDER_FUNCTIONS);
+				const properFunctionName =
+					functionOperators.find(
+						(func: string) => func.toLowerCase() === operator.toLowerCase(),
+					) || operator;
+
+				const formattedValue = formatValueForExpression(value, operator);
+				return `${properFunctionName}(${key.key}, ${formattedValue})`;
+			}
+
+			const formattedValue = formatValueForExpression(value, operator);
+			return `${key.key} ${operator} ${formattedValue}`;
 		})
 		.filter((expression) => expression !== ''); // Remove empty expressions
 
@@ -117,7 +141,6 @@ export const convertExpressionToFilters = (
 	if (!expression) return [];
 
 	const queryPairs = extractQueryPairs(expression);
-
 	const filters: TagFilterItem[] = [];
 
 	queryPairs.forEach((pair) => {
@@ -145,19 +168,36 @@ export const convertFiltersToExpressionWithExistingQuery = (
 	filters: TagFilter,
 	existingQuery: string | undefined,
 ): { filters: TagFilter; filter: { expression: string } } => {
+	// Check for deprecated operators and replace them with new operators
+	const updatedFilters = cloneDeep(filters);
+
+	// Replace deprecated operators in filter items
+	if (updatedFilters?.items) {
+		updatedFilters.items = updatedFilters.items.map((item) => {
+			const opLower = item.op?.toLowerCase();
+			if (Object.keys(DEPRECATED_OPERATORS_MAP).includes(opLower)) {
+				return {
+					...item,
+					op: DEPRECATED_OPERATORS_MAP[
+						opLower as keyof typeof DEPRECATED_OPERATORS_MAP
+					].toLowerCase(),
+				};
+			}
+			return item;
+		});
+	}
+
 	if (!existingQuery) {
 		// If no existing query, return filters with a newly generated expression
 		return {
-			filters,
-			filter: convertFiltersToExpression(filters),
+			filters: updatedFilters,
+			filter: convertFiltersToExpression(updatedFilters),
 		};
 	}
 
 	// Extract query pairs from the existing query
 	const queryPairs = extractQueryPairs(existingQuery.trim());
 	let queryPairsMap: Map<string, IQueryPair> = new Map();
-
-	const updatedFilters = cloneDeep(filters); // Clone filters to avoid direct mutation
 	const nonExistingFilters: TagFilterItem[] = [];
 	let modifiedQuery = existingQuery; // We'll modify this query as we proceed
 	const visitedPairs: Set<string> = new Set(); // Set to track visited query pairs
