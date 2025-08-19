@@ -470,6 +470,15 @@ func (q *querier) run(
 			if err != nil {
 				return nil, err
 			}
+			switch v := result.Value.(type) {
+			case *qbtypes.TimeSeriesData:
+				v.QueryName = name
+			case *qbtypes.ScalarData:
+				v.QueryName = name
+			case *qbtypes.RawData:
+				v.QueryName = name
+			}
+
 			results[name] = result.Value
 			warnings = append(warnings, result.Warnings...)
 			warningsDocURL = result.WarningsDocURL
