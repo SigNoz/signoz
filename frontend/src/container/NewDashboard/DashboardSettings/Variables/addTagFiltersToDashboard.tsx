@@ -1,4 +1,8 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import {
+	convertFiltersToExpressionWithExistingQuery,
+	removeKeysFromExpression,
+} from 'components/QueryBuilderV2/utils';
 import { cloneDeep, isArray, isEmpty } from 'lodash-es';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import {
@@ -47,13 +51,18 @@ const updateQueryFilters = (
 		newItems.push(filter);
 	}
 
+	const newFilterToUpdate = {
+		...queryData.filters,
+		items: newItems,
+		op: queryData.filters?.op || 'AND',
+	};
+
 	return {
 		...queryData,
-		filters: {
-			...queryData.filters,
-			items: newItems,
-			op: queryData.filters?.op || 'AND',
-		},
+		...convertFiltersToExpressionWithExistingQuery(
+			newFilterToUpdate,
+			queryData.filter?.expression,
+		),
 	};
 };
 
@@ -112,6 +121,13 @@ const removeIfPresent = (
 			...queryData.filters,
 			items: newItems,
 			op: queryData.filters?.op || 'AND',
+		},
+		filter: {
+			...queryData.filter,
+			expression: removeKeysFromExpression(
+				queryData.filter?.expression ?? '',
+				filter.key?.key ? [filter.key.key] : [],
+			),
 		},
 	};
 };
