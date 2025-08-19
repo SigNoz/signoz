@@ -127,17 +127,20 @@ function RawLogView({
 		formatTimezoneAdjustedTimestamp,
 	]);
 
-	const handleClickExpand = useCallback(() => {
-		if (activeContextLog || isReadOnly) return;
+	const handleClickExpand = useCallback(
+		(event: MouseEvent) => {
+			if (activeContextLog || isReadOnly) return;
 
-		// Use custom click handler if provided, otherwise use default behavior
-		if (onLogClick) {
-			onLogClick(data);
-		} else {
-			onSetActiveLog(data);
-			setSelectedTab(VIEW_TYPES.OVERVIEW);
-		}
-	}, [activeContextLog, isReadOnly, data, onSetActiveLog, onLogClick]);
+			// Use custom click handler if provided, otherwise use default behavior
+			if (onLogClick) {
+				onLogClick(data, event);
+			} else {
+				onSetActiveLog(data);
+				setSelectedTab(VIEW_TYPES.OVERVIEW);
+			}
+		},
+		[activeContextLog, isReadOnly, data, onSetActiveLog, onLogClick],
+	);
 
 	const handleCloseLogDetail: DrawerProps['onClose'] = useCallback(
 		(

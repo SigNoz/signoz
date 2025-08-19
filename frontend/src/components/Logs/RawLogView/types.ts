@@ -1,4 +1,5 @@
 import { FontSize } from 'container/OptionsMenu/types';
+import { MouseEvent } from 'react';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 
@@ -10,7 +11,7 @@ export interface RawLogViewProps {
 	linesPerRow: number;
 	fontSize: FontSize;
 	selectedFields?: IField[];
-	onLogClick?: (log: ILog) => void;
+	onLogClick?: (log: ILog, event: MouseEvent) => void;
 }
 
 export interface RawLogContentProps {
