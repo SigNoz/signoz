@@ -391,3 +391,11 @@
 		}
 	}
 }
+
+.metric-metadata-value {
+	.y-axis-unit-selector-component {
+		.ant-select {
+			width: auto !important;
+		}
+	}
+}

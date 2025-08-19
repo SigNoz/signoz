@@ -13,6 +13,7 @@ import { useUpdateMetricMetadata } from 'hooks/metricsExplorer/useUpdateMetricMe
 import { useNotifications } from 'hooks/useNotifications';
 import { Edit2, Save, X } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import {
@@ -47,6 +48,7 @@ function Metadata({
 	const [activeKey, setActiveKey] = useState<string | string[]>(
 		'metric-metadata',
 	);
+	const queryClient = useQueryClient();
 
 	const tableData = useMemo(
 		() =>
@@ -206,6 +208,7 @@ function Metadata({
 						});
 						refetchMetricDetails();
 						setIsEditing(false);
+						queryClient.invalidateQueries(['metricsList']);
 					} else {
 						notifications.error({
 							message:
@@ -226,6 +229,7 @@ function Metadata({
 		metricMetadata,
 		notifications,
 		refetchMetricDetails,
+		queryClient,
 	]);
 
 	const actionButton = useMemo(() => {
