@@ -91,8 +91,6 @@ func CommentFromHTTPRequest(req *http.Request) map[string]string {
 	}
 
 	comments["http_path"] = referrerURL.Path
-	comments["http_query"] = referrerURL.RawQuery
-	comments["http_referrer"] = referrer
 
 	return comments
 }
