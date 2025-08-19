@@ -296,7 +296,7 @@ function Summary(): JSX.Element {
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-summary-tab">
 				<MetricsSearch query={searchQuery} onChange={handleFilterChange} />
-				{isMetricsLoading || isTreeMapLoading ? (
+				{isMetricsLoading && isTreeMapLoading ? (
 					<MetricsLoading />
 				) : isMetricsListDataEmpty && isMetricsTreeMapDataEmpty ? (
 					<NoLogs dataSource={DataSource.METRICS} />
