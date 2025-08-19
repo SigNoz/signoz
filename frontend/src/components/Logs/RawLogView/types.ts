@@ -10,6 +10,7 @@ export interface RawLogViewProps {
 	linesPerRow: number;
 	fontSize: FontSize;
 	selectedFields?: IField[];
+	onLogClick?: (log: ILog) => void;
 }
 
 export interface RawLogContentProps {
