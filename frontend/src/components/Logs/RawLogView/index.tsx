@@ -37,6 +37,7 @@ function RawLogView({
 	isTextOverflowEllipsisDisabled,
 	selectedFields = [],
 	fontSize,
+	onLogClick,
 }: RawLogViewProps): JSX.Element {
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		data.id,
@@ -129,9 +130,14 @@ function RawLogView({
 	const handleClickExpand = useCallback(() => {
 		if (activeContextLog || isReadOnly) return;
 
-		onSetActiveLog(data);
-		setSelectedTab(VIEW_TYPES.OVERVIEW);
-	}, [activeContextLog, isReadOnly, data, onSetActiveLog]);
+		// Use custom click handler if provided, otherwise use default behavior
+		if (onLogClick) {
+			onLogClick(data);
+		} else {
+			onSetActiveLog(data);
+			setSelectedTab(VIEW_TYPES.OVERVIEW);
+		}
+	}, [activeContextLog, isReadOnly, data, onSetActiveLog, onLogClick]);
 
 	const handleCloseLogDetail: DrawerProps['onClose'] = useCallback(
 		(
