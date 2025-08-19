@@ -21,7 +21,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
-import { useCallback, useEffect, useMemo } from 'react';
+import { MouseEvent, useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { Virtuoso } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
@@ -144,7 +144,7 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 
 	// Navigate to logs explorer with trace_id and span_id filters and activeLogId
 	const handleLogClick = useCallback(
-		(log: ILog): void => {
+		(log: ILog, event: MouseEvent): void => {
 			const spanLogsFilter = createSpanLogsFilter();
 
 			// Create base query with trace_id and span_id filters
@@ -173,7 +173,16 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 				[QueryParams.compositeQuery]: JSON.stringify(updatedQuery),
 			};
 
-			safeNavigate(`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`);
+			const url = `${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`;
+
+			// Check for Ctrl+click (Windows/Linux) or Cmd+click (Mac) to open in new tab
+			const shouldOpenInNewTab = event.ctrlKey || event.metaKey;
+
+			if (shouldOpenInNewTab) {
+				window.open(url, '_blank');
+			} else {
+				safeNavigate(url);
+			}
 		},
 		[
 			createSpanLogsFilter,
