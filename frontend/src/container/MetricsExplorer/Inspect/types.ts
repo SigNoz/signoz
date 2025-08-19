@@ -43,16 +43,17 @@ export interface GraphViewProps {
 	showExpandedView: boolean;
 	setShowExpandedView: (showExpandedView: boolean) => void;
 	setExpandedViewOptions: (options: GraphPopoverOptions | null) => void;
-	metricInspectionOptions: MetricInspectionOptions;
+	appliedMetricInspectionOptions: InspectOptions;
 	isInspectMetricsRefetching: boolean;
 }
 
 export interface QueryBuilderProps {
-	metricName: string | null;
-	setMetricName: (metricName: string) => void;
+	currentMetricName: string | null;
+	setCurrentMetricName: (metricName: string) => void;
+	setAppliedMetricName: (metricName: string) => void;
 	metricType: MetricType | undefined;
 	spaceAggregationLabels: string[];
-	metricInspectionOptions: MetricInspectionOptions;
+	currentMetricInspectionOptions: InspectOptions;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
 	inspectionStep: InspectionStep;
 	inspectMetricsTimeSeries: InspectMetricsSeries[];
@@ -60,19 +61,19 @@ export interface QueryBuilderProps {
 }
 
 export interface MetricNameSearchProps {
-	metricName: string | null;
-	setMetricName: (metricName: string) => void;
+	currentMetricName: string | null;
+	setCurrentMetricName: (metricName: string) => void;
 }
 
 export interface MetricFiltersProps {
 	searchQuery: IBuilderQuery;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
-	metricName: string | null;
+	currentMetricName: string | null;
 	metricType: MetricType | null;
 }
 
 export interface MetricTimeAggregationProps {
-	metricInspectionOptions: MetricInspectionOptions;
+	currentMetricInspectionOptions: InspectOptions;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
 	inspectionStep: InspectionStep;
 	inspectMetricsTimeSeries: InspectMetricsSeries[];
@@ -80,7 +81,7 @@ export interface MetricTimeAggregationProps {
 
 export interface MetricSpaceAggregationProps {
 	spaceAggregationLabels: string[];
-	metricInspectionOptions: MetricInspectionOptions;
+	currentMetricInspectionOptions: InspectOptions;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
 	inspectionStep: InspectionStep;
 }
@@ -101,12 +102,17 @@ export enum SpaceAggregationOptions {
 	AVG_BY = 'avg_by',
 }
 
-export interface MetricInspectionOptions {
+export interface InspectOptions {
 	timeAggregationOption: TimeAggregationOptions | undefined;
 	timeAggregationInterval: number | undefined;
 	spaceAggregationOption: SpaceAggregationOptions | undefined;
 	spaceAggregationLabels: string[];
 	filters: TagFilter;
+}
+
+export interface MetricInspectionOptions {
+	currentOptions: InspectOptions;
+	appliedOptions: InspectOptions;
 }
 
 export type MetricInspectionAction =
@@ -115,7 +121,8 @@ export type MetricInspectionAction =
 	| { type: 'SET_SPACE_AGGREGATION_OPTION'; payload: SpaceAggregationOptions }
 	| { type: 'SET_SPACE_AGGREGATION_LABELS'; payload: string[] }
 	| { type: 'SET_FILTERS'; payload: TagFilter }
-	| { type: 'RESET_INSPECTION' };
+	| { type: 'RESET_INSPECTION' }
+	| { type: 'APPLY_INSPECTION_OPTIONS' };
 
 export enum InspectionStep {
 	TIME_AGGREGATION = 1,
@@ -156,7 +163,7 @@ export interface ExpandedViewProps {
 	options: GraphPopoverOptions | null;
 	spaceAggregationSeriesMap: Map<string, InspectMetricsSeries[]>;
 	step: InspectionStep;
-	metricInspectionOptions: MetricInspectionOptions;
+	appliedMetricInspectionOptions: InspectOptions;
 	timeAggregatedSeriesMap: Map<number, GraphPopoverData[]>;
 }
 
@@ -165,7 +172,7 @@ export interface TableViewProps {
 	inspectMetricsTimeSeries: InspectMetricsSeries[];
 	setShowExpandedView: (showExpandedView: boolean) => void;
 	setExpandedViewOptions: (options: GraphPopoverOptions | null) => void;
-	metricInspectionOptions: MetricInspectionOptions;
+	appliedMetricInspectionOptions: InspectOptions;
 	isInspectMetricsRefetching: boolean;
 }
 

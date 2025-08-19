@@ -29,8 +29,8 @@ import {
 	GraphPopoverData,
 	GraphPopoverOptions,
 	InspectionStep,
+	InspectOptions,
 	MetricFiltersProps,
-	MetricInspectionOptions,
 	MetricNameSearchProps,
 	MetricSpaceAggregationProps,
 	MetricTimeAggregationProps,
@@ -74,13 +74,13 @@ export function getDefaultTimeAggregationInterval(
 }
 
 export function MetricNameSearch({
-	metricName,
-	setMetricName,
+	currentMetricName,
+	setCurrentMetricName,
 }: MetricNameSearchProps): JSX.Element {
-	const [searchText, setSearchText] = useState(metricName);
+	const [searchText, setSearchText] = useState(currentMetricName);
 
 	const handleSetMetricName = (value: BaseAutocompleteData): void => {
-		setMetricName(value.key);
+		setCurrentMetricName(value.key);
 	};
 
 	const handleChange = (value: BaseAutocompleteData): void => {
@@ -106,19 +106,19 @@ export function MetricNameSearch({
 export function MetricFilters({
 	dispatchMetricInspectionOptions,
 	searchQuery,
-	metricName,
+	currentMetricName,
 	metricType,
 }: MetricFiltersProps): JSX.Element {
 	const aggregateAttribute = useMemo(
 		() => ({
-			key: metricName ?? '',
+			key: currentMetricName ?? '',
 			dataType: DataTypes.String,
 			type: metricType,
 			isColumn: true,
 			isJSON: false,
-			id: `${metricName}--${DataTypes.String}--${metricType}--true`,
+			id: `${currentMetricName}--${DataTypes.String}--${metricType}--true`,
 		}),
-		[metricName, metricType],
+		[currentMetricName, metricType],
 	);
 
 	const [currentQuery, setCurrentQuery] = useState<IBuilderQuery>({
@@ -169,7 +169,7 @@ export function MetricFilters({
 }
 
 export function MetricTimeAggregation({
-	metricInspectionOptions,
+	currentMetricInspectionOptions,
 	dispatchMetricInspectionOptions,
 	inspectionStep,
 	inspectMetricsTimeSeries,
@@ -190,14 +190,14 @@ export function MetricTimeAggregation({
 				<div className="inspect-metrics-input-group">
 					<Typography.Text>Align with</Typography.Text>
 					<Select
-						value={metricInspectionOptions.timeAggregationOption}
+						value={currentMetricInspectionOptions.timeAggregationOption}
 						onChange={(value): void => {
 							dispatchMetricInspectionOptions({
 								type: 'SET_TIME_AGGREGATION_OPTION',
 								payload: value,
 							});
 							// set the time aggregation interval to the default value if it is not set
-							if (!metricInspectionOptions.timeAggregationInterval) {
+							if (!currentMetricInspectionOptions.timeAggregationInterval) {
 								dispatchMetricInspectionOptions({
 									type: 'SET_TIME_AGGREGATION_INTERVAL',
 									payload: getDefaultTimeAggregationInterval(
@@ -221,7 +221,7 @@ export function MetricTimeAggregation({
 					<Input
 						type="number"
 						className="no-arrows-input"
-						value={metricInspectionOptions.timeAggregationInterval}
+						value={currentMetricInspectionOptions.timeAggregationInterval}
 						placeholder="Select interval..."
 						suffix="seconds"
 						onChange={(e): void => {
@@ -240,7 +240,7 @@ export function MetricTimeAggregation({
 
 export function MetricSpaceAggregation({
 	spaceAggregationLabels,
-	metricInspectionOptions,
+	currentMetricInspectionOptions,
 	dispatchMetricInspectionOptions,
 	inspectionStep,
 }: MetricSpaceAggregationProps): JSX.Element {
@@ -259,7 +259,7 @@ export function MetricSpaceAggregation({
 			<div className="metric-space-aggregation-content">
 				<div className="metric-space-aggregation-content-left">
 					<Select
-						value={metricInspectionOptions.spaceAggregationOption}
+						value={currentMetricInspectionOptions.spaceAggregationOption}
 						placeholder="Select option"
 						onChange={(value): void => {
 							dispatchMetricInspectionOptions({
@@ -282,7 +282,7 @@ export function MetricSpaceAggregation({
 					mode="multiple"
 					style={{ width: '100%' }}
 					placeholder="Search for attributes..."
-					value={metricInspectionOptions.spaceAggregationLabels}
+					value={currentMetricInspectionOptions.spaceAggregationLabels}
 					onChange={(value): void => {
 						dispatchMetricInspectionOptions({
 							type: 'SET_SPACE_AGGREGATION_LABELS',
@@ -338,7 +338,7 @@ export function applyFilters(
 
 export function applyTimeAggregation(
 	inspectMetricsTimeSeries: InspectMetricsSeries[],
-	metricInspectionOptions: MetricInspectionOptions,
+	appliedMetricInspectionOptions: InspectOptions,
 ): {
 	timeAggregatedSeries: InspectMetricsSeries[];
 	timeAggregatedSeriesMap: Map<number, GraphPopoverData[]>;
@@ -346,7 +346,7 @@ export function applyTimeAggregation(
 	const {
 		timeAggregationOption,
 		timeAggregationInterval,
-	} = metricInspectionOptions;
+	} = appliedMetricInspectionOptions;
 
 	if (!timeAggregationInterval) {
 		return {
@@ -431,7 +431,7 @@ export function applyTimeAggregation(
 
 export function applySpaceAggregation(
 	inspectMetricsTimeSeries: InspectMetricsSeries[],
-	metricInspectionOptions: MetricInspectionOptions,
+	appliedMetricInspectionOptions: InspectOptions,
 ): {
 	aggregatedSeries: InspectMetricsSeries[];
 	spaceAggregatedSeriesMap: Map<string, InspectMetricsSeries[]>;
@@ -441,7 +441,7 @@ export function applySpaceAggregation(
 
 	inspectMetricsTimeSeries.forEach((series) => {
 		// Create composite key from selected labels
-		const key = metricInspectionOptions.spaceAggregationLabels
+		const key = appliedMetricInspectionOptions.spaceAggregationLabels
 			.map((label) => `${label}:${series.labels[label]}`)
 			.join(',');
 
@@ -476,7 +476,7 @@ export function applySpaceAggregation(
 			([timestamp, values]) => {
 				let aggregatedValue: number;
 
-				switch (metricInspectionOptions.spaceAggregationOption) {
+				switch (appliedMetricInspectionOptions.spaceAggregationOption) {
 					case SpaceAggregationOptions.SUM_BY:
 						aggregatedValue = values.reduce((sum, val) => sum + val, 0);
 						break;
@@ -730,11 +730,11 @@ export function getTimeSeriesLabel(
 export function HoverPopover({
 	options,
 	step,
-	metricInspectionOptions,
+	appliedMetricInspectionOptions,
 }: {
 	options: GraphPopoverOptions;
 	step: InspectionStep;
-	metricInspectionOptions: MetricInspectionOptions;
+	appliedMetricInspectionOptions: InspectOptions;
 }): JSX.Element {
 	const closestTimestamp = useMemo(() => {
 		if (!options.timeSeries) {
@@ -762,7 +762,7 @@ export function HoverPopover({
 	const title = useMemo(() => {
 		if (
 			step === InspectionStep.COMPLETED &&
-			metricInspectionOptions.spaceAggregationLabels.length === 0
+			appliedMetricInspectionOptions.spaceAggregationLabels.length === 0
 		) {
 			return undefined;
 		}
@@ -776,7 +776,7 @@ export function HoverPopover({
 			options.timeSeries,
 			options.timeSeries?.strokeColor,
 		);
-	}, [step, options.timeSeries, metricInspectionOptions]);
+	}, [step, options.timeSeries, appliedMetricInspectionOptions]);
 
 	return (
 		<Card
@@ -845,4 +845,27 @@ export function onGraphHover(
 		timestamp: xVal,
 		timeSeries: series,
 	});
+}
+
+export function useMetricName(
+	metricName: string | null,
+): {
+	currentMetricName: string | null;
+	setCurrentMetricName: (metricName: string | null) => void;
+	appliedMetricName: string | null;
+	setAppliedMetricName: (metricName: string | null) => void;
+} {
+	const [currentMetricName, setCurrentMetricName] = useState<string | null>(
+		metricName,
+	);
+	const [appliedMetricName, setAppliedMetricName] = useState<string | null>(
+		metricName,
+	);
+
+	return {
+		currentMetricName,
+		setCurrentMetricName,
+		appliedMetricName,
+		setAppliedMetricName,
+	};
 }

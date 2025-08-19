@@ -27,30 +27,55 @@ const metricInspectionReducer = (
 		case 'SET_TIME_AGGREGATION_OPTION':
 			return {
 				...state,
-				timeAggregationOption: action.payload,
+				currentOptions: {
+					...state.currentOptions,
+					timeAggregationOption: action.payload,
+				},
 			};
 		case 'SET_TIME_AGGREGATION_INTERVAL':
 			return {
 				...state,
-				timeAggregationInterval: action.payload,
+				currentOptions: {
+					...state.currentOptions,
+					timeAggregationInterval: action.payload,
+				},
 			};
 		case 'SET_SPACE_AGGREGATION_OPTION':
 			return {
 				...state,
-				spaceAggregationOption: action.payload,
+				currentOptions: {
+					...state.currentOptions,
+					spaceAggregationOption: action.payload,
+				},
 			};
 		case 'SET_SPACE_AGGREGATION_LABELS':
 			return {
 				...state,
-				spaceAggregationLabels: action.payload,
+				currentOptions: {
+					...state.currentOptions,
+					spaceAggregationLabels: action.payload,
+				},
 			};
 		case 'SET_FILTERS':
 			return {
 				...state,
-				filters: action.payload,
+				currentOptions: {
+					...state.currentOptions,
+					filters: action.payload,
+				},
+			};
+		case 'APPLY_INSPECTION_OPTIONS':
+			return {
+				...state,
+				appliedOptions: {
+					...state.appliedOptions,
+					...state.currentOptions,
+				},
 			};
 		case 'RESET_INSPECTION':
-			return { ...INITIAL_INSPECT_METRICS_OPTIONS };
+			return {
+				...INITIAL_INSPECT_METRICS_OPTIONS,
+			};
 		default:
 			return state;
 	}
@@ -84,7 +109,7 @@ export function useInspectMetrics(
 			metricName: metricName ?? '',
 			start,
 			end,
-			filters: metricInspectionOptions.filters,
+			filters: metricInspectionOptions.appliedOptions.filters,
 		},
 		{
 			enabled: !!metricName,
@@ -117,13 +142,26 @@ export function useInspectMetrics(
 	);
 
 	// Evaluate inspection step
-	const inspectionStep = useMemo(() => {
-		if (metricInspectionOptions.spaceAggregationOption) {
+	const currentInspectionStep = useMemo(() => {
+		if (metricInspectionOptions.currentOptions.spaceAggregationOption) {
 			return InspectionStep.COMPLETED;
 		}
 		if (
-			metricInspectionOptions.timeAggregationOption &&
-			metricInspectionOptions.timeAggregationInterval
+			metricInspectionOptions.currentOptions.timeAggregationOption &&
+			metricInspectionOptions.currentOptions.timeAggregationInterval
+		) {
+			return InspectionStep.SPACE_AGGREGATION;
+		}
+		return InspectionStep.TIME_AGGREGATION;
+	}, [metricInspectionOptions]);
+
+	const appliedInspectionStep = useMemo(() => {
+		if (metricInspectionOptions.appliedOptions.spaceAggregationOption) {
+			return InspectionStep.COMPLETED;
+		}
+		if (
+			metricInspectionOptions.appliedOptions.timeAggregationOption &&
+			metricInspectionOptions.appliedOptions.timeAggregationInterval
 		) {
 			return InspectionStep.SPACE_AGGREGATION;
 		}
@@ -149,23 +187,26 @@ export function useInspectMetrics(
 
 		// Apply time aggregation once required options are set
 		if (
-			inspectionStep >= InspectionStep.SPACE_AGGREGATION &&
-			metricInspectionOptions.timeAggregationOption &&
-			metricInspectionOptions.timeAggregationInterval
+			appliedInspectionStep >= InspectionStep.SPACE_AGGREGATION &&
+			metricInspectionOptions.appliedOptions.timeAggregationOption &&
+			metricInspectionOptions.appliedOptions.timeAggregationInterval
 		) {
 			const {
 				timeAggregatedSeries,
 				timeAggregatedSeriesMap,
-			} = applyTimeAggregation(inspectMetricsTimeSeries, metricInspectionOptions);
+			} = applyTimeAggregation(
+				inspectMetricsTimeSeries,
+				metricInspectionOptions.appliedOptions,
+			);
 			timeSeries = timeAggregatedSeries;
 			setTimeAggregatedSeriesMap(timeAggregatedSeriesMap);
 			setAggregatedTimeSeries(timeSeries);
 		}
 		// Apply space aggregation
-		if (inspectionStep === InspectionStep.COMPLETED) {
+		if (appliedInspectionStep === InspectionStep.COMPLETED) {
 			const { aggregatedSeries, spaceAggregatedSeriesMap } = applySpaceAggregation(
 				timeSeries,
-				metricInspectionOptions,
+				metricInspectionOptions.appliedOptions,
 			);
 			timeSeries = aggregatedSeries;
 			setSpaceAggregatedSeriesMap(spaceAggregatedSeriesMap);
@@ -186,7 +227,7 @@ export function useInspectMetrics(
 
 		const rawData = [timestamps, ...timeseriesArray];
 		return rawData.map((series) => new Float64Array(series));
-	}, [inspectMetricsTimeSeries, inspectionStep, metricInspectionOptions]);
+	}, [inspectMetricsTimeSeries, appliedInspectionStep, metricInspectionOptions]);
 
 	const spaceAggregationLabels = useMemo(() => {
 		const labels = new Set<string>();
@@ -216,7 +257,7 @@ export function useInspectMetrics(
 		spaceAggregationLabels,
 		metricInspectionOptions,
 		dispatchMetricInspectionOptions,
-		inspectionStep,
+		inspectionStep: currentInspectionStep,
 		isInspectMetricsRefetching,
 		spaceAggregatedSeriesMap,
 		aggregatedTimeSeries,

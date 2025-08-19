@@ -33,7 +33,7 @@ function ExpandedView({
 	options,
 	spaceAggregationSeriesMap,
 	step,
-	metricInspectionOptions,
+	appliedMetricInspectionOptions,
 	timeAggregatedSeriesMap,
 }: ExpandedViewProps): JSX.Element {
 	const [
@@ -44,17 +44,17 @@ function ExpandedView({
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.InspectPointClicked, {
 			[MetricsExplorerEventKeys.Modal]: 'inspect',
-			[MetricsExplorerEventKeys.Filters]: metricInspectionOptions.filters,
+			[MetricsExplorerEventKeys.Filters]: appliedMetricInspectionOptions.filters,
 			[MetricsExplorerEventKeys.TimeAggregationInterval]:
-				metricInspectionOptions.timeAggregationInterval,
+				appliedMetricInspectionOptions.timeAggregationInterval,
 			[MetricsExplorerEventKeys.TimeAggregationOption]:
-				metricInspectionOptions.timeAggregationOption,
+				appliedMetricInspectionOptions.timeAggregationOption,
 			[MetricsExplorerEventKeys.SpaceAggregationOption]:
-				metricInspectionOptions.spaceAggregationOption,
+				appliedMetricInspectionOptions.spaceAggregationOption,
 			[MetricsExplorerEventKeys.SpaceAggregationLabels]:
-				metricInspectionOptions.spaceAggregationLabels,
+				appliedMetricInspectionOptions.spaceAggregationLabels,
 		});
-	}, [metricInspectionOptions]);
+	}, [appliedMetricInspectionOptions]);
 
 	useEffect(() => {
 		if (step !== InspectionStep.COMPLETED) {
@@ -167,7 +167,7 @@ function ExpandedView({
 							<Typography.Text strong>
 								{`${absoluteValue} is the ${
 									SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW[
-										metricInspectionOptions.spaceAggregationOption ??
+										appliedMetricInspectionOptions.spaceAggregationOption ??
 											SpaceAggregationOptions.SUM_BY
 									]
 								} of`}
@@ -240,7 +240,7 @@ function ExpandedView({
 											)?.value ?? options?.value
 									  } is the ${
 											TIME_AGGREGATION_OPTIONS[
-												metricInspectionOptions.timeAggregationOption ??
+												appliedMetricInspectionOptions.timeAggregationOption ??
 													TimeAggregationOptions.SUM
 											]
 									  } of`
@@ -299,7 +299,7 @@ function ExpandedView({
 							<Typography.Text strong>
 								{`${absoluteValue} is the ${
 									TIME_AGGREGATION_OPTIONS[
-										metricInspectionOptions.timeAggregationOption ??
+										appliedMetricInspectionOptions.timeAggregationOption ??
 											TimeAggregationOptions.SUM
 									]
 								} of`}

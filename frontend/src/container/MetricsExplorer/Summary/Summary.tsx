@@ -292,8 +292,6 @@ function Summary(): JSX.Element {
 		],
 	);
 
-	console.log(searchQuery.filters);
-
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-summary-tab">
