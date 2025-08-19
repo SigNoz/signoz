@@ -20,7 +20,6 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
-import { areAllFiltersComplete } from '../Summary/utils';
 import {
 	SPACE_AGGREGATION_OPTIONS,
 	TIME_AGGREGATION_OPTIONS,
@@ -143,12 +142,10 @@ export function MetricFilters({
 			},
 			expression,
 		});
-		if (areAllFiltersComplete(tagFilter)) {
-			dispatchMetricInspectionOptions({
-				type: 'SET_FILTERS',
-				payload: tagFilter,
-			});
-		}
+		dispatchMetricInspectionOptions({
+			type: 'SET_FILTERS',
+			payload: tagFilter,
+		});
 	};
 
 	return (
