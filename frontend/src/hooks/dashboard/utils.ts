@@ -105,6 +105,7 @@ export const createDynamicVariableToWidgetsMap = (
 		widgets.forEach((widget) => {
 			if (widget.query?.builder?.queryData) {
 				widget.query.builder.queryData.forEach((queryData: IBuilderQuery) => {
+					// Check filter items for dynamic variables
 					queryData.filters?.items?.forEach((filter: TagFilterItem) => {
 						// For each filter, check if it uses any dynamic variable
 						dynamicVariables.forEach((variable) => {
@@ -120,6 +121,19 @@ export const createDynamicVariableToWidgetsMap = (
 							}
 						});
 					});
+
+					// Check filter expression for dynamic variables
+					if (queryData.filter?.expression) {
+						dynamicVariables.forEach((variable) => {
+							if (
+								variable.dynamicVariablesAttribute &&
+								queryData.filter?.expression?.includes(`$${variable.name}`) &&
+								!dynamicVariableToWidgetsMap[variable.id].includes(widget.id)
+							) {
+								dynamicVariableToWidgetsMap[variable.id].push(widget.id);
+							}
+						});
+					}
 				});
 			}
 		});

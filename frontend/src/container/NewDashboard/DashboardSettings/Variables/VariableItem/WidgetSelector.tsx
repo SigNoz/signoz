@@ -1,4 +1,5 @@
 import { CustomMultiSelect } from 'components/NewSelect';
+import { PANEL_GROUP_TYPES } from 'constants/queryBuilder';
 import { generateGridTitle } from 'container/GridPanelSwitch/utils';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 
@@ -17,10 +18,15 @@ export function WidgetSelector({
 	);
 
 	// Filter and deduplicate widgets by ID, keeping only those with layout entries
+	// and excluding row widgets since they are not panels that can have variables
 	const widgets = Object.values(
 		(selectedDashboard?.data?.widgets || []).reduce(
 			(acc: Record<string, any>, widget) => {
-				if (widget.id && layoutIds.has(widget.id)) {
+				if (
+					widget.id &&
+					layoutIds.has(widget.id) &&
+					widget.panelTypes !== PANEL_GROUP_TYPES.ROW
+				) {
 					acc[widget.id] = widget;
 				}
 				return acc;
