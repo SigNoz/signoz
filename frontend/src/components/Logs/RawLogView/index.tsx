@@ -134,15 +134,10 @@ function RawLogView({
 		(event: MouseEvent) => {
 			if (activeContextLog || isReadOnly) return;
 
-			// Use custom click handler if provided, otherwise use default behavior
-			if (onLogClick) {
-				onLogClick(data, event);
-			} else {
-				onSetActiveLog(data);
-				setSelectedTab(VIEW_TYPES.OVERVIEW);
-			}
+			onSetActiveLog(data);
+			setSelectedTab(VIEW_TYPES.OVERVIEW);
 		},
-		[activeContextLog, isReadOnly, data, onSetActiveLog, onLogClick],
+		[activeContextLog, isReadOnly, data, onSetActiveLog],
 	);
 
 	const handleCloseLogDetail: DrawerProps['onClose'] = useCallback(
