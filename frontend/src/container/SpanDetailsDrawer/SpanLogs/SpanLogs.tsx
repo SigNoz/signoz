@@ -50,7 +50,7 @@ interface SpanLogsProps {
  * @param spanId - The span identifier
  * @returns Tag filters for the query builder
  */
-function createSpanLogsFilters(traceId: string, spanId: string): TagFilter {
+function createSpanLogsFilters(traceId: string): TagFilter {
 	const traceIdKey: BaseAutocompleteData = {
 		id: uuid(),
 		dataType: DataTypes.String,
@@ -58,15 +58,6 @@ function createSpanLogsFilters(traceId: string, spanId: string): TagFilter {
 		type: '',
 		isJSON: false,
 		key: 'trace_id',
-	};
-
-	const spanIdKey: BaseAutocompleteData = {
-		id: uuid(),
-		dataType: DataTypes.String,
-		isColumn: true,
-		type: '',
-		isJSON: false,
-		key: 'span_id',
 	};
 
 	return {
@@ -77,12 +68,6 @@ function createSpanLogsFilters(traceId: string, spanId: string): TagFilter {
 				value: traceId,
 				key: traceIdKey,
 			},
-			{
-				id: uuid(),
-				op: getOperatorValue(OPERATORS.IN),
-				value: spanId,
-				key: spanIdKey,
-			},
 		],
 		op: 'AND',
 	};
@@ -92,10 +77,7 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const { updateAllQueriesOperators } = useQueryBuilder();
 
-	const filters = useMemo(() => createSpanLogsFilters(traceId, spanId), [
-		traceId,
-		spanId,
-	]);
+	const filters = useMemo(() => createSpanLogsFilters(traceId), [traceId]);
 
 	const basePayload = getSpanLogsQueryPayload(
 		timeRange.startTime,
@@ -234,29 +216,44 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 	}, [data, setIsPaginating]);
 
 	const getItemContent = useCallback(
-		(_: number, logToRender: ILog): JSX.Element => (
-			<RawLogView
-				isTextOverflowEllipsisDisabled
-				key={logToRender.id}
-				data={logToRender}
-				linesPerRow={5}
-				fontSize={FontSize.MEDIUM}
-				onLogClick={handleLogClick}
-				selectedFields={[
-					{
-						dataType: 'string',
-						type: '',
-						name: 'body',
-					},
-					{
-						dataType: 'string',
-						type: '',
-						name: 'timestamp',
-					},
-				]}
-			/>
-		),
-		[handleLogClick],
+		(_: number, logToRender: ILog): JSX.Element => {
+			const getIsSpanRelated = (log: ILog, currentSpanId: string): boolean => {
+				if (log.spanID) {
+					return log.spanID === currentSpanId;
+				}
+				return log.span_id === currentSpanId;
+			};
+
+			const isSpanRelated = getIsSpanRelated(logToRender, spanId);
+
+			return (
+				<RawLogView
+					isTextOverflowEllipsisDisabled
+					key={logToRender.id}
+					data={logToRender}
+					linesPerRow={5}
+					fontSize={FontSize.MEDIUM}
+					onLogClick={handleLogClick}
+					isHighlighted={isSpanRelated}
+					helpTooltip={
+						isSpanRelated ? 'This log belongs to the current span' : undefined
+					}
+					selectedFields={[
+						{
+							dataType: 'string',
+							type: '',
+							name: 'body',
+						},
+						{
+							dataType: 'string',
+							type: '',
+							name: 'timestamp',
+						},
+					]}
+				/>
+			);
+		},
+		[handleLogClick, spanId],
 	);
 
 	const renderFooter = useCallback((): JSX.Element | null => {
