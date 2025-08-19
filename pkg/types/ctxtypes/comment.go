@@ -9,6 +9,17 @@ import (
 	"sync"
 )
 
+var (
+	logsExplorerRegex    = regexp.MustCompile(`/logs/logs-explorer(?:\?.*)?$`)
+	traceExplorerRegex   = regexp.MustCompile(`/traces-explorer(?:\?.*)?$`)
+	metricsExplorerRegex = regexp.MustCompile(`/metrics-explorer/explorer(?:\?.*)?$`)
+	dashboardRegex       = regexp.MustCompile(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`)
+	dashboardIDRegex     = regexp.MustCompile(`/dashboard/([a-f0-9\-]+)/`)
+	widgetIDRegex        = regexp.MustCompile(`widgetId=([a-f0-9\-]+)`)
+	ruleRegex            = regexp.MustCompile(`/alerts/(new|edit)(?:\?.*)?$`)
+	ruleIDRegex          = regexp.MustCompile(`ruleId=(\d+)`)
+)
+
 type commentCtxKey struct{}
 
 type Comment struct {
@@ -42,16 +53,16 @@ func CommentFromHTTPRequest(req *http.Request) map[string]string {
 		return comments
 	}
 
-	logsExplorerMatched, _ := regexp.MatchString(`/logs/logs-explorer(?:\?.*)?$`, referrer)
-	traceExplorerMatched, _ := regexp.MatchString(`/traces-explorer(?:\?.*)?$`, referrer)
-	metricsExplorerMatched, _ := regexp.MatchString(`/metrics-explorer/explorer(?:\?.*)?$`, referrer)
-	dashboardMatched, _ := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
-	alertMatched, _ := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
+	logsExplorerMatched := logsExplorerRegex.MatchString(referrer)
+	traceExplorerMatched := traceExplorerRegex.MatchString(referrer)
+	metricsExplorerMatched := metricsExplorerRegex.MatchString(referrer)
+	dashboardMatched := dashboardRegex.MatchString(referrer)
+	ruleMatched := ruleRegex.MatchString(referrer)
 
 	switch {
 	case dashboardMatched:
 		comments["module_name"] = "dashboard"
-	case alertMatched:
+	case ruleMatched:
 		comments["module_name"] = "rule"
 	case metricsExplorerMatched:
 		comments["module_name"] = "metrics-explorer"
@@ -64,24 +75,18 @@ func CommentFromHTTPRequest(req *http.Request) map[string]string {
 	}
 
 	if dashboardMatched {
-		if dashboardIDRegex, err := regexp.Compile(`/dashboard/([a-f0-9\-]+)/`); err == nil {
-			if matches := dashboardIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
-				comments["dashboard_id"] = matches[1]
-			}
+		if matches := dashboardIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
+			comments["dashboard_id"] = matches[1]
 		}
 
-		if widgetIDRegex, err := regexp.Compile(`widgetId=([a-f0-9\-]+)`); err == nil {
-			if matches := widgetIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
-				comments["widget_id"] = matches[1]
-			}
+		if matches := widgetIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
+			comments["widget_id"] = matches[1]
 		}
 	}
 
-	if alertMatched {
-		if alertIDRegex, err := regexp.Compile(`ruleId=(\d+)`); err == nil {
-			if matches := alertIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
-				comments["rule_id"] = matches[1]
-			}
+	if ruleMatched {
+		if matches := ruleIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
+			comments["rule_id"] = matches[1]
 		}
 	}
 
@@ -99,12 +104,14 @@ func NewComment() *Comment {
 func (comment *Comment) Set(key, value string) {
 	comment.mtx.Lock()
 	defer comment.mtx.Unlock()
+
 	comment.vals[key] = value
 }
 
 func (comment *Comment) Merge(vals map[string]string) {
 	comment.mtx.Lock()
 	defer comment.mtx.Unlock()
+
 	for key, value := range vals {
 		comment.vals[key] = value
 	}
@@ -113,10 +120,19 @@ func (comment *Comment) Merge(vals map[string]string) {
 func (comment *Comment) Map() map[string]string {
 	comment.mtx.RLock()
 	defer comment.mtx.RUnlock()
-	return comment.vals
+
+	copyOfVals := make(map[string]string)
+	for key, value := range comment.vals {
+		copyOfVals[key] = value
+	}
+
+	return copyOfVals
 }
 
 func (comment *Comment) String() string {
+	comment.mtx.RLock()
+	defer comment.mtx.RUnlock()
+
 	commentJSON, err := json.Marshal(comment.vals)
 	if err != nil {
 		return "{}"
