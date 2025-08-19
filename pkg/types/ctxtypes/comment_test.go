@@ -1,7 +1,6 @@
 package ctxtypes
 
 import (
-	"maps"
 	"net/http"
 	"testing"
 
@@ -60,7 +59,7 @@ func TestCommentFromHTTPRequest(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			actual := CommentFromHTTPRequest(tc.req)
 
-			assert.True(t, maps.Equal(actual, tc.expected))
+			assert.Equal(t, tc.expected, actual)
 		})
 	}
 }
