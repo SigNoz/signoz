@@ -185,7 +185,7 @@ describe('formatDataForMetricsTable', () => {
 		const { container: descriptionWrapper } = render(descriptionElement);
 		expect(descriptionWrapper.textContent).toBe('test-description');
 
-		// Verify null unit rendering
+		// Verify unit rendering
 		const unitElement = result[0].unit as JSX.Element;
 		const { container: unitWrapper } = render(unitElement);
 		expect(unitWrapper.textContent).toBe(getUniversalNameFromMetricUnit('ms'));
