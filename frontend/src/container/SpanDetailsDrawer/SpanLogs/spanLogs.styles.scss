@@ -1,0 +1,11 @@
+.span-logs-list-container {
+	color: var(--bg-vanilla-400);
+
+	.logs-loading-skeleton {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 8px 0;
+	}
+}

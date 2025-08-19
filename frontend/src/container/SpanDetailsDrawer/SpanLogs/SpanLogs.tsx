@@ -1,13 +1,24 @@
+import './spanLogs.styles.scss';
+
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
-import { OPERATORS } from 'constants/queryBuilder';
+import { QueryParams } from 'constants/query';
+import {
+	initialQueriesMap,
+	OPERATORS,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import ROUTES from 'constants/routes';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useHandleLogsPagination } from 'hooks/infraMonitoring/useHandleLogsPagination';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import createQueryParams from 'lib/createQueryParams';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { useCallback, useEffect, useMemo } from 'react';
@@ -19,6 +30,7 @@ import {
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
 import { getSpanLogsQueryPayload } from './constants';
@@ -77,6 +89,9 @@ function createSpanLogsFilters(traceId: string, spanId: string): TagFilter {
 }
 
 function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
+	const { updateAllQueriesOperators } = useQueryBuilder();
+
 	const filters = useMemo(() => createSpanLogsFilters(traceId, spanId), [
 		traceId,
 		spanId,
@@ -86,6 +101,87 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 		timeRange.startTime,
 		timeRange.endTime,
 		filters,
+	);
+
+	// Create trace_id and span_id filters for logs explorer navigation
+	const createSpanLogsFilter = useCallback((): TagFilter => {
+		const traceIdKey: BaseAutocompleteData = {
+			id: uuid(),
+			dataType: DataTypes.String,
+			isColumn: true,
+			type: '',
+			isJSON: false,
+			key: 'trace_id',
+		};
+
+		const spanIdKey: BaseAutocompleteData = {
+			id: uuid(),
+			dataType: DataTypes.String,
+			isColumn: true,
+			type: '',
+			isJSON: false,
+			key: 'span_id',
+		};
+
+		return {
+			items: [
+				{
+					id: uuid(),
+					op: getOperatorValue(OPERATORS['=']),
+					value: traceId,
+					key: traceIdKey,
+				},
+				{
+					id: uuid(),
+					op: getOperatorValue(OPERATORS['=']),
+					value: spanId,
+					key: spanIdKey,
+				},
+			],
+			op: 'AND',
+		};
+	}, [traceId, spanId]);
+
+	// Navigate to logs explorer with trace_id and span_id filters and activeLogId
+	const handleLogClick = useCallback(
+		(log: ILog): void => {
+			const spanLogsFilter = createSpanLogsFilter();
+
+			// Create base query with trace_id and span_id filters
+			const baseQuery = updateAllQueriesOperators(
+				initialQueriesMap[DataSource.LOGS],
+				PANEL_TYPES.LIST,
+				DataSource.LOGS,
+			);
+
+			// Add trace_id and span_id filters to the query
+			const updatedQuery = {
+				...baseQuery,
+				builder: {
+					...baseQuery.builder,
+					queryData: baseQuery.builder.queryData.map((queryData) => ({
+						...queryData,
+						filters: spanLogsFilter,
+					})),
+				},
+			};
+
+			const queryParams = {
+				[QueryParams.activeLogId]: `"${log.id}"`,
+				[QueryParams.startTime]: timeRange.startTime.toString(),
+				[QueryParams.endTime]: timeRange.endTime.toString(),
+				[QueryParams.compositeQuery]: JSON.stringify(updatedQuery),
+			};
+
+			safeNavigate(`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`);
+		},
+		[
+			createSpanLogsFilter,
+			updateAllQueriesOperators,
+			timeRange.startTime,
+			timeRange.endTime,
+			safeNavigate,
+		],
 	);
 
 	const {
@@ -136,6 +232,7 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 				data={logToRender}
 				linesPerRow={5}
 				fontSize={FontSize.MEDIUM}
+				onLogClick={handleLogClick}
 				selectedFields={[
 					{
 						dataType: 'string',
@@ -150,7 +247,7 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 				]}
 			/>
 		),
-		[],
+		[handleLogClick],
 	);
 
 	const renderFooter = useCallback((): JSX.Element | null => {
@@ -177,7 +274,7 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 							endReached={loadMoreLogs}
 							totalCount={logs.length}
 							itemContent={getItemContent}
-							style={{ height: `calc(${logs.length} * ${24}px)` }}
+							style={{ height: `calc(${logs.length} * ${24}px + 40px)` }}
 							overscan={200}
 							components={{
 								Footer: renderFooter,
