@@ -577,11 +577,8 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*q
 		}
 		allAggChArgs = append(allAggChArgs, chArgs...)
 
-		// Use alias if provided, otherwise use default naming
+		// Always use standardized alias format for compatibility with consume() method
 		alias := fmt.Sprintf("__result_%d", i)
-		if agg.Alias != "" {
-			alias = agg.Alias
-		}
 
 		sb.SelectMore(fmt.Sprintf("%s AS %s", rewritten, alias))
 	}
@@ -665,11 +662,8 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(selectFromCTE string) (*qbtype
 		}
 		allAggChArgs = append(allAggChArgs, chArgs...)
 
-		// Use alias if provided, otherwise use default naming
+		// Always use standardized alias format for compatibility with consume() method
 		alias := fmt.Sprintf("__result_%d", i)
-		if agg.Alias != "" {
-			alias = agg.Alias
-		}
 
 		sb.SelectMore(fmt.Sprintf("%s AS %s", rewritten, alias))
 	}
@@ -816,11 +810,8 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(selectFromCTE string) (*qbtyp
 		}
 		allAggChArgs = append(allAggChArgs, chArgs...)
 
-		// Use alias if provided, otherwise use default naming
+		// Always use standardized alias format for compatibility with consume() method
 		alias := fmt.Sprintf("__result_%d", i)
-		if agg.Alias != "" {
-			alias = agg.Alias
-		}
 
 		sb.SelectMore(fmt.Sprintf("%s AS %s", rewritten, alias))
 	}
