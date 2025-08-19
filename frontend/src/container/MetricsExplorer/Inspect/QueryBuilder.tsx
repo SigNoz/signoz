@@ -45,6 +45,7 @@ function QueryBuilder({
 					className="stage-run-query"
 					icon={<Play size={14} />}
 					onClick={applyInspectionOptions}
+					data-testid="apply-query-button"
 				>
 					Stage & Run Query
 				</Button>
