@@ -1,7 +1,13 @@
-.span-logs-list-container {
-	color: var(--bg-vanilla-400);
-
-	.logs-loading-skeleton {
+.span-logs {
+	background: rgba(171, 189, 255, 0.04);
+	margin-inline: 16px;
+	padding-top: 15px;
+	&-empty {
+		padding-top: 0;
+	}
+	&-list-container .logs-loading-skeleton,
+	&-empty-content {
+		color: var(--bg-vanilla-400);
 		display: flex;
 		flex-direction: column;
 		align-items: center;
