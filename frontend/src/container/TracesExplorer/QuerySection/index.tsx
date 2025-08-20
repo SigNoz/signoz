@@ -2,21 +2,12 @@ import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOrderBy from 'container/ExplorerOrderBy';
 import { OrderByFilterProps } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter.interfaces';
-import {
-	QueryBuilderProps,
-	TraceView,
-} from 'container/QueryBuilder/QueryBuilder.interfaces';
+import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { memo, useCallback, useMemo } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
-function QuerySection({
-	onChangeTraceView = (): void => {},
-}: {
-	onChangeTraceView?: (view: TraceView) => void;
-}): JSX.Element {
-	const { removeAllQueryBuilderEntities } = useQueryBuilder();
+function QuerySection(): JSX.Element {
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
 	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
@@ -51,29 +42,10 @@ function QuerySection({
 		[panelTypes],
 	);
 
-	const handleChangeTraceView = useCallback(
-		(view: TraceView) => {
-			if (isListViewPanel) {
-				removeAllQueryBuilderEntities('queryFormulas');
-			} else {
-				if (view === TraceView.SPANS) {
-					removeAllQueryBuilderEntities('queryTraceOperator');
-				} else {
-					removeAllQueryBuilderEntities('queryFormulas');
-				}
-			}
-			onChangeTraceView(view);
-		},
-		[onChangeTraceView, isListViewPanel, removeAllQueryBuilderEntities],
-	);
-
 	return (
 		<QueryBuilderV2
-			isListViewPanel={
-				panelTypes === PANEL_TYPES.LIST || panelTypes === PANEL_TYPES.TRACE
-			}
-			showTraceViewSelector
-			onChangeTraceView={handleChangeTraceView}
+			isListViewPanel={isListViewPanel}
+			showTraceOperator={true}
 			config={{ initialDataSource: DataSource.TRACES, queryVariant: 'static' }}
 			queryComponents={queryComponents}
 			panelType={panelTypes}

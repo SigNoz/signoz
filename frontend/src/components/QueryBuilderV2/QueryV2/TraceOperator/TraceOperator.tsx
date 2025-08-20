@@ -13,6 +13,8 @@ import {
 import QueryAddOns from '../QueryAddOns/QueryAddOns';
 import QueryAggregation from '../QueryAggregation/QueryAggregation';
 import { useTraceOperatorOperations } from 'hooks/queryBuilder/userTraceOperatorOperations';
+import { Button, Tooltip } from 'antd';
+import { Trash2 } from 'lucide-react';
 
 export default function TraceOperator({
 	traceOperator,
@@ -21,7 +23,7 @@ export default function TraceOperator({
 	traceOperator: IBuilderTraceOperator | undefined;
 	isListViewPanel?: boolean;
 }): JSX.Element {
-	const { panelType, currentQuery } = useQueryBuilder();
+	const { panelType, currentQuery, removeTraceOperator } = useQueryBuilder();
 	const { handleChangeTraceOperatorData } = useTraceOperatorOperations({
 		index: 0,
 		query: traceOperator,
@@ -112,6 +114,13 @@ export default function TraceOperator({
 					</div>
 				)}
 			</div>
+			{true && (
+				<Tooltip title="Remove Trace Operator" placement="topLeft">
+					<Button className="periscope-btn ghost" onClick={removeTraceOperator}>
+						<Trash2 size={14} />
+					</Button>
+				</Tooltip>
+			)}
 		</div>
 	);
 }

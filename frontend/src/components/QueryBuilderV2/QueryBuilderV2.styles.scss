@@ -183,7 +183,7 @@
 		flex-direction: column;
 		gap: 8px;
 
-		margin-left: 32px;
+		margin-left: 26px;
 		padding-bottom: 16px;
 		padding-left: 8px;
 
@@ -199,8 +199,8 @@
 			}
 
 			.formula-container {
-				margin-left: 82px;
-				padding: 4px 0px;
+				padding: 8px;
+				margin-left: 74px;
 
 				.ant-col {
 					&::before {
@@ -335,6 +335,12 @@
 					);
 					left: 15px;
 				}
+
+				&.has-trace-operator {
+					&::before {
+						height: 0px;
+					}
+				}
 			}
 
 			.formula-name {
@@ -351,7 +357,7 @@
 
 				&::before {
 					content: '';
-					height: 65px;
+					height: 128px;
 					content: '';
 					position: absolute;
 					left: 0;

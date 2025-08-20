@@ -114,6 +114,7 @@ export const QueryV2 = memo(function QueryV2({
 						<div className="query-actions-container">
 							<div className="query-actions-left-container">
 								<QBEntityOptions
+									hasTraceOperator={showTraceOperator}
 									isMetricsDataSource={dataSource === DataSource.METRICS}
 									showFunctions={
 										(version && version === ENTITY_VERSION_V4) ||

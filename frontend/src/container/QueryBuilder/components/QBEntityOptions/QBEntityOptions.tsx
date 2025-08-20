@@ -39,6 +39,7 @@ interface QBEntityOptionsProps {
 	showCloneOption?: boolean;
 	isListViewPanel?: boolean;
 	index?: number;
+	hasTraceOperator?: boolean;
 	queryVariant?: 'dropdown' | 'static';
 	onChangeDataSource?: (value: DataSource) => void;
 }
@@ -61,6 +62,7 @@ export default function QBEntityOptions({
 	onCloneQuery,
 	index,
 	queryVariant,
+	hasTraceOperator = false,
 	onChangeDataSource,
 }: QBEntityOptionsProps): JSX.Element {
 	const handleCloneEntity = (): void => {
@@ -115,6 +117,7 @@ export default function QBEntityOptions({
 								className={cx(
 									'periscope-btn',
 									entityType === 'query' ? 'query-name' : 'formula-name',
+									hasTraceOperator && 'has-trace-operator',
 									isLogsExplorerPage && lastUsedQuery === index ? 'sync-btn' : '',
 								)}
 							>

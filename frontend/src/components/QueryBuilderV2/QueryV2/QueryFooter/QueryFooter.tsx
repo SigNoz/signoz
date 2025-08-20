@@ -4,11 +4,15 @@ import { Plus, Sigma } from 'lucide-react';
 export default function QueryFooter({
 	addNewBuilderQuery,
 	addNewFormula,
-	showFormula = true,
+	addTraceOperator,
+	showAddFormula = true,
+	showAddTraceOperator = false,
 }: {
 	addNewBuilderQuery: () => void;
 	addNewFormula: () => void;
-	showFormula?: boolean;
+	addTraceOperator?: () => void;
+	showAddTraceOperator: boolean;
+	showAddFormula?: boolean;
 }): JSX.Element {
 	return (
 		<div className="qb-footer">
@@ -24,7 +28,7 @@ export default function QueryFooter({
 					</Tooltip>
 				</div>
 
-				{showFormula && (
+				{showAddFormula && (
 					<div className="qb-add-formula">
 						<Tooltip
 							title={
@@ -48,6 +52,34 @@ export default function QueryFooter({
 								onClick={addNewFormula}
 							>
 								Add Formula
+							</Button>
+						</Tooltip>
+					</div>
+				)}
+				{showAddTraceOperator && (
+					<div className="qb-add-formula">
+						<Tooltip
+							title={
+								<div style={{ textAlign: 'center' }}>
+									Add Trace Matching
+									<Typography.Link
+										href="https://signoz.io/docs/userguide/query-builder-v5/#multi-query-analysis-advanced-comparisons"
+										target="_blank"
+										style={{ textDecoration: 'underline' }}
+									>
+										{' '}
+										<br />
+										Learn more
+									</Typography.Link>
+								</div>
+							}
+						>
+							<Button
+								className="add-formula-button periscope-btn secondary"
+								icon={<Sigma size={16} />}
+								onClick={() => addTraceOperator?.()}
+							>
+								Add Trace Matching
 							</Button>
 						</Tooltip>
 					</div>
