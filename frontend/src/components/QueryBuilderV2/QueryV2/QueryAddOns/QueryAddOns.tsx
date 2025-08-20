@@ -144,6 +144,7 @@ function QueryAddOns({
 	showReduceTo,
 	panelType,
 	index,
+	isForTraceOperator = false,
 	children,
 }: {
 	query: IBuilderQuery;
@@ -152,6 +153,7 @@ function QueryAddOns({
 	showReduceTo: boolean;
 	panelType: PANEL_TYPES | null;
 	index: number;
+	isForTraceOperator?: boolean;
 	children?: React.ReactNode;
 }): JSX.Element {
 	const [addOns, setAddOns] = useState<AddOn[]>(ADD_ONS);
@@ -162,6 +164,7 @@ function QueryAddOns({
 		index,
 		query,
 		entityVersion: '',
+		isForTraceOperator: isForTraceOperator,
 	});
 
 	const { handleSetQueryData } = useQueryBuilder();

@@ -120,7 +120,7 @@ export default function TraceOperator({
 						>
 							<QueryAddOns
 								index={0}
-								query={traceOperator} //TODO: replace this with the traceoperator
+								query={traceOperator}
 								version="v3"
 								isForTraceOperator={true}
 								isListViewPanel={false}
