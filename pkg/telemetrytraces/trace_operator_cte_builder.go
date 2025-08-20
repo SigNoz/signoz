@@ -863,10 +863,9 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(selectFromCTE string) (*qbtyp
 
 func (b *traceOperatorCTEBuilder) addHavingClause(sb *sqlbuilder.SelectBuilder) error {
 	if b.operator.Having != nil && b.operator.Having.Expression != "" {
-		havingExpr := b.operator.Having.Expression
-		if strings.TrimSpace(havingExpr) != "" {
-			sb.Having(havingExpr)
-		}
+		rewriter := querybuilder.NewHavingExpressionRewriter()
+		rewrittenExpr := rewriter.RewriteForTraces(b.operator.Having.Expression, b.operator.Aggregations)
+		sb.Having(rewrittenExpr)
 	}
 	return nil
 }
