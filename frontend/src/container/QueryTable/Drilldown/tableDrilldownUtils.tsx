@@ -70,6 +70,7 @@ export const getBreakoutQuery = (
 					...item,
 					groupBy: [groupBy],
 					orderBy: [],
+					legend: item.legend && groupBy.key ? `{{${groupBy.key}}}` : '',
 				};
 			}
 			return item;

@@ -27,11 +27,13 @@ import RightToolbarActions from 'container/QueryBuilder/components/ToolbarAction
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useChartMutable } from 'hooks/useChartMutable';
+import useComponentPermission from 'hooks/useComponentPermission';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import GetMinMax from 'lib/getMinMax';
+import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -77,6 +79,9 @@ function FullView({
 	}, [setCurrentGraphRef]);
 
 	const { selectedDashboard, isDashboardLocked } = useDashboard();
+	const { user } = useAppContext();
+
+	const [editWidget] = useComponentPermission(['edit_widget'], user.role);
 
 	const getSelectedTime = useCallback(
 		() =>
@@ -231,17 +236,19 @@ function FullView({
 												Reset Query
 											</Button>
 										)}
-										<Button
-											className="switch-edit-btn"
-											disabled={response.isFetching || response.isLoading}
-											onClick={(): void => {
-												if (dashboardEditView) {
-													safeNavigate(dashboardEditView);
-												}
-											}}
-										>
-											Switch to Edit Mode
-										</Button>
+										{editWidget && (
+											<Button
+												className="switch-edit-btn"
+												disabled={response.isFetching || response.isLoading}
+												onClick={(): void => {
+													if (dashboardEditView) {
+														safeNavigate(dashboardEditView);
+													}
+												}}
+											>
+												Switch to Edit Mode
+											</Button>
+										)}
 									</div>
 								)}
 								<div className="time-container">
