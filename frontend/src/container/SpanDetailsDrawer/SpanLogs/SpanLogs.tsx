@@ -46,9 +46,8 @@ interface SpanLogsProps {
 }
 
 /**
- * Creates tag filters for querying logs by trace_id and span_id
+ * Creates tag filters for querying logs by trace_id
  * @param traceId - The trace identifier
- * @param spanId - The span identifier
  * @returns Tag filters for the query builder
  */
 function createSpanLogsFilters(traceId: string): TagFilter {
