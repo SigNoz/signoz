@@ -1,5 +1,6 @@
 import './spanLogs.styles.scss';
 
+import cx from 'classnames';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
@@ -294,15 +295,13 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 	);
 
 	const renderNoLogsFound = (): JSX.Element => (
-		<div className="span-logs-empty">
-			<div className="span-logs-empty-content">
-				<p>No logs found for this span</p>
-			</div>
+		<div className="span-logs-empty-content">
+			<p>No logs found for this span</p>
 		</div>
 	);
 
 	return (
-		<div className="span-logs">
+		<div className={cx('span-logs', { 'span-logs-empty': logs.length === 0 })}>
 			{isLoading && <LogsLoading />}
 			{!isLoading && !isError && logs.length === 0 && renderNoLogsFound()}
 			{isError && !isLoading && <LogsError />}
