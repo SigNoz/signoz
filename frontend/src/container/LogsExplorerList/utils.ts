@@ -1,4 +1,5 @@
 import { TelemetryFieldKey } from 'api/v5/v5';
+import { isEmpty } from 'lodash-es';
 import { IField } from 'types/api/logs/fields';
 import {
 	IBuilderQuery,
@@ -8,11 +9,13 @@ import {
 export const convertKeysToColumnFields = (
 	keys: TelemetryFieldKey[],
 ): IField[] =>
-	keys.map((item) => ({
-		dataType: item.fieldDataType ?? '',
-		name: item.name,
-		type: item.fieldContext ?? '',
-	}));
+	keys
+		.filter((item) => !isEmpty(item.name))
+		.map((item) => ({
+			dataType: item.fieldDataType ?? '',
+			name: item.name,
+			type: item.fieldContext ?? '',
+		}));
 /**
  * Determines if a query represents a trace-to-logs navigation
  * by checking for the presence of a trace_id filter.

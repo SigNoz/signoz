@@ -347,7 +347,7 @@ func (mc *migrateCommon) createAggregations(ctx context.Context, queryData map[s
 	aggregateAttr, hasAttr := queryData["aggregateAttribute"].(map[string]any)
 	dataSource, _ := queryData["dataSource"].(string)
 
-	if aggregateOp == "noop" {
+	if aggregateOp == "noop" && dataSource != "metrics" {
 		return false
 	}
 
@@ -696,8 +696,16 @@ func (mc *migrateCommon) buildCondition(ctx context.Context, key, operator strin
 	case "<=":
 		return fmt.Sprintf("%s <= %s", key, formattedValue)
 	case "in", "IN":
+		if !strings.HasPrefix(formattedValue, "[") && !mc.isVariable(formattedValue) {
+			mc.logger.WarnContext(ctx, "multi-value operator in found with single value", "key", key, "formatted_value", formattedValue)
+			return fmt.Sprintf("%s = %s", key, formattedValue)
+		}
 		return fmt.Sprintf("%s IN %s", key, formattedValue)
 	case "nin", "NOT IN":
+		if !strings.HasPrefix(formattedValue, "[") && !mc.isVariable(formattedValue) {
+			mc.logger.WarnContext(ctx, "multi-value operator not in found with single value", "key", key, "formatted_value", formattedValue)
+			return fmt.Sprintf("%s != %s", key, formattedValue)
+		}
 		return fmt.Sprintf("%s NOT IN %s", key, formattedValue)
 	case "like", "LIKE":
 		return fmt.Sprintf("%s LIKE %s", key, formattedValue)
@@ -892,6 +900,7 @@ func (mc *migrateCommon) isVariable(s string) bool {
 	s = strings.TrimSpace(s)
 
 	patterns := []string{
+		`^\{.*\}$`,       // {var} or {.var}
 		`^\{\{.*\}\}$`,   // {{var}} or {{.var}}
 		`^\$.*$`,         // $var or $service.name
 		`^\[\[.*\]\]$`,   // [[var]] or [[.var]]
@@ -916,6 +925,11 @@ func (mc *migrateCommon) normalizeVariable(ctx context.Context, s string) string
 	// {{var}} or {{.var}}
 	if strings.HasPrefix(s, "{{") && strings.HasSuffix(s, "}}") {
 		varName = strings.TrimPrefix(strings.TrimSuffix(s, "}}"), "{{")
+		varName = strings.TrimPrefix(varName, ".")
+		// this is probably going to be problem if user has $ as start of key
+		varName = strings.TrimPrefix(varName, "$")
+	} else if strings.HasPrefix(s, "{") && strings.HasSuffix(s, "}") { // {var} or {.var}
+		varName = strings.TrimPrefix(strings.TrimSuffix(s, "}"), "{")
 		varName = strings.TrimPrefix(varName, ".")
 		// this is probably going to be problem if user has $ as start of key
 		varName = strings.TrimPrefix(varName, "$")

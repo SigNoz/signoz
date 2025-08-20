@@ -20,6 +20,7 @@ function TimeSeriesViewContainer({
 	dataSource = DataSource.TRACES,
 	isFilterApplied,
 	setWarning,
+	setIsLoadingQueries,
 }: TimeSeriesViewProps): JSX.Element {
 	const { stagedQuery, currentQuery, panelType } = useQueryBuilder();
 
@@ -47,7 +48,7 @@ function TimeSeriesViewContainer({
 		return isValid.every(Boolean);
 	}, [currentQuery]);
 
-	const { data, isLoading, isError, error } = useGetQueryRange(
+	const { data, isLoading, isFetching, isError, error } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap[dataSource],
 			graphType: panelType || PANEL_TYPES.TIME_SERIES,
@@ -83,12 +84,20 @@ function TimeSeriesViewContainer({
 		[data, isValidToConvertToMs],
 	);
 
+	useEffect(() => {
+		if (isLoading || isFetching) {
+			setIsLoadingQueries(true);
+		} else {
+			setIsLoadingQueries(false);
+		}
+	}, [isLoading, isFetching, setIsLoadingQueries]);
+
 	return (
 		<TimeSeriesView
 			isFilterApplied={isFilterApplied}
 			isError={isError}
 			error={error as APIError}
-			isLoading={isLoading}
+			isLoading={isLoading || isFetching}
 			data={responseData}
 			yAxisUnit={isValidToConvertToMs ? 'ms' : 'short'}
 			dataSource={dataSource}
@@ -101,6 +110,7 @@ interface TimeSeriesViewProps {
 	dataSource?: DataSource;
 	isFilterApplied: boolean;
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
+	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
 }
 
 TimeSeriesViewContainer.defaultProps = {

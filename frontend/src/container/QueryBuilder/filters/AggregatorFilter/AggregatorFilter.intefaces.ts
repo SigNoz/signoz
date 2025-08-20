@@ -8,4 +8,5 @@ export type AgregatorFilterProps = Pick<AutoCompleteProps, 'disabled'> & {
 	defaultValue?: string;
 	onSelect?: (value: BaseAutocompleteData) => void;
 	index?: number;
+	signalSource?: 'meter' | '';
 };

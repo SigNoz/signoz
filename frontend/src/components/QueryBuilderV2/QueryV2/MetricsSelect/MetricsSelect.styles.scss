@@ -44,13 +44,14 @@
 .lightMode {
 	.metrics-select-container {
 		.ant-select-selector {
-			border: 1px solid var(--bg-slate-300) !important;
+			border: 1px solid var(--bg-vanilla-300) !important;
 			background: var(--bg-vanilla-100);
 			color: var(--text-ink-100);
 		}
 
 		.ant-select-dropdown {
 			background: var(--bg-vanilla-100);
+			border: 1px solid var(--bg-vanilla-300) !important;
 			box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12),
 				0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
 			backdrop-filter: none;

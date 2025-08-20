@@ -6,6 +6,7 @@ import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKey
 import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import { has } from 'lodash-es';
 import { AllTraceFilterKeyValue } from 'pages/TracesExplorer/Filter/filterUtils';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -452,7 +453,9 @@ const useOptionsMenu = ({
 		() => ({
 			addColumn: {
 				isFetching: isSearchedAttributesFetchingV5,
-				value: preferences?.columns || defaultOptionsQuery.selectColumns,
+				value:
+					preferences?.columns.filter((item) => has(item, 'name')) ||
+					defaultOptionsQuery.selectColumns.filter((item) => has(item, 'name')),
 				options: optionsFromAttributeKeys || [],
 				onFocus: handleFocus,
 				onBlur: handleBlur,

@@ -239,10 +239,17 @@ export interface MetricBuilderQuery extends BaseBuilderQuery {
 	aggregations?: MetricAggregation[];
 }
 
+export interface MeterBuilderQuery extends BaseBuilderQuery {
+	signal: 'metrics';
+	source: 'meter';
+	aggregations?: MetricAggregation[];
+}
+
 export type BuilderQuery =
 	| TraceBuilderQuery
 	| LogBuilderQuery
-	| MetricBuilderQuery;
+	| MetricBuilderQuery
+	| MeterBuilderQuery;
 
 export interface QueryBuilderFormula {
 	name: string;

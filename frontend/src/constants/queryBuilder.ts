@@ -23,6 +23,7 @@ import {
 	BoolOperators,
 	DataSource,
 	LogsAggregatorOperator,
+	MeterAggregateOperator,
 	MetricAggregateOperator,
 	NumberOperators,
 	QueryAdditionalFilter,
@@ -36,6 +37,7 @@ import { v4 as uuid } from 'uuid';
 
 import {
 	logsAggregateOperatorOptions,
+	meterAggregateOperatorOptions,
 	metricAggregateOperatorOptions,
 	metricsGaugeAggregateOperatorOptions,
 	metricsGaugeSpaceAggregateOperatorOptions,
@@ -79,6 +81,7 @@ export const mapOfOperators = {
 	metrics: metricAggregateOperatorOptions,
 	logs: logsAggregateOperatorOptions,
 	traces: tracesAggregateOperatorOptions,
+	meter: meterAggregateOperatorOptions,
 };
 
 export const metricsOperatorsByType = {
@@ -193,6 +196,7 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 	groupBy: [],
 	legend: '',
 	reduceTo: 'avg',
+	source: '',
 };
 
 const initialQueryBuilderFormLogsValues: IBuilderQuery = {
@@ -207,6 +211,39 @@ const initialQueryBuilderFormTracesValues: IBuilderQuery = {
 	aggregateOperator: TracesAggregatorOperator.COUNT,
 	aggregations: [{ expression: 'count() ' }],
 	dataSource: DataSource.TRACES,
+};
+
+export const initialQueryBuilderFormMeterValues: IBuilderQuery = {
+	dataSource: DataSource.METRICS,
+	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
+	aggregateOperator: MeterAggregateOperator.COUNT,
+	aggregateAttribute: initialAutocompleteData,
+	timeAggregation: MeterAggregateOperator.RATE,
+	spaceAggregation: MeterAggregateOperator.SUM,
+	filter: { expression: '' },
+	aggregations: [
+		{
+			metricName: '',
+			temporality: '',
+			timeAggregation: MeterAggregateOperator.COUNT,
+			spaceAggregation: MeterAggregateOperator.SUM,
+			reduceTo: 'avg',
+		},
+	],
+	functions: [],
+	filters: { items: [], op: 'AND' },
+	expression: createNewBuilderItemName({
+		existNames: [],
+		sourceNames: alphabet,
+	}),
+	disabled: false,
+	stepInterval: undefined,
+	having: [],
+	limit: null,
+	orderBy: [],
+	groupBy: [],
+	legend: '',
+	reduceTo: 'avg',
 };
 
 export const initialQueryBuilderFormValuesMap: Record<
@@ -283,6 +320,19 @@ export const initialQueriesMap: Record<DataSource, Query> = {
 	metrics: initialQueryWithType,
 	logs: initialQueryLogsWithType,
 	traces: initialQueryTracesWithType,
+};
+
+export const initialQueryMeterWithType: Query = {
+	...initialQueryWithType,
+	builder: {
+		...initialQueryWithType.builder,
+		queryData: [
+			{
+				...initialQueryBuilderFormValuesMap.metrics,
+				source: 'meter',
+			},
+		],
+	},
 };
 
 export const operatorsByTypes: Record<LocalDataType, string[]> = {
