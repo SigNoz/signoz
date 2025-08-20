@@ -624,6 +624,11 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*q
 
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
+	// Add HAVING clause if specified
+	if err := b.addHavingClause(sb); err != nil {
+		return nil, err
+	}
+
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 	return &qbtypes.Statement{
 		Query: sql,
@@ -715,6 +720,11 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(selectFromCTE string) (*qbtype
 			groupByKeys[i] = fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name)
 		}
 		sb.GroupBy(groupByKeys...)
+	}
+
+	// Add HAVING clause if specified
+	if err := b.addHavingClause(sb); err != nil {
+		return nil, err
 	}
 
 	orderApplied := false
@@ -839,11 +849,26 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(selectFromCTE string) (*qbtyp
 
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
+	// Add HAVING clause if specified
+	if err := b.addHavingClause(sb); err != nil {
+		return nil, err
+	}
+
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 	return &qbtypes.Statement{
 		Query: sql,
 		Args:  args,
 	}, nil
+}
+
+func (b *traceOperatorCTEBuilder) addHavingClause(sb *sqlbuilder.SelectBuilder) error {
+	if b.operator.Having != nil && b.operator.Having.Expression != "" {
+		havingExpr := b.operator.Having.Expression
+		if strings.TrimSpace(havingExpr) != "" {
+			sb.Having(havingExpr)
+		}
+	}
+	return nil
 }
 
 func (b *traceOperatorCTEBuilder) addCTE(name, sql string, args []any, dependsOn []string) {
