@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"sync"
 )
 
 var (
@@ -23,14 +24,15 @@ type commentCtxKey struct{}
 
 type Comment struct {
 	vals map[string]string
+	mtx  sync.RWMutex
 }
 
-func NewContextWithComment(ctx context.Context, comment Comment) context.Context {
+func NewContextWithComment(ctx context.Context, comment *Comment) context.Context {
 	return context.WithValue(ctx, commentCtxKey{}, comment)
 }
 
-func CommentFromContext(ctx context.Context) Comment {
-	comment, ok := ctx.Value(commentCtxKey{}).(Comment)
+func CommentFromContext(ctx context.Context) *Comment {
+	comment, ok := ctx.Value(commentCtxKey{}).(*Comment)
 	if !ok {
 		return NewComment()
 	}
@@ -97,15 +99,21 @@ func CommentFromHTTPRequest(req *http.Request) map[string]string {
 }
 
 // NewComment creates a new Comment with an empty map. It is safe to use concurrently.
-func NewComment() Comment {
-	return Comment{vals: map[string]string{}}
+func NewComment() *Comment {
+	return &Comment{vals: map[string]string{}}
 }
 
-func (comment Comment) Set(key, value string) {
+func (comment *Comment) Set(key, value string) {
+	comment.mtx.Lock()
+	defer comment.mtx.Unlock()
+
 	comment.vals[key] = value
 }
 
-func (comment Comment) Merge(vals map[string]string) {
+func (comment *Comment) Merge(vals map[string]string) {
+	comment.mtx.Lock()
+	defer comment.mtx.Unlock()
+
 	// If vals is nil, do nothing. Comment should not panic.
 	if vals == nil {
 		return
@@ -116,7 +124,10 @@ func (comment Comment) Merge(vals map[string]string) {
 	}
 }
 
-func (comment Comment) Map() map[string]string {
+func (comment *Comment) Map() map[string]string {
+	comment.mtx.RLock()
+	defer comment.mtx.RUnlock()
+
 	copyOfVals := make(map[string]string)
 	for key, value := range comment.vals {
 		copyOfVals[key] = value
@@ -125,7 +136,10 @@ func (comment Comment) Map() map[string]string {
 	return copyOfVals
 }
 
-func (comment Comment) String() string {
+func (comment *Comment) String() string {
+	comment.mtx.RLock()
+	defer comment.mtx.RUnlock()
+
 	commentJSON, err := json.Marshal(comment.vals)
 	if err != nil {
 		return "{}"
@@ -134,7 +148,7 @@ func (comment Comment) String() string {
 	return string(commentJSON)
 }
 
-func (comment Comment) Equal(other Comment) bool {
+func (comment *Comment) Equal(other *Comment) bool {
 	if len(comment.vals) != len(other.vals) {
 		return false
 	}

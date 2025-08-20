@@ -62,7 +62,7 @@ func TestCommentFromHTTPRequest(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			actual := CommentFromHTTPRequest(tc.req)
 
-			assert.True(t, Comment{vals: tc.expected}.Equal(Comment{vals: actual}))
+			assert.True(t, (&Comment{vals: tc.expected}).Equal(&Comment{vals: actual}))
 		})
 	}
 }
