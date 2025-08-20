@@ -144,6 +144,7 @@ function QueryAddOns({
 	showReduceTo,
 	panelType,
 	index,
+	children,
 }: {
 	query: IBuilderQuery;
 	version: string;
@@ -151,6 +152,7 @@ function QueryAddOns({
 	showReduceTo: boolean;
 	panelType: PANEL_TYPES | null;
 	index: number;
+	children?: React.ReactNode;
 }): JSX.Element {
 	const [addOns, setAddOns] = useState<AddOn[]>(ADD_ONS);
 
@@ -486,6 +488,7 @@ function QueryAddOns({
 						</Tooltip>
 					))}
 				</Radio.Group>
+				{children}
 			</div>
 		</div>
 	);
