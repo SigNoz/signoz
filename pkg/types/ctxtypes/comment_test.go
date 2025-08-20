@@ -1,7 +1,10 @@
 package ctxtypes
 
 import (
+	"context"
+	"fmt"
 	"net/http"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -59,7 +62,62 @@ func TestCommentFromHTTPRequest(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			actual := CommentFromHTTPRequest(tc.req)
 
-			assert.Equal(t, tc.expected, actual)
+			assert.True(t, Comment{vals: tc.expected}.Equal(Comment{vals: actual}))
 		})
+	}
+}
+
+func TestCommentFromContext(t *testing.T) {
+	ctx := context.Background()
+	comment1 := CommentFromContext(ctx)
+	assert.True(t, NewComment().Equal(comment1))
+
+	comment1.Set("k1", "v1")
+	ctx = NewContextWithComment(ctx, comment1)
+	actual1 := CommentFromContext(ctx)
+	assert.True(t, comment1.Equal(actual1))
+
+	// Get the comment from the context, mutate it, but this time do not set it back in the context
+	comment2 := CommentFromContext(ctx)
+	comment2.Set("k2", "v2")
+
+	actual2 := CommentFromContext(ctx)
+	// Since comment2 was not set back in the context, it should not affect the original comment1
+	assert.True(t, comment1.Equal(actual2))
+	assert.False(t, comment2.Equal(actual2))
+	assert.False(t, comment1.Equal(comment2))
+}
+
+func TestCommentFromContextConcurrent(t *testing.T) {
+	comment := NewComment()
+	comment.Set("k1", "v1")
+
+	ctx := context.Background()
+	ctx = NewContextWithComment(ctx, comment)
+
+	var wg sync.WaitGroup
+	ctxs := make([]context.Context, 10)
+	var mtx sync.Mutex
+	wg.Add(10)
+
+	for i := 0; i < 10; i++ {
+		go func(i int) {
+			defer wg.Done()
+			comment := CommentFromContext(ctx)
+			comment.Set("k2", fmt.Sprintf("v%d", i))
+			ctx = NewContextWithComment(ctx, comment)
+			mtx.Lock()
+			ctxs[i] = ctx
+			mtx.Unlock()
+		}(i)
+	}
+
+	wg.Wait()
+
+	for i, ctx := range ctxs {
+		comment := CommentFromContext(ctx)
+		assert.Equal(t, len(comment.vals), 2)
+		assert.Equal(t, comment.vals["k1"], "v1")
+		assert.Equal(t, comment.vals["k2"], fmt.Sprintf("v%d", i))
 	}
 }

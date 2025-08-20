@@ -353,9 +353,8 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 			}(time.Now())
 
 			comment := ctxtypes.CommentFromContext(ctx)
-			comment.Set("alertID", rule.ID())
-			comment.Set("source", "alerts")
-			comment.Set("client", "query-service")
+			comment.Set("rule_id", rule.ID())
+			comment.Set("auth_type", "internal")
 			ctx = ctxtypes.NewContextWithComment(ctx, comment)
 
 			_, err := rule.Eval(ctx, ts)

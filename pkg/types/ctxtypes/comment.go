@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"sync"
 )
 
 var (
@@ -24,20 +23,22 @@ type commentCtxKey struct{}
 
 type Comment struct {
 	vals map[string]string
-	mtx  sync.RWMutex
 }
 
-func NewContextWithComment(ctx context.Context, comment *Comment) context.Context {
+func NewContextWithComment(ctx context.Context, comment Comment) context.Context {
 	return context.WithValue(ctx, commentCtxKey{}, comment)
 }
 
-func CommentFromContext(ctx context.Context) *Comment {
-	comment, ok := ctx.Value(commentCtxKey{}).(*Comment)
+func CommentFromContext(ctx context.Context) Comment {
+	comment, ok := ctx.Value(commentCtxKey{}).(Comment)
 	if !ok {
 		return NewComment()
 	}
 
-	return comment
+	// Return a deep copy of the comment to prevent mutations from affecting the original
+	copy := NewComment()
+	copy.Merge(comment.Map())
+	return copy
 }
 
 func CommentFromHTTPRequest(req *http.Request) map[string]string {
@@ -96,35 +97,26 @@ func CommentFromHTTPRequest(req *http.Request) map[string]string {
 }
 
 // NewComment creates a new Comment with an empty map. It is safe to use concurrently.
-func NewComment() *Comment {
-	return &Comment{vals: map[string]string{}}
+func NewComment() Comment {
+	return Comment{vals: map[string]string{}}
 }
 
-func (comment *Comment) Set(key, value string) {
-	comment.mtx.Lock()
-	defer comment.mtx.Unlock()
-
+func (comment Comment) Set(key, value string) {
 	comment.vals[key] = value
 }
 
-func (comment *Comment) Merge(vals map[string]string) {
+func (comment Comment) Merge(vals map[string]string) {
 	// If vals is nil, do nothing. Comment should not panic.
 	if vals == nil {
 		return
 	}
-
-	comment.mtx.Lock()
-	defer comment.mtx.Unlock()
 
 	for key, value := range vals {
 		comment.vals[key] = value
 	}
 }
 
-func (comment *Comment) Map() map[string]string {
-	comment.mtx.RLock()
-	defer comment.mtx.RUnlock()
-
+func (comment Comment) Map() map[string]string {
 	copyOfVals := make(map[string]string)
 	for key, value := range comment.vals {
 		copyOfVals[key] = value
@@ -133,14 +125,25 @@ func (comment *Comment) Map() map[string]string {
 	return copyOfVals
 }
 
-func (comment *Comment) String() string {
-	comment.mtx.RLock()
-	defer comment.mtx.RUnlock()
-
+func (comment Comment) String() string {
 	commentJSON, err := json.Marshal(comment.vals)
 	if err != nil {
 		return "{}"
 	}
 
 	return string(commentJSON)
+}
+
+func (comment Comment) Equal(other Comment) bool {
+	if len(comment.vals) != len(other.vals) {
+		return false
+	}
+
+	for key, value := range comment.vals {
+		if val, ok := other.vals[key]; !ok || val != value {
+			return false
+		}
+	}
+
+	return true
 }
