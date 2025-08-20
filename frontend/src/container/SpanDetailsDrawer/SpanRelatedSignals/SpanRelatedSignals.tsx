@@ -142,6 +142,7 @@ function SpanRelatedSignals({
 				ROUTES.LOGS_EXPLORER
 			}?${searchParams.toString()}`,
 			'_blank',
+			'noopener,noreferrer',
 		);
 	}, [selectedSpan.traceId, traceStartTime, traceEndTime]);
 
