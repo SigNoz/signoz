@@ -219,6 +219,39 @@ function TracesExplorer(): JSX.Element {
 
 	useShareBuilderUrl({ defaultValue: defaultQuery, forceReset: shouldReset });
 
+	const isMultipleQueries = useMemo(
+		() =>
+			currentQuery.builder.queryData.length > 1 ||
+			currentQuery.builder.queryFormulas.length > 0,
+		[currentQuery],
+	);
+
+	const isGroupByExist = useMemo(() => {
+		const groupByCount: number = currentQuery.builder.queryData.reduce<number>(
+			(acc, query) => acc + (query?.groupBy?.length || 0),
+			0,
+		);
+		return groupByCount > 0;
+	}, [currentQuery]);
+
+	useEffect(() => {
+		const shouldChangeView = isMultipleQueries || isGroupByExist;
+
+		if (
+			(selectedView === ExplorerViews.LIST ||
+				selectedView === ExplorerViews.TRACE) &&
+			shouldChangeView
+		) {
+			// Switch to timeseries view automatically
+			handleChangeSelectedView(ExplorerViews.TIMESERIES);
+		}
+	}, [
+		selectedView,
+		isMultipleQueries,
+		isGroupByExist,
+		handleChangeSelectedView,
+	]);
+
 	useEffect(() => {
 		if (shouldReset) {
 			setShouldReset(false);
