@@ -4,6 +4,7 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import {
 	IBuilderFormula,
 	IBuilderQuery,
+	IBuilderTraceOperator,
 } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	BaseBuilderQuery,
@@ -25,6 +26,14 @@ type UseQueryOperationsParams = Pick<QueryProps, 'index' | 'query'> &
 
 // Generic type that can work with both legacy and V5 query types
 export type HandleChangeQueryData<T = IBuilderQuery> = <
+	Key extends keyof T,
+	Value extends T[Key]
+>(
+	key: Key,
+	value: Value,
+) => void;
+
+export type HandleChangeTraceOperatorData<T = IBuilderTraceOperator> = <
 	Key extends keyof T,
 	Value extends T[Key]
 >(
@@ -65,4 +74,11 @@ export type UseQueryOperations = (
 	handleChangeFormulaData: HandleChangeFormulaData;
 	handleQueryFunctionsUpdates: (functions: QueryFunction[]) => void;
 	listOfAdditionalFormulaFilters: string[];
+};
+
+export type UseTraceOperatorOperations = (params: {
+	index?: number;
+	query?: IBuilderTraceOperator;
+}) => {
+	handleChangeTraceOperatorData: HandleChangeTraceOperatorData;
 };
