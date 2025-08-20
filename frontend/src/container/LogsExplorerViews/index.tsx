@@ -256,7 +256,6 @@ function LogsExplorerViewsContainer({
 	} = useGetExplorerQueryRange(
 		listChartQuery,
 		PANEL_TYPES.TIME_SERIES,
-		// ENTITY_VERSION_V4,
 		ENTITY_VERSION_V5,
 		{
 			enabled:
@@ -279,7 +278,6 @@ function LogsExplorerViewsContainer({
 	} = useGetExplorerQueryRange(
 		requestData,
 		panelType,
-		// ENTITY_VERSION_V4,
 		ENTITY_VERSION_V5,
 		{
 			keepPreviousData: true,

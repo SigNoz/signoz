@@ -197,3 +197,94 @@ export const MOCK_QUERY = {
 		},
 	],
 };
+
+export const MOCK_KEY_SUGGESTIONS_RESPONSE = {
+	status: 'success',
+	data: {
+		complete: true,
+		keys: {
+			resource: [
+				{
+					name: 'service.name',
+					label: 'Service Name',
+					type: 'resource',
+					signal: 'logs',
+					fieldContext: 'resource',
+					fieldDataType: 'string',
+				},
+				{
+					name: 'deployment.environment',
+					label: 'Environment',
+					type: 'resource',
+					signal: 'logs',
+					fieldContext: 'resource',
+					fieldDataType: 'string',
+				},
+			],
+			attribute: [
+				{
+					name: 'http.method',
+					label: 'HTTP Method',
+					type: 'attribute',
+					signal: 'logs',
+					fieldContext: 'attribute',
+					fieldDataType: 'string',
+				},
+				{
+					name: 'http.status_code',
+					label: 'HTTP Status Code',
+					type: 'attribute',
+					signal: 'logs',
+					fieldContext: 'attribute',
+					fieldDataType: 'number',
+				},
+			],
+		},
+	},
+};
+
+export const MOCK_KEY_SUGGESTIONS_SEARCH_RESPONSE = {
+	status: 'success',
+	data: {
+		complete: true,
+		keys: {
+			resource: [
+				{
+					name: 'service.name',
+					label: 'Service Name',
+					type: 'resource',
+					signal: 'logs',
+					fieldContext: 'resource',
+					fieldDataType: 'string',
+				},
+				{
+					name: 'deployment.environment',
+					label: 'Environment',
+					type: 'resource',
+					signal: 'logs',
+					fieldContext: 'attribute',
+					fieldDataType: 'string',
+				},
+			],
+		},
+	},
+};
+
+export const MOCK_KEY_SUGGESTIONS_SINGLE_RESPONSE = {
+	status: 'success',
+	data: {
+		complete: true,
+		keys: {
+			resource: [
+				{
+					name: 'deployment.environment',
+					label: 'Environment',
+					type: 'resource',
+					signal: 'logs',
+					fieldContext: 'resource',
+					fieldDataType: 'string',
+				},
+			],
+		},
+	},
+};
