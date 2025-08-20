@@ -185,40 +185,6 @@ describe('TableDrilldown Breakout Functionality', () => {
 		expect(screen.getByText('Breakout by')).toBeInTheDocument();
 	});
 
-	// it('should filter breakout options when searching', async (): Promise<void> => {
-	// 	// Mock the MSW server to intercept the keySuggestions API call
-	// 	server.use(
-	// 		rest.get('*/fields/keys', (req, res, ctx) =>
-	// 			res(ctx.status(200), ctx.json(MOCK_KEY_SUGGESTIONS_SEARCH_RESPONSE)),
-	// 		),
-	// 	);
-
-	// 	renderWithProviders(<MockTableDrilldown />);
-
-	// 	// Navigate to breakout options
-	// 	const aggregateButton = screen.getByRole('button', { name: /aggregate/i });
-	// 	fireEvent.click(aggregateButton);
-
-	// 	const breakoutOption = screen.getByText(/Breakout by/);
-	// 	fireEvent.click(breakoutOption);
-
-	// 	// Wait for breakout options to load
-	// 	await screen.findByText('deployment.environment');
-
-	// 	// Find the search input and type to filter
-	// 	const searchInput = screen.getByPlaceholderText('Search breakout options...');
-	// 	fireEvent.change(searchInput, { target: { value: 'deployment' } });
-
-	// 	// Wait for debounced search to complete
-	// 	await new Promise((resolve) => {
-	// 		setTimeout(resolve, 500);
-	// 	});
-
-	// 	// Verify that only deployment.environment is visible after filtering
-	// 	expect(screen.getByText('deployment.environment')).toBeInTheDocument();
-	// 	expect(screen.queryByText('service.name')).not.toBeInTheDocument();
-	// });
-
 	it('should add selected breakout option to groupBy and redirect with correct query', async (): Promise<void> => {
 		// Mock the MSW server to intercept the keySuggestions API call
 		server.use(
