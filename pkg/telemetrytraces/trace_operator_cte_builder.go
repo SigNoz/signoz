@@ -135,32 +135,11 @@ func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() error {
 		sqlbuilder.Escape("resource_string_service$$name")+" AS `service.name`",
 		sqlbuilder.Escape("resource_string_service$$name"),
 		sqlbuilder.Escape("resource_string_service$$name_exists"),
+		"attributes_string",
+		"attributes_number",
+		"attributes_bool",
+		"resources_string",
 	)
-
-	requiredFields := make(map[string]bool)
-	for _, query := range b.queries {
-		if query.Filter != nil && query.Filter.Expression != "" {
-			selectors := querybuilder.QueryStringToKeysSelectors(query.Filter.Expression)
-			for _, selector := range selectors {
-				requiredFields[selector.Name] = true
-			}
-		}
-	}
-
-	for _, field := range b.operator.SelectFields {
-		requiredFields[field.Name] = true
-	}
-
-	for fieldName := range requiredFields {
-		if fieldName == "service.name" {
-			continue
-		}
-		// Skip span scope fields (isRoot, isEntryPoint) as they are computed conditions, not actual columns
-		if strings.ToLower(fieldName) == SpanSearchScopeRoot || strings.ToLower(fieldName) == SpanSearchScopeEntryPoint {
-			continue
-		}
-		sb.SelectMore(sqlbuilder.Escape(fieldName))
-	}
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
@@ -238,6 +217,12 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 		"`service.name`",
 		fmt.Sprintf("'%s' AS level", cteName),
 	)
+
+	requiredColumns := b.getRequiredAttributeColumns()
+	for _, col := range requiredColumns {
+		sb.SelectMore(col)
+	}
+
 	sb.From("base_spans AS s")
 
 	if query.Filter != nil && query.Filter.Expression != "" {
@@ -345,6 +330,11 @@ func (b *traceOperatorCTEBuilder) buildAndCTE(leftCTE, rightCTE string) (string,
 		"l.`service.name`",
 		"l.level",
 	)
+
+	requiredColumns := b.getRequiredAttributeColumns()
+	for _, col := range requiredColumns {
+		sb.SelectMore(fmt.Sprintf("l.%s", col))
+	}
 	sb.From(fmt.Sprintf("%s AS l", leftCTE))
 	sb.JoinWithOption(
 		sqlbuilder.InnerJoin,
@@ -378,6 +368,11 @@ func (b *traceOperatorCTEBuilder) buildNotCTE(leftCTE, rightCTE string) (string,
 		"l.`service.name`",
 		"l.level",
 	)
+
+	requiredColumns := b.getRequiredAttributeColumns()
+	for _, col := range requiredColumns {
+		sb.SelectMore(fmt.Sprintf("l.%s", col))
+	}
 	sb.From(fmt.Sprintf("%s AS l", leftCTE))
 	sb.Where(fmt.Sprintf(
 		"NOT EXISTS (SELECT 1 FROM %s AS r WHERE r.trace_id = l.trace_id)",
@@ -478,6 +473,63 @@ func (b *traceOperatorCTEBuilder) getKeySelectors() []*telemetrytypes.FieldKeySe
 	}
 
 	return keySelectors
+}
+
+func (b *traceOperatorCTEBuilder) getRequiredAttributeColumns() []string {
+	requiredColumns := make(map[string]bool)
+
+	allKeySelectors := b.getKeySelectors()
+
+	for _, selector := range allKeySelectors {
+		if b.isIntrinsicField(selector.Name) {
+			continue
+		}
+		if strings.ToLower(selector.Name) == SpanSearchScopeRoot || strings.ToLower(selector.Name) == SpanSearchScopeEntryPoint {
+			continue
+		}
+		switch selector.FieldContext {
+		case telemetrytypes.FieldContextResource:
+			requiredColumns["resources_string"] = true
+		case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextUnspecified:
+			switch selector.FieldDataType {
+			case telemetrytypes.FieldDataTypeString:
+				requiredColumns["attributes_string"] = true
+			case telemetrytypes.FieldDataTypeNumber:
+				requiredColumns["attributes_number"] = true
+			case telemetrytypes.FieldDataTypeBool:
+				requiredColumns["attributes_bool"] = true
+			default:
+				requiredColumns["attributes_string"] = true
+			}
+		}
+	}
+
+	result := make([]string, 0, len(requiredColumns))
+	for col := range requiredColumns {
+		result = append(result, col)
+	}
+	return result
+}
+
+func (b *traceOperatorCTEBuilder) isIntrinsicField(fieldName string) bool {
+	_, isIntrinsic := IntrinsicFields[fieldName]
+	if isIntrinsic {
+		return true
+	}
+	_, isIntrinsicDeprecated := IntrinsicFieldsDeprecated[fieldName]
+	if isIntrinsicDeprecated {
+		return true
+	}
+	_, isCalculated := CalculatedFields[fieldName]
+	if isCalculated {
+		return true
+	}
+	_, isCalculatedDeprecated := CalculatedFieldsDeprecated[fieldName]
+	if isCalculatedDeprecated {
+		return true
+	}
+	_, isDefault := DefaultFields[fieldName]
+	return isDefault
 }
 
 func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*qbtypes.Statement, error) {
