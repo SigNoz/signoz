@@ -64,7 +64,12 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 			!isListViewPanel ||
 			(currentDataSource === DataSource.TRACES && showTraceOperator)
 		);
-	}, [showOnlyWhereClause, currentDataSource, showTraceOperator]);
+	}, [
+		showOnlyWhereClause,
+		currentDataSource,
+		showTraceOperator,
+		isListViewPanel,
+	]);
 
 	const listViewLogFilterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
 		const config: QueryBuilderProps['filterConfigs'] = {
