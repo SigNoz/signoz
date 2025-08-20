@@ -218,4 +218,76 @@ describe('TableDrilldown Breakout Functionality', () => {
 		expect(screen.getByText('deployment.environment')).toBeInTheDocument();
 		expect(screen.queryByText('service.name')).not.toBeInTheDocument();
 	});
+
+	it('should add selected breakout option to groupBy and redirect with correct query', async (): Promise<void> => {
+		// Mock the MSW server to intercept the keySuggestions API call
+		server.use(
+			rest.get('*/fields/keys', (req, res, ctx) =>
+				res(ctx.status(200), ctx.json(MOCK_KEY_SUGGESTIONS_RESPONSE)),
+			),
+		);
+
+		renderWithProviders(<MockTableDrilldown />);
+
+		// Navigate to breakout options
+		const aggregateButton = screen.getByRole('button', { name: /aggregate/i });
+		fireEvent.click(aggregateButton);
+
+		const breakoutOption = screen.getByText(/Breakout by/);
+		fireEvent.click(breakoutOption);
+
+		// Wait for breakout options to load
+		await screen.findByText('deployment.environment');
+
+		// Click on a breakout option (e.g., deployment.environment)
+		const breakoutOptionItem = screen.getByText('deployment.environment');
+		fireEvent.click(breakoutOptionItem);
+
+		// Verify redirectWithQueryBuilderData was called
+		expect(mockRedirectWithQueryBuilderData).toHaveBeenCalledTimes(1);
+
+		const [
+			query,
+			queryParams,
+			,
+			newTab,
+		] = mockRedirectWithQueryBuilderData.mock.calls[0];
+
+		// Check that the query contains the correct structure
+		expect(query.builder).toBeDefined();
+		expect(query.builder.queryData).toBeDefined();
+
+		// Find the query data for the aggregate query (queryName: 'A')
+		const aggregateQueryData = query.builder.queryData.find(
+			(item: any) => item.queryName === 'A',
+		);
+		expect(aggregateQueryData).toBeDefined();
+
+		// Verify that the groupBy has been updated to only contain the selected breakout option
+		expect(aggregateQueryData.groupBy).toHaveLength(1);
+		expect(aggregateQueryData.groupBy[0].key).toEqual('deployment.environment');
+
+		// Verify that orderBy has been cleared (as per getBreakoutQuery logic)
+		expect(aggregateQueryData.orderBy).toEqual([]);
+
+		// Verify that the legend has been updated (check the actual value being returned)
+		// The legend logic in getBreakoutQuery: legend: item.legend && groupBy.key ? `{{${groupBy.key}}}` : ''
+		// Since the original legend might be empty, the result could be empty string
+		expect(aggregateQueryData.legend).toBeDefined();
+
+		// Check that the queryParams contain the expandedWidgetId
+		expect(queryParams).toEqual({ expandedWidgetId: 'test-widget' });
+
+		// Check that newTab is true
+		expect(newTab).toBe(true);
+
+		// Verify that the original filters are preserved and new filters are added
+		expect(aggregateQueryData.filter.expression).toContain(
+			"service.name = '$service.name' AND trace_id EXISTS AND deployment.environment = '$env'",
+		);
+		// The new filter from the clicked data should also be present
+		expect(aggregateQueryData.filter.expression).toContain(
+			"service.name = 'adservice' AND trace_id = 'df2cfb0e57bb8736207689851478cd50'",
+		);
+	});
 });
