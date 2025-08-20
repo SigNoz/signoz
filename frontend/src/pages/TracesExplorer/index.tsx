@@ -10,7 +10,6 @@ import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
-import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import ExportPanel from 'container/ExportPanel';
@@ -65,7 +64,7 @@ function TracesExplorer(): JSX.Element {
 		},
 	});
 
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [searchParams] = useSearchParams();
 
 	// Get panel type from URL
 	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
@@ -86,14 +85,6 @@ function TracesExplorer(): JSX.Element {
 			}
 		}
 	}, [panelTypesFromUrl, selectedView]);
-
-	// Update URL when selectedView changes
-	useEffect(() => {
-		setSearchParams((prev: URLSearchParams) => {
-			prev.set(QueryParams.selectedExplorerView, selectedView);
-			return prev;
-		});
-	}, [selectedView, setSearchParams]);
 
 	const [shouldReset, setShouldReset] = useState(false);
 
@@ -140,6 +131,7 @@ function TracesExplorer(): JSX.Element {
 			}
 
 			setSelectedView(view);
+
 			handleExplorerTabChange(
 				view === ExplorerViews.TIMESERIES ? PANEL_TYPES.TIME_SERIES : view,
 			);
