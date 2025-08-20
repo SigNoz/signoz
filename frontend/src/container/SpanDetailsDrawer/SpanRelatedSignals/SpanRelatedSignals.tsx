@@ -1,16 +1,23 @@
 import './SpanRelatedSignals.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Divider, Drawer, Typography } from 'antd';
+import { Button, Divider, Drawer, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
+import { QueryParams } from 'constants/query';
+import {
+	initialQueryBuilderFormValuesMap,
+	initialQueryState,
+} from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { X } from 'lucide-react';
+import { Compass, X } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { Span } from 'types/api/trace/getTraceV2';
+import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 
 import { RelatedSignalsViews } from '../constants';
 import SpanLogs from '../SpanLogs/SpanLogs';
@@ -87,6 +94,57 @@ function SpanRelatedSignals({
 		[selectedSpan.traceId],
 	);
 
+	const handleExplorePagesRedirect = useCallback((): void => {
+		const startTimeMs = traceStartTime - FIVE_MINUTES_IN_MS;
+		const endTimeMs = traceEndTime + FIVE_MINUTES_IN_MS;
+
+		const traceIdFilter = {
+			op: 'AND',
+			items: [
+				{
+					id: 'trace-id-filter',
+					key: {
+						key: 'trace_id',
+						id: 'trace-id-key',
+						dataType: 'string' as const,
+						isColumn: true,
+						type: '',
+						isJSON: false,
+					} as BaseAutocompleteData,
+					op: 'IN',
+					value: selectedSpan.traceId,
+				},
+			],
+		};
+
+		const compositeQuery = {
+			...initialQueryState,
+			queryType: 'builder',
+			builder: {
+				...initialQueryState.builder,
+				queryData: [
+					{
+						...initialQueryBuilderFormValuesMap.logs,
+						aggregateOperator: LogsAggregatorOperator.NOOP,
+						filters: traceIdFilter,
+					},
+				],
+			},
+		};
+
+		const searchParams = new URLSearchParams();
+		searchParams.set('compositeQuery', JSON.stringify(compositeQuery));
+		searchParams.set(QueryParams.startTime, startTimeMs.toString());
+		searchParams.set(QueryParams.endTime, endTimeMs.toString());
+
+		window.open(
+			`${window.location.origin}${
+				ROUTES.LOGS_EXPLORER
+			}?${searchParams.toString()}`,
+			'_blank',
+		);
+	}, [selectedSpan.traceId, traceStartTime, traceEndTime]);
+
 	return (
 		<Drawer
 			width="50%"
@@ -146,6 +204,13 @@ function SpanRelatedSignals({
 							onChange={handleTabChange}
 							className="related-signals-radio"
 						/>
+						{selectedView === RelatedSignalsViews.LOGS && (
+							<Button
+								icon={<Compass size={18} />}
+								className="open-in-explorer"
+								onClick={handleExplorePagesRedirect}
+							/>
+						)}
 					</div>
 
 					{selectedView === RelatedSignalsViews.LOGS && (

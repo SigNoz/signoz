@@ -33,6 +33,17 @@
 
 	.views-tabs-container {
 		padding: 16px 15px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		.open-in-explorer {
+			width: 30px;
+			height: 30px;
+			border-radius: 2px;
+			border: 1px solid var(--bg-slate-400);
+			background: var(--bg-ink-300);
+			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+		}
 
 		.ant-radio-button-wrapper {
 			width: 114px;
