@@ -52,6 +52,9 @@ type QueryBuilderTraceOperator struct {
 	StepInterval Step               `json:"stepInterval,omitempty"`
 	GroupBy      []GroupByKey       `json:"groupBy,omitempty"`
 
+	// having clause to apply to the aggregated query results
+	Having *Having `json:"having,omitempty"`
+
 	Limit  int    `json:"limit,omitempty"`
 	Cursor string `json:"cursor,omitempty"`
 
