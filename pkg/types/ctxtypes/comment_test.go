@@ -105,9 +105,9 @@ func TestCommentFromContextConcurrent(t *testing.T) {
 			defer wg.Done()
 			comment := CommentFromContext(ctx)
 			comment.Set("k2", fmt.Sprintf("v%d", i))
-			ctx = NewContextWithComment(ctx, comment)
+			newCtx := NewContextWithComment(ctx, comment)
 			mtx.Lock()
-			ctxs[i] = ctx
+			ctxs[i] = newCtx
 			mtx.Unlock()
 		}(i)
 	}
