@@ -229,9 +229,11 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 		filterWhereClause, err := querybuilder.PrepareWhereClause(
 			query.Filter.Expression,
 			querybuilder.FilterExprVisitorOpts{
-				FieldMapper:      b.stmtBuilder.fm,
-				ConditionBuilder: b.stmtBuilder.cb,
-				FieldKeys:        keys,
+				Logger:             b.stmtBuilder.logger,
+				FieldMapper:        b.stmtBuilder.fm,
+				ConditionBuilder:   b.stmtBuilder.cb,
+				FieldKeys:          keys,
+				SkipResourceFilter: true,
 			},
 		)
 		if err != nil {
@@ -307,6 +309,12 @@ func (b *traceOperatorCTEBuilder) buildDirectDescendantCTE(parentCTE, childCTE s
 		"c.`service.name`",
 		fmt.Sprintf("'%s' AS level", childCTE),
 	)
+
+	requiredColumns := b.getRequiredAttributeColumns()
+	for _, col := range requiredColumns {
+		sb.SelectMore(fmt.Sprintf("c.%s", col))
+	}
+
 	sb.From(fmt.Sprintf("%s AS c", childCTE))
 	sb.JoinWithOption(
 		sqlbuilder.InnerJoin,
