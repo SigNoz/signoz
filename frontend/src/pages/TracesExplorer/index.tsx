@@ -112,33 +112,7 @@ function TracesExplorer(): JSX.Element {
 				handleSetConfig(PANEL_TYPES.LIST, DataSource.TRACES);
 			}
 
-			if (view === ExplorerViews.LIST) {
-				if (
-					selectedView !== ExplorerViews.LIST &&
-					currentQuery?.builder?.queryData?.[0]
-				) {
-					const filterToRetain = currentQuery.builder.queryData[0].filter;
-
-					const newDefaultQuery = updateAllQueriesOperators(
-						initialQueriesMap.traces,
-						PANEL_TYPES.LIST,
-						DataSource.TRACES,
-					);
-
-					const newListQuery = updateQueriesData(
-						newDefaultQuery,
-						'queryData',
-						(item, index) => {
-							if (index === 0) {
-								return { ...item, filter: filterToRetain };
-							}
-							return item;
-						},
-					);
-					setDefaultQuery(newListQuery);
-				}
-				setShouldReset(true);
-			}
+			//TODO: remove formula when switching to List view
 
 			setSelectedView(view);
 			handleExplorerTabChange(

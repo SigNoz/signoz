@@ -99,7 +99,7 @@ export default function QBEntityOptions({
 									value="query-builder"
 									className="periscope-btn visibility-toggle"
 									onClick={onToggleVisibility}
-									disabled={isListViewPanel}
+									disabled={isListViewPanel && query?.dataSource !== DataSource.TRACES}
 								>
 									{entityData.disabled ? <EyeOff size={16} /> : <Eye size={16} />}
 								</Button>
