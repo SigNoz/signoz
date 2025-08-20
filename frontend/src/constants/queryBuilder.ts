@@ -12,6 +12,7 @@ import {
 	HavingForm,
 	IBuilderFormula,
 	IBuilderQuery,
+	IBuilderTraceOperator,
 	IClickHouseQuery,
 	IPromQLQuery,
 	Query,
@@ -265,6 +266,31 @@ export const initialFormulaBuilderFormValues: IBuilderFormula = {
 	legend: '',
 };
 
+export const initialQueryBuilderFormTraceOperatorValues: IBuilderTraceOperator = {
+	queryName: 'T1',
+	legend: '',
+	expression: '',
+	limit: null,
+	orderBy: [],
+	aggregateOperator: MeterAggregateOperator.COUNT,
+	aggregateAttribute: initialAutocompleteData,
+	timeAggregation: MeterAggregateOperator.RATE,
+	spaceAggregation: MeterAggregateOperator.SUM,
+	aggregations: [
+		{
+			metricName: '',
+			temporality: '',
+			timeAggregation: MeterAggregateOperator.COUNT,
+			spaceAggregation: MeterAggregateOperator.SUM,
+			reduceTo: 'avg',
+		},
+	],
+	stepInterval: undefined,
+	having: [],
+	groupBy: [],
+	reduceTo: 'avg',
+};
+
 export const initialQueryPromQLData: IPromQLQuery = {
 	name: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
 	query: '',
@@ -282,6 +308,7 @@ export const initialClickHouseData: IClickHouseQuery = {
 export const initialQueryBuilderData: QueryBuilderData = {
 	queryData: [initialQueryBuilderFormValues],
 	queryFormulas: [],
+	queryTraceOperator: [],
 };
 
 export const initialSingleQueryMap: Record<
