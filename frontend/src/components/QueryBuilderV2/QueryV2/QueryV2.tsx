@@ -26,6 +26,7 @@ export const QueryV2 = memo(function QueryV2({
 	query,
 	filterConfigs,
 	isListViewPanel = false,
+	showTraceOperator = false,
 	version,
 	showOnlyWhereClause = false,
 	signalSource = '',
@@ -108,7 +109,7 @@ export const QueryV2 = memo(function QueryV2({
 			ref={ref}
 		>
 			<div className="qb-content-section">
-				{!showOnlyWhereClause && (
+				{(!showOnlyWhereClause || showTraceOperator) && (
 					<div className="qb-header-container">
 						<div className="query-actions-container">
 							<div className="query-actions-left-container">
@@ -139,7 +140,28 @@ export const QueryV2 = memo(function QueryV2({
 								/>
 							</div>
 
-							{!isListViewPanel && (
+							{!isCollapsed && showTraceOperator && (
+								<div className="qb-search-filter-container" style={{ flex: 1 }}>
+									<div className="query-search-container">
+										<QuerySearch
+											key={`query-search-${query.queryName}-${query.dataSource}`}
+											onChange={handleSearchChange}
+											queryData={query}
+											dataSource={dataSource}
+											signalSource={signalSource}
+										/>
+									</div>
+
+									{showSpanScopeSelector && (
+										<div className="traces-search-filter-container">
+											<div className="traces-search-filter-in">in</div>
+											<SpanScopeSelector query={query} />
+										</div>
+									)}
+								</div>
+							)}
+
+							{(!isListViewPanel || showTraceOperator) && (
 								<Dropdown
 									className="query-actions-dropdown"
 									menu={{
@@ -181,28 +203,31 @@ export const QueryV2 = memo(function QueryV2({
 								</div>
 							)}
 
-							<div className="qb-search-filter-container">
-								<div className="query-search-container">
-									<QuerySearch
-										key={`query-search-${query.queryName}-${query.dataSource}`}
-										onChange={handleSearchChange}
-										queryData={query}
-										dataSource={dataSource}
-										signalSource={signalSource}
-									/>
-								</div>
-
-								{showSpanScopeSelector && (
-									<div className="traces-search-filter-container">
-										<div className="traces-search-filter-in">in</div>
-										<SpanScopeSelector query={query} />
+							{!showTraceOperator && (
+								<div className="qb-search-filter-container">
+									<div className="query-search-container">
+										<QuerySearch
+											key={`query-search-${query.queryName}-${query.dataSource}`}
+											onChange={handleSearchChange}
+											queryData={query}
+											dataSource={dataSource}
+											signalSource={signalSource}
+										/>
 									</div>
-								)}
-							</div>
+
+									{showSpanScopeSelector && (
+										<div className="traces-search-filter-container">
+											<div className="traces-search-filter-in">in</div>
+											<SpanScopeSelector query={query} />
+										</div>
+									)}
+								</div>
+							)}
 						</div>
 
 						{!showOnlyWhereClause &&
 							!isListViewPanel &&
+							!showTraceOperator &&
 							dataSource !== DataSource.METRICS && (
 								<QueryAggregation
 									dataSource={dataSource}
@@ -225,7 +250,7 @@ export const QueryV2 = memo(function QueryV2({
 							/>
 						)}
 
-						{!showOnlyWhereClause && (
+						{!showOnlyWhereClause && !showTraceOperator && (
 							<QueryAddOns
 								index={index}
 								query={query}

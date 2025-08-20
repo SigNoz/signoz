@@ -2,14 +2,21 @@ import './QueryBuilderV2.styles.scss';
 
 import { OPERATORS, PANEL_TYPES } from 'constants/queryBuilder';
 import { Formula } from 'container/QueryBuilder/components/Formula';
-import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
+import {
+	QueryBuilderProps,
+	TraceView,
+} from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { memo, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { QueryBuilderV2Provider } from './QueryBuilderV2Context';
 import QueryFooter from './QueryV2/QueryFooter/QueryFooter';
 import { QueryV2 } from './QueryV2/QueryV2';
+import TraceOperator from './QueryV2/TraceOperator/TraceOperator';
+import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
+import { ChartNoAxesGantt, DraftingCompass } from 'lucide-react';
+import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
 
 export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	config,
@@ -18,7 +25,9 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	queryComponents,
 	isListViewPanel = false,
 	showOnlyWhereClause = false,
+	showTraceViewSelector = false,
 	version,
+	onChangeTraceView,
 }: QueryBuilderProps): JSX.Element {
 	const {
 		currentQuery,
@@ -30,6 +39,24 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	} = useQueryBuilder();
 
 	const containerRef = useRef(null);
+	const [selectedTraceView, setSelectedTraceView] = useState<TraceView>(
+		TraceView.SPANS,
+	);
+
+	const traceViewOptions: { label: string; value: TraceView }[] = useMemo(() => {
+		return [
+			{
+				label: 'Spans',
+				value: TraceView.SPANS,
+				icon: <ChartNoAxesGantt size={14} />,
+			},
+			{
+				label: 'Traces',
+				value: TraceView.TRACES,
+				icon: <DraftingCompass size={14} />,
+			},
+		];
+	}, []);
 
 	const currentDataSource = useMemo(
 		() =>
@@ -97,11 +124,63 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		listViewTracesFilterConfigs,
 	]);
 
+	const handleChangeTraceView = useCallback(
+		(value: TraceView) => {
+			setSelectedTraceView(value);
+			if (
+				currentDataSource === DataSource.TRACES &&
+				typeof onChangeTraceView === 'function'
+			) {
+				onChangeTraceView(value);
+			}
+		},
+		[onChangeTraceView, currentDataSource],
+	);
+
+	const shouldShowTraceOperator = useMemo(() => {
+		return (
+			currentDataSource === DataSource.TRACES &&
+			(!isListViewPanel ? selectedTraceView === TraceView.TRACES : true)
+		);
+	}, [currentDataSource, isListViewPanel, selectedTraceView]);
+
+	const shouldShowTraceViewSelector = useMemo(() => {
+		return currentDataSource === DataSource.TRACES && showTraceViewSelector;
+	}, [currentDataSource, showTraceViewSelector]);
+
+	const showFormula = useMemo(() => {
+		if (currentDataSource === DataSource.TRACES) {
+			return !isListViewPanel && selectedTraceView === TraceView.SPANS;
+		}
+
+		return true;
+	}, [isListViewPanel, selectedTraceView, currentDataSource]);
+
+	const traceOperator = useMemo((): IBuilderTraceOperator | undefined => {
+		if (currentQuery.builder.queryTraceOperator.length > 0) {
+			return currentQuery.builder.queryTraceOperator[0] || {};
+		}
+
+		return undefined;
+	}, [currentQuery.builder.queryTraceOperator]);
+
 	return (
 		<QueryBuilderV2Provider>
 			<div className="query-builder-v2">
 				<div className="qb-content-container">
-					{isListViewPanel && (
+					{shouldShowTraceViewSelector && (
+						<div className="qb-trace-view-selector-container">
+							<SignozRadioGroup
+								value={selectedTraceView}
+								options={traceViewOptions}
+								onChange={(e): void => {
+									handleChangeTraceView(e.target.value);
+								}}
+							/>
+						</div>
+					)}
+
+					{isListViewPanel && currentDataSource !== DataSource.TRACES && (
 						<QueryV2
 							ref={containerRef}
 							key={currentQuery.builder.queryData[0].queryName}
@@ -109,6 +188,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							query={currentQuery.builder.queryData[0]}
 							filterConfigs={queryFilterConfigs}
 							queryComponents={queryComponents}
+							showTraceOperator={shouldShowTraceOperator}
 							version={version}
 							isAvailableToDisable={false}
 							queryVariant={config?.queryVariant || 'dropdown'}
@@ -117,7 +197,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 						/>
 					)}
 
-					{!isListViewPanel &&
+					{(!isListViewPanel || currentDataSource === DataSource.TRACES) &&
 						currentQuery.builder.queryData.map((query, index) => (
 							<QueryV2
 								ref={containerRef}
@@ -128,6 +208,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 								queryComponents={queryComponents}
 								version={version}
 								isAvailableToDisable={false}
+								showTraceOperator={shouldShowTraceOperator}
 								queryVariant={config?.queryVariant || 'dropdown'}
 								showOnlyWhereClause={showOnlyWhereClause}
 								isListViewPanel={isListViewPanel}
@@ -158,15 +239,24 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 						</div>
 					)}
 
-					{!showOnlyWhereClause && !isListViewPanel && (
+					{((!showOnlyWhereClause && !isListViewPanel) ||
+						shouldShowTraceOperator) && (
 						<QueryFooter
+							showFormula={showFormula}
 							addNewBuilderQuery={addNewBuilderQuery}
 							addNewFormula={addNewFormula}
 						/>
 					)}
+
+					{shouldShowTraceOperator && (
+						<TraceOperator
+							isListViewPanel={isListViewPanel}
+							traceOperator={traceOperator}
+						/>
+					)}
 				</div>
 
-				{!showOnlyWhereClause && !isListViewPanel && (
+				{!showOnlyWhereClause && (!isListViewPanel || shouldShowTraceOperator) && (
 					<div className="query-names-section">
 						{currentQuery.builder.queryData.map((query) => (
 							<div key={query.queryName} className="query-name">
