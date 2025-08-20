@@ -58,6 +58,8 @@ type QueryBuilderTraceOperator struct {
 	Limit  int    `json:"limit,omitempty"`
 	Cursor string `json:"cursor,omitempty"`
 
+	Legend string `json:"legend,omitempty"`
+
 	// Other post-processing options
 	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
 	Functions    []Function                         `json:"functions,omitempty"`
