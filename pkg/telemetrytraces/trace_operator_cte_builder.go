@@ -155,6 +155,10 @@ func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() error {
 		if fieldName == "service.name" {
 			continue
 		}
+		// Skip span scope fields (isRoot, isEntryPoint) as they are computed conditions, not actual columns
+		if strings.ToLower(fieldName) == SpanSearchScopeRoot || strings.ToLower(fieldName) == SpanSearchScopeEntryPoint {
+			continue
+		}
 		sb.SelectMore(sqlbuilder.Escape(fieldName))
 	}
 
@@ -345,7 +349,7 @@ func (b *traceOperatorCTEBuilder) buildAndCTE(leftCTE, rightCTE string) (string,
 	sb.JoinWithOption(
 		sqlbuilder.InnerJoin,
 		fmt.Sprintf("%s AS r", rightCTE),
-		"l.trace_id = r.trace_id AND l.span_id = r.span_id",
+		"l.trace_id = r.trace_id",
 	)
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -376,7 +380,7 @@ func (b *traceOperatorCTEBuilder) buildNotCTE(leftCTE, rightCTE string) (string,
 	)
 	sb.From(fmt.Sprintf("%s AS l", leftCTE))
 	sb.Where(fmt.Sprintf(
-		"NOT EXISTS (SELECT 1 FROM %s AS r WHERE r.trace_id = l.trace_id AND r.span_id = l.span_id)",
+		"NOT EXISTS (SELECT 1 FROM %s AS r WHERE r.trace_id = l.trace_id)",
 		rightCTE,
 	))
 
