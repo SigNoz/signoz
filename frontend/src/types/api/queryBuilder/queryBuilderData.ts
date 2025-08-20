@@ -29,10 +29,7 @@ export interface IBuilderFormula {
 	orderBy?: OrderByPayload[];
 }
 
-export type IBuilderTraceOperator = Omit<
-	IBuilderQuery,
-	'dataSource' | 'filter' | 'filters' | 'disabled' | 'functions'
-> & {
+export type IBuilderTraceOperator = IBuilderQuery & {
 	returnSpansFrom?: string;
 };
 

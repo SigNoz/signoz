@@ -15,6 +15,7 @@ import {
 	MAX_FORMULAS,
 	MAX_QUERIES,
 	PANEL_TYPES,
+	TRACE_OPERATOR_QUERY_NAME,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import {
@@ -651,12 +652,12 @@ export function QueryBuilderProvider({
 		const trimmed = (expression || '').trim();
 
 		setCurrentQuery((prevState) => {
-			const existing = prevState.builder.queryTraceOperator[0];
+			const existing = prevState.builder.queryTraceOperator?.[0] || null;
 			const updated: IBuilderTraceOperator = existing
 				? { ...existing, expression: trimmed }
 				: {
 						...initialQueryBuilderFormTraceOperatorValues,
-						queryName: 'T1',
+						queryName: TRACE_OPERATOR_QUERY_NAME,
 						expression: trimmed,
 				  };
 
@@ -671,12 +672,12 @@ export function QueryBuilderProvider({
 		});
 		// eslint-disable-next-line sonarjs/no-identical-functions
 		setSupersetQuery((prevState) => {
-			const existing = prevState.builder.queryTraceOperator[0];
+			const existing = prevState.builder.queryTraceOperator?.[0] || null;
 			const updated: IBuilderTraceOperator = existing
 				? { ...existing, expression: trimmed }
 				: {
 						...initialQueryBuilderFormTraceOperatorValues,
-						queryName: 'T1',
+						queryName: TRACE_OPERATOR_QUERY_NAME,
 						expression: trimmed,
 				  };
 

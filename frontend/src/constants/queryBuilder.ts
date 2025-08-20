@@ -51,6 +51,8 @@ import {
 export const MAX_FORMULAS = 20;
 export const MAX_QUERIES = 26;
 
+export const TRACE_OPERATOR_QUERY_NAME = 'T1';
+
 export const idDivider = '--';
 export const selectValueDivider = '__';
 
@@ -267,28 +269,8 @@ export const initialFormulaBuilderFormValues: IBuilderFormula = {
 };
 
 export const initialQueryBuilderFormTraceOperatorValues: IBuilderTraceOperator = {
-	queryName: 'T1',
-	legend: '',
-	expression: '',
-	limit: null,
-	orderBy: [],
-	aggregateOperator: MeterAggregateOperator.COUNT,
-	aggregateAttribute: initialAutocompleteData,
-	timeAggregation: MeterAggregateOperator.RATE,
-	spaceAggregation: MeterAggregateOperator.SUM,
-	aggregations: [
-		{
-			metricName: '',
-			temporality: '',
-			timeAggregation: MeterAggregateOperator.COUNT,
-			spaceAggregation: MeterAggregateOperator.SUM,
-			reduceTo: 'avg',
-		},
-	],
-	stepInterval: undefined,
-	having: [],
-	groupBy: [],
-	reduceTo: 'avg',
+	...initialQueryBuilderFormTracesValues,
+	queryName: TRACE_OPERATOR_QUERY_NAME,
 };
 
 export const initialQueryPromQLData: IPromQLQuery = {

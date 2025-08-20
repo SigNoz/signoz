@@ -19,6 +19,7 @@ import { SelectOption } from './select';
 
 type UseQueryOperationsParams = Pick<QueryProps, 'index' | 'query'> &
 	Pick<QueryBuilderProps, 'filterConfigs'> & {
+		isForTraceOperator?: boolean;
 		formula?: IBuilderFormula;
 		isListViewPanel?: boolean;
 		entityVersion: string;
@@ -74,11 +75,4 @@ export type UseQueryOperations = (
 	handleChangeFormulaData: HandleChangeFormulaData;
 	handleQueryFunctionsUpdates: (functions: QueryFunction[]) => void;
 	listOfAdditionalFormulaFilters: string[];
-};
-
-export type UseTraceOperatorOperations = (params: {
-	index?: number;
-	query?: IBuilderTraceOperator;
-}) => {
-	handleChangeTraceOperatorData: HandleChangeTraceOperatorData;
 };
