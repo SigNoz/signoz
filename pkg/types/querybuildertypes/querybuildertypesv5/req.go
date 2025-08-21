@@ -88,8 +88,8 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 
 	case QueryTypeTraceOperator:
 		var spec QueryBuilderTraceOperator
-		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
-			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid trace operator spec")
+		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "trace operator spec"); err != nil {
+			return wrapUnmarshalError(err, "invalid trace operator spec: %v", err)
 		}
 		q.Spec = spec
 
@@ -113,7 +113,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 			"unknown query type %q",
 			shadow.Type,
 		).WithAdditional(
-			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql",
+			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, builder_trace_operator, promql, clickhouse_sql",
 		)
 	}
 

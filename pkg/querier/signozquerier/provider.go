@@ -89,6 +89,16 @@ func newProvider(
 		telemetryStore,
 	)
 
+	// ADD: Create trace operator statement builder
+	traceOperatorStmtBuilder := telemetrytraces.NewTraceOperatorStatementBuilder(
+		settings,
+		telemetryMetadataStore,
+		traceFieldMapper,
+		traceConditionBuilder,
+		traceStmtBuilder, // Pass the regular trace statement builder
+		traceAggExprRewriter,
+	)
+
 	// Create log statement builder
 	logFieldMapper := telemetrylogs.NewFieldMapper()
 	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper)
@@ -147,7 +157,7 @@ func newProvider(
 		cfg.FluxInterval,
 	)
 
-	// Create and return the querier
+	// Create and return the querier - ADD traceOperatorStmtBuilder parameter
 	return querier.New(
 		settings,
 		telemetryStore,
@@ -157,6 +167,7 @@ func newProvider(
 		logStmtBuilder,
 		metricStmtBuilder,
 		meterStmtBuilder,
+		traceOperatorStmtBuilder,
 		bucketCache,
 	), nil
 }

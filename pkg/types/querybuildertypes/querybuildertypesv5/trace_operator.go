@@ -29,6 +29,11 @@ var (
 	OrderByTraceDuration = TraceOrderBy{valuer.NewString("trace_duration")}
 )
 
+const (
+	// MaxTraceOperators defines the maximum number of operators allowed in a trace expression
+	MaxTraceOperators = 10
+)
+
 type QueryBuilderTraceOperator struct {
 	Name     string `json:"name"`
 	Disabled bool   `json:"disabled,omitempty"`
@@ -41,14 +46,19 @@ type QueryBuilderTraceOperator struct {
 	ReturnSpansFrom string `json:"returnSpansFrom,omitempty"`
 
 	// Trace-specific ordering (only span_count and trace_duration allowed)
-	Order []OrderBy `json:"orderBy,omitempty"`
+	Order []OrderBy `json:"order,omitempty"`
 
 	Aggregations []TraceAggregation `json:"aggregations,omitempty"`
 	StepInterval Step               `json:"stepInterval,omitempty"`
 	GroupBy      []GroupByKey       `json:"groupBy,omitempty"`
 
+	// having clause to apply to the aggregated query results
+	Having *Having `json:"having,omitempty"`
+
 	Limit  int    `json:"limit,omitempty"`
 	Cursor string `json:"cursor,omitempty"`
+
+	Legend string `json:"legend,omitempty"`
 
 	// Other post-processing options
 	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
@@ -84,7 +94,7 @@ func (q *QueryBuilderTraceOperator) ParseExpression() error {
 		)
 	}
 
-	parsed, err := parseTraceExpression(q.Expression)
+	parsed, operatorCount, err := parseTraceExpression(q.Expression)
 	if err != nil {
 		return errors.WrapInvalidInputf(
 			err,
@@ -94,13 +104,24 @@ func (q *QueryBuilderTraceOperator) ParseExpression() error {
 		)
 	}
 
+	// Validate operator count immediately during parsing
+	if operatorCount > MaxTraceOperators {
+		return errors.WrapInvalidInputf(
+			nil,
+			errors.CodeInvalidInput,
+			"expression contains %d operators, which exceeds the maximum allowed %d operators",
+			operatorCount,
+			MaxTraceOperators,
+		)
+	}
+
 	q.ParsedExpression = parsed
 	return nil
 }
 
 // ValidateTraceOperator validates that all referenced queries exist and are trace queries
 func (q *QueryBuilderTraceOperator) ValidateTraceOperator(queries []QueryEnvelope) error {
-	// Parse the expression
+	// Parse the expression - this now includes operator count validation
 	if err := q.ParseExpression(); err != nil {
 		return err
 	}
@@ -155,6 +176,15 @@ func (q *QueryBuilderTraceOperator) ValidateTraceOperator(queries []QueryEnvelop
 				signal,
 			)
 		}
+	}
+
+	if q.StepInterval.Seconds() < 0 {
+		return errors.WrapInvalidInputf(
+			nil,
+			errors.CodeInvalidInput,
+			"stepInterval cannot be negative, got %f seconds",
+			q.StepInterval.Seconds(),
+		)
 	}
 
 	// Validate ReturnSpansFrom if specified
@@ -276,6 +306,11 @@ func (q *QueryBuilderTraceOperator) collectReferencedQueries(operand *TraceOpera
 	return unique
 }
 
+// CollectReferencedQueries is a public wrapper for collectReferencedQueries
+func (q *QueryBuilderTraceOperator) CollectReferencedQueries(operand *TraceOperand) []string {
+	return q.collectReferencedQueries(operand)
+}
+
 // ValidateUniqueTraceOperator ensures only one trace operator exists in queries
 func ValidateUniqueTraceOperator(queries []QueryEnvelope) error {
 	traceOperatorCount := 0
@@ -304,9 +339,8 @@ func ValidateUniqueTraceOperator(queries []QueryEnvelope) error {
 	return nil
 }
 
-// parseTraceExpression parses an expression string into a tree structure
 // Handles precedence: NOT (highest) > || > && > => (lowest)
-func parseTraceExpression(expr string) (*TraceOperand, error) {
+func parseTraceExpression(expr string) (*TraceOperand, int, error) {
 	expr = strings.TrimSpace(expr)
 
 	// Handle parentheses
@@ -319,15 +353,15 @@ func parseTraceExpression(expr string) (*TraceOperand, error) {
 
 	// Handle unary NOT operator (prefix)
 	if strings.HasPrefix(expr, "NOT ") {
-		operand, err := parseTraceExpression(expr[4:])
+		operand, count, err := parseTraceExpression(expr[4:])
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		notOp := TraceOperatorNot
 		return &TraceOperand{
 			Operator: &notOp,
 			Left:     operand,
-		}, nil
+		}, count + 1, nil // Add 1 for this NOT operator
 	}
 
 	// Find binary operators with lowest precedence first (=> has lowest precedence)
@@ -339,14 +373,14 @@ func parseTraceExpression(expr string) (*TraceOperand, error) {
 			leftExpr := strings.TrimSpace(expr[:pos])
 			rightExpr := strings.TrimSpace(expr[pos+len(op):])
 
-			left, err := parseTraceExpression(leftExpr)
+			left, leftCount, err := parseTraceExpression(leftExpr)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
 
-			right, err := parseTraceExpression(rightExpr)
+			right, rightCount, err := parseTraceExpression(rightExpr)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
 
 			var opType TraceOperatorType
@@ -365,13 +399,13 @@ func parseTraceExpression(expr string) (*TraceOperand, error) {
 				Operator: &opType,
 				Left:     left,
 				Right:    right,
-			}, nil
+			}, leftCount + rightCount + 1, nil // Add counts from both sides + 1 for this operator
 		}
 	}
 
 	// If no operators found, this should be a query reference
 	if matched, _ := regexp.MatchString(`^[A-Za-z][A-Za-z0-9_]*$`, expr); !matched {
-		return nil, errors.WrapInvalidInputf(
+		return nil, 0, errors.WrapInvalidInputf(
 			nil,
 			errors.CodeInvalidInput,
 			"invalid query reference '%s'",
@@ -379,9 +413,10 @@ func parseTraceExpression(expr string) (*TraceOperand, error) {
 		)
 	}
 
+	// Leaf node - no operators
 	return &TraceOperand{
 		QueryRef: &TraceOperatorQueryRef{Name: expr},
-	}, nil
+	}, 0, nil
 }
 
 // isBalancedParentheses checks if parentheses are balanced in the expression

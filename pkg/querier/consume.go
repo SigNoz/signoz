@@ -42,8 +42,10 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 		payload, err = readAsTimeSeries(rows, queryWindow, step, queryName)
 	case qbtypes.RequestTypeScalar:
 		payload, err = readAsScalar(rows, queryName)
-	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace:
+	case qbtypes.RequestTypeRaw:
 		payload, err = readAsRaw(rows, queryName)
+	case qbtypes.RequestTypeTrace:
+		payload, err = readAsTrace(rows, queryName)
 		// TODO: add support for other request types
 	}
 
@@ -329,6 +331,74 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 		QueryName: queryName,
 		Columns:   cd,
 		Data:      data,
+	}, nil
+}
+
+func readAsTrace(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
+	colNames := rows.Columns()
+	colTypes := rows.ColumnTypes()
+	colCnt := len(colNames)
+
+	scanTpl := make([]any, colCnt)
+	for i, ct := range colTypes {
+		scanTpl[i] = reflect.New(ct.ScanType()).Interface()
+	}
+
+	var outRows []*qbtypes.RawRow
+
+	for rows.Next() {
+		scan := make([]any, colCnt)
+		for i := range scanTpl {
+			scan[i] = reflect.New(colTypes[i].ScanType()).Interface()
+		}
+
+		if err := rows.Scan(scan...); err != nil {
+			return nil, err
+		}
+
+		rr := qbtypes.RawRow{
+			Data: make(map[string]any, colCnt),
+		}
+
+		for i, cellPtr := range scan {
+			name := colNames[i]
+
+			val := reflect.ValueOf(cellPtr).Elem().Interface()
+
+			if name == "timestamp" || name == "timestamp_datetime" {
+				switch t := val.(type) {
+				case time.Time:
+					rr.Timestamp = t
+				case uint64: // epoch-ns stored as integer
+					rr.Timestamp = time.Unix(0, int64(t))
+				case int64:
+					rr.Timestamp = time.Unix(0, t)
+				case string: // Handle timestamp strings (ISO format)
+					if parsedTime, err := time.Parse(time.RFC3339, t); err == nil {
+						rr.Timestamp = parsedTime
+					} else if parsedTime, err := time.Parse("2006-01-02T15:04:05.999999999Z", t); err == nil {
+						rr.Timestamp = parsedTime
+					} else {
+						// leave zero time if unrecognised
+					}
+				default:
+					// leave zero time if unrecognised
+				}
+			}
+
+			// store value in map as *any, to match the schema
+			v := any(val)
+			rr.Data[name] = &v
+		}
+		outRows = append(outRows, &rr)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return &qbtypes.RawData{
+		QueryName: queryName,
+		Rows:      outRows,
 	}, nil
 }
 
