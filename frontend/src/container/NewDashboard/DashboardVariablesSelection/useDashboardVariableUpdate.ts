@@ -1,7 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import useAddDynamicVariableToPanels from 'hooks/dashboard/useAddDynamicVariableToPanels';
+import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback } from 'react';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
@@ -41,7 +40,6 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 
 	const addDynamicVariableToPanels = useAddDynamicVariableToPanels();
 	const updateMutation = useUpdateDashboard();
-	const { updateUrlVariable } = useVariablesFromUrl();
 
 	const onValueUpdate = useCallback(
 		(
@@ -53,7 +51,6 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 		): void => {
 			if (id) {
 				updateLocalStorageDashboardVariables(name, value, allSelected);
-				updateUrlVariable(id, value, allSelected);
 
 				if (selectedDashboard) {
 					setSelectedDashboard((prev) => {
@@ -96,7 +93,6 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 			selectedDashboard,
 			setSelectedDashboard,
 			updateLocalStorageDashboardVariables,
-			updateUrlVariable,
 		],
 	);
 
@@ -207,7 +203,7 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 				showALLOption: false,
 				dynamicVariablesAttribute: name,
 				dynamicVariablesSource: source,
-				// dynamicVariablesWidgetIds: widgetId ? [widgetId] : [],
+				dynamicVariablesWidgetIds: [],
 				queryValue: '',
 			};
 
