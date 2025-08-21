@@ -173,6 +173,31 @@ func removeGroupinSetPoints(series v3.Series) []v3.Point {
 	return result
 }
 
+func (b BasicRuleThreshold) MarshalJSON() ([]byte, error) {
+	wrapper := struct {
+		Kind string          `json:"kind"`
+		Spec json.RawMessage `json:"spec"`
+	}{
+		Kind: "basic",
+	}
+	spec := BasicRuleThresholdJSON{
+		Name:           b.name,
+		Target:         b.target,
+		TargetUnit:     b.targetUnit,
+		RuleUnit:       b.ruleUnit,
+		RecoveryTarget: b.recoveryTarget,
+		MatchType:      b.matchType,
+		CompareOp:      b.compareOp,
+		SelectedQuery:  b.selectedQuery,
+	}
+	specBytes, err := json.Marshal(spec)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal basic rule threshold: %w", err)
+	}
+	wrapper.Spec = specBytes
+	return json.Marshal(wrapper)
+}
+
 func (b BasicRuleThreshold) ShouldAlert(series v3.Series) (Sample, bool) {
 	var shouldAlert bool
 	var alertSmpl Sample

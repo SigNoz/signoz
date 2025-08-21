@@ -28,6 +28,8 @@ type Task interface {
 	Rules() []Rule
 	Stop()
 	Pause(b bool)
+	IsCronSchedule() bool
+	SetSchedule(string, time.Time)
 }
 
 // newTask returns an appropriate group for

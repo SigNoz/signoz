@@ -68,7 +68,9 @@ type PostableRule struct {
 	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
 	OldYaml string `json:"yaml,omitempty"`
 
-	Evaluation Evaluation `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
+	Evaluation       Evaluation `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
+	ScheduleStartsAt int64      `yaml:"startsAt,omitempty" json:"startsAt,omitempty"`
+	Schedule         string     `json:"schedule,omitempty"`
 }
 
 func (p *PostableRule) UnmarshalJSON(data []byte) error {
@@ -79,11 +81,11 @@ func (p *PostableRule) UnmarshalJSON(data []byte) error {
 	}{
 		Alias: (*Alias)(p),
 	}
-	
+
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
-	
+
 	if len(aux.Evaluation) > 0 {
 		eval, err := UnmarshalEvaluationJSON(aux.Evaluation)
 		if err != nil {
@@ -91,7 +93,7 @@ func (p *PostableRule) UnmarshalJSON(data []byte) error {
 		}
 		p.Evaluation = eval
 	}
-	
+
 	return nil
 }
 
