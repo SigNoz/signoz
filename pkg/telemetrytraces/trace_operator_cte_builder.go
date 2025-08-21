@@ -122,37 +122,22 @@ func (b *traceOperatorCTEBuilder) buildTimeConstantsCTE() string {
 		b.start, b.end, startBucket, endBucket)
 }
 
+// buildBaseSpansCTE
 func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() error {
 	sb := sqlbuilder.NewSelectBuilder()
-
-	sb.Select(
-		"trace_id",
-		"span_id",
-		"parent_span_id",
-		"name",
-		"timestamp",
-		"duration_nano",
-		sqlbuilder.Escape("resource_string_service$$name")+" AS `service.name`",
-		sqlbuilder.Escape("resource_string_service$$name"),
-		sqlbuilder.Escape("resource_string_service$$name_exists"),
-		"attributes_string",
-		"attributes_number",
-		"attributes_bool",
-		"resources_string",
-	)
+	sb.Select("*")
+	// add a stable alias for downstream consumers
+	sb.SelectMore(sqlbuilder.Escape("resource_string_service$$name") + " AS `service.name`")
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
-
 	startBucket := b.start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
 	endBucket := b.end / querybuilder.NsToSeconds
-
 	sb.Where(
 		sb.GE("timestamp", fmt.Sprintf("%d", b.start)),
 		sb.L("timestamp", fmt.Sprintf("%d", b.end)),
 		sb.GE("ts_bucket_start", startBucket),
 		sb.LE("ts_bucket_start", endBucket),
 	)
-
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	b.addCTE("base_spans", sql, args, nil)
 	return nil
@@ -209,21 +194,8 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 	b.stmtBuilder.logger.InfoContext(b.ctx, "Retrieved keys for query", "queryName", queryName, "keysCount", len(keys))
 
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select(
-		"trace_id",
-		"span_id",
-		"parent_span_id",
-		"name",
-		"timestamp",
-		"duration_nano",
-		"`service.name`",
-		fmt.Sprintf("'%s' AS level", cteName),
-	)
-
-	requiredColumns := b.getRequiredAttributeColumns()
-	for _, col := range requiredColumns {
-		sb.SelectMore(col)
-	}
+	// Select all columns plus add the level identifier
+	sb.Select("*", fmt.Sprintf("'%s' AS level", cteName))
 
 	sb.From("base_spans AS s")
 
@@ -312,21 +284,8 @@ func (b *traceOperatorCTEBuilder) buildOperatorCTE(op qbtypes.TraceOperatorType,
 
 func (b *traceOperatorCTEBuilder) buildDirectDescendantCTE(parentCTE, childCTE string) (string, []any, []string) {
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select(
-		"p.trace_id",
-		"p.span_id",
-		"p.parent_span_id",
-		"p.name",
-		"p.timestamp",
-		"p.duration_nano",
-		"p.`service.name`",
-		fmt.Sprintf("'%s' AS level", parentCTE),
-	)
-
-	requiredColumns := b.getRequiredAttributeColumns()
-	for _, col := range requiredColumns {
-		sb.SelectMore(fmt.Sprintf("p.%s", col))
-	}
+	// Select all columns from parent, simpler approach
+	sb.Select("p.*")
 
 	sb.From(fmt.Sprintf("%s AS p", parentCTE))
 	sb.JoinWithOption(
@@ -341,21 +300,8 @@ func (b *traceOperatorCTEBuilder) buildDirectDescendantCTE(parentCTE, childCTE s
 
 func (b *traceOperatorCTEBuilder) buildAndCTE(leftCTE, rightCTE string) (string, []any, []string) {
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select(
-		"l.trace_id",
-		"l.span_id",
-		"l.parent_span_id",
-		"l.name",
-		"l.timestamp",
-		"l.duration_nano",
-		"l.`service.name`",
-		"l.level",
-	)
-
-	requiredColumns := b.getRequiredAttributeColumns()
-	for _, col := range requiredColumns {
-		sb.SelectMore(fmt.Sprintf("l.%s", col))
-	}
+	// Select all columns from left CTE
+	sb.Select("l.*")
 	sb.From(fmt.Sprintf("%s AS l", leftCTE))
 	sb.JoinWithOption(
 		sqlbuilder.InnerJoin,
@@ -379,21 +325,8 @@ func (b *traceOperatorCTEBuilder) buildOrCTE(leftCTE, rightCTE string) (string, 
 
 func (b *traceOperatorCTEBuilder) buildNotCTE(leftCTE, rightCTE string) (string, []any, []string) {
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select(
-		"l.trace_id",
-		"l.span_id",
-		"l.parent_span_id",
-		"l.name",
-		"l.timestamp",
-		"l.duration_nano",
-		"l.`service.name`",
-		"l.level",
-	)
-
-	requiredColumns := b.getRequiredAttributeColumns()
-	for _, col := range requiredColumns {
-		sb.SelectMore(fmt.Sprintf("l.%s", col))
-	}
+	// Select all columns from left CTE
+	sb.Select("l.*")
 	sb.From(fmt.Sprintf("%s AS l", leftCTE))
 	sb.Where(fmt.Sprintf(
 		"NOT EXISTS (SELECT 1 FROM %s AS r WHERE r.trace_id = l.trace_id)",
@@ -441,29 +374,47 @@ func (b *traceOperatorCTEBuilder) buildListQuery(selectFromCTE string) (*qbtypes
 		"parent_span_id": true,
 	}
 
-	// Add all selectFields - they should already be in the CTE
+	// Get keys for selectFields
+	keySelectors := b.getKeySelectors()
+	for _, field := range b.operator.SelectFields {
+		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
+			Name:          field.Name,
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  field.FieldContext,
+			FieldDataType: field.FieldDataType,
+		})
+	}
+
+	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(b.ctx, keySelectors)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add selectFields using ColumnExpressionFor since we now have all base table columns
 	for _, field := range b.operator.SelectFields {
 		if selectedFields[field.Name] {
 			continue
 		}
-		// Reference the column directly from the CTE
-		sb.SelectMore(fmt.Sprintf("`%s`", field.Name))
+		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(b.ctx, &field, keys)
+		if err != nil {
+			b.stmtBuilder.logger.WarnContext(b.ctx, "failed to map select field",
+				"field", field.Name, "error", err)
+			continue
+		}
+		sb.SelectMore(colExpr)
 		selectedFields[field.Name] = true
 	}
 
 	sb.From(selectFromCTE)
 
-	// Add order by support
-	keySelectors := b.getKeySelectors()
-	_, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(b.ctx, keySelectors)
-	if err != nil {
-		return nil, err
-	}
-
+	// Add order by support using ColumnExpressionFor
 	orderApplied := false
 	for _, orderBy := range b.operator.Order {
-		// For columns in selectFields, just use the column name
-		sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(b.ctx, &orderBy.Key.TelemetryFieldKey, keys)
+		if err != nil {
+			return nil, err
+		}
+		sb.OrderBy(fmt.Sprintf("%s %s", colExpr, orderBy.Direction.StringValue()))
 		orderApplied = true
 	}
 
@@ -763,7 +714,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(selectFromCTE string) (*qbtype
 
 	sb.Select(
 		"any(timestamp) as timestamp",
-		"any(`service.name`) as `service.name`",
+		"any(`service.name`) as `service.name`", // <-- use alias, no $$ here
 		"any(name) as `name`",
 		"count() as span_count",
 		"any(duration_nano) as `duration_nano`",
