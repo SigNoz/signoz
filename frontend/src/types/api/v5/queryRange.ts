@@ -223,6 +223,8 @@ export interface BaseBuilderQuery {
 	secondaryAggregations?: SecondaryAggregation[];
 	functions?: QueryFunction[];
 	legend?: string;
+	expression?: string; // for trace operator
+	returnSpansFrom?: string; // for trace operator
 }
 
 export interface TraceBuilderQuery extends BaseBuilderQuery {
