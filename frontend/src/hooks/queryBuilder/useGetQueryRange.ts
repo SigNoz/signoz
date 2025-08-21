@@ -2,6 +2,7 @@ import { isAxiosError } from 'axios';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { updateBarStepInterval } from 'container/GridCardLayout/utils';
+import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
 import {
 	GetMetricQueryRange,
 	GetQueryResultsProps,
@@ -35,6 +36,8 @@ export const useGetQueryRange: UseGetQueryRange = (
 	options,
 	headers,
 ) => {
+	const { dynamicVariables } = useGetDynamicVariables();
+
 	const newRequestData: GetQueryResultsProps = useMemo(() => {
 		const firstQueryData = requestData.query.builder?.queryData[0];
 		const isListWithSingleTimestampOrder =
@@ -138,7 +141,13 @@ export const useGetQueryRange: UseGetQueryRange = (
 		APIError | Error
 	>({
 		queryFn: async ({ signal }) =>
-			GetMetricQueryRange(modifiedRequestData, version, signal, headers),
+			GetMetricQueryRange(
+				modifiedRequestData,
+				version,
+				dynamicVariables,
+				signal,
+				headers,
+			),
 		...options,
 		retry,
 		queryKey,
