@@ -56,7 +56,10 @@ import {
 	StepHeading,
 } from './styles';
 import { usePrefillAlertConditions } from './usePrefillAlertConditions';
-import { getSelectedQueryOptions } from './utils';
+import {
+	getInvolvedQueriesInTraceOperator,
+	getSelectedQueryOptions,
+} from './utils';
 
 export enum AlertDetectionTypes {
 	THRESHOLD_ALERT = 'threshold_rule',
@@ -149,11 +152,17 @@ function FormAlertRules({
 	]);
 
 	const queryOptions = useMemo(() => {
+		const involvedQueriesInTraceOperator = getInvolvedQueriesInTraceOperator(
+			currentQuery.builder.queryTraceOperator,
+		);
 		const queryConfig: Record<EQueryType, () => SelectProps['options']> = {
-			// TODO: Filter out queries who are used in trace operator
 			[EQueryType.QUERY_BUILDER]: () => [
-				...(getSelectedQueryOptions(currentQuery.builder.queryData) || []),
+				...(getSelectedQueryOptions(currentQuery.builder.queryData)?.filter(
+					(option) =>
+						!involvedQueriesInTraceOperator.includes(option.value as string),
+				) || []),
 				...(getSelectedQueryOptions(currentQuery.builder.queryFormulas) || []),
+				...(getSelectedQueryOptions(currentQuery.builder.queryTraceOperator) || []),
 			],
 			[EQueryType.PROM]: () => getSelectedQueryOptions(currentQuery.promql),
 			[EQueryType.CLICKHOUSE]: () =>
