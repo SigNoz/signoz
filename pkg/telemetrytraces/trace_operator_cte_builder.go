@@ -422,45 +422,48 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(selectFromCTE string, requestT
 func (b *traceOperatorCTEBuilder) buildListQuery(selectFromCTE string) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
+	// Select core fields
 	sb.Select(
 		"timestamp",
 		"trace_id",
 		"span_id",
 		"name",
-		"service.name",
 		"duration_nano",
 		"parent_span_id",
 	)
 
+	selectedFields := map[string]bool{
+		"timestamp":      true,
+		"trace_id":       true,
+		"span_id":        true,
+		"name":           true,
+		"duration_nano":  true,
+		"parent_span_id": true,
+	}
+
+	// Add all selectFields - they should already be in the CTE
 	for _, field := range b.operator.SelectFields {
-		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(b.ctx, &field, nil)
-		if err != nil {
-			return nil, errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"failed to map select field '%s' in list query: %v",
-				field.Name,
-				err,
-			)
+		if selectedFields[field.Name] {
+			continue
 		}
-		sb.SelectMore(sqlbuilder.Escape(colExpr))
+		// Reference the column directly from the CTE
+		sb.SelectMore(fmt.Sprintf("`%s`", field.Name))
+		selectedFields[field.Name] = true
 	}
 
 	sb.From(selectFromCTE)
 
 	// Add order by support
 	keySelectors := b.getKeySelectors()
-	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(b.ctx, keySelectors)
+	_, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(b.ctx, keySelectors)
 	if err != nil {
 		return nil, err
 	}
 
 	orderApplied := false
 	for _, orderBy := range b.operator.Order {
-		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(b.ctx, &orderBy.Key.TelemetryFieldKey, keys)
-		if err != nil {
-			return nil, err
-		}
-		sb.OrderBy(fmt.Sprintf("%s %s", colExpr, orderBy.Direction.StringValue()))
+		// For columns in selectFields, just use the column name
+		sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
 		orderApplied = true
 	}
 
