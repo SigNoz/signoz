@@ -1,5 +1,4 @@
 import { Row } from 'antd';
-import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
 import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -117,11 +116,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 		if (id) {
 			updateLocalStorageDashboardVariables(name, value, allSelected);
 
-			if (allSelected) {
-				updateUrlVariable(name || id, ALL_SELECTED_VALUE);
-			} else {
-				updateUrlVariable(name || id, value);
-			}
+			updateUrlVariable(id, value, allSelected);
 
 			if (selectedDashboard) {
 				setSelectedDashboard((prev) => {

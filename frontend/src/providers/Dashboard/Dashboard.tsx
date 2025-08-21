@@ -2,7 +2,6 @@
 import { Modal } from 'antd';
 import getDashboard from 'api/v1/dashboards/id/get';
 import locked from 'api/v1/dashboards/id/lock';
-import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
@@ -235,11 +234,8 @@ export function DashboardProvider({
 			Object.keys(data.data.variables).forEach((variable) => {
 				const variableData = data.data.variables[variable];
 
-				const variablesFromUrl = getUrlVariables();
 				// values from url
-				const urlVariable = variableData?.name
-					? variablesFromUrl[variableData?.name] || variablesFromUrl[variableData.id]
-					: variablesFromUrl[variableData.id];
+				const urlVariable = getUrlVariables()[variableData.id];
 
 				let updatedVariable = {
 					...data.data.variables[variable],
@@ -250,9 +246,7 @@ export function DashboardProvider({
 				if (urlVariable) {
 					updatedVariable = {
 						...updatedVariable,
-						...(urlVariable !== ALL_SELECTED_VALUE &&
-							updatedVariable?.showALLOption && { selectedValue: urlVariable }),
-						...(urlVariable === ALL_SELECTED_VALUE && { allSelected: true }),
+						...urlVariable,
 					};
 				}
 

@@ -5,17 +5,19 @@ import { useHistory } from 'react-router-dom';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 interface LocalStoreDashboardVariables {
-	[name: string]:
-		| IDashboardVariable['selectedValue'][]
-		| IDashboardVariable['selectedValue'];
+	[id: string]: {
+		selectedValue: IDashboardVariable['selectedValue'];
+		allSelected: boolean;
+	};
 }
 
 interface UseVariablesFromUrlReturn {
 	getUrlVariables: () => LocalStoreDashboardVariables;
 	setUrlVariables: (variables: LocalStoreDashboardVariables) => void;
 	updateUrlVariable: (
-		name: string,
+		id: string,
 		selectedValue: IDashboardVariable['selectedValue'],
+		allSelected: boolean,
 	) => void;
 	clearUrlVariables: () => void;
 }
@@ -25,14 +27,14 @@ const useVariablesFromUrl = (): UseVariablesFromUrlReturn => {
 	const history = useHistory();
 
 	const getUrlVariables = useCallback((): LocalStoreDashboardVariables => {
-		const variablesParam = urlQuery.get(QueryParams.variables);
+		const variableConfigsParam = urlQuery.get(QueryParams.variableConfigs);
 
-		if (!variablesParam) {
+		if (!variableConfigsParam) {
 			return {};
 		}
 
 		try {
-			return JSON.parse(decodeURIComponent(variablesParam));
+			return JSON.parse(decodeURIComponent(variableConfigsParam));
 		} catch (error) {
 			console.error('Failed to parse variables from URL:', error);
 			return {};
@@ -44,11 +46,11 @@ const useVariablesFromUrl = (): UseVariablesFromUrlReturn => {
 			const params = new URLSearchParams(urlQuery.toString());
 
 			if (Object.keys(variables).length === 0) {
-				params.delete(QueryParams.variables);
+				params.delete(QueryParams.variableConfigs);
 			} else {
 				try {
 					const encodedVariables = encodeURIComponent(JSON.stringify(variables));
-					params.set(QueryParams.variables, encodedVariables);
+					params.set(QueryParams.variableConfigs, encodedVariables);
 				} catch (error) {
 					console.error('Failed to serialize variables for URL:', error);
 				}
@@ -63,7 +65,7 @@ const useVariablesFromUrl = (): UseVariablesFromUrlReturn => {
 
 	const clearUrlVariables = useCallback((): void => {
 		const params = new URLSearchParams(urlQuery.toString());
-		params.delete(QueryParams.variables);
+		params.delete(QueryParams.variableConfigs);
 		params.delete('options');
 
 		history.replace({
@@ -72,15 +74,19 @@ const useVariablesFromUrl = (): UseVariablesFromUrlReturn => {
 	}, [history, urlQuery]);
 
 	const updateUrlVariable = useCallback(
-		(name: string, selectedValue: IDashboardVariable['selectedValue']): void => {
+		(
+			id: string,
+			selectedValue: IDashboardVariable['selectedValue'],
+			allSelected: boolean,
+		): void => {
 			const currentVariables = getUrlVariables();
 
 			const updatedVariables = {
 				...currentVariables,
-				[name]: selectedValue,
+				[id]: { selectedValue, allSelected },
 			};
 
-			setUrlVariables(updatedVariables as LocalStoreDashboardVariables);
+			setUrlVariables(updatedVariables);
 		},
 		[getUrlVariables, setUrlVariables],
 	);
