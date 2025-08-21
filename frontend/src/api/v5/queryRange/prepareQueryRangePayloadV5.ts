@@ -471,6 +471,7 @@ export const prepareQueryRangePayloadV5 = ({
 			const currentTraceOperator = mapQueryDataToApi(
 				filteredTraceOperator,
 				'queryName',
+				tableParams,
 			);
 
 			// Combine legend maps
