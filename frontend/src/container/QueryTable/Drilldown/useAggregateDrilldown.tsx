@@ -5,7 +5,7 @@ import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { ContextMenuItem } from './contextConfig';
-import { FilterData } from './drilldownUtils';
+import { FilterData, getQueryData } from './drilldownUtils';
 import useBaseAggregateOptions from './useBaseAggregateOptions';
 import useBreakout from './useBreakout';
 
@@ -58,19 +58,37 @@ const useAggregateDrilldown = ({
 		// Extract field variables from aggregation data filters
 		const fieldVars: Record<string, string | number | boolean> = {};
 
+		// Get groupBy fields from the specific queryData item that matches the queryName
+		const groupByFields: string[] = [];
+		if (aggregateData.queryName) {
+			// Find the specific queryData item that matches the queryName
+			const matchingQueryData = getQueryData(query, aggregateData.queryName);
+
+			if (matchingQueryData?.groupBy) {
+				matchingQueryData.groupBy.forEach((field) => {
+					if (field.key && !groupByFields.includes(field.key)) {
+						groupByFields.push(field.key);
+					}
+				});
+			}
+		}
+
 		aggregateData.filters.forEach((filter) => {
-			// Exclude queryName from fieldVariables
-			if (
-				filter.filterKey &&
-				filter.filterValue !== undefined &&
-				filter.filterKey !== aggregateData.queryName
-			) {
-				fieldVars[filter.filterKey] = filter.filterValue;
+			if (filter.filterKey && filter.filterValue !== undefined) {
+				// Check if this field is present in groupBy from the query
+				const isFieldInGroupBy = groupByFields.includes(filter.filterKey);
+
+				if (isFieldInGroupBy) {
+					fieldVars[filter.filterKey] = filter.filterValue;
+					console.log(
+						`Field "${filter.filterKey}" is in groupBy, adding to fieldVariables`,
+					);
+				}
 			}
 		});
 
 		return fieldVars;
-	}, [aggregateData]);
+	}, [aggregateData?.filters, aggregateData?.queryName, query]);
 
 	const { dashbaordVariablesConfig } = useDashboardVarConfig({
 		setSubMenu,
