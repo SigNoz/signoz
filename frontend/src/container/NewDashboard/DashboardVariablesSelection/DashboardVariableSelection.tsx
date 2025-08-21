@@ -1,6 +1,6 @@
 import './DashboardVariableSelection.styles.scss';
 
-import { Alert, Row } from 'antd';
+import { Row } from 'antd';
 import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useEffect, useState } from 'react';
