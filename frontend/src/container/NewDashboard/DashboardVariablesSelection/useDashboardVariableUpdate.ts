@@ -203,7 +203,7 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 				showALLOption: false,
 				dynamicVariablesAttribute: name,
 				dynamicVariablesSource: source,
-				// dynamicVariablesWidgetIds: widgetId ? [widgetId] : [],
+				dynamicVariablesWidgetIds: [],
 				queryValue: '',
 			};
 
