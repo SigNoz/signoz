@@ -124,7 +124,7 @@ export const getAggregateColumnHeader = (
 	queryName: string,
 ): { dataSource: string; aggregations: string } => {
 	// Find the query step with the matching queryName
-	const queryStep = query.builder.queryData.find(
+	const queryStep = query?.builder?.queryData.find(
 		(step) => step.queryName === queryName,
 	);
 
