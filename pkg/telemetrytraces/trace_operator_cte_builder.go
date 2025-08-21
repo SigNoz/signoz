@@ -434,12 +434,35 @@ func (b *traceOperatorCTEBuilder) buildListQuery(selectFromCTE string) (*qbtypes
 
 	sb.From(selectFromCTE)
 
-	sb.OrderBy("timestamp DESC")
+	// Add order by support
+	keySelectors := b.getKeySelectors()
+	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(b.ctx, keySelectors)
+	if err != nil {
+		return nil, err
+	}
+
+	orderApplied := false
+	for _, orderBy := range b.operator.Order {
+		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(b.ctx, &orderBy.Key.TelemetryFieldKey, keys)
+		if err != nil {
+			return nil, err
+		}
+		sb.OrderBy(fmt.Sprintf("%s %s", colExpr, orderBy.Direction.StringValue()))
+		orderApplied = true
+	}
+
+	if !orderApplied {
+		sb.OrderBy("timestamp DESC")
+	}
 
 	if b.operator.Limit > 0 {
 		sb.Limit(b.operator.Limit)
 	} else {
 		sb.Limit(100)
+	}
+
+	if b.operator.Offset > 0 {
+		sb.Offset(b.operator.Offset)
 	}
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -630,11 +653,27 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*q
 		sb.GroupBy(groupByKeys...)
 	}
 
+	// Add order by support
+	for _, orderBy := range b.operator.Order {
+		idx, ok := b.aggOrderBy(orderBy)
+		if ok {
+			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
+		} else {
+			sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+		}
+	}
+	sb.OrderBy("ts desc")
+
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
 	// Add HAVING clause if specified
 	if err := b.addHavingClause(sb); err != nil {
 		return nil, err
+	}
+
+	// Add limit support
+	if b.operator.Limit > 0 {
+		sb.Limit(b.operator.Limit)
 	}
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
@@ -855,6 +894,26 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(selectFromCTE string) (*qbtyp
 		sb.GroupBy(groupByKeys...)
 	}
 
+	// Add order by support
+	for _, orderBy := range b.operator.Order {
+		idx, ok := b.aggOrderBy(orderBy)
+		if ok {
+			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
+		} else {
+			sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+		}
+	}
+
+	// Add default ordering if no orderBy specified
+	if len(b.operator.Order) == 0 {
+		sb.OrderBy("__result_0 DESC")
+	}
+
+	// Add limit support
+	if b.operator.Limit > 0 {
+		sb.Limit(b.operator.Limit)
+	}
+
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
 	// Add HAVING clause if specified
@@ -886,4 +945,15 @@ func (b *traceOperatorCTEBuilder) addCTE(name, sql string, args []any, dependsOn
 		dependsOn: dependsOn,
 	})
 	b.cteNameToIndex[name] = len(b.ctes) - 1
+}
+
+func (b *traceOperatorCTEBuilder) aggOrderBy(k qbtypes.OrderBy) (int, bool) {
+	for i, agg := range b.operator.Aggregations {
+		if k.Key.Name == agg.Alias ||
+			k.Key.Name == agg.Expression ||
+			k.Key.Name == fmt.Sprintf("__result_%d", i) {
+			return i, true
+		}
+	}
+	return 0, false
 }

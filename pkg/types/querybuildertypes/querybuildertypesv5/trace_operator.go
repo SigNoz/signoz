@@ -56,6 +56,7 @@ type QueryBuilderTraceOperator struct {
 	Having *Having `json:"having,omitempty"`
 
 	Limit  int    `json:"limit,omitempty"`
+	Offset int    `json:"offset,omitempty"`
 	Cursor string `json:"cursor,omitempty"`
 
 	Legend string `json:"legend,omitempty"`
@@ -261,6 +262,15 @@ func (q *QueryBuilderTraceOperator) ValidatePagination() error {
 			errors.CodeInvalidInput,
 			"limit must be non-negative, got %d",
 			q.Limit,
+		)
+	}
+
+	if q.Offset < 0 {
+		return errors.WrapInvalidInputf(
+			nil,
+			errors.CodeInvalidInput,
+			"offset must be non-negative, got %d",
+			q.Offset,
 		)
 	}
 
