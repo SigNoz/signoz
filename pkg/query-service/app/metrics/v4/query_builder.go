@@ -97,6 +97,14 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 }
 
 func BuildPromQuery(promQuery *v3.PromQuery, step, start, end int64) *model.QueryRangeParams {
+	// Defensive clamp: avoid zero/negative step reaching the PromQL engine
+	if step <= 0 {
+		derived := common.MinAllowedStepInterval(start, end)
+		if derived <= 0 {
+			derived = 60
+		}
+		step = derived
+	}
 	return &model.QueryRangeParams{
 		Query: promQuery.Query,
 		Start: time.UnixMilli(start),

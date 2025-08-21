@@ -875,6 +875,14 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 		queryRangeParams.Start = queryRangeParams.End
 	}
 
+	// Ensure a valid, non-zero step for PromQL range queries.
+	// Some clients may omit the step; Prometheus engine panics if step == 0.
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
+		if queryRangeParams.Step <= 0 {
+			queryRangeParams.Step = common.MinAllowedStepInterval(queryRangeParams.Start, queryRangeParams.End)
+		}
+	}
+
 	// replace go template variables in clickhouse query
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
 		for _, chQuery := range queryRangeParams.CompositeQuery.ClickHouseQueries {
