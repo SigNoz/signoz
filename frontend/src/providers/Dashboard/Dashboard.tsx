@@ -8,6 +8,7 @@ import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs, { Dayjs } from 'dayjs';
 import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
+import useAxiosError from 'hooks/useAxiosError';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useTabVisibility from 'hooks/useTabFocus';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -308,7 +309,7 @@ export function DashboardProvider({
 					});
 				} catch (error) {
 					showErrorModal(error as APIError);
-					throw error;
+					return;
 				} finally {
 					setIsDashboardFetching(false);
 				}
@@ -320,13 +321,12 @@ export function DashboardProvider({
 			// eslint-disable-next-line sonarjs/cognitive-complexity
 			onSuccess: (data) => {
 				// if the url variable is not set for any variable, set it to the default value
-				const variables = data?.data?.data?.variables;
+				const variables = data?.data?.variables;
 				if (variables) {
 					initializeDefaultVariables(variables, getUrlVariables, updateUrlVariable);
 				}
 
-				if (!data?.data) return;
-				const updatedDashboardData = transformDashboardVariables(data?.data);
+				const updatedDashboardData = transformDashboardVariables(data);
 				const updatedDate = dayjs(updatedDashboardData.updatedAt);
 
 				setIsDashboardLocked(updatedDashboardData?.locked || false);
