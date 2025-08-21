@@ -123,15 +123,8 @@ func (b *traceOperatorCTEBuilder) buildTimeConstantsCTE() string {
 }
 
 func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() error {
-	keySelectors := b.getKeySelectorsIncludingSelectFields()
-	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(b.ctx, keySelectors)
-	if err != nil {
-		return err
-	}
-
 	sb := sqlbuilder.NewSelectBuilder()
 
-	// Always select core fields
 	sb.Select(
 		"trace_id",
 		"span_id",
@@ -139,64 +132,14 @@ func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() error {
 		"name",
 		"timestamp",
 		"duration_nano",
+		sqlbuilder.Escape("resource_string_service$$name")+" AS `service.name`",
+		sqlbuilder.Escape("resource_string_service$$name"),
+		sqlbuilder.Escape("resource_string_service$$name_exists"),
+		"attributes_string",
+		"attributes_number",
+		"attributes_bool",
+		"resources_string",
 	)
-
-	// Track what we've selected to avoid duplicates
-	selectedFields := map[string]bool{
-		"trace_id":       true,
-		"span_id":        true,
-		"parent_span_id": true,
-		"name":           true,
-		"timestamp":      true,
-		"duration_nano":  true,
-	}
-
-	if serviceName, exists := keys["service.name"]; exists && len(serviceName) > 0 && serviceName[0].Materialized {
-		sb.SelectMore(sqlbuilder.Escape("resource_string_service$$name") + " AS `service.name`")
-		selectedFields["service.name"] = true
-	}
-
-	// Add columns for all selectFields
-	for _, field := range b.operator.SelectFields {
-		if selectedFields[field.Name] {
-			continue
-		}
-
-		if _, isCalculated := CalculatedFields[field.Name]; isCalculated {
-			sb.SelectMore(field.Name + " AS `" + field.Name + "`")
-			selectedFields[field.Name] = true
-			continue
-		}
-
-		if _, isCalculatedDeprecated := CalculatedFieldsDeprecated[field.Name]; isCalculatedDeprecated {
-			sb.SelectMore(field.Name + " AS `" + field.Name + "`")
-			selectedFields[field.Name] = true
-			continue
-		}
-
-		// For other fields, use the field mapper
-		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(b.ctx, &field, keys)
-		if err != nil {
-			// Log warning but continue - field might not exist
-			b.stmtBuilder.logger.WarnContext(b.ctx, "failed to map select field in base_spans",
-				"field", field.Name, "error", err)
-			continue
-		}
-
-		if strings.Contains(colExpr, " AS ") {
-			sb.SelectMore(colExpr)
-		} else {
-			sb.SelectMore(fmt.Sprintf("%s AS `%s`", colExpr, field.Name))
-		}
-		selectedFields[field.Name] = true
-	}
-	requiredColumns := b.getRequiredAttributeColumns()
-	for _, col := range requiredColumns {
-		if !selectedFields[col] {
-			sb.SelectMore(col)
-			selectedFields[col] = true
-		}
-	}
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
@@ -258,24 +201,14 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 	}
 
 	keySelectors := getKeySelectors(*query)
-	// Also include selectFields in key selectors
-	for _, field := range b.operator.SelectFields {
-		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          field.Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  field.FieldContext,
-			FieldDataType: field.FieldDataType,
-		})
-	}
-
+	b.stmtBuilder.logger.InfoContext(b.ctx, "Key selectors for query", "queryName", queryName, "keySelectors", keySelectors)
 	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(b.ctx, keySelectors)
 	if err != nil {
 		return "", err
 	}
+	b.stmtBuilder.logger.InfoContext(b.ctx, "Retrieved keys for query", "queryName", queryName, "keysCount", len(keys))
 
 	sb := sqlbuilder.NewSelectBuilder()
-
-	// Select core fields
 	sb.Select(
 		"trace_id",
 		"span_id",
@@ -283,31 +216,19 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 		"name",
 		"timestamp",
 		"duration_nano",
+		"`service.name`",
 		fmt.Sprintf("'%s' AS level", cteName),
 	)
 
-	selectedFields := map[string]bool{
-		"trace_id":       true,
-		"span_id":        true,
-		"parent_span_id": true,
-		"name":           true,
-		"timestamp":      true,
-		"duration_nano":  true,
-	}
-
-	// Add all selectFields from operator
-	for _, field := range b.operator.SelectFields {
-		if selectedFields[field.Name] {
-			continue
-		}
-		// Reference the already-aliased column from base_spans
-		sb.SelectMore(fmt.Sprintf("`%s`", field.Name))
-		selectedFields[field.Name] = true
+	requiredColumns := b.getRequiredAttributeColumns()
+	for _, col := range requiredColumns {
+		sb.SelectMore(col)
 	}
 
 	sb.From("base_spans AS s")
 
 	if query.Filter != nil && query.Filter.Expression != "" {
+		b.stmtBuilder.logger.InfoContext(b.ctx, "Applying filter to query CTE", "queryName", queryName, "filter", query.Filter.Expression)
 		filterWhereClause, err := querybuilder.PrepareWhereClause(
 			query.Filter.Expression,
 			querybuilder.FilterExprVisitorOpts{
@@ -315,14 +236,24 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 				FieldMapper:        b.stmtBuilder.fm,
 				ConditionBuilder:   b.stmtBuilder.cb,
 				FieldKeys:          keys,
-				SkipResourceFilter: true,
+				SkipResourceFilter: false,
 			},
 		)
 		if err != nil {
+			b.stmtBuilder.logger.ErrorContext(b.ctx, "Failed to prepare where clause", "error", err, "filter", query.Filter.Expression)
 			return "", err
 		}
 		if filterWhereClause != nil {
+			b.stmtBuilder.logger.InfoContext(b.ctx, "Adding where clause", "whereClause", filterWhereClause.WhereClause)
 			sb.AddWhereClause(filterWhereClause.WhereClause)
+		} else {
+			b.stmtBuilder.logger.WarnContext(b.ctx, "PrepareWhereClause returned nil", "filter", query.Filter.Expression)
+		}
+	} else {
+		if query.Filter == nil {
+			b.stmtBuilder.logger.InfoContext(b.ctx, "No filter for query CTE", "queryName", queryName, "reason", "filter is nil")
+		} else {
+			b.stmtBuilder.logger.InfoContext(b.ctx, "No filter for query CTE", "queryName", queryName, "reason", "filter expression is empty")
 		}
 	}
 
@@ -381,40 +312,26 @@ func (b *traceOperatorCTEBuilder) buildOperatorCTE(op qbtypes.TraceOperatorType,
 
 func (b *traceOperatorCTEBuilder) buildDirectDescendantCTE(parentCTE, childCTE string) (string, []any, []string) {
 	sb := sqlbuilder.NewSelectBuilder()
-
-	// Select core fields from child
 	sb.Select(
-		"c.trace_id",
-		"c.span_id",
-		"c.parent_span_id",
-		"c.name",
-		"c.timestamp",
-		"c.duration_nano",
-		fmt.Sprintf("'%s' AS level", childCTE),
+		"p.trace_id",
+		"p.span_id",
+		"p.parent_span_id",
+		"p.name",
+		"p.timestamp",
+		"p.duration_nano",
+		"p.`service.name`",
+		fmt.Sprintf("'%s' AS level", parentCTE),
 	)
 
-	selectedFields := map[string]bool{
-		"trace_id":       true,
-		"span_id":        true,
-		"parent_span_id": true,
-		"name":           true,
-		"timestamp":      true,
-		"duration_nano":  true,
+	requiredColumns := b.getRequiredAttributeColumns()
+	for _, col := range requiredColumns {
+		sb.SelectMore(fmt.Sprintf("p.%s", col))
 	}
 
-	// Propagate all selectFields
-	for _, field := range b.operator.SelectFields {
-		if selectedFields[field.Name] {
-			continue
-		}
-		sb.SelectMore(fmt.Sprintf("c.`%s`", field.Name))
-		selectedFields[field.Name] = true
-	}
-
-	sb.From(fmt.Sprintf("%s AS c", childCTE))
+	sb.From(fmt.Sprintf("%s AS p", parentCTE))
 	sb.JoinWithOption(
 		sqlbuilder.InnerJoin,
-		fmt.Sprintf("%s AS p", parentCTE),
+		fmt.Sprintf("%s AS c", childCTE),
 		"p.trace_id = c.trace_id AND p.span_id = c.parent_span_id",
 	)
 
@@ -424,7 +341,6 @@ func (b *traceOperatorCTEBuilder) buildDirectDescendantCTE(parentCTE, childCTE s
 
 func (b *traceOperatorCTEBuilder) buildAndCTE(leftCTE, rightCTE string) (string, []any, []string) {
 	sb := sqlbuilder.NewSelectBuilder()
-
 	sb.Select(
 		"l.trace_id",
 		"l.span_id",
@@ -432,28 +348,14 @@ func (b *traceOperatorCTEBuilder) buildAndCTE(leftCTE, rightCTE string) (string,
 		"l.name",
 		"l.timestamp",
 		"l.duration_nano",
+		"l.`service.name`",
 		"l.level",
 	)
 
-	selectedFields := map[string]bool{
-		"trace_id":       true,
-		"span_id":        true,
-		"parent_span_id": true,
-		"name":           true,
-		"timestamp":      true,
-		"duration_nano":  true,
-		"level":          true,
+	requiredColumns := b.getRequiredAttributeColumns()
+	for _, col := range requiredColumns {
+		sb.SelectMore(fmt.Sprintf("l.%s", col))
 	}
-
-	// Propagate all selectFields
-	for _, field := range b.operator.SelectFields {
-		if selectedFields[field.Name] {
-			continue
-		}
-		sb.SelectMore(fmt.Sprintf("l.`%s`", field.Name))
-		selectedFields[field.Name] = true
-	}
-
 	sb.From(fmt.Sprintf("%s AS l", leftCTE))
 	sb.JoinWithOption(
 		sqlbuilder.InnerJoin,
@@ -466,45 +368,17 @@ func (b *traceOperatorCTEBuilder) buildAndCTE(leftCTE, rightCTE string) (string,
 }
 
 func (b *traceOperatorCTEBuilder) buildOrCTE(leftCTE, rightCTE string) (string, []string) {
-	// For UNION, we need to ensure both CTEs have same columns in same order
-	cols := []string{
-		"trace_id",
-		"span_id",
-		"parent_span_id",
-		"name",
-		"timestamp",
-		"duration_nano",
-		"level",
-	}
-
-	// Add all selectFields
-	for _, field := range b.operator.SelectFields {
-		found := false
-		for _, col := range cols {
-			if col == field.Name {
-				found = true
-				break
-			}
-		}
-		if !found {
-			cols = append(cols, fmt.Sprintf("`%s`", field.Name))
-		}
-	}
-
-	colList := strings.Join(cols, ", ")
-
 	sql := fmt.Sprintf(`
-		SELECT %s FROM %s
+		SELECT * FROM %s
 		UNION DISTINCT
-		SELECT %s FROM %s
-	`, colList, leftCTE, colList, rightCTE)
+		SELECT * FROM %s
+	`, leftCTE, rightCTE)
 
 	return sql, []string{leftCTE, rightCTE}
 }
 
 func (b *traceOperatorCTEBuilder) buildNotCTE(leftCTE, rightCTE string) (string, []any, []string) {
 	sb := sqlbuilder.NewSelectBuilder()
-
 	sb.Select(
 		"l.trace_id",
 		"l.span_id",
@@ -512,28 +386,14 @@ func (b *traceOperatorCTEBuilder) buildNotCTE(leftCTE, rightCTE string) (string,
 		"l.name",
 		"l.timestamp",
 		"l.duration_nano",
+		"l.`service.name`",
 		"l.level",
 	)
 
-	selectedFields := map[string]bool{
-		"trace_id":       true,
-		"span_id":        true,
-		"parent_span_id": true,
-		"name":           true,
-		"timestamp":      true,
-		"duration_nano":  true,
-		"level":          true,
+	requiredColumns := b.getRequiredAttributeColumns()
+	for _, col := range requiredColumns {
+		sb.SelectMore(fmt.Sprintf("l.%s", col))
 	}
-
-	// Propagate all selectFields
-	for _, field := range b.operator.SelectFields {
-		if selectedFields[field.Name] {
-			continue
-		}
-		sb.SelectMore(fmt.Sprintf("l.`%s`", field.Name))
-		selectedFields[field.Name] = true
-	}
-
 	sb.From(fmt.Sprintf("%s AS l", leftCTE))
 	sb.Where(fmt.Sprintf(
 		"NOT EXISTS (SELECT 1 FROM %s AS r WHERE r.trace_id = l.trace_id)",
@@ -562,48 +422,45 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(selectFromCTE string, requestT
 func (b *traceOperatorCTEBuilder) buildListQuery(selectFromCTE string) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
-	// Select core fields
 	sb.Select(
 		"timestamp",
 		"trace_id",
 		"span_id",
 		"name",
+		"service.name",
 		"duration_nano",
 		"parent_span_id",
 	)
 
-	selectedFields := map[string]bool{
-		"timestamp":      true,
-		"trace_id":       true,
-		"span_id":        true,
-		"name":           true,
-		"duration_nano":  true,
-		"parent_span_id": true,
-	}
-
-	// Add all selectFields - they should already be in the CTE
 	for _, field := range b.operator.SelectFields {
-		if selectedFields[field.Name] {
-			continue
+		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(b.ctx, &field, nil)
+		if err != nil {
+			return nil, errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"failed to map select field '%s' in list query: %v",
+				field.Name,
+				err,
+			)
 		}
-		// Reference the column directly from the CTE
-		sb.SelectMore(fmt.Sprintf("`%s`", field.Name))
-		selectedFields[field.Name] = true
+		sb.SelectMore(sqlbuilder.Escape(colExpr))
 	}
 
 	sb.From(selectFromCTE)
 
 	// Add order by support
 	keySelectors := b.getKeySelectors()
-	_, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(b.ctx, keySelectors)
+	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(b.ctx, keySelectors)
 	if err != nil {
 		return nil, err
 	}
 
 	orderApplied := false
 	for _, orderBy := range b.operator.Order {
-		// For columns in selectFields, just use the column name
-		sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(b.ctx, &orderBy.Key.TelemetryFieldKey, keys)
+		if err != nil {
+			return nil, err
+		}
+		sb.OrderBy(fmt.Sprintf("%s %s", colExpr, orderBy.Direction.StringValue()))
 		orderApplied = true
 	}
 
@@ -657,22 +514,6 @@ func (b *traceOperatorCTEBuilder) getKeySelectors() []*telemetrytypes.FieldKeySe
 
 	for i := range keySelectors {
 		keySelectors[i].Signal = telemetrytypes.SignalTraces
-	}
-
-	return keySelectors
-}
-
-func (b *traceOperatorCTEBuilder) getKeySelectorsIncludingSelectFields() []*telemetrytypes.FieldKeySelector {
-	keySelectors := b.getKeySelectors()
-
-	// Add selectFields to key selectors
-	for _, field := range b.operator.SelectFields {
-		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          field.Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  field.FieldContext,
-			FieldDataType: field.FieldDataType,
-		})
 	}
 
 	return keySelectors
@@ -735,12 +576,7 @@ func (b *traceOperatorCTEBuilder) isIntrinsicField(fieldName string) bool {
 	return isDefault
 }
 
-// ... Continue with remaining methods (buildTimeSeriesQuery, buildTraceQuery, buildScalarQuery, etc.) ...
-// These would follow the same pattern of ensuring selectFields are properly handled
-
 func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*qbtypes.Statement, error) {
-	// Implementation remains mostly the same as original
-	// Just ensure selectFields are considered when needed
 	sb := sqlbuilder.NewSelectBuilder()
 
 	stepIntervalSeconds := int64(b.operator.StepInterval.Seconds())
@@ -830,6 +666,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*q
 		sb.GroupBy(groupByKeys...)
 	}
 
+	// Add order by support
 	for _, orderBy := range b.operator.Order {
 		idx, ok := b.aggOrderBy(orderBy)
 		if ok {
@@ -842,10 +679,12 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*q
 
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
+	// Add HAVING clause if specified
 	if err := b.addHavingClause(sb); err != nil {
 		return nil, err
 	}
 
+	// Add limit support
 	if b.operator.Limit > 0 {
 		sb.Limit(b.operator.Limit)
 	}
