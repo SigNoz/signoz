@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+/* eslint-disable sonarjs/no-identical-functions */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
@@ -352,7 +353,6 @@ export function convertTraceOperatorToV5(
 				requestType,
 				panelType,
 			);
-			let spec: QueryEnvelope['spec'];
 
 			// Skip aggregation for raw request type
 			const aggregations =
@@ -360,7 +360,7 @@ export function convertTraceOperatorToV5(
 					? undefined
 					: createAggregation(traceOperatorData, panelType);
 
-			spec = {
+			const spec: QueryEnvelope['spec'] = {
 				name: queryName,
 				returnSpansFrom: traceOperatorData.returnSpansFrom || '',
 				...baseSpec,
@@ -471,6 +471,7 @@ export const prepareQueryRangePayloadV5 = ({
 			const currentTraceOperator = mapQueryDataToApi(
 				filteredTraceOperator,
 				'queryName',
+				tableParams,
 			);
 
 			// Combine legend maps
@@ -516,29 +517,7 @@ export const prepareQueryRangePayloadV5 = ({
 				graphType,
 			);
 
-			// const traceOperatorQueries = Object.entries(currentTraceOperator.data).map(
-			// 	([queryName, traceOperatorData]): QueryEnvelope => ({
-			// 		type: 'builder_trace_operator' as const,
-			// 		spec: {
-			// 			name: queryName,
-			// 			expression: traceOperatorData.expression || '',
-			// 			legend: isEmpty(traceOperatorData.legend)
-			// 				? undefined
-			// 				: traceOperatorData.legend,
-			// 			limit: 10,
-			// 			order: traceOperatorData.orderBy?.map(
-			// 				// eslint-disable-next-line sonarjs/no-identical-functions
-			// 				(order: any): OrderBy => ({
-			// 					key: {
-			// 						name: order.columnName,
-			// 					},
-			// 					direction: order.order,
-			// 				}),
-			// 			),
-			// 		},
-			// 	}),
-			// );
-			// Combine both types
+			// Combine all query types
 			queries = [...builderQueries, ...formulaQueries, ...traceOperatorQueries];
 			break;
 		}
