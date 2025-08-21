@@ -1,5 +1,6 @@
+/* eslint-disable react/require-default-props */
 import { Button, Tooltip, Typography } from 'antd';
-import { Plus, Sigma } from 'lucide-react';
+import { DraftingCompass, Plus, Sigma } from 'lucide-react';
 
 export default function QueryFooter({
 	addNewBuilderQuery,
@@ -76,8 +77,8 @@ export default function QueryFooter({
 						>
 							<Button
 								className="add-formula-button periscope-btn secondary"
-								icon={<Sigma size={16} />}
-								onClick={() => addTraceOperator?.()}
+								icon={<DraftingCompass size={16} />}
+								onClick={(): void => addTraceOperator?.()}
 							>
 								Add Trace Matching
 							</Button>
