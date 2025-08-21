@@ -150,6 +150,7 @@ function FormAlertRules({
 
 	const queryOptions = useMemo(() => {
 		const queryConfig: Record<EQueryType, () => SelectProps['options']> = {
+			// TODO: Filter out queries who are used in trace operator
 			[EQueryType.QUERY_BUILDER]: () => [
 				...(getSelectedQueryOptions(currentQuery.builder.queryData) || []),
 				...(getSelectedQueryOptions(currentQuery.builder.queryFormulas) || []),

@@ -4,9 +4,15 @@ import { Plus, Sigma } from 'lucide-react';
 export default function QueryFooter({
 	addNewBuilderQuery,
 	addNewFormula,
+	addTraceOperator,
+	showAddFormula = true,
+	showAddTraceOperator = false,
 }: {
 	addNewBuilderQuery: () => void;
 	addNewFormula: () => void;
+	addTraceOperator?: () => void;
+	showAddTraceOperator: boolean;
+	showAddFormula?: boolean;
 }): JSX.Element {
 	return (
 		<div className="qb-footer">
@@ -22,32 +28,62 @@ export default function QueryFooter({
 					</Tooltip>
 				</div>
 
-				<div className="qb-add-formula">
-					<Tooltip
-						title={
-							<div style={{ textAlign: 'center' }}>
-								Add New Formula
-								<Typography.Link
-									href="https://signoz.io/docs/userguide/query-builder-v5/#multi-query-analysis-advanced-comparisons"
-									target="_blank"
-									style={{ textDecoration: 'underline' }}
-								>
-									{' '}
-									<br />
-									Learn more
-								</Typography.Link>
-							</div>
-						}
-					>
-						<Button
-							className="add-formula-button periscope-btn secondary"
-							icon={<Sigma size={16} />}
-							onClick={addNewFormula}
+				{showAddFormula && (
+					<div className="qb-add-formula">
+						<Tooltip
+							title={
+								<div style={{ textAlign: 'center' }}>
+									Add New Formula
+									<Typography.Link
+										href="https://signoz.io/docs/userguide/query-builder-v5/#multi-query-analysis-advanced-comparisons"
+										target="_blank"
+										style={{ textDecoration: 'underline' }}
+									>
+										{' '}
+										<br />
+										Learn more
+									</Typography.Link>
+								</div>
+							}
 						>
-							Add Formula
-						</Button>
-					</Tooltip>
-				</div>
+							<Button
+								className="add-formula-button periscope-btn secondary"
+								icon={<Sigma size={16} />}
+								onClick={addNewFormula}
+							>
+								Add Formula
+							</Button>
+						</Tooltip>
+					</div>
+				)}
+				{showAddTraceOperator && (
+					<div className="qb-add-formula">
+						<Tooltip
+							title={
+								<div style={{ textAlign: 'center' }}>
+									Add Trace Matching
+									<Typography.Link
+										href="https://signoz.io/docs/userguide/query-builder-v5/#multi-query-analysis-advanced-comparisons"
+										target="_blank"
+										style={{ textDecoration: 'underline' }}
+									>
+										{' '}
+										<br />
+										Learn more
+									</Typography.Link>
+								</div>
+							}
+						>
+							<Button
+								className="add-formula-button periscope-btn secondary"
+								icon={<Sigma size={16} />}
+								onClick={() => addTraceOperator?.()}
+							>
+								Add Trace Matching
+							</Button>
+						</Tooltip>
+					</div>
+				)}
 			</div>
 		</div>
 	);

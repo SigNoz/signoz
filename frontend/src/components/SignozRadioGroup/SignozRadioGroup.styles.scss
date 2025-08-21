@@ -17,6 +17,19 @@
 		font-weight: var(--font-weight-normal);
 	}
 
+	.view-title-container {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		justify-content: center;
+
+		.icon-container {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+	}
+
 	.tab {
 		border: 1px solid var(--bg-slate-400);
 		&:hover {
