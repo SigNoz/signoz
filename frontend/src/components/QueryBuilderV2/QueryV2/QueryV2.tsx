@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { Dropdown } from 'antd';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
