@@ -200,7 +200,7 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 				haveCustomValuesSelected: false,
 				sort: 'ASC' as const,
 				multiSelect: true,
-				showALLOption: false,
+				showALLOption: true,
 				dynamicVariablesAttribute: name,
 				dynamicVariablesSource: source,
 				dynamicVariablesWidgetIds: [],
