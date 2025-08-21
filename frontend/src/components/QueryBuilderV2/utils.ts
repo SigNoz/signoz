@@ -6,7 +6,7 @@ import {
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep, isEqual, sortBy } from 'lodash-es';
 import { IQueryPair } from 'types/antlrQueryTypes';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -242,6 +242,31 @@ export const convertFiltersToExpressionWithExistingQuery = (
 				existingPair.position?.valueEnd
 			) {
 				visitedPairs.add(`${key.key}-${op}`.trim().toLowerCase());
+
+				// Check if existing values match current filter values (for array-based operators)
+				if (existingPair.valueList && filter.value && Array.isArray(filter.value)) {
+					// Clean quotes from string values for comparison
+					const cleanValues = (values: any[]): any[] =>
+						values.map((val) => (typeof val === 'string' ? unquote(val) : val));
+
+					const cleanExistingValues = cleanValues(existingPair.valueList);
+					const cleanFilterValues = cleanValues(filter.value);
+
+					// Compare arrays (order-independent) - if identical, keep existing value
+					const isSameValues =
+						cleanExistingValues.length === cleanFilterValues.length &&
+						isEqual(sortBy(cleanExistingValues), sortBy(cleanFilterValues));
+
+					if (isSameValues) {
+						// Values are identical, preserve existing formatting
+						modifiedQuery =
+							modifiedQuery.slice(0, existingPair.position.valueStart) +
+							existingPair.value +
+							modifiedQuery.slice(existingPair.position.valueEnd + 1);
+						return;
+					}
+				}
+
 				modifiedQuery =
 					modifiedQuery.slice(0, existingPair.position.valueStart) +
 					formattedValue +
