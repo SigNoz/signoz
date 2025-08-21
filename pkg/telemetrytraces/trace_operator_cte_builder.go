@@ -919,35 +919,14 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(selectFromCTE string) (*qbtype
 
 	traceSubquery := fmt.Sprintf("SELECT DISTINCT trace_id FROM %s", selectFromCTE)
 
-	// For trace queries, we need to go back to base_spans to get root span info
-	// First, build the select list for trace-level data
 	sb.Select(
 		"any(timestamp) as timestamp",
-		"trace_id as `trace_id`",
+		"any(`service.name`) as `service.name`",
+		"any(name) as `name`",
 		"count() as span_count",
+		"any(duration_nano) as `duration_nano`",
+		"trace_id as `trace_id`",
 	)
-
-	// Check if service.name is in selectFields and handle appropriately
-	hasServiceName := false
-	for _, field := range b.operator.SelectFields {
-		if field.Name == "service.name" {
-			hasServiceName = true
-			break
-		}
-	}
-
-	if hasServiceName {
-		// Use the materialized column if available
-		if serviceName, exists := keys["service.name"]; exists && len(serviceName) > 0 && serviceName[0].Materialized {
-			sb.SelectMore("any(`resource_string_service$$name`) as `service.name`")
-		} else {
-			sb.SelectMore("any(resources_string['service.name']) as `service.name`")
-		}
-	}
-
-	// Add name and duration_nano
-	sb.SelectMore("any(name) as `name`")
-	sb.SelectMore("any(duration_nano) as `duration_nano`")
 
 	sb.From("base_spans")
 	sb.Where(
