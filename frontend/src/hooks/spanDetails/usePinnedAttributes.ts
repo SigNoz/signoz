@@ -57,24 +57,14 @@ export function usePinnedAttributes(
 			);
 
 			if (preference?.value) {
-				// Use backend data
+				// use backend data
 				setPinnedKeys(preference.value as string[]);
 			} else if (localStoragePinnedKeys.length > 0) {
-				// Migrate from localStorage to backend
+				// use local storage data
 				setPinnedKeys(localStoragePinnedKeys);
-				// Update context immediately
-				updateUserPreferenceInContext({
-					name: USER_PREFERENCES.SPAN_DETAILS_PINNED_ATTRIBUTES,
-					value: localStoragePinnedKeys,
-				} as UserPreference);
 			}
 		}
-	}, [
-		userPreferences,
-		localStoragePinnedKeys,
-		updateUserPreferenceInContext,
-		updateUserPreferenceMutation,
-	]);
+	}, [userPreferences, localStoragePinnedKeys]);
 
 	// Create pinned attributes state from stored keys, filtering by available attributes
 	const pinnedAttributes = useMemo(
