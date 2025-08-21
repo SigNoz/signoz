@@ -1,21 +1,23 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable sonarjs/no-duplicate-string */
 
-import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
-import cx from 'classnames';
 import './TraceOperator.styles.scss';
+
+import { Button, Select, Tooltip, Typography } from 'antd';
+import cx from 'classnames';
+import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
+import { Trash2 } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import {
 	IBuilderQuery,
 	IBuilderTraceOperator,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
+
 import QueryAddOns from '../QueryAddOns/QueryAddOns';
 import QueryAggregation from '../QueryAggregation/QueryAggregation';
-import { Button, Select, Tooltip, Typography } from 'antd';
-import { Trash2 } from 'lucide-react';
-import { DataSource } from 'types/common/queryBuilder';
-import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 
 export default function TraceOperator({
 	traceOperator,
@@ -64,27 +66,29 @@ export default function TraceOperator({
 		[handleChangeQueryData],
 	);
 
-	const defaultSpanSource = useMemo(() => {
-		return (
+	const defaultSpanSource = useMemo(
+		() =>
 			traceOperator.returnSpansFrom ||
 			currentQuery.builder.queryData[0].queryName ||
-			''
-		);
-	}, [currentQuery.builder.queryData, traceOperator?.returnSpansFrom]);
+			'',
+		[currentQuery.builder.queryData, traceOperator?.returnSpansFrom],
+	);
 
-	const spanSourceOptions = useMemo(() => {
-		return currentQuery.builder.queryData.map((query) => ({
-			value: query.queryName,
-			label: (
-				<div className="qb-trace-operator-span-source-label">
-					<span className="qb-trace-operator-span-source-label-query">Query</span>
-					<p className="qb-trace-operator-span-source-label-query-name">
-						{query.queryName}
-					</p>
-				</div>
-			),
-		}));
-	}, [currentQuery.builder.queryData]);
+	const spanSourceOptions = useMemo(
+		() =>
+			currentQuery.builder.queryData.map((query) => ({
+				value: query.queryName,
+				label: (
+					<div className="qb-trace-operator-span-source-label">
+						<span className="qb-trace-operator-span-source-label-query">Query</span>
+						<p className="qb-trace-operator-span-source-label-query-name">
+							{query.queryName}
+						</p>
+					</div>
+				),
+			})),
+		[currentQuery.builder.queryData],
+	);
 
 	return (
 		<div className={cx('qb-trace-operator', !isListViewPanel && 'non-list-view')}>
@@ -122,7 +126,7 @@ export default function TraceOperator({
 								index={0}
 								query={traceOperator}
 								version="v3"
-								isForTraceOperator={true}
+								isForTraceOperator
 								isListViewPanel={false}
 								showReduceTo={false}
 								panelType={panelType}

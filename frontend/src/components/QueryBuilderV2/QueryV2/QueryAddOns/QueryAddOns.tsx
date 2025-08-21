@@ -164,7 +164,7 @@ function QueryAddOns({
 		index,
 		query,
 		entityVersion: '',
-		isForTraceOperator: isForTraceOperator,
+		isForTraceOperator,
 	});
 
 	const { handleSetQueryData } = useQueryBuilder();

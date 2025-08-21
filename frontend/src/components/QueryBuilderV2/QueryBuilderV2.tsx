@@ -5,13 +5,13 @@ import { Formula } from 'container/QueryBuilder/components/Formula';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { memo, useEffect, useMemo, useRef } from 'react';
+import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { QueryBuilderV2Provider } from './QueryBuilderV2Context';
 import QueryFooter from './QueryV2/QueryFooter/QueryFooter';
 import { QueryV2 } from './QueryV2/QueryV2';
 import TraceOperator from './QueryV2/TraceOperator/TraceOperator';
-import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
 
 export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	config,
@@ -58,18 +58,13 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		newPanelType,
 	]);
 
-	const isMultiQueryAllowed = useMemo(() => {
-		return (
+	const isMultiQueryAllowed = useMemo(
+		() =>
 			!showOnlyWhereClause ||
 			!isListViewPanel ||
-			(currentDataSource === DataSource.TRACES && showTraceOperator)
-		);
-	}, [
-		showOnlyWhereClause,
-		currentDataSource,
-		showTraceOperator,
-		isListViewPanel,
-	]);
+			(currentDataSource === DataSource.TRACES && showTraceOperator),
+		[showOnlyWhereClause, currentDataSource, showTraceOperator, isListViewPanel],
+	);
 
 	const listViewLogFilterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
 		const config: QueryBuilderProps['filterConfigs'] = {
@@ -125,25 +120,20 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		return undefined;
 	}, [currentQuery.builder.queryTraceOperator]);
 
-	const shouldShowTraceOperator = useMemo(() => {
-		return (
+	const shouldShowTraceOperator = useMemo(
+		() =>
 			showTraceOperator &&
 			currentDataSource === DataSource.TRACES &&
-			Boolean(traceOperator)
-		);
-	}, [currentDataSource, showTraceOperator, traceOperator]);
+			Boolean(traceOperator),
+		[currentDataSource, showTraceOperator, traceOperator],
+	);
 
-	const shouldShowFooter = useMemo(() => {
-		return (
+	const shouldShowFooter = useMemo(
+		() =>
 			(!showOnlyWhereClause && !isListViewPanel) ||
-			(currentDataSource === DataSource.TRACES && showTraceOperator)
-		);
-	}, [
-		isListViewPanel,
-		showTraceOperator,
-		showOnlyWhereClause,
-		currentDataSource,
-	]);
+			(currentDataSource === DataSource.TRACES && showTraceOperator),
+		[isListViewPanel, showTraceOperator, showOnlyWhereClause, currentDataSource],
+	);
 
 	const showFormula = useMemo(() => {
 		if (currentDataSource === DataSource.TRACES) {
@@ -223,7 +213,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							addNewBuilderQuery={addNewBuilderQuery}
 							addNewFormula={addNewFormula}
 							addTraceOperator={addTraceOperator}
-							showAddTraceOperator={showTraceOperator && !Boolean(traceOperator)}
+							showAddTraceOperator={showTraceOperator && !traceOperator}
 						/>
 					)}
 

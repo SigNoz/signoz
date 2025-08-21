@@ -648,7 +648,7 @@ export function QueryBuilderProvider({
 		});
 	}, [createNewBuilderFormula]);
 
-	const addTraceOperator = useCallback((expression: string = '') => {
+	const addTraceOperator = useCallback((expression = '') => {
 		const trimmed = (expression || '').trim();
 
 		setCurrentQuery((prevState) => {
@@ -693,25 +693,21 @@ export function QueryBuilderProvider({
 	}, []);
 
 	const removeTraceOperator = useCallback(() => {
-		setCurrentQuery((prevState) => {
-			return {
-				...prevState,
-				builder: {
-					...prevState.builder,
-					queryTraceOperator: [],
-				},
-			};
-		});
+		setCurrentQuery((prevState) => ({
+			...prevState,
+			builder: {
+				...prevState.builder,
+				queryTraceOperator: [],
+			},
+		}));
 		// eslint-disable-next-line sonarjs/no-identical-functions
-		setSupersetQuery((prevState) => {
-			return {
-				...prevState,
-				builder: {
-					...prevState.builder,
-					queryTraceOperator: [],
-				},
-			};
-		});
+		setSupersetQuery((prevState) => ({
+			...prevState,
+			builder: {
+				...prevState.builder,
+				queryTraceOperator: [],
+			},
+		}));
 	}, []);
 
 	const updateQueryBuilderData: <T>(

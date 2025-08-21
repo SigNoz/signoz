@@ -53,7 +53,6 @@ function TracesExplorer(): JSX.Element {
 		handleRunQuery,
 		stagedQuery,
 		handleSetConfig,
-		updateQueriesData,
 	} = useQueryBuilder();
 
 	const { options } = useOptionsMenu({
@@ -112,22 +111,14 @@ function TracesExplorer(): JSX.Element {
 				handleSetConfig(PANEL_TYPES.LIST, DataSource.TRACES);
 			}
 
-			//TODO: remove formula when switching to List view
+			// TODO: remove formula when switching to List view
 
 			setSelectedView(view);
 			handleExplorerTabChange(
 				view === ExplorerViews.TIMESERIES ? PANEL_TYPES.TIME_SERIES : view,
 			);
 		},
-		[
-			handleSetConfig,
-			handleExplorerTabChange,
-			selectedView,
-			currentQuery,
-			updateAllQueriesOperators,
-			updateQueriesData,
-			setSelectedView,
-		],
+		[handleSetConfig, handleExplorerTabChange, selectedView, setSelectedView],
 	);
 
 	const listQuery = useMemo(() => {
