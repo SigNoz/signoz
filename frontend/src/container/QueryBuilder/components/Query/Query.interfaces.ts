@@ -11,5 +11,7 @@ export type QueryProps = {
 	version: string;
 	showSpanScopeSelector?: boolean;
 	showOnlyWhereClause?: boolean;
+	showTraceOperator?: boolean;
 	signalSource?: string;
+	isMultiQueryAllowed?: boolean;
 } & Pick<QueryBuilderProps, 'filterConfigs' | 'queryComponents'>;

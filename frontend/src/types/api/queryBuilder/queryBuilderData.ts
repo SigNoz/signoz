@@ -29,6 +29,10 @@ export interface IBuilderFormula {
 	orderBy?: OrderByPayload[];
 }
 
+export type IBuilderTraceOperator = IBuilderQuery & {
+	returnSpansFrom?: string;
+};
+
 export interface TagFilterItem {
 	id: string;
 	key?: BaseAutocompleteData;
@@ -124,6 +128,7 @@ export type BuilderQueryDataResourse = Record<
 export type MapData =
 	| IBuilderQuery
 	| IBuilderFormula
+	| IBuilderTraceOperator
 	| IClickHouseQuery
 	| IPromQLQuery;
 
