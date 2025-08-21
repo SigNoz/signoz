@@ -10,10 +10,9 @@
 		&::before {
 			content: '';
 			position: absolute;
-			top: 50%;
-			transform: translateY(-50%);
+			top: 24px;
 			left: 12px;
-			height: calc(100% - 48px);
+			height: 88px;
 			width: 1px;
 			background: repeating-linear-gradient(
 				to bottom,
@@ -56,7 +55,7 @@
 		&::before {
 			content: '';
 			position: absolute;
-			top: 50%;
+			top: 16px;
 			transform: translateY(-50%);
 			left: -26px;
 			height: 1px;
@@ -73,7 +72,7 @@
 		&::after {
 			content: '';
 			position: absolute;
-			top: 50%;
+			top: 16px;
 			left: -10px;
 			transform: translateY(-50%);
 			height: 4px;
