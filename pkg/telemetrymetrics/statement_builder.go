@@ -114,6 +114,7 @@ func GetKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation])
 		keySelectors[idx].MetricContext = &telemetrytypes.MetricContext{
 			MetricName: query.Aggregations[0].MetricName,
 		}
+		keySelectors[idx].Source = query.Source
 	}
 	return keySelectors
 }
