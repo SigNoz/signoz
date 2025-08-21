@@ -85,6 +85,11 @@ type BaseRule struct {
 	TemporalityMap map[string]map[v3.Temporality]bool
 
 	sqlstore sqlstore.SQLStore
+
+	evaluation ruletypes.Evaluation
+
+	schedule         string
+	scheduleStartsAt time.Time
 }
 
 type RuleOption func(*BaseRule)
@@ -139,6 +144,8 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 		Active:            map[uint64]*ruletypes.Alert{},
 		reader:            reader,
 		TemporalityMap:    make(map[string]map[v3.Temporality]bool),
+		evaluation:        p.Evaluation,
+		schedule:          p.Schedule,
 	}
 
 	if baseRule.evalWindow == 0 {
@@ -210,6 +217,18 @@ func (r *BaseRule) TargetVal() float64 {
 	return r.targetVal()
 }
 
+func (r *BaseRule) Thresholds() []ruletypes.RuleThreshold {
+	return r.ruleCondition.Thresholds
+}
+
+func (r *BaseRule) IsScheduled() bool {
+	return r.schedule != ""
+}
+
+func (r *BaseRule) GetSchedule() (string, time.Time) {
+	return r.schedule, r.scheduleStartsAt
+}
+
 func (r *ThresholdRule) hostFromSource() string {
 	parsedUrl, err := url.Parse(r.source)
 	if err != nil {
@@ -241,8 +260,10 @@ func (r *BaseRule) Unit() string {
 }
 
 func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time) {
-	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli()
-	end := ts.UnixMilli()
+
+	st, en := r.evaluation.EvaluationTime(ts)
+	start := st.UnixMilli()
+	end := en.UnixMilli()
 
 	if r.evalDelay > 0 {
 		start = start - int64(r.evalDelay.Milliseconds())
