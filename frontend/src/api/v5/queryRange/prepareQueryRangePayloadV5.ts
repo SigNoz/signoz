@@ -24,6 +24,7 @@ import {
 	TelemetryFieldKey,
 	TraceAggregation,
 	VariableItem,
+	VariableType,
 } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -406,6 +407,7 @@ export const prepareQueryRangePayloadV5 = ({
 	formatForWeb,
 	originalGraphType,
 	fillGaps,
+	dynamicVariables,
 }: GetQueryResultsProps): PrepareQueryRangePayloadV5Result => {
 	let legendMap: Record<string, string> = {};
 	const requestType = mapPanelTypeToRequestType(graphType);
@@ -497,7 +499,12 @@ export const prepareQueryRangePayloadV5 = ({
 			fillGaps: fillGaps || false,
 		},
 		variables: Object.entries(variables).reduce((acc, [key, value]) => {
-			acc[key] = { value };
+			acc[key] = {
+				value,
+				type: dynamicVariables
+					?.find((v) => v.name === key)
+					?.type.toLowerCase() as VariableType,
+			};
 			return acc;
 		}, {} as Record<string, VariableItem>),
 	};

@@ -2,6 +2,7 @@ import { getSubstituteVars } from 'api/dashboard/substitute_vars';
 import { prepareQueryRangePayloadV5 } from 'api/v5/v5';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
+import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useCallback } from 'react';
@@ -34,6 +35,8 @@ function useUpdatedQuery(): UseUpdatedQueryResult {
 
 	const queryRangeMutation = useMutation(getSubstituteVars);
 
+	const { dynamicVariables } = useGetDynamicVariables();
+
 	const getUpdatedQuery = useCallback(
 		async ({
 			widgetConfig,
@@ -47,6 +50,7 @@ function useUpdatedQuery(): UseUpdatedQueryResult {
 				globalSelectedInterval,
 				variables: getDashboardVariables(selectedDashboard?.data?.variables),
 				originalGraphType: widgetConfig.panelTypes,
+				dynamicVariables,
 			});
 
 			// Execute query and process results
@@ -55,7 +59,7 @@ function useUpdatedQuery(): UseUpdatedQueryResult {
 			// Map query data from API response
 			return mapQueryDataFromApi(queryResult.data.compositeQuery);
 		},
-		[globalSelectedInterval, queryRangeMutation],
+		[dynamicVariables, globalSelectedInterval, queryRangeMutation],
 	);
 
 	return {
