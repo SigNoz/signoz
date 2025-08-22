@@ -48,7 +48,7 @@ export interface RuleCondition {
 	seasonality?: string;
 }
 export interface Labels {
-	[key: string]: string;
+	[key: string]: string | undefined;
 }
 
 export interface AlertRuleStats {
