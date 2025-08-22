@@ -175,12 +175,13 @@ function BreakDown(): JSX.Element {
 					<Alert
 						type="info"
 						showIcon
-						message="SigNoz bills in UTC timezone. To match billing data, select complete day ranges in UTC (e.g., 00:00 to 23:59 UTC)."
+						message="Billing is calculated in UTC. To match your usage data with billing, select full-day ranges in UTC time (00:00 – 23:59 UTC). 
+						For example, if you’re in IST, the billing day of Jan 1, 00:00 – Jan 1, 23:59 UTC will appear as Jan 1, 5:30 AM – Jan 2, 5:29 AM IST."
 					/>
 					<Alert
-						type="info"
+						type="warning"
 						showIcon
-						message="Please note that the meter module data will be accurate post 22nd August 2025 00:00 UTC"
+						message="Meter module data is accurate only from 22nd August 2025, 00:00 UTC onwards. Data before this time was collected during the beta phase and may be inaccurate."
 					/>
 				</section>
 				<section className="total">
