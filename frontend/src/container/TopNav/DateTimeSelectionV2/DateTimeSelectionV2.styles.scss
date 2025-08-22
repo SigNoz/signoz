@@ -283,9 +283,45 @@
 			gap: 6px;
 			flex-flow: wrap;
 		}
+
+		.time-selector-container {
+			display: flex;
+			flex-direction: column;
+			gap: 32px;
+		}
+
+		.recently-used-container {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+
+			.recently-used-range {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+
+				.recently-used-range-item {
+					color: var(--bg-vanilla-400);
+					background-color: var(--bg-ink-200);
+					font-size: 12px;
+					line-height: 16px;
+					letter-spacing: 0.04em;
+					text-align: left;
+					border-radius: 2px;
+					padding: 8px;
+					cursor: pointer;
+
+					&:hover {
+						background-color: var(--bg-ink-100);
+						color: var(--bg-vanilla-100);
+					}
+				}
+			}
+		}
+
 		.time-heading {
 			text-align: left;
-			color: var(--bg-slate-200);
+			color: var(--bg-vanilla-300);
 			font-size: 11px;
 			font-style: normal;
 			font-weight: 500;

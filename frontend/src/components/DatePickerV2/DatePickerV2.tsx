@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { addCustomTimeRange } from 'utils/customTimeRangeUtils';
 
 function DatePickerV2({
 	onSetCustomDTPickerVisible,
@@ -47,6 +48,9 @@ function DatePickerV2({
 	const handleNext = (): void => {
 		if (selectedDateTimeFor === 'to') {
 			onCustomDateHandler([selectedFromDateTime, selectedToDateTime]);
+
+			addCustomTimeRange([selectedFromDateTime, selectedToDateTime]);
+
 			setIsOpen(false);
 			onSetCustomDTPickerVisible(false);
 			setSelectedDateTimeFor('from');
@@ -254,20 +258,7 @@ function DatePickerV2({
 					disabled={(current): boolean => {
 						if (selectedDateTimeFor === 'to') {
 							// disable dates after today and before selectedFromDateTime
-
 							const currentDay = dayjs(current);
-
-							console.log('dayjs()', dayjs());
-							console.log(
-								'dayjs(selectedFromDateTime)',
-								dayjs(selectedFromDateTime).endOf('day'),
-							);
-
-							console.log(
-								'isBefore',
-								currentDay.isBefore(dayjs(selectedFromDateTime).subtract(1, 'day')),
-							);
-
 							return (
 								currentDay.isAfter(dayjs()) ||
 								currentDay.isBefore(dayjs(selectedFromDateTime).subtract(1, 'day')) ||
@@ -277,11 +268,6 @@ function DatePickerV2({
 
 						if (selectedDateTimeFor === 'from') {
 							// disable dates after selectedToDateTime
-
-							console.log('current', current);
-							console.log('selectedToDateTime', selectedToDateTime);
-							console.log('dayjs(current)', dayjs(current));
-							console.log('dayjs(selectedToDateTime)', dayjs(selectedToDateTime));
 
 							return (
 								dayjs(current).isAfter(dayjs(selectedToDateTime)) ||

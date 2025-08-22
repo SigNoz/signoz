@@ -5,6 +5,7 @@ import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import DatePickerV2 from 'components/DatePickerV2/DatePickerV2';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import {
@@ -12,10 +13,12 @@ import {
 	Option,
 	RelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/config';
+import dayjs from 'dayjs';
 import { Clock, PenLine } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import { Dispatch, SetStateAction, useMemo } from 'react';
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
 
 import TimezonePicker from './TimezonePicker';
 
@@ -35,6 +38,14 @@ interface CustomTimePickerPopoverContentProps {
 	setActiveView: Dispatch<SetStateAction<'datetime' | 'timezone'>>;
 	isOpenedFromFooter: boolean;
 	setIsOpenedFromFooter: Dispatch<SetStateAction<boolean>>;
+}
+
+interface RecentlyUsedDateTimeRange {
+	label: string;
+	value: number;
+	timestamp: number;
+	from: string;
+	to: string;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -57,8 +68,35 @@ function CustomTimePickerPopoverContent({
 	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
 		pathname,
 	]);
+
 	const { timezone } = useTimezone();
 	const activeTimezoneOffset = timezone.offset;
+
+	const [recentlyUsedTimeRanges, setRecentlyUsedTimeRanges] = useState<
+		RecentlyUsedDateTimeRange[]
+	>([]);
+
+	useEffect(() => {
+		if (!customDateTimeVisible) {
+			const customTimeRanges = getCustomTimeRanges();
+
+			const formattedCustomTimeRanges: RecentlyUsedDateTimeRange[] = customTimeRanges.map(
+				(range) => ({
+					label: `${dayjs(range.from)
+						.tz(timezone.value)
+						.format(DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS)} - ${dayjs(range.to)
+						.tz(timezone.value)
+						.format(DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS)}`,
+					from: range.from,
+					to: range.to,
+					value: range.timestamp,
+					timestamp: range.timestamp,
+				}),
+			);
+
+			setRecentlyUsedTimeRanges(formattedCustomTimeRanges);
+		}
+	}, [customDateTimeVisible, timezone.value]);
 
 	function getTimeChips(options: Option[]): JSX.Element {
 		return (
@@ -153,6 +191,28 @@ function CustomTimePickerPopoverContent({
 
 							<div className="recently-used-container">
 								<div className="time-heading">RECENTLY USED</div>
+								<div className="recently-used-range">
+									{recentlyUsedTimeRanges.map((range: RecentlyUsedDateTimeRange) => (
+										<div
+											className="recently-used-range-item"
+											role="button"
+											tabIndex={0}
+											onKeyDown={(e): void => {
+												if (e.key === 'Enter' || e.key === ' ') {
+													onCustomDateHandler([dayjs(range.from), dayjs(range.to)]);
+													setIsOpen(false);
+												}
+											}}
+											key={range.value}
+											onClick={(): void => {
+												onCustomDateHandler([dayjs(range.from), dayjs(range.to)]);
+												setIsOpen(false);
+											}}
+										>
+											{range.label}
+										</div>
+									))}
+								</div>
 							</div>
 						</div>
 					)}
