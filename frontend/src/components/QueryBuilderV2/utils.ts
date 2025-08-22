@@ -367,13 +367,23 @@ export const convertFiltersToExpressionWithExistingQuery = (
 		if (
 			queryPairsMap.has(`${filter.key?.key}-${filter.op}`.trim().toLowerCase())
 		) {
-			const formattedValue = formatValueForExpression(value, op);
-			// replace the value with the new value
-			modifiedQuery = modifiedQuery.replace(
-				`${filter.key?.key}-${filter.op}`,
-				`${filter.key?.key}-${filter.op} ${formattedValue}`,
+			const existingPair = queryPairsMap.get(
+				`${filter.key?.key}-${filter.op}`.trim().toLowerCase(),
 			);
-			queryPairsMap = getQueryPairsMap(modifiedQuery);
+			if (
+				existingPair &&
+				existingPair.position?.valueStart &&
+				existingPair.position?.valueEnd
+			) {
+				const formattedValue = formatValueForExpression(value, op);
+				// replace the value with the new value
+				modifiedQuery =
+					modifiedQuery.slice(0, existingPair.position.valueStart) +
+					formattedValue +
+					modifiedQuery.slice(existingPair.position.valueEnd + 1);
+				queryPairsMap = getQueryPairsMap(modifiedQuery);
+			}
+
 			visitedPairs.add(`${filter.key?.key}-${filter.op}`.trim().toLowerCase());
 		}
 
