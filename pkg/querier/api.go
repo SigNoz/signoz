@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"regexp"
 	"runtime/debug"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
@@ -12,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/variables"
@@ -166,49 +166,9 @@ func (a *API) logEvent(ctx context.Context, referrer string, event *qbtypes.QBEv
 		return
 	}
 
-	properties["referrer"] = referrer
-
-	logsExplorerMatched, _ := regexp.MatchString(`/logs/logs-explorer(?:\?.*)?$`, referrer)
-	traceExplorerMatched, _ := regexp.MatchString(`/traces-explorer(?:\?.*)?$`, referrer)
-	metricsExplorerMatched, _ := regexp.MatchString(`/metrics-explorer/explorer(?:\?.*)?$`, referrer)
-	dashboardMatched, _ := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
-	alertMatched, _ := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
-
-	switch {
-	case dashboardMatched:
-		properties["module_name"] = "dashboard"
-	case alertMatched:
-		properties["module_name"] = "rule"
-	case metricsExplorerMatched:
-		properties["module_name"] = "metrics-explorer"
-	case logsExplorerMatched:
-		properties["module_name"] = "logs-explorer"
-	case traceExplorerMatched:
-		properties["module_name"] = "traces-explorer"
-	default:
-		return
-	}
-
-	if dashboardMatched {
-		if dashboardIDRegex, err := regexp.Compile(`/dashboard/([a-f0-9\-]+)/`); err == nil {
-			if matches := dashboardIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
-				properties["dashboard_id"] = matches[1]
-			}
-		}
-
-		if widgetIDRegex, err := regexp.Compile(`widgetId=([a-f0-9\-]+)`); err == nil {
-			if matches := widgetIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
-				properties["widget_id"] = matches[1]
-			}
-		}
-	}
-
-	if alertMatched {
-		if alertIDRegex, err := regexp.Compile(`ruleId=(\d+)`); err == nil {
-			if matches := alertIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
-				properties["rule_id"] = matches[1]
-			}
-		}
+	comments := ctxtypes.CommentFromContext(ctx).Map()
+	for key, value := range comments {
+		properties[key] = value
 	}
 
 	if !event.HasData {

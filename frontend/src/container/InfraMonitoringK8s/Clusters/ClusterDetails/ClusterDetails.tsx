@@ -520,21 +520,12 @@ function ClusterDetails({
 								>
 									Cluster Name
 								</Typography.Text>
-								<Typography.Text
-									type="secondary"
-									className="entity-details-metadata-label"
-								>
-									Cluster Name
-								</Typography.Text>
 							</div>
 							<div className="values-row">
 								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={cluster.meta.k8s_cluster_name}>
 										{cluster.meta.k8s_cluster_name}
 									</Tooltip>
-								</Typography.Text>
-								<Typography.Text className="entity-details-metadata-value">
-									<Tooltip title="Cluster name">{cluster.meta.k8s_cluster_name}</Tooltip>
 								</Typography.Text>
 							</div>
 						</div>
