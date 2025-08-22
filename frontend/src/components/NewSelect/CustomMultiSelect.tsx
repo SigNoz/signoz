@@ -273,7 +273,8 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					: filteredOptions,
 			);
 		}
-	}, [filteredOptions, searchText, options, selectedValues]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [filteredOptions, searchText, options]);
 
 	// ===== Text Selection Utilities =====
 
