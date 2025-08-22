@@ -1,6 +1,6 @@
 import './BreakDown.styles.scss';
 
-import { Typography } from 'antd';
+import { Alert, Typography } from 'antd';
 // import useFilterConfig from 'components/QuickFilters/hooks/useFilterConfig';
 // import { SignalType } from 'components/QuickFilters/types';
 import { QueryParams } from 'constants/query';
@@ -171,6 +171,18 @@ function BreakDown(): JSX.Element {
 				<DateTimeSelectionV2 showAutoRefresh={false} />
 			</section>
 			<section className="meter-explorer-graphs">
+				<section className="info">
+					<Alert
+						type="info"
+						showIcon
+						message="SigNoz bills in UTC timezone. To match billing data, select complete day ranges in UTC (e.g., 00:00 to 23:59 UTC)."
+					/>
+					<Alert
+						type="info"
+						showIcon
+						message="Please note that the meter module data will be accurate post 22st August 2025 00:00 UTC"
+					/>
+				</section>
 				<section className="total">
 					<Section
 						id={sections[0].id}
