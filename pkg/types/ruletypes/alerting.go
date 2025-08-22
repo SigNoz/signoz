@@ -142,6 +142,8 @@ func (rc *RuleCondition) GetSelectedQueryName() string {
 						queryNames[spec.Name] = struct{}{}
 					case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
 						queryNames[spec.Name] = struct{}{}
+					case qbtypes.QueryBuilderFormula:
+						queryNames[spec.Name] = struct{}{}
 					}
 				}
 			} else if rc.QueryType() == v3.QueryTypeClickHouseSQL {
