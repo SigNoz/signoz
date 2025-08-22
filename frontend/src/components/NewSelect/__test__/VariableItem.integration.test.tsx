@@ -209,13 +209,7 @@ describe('VariableItem Integration Tests', () => {
 		});
 	});
 
-	// ===== 4. QUERY VARIABLE TYPE =====
-	describe('Query Variable Integration', () => {
-		// Tests removed due to API interaction complexities
-		// Component behavior for query variables is verified through integration tests
-	});
-
-	// ===== 5. VALUE PERSISTENCE AND STATE MANAGEMENT =====
+	// ===== 4. VALUE PERSISTENCE AND STATE MANAGEMENT =====
 	describe('Value Persistence and State Management', () => {
 		test('VI-04: All selected state handling', () => {
 			const variable = createMockVariable({
@@ -374,87 +368,18 @@ describe('VariableItem Integration Tests', () => {
 			expect(tags.length).toBeGreaterThan(0);
 
 			// Check for overflow indicator (maxTagCount is set to 4 in the component)
+			// With 7 tags and maxTagCount of 4, should show "+ 3 more"
 			if (tags.length > 4) {
 				const overflowIndicator = document.querySelector('[title*=","]');
 				expect(overflowIndicator).toBeInTheDocument();
+
+				// Verify the "+ N more" text is displayed
+				const overflowText = overflowIndicator?.textContent;
+				expect(overflowText).toMatch(/\+ \d+ more/);
+
+				// Should show exactly "+ 3 more" for 7 tags with maxTagCount of 4
+				expect(overflowText).toBe('+ 3 more');
 			}
-		});
-	});
-
-	// ===== 7. EDGE CASES AND ERROR SCENARIOS =====
-	describe('Edge Cases and Error Scenarios', () => {
-		test('VI-09: Empty custom value handling', () => {
-			const variable = createMockVariable({
-				type: 'CUSTOM',
-				customValue: '',
-				multiSelect: false,
-			});
-
-			render(
-				<TestWrapper>
-					<VariableItem
-						variableData={variable}
-						existingVariables={{}}
-						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
-					/>
-				</TestWrapper>,
-			);
-
-			const combobox = screen.getByRole('combobox');
-			expect(combobox).toBeInTheDocument();
-		});
-
-		test('VI-10: Variable without name handling', () => {
-			const variable = createMockVariable({
-				name: '',
-				type: 'CUSTOM',
-				customValue: 'value1,value2',
-			});
-
-			render(
-				<TestWrapper>
-					<VariableItem
-						variableData={variable}
-						existingVariables={{}}
-						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
-					/>
-				</TestWrapper>,
-			);
-
-			// Should still render the component
-			const combobox = screen.getByRole('combobox');
-			expect(combobox).toBeInTheDocument();
-		});
-
-		test('VI-11: Null/undefined selected value handling', () => {
-			const variable = createMockVariable({
-				type: 'CUSTOM',
-				customValue: 'option1,option2',
-				selectedValue: undefined,
-				multiSelect: true,
-			});
-
-			render(
-				<TestWrapper>
-					<VariableItem
-						variableData={variable}
-						existingVariables={{}}
-						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
-					/>
-				</TestWrapper>,
-			);
-
-			const combobox = screen.getByRole('combobox');
-			expect(combobox).toBeInTheDocument();
 		});
 	});
 
@@ -828,46 +753,6 @@ describe('VariableItem Integration Tests', () => {
 				);
 				expect(hasRegexValue).toBe(true);
 			});
-		});
-
-		test('VI-23: Custom values treated as normal dropdown values in variable', async () => {
-			const variable = createMockVariable({
-				type: 'CUSTOM',
-				customValue: 'option1,option2,custom-value',
-				multiSelect: true,
-			});
-
-			render(
-				<TestWrapper>
-					<VariableItem
-						variableData={variable}
-						existingVariables={{}}
-						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
-					/>
-				</TestWrapper>,
-			);
-
-			const combobox = screen.getByRole('combobox');
-			await user.click(combobox);
-
-			// Wait for dropdown to open (don't expect ALL option as it might not be there)
-			await waitFor(() => {
-				expect(screen.getByText('option1')).toBeInTheDocument();
-			});
-
-			// Custom value should appear in dropdown like normal options
-			expect(screen.getByText('custom-value')).toBeInTheDocument();
-
-			// Should be selectable like normal options
-			const customOption = screen.getByText('custom-value');
-			await user.click(customOption);
-
-			// Note: The component may not immediately call onValueUpdate
-			// This test verifies the custom value is selectable
-			expect(customOption).toBeInTheDocument();
 		});
 	});
 

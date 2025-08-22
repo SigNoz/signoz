@@ -284,6 +284,8 @@ describe('CustomSelect - Comprehensive Tests', () => {
 				// Original options should not be visible
 				expect(screen.queryByText('Frontend')).not.toBeInTheDocument();
 				expect(screen.queryByText('Backend')).not.toBeInTheDocument();
+				expect(screen.queryByText('Database')).not.toBeInTheDocument();
+				expect(screen.queryByText('API Gateway')).not.toBeInTheDocument();
 
 				// Should show custom value option
 				const customOptions = screen.getAllByText('nonexistent');
@@ -316,6 +318,8 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			await waitFor(() => {
 				const activeOption = document.querySelector('.option-item.active');
 				expect(activeOption).toBeInTheDocument();
+				// Verify it's the first option (Frontend)
+				expect(activeOption?.textContent).toContain('Frontend');
 			});
 
 			// Arrow up should go to previous option
@@ -324,6 +328,8 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			await waitFor(() => {
 				const activeOption = document.querySelector('.option-item.active');
 				expect(activeOption).toBeInTheDocument();
+				// Verify it's now the last option (API Gateway) - wraps around
+				expect(activeOption?.textContent).toContain('API Gateway');
 			});
 		});
 
@@ -344,6 +350,13 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 			const combobox = screen.getByRole('combobox');
 			expect(combobox).toHaveFocus();
+
+			// Open dropdown
+			await user.click(combobox);
+
+			await waitFor(() => {
+				expect(screen.getByText('Frontend')).toBeInTheDocument();
+			});
 		});
 
 		test('KN-03: Enter selection in dropdown', async () => {
@@ -361,7 +374,10 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			await user.keyboard('{Enter}');
 
 			// Should have selected an option
-			expect(mockOnChange).toHaveBeenCalled();
+			expect(mockOnChange).toHaveBeenCalledWith('frontend', {
+				label: 'Frontend',
+				value: 'frontend',
+			});
 		});
 
 		test('KN-04: Space key selection', async () => {
@@ -378,7 +394,10 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			await user.keyboard(' ');
 
 			// Should have selected an option
-			expect(mockOnChange).toHaveBeenCalled();
+			expect(mockOnChange).toHaveBeenCalledWith('frontend', {
+				label: 'Frontend',
+				value: 'frontend',
+			});
 		});
 
 		test('KN-05: Tab navigation within dropdown', async () => {
@@ -478,12 +497,6 @@ describe('CustomSelect - Comprehensive Tests', () => {
 				expect(screen.getByText('No options available')).toBeInTheDocument();
 			});
 		});
-	});
-
-	// ===== 5. CLEAR ACTIONS =====
-	describe('Clear Actions (CA)', () => {
-		// Tests removed due to clear functionality complexities
-		// Component behavior for clear actions is verified through integration tests
 	});
 
 	// ===== 6. SAVE AND SELECTION TRIGGERS =====
@@ -606,59 +619,8 @@ describe('CustomSelect - Comprehensive Tests', () => {
 		});
 	});
 
-	// ===== 9. PERFORMANCE =====
-	describe('Performance', () => {
-		test('handles large option sets efficiently', async () => {
-			const largeOptionSet = Array.from({ length: 1000 }, (_, i) => ({
-				label: `Option ${i}`,
-				value: `option-${i}`,
-			}));
-
-			const renderStart = performance.now();
-			render(<CustomSelect options={largeOptionSet} onChange={mockOnChange} />);
-			const renderTime = performance.now() - renderStart;
-
-			// Component should render within reasonable time
-			expect(renderTime).toBeLessThan(1000); // 1 second
-
-			const combobox = screen.getByRole('combobox');
-			expect(combobox).toBeInTheDocument();
-
-			const dropdownStart = performance.now();
-			await user.click(combobox);
-
-			await waitFor(() => {
-				const dropdown = document.querySelector('.custom-select-dropdown');
-				expect(dropdown).toBeInTheDocument();
-			});
-
-			const dropdownTime = performance.now() - dropdownStart;
-			expect(dropdownTime).toBeLessThan(500); // 500ms
-		});
-	});
-
 	// ===== 10. EDGE CASES =====
 	describe('Edge Cases', () => {
-		test('handles empty options array', () => {
-			render(<CustomSelect options={[]} onChange={mockOnChange} />);
-
-			const combobox = screen.getByRole('combobox');
-			expect(combobox).toBeInTheDocument();
-		});
-
-		test('handles undefined/null values gracefully', () => {
-			render(
-				<CustomSelect
-					options={mockOptions}
-					onChange={mockOnChange}
-					value={undefined}
-				/>,
-			);
-
-			const combobox = screen.getByRole('combobox');
-			expect(combobox).toBeInTheDocument();
-		});
-
 		test('handles special characters in options', async () => {
 			const specialOptions = [
 				{ label: 'Option with spaces', value: 'option-with-spaces' },

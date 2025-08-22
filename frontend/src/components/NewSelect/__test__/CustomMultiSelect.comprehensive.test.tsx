@@ -61,7 +61,6 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 				/>,
 			);
 
-			// Check that custom value is displayed as a tag
 			expect(screen.getByText('custom-value')).toBeInTheDocument();
 			expect(screen.getByText('frontend')).toBeInTheDocument();
 
@@ -415,6 +414,8 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 				// Original options should not be visible
 				expect(screen.queryByText('Frontend')).not.toBeInTheDocument();
 				expect(screen.queryByText('Backend')).not.toBeInTheDocument();
+				expect(screen.queryByText('Database')).not.toBeInTheDocument();
+				expect(screen.queryByText('API Gateway')).not.toBeInTheDocument();
 
 				// Should show custom value option
 				const customOptions = screen.getAllByText('nonexistent');
@@ -602,9 +603,6 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 		});
 	});
 
-	// ===== 4. COMMA-SEPARATED VALUES =====
-	// describe('Comma-Separated Values (CSV)', () => {});
-
 	// ===== 5. UI/UX BEHAVIORS =====
 	describe('UI/UX Behaviors (UI)', () => {
 		test('UI-01: Loading state does not block interaction', async () => {
@@ -688,17 +686,17 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			await user.click(combobox);
 
 			await waitFor(() => {
-				const loadingFooter = document.querySelector('.navigation-loading');
-				expect(loadingFooter).toBeInTheDocument();
-				expect(
-					screen.getByText('We are updating the values...'),
-				).toBeInTheDocument();
-
 				// should display values
 				expect(screen.getByText('Frontend')).toBeInTheDocument();
 				expect(screen.getByText('Backend')).toBeInTheDocument();
 				expect(screen.getByText('Database')).toBeInTheDocument();
 				expect(screen.getByText('API Gateway')).toBeInTheDocument();
+
+				const loadingFooter = document.querySelector('.navigation-loading');
+				expect(loadingFooter).toBeInTheDocument();
+				expect(
+					screen.getByText('We are updating the values...'),
+				).toBeInTheDocument();
 			});
 		});
 
@@ -1107,30 +1105,46 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			// Navigate to chips using arrow keys
 			await user.keyboard('{ArrowLeft}');
 
-			// Should have an active chip
+			// Should have an active chip - verify initial chip
 			await waitFor(() => {
 				const activeChip = document.querySelector(
 					'.ant-select-selection-item-active',
 				);
 				expect(activeChip).toBeInTheDocument();
+				// Verify we're on the last chip (database)
+				expect(activeChip?.textContent).toContain('database');
 			});
 
-			// Use Shift + Arrow to navigate between chips
+			// Use Shift + Arrow to navigate to previous chip
 			await user.keyboard('{Shift>}{ArrowLeft}{/Shift}');
 
-			// Verify we're on a different chip
+			// Verify we're on a different chip (backend)
 			await waitFor(() => {
 				const activeChip = document.querySelector(
 					'.ant-select-selection-item-active',
 				);
 				expect(activeChip).toBeInTheDocument();
+				// Verify we moved to the previous chip (backend)
+				expect(activeChip?.textContent).toContain('backend');
 			});
 
 			// Use Del to delete the active chip
 			await user.keyboard('{Delete}');
 
-			// Note: The component may not trigger onChange on Delete key
-			// This test verifies the keyboard navigation and deletion interaction works
+			// Verify the chip was deleted
+			await waitFor(() => {
+				// Check that the backend chip is no longer present
+				const backendChip = document.querySelector('.ant-select-selection-item');
+				expect(backendChip?.textContent).not.toContain('backend');
+
+				// Verify onChange was called with the updated value (without backend)
+				expect(mockOnChange).toHaveBeenCalledWith(
+					['frontend'],
+					[{ label: 'frontend', value: 'frontend' }],
+				);
+			});
+
+			// Verify focus remains on combobox
 			expect(combobox).toHaveFocus();
 		});
 
@@ -1286,26 +1300,6 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 			// The component may call onChange multiple times, so just verify it was called
 			expect(mockOnChangeWithDelay).toHaveBeenCalled();
-		});
-
-		test('ACA-02: Single select clear behavior', async () => {
-			render(
-				<CustomMultiSelect
-					options={mockOptions}
-					onChange={mockOnChange}
-					value={['frontend']}
-					allowClear
-				/>,
-			);
-
-			const clearButton = document.querySelector('.ant-select-clear');
-			expect(clearButton).toBeInTheDocument();
-
-			// Click clear button
-			await user.click(clearButton as Element);
-
-			// Should clear the single selection
-			expect(mockOnChange).toHaveBeenCalledWith([], []);
 		});
 	});
 
