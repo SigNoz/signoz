@@ -188,8 +188,7 @@ func FormatValueForContains(value any) string {
 }
 
 func FormatFullTextSearch(input string) string {
-	_, err := regexp.Compile(input)
-	if err != nil {
+	if _, err := regexp.Compile(input); err != nil {
 		// Not a valid regex -> treat as literal substring
 		return regexp.QuoteMeta(input)
 	}

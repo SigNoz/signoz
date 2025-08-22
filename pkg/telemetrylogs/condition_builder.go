@@ -64,6 +64,10 @@ func (c *conditionBuilder) conditionFor(
 			return sb.ILike(tblFieldName, value), nil
 		case qbtypes.FilterOperatorNotLike:
 			return sb.NotILike(tblFieldName, value), nil
+		case qbtypes.FilterOperatorRegexp:
+			return fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, tblFieldName, sb.Var(value)), nil
+		case qbtypes.FilterOperatorNotRegexp:
+			return fmt.Sprintf(`NOT match(LOWER(%s), LOWER(%s))`, tblFieldName, sb.Var(value)), nil
 		}
 	}
 
@@ -99,12 +103,7 @@ func (c *conditionBuilder) conditionFor(
 		return sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
 
 	case qbtypes.FilterOperatorRegexp:
-		// check if the field is fullText, if yes then convert value to lower
-		valueStr := sb.Var(value)
-		if tblFieldName == DefaultFullTextColumn.Name {
-			valueStr = fmt.Sprintf("LOWER(%s)", valueStr)
-		}
-		return fmt.Sprintf(`match(%s, %s)`, tblFieldName, valueStr), nil
+		return fmt.Sprintf(`match(%s, %s)`, tblFieldName, sb.Var(value)), nil
 	case qbtypes.FilterOperatorNotRegexp:
 		return fmt.Sprintf(`NOT match(%s, %s)`, tblFieldName, sb.Var(value)), nil
 	// between and not between
