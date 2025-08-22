@@ -396,6 +396,8 @@ func (v *variableReplacementVisitor) VisitFunctionCall(ctx *grammar.FunctionCall
 		functionName = "hasAny"
 	} else if ctx.HASALL() != nil {
 		functionName = "hasAll"
+	} else if ctx.HASTOKEN() != nil {
+		functionName = "hasToken"
 	}
 
 	params := v.Visit(ctx.FunctionParamList()).(string)

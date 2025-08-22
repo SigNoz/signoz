@@ -616,6 +616,8 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		functionName = "hasAny"
 	} else if ctx.HASALL() != nil {
 		functionName = "hasAll"
+	} else if ctx.HASTOKEN() != nil {
+		functionName = "hasToken"
 	} else {
 		// Default fallback
 		v.errors = append(v.errors, fmt.Sprintf("unknown function `%s`", ctx.GetText()))
@@ -638,28 +640,38 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 	for _, key := range keys {
 		var fieldName string
 
-		if strings.HasPrefix(key.Name, v.jsonBodyPrefix) {
-			fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
-		} else {
-			// TODO(add docs for json body search)
-			if v.mainErrorURL == "" {
-				v.mainErrorURL = "https://signoz.io/docs/userguide/search-troubleshooting/#function-supports-only-body-json-search"
+		if functionName == "hasToken" {
+			// this will only work with string.
+			if _, ok := value[0].(string); !ok {
+				v.errors = append(v.errors, fmt.Sprintf("function `%s` expects value parameter to be a string", functionName))
+				return ""
 			}
-			v.errors = append(v.errors, fmt.Sprintf("function `%s` supports only body JSON search", functionName))
-			return ""
-		}
+			conds = append(conds, fmt.Sprintf("hasToken(LOWER(%s), LOWER(%s))", key.Name, v.builder.Var(value[0])))
+		} else {
+			// this is that all other functions only support array fields
+			if strings.HasPrefix(key.Name, v.jsonBodyPrefix) {
+				fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
+			} else {
+				// TODO(add docs for json body search)
+				if v.mainErrorURL == "" {
+					v.mainErrorURL = "https://signoz.io/docs/userguide/search-troubleshooting/#function-supports-only-body-json-search"
+				}
+				v.errors = append(v.errors, fmt.Sprintf("function `%s` supports only body JSON search", functionName))
+				return ""
+			}
 
-		var cond string
-		// Map our functions to ClickHouse equivalents
-		switch functionName {
-		case "has":
-			cond = fmt.Sprintf("has(%s, %s)", fieldName, v.builder.Var(value[0]))
-		case "hasAny":
-			cond = fmt.Sprintf("hasAny(%s, %s)", fieldName, v.builder.Var(value))
-		case "hasAll":
-			cond = fmt.Sprintf("hasAll(%s, %s)", fieldName, v.builder.Var(value))
+			var cond string
+			// Map our functions to ClickHouse equivalents
+			switch functionName {
+			case "has":
+				cond = fmt.Sprintf("has(%s, %s)", fieldName, v.builder.Var(value[0]))
+			case "hasAny":
+				cond = fmt.Sprintf("hasAny(%s, %s)", fieldName, v.builder.Var(value))
+			case "hasAll":
+				cond = fmt.Sprintf("hasAll(%s, %s)", fieldName, v.builder.Var(value))
+			}
+			conds = append(conds, cond)
 		}
-		conds = append(conds, cond)
 	}
 
 	if len(conds) == 1 {

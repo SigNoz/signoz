@@ -367,6 +367,8 @@ func (r *WhereClauseRewriter) VisitFunctionCall(ctx *parser.FunctionCallContext)
 		r.rewritten.WriteString("hasany")
 	} else if ctx.HASALL() != nil {
 		r.rewritten.WriteString("hasall")
+	} else if ctx.HASTOKEN() != nil {
+		r.rewritten.WriteString("hasToken")
 	}
 
 	r.rewritten.WriteString("(")
