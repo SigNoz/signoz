@@ -4,7 +4,7 @@ import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 
 var (
 	DefaultFullTextColumn = &telemetrytypes.TelemetryFieldKey{
-		Name:          "body",
+		Name:          "LOWER(body)",
 		Signal:        telemetrytypes.SignalLogs,
 		FieldContext:  telemetrytypes.FieldContextLog,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
@@ -13,6 +13,13 @@ var (
 	IntrinsicFields            = map[string]telemetrytypes.TelemetryFieldKey{
 		"body": {
 			Name:          "body",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		// for fulltext
+		"LOWER(body)": {
+			Name:          "LOWER(body)",
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextLog,
 			FieldDataType: telemetrytypes.FieldDataTypeString,

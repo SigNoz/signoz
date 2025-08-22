@@ -3,6 +3,7 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
@@ -28,6 +29,8 @@ var (
 		"severity_text":      {Name: "severity_text", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
 		"severity_number":    {Name: "severity_number", Type: schema.ColumnTypeUInt8},
 		"body":               {Name: "body", Type: schema.ColumnTypeString},
+		// for indexing purpose
+		"LOWER(body)": {Name: "LOWER(body)", Type: schema.ColumnTypeString},
 		"attributes_string": {Name: "attributes_string", Type: schema.MapColumnType{
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
@@ -60,6 +63,10 @@ func NewFieldMapper() qbtypes.FieldMapper {
 }
 
 func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+	// handle explicitly for full text search
+	if reflect.DeepEqual(key, DefaultFullTextColumn) {
+		return logsV2Columns["LOWER(body)"], nil
+	}
 
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:

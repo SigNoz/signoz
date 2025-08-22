@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -184,4 +185,13 @@ func FormatValueForContains(value any) string {
 			return fmt.Sprintf("%v", value)
 		}
 	}
+}
+
+func FormatFullTextSearch(input string) string {
+	_, err := regexp.Compile(input)
+	if err != nil {
+		// Not a valid regex -> treat as literal substring
+		return regexp.QuoteMeta(input)
+	}
+	return input
 }

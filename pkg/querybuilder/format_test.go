@@ -273,3 +273,30 @@ func TestFormatValueForContains_LargeNumberScientificNotation(t *testing.T) {
 	assert.Equal(t, "521509198310", result)
 	assert.NotEqual(t, "5.2150919831e+11", result)
 }
+
+func TestFormatFullTextSearch(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		// valid regex, unchanged
+		{"foo.*bar", "foo.*bar"},
+		// invalid regex, escaped
+		{"[ERROR-1234]", `\[ERROR-1234\]`},
+		// literal with +
+		{"C++ Error", `C\+\+ Error`},
+		// IP address, valid regex but unsafe chars
+		{"10.0.0.1", "10.0.0.1"},
+		// java class, '.' will still be regex wildcard
+		{"java.lang.NullPointerException", "java.lang.NullPointerException"},
+		// a-o  invalid character class range
+		{"[LocalLog partition=__cluster_metadata-0,", "\\[LocalLog partition=__cluster_metadata-0,"},
+		{"[abcd]", "[abcd]"},
+	}
+	for _, tt := range tests {
+		got := FormatFullTextSearch(tt.input)
+		if got != tt.expected {
+			t.Errorf("sanitizeSearch(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
