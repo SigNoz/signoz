@@ -296,7 +296,7 @@ func TestFormatFullTextSearch(t *testing.T) {
 	for _, tt := range tests {
 		got := FormatFullTextSearch(tt.input)
 		if got != tt.expected {
-			t.Errorf("sanitizeSearch(%q) = %q, want %q", tt.input, got, tt.expected)
+			t.Errorf("FormatFullTextSearch(%q) = %q, want %q", tt.input, got, tt.expected)
 		}
 	}
 }
