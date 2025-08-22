@@ -5,7 +5,11 @@ import { useCallback, useMemo } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getGroupContextMenuConfig } from './contextConfig';
-import { addFilterToQuery } from './drilldownUtils';
+import {
+	addFilterToQuery,
+	getBaseMeta,
+	isNumberDataType,
+} from './drilldownUtils';
 
 const useFilterDrilldown = ({
 	query,
@@ -40,7 +44,14 @@ const useFilterDrilldown = ({
 	const handleFilterDrilldown = useCallback(
 		(operator: string): void => {
 			const filterKey = clickedData?.column?.title as string;
-			const filterValue = clickedData?.record?.[filterKey] || '';
+			let filterValue = clickedData?.record?.[filterKey] || '';
+
+			// Check if the filterKey is of number type and convert filterValue accordingly
+			const baseMeta = getBaseMeta(query, filterKey);
+			if (baseMeta && isNumberDataType(baseMeta.dataType) && filterValue !== '') {
+				filterValue = Number(filterValue);
+			}
+
 			const newQuery = addFilterToQuery(query, [
 				{
 					filterKey,
