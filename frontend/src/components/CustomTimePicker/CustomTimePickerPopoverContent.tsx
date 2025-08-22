@@ -4,21 +4,19 @@ import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
+import DatePickerV2 from 'components/DatePickerV2/DatePickerV2';
 import ROUTES from 'constants/routes';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import {
-	CustomTimeType,
 	LexicalContext,
 	Option,
 	RelativeDurationSuggestionOptions,
-	Time,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import { Clock, PenLine } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import RangePickerModal from './RangePickerModal';
 import TimezonePicker from './TimezonePicker';
 
 interface CustomTimePickerPopoverContentProps {
@@ -37,10 +35,6 @@ interface CustomTimePickerPopoverContentProps {
 	setActiveView: Dispatch<SetStateAction<'datetime' | 'timezone'>>;
 	isOpenedFromFooter: boolean;
 	setIsOpenedFromFooter: Dispatch<SetStateAction<boolean>>;
-	onTimeChange?: (
-		interval: Time | CustomTimeType,
-		dateTimeRange?: [number, number],
-	) => void;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -57,7 +51,6 @@ function CustomTimePickerPopoverContent({
 	setActiveView,
 	isOpenedFromFooter,
 	setIsOpenedFromFooter,
-	onTimeChange,
 }: CustomTimePickerPopoverContentProps): JSX.Element {
 	const { pathname } = useLocation();
 
@@ -112,50 +105,55 @@ function CustomTimePickerPopoverContent({
 	return (
 		<>
 			<div className="date-time-popover">
-				<div className="date-time-options">
-					{isLogsExplorerPage && (
-						<Button className="data-time-live" type="text" onClick={handleGoLive}>
-							Live
-						</Button>
-					)}
-					{options.map((option) => (
-						<Button
-							type="text"
-							key={option.label + option.value}
-							onClick={(): void => {
-								onSelectHandler(option.label, option.value);
-							}}
-							className={cx(
-								'date-time-options-btn',
-								customDateTimeVisible
-									? option.value === 'custom' && 'active'
-									: selectedTime === option.value && 'active',
-							)}
-						>
-							{option.label}
-						</Button>
-					))}
-				</div>
+				{!customDateTimeVisible && (
+					<div className="date-time-options">
+						{isLogsExplorerPage && (
+							<Button className="data-time-live" type="text" onClick={handleGoLive}>
+								Live
+							</Button>
+						)}
+						{options.map((option) => (
+							<Button
+								type="text"
+								key={option.label + option.value}
+								onClick={(): void => {
+									onSelectHandler(option.label, option.value);
+								}}
+								className={cx(
+									'date-time-options-btn',
+									customDateTimeVisible
+										? option.value === 'custom' && 'active'
+										: selectedTime === option.value && 'active',
+								)}
+							>
+								{option.label}
+							</Button>
+						))}
+					</div>
+				)}
+
 				<div
 					className={cx(
 						'relative-date-time',
-						selectedTime === 'custom' || customDateTimeVisible
-							? 'date-picker'
-							: 'relative-times',
+						customDateTimeVisible ? 'date-picker' : 'relative-times',
 					)}
 				>
-					{selectedTime === 'custom' || customDateTimeVisible ? (
-						<RangePickerModal
-							setCustomDTPickerVisible={setCustomDTPickerVisible}
+					{customDateTimeVisible ? (
+						<DatePickerV2
+							onSetCustomDTPickerVisible={setCustomDTPickerVisible}
 							setIsOpen={setIsOpen}
 							onCustomDateHandler={onCustomDateHandler}
-							selectedTime={selectedTime}
-							onTimeChange={onTimeChange}
 						/>
 					) : (
-						<div className="relative-times-container">
-							<div className="time-heading">RELATIVE TIMES</div>
-							<div>{getTimeChips(RelativeDurationSuggestionOptions)}</div>
+						<div className="time-selector-container">
+							<div className="relative-times-container">
+								<div className="time-heading">RELATIVE TIMES</div>
+								<div>{getTimeChips(RelativeDurationSuggestionOptions)}</div>
+							</div>
+
+							<div className="recently-used-container">
+								<div className="time-heading">RECENTLY USED</div>
+							</div>
 						</div>
 					)}
 				</div>
@@ -188,9 +186,5 @@ function CustomTimePickerPopoverContent({
 		</>
 	);
 }
-
-CustomTimePickerPopoverContent.defaultProps = {
-	onTimeChange: undefined,
-};
 
 export default CustomTimePickerPopoverContent;

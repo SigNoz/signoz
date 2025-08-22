@@ -875,7 +875,6 @@ function DateTimeSelection({
 						onCustomDateHandler={onCustomDateHandler}
 						customDateTimeVisible={customDateTimeVisible}
 						setCustomDTPickerVisible={setCustomDTPickerVisible}
-						onTimeChange={onTimeChange}
 					/>
 
 					{showAutoRefresh && selectedTime !== 'custom' && (

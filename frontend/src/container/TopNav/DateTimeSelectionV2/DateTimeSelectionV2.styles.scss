@@ -154,7 +154,7 @@
 			padding: 13.5px 14px;
 			height: 44px;
 			color: var(--bg-vanilla-400, #c0c1c3);
-			font-size: 14px;
+			font-size: 13px;
 			font-style: normal;
 			font-weight: 400;
 			line-height: normal;
@@ -177,7 +177,7 @@
 			padding: 8px 13px;
 			height: 37px;
 			color: var(--bg-vanilla-400, #c0c1c3);
-			font-size: 14px;
+			font-size: 13px;
 			font-style: normal;
 			font-weight: 400;
 			line-height: normal;
@@ -190,6 +190,80 @@
 		}
 	}
 
+	.date-time-custom-options-container {
+		display: flex;
+		width: 224px;
+		flex-direction: column;
+		border-right: 1px solid #1d212d;
+
+		.back-btn {
+			display: flex;
+			align-items: center;
+			gap: 16px;
+			padding: 8px;
+			cursor: pointer;
+
+			&:hover {
+				background-color: rgba(171, 189, 255, 0.04);
+			}
+		}
+
+		.date-time-custom-options {
+			.date-time-custom-option-from,
+			.date-time-custom-option-to {
+				display: flex;
+				padding: 12px 14px;
+				flex-direction: column;
+				align-items: flex-start;
+				gap: 10px;
+				cursor: pointer;
+
+				&.disabled {
+					cursor: not-allowed;
+				}
+
+				.date-time-custom-option-from-title,
+				.date-time-custom-option-to-title {
+					color: var(--Slate-50, #62687c);
+					font-variant-numeric: slashed-zero;
+					font-family: Inter;
+					font-size: 12px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: normal;
+					letter-spacing: 0.12px;
+					text-transform: uppercase;
+				}
+
+				.date-time-custom-option-from-value,
+				.date-time-custom-option-to-value {
+					color: var(--bg-vanilla-400, #c0c1c3);
+					font-variant-numeric: slashed-zero;
+					font-family: Inter;
+					font-size: 13px;
+					font-style: normal;
+					font-weight: 300;
+					line-height: normal;
+					letter-spacing: 0.14px;
+				}
+
+				&.active {
+					background: rgba(171, 189, 255, 0.04);
+
+					.date-time-custom-option-from-title,
+					.date-time-custom-option-to-title {
+						color: var(--bg-vanilla-400, #c0c1c3);
+					}
+
+					.date-time-custom-option-from-value,
+					.date-time-custom-option-to-value {
+						color: var(--Vanilla-100, #fff);
+					}
+				}
+			}
+		}
+	}
+
 	.relative-date-time {
 		display: flex;
 		flex-direction: column;
@@ -197,12 +271,11 @@
 		padding: 13px 14px;
 
 		&.date-picker {
-			width: 480px;
-			height: 430px;
+			padding: 0px;
 		}
 
 		&.relative-times {
-			width: 320px;
+			width: 360px;
 		}
 
 		.relative-date-time-section {
@@ -224,8 +297,8 @@
 		.time-btns {
 			color: var(--bg-vanilla-400);
 			background-color: #23262e;
-			font-size: 14px;
-			line-height: 17px;
+			font-size: 12px;
+			line-height: 16px;
 			letter-spacing: 0.04em;
 			text-align: left;
 			border-radius: 2px;
