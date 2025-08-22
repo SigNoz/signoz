@@ -1,9 +1,27 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+import { negateOperator, OPERATORS } from 'constants/antlrQueryConstants';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { extractQueryPairs } from 'utils/queryContextUtils';
 
-import { convertFiltersToExpression } from '../utils';
+import {
+	convertFiltersToExpression,
+	convertFiltersToExpressionWithExistingQuery,
+} from '../utils';
+
+jest.mock('utils/queryContextUtils', () => ({
+	extractQueryPairs: jest.fn(),
+}));
+
+// Type the mocked functions
+const mockExtractQueryPairs = extractQueryPairs as jest.MockedFunction<
+	typeof extractQueryPairs
+>;
 
 describe('convertFiltersToExpression', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+	});
+
 	it('should handle empty, null, and undefined inputs', () => {
 		// Test null and undefined
 		expect(convertFiltersToExpression(null as any)).toEqual({ expression: '' });
@@ -532,5 +550,365 @@ describe('convertFiltersToExpression', () => {
 			expression:
 				"user_id NOT EXISTS AND description NOT CONTAINS 'error' AND NOT has(tags, 'production') AND NOT hasAny(labels, ['env:prod', 'service:api'])",
 		});
+	});
+
+	it('should return filters with new expression when no existing query', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: { id: 'service.name', key: 'service.name', type: 'string' },
+					op: OPERATORS['='],
+					value: 'test-service',
+				},
+			],
+			op: 'AND',
+		};
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			undefined,
+		);
+
+		expect(result.filters).toEqual(filters);
+		expect(result.filter.expression).toBe("service.name = 'test-service'");
+	});
+
+	it('should handle empty filters', () => {
+		const filters = {
+			items: [],
+			op: 'AND',
+		};
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			undefined,
+		);
+
+		expect(result.filters).toEqual(filters);
+		expect(result.filter.expression).toBe('');
+	});
+
+	it('should handle existing query with matching filters', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: { id: 'service.name', key: 'service.name', type: 'string' },
+					op: OPERATORS['='],
+					value: 'updated-service',
+				},
+			],
+			op: 'AND',
+		};
+
+		const existingQuery = "service.name = 'old-service'";
+
+		mockExtractQueryPairs.mockReturnValue([
+			{
+				key: 'service.name',
+				operator: OPERATORS['='],
+				value: "'old-service'",
+				hasNegation: false,
+				isMultiValue: false,
+				isComplete: true,
+				position: {
+					keyStart: 0,
+					keyEnd: 11,
+					operatorStart: 13,
+					operatorEnd: 13,
+					valueStart: 15,
+					valueEnd: 28,
+				},
+			},
+		]);
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			existingQuery,
+		);
+
+		expect(result.filters).toBeDefined();
+		expect(result.filter).toBeDefined();
+		expect(result.filter.expression).toBe("service.name = 'old-service'");
+		expect(mockExtractQueryPairs).toHaveBeenCalledWith(
+			"service.name = 'old-service'",
+		);
+	});
+
+	it('should handle IN operator with existing query', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: { id: 'service.name', key: 'service.name', type: 'string' },
+					op: OPERATORS.IN,
+					value: ['service1', 'service2'],
+				},
+			],
+			op: 'AND',
+		};
+
+		const existingQuery = "service.name IN ['old-service']";
+
+		mockExtractQueryPairs.mockReturnValue([
+			{
+				key: 'service.name',
+				operator: 'IN',
+				value: "['old-service']",
+				valueList: ["'old-service'"],
+				valuesPosition: [
+					{
+						start: 17,
+						end: 29,
+					},
+				],
+				hasNegation: false,
+				isMultiValue: true,
+				position: {
+					keyStart: 0,
+					keyEnd: 11,
+					operatorStart: 13,
+					operatorEnd: 14,
+					valueStart: 16,
+					valueEnd: 30,
+					negationStart: 0,
+					negationEnd: 0,
+				},
+				isComplete: true,
+			},
+		]);
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			existingQuery,
+		);
+
+		expect(result.filters).toBeDefined();
+		expect(result.filter).toBeDefined();
+		expect(result.filter.expression).toBe(
+			"service.name IN ['service1', 'service2']",
+		);
+	});
+
+	it('should handle IN operator conversion from equals', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: { id: 'service.name', key: 'service.name', type: 'string' },
+					op: OPERATORS.IN,
+					value: ['service1', 'service2'],
+				},
+			],
+			op: 'AND',
+		};
+
+		const existingQuery = "service.name = 'old-service'";
+
+		mockExtractQueryPairs.mockReturnValue([
+			{
+				key: 'service.name',
+				operator: OPERATORS['='],
+				value: "'old-service'",
+				hasNegation: false,
+				isMultiValue: false,
+				isComplete: true,
+				position: {
+					keyStart: 0,
+					keyEnd: 11,
+					operatorStart: 13,
+					operatorEnd: 13,
+					valueStart: 15,
+					valueEnd: 28,
+				},
+			},
+		]);
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			existingQuery,
+		);
+
+		expect(result.filters.items).toHaveLength(1);
+		expect(result.filter.expression).toBe(
+			"service.name IN ['service1', 'service2'] ",
+		);
+	});
+
+	it('should handle NOT IN operator conversion from not equals', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: { id: 'service.name', key: 'service.name', type: 'string' },
+					op: negateOperator(OPERATORS.IN),
+					value: ['service1', 'service2'],
+				},
+			],
+			op: 'AND',
+		};
+
+		const existingQuery = "service.name != 'old-service'";
+
+		mockExtractQueryPairs.mockReturnValue([
+			{
+				key: 'service.name',
+				operator: OPERATORS['!='],
+				value: "'old-service'",
+				hasNegation: false,
+				isMultiValue: false,
+				isComplete: true,
+				position: {
+					keyStart: 0,
+					keyEnd: 11,
+					operatorStart: 13,
+					operatorEnd: 14,
+					valueStart: 16,
+					valueEnd: 28,
+				},
+			},
+		]);
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			existingQuery,
+		);
+
+		expect(result.filters.items).toHaveLength(1);
+		expect(result.filter.expression).toBe(
+			"service.name NOT IN ['service1', 'service2'] ",
+		);
+	});
+
+	it('should add new filters when they do not exist in existing query', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: { id: 'new.key', key: 'new.key', type: 'string' },
+					op: OPERATORS['='],
+					value: 'new-value',
+				},
+			],
+			op: 'AND',
+		};
+
+		const existingQuery = "service.name = 'old-service'";
+
+		mockExtractQueryPairs.mockReturnValue([
+			{
+				key: 'service.name',
+				operator: OPERATORS['='],
+				value: "'old-service'",
+				hasNegation: false,
+				isMultiValue: false,
+				isComplete: true,
+				position: {
+					keyStart: 0,
+					keyEnd: 11,
+					operatorStart: 13,
+					operatorEnd: 13,
+					valueStart: 15,
+					valueEnd: 28,
+				},
+			},
+		]);
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			existingQuery,
+		);
+
+		expect(result.filters.items).toHaveLength(2); // Original + new filter
+		expect(result.filter.expression).toBe(
+			"service.name = 'old-service' new.key = 'new-value'",
+		);
+	});
+
+	it('should handle simple value replacement', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: { id: 'status', key: 'status', type: 'string' },
+					op: OPERATORS['='],
+					value: 'error',
+				},
+			],
+			op: 'AND',
+		};
+
+		const existingQuery = "status = 'success'";
+
+		mockExtractQueryPairs.mockReturnValue([
+			{
+				key: 'status',
+				operator: OPERATORS['='],
+				value: "'success'",
+				hasNegation: false,
+				isMultiValue: false,
+				isComplete: true,
+				position: {
+					keyStart: 0,
+					keyEnd: 6,
+					operatorStart: 8,
+					operatorEnd: 8,
+					valueStart: 10,
+					valueEnd: 19,
+				},
+			},
+		]);
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			existingQuery,
+		);
+
+		expect(result.filters.items).toHaveLength(1);
+		expect(result.filter.expression).toBe("status = 'success'");
+	});
+
+	it('should handle filters with no key gracefully', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: undefined,
+					op: OPERATORS['='],
+					value: 'test-value',
+				},
+			],
+			op: 'AND',
+		};
+
+		const existingQuery = "service.name = 'old-service'";
+
+		mockExtractQueryPairs.mockReturnValue([
+			{
+				key: 'service.name',
+				operator: OPERATORS['='],
+				value: "'old-service'",
+				hasNegation: false,
+				isMultiValue: false,
+				isComplete: true,
+				position: {
+					keyStart: 0,
+					keyEnd: 11,
+					operatorStart: 13,
+					operatorEnd: 13,
+					valueStart: 15,
+					valueEnd: 28,
+				},
+			},
+		]);
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			existingQuery,
+		);
+
+		expect(result.filters.items).toHaveLength(2);
+		expect(result.filter.expression).toBe("service.name = 'old-service'");
 	});
 });
