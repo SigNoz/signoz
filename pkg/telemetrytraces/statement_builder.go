@@ -67,6 +67,15 @@ func (b *traceQueryStatementBuilder) Build(
 	start = querybuilder.ToNanoSecs(start)
 	end = querybuilder.ToNanoSecs(end)
 
+	var selectedFields []telemetrytypes.TelemetryFieldKey
+	for _, v := range query.SelectFields {
+		if v.Name == "isRoot" || v.Name == "isEntryPoint" {
+			continue
+		}
+		selectedFields = append(selectedFields, v)
+	}
+	query.SelectFields = selectedFields
+
 	keySelectors := getKeySelectors(query)
 
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
