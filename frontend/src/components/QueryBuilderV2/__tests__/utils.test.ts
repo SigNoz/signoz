@@ -630,7 +630,7 @@ describe('convertFiltersToExpression', () => {
 
 		expect(result.filters).toBeDefined();
 		expect(result.filter).toBeDefined();
-		expect(result.filter.expression).toBe("service.name = 'old-service'");
+		expect(result.filter.expression).toBe("service.name = 'updated-service'");
 		expect(mockExtractQueryPairs).toHaveBeenCalledWith(
 			"service.name = 'old-service'",
 		);
@@ -852,9 +852,9 @@ describe('convertFiltersToExpression', () => {
 				position: {
 					keyStart: 0,
 					keyEnd: 6,
-					operatorStart: 8,
-					operatorEnd: 8,
-					valueStart: 10,
+					operatorStart: 7,
+					operatorEnd: 7,
+					valueStart: 9,
 					valueEnd: 19,
 				},
 			},
@@ -866,7 +866,7 @@ describe('convertFiltersToExpression', () => {
 		);
 
 		expect(result.filters.items).toHaveLength(1);
-		expect(result.filter.expression).toBe("status = 'success'");
+		expect(result.filter.expression).toBe("status = 'error'");
 	});
 
 	it('should handle filters with no key gracefully', () => {
