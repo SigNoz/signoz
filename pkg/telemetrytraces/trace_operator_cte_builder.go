@@ -237,8 +237,8 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 
 func sanitizeForSQL(s string) string {
 	replacements := map[string]string{
-		"=>":  "DIRECT_DESC",
-		"->":  "INDIRECT_DESC",
+		"=>":  "DIR_DESC",
+		"->":  "INDIR_DESC",
 		"&&":  "AND",
 		"||":  "OR",
 		"NOT": "NOT",
@@ -267,6 +267,8 @@ func (b *traceOperatorCTEBuilder) buildOperatorCTE(op qbtypes.TraceOperatorType,
 	switch op {
 	case qbtypes.TraceOperatorDirectDescendant:
 		sql, args, dependsOn = b.buildDirectDescendantCTE(leftCTE, rightCTE)
+	case qbtypes.TraceOperatorIndirectDescendant:
+		sql, args, dependsOn = b.buildIndirectDescendantCTE(leftCTE, rightCTE)
 	case qbtypes.TraceOperatorAnd:
 		sql, args, dependsOn = b.buildAndCTE(leftCTE, rightCTE)
 	case qbtypes.TraceOperatorOr:
@@ -296,6 +298,40 @@ func (b *traceOperatorCTEBuilder) buildDirectDescendantCTE(parentCTE, childCTE s
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return sql, args, []string{parentCTE, childCTE}
+}
+
+func (b *traceOperatorCTEBuilder) buildIndirectDescendantCTE(ancestorCTE, descendantCTE string) (string, []any, []string) {
+	// Walk up from descendant spans to find all their ancestors, then join with ancestor CTE
+	sql := fmt.Sprintf(`
+		WITH RECURSIVE up AS (
+			SELECT
+				d.trace_id,
+				d.span_id,
+				d.parent_span_id,
+				0 AS depth
+			FROM %s AS d
+			
+			UNION ALL
+			
+			SELECT
+				p.trace_id,
+				p.span_id,
+				p.parent_span_id,
+				up.depth + 1
+			FROM base_spans AS p
+			JOIN up ON p.trace_id = up.trace_id AND p.span_id = up.parent_span_id
+			WHERE up.depth < 100
+		)
+		SELECT DISTINCT a.*
+		FROM %s AS a
+		GLOBAL INNER JOIN (
+			SELECT DISTINCT trace_id, span_id
+			FROM up
+			WHERE depth > 0
+		) AS ancestors ON ancestors.trace_id = a.trace_id AND ancestors.span_id = a.span_id
+	`, descendantCTE, ancestorCTE)
+
+	return sql, nil, []string{ancestorCTE, descendantCTE, "base_spans"}
 }
 
 func (b *traceOperatorCTEBuilder) buildAndCTE(leftCTE, rightCTE string) (string, []any, []string) {

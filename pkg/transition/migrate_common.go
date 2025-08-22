@@ -366,7 +366,7 @@ func (mc *migrateCommon) createAggregations(ctx context.Context, queryData map[s
 			aggregation = map[string]any{
 				"metricName":       aggregateAttr["key"],
 				"temporality":      queryData["temporality"],
-				"timeAggregation":  aggregateOp,
+				"timeAggregation":  queryData["timeAggregation"],
 				"spaceAggregation": queryData["spaceAggregation"],
 			}
 			if reduceTo, ok := queryData["reduceTo"].(string); ok {

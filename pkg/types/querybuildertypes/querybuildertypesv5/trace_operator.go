@@ -376,7 +376,7 @@ func parseTraceExpression(expr string) (*TraceOperand, int, error) {
 
 	// Find binary operators with lowest precedence first (=> has lowest precedence)
 	// Order: => (lowest) < && < || < NOT (highest)
-	operators := []string{"=>", "&&", "||", " NOT "}
+	operators := []string{"->", "=>", "&&", "||", " NOT "}
 
 	for _, op := range operators {
 		if pos := findOperatorPosition(expr, op); pos != -1 {
@@ -397,6 +397,8 @@ func parseTraceExpression(expr string) (*TraceOperand, int, error) {
 			switch strings.TrimSpace(op) {
 			case "=>":
 				opType = TraceOperatorDirectDescendant
+			case "->":
+				opType = TraceOperatorIndirectDescendant
 			case "&&":
 				opType = TraceOperatorAnd
 			case "||":
