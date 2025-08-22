@@ -180,7 +180,7 @@ function BreakDown(): JSX.Element {
 					<Alert
 						type="info"
 						showIcon
-						message="Please note that the meter module data will be accurate post 22st August 2025 00:00 UTC"
+						message="Please note that the meter module data will be accurate post 22nd August 2025 00:00 UTC"
 					/>
 				</section>
 				<section className="total">
