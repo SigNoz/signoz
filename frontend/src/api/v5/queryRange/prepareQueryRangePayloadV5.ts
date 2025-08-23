@@ -503,7 +503,7 @@ export const prepareQueryRangePayloadV5 = ({
 				value,
 				type: dynamicVariables
 					?.find((v) => v.name === key)
-					?.type.toLowerCase() as VariableType,
+					?.type?.toLowerCase() as VariableType,
 			};
 			return acc;
 		}, {} as Record<string, VariableItem>),

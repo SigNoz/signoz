@@ -1,7 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
-import { createStore } from 'redux';
+import configureStore from 'redux-mock-store';
 
 // Import dependency building functions
 import {
@@ -13,7 +13,7 @@ import {
 window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
 function createMockStore(globalTime?: any): any {
-	createStore(() => ({
+	return configureStore([])(() => ({
 		globalTime: globalTime || {
 			minTime: '2023-01-01T00:00:00Z',
 			maxTime: '2023-01-02T00:00:00Z',
