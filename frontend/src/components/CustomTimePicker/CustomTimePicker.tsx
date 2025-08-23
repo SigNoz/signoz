@@ -383,20 +383,23 @@ function CustomTimePicker({
 						}
 						value={inputValue}
 						onFocus={handleFocus}
+						onClick={handleFocus}
 						onBlur={handleBlur}
 						onChange={handleInputChange}
 						data-1p-ignore
 						prefix={
-							inputValue && inputStatus === 'success' ? (
-								<CheckCircle size={14} color="#51E7A8" />
-							) : (
-								<Tooltip title="Enter time in format (e.g., 1m, 2h, 3d, 4w)">
-									<Clock size={14} />
-								</Tooltip>
-							)
+							<div className="time-input-prefix">
+								{inputValue && inputStatus === 'success' ? (
+									<CheckCircle size={14} color="#51E7A8" />
+								) : (
+									<Tooltip title="Enter time in format (e.g., 1m, 2h, 3d, 4w)">
+										<Clock size={14} className="cursor-pointer" />
+									</Tooltip>
+								)}
+							</div>
 						}
 						suffix={
-							<>
+							<div className="time-input-suffix">
 								{!!isTimezoneOverridden && activeTimezoneOffset && (
 									<div className="timezone-badge" onClick={handleTimezoneHintClick}>
 										<span>{activeTimezoneOffset}</span>
@@ -404,9 +407,13 @@ function CustomTimePicker({
 								)}
 								<ChevronDown
 									size={14}
-									onClick={(): void => handleViewChange('datetime')}
+									className="cursor-pointer time-input-suffix-icon-badge"
+									onClick={(e): void => {
+										e.stopPropagation();
+										handleViewChange('datetime');
+									}}
 								/>
-							</>
+							</div>
 						}
 					/>
 				</Popover>
