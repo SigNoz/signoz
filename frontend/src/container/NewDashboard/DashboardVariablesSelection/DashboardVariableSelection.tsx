@@ -180,7 +180,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 				orderBasedSortedVariables.map((variable) =>
 					variable.type === 'DYNAMIC' ? (
 						<DynamicVariableSelection
-							key={`${variable.name}${variable.id}}${variable.order}`}
+							key={`${variable.name}${variable.id}${variable.order}`}
 							existingVariables={variables}
 							variableData={{
 								name: variable.name,
