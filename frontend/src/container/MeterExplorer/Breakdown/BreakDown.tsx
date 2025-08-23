@@ -1,6 +1,6 @@
 import './BreakDown.styles.scss';
 
-import { Typography } from 'antd';
+import { Alert, Typography } from 'antd';
 // import useFilterConfig from 'components/QuickFilters/hooks/useFilterConfig';
 // import { SignalType } from 'components/QuickFilters/types';
 import { QueryParams } from 'constants/query';
@@ -171,6 +171,19 @@ function BreakDown(): JSX.Element {
 				<DateTimeSelectionV2 showAutoRefresh={false} />
 			</section>
 			<section className="meter-explorer-graphs">
+				<section className="info">
+					<Alert
+						type="info"
+						showIcon
+						message="Billing is calculated in UTC. To match your meter data with billing, select full-day ranges in UTC time (00:00 – 23:59 UTC). 
+						For example, if you’re in IST, for the billing of Jan 1, select your time range as Jan 1, 5:30 AM – Jan 2, 5:29 AM IST."
+					/>
+					<Alert
+						type="warning"
+						showIcon
+						message="Meter module data is accurate only from 22nd August 2025, 00:00 UTC onwards. Data before this time was collected during the beta phase and may be inaccurate."
+					/>
+				</section>
 				<section className="total">
 					<Section
 						id={sections[0].id}
