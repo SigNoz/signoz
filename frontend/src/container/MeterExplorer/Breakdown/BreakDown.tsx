@@ -175,8 +175,8 @@ function BreakDown(): JSX.Element {
 					<Alert
 						type="info"
 						showIcon
-						message="Billing is calculated in UTC. To match your usage data with billing, select full-day ranges in UTC time (00:00 – 23:59 UTC). 
-						For example, if you’re in IST, the billing day of Jan 1, 00:00 – Jan 1, 23:59 UTC will appear as Jan 1, 5:30 AM – Jan 2, 5:29 AM IST."
+						message="Billing is calculated in UTC. To match your meter data with billing, select full-day ranges in UTC time (00:00 – 23:59 UTC). 
+						For example, if you’re in IST, the billing day of Jan 1, select your time range as Jan 1, 5:30 AM – Jan 2, 5:29 AM IST."
 					/>
 					<Alert
 						type="warning"
