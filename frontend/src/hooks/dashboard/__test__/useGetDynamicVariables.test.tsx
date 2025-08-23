@@ -18,50 +18,52 @@ jest.mock('providers/Dashboard/Dashboard', () => ({
 // Sample dashboard data with variables
 const mockDashboardData = {
 	data: {
-		title: 'Test Dashboard',
-		variables: {
-			var1: {
-				id: 'var1',
-				name: 'service',
-				type: 'DYNAMIC',
-				dynamicVariablesAttribute: 'service.name',
-				dynamicVariablesSource: 'Traces',
-				selectedValue: 'frontend',
-				multiSelect: false,
-				showALLOption: false,
-				allSelected: false,
-				description: '',
-				sort: 'DISABLED',
-			},
-			var2: {
-				id: 'var2',
-				name: 'status',
-				type: 'DYNAMIC',
-				dynamicVariablesAttribute: 'http.status_code',
-				dynamicVariablesSource: 'Traces',
-				selectedValue: '200',
-				multiSelect: false,
-				showALLOption: false,
-				allSelected: false,
-				description: '',
-				sort: 'DISABLED',
-			},
-			var3: {
-				id: 'var3',
-				name: 'interval',
-				type: 'CUSTOM', // Not DYNAMIC - should be filtered out
-				customValue: '5m',
-				multiSelect: false,
-				showALLOption: false,
-				allSelected: false,
-				description: '',
-				sort: 'DISABLED',
+		data: {
+			title: 'Test Dashboard',
+			variables: {
+				var1: {
+					id: 'var1',
+					name: 'service',
+					type: 'DYNAMIC',
+					dynamicVariablesAttribute: 'service.name',
+					dynamicVariablesSource: 'Traces',
+					selectedValue: 'frontend',
+					multiSelect: false,
+					showALLOption: false,
+					allSelected: false,
+					description: '',
+					sort: 'DISABLED',
+				},
+				var2: {
+					id: 'var2',
+					name: 'status',
+					type: 'DYNAMIC',
+					dynamicVariablesAttribute: 'http.status_code',
+					dynamicVariablesSource: 'Traces',
+					selectedValue: '200',
+					multiSelect: false,
+					showALLOption: false,
+					allSelected: false,
+					description: '',
+					sort: 'DISABLED',
+				},
+				var3: {
+					id: 'var3',
+					name: 'interval',
+					type: 'CUSTOM', // Not DYNAMIC - should be filtered out
+					customValue: '5m',
+					multiSelect: false,
+					showALLOption: false,
+					allSelected: false,
+					description: '',
+					sort: 'DISABLED',
+				},
 			},
 		},
+		id: 'dashboard-123',
+		loading: false,
+		error: null,
 	},
-	uuid: 'dashboard-123',
-	loading: false,
-	error: null,
 };
 
 // Mock refetch function
@@ -147,7 +149,7 @@ describe('useGetDynamicVariables', () => {
 		(useQuery as jest.Mock).mockReturnValue({
 			data: {
 				data: { title: 'Empty Dashboard' },
-				uuid: 'dashboard-empty',
+				id: 'dashboard-empty',
 				loading: false,
 				error: null,
 			},
