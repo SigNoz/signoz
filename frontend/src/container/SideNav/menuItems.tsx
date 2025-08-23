@@ -270,7 +270,7 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		label: 'Cost Meter',
 		icon: <ChartArea size={16} />,
 		isNew: false,
-		isEnabled: false,
+		isEnabled: true,
 		isBeta: true,
 		itemKey: 'meter-explorer',
 	},
