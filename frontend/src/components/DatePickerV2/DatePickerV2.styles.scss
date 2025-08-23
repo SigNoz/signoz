@@ -49,6 +49,18 @@
 				-webkit-appearance: none;
 				appearance: none;
 			}
+
+			&:focus {
+				border: none !important;
+				outline: none !important;
+				box-shadow: none !important;
+			}
+
+			&:focus-visible {
+				border: none !important;
+				outline: none !important;
+				box-shadow: none !important;
+			}
 		}
 	}
 

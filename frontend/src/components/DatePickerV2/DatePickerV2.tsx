@@ -9,7 +9,7 @@ import { LexicalContext } from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs, { Dayjs } from 'dayjs';
 import { CornerUpLeft, MoveRight } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -30,6 +30,8 @@ function DatePickerV2({
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+
+	const timeInputRef = useRef<HTMLInputElement>(null);
 
 	const { timezone } = useTimezone();
 
@@ -92,9 +94,17 @@ function DatePickerV2({
 					: dayjs(date).tz(timezone.value);
 			});
 		}
+
+		// focus the time input
+		timeInputRef?.current?.focus();
 	};
 
 	const handleTimeChange = (time: string): void => {
+		// time should have format HH:mm:ss
+		if (!/^\d{2}:\d{2}:\d{2}$/.test(time)) {
+			return;
+		}
+
 		if (selectedDateTimeFor === 'from') {
 			setSelectedFromDateTime((prev) => {
 				if (prev) {
@@ -186,23 +196,14 @@ function DatePickerV2({
 						tabIndex={0}
 						onKeyDown={(e): void => {
 							if (e.key === 'Enter') {
-								if (!isValidRange()) {
-									return;
-								}
-
 								handleSelectDateTimeFor('from');
 							}
 						}}
 						className={cx(
 							'date-time-custom-option-from',
 							selectedDateTimeFor === 'from' && 'active',
-							!isValidRange() && 'disabled',
 						)}
 						onClick={(): void => {
-							if (!isValidRange()) {
-								return;
-							}
-
 							handleSelectDateTimeFor('from');
 						}}
 					>
@@ -216,23 +217,14 @@ function DatePickerV2({
 						tabIndex={0}
 						onKeyDown={(e): void => {
 							if (e.key === 'Enter') {
-								if (!isValidRange()) {
-									return;
-								}
-
 								handleSelectDateTimeFor('to');
 							}
 						}}
 						className={cx(
 							'date-time-custom-option-to',
 							selectedDateTimeFor === 'to' && 'active',
-							!isValidRange() && 'disabled',
 						)}
 						onClick={(): void => {
-							if (!isValidRange()) {
-								return;
-							}
-
 							handleSelectDateTimeFor('to');
 						}}
 					>
@@ -292,6 +284,7 @@ function DatePickerV2({
 					<div className="time-input-container">
 						<Input
 							type="time"
+							ref={timeInputRef}
 							className="time-input"
 							value={
 								selectedDateTimeFor === 'from'

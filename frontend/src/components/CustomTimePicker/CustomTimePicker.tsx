@@ -257,6 +257,11 @@ function CustomTimePicker({
 	};
 
 	const handleSelect = (label: string, value: string): void => {
+		if (label === 'Custom') {
+			setCustomDTPickerVisible?.(true);
+			return;
+		}
+
 		onSelect(value);
 		setSelectedTimePlaceholderValue(label);
 		setInputStatus('');
