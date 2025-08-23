@@ -63,19 +63,30 @@ export const getBreakoutQuery = (
 	);
 	const newQuery = cloneDeep(queryWithFilters);
 
-	newQuery.builder.queryData = newQuery.builder.queryData.map(
-		(item: IBuilderQuery) => {
-			if (item.queryName === aggregateData.queryName) {
-				return {
-					...item,
-					groupBy: [groupBy],
-					orderBy: [],
-					legend: item.legend && groupBy.key ? `{{${groupBy.key}}}` : '',
-				};
-			}
-			return item;
-		},
-	);
+	// OLD LOGIC - Preserved all queries, modified only the matching one
+	// newQuery.builder.queryData = newQuery.builder.queryData.map(
+	// 	(item: IBuilderQuery) => {
+	// 		if (item.queryName === aggregateData.queryName) {
+	// 			return {
+	// 				...item,
+	// 				groupBy: [groupBy],
+	// 				orderBy: [],
+	// 				legend: item.legend && groupBy.key ? `{{${groupBy.key}}}` : '',
+	// 			};
+	// 		}
+	// 		return item;
+	// 	},
+	// );
+
+	// NEW LOGIC - Filter to keep only the query that matches queryName
+	newQuery.builder.queryData = newQuery.builder.queryData
+		.filter((item: IBuilderQuery) => item.queryName === aggregateData.queryName)
+		.map((item: IBuilderQuery) => ({
+			...item,
+			groupBy: [groupBy],
+			orderBy: [],
+			legend: item.legend && groupBy.key ? `{{${groupBy.key}}}` : '',
+		}));
 
 	return newQuery;
 };
