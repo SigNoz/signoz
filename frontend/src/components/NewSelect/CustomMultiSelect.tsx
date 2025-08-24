@@ -546,12 +546,30 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 			// Reset active index when search changes if dropdown is open
 			if (isOpen && trimmedValue) {
-				setActiveIndex(0);
+				setActiveIndex(-1);
+				// see if the trimmed value matched any option and set that active index
+				const matchedOption = filteredOptions.find(
+					(option) =>
+						option.label.toLowerCase() === trimmedValue.toLowerCase() ||
+						option.value?.toLowerCase() === trimmedValue.toLowerCase(),
+				);
+				if (matchedOption) {
+					setActiveIndex(1);
+				} else {
+					// check if the trimmed value is a regex pattern and set that active index
+					const isRegex =
+						trimmedValue.startsWith('.*') && trimmedValue.endsWith('.*');
+					if (isRegex) {
+						setActiveIndex(0);
+					} else {
+						setActiveIndex(1);
+					}
+				}
 			}
 
 			if (onSearch) onSearch(trimmedValue);
 		},
-		[onSearch, isOpen, selectedValues, onChange],
+		[onSearch, isOpen, selectedValues, onChange, filteredOptions],
 	);
 
 	// ===== UI & Rendering Functions =====
@@ -1573,15 +1591,17 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							<div className="navigation-text">
 								{errorMessage || SOMETHING_WENT_WRONG}
 							</div>
-							<div className="navigation-icons">
-								<ReloadOutlined
-									twoToneColor={Color.BG_CHERRY_400}
-									onClick={(e): void => {
-										e.stopPropagation();
-										if (onRetry) onRetry();
-									}}
-								/>
-							</div>
+							{onRetry && (
+								<div className="navigation-icons">
+									<ReloadOutlined
+										twoToneColor={Color.BG_CHERRY_400}
+										onClick={(e): void => {
+											e.stopPropagation();
+											onRetry();
+										}}
+									/>
+								</div>
+							)}
 						</div>
 					)}
 
