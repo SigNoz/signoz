@@ -66,9 +66,46 @@ function getSignalType(dataSource: string): 'traces' | 'logs' | 'metrics' {
 	return 'metrics';
 }
 
-/**
- * Creates base spec for builder queries
- */
+function isDeprecatedField(fieldName: string): boolean {
+	const deprecatedIntrinsicFields = [
+		'traceID',
+		'spanID',
+		'parentSpanID',
+		'spanKind',
+		'durationNano',
+		'statusCode',
+		'statusMessage',
+		'statusCodeString',
+	];
+
+	const deprecatedCalculatedFields = [
+		'responseStatusCode',
+		'externalHttpUrl',
+		'httpUrl',
+		'externalHttpMethod',
+		'httpMethod',
+		'httpHost',
+		'dbName',
+		'dbOperation',
+		'hasError',
+		'isRemote',
+		'serviceName',
+		'httpRoute',
+		'msgSystem',
+		'msgOperation',
+		'dbSystem',
+		'rpcSystem',
+		'rpcService',
+		'rpcMethod',
+		'peerService',
+	];
+
+	return (
+		deprecatedIntrinsicFields.includes(fieldName) ||
+		deprecatedCalculatedFields.includes(fieldName)
+	);
+}
+
 function createBaseSpec(
 	queryData: IBuilderQuery,
 	requestType: RequestType,
@@ -140,16 +177,29 @@ function createBaseSpec(
 		selectFields: isEmpty(nonEmptySelectColumns)
 			? undefined
 			: nonEmptySelectColumns?.map(
-					(column: any): TelemetryFieldKey => ({
-						name: column.name ?? column.key,
-						fieldDataType:
-							column?.fieldDataType ?? (column?.dataType as FieldDataType),
-						fieldContext: column?.fieldContext ?? (column?.type as FieldContext),
-						signal: column?.signal ?? undefined,
-					}),
+					(column: any): TelemetryFieldKey => {
+						const fieldName = column.name ?? column.key;
+						const isDeprecated = isDeprecatedField(fieldName);
+
+						const fieldObj: TelemetryFieldKey = {
+							name: fieldName,
+							fieldDataType:
+								column?.fieldDataType ?? (column?.dataType as FieldDataType),
+							signal: column?.signal ?? undefined,
+						};
+
+						// Only add fieldContext if the field is NOT deprecated
+						if (!isDeprecated && fieldName !== 'name') {
+							fieldObj.fieldContext =
+								column?.fieldContext ?? (column?.type as FieldContext);
+						}
+
+						return fieldObj;
+					},
 			  ),
 	};
 }
+
 // Utility to parse aggregation expressions with optional alias
 export function parseAggregations(
 	expression: string,
