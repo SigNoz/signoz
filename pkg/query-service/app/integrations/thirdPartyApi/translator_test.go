@@ -3,43 +3,69 @@ package thirdPartyApi
 import (
 	"testing"
 
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFilterResponse(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    []*v3.Result
-		expected []*v3.Result
+		input    []*qbtypes.QueryRangeResponse
+		expected []*qbtypes.QueryRangeResponse
 	}{
 		{
-			name: "should filter out IP addresses from net.peer.name",
-			input: []*v3.Result{
+			name: "should filter out IP addresses from series labels",
+			input: []*qbtypes.QueryRangeResponse{
 				{
-					Table: &v3.Table{
-						Rows: []*v3.TableRow{
-							{
-								Data: map[string]interface{}{
-									"net.peer.name": "192.168.1.1",
-								},
-							},
-							{
-								Data: map[string]interface{}{
-									"net.peer.name": "example.com",
+					Data: qbtypes.QueryData{
+						Results: []any{
+							&qbtypes.TimeSeriesData{
+								Aggregations: []*qbtypes.AggregationBucket{
+									{
+										Series: []*qbtypes.TimeSeries{
+											{
+												Labels: []*qbtypes.Label{
+													{
+														Key: telemetrytypes.TelemetryFieldKey{Name: "net.peer.name"},
+														Value: "192.168.1.1",
+													},
+												},
+											},
+											{
+												Labels: []*qbtypes.Label{
+													{
+														Key: telemetrytypes.TelemetryFieldKey{Name: "net.peer.name"},
+														Value: "example.com",
+													},
+												},
+											},
+										},
+									},
 								},
 							},
 						},
 					},
 				},
 			},
-			expected: []*v3.Result{
+			expected: []*qbtypes.QueryRangeResponse{
 				{
-					Table: &v3.Table{
-						Rows: []*v3.TableRow{
-							{
-								Data: map[string]interface{}{
-									"net.peer.name": "example.com",
+					Data: qbtypes.QueryData{
+						Results: []any{
+							&qbtypes.TimeSeriesData{
+								Aggregations: []*qbtypes.AggregationBucket{
+									{
+										Series: []*qbtypes.TimeSeries{
+											{
+												Labels: []*qbtypes.Label{
+													{
+														Key: telemetrytypes.TelemetryFieldKey{Name: "net.peer.name"},
+														Value: "example.com",
+													},
+												},
+											},
+										},
+									},
 								},
 							},
 						},
@@ -48,24 +74,41 @@ func TestFilterResponse(t *testing.T) {
 			},
 		},
 		{
-			name: "should handle nil data",
-			input: []*v3.Result{
+			name: "should filter out IP addresses from raw data",
+			input: []*qbtypes.QueryRangeResponse{
 				{
-					Table: &v3.Table{
-						Rows: []*v3.TableRow{
-							{
-								Data: nil,
+					Data: qbtypes.QueryData{
+						Results: []any{
+							&qbtypes.RawData{
+								Rows: []*qbtypes.RawRow{
+									{
+										Data: map[string]any{
+											"net.peer.name": "192.168.1.1",
+										},
+									},
+									{
+										Data: map[string]any{
+											"net.peer.name": "example.com",
+										},
+									},
+								},
 							},
 						},
 					},
 				},
 			},
-			expected: []*v3.Result{
+			expected: []*qbtypes.QueryRangeResponse{
 				{
-					Table: &v3.Table{
-						Rows: []*v3.TableRow{
-							{
-								Data: nil,
+					Data: qbtypes.QueryData{
+						Results: []any{
+							&qbtypes.RawData{
+								Rows: []*qbtypes.RawRow{
+									{
+										Data: map[string]any{
+											"net.peer.name": "example.com",
+										},
+									},
+								},
 							},
 						},
 					},
@@ -82,97 +125,16 @@ func TestFilterResponse(t *testing.T) {
 	}
 }
 
-func TestGetFilterSet(t *testing.T) {
-	tests := []struct {
-		name            string
-		existingFilters []v3.FilterItem
-		apiFilters      v3.FilterSet
-		expected        []v3.FilterItem
-	}{
-		{
-			name: "should append new filters",
-			existingFilters: []v3.FilterItem{
-				{
-					Key: v3.AttributeKey{Key: "existing"},
-				},
-			},
-			apiFilters: v3.FilterSet{
-				Items: []v3.FilterItem{
-					{
-						Key: v3.AttributeKey{Key: "new"},
-					},
-				},
-			},
-			expected: []v3.FilterItem{
-				{
-					Key: v3.AttributeKey{Key: "existing"},
-				},
-				{
-					Key: v3.AttributeKey{Key: "new"},
-				},
-			},
-		},
-		{
-			name:            "should handle empty api filters",
-			existingFilters: []v3.FilterItem{{Key: v3.AttributeKey{Key: "existing"}}},
-			apiFilters:      v3.FilterSet{},
-			expected:        []v3.FilterItem{{Key: v3.AttributeKey{Key: "existing"}}},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := getFilterSet(tt.existingFilters, tt.apiFilters)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
-func TestGetGroupBy(t *testing.T) {
-	tests := []struct {
-		name          string
-		existingGroup []v3.AttributeKey
-		apiGroup      []v3.AttributeKey
-		expected      []v3.AttributeKey
-	}{
-		{
-			name: "should append new group by attributes",
-			existingGroup: []v3.AttributeKey{
-				{Key: "existing"},
-			},
-			apiGroup: []v3.AttributeKey{
-				{Key: "new"},
-			},
-			expected: []v3.AttributeKey{
-				{Key: "existing"},
-				{Key: "new"},
-			},
-		},
-		{
-			name:          "should handle empty api group",
-			existingGroup: []v3.AttributeKey{{Key: "existing"}},
-			apiGroup:      []v3.AttributeKey{},
-			expected:      []v3.AttributeKey{{Key: "existing"}},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := getGroupBy(tt.existingGroup, tt.apiGroup)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
 
 func TestBuildDomainList(t *testing.T) {
 	tests := []struct {
 		name    string
-		input   *ThirdPartyApis
+		input   *ThirdPartyApiRequest
 		wantErr bool
 	}{
 		{
 			name: "basic domain list query",
-			input: &ThirdPartyApis{
+			input: &ThirdPartyApiRequest{
 				Start: 1000,
 				End:   2000,
 			},
@@ -180,18 +142,18 @@ func TestBuildDomainList(t *testing.T) {
 		},
 		{
 			name: "with filters and group by",
-			input: &ThirdPartyApis{
+			input: &ThirdPartyApiRequest{
 				Start: 1000,
 				End:   2000,
-				Filters: v3.FilterSet{
-					Items: []v3.FilterItem{
-						{
-							Key: v3.AttributeKey{Key: "test"},
+				Filter: &qbtypes.Filter{
+					Expression: "test = 'value'",
+				},
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "test",
 						},
 					},
-				},
-				GroupBy: []v3.AttributeKey{
-					{Key: "test"},
 				},
 			},
 			wantErr: false,
@@ -210,7 +172,9 @@ func TestBuildDomainList(t *testing.T) {
 			assert.Equal(t, tt.input.Start, result.Start)
 			assert.Equal(t, tt.input.End, result.End)
 			assert.NotNil(t, result.CompositeQuery)
-			assert.NotNil(t, result.CompositeQuery.BuilderQueries)
+			assert.Len(t, result.CompositeQuery.Queries, 7) // endpoints, lastseen, rps, error, total_span, p99, error_rate
+			assert.Equal(t, "v5", result.SchemaVersion)
+			assert.Equal(t, qbtypes.RequestTypeScalar, result.RequestType)
 		})
 	}
 }
@@ -218,12 +182,12 @@ func TestBuildDomainList(t *testing.T) {
 func TestBuildDomainInfo(t *testing.T) {
 	tests := []struct {
 		name    string
-		input   *ThirdPartyApis
+		input   *ThirdPartyApiRequest
 		wantErr bool
 	}{
 		{
 			name: "basic domain info query",
-			input: &ThirdPartyApis{
+			input: &ThirdPartyApiRequest{
 				Start: 1000,
 				End:   2000,
 			},
@@ -231,18 +195,18 @@ func TestBuildDomainInfo(t *testing.T) {
 		},
 		{
 			name: "with filters and group by",
-			input: &ThirdPartyApis{
+			input: &ThirdPartyApiRequest{
 				Start: 1000,
 				End:   2000,
-				Filters: v3.FilterSet{
-					Items: []v3.FilterItem{
-						{
-							Key: v3.AttributeKey{Key: "test"},
+				Filter: &qbtypes.Filter{
+					Expression: "test = 'value'",
+				},
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "test",
 						},
 					},
-				},
-				GroupBy: []v3.AttributeKey{
-					{Key: "test"},
 				},
 			},
 			wantErr: false,
@@ -261,7 +225,9 @@ func TestBuildDomainInfo(t *testing.T) {
 			assert.Equal(t, tt.input.Start, result.Start)
 			assert.Equal(t, tt.input.End, result.End)
 			assert.NotNil(t, result.CompositeQuery)
-			assert.NotNil(t, result.CompositeQuery.BuilderQueries)
+			assert.Len(t, result.CompositeQuery.Queries, 4) // endpoints, p99, error_rate, lastseen
+			assert.Equal(t, "v5", result.SchemaVersion)
+			assert.Equal(t, qbtypes.RequestTypeScalar, result.RequestType)
 		})
 	}
 }
