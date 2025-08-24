@@ -26,107 +26,6 @@ interface ColumnViewProps {
 	};
 }
 
-// // Generate large dataset for virtualization demo (supports offset for unique ids)
-// const generateLargeDataset = (count: number, startIndex = 0): any[] => {
-// 	const departments = [
-// 		'Engineering',
-// 		'Marketing',
-// 		'Sales',
-// 		'Support',
-// 		'Product',
-// 		'Design',
-// 		'Finance',
-// 		'HR',
-// 	];
-// 	const roles = ['admin', 'user', 'moderator', 'guest'] as const;
-// 	const statuses = ['active', 'inactive', 'pending', 'suspended'] as const;
-
-// 	return Array.from({ length: count }, (_, index) => ({
-// 		id: `${startIndex + index + 1}`,
-// 		name: `User ${startIndex + index + 1}`,
-// 		email: `user${startIndex + index + 1}@company.com`,
-// 		role: roles[index % roles.length],
-// 		status: statuses[index % statuses.length],
-// 		lastLogin: new Date(
-// 			Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
-// 		).toISOString(),
-// 		createdAt: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000)
-// 			.toISOString()
-// 			.split('T')[0],
-// 		avatar: `https://images.unsplash.com/photo-${
-// 			1500000000000 + index
-// 		}?w=32&h=32&fit=crop&crop=face`,
-// 		department: departments[index % departments.length],
-// 		salary: 50000 + Math.floor(Math.random() * 100000),
-// 		performance: 60 + Math.floor(Math.random() * 40),
-// 	}));
-// };
-
-// const defaultColumns = [
-// 	{
-// 		id: 'serial',
-// 		header: '#',
-// 		size: 72,
-// 		cell: ({ row }: { row: Row<any> }): number => row.index + 1,
-// 	},
-// 	{
-// 		accessorKey: 'name',
-// 		header: 'Name',
-// 		size: 220,
-// 		minSize: 120,
-// 		maxSize: 360,
-// 	},
-// 	{
-// 		accessorKey: 'email',
-// 		header: 'Email',
-// 		size: 260,
-// 		minSize: 160,
-// 		maxSize: 460,
-// 	},
-// 	{
-// 		accessorKey: 'role',
-// 		header: 'Role',
-// 		size: 140,
-// 		minSize: 100,
-// 		maxSize: 220,
-// 	},
-// 	{
-// 		accessorKey: 'status',
-// 		header: 'Status',
-// 		size: 160,
-// 		minSize: 120,
-// 		maxSize: 240,
-// 	},
-// 	{
-// 		accessorKey: 'department',
-// 		header: 'Department',
-// 		size: 180,
-// 		minSize: 120,
-// 		maxSize: 280,
-// 	},
-// 	{
-// 		accessorKey: 'salary',
-// 		header: 'Salary',
-// 		size: 140,
-// 		minSize: 100,
-// 		maxSize: 220,
-// 	},
-// 	{
-// 		accessorKey: 'performance',
-// 		header: 'Performance',
-// 		size: 200,
-// 		minSize: 120,
-// 		maxSize: 300,
-// 	},
-// 	{
-// 		accessorKey: 'lastLogin',
-// 		header: 'Last Login',
-// 		size: 180,
-// 		minSize: 120,
-// 		maxSize: 260,
-// 	},
-// ];
-
 function ColumnView({
 	logs,
 	onLoadMore,
@@ -137,18 +36,11 @@ function ColumnView({
 	options,
 }: ColumnViewProps): JSX.Element {
 	const {
-		activeLog: activeContextLog,
-		onSetActiveLog: handleSetActiveContextLog,
-		onClearActiveLog: handleClearActiveContextLog,
-		onAddToQuery: handleAddToQuery,
-	} = useActiveLog();
-
-	const {
 		activeLog,
-		onSetActiveLog,
-		onClearActiveLog,
-		onAddToQuery,
-		onGroupByAttribute,
+		onSetActiveLog: handleSetActiveLog,
+		onClearActiveLog: handleClearActiveLog,
+		onAddToQuery: handleAddToQuery,
+		onGroupByAttribute: handleGroupByAttribute,
 	} = useActiveLog();
 
 	const tableViewProps = {
@@ -162,8 +54,8 @@ function ColumnView({
 
 	const { dataSource, columns } = useTableView({
 		...tableViewProps,
-		onClickExpand: onSetActiveLog,
-		onOpenLogsContext: handleSetActiveContextLog,
+		onClickExpand: handleSetActiveLog,
+		onOpenLogsContext: handleClearActiveLog,
 	});
 
 	const { draggedColumns, onColumnOrderChange } = useDragColumns<
@@ -254,7 +146,7 @@ function ColumnView({
 	const handleRowClick = (row: Row<Record<string, unknown>>): void => {
 		const currentLog = logs.find(({ id }) => id === row.original.id);
 
-		onSetActiveLog(currentLog as ILog);
+		handleSetActiveLog(currentLog as ILog);
 	};
 
 	return (
@@ -277,24 +169,14 @@ function ColumnView({
 				onRowClick={handleRowClick}
 			/>
 
-			{activeContextLog && (
-				<LogDetail
-					log={activeContextLog}
-					onClose={handleClearActiveContextLog}
-					onAddToQuery={handleAddToQuery}
-					selectedTab={VIEW_TYPES.CONTEXT}
-					onGroupByAttribute={onGroupByAttribute}
-				/>
-			)}
-
 			{activeLog && (
 				<LogDetail
 					selectedTab={VIEW_TYPES.OVERVIEW}
 					log={activeLog}
-					onClose={onClearActiveLog}
-					onAddToQuery={onAddToQuery}
-					onClickActionItem={onAddToQuery}
-					onGroupByAttribute={onGroupByAttribute}
+					onClose={handleClearActiveLog}
+					onAddToQuery={handleAddToQuery}
+					onClickActionItem={handleAddToQuery}
+					onGroupByAttribute={handleGroupByAttribute}
 				/>
 			)}
 		</div>
