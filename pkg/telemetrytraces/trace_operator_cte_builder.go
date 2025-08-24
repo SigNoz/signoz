@@ -286,7 +286,6 @@ func (b *traceOperatorCTEBuilder) buildOperatorCTE(op qbtypes.TraceOperatorType,
 
 func (b *traceOperatorCTEBuilder) buildDirectDescendantCTE(parentCTE, childCTE string) (string, []any, []string) {
 	sb := sqlbuilder.NewSelectBuilder()
-	// Select all columns from parent, simpler approach
 	sb.Select("p.*")
 
 	sb.From(fmt.Sprintf("%s AS p", parentCTE))
@@ -361,11 +360,10 @@ func (b *traceOperatorCTEBuilder) buildOrCTE(leftCTE, rightCTE string) (string, 
 
 func (b *traceOperatorCTEBuilder) buildNotCTE(leftCTE, rightCTE string) (string, []any, []string) {
 	sb := sqlbuilder.NewSelectBuilder()
-	// Select all columns from left CTE
 	sb.Select("l.*")
 	sb.From(fmt.Sprintf("%s AS l", leftCTE))
 	sb.Where(fmt.Sprintf(
-		"NOT EXISTS (SELECT 1 FROM %s AS r WHERE r.trace_id = l.trace_id)",
+		"l.trace_id GLOBAL NOT IN (SELECT DISTINCT trace_id FROM %s)",
 		rightCTE,
 	))
 
