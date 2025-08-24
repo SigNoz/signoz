@@ -17,6 +17,19 @@ export const OPERATORS = {
 	'<': '<',
 };
 
+export const TRACE_OPERATOR_OPERATORS = {
+	AND: '&&',
+	OR: '||',
+	NOT: 'NOT',
+	DIRECT_DESCENDENT: '=>',
+	INDIRECT_DESCENDENT: '->',
+};
+
+export const TRACE_OPERATOR_OPERATORS_LABELS = {
+	[TRACE_OPERATOR_OPERATORS.DIRECT_DESCENDENT]: 'Direct Descendent',
+	[TRACE_OPERATOR_OPERATORS.INDIRECT_DESCENDENT]: 'Indirect Descendent',
+};
+
 export const QUERY_BUILDER_FUNCTIONS = {
 	HAS: 'has',
 	HASANY: 'hasAny',

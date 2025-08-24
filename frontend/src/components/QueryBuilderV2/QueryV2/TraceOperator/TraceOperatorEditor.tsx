@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+/* eslint-disable sonarjs/no-identical-functions */
 
 import '../QuerySearch/QuerySearch.styles.scss';
 
@@ -18,6 +19,10 @@ import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
 import { Button, Popover } from 'antd';
 import cx from 'classnames';
+import {
+	TRACE_OPERATOR_OPERATORS,
+	TRACE_OPERATOR_OPERATORS_LABELS,
+} from 'constants/antlrQueryConstants';
 import { getInvolvedQueriesInTraceOperator } from 'container/FormAlertRules/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -198,11 +203,11 @@ function TraceOperatorEditor({
 				option.label.toLowerCase().includes(searchText),
 			);
 
-			// Add boost to exact matches
-			options = options.map((option) => ({
-				...option,
-				boost: option.label.toLowerCase() === searchText ? 100 : 0,
-			}));
+			// // Add boost to exact matches
+			// options = options.map((option) => ({
+			// 	...option,
+			// 	boost: option.label.toLowerCase() === searchText ? 100 : 0,
+			// }));
 
 			// Add space after selection for atoms
 			const optionsWithSpace = addSpaceToOptions(options);
@@ -216,21 +221,14 @@ function TraceOperatorEditor({
 
 		if (queryContext.isInOperator) {
 			// Suggest operators for trace operators
-			options = [
-				{
-					label: '=> (Direct Decendent)',
-					type: 'operator',
-					apply: '=>',
-				},
-				{ label: '&&', type: 'operator', apply: '&&' },
-				{ label: '||', type: 'operator', apply: '||' },
-				{ label: 'NOT', type: 'operator', apply: 'NOT' },
-				{
-					label: '-> (Indirect Decendent)',
-					type: 'operator',
-					apply: '->',
-				},
-			];
+			const operators = Object.values(TRACE_OPERATOR_OPERATORS);
+			options = operators.map((operator) => ({
+				label: TRACE_OPERATOR_OPERATORS_LABELS[operator]
+					? `${operator} (${TRACE_OPERATOR_OPERATORS_LABELS[operator]})`
+					: operator,
+				type: 'operator',
+				apply: operator,
+			}));
 
 			// Add space after selection for operators
 			const optionsWithSpace = addSpaceToOptions(options);
@@ -264,11 +262,14 @@ function TraceOperatorEditor({
 
 			if (curChar === ')') {
 				// After closing parenthesis, suggest operators
-				options = [
-					{ label: '=>', type: 'operator', apply: '=>' },
-					{ label: '&&', type: 'operator', apply: '&&' },
-					{ label: '||', type: 'operator', apply: '||' },
-				];
+				const operators = Object.values(TRACE_OPERATOR_OPERATORS);
+				options = operators.map((operator) => ({
+					label: TRACE_OPERATOR_OPERATORS_LABELS[operator]
+						? `${operator} (${TRACE_OPERATOR_OPERATORS_LABELS[operator]})`
+						: operator,
+					type: 'operator',
+					apply: operator,
+				}));
 
 				// Add space after selection for closing parenthesis context
 				const optionsWithSpace = addSpaceToOptions(options);
