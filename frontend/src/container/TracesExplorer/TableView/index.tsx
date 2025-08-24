@@ -16,8 +16,10 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 function TableView({
 	setWarning,
+	setIsLoadingQueries,
 }: {
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
+	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
 }): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 
@@ -26,7 +28,7 @@ function TableView({
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const { data, isLoading, isError, error } = useGetQueryRange(
+	const { data, isLoading, isFetching, isError, error } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap.traces,
 			graphType: panelType || PANEL_TYPES.TABLE,
@@ -48,6 +50,14 @@ function TableView({
 			enabled: !!stagedQuery && panelType === PANEL_TYPES.TABLE,
 		},
 	);
+
+	useEffect(() => {
+		if (isLoading || isFetching) {
+			setIsLoadingQueries(true);
+		} else {
+			setIsLoadingQueries(false);
+		}
+	}, [isLoading, isFetching, setIsLoadingQueries]);
 
 	const queryTableData = useMemo(
 		() =>

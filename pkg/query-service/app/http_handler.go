@@ -65,6 +65,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 
@@ -1036,9 +1037,54 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 			// to get the correct query range
 			start := end.Add(-time.Duration(rule.EvalWindow)).Add(-3 * time.Minute)
 			if rule.AlertType == ruletypes.AlertTypeLogs {
-				res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
+				if rule.Version != "v5" {
+					res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
+				} else {
+					// TODO(srikanthccv): re-visit this and support multiple queries
+					var q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+
+					for _, query := range rule.RuleCondition.CompositeQuery.Queries {
+						if query.Type == qbtypes.QueryTypeBuilder {
+							switch spec := query.Spec.(type) {
+							case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+								q = spec
+							}
+						}
+					}
+
+					filterExpr := ""
+					if q.Filter != nil && q.Filter.Expression != "" {
+						filterExpr = q.Filter.Expression
+					}
+
+					whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
+
+					res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogsV5(start, end, whereClause)
+				}
 			} else if rule.AlertType == ruletypes.AlertTypeTraces {
-				res.Items[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
+				if rule.Version != "v5" {
+					res.Items[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
+				} else {
+					// TODO(srikanthccv): re-visit this and support multiple queries
+					var q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
+
+					for _, query := range rule.RuleCondition.CompositeQuery.Queries {
+						if query.Type == qbtypes.QueryTypeBuilder {
+							switch spec := query.Spec.(type) {
+							case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+								q = spec
+							}
+						}
+					}
+
+					filterExpr := ""
+					if q.Filter != nil && q.Filter.Expression != "" {
+						filterExpr = q.Filter.Expression
+					}
+
+					whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
+					res.Items[idx].RelatedTracesLink = contextlinks.PrepareLinksToTracesV5(start, end, whereClause)
+				}
 			}
 		}
 	}
