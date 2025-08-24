@@ -6,6 +6,7 @@ import useGraphContextMenu from 'container/QueryTable/Drilldown/useGraphContextM
 import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
 import { memo, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
+import { EQueryType } from 'types/common/dashboard';
 
 import { TitleContainer, ValueContainer } from './styles';
 import { GridValueComponentProps } from './types';
@@ -39,7 +40,13 @@ function GridValueComponent({
 
 	const { menuItemsConfig } = useGraphContextMenu({
 		widgetId: widget?.id || '',
-		query: widget?.query,
+		query: widget?.query || {
+			queryType: EQueryType.QUERY_BUILDER,
+			promql: [],
+			builder: { queryFormulas: [], queryData: [] },
+			clickhouse_sql: [],
+			id: '',
+		},
 		graphData: clickedData,
 		onClose,
 		coordinates,

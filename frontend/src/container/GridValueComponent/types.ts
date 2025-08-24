@@ -12,8 +12,8 @@ export type GridValueComponentProps = {
 	yAxisUnit?: string;
 	thresholds?: ThresholdProps[];
 	// Context menu related props
-	widget: Widgets;
-	queryResponse: UseQueryResult<
+	widget?: Widgets;
+	queryResponse?: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps, unknown>,
 		Error
 	>;
