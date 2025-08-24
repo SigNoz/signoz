@@ -66,10 +66,12 @@ export const getBaseContextConfig = ({
 	handleBaseDrilldown,
 	setSubMenu,
 	showDashboardVariablesOption,
+	showBreakoutOption,
 }: {
 	handleBaseDrilldown: (key: string) => void;
 	setSubMenu: (subMenu: string) => void;
 	showDashboardVariablesOption: boolean;
+	showBreakoutOption: boolean;
 }): {
 	key: string;
 	icon: React.ReactNode;
@@ -107,5 +109,6 @@ export const getBaseContextConfig = ({
 		icon: <ChartBar size={16} />,
 		label: 'Breakout by ..',
 		onClick: (): void => setSubMenu('breakout'),
+		hidden: !showBreakoutOption,
 	},
 ];
