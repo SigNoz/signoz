@@ -24,7 +24,7 @@ import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import { PanelWrapperProps } from './panelWrapper.types';
-import { getTimeRangeFromUplotAxis } from './utils';
+import { getTimeRangeFromStepInterval } from './utils';
 
 function UplotPanelWrapper({
 	queryResponse,
@@ -165,15 +165,17 @@ function UplotPanelWrapper({
 			// Compute time range if needed and if axes data is available
 			let timeRange;
 			if (axesData) {
-				const { xAxis } = axesData;
-				timeRange = getTimeRangeFromUplotAxis(xAxis, xValue);
+				const stepInterval =
+					(queryResponse?.data?.params as any)?.compositeQuery?.queries?.[0]?.spec
+						?.stepInterval || 60;
+				timeRange = getTimeRangeFromStepInterval(stepInterval, xValue);
 			}
 
 			if (data && data?.record?.queryName) {
 				onClick(data.coord, { ...data.record, label: data.label, timeRange });
 			}
 		},
-		[onClick],
+		[onClick, queryResponse],
 	);
 
 	const options = useMemo(
