@@ -5,7 +5,7 @@ import './TraceOperator.styles.scss';
 
 import { Button, Select, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
-import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
+// import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Trash2 } from 'lucide-react';
@@ -18,6 +18,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import QueryAddOns from '../QueryAddOns/QueryAddOns';
 import QueryAggregation from '../QueryAggregation/QueryAggregation';
+import TraceOperatorEditor from './TraceOperatorEditor';
 
 export default function TraceOperator({
 	traceOperator,
@@ -93,17 +94,20 @@ export default function TraceOperator({
 	return (
 		<div className={cx('qb-trace-operator', !isListViewPanel && 'non-list-view')}>
 			<div className="qb-trace-operator-container">
-				<InputWithLabel
+				<div
 					className={cx(
-						'qb-trace-operator-input',
+						'qb-trace-operator-label-with-input',
 						!isListViewPanel && 'qb-trace-operator-arrow',
 					)}
-					initialValue={traceOperator?.expression || ''}
-					label="TRACES MATCHING"
-					placeholder="Add condition..."
-					type="text"
-					onChange={handleTraceOperatorChange}
-				/>
+				>
+					<Typography.Text className="label">TRACES MATCHING</Typography.Text>
+					<TraceOperatorEditor
+						value={traceOperator?.expression || ''}
+						traceOperator={traceOperator}
+						onChange={handleTraceOperatorChange}
+					/>
+				</div>
+
 				{!isListViewPanel && (
 					<div className="qb-trace-operator-aggregation-container">
 						<div className={cx(!isListViewPanel && 'qb-trace-operator-arrow')}>
@@ -131,7 +135,7 @@ export default function TraceOperator({
 								showReduceTo={false}
 								panelType={panelType}
 							>
-								<div className="qb-trace-operator-add-ons-input">
+								<div className={cx('qb-trace-operator-label-with-input', 'arrow-left')}>
 									<Typography.Text className="label">Using spans from</Typography.Text>
 									<Select
 										bordered={false}
