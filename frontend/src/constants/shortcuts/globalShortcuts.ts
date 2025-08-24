@@ -1,25 +1,25 @@
 export const GlobalShortcuts = {
-	NavigateToServices: 's + shift',
-	NavigateToTraces: 't + shift',
-	NavigateToLogs: 'l + shift',
-	NavigateToDashboards: 'd + shift',
-	NavigateToAlerts: 'a + shift',
-	NavigateToExceptions: 'e + shift',
-	NavigateToMessagingQueues: 'm + shift',
-	ToggleSidebar: 'b + shift',
-	NavigateToHome: 'h + shift',
+	NavigateToServices: 's+shift',
+	NavigateToTraces: 't+shift',
+	NavigateToLogs: 'l+shift',
+	NavigateToDashboards: 'd+shift',
+	NavigateToAlerts: 'a+shift',
+	NavigateToExceptions: 'e+shift',
+	NavigateToMessagingQueues: 'm+shift',
+	ToggleSidebar: 'b+shift',
+	NavigateToHome: 'h+shift',
 };
 
 export const GlobalShortcutsName = {
-	NavigateToServices: 'shift + s',
-	NavigateToTraces: 'shift + t',
-	NavigateToLogs: 'shift + l',
-	NavigateToDashboards: 'shift + d',
-	NavigateToAlerts: 'shift + a',
-	NavigateToExceptions: 'shift + e',
-	NavigateToMessagingQueues: 'shift + m',
-	ToggleSidebar: 'shift + b',
-	NavigateToHome: 'shift + h',
+	NavigateToServices: 'shift+s',
+	NavigateToTraces: 'shift+t',
+	NavigateToLogs: 'shift+l',
+	NavigateToDashboards: 'shift+d',
+	NavigateToAlerts: 'shift+a',
+	NavigateToExceptions: 'shift+e',
+	NavigateToMessagingQueues: 'shift+m',
+	ToggleSidebar: 'shift+b',
+	NavigateToHome: 'shift+h',
 };
 
 export const GlobalShortcutsDescription = {

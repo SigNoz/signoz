@@ -4,15 +4,13 @@ import updateUserPreference from 'api/v1/user/preferences/name/update';
 import { AxiosError } from 'axios';
 import ROUTES from 'constants/routes';
 import { USER_PREFERENCES } from 'constants/userPreferences';
-import { routeConfig } from 'container/SideNav/config';
-import { getQueryString } from 'container/SideNav/helper';
 import { useThemeMode } from 'hooks/useDarkMode';
+import { THEME_MODE } from 'hooks/useDarkMode/constant';
 import { useNotifications } from 'hooks/useNotifications';
 import { KBarProvider } from 'kbar';
 import history from 'lib/history';
 import { useCallback } from 'react';
 import { useMutation } from 'react-query';
-import { useLocation } from 'react-router-dom';
 import { UserPreference } from 'types/api/preferences/preference';
 import { showErrorNotification } from 'utils/error';
 
@@ -23,7 +21,6 @@ export function KBarCommandPaletteProvider({
 }: {
 	children: React.ReactNode;
 }): JSX.Element {
-	const { pathname, search } = useLocation();
 	const { notifications } = useNotifications();
 
 	const { setAutoSwitch, setTheme } = useThemeMode();
@@ -41,31 +38,9 @@ export function KBarCommandPaletteProvider({
 		}
 	};
 
-	const isCtrlMetaKey = (e: MouseEvent): boolean => e.ctrlKey || e.metaKey;
-
-	const openInNewTab = (path: string): void => {
-		window.open(path, '_blank');
-	};
-
-	const onClickHandler = useCallback(
-		(key: string, event: MouseEvent | null) => {
-			const params = new URLSearchParams(search);
-			const availableParams = routeConfig[key];
-
-			const queryString = getQueryString(availableParams || [], params);
-
-			if (pathname !== key) {
-				if (event && isCtrlMetaKey(event)) {
-					openInNewTab(`${key}?${queryString.join('&')}`);
-				} else {
-					history.push(`${key}?${queryString.join('&')}`, {
-						from: pathname,
-					});
-				}
-			}
-		},
-		[pathname, search],
-	);
+	const onClickHandler = useCallback((key: string): void => {
+		history.push(key);
+	}, []);
 
 	const { updateUserPreferenceInContext } = useAppContext();
 
@@ -121,7 +96,7 @@ export function KBarCommandPaletteProvider({
 			keywords: 'home',
 			section: 'Navigation',
 			perform: (): void => {
-				onClickHandler(ROUTES.HOME, null);
+				onClickHandler(ROUTES.HOME);
 			},
 		},
 		{
@@ -131,7 +106,7 @@ export function KBarCommandPaletteProvider({
 			keywords: 'dashboards',
 			section: 'Navigation',
 			perform: (): void => {
-				onClickHandler(ROUTES.ALL_DASHBOARD, null);
+				onClickHandler(ROUTES.ALL_DASHBOARD);
 			},
 		},
 		{
@@ -141,37 +116,37 @@ export function KBarCommandPaletteProvider({
 			keywords: 'services monitoring',
 			section: 'Navigation',
 			perform: (): void => {
-				onClickHandler(ROUTES.APPLICATION, null);
+				onClickHandler(ROUTES.APPLICATION);
 			},
 		},
 		{
 			id: 'traces',
 			name: 'Go to Traces',
 			shortcut: ['shift + t'],
-			keywords: 'traces distributed tracing',
+			keywords: 'traces',
 			section: 'Navigation',
 			perform: (): void => {
-				onClickHandler(ROUTES.TRACE, null);
+				onClickHandler(ROUTES.TRACES_EXPLORER);
 			},
 		},
 		{
 			id: 'logs',
 			name: 'Go to Logs',
 			shortcut: ['shift + l'],
-			keywords: 'logs log management',
+			keywords: 'logs',
 			section: 'Navigation',
 			perform: (): void => {
-				onClickHandler(ROUTES.LOGS, null);
+				onClickHandler(ROUTES.LOGS);
 			},
 		},
 		{
 			id: 'alerts',
 			name: 'Go to Alerts',
 			shortcut: ['shift + a'],
-			keywords: 'alerts notifications',
+			keywords: 'alerts',
 			section: 'Navigation',
 			perform: (): void => {
-				onClickHandler(ROUTES.LIST_ALL_ALERT, null);
+				onClickHandler(ROUTES.LIST_ALL_ALERT);
 			},
 		},
 		{
@@ -181,7 +156,7 @@ export function KBarCommandPaletteProvider({
 			keywords: 'exceptions errors',
 			section: 'Navigation',
 			perform: (): void => {
-				onClickHandler(ROUTES.ALL_ERROR, null);
+				onClickHandler(ROUTES.ALL_ERROR);
 			},
 		},
 		{
@@ -191,31 +166,23 @@ export function KBarCommandPaletteProvider({
 			keywords: 'messaging queues mq',
 			section: 'Navigation',
 			perform: (): void => {
-				onClickHandler(ROUTES.MESSAGING_QUEUES_OVERVIEW, null);
+				onClickHandler(ROUTES.MESSAGING_QUEUES_OVERVIEW);
 			},
 		},
 		{
-			id: 'settings',
-			name: 'Go to Settings',
-			keywords: 'settings',
-			section: 'Navigation',
-			perform: (): void => {
-				onClickHandler(ROUTES.SETTINGS, null);
-			},
-		},
-		{
-			id: 'account-settings',
+			id: 'my-settings',
 			name: 'Go to Account Settings',
 			keywords: 'account settings',
 			section: 'Navigation',
 			perform: (): void => {
-				onClickHandler(ROUTES.MY_SETTINGS, null);
+				console.log('my settings');
+				onClickHandler(ROUTES.MY_SETTINGS);
 			},
 		},
 		{
 			id: 'open-sidebar',
 			name: 'Open Sidebar',
-			keywords: 'sidebar navigation menu',
+			keywords: 'sidebar navigation menu expand',
 			section: 'Settings',
 			perform: (): void => {
 				handleOpenSidebar();
@@ -224,7 +191,7 @@ export function KBarCommandPaletteProvider({
 		{
 			id: 'collapse-sidebar',
 			name: 'Collapse Sidebar',
-			keywords: 'sidebar navigation menu',
+			keywords: 'sidebar navigation menu collapse',
 			section: 'Settings',
 			perform: (): void => {
 				handleCloseSidebar();
@@ -236,7 +203,7 @@ export function KBarCommandPaletteProvider({
 			keywords: 'theme dark mode appearance',
 			section: 'Settings',
 			perform: (): void => {
-				handleThemeChange('dark');
+				handleThemeChange(THEME_MODE.DARK);
 			},
 		},
 		{
@@ -245,7 +212,7 @@ export function KBarCommandPaletteProvider({
 			keywords: 'theme light mode appearance',
 			section: 'Settings',
 			perform: (): void => {
-				handleThemeChange('light');
+				handleThemeChange(THEME_MODE.LIGHT);
 			},
 		},
 		{
@@ -254,7 +221,7 @@ export function KBarCommandPaletteProvider({
 			keywords: 'system theme appearance',
 			section: 'Settings',
 			perform: (): void => {
-				handleThemeChange('auto');
+				handleThemeChange(THEME_MODE.SYSTEM);
 			},
 		},
 	];
