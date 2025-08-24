@@ -555,15 +555,17 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 							<div className="navigation-text">
 								{errorMessage || SOMETHING_WENT_WRONG}
 							</div>
-							<div className="navigation-icons">
-								<ReloadOutlined
-									twoToneColor={Color.BG_CHERRY_400}
-									onClick={(e): void => {
-										e.stopPropagation();
-										if (onRetry) onRetry();
-									}}
-								/>
-							</div>
+							{onRetry && (
+								<div className="navigation-icons">
+									<ReloadOutlined
+										twoToneColor={Color.BG_CHERRY_400}
+										onClick={(e): void => {
+											e.stopPropagation();
+											onRetry();
+										}}
+									/>
+								</div>
+							)}
 						</div>
 					)}
 
