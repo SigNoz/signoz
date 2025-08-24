@@ -30,7 +30,7 @@ import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import dayjs from 'dayjs';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
-import useThemeMode, { useIsDarkMode } from 'hooks/useDarkMode';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import useTabVisibility from 'hooks/useTabFocus';
@@ -176,7 +176,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	});
 
 	const isDarkMode = useIsDarkMode();
-	const { autoSwitch } = useThemeMode();
 
 	const { pathname } = useLocation();
 	const { t } = useTranslation(['titles']);
@@ -464,9 +463,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			document.body.classList.remove('darkMode');
 		}
 	}, [isDarkMode]);
-
-	console.log('isDarkMode', isDarkMode);
-	console.log('autoSwitch', autoSwitch);
 
 	const showAddCreditCardModal = useMemo(() => {
 		if (

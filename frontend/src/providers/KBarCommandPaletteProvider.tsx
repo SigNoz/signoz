@@ -1,4 +1,3 @@
-import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
@@ -7,11 +6,11 @@ import ROUTES from 'constants/routes';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
-import useThemeMode, { useIsDarkMode } from 'hooks/useDarkMode';
+import { useThemeMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import { KBarProvider } from 'kbar';
 import history from 'lib/history';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { useMutation } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { UserPreference } from 'types/api/preferences/preference';
@@ -26,16 +25,10 @@ export function KBarCommandPaletteProvider({
 }): JSX.Element {
 	const { pathname, search } = useLocation();
 	const { notifications } = useNotifications();
-	const { userPreferences } = useAppContext();
 
-	const { toggleTheme, setAutoSwitch } = useThemeMode();
-
-	const isDarkMode = useIsDarkMode();
+	const { setAutoSwitch, setTheme } = useThemeMode();
 
 	const handleThemeChange = (value: string): void => {
-		console.log('value', value);
-		console.log('isDarkMode', isDarkMode);
-
 		logEvent('Account Settings: Theme Changed', {
 			theme: value,
 		});
@@ -44,12 +37,7 @@ export function KBarCommandPaletteProvider({
 			setAutoSwitch(true);
 		} else {
 			setAutoSwitch(false);
-			// Only toggle if the current theme is different from the target
-			const targetIsDark = value === 'dark';
-
-			if (targetIsDark !== isDarkMode) {
-				toggleTheme();
-			}
+			setTheme(value);
 		}
 	};
 
@@ -90,70 +78,57 @@ export function KBarCommandPaletteProvider({
 		},
 	);
 
-	const sideNavPinnedPreference = userPreferences?.find(
-		(preference) => preference.name === USER_PREFERENCES.SIDENAV_PINNED,
-	)?.value as boolean;
-
-	// Add loading state to prevent layout shift during initial load
-	const [isSidebarLoaded, setIsSidebarLoaded] = useState(false);
-
-	// Get sidebar state from localStorage as fallback until preferences are loaded
-	const getSidebarStateFromLocalStorage = useCallback((): boolean => {
-		try {
-			const storedValue = getLocalStorageApi(USER_PREFERENCES.SIDENAV_PINNED);
-			return storedValue === 'true';
-		} catch {
-			return false;
-		}
-	}, []);
-
-	// Set sidebar as loaded after user preferences are fetched
-	useEffect(() => {
-		if (userPreferences !== null) {
-			setIsSidebarLoaded(true);
-		}
-	}, [userPreferences]);
-
-	// Use localStorage value as fallback until preferences are loaded
-	const isSideNavPinned = isSidebarLoaded
-		? sideNavPinnedPreference
-		: getSidebarStateFromLocalStorage();
-
-	const handleToggleSidebar = useCallback((): void => {
-		const newState = !isSideNavPinned;
-
-		logEvent('Global Shortcut: Sidebar Toggle', {
-			previousState: isSideNavPinned,
-			newState,
-		});
-
-		// Save to localStorage immediately for instant feedback
-		setLocalStorageApi(USER_PREFERENCES.SIDENAV_PINNED, newState.toString());
+	const handleOpenSidebar = useCallback((): void => {
+		setLocalStorageApi(USER_PREFERENCES.SIDENAV_PINNED, 'true');
 
 		// Update the context immediately
 		const save = {
 			name: USER_PREFERENCES.SIDENAV_PINNED,
-			value: newState,
+			value: true,
 		};
+
 		updateUserPreferenceInContext(save as UserPreference);
 
 		// Make the API call in the background
 		updateUserPreferenceMutation({
 			name: USER_PREFERENCES.SIDENAV_PINNED,
-			value: newState,
+			value: true,
 		});
-	}, [
-		isSideNavPinned,
-		updateUserPreferenceInContext,
-		updateUserPreferenceMutation,
-	]);
+	}, [updateUserPreferenceInContext, updateUserPreferenceMutation]);
 
+	const handleCloseSidebar = useCallback((): void => {
+		setLocalStorageApi(USER_PREFERENCES.SIDENAV_PINNED, 'false');
+
+		// Update the context immediately
+		const save = {
+			name: USER_PREFERENCES.SIDENAV_PINNED,
+			value: false,
+		};
+
+		updateUserPreferenceInContext(save as UserPreference);
+
+		// Make the API call in the background
+		updateUserPreferenceMutation({
+			name: USER_PREFERENCES.SIDENAV_PINNED,
+			value: false,
+		});
+	}, [updateUserPreferenceInContext, updateUserPreferenceMutation]);
 	const kbarActions = [
+		{
+			id: 'home',
+			name: 'Go to Home',
+			shortcut: ['shift + h'],
+			keywords: 'home',
+			section: 'Navigation',
+			perform: (): void => {
+				onClickHandler(ROUTES.HOME, null);
+			},
+		},
 		{
 			id: 'dashboards',
 			name: 'Go to Dashboards',
 			shortcut: ['shift + d'],
-			keywords: 'dashboards metrics visualization',
+			keywords: 'dashboards',
 			section: 'Navigation',
 			perform: (): void => {
 				onClickHandler(ROUTES.ALL_DASHBOARD, null);
@@ -220,13 +195,39 @@ export function KBarCommandPaletteProvider({
 			},
 		},
 		{
-			id: 'toggle-sidebar',
-			name: 'Toggle Sidebar',
-			shortcut: ['shift + b'],
+			id: 'settings',
+			name: 'Go to Settings',
+			keywords: 'settings',
+			section: 'Navigation',
+			perform: (): void => {
+				onClickHandler(ROUTES.SETTINGS, null);
+			},
+		},
+		{
+			id: 'account-settings',
+			name: 'Go to Account Settings',
+			keywords: 'account settings',
+			section: 'Navigation',
+			perform: (): void => {
+				onClickHandler(ROUTES.MY_SETTINGS, null);
+			},
+		},
+		{
+			id: 'open-sidebar',
+			name: 'Open Sidebar',
 			keywords: 'sidebar navigation menu',
 			section: 'Settings',
 			perform: (): void => {
-				handleToggleSidebar();
+				handleOpenSidebar();
+			},
+		},
+		{
+			id: 'collapse-sidebar',
+			name: 'Collapse Sidebar',
+			keywords: 'sidebar navigation menu',
+			section: 'Settings',
+			perform: (): void => {
+				handleCloseSidebar();
 			},
 		},
 		{
