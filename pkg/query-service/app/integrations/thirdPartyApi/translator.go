@@ -1,60 +1,71 @@
 package thirdPartyApi
 
 import (
+	"fmt"
 	"net"
 	"time"
 
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 const (
-	urlPathKey    = "http.url"
-	serverNameKey = "net.peer.name"
+	urlPathKeyLegacy    = "http.url"
+	serverNameKeyLegacy = "net.peer.name"
 
-	urlPathKeyNew    = "url.full"
-	serverNameKeyNew = "server.address"
+	urlPathKeyCurrent    = "url.full"
+	serverNameKeyCurrent = "server.address"
 )
 
 var defaultStepInterval = 60 * time.Second
 
-func createDualSemconvGroupByKeysServerKey() []qbtypes.GroupByKey {
-	return []qbtypes.GroupByKey{
-		{
-			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-				Name:          serverNameKeyNew,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				Signal:        telemetrytypes.SignalTraces,
-			},
-		},
-		{
-			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-				Name:          serverNameKey,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				Signal:        telemetrytypes.SignalTraces,
-			},
-		},
-	}
+// SemconvFieldMapping defines the mapping between legacy and current semconv
+type SemconvFieldMapping struct {
+	LegacyField  string
+	CurrentField string
+	FieldType    telemetrytypes.FieldDataType
+	Context      telemetrytypes.FieldContext
 }
 
-func createDualSemconvGroupByKeysUrlPathKey() []qbtypes.GroupByKey {
+var semconvMappings = []SemconvFieldMapping{
+	{
+		LegacyField:  urlPathKeyLegacy,
+		CurrentField: urlPathKeyCurrent,
+		FieldType:    telemetrytypes.FieldDataTypeString,
+		Context:      telemetrytypes.FieldContextAttribute,
+	},
+	{
+		LegacyField:  serverNameKeyLegacy,
+		CurrentField: serverNameKeyCurrent,
+		FieldType:    telemetrytypes.FieldDataTypeString,
+		Context:      telemetrytypes.FieldContextAttribute,
+	},
+}
+
+// CreateDualSemconvGroupByKeys creates group by keys supporting both semconv versions
+func CreateDualSemconvGroupByKeysServer() []qbtypes.GroupByKey {
+	return createDualSemconvGroupBy(semconvMappings[1]) // server name mapping
+}
+
+func CreateDualSemconvGroupByKeysUrl() []qbtypes.GroupByKey {
+	return createDualSemconvGroupBy(semconvMappings[0]) // url path mapping
+}
+
+func createDualSemconvGroupBy(mapping SemconvFieldMapping) []qbtypes.GroupByKey {
 	return []qbtypes.GroupByKey{
 		{
 			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-				Name:          urlPathKeyNew,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-				FieldContext:  telemetrytypes.FieldContextAttribute,
+				Name:          mapping.CurrentField,
+				FieldDataType: mapping.FieldType,
+				FieldContext:  mapping.Context,
 				Signal:        telemetrytypes.SignalTraces,
 			},
 		},
 		{
 			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-				Name:          urlPathKey,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-				FieldContext:  telemetrytypes.FieldContextAttribute,
+				Name:          mapping.LegacyField,
+				FieldDataType: mapping.FieldType,
+				FieldContext:  mapping.Context,
 				Signal:        telemetrytypes.SignalTraces,
 			},
 		},
@@ -76,9 +87,9 @@ func MergeSemconvColumns(result *qbtypes.QueryRangeResponse) *qbtypes.QueryRange
 		netPeerIdx := -1
 
 		for i, col := range scalarData.Columns {
-			if col.Name == serverNameKeyNew {
+			if col.Name == serverNameKeyCurrent {
 				serverAddrIdx = i
-			} else if col.Name == serverNameKey {
+			} else if col.Name == serverNameKeyLegacy {
 				netPeerIdx = i
 			}
 		}
@@ -123,7 +134,7 @@ func MergeSemconvColumns(result *qbtypes.QueryRangeResponse) *qbtypes.QueryRange
 			if i == serverAddrIdx {
 				newCol := &qbtypes.ColumnDescriptor{
 					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-						Name:          serverNameKey,
+						Name:          serverNameKeyLegacy,
 						FieldDataType: col.FieldDataType,
 						FieldContext:  col.FieldContext,
 						Signal:        col.Signal,
@@ -210,7 +221,7 @@ func FilterResponse(results []*qbtypes.QueryRangeResponse) []*qbtypes.QueryRange
 // shouldIncludeSeries checks if a series should be included based on IP filtering
 func shouldIncludeSeries(series *qbtypes.TimeSeries) bool {
 	for _, label := range series.Labels {
-		if label.Key.Name == serverNameKey || label.Key.Name == serverNameKeyNew {
+		if label.Key.Name == serverNameKeyLegacy || label.Key.Name == serverNameKeyCurrent {
 			if strVal, ok := label.Value.(string); ok {
 				if net.ParseIP(strVal) != nil {
 					return false // Skip IP addresses
@@ -223,7 +234,7 @@ func shouldIncludeSeries(series *qbtypes.TimeSeries) bool {
 
 func shouldIncludeRow(row *qbtypes.RawRow) bool {
 	if row.Data != nil {
-		for _, key := range []string{serverNameKey, serverNameKeyNew} {
+		for _, key := range []string{serverNameKeyLegacy, serverNameKeyCurrent} {
 			if domainVal, ok := row.Data[key]; ok {
 				if domainStr, ok := domainVal.(string); ok {
 					if net.ParseIP(domainStr) != nil {
@@ -236,334 +247,7 @@ func shouldIncludeRow(row *qbtypes.RawRow) bool {
 	return true
 }
 
-// convertV3FiltersToV5 converts v3 FilterSet to v5 Filter
-// TODO : Add filters
-func convertV3FiltersToV5(v3Filters v3.FilterSet) *qbtypes.Filter {
-	if len(v3Filters.Items) == 0 {
-		return nil
-	}
-
-	return &qbtypes.Filter{
-		Expression: "",
-	}
-}
-
-// convertV3GroupByToV5 converts v3 AttributeKey slice to v5 GroupByKey slice
-func convertV3GroupByToV5(v3GroupBy []v3.AttributeKey) []qbtypes.GroupByKey {
-	if len(v3GroupBy) == 0 {
-		return nil
-	}
-
-	v5GroupBy := make([]qbtypes.GroupByKey, len(v3GroupBy))
-	for i, attr := range v3GroupBy {
-		v5GroupBy[i] = qbtypes.GroupByKey{
-			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-				Name:          attr.Key,
-				FieldDataType: convertV3DataTypeToV5(attr.DataType),
-				FieldContext:  convertV3TypeToV5(attr.Type),
-				Signal:        telemetrytypes.SignalTraces,
-			},
-		}
-	}
-
-	return v5GroupBy
-}
-
-// convertV3DataTypeToV5 converts v3 data type to v5 field data type
-func convertV3DataTypeToV5(dataType v3.AttributeKeyDataType) telemetrytypes.FieldDataType {
-	switch dataType {
-	case v3.AttributeKeyDataTypeString:
-		return telemetrytypes.FieldDataTypeString
-	case v3.AttributeKeyDataTypeFloat64:
-		return telemetrytypes.FieldDataTypeFloat64
-	case v3.AttributeKeyDataTypeInt64:
-		return telemetrytypes.FieldDataTypeInt64
-	case v3.AttributeKeyDataTypeBool:
-		return telemetrytypes.FieldDataTypeBool
-	default:
-		return telemetrytypes.FieldDataTypeString
-	}
-}
-
-// convertV3TypeToV5 converts v3 attribute type to v5 field context
-func convertV3TypeToV5(attrType v3.AttributeKeyType) telemetrytypes.FieldContext {
-	switch attrType {
-	case v3.AttributeKeyTypeTag:
-		return telemetrytypes.FieldContextAttribute
-	case v3.AttributeKeyTypeResource:
-		return telemetrytypes.FieldContextResource
-	default:
-		return telemetrytypes.FieldContextAttribute
-	}
-}
-
-// BuildDomainList creates a v5 query range request for domain listing
-func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*qbtypes.QueryRangeRequest, error) {
-	additionalFilters := convertV3FiltersToV5(thirdPartyApis.Filters)
-	additionalGroupBy := convertV3GroupByToV5(thirdPartyApis.GroupBy)
-
-	// Build the trace aggregation query for endpoints
-	endpointsQuery := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Name:         "endpoints",
-		Signal:       telemetrytypes.SignalTraces,
-		StepInterval: qbtypes.Step{Duration: defaultStepInterval},
-		Aggregations: []qbtypes.TraceAggregation{
-			{
-				Expression: "count_distinct(http.url)",
-			},
-		},
-		Filter:  buildBaseFilter(additionalFilters),
-		GroupBy: mergeGroupBy(createDualSemconvGroupByKeysServerKey(), additionalGroupBy),
-	}
-
-	// Build the trace aggregation query for last seen
-	lastSeenQuery := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Name:         "lastseen",
-		Signal:       telemetrytypes.SignalTraces,
-		StepInterval: qbtypes.Step{Duration: defaultStepInterval},
-		Aggregations: []qbtypes.TraceAggregation{
-			{
-				Expression: "max(timestamp)",
-			},
-		},
-		Filter:  buildBaseFilter(additionalFilters),
-		GroupBy: mergeGroupBy(createDualSemconvGroupByKeysServerKey(), additionalGroupBy),
-	}
-
-	// Build the trace aggregation query for RPS
-	rpsQuery := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Name:         "rps",
-		Signal:       telemetrytypes.SignalTraces,
-		StepInterval: qbtypes.Step{Duration: defaultStepInterval},
-		Aggregations: []qbtypes.TraceAggregation{
-			{
-				Expression: "rate()",
-			},
-		},
-		Filter:  buildBaseFilter(additionalFilters),
-		GroupBy: mergeGroupBy(createDualSemconvGroupByKeysServerKey(), additionalGroupBy),
-	}
-
-	// Build the trace aggregation query for errors
-	errorQuery := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Name:         "error",
-		Signal:       telemetrytypes.SignalTraces,
-		StepInterval: qbtypes.Step{Duration: defaultStepInterval},
-		Aggregations: []qbtypes.TraceAggregation{
-			{
-				Expression: "count()",
-			},
-		},
-		Filter:  buildErrorFilter(additionalFilters),
-		GroupBy: mergeGroupBy(createDualSemconvGroupByKeysServerKey(), additionalGroupBy),
-	}
-
-	// Build the trace aggregation query for total spans
-	totalSpanQuery := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Name:         "total_span",
-		Signal:       telemetrytypes.SignalTraces,
-		StepInterval: qbtypes.Step{Duration: defaultStepInterval},
-		Aggregations: []qbtypes.TraceAggregation{
-			{
-				Expression: "count()",
-			},
-		},
-		Filter:  buildBaseFilter(additionalFilters),
-		GroupBy: mergeGroupBy(createDualSemconvGroupByKeysServerKey(), additionalGroupBy),
-	}
-
-	// Build the trace aggregation query for P99 latency
-	p99Query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Name:         "p99",
-		Signal:       telemetrytypes.SignalTraces,
-		StepInterval: qbtypes.Step{Duration: defaultStepInterval},
-		Aggregations: []qbtypes.TraceAggregation{
-			{
-				Expression: "p99(duration_nano)",
-			},
-		},
-		Filter:  buildBaseFilter(additionalFilters),
-		GroupBy: mergeGroupBy(createDualSemconvGroupByKeysServerKey(), additionalGroupBy),
-	}
-
-	// Build the formula query for error rate
-	errorRateFormula := qbtypes.QueryBuilderFormula{
-		Name:       "error_rate",
-		Expression: "(error/total_span)*100",
-	}
-
-	// Create the composite query
-	compositeQuery := qbtypes.CompositeQuery{
-		Queries: []qbtypes.QueryEnvelope{
-			{
-				Type: qbtypes.QueryTypeBuilder,
-				Spec: endpointsQuery,
-			},
-			{
-				Type: qbtypes.QueryTypeBuilder,
-				Spec: lastSeenQuery,
-			},
-			{
-				Type: qbtypes.QueryTypeBuilder,
-				Spec: rpsQuery,
-			},
-			{
-				Type: qbtypes.QueryTypeBuilder,
-				Spec: errorQuery,
-			},
-			{
-				Type: qbtypes.QueryTypeBuilder,
-				Spec: totalSpanQuery,
-			},
-			{
-				Type: qbtypes.QueryTypeBuilder,
-				Spec: p99Query,
-			},
-			{
-				Type: qbtypes.QueryTypeFormula,
-				Spec: errorRateFormula,
-			},
-		},
-	}
-
-	queryRangeRequest := &qbtypes.QueryRangeRequest{
-		SchemaVersion:  "v5",
-		Start:          uint64(thirdPartyApis.Start),
-		End:            uint64(thirdPartyApis.End),
-		RequestType:    qbtypes.RequestTypeScalar,
-		CompositeQuery: compositeQuery,
-		FormatOptions: &qbtypes.FormatOptions{
-			FormatTableResultForUI: true,
-		},
-	}
-
-	return queryRangeRequest, nil
-}
-
-// BuildDomainInfo creates a v5 query range request for domain information
-func BuildDomainInfo(thirdPartyApis *ThirdPartyApis) (*qbtypes.QueryRangeRequest, error) {
-	additionalFilters := convertV3FiltersToV5(thirdPartyApis.Filters)
-	additionalGroupBy := convertV3GroupByToV5(thirdPartyApis.GroupBy)
-
-	// Build the trace aggregation query for endpoints
-	endpointsQuery := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Name:         "endpoints",
-		Signal:       telemetrytypes.SignalTraces,
-		StepInterval: qbtypes.Step{Duration: defaultStepInterval},
-		Aggregations: []qbtypes.TraceAggregation{
-			{
-				Expression: "rate(http.url)",
-			},
-		},
-		Filter:  buildBaseFilter(additionalFilters),
-		GroupBy: mergeGroupBy(createDualSemconvGroupByKeysUrlPathKey(), additionalGroupBy),
-	}
-
-	// Build the trace aggregation query for P99 latency
-	p99Query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Name:         "p99",
-		Signal:       telemetrytypes.SignalTraces,
-		StepInterval: qbtypes.Step{Duration: defaultStepInterval},
-		Aggregations: []qbtypes.TraceAggregation{
-			{
-				Expression: "p99(duration_nano)",
-			},
-		},
-		Filter:  buildBaseFilter(additionalFilters),
-		GroupBy: mergeGroupBy([]qbtypes.GroupByKey{}, additionalGroupBy),
-	}
-
-	// Build the trace aggregation query for error rate
-	errorRateQuery := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Name:         "error_rate",
-		Signal:       telemetrytypes.SignalTraces,
-		StepInterval: qbtypes.Step{Duration: defaultStepInterval},
-		Aggregations: []qbtypes.TraceAggregation{
-			{
-				Expression: "rate()",
-			},
-		},
-		Filter:  buildBaseFilter(additionalFilters),
-		GroupBy: mergeGroupBy([]qbtypes.GroupByKey{}, additionalGroupBy),
-	}
-
-	// Build the trace aggregation query for last seen
-	lastSeenQuery := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Name:         "lastseen",
-		Signal:       telemetrytypes.SignalTraces,
-		StepInterval: qbtypes.Step{Duration: defaultStepInterval},
-		Aggregations: []qbtypes.TraceAggregation{
-			{
-				Expression: "max(timestamp)",
-			},
-		},
-		Filter:  buildBaseFilter(additionalFilters),
-		GroupBy: mergeGroupBy([]qbtypes.GroupByKey{}, additionalGroupBy),
-	}
-
-	// Create the composite query
-	compositeQuery := qbtypes.CompositeQuery{
-		Queries: []qbtypes.QueryEnvelope{
-			{
-				Type: qbtypes.QueryTypeBuilder,
-				Spec: endpointsQuery,
-			},
-			{
-				Type: qbtypes.QueryTypeBuilder,
-				Spec: p99Query,
-			},
-			{
-				Type: qbtypes.QueryTypeBuilder,
-				Spec: errorRateQuery,
-			},
-			{
-				Type: qbtypes.QueryTypeBuilder,
-				Spec: lastSeenQuery,
-			},
-		},
-	}
-
-	queryRangeRequest := &qbtypes.QueryRangeRequest{
-		SchemaVersion:  "v5",
-		Start:          uint64(thirdPartyApis.Start),
-		End:            uint64(thirdPartyApis.End),
-		RequestType:    qbtypes.RequestTypeScalar,
-		CompositeQuery: compositeQuery,
-		FormatOptions: &qbtypes.FormatOptions{
-			FormatTableResultForUI: true,
-		},
-	}
-
-	return queryRangeRequest, nil
-}
-
-// buildBaseFilter creates the base filter for client spans with http.url
-func buildBaseFilter(additionalFilters *qbtypes.Filter) *qbtypes.Filter {
-	baseExpression := "(http.url EXISTS OR url.full EXISTS) AND kind_string = 'Client'"
-
-	if additionalFilters != nil && additionalFilters.Expression != "" {
-		baseExpression = "(" + baseExpression + ") AND (" + additionalFilters.Expression + ")"
-	}
-
-	return &qbtypes.Filter{
-		Expression: baseExpression,
-	}
-}
-
-// buildErrorFilter creates the filter for error spans
-func buildErrorFilter(additionalFilters *qbtypes.Filter) *qbtypes.Filter {
-	errorExpression := "has_error = true AND (http.url EXISTS OR url.full EXISTS) AND kind_string = 'Client'"
-
-	if additionalFilters != nil && additionalFilters.Expression != "" {
-		errorExpression = "(" + errorExpression + ") AND (" + additionalFilters.Expression + ")"
-	}
-
-	return &qbtypes.Filter{
-		Expression: errorExpression,
-	}
-}
-
-// mergeGroupBy merges base group by keys with additional ones
+// Utility functions
 func mergeGroupBy(baseGroupBy []qbtypes.GroupByKey, additionalGroupBy []qbtypes.GroupByKey) []qbtypes.GroupByKey {
 	if len(additionalGroupBy) == 0 {
 		return baseGroupBy
@@ -574,4 +258,257 @@ func mergeGroupBy(baseGroupBy []qbtypes.GroupByKey, additionalGroupBy []qbtypes.
 	result = append(result, additionalGroupBy...)
 
 	return result
+}
+
+// BuildDomainList creates a v5 query range request for domain listing
+func BuildDomainList(req *ThirdPartyApiRequest) (*qbtypes.QueryRangeRequest, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Build all the required queries
+	queries := []qbtypes.QueryEnvelope{
+		buildEndpointsQuery(req),
+		buildLastSeenQuery(req),
+		buildRpsQuery(req),
+		buildErrorQuery(req),
+		buildTotalSpanQuery(req),
+		buildP99Query(req),
+		buildErrorRateFormula(),
+	}
+
+	return &qbtypes.QueryRangeRequest{
+		SchemaVersion: "v5",
+		Start:         req.Start,
+		End:           req.End,
+		RequestType:   qbtypes.RequestTypeScalar,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: queries,
+		},
+		FormatOptions: &qbtypes.FormatOptions{
+			FormatTableResultForUI: true,
+		},
+	}, nil
+}
+
+// BuildDomainInfo creates a v5 query range request for domain information
+func BuildDomainInfo(req *ThirdPartyApiRequest) (*qbtypes.QueryRangeRequest, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	queries := []qbtypes.QueryEnvelope{
+		buildEndpointsInfoQuery(req),
+		buildP99InfoQuery(req),
+		buildErrorRateInfoQuery(req),
+		buildLastSeenInfoQuery(req),
+	}
+
+	return &qbtypes.QueryRangeRequest{
+		SchemaVersion: "v5",
+		Start:         req.Start,
+		End:           req.End,
+		RequestType:   qbtypes.RequestTypeScalar,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: queries,
+		},
+		FormatOptions: &qbtypes.FormatOptions{
+			FormatTableResultForUI: true,
+		},
+	}, nil
+}
+
+// Query builders for domain list
+func buildEndpointsQuery(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+	return qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeBuilder,
+		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Name:         "endpoints",
+			Signal:       telemetrytypes.SignalTraces,
+			StepInterval: qbtypes.Step{Duration: defaultStepInterval},
+			Aggregations: []qbtypes.TraceAggregation{
+				{Expression: "count_distinct(http.url)"},
+			},
+			Filter:  buildBaseFilter(req.Filter),
+			GroupBy: mergeGroupBy(CreateDualSemconvGroupByKeysServer(), req.GroupBy),
+		},
+	}
+}
+
+func buildLastSeenQuery(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+	return qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeBuilder,
+		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Name:         "lastseen",
+			Signal:       telemetrytypes.SignalTraces,
+			StepInterval: qbtypes.Step{Duration: defaultStepInterval},
+			Aggregations: []qbtypes.TraceAggregation{
+				{Expression: "max(timestamp)"},
+			},
+			Filter:  buildBaseFilter(req.Filter),
+			GroupBy: mergeGroupBy(CreateDualSemconvGroupByKeysServer(), req.GroupBy),
+		},
+	}
+}
+
+func buildRpsQuery(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+	return qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeBuilder,
+		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Name:         "rps",
+			Signal:       telemetrytypes.SignalTraces,
+			StepInterval: qbtypes.Step{Duration: defaultStepInterval},
+			Aggregations: []qbtypes.TraceAggregation{
+				{Expression: "rate()"},
+			},
+			Filter:  buildBaseFilter(req.Filter),
+			GroupBy: mergeGroupBy(CreateDualSemconvGroupByKeysServer(), req.GroupBy),
+		},
+	}
+}
+
+func buildErrorQuery(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+	return qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeBuilder,
+		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Name:         "error",
+			Signal:       telemetrytypes.SignalTraces,
+			StepInterval: qbtypes.Step{Duration: defaultStepInterval},
+			Aggregations: []qbtypes.TraceAggregation{
+				{Expression: "count()"},
+			},
+			Filter:  buildErrorFilter(req.Filter),
+			GroupBy: mergeGroupBy(CreateDualSemconvGroupByKeysServer(), req.GroupBy),
+		},
+	}
+}
+
+func buildTotalSpanQuery(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+	return qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeBuilder,
+		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Name:         "total_span",
+			Signal:       telemetrytypes.SignalTraces,
+			StepInterval: qbtypes.Step{Duration: defaultStepInterval},
+			Aggregations: []qbtypes.TraceAggregation{
+				{Expression: "count()"},
+			},
+			Filter:  buildBaseFilter(req.Filter),
+			GroupBy: mergeGroupBy(CreateDualSemconvGroupByKeysServer(), req.GroupBy),
+		},
+	}
+}
+
+func buildP99Query(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+	return qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeBuilder,
+		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Name:         "p99",
+			Signal:       telemetrytypes.SignalTraces,
+			StepInterval: qbtypes.Step{Duration: defaultStepInterval},
+			Aggregations: []qbtypes.TraceAggregation{
+				{Expression: "p99(duration_nano)"},
+			},
+			Filter:  buildBaseFilter(req.Filter),
+			GroupBy: mergeGroupBy(CreateDualSemconvGroupByKeysServer(), req.GroupBy),
+		},
+	}
+}
+
+func buildErrorRateFormula() qbtypes.QueryEnvelope {
+	return qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeFormula,
+		Spec: qbtypes.QueryBuilderFormula{
+			Name:       "error_rate",
+			Expression: "(error/total_span)*100",
+		},
+	}
+}
+
+// Query builders for domain info
+func buildEndpointsInfoQuery(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+	return qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeBuilder,
+		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Name:         "endpoints",
+			Signal:       telemetrytypes.SignalTraces,
+			StepInterval: qbtypes.Step{Duration: defaultStepInterval},
+			Aggregations: []qbtypes.TraceAggregation{
+				{Expression: "rate(http.url)"},
+			},
+			Filter:  buildBaseFilter(req.Filter),
+			GroupBy: mergeGroupBy(CreateDualSemconvGroupByKeysUrl(), req.GroupBy),
+		},
+	}
+}
+
+func buildP99InfoQuery(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+	return qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeBuilder,
+		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Name:         "p99",
+			Signal:       telemetrytypes.SignalTraces,
+			StepInterval: qbtypes.Step{Duration: defaultStepInterval},
+			Aggregations: []qbtypes.TraceAggregation{
+				{Expression: "p99(duration_nano)"},
+			},
+			Filter:  buildBaseFilter(req.Filter),
+			GroupBy: req.GroupBy,
+		},
+	}
+}
+
+func buildErrorRateInfoQuery(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+	return qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeBuilder,
+		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Name:         "error_rate",
+			Signal:       telemetrytypes.SignalTraces,
+			StepInterval: qbtypes.Step{Duration: defaultStepInterval},
+			Aggregations: []qbtypes.TraceAggregation{
+				{Expression: "rate()"},
+			},
+			Filter:  buildBaseFilter(req.Filter),
+			GroupBy: req.GroupBy,
+		},
+	}
+}
+
+func buildLastSeenInfoQuery(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+	return qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeBuilder,
+		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Name:         "lastseen",
+			Signal:       telemetrytypes.SignalTraces,
+			StepInterval: qbtypes.Step{Duration: defaultStepInterval},
+			Aggregations: []qbtypes.TraceAggregation{
+				{Expression: "max(timestamp)"},
+			},
+			Filter:  buildBaseFilter(req.Filter),
+			GroupBy: req.GroupBy,
+		},
+	}
+}
+
+// Filter builders with dual semconv support
+func buildBaseFilter(additionalFilter *qbtypes.Filter) *qbtypes.Filter {
+	baseExpression := fmt.Sprintf("(%s EXISTS OR %s EXISTS) AND kind_string = 'Client'",
+		urlPathKeyLegacy, urlPathKeyCurrent)
+
+	if additionalFilter != nil && additionalFilter.Expression != "" {
+		baseExpression = fmt.Sprintf("(%s) AND (%s)", baseExpression, additionalFilter.Expression)
+	}
+
+	return &qbtypes.Filter{Expression: baseExpression}
+}
+
+func buildErrorFilter(additionalFilter *qbtypes.Filter) *qbtypes.Filter {
+	errorExpression := fmt.Sprintf("has_error = true AND (%s EXISTS OR %s EXISTS) AND kind_string = 'Client'",
+		urlPathKeyLegacy, urlPathKeyCurrent)
+
+	if additionalFilter != nil && additionalFilter.Expression != "" {
+		errorExpression = fmt.Sprintf("(%s) AND (%s)", errorExpression, additionalFilter.Expression)
+	}
+
+	return &qbtypes.Filter{Expression: errorExpression}
 }

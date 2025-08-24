@@ -981,10 +981,15 @@ func ParseQueueBody(r *http.Request) (*queues2.QueueListRequest, *model.ApiError
 }
 
 // ParseRequestBody for third party APIs
-func ParseRequestBody(r *http.Request) (*thirdPartyApi.ThirdPartyApis, *model.ApiError) {
-	thirdPartApis := new(thirdPartyApi.ThirdPartyApis)
-	if err := json.NewDecoder(r.Body).Decode(thirdPartApis); err != nil {
+func ParseRequestBody(r *http.Request) (*thirdPartyApi.ThirdPartyApiRequest, *model.ApiError) {
+	req := new(thirdPartyApi.ThirdPartyApiRequest)
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
-	return thirdPartApis, nil
+	
+	if err := req.Validate(); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
+	
+	return req, nil
 }
