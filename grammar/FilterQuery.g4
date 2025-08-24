@@ -57,7 +57,7 @@ comparison
     | key GE value
 
     | key (LIKE | ILIKE) value
-    | key (NOT_LIKE | NOT_ILIKE) value
+    | key NOT (LIKE | ILIKE) value
 
     | key BETWEEN value AND value
     | key NOT BETWEEN value AND value
@@ -167,9 +167,7 @@ GE          : '>='  ;
 
 // Operators that are made of multiple keywords
 LIKE        : [Ll][Ii][Kk][Ee] ;
-NOT_LIKE    : [Nn][Oo][Tt] [ \t]+ [Ll][Ii][Kk][Ee] ;
 ILIKE       : [Ii][Ll][Ii][Kk][Ee] ;
-NOT_ILIKE   : [Nn][Oo][Tt] [ \t]+ [Ii][Ll][Ii][Kk][Ee] ;
 BETWEEN     : [Bb][Ee][Tt][Ww][Ee][Ee][Nn] ;
 EXISTS      : [Ee][Xx][Ii][Ss][Tt][Ss]? ;
 REGEXP      : [Rr][Ee][Gg][Ee][Xx][Pp] ;

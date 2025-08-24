@@ -511,12 +511,14 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			op = qbtypes.FilterOperatorGreaterThanOrEq
 		} else if ctx.LIKE() != nil {
 			op = qbtypes.FilterOperatorLike
+			if ctx.NOT() != nil {
+				op = qbtypes.FilterOperatorNotLike
+			}
 		} else if ctx.ILIKE() != nil {
 			op = qbtypes.FilterOperatorILike
-		} else if ctx.NOT_LIKE() != nil {
-			op = qbtypes.FilterOperatorNotLike
-		} else if ctx.NOT_ILIKE() != nil {
-			op = qbtypes.FilterOperatorNotILike
+			if ctx.NOT() != nil {
+				op = qbtypes.FilterOperatorNotILike
+			}
 		} else if ctx.REGEXP() != nil {
 			op = qbtypes.FilterOperatorRegexp
 			if ctx.NOT() != nil {
@@ -641,8 +643,19 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		var fieldName string
 
 		if functionName == "hasToken" {
+
+			if key.Name != "body" {
+				if v.mainErrorURL == "" {
+					v.mainErrorURL = "https://signoz.io/docs/userguide/functions-reference/#hastoken-function"
+				}
+				v.errors = append(v.errors, fmt.Sprintf("function `%s` only supports body field as first parameter", functionName))
+			}
+
 			// this will only work with string.
 			if _, ok := value[0].(string); !ok {
+				if v.mainErrorURL == "" {
+					v.mainErrorURL = "https://signoz.io/docs/userguide/functions-reference/#hastoken-function"
+				}
 				v.errors = append(v.errors, fmt.Sprintf("function `%s` expects value parameter to be a string", functionName))
 				return ""
 			}
