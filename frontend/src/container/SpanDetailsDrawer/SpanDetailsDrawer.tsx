@@ -8,7 +8,14 @@ import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { Anvil, Bookmark, Link2, PanelRight, Search } from 'lucide-react';
+import {
+	Anvil,
+	Bookmark,
+	Link2,
+	PanelRight,
+	Search,
+	Server,
+} from 'lucide-react';
 import { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { formatEpochTimestamp } from 'utils/timeUtils';
@@ -242,16 +249,25 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 										// 	),
 										// 	value: RelatedSignalsViews.METRICS,
 										// },
-										// {
-										// 	label: (
-										// 		<div className="view-title">
-										// 			<Server size={14} />
-										// 			Infra
-										// 		</div>
-										// 	),
-										// 	value: RelatedSignalsViews.INFRA,
-										// },
-									]}
+									].concat(
+										// Only show Infra option if span has infrastructure metadata
+										selectedSpan?.tagMap?.['k8s.cluster.name'] ||
+											selectedSpan?.tagMap?.['k8s.pod.name'] ||
+											selectedSpan?.tagMap?.['k8s.node.name'] ||
+											selectedSpan?.tagMap?.['host.name']
+											? [
+													{
+														label: (
+															<div className="view-title">
+																<Server size={14} />
+																Infra
+															</div>
+														),
+														value: RelatedSignalsViews.INFRA,
+													},
+											  ]
+											: [],
+									)}
 									onChange={handleRelatedSignalsChange}
 									className="related-signals-radio"
 								/>
