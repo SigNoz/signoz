@@ -116,6 +116,10 @@
 		border: 1px solid var(--bg-slate-400);
 		background: var(--bg-ink-300);
 
+		.qb-trace-operator-editor-container {
+			flex: 1;
+		}
+
 		&.arrow-left {
 			&::before {
 				content: '';

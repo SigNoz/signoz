@@ -101,11 +101,13 @@ export default function TraceOperator({
 					)}
 				>
 					<Typography.Text className="label">TRACES MATCHING</Typography.Text>
-					<TraceOperatorEditor
-						value={traceOperator?.expression || ''}
-						traceOperator={traceOperator}
-						onChange={handleTraceOperatorChange}
-					/>
+					<div className="qb-trace-operator-editor-container">
+						<TraceOperatorEditor
+							value={traceOperator?.expression || ''}
+							traceOperator={traceOperator}
+							onChange={handleTraceOperatorChange}
+						/>
+					</div>
 				</div>
 
 				{!isListViewPanel && (
@@ -135,7 +137,7 @@ export default function TraceOperator({
 								showReduceTo={false}
 								panelType={panelType}
 							>
-								<div className={cx('qb-trace-operator-label-with-input', 'arrow-left')}>
+								<div className="qb-trace-operator-label-with-input arrow-left">
 									<Typography.Text className="label">Using spans from</Typography.Text>
 									<Select
 										bordered={false}
