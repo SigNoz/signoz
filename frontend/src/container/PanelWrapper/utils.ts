@@ -88,3 +88,12 @@ export const getTimeRangeFromUplotAxis = (
 
 	return { startTime, endTime };
 };
+
+export const getTimeRangeFromStepInterval = (
+	stepInterval: number,
+	xValue: number,
+): { startTime: number; endTime: number } => {
+	const startTime = xValue;
+	const endTime = xValue + stepInterval;
+	return { startTime, endTime };
+};
