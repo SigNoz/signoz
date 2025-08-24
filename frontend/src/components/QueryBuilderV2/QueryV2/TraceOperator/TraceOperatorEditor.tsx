@@ -190,8 +190,6 @@ function TraceOperatorEditor({
 
 			const involvedQueries = getInvolvedQueriesInTraceOperator([traceOperator]);
 
-			console.log({ involvedQueries });
-
 			options = queryOptions.map((option) => ({
 				...option,
 				boost: !involvedQueries.includes(option.apply as string) ? 100 : -99,
