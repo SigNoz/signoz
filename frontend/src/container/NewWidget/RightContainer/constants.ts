@@ -183,7 +183,7 @@ export const panelTypeVsContextLinks: {
 	[key in PANEL_TYPES]: boolean;
 } = {
 	[PANEL_TYPES.TIME_SERIES]: true,
-	[PANEL_TYPES.VALUE]: false,
+	[PANEL_TYPES.VALUE]: true,
 	[PANEL_TYPES.TABLE]: true,
 	[PANEL_TYPES.LIST]: false,
 	[PANEL_TYPES.PIE]: true,

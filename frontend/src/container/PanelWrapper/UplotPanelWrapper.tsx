@@ -164,11 +164,20 @@ function UplotPanelWrapper({
 			console.log('onClickData: ', data);
 			// Compute time range if needed and if axes data is available
 			let timeRange;
-			if (axesData) {
-				const stepInterval =
-					(queryResponse?.data?.params as any)?.compositeQuery?.queries?.[0]?.spec
-						?.stepInterval || 60;
-				timeRange = getTimeRangeFromStepInterval(stepInterval, xValue);
+			if (axesData && queryData?.queryName) {
+				// Get the compositeQuery from the response params
+				const compositeQuery = (queryResponse?.data?.params as any)?.compositeQuery;
+
+				if (compositeQuery?.queries) {
+					// Find the specific query by name from the queries array
+					const specificQuery = compositeQuery.queries.find(
+						(query: any) => query.spec?.name === queryData.queryName,
+					);
+
+					// Use the stepInterval from the specific query, fallback to default
+					const stepInterval = specificQuery?.spec?.stepInterval || 60;
+					timeRange = getTimeRangeFromStepInterval(stepInterval, xValue);
+				}
 			}
 
 			if (data && data?.record?.queryName) {
