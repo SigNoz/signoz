@@ -23,7 +23,7 @@ export const useCoordinates = (): {
 		(x: number, y: number): PopoverPosition => {
 			const windowWidth = window.innerWidth;
 			const windowHeight = window.innerHeight;
-			const popoverWidth = 210;
+			const popoverWidth = 300;
 			const popoverHeight = 254; // to change
 			const offset = 10;
 

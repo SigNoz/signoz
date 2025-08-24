@@ -27,6 +27,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { prepareQueryRangePayload } from './prepareQueryRangePayload';
 import { QueryData } from 'types/api/widgets/getQuery';
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
+import { DynamicVariable } from 'hooks/dashboard/useGetDynamicVariables';
 
 /**
  * Validates if metric name is available for METRICS data source
@@ -188,6 +189,7 @@ export const getLegend = (
 export async function GetMetricQueryRange(
 	props: GetQueryResultsProps,
 	version: string,
+	dynamicVariables?: DynamicVariable[],
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
 	isInfraMonitoring?: boolean,
@@ -233,7 +235,10 @@ export async function GetMetricQueryRange(
 	}
 
 	if (version === ENTITY_VERSION_V5) {
-		const v5Result = prepareQueryRangePayloadV5(props);
+		const v5Result = prepareQueryRangePayloadV5({
+			...props,
+			dynamicVariables,
+		});
 		legendMap = v5Result.legendMap;
 
 		// atleast one query should be there to make call to v5 api
@@ -363,4 +368,5 @@ export interface GetQueryResultsProps {
 	end?: number;
 	step?: number;
 	originalGraphType?: PANEL_TYPES;
+	dynamicVariables?: DynamicVariable[];
 }

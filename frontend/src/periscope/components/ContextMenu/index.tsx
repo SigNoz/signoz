@@ -111,7 +111,7 @@ export function ContextMenu({
 					position: 'fixed',
 					left: position.left,
 					top: position.top,
-					width: 210,
+					width: 300,
 					maxHeight: 254,
 				}}
 				arrow={false}

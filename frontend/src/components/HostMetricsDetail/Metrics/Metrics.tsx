@@ -13,6 +13,7 @@ import {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/config';
+import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -71,6 +72,8 @@ function Metrics({
 		[hostName, timeRange.startTime, timeRange.endTime, dotMetricsEnabled],
 	);
 
+	const { dynamicVariables } = useGetDynamicVariables();
+
 	const queries = useQueries(
 		queryPayloads.map((payload, index) => ({
 			queryKey: ['host-metrics', payload, ENTITY_VERSION_V4, 'HOST'],
@@ -78,7 +81,8 @@ function Metrics({
 				signal,
 			}: QueryFunctionContext): Promise<
 				SuccessResponse<MetricRangePayloadProps>
-			> => GetMetricQueryRange(payload, ENTITY_VERSION_V4, signal),
+			> =>
+				GetMetricQueryRange(payload, ENTITY_VERSION_V4, dynamicVariables, signal),
 			enabled: !!payload && visibilities[index],
 			keepPreviousData: true,
 		})),

@@ -38,6 +38,13 @@ const isArrayOperator = (operator: string): boolean => {
 	return arrayOperators.includes(operator);
 };
 
+const isVariable = (value: string | string[] | number | boolean): boolean => {
+	if (Array.isArray(value)) {
+		return value.some((v) => typeof v === 'string' && v.trim().startsWith('$'));
+	}
+	return typeof value === 'string' && value.trim().startsWith('$');
+};
+
 /**
  * Format a value for the expression string
  * @param value - The value to format
@@ -48,6 +55,10 @@ const formatValueForExpression = (
 	value: string[] | string | number | boolean,
 	operator?: string,
 ): string => {
+	if (isVariable(value)) {
+		return String(value);
+	}
+
 	// For IN operators, ensure value is always an array
 	if (isArrayOperator(operator || '')) {
 		const arrayValue = Array.isArray(value) ? value : [value];

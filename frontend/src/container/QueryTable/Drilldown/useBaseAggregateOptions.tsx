@@ -11,6 +11,7 @@ import createQueryParams from 'lib/createQueryParams';
 import ContextMenu from 'periscope/components/ContextMenu';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -27,6 +28,7 @@ interface UseBaseAggregateOptionsProps {
 	aggregateData: AggregateData | null;
 	contextLinks?: ContextLinksData;
 	panelType?: PANEL_TYPES;
+	fieldVariables: Record<string, string | number | boolean>;
 }
 
 interface BaseAggregateOptionsConfig {
@@ -55,6 +57,7 @@ const useBaseAggregateOptions = ({
 	aggregateData,
 	contextLinks,
 	panelType,
+	fieldVariables,
 }: UseBaseAggregateOptionsProps): {
 	baseAggregateOptionsConfig: BaseAggregateOptionsConfig;
 } => {
@@ -64,6 +67,8 @@ const useBaseAggregateOptions = ({
 		isLoading: isResolveQueryLoading,
 	} = useUpdatedQuery();
 	const { selectedDashboard } = useDashboard();
+
+	console.log('>>V subMenu', subMenu);
 
 	useEffect(() => {
 		if (!aggregateData) return;
@@ -83,21 +88,6 @@ const useBaseAggregateOptions = ({
 	}, [query, aggregateData, panelType]);
 
 	const { safeNavigate } = useSafeNavigate();
-
-	const fieldVariables = useMemo(() => {
-		if (!aggregateData?.filters) return {};
-
-		// Extract field variables from aggregation data filters
-		const fieldVars: Record<string, string | number | boolean> = {};
-
-		aggregateData.filters.forEach((filter) => {
-			if (filter.filterKey && filter.filterValue !== undefined) {
-				fieldVars[filter.filterKey] = filter.filterValue;
-			}
-		});
-
-		return fieldVars;
-	}, [aggregateData?.filters]);
 
 	// Use the new useContextVariables hook
 	const { processedVariables } = useContextVariables({
@@ -121,6 +111,7 @@ const useBaseAggregateOptions = ({
 					icon={<LinkOutlined />}
 					onClick={(): void => {
 						window.open(url, '_blank');
+						onClose?.();
 					}}
 				>
 					{label}
@@ -129,17 +120,11 @@ const useBaseAggregateOptions = ({
 		} catch (error) {
 			return [];
 		}
-	}, [contextLinks, processedVariables]);
+	}, [contextLinks, processedVariables, onClose]);
 
 	const handleBaseDrilldown = useCallback(
 		(key: string): void => {
-			if (key === 'breakout') {
-				// if (!drilldownQuery) {
-				setSubMenu(key);
-				return;
-				// }
-			}
-
+			console.log('Base drilldown:', { key, aggregateData });
 			const route = getRoute(key);
 			const timeRange = aggregateData?.timeRange;
 			const filtersToAdd = aggregateData?.filters || [];
@@ -149,10 +134,6 @@ const useBaseAggregateOptions = ({
 				key,
 				aggregateData?.queryName || '',
 			);
-
-			// if (viewQuery) {
-			// 	viewQuery = resolveQueryVariables(viewQuery);
-			// }
 
 			let queryParams = {
 				[QueryParams.compositeQuery]: JSON.stringify(viewQuery),
@@ -179,17 +160,21 @@ const useBaseAggregateOptions = ({
 
 			onClose();
 		},
-		[resolvedQuery, safeNavigate, onClose, setSubMenu, aggregateData],
+		[resolvedQuery, safeNavigate, onClose, aggregateData],
 	);
+
+	const { pathname } = useLocation();
+
+	const showDashboardVariablesOption = useMemo(() => {
+		const fieldVariablesExist = Object.keys(fieldVariables).length > 0;
+		// Check if current route is exactly dashboard route (/dashboard/:dashboardId)
+		const dashboardPattern = /^\/dashboard\/[^/]+$/;
+		return fieldVariablesExist && dashboardPattern.test(pathname);
+	}, [pathname, fieldVariables]);
 
 	const baseAggregateOptionsConfig = useMemo(() => {
 		if (!aggregateData) {
 			console.warn('aggregateData is null in baseAggregateOptionsConfig');
-			return {};
-		}
-
-		// Skip breakout logic as it's handled by useBreakout
-		if (subMenu === 'breakout') {
 			return {};
 		}
 
@@ -199,6 +184,13 @@ const useBaseAggregateOptions = ({
 			resolvedQuery,
 			queryName as string,
 		);
+
+		const baseContextConfig = getBaseContextConfig({
+			handleBaseDrilldown,
+			setSubMenu,
+			showDashboardVariablesOption,
+			showBreakoutOption: panelType !== PANEL_TYPES.VALUE,
+		}).filter((item) => !item.hidden);
 
 		return {
 			items: (
@@ -226,21 +218,21 @@ const useBaseAggregateOptions = ({
 							}}
 						>
 							<>
-								{getBaseContextConfig({ handleBaseDrilldown }).map(
-									({ key, label, icon, onClick }) => {
-										const isLoading = isResolveQueryLoading && key !== 'breakout';
-										return (
-											<ContextMenu.Item
-												key={key}
-												icon={isLoading ? <LoadingOutlined spin /> : icon}
-												onClick={(): void => onClick()}
-												disabled={isLoading}
-											>
-												{label}
-											</ContextMenu.Item>
-										);
-									},
-								)}
+								{baseContextConfig.map(({ key, label, icon, onClick }) => {
+									const isLoading =
+										isResolveQueryLoading &&
+										(key === 'view_logs' || key === 'view_traces');
+									return (
+										<ContextMenu.Item
+											key={key}
+											icon={isLoading ? <LoadingOutlined spin /> : icon}
+											onClick={(): void => onClick()}
+											disabled={isLoading}
+										>
+											{label}
+										</ContextMenu.Item>
+									);
+								})}
 								{getContextLinksItems()}
 							</>
 						</OverlayScrollbar>
@@ -249,12 +241,14 @@ const useBaseAggregateOptions = ({
 			),
 		};
 	}, [
-		subMenu,
 		handleBaseDrilldown,
 		aggregateData,
 		getContextLinksItems,
 		isResolveQueryLoading,
 		resolvedQuery,
+		showDashboardVariablesOption,
+		setSubMenu,
+		panelType,
 	]);
 
 	return { baseAggregateOptionsConfig };
