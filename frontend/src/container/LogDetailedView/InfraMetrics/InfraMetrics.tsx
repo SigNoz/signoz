@@ -1,7 +1,8 @@
 import './InfraMetrics.styles.scss';
 
-import { Empty, Radio } from 'antd';
+import { Empty } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
+import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { History, Table } from 'lucide-react';
 import { useState } from 'react';
 
@@ -45,32 +46,35 @@ function InfraMetrics({
 
 	return (
 		<div className="infra-metrics-container">
-			<Radio.Group
-				className="views-tabs"
-				onChange={handleModeChange}
+			<SignozRadioGroup
 				value={selectedView}
-			>
-				<Radio.Button
-					className={selectedView === VIEW_TYPES.NODE ? 'selected_view tab' : 'tab'}
-					value={VIEW_TYPES.NODE}
-				>
-					<div className="view-title">
-						<Table size={14} />
-						Node
-					</div>
-				</Radio.Button>
-				{podName && (
-					<Radio.Button
-						className={selectedView === VIEW_TYPES.POD ? 'selected_view tab' : 'tab'}
-						value={VIEW_TYPES.POD}
-					>
-						<div className="view-title">
-							<History size={14} />
-							Pod
-						</div>
-					</Radio.Button>
-				)}
-			</Radio.Group>
+				onChange={handleModeChange}
+				className="views-tabs"
+				options={[
+					{
+						label: (
+							<div className="view-title">
+								<Table size={14} />
+								Node
+							</div>
+						),
+						value: VIEW_TYPES.NODE,
+					},
+					...(podName
+						? [
+								{
+									label: (
+										<div className="view-title">
+											<History size={14} />
+											Pod
+										</div>
+									),
+									value: VIEW_TYPES.POD,
+								},
+						  ]
+						: []),
+				]}
+			/>
 			{/* TODO(Rahul): Make a common config driven component for this and other infra metrics components */}
 			{selectedView === VIEW_TYPES.NODE && (
 				<NodeMetrics

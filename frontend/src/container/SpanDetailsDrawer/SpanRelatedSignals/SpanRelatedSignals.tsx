@@ -11,8 +11,10 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
+import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Compass, X } from 'lucide-react';
+import { Compass, Server, X } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
@@ -66,14 +68,32 @@ function SpanRelatedSignals({
 	);
 	const isDarkMode = useIsDarkMode();
 
+	// Extract infrastructure metadata from span attributes
+	const infraMetadata = useMemo(() => {
+		if (!selectedSpan?.tagMap) return null;
+
+		const clusterName = selectedSpan.tagMap['k8s.cluster.name'] || '';
+		const podName = selectedSpan.tagMap['k8s.pod.name'] || '';
+		const nodeName = selectedSpan.tagMap['k8s.node.name'] || '';
+		const hostName = selectedSpan.tagMap['host.name'] || '';
+
+		// Only return metadata if we have at least one infrastructure identifier
+		if (!clusterName && !podName && !nodeName && !hostName) {
+			return null;
+		}
+
+		return {
+			clusterName,
+			podName,
+			nodeName,
+			hostName,
+			spanTimestamp: dayjs(selectedSpan.timestamp).format(),
+		};
+	}, [selectedSpan]);
+
 	const handleTabChange = useCallback((e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
 	}, []);
-
-	const handleClose = useCallback((): void => {
-		setSelectedView(RelatedSignalsViews.LOGS);
-		onClose();
-	}, [onClose]);
 
 	const appliedFilters = useMemo(
 		(): TagFilterItem[] => [
@@ -158,7 +178,7 @@ function SpanRelatedSignals({
 				</>
 			}
 			placement="right"
-			onClose={handleClose}
+			onClose={onClose}
 			open={isOpen}
 			style={{
 				overscrollBehavior: 'contain',
@@ -192,15 +212,19 @@ function SpanRelatedSignals({
 								// 	),
 								// 	value: RelatedSignalsViews.METRICS,
 								// },
-								// {
-								// 	label: (
-								// 		<div className="view-title">
-								// 			<Server size={14} />
-								// 			Infra
-								// 		</div>
-								// 	),
-								// 	value: RelatedSignalsViews.INFRA,
-								// },
+								...(infraMetadata
+									? [
+											{
+												label: (
+													<div className="view-title">
+														<Server size={14} />
+														Infra
+													</div>
+												),
+												value: RelatedSignalsViews.INFRA,
+											},
+									  ]
+									: []),
 							]}
 							onChange={handleTabChange}
 							className="related-signals-radio"
@@ -227,6 +251,16 @@ function SpanRelatedSignals({
 								handleExplorerPageRedirect={handleExplorerPageRedirect}
 							/>
 						</>
+					)}
+
+					{selectedView === RelatedSignalsViews.INFRA && infraMetadata && (
+						<InfraMetrics
+							clusterName={infraMetadata.clusterName}
+							podName={infraMetadata.podName}
+							nodeName={infraMetadata.nodeName}
+							hostName={infraMetadata.hostName}
+							logLineTimestamp={infraMetadata.spanTimestamp}
+						/>
 					)}
 				</div>
 			)}
