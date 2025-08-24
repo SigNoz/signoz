@@ -360,6 +360,21 @@ func (b *traceOperatorCTEBuilder) buildOrCTE(leftCTE, rightCTE string) (string, 
 
 func (b *traceOperatorCTEBuilder) buildNotCTE(leftCTE, rightCTE string) (string, []any, []string) {
 	sb := sqlbuilder.NewSelectBuilder()
+	
+	// Handle unary NOT case (rightCTE is empty)
+	if rightCTE == "" {
+		// Unary NOT: select all spans from traces that do NOT contain spans from leftCTE
+		sb.Select("b.*")
+		sb.From("base_spans AS b")
+		sb.Where(fmt.Sprintf(
+			"b.trace_id GLOBAL NOT IN (SELECT DISTINCT trace_id FROM %s)",
+			leftCTE,
+		))
+		sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		return sql, args, []string{"base_spans", leftCTE}
+	}
+	
+	// Binary NOT (exclude): select spans from leftCTE that are NOT in rightCTE traces
 	sb.Select("l.*")
 	sb.From(fmt.Sprintf("%s AS l", leftCTE))
 	sb.Where(fmt.Sprintf(

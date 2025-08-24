@@ -13,6 +13,7 @@ var (
 	logsExplorerRegex    = regexp.MustCompile(`/logs/logs-explorer(?:\?.*)?$`)
 	traceExplorerRegex   = regexp.MustCompile(`/traces-explorer(?:\?.*)?$`)
 	metricsExplorerRegex = regexp.MustCompile(`/metrics-explorer/explorer(?:\?.*)?$`)
+	meterRegex           = regexp.MustCompile(`/meter/(?:\?.*)?$`)
 	dashboardRegex       = regexp.MustCompile(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`)
 	dashboardIDRegex     = regexp.MustCompile(`/dashboard/([a-f0-9\-]+)/`)
 	widgetIDRegex        = regexp.MustCompile(`widgetId=([a-f0-9\-]+)`)
@@ -59,6 +60,7 @@ func CommentFromHTTPRequest(req *http.Request) map[string]string {
 	logsExplorerMatched := logsExplorerRegex.MatchString(referrer)
 	traceExplorerMatched := traceExplorerRegex.MatchString(referrer)
 	metricsExplorerMatched := metricsExplorerRegex.MatchString(referrer)
+	meterMatched := meterRegex.MatchString(referrer)
 	dashboardMatched := dashboardRegex.MatchString(referrer)
 	ruleMatched := ruleRegex.MatchString(referrer)
 
@@ -73,6 +75,8 @@ func CommentFromHTTPRequest(req *http.Request) map[string]string {
 		comments["module_name"] = "logs-explorer"
 	case traceExplorerMatched:
 		comments["module_name"] = "traces-explorer"
+	case meterMatched:
+		comments["module_name"] = "meter"
 	default:
 		return comments
 	}
