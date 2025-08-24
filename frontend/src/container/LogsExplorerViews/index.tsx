@@ -2,6 +2,8 @@
 import './LogsExplorerViews.styles.scss';
 
 import { Button, Switch, Typography } from 'antd';
+import getFromLocalstorage from 'api/browser/localstorage/get';
+import setToLocalstorage from 'api/browser/localstorage/set';
 import { getQueryStats, WsDataEvent } from 'api/common/getQueryStats';
 import logEvent from 'api/common/logEvent';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
@@ -103,7 +105,13 @@ function LogsExplorerViewsContainer({
 }): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const dispatch = useDispatch();
-	const [showFrequencyChart, setShowFrequencyChart] = useState(true);
+
+	const [showFrequencyChart, setShowFrequencyChart] = useState(false);
+
+	useEffect(() => {
+		const frequencyChart = getFromLocalstorage(LOCALSTORAGE.SHOW_FREQUENCY_CHART);
+		setShowFrequencyChart(frequencyChart === 'true');
+	}, []);
 
 	// this is to respect the panel type present in the URL rather than defaulting it to list always.
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
@@ -672,6 +680,18 @@ function LogsExplorerViewsContainer({
 		[logs, timezone.value],
 	);
 
+	const handleToggleFrequencyChart = useCallback(() => {
+		const newShowFrequencyChart = !showFrequencyChart;
+
+		// store the value in local storage
+		setToLocalstorage(
+			LOCALSTORAGE.SHOW_FREQUENCY_CHART,
+			newShowFrequencyChart?.toString() || 'false',
+		);
+
+		setShowFrequencyChart(newShowFrequencyChart);
+	}, [showFrequencyChart]);
+
 	return (
 		<div className="logs-explorer-views-container">
 			<div className="logs-explorer-views-types">
@@ -685,7 +705,7 @@ function LogsExplorerViewsContainer({
 										size="small"
 										checked={showFrequencyChart}
 										defaultChecked
-										onChange={(): void => setShowFrequencyChart(!showFrequencyChart)}
+										onChange={handleToggleFrequencyChart}
 									/>
 								</div>
 							)}
@@ -761,12 +781,14 @@ function LogsExplorerViewsContainer({
 				</div>
 
 				{selectedPanelType === PANEL_TYPES.LIST && showFrequencyChart && (
-					<LogsExplorerChart
-						className="logs-histogram"
-						isLoading={isFetchingListChartData || isLoadingListChartData}
-						data={chartData}
-						isLogsExplorerViews={panelType === PANEL_TYPES.LIST}
-					/>
+					<div className="logs-frequency-chart-container">
+						<LogsExplorerChart
+							className="logs-frequency-chart"
+							isLoading={isFetchingListChartData || isLoadingListChartData}
+							data={chartData}
+							isLogsExplorerViews={panelType === PANEL_TYPES.LIST}
+						/>
+					</div>
 				)}
 
 				<div className="logs-explorer-views-type-content">
@@ -777,12 +799,12 @@ function LogsExplorerViewsContainer({
 							currentStagedQueryData={listQuery}
 							logs={logs}
 							onEndReached={handleEndReached}
+							isFrequencyChartVisible={showFrequencyChart}
 							isError={isError}
 							error={error as APIError}
 							isFilterApplied={!isEmpty(listQuery?.filters?.items)}
 						/>
 					)}
-
 					{selectedPanelType === PANEL_TYPES.TIME_SERIES && (
 						<TimeSeriesView
 							isLoading={isLoading || isFetching}
