@@ -111,6 +111,7 @@ const useBaseAggregateOptions = ({
 					icon={<LinkOutlined />}
 					onClick={(): void => {
 						window.open(url, '_blank');
+						onClose?.();
 					}}
 				>
 					{label}
@@ -119,7 +120,7 @@ const useBaseAggregateOptions = ({
 		} catch (error) {
 			return [];
 		}
-	}, [contextLinks, processedVariables]);
+	}, [contextLinks, processedVariables, onClose]);
 
 	const handleBaseDrilldown = useCallback(
 		(key: string): void => {
