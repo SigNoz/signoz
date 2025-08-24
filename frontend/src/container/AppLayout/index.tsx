@@ -30,7 +30,7 @@ import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import dayjs from 'dayjs';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
-import { useIsDarkMode } from 'hooks/useDarkMode';
+import useThemeMode, { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import useTabVisibility from 'hooks/useTabFocus';
@@ -176,6 +176,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	});
 
 	const isDarkMode = useIsDarkMode();
+	const { autoSwitch } = useThemeMode();
 
 	const { pathname } = useLocation();
 	const { t } = useTranslation(['titles']);
@@ -464,6 +465,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		}
 	}, [isDarkMode]);
 
+	console.log('isDarkMode', isDarkMode);
+	console.log('autoSwitch', autoSwitch);
+
 	const showAddCreditCardModal = useMemo(() => {
 		if (
 			!isFetchingFeatureFlags &&
@@ -668,6 +672,18 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		</div>
 	);
 
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
+	const { updateUserPreferenceInContext } = useAppContext();
+
+	const { mutate: updateUserPreferenceMutation } = useMutation(
+		updateUserPreference,
+		{
+			onError: (error) => {
+				showErrorNotification(notifications, error as AxiosError);
+			},
+		},
+	);
+
 	const sideNavPinnedPreference = userPreferences?.find(
 		(preference) => preference.name === USER_PREFERENCES.SIDENAV_PINNED,
 	)?.value as boolean;
@@ -696,18 +712,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isSideNavPinned = isSidebarLoaded
 		? sideNavPinnedPreference
 		: getSidebarStateFromLocalStorage();
-
-	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
-	const { updateUserPreferenceInContext } = useAppContext();
-
-	const { mutate: updateUserPreferenceMutation } = useMutation(
-		updateUserPreference,
-		{
-			onError: (error) => {
-				showErrorNotification(notifications, error as AxiosError);
-			},
-		},
-	);
 
 	const handleToggleSidebar = useCallback((): void => {
 		const newState = !isSideNavPinned;

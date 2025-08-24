@@ -2,17 +2,17 @@ import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 
 const userOS = getUserOperatingSystem();
 export const LogsExplorerShortcuts = {
-	StageAndRunQuery: 'enter+meta',
+	StageAndRunQuery: 'enter + meta',
 	FocusTheSearchBar: 's',
-	ShowAllFilters: '/+meta',
+	ShowAllFilters: '/ + meta',
 };
 
 export const LogsExplorerShortcutsName = {
 	StageAndRunQuery: `${
 		userOS === UserOperatingSystem.MACOS ? 'cmd' : 'ctrl'
-	}+enter`,
+	} + enter`,
 	FocusTheSearchBar: 's',
-	ShowAllFilters: `${userOS === UserOperatingSystem.MACOS ? 'cmd' : 'ctrl'}+/`,
+	ShowAllFilters: `${userOS === UserOperatingSystem.MACOS ? 'cmd' : 'ctrl'} + /`,
 };
 
 export const LogsExplorerShortcutsDescription = {
