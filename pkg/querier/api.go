@@ -155,6 +155,7 @@ func (a *API) logEvent(ctx context.Context, referrer string, event *qbtypes.QBEv
 		"logs_used":         event.LogsUsed,
 		"traces_used":       event.TracesUsed,
 		"metrics_used":      event.MetricsUsed,
+		"source":            event.Source,
 		"filter_applied":    event.FilterApplied,
 		"group_by_applied":  event.GroupByApplied,
 		"query_type":        event.QueryType,
