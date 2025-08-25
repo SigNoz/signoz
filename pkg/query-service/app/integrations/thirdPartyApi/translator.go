@@ -3,6 +3,7 @@ package thirdPartyApi
 import (
 	"fmt"
 	"net"
+	"regexp"
 	"time"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -13,13 +14,12 @@ const (
 	urlPathKeyLegacy    = "http.url"
 	serverNameKeyLegacy = "net.peer.name"
 
-	urlPathKeyCurrent    = "url.full"
-	serverNameKeyCurrent = "server.address"
+	urlPathKey    = "url.full"
+	serverNameKey = "server.address"
 )
 
 var defaultStepInterval = 60 * time.Second
 
-// SemconvFieldMapping defines the mapping between legacy and current semconv
 type SemconvFieldMapping struct {
 	LegacyField  string
 	CurrentField string
@@ -27,49 +27,51 @@ type SemconvFieldMapping struct {
 	Context      telemetrytypes.FieldContext
 }
 
-var semconvMappings = []SemconvFieldMapping{
-	{
-		LegacyField:  urlPathKeyLegacy,
-		CurrentField: urlPathKeyCurrent,
-		FieldType:    telemetrytypes.FieldDataTypeString,
-		Context:      telemetrytypes.FieldContextAttribute,
+var dualSemconvGroupByKeys = map[string][]qbtypes.GroupByKey{
+	"server": {
+		{
+			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+				Name:          serverNameKey,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				Signal:        telemetrytypes.SignalTraces,
+			},
+		},
+		{
+			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+				Name:          serverNameKeyLegacy,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				Signal:        telemetrytypes.SignalTraces,
+			},
+		},
 	},
-	{
-		LegacyField:  serverNameKeyLegacy,
-		CurrentField: serverNameKeyCurrent,
-		FieldType:    telemetrytypes.FieldDataTypeString,
-		Context:      telemetrytypes.FieldContextAttribute,
+	"url": {
+		{
+			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+				Name:          urlPathKey,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				Signal:        telemetrytypes.SignalTraces,
+			},
+		},
+		{
+			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+				Name:          urlPathKeyLegacy,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				Signal:        telemetrytypes.SignalTraces,
+			},
+		},
 	},
 }
 
-// CreateDualSemconvGroupByKeys creates group by keys supporting both semconv versions
 func CreateDualSemconvGroupByKeysServer() []qbtypes.GroupByKey {
-	return createDualSemconvGroupBy(semconvMappings[1]) // server name mapping
+	return dualSemconvGroupByKeys["server"]
 }
 
 func CreateDualSemconvGroupByKeysUrl() []qbtypes.GroupByKey {
-	return createDualSemconvGroupBy(semconvMappings[0]) // url path mapping
-}
-
-func createDualSemconvGroupBy(mapping SemconvFieldMapping) []qbtypes.GroupByKey {
-	return []qbtypes.GroupByKey{
-		{
-			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-				Name:          mapping.CurrentField,
-				FieldDataType: mapping.FieldType,
-				FieldContext:  mapping.Context,
-				Signal:        telemetrytypes.SignalTraces,
-			},
-		},
-		{
-			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-				Name:          mapping.LegacyField,
-				FieldDataType: mapping.FieldType,
-				FieldContext:  mapping.Context,
-				Signal:        telemetrytypes.SignalTraces,
-			},
-		},
-	}
+	return dualSemconvGroupByKeys["url"]
 }
 
 func MergeSemconvColumns(result *qbtypes.QueryRangeResponse) *qbtypes.QueryRangeResponse {
@@ -87,7 +89,7 @@ func MergeSemconvColumns(result *qbtypes.QueryRangeResponse) *qbtypes.QueryRange
 		netPeerIdx := -1
 
 		for i, col := range scalarData.Columns {
-			if col.Name == serverNameKeyCurrent {
+			if col.Name == serverNameKey {
 				serverAddrIdx = i
 			} else if col.Name == serverNameKeyLegacy {
 				netPeerIdx = i
@@ -184,7 +186,6 @@ func FilterResponse(results []*qbtypes.QueryRangeResponse) []*qbtypes.QueryRange
 				continue
 			}
 
-			// Handle different result types
 			switch resultData := result.(type) {
 			case *qbtypes.TimeSeriesData:
 				if resultData.Aggregations != nil {
@@ -218,13 +219,12 @@ func FilterResponse(results []*qbtypes.QueryRangeResponse) []*qbtypes.QueryRange
 	return filteredResults
 }
 
-// shouldIncludeSeries checks if a series should be included based on IP filtering
 func shouldIncludeSeries(series *qbtypes.TimeSeries) bool {
 	for _, label := range series.Labels {
-		if label.Key.Name == serverNameKeyLegacy || label.Key.Name == serverNameKeyCurrent {
+		if label.Key.Name == serverNameKeyLegacy || label.Key.Name == serverNameKey {
 			if strVal, ok := label.Value.(string); ok {
 				if net.ParseIP(strVal) != nil {
-					return false // Skip IP addresses
+					return false
 				}
 			}
 		}
@@ -234,11 +234,11 @@ func shouldIncludeSeries(series *qbtypes.TimeSeries) bool {
 
 func shouldIncludeRow(row *qbtypes.RawRow) bool {
 	if row.Data != nil {
-		for _, key := range []string{serverNameKeyLegacy, serverNameKeyCurrent} {
+		for _, key := range []string{serverNameKeyLegacy, serverNameKey} {
 			if domainVal, ok := row.Data[key]; ok {
 				if domainStr, ok := domainVal.(string); ok {
 					if net.ParseIP(domainStr) != nil {
-						return false // Skip IP addresses
+						return false
 					}
 				}
 			}
@@ -247,26 +247,20 @@ func shouldIncludeRow(row *qbtypes.RawRow) bool {
 	return true
 }
 
-// Utility functions
-func mergeGroupBy(baseGroupBy []qbtypes.GroupByKey, additionalGroupBy []qbtypes.GroupByKey) []qbtypes.GroupByKey {
-	if len(additionalGroupBy) == 0 {
-		return baseGroupBy
-	}
-
-	result := make([]qbtypes.GroupByKey, len(baseGroupBy))
-	copy(result, baseGroupBy)
-	result = append(result, additionalGroupBy...)
-
-	return result
+func containsKindStringOverride(expression string) bool {
+	kindStringPattern := regexp.MustCompile(`kind_string\s*[!=<>]+`)
+	return kindStringPattern.MatchString(expression)
 }
 
-// BuildDomainList creates a v5 query range request for domain listing
+func mergeGroupBy(base, additional []qbtypes.GroupByKey) []qbtypes.GroupByKey {
+	return append(base, additional...)
+}
+
 func BuildDomainList(req *ThirdPartyApiRequest) (*qbtypes.QueryRangeRequest, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
-	// Build all the required queries
 	queries := []qbtypes.QueryEnvelope{
 		buildEndpointsQuery(req),
 		buildLastSeenQuery(req),
@@ -291,7 +285,6 @@ func BuildDomainList(req *ThirdPartyApiRequest) (*qbtypes.QueryRangeRequest, err
 	}, nil
 }
 
-// BuildDomainInfo creates a v5 query range request for domain information
 func BuildDomainInfo(req *ThirdPartyApiRequest) (*qbtypes.QueryRangeRequest, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
@@ -318,7 +311,6 @@ func BuildDomainInfo(req *ThirdPartyApiRequest) (*qbtypes.QueryRangeRequest, err
 	}, nil
 }
 
-// Query builders for domain list
 func buildEndpointsQuery(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
@@ -425,7 +417,6 @@ func buildErrorRateFormula() qbtypes.QueryEnvelope {
 	}
 }
 
-// Query builders for domain info
 func buildEndpointsInfoQuery(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
@@ -490,12 +481,14 @@ func buildLastSeenInfoQuery(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 	}
 }
 
-// Filter builders with dual semconv support
 func buildBaseFilter(additionalFilter *qbtypes.Filter) *qbtypes.Filter {
 	baseExpression := fmt.Sprintf("(%s EXISTS OR %s EXISTS) AND kind_string = 'Client'",
-		urlPathKeyLegacy, urlPathKeyCurrent)
+		urlPathKeyLegacy, urlPathKey)
 
 	if additionalFilter != nil && additionalFilter.Expression != "" {
+		if containsKindStringOverride(additionalFilter.Expression) {
+			return &qbtypes.Filter{Expression: baseExpression}
+		}
 		baseExpression = fmt.Sprintf("(%s) AND (%s)", baseExpression, additionalFilter.Expression)
 	}
 
@@ -504,9 +497,12 @@ func buildBaseFilter(additionalFilter *qbtypes.Filter) *qbtypes.Filter {
 
 func buildErrorFilter(additionalFilter *qbtypes.Filter) *qbtypes.Filter {
 	errorExpression := fmt.Sprintf("has_error = true AND (%s EXISTS OR %s EXISTS) AND kind_string = 'Client'",
-		urlPathKeyLegacy, urlPathKeyCurrent)
+		urlPathKeyLegacy, urlPathKey)
 
 	if additionalFilter != nil && additionalFilter.Expression != "" {
+		if containsKindStringOverride(additionalFilter.Expression) {
+			return &qbtypes.Filter{Expression: errorExpression}
+		}
 		errorExpression = fmt.Sprintf("(%s) AND (%s)", errorExpression, additionalFilter.Expression)
 	}
 

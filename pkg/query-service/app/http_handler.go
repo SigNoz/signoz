@@ -5069,7 +5069,7 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 	if apiErr != nil {
 		zap.L().Error("Failed to parse request body", zap.Error(apiErr.Err))
-		RespondError(w, apiErr, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, apiErr.Error()))
 		return
 	}
 
@@ -5077,16 +5077,16 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 	queryRangeRequest, err := thirdPartyApi.BuildDomainList(thirdPartyQueryRequest)
 	if err != nil {
 		zap.L().Error("Failed to build domain list query", zap.Error(err))
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, nil)
+		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
+		render.Error(w, apiErrObj)
 		return
 	}
 
 	// Validate the v5 query range request
 	if err := queryRangeRequest.Validate(); err != nil {
 		zap.L().Error("Query validation failed", zap.Error(err))
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, nil)
+		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
+		render.Error(w, apiErrObj)
 		return
 	}
 
@@ -5094,15 +5094,15 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 	result, err := aH.Signoz.Querier.QueryRange(r.Context(), orgID, queryRangeRequest)
 	if err != nil {
 		zap.L().Error("Query execution failed", zap.Error(err))
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, nil)
+		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
+		render.Error(w, apiErrObj)
 		return
 	}
 
 	result = thirdPartyApi.MergeSemconvColumns(result)
 
 	// Filter IP addresses if ShowIp is false
-	var finalResult *qbtypes.QueryRangeResponse = result
+	var finalResult = result
 	if !thirdPartyQueryRequest.ShowIp {
 		filteredResults := thirdPartyApi.FilterResponse([]*qbtypes.QueryRangeResponse{result})
 		if len(filteredResults) > 0 {
@@ -5133,7 +5133,7 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 	if apiErr != nil {
 		zap.L().Error("Failed to parse request body", zap.Error(apiErr.Err))
-		RespondError(w, apiErr, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, apiErr.Error()))
 		return
 	}
 
@@ -5141,16 +5141,16 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 	queryRangeRequest, err := thirdPartyApi.BuildDomainInfo(thirdPartyQueryRequest)
 	if err != nil {
 		zap.L().Error("Failed to build domain info query", zap.Error(err))
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, nil)
+		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
+		render.Error(w, apiErrObj)
 		return
 	}
 
 	// Validate the v5 query range request
 	if err := queryRangeRequest.Validate(); err != nil {
 		zap.L().Error("Query validation failed", zap.Error(err))
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, nil)
+		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
+		render.Error(w, apiErrObj)
 		return
 	}
 
@@ -5158,8 +5158,8 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 	result, err := aH.Signoz.Querier.QueryRange(r.Context(), orgID, queryRangeRequest)
 	if err != nil {
 		zap.L().Error("Query execution failed", zap.Error(err))
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, nil)
+		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
+		render.Error(w, apiErrObj)
 		return
 	}
 
