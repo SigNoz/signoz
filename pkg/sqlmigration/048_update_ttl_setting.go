@@ -36,10 +36,6 @@ func (migration *updateTTLSettingForCustomRetention) Register(migrations *migrat
 }
 
 func (migration *updateTTLSettingForCustomRetention) Up(ctx context.Context, db *bun.DB) error {
-	if err := migration.sqlschema.ToggleFKEnforcement(ctx, db, false); err != nil {
-		return err
-	}
-
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -72,10 +68,6 @@ func (migration *updateTTLSettingForCustomRetention) Up(ctx context.Context, db 
 	}
 
 	if err := tx.Commit(); err != nil {
-		return err
-	}
-
-	if err := migration.sqlschema.ToggleFKEnforcement(ctx, db, true); err != nil {
 		return err
 	}
 
