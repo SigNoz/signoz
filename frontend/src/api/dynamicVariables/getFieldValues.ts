@@ -14,6 +14,7 @@ export const getFieldValues = async (
 	value?: string,
 	startUnixMilli?: number,
 	endUnixMilli?: number,
+	existingQuery?: string,
 ): Promise<SuccessResponse<FieldValueResponse> | ErrorResponse> => {
 	const params: Record<string, string> = {};
 
@@ -37,19 +38,35 @@ export const getFieldValues = async (
 		params.endUnixMilli = Math.floor(endUnixMilli / 1000000).toString();
 	}
 
+	if (existingQuery) {
+		params.existingQuery = existingQuery;
+	}
+
 	const response = await ApiBaseInstance.get('/fields/values', { params });
 
 	// Normalize values from different types (stringValues, boolValues, etc.)
 	if (response.data?.data?.values) {
 		const allValues: string[] = [];
-		Object.values(response.data.data.values).forEach((valueArray: any) => {
-			if (Array.isArray(valueArray)) {
-				allValues.push(...valueArray.map(String));
-			}
-		});
+		Object.entries(response.data.data.values).forEach(
+			([key, valueArray]: [string, any]) => {
+				// Skip RelatedValues as they should be kept separate
+				if (key === 'relatedValues') {
+					return;
+				}
+
+				if (Array.isArray(valueArray)) {
+					allValues.push(...valueArray.map(String));
+				}
+			},
+		);
 
 		// Add a normalized values array to the response
 		response.data.data.normalizedValues = allValues;
+
+		// Add relatedValues to the response as per FieldValueResponse
+		if (response.data.data.values.relatedValues) {
+			response.data.data.relatedValues = response.data.data.values.relatedValues;
+		}
 	}
 
 	return {
