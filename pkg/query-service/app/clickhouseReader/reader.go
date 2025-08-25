@@ -1600,10 +1600,19 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			zap.String("orgID", orgID))
 
 		ttlParams := &model.TTLParams{
-			Type:                  params.Type,
-			DelDuration:           int64(params.DefaultTTLDays * 24 * 3600),
-			ColdStorageVolume:     params.ColdStorageVolume,
-			ToColdStorageDuration: params.ToColdStorageDuration,
+			Type:        params.Type,
+			DelDuration: int64(params.DefaultTTLDays * 24 * 3600),
+		}
+		if params.ColdStorageVolume != "" {
+			ttlParams.ColdStorageVolume = params.ColdStorageVolume
+		} else {
+			ttlParams.ColdStorageVolume = ""
+		}
+
+		if params.ToColdStorageDuration > 0 {
+			ttlParams.ToColdStorageDuration = params.ToColdStorageDuration
+		} else {
+			ttlParams.ToColdStorageDuration = 0
 		}
 
 		ttlResult, apiErr := r.SetTTL(ctx, orgID, ttlParams)
