@@ -44,7 +44,9 @@ export const prepareQueryByFilter = (
 			...query.builder,
 			queryData: query.builder.queryData?.map((item) => ({
 				...item,
-				filters: value ? getFilter(item.filters, tagFilter, value) : item.filters,
+				filters: value
+					? getFilter(item.filters || { items: [], op: 'AND' }, tagFilter, value)
+					: item.filters,
 			})),
 		},
 	};
@@ -61,7 +63,8 @@ export const getQueryWithoutFilterId = (query: Query): Query => {
 				...item,
 				filters: {
 					...item.filters,
-					items: item.filters.items.filter((item) => item.key?.key !== 'id'),
+					items: item.filters?.items?.filter((item) => item.key?.key !== 'id') || [],
+					op: item.filters?.op || 'AND',
 				},
 			})),
 		},

@@ -1,5 +1,5 @@
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 
@@ -43,48 +43,7 @@ export const listViewInitialTraceQuery = {
 				orderBy: [{ columnName: 'timestamp', order: 'desc' }],
 				offset: 0,
 				pageSize: 10,
-				selectColumns: [
-					{
-						key: 'serviceName',
-						dataType: 'string',
-						type: 'tag',
-						isColumn: true,
-						isJSON: false,
-						id: 'serviceName--string--tag--true',
-					},
-					{
-						key: 'name',
-						dataType: 'string',
-						type: 'tag',
-						isColumn: true,
-						isJSON: false,
-						id: 'name--string--tag--true',
-					},
-					{
-						key: 'durationNano',
-						dataType: 'float64',
-						type: 'tag',
-						isColumn: true,
-						isJSON: false,
-						id: 'durationNano--float64--tag--true',
-					},
-					{
-						key: 'httpMethod',
-						dataType: 'string',
-						type: 'tag',
-						isColumn: true,
-						isJSON: false,
-						id: 'httpMethod--string--tag--true',
-					},
-					{
-						key: 'responseStatusCode',
-						dataType: 'string',
-						type: 'tag',
-						isColumn: true,
-						isJSON: false,
-						id: 'responseStatusCode--string--tag--true',
-					},
-				] as BaseAutocompleteData[],
+				selectColumns: defaultTraceSelectedColumns,
 			},
 		],
 	},

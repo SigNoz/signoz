@@ -272,12 +272,11 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			width: 80,
 			key: 'severity',
 			sorter: (a, b): number =>
-				(a.labels ? a.labels.severity.length : 0) -
-				(b.labels ? b.labels.severity.length : 0),
+				(a?.labels?.severity?.length || 0) - (b?.labels?.severity?.length || 0),
 			render: (value): JSX.Element => {
-				const objectKeys = Object.keys(value);
+				const objectKeys = value ? Object.keys(value) : [];
 				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';
-				const severityValue = value[withSeverityKey];
+				const severityValue = withSeverityKey ? value[withSeverityKey] : '-';
 
 				return <Typography>{severityValue}</Typography>;
 			},
@@ -290,7 +289,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			align: 'center',
 			width: 100,
 			render: (value): JSX.Element => {
-				const objectKeys = Object.keys(value);
+				const objectKeys = value ? Object.keys(value) : [];
 				const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
 
 				if (withOutSeverityKeys.length === 0) {

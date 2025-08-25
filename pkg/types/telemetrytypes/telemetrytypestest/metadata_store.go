@@ -28,12 +28,13 @@ func NewMockMetadataStore() *MockMetadataStore {
 }
 
 // GetKeys returns a map of field keys types.TelemetryFieldKey by name
-func (m *MockMetadataStore) GetKeys(ctx context.Context, fieldKeySelector *telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, error) {
+func (m *MockMetadataStore) GetKeys(ctx context.Context, fieldKeySelector *telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
+
 	result := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 
 	// If selector is nil, return all keys
 	if fieldKeySelector == nil {
-		return m.KeysMap, nil
+		return m.KeysMap, true, nil
 	}
 
 	// Apply selector logic
@@ -52,19 +53,19 @@ func (m *MockMetadataStore) GetKeys(ctx context.Context, fieldKeySelector *telem
 		}
 	}
 
-	return result, nil
+	return result, true, nil
 }
 
 // GetKeysMulti applies multiple selectors and returns combined results
-func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, error) {
+func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	result := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 
 	// Process each selector
 	for _, selector := range fieldKeySelectors {
 		selectorCopy := selector // Create a copy to avoid issues with pointer semantics
-		selectorResults, err := m.GetKeys(ctx, selectorCopy)
+		selectorResults, _, err := m.GetKeys(ctx, selectorCopy)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		// Merge results
@@ -87,7 +88,7 @@ func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, fieldKeySelectors 
 		}
 	}
 
-	return result, nil
+	return result, true, nil
 }
 
 // GetKey returns a list of keys with the given name
@@ -113,37 +114,37 @@ func (m *MockMetadataStore) GetKey(ctx context.Context, fieldKeySelector *teleme
 }
 
 // GetRelatedValues returns a list of related values for the given key name and selection
-func (m *MockMetadataStore) GetRelatedValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, error) {
+func (m *MockMetadataStore) GetRelatedValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
 	if fieldValueSelector == nil {
-		return nil, nil
+		return nil, true, nil
 	}
 
 	// Generate a lookup key from the selector
 	lookupKey := generateLookupKey(fieldValueSelector)
 
 	if values, exists := m.RelatedValuesMap[lookupKey]; exists {
-		return values, nil
+		return values, true, nil
 	}
 
 	// Return empty slice if no values found
-	return []string{}, nil
+	return []string{}, true, nil
 }
 
 // GetAllValues returns all values for a given field
-func (m *MockMetadataStore) GetAllValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
+func (m *MockMetadataStore) GetAllValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	if fieldValueSelector == nil {
-		return &telemetrytypes.TelemetryFieldValues{}, nil
+		return &telemetrytypes.TelemetryFieldValues{}, true, nil
 	}
 
 	// Generate a lookup key from the selector
 	lookupKey := generateLookupKey(fieldValueSelector)
 
 	if values, exists := m.AllValuesMap[lookupKey]; exists {
-		return values, nil
+		return values, true, nil
 	}
 
 	// Return empty values object if not found
-	return &telemetrytypes.TelemetryFieldValues{}, nil
+	return &telemetrytypes.TelemetryFieldValues{}, true, nil
 }
 
 // Helper functions to avoid adding methods to structs
@@ -155,7 +156,7 @@ func matchesName(selector *telemetrytypes.FieldKeySelector, name string) bool {
 	}
 
 	if selector.SelectorMatchType.String == telemetrytypes.FieldSelectorMatchTypeExact.String {
-		return selector.Name == name
+		return selector.Name == name || name == selector.FieldContext.StringValue()+"."+selector.Name
 	}
 
 	// Fuzzy matching for FieldSelectorMatchTypeFuzzy

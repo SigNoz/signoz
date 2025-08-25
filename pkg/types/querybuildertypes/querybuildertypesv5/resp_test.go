@@ -5,8 +5,10 @@ import (
 	"math"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTimeSeriesValue_MarshalJSON(t *testing.T) {
@@ -305,6 +307,91 @@ func TestSanitizeValue(t *testing.T) {
 			if string(gotJSON) != string(expectedJSON) {
 				t.Errorf("sanitizeValue() = %v, want %v", string(gotJSON), string(expectedJSON))
 			}
+		})
+	}
+}
+
+func TestRawData_MarshalJSON(t *testing.T) {
+	str1 := "val1"
+	num1 := float64(1.1)
+
+	tests := []struct {
+		name     string
+		data     RawData
+		expected string
+	}{
+		{
+			name: "ValidTimestamp_NoData",
+			data: RawData{
+				QueryName: "test_query",
+				Rows: []*RawRow{
+					{
+						Timestamp: time.Unix(1717334400, 0).UTC(),
+						Data:      map[string]any{},
+					},
+				},
+			},
+			expected: `{"nextCursor":"","queryName":"test_query","rows":[{"data":{},"timestamp":"2024-06-02T13:20:00Z"}]}`,
+		},
+		{
+			name: "NoTimestamp_NoData",
+			data: RawData{
+				QueryName: "test_query",
+				Rows: []*RawRow{
+					{
+						Data: map[string]any{},
+					},
+				},
+			},
+			expected: `{"nextCursor":"","queryName":"test_query","rows":[{"data":{}}]}`,
+		},
+		{
+			name: "ZeroTimestamp_NoData",
+			data: RawData{
+				QueryName: "test_query",
+				Rows: []*RawRow{
+					{
+						Timestamp: time.Time{},
+						Data:      map[string]any{},
+					},
+				},
+			},
+			expected: `{"nextCursor":"","queryName":"test_query","rows":[{"data":{}}]}`,
+		},
+		{
+			name: "NoTimestamp_WithData",
+			data: RawData{
+				QueryName: "test_query",
+				Rows: []*RawRow{
+					{
+						Data: map[string]any{
+							"value": "val1",
+						},
+					},
+				},
+			},
+			expected: `{"nextCursor":"","queryName":"test_query","rows":[{"data":{"value":"val1"}}]}`,
+		},
+		{
+			name: "WithTimestamp_WithPointerData",
+			data: RawData{
+				QueryName: "test_query",
+				Rows: []*RawRow{
+					{
+						Timestamp: time.Unix(1717334400, 0).UTC(),
+						Data:      map[string]any{"str1": &str1, "num1": &num1, "num2": nil},
+					},
+				},
+			},
+			expected: `{"nextCursor":"","queryName":"test_query","rows":[{"data":{"num1":1.1,"str1":"val1","num2":null},"timestamp":"2024-06-02T13:20:00Z"}]}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := json.Marshal(tt.data)
+			assert.NoError(t, err)
+			assert.JSONEq(t, tt.expected, string(got))
 		})
 	}
 }

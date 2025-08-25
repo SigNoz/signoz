@@ -232,14 +232,17 @@ function SettingsPage(): JSX.Element {
 	return (
 		<div className="settings-page">
 			<header className="settings-page-header">
-				<div className="settings-page-header-title">
+				<div
+					className="settings-page-header-title"
+					data-testid="settings-page-title"
+				>
 					<Wrench size={16} />
 					Settings
 				</div>
 			</header>
 
 			<div className="settings-page-content-container">
-				<div className="settings-page-sidenav">
+				<div className="settings-page-sidenav" data-testid="settings-page-sidenav">
 					{settingsMenuItems
 						.filter((item) => item.isEnabled)
 						.map((item) => (
@@ -256,6 +259,7 @@ function SettingsPage(): JSX.Element {
 									});
 									handleMenuItemClick((event as unknown) as MouseEvent, item);
 								}}
+								dataTestId={item.itemKey}
 							/>
 						))}
 				</div>

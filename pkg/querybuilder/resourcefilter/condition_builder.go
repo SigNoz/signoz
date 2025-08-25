@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -34,7 +35,8 @@ func valueForIndexFilter(op qbtypes.FilterOperator, key *telemetrytypes.Telemetr
 		}
 		return values
 	}
-	return value
+	// resource table expects string value
+	return fmt.Sprintf(`%%%v%%`, value)
 }
 
 func keyIndexFilter(key *telemetrytypes.TelemetryFieldKey) any {
@@ -51,6 +53,16 @@ func (b *defaultConditionBuilder) ConditionFor(
 
 	if key.FieldContext != telemetrytypes.FieldContextResource {
 		return "true", nil
+	}
+
+	switch op {
+	case qbtypes.FilterOperatorContains,
+		qbtypes.FilterOperatorNotContains,
+		qbtypes.FilterOperatorILike,
+		qbtypes.FilterOperatorNotILike,
+		qbtypes.FilterOperatorLike,
+		qbtypes.FilterOperatorNotLike:
+		value = querybuilder.FormatValueForContains(value)
 	}
 
 	column, err := b.fm.ColumnFor(ctx, key)

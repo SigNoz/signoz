@@ -23,6 +23,7 @@ interface TableRowProps {
 	index: number;
 	log: Record<string, unknown>;
 	handleSetActiveContextLog: (log: ILog) => void;
+	onShowLogDetails: (log: ILog) => void;
 	logs: ILog[];
 	hasActions: boolean;
 	fontSize: FontSize;
@@ -33,6 +34,7 @@ export default function TableRow({
 	index,
 	log,
 	handleSetActiveContextLog,
+	onShowLogDetails,
 	logs,
 	hasActions,
 	fontSize,
@@ -57,6 +59,11 @@ export default function TableRow({
 		[currentLog, handleSetActiveContextLog],
 	);
 
+	const handleShowLogDetails = useCallback(() => {
+		if (!onShowLogDetails || !currentLog) return;
+		onShowLogDetails(currentLog);
+	}, [currentLog, onShowLogDetails]);
+
 	const hasSingleColumn =
 		tableColumns.filter((column) => column.key !== 'state-indicator').length ===
 		1;
@@ -65,6 +72,8 @@ export default function TableRow({
 		<>
 			{tableColumns.map((column) => {
 				if (!column.render) return <td>Empty</td>;
+
+				if (!column.key) return null;
 
 				const element: ColumnTypeRender<Record<string, unknown>> = column.render(
 					log[column.key as keyof Record<string, unknown>],
@@ -89,6 +98,8 @@ export default function TableRow({
 						key={column.key}
 						fontSize={fontSize}
 						columnKey={column.key as string}
+						onClick={handleShowLogDetails}
+						className={column.key as string}
 					>
 						{cloneElement(children, props)}
 					</TableCellStyled>

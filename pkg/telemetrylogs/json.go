@@ -26,12 +26,12 @@ func parseStrValue(valueStr string, operator qbtypes.FilterOperator) (telemetryt
 
 	var err error
 	var parsedValue any
-	if parsedValue, err = strconv.ParseBool(valueStr); err == nil {
-		valueType = telemetrytypes.FieldDataTypeBool
-	} else if parsedValue, err = strconv.ParseInt(valueStr, 10, 64); err == nil {
+	if parsedValue, err = strconv.ParseInt(valueStr, 10, 64); err == nil {
 		valueType = telemetrytypes.FieldDataTypeInt64
 	} else if parsedValue, err = strconv.ParseFloat(valueStr, 64); err == nil {
 		valueType = telemetrytypes.FieldDataTypeFloat64
+	} else if parsedValue, err = strconv.ParseBool(valueStr); err == nil {
+		valueType = telemetrytypes.FieldDataTypeBool
 	} else {
 		parsedValue = valueStr
 		valueType = telemetrytypes.FieldDataTypeString

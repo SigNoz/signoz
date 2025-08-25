@@ -31,6 +31,10 @@
 		}
 	}
 
+	.refresh-text-container {
+		display: none;
+	}
+
 	.refresh-actions {
 		display: flex;
 		flex-direction: row;
@@ -307,5 +311,13 @@
 	.reset-button {
 		background: var(--bg-vanilla-100);
 		border-color: var(--bg-vanilla-300);
+	}
+}
+
+@media (min-width: 1400px) {
+	.date-time-selector {
+		.refresh-text-container {
+			display: block;
+		}
 	}
 }

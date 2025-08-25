@@ -43,13 +43,13 @@ export const omitIdFromQuery = (query: Query | null): any => ({
 	builder: {
 		...query?.builder,
 		queryData: query?.builder.queryData.map((queryData) => {
-			const { id, ...rest } = queryData.aggregateAttribute;
+			const { id, ...rest } = queryData.aggregateAttribute || {};
 			const newAggregateAttribute = rest;
 			const newGroupByAttributes = queryData.groupBy.map((groupByAttribute) => {
 				const { id, ...rest } = groupByAttribute;
 				return rest;
 			});
-			const newItems = queryData.filters.items.map((item) => {
+			const newItems = queryData.filters?.items?.map((item) => {
 				const { id, ...newItem } = item;
 				if (item.key) {
 					const { id, ...rest } = item.key;

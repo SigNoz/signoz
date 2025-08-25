@@ -77,7 +77,12 @@ func NewSQLSchemaProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[
 	)
 }
 
-func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]] {
+func NewSQLMigrationProviderFactories(
+	sqlstore sqlstore.SQLStore,
+	sqlschema sqlschema.SQLSchema,
+	telemetryStore telemetrystore.TelemetryStore,
+	providerSettings factory.ProviderSettings,
+) factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]] {
 	return factory.MustNewNamedMap(
 		sqlmigration.NewAddDataMigrationsFactory(),
 		sqlmigration.NewAddOrganizationFactory(),
@@ -131,7 +136,14 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore, sqlschema sqls
 
 func NewTelemetryStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]] {
 	return factory.MustNewNamedMap(
-		clickhousetelemetrystore.NewFactory(telemetrystorehook.NewSettingsFactory(), telemetrystorehook.NewLoggingFactory()),
+		clickhousetelemetrystore.NewFactory(
+			telemetrystore.TelemetryStoreHookFactoryFunc(func(s string) factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config] {
+				return telemetrystorehook.NewSettingsFactory(s)
+			}),
+			telemetrystore.TelemetryStoreHookFactoryFunc(func(s string) factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config] {
+				return telemetrystorehook.NewLoggingFactory()
+			}),
+		),
 	)
 }
 

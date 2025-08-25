@@ -1,12 +1,22 @@
 import './FunnelStep.styles.scss';
 
-import { Button, Divider, Form, Switch, Tooltip } from 'antd';
+import {
+	Button,
+	Divider,
+	Dropdown,
+	Form,
+	MenuProps,
+	Space,
+	Switch,
+	Tooltip,
+} from 'antd';
 import cx from 'classnames';
 import { FilterSelect } from 'components/CeleryOverview/CeleryOverviewConfigOptions/CeleryOverviewConfigOptions';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
-import { HardHat, PencilLine } from 'lucide-react';
+import { ChevronDown, HardHat, PencilLine } from 'lucide-react';
+import { LatencyPointers } from 'pages/TracesFunnelDetails/constants';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useAppContext } from 'providers/App/App';
 import { useMemo, useState } from 'react';
@@ -37,17 +47,16 @@ function FunnelStep({
 		false,
 	);
 
-	// temporarily hide latency pointer, as it breaks some edge cases (ref: https://signoz-team.slack.com/archives/C089MNX4Y90/p1748600682066499?thread_ts=1748599673.171759&cid=C089MNX4Y90)
-	// const latencyPointerItems: MenuProps['items'] = LatencyPointers.map(
-	// 	(option) => ({
-	// 		key: option.value,
-	// 		label: option.key,
-	// 		style:
-	// 			option.value === stepData.latency_pointer
-	// 				? { backgroundColor: 'var(--bg-slate-100)' }
-	// 				: {},
-	// 	}),
-	// );
+	const latencyPointerItems: MenuProps['items'] = LatencyPointers.map(
+		(option) => ({
+			key: option.value,
+			label: option.key,
+			style:
+				option.value === stepData.latency_pointer
+					? { backgroundColor: 'var(--bg-slate-100)' }
+					: {},
+		}),
+	);
 
 	const updatedCurrentQuery = useMemo(
 		() => ({
@@ -205,8 +214,7 @@ function FunnelStep({
 						/>
 						<div className="error__label">Errors</div>
 					</div>
-					{/* temporarily hide latency pointer, as it breaks some edge cases (ref: https://signoz-team.slack.com/archives/C089MNX4Y90/p1748600682066499?thread_ts=1748599673.171759&cid=C089MNX4Y90) */}
-					{/* <div className="latency-pointer">
+					<div className="latency-pointer">
 						<div className="latency-pointer__label">Latency pointer</div>
 						<Dropdown
 							menu={{
@@ -217,6 +225,7 @@ function FunnelStep({
 									}),
 							}}
 							trigger={['click']}
+							disabled={!hasEditPermission}
 						>
 							<Space>
 								{
@@ -227,7 +236,7 @@ function FunnelStep({
 								<ChevronDown size={14} color="var(--bg-vanilla-400)" />
 							</Space>
 						</Dropdown>
-					</div> */}
+					</div>
 				</div>
 			</Form>
 		</div>

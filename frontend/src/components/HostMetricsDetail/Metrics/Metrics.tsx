@@ -13,6 +13,7 @@ import {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/config';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { useMultiIntersectionObserver } from 'hooks/useMultiIntersectionObserver';
@@ -86,6 +87,7 @@ function Metrics({
 	const isDarkMode = useIsDarkMode();
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
+	const { currentQuery } = useQueryBuilder();
 
 	const chartData = useMemo(
 		() => queries.map(({ data }) => getUPlotChartData(data?.payload)),
@@ -144,9 +146,17 @@ function Metrics({
 					minTimeScale: graphTimeIntervals[idx].start,
 					maxTimeScale: graphTimeIntervals[idx].end,
 					onDragSelect: (start, end) => onDragSelect(start, end, idx),
+					query: currentQuery,
 				}),
 			),
-		[queries, isDarkMode, dimensions, graphTimeIntervals, onDragSelect],
+		[
+			queries,
+			isDarkMode,
+			dimensions,
+			graphTimeIntervals,
+			onDragSelect,
+			currentQuery,
+		],
 	);
 
 	const renderCardContent = (

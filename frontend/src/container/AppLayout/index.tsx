@@ -10,21 +10,26 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import getChangelogByVersion from 'api/changelog/getChangelogByVersion';
 import logEvent from 'api/common/logEvent';
 import manageCreditCardApi from 'api/v1/portal/create';
+import updateUserPreference from 'api/v1/user/preferences/name/update';
 import getUserLatestVersion from 'api/v1/version/getLatestVersion';
 import getUserVersion from 'api/v1/version/getVersion';
+import { AxiosError } from 'axios';
 import cx from 'classnames';
 import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
 import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
+import { MIN_ACCOUNT_AGE_FOR_CHANGELOG } from 'constants/changelog';
 import { Events } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
+import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import dayjs from 'dayjs';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
@@ -67,8 +72,10 @@ import {
 	LicensePlatform,
 	LicenseState,
 } from 'types/api/licensesV3/getActive';
+import { UserPreference } from 'types/api/preferences/preference';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
+import { showErrorNotification } from 'utils/error';
 import { eventEmitter } from 'utils/getEventEmitter';
 import {
 	getFormattedDate,
@@ -110,6 +117,34 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { latestVersion } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
+
+	const isWorkspaceAccessRestricted = useMemo(() => {
+		if (!activeLicense) {
+			return false;
+		}
+
+		const isTerminated = activeLicense.state === LicenseState.TERMINATED;
+		const isExpired = activeLicense.state === LicenseState.EXPIRED;
+		const isCancelled = activeLicense.state === LicenseState.CANCELLED;
+		const isDefaulted = activeLicense.state === LicenseState.DEFAULTED;
+		const isEvaluationExpired =
+			activeLicense.state === LicenseState.EVALUATION_EXPIRED;
+
+		return (
+			isTerminated ||
+			isExpired ||
+			isCancelled ||
+			isDefaulted ||
+			isEvaluationExpired
+		);
+	}, [activeLicense]);
+
+	const daysSinceAccountCreation = useMemo(() => {
+		const userCreationDate = dayjs(user.createdAt);
+		const currentDate = dayjs();
+
+		return Math.abs(currentDate.diff(userCreationDate, 'day'));
+	}, [user.createdAt]);
 
 	const handleBillingOnSuccess = (
 		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,
@@ -183,7 +218,13 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	useEffect(() => {
 		// refetch the changelog only when the current tab becomes active + there isn't an active request
-		if (!getChangelogByVersionResponse.isLoading && isVisible) {
+		if (
+			isVisible &&
+			!changelog &&
+			!getChangelogByVersionResponse.isLoading &&
+			isLoggedIn &&
+			Boolean(latestVersion)
+		) {
 			getChangelogByVersionResponse.refetch();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -194,7 +235,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		if (
 			isCloudUserVal &&
 			Boolean(latestVersion) &&
-			latestVersion !== seenChangelogVersion
+			seenChangelogVersion != null &&
+			latestVersion !== seenChangelogVersion &&
+			daysSinceAccountCreation > MIN_ACCOUNT_AGE_FOR_CHANGELOG && // Show to only users older than 2 weeks
+			!isWorkspaceAccessRestricted
 		) {
 			// Automatically open the changelog modal for cloud users after 1s, if they've not seen this version before.
 			timer = setTimeout(() => {
@@ -205,11 +249,13 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		return (): void => {
 			clearInterval(timer);
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		isCloudUserVal,
 		latestVersion,
 		seenChangelogVersion,
 		toggleChangelogModal,
+		isWorkspaceAccessRestricted,
 	]);
 
 	useEffect(() => {
@@ -364,20 +410,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	useEffect(() => {
 		if (!isFetchingActiveLicense && activeLicense) {
-			const isTerminated = activeLicense.state === LicenseState.TERMINATED;
-			const isExpired = activeLicense.state === LicenseState.EXPIRED;
-			const isCancelled = activeLicense.state === LicenseState.CANCELLED;
-			const isDefaulted = activeLicense.state === LicenseState.DEFAULTED;
-			const isEvaluationExpired =
-				activeLicense.state === LicenseState.EVALUATION_EXPIRED;
-
-			const isWorkspaceAccessRestricted =
-				isTerminated ||
-				isExpired ||
-				isCancelled ||
-				isDefaulted ||
-				isEvaluationExpired;
-
 			const { platform } = activeLicense;
 
 			if (
@@ -387,7 +419,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				setShowWorkspaceRestricted(true);
 			}
 		}
-	}, [isFetchingActiveLicense, activeLicense]);
+	}, [isFetchingActiveLicense, activeLicense, isWorkspaceAccessRestricted]);
 
 	useEffect(() => {
 		if (
@@ -636,9 +668,84 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		</div>
 	);
 
-	const sideNavPinned = userPreferences?.find(
+	const sideNavPinnedPreference = userPreferences?.find(
 		(preference) => preference.name === USER_PREFERENCES.SIDENAV_PINNED,
 	)?.value as boolean;
+
+	// Add loading state to prevent layout shift during initial load
+	const [isSidebarLoaded, setIsSidebarLoaded] = useState(false);
+
+	// Get sidebar state from localStorage as fallback until preferences are loaded
+	const getSidebarStateFromLocalStorage = useCallback((): boolean => {
+		try {
+			const storedValue = getLocalStorageApi(USER_PREFERENCES.SIDENAV_PINNED);
+			return storedValue === 'true';
+		} catch {
+			return false;
+		}
+	}, []);
+
+	// Set sidebar as loaded after user preferences are fetched
+	useEffect(() => {
+		if (userPreferences !== null) {
+			setIsSidebarLoaded(true);
+		}
+	}, [userPreferences]);
+
+	// Use localStorage value as fallback until preferences are loaded
+	const isSideNavPinned = isSidebarLoaded
+		? sideNavPinnedPreference
+		: getSidebarStateFromLocalStorage();
+
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
+	const { updateUserPreferenceInContext } = useAppContext();
+
+	const { mutate: updateUserPreferenceMutation } = useMutation(
+		updateUserPreference,
+		{
+			onError: (error) => {
+				showErrorNotification(notifications, error as AxiosError);
+			},
+		},
+	);
+
+	const handleToggleSidebar = useCallback((): void => {
+		const newState = !isSideNavPinned;
+
+		logEvent('Global Shortcut: Sidebar Toggle', {
+			previousState: isSideNavPinned,
+			newState,
+		});
+
+		// Save to localStorage immediately for instant feedback
+		setLocalStorageApi(USER_PREFERENCES.SIDENAV_PINNED, newState.toString());
+
+		// Update the context immediately
+		const save = {
+			name: USER_PREFERENCES.SIDENAV_PINNED,
+			value: newState,
+		};
+		updateUserPreferenceInContext(save as UserPreference);
+
+		// Make the API call in the background
+		updateUserPreferenceMutation({
+			name: USER_PREFERENCES.SIDENAV_PINNED,
+			value: newState,
+		});
+	}, [
+		isSideNavPinned,
+		updateUserPreferenceInContext,
+		updateUserPreferenceMutation,
+	]);
+
+	// Register the sidebar toggle shortcut
+	useEffect(() => {
+		registerShortcut(GlobalShortcuts.ToggleSidebar, handleToggleSidebar);
+
+		return (): void => {
+			deregisterShortcut(GlobalShortcuts.ToggleSidebar);
+		};
+	}, [registerShortcut, deregisterShortcut, handleToggleSidebar]);
 
 	const SHOW_TRIAL_EXPIRY_BANNER =
 		showTrialExpiryBanner && !showPaymentFailedWarning;
@@ -713,14 +820,14 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				className={cx(
 					'app-layout',
 					isDarkMode ? 'darkMode dark' : 'lightMode',
-					sideNavPinned ? 'side-nav-pinned' : '',
+					isSideNavPinned ? 'side-nav-pinned' : '',
 					SHOW_WORKSPACE_RESTRICTED_BANNER ? 'isWorkspaceRestricted' : '',
 					SHOW_TRIAL_EXPIRY_BANNER ? 'isTrialExpired' : '',
 					SHOW_PAYMENT_FAILED_BANNER ? 'isPaymentFailed' : '',
 				)}
 			>
 				{isToDisplayLayout && !renderFullScreen && (
-					<SideNav isPinned={sideNavPinned} />
+					<SideNav isPinned={isSideNavPinned} />
 				)}
 				<div
 					className={cx('app-content', {
