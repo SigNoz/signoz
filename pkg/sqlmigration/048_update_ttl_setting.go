@@ -53,12 +53,11 @@ func (migration *updateTTLSettingForCustomRetention) Up(ctx context.Context, db 
 
 	// Define the new column
 	column := &sqlschema.Column{
-		Name:     sqlschema.ColumnName("resource_rules"),
+		Name:     sqlschema.ColumnName("resource_conditions"),
 		DataType: sqlschema.DataTypeText,
 		Nullable: true,
 	}
 
-	// Add the resource_rules column using sqlschema
 	sqls := migration.sqlschema.Operator().AddColumn(table, uniqueConstraints, column, nil)
 
 	for _, sql := range sqls {
