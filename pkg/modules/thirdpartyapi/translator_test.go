@@ -1,7 +1,7 @@
-package thirdPartyApi
+package thirdpartyapi
 
 import (
-	thirdPartyApi2 "github.com/SigNoz/signoz/pkg/types/thirdPartyApi"
+	"github.com/SigNoz/signoz/pkg/types"
 	"testing"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -129,12 +129,12 @@ func TestFilterResponse(t *testing.T) {
 func TestBuildDomainList(t *testing.T) {
 	tests := []struct {
 		name    string
-		input   *thirdPartyApi2.ThirdPartyApiRequest
+		input   *types.ThirdPartyApiRequest
 		wantErr bool
 	}{
 		{
 			name: "basic domain list query",
-			input: &thirdPartyApi2.ThirdPartyApiRequest{
+			input: &types.ThirdPartyApiRequest{
 				Start: 1000,
 				End:   2000,
 			},
@@ -142,7 +142,7 @@ func TestBuildDomainList(t *testing.T) {
 		},
 		{
 			name: "with filters and group by",
-			input: &thirdPartyApi2.ThirdPartyApiRequest{
+			input: &types.ThirdPartyApiRequest{
 				Start: 1000,
 				End:   2000,
 				Filter: &qbtypes.Filter{
@@ -182,12 +182,12 @@ func TestBuildDomainList(t *testing.T) {
 func TestBuildDomainInfo(t *testing.T) {
 	tests := []struct {
 		name    string
-		input   *thirdPartyApi2.ThirdPartyApiRequest
+		input   *types.ThirdPartyApiRequest
 		wantErr bool
 	}{
 		{
 			name: "basic domain info query",
-			input: &thirdPartyApi2.ThirdPartyApiRequest{
+			input: &types.ThirdPartyApiRequest{
 				Start: 1000,
 				End:   2000,
 			},
@@ -195,7 +195,7 @@ func TestBuildDomainInfo(t *testing.T) {
 		},
 		{
 			name: "with filters and group by",
-			input: &thirdPartyApi2.ThirdPartyApiRequest{
+			input: &types.ThirdPartyApiRequest{
 				Start: 1000,
 				End:   2000,
 				Filter: &qbtypes.Filter{

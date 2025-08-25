@@ -1,4 +1,4 @@
-package thirdPartyApi
+package types
 
 import (
 	"fmt"

@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/modules/thirdPartyApi"
+	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
 
 	//qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"io"
@@ -5075,7 +5075,7 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build the v5 query range request for domain listing
-	queryRangeRequest, err := thirdPartyApi.BuildDomainList(thirdPartyQueryRequest)
+	queryRangeRequest, err := thirdpartyapi.BuildDomainList(thirdPartyQueryRequest)
 	if err != nil {
 		zap.L().Error("Failed to build domain list query", zap.Error(err))
 		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
@@ -5100,12 +5100,12 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result = thirdPartyApi.MergeSemconvColumns(result)
+	result = thirdpartyapi.MergeSemconvColumns(result)
 
 	// Filter IP addresses if ShowIp is false
 	var finalResult = result
 	if !thirdPartyQueryRequest.ShowIp {
-		filteredResults := thirdPartyApi.FilterResponse([]*qbtypes.QueryRangeResponse{result})
+		filteredResults := thirdpartyapi.FilterResponse([]*qbtypes.QueryRangeResponse{result})
 		if len(filteredResults) > 0 {
 			finalResult = filteredResults[0]
 		}
@@ -5139,7 +5139,7 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build the v5 query range request for domain info
-	queryRangeRequest, err := thirdPartyApi.BuildDomainInfo(thirdPartyQueryRequest)
+	queryRangeRequest, err := thirdpartyapi.BuildDomainInfo(thirdPartyQueryRequest)
 	if err != nil {
 		zap.L().Error("Failed to build domain info query", zap.Error(err))
 		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
@@ -5164,12 +5164,12 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result = thirdPartyApi.MergeSemconvColumns(result)
+	result = thirdpartyapi.MergeSemconvColumns(result)
 
 	// Filter IP addresses if ShowIp is false
 	var finalResult *qbtypes.QueryRangeResponse = result
 	if !thirdPartyQueryRequest.ShowIp {
-		filteredResults := thirdPartyApi.FilterResponse([]*qbtypes.QueryRangeResponse{result})
+		filteredResults := thirdpartyapi.FilterResponse([]*qbtypes.QueryRangeResponse{result})
 		if len(filteredResults) > 0 {
 			finalResult = filteredResults[0]
 		}

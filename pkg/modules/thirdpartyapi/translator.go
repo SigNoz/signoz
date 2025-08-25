@@ -1,8 +1,8 @@
-package thirdPartyApi
+package thirdpartyapi
 
 import (
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/types/thirdPartyApi"
+	"github.com/SigNoz/signoz/pkg/types"
 	"net"
 	"regexp"
 	"time"
@@ -249,7 +249,7 @@ func mergeGroupBy(base, additional []qbtypes.GroupByKey) []qbtypes.GroupByKey {
 	return append(base, additional...)
 }
 
-func BuildDomainList(req *thirdPartyApi.ThirdPartyApiRequest) (*qbtypes.QueryRangeRequest, error) {
+func BuildDomainList(req *types.ThirdPartyApiRequest) (*qbtypes.QueryRangeRequest, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -278,7 +278,7 @@ func BuildDomainList(req *thirdPartyApi.ThirdPartyApiRequest) (*qbtypes.QueryRan
 	}, nil
 }
 
-func BuildDomainInfo(req *thirdPartyApi.ThirdPartyApiRequest) (*qbtypes.QueryRangeRequest, error) {
+func BuildDomainInfo(req *types.ThirdPartyApiRequest) (*qbtypes.QueryRangeRequest, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -304,7 +304,7 @@ func BuildDomainInfo(req *thirdPartyApi.ThirdPartyApiRequest) (*qbtypes.QueryRan
 	}, nil
 }
 
-func buildEndpointsQuery(req *thirdPartyApi.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildEndpointsQuery(req *types.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -320,7 +320,7 @@ func buildEndpointsQuery(req *thirdPartyApi.ThirdPartyApiRequest) qbtypes.QueryE
 	}
 }
 
-func buildLastSeenQuery(req *thirdPartyApi.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildLastSeenQuery(req *types.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -336,7 +336,7 @@ func buildLastSeenQuery(req *thirdPartyApi.ThirdPartyApiRequest) qbtypes.QueryEn
 	}
 }
 
-func buildRpsQuery(req *thirdPartyApi.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildRpsQuery(req *types.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -352,7 +352,7 @@ func buildRpsQuery(req *thirdPartyApi.ThirdPartyApiRequest) qbtypes.QueryEnvelop
 	}
 }
 
-func buildErrorQuery(req *thirdPartyApi.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildErrorQuery(req *types.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -368,7 +368,7 @@ func buildErrorQuery(req *thirdPartyApi.ThirdPartyApiRequest) qbtypes.QueryEnvel
 	}
 }
 
-func buildTotalSpanQuery(req *thirdPartyApi.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildTotalSpanQuery(req *types.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -384,7 +384,7 @@ func buildTotalSpanQuery(req *thirdPartyApi.ThirdPartyApiRequest) qbtypes.QueryE
 	}
 }
 
-func buildP99Query(req *thirdPartyApi.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildP99Query(req *types.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -410,7 +410,7 @@ func buildErrorRateFormula() qbtypes.QueryEnvelope {
 	}
 }
 
-func buildEndpointsInfoQuery(req *thirdPartyApi.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildEndpointsInfoQuery(req *types.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -426,7 +426,7 @@ func buildEndpointsInfoQuery(req *thirdPartyApi.ThirdPartyApiRequest) qbtypes.Qu
 	}
 }
 
-func buildP99InfoQuery(req *thirdPartyApi.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildP99InfoQuery(req *types.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -442,7 +442,7 @@ func buildP99InfoQuery(req *thirdPartyApi.ThirdPartyApiRequest) qbtypes.QueryEnv
 	}
 }
 
-func buildErrorRateInfoQuery(req *thirdPartyApi.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildErrorRateInfoQuery(req *types.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -458,7 +458,7 @@ func buildErrorRateInfoQuery(req *thirdPartyApi.ThirdPartyApiRequest) qbtypes.Qu
 	}
 }
 
-func buildLastSeenInfoQuery(req *thirdPartyApi.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildLastSeenInfoQuery(req *types.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
