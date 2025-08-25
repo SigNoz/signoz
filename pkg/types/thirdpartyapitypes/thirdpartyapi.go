@@ -1,7 +1,7 @@
-package types
+package thirdpartyapitypes
 
 import (
-	"fmt"
+	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
@@ -18,11 +18,11 @@ type ThirdPartyApiRequest struct {
 // Validate validates the ThirdPartyApiRequest
 func (req *ThirdPartyApiRequest) Validate() error {
 	if req.Start >= req.End {
-		return fmt.Errorf("start time must be before end time")
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "start time must be before end time")
 	}
 
 	if req.Filter != nil && req.Filter.Expression == "" {
-		return fmt.Errorf("filter expression cannot be empty when filter is provided")
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "filter expression cannot be empty when filter is provided")
 	}
 
 	return nil

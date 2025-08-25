@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/thirdpartyapitypes"
 	"math"
 	"net/http"
 	"sort"
@@ -981,14 +981,14 @@ func ParseQueueBody(r *http.Request) (*queues2.QueueListRequest, *model.ApiError
 }
 
 // ParseRequestBody for third party APIs
-func ParseRequestBody(r *http.Request) (*types.ThirdPartyApiRequest, error) {
-	req := new(types.ThirdPartyApiRequest)
+func ParseRequestBody(r *http.Request) (*thirdpartyapitypes.ThirdPartyApiRequest, error) {
+	req := new(thirdpartyapitypes.ThirdPartyApiRequest)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		return nil, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "cannot parse the request body: %v", err)
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
+		return nil, err
 	}
 
 	return req, nil
