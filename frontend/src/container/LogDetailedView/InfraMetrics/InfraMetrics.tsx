@@ -16,7 +16,7 @@ interface MetricsDataProps {
 	nodeName: string;
 	hostName: string;
 	clusterName: string;
-	logLineTimestamp: string;
+	timestamp: string;
 	dataSource: DataSource.LOGS | DataSource.TRACES;
 }
 
@@ -25,7 +25,7 @@ function InfraMetrics({
 	nodeName,
 	hostName,
 	clusterName,
-	logLineTimestamp,
+	timestamp,
 	dataSource = DataSource.LOGS,
 }: MetricsDataProps): JSX.Element {
 	const [selectedView, setSelectedView] = useState<string>(() =>
@@ -89,14 +89,14 @@ function InfraMetrics({
 					nodeName={nodeName}
 					clusterName={clusterName}
 					hostName={hostName}
-					logLineTimestamp={logLineTimestamp}
+					timestamp={timestamp}
 				/>
 			)}
 			{selectedView === VIEW_TYPES.POD && podName && (
 				<PodMetrics
 					podName={podName}
 					clusterName={clusterName}
-					logLineTimestamp={logLineTimestamp}
+					timestamp={timestamp}
 				/>
 			)}
 		</div>
