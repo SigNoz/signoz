@@ -1255,10 +1255,12 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 							allTokens[iterator].type,
 						)
 					) {
+						// Capture opening token type before advancing
+						const openingTokenType = allTokens[iterator].type;
 						multiValueStart = allTokens[iterator].start;
 						iterator += 1;
 						const closingToken =
-							allTokens[iterator].type === FilterQueryLexer.LPAREN
+							openingTokenType === FilterQueryLexer.LPAREN
 								? FilterQueryLexer.RPAREN
 								: FilterQueryLexer.RBRACK;
 

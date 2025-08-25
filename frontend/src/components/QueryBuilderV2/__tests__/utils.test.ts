@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+/* eslint-disable import/no-unresolved */
 import { negateOperator, OPERATORS } from 'constants/antlrQueryConstants';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { extractQueryPairs } from 'utils/queryContextUtils';
@@ -7,15 +8,6 @@ import {
 	convertFiltersToExpression,
 	convertFiltersToExpressionWithExistingQuery,
 } from '../utils';
-
-jest.mock('utils/queryContextUtils', () => ({
-	extractQueryPairs: jest.fn(),
-}));
-
-// Type the mocked functions
-const mockExtractQueryPairs = extractQueryPairs as jest.MockedFunction<
-	typeof extractQueryPairs
->;
 
 describe('convertFiltersToExpression', () => {
 	beforeEach(() => {
@@ -604,25 +596,6 @@ describe('convertFiltersToExpression', () => {
 
 		const existingQuery = "service.name = 'old-service'";
 
-		mockExtractQueryPairs.mockReturnValue([
-			{
-				key: 'service.name',
-				operator: OPERATORS['='],
-				value: "'old-service'",
-				hasNegation: false,
-				isMultiValue: false,
-				isComplete: true,
-				position: {
-					keyStart: 0,
-					keyEnd: 11,
-					operatorStart: 13,
-					operatorEnd: 13,
-					valueStart: 15,
-					valueEnd: 28,
-				},
-			},
-		]);
-
 		const result = convertFiltersToExpressionWithExistingQuery(
 			filters,
 			existingQuery,
@@ -631,8 +604,15 @@ describe('convertFiltersToExpression', () => {
 		expect(result.filters).toBeDefined();
 		expect(result.filter).toBeDefined();
 		expect(result.filter.expression).toBe("service.name = 'updated-service'");
-		expect(mockExtractQueryPairs).toHaveBeenCalledWith(
-			"service.name = 'old-service'",
+		// Ensure parser can parse the existing query
+		expect(extractQueryPairs(existingQuery)).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					key: 'service.name',
+					operator: '=',
+					value: "'old-service'",
+				}),
+			]),
 		);
 	});
 
@@ -650,34 +630,6 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const existingQuery = "service.name IN ['old-service']";
-
-		mockExtractQueryPairs.mockReturnValue([
-			{
-				key: 'service.name',
-				operator: 'IN',
-				value: "['old-service']",
-				valueList: ["'old-service'"],
-				valuesPosition: [
-					{
-						start: 17,
-						end: 29,
-					},
-				],
-				hasNegation: false,
-				isMultiValue: true,
-				position: {
-					keyStart: 0,
-					keyEnd: 11,
-					operatorStart: 13,
-					operatorEnd: 14,
-					valueStart: 16,
-					valueEnd: 30,
-					negationStart: 0,
-					negationEnd: 0,
-				},
-				isComplete: true,
-			},
-		]);
 
 		const result = convertFiltersToExpressionWithExistingQuery(
 			filters,
@@ -706,25 +658,6 @@ describe('convertFiltersToExpression', () => {
 
 		const existingQuery = "service.name = 'old-service'";
 
-		mockExtractQueryPairs.mockReturnValue([
-			{
-				key: 'service.name',
-				operator: OPERATORS['='],
-				value: "'old-service'",
-				hasNegation: false,
-				isMultiValue: false,
-				isComplete: true,
-				position: {
-					keyStart: 0,
-					keyEnd: 11,
-					operatorStart: 13,
-					operatorEnd: 13,
-					valueStart: 15,
-					valueEnd: 28,
-				},
-			},
-		]);
-
 		const result = convertFiltersToExpressionWithExistingQuery(
 			filters,
 			existingQuery,
@@ -750,25 +683,6 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const existingQuery = "service.name != 'old-service'";
-
-		mockExtractQueryPairs.mockReturnValue([
-			{
-				key: 'service.name',
-				operator: OPERATORS['!='],
-				value: "'old-service'",
-				hasNegation: false,
-				isMultiValue: false,
-				isComplete: true,
-				position: {
-					keyStart: 0,
-					keyEnd: 11,
-					operatorStart: 13,
-					operatorEnd: 14,
-					valueStart: 16,
-					valueEnd: 28,
-				},
-			},
-		]);
 
 		const result = convertFiltersToExpressionWithExistingQuery(
 			filters,
@@ -796,25 +710,6 @@ describe('convertFiltersToExpression', () => {
 
 		const existingQuery = "service.name = 'old-service'";
 
-		mockExtractQueryPairs.mockReturnValue([
-			{
-				key: 'service.name',
-				operator: OPERATORS['='],
-				value: "'old-service'",
-				hasNegation: false,
-				isMultiValue: false,
-				isComplete: true,
-				position: {
-					keyStart: 0,
-					keyEnd: 11,
-					operatorStart: 13,
-					operatorEnd: 13,
-					valueStart: 15,
-					valueEnd: 28,
-				},
-			},
-		]);
-
 		const result = convertFiltersToExpressionWithExistingQuery(
 			filters,
 			existingQuery,
@@ -841,25 +736,6 @@ describe('convertFiltersToExpression', () => {
 
 		const existingQuery = "status = 'success'";
 
-		mockExtractQueryPairs.mockReturnValue([
-			{
-				key: 'status',
-				operator: OPERATORS['='],
-				value: "'success'",
-				hasNegation: false,
-				isMultiValue: false,
-				isComplete: true,
-				position: {
-					keyStart: 0,
-					keyEnd: 6,
-					operatorStart: 7,
-					operatorEnd: 7,
-					valueStart: 9,
-					valueEnd: 19,
-				},
-			},
-		]);
-
 		const result = convertFiltersToExpressionWithExistingQuery(
 			filters,
 			existingQuery,
@@ -883,25 +759,6 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const existingQuery = "service.name = 'old-service'";
-
-		mockExtractQueryPairs.mockReturnValue([
-			{
-				key: 'service.name',
-				operator: OPERATORS['='],
-				value: "'old-service'",
-				hasNegation: false,
-				isMultiValue: false,
-				isComplete: true,
-				position: {
-					keyStart: 0,
-					keyEnd: 11,
-					operatorStart: 13,
-					operatorEnd: 13,
-					valueStart: 15,
-					valueEnd: 28,
-				},
-			},
-		]);
 
 		const result = convertFiltersToExpressionWithExistingQuery(
 			filters,
