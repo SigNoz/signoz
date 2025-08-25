@@ -2,6 +2,7 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Divider, Modal, Row, Spin, Typography } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
+import setRetentionApiV2 from 'api/settings/setRetentionV2';
 import TextToolTip from 'components/TextToolTip';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -29,6 +30,7 @@ import {
 	PayloadPropsMetrics as GetRetentionPeriodMetricsPayload,
 	PayloadPropsTraces as GetRetentionPeriodTracesPayload,
 } from 'types/api/settings/getRetention';
+import { PayloadPropsV2 } from 'types/api/settings/setRetention';
 
 import Retention from './Retention';
 import StatusMessage from './StatusMessage';
@@ -341,14 +343,26 @@ function GeneralSettings({
 		}
 		try {
 			onPostApiLoadingHandler(type);
-			const setTTLResponse = await setRetentionApi({
-				type,
-				totalDuration: `${apiCallTotalRetention || -1}h`,
-				coldStorage: s3Enabled ? 's3' : null,
-				toColdDuration: `${apiCallS3Retention || -1}h`,
-			});
+			let setTTLResponse: SuccessResponseV2<PayloadPropsV2>;
+			if (type === 'logs') {
+				setTTLResponse = await setRetentionApiV2({
+					type,
+					defaultTTLDays: apiCallTotalRetention ? apiCallTotalRetention / 24 : -1, // convert Hours to days
+					coldStorageVolume: '',
+					coldStorageDuration: 0,
+					ttlConditions: [],
+				});
+			} else {
+				setTTLResponse = await setRetentionApi({
+					type,
+					totalDuration: `${apiCallTotalRetention || -1}h`,
+					coldStorage: s3Enabled ? 's3' : null,
+					toColdDuration: `${apiCallS3Retention || -1}h`,
+				});
+			}
+
 			let hasSetTTLFailed = false;
-			if (setTTLResponse.statusCode === 409) {
+			if (setTTLResponse.httpStatusCode === 409) {
 				hasSetTTLFailed = true;
 				notifications.error({
 					message: 'Error',
@@ -407,6 +421,7 @@ function GeneralSettings({
 	const renderConfig = [
 		{
 			name: 'Metrics',
+			type: 'metrics',
 			retentionFields: [
 				{
 					name: t('total_retention_period'),
@@ -448,6 +463,7 @@ function GeneralSettings({
 		},
 		{
 			name: 'Traces',
+			type: 'traces',
 			retentionFields: [
 				{
 					name: t('total_retention_period'),
@@ -487,6 +503,7 @@ function GeneralSettings({
 		},
 		{
 			name: 'Logs',
+			type: 'logs',
 			retentionFields: [
 				{
 					name: t('total_retention_period'),
@@ -545,6 +562,7 @@ function GeneralSettings({
 							/>
 							{category.retentionFields.map((retentionField) => (
 								<Retention
+									type={category.type as TTTLType}
 									key={retentionField.name}
 									text={retentionField.name}
 									retentionValue={retentionField.value}
