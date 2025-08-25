@@ -18,9 +18,7 @@ export const getTraceToLogsQuery = (
 	const key: BaseAutocompleteData = {
 		id: uuid(),
 		dataType: DataTypes.String,
-		isColumn: true,
 		type: '',
-		isJSON: false,
 		key: 'trace_id',
 	};
 

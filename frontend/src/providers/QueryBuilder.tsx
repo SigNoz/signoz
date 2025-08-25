@@ -39,9 +39,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { AppState } from 'store/reducers';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 // ** Types
 import {
@@ -60,7 +58,6 @@ import {
 	QueryBuilderContextType,
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { sanitizeOrderByForExplorer } from 'utils/sanitizeOrderBy';
 import { v4 as uuid } from 'uuid';
 
@@ -108,10 +105,6 @@ export function QueryBuilderProvider({
 		calledFromHandleRunQuery,
 		setCalledFromHandleRunQuery,
 	] = useState<boolean>(false);
-
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
 
 	const compositeQueryParam = useGetCompositeQueryParam();
 	const { queryType: queryTypeParam, ...queryState } =
@@ -887,67 +880,49 @@ export function QueryBuilderProvider({
 		[],
 	);
 
-	const handleRunQuery = useCallback(
-		(shallUpdateStepInterval?: boolean, newQBQuery?: boolean) => {
-			const isExplorer =
-				location.pathname === ROUTES.LOGS_EXPLORER ||
-				location.pathname === ROUTES.TRACES_EXPLORER;
-			if (isExplorer) {
-				setCalledFromHandleRunQuery(true);
-			}
-			let currentQueryData = currentQuery;
-
-			if (newQBQuery) {
-				currentQueryData = {
-					...currentQueryData,
-					builder: {
-						...currentQueryData.builder,
-						queryData: currentQueryData.builder.queryData.map((item) => ({
-							...item,
-							filter: {
-								...item.filter,
-								expression:
-									item.filter?.expression.trim() === ''
-										? ''
-										: item.filter?.expression ?? '',
-							},
-							filters: {
-								items: [],
-								op: 'AND',
-							},
-						})),
+	const handleRunQuery = useCallback(() => {
+		const isExplorer =
+			location.pathname === ROUTES.LOGS_EXPLORER ||
+			location.pathname === ROUTES.TRACES_EXPLORER;
+		if (isExplorer) {
+			setCalledFromHandleRunQuery(true);
+		}
+		const currentQueryData = {
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: currentQuery.builder.queryData.map((item) => ({
+					...item,
+					filter: {
+						...item.filter,
+						expression:
+							item.filter?.expression.trim() === ''
+								? ''
+								: item.filter?.expression ?? '',
 					},
-				};
-			}
-			redirectWithQueryBuilderData({
-				...{
-					...currentQueryData,
-					...updateStepInterval(
-						{
-							builder: currentQueryData.builder,
-							clickhouse_sql: currentQueryData.clickhouse_sql,
-							promql: currentQueryData.promql,
-							id: currentQueryData.id,
-							queryType,
-							unit: currentQueryData.unit,
-						},
-						maxTime,
-						minTime,
-						!!shallUpdateStepInterval,
-					),
-				},
-				queryType,
-			});
-		},
-		[
-			location.pathname,
-			currentQuery,
+					filters: {
+						items: [],
+						op: 'AND',
+					},
+				})),
+			},
+		};
+
+		redirectWithQueryBuilderData({
+			...{
+				...currentQueryData,
+				...updateStepInterval({
+					builder: currentQueryData.builder,
+					clickhouse_sql: currentQueryData.clickhouse_sql,
+					promql: currentQueryData.promql,
+					id: currentQueryData.id,
+					queryType,
+					unit: currentQueryData.unit,
+				}),
+			},
 			queryType,
-			maxTime,
-			minTime,
-			redirectWithQueryBuilderData,
-		],
-	);
+		});
+	}, [currentQuery, location.pathname, queryType, redirectWithQueryBuilderData]);
 
 	useEffect(() => {
 		if (location.pathname !== currentPathnameRef.current) {
