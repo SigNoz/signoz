@@ -54,7 +54,7 @@
 			border: none;
 
 			&.active-tab {
-				background-color: #1d212d;
+				background-color: var(--bg-slate-400);
 			}
 		}
 	}
@@ -146,10 +146,10 @@
 		display: flex;
 		width: 224px;
 		flex-direction: column;
-		border-right: 1px solid #1d212d;
+		border-right: 1px solid var(--bg-slate-400);
 
 		.data-time-live {
-			border-bottom: 1px solid #1d212d;
+			border-bottom: 1px solid var(--bg-slate-400);
 			text-align: start;
 			padding: 13.5px 14px;
 			height: 44px;
@@ -194,7 +194,7 @@
 		display: flex;
 		width: 224px;
 		flex-direction: column;
-		border-right: 1px solid #1d212d;
+		border-right: 1px solid var(--bg-slate-400);
 
 		.back-btn {
 			display: flex;
@@ -224,7 +224,7 @@
 
 				.date-time-custom-option-from-title,
 				.date-time-custom-option-to-title {
-					color: var(--Slate-50, #62687c);
+					color: var(--bg-slate-50);
 					font-variant-numeric: slashed-zero;
 					font-family: Inter;
 					font-size: 12px;
@@ -237,7 +237,7 @@
 
 				.date-time-custom-option-from-value,
 				.date-time-custom-option-to-value {
-					color: var(--bg-vanilla-400, #c0c1c3);
+					color: var(--bg-vanilla-400);
 					font-variant-numeric: slashed-zero;
 					font-family: Inter;
 					font-size: 13px;
@@ -252,12 +252,12 @@
 
 					.date-time-custom-option-from-title,
 					.date-time-custom-option-to-title {
-						color: var(--bg-vanilla-400, #c0c1c3);
+						color: var(--bg-vanilla-400);
 					}
 
 					.date-time-custom-option-from-value,
 					.date-time-custom-option-to-value {
-						color: var(--Vanilla-100, #fff);
+						color: var(--bg-vanilla-100);
 					}
 				}
 			}

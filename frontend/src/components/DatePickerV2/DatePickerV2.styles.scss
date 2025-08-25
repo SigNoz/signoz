@@ -84,6 +84,31 @@
 
 .invalid-date-range-tooltip {
 	.ant-tooltip-inner {
-		color: var(--bg-amber-500) !important;
+		color: var(--bg-sakura-500) !important;
+	}
+}
+
+.lightMode {
+	.custom-date-time-picker-v2 {
+		.periscope-calendar-day {
+			&.periscope-calendar-today {
+				&.text-accent-foreground {
+					color: var(--bg-ink-500) !important;
+				}
+			}
+
+			button {
+				&:hover {
+					background-color: var(--bg-robin-500) !important;
+					color: var(--bg-ink-500) !important;
+				}
+			}
+		}
+
+		.custom-time-selector {
+			.time-input {
+				color: var(--bg-ink-500) !important;
+			}
+		}
 	}
 }

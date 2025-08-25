@@ -79,10 +79,6 @@ function DatePickerV2({
 				: dayjs(date).tz(timezone.value);
 
 			setSelectedFromDateTime(updatedFromDateTime);
-
-			if (updatedFromDateTime.isAfter(selectedToDateTime)) {
-				setSelectedToDateTime(null);
-			}
 		} else {
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			setSelectedToDateTime((prev) => {
@@ -147,14 +143,6 @@ function DatePickerV2({
 	const isValidRange = (): boolean => {
 		if (selectedDateTimeFor === 'to') {
 			return selectedToDateTime?.isAfter(selectedFromDateTime) ?? false;
-		}
-
-		if (
-			selectedDateTimeFor === 'from' &&
-			selectedFromDateTime &&
-			selectedToDateTime
-		) {
-			return selectedFromDateTime.isBefore(selectedToDateTime) ?? false;
 		}
 
 		return true;
@@ -251,21 +239,13 @@ function DatePickerV2({
 						if (selectedDateTimeFor === 'to') {
 							// disable dates after today and before selectedFromDateTime
 							const currentDay = dayjs(current);
-							return (
-								currentDay.isAfter(dayjs()) ||
-								currentDay.isBefore(dayjs(selectedFromDateTime).subtract(1, 'day')) ||
-								false
-							);
+							return currentDay.isAfter(dayjs()) || false;
 						}
 
 						if (selectedDateTimeFor === 'from') {
 							// disable dates after selectedToDateTime
 
-							return (
-								dayjs(current).isAfter(dayjs(selectedToDateTime)) ||
-								dayjs(current).isAfter(dayjs()) ||
-								false
-							);
+							return dayjs(current).isAfter(dayjs()) || false;
 						}
 
 						return false;
