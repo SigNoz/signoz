@@ -155,7 +155,7 @@ func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
 }
 
 func (q *QueryBuilderQuery[T]) validateSelectFields() error {
-	// isRoot and isEntryPoint are returned by the Metadata API, so if someone sends them, we have to skip these.
+	// isRoot and isEntryPoint are returned by the Metadata API, so if someone sends them, we have to reject the request.
 	for _, v := range q.SelectFields {
 		if v.Name == "isRoot" || v.Name == "isEntryPoint" {
 			return errors.NewInvalidInputf(
