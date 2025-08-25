@@ -1682,12 +1682,12 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			TransactionID: uuid,
-			TableName:     tableName,
-			TTL:           params.DefaultTTLDays,
-			ResourceRules: string(ttlConditionsJSON),
-			Status:        constants.StatusPending,
-			OrgID:         orgID,
+			TransactionID:      uuid,
+			TableName:          tableName,
+			TTL:                params.DefaultTTLDays,
+			ResourceConditions: string(ttlConditionsJSON),
+			Status:             constants.StatusPending,
+			OrgID:              orgID,
 		}
 
 		// Insert TTL setting record
@@ -1829,10 +1829,10 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 			return response, nil
 		}
 
-		// Parse TTL conditions from ResourceRules
+		// Parse TTL conditions from ResourceConditions
 		var ttlConditions []model.CustomRetentionRule
-		if customTTL.ResourceRules != "" {
-			if err := json.Unmarshal([]byte(customTTL.ResourceRules), &ttlConditions); err != nil {
+		if customTTL.ResourceConditions != "" {
+			if err := json.Unmarshal([]byte(customTTL.ResourceConditions), &ttlConditions); err != nil {
 				zap.L().Error("Error parsing TTL conditions", zap.Error(err))
 				ttlConditions = []model.CustomRetentionRule{}
 			}
