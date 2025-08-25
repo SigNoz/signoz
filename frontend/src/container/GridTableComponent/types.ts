@@ -1,4 +1,5 @@
 import { TableProps } from 'antd';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { LogsExplorerTableProps } from 'container/LogsExplorerTable/LogsExplorerTable.interfaces';
 import {
 	ThresholdOperators,
@@ -6,7 +7,7 @@ import {
 } from 'container/NewWidget/RightContainer/Threshold/types';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { ColumnUnit } from 'types/api/dashboard/getAll';
+import { ColumnUnit, ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export type GridTableComponentProps = {
@@ -22,6 +23,9 @@ export type GridTableComponentProps = {
 	widgetId?: string;
 	renderColumnCell?: QueryTableProps['renderColumnCell'];
 	customColTitles?: Record<string, string>;
+	enableDrillDown?: boolean;
+	contextLinks?: ContextLinksData;
+	panelType?: PANEL_TYPES;
 } & Pick<LogsExplorerTableProps, 'data'> &
 	Omit<TableProps<RowData>, 'columns' | 'dataSource'>;
 

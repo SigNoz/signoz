@@ -53,6 +53,7 @@ function GridCardGraph({
 	customTimeRange,
 	customOnRowClick,
 	customTimeRangeWindowForCoRelation,
+	enableDrillDown,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -317,6 +318,7 @@ function GridCardGraph({
 					customErrorMessage={isInternalServerError ? customErrorMessage : undefined}
 					customOnRowClick={customOnRowClick}
 					customTimeRangeWindowForCoRelation={customTimeRangeWindowForCoRelation}
+					enableDrillDown={enableDrillDown}
 				/>
 			)}
 		</div>
@@ -332,6 +334,7 @@ GridCardGraph.defaultProps = {
 	version: 'v3',
 	analyticsEvent: undefined,
 	customTimeRangeWindowForCoRelation: undefined,
+	enableDrillDown: false,
 };
 
 export default memo(GridCardGraph);

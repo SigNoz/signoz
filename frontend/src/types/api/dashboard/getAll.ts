@@ -120,6 +120,7 @@ export interface IBaseWidget {
 	columnWidths?: Record<string, number>;
 	legendPosition?: LegendPosition;
 	customLegendColors?: Record<string, string>;
+	contextLinks?: ContextLinksData;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;
@@ -136,4 +137,15 @@ export interface IQueryBuilderTagFilterItems {
 	key: string;
 	op: string;
 	value: string[];
+}
+
+export interface ContextLinkProps {
+	id: string;
+	url: string;
+	label: string;
+	// openInNewTab: boolean;
+}
+
+export interface ContextLinksData {
+	linksData: ContextLinkProps[];
 }

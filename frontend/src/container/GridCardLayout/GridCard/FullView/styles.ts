@@ -18,6 +18,7 @@ export const NotFoundContainer = styled.div`
 export const TimeContainer = styled.div<Props>`
 	display: flex;
 	justify-content: flex-end;
+	gap: 16px;
 	align-items: center;
 	${({ $panelType }): FlattenSimpleInterpolation =>
 		$panelType === PANEL_TYPES.TABLE
@@ -25,6 +26,10 @@ export const TimeContainer = styled.div<Props>`
 					margin-bottom: 1rem;
 			  `
 			: css``}
+
+	.time-container {
+		display: flex;
+	}
 `;
 
 export const GraphContainer = styled.div<GraphContainerProps>`

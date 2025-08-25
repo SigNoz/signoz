@@ -1279,6 +1279,15 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 						if (allTokens[iterator].type === closingToken) {
 							multiValueEnd = allTokens[iterator].stop;
 						}
+					} else if (isValueToken(allTokens[iterator].type)) {
+						valueList.push(allTokens[iterator].text);
+						valuesPosition.push({
+							start: allTokens[iterator].start,
+							end: allTokens[iterator].stop,
+						});
+						multiValueStart = allTokens[iterator].start;
+						multiValueEnd = allTokens[iterator].stop;
+						iterator += 1;
 					}
 
 					currentPair.valuesPosition = valuesPosition;
