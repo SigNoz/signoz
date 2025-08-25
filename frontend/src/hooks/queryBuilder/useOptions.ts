@@ -34,7 +34,6 @@ export const useOptions = (
 			transformStringWithPrefix({
 				str: data?.key,
 				prefix: data?.type || '',
-				condition: !data?.isColumn,
 			}),
 		[],
 	);

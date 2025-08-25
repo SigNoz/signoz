@@ -10,11 +10,7 @@ import { VIEWS } from './constants';
 export type LogDetailProps = {
 	log: ILog | null;
 	selectedTab: VIEWS;
-	onGroupByAttribute?: (
-		fieldKey: string,
-		isJSON?: boolean,
-		dataType?: DataTypes,
-	) => Promise<void>;
+	onGroupByAttribute?: (fieldKey: string, dataType?: DataTypes) => Promise<void>;
 	isListViewPanel?: boolean;
 	listViewPanelSelectedFields?: IField[] | null;
 } & Pick<AddToQueryHOCProps, 'onAddToQuery'> &
