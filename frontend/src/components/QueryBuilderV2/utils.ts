@@ -6,7 +6,7 @@ import {
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep, isEqual, sortBy } from 'lodash-es';
 import { IQueryPair } from 'types/antlrQueryTypes';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -38,6 +38,13 @@ const isArrayOperator = (operator: string): boolean => {
 	return arrayOperators.includes(operator);
 };
 
+const isVariable = (value: string | string[] | number | boolean): boolean => {
+	if (Array.isArray(value)) {
+		return value.some((v) => typeof v === 'string' && v.trim().startsWith('$'));
+	}
+	return typeof value === 'string' && value.trim().startsWith('$');
+};
+
 /**
  * Format a value for the expression string
  * @param value - The value to format
@@ -48,6 +55,10 @@ const formatValueForExpression = (
 	value: string[] | string | number | boolean,
 	operator?: string,
 ): string => {
+	if (isVariable(value)) {
+		return String(value);
+	}
+
 	// For IN operators, ensure value is always an array
 	if (isArrayOperator(operator || '')) {
 		const arrayValue = Array.isArray(value) ? value : [value];
@@ -163,6 +174,19 @@ export const convertExpressionToFilters = (
 
 	return filters;
 };
+const getQueryPairsMap = (query: string): Map<string, IQueryPair> => {
+	const queryPairs = extractQueryPairs(query);
+	const queryPairsMap: Map<string, IQueryPair> = new Map();
+
+	queryPairs.forEach((pair) => {
+		const key = pair.hasNegation
+			? `${pair.key}-not ${pair.operator}`.trim().toLowerCase()
+			: `${pair.key}-${pair.operator}`.trim().toLowerCase();
+		queryPairsMap.set(key, pair);
+	});
+
+	return queryPairsMap;
+};
 
 export const convertFiltersToExpressionWithExistingQuery = (
 	filters: TagFilter,
@@ -195,24 +219,12 @@ export const convertFiltersToExpressionWithExistingQuery = (
 		};
 	}
 
-	// Extract query pairs from the existing query
-	const queryPairs = extractQueryPairs(existingQuery.trim());
-	let queryPairsMap: Map<string, IQueryPair> = new Map();
 	const nonExistingFilters: TagFilterItem[] = [];
 	let modifiedQuery = existingQuery; // We'll modify this query as we proceed
 	const visitedPairs: Set<string> = new Set(); // Set to track visited query pairs
 
 	// Map extracted query pairs to key-specific pair information for faster access
-	if (queryPairs.length > 0) {
-		queryPairsMap = new Map(
-			queryPairs.map((pair) => {
-				const key = pair.hasNegation
-					? `${pair.key}-not ${pair.operator}`.trim().toLowerCase()
-					: `${pair.key}-${pair.operator}`.trim().toLowerCase();
-				return [key, pair];
-			}),
-		);
-	}
+	let queryPairsMap = getQueryPairsMap(existingQuery.trim());
 
 	filters?.items?.forEach((filter) => {
 		const { key, op, value } = filter;
@@ -241,10 +253,37 @@ export const convertFiltersToExpressionWithExistingQuery = (
 				existingPair.position?.valueEnd
 			) {
 				visitedPairs.add(`${key.key}-${op}`.trim().toLowerCase());
+
+				// Check if existing values match current filter values (for array-based operators)
+				if (existingPair.valueList && filter.value && Array.isArray(filter.value)) {
+					// Clean quotes from string values for comparison
+					const cleanValues = (values: any[]): any[] =>
+						values.map((val) => (typeof val === 'string' ? unquote(val) : val));
+
+					const cleanExistingValues = cleanValues(existingPair.valueList);
+					const cleanFilterValues = cleanValues(filter.value);
+
+					// Compare arrays (order-independent) - if identical, keep existing value
+					const isSameValues =
+						cleanExistingValues.length === cleanFilterValues.length &&
+						isEqual(sortBy(cleanExistingValues), sortBy(cleanFilterValues));
+
+					if (isSameValues) {
+						// Values are identical, preserve existing formatting
+						modifiedQuery =
+							modifiedQuery.slice(0, existingPair.position.valueStart) +
+							existingPair.value +
+							modifiedQuery.slice(existingPair.position.valueEnd + 1);
+						return;
+					}
+				}
+
 				modifiedQuery =
 					modifiedQuery.slice(0, existingPair.position.valueStart) +
 					formattedValue +
 					modifiedQuery.slice(existingPair.position.valueEnd + 1);
+
+				queryPairsMap = getQueryPairsMap(modifiedQuery);
 				return;
 			}
 
@@ -270,6 +309,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 							)}${OPERATORS.IN} ${formattedValue} ${modifiedQuery.slice(
 								notInPair.position.valueEnd + 1,
 							)}`;
+							queryPairsMap = getQueryPairsMap(modifiedQuery.trim());
 						}
 						shouldAddToNonExisting = false; // Don't add this to non-existing filters
 					} else if (
@@ -286,6 +326,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 							)}${OPERATORS.IN} ${formattedValue} ${modifiedQuery.slice(
 								equalsPair.position.valueEnd + 1,
 							)}`;
+							queryPairsMap = getQueryPairsMap(modifiedQuery);
 						}
 						shouldAddToNonExisting = false; // Don't add this to non-existing filters
 					} else if (
@@ -302,6 +343,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 							)}${OPERATORS.IN} ${formattedValue} ${modifiedQuery.slice(
 								notEqualsPair.position.valueEnd + 1,
 							)}`;
+							queryPairsMap = getQueryPairsMap(modifiedQuery);
 						}
 						shouldAddToNonExisting = false; // Don't add this to non-existing filters
 					}
@@ -323,6 +365,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 							} ${formattedValue} ${modifiedQuery.slice(
 								notEqualsPair.position.valueEnd + 1,
 							)}`;
+							queryPairsMap = getQueryPairsMap(modifiedQuery);
 						}
 						shouldAddToNonExisting = false; // Don't add this to non-existing filters
 					}
@@ -335,6 +378,23 @@ export const convertFiltersToExpressionWithExistingQuery = (
 		if (
 			queryPairsMap.has(`${filter.key?.key}-${filter.op}`.trim().toLowerCase())
 		) {
+			const existingPair = queryPairsMap.get(
+				`${filter.key?.key}-${filter.op}`.trim().toLowerCase(),
+			);
+			if (
+				existingPair &&
+				existingPair.position?.valueStart &&
+				existingPair.position?.valueEnd
+			) {
+				const formattedValue = formatValueForExpression(value, op);
+				// replace the value with the new value
+				modifiedQuery =
+					modifiedQuery.slice(0, existingPair.position.valueStart) +
+					formattedValue +
+					modifiedQuery.slice(existingPair.position.valueEnd + 1);
+				queryPairsMap = getQueryPairsMap(modifiedQuery);
+			}
+
 			visitedPairs.add(`${filter.key?.key}-${filter.op}`.trim().toLowerCase());
 		}
 

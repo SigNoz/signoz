@@ -10,6 +10,7 @@ export const ValueContainer = styled.div`
 	justify-content: center;
 	align-items: center;
 	flex-direction: column;
+	user-select: none;
 `;
 
 export const TitleContainer = styled.div<Props>`

@@ -23,7 +23,14 @@ export const getDashboardVariables = (
 
 		Object.entries(variables).forEach(([, value]) => {
 			if (value?.name) {
-				variablesTuple[value.name] = value?.selectedValue;
+				variablesTuple[value.name] =
+					value?.type === 'DYNAMIC' &&
+					value?.allSelected &&
+					value?.showALLOption &&
+					value?.multiSelect &&
+					!value?.haveCustomValuesSelected
+						? '__all__'
+						: value?.selectedValue;
 			}
 		});
 

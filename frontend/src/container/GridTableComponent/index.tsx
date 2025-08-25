@@ -46,6 +46,7 @@ function GridTableComponent({
 	onOpenTraceBtnClick,
 	customOnRowClick,
 	widgetId,
+	panelType,
 	...props
 }: GridTableComponentProps): JSX.Element {
 	const { t } = useTranslation(['valueGraph']);
@@ -266,6 +267,7 @@ function GridTableComponent({
 				dataSource={dataSource}
 				sticky={sticky}
 				widgetId={widgetId}
+				panelType={panelType}
 				onRow={
 					openTracesButton || customOnRowClick
 						? (record): React.HTMLAttributes<HTMLElement> => ({

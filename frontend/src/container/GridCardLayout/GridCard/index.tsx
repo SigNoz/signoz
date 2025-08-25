@@ -4,6 +4,8 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
+import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
+import { createDynamicVariableToWidgetsMap } from 'hooks/dashboard/utils';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
@@ -13,7 +15,6 @@ import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryClient } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -53,6 +54,7 @@ function GridCardGraph({
 	customTimeRange,
 	customOnRowClick,
 	customTimeRangeWindowForCoRelation,
+	enableDrillDown,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -62,14 +64,18 @@ function GridCardGraph({
 	const {
 		toScrollWidgetId,
 		setToScrollWidgetId,
-		variablesToGetUpdated,
 		setDashboardQueryRangeCalled,
 	} = useDashboard();
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-	const queryClient = useQueryClient();
+
+	const { dynamicVariables } = useGetDynamicVariables();
+	const dynamicVariableToWidgetsMap = useMemo(
+		() => createDynamicVariableToWidgetsMap(dynamicVariables, [widget]),
+		[dynamicVariables, widget],
+	);
 
 	const handleBackNavigation = (): void => {
 		const searchParams = new URLSearchParams(window.location.search);
@@ -120,11 +126,7 @@ function GridCardGraph({
 	const isEmptyWidget =
 		widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget);
 
-	const queryEnabledCondition =
-		isVisible &&
-		!isEmptyWidget &&
-		isQueryEnabled &&
-		isEmpty(variablesToGetUpdated);
+	const queryEnabledCondition = isVisible && !isEmptyWidget && isQueryEnabled;
 
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
 		if (widget.panelTypes !== PANEL_TYPES.LIST) {
@@ -163,22 +165,24 @@ function GridCardGraph({
 		};
 	});
 
-	useEffect(() => {
-		if (variablesToGetUpdated.length > 0) {
-			queryClient.cancelQueries([
-				maxTime,
-				minTime,
-				globalSelectedInterval,
-				variables,
-				widget?.query,
-				widget?.panelTypes,
-				widget.timePreferance,
-				widget.fillSpans,
-				requestData,
-			]);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [variablesToGetUpdated]);
+	// TODO [vikrantgupta25] remove this useEffect with refactor as this is prone to race condition
+	// this is added to tackle the case of async communication between VariableItem.tsx and GridCard.tsx
+	// useEffect(() => {
+	// 	if (variablesToGetUpdated.length > 0) {
+	// 		queryClient.cancelQueries([
+	// 			maxTime,
+	// 			minTime,
+	// 			globalSelectedInterval,
+	// 			variables,
+	// 			widget?.query,
+	// 			widget?.panelTypes,
+	// 			widget.timePreferance,
+	// 			widget.fillSpans,
+	// 			requestData,
+	// 		]);
+	// 	}
+	// 	// eslint-disable-next-line react-hooks/exhaustive-deps
+	// }, [variablesToGetUpdated]);
 
 	useEffect(() => {
 		if (!isEqual(updatedQuery, requestData.query)) {
@@ -218,12 +222,23 @@ function GridCardGraph({
 				maxTime,
 				minTime,
 				globalSelectedInterval,
-				variables,
 				widget?.query,
 				widget?.panelTypes,
 				widget.timePreferance,
 				widget.fillSpans,
 				requestData,
+				variables
+					? Object.entries(variables).reduce((acc, [id, variable]) => {
+							if (
+								variable.type !== 'DYNAMIC' ||
+								(dynamicVariableToWidgetsMap?.[id] &&
+									dynamicVariableToWidgetsMap?.[id].includes(widget.id))
+							) {
+								return { ...acc, [id]: variable.selectedValue };
+							}
+							return acc;
+					  }, {})
+					: {},
 				...(customTimeRange && customTimeRange.startTime && customTimeRange.endTime
 					? [customTimeRange.startTime, customTimeRange.endTime]
 					: []),
@@ -317,6 +332,7 @@ function GridCardGraph({
 					customErrorMessage={isInternalServerError ? customErrorMessage : undefined}
 					customOnRowClick={customOnRowClick}
 					customTimeRangeWindowForCoRelation={customTimeRangeWindowForCoRelation}
+					enableDrillDown={enableDrillDown}
 				/>
 			)}
 		</div>
@@ -332,6 +348,7 @@ GridCardGraph.defaultProps = {
 	version: 'v3',
 	analyticsEvent: undefined,
 	customTimeRangeWindowForCoRelation: undefined,
+	enableDrillDown: false,
 };
 
 export default memo(GridCardGraph);

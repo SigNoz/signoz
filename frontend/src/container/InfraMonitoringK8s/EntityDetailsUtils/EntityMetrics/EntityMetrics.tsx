@@ -15,6 +15,7 @@ import {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/config';
+import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -98,6 +99,8 @@ function EntityMetrics<T>({
 		],
 	);
 
+	const { dynamicVariables } = useGetDynamicVariables();
+
 	const queries = useQueries(
 		queryPayloads.map((payload, index) => ({
 			queryKey: [queryKey, payload, ENTITY_VERSION_V4, category],
@@ -105,7 +108,8 @@ function EntityMetrics<T>({
 				signal,
 			}: QueryFunctionContext): Promise<
 				SuccessResponse<MetricRangePayloadProps>
-			> => GetMetricQueryRange(payload, ENTITY_VERSION_V4, signal),
+			> =>
+				GetMetricQueryRange(payload, ENTITY_VERSION_V4, dynamicVariables, signal),
 			enabled: !!payload && visibilities[index],
 			keepPreviousData: true,
 		})),

@@ -34,7 +34,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
-import { useNavigationType } from 'react-router-dom-v5-compat';
+import { useNavigationType, useSearchParams } from 'react-router-dom-v5-compat';
 import { useCopyToClipboard } from 'react-use';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -116,6 +116,8 @@ function DateTimeSelection({
 		initialModalStartTime,
 	);
 	const [modalEndTime, setModalEndTime] = useState<number>(initialModalEndTime);
+
+	const [searchParams] = useSearchParams();
 
 	// Effect to update modal time state when props change
 	useEffect(() => {
@@ -410,8 +412,10 @@ function DateTimeSelection({
 			// Remove Hidden Filters from URL query parameters on time change
 			urlQuery.delete(QueryParams.activeLogId);
 
-			const updatedCompositeQuery = getUpdatedCompositeQuery();
-			urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
+			if (searchParams.has(QueryParams.compositeQuery)) {
+				const updatedCompositeQuery = getUpdatedCompositeQuery();
+				urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
+			}
 
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 			safeNavigate(generatedUrl);
@@ -428,6 +432,7 @@ function DateTimeSelection({
 			updateLocalStorageForRoutes,
 			updateTimeInterval,
 			urlQuery,
+			searchParams,
 		],
 	);
 
@@ -488,8 +493,10 @@ function DateTimeSelection({
 				urlQuery.set(QueryParams.endTime, endTime?.toDate().getTime().toString());
 				urlQuery.delete(QueryParams.relativeTime);
 
-				const updatedCompositeQuery = getUpdatedCompositeQuery();
-				urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
+				if (searchParams.has(QueryParams.compositeQuery)) {
+					const updatedCompositeQuery = getUpdatedCompositeQuery();
+					urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
+				}
 
 				const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 				safeNavigate(generatedUrl);

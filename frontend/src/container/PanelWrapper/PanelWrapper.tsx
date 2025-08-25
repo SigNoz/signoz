@@ -21,6 +21,7 @@ function PanelWrapper({
 	onOpenTraceBtnClick,
 	customSeries,
 	customOnRowClick,
+	enableDrillDown = false,
 }: PanelWrapperProps): JSX.Element {
 	const Component = PanelTypeVsPanelWrapper[
 		selectedGraph || widget.panelTypes
@@ -49,6 +50,7 @@ function PanelWrapper({
 			onOpenTraceBtnClick={onOpenTraceBtnClick}
 			customOnRowClick={customOnRowClick}
 			customSeries={customSeries}
+			enableDrillDown={enableDrillDown}
 		/>
 	);
 }
