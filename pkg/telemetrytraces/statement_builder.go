@@ -67,16 +67,6 @@ func (b *traceQueryStatementBuilder) Build(
 	start = querybuilder.ToNanoSecs(start)
 	end = querybuilder.ToNanoSecs(end)
 
-	// isRoot and isEntryPoint are returned by the Metadata API, so if someone sends them, we have to skip these.
-	var selectedFields []telemetrytypes.TelemetryFieldKey
-	for _, v := range query.SelectFields {
-		if v.Name == "isRoot" || v.Name == "isEntryPoint" {
-			continue
-		}
-		selectedFields = append(selectedFields, v)
-	}
-	query.SelectFields = selectedFields
-
 	keySelectors := getKeySelectors(query)
 
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
