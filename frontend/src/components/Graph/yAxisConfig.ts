@@ -1,4 +1,9 @@
 import { formattedValueToString, getValueFormat } from '@grafana/data';
+import {
+	AdditionalLabelsMappingForGrafanaUnits,
+	UniversalUnitToGrafanaUnit,
+} from 'components/YAxisUnitSelector/constants';
+import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 
 export const getYAxisFormattedValue = (
 	value: string,
@@ -47,9 +52,42 @@ export const getYAxisFormattedValue = (
 };
 
 export const getToolTipValue = (value: string, format?: string): string => {
+	const universalMappingExists = format && format in UniversalUnitToGrafanaUnit;
+	const universalMappingNotFound =
+		format &&
+		format in UniversalYAxisUnit &&
+		!(format in UniversalUnitToGrafanaUnit);
+
+	let processedFormat = universalMappingExists
+		? UniversalUnitToGrafanaUnit[format as UniversalYAxisUnit]
+		: format;
+
+	console.log({
+		processedFormat,
+	});
+
+	// If using universal units but a compatible mapping is not found, use `short` for numeric formatting
+	if (universalMappingNotFound) {
+		processedFormat = 'short';
+	}
 	try {
-		return formattedValueToString(
-			getValueFormat(format)(parseFloat(value), undefined, undefined, undefined),
+		const valueFormat = getValueFormat(processedFormat)(
+			parseFloat(value),
+			undefined,
+			undefined,
+			undefined,
+		);
+		// For universal units, check if it requires a custom suffix
+		const suffix = valueFormat?.suffix?.trim() || '';
+		if (
+			universalMappingExists &&
+			suffix in AdditionalLabelsMappingForGrafanaUnits
+		) {
+			return `${valueFormat.text} ${AdditionalLabelsMappingForGrafanaUnits[suffix]}`;
+		}
+		return (
+			formattedValueToString(valueFormat) +
+			(universalMappingNotFound ? ` ${format}` : '')
 		);
 	} catch (error) {
 		console.error(error);
