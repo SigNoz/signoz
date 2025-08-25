@@ -11,11 +11,11 @@ import (
 )
 
 const (
-	urlPathKeyLegacy    = "http.url"
-	serverNameKeyLegacy = "net.peer.name"
+	urlPathKeyLegacy       = "http.url"
+	serverAddressKeyLegacy = "net.peer.name"
 
-	urlPathKey    = "url.full"
-	serverNameKey = "server.address"
+	urlPathKey       = "url.full"
+	serverAddressKey = "server.address"
 )
 
 var defaultStepInterval = 60 * time.Second
@@ -31,7 +31,7 @@ var dualSemconvGroupByKeys = map[string][]qbtypes.GroupByKey{
 	"server": {
 		{
 			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-				Name:          serverNameKey,
+				Name:          serverAddressKey,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				Signal:        telemetrytypes.SignalTraces,
@@ -39,7 +39,7 @@ var dualSemconvGroupByKeys = map[string][]qbtypes.GroupByKey{
 		},
 		{
 			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-				Name:          serverNameKeyLegacy,
+				Name:          serverAddressKeyLegacy,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				Signal:        telemetrytypes.SignalTraces,
@@ -66,13 +66,6 @@ var dualSemconvGroupByKeys = map[string][]qbtypes.GroupByKey{
 	},
 }
 
-func CreateDualSemconvGroupByKeysServer() []qbtypes.GroupByKey {
-	return dualSemconvGroupByKeys["server"]
-}
-
-func CreateDualSemconvGroupByKeysUrl() []qbtypes.GroupByKey {
-	return dualSemconvGroupByKeys["url"]
-}
 
 func MergeSemconvColumns(result *qbtypes.QueryRangeResponse) *qbtypes.QueryRangeResponse {
 	if result == nil || result.Data.Results == nil {
@@ -89,9 +82,9 @@ func MergeSemconvColumns(result *qbtypes.QueryRangeResponse) *qbtypes.QueryRange
 		netPeerIdx := -1
 
 		for i, col := range scalarData.Columns {
-			if col.Name == serverNameKey {
+			if col.Name == serverAddressKey {
 				serverAddrIdx = i
-			} else if col.Name == serverNameKeyLegacy {
+			} else if col.Name == serverAddressKeyLegacy {
 				netPeerIdx = i
 			}
 		}
@@ -136,7 +129,7 @@ func MergeSemconvColumns(result *qbtypes.QueryRangeResponse) *qbtypes.QueryRange
 			if i == serverAddrIdx {
 				newCol := &qbtypes.ColumnDescriptor{
 					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-						Name:          serverNameKeyLegacy,
+						Name:          serverAddressKeyLegacy,
 						FieldDataType: col.FieldDataType,
 						FieldContext:  col.FieldContext,
 						Signal:        col.Signal,
@@ -221,7 +214,7 @@ func FilterResponse(results []*qbtypes.QueryRangeResponse) []*qbtypes.QueryRange
 
 func shouldIncludeSeries(series *qbtypes.TimeSeries) bool {
 	for _, label := range series.Labels {
-		if label.Key.Name == serverNameKeyLegacy || label.Key.Name == serverNameKey {
+		if label.Key.Name == serverAddressKeyLegacy || label.Key.Name == serverAddressKey {
 			if strVal, ok := label.Value.(string); ok {
 				if net.ParseIP(strVal) != nil {
 					return false
@@ -234,7 +227,7 @@ func shouldIncludeSeries(series *qbtypes.TimeSeries) bool {
 
 func shouldIncludeRow(row *qbtypes.RawRow) bool {
 	if row.Data != nil {
-		for _, key := range []string{serverNameKeyLegacy, serverNameKey} {
+		for _, key := range []string{serverAddressKeyLegacy, serverAddressKey} {
 			if domainVal, ok := row.Data[key]; ok {
 				if domainStr, ok := domainVal.(string); ok {
 					if net.ParseIP(domainStr) != nil {
@@ -322,7 +315,7 @@ func buildEndpointsQuery(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 				{Expression: "count_distinct(http.url)"},
 			},
 			Filter:  buildBaseFilter(req.Filter),
-			GroupBy: mergeGroupBy(CreateDualSemconvGroupByKeysServer(), req.GroupBy),
+			GroupBy: mergeGroupBy(dualSemconvGroupByKeys["server"], req.GroupBy),
 		},
 	}
 }
@@ -338,7 +331,7 @@ func buildLastSeenQuery(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 				{Expression: "max(timestamp)"},
 			},
 			Filter:  buildBaseFilter(req.Filter),
-			GroupBy: mergeGroupBy(CreateDualSemconvGroupByKeysServer(), req.GroupBy),
+			GroupBy: mergeGroupBy(dualSemconvGroupByKeys["server"], req.GroupBy),
 		},
 	}
 }
@@ -354,7 +347,7 @@ func buildRpsQuery(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 				{Expression: "rate()"},
 			},
 			Filter:  buildBaseFilter(req.Filter),
-			GroupBy: mergeGroupBy(CreateDualSemconvGroupByKeysServer(), req.GroupBy),
+			GroupBy: mergeGroupBy(dualSemconvGroupByKeys["server"], req.GroupBy),
 		},
 	}
 }
@@ -370,7 +363,7 @@ func buildErrorQuery(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 				{Expression: "count()"},
 			},
 			Filter:  buildErrorFilter(req.Filter),
-			GroupBy: mergeGroupBy(CreateDualSemconvGroupByKeysServer(), req.GroupBy),
+			GroupBy: mergeGroupBy(dualSemconvGroupByKeys["server"], req.GroupBy),
 		},
 	}
 }
@@ -386,7 +379,7 @@ func buildTotalSpanQuery(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 				{Expression: "count()"},
 			},
 			Filter:  buildBaseFilter(req.Filter),
-			GroupBy: mergeGroupBy(CreateDualSemconvGroupByKeysServer(), req.GroupBy),
+			GroupBy: mergeGroupBy(dualSemconvGroupByKeys["server"], req.GroupBy),
 		},
 	}
 }
@@ -402,7 +395,7 @@ func buildP99Query(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 				{Expression: "p99(duration_nano)"},
 			},
 			Filter:  buildBaseFilter(req.Filter),
-			GroupBy: mergeGroupBy(CreateDualSemconvGroupByKeysServer(), req.GroupBy),
+			GroupBy: mergeGroupBy(dualSemconvGroupByKeys["server"], req.GroupBy),
 		},
 	}
 }
@@ -428,7 +421,7 @@ func buildEndpointsInfoQuery(req *ThirdPartyApiRequest) qbtypes.QueryEnvelope {
 				{Expression: "rate(http.url)"},
 			},
 			Filter:  buildBaseFilter(req.Filter),
-			GroupBy: mergeGroupBy(CreateDualSemconvGroupByKeysUrl(), req.GroupBy),
+			GroupBy: mergeGroupBy(dualSemconvGroupByKeys["url"], req.GroupBy),
 		},
 	}
 }
