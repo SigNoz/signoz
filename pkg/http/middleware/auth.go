@@ -52,10 +52,10 @@ func (a *Auth) Wrap(next http.Handler) http.Handler {
 		}
 
 		// Set dedicated auth type in context
-		ctx = authtypes.SetAuthType(ctx, "jwt")
+		ctx = authtypes.SetAuthType(ctx, authtypes.AuthTypeJWT)
 
 		comment := ctxtypes.CommentFromContext(ctx)
-		comment.Set("auth_type", "jwt")
+		comment.Set("auth_type", authtypes.AuthTypeJWT)
 		comment.Set("user_id", claims.UserID)
 		comment.Set("org_id", claims.OrgID)
 
