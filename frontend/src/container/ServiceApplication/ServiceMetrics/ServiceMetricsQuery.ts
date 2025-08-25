@@ -23,7 +23,6 @@ export const serviceMetricsQuery = (
 ): QueryBuilderData => {
 	const p99AutoCompleteData: BaseAutocompleteData = {
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		key: dotMetricsEnabled
 			? WidgetKeys.Signoz_latency_bucket
 			: WidgetKeys.Signoz_latency_bucket_norm,
@@ -32,14 +31,12 @@ export const serviceMetricsQuery = (
 
 	const errorRateAutoCompleteData: BaseAutocompleteData = {
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		key: WidgetKeys.SignozCallsTotal,
 		type: '',
 	};
 
 	const operationPrSecondAutoCompleteData: BaseAutocompleteData = {
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		key: WidgetKeys.SignozCallsTotal,
 		type: '',
 	};
@@ -56,7 +53,6 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
 				key: dotMetricsEnabled
 					? WidgetKeys.Service_name
 					: WidgetKeys.Service_name_norm,
@@ -69,7 +65,6 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
 				key: WidgetKeys.Operation,
 				type: MetricsType.Tag,
 			},
@@ -83,7 +78,6 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
 				key: dotMetricsEnabled
 					? WidgetKeys.Service_name
 					: WidgetKeys.Service_name_norm,
@@ -96,7 +90,6 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.Int64,
-				isColumn: false,
 				key: dotMetricsEnabled ? WidgetKeys.StatusCode : WidgetKeys.StatusCodeNorm,
 				type: MetricsType.Tag,
 			},
@@ -107,7 +100,6 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
 				key: WidgetKeys.Operation,
 				type: MetricsType.Tag,
 			},
@@ -121,7 +113,6 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
 				key: dotMetricsEnabled
 					? WidgetKeys.Service_name
 					: WidgetKeys.Service_name_norm,
@@ -134,7 +125,6 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
 				key: WidgetKeys.Operation,
 				type: MetricsType.Tag,
 			},
@@ -148,7 +138,6 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
 				key: dotMetricsEnabled
 					? WidgetKeys.Service_name
 					: WidgetKeys.Service_name_norm,
@@ -161,7 +150,6 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
 				key: WidgetKeys.Operation,
 				type: MetricsType.Tag,
 			},
@@ -205,7 +193,6 @@ export const serviceMetricsQuery = (
 	const groupBy: BaseAutocompleteData[] = [
 		{
 			dataType: DataTypes.String,
-			isColumn: false,
 			key: dotMetricsEnabled
 				? WidgetKeys.Service_name
 				: WidgetKeys.Service_name_norm,

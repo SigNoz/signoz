@@ -99,10 +99,8 @@ const mockTracesFilters: IBuilderQuery['filters'] = {
 			key: {
 				id: 'service-name',
 				dataType: DataTypes.String,
-				isColumn: true,
 				key: 'service.name',
 				type: 'tag',
-				isJSON: false,
 				isIndexed: false,
 			},
 			op: '=',
