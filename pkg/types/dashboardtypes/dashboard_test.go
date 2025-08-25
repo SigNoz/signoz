@@ -50,10 +50,11 @@ func TestCanUpdate_MultipleDeletions_ByAuthType(t *testing.T) {
 			wantErr:  false,
 		},
 		{
-			name:    "no-authType-blocks-multi-delete",
-			setAuth: false,
-			updated: []string{"a"},
-			wantErr: true,
+			name:     "internal-authType-allows-multi-delete",
+			authType: authtypes.AuthTypeInternal,
+			setAuth:  true,
+			updated:  []string{"a"},
+			wantErr:  false,
 		},
 	}
 

@@ -253,7 +253,7 @@ func (dashboard *Dashboard) CanUpdate(ctx context.Context, data StorableDashboar
 		}
 	}
 	// Allow multiple deletions for API key requests; enforce for others
-	if authType, ok := authtypes.AuthTypeFromContext(ctx); (!ok || authType != authtypes.AuthTypeAPIKey) && len(difference) > 1 {
+	if authType, ok := authtypes.AuthTypeFromContext(ctx); (ok && authType == authtypes.AuthTypeJWT) && len(difference) > 1 {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "deleting more than one panel is not supported")
 	}
 
