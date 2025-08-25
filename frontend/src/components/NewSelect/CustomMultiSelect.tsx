@@ -1452,8 +1452,17 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			});
 		}
 
-		// Now add all custom options at the beginning
-		const enhancedNonSectionOptions = [...customOptions, ...nonSectionOptions];
+		// Now add all custom options at the beginning, removing duplicates based on value
+		const allOptions = [...customOptions, ...nonSectionOptions];
+		const seenValues = new Set<string>();
+		const enhancedNonSectionOptions = allOptions.filter((option) => {
+			const value = option.value || '';
+			if (seenValues.has(value)) {
+				return false;
+			}
+			seenValues.add(value);
+			return true;
+		});
 
 		const allOptionValues = getAllAvailableValues(processedOptions);
 		const allOptionsSelected =
