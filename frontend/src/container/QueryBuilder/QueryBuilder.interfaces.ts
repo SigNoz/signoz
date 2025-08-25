@@ -30,5 +30,14 @@ export type QueryBuilderProps = {
 	isListViewPanel?: boolean;
 	showFunctions?: boolean;
 	showOnlyWhereClause?: boolean;
+	showOnlyTraceOperator?: boolean;
+	showTraceViewSelector?: boolean;
+	showTraceOperator?: boolean;
 	version: string;
+	onChangeTraceView?: (view: TraceView) => void;
 };
+
+export enum TraceView {
+	SPANS = 'spans',
+	TRACES = 'traces',
+}

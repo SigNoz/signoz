@@ -1,3 +1,4 @@
+/* eslint-disable react/require-default-props */
 /* eslint-disable sonarjs/no-duplicate-string */
 import './QBEntityOptions.styles.scss';
 
@@ -39,6 +40,7 @@ interface QBEntityOptionsProps {
 	showCloneOption?: boolean;
 	isListViewPanel?: boolean;
 	index?: number;
+	hasTraceOperator?: boolean;
 	queryVariant?: 'dropdown' | 'static';
 	onChangeDataSource?: (value: DataSource) => void;
 }
@@ -61,6 +63,7 @@ export default function QBEntityOptions({
 	onCloneQuery,
 	index,
 	queryVariant,
+	hasTraceOperator = false,
 	onChangeDataSource,
 }: QBEntityOptionsProps): JSX.Element {
 	const handleCloneEntity = (): void => {
@@ -97,7 +100,7 @@ export default function QBEntityOptions({
 									value="query-builder"
 									className="periscope-btn visibility-toggle"
 									onClick={onToggleVisibility}
-									disabled={isListViewPanel}
+									disabled={isListViewPanel && query?.dataSource !== DataSource.TRACES}
 								>
 									{entityData.disabled ? <EyeOff size={16} /> : <Eye size={16} />}
 								</Button>
@@ -115,6 +118,7 @@ export default function QBEntityOptions({
 								className={cx(
 									'periscope-btn',
 									entityType === 'query' ? 'query-name' : 'formula-name',
+									hasTraceOperator && 'has-trace-operator',
 									isLogsExplorerPage && lastUsedQuery === index ? 'sync-btn' : '',
 								)}
 							>

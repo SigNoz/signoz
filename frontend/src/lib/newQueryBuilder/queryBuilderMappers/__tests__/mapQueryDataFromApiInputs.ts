@@ -89,6 +89,7 @@ export const widgetQueryWithoutVariables = ({
 			},
 		],
 		queryFormulas: [],
+		queryTraceOperator: [],
 	},
 	id: '2bbbd8d8-db99-40be-b9c6-9e197c5bc537',
 	queryType: 'builder',
@@ -128,6 +129,7 @@ export const stepIntervalUnchanged = {
 			},
 		],
 		queryFormulas: [],
+		queryTraceOperator: [],
 	},
 	clickhouse_sql: [
 		{
@@ -341,6 +343,7 @@ export const widgetQueryWithVariables = ({
 			},
 		],
 		queryFormulas: [],
+		queryTraceOperator: [],
 	},
 	id: '64fcd7be-61d0-4f92-bbb2-1449b089f766',
 	queryType: 'builder',
@@ -431,6 +434,7 @@ export const replaceVariables = {
 			},
 		],
 		queryFormulas: [],
+		queryTraceOperator: [],
 	},
 	clickhouse_sql: [
 		{
@@ -497,6 +501,7 @@ export const defaultOutput = {
 			},
 		],
 		queryFormulas: [],
+		queryTraceOperator: [],
 	},
 	clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 	id: 'test-id',
@@ -668,6 +673,7 @@ export const widgetQueriesWithFunctions = ({
 				legend: '',
 			},
 		],
+		queryTraceOperator: [],
 	},
 	id: '5d1844fe-9b44-4f15-b6fe-f1b843550b77',
 	queryType: 'builder',
@@ -743,6 +749,7 @@ export const outputWithFunctions = {
 				legend: '',
 			},
 		],
+		queryTraceOperator: [],
 	},
 	clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 	id: 'test-id',

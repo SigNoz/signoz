@@ -144,6 +144,8 @@ function QueryAddOns({
 	showReduceTo,
 	panelType,
 	index,
+	isForTraceOperator = false,
+	children,
 }: {
 	query: IBuilderQuery;
 	version: string;
@@ -151,6 +153,8 @@ function QueryAddOns({
 	showReduceTo: boolean;
 	panelType: PANEL_TYPES | null;
 	index: number;
+	isForTraceOperator?: boolean;
+	children?: React.ReactNode;
 }): JSX.Element {
 	const [addOns, setAddOns] = useState<AddOn[]>(ADD_ONS);
 
@@ -160,6 +164,7 @@ function QueryAddOns({
 		index,
 		query,
 		entityVersion: '',
+		isForTraceOperator,
 	});
 
 	const { handleSetQueryData } = useQueryBuilder();
@@ -486,6 +491,7 @@ function QueryAddOns({
 						</Tooltip>
 					))}
 				</Radio.Group>
+				{children}
 			</div>
 		</div>
 	);

@@ -2,12 +2,13 @@ import {
 	initialFormulaBuilderFormValues,
 	initialQueryBuilderFormValuesMap,
 } from 'constants/queryBuilder';
-import { FORMULA_REGEXP } from 'constants/regExp';
+import { FORMULA_REGEXP, TRACE_OPERATOR_REGEXP } from 'constants/regExp';
 import { isUndefined } from 'lodash-es';
 import {
 	BuilderQueryDataResourse,
 	IBuilderFormula,
 	IBuilderQuery,
+	IBuilderTraceOperator,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryBuilderData } from 'types/common/queryBuilder';
 
@@ -17,6 +18,7 @@ export const transformQueryBuilderDataModel = (
 ): QueryBuilderData => {
 	const queryData: QueryBuilderData['queryData'] = [];
 	const queryFormulas: QueryBuilderData['queryFormulas'] = [];
+	const queryTraceOperator: QueryBuilderData['queryTraceOperator'] = [];
 
 	Object.entries(data).forEach(([, value]) => {
 		if (FORMULA_REGEXP.test(value.queryName)) {
@@ -31,6 +33,9 @@ export const transformQueryBuilderDataModel = (
 			} else {
 				queryFormulas.push({ ...initialFormulaBuilderFormValues, ...formula });
 			}
+		} else if (TRACE_OPERATOR_REGEXP.test(value.queryName)) {
+			const traceOperator = value as IBuilderTraceOperator;
+			queryTraceOperator.push({ ...traceOperator });
 		} else {
 			const queryFromData = value as IBuilderQuery;
 			const baseQuery = query?.queryData?.find(
@@ -55,5 +60,5 @@ export const transformQueryBuilderDataModel = (
 		}
 	});
 
-	return { queryData, queryFormulas };
+	return { queryData, queryFormulas, queryTraceOperator };
 };
