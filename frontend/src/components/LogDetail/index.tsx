@@ -384,6 +384,7 @@ function LogDetailInner({
 					nodeName={log.resources_string?.[RESOURCE_KEYS.NODE_NAME] || ''}
 					hostName={log.resources_string?.[RESOURCE_KEYS.HOST_NAME] || ''}
 					logLineTimestamp={log.timestamp.toString()}
+					dataSource={DataSource.LOGS}
 				/>
 			)}
 		</Drawer>
