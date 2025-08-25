@@ -84,7 +84,6 @@ func (c *Claims) IsSelfAccess(id string) error {
 	return errors.New(errors.TypeForbidden, errors.CodeForbidden, "only the user/admin can access their own resource")
 }
 
-// Auth type handling via context (avoids relying on comment metadata)
 type authTypeKey struct{}
 
 // SetAuthType stores the auth type (e.g., "jwt", "api_key", "internal") in context.
