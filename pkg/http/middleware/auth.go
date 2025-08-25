@@ -51,7 +51,6 @@ func (a *Auth) Wrap(next http.Handler) http.Handler {
 			return
 		}
 
-		// Set dedicated auth type in context
 		ctx = authtypes.SetAuthType(ctx, authtypes.AuthTypeJWT)
 
 		comment := ctxtypes.CommentFromContext(ctx)
