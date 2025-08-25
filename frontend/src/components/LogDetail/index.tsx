@@ -383,7 +383,7 @@ function LogDetailInner({
 					podName={log.resources_string?.[RESOURCE_KEYS.POD_NAME] || ''}
 					nodeName={log.resources_string?.[RESOURCE_KEYS.NODE_NAME] || ''}
 					hostName={log.resources_string?.[RESOURCE_KEYS.HOST_NAME] || ''}
-					logLineTimestamp={log.timestamp.toString()}
+					timestamp={log.timestamp.toString()}
 					dataSource={DataSource.LOGS}
 				/>
 			)}
