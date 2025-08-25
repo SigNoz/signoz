@@ -16,6 +16,7 @@ const config: Config.InitialOptions = {
 		'ts-jest': {
 			useESM: true,
 			isolatedModules: true,
+			tsconfig: '<rootDir>/tsconfig.jest.json',
 		},
 	},
 	testMatch: ['<rootDir>/src/**/*?(*.)(test).(ts|js)?(x)'],
