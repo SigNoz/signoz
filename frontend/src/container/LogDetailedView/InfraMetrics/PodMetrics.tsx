@@ -23,14 +23,14 @@ import { getPodQueryPayload, podWidgetInfo } from './constants';
 function PodMetrics({
 	podName,
 	clusterName,
-	logLineTimestamp,
+	timestamp,
 }: {
 	podName: string;
 	clusterName: string;
-	logLineTimestamp: string;
+	timestamp: string;
 }): JSX.Element {
 	const { start, end, verticalLineTimestamp } = useMemo(() => {
-		const logTimestamp = dayjs(logLineTimestamp);
+		const logTimestamp = dayjs(timestamp);
 		const now = dayjs();
 		const startTime = logTimestamp.subtract(3, 'hour');
 
@@ -43,7 +43,7 @@ function PodMetrics({
 			end: endTime.unix(),
 			verticalLineTimestamp: logTimestamp.unix(),
 		};
-	}, [logLineTimestamp]);
+	}, [timestamp]);
 
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =

@@ -259,7 +259,7 @@ function SpanRelatedSignals({
 							podName={infraMetadata.podName}
 							nodeName={infraMetadata.nodeName}
 							hostName={infraMetadata.hostName}
-							logLineTimestamp={infraMetadata.spanTimestamp}
+							timestamp={infraMetadata.spanTimestamp}
 							dataSource={DataSource.TRACES}
 						/>
 					)}
