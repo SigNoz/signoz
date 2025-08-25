@@ -145,7 +145,7 @@ func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
 		}
 	}
 
-	if requestType == RequestTypeTrace || requestType == RequestTypeRaw {
+	if requestType == RequestTypeRaw {
 		if err := q.validateSelectFields(); err != nil {
 			return err
 		}
