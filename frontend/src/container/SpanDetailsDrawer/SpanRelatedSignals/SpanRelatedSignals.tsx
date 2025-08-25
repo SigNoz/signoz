@@ -19,7 +19,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { Span } from 'types/api/trace/getTraceV2';
-import { LogsAggregatorOperator } from 'types/common/queryBuilder';
+import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 
 import { RelatedSignalsViews } from '../constants';
 import SpanLogs from '../SpanLogs/SpanLogs';
@@ -260,6 +260,7 @@ function SpanRelatedSignals({
 							nodeName={infraMetadata.nodeName}
 							hostName={infraMetadata.hostName}
 							logLineTimestamp={infraMetadata.spanTimestamp}
+							dataSource={DataSource.TRACES}
 						/>
 					)}
 				</div>

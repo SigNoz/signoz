@@ -5,6 +5,7 @@ import { RadioChangeEvent } from 'antd/lib';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { History, Table } from 'lucide-react';
 import { useState } from 'react';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { VIEW_TYPES } from './constants';
 import NodeMetrics from './NodeMetrics';
@@ -16,6 +17,7 @@ interface MetricsDataProps {
 	hostName: string;
 	clusterName: string;
 	logLineTimestamp: string;
+	dataSource: DataSource.LOGS | DataSource.TRACES;
 }
 
 function InfraMetrics({
@@ -24,6 +26,7 @@ function InfraMetrics({
 	hostName,
 	clusterName,
 	logLineTimestamp,
+	dataSource = DataSource.LOGS,
 }: MetricsDataProps): JSX.Element {
 	const [selectedView, setSelectedView] = useState<string>(() =>
 		podName ? VIEW_TYPES.POD : VIEW_TYPES.NODE,
@@ -34,11 +37,16 @@ function InfraMetrics({
 	};
 
 	if (!podName && !nodeName && !hostName) {
+		const emptyStateDescription =
+			dataSource === DataSource.TRACES
+				? 'No data available. Please select a span containing a pod, node, or host attributes to view metrics.'
+				: 'No data available. Please select a valid log line containing a pod, node, or host attributes to view metrics.';
+
 		return (
 			<div className="empty-container">
 				<Empty
 					image={Empty.PRESENTED_IMAGE_SIMPLE}
-					description="No data available. Please select a valid log line containing a pod, node, or host attributes to view metrics."
+					description={emptyStateDescription}
 				/>
 			</div>
 		);
