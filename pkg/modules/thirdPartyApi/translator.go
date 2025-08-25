@@ -66,7 +66,6 @@ var dualSemconvGroupByKeys = map[string][]qbtypes.GroupByKey{
 	},
 }
 
-
 func MergeSemconvColumns(result *qbtypes.QueryRangeResponse) *qbtypes.QueryRangeResponse {
 	if result == nil || result.Data.Results == nil {
 		return result
@@ -78,32 +77,32 @@ func MergeSemconvColumns(result *qbtypes.QueryRangeResponse) *qbtypes.QueryRange
 			continue
 		}
 
-		serverAddrIdx := -1
-		netPeerIdx := -1
+		serverAddressKeyIdx := -1
+		serverAddressKeyLegacyIdx := -1
 
 		for i, col := range scalarData.Columns {
 			if col.Name == serverAddressKey {
-				serverAddrIdx = i
+				serverAddressKeyIdx = i
 			} else if col.Name == serverAddressKeyLegacy {
-				netPeerIdx = i
+				serverAddressKeyLegacyIdx = i
 			}
 		}
 
-		if serverAddrIdx == -1 || netPeerIdx == -1 {
+		if serverAddressKeyIdx == -1 || serverAddressKeyLegacyIdx == -1 {
 			continue
 		}
 
 		var newRows [][]any
 		for _, row := range scalarData.Data {
-			if len(row) <= serverAddrIdx || len(row) <= netPeerIdx {
+			if len(row) <= serverAddressKeyIdx || len(row) <= serverAddressKeyLegacyIdx {
 				continue
 			}
 
 			var serverName any
-			if isValidValue(row[serverAddrIdx]) {
-				serverName = row[serverAddrIdx]
-			} else if isValidValue(row[netPeerIdx]) {
-				serverName = row[netPeerIdx]
+			if isValidValue(row[serverAddressKeyIdx]) {
+				serverName = row[serverAddressKeyIdx]
+			} else if isValidValue(row[serverAddressKeyLegacyIdx]) {
+				serverName = row[serverAddressKeyLegacyIdx]
 			}
 
 			if serverName != nil {
@@ -112,7 +111,7 @@ func MergeSemconvColumns(result *qbtypes.QueryRangeResponse) *qbtypes.QueryRange
 
 				targetIdx := 1
 				for i, val := range row {
-					if i != netPeerIdx && i != serverAddrIdx {
+					if i != serverAddressKeyLegacyIdx && i != serverAddressKeyIdx {
 						if targetIdx < len(newRow) {
 							newRow[targetIdx] = val
 							targetIdx++
@@ -126,7 +125,7 @@ func MergeSemconvColumns(result *qbtypes.QueryRangeResponse) *qbtypes.QueryRange
 		newColumns := make([]*qbtypes.ColumnDescriptor, len(scalarData.Columns)-1)
 		targetIdx := 0
 		for i, col := range scalarData.Columns {
-			if i == serverAddrIdx {
+			if i == serverAddressKeyIdx {
 				newCol := &qbtypes.ColumnDescriptor{
 					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
 						Name:          serverAddressKeyLegacy,
@@ -141,7 +140,7 @@ func MergeSemconvColumns(result *qbtypes.QueryRangeResponse) *qbtypes.QueryRange
 				}
 				newColumns[targetIdx] = newCol
 				targetIdx++
-			} else if i != netPeerIdx {
+			} else if i != serverAddressKeyLegacyIdx {
 				newColumns[targetIdx] = col
 				targetIdx++
 			}
