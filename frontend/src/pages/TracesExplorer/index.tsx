@@ -323,7 +323,7 @@ function TracesExplorer(): JSX.Element {
 							}
 							rightActions={
 								<RightToolbarActions
-									onStageRunQuery={(): void => handleRunQuery(true, true)}
+									onStageRunQuery={(): void => handleRunQuery()}
 									isLoadingQueries={isLoadingQueries}
 								/>
 							}

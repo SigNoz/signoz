@@ -17,7 +17,7 @@ function InputWithLabel({
 	closeIcon,
 }: {
 	label: string;
-	initialValue?: string | number;
+	initialValue?: string | number | null;
 	placeholder: string;
 	type?: string;
 	onClose?: () => void;

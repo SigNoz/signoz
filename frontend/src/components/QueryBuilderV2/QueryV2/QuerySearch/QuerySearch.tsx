@@ -1292,7 +1292,7 @@ function QuerySearch({
 										if (onRun && typeof onRun === 'function') {
 											onRun(query);
 										} else {
-											handleRunQuery(true, true);
+											handleRunQuery();
 										}
 										return true;
 									},

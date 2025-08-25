@@ -53,10 +53,7 @@ function useUpdatedQuery(): UseUpdatedQueryResult {
 			const queryResult = await queryRangeMutation.mutateAsync(queryPayload);
 
 			// Map query data from API response
-			return mapQueryDataFromApi(
-				queryResult.data.compositeQuery,
-				widgetConfig?.query,
-			);
+			return mapQueryDataFromApi(queryResult.data.compositeQuery);
 		},
 		[globalSelectedInterval, queryRangeMutation],
 	);
