@@ -8,7 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -254,8 +253,7 @@ func (dashboard *Dashboard) CanUpdate(ctx context.Context, data StorableDashboar
 		}
 	}
 	// Allow multiple deletions for API key requests; enforce for others
-	authType := ctxtypes.CommentFromContext(ctx).Map()["auth_type"]
-	if authType != "api_key" && len(difference) > 1 {
+	if authType, ok := authtypes.AuthTypeFromContext(ctx); (!ok || authType != "api_key") && len(difference) > 1 {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "deleting more than one panel is not supported")
 	}
 

@@ -98,6 +98,9 @@ func (a *APIKey) Wrap(next http.Handler) http.Handler {
 			return
 		}
 
+		// Set dedicated auth type in context
+		ctx = authtypes.SetAuthType(ctx, "api_key")
+
 		comment := ctxtypes.CommentFromContext(ctx)
 		comment.Set("auth_type", "api_key")
 		comment.Set("user_id", claims.UserID)
