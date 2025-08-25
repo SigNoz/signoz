@@ -47,11 +47,7 @@ interface TableViewProps {
 	selectedOptions: OptionsQuery;
 	isListViewPanel?: boolean;
 	listViewPanelSelectedFields?: IField[] | null;
-	onGroupByAttribute?: (
-		fieldKey: string,
-		isJSON?: boolean,
-		dataType?: DataTypes,
-	) => Promise<void>;
+	onGroupByAttribute?: (fieldKey: string, dataType?: DataTypes) => Promise<void>;
 }
 
 type Props = TableViewProps &
@@ -123,7 +119,6 @@ function TableView({
 				fieldKey,
 				validatedFieldValue,
 				operator,
-				undefined,
 				dataType as DataTypes,
 				fieldType,
 			);

@@ -44,7 +44,6 @@ const createFilterItem = (config: SpanFilterConfig): TagFilterItem => ({
 	key: {
 		key: config.key,
 		dataType: undefined,
-		isColumn: false,
 		type: config?.type,
 	},
 	op: '=',

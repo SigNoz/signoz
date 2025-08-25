@@ -19,6 +19,7 @@ type QBEvent struct {
 	LogsUsed        bool   `json:"logs_used,omitempty"`
 	MetricsUsed     bool   `json:"metrics_used,omitempty"`
 	TracesUsed      bool   `json:"traces_used,omitempty"`
+	Source          string `json:"source,omitempty"`
 	FilterApplied   bool   `json:"filter_applied,omitempty"`
 	GroupByApplied  bool   `json:"group_by_applied,omitempty"`
 	QueryType       string `json:"query_type,omitempty"`
