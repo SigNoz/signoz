@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/modules/thirdPartyApi"
+	"github.com/SigNoz/signoz/pkg/types/thirdPartyApi"
 	"math"
 	"net/http"
 	"sort"

@@ -1,6 +1,7 @@
 package thirdPartyApi
 
 import (
+	thirdPartyApi2 "github.com/SigNoz/signoz/pkg/types/thirdPartyApi"
 	"testing"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -27,7 +28,7 @@ func TestFilterResponse(t *testing.T) {
 											{
 												Labels: []*qbtypes.Label{
 													{
-														Key: telemetrytypes.TelemetryFieldKey{Name: "net.peer.name"},
+														Key:   telemetrytypes.TelemetryFieldKey{Name: "net.peer.name"},
 														Value: "192.168.1.1",
 													},
 												},
@@ -35,7 +36,7 @@ func TestFilterResponse(t *testing.T) {
 											{
 												Labels: []*qbtypes.Label{
 													{
-														Key: telemetrytypes.TelemetryFieldKey{Name: "net.peer.name"},
+														Key:   telemetrytypes.TelemetryFieldKey{Name: "net.peer.name"},
 														Value: "example.com",
 													},
 												},
@@ -59,7 +60,7 @@ func TestFilterResponse(t *testing.T) {
 											{
 												Labels: []*qbtypes.Label{
 													{
-														Key: telemetrytypes.TelemetryFieldKey{Name: "net.peer.name"},
+														Key:   telemetrytypes.TelemetryFieldKey{Name: "net.peer.name"},
 														Value: "example.com",
 													},
 												},
@@ -125,16 +126,15 @@ func TestFilterResponse(t *testing.T) {
 	}
 }
 
-
 func TestBuildDomainList(t *testing.T) {
 	tests := []struct {
 		name    string
-		input   *ThirdPartyApiRequest
+		input   *thirdPartyApi2.ThirdPartyApiRequest
 		wantErr bool
 	}{
 		{
 			name: "basic domain list query",
-			input: &ThirdPartyApiRequest{
+			input: &thirdPartyApi2.ThirdPartyApiRequest{
 				Start: 1000,
 				End:   2000,
 			},
@@ -142,7 +142,7 @@ func TestBuildDomainList(t *testing.T) {
 		},
 		{
 			name: "with filters and group by",
-			input: &ThirdPartyApiRequest{
+			input: &thirdPartyApi2.ThirdPartyApiRequest{
 				Start: 1000,
 				End:   2000,
 				Filter: &qbtypes.Filter{
@@ -182,12 +182,12 @@ func TestBuildDomainList(t *testing.T) {
 func TestBuildDomainInfo(t *testing.T) {
 	tests := []struct {
 		name    string
-		input   *ThirdPartyApiRequest
+		input   *thirdPartyApi2.ThirdPartyApiRequest
 		wantErr bool
 	}{
 		{
 			name: "basic domain info query",
-			input: &ThirdPartyApiRequest{
+			input: &thirdPartyApi2.ThirdPartyApiRequest{
 				Start: 1000,
 				End:   2000,
 			},
@@ -195,7 +195,7 @@ func TestBuildDomainInfo(t *testing.T) {
 		},
 		{
 			name: "with filters and group by",
-			input: &ThirdPartyApiRequest{
+			input: &thirdPartyApi2.ThirdPartyApiRequest{
 				Start: 1000,
 				End:   2000,
 				Filter: &qbtypes.Filter{
