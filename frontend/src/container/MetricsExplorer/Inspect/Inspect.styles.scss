@@ -122,6 +122,10 @@
 				gap: 4px;
 
 				.inspect-metrics-query-builder-header {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+
 					.query-builder-button-label {
 						display: flex;
 						align-items: center;

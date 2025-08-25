@@ -82,12 +82,14 @@ function QuerySearch({
 	dataSource,
 	onRun,
 	signalSource,
+	isMetricsExplorer = false,
 }: {
 	onChange: (value: string) => void;
 	queryData: IBuilderQuery;
 	dataSource: DataSource;
 	signalSource?: string;
 	onRun?: (query: string) => void;
+	isMetricsExplorer?: boolean;
 }): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [query, setQuery] = useState<string>(queryData.filter?.expression || '');
@@ -208,7 +210,8 @@ function QuerySearch({
 		async (searchText?: string): Promise<void> => {
 			if (
 				dataSource === DataSource.METRICS &&
-				!queryData.aggregateAttribute?.key
+				!queryData.aggregateAttribute?.key &&
+				!isMetricsExplorer
 			) {
 				setKeySuggestions([]);
 				return;
@@ -249,6 +252,7 @@ function QuerySearch({
 			toggleSuggestions,
 			queryData.aggregateAttribute?.key,
 			signalSource,
+			isMetricsExplorer,
 		],
 	);
 
@@ -1453,6 +1457,7 @@ function QuerySearch({
 QuerySearch.defaultProps = {
 	onRun: undefined,
 	signalSource: '',
+	isMetricsExplorer: false,
 };
 
 export default QuerySearch;

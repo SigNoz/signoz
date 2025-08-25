@@ -10,7 +10,7 @@ import ExpandedView from '../ExpandedView';
 import {
 	GraphPopoverData,
 	InspectionStep,
-	MetricInspectionOptions,
+	InspectOptions,
 	SpaceAggregationOptions,
 	TimeAggregationOptions,
 } from '../types';
@@ -62,7 +62,7 @@ describe('ExpandedView', () => {
 		],
 	]);
 
-	const mockMetricInspectionOptions: MetricInspectionOptions = {
+	const mockMetricInspectionOptions: InspectOptions = {
 		timeAggregationOption: TimeAggregationOptions.MAX,
 		timeAggregationInterval: 60,
 		spaceAggregationOption: SpaceAggregationOptions.MAX_BY,
@@ -79,7 +79,7 @@ describe('ExpandedView', () => {
 				options={mockOptions}
 				spaceAggregationSeriesMap={mockSpaceAggregationSeriesMap}
 				step={InspectionStep.TIME_AGGREGATION}
-				metricInspectionOptions={mockMetricInspectionOptions}
+				appliedMetricInspectionOptions={mockMetricInspectionOptions}
 				timeAggregatedSeriesMap={mockTimeAggregatedSeriesMap}
 			/>,
 		);
@@ -96,7 +96,7 @@ describe('ExpandedView', () => {
 				options={mockOptions}
 				spaceAggregationSeriesMap={mockSpaceAggregationSeriesMap}
 				step={InspectionStep.SPACE_AGGREGATION}
-				metricInspectionOptions={{
+				appliedMetricInspectionOptions={{
 					...mockMetricInspectionOptions,
 					timeAggregationInterval: TIME_AGGREGATION_INTERVAL,
 				}}
@@ -127,7 +127,7 @@ describe('ExpandedView', () => {
 				options={mockOptions}
 				spaceAggregationSeriesMap={mockSpaceAggregationSeriesMap}
 				step={InspectionStep.COMPLETED}
-				metricInspectionOptions={mockMetricInspectionOptions}
+				appliedMetricInspectionOptions={mockMetricInspectionOptions}
 				timeAggregatedSeriesMap={mockTimeAggregatedSeriesMap}
 			/>,
 		);
@@ -153,7 +153,7 @@ describe('ExpandedView', () => {
 				options={mockOptions}
 				spaceAggregationSeriesMap={mockSpaceAggregationSeriesMap}
 				step={InspectionStep.TIME_AGGREGATION}
-				metricInspectionOptions={mockMetricInspectionOptions}
+				appliedMetricInspectionOptions={mockMetricInspectionOptions}
 				timeAggregatedSeriesMap={mockTimeAggregatedSeriesMap}
 			/>,
 		);

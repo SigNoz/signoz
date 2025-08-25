@@ -3,6 +3,7 @@ import './Summary.styles.scss';
 
 import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
+import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import NoLogs from 'container/NoLogs/NoLogs';
@@ -184,6 +185,7 @@ function Summary(): JSX.Element {
 		() => ({
 			...initialQueriesMap.metrics.builder.queryData[0],
 			filters: queryFilters,
+			filter: convertFiltersToExpression(queryFilters),
 		}),
 		[queryFilters],
 	);
@@ -290,18 +292,11 @@ function Summary(): JSX.Element {
 		],
 	);
 
-	console.log({
-		isMetricsListDataEmpty,
-		isMetricsTreeMapDataEmpty,
-		treeMapData,
-		sec: treeMapData?.payload?.data[heatmapView],
-	});
-
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-summary-tab">
 				<MetricsSearch query={searchQuery} onChange={handleFilterChange} />
-				{isMetricsLoading || isTreeMapLoading ? (
+				{isMetricsLoading && isTreeMapLoading ? (
 					<MetricsLoading />
 				) : isMetricsListDataEmpty && isMetricsTreeMapDataEmpty ? (
 					<NoLogs dataSource={DataSource.METRICS} />
