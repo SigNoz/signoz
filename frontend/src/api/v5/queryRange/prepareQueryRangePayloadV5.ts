@@ -117,7 +117,7 @@ function createBaseSpec(
 	)[])?.filter((c) => ('key' in c ? c?.key : c?.name));
 
 	return {
-		stepInterval: queryData?.stepInterval || undefined,
+		stepInterval: queryData?.stepInterval || null,
 		disabled: queryData.disabled,
 		filter: queryData?.filter?.expression ? queryData.filter : undefined,
 		groupBy:
@@ -125,8 +125,8 @@ function createBaseSpec(
 				? queryData.groupBy.map(
 						(item: any): GroupByKey => ({
 							name: item.key,
-							fieldDataType: item?.dataType,
-							fieldContext: item?.type,
+							fieldDataType: item?.dataType || '',
+							fieldContext: item?.type || '',
 							description: item?.description,
 							unit: item?.unit,
 							signal: item?.signal,
@@ -203,6 +203,7 @@ function createBaseSpec(
 // Utility to parse aggregation expressions with optional alias
 export function parseAggregations(
 	expression: string,
+	availableAlias?: string,
 ): { expression: string; alias?: string }[] {
 	const result: { expression: string; alias?: string }[] = [];
 	// Matches function calls like "count()" or "sum(field)" with optional alias like "as 'alias'"
@@ -211,7 +212,7 @@ export function parseAggregations(
 	let match = regex.exec(expression);
 	while (match !== null) {
 		const expr = match[1];
-		let alias = match[2];
+		let alias = match[2] || availableAlias; // Use provided alias or availableAlias if not matched
 		if (alias) {
 			// Remove quotes if present
 			alias = alias.replace(/^['"]|['"]$/g, '');
@@ -262,9 +263,14 @@ export function createAggregation(
 	}
 
 	if (queryData.aggregations?.length > 0) {
-		return isEmpty(parseAggregations(queryData.aggregations?.[0].expression))
-			? [{ expression: 'count()' }]
-			: parseAggregations(queryData.aggregations?.[0].expression);
+		return queryData.aggregations.flatMap(
+			(agg: { expression: string; alias?: string }) => {
+				const parsedAggregations = parseAggregations(agg.expression, agg?.alias);
+				return isEmpty(parsedAggregations)
+					? [{ expression: 'count()' }]
+					: parsedAggregations;
+			},
+		);
 	}
 
 	return [{ expression: 'count()' }];
