@@ -20,3 +20,7 @@ export type LogDetailProps = {
 } & Pick<AddToQueryHOCProps, 'onAddToQuery'> &
 	Partial<Pick<ActionItemProps, 'onClickActionItem'>> &
 	Pick<DrawerProps, 'onClose'>;
+
+export type LogDetailInnerProps = LogDetailProps & {
+	log: NonNullable<LogDetailProps['log']>;
+};

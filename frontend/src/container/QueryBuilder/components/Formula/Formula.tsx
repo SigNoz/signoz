@@ -1,6 +1,7 @@
 import './Formula.styles.scss';
 
-import { Col, Input, Row } from 'antd';
+import { Col, Input, Row, Select } from 'antd';
+import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { LEGEND } from 'constants/global';
 // ** Components
 import { FilterLabel } from 'container/QueryBuilder/components';
@@ -11,8 +12,12 @@ import OrderByFilter from 'container/QueryBuilder/filters/Formula/OrderBy/OrderB
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { ChangeEvent, useCallback, useMemo, useState } from 'react';
-import { IBuilderFormula } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderFormula,
+	OrderByPayload,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { getFormatedLegend } from 'utils/getFormatedLegend';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { AdditionalFiltersToggler } from '../AdditionalFiltersToggler';
 import QBEntityOptions from '../QBEntityOptions/QBEntityOptions';
@@ -25,6 +30,7 @@ export function Formula({
 	filterConfigs,
 	query,
 	isAdditionalFilterEnable,
+	isQBV2,
 }: FormulaProps): JSX.Element {
 	const {
 		removeQueryBuilderEntityByIndex,
@@ -95,6 +101,31 @@ export function Formula({
 		[handleChangeFormulaData],
 	);
 
+	const handleQBV2OrderByChange = useCallback(
+		(value: string) => {
+			const [columnName, order] = value.split(' ');
+			const newOrderBy: OrderByPayload[] = [{ columnName, order }];
+			handleChangeFormulaData('orderBy', newOrderBy);
+		},
+		[handleChangeFormulaData],
+	);
+
+	const qbV2OrderByOptions = useMemo(
+		() => [
+			{ label: `${formula.queryName} asc`, value: `${formula.queryName} asc` },
+			{ label: `${formula.queryName} desc`, value: `${formula.queryName} desc` },
+		],
+		[formula.queryName],
+	);
+
+	const qbV2OrderByValue = useMemo(
+		() =>
+			formula.orderBy?.length
+				? `${formula.orderBy[0].columnName} ${formula.orderBy[0].order}`
+				: undefined,
+		[formula.orderBy],
+	);
+
 	const renderAdditionalFilters = useMemo(
 		() => (
 			<>
@@ -161,15 +192,18 @@ export function Formula({
 					<Col span={24}>
 						<Input.TextArea
 							name="expression"
+							className="formula-expression"
 							onChange={handleChange}
 							size="middle"
 							value={formula.expression}
+							placeholder="Enter formula"
 							rows={2}
 						/>
 					</Col>
 					<Col span={24}>
 						<Input
 							name="legend"
+							className="formula-legend"
 							onChange={handleChange}
 							size="middle"
 							value={formula.legend}
@@ -185,6 +219,34 @@ export function Formula({
 									{renderAdditionalFilters}
 								</Row>
 							</AdditionalFiltersToggler>
+						</Col>
+					)}
+					{isQBV2 && (
+						<Col span={24}>
+							<div className="formula-qbv2-container">
+								<div className="periscope-input-with-label">
+									<div className="label">Order By</div>
+									<div className="input">
+										<Select
+											getPopupContainer={popupContainer}
+											showSearch
+											filterOption={false}
+											showArrow={false}
+											placeholder="Select order by"
+											options={qbV2OrderByOptions}
+											onChange={handleQBV2OrderByChange}
+											value={qbV2OrderByValue}
+											style={{ width: '100%' }}
+										/>
+									</div>
+								</div>
+								<InputWithLabel
+									label="Limit"
+									onChange={(value): void => handleChangeLimit(Number(value))}
+									initialValue={formula?.limit ?? undefined}
+									placeholder="Enter limit"
+								/>
+							</div>
 						</Col>
 					)}
 				</Row>

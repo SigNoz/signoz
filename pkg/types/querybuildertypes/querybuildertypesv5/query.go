@@ -15,10 +15,11 @@ type Query interface {
 }
 
 type Result struct {
-	Type     RequestType
-	Value    any // concrete Go value (to be type asserted based on the RequestType)
-	Stats    ExecStats
-	Warnings []string
+	Type           RequestType
+	Value          any // concrete Go value (to be type asserted based on the RequestType)
+	Stats          ExecStats
+	Warnings       []string
+	WarningsDocURL string
 }
 
 type ExecStats struct {

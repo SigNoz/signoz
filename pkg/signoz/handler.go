@@ -1,6 +1,7 @@
 package signoz
 
 import (
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -30,14 +31,14 @@ type Handlers struct {
 	TraceFunnel  tracefunnel.Handler
 }
 
-func NewHandlers(modules Modules) Handlers {
+func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Handlers {
 	return Handlers{
 		Organization: implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
 		Preference:   implpreference.NewHandler(modules.Preference),
 		User:         impluser.NewHandler(modules.User),
 		SavedView:    implsavedview.NewHandler(modules.SavedView),
 		Apdex:        implapdex.NewHandler(modules.Apdex),
-		Dashboard:    impldashboard.NewHandler(modules.Dashboard),
+		Dashboard:    impldashboard.NewHandler(modules.Dashboard, providerSettings),
 		QuickFilter:  implquickfilter.NewHandler(modules.QuickFilter),
 		TraceFunnel:  impltracefunnel.NewHandler(modules.TraceFunnel),
 	}

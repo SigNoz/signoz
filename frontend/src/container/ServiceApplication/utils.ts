@@ -15,10 +15,10 @@ import {
 } from './types';
 
 export function getSeriesValue(
-	queryArray: QueryDataV3[],
+	queryArray: QueryDataV3[] | undefined,
 	queryName: string,
 ): string {
-	const queryObject = queryArray.find((item) => item.queryName === queryName);
+	const queryObject = queryArray?.find((item) => item?.queryName === queryName);
 	const series = queryObject ? queryObject.series : 0;
 	return series ? series[0].values[0].value : '0';
 }

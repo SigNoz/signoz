@@ -37,14 +37,12 @@ import {
 	defaultEvalWindow,
 	defaultMatchType,
 } from 'types/api/alerts/def';
-import {
-	IBuilderQuery,
-	Query,
-	QueryFunctionProps,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryFunction } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { compositeQueryToQueryEnvelope } from 'utils/compositeQueryToQueryEnvelope';
 
 import BasicInfo from './BasicInfo';
 import ChartPreview from './ChartPreview';
@@ -166,7 +164,7 @@ function FormAlertRules({
 
 	const sq = useMemo(() => mapQueryDataFromApi(initQuery), [initQuery]);
 
-	useShareBuilderUrl(sq);
+	useShareBuilderUrl({ defaultValue: sq });
 
 	const handleDetectionMethodChange = (value: string): void => {
 		setAlertDef((def) => ({
@@ -181,12 +179,17 @@ function FormAlertRules({
 		setDetectionMethod(value);
 	};
 
-	const updateFunctions = (data: IBuilderQuery): QueryFunctionProps[] => {
-		const anomalyFunction = {
-			name: 'anomaly',
-			args: [],
-			namedArgs: { z_score_threshold: alertDef.condition.target || 3 },
+	const updateFunctions = (data: IBuilderQuery): QueryFunction[] => {
+		const anomalyFunction: QueryFunction = {
+			name: 'anomaly' as any,
+			args: [
+				{
+					name: 'z_score_threshold',
+					value: alertDef.condition.target || 3,
+				},
+			],
 		};
+
 		const functions = data.functions || [];
 
 		if (alertDef.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT) {
@@ -237,8 +240,18 @@ function FormAlertRules({
 			const queryData = currentQuery.builder.queryData[index];
 
 			const updatedFunctions = updateFunctions(queryData);
-			queryData.functions = updatedFunctions;
-			handleSetQueryData(index, queryData);
+
+			// Only update if functions actually changed to avoid resetting aggregateAttribute
+			const currentFunctions = queryData.functions || [];
+			const functionsChanged = !isEqual(currentFunctions, updatedFunctions);
+
+			if (functionsChanged) {
+				const updatedQueryData = {
+					...queryData,
+					functions: updatedFunctions,
+				};
+				handleSetQueryData(index, updatedQueryData);
+			}
 		}
 	};
 
@@ -272,6 +285,9 @@ function FormAlertRules({
 			ruleType,
 			condition: {
 				...initialValue.condition,
+				compositeQuery: compositeQueryToQueryEnvelope(
+					initialValue.condition.compositeQuery,
+				),
 				matchType: initialValue.condition.matchType ?? matchType ?? '',
 				op: initialValue.condition.op ?? op ?? '',
 				target: initialValue.condition.target ?? target ?? 0,
@@ -447,7 +463,7 @@ function FormAlertRules({
 					: alertDef.ruleType,
 			condition: {
 				...alertDef.condition,
-				compositeQuery: {
+				compositeQuery: compositeQueryToQueryEnvelope({
 					builderQueries: {
 						...mapQueryDataToApi(currentQuery.builder.queryData, 'queryName').data,
 						...mapQueryDataToApi(currentQuery.builder.queryFormulas, 'queryName')
@@ -458,7 +474,7 @@ function FormAlertRules({
 					queryType: currentQuery.queryType,
 					panelType: panelType || initQuery.panelType,
 					unit: currentQuery.unit,
-				},
+				}),
 			},
 		};
 
@@ -848,7 +864,7 @@ function FormAlertRules({
 							queryCategory={currentQuery.queryType}
 							setQueryCategory={onQueryCategoryChange}
 							alertType={alertType || AlertTypes.METRICS_BASED_ALERT}
-							runQuery={(): void => handleRunQuery(true)}
+							runQuery={(): void => handleRunQuery(true, true)}
 							alertDef={alertDef}
 							panelType={panelType || PANEL_TYPES.TIME_SERIES}
 							key={currentQuery.queryType}

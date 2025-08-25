@@ -29,7 +29,7 @@ import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { replaceIncorrectObjectFields } from 'lib/replaceIncorrectObjectFields';
-import { cloneDeep, get, isEqual, merge, set } from 'lodash-es';
+import { cloneDeep, get, isEqual, set } from 'lodash-es';
 import {
 	createContext,
 	PropsWithChildren,
@@ -42,6 +42,7 @@ import {
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 // ** Types
 import {
 	IBuilderFormula,
@@ -60,6 +61,7 @@ import {
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { sanitizeOrderByForExplorer } from 'utils/sanitizeOrderBy';
 import { v4 as uuid } from 'uuid';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
@@ -101,6 +103,12 @@ export function QueryBuilderProvider({
 
 	const currentPathnameRef = useRef<string | null>(location.pathname);
 
+	// This is used to determine if the query was called from the handleRunQuery function - which means manual trigger from Stage and Run button
+	const [
+		calledFromHandleRunQuery,
+		setCalledFromHandleRunQuery,
+	] = useState<boolean>(false);
+
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -141,10 +149,10 @@ export function QueryBuilderProvider({
 
 			const isCurrentOperatorAvailableInList = initialOperators
 				.map((operator) => operator.value)
-				.includes(queryData.aggregateOperator);
+				.includes(queryData.aggregateOperator || '');
 
 			if (!isCurrentOperatorAvailableInList) {
-				return { ...queryData, aggregateOperator: initialOperators[0].value };
+				return { ...queryData, aggregateOperator: initialOperators[0]?.value };
 			}
 
 			return queryData;
@@ -177,11 +185,22 @@ export function QueryBuilderProvider({
 					aggregateAttribute: {
 						...item.aggregateAttribute,
 						id: createIdFromObjectFields(
-							item.aggregateAttribute,
+							item.aggregateAttribute as BaseAutocompleteData,
 							baseAutoCompleteIdKeysOrder,
 						),
-					},
+					} as BaseAutocompleteData,
 				};
+
+				// Explorer pages: sanitize stale orderBy before first query
+				const isExplorer =
+					location.pathname === ROUTES.LOGS_EXPLORER ||
+					location.pathname === ROUTES.TRACES_EXPLORER;
+				if (isExplorer) {
+					const sanitizedOrderBy = sanitizeOrderByForExplorer(currentElement);
+					return calledFromHandleRunQuery
+						? currentElement
+						: { ...currentElement, orderBy: sanitizedOrderBy };
+				}
 
 				return currentElement;
 			});
@@ -214,11 +233,11 @@ export function QueryBuilderProvider({
 
 			return nextQuery;
 		},
-		[initialDataSource],
+		[initialDataSource, location.pathname, calledFromHandleRunQuery],
 	);
 
 	const initQueryBuilderData = useCallback(
-		(query: Query, timeUpdated?: boolean): void => {
+		(query: Query): void => {
 			const { queryType: newQueryType, ...queryState } = prepareQueryBuilderData(
 				query,
 			);
@@ -233,21 +252,33 @@ export function QueryBuilderProvider({
 			const nextQuery: Query = { ...newQueryState, queryType: type };
 
 			setStagedQuery(nextQuery);
-			setCurrentQuery(
-				timeUpdated ? merge(currentQuery, newQueryState) : newQueryState,
-			);
+			setCurrentQuery(newQueryState);
 			setQueryType(type);
 		},
-		[prepareQueryBuilderData, currentQuery],
+		[prepareQueryBuilderData],
 	);
 
 	const updateAllQueriesOperators = useCallback(
-		(query: Query, panelType: PANEL_TYPES, dataSource: DataSource): Query => {
+		(
+			query: Query,
+			panelType: PANEL_TYPES,
+			dataSource: DataSource,
+			signalSource?: 'meter' | '',
+		): Query => {
 			const queryData = query.builder.queryData?.map((item) =>
 				getElementWithActualOperator(item, dataSource, panelType),
 			);
 
-			return { ...query, builder: { ...query.builder, queryData } };
+			return {
+				...query,
+				builder: {
+					...query.builder,
+					queryData: queryData.map((item) => ({
+						...item,
+						source: signalSource,
+					})),
+				},
+			};
 		},
 
 		[getElementWithActualOperator],
@@ -280,7 +311,7 @@ export function QueryBuilderProvider({
 				aggregateAttribute: {
 					...aggregateAttribute,
 					id: '',
-				},
+				} as BaseAutocompleteData,
 				timeAggregation,
 				spaceAggregation,
 				functions,
@@ -415,6 +446,7 @@ export function QueryBuilderProvider({
 
 			const newQuery: IBuilderQuery = {
 				...initialBuilderQuery,
+				source: queries?.[0]?.source || '',
 				queryName: createNewBuilderItemName({ existNames, sourceNames: alphabet }),
 				expression: createNewBuilderItemName({
 					existNames,
@@ -509,6 +541,8 @@ export function QueryBuilderProvider({
 		setCurrentQuery((prevState) => {
 			if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;
 
+			console.log('prevState', prevState.builder.queryData);
+
 			const newQuery = createNewBuilderQuery(prevState.builder.queryData);
 
 			return {
@@ -519,6 +553,7 @@ export function QueryBuilderProvider({
 				},
 			};
 		});
+
 		// eslint-disable-next-line sonarjs/no-identical-functions
 		setSupersetQuery((prevState) => {
 			if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;
@@ -853,18 +888,48 @@ export function QueryBuilderProvider({
 	);
 
 	const handleRunQuery = useCallback(
-		(shallUpdateStepInterval?: boolean) => {
+		(shallUpdateStepInterval?: boolean, newQBQuery?: boolean) => {
+			const isExplorer =
+				location.pathname === ROUTES.LOGS_EXPLORER ||
+				location.pathname === ROUTES.TRACES_EXPLORER;
+			if (isExplorer) {
+				setCalledFromHandleRunQuery(true);
+			}
+			let currentQueryData = currentQuery;
+
+			if (newQBQuery) {
+				currentQueryData = {
+					...currentQueryData,
+					builder: {
+						...currentQueryData.builder,
+						queryData: currentQueryData.builder.queryData.map((item) => ({
+							...item,
+							filter: {
+								...item.filter,
+								expression:
+									item.filter?.expression.trim() === ''
+										? ''
+										: item.filter?.expression ?? '',
+							},
+							filters: {
+								items: [],
+								op: 'AND',
+							},
+						})),
+					},
+				};
+			}
 			redirectWithQueryBuilderData({
 				...{
-					...currentQuery,
+					...currentQueryData,
 					...updateStepInterval(
 						{
-							builder: currentQuery.builder,
-							clickhouse_sql: currentQuery.clickhouse_sql,
-							promql: currentQuery.promql,
-							id: currentQuery.id,
+							builder: currentQueryData.builder,
+							clickhouse_sql: currentQueryData.clickhouse_sql,
+							promql: currentQueryData.promql,
+							id: currentQueryData.id,
 							queryType,
-							unit: currentQuery.unit,
+							unit: currentQueryData.unit,
 						},
 						maxTime,
 						minTime,
@@ -874,31 +939,54 @@ export function QueryBuilderProvider({
 				queryType,
 			});
 		},
-		[currentQuery, queryType, maxTime, minTime, redirectWithQueryBuilderData],
+		[
+			location.pathname,
+			currentQuery,
+			queryType,
+			maxTime,
+			minTime,
+			redirectWithQueryBuilderData,
+		],
 	);
 
 	useEffect(() => {
+		if (location.pathname !== currentPathnameRef.current) {
+			currentPathnameRef.current = location.pathname;
+
+			setStagedQuery(null);
+			// reset the last used query to 0 when navigating away from the page
+			setLastUsedQuery(0);
+			setCalledFromHandleRunQuery(false);
+		}
+	}, [location.pathname]);
+
+	// Separate useEffect to handle initQueryBuilderData after pathname changes
+	useEffect(() => {
 		if (!compositeQueryParam) return;
 
-		if (stagedQuery && stagedQuery.id === compositeQueryParam.id) {
-			return;
-		}
+		// Only run initQueryBuilderData if we're not in the middle of a pathname change
+		if (location.pathname === currentPathnameRef.current) {
+			if (stagedQuery && stagedQuery.id === compositeQueryParam.id) {
+				return;
+			}
 
-		const { isValid, validData } = replaceIncorrectObjectFields(
-			compositeQueryParam,
-			initialQueriesMap.metrics,
-		);
+			const { isValid, validData } = replaceIncorrectObjectFields(
+				compositeQueryParam,
+				initialQueriesMap.metrics,
+			);
 
-		if (!isValid) {
-			redirectWithQueryBuilderData(validData);
-		} else {
-			initQueryBuilderData(compositeQueryParam);
+			if (!isValid) {
+				redirectWithQueryBuilderData(validData);
+			} else {
+				initQueryBuilderData(compositeQueryParam);
+			}
 		}
 	}, [
 		initQueryBuilderData,
 		redirectWithQueryBuilderData,
 		compositeQueryParam,
 		stagedQuery,
+		location.pathname,
 	]);
 
 	const resetQuery = (newCurrentQuery?: QueryState): void => {
@@ -909,16 +997,6 @@ export function QueryBuilderProvider({
 			setSupersetQuery(newCurrentQuery);
 		}
 	};
-
-	useEffect(() => {
-		if (location.pathname !== currentPathnameRef.current) {
-			currentPathnameRef.current = location.pathname;
-
-			setStagedQuery(null);
-			// reset the last used query to 0 when navigating away from the page
-			setLastUsedQuery(0);
-		}
-	}, [location.pathname]);
 
 	const handleOnUnitsChange = useCallback(
 		(unit: string) => {

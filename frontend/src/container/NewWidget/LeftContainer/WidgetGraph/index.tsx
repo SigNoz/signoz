@@ -1,11 +1,14 @@
 import './WidgetGraph.styles.scss';
 
 import { InfoCircleOutlined } from '@ant-design/icons';
+import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { Card } from 'container/GridCardLayout/styles';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { isEmpty } from 'lodash-es';
 import { memo } from 'react';
+import { Warning } from 'types/api';
 
 import { WidgetGraphContainerProps } from '../../types';
 import PlotTag from './PlotTag';
@@ -34,7 +37,12 @@ function WidgetGraph({
 	return (
 		<Container $panelType={selectedGraph} className="widget-graph">
 			<div className="header">
-				<PlotTag queryType={currentQuery.queryType} panelType={selectedGraph} />
+				<div className="header-left">
+					<PlotTag queryType={currentQuery.queryType} panelType={selectedGraph} />
+					{!isEmpty(queryResponse.data?.warning) && (
+						<WarningPopover warningData={queryResponse.data?.warning as Warning} />
+					)}
+				</div>
 				<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
 			</div>
 			{queryResponse.error && (

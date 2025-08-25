@@ -14,6 +14,7 @@ import {
 	calculateEnhancedLegendConfig,
 } from 'container/PanelWrapper/enhancedLegend';
 import { Dimensions } from 'hooks/useDimensions';
+import { getLegend } from 'lib/dashboard/getQueryResults';
 import { convertValue } from 'lib/getConvertedValue';
 import getLabelName from 'lib/getLabelName';
 import { cloneDeep, isUndefined } from 'lodash-es';
@@ -70,6 +71,7 @@ export interface GetUPlotChartOptions {
 	enhancedLegend?: boolean;
 	legendPosition?: LegendPosition;
 	enableZoom?: boolean;
+	query?: Query;
 }
 
 /** the function converts series A , series B , series C to
@@ -151,6 +153,23 @@ function getBands(series): any[] {
 	return bands;
 }
 
+function getMinMaxValues(series: QueryData[]): [number, number] {
+	let min = Number.MAX_VALUE;
+	let max = Number.MIN_VALUE;
+
+	series.forEach((s) => {
+		s.values?.forEach(([, val]) => {
+			const num = Number(val);
+			if (Number.isFinite(num) && num > 0) {
+				min = Math.min(min, num);
+				max = Math.max(max, num);
+			}
+		});
+	});
+
+	return [min, max];
+}
+
 export const getUPlotChartOptions = ({
 	id,
 	dimensions,
@@ -181,6 +200,7 @@ export const getUPlotChartOptions = ({
 	enhancedLegend = true,
 	legendPosition = LegendPosition.BOTTOM,
 	enableZoom,
+	query,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -195,11 +215,17 @@ export const getUPlotChartOptions = ({
 
 	// Calculate dynamic legend configuration based on panel dimensions and series count
 	const seriesCount = (apiResponse?.data?.result || []).length;
+
 	const seriesLabels = enhancedLegend
 		? (apiResponse?.data?.result || []).map((item) =>
-				getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
+				getLegend(
+					item,
+					query || currentQuery,
+					getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
+				),
 		  )
 		: [];
+
 	const legendConfig = enhancedLegend
 		? calculateEnhancedLegendConfig(
 				dimensions,
@@ -278,16 +304,32 @@ export const getUPlotChartOptions = ({
 				...timeScaleProps,
 			},
 			y: {
-				...getYAxisScale({
-					thresholds,
-					series: stackBarChart
-						? getStackedSeriesYAxis(apiResponse?.data?.newResult?.data?.result || [])
-						: apiResponse?.data?.newResult?.data?.result || [],
-					yAxisUnit,
-					softMax,
-					softMin,
-				}),
-				distr: isLogScale ? 3 : 1,
+				...(((): { auto?: boolean; range?: uPlot.Scale.Range; distr?: number } => {
+					const yAxisConfig = getYAxisScale({
+						thresholds,
+						series: stackBarChart
+							? getStackedSeriesYAxis(apiResponse?.data?.newResult?.data?.result || [])
+							: apiResponse?.data?.newResult?.data?.result || [],
+						yAxisUnit,
+						softMax,
+						softMin,
+					});
+
+					if (isLogScale) {
+						const [minVal, maxVal] = getMinMaxValues(apiResponse?.data?.result || []);
+						// Round down min to nearest power of 10 below the data
+						const minPow = Math.floor(Math.log10(minVal));
+						// Round up max to nearest power of 10 above the data
+						const maxPow = Math.ceil(Math.log10(maxVal));
+
+						return {
+							range: [10 ** minPow, 10 ** maxPow],
+							distr: 3, // log distribution
+						};
+					}
+
+					return yAxisConfig;
+				})() as { auto?: boolean; range?: uPlot.Scale.Range; distr?: number }),
 			},
 		},
 		plugins: [
@@ -299,6 +341,7 @@ export const getUPlotChartOptions = ({
 				timezone,
 				colorMapping,
 				customTooltipElement,
+				query: query || currentQuery,
 			}),
 			onClickPlugin({
 				onClick: onClickHandler,
@@ -648,7 +691,7 @@ export const getUPlotChartOptions = ({
 					widgetMetaData: apiResponse?.data?.result || [],
 					graphsVisibilityStates,
 					panelType,
-					currentQuery,
+					currentQuery: query || currentQuery,
 					stackBarChart,
 					hiddenGraph,
 					isDarkMode,

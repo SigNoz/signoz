@@ -64,6 +64,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 
@@ -470,6 +471,7 @@ func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *middlew
 func (aH *APIHandler) RegisterQueryRangeV5Routes(router *mux.Router, am *middleware.AuthZ) {
 	subRouter := router.PathPrefix("/api/v5").Subrouter()
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QuerierAPI.QueryRange)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/substitute_vars", am.ViewAccess(aH.QuerierAPI.ReplaceVariables)).Methods(http.MethodPost)
 }
 
 // todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
@@ -1034,9 +1036,54 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 			// to get the correct query range
 			start := end.Add(-time.Duration(rule.EvalWindow)).Add(-3 * time.Minute)
 			if rule.AlertType == ruletypes.AlertTypeLogs {
-				res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
+				if rule.Version != "v5" {
+					res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
+				} else {
+					// TODO(srikanthccv): re-visit this and support multiple queries
+					var q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+
+					for _, query := range rule.RuleCondition.CompositeQuery.Queries {
+						if query.Type == qbtypes.QueryTypeBuilder {
+							switch spec := query.Spec.(type) {
+							case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+								q = spec
+							}
+						}
+					}
+
+					filterExpr := ""
+					if q.Filter != nil && q.Filter.Expression != "" {
+						filterExpr = q.Filter.Expression
+					}
+
+					whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
+
+					res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogsV5(start, end, whereClause)
+				}
 			} else if rule.AlertType == ruletypes.AlertTypeTraces {
-				res.Items[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
+				if rule.Version != "v5" {
+					res.Items[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
+				} else {
+					// TODO(srikanthccv): re-visit this and support multiple queries
+					var q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
+
+					for _, query := range rule.RuleCondition.CompositeQuery.Queries {
+						if query.Type == qbtypes.QueryTypeBuilder {
+							switch spec := query.Spec.(type) {
+							case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+								q = spec
+							}
+						}
+					}
+
+					filterExpr := ""
+					if q.Filter != nil && q.Filter.Expression != "" {
+						filterExpr = q.Filter.Expression
+					}
+
+					whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
+					res.Items[idx].RelatedTracesLink = contextlinks.PrepareLinksToTracesV5(start, end, whereClause)
+				}
 			}
 		}
 	}
@@ -4217,6 +4264,8 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 		response, err = aH.reader.GetLogAggregateAttributes(r.Context(), req)
 	case v3.DataSourceTraces:
 		response, err = aH.reader.GetTraceAggregateAttributes(r.Context(), req)
+	case v3.DataSourceMeter:
+		response, err = aH.reader.GetMeterAggregateAttributes(r.Context(), orgID, req)
 	default:
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
 		return
@@ -4266,6 +4315,8 @@ func (aH *APIHandler) autoCompleteAttributeKeys(w http.ResponseWriter, r *http.R
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
 		response, err = aH.reader.GetMetricAttributeKeys(r.Context(), req)
+	case v3.DataSourceMeter:
+		response, err = aH.reader.GetMeterAttributeKeys(r.Context(), req)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAttributeKeys(r.Context(), req)
 	case v3.DataSourceTraces:

@@ -3,6 +3,7 @@ package telemetrytraces
 import (
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -63,7 +64,8 @@ func TestSpanScopeFilterExpression(t *testing.T) {
 				FieldContext: telemetrytypes.FieldContextSpan,
 			}}
 
-			whereClause, _, err := querybuilder.PrepareWhereClause(tt.expression, querybuilder.FilterExprVisitorOpts{
+			whereClause, err := querybuilder.PrepareWhereClause(tt.expression, querybuilder.FilterExprVisitorOpts{
+				Logger:           instrumentationtest.New().Logger(),
 				FieldMapper:      fm,
 				ConditionBuilder: cb,
 				FieldKeys:        fieldKeys,
@@ -77,7 +79,7 @@ func TestSpanScopeFilterExpression(t *testing.T) {
 				require.NotNil(t, whereClause)
 
 				// Apply the where clause to the builder and get the SQL
-				sb.AddWhereClause(whereClause)
+				sb.AddWhereClause(whereClause.WhereClause)
 				whereSQL, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 				t.Logf("Generated SQL: %s", whereSQL)
 				assert.Contains(t, whereSQL, tt.expectedCondition)
@@ -129,7 +131,8 @@ func TestSpanScopeWithResourceFilter(t *testing.T) {
 				FieldContext: telemetrytypes.FieldContextResource,
 			}}
 
-			_, _, err := querybuilder.PrepareWhereClause(tt.expression, querybuilder.FilterExprVisitorOpts{
+			_, err := querybuilder.PrepareWhereClause(tt.expression, querybuilder.FilterExprVisitorOpts{
+				Logger:             instrumentationtest.New().Logger(),
 				FieldMapper:        fm,
 				ConditionBuilder:   cb,
 				FieldKeys:          fieldKeys,

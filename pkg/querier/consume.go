@@ -332,7 +332,7 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 	}, nil
 }
 
-func derefValue(v interface{}) interface{} {
+func derefValue(v any) any {
 	if v == nil {
 		return nil
 	}
@@ -350,7 +350,6 @@ func derefValue(v interface{}) interface{} {
 }
 
 func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
-
 	colNames := rows.Columns()
 	colTypes := rows.ColumnTypes()
 	colCnt := len(colNames)
@@ -375,7 +374,7 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 		}
 
 		rr := qbtypes.RawRow{
-			Data: make(map[string]*any, colCnt),
+			Data: make(map[string]any, colCnt),
 		}
 
 		for i, cellPtr := range scan {
@@ -398,9 +397,7 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 				}
 			}
 
-			// store value in map as *any, to match the schema
-			v := any(val)
-			rr.Data[name] = &v
+			rr.Data[name] = val
 		}
 		outRows = append(outRows, &rr)
 	}

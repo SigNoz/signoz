@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"regexp"
 	"runtime/debug"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
@@ -12,8 +11,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/SigNoz/signoz/pkg/variables"
 )
 
 type API struct {
@@ -85,6 +86,60 @@ func (a *API) QueryRange(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusOK, queryRangeResponse)
 }
 
+// TODO(srikanthccv): everything done here can be done on frontend as well
+// For the time being I am adding a helper function
+func (a *API) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
+
+	var queryRangeRequest qbtypes.QueryRangeRequest
+	if err := json.NewDecoder(req.Body).Decode(&queryRangeRequest); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	errs := []error{}
+
+	for idx, item := range queryRangeRequest.CompositeQuery.Queries {
+		if item.Type == qbtypes.QueryTypeBuilder {
+			switch spec := item.Spec.(type) {
+			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+				if spec.Filter != nil && spec.Filter.Expression != "" {
+					replaced, err := variables.ReplaceVariablesInExpression(spec.Filter.Expression, queryRangeRequest.Variables)
+					if err != nil {
+						errs = append(errs, err)
+					}
+					spec.Filter.Expression = replaced
+				}
+				queryRangeRequest.CompositeQuery.Queries[idx].Spec = spec
+			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+				if spec.Filter != nil && spec.Filter.Expression != "" {
+					replaced, err := variables.ReplaceVariablesInExpression(spec.Filter.Expression, queryRangeRequest.Variables)
+					if err != nil {
+						errs = append(errs, err)
+					}
+					spec.Filter.Expression = replaced
+				}
+				queryRangeRequest.CompositeQuery.Queries[idx].Spec = spec
+			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+				if spec.Filter != nil && spec.Filter.Expression != "" {
+					replaced, err := variables.ReplaceVariablesInExpression(spec.Filter.Expression, queryRangeRequest.Variables)
+					if err != nil {
+						errs = append(errs, err)
+					}
+					spec.Filter.Expression = replaced
+				}
+				queryRangeRequest.CompositeQuery.Queries[idx].Spec = spec
+			}
+		}
+	}
+
+	if len(errs) != 0 {
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, errors.Join(errs...).Error()))
+		return
+	}
+
+	render.Success(rw, http.StatusOK, queryRangeRequest)
+}
+
 func (a *API) logEvent(ctx context.Context, referrer string, event *qbtypes.QBEvent) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
@@ -100,6 +155,7 @@ func (a *API) logEvent(ctx context.Context, referrer string, event *qbtypes.QBEv
 		"logs_used":         event.LogsUsed,
 		"traces_used":       event.TracesUsed,
 		"metrics_used":      event.MetricsUsed,
+		"source":            event.Source,
 		"filter_applied":    event.FilterApplied,
 		"group_by_applied":  event.GroupByApplied,
 		"query_type":        event.QueryType,
@@ -111,49 +167,9 @@ func (a *API) logEvent(ctx context.Context, referrer string, event *qbtypes.QBEv
 		return
 	}
 
-	properties["referrer"] = referrer
-
-	logsExplorerMatched, _ := regexp.MatchString(`/logs/logs-explorer(?:\?.*)?$`, referrer)
-	traceExplorerMatched, _ := regexp.MatchString(`/traces-explorer(?:\?.*)?$`, referrer)
-	metricsExplorerMatched, _ := regexp.MatchString(`/metrics-explorer/explorer(?:\?.*)?$`, referrer)
-	dashboardMatched, _ := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
-	alertMatched, _ := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
-
-	switch {
-	case dashboardMatched:
-		properties["module_name"] = "dashboard"
-	case alertMatched:
-		properties["module_name"] = "rule"
-	case metricsExplorerMatched:
-		properties["module_name"] = "metrics-explorer"
-	case logsExplorerMatched:
-		properties["module_name"] = "logs-explorer"
-	case traceExplorerMatched:
-		properties["module_name"] = "traces-explorer"
-	default:
-		return
-	}
-
-	if dashboardMatched {
-		if dashboardIDRegex, err := regexp.Compile(`/dashboard/([a-f0-9\-]+)/`); err == nil {
-			if matches := dashboardIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
-				properties["dashboard_id"] = matches[1]
-			}
-		}
-
-		if widgetIDRegex, err := regexp.Compile(`widgetId=([a-f0-9\-]+)`); err == nil {
-			if matches := widgetIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
-				properties["widget_id"] = matches[1]
-			}
-		}
-	}
-
-	if alertMatched {
-		if alertIDRegex, err := regexp.Compile(`ruleId=(\d+)`); err == nil {
-			if matches := alertIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
-				properties["rule_id"] = matches[1]
-			}
-		}
+	comments := ctxtypes.CommentFromContext(ctx).Map()
+	for key, value := range comments {
+		properties[key] = value
 	}
 
 	if !event.HasData {

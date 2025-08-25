@@ -15,7 +15,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep, isFunction, isNull } from 'lodash-es';
-import { Settings2 as SettingsIcon } from 'lucide-react';
+import { Frown, Settings2 as SettingsIcon } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useMemo, useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -90,9 +90,14 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				...currentQuery.builder,
 				queryData: currentQuery.builder.queryData.map((item, idx) => ({
 					...item,
+					filter: {
+						...item.filter,
+						expression: '',
+					},
 					filters: {
 						...item.filters,
-						items: idx === lastUsedQuery ? [] : [...item.filters.items],
+						items: idx === lastUsedQuery ? [] : [...(item.filters?.items || [])],
+						op: item.filters?.op || 'AND',
 					},
 				})),
 			},
@@ -231,6 +236,13 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 											);
 									}
 								})}
+
+								{filterConfig.length === 0 && (
+									<div className="no-filters-container">
+										<Frown size={16} />
+										<Typography.Text>No filters found</Typography.Text>
+									</div>
+								)}
 							</section>
 						</>
 					</OverlayScrollbar>

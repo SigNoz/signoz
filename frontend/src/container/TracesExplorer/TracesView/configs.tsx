@@ -11,17 +11,17 @@ export const PER_PAGE_OPTIONS: number[] = [10, ...DEFAULT_PER_PAGE_OPTIONS];
 export const columns: ColumnsType<ListItem['data']> = [
 	{
 		title: 'Root Service Name',
-		dataIndex: 'subQuery.serviceName',
+		dataIndex: 'service.name',
 		key: 'serviceName',
 	},
 	{
 		title: 'Root Operation Name',
-		dataIndex: 'subQuery.name',
+		dataIndex: 'name',
 		key: 'name',
 	},
 	{
 		title: 'Root Duration (in ms)',
-		dataIndex: 'subQuery.durationNano',
+		dataIndex: 'duration_nano',
 		key: 'durationNano',
 		render: (duration: number): JSX.Element => (
 			<Typography>{getMs(String(duration))}ms</Typography>
@@ -34,7 +34,7 @@ export const columns: ColumnsType<ListItem['data']> = [
 	},
 	{
 		title: 'TraceID',
-		dataIndex: 'traceID',
+		dataIndex: 'trace_id',
 		key: 'traceID',
 		render: (traceID: string): JSX.Element => (
 			<Link

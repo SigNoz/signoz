@@ -1,4 +1,5 @@
 module.exports = {
+	ignorePatterns: ['src/parser/*.ts'],
 	env: {
 		browser: true,
 		es2021: true,

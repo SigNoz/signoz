@@ -3,16 +3,21 @@ import './Explorer.styles.scss';
 import * as Sentry from '@sentry/react';
 import { Switch } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
+import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
+import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
+import { Warning } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -20,7 +25,7 @@ import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToD
 import { v4 as uuid } from 'uuid';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
-import QuerySection from './QuerySection';
+// import QuerySection from './QuerySection';
 import TimeSeries from './TimeSeries';
 import { ExplorerTabs } from './types';
 import { splitQueryIntoOneChartPerQuery } from './utils';
@@ -53,6 +58,16 @@ function Explorer(): JSX.Element {
 		});
 	};
 
+	const defaultQuery = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				initialQueriesMap[DataSource.METRICS],
+				PANEL_TYPES.TIME_SERIES,
+				DataSource.METRICS,
+			),
+		[updateAllQueriesOperators],
+	);
+
 	const exportDefaultQuery = useMemo(
 		() =>
 			updateAllQueriesOperators(
@@ -63,7 +78,7 @@ function Explorer(): JSX.Element {
 		[currentQuery, updateAllQueriesOperators],
 	);
 
-	useShareBuilderUrl(exportDefaultQuery);
+	useShareBuilderUrl({ defaultValue: defaultQuery });
 
 	const handleExport = useCallback(
 		(
@@ -101,6 +116,13 @@ function Explorer(): JSX.Element {
 		});
 	}, []);
 
+	const queryComponents = useMemo(
+		(): QueryBuilderProps['queryComponents'] => ({}),
+		[],
+	);
+
+	const [warning, setWarning] = useState<Warning | undefined>(undefined);
+
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-explore-container">
@@ -114,11 +136,20 @@ function Explorer(): JSX.Element {
 						/>
 					</div>
 					<div className="explore-header-right-actions">
+						{!isEmpty(warning) && <WarningPopover warningData={warning} />}
 						<DateTimeSelector showAutoRefresh />
-						<RightToolbarActions onStageRunQuery={handleRunQuery} />
+						<RightToolbarActions
+							onStageRunQuery={(): void => handleRunQuery(true, true)}
+						/>
 					</div>
 				</div>
-				<QuerySection />
+				<QueryBuilderV2
+					config={{ initialDataSource: DataSource.METRICS, queryVariant: 'static' }}
+					panelType={PANEL_TYPES.TIME_SERIES}
+					queryComponents={queryComponents}
+					showFunctions={false}
+					version="v3"
+				/>
 				{/* TODO: Enable once we have resolved all related metrics issues */}
 				{/* <Button.Group className="explore-tabs">
 					<Button
@@ -142,7 +173,10 @@ function Explorer(): JSX.Element {
 				</Button.Group> */}
 				<div className="explore-content">
 					{selectedTab === ExplorerTabs.TIME_SERIES && (
-						<TimeSeries showOneChartPerQuery={showOneChartPerQuery} />
+						<TimeSeries
+							showOneChartPerQuery={showOneChartPerQuery}
+							setWarning={setWarning}
+						/>
 					)}
 					{/* TODO: Enable once we have resolved all related metrics issues */}
 					{/* {selectedTab === ExplorerTabs.RELATED_METRICS && (
@@ -155,7 +189,7 @@ function Explorer(): JSX.Element {
 				query={exportDefaultQuery}
 				sourcepage={DataSource.METRICS}
 				onExport={handleExport}
-				isOneChartPerQuery={showOneChartPerQuery}
+				isOneChartPerQuery={false}
 				splitedQueries={splitedQueries}
 			/>
 		</Sentry.ErrorBoundary>

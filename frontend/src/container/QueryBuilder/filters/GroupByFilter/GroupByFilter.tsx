@@ -10,9 +10,17 @@ import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAut
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { isEqual, uniqWith } from 'lodash-es';
-import { memo, ReactNode, useCallback, useEffect, useState } from 'react';
+import {
+	memo,
+	ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useQueryClient } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -25,6 +33,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 	query,
 	onChange,
 	disabled,
+	signalSource,
 }: GroupByFilterProps): JSX.Element {
 	const queryClient = useQueryClient();
 	const [searchText, setSearchText] = useState<string>('');
@@ -38,11 +47,18 @@ export const GroupByFilter = memo(function GroupByFilter({
 
 	const debouncedValue = useDebounce(searchText, DEBOUNCE_DELAY);
 
+	const dataSource = useMemo(() => {
+		if (signalSource === 'meter') {
+			return 'meter' as DataSource;
+		}
+		return query.dataSource;
+	}, [signalSource, query.dataSource]);
+
 	const { isFetching } = useGetAggregateKeys(
 		{
-			aggregateAttribute: query.aggregateAttribute.key,
-			dataSource: query.dataSource,
-			aggregateOperator: query.aggregateOperator,
+			aggregateAttribute: query.aggregateAttribute?.key || '',
+			dataSource,
+			aggregateOperator: query.aggregateOperator || '',
 			searchText: debouncedValue,
 		},
 		{
@@ -94,9 +110,9 @@ export const GroupByFilter = memo(function GroupByFilter({
 			[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchText, isFocused],
 			async () =>
 				getAggregateKeys({
-					aggregateAttribute: query.aggregateAttribute.key,
+					aggregateAttribute: query.aggregateAttribute?.key || '',
 					dataSource: query.dataSource,
-					aggregateOperator: query.aggregateOperator,
+					aggregateOperator: query.aggregateOperator || '',
 					searchText,
 				}),
 		);
@@ -104,7 +120,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 		return response.payload?.attributeKeys || [];
 	}, [
 		isFocused,
-		query.aggregateAttribute.key,
+		query.aggregateAttribute?.key,
 		query.aggregateOperator,
 		query.dataSource,
 		queryClient,
@@ -195,6 +211,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}
 			data-testid="group-by"
+			placeholder={localValues.length === 0 ? 'Everything (no breakdown)' : ''}
 		/>
 	);
 });

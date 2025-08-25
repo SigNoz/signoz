@@ -1,7 +1,11 @@
 import { orange } from '@ant-design/colors';
 import { SettingOutlined } from '@ant-design/icons';
 import { Dropdown, MenuProps } from 'antd';
-import { OPERATORS } from 'constants/queryBuilder';
+import {
+	negateOperator,
+	OPERATORS,
+	QUERY_BUILDER_FUNCTIONS,
+} from 'constants/antlrQueryConstants';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 
 import { TitleWrapper } from './BodyTitleRenderer.styles';
@@ -29,7 +33,9 @@ function BodyTitleRenderer({
 					getDataTypes(value),
 				),
 				`${value}`,
-				isFilterIn ? OPERATORS.HAS : OPERATORS.NHAS,
+				isFilterIn
+					? QUERY_BUILDER_FUNCTIONS.HAS
+					: negateOperator(QUERY_BUILDER_FUNCTIONS.HAS),
 				true,
 				parentIsArray ? getDataTypes([value]) : getDataTypes(value),
 			);

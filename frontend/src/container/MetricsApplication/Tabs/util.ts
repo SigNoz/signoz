@@ -283,7 +283,8 @@ export function handleQueryChange(
 				...item,
 				filters: {
 					...item.filters,
-					items: [...item.filters.items, ...filterItem, ...(filters || [])],
+					items: [...(item.filters?.items || []), ...filterItem, ...(filters || [])],
+					op: item.filters?.op || 'AND',
 				},
 			})),
 		},

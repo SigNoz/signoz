@@ -1,5 +1,6 @@
+import { isAxiosError } from 'axios';
 import classNames from 'classnames';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter/BuilderUnits';
@@ -12,6 +13,7 @@ import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
+import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -19,7 +21,10 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { TimeSeriesProps } from './types';
 import { splitQueryIntoOneChartPerQuery } from './utils';
 
-function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
+function TimeSeries({
+	showOneChartPerQuery,
+	setWarning,
+}: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
@@ -33,8 +38,8 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 		currentQuery.builder.queryData.forEach(
 			({ aggregateAttribute, aggregateOperator }) => {
 				const isExistDurationNanoAttribute =
-					aggregateAttribute.key === 'durationNano' ||
-					aggregateAttribute.key === 'duration_nano';
+					aggregateAttribute?.key === 'durationNano' ||
+					aggregateAttribute?.key === 'duration_nano';
 
 				const isCountOperator =
 					aggregateOperator === 'count' || aggregateOperator === 'count_distinct';
@@ -63,7 +68,7 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
 				payload,
-				ENTITY_VERSION_V4,
+				ENTITY_VERSION_V5,
 				globalSelectedTime,
 				maxTime,
 				minTime,
@@ -80,9 +85,25 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 							dataSource: DataSource.METRICS,
 						},
 					},
-					ENTITY_VERSION_V4,
+					// ENTITY_VERSION_V4,
+					ENTITY_VERSION_V5,
 				),
 			enabled: !!payload,
+			retry: (failureCount: number, error: Error): boolean => {
+				let status: number | undefined;
+
+				if (error instanceof APIError) {
+					status = error.getHttpStatusCode();
+				} else if (isAxiosError(error)) {
+					status = error.response?.status;
+				}
+
+				if (status && status >= 400 && status < 500) {
+					return false;
+				}
+
+				return failureCount < 3;
+			},
 		})),
 	);
 
@@ -126,6 +147,8 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 							data={datapoint}
 							yAxisUnit={yAxisUnit}
 							dataSource={DataSource.METRICS}
+							error={queries[index].error as APIError}
+							setWarning={setWarning}
 						/>
 					</div>
 				))}

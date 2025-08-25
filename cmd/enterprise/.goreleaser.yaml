@@ -11,7 +11,7 @@ before:
 builds:
   - id: signoz
     binary: bin/signoz
-    main: cmd/enterprise
+    main: ./cmd/enterprise
     env:
       - CGO_ENABLED=1
       - >-

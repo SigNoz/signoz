@@ -297,6 +297,36 @@ func Test_buildAttributeFilter(t *testing.T) {
 			},
 			want: "lower(body) LIKE lower('test')",
 		},
+		{
+			name: "build attribute filter like-body",
+			args: args{
+				item: v3.FilterItem{
+					Key: v3.AttributeKey{
+						Key:      "body",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: true,
+					},
+					Operator: v3.FilterOperatorILike,
+					Value:    "test",
+				},
+			},
+			want: "body ILIKE 'test'",
+		},
+		{
+			name: "build attribute filter not ilike-body",
+			args: args{
+				item: v3.FilterItem{
+					Key: v3.AttributeKey{
+						Key:      "body",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: true,
+					},
+					Operator: v3.FilterOperatorNotILike,
+					Value:    "test",
+				},
+			},
+			want: "body NOT ILIKE 'test'",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

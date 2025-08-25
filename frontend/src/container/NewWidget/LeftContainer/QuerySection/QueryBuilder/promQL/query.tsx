@@ -53,8 +53,8 @@ function PromQLQueryBuilder({
 
 	return (
 		<QueryHeader
-			name={queryData.name}
-			disabled={queryData.disabled}
+			name={queryData?.name}
+			disabled={queryData?.disabled}
 			onDisable={handleDisable}
 			onDelete={handleRemoveQuery}
 			deletable={deletable}
@@ -63,7 +63,7 @@ function PromQLQueryBuilder({
 				onChange={handleUpdateQuery}
 				size="middle"
 				name="query"
-				defaultValue={queryData.query}
+				defaultValue={queryData?.query}
 				addonBefore="PromQL Query"
 				style={{ marginBottom: '0.5rem' }}
 			/>
@@ -72,7 +72,7 @@ function PromQLQueryBuilder({
 				onChange={handleUpdateQuery}
 				size="middle"
 				name="legend"
-				defaultValue={queryData.legend}
+				defaultValue={queryData?.legend}
 				addonBefore="Legend Format"
 				style={{ marginBottom: '0.5rem' }}
 			/>

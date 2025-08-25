@@ -78,7 +78,8 @@ function TopOperationsTable({
 					...item,
 					filters: {
 						...item.filters,
-						items: [...item.filters.items, ...opFilters],
+						items: [...(item.filters?.items || []), ...opFilters],
+						op: item.filters?.op || 'AND',
 					},
 				})),
 			},

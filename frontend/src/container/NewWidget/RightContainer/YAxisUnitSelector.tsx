@@ -16,11 +16,13 @@ const findCategoryByName = (
 type OnSelectType = Dispatch<SetStateAction<string>> | ((val: string) => void);
 function YAxisUnitSelector({
 	defaultValue,
+	value,
 	onSelect,
 	fieldLabel,
 	handleClear,
 }: {
 	defaultValue: string;
+	value: string;
 	onSelect: OnSelectType;
 	fieldLabel: string;
 	handleClear?: () => void;
@@ -40,6 +42,7 @@ function YAxisUnitSelector({
 				options={options}
 				allowClear
 				defaultValue={findCategoryById(defaultValue)?.name}
+				value={findCategoryById(value)?.name || ''}
 				onClear={handleClear}
 				onSelect={onSelectHandler}
 				filterOption={(inputValue, option): boolean => {

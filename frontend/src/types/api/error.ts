@@ -21,6 +21,10 @@ class APIError extends Error {
 	getErrorCode(): string {
 		return this.error.error.code;
 	}
+
+	getErrorDetails(): ErrorResponseV2 {
+		return this.error;
+	}
 }
 
 export default APIError;

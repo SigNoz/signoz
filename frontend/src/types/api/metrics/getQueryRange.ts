@@ -1,6 +1,7 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
+import { Warning } from '..';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -32,6 +33,7 @@ export interface MetricRangePayloadProps {
 		result: QueryData[];
 		resultType: string;
 		newResult: MetricRangePayloadV3;
+		warnings?: string[];
 	};
 }
 
@@ -39,5 +41,7 @@ export interface MetricRangePayloadV3 {
 	data: {
 		result: QueryDataV3[];
 		resultType: string;
+		warnings?: string[];
 	};
+	warning?: Warning;
 }

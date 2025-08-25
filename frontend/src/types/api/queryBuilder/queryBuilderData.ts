@@ -1,3 +1,4 @@
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { Format } from 'container/NewWidget/RightContainer/types';
 import { EQueryType } from 'types/common/dashboard';
 import {
@@ -6,6 +7,14 @@ import {
 	ReduceOperators,
 } from 'types/common/queryBuilder';
 
+import {
+	Filter,
+	Having as HavingV5,
+	LogAggregation,
+	MetricAggregation,
+	QueryFunction,
+	TraceAggregation,
+} from '../v5/queryRange';
 import { BaseAutocompleteData } from './queryAutocompleteResponse';
 
 // Type for Formula
@@ -57,25 +66,28 @@ export interface QueryFunctionProps {
 export type IBuilderQuery = {
 	queryName: string;
 	dataSource: DataSource;
-	aggregateOperator: string;
-	aggregateAttribute: BaseAutocompleteData;
-	timeAggregation: string;
+	aggregateOperator?: string;
+	aggregateAttribute?: BaseAutocompleteData;
+	aggregations?: TraceAggregation[] | LogAggregation[] | MetricAggregation[];
+	timeAggregation?: string;
 	spaceAggregation?: string;
 	temporality?: string;
-	functions: QueryFunctionProps[];
-	filters: TagFilter;
+	functions: QueryFunction[];
+	filter?: Filter;
+	filters?: TagFilter;
 	groupBy: BaseAutocompleteData[];
 	expression: string;
 	disabled: boolean;
-	having: Having[];
+	having: Having[] | HavingV5;
 	limit: number | null;
-	stepInterval: number;
+	stepInterval: number | undefined;
 	orderBy: OrderByPayload[];
-	reduceTo: ReduceOperators;
+	reduceTo?: ReduceOperators;
 	legend: string;
 	pageSize?: number;
 	offset?: number;
-	selectColumns?: BaseAutocompleteData[];
+	selectColumns?: BaseAutocompleteData[] | TelemetryFieldKey[];
+	source?: 'meter' | '';
 };
 
 export interface IClickHouseQuery {
