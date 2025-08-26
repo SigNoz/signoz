@@ -986,7 +986,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 
 		if len(conds) != 0 {
 			// see `expr` in condition_builder.go, if key doesn't exist we don't check for value
-			// hence, this is join of conditions on resource and attribtues
+			// hence, this is join of conditions on resource and attributes
 			sb.Where(sb.And(conds...))
 		}
 	}
