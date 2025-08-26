@@ -172,8 +172,6 @@ describe('StatusCodeBarCharts', () => {
 			key: {
 				dataType: 'string',
 				id: 'response_status_code--string--tag--false',
-				isColumn: false,
-				isJSON: false,
 				key: 'response_status_code',
 				type: 'tag',
 			},
@@ -185,8 +183,6 @@ describe('StatusCodeBarCharts', () => {
 			key: {
 				dataType: 'string',
 				id: 'response_status_code--string--tag--false',
-				isColumn: false,
-				isJSON: false,
 				key: 'response_status_code',
 				type: 'tag',
 			},
