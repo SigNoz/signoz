@@ -263,10 +263,7 @@ export type QueryBuilderContextType = {
 		redirectToUrl?: typeof ROUTES[keyof typeof ROUTES],
 		shallStringify?: boolean,
 	) => void;
-	handleRunQuery: (
-		shallUpdateStepInterval?: boolean,
-		newQBQuery?: boolean,
-	) => void;
+	handleRunQuery: () => void;
 	resetQuery: (newCurrentQuery?: QueryState) => void;
 	handleOnUnitsChange: (units: Format['id']) => void;
 	updateAllQueriesOperators: (

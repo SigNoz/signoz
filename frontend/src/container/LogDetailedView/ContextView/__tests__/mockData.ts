@@ -43,7 +43,6 @@ export const mockQuery: Query = {
 					key: 'body',
 					type: 'string',
 					dataType: DataTypes.String,
-					isColumn: true,
 				},
 				timeAggregation: 'sum',
 				functions: [],
@@ -69,7 +68,6 @@ const mockBaseAutocompleteData: BaseAutocompleteData = {
 	key: 'service',
 	type: 'string',
 	dataType: DataTypes.String,
-	isColumn: true,
 };
 
 export const mockTagFilter: TagFilter = {

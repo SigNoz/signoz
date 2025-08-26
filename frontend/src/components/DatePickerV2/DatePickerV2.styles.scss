@@ -1,0 +1,114 @@
+.date-picker-v2-container {
+	display: flex;
+	flex-direction: row;
+}
+
+.custom-date-time-picker-v2 {
+	padding: 12px;
+
+	.periscope-calendar {
+		border-radius: 4px;
+		border: none !important;
+		background: none !important;
+		padding: 8px 0 !important;
+	}
+
+	.periscope-calendar-day {
+		background: none !important;
+
+		&.periscope-calendar-today {
+			&.text-accent-foreground {
+				color: var(--bg-vanilla-100) !important;
+			}
+		}
+
+		button {
+			&:hover {
+				background-color: var(--bg-robin-500) !important;
+				color: var(--bg-vanilla-100) !important;
+			}
+		}
+	}
+
+	.custom-time-selector {
+		display: flex;
+		flex-direction: row;
+		gap: 16px;
+		align-items: center;
+		justify-content: space-between;
+
+		.time-input {
+			border-radius: 4px;
+			border: none !important;
+			background: none !important;
+			padding: 8px 4px !important;
+			color: var(--bg-vanilla-100) !important;
+
+			&::-webkit-calendar-picker-indicator {
+				display: none !important;
+				-webkit-appearance: none;
+				appearance: none;
+			}
+
+			&:focus {
+				border: none !important;
+				outline: none !important;
+				box-shadow: none !important;
+			}
+
+			&:focus-visible {
+				border: none !important;
+				outline: none !important;
+				box-shadow: none !important;
+			}
+		}
+	}
+
+	.custom-date-time-picker-footer {
+		display: flex;
+		flex-direction: row;
+		gap: 8px;
+		align-items: center;
+		justify-content: flex-end;
+		margin-top: 16px;
+
+		.next-btn {
+			width: 80px;
+		}
+
+		.clear-btn {
+			width: 80px;
+		}
+	}
+}
+
+.invalid-date-range-tooltip {
+	.ant-tooltip-inner {
+		color: var(--bg-sakura-500) !important;
+	}
+}
+
+.lightMode {
+	.custom-date-time-picker-v2 {
+		.periscope-calendar-day {
+			&.periscope-calendar-today {
+				&.text-accent-foreground {
+					color: var(--bg-ink-500) !important;
+				}
+			}
+
+			button {
+				&:hover {
+					background-color: var(--bg-robin-500) !important;
+					color: var(--bg-ink-500) !important;
+				}
+			}
+		}
+
+		.custom-time-selector {
+			.time-input {
+				color: var(--bg-ink-500) !important;
+			}
+		}
+	}
+}

@@ -169,9 +169,8 @@ func TestBucketCache_Put_And_Get(t *testing.T) {
 	assert.Equal(t, []string{"test warning"}, cached.Warnings)
 
 	// Verify the time series data
-	tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
+	_, ok := cached.Value.(*qbtypes.TimeSeriesData)
 	require.True(t, ok)
-	assert.Equal(t, "A", tsData.QueryName)
 }
 
 func TestBucketCache_PartialHit(t *testing.T) {
@@ -1077,7 +1076,6 @@ func TestBucketCache_FilteredCachedResults(t *testing.T) {
 	// Verify the cached result only contains values within the requested range
 	tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
 	require.True(t, ok)
-	assert.Equal(t, "A", tsData.QueryName)
 	require.Len(t, tsData.Aggregations, 1)
 	require.Len(t, tsData.Aggregations[0].Series, 1)
 

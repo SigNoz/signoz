@@ -22,12 +22,7 @@ export type UseActiveLog = {
 		fieldKey: string,
 		fieldValue: string,
 		operator: string,
-		isJSON?: boolean,
 		dataType?: DataTypes,
 	) => void;
-	onGroupByAttribute: (
-		fieldKey: string,
-		isJSON?: boolean,
-		dataType?: DataTypes,
-	) => Promise<void>;
+	onGroupByAttribute: (fieldKey: string, dataType?: DataTypes) => Promise<void>;
 };

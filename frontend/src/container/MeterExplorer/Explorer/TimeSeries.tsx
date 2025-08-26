@@ -69,7 +69,7 @@ function TimeSeries(): JSX.Element {
 				GetMetricQueryRange(
 					{
 						query: payload,
-						graphType: PANEL_TYPES.TIME_SERIES,
+						graphType: PANEL_TYPES.BAR,
 						selectedTime: 'GLOBAL_TIME',
 						globalSelectedInterval: globalSelectedTime,
 						params: {
@@ -131,6 +131,7 @@ function TimeSeries(): JSX.Element {
 							data={datapoint}
 							dataSource={DataSource.METRICS}
 							yAxisUnit={yAxisUnit}
+							panelType={PANEL_TYPES.BAR}
 						/>
 					</div>
 				))}

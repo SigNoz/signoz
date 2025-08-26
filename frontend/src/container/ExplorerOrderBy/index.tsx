@@ -34,7 +34,7 @@ function ExplorerOrderBy({ query, onChange }: OrderByFilterProps): JSX.Element {
 		const keysOptions = createOptions(data?.payload?.attributeKeys || []);
 
 		const customOptions = createOptions([
-			{ key: 'timestamp', isColumn: true, type: '', dataType: DataTypes.EMPTY },
+			{ key: 'timestamp', type: '', dataType: DataTypes.EMPTY },
 		]);
 
 		const baseOptions = [

@@ -63,11 +63,11 @@ func (v *TelemetryFieldVisitor) VisitColumnDef(expr *parser.ColumnDef) error {
 	case "bool":
 		fieldDataType = telemetrytypes.FieldDataTypeBool
 	case "int", "int64":
-		fieldDataType = telemetrytypes.FieldDataTypeFloat64
+		fieldDataType = telemetrytypes.FieldDataTypeNumber
 	case "float", "float64":
-		fieldDataType = telemetrytypes.FieldDataTypeFloat64
+		fieldDataType = telemetrytypes.FieldDataTypeNumber
 	case "number":
-		fieldDataType = telemetrytypes.FieldDataTypeFloat64
+		fieldDataType = telemetrytypes.FieldDataTypeNumber
 	default:
 		return nil // Unknown data type
 	}

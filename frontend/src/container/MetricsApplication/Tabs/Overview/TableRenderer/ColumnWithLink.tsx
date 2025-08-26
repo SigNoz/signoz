@@ -26,8 +26,6 @@ function ColumnWithLink({
 					key: 'name',
 					dataType: DataTypes.String,
 					type: 'tag',
-					isColumn: true,
-					isJSON: false,
 					id: 'name--string--tag--true',
 				},
 				op: 'in',

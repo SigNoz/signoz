@@ -1,7 +1,7 @@
 import { isAxiosError } from 'axios';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { updateStepInterval } from 'container/GridCardLayout/utils';
+import { updateBarStepInterval } from 'container/GridCardLayout/utils';
 import {
 	GetMetricQueryRange,
 	GetQueryResultsProps,
@@ -97,7 +97,7 @@ export const useGetQueryRange: UseGetQueryRange = (
 				interval: requestData.globalSelectedInterval,
 			});
 
-			const updatedQuery = updateStepInterval(
+			const updatedQuery = updateBarStepInterval(
 				requestData.query,
 				requestData.start ? requestData.start * 1e3 : parseInt(start, 10) * 1e3,
 				requestData.end ? requestData.end * 1e3 : parseInt(end, 10) * 1e3,

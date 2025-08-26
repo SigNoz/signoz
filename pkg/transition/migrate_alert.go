@@ -39,6 +39,8 @@ func (m *alertMigrateV5) Migrate(ctx context.Context, ruleData map[string]any) b
 		return false
 	}
 
+	m.logger.InfoContext(ctx, "migrating alert", "alert_name", ruleData["alert"])
+
 	ruleCondition, ok := ruleData["condition"].(map[string]any)
 	if !ok {
 		m.logger.WarnContext(ctx, "didn't find condition")
@@ -71,7 +73,7 @@ func (m *alertMigrateV5) Migrate(ctx context.Context, ruleData map[string]any) b
 						panelType = pt
 					}
 
-					if m.updateQueryData(ctx, queryMap, "v4", panelType) {
+					if m.updateQueryData(ctx, queryMap, version, panelType) {
 						updated = true
 					}
 					m.logger.InfoContext(ctx, "migrated querymap")

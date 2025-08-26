@@ -56,8 +56,6 @@ describe('API Monitoring Utils', () => {
 			const groupBy = [
 				{
 					dataType: DataTypes.String,
-					isColumn: true,
-					isJSON: false,
 					// eslint-disable-next-line sonarjs/no-duplicate-string
 					key: 'http.method',
 					type: '',
@@ -72,8 +70,6 @@ describe('API Monitoring Utils', () => {
 						id: 'test-filter',
 						key: {
 							dataType: DataTypes.String,
-							isColumn: true,
-							isJSON: false,
 							key: 'test-key',
 							type: '',
 						},
@@ -144,8 +140,6 @@ describe('API Monitoring Utils', () => {
 					[
 						{
 							dataType: DataTypes.String,
-							isColumn: true,
-							isJSON: false,
 							key: 'custom.field',
 							type: '',
 						},
@@ -180,24 +174,18 @@ describe('API Monitoring Utils', () => {
 					id: 'group-by-1',
 					key: 'http.method',
 					dataType: DataTypes.String,
-					isColumn: true,
-					isJSON: false,
 					type: '',
 				},
 				{
 					id: 'group-by-2',
 					key: 'http.status_code',
 					dataType: DataTypes.String,
-					isColumn: true,
-					isJSON: false,
 					type: '',
 				},
 				{
 					id: 'group-by-3',
 					key: 'service.name',
 					dataType: DataTypes.String,
-					isColumn: false,
-					isJSON: false,
 					type: 'tag',
 				},
 			];
@@ -258,8 +246,6 @@ describe('API Monitoring Utils', () => {
 					id: 'group-by-1',
 					key: 'http.method',
 					dataType: DataTypes.String,
-					isColumn: true,
-					isJSON: false,
 					type: '',
 				},
 			];
@@ -281,7 +267,6 @@ describe('API Monitoring Utils', () => {
 			expect(knownField).toBeDefined();
 			if (knownField && knownField.key) {
 				expect(knownField.key.dataType).toBe(DataTypes.String);
-				expect(knownField.key.isColumn).toBe(true);
 			}
 
 			// Should include the unknown field
@@ -430,8 +415,6 @@ describe('API Monitoring Utils', () => {
 						id: 'test-filter',
 						key: {
 							dataType: DataTypes.String,
-							isColumn: true,
-							isJSON: false,
 							key: 'test-key',
 							type: '',
 						},
@@ -543,8 +526,6 @@ describe('API Monitoring Utils', () => {
 						id: 'test-filter',
 						key: {
 							dataType: 'string',
-							isColumn: true,
-							isJSON: false,
 							key: 'test.key',
 							type: '',
 						},
@@ -1401,8 +1382,6 @@ describe('API Monitoring Utils', () => {
 				id: 'custom-filter',
 				key: {
 					dataType: 'string',
-					isColumn: true,
-					isJSON: false,
 					key: 'custom.key',
 					type: '',
 				},

@@ -28,14 +28,12 @@ export const topOperationQueries = ({
 			? WidgetKeys.Signoz_latency_bucket
 			: WidgetKeys.Signoz_latency_bucket_norm,
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		type: '',
 	};
 
 	const errorRateAutoCompleteData: BaseAutocompleteData = {
 		key: WidgetKeys.SignozCallsTotal,
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		type: '',
 	};
 
@@ -44,7 +42,6 @@ export const topOperationQueries = ({
 			? WidgetKeys.SignozLatencyCount
 			: WidgetKeys.SignozLatencyCountNorm,
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		type: '',
 	};
 
@@ -56,7 +53,6 @@ export const topOperationQueries = ({
 					? WidgetKeys.Service_name
 					: WidgetKeys.Service_name_norm,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Resource,
 			},
 			value: [servicename],
@@ -69,7 +65,6 @@ export const topOperationQueries = ({
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
 				key: dotMetricsEnabled
 					? WidgetKeys.Service_name
 					: WidgetKeys.Service_name_norm,
@@ -82,7 +77,6 @@ export const topOperationQueries = ({
 			id: '',
 			key: {
 				dataType: DataTypes.Int64,
-				isColumn: false,
 				key: dotMetricsEnabled ? WidgetKeys.StatusCode : WidgetKeys.StatusCodeNorm,
 				type: MetricsType.Tag,
 			},
@@ -96,7 +90,6 @@ export const topOperationQueries = ({
 	const groupBy: BaseAutocompleteData[] = [
 		{
 			dataType: DataTypes.String,
-			isColumn: false,
 			key: WidgetKeys.Operation,
 			type: MetricsType.Tag,
 		},

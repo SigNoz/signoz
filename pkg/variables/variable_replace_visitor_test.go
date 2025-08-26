@@ -236,6 +236,17 @@ func TestReplaceVariablesInExpression(t *testing.T) {
 			expected: "hasAny(tags, ('error', 'warning', 'info'))",
 		},
 		{
+			name:       "variable in hasToken function",
+			expression: "hasToken(tags, $tags)",
+			variables: map[string]qbtypes.VariableItem{
+				"tags": {
+					Type:  qbtypes.DynamicVariableType,
+					Value: "test",
+				},
+			},
+			expected: "hasToken(tags, 'test')",
+		},
+		{
 			name:       "empty array variable",
 			expression: "service.name IN $services",
 			variables: map[string]qbtypes.VariableItem{

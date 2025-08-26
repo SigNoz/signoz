@@ -300,13 +300,15 @@ func (v *variableReplacementVisitor) VisitComparison(ctx *grammar.ComparisonCont
 	} else if ctx.GE() != nil {
 		parts = append(parts, " >= ")
 	} else if ctx.LIKE() != nil {
+		if ctx.NOT() != nil {
+			parts = append(parts, " NOT")
+		}
 		parts = append(parts, " LIKE ")
 	} else if ctx.ILIKE() != nil {
+		if ctx.NOT() != nil {
+			parts = append(parts, " NOT")
+		}
 		parts = append(parts, " ILIKE ")
-	} else if ctx.NOT_LIKE() != nil {
-		parts = append(parts, " NOT LIKE ")
-	} else if ctx.NOT_ILIKE() != nil {
-		parts = append(parts, " NOT ILIKE ")
 	} else if ctx.REGEXP() != nil {
 		if ctx.NOT() != nil {
 			parts = append(parts, " NOT")
@@ -396,6 +398,8 @@ func (v *variableReplacementVisitor) VisitFunctionCall(ctx *grammar.FunctionCall
 		functionName = "hasAny"
 	} else if ctx.HASALL() != nil {
 		functionName = "hasAll"
+	} else if ctx.HASTOKEN() != nil {
+		functionName = "hasToken"
 	}
 
 	params := v.Visit(ctx.FunctionParamList()).(string)

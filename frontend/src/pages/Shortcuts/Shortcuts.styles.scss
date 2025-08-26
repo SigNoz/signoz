@@ -17,5 +17,12 @@
 			font-size: 22px;
 			line-height: 1.3636363636363635;
 		}
+
+		tbody {
+			.shortcut-key {
+				font-family: 'Space Mono', monospace;
+				text-transform: uppercase;
+			}
+		}
 	}
 }

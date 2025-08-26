@@ -6,7 +6,7 @@ import cx from 'classnames';
 import { CardContainer } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Widgets } from 'types/api/dashboard/getAll';
 
@@ -129,23 +129,22 @@ function MetricPage(): JSX.Element {
 		},
 	];
 
-	const [renderedGraphCount, setRenderedGraphCount] = useState(0);
+	const renderedGraphCountRef = useRef(0);
 	const hasLoggedRef = useRef(false);
 
-	const checkIfDataExists = (isDataAvailable: boolean): void => {
+	const checkIfDataExists = useCallback((isDataAvailable: boolean): void => {
 		if (isDataAvailable) {
-			const newCount = renderedGraphCount + 1;
-			setRenderedGraphCount(newCount);
+			renderedGraphCountRef.current += 1;
 
 			// Only log when first graph has rendered and we haven't logged yet
-			if (newCount === 1 && !hasLoggedRef.current) {
+			if (renderedGraphCountRef.current === 1 && !hasLoggedRef.current) {
 				logEvent('MQ Kafka: Metric view', {
 					graphRendered: true,
 				});
 				hasLoggedRef.current = true;
 			}
 		}
-	};
+	}, []);
 
 	return (
 		<div className="metric-page">

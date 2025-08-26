@@ -2,13 +2,12 @@ package telemetrystorehook
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 )
 
 type provider struct {
@@ -32,11 +31,7 @@ func NewSettings(ctx context.Context, providerSettings factory.ProviderSettings,
 func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent) context.Context {
 	settings := clickhouse.Settings{}
 
-	// Apply default settings
-	logComment := h.getLogComment(ctx)
-	if logComment != "" {
-		settings["log_comment"] = logComment
-	}
+	settings["log_comment"] = ctxtypes.CommentFromContext(ctx).String()
 
 	if ctx.Value("enforce_max_result_rows") != nil {
 		settings["max_result_rows"] = h.settings.MaxResultRows
@@ -91,22 +86,4 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 	return ctx
 }
 
-func (h *provider) AfterQuery(ctx context.Context, event *telemetrystore.QueryEvent) {
-}
-
-func (h *provider) getLogComment(ctx context.Context) string {
-	// Get the key-value pairs from context for log comment
-	kv := ctx.Value(common.LogCommentKey)
-	if kv == nil {
-		return ""
-	}
-
-	logCommentKVs, ok := kv.(map[string]string)
-	if !ok {
-		return ""
-	}
-
-	logComment, _ := json.Marshal(logCommentKVs)
-
-	return string(logComment)
-}
+func (h *provider) AfterQuery(ctx context.Context, event *telemetrystore.QueryEvent) {}

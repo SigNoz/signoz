@@ -2,11 +2,13 @@ import './Attributes.styles.scss';
 
 import { Input, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
+import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { flattenObject } from 'container/LogDetailedView/utils';
 import { useMemo, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import NoData from '../NoData/NoData';
+import AttributeActions from './AttributeActions';
 
 interface IAttributesProps {
 	span: Span;
@@ -53,10 +55,13 @@ function Attributes(props: IAttributesProps): JSX.Element {
 						</Typography.Text>
 						<div className="value-wrapper">
 							<Tooltip title={item.value}>
-								<Typography.Text className="item-value" ellipsis>
-									{item.value}
-								</Typography.Text>
+								<CopyClipboardHOC entityKey={item.value} textToCopy={item.value}>
+									<Typography.Text className="item-value" ellipsis>
+										{item.value}
+									</Typography.Text>
+								</CopyClipboardHOC>
 							</Tooltip>
+							<AttributeActions record={item} />
 						</div>
 					</div>
 				))}

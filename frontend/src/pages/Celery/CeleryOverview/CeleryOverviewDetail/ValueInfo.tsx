@@ -188,8 +188,6 @@ export default function ValueInfo({
 										key: {
 											dataType: DataTypes.bool,
 											id: 'has_error--bool----true',
-											isColumn: true,
-											isJSON: false,
 											key: 'has_error',
 											type: '',
 										},

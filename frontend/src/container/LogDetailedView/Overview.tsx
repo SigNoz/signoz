@@ -29,11 +29,7 @@ interface OverviewProps {
 	isListViewPanel?: boolean;
 	selectedOptions: OptionsQuery;
 	listViewPanelSelectedFields?: IField[] | null;
-	onGroupByAttribute?: (
-		fieldKey: string,
-		isJSON?: boolean,
-		dataType?: DataTypes,
-	) => Promise<void>;
+	onGroupByAttribute?: (fieldKey: string, dataType?: DataTypes) => Promise<void>;
 }
 
 type Props = OverviewProps &

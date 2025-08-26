@@ -34,7 +34,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
-import { useNavigationType } from 'react-router-dom-v5-compat';
+import { useNavigationType, useSearchParams } from 'react-router-dom-v5-compat';
 import { useCopyToClipboard } from 'react-use';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -116,6 +116,8 @@ function DateTimeSelection({
 		initialModalStartTime,
 	);
 	const [modalEndTime, setModalEndTime] = useState<number>(initialModalEndTime);
+
+	const [searchParams] = useSearchParams();
 
 	// Effect to update modal time state when props change
 	useEffect(() => {
@@ -246,7 +248,7 @@ function DateTimeSelection({
 		timeInterval: Time | CustomTimeType = '15m',
 	): string | Time => {
 		if (startTime && endTime && timeInterval === 'custom') {
-			const format = DATE_TIME_FORMATS.UK_DATETIME;
+			const format = DATE_TIME_FORMATS.UK_DATETIME_SECONDS;
 
 			const startString = startTime.format(format);
 			const endString = endTime.format(format);
@@ -410,8 +412,10 @@ function DateTimeSelection({
 			// Remove Hidden Filters from URL query parameters on time change
 			urlQuery.delete(QueryParams.activeLogId);
 
-			const updatedCompositeQuery = getUpdatedCompositeQuery();
-			urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
+			if (searchParams.has(QueryParams.compositeQuery)) {
+				const updatedCompositeQuery = getUpdatedCompositeQuery();
+				urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
+			}
 
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 			safeNavigate(generatedUrl);
@@ -428,6 +432,7 @@ function DateTimeSelection({
 			updateLocalStorageForRoutes,
 			updateTimeInterval,
 			urlQuery,
+			searchParams,
 		],
 	);
 
@@ -488,8 +493,10 @@ function DateTimeSelection({
 				urlQuery.set(QueryParams.endTime, endTime?.toDate().getTime().toString());
 				urlQuery.delete(QueryParams.relativeTime);
 
-				const updatedCompositeQuery = getUpdatedCompositeQuery();
-				urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
+				if (searchParams.has(QueryParams.compositeQuery)) {
+					const updatedCompositeQuery = getUpdatedCompositeQuery();
+					urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
+				}
 
 				const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 				safeNavigate(generatedUrl);
@@ -796,6 +803,17 @@ function DateTimeSelection({
 
 	const { timezone } = useTimezone();
 
+	const getSelectedValue = (): string =>
+		getInputLabel(
+			dayjs(isModalTimeSelection ? modalStartTime : minTime / 1000000).tz(
+				timezone.value,
+			),
+			dayjs(isModalTimeSelection ? modalEndTime : maxTime / 1000000).tz(
+				timezone.value,
+			),
+			isModalTimeSelection ? modalSelectedInterval : selectedTime,
+		);
+
 	return (
 		<div className="date-time-selector">
 			{showResetButton && selectedTime !== defaultRelativeTime && (
@@ -852,15 +870,7 @@ function DateTimeSelection({
 						onCustomTimeStatusUpdate={(isValid: boolean): void => {
 							setIsValidteRelativeTime(isValid);
 						}}
-						selectedValue={getInputLabel(
-							dayjs(isModalTimeSelection ? modalStartTime : minTime / 1000000).tz(
-								timezone.value,
-							),
-							dayjs(isModalTimeSelection ? modalEndTime : maxTime / 1000000).tz(
-								timezone.value,
-							),
-							isModalTimeSelection ? modalSelectedInterval : selectedTime,
-						)}
+						selectedValue={getSelectedValue()}
 						data-testid="dropDown"
 						items={options}
 						newPopover
@@ -868,7 +878,6 @@ function DateTimeSelection({
 						onCustomDateHandler={onCustomDateHandler}
 						customDateTimeVisible={customDateTimeVisible}
 						setCustomDTPickerVisible={setCustomDTPickerVisible}
-						onTimeChange={onTimeChange}
 					/>
 
 					{showAutoRefresh && selectedTime !== 'custom' && (

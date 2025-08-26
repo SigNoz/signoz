@@ -144,8 +144,6 @@ function External(): JSX.Element {
 					key: 'hasError',
 					dataType: DataTypes.bool,
 					type: 'tag',
-					isColumn: true,
-					isJSON: false,
 					id: 'hasError--bool--tag--true',
 				},
 				op: 'in',

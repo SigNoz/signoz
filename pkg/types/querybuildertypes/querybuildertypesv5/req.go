@@ -319,6 +319,23 @@ func (r *QueryRangeRequest) IsAnomalyRequest() (*QueryBuilderQuery[MetricAggrega
 	return &q, hasAnomaly
 }
 
+// We do not support fill gaps for these queries. Maybe support in future?
+func (r *QueryRangeRequest) SkipFillGaps(name string) bool {
+	for _, query := range r.CompositeQuery.Queries {
+		switch spec := query.Spec.(type) {
+		case PromQuery:
+			if spec.Name == name {
+				return true
+			}
+		case ClickHouseQuery:
+			if spec.Name == name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
 func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 	// Define a type alias to avoid infinite recursion

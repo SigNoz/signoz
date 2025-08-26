@@ -272,9 +272,7 @@ function QueryBuilderSearch({
 			(item) => item.key as BaseAutocompleteData,
 		);
 
-		initialTagFilters.items = tags.map((tag, index) => {
-			const isJsonTrue = query.filters?.items[index]?.key?.isJSON;
-
+		initialTagFilters.items = tags.map((tag) => {
 			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
 
 			const filterAttribute = [
@@ -293,8 +291,6 @@ function QueryBuilderSearch({
 					key: tagKey,
 					dataType: fetchValueDataType(computedTagValue, tagOperator),
 					type: '',
-					isColumn: false,
-					isJSON: isJsonTrue,
 				},
 				op: getOperatorValue(tagOperator),
 				value: computedTagValue,

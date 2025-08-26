@@ -7,6 +7,7 @@ export const GlobalShortcuts = {
 	NavigateToExceptions: 'e+shift',
 	NavigateToMessagingQueues: 'm+shift',
 	ToggleSidebar: 'b+shift',
+	NavigateToHome: 'h+shift',
 };
 
 export const GlobalShortcutsName = {
@@ -18,9 +19,11 @@ export const GlobalShortcutsName = {
 	NavigateToExceptions: 'shift+e',
 	NavigateToMessagingQueues: 'shift+m',
 	ToggleSidebar: 'shift+b',
+	NavigateToHome: 'shift+h',
 };
 
 export const GlobalShortcutsDescription = {
+	NavigateToHome: 'Navigate to Home',
 	NavigateToServices: 'Navigate to Services page',
 	NavigateToTraces: 'Navigate to Traces page',
 	NavigateToLogs: 'Navigate to logs page',

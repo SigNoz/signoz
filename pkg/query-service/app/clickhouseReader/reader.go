@@ -3640,28 +3640,8 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 	return seriesList, getPersonalisedError(rows.Err())
 }
 
-func logCommentKVs(ctx context.Context) map[string]string {
-	kv := ctx.Value(common.LogCommentKey)
-	if kv == nil {
-		return nil
-	}
-	logCommentKVs, ok := kv.(map[string]string)
-	if !ok {
-		return nil
-	}
-	return logCommentKVs
-}
-
 // GetTimeSeriesResultV3 runs the query and returns list of time series
 func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error) {
-
-	ctxArgs := map[string]interface{}{"query": query}
-	for k, v := range logCommentKVs(ctx) {
-		ctxArgs[k] = v
-	}
-
-	defer utils.Elapsed("GetTimeSeriesResultV3", ctxArgs)()
-
 	// Hook up query progress reporting if requested.
 	queryId := ctx.Value("queryId")
 	if queryId != nil {
@@ -3725,20 +3705,12 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 
 // GetListResultV3 runs the query and returns list of rows
 func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error) {
-
-	ctxArgs := map[string]interface{}{"query": query}
-	for k, v := range logCommentKVs(ctx) {
-		ctxArgs[k] = v
-	}
-
-	defer utils.Elapsed("GetListResultV3", ctxArgs)()
-
 	rows, err := r.db.Query(ctx, query)
-
 	if err != nil {
 		zap.L().Error("error while reading time series result", zap.Error(err))
 		return nil, errors.New(err.Error())
 	}
+
 	defer rows.Close()
 
 	var (

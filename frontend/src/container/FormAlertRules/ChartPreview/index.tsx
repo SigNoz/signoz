@@ -142,7 +142,6 @@ function ChartPreview({
 				return false;
 		}
 	}, [query]);
-
 	const queryResponse = useGetQueryRange(
 		{
 			query: query || initialQueriesMap.metrics,

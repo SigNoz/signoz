@@ -51,7 +51,6 @@ export const latency = ({
 			? signozLatencyBucketMetrics
 			: WidgetKeys.DurationNano,
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		type: isSpanMetricEnable ? '' : MetricsType.Tag,
 	};
 
@@ -64,7 +63,6 @@ export const latency = ({
 				key: isSpanMetricEnable ? signozMetricsServiceName : WidgetKeys.ServiceName,
 				dataType: DataTypes.String,
 				type: isSpanMetricEnable ? MetricsType.Resource : MetricsType.Tag,
-				isColumn: !isSpanMetricEnable,
 			},
 			op: isSpanMetricEnable ? OPERATORS.IN : OPERATORS['='],
 			value: isSpanMetricEnable ? [servicename] : servicename,
@@ -73,7 +71,6 @@ export const latency = ({
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: !isSpanMetricEnable,
 				key: isSpanMetricEnable ? WidgetKeys.Operation : WidgetKeys.Name,
 				type: MetricsType.Tag,
 			},
@@ -122,21 +119,18 @@ export const apDexTracesQueryBuilderQueries = ({
 }: ApDexProps): QueryBuilderData => {
 	const autoCompleteDataA: BaseAutocompleteData = {
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		key: '',
 		type: '',
 	};
 
 	const autoCompleteDataB: BaseAutocompleteData = {
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		key: '',
 		type: '',
 	};
 
 	const autoCompleteDataC: BaseAutocompleteData = {
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		key: '',
 		type: '',
 	};
@@ -147,7 +141,6 @@ export const apDexTracesQueryBuilderQueries = ({
 			key: {
 				key: WidgetKeys.ServiceName,
 				dataType: DataTypes.String,
-				isColumn: true,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['='],
@@ -158,7 +151,6 @@ export const apDexTracesQueryBuilderQueries = ({
 			key: {
 				key: WidgetKeys.Name,
 				dataType: DataTypes.String,
-				isColumn: true,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
@@ -173,7 +165,6 @@ export const apDexTracesQueryBuilderQueries = ({
 			key: {
 				key: WidgetKeys.HasError,
 				dataType: DataTypes.bool,
-				isColumn: true,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['='],
@@ -184,7 +175,6 @@ export const apDexTracesQueryBuilderQueries = ({
 			key: {
 				key: WidgetKeys.DurationNano,
 				dataType: DataTypes.Float64,
-				isColumn: true,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['<='],
@@ -195,7 +185,6 @@ export const apDexTracesQueryBuilderQueries = ({
 			key: {
 				key: WidgetKeys.ServiceName,
 				dataType: DataTypes.String,
-				isColumn: true,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['='],
@@ -206,7 +195,6 @@ export const apDexTracesQueryBuilderQueries = ({
 			key: {
 				key: WidgetKeys.Name,
 				dataType: DataTypes.String,
-				isColumn: true,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
@@ -220,7 +208,6 @@ export const apDexTracesQueryBuilderQueries = ({
 			key: {
 				key: WidgetKeys.DurationNano,
 				dataType: DataTypes.Float64,
-				isColumn: true,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['<='],
@@ -231,7 +218,6 @@ export const apDexTracesQueryBuilderQueries = ({
 			key: {
 				key: WidgetKeys.HasError,
 				dataType: DataTypes.bool,
-				isColumn: true,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['='],
@@ -242,7 +228,6 @@ export const apDexTracesQueryBuilderQueries = ({
 			key: {
 				key: WidgetKeys.ServiceName,
 				dataType: DataTypes.String,
-				isColumn: true,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['='],
@@ -253,7 +238,6 @@ export const apDexTracesQueryBuilderQueries = ({
 			key: {
 				key: WidgetKeys.Name,
 				dataType: DataTypes.String,
-				isColumn: true,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
@@ -310,7 +294,6 @@ export const apDexMetricsQueryBuilderQueries = ({
 			? WidgetKeys.SignozLatencyCount
 			: WidgetKeys.SignozLatencyCountNorm,
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		type: '',
 	};
 
@@ -319,7 +302,6 @@ export const apDexMetricsQueryBuilderQueries = ({
 			? WidgetKeys.Signoz_latency_bucket
 			: WidgetKeys.Signoz_latency_bucket_norm,
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		type: '',
 	};
 
@@ -328,7 +310,6 @@ export const apDexMetricsQueryBuilderQueries = ({
 			? WidgetKeys.Signoz_latency_bucket
 			: WidgetKeys.Signoz_latency_bucket_norm,
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		type: '',
 	};
 
@@ -340,7 +321,6 @@ export const apDexMetricsQueryBuilderQueries = ({
 					? WidgetKeys.Service_name
 					: WidgetKeys.Service_name_norm,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['='],
@@ -351,7 +331,6 @@ export const apDexMetricsQueryBuilderQueries = ({
 			key: {
 				key: WidgetKeys.Operation,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
@@ -366,7 +345,6 @@ export const apDexMetricsQueryBuilderQueries = ({
 			key: {
 				key: dotMetricsEnabled ? WidgetKeys.StatusCode : WidgetKeys.StatusCodeNorm,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['!='],
@@ -377,7 +355,6 @@ export const apDexMetricsQueryBuilderQueries = ({
 			key: {
 				key: WidgetKeys.Le,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['='],
@@ -390,7 +367,6 @@ export const apDexMetricsQueryBuilderQueries = ({
 					? WidgetKeys.Service_name
 					: WidgetKeys.Service_name_norm,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['='],
@@ -401,7 +377,6 @@ export const apDexMetricsQueryBuilderQueries = ({
 			key: {
 				key: WidgetKeys.Operation,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
@@ -416,7 +391,6 @@ export const apDexMetricsQueryBuilderQueries = ({
 			key: {
 				key: WidgetKeys.Le,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['='],
@@ -427,7 +401,6 @@ export const apDexMetricsQueryBuilderQueries = ({
 			key: {
 				key: dotMetricsEnabled ? WidgetKeys.StatusCode : WidgetKeys.StatusCodeNorm,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['!='],
@@ -440,7 +413,6 @@ export const apDexMetricsQueryBuilderQueries = ({
 					? WidgetKeys.Service_name
 					: WidgetKeys.Service_name_norm,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['='],
@@ -451,7 +423,6 @@ export const apDexMetricsQueryBuilderQueries = ({
 			key: {
 				key: WidgetKeys.Operation,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
@@ -511,7 +482,6 @@ export const operationPerSec = ({
 				? WidgetKeys.SignozLatencyCount
 				: WidgetKeys.SignozLatencyCountNorm,
 			dataType: DataTypes.Float64,
-			isColumn: true,
 			type: '',
 		},
 	];
@@ -525,7 +495,6 @@ export const operationPerSec = ({
 						? WidgetKeys.Service_name
 						: WidgetKeys.Service_name_norm,
 					dataType: DataTypes.String,
-					isColumn: false,
 					type: MetricsType.Resource,
 				},
 				op: OPERATORS.IN,
@@ -536,7 +505,6 @@ export const operationPerSec = ({
 				key: {
 					key: WidgetKeys.Operation,
 					dataType: DataTypes.String,
-					isColumn: false,
 					type: MetricsType.Tag,
 				},
 				op: OPERATORS.IN,
@@ -571,13 +539,11 @@ export const errorPercentage = ({
 	const autocompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozCallsTotal,
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		type: '',
 	};
 	const autocompleteDataB: BaseAutocompleteData = {
 		key: WidgetKeys.SignozCallsTotal,
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		type: '',
 	};
 
@@ -591,7 +557,6 @@ export const errorPercentage = ({
 					? WidgetKeys.Service_name
 					: WidgetKeys.Service_name_norm,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
@@ -602,7 +567,6 @@ export const errorPercentage = ({
 			key: {
 				key: WidgetKeys.Operation,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
@@ -613,7 +577,6 @@ export const errorPercentage = ({
 			key: {
 				key: dotMetricsEnabled ? WidgetKeys.StatusCode : WidgetKeys.StatusCodeNorm,
 				dataType: DataTypes.Int64,
-				isColumn: false,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
@@ -630,7 +593,6 @@ export const errorPercentage = ({
 					? WidgetKeys.Service_name
 					: WidgetKeys.Service_name_norm,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
@@ -641,7 +603,6 @@ export const errorPercentage = ({
 			key: {
 				key: WidgetKeys.Operation,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,

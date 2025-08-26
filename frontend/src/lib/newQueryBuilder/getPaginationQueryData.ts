@@ -72,7 +72,6 @@ export const getPaginationQueryData: SetupPaginationQueryData = ({
 								key: 'id',
 								type: '',
 								dataType: DataTypes.String,
-								isColumn: true,
 							},
 							op:
 								orderByTimestamp.order === ORDERBY_FILTERS.ASC

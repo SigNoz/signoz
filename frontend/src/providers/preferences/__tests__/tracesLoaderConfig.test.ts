@@ -59,8 +59,6 @@ describe('tracesLoaderConfig', () => {
 			{
 				key: 'test-trace-column',
 				type: 'tag',
-				dataType: DataTypes.String,
-				isColumn: true,
 			},
 		];
 
@@ -93,7 +91,6 @@ describe('tracesLoaderConfig', () => {
 				key: 'url-trace-column',
 				type: 'tag',
 				dataType: DataTypes.String,
-				isColumn: true,
 			},
 		];
 

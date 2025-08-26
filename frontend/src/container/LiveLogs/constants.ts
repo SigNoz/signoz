@@ -49,5 +49,4 @@ export const idObject: BaseAutocompleteData = {
 	key: 'id',
 	type: '',
 	dataType: DataTypes.String,
-	isColumn: true,
 };

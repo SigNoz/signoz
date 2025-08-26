@@ -300,12 +300,14 @@ func (d *LogicalContradictionDetector) VisitComparison(ctx *grammar.ComparisonCo
 			operator = qbtypes.FilterOperatorGreaterThanOrEq
 		} else if ctx.LIKE() != nil {
 			operator = qbtypes.FilterOperatorLike
+			if ctx.NOT() != nil {
+				operator = qbtypes.FilterOperatorNotLike
+			}
 		} else if ctx.ILIKE() != nil {
 			operator = qbtypes.FilterOperatorILike
-		} else if ctx.NOT_LIKE() != nil {
-			operator = qbtypes.FilterOperatorNotLike
-		} else if ctx.NOT_ILIKE() != nil {
-			operator = qbtypes.FilterOperatorNotILike
+			if ctx.NOT() != nil {
+				operator = qbtypes.FilterOperatorNotILike
+			}
 		} else if ctx.REGEXP() != nil {
 			operator = qbtypes.FilterOperatorRegexp
 			if ctx.NOT() != nil {

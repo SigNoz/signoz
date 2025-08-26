@@ -98,8 +98,6 @@ const mockAggregateKeysData = {
 				key: 'http.status',
 				dataType: DataTypes.String,
 				type: 'tag',
-				isColumn: false,
-				isJSON: false,
 				id: 'http.status--string--tag--false',
 			},
 		],

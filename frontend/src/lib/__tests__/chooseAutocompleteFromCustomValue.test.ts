@@ -17,14 +17,11 @@ describe('chooseAutocompleteFromCustomValue', () => {
 		{
 			key: 'string_key',
 			dataType: DataTypes.String,
-			isJSON: false,
-			isColumn: false,
 			type: '',
 			id: createIdFromObjectFields(
 				{
 					dataType: DataTypes.String,
 					key: 'string_key',
-					isColumn: false,
 					type: '',
 				},
 				baseAutoCompleteIdKeysOrder,
@@ -33,14 +30,11 @@ describe('chooseAutocompleteFromCustomValue', () => {
 		{
 			key: 'number_key',
 			dataType: DataTypes.Float64,
-			isJSON: false,
-			isColumn: false,
 			type: '',
 			id: createIdFromObjectFields(
 				{
 					dataType: DataTypes.Float64,
 					key: 'number_key',
-					isColumn: false,
 					type: '',
 				},
 				baseAutoCompleteIdKeysOrder,
@@ -49,25 +43,20 @@ describe('chooseAutocompleteFromCustomValue', () => {
 		{
 			key: 'bool_key',
 			dataType: DataTypes.bool,
-			isJSON: false,
-			isColumn: false,
 			type: '',
 			id: createIdFromObjectFields(
-				{ dataType: DataTypes.bool, key: 'bool_key', isColumn: false, type: '' },
+				{ dataType: DataTypes.bool, key: 'bool_key', type: '' },
 				baseAutoCompleteIdKeysOrder,
 			),
 		},
 		{
 			key: 'float_key',
 			dataType: DataTypes.Float64,
-			isJSON: false,
-			isColumn: false,
 			type: '',
 			id: createIdFromObjectFields(
 				{
 					dataType: DataTypes.Float64,
 					key: 'float_key',
-					isColumn: false,
 					type: '',
 				},
 				baseAutoCompleteIdKeysOrder,
@@ -76,14 +65,11 @@ describe('chooseAutocompleteFromCustomValue', () => {
 		{
 			key: 'unknown_key',
 			dataType: DataTypes.EMPTY,
-			isJSON: false,
-			isColumn: false,
 			type: '',
 			id: createIdFromObjectFields(
 				{
 					dataType: DataTypes.EMPTY,
 					key: 'unknown_key',
-					isColumn: false,
 					type: '',
 				},
 				baseAutoCompleteIdKeysOrder,
@@ -92,14 +78,11 @@ describe('chooseAutocompleteFromCustomValue', () => {
 		{
 			key: 'duplicate_key',
 			dataType: DataTypes.String,
-			isJSON: false,
-			isColumn: false,
 			type: '',
 			id: createIdFromObjectFields(
 				{
 					dataType: DataTypes.String,
 					key: 'duplicate_key',
-					isColumn: false,
 					type: '',
 				},
 				baseAutoCompleteIdKeysOrder,
@@ -108,14 +91,11 @@ describe('chooseAutocompleteFromCustomValue', () => {
 		{
 			key: 'duplicate_key',
 			dataType: DataTypes.Float64,
-			isJSON: false,
-			isColumn: false,
 			type: '',
 			id: createIdFromObjectFields(
 				{
 					dataType: DataTypes.Float64,
 					key: 'duplicate_key',
-					isColumn: false,
 					type: '',
 				},
 				baseAutoCompleteIdKeysOrder,
@@ -129,7 +109,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'string_key',
-				false,
 				'string' as DataTypes,
 			);
 
@@ -141,7 +120,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'number_key',
-				false,
 				'number',
 			);
 
@@ -153,7 +131,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'bool_key',
-				false,
 				'bool' as DataTypes,
 			);
 
@@ -165,7 +142,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'float_key',
-				false,
 				'number',
 			);
 
@@ -177,7 +153,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'unknown_key',
-				false,
 				'unknown' as DataTypes,
 			);
 
@@ -185,7 +160,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				...initialAutocompleteData,
 				key: 'unknown_key',
 				dataType: 'unknown',
-				isJSON: false,
 			});
 		});
 
@@ -195,16 +169,12 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				{
 					key: 'json_key',
 					dataType: DataTypes.String,
-					isJSON: true,
-					isColumn: false,
 					type: '',
 					id: createIdFromObjectFields(
 						{
 							dataType: DataTypes.String,
 							key: 'json_key',
-							isColumn: false,
 							type: '',
-							isJSON: true,
 						},
 						baseAutoCompleteIdKeysOrder,
 					),
@@ -213,7 +183,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				jsonSourceList as BaseAutocompleteData[],
 				'json_key',
-				true,
 				'string' as DataTypes,
 			);
 			expect(result).toEqual(jsonSourceList[0]);
@@ -226,7 +195,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'string_key',
-				false,
 				'number',
 			);
 
@@ -234,7 +202,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				...initialAutocompleteData,
 				key: 'string_key',
 				dataType: DataTypes.Float64,
-				isJSON: false,
 			});
 		});
 
@@ -243,7 +210,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'number_key',
-				false,
 				'string' as DataTypes,
 			);
 
@@ -251,7 +217,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				...initialAutocompleteData,
 				key: 'number_key',
 				dataType: DataTypes.String,
-				isJSON: false,
 			});
 		});
 
@@ -260,7 +225,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'bool_key',
-				false,
 				'string' as DataTypes,
 			);
 
@@ -268,7 +232,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				...initialAutocompleteData,
 				key: 'bool_key',
 				dataType: DataTypes.String,
-				isJSON: false,
 			});
 		});
 
@@ -277,7 +240,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'duplicate_key',
-				false,
 				'number' as DataTypes,
 			);
 
@@ -291,7 +253,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'new_string_key',
-				false,
 				'string' as DataTypes,
 			);
 
@@ -299,7 +260,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				...initialAutocompleteData,
 				key: 'new_string_key',
 				dataType: DataTypes.String,
-				isJSON: false,
 			});
 		});
 
@@ -308,7 +268,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'new_number_key',
-				false,
 				'number' as DataTypes,
 			);
 
@@ -316,7 +275,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				...initialAutocompleteData,
 				key: 'new_number_key',
 				dataType: DataTypes.Float64,
-				isJSON: false,
 			});
 		});
 
@@ -325,7 +283,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'new_bool_key',
-				false,
 				'bool' as DataTypes,
 			);
 
@@ -333,7 +290,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				...initialAutocompleteData,
 				key: 'new_bool_key',
 				dataType: DataTypes.bool,
-				isJSON: false,
 			});
 		});
 
@@ -342,7 +298,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'new_unknown_key',
-				false,
 				'unknown' as DataTypes,
 			);
 
@@ -350,7 +305,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				...initialAutocompleteData,
 				key: 'new_unknown_key',
 				dataType: 'unknown',
-				isJSON: false,
 			});
 		});
 
@@ -359,14 +313,12 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'new_undefined_key',
-				false,
 			);
 
 			expect(result).toEqual({
 				...initialAutocompleteData,
 				key: 'new_undefined_key',
 				dataType: DataTypes.EMPTY,
-				isJSON: false,
 			});
 		});
 
@@ -375,14 +327,12 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'json_not_found',
-				true,
 				'string' as DataTypes,
 			);
 			expect(result).toEqual({
 				...initialAutocompleteData,
 				key: 'json_not_found',
 				dataType: DataTypes.String,
-				isJSON: true,
 			});
 		});
 	});
@@ -392,14 +342,11 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			{
 				key: 'tag_key',
 				dataType: DataTypes.String,
-				isJSON: false,
 				type: MetricsType.Tag,
-				isColumn: false,
 				id: createIdFromObjectFields(
 					{
 						dataType: DataTypes.String,
 						key: 'tag_key',
-						isColumn: false,
 						type: MetricsType.Tag,
 					},
 					baseAutoCompleteIdKeysOrder,
@@ -408,14 +355,11 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			{
 				key: 'resource_key',
 				dataType: DataTypes.Float64,
-				isJSON: false,
 				type: MetricsType.Resource,
-				isColumn: false,
 				id: createIdFromObjectFields(
 					{
 						dataType: DataTypes.Float64,
 						key: 'resource_key',
-						isColumn: false,
 						type: MetricsType.Resource,
 					},
 					baseAutoCompleteIdKeysOrder,
@@ -424,14 +368,11 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			{
 				key: 'scope_key',
 				dataType: DataTypes.bool,
-				isJSON: false,
 				type: MetricsType.Scope,
-				isColumn: false,
 				id: createIdFromObjectFields(
 					{
 						dataType: DataTypes.bool,
 						key: 'scope_key',
-						isColumn: false,
 						type: MetricsType.Scope,
 					},
 					baseAutoCompleteIdKeysOrder,
@@ -440,14 +381,11 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			{
 				key: 'tag_key_duplicate',
 				dataType: DataTypes.String,
-				isJSON: false,
 				type: MetricsType.Tag,
-				isColumn: false,
 				id: createIdFromObjectFields(
 					{
 						dataType: DataTypes.String,
 						key: 'tag_key_duplicate',
-						isColumn: false,
 						type: MetricsType.Tag,
 					},
 					baseAutoCompleteIdKeysOrder,
@@ -456,14 +394,11 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			{
 				key: 'tag_key_duplicate',
 				dataType: DataTypes.String,
-				isJSON: false,
 				type: MetricsType.Resource,
-				isColumn: false,
 				id: createIdFromObjectFields(
 					{
 						dataType: DataTypes.String,
 						key: 'tag_key_duplicate',
-						isColumn: false,
 						type: MetricsType.Resource,
 					},
 					baseAutoCompleteIdKeysOrder,
@@ -475,7 +410,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				fieldTypeMockSourceList,
 				'tag_key',
-				false,
 				'string' as DataTypes,
 				MetricsType.Tag,
 			);
@@ -486,7 +420,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				fieldTypeMockSourceList,
 				'resource_key',
-				false,
 				'number' as DataTypes,
 				MetricsType.Resource,
 			);
@@ -497,7 +430,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				fieldTypeMockSourceList,
 				'scope_key',
-				false,
 				'bool' as DataTypes,
 				MetricsType.Scope,
 			);
@@ -508,7 +440,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				fieldTypeMockSourceList,
 				'tag_key_duplicate',
-				false,
 				'string' as DataTypes,
 				MetricsType.Resource,
 			);
@@ -521,14 +452,11 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			{
 				key: 'test_key',
 				dataType: DataTypes.String,
-				isJSON: false,
 				type: MetricsType.Tag,
-				isColumn: false,
 				id: createIdFromObjectFields(
 					{
 						dataType: DataTypes.String,
 						key: 'test_key',
-						isColumn: false,
 						type: MetricsType.Tag,
 					},
 					baseAutoCompleteIdKeysOrder,
@@ -540,7 +468,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				fieldTypeMockSourceList,
 				'test_key',
-				false,
 				'string' as DataTypes,
 				MetricsType.Resource,
 			);
@@ -548,7 +475,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				...initialAutocompleteData,
 				key: 'test_key',
 				dataType: DataTypes.String,
-				isJSON: false,
 				type: MetricsType.Resource,
 			});
 		});
@@ -559,7 +485,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'new_key_with_tag_type',
-				false,
 				'string' as DataTypes,
 				MetricsType.Tag,
 			);
@@ -567,7 +492,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				...initialAutocompleteData,
 				key: 'new_key_with_tag_type',
 				dataType: DataTypes.String,
-				isJSON: false,
 				type: MetricsType.Tag,
 			});
 		});
@@ -576,7 +500,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'new_key_with_resource_type',
-				false,
 				'number' as DataTypes,
 				MetricsType.Resource,
 			);
@@ -584,7 +507,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				...initialAutocompleteData,
 				key: 'new_key_with_resource_type',
 				dataType: DataTypes.Float64,
-				isJSON: false,
 				type: MetricsType.Resource,
 			});
 		});
@@ -593,7 +515,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'new_key_with_scope_type',
-				false,
 				'bool' as DataTypes,
 				MetricsType.Scope,
 			);
@@ -601,7 +522,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				...initialAutocompleteData,
 				key: 'new_key_with_scope_type',
 				dataType: DataTypes.bool,
-				isJSON: false,
 				type: MetricsType.Scope,
 			});
 		});
@@ -610,7 +530,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'new_key_with_undefined_type',
-				false,
 				'string' as DataTypes,
 				undefined,
 			);
@@ -618,7 +537,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				...initialAutocompleteData,
 				key: 'new_key_with_undefined_type',
 				dataType: DataTypes.String,
-				isJSON: false,
 				type: '',
 			});
 		});
@@ -627,7 +545,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			const result = chooseAutocompleteFromCustomValue(
 				mockSourceList,
 				'json_not_found_with_type',
-				true,
 				'string' as DataTypes,
 				MetricsType.Tag,
 			);
@@ -635,7 +552,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				...initialAutocompleteData,
 				key: 'json_not_found_with_type',
 				dataType: DataTypes.String,
-				isJSON: true,
 				type: MetricsType.Tag,
 			});
 		});

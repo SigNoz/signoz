@@ -14,7 +14,7 @@ export type AlertHeaderProps = {
 		state: string;
 		alert: string;
 		id: string;
-		labels: Record<string, string>;
+		labels: Record<string, string | undefined> | undefined;
 		disabled: boolean;
 	};
 };
@@ -23,13 +23,14 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 	const { alertRuleState } = useAlertRule();
 	const [updatedName, setUpdatedName] = useState(alertName);
 
-	const labelsWithoutSeverity = useMemo(
-		() =>
-			Object.fromEntries(
+	const labelsWithoutSeverity = useMemo(() => {
+		if (labels) {
+			return Object.fromEntries(
 				Object.entries(labels).filter(([key]) => key !== 'severity'),
-			),
-		[labels],
-	);
+			);
+		}
+		return {};
+	}, [labels]);
 
 	return (
 		<div className="alert-info">
@@ -43,7 +44,7 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 					</div>
 				</div>
 				<div className="bottom-section">
-					{labels.severity && <AlertSeverity severity={labels.severity} />}
+					{labels?.severity && <AlertSeverity severity={labels.severity} />}
 
 					{/* // TODO(shaheer): Get actual data when we are able to get alert firing from state from API */}
 					{/* <AlertStatus

@@ -61,6 +61,10 @@ func TestServeHttpWithoutPrefix(t *testing.T) {
 			name: "DoesNotExist",
 			path: "/does-not-exist",
 		},
+		{
+			name: "Directory",
+			path: "/assets",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -128,6 +132,11 @@ func TestServeHttpWithPrefix(t *testing.T) {
 		{
 			name:  "FileDoesNotExist",
 			path:  "/web/does-not-exist",
+			found: true,
+		},
+		{
+			name:  "Directory",
+			path:  "/web/assets",
 			found: true,
 		},
 		{

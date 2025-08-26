@@ -49,9 +49,14 @@ import { getListColumns, transformDataWithDate } from './utils';
 interface ListViewProps {
 	isFilterApplied: boolean;
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
+	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
 }
 
-function ListView({ isFilterApplied, setWarning }: ListViewProps): JSX.Element {
+function ListView({
+	isFilterApplied,
+	setWarning,
+	setIsLoadingQueries,
+}: ListViewProps): JSX.Element {
 	const {
 		stagedQuery,
 		panelType: panelTypeFromQueryBuilder,
@@ -161,6 +166,14 @@ function ListView({ isFilterApplied, setWarning }: ListViewProps): JSX.Element {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data?.payload, data?.warning]);
+
+	useEffect(() => {
+		if (isLoading || isFetching) {
+			setIsLoadingQueries(true);
+		} else {
+			setIsLoadingQueries(false);
+		}
+	}, [isLoading, isFetching, setIsLoadingQueries]);
 
 	const dataLength =
 		data?.payload?.data?.newResult?.data?.result[0]?.list?.length;

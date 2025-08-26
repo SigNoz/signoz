@@ -9,6 +9,9 @@ import { SpanDuration } from '../Success';
 // Mock the hooks
 jest.mock('hooks/useSafeNavigate');
 jest.mock('hooks/useUrlQuery');
+jest.mock('@signozhq/badge', () => ({
+	Badge: jest.fn(),
+}));
 
 const mockSpan: Span = {
 	spanId: 'test-span-id',

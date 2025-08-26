@@ -41,7 +41,7 @@ func FromTimeUnit(u Unit) Duration {
 		return Decisecond
 	case "s":
 		return Second
-	case "m":
+	case "m", "min":
 		return Minute
 	case "h":
 		return Hour

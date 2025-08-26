@@ -66,9 +66,46 @@ function getSignalType(dataSource: string): 'traces' | 'logs' | 'metrics' {
 	return 'metrics';
 }
 
-/**
- * Creates base spec for builder queries
- */
+function isDeprecatedField(fieldName: string): boolean {
+	const deprecatedIntrinsicFields = [
+		'traceID',
+		'spanID',
+		'parentSpanID',
+		'spanKind',
+		'durationNano',
+		'statusCode',
+		'statusMessage',
+		'statusCodeString',
+	];
+
+	const deprecatedCalculatedFields = [
+		'responseStatusCode',
+		'externalHttpUrl',
+		'httpUrl',
+		'externalHttpMethod',
+		'httpMethod',
+		'httpHost',
+		'dbName',
+		'dbOperation',
+		'hasError',
+		'isRemote',
+		'serviceName',
+		'httpRoute',
+		'msgSystem',
+		'msgOperation',
+		'dbSystem',
+		'rpcSystem',
+		'rpcService',
+		'rpcMethod',
+		'peerService',
+	];
+
+	return (
+		deprecatedIntrinsicFields.includes(fieldName) ||
+		deprecatedCalculatedFields.includes(fieldName)
+	);
+}
+
 function createBaseSpec(
 	queryData: IBuilderQuery,
 	requestType: RequestType,
@@ -80,7 +117,7 @@ function createBaseSpec(
 	)[])?.filter((c) => ('key' in c ? c?.key : c?.name));
 
 	return {
-		stepInterval: queryData?.stepInterval || undefined,
+		stepInterval: queryData?.stepInterval || null,
 		disabled: queryData.disabled,
 		filter: queryData?.filter?.expression ? queryData.filter : undefined,
 		groupBy:
@@ -88,8 +125,8 @@ function createBaseSpec(
 				? queryData.groupBy.map(
 						(item: any): GroupByKey => ({
 							name: item.key,
-							fieldDataType: item?.dataType,
-							fieldContext: item?.type,
+							fieldDataType: item?.dataType || '',
+							fieldContext: item?.type || '',
 							description: item?.description,
 							unit: item?.unit,
 							signal: item?.signal,
@@ -140,19 +177,33 @@ function createBaseSpec(
 		selectFields: isEmpty(nonEmptySelectColumns)
 			? undefined
 			: nonEmptySelectColumns?.map(
-					(column: any): TelemetryFieldKey => ({
-						name: column.name ?? column.key,
-						fieldDataType:
-							column?.fieldDataType ?? (column?.dataType as FieldDataType),
-						fieldContext: column?.fieldContext ?? (column?.type as FieldContext),
-						signal: column?.signal ?? undefined,
-					}),
+					(column: any): TelemetryFieldKey => {
+						const fieldName = column.name ?? column.key;
+						const isDeprecated = isDeprecatedField(fieldName);
+
+						const fieldObj: TelemetryFieldKey = {
+							name: fieldName,
+							fieldDataType:
+								column?.fieldDataType ?? (column?.dataType as FieldDataType),
+							signal: column?.signal ?? undefined,
+						};
+
+						// Only add fieldContext if the field is NOT deprecated
+						if (!isDeprecated && fieldName !== 'name') {
+							fieldObj.fieldContext =
+								column?.fieldContext ?? (column?.type as FieldContext);
+						}
+
+						return fieldObj;
+					},
 			  ),
 	};
 }
+
 // Utility to parse aggregation expressions with optional alias
 export function parseAggregations(
 	expression: string,
+	availableAlias?: string,
 ): { expression: string; alias?: string }[] {
 	const result: { expression: string; alias?: string }[] = [];
 	// Matches function calls like "count()" or "sum(field)" with optional alias like "as 'alias'"
@@ -161,7 +212,7 @@ export function parseAggregations(
 	let match = regex.exec(expression);
 	while (match !== null) {
 		const expr = match[1];
-		let alias = match[2];
+		let alias = match[2] || availableAlias; // Use provided alias or availableAlias if not matched
 		if (alias) {
 			// Remove quotes if present
 			alias = alias.replace(/^['"]|['"]$/g, '');
@@ -212,9 +263,14 @@ export function createAggregation(
 	}
 
 	if (queryData.aggregations?.length > 0) {
-		return isEmpty(parseAggregations(queryData.aggregations?.[0].expression))
-			? [{ expression: 'count()' }]
-			: parseAggregations(queryData.aggregations?.[0].expression);
+		return queryData.aggregations.flatMap(
+			(agg: { expression: string; alias?: string }) => {
+				const parsedAggregations = parseAggregations(agg.expression, agg?.alias);
+				return isEmpty(parsedAggregations)
+					? [{ expression: 'count()' }]
+					: parsedAggregations;
+			},
+		);
 	}
 
 	return [{ expression: 'count()' }];

@@ -60,8 +60,6 @@ export const getJobMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_cpu_usage--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodCpuUtilizationKey,
 								type: 'Gauge',
 							},
@@ -76,8 +74,6 @@ export const getJobMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_job_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sJobNameKey,
 											type: 'tag',
 										},
@@ -89,8 +85,6 @@ export const getJobMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -149,8 +143,6 @@ export const getJobMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_usage--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemoryUsageKey,
 								type: 'Gauge',
 							},
@@ -165,8 +157,6 @@ export const getJobMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_job_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sJobNameKey,
 											type: 'tag',
 										},
@@ -178,8 +168,6 @@ export const getJobMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -238,8 +226,6 @@ export const getJobMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_network_io--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodNetworkIoKey,
 								type: 'Sum',
 							},
@@ -254,8 +240,6 @@ export const getJobMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_job_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sJobNameKey,
 											type: 'tag',
 										},
@@ -267,8 +251,6 @@ export const getJobMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -283,16 +265,12 @@ export const getJobMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'direction--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'direction',
 									type: 'tag',
 								},
 								{
 									dataType: DataTypes.String,
 									id: 'interface--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'interface',
 									type: 'tag',
 								},
@@ -344,8 +322,6 @@ export const getJobMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_network_errors--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodNetworkErrorsKey,
 								type: 'Sum',
 							},
@@ -360,8 +336,6 @@ export const getJobMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_job_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sJobNameKey,
 											type: 'tag',
 										},
@@ -373,8 +347,6 @@ export const getJobMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -389,16 +361,12 @@ export const getJobMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'direction--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'direction',
 									type: 'tag',
 								},
 								{
 									dataType: DataTypes.String,
 									id: 'interface--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'interface',
 									type: 'tag',
 								},

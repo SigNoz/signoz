@@ -128,7 +128,6 @@ export const secondsToMilliseconds = (seconds: number): number =>
 	seconds * 1_000;
 
 export const epochToTimeString = (epochMs: number): string => {
-	console.log({ epochMs });
 	const date = new Date(epochMs);
 	const options: Intl.DateTimeFormatOptions = {
 		hour: '2-digit',

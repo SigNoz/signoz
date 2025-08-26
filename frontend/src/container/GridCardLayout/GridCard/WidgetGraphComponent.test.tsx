@@ -65,8 +65,6 @@ const mockProps: WidgetGraphComponentProps = {
 						aggregateAttribute: {
 							dataType: DataTypes.String,
 							id: 'span_id--string----true',
-							isColumn: true,
-							isJSON: false,
 							key: 'span_id',
 							type: '',
 						},

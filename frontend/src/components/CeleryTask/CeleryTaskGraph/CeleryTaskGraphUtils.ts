@@ -32,8 +32,6 @@ export const celeryAllStateWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: '------false',
-						isColumn: false,
-						isJSON: false,
 						key: '',
 						type: '',
 					},
@@ -50,8 +48,6 @@ export const celeryAllStateWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'celery.state--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.state',
 							type: 'tag',
 						},
@@ -88,7 +84,6 @@ export const celeryRetryStateWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: '------false',
-						isColumn: false,
 						key: '',
 						type: '',
 					},
@@ -103,8 +98,6 @@ export const celeryRetryStateWidgetData = (
 								key: {
 									dataType: DataTypes.String,
 									id: 'celery.state--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'celery.state',
 									type: 'tag',
 								},
@@ -119,8 +112,6 @@ export const celeryRetryStateWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'celery.hostname--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.hostname',
 							type: 'tag',
 						},
@@ -153,8 +144,6 @@ export const celeryFailedStateWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: '------false',
-						isColumn: false,
-						isJSON: false,
 						key: '',
 						type: '',
 					},
@@ -169,8 +158,6 @@ export const celeryFailedStateWidgetData = (
 								key: {
 									dataType: DataTypes.String,
 									id: 'celery.state--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'celery.state',
 									type: 'tag',
 								},
@@ -185,8 +172,6 @@ export const celeryFailedStateWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'celery.hostname--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.hostname',
 							type: 'tag',
 						},
@@ -219,8 +204,6 @@ export const celerySuccessStateWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: '------false',
-						isColumn: false,
-						isJSON: false,
 						key: '',
 						type: '',
 					},
@@ -235,8 +218,6 @@ export const celerySuccessStateWidgetData = (
 								key: {
 									dataType: DataTypes.String,
 									id: 'celery.state--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'celery.state',
 									type: 'tag',
 								},
@@ -251,8 +232,6 @@ export const celerySuccessStateWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'celery.hostname--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.hostname',
 							type: 'tag',
 						},
@@ -284,7 +263,6 @@ export const celeryTasksByWorkerWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: '------false',
-						isColumn: false,
 						key: '',
 						type: '',
 					},
@@ -301,8 +279,6 @@ export const celeryTasksByWorkerWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'celery.hostname--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.hostname',
 							type: 'tag',
 						},
@@ -338,8 +314,6 @@ export const celeryErrorByWorkerWidgetData = (
 					aggregateAttribute: {
 						dataType: 'string',
 						id: 'span_id--string----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'span_id',
 						type: '',
 					},
@@ -353,8 +327,6 @@ export const celeryErrorByWorkerWidgetData = (
 								key: {
 									dataType: DataTypes.bool,
 									id: 'has_error--bool----true',
-									isColumn: true,
-									isJSON: false,
 									key: 'has_error',
 									type: '',
 								},
@@ -373,8 +345,6 @@ export const celeryErrorByWorkerWidgetData = (
 					groupBy: [
 						{
 							dataType: DataTypes.String,
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.hostname',
 							type: 'tag',
 							id: 'celery.hostname--string--tag--false',
@@ -390,8 +360,6 @@ export const celeryErrorByWorkerWidgetData = (
 					aggregateAttribute: {
 						dataType: 'string',
 						id: 'span_id--string----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'span_id',
 						type: '',
 					},
@@ -411,8 +379,6 @@ export const celeryErrorByWorkerWidgetData = (
 					groupBy: [
 						{
 							dataType: DataTypes.String,
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.hostname',
 							type: 'tag',
 							id: 'celery.hostname--string--tag--false',
@@ -445,8 +411,6 @@ export const celeryLatencyByWorkerWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
 						id: 'duration_nano--float64----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'duration_nano',
 						type: '',
 					},
@@ -463,8 +427,6 @@ export const celeryLatencyByWorkerWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'celery.hostname--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.hostname',
 							type: 'tag',
 						},
@@ -498,8 +460,6 @@ export const celeryActiveTasksWidgetData = (
 						dataType: DataTypes.Float64,
 						id:
 							'flower_worker_number_of_currently_executing_tasks--float64--Gauge--true',
-						isColumn: true,
-						isJSON: false,
 						key: 'flower_worker_number_of_currently_executing_tasks',
 						type: 'Gauge',
 					},
@@ -516,8 +476,6 @@ export const celeryActiveTasksWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'worker--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'worker',
 							type: 'tag',
 						},
@@ -551,8 +509,6 @@ export const celeryTaskLatencyWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
 						id: 'duration_nano--float64----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'duration_nano',
 						type: '',
 					},
@@ -569,8 +525,6 @@ export const celeryTaskLatencyWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'celery.task_name--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.task_name',
 							type: 'tag',
 						},
@@ -606,8 +560,6 @@ export const celerySlowestTasksTableWidgetData = getWidgetQueryBuilder(
 				aggregateAttribute: {
 					dataType: DataTypes.Float64,
 					id: 'duration_nano--float64----true',
-					isColumn: true,
-					isJSON: false,
 					key: 'duration_nano',
 					type: '',
 				},
@@ -624,8 +576,6 @@ export const celerySlowestTasksTableWidgetData = getWidgetQueryBuilder(
 					{
 						dataType: DataTypes.String,
 						id: 'celery.task_name--string--tag--false',
-						isColumn: false,
-						isJSON: false,
 						key: 'celery.task_name',
 						type: 'tag',
 					},
@@ -660,8 +610,6 @@ export const celeryRetryTasksTableWidgetData = getWidgetQueryBuilder(
 				aggregateAttribute: {
 					dataType: DataTypes.Float64,
 					id: 'duration_nano--float64----true',
-					isColumn: true,
-					isJSON: false,
 					key: 'duration_nano',
 					type: '',
 				},
@@ -676,8 +624,6 @@ export const celeryRetryTasksTableWidgetData = getWidgetQueryBuilder(
 							key: {
 								dataType: DataTypes.String,
 								id: 'celery.state--string--tag--false',
-								isColumn: false,
-								isJSON: false,
 								key: 'celery.state',
 								type: 'tag',
 							},
@@ -692,8 +638,6 @@ export const celeryRetryTasksTableWidgetData = getWidgetQueryBuilder(
 					{
 						dataType: DataTypes.String,
 						id: 'celery.task_name--string--tag--false',
-						isColumn: false,
-						isJSON: false,
 						key: 'celery.task_name',
 						type: 'tag',
 					},
@@ -729,8 +673,6 @@ export const celeryFailedTasksTableWidgetData = getWidgetQueryBuilder(
 				aggregateAttribute: {
 					dataType: DataTypes.Float64,
 					id: 'duration_nano--float64----true',
-					isColumn: true,
-					isJSON: false,
 					key: 'duration_nano',
 					type: '',
 				},
@@ -745,8 +687,6 @@ export const celeryFailedTasksTableWidgetData = getWidgetQueryBuilder(
 							key: {
 								dataType: DataTypes.String,
 								id: 'celery.state--string--tag--false',
-								isColumn: false,
-								isJSON: false,
 								key: 'celery.state',
 								type: 'tag',
 							},
@@ -761,8 +701,6 @@ export const celeryFailedTasksTableWidgetData = getWidgetQueryBuilder(
 					{
 						dataType: DataTypes.String,
 						id: 'celery.task_name--string--tag--false',
-						isColumn: false,
-						isJSON: false,
 						key: 'celery.task_name',
 						type: 'tag',
 					},
@@ -796,8 +734,6 @@ export const celerySuccessTasksTableWidgetData = getWidgetQueryBuilder(
 				aggregateAttribute: {
 					dataType: DataTypes.Float64,
 					id: 'duration_nano--float64----true',
-					isColumn: true,
-					isJSON: false,
 					key: 'duration_nano',
 					type: '',
 				},
@@ -812,8 +748,6 @@ export const celerySuccessTasksTableWidgetData = getWidgetQueryBuilder(
 							key: {
 								dataType: DataTypes.String,
 								id: 'celery.state--string--tag--false',
-								isColumn: false,
-								isJSON: false,
 								key: 'celery.state',
 								type: 'tag',
 							},
@@ -828,8 +762,6 @@ export const celerySuccessTasksTableWidgetData = getWidgetQueryBuilder(
 					{
 						dataType: DataTypes.String,
 						id: 'celery.task_name--string--tag--false',
-						isColumn: false,
-						isJSON: false,
 						key: 'celery.task_name',
 						type: 'tag',
 					},
@@ -869,8 +801,6 @@ export const celeryTimeSeriesTablesWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
 						id: 'duration_nano--float64----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'duration_nano',
 						type: '',
 					},
@@ -885,8 +815,6 @@ export const celeryTimeSeriesTablesWidgetData = (
 								key: {
 									dataType: DataTypes.String,
 									id: `${entity}--string--tag--false`,
-									isColumn: false,
-									isJSON: false,
 									key: `${entity}`,
 									type: 'tag',
 								},
@@ -901,8 +829,6 @@ export const celeryTimeSeriesTablesWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'celery.task_name--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.task_name',
 							type: 'tag',
 						},
@@ -933,8 +859,6 @@ export const celeryAllStateCountWidgetData = getWidgetQueryBuilder(
 				aggregateAttribute: {
 					dataType: DataTypes.String,
 					id: 'span_id--string----true',
-					isColumn: true,
-					isJSON: false,
 					key: 'span_id',
 					type: '',
 				},
@@ -972,8 +896,6 @@ export const celerySuccessStateCountWidgetData = getWidgetQueryBuilder(
 				aggregateAttribute: {
 					dataType: DataTypes.String,
 					id: 'span_id--string----true',
-					isColumn: true,
-					isJSON: false,
 					key: 'span_id',
 					type: '',
 				},
@@ -988,8 +910,6 @@ export const celerySuccessStateCountWidgetData = getWidgetQueryBuilder(
 							key: {
 								dataType: DataTypes.String,
 								id: 'celery.state--string--tag--false',
-								isColumn: false,
-								isJSON: false,
 								key: 'celery.state',
 								type: 'tag',
 							},
@@ -1025,8 +945,6 @@ export const celeryFailedStateCountWidgetData = getWidgetQueryBuilder(
 				aggregateAttribute: {
 					dataType: DataTypes.String,
 					id: 'span_id--string----true',
-					isColumn: true,
-					isJSON: false,
 					key: 'span_id',
 					type: '',
 				},
@@ -1041,8 +959,6 @@ export const celeryFailedStateCountWidgetData = getWidgetQueryBuilder(
 							key: {
 								dataType: DataTypes.String,
 								id: 'celery.state--string--tag--false',
-								isColumn: false,
-								isJSON: false,
 								key: 'celery.state',
 								type: 'tag',
 							},
@@ -1078,7 +994,6 @@ export const celeryRetryStateCountWidgetData = getWidgetQueryBuilder(
 				aggregateAttribute: {
 					dataType: DataTypes.String,
 					id: 'span_id--string----true',
-					isColumn: true,
 					key: 'span_id',
 					type: '',
 				},
@@ -1093,8 +1008,6 @@ export const celeryRetryStateCountWidgetData = getWidgetQueryBuilder(
 							key: {
 								dataType: DataTypes.String,
 								id: 'celery.state--string--tag--false',
-								isColumn: false,
-								isJSON: false,
 								key: 'celery.state',
 								type: 'tag',
 							},

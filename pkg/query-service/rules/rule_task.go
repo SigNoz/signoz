@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -352,12 +352,10 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetEvaluationTimestamp(t)
 			}(time.Now())
 
-			kvs := map[string]string{
-				"alertID": rule.ID(),
-				"source":  "alerts",
-				"client":  "query-service",
-			}
-			ctx = context.WithValue(ctx, common.LogCommentKey, kvs)
+			comment := ctxtypes.CommentFromContext(ctx)
+			comment.Set("rule_id", rule.ID())
+			comment.Set("auth_type", "internal")
+			ctx = ctxtypes.NewContextWithComment(ctx, comment)
 
 			_, err := rule.Eval(ctx, ts)
 			if err != nil {

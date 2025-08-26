@@ -613,7 +613,7 @@ function DashboardsList(): JSX.Element {
 			{
 				label: (
 					<a
-						href="https://github.com/SigNoz/dashboards"
+						href="https://signoz.io/docs/dashboards/dashboard-templates/overview/"
 						target="_blank"
 						rel="noopener noreferrer"
 					>

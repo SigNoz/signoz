@@ -72,17 +72,22 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// check whether a file exists or is a directory at the given path
 	fi, err := os.Stat(path)
-	if os.IsNotExist(err) || fi.IsDir() {
-		// file does not exist or path is a directory, serve index.html
-		http.ServeFile(rw, req, filepath.Join(provider.config.Directory, indexFileName))
+	if err != nil {
+		// if the file doesn't exist, serve index.html
+		if os.IsNotExist(err) {
+			http.ServeFile(rw, req, filepath.Join(provider.config.Directory, indexFileName))
+			return
+		}
+
+		// if we got an error (that wasn't that the file doesn't exist) stating the
+		// file, return a 500 internal server error and stop
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if err != nil {
-		// if we got an error (that wasn't that the file doesn't exist) stating the
-		// file, return a 500 internal server error and stop
-		// TODO: Put down a crash html page here
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	if fi.IsDir() {
+		// path is a directory, serve index.html
+		http.ServeFile(rw, req, filepath.Join(provider.config.Directory, indexFileName))
 		return
 	}
 

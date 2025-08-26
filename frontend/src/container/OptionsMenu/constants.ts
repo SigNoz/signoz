@@ -17,8 +17,6 @@ export const defaultLogsSelectedColumns: TelemetryFieldKey[] = [
 		signal: 'logs',
 		fieldContext: 'log',
 		fieldDataType: '',
-		isColumn: true,
-		isJSON: false,
 		isIndexed: false,
 	},
 	{
@@ -26,8 +24,6 @@ export const defaultLogsSelectedColumns: TelemetryFieldKey[] = [
 		signal: 'logs',
 		fieldContext: 'log',
 		fieldDataType: '',
-		isColumn: true,
-		isJSON: false,
 		isIndexed: false,
 	},
 ];

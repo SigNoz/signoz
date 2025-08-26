@@ -24,8 +24,6 @@ export const celeryOverviewRequestRateWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.EMPTY,
 						id: '------false',
-						isColumn: false,
-						isJSON: false,
 						key: '',
 						type: '',
 					},
@@ -66,8 +64,6 @@ export const celeryOverviewErrorRateWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.EMPTY,
 						id: '------false',
-						isColumn: false,
-						isJSON: false,
 						key: '',
 						type: '',
 					},
@@ -83,8 +79,6 @@ export const celeryOverviewErrorRateWidgetData = (
 								key: {
 									dataType: DataTypes.bool,
 									id: 'has_error--bool----true',
-									isColumn: true,
-									isJSON: false,
 									key: 'has_error',
 									type: '',
 								},
@@ -123,8 +117,6 @@ export const celeryOverviewAvgLatencyWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
 						id: 'duration_nano--float64----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'duration_nano',
 						type: '',
 					},
@@ -168,8 +160,6 @@ export const celeryOverviewRequestRateGraphData = (
 					aggregateAttribute: {
 						dataType: DataTypes.EMPTY,
 						id: '------false',
-						isColumn: false,
-						isJSON: false,
 						key: '',
 						type: '',
 					},
@@ -217,8 +207,6 @@ export const celeryOverviewErrorRateGraphData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: 'span_id--string----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'span_id',
 						type: '',
 					},
@@ -233,8 +221,6 @@ export const celeryOverviewErrorRateGraphData = (
 								key: {
 									dataType: DataTypes.bool,
 									id: 'has_error--bool----true',
-									isColumn: true,
-									isJSON: false,
 									key: 'has_error',
 									type: '',
 								},
@@ -261,8 +247,6 @@ export const celeryOverviewErrorRateGraphData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: 'span_id--string----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'span_id',
 						type: '',
 					},
@@ -277,8 +261,6 @@ export const celeryOverviewErrorRateGraphData = (
 								key: {
 									dataType: DataTypes.bool,
 									id: 'has_error--bool----true',
-									isColumn: true,
-									isJSON: false,
 									key: 'has_error',
 									type: '',
 								},
@@ -305,8 +287,6 @@ export const celeryOverviewErrorRateGraphData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: 'span_id--string----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'span_id',
 						type: '',
 					},
@@ -360,8 +340,6 @@ export const celeryOverviewAvgLatencyGraphData = (
 					aggregateAttribute: {
 						dataType: DataTypes.ArrayFloat64,
 						id: 'duration_nano--float64----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'duration_nano',
 						type: '',
 					},
@@ -389,8 +367,6 @@ export const celeryOverviewAvgLatencyGraphData = (
 					aggregateAttribute: {
 						dataType: DataTypes.ArrayFloat64,
 						id: 'duration_nano--float64----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'duration_nano',
 						type: '',
 					},
@@ -418,8 +394,6 @@ export const celeryOverviewAvgLatencyGraphData = (
 					aggregateAttribute: {
 						dataType: DataTypes.ArrayFloat64,
 						id: 'duration_nano--float64----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'duration_nano',
 						type: '',
 					},

@@ -119,8 +119,6 @@ function HostMetricsDetails({
 						key: 'host.name',
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 						id: 'host.name--string--resource--false',
 					},
 					op: '=',

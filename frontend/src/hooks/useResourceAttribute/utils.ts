@@ -104,7 +104,6 @@ export const resourceAttributesToTagFilterItems = (
 			key: {
 				dataType: DataTypes.String,
 				type: MetricsType.Resource,
-				isColumn: false,
 				key: e.Key,
 			},
 		}));
@@ -114,7 +113,6 @@ export const resourceAttributesToTagFilterItems = (
 		id: `${res.id}`,
 		key: {
 			key: res.tagKey,
-			isColumn: false,
 			type: '',
 			dataType: DataTypes.EMPTY,
 		},
@@ -130,7 +128,6 @@ export const resourceAttributesToTracesFilterItems = (
 		id: `${res.id}`,
 		key: {
 			key: convertMetricKeyToTrace(res.tagKey),
-			isColumn: false,
 			type: MetricsType.Resource,
 			dataType: DataTypes.String,
 			id: `${convertMetricKeyToTrace(res.tagKey)}--string--resource--true`,

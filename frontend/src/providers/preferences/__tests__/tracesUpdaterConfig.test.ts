@@ -37,7 +37,6 @@ describe('tracesUpdaterConfig', () => {
 			name: 'test-trace-column',
 			fieldContext: '',
 			fieldDataType: DataTypes.String,
-			isColumn: true,
 		},
 	];
 
@@ -76,7 +75,6 @@ describe('tracesUpdaterConfig', () => {
 					key: 'existing-column',
 					type: 'tag',
 					dataType: DataTypes.String,
-					isColumn: true,
 				},
 			],
 			otherProp: 'value',

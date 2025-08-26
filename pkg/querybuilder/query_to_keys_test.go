@@ -32,12 +32,6 @@ func TestQueryToKeys(t *testing.T) {
 					FieldContext:  telemetrytypes.FieldContextResource,
 					FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 				},
-				{
-					Name:          "resource.service.name",
-					Signal:        telemetrytypes.SignalUnspecified,
-					FieldContext:  telemetrytypes.FieldContextResource,
-					FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-				},
 			},
 		},
 		{

@@ -24,7 +24,6 @@ const getDataTypeForCustomValue = (dataType?: string): DataTypes => {
 export const chooseAutocompleteFromCustomValue = (
 	sourceList: BaseAutocompleteData[],
 	value: string,
-	isJSON?: boolean,
 	dataType?: DataTypes | 'number',
 	fieldType?: MetricsType | undefined,
 ): BaseAutocompleteData => {
@@ -43,7 +42,6 @@ export const chooseAutocompleteFromCustomValue = (
 			key: value,
 			dataType: dataTypeToUse,
 			type: fieldType || '',
-			isJSON,
 		};
 	}
 

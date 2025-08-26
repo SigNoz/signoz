@@ -123,8 +123,6 @@ describe('AllEndPoints', () => {
 						{
 							key: 'http.status_code',
 							dataType: 'string',
-							isColumn: true,
-							isJSON: false,
 							type: '',
 						},
 					],

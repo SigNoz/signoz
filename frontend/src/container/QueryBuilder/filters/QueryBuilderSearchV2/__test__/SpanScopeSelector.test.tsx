@@ -33,7 +33,7 @@ const createSpanScopeFilter = (key: string): TagFilterItem => ({
 
 const createNonScopeFilter = (key: string, value: string): TagFilterItem => ({
 	id: `non-scope-${key}`,
-	key: { key, isColumn: false, type: 'tag' },
+	key: { key, type: 'tag' },
 	op: '=',
 	value,
 });
