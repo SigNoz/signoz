@@ -27,8 +27,7 @@ export const getDashboardVariables = (
 					value?.type === 'DYNAMIC' &&
 					value?.allSelected &&
 					value?.showALLOption &&
-					value?.multiSelect &&
-					!value?.haveCustomValuesSelected
+					value?.multiSelect
 						? '__all__'
 						: value?.selectedValue;
 			}

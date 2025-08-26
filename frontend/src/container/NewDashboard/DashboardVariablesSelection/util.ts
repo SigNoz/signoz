@@ -331,3 +331,38 @@ export const getOptionsForDynamicVariable = (
 		value: option.toString(),
 	}));
 };
+
+export const uniqueOptions = (options: OptionData[]): OptionData[] => {
+	const uniqueOptions: OptionData[] = [];
+	const seenValues = new Set<string>();
+
+	options.forEach((option) => {
+		const value = option.value || '';
+		if (seenValues.has(value)) {
+			return;
+		}
+		seenValues.add(value);
+		uniqueOptions.push(option);
+	});
+
+	return uniqueOptions;
+};
+
+export const uniqueValues = (values: string[] | string): string[] | string => {
+	if (Array.isArray(values)) {
+		const uniqueValues: string[] = [];
+		const seenValues = new Set<string>();
+
+		values.forEach((value) => {
+			if (seenValues.has(value)) {
+				return;
+			}
+			seenValues.add(value);
+			uniqueValues.push(value);
+		});
+
+		return uniqueValues;
+	}
+
+	return values;
+};

@@ -21,7 +21,11 @@ import { popupContainer } from 'utils/selectPopupContainer';
 
 import { ALL_SELECT_VALUE } from '../utils';
 import { SelectItemStyle } from './styles';
-import { areArraysEqual, getOptionsForDynamicVariable } from './util';
+import {
+	areArraysEqual,
+	getOptionsForDynamicVariable,
+	uniqueValues,
+} from './util';
 import { getSelectValue } from './VariableItem';
 
 interface DynamicVariableSelectionProps {
@@ -284,7 +288,8 @@ function DynamicVariableSelection({
 	const handleTempChange = (inputValue: string | string[]): void => {
 		// Store the selection in temporary state while dropdown is open
 		const value = variableData.multiSelect && !inputValue ? [] : inputValue;
-		setTempSelection(value);
+		const sanitizedValue = uniqueValues(value);
+		setTempSelection(sanitizedValue);
 	};
 
 	// Handle dropdown visibility changes

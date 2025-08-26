@@ -1,4 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import { uniqueOptions } from 'container/NewDashboard/DashboardVariablesSelection/util';
+
 import { OptionData } from './types';
 
 export const SPACEKEY = ' ';
@@ -98,8 +100,10 @@ export const prioritizeOrAddOptionForMultiSelect = (
 		label: labels?.[value] ?? value, // Use provided label or default to value
 	}));
 
+	const flatOutSelectedOptions = uniqueOptions([...newOptions, ...foundOptions]);
+
 	// Add found & new options to the top
-	return [...newOptions, ...foundOptions, ...filteredOptions];
+	return [...flatOutSelectedOptions, ...filteredOptions];
 };
 
 /**
