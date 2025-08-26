@@ -287,6 +287,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				var bq *builderQuery[qbtypes.MetricAggregation]
 
 				if spec.Source == telemetrytypes.SourceMeter {
+					event.Source = telemetrytypes.SourceMeter.StringValue()
 					bq = newBuilderQuery(q.telemetryStore, q.meterStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
 				} else {
 					bq = newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, spec, timeRange, req.RequestType, tmplVars)

@@ -82,7 +82,6 @@ export const useActiveLog = (): UseActiveLog => {
 			fieldKey: string,
 			fieldValue: string,
 			operator: string,
-			isJSON?: boolean,
 			dataType?: DataTypes,
 			fieldType?: MetricsType | undefined,
 		): Promise<void> => {
@@ -106,7 +105,6 @@ export const useActiveLog = (): UseActiveLog => {
 				const existAutocompleteKey = chooseAutocompleteFromCustomValue(
 					keysAutocomplete,
 					fieldKey,
-					isJSON,
 					dataType,
 					fieldType,
 				);
@@ -145,11 +143,7 @@ export const useActiveLog = (): UseActiveLog => {
 	);
 
 	const onGroupByAttribute = useCallback(
-		async (
-			fieldKey: string,
-			isJSON?: boolean,
-			dataType?: DataTypes,
-		): Promise<void> => {
+		async (fieldKey: string, dataType?: DataTypes): Promise<void> => {
 			try {
 				const keysAutocompleteResponse = await queryClient.fetchQuery(
 					[QueryBuilderKeys.GET_AGGREGATE_KEYS, fieldKey],
@@ -171,7 +165,6 @@ export const useActiveLog = (): UseActiveLog => {
 				const existAutocompleteKey = chooseAutocompleteFromCustomValue(
 					keysAutocomplete,
 					fieldKey,
-					isJSON,
 					dataType,
 				);
 

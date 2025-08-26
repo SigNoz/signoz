@@ -117,8 +117,6 @@ export function MetricFilters({
 			key: metricName ?? '',
 			dataType: DataTypes.String,
 			type: metricType,
-			isColumn: true,
-			isJSON: false,
 			id: `${metricName}--${DataTypes.String}--${metricType}--true`,
 		}),
 		[metricName, metricType],
