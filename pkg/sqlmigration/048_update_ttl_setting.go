@@ -53,7 +53,7 @@ func (migration *updateTTLSettingForCustomRetention) Up(ctx context.Context, db 
 
 	// Define the new column
 	column := &sqlschema.Column{
-		Name:     sqlschema.ColumnName("resource_conditions"),
+		Name:     sqlschema.ColumnName("resource_condition"),
 		DataType: sqlschema.DataTypeText,
 		Nullable: true,
 	}
