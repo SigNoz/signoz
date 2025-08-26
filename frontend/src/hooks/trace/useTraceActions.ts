@@ -62,7 +62,6 @@ export const useTraceActions = (): UseTraceActionsReturn => {
 			return chooseAutocompleteFromCustomValue(
 				keysAutocomplete,
 				fieldKey,
-				false,
 				DataTypes.String,
 			);
 		},

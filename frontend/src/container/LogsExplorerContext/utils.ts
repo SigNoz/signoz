@@ -15,7 +15,6 @@ export const getFiltersFromResources = (
 				key,
 				dataType: DataTypes.String,
 				type: 'resource',
-				isColumn: false,
 			},
 			op: OPERATORS['='],
 			value: resourceValue,

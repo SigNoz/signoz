@@ -93,10 +93,8 @@ const mockFilters: IBuilderQuery['filters'] = {
 			key: {
 				id: 'pod-name',
 				dataType: DataTypes.String,
-				isColumn: true,
 				key: 'pod-name',
 				type: 'tag',
-				isJSON: false,
 				isIndexed: false,
 			},
 			op: '=',
