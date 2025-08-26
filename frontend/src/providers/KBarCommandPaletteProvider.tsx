@@ -175,7 +175,6 @@ export function KBarCommandPaletteProvider({
 			keywords: 'account settings',
 			section: 'Navigation',
 			perform: (): void => {
-				console.log('my settings');
 				onClickHandler(ROUTES.MY_SETTINGS);
 			},
 		},
