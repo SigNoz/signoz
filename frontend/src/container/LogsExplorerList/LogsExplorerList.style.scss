@@ -43,11 +43,11 @@
 				}
 
 				border-bottom: 1px solid var(--bg-slate-400) !important;
-				background-color: #121317 !important;
+				background-color: var(--bg-ink-400) !important;
 
 				tr {
 					&:hover {
-						background-color: #121317 !important;
+						background-color: var(--bg-ink-400) !important;
 					}
 				}
 			}
@@ -69,6 +69,16 @@
 					}
 
 					border-bottom: 1px solid var(--bg-slate-400) !important;
+				}
+
+				tr:has(.active-log) {
+					background-color: rgba(
+						78,
+						116,
+						248,
+						0.5
+					) !important; // same as bg-robin-500
+					color: var(--text-vanilla-100) !important;
 				}
 			}
 

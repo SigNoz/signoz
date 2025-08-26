@@ -122,7 +122,7 @@ describe('Logs Explorer Tests', () => {
 			</MemoryRouter>,
 		);
 
-		// toggle the chart and check it gets removed from the DOM
+		// by default is hidden, toggle the chart and check it's visibility
 		const histogramToggle = getByRole('switch');
 		fireEvent.click(histogramToggle);
 		expect(queryByText(frequencyChartContent)).toBeInTheDocument();

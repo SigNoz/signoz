@@ -4280,10 +4280,29 @@
     "@signozhq/button" "^0.0.2"
     class-variance-authority "^0.7.0"
     clsx "^2.1.1"
-"@signozhq/table@0.3.3":
-  version "0.3.3"
-  resolved "https://registry.yarnpkg.com/@signozhq/table/-/table-0.3.3.tgz#6f04f5cbe40dcf13c796608afda230f5fac3cd0e"
-  integrity sha512-ox6v9ldAQ1u+fhIWZLF8mZ1LoLGbLKWikcp6ep0B5GKlfqjTMx8iTQ3FY82ctd1dGnjLk/O9o5XKJHibG74oew==
+    lucide-react "^0.445.0"
+    tailwind-merge "^2.5.2"
+    tailwindcss-animate "^1.0.7"
+
+"@signozhq/sonner@0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@signozhq/sonner/-/sonner-0.1.0.tgz#1310cc530c60459608246550eb977a1ae27b6ce4"
+  integrity sha512-P4gc1WdNiX89FZIAhIvR4Bj3sdL7VIpoM80L6otnoeLCZhyFfEOXHGAElvO2z7BuBqJBp1f3pdVDrBQNE6bhyw==
+  dependencies:
+    "@radix-ui/react-icons" "^1.3.0"
+    "@radix-ui/react-slot" "^1.1.0"
+    class-variance-authority "^0.7.0"
+    clsx "^2.1.1"
+    lucide-react "^0.445.0"
+    next-themes "^0.4.6"
+    sonner "^2.0.7"
+    tailwind-merge "^2.5.2"
+    tailwindcss-animate "^1.0.7"
+
+"@signozhq/table@0.3.4":
+  version "0.3.4"
+  resolved "https://registry.yarnpkg.com/@signozhq/table/-/table-0.3.4.tgz#5f243f2977f21fe351207d4ae6db390e400a7933"
+  integrity sha512-5B3kxYrfNEE9TH1orxAl6CNlESnyNVOgEW08ji9u2kz+khUd0euMCnZPrTBbotRW/INoEwRQxyBPj3auaa3jjQ==
   dependencies:
     "@radix-ui/react-icons" "^1.3.0"
     "@radix-ui/react-slot" "^1.1.0"
@@ -13370,6 +13389,11 @@ new-array@^1.0.0:
   resolved "https://registry.npmjs.org/new-array/-/new-array-1.0.0.tgz"
   integrity sha512-K5AyFYbuHZ4e/ti52y7k18q8UHsS78FlRd85w2Fmsd6AkuLipDihPflKC0p3PN5i8II7+uHxo+CtkLiJDfmS5A==
 
+next-themes@^0.4.6:
+  version "0.4.6"
+  resolved "https://registry.yarnpkg.com/next-themes/-/next-themes-0.4.6.tgz#8d7e92d03b8fea6582892a50a928c9b23502e8b6"
+  integrity sha512-pZvgD5L0IEvX5/9GWyHMf3m8BKiVQwsCMHfoFosXtXBMnaS0ZnIJ9ST4b4NqLVKDEm8QBxoNNGNaBv2JNF6XNA==
+
 ngraph.events@^1.0.0, ngraph.events@^1.2.1:
   version "1.2.2"
   resolved "https://registry.npmjs.org/ngraph.events/-/ngraph.events-1.2.2.tgz"
@@ -16473,6 +16497,11 @@ sockjs@^0.3.24:
     faye-websocket "^0.11.3"
     uuid "^8.3.2"
     websocket-driver "^0.7.4"
+
+sonner@^2.0.7:
+  version "2.0.7"
+  resolved "https://registry.yarnpkg.com/sonner/-/sonner-2.0.7.tgz#810c1487a67ec3370126e0f400dfb9edddc3e4f6"
+  integrity sha512-W6ZN4p58k8aDKA4XPcx2hpIQXBRAgyiWVkYhT7CvK6D3iAu7xjvVyhQHg2/iaKJZ1XVJ4r7XuwGL+WGEK37i9w==
 
 sort-asc@^0.1.0:
   version "0.1.0"

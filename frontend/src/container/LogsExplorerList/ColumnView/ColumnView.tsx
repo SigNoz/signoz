@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { ColumnDef, DataTable, Row } from '@signozhq/table';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
@@ -5,12 +6,14 @@ import LogStateIndicator from 'components/Logs/LogStateIndicator/LogStateIndicat
 import { getLogIndicatorTypeForTable } from 'components/Logs/LogStateIndicator/utils';
 import { useTableView } from 'components/Logs/TableView/useTableView';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { QueryParams } from 'constants/query';
 import { FontSize } from 'container/OptionsMenu/types';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
+import useUrlQueryData from 'hooks/useUrlQueryData';
 import { isEmpty, isEqual } from 'lodash-es';
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { ILog } from 'types/api/logs/log';
 
 interface ColumnViewProps {
@@ -19,6 +22,7 @@ interface ColumnViewProps {
 	selectedFields: any[];
 	isLoading: boolean;
 	isFetching: boolean;
+
 	isFrequencyChartVisible: boolean;
 	options: {
 		maxLinesPerRow: number;
@@ -42,6 +46,29 @@ function ColumnView({
 		onAddToQuery: handleAddToQuery,
 		onGroupByAttribute: handleGroupByAttribute,
 	} = useActiveLog();
+
+	const { queryData: activeLogId } = useUrlQueryData<string | null>(
+		QueryParams.activeLogId,
+		null,
+	);
+
+	const scrollToIndexRef = useRef<
+		| ((
+				rowIndex: number,
+				options?: { align?: 'start' | 'center' | 'end' },
+		  ) => void)
+		| undefined
+	>();
+
+	useEffect(() => {
+		if (activeLogId) {
+			const log = logs.find(({ id }) => id === activeLogId);
+
+			if (log) {
+				handleSetActiveLog(log);
+			}
+		}
+	}, [activeLogId, logs, handleSetActiveLog]);
 
 	const tableViewProps = {
 		logs,
@@ -67,6 +94,23 @@ function ColumnView({
 		[columns, draggedColumns],
 	);
 
+	const scrollToLog = useCallback(
+		(logId: string): void => {
+			const logIndex = logs.findIndex((log) => log.id === logId);
+
+			if (logIndex !== -1 && scrollToIndexRef.current) {
+				scrollToIndexRef.current(logIndex, { align: 'center' });
+			}
+		},
+		[logs],
+	);
+
+	useEffect(() => {
+		if (activeLogId) {
+			scrollToLog(activeLogId);
+		}
+	}, [activeLogId]);
+
 	const args = {
 		columns,
 		tableId: 'virtualized-infinite-reorder-resize',
@@ -89,7 +133,8 @@ function ColumnView({
 		rowHeight: 56,
 		enableInfiniteScroll: true,
 		enableScrollRestoration: false,
-		fixedHeight: isFrequencyChartVisible ? 520 : 720,
+		fixedHeight: isFrequencyChartVisible ? 560 : 760,
+		enableDynamicRowHeight: false,
 	};
 
 	const selectedColumns = useMemo(
@@ -120,10 +165,18 @@ function ColumnView({
 						return <LogStateIndicator type={type} fontSize={fontSize} />;
 					}
 
-					return <div className="table-cell-content">{getValue()}</div>;
+					return (
+						<div
+							className={`table-cell-content ${
+								row.original.id === activeLog?.id ? 'active-log' : ''
+							}`}
+						>
+							{getValue()}
+						</div>
+					);
 				},
 			})),
-		[tableColumns, options.fontSize],
+		[tableColumns, options.fontSize, activeLog?.id],
 	);
 
 	const handleColumnOrderChange = (newColumns: ColumnDef<any>[]): void => {
@@ -167,6 +220,7 @@ function ColumnView({
 				loadingMore={isLoading || isFetching}
 				onColumnOrderChange={handleColumnOrderChange}
 				onRowClick={handleRowClick}
+				scrollToIndexRef={scrollToIndexRef}
 			/>
 
 			{activeLog && (
