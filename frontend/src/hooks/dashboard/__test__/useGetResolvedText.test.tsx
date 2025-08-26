@@ -181,4 +181,32 @@ describe('useGetResolvedText', () => {
 		expect(result.current.fullText).toBe(text);
 		expect(result.current.truncatedText).toBe(text);
 	});
+
+	it('should handle complex variable names with improved patterns', () => {
+		const text = 'API: $api.v1.endpoint Config: $config.database.host';
+		const variables = {
+			'api.v1.endpoint': '/users',
+			'config.database.host': 'localhost:5432',
+		};
+
+		const { result } = renderHookWithProps({ text, variables });
+
+		expect(result.current.fullText).toBe('API: /users Config: localhost:5432');
+		expect(result.current.truncatedText).toBe(
+			'API: /users Config: localhost:5432',
+		);
+	});
+
+	it('should stop at punctuation boundaries correctly', () => {
+		const text = 'Status: $service.name, Error: $error.type;';
+		const variables = {
+			'service.name': 'web-api',
+			'error.type': 'timeout',
+		};
+
+		const { result } = renderHookWithProps({ text, variables });
+
+		expect(result.current.fullText).toBe('Status: web-api, Error: timeout;');
+		expect(result.current.truncatedText).toBe('Status: web-api, Error: timeout;');
+	});
 });
