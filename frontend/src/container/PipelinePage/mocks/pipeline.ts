@@ -18,8 +18,6 @@ export function mockPipelineFilter(
 					key,
 					dataType: DataTypes.String,
 					type: '',
-					isColumn: false,
-					isJSON: false,
 				},
 				op,
 				value,

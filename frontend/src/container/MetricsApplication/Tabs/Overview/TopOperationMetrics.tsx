@@ -5,7 +5,7 @@ import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsAppli
 import { topOperationQueries } from 'container/MetricsApplication/MetricsPageQueries/TopOperationQueries';
 import { QueryTable } from 'container/QueryTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useNotifications } from 'hooks/useNotifications';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
@@ -65,7 +65,7 @@ function TopOperationMetrics(): JSX.Element {
 		[servicename, dotMetricsEnabled],
 	);
 
-	const updatedQuery = useStepInterval(keyOperationWidget.query);
+	const updatedQuery = updateStepInterval(keyOperationWidget.query);
 
 	const isEmptyWidget = keyOperationWidget.id === PANEL_TYPES.EMPTY_WIDGET;
 
