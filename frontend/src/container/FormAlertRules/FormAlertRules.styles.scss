@@ -86,6 +86,13 @@
 	}
 }
 
+.y-axis-unit-selector-container {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 8px;
+}
+
 .detection-method-container {
 	margin: 24px 0;
 

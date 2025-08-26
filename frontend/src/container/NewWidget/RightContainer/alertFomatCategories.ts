@@ -1,4 +1,5 @@
 import { DefaultOptionType } from 'antd/es/select';
+import { Y_AXIS_CATEGORIES } from 'components/YAxisUnitSelector/constants';
 
 import {
 	BooleanFormats,
@@ -107,18 +108,53 @@ export const alertsCategory = [
 
 export const getCategorySelectOptionByName = (
 	name?: CategoryNames | string,
-): DefaultOptionType[] =>
-	alertsCategory
+): DefaultOptionType[] => {
+	const newAlertsCategory = Y_AXIS_CATEGORIES.find(
+		(category) => category.name === name,
+	);
+	if (newAlertsCategory) {
+		return newAlertsCategory.units.map((unit) => ({
+			label: unit.name,
+			value: unit.id,
+		}));
+	}
+
+	const oldAlertsCategory = alertsCategory
 		.find((category) => category.name === name)
 		?.formats.map((format) => ({
 			label: format.name,
 			value: format.id,
-		})) || [];
+		}));
+	if (oldAlertsCategory) {
+		return oldAlertsCategory;
+	}
 
-export const getCategoryByOptionId = (id: string): Category | undefined =>
-	alertsCategory.find((category) =>
+	return [];
+};
+
+export const getCategoryByOptionId = (id: string): Category | undefined => {
+	const newAlertsCategory = Y_AXIS_CATEGORIES.find((category) =>
+		category.units.some((unit) => unit.id === id),
+	);
+	if (newAlertsCategory) {
+		return {
+			name: newAlertsCategory.name,
+			formats: newAlertsCategory.units.map((unit) => ({
+				name: unit.name,
+				id: unit.id,
+			})),
+		};
+	}
+
+	const oldAlertsCategory = alertsCategory.find((category) =>
 		category.formats.some((format) => format.id === id),
 	);
+	if (oldAlertsCategory) {
+		return oldAlertsCategory;
+	}
+
+	return undefined;
+};
 
 export const isCategoryName = (name: string): name is CategoryNames =>
 	alertsCategory.some((category) => category.name === name);

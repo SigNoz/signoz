@@ -6,6 +6,7 @@ import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
 import logEvent from 'api/common/logEvent';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
+import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
@@ -14,7 +15,6 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
-import { BuilderUnitsFilter } from 'container/QueryBuilder/filters';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useNotifications } from 'hooks/useNotifications';
@@ -57,7 +57,7 @@ import {
 	StepHeading,
 } from './styles';
 import { usePrefillAlertConditions } from './usePrefillAlertConditions';
-import { getSelectedQueryOptions } from './utils';
+import { getSelectedQueryOptions, useGetYAxisUnitFromQuery } from './utils';
 
 export enum AlertDetectionTypes {
 	THRESHOLD_ALERT = 'threshold_rule',
@@ -719,6 +719,8 @@ function FormAlertRules({
 
 	const isAlertNameMissing = !formInstance.getFieldValue('alert');
 
+	const yAxisUnitFromQuery = useGetYAxisUnitFromQuery(stagedQuery);
+
 	const onUnitChangeHandler = (value: string): void => {
 		setYAxisUnit(value);
 		// reset target unit
@@ -730,6 +732,10 @@ function FormAlertRules({
 			},
 		}));
 	};
+
+	useEffect(() => {
+		setYAxisUnit(yAxisUnitFromQuery || '');
+	}, [yAxisUnitFromQuery]);
 
 	const isChannelConfigurationValid =
 		alertDef?.broadcastToAll ||
@@ -841,10 +847,10 @@ function FormAlertRules({
 					</div>
 
 					<StepContainer>
-						<BuilderUnitsFilter
-							onChange={onUnitChangeHandler}
-							yAxisUnit={yAxisUnit}
-						/>
+						<div className="y-axis-unit-selector-container">
+							<Typography.Text>Y-Axis Unit</Typography.Text>
+							<YAxisUnitSelector value={yAxisUnit} onChange={onUnitChangeHandler} />
+						</div>
 					</StepContainer>
 
 					<div className="steps-container">
@@ -884,6 +890,7 @@ function FormAlertRules({
 							alertDef={alertDef}
 							setAlertDef={setAlertDef}
 							queryOptions={queryOptions}
+							yAxisUnit={yAxisUnit}
 						/>
 
 						{renderBasicInfo()}

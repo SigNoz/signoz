@@ -740,6 +740,11 @@ export const getUPlotChartOptions = ({
 					isDarkMode,
 					colorMapping,
 			  }),
-		axes: getAxes({ isDarkMode, yAxisUnit, panelType, isLogScale }),
+		axes: getAxes({
+			isDarkMode,
+			yAxisUnit,
+			panelType,
+			isLogScale,
+		}),
 	};
 };
