@@ -305,13 +305,11 @@ export function SpanDuration({
 					})}
 				</div>
 				{hasActionButtons && <SpanLineActionButtons span={span} />}
-				<Tooltip title={`${toFixed(time, 2)} ${timeUnitName}`}>
-					<Typography.Text
-						className="span-line-text"
-						ellipsis
-						style={textStyle}
-					>{`${toFixed(time, 2)} ${timeUnitName}`}</Typography.Text>
-				</Tooltip>
+				<Typography.Text
+					className="span-line-text"
+					ellipsis
+					style={textStyle}
+				>{`${toFixed(time, 2)} ${timeUnitName}`}</Typography.Text>
 			</div>
 		</SpanHoverCard>
 	);
