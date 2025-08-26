@@ -28,7 +28,7 @@ func Test_getClickhouseKey(t *testing.T) {
 			args: args{
 				key: v3.AttributeKey{Key: "servicename", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource},
 			},
-			want: "'resource.servicename'",
+			want: "resources_string['servicename']",
 		},
 		{
 			name: "selected field",
@@ -42,7 +42,7 @@ func Test_getClickhouseKey(t *testing.T) {
 			args: args{
 				key: v3.AttributeKey{Key: "servicename", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource, IsColumn: true},
 			},
-			want: "'resource.servicename'",
+			want: "`resource_string_servicename`",
 		},
 		{
 			name: "top level key",
@@ -95,7 +95,7 @@ func Test_getSelectLabels(t *testing.T) {
 					{Key: "service_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource, IsColumn: true},
 				},
 			},
-			want: " attributes_string['user_name'] as `user_name`, 'resource.service_name' as `service_name`,",
+			want: " attributes_string['user_name'] as `user_name`, `resource_string_service_name` as `service_name`,",
 		},
 	}
 	for _, tt := range tests {
@@ -167,7 +167,6 @@ func Test_getExistsNexistsFilter(t *testing.T) {
 	}
 }
 
-// this will not build filters for resource attributes
 func Test_buildAttributeFilter(t *testing.T) {
 	type args struct {
 		item v3.FilterItem
@@ -183,15 +182,15 @@ func Test_buildAttributeFilter(t *testing.T) {
 			args: args{
 				item: v3.FilterItem{
 					Key: v3.AttributeKey{
-						Key:      "name",
+						Key:      "service.name",
 						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeTag,
+						Type:     v3.AttributeKeyTypeResource,
 					},
 					Operator: v3.FilterOperatorEqual,
 					Value:    "test",
 				},
 			},
-			want:    "attributes_string['name'] = 'test'",
+			want:    "resources_string['service.name'] = 'test'",
 			wantErr: false,
 		},
 		{
@@ -213,14 +212,14 @@ func Test_buildAttributeFilter(t *testing.T) {
 			args: args{
 				item: v3.FilterItem{
 					Key: v3.AttributeKey{
-						Key:      "name",
+						Key:      "service.name",
 						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeTag,
+						Type:     v3.AttributeKeyTypeResource,
 					},
 					Operator: v3.FilterOperatorExists,
 				},
 			},
-			want:    "mapContains(attributes_string, 'name')",
+			want:    "mapContains(resources_string, 'service.name')",
 			wantErr: false,
 		},
 		{
@@ -228,30 +227,30 @@ func Test_buildAttributeFilter(t *testing.T) {
 			args: args{
 				item: v3.FilterItem{
 					Key: v3.AttributeKey{
-						Key:      "name",
+						Key:      "service.name",
 						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeTag,
+						Type:     v3.AttributeKeyTypeResource,
 					},
 					Operator: v3.FilterOperatorRegex,
 					Value:    "^test",
 				},
 			},
-			want: "match(attributes_string['name'], '^test')",
+			want: "match(resources_string['service.name'], '^test')",
 		},
 		{
 			name: "build attribute filter contains",
 			args: args{
 				item: v3.FilterItem{
 					Key: v3.AttributeKey{
-						Key:      "name",
+						Key:      "service.name",
 						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeTag,
+						Type:     v3.AttributeKeyTypeResource,
 					},
 					Operator: v3.FilterOperatorContains,
 					Value:    "test",
 				},
 			},
-			want: "attributes_string['name'] ILIKE '%test%'",
+			want: "resources_string['service.name'] ILIKE '%test%'",
 		},
 		{
 			name: "build attribute filter contains- body",
@@ -273,15 +272,15 @@ func Test_buildAttributeFilter(t *testing.T) {
 			args: args{
 				item: v3.FilterItem{
 					Key: v3.AttributeKey{
-						Key:      "name",
+						Key:      "service.name",
 						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeTag,
+						Type:     v3.AttributeKeyTypeResource,
 					},
 					Operator: v3.FilterOperatorLike,
 					Value:    "test%",
 				},
 			},
-			want: "attributes_string['name'] ILIKE 'test%'",
+			want: "resources_string['service.name'] ILIKE 'test%'",
 		},
 		{
 			name: "build attribute filter like-body",
@@ -805,41 +804,6 @@ func Test_buildLogsQuery(t *testing.T) {
 				"group by `user_name` order by `user_name` desc",
 		},
 		{
-			name: "build logs query with resource attribute aggregate",
-			args: args{
-				panelType: v3.PanelTypeTable,
-				start:     1680066360726210000,
-				end:       1680066458000000000,
-				step:      1000,
-				mq: &v3.BuilderQuery{
-					AggregateOperator: v3.AggregateOperatorCountDistinct,
-					AggregateAttribute: v3.AttributeKey{
-						Key:      "host",
-						Type:     v3.AttributeKeyTypeResource,
-						DataType: v3.AttributeKeyDataTypeString,
-					},
-					Filters: &v3.FilterSet{},
-					GroupBy: []v3.AttributeKey{
-						{
-							Key:      "user_name",
-							DataType: v3.AttributeKeyDataTypeString,
-							Type:     v3.AttributeKeyTypeTag,
-						},
-					},
-					OrderBy: []v3.OrderBy{
-						{
-							ColumnName: "user_name",
-							Order:      "desc",
-						},
-					},
-				},
-			},
-			want: "SELECT attributes_string['user_name'] as `user_name`, toFloat64(count(distinct('resource.host'))) as value from signoz_logs.distributed_logs_v2 " +
-				"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-				"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (seen_at_ts_bucket_start >= 1680064560) " +
-				"AND (seen_at_ts_bucket_start <= 1680066458) AND (simpleJSONHas(labels, 'host') AND labels like '%host%'))) group by `user_name` order by `user_name` desc",
-		},
-		{
 			name: "build logs query noop",
 			args: args{
 				panelType: v3.PanelTypeList,
@@ -924,7 +888,7 @@ func Test_buildLogsQuery(t *testing.T) {
 					},
 				},
 			},
-			want: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, 'resource.host' as `host`, avg(attributes_number['duration']) as value " +
+			want: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, resources_string['host'] as `host`, avg(attributes_number['duration']) as value " +
 				"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
 				"AND attributes_number['duration'] > 1000.000000 AND mapContains(attributes_number, 'duration') AND mapContains(attributes_number, 'duration') AND " +
 				"(resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) " +
@@ -995,7 +959,7 @@ func TestPrepareLogsQuery(t *testing.T) {
 					},
 				},
 			},
-			want: "SELECT attributes_string['name'] as `name`, 'resource.host' as `host`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where " +
+			want: "SELECT attributes_string['name'] as `name`, resources_string['host'] as `host`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where " +
 				"(timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND lower(body) like lower('%requestor_list%') " +
 				"AND lower(body) like lower('%index_service%') AND has(JSONExtract(JSON_QUERY(body, '$.\"requestor_list\"[*]'), 'Array(String)'), 'index_service') AND mapContains(attributes_string, 'name') AND " +
 				"(resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND " +
