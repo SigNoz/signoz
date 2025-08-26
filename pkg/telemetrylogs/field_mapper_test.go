@@ -2,6 +2,7 @@ package telemetrylogs
 
 import (
 	"context"
+	"strconv"
 	"testing"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
@@ -26,7 +27,7 @@ func TestGetColumn(t *testing.T) {
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			expectedCol:   logsV2Columns["resource"],
+			expectedCol:   logsV2Columns["resources_string"],
 			expectedError: nil,
 		},
 		{
@@ -184,10 +185,11 @@ func TestGetFieldKeyName(t *testing.T) {
 	ctx := context.Background()
 
 	testCases := []struct {
-		name           string
-		key            telemetrytypes.TelemetryFieldKey
-		expectedResult string
-		expectedError  error
+		name                string
+		key                 telemetrytypes.TelemetryFieldKey
+		resourceJSONEnabled bool
+		expectedResult      string
+		expectedError       error
 	}{
 		{
 			name: "Simple column type - timestamp",
@@ -234,7 +236,17 @@ func TestGetFieldKeyName(t *testing.T) {
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			expectedResult: "'resource.service.name'",
+			expectedResult:      "'resource.service.name'",
+			resourceJSONEnabled: true,
+			expectedError:       nil,
+		},
+		{
+			name: "Map column type - resource attribute - legacy",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "service.name",
+				FieldContext: telemetrytypes.FieldContextResource,
+			},
+			expectedResult: "resources_string['service.name']",
 			expectedError:  nil,
 		},
 		{
@@ -248,10 +260,10 @@ func TestGetFieldKeyName(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("RESOURCE_JSON_COLUMN_ENABLED", strconv.FormatBool(tc.resourceJSONEnabled))
+			fm := NewFieldMapper()
 			result, err := fm.FieldFor(ctx, &tc.key)
 
 			if tc.expectedError != nil {

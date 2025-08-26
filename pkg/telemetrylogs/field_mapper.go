@@ -3,6 +3,8 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
@@ -54,16 +56,29 @@ var (
 	}
 )
 
-type fieldMapper struct{}
+type fieldMapper struct {
+	resourceJSONColumnEnabled bool
+}
 
 func NewFieldMapper() qbtypes.FieldMapper {
-	return &fieldMapper{}
+	resourceJSONColumnEnabled := false
+	resourceJSONColumnEnabledStr := os.Getenv("RESOURCE_JSON_COLUMN_ENABLED")
+	if val, err := strconv.ParseBool(resourceJSONColumnEnabledStr); err == nil {
+		resourceJSONColumnEnabled = val
+	}
+
+	return &fieldMapper{
+		resourceJSONColumnEnabled: resourceJSONColumnEnabled,
+	}
 }
 
 func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		return logsV2Columns["resource"], nil
+		if m.resourceJSONColumnEnabled {
+			return logsV2Columns["resource"], nil
+		}
+		return logsV2Columns["resources_string"], nil
 	case telemetrytypes.FieldContextScope:
 		switch key.Name {
 		case "name", "scope.name", "scope_name":

@@ -324,6 +324,7 @@ func TestStatementBuilder(t *testing.T) {
 		},
 	}
 
+	t.Setenv("RESOURCE_JSON_COLUMN_ENABLED", "true")
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
@@ -492,6 +493,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		},
 	}
 
+	t.Setenv("RESOURCE_JSON_COLUMN_ENABLED", "true")
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
@@ -554,6 +556,7 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 		},
 	}
 
+	t.Setenv("RESOURCE_JSON_COLUMN_ENABLED", "true")
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
