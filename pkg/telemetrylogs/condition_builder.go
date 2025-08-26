@@ -165,7 +165,7 @@ func (c *conditionBuilder) conditionFor(
 
 		var value any
 		switch column.Type {
-		case schema.ColumnTypeJSON:
+		case schema.JSONColumnType{}:
 			value = "NULL"
 			if operator == qbtypes.FilterOperatorExists {
 				return sb.NE(tblFieldName, value), nil

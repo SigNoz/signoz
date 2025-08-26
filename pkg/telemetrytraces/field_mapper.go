@@ -50,7 +50,7 @@ var (
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
 		}},
-		"resource": {Name: "resource", Type: schema.ColumnTypeJSON},
+		"resource": {Name: "resource", Type: schema.JSONColumnType{}},
 
 		"events": {Name: "events", Type: schema.ArrayColumnType{
 			ElementType: schema.ColumnTypeString,
@@ -236,7 +236,7 @@ func (m *defaultFieldMapper) FieldFor(
 	}
 
 	switch column.Type {
-	case schema.ColumnTypeJSON:
+	case schema.JSONColumnType{}:
 		return fmt.Sprintf("'resource.%s'", key.Name), nil
 	case schema.ColumnTypeString,
 		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
