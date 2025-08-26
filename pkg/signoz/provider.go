@@ -20,6 +20,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/nfgrouping/nfgroupingtest"
 	"github.com/SigNoz/signoz/pkg/nfgrouping/rulegrouping"
 	"github.com/SigNoz/signoz/pkg/nfgrouping/standardgrouping"
+	"github.com/SigNoz/signoz/pkg/nfrouting"
+	"github.com/SigNoz/signoz/pkg/nfrouting/expressionroutes"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -41,6 +43,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystorehook"
+	routeTypes "github.com/SigNoz/signoz/pkg/types/routingtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/SigNoz/signoz/pkg/web/noopweb"
@@ -135,6 +138,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddFactorIndexesFactory(sqlstore, sqlschema),
 		sqlmigration.NewQueryBuilderV5MigrationFactory(sqlstore, telemetryStore),
 		sqlmigration.NewAddMeterQuickFiltersFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddNotificationRoutesFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -165,10 +169,10 @@ func NewNotificationGroupingProviderFactories() factory.NamedMap[factory.Provide
 	)
 }
 
-func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationGroups nfgrouping.NotificationGroups) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
+func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationGroups nfgrouping.NotificationGroups, nfRoutes nfrouting.NotificationRoutes) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
 	return factory.MustNewNamedMap(
 		legacyalertmanager.NewFactory(sqlstore, orgGetter),
-		signozalertmanager.NewFactory(sqlstore, orgGetter, notificationGroups),
+		signozalertmanager.NewFactory(sqlstore, orgGetter, notificationGroups, nfRoutes),
 	)
 }
 
@@ -202,5 +206,11 @@ func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetrySt
 func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, cache cache.Cache) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
 	return factory.MustNewNamedMap(
 		signozquerier.NewFactory(telemetryStore, prometheus, cache),
+	)
+}
+
+func NewNotificationRoutingProviderFactories(routeStore routeTypes.RouteStore) factory.NamedMap[factory.ProviderFactory[nfrouting.NotificationRoutes, nfrouting.Config]] {
+	return factory.MustNewNamedMap(
+		expressionroutes.NewFactory(routeStore),
 	)
 }

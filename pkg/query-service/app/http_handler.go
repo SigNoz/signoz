@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/nfrouting"
 	"io"
 	"math"
 	"net/http"
@@ -146,6 +147,8 @@ type APIHandler struct {
 	QuerierAPI *querierAPI.API
 
 	Signoz *signoz.SigNoz
+
+	NotificationRoutesAPI *nfrouting.API
 }
 
 type APIHandlerOpts struct {
@@ -176,6 +179,8 @@ type APIHandlerOpts struct {
 	QuerierAPI *querierAPI.API
 
 	Signoz *signoz.SigNoz
+
+	NotificationRoutesAPI *nfrouting.API
 }
 
 // NewAPIHandler returns an APIHandler
@@ -237,6 +242,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		Signoz:                        opts.Signoz,
 		FieldsAPI:                     opts.FieldsAPI,
 		QuerierAPI:                    opts.QuerierAPI,
+		NotificationRoutesAPI:         opts.NotificationRoutesAPI,
 	}
 
 	logsQueryBuilder := logsv4.PrepareLogsQuery
@@ -613,6 +619,13 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v3/licenses/active", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
 		aH.LicensingAPI.Activate(rw, req)
 	})).Methods(http.MethodGet)
+
+	//notification routes
+	router.HandleFunc("/api/v1/notification-routes", am.ViewAccess(aH.NotificationRoutesAPI.GetAllNotificationRoutesByOrgID)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/notification-routes/{id}", am.ViewAccess(aH.NotificationRoutesAPI.GetNotificationRouteByID)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/notification-routes", am.AdminAccess(aH.NotificationRoutesAPI.CreateNotificationRoute)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/notification-routes/{id}", am.AdminAccess(aH.NotificationRoutesAPI.DeleteNotificationRouteByID)).Methods(http.MethodDelete)
+
 }
 
 func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *middleware.AuthZ) {

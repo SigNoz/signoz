@@ -2,6 +2,7 @@ package signozalertmanager
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/nfrouting"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
@@ -25,13 +26,13 @@ type provider struct {
 	stopC              chan struct{}
 }
 
-func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationGroups nfgrouping.NotificationGroups) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
+func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationGroups nfgrouping.NotificationGroups, nfRoutes nfrouting.NotificationRoutes) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, settings factory.ProviderSettings, config alertmanager.Config) (alertmanager.Alertmanager, error) {
-		return New(ctx, settings, config, sqlstore, orgGetter, notificationGroups)
+		return New(ctx, settings, config, sqlstore, orgGetter, notificationGroups, nfRoutes)
 	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationGroups nfgrouping.NotificationGroups) (*provider, error) {
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationGroups nfgrouping.NotificationGroups, nfRoutes nfrouting.NotificationRoutes) (*provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
@@ -45,6 +46,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 			configStore,
 			orgGetter,
 			notificationGroups,
+			nfRoutes,
 		),
 		settings:           settings,
 		config:             config,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/nfrouting"
 	"log/slog"
 	"sort"
 	"sync"
@@ -23,6 +24,7 @@ import (
 // assigns the correct notifiers to each.
 type Dispatcher struct {
 	route   *dispatch.Route
+	nfRoute nfrouting.NotificationRoutes
 	alerts  provider.Alerts
 	stage   notify.Stage
 	marker  types.GroupMarker
@@ -47,6 +49,28 @@ type Dispatcher struct {
 // We use the upstream Limits interface from Prometheus
 type Limits = dispatch.Limits
 
+// createRouteFromChannel creates a dispatch.Route from a channel name
+func (d *Dispatcher) createRouteFromChannel(channel string) *dispatch.Route {
+	// Create route options with the channel as receiver
+	routeOpts := dispatch.RouteOpts{
+		Receiver:            channel,
+		GroupWait:           5 * time.Second,
+		GroupInterval:       30 * time.Second,
+		RepeatInterval:      4 * time.Hour,
+		GroupBy:             make(map[model.LabelName]struct{}),
+		GroupByAll:          false,
+		MuteTimeIntervals:   []string{},
+		ActiveTimeIntervals: []string{},
+	}
+
+	// Create a new route with these options
+	route := &dispatch.Route{
+		RouteOpts: routeOpts,
+	}
+
+	return route
+}
+
 // NewDispatcher returns a new Dispatcher.
 func NewDispatcher(
 	ap provider.Alerts,
@@ -59,6 +83,7 @@ func NewDispatcher(
 	m *DispatcherMetrics,
 	n nfgrouping.NotificationGroups,
 	orgID string,
+	nfRoutes nfrouting.NotificationRoutes,
 ) *Dispatcher {
 	if lim == nil {
 		// Use a simple implementation when no limits are provided
@@ -76,6 +101,7 @@ func NewDispatcher(
 		limits:             lim,
 		notificationGroups: n,
 		orgID:              orgID,
+		nfRoute:            nfRoutes,
 	}
 	return disp
 }
@@ -121,8 +147,10 @@ func (d *Dispatcher) run(it provider.AlertIterator) {
 			}
 
 			now := time.Now()
-			for _, r := range d.route.Match(alert.Labels) {
-				d.processAlert(alert, r)
+			channels := d.nfRoute.Match(d.ctx, d.orgID, alert.Labels)
+			for _, channel := range channels {
+				route := d.createRouteFromChannel(channel)
+				d.processAlert(alert, route)
 			}
 			d.metrics.processingDuration.Observe(time.Since(now).Seconds())
 

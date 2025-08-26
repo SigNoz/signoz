@@ -13,6 +13,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/nfgrouping"
+	"github.com/SigNoz/signoz/pkg/nfrouting"
+	"github.com/SigNoz/signoz/pkg/nfrouting/nfroutingstore/sqlroutingstore"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
@@ -24,6 +26,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/routingtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
 
@@ -50,6 +53,7 @@ type SigNoz struct {
 	Modules            Modules
 	Handlers           Handlers
 	NotificationGroups nfgrouping.NotificationGroups
+	RouteStore         routingtypes.RouteStore
 }
 
 func New(
@@ -245,13 +249,26 @@ func New(
 	if err != nil {
 		return nil, err
 	}
+	routeStore := sqlroutingstore.NewStore(sqlstore)
+	notificationRoutes, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		nfrouting.Config{
+			Provider: "expression",
+		},
+		NewNotificationRoutingProviderFactories(routeStore),
+		"expression",
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	// Initialize alertmanager from the available alertmanager provider factories
 	alertmanager, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		config.Alertmanager,
-		NewAlertmanagerProviderFactories(sqlstore, orgGetter, notificationGroups),
+		NewAlertmanagerProviderFactories(sqlstore, orgGetter, notificationGroups, notificationRoutes),
 		config.Alertmanager.Provider,
 	)
 	if err != nil {
@@ -339,5 +356,6 @@ func New(
 		Modules:            modules,
 		Handlers:           handlers,
 		NotificationGroups: notificationGroups,
+		RouteStore:         routeStore,
 	}, nil
 }
