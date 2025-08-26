@@ -197,8 +197,6 @@ function LogsExplorerViewsContainer({
 					key: 'severity_text',
 					dataType: DataTypes.String,
 					type: '',
-					isColumn: true,
-					isJSON: false,
 					id: 'severity_text--string----true',
 				},
 			],
@@ -214,7 +212,6 @@ function LogsExplorerViewsContainer({
 								key: 'id',
 								type: '',
 								dataType: DataTypes.String,
-								isColumn: true,
 							},
 							op: OPERATORS['<='],
 							value: activeLogId,
@@ -329,7 +326,6 @@ function LogsExplorerViewsContainer({
 								key: 'id',
 								type: '',
 								dataType: DataTypes.String,
-								isColumn: true,
 							},
 							op: OPERATORS['<='],
 							value: activeLogId,
@@ -482,8 +478,7 @@ function LogsExplorerViewsContainer({
 	);
 
 	useEffect(() => {
-		const shouldChangeView =
-			(isMultipleQueries || isGroupByExist) && selectedView !== ExplorerViews.LIST;
+		const shouldChangeView = isMultipleQueries || isGroupByExist;
 
 		if (selectedPanelType === PANEL_TYPES.LIST && shouldChangeView) {
 			handleExplorerTabChange(PANEL_TYPES.TIME_SERIES);
