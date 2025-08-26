@@ -4,6 +4,7 @@ import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import AppLoading from 'components/AppLoading/AppLoading';
+import KBarCommandPalette from 'components/KBarCommandPalette/KBarCommandPalette';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import UserpilotRouteTracker from 'components/UserpilotRouteTracker/UserpilotRouteTracker';
@@ -25,6 +26,7 @@ import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
+import { KBarCommandPaletteProvider } from 'providers/KBarCommandPaletteProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
@@ -368,39 +370,42 @@ function App(): JSX.Element {
 			<ConfigProvider theme={themeConfig}>
 				<Router history={history}>
 					<CompatRouter>
-						<UserpilotRouteTracker />
-						<NotificationProvider>
-							<ErrorModalProvider>
-								<PrivateRoute>
-									<ResourceProvider>
-										<QueryBuilderProvider>
-											<DashboardProvider>
-												<KeyboardHotkeysProvider>
-													<AlertRuleProvider>
-														<AppLayout>
-															<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-																<Switch>
-																	{routes.map(({ path, component, exact }) => (
-																		<Route
-																			key={`${path}`}
-																			exact={exact}
-																			path={path}
-																			component={component}
-																		/>
-																	))}
-																	<Route exact path="/" component={Home} />
-																	<Route path="*" component={NotFound} />
-																</Switch>
-															</Suspense>
-														</AppLayout>
-													</AlertRuleProvider>
-												</KeyboardHotkeysProvider>
-											</DashboardProvider>
-										</QueryBuilderProvider>
-									</ResourceProvider>
-								</PrivateRoute>
-							</ErrorModalProvider>
-						</NotificationProvider>
+						<KBarCommandPaletteProvider>
+							<UserpilotRouteTracker />
+							<KBarCommandPalette />
+							<NotificationProvider>
+								<ErrorModalProvider>
+									<PrivateRoute>
+										<ResourceProvider>
+											<QueryBuilderProvider>
+												<DashboardProvider>
+													<KeyboardHotkeysProvider>
+														<AlertRuleProvider>
+															<AppLayout>
+																<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+																	<Switch>
+																		{routes.map(({ path, component, exact }) => (
+																			<Route
+																				key={`${path}`}
+																				exact={exact}
+																				path={path}
+																				component={component}
+																			/>
+																		))}
+																		<Route exact path="/" component={Home} />
+																		<Route path="*" component={NotFound} />
+																	</Switch>
+																</Suspense>
+															</AppLayout>
+														</AlertRuleProvider>
+													</KeyboardHotkeysProvider>
+												</DashboardProvider>
+											</QueryBuilderProvider>
+										</ResourceProvider>
+									</PrivateRoute>
+								</ErrorModalProvider>
+							</NotificationProvider>
+						</KBarCommandPaletteProvider>
 					</CompatRouter>
 				</Router>
 			</ConfigProvider>
