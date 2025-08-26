@@ -160,7 +160,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 											label="Seconds"
 											placeholder="Auto"
 											labelAfter
-											initialValue={query?.stepInterval ?? undefined}
+											initialValue={query?.stepInterval ?? null}
 										/>
 									</div>
 								</div>
@@ -283,7 +283,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 									label="Seconds"
 									placeholder="Auto"
 									labelAfter
-									initialValue={query?.stepInterval ?? undefined}
+									initialValue={query?.stepInterval ?? null}
 									className="histogram-every-input"
 								/>
 							</div>
