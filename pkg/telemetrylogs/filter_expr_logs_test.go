@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/require"
 )
@@ -2324,6 +2325,117 @@ func TestFilterExprLogs(t *testing.T) {
 				"%warning%", true, "%deprecated%", true,
 				"low", true,
 			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
+
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts)
+
+			if tc.shouldPass {
+				if err != nil {
+					t.Errorf("Failed to parse query: %s\nError: %v\n", tc.query, err)
+					return
+				}
+
+				if clause == nil {
+					t.Errorf("Expected clause for query: %s\n", tc.query)
+					return
+				}
+
+				// Build the SQL and print it for debugging
+				sql, args := clause.WhereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+				require.Equal(t, tc.expectedQuery, sql)
+				require.Equal(t, tc.expectedArgs, args)
+			} else {
+				require.Error(t, err, "Expected error for query: %s", tc.query)
+				_, _, _, _, _, a := errors.Unwrapb(err)
+				contains := false
+				for _, warn := range a {
+					if strings.Contains(warn, tc.expectedErrorContains) {
+						contains = true
+						break
+					}
+				}
+				require.True(t, contains)
+			}
+		})
+	}
+}
+
+// TestFilterExprLogs tests a comprehensive set of query patterns for logs search
+func TestFilterExprLogsConflictNegation(t *testing.T) {
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
+
+	// Define a comprehensive set of field keys to support all test cases
+	keys := buildCompleteFieldKeyMap()
+
+	keys["body"] = []*telemetrytypes.TelemetryFieldKey{
+		{
+			Name:          "body",
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		{
+			Name:          "body",
+			FieldContext:  telemetrytypes.FieldContextAttribute,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+	}
+
+	opts := querybuilder.FilterExprVisitorOpts{
+		Logger:           instrumentationtest.New().Logger(),
+		FieldMapper:      fm,
+		ConditionBuilder: cb,
+		FieldKeys:        keys,
+		FullTextColumn:   DefaultFullTextColumn,
+		JsonBodyPrefix:   BodyJSONStringSearchPrefix,
+		JsonKeyToKey:     GetBodyJSONKey,
+	}
+
+	testCases := []struct {
+		category              string
+		query                 string
+		shouldPass            bool
+		expectedQuery         string
+		expectedArgs          []any
+		expectedErrorContains string
+	}{
+		{
+			category:              "not_contains",
+			query:                 "body NOT CONTAINS 'done'",
+			shouldPass:            true,
+			expectedQuery:         "WHERE (LOWER(body) NOT LIKE LOWER(?) AND LOWER(attributes_string['body']) NOT LIKE LOWER(?))",
+			expectedArgs:          []any{"%done%", "%done%"},
+			expectedErrorContains: "",
+		},
+		{
+			category:   "not_like",
+			query:      "body NOT LIKE 'done'",
+			shouldPass: true,
+			// lower index search on body even for LIKE
+			expectedQuery:         "WHERE (LOWER(body) NOT LIKE LOWER(?) AND attributes_string['body'] NOT LIKE ?)",
+			expectedArgs:          []any{"done", "done"},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "not_equal",
+			query:                 "body != 'done'",
+			shouldPass:            true,
+			expectedQuery:         "WHERE (body <> ? AND attributes_string['body'] <> ?)",
+			expectedArgs:          []any{"done", "done"},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "not_regex",
+			query:                 "body NOT REGEXP 'done'",
+			shouldPass:            true,
+			expectedQuery:         "WHERE (NOT match(LOWER(body), LOWER(?)) AND NOT match(attributes_string['body'], ?))",
+			expectedArgs:          []any{"done", "done"},
+			expectedErrorContains: "",
 		},
 	}
 
