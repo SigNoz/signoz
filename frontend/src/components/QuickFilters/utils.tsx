@@ -53,8 +53,6 @@ export const getFilterConfig = (
 					key: att.key,
 					dataType: att.dataType,
 					type: att.type,
-					isColumn: att.isColumn,
-					isJSON: att.isJSON,
 				},
 				defaultOpen: index < 2,
 			} as IQuickFiltersConfig),

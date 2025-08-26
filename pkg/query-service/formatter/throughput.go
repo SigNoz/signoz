@@ -22,25 +22,25 @@ func simpleCountUnit(value float64, decimals *int, symbol string) string {
 
 func (f *throughputFormatter) Format(value float64, unit string) string {
 	switch unit {
-	case "cps":
+	case "cps", "{count}/s":
 		return simpleCountUnit(value, nil, "c/s")
-	case "ops":
+	case "ops", "{ops}/s":
 		return simpleCountUnit(value, nil, "op/s")
-	case "reqps":
+	case "reqps", "{req}/s":
 		return simpleCountUnit(value, nil, "req/s")
-	case "rps":
+	case "rps", "{read}/s":
 		return simpleCountUnit(value, nil, "r/s")
-	case "wps":
+	case "wps", "{write}/s":
 		return simpleCountUnit(value, nil, "w/s")
-	case "iops":
+	case "iops", "{iops}/s":
 		return simpleCountUnit(value, nil, "iops")
-	case "cpm":
+	case "cpm", "{count}/min":
 		return simpleCountUnit(value, nil, "c/m")
-	case "opm":
+	case "opm", "{ops}/min":
 		return simpleCountUnit(value, nil, "op/m")
-	case "rpm":
+	case "rpm", "{read}/min":
 		return simpleCountUnit(value, nil, "r/m")
-	case "wpm":
+	case "wpm", "{write}/min":
 		return simpleCountUnit(value, nil, "w/m")
 	}
 	// When unit is not matched, return the value as it is.

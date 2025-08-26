@@ -4,6 +4,7 @@ import logEvent from 'api/common/logEvent';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import Uplot from 'components/Uplot';
 import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import { getLocalStorageGraphVisibilityState } from 'container/GridCardLayout/GridCard/utils';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
@@ -54,6 +55,7 @@ function TimeSeriesView({
 	isFilterApplied,
 	dataSource,
 	setWarning,
+	panelType = PANEL_TYPES.TIME_SERIES,
 }: TimeSeriesViewProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -191,6 +193,7 @@ function TimeSeriesView({
 		maxTimeScale,
 		softMax: null,
 		softMin: null,
+		panelType,
 		tzDate: (timestamp: number) =>
 			uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 		timezone: timezone.value,
@@ -259,6 +262,7 @@ interface TimeSeriesViewProps {
 	isFilterApplied: boolean;
 	dataSource: DataSource;
 	setWarning?: Dispatch<SetStateAction<Warning | undefined>>;
+	panelType?: PANEL_TYPES;
 }
 
 TimeSeriesView.defaultProps = {
@@ -266,6 +270,7 @@ TimeSeriesView.defaultProps = {
 	yAxisUnit: 'short',
 	error: undefined,
 	setWarning: undefined,
+	panelType: PANEL_TYPES.TIME_SERIES,
 };
 
 export default TimeSeriesView;

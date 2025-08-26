@@ -490,18 +490,12 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*cac
 		key      string
 	}
 	seriesMap := make(map[seriesKey]*qbtypes.TimeSeries, estimatedSeries)
-	var queryName string
 
 	for _, bucket := range buckets {
 		var tsData *qbtypes.TimeSeriesData
 		if err := json.Unmarshal(bucket.Value, &tsData); err != nil {
 			bc.logger.ErrorContext(ctx, "failed to unmarshal time series data", "error", err)
 			continue
-		}
-
-		// Preserve the query name from the first bucket
-		if queryName == "" && tsData.QueryName != "" {
-			queryName = tsData.QueryName
 		}
 
 		for _, aggBucket := range tsData.Aggregations {
@@ -549,7 +543,6 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*cac
 
 	// Convert map back to slice
 	result := &qbtypes.TimeSeriesData{
-		QueryName:    queryName,
 		Aggregations: make([]*qbtypes.AggregationBucket, 0, len(aggMap)),
 	}
 
@@ -738,9 +731,7 @@ func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, fluxBoun
 	case qbtypes.RequestTypeTimeSeries:
 		// Trim time series data
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok && tsData != nil {
-			trimmedData := &qbtypes.TimeSeriesData{
-				QueryName: tsData.QueryName,
-			}
+			trimmedData := &qbtypes.TimeSeriesData{}
 
 			for _, aggBucket := range tsData.Aggregations {
 				trimmedBucket := &qbtypes.AggregationBucket{
@@ -807,7 +798,6 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, 
 	case qbtypes.RequestTypeTimeSeries:
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
 			filteredData := &qbtypes.TimeSeriesData{
-				QueryName:    tsData.QueryName,
 				Aggregations: make([]*qbtypes.AggregationBucket, 0, len(tsData.Aggregations)),
 			}
 
