@@ -46,7 +46,7 @@ func (migration *updateTTLSettingForCustomRetention) Up(ctx context.Context, db 
 	}()
 
 	// Get the table and its constraints
-	table, uniqueConstraints, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("ttl_setting"))
+	table, _, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("ttl_setting"))
 	if err != nil {
 		return err
 	}
@@ -58,8 +58,7 @@ func (migration *updateTTLSettingForCustomRetention) Up(ctx context.Context, db 
 		Nullable: true,
 	}
 
-	sqls := migration.sqlschema.Operator().AddColumn(table, uniqueConstraints, column, nil)
-
+	sqls := migration.sqlschema.Operator().AddColumn(table, nil, column, nil)
 	for _, sql := range sqls {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
