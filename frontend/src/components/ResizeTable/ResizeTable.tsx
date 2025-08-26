@@ -4,7 +4,7 @@ import { Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import cx from 'classnames';
 import { dragColumnParams } from 'hooks/useDragColumns/configs';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { getColumnWidth, RowData } from 'lib/query/createTableColumnsFromQuery';
 import { debounce, set } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
@@ -110,11 +110,14 @@ function ResizeTable({
 			// Apply stored column widths from widget configuration
 			const columnsWithStoredWidths = columns.map((col) => {
 				const dataIndex = (col as RowData).dataIndex as string;
-				if (dataIndex && columnWidths && columnWidths[dataIndex]) {
-					return {
-						...col,
-						width: columnWidths[dataIndex], // Apply stored width
-					};
+				if (dataIndex && columnWidths) {
+					const width = getColumnWidth(dataIndex, columnWidths);
+					if (width) {
+						return {
+							...col,
+							width, // Apply stored width
+						};
+					}
 				}
 				return col;
 			});

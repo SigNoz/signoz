@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"golang.org/x/exp/maps"
@@ -29,6 +30,16 @@ func (c *conditionBuilder) conditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
+
+	switch operator {
+	case qbtypes.FilterOperatorContains,
+		qbtypes.FilterOperatorNotContains,
+		qbtypes.FilterOperatorILike,
+		qbtypes.FilterOperatorNotILike,
+		qbtypes.FilterOperatorLike,
+		qbtypes.FilterOperatorNotLike:
+		value = querybuilder.FormatValueForContains(value)
+	}
 
 	column, err := c.fm.ColumnFor(ctx, key)
 	if err != nil {
@@ -53,6 +64,10 @@ func (c *conditionBuilder) conditionFor(
 			return sb.ILike(tblFieldName, value), nil
 		case qbtypes.FilterOperatorNotLike:
 			return sb.NotILike(tblFieldName, value), nil
+		case qbtypes.FilterOperatorRegexp:
+			return fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, tblFieldName, sb.Var(value)), nil
+		case qbtypes.FilterOperatorNotRegexp:
+			return fmt.Sprintf(`NOT match(LOWER(%s), LOWER(%s))`, tblFieldName, sb.Var(value)), nil
 		}
 	}
 
@@ -146,11 +161,6 @@ func (c *conditionBuilder) conditionFor(
 			} else {
 				return "NOT " + GetBodyJSONKeyForExists(ctx, key, operator, value), nil
 			}
-		}
-
-		// if the field is intrinsic, it always exists
-		if slices.Contains(maps.Keys(IntrinsicFields), key.Name) {
-			return "true", nil
 		}
 
 		var value any

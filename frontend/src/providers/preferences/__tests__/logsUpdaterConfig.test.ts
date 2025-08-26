@@ -1,3 +1,4 @@
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { LogViewMode } from 'container/LogsTable';
 import { defaultOptionsQuery } from 'container/OptionsMenu/constants';
@@ -7,10 +8,7 @@ import {
 	PreferenceMode,
 	Preferences,
 } from 'providers/preferences/types';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import getLogsUpdaterConfig from '../configs/logsUpdaterConfig';
 
@@ -65,12 +63,11 @@ describe('logsUpdaterConfig', () => {
 			setSavedViewPreferences,
 		);
 
-		const newColumns: BaseAutocompleteData[] = [
+		const newColumns: TelemetryFieldKey[] = [
 			{
-				key: 'new-column',
-				type: 'tag',
-				dataType: DataTypes.String,
-				isColumn: true,
+				name: 'new-column',
+				fieldContext: '',
+				fieldDataType: DataTypes.String,
 			},
 		];
 
@@ -81,7 +78,6 @@ describe('logsUpdaterConfig', () => {
 					key: 'old-column',
 					type: 'tag',
 					dataType: DataTypes.String,
-					isColumn: true,
 				},
 			],
 			maxLines: 2,
@@ -114,12 +110,11 @@ describe('logsUpdaterConfig', () => {
 			setSavedViewPreferences,
 		);
 
-		const newColumns: BaseAutocompleteData[] = [
+		const newColumns: TelemetryFieldKey[] = [
 			{
-				key: 'new-column',
-				type: 'tag',
-				dataType: DataTypes.String,
-				isColumn: true,
+				name: 'new-column',
+				fieldContext: '',
+				fieldDataType: DataTypes.String,
 			},
 		];
 
@@ -156,7 +151,6 @@ describe('logsUpdaterConfig', () => {
 					key: 'column',
 					type: 'tag',
 					dataType: DataTypes.String,
-					isColumn: true,
 				},
 			],
 			maxLines: 2,
@@ -185,7 +179,6 @@ describe('logsUpdaterConfig', () => {
 				key: 'column',
 				type: 'tag',
 				dataType: DataTypes.String,
-				isColumn: true,
 			},
 		]); // Should preserve columns
 	});
@@ -211,7 +204,6 @@ describe('logsUpdaterConfig', () => {
 					key: 'column',
 					type: 'tag',
 					dataType: DataTypes.String,
-					isColumn: true,
 				},
 			],
 			maxLines: 2,

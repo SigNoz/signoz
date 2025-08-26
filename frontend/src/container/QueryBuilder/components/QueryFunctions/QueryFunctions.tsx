@@ -6,29 +6,28 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { cloneDeep, pullAt } from 'lodash-es';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
-import {
-	IBuilderQuery,
-	QueryFunctionProps,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
+import { normalizeFunctionName } from 'utils/functionNameNormalizer';
 
 import Function from './Function';
 import { toFloat64 } from './utils';
 
-const defaultMetricFunctionStruct: QueryFunctionProps = {
-	name: QueryFunctionsTypes.CUTOFF_MIN,
+const defaultMetricFunctionStruct: QueryFunction = {
+	name: QueryFunctionsTypes.CUTOFF_MIN as any,
 	args: [],
 };
 
-const defaultLogFunctionStruct: QueryFunctionProps = {
-	name: QueryFunctionsTypes.TIME_SHIFT,
+const defaultLogFunctionStruct: QueryFunction = {
+	name: QueryFunctionsTypes.TIME_SHIFT as any,
 	args: [],
 };
 
 interface QueryFunctionsProps {
 	query: IBuilderQuery;
-	queryFunctions: QueryFunctionProps[];
-	onChange: (functions: QueryFunctionProps[]) => void;
+	queryFunctions: QueryFunction[];
+	onChange: (functions: QueryFunction[]) => void;
 	maxFunctions: number;
 }
 
@@ -87,8 +86,11 @@ export default function QueryFunctions({
 	onChange,
 	maxFunctions = 3,
 }: QueryFunctionsProps): JSX.Element {
-	const [functions, setFunctions] = useState<QueryFunctionProps[]>(
-		queryFunctions,
+	const [functions, setFunctions] = useState<QueryFunction[]>(
+		queryFunctions.map((func) => ({
+			...func,
+			name: normalizeFunctionName(func.name) as any,
+		})),
 	);
 
 	const isDarkMode = useIsDarkMode();
@@ -127,7 +129,7 @@ export default function QueryFunctions({
 	};
 
 	const handleDeleteFunction = (
-		queryFunction: QueryFunctionProps,
+		queryFunction: QueryFunction,
 		index: number,
 	): void => {
 		const clonedFunctions = cloneDeep(functions);
@@ -138,21 +140,23 @@ export default function QueryFunctions({
 	};
 
 	const handleUpdateFunctionName = (
-		func: QueryFunctionProps,
+		func: QueryFunction,
 		index: number,
 		value: string,
 	): void => {
 		const updateFunctions = cloneDeep(functions);
 
 		if (updateFunctions && updateFunctions.length > 0 && updateFunctions[index]) {
-			updateFunctions[index].name = value;
+			// Normalize function name from backend response to match frontend expectations
+			const normalizedValue = normalizeFunctionName(value);
+			updateFunctions[index].name = normalizedValue as any;
 			setFunctions(updateFunctions);
 			onChange(updateFunctions);
 		}
 	};
 
 	const handleUpdateFunctionArgs = (
-		func: QueryFunctionProps,
+		func: QueryFunction,
 		index: number,
 		value: string,
 	): void => {
@@ -160,11 +164,12 @@ export default function QueryFunctions({
 
 		if (updateFunctions && updateFunctions.length > 0 && updateFunctions[index]) {
 			updateFunctions[index].args = [
-				// timeShift expects a float64 value, so we convert the string to a number
-				// For other functions, we keep the value as a string
-				updateFunctions[index].name === QueryFunctionsTypes.TIME_SHIFT
-					? toFloat64(value)
-					: value,
+				{
+					value:
+						updateFunctions[index].name === QueryFunctionsTypes.TIME_SHIFT
+							? toFloat64(value)
+							: value,
+				},
 			];
 			setFunctions(updateFunctions);
 			onChange(updateFunctions);

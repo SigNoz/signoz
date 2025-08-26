@@ -4,6 +4,7 @@ import {
 	Alert,
 	Button,
 	Col,
+	Flex,
 	Modal,
 	Row,
 	Skeleton,
@@ -11,6 +12,7 @@ import {
 	Typography,
 } from 'antd';
 import manageCreditCardApi from 'api/v1/portal/create';
+import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
@@ -146,9 +148,9 @@ function WorkspaceSuspended(): JSX.Element {
 									justify="center"
 									align="middle"
 									className="workspace-suspended__modal__cta"
-									gutter={[16, 16]}
+									gutter={[8, 8]}
 								>
-									<Col>
+									<Flex gap={8} justify="center" align="center">
 										<Button
 											type="primary"
 											shape="round"
@@ -158,7 +160,8 @@ function WorkspaceSuspended(): JSX.Element {
 										>
 											{t('continueMyJourney')}
 										</Button>
-									</Col>
+										<RefreshPaymentStatus btnShape="round" />
+									</Flex>
 								</Row>
 							)}
 							<div className="workspace-suspended__creative">

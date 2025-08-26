@@ -32,7 +32,7 @@ function fillMissingXAxisTimestamps(timestampArr: number[], data: any[]): any {
 	// Fill missing timestamps with null values
 	processedData.forEach((entry: { values: (number | null)[][] }) => {
 		const existingTimestamps = new Set(
-			(entry.values ?? []).map((value) => value[0]),
+			(entry?.values ?? []).map((value) => value[0]),
 		);
 
 		const missingTimestamps = Array.from(allTimestampsSet).filter(
@@ -42,21 +42,21 @@ function fillMissingXAxisTimestamps(timestampArr: number[], data: any[]): any {
 		missingTimestamps.forEach((timestamp) => {
 			const value = null;
 
-			entry.values.push([timestamp, value]);
+			entry?.values?.push([timestamp, value]);
 		});
 
-		entry.values.forEach((v) => {
+		entry?.values?.forEach((v) => {
 			// eslint-disable-next-line no-param-reassign
 			v[1] = normalizePlotValue(v[1]);
 		});
 
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
-		entry.values.sort((a, b) => a[0] - b[0]);
+		entry?.values?.sort((a, b) => a[0] - b[0]);
 	});
 
 	return processedData.map((entry: { values: [number, string][] }) =>
-		entry.values.map((value) => value[1]),
+		entry?.values?.map((value) => value[1]),
 	);
 }
 

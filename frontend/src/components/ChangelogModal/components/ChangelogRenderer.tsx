@@ -32,7 +32,7 @@ function renderMedia(media: Media): JSX.Element | null {
 				controls
 				controlsList="nodownload noplaybackrate"
 				loop
-				className="my-3 h-auto w-full rounded"
+				className="changelog-media-video"
 			>
 				<source src={media.url} type={media.mime} />
 				<track kind="captions" src="" label="No captions available" default />
@@ -56,7 +56,7 @@ function ChangelogRenderer({ changelog }: Props): JSX.Element {
 			</div>
 			<span className="changelog-release-date">{formattedReleaseDate}</span>
 			{changelog.features && changelog.features.length > 0 && (
-				<div className="changelog-renderer-list flex flex-col gap-7">
+				<div className="changelog-renderer-list">
 					{changelog.features.map((feature) => (
 						<div key={feature.id}>
 							<h2>{feature.title}</h2>

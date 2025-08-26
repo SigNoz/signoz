@@ -1,7 +1,11 @@
 import { orange } from '@ant-design/colors';
 import { SettingOutlined } from '@ant-design/icons';
 import { Dropdown, MenuProps } from 'antd';
-import { OPERATORS } from 'constants/queryBuilder';
+import {
+	negateOperator,
+	OPERATORS,
+	QUERY_BUILDER_FUNCTIONS,
+} from 'constants/antlrQueryConstants';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 
 import { TitleWrapper } from './BodyTitleRenderer.styles';
@@ -29,8 +33,9 @@ function BodyTitleRenderer({
 					getDataTypes(value),
 				),
 				`${value}`,
-				isFilterIn ? OPERATORS.HAS : OPERATORS.NHAS,
-				true,
+				isFilterIn
+					? QUERY_BUILDER_FUNCTIONS.HAS
+					: negateOperator(QUERY_BUILDER_FUNCTIONS.HAS),
 				parentIsArray ? getDataTypes([value]) : getDataTypes(value),
 			);
 		} else {
@@ -38,7 +43,6 @@ function BodyTitleRenderer({
 				`body.${removeObjectFromString(nodeKey)}`,
 				`${value}`,
 				isFilterIn ? OPERATORS['='] : OPERATORS['!='],
-				true,
 				getDataTypes(value),
 			);
 		}
@@ -71,8 +75,13 @@ function BodyTitleRenderer({
 		onClick: onClickHandler,
 	};
 
+	const handleTextSelection = (e: React.MouseEvent): void => {
+		// Prevent tree node click when user is trying to select text
+		e.stopPropagation();
+	};
+
 	return (
-		<TitleWrapper>
+		<TitleWrapper onMouseDown={handleTextSelection}>
 			<Dropdown menu={menu} trigger={['click']}>
 				<SettingOutlined style={{ marginRight: 8 }} className="hover-reveal" />
 			</Dropdown>

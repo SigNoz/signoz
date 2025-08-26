@@ -3,9 +3,11 @@ import { useGetMetricMeta } from 'hooks/apDex/useGetMetricMeta';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useParams } from 'react-router-dom';
 
+import { FeatureKeys } from '../../../../../constants/features';
+import { useAppContext } from '../../../../../providers/App/App';
+import { WidgetKeys } from '../../../constant';
 import { IServiceName } from '../../types';
 import ApDexMetrics from './ApDexMetrics';
-import { metricMeta } from './constants';
 import { ApDexDataSwitcherProps } from './types';
 
 function ApDexMetricsApplication({
@@ -18,7 +20,19 @@ function ApDexMetricsApplication({
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
 
-	const { data, isLoading, error } = useGetMetricMeta(metricMeta, servicename);
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
+	const signozLatencyBucketMetrics = dotMetricsEnabled
+		? WidgetKeys.Signoz_latency_bucket
+		: WidgetKeys.Signoz_latency_bucket_norm;
+
+	const { data, isLoading, error } = useGetMetricMeta(
+		signozLatencyBucketMetrics,
+		servicename,
+	);
 	useErrorNotification(error);
 
 	if (isLoading) {

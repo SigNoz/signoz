@@ -2,6 +2,12 @@
 	height: 57vh;
 	width: 100%;
 
+	.chart-preview-header {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
 	.threshold-alert-uplot-chart-container {
 		height: calc(100% - 24px);
 	}

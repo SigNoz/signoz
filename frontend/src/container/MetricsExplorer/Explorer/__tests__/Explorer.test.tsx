@@ -4,6 +4,7 @@ import * as useOptionsMenuHooks from 'container/OptionsMenu';
 import * as useUpdateDashboardHooks from 'hooks/dashboard/useUpdateDashboard';
 import * as useQueryBuilderHooks from 'hooks/queryBuilder/useQueryBuilder';
 import * as appContextHooks from 'providers/App/App';
+import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import * as timezoneHooks from 'providers/Timezone';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
@@ -158,7 +159,9 @@ describe('Explorer', () => {
 			<QueryClientProvider client={queryClient}>
 				<MemoryRouter>
 					<Provider store={store}>
-						<Explorer />
+						<ErrorModalProvider>
+							<Explorer />
+						</ErrorModalProvider>
 					</Provider>
 				</MemoryRouter>
 			</QueryClientProvider>,
@@ -181,7 +184,9 @@ describe('Explorer', () => {
 			<QueryClientProvider client={queryClient}>
 				<MemoryRouter>
 					<Provider store={store}>
-						<Explorer />
+						<ErrorModalProvider>
+							<Explorer />
+						</ErrorModalProvider>
 					</Provider>
 				</MemoryRouter>
 			</QueryClientProvider>,
@@ -201,7 +206,9 @@ describe('Explorer', () => {
 			<QueryClientProvider client={queryClient}>
 				<MemoryRouter>
 					<Provider store={store}>
-						<Explorer />
+						<ErrorModalProvider>
+							<Explorer />
+						</ErrorModalProvider>
 					</Provider>
 				</MemoryRouter>
 			</QueryClientProvider>,

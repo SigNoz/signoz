@@ -163,8 +163,6 @@ export function onViewAPIMonitoringPopupClick({
 									key: 'hasError',
 									dataType: DataTypes.bool,
 									type: 'tag',
-									isColumn: true,
-									isJSON: false,
 									id: 'hasError--bool--tag--true',
 								},
 								op: 'in',
@@ -178,8 +176,6 @@ export function onViewAPIMonitoringPopupClick({
 						key: 'service.name',
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 					},
 					op: '=',
 					value: servicename,
@@ -283,7 +279,8 @@ export function handleQueryChange(
 				...item,
 				filters: {
 					...item.filters,
-					items: [...item.filters.items, ...filterItem, ...(filters || [])],
+					items: [...(item.filters?.items || []), ...filterItem, ...(filters || [])],
+					op: item.filters?.op || 'AND',
 				},
 			})),
 		},
@@ -307,10 +304,8 @@ export function useGetAPMToLogsQueries({
 	const serviceName = {
 		id: 'service.name--string--resource--true',
 		dataType: DataTypes.String,
-		isColumn: false,
 		key: 'service.name',
 		type: 'resource',
-		isJSON: false,
 	};
 
 	if (filters?.length) {
@@ -355,8 +350,6 @@ export function useGetAPMToTracesQueries({
 				key: 'spanKind',
 				dataType: DataTypes.String,
 				type: 'tag',
-				isColumn: true,
-				isJSON: false,
 				id: 'spanKind--string--tag--true',
 			},
 			op: '=',
@@ -372,8 +365,6 @@ export function useGetAPMToTracesQueries({
 				key: 'dbSystem',
 				dataType: DataTypes.String,
 				type: 'tag',
-				isColumn: true,
-				isJSON: false,
 				id: 'dbSystem--string--tag--true',
 			},
 			op: 'exists',

@@ -62,6 +62,9 @@ func (q *builderQuery[T]) Fingerprint() string {
 	// Add signal type
 	parts = append(parts, fmt.Sprintf("signal=%s", q.spec.Signal.StringValue()))
 
+	// Add source type
+	parts = append(parts, fmt.Sprintf("source=%s", q.spec.Source.StringValue()))
+
 	// Add step interval if present
 	parts = append(parts, fmt.Sprintf("step=%s", q.spec.StepInterval.String()))
 
@@ -89,6 +92,12 @@ func (q *builderQuery[T]) Fingerprint() string {
 	// Add filter if present
 	if q.spec.Filter != nil && q.spec.Filter.Expression != "" {
 		parts = append(parts, fmt.Sprintf("filter=%s", q.spec.Filter.Expression))
+
+		for name, item := range q.variables {
+			if strings.Contains(q.spec.Filter.Expression, "$"+name) {
+				parts = append(parts, fmt.Sprintf("%s=%s", name, fmt.Sprint(item.Value)))
+			}
+		}
 	}
 
 	// Add group by keys
@@ -188,7 +197,9 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 	if err != nil {
 		return nil, err
 	}
+
 	result.Warnings = stmt.Warnings
+	result.WarningsDocURL = stmt.WarningsDocURL
 	return result, nil
 }
 
@@ -210,6 +221,15 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 			return nil, errors.Newf(errors.TypeTimeout, errors.CodeTimeout, "Query timed out").
 				WithAdditional("Try refining your search by adding relevant resource attributes filtering")
 		}
+
+		if !errors.Is(err, context.Canceled) {
+			return nil, errors.Newf(
+				errors.TypeInternal,
+				errors.CodeInternal,
+				"Something went wrong on our end. It's not you, it's us. Our team is notified about it. Reach out to support if issue persists.",
+			)
+		}
+
 		return nil, err
 	}
 	defer rows.Close()
@@ -282,6 +302,9 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		}
 	}
 
+	var warnings []string
+	var warningsDocURL string
+
 	for _, r := range buckets {
 		q.spec.Offset = 0
 		q.spec.Limit = need
@@ -290,7 +313,8 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		if err != nil {
 			return nil, err
 		}
-
+		warnings = stmt.Warnings
+		warningsDocURL = stmt.WarningsDocURL
 		// Execute with proper context for partial value detection
 		res, err := q.executeWithContext(ctx, stmt.Query, stmt.Args)
 		if err != nil {
@@ -330,6 +354,8 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 			Rows:       rows,
 			NextCursor: nextCursor,
 		},
+		Warnings:       warnings,
+		WarningsDocURL: warningsDocURL,
 		Stats: qbtypes.ExecStats{
 			RowsScanned:  totalRows,
 			BytesScanned: totalBytes,

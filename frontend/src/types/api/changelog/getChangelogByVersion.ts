@@ -8,6 +8,12 @@ export type Media = {
 	[key: string]: any; // Allow other fields (e.g., mime, size) to be flexible
 };
 
+export enum DeploymentType {
+	ALL = 'All',
+	CLOUD_ONLY = 'Cloud only',
+	OSS_ONLY = 'OSS Only',
+}
+
 type Feature = {
 	id: number;
 	documentId: string;
@@ -17,7 +23,7 @@ type Feature = {
 	updatedAt: string;
 	publishedAt: string;
 	description: string;
-	deployment_type: string | null;
+	deployment_type: DeploymentType;
 	media: Media | null;
 };
 

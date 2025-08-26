@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	metricToUseForStatefulSets = GetDotMetrics("k8s_pod_cpu_utilization")
+	metricToUseForStatefulSets = GetDotMetrics("k8s_pod_cpu_usage")
 	k8sStatefulSetNameAttrKey  = GetDotMetrics("k8s_statefulset_name")
 
 	metricNamesForStatefulSets = map[string]string{

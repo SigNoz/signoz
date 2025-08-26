@@ -52,8 +52,10 @@ func (module *module) Create(ctx context.Context, timestamp int64, name string, 
 		funnel.CreatedBy = funnel.CreatedByUser.Identifiable.ID.String()
 	}
 
-	if err := module.store.Create(ctx, funnel); err != nil {
-		return nil, fmt.Errorf("failed to create funnel: %v", err)
+	err := module.store.Create(ctx, funnel)
+
+	if err != nil {
+		return nil, err
 	}
 
 	return funnel, nil

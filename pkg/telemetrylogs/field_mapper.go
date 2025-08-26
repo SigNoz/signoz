@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/huandu/go-sqlbuilder"
 
 	"golang.org/x/exp/maps"
 )
@@ -60,7 +61,6 @@ func NewFieldMapper() qbtypes.FieldMapper {
 }
 
 func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
-
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		return logsV2Columns["resource"], nil
@@ -162,7 +162,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 			// is it a static field?
 			if _, ok := logsV2Columns[field.Name]; ok {
 				// if it is, attach the column name directly
-				field.FieldContext = telemetrytypes.FieldContextSpan
+				field.FieldContext = telemetrytypes.FieldContextLog
 				colName, _ = m.FieldFor(ctx, field)
 			} else {
 				// - the context is not provided
@@ -176,7 +176,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
 				} else {
 					// not even a close match, return an error
-					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field %s not found", field.Name)
+					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name)
 				}
 			}
 		} else if len(keysForField) == 1 {
@@ -193,5 +193,5 @@ func (m *fieldMapper) ColumnExpressionFor(
 		}
 	}
 
-	return fmt.Sprintf("%s AS `%s`", colName, field.Name), nil
+	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(colName), field.Name), nil
 }

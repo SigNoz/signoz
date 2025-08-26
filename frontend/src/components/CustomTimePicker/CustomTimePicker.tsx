@@ -5,13 +5,12 @@ import './CustomTimePicker.styles.scss';
 import { Input, Popover, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import {
-	CustomTimeType,
 	FixedDurationSuggestionOptions,
 	Options,
 	RelativeDurationSuggestionOptions,
-	Time,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs from 'dayjs';
 import { isValidTimeFormat } from 'lib/getMinMax';
@@ -28,7 +27,10 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import CustomTimePickerPopoverContent from './CustomTimePickerPopoverContent';
@@ -58,10 +60,6 @@ interface CustomTimePickerProps {
 	setCustomDTPickerVisible?: Dispatch<SetStateAction<boolean>>;
 	onCustomDateHandler?: (dateTimeRange: DateTimeRangeType) => void;
 	handleGoLive?: () => void;
-	onTimeChange?: (
-		interval: Time | CustomTimeType,
-		dateTimeRange?: [number, number],
-	) => void;
 }
 
 function CustomTimePicker({
@@ -79,12 +77,15 @@ function CustomTimePicker({
 	setCustomDTPickerVisible,
 	onCustomDateHandler,
 	handleGoLive,
-	onTimeChange,
 }: CustomTimePickerProps): JSX.Element {
 	const [
 		selectedTimePlaceholderValue,
 		setSelectedTimePlaceholderValue,
 	] = useState('Select / Enter Time Range');
+
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	const [inputValue, setInputValue] = useState('');
 	const [inputStatus, setInputStatus] = useState<'' | 'error' | 'success'>('');
@@ -256,6 +257,11 @@ function CustomTimePicker({
 	};
 
 	const handleSelect = (label: string, value: string): void => {
+		if (label === 'Custom') {
+			setCustomDTPickerVisible?.(true);
+			return;
+		}
+
 		onSelect(value);
 		setSelectedTimePlaceholderValue(label);
 		setInputStatus('');
@@ -318,83 +324,105 @@ function CustomTimePicker({
 		);
 	};
 
+	const getTooltipTitle = (): string => {
+		if (selectedTime === 'custom' && inputValue === '' && !open) {
+			return `${dayjs(minTime / 1000_000)
+				.tz(timezone.value)
+				.format(DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS)} - ${dayjs(
+				maxTime / 1000_000,
+			)
+				.tz(timezone.value)
+				.format(DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS)}`;
+		}
+
+		return '';
+	};
+
 	return (
 		<div className="custom-time-picker">
-			<Popover
-				className={cx(
-					'timeSelection-input-container',
-					selectedTime === 'custom' && inputValue === '' ? 'custom-time' : '',
-				)}
-				placement="bottomRight"
-				getPopupContainer={popupContainer}
-				rootClassName="date-time-root"
-				content={
-					newPopover ? (
-						<CustomTimePickerPopoverContent
-							setIsOpen={setOpen}
-							customDateTimeVisible={defaultTo(customDateTimeVisible, false)}
-							setCustomDTPickerVisible={defaultTo(setCustomDTPickerVisible, noop)}
-							onCustomDateHandler={defaultTo(onCustomDateHandler, noop)}
-							onSelectHandler={handleSelect}
-							handleGoLive={defaultTo(handleGoLive, noop)}
-							options={items}
-							selectedTime={selectedTime}
-							activeView={activeView}
-							setActiveView={setActiveView}
-							setIsOpenedFromFooter={setIsOpenedFromFooter}
-							isOpenedFromFooter={isOpenedFromFooter}
-							onTimeChange={onTimeChange}
-						/>
-					) : (
-						content
-					)
-				}
-				arrow={false}
-				trigger="click"
-				open={open}
-				onOpenChange={handleOpenChange}
-				style={{
-					padding: 0,
-				}}
-			>
-				<Input
-					className="timeSelection-input"
-					type="text"
-					status={inputValue && inputStatus === 'error' ? 'error' : ''}
-					placeholder={
-						isInputFocused
-							? 'Time Format (1m or 2h or 3d or 4w)'
-							: selectedTimePlaceholderValue
-					}
-					value={inputValue}
-					onFocus={handleFocus}
-					onBlur={handleBlur}
-					onChange={handleInputChange}
-					prefix={
-						inputValue && inputStatus === 'success' ? (
-							<CheckCircle size={14} color="#51E7A8" />
+			<Tooltip title={getTooltipTitle()} placement="top">
+				<Popover
+					className={cx(
+						'timeSelection-input-container',
+						selectedTime === 'custom' && inputValue === '' ? 'custom-time' : '',
+					)}
+					placement="bottomRight"
+					getPopupContainer={popupContainer}
+					rootClassName="date-time-root"
+					content={
+						newPopover ? (
+							<CustomTimePickerPopoverContent
+								setIsOpen={setOpen}
+								customDateTimeVisible={defaultTo(customDateTimeVisible, false)}
+								setCustomDTPickerVisible={defaultTo(setCustomDTPickerVisible, noop)}
+								onCustomDateHandler={defaultTo(onCustomDateHandler, noop)}
+								onSelectHandler={handleSelect}
+								handleGoLive={defaultTo(handleGoLive, noop)}
+								options={items}
+								selectedTime={selectedTime}
+								activeView={activeView}
+								setActiveView={setActiveView}
+								setIsOpenedFromFooter={setIsOpenedFromFooter}
+								isOpenedFromFooter={isOpenedFromFooter}
+							/>
 						) : (
-							<Tooltip title="Enter time in format (e.g., 1m, 2h, 3d, 4w)">
-								<Clock size={14} />
-							</Tooltip>
+							content
 						)
 					}
-					suffix={
-						<>
-							{!!isTimezoneOverridden && activeTimezoneOffset && (
-								<div className="timezone-badge" onClick={handleTimezoneHintClick}>
-									<span>{activeTimezoneOffset}</span>
-								</div>
-							)}
-							<ChevronDown
-								size={14}
-								onClick={(): void => handleViewChange('datetime')}
-							/>
-						</>
-					}
-				/>
-			</Popover>
-
+					arrow={false}
+					trigger="click"
+					open={open}
+					onOpenChange={handleOpenChange}
+					style={{
+						padding: 0,
+					}}
+				>
+					<Input
+						className="timeSelection-input"
+						type="text"
+						status={inputValue && inputStatus === 'error' ? 'error' : ''}
+						placeholder={
+							isInputFocused
+								? 'Time Format (1m or 2h or 3d or 4w)'
+								: selectedTimePlaceholderValue
+						}
+						value={inputValue}
+						onFocus={handleFocus}
+						onClick={handleFocus}
+						onBlur={handleBlur}
+						onChange={handleInputChange}
+						data-1p-ignore
+						prefix={
+							<div className="time-input-prefix">
+								{inputValue && inputStatus === 'success' ? (
+									<CheckCircle size={14} color="#51E7A8" />
+								) : (
+									<Tooltip title="Enter time in format (e.g., 1m, 2h, 3d, 4w)">
+										<Clock size={14} className="cursor-pointer" />
+									</Tooltip>
+								)}
+							</div>
+						}
+						suffix={
+							<div className="time-input-suffix">
+								{!!isTimezoneOverridden && activeTimezoneOffset && (
+									<div className="timezone-badge" onClick={handleTimezoneHintClick}>
+										<span>{activeTimezoneOffset}</span>
+									</div>
+								)}
+								<ChevronDown
+									size={14}
+									className="cursor-pointer time-input-suffix-icon-badge"
+									onClick={(e): void => {
+										e.stopPropagation();
+										handleViewChange('datetime');
+									}}
+								/>
+							</div>
+						}
+					/>
+				</Popover>
+			</Tooltip>
 			{inputStatus === 'error' && inputErrorMessage && (
 				<Typography.Title level={5} className="valid-format-error">
 					{inputErrorMessage}
@@ -413,5 +441,4 @@ CustomTimePicker.defaultProps = {
 	onCustomDateHandler: noop,
 	handleGoLive: noop,
 	onCustomTimeStatusUpdate: noop,
-	onTimeChange: undefined,
 };

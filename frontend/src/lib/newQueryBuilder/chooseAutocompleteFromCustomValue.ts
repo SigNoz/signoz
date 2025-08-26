@@ -1,4 +1,5 @@
 import { initialAutocompleteData } from 'constants/queryBuilder';
+import { MetricsType } from 'container/MetricsApplication/constant';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -23,14 +24,16 @@ const getDataTypeForCustomValue = (dataType?: string): DataTypes => {
 export const chooseAutocompleteFromCustomValue = (
 	sourceList: BaseAutocompleteData[],
 	value: string,
-	isJSON?: boolean,
 	dataType?: DataTypes | 'number',
+	fieldType?: MetricsType | undefined,
 ): BaseAutocompleteData => {
 	const dataTypeToUse = getDataTypeForCustomValue(dataType);
 	const firstBaseAutoCompleteValue = sourceList.find(
 		(sourceAutoComplete) =>
 			value === sourceAutoComplete.key &&
-			(dataType === undefined || dataTypeToUse === sourceAutoComplete.dataType),
+			(dataType === undefined || dataTypeToUse === sourceAutoComplete.dataType) &&
+			((fieldType === undefined && sourceAutoComplete.type === '') ||
+				(fieldType !== undefined && fieldType === sourceAutoComplete.type)),
 	);
 
 	if (!firstBaseAutoCompleteValue) {
@@ -38,7 +41,7 @@ export const chooseAutocompleteFromCustomValue = (
 			...initialAutocompleteData,
 			key: value,
 			dataType: dataTypeToUse,
-			isJSON,
+			type: fieldType || '',
 		};
 	}
 

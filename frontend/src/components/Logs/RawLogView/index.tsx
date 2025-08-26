@@ -1,13 +1,11 @@
 import './RawLogView.styles.scss';
 
-import Convert from 'ansi-to-html';
 import { DrawerProps } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES, VIEWS } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { escapeHtml, unescapeString } from 'container/LogDetailedView/utils';
+import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
 import LogsExplorerContext from 'container/LogsExplorerContext';
-import dompurify from 'dompurify';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 // hooks
@@ -23,7 +21,6 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';
 import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
@@ -31,8 +28,6 @@ import { getLogIndicatorType } from '../LogStateIndicator/utils';
 // styles
 import { RawLogContent, RawLogViewContainer } from './styles';
 import { RawLogViewProps } from './types';
-
-const convert = new Convert();
 
 function RawLogView({
 	isActiveLog,
@@ -176,11 +171,7 @@ function RawLogView({
 
 	const html = useMemo(
 		() => ({
-			__html: convert.toHtml(
-				dompurify.sanitize(unescapeString(escapeHtml(text)), {
-					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
-				}),
-			),
+			__html: getSanitizedLogBody(text, { shouldEscapeHtml: true }),
 		}),
 		[text],
 	);

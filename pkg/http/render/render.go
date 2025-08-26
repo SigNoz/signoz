@@ -43,6 +43,8 @@ func Success(rw http.ResponseWriter, httpCode int, data interface{}) {
 		httpCode = http.StatusOK
 	}
 
+	rw.Header().Set("Content-Type", "application/json")
+
 	rw.WriteHeader(httpCode)
 	_, _ = rw.Write(body)
 }

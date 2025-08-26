@@ -1,6 +1,7 @@
 import { RelatedMetric } from 'api/metricsExplorer/getRelatedMetrics';
+import { Dispatch, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
-import { SuccessResponse } from 'types/api';
+import { SuccessResponse, Warning } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 export enum ExplorerTabs {
@@ -10,6 +11,7 @@ export enum ExplorerTabs {
 
 export interface TimeSeriesProps {
 	showOneChartPerQuery: boolean;
+	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 }
 
 export interface RelatedMetricsProps {

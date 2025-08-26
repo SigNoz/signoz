@@ -6,7 +6,6 @@ export enum MetricsExplorerEvents {
 	ModalOpened = 'Metrics Explorer: Modal opened',
 	MetricClicked = 'Metrics Explorer: Metric clicked',
 	FilterApplied = 'Metrics Explorer: Filter applied',
-	TimeUpdated = 'Metrics Explorer: Time updated',
 	TreemapViewChanged = 'Metrics Explorer: Treemap view changed',
 	PageNumberChanged = 'Metrics Explorer: Page number changed',
 	PageSizeChanged = 'Metrics Explorer: Page size changed',
@@ -48,4 +47,5 @@ export enum MetricsExplorerEventKeys {
 	YAxisUnit = 'yAxisUnit',
 	ViewName = 'viewName',
 	Filters = 'filters',
+	TimeRange = 'timeRange',
 }

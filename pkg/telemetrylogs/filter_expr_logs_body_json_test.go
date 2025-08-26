@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -19,6 +20,7 @@ func TestFilterExprLogsBodyJSON(t *testing.T) {
 	keys := buildCompleteFieldKeyMap()
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
@@ -161,7 +163,7 @@ func TestFilterExprLogsBodyJSON(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-			clause, _, err := querybuilder.PrepareWhereClause(tc.query, opts)
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts)
 
 			if tc.shouldPass {
 				if err != nil {
@@ -175,7 +177,7 @@ func TestFilterExprLogsBodyJSON(t *testing.T) {
 				}
 
 				// Build the SQL and print it for debugging
-				sql, args := clause.BuildWithFlavor(sqlbuilder.ClickHouse)
+				sql, args := clause.WhereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 				require.Equal(t, tc.expectedQuery, sql)
 				require.Equal(t, tc.expectedArgs, args)

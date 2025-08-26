@@ -60,14 +60,14 @@ function EntityLogsDetailedView({
 							...currentQuery.builder.queryData[0].aggregateAttribute,
 						},
 						filters: {
-							items: filterOutPrimaryFilters(logFilters.items, queryKeyFilters),
+							items: filterOutPrimaryFilters(logFilters?.items || [], queryKeyFilters),
 							op: 'AND',
 						},
 					},
 				],
 			},
 		}),
-		[currentQuery, logFilters.items, queryKeyFilters],
+		[currentQuery, logFilters?.items, queryKeyFilters],
 	);
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
@@ -78,7 +78,7 @@ function EntityLogsDetailedView({
 				<div className="filter-section">
 					{query && (
 						<QueryBuilderSearch
-							query={query}
+							query={query as IBuilderQuery}
 							onChange={(value): void => handleChangeLogFilters(value, VIEWS.LOGS)}
 							disableNavigationShortcuts
 						/>

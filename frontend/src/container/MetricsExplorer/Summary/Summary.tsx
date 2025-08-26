@@ -1,9 +1,11 @@
+/* eslint-disable no-nested-ternary */
 import './Summary.styles.scss';
 
 import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
+import NoLogs from 'container/NoLogs/NoLogs';
 import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
 import { useGetMetricsTreeMap } from 'hooks/metricsExplorer/useGetMetricsTreeMap';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
@@ -12,11 +14,13 @@ import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import InspectModal from '../Inspect';
 import MetricDetails from '../MetricDetails';
+import { MetricsLoading } from '../MetricsLoading/MetricsLoading';
 import {
 	IS_INSPECT_MODAL_OPEN_KEY,
 	IS_METRIC_DETAILS_OPEN_KEY,
@@ -75,14 +79,13 @@ function Summary(): JSX.Element {
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.TabChanged, {
 			[MetricsExplorerEventKeys.Tab]: 'summary',
+			[MetricsExplorerEventKeys.TimeRange]: {
+				startTime: convertNanoToMilliseconds(minTime),
+				endTime: convertNanoToMilliseconds(maxTime),
+			},
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
-
-	useEffect(() => {
-		logEvent(MetricsExplorerEvents.TimeUpdated, {
-			[MetricsExplorerEventKeys.Tab]: 'summary',
-		});
-	}, [maxTime, minTime]);
 
 	// This is used to avoid the filters from being serialized with the id
 	const queryFiltersWithoutId = useMemo(() => {
@@ -168,9 +171,11 @@ function Summary(): JSX.Element {
 				[SUMMARY_FILTERS_KEY]: JSON.stringify(value),
 			});
 			setCurrentPage(1);
-			logEvent(MetricsExplorerEvents.FilterApplied, {
-				[MetricsExplorerEventKeys.Tab]: 'summary',
-			});
+			if (value.items.length > 0) {
+				logEvent(MetricsExplorerEvents.FilterApplied, {
+					[MetricsExplorerEventKeys.Tab]: 'summary',
+				});
+			}
 		},
 		[setSearchParams, searchParams],
 	);
@@ -266,30 +271,64 @@ function Summary(): JSX.Element {
 		});
 	};
 
+	const isMetricsListDataEmpty = useMemo(
+		() =>
+			formattedMetricsData.length === 0 && !isMetricsLoading && !isMetricsFetching,
+		[formattedMetricsData, isMetricsLoading, isMetricsFetching],
+	);
+
+	const isMetricsTreeMapDataEmpty = useMemo(
+		() =>
+			!treeMapData?.payload?.data[heatmapView]?.length &&
+			!isTreeMapLoading &&
+			!isTreeMapFetching,
+		[
+			treeMapData?.payload?.data,
+			heatmapView,
+			isTreeMapLoading,
+			isTreeMapFetching,
+		],
+	);
+
+	console.log({
+		isMetricsListDataEmpty,
+		isMetricsTreeMapDataEmpty,
+		treeMapData,
+		sec: treeMapData?.payload?.data[heatmapView],
+	});
+
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-summary-tab">
 				<MetricsSearch query={searchQuery} onChange={handleFilterChange} />
-				<MetricsTreemap
-					data={treeMapData?.payload}
-					isLoading={isTreeMapLoading || isTreeMapFetching}
-					isError={isProportionViewError}
-					viewType={heatmapView}
-					openMetricDetails={openMetricDetails}
-					setHeatmapView={handleSetHeatmapView}
-				/>
-				<MetricsTable
-					isLoading={isMetricsLoading || isMetricsFetching}
-					isError={isListViewError}
-					data={formattedMetricsData}
-					pageSize={pageSize}
-					currentPage={currentPage}
-					onPaginationChange={onPaginationChange}
-					setOrderBy={handleSetOrderBy}
-					totalCount={metricsData?.payload?.data?.total || 0}
-					openMetricDetails={openMetricDetails}
-					queryFilters={queryFilters}
-				/>
+				{isMetricsLoading || isTreeMapLoading ? (
+					<MetricsLoading />
+				) : isMetricsListDataEmpty && isMetricsTreeMapDataEmpty ? (
+					<NoLogs dataSource={DataSource.METRICS} />
+				) : (
+					<>
+						<MetricsTreemap
+							data={treeMapData?.payload}
+							isLoading={isTreeMapLoading || isTreeMapFetching}
+							isError={isProportionViewError}
+							viewType={heatmapView}
+							openMetricDetails={openMetricDetails}
+							setHeatmapView={handleSetHeatmapView}
+						/>
+						<MetricsTable
+							isLoading={isMetricsLoading || isMetricsFetching}
+							isError={isListViewError}
+							data={formattedMetricsData}
+							pageSize={pageSize}
+							currentPage={currentPage}
+							onPaginationChange={onPaginationChange}
+							setOrderBy={handleSetOrderBy}
+							totalCount={metricsData?.payload?.data?.total || 0}
+							openMetricDetails={openMetricDetails}
+							queryFilters={queryFilters}
+						/>
+					</>
+				)}
 			</div>
 			{isMetricDetailsOpen && (
 				<MetricDetails

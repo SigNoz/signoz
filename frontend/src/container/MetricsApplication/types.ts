@@ -22,6 +22,7 @@ export interface NavigateToTraceProps {
 	selectedTraceTags: string;
 	apmToTraceQuery: Query;
 	safeNavigate: (path: string) => void;
+	openInNewTab: boolean;
 }
 
 export interface DatabaseCallsRPSProps extends DatabaseCallProps {

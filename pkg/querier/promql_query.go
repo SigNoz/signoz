@@ -63,7 +63,7 @@ func (q *promqlQuery) Window() (uint64, uint64) {
 func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem, start, end uint64) (string, error) {
 	varsData := map[string]any{}
 	for k, v := range vars {
-		varsData[k] = formatValueForProm(v)
+		varsData[k] = formatValueForProm(v.Value)
 	}
 
 	querybuilder.AssignReservedVars(varsData, start, end)

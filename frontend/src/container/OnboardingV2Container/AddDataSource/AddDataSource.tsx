@@ -434,6 +434,9 @@ function OnboardingAddDataSource(): JSX.Element {
 					history.push(ROUTES.LOGS);
 					break;
 				case 'metrics':
+					history.push(ROUTES.METRICS_EXPLORER);
+					break;
+				case 'dashboards':
 					history.push(ROUTES.ALL_DASHBOARD);
 					break;
 				case 'infra-monitoring-hosts':
@@ -453,6 +456,9 @@ function OnboardingAddDataSource(): JSX.Element {
 					break;
 				case 'home':
 					history.push(ROUTES.HOME);
+					break;
+				case 'api-monitoring':
+					history.push(ROUTES.API_MONITORING);
 					break;
 				default:
 					history.push(ROUTES.APPLICATION);

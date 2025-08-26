@@ -72,6 +72,7 @@ function SearchBar({
 					onKeyDown={handleKeyDown}
 					tabIndex={0}
 					autoFocus
+					data-1p-ignore
 				/>
 			</div>
 			<kbd className="timezone-picker__esc-key">esc</kbd>

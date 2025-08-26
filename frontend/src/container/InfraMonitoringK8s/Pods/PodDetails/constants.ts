@@ -72,10 +72,7 @@ export const getPodMetricsQueryPayload = (
 		dotMetricsEnabled ? dotKey : underscoreKey;
 	const k8sContainerNameKey = getKey('k8s.container.name', 'k8s_container_name');
 
-	const k8sPodCpuUtilKey = getKey(
-		'k8s.pod.cpu.utilization',
-		'k8s_pod_cpu_utilization',
-	);
+	const k8sPodCpuUtilKey = getKey('k8s.pod.cpu.usage', 'k8s_pod_cpu_usage');
 
 	const k8sPodCpuReqUtilKey = getKey(
 		'k8s.pod.cpu_request_utilization',
@@ -115,8 +112,8 @@ export const getPodMetricsQueryPayload = (
 	);
 
 	const containerCpuUtilKey = getKey(
-		'container.cpu.utilization',
-		'container_cpu_utilization',
+		'container.cpu.usage',
+		'container_cpu_usage',
 	);
 
 	const k8sContainerCpuRequestKey = getKey(
@@ -189,9 +186,7 @@ export const getPodMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'k8s_pod_cpu_utilization--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+								id: 'k8s_pod_cpu_usage--float64--Gauge--true',
 								key: k8sPodCpuUtilKey,
 								type: 'Gauge',
 							},
@@ -206,8 +201,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -219,8 +212,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -245,9 +236,7 @@ export const getPodMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'k8s_pod_cpu_utilization--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+								id: 'k8s_pod_cpu_usage--float64--Gauge--true',
 								key: k8sPodCpuUtilKey,
 								type: 'Gauge',
 							},
@@ -262,8 +251,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -275,8 +262,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -301,9 +286,7 @@ export const getPodMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'k8s_pod_cpu_utilization--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+								id: 'k8s_pod_cpu_usage--float64--Gauge--true',
 								key: k8sPodCpuUtilKey,
 								type: 'Gauge',
 							},
@@ -318,8 +301,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -331,8 +312,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -391,8 +370,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_cpu_request_utilization--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodCpuReqUtilKey,
 								type: 'Gauge',
 							},
@@ -407,8 +384,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -420,8 +395,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -447,8 +420,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_cpu_limit_utilization--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodCpuLimitUtilKey,
 								type: 'Gauge',
 							},
@@ -463,8 +434,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -476,8 +445,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -503,8 +470,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_cpu_request_utilization--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodCpuReqUtilKey,
 								type: 'Gauge',
 							},
@@ -519,8 +484,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -532,8 +495,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -559,8 +520,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_cpu_request_utilization--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodCpuReqUtilKey,
 								type: 'Gauge',
 							},
@@ -575,8 +534,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -588,8 +545,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -615,8 +570,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_cpu_limit_utilization--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodCpuLimitUtilKey,
 								type: 'Gauge',
 							},
@@ -631,8 +584,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -644,8 +595,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -671,8 +620,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_cpu_limit_utilization--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodCpuLimitUtilKey,
 								type: 'Gauge',
 							},
@@ -687,8 +634,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -700,8 +645,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -760,8 +703,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_usage--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemUsageKey,
 								type: 'Gauge',
 							},
@@ -776,8 +717,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -789,8 +728,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -816,8 +753,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_usage--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemUsageKey,
 								type: 'Gauge',
 							},
@@ -832,8 +767,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -845,8 +778,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -872,8 +803,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_usage--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemUsageKey,
 								type: 'Gauge',
 							},
@@ -888,8 +817,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -901,8 +828,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -961,8 +886,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_request_utilization--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemReqUtilKey,
 								type: 'Gauge',
 							},
@@ -977,8 +900,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -990,8 +911,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -1017,8 +936,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_limit_utilization--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemLimitUtilKey,
 								type: 'Gauge',
 							},
@@ -1033,8 +950,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1046,8 +961,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -1073,8 +986,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_request_utilization--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemReqUtilKey,
 								type: 'Gauge',
 							},
@@ -1089,8 +1000,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1102,8 +1011,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -1129,8 +1036,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_limit_utilization--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemLimitUtilKey,
 								type: 'Gauge',
 							},
@@ -1145,8 +1050,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1158,8 +1061,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -1185,8 +1086,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_request_utilization--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemReqUtilKey,
 								type: 'Gauge',
 							},
@@ -1201,8 +1100,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1214,8 +1111,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -1241,8 +1136,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_limit_utilization--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemLimitUtilKey,
 								type: 'Gauge',
 							},
@@ -1257,8 +1150,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1270,8 +1161,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -1330,8 +1219,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_rss--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemRssKey,
 								type: 'Gauge',
 							},
@@ -1346,8 +1233,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1359,8 +1244,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -1386,8 +1269,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_working_set--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemWorkingSetKey,
 								type: 'Gauge',
 							},
@@ -1402,8 +1283,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1415,8 +1294,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -1482,8 +1359,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_major_page_faults--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemMajorPFKey,
 								type: 'Gauge',
 							},
@@ -1498,8 +1373,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1511,8 +1384,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -1570,9 +1441,7 @@ export const getPodMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'container_cpu_utilization--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+								id: 'container_cpu_usage--float64--Gauge--true',
 								key: containerCpuUtilKey,
 								type: 'Gauge',
 							},
@@ -1587,8 +1456,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1600,8 +1467,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -1616,8 +1481,6 @@ export const getPodMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_container_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: k8sContainerNameKey,
 									type: 'tag',
 								},
@@ -1668,9 +1531,7 @@ export const getPodMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'container_cpu_utilization--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+								id: 'container_cpu_usage--float64--Gauge--true',
 								key: containerCpuUtilKey,
 								type: 'Gauge',
 							},
@@ -1685,8 +1546,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1698,8 +1557,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -1714,8 +1571,6 @@ export const getPodMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_container_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: k8sContainerNameKey,
 									type: 'tag',
 								},
@@ -1734,8 +1589,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_cpu_request--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sContainerCpuRequestKey,
 								type: 'Gauge',
 							},
@@ -1750,8 +1603,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1763,8 +1614,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -1779,8 +1628,6 @@ export const getPodMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_container_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: k8sContainerNameKey,
 									type: 'tag',
 								},
@@ -1799,8 +1646,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_cpu_limit--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sContainerCpuLimitKey,
 								type: 'Gauge',
 							},
@@ -1815,8 +1660,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1828,8 +1671,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -1844,8 +1685,6 @@ export const getPodMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_container_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: k8sContainerNameKey,
 									type: 'tag',
 								},
@@ -1910,8 +1749,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'container_memory_usage--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: containerMemUsageKey,
 								type: 'Gauge',
 							},
@@ -1926,8 +1763,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1939,8 +1774,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -1955,8 +1788,6 @@ export const getPodMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_container_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: k8sContainerNameKey,
 									type: 'tag',
 								},
@@ -1975,8 +1806,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'container_memory_working_set--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: containerMemWorkingSetKey,
 								type: 'Gauge',
 							},
@@ -1991,8 +1820,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -2004,8 +1831,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -2020,8 +1845,6 @@ export const getPodMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_container_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: k8sContainerNameKey,
 									type: 'tag',
 								},
@@ -2040,8 +1863,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'container_memory_rss--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: containerMemRssKey,
 								type: 'Gauge',
 							},
@@ -2056,8 +1877,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -2069,8 +1888,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -2085,8 +1902,6 @@ export const getPodMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_container_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: k8sContainerNameKey,
 									type: 'tag',
 								},
@@ -2138,8 +1953,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'container_memory_usage--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: containerMemUsageKey,
 								type: 'Gauge',
 							},
@@ -2154,8 +1967,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -2167,8 +1978,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -2183,8 +1992,6 @@ export const getPodMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_container_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: k8sContainerNameKey,
 									type: 'tag',
 								},
@@ -2203,8 +2010,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_memory_request--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sContainerMemoryRequestKey,
 								type: 'Gauge',
 							},
@@ -2219,8 +2024,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -2232,8 +2035,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -2248,8 +2049,6 @@ export const getPodMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_container_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: k8sContainerNameKey,
 									type: 'tag',
 								},
@@ -2268,8 +2067,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_memory_limit--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sContainerMemoryLimitKey,
 								type: 'Gauge',
 							},
@@ -2284,8 +2081,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -2297,8 +2092,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -2313,8 +2106,6 @@ export const getPodMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_container_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: k8sContainerNameKey,
 									type: 'tag',
 								},
@@ -2379,8 +2170,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_network_io--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodNetworkIoKey,
 								type: 'Sum',
 							},
@@ -2395,8 +2184,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -2408,8 +2195,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -2424,16 +2209,12 @@ export const getPodMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'interface--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'interface',
 									type: 'tag',
 								},
 								{
 									dataType: DataTypes.String,
 									id: 'direction--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'direction',
 									type: 'tag',
 								},
@@ -2485,8 +2266,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_network_errors--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodNetworkErrorsKey,
 								type: 'Sum',
 							},
@@ -2501,8 +2280,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -2514,8 +2291,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -2530,16 +2305,12 @@ export const getPodMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'interface--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'interface',
 									type: 'tag',
 								},
 								{
 									dataType: DataTypes.String,
 									id: 'direction--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'direction',
 									type: 'tag',
 								},
@@ -2591,8 +2362,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_filesystem_capacity--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodFilesystemCapacityKey,
 								type: 'Gauge',
 							},
@@ -2607,8 +2376,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -2620,8 +2387,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -2647,8 +2412,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_filesystem_available--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodFilesystemAvailableKey,
 								type: 'Gauge',
 							},
@@ -2663,8 +2426,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -2676,8 +2437,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -2703,8 +2462,6 @@ export const getPodMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_filesystem_usage--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodFilesystemUsageKey,
 								type: 'Gauge',
 							},
@@ -2719,8 +2476,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -2732,8 +2487,6 @@ export const getPodMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},

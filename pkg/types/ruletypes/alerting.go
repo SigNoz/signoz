@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 // this file contains common structs and methods used by
@@ -131,9 +133,29 @@ func (rc *RuleCondition) GetSelectedQueryName() string {
 				for name := range rc.CompositeQuery.BuilderQueries {
 					queryNames[name] = struct{}{}
 				}
+
+				for _, query := range rc.CompositeQuery.Queries {
+					switch spec := query.Spec.(type) {
+					case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+						queryNames[spec.Name] = struct{}{}
+					case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+						queryNames[spec.Name] = struct{}{}
+					case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+						queryNames[spec.Name] = struct{}{}
+					case qbtypes.QueryBuilderFormula:
+						queryNames[spec.Name] = struct{}{}
+					}
+				}
 			} else if rc.QueryType() == v3.QueryTypeClickHouseSQL {
 				for name := range rc.CompositeQuery.ClickHouseQueries {
 					queryNames[name] = struct{}{}
+				}
+
+				for _, query := range rc.CompositeQuery.Queries {
+					switch spec := query.Spec.(type) {
+					case qbtypes.ClickHouseQuery:
+						queryNames[spec.Name] = struct{}{}
+					}
 				}
 			}
 		}
@@ -175,7 +197,7 @@ func (rc *RuleCondition) IsValid() bool {
 	}
 	if rc.QueryType() == v3.QueryTypePromQL {
 
-		if len(rc.CompositeQuery.PromQueries) == 0 {
+		if len(rc.CompositeQuery.PromQueries) == 0 && len(rc.CompositeQuery.Queries) == 0 {
 			return false
 		}
 	}

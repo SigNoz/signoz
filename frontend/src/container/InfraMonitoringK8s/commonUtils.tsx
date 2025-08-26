@@ -285,9 +285,13 @@ export const getFiltersFromParams = (
 ): IBuilderQuery['filters'] | null => {
 	const filtersFromParams = searchParams.get(queryKey);
 	if (filtersFromParams) {
-		const decoded = decodeURIComponent(filtersFromParams);
-		const parsed = JSON.parse(decoded);
-		return parsed as IBuilderQuery['filters'];
+		try {
+			const decoded = decodeURIComponent(filtersFromParams);
+			const parsed = JSON.parse(decoded);
+			return parsed as IBuilderQuery['filters'];
+		} catch (error) {
+			return null;
+		}
 	}
 	return null;
 };

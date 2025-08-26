@@ -7,9 +7,6 @@ import {
 	outputWithFunctions,
 	replaceVariables,
 	stepIntervalUnchanged,
-	widgetQueriesWithFunctions,
-	widgetQueryWithoutVariables,
-	widgetQueryWithVariables,
 } from './mapQueryDataFromApiInputs';
 
 jest.mock('uuid', () => ({
@@ -18,10 +15,7 @@ jest.mock('uuid', () => ({
 
 describe('mapQueryDataFromApi function tests', () => {
 	it('should not update the step interval when query is passed', () => {
-		const output = mapQueryDataFromApi(
-			compositeQueryWithoutVariables,
-			widgetQueryWithoutVariables,
-		);
+		const output = mapQueryDataFromApi(compositeQueryWithoutVariables);
 
 		// composite query is the response from the `v3/query_range/format` API call.
 		// even if the composite query returns stepInterval updated do not modify it
@@ -29,20 +23,14 @@ describe('mapQueryDataFromApi function tests', () => {
 	});
 
 	it('should update filter from the composite query', () => {
-		const output = mapQueryDataFromApi(
-			compositeQueryWithVariables,
-			widgetQueryWithVariables,
-		);
+		const output = mapQueryDataFromApi(compositeQueryWithVariables);
 
 		// replace the variables in the widget query and leave the rest items untouched
 		expect(output).toStrictEqual(replaceVariables);
 	});
 
 	it('should not update the step intervals with multiple queries and functions', () => {
-		const output = mapQueryDataFromApi(
-			compositeQueriesWithFunctions,
-			widgetQueriesWithFunctions,
-		);
+		const output = mapQueryDataFromApi(compositeQueriesWithFunctions);
 
 		expect(output).toStrictEqual(outputWithFunctions);
 	});

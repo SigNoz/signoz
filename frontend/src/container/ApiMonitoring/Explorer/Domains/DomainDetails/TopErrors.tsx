@@ -58,17 +58,15 @@ function TopErrors({
 									id: '92b8a1c1',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.URL_PATH,
 										type: 'tag',
 									},
 									op: '=',
 									value: endPointName,
 								},
-								...initialFilters.items,
+								...(initialFilters?.items || []),
 						  ]
-						: [...initialFilters.items],
+						: [...(initialFilters?.items || [])],
 					op: 'AND',
 				},
 				showStatusCodeErrors,
@@ -236,7 +234,7 @@ function TopErrors({
 								record.statusCode,
 							);
 							navigateToExplorer({
-								filters: [...filters.items],
+								filters: [...(filters?.items || [])],
 								dataSource: DataSource.TRACES,
 								startTime: minTime,
 								endTime: maxTime,

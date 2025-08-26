@@ -3,6 +3,7 @@ import './FunnelsEmptyState.styles.scss';
 import { Button } from 'antd';
 import LearnMore from 'components/LearnMore/LearnMore';
 import { Plus } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 
 interface FunnelsEmptyStateProps {
 	onCreateFunnel?: () => void;
@@ -11,6 +12,8 @@ interface FunnelsEmptyStateProps {
 function FunnelsEmptyState({
 	onCreateFunnel,
 }: FunnelsEmptyStateProps): JSX.Element {
+	const { hasEditPermission } = useAppContext();
+
 	return (
 		<div className="funnels-empty">
 			<div className="funnels-empty__content">
@@ -29,14 +32,16 @@ function FunnelsEmptyState({
 				</section>
 
 				<div className="funnels-empty__actions">
-					<Button
-						type="primary"
-						icon={<Plus size={16} />}
-						onClick={onCreateFunnel}
-						className="funnels-empty__new-btn"
-					>
-						New funnel
-					</Button>
+					{hasEditPermission && (
+						<Button
+							type="primary"
+							icon={<Plus size={16} />}
+							onClick={onCreateFunnel}
+							className="funnels-empty__new-btn"
+						>
+							New funnel
+						</Button>
+					)}
 					<LearnMore url="https://signoz.io/blog/tracing-funnels-observability-distributed-systems/" />
 				</div>
 			</div>

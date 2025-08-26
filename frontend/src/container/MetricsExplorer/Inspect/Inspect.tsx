@@ -11,6 +11,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Compass } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import ExpandedView from './ExpandedView';
@@ -214,7 +215,7 @@ function Inspect({
 						dispatchMetricInspectionOptions={handleDispatchMetricInspectionOptions}
 						inspectionStep={inspectionStep}
 						inspectMetricsTimeSeries={inspectMetricsTimeSeries}
-						searchQuery={searchQuery}
+						searchQuery={searchQuery as IBuilderQuery}
 					/>
 				</div>
 				<div className="inspect-metrics-content-second-col">

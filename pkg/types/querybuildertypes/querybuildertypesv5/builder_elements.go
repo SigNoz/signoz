@@ -34,7 +34,7 @@ func (s *Step) UnmarshalJSON(b []byte) error {
 		s.Duration = d
 		return nil
 	}
-	var sec float64 // 30 → 30 s ; 0.5 → 500 ms
+	var sec float64
 	if err := json.Unmarshal(b, &sec); err != nil {
 		return errors.WrapInvalidInputf(
 			err,
@@ -47,8 +47,12 @@ func (s *Step) UnmarshalJSON(b []byte) error {
 }
 
 func (s Step) MarshalJSON() ([]byte, error) {
-	// Emit human‑friendly string → "30s"
-	return json.Marshal(s.Duration.String())
+	return json.Marshal(s.Duration.Seconds())
+}
+
+// Copy creates a copy of Step
+func (s Step) Copy() Step {
+	return s
 }
 
 // FilterOperator is the operator for the filter.
@@ -306,11 +310,21 @@ type TraceAggregation struct {
 	Alias string `json:"alias,omitempty"`
 }
 
+// Copy creates a deep copy of TraceAggregation
+func (t TraceAggregation) Copy() TraceAggregation {
+	return t
+}
+
 type LogAggregation struct {
 	// aggregation expression - example: count(), sum(item_price), countIf(day > 10)
 	Expression string `json:"expression"`
 	// if any, it will be used as the alias of the aggregation in the result
 	Alias string `json:"alias,omitempty"`
+}
+
+// Copy creates a deep copy of LogAggregation
+func (l LogAggregation) Copy() LogAggregation {
+	return l
 }
 
 type MetricAggregation struct {
@@ -332,13 +346,42 @@ type MetricAggregation struct {
 	ReduceTo ReduceTo `json:"reduceTo,omitempty"`
 }
 
+// Copy creates a deep copy of MetricAggregation
+func (m MetricAggregation) Copy() MetricAggregation {
+	c := m
+	if m.TableHints != nil {
+		tableHintsCopy := *m.TableHints
+		c.TableHints = &tableHintsCopy
+	}
+	if m.ValueFilter != nil {
+		valueFilterCopy := *m.ValueFilter
+		c.ValueFilter = &valueFilterCopy
+	}
+	return c
+}
+
 type Filter struct {
 	// expression to filter by following the filter syntax
 	Expression string `json:"expression"`
 }
 
+// Copy creates a deep copy of Filter
+func (f *Filter) Copy() *Filter {
+	if f == nil {
+		return nil
+	}
+	return &Filter{
+		Expression: f.Expression,
+	}
+}
+
 type GroupByKey struct {
 	telemetrytypes.TelemetryFieldKey
+}
+
+// Copy creates a deep copy of GroupByKey
+func (g GroupByKey) Copy() GroupByKey {
+	return g
 }
 
 type Having struct {
@@ -346,8 +389,23 @@ type Having struct {
 	Expression string `json:"expression"`
 }
 
+// Copy creates a deep copy of Having
+func (h *Having) Copy() *Having {
+	if h == nil {
+		return nil
+	}
+	return &Having{
+		Expression: h.Expression,
+	}
+}
+
 type OrderByKey struct {
 	telemetrytypes.TelemetryFieldKey
+}
+
+// Copy creates a deep copy of OrderByKey
+func (o OrderByKey) Copy() OrderByKey {
+	return o
 }
 
 // key to order by
@@ -356,6 +414,14 @@ type OrderBy struct {
 	Key OrderByKey `json:"key"`
 	// direction to order by
 	Direction OrderDirection `json:"direction"`
+}
+
+// Copy creates a deep copy of OrderBy
+func (o OrderBy) Copy() OrderBy {
+	return OrderBy{
+		Key:       o.Key.Copy(),
+		Direction: o.Direction,
+	}
 }
 
 // secondary aggregation to apply to the query
@@ -374,7 +440,32 @@ type SecondaryAggregation struct {
 	// limit the maximum number of rows to return
 	Limit int `json:"limit,omitempty"`
 	// limitBy fields to limit by
-	LimitBy LimitBy `json:"limitBy,omitempty"`
+	LimitBy *LimitBy `json:"limitBy,omitempty"`
+}
+
+// Copy creates a deep copy of SecondaryAggregation
+func (s SecondaryAggregation) Copy() SecondaryAggregation {
+	c := s
+
+	if s.GroupBy != nil {
+		c.GroupBy = make([]GroupByKey, len(s.GroupBy))
+		for i, gb := range s.GroupBy {
+			c.GroupBy[i] = gb.Copy()
+		}
+	}
+
+	if s.Order != nil {
+		c.Order = make([]OrderBy, len(s.Order))
+		for i, o := range s.Order {
+			c.Order[i] = o.Copy()
+		}
+	}
+
+	if s.LimitBy != nil {
+		c.LimitBy = s.LimitBy.Copy()
+	}
+
+	return c
 }
 
 type FunctionArg struct {
@@ -382,6 +473,13 @@ type FunctionArg struct {
 	Name string `json:"name,omitempty"`
 	// value of the argument
 	Value any `json:"value"`
+}
+
+// Copy creates a deep copy of FunctionArg
+func (f FunctionArg) Copy() FunctionArg {
+	// value is an interface{}, we keep it as-is
+	// in practice, it's usually primitives (string, float64, etc)
+	return f
 }
 
 type Function struct {
@@ -392,9 +490,38 @@ type Function struct {
 	Args []FunctionArg `json:"args,omitempty"`
 }
 
+// Copy creates a deep copy of Function
+func (f Function) Copy() Function {
+	c := f
+
+	if f.Args != nil {
+		c.Args = make([]FunctionArg, len(f.Args))
+		for i, arg := range f.Args {
+			c.Args[i] = arg.Copy()
+		}
+	}
+
+	return c
+}
+
 type LimitBy struct {
 	// keys to limit by
 	Keys []string `json:"keys"`
 	// value to limit by
 	Value string `json:"value"`
+}
+
+// Copy creates a deep copy of LimitBy
+func (l *LimitBy) Copy() *LimitBy {
+	if l == nil {
+		return nil
+	}
+	c := &LimitBy{
+		Value: l.Value,
+	}
+	if l.Keys != nil {
+		c.Keys = make([]string, len(l.Keys))
+		copy(c.Keys, l.Keys)
+	}
+	return c
 }

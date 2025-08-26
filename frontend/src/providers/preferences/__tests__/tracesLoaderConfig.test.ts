@@ -4,6 +4,7 @@ import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import tracesLoaderConfig from '../configs/tracesLoaderConfig';
 
@@ -58,8 +59,6 @@ describe('tracesLoaderConfig', () => {
 			{
 				key: 'test-trace-column',
 				type: 'tag',
-				dataType: DataTypes.String,
-				isColumn: true,
 			},
 		];
 
@@ -92,7 +91,6 @@ describe('tracesLoaderConfig', () => {
 				key: 'url-trace-column',
 				type: 'tag',
 				dataType: DataTypes.String,
-				isColumn: true,
 			},
 		];
 
@@ -125,7 +123,7 @@ describe('tracesLoaderConfig', () => {
 		const result = await tracesLoaderConfig.default();
 
 		expect(result).toEqual({
-			columns: defaultTraceSelectedColumns as BaseAutocompleteData[],
+			columns: defaultTraceSelectedColumns as TelemetryFieldKey[],
 		});
 	});
 });

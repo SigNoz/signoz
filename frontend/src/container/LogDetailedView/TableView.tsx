@@ -14,6 +14,7 @@ import { ResizeTable } from 'components/ResizeTable';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
+import { MetricsType } from 'container/MetricsApplication/constant';
 import { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
@@ -32,7 +33,7 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { ActionItemProps } from './ActionItem';
 import FieldRenderer from './FieldRenderer';
-import { TableViewActions } from './TableView/TableViewActions';
+import TableViewActions from './TableView/TableViewActions';
 import {
 	filterKeyForField,
 	findKeyPath,
@@ -46,11 +47,7 @@ interface TableViewProps {
 	selectedOptions: OptionsQuery;
 	isListViewPanel?: boolean;
 	listViewPanelSelectedFields?: IField[] | null;
-	onGroupByAttribute?: (
-		fieldKey: string,
-		isJSON?: boolean,
-		dataType?: DataTypes,
-	) => Promise<void>;
+	onGroupByAttribute?: (fieldKey: string, dataType?: DataTypes) => Promise<void>;
 }
 
 type Props = TableViewProps &
@@ -87,8 +84,9 @@ function TableView({
 				}
 			});
 		} else {
+			// eslint-disable-next-line sonarjs/no-identical-functions
 			selectedOptions.selectColumns.forEach((val) => {
-				const path = findKeyPath(logData, val.key, '');
+				const path = findKeyPath(logData, val.name, '');
 				if (path) {
 					pinnedAttributes[path] = true;
 				}
@@ -113,6 +111,7 @@ function TableView({
 		fieldKey: string,
 		fieldValue: string,
 		dataType: string | undefined,
+		fieldType: string | undefined,
 	): void => {
 		const validatedFieldValue = removeJSONStringifyQuotes(fieldValue);
 		if (onClickActionItem) {
@@ -120,8 +119,8 @@ function TableView({
 				fieldKey,
 				validatedFieldValue,
 				operator,
-				undefined,
 				dataType as DataTypes,
+				fieldType,
 			);
 		}
 	};
@@ -131,8 +130,9 @@ function TableView({
 		fieldKey: string,
 		fieldValue: string,
 		dataType: string | undefined,
+		fieldType: MetricsType | undefined,
 	) => (): void => {
-		handleClick(operator, fieldKey, fieldValue, dataType);
+		handleClick(operator, fieldKey, fieldValue, dataType, fieldType);
 		if (operator === OPERATORS['=']) {
 			setIsFilterInLoading(true);
 		}

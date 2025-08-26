@@ -262,24 +262,23 @@ function QueryBuilderSearch({
 	};
 
 	const queryTags = useMemo(() => {
-		if (!query.aggregateAttribute.key && isMetricsDataSource) return [];
+		if (!query.aggregateAttribute?.key && isMetricsDataSource) return [];
 		return tags;
-	}, [isMetricsDataSource, query.aggregateAttribute.key, tags]);
+	}, [isMetricsDataSource, query.aggregateAttribute?.key, tags]);
 
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
-		const initialSourceKeys = query.filters.items?.map(
+		const initialSourceKeys = query.filters?.items?.map(
 			(item) => item.key as BaseAutocompleteData,
 		);
 
-		initialTagFilters.items = tags.map((tag, index) => {
-			const isJsonTrue = query.filters?.items[index]?.key?.isJSON;
-
+		initialTagFilters.items = tags.map((tag) => {
 			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
 
-			const filterAttribute = [...initialSourceKeys, ...sourceKeys].find(
-				(key) => key?.key === getRemovePrefixFromKey(tagKey),
-			);
+			const filterAttribute = [
+				...(initialSourceKeys || []),
+				...(sourceKeys || []),
+			].find((key) => key?.key === getRemovePrefixFromKey(tagKey));
 
 			const computedTagValue =
 				tagValue && Array.isArray(tagValue) && tagValue[tagValue.length - 1] === ''
@@ -292,8 +291,6 @@ function QueryBuilderSearch({
 					key: tagKey,
 					dataType: fetchValueDataType(computedTagValue, tagOperator),
 					type: '',
-					isColumn: false,
-					isJSON: isJsonTrue,
 				},
 				op: getOperatorValue(tagOperator),
 				value: computedTagValue,
@@ -385,7 +382,7 @@ function QueryBuilderSearch({
 					!showAllFilters && options.length > 3 && !key ? 'hide-scroll' : '',
 				)}
 				rootClassName="query-builder-search"
-				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+				disabled={isMetricsDataSource && !query.aggregateAttribute?.key}
 				style={selectStyle}
 				onSearch={handleSearch}
 				onChange={onChangeHandler}

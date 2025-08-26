@@ -28,6 +28,7 @@ describe('HostsListControls', () => {
 			<HostsListControls
 				handleFiltersChange={mockHandleFiltersChange}
 				filters={mockFilters}
+				showAutoRefresh={false}
 			/>,
 		);
 

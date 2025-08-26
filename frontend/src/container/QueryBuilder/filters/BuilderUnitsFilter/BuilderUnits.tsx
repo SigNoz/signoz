@@ -30,8 +30,10 @@ function BuilderUnitsFilter({
 	};
 
 	return (
-		<Space>
-			<DefaultLabel>Y-axis unit</DefaultLabel>
+		<Space className="builder-units-filter">
+			<DefaultLabel className="builder-units-filter-label">
+				Y-axis unit
+			</DefaultLabel>
 			<Select
 				getPopupContainer={popupContainer}
 				style={selectStyles}

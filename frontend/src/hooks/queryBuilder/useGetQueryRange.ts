@@ -1,6 +1,7 @@
+import { isAxiosError } from 'axios';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { updateStepInterval } from 'container/GridCardLayout/utils';
+import { updateBarStepInterval } from 'container/GridCardLayout/utils';
 import {
 	GetMetricQueryRange,
 	GetQueryResultsProps,
@@ -8,16 +9,25 @@ import {
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
-import { SuccessResponse } from 'types/api';
+import { SuccessResponse, Warning } from 'types/api';
+import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
+
+type UseGetQueryRangeOptions = UseQueryOptions<
+	SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
+	APIError | Error
+>;
 
 type UseGetQueryRange = (
 	requestData: GetQueryResultsProps,
 	version: string,
-	options?: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
+	options?: UseGetQueryRangeOptions,
 	headers?: Record<string, string>,
-) => UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error>;
+) => UseQueryResult<
+	SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
+	Error
+>;
 
 export const useGetQueryRange: UseGetQueryRange = (
 	requestData,
@@ -31,7 +41,7 @@ export const useGetQueryRange: UseGetQueryRange = (
 			requestData.graphType === PANEL_TYPES.LIST &&
 			firstQueryData?.orderBy?.length === 1 &&
 			// exclude list with id filter (i.e. context logs)
-			!firstQueryData?.filters.items.some((filter) => filter.key?.key === 'id') &&
+			!firstQueryData?.filters?.items.some((filter) => filter.key?.key === 'id') &&
 			firstQueryData?.orderBy[0].columnName === 'timestamp';
 
 		const modifiedRequestData = {
@@ -87,7 +97,7 @@ export const useGetQueryRange: UseGetQueryRange = (
 				interval: requestData.globalSelectedInterval,
 			});
 
-			const updatedQuery = updateStepInterval(
+			const updatedQuery = updateBarStepInterval(
 				requestData.query,
 				requestData.start ? requestData.start * 1e3 : parseInt(start, 10) * 1e3,
 				requestData.end ? requestData.end * 1e3 : parseInt(end, 10) * 1e3,
@@ -102,10 +112,35 @@ export const useGetQueryRange: UseGetQueryRange = (
 		return requestData;
 	}, [requestData]);
 
-	return useQuery<SuccessResponse<MetricRangePayloadProps>, Error>({
+	const retry = useMemo(() => {
+		if (options?.retry !== undefined) {
+			return options.retry;
+		}
+		return (failureCount: number, error: Error): boolean => {
+			let status: number | undefined;
+
+			if (error instanceof APIError) {
+				status = error.getHttpStatusCode();
+			} else if (isAxiosError(error)) {
+				status = error.response?.status;
+			}
+
+			if (status && status >= 400 && status < 500) {
+				return false;
+			}
+
+			return failureCount < 3;
+		};
+	}, [options?.retry]);
+
+	return useQuery<
+		SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
+		APIError | Error
+	>({
 		queryFn: async ({ signal }) =>
 			GetMetricQueryRange(modifiedRequestData, version, signal, headers),
 		...options,
+		retry,
 		queryKey,
 	});
 };

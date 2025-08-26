@@ -11,4 +11,11 @@ type PromQuery struct {
 	Step Step `json:"step"`
 	// stats if true, the query will return stats
 	Stats bool `json:"stats"`
+
+	Legend string `json:"legend,omitempty"`
+}
+
+// Copy creates a deep copy of the PromQuery
+func (q PromQuery) Copy() PromQuery {
+	return q // shallow copy is sufficient
 }

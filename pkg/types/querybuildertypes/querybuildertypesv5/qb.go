@@ -41,9 +41,10 @@ type AggExprRewriter interface {
 }
 
 type Statement struct {
-	Query    string
-	Args     []any
-	Warnings []string
+	Query          string
+	Args           []any
+	Warnings       []string
+	WarningsDocURL string
 }
 
 // StatementBuilder builds the query.

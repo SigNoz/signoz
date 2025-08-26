@@ -118,8 +118,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorIn,
 			value:         []any{"http.server.duration", "http.server.request.duration", "http.server.response.duration"},
-			expectedSQL:   "(metric_name = ? OR metric_name = ? OR metric_name = ?)",
-			expectedArgs:  []any{"http.server.duration", "http.server.request.duration", "http.server.response.duration"},
+			expectedSQL:   "metric_name IN (?)",
+			expectedArgs:  []any{[]any{"http.server.duration", "http.server.request.duration", "http.server.response.duration"}},
 			expectedError: nil,
 		},
 		{
@@ -134,6 +134,19 @@ func TestConditionFor(t *testing.T) {
 			expectedError: qbtypes.ErrInValues,
 		},
 		{
+			name: "Contains operator - string attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorContains,
+			value:         521509198310,
+			expectedSQL:   "LOWER(JSONExtractString(labels, 'user.id')) LIKE LOWER(?)",
+			expectedArgs:  []any{"%521509198310%"},
+			expectedError: nil,
+		},
+		{
 			name: "Not In operator - metric_name",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "metric_name",
@@ -141,8 +154,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotIn,
 			value:         []any{"debug", "info", "trace"},
-			expectedSQL:   "(metric_name <> ? AND metric_name <> ? AND metric_name <> ?)",
-			expectedArgs:  []any{"debug", "info", "trace"},
+			expectedSQL:   "metric_name NOT IN (?)",
+			expectedArgs:  []any{[]any{"debug", "info", "trace"}},
 			expectedError: nil,
 		},
 		{

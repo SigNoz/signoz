@@ -11,6 +11,7 @@ interface ToolbarProps {
 	leftActions?: JSX.Element;
 	rightActions?: JSX.Element;
 	showOldCTA?: boolean;
+	warningElement?: JSX.Element;
 }
 
 export default function Toolbar({
@@ -18,6 +19,7 @@ export default function Toolbar({
 	leftActions,
 	rightActions,
 	showOldCTA,
+	warningElement,
 }: ToolbarProps): JSX.Element {
 	const { pathname } = useLocation();
 
@@ -32,14 +34,20 @@ export default function Toolbar({
 	return (
 		<div className="toolbar">
 			<div className="leftActions">{leftActions}</div>
-			<div className="timeRange">
-				{showOldCTA && <NewExplorerCTA />}
-				<DateTimeSelectionV2
-					showAutoRefresh={showAutoRefresh}
-					showRefreshText={!isLogsExplorerPage && !isApiMonitoringPage}
-				/>
+
+			<div className="rightActions">
+				<div className="timeRange">
+					{warningElement}
+					{showOldCTA && <NewExplorerCTA />}
+					<DateTimeSelectionV2
+						showAutoRefresh={showAutoRefresh}
+						showRefreshText={!isLogsExplorerPage && !isApiMonitoringPage}
+						hideShareModal
+					/>
+				</div>
+
+				{rightActions}
 			</div>
-			<div className="rightActions">{rightActions}</div>
 		</div>
 	);
 }
@@ -48,4 +56,5 @@ Toolbar.defaultProps = {
 	leftActions: <div />,
 	rightActions: <div />,
 	showOldCTA: false,
+	warningElement: <div />,
 };

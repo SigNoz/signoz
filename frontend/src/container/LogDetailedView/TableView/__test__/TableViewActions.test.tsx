@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 
-import { TableViewActions } from '../TableViewActions';
+import TableViewActions from '../TableViewActions';
 
 // Mock the components and hooks
 jest.mock('components/Logs/CopyClipboardHOC', () => ({

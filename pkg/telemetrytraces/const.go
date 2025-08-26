@@ -108,7 +108,7 @@ var (
 			Name:          "spanKind",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
-			FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
 		"durationNano": {
 			Name:          "durationNano",
@@ -142,7 +142,7 @@ var (
 			Description:   "Derived response status code from the HTTP/RPC status code attributes. Learn more [here](https://signoz.io/docs/traces-management/guides/derived-fields-spans/#response_status_code)",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
-			FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
 		"external_http_url": {
 			Name:          "external_http_url",
@@ -205,7 +205,7 @@ var (
 			Description:   "Whether the span is remote. Learn more [here](https://signoz.io/docs/traces-management/guides/derived-fields-spans/#is_remote)",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
-			FieldDataType: telemetrytypes.FieldDataTypeBool,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
 	}
 
@@ -214,7 +214,7 @@ var (
 			Name:          "responseStatusCode",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
-			FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
 		"externalHttpUrl": {
 			Name:          "externalHttpUrl",
@@ -268,51 +268,105 @@ var (
 			Name:          "isRemote",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
-			FieldDataType: telemetrytypes.FieldDataTypeBool,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"serviceName": {
+			Name:          "serviceName",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"httpRoute": {
+			Name:          "httpRoute",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"msgSystem": {
+			Name:          "msgSystem",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"msgOperation": {
+			Name:          "msgOperation",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"dbSystem": {
+			Name:          "dbSystem",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"rpcSystem": {
+			Name:          "rpcSystem",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"rpcService": {
+			Name:          "rpcService",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"rpcMethod": {
+			Name:          "rpcMethod",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"peerService": {
+			Name:          "peerService",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
 	}
 	SpanSearchScopeRoot       = "isroot"
 	SpanSearchScopeEntryPoint = "isentrypoint"
 
-	DefaultFields = []telemetrytypes.TelemetryFieldKey{
-		{
+	DefaultFields = map[string]telemetrytypes.TelemetryFieldKey{
+		"timestamp": {
 			Name:          "timestamp",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
 			FieldDataType: telemetrytypes.FieldDataTypeNumber,
 		},
-		{
+		"span_id": {
 			Name:          "span_id",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
-		{
+		"trace_id": {
 			Name:          "trace_id",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
-		{
+		"name": {
 			Name:          "name",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
-		{
+		"service.name": {
 			Name:          "service.name",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextResource,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 			Materialized:  true,
 		},
-		{
+		"duration_nano": {
 			Name:          "duration_nano",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
 			FieldDataType: telemetrytypes.FieldDataTypeNumber,
 		},
-		{
+		"response_status_code": {
 			Name:          "response_status_code",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,

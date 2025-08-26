@@ -12,3 +12,14 @@
 		margin-bottom: 16px;
 	}
 }
+
+.lightMode {
+	.edit-alert-channels-container {
+		background: var(--bg-vanilla-100);
+		border-color: var(--bg-vanilla-300);
+
+		.form-alert-channels-title {
+			color: var(--bg-ink-100);
+		}
+	}
+}

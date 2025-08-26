@@ -69,13 +69,15 @@ function TriggeredAlerts(): JSX.Element {
 	}
 
 	return (
-		<TriggerComponent
-			allAlerts={alertsResponse?.data?.payload || []}
-			selectedFilter={selectedFilter}
-			selectedGroup={selectedGroup}
-			onSelectedFilterChange={handleSelectedFilterChange}
-			onSelectedGroupChange={handleSelectedGroupChange}
-		/>
+		<div className="triggered-alerts-container">
+			<TriggerComponent
+				allAlerts={alertsResponse?.data?.payload || []}
+				selectedFilter={selectedFilter}
+				selectedGroup={selectedGroup}
+				onSelectedFilterChange={handleSelectedFilterChange}
+				onSelectedGroupChange={handleSelectedGroupChange}
+			/>
+		</div>
 	);
 }
 

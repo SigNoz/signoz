@@ -33,8 +33,8 @@ export const getDaemonSetMetricsQueryPayload = (
 	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
 	const k8sPodCpuUtilizationKey = dotMetricsEnabled
-		? 'k8s.pod.cpu.utilization'
-		: 'k8s_pod_cpu_utilization';
+		? 'k8s.pod.cpu.usage'
+		: 'k8s_pod_cpu_usage';
 
 	const k8sContainerCpuRequestKey = dotMetricsEnabled
 		? 'k8s.container.cpu_request'
@@ -84,9 +84,7 @@ export const getDaemonSetMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'k8s_pod_cpu_utilization--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+								id: 'k8s_pod_cpu_usage--float64--Gauge--true',
 								key: k8sPodCpuUtilizationKey,
 								type: 'Gauge',
 							},
@@ -101,8 +99,6 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_daemonset_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sDaemonSetNameKey,
 											type: 'tag',
 										},
@@ -114,8 +110,6 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -141,8 +135,6 @@ export const getDaemonSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_cpu_request--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sContainerCpuRequestKey,
 								type: 'Gauge',
 							},
@@ -157,8 +149,6 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -170,8 +160,6 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -197,8 +185,6 @@ export const getDaemonSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_cpu_limit--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sContainerCpuLimitKey,
 								type: 'Gauge',
 							},
@@ -213,8 +199,6 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -226,8 +210,6 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -286,8 +268,6 @@ export const getDaemonSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_usage--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemoryUsageKey,
 								type: 'Gauge',
 							},
@@ -302,8 +282,6 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_daemonset_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sDaemonSetNameKey,
 											type: 'tag',
 										},
@@ -315,8 +293,6 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -342,8 +318,6 @@ export const getDaemonSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_memory_request--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sContainerMemoryRequestKey,
 								type: 'Gauge',
 							},
@@ -358,8 +332,6 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -371,8 +343,6 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -398,8 +368,6 @@ export const getDaemonSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_memory_limit--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sContainerMemoryLimitKey,
 								type: 'Gauge',
 							},
@@ -414,8 +382,6 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -427,8 +393,6 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -487,8 +451,6 @@ export const getDaemonSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_network_io--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodNetworkIoKey,
 								type: 'Sum',
 							},
@@ -503,8 +465,6 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_daemonset_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sDaemonSetNameKey,
 											type: 'tag',
 										},
@@ -516,8 +476,6 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -532,16 +490,12 @@ export const getDaemonSetMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'direction--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'direction',
 									type: 'tag',
 								},
 								{
 									dataType: DataTypes.String,
 									id: 'interface--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'interface',
 									type: 'tag',
 								},
@@ -593,8 +547,6 @@ export const getDaemonSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_network_errors--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodNetworkErrorsKey,
 								type: 'Sum',
 							},
@@ -609,8 +561,6 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_daemonset_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sDaemonSetNameKey,
 											type: 'tag',
 										},
@@ -622,8 +572,6 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -638,16 +586,12 @@ export const getDaemonSetMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'direction--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'direction',
 									type: 'tag',
 								},
 								{
 									dataType: DataTypes.String,
 									id: 'interface--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'interface',
 									type: 'tag',
 								},
