@@ -160,8 +160,7 @@ func (q *QueryBuilderQuery[T]) validateSelectFields() error {
 		if v.Name == "isRoot" || v.Name == "isEntryPoint" {
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
-				"invalid selectField: %s",
-				v.Name,
+				"isRoot and isEntryPoint fields are not supported in selectFields",
 			)
 		}
 	}
