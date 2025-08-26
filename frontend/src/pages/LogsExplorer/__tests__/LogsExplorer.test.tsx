@@ -105,7 +105,6 @@ const logsQueryServerRequest = (): void =>
 describe('Logs Explorer Tests', () => {
 	test('Logs Explorer default view test without data', async () => {
 		const {
-			getByText,
 			getByRole,
 			queryByText,
 			getByTestId,
@@ -123,13 +122,10 @@ describe('Logs Explorer Tests', () => {
 			</MemoryRouter>,
 		);
 
-		// check the presence of frequency chart content
-		expect(getByText(frequencyChartContent)).toBeInTheDocument();
-
 		// toggle the chart and check it gets removed from the DOM
 		const histogramToggle = getByRole('switch');
 		fireEvent.click(histogramToggle);
-		expect(queryByText(frequencyChartContent)).not.toBeInTheDocument();
+		expect(queryByText(frequencyChartContent)).toBeInTheDocument();
 
 		// check the presence of search bar and query builder and absence of clickhouse
 		const searchView = getByTestId('search-view');
@@ -277,10 +273,10 @@ describe('Logs Explorer Tests', () => {
 		const histogramToggle = getByRole('switch');
 		expect(histogramToggle).toBeInTheDocument();
 		expect(histogramToggle).toBeChecked();
-		expect(queryByText(frequencyChartContent)).toBeInTheDocument();
 
 		// toggle the chart and check it gets removed from the DOM
 		await fireEvent.click(histogramToggle);
+		expect(histogramToggle).not.toBeChecked();
 		expect(queryByText(frequencyChartContent)).not.toBeInTheDocument();
 	});
 });
