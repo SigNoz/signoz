@@ -248,7 +248,7 @@ function DateTimeSelection({
 		timeInterval: Time | CustomTimeType = '15m',
 	): string | Time => {
 		if (startTime && endTime && timeInterval === 'custom') {
-			const format = DATE_TIME_FORMATS.UK_DATETIME;
+			const format = DATE_TIME_FORMATS.UK_DATETIME_SECONDS;
 
 			const startString = startTime.format(format);
 			const endString = endTime.format(format);
@@ -803,6 +803,17 @@ function DateTimeSelection({
 
 	const { timezone } = useTimezone();
 
+	const getSelectedValue = (): string =>
+		getInputLabel(
+			dayjs(isModalTimeSelection ? modalStartTime : minTime / 1000000).tz(
+				timezone.value,
+			),
+			dayjs(isModalTimeSelection ? modalEndTime : maxTime / 1000000).tz(
+				timezone.value,
+			),
+			isModalTimeSelection ? modalSelectedInterval : selectedTime,
+		);
+
 	return (
 		<div className="date-time-selector">
 			{showResetButton && selectedTime !== defaultRelativeTime && (
@@ -859,15 +870,7 @@ function DateTimeSelection({
 						onCustomTimeStatusUpdate={(isValid: boolean): void => {
 							setIsValidteRelativeTime(isValid);
 						}}
-						selectedValue={getInputLabel(
-							dayjs(isModalTimeSelection ? modalStartTime : minTime / 1000000).tz(
-								timezone.value,
-							),
-							dayjs(isModalTimeSelection ? modalEndTime : maxTime / 1000000).tz(
-								timezone.value,
-							),
-							isModalTimeSelection ? modalSelectedInterval : selectedTime,
-						)}
+						selectedValue={getSelectedValue()}
 						data-testid="dropDown"
 						items={options}
 						newPopover
@@ -875,7 +878,6 @@ function DateTimeSelection({
 						onCustomDateHandler={onCustomDateHandler}
 						customDateTimeVisible={customDateTimeVisible}
 						setCustomDTPickerVisible={setCustomDTPickerVisible}
-						onTimeChange={onTimeChange}
 					/>
 
 					{showAutoRefresh && selectedTime !== 'custom' && (
