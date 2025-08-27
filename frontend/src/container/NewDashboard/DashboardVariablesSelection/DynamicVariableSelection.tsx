@@ -215,18 +215,29 @@ function DynamicVariableSelection({
 				) {
 					onValueUpdate(variableData.name, variableData.id, optionsData, true);
 				} else {
+					// Build union of available options shown in dropdown (normalized + related)
+					const allAvailableOptionStrings = [
+						...new Set([
+							...optionsData.map((v) => v.toString()),
+							...relatedValues.map((v) => v.toString()),
+						]),
+					];
+
+					const haveCustomValuesSelected =
+						Array.isArray(value) &&
+						!value.every((v) => allAvailableOptionStrings.includes(v.toString()));
+
 					onValueUpdate(
 						variableData.name,
 						variableData.id,
 						value,
-						optionsData.every((v) => value.includes(v.toString())),
-						Array.isArray(value) &&
-							!value.every((v) => optionsData.includes(v.toString())),
+						allAvailableOptionStrings.every((v) => value.includes(v.toString())),
+						haveCustomValuesSelected,
 					);
 				}
 			}
 		},
-		[variableData, onValueUpdate, optionsData],
+		[variableData, onValueUpdate, optionsData, relatedValues],
 	);
 
 	useEffect(() => {
@@ -242,6 +253,17 @@ function DynamicVariableSelection({
 		variableData.dynamicVariablesAttribute,
 		debouncedApiSearchText,
 	]);
+
+	// Build a memoized list of all currently available option strings (normalized + related)
+	const allAvailableOptionStrings = useMemo(
+		() => [
+			...new Set([
+				...optionsData.map((v) => v.toString()),
+				...relatedValues.map((v) => v.toString()),
+			]),
+		],
+		[optionsData, relatedValues],
+	);
 
 	const handleSearch = useCallback(
 		(text: string) => {
@@ -297,16 +319,15 @@ function DynamicVariableSelection({
 		// Initialize temp selection when opening dropdown
 		if (visible) {
 			if (isUndefined(tempSelection) && selectValue === ALL_SELECT_VALUE) {
-				// set all options from the optionsData and the selectedValue, make sure to remove duplicates
+				// Select ALL currently available values (normalized + related) while preserving any custom selections
+				const rawSelected = Array.isArray(variableData.selectedValue)
+					? variableData.selectedValue
+					: variableData.selectedValue
+					? [variableData.selectedValue]
+					: [];
+				const currentSelectedStrings = rawSelected.map((v) => v.toString());
 				const allOptions = [
-					...new Set([
-						...optionsData.map((option) => option.toString()),
-						...(variableData.selectedValue
-							? Array.isArray(variableData.selectedValue)
-								? variableData.selectedValue.map((v) => v.toString())
-								: [variableData.selectedValue.toString()]
-							: []),
-					]),
+					...new Set([...allAvailableOptionStrings, ...currentSelectedStrings]),
 				];
 				setTempSelection(allOptions);
 			} else {
@@ -428,6 +449,7 @@ function DynamicVariableSelection({
 						maxTagTextLength={30}
 						onSearch={handleSearch}
 						onRetry={(): void => {
+							setErrorMessage(null);
 							refetch();
 						}}
 						showIncompleteDataMessage={!isComplete && filteredOptionsData.length > 0}
@@ -458,6 +480,7 @@ function DynamicVariableSelection({
 						errorMessage={errorMessage}
 						onSearch={handleSearch}
 						onRetry={(): void => {
+							setErrorMessage(null);
 							refetch();
 						}}
 						showIncompleteDataMessage={!isComplete && filteredOptionsData.length > 0}
