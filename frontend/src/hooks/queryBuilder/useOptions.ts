@@ -3,7 +3,6 @@ import {
 	getTagToken,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
-import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { isEmpty } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -30,12 +29,7 @@ export const useOptions = (
 	const operators = useOperators(key, keys);
 
 	const getLabel = useCallback(
-		(data: BaseAutocompleteData): Option['label'] =>
-			transformStringWithPrefix({
-				str: data?.key,
-				prefix: data?.type || '',
-				condition: !data?.isColumn,
-			}),
+		(data: BaseAutocompleteData): Option['label'] => data?.key,
 		[],
 	);
 

@@ -39,9 +39,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { AppState } from 'store/reducers';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 // ** Types
 import {
@@ -60,7 +58,7 @@ import {
 	QueryBuilderContextType,
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import { sanitizeOrderByForExplorer } from 'utils/sanitizeOrderBy';
 import { v4 as uuid } from 'uuid';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
@@ -102,9 +100,11 @@ export function QueryBuilderProvider({
 
 	const currentPathnameRef = useRef<string | null>(location.pathname);
 
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	// This is used to determine if the query was called from the handleRunQuery function - which means manual trigger from Stage and Run button
+	const [
+		calledFromHandleRunQuery,
+		setCalledFromHandleRunQuery,
+	] = useState<boolean>(false);
 
 	const compositeQueryParam = useGetCompositeQueryParam();
 	const { queryType: queryTypeParam, ...queryState } =
@@ -184,6 +184,17 @@ export function QueryBuilderProvider({
 					} as BaseAutocompleteData,
 				};
 
+				// Explorer pages: sanitize stale orderBy before first query
+				const isExplorer =
+					location.pathname === ROUTES.LOGS_EXPLORER ||
+					location.pathname === ROUTES.TRACES_EXPLORER;
+				if (isExplorer) {
+					const sanitizedOrderBy = sanitizeOrderByForExplorer(currentElement);
+					return calledFromHandleRunQuery
+						? currentElement
+						: { ...currentElement, orderBy: sanitizedOrderBy };
+				}
+
 				return currentElement;
 			});
 
@@ -215,7 +226,7 @@ export function QueryBuilderProvider({
 
 			return nextQuery;
 		},
-		[initialDataSource],
+		[initialDataSource, location.pathname, calledFromHandleRunQuery],
 	);
 
 	const initQueryBuilderData = useCallback(
@@ -428,6 +439,7 @@ export function QueryBuilderProvider({
 
 			const newQuery: IBuilderQuery = {
 				...initialBuilderQuery,
+				source: queries?.[0]?.source || '',
 				queryName: createNewBuilderItemName({ existNames, sourceNames: alphabet }),
 				expression: createNewBuilderItemName({
 					existNames,
@@ -522,6 +534,8 @@ export function QueryBuilderProvider({
 		setCurrentQuery((prevState) => {
 			if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;
 
+			console.log('prevState', prevState.builder.queryData);
+
 			const newQuery = createNewBuilderQuery(prevState.builder.queryData);
 
 			return {
@@ -532,6 +546,7 @@ export function QueryBuilderProvider({
 				},
 			};
 		});
+
 		// eslint-disable-next-line sonarjs/no-identical-functions
 		setSupersetQuery((prevState) => {
 			if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;
@@ -865,54 +880,49 @@ export function QueryBuilderProvider({
 		[],
 	);
 
-	const handleRunQuery = useCallback(
-		(shallUpdateStepInterval?: boolean, newQBQuery?: boolean) => {
-			let currentQueryData = currentQuery;
-
-			if (newQBQuery) {
-				currentQueryData = {
-					...currentQueryData,
-					builder: {
-						...currentQueryData.builder,
-						queryData: currentQueryData.builder.queryData.map((item) => ({
-							...item,
-							filter: {
-								...item.filter,
-								expression:
-									item.filter?.expression.trim() === ''
-										? ''
-										: item.filter?.expression ?? '',
-							},
-							filters: {
-								items: [],
-								op: 'AND',
-							},
-						})),
+	const handleRunQuery = useCallback(() => {
+		const isExplorer =
+			location.pathname === ROUTES.LOGS_EXPLORER ||
+			location.pathname === ROUTES.TRACES_EXPLORER;
+		if (isExplorer) {
+			setCalledFromHandleRunQuery(true);
+		}
+		const currentQueryData = {
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: currentQuery.builder.queryData.map((item) => ({
+					...item,
+					filter: {
+						...item.filter,
+						expression:
+							item.filter?.expression.trim() === ''
+								? ''
+								: item.filter?.expression ?? '',
 					},
-				};
-			}
-			redirectWithQueryBuilderData({
-				...{
-					...currentQueryData,
-					...updateStepInterval(
-						{
-							builder: currentQueryData.builder,
-							clickhouse_sql: currentQueryData.clickhouse_sql,
-							promql: currentQueryData.promql,
-							id: currentQueryData.id,
-							queryType,
-							unit: currentQueryData.unit,
-						},
-						maxTime,
-						minTime,
-						!!shallUpdateStepInterval,
-					),
-				},
-				queryType,
-			});
-		},
-		[currentQuery, queryType, maxTime, minTime, redirectWithQueryBuilderData],
-	);
+					filters: {
+						items: [],
+						op: 'AND',
+					},
+				})),
+			},
+		};
+
+		redirectWithQueryBuilderData({
+			...{
+				...currentQueryData,
+				...updateStepInterval({
+					builder: currentQueryData.builder,
+					clickhouse_sql: currentQueryData.clickhouse_sql,
+					promql: currentQueryData.promql,
+					id: currentQueryData.id,
+					queryType,
+					unit: currentQueryData.unit,
+				}),
+			},
+			queryType,
+		});
+	}, [currentQuery, location.pathname, queryType, redirectWithQueryBuilderData]);
 
 	useEffect(() => {
 		if (location.pathname !== currentPathnameRef.current) {
@@ -921,6 +931,7 @@ export function QueryBuilderProvider({
 			setStagedQuery(null);
 			// reset the last used query to 0 when navigating away from the page
 			setLastUsedQuery(0);
+			setCalledFromHandleRunQuery(false);
 		}
 	}, [location.pathname]);
 
