@@ -118,7 +118,17 @@ function VariableItem({
 	]);
 	// Error messages
 	const [errorName, setErrorName] = useState<boolean>(false);
+	const [errorNameMessage, setErrorNameMessage] = useState<string>('');
 	const [errorPreview, setErrorPreview] = useState<string | null>(null);
+
+	const REQUIRED_NAME_MESSAGE = 'Variable name is required';
+
+	// Initialize error state for empty name
+	useEffect(() => {
+		if (!variableName.trim()) {
+			setErrorName(true);
+		}
+	}, [variableName]);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -315,17 +325,28 @@ function VariableItem({
 								placeholder="Unique name of the variable"
 								value={variableName}
 								className="name-input"
-								onChange={(e): void => {
-									setVariableName(e.target.value);
-									setErrorName(
-										!validateName(e.target.value) && e.target.value !== variableData.name,
-									);
+								onChange={({ target: { value } }): void => {
+									setVariableName(value);
+
+									// Check for empty name
+									if (!value.trim()) {
+										setErrorName(true);
+										setErrorNameMessage(REQUIRED_NAME_MESSAGE);
+									}
+									// Check for duplicate name
+									else if (!validateName(value) && value !== variableData.name) {
+										setErrorName(true);
+										setErrorNameMessage('Variable name already exists');
+									}
+									// No errors
+									else {
+										setErrorName(false);
+										setErrorNameMessage('');
+									}
 								}}
 							/>
 							<div>
-								<Typography.Text type="warning">
-									{errorName ? 'Variable name already exists' : ''}
-								</Typography.Text>
+								<Typography.Text type="warning">{errorNameMessage}</Typography.Text>
 							</div>
 						</div>
 					</VariableItemRow>
