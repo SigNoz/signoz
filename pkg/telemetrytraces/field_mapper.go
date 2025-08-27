@@ -3,6 +3,8 @@ package telemetrytraces
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
@@ -50,6 +52,7 @@ var (
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
 		}},
+		"resource": {Name: "resource", Type: schema.JSONColumnType{}},
 
 		"events": {Name: "events", Type: schema.ArrayColumnType{
 			ElementType: schema.ColumnTypeString,
@@ -157,12 +160,21 @@ var (
 	}
 )
 
-type defaultFieldMapper struct{}
+type defaultFieldMapper struct {
+	resourceJSONColumnEnabled bool
+}
 
 var _ qbtypes.FieldMapper = (*defaultFieldMapper)(nil)
 
 func NewFieldMapper() *defaultFieldMapper {
-	return &defaultFieldMapper{}
+	resourceJSONColumnEnabled := false
+	resourceJSONColumnEnabledStr := os.Getenv("RESOURCE_JSON_COLUMN_ENABLED")
+	if val, err := strconv.ParseBool(resourceJSONColumnEnabledStr); err == nil {
+		resourceJSONColumnEnabled = val
+	}
+	return &defaultFieldMapper{
+		resourceJSONColumnEnabled: resourceJSONColumnEnabled,
+	}
 }
 
 func (m *defaultFieldMapper) getColumn(
@@ -171,6 +183,9 @@ func (m *defaultFieldMapper) getColumn(
 ) (*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
+		if m.resourceJSONColumnEnabled {
+			return indexV3Columns["resource"], nil
+		}
 		return indexV3Columns["resources_string"], nil
 	case telemetrytypes.FieldContextScope:
 		return nil, qbtypes.ErrColumnNotFound
@@ -235,6 +250,8 @@ func (m *defaultFieldMapper) FieldFor(
 	}
 
 	switch column.Type {
+	case schema.JSONColumnType{}:
+		return fmt.Sprintf("'resource.%s'", key.Name), nil
 	case schema.ColumnTypeString,
 		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 		schema.ColumnTypeUInt64,
