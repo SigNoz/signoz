@@ -11,7 +11,7 @@ import { FieldValueResponse } from 'types/api/dynamicVariables/getFieldValues';
 export const getFieldValues = async (
 	signal?: 'traces' | 'logs' | 'metrics',
 	name?: string,
-	value?: string,
+	searchText?: string,
 	startUnixMilli?: number,
 	endUnixMilli?: number,
 	existingQuery?: string,
@@ -19,15 +19,15 @@ export const getFieldValues = async (
 	const params: Record<string, string> = {};
 
 	if (signal) {
-		params.signal = signal;
+		params.signal = encodeURIComponent(signal);
 	}
 
 	if (name) {
-		params.name = name;
+		params.name = encodeURIComponent(name);
 	}
 
-	if (value) {
-		params.value = value;
+	if (searchText) {
+		params.searchText = encodeURIComponent(searchText);
 	}
 
 	if (startUnixMilli) {

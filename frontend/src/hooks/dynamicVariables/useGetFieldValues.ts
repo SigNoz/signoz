@@ -9,7 +9,7 @@ interface UseGetFieldValuesProps {
 	/** Name of the attribute for which values are being fetched */
 	name: string;
 	/** Optional search text */
-	value?: string;
+	searchText?: string;
 	/** Whether the query should be enabled */
 	enabled?: boolean;
 	/** Start Unix Milli */
@@ -32,7 +32,7 @@ interface UseGetFieldValuesProps {
 export const useGetFieldValues = ({
 	signal,
 	name,
-	value,
+	searchText,
 	startUnixMilli,
 	endUnixMilli,
 	enabled = true,
@@ -45,7 +45,7 @@ export const useGetFieldValues = ({
 			'fieldValues',
 			signal,
 			name,
-			value,
+			searchText,
 			startUnixMilli,
 			endUnixMilli,
 			existingQuery,
@@ -54,7 +54,7 @@ export const useGetFieldValues = ({
 			getFieldValues(
 				signal,
 				name,
-				value,
+				searchText,
 				startUnixMilli,
 				endUnixMilli,
 				existingQuery,

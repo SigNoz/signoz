@@ -14,11 +14,11 @@ export const getFieldKeys = async (
 	const params: Record<string, string> = {};
 
 	if (signal) {
-		params.signal = signal;
+		params.signal = encodeURIComponent(signal);
 	}
 
 	if (name) {
-		params.name = name;
+		params.name = encodeURIComponent(name);
 	}
 
 	const response = await ApiBaseInstance.get('/fields/keys', { params });
