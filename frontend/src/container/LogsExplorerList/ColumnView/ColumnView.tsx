@@ -17,7 +17,7 @@ import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { isEmpty, isEqual } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ILog } from 'types/api/logs/log';
 
 interface ColumnViewProps {
@@ -51,6 +51,8 @@ function ColumnView({
 		onGroupByAttribute: handleGroupByAttribute,
 	} = useActiveLog();
 
+	const [showActiveLog, setShowActiveLog] = useState<boolean>(false);
+
 	const { queryData: activeLogId } = useUrlQueryData<string | null>(
 		QueryParams.activeLogId,
 		null,
@@ -72,9 +74,10 @@ function ColumnView({
 
 			if (log) {
 				handleSetActiveLog(log);
+				setShowActiveLog(true);
 			}
 		}
-	}, [activeLogId, logs, handleSetActiveLog]);
+	}, []);
 
 	const tableViewProps = {
 		logs,
@@ -88,7 +91,6 @@ function ColumnView({
 	const { dataSource, columns } = useTableView({
 		...tableViewProps,
 		onClickExpand: handleSetActiveLog,
-		onOpenLogsContext: handleClearActiveLog,
 	});
 
 	const { draggedColumns, onColumnOrderChange } = useDragColumns<
@@ -222,7 +224,20 @@ function ColumnView({
 	const handleRowClick = (row: Row<Record<string, unknown>>): void => {
 		const currentLog = logs.find(({ id }) => id === row.original.id);
 
+		setShowActiveLog(true);
 		handleSetActiveLog(currentLog as ILog);
+	};
+
+	const removeQueryParam = (key: string): void => {
+		const url = new URL(window.location.href);
+		url.searchParams.delete(key);
+		window.history.replaceState({}, '', url);
+	};
+
+	const handleLogDetailClose = (): void => {
+		removeQueryParam(QueryParams.activeLogId);
+		handleClearActiveLog();
+		setShowActiveLog(false);
 	};
 
 	return (
@@ -246,11 +261,11 @@ function ColumnView({
 				scrollToIndexRef={scrollToIndexRef}
 			/>
 
-			{activeLog && (
+			{showActiveLog && activeLog && (
 				<LogDetail
 					selectedTab={VIEW_TYPES.OVERVIEW}
 					log={activeLog}
-					onClose={handleClearActiveLog}
+					onClose={handleLogDetailClose}
 					onAddToQuery={handleAddToQuery}
 					onClickActionItem={handleAddToQuery}
 					onGroupByAttribute={handleGroupByAttribute}
