@@ -66,6 +66,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	onDropdownVisibleChange,
 	showIncompleteDataMessage = false,
 	showLabels = false,
+	enableRegexOption = false,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -559,17 +560,24 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					// check if the trimmed value is a regex pattern and set that active index
 					const isRegex =
 						trimmedValue.startsWith('.*') && trimmedValue.endsWith('.*');
-					if (isRegex) {
+					if (isRegex && enableRegexOption) {
 						setActiveIndex(0);
 					} else {
-						setActiveIndex(1);
+						setActiveIndex(enableRegexOption ? 1 : 0);
 					}
 				}
 			}
 
 			if (onSearch) onSearch(trimmedValue);
 		},
-		[onSearch, isOpen, selectedValues, onChange, filteredOptions],
+		[
+			onSearch,
+			isOpen,
+			selectedValues,
+			onChange,
+			filteredOptions,
+			enableRegexOption,
+		],
 	);
 
 	// ===== UI & Rendering Functions =====
@@ -837,7 +845,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				}
 
 				// Add Regex to flat list
-				if (!isEmpty(searchText)) {
+				if (!isEmpty(searchText) && enableRegexOption) {
 					// Only add regex wrapper if it doesn't already look like a regex pattern
 					const isAlreadyRegex =
 						searchText.startsWith('.*') && searchText.endsWith('.*');
@@ -1379,6 +1387,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			extendSelection,
 			onDropdownVisibleChange,
 			handleSelectAll,
+			enableRegexOption,
 		],
 	);
 
@@ -1429,7 +1438,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		const customOptions: OptionData[] = [];
 
 		// add regex options first since they appear first in the UI
-		if (!isEmpty(searchText)) {
+		if (!isEmpty(searchText) && enableRegexOption) {
 			// Only add regex wrapper if it doesn't already look like a regex pattern
 			const isAlreadyRegex =
 				searchText.startsWith('.*') && searchText.endsWith('.*');
@@ -1655,6 +1664,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		onRetry,
 		showIncompleteDataMessage,
 		isScrolledToBottom,
+		enableRegexOption,
 	]);
 
 	// Custom handler for dropdown visibility changes
