@@ -61,4 +61,5 @@ export interface CustomMultiSelectProps
 	maxTagTextLength?: number;
 	showIncompleteDataMessage?: boolean;
 	showLabels?: boolean;
+	enableRegexOption?: boolean;
 }
