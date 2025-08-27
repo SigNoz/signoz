@@ -121,7 +121,7 @@ func TestExtractFieldKeysFromTblStatement(t *testing.T) {
 		{
 			Name:          "input_size",
 			FieldContext:  telemetrytypes.FieldContextAttribute,
-			FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+			FieldDataType: telemetrytypes.FieldDataTypeNumber,
 			Materialized:  true,
 		},
 		{

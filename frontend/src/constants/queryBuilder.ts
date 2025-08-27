@@ -58,8 +58,8 @@ export const selectValueDivider = '__';
 
 export const baseAutoCompleteIdKeysOrder: (keyof Omit<
 	BaseAutocompleteData,
-	'id' | 'isJSON' | 'isIndexed'
->)[] = ['key', 'dataType', 'type', 'isColumn'];
+	'id' | 'isIndexed'
+>)[] = ['key', 'dataType', 'type'];
 
 export const autocompleteType: Record<AutocompleteType, AutocompleteType> = {
 	resource: 'resource',
@@ -153,14 +153,12 @@ export const initialHavingValues: HavingForm = {
 
 export const initialAutocompleteData: BaseAutocompleteData = {
 	id: createIdFromObjectFields(
-		{ dataType: null, key: '', isColumn: null, type: null },
+		{ dataType: null, key: '', type: null },
 		baseAutoCompleteIdKeysOrder,
 	),
 	dataType: DataTypes.EMPTY,
 	key: '',
-	isColumn: false,
 	type: '',
-	isJSON: false,
 };
 
 export const initialFilters: TagFilter = {
@@ -192,7 +190,7 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 		sourceNames: alphabet,
 	}),
 	disabled: false,
-	stepInterval: undefined,
+	stepInterval: null,
 	having: [],
 	limit: null,
 	orderBy: [],
@@ -240,7 +238,7 @@ export const initialQueryBuilderFormMeterValues: IBuilderQuery = {
 		sourceNames: alphabet,
 	}),
 	disabled: false,
-	stepInterval: undefined,
+	stepInterval: null,
 	having: [],
 	limit: null,
 	orderBy: [],
