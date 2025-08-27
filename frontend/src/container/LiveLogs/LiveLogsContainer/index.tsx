@@ -1,11 +1,8 @@
-import { Col } from 'antd';
-import Spinner from 'components/Spinner';
+import './LiveLogsContainer.styles.scss';
+
 import { MAX_LOGS_LIST_SIZE } from 'constants/liveTail';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { themeColors } from 'constants/theme';
 import GoToTop from 'container/GoToTop';
-import FiltersInput from 'container/LiveLogs/FiltersInput';
-import LiveLogsTopNav from 'container/LiveLogsTopNav';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
@@ -23,9 +20,9 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { idObject } from '../constants';
 import ListViewPanel from '../ListViewPanel';
 import LiveLogsList from '../LiveLogsList';
+import LiveLogsListChart from '../LiveLogsListChart';
 import { QueryHistoryState } from '../types';
 import { prepareQueryByFilter } from '../utils';
-import { ContentWrapper, LiveLogsChart, Wrapper } from './styles';
 
 function LiveLogsContainer(): JSX.Element {
 	const location = useLocation();
@@ -185,34 +182,24 @@ function LiveLogsContainer(): JSX.Element {
 	}, [queryLocationState, updateLogs]);
 
 	return (
-		<Wrapper>
-			<LiveLogsTopNav />
-			<ContentWrapper gutter={[0, 20]} style={{ color: themeColors.lightWhite }}>
-				<Col span={24}>
-					<FiltersInput />
-				</Col>
-				{initialLoading && logs.length === 0 ? (
-					<Col span={24}>
-						<Spinner style={{ height: 'auto' }} tip="Fetching Logs" />
-					</Col>
-				) : (
-					<>
-						<Col span={24}>
-							<LiveLogsChart
-								initialData={queryLocationState?.graphQueryPayload || null}
-							/>
-						</Col>
-						<Col span={24}>
-							<ListViewPanel />
-						</Col>
-						<Col span={24}>
-							<LiveLogsList logs={logs} />
-						</Col>
-					</>
-				)}
-				<GoToTop />
-			</ContentWrapper>
-		</Wrapper>
+		<div className="live-logs-container">
+			<div className="live-logs-content">
+				<ListViewPanel />
+				<div className="live-logs-chart-container">
+					<LiveLogsListChart
+						initialData={queryLocationState?.graphQueryPayload || null}
+					/>
+				</div>
+				<div className="live-logs-list-container">
+					<LiveLogsList
+						logs={logs}
+						isLoading={initialLoading && logs.length === 0}
+					/>
+				</div>
+			</div>
+
+			<GoToTop />
+		</div>
 	);
 }
 

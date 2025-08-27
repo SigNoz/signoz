@@ -1,3 +1,5 @@
+import './LiveLogsList.styles.scss';
+
 import { Card, Typography } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
@@ -26,7 +28,7 @@ import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import { LiveLogsListProps } from './types';
 
-function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
+function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
 
 	const { t } = useTranslation(['logs']);
@@ -112,14 +114,18 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 	}
 
 	return (
-		<>
+		<div className="live-logs-list">
 			{options.format !== OptionFormatTypes.TABLE && (
 				<Heading>
 					<Typography.Text>Event</Typography.Text>
 				</Heading>
 			)}
 
-			{logs.length === 0 && <Typography>{t('fetching_log_lines')}</Typography>}
+			{(logs.length === 0 || isLoading) && (
+				<div className="live-logs-list-loading">
+					<Typography>{t('fetching_log_lines')}</Typography>
+				</div>
+			)}
 
 			{logs.length !== 0 && (
 				<InfinityWrapperStyled>
@@ -159,7 +165,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 				onGroupByAttribute={onGroupByAttribute}
 				onClickActionItem={onAddToQuery}
 			/>
-		</>
+		</div>
 	);
 }
 

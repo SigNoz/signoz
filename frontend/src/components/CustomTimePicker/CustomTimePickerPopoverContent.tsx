@@ -16,7 +16,14 @@ import {
 import dayjs from 'dayjs';
 import { Clock, PenLine } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useLocation } from 'react-router-dom';
 import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
 
@@ -32,12 +39,13 @@ interface CustomTimePickerPopoverContentProps {
 		lexicalContext?: LexicalContext,
 	) => void;
 	onSelectHandler: (label: string, value: string) => void;
-	handleGoLive: () => void;
+	onGoLive: () => void;
 	selectedTime: string;
 	activeView: 'datetime' | 'timezone';
 	setActiveView: Dispatch<SetStateAction<'datetime' | 'timezone'>>;
 	isOpenedFromFooter: boolean;
 	setIsOpenedFromFooter: Dispatch<SetStateAction<boolean>>;
+	onExitLiveLogs: () => void;
 }
 
 interface RecentlyUsedDateTimeRange {
@@ -56,12 +64,13 @@ function CustomTimePickerPopoverContent({
 	setCustomDTPickerVisible,
 	onCustomDateHandler,
 	onSelectHandler,
-	handleGoLive,
+	onGoLive,
 	selectedTime,
 	activeView,
 	setActiveView,
 	isOpenedFromFooter,
 	setIsOpenedFromFooter,
+	onExitLiveLogs,
 }: CustomTimePickerPopoverContentProps): JSX.Element {
 	const { pathname } = useLocation();
 
@@ -75,6 +84,12 @@ function CustomTimePickerPopoverContent({
 	const [recentlyUsedTimeRanges, setRecentlyUsedTimeRanges] = useState<
 		RecentlyUsedDateTimeRange[]
 	>([]);
+
+	const handleExitLiveLogs = useCallback((): void => {
+		if (isLogsExplorerPage) {
+			onExitLiveLogs();
+		}
+	}, [isLogsExplorerPage, onExitLiveLogs]);
 
 	useEffect(() => {
 		if (!customDateTimeVisible) {
@@ -107,6 +122,7 @@ function CustomTimePickerPopoverContent({
 						className="time-btns"
 						key={option.label + option.value}
 						onClick={(): void => {
+							handleExitLiveLogs();
 							onSelectHandler(option.label, option.value);
 						}}
 					>
@@ -140,36 +156,39 @@ function CustomTimePickerPopoverContent({
 		);
 	}
 
+	const handleGoLive = (): void => {
+		onGoLive();
+		setIsOpen(false);
+	};
+
 	return (
 		<>
 			<div className="date-time-popover">
-				{!customDateTimeVisible && (
-					<div className="date-time-options">
-						{isLogsExplorerPage && (
-							<Button className="data-time-live" type="text" onClick={handleGoLive}>
-								Live
-							</Button>
-						)}
-						{options.map((option) => (
-							<Button
-								type="text"
-								key={option.label + option.value}
-								onClick={(): void => {
-									onSelectHandler(option.label, option.value);
-								}}
-								className={cx(
-									'date-time-options-btn',
-									customDateTimeVisible
-										? option.value === 'custom' && 'active'
-										: selectedTime === option.value && 'active',
-								)}
-							>
-								{option.label}
-							</Button>
-						))}
-					</div>
-				)}
-
+				<div className="date-time-options">
+					{isLogsExplorerPage && (
+						<Button className="data-time-live" type="text" onClick={handleGoLive}>
+							Live
+						</Button>
+					)}
+					{options.map((option) => (
+						<Button
+							type="text"
+							key={option.label + option.value}
+							onClick={(): void => {
+								handleExitLiveLogs();
+								onSelectHandler(option.label, option.value);
+							}}
+							className={cx(
+								'date-time-options-btn',
+								customDateTimeVisible
+									? option.value === 'custom' && 'active'
+									: selectedTime === option.value && 'active',
+							)}
+						>
+							{option.label}
+						</Button>
+					))}
+				</div>
 				<div
 					className={cx(
 						'relative-date-time',
@@ -199,12 +218,14 @@ function CustomTimePickerPopoverContent({
 											tabIndex={0}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter' || e.key === ' ') {
+													handleExitLiveLogs();
 													onCustomDateHandler([dayjs(range.from), dayjs(range.to)]);
 													setIsOpen(false);
 												}
 											}}
 											key={range.value}
 											onClick={(): void => {
+												handleExitLiveLogs();
 												onCustomDateHandler([dayjs(range.from), dayjs(range.to)]);
 												setIsOpen(false);
 											}}

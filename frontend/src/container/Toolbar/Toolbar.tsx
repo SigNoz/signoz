@@ -3,6 +3,7 @@ import './Toolbar.styles.scss';
 import ROUTES from 'constants/routes';
 import NewExplorerCTA from 'container/NewExplorerCTA';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import { noop } from 'lodash-es';
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -12,6 +13,9 @@ interface ToolbarProps {
 	rightActions?: JSX.Element;
 	showOldCTA?: boolean;
 	warningElement?: JSX.Element;
+	onGoLive?: () => void;
+	onExitLiveLogs?: () => void;
+	showLiveLogs?: boolean;
 }
 
 export default function Toolbar({
@@ -20,6 +24,9 @@ export default function Toolbar({
 	rightActions,
 	showOldCTA,
 	warningElement,
+	showLiveLogs,
+	onGoLive,
+	onExitLiveLogs,
 }: ToolbarProps): JSX.Element {
 	const { pathname } = useLocation();
 
@@ -40,6 +47,9 @@ export default function Toolbar({
 					{warningElement}
 					{showOldCTA && <NewExplorerCTA />}
 					<DateTimeSelectionV2
+						showLiveLogs={showLiveLogs}
+						onExitLiveLogs={onExitLiveLogs}
+						onGoLive={onGoLive}
 						showAutoRefresh={showAutoRefresh}
 						showRefreshText={!isLogsExplorerPage && !isApiMonitoringPage}
 						hideShareModal
@@ -57,4 +67,7 @@ Toolbar.defaultProps = {
 	rightActions: <div />,
 	showOldCTA: false,
 	warningElement: <div />,
+	showLiveLogs: false,
+	onGoLive: (): void => noop(),
+	onExitLiveLogs: (): void => {},
 };
