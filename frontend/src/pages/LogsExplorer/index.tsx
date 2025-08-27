@@ -45,6 +45,7 @@ import { ExplorerViews } from './utils';
 
 function LogsExplorer(): JSX.Element {
 	const [searchParams] = useSearchParams();
+	const [showLiveLogs, setShowLiveLogs] = useState<boolean>(false);
 
 	// Get panel type from URL
 	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
@@ -335,6 +336,14 @@ function LogsExplorer(): JSX.Element {
 		[],
 	);
 
+	const handleShowLiveLogs = useCallback(() => {
+		setShowLiveLogs(true);
+	}, []);
+
+	const handleExitLiveLogs = useCallback(() => {
+		setShowLiveLogs(false);
+	}, []);
+
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className={cx('logs-module-page', showFilters ? 'filter-visible' : '')}>
@@ -371,6 +380,9 @@ function LogsExplorer(): JSX.Element {
 								isLoadingQueries={isLoadingQueries}
 							/>
 						}
+						showLiveLogs={showLiveLogs}
+						onGoLive={handleShowLiveLogs}
+						onExitLiveLogs={handleExitLiveLogs}
 					/>
 
 					<div className="log-explorer-query-container">
@@ -386,6 +398,7 @@ function LogsExplorer(): JSX.Element {
 								chartQueryKeyRef={chartQueryKeyRef}
 								setIsLoadingQueries={setIsLoadingQueries}
 								setWarning={setWarning}
+								showLiveLogs={showLiveLogs}
 							/>
 						</div>
 					</div>

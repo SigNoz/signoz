@@ -59,7 +59,9 @@ interface CustomTimePickerProps {
 	customDateTimeVisible?: boolean;
 	setCustomDTPickerVisible?: Dispatch<SetStateAction<boolean>>;
 	onCustomDateHandler?: (dateTimeRange: DateTimeRangeType) => void;
-	handleGoLive?: () => void;
+	showLiveLogs?: boolean;
+	onGoLive?: () => void;
+	onExitLiveLogs?: () => void;
 }
 
 function CustomTimePicker({
@@ -76,7 +78,9 @@ function CustomTimePicker({
 	customDateTimeVisible,
 	setCustomDTPickerVisible,
 	onCustomDateHandler,
-	handleGoLive,
+	onGoLive,
+	onExitLiveLogs,
+	showLiveLogs,
 }: CustomTimePickerProps): JSX.Element {
 	const [
 		selectedTimePlaceholderValue,
@@ -165,9 +169,13 @@ function CustomTimePicker({
 	};
 
 	useEffect(() => {
-		const value = getSelectedTimeRangeLabel(selectedTime, selectedValue);
-		setSelectedTimePlaceholderValue(value);
-	}, [selectedTime, selectedValue]);
+		if (showLiveLogs) {
+			setSelectedTimePlaceholderValue('Live');
+		} else {
+			const value = getSelectedTimeRangeLabel(selectedTime, selectedValue);
+			setSelectedTimePlaceholderValue(value);
+		}
+	}, [selectedTime, selectedValue, showLiveLogs]);
 
 	const hide = (): void => {
 		setOpen(false);
@@ -357,7 +365,8 @@ function CustomTimePicker({
 								setCustomDTPickerVisible={defaultTo(setCustomDTPickerVisible, noop)}
 								onCustomDateHandler={defaultTo(onCustomDateHandler, noop)}
 								onSelectHandler={handleSelect}
-								handleGoLive={defaultTo(handleGoLive, noop)}
+								onGoLive={defaultTo(onGoLive, noop)}
+								onExitLiveLogs={defaultTo(onExitLiveLogs, noop)}
 								options={items}
 								selectedTime={selectedTime}
 								activeView={activeView}
@@ -439,6 +448,8 @@ CustomTimePicker.defaultProps = {
 	customDateTimeVisible: false,
 	setCustomDTPickerVisible: noop,
 	onCustomDateHandler: noop,
-	handleGoLive: noop,
+	onGoLive: noop,
 	onCustomTimeStatusUpdate: noop,
+	onExitLiveLogs: noop,
+	showLiveLogs: false,
 };
