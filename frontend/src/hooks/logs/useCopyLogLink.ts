@@ -67,7 +67,6 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 	);
 
 	const onClearActiveLog = useCallback(() => {
-		console.log('onClearActiveLog');
 		const currentUrlQuery = new URLSearchParams(search);
 		currentUrlQuery.delete(QueryParams.activeLogId);
 		const newUrl = `${pathname}?${currentUrlQuery.toString()}`;

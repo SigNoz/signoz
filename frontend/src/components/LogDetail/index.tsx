@@ -337,7 +337,7 @@ function LogDetailInner({
 					/>
 				)}
 
-				<Tooltip title="Copy Log Link" placement="left">
+				<Tooltip title="Copy Log Link" placement="left" aria-label="Copy Log Link">
 					<Button
 						className="action-btn"
 						icon={<Copy size={16} />}
