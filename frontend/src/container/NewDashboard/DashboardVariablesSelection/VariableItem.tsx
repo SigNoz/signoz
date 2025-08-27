@@ -419,7 +419,10 @@ function VariableItem({
 							enableAllSelection={enableSelectAll}
 							maxTagTextLength={30}
 							allowClear={selectValue !== ALL_SELECT_VALUE && selectValue !== 'ALL'}
-							onRetry={refetch}
+							onRetry={(): void => {
+								setErrorMessage(null);
+								refetch();
+							}}
 						/>
 					) : (
 						<CustomSelect
@@ -445,7 +448,10 @@ function VariableItem({
 							}))}
 							value={selectValue}
 							errorMessage={errorMessage}
-							onRetry={refetch}
+							onRetry={(): void => {
+								setErrorMessage(null);
+								refetch();
+							}}
 						/>
 					))
 				)}
