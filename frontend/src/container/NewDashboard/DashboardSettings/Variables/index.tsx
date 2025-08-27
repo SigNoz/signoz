@@ -184,21 +184,23 @@ function VariablesSetting({
 
 	// initialize and adjust dynamicVariablesWidgetIds values for all variables
 	useEffect(() => {
-		const newVariablesArr = Object.values(variables).map(
-			(variable: IDashboardVariable) => {
-				if (variable.type === 'DYNAMIC') {
-					return {
-						...variable,
-						dynamicVariablesWidgetIds: dynamicVariableToWidgetsMap[variable.id] || [],
-					};
-				}
-
-				return variable;
-			},
-		);
-
-		setVariablesTableData(newVariablesArr);
-	}, [variables, dynamicVariableToWidgetsMap]);
+		// Only update dynamic variables without changing the order
+		if (variablesTableData.length > 0) {
+			const updatedVariablesArr = variablesTableData.map(
+				(variable: IDashboardVariable) => {
+					if (variable.type === 'DYNAMIC') {
+						return {
+							...variable,
+							dynamicVariablesWidgetIds:
+								dynamicVariableToWidgetsMap[variable.id] || [],
+						};
+					}
+					return variable;
+				},
+			);
+			setVariablesTableData(updatedVariablesArr);
+		}
+	}, [dynamicVariableToWidgetsMap, variablesTableData]);
 
 	const updateVariables = (
 		updatedVariablesData: Dashboard['data']['variables'],

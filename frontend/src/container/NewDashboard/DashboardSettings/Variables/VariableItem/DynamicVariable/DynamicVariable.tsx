@@ -53,7 +53,7 @@ function DynamicVariable({
 	const [attributes, setAttributes] = useState<Record<string, FieldKey[]>>({});
 	const [selectedAttribute, setSelectedAttribute] = useState<string>();
 	const [apiSearchText, setApiSearchText] = useState<string>('');
-
+	const [errorMessage, setErrorMessage] = useState<string>();
 	const debouncedApiSearchText = useDebounce(apiSearchText, DEBOUNCE_DELAY);
 
 	const [filteredAttributes, setFilteredAttributes] = useState<
@@ -142,7 +142,7 @@ function DynamicVariable({
 		dynamicVariablesSelectedValue?.value,
 	]);
 
-	const errorMessage = (error as any)?.message;
+	const errorText = (error as any)?.message || errorMessage;
 	return (
 		<div className="dynamic-variable-container">
 			<CustomSelect
@@ -152,15 +152,17 @@ function DynamicVariable({
 					value: key,
 				}))}
 				loading={isLoading}
-				status={errorMessage ? 'error' : undefined}
+				status={errorText ? 'error' : undefined}
 				onChange={(value): void => {
 					setSelectedAttribute(value);
 				}}
 				showSearch
-				errorMessage={errorMessage as any}
+				errorMessage={errorText as any}
 				value={selectedAttribute || dynamicVariablesSelectedValue?.name}
 				onSearch={handleSearch}
 				onRetry={(): void => {
+					// reset error message
+					setErrorMessage(undefined);
 					refetch();
 				}}
 			/>
