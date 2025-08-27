@@ -139,7 +139,7 @@ function MetricDetails({
 								icon={<Crosshair size={18} />}
 								onClick={(): void => {
 									if (metric?.name) {
-										openInspectModal(metric.name);
+										openInspectModal?.(metric.name);
 									}
 								}}
 								data-testid="inspect-metric-button"
