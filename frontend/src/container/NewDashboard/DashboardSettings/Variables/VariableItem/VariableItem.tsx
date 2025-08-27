@@ -383,6 +383,9 @@ function VariableItem({
 								}}
 							>
 								Dynamic
+								<Tag bordered={false} className="sidenav-beta-tag" color="geekblue">
+									Beta
+								</Tag>
 							</Button>
 							<Button
 								type="text"
@@ -426,6 +429,9 @@ function VariableItem({
 								}}
 							>
 								Query
+								<Tag bordered={false} className="sidenav-beta-tag" color="warning">
+									Not Recommended
+								</Tag>
 							</Button>
 						</div>
 					</VariableItemRow>

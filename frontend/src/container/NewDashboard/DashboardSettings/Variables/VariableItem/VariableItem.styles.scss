@@ -99,7 +99,8 @@
 			}
 
 			.variable-type-btn-group {
-				display: flex;
+				display: grid;
+				grid-template-columns: max-content max-content max-content max-content;
 				height: 32px;
 				flex-shrink: 0;
 				border-radius: 2px;
@@ -112,12 +113,14 @@
 					height: 32px;
 					flex-shrink: 0;
 					border-radius: 2px 0px 0px 2px;
+					width: 100%;
 				}
 
 				.variable-type-btn {
 					display: flex;
 					align-items: center;
 					justify-content: center;
+					gap: 8px;
 				}
 
 				.variable-type-btn + .variable-type-btn {
