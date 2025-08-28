@@ -189,8 +189,9 @@ describe('traceOperatorContextUtils', () => {
 			jest.spyOn(console, 'error').mockImplementation(() => {});
 		});
 
-		jest.restoreAllMocks();
-		afterEach(() => {});
+		afterEach(() => {
+			jest.restoreAllMocks();
+		});
 
 		it('should return default context for empty query', () => {
 			const result = getTraceOperatorContextAtCursor('', 0);
