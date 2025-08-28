@@ -849,7 +849,11 @@ function FormAlertRules({
 					<StepContainer>
 						<div className="y-axis-unit-selector-container">
 							<Typography.Text>Y-Axis Unit</Typography.Text>
-							<YAxisUnitSelector value={yAxisUnit} onChange={onUnitChangeHandler} />
+							<YAxisUnitSelector
+								initialValue={currentQuery.unit || ''}
+								value={yAxisUnit}
+								onChange={onUnitChangeHandler}
+							/>
 						</div>
 					</StepContainer>
 

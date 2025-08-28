@@ -302,6 +302,10 @@ function NewWidget({
 		contextLinks,
 	]);
 
+	const [initialYAxisUnit, setInitialYAxisUnit] = useState<string | undefined>(
+		selectedWidget?.yAxisUnit,
+	);
+
 	useEffect(() => {
 		const compositeQuery = query.get('compositeQuery');
 		if (compositeQuery) {
@@ -309,6 +313,7 @@ function NewWidget({
 				const decoded = decodeURIComponent(compositeQuery);
 				const parsedQuery = JSON.parse(decoded) as Query;
 				setYAxisUnit(parsedQuery.unit || 'none');
+				setInitialYAxisUnit(parsedQuery.unit);
 			} catch (error) {
 				setYAxisUnit('none');
 			}
@@ -835,6 +840,7 @@ function NewWidget({
 							setStackedBarChart={setStackedBarChart}
 							opacity={opacity}
 							yAxisUnit={yAxisUnit}
+							initialYAxisUnit={initialYAxisUnit}
 							columnUnits={columnUnits}
 							setColumnUnits={setColumnUnits}
 							bucketCount={bucketCount}
