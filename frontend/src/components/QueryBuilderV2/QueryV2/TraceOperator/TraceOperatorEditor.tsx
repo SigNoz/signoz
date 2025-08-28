@@ -381,7 +381,7 @@ function TraceOperatorEditor({
 										if (onRun && typeof onRun === 'function') {
 											onRun(value);
 										} else {
-											handleRunQuery(true, true);
+											handleRunQuery();
 										}
 										return true;
 									},

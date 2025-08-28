@@ -176,19 +176,13 @@ function TracesExplorer(): JSX.Element {
 
 	useShareBuilderUrl({ defaultValue: defaultQuery, forceReset: shouldReset });
 
-	const isMultipleQueries = useMemo(() => {
-		const builder = currentQuery?.builder;
-		const queriesLen = builder?.queryData?.length ?? 0;
-		const formulasLen = builder?.queryFormulas?.length ?? 0;
-		return queriesLen > 1 || formulasLen > 0;
-	}, [currentQuery]);
-
 	const isGroupByExist = useMemo(() => {
 		const queryData = currentQuery?.builder?.queryData ?? [];
 		return queryData.some((q) => (q?.groupBy?.length ?? 0) > 0);
 	}, [currentQuery]);
+
 	useEffect(() => {
-		const shouldChangeView = isMultipleQueries || isGroupByExist;
+		const shouldChangeView = isGroupByExist;
 
 		if (
 			(selectedView === ExplorerViews.LIST ||
@@ -198,12 +192,7 @@ function TracesExplorer(): JSX.Element {
 			// Switch to timeseries view automatically
 			handleChangeSelectedView(ExplorerViews.TIMESERIES);
 		}
-	}, [
-		selectedView,
-		isMultipleQueries,
-		isGroupByExist,
-		handleChangeSelectedView,
-	]);
+	}, [selectedView, isGroupByExist, handleChangeSelectedView]);
 
 	useEffect(() => {
 		if (shouldReset) {
