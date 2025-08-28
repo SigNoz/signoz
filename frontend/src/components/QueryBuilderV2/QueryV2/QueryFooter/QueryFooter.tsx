@@ -58,13 +58,13 @@ export default function QueryFooter({
 					</div>
 				)}
 				{showAddTraceOperator && (
-					<div className="qb-add-formula">
+					<div className="qb-trace-operator-button-container">
 						<Tooltip
 							title={
 								<div style={{ textAlign: 'center' }}>
 									Add Trace Matching
 									<Typography.Link
-										href="https://signoz.io/docs/userguide/query-builder-v5/#multi-query-analysis-advanced-comparisons"
+										href="https://signoz.io/docs/userguide/query-builder-v5/#multi-query-analysis-trace-operators"
 										target="_blank"
 										style={{ textDecoration: 'underline' }}
 									>
@@ -76,7 +76,7 @@ export default function QueryFooter({
 							}
 						>
 							<Button
-								className="add-formula-button periscope-btn secondary"
+								className="add-trace-operator-button periscope-btn secondary"
 								icon={<DraftingCompass size={16} />}
 								onClick={(): void => addTraceOperator?.()}
 							>
