@@ -668,6 +668,18 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		</div>
 	);
 
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
+	const { updateUserPreferenceInContext } = useAppContext();
+
+	const { mutate: updateUserPreferenceMutation } = useMutation(
+		updateUserPreference,
+		{
+			onError: (error) => {
+				showErrorNotification(notifications, error as AxiosError);
+			},
+		},
+	);
+
 	const sideNavPinnedPreference = userPreferences?.find(
 		(preference) => preference.name === USER_PREFERENCES.SIDENAV_PINNED,
 	)?.value as boolean;
@@ -696,18 +708,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isSideNavPinned = isSidebarLoaded
 		? sideNavPinnedPreference
 		: getSidebarStateFromLocalStorage();
-
-	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
-	const { updateUserPreferenceInContext } = useAppContext();
-
-	const { mutate: updateUserPreferenceMutation } = useMutation(
-		updateUserPreference,
-		{
-			onError: (error) => {
-				showErrorNotification(notifications, error as AxiosError);
-			},
-		},
-	);
 
 	const handleToggleSidebar = useCallback((): void => {
 		const newState = !isSideNavPinned;

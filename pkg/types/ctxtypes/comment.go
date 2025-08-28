@@ -13,7 +13,7 @@ var (
 	logsExplorerRegex    = regexp.MustCompile(`/logs/logs-explorer(?:\?.*)?$`)
 	traceExplorerRegex   = regexp.MustCompile(`/traces-explorer(?:\?.*)?$`)
 	metricsExplorerRegex = regexp.MustCompile(`/metrics-explorer/explorer(?:\?.*)?$`)
-	meterRegex           = regexp.MustCompile(`/meter/(?:\?.*)?$`)
+	meterRegex           = regexp.MustCompile(`/meter(?:/.*)?(?:\?.*)?$`)
 	dashboardRegex       = regexp.MustCompile(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`)
 	dashboardIDRegex     = regexp.MustCompile(`/dashboard/([a-f0-9\-]+)/`)
 	widgetIDRegex        = regexp.MustCompile(`widgetId=([a-f0-9\-]+)`)
