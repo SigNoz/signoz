@@ -67,6 +67,32 @@ type PostableRule struct {
 	// legacy
 	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
 	OldYaml string `json:"yaml,omitempty"`
+
+	Evaluation Evaluation `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
+}
+
+func (p *PostableRule) UnmarshalJSON(data []byte) error {
+	type Alias PostableRule
+	aux := &struct {
+		Evaluation json.RawMessage `json:"evaluation,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(p),
+	}
+	
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	
+	if len(aux.Evaluation) > 0 {
+		eval, err := UnmarshalEvaluationJSON(aux.Evaluation)
+		if err != nil {
+			return err
+		}
+		p.Evaluation = eval
+	}
+	
+	return nil
 }
 
 func ParsePostableRule(content []byte) (*PostableRule, error) {
@@ -145,6 +171,10 @@ func ParseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*P
 		rule.RuleCondition.Thresholds = append(rule.RuleCondition.Thresholds,
 			NewBasicRuleThreshold(CriticalThresholdName, rule.RuleCondition.Target, nil, rule.RuleCondition.MatchType, rule.RuleCondition.CompareOp, rule.RuleCondition.SelectedQuery, rule.RuleCondition.TargetUnit, rule.RuleCondition.CompositeQuery.Unit))
 	}
+	if rule.Evaluation == nil {
+		rule.Evaluation = NewEvaluation("rolling", RollingWindow{EvalWindow: rule.EvalWindow, Frequency: rule.Frequency, RequiredNumPoints: rule.RuleCondition.RequiredNumPoints, RequireMinPoints: rule.RuleCondition.RequireMinPoints})
+	}
+
 	return rule, nil
 }
 

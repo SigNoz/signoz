@@ -870,6 +870,10 @@ func TestPrepareLinksToLogs(t *testing.T) {
 		RuleType:   ruletypes.RuleTypeThreshold,
 		EvalWindow: ruletypes.Duration(5 * time.Minute),
 		Frequency:  ruletypes.Duration(1 * time.Minute),
+		Evaluation: &ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
@@ -913,6 +917,10 @@ func TestPrepareLinksToLogsV5(t *testing.T) {
 		RuleType:   ruletypes.RuleTypeThreshold,
 		EvalWindow: ruletypes.Duration(5 * time.Minute),
 		Frequency:  ruletypes.Duration(1 * time.Minute),
+		Evaluation: &ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
@@ -963,6 +971,10 @@ func TestPrepareLinksToTracesV5(t *testing.T) {
 		RuleType:   ruletypes.RuleTypeThreshold,
 		EvalWindow: ruletypes.Duration(5 * time.Minute),
 		Frequency:  ruletypes.Duration(1 * time.Minute),
+		Evaluation: &ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
@@ -1013,6 +1025,10 @@ func TestPrepareLinksToTraces(t *testing.T) {
 		RuleType:   ruletypes.RuleTypeThreshold,
 		EvalWindow: ruletypes.Duration(5 * time.Minute),
 		Frequency:  ruletypes.Duration(1 * time.Minute),
+		Evaluation: &ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
@@ -1141,6 +1157,10 @@ func TestThresholdRuleEvalDelay(t *testing.T) {
 		RuleType:   ruletypes.RuleTypeThreshold,
 		EvalWindow: ruletypes.Duration(5 * time.Minute),
 		Frequency:  ruletypes.Duration(1 * time.Minute),
+		Evaluation: &ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeClickHouseSQL,
@@ -1191,6 +1211,10 @@ func TestThresholdRuleClickHouseTmpl(t *testing.T) {
 		RuleType:   ruletypes.RuleTypeThreshold,
 		EvalWindow: ruletypes.Duration(5 * time.Minute),
 		Frequency:  ruletypes.Duration(1 * time.Minute),
+		Evaluation: &ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeClickHouseSQL,
@@ -1248,6 +1272,10 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		RuleType:   ruletypes.RuleTypeThreshold,
 		EvalWindow: ruletypes.Duration(5 * time.Minute),
 		Frequency:  ruletypes.Duration(1 * time.Minute),
+		Evaluation: &ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
@@ -1428,6 +1456,10 @@ func TestThresholdRuleNoData(t *testing.T) {
 		RuleType:   ruletypes.RuleTypeThreshold,
 		EvalWindow: ruletypes.Duration(5 * time.Minute),
 		Frequency:  ruletypes.Duration(1 * time.Minute),
+		Evaluation: &ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
@@ -1521,6 +1553,10 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 		RuleType:   ruletypes.RuleTypeThreshold,
 		EvalWindow: ruletypes.Duration(5 * time.Minute),
 		Frequency:  ruletypes.Duration(1 * time.Minute),
+		Evaluation: &ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
@@ -1633,6 +1669,10 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 		RuleType:   ruletypes.RuleTypeThreshold,
 		EvalWindow: ruletypes.Duration(5 * time.Minute),
 		Frequency:  ruletypes.Duration(1 * time.Minute),
+		Evaluation: &ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
@@ -1758,6 +1798,10 @@ func TestThresholdRuleShiftBy(t *testing.T) {
 		RuleType:   ruletypes.RuleTypeThreshold,
 		EvalWindow: ruletypes.Duration(5 * time.Minute),
 		Frequency:  ruletypes.Duration(1 * time.Minute),
+		Evaluation: &ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
@@ -1822,6 +1866,10 @@ func TestMultipleThresholdRule(t *testing.T) {
 		RuleType:   ruletypes.RuleTypeThreshold,
 		EvalWindow: ruletypes.Duration(5 * time.Minute),
 		Frequency:  ruletypes.Duration(1 * time.Minute),
+		Evaluation: &ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,

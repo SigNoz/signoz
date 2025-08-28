@@ -125,8 +125,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 
 	prevState := r.State()
 
-	start := ts.Add(-r.evalWindow)
-	end := ts
+	start, end := r.Timestamps(ts)
 	interval := 60 * time.Second // TODO(srikanthccv): this should be configurable
 
 	valueFormatter := formatter.FromUnit(r.Unit())
