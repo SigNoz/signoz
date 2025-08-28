@@ -957,6 +957,40 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 		sb.Where(sb.LE("unix_milli", fieldValueSelector.EndUnixMilli))
 	}
 
+	if fieldValueSelector.Value != "" {
+		var conds []string
+		if fieldValueSelector.FieldContext != telemetrytypes.FieldContextAttribute &&
+			fieldValueSelector.FieldContext != telemetrytypes.FieldContextResource {
+			origContext := key.FieldContext
+
+			// search on attributes
+			key.FieldContext = telemetrytypes.FieldContextAttribute
+			cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			if err == nil {
+				conds = append(conds, cond)
+			}
+
+			// search on resource
+			key.FieldContext = telemetrytypes.FieldContextResource
+			cond, err = t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			if err == nil {
+				conds = append(conds, cond)
+			}
+			key.FieldContext = origContext
+		} else {
+			cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			if err == nil {
+				conds = append(conds, cond)
+			}
+		}
+
+		if len(conds) != 0 {
+			// see `expr` in condition_builder.go, if key doesn't exist we don't check for value
+			// hence, this is join of conditions on resource and attributes
+			sb.Where(sb.And(conds...))
+		}
+	}
+
 	limit := fieldValueSelector.Limit
 	if limit == 0 {
 		limit = 50
