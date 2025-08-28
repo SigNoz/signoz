@@ -1,9 +1,8 @@
 import { PauseCircleFilled, PlayCircleFilled } from '@ant-design/icons';
 import { Button } from 'antd';
-import { getQueryWithoutFilterId } from 'container/LiveLogs/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useEventSource } from 'providers/EventSource';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { validateQuery } from 'utils/queryValidationUtils';
 
 function LiveLogsPauseResume(): JSX.Element {
@@ -16,7 +15,7 @@ function LiveLogsPauseResume(): JSX.Element {
 		handleSetInitialLoading,
 	} = useEventSource();
 
-	const { redirectWithQueryBuilderData, currentQuery } = useQueryBuilder();
+	const { currentQuery } = useQueryBuilder();
 
 	const isPlaying = isConnectionOpen || isConnectionLoading || initialLoading;
 
@@ -44,11 +43,8 @@ function LiveLogsPauseResume(): JSX.Element {
 		if ((!isConnectionOpen && isConnectionLoading) || isConnectionOpen) {
 			handleCloseConnection();
 		} else {
-			const preparedQuery = getQueryWithoutFilterId(currentQuery);
-			redirectWithQueryBuilderData(preparedQuery);
-
 			const currentFilterExpression =
-				currentQuery?.builder.queryData[0]?.filter?.expression || '';
+				currentQuery?.builder.queryData[0]?.filter?.expression?.trim() || '';
 
 			const validationResult = validateQuery(currentFilterExpression || '');
 
@@ -65,9 +61,16 @@ function LiveLogsPauseResume(): JSX.Element {
 		currentQuery,
 		handleSetInitialLoading,
 		handleCloseConnection,
-		redirectWithQueryBuilderData,
 		handleStartNewConnection,
 	]);
+
+	// clean up the connection when the component unmounts
+	useEffect(
+		() => (): void => {
+			handleCloseConnection();
+		},
+		[handleCloseConnection],
+	);
 
 	return (
 		<div className="live-logs-pause-resume">

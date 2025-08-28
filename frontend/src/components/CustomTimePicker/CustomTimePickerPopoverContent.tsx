@@ -6,6 +6,7 @@ import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import DatePickerV2 from 'components/DatePickerV2/DatePickerV2';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import {
@@ -14,6 +15,7 @@ import {
 	RelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs from 'dayjs';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { Clock, PenLine } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import {
@@ -77,6 +79,13 @@ function CustomTimePickerPopoverContent({
 	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
 		pathname,
 	]);
+
+	const urlQuery = useUrlQuery();
+
+	const panelTypeFromURL = urlQuery.get(QueryParams.panelTypes);
+
+	const isLogsListView =
+		panelTypeFromURL !== 'table' && panelTypeFromURL !== 'chart'; // we do not select list view in the url
 
 	const { timezone } = useTimezone();
 	const activeTimezoneOffset = timezone.offset;
@@ -165,7 +174,7 @@ function CustomTimePickerPopoverContent({
 		<>
 			<div className="date-time-popover">
 				<div className="date-time-options">
-					{isLogsExplorerPage && (
+					{isLogsExplorerPage && isLogsListView && (
 						<Button className="data-time-live" type="text" onClick={handleGoLive}>
 							Live
 						</Button>

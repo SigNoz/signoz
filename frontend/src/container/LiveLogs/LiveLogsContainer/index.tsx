@@ -153,7 +153,7 @@ function LiveLogsContainer(): JSX.Element {
 	// Replace the existing useEffect (lines 175-185) with this:
 	useEffect(() => {
 		const currentFilterExpression =
-			currentQuery?.builder.queryData[0]?.filter?.expression || '';
+			currentQuery?.builder.queryData[0]?.filter?.expression?.trim() || '';
 
 		// Check if filterExpression has actually changed
 		if (
@@ -176,7 +176,7 @@ function LiveLogsContainer(): JSX.Element {
 	useEffect(() => {
 		if (initialLoading && !isConnectionLoading) {
 			const currentFilterExpression =
-				currentQuery?.builder.queryData[0]?.filter?.expression || '';
+				currentQuery?.builder.queryData[0]?.filter?.expression?.trim() || '';
 
 			const validationResult = validateQuery(currentFilterExpression || '');
 
@@ -206,6 +206,14 @@ function LiveLogsContainer(): JSX.Element {
 		compositeQuery,
 		handleStartNewConnection,
 	]);
+
+	// clean up the connection when the component unmounts
+	useEffect(
+		() => (): void => {
+			handleCloseConnection();
+		},
+		[handleCloseConnection],
+	);
 
 	const handleToggleFrequencyChart = useCallback(() => {
 		setShowLiveLogsFrequencyChart(!showLiveLogsFrequencyChart);
