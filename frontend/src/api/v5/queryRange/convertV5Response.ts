@@ -11,13 +11,13 @@ import {
 } from 'types/api/v5/queryRange';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
-// Severity normalization mapping
+// Severity normalization mapping using lowercase keys to match color function
 const SEVERITY_VARIANTS = {
-	TRACE: ['TRACE', 'Trace', 'trace', 'trc', 'Trc'],
-	DEBUG: ['DEBUG', 'Debug', 'debug', 'dbg', 'Dbg'],
-	INFO: ['INFO', 'Info', 'info', 'Information', 'information'],
-	WARN: ['WARN', 'Warn', 'warn', 'warning', 'Warning', 'wrn', 'Wrn'],
-	ERROR: [
+	trace: ['TRACE', 'Trace', 'trace', 'trc', 'Trc'],
+	debug: ['DEBUG', 'Debug', 'debug', 'dbg', 'Dbg'],
+	info: ['INFO', 'Info', 'info', 'Information', 'information'],
+	warn: ['WARN', 'Warn', 'warn', 'warning', 'Warning', 'wrn', 'Wrn'],
+	error: [
 		'ERROR',
 		'Error',
 		'error',
@@ -28,7 +28,7 @@ const SEVERITY_VARIANTS = {
 		'Fail',
 		'FAIL',
 	],
-	FATAL: [
+	fatal: [
 		'FATAL',
 		'Fatal',
 		'fatal',
@@ -47,9 +47,14 @@ const SEVERITY_VARIANTS = {
 /**
  * Normalizes severity labels to standard values
  * @param severity - Original severity value
- * @returns Normalized severity value or original if no mapping found
+ * @returns Normalized severity value, defaults to 'info' for empty severity value
  */
 function normalizeSeverityLabel(severity: string): string {
+	// Handle empty string as info
+	if (!severity || severity.trim() === '') {
+		return 'info';
+	}
+
 	const normalized = Object.keys(SEVERITY_VARIANTS).find((key) =>
 		SEVERITY_VARIANTS[key as keyof typeof SEVERITY_VARIANTS].includes(severity),
 	);
@@ -64,7 +69,7 @@ function normalizeSeverityLabel(severity: string): string {
 function normalizeLabelsObject(
 	labels: Record<string, string>,
 ): Record<string, string> {
-	if (labels.severity_text) {
+	if ('severity_text' in labels) {
 		return {
 			...labels,
 			severity_text: normalizeSeverityLabel(labels.severity_text),
