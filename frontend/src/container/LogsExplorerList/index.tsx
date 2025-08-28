@@ -27,7 +27,7 @@ import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import NoLogs from '../NoLogs/NoLogs';
-import InfinityTableView from './InfinityTableView';
+import ColumnView from './ColumnView/ColumnView';
 import { LogsExplorerListProps } from './LogsExplorerList.interfaces';
 import { InfinityWrapperStyled } from './styles';
 import {
@@ -48,6 +48,7 @@ function LogsExplorerList({
 	isError,
 	error,
 	isFilterApplied,
+	isFrequencyChartVisible,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
 
@@ -90,6 +91,7 @@ function LogsExplorerList({
 			});
 		}
 	}, [isLoading, isFetching, isError, logs.length]);
+
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
 			if (options.format === 'raw') {
@@ -127,75 +129,6 @@ function LogsExplorerList({
 			selectedFields,
 		],
 	);
-
-	const renderContent = useMemo(() => {
-		const components = isLoading
-			? {
-					Footer,
-			  }
-			: {};
-
-		if (options.format === 'table') {
-			return (
-				<InfinityTableView
-					ref={ref}
-					isLoading={isLoading}
-					tableViewProps={{
-						logs,
-						fields: selectedFields,
-						linesPerRow: options.maxLines,
-						fontSize: options.fontSize,
-						appendTo: 'end',
-						activeLogIndex,
-					}}
-					infitiyTableProps={{ onEndReached }}
-				/>
-			);
-		}
-
-		function getMarginTop(): string {
-			switch (options.fontSize) {
-				case FontSize.SMALL:
-					return '10px';
-				case FontSize.MEDIUM:
-					return '12px';
-				case FontSize.LARGE:
-					return '15px';
-				default:
-					return '15px';
-			}
-		}
-
-		return (
-			<Card
-				style={{ width: '100%', marginTop: getMarginTop() }}
-				bodyStyle={CARD_BODY_STYLE}
-			>
-				<OverlayScrollbar isVirtuoso>
-					<Virtuoso
-						key={activeLogIndex || 'logs-virtuoso'}
-						ref={ref}
-						initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
-						data={logs}
-						endReached={onEndReached}
-						totalCount={logs.length}
-						itemContent={getItemContent}
-						components={components}
-					/>
-				</OverlayScrollbar>
-			</Card>
-		);
-	}, [
-		isLoading,
-		options.format,
-		options.maxLines,
-		options.fontSize,
-		activeLogIndex,
-		logs,
-		onEndReached,
-		getItemContent,
-		selectedFields,
-	]);
 
 	const isTraceToLogsNavigation = useMemo(() => {
 		if (!currentStagedQueryData) return false;
@@ -236,6 +169,83 @@ function LogsExplorerList({
 		return getEmptyLogsListConfig(handleClearFilters);
 	}, [isTraceToLogsNavigation, handleClearFilters]);
 
+	const handleLoadMore = useCallback(() => {
+		if (isLoading || isFetching) return;
+
+		onEndReached(logs.length);
+	}, [isLoading, isFetching, onEndReached, logs.length]);
+
+	const renderContent = useMemo(() => {
+		const components = isLoading
+			? {
+					Footer,
+			  }
+			: {};
+
+		if (options.format === 'table') {
+			return (
+				<ColumnView
+					logs={logs}
+					onLoadMore={handleLoadMore}
+					selectedFields={selectedFields}
+					isLoading={isLoading}
+					isFetching={isFetching}
+					options={{
+						maxLinesPerRow: options.maxLines,
+						fontSize: options.fontSize,
+					}}
+					isFrequencyChartVisible={isFrequencyChartVisible}
+				/>
+			);
+		}
+
+		function getMarginTop(): string {
+			switch (options.fontSize) {
+				case FontSize.SMALL:
+					return '10px';
+				case FontSize.MEDIUM:
+					return '12px';
+				case FontSize.LARGE:
+					return '15px';
+				default:
+					return '15px';
+			}
+		}
+
+		return (
+			<InfinityWrapperStyled data-testid="logs-list-virtuoso">
+				<Card
+					style={{ width: '100%', marginTop: getMarginTop() }}
+					bodyStyle={CARD_BODY_STYLE}
+				>
+					<OverlayScrollbar isVirtuoso>
+						<Virtuoso
+							key={activeLogIndex || 'logs-virtuoso'}
+							ref={ref}
+							initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
+							data={logs}
+							endReached={onEndReached}
+							totalCount={logs.length}
+							itemContent={getItemContent}
+							components={components}
+						/>
+					</OverlayScrollbar>
+				</Card>
+			</InfinityWrapperStyled>
+		);
+	}, [
+		isLoading,
+		activeLogIndex,
+		handleLoadMore,
+		isFetching,
+		logs,
+		onEndReached,
+		getItemContent,
+		selectedFields,
+		isFrequencyChartVisible,
+		options,
+	]);
+
 	return (
 		<div className="logs-list-view-container">
 			{(isLoading || (isFetching && logs.length === 0)) && <LogsLoading />}
@@ -264,9 +274,7 @@ function LogsExplorerList({
 
 			{!isLoading && !isError && logs.length > 0 && (
 				<>
-					<InfinityWrapperStyled data-testid="logs-list-virtuoso">
-						{renderContent}
-					</InfinityWrapperStyled>
+					{renderContent}
 
 					<LogDetail
 						selectedTab={VIEW_TYPES.OVERVIEW}
