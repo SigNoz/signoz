@@ -467,7 +467,6 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
 	}
 
-	b.logger.Info(stmt.Query)
 	return stmt, nil
 }
 
