@@ -408,6 +408,10 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 		innerSB.Limit(100)
 	}
 
+	if query.Offset > 0 {
+		innerSB.Offset(query.Offset)
+	}
+
 	innerSQL, innerArgs := innerSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	cteFragments = append(cteFragments, fmt.Sprintf("__toe_duration_sorted AS (%s)", innerSQL))
@@ -441,10 +445,6 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 		mainSB.Limit(query.Limit)
 	} else {
 		mainSB.Limit(100)
-	}
-
-	if query.Offset > 0 {
-		mainSB.Offset(query.Offset)
 	}
 
 	mainSQL, mainArgs := mainSB.BuildWithFlavor(sqlbuilder.ClickHouse)
