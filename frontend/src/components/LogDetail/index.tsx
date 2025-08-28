@@ -23,6 +23,7 @@ import {
 } from 'container/LogDetailedView/utils';
 import useInitialQuery from 'container/LogsExplorerContext/useInitialQuery';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
@@ -93,6 +94,8 @@ function LogDetailInner({
 	);
 
 	const { notifications } = useNotifications();
+
+	const { onLogCopy } = useCopyLogLink(log?.id);
 
 	const LogJsonData = log ? aggregateAttributesResourcesToString(log) : '';
 
@@ -333,6 +336,14 @@ function LogDetailInner({
 						onClick={handleFilterVisible}
 					/>
 				)}
+
+				<Tooltip title="Copy Log Link" placement="left" aria-label="Copy Log Link">
+					<Button
+						className="action-btn"
+						icon={<Copy size={16} />}
+						onClick={onLogCopy}
+					/>
+				</Tooltip>
 			</div>
 			{isFilterVisible && contextQuery?.builder.queryData[0] && (
 				<div className="log-detail-drawer-query-container">
