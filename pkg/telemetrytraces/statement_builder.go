@@ -361,11 +361,6 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 	distSB := sqlbuilder.NewSelectBuilder()
 	distSB.Select("trace_id")
 	distSB.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
-	distSB.Where(
-		distSB.GE("timestamp", fmt.Sprintf("%d", start)),
-		distSB.L("timestamp", fmt.Sprintf("%d", end)),
-		distSB.GE("ts_bucket_start", startBucket),
-		distSB.LE("ts_bucket_start", endBucket))
 
 	var (
 		cteFragments []string
