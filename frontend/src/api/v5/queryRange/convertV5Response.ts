@@ -11,6 +11,68 @@ import {
 } from 'types/api/v5/queryRange';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
+// Severity normalization mapping
+const SEVERITY_VARIANTS = {
+	TRACE: ['TRACE', 'Trace', 'trace', 'trc', 'Trc'],
+	DEBUG: ['DEBUG', 'Debug', 'debug', 'dbg', 'Dbg'],
+	INFO: ['INFO', 'Info', 'info', 'Information', 'information'],
+	WARN: ['WARN', 'Warn', 'warn', 'warning', 'Warning', 'wrn', 'Wrn'],
+	ERROR: [
+		'ERROR',
+		'Error',
+		'error',
+		'err',
+		'Err',
+		'ERR',
+		'fail',
+		'Fail',
+		'FAIL',
+	],
+	FATAL: [
+		'FATAL',
+		'Fatal',
+		'fatal',
+		'critical',
+		'Critical',
+		'CRITICAL',
+		'crit',
+		'Crit',
+		'CRIT',
+		'panic',
+		'Panic',
+		'PANIC',
+	],
+};
+
+/**
+ * Normalizes severity labels to standard values
+ * @param severity - Original severity value
+ * @returns Normalized severity value or original if no mapping found
+ */
+function normalizeSeverityLabel(severity: string): string {
+	const normalized = Object.keys(SEVERITY_VARIANTS).find((key) =>
+		SEVERITY_VARIANTS[key as keyof typeof SEVERITY_VARIANTS].includes(severity),
+	);
+	return normalized || severity;
+}
+
+/**
+ * Normalizes severity_text labels in a labels object
+ * @param labels - Object containing label key-value pairs
+ * @returns Labels object with normalized severity_text value
+ */
+function normalizeLabelsObject(
+	labels: Record<string, string>,
+): Record<string, string> {
+	if (labels.severity_text) {
+		return {
+			...labels,
+			severity_text: normalizeSeverityLabel(labels.severity_text),
+		};
+	}
+	return labels;
+}
+
 function getColName(
 	col: ScalarData['columns'][number],
 	legendMap: Record<string, string>,
@@ -80,6 +142,7 @@ function convertTimeSeriesData(
 			| 'upperBoundSeries'
 			| 'lowerBoundSeries'
 			| 'anomalyScores',
+		// eslint-disable-next-line sonarjs/cognitive-complexity
 	): any[] =>
 		aggregations?.flatMap((aggregation) => {
 			const { index, alias } = aggregation;
@@ -89,25 +152,78 @@ function convertTimeSeriesData(
 				return [];
 			}
 
-			return seriesData.map((series: any) => ({
-				labels: series.labels
+			const processedSeries = seriesData.map((series: any) => {
+				// Create labels object with normalization
+				const rawLabels = series.labels
 					? Object.fromEntries(
 							series.labels.map((label: any) => [label.key.name, label.value]),
 					  )
-					: {},
-				labelsArray: series.labels
-					? series.labels.map((label: any) => ({ [label.key.name]: label.value }))
-					: [],
-				values: series.values.map((value: any) => ({
-					timestamp: value.timestamp,
-					value: String(value.value),
-				})),
-				metaData: {
-					alias,
-					index,
-					queryName: timeSeriesData.queryName,
-				},
-			}));
+					: {};
+
+				// Normalize the labels, specifically severity_text
+				const normalizedLabels = normalizeLabelsObject(rawLabels);
+
+				return {
+					labels: normalizedLabels,
+					labelsArray: series.labels
+						? series.labels.map((label: any) => ({
+								[label.key.name]:
+									label.key.name === 'severity_text'
+										? normalizeSeverityLabel(label.value)
+										: label.value,
+						  }))
+						: [],
+					values: series.values.map((value: any) => ({
+						timestamp: value.timestamp,
+						value: String(value.value),
+					})),
+					metaData: {
+						alias,
+						index,
+						queryName: timeSeriesData.queryName,
+					},
+				};
+			});
+
+			// Aggregate series with identical normalized labels
+			const labelsMap = new Map<string, any>();
+
+			processedSeries.forEach((series: { labels: any; values: any[] }) => {
+				const labelsKey = JSON.stringify(series.labels);
+				const existingSeries = labelsMap.get(labelsKey);
+
+				if (existingSeries) {
+					// Merge values: combine timestamps and sum values for same timestamps
+					const mergedValues = new Map<number, number>();
+
+					// Add existing values
+					existingSeries.values.forEach((value: any) => {
+						mergedValues.set(value.timestamp, parseFloat(value.value) || 0);
+					});
+
+					// Add current series values
+					series.values.forEach((value: any) => {
+						const { timestamp } = value;
+						const currentValue = parseFloat(value.value) || 0;
+						const existingValue = mergedValues.get(timestamp) || 0;
+						mergedValues.set(timestamp, existingValue + currentValue);
+					});
+
+					// Update existing series with merged values
+					existingSeries.values = Array.from(mergedValues.entries())
+						.sort(([a], [b]) => a - b)
+						.map(([timestamp, value]) => ({
+							timestamp,
+							value: String(value),
+						}));
+				} else {
+					// First series with this label combination
+					labelsMap.set(labelsKey, { ...series });
+				}
+			});
+
+			// Convert map back to array
+			return Array.from(labelsMap.values());
 		});
 
 	return {
