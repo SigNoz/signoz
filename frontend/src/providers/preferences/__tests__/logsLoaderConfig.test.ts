@@ -62,7 +62,6 @@ describe('logsLoaderConfig', () => {
 				key: 'test-column',
 				type: 'tag',
 				dataType: DataTypes.String,
-				isColumn: true,
 			},
 		];
 
@@ -106,7 +105,6 @@ describe('logsLoaderConfig', () => {
 				key: 'url-column',
 				type: 'tag',
 				dataType: DataTypes.String,
-				isColumn: true,
 			},
 		];
 

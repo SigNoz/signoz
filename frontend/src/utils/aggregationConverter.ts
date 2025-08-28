@@ -33,9 +33,7 @@ export function convertAggregationsToBaseAutocompleteData(
 					{
 						id: uuid(),
 						dataType: DataTypes.Float64,
-						isColumn: false,
 						type: '',
-						isJSON: false,
 						key: `${spaceAggregation || 'avg'}(${metricName || 'metric'})`,
 					},
 				];
@@ -46,9 +44,7 @@ export function convertAggregationsToBaseAutocompleteData(
 					{
 						id: uuid(),
 						dataType: DataTypes.Float64,
-						isColumn: false,
 						type: '',
-						isJSON: false,
 						key: 'count()',
 					},
 				];
@@ -65,9 +61,7 @@ export function convertAggregationsToBaseAutocompleteData(
 			return {
 				id: uuid(),
 				dataType: DataTypes.Float64,
-				isColumn: false,
 				type: '',
-				isJSON: false,
 				key: displayKey,
 			};
 		}
@@ -81,9 +75,7 @@ export function convertAggregationsToBaseAutocompleteData(
 		return {
 			id: uuid(),
 			dataType: DataTypes.Float64,
-			isColumn: false,
 			type: '',
-			isJSON: false,
 			key: displayKey,
 		};
 	});
