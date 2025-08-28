@@ -12,6 +12,7 @@ interface RightToolbarActionsProps {
 	isLoadingQueries?: boolean;
 	listQueryKeyRef?: MutableRefObject<any>;
 	chartQueryKeyRef?: MutableRefObject<any>;
+	showLiveLogs?: boolean;
 }
 
 export default function RightToolbarActions({
@@ -19,19 +20,25 @@ export default function RightToolbarActions({
 	isLoadingQueries,
 	listQueryKeyRef,
 	chartQueryKeyRef,
+	showLiveLogs,
 }: RightToolbarActionsProps): JSX.Element {
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
 	const queryClient = useQueryClient();
 
 	useEffect(() => {
+		if (showLiveLogs) return;
+
 		registerShortcut(LogsExplorerShortcuts.StageAndRunQuery, onStageRunQuery);
 
 		return (): void => {
 			deregisterShortcut(LogsExplorerShortcuts.StageAndRunQuery);
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [onStageRunQuery]);
+	}, [onStageRunQuery, showLiveLogs]);
+
+	if (showLiveLogs) return <div />;
+
 	return (
 		<div>
 			{isLoadingQueries ? (
@@ -71,4 +78,5 @@ RightToolbarActions.defaultProps = {
 	isLoadingQueries: false,
 	listQueryKeyRef: null,
 	chartQueryKeyRef: null,
+	showLiveLogs: false,
 };

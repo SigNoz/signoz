@@ -1,6 +1,7 @@
 import './Toolbar.styles.scss';
 
 import ROUTES from 'constants/routes';
+import LiveLogsPauseResume from 'container/LiveLogs/LiveLogsPauseResume/LiveLogsPauseResume';
 import NewExplorerCTA from 'container/NewExplorerCTA';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { noop } from 'lodash-es';
@@ -46,6 +47,7 @@ export default function Toolbar({
 				<div className="timeRange">
 					{warningElement}
 					{showOldCTA && <NewExplorerCTA />}
+					{showLiveLogs && <LiveLogsPauseResume />}
 					<DateTimeSelectionV2
 						showLiveLogs={showLiveLogs}
 						onExitLiveLogs={onExitLiveLogs}

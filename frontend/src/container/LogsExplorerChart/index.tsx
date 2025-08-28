@@ -25,6 +25,7 @@ function LogsExplorerChart({
 	isLabelEnabled = true,
 	className,
 	isLogsExplorerViews = false,
+	isShowingLiveLogs = false,
 }: LogsExplorerChartProps): JSX.Element {
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
@@ -55,6 +56,11 @@ function LogsExplorerChart({
 
 	const onDragSelect = useCallback(
 		(start: number, end: number): void => {
+			// Do not allow dragging on live logs chart
+			if (isShowingLiveLogs) {
+				return;
+			}
+
 			const startTimestamp = Math.trunc(start);
 			const endTimestamp = Math.trunc(end);
 
@@ -75,7 +81,7 @@ function LogsExplorerChart({
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 			safeNavigate(generatedUrl);
 		},
-		[dispatch, location.pathname, safeNavigate, urlQuery],
+		[dispatch, location.pathname, safeNavigate, urlQuery, isShowingLiveLogs],
 	);
 
 	const graphData = useMemo(

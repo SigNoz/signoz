@@ -346,6 +346,28 @@ function CustomTimePicker({
 		return '';
 	};
 
+	const getInputPrefix = (): JSX.Element => {
+		if (showLiveLogs) {
+			return (
+				<div className="time-input-prefix">
+					<div className="live-dot-icon" />
+				</div>
+			);
+		}
+
+		return (
+			<div className="time-input-prefix">
+				{inputValue && inputStatus === 'success' ? (
+					<CheckCircle size={14} color="#51E7A8" />
+				) : (
+					<Tooltip title="Enter time in format (e.g., 1m, 2h, 3d, 4w)">
+						<Clock size={14} className="cursor-pointer" />
+					</Tooltip>
+				)}
+			</div>
+		);
+	};
+
 	return (
 		<div className="custom-time-picker">
 			<Tooltip title={getTooltipTitle()} placement="top">
@@ -401,17 +423,7 @@ function CustomTimePicker({
 						onBlur={handleBlur}
 						onChange={handleInputChange}
 						data-1p-ignore
-						prefix={
-							<div className="time-input-prefix">
-								{inputValue && inputStatus === 'success' ? (
-									<CheckCircle size={14} color="#51E7A8" />
-								) : (
-									<Tooltip title="Enter time in format (e.g., 1m, 2h, 3d, 4w)">
-										<Clock size={14} className="cursor-pointer" />
-									</Tooltip>
-								)}
-							</div>
-						}
+						prefix={getInputPrefix()}
 						suffix={
 							<div className="time-input-suffix">
 								{!!isTimezoneOverridden && activeTimezoneOffset && (
