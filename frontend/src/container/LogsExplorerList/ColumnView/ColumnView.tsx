@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { ColumnDef, DataTable, Row } from '@signozhq/table';
 import LogDetail from 'components/LogDetail';
@@ -5,14 +6,17 @@ import { VIEW_TYPES } from 'components/LogDetail/constants';
 import LogStateIndicator from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import { getLogIndicatorTypeForTable } from 'components/Logs/LogStateIndicator/utils';
 import { useTableView } from 'components/Logs/TableView/useTableView';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { FontSize } from 'container/OptionsMenu/types';
+import dayjs from 'dayjs';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { isEmpty, isEqual } from 'lodash-es';
+import { useTimezone } from 'providers/Timezone';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { ILog } from 'types/api/logs/log';
 
@@ -59,6 +63,8 @@ function ColumnView({
 		  ) => void)
 		| undefined
 	>();
+
+	const { timezone } = useTimezone();
 
 	useEffect(() => {
 		if (activeLogId) {
@@ -165,13 +171,28 @@ function ColumnView({
 						return <LogStateIndicator type={type} fontSize={fontSize} />;
 					}
 
+					const isTimestamp = field.key === 'timestamp';
+					const cellContent = getValue();
+
+					if (isTimestamp) {
+						const formattedTimestamp = dayjs(cellContent as string).tz(
+							timezone.value,
+						);
+
+						return (
+							<div className="table-cell-content">
+								{formattedTimestamp.format(DATE_TIME_FORMATS.ISO_DATETIME_MS)}
+							</div>
+						);
+					}
+
 					return (
 						<div
 							className={`table-cell-content ${
 								row.original.id === activeLog?.id ? 'active-log' : ''
 							}`}
 						>
-							{getValue()}
+							{cellContent}
 						</div>
 					);
 				},
