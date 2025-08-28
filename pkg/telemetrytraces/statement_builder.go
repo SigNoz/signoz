@@ -361,6 +361,11 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 	distSB := sqlbuilder.NewSelectBuilder()
 	distSB.Select("trace_id")
 	distSB.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
+	distSB.Where(
+		distSB.GE("timestamp", fmt.Sprintf("%d", start)),
+		distSB.L("timestamp", fmt.Sprintf("%d", end)),
+		distSB.GE("ts_bucket_start", startBucket),
+		distSB.LE("ts_bucket_start", endBucket))
 
 	var (
 		cteFragments []string
@@ -401,6 +406,12 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 	// order by duration and limit 1 per trace
 	innerSB.OrderBy("duration_nano DESC")
 	innerSB.SQL("LIMIT 1 BY trace_id")
+
+	if query.Limit > 0 {
+		innerSB.Limit(query.Limit)
+	} else {
+		innerSB.Limit(100)
+	}
 
 	innerSQL, innerArgs := innerSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
@@ -456,6 +467,7 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
 	}
 
+	b.logger.Info(stmt.Query)
 	return stmt, nil
 }
 
