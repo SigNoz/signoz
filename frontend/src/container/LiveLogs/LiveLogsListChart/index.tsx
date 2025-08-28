@@ -15,6 +15,7 @@ import { LiveLogsListChartProps } from './types';
 function LiveLogsListChart({
 	className,
 	initialData,
+	isShowingLiveLogs = false,
 }: LiveLogsListChartProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
 	const { isConnectionOpen } = useEventSource();
@@ -62,12 +63,15 @@ function LiveLogsListChart({
 	}, [data, initialData]);
 
 	return (
-		<LogsExplorerChart
-			isLoading={initialData ? false : isFetching}
-			data={chartData}
-			isLabelEnabled={false}
-			className={className}
-		/>
+		<div className="live-logs-chart-container">
+			<LogsExplorerChart
+				isLoading={initialData ? false : isFetching}
+				data={chartData}
+				isLabelEnabled={false}
+				className={className}
+				isLogsExplorerViews={isShowingLiveLogs}
+			/>
+		</div>
 	);
 }
 

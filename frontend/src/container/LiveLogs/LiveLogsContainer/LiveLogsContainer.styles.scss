@@ -1,4 +1,21 @@
 .live-logs-chart-container {
 	height: 200px;
-	width: 100%;
+	min-height: 200px;
+	border: 1px solid var(--bg-ink-300);
+	border-left: none;
+	border-right: none;
+}
+
+.live-logs-settings-panel {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 8px;
+	border-bottom: 1px solid var(--bg-ink-300);
+
+	.live-logs-frequency-chart-view-controller {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
 }
