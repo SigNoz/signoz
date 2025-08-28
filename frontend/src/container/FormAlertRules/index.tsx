@@ -5,6 +5,7 @@ import { Button, FormInstance, Modal, SelectProps, Typography } from 'antd';
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
 import logEvent from 'api/common/logEvent';
+import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
@@ -56,10 +57,7 @@ import {
 	StepHeading,
 } from './styles';
 import { usePrefillAlertConditions } from './usePrefillAlertConditions';
-import {
-	getInvolvedQueriesInTraceOperator,
-	getSelectedQueryOptions,
-} from './utils';
+import { getSelectedQueryOptions } from './utils';
 
 export enum AlertDetectionTypes {
 	THRESHOLD_ALERT = 'threshold_rule',
