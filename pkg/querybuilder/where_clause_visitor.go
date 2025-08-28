@@ -374,6 +374,9 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		if len(conds) == 1 {
 			return conds[0]
 		}
+		if op.IsNegativeOperator() {
+			return v.builder.And(conds...)
+		}
 		return v.builder.Or(conds...)
 	}
 
@@ -438,6 +441,9 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		if len(conds) == 1 {
 			return conds[0]
 		}
+		if op.IsNegativeOperator() {
+			return v.builder.And(conds...)
+		}
 		return v.builder.Or(conds...)
 	}
 
@@ -466,6 +472,9 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		}
 		if len(conds) == 1 {
 			return conds[0]
+		}
+		if op.IsNegativeOperator() {
+			return v.builder.And(conds...)
 		}
 		return v.builder.Or(conds...)
 	}
@@ -543,6 +552,9 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		}
 		if len(conds) == 1 {
 			return conds[0]
+		}
+		if op.IsNegativeOperator() {
+			return v.builder.And(conds...)
 		}
 		return v.builder.Or(conds...)
 	}
