@@ -2,6 +2,7 @@ package telemetrytypes
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -37,6 +38,35 @@ func (f TelemetryFieldKey) String() string {
 		sb.WriteString(fmt.Sprintf(",datatype=%s", f.FieldDataType.StringValue()))
 	}
 	return sb.String()
+}
+
+// GetFieldKeyFromKeyText returns a TelemetryFieldKey from a key text.
+// The key text is expected to be in the format of
+// Either
+// 1. `FieldName`
+// 2. `fieldContext.fieldName:fieldDataType`
+// Using a regex to extract the components.
+var complexFieldRegex = regexp.MustCompile(`^(\w+)\.([\w\.]+):(\w+)$`)
+
+func ValidateFieldKeyText(key string) error {
+
+	// Try complex format (fieldContext.fieldName:fieldDataType)
+	matches := complexFieldRegex.FindStringSubmatch(key)
+	if matches == nil {
+		return nil
+	}
+
+	// Validate field context
+	if _, ok := fieldContexts[matches[1]]; !ok {
+		return fmt.Errorf("invalid field context: %s", matches[1])
+	}
+
+	// Validate data type
+	if _, ok := fieldDataTypes[matches[3]]; !ok {
+		return fmt.Errorf("invalid field data type: %s", matches[3])
+	}
+
+	return nil
 }
 
 // GetFieldKeyFromKeyText returns a TelemetryFieldKey from a key text.
@@ -96,6 +126,20 @@ func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
 	}
 
 	return fieldKeySelector
+}
+
+func GetKeyTextFromFieldKey(key *TelemetryFieldKey) string {
+	var sb strings.Builder
+	if key.FieldContext != FieldContextUnspecified {
+		sb.WriteString(key.FieldContext.StringValue())
+		sb.WriteString(".")
+	}
+	sb.WriteString(key.Name)
+	if key.FieldDataType != FieldDataTypeUnspecified {
+		sb.WriteString(":")
+		sb.WriteString(key.FieldDataType.StringValue())
+	}
+	return sb.String()
 }
 
 func FieldKeyToMaterializedColumnName(key *TelemetryFieldKey) string {
