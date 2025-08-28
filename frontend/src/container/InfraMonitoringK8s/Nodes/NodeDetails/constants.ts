@@ -341,6 +341,7 @@ export const getNodeMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -647,6 +648,7 @@ export const getNodeMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -810,6 +812,7 @@ export const getNodeMetricsQueryPayload = (
 							queryName: 'F2',
 						},
 					],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -973,6 +976,7 @@ export const getNodeMetricsQueryPayload = (
 							queryName: 'F2',
 						},
 					],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -1052,6 +1056,7 @@ export const getNodeMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -1131,6 +1136,7 @@ export const getNodeMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -1216,6 +1222,7 @@ export const getNodeMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -1301,6 +1308,7 @@ export const getNodeMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -1451,6 +1459,7 @@ export const getNodeMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -1569,6 +1578,7 @@ export const getNodeMetricsQueryPayload = (
 							queryName: 'F1',
 						},
 					],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{

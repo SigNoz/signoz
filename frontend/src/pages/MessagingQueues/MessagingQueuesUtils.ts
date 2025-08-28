@@ -155,6 +155,7 @@ export function getWidgetQuery({
 					},
 				],
 				queryFormulas: [],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [],
 			id: uuid(),

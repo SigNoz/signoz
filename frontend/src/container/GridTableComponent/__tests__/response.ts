@@ -161,6 +161,7 @@ export const widgetQueryWithLegend = {
 			},
 		],
 		queryFormulas: [],
+		queryTraceOperator: [],
 	},
 	id: '48ad5a67-9a3c-49d4-a886-d7a34f8b875d',
 	queryType: 'builder',
