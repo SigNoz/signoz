@@ -364,11 +364,17 @@ function GeneralSettings({
 					});
 				}
 			} catch (error) {
+				hasSetTTLFailed = true;
 				if ((error as APIError).getHttpStatusCode() === StatusCodes.CONFLICT) {
-					hasSetTTLFailed = true;
 					notifications.error({
 						message: 'Error',
 						description: t('retention_request_race_condition'),
+						placement: 'topRight',
+					});
+				} else {
+					notifications.error({
+						message: 'Error',
+						description: (error as APIError).getErrorMessage(),
 						placement: 'topRight',
 					});
 				}
