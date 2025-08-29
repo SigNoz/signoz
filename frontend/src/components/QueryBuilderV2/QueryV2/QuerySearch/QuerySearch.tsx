@@ -27,6 +27,7 @@ import {
 	QUERY_BUILDER_OPERATORS_BY_KEY_TYPE,
 	queryOperatorSuggestions,
 } from 'constants/antlrQueryConstants';
+import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
@@ -161,13 +162,7 @@ function QuerySearch({
 
 	const { handleRunQuery } = useQueryBuilder();
 
-	// const {
-	// 	data: queryKeySuggestions,
-	// 	refetch: refetchQueryKeySuggestions,
-	// } = useGetQueryKeySuggestions({
-	// 	signal: dataSource,
-	// 	name: searchText || '',
-	// });
+	const { dynamicVariables } = useGetDynamicVariables();
 
 	// Add back the generateOptions function and useEffect
 	const generateOptions = (keys: {
@@ -982,6 +977,25 @@ function QuerySearch({
 				option.label.toLowerCase().includes(searchText),
 			);
 
+			// Add dynamic variables suggestions for the current key
+			const variableName = dynamicVariables.find(
+				(variable) => variable?.dynamicVariablesAttribute === keyName,
+			)?.name;
+
+			if (variableName) {
+				const variableValue = `$${variableName}`;
+				const variableOption = {
+					label: variableValue,
+					type: 'variable',
+					apply: variableValue,
+				};
+
+				// Add variable suggestion at the beginning if it matches the search text
+				if (variableValue.toLowerCase().includes(searchText.toLowerCase())) {
+					options = [variableOption, ...options];
+				}
+			}
+
 			// Trigger fetch only if needed
 			const shouldFetch =
 				// Fetch only if key is available
@@ -1033,6 +1047,9 @@ function QuerySearch({
 					processedOption.apply = option.label;
 				} else if (option.type === 'array') {
 					// Arrays are already formatted as arrays
+					processedOption.apply = option.label;
+				} else if (option.type === 'variable') {
+					// Variables should be used as-is (they already have the $ prefix)
 					processedOption.apply = option.label;
 				}
 

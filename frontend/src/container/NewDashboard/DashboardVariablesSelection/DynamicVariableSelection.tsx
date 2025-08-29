@@ -2,6 +2,7 @@
 /* eslint-disable no-nested-ternary */
 import './DashboardVariableSelection.styles.scss';
 
+import { InfoCircleOutlined } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
 import { getFieldValues } from 'api/dynamicVariables/getFieldValues';
 import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
@@ -20,7 +21,11 @@ import { popupContainer } from 'utils/selectPopupContainer';
 
 import { ALL_SELECT_VALUE } from '../utils';
 import { SelectItemStyle } from './styles';
-import { areArraysEqual } from './util';
+import {
+	areArraysEqual,
+	getOptionsForDynamicVariable,
+	uniqueValues,
+} from './util';
 import { getSelectValue } from './VariableItem';
 
 interface DynamicVariableSelectionProps {
@@ -52,6 +57,11 @@ function DynamicVariableSelection({
 		(string | number | boolean)[]
 	>([]);
 
+	const [relatedValues, setRelatedValues] = useState<string[]>([]);
+	const [originalRelatedValues, setOriginalRelatedValues] = useState<string[]>(
+		[],
+	);
+
 	const [tempSelection, setTempSelection] = useState<
 		string | string[] | undefined
 	>(undefined);
@@ -78,6 +88,67 @@ function DynamicVariableSelection({
 		(state) => state.globalTime,
 	);
 
+	// existing query is the query made from the other dynamic variables around this one with there current values
+	// for e.g. k8s.namespace.name IN ["zeus", "gene"] AND doc_op_type IN ["test"]
+	const existingQuery = useMemo(() => {
+		if (!existingVariables || !variableData.dynamicVariablesAttribute) {
+			return '';
+		}
+
+		const queryParts: string[] = [];
+
+		Object.entries(existingVariables).forEach(([, variable]) => {
+			// Skip the current variable being processed
+			if (variable.id === variableData.id) {
+				return;
+			}
+
+			// Only include dynamic variables that have selected values and are not selected as ALL
+			if (
+				variable.type === 'DYNAMIC' &&
+				variable.dynamicVariablesAttribute &&
+				variable.selectedValue &&
+				!isEmpty(variable.selectedValue) &&
+				(variable.showALLOption ? !variable.allSelected : true)
+			) {
+				const attribute = variable.dynamicVariablesAttribute;
+				const values = Array.isArray(variable.selectedValue)
+					? variable.selectedValue
+					: [variable.selectedValue];
+
+				// Filter out empty values and convert to strings
+				const validValues = values
+					.filter((value) => value !== null && value !== undefined && value !== '')
+					.map((value) => value.toString());
+
+				if (validValues.length > 0) {
+					// Format values for query - wrap strings in quotes, keep numbers as is
+					const formattedValues = validValues.map((value) => {
+						// Check if value is a number
+						const numValue = Number(value);
+						if (!Number.isNaN(numValue) && Number.isFinite(numValue)) {
+							return value; // Keep as number
+						}
+						// Escape single quotes and wrap in quotes
+						return `'${value.replace(/'/g, "\\'")}'`;
+					});
+
+					if (formattedValues.length === 1) {
+						queryParts.push(`${attribute} = ${formattedValues[0]}`);
+					} else {
+						queryParts.push(`${attribute} IN [${formattedValues.join(', ')}]`);
+					}
+				}
+			}
+		});
+
+		return queryParts.join(' AND ');
+	}, [
+		existingVariables,
+		variableData.id,
+		variableData.dynamicVariablesAttribute,
+	]);
+
 	const { isLoading, refetch } = useQuery(
 		[
 			REACT_QUERY_KEY.DASHBOARD_BY_ID,
@@ -100,11 +171,14 @@ function DynamicVariableSelection({
 					debouncedApiSearchText,
 					minTime,
 					maxTime,
+					existingQuery,
 				),
 			onSuccess: (data) => {
 				setOptionsData(data.payload?.normalizedValues || []);
 				setIsComplete(data.payload?.complete || false);
 				setFilteredOptionsData(data.payload?.normalizedValues || []);
+				setRelatedValues(data.payload?.relatedValues || []);
+				setOriginalRelatedValues(data.payload?.relatedValues || []);
 			},
 			onError: (error: any) => {
 				if (error) {
@@ -141,18 +215,29 @@ function DynamicVariableSelection({
 				) {
 					onValueUpdate(variableData.name, variableData.id, optionsData, true);
 				} else {
+					// Build union of available options shown in dropdown (normalized + related)
+					const allAvailableOptionStrings = [
+						...new Set([
+							...optionsData.map((v) => v.toString()),
+							...relatedValues.map((v) => v.toString()),
+						]),
+					];
+
+					const haveCustomValuesSelected =
+						Array.isArray(value) &&
+						!value.every((v) => allAvailableOptionStrings.includes(v.toString()));
+
 					onValueUpdate(
 						variableData.name,
 						variableData.id,
 						value,
-						optionsData.every((v) => value.includes(v.toString())),
-						Array.isArray(value) &&
-							!value.every((v) => optionsData.includes(v.toString())),
+						allAvailableOptionStrings.every((v) => value.includes(v.toString())),
+						haveCustomValuesSelected,
 					);
 				}
 			}
 		},
-		[variableData, onValueUpdate, optionsData],
+		[variableData, onValueUpdate, optionsData, relatedValues],
 	);
 
 	useEffect(() => {
@@ -169,11 +254,23 @@ function DynamicVariableSelection({
 		debouncedApiSearchText,
 	]);
 
+	// Build a memoized list of all currently available option strings (normalized + related)
+	const allAvailableOptionStrings = useMemo(
+		() => [
+			...new Set([
+				...optionsData.map((v) => v.toString()),
+				...relatedValues.map((v) => v.toString()),
+			]),
+		],
+		[optionsData, relatedValues],
+	);
+
 	const handleSearch = useCallback(
 		(text: string) => {
 			if (isComplete) {
 				if (!text) {
 					setFilteredOptionsData(optionsData);
+					setRelatedValues(originalRelatedValues);
 					return;
 				}
 
@@ -184,11 +281,16 @@ function DynamicVariableSelection({
 					}
 				});
 				setFilteredOptionsData(localFilteredOptionsData);
+				setRelatedValues(
+					originalRelatedValues.filter((value) =>
+						value.toLowerCase().includes(text.toLowerCase()),
+					),
+				);
 			} else {
 				setApiSearchText(text);
 			}
 		},
-		[isComplete, optionsData],
+		[isComplete, optionsData, originalRelatedValues],
 	);
 
 	const { selectedValue } = variableData;
@@ -208,7 +310,8 @@ function DynamicVariableSelection({
 	const handleTempChange = (inputValue: string | string[]): void => {
 		// Store the selection in temporary state while dropdown is open
 		const value = variableData.multiSelect && !inputValue ? [] : inputValue;
-		setTempSelection(value);
+		const sanitizedValue = uniqueValues(value);
+		setTempSelection(sanitizedValue);
 	};
 
 	// Handle dropdown visibility changes
@@ -216,16 +319,15 @@ function DynamicVariableSelection({
 		// Initialize temp selection when opening dropdown
 		if (visible) {
 			if (isUndefined(tempSelection) && selectValue === ALL_SELECT_VALUE) {
-				// set all options from the optionsData and the selectedValue, make sure to remove duplicates
+				// Select ALL currently available values (normalized + related) while preserving any custom selections
+				const rawSelected = Array.isArray(variableData.selectedValue)
+					? variableData.selectedValue
+					: variableData.selectedValue
+					? [variableData.selectedValue]
+					: [];
+				const currentSelectedStrings = rawSelected.map((v) => v.toString());
 				const allOptions = [
-					...new Set([
-						...optionsData.map((option) => option.toString()),
-						...(variableData.selectedValue
-							? Array.isArray(variableData.selectedValue)
-								? variableData.selectedValue.map((v) => v.toString())
-								: [variableData.selectedValue.toString()]
-							: []),
-					]),
+					...new Set([...allAvailableOptionStrings, ...currentSelectedStrings]),
 				];
 				setTempSelection(allOptions);
 			} else {
@@ -234,8 +336,28 @@ function DynamicVariableSelection({
 		}
 		// Apply changes when closing dropdown
 		else if (!visible && tempSelection !== undefined) {
-			// Call handleChange with the temporarily stored selection
-			handleChange(tempSelection);
+			// Only call handleChange if there's actually a change in the selection
+			const currentValue = variableData.selectedValue;
+
+			// Helper function to check if arrays have the same elements regardless of order
+			const areArraysEqualIgnoreOrder = (a: any[], b: any[]): boolean => {
+				if (a.length !== b.length) return false;
+				const sortedA = [...a].sort();
+				const sortedB = [...b].sort();
+				return areArraysEqual(sortedA, sortedB);
+			};
+
+			const hasChanged =
+				tempSelection !== currentValue &&
+				!(
+					Array.isArray(tempSelection) &&
+					Array.isArray(currentValue) &&
+					areArraysEqualIgnoreOrder(tempSelection, currentValue)
+				);
+
+			if (hasChanged) {
+				handleChange(tempSelection);
+			}
 			setTempSelection(undefined);
 		}
 	};
@@ -296,6 +418,11 @@ function DynamicVariableSelection({
 		<div className="variable-item">
 			<Typography.Text className="variable-name" ellipsis>
 				${variableData.name}
+				{variableData.description && (
+					<Tooltip title={variableData.description}>
+						<InfoCircleOutlined className="info-icon" />
+					</Tooltip>
+				)}
 			</Typography.Text>
 			<div className="variable-value">
 				{variableData.multiSelect ? (
@@ -305,10 +432,10 @@ function DynamicVariableSelection({
 								? selectValue.join(' ')
 								: selectValue || variableData.id
 						}
-						options={filteredOptionsData.map((option) => ({
-							label: option.toString(),
-							value: option.toString(),
-						}))}
+						options={getOptionsForDynamicVariable(
+							filteredOptionsData || [],
+							relatedValues || [],
+						)}
 						defaultValue={variableData.defaultValue}
 						onChange={handleTempChange}
 						bordered={false}
@@ -342,6 +469,7 @@ function DynamicVariableSelection({
 						maxTagTextLength={30}
 						onSearch={handleSearch}
 						onRetry={(): void => {
+							setErrorMessage(null);
 							refetch();
 						}}
 						showIncompleteDataMessage={!isComplete && filteredOptionsData.length > 0}
@@ -363,15 +491,16 @@ function DynamicVariableSelection({
 						className="variable-select"
 						popupClassName="dropdown-styles"
 						getPopupContainer={popupContainer}
-						options={filteredOptionsData.map((option) => ({
-							label: option.toString(),
-							value: option.toString(),
-						}))}
+						options={getOptionsForDynamicVariable(
+							filteredOptionsData || [],
+							relatedValues || [],
+						)}
 						value={selectValue}
 						defaultValue={variableData.defaultValue}
 						errorMessage={errorMessage}
 						onSearch={handleSearch}
 						onRetry={(): void => {
+							setErrorMessage(null);
 							refetch();
 						}}
 						showIncompleteDataMessage={!isComplete && filteredOptionsData.length > 0}

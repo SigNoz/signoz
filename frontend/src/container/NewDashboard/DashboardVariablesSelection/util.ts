@@ -1,3 +1,4 @@
+import { OptionData } from 'components/NewSelect/types';
 import { isEmpty, isNull } from 'lodash-es';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 
@@ -293,4 +294,75 @@ export const checkAPIInvocation = (
 		variablesToGetUpdated.length > 0 &&
 		variablesToGetUpdated[0] === variableData.name
 	);
+};
+
+export const getOptionsForDynamicVariable = (
+	normalizedValues: (string | number | boolean)[],
+	relatedValues: string[],
+): OptionData[] => {
+	const options: OptionData[] = [];
+
+	if (relatedValues.length > 0) {
+		// Add Related Values group
+		options.push({
+			label: 'Related Values',
+			value: 'relatedValues',
+			options: relatedValues.map((option) => ({
+				label: option.toString(),
+				value: option.toString(),
+			})),
+		});
+
+		// Add All Values group (complete union - shows everything)
+		options.push({
+			label: 'All Values',
+			value: 'allValues',
+			options: normalizedValues.map((option) => ({
+				label: option.toString(),
+				value: option.toString(),
+			})),
+		});
+
+		return options;
+	}
+
+	return normalizedValues.map((option) => ({
+		label: option.toString(),
+		value: option.toString(),
+	}));
+};
+
+export const uniqueOptions = (options: OptionData[]): OptionData[] => {
+	const uniqueOptions: OptionData[] = [];
+	const seenValues = new Set<string>();
+
+	options.forEach((option) => {
+		const value = option.value || '';
+		if (seenValues.has(value)) {
+			return;
+		}
+		seenValues.add(value);
+		uniqueOptions.push(option);
+	});
+
+	return uniqueOptions;
+};
+
+export const uniqueValues = (values: string[] | string): string[] | string => {
+	if (Array.isArray(values)) {
+		const uniqueValues: string[] = [];
+		const seenValues = new Set<string>();
+
+		values.forEach((value) => {
+			if (seenValues.has(value)) {
+				return;
+			}
+			seenValues.add(value);
+			uniqueValues.push(value);
+		});
+
+		return uniqueValues;
+	}
+
+	return values;
 };

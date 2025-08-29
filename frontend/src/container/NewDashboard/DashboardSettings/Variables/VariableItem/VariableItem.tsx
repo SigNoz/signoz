@@ -42,6 +42,7 @@ import { variablePropsToPayloadVariables } from '../../../utils';
 import { TVariableMode } from '../types';
 import DynamicVariable from './DynamicVariable/DynamicVariable';
 import { LabelContainer, VariableItemRow } from './styles';
+import { WidgetSelector } from './WidgetSelector';
 
 const { Option } = Select;
 
@@ -117,7 +118,17 @@ function VariableItem({
 	]);
 	// Error messages
 	const [errorName, setErrorName] = useState<boolean>(false);
+	const [errorNameMessage, setErrorNameMessage] = useState<string>('');
 	const [errorPreview, setErrorPreview] = useState<string | null>(null);
+
+	const REQUIRED_NAME_MESSAGE = 'Variable name is required';
+
+	// Initialize error state for empty name
+	useEffect(() => {
+		if (!variableName.trim()) {
+			setErrorName(true);
+		}
+	}, [variableName]);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -138,6 +149,14 @@ function VariableItem({
 		startUnixMilli: minTime,
 		endUnixMilli: maxTime,
 	});
+
+	const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
+
+	useEffect(() => {
+		if (queryType === 'DYNAMIC') {
+			setSelectedWidgets(variableData?.dynamicVariablesWidgetIds || []);
+		}
+	}, [queryType, variableData?.dynamicVariablesWidgetIds]);
 
 	useEffect(() => {
 		if (queryType === 'CUSTOM') {
@@ -207,6 +226,10 @@ function VariableItem({
 			...(queryType === 'DYNAMIC' && {
 				dynamicVariablesAttribute: dynamicVariablesSelectedValue?.name,
 				dynamicVariablesSource: dynamicVariablesSelectedValue?.value,
+			}),
+			...(queryType === 'DYNAMIC' && {
+				dynamicVariablesWidgetIds:
+					selectedWidgets?.length > 0 ? selectedWidgets : [],
 			}),
 		};
 
@@ -302,17 +325,28 @@ function VariableItem({
 								placeholder="Unique name of the variable"
 								value={variableName}
 								className="name-input"
-								onChange={(e): void => {
-									setVariableName(e.target.value);
-									setErrorName(
-										!validateName(e.target.value) && e.target.value !== variableData.name,
-									);
+								onChange={({ target: { value } }): void => {
+									setVariableName(value);
+
+									// Check for empty name
+									if (!value.trim()) {
+										setErrorName(true);
+										setErrorNameMessage(REQUIRED_NAME_MESSAGE);
+									}
+									// Check for duplicate name
+									else if (!validateName(value) && value !== variableData.name) {
+										setErrorName(true);
+										setErrorNameMessage('Variable name already exists');
+									}
+									// No errors
+									else {
+										setErrorName(false);
+										setErrorNameMessage('');
+									}
 								}}
 							/>
 							<div>
-								<Typography.Text type="warning">
-									{errorName ? 'Variable name already exists' : ''}
-								</Typography.Text>
+								<Typography.Text type="warning">{errorNameMessage}</Typography.Text>
 							</div>
 						</div>
 					</VariableItemRow>
@@ -349,6 +383,9 @@ function VariableItem({
 								}}
 							>
 								Dynamic
+								<Tag bordered={false} className="sidenav-beta-tag" color="geekblue">
+									Beta
+								</Tag>
 							</Button>
 							<Button
 								type="text"
@@ -392,6 +429,9 @@ function VariableItem({
 								}}
 							>
 								Query
+								<Tag bordered={false} className="sidenav-beta-tag" color="warning">
+									Not Recommended
+								</Tag>
 							</Button>
 						</div>
 					</VariableItemRow>
@@ -581,6 +621,19 @@ function VariableItem({
 								/>
 							</VariableItemRow>
 						</>
+					)}
+					{queryType === 'DYNAMIC' && (
+						<VariableItemRow className="dynamic-variable-section">
+							<LabelContainer>
+								<Typography className="typography-variables">
+									Select Panels to apply this variable
+								</Typography>
+							</LabelContainer>
+							<WidgetSelector
+								selectedWidgets={selectedWidgets}
+								setSelectedWidgets={setSelectedWidgets}
+							/>
+						</VariableItemRow>
 					)}
 				</div>
 			</div>
