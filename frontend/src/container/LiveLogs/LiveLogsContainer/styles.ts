@@ -14,4 +14,7 @@ export const ContentWrapper = styled(Row)`
 
 export const Wrapper = styled.div`
 	padding-bottom: 4rem;
+	padding-top: 1rem;
+	padding-left: 1rem;
+	padding-right: 1rem;
 `;
