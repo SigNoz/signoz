@@ -2,6 +2,9 @@ package signoz
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/nfrouting"
+	"github.com/SigNoz/signoz/pkg/nfrouting/nfroutingstore/sqlroutingstore"
+	"github.com/SigNoz/signoz/pkg/types/nfroutingtypes"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
@@ -49,6 +52,7 @@ type SigNoz struct {
 	StatsReporter   statsreporter.StatsReporter
 	Modules         Modules
 	Handlers        Handlers
+	RouteStore      nfroutingtypes.RouteStore
 }
 
 func New(
@@ -254,6 +258,20 @@ func New(
 		return nil, err
 	}
 
+	routeStore := sqlroutingstore.NewStore(sqlstore)
+	notificationRoutes, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		nfrouting.Config{
+			Provider: "expression",
+		},
+		NewNotificationRoutingProviderFactories(routeStore),
+		"expression",
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	licensingProviderFactory := licenseProviderFactory(sqlstore, zeus, orgGetter, analytics)
 	licensing, err := licensingProviderFactory.New(
 		ctx,
@@ -278,6 +296,7 @@ func New(
 		modules.SavedView,
 		modules.User,
 		licensing,
+		notificationRoutes,
 	}
 
 	// Initialize stats reporter from the available stats reporter provider factories
@@ -321,5 +340,6 @@ func New(
 		Sharder:         sharder,
 		Modules:         modules,
 		Handlers:        handlers,
+		RouteStore:      routeStore,
 	}, nil
 }

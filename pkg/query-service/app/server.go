@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/nfrouting"
 	"log/slog"
 	"net"
 	"net/http"
@@ -29,6 +30,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/nfroutingtypes"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
@@ -95,6 +97,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		signoz.Modules.OrgGetter,
 		signoz.Querier,
 		signoz.Instrumentation.Logger(),
+		signoz.RouteStore,
 	)
 	if err != nil {
 		return nil, err
@@ -120,6 +123,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		FieldsAPI:                     fields.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.TelemetryStore),
 		Signoz:                        signoz,
 		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier, signoz.Analytics),
+		NotificationRoutesAPI:         nfrouting.NewAPI(signoz.Analytics, signoz.RouteStore, signoz.Alertmanager),
 	})
 	if err != nil {
 		return nil, err
@@ -390,6 +394,7 @@ func makeRulesManager(
 	orgGetter organization.Getter,
 	querier querier.Querier,
 	logger *slog.Logger,
+	routeStore nfroutingtypes.RouteStore,
 ) (*rules.Manager, error) {
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
@@ -405,6 +410,7 @@ func makeRulesManager(
 		SQLStore:       sqlstore,
 		OrgGetter:      orgGetter,
 		Alertmanager:   alertmanager,
+		RouteStore:     routeStore,
 	}
 
 	// create Manager

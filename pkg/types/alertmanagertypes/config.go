@@ -207,12 +207,12 @@ func (c *Config) CreateReceiver(receiver config.Receiver) error {
 		}
 	}
 
-	route, err := NewRouteFromReceiver(receiver)
-	if err != nil {
-		return err
-	}
-
-	c.alertmanagerConfig.Route.Routes = append(c.alertmanagerConfig.Route.Routes, route)
+	//route, err := NewRouteFromReceiver(receiver)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//c.alertmanagerConfig.Route.Routes = append(c.alertmanagerConfig.Route.Routes, route)
 	c.alertmanagerConfig.Receivers = append(c.alertmanagerConfig.Receivers, receiver)
 
 	if err := c.alertmanagerConfig.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {

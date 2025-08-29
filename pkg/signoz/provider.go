@@ -16,6 +16,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/nfrouting"
+	"github.com/SigNoz/signoz/pkg/nfrouting/expressionroutes"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -37,6 +39,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystorehook"
+	"github.com/SigNoz/signoz/pkg/types/nfroutingtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/SigNoz/signoz/pkg/web/noopweb"
@@ -131,6 +134,8 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddFactorIndexesFactory(sqlstore, sqlschema),
 		sqlmigration.NewQueryBuilderV5MigrationFactory(sqlstore, telemetryStore),
 		sqlmigration.NewAddMeterQuickFiltersFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddNotificationRoutesFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateAlertmanagerRoutesFactory(),
 	)
 }
 
@@ -190,5 +195,11 @@ func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetrySt
 func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, cache cache.Cache) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
 	return factory.MustNewNamedMap(
 		signozquerier.NewFactory(telemetryStore, prometheus, cache),
+	)
+}
+
+func NewNotificationRoutingProviderFactories(routeStore nfroutingtypes.RouteStore) factory.NamedMap[factory.ProviderFactory[nfrouting.NotificationRoutes, nfrouting.Config]] {
+	return factory.MustNewNamedMap(
+		expressionroutes.NewFactory(routeStore),
 	)
 }

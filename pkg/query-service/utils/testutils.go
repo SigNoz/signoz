@@ -56,6 +56,7 @@ func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath s
 			sqlmigration.NewUpdateInvitesFactory(sqlStore),
 			sqlmigration.NewUpdatePatFactory(sqlStore),
 			sqlmigration.NewUpdateAlertmanagerFactory(sqlStore),
+			sqlmigration.NewMigrateAlertmanagerRoutesFactory(),
 			sqlmigration.NewUpdatePreferencesFactory(sqlStore),
 			sqlmigration.NewUpdateApdexTtlFactory(sqlStore),
 			sqlmigration.NewUpdateResetPasswordFactory(sqlStore),
