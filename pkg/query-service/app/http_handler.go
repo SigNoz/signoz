@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -10,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
 
 	//qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/nfrouting"
 	"io"
 	"math"
 	"net/http"
@@ -149,6 +151,8 @@ type APIHandler struct {
 	QuerierAPI *querierAPI.API
 
 	Signoz *signoz.SigNoz
+
+	NotificationRoutesAPI *nfrouting.API
 }
 
 type APIHandlerOpts struct {
@@ -179,6 +183,8 @@ type APIHandlerOpts struct {
 	QuerierAPI *querierAPI.API
 
 	Signoz *signoz.SigNoz
+
+	NotificationRoutesAPI *nfrouting.API
 }
 
 // NewAPIHandler returns an APIHandler
@@ -240,6 +246,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		Signoz:                        opts.Signoz,
 		FieldsAPI:                     opts.FieldsAPI,
 		QuerierAPI:                    opts.QuerierAPI,
+		NotificationRoutesAPI:         opts.NotificationRoutesAPI,
 	}
 
 	logsQueryBuilder := logsv4.PrepareLogsQuery
@@ -311,7 +318,7 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 	})
 	if err != nil {
 		zap.L().Error("error marshalling json response", zap.Error(err))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		render.Error(w, err)
 		return
 	}
 
@@ -355,7 +362,7 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	})
 	if err != nil {
 		zap.L().Error("error marshalling json response", zap.Error(err))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		render.Error(w, err)
 		return
 	}
 
@@ -616,6 +623,11 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v3/licenses/active", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
 		aH.LicensingAPI.Activate(rw, req)
 	})).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/notification-routes", am.ViewAccess(aH.NotificationRoutesAPI.GetAllNotificationRoutesByOrgID)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/notification-routes/{id}", am.ViewAccess(aH.NotificationRoutesAPI.GetNotificationRouteByID)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/notification-routes", am.AdminAccess(aH.NotificationRoutesAPI.CreateNotificationRoute)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/notification-routes/{id}", am.AdminAccess(aH.NotificationRoutesAPI.DeleteNotificationRouteByID)).Methods(http.MethodDelete)
 }
 
 func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *middleware.AuthZ) {
@@ -670,6 +682,10 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 
 	ruleResponse, err := aH.ruleManager.GetRule(r.Context(), id)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: err}, nil)
+			return
+		}
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
@@ -1384,6 +1400,10 @@ func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 	err := aH.ruleManager.DeleteRule(r.Context(), id)
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: err}, nil)
+			return
+		}
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
@@ -1412,6 +1432,10 @@ func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
 	gettableRule, err := aH.ruleManager.PatchRule(r.Context(), string(body), id)
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: err}, nil)
+			return
+		}
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
@@ -1438,6 +1462,10 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 	err = aH.ruleManager.EditRule(r.Context(), string(body), id)
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: err}, nil)
+			return
+		}
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}

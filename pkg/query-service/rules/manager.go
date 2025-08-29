@@ -14,8 +14,6 @@ import (
 
 	"errors"
 
-	"github.com/go-openapi/strfmt"
-
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -29,8 +27,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/nfroutingtypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/go-openapi/strfmt"
 )
 
 type PrepareTaskOptions struct {
@@ -101,6 +101,7 @@ type ManagerOptions struct {
 	Alertmanager        alertmanager.Alertmanager
 	SQLStore            sqlstore.SQLStore
 	OrgGetter           organization.Getter
+	RouteStore          nfroutingtypes.RouteStore
 }
 
 // The Manager manages recording and alerting rules.
@@ -123,6 +124,7 @@ type Manager struct {
 	alertmanager alertmanager.Alertmanager
 	sqlstore     sqlstore.SQLStore
 	orgGetter    organization.Getter
+	routeStore   nfroutingtypes.RouteStore
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -220,6 +222,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		alertmanager:        o.Alertmanager,
 		sqlstore:            o.SQLStore,
 		orgGetter:           o.OrgGetter,
+		routeStore:          o.RouteStore,
 	}
 
 	return m, nil
@@ -356,21 +359,30 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 			return err
 		}
 
-		var preferredChannels []string
-		if len(parsedRule.PreferredChannels) == 0 {
-			channels, err := m.alertmanager.ListChannels(ctx, claims.OrgID)
-			if err != nil {
-				return err
-			}
-
-			for _, channel := range channels {
-				preferredChannels = append(preferredChannels, channel.Name)
-			}
-		} else {
-			preferredChannels = parsedRule.PreferredChannels
+		err = alertmanagertypes.RemoveRuleFromRoutes(cfg.AlertmanagerConfig(), id.StringValue())
+		if err != nil {
+			return err
 		}
 
-		err = cfg.UpdateRuleIDMatcher(id.StringValue(), preferredChannels)
+		ruleGrouping := parsedRule.GetRuleGrouping()
+
+		// Convert to alertmanagertypes.RuleGrouping
+		alertGrouping := alertmanagertypes.RuleGrouping{
+			GroupBy:        ruleGrouping.GroupBy,
+			RepeatInterval: time.Duration(parsedRule.Renotify),
+		}
+		var allRoutes []nfroutingtypes.ExpressionRoute
+		if parsedRule.NotificationPolicies {
+			if m.routeStore != nil {
+				// Get expression routes for the organization
+				allRoutes, err = m.routeStore.GetAllByOrgID(ctx, claims.OrgID)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		thresholdMapping := parsedRule.ThresholdMapping
+		err = cfg.AddRuleToRoutes(id.StringValue(), alertGrouping, parsedRule.NotificationPolicies, allRoutes, thresholdMapping)
 		if err != nil {
 			return err
 		}
@@ -468,7 +480,7 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 			return err
 		}
 
-		err = cfg.DeleteRuleIDMatcher(id.StringValue())
+		err = alertmanagertypes.RemoveRuleFromRoutes(cfg.AlertmanagerConfig(), id.StringValue())
 		if err != nil {
 			return err
 		}
@@ -542,21 +554,30 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 			return err
 		}
 
-		var preferredChannels []string
-		if len(parsedRule.PreferredChannels) == 0 {
-			channels, err := m.alertmanager.ListChannels(ctx, claims.OrgID)
-			if err != nil {
-				return err
-			}
+		// Extract user-defined grouping configuration from rule
+		ruleGrouping := parsedRule.GetRuleGrouping()
 
-			for _, channel := range channels {
-				preferredChannels = append(preferredChannels, channel.Name)
-			}
-		} else {
-			preferredChannels = parsedRule.PreferredChannels
+		// Convert to alertmanagertypes.RuleGrouping
+		alertGrouping := alertmanagertypes.RuleGrouping{
+			GroupBy:        ruleGrouping.GroupBy,
+			RepeatInterval: time.Duration(parsedRule.Renotify),
 		}
 
-		err = cfg.CreateRuleIDMatcher(id.StringValue(), preferredChannels)
+		// Get threshold mapping from rule, provide defaults if empty
+		thresholdMapping := parsedRule.ThresholdMapping
+
+		var allRoutes []nfroutingtypes.ExpressionRoute
+		if parsedRule.NotificationPolicies {
+			if m.routeStore != nil {
+				// Get expression routes for the organization
+				allRoutes, err = m.routeStore.GetAllByOrgID(ctx, claims.OrgID)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		err = cfg.AddRuleToRoutes(id.StringValue(), alertGrouping, parsedRule.NotificationPolicies, allRoutes, thresholdMapping)
 		if err != nil {
 			return err
 		}
