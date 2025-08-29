@@ -3834,6 +3834,24 @@
     "@radix-ui/react-use-controllable-state" "1.0.1"
     "@radix-ui/react-visually-hidden" "1.0.3"
 
+"@radix-ui/react-tooltip@^1.2.6":
+  version "1.2.8"
+  resolved "https://registry.yarnpkg.com/@radix-ui/react-tooltip/-/react-tooltip-1.2.8.tgz#3f50267e25bccfc9e20bb3036bfd9ab4c2c30c2c"
+  integrity sha512-tY7sVt1yL9ozIxvmbtN5qtmH2krXcBCfjEiCgKGLqunJHvgvZG2Pcl2oQ3kbcZARb1BGEHdkLzcYGO8ynVlieg==
+  dependencies:
+    "@radix-ui/primitive" "1.1.3"
+    "@radix-ui/react-compose-refs" "1.1.2"
+    "@radix-ui/react-context" "1.1.2"
+    "@radix-ui/react-dismissable-layer" "1.1.11"
+    "@radix-ui/react-id" "1.1.1"
+    "@radix-ui/react-popper" "1.2.8"
+    "@radix-ui/react-portal" "1.1.9"
+    "@radix-ui/react-presence" "1.1.5"
+    "@radix-ui/react-primitive" "2.1.3"
+    "@radix-ui/react-slot" "1.2.3"
+    "@radix-ui/react-use-controllable-state" "1.2.2"
+    "@radix-ui/react-visually-hidden" "1.2.3"
+
 "@radix-ui/react-use-callback-ref@1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@radix-ui/react-use-callback-ref/-/react-use-callback-ref-1.0.1.tgz#f4bb1f27f2023c984e6534317ebc411fc181107a"
@@ -3933,6 +3951,13 @@
   dependencies:
     "@babel/runtime" "^7.13.10"
     "@radix-ui/react-primitive" "1.0.3"
+
+"@radix-ui/react-visually-hidden@1.2.3":
+  version "1.2.3"
+  resolved "https://registry.yarnpkg.com/@radix-ui/react-visually-hidden/-/react-visually-hidden-1.2.3.tgz#a8c38c8607735dc9f05c32f87ab0f9c2b109efbf"
+  integrity sha512-pzJq12tEaaIhqjbzpCuv/OypJY/BPavOofm+dbab+MHLajy277+1lLm6JFcGgF5eskJ6mquGirhXY2GD/8u8Ug==
+  dependencies:
+    "@radix-ui/react-primitive" "2.1.3"
 
 "@radix-ui/rect@1.0.1":
   version "1.0.1"
@@ -4299,19 +4324,34 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/table@0.3.4":
-  version "0.3.4"
-  resolved "https://registry.yarnpkg.com/@signozhq/table/-/table-0.3.4.tgz#5f243f2977f21fe351207d4ae6db390e400a7933"
-  integrity sha512-5B3kxYrfNEE9TH1orxAl6CNlESnyNVOgEW08ji9u2kz+khUd0euMCnZPrTBbotRW/INoEwRQxyBPj3auaa3jjQ==
+"@signozhq/table@0.3.7":
+  version "0.3.7"
+  resolved "https://registry.yarnpkg.com/@signozhq/table/-/table-0.3.7.tgz#895b710c02af124dfb5117e02bbc6d80ce062063"
+  integrity sha512-XDwRHBTf2q48MOuxkzzr0htWd0/mmvgHoZLl0WAMLk2gddbbNHg9hkCPfVARYOke6mX8Z/4T3e7dzgkRUhDGDg==
   dependencies:
     "@radix-ui/react-icons" "^1.3.0"
     "@radix-ui/react-slot" "^1.1.0"
+    "@signozhq/tooltip" "0.0.2"
     "@tanstack/react-table" "^8.21.3"
     "@tanstack/react-virtual" "^3.13.9"
     "@types/lodash-es" "^4.17.12"
     class-variance-authority "^0.7.0"
     clsx "^2.1.1"
     lodash-es "^4.17.21"
+    lucide-react "^0.445.0"
+    tailwind-merge "^2.5.2"
+    tailwindcss-animate "^1.0.7"
+
+"@signozhq/tooltip@0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@signozhq/tooltip/-/tooltip-0.0.2.tgz#bb4e2681868fa2e06db78eff5872ffb2a78b93b6"
+  integrity sha512-itxvrFq0SHr+xTabd7Tf/O9Gfq45kpIyQ5qklDRfhbxr4PIVSBw5XMr2OgzOPbW7P8S9fugCwMu6gPyAZ0SM5A==
+  dependencies:
+    "@radix-ui/react-icons" "^1.3.0"
+    "@radix-ui/react-slot" "^1.1.0"
+    "@radix-ui/react-tooltip" "^1.2.6"
+    class-variance-authority "^0.7.0"
+    clsx "^2.1.1"
     lucide-react "^0.445.0"
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"

@@ -140,7 +140,7 @@ function ColumnView({
 		enableInfiniteScroll: true,
 		enableScrollRestoration: false,
 		fixedHeight: isFrequencyChartVisible ? 560 : 760,
-		enableDynamicRowHeight: false,
+		enableDynamicRowHeight: true,
 	};
 
 	const selectedColumns = useMemo(
@@ -154,8 +154,10 @@ function ColumnView({
 				// eslint-disable-next-line sonarjs/no-duplicate-string
 				size: field.key === 'state-indicator' ? 4 : 180,
 				minSize: field.key === 'state-indicator' ? 4 : 120,
-				maxSize: field.key === 'state-indicator' ? 4 : 1080,
-				pin: field.key === 'state-indicator' ? 'left' : 'none',
+				maxSize: field.key === 'state-indicator' ? 4 : Number.MAX_SAFE_INTEGER,
+				disableReorder: field.key === 'state-indicator',
+				disableDropBefore: field.key === 'state-indicator',
+				disableResizing: field.key === 'state-indicator',
 				// eslint-disable-next-line react/no-unstable-nested-components
 				cell: ({
 					row,
