@@ -642,49 +642,6 @@ function LogsExplorerViewsContainer({
 		setShowFrequencyChart(newShowFrequencyChart);
 	}, [showFrequencyChart]);
 
-	// const handleGoLive = useCallback(() => {
-	// 	if (!stagedQuery) return;
-
-	// 	let queryHistoryState: QueryHistoryState | null = null;
-
-	// 	const compositeQuery = constructCompositeQuery({
-	// 		query: stagedQuery,
-	// 		initialQueryData: initialQueryBuilderFormValuesMap.logs,
-	// 		customQueryData: defaultLiveQueryDataConfig,
-	// 	});
-
-	// 	const isListView =
-	// 		panelType === PANEL_TYPES.LIST && stagedQuery.builder.queryData[0];
-
-	// 	if (isListView) {
-	// 		const [graphQuery, listQuery] = queryClient.getQueriesData<
-	// 			SuccessResponse<MetricRangePayloadProps> | ErrorResponse
-	// 		>({
-	// 			queryKey: REACT_QUERY_KEY.GET_QUERY_RANGE,
-	// 			active: true,
-	// 		});
-
-	// 		queryHistoryState = {
-	// 			graphQueryPayload:
-	// 				graphQuery && graphQuery[1]
-	// 					? graphQuery[1].payload?.data.result || []
-	// 					: [],
-	// 			listQueryPayload:
-	// 				listQuery && listQuery[1]
-	// 					? listQuery[1].payload?.data?.newResult?.data?.result || []
-	// 					: [],
-	// 		};
-	// 	}
-
-	// 	const JSONCompositeQuery = encodeURIComponent(JSON.stringify(compositeQuery));
-
-	// 	const path = `${ROUTES.LOGS_EXPLORER}?${QueryParams.compositeQuery}=${JSONCompositeQuery}`;
-
-	// 	safeNavigate(path, { state: queryHistoryState });
-	// }, [panelType, safeNavigate, stagedQuery]);
-
-	// console.log('showLiveLogs', showLiveLogs);
-
 	return (
 		<div className="logs-explorer-views-container">
 			<div className="logs-explorer-views-types">

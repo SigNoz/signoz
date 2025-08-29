@@ -40,6 +40,12 @@ function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 		onSetActiveLog,
 	} = useActiveLog();
 
+	// get only data from the logs object
+	const formattedLogs: ILog[] = useMemo(
+		() => logs.map((log) => log?.data).flat(),
+		[logs],
+	);
+
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
 		dataSource: DataSource.LOGS,
@@ -47,8 +53,8 @@ function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 	});
 
 	const activeLogIndex = useMemo(
-		() => logs.findIndex(({ id }) => id === activeLogId),
-		[logs, activeLogId],
+		() => formattedLogs.findIndex(({ id }) => id === activeLogId),
+		[formattedLogs, activeLogId],
 	);
 
 	const selectedFields = convertKeysToColumnFields([
@@ -102,7 +108,7 @@ function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 		});
 	}, [activeLogId, activeLogIndex]);
 
-	const isLoadingList = isConnectionLoading && logs.length === 0;
+	const isLoadingList = isConnectionLoading && formattedLogs.length === 0;
 
 	const renderLoading = useCallback(
 		() => (
@@ -124,16 +130,17 @@ function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 
 	return (
 		<div className="live-logs-list">
-			{(logs.length === 0 || isLoading || isLoadingList) && renderLoading()}
+			{(formattedLogs.length === 0 || isLoading || isLoadingList) &&
+				renderLoading()}
 
-			{logs.length !== 0 && (
+			{formattedLogs.length !== 0 && (
 				<InfinityWrapperStyled>
 					{options.format === OptionFormatTypes.TABLE ? (
 						<InfinityTableView
 							ref={ref}
 							isLoading={false}
 							tableViewProps={{
-								logs,
+								logs: formattedLogs,
 								fields: selectedFields,
 								linesPerRow: options.maxLines,
 								fontSize: options.fontSize,
@@ -147,8 +154,8 @@ function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 								<Virtuoso
 									ref={ref}
 									initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
-									data={logs}
-									totalCount={logs.length}
+									data={formattedLogs}
+									totalCount={formattedLogs.length}
 									itemContent={getItemContent}
 								/>
 							</OverlayScrollbar>
@@ -156,14 +163,17 @@ function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 					)}
 				</InfinityWrapperStyled>
 			)}
-			<LogDetail
-				selectedTab={VIEW_TYPES.OVERVIEW}
-				log={activeLog}
-				onClose={onClearActiveLog}
-				onAddToQuery={onAddToQuery}
-				onGroupByAttribute={onGroupByAttribute}
-				onClickActionItem={onAddToQuery}
-			/>
+
+			{activeLog && (
+				<LogDetail
+					selectedTab={VIEW_TYPES.OVERVIEW}
+					log={activeLog}
+					onClose={onClearActiveLog}
+					onAddToQuery={onAddToQuery}
+					onGroupByAttribute={onGroupByAttribute}
+					onClickActionItem={onAddToQuery}
+				/>
+			)}
 		</div>
 	);
 }

@@ -173,31 +173,33 @@ function CustomTimePickerPopoverContent({
 	return (
 		<>
 			<div className="date-time-popover">
-				<div className="date-time-options">
-					{isLogsExplorerPage && isLogsListView && (
-						<Button className="data-time-live" type="text" onClick={handleGoLive}>
-							Live
-						</Button>
-					)}
-					{options.map((option) => (
-						<Button
-							type="text"
-							key={option.label + option.value}
-							onClick={(): void => {
-								handleExitLiveLogs();
-								onSelectHandler(option.label, option.value);
-							}}
-							className={cx(
-								'date-time-options-btn',
-								customDateTimeVisible
-									? option.value === 'custom' && 'active'
-									: selectedTime === option.value && 'active',
-							)}
-						>
-							{option.label}
-						</Button>
-					))}
-				</div>
+				{!customDateTimeVisible && (
+					<div className="date-time-options">
+						{isLogsExplorerPage && isLogsListView && (
+							<Button className="data-time-live" type="text" onClick={handleGoLive}>
+								Live
+							</Button>
+						)}
+						{options.map((option) => (
+							<Button
+								type="text"
+								key={option.label + option.value}
+								onClick={(): void => {
+									handleExitLiveLogs();
+									onSelectHandler(option.label, option.value);
+								}}
+								className={cx(
+									'date-time-options-btn',
+									customDateTimeVisible
+										? option.value === 'custom' && 'active'
+										: selectedTime === option.value && 'active',
+								)}
+							>
+								{option.label}
+							</Button>
+						))}
+					</div>
+				)}
 				<div
 					className={cx(
 						'relative-date-time',

@@ -15,17 +15,17 @@ import { Sliders } from 'lucide-react';
 import { useEventSource } from 'providers/EventSource';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { validateQuery } from 'utils/queryValidationUtils';
 
 import LiveLogsList from '../LiveLogsList';
+import { ILiveLogsLog } from '../LiveLogsList/types';
 import LiveLogsListChart from '../LiveLogsListChart';
 import { QueryHistoryState } from '../types';
 
 function LiveLogsContainer(): JSX.Element {
 	const location = useLocation();
-	const [logs, setLogs] = useState<ILog[]>([]);
+	const [logs, setLogs] = useState<ILiveLogsLog[]>([]);
 	const { currentQuery, stagedQuery } = useQueryBuilder();
 	const [showLiveLogsFrequencyChart, setShowLiveLogsFrequencyChart] = useState(
 		true,
@@ -39,7 +39,7 @@ function LiveLogsContainer(): JSX.Element {
 
 	const queryLocationState = location.state as QueryHistoryState;
 
-	const batchedEventsRef = useRef<ILog[]>([]);
+	const batchedEventsRef = useRef<ILiveLogsLog[]>([]);
 
 	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
 	const menuRef = useRef<HTMLDivElement>(null);
@@ -96,7 +96,7 @@ function LiveLogsContainer(): JSX.Element {
 
 	const compositeQuery = useGetCompositeQueryParam();
 
-	const updateLogs = useCallback((newLogs: ILog[]) => {
+	const updateLogs = useCallback((newLogs: ILiveLogsLog[]) => {
 		setLogs((prevState) =>
 			[...newLogs, ...prevState].slice(0, MAX_LOGS_LIST_SIZE),
 		);
@@ -110,7 +110,7 @@ function LiveLogsContainer(): JSX.Element {
 	}, 500);
 
 	const batchLiveLog = useCallback(
-		(log: ILog): void => {
+		(log: ILiveLogsLog): void => {
 			batchedEventsRef.current.push(log);
 
 			debouncedUpdateLogs();
@@ -120,7 +120,7 @@ function LiveLogsContainer(): JSX.Element {
 
 	const handleGetLiveLogs = useCallback(
 		(event: MessageEvent<string>) => {
-			const data: ILog = JSON.parse(event.data);
+			const data: ILiveLogsLog = JSON.parse(event?.data);
 
 			batchLiveLog(data);
 		},
@@ -252,11 +252,13 @@ function LiveLogsContainer(): JSX.Element {
 				</div>
 
 				{showLiveLogsFrequencyChart && (
-					<LiveLogsListChart
-						initialData={queryLocationState?.graphQueryPayload || null}
-						className="live-logs-chart"
-						isShowingLiveLogs
-					/>
+					<div className="live-logs-chart-container">
+						<LiveLogsListChart
+							initialData={queryLocationState?.graphQueryPayload || null}
+							className="live-logs-chart"
+							isShowingLiveLogs
+						/>
+					</div>
 				)}
 
 				<div className="live-logs-list-container">
