@@ -9,8 +9,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import APIError from 'types/api/error';
 
-import { Container } from '../styles';
-
 function AddDomain({ refetch }: Props): JSX.Element {
 	const { t } = useTranslation(['common', 'organizationsettings']);
 	const [isAddDomains, setIsDomain] = useState(false);
@@ -42,7 +40,7 @@ function AddDomain({ refetch }: Props): JSX.Element {
 
 	return (
 		<>
-			<Container>
+			<div className="auth-domains-title-container">
 				<Typography.Title level={3}>
 					{t('authenticated_domains', {
 						ns: 'organizationsettings',
@@ -55,10 +53,11 @@ function AddDomain({ refetch }: Props): JSX.Element {
 				>
 					{t('add_domain', { ns: 'organizationsettings' })}
 				</Button>
-			</Container>
+			</div>
 			<Modal
 				centered
 				title="Add Domain"
+				className="add-domain-modal"
 				footer={null}
 				open={isAddDomains}
 				destroyOnClose
