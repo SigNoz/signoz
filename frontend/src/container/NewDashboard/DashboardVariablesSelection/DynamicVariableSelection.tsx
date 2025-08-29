@@ -336,8 +336,28 @@ function DynamicVariableSelection({
 		}
 		// Apply changes when closing dropdown
 		else if (!visible && tempSelection !== undefined) {
-			// Call handleChange with the temporarily stored selection
-			handleChange(tempSelection);
+			// Only call handleChange if there's actually a change in the selection
+			const currentValue = variableData.selectedValue;
+
+			// Helper function to check if arrays have the same elements regardless of order
+			const areArraysEqualIgnoreOrder = (a: any[], b: any[]): boolean => {
+				if (a.length !== b.length) return false;
+				const sortedA = [...a].sort();
+				const sortedB = [...b].sort();
+				return areArraysEqual(sortedA, sortedB);
+			};
+
+			const hasChanged =
+				tempSelection !== currentValue &&
+				!(
+					Array.isArray(tempSelection) &&
+					Array.isArray(currentValue) &&
+					areArraysEqualIgnoreOrder(tempSelection, currentValue)
+				);
+
+			if (hasChanged) {
+				handleChange(tempSelection);
+			}
 			setTempSelection(undefined);
 		}
 	};
