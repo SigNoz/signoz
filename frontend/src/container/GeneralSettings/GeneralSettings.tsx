@@ -8,6 +8,7 @@ import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
+import { StatusCodes } from 'http-status-codes';
 import find from 'lodash-es/find';
 import { useAppContext } from 'providers/App/App';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
@@ -24,13 +25,13 @@ import {
 	IDiskType,
 	PayloadProps as GetDisksPayload,
 } from 'types/api/disks/getDisks';
+import APIError from 'types/api/error';
 import { TTTLType } from 'types/api/settings/common';
 import {
 	PayloadPropsLogs as GetRetentionPeriodLogsPayload,
 	PayloadPropsMetrics as GetRetentionPeriodMetricsPayload,
 	PayloadPropsTraces as GetRetentionPeriodTracesPayload,
 } from 'types/api/settings/getRetention';
-import { PayloadPropsV2 } from 'types/api/settings/setRetention';
 
 import Retention from './Retention';
 import StatusMessage from './StatusMessage';
@@ -343,32 +344,34 @@ function GeneralSettings({
 		}
 		try {
 			onPostApiLoadingHandler(type);
-			let setTTLResponse: SuccessResponseV2<PayloadPropsV2>;
-			if (type === 'logs') {
-				setTTLResponse = await setRetentionApiV2({
-					type,
-					defaultTTLDays: apiCallTotalRetention ? apiCallTotalRetention / 24 : -1, // convert Hours to days
-					coldStorageVolume: '',
-					coldStorageDuration: 0,
-					ttlConditions: [],
-				});
-			} else {
-				setTTLResponse = await setRetentionApi({
-					type,
-					totalDuration: `${apiCallTotalRetention || -1}h`,
-					coldStorage: s3Enabled ? 's3' : null,
-					toColdDuration: `${apiCallS3Retention || -1}h`,
-				});
-			}
-
 			let hasSetTTLFailed = false;
-			if (setTTLResponse.httpStatusCode === 409) {
-				hasSetTTLFailed = true;
-				notifications.error({
-					message: 'Error',
-					description: t('retention_request_race_condition'),
-					placement: 'topRight',
-				});
+
+			try {
+				if (type === 'logs') {
+					await setRetentionApiV2({
+						type,
+						defaultTTLDays: apiCallTotalRetention ? apiCallTotalRetention / 24 : -1, // convert Hours to days
+						coldStorageVolume: '',
+						coldStorageDuration: 0,
+						ttlConditions: [],
+					});
+				} else {
+					await setRetentionApi({
+						type,
+						totalDuration: `${apiCallTotalRetention || -1}h`,
+						coldStorage: s3Enabled ? 's3' : null,
+						toColdDuration: `${apiCallS3Retention || -1}h`,
+					});
+				}
+			} catch (error) {
+				if ((error as APIError).getHttpStatusCode() === StatusCodes.CONFLICT) {
+					hasSetTTLFailed = true;
+					notifications.error({
+						message: 'Error',
+						description: t('retention_request_race_condition'),
+						placement: 'topRight',
+					});
+				}
 			}
 
 			if (type === 'metrics') {
