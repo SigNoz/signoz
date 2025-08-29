@@ -7,6 +7,7 @@ import { useAppContext } from 'providers/App/App';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { ErrorResponse, SuccessResponse, SuccessResponseV2 } from 'types/api';
+import APIError from 'types/api/error';
 import { TTTLType } from 'types/api/settings/common';
 import { PayloadProps as GetRetentionPeriodAPIPayloadProps } from 'types/api/settings/getRetention';
 
@@ -65,8 +66,8 @@ function GeneralSettings(): JSX.Element {
 	if (getRetentionPeriodTracesApiResponse.isError || getDisksResponse.isError) {
 		return (
 			<Typography>
-				{getRetentionPeriodTracesApiResponse.isError ||
-					getDisksResponse.isError ||
+				{getRetentionPeriodTracesApiResponse.data?.error ||
+					getDisksResponse.data?.error ||
 					t('something_went_wrong')}
 			</Typography>
 		);
@@ -75,8 +76,8 @@ function GeneralSettings(): JSX.Element {
 	if (getRetentionPeriodLogsApiResponse.isError || getDisksResponse.isError) {
 		return (
 			<Typography>
-				{getRetentionPeriodLogsApiResponse.isError ||
-					getDisksResponse.error ||
+				{(getRetentionPeriodLogsApiResponse.error as APIError).getErrorMessage() ||
+					getDisksResponse.data?.error ||
 					t('something_went_wrong')}
 			</Typography>
 		);
