@@ -82,7 +82,7 @@ describe('Having filter behaviour', () => {
 		const onChange = jest.fn();
 		const user = userEvent.setup();
 
-		const constructedAttribute = 'SUM(tag_bytes)';
+		const constructedAttribute = 'SUM(bytes)';
 		const optionTestTitle = 'havingOption';
 
 		const { unmount } = render(
@@ -99,7 +99,7 @@ describe('Having filter behaviour', () => {
 		// click on the select
 		await user.click(input);
 
-		// show predefined options for operator with attribute SUM(tag_bytes)
+		// show predefined options for operator with attribute SUM(bytes)
 		const option = screen.getByTitle(optionTestTitle);
 
 		expect(option).toBeInTheDocument();
@@ -114,7 +114,7 @@ describe('Having filter behaviour', () => {
 
 		await user.type(input, 'bytes');
 
-		// show again predefined options for operator with attribute SUM(tag_bytes)
+		// show again predefined options for operator with attribute SUM(bytes)
 		const sameAttributeOption = screen.getByTitle(optionTestTitle);
 
 		expect(sameAttributeOption).toBeInTheDocument();
@@ -123,12 +123,12 @@ describe('Having filter behaviour', () => {
 
 		expect(input).toHaveValue(constructedAttribute);
 
-		// show operators after SUM(tag_bytes)
+		// show operators after SUM(bytes)
 		const operatorsOptions = screen.getAllByTitle(optionTestTitle);
 
 		expect(operatorsOptions.length).toEqual(HAVING_OPERATORS.length);
 
-		// show operators after SUM(tag_bytes) when type from keyboard
+		// show operators after SUM(bytes) when type from keyboard
 		await user.clear(input);
 
 		await user.type(input, `${constructedAttribute} !=`);
