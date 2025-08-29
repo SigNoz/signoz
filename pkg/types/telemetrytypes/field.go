@@ -34,10 +34,7 @@ func (f TelemetryFieldKey) String() string {
 		sb.WriteString(fmt.Sprintf(",context=%s", f.FieldContext.String))
 	}
 	if f.FieldDataType != FieldDataTypeUnspecified {
-		sb.WriteString(fmt.Sprintf(",type=%s", f.FieldDataType.StringValue()))
-	}
-	if f.Materialized {
-		sb.WriteString(",materialized")
+		sb.WriteString(fmt.Sprintf(",datatype=%s", f.FieldDataType.StringValue()))
 	}
 	return sb.String()
 }
@@ -124,6 +121,7 @@ type FieldKeySelector struct {
 	StartUnixMilli    int64                  `json:"startUnixMilli"`
 	EndUnixMilli      int64                  `json:"endUnixMilli"`
 	Signal            Signal                 `json:"signal"`
+	Source            Source                 `json:"source"`
 	FieldContext      FieldContext           `json:"fieldContext"`
 	FieldDataType     FieldDataType          `json:"fieldDataType"`
 	Name              string                 `json:"name"`

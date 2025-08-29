@@ -64,6 +64,8 @@ const (
 	signozTraceLocalTableName = "signoz_index_v2"
 	signozMetricDBName        = "signoz_metrics"
 	signozMetadataDbName      = "signoz_metadata"
+	signozMeterDBName         = "signoz_meter"
+	signozMeterSamplesName    = "samples_agg_1d"
 
 	signozSampleLocalTableName = "samples_v4"
 	signozSampleTableName      = "distributed_samples_v4"
@@ -272,7 +274,7 @@ func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model
 
 func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, error) {
 	services := []string{}
-	rows, err := r.db.Query(ctx, fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s WHERE ts_bucket_start > (toUnixTimestamp(now() - INTERVAL 1 DAY) - 1800) AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, r.traceTableName))
+	rows, err := r.db.Query(ctx, fmt.Sprintf(`SELECT DISTINCT resource_string_service$$name FROM %s.%s WHERE ts_bucket_start > (toUnixTimestamp(now() - INTERVAL 1 DAY) - 1800) AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, r.traceTableName))
 	if err != nil {
 		return nil, fmt.Errorf("error in processing sql query")
 	}
@@ -426,18 +428,18 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 
 			query := fmt.Sprintf(
 				`SELECT
-					quantile(0.99)(durationNano) as p99,
-					avg(durationNano) as avgDuration,
+					quantile(0.99)(duration_nano) as p99,
+					avg(duration_nano) as avgDuration,
 					count(*) as numCalls
 				FROM %s.%s
-				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end`,
+				WHERE resource_string_service$$name = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end`,
 				r.TraceDB, r.traceTableName,
 			)
 			errorQuery := fmt.Sprintf(
 				`SELECT
 					count(*) as numErrors
 				FROM %s.%s
-				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
+				WHERE resource_string_service$$name = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
 				r.TraceDB, r.traceTableName,
 			)
 
@@ -757,10 +759,10 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 			quantile(0.95)(durationNano) as p95,
 			quantile(0.99)(durationNano) as p99,
 			COUNT(*) as numCalls,
-			countIf(statusCode=2) as errorCount,
+			countIf(status_code=2) as errorCount,
 			name
 		FROM %s.%s
-		WHERE serviceName = @serviceName AND timestamp>= @start AND timestamp<= @end`,
+		WHERE resource_string_service$$name = @serviceName AND timestamp>= @start AND timestamp<= @end`,
 		r.TraceDB, r.traceTableName,
 	)
 
@@ -897,7 +899,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	if err != nil {
 		zap.L().Info("cache miss for getWaterfallSpansForTraceWithMetadata", zap.String("traceID", traceID))
 
-		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, references, attributes_string, attributes_number, attributes_bool, resources_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
+		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, links as references, attributes_string, attributes_number, attributes_bool, resources_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
 		if err != nil {
 			return nil, err
 		}
@@ -1104,7 +1106,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 	if err != nil {
 		zap.L().Info("cache miss for getFlamegraphSpansForTrace", zap.String("traceID", traceID))
 
-		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error,references, resource_string_service$$name, name, events FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
+		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error,links as references, resource_string_service$$name, name, events FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
 		if err != nil {
 			return nil, err
 		}
@@ -2741,8 +2743,55 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, org
 	return &response, nil
 }
 
-func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+func (r *ClickHouseReader) GetMeterAggregateAttributes(ctx context.Context, orgID valuer.UUID, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
+	var response v3.AggregateAttributeResponse
+	// Query all relevant metric names from time_series_v4, but leave metadata retrieval to cache/db
+	query := fmt.Sprintf(
+		`SELECT metric_name,type,temporality,is_monotonic 
+		 FROM %s.%s 
+		 WHERE metric_name ILIKE $1
+		 GROUP BY metric_name,type,temporality,is_monotonic`,
+		signozMeterDBName, signozMeterSamplesName)
 
+	if req.Limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
+	}
+
+	rows, err := r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
+	if err != nil {
+		zap.L().Error("Error while querying meter names", zap.Error(err))
+		return nil, fmt.Errorf("error while executing meter name query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var name string
+		var typ string
+		var temporality string
+		var isMonotonic bool
+		if err := rows.Scan(&name, &typ, &temporality, &isMonotonic); err != nil {
+			return nil, fmt.Errorf("error while scanning meter name: %s", err.Error())
+		}
+
+		// Non-monotonic cumulative sums are treated as gauges
+		if typ == "Sum" && !isMonotonic && temporality == string(v3.Cumulative) {
+			typ = "Gauge"
+		}
+
+		// unlike traces/logs `tag`/`resource` type, the `Type` will be metric type
+		key := v3.AttributeKey{
+			Key:      name,
+			DataType: v3.AttributeKeyDataTypeFloat64,
+			Type:     v3.AttributeKeyType(typ),
+			IsColumn: true,
+		}
+		response.AttributeKeys = append(response.AttributeKeys, key)
+	}
+
+	return &response, nil
+}
+
+func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	var query string
 	var err error
 	var rows driver.Rows
@@ -2759,6 +2808,41 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
 	rows, err = r.db.Query(ctx, query, req.AggregateAttribute, common.PastDayRoundOff(), normalized, fmt.Sprintf("%%%s%%", req.SearchText))
+	if err != nil {
+		zap.L().Error("Error while executing query", zap.Error(err))
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var attributeKey string
+	for rows.Next() {
+		if err := rows.Scan(&attributeKey); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		key := v3.AttributeKey{
+			Key:      attributeKey,
+			DataType: v3.AttributeKeyDataTypeString, // https://github.com/OpenObservability/OpenMetrics/blob/main/proto/openmetrics_data_model.proto#L64-L72.
+			Type:     v3.AttributeKeyTypeTag,
+			IsColumn: false,
+		}
+		response.AttributeKeys = append(response.AttributeKeys, key)
+	}
+
+	return &response, nil
+}
+
+func (r *ClickHouseReader) GetMeterAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+	var query string
+	var err error
+	var rows driver.Rows
+	var response v3.FilterAttributeKeyResponse
+
+	// skips the internal attributes i.e attributes starting with __
+	query = fmt.Sprintf("SELECT DISTINCT arrayJoin(JSONExtractKeys(labels)) as attr_name FROM %s.%s WHERE metric_name=$1 AND attr_name ILIKE $2 AND attr_name NOT LIKE '\\_\\_%%'", signozMeterDBName, signozMeterSamplesName)
+	if req.Limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
+	}
+	rows, err = r.db.Query(ctx, query, req.AggregateAttribute, fmt.Sprintf("%%%s%%", req.SearchText))
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
@@ -3556,28 +3640,8 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 	return seriesList, getPersonalisedError(rows.Err())
 }
 
-func logCommentKVs(ctx context.Context) map[string]string {
-	kv := ctx.Value(common.LogCommentKey)
-	if kv == nil {
-		return nil
-	}
-	logCommentKVs, ok := kv.(map[string]string)
-	if !ok {
-		return nil
-	}
-	return logCommentKVs
-}
-
 // GetTimeSeriesResultV3 runs the query and returns list of time series
 func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error) {
-
-	ctxArgs := map[string]interface{}{"query": query}
-	for k, v := range logCommentKVs(ctx) {
-		ctxArgs[k] = v
-	}
-
-	defer utils.Elapsed("GetTimeSeriesResultV3", ctxArgs)()
-
 	// Hook up query progress reporting if requested.
 	queryId := ctx.Value("queryId")
 	if queryId != nil {
@@ -3641,20 +3705,12 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 
 // GetListResultV3 runs the query and returns list of rows
 func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error) {
-
-	ctxArgs := map[string]interface{}{"query": query}
-	for k, v := range logCommentKVs(ctx) {
-		ctxArgs[k] = v
-	}
-
-	defer utils.Elapsed("GetListResultV3", ctxArgs)()
-
 	rows, err := r.db.Query(ctx, query)
-
 	if err != nil {
 		zap.L().Error("error while reading time series result", zap.Error(err))
 		return nil, errors.New(err.Error())
 	}
+
 	defer rows.Close()
 
 	var (
@@ -4033,103 +4089,6 @@ func (r *ClickHouseReader) GetSpanAttributeKeysByNames(ctx context.Context, name
 	}
 
 	return response, nil
-}
-
-func (r *ClickHouseReader) LiveTailLogsV4(ctx context.Context, query string, timestampStart uint64, idStart string, client *model.LogsLiveTailClientV2) {
-	if timestampStart == 0 {
-		timestampStart = uint64(time.Now().UnixNano())
-	} else {
-		timestampStart = uint64(utils.GetEpochNanoSecs(int64(timestampStart)))
-	}
-
-	ticker := time.NewTicker(time.Duration(r.liveTailRefreshSeconds) * time.Second)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			done := true
-			client.Done <- &done
-			zap.L().Debug("closing go routine : " + client.Name)
-			return
-		case <-ticker.C:
-			// get the new 100 logs as anything more older won't make sense
-			var tmpQuery string
-			bucketStart := (timestampStart / NANOSECOND) - 1800
-
-			// we have to form the query differently if the resource filters are used
-			if strings.Contains(query, r.logsResourceTableV2) {
-				tmpQuery = fmt.Sprintf("seen_at_ts_bucket_start >=%d)) AND ts_bucket_start >=%d AND timestamp >=%d", bucketStart, bucketStart, timestampStart)
-			} else {
-				tmpQuery = fmt.Sprintf("ts_bucket_start >=%d AND timestamp >=%d", bucketStart, timestampStart)
-			}
-			if idStart != "" {
-				tmpQuery = fmt.Sprintf("%s AND id > '%s'", tmpQuery, idStart)
-			}
-
-			// the reason we are doing desc is that we need the latest logs first
-			tmpQuery = query + tmpQuery + " order by timestamp desc, id desc limit 100"
-
-			// using the old structure since we can directly read it to the struct as use it.
-			response := []model.SignozLogV2{}
-			err := r.db.Select(ctx, &response, tmpQuery)
-			if err != nil {
-				zap.L().Error("Error while getting logs", zap.Error(err))
-				client.Error <- err
-				return
-			}
-			for i := len(response) - 1; i >= 0; i-- {
-				client.Logs <- &response[i]
-				if i == 0 {
-					timestampStart = response[i].Timestamp
-					idStart = response[i].ID
-				}
-			}
-		}
-	}
-}
-
-func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, timestampStart uint64, idStart string, client *model.LogsLiveTailClient) {
-	if timestampStart == 0 {
-		timestampStart = uint64(time.Now().UnixNano())
-	} else {
-		timestampStart = uint64(utils.GetEpochNanoSecs(int64(timestampStart)))
-	}
-
-	ticker := time.NewTicker(time.Duration(r.liveTailRefreshSeconds) * time.Second)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			done := true
-			client.Done <- &done
-			zap.L().Debug("closing go routine : " + client.Name)
-			return
-		case <-ticker.C:
-			// get the new 100 logs as anything more older won't make sense
-			tmpQuery := fmt.Sprintf("timestamp >='%d'", timestampStart)
-			if idStart != "" {
-				tmpQuery = fmt.Sprintf("%s AND id > '%s'", tmpQuery, idStart)
-			}
-			// the reason we are doing desc is that we need the latest logs first
-			tmpQuery = query + tmpQuery + " order by timestamp desc, id desc limit 100"
-
-			// using the old structure since we can directly read it to the struct as use it.
-			response := []model.SignozLog{}
-			err := r.db.Select(ctx, &response, tmpQuery)
-			if err != nil {
-				zap.L().Error("Error while getting logs", zap.Error(err))
-				client.Error <- err
-				return
-			}
-			for i := len(response) - 1; i >= 0; i-- {
-				client.Logs <- &response[i]
-				if i == 0 {
-					timestampStart = response[i].Timestamp
-					idStart = response[i].ID
-				}
-			}
-		}
-	}
 }
 
 func (r *ClickHouseReader) AddRuleStateHistory(ctx context.Context, ruleStateHistory []model.RuleStateHistory) error {
@@ -5977,7 +5936,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	var startTime, endTime, durationNano uint64
 	var searchScanResponses []model.SpanItemV2
 
-	query := fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, references, attributes_string, attributes_number, attributes_bool, resources_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3", r.TraceDB, r.traceTableName)
+	query := fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, links as references, attributes_string, attributes_number, attributes_bool, resources_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3", r.TraceDB, r.traceTableName)
 	err = r.db.Select(ctx, &searchScanResponses, query, params.TraceID, strconv.FormatInt(traceSummary.Start.Unix()-1800, 10), strconv.FormatInt(traceSummary.End.Unix(), 10))
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))

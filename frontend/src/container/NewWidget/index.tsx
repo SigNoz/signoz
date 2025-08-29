@@ -5,6 +5,7 @@ import { WarningOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import { adjustQueryForV5 } from 'components/QueryBuilderV2/utils';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueriesMap,
@@ -468,6 +469,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			updatedLayout = newLayoutItem;
 		}
 
+		const adjustedQueryForV5 = adjustQueryForV5(currentQuery);
+
 		const dashboard: Props = {
 			id: selectedDashboard.id,
 
@@ -487,7 +490,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								stackedBarChart: selectedWidget?.stackedBarChart || false,
 								yAxisUnit: selectedWidget?.yAxisUnit,
 								panelTypes: graphType,
-								query: currentQuery,
+								query: adjustedQueryForV5,
 								thresholds: selectedWidget?.thresholds,
 								columnUnits: selectedWidget?.columnUnits,
 								softMin: selectedWidget?.softMin || 0,
@@ -516,7 +519,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								stackedBarChart: selectedWidget?.stackedBarChart || false,
 								yAxisUnit: selectedWidget?.yAxisUnit,
 								panelTypes: graphType,
-								query: currentQuery,
+								query: adjustedQueryForV5,
 								thresholds: selectedWidget?.thresholds,
 								columnUnits: selectedWidget?.columnUnits,
 								softMin: selectedWidget?.softMin || 0,
@@ -581,7 +584,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const setGraphHandler = (type: PANEL_TYPES): void => {
 		setIsLoadingPanelData(true);
-		const updatedQuery = handleQueryChange(type as any, supersetQuery);
+		const updatedQuery = handleQueryChange(
+			type as any,
+			supersetQuery,
+			selectedGraph,
+		);
 		setGraphType(type);
 		redirectWithQueryBuilderData(
 			updatedQuery,

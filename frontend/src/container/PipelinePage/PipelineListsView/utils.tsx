@@ -1,6 +1,7 @@
 import { ColumnType } from 'antd/lib/table/interface';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
+import { cloneDeep } from 'lodash-es';
 import update from 'react-addons-update';
 import { ProcessorData } from 'types/api/pipeline/def';
 
@@ -81,7 +82,7 @@ export function getProcessorUpdatedRow<T extends ProcessorData>(
 	dragIndex: number,
 	hoverIndex: number,
 ): Array<T> {
-	const data = processorData;
+	const data = cloneDeep(processorData);
 	const item = data.splice(dragIndex, 1)[0];
 	data.splice(hoverIndex, 0, item);
 	data.forEach((item, index) => {

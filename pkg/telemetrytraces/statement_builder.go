@@ -69,7 +69,7 @@ func (b *traceQueryStatementBuilder) Build(
 
 	keySelectors := getKeySelectors(query)
 
-	keys, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
 	}
@@ -103,6 +103,8 @@ func (b *traceQueryStatementBuilder) Build(
 		return b.buildTimeSeriesQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeScalar:
 		return b.buildScalarQuery(ctx, q, query, start, end, keys, variables, false, false)
+	case qbtypes.RequestTypeTrace:
+		return b.buildTraceQuery(ctx, q, query, start, end, keys, variables)
 	}
 
 	return nil, fmt.Errorf("unsupported request type: %s", requestType)
@@ -146,6 +148,7 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 
 	for idx := range keySelectors {
 		keySelectors[idx].Signal = telemetrytypes.SignalTraces
+		keySelectors[idx].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
 	}
 
 	return keySelectors
@@ -301,7 +304,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -331,11 +334,129 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
 
-	return &qbtypes.Statement{
-		Query:    finalSQL,
-		Args:     finalArgs,
-		Warnings: warnings,
-	}, nil
+	stmt := &qbtypes.Statement{
+		Query: finalSQL,
+		Args:  finalArgs,
+	}
+	if preparedWhereClause != nil {
+		stmt.Warnings = preparedWhereClause.Warnings
+		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+	}
+
+	return stmt, nil
+}
+
+func (b *traceQueryStatementBuilder) buildTraceQuery(
+	ctx context.Context,
+	_ *sqlbuilder.SelectBuilder,
+	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
+	start, end uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
+) (*qbtypes.Statement, error) {
+
+	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
+	endBucket := end / querybuilder.NsToSeconds
+
+	distSB := sqlbuilder.NewSelectBuilder()
+	distSB.Select("trace_id")
+	distSB.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
+
+	var (
+		cteFragments []string
+		cteArgs      [][]any
+	)
+
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, distSB, query, start, end, variables); err != nil {
+		return nil, err
+	} else if frag != "" {
+		cteFragments = append(cteFragments, frag)
+		cteArgs = append(cteArgs, args)
+	}
+
+	// Add filter conditions
+	preparedWhereClause, err := b.addFilterCondition(ctx, distSB, start, end, query, keys, variables)
+	if err != nil {
+		return nil, err
+	}
+
+	distSQL, distArgs := distSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	cteFragments = append(cteFragments, fmt.Sprintf("__toe AS (%s)", distSQL))
+	cteArgs = append(cteArgs, distArgs)
+
+	// Build the inner subquery for root spans
+	innerSB := sqlbuilder.NewSelectBuilder()
+	innerSB.Select("trace_id", "duration_nano", sqlbuilder.Escape("resource_string_service$$name as `service.name`"), "name")
+	innerSB.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
+	innerSB.Where("parent_span_id = ''")
+
+	// Add time filter to inner query
+	innerSB.Where(
+		innerSB.GE("timestamp", fmt.Sprintf("%d", start)),
+		innerSB.L("timestamp", fmt.Sprintf("%d", end)),
+		innerSB.GE("ts_bucket_start", startBucket),
+		innerSB.LE("ts_bucket_start", endBucket))
+
+	// order by duration and limit 1 per trace
+	innerSB.OrderBy("duration_nano DESC")
+	innerSB.SQL("LIMIT 1 BY trace_id")
+
+	innerSQL, innerArgs := innerSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	cteFragments = append(cteFragments, fmt.Sprintf("__toe_duration_sorted AS (%s)", innerSQL))
+	cteArgs = append(cteArgs, innerArgs)
+
+	// main query that joins everything
+	mainSB := sqlbuilder.NewSelectBuilder()
+	mainSB.Select(
+		"__toe_duration_sorted.`service.name` AS `service.name`",
+		"__toe_duration_sorted.name AS `name`",
+		"count() AS span_count",
+		"__toe_duration_sorted.duration_nano AS `duration_nano`",
+		"__toe_duration_sorted.trace_id AS `trace_id`",
+	)
+
+	// Join the distributed table with the inner subquery
+	mainSB.SQL("FROM __toe")
+	mainSB.SQL("INNER JOIN __toe_duration_sorted")
+	mainSB.SQL("ON __toe.trace_id = __toe_duration_sorted.trace_id")
+
+	// Group by trace-level fields
+	mainSB.GroupBy("trace_id", "duration_nano", "name", "`service.name`")
+
+	// order by duration only supported for now
+	mainSB.OrderBy("duration_nano DESC")
+
+	// Limit by trace_id to ensure one row per trace
+	mainSB.SQL("LIMIT 1 BY trace_id")
+
+	if query.Limit > 0 {
+		mainSB.Limit(query.Limit)
+	} else {
+		mainSB.Limit(100)
+	}
+
+	if query.Offset > 0 {
+		mainSB.Offset(query.Offset)
+	}
+
+	mainSQL, mainArgs := mainSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	// combine it all together:  WITH … SELECT …
+	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL + " SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000"
+	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
+
+	stmt := &qbtypes.Statement{
+		Query: finalSQL,
+		Args:  finalArgs,
+	}
+	if preparedWhereClause != nil {
+		stmt.Warnings = preparedWhereClause.Warnings
+		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+	}
+
+	return stmt, nil
 }
 
 func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
@@ -369,7 +490,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, "", nil)
 		if err != nil {
 			return nil, err
 		}
@@ -395,7 +516,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -427,6 +548,16 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 			sb.Having(rewrittenExpr)
 		}
 
+		if len(query.Order) != 0 {
+			for _, orderBy := range query.Order {
+				_, ok := aggOrderBy(orderBy, query)
+				if !ok {
+					sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+				}
+			}
+			sb.OrderBy("ts desc")
+		}
+
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
 		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 
@@ -443,6 +574,16 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 			sb.Having(rewrittenExpr)
 		}
 
+		if len(query.Order) != 0 {
+			for _, orderBy := range query.Order {
+				_, ok := aggOrderBy(orderBy, query)
+				if !ok {
+					sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+				}
+			}
+			sb.OrderBy("ts desc")
+		}
+
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
 		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 
@@ -451,11 +592,16 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		finalArgs = querybuilder.PrependArgs(cteArgs, mainArgs)
 	}
 
-	return &qbtypes.Statement{
-		Query:    finalSQL,
-		Args:     finalArgs,
-		Warnings: warnings,
-	}, nil
+	stmt := &qbtypes.Statement{
+		Query: finalSQL,
+		Args:  finalArgs,
+	}
+	if preparedWhereClause != nil {
+		stmt.Warnings = preparedWhereClause.Warnings
+		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+	}
+
+	return stmt, nil
 }
 
 // buildScalarQuery builds a query for scalar panel type
@@ -486,7 +632,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 
 	var allGroupByArgs []any
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, "", nil)
 		if err != nil {
 			return nil, err
 		}
@@ -519,7 +665,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -561,11 +707,16 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
 
-	return &qbtypes.Statement{
-		Query:    finalSQL,
-		Args:     finalArgs,
-		Warnings: warnings,
-	}, nil
+	stmt := &qbtypes.Statement{
+		Query: finalSQL,
+		Args:  finalArgs,
+	}
+	if preparedWhereClause != nil {
+		stmt.Warnings = preparedWhereClause.Warnings
+		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+	}
+
+	return stmt, nil
 }
 
 // buildFilterCondition builds SQL condition from filter expression
@@ -576,15 +727,15 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
-) ([]string, error) {
+) (*querybuilder.PreparedWhereClause, error) {
 
-	var filterWhereClause *sqlbuilder.WhereClause
-	var warnings []string
+	var preparedWhereClause *querybuilder.PreparedWhereClause
 	var err error
 
 	if query.Filter != nil && query.Filter.Expression != "" {
 		// add filter expression
-		filterWhereClause, warnings, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			Logger:             b.logger,
 			FieldMapper:        b.fm,
 			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
@@ -597,8 +748,8 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 		}
 	}
 
-	if filterWhereClause != nil {
-		sb.AddWhereClause(filterWhereClause)
+	if preparedWhereClause != nil {
+		sb.AddWhereClause(preparedWhereClause.WhereClause)
 	}
 
 	// add time filter
@@ -607,7 +758,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 
 	sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.L("timestamp", fmt.Sprintf("%d", end)), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
 
-	return warnings, nil
+	return preparedWhereClause, nil
 }
 
 func aggOrderBy(k qbtypes.OrderBy, q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) (int, bool) {

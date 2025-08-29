@@ -117,10 +117,10 @@ describe('MetricDetails utils', () => {
 		it('should create correct query for SUM metric type', () => {
 			const query = getMetricDetailsQuery(TEST_METRIC_NAME, MetricType.SUM);
 
-			expect(query.builder.queryData[0]?.aggregateAttribute.key).toBe(
+			expect(query.builder.queryData[0]?.aggregateAttribute?.key).toBe(
 				TEST_METRIC_NAME,
 			);
-			expect(query.builder.queryData[0]?.aggregateAttribute.type).toBe(
+			expect(query.builder.queryData[0]?.aggregateAttribute?.type).toBe(
 				MetricType.SUM,
 			);
 			expect(query.builder.queryData[0]?.aggregateOperator).toBe('rate');
@@ -131,10 +131,10 @@ describe('MetricDetails utils', () => {
 		it('should create correct query for GAUGE metric type', () => {
 			const query = getMetricDetailsQuery(TEST_METRIC_NAME, MetricType.GAUGE);
 
-			expect(query.builder.queryData[0]?.aggregateAttribute.key).toBe(
+			expect(query.builder.queryData[0]?.aggregateAttribute?.key).toBe(
 				TEST_METRIC_NAME,
 			);
-			expect(query.builder.queryData[0]?.aggregateAttribute.type).toBe(
+			expect(query.builder.queryData[0]?.aggregateAttribute?.type).toBe(
 				MetricType.GAUGE,
 			);
 			expect(query.builder.queryData[0]?.aggregateOperator).toBe('avg');
@@ -145,10 +145,10 @@ describe('MetricDetails utils', () => {
 		it('should create correct query for SUMMARY metric type', () => {
 			const query = getMetricDetailsQuery(TEST_METRIC_NAME, MetricType.SUMMARY);
 
-			expect(query.builder.queryData[0]?.aggregateAttribute.key).toBe(
+			expect(query.builder.queryData[0]?.aggregateAttribute?.key).toBe(
 				TEST_METRIC_NAME,
 			);
-			expect(query.builder.queryData[0]?.aggregateAttribute.type).toBe(
+			expect(query.builder.queryData[0]?.aggregateAttribute?.type).toBe(
 				MetricType.SUMMARY,
 			);
 			expect(query.builder.queryData[0]?.aggregateOperator).toBe('noop');
@@ -159,10 +159,10 @@ describe('MetricDetails utils', () => {
 		it('should create correct query for HISTOGRAM metric type', () => {
 			const query = getMetricDetailsQuery(TEST_METRIC_NAME, MetricType.HISTOGRAM);
 
-			expect(query.builder.queryData[0]?.aggregateAttribute.key).toBe(
+			expect(query.builder.queryData[0]?.aggregateAttribute?.key).toBe(
 				TEST_METRIC_NAME,
 			);
-			expect(query.builder.queryData[0]?.aggregateAttribute.type).toBe(
+			expect(query.builder.queryData[0]?.aggregateAttribute?.type).toBe(
 				MetricType.HISTOGRAM,
 			);
 			expect(query.builder.queryData[0]?.aggregateOperator).toBe('noop');
@@ -176,10 +176,10 @@ describe('MetricDetails utils', () => {
 				MetricType.EXPONENTIAL_HISTOGRAM,
 			);
 
-			expect(query.builder.queryData[0]?.aggregateAttribute.key).toBe(
+			expect(query.builder.queryData[0]?.aggregateAttribute?.key).toBe(
 				TEST_METRIC_NAME,
 			);
-			expect(query.builder.queryData[0]?.aggregateAttribute.type).toBe(
+			expect(query.builder.queryData[0]?.aggregateAttribute?.type).toBe(
 				MetricType.EXPONENTIAL_HISTOGRAM,
 			);
 			expect(query.builder.queryData[0]?.aggregateOperator).toBe('noop');
@@ -190,10 +190,10 @@ describe('MetricDetails utils', () => {
 		it('should create query with default values for unknown metric type', () => {
 			const query = getMetricDetailsQuery(TEST_METRIC_NAME, undefined);
 
-			expect(query.builder.queryData[0]?.aggregateAttribute.key).toBe(
+			expect(query.builder.queryData[0]?.aggregateAttribute?.key).toBe(
 				TEST_METRIC_NAME,
 			);
-			expect(query.builder.queryData[0]?.aggregateAttribute.type).toBe('');
+			expect(query.builder.queryData[0]?.aggregateAttribute?.type).toBe('');
 			expect(query.builder.queryData[0]?.aggregateOperator).toBe('noop');
 			expect(query.builder.queryData[0]?.timeAggregation).toBe('noop');
 			expect(query.builder.queryData[0]?.spaceAggregation).toBe('noop');
@@ -207,14 +207,14 @@ describe('MetricDetails utils', () => {
 				filter,
 			);
 
-			expect(query.builder.queryData[0]?.filters.items).toHaveLength(1);
-			expect(query.builder.queryData[0]?.filters.items[0]?.key?.key).toBe(
+			expect(query.builder.queryData[0]?.filters?.items).toHaveLength(1);
+			expect(query.builder.queryData[0]?.filters?.items[0]?.key?.key).toBe(
 				'service',
 			);
-			expect(query.builder.queryData[0]?.filters.items[0]?.value).toBe(
+			expect(query.builder.queryData[0]?.filters?.items[0]?.value).toBe(
 				API_GATEWAY,
 			);
-			expect(query.builder.queryData[0]?.filters.items[0]?.op).toBe('=');
+			expect(query.builder.queryData[0]?.filters?.items[0]?.op).toBe('=');
 		});
 
 		it('should include groupBy when provided', () => {
@@ -227,8 +227,8 @@ describe('MetricDetails utils', () => {
 			);
 
 			expect(query.builder.queryData[0]?.groupBy).toHaveLength(1);
-			expect(query.builder.queryData[0]?.groupBy[0]?.key).toBe('service');
-			expect(query.builder.queryData[0]?.groupBy[0]?.type).toBe('tag');
+			expect(query.builder.queryData[0]?.groupBy?.[0]?.key).toBe('service');
+			expect(query.builder.queryData[0]?.groupBy?.[0]?.type).toBe('tag');
 		});
 
 		it('should include both filter and groupBy when provided', () => {
@@ -241,18 +241,18 @@ describe('MetricDetails utils', () => {
 				groupBy,
 			);
 
-			expect(query.builder.queryData[0]?.filters.items).toHaveLength(1);
+			expect(query.builder.queryData[0]?.filters?.items).toHaveLength(1);
 			expect(query.builder.queryData[0]?.groupBy).toHaveLength(1);
-			expect(query.builder.queryData[0]?.filters.items[0]?.key?.key).toBe(
+			expect(query.builder.queryData[0]?.filters?.items[0]?.key?.key).toBe(
 				'service',
 			);
-			expect(query.builder.queryData[0]?.groupBy[0]?.key).toBe('endpoint');
+			expect(query.builder.queryData[0]?.groupBy?.[0]?.key).toBe('endpoint');
 		});
 
 		it('should not include filters or groupBy when not provided', () => {
 			const query = getMetricDetailsQuery(TEST_METRIC_NAME, MetricType.SUM);
 
-			expect(query.builder.queryData[0]?.filters.items).toHaveLength(0);
+			expect(query.builder.queryData[0]?.filters?.items).toHaveLength(0);
 			expect(query.builder.queryData[0]?.groupBy).toHaveLength(0);
 		});
 	});

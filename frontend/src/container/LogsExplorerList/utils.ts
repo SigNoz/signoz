@@ -1,18 +1,21 @@
+import { TelemetryFieldKey } from 'api/v5/v5';
+import { isEmpty } from 'lodash-es';
 import { IField } from 'types/api/logs/fields';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
 
 export const convertKeysToColumnFields = (
-	keys: BaseAutocompleteData[],
+	keys: TelemetryFieldKey[],
 ): IField[] =>
-	keys.map((item) => ({
-		dataType: item.dataType as string,
-		name: item.key,
-		type: item.type as string,
-	}));
+	keys
+		.filter((item) => !isEmpty(item.name))
+		.map((item) => ({
+			dataType: item.fieldDataType ?? '',
+			name: item.name,
+			type: item.fieldContext ?? '',
+		}));
 /**
  * Determines if a query represents a trace-to-logs navigation
  * by checking for the presence of a trace_id filter.

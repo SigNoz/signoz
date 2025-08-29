@@ -67,11 +67,6 @@ func (m *mockQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 	}, nil
 }
 
-// ptr is a helper function to get a pointer to a value
-func ptr[T any](v T) *T {
-	return &v
-}
-
 // createTestBucketCache creates a test bucket cache
 func createTestBucketCache(t *testing.T) *bucketCache {
 	memCache := createTestCache(t)
@@ -174,9 +169,8 @@ func TestBucketCache_Put_And_Get(t *testing.T) {
 	assert.Equal(t, []string{"test warning"}, cached.Warnings)
 
 	// Verify the time series data
-	tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
+	_, ok := cached.Value.(*qbtypes.TimeSeriesData)
 	require.True(t, ok)
-	assert.Equal(t, "A", tsData.QueryName)
 }
 
 func TestBucketCache_PartialHit(t *testing.T) {
@@ -425,16 +419,16 @@ func TestBucketCache_RawData(t *testing.T) {
 		Rows: []*qbtypes.RawRow{
 			{
 				Timestamp: time.Unix(1, 0),
-				Data: map[string]*any{
-					"value": ptr[any](10.5),
-					"label": ptr[any]("test1"),
+				Data: map[string]any{
+					"value": 10.5,
+					"label": "test1",
 				},
 			},
 			{
 				Timestamp: time.Unix(2, 0),
-				Data: map[string]*any{
-					"value": ptr[any](20.5),
-					"label": ptr[any]("test2"),
+				Data: map[string]any{
+					"value": 20.5,
+					"label": "test2",
 				},
 			},
 		},
@@ -1082,7 +1076,6 @@ func TestBucketCache_FilteredCachedResults(t *testing.T) {
 	// Verify the cached result only contains values within the requested range
 	tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
 	require.True(t, ok)
-	assert.Equal(t, "A", tsData.QueryName)
 	require.Len(t, tsData.Aggregations, 1)
 	require.Len(t, tsData.Aggregations[0].Series, 1)
 

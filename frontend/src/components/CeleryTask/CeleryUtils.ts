@@ -39,8 +39,6 @@ export function getFiltersFromQueryParams(
 			key,
 			dataType: DataTypes.String,
 			type: 'tag',
-			isColumn: false,
-			isJSON: false,
 			id: `${key}--string--tag--false`,
 		},
 		op: '=',
@@ -64,7 +62,8 @@ export function applyCeleryFilterOnWidgetData(
 								...queryItem,
 								filters: {
 									...queryItem.filters,
-									items: [...queryItem.filters.items, ...filters],
+									items: [...(queryItem.filters?.items || []), ...filters],
+									op: queryItem.filters?.op || 'AND',
 								},
 						  }
 						: queryItem,
@@ -99,8 +98,7 @@ export const createFiltersFromData = (
 		key: string;
 		dataType: DataTypes;
 		type: string;
-		isColumn: boolean;
-		isJSON: boolean;
+
 		id: string;
 	};
 	op: string;
@@ -118,8 +116,6 @@ export const createFiltersFromData = (
 					key,
 					dataType: DataTypes.String,
 					type: 'tag',
-					isColumn: false,
-					isJSON: false,
 					id: `${key}--string--tag--false`,
 				},
 				op: '=',

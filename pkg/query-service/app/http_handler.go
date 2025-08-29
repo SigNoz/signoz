@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"math/rand/v2"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -30,7 +29,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
-	"github.com/SigNoz/signoz/pkg/query-service/transition"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
@@ -40,6 +38,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/SigNoz/signoz/pkg/contextlinks"
 	traceFunnelsModule "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
@@ -57,7 +56,6 @@ import (
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/contextlinks"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -66,7 +64,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
-	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 
@@ -389,7 +387,7 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *middlew
 	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
 
 	// live logs
-	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.QuerierAPI.QueryRawStream)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) RegisterFieldsRoutes(router *mux.Router, am *middleware.AuthZ) {
@@ -473,6 +471,7 @@ func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *middlew
 func (aH *APIHandler) RegisterQueryRangeV5Routes(router *mux.Router, am *middleware.AuthZ) {
 	subRouter := router.PathPrefix("/api/v5").Subrouter()
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QuerierAPI.QueryRange)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/substitute_vars", am.ViewAccess(aH.QuerierAPI.ReplaceVariables)).Methods(http.MethodPost)
 }
 
 // todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
@@ -1037,9 +1036,54 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 			// to get the correct query range
 			start := end.Add(-time.Duration(rule.EvalWindow)).Add(-3 * time.Minute)
 			if rule.AlertType == ruletypes.AlertTypeLogs {
-				res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
+				if rule.Version != "v5" {
+					res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
+				} else {
+					// TODO(srikanthccv): re-visit this and support multiple queries
+					var q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+
+					for _, query := range rule.RuleCondition.CompositeQuery.Queries {
+						if query.Type == qbtypes.QueryTypeBuilder {
+							switch spec := query.Spec.(type) {
+							case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+								q = spec
+							}
+						}
+					}
+
+					filterExpr := ""
+					if q.Filter != nil && q.Filter.Expression != "" {
+						filterExpr = q.Filter.Expression
+					}
+
+					whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
+
+					res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogsV5(start, end, whereClause)
+				}
 			} else if rule.AlertType == ruletypes.AlertTypeTraces {
-				res.Items[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
+				if rule.Version != "v5" {
+					res.Items[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
+				} else {
+					// TODO(srikanthccv): re-visit this and support multiple queries
+					var q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
+
+					for _, query := range rule.RuleCondition.CompositeQuery.Queries {
+						if query.Type == qbtypes.QueryTypeBuilder {
+							switch spec := query.Spec.(type) {
+							case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+								q = spec
+							}
+						}
+					}
+
+					filterExpr := ""
+					if q.Filter != nil && q.Filter.Expression != "" {
+						filterExpr = q.Filter.Expression
+					}
+
+					whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
+					res.Items[idx].RelatedTracesLink = contextlinks.PrepareLinksToTracesV5(start, end, whereClause)
+				}
 			}
 		}
 	}
@@ -4006,7 +4050,7 @@ func (aH *APIHandler) logFieldUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getLogs(w http.ResponseWriter, r *http.Request) {
-	aH.WriteJSON(w, r, map[string]interface{}{"results": []model.SignozLog{}})
+	aH.WriteJSON(w, r, map[string]interface{}{"results": []interface{}{}})
 }
 
 func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
@@ -4220,6 +4264,8 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 		response, err = aH.reader.GetLogAggregateAttributes(r.Context(), req)
 	case v3.DataSourceTraces:
 		response, err = aH.reader.GetTraceAggregateAttributes(r.Context(), req)
+	case v3.DataSourceMeter:
+		response, err = aH.reader.GetMeterAggregateAttributes(r.Context(), orgID, req)
 	default:
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
 		return
@@ -4269,6 +4315,8 @@ func (aH *APIHandler) autoCompleteAttributeKeys(w http.ResponseWriter, r *http.R
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
 		response, err = aH.reader.GetMetricAttributeKeys(r.Context(), req)
+	case v3.DataSourceMeter:
+		response, err = aH.reader.GetMeterAttributeKeys(r.Context(), req)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAttributeKeys(r.Context(), req)
 	case v3.DataSourceTraces:
@@ -4707,92 +4755,6 @@ func (aH *APIHandler) GetQueryProgressUpdates(w http.ResponseWriter, r *http.Req
 	}
 }
 
-func (aH *APIHandler) liveTailLogsV2(w http.ResponseWriter, r *http.Request) {
-
-	// get the param from url and add it to body
-	stringReader := strings.NewReader(r.URL.Query().Get("q"))
-	r.Body = io.NopCloser(stringReader)
-
-	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
-	if apiErrorObj != nil {
-		zap.L().Error(apiErrorObj.Err.Error())
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-
-	var err error
-	var queryString string
-	switch queryRangeParams.CompositeQuery.QueryType {
-	case v3.QueryTypeBuilder:
-		// check if any enrichment is required for logs if yes then enrich them
-		if logsv3.EnrichmentRequired(queryRangeParams) {
-			// get the fields if any logs query is present
-			logsFields, err := aH.reader.GetLogFieldsFromNames(r.Context(), logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
-			if err != nil {
-				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, nil)
-				return
-			}
-			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
-			logsv3.Enrich(queryRangeParams, fields)
-		}
-
-		queryString, err = aH.queryBuilder.PrepareLiveTailQuery(queryRangeParams)
-		if err != nil {
-			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-			return
-		}
-
-	default:
-		err = fmt.Errorf("invalid query type")
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.WriteHeader(200)
-
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		err := model.ApiError{Typ: model.ErrorStreamingNotSupported, Err: nil}
-		RespondError(w, &err, "streaming is not supported")
-		return
-	}
-
-	// flush the headers
-	flusher.Flush()
-
-	// create the client
-	client := &model.LogsLiveTailClientV2{Name: r.RemoteAddr, Logs: make(chan *model.SignozLogV2, 1000), Done: make(chan *bool), Error: make(chan error)}
-	go aH.reader.LiveTailLogsV4(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
-	for {
-		select {
-		case log := <-client.Logs:
-			var buf bytes.Buffer
-			enc := json.NewEncoder(&buf)
-			enc.Encode(log)
-			fmt.Fprintf(w, "data: %v\n\n", buf.String())
-			flusher.Flush()
-		case <-client.Done:
-			zap.L().Debug("done!")
-			return
-		case err := <-client.Error:
-			zap.L().Error("error occurred", zap.Error(err))
-			fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
-			flusher.Flush()
-			return
-		}
-	}
-
-}
-
-func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
-	aH.liveTailLogsV2(w, r)
-}
-
 func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
@@ -4910,45 +4872,6 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	aH.sendQueryResultEvents(r, result, queryRangeParams, "v4")
 	resp := v3.QueryRangeResponse{
 		Result: result,
-	}
-
-	if rand.Float64() < (1.0/30.0) &&
-		queryRangeParams.CompositeQuery.PanelType != v3.PanelTypeList &&
-		queryRangeParams.CompositeQuery.PanelType != v3.PanelTypeTrace {
-		v4JSON, _ := json.Marshal(queryRangeParams)
-		func() {
-			defer func() {
-				if rr := recover(); rr != nil {
-					zap.L().Warn(
-						"unexpected panic while converting to v5",
-						zap.Any("panic", rr),
-						zap.String("v4_payload", string(v4JSON)),
-					)
-				}
-			}()
-			v5Req, err := transition.ConvertV3ToV5(queryRangeParams)
-			if err != nil {
-				zap.L().Warn("unable to convert to v5 request payload", zap.Error(err), zap.String("v4_payload", string(v4JSON)))
-				return
-			}
-			v5ReqJSON, _ := json.Marshal(v5Req)
-
-			v3Resp := v3.QueryRangeResponse{
-				Result: result,
-			}
-
-			v5Resp, err := transition.ConvertV3ResponseToV5(&v3Resp, querybuildertypesv5.RequestTypeTimeSeries)
-			if err != nil {
-				zap.L().Warn("unable to convert to v5 response payload", zap.Error(err))
-				return
-			}
-
-			v5RespJSON, _ := json.Marshal(v5Resp)
-			zap.L().Info("v5 request and expected response",
-				zap.String("request_payload", string(v5ReqJSON)),
-				zap.String("response_payload", string(v5RespJSON)),
-			)
-		}()
 	}
 
 	aH.Respond(w, resp)

@@ -7,7 +7,7 @@ import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
 
 // eslint-disable-next-line no-useless-escape
-export const tagRegexp = /^\s*(.*?)\s*(\bIN\b|\bNOT_IN\b|\bLIKE\b|\bNOT_LIKE\b|\bREGEX\b|\bNOT_REGEX\b|=|!=|\bEXISTS\b|\bNOT_EXISTS\b|\bCONTAINS\b|\bNOT_CONTAINS\b|>=|>|<=|<|\bHAS\b|\bNHAS\b)\s*(.*)$/gi;
+export const tagRegexp = /^\s*(.*?)\s*(\bIN\b|\bNOT_IN\b|\bLIKE\b|\bNOT_LIKE\b|\bILIKE\b|\bNOT_ILIKE\b|\bREGEX\b|\bNOT_REGEX\b|=|!=|\bEXISTS\b|\bNOT_EXISTS\b|\bCONTAINS\b|\bNOT_CONTAINS\b|>=|>|<=|<|\bHAS\b|\bNHAS\b)\s*(.*)$/gi;
 
 export function isInNInOperator(value: string): boolean {
 	return value === OPERATORS.IN || value === OPERATORS.NIN;
@@ -58,27 +58,31 @@ export function getOperatorValue(op: string): string {
 		case 'IN':
 			return 'in';
 		case 'NOT_IN':
-			return 'nin';
+			return 'not in';
 		case OPERATORS.REGEX:
 			return 'regex';
 		case OPERATORS.HAS:
 			return 'has';
 		case OPERATORS.NHAS:
-			return 'nhas';
+			return 'not has';
 		case OPERATORS.NREGEX:
-			return 'nregex';
+			return 'not regex';
 		case 'LIKE':
 			return 'like';
+		case 'ILIKE':
+			return 'ilike';
 		case 'NOT_LIKE':
-			return 'nlike';
+			return 'not like';
+		case 'NOT_ILIKE':
+			return 'not ilike';
 		case 'EXISTS':
 			return 'exists';
 		case 'NOT_EXISTS':
-			return 'nexists';
+			return 'not exists';
 		case 'CONTAINS':
 			return 'contains';
 		case 'NOT_CONTAINS':
-			return 'ncontains';
+			return 'not contains';
 		default:
 			return op;
 	}
@@ -88,27 +92,27 @@ export function getOperatorFromValue(op: string): string {
 	switch (op) {
 		case 'in':
 			return 'IN';
-		case 'nin':
+		case 'not in':
 			return 'NOT_IN';
 		case 'like':
 			return 'LIKE';
 		case 'regex':
 			return OPERATORS.REGEX;
-		case 'nregex':
+		case 'not regex':
 			return OPERATORS.NREGEX;
-		case 'nlike':
+		case 'not like':
 			return 'NOT_LIKE';
 		case 'exists':
 			return 'EXISTS';
-		case 'nexists':
+		case 'not exists':
 			return 'NOT_EXISTS';
 		case 'contains':
 			return 'CONTAINS';
-		case 'ncontains':
+		case 'not contains':
 			return 'NOT_CONTAINS';
 		case 'has':
 			return OPERATORS.HAS;
-		case 'nhas':
+		case 'not has':
 			return OPERATORS.NHAS;
 		default:
 			return op;

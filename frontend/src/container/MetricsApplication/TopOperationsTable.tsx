@@ -50,7 +50,7 @@ function TopOperationsTable({
 
 	const params = useParams<{ servicename: string }>();
 
-	const handleOnClick = (operation: string): void => {
+	const handleOnClick = (operation: string, openInNewTab: boolean): void => {
 		const { servicename: encodedServiceName } = params;
 		const servicename = decodeURIComponent(encodedServiceName);
 
@@ -61,8 +61,6 @@ function TopOperationsTable({
 					key: 'name',
 					dataType: DataTypes.String,
 					type: 'tag',
-					isColumn: true,
-					isJSON: false,
 					id: 'name--string--tag--true',
 				},
 				op: 'in',
@@ -78,7 +76,8 @@ function TopOperationsTable({
 					...item,
 					filters: {
 						...item.filters,
-						items: [...item.filters.items, ...opFilters],
+						items: [...(item.filters?.items || []), ...opFilters],
+						op: item.filters?.op || 'AND',
 					},
 				})),
 			},
@@ -92,6 +91,7 @@ function TopOperationsTable({
 			selectedTraceTags,
 			apmToTraceQuery: preparedQuery,
 			safeNavigate,
+			openInNewTab,
 		});
 	};
 
@@ -110,7 +110,18 @@ function TopOperationsTable({
 		},
 		render: (text: string): JSX.Element => (
 			<Tooltip placement="topLeft" title={text}>
-				<Typography.Link onClick={(): void => handleOnClick(text)}>
+				<Typography.Link
+					onClick={(e): void => {
+						e.stopPropagation();
+						e.preventDefault();
+
+						if (e.metaKey || e.ctrlKey) {
+							handleOnClick(text, true); // open in new tab
+						} else {
+							handleOnClick(text, false); // open in current tab
+						}
+					}}
+				>
 					{text}
 				</Typography.Link>
 			</Tooltip>

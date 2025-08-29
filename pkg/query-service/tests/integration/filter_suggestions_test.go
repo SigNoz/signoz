@@ -318,7 +318,7 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	emailing := emailingtest.New()
 	analytics := analyticstest.New()
 	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
-	handlers := signoz.NewHandlers(modules)
+	handlers := signoz.NewHandlers(modules, providerSettings)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader: reader,

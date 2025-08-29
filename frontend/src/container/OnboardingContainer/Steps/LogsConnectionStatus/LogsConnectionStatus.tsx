@@ -49,7 +49,6 @@ export default function LogsConnectionStatus(): JSX.Element {
 						id: '------false',
 						dataType: DataTypes.EMPTY,
 						key: '',
-						isColumn: false,
 						type: '',
 					},
 					filters: {

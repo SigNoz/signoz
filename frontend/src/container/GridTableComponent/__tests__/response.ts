@@ -4,16 +4,19 @@ export const tableDataMultipleQueriesSuccessResponse = {
 			name: 'service_name',
 			queryName: '',
 			isValueColumn: false,
+			id: 'service_name',
 		},
 		{
 			name: 'A',
 			queryName: 'A',
 			isValueColumn: true,
+			id: 'A',
 		},
 		{
 			name: 'B',
 			queryName: 'B',
 			isValueColumn: true,
+			id: 'B',
 		},
 	],
 	rows: [
@@ -102,8 +105,6 @@ export const widgetQueryWithLegend = {
 				aggregateAttribute: {
 					dataType: 'float64',
 					id: 'signoz_latency--float64--ExponentialHistogram--true',
-					isColumn: true,
-					isJSON: false,
 					key: 'signoz_latency',
 					type: 'ExponentialHistogram',
 				},
@@ -123,8 +124,6 @@ export const widgetQueryWithLegend = {
 				groupBy: [
 					{
 						dataType: 'string',
-						isColumn: false,
-						isJSON: false,
 						key: 'service_name',
 						type: 'tag',
 						id: 'service_name--string--tag--false',
@@ -140,8 +139,6 @@ export const widgetQueryWithLegend = {
 				aggregateAttribute: {
 					dataType: 'float64',
 					id: 'system_disk_operations--float64--Sum--true',
-					isColumn: true,
-					isJSON: false,
 					key: 'system_disk_operations',
 					type: 'Sum',
 				},

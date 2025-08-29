@@ -3,6 +3,7 @@ package rules
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math"
 	"net/url"
 	"sync"
@@ -66,7 +67,7 @@ type BaseRule struct {
 
 	reader interfaces.Reader
 
-	logger *zap.Logger
+	logger *slog.Logger
 
 	// sendUnmatched sends observed metric values
 	// even if they dont match the rule condition. this is
@@ -106,7 +107,7 @@ func WithEvalDelay(dur time.Duration) RuleOption {
 	}
 }
 
-func WithLogger(logger *zap.Logger) RuleOption {
+func WithLogger(logger *slog.Logger) RuleOption {
 	return func(r *BaseRule) {
 		r.logger = logger
 	}
@@ -333,7 +334,7 @@ func (r *BaseRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay tim
 		Limit(1).
 		Scan(ctx, &orgID)
 	if err != nil {
-		r.logger.Error("failed to get org ids", zap.Error(err))
+		r.logger.ErrorContext(ctx, "failed to get org ids", "error", err)
 		return
 	}
 

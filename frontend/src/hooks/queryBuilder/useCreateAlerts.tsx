@@ -1,14 +1,14 @@
 import logEvent from 'api/common/logEvent';
-import { getQueryRangeFormat } from 'api/dashboard/queryRangeFormat';
+import { getSubstituteVars } from 'api/dashboard/substitute_vars';
+import { prepareQueryRangePayloadV5 } from 'api/v5/v5';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { useNotifications } from 'hooks/useNotifications';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import { prepareQueryRangePayload } from 'lib/dashboard/prepareQueryRangePayload';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -25,7 +25,7 @@ const useCreateAlerts = (
 	caller?: string,
 	thresholds?: ThresholdProps[],
 ): VoidFunction => {
-	const queryRangeMutation = useMutation(getQueryRangeFormat);
+	const queryRangeMutation = useMutation(getSubstituteVars);
 
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -57,27 +57,22 @@ const useCreateAlerts = (
 				queryType: widget.query.queryType,
 			});
 		}
-		const { queryPayload } = prepareQueryRangePayload({
+		const { queryPayload } = prepareQueryRangePayloadV5({
 			query: widget.query,
 			globalSelectedInterval,
 			graphType: getGraphType(widget.panelTypes),
 			selectedTime: widget.timePreferance,
 			variables: getDashboardVariables(selectedDashboard?.data.variables),
+			originalGraphType: widget.panelTypes,
 		});
 		queryRangeMutation.mutate(queryPayload, {
 			onSuccess: (data) => {
-				const updatedQuery = mapQueryDataFromApi(
-					data.compositeQuery,
-					widget?.query,
-				);
-
+				const updatedQuery = mapQueryDataFromApi(data.data.compositeQuery);
 				const url = `${ROUTES.ALERTS_NEW}?${
 					QueryParams.compositeQuery
 				}=${encodeURIComponent(JSON.stringify(updatedQuery))}&${
 					QueryParams.panelTypes
-				}=${widget.panelTypes}&version=${
-					selectedDashboard?.data.version || DEFAULT_ENTITY_VERSION
-				}`;
+				}=${widget.panelTypes}&version=${ENTITY_VERSION_V5}`;
 
 				history.push(url, {
 					thresholds,

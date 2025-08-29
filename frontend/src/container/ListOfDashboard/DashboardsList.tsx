@@ -25,7 +25,7 @@ import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/v1/dashboards/create';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import { sanitizeDashboardData } from 'container/NewDashboard/DashboardDescription';
@@ -57,6 +57,7 @@ import {
 	Radius,
 	RotateCw,
 	Search,
+	SquareArrowOutUpRight,
 } from 'lucide-react';
 // #TODO: lucide will be removing brand icons like Github in future, in that case we can use simple icons
 // see more: https://github.com/lucide-icons/lucide/issues/94
@@ -293,7 +294,7 @@ function DashboardsList(): JSX.Element {
 					ns: 'dashboard',
 				}),
 				uploadedGrafana: false,
-				version: ENTITY_VERSION_V4,
+				version: ENTITY_VERSION_V5,
 			});
 
 			safeNavigate(
@@ -440,13 +441,7 @@ function DashboardsList(): JSX.Element {
 									placement="left"
 									overlayClassName="title-toolip"
 								>
-									<div
-										className="title-link"
-										onClick={(e): void => {
-											e.stopPropagation();
-											safeNavigate(getLink());
-										}}
-									>
+									<div className="title-link" onClick={onClickHandler}>
 										<img
 											src={dashboard?.image || Base64Icons[0]}
 											alt="dashboard-image"
@@ -493,6 +488,18 @@ function DashboardsList(): JSX.Element {
 													onClick={onClickHandler}
 												>
 													View
+												</Button>
+												<Button
+													type="text"
+													className="action-btn"
+													icon={<SquareArrowOutUpRight size={12} />}
+													onClick={(e): void => {
+														e.stopPropagation();
+														e.preventDefault();
+														window.open(getLink(), '_blank');
+													}}
+												>
+													Open in New Tab
 												</Button>
 												<Button
 													type="text"
@@ -606,7 +613,7 @@ function DashboardsList(): JSX.Element {
 			{
 				label: (
 					<a
-						href="https://github.com/SigNoz/dashboards"
+						href="https://signoz.io/docs/dashboards/dashboard-templates/overview/"
 						target="_blank"
 						rel="noopener noreferrer"
 					>

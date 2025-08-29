@@ -14,6 +14,11 @@
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link rel="preconnect" href="https://cdn.vercel.com" crossorigin />
 
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+			rel="stylesheet"
+		/>
+
 		<title data-react-helmet="true">
 			Open source Observability platform | SigNoz
 		</title>
@@ -57,7 +62,6 @@
 		<meta name="robots" content="noindex" />
 		<link data-react-helmet="true" rel="shortcut icon" href="/favicon.ico" />
 
-		<link rel="stylesheet" href="/css/uPlot.min.css" />
 		<% if (htmlWebpackPlugin.options.templateParameters.preloadFonts) { %> <%
 		htmlWebpackPlugin.options.templateParameters.preloadFonts.forEach(function(font)
 		{ %>
@@ -76,33 +80,36 @@
 
 		<script>
 			const PYLON_APP_ID = '<%= htmlWebpackPlugin.options.PYLON_APP_ID %>';
-			(function() {
+			(function () {
 				var e = window;
 				var t = document;
-				var n = function() {
+				var n = function () {
 					n.e(arguments);
 				};
 				n.q = [];
-				n.e = function(e) {
+				n.e = function (e) {
 					n.q.push(e);
 				};
 				e.Pylon = n;
-				var r = function() {
-					var e = t.createElement("script");
-					e.setAttribute("type", "text/javascript");
-					e.setAttribute("async", "true");
-					e.setAttribute("src", "https://widget.usepylon.com/widget/" + PYLON_APP_ID);
-					var n = t.getElementsByTagName("script")[0];
+				var r = function () {
+					var e = t.createElement('script');
+					e.setAttribute('type', 'text/javascript');
+					e.setAttribute('async', 'true');
+					e.setAttribute(
+						'src',
+						'https://widget.usepylon.com/widget/' + PYLON_APP_ID,
+					);
+					var n = t.getElementsByTagName('script')[0];
 					n.parentNode.insertBefore(e, n);
 				};
-				if (t.readyState === "complete") {
+				if (t.readyState === 'complete') {
 					r();
 				} else if (e.addEventListener) {
-					e.addEventListener("load", r, false);
+					e.addEventListener('load', r, false);
 				}
 			})();
 		</script>
-        <script type="text/javascript">
+		<script type="text/javascript">
 			window.AppcuesSettings = { enableURLDetection: true };
 		</script>
 		<script>
@@ -114,7 +121,7 @@
 				var s = d.getElementsByTagName(t)[0];
 				s.parentNode.insertBefore(a, s);
 			})(document, 'script');
-
 		</script>
+		<link rel="stylesheet" href="/css/uPlot.min.css" />
 	</body>
 </html>

@@ -3,11 +3,21 @@
 
 @import './periscope.scss';
 
+/* Import fonts from CDN */
+@import url('https://fonts.googleapis.com/css2?family=Work+Sans&wght@500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono&wght@100;200;300;400;500;600;700;800;900&display=swap');
+
 #root,
 html,
 body {
 	height: 100%;
 	overflow: hidden;
+	font-family: 'Inter', sans-serif;
+	font-optical-sizing: auto;
+	font-weight: 400;
+	font-style: normal;
 }
 
 body {
@@ -690,15 +700,6 @@ notifications	-  2050
 
 */
 
-/* Import fonts from CDN */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@500&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100;200;300;400;500;600;700;800;900&display=swap');
-
-/* Remove the old Geist Mono font-face declarations since we're using Google Fonts */
-
 @keyframes spin {
 	from {
 		transform: rotate(0deg);
@@ -753,4 +754,8 @@ notifications	-  2050
 
 .service-map-container {
 	padding: 0px 8px;
+}
+
+.cursor-pointer {
+	cursor: pointer;
 }

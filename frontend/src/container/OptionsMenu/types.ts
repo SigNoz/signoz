@@ -1,6 +1,6 @@
 import { InputNumberProps, RadioProps, SelectProps } from 'antd';
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { LogViewMode } from 'container/LogsTable';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 export enum FontSize {
 	SMALL = 'small',
@@ -13,7 +13,7 @@ interface FontSizeProps {
 	onChange: (val: FontSize) => void;
 }
 export interface OptionsQuery {
-	selectColumns: BaseAutocompleteData[];
+	selectColumns: TelemetryFieldKey[];
 	maxLines: number;
 	format: LogViewMode;
 	fontSize: FontSize;
@@ -36,7 +36,7 @@ export type OptionsMenuConfig = {
 		'options' | 'onSelect' | 'onFocus' | 'onSearch' | 'onBlur'
 	> & {
 		isFetching: boolean;
-		value: BaseAutocompleteData[];
+		value: TelemetryFieldKey[];
 		onRemove: (key: string) => void;
 	};
 };

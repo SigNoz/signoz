@@ -15,6 +15,7 @@ import {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/config';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import {
@@ -113,6 +114,7 @@ function EntityMetrics<T>({
 	const isDarkMode = useIsDarkMode();
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
+	const { currentQuery } = useQueryBuilder();
 
 	const chartData = useMemo(
 		() =>
@@ -181,6 +183,7 @@ function EntityMetrics<T>({
 					minTimeScale: graphTimeIntervals[idx].start,
 					maxTimeScale: graphTimeIntervals[idx].end,
 					onDragSelect: (start, end) => onDragSelect(start, end, idx),
+					query: currentQuery,
 				});
 			}),
 		[
@@ -190,6 +193,7 @@ function EntityMetrics<T>({
 			entityWidgetInfo,
 			graphTimeIntervals,
 			onDragSelect,
+			currentQuery,
 		],
 	);
 

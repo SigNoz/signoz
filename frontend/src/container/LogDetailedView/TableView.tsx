@@ -47,11 +47,7 @@ interface TableViewProps {
 	selectedOptions: OptionsQuery;
 	isListViewPanel?: boolean;
 	listViewPanelSelectedFields?: IField[] | null;
-	onGroupByAttribute?: (
-		fieldKey: string,
-		isJSON?: boolean,
-		dataType?: DataTypes,
-	) => Promise<void>;
+	onGroupByAttribute?: (fieldKey: string, dataType?: DataTypes) => Promise<void>;
 }
 
 type Props = TableViewProps &
@@ -88,8 +84,9 @@ function TableView({
 				}
 			});
 		} else {
+			// eslint-disable-next-line sonarjs/no-identical-functions
 			selectedOptions.selectColumns.forEach((val) => {
-				const path = findKeyPath(logData, val.key, '');
+				const path = findKeyPath(logData, val.name, '');
 				if (path) {
 					pinnedAttributes[path] = true;
 				}
@@ -122,7 +119,6 @@ function TableView({
 				fieldKey,
 				validatedFieldValue,
 				operator,
-				undefined,
 				dataType as DataTypes,
 				fieldType,
 			);

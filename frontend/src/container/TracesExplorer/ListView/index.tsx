@@ -1,6 +1,10 @@
+import './ListView.styles.scss';
+
 import logEvent from 'api/common/logEvent';
+import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ResizeTable } from 'components/ResizeTable';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -18,29 +22,49 @@ import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { cloneDeep } from 'lodash-es';
+import { ArrowUp10, Minus } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import { memo, useCallback, useEffect, useMemo } from 'react';
+import {
+	Dispatch,
+	memo,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { Warning } from 'types/api';
+import APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { TracesLoading } from '../TraceLoading/TraceLoading';
 import { defaultSelectedColumns, PER_PAGE_OPTIONS } from './configs';
-import { Container, ErrorText, tableStyles } from './styles';
+import { Container, tableStyles } from './styles';
 import { getListColumns, transformDataWithDate } from './utils';
 
 interface ListViewProps {
 	isFilterApplied: boolean;
+	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
+	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
 }
 
-function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
+function ListView({
+	isFilterApplied,
+	setWarning,
+	setIsLoadingQueries,
+}: ListViewProps): JSX.Element {
 	const {
 		stagedQuery,
 		panelType: panelTypeFromQueryBuilder,
 	} = useQueryBuilder();
 
 	const panelType = panelTypeFromQueryBuilder || PANEL_TYPES.LIST;
+
+	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
 
 	const {
 		selectedTime: globalSelectedTime,
@@ -68,6 +92,23 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 	const paginationConfig =
 		paginationQueryData ?? getDefaultPaginationConfig(PER_PAGE_OPTIONS);
 
+	const requestQuery = useMemo(() => {
+		const query = stagedQuery
+			? cloneDeep(stagedQuery)
+			: cloneDeep(initialQueriesMap.traces);
+
+		if (query.builder.queryData[0]) {
+			query.builder.queryData[0].orderBy = [
+				{
+					columnName: orderBy.split(':')[0],
+					order: orderBy.split(':')[1] as 'asc' | 'desc',
+				},
+			];
+		}
+
+		return query;
+	}, [stagedQuery, orderBy]);
+
 	const queryKey = useMemo(
 		() => [
 			REACT_QUERY_KEY.GET_QUERY_RANGE,
@@ -78,6 +119,7 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 			panelType,
 			paginationConfig,
 			options?.selectColumns,
+			orderBy,
 		],
 		[
 			stagedQuery,
@@ -87,12 +129,13 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 			options?.selectColumns,
 			maxTime,
 			minTime,
+			orderBy,
 		],
 	);
 
-	const { data, isFetching, isLoading, isError } = useGetQueryRange(
+	const { data, isFetching, isLoading, isError, error } = useGetQueryRange(
 		{
-			query: stagedQuery || initialQueriesMap.traces,
+			query: requestQuery,
 			graphType: panelType,
 			selectedTime: 'GLOBAL_TIME' as const,
 			globalSelectedInterval: globalSelectedTime as CustomTimeType,
@@ -104,7 +147,8 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 				selectColumns: options?.selectColumns,
 			},
 		},
-		ENTITY_VERSION_V4,
+		// ENTITY_VERSION_V4,
+		ENTITY_VERSION_V5,
 		{
 			queryKey,
 			enabled:
@@ -115,6 +159,21 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 				!!options?.selectColumns?.length,
 		},
 	);
+
+	useEffect(() => {
+		if (data?.payload) {
+			setWarning(data?.warning);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data?.payload, data?.warning]);
+
+	useEffect(() => {
+		if (isLoading || isFetching) {
+			setIsLoadingQueries(true);
+		} else {
+			setIsLoadingQueries(false);
+		}
+	}, [isLoading, isFetching, setIsLoadingQueries]);
 
 	const dataLength =
 		data?.payload?.data?.newResult?.data?.result[0]?.list?.length;
@@ -146,6 +205,10 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 		[columns, onDragColumns],
 	);
 
+	const handleOrderChange = useCallback((value: string) => {
+		setOrderBy(value);
+	}, []);
+
 	const isDataAbsent =
 		!isLoading &&
 		!isFetching &&
@@ -167,15 +230,29 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 	return (
 		<Container>
 			{transformedQueryTableData.length !== 0 && (
-				<TraceExplorerControls
-					isLoading={isFetching}
-					totalCount={totalCount}
-					config={config}
-					perPageOptions={PER_PAGE_OPTIONS}
-				/>
+				<div className="trace-explorer-controls">
+					<div className="order-by-container">
+						<div className="order-by-label">
+							Order by <Minus size={14} /> <ArrowUp10 size={14} />
+						</div>
+
+						<ListViewOrderBy
+							value={orderBy}
+							onChange={handleOrderChange}
+							dataSource={DataSource.TRACES}
+						/>
+					</div>
+
+					<TraceExplorerControls
+						isLoading={isFetching}
+						totalCount={totalCount}
+						config={config}
+						perPageOptions={PER_PAGE_OPTIONS}
+					/>
+				</div>
 			)}
 
-			{isError && <ErrorText>{data?.error || 'Something went wrong'}</ErrorText>}
+			{isError && error && <ErrorInPlace error={error as APIError} />}
 
 			{(isLoading || (isFetching && transformedQueryTableData.length === 0)) && (
 				<TracesLoading />

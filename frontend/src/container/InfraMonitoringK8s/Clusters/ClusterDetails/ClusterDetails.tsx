@@ -122,8 +122,6 @@ function ClusterDetails({
 						key: QUERY_KEYS.K8S_CLUSTER_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 						id: 'k8s_cluster_name--string--resource--false',
 					},
 					op: '=',
@@ -150,8 +148,6 @@ function ClusterDetails({
 						key: QUERY_KEYS.K8S_OBJECT_KIND,
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 						id: 'k8s.object.kind--string--resource--false',
 					},
 					op: '=',
@@ -163,8 +159,6 @@ function ClusterDetails({
 						key: QUERY_KEYS.K8S_OBJECT_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 						id: 'k8s.object.name--string--resource--false',
 					},
 					op: '=',
@@ -263,16 +257,18 @@ function ClusterDetails({
 	const handleChangeLogFilters = useCallback(
 		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogsAndTracesFilters((prevFilters) => {
-				const primaryFilters = prevFilters.items.filter((item) =>
+				const primaryFilters = prevFilters?.items?.filter((item) =>
 					[QUERY_KEYS.K8S_CLUSTER_NAME].includes(item.key?.key ?? ''),
 				);
-				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
-				const newFilters = value.items.filter(
+				const paginationFilter = value?.items?.find(
+					(item) => item.key?.key === 'id',
+				);
+				const newFilters = value?.items?.filter(
 					(item) =>
 						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_CLUSTER_NAME,
 				);
 
-				if (newFilters.length > 0) {
+				if (newFilters && newFilters?.length > 0) {
 					logEvent(InfraMonitoringEvents.FilterApplied, {
 						entity: InfraMonitoringEvents.K8sEntity,
 						page: InfraMonitoringEvents.DetailedPage,
@@ -285,8 +281,8 @@ function ClusterDetails({
 					op: 'AND',
 					items: filterDuplicateFilters(
 						[
-							...primaryFilters,
-							...newFilters,
+							...(primaryFilters || []),
+							...(newFilters || []),
 							...(paginationFilter ? [paginationFilter] : []),
 						].filter((item): item is TagFilterItem => item !== undefined),
 					),
@@ -310,11 +306,11 @@ function ClusterDetails({
 	const handleChangeTracesFilters = useCallback(
 		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogsAndTracesFilters((prevFilters) => {
-				const primaryFilters = prevFilters.items.filter((item) =>
+				const primaryFilters = prevFilters?.items?.filter((item) =>
 					[QUERY_KEYS.K8S_CLUSTER_NAME].includes(item.key?.key ?? ''),
 				);
 
-				if (value.items.length > 0) {
+				if (value?.items && value?.items?.length > 0) {
 					logEvent(InfraMonitoringEvents.FilterApplied, {
 						entity: InfraMonitoringEvents.K8sEntity,
 						page: InfraMonitoringEvents.DetailedPage,
@@ -327,10 +323,10 @@ function ClusterDetails({
 					op: 'AND',
 					items: filterDuplicateFilters(
 						[
-							...primaryFilters,
-							...value.items.filter(
+							...(primaryFilters || []),
+							...(value?.items?.filter(
 								(item) => item.key?.key !== QUERY_KEYS.K8S_CLUSTER_NAME,
-							),
+							) || []),
 						].filter((item): item is TagFilterItem => item !== undefined),
 					),
 				};
@@ -353,14 +349,14 @@ function ClusterDetails({
 	const handleChangeEventsFilters = useCallback(
 		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setEventsFilters((prevFilters) => {
-				const clusterKindFilter = prevFilters.items.find(
+				const clusterKindFilter = prevFilters?.items?.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_KIND,
 				);
-				const clusterNameFilter = prevFilters.items.find(
+				const clusterNameFilter = prevFilters?.items?.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				if (value.items.length > 0) {
+				if (value?.items && value?.items?.length > 0) {
 					logEvent(InfraMonitoringEvents.FilterApplied, {
 						entity: InfraMonitoringEvents.K8sEntity,
 						page: InfraMonitoringEvents.DetailedPage,
@@ -375,11 +371,11 @@ function ClusterDetails({
 						[
 							clusterKindFilter,
 							clusterNameFilter,
-							...value.items.filter(
+							...(value?.items?.filter(
 								(item) =>
 									item.key?.key !== QUERY_KEYS.K8S_OBJECT_KIND &&
 									item.key?.key !== QUERY_KEYS.K8S_OBJECT_NAME,
-							),
+							) || []),
 						].filter((item): item is TagFilterItem => item !== undefined),
 					),
 				};
@@ -418,7 +414,9 @@ function ClusterDetails({
 		if (selectedView === VIEW_TYPES.LOGS) {
 			const filtersWithoutPagination = {
 				...logsAndTracesFilters,
-				items: logsAndTracesFilters.items.filter((item) => item.key?.key !== 'id'),
+				items:
+					logsAndTracesFilters?.items?.filter((item) => item.key?.key !== 'id') ||
+					[],
 			};
 
 			const compositeQuery = {
@@ -516,21 +514,12 @@ function ClusterDetails({
 								>
 									Cluster Name
 								</Typography.Text>
-								<Typography.Text
-									type="secondary"
-									className="entity-details-metadata-label"
-								>
-									Cluster Name
-								</Typography.Text>
 							</div>
 							<div className="values-row">
 								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={cluster.meta.k8s_cluster_name}>
 										{cluster.meta.k8s_cluster_name}
 									</Tooltip>
-								</Typography.Text>
-								<Typography.Text className="entity-details-metadata-value">
-									<Tooltip title="Cluster name">{cluster.meta.k8s_cluster_name}</Tooltip>
 								</Typography.Text>
 							</div>
 						</div>

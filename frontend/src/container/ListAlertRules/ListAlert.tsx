@@ -105,7 +105,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const onEditHandler = (record: GettableAlert) => (): void => {
+	const onEditHandler = (record: GettableAlert, openInNewTab: boolean): void => {
 		const compositeQuery = mapQueryDataFromApi(record.condition.compositeQuery);
 		params.set(
 			QueryParams.compositeQuery,
@@ -117,7 +117,12 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		params.set(QueryParams.ruleId, record.id.toString());
 
 		setEditLoader(false);
-		history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
+
+		if (openInNewTab) {
+			window.open(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`, '_blank');
+		} else {
+			history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
+		}
 	};
 
 	const onCloneHandler = (
@@ -250,9 +255,15 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				}
 				return 0;
 			},
-			render: (value, record): JSX.Element => (
-				<Typography.Link onClick={onEditHandler(record)}>{value}</Typography.Link>
-			),
+			render: (value, record): JSX.Element => {
+				const onClickHandler = (e: React.MouseEvent<HTMLElement>): void => {
+					e.stopPropagation();
+					e.preventDefault();
+					onEditHandler(record, e.metaKey || e.ctrlKey);
+				};
+
+				return <Typography.Link onClick={onClickHandler}>{value}</Typography.Link>;
+			},
 			sortOrder: sortedInfo.columnKey === 'name' ? sortedInfo.order : null,
 		},
 		{
@@ -261,12 +272,11 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			width: 80,
 			key: 'severity',
 			sorter: (a, b): number =>
-				(a.labels ? a.labels.severity.length : 0) -
-				(b.labels ? b.labels.severity.length : 0),
+				(a?.labels?.severity?.length || 0) - (b?.labels?.severity?.length || 0),
 			render: (value): JSX.Element => {
-				const objectKeys = Object.keys(value);
+				const objectKeys = value ? Object.keys(value) : [];
 				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';
-				const severityValue = value[withSeverityKey];
+				const severityValue = withSeverityKey ? value[withSeverityKey] : '-';
 
 				return <Typography>{severityValue}</Typography>;
 			},
@@ -279,7 +289,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			align: 'center',
 			width: 100,
 			render: (value): JSX.Element => {
-				const objectKeys = Object.keys(value);
+				const objectKeys = value ? Object.keys(value) : [];
 				const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
 
 				if (withOutSeverityKeys.length === 0) {
@@ -311,11 +321,19 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 						/>,
 						<ColumnButton
 							key="2"
-							onClick={onEditHandler(record)}
+							onClick={(): void => onEditHandler(record, false)}
 							type="link"
 							loading={editLoader}
 						>
 							Edit
+						</ColumnButton>,
+						<ColumnButton
+							key="3"
+							onClick={(): void => onEditHandler(record, true)}
+							type="link"
+							loading={editLoader}
+						>
+							Edit in New Tab
 						</ColumnButton>,
 						<ColumnButton
 							key="3"

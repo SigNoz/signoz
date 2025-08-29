@@ -121,8 +121,6 @@ function StatefulSetDetails({
 						key: QUERY_KEYS.K8S_STATEFUL_SET_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 						id: 'k8s_statefulset_name--string--resource--false',
 					},
 					op: '=',
@@ -134,8 +132,6 @@ function StatefulSetDetails({
 						key: QUERY_KEYS.K8S_NAMESPACE_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 						id: 'k8s_namespace_name--string--resource--false',
 					},
 					op: '=',
@@ -166,8 +162,6 @@ function StatefulSetDetails({
 						key: QUERY_KEYS.K8S_OBJECT_KIND,
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 						id: 'k8s.object.kind--string--resource--false',
 					},
 					op: '=',
@@ -179,8 +173,6 @@ function StatefulSetDetails({
 						key: QUERY_KEYS.K8S_OBJECT_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 						id: 'k8s.object.name--string--resource--false',
 					},
 					op: '=',
@@ -279,19 +271,21 @@ function StatefulSetDetails({
 	const handleChangeLogFilters = useCallback(
 		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogAndTracesFilters((prevFilters) => {
-				const primaryFilters = prevFilters.items.filter((item) =>
+				const primaryFilters = prevFilters?.items?.filter((item) =>
 					[QUERY_KEYS.K8S_STATEFUL_SET_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
 						item.key?.key ?? '',
 					),
 				);
-				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
-				const newFilters = value.items.filter(
+				const paginationFilter = value?.items?.find(
+					(item) => item.key?.key === 'id',
+				);
+				const newFilters = value?.items?.filter(
 					(item) =>
 						item.key?.key !== 'id' &&
 						item.key?.key !== QUERY_KEYS.K8S_STATEFUL_SET_NAME,
 				);
 
-				if (newFilters.length > 0) {
+				if (newFilters && newFilters?.length > 0) {
 					logEvent(InfraMonitoringEvents.FilterApplied, {
 						entity: InfraMonitoringEvents.K8sEntity,
 						page: InfraMonitoringEvents.DetailedPage,
@@ -303,8 +297,8 @@ function StatefulSetDetails({
 				const updatedFilters = {
 					op: 'AND',
 					items: [
-						...primaryFilters,
-						...newFilters,
+						...(primaryFilters || []),
+						...(newFilters || []),
 						...(paginationFilter ? [paginationFilter] : []),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
@@ -327,13 +321,13 @@ function StatefulSetDetails({
 	const handleChangeTracesFilters = useCallback(
 		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogAndTracesFilters((prevFilters) => {
-				const primaryFilters = prevFilters.items.filter((item) =>
+				const primaryFilters = prevFilters?.items?.filter((item) =>
 					[QUERY_KEYS.K8S_STATEFUL_SET_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
 						item.key?.key ?? '',
 					),
 				);
 
-				if (value.items.length > 0) {
+				if (value?.items && value?.items?.length > 0) {
 					logEvent(InfraMonitoringEvents.FilterApplied, {
 						entity: InfraMonitoringEvents.K8sEntity,
 						page: InfraMonitoringEvents.DetailedPage,
@@ -345,10 +339,10 @@ function StatefulSetDetails({
 				const updatedFilters = {
 					op: 'AND',
 					items: [
-						...primaryFilters,
-						...value.items.filter(
+						...(primaryFilters || []),
+						...(value?.items?.filter(
 							(item) => item.key?.key !== QUERY_KEYS.K8S_STATEFUL_SET_NAME,
-						),
+						) || []),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
 
@@ -370,14 +364,14 @@ function StatefulSetDetails({
 	const handleChangeEventsFilters = useCallback(
 		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setEventsFilters((prevFilters) => {
-				const statefulSetKindFilter = prevFilters.items.find(
+				const statefulSetKindFilter = prevFilters?.items?.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_KIND,
 				);
-				const statefulSetNameFilter = prevFilters.items.find(
+				const statefulSetNameFilter = prevFilters?.items?.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				if (value.items.length > 0) {
+				if (value?.items && value?.items?.length > 0) {
 					logEvent(InfraMonitoringEvents.FilterApplied, {
 						entity: InfraMonitoringEvents.K8sEntity,
 						page: InfraMonitoringEvents.DetailedPage,
@@ -391,11 +385,11 @@ function StatefulSetDetails({
 					items: [
 						statefulSetKindFilter,
 						statefulSetNameFilter,
-						...value.items.filter(
+						...(value?.items?.filter(
 							(item) =>
 								item.key?.key !== QUERY_KEYS.K8S_OBJECT_KIND &&
 								item.key?.key !== QUERY_KEYS.K8S_OBJECT_NAME,
-						),
+						) || []),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
 
@@ -433,7 +427,8 @@ function StatefulSetDetails({
 		if (selectedView === VIEW_TYPES.LOGS) {
 			const filtersWithoutPagination = {
 				...logAndTracesFilters,
-				items: logAndTracesFilters.items.filter((item) => item.key?.key !== 'id'),
+				items:
+					logAndTracesFilters?.items?.filter((item) => item.key?.key !== 'id') || [],
 			};
 
 			const compositeQuery = {

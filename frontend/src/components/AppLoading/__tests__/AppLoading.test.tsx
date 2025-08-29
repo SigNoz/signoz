@@ -1,13 +1,15 @@
 import { render, screen } from '@testing-library/react';
 
+import getLocal from '../../../api/browser/localstorage/get';
 import AppLoading from '../AppLoading';
 
-// Mock the localStorage API
-const mockGet = jest.fn();
-jest.mock('api/browser/localstorage/get', () => ({
+jest.mock('../../../api/browser/localstorage/get', () => ({
 	__esModule: true,
-	default: mockGet,
+	default: jest.fn(),
 }));
+
+// Access the mocked function
+const mockGet = (getLocal as unknown) as jest.Mock;
 
 describe('AppLoading', () => {
 	const SIGNOZ_TEXT = 'SigNoz';

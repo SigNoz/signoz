@@ -2,7 +2,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { Dispatch, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
-import { SuccessResponse } from 'types/api';
+import { SuccessResponse, Warning } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
@@ -36,7 +36,9 @@ export interface WidgetGraphProps {
 
 export type WidgetGraphContainerProps = {
 	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
+		SuccessResponse<MetricRangePayloadProps, unknown> & {
+			warning?: Warning;
+		},
 		Error
 	>;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;

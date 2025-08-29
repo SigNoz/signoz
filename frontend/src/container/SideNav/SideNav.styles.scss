@@ -830,7 +830,7 @@
 
 	& span {
 		display: block;
-		max-width: 170px;
+		max-width: 286px;
 		white-space: nowrap; /* Prevents line breaks */
 		overflow: hidden; /* Hides overflowing content */
 		text-overflow: ellipsis;
@@ -841,7 +841,7 @@
 	.ant-dropdown-menu {
 		margin-left: 8px !important;
 		padding: 0px !important;
-		width: 216px !important;
+		width: 360px !important;
 		border-radius: 3px !important;
 
 		// Glass blur

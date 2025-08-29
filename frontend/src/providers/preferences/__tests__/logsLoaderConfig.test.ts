@@ -62,7 +62,6 @@ describe('logsLoaderConfig', () => {
 				key: 'test-column',
 				type: 'tag',
 				dataType: DataTypes.String,
-				isColumn: true,
 			},
 		];
 
@@ -106,7 +105,6 @@ describe('logsLoaderConfig', () => {
 				key: 'url-column',
 				type: 'tag',
 				dataType: DataTypes.String,
-				isColumn: true,
 			},
 		];
 
@@ -150,7 +148,7 @@ describe('logsLoaderConfig', () => {
 		const result = await logsLoaderConfig.default();
 
 		expect(result).toEqual({
-			columns: defaultLogsSelectedColumns as BaseAutocompleteData[],
+			columns: defaultLogsSelectedColumns,
 			formatting: {
 				maxLines: 2,
 				format: 'table' as LogViewMode,

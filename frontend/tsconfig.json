@@ -31,7 +31,7 @@
 		],
 		"types": ["node", "jest"]
 	},
-	"exclude": ["node_modules"],
+	"exclude": ["node_modules", "src/parser/*.ts"],
 	"include": [
 		"./src",
 		"./src/**/*.ts",
@@ -48,6 +48,8 @@
 		"./webpack.config.prod.js",
 		"./jest.setup.ts",
 		"./tests/**.ts",
-		"./**/*.d.ts"
+		"./**/*.d.ts",
+		"./playwright.config.ts",
+		"./e2e/**/*.ts"
 	]
 }

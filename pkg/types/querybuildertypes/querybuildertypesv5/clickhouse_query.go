@@ -7,4 +7,11 @@ type ClickHouseQuery struct {
 	Query string `json:"query"`
 	// disabled if true, the query will not be executed
 	Disabled bool `json:"disabled"`
+
+	Legend string `json:"legend,omitempty"`
+}
+
+// Copy creates a deep copy of the ClickHouseQuery
+func (q ClickHouseQuery) Copy() ClickHouseQuery {
+	return q
 }

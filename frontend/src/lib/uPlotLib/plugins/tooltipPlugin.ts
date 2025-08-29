@@ -3,9 +3,11 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { themeColors } from 'constants/theme';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
 import { get } from 'lodash-es';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { placement } from '../placement';
 import { generateColor } from '../utils/generateColor';
@@ -49,6 +51,7 @@ const generateTooltipContent = (
 	stackBarChart?: boolean,
 	timezone?: string,
 	colorMapping?: Record<string, string>,
+	query?: Query,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
@@ -92,9 +95,16 @@ const generateTooltipContent = (
 				const value = getTooltipBaseValue(data, index, idx, stackBarChart);
 
 				const dataIngested = quantity[idx];
-				const label = isMergedSeries
-					? ''
-					: getLabelName(metric, queryName || '', legend || '');
+				const baseLabelName = getLabelName(metric, queryName || '', legend || '');
+
+				let label = '';
+				if (isMergedSeries) {
+					label = '';
+				} else if (query) {
+					label = getLegend(seriesList[index - 1], query, baseLabelName);
+				} else {
+					label = baseLabelName;
+				}
 
 				let color =
 					colorMapping?.[label] ||
@@ -234,6 +244,7 @@ type ToolTipPluginProps = {
 	customTooltipElement?: HTMLDivElement;
 	timezone?: string;
 	colorMapping?: Record<string, string>;
+	query?: Query;
 };
 
 const tooltipPlugin = ({
@@ -247,6 +258,7 @@ const tooltipPlugin = ({
 	customTooltipElement,
 	timezone,
 	colorMapping,
+	query,
 }: // eslint-disable-next-line sonarjs/cognitive-complexity
 ToolTipPluginProps): any => {
 	let over: HTMLElement;
@@ -315,6 +327,7 @@ ToolTipPluginProps): any => {
 							stackBarChart,
 							timezone,
 							colorMapping,
+							query,
 						);
 						if (customTooltipElement) {
 							content.appendChild(customTooltipElement);

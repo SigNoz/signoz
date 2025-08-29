@@ -4,12 +4,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	pql "github.com/prometheus/prometheus/promql"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 func TestPromRuleShouldAlert(t *testing.T) {
@@ -653,12 +653,14 @@ func TestPromRuleShouldAlert(t *testing.T) {
 		},
 	}
 
+	logger := instrumentationtest.New().Logger()
+
 	for idx, c := range cases {
 		postableRule.RuleCondition.CompareOp = ruletypes.CompareOp(c.compareOp)
 		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 
-		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, zap.NewNop(), nil, nil)
+		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, nil, nil)
 		if err != nil {
 			assert.NoError(t, err)
 		}

@@ -36,8 +36,6 @@ function prepareQuery(filters: TagFilter, traceID: string): Query {
 									key: 'trace_id',
 									dataType: DataTypes.String,
 									type: '',
-									isColumn: true,
-									isJSON: false,
 									id: 'trace_id--string----true',
 								},
 								op: '=',
@@ -60,7 +58,9 @@ function Filters({
 	endTime: number;
 	traceID: string;
 }): JSX.Element {
-	const [filters, setFilters] = useState<TagFilter>(BASE_FILTER_QUERY.filters);
+	const [filters, setFilters] = useState<TagFilter>(
+		BASE_FILTER_QUERY.filters || { items: [], op: 'AND' },
+	);
 	const [noData, setNoData] = useState<boolean>(false);
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
 	const handleFilterChange = (value: TagFilter): void => {
@@ -104,8 +104,6 @@ function Filters({
 						key: 'name',
 						dataType: 'string',
 						type: 'tag',
-						isColumn: true,
-						isJSON: false,
 						id: 'name--string--tag--true',
 						isIndexed: false,
 					},

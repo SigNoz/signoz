@@ -12,6 +12,7 @@ import (
 func parseFieldKeyRequest(r *http.Request) (*telemetrytypes.FieldKeySelector, error) {
 	var req telemetrytypes.FieldKeySelector
 	var signal telemetrytypes.Signal
+	var source telemetrytypes.Source
 	var err error
 
 	signalStr := r.URL.Query().Get("signal")
@@ -19,6 +20,13 @@ func parseFieldKeyRequest(r *http.Request) (*telemetrytypes.FieldKeySelector, er
 		signal = telemetrytypes.Signal{String: valuer.NewString(signalStr)}
 	} else {
 		signal = telemetrytypes.SignalUnspecified
+	}
+
+	sourceStr := r.URL.Query().Get("source")
+	if sourceStr != "" {
+		source = telemetrytypes.Source{String: valuer.NewString(sourceStr)}
+	} else {
+		source = telemetrytypes.SourceUnspecified
 	}
 
 	if r.URL.Query().Get("limit") != "" {
@@ -76,6 +84,7 @@ func parseFieldKeyRequest(r *http.Request) (*telemetrytypes.FieldKeySelector, er
 		StartUnixMilli:    startUnixMilli,
 		EndUnixMilli:      endUnixMilli,
 		Signal:            signal,
+		Source:            source,
 		Name:              name,
 		FieldContext:      fieldContext,
 		FieldDataType:     fieldDataType,
