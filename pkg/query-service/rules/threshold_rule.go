@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
 	"log/slog"
 	"math"
 	"reflect"
@@ -487,7 +486,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 	for _, series := range queryResult.Series {
 		if r.Condition() != nil && r.Condition().RequireMinPoints {
 			if len(series.Points) < r.ruleCondition.RequiredNumPoints {
-				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", zap.String("ruleid", r.ID()), zap.Int("numPoints", len(series.Points)), zap.Int("requiredPoints", r.ruleCondition.RequiredNumPoints))
+				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
 				continue
 			}
 		}
@@ -566,7 +565,7 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 	for _, series := range queryResult.Series {
 		if r.Condition() != nil && r.Condition().RequireMinPoints {
 			if len(series.Points) < r.Condition().RequiredNumPoints {
-				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", zap.String("ruleid", r.ID()), zap.Int("numPoints", len(series.Points)), zap.Int("requiredPoints", r.ruleCondition.RequiredNumPoints))
+				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
 				continue
 			}
 		}
