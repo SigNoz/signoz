@@ -29,7 +29,6 @@ type traceQueryStatementBuilder struct {
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
 	telemetryStore            telemetrystore.TelemetryStore
-	containsOrClause          bool
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*traceQueryStatementBuilder)(nil)
@@ -73,11 +72,6 @@ func (b *traceQueryStatementBuilder) Build(
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
-	}
-
-	// override skipResourceFilter if the expression contains OR
-	if strings.Contains(query.Filter.Expression, " OR ") {
-		b.containsOrClause = true
 	}
 
 	b.adjustKeys(ctx, keys, query)
@@ -745,7 +739,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 			FieldMapper:        b.fm,
 			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
-			SkipResourceFilter: !b.containsOrClause,
+			SkipResourceFilter: true,
 			Variables:          variables,
 		})
 
@@ -785,9 +779,6 @@ func (b *traceQueryStatementBuilder) maybeAttachResourceFilter(
 	start, end uint64,
 	variables map[string]qbtypes.VariableItem,
 ) (cteSQL string, cteArgs []any, err error) {
-	if b.containsOrClause {
-		return "", nil, nil
-	}
 
 	stmt, err := b.buildResourceFilterCTE(ctx, query, start, end, variables)
 	if err != nil {
