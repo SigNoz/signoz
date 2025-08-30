@@ -484,9 +484,18 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 	}
 
 	for _, series := range queryResult.Series {
-		smpl, shouldAlert := r.ShouldAlert(*series)
-		if shouldAlert {
-			resultVector = append(resultVector, smpl)
+		if r.Condition() != nil && r.Condition().RequireMinPoints {
+			if len(series.Points) < r.ruleCondition.RequiredNumPoints {
+				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
+				continue
+			}
+		}
+		for _, threshold := range r.Thresholds() {
+			smpl, shouldAlert := threshold.ShouldAlert(*series)
+			if shouldAlert {
+				resultVector = append(resultVector, smpl)
+				break
+			}
 		}
 	}
 
@@ -554,9 +563,18 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 	}
 
 	for _, series := range queryResult.Series {
-		smpl, shouldAlert := r.ShouldAlert(*series)
-		if shouldAlert {
-			resultVector = append(resultVector, smpl)
+		if r.Condition() != nil && r.Condition().RequireMinPoints {
+			if len(series.Points) < r.Condition().RequiredNumPoints {
+				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
+				continue
+			}
+		}
+		for _, threshold := range r.Thresholds() {
+			smpl, shouldAlert := threshold.ShouldAlert(*series)
+			if shouldAlert {
+				resultVector = append(resultVector, smpl)
+				break
+			}
 		}
 	}
 
@@ -597,6 +615,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		}
 
 		value := valueFormatter.Format(smpl.V, r.Unit())
+		//todo(aniket): handle different threshold
 		threshold := valueFormatter.Format(r.targetVal(), r.Unit())
 		r.logger.DebugContext(ctx, "Alert template data for rule", "rule_name", r.Name(), "formatter", valueFormatter.Name(), "value", value, "threshold", threshold)
 

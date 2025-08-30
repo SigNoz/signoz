@@ -253,9 +253,18 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 	r.logger.InfoContext(ctx, "anomaly scores", "scores", string(scoresJSON))
 
 	for _, series := range queryResult.AnomalyScores {
-		smpl, shouldAlert := r.ShouldAlert(*series)
-		if shouldAlert {
-			resultVector = append(resultVector, smpl)
+		if r.Condition() != nil && r.Condition().RequireMinPoints {
+			if len(series.Points) < r.Condition().RequiredNumPoints {
+				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
+				continue
+			}
+		}
+		for _, threshold := range r.Thresholds() {
+			smpl, shouldAlert := threshold.ShouldAlert(*series)
+			if shouldAlert {
+				resultVector = append(resultVector, smpl)
+				break //return when one threshold is alerted
+			}
 		}
 	}
 	return resultVector, nil
@@ -296,9 +305,18 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 	r.logger.InfoContext(ctx, "anomaly scores", "scores", string(scoresJSON))
 
 	for _, series := range queryResult.AnomalyScores {
-		smpl, shouldAlert := r.ShouldAlert(*series)
-		if shouldAlert {
-			resultVector = append(resultVector, smpl)
+		if r.Condition().RequireMinPoints {
+			if len(series.Points) < r.Condition().RequiredNumPoints {
+				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
+				continue
+			}
+		}
+		for _, threshold := range r.Thresholds() {
+			smpl, shouldAlert := threshold.ShouldAlert(*series)
+			if shouldAlert {
+				resultVector = append(resultVector, smpl)
+				break
+			}
 		}
 	}
 	return resultVector, nil
