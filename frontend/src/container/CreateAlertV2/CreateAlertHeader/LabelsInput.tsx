@@ -1,0 +1,127 @@
+import { CloseOutlined } from '@ant-design/icons';
+import React, { useCallback, useState } from 'react';
+
+import { LabelInputState, LabelsInputProps } from './types';
+
+function LabelsInput({
+	labels,
+	onLabelsChange,
+}: LabelsInputProps): JSX.Element {
+	const [inputState, setInputState] = useState<LabelInputState>({
+		key: '',
+		value: '',
+		isKeyInput: true,
+	});
+	const [isAdding, setIsAdding] = useState(false);
+
+	const handleAddLabelsClick = useCallback(() => {
+		setIsAdding(true);
+		setInputState({ key: '', value: '', isKeyInput: true });
+	}, []);
+
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLInputElement>) => {
+			if (e.key === 'Enter') {
+				if (inputState.isKeyInput) {
+					if (inputState.key.trim()) {
+						setInputState((prev) => ({ ...prev, isKeyInput: false }));
+					}
+				} else if (inputState.value.trim()) {
+					// Add the label
+					const newLabels = {
+						...labels,
+						[inputState.key.trim()]: inputState.value.trim(),
+					};
+					onLabelsChange(newLabels);
+
+					// Reset and continue adding
+					setInputState({ key: '', value: '', isKeyInput: true });
+				}
+			} else if (e.key === 'Escape') {
+				// Cancel adding
+				setIsAdding(false);
+				setInputState({ key: '', value: '', isKeyInput: true });
+			}
+		},
+		[inputState, labels, onLabelsChange],
+	);
+
+	const handleInputChange = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			if (inputState.isKeyInput) {
+				setInputState((prev) => ({ ...prev, key: e.target.value }));
+			} else {
+				setInputState((prev) => ({ ...prev, value: e.target.value }));
+			}
+		},
+		[inputState.isKeyInput],
+	);
+
+	const handleRemoveLabel = useCallback(
+		(key: string) => {
+			const newLabels = { ...labels };
+			delete newLabels[key];
+			onLabelsChange(newLabels);
+		},
+		[labels, onLabelsChange],
+	);
+
+	const handleBlur = useCallback(() => {
+		if (!inputState.isKeyInput && inputState.key && !inputState.value) {
+			setInputState((prev) => ({ ...prev, isKeyInput: true, value: '' }));
+		}
+		if (!inputState.key && !inputState.value) {
+			setTimeout(() => {
+				setIsAdding(false);
+				setInputState({ key: '', value: '', isKeyInput: true });
+			}, 200);
+		}
+	}, [inputState.isKeyInput, inputState.key, inputState.value]);
+
+	return (
+		<div className="labels-input">
+			{Object.keys(labels).length > 0 && (
+				<div className="labels-input__existing-labels">
+					{Object.entries(labels).map(([key, value]) => (
+						<span key={key} className="labels-input__label-pill">
+							{key}: {value}
+							<button
+								type="button"
+								className="labels-input__remove-button"
+								onClick={(): void => handleRemoveLabel(key)}
+							>
+								<CloseOutlined />
+							</button>
+						</span>
+					))}
+				</div>
+			)}
+
+			{!isAdding ? (
+				<button
+					className="labels-input__add-button"
+					type="button"
+					onClick={handleAddLabelsClick}
+				>
+					+ Add labels
+				</button>
+			) : (
+				<div className="labels-input__input-container">
+					<input
+						type="text"
+						value={inputState.isKeyInput ? inputState.key : inputState.value}
+						onChange={handleInputChange}
+						onKeyDown={handleKeyDown}
+						onBlur={handleBlur}
+						className="labels-input__input"
+						placeholder={inputState.isKeyInput ? 'Enter key' : 'Enter value'}
+						// eslint-disable-next-line jsx-a11y/no-autofocus
+						autoFocus
+					/>
+				</div>
+			)}
+		</div>
+	);
+}
+
+export default LabelsInput;
