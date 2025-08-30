@@ -670,7 +670,7 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 	ruleResponse, err := aH.ruleManager.GetRule(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
 			return
 		}
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -1388,7 +1388,7 @@ func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
 			return
 		}
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -1423,7 +1423,7 @@ func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
 			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: err}, nil)
 			return
 		}
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("rule not found")}, nil)
 		return
 	}
 
@@ -1453,7 +1453,7 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: err}, nil)
 			return
 		}
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("rule not found")}, nil)
 		return
 	}
 
