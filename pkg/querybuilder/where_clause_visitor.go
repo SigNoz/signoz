@@ -95,13 +95,6 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWher
 		opts.Builder = sb
 	}
 
-	// override skipResourceFilter if the expression contains OR
-	if strings.Contains(strings.ToLower(query), " or ") {
-		opts.SkipResourceFilter = false
-	}
-
-	visitor := newFilterExpressionVisitor(opts)
-
 	// Set up error handling
 	lexerErrorListener := NewErrorListener()
 	lexer.RemoveErrorListeners()
@@ -115,6 +108,17 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWher
 
 	// Parse the query
 	tree := parser.Query()
+
+	// override skipResourceFilter if the expression contains OR
+	for _, tok := range tokens.GetAllTokens() {
+		if tok.GetTokenType() == grammar.FilterQueryParserOR {
+			opts.SkipResourceFilter = false
+			break
+		}
+	}
+	tokens.Reset()
+
+	visitor := newFilterExpressionVisitor(opts)
 
 	// Handle syntax errors
 	if len(parserErrorListener.SyntaxErrors) > 0 {
