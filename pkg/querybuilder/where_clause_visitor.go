@@ -96,7 +96,7 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWher
 	}
 
 	// override skipResourceFilter if the expression contains OR
-	if strings.Contains(query, " OR ") {
+	if strings.Contains(strings.ToLower(query), " or ") {
 		opts.SkipResourceFilter = false
 	}
 
