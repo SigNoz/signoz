@@ -114,7 +114,7 @@ func TestValidateFunnelSteps(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "too few steps",
+			name: "single step is valid",
 			steps: []*FunnelStep{
 				{
 					ID:          valuer.GenerateUUID(),
@@ -124,7 +124,7 @@ func TestValidateFunnelSteps(t *testing.T) {
 					Order:       1,
 				},
 			},
-			expectError: true,
+			expectError: false,
 		},
 		{
 			name: "missing service name",
