@@ -12,6 +12,7 @@ export type UseCopyLogLink = {
 	isLogsExplorerPage: boolean;
 	activeLogId: string | null;
 	onLogCopy: MouseEventHandler<HTMLElement>;
+	onClearActiveLog: () => void;
 };
 
 export type UseActiveLog = {
