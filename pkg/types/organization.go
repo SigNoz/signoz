@@ -68,6 +68,7 @@ type TTLSetting struct {
 	ColdStorageTTL int    `bun:"cold_storage_ttl,notnull,default:0"`
 	Status         string `bun:"status,type:text,notnull"`
 	OrgID          string `json:"-" bun:"org_id,notnull"`
+	Condition      string `bun:"condition,type:text"`
 }
 
 type OrganizationStore interface {
