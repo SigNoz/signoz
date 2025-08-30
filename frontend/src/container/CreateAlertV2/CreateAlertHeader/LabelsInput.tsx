@@ -23,7 +23,23 @@ function LabelsInput({
 		(e: React.KeyboardEvent<HTMLInputElement>) => {
 			if (e.key === 'Enter') {
 				if (inputState.isKeyInput) {
-					if (inputState.key.trim()) {
+					// Check if input contains a colon (key:value format)
+					if (inputState.key.includes(':')) {
+						const [key, ...valueParts] = inputState.key.split(':');
+						const value = valueParts.join(':'); // Rejoin in case value contains colons
+
+						if (key.trim() && value.trim()) {
+							// Add the label immediately
+							const newLabels = {
+								...labels,
+								[key.trim()]: value.trim(),
+							};
+							onLabelsChange(newLabels);
+
+							// Reset input state
+							setInputState({ key: '', value: '', isKeyInput: true });
+						}
+					} else if (inputState.key.trim()) {
 						setInputState((prev) => ({ ...prev, isKeyInput: false }));
 					}
 				} else if (inputState.value.trim()) {
