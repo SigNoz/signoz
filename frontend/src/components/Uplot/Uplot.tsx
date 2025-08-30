@@ -62,7 +62,7 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 		useEffect(() => {
 			onCreateRef.current = onCreate;
 			onDeleteRef.current = onDelete;
-		});
+		}, [onCreate, onDelete]);
 
 		const destroy = useCallback((chart: uPlot | null) => {
 			if (chart) {
@@ -71,12 +71,25 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 				chartRef.current = null;
 			}
 
-			// remove chart tooltip on cleanup
+			// Clean up tooltip overlay that might be detached
 			const overlay = document.getElementById('overlay');
-
 			if (overlay) {
+				// Remove all child elements from overlay
+				while (overlay.firstChild) {
+					overlay.removeChild(overlay.firstChild);
+				}
 				overlay.style.display = 'none';
 			}
+
+			// Clean up any remaining tooltips that might be detached
+			const tooltips = document.querySelectorAll(
+				'.uplot-tooltip, .tooltip-container',
+			);
+			tooltips.forEach((tooltip) => {
+				if (tooltip && tooltip.parentNode) {
+					tooltip.parentNode.removeChild(tooltip);
+				}
+			});
 		}, []);
 
 		const create = useCallback(() => {
