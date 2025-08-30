@@ -23,6 +23,7 @@ const ENTER_VALUE_PLACEHOLDER = 'Enter value';
 const CLOSE_ICON_TEST_ID = 'close-icon';
 const SEVERITY_HIGH_TEXT = 'severity: high';
 const ENVIRONMENT_PRODUCTION_TEXT = 'environment: production';
+const SEVERITY_HIGH_KEY_VALUE = 'severity:high';
 
 const renderLabelsInput = (
 	props: Partial<LabelsInputProps> = {},
@@ -378,6 +379,152 @@ describe('LabelsInput', () => {
 			// Should be focused on new key input
 			const newInput = screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER);
 			expect(newInput).toHaveFocus();
+		});
+	});
+
+	describe('Key:Value Format Support', () => {
+		it('adds label when key:value format is entered and Enter is pressed', () => {
+			renderLabelsInput();
+
+			fireEvent.click(screen.getByText(ADD_LABELS_TEXT));
+			const input = screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER);
+
+			// Enter key:value format
+			fireEvent.change(input, { target: { value: SEVERITY_HIGH_KEY_VALUE } });
+			fireEvent.keyDown(input, { key: 'Enter' });
+
+			expect(mockOnLabelsChange).toHaveBeenCalledWith({ severity: 'high' });
+		});
+
+		it('trims whitespace from key and value in key:value format', () => {
+			renderLabelsInput();
+
+			fireEvent.click(screen.getByText(ADD_LABELS_TEXT));
+			const input = screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER);
+
+			// Enter key:value format with whitespace
+			fireEvent.change(input, { target: { value: '  severity  :  high  ' } });
+			fireEvent.keyDown(input, { key: 'Enter' });
+
+			expect(mockOnLabelsChange).toHaveBeenCalledWith({ severity: 'high' });
+		});
+
+		it('handles values with colons correctly', () => {
+			renderLabelsInput();
+
+			fireEvent.click(screen.getByText(ADD_LABELS_TEXT));
+			const input = screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER);
+
+			// Enter key:value format where value contains colons
+			fireEvent.change(input, {
+				target: { value: 'url:https://example.com:8080' },
+			});
+			fireEvent.keyDown(input, { key: 'Enter' });
+
+			expect(mockOnLabelsChange).toHaveBeenCalledWith({
+				url: 'https://example.com:8080',
+			});
+		});
+
+		it('does not add label if key is empty in key:value format', () => {
+			renderLabelsInput();
+
+			fireEvent.click(screen.getByText(ADD_LABELS_TEXT));
+			const input = screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER);
+
+			// Enter key:value format with empty key
+			fireEvent.change(input, { target: { value: ':high' } });
+			fireEvent.keyDown(input, { key: 'Enter' });
+
+			expect(mockOnLabelsChange).not.toHaveBeenCalled();
+		});
+
+		it('does not add label if value is empty in key:value format', () => {
+			renderLabelsInput();
+
+			fireEvent.click(screen.getByText(ADD_LABELS_TEXT));
+			const input = screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER);
+
+			// Enter key:value format with empty value
+			fireEvent.change(input, { target: { value: 'severity:' } });
+			fireEvent.keyDown(input, { key: 'Enter' });
+
+			expect(mockOnLabelsChange).not.toHaveBeenCalled();
+		});
+
+		it('does not add label if only colon is entered', () => {
+			renderLabelsInput();
+
+			fireEvent.click(screen.getByText(ADD_LABELS_TEXT));
+			const input = screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER);
+
+			// Enter only colon
+			fireEvent.change(input, { target: { value: ':' } });
+			fireEvent.keyDown(input, { key: 'Enter' });
+
+			expect(mockOnLabelsChange).not.toHaveBeenCalled();
+		});
+
+		it('resets input state after adding label with key:value format', () => {
+			renderLabelsInput();
+
+			fireEvent.click(screen.getByText(ADD_LABELS_TEXT));
+			const input = screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER);
+
+			// Add label with key:value format
+			fireEvent.change(input, { target: { value: 'severity:high' } });
+			fireEvent.keyDown(input, { key: 'Enter' });
+
+			// Should be back to key input for next label
+			expect(
+				screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER),
+			).toBeInTheDocument();
+			expect(
+				screen.queryByPlaceholderText(ENTER_VALUE_PLACEHOLDER),
+			).not.toBeInTheDocument();
+		});
+
+		it('does not auto-save when typing key:value without pressing Enter', () => {
+			renderLabelsInput();
+
+			fireEvent.click(screen.getByText(ADD_LABELS_TEXT));
+			const input = screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER);
+
+			// Type key:value format but don't press Enter
+			fireEvent.change(input, { target: { value: SEVERITY_HIGH_KEY_VALUE } });
+
+			// Should not have called onLabelsChange yet
+			expect(mockOnLabelsChange).not.toHaveBeenCalled();
+		});
+
+		it('handles multiple key:value entries correctly', () => {
+			const { rerender } = renderLabelsInput();
+
+			fireEvent.click(screen.getByText(ADD_LABELS_TEXT));
+			const input = screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER);
+
+			// Add first label
+			fireEvent.change(input, { target: { value: SEVERITY_HIGH_KEY_VALUE } });
+			fireEvent.keyDown(input, { key: 'Enter' });
+
+			// Simulate parent component updating labels
+			const firstLabels = { severity: 'high' };
+			rerender(
+				<LabelsInput labels={firstLabels} onLabelsChange={mockOnLabelsChange} />,
+			);
+
+			// Add second label
+			const newInput = screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER);
+			fireEvent.change(newInput, { target: { value: 'environment:production' } });
+			fireEvent.keyDown(newInput, { key: 'Enter' });
+
+			// Check that we made two calls and the last one includes both labels
+			expect(mockOnLabelsChange).toHaveBeenCalledTimes(2);
+			expect(mockOnLabelsChange).toHaveBeenNthCalledWith(1, { severity: 'high' });
+			expect(mockOnLabelsChange).toHaveBeenNthCalledWith(2, {
+				severity: 'high',
+				environment: 'production',
+			});
 		});
 	});
 
