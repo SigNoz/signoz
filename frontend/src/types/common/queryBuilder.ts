@@ -6,6 +6,7 @@ import { Dispatch, SetStateAction } from 'react';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
+	IBuilderTraceOperator,
 	IClickHouseQuery,
 	IPromQLQuery,
 	Query,
@@ -222,6 +223,7 @@ export type ReduceOperators = 'last' | 'sum' | 'avg' | 'max' | 'min';
 export type QueryBuilderData = {
 	queryData: IBuilderQuery[];
 	queryFormulas: IBuilderFormula[];
+	queryTraceOperator: IBuilderTraceOperator[];
 };
 
 export type QueryBuilderContextType = {
@@ -235,6 +237,10 @@ export type QueryBuilderContextType = {
 	panelType: PANEL_TYPES | null;
 	isEnabledQuery: boolean;
 	handleSetQueryData: (index: number, queryData: IBuilderQuery) => void;
+	handleSetTraceOperatorData: (
+		index: number,
+		traceOperatorData: IBuilderTraceOperator,
+	) => void;
 	handleSetFormulaData: (index: number, formulaData: IBuilderFormula) => void;
 	handleSetQueryItemData: (
 		index: number,
@@ -249,12 +255,15 @@ export type QueryBuilderContextType = {
 		type: keyof QueryBuilderData,
 		index: number,
 	) => void;
+	removeAllQueryBuilderEntities: (type: keyof QueryBuilderData) => void;
 	removeQueryTypeItemByIndex: (
 		type: EQueryType.PROM | EQueryType.CLICKHOUSE,
 		index: number,
 	) => void;
 	addNewBuilderQuery: () => void;
 	addNewFormula: () => void;
+	removeTraceOperator: () => void;
+	addTraceOperator: (expression?: string) => void;
 	cloneQuery: (type: string, query: IBuilderQuery) => void;
 	addNewQueryItem: (type: EQueryType.PROM | EQueryType.CLICKHOUSE) => void;
 	redirectWithQueryBuilderData: (

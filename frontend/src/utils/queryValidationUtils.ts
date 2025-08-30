@@ -3,6 +3,8 @@
 import { CharStreams, CommonTokenStream } from 'antlr4';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import FilterQueryParser from 'parser/FilterQueryParser';
+import TraceOperatorGrammerLexer from 'TraceOperator/parser/TraceOperatorGrammerLexer';
+import TraceOperatorGrammerParser from 'TraceOperator/parser/TraceOperatorGrammerParser';
 import { IDetailedError, IValidationResult } from 'types/antlrQueryTypes';
 
 // Custom error listener to capture ANTLR errors
@@ -165,6 +167,69 @@ export const validateQuery = (query: string): IValidationResult => {
 		return {
 			isValid: false,
 			message: 'Invalid query syntax',
+			errors: [detailedError],
+		};
+	}
+};
+
+export const validateTraceOperatorQuery = (
+	query: string,
+): IValidationResult => {
+	// Empty query is considered valid
+	if (!query.trim()) {
+		return {
+			isValid: true,
+			message: 'Trace operator query is empty',
+			errors: [],
+		};
+	}
+
+	try {
+		const errorListener = new QueryErrorListener();
+		const inputStream = CharStreams.fromString(query);
+
+		// Setup lexer
+		const lexer = new TraceOperatorGrammerLexer(inputStream);
+		lexer.removeErrorListeners(); // Remove default error listeners
+		lexer.addErrorListener(errorListener);
+
+		// Setup parser
+		const tokenStream = new CommonTokenStream(lexer);
+		const parser = new TraceOperatorGrammerParser(tokenStream);
+		parser.removeErrorListeners(); // Remove default error listeners
+		parser.addErrorListener(errorListener);
+
+		// Try parsing
+		parser.query();
+
+		// Check if any errors were captured
+		if (errorListener.hasErrors()) {
+			return {
+				isValid: false,
+				message: 'Trace operator syntax error',
+				errors: errorListener.getErrors(),
+			};
+		}
+
+		return {
+			isValid: true,
+			message: 'Trace operator is valid!',
+			errors: [],
+		};
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : 'Invalid trace operator syntax';
+
+		const detailedError: IDetailedError = {
+			message: errorMessage,
+			line: 0,
+			column: 0,
+			offendingSymbol: '',
+			expectedTokens: [],
+		};
+		return {
+			isValid: false,
+			message: 'Invalid trace operator syntax',
 			errors: [detailedError],
 		};
 	}

@@ -52,7 +52,6 @@ function TracesExplorer(): JSX.Element {
 		handleRunQuery,
 		stagedQuery,
 		handleSetConfig,
-		updateQueriesData,
 	} = useQueryBuilder();
 
 	const { options } = useOptionsMenu({
@@ -103,33 +102,7 @@ function TracesExplorer(): JSX.Element {
 				handleSetConfig(PANEL_TYPES.LIST, DataSource.TRACES);
 			}
 
-			if (view === ExplorerViews.LIST) {
-				if (
-					selectedView !== ExplorerViews.LIST &&
-					currentQuery?.builder?.queryData?.[0]
-				) {
-					const filterToRetain = currentQuery.builder.queryData[0].filter;
-
-					const newDefaultQuery = updateAllQueriesOperators(
-						initialQueriesMap.traces,
-						PANEL_TYPES.LIST,
-						DataSource.TRACES,
-					);
-
-					const newListQuery = updateQueriesData(
-						newDefaultQuery,
-						'queryData',
-						(item, index) => {
-							if (index === 0) {
-								return { ...item, filter: filterToRetain };
-							}
-							return item;
-						},
-					);
-					setDefaultQuery(newListQuery);
-				}
-				setShouldReset(true);
-			}
+			// TODO: remove formula when switching to List view
 
 			setSelectedView(view);
 
@@ -137,15 +110,7 @@ function TracesExplorer(): JSX.Element {
 				view === ExplorerViews.TIMESERIES ? PANEL_TYPES.TIME_SERIES : view,
 			);
 		},
-		[
-			handleSetConfig,
-			handleExplorerTabChange,
-			selectedView,
-			currentQuery,
-			updateAllQueriesOperators,
-			updateQueriesData,
-			setSelectedView,
-		],
+		[handleSetConfig, handleExplorerTabChange, selectedView, setSelectedView],
 	);
 
 	const listQuery = useMemo(() => {
@@ -211,19 +176,13 @@ function TracesExplorer(): JSX.Element {
 
 	useShareBuilderUrl({ defaultValue: defaultQuery, forceReset: shouldReset });
 
-	const isMultipleQueries = useMemo(() => {
-		const builder = currentQuery?.builder;
-		const queriesLen = builder?.queryData?.length ?? 0;
-		const formulasLen = builder?.queryFormulas?.length ?? 0;
-		return queriesLen > 1 || formulasLen > 0;
-	}, [currentQuery]);
-
 	const isGroupByExist = useMemo(() => {
 		const queryData = currentQuery?.builder?.queryData ?? [];
 		return queryData.some((q) => (q?.groupBy?.length ?? 0) > 0);
 	}, [currentQuery]);
+
 	useEffect(() => {
-		const shouldChangeView = isMultipleQueries || isGroupByExist;
+		const shouldChangeView = isGroupByExist;
 
 		if (
 			(selectedView === ExplorerViews.LIST ||
@@ -233,12 +192,7 @@ function TracesExplorer(): JSX.Element {
 			// Switch to timeseries view automatically
 			handleChangeSelectedView(ExplorerViews.TIMESERIES);
 		}
-	}, [
-		selectedView,
-		isMultipleQueries,
-		isGroupByExist,
-		handleChangeSelectedView,
-	]);
+	}, [selectedView, isGroupByExist, handleChangeSelectedView]);
 
 	useEffect(() => {
 		if (shouldReset) {

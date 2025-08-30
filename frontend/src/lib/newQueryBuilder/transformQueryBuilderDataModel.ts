@@ -2,11 +2,12 @@ import {
 	initialFormulaBuilderFormValues,
 	initialQueryBuilderFormValuesMap,
 } from 'constants/queryBuilder';
-import { FORMULA_REGEXP } from 'constants/regExp';
+import { FORMULA_REGEXP, TRACE_OPERATOR_REGEXP } from 'constants/regExp';
 import {
 	BuilderQueryDataResourse,
 	IBuilderFormula,
 	IBuilderQuery,
+	IBuilderTraceOperator,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryBuilderData } from 'types/common/queryBuilder';
 
@@ -16,6 +17,7 @@ export const transformQueryBuilderDataModel = (
 ): QueryBuilderData => {
 	const queryData: QueryBuilderData['queryData'] = [];
 	const queryFormulas: QueryBuilderData['queryFormulas'] = [];
+	const queryTraceOperator: QueryBuilderData['queryTraceOperator'] = [];
 
 	Object.entries(data).forEach(([key, value]) => {
 		const isFormula = queryTypes
@@ -25,6 +27,9 @@ export const transformQueryBuilderDataModel = (
 		if (isFormula) {
 			const formula = value as IBuilderFormula;
 			queryFormulas.push({ ...initialFormulaBuilderFormValues, ...formula });
+		} else if (TRACE_OPERATOR_REGEXP.test(value.queryName)) {
+			const traceOperator = value as IBuilderTraceOperator;
+			queryTraceOperator.push({ ...traceOperator });
 		} else {
 			const queryFromData = value as IBuilderQuery;
 			queryData.push({
@@ -34,5 +39,5 @@ export const transformQueryBuilderDataModel = (
 		}
 	});
 
-	return { queryData, queryFormulas };
+	return { queryData, queryFormulas, queryTraceOperator };
 };
