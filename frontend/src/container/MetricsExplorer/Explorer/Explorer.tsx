@@ -1,7 +1,7 @@
 import './Explorer.styles.scss';
 
 import * as Sentry from '@sentry/react';
-import { Switch } from 'antd';
+import { Switch, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -25,10 +25,10 @@ import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToD
 import { v4 as uuid } from 'uuid';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
-// import QuerySection from './QuerySection';
+import MetricDetails from '../MetricDetails/MetricDetails';
 import TimeSeries from './TimeSeries';
 import { ExplorerTabs } from './types';
-import { splitQueryIntoOneChartPerQuery } from './utils';
+import { splitQueryIntoOneChartPerQuery, useGetMetricUnits } from './utils';
 
 const ONE_CHART_PER_QUERY_ENABLED_KEY = 'isOneChartPerQueryEnabled';
 
@@ -40,6 +40,31 @@ function Explorer(): JSX.Element {
 		currentQuery,
 	} = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
+	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
+
+	const metricNames = useMemo(
+		() =>
+			stagedQuery?.builder.queryData.map(
+				(query) => query.aggregateAttribute?.key ?? '',
+			) ?? [],
+		[stagedQuery],
+	);
+
+	const {
+		units,
+		metrics,
+		isLoading: isMetricUnitsLoading,
+		isError: isMetricUnitsError,
+	} = useGetMetricUnits(metricNames);
+
+	const areAllMetricUnitsSame = useMemo(
+		() =>
+			!isMetricUnitsLoading &&
+			!isMetricUnitsError &&
+			units.length > 0 &&
+			units.every((unit) => unit === units[0]),
+		[units, isMetricUnitsLoading, isMetricUnitsError],
+	);
 
 	const [searchParams, setSearchParams] = useSearchParams();
 	const isOneChartPerQueryEnabled =
@@ -48,7 +73,31 @@ function Explorer(): JSX.Element {
 	const [showOneChartPerQuery, toggleShowOneChartPerQuery] = useState(
 		isOneChartPerQueryEnabled,
 	);
+	const [disableOneChartPerQuery, toggleDisableOneChartPerQuery] = useState(
+		false,
+	);
 	const [selectedTab] = useState<ExplorerTabs>(ExplorerTabs.TIME_SERIES);
+	const [yAxisUnit, setYAxisUnit] = useState<string>('');
+
+	useEffect(() => {
+		if (units.length === 0) {
+			setYAxisUnit('');
+		} else if (units.length === 1 && units[0] !== '') {
+			setYAxisUnit(units[0]);
+		} else if (areAllMetricUnitsSame && units[0] !== '') {
+			setYAxisUnit(units[0]);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [JSON.stringify(units), areAllMetricUnitsSame]);
+
+	useEffect(() => {
+		if (units.length > 1 && !areAllMetricUnitsSame) {
+			toggleShowOneChartPerQuery(true);
+			toggleDisableOneChartPerQuery(true);
+		} else {
+			toggleDisableOneChartPerQuery(false);
+		}
+	}, [units, areAllMetricUnitsSame]);
 
 	const handleToggleShowOneChartPerQuery = (): void => {
 		toggleShowOneChartPerQuery(!showOneChartPerQuery);
@@ -68,15 +117,20 @@ function Explorer(): JSX.Element {
 		[updateAllQueriesOperators],
 	);
 
-	const exportDefaultQuery = useMemo(
-		() =>
-			updateAllQueriesOperators(
-				currentQuery || initialQueriesMap[DataSource.METRICS],
-				PANEL_TYPES.TIME_SERIES,
-				DataSource.METRICS,
-			),
-		[currentQuery, updateAllQueriesOperators],
-	);
+	const exportDefaultQuery = useMemo(() => {
+		const query = updateAllQueriesOperators(
+			currentQuery || initialQueriesMap[DataSource.METRICS],
+			PANEL_TYPES.TIME_SERIES,
+			DataSource.METRICS,
+		);
+		if (yAxisUnit) {
+			return {
+				...query,
+				unit: yAxisUnit,
+			};
+		}
+		return query;
+	}, [currentQuery, updateAllQueriesOperators, yAxisUnit]);
 
 	useShareBuilderUrl({ defaultValue: defaultQuery });
 
@@ -90,8 +144,16 @@ function Explorer(): JSX.Element {
 
 			const widgetId = uuid();
 
+			let query = queryToExport || exportDefaultQuery;
+			if (yAxisUnit) {
+				query = {
+					...query,
+					unit: yAxisUnit,
+				};
+			}
+
 			const dashboardEditView = generateExportToDashboardLink({
-				query: queryToExport || exportDefaultQuery,
+				query,
 				panelType: PANEL_TYPES.TIME_SERIES,
 				dashboardId: dashboard.id,
 				widgetId,
@@ -99,7 +161,7 @@ function Explorer(): JSX.Element {
 
 			safeNavigate(dashboardEditView);
 		},
-		[exportDefaultQuery, safeNavigate],
+		[exportDefaultQuery, safeNavigate, yAxisUnit],
 	);
 
 	const splitedQueries = useMemo(
@@ -129,11 +191,17 @@ function Explorer(): JSX.Element {
 				<div className="explore-header">
 					<div className="explore-header-left-actions">
 						<span>1 chart/query</span>
-						<Switch
-							checked={showOneChartPerQuery}
-							onChange={handleToggleShowOneChartPerQuery}
-							size="small"
-						/>
+						<Tooltip
+							open={disableOneChartPerQuery ? undefined : false}
+							title="One chart per query cannot be disabled for multiple queries with different units."
+						>
+							<Switch
+								checked={showOneChartPerQuery}
+								onChange={handleToggleShowOneChartPerQuery}
+								disabled={disableOneChartPerQuery}
+								size="small"
+							/>
+						</Tooltip>
 					</div>
 					<div className="explore-header-right-actions">
 						{!isEmpty(warning) && <WarningPopover warningData={warning} />}
@@ -174,6 +242,15 @@ function Explorer(): JSX.Element {
 						<TimeSeries
 							showOneChartPerQuery={showOneChartPerQuery}
 							setWarning={setWarning}
+							areAllMetricUnitsSame={areAllMetricUnitsSame}
+							isMetricUnitsLoading={isMetricUnitsLoading}
+							isMetricUnitsError={isMetricUnitsError}
+							metricUnits={units}
+							metricNames={metricNames}
+							metrics={metrics}
+							setIsMetricDetailsOpen={setIsMetricDetailsOpen}
+							yAxisUnit={yAxisUnit}
+							setYAxisUnit={setYAxisUnit}
 						/>
 					)}
 					{/* TODO: Enable once we have resolved all related metrics issues */}
@@ -190,6 +267,14 @@ function Explorer(): JSX.Element {
 				isOneChartPerQuery={false}
 				splitedQueries={splitedQueries}
 			/>
+			{isMetricDetailsOpen && (
+				<MetricDetails
+					metricName={metricNames[0]}
+					isOpen={isMetricDetailsOpen}
+					onClose={(): void => setIsMetricDetailsOpen(false)}
+					isModalTimeSelection={false}
+				/>
+			)}
 		</Sentry.ErrorBoundary>
 	);
 }
