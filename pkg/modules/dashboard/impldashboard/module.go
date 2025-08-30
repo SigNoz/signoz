@@ -81,7 +81,7 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return nil, err
 	}
 
-	err = dashboard.Update(updatableDashboard, updatedBy)
+	err = dashboard.Update(ctx, updatableDashboard, updatedBy)
 	if err != nil {
 		return nil, err
 	}
