@@ -83,4 +83,5 @@ export const REACT_QUERY_KEY = {
 	// Quick Filters Query Keys
 	GET_CUSTOM_FILTERS: 'GET_CUSTOM_FILTERS',
 	GET_OTHER_FILTERS: 'GET_OTHER_FILTERS',
+	SPAN_LOGS: 'SPAN_LOGS',
 } as const;
