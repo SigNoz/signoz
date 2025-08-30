@@ -100,7 +100,6 @@
 
 			.variable-type-btn-group {
 				display: flex;
-				width: 342px;
 				height: 32px;
 				flex-shrink: 0;
 				border-radius: 2px;
@@ -196,6 +195,21 @@
 				line-height: 20px; /* 142.857% */
 				letter-spacing: -0.07px;
 				width: 339px;
+			}
+		}
+
+		.default-value-section {
+			display: grid;
+			grid-template-columns: max-content 1fr;
+
+			.default-value-description {
+				color: var(--bg-vanilla-400);
+				font-family: Inter;
+				font-size: 11px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 18px;
+				letter-spacing: -0.06px;
 			}
 		}
 

@@ -1,4 +1,3 @@
-import { QueryClient, QueryClientProvider } from 'react-query';
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 import {
 	IDashboardVariable,
@@ -75,23 +74,6 @@ const TEST_VAR_DESCRIPTIONS = {
 const SAVE_BUTTON_TEXT = 'Save Variable';
 const UNIQUE_NAME_PLACEHOLDER = 'Unique name of the variable';
 
-// Create QueryClient for wrapping the component
-const createTestQueryClient = (): QueryClient =>
-	new QueryClient({
-		defaultOptions: {
-			queries: {
-				retry: false,
-			},
-		},
-	});
-
-// Wrapper component with QueryClientProvider
-const wrapper = ({ children }: { children: React.ReactNode }): JSX.Element => (
-	<QueryClientProvider client={createTestQueryClient()}>
-		{children}
-	</QueryClientProvider>
-);
-
 // Basic variable data for testing
 const basicVariableData: IDashboardVariable = {
 	id: TEST_VAR_IDS.VAR1,
@@ -118,7 +100,6 @@ const renderVariableItem = (
 			validateName={validateNameFn}
 			mode={VARIABLE_MODE}
 		/>,
-		{ wrapper } as any,
 	);
 };
 
