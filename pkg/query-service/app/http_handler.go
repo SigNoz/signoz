@@ -1452,10 +1452,10 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
 			return
 		}
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("rule not found")}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
