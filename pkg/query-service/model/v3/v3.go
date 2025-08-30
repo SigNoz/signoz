@@ -514,7 +514,8 @@ type CompositeQuery struct {
 	ClickHouseQueries map[string]*ClickHouseQuery `json:"chQueries,omitempty"`
 	PromQueries       map[string]*PromQuery       `json:"promQueries,omitempty"`
 
-	Queries []qbtypes.QueryEnvelope `json:"queries,omitempty"`
+	Queries       []qbtypes.QueryEnvelope `json:"queries,omitempty"`
+	FormatOptions *qbtypes.FormatOptions  `json:"formatOptions,omitempty"`
 
 	PanelType PanelType `json:"panelType"`
 	QueryType QueryType `json:"queryType"`
