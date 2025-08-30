@@ -29,6 +29,7 @@ export const DATE_TIME_FORMATS = {
 	DATE_SHORT: 'MM/DD',
 	YEAR_SHORT: 'YY',
 	YEAR_MONTH: 'YY-MM',
+	SPAN_POPOVER_DATE: 'M/D/YY - HH:mm',
 
 	// Month name formats
 	MONTH_DATE_FULL: 'MMMM DD, YYYY',
