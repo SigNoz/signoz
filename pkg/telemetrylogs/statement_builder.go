@@ -220,10 +220,23 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	// Select default columns
-	sb.Select(
-		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string",
-	)
+	if len(query.SelectFields) == 0 {
+		// Select default columns
+		sb.Select(
+			"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string",
+		)
+	} else {
+		sb.Select("timestamp, id") // always select id, timestamp by default
+		// Select specified columns
+		for _, field := range query.SelectFields {
+			// get column expression for the field
+			colExpr, err := b.fm.ColumnExpressionFor(ctx, &field, keys)
+			if err != nil {
+				return nil, err
+			}
+			sb.SelectMore(colExpr)
+		}
+	}
 
 	// From table
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
