@@ -149,7 +149,11 @@ func (b BasicRuleThreshold) Target() float64 {
 }
 
 func (b BasicRuleThreshold) RecoveryTarget() float64 {
-	if b.recoveryTarget == nil { return 0 } else { return *b.recoveryTarget }
+	if b.recoveryTarget == nil {
+		return 0
+	} else {
+		return *b.recoveryTarget
+	}
 }
 
 func (b BasicRuleThreshold) MatchType() MatchType {
@@ -183,7 +187,7 @@ func (b BasicRuleThreshold) ShouldAlert(series v3.Series) (Sample, bool) {
 		lbls = append(lbls, qslabels.Label{Name: name, Value: value})
 	}
 
-	lbls = append(lbls, qslabels.Label{Name: "threshold", Value: b.name})
+	lbls = append(lbls, qslabels.Label{Name: LabelThresholdName, Value: b.name})
 
 	series.Points = removeGroupinSetPoints(series)
 

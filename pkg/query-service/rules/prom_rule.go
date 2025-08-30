@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go.uber.org/zap"
 	"log/slog"
 	"time"
 
@@ -151,6 +152,12 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 	var alerts = make(map[uint64]*ruletypes.Alert, len(res))
 
 	for _, series := range res {
+		if r.Condition() != nil && r.Condition().RequireMinPoints {
+			if len(series.Floats) < r.Condition().RequiredNumPoints {
+				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", zap.String("ruleid", r.ID()), zap.Int("numPoints", len(series.Floats)), zap.Int("requiredPoints", r.Condition().RequiredNumPoints))
+				continue
+			}
+		}
 		for _, ruleThreshold := range r.Thresholds() {
 			l := make(map[string]string, len(series.Metric))
 			for _, lbl := range series.Metric {
@@ -231,6 +238,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 				GeneratorURL:      r.GeneratorURL(),
 				Receivers:         r.preferredChannels,
 			}
+			break
 		}
 	}
 

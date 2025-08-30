@@ -86,9 +86,6 @@ type BaseRule struct {
 	TemporalityMap map[string]map[v3.Temporality]bool
 
 	sqlstore sqlstore.SQLStore
-
-	cronExpression string
-	cronEnabled    bool
 }
 
 type RuleOption func(*BaseRule)
