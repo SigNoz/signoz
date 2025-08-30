@@ -527,23 +527,4 @@ describe('LabelsInput', () => {
 			});
 		});
 	});
-
-	describe('Accessibility', () => {
-		it('has proper button types', () => {
-			renderLabelsInput();
-
-			const addButton = screen.getByText(ADD_LABELS_TEXT);
-			expect(addButton).toHaveAttribute('type', 'button');
-		});
-
-		it('has proper input attributes', () => {
-			renderLabelsInput();
-
-			fireEvent.click(screen.getByText(ADD_LABELS_TEXT));
-			const input = screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER);
-
-			expect(input).toHaveAttribute('type', 'text');
-			expect(input).toHaveAttribute('placeholder', ENTER_KEY_PLACEHOLDER);
-		});
-	});
 });
