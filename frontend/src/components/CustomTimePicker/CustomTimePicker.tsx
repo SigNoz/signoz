@@ -59,7 +59,9 @@ interface CustomTimePickerProps {
 	customDateTimeVisible?: boolean;
 	setCustomDTPickerVisible?: Dispatch<SetStateAction<boolean>>;
 	onCustomDateHandler?: (dateTimeRange: DateTimeRangeType) => void;
-	handleGoLive?: () => void;
+	showLiveLogs?: boolean;
+	onGoLive?: () => void;
+	onExitLiveLogs?: () => void;
 }
 
 function CustomTimePicker({
@@ -76,7 +78,9 @@ function CustomTimePicker({
 	customDateTimeVisible,
 	setCustomDTPickerVisible,
 	onCustomDateHandler,
-	handleGoLive,
+	onGoLive,
+	onExitLiveLogs,
+	showLiveLogs,
 }: CustomTimePickerProps): JSX.Element {
 	const [
 		selectedTimePlaceholderValue,
@@ -165,9 +169,13 @@ function CustomTimePicker({
 	};
 
 	useEffect(() => {
-		const value = getSelectedTimeRangeLabel(selectedTime, selectedValue);
-		setSelectedTimePlaceholderValue(value);
-	}, [selectedTime, selectedValue]);
+		if (showLiveLogs) {
+			setSelectedTimePlaceholderValue('Live');
+		} else {
+			const value = getSelectedTimeRangeLabel(selectedTime, selectedValue);
+			setSelectedTimePlaceholderValue(value);
+		}
+	}, [selectedTime, selectedValue, showLiveLogs]);
 
 	const hide = (): void => {
 		setOpen(false);
@@ -338,6 +346,28 @@ function CustomTimePicker({
 		return '';
 	};
 
+	const getInputPrefix = (): JSX.Element => {
+		if (showLiveLogs) {
+			return (
+				<div className="time-input-prefix">
+					<div className="live-dot-icon" />
+				</div>
+			);
+		}
+
+		return (
+			<div className="time-input-prefix">
+				{inputValue && inputStatus === 'success' ? (
+					<CheckCircle size={14} color="#51E7A8" />
+				) : (
+					<Tooltip title="Enter time in format (e.g., 1m, 2h, 3d, 4w)">
+						<Clock size={14} className="cursor-pointer" />
+					</Tooltip>
+				)}
+			</div>
+		);
+	};
+
 	return (
 		<div className="custom-time-picker">
 			<Tooltip title={getTooltipTitle()} placement="top">
@@ -357,7 +387,8 @@ function CustomTimePicker({
 								setCustomDTPickerVisible={defaultTo(setCustomDTPickerVisible, noop)}
 								onCustomDateHandler={defaultTo(onCustomDateHandler, noop)}
 								onSelectHandler={handleSelect}
-								handleGoLive={defaultTo(handleGoLive, noop)}
+								onGoLive={defaultTo(onGoLive, noop)}
+								onExitLiveLogs={defaultTo(onExitLiveLogs, noop)}
 								options={items}
 								selectedTime={selectedTime}
 								activeView={activeView}
@@ -392,17 +423,7 @@ function CustomTimePicker({
 						onBlur={handleBlur}
 						onChange={handleInputChange}
 						data-1p-ignore
-						prefix={
-							<div className="time-input-prefix">
-								{inputValue && inputStatus === 'success' ? (
-									<CheckCircle size={14} color="#51E7A8" />
-								) : (
-									<Tooltip title="Enter time in format (e.g., 1m, 2h, 3d, 4w)">
-										<Clock size={14} className="cursor-pointer" />
-									</Tooltip>
-								)}
-							</div>
-						}
+						prefix={getInputPrefix()}
 						suffix={
 							<div className="time-input-suffix">
 								{!!isTimezoneOverridden && activeTimezoneOffset && (
@@ -439,6 +460,8 @@ CustomTimePicker.defaultProps = {
 	customDateTimeVisible: false,
 	setCustomDTPickerVisible: noop,
 	onCustomDateHandler: noop,
-	handleGoLive: noop,
+	onGoLive: noop,
 	onCustomTimeStatusUpdate: noop,
+	onExitLiveLogs: noop,
+	showLiveLogs: false,
 };
