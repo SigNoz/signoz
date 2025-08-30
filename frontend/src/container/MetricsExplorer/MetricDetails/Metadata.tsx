@@ -5,12 +5,15 @@ import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { UpdateMetricMetadataProps } from 'api/metricsExplorer/updateMetricMetadata';
 import { ResizeTable } from 'components/ResizeTable';
+import YAxisUnitSelector from 'components/YAxisUnitSelector';
+import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
 import { useUpdateMetricMetadata } from 'hooks/metricsExplorer/useUpdateMetricMetadata';
 import { useNotifications } from 'hooks/useNotifications';
 import { Edit2, Save, X } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import {
@@ -35,6 +38,7 @@ function Metadata({
 		metricType: metadata?.metric_type || MetricType.SUM,
 		description: metadata?.description || '',
 		temporality: metadata?.temporality,
+		unit: metadata?.unit,
 	});
 	const { notifications } = useNotifications();
 	const {
@@ -44,6 +48,7 @@ function Metadata({
 	const [activeKey, setActiveKey] = useState<string | string[]>(
 		'metric-metadata',
 	);
+	const queryClient = useQueryClient();
 
 	const tableData = useMemo(
 		() =>
@@ -66,6 +71,7 @@ function Metadata({
 	);
 
 	const columns: ColumnsType<DataType> = useMemo(
+		// eslint-disable-next-line sonarjs/cognitive-complexity
 		() => [
 			{
 				title: 'Key',
@@ -91,7 +97,10 @@ function Metadata({
 				ellipsis: true,
 				className: 'metric-metadata-value',
 				render: (field: { value: string; key: string }): JSX.Element => {
-					if (!isEditing || field.key === 'unit') {
+					// Don't allow editing of unit if it's already set
+					const disableEditingForMetricsWithUnits =
+						field.key === 'unit' && Boolean(metadata?.unit);
+					if (!isEditing || disableEditingForMetricsWithUnits) {
 						if (field.key === 'metric_type') {
 							return (
 								<div>
@@ -99,7 +108,11 @@ function Metadata({
 								</div>
 							);
 						}
-						return <FieldRenderer field={field.value || '-'} />;
+						let fieldValue = field.value;
+						if (field.key === 'unit') {
+							fieldValue = getUniversalNameFromMetricUnit(field.value);
+						}
+						return <FieldRenderer field={fieldValue || '-'} />;
 					}
 					if (field.key === 'metric_type') {
 						return (
@@ -115,6 +128,16 @@ function Metadata({
 										...prev,
 										metricType: value as MetricType,
 									}));
+								}}
+							/>
+						);
+					}
+					if (field.key === 'unit') {
+						return (
+							<YAxisUnitSelector
+								value={metricMetadata.unit}
+								onChange={(value): void => {
+									setMetricMetadata((prev) => ({ ...prev, unit: value }));
 								}}
 							/>
 						);
@@ -157,7 +180,7 @@ function Metadata({
 				},
 			},
 		],
-		[isEditing, metricMetadata, setMetricMetadata],
+		[isEditing, metadata?.unit, metricMetadata],
 	);
 
 	const handleSave = useCallback(() => {
@@ -185,6 +208,7 @@ function Metadata({
 						});
 						refetchMetricDetails();
 						setIsEditing(false);
+						queryClient.invalidateQueries(['metricsList']);
 					} else {
 						notifications.error({
 							message:
@@ -205,6 +229,7 @@ function Metadata({
 		metricMetadata,
 		notifications,
 		refetchMetricDetails,
+		queryClient,
 	]);
 
 	const actionButton = useMemo(() => {
