@@ -189,7 +189,7 @@ const useBaseAggregateOptions = ({
 			handleBaseDrilldown,
 			setSubMenu,
 			showDashboardVariablesOption,
-			showBreakoutOption: panelType !== PANEL_TYPES.VALUE,
+			showBreakoutOption: true,
 		}).filter((item) => !item.hidden);
 
 		return {
@@ -248,7 +248,6 @@ const useBaseAggregateOptions = ({
 		resolvedQuery,
 		showDashboardVariablesOption,
 		setSubMenu,
-		panelType,
 	]);
 
 	return { baseAggregateOptionsConfig };

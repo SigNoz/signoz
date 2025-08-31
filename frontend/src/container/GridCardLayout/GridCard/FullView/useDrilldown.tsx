@@ -1,4 +1,5 @@
 import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
@@ -19,6 +20,7 @@ export interface DrilldownQueryProps {
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	enableDrillDown: boolean;
 	selectedDashboard: Dashboard | undefined;
+	selectedPanelType: PANEL_TYPES;
 }
 
 export interface UseDrilldownReturn {
@@ -33,6 +35,7 @@ const useDrilldown = ({
 	widget,
 	setRequestData,
 	selectedDashboard,
+	selectedPanelType,
 }: DrilldownQueryProps): UseDrilldownReturn => {
 	const isMounted = useRef(false);
 	const { redirectWithQueryBuilderData, currentQuery } = useQueryBuilder();
@@ -60,7 +63,7 @@ const useDrilldown = ({
 	const dashboardEditView = selectedDashboard?.id
 		? generateExportToDashboardLink({
 				query: currentQuery,
-				panelType: widget.panelTypes,
+				panelType: selectedPanelType,
 				dashboardId: selectedDashboard?.id || '',
 				widgetId: widget.id,
 		  })

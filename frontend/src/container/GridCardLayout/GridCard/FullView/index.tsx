@@ -147,6 +147,7 @@ function FullView({
 		widget,
 		setRequestData,
 		selectedDashboard,
+		selectedPanelType,
 	});
 
 	useEffect(() => {
