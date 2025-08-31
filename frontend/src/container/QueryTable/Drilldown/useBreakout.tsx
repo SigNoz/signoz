@@ -69,7 +69,11 @@ const useBreakout = ({
 				filtersToAdd,
 			);
 
-			const breakoutPanelType = getBreakoutPanelType(breakoutQuery, panelType);
+			const breakoutPanelType = getBreakoutPanelType(
+				breakoutQuery,
+				panelType,
+				groupBy,
+			);
 
 			redirectToViewMode(breakoutQuery, breakoutPanelType);
 			onClose();

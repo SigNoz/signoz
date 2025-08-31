@@ -1,9 +1,6 @@
 import { OPERATORS, PANEL_TYPES } from 'constants/queryBuilder';
 import cloneDeep from 'lodash-es/cloneDeep';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { addFilterToSelectedQuery, FilterData } from './drilldownUtils';
@@ -49,17 +46,10 @@ export const getFiltersToAddToView = (clickedData: any): FilterData[] => {
 export const getBreakoutPanelType = (
 	breakoutQuery: Query,
 	currentPanelType?: PANEL_TYPES,
+	groupBy?: BreakoutAttributeType,
 ): PANEL_TYPES => {
 	// Check if the query is grouped by a number data type
-	// breakoutQuery has only one query, so we can safely use [0]
-	const hasNumberGroupBy = breakoutQuery.builder.queryData[0]?.groupBy.some(
-		(groupBy: BaseAutocompleteData) =>
-			// groupBy.dataType === 'number'
-			groupBy.dataType === DataTypes.Int64 ||
-			groupBy.dataType === DataTypes.Float64,
-	);
-
-	console.log('hasNumberGroupBy', { breakoutQuery, hasNumberGroupBy });
+	const hasNumberGroupBy = groupBy?.dataType === 'number';
 
 	if (hasNumberGroupBy) {
 		return PANEL_TYPES.HISTOGRAM;
@@ -69,7 +59,7 @@ export const getBreakoutPanelType = (
 		return PANEL_TYPES.TABLE;
 	}
 
-	return PANEL_TYPES.TIME_SERIES;
+	return currentPanelType || PANEL_TYPES.TIME_SERIES;
 };
 
 /**
