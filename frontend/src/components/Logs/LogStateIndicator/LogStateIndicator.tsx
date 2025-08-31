@@ -69,6 +69,7 @@ const SEVERITY_VARIANT_CLASSES: Record<string, string> = {
 
 	// Warn variants - amber-600 to amber-200
 	WARN: 'severity-warn-0',
+	WARNING: 'severity-warn-0',
 	Warn: 'severity-warn-1',
 	warn: 'severity-warn-2',
 	warning: 'severity-warn-3',
