@@ -9,6 +9,7 @@ import { useMemo } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
+import { validateQuery } from 'utils/queryValidationUtils';
 
 import { LiveLogsListChartProps } from './types';
 
@@ -17,17 +18,24 @@ function LiveLogsListChart({
 	initialData,
 	isShowingLiveLogs = false,
 }: LiveLogsListChartProps): JSX.Element {
-	const { stagedQuery } = useQueryBuilder();
+	const { currentQuery } = useQueryBuilder();
 	const { isConnectionOpen } = useEventSource();
 
 	const listChartQuery: Query | null = useMemo(() => {
-		if (!stagedQuery) return null;
+		if (!currentQuery) return null;
+
+		const currentFilterExpression =
+			currentQuery?.builder.queryData[0]?.filter?.expression?.trim() || '';
+
+		const validationResult = validateQuery(currentFilterExpression || '');
+
+		if (!validationResult.isValid) return null;
 
 		return {
-			...stagedQuery,
+			...currentQuery,
 			builder: {
-				...stagedQuery.builder,
-				queryData: stagedQuery.builder.queryData.map((item) => ({
+				...currentQuery.builder,
+				queryData: currentQuery.builder.queryData.map((item) => ({
 					...item,
 					disabled: false,
 					aggregateOperator: LogsAggregatorOperator.COUNT,
@@ -40,7 +48,7 @@ function LiveLogsListChart({
 				})),
 			},
 		};
-	}, [stagedQuery]);
+	}, [currentQuery]);
 
 	const { data, isFetching } = useGetExplorerQueryRange(
 		listChartQuery,

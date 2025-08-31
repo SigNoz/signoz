@@ -150,7 +150,6 @@ function LiveLogsContainer(): JSX.Element {
 		[handleCloseConnection, openConnection],
 	);
 
-	// Replace the existing useEffect (lines 175-185) with this:
 	useEffect(() => {
 		const currentFilterExpression =
 			currentQuery?.builder.queryData[0]?.filter?.expression?.trim() || '';
@@ -168,7 +167,6 @@ function LiveLogsContainer(): JSX.Element {
 				handleStartNewConnection(currentFilterExpression);
 			}
 
-			// Update the ref with current value
 			prevFilterExpressionRef.current = currentFilterExpression || null;
 		}
 	}, [currentQuery, handleStartNewConnection]);
