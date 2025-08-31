@@ -18,6 +18,199 @@ import (
 
 var searchTroubleshootingGuideURL = "https://signoz.io/docs/userguide/search-troubleshooting/"
 
+// BooleanExpression represents a boolean expression with proper evaluation context
+type BooleanExpression struct {
+	SQL     string
+	IsTrue  bool
+	IsEmpty bool
+}
+
+// NewBooleanExpression creates a BooleanExpression from SQL
+func NewBooleanExpression(sql string) BooleanExpression {
+	return BooleanExpression{
+		SQL:     sql,
+		IsTrue:  sql == "true",
+		IsEmpty: sql == "",
+	}
+}
+
+// booleanEvaluatingVisitor is a specialized visitor for resource filter context
+// that properly applies boolean algebra during tree traversal
+type booleanEvaluatingVisitor struct {
+	*filterExpressionVisitor
+}
+
+func newBooleanEvaluatingVisitor(opts FilterExprVisitorOpts) *booleanEvaluatingVisitor {
+	return &booleanEvaluatingVisitor{
+		filterExpressionVisitor: newFilterExpressionVisitor(opts),
+	}
+}
+
+// Visit dispatches to boolean-aware visit methods
+func (v *booleanEvaluatingVisitor) Visit(tree antlr.ParseTree) any {
+	if tree == nil {
+		return NewBooleanExpression("")
+	}
+
+	switch t := tree.(type) {
+	case *grammar.QueryContext:
+		return v.VisitQuery(t)
+	case *grammar.ExpressionContext:
+		return v.VisitExpression(t)
+	case *grammar.OrExpressionContext:
+		return v.VisitOrExpression(t)
+	case *grammar.AndExpressionContext:
+		return v.VisitAndExpression(t)
+	case *grammar.UnaryExpressionContext:
+		return v.VisitUnaryExpression(t)
+	case *grammar.PrimaryContext:
+		return v.VisitPrimary(t)
+	default:
+		// For leaf nodes, delegate to original visitor and wrap result
+		result := v.filterExpressionVisitor.Visit(tree)
+		if sql, ok := result.(string); ok {
+			return NewBooleanExpression(sql)
+		}
+		return NewBooleanExpression("")
+	}
+}
+
+func (v *booleanEvaluatingVisitor) VisitQuery(ctx *grammar.QueryContext) any {
+	return v.Visit(ctx.Expression())
+}
+
+func (v *booleanEvaluatingVisitor) VisitExpression(ctx *grammar.ExpressionContext) any {
+	return v.Visit(ctx.OrExpression())
+}
+
+func (v *booleanEvaluatingVisitor) VisitOrExpression(ctx *grammar.OrExpressionContext) any {
+	andExpressions := ctx.AllAndExpression()
+
+	var result BooleanExpression
+	hasTrue := false
+	hasEmpty := false
+
+	for i, expr := range andExpressions {
+		exprResult := v.Visit(expr).(BooleanExpression)
+		if exprResult.IsTrue {
+			hasTrue = true
+		}
+		if exprResult.IsEmpty {
+			hasEmpty = true
+		}
+
+		if i == 0 {
+			result = exprResult
+		} else {
+			if result.IsEmpty {
+				result = exprResult
+			} else if !exprResult.IsEmpty {
+				sql := v.builder.Or(result.SQL, exprResult.SQL)
+				result = NewBooleanExpression(sql)
+			}
+		}
+	}
+
+	// In resource filter context, if any operand is empty (meaning "include all resources"),
+	// the entire OR should be empty (include all resources)
+	if hasEmpty && v.onlyResourceFilter {
+		result.IsEmpty = true
+		result.IsTrue = true
+		result.SQL = ""
+	} else if hasTrue {
+		// Mark as always true if any operand is true, but preserve the SQL structure
+		result.IsTrue = true
+	}
+
+	return result
+}
+
+func (v *booleanEvaluatingVisitor) VisitAndExpression(ctx *grammar.AndExpressionContext) any {
+	unaryExpressions := ctx.AllUnaryExpression()
+
+	var result BooleanExpression
+	allTrue := true
+
+	for i, expr := range unaryExpressions {
+		exprResult := v.Visit(expr).(BooleanExpression)
+		if !exprResult.IsTrue && !exprResult.IsEmpty {
+			allTrue = false
+		}
+
+		if i == 0 {
+			result = exprResult
+		} else {
+			// Apply boolean AND logic
+			if exprResult.IsTrue {
+				// A AND true = A, continue with result
+				continue
+			}
+			if result.IsTrue {
+				result = exprResult
+			} else if result.IsEmpty {
+				result = exprResult
+			} else if !exprResult.IsEmpty {
+				sql := v.builder.And(result.SQL, exprResult.SQL)
+				result = NewBooleanExpression(sql)
+			}
+		}
+	}
+
+	// If all terms were "true", mark the result as always true
+	if allTrue && len(unaryExpressions) > 0 {
+		result.IsTrue = true
+		if result.SQL == "" {
+			result.SQL = "true"
+		}
+	}
+
+	return result
+}
+
+func (v *booleanEvaluatingVisitor) VisitUnaryExpression(ctx *grammar.UnaryExpressionContext) any {
+	result := v.Visit(ctx.Primary()).(BooleanExpression)
+
+	if ctx.NOT() != nil {
+		// Apply NOT logic with resource filter context awareness
+		if v.onlyResourceFilter {
+			if result.IsTrue {
+				return NewBooleanExpression("") // NOT(true) = include all resources
+			}
+			if result.IsEmpty {
+				return NewBooleanExpression("") // NOT(empty) = include all resources
+			}
+		}
+
+		sql := fmt.Sprintf("NOT (%s)", result.SQL)
+		return NewBooleanExpression(sql)
+	}
+
+	return result
+}
+
+func (v *booleanEvaluatingVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
+	if ctx.OrExpression() != nil {
+		result := v.Visit(ctx.OrExpression()).(BooleanExpression)
+		// If no boolean simplification happened, preserve original parentheses structure
+		if !result.IsEmpty && !result.IsTrue {
+			// Use original visitor to get proper parentheses structure
+			originalSQL := v.filterExpressionVisitor.Visit(ctx)
+			if sql, ok := originalSQL.(string); ok && sql != "" {
+				return NewBooleanExpression(sql)
+			}
+			result.SQL = fmt.Sprintf("(%s)", result.SQL)
+		}
+		return result
+	}
+
+	// For other cases, delegate to original visitor
+	sqlResult := v.filterExpressionVisitor.Visit(ctx)
+	if sql, ok := sqlResult.(string); ok {
+		return NewBooleanExpression(sql)
+	}
+	return NewBooleanExpression("")
+}
+
 // filterExpressionVisitor implements the FilterQueryVisitor interface
 // to convert the parsed filter expressions into ClickHouse WHERE clause
 type filterExpressionVisitor struct {
@@ -34,6 +227,7 @@ type filterExpressionVisitor struct {
 	jsonBodyPrefix     string
 	jsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	skipResourceFilter bool
+	onlyResourceFilter bool
 	skipFullTextFilter bool
 	skipFunctionCalls  bool
 	ignoreNotFoundKeys bool
@@ -52,6 +246,7 @@ type FilterExprVisitorOpts struct {
 	JsonBodyPrefix     string
 	JsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	SkipResourceFilter bool
+	OnlyResourceFilter bool // Only process resource terms, skip non-resource terms
 	SkipFullTextFilter bool
 	SkipFunctionCalls  bool
 	IgnoreNotFoundKeys bool
@@ -70,6 +265,7 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		jsonBodyPrefix:     opts.JsonBodyPrefix,
 		jsonKeyToKey:       opts.JsonKeyToKey,
 		skipResourceFilter: opts.SkipResourceFilter,
+		onlyResourceFilter: opts.OnlyResourceFilter,
 		skipFullTextFilter: opts.SkipFullTextFilter,
 		skipFunctionCalls:  opts.SkipFunctionCalls,
 		ignoreNotFoundKeys: opts.IgnoreNotFoundKeys,
@@ -160,6 +356,31 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWher
 		cond = "true"
 	}
 
+	// In resource filter context, apply robust boolean evaluation only when needed
+	if opts.OnlyResourceFilter {
+		// Check if the condition contains patterns that need boolean simplification
+		// We need boolean evaluation when:
+		// 1. Expression contains " true" (indicating simplified non-resource terms)
+		// 2. Expression is exactly "true"
+		// 3. Expression contains "NOT" with true values that need simplification
+		needsBooleanEval := strings.Contains(cond, " true") ||
+			cond == "true" ||
+			(strings.Contains(cond, "NOT") && strings.Contains(cond, "true"))
+
+		if needsBooleanEval {
+			// Re-parse and evaluate with boolean algebra
+			boolVisitor := newBooleanEvaluatingVisitor(opts)
+			boolResult := boolVisitor.Visit(tree)
+			if boolExpr, ok := boolResult.(BooleanExpression); ok {
+				if boolExpr.IsEmpty {
+					cond = "true" // Empty means include all resources
+				} else {
+					cond = boolExpr.SQL
+				}
+			}
+		}
+	}
+
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
 
 	return &PreparedWhereClause{whereClause, visitor.warnings, visitor.mainWarnURL}, nil
@@ -226,22 +447,23 @@ func (v *filterExpressionVisitor) VisitExpression(ctx *grammar.ExpressionContext
 func (v *filterExpressionVisitor) VisitOrExpression(ctx *grammar.OrExpressionContext) any {
 	andExpressions := ctx.AllAndExpression()
 
-	andExpressionConditions := make([]string, len(andExpressions))
-	for i, expr := range andExpressions {
+	validConditions := []string{}
+
+	for _, expr := range andExpressions {
 		if condExpr, ok := v.Visit(expr).(string); ok && condExpr != "" {
-			andExpressionConditions[i] = condExpr
+			validConditions = append(validConditions, condExpr)
 		}
 	}
 
-	if len(andExpressionConditions) == 0 {
+	if len(validConditions) == 0 {
 		return ""
 	}
 
-	if len(andExpressionConditions) == 1 {
-		return andExpressionConditions[0]
+	if len(validConditions) == 1 {
+		return validConditions[0]
 	}
 
-	return v.builder.Or(andExpressionConditions...)
+	return v.builder.Or(validConditions...)
 }
 
 // VisitAndExpression handles AND expressions
@@ -272,6 +494,17 @@ func (v *filterExpressionVisitor) VisitUnaryExpression(ctx *grammar.UnaryExpress
 
 	// Check if this is a NOT expression
 	if ctx.NOT() != nil {
+		// In resource filter context, handle NOT specially
+		if v.onlyResourceFilter {
+			// NOT(true) means NOT(all non-resource terms) which means "include all resources"
+			if result == "true" {
+				return "" // No filtering = include all resources
+			}
+			// NOT(empty) should return empty (no filtering)
+			if result == "" {
+				return ""
+			}
+		}
 		return fmt.Sprintf("NOT (%s)", result)
 	}
 
@@ -283,7 +516,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 	if ctx.OrExpression() != nil {
 		// This is a parenthesized expression
 		if condExpr, ok := v.Visit(ctx.OrExpression()).(string); ok && condExpr != "" {
-			return fmt.Sprintf("(%s)", v.Visit(ctx.OrExpression()).(string))
+			return fmt.Sprintf("(%s)", condExpr)
 		}
 		return ""
 	} else if ctx.Comparison() != nil {
@@ -362,6 +595,22 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		keys = filteredKeys
 		if len(keys) == 0 {
 			return ""
+		}
+	}
+
+	// this is used to only process resource terms in resource filter context
+	if v.onlyResourceFilter {
+		filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
+		for _, key := range keys {
+			if key.FieldContext == telemetrytypes.FieldContextResource {
+				filteredKeys = append(filteredKeys, key)
+			}
+		}
+		keys = filteredKeys
+		if len(keys) == 0 {
+			// For non-resource terms in resource filter context, return "true"
+			// This ensures OR expressions work correctly (e.g., resource OR non-resource)
+			return "true"
 		}
 	}
 
