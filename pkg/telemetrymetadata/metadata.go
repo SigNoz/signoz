@@ -113,12 +113,12 @@ func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) 
 	statements := []telemetrytypes.ShowCreateTableStatement{}
 	err := t.telemetrystore.ClickhouseDB().Select(ctx, &statements, query)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTblStatement.Error())
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "%s", ErrFailedToGetTblStatement.Error())
 	}
 
 	materialisedKeys, err := ExtractFieldKeysFromTblStatement(statements[0].Statement)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "%s", ErrFailedToGetTracesKeys.Error())
 	}
 
 	for idx := range materialisedKeys {

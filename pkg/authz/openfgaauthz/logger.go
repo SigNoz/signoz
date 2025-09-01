@@ -22,7 +22,7 @@ func NewLogger(logger *slog.Logger) *openfgaLogger {
 
 func (logger *openfgaLogger) With(fields ...zap.Field) pkgopenfgalogger.Logger {
 	newLogger := logger.slog.With(logger.convertor.FieldsToAttributes(fields)...)
-	return &openfgaLogger{slog: newLogger, convertor: instrumentation.NewZapSlogConvertor()}
+	return &openfgaLogger{slog: newLogger, convertor: logger.convertor}
 }
 
 func (logger *openfgaLogger) Info(message string, fields ...zap.Field) {
