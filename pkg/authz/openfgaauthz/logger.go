@@ -5,7 +5,7 @@ import (
 	"log/slog"
 
 	pkgopenfgalogger "github.com/openfga/openfga/pkg/logger"
-	"go.uber.org/zap"
+	"go.uber.org/zap" //nolint:depguard
 )
 
 var _ pkgopenfgalogger.Logger = (*openfgaLogger)(nil)
@@ -23,36 +23,44 @@ func (logger *openfgaLogger) With(fields ...zap.Field) pkgopenfgalogger.Logger {
 	return &openfgaLogger{slog: newLogger}
 }
 
+func (logger *openfgaLogger) Info(message string, fields ...zap.Field) {
+	logger.slog.Info(message, zapFieldsToArgs(fields)...) //nolint:sloglint
+}
+
+func (logger *openfgaLogger) InfoWithContext(ctx context.Context, message string, fields ...zap.Field) {
+	logger.slog.InfoContext(ctx, message, zapFieldsToArgs(fields)...) //nolint:sloglint
+}
+
 func (logger *openfgaLogger) Debug(message string, fields ...zap.Field) {
-	logger.slog.Debug(message, zapFieldsToArgs(fields)...)
+	logger.slog.Debug(message, zapFieldsToArgs(fields)...) //nolint:sloglint
 }
 
 func (logger *openfgaLogger) DebugWithContext(ctx context.Context, message string, fields ...zap.Field) {
-	logger.slog.DebugContext(ctx, message, zapFieldsToArgs(fields)...)
+	logger.slog.DebugContext(ctx, message, zapFieldsToArgs(fields)...) //nolint:sloglint
+}
+
+func (logger *openfgaLogger) Warn(message string, fields ...zap.Field) {
+	logger.slog.Warn(message, zapFieldsToArgs(fields)...) //nolint:sloglint
+}
+
+func (logger *openfgaLogger) WarnWithContext(ctx context.Context, message string, fields ...zap.Field) {
+	logger.slog.WarnContext(ctx, message, zapFieldsToArgs(fields)...) //nolint:sloglint
 }
 
 func (logger *openfgaLogger) Error(message string, fields ...zap.Field) {
-	logger.slog.Error(message, zapFieldsToArgs(fields)...)
+	logger.slog.Error(message, zapFieldsToArgs(fields)...) //nolint:sloglint
 }
 
 func (logger *openfgaLogger) ErrorWithContext(ctx context.Context, message string, fields ...zap.Field) {
-	logger.slog.ErrorContext(ctx, message, zapFieldsToArgs(fields)...)
+	logger.slog.ErrorContext(ctx, message, zapFieldsToArgs(fields)...) //nolint:sloglint
 }
 
 func (logger *openfgaLogger) Fatal(message string, fields ...zap.Field) {
-	logger.slog.Error(message, zapFieldsToArgs(fields)...)
+	logger.slog.Error(message, zapFieldsToArgs(fields)...) //nolint:sloglint
 }
 
 func (logger *openfgaLogger) FatalWithContext(ctx context.Context, message string, fields ...zap.Field) {
 	logger.slog.ErrorContext(ctx, message, zapFieldsToArgs(fields)...)
-}
-
-func (logger *openfgaLogger) Info(message string, fields ...zap.Field) {
-	logger.slog.Info(message, zapFieldsToArgs(fields)...)
-}
-
-func (logger *openfgaLogger) InfoWithContext(ctx context.Context, message string, fields ...zap.Field) {
-	logger.slog.InfoContext(ctx, message, zapFieldsToArgs(fields)...)
 }
 
 func (logger *openfgaLogger) Panic(message string, fields ...zap.Field) {
@@ -63,14 +71,6 @@ func (logger *openfgaLogger) Panic(message string, fields ...zap.Field) {
 func (logger *openfgaLogger) PanicWithContext(ctx context.Context, message string, fields ...zap.Field) {
 	logger.slog.ErrorContext(ctx, message, zapFieldsToArgs(fields)...)
 	panic(message)
-}
-
-func (logger *openfgaLogger) Warn(message string, fields ...zap.Field) {
-	logger.slog.Warn(message, zapFieldsToArgs(fields)...)
-}
-
-func (logger *openfgaLogger) WarnWithContext(ctx context.Context, message string, fields ...zap.Field) {
-	logger.slog.WarnContext(ctx, message, zapFieldsToArgs(fields)...)
 }
 
 func zapFieldsToArgs(fields []zap.Field) []any {
