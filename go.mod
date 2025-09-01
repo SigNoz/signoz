@@ -37,6 +37,8 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/open-telemetry/opamp-go v0.19.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza v0.128.0
+	github.com/openfga/api/proto v0.0.0-20250127102726-f9709139a369
+	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20250428093642-7aeebe78bbfe
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
@@ -100,9 +102,6 @@ require (
 	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/natefinch/wrap v0.2.0 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
-	github.com/openfga/api/proto v0.0.0-20250127102726-f9709139a369 // indirect
-	github.com/openfga/go-sdk v0.7.1 // indirect
-	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20250428093642-7aeebe78bbfe // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/pressly/goose/v3 v3.24.3 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
