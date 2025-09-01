@@ -1,4 +1,4 @@
-package openfgaaccesscontrol
+package openfgaauthz
 
 import (
 	"github.com/SigNoz/signoz/pkg/errors"

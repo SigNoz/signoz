@@ -3,8 +3,6 @@ package signoz
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/accesscontrol"
-	"github.com/SigNoz/signoz/pkg/accesscontrol/openfgaaccesscontrol"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/cache"
@@ -266,14 +264,6 @@ func New(
 		return nil, err
 	}
 
-	accessControlProviderFactory := openfgaaccesscontrol.NewProviderFactory()
-	accessControl, err := accessControlProviderFactory.New(ctx, providerSettings, accesscontrol.Config{
-		SqlstoreConfig: config.SQLStore,
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	// Initialize all modules
 	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
 
@@ -309,7 +299,6 @@ func New(
 		factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanager),
 		factory.NewNamedService(factory.MustNewName("licensing"), licensing),
 		factory.NewNamedService(factory.MustNewName("statsreporter"), statsReporter),
-		factory.NewNamedService(factory.MustNewName("accesscontrol"), accessControl),
 	)
 	if err != nil {
 		return nil, err

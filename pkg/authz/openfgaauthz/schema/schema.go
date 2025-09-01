@@ -7,13 +7,13 @@ import (
 )
 
 var (
-	//go:embed core.fga
-	coreDSL string
+	//go:embed base.fga
+	baseDSL string
 )
 
 var SchemaModules = []transformer.ModuleFile{
 	{
-		Name:     "core.fga",
-		Contents: coreDSL,
+		Name:     "base.fga",
+		Contents: baseDSL,
 	},
 }

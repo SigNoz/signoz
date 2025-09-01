@@ -1,34 +1,37 @@
-package openfgaaccesscontrol
+package openfgaauthz
 
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/accesscontrol"
-	"github.com/SigNoz/signoz/pkg/accesscontrol/openfgaaccesscontrol/schema"
+	authz "github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/authz/openfgaauthz/schema"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	language "github.com/openfga/language/pkg/go/transformer"
 	"github.com/openfga/openfga/pkg/server"
 )
 
 type provider struct {
-	config   accesscontrol.Config
+	config   authz.Config
 	settings factory.ScopedProviderSettings
 	server   *server.Server
 	stopChan chan struct{}
 }
 
-func NewProviderFactory() factory.ProviderFactory[accesscontrol.AccessControl, accesscontrol.Config] {
-	return factory.NewProviderFactory(factory.MustNewName("openfga"), newOpenfgaProvider)
+func NewProviderFactory(sqlstoreConfig sqlstore.Config) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("openfga"), func(ctx context.Context, ps factory.ProviderSettings, config authz.Config) (authz.AuthZ, error) {
+		return newOpenfgaProvider(ctx, ps, config, sqlstoreConfig)
+	})
 }
 
-func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config accesscontrol.Config) (accesscontrol.AccessControl, error) {
-	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/accesscontrol/openfgaaccesscontrol")
+func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstoreConfig sqlstore.Config) (authz.AuthZ, error) {
+	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/authz/openfgaauthz")
 
 	// setup connections and run the migrations
-	sqlstore, err := NewStore(storeConfig{sqlstoreConfig: config.SqlstoreConfig})
+	sqlstore, err := NewStore(storeConfig{sqlstoreConfig: sqlstoreConfig})
 	if err != nil {
-		scopedProviderSettings.Logger().DebugContext(ctx, "failed to initialize sqlstore for accesscontrol")
+		scopedProviderSettings.Logger().DebugContext(ctx, "failed to initialize sqlstore for authz")
 		return nil, err
 	}
 
@@ -39,7 +42,7 @@ func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, 
 	}
 	openfgaServer, err := server.NewServerWithOpts(opts...)
 	if err != nil {
-		scopedProviderSettings.Logger().DebugContext(ctx, "failed to create accesscontrol server")
+		scopedProviderSettings.Logger().DebugContext(ctx, "failed to create authz server")
 		return nil, err
 	}
 

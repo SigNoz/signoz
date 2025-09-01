@@ -42,3 +42,7 @@
 /pkg/telemetrymetadata/ @srikanthccv
 /pkg/telemetrymetrics/ @srikanthccv
 /pkg/telemetrytraces/ @srikanthccv
+
+# AuthN / AuthZ Owners 
+
+/pkg/authz/ @vikrantgupta25/ @grandwizard28

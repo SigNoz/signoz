@@ -1,16 +1,13 @@
-package accesscontrol
+package authz
 
 import (
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
 )
 
-type Config struct {
-	SqlstoreConfig sqlstore.Config
-}
+type Config struct{}
 
 func NewConfigFactory() factory.ConfigFactory {
-	return factory.NewConfigFactory(factory.MustNewName("accesscontrol"), newConfig)
+	return factory.NewConfigFactory(factory.MustNewName("authz"), newConfig)
 }
 
 func newConfig() factory.Config {

@@ -1,7 +1,7 @@
-package accesscontrol
+package authz
 
 import "github.com/SigNoz/signoz/pkg/factory"
 
-type AccessControl interface {
+type AuthZ interface {
 	factory.Service
 }
