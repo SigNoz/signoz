@@ -48,6 +48,7 @@ function HistogramPanelWrapper({
 		setSubMenu,
 		contextLinks: widget.contextLinks,
 		panelType: widget.panelTypes,
+		queryRange: queryResponse,
 	});
 
 	const clickHandlerWithContextMenu = useCallback(

@@ -168,6 +168,7 @@ function PiePanelWrapper({
 		setSubMenu,
 		contextLinks: widget.contextLinks,
 		panelType: widget.panelTypes,
+		queryRange: queryResponse,
 	});
 
 	return (
