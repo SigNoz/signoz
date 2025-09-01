@@ -782,7 +782,7 @@ func (aH *APIHandler) getDowntimeSchedule(w http.ResponseWriter, r *http.Request
 	idStr := mux.Vars(r)["id"]
 	id, err := valuer.NewUUID(idStr)
 	if err != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
 		return
 	}
 
@@ -818,7 +818,7 @@ func (aH *APIHandler) editDowntimeSchedule(w http.ResponseWriter, r *http.Reques
 	idStr := mux.Vars(r)["id"]
 	id, err := valuer.NewUUID(idStr)
 	if err != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
 		return
 	}
 
@@ -846,7 +846,7 @@ func (aH *APIHandler) deleteDowntimeSchedule(w http.ResponseWriter, r *http.Requ
 	idStr := mux.Vars(r)["id"]
 	id, err := valuer.NewUUID(idStr)
 	if err != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
 		return
 	}
 
@@ -1949,7 +1949,7 @@ func (aH *APIHandler) setCustomRetentionTTL(w http.ResponseWriter, r *http.Reque
 	// Context is not used here as TTL is long duration DB operation
 	result, apiErr := aH.reader.SetTTLV2(context.Background(), claims.OrgID, &params)
 	if apiErr != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInternal, apiErr.Error()))
+		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInternal, apiErr.Error()))
 		return
 	}
 
@@ -1960,13 +1960,13 @@ func (aH *APIHandler) getCustomRetentionTTL(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	claims, errv2 := authtypes.ClaimsFromContext(ctx)
 	if errv2 != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get org id from context"))
+		render.Error(w, errorsV2.New(errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get org id from context"))
 		return
 	}
 
 	result, apiErr := aH.reader.GetCustomRetentionTTL(r.Context(), claims.OrgID)
 	if apiErr != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInternal, apiErr.Error()))
+		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInternal, apiErr.Error()))
 		return
 	}
 
@@ -3374,7 +3374,7 @@ func (aH *APIHandler) calculateConnectionStatus(
 	go func() {
 		defer wg.Done()
 
-		if connectionTests.Metrics == nil || len(connectionTests.Metrics) < 1 {
+		if len(connectionTests.Metrics) < 1 {
 			return
 		}
 
@@ -4066,7 +4066,6 @@ func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(
 func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *middleware.AuthZ) {
 	subRouter := router.PathPrefix("/api/v1/logs").Subrouter()
 	subRouter.HandleFunc("", am.ViewAccess(aH.getLogs)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/tail", am.ViewAccess(aH.tailLogs)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", am.ViewAccess(aH.logFields)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", am.EditAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/aggregate", am.ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
@@ -4111,10 +4110,6 @@ func (aH *APIHandler) logFieldUpdate(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getLogs(w http.ResponseWriter, r *http.Request) {
 	aH.WriteJSON(w, r, map[string]interface{}{"results": []interface{}{}})
-}
-
-func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
-	return
 }
 
 func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
@@ -5020,6 +5015,10 @@ func (aH *APIHandler) getQueueOverview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
 
 	aH.Respond(w, results)
 }
@@ -5044,6 +5043,11 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queryRangeParams, err := thirdPartyApi.BuildDomainList(thirdPartyQueryRequest)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -5097,6 +5101,10 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queryRangeParams, err := thirdPartyApi.BuildDomainInfo(thirdPartyQueryRequest)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
 
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
 		zap.L().Error(err.Error())
