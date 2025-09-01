@@ -75,13 +75,13 @@ func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*dashboard
 	return dashboards, nil
 }
 
-func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatableDashboard dashboardtypes.UpdatableDashboard) (*dashboardtypes.Dashboard, error) {
+func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatableDashboard dashboardtypes.UpdatableDashboard, diff int) (*dashboardtypes.Dashboard, error) {
 	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
 		return nil, err
 	}
 
-	err = dashboard.Update(ctx, updatableDashboard, updatedBy)
+	err = dashboard.Update(ctx, updatableDashboard, updatedBy, diff)
 	if err != nil {
 		return nil, err
 	}

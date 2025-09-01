@@ -1,7 +1,6 @@
 package authtypes
 
 import (
-	"context"
 	"log/slog"
 	"slices"
 
@@ -82,17 +81,4 @@ func (c *Claims) IsSelfAccess(id string) error {
 	}
 
 	return errors.New(errors.TypeForbidden, errors.CodeForbidden, "only the user/admin can access their own resource")
-}
-
-type authTypeKey struct{}
-
-// SetAuthType stores the auth type (e.g., "jwt", "api_key", "internal") in context.
-func SetAuthType(ctx context.Context, authType string) context.Context {
-	return context.WithValue(ctx, authTypeKey{}, authType)
-}
-
-// AuthTypeFromContext retrieves the auth type from context if set.
-func AuthTypeFromContext(ctx context.Context) (string, bool) {
-	v, ok := ctx.Value(authTypeKey{}).(string)
-	return v, ok
 }

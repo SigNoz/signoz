@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,50 +19,48 @@ func makeTestWidgets(ids ...string) []interface{} {
 	return widgets
 }
 
-func TestCanUpdate_MultipleDeletions_ByAuthType(t *testing.T) {
+func TestCanUpdate_MultipleDeletions_ByDiff(t *testing.T) {
 	testCases := []struct {
-		name     string
-		authType string
-		setAuth  bool
-		updated  []string
-		wantErr  bool
+		name    string
+		diff    int
+		updated []string
+		wantErr bool
 	}{
 		{
-			name:     "api_key-allows-multi-delete",
-			authType: authtypes.AuthTypeAPIKey,
-			setAuth:  true,
-			updated:  []string{"a"},
-			wantErr:  false,
+			name:    "diff-0-allows-multi-delete",
+			diff:    0,
+			updated: []string{"a"}, // deleting 2 widgets (b, c)
+			wantErr: false,
 		},
 		{
-			name:     "jwt-blocks-multi-delete",
-			authType: authtypes.AuthTypeJWT,
-			setAuth:  true,
-			updated:  []string{"a"},
-			wantErr:  true,
+			name:    "diff-1-blocks-multi-delete",
+			diff:    1,
+			updated: []string{"a"}, // deleting 2 widgets (b, c) > diff(1)
+			wantErr: true,
 		},
 		{
-			name:     "jwt-allows-single-delete",
-			authType: authtypes.AuthTypeJWT,
-			setAuth:  true,
-			updated:  []string{"a", "b"},
-			wantErr:  false,
+			name:    "diff-1-allows-single-delete",
+			diff:    1,
+			updated: []string{"a", "b"}, // deleting 1 widget (c) = diff(1)
+			wantErr: false,
 		},
 		{
-			name:     "internal-authType-allows-multi-delete",
-			authType: authtypes.AuthTypeInternal,
-			setAuth:  true,
-			updated:  []string{"a"},
-			wantErr:  false,
+			name:    "diff-2-allows-two-deletions",
+			diff:    2,
+			updated: []string{"a"}, // deleting 2 widgets (b, c) = diff(2)
+			wantErr: false,
+		},
+		{
+			name:    "diff-1-blocks-three-deletions",
+			diff:    1,
+			updated: []string{}, // deleting all 3 widgets > diff(1)
+			wantErr: true,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
-			if tc.setAuth {
-				ctx = authtypes.SetAuthType(ctx, tc.authType)
-			}
 
 			orgID := valuer.GenerateUUID()
 			initial := StorableDashboardData{
@@ -75,7 +72,7 @@ func TestCanUpdate_MultipleDeletions_ByAuthType(t *testing.T) {
 			updated := StorableDashboardData{
 				"widgets": makeTestWidgets(tc.updated...),
 			}
-			err = d.CanUpdate(ctx, updated)
+			err = d.CanUpdate(ctx, updated, tc.diff)
 			if tc.wantErr {
 				assert.Error(t, err)
 			} else {
