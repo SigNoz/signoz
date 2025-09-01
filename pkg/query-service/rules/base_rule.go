@@ -123,7 +123,9 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	if p.RuleCondition == nil || !p.RuleCondition.IsValid() {
 		return nil, fmt.Errorf("invalid rule condition")
 	}
-
+	if p.NotificationPolicies {
+		p.Labels["notification_policy"] = "true"
+	}
 	baseRule := &BaseRule{
 		id:                id,
 		orgID:             orgID,

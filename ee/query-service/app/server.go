@@ -3,6 +3,9 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
+	"github.com/SigNoz/signoz/pkg/types/nfroutingtypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"log/slog"
 	"net"
 	"net/http"
@@ -98,6 +101,9 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		signoz.Cache,
 	)
 
+	ruleStore := sqlrulestore.NewRuleStore(signoz.SQLStore)
+	routeManager := alertmanager.NewManagerWithChannelRoutingStrategy(signoz.Alertmanager, ruleStore)
+
 	rm, err := makeRulesManager(
 		reader,
 		signoz.Cache,
@@ -108,6 +114,9 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		signoz.Modules.OrgGetter,
 		signoz.Querier,
 		signoz.Instrumentation.Logger(),
+		ruleStore,
+		signoz.RouteStore,
+		routeManager,
 	)
 
 	if err != nil {
@@ -170,6 +179,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		Gateway:                       gatewayProxy,
 		GatewayUrl:                    config.Gateway.URL.String(),
 		JWT:                           jwt,
+		RoutingManager:                routeManager,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts, signoz)
@@ -418,17 +428,7 @@ func (s *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
-func makeRulesManager(
-	ch baseint.Reader,
-	cache cache.Cache,
-	alertmanager alertmanager.Alertmanager,
-	sqlstore sqlstore.SQLStore,
-	telemetryStore telemetrystore.TelemetryStore,
-	prometheus prometheus.Prometheus,
-	orgGetter organization.Getter,
-	querier querier.Querier,
-	logger *slog.Logger,
-) (*baserules.Manager, error) {
+func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, querier querier.Querier, logger *slog.Logger, ruleStore ruletypes.RuleStore, routeStore nfroutingtypes.RouteStore, routeManager *alertmanager.RouteManager) (*baserules.Manager, error) {
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
 		TelemetryStore:      telemetryStore,
@@ -445,9 +445,11 @@ func makeRulesManager(
 		Alertmanager:        alertmanager,
 		SQLStore:            sqlstore,
 		OrgGetter:           orgGetter,
+		RouteStore:          routeStore,
+		RoutingManager:      routeManager,
 	}
 
-	// create Manager
+	// create RouteManager
 	manager, err := baserules.NewManager(managerOpts)
 	if err != nil {
 		return nil, fmt.Errorf("rule manager error: %v", err)

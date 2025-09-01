@@ -22,7 +22,7 @@ func newMockRouteStore() *mockRouteStore {
 	}
 }
 
-func (m *mockRouteStore) GetByID(ctx context.Context, id string) (*nfroutingtypes.ExpressionRoute, error) {
+func (m *mockRouteStore) GetByID(ctx context.Context, id valuer.UUID) (*nfroutingtypes.ExpressionRoute, error) {
 	for _, orgRoutes := range m.routes {
 		for _, route := range orgRoutes {
 			if route.ID.StringValue() == id {
@@ -33,12 +33,12 @@ func (m *mockRouteStore) GetByID(ctx context.Context, id string) (*nfroutingtype
 	return nil, nil
 }
 
-func (m *mockRouteStore) Create(ctx context.Context, route *nfroutingtypes.ExpressionRoute) error {
+func (m *mockRouteStore) Create(ctx context.Context, route *nfroutingtypes.ExpressionRoute) (valuer.UUID, error) {
 	if m.routes[route.OrgID] == nil {
 		m.routes[route.OrgID] = make([]nfroutingtypes.ExpressionRoute, 0)
 	}
 	m.routes[route.OrgID] = append(m.routes[route.OrgID], *route)
-	return nil
+	return
 }
 
 func (m *mockRouteStore) Update(ctx context.Context, route *nfroutingtypes.ExpressionRoute) error {
@@ -127,7 +127,7 @@ func TestRouteStore_CRUD_Operations(t *testing.T) {
 	}
 	route.ID = valuer.GenerateUUID()
 
-	err := mockStore.Create(ctx, route)
+	_, err := mockStore.Create(ctx, route)
 	require.NoError(t, err)
 
 	// Test GetByID
@@ -186,10 +186,10 @@ func TestRouteStore_MultipleOrganizations(t *testing.T) {
 	}
 	route2.ID = valuer.GenerateUUID()
 
-	err := mockStore.Create(ctx, route1)
+	_, err := mockStore.Create(ctx, route1)
 	require.NoError(t, err)
 
-	err = mockStore.Create(ctx, route2)
+	_, err = mockStore.Create(ctx, route2)
 	require.NoError(t, err)
 
 	// Test isolation between organizations

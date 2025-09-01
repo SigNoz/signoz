@@ -16,11 +16,13 @@ import (
 
 type API struct {
 	alertmanager Alertmanager
+	routeManager *RouteManager
 }
 
-func NewAPI(alertmanager Alertmanager) *API {
+func NewAPI(alertmanager Alertmanager, routeManager *RouteManager) *API {
 	return &API{
 		alertmanager: alertmanager,
+		routeManager: routeManager,
 	}
 }
 

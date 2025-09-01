@@ -102,6 +102,8 @@ type ManagerOptions struct {
 	SQLStore            sqlstore.SQLStore
 	OrgGetter           organization.Getter
 	RouteStore          nfroutingtypes.RouteStore
+	RoutingManager      *alertmanager.RouteManager
+	RuleStore           ruletypes.RuleStore
 }
 
 // The Manager manages recording and alerting rules.
@@ -121,10 +123,11 @@ type Manager struct {
 	prepareTaskFunc     func(opts PrepareTaskOptions) (Task, error)
 	prepareTestRuleFunc func(opts PrepareTestRuleOptions) (int, *model.ApiError)
 
-	alertmanager alertmanager.Alertmanager
-	sqlstore     sqlstore.SQLStore
-	orgGetter    organization.Getter
-	routeStore   nfroutingtypes.RouteStore
+	alertmanager   alertmanager.Alertmanager
+	sqlstore       sqlstore.SQLStore
+	orgGetter      organization.Getter
+	routeStore     nfroutingtypes.RouteStore
+	routingManager *alertmanager.RouteManager
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -204,13 +207,12 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 // by calling the Run method.
 func NewManager(o *ManagerOptions) (*Manager, error) {
 	o = defaultOptions(o)
-	ruleStore := sqlrulestore.NewRuleStore(o.SQLStore)
 	maintenanceStore := sqlrulestore.NewMaintenanceStore(o.SQLStore)
 
 	m := &Manager{
 		tasks:               map[string]Task{},
 		rules:               map[string]Rule{},
-		ruleStore:           ruleStore,
+		ruleStore:           o.RuleStore,
 		maintenanceStore:    maintenanceStore,
 		opts:                o,
 		block:               make(chan struct{}),
@@ -223,6 +225,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		sqlstore:            o.SQLStore,
 		orgGetter:           o.OrgGetter,
 		routeStore:          o.RouteStore,
+		routingManager:      o.RoutingManager,
 	}
 
 	return m, nil
@@ -354,42 +357,11 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 	existingRule.Data = ruleStr
 
 	return m.ruleStore.EditRule(ctx, existingRule, func(ctx context.Context) error {
-		cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
-		if err != nil {
-			return err
-		}
 
-		err = alertmanagertypes.RemoveRuleFromRoutes(cfg.AlertmanagerConfig(), id.StringValue())
-		if err != nil {
-			return err
-		}
-
-		ruleGrouping := parsedRule.GetRuleGrouping()
-
-		// Convert to alertmanagertypes.RuleGrouping
-		alertGrouping := alertmanagertypes.RuleGrouping{
-			GroupBy:        ruleGrouping.GroupBy,
-			RepeatInterval: time.Duration(parsedRule.Renotify),
-		}
-		var allRoutes []nfroutingtypes.ExpressionRoute
 		if parsedRule.NotificationPolicies {
-			if m.routeStore != nil {
-				// Get expression routes for the organization
-				allRoutes, err = m.routeStore.GetAllByOrgID(ctx, claims.OrgID)
-				if err != nil {
-					return err
-				}
-			}
-		}
-		thresholdMapping := parsedRule.ThresholdMapping
-		err = cfg.AddRuleToRoutes(id.StringValue(), alertGrouping, parsedRule.NotificationPolicies, allRoutes, thresholdMapping)
-		if err != nil {
-			return err
-		}
-
-		err = m.alertmanager.SetConfig(ctx, cfg)
-		if err != nil {
-			return err
+			err = m.routingManager.AddNotificationPolicyRules(ctx, orgID.StringValue(), id.StringValue(), *parsedRule)
+		} else {
+			err = m.routingManager.AddDirectRules(ctx, orgID.StringValue(), id.StringValue(), *parsedRule)
 		}
 
 		err = m.syncRuleStateWithTask(ctx, orgID, prepareTaskName(existingRule.ID.StringValue()), parsedRule)
@@ -469,25 +441,21 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		return err
 	}
 
-	_, err = m.ruleStore.GetStoredRule(ctx, id)
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		return err
+	}
+
+	storedRule, err := m.GetRule(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	return m.ruleStore.DeleteRule(ctx, id, func(ctx context.Context) error {
-		cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
-		if err != nil {
-			return err
-		}
-
-		err = alertmanagertypes.RemoveRuleFromRoutes(cfg.AlertmanagerConfig(), id.StringValue())
-		if err != nil {
-			return err
-		}
-
-		err = m.alertmanager.SetConfig(ctx, cfg)
-		if err != nil {
-			return err
+		if storedRule.NotificationPolicies {
+			err = m.routingManager.DeleteNotificationPolicyRules(ctx, orgID.StringValue(), id.StringValue())
+		} else {
+			err = m.routingManager.DeleteDirectRules(ctx, orgID.StringValue(), id.StringValue())
 		}
 
 		taskName := prepareTaskName(id.StringValue())
@@ -549,40 +517,12 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 	}
 
 	id, err := m.ruleStore.CreateRule(ctx, storedRule, func(ctx context.Context, id valuer.UUID) error {
-		cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
-		if err != nil {
-			return err
-		}
 
-		// Extract user-defined grouping configuration from rule
-		ruleGrouping := parsedRule.GetRuleGrouping()
-
-		// Convert to alertmanagertypes.RuleGrouping
-		alertGrouping := alertmanagertypes.RuleGrouping{
-			GroupBy:        ruleGrouping.GroupBy,
-			RepeatInterval: time.Duration(parsedRule.Renotify),
-		}
-
-		// Get threshold mapping from rule, provide defaults if empty
-		thresholdMapping := parsedRule.ThresholdMapping
-
-		var allRoutes []nfroutingtypes.ExpressionRoute
 		if parsedRule.NotificationPolicies {
-			if m.routeStore != nil {
-				// Get expression routes for the organization
-				allRoutes, err = m.routeStore.GetAllByOrgID(ctx, claims.OrgID)
-				if err != nil {
-					return err
-				}
-			}
+			err = m.routingManager.AddNotificationPolicyRules(ctx, orgID.StringValue(), id.StringValue(), *parsedRule)
+		} else {
+			err = m.routingManager.AddDirectRules(ctx, orgID.StringValue(), id.StringValue(), *parsedRule)
 		}
-
-		err = cfg.AddRuleToRoutes(id.StringValue(), alertGrouping, parsedRule.NotificationPolicies, allRoutes, thresholdMapping)
-		if err != nil {
-			return err
-		}
-
-		err = m.alertmanager.SetConfig(ctx, cfg)
 		if err != nil {
 			return err
 		}

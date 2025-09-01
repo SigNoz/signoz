@@ -2,6 +2,9 @@ package signozalertmanager
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/alertmanager/routestrategy"
+	"github.com/prometheus/alertmanager/featurecontrol"
+	"github.com/prometheus/alertmanager/matcher/compat"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
@@ -15,12 +18,13 @@ import (
 )
 
 type provider struct {
-	service     *alertmanager.Service
-	config      alertmanager.Config
-	settings    factory.ScopedProviderSettings
-	configStore alertmanagertypes.ConfigStore
-	stateStore  alertmanagertypes.StateStore
-	stopC       chan struct{}
+	service       *alertmanager.Service
+	config        alertmanager.Config
+	settings      factory.ScopedProviderSettings
+	configStore   alertmanagertypes.ConfigStore
+	stateStore    alertmanagertypes.StateStore
+	stopC         chan struct{}
+	routeStrategy routestrategy.RoutingStrategy
 }
 
 func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
@@ -54,6 +58,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 }
 
 func (provider *provider) Start(ctx context.Context) error {
+	compat.InitFromFlags(provider.settings.Logger(), featurecontrol.NoopFlags{})
 	if err := provider.service.SyncServers(ctx); err != nil {
 		provider.settings.Logger().ErrorContext(ctx, "failed to sync alertmanager servers", "error", err)
 		return err

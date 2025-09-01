@@ -4,9 +4,6 @@ import (
 	"context"
 	"sync"
 
-	"github.com/prometheus/alertmanager/featurecontrol"
-	"github.com/prometheus/alertmanager/matcher/compat"
-
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -66,7 +63,6 @@ func (service *Service) SyncServers(ctx context.Context) error {
 
 	service.serversMtx.Lock()
 	for _, org := range orgs {
-		compat.InitFromFlags(service.settings.Logger(), featurecontrol.NoopFlags{})
 		config, err := service.getConfig(ctx, org.ID.StringValue())
 		if err != nil {
 			service.settings.Logger().ErrorContext(ctx, "failed to get alertmanager config for org", "org_id", org.ID.StringValue(), "error", err)

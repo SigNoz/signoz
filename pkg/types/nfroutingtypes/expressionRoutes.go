@@ -97,8 +97,8 @@ type ExpressionRoute struct {
 }
 
 type RouteStore interface {
-	GetByID(ctx context.Context, id string) (*ExpressionRoute, error)
-	Create(ctx context.Context, route *ExpressionRoute) error
+	GetByID(ctx context.Context, id valuer.UUID) (*ExpressionRoute, error)
+	Create(ctx context.Context, route *ExpressionRoute) (valuer.UUID, error)
 	Update(ctx context.Context, route *ExpressionRoute) error
 	Delete(ctx context.Context, id string) error
 	GetAllByOrgID(ctx context.Context, orgID string) ([]ExpressionRoute, error)
@@ -132,7 +132,7 @@ func CanConvertToPrometheusMatchers(expression string) bool {
 			continue
 		}
 
-		if _, err := compat.Matcher(part, "validation"); err != nil {
+		if _, err := compat.Matcher(part, "noop"); err != nil {
 			return false
 		}
 	}

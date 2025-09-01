@@ -206,13 +206,6 @@ func (c *Config) CreateReceiver(receiver config.Receiver) error {
 			return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigConflict, "the receiver name has to be unique, please choose a different name")
 		}
 	}
-
-	//route, err := NewRouteFromReceiver(receiver)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//c.alertmanagerConfig.Route.Routes = append(c.alertmanagerConfig.Route.Routes, route)
 	c.alertmanagerConfig.Receivers = append(c.alertmanagerConfig.Receivers, receiver)
 
 	if err := c.alertmanagerConfig.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
@@ -300,6 +293,12 @@ func (c *Config) CreateRuleIDMatcher(ruleID string, receiverNames []string) erro
 	c.storeableConfig.UpdatedAt = time.Now()
 
 	return nil
+}
+
+func (c *Config) UpdateStoreableConfig() {
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
+	c.storeableConfig.UpdatedAt = time.Now()
 }
 
 func (c *Config) UpdateRuleIDMatcher(ruleID string, receiverNames []string) error {

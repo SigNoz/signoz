@@ -5,6 +5,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	routeTypes "github.com/SigNoz/signoz/pkg/types/nfroutingtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type store struct {
@@ -17,7 +18,7 @@ func NewStore(sqlstore sqlstore.SQLStore) routeTypes.RouteStore {
 	}
 }
 
-func (store *store) GetByID(ctx context.Context, id string) (*routeTypes.ExpressionRoute, error) {
+func (store *store) GetByID(ctx context.Context, id valuer.UUID) (*routeTypes.ExpressionRoute, error) {
 	route := new(routeTypes.ExpressionRoute)
 	err := store.sqlstore.BunDB().NewSelect().Model(route).Where("id = ?", id).Scan(ctx)
 	if err != nil {
@@ -26,13 +27,13 @@ func (store *store) GetByID(ctx context.Context, id string) (*routeTypes.Express
 
 	return route, nil
 }
-func (store *store) Create(ctx context.Context, route *routeTypes.ExpressionRoute) error {
+func (store *store) Create(ctx context.Context, route *routeTypes.ExpressionRoute) (valuer.UUID, error) {
 	_, err := store.sqlstore.BunDB().NewInsert().Model(route).Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "expression route with ID: %s already exists", route.ID)
+		return valuer.UUID{}, err
 	}
 
-	return nil
+	return route.ID, nil
 }
 func (store *store) Update(ctx context.Context, route *routeTypes.ExpressionRoute) error {
 	_, err := store.sqlstore.BunDB().NewUpdate().Model(route).WherePK().Exec(ctx)

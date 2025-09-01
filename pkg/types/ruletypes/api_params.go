@@ -70,10 +70,11 @@ type PostableRule struct {
 	ThresholdMapping map[string][]string `json:"thresholdMapping,omitempty"` // {"critical": "critical-receiver", "warning": "warning-receiver"}
 
 	// legacy
-	Expr                 string   `yaml:"expr,omitempty" json:"expr,omitempty"`
-	OldYaml              string   `json:"yaml,omitempty"`
-	NotificationPolicies bool     `yaml:"notificationPolicies,omitempty" json:"notificationPolicies,omitempty"`
-	Renotify             Duration `yaml:"renotify,omitempty" json:"renotify,omitempty"`
+	Expr                 string              `yaml:"expr,omitempty" json:"expr,omitempty"`
+	OldYaml              string              `json:"yaml,omitempty"`
+	NotificationPolicies bool                `yaml:"notificationPolicies,omitempty" json:"notificationPolicies,omitempty"`
+	Renotify             Duration            `yaml:"renotify,omitempty" json:"renotify,omitempty"`
+	Thresholds           map[string][]string `yaml:"thresholds,omitempty" json:"thresholds,omitempty"`
 }
 
 // GetRuleGrouping extracts grouping configuration from PostableRule and provides defaults
@@ -181,7 +182,7 @@ func isValidLabelName(ln string) bool {
 		return false
 	}
 	for i, b := range ln {
-		if !((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_' || (b >= '0' && b <= '9' && i > 0)) {
+		if !((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_' || b == '.' || (b >= '0' && b <= '9' && i > 0)) {
 			return false
 		}
 	}
