@@ -28,16 +28,16 @@ var (
 )
 
 type querier struct {
-	logger                   *slog.Logger
-	telemetryStore           telemetrystore.TelemetryStore
-	metadataStore            telemetrytypes.MetadataStore
-	promEngine               prometheus.Prometheus
-	traceStmtBuilder         qbtypes.StatementBuilder[qbtypes.TraceAggregation]
-	logStmtBuilder           qbtypes.StatementBuilder[qbtypes.LogAggregation]
-	metricStmtBuilder        qbtypes.StatementBuilder[qbtypes.MetricAggregation]
-	meterStmtBuilder         qbtypes.StatementBuilder[qbtypes.MetricAggregation]
-	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder
-	bucketCache              BucketCache
+	logger                 *slog.Logger
+	telemetryStore         telemetrystore.TelemetryStore
+	metadataStore          telemetrytypes.MetadataStore
+	promEngine             prometheus.Prometheus
+	traceStmtBuilder       qbtypes.StatementBuilder[qbtypes.TraceAggregation]
+	logStmtBuilder         qbtypes.StatementBuilder[qbtypes.LogAggregation]
+	metricStmtBuilder      qbtypes.StatementBuilder[qbtypes.MetricAggregation]
+	meterStmtBuilder       qbtypes.StatementBuilder[qbtypes.MetricAggregation]
+	bucketCache            BucketCache
+	liveDataRefreshSeconds time.Duration
 }
 
 var _ Querier = (*querier)(nil)
