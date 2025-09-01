@@ -186,12 +186,12 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 	}
 
 	keySelectors := getKeySelectors(*query)
-	b.stmtBuilder.logger.InfoContext(b.ctx, "Key selectors for query", "queryName", queryName, "keySelectors", keySelectors)
+	b.stmtBuilder.logger.DebugContext(b.ctx, "Key selectors for query", "queryName", queryName, "keySelectors", keySelectors)
 	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(b.ctx, keySelectors)
 	if err != nil {
 		return "", err
 	}
-	b.stmtBuilder.logger.InfoContext(b.ctx, "Retrieved keys for query", "queryName", queryName, "keysCount", len(keys))
+	b.stmtBuilder.logger.DebugContext(b.ctx, "Retrieved keys for query", "queryName", queryName, "keysCount", len(keys))
 
 	sb := sqlbuilder.NewSelectBuilder()
 	// Select all columns plus add the level identifier
@@ -200,7 +200,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 	sb.From("base_spans AS s")
 
 	if query.Filter != nil && query.Filter.Expression != "" {
-		b.stmtBuilder.logger.InfoContext(b.ctx, "Applying filter to query CTE", "queryName", queryName, "filter", query.Filter.Expression)
+		b.stmtBuilder.logger.DebugContext(b.ctx, "Applying filter to query CTE", "queryName", queryName, "filter", query.Filter.Expression)
 		filterWhereClause, err := querybuilder.PrepareWhereClause(
 			query.Filter.Expression,
 			querybuilder.FilterExprVisitorOpts{
@@ -216,16 +216,16 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 			return "", err
 		}
 		if filterWhereClause != nil {
-			b.stmtBuilder.logger.InfoContext(b.ctx, "Adding where clause", "whereClause", filterWhereClause.WhereClause)
+			b.stmtBuilder.logger.DebugContext(b.ctx, "Adding where clause", "whereClause", filterWhereClause.WhereClause)
 			sb.AddWhereClause(filterWhereClause.WhereClause)
 		} else {
 			b.stmtBuilder.logger.WarnContext(b.ctx, "PrepareWhereClause returned nil", "filter", query.Filter.Expression)
 		}
 	} else {
 		if query.Filter == nil {
-			b.stmtBuilder.logger.InfoContext(b.ctx, "No filter for query CTE", "queryName", queryName, "reason", "filter is nil")
+			b.stmtBuilder.logger.DebugContext(b.ctx, "No filter for query CTE", "queryName", queryName, "reason", "filter is nil")
 		} else {
-			b.stmtBuilder.logger.InfoContext(b.ctx, "No filter for query CTE", "queryName", queryName, "reason", "filter expression is empty")
+			b.stmtBuilder.logger.DebugContext(b.ctx, "No filter for query CTE", "queryName", queryName, "reason", "filter expression is empty")
 		}
 	}
 
