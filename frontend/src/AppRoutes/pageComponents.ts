@@ -295,3 +295,15 @@ export const MetricsExplorer = Loadable(
 export const ApiMonitoring = Loadable(
 	() => import(/* webpackChunkName: "ApiMonitoring" */ 'pages/ApiMonitoring'),
 );
+
+export const SessionRecordings = Loadable(
+	() =>
+		import(/* webpackChunkName: "SessionRecordings" */ 'pages/SessionRecording'),
+);
+
+export const SessionRecordingsDetail = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "SessionRecordingsDetail" */ 'pages/SessionRecording/SessionDetail'
+		),
+);

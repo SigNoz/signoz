@@ -31,6 +31,7 @@ import {
 	Unplug,
 	User,
 	UserPlus,
+	Video,
 } from 'lucide-react';
 
 import { SecondaryMenuItemKey, SidebarItem } from './sideNav.types';
@@ -103,7 +104,6 @@ const menuItems: SidebarItem[] = [
 		icon: <HardDrive size={16} />,
 		itemKey: 'services',
 	},
-
 	{
 		key: ROUTES.LOGS,
 		label: 'Logs',
@@ -273,6 +273,13 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		isEnabled: true,
 		isBeta: true,
 		itemKey: 'meter-explorer',
+	},
+	{
+		key: ROUTES.SESSION_RECORDINGS,
+		label: 'Session Recordings',
+		icon: <Video size={16} />,
+		isEnabled: true,
+		itemKey: 'session-recordings',
 	},
 	{
 		key: ROUTES.MESSAGING_QUEUES_OVERVIEW,

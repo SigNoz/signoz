@@ -54,6 +54,8 @@ import {
 	WorkspaceAccessRestricted,
 	WorkspaceBlocked,
 	WorkspaceSuspended,
+	SessionRecordings,
+	SessionRecordingsDetail,
 } from './pageComponents';
 
 const routes: AppRoutes[] = [
@@ -448,6 +450,20 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: MeterExplorer,
 		key: 'METER_EXPLORER',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.SESSION_RECORDINGS,
+		exact: true,
+		component: SessionRecordings,
+		key: 'SESSION_RECORDINGS',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.SESSION_RECORDINGS_DETAIL,
+		exact: true,
+		component: SessionRecordingsDetail,
+		key: 'SESSION_RECORDINGS_DETAIL',
 		isPrivate: true,
 	},
 	{

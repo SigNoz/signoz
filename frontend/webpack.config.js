@@ -108,6 +108,12 @@ const config = {
 			},
 			{
 				test: /\.css$/,
+				include: /node_modules/,
+				use: [styleLoader, cssLoader],
+			},
+			{
+				test: /\.css$/,
+				exclude: /node_modules/,
 				use: [
 					styleLoader,
 					{

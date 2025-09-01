@@ -1,0 +1,306 @@
+.session-detail-page {
+	height: 100%;
+	background: var(--bg-ink-400);
+	padding: 0;
+
+	.page-header {
+		background: var(--bg-ink-500);
+		border-bottom: 1px solid var(--bg-slate-400);
+		padding: 24px 24px 16px;
+		margin-bottom: 0;
+
+		.header-content {
+			.back-button {
+				margin-bottom: 16px;
+				color: var(--bg-vanilla-400);
+				padding: 0;
+				height: auto;
+				font-size: 14px;
+
+				&:hover {
+					color: var(--bg-vanilla-100);
+				}
+
+				.anticon {
+					margin-right: 8px;
+				}
+			}
+
+			.page-title {
+				margin: 0 0 8px 0;
+				color: var(--bg-vanilla-100);
+				font-weight: 600;
+				font-size: 24px;
+				line-height: 32px;
+			}
+
+			.page-description {
+				font-size: 14px;
+				line-height: 20px;
+				color: var(--bg-vanilla-400);
+				margin: 0;
+			}
+		}
+	}
+
+	.page-content {
+		padding: 24px;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+
+		.content-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+			gap: 16px;
+
+			.overview-card,
+			.user-card,
+			.device-card,
+			.player-card,
+			.logs-card {
+				background: var(--bg-ink-500);
+				border: 1px solid var(--bg-slate-400);
+				border-radius: 6px;
+
+				.ant-card-head {
+					background: var(--bg-ink-400);
+					border-bottom: 1px solid var(--bg-slate-400);
+
+					.ant-card-head-title {
+						color: var(--bg-vanilla-100);
+						font-weight: 600;
+						font-size: 16px;
+						line-height: 24px;
+					}
+				}
+
+				.ant-card-body {
+					padding: 16px;
+				}
+
+				.ant-descriptions {
+					.ant-descriptions-item-label {
+						color: var(--bg-vanilla-400);
+						font-weight: 500;
+						font-size: 12px;
+						line-height: 16px;
+						text-transform: uppercase;
+						letter-spacing: 0.5px;
+					}
+
+					.ant-descriptions-item-content {
+						color: var(--bg-vanilla-100);
+						font-size: 14px;
+						line-height: 20px;
+					}
+				}
+
+				.user-agent-text {
+					font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+					font-size: 12px;
+				}
+
+				.logs-content {
+					.logs-count {
+						display: block;
+						margin-top: 8px;
+						font-size: 14px;
+					}
+
+					.ant-typography {
+						margin-bottom: 8px;
+					}
+				}
+				line-height: 16px;
+				word-break: break-all;
+				max-width: 100%;
+				display: block;
+			}
+
+			.ant-tag {
+				font-size: 12px;
+				line-height: 16px;
+				padding: 2px 8px;
+				border-radius: 4px;
+			}
+
+			.ant-space {
+				.anticon {
+					color: var(--bg-vanilla-400);
+					flex-shrink: 0;
+				}
+			}
+		}
+
+		.player-card {
+			grid-column: span 2;
+
+			.player-content {
+				.player-description {
+					color: var(--bg-vanilla-400);
+					font-size: 14px;
+					line-height: 20px;
+					margin-bottom: 24px;
+					text-align: center;
+				}
+
+				.player-actions {
+					display: flex;
+					justify-content: center;
+
+					.play-button-large {
+						background: var(--bg-sakura-500);
+						border-color: var(--bg-sakura-500);
+						color: var(--bg-ink-500);
+						height: 48px;
+						padding: 0 32px;
+						font-size: 16px;
+						font-weight: 500;
+						border-radius: 8px;
+
+						&:hover {
+							background: var(--bg-sakura-600);
+							border-color: var(--bg-sakura-600);
+						}
+
+						.anticon {
+							margin-right: 8px;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// Light mode overrides
+.lightMode {
+	.session-detail-page {
+		background: var(--bg-vanilla-100);
+
+		.page-header {
+			background: var(--bg-vanilla-200);
+			border-bottom: 1px solid var(--bg-slate-300);
+
+			.header-content {
+				.back-button {
+					color: var(--bg-ink-400);
+
+					&:hover {
+						color: var(--bg-ink-500);
+					}
+				}
+
+				.page-title {
+					color: var(--bg-ink-500);
+				}
+
+				.page-description {
+					color: var(--bg-ink-400);
+				}
+			}
+		}
+
+		.page-content {
+			.content-grid {
+				.overview-card,
+				.user-card,
+				.device-card,
+				.player-card {
+					background: var(--bg-vanilla-200);
+					border: 1px solid var(--bg-slate-300);
+
+					.ant-card-head {
+						background: var(--bg-vanilla-300);
+						border-bottom: 1px solid var(--bg-slate-300);
+
+						.ant-card-head-title {
+							color: var(--bg-ink-500);
+						}
+					}
+
+					.ant-descriptions {
+						.ant-descriptions-item-label {
+							color: var(--bg-ink-400);
+						}
+
+						.ant-descriptions-item-content {
+							color: var(--bg-ink-500);
+						}
+					}
+
+					.ant-space {
+						.anticon {
+							color: var(--bg-ink-400);
+						}
+					}
+				}
+
+				.player-card {
+					.player-content {
+						.player-description {
+							color: var(--bg-ink-400);
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// Responsive design
+@media (max-width: 768px) {
+	.session-detail-page {
+		.page-content {
+			padding: 16px;
+
+			.content-grid {
+				grid-template-columns: 1fr;
+				gap: 12px;
+
+				.player-card {
+					grid-column: span 1;
+				}
+			}
+		}
+	}
+}
+
+@media (max-width: 480px) {
+	.session-detail-page {
+		.page-header {
+			padding: 16px 16px 12px;
+
+			.header-content {
+				.page-title {
+					font-size: 20px;
+					line-height: 28px;
+				}
+			}
+		}
+
+		.page-content {
+			padding: 12px;
+
+			.content-grid {
+				gap: 12px;
+
+				.overview-card,
+				.user-card,
+				.device-card,
+				.player-card {
+					.ant-card-body {
+						padding: 12px;
+					}
+
+					.ant-descriptions {
+						.ant-descriptions-item {
+							margin-bottom: 8px;
+						}
+					}
+				}
+			}
+		}
+	}
+}

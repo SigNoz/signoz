@@ -4046,6 +4046,11 @@
   resolved "https://registry.yarnpkg.com/@remix-run/router/-/router-1.20.0.tgz#03554155b45d8b529adf635b2f6ad1165d70d8b4"
   integrity sha512-mUnk8rPJBI9loFDZ+YzPGdeniYK+FTmRD1TMCz7ev2SNIozyKKpnGgsxO34u6Z4z/t0ITuu7voi/AshfsGsgFg==
 
+"@rrweb/types@2.0.0-alpha.18", "@rrweb/types@^2.0.0-alpha.4":
+  version "2.0.0-alpha.18"
+  resolved "https://registry.yarnpkg.com/@rrweb/types/-/types-2.0.0-alpha.18.tgz#e1d9af844cebbf30a2be8808f6cf64f5df3e7f50"
+  integrity sha512-iMH3amHthJZ9x3gGmBPmdfim7wLGygC2GciIkw2A6SO8giSn8PHYtRT8OKNH4V+k3SZ6RSnYHcTQxBA7pSWZ3Q==
+
 "@sentry-internal/browser-utils@8.41.0":
   version "8.41.0"
   resolved "https://registry.yarnpkg.com/@sentry-internal/browser-utils/-/browser-utils-8.41.0.tgz#9dc30a8c88aa6e1e542e5acae29ceabd1b377cc4"
@@ -4431,6 +4436,11 @@
   resolved "https://registry.npmjs.org/@tsconfig/node16/-/node16-1.0.3.tgz"
   integrity sha512-yOlFc+7UtL/89t2ZhjPvvB/DeAr3r+Dq58IgzsFkOAvVC6NMJXmCGjbptdXdR9qsX7pKcTL+s87FtYREi2dEEQ==
 
+"@tsconfig/svelte@^1.0.0":
+  version "1.0.13"
+  resolved "https://registry.yarnpkg.com/@tsconfig/svelte/-/svelte-1.0.13.tgz#2fa34376627192c0d643ce54964915e2bd3a58e4"
+  integrity sha512-5lYJP45Xllo4yE/RUBccBT32eBlRDbqN8r1/MIvQbKxW3aFqaYPCNgm8D5V20X4ShHcwvYWNlKg3liDh1MlBoA==
+
 "@tweenjs/tween.js@18 - 19", "@tweenjs/tween.js@19":
   version "19.0.0"
   resolved "https://registry.npmjs.org/@tweenjs/tween.js/-/tween.js-19.0.0.tgz"
@@ -4560,6 +4570,11 @@
     "@types/node" "*"
     tapable "^2.0.0"
     webpack "^5.1.0"
+
+"@types/css-font-loading-module@0.0.7":
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/@types/css-font-loading-module/-/css-font-loading-module-0.0.7.tgz#2f98ede46acc0975de85c0b7b0ebe06041d24601"
+  integrity sha512-nl09VhutdjINdWyXxHWN/w9zlNCfr60JUqJbd24YXUuCwgeL0TpFSdElCwb6cxfB6ybE19Gjj4g0jsgkXxKv1Q==
 
 "@types/d3-array@3.0.3":
   version "3.0.3"
@@ -5724,6 +5739,11 @@
   resolved "https://registry.npmjs.org/@xobotyi/scrollbar-width/-/scrollbar-width-1.9.5.tgz"
   integrity sha512-N8tkAACJx2ww8vFMneJmaAgmjAG1tnVBZJRLRcx061tmsLRZHSEZSLuGWnwPtunsSLvSqXQ2wfp7Mgqg1I+2dQ==
 
+"@xstate/fsm@^1.4.0":
+  version "1.6.5"
+  resolved "https://registry.yarnpkg.com/@xstate/fsm/-/fsm-1.6.5.tgz#f599e301997ad7e3c572a0b1ff0696898081bea5"
+  integrity sha512-b5o1I6aLNeYlU/3CPlj/Z91ybk1gUsKT+5NAJI+2W4UjvS5KLG28K9v5UvNoFVjHV8PajVZ00RH3vnjyQO7ZAw==
+
 "@xstate/react@^3.0.0":
   version "3.2.2"
   resolved "https://registry.npmjs.org/@xstate/react/-/react-3.2.2.tgz"
@@ -6697,6 +6717,11 @@ balanced-match@^1.0.0:
   version "1.0.2"
   resolved "https://registry.npmjs.org/balanced-match/-/balanced-match-1.0.2.tgz"
   integrity sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==
+
+base64-arraybuffer@^1.0.1:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/base64-arraybuffer/-/base64-arraybuffer-1.0.2.tgz#1c37589a7c4b0746e34bd1feb951da2df01c1bdc"
+  integrity sha512-I3yl4r9QB5ZRY3XuJVEPfc2XhZO6YweFPI+UovAzn+8/hb3oJ6lnysaFcjVpkCPfVWFUDvoZ8kmVDP7WyRtYtQ==
 
 base64-js@^1.3.1:
   version "1.5.1"
@@ -9397,7 +9422,7 @@ fb-watchman@^2.0.0:
   dependencies:
     bser "2.1.1"
 
-fflate@^0.4.8:
+fflate@^0.4.4, fflate@^0.4.8:
   version "0.4.8"
   resolved "https://registry.yarnpkg.com/fflate/-/fflate-0.4.8.tgz#f90b82aefbd8ac174213abb338bd7ef848f0f5ae"
   integrity sha512-FJqqoDBR00Mdj9ppamLa/Y7vxm+PRmNWA67N846RvsoYVMKB4q3y/de5PA7gUmRMYK/8CMz2GDZQmCRN1wBcWA==
@@ -13155,6 +13180,11 @@ minipass@^4.2.4:
   resolved "https://registry.yarnpkg.com/minipass/-/minipass-7.0.4.tgz#dbce03740f50a4786ba994c1fb908844d27b038c"
   integrity sha512-jYofLM5Dam9279rdkWzqHozUo4ybjdZmCsDHePy5V/PbBcVMiSZR97gmAy45aqi8CK1lG2ECd356FU86avfwUQ==
 
+mitt@^3.0.0:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/mitt/-/mitt-3.0.1.tgz#ea36cf0cc30403601ae074c8f77b7092cdab36d1"
+  integrity sha512-vKivATfr97l2/QBCYAkXYDbrIWPM2IIKEl7YPhjCvKlG3kE2gm+uBo6nEXK3M5/Ffh/FLpKExzOQ3JJoJGFKBw==
+
 mkdirp@^0.5.6:
   version "0.5.6"
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-0.5.6.tgz#7def03d2432dcae4ba1d611445c48396062255f6"
@@ -15988,6 +16018,40 @@ robust-predicates@^3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/robust-predicates/-/robust-predicates-3.0.2.tgz#d5b28528c4824d20fc48df1928d41d9efa1ad771"
   integrity sha512-IXgzBWvWQwE6PrDI05OvmXUIruQTcoMDzRsOd5CDvHCVLcLHMTSYvOK5Cm46kWqlV3yAbuSpBZdJ5oP5OUoStg==
+
+rrdom@^0.1.7:
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/rrdom/-/rrdom-0.1.7.tgz#f2f49bfd01b59291bb7b0d981371a5e02a18e2aa"
+  integrity sha512-ZLd8f14z9pUy2Hk9y636cNv5Y2BMnNEY99wxzW9tD2BLDfe1xFxtLjB4q/xCBYo6HRe0wofzKzjm4JojmpBfFw==
+  dependencies:
+    rrweb-snapshot "^2.0.0-alpha.4"
+
+rrweb-player@1.0.0-alpha.4:
+  version "1.0.0-alpha.4"
+  resolved "https://registry.yarnpkg.com/rrweb-player/-/rrweb-player-1.0.0-alpha.4.tgz#57576343aaff6c6fb266689fd5d63092be46967c"
+  integrity sha512-Wlmn9GZ5Fdqa37vd3TzsYdLl/JWEvXNUrLCrYpnOwEgmY409HwVIvvA5aIo7k582LoKgdRCsB87N+f0oWAR0Kg==
+  dependencies:
+    "@tsconfig/svelte" "^1.0.0"
+    rrweb "^2.0.0-alpha.4"
+
+rrweb-snapshot@^2.0.0-alpha.4:
+  version "2.0.0-alpha.4"
+  resolved "https://registry.yarnpkg.com/rrweb-snapshot/-/rrweb-snapshot-2.0.0-alpha.4.tgz#2801bf5946177b9d685a01661a62d9d2e958f174"
+  integrity sha512-KQ2OtPpXO5jLYqg1OnXS/Hf+EzqnZyP5A+XPqBCjYpj3XIje/Od4gdUwjbFo3cVuWq5Cw5Y1d3/xwgIS7/XpQQ==
+
+rrweb@^2.0.0-alpha.4:
+  version "2.0.0-alpha.4"
+  resolved "https://registry.yarnpkg.com/rrweb/-/rrweb-2.0.0-alpha.4.tgz#3c7cf2f1bcf44f7a88dd3fad00ee8d6dd711f258"
+  integrity sha512-wEHUILbxDPcNwkM3m4qgPgXAiBJyqCbbOHyVoNEVBJzHszWEFYyTbrZqUdeb1EfmTRC2PsumCIkVcomJ/xcOzA==
+  dependencies:
+    "@rrweb/types" "^2.0.0-alpha.4"
+    "@types/css-font-loading-module" "0.0.7"
+    "@xstate/fsm" "^1.4.0"
+    base64-arraybuffer "^1.0.1"
+    fflate "^0.4.4"
+    mitt "^3.0.0"
+    rrdom "^0.1.7"
+    rrweb-snapshot "^2.0.0-alpha.4"
 
 rtl-css-js@^1.14.0, rtl-css-js@^1.16.1:
   version "1.16.1"

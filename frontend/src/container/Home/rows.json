@@ -1,0 +1,3724 @@
+{
+	"rows": [
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 124,
+					"rr-web.offset": 124,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":180}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":181}}]},\"timestamp\":1756545045707}",
+				"id": "0hlte0sr9q9GdiDAqtFMU3fBnnp",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545045707000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:45.707+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 123,
+					"rr-web.offset": 123,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":179}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":180}}]},\"timestamp\":1756545045608}",
+				"id": "0hlte0hinoIaE6tc461LD6I6iUu",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545045608000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:45.608+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 122,
+					"rr-web.offset": 122,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":1,\"positions\":[{\"x\":371,\"y\":817,\"id\":17,\"timeOffset\":-467},{\"x\":375,\"y\":818,\"id\":17,\"timeOffset\":-411},{\"x\":376,\"y\":818,\"id\":17,\"timeOffset\":-338},{\"x\":458,\"y\":828,\"id\":17,\"timeOffset\":-279},{\"x\":562,\"y\":851,\"id\":155,\"timeOffset\":-225},{\"x\":584,\"y\":858,\"id\":90,\"timeOffset\":-174},{\"x\":583,\"y\":858,\"id\":90,\"timeOffset\":-12}]},\"timestamp\":1756545045549}",
+				"id": "0hlte0b5NWuSDaoAsqvYzBdJEg1",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545045549000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:45.549+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 121,
+					"rr-web.offset": 121,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":2,\"type\":2,\"id\":90,\"x\":584,\"y\":858},\"timestamp\":1756545045520}",
+				"id": "0hlte0Xp9YsYTDPSof9geCiVZC6",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545045520000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:45.52+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 120,
+					"rr-web.offset": 120,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":2,\"type\":0,\"id\":90,\"x\":584,\"y\":858},\"timestamp\":1756545045520}",
+				"id": "0hlte0Xp9Ys7VchOn6lIzmJiB1p",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545045520000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:45.52+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 119,
+					"rr-web.offset": 119,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":178}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":179}}]},\"timestamp\":1756545045507}",
+				"id": "0hlte0WMV5nkRxG9qsDracD7uCW",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545045507000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:45.507+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 118,
+					"rr-web.offset": 118,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":2,\"type\":6,\"id\":87},\"timestamp\":1756545045420}",
+				"id": "0hlte0MZpBh6gR8YgJhts0FrLB0",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545045420000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:45.42+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 117,
+					"rr-web.offset": 117,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":2,\"type\":1,\"id\":90,\"x\":584,\"y\":858},\"timestamp\":1756545045420}",
+				"id": "0hlte0MZpBgOuQo2COGQNxHvjqd",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545045420000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:45.42+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 116,
+					"rr-web.offset": 116,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":177}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":178}}]},\"timestamp\":1756545045407}",
+				"id": "0hlte0L7AidCq1gIa1YkaIoQHRS",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545045407000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:45.407+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 115,
+					"rr-web.offset": 115,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":176}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":177}}]},\"timestamp\":1756545045306}",
+				"id": "0hlte09ks09Gri1kPafzzEoWvhn",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545045306000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:45.306+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 114,
+					"rr-web.offset": 114,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":175}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":176}}]},\"timestamp\":1756545045207}",
+				"id": "0hltdzycVyIKTGIkIAEZXHdPUsm",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545045207000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:45.207+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 113,
+					"rr-web.offset": 113,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":174}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":175}}]},\"timestamp\":1756545045107}",
+				"id": "0hltdznNBb7NS1nJyIkh0PdWbkV",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545045107000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:45.107+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 112,
+					"rr-web.offset": 112,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":1,\"positions\":[{\"x\":264,\"y\":791,\"id\":87,\"timeOffset\":-472},{\"x\":264,\"y\":790,\"id\":87,\"timeOffset\":-406},{\"x\":264,\"y\":790,\"id\":87,\"timeOffset\":-130},{\"x\":294,\"y\":794,\"id\":87,\"timeOffset\":-73},{\"x\":342,\"y\":810,\"id\":17,\"timeOffset\":-23}]},\"timestamp\":1756545045048}",
+				"id": "0hltdzgjlJjh7vynrFvm4hC37Sd",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545045048000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:45.048+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 111,
+					"rr-web.offset": 111,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":173}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":174}}]},\"timestamp\":1756545045008}",
+				"id": "0hltdzcEpZFJrVEQi8ZSztDZeqD",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545045008000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:45.008+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 110,
+					"rr-web.offset": 110,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":172}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":173}}]},\"timestamp\":1756545044907}",
+				"id": "0hltdzQsWqlE39iyox2ZF4leWJa",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044907000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.907+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 109,
+					"rr-web.offset": 109,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":143}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":172}}]},\"timestamp\":1756545044807}",
+				"id": "0hltdzFdCTb8l30kmuuPOaps3bS",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044807000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.807+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 108,
+					"rr-web.offset": 108,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545044766}",
+				"id": "0hltdzB1INoYHCvrpiYz2dPer4P",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044766000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.766+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 106,
+					"rr-web.offset": 106,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"\",\"isChecked\":false,\"id\":68},\"timestamp\":1756545044766}",
+				"id": "0hltdzB1INoRmAnmPzndr7TJD4T",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044766000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.766+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 107,
+					"rr-web.offset": 107,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"\",\"isChecked\":false,\"id\":76},\"timestamp\":1756545044766}",
+				"id": "0hltdzB1INoQlK1WIhgsJWPXd23",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044766000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.766+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 105,
+					"rr-web.offset": 105,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[],\"adds\":[{\"parentId\":90,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"\\n            \",\"id\":144}},{\"parentId\":90,\"nextId\":144,\"node\":{\"type\":2,\"tagName\":\"p\",\"attributes\":{},\"childNodes\":[],\"id\":145}},{\"parentId\":90,\"nextId\":145,\"node\":{\"type\":3,\"textContent\":\"\\n              \",\"id\":146}},{\"parentId\":90,\"nextId\":146,\"node\":{\"type\":2,\"tagName\":\"p\",\"attributes\":{},\"childNodes\":[],\"id\":147}},{\"parentId\":90,\"nextId\":147,\"node\":{\"type\":3,\"textContent\":\"\\n              \",\"id\":148}},{\"parentId\":90,\"nextId\":148,\"node\":{\"type\":2,\"tagName\":\"p\",\"attributes\":{},\"childNodes\":[],\"id\":149}},{\"parentId\":90,\"nextId\":149,\"node\":{\"type\":3,\"textContent\":\"\\n              \",\"id\":150}},{\"parentId\":90,\"nextId\":150,\"node\":{\"type\":2,\"tagName\":\"p\",\"attributes\":{},\"childNodes\":[],\"id\":151}},{\"parentId\":90,\"nextId\":151,\"node\":{\"type\":3,\"textContent\":\"\\n              \",\"id\":152}},{\"parentId\":90,\"nextId\":152,\"node\":{\"type\":2,\"tagName\":\"p\",\"attributes\":{},\"childNodes\":[],\"id\":153}},{\"parentId\":90,\"nextId\":153,\"node\":{\"type\":3,\"textContent\":\"\\n              \",\"id\":154}},{\"parentId\":90,\"nextId\":154,\"node\":{\"type\":2,\"tagName\":\"h3\",\"attributes\":{},\"childNodes\":[],\"id\":155}},{\"parentId\":90,\"nextId\":155,\"node\":{\"type\":3,\"textContent\":\"\\n              \",\"id\":156}},{\"parentId\":155,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"**** ********* *************\",\"id\":157}},{\"parentId\":153,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\" *******\",\"id\":158}},{\"parentId\":153,\"nextId\":158,\"node\":{\"type\":2,\"tagName\":\"strong\",\"attributes\":{},\"childNodes\":[],\"id\":159}},{\"parentId\":159,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"*****\",\"id\":160}},{\"parentId\":151,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\" **********\",\"id\":161}},{\"parentId\":151,\"nextId\":161,\"node\":{\"type\":2,\"tagName\":\"strong\",\"attributes\":{},\"childNodes\":[],\"id\":162}},{\"parentId\":162,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******\",\"id\":163}},{\"parentId\":149,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\" ***************************\",\"id\":164}},{\"parentId\":149,\"nextId\":164,\"node\":{\"type\":2,\"tagName\":\"strong\",\"attributes\":{},\"childNodes\":[],\"id\":165}},{\"parentId\":165,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"********\",\"id\":166}},{\"parentId\":147,\"nextId\":null,\"node\":{\"type\":2,\"tagName\":\"em\",\"attributes\":{},\"childNodes\":[],\"id\":167}},{\"parentId\":167,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"***** **** **** ********** ***** ** ******** ** *** ******* *********\",\"id\":168}},{\"parentId\":145,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\" ******\",\"id\":169}},{\"parentId\":145,\"nextId\":169,\"node\":{\"type\":2,\"tagName\":\"strong\",\"attributes\":{},\"childNodes\":[],\"id\":170}},{\"parentId\":170,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******** *******\",\"id\":171}}]},\"timestamp\":1756545044765}",
+				"id": "0hltdzAuK2WD1bqlat5YjZsvS7E",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044765000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.765+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 103,
+					"rr-web.offset": 103,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":2,\"type\":0,\"id\":87,\"x\":264,\"y\":790},\"timestamp\":1756545044762}",
+				"id": "0hltdzAZP0Zu1XRQyKv3Wl0j1Bw",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044762000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.762+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 104,
+					"rr-web.offset": 104,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":2,\"type\":2,\"id\":87,\"x\":264,\"y\":790},\"timestamp\":1756545044762}",
+				"id": "0hltdzAZP0ZbEwKOBUunqEk7Zx5",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044762000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.762+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 102,
+					"rr-web.offset": 102,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":142}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":143}}]},\"timestamp\":1756545044707}",
+				"id": "0hltdz4Ns6PbiOGvQRMI8sPpf18",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044707000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.707+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 100,
+					"rr-web.offset": 100,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":2,\"type\":6,\"id\":84},\"timestamp\":1756545044642}",
+				"id": "0hltdyx4blAtiCrotic3m36Pdll",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044642000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.642+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 101,
+					"rr-web.offset": 101,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":2,\"type\":5,\"id\":87},\"timestamp\":1756545044642}",
+				"id": "0hltdyx4blAZ69iHIunTdTYzdGe",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044642000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.642+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 99,
+					"rr-web.offset": 99,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":2,\"type\":1,\"id\":87,\"x\":264,\"y\":790},\"timestamp\":1756545044641}",
+				"id": "0hltdywxdPrSXig3ufJhpjF5tOT",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044641000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.641+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 98,
+					"rr-web.offset": 98,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":141}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":142}}]},\"timestamp\":1756545044607}",
+				"id": "0hltdyt8XjFOSldqKTH9EjlG61P",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044607000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.607+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 97,
+					"rr-web.offset": 97,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":1,\"positions\":[{\"x\":277,\"y\":694,\"id\":84,\"timeOffset\":-445},{\"x\":279,\"y\":749,\"id\":84,\"timeOffset\":-388},{\"x\":279,\"y\":759,\"id\":79,\"timeOffset\":-336},{\"x\":275,\"y\":756,\"id\":84,\"timeOffset\":-279},{\"x\":266,\"y\":735,\"id\":84,\"timeOffset\":-225},{\"x\":266,\"y\":749,\"id\":84,\"timeOffset\":-168},{\"x\":265,\"y\":788,\"id\":87,\"timeOffset\":-111},{\"x\":264,\"y\":791,\"id\":87,\"timeOffset\":-38}]},\"timestamp\":1756545044548}",
+				"id": "0hltdymV7RqfCBHZOBWMTydqacJ",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044548000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.548+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 96,
+					"rr-web.offset": 96,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":140}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":141}}]},\"timestamp\":1756545044507}",
+				"id": "0hltdyhtDM4UiPGDJiYV3TBGIYZ",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044507000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.507+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 95,
+					"rr-web.offset": 95,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":139}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":140}}]},\"timestamp\":1756545044406}",
+				"id": "0hltdyWWudafLYZs2tmnaDtZ1uw",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044406000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.406+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 94,
+					"rr-web.offset": 94,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":138}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":139}}]},\"timestamp\":1756545044307}",
+				"id": "0hltdyLOYbjwPL3YkKSXxjyqJ7v",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044307000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.307+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 93,
+					"rr-web.offset": 93,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsdhajskdhasdjkhdasdd\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545044220}",
+				"id": "0hltdyBbshc7GywjLSOyZTCOYgR",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044220000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.22+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 92,
+					"rr-web.offset": 92,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":137}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":138}}]},\"timestamp\":1756545044207}",
+				"id": "0hltdyA9EEYNwbdX7ePKILbGTrK",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044207000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.207+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 91,
+					"rr-web.offset": 91,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":136}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":137}}]},\"timestamp\":1756545044107}",
+				"id": "0hltdxyttrOPAREAkSESsjbbcD3",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044107000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.107+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 90,
+					"rr-web.offset": 90,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":1,\"positions\":[{\"x\":267,\"y\":557,\"id\":68,\"timeOffset\":0}]},\"timestamp\":1756545044048}",
+				"id": "0hltdxsGTa0Ciu1olYfkTwiqTAE",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044048000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.048+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 89,
+					"rr-web.offset": 89,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":135}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":136}}]},\"timestamp\":1756545044007}",
+				"id": "0hltdxneZUChcJBUxbHy2HQKjo3",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545044007000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:44.007+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 88,
+					"rr-web.offset": 88,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsdhajskdhasdjkhdasd\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043944}",
+				"id": "0hltdxgZFpZBo1VYM5ohFQGmnwn",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043944000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.944+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 87,
+					"rr-web.offset": 87,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":134}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":135}}]},\"timestamp\":1756545043906}",
+				"id": "0hltdxcIGlj4uTfWpLLnzZFPWow",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043906000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.906+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 86,
+					"rr-web.offset": 86,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsdhajskdhasdjkhdas\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043904}",
+				"id": "0hltdxc4K56dadPU5kMTCOfOFEQ",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043904000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.904+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 85,
+					"rr-web.offset": 85,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsdhajskdhasdjkhda\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043869}",
+				"id": "0hltdxY8G3CRJK10X7FDiOUs4Bi",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043869000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.869+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 84,
+					"rr-web.offset": 84,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":133}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":134}}]},\"timestamp\":1756545043807}",
+				"id": "0hltdxR9ujrYIn2feMvUdhiO8NT",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043807000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.807+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 83,
+					"rr-web.offset": 83,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsdhajskdhasdjkhd\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043796}",
+				"id": "0hltdxPvCxQlHCMtLUP7SOnOS3G",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043796000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.796+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 82,
+					"rr-web.offset": 82,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsdhajskdhasdjkh\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043744}",
+				"id": "0hltdxK4b5DRqON1juVc8CKFTEt",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043744000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.744+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 81,
+					"rr-web.offset": 81,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":132}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":133}}]},\"timestamp\":1756545043707}",
+				"id": "0hltdxFuaMhF9XVHflBFFZzxvo0",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043707000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.707+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 80,
+					"rr-web.offset": 80,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsdhajskdhasdjk\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043680}",
+				"id": "0hltdxCsJ5HRuSe3e8HeHpGHa8d",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043680000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.68+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 79,
+					"rr-web.offset": 79,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsdhajskdhasdj\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043651}",
+				"id": "0hltdx9c57EIMa8pWH77pkW68Aq",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043651000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.651+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 78,
+					"rr-web.offset": 78,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsdhajskdhasd\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043641}",
+				"id": "0hltdx8ULg7Xos6Rw8wnqnffUon",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043641000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.641+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 77,
+					"rr-web.offset": 77,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":131}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":132}}]},\"timestamp\":1756545043607}",
+				"id": "0hltdx4fFzW9AA38HJlKlMP1y93",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043607000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.607+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 76,
+					"rr-web.offset": 76,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsdhajskdhas\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043588}",
+				"id": "0hltdx2WlSa8FCbsmaW5dlJ87iT",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043588000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.588+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 75,
+					"rr-web.offset": 75,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsdhajskdha\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043559}",
+				"id": "0hltdwzGXUY2CA2tDAdkSQx0W1O",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043559000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.559+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 74,
+					"rr-web.offset": 74,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsdhajskdh\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043516}",
+				"id": "0hltdwuQgi92OKVH0ZwKdeyh0TG",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043516000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.516+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 73,
+					"rr-web.offset": 73,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":130}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":131}}]},\"timestamp\":1756545043507}",
+				"id": "0hltdwtPvcLwWAcfFwOlWsZnoG2",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043507000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.507+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 72,
+					"rr-web.offset": 72,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsdhajskd\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043472}",
+				"id": "0hltdwpTraRIeR3KNFWEACwfa46",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043472000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.472+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 71,
+					"rr-web.offset": 71,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsdhajsk\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043463}",
+				"id": "0hltdwoT6Ud2hjLXM7Drzp4K5zl",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043463000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.463+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 70,
+					"rr-web.offset": 70,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsdhajs\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043459}",
+				"id": "0hltdwo1D7NEZy40W4y7v9aj9uE",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043459000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.459+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 69,
+					"rr-web.offset": 69,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsdhaj\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043443}",
+				"id": "0hltdwmDdcOTuwxyfM5uYc6uzt5",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043443000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.443+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 68,
+					"rr-web.offset": 68,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":129}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":130}}]},\"timestamp\":1756545043406}",
+				"id": "0hltdwi3ctqWWNc5z13775dq9Ji",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043406000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.406+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 67,
+					"rr-web.offset": 67,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsdha\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043399}",
+				"id": "0hltdwhGoUgax27Fy9YkDrXv0WW",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043399000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.399+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 66,
+					"rr-web.offset": 66,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":128}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":129}}]},\"timestamp\":1756545043307}",
+				"id": "0hltdwWvGs0XQoW1qsy9HiTaPZx",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043307000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.307+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 65,
+					"rr-web.offset": 65,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsdh\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043300}",
+				"id": "0hltdwW8SSoqocRIf9crJC6bfho",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043300000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.3+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 64,
+					"rr-web.offset": 64,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjsd\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043300}",
+				"id": "0hltdwW8SSoVK0U1gaKbzDbatmj",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043300000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.3+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 63,
+					"rr-web.offset": 63,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakjs\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043256}",
+				"id": "0hltdwRBdL6HvUYJns973tXaIJ9",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043256000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.256+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 62,
+					"rr-web.offset": 62,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhakj\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043221}",
+				"id": "0hltdwNFZJBv77sVlhiRj4M0IHr",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043221000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.221+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 61,
+					"rr-web.offset": 61,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":127}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":128}}]},\"timestamp\":1756545043207}",
+				"id": "0hltdwLfwUpjjH1zdGKKpVRt8vA",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043207000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.207+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 60,
+					"rr-web.offset": 60,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdhak\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043195}",
+				"id": "0hltdwKKGN4hAlJVotOPIAoiVXl",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043195000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.195+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 59,
+					"rr-web.offset": 59,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdha\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043173}",
+				"id": "0hltdwHqqoE3FGT8ysZnP6s72ey",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043173000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.173+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 58,
+					"rr-web.offset": 58,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":126}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":127}}]},\"timestamp\":1756545043107}",
+				"id": "0hltdwAQc7ep9tGTQD4R6a0PCrE",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043107000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.107+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 57,
+					"rr-web.offset": 57,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjdh\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043063}",
+				"id": "0hltdw5TmzwMiGIc2jCXI7HDLEY",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043063000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.063+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 56,
+					"rr-web.offset": 56,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kjd\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545043062}",
+				"id": "0hltdw5Moec3Y0MfVwQboCtsTgm",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043062000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.062+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 55,
+					"rr-web.offset": 55,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":125}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":126}}]},\"timestamp\":1756545043006}",
+				"id": "0hltdvz4JP9mO1pSU3n7MUjExC6",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545043006000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:43.006+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 54,
+					"rr-web.offset": 54,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"kj\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545042995}",
+				"id": "0hltdvxpbcjPnmfA9L70dGnJ6k2",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042995000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.995+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 53,
+					"rr-web.offset": 53,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"k\",\"isChecked\":false,\"id\":84},\"timestamp\":1756545042977}",
+				"id": "0hltdvvo5R80Ti3veMEGObjxkh5",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042977000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.977+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 52,
+					"rr-web.offset": 52,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":124}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":125}}]},\"timestamp\":1756545042907}",
+				"id": "0hltdvnvxNJI0fZf4B2lNNbM6VU",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042907000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.907+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 51,
+					"rr-web.offset": 51,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":2,\"type\":5,\"id\":84},\"timestamp\":1756545042856}",
+				"id": "0hltdviCJqORIK0SIb3PSvWNZ6U",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042856000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.856+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 50,
+					"rr-web.offset": 50,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":2,\"type\":6,\"id\":76},\"timestamp\":1756545042855}",
+				"id": "0hltdvi5LV5XE9Anfb0dXDA2uby",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042855000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.855+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 49,
+					"rr-web.offset": 49,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":123}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":124}}]},\"timestamp\":1756545042806}",
+				"id": "0hltdvcZeep5qlO3kot8T0GLtLr",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042806000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.806+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 48,
+					"rr-web.offset": 48,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"dkjahsdkjh\",\"isChecked\":false,\"id\":76},\"timestamp\":1756545042799}",
+				"id": "0hltdvbmqFctWvawOJPVUatiKAi",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042799000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.799+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 47,
+					"rr-web.offset": 47,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"dkjahsdkj\",\"isChecked\":false,\"id\":76},\"timestamp\":1756545042715}",
+				"id": "0hltdvSL5NRhVYvyBdTvT9HH50o",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042715000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.715+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 46,
+					"rr-web.offset": 46,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":122}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":123}}]},\"timestamp\":1756545042707}",
+				"id": "0hltdvRRIcxvkqNBrJZv6wjJSNh",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042707000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.707+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 45,
+					"rr-web.offset": 45,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"dkjahsdk\",\"isChecked\":false,\"id\":76},\"timestamp\":1756545042707}",
+				"id": "0hltdvRRIcwYGJ5FFibu5AGHSJq",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042707000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.707+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 44,
+					"rr-web.offset": 44,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"dkjahsd\",\"isChecked\":false,\"id\":76},\"timestamp\":1756545042671}",
+				"id": "0hltdvNOGFiy2G3O3dz9ZD06XMj",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042671000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.671+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 43,
+					"rr-web.offset": 43,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":121}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":122}}]},\"timestamp\":1756545042606}",
+				"id": "0hltdvG4zuTFratP35ETkBSVSog",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042606000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.606+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 42,
+					"rr-web.offset": 42,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"dkjahs\",\"isChecked\":false,\"id\":76},\"timestamp\":1756545042596}",
+				"id": "0hltdvExGTMdLtA2aB24k4AbYlu",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042596000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.596+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 41,
+					"rr-web.offset": 41,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"dkjah\",\"isChecked\":false,\"id\":76},\"timestamp\":1756545042563}",
+				"id": "0hltdvBF984gBcFkgsXqEDYease",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042563000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.563+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 40,
+					"rr-web.offset": 40,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"dkja\",\"isChecked\":false,\"id\":76},\"timestamp\":1756545042554}",
+				"id": "0hltdvAEO2FeopKzxqEuiILiCew",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042554000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.554+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 39,
+					"rr-web.offset": 39,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":120}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":121}}]},\"timestamp\":1756545042507}",
+				"id": "0hltdv4wdscAG9MaF6n6yWC0YAb",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042507000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.507+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 38,
+					"rr-web.offset": 38,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"dkj\",\"isChecked\":false,\"id\":76},\"timestamp\":1756545042484}",
+				"id": "0hltdv2MFyRUS9Dnp9zVliQQmBs",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042484000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.484+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 37,
+					"rr-web.offset": 37,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"dk\",\"isChecked\":false,\"id\":76},\"timestamp\":1756545042436}",
+				"id": "0hltduwxXTTl0gBIk976QVbhAkv",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042436000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.436+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 36,
+					"rr-web.offset": 36,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"d\",\"isChecked\":false,\"id\":76},\"timestamp\":1756545042420}",
+				"id": "0hltduv9xyU6QwisyZn2yHIh1Zm",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042420000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.42+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 35,
+					"rr-web.offset": 35,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":119}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":120}}]},\"timestamp\":1756545042407}",
+				"id": "0hltduthJVRToX5DOlz3wi04Dxq",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042407000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.407+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 34,
+					"rr-web.offset": 34,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":118}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":119}}]},\"timestamp\":1756545042307}",
+				"id": "0hltduiRz8GWaiCtzN2Ri32H8wS",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042307000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.307+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 33,
+					"rr-web.offset": 33,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":117}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":118}}]},\"timestamp\":1756545042207}",
+				"id": "0hltduXCel5S1rLA0jRBMI634Uo",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042207000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.207+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 32,
+					"rr-web.offset": 32,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":2,\"type\":5,\"id\":76},\"timestamp\":1756545042206}",
+				"id": "0hltduX5gPlpKNfYsmRYRr89mBT",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042206000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.206+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 31,
+					"rr-web.offset": 31,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":2,\"type\":6,\"id\":68},\"timestamp\":1756545042205}",
+				"id": "0hltduWyi4S32E3yGmErVGVx6Wx",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042205000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.205+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 30,
+					"rr-web.offset": 30,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":116}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":117}}]},\"timestamp\":1756545042107}",
+				"id": "0hltduLxKNu0huUhrzwrQfGXucT",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042107000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.107+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 29,
+					"rr-web.offset": 29,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"dasdkjh\",\"isChecked\":false,\"id\":68},\"timestamp\":1756545042052}",
+				"id": "0hltduFlnTlrhanVfzygymVWt3p",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042052000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.052+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 28,
+					"rr-web.offset": 28,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":115}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":116}}]},\"timestamp\":1756545042007}",
+				"id": "0hltduAi00kREMuk7TPtrAx4tZK",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545042007000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:42.007+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 27,
+					"rr-web.offset": 27,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"dasdkj\",\"isChecked\":false,\"id\":68},\"timestamp\":1756545041981}",
+				"id": "0hltdu7mh4dxIAbOw6xmFhIqlvF",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041981000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.981+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 26,
+					"rr-web.offset": 26,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"dasdk\",\"isChecked\":false,\"id\":68},\"timestamp\":1756545041942}",
+				"id": "0hltdu3OjfU67lDOT0OfVGd31u3",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041942000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.942+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 25,
+					"rr-web.offset": 25,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"dasd\",\"isChecked\":false,\"id\":68},\"timestamp\":1756545041917}",
+				"id": "0hltdu0aP4forCVN6dyfm7Ur1WE",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041917000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.917+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 24,
+					"rr-web.offset": 24,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":114}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":115}}]},\"timestamp\":1756545041907}",
+				"id": "0hltdtzSfdZpWeKgJJCaeHA7CNe",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041907000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.907+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 23,
+					"rr-web.offset": 23,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"das\",\"isChecked\":false,\"id\":68},\"timestamp\":1756545041830}",
+				"id": "0hltdtqnjAYIScrX8MBY2evQbAo",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041830000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.83+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 22,
+					"rr-web.offset": 22,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"da\",\"isChecked\":false,\"id\":68},\"timestamp\":1756545041813}",
+				"id": "0hltdtotBKGLtfFVM8T5JPDjchu",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041813000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.813+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 21,
+					"rr-web.offset": 21,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":113}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":114}}]},\"timestamp\":1756545041808}",
+				"id": "0hltdtoKJbiGht5GFhzbKqK0eY4",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041808000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.808+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 20,
+					"rr-web.offset": 20,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":5,\"text\":\"d\",\"isChecked\":false,\"id\":68},\"timestamp\":1756545041734}",
+				"id": "0hltdtg0IAcpfpcoXkbxveXkWe7",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041734000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.734+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 19,
+					"rr-web.offset": 19,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":112}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":113}}]},\"timestamp\":1756545041707}",
+				"id": "0hltdtcy0tE4DADyfntlofzp5Le",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041707000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.707+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 18,
+					"rr-web.offset": 18,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":111}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":112}}]},\"timestamp\":1756545041607}",
+				"id": "0hltdtRigW34z0jJciE8aCMk7bz",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041607000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.607+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 17,
+					"rr-web.offset": 17,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":2,\"type\":2,\"id\":68,\"x\":267,\"y\":545},\"timestamp\":1756545041547}",
+				"id": "0hltdtKyHtKaOHJCoJbEev7y8yR",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041547000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.547+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 16,
+					"rr-web.offset": 16,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":2,\"type\":0,\"id\":68,\"x\":267,\"y\":545},\"timestamp\":1756545041547}",
+				"id": "0hltdtKyHtKVKTRRWkQV14kPSlJ",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041547000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.547+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 15,
+					"rr-web.offset": 15,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":110}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":111}}]},\"timestamp\":1756545041507}",
+				"id": "0hltdtGTM8s2x6gLtrkU4lX6rPH",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041507000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.507+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 14,
+					"rr-web.offset": 14,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":1,\"positions\":[{\"x\":313,\"y\":445,\"id\":59,\"timeOffset\":-445},{\"x\":299,\"y\":495,\"id\":17,\"timeOffset\":-387},{\"x\":279,\"y\":516,\"id\":65,\"timeOffset\":-331},{\"x\":274,\"y\":521,\"id\":65,\"timeOffset\":-274},{\"x\":273,\"y\":521,\"id\":65,\"timeOffset\":-209},{\"x\":270,\"y\":533,\"id\":63,\"timeOffset\":-151},{\"x\":267,\"y\":544,\"id\":68,\"timeOffset\":-92}]},\"timestamp\":1756545041503}",
+				"id": "0hltdtG1SlckvzJJZ6KEHcKvAZj",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041503000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.503+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 12,
+					"rr-web.offset": 12,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":2,\"type\":1,\"id\":68,\"x\":267,\"y\":545},\"timestamp\":1756545041449}",
+				"id": "0hltdt9wuCnI9jQHSOdYpSunHbF",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041449000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.449+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 13,
+					"rr-web.offset": 13,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":2,\"type\":5,\"id\":68},\"timestamp\":1756545041449}",
+				"id": "0hltdt9wuCmSxu9c0XXlrhyHDfx",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041449000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.449+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 11,
+					"rr-web.offset": 11,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":109}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":110}}]},\"timestamp\":1756545041407}",
+				"id": "0hltdt5E1lh02hcAS6Kw5Rdbo4a",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041407000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.407+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 10,
+					"rr-web.offset": 10,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":108}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":109}}]},\"timestamp\":1756545041307}",
+				"id": "0hltdstyhOX58KpMNAEcrY6cxEe",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041307000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.307+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 9,
+					"rr-web.offset": 9,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":107}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":108}}]},\"timestamp\":1756545041206}",
+				"id": "0hltdsicOg2biYYHs6DY7HYy43L",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041206000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.206+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 8,
+					"rr-web.offset": 8,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":106}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":107}}]},\"timestamp\":1756545041107}",
+				"id": "0hltdsXU2eB4xbxMuwN5IVc5teZ",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041107000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.107+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 7,
+					"rr-web.offset": 7,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":105}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":106}}]},\"timestamp\":1756545041006}",
+				"id": "0hltdsM7jvhbKbvdbhUfHlK2cF6",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041006000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.006+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 6,
+					"rr-web.offset": 6,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":1,\"positions\":[{\"x\":307,\"y\":398,\"id\":47,\"timeOffset\":0}]},\"timestamp\":1756545041002}",
+				"id": "0hltdsLfqYR4M73nWYEaVUOmJiv",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545041002000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:41.002+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 5,
+					"rr-web.offset": 5,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[],\"removes\":[{\"parentId\":59,\"id\":104}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":105}}]},\"timestamp\":1756545040908}",
+				"id": "0hltdsB6MF9K9dCcKzI2Dg6dQBa",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545040908000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:40.908+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 4,
+					"rr-web.offset": 4,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":0,\"texts\":[],\"attributes\":[{\"id\":59,\"attributes\":{\"class\":\"status recording\"}},{\"id\":47,\"attributes\":{\"disabled\":\"\"}},{\"id\":50,\"attributes\":{\"disabled\":null}},{\"id\":56,\"attributes\":{\"disabled\":null}}],\"removes\":[{\"parentId\":59,\"id\":60}],\"adds\":[{\"parentId\":59,\"nextId\":null,\"node\":{\"type\":3,\"textContent\":\"******* ********* ******\",\"id\":104}}]},\"timestamp\":1756545040808}",
+				"id": "0hltdrzr1rymHt9SAT4huZQ2Aee",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545040808000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:40.808+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 3,
+					"rr-web.offset": 3,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":3,\"data\":{\"source\":2,\"type\":6,\"id\":47},\"timestamp\":1756545040807}",
+				"id": "0hltdrzk3WePkJu0DBoydzMx3gb",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545040807000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:40.807+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 2,
+					"rr-web.offset": 2,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":2,\"data\":{\"node\":{\"type\":0,\"childNodes\":[{\"type\":1,\"name\":\"html\",\"publicId\":\"\",\"systemId\":\"\",\"id\":2},{\"type\":2,\"tagName\":\"html\",\"attributes\":{\"lang\":\"en\"},\"childNodes\":[{\"type\":2,\"tagName\":\"head\",\"attributes\":{},\"childNodes\":[{\"type\":3,\"textContent\":\"\\n    \",\"id\":5},{\"type\":2,\"tagName\":\"meta\",\"attributes\":{\"charset\":\"UTF-8\"},\"childNodes\":[],\"id\":6},{\"type\":3,\"textContent\":\"\\n    \",\"id\":7},{\"type\":2,\"tagName\":\"meta\",\"attributes\":{\"name\":\"viewport\",\"content\":\"width=device-width, initial-scale=1.0\"},\"childNodes\":[],\"id\":8},{\"type\":3,\"textContent\":\"\\n    \",\"id\":9},{\"type\":2,\"tagName\":\"title\",\"attributes\":{},\"childNodes\":[{\"type\":3,\"textContent\":\"****** ******* ******** *******\",\"id\":11}],\"id\":10},{\"type\":3,\"textContent\":\"\\n    \",\"id\":12},{\"type\":2,\"tagName\":\"style\",\"attributes\":{},\"childNodes\":[{\"type\":3,\"textContent\":\"body { font-family: Arial, sans-serif; max-width: 800px; margin: 0px auto; padding: 20px; }.form-group { margin-bottom: 15px; }label { display: block; margin-bottom: 5px; font-weight: bold; }input, textarea { width: 100%; padding: 8px; border: 1px solid rgb(221, 221, 221); border-radius: 4px; }button { background-color: rgb(0, 123, 255); color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }button:hover { background-color: rgb(0, 86, 179); }.controls { margin: 20px 0px; padding: 15px; background-color: rgb(248, 249, 250); border-radius: 4px; }.status { padding: 10px; margin: 10px 0px; border-radius: 4px; }.status.recording { background-color: rgb(212, 237, 218); color: rgb(21, 87, 36); border: 1px solid rgb(195, 230, 203); }.status.stopped { background-color: rgb(248, 215, 218); color: rgb(114, 28, 36); border: 1px solid rgb(245, 198, 203); }.dependencies { margin: 20px 0px; padding: 15px; background-color: rgb(231, 243, 255); border-radius: 4px; border: 1px solid rgb(179, 217, 255); }\",\"isStyle\":true,\"id\":14}],\"id\":13},{\"type\":3,\"textContent\":\"\\n  \",\"id\":15}],\"id\":4},{\"type\":3,\"textContent\":\"\\n  \",\"id\":16},{\"type\":2,\"tagName\":\"body\",\"attributes\":{},\"childNodes\":[{\"type\":3,\"textContent\":\"\\n    \",\"id\":18},{\"type\":2,\"tagName\":\"h1\",\"attributes\":{},\"childNodes\":[{\"type\":3,\"textContent\":\"****** ******* ******** *******\",\"id\":20}],\"id\":19},{\"type\":3,\"textContent\":\"\\n\\n    \",\"id\":21},{\"type\":2,\"tagName\":\"div\",\"attributes\":{\"class\":\"dependencies\"},\"childNodes\":[{\"type\":3,\"textContent\":\"\\n      \",\"id\":23},{\"type\":2,\"tagName\":\"h3\",\"attributes\":{},\"childNodes\":[{\"type\":3,\"textContent\":\"******* ******\",\"id\":25}],\"id\":24},{\"type\":3,\"textContent\":\"\\n      \",\"id\":26},{\"type\":2,\"tagName\":\"div\",\"attributes\":{\"id\":\"depsStatus\"},\"childNodes\":[{\"type\":3,\"textContent\":\"\\n            \",\"id\":28},{\"type\":2,\"tagName\":\"div\",\"attributes\":{\"style\":\"color: green;\"},\"childNodes\":[{\"type\":3,\"textContent\":\"\\n              * ******* ****** *************\",\"id\":30},{\"type\":2,\"tagName\":\"br\",\"attributes\":{},\"childNodes\":[],\"id\":31},{\"type\":3,\"textContent\":\"\\n              * ****** ******* ********* ******\",\"id\":32},{\"type\":2,\"tagName\":\"br\",\"attributes\":{},\"childNodes\":[],\"id\":33},{\"type\":3,\"textContent\":\"\\n              * *** ************* ******* ********\",\"id\":34},{\"type\":2,\"tagName\":\"br\",\"attributes\":{},\"childNodes\":[],\"id\":35},{\"type\":3,\"textContent\":\"\\n              * ****** ***** ****** ********* ************* * ******\",\"id\":36},{\"type\":2,\"tagName\":\"br\",\"attributes\":{},\"childNodes\":[],\"id\":37},{\"type\":3,\"textContent\":\"\\n              * ************** *********** **** ********\\n            \",\"id\":38}],\"id\":29},{\"type\":3,\"textContent\":\"\\n          \",\"id\":39}],\"id\":27},{\"type\":3,\"textContent\":\"\\n    \",\"id\":40}],\"id\":22},{\"type\":3,\"textContent\":\"\\n\\n    \",\"id\":41},{\"type\":2,\"tagName\":\"div\",\"attributes\":{\"class\":\"controls\"},\"childNodes\":[{\"type\":3,\"textContent\":\"\\n      \",\"id\":43},{\"type\":2,\"tagName\":\"h3\",\"attributes\":{},\"childNodes\":[{\"type\":3,\"textContent\":\"********* ********\",\"id\":45}],\"id\":44},{\"type\":3,\"textContent\":\"\\n      \",\"id\":46},{\"type\":2,\"tagName\":\"button\",\"attributes\":{\"id\":\"startBtn\"},\"childNodes\":[{\"type\":3,\"textContent\":\"***** *********\",\"id\":48}],\"id\":47},{\"type\":3,\"textContent\":\"\\n      \",\"id\":49},{\"type\":2,\"tagName\":\"button\",\"attributes\":{\"id\":\"stopBtn\",\"disabled\":\"\"},\"childNodes\":[{\"type\":3,\"textContent\":\"**** *********\",\"id\":51}],\"id\":50},{\"type\":3,\"textContent\":\"\\n      \",\"id\":52},{\"type\":2,\"tagName\":\"button\",\"attributes\":{\"id\":\"resumeBtn\",\"disabled\":\"\"},\"childNodes\":[{\"type\":3,\"textContent\":\"****** *********\",\"id\":54}],\"id\":53},{\"type\":3,\"textContent\":\"\\n      \",\"id\":55},{\"type\":2,\"tagName\":\"button\",\"attributes\":{\"id\":\"deinitBtn\",\"disabled\":\"\"},\"childNodes\":[{\"type\":3,\"textContent\":\"************\",\"id\":57}],\"id\":56},{\"type\":3,\"textContent\":\"\\n\\n      \",\"id\":58},{\"type\":2,\"tagName\":\"div\",\"attributes\":{\"id\":\"status\",\"class\":\"status stopped\"},\"childNodes\":[{\"type\":3,\"textContent\":\"******* *** *********\",\"id\":60}],\"id\":59},{\"type\":3,\"textContent\":\"\\n    \",\"id\":61}],\"id\":42},{\"type\":3,\"textContent\":\"\\n\\n    \",\"id\":62},{\"type\":2,\"tagName\":\"div\",\"attributes\":{\"class\":\"form-group\"},\"childNodes\":[{\"type\":3,\"textContent\":\"\\n      \",\"id\":64},{\"type\":2,\"tagName\":\"label\",\"attributes\":{\"for\":\"name\"},\"childNodes\":[{\"type\":3,\"textContent\":\"*****\",\"id\":66}],\"id\":65},{\"type\":3,\"textContent\":\"\\n      \",\"id\":67},{\"type\":2,\"tagName\":\"input\",\"attributes\":{\"type\":\"text\",\"id\":\"name\",\"placeholder\":\"Enter your name\"},\"childNodes\":[],\"id\":68},{\"type\":3,\"textContent\":\"\\n    \",\"id\":69}],\"id\":63},{\"type\":3,\"textContent\":\"\\n\\n    \",\"id\":70},{\"type\":2,\"tagName\":\"div\",\"attributes\":{\"class\":\"form-group\"},\"childNodes\":[{\"type\":3,\"textContent\":\"\\n      \",\"id\":72},{\"type\":2,\"tagName\":\"label\",\"attributes\":{\"for\":\"email\"},\"childNodes\":[{\"type\":3,\"textContent\":\"******\",\"id\":74}],\"id\":73},{\"type\":3,\"textContent\":\"\\n      \",\"id\":75},{\"type\":2,\"tagName\":\"input\",\"attributes\":{\"type\":\"email\",\"id\":\"email\",\"placeholder\":\"Enter your email\"},\"childNodes\":[],\"id\":76},{\"type\":3,\"textContent\":\"\\n    \",\"id\":77}],\"id\":71},{\"type\":3,\"textContent\":\"\\n\\n    \",\"id\":78},{\"type\":2,\"tagName\":\"div\",\"attributes\":{\"class\":\"form-group\"},\"childNodes\":[{\"type\":3,\"textContent\":\"\\n      \",\"id\":80},{\"type\":2,\"tagName\":\"label\",\"attributes\":{\"for\":\"message\"},\"childNodes\":[{\"type\":3,\"textContent\":\"********\",\"id\":82}],\"id\":81},{\"type\":3,\"textContent\":\"\\n      \",\"id\":83},{\"type\":2,\"tagName\":\"textarea\",\"attributes\":{\"id\":\"message\",\"rows\":\"4\",\"placeholder\":\"Enter your message\"},\"childNodes\":[],\"id\":84},{\"type\":3,\"textContent\":\"\\n    \",\"id\":85}],\"id\":79},{\"type\":3,\"textContent\":\"\\n\\n    \",\"id\":86},{\"type\":2,\"tagName\":\"button\",\"attributes\":{\"id\":\"submitBtn\"},\"childNodes\":[{\"type\":3,\"textContent\":\"****** ****\",\"id\":88}],\"id\":87},{\"type\":3,\"textContent\":\"\\n\\n    \",\"id\":89},{\"type\":2,\"tagName\":\"div\",\"attributes\":{\"id\":\"output\"},\"childNodes\":[],\"id\":90},{\"type\":3,\"textContent\":\"\\n\\n    \",\"id\":91},{\"type\":5,\"textContent\":\" Load the built Signoz Session Recorder (includes all dependencies) \",\"id\":92},{\"type\":3,\"textContent\":\"\\n    \",\"id\":93},{\"type\":2,\"tagName\":\"script\",\"attributes\":{\"src\":\"http://127.0.0.1:5500/signoz-web-session-recorder/dist/browser/index.js\"},\"childNodes\":[],\"id\":94},{\"type\":3,\"textContent\":\"\\n\\n    \",\"id\":95},{\"type\":2,\"tagName\":\"script\",\"attributes\":{},\"childNodes\":[{\"type\":3,\"textContent\":\"SCRIPT_PLACEHOLDER\",\"id\":97}],\"id\":96},{\"type\":3,\"textContent\":\"\\n  \",\"id\":98},{\"type\":5,\"textContent\":\" Code injected by live-server \",\"id\":99},{\"type\":3,\"textContent\":\"\\n\",\"id\":100},{\"type\":2,\"tagName\":\"script\",\"attributes\":{},\"childNodes\":[{\"type\":3,\"textContent\":\"SCRIPT_PLACEHOLDER\",\"id\":102}],\"id\":101},{\"type\":3,\"textContent\":\"\\n\\n\\n\",\"id\":103}],\"id\":17}],\"id\":3}],\"id\":1},\"initialOffset\":{\"left\":0,\"top\":0}},\"timestamp\":1756545040767}",
+				"id": "0hltdrvF7mBSEDgmOZS6oDtw9jw",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545040767000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:40.767+05:30"
+		},
+		{
+			"data": {
+				"attributes_bool": {},
+				"attributes_number": {
+					"rr-web.chunk": 1,
+					"rr-web.event": 1,
+					"rr-web.offset": 1,
+					"rr-web.total-chunks": 1
+				},
+				"attributes_string": {},
+				"body": "{\"type\":4,\"data\":{\"href\":\"http://127.0.0.1:5500/signoz-web-session-recorder/examples/basic-usage.html\",\"width\":1188,\"height\":1086},\"timestamp\":1756545040763}",
+				"id": "0hltdrunEOvzgmdGpBmWx72WMqw",
+				"resources_string": {
+					"deployment.environment": "development",
+					"rum.sessionId": "test-session-1756545040762",
+					"service.name": "signoz-session-recorder",
+					"service.version": "0.1.0"
+				},
+				"scope_name": "rum.rr-web",
+				"scope_string": {},
+				"scope_version": "0.1.0",
+				"severity_number": 0,
+				"severity_text": "",
+				"span_id": "",
+				"timestamp": 1756545040763000000,
+				"trace_flags": 0,
+				"trace_id": ""
+			},
+			"timestamp": "2025-08-30T14:40:40.763+05:30"
+		}
+	]
+}

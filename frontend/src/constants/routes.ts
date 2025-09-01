@@ -19,6 +19,8 @@ const ROUTES = {
 	GET_STARTED_AZURE_MONITORING: '/get-started/azure-monitoring',
 	USAGE_EXPLORER: '/usage-explorer',
 	APPLICATION: '/services',
+	SESSION_RECORDINGS: '/session-recordings',
+	SESSION_RECORDINGS_DETAIL: '/session-recordings/:sessionId',
 	ALL_DASHBOARD: '/dashboard',
 	DASHBOARD: '/dashboard/:dashboardId',
 	DASHBOARD_WIDGET: '/dashboard/:dashboardId/:widgetId',

@@ -24,7 +24,7 @@ import { AnimatePresence } from 'motion/react';
 import * as motion from 'motion/react-client';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { UserPreference } from 'types/api/preferences/preference';
 import { DataSource } from 'types/common/queryBuilder';
@@ -40,6 +40,9 @@ import HomeChecklist, { ChecklistItem } from './HomeChecklist/HomeChecklist';
 import SavedViews from './SavedViews/SavedViews';
 import Services from './Services/Services';
 import StepsProgress from './StepsProgress/StepsProgress';
+import events from './rows.json';
+import { eventWithTime } from '@rrweb/types';
+import RRWebPlayer from 'pages/SessionRecording/RRWebPlayer';
 
 const homeInterval = 30 * 60 * 1000;
 
@@ -167,6 +170,37 @@ export default function Home(): JSX.Element {
 	const [isMetricsIngestionActive, setIsMetricsIngestionActive] = useState(
 		false,
 	);
+
+	const playerContainerRef = useRef(null);
+	// const [player, setPlayer] = useState<init | null>(null);
+	const [parsedEvents, setParsedEvents] = useState<eventWithTime[]>([]);
+
+	useEffect(() => {
+		if (events.rows.length > 0) {
+			// Initialize the rrweb player with events
+			const parsedEvents = events.rows.map((event) => {
+				return JSON.parse(event.data.body);
+			});
+
+			setParsedEvents(parsedEvents);
+			// const replayPlayer = new init({
+			// 	target: (playerContainerRef.current as unknown) as HTMLElement,
+			// 	props: {
+			// 		events: parsedEvents, // Pass the captured events to the player
+			// 		speed: 1, // Normal speed (can be adjusted)
+			// 		showDebug: false, // Optionally show debug info
+			// 	},
+			// });
+
+			// // Save the player instance for future use if needed
+			// setPlayer(replayPlayer);
+
+			// // Cleanup on unmount
+			// return () => {
+			// 	replayPlayer.destroy();
+			// };
+		}
+	}, [events]); // Re-run effect when events change
 
 	const processUserPreferences = (userPreferences: UserPreference[]): void => {
 		const checklistSkipped = Boolean(
@@ -311,6 +345,9 @@ export default function Home(): JSX.Element {
 
 	return (
 		<div className="home-container">
+			<p>hello world</p>
+			<RRWebPlayer events={parsedEvents} options={{ autoPlay: false }} />
+			{/* 
 			<div className="sticky-header">
 				{showBanner && (
 					<div className="home-container-banner">
@@ -378,7 +415,6 @@ export default function Home(): JSX.Element {
 					}
 				/>
 			</div>
-
 			<div className="home-content">
 				<div className="home-left-content">
 					<DataSourceInfo
@@ -764,7 +800,7 @@ export default function Home(): JSX.Element {
 						</>
 					)}
 				</div>
-			</div>
+			</div> */}
 		</div>
 	);
 }
