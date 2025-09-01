@@ -8,8 +8,7 @@ import (
 	"go.uber.org/zap" //nolint:depguard
 )
 
-// implements all conversion functions required for zap interface with underlying slog provider
-type ZapSlogConvertor struct{}
+type zapToSlogConverter struct{}
 
 func NewLogger(config Config, wrappers ...loghandler.Wrapper) *slog.Logger {
 	logger := slog.New(
@@ -38,11 +37,11 @@ func NewLogger(config Config, wrappers ...loghandler.Wrapper) *slog.Logger {
 	return logger
 }
 
-func NewZapSlogConvertor() *ZapSlogConvertor {
-	return &ZapSlogConvertor{}
+func NewZapToSlogConverter() ZapToSlogConverter {
+	return &zapToSlogConverter{}
 }
 
-func (convertor *ZapSlogConvertor) FieldsToAttributes(fields []zap.Field) []any {
+func (*zapToSlogConverter) FieldsToAttributes(fields []zap.Field) []any {
 	// for each KV pair
 	args := make([]any, 0, len(fields)*2)
 	for _, f := range fields {

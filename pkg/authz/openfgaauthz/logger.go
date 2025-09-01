@@ -13,11 +13,11 @@ var _ pkgopenfgalogger.Logger = (*openfgaLogger)(nil)
 
 type openfgaLogger struct {
 	slog      *slog.Logger
-	convertor *instrumentation.ZapSlogConvertor
+	convertor instrumentation.ZapToSlogConverter
 }
 
 func NewLogger(logger *slog.Logger) *openfgaLogger {
-	return &openfgaLogger{slog: logger, convertor: instrumentation.NewZapSlogConvertor()}
+	return &openfgaLogger{slog: logger, convertor: instrumentation.NewZapToSlogConverter()}
 }
 
 func (logger *openfgaLogger) With(fields ...zap.Field) pkgopenfgalogger.Logger {
