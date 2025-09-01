@@ -153,7 +153,7 @@ func (q *QueryBuilderTraceOperator) ValidateTraceOperator(queries []QueryEnvelop
 	}
 
 	// Get all query names referenced in the expression
-	referencedQueries := q.collectReferencedQueries(q.ParsedExpression)
+	referencedQueries := q.CollectReferencedQueries(q.ParsedExpression)
 
 	// Validate that all referenced queries exist and are trace queries
 	for _, queryName := range referencedQueries {
@@ -287,8 +287,8 @@ func (q *QueryBuilderTraceOperator) ValidatePagination() error {
 	return nil
 }
 
-// collectReferencedQueries collects all query names referenced in the expression tree
-func (q *QueryBuilderTraceOperator) collectReferencedQueries(operand *TraceOperand) []string {
+// CollectReferencedQueries collects all query names referenced in the expression tree
+func (q *QueryBuilderTraceOperator) CollectReferencedQueries(operand *TraceOperand) []string {
 	if operand == nil {
 		return nil
 	}
@@ -300,8 +300,8 @@ func (q *QueryBuilderTraceOperator) collectReferencedQueries(operand *TraceOpera
 	}
 
 	// Recursively collect from children
-	queries = append(queries, q.collectReferencedQueries(operand.Left)...)
-	queries = append(queries, q.collectReferencedQueries(operand.Right)...)
+	queries = append(queries, q.CollectReferencedQueries(operand.Left)...)
+	queries = append(queries, q.CollectReferencedQueries(operand.Right)...)
 
 	// Remove duplicates
 	seen := make(map[string]bool)
@@ -314,11 +314,6 @@ func (q *QueryBuilderTraceOperator) collectReferencedQueries(operand *TraceOpera
 	}
 
 	return unique
-}
-
-// CollectReferencedQueries is a public wrapper for collectReferencedQueries
-func (q *QueryBuilderTraceOperator) CollectReferencedQueries(operand *TraceOperand) []string {
-	return q.collectReferencedQueries(operand)
 }
 
 // ValidateUniqueTraceOperator ensures only one trace operator exists in queries
