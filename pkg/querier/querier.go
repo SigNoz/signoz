@@ -51,21 +51,21 @@ func New(
 	logStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
 	meterStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
-	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder,
 	bucketCache BucketCache,
+	liveDataRefreshSeconds time.Duration,
 ) *querier {
 	querierSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier")
 	return &querier{
-		logger:                   querierSettings.Logger(),
-		telemetryStore:           telemetryStore,
-		metadataStore:            metadataStore,
-		promEngine:               promEngine,
-		traceStmtBuilder:         traceStmtBuilder,
-		logStmtBuilder:           logStmtBuilder,
-		metricStmtBuilder:        metricStmtBuilder,
-		meterStmtBuilder:         meterStmtBuilder,
-		traceOperatorStmtBuilder: traceOperatorStmtBuilder,
-		bucketCache:              bucketCache,
+		logger:                 querierSettings.Logger(),
+		telemetryStore:         telemetryStore,
+		metadataStore:          metadataStore,
+		promEngine:             promEngine,
+		traceStmtBuilder:       traceStmtBuilder,
+		logStmtBuilder:         logStmtBuilder,
+		metricStmtBuilder:      metricStmtBuilder,
+		meterStmtBuilder:       meterStmtBuilder,
+		bucketCache:            bucketCache,
+		liveDataRefreshSeconds: 5,
 	}
 }
 
