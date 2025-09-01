@@ -541,6 +541,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/dependency_graph", am.ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.AdminAccess(aH.setTTL)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/settings/ttl", am.AdminAccess(aH.setCustomRetentionTTL)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v2/settings/ttl", am.ViewAccess(aH.getCustomRetentionTTL)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.Signoz.Handlers.Apdex.Set)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.Signoz.Handlers.Apdex.Get)).Methods(http.MethodGet)
 
@@ -1928,6 +1930,47 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 
 	aH.WriteJSON(w, r, result)
 
+}
+
+func (aH *APIHandler) setCustomRetentionTTL(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, errv2 := authtypes.ClaimsFromContext(ctx)
+	if errv2 != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get org id from context"))
+		return
+	}
+
+	var params model.CustomRetentionTTLParams
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "Invalid data"))
+		return
+	}
+
+	// Context is not used here as TTL is long duration DB operation
+	result, apiErr := aH.reader.SetTTLV2(context.Background(), claims.OrgID, &params)
+	if apiErr != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInternal, apiErr.Error()))
+		return
+	}
+
+	aH.WriteJSON(w, r, result)
+}
+
+func (aH *APIHandler) getCustomRetentionTTL(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, errv2 := authtypes.ClaimsFromContext(ctx)
+	if errv2 != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get org id from context"))
+		return
+	}
+
+	result, apiErr := aH.reader.GetCustomRetentionTTL(r.Context(), claims.OrgID)
+	if apiErr != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInternal, apiErr.Error()))
+		return
+	}
+
+	aH.WriteJSON(w, r, result)
 }
 
 func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
