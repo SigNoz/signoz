@@ -3,6 +3,32 @@ import { resolveTexts } from 'hooks/dashboard/useContextVariables';
 import { ContextLinkProps } from 'types/api/dashboard/getAll';
 import { v4 as uuid } from 'uuid';
 
+// Configuration for variable source types
+export const VARIABLE_SOURCE_CONFIG = {
+	TIMESTAMP: {
+		label: 'Global timestamp',
+	},
+	QUERY: {
+		label: 'Query variable',
+	},
+	GLOBAL: {
+		label: 'Global variable',
+	},
+	DASHBOARD: {
+		label: 'Dashboard variable',
+	},
+} as const;
+
+interface ContextVariable {
+	name: string;
+	source?: string;
+}
+
+interface TransformedVariable {
+	name: string;
+	source: string;
+}
+
 interface UrlParam {
 	key: string;
 	value: string;
@@ -171,6 +197,67 @@ const processContextLinks = (
 		label: resolvedLabels.fullTexts[index],
 		url: finalUrls[index],
 	}));
+};
+
+/**
+ * Transforms context variables into the format expected by VariablesDropdown
+ * @param variables - Array of context variables from useContextVariables
+ * @returns Array of transformed variables with proper source descriptions
+ */
+export const transformContextVariables = (
+	variables: ContextVariable[],
+): TransformedVariable[] => {
+	const groupedVars: { [key: string]: TransformedVariable[] } = {};
+
+	// Process variables array from useContextVariables
+	variables.forEach((variable) => {
+		let source = 'Dashboard variable';
+
+		// Check if it's a timestamp variable
+		if (variable.name.toLowerCase().includes('timestamp')) {
+			source = VARIABLE_SOURCE_CONFIG.TIMESTAMP.label;
+		}
+		// Check if it's a custom/field variable (usually has dots or specific patterns)
+		else if (
+			variable.name.includes('.') ||
+			variable.name.toLowerCase().includes('custom')
+		) {
+			source = VARIABLE_SOURCE_CONFIG.QUERY.label;
+		}
+		// Check if it's from global variables
+		else if (variable.source === 'global') {
+			source = VARIABLE_SOURCE_CONFIG.GLOBAL.label;
+		}
+
+		// Group variables by source
+		if (!groupedVars[source]) {
+			groupedVars[source] = [];
+		}
+
+		groupedVars[source].push({
+			name: variable.name,
+			source,
+		});
+	});
+
+	// Flatten the grouped variables to maintain source grouping order
+	const allVars: TransformedVariable[] = [];
+
+	// Add variables in the order we want them to appear
+	const sourceOrder = [
+		VARIABLE_SOURCE_CONFIG.TIMESTAMP.label,
+		VARIABLE_SOURCE_CONFIG.GLOBAL.label,
+		VARIABLE_SOURCE_CONFIG.QUERY.label,
+		VARIABLE_SOURCE_CONFIG.DASHBOARD.label,
+	];
+
+	sourceOrder.forEach((source) => {
+		if (groupedVars[source]) {
+			allVars.push(...groupedVars[source]);
+		}
+	});
+
+	return allVars;
 };
 
 export {

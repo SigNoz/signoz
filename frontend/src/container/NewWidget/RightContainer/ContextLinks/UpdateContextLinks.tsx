@@ -13,11 +13,15 @@ import { CONTEXT_LINK_FIELDS } from 'container/NewWidget/RightContainer/ContextL
 import {
 	getInitialValues,
 	getUrlParams,
+	transformContextVariables,
 	updateUrlWithParams,
 } from 'container/NewWidget/RightContainer/ContextLinks/utils';
+import useContextVariables from 'hooks/dashboard/useContextVariables';
 import { Plus, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { ContextLinkProps } from 'types/api/dashboard/getAll';
+import { useEffect, useMemo, useState } from 'react';
+import { ContextLinkProps, Widgets } from 'types/api/dashboard/getAll';
+
+import VariablesDropdown from './VariablesDropdown';
 
 const { TextArea } = AntInput;
 
@@ -25,12 +29,14 @@ interface UpdateContextLinksProps {
 	selectedContextLink: ContextLinkProps | null;
 	onSave: (newContextLink: ContextLinkProps) => void;
 	onCancel: () => void;
+	selectedWidget?: Widgets;
 }
 
 function UpdateContextLinks({
 	selectedContextLink,
 	onSave,
 	onCancel,
+	selectedWidget,
 }: UpdateContextLinksProps): JSX.Element {
 	const [form] = Form.useForm();
 	const label = Form.useWatch(CONTEXT_LINK_FIELDS.LABEL, form);
@@ -43,8 +49,89 @@ function UpdateContextLinks({
 		}[]
 	>([]);
 
+	// Extract field variables from the widget's query (all groupBy fields from all queries)
+	const fieldVariables = useMemo(() => {
+		if (!selectedWidget?.query?.builder?.queryData) return {};
+
+		const fieldVars: Record<string, string | number | boolean> = {};
+
+		// Get all groupBy fields from all queries
+		selectedWidget.query.builder.queryData.forEach((queryData) => {
+			if (queryData.groupBy) {
+				queryData.groupBy.forEach((field) => {
+					if (field.key && !(field.key in fieldVars)) {
+						fieldVars[field.key] = ''; // Placeholder value
+					}
+				});
+			}
+		});
+
+		return fieldVars;
+	}, [selectedWidget?.query]);
+
+	// Use useContextVariables to get dashboard, global, and field variables
+	const { processedVariables, variables } = useContextVariables({
+		maxValues: 2,
+		customVariables: fieldVariables,
+	});
+
+	// Transform variables into the format expected by VariablesDropdown
+	const transformedVariables = useMemo(
+		() => transformContextVariables(variables),
+		[variables],
+	);
+
+	// Console log all available variables
+	console.log('=== CONTEXT LINKS VARIABLES ===');
+	console.log('Field Variables:', fieldVariables);
+	console.log('All Variables:', variables);
+	console.log('Processed Variables:', processedVariables);
+	console.log('Transformed Variables:', transformedVariables);
+	console.log('Selected Widget Query:', selectedWidget?.query);
+	console.log('================================');
+
 	// Function to get current domain
 	const getCurrentDomain = (): string => window.location.origin;
+
+	// Function to handle variable selection from dropdown
+	const handleVariableSelect = (variableName: string): void => {
+		// Get current URL value from form
+		const currentValue = form.getFieldValue(CONTEXT_LINK_FIELDS.URL) || '';
+
+		// For now, just append the variable to the end
+		// In the future, we can implement cursor position logic
+		const newValue = currentValue + variableName;
+
+		// Update form value
+		form.setFieldValue(CONTEXT_LINK_FIELDS.URL, newValue);
+	};
+
+	// Function to handle variable selection for parameter values
+	const handleParamChange = (
+		index: number,
+		field: 'key' | 'value',
+		value: string,
+	): void => {
+		const newParams = [...params];
+		newParams[index][field] = value;
+		setParams(newParams);
+		const updatedUrl = updateUrlWithParams(url, newParams);
+		form.setFieldValue(CONTEXT_LINK_FIELDS.URL, updatedUrl);
+	};
+
+	const handleParamVariableSelect = (
+		index: number,
+		variableName: string,
+	): void => {
+		// Get current parameter value
+		const currentValue = params[index].value;
+
+		// Append the variable to the current value
+		const newValue = currentValue + variableName;
+
+		// Update the parameter value
+		handleParamChange(index, 'value', newValue);
+	};
 
 	console.log('FORM VALUES', { label, url });
 	useEffect(() => {
@@ -106,103 +193,121 @@ function UpdateContextLinks({
 		form.setFieldValue(CONTEXT_LINK_FIELDS.URL, updatedUrl);
 	};
 
-	const handleParamChange = (
-		index: number,
-		field: 'key' | 'value',
-		value: string,
-	): void => {
-		const newParams = [...params];
-		newParams[index][field] = value;
-		setParams(newParams);
-		const updatedUrl = updateUrlWithParams(url, newParams);
-		form.setFieldValue(CONTEXT_LINK_FIELDS.URL, updatedUrl);
-	};
-
 	return (
 		<div className="context-link-form-container">
-			<Form
-				form={form}
-				name="contextLink"
-				initialValues={getInitialValues(selectedContextLink)}
-				// onFinish={() => {}}
-			>
-				{/* //label */}
-				<Typography.Text className="form-label">Label</Typography.Text>
-				<Form.Item
-					name={CONTEXT_LINK_FIELDS.LABEL}
-					rules={[{ required: false, message: 'Please input the label' }]}
+			<div>
+				<Form
+					form={form}
+					name="contextLink"
+					initialValues={getInitialValues(selectedContextLink)}
+					// onFinish={() => {}}
 				>
-					<Input placeholder="View Traces details: {{_traceId}}" />
-				</Form.Item>
-				{/* //url */}
-				<Typography.Text className="form-label">
-					URL <span className="required-asterisk">*</span>
-				</Typography.Text>
-				<Form.Item
-					name={CONTEXT_LINK_FIELDS.URL}
-					// label="URL"
-					rules={[
-						{ required: true, message: 'Please input the URL' },
-						{
-							pattern: /^(https?:\/\/|\/|{{.*}}\/)/,
-							message: 'URLs must start with http(s), /, or {{.*}}/',
-						},
-					]}
-				>
-					<Input
-						autoComplete="off"
-						autoCorrect="off"
-						autoCapitalize="off"
-						spellCheck="false"
-						placeholder={`${getCurrentDomain()}/trace/{{_traceId}}`}
-					/>
-				</Form.Item>
-			</Form>
-			<div className="params-container">
-				{/* URL Parameters Section */}
-				{params.length > 0 && (
-					<div className="url-parameters-section">
-						<Row gutter={[8, 8]} className="parameter-header">
-							<Col span={11}>Key</Col>
-							<Col span={11}>Value</Col>
-							<Col span={2}>{/* Empty column for spacing */}</Col>
-						</Row>
-
-						{params.map((param, index) => (
-							// eslint-disable-next-line react/no-array-index-key
-							<Row gutter={[8, 8]} key={index} className="parameter-row">
-								<Col span={11}>
+					{/* //label */}
+					<Typography.Text className="form-label">Label</Typography.Text>
+					<Form.Item
+						name={CONTEXT_LINK_FIELDS.LABEL}
+						rules={[{ required: false, message: 'Please input the label' }]}
+					>
+						<Input placeholder="View Traces details: {{_traceId}}" />
+					</Form.Item>
+					{/* //url */}
+					<Typography.Text className="form-label">
+						URL <span className="required-asterisk">*</span>
+					</Typography.Text>
+					<Form.Item
+						name={CONTEXT_LINK_FIELDS.URL}
+						// label="URL"
+						rules={[
+							{ required: true, message: 'Please input the URL' },
+							{
+								pattern: /^(https?:\/\/|\/|{{.*}}\/)/,
+								message: 'URLs must start with http(s), /, or {{.*}}/',
+							},
+						]}
+					>
+						<VariablesDropdown
+							onVariableSelect={handleVariableSelect}
+							variables={transformedVariables}
+						>
+							{({ setIsOpen }): JSX.Element => (
+								<div className="url-input-trigger">
 									<Input
-										id={`param-key-${index}`}
-										placeholder="Key"
-										value={param.key}
+										value={url}
 										onChange={(e): void =>
-											handleParamChange(index, 'key', e.target.value)
+											form.setFieldValue(CONTEXT_LINK_FIELDS.URL, e.target.value)
 										}
+										autoComplete="off"
+										autoCorrect="off"
+										autoCapitalize="off"
+										spellCheck="false"
+										className="url-input-field"
+										placeholder={`${getCurrentDomain()}/trace/{{_traceId}}`}
+										onFocus={(): void => setIsOpen(true)}
 									/>
-								</Col>
-								<Col span={11}>
-									<TextArea
-										rows={1}
-										placeholder="Value"
-										value={param.value}
-										onChange={(event): void =>
-											handleParamChange(index, 'value', event.target.value)
-										}
-									/>
-								</Col>
-								<Col span={2}>
-									<Button
-										type="text"
-										icon={<Trash2 size={14} />}
-										onClick={(): void => handleDeleteParameter(index)}
-										className="delete-parameter-btn"
-									/>
-								</Col>
+								</div>
+							)}
+						</VariablesDropdown>
+					</Form.Item>
+
+					{/* Remove the separate variables section */}
+				</Form>
+
+				<div className="params-container">
+					{/* URL Parameters Section */}
+					{params.length > 0 && (
+						<div className="url-parameters-section">
+							<Row gutter={[8, 8]} className="parameter-header">
+								<Col span={4}>Key</Col>
+								<Col span={18}>Value</Col>
+								<Col span={2}>{/* Empty column for spacing */}</Col>
 							</Row>
-						))}
-					</div>
-				)}
+
+							{params.map((param, index) => (
+								// eslint-disable-next-line react/no-array-index-key
+								<Row gutter={[8, 8]} key={index} className="parameter-row">
+									<Col span={4}>
+										<Input
+											id={`param-key-${index}`}
+											placeholder="Key"
+											value={param.key}
+											onChange={(e): void =>
+												handleParamChange(index, 'key', e.target.value)
+											}
+										/>
+									</Col>
+									<Col span={18}>
+										<VariablesDropdown
+											onVariableSelect={(variableName): void =>
+												handleParamVariableSelect(index, variableName)
+											}
+											variables={transformedVariables}
+										>
+											{({ setIsOpen }): JSX.Element => (
+												<TextArea
+													rows={1}
+													placeholder="Value"
+													value={param.value}
+													onChange={(event): void =>
+														handleParamChange(index, 'value', event.target.value)
+													}
+													onFocus={(): void => setIsOpen(true)}
+												/>
+											)}
+										</VariablesDropdown>
+									</Col>
+									<Col span={2}>
+										<Button
+											type="text"
+											icon={<Trash2 size={14} />}
+											onClick={(): void => handleDeleteParameter(index)}
+											className="delete-parameter-btn"
+										/>
+									</Col>
+								</Row>
+							))}
+						</div>
+					)}
+				</div>
 
 				{/* Add URL parameter btn */}
 				<Button
@@ -225,5 +330,9 @@ function UpdateContextLinks({
 		</div>
 	);
 }
+
+UpdateContextLinks.defaultProps = {
+	selectedWidget: undefined,
+};
 
 export default UpdateContextLinks;
