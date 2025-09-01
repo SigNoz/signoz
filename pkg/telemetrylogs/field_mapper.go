@@ -107,7 +107,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 	case schema.JSONColumnType{}:
 		oldColumn := logsV2Columns["resources_string"]
 		oldKeyName := fmt.Sprintf("%s['%s']", oldColumn.Name, key.Name)
-		// have to add ::string as clickhouse throws an error data types Variant/Dynamic are not allowed in GROUP BY
+		// have to add ::string as clickHouse throws an error :- data types Variant/Dynamic are not allowed in GROUP BY
 		// once clickHouse dependency is updated, we need to check if we can remove it.
 		if key.Materialized {
 			oldKeyName = telemetrytypes.FieldKeyToMaterializedColumnName(key)
@@ -116,7 +116,6 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 			return fmt.Sprintf("multiIf(resource.%s IS NOT NULL, resource.%s::String, mapContains(%s, '%s'), %s, NULL)", key.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
 		}
 
-		// use coalesce for backward compatibility
 	case schema.ColumnTypeString,
 		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 		schema.ColumnTypeUInt64,

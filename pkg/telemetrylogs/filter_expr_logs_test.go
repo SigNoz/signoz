@@ -15,8 +15,6 @@ import (
 
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search
 func TestFilterExprLogs(t *testing.T) {
-	t.Setenv("RESOURCE_JSON_COLUMN_ENABLED", "true")
-
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 
