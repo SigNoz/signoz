@@ -156,7 +156,7 @@ func (handler *handler) LockUnlock(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.LockUnlock(ctx, orgID, dashboardID, claims.Email, *req.Locked)
+	err = handler.module.LockUnlock(ctx, orgID, dashboardID, claims.Email, claims.Role, *req.Locked)
 	if err != nil {
 		render.Error(rw, err)
 		return

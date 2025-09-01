@@ -108,7 +108,7 @@ func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
 	}
 
 	// Validate aggregations only for non-raw request types
-	if requestType != RequestTypeRaw && requestType != RequestTypeTrace {
+	if requestType != RequestTypeRaw && requestType != RequestTypeRawStream && requestType != RequestTypeTrace {
 		if err := q.validateAggregations(); err != nil {
 			return err
 		}
@@ -145,6 +145,25 @@ func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
 		}
 	}
 
+	if requestType == RequestTypeRaw {
+		if err := q.validateSelectFields(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (q *QueryBuilderQuery[T]) validateSelectFields() error {
+	// isRoot and isEntryPoint are returned by the Metadata API, so if someone sends them, we have to reject the request.
+	for _, v := range q.SelectFields {
+		if v.Name == "isRoot" || v.Name == "isEntryPoint" {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"isRoot and isEntryPoint fields are not supported in selectFields",
+			)
+		}
+	}
 	return nil
 }
 
@@ -431,7 +450,7 @@ func (q *QueryBuilderQuery[T]) validateHaving() error {
 // ValidateQueryRangeRequest validates the entire query range request
 func (r *QueryRangeRequest) Validate() error {
 	// Validate time range
-	if r.Start >= r.End {
+	if r.RequestType != RequestTypeRawStream && r.Start >= r.End {
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"start time must be before end time",
@@ -440,7 +459,7 @@ func (r *QueryRangeRequest) Validate() error {
 
 	// Validate request type
 	switch r.RequestType {
-	case RequestTypeRaw, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeTrace:
+	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeTrace:
 		// Valid request types
 	default:
 		return errors.NewInvalidInputf(
