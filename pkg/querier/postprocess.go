@@ -1012,8 +1012,7 @@ func canDefaultZeroAgg(expr string) bool {
 	// while statistical/analytical operations should show gaps when there's no data to analyze.
 	if strings.HasPrefix(expr, "count(") ||
 		strings.HasPrefix(expr, "count_distinct(") ||
-		strings.HasPrefix(expr, "sum(") ||
-		strings.HasPrefix(expr, "increase(") {
+		strings.HasPrefix(expr, "sum(") {
 		return true
 	}
 	return false
