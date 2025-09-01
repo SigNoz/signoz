@@ -1,3 +1,5 @@
+import './LogsExplorerChart.styles.scss';
+
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
@@ -15,7 +17,6 @@ import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { LogsExplorerChartProps } from './LogsExplorerChart.interfaces';
-import { CardStyled } from './LogsExplorerChart.styled';
 import { getColorsForSeverityLabels } from './utils';
 
 function LogsExplorerChart({
@@ -100,9 +101,11 @@ function LogsExplorerChart({
 	);
 
 	return (
-		<CardStyled className={className}>
+		<div className={`${className} logs-frequency-chart-container`}>
 			{isLoading ? (
-				<Spinner size="default" height="100%" />
+				<div className="logs-frequency-chart-loading">
+					<Spinner size="default" height="100%" />
+				</div>
 			) : (
 				<Graph
 					name="logsExplorerChart"
@@ -115,7 +118,7 @@ function LogsExplorerChart({
 					maxTime={chartMaxTime}
 				/>
 			)}
-		</CardStyled>
+		</div>
 	);
 }
 
