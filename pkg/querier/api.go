@@ -265,7 +265,7 @@ func (a *API) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if len(errs) != 0 {
-		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, errors.Join(errs...).Error()))
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "%s", errors.Join(errs...).Error()))
 		return
 	}
 

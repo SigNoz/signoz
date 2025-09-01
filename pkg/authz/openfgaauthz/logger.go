@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation"
 	pkgopenfgalogger "github.com/openfga/openfga/pkg/logger"
 	"go.uber.org/zap" //nolint:depguard
 )
@@ -11,79 +12,65 @@ import (
 var _ pkgopenfgalogger.Logger = (*openfgaLogger)(nil)
 
 type openfgaLogger struct {
-	slog *slog.Logger
+	slog      *slog.Logger
+	convertor *instrumentation.ZapSlogConvertor
 }
 
 func NewLogger(logger *slog.Logger) *openfgaLogger {
-	return &openfgaLogger{slog: logger}
+	return &openfgaLogger{slog: logger, convertor: instrumentation.NewZapSlogConvertor()}
 }
 
 func (logger *openfgaLogger) With(fields ...zap.Field) pkgopenfgalogger.Logger {
-	newLogger := logger.slog.With(zapFieldsToArgs(fields)...)
-	return &openfgaLogger{slog: newLogger}
+	newLogger := logger.slog.With(logger.convertor.FieldsToAttributes(fields)...)
+	return &openfgaLogger{slog: newLogger, convertor: instrumentation.NewZapSlogConvertor()}
 }
 
 func (logger *openfgaLogger) Info(message string, fields ...zap.Field) {
-	logger.slog.Info(message, zapFieldsToArgs(fields)...) //nolint:sloglint
+	logger.slog.Info(message, logger.convertor.FieldsToAttributes(fields)...) //nolint:sloglint
 }
 
 func (logger *openfgaLogger) InfoWithContext(ctx context.Context, message string, fields ...zap.Field) {
-	logger.slog.InfoContext(ctx, message, zapFieldsToArgs(fields)...) //nolint:sloglint
+	logger.slog.InfoContext(ctx, message, logger.convertor.FieldsToAttributes(fields)...) //nolint:sloglint
 }
 
 func (logger *openfgaLogger) Debug(message string, fields ...zap.Field) {
-	logger.slog.Debug(message, zapFieldsToArgs(fields)...) //nolint:sloglint
+	logger.slog.Debug(message, logger.convertor.FieldsToAttributes(fields)...) //nolint:sloglint
 }
 
 func (logger *openfgaLogger) DebugWithContext(ctx context.Context, message string, fields ...zap.Field) {
-	logger.slog.DebugContext(ctx, message, zapFieldsToArgs(fields)...) //nolint:sloglint
+	logger.slog.DebugContext(ctx, message, logger.convertor.FieldsToAttributes(fields)...) //nolint:sloglint
 }
 
 func (logger *openfgaLogger) Warn(message string, fields ...zap.Field) {
-	logger.slog.Warn(message, zapFieldsToArgs(fields)...) //nolint:sloglint
+	logger.slog.Warn(message, logger.convertor.FieldsToAttributes(fields)...) //nolint:sloglint
 }
 
 func (logger *openfgaLogger) WarnWithContext(ctx context.Context, message string, fields ...zap.Field) {
-	logger.slog.WarnContext(ctx, message, zapFieldsToArgs(fields)...) //nolint:sloglint
+	logger.slog.WarnContext(ctx, message, logger.convertor.FieldsToAttributes(fields)...) //nolint:sloglint
 }
 
 func (logger *openfgaLogger) Error(message string, fields ...zap.Field) {
-	logger.slog.Error(message, zapFieldsToArgs(fields)...) //nolint:sloglint
+	logger.slog.Error(message, logger.convertor.FieldsToAttributes(fields)...) //nolint:sloglint
 }
 
 func (logger *openfgaLogger) ErrorWithContext(ctx context.Context, message string, fields ...zap.Field) {
-	logger.slog.ErrorContext(ctx, message, zapFieldsToArgs(fields)...) //nolint:sloglint
+	logger.slog.ErrorContext(ctx, message, logger.convertor.FieldsToAttributes(fields)...) //nolint:sloglint
 }
 
 func (logger *openfgaLogger) Fatal(message string, fields ...zap.Field) {
-	logger.slog.Error(message, zapFieldsToArgs(fields)...) //nolint:sloglint
+	logger.slog.Error(message, logger.convertor.FieldsToAttributes(fields)...) //nolint:sloglint
 }
 
 func (logger *openfgaLogger) FatalWithContext(ctx context.Context, message string, fields ...zap.Field) {
-	logger.slog.ErrorContext(ctx, message, zapFieldsToArgs(fields)...)
+	logger.slog.ErrorContext(ctx, message, logger.convertor.FieldsToAttributes(fields)...) //nolint:sloglint
 }
 
 func (logger *openfgaLogger) Panic(message string, fields ...zap.Field) {
-	logger.slog.Error(message, zapFieldsToArgs(fields)...)
+	logger.slog.Error(message, logger.convertor.FieldsToAttributes(fields)...) //nolint:sloglint
 	panic(message)
 }
 
 func (logger *openfgaLogger) PanicWithContext(ctx context.Context, message string, fields ...zap.Field) {
-	logger.slog.ErrorContext(ctx, message, zapFieldsToArgs(fields)...)
+	logger.slog.ErrorContext(ctx, message, logger.convertor.FieldsToAttributes(fields)...) //nolint:sloglint
 	panic(message)
-}
-
-func zapFieldsToArgs(fields []zap.Field) []any {
-	args := make([]any, 0, len(fields)*2)
-	for _, f := range fields {
-		args = append(args, f.Key)
-		if f.Interface != nil {
-			args = append(args, f.Interface)
-		} else if f.String != "" {
-			args = append(args, f.String)
-		} else {
-			args = append(args, f.Integer)
-		}
-	}
-	return args
 }
