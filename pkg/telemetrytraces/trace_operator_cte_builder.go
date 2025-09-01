@@ -525,25 +525,9 @@ func (b *traceOperatorCTEBuilder) getKeySelectors() []*telemetrytypes.FieldKeySe
 func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
-	stepIntervalSeconds := int64(b.operator.StepInterval.Seconds())
-	if stepIntervalSeconds <= 0 {
-		timeRangeSeconds := (b.end - b.start) / querybuilder.NsToSeconds
-		if timeRangeSeconds > 3600 {
-			stepIntervalSeconds = 300
-		} else if timeRangeSeconds > 1800 {
-			stepIntervalSeconds = 120
-		} else {
-			stepIntervalSeconds = 60
-		}
-
-		b.stmtBuilder.logger.WarnContext(b.ctx,
-			"trace operator stepInterval not set, using default",
-			"defaultSeconds", stepIntervalSeconds)
-	}
-
 	sb.Select(fmt.Sprintf(
 		"toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts",
-		stepIntervalSeconds,
+		int64(b.operator.StepInterval.Seconds()),
 	))
 
 	keySelectors := b.getKeySelectors()
@@ -583,7 +567,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*q
 		rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
 			b.ctx,
 			agg.Expression,
-			uint64(stepIntervalSeconds),
+			uint64(b.operator.StepInterval.Seconds()),
 			keys,
 		)
 		if err != nil {
