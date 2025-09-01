@@ -100,6 +100,9 @@ function DashboardVariableSelection(): JSX.Element | null {
 		[JSON.stringify(dependencyData?.order), minTime, maxTime],
 	);
 
+	// Performance optimization: For dynamic variables with allSelected=true, we don't store
+	// individual values in localStorage since we can always derive them from available options.
+	// This makes localStorage much lighter and more efficient.
 	const onValueUpdate = (
 		name: string,
 		id: string,
@@ -109,7 +112,11 @@ function DashboardVariableSelection(): JSX.Element | null {
 		// eslint-disable-next-line sonarjs/cognitive-complexity
 	): void => {
 		if (id) {
-			updateLocalStorageDashboardVariables(name, value, allSelected);
+			// For dynamic variables, only store in localStorage when NOT allSelected
+			// This makes localStorage much lighter by avoiding storing all individual values
+			const variable = variables?.[id] || variables?.[name];
+			const isDynamic = variable?.type === 'DYNAMIC';
+			updateLocalStorageDashboardVariables(name, value, allSelected, isDynamic);
 
 			if (selectedDashboard) {
 				setSelectedDashboard((prev) => {
