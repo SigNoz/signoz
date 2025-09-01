@@ -66,6 +66,9 @@ function DynamicVariableSelection({
 		string | string[] | undefined
 	>(undefined);
 
+	// Track dropdown open state for auto-checking new values
+	const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+
 	// Create a dependency key from all dynamic variables
 	const dynamicVariablesKey = useMemo(() => {
 		if (!existingVariables) return 'no_variables';
@@ -174,11 +177,38 @@ function DynamicVariableSelection({
 					existingQuery,
 				),
 			onSuccess: (data) => {
-				setOptionsData(data.payload?.normalizedValues || []);
+				const newNormalizedValues = data.payload?.normalizedValues || [];
+				const newRelatedValues = data.payload?.relatedValues || [];
+
+				setOptionsData(newNormalizedValues);
 				setIsComplete(data.payload?.complete || false);
-				setFilteredOptionsData(data.payload?.normalizedValues || []);
-				setRelatedValues(data.payload?.relatedValues || []);
-				setOriginalRelatedValues(data.payload?.relatedValues || []);
+				setFilteredOptionsData(newNormalizedValues);
+				setRelatedValues(newRelatedValues);
+				setOriginalRelatedValues(newRelatedValues);
+
+				// Only run auto-check logic when necessary to avoid performance issues
+				if (variableData.allSelected && isDropdownOpen) {
+					// Build the latest full list from API (normalized + related)
+					const latestValues = [
+						...new Set([
+							...newNormalizedValues.map((v) => v.toString()),
+							...newRelatedValues.map((v) => v.toString()),
+						]),
+					];
+
+					// Update temp selection to exactly reflect latest API values when ALL is active
+					const currentStrings = Array.isArray(tempSelection)
+						? tempSelection.map((v) => v.toString())
+						: tempSelection
+						? [tempSelection.toString()]
+						: [];
+					const areSame =
+						currentStrings.length === latestValues.length &&
+						latestValues.every((v) => currentStrings.includes(v));
+					if (!areSame) {
+						setTempSelection(latestValues);
+					}
+				}
 			},
 			onError: (error: any) => {
 				if (error) {
@@ -213,7 +243,9 @@ function DynamicVariableSelection({
 					value === ALL_SELECT_VALUE ||
 					(Array.isArray(value) && value.includes(ALL_SELECT_VALUE))
 				) {
-					onValueUpdate(variableData.name, variableData.id, optionsData, true);
+					// For ALL selection in dynamic variables, pass null to avoid storing values
+					// The parent component will handle this appropriately
+					onValueUpdate(variableData.name, variableData.id, null, true);
 				} else {
 					// Build union of available options shown in dropdown (normalized + related)
 					const allAvailableOptionStrings = [
@@ -307,29 +339,27 @@ function DynamicVariableSelection({
 			: selectedValueStringified;
 
 	// Add a handler for tracking temporary selection changes
-	const handleTempChange = (inputValue: string | string[]): void => {
-		// Store the selection in temporary state while dropdown is open
-		const value = variableData.multiSelect && !inputValue ? [] : inputValue;
-		const sanitizedValue = uniqueValues(value);
-		setTempSelection(sanitizedValue);
-	};
+	const handleTempChange = useCallback(
+		(inputValue: string | string[]): void => {
+			// Store the selection in temporary state while dropdown is open
+			const value = variableData.multiSelect && !inputValue ? [] : inputValue;
+			const sanitizedValue = uniqueValues(value);
+			setTempSelection(sanitizedValue);
+		},
+		[variableData.multiSelect],
+	);
 
 	// Handle dropdown visibility changes
 	const handleDropdownVisibleChange = (visible: boolean): void => {
+		// Update dropdown open state for auto-checking
+		setIsDropdownOpen(visible);
+
 		// Initialize temp selection when opening dropdown
 		if (visible) {
 			if (isUndefined(tempSelection) && selectValue === ALL_SELECT_VALUE) {
-				// Select ALL currently available values (normalized + related) while preserving any custom selections
-				const rawSelected = Array.isArray(variableData.selectedValue)
-					? variableData.selectedValue
-					: variableData.selectedValue
-					? [variableData.selectedValue]
-					: [];
-				const currentSelectedStrings = rawSelected.map((v) => v.toString());
-				const allOptions = [
-					...new Set([...allAvailableOptionStrings, ...currentSelectedStrings]),
-				];
-				setTempSelection(allOptions);
+				// When ALL is selected, set selection to exactly the latest available values
+				const latestAll = [...allAvailableOptionStrings];
+				setTempSelection(latestAll);
 			} else {
 				setTempSelection(getSelectValue(variableData.selectedValue, variableData));
 			}
@@ -346,6 +376,19 @@ function DynamicVariableSelection({
 				const sortedB = [...b].sort();
 				return areArraysEqual(sortedA, sortedB);
 			};
+
+			// If ALL was selected before and remains ALL after, skip updating
+			const wasAllSelected = enableSelectAll && variableData.allSelected;
+			const isAllSelectedAfter =
+				enableSelectAll &&
+				Array.isArray(tempSelection) &&
+				tempSelection.length === allAvailableOptionStrings.length &&
+				allAvailableOptionStrings.every((v) => tempSelection.includes(v));
+
+			if (wasAllSelected && isAllSelectedAfter) {
+				setTempSelection(undefined);
+				return;
+			}
 
 			const hasChanged =
 				tempSelection !== currentValue &&
@@ -370,6 +413,10 @@ function DynamicVariableSelection({
 				if (variableData.showALLOption) {
 					if (variableData.defaultValue) {
 						value = variableData.defaultValue;
+					} else if (variableData.allSelected) {
+						// If ALL is selected but no stored values, derive from available options
+						// This handles the case where we don't store values in localStorage for ALL
+						value = allAvailableOptionStrings;
 					} else {
 						value = optionsData;
 					}
@@ -394,9 +441,11 @@ function DynamicVariableSelection({
 		variableData.multiSelect,
 		variableData.showALLOption,
 		variableData.defaultValue,
+		variableData.allSelected,
 		selectedValue,
 		tempSelection,
 		optionsData,
+		allAvailableOptionStrings,
 	]);
 
 	useEffect(() => {
