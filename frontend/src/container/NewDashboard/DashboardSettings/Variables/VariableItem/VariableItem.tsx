@@ -243,7 +243,7 @@ function VariableItem({
 			customValue: variableCustomValue,
 			textboxValue: variableTextboxValue,
 			multiSelect: variableMultiSelect,
-			showALLOption: variableShowALLOption,
+			showALLOption: queryType === 'DYNAMIC' ? true : variableShowALLOption,
 			sort: variableSortType,
 			...(queryType === 'TEXTBOX' && {
 				selectedValue: (variableData.selectedValue ||
@@ -637,7 +637,7 @@ function VariableItem({
 									}}
 								/>
 							</VariableItemRow>
-							{variableMultiSelect && (
+							{variableMultiSelect && queryType !== 'DYNAMIC' && (
 								<VariableItemRow className="all-option-section">
 									<LabelContainer>
 										<Typography className="typography-variables">
