@@ -65,6 +65,10 @@ function VariableItem({
 	const [variableName, setVariableName] = useState<string>(
 		variableData.name || '',
 	);
+	const [
+		hasUserManuallyChangedName,
+		setHasUserManuallyChangedName,
+	] = useState<boolean>(false);
 	const [variableDescription, setVariableDescription] = useState<string>(
 		variableData.description || '',
 	);
@@ -116,10 +120,39 @@ function VariableItem({
 		variableData.dynamicVariablesAttribute,
 		variableData.dynamicVariablesSource,
 	]);
+
 	// Error messages
 	const [errorName, setErrorName] = useState<boolean>(false);
 	const [errorNameMessage, setErrorNameMessage] = useState<string>('');
 	const [errorPreview, setErrorPreview] = useState<string | null>(null);
+
+	// Auto-set variable name to selected attribute name in creation mode when user hasn't manually changed it
+	useEffect(() => {
+		if (
+			mode === 'ADD' && // Only in creation mode
+			queryType === 'DYNAMIC' && // Only for dynamic variables
+			dynamicVariablesSelectedValue?.name && // Attribute is selected
+			!hasUserManuallyChangedName // User hasn't manually changed the name
+		) {
+			const newName = dynamicVariablesSelectedValue.name;
+			setVariableName(newName);
+
+			// Trigger validation for the auto-set name
+			if (!validateName(newName)) {
+				setErrorName(true);
+				setErrorNameMessage('Variable name already exists');
+			} else {
+				setErrorName(false);
+				setErrorNameMessage('');
+			}
+		}
+	}, [
+		mode,
+		queryType,
+		dynamicVariablesSelectedValue?.name,
+		hasUserManuallyChangedName,
+		validateName,
+	]);
 
 	const REQUIRED_NAME_MESSAGE = 'Variable name is required';
 
@@ -326,6 +359,7 @@ function VariableItem({
 								className="name-input"
 								onChange={({ target: { value } }): void => {
 									setVariableName(value);
+									setHasUserManuallyChangedName(true); // Mark that user has manually changed the name
 
 									// Check for empty name
 									if (!value.trim()) {
@@ -379,6 +413,10 @@ function VariableItem({
 								onClick={(): void => {
 									setQueryType('DYNAMIC');
 									setPreviewValues([]);
+									// Reset manual change flag if no name is entered
+									if (!variableName.trim()) {
+										setHasUserManuallyChangedName(false);
+									}
 								}}
 							>
 								Dynamic
@@ -396,6 +434,10 @@ function VariableItem({
 								onClick={(): void => {
 									setQueryType('TEXTBOX');
 									setPreviewValues([]);
+									// Reset manual change flag if no name is entered
+									if (!variableName.trim()) {
+										setHasUserManuallyChangedName(false);
+									}
 								}}
 							>
 								Textbox
@@ -410,6 +452,10 @@ function VariableItem({
 								onClick={(): void => {
 									setQueryType('CUSTOM');
 									setPreviewValues([]);
+									// Reset manual change flag if no name is entered
+									if (!variableName.trim()) {
+										setHasUserManuallyChangedName(false);
+									}
 								}}
 							>
 								Custom
@@ -425,6 +471,10 @@ function VariableItem({
 								onClick={(): void => {
 									setQueryType('QUERY');
 									setPreviewValues([]);
+									// Reset manual change flag if no name is entered
+									if (!variableName.trim()) {
+										setHasUserManuallyChangedName(false);
+									}
 								}}
 							>
 								Query
