@@ -198,7 +198,6 @@ function VariableItem({
 		queryType,
 		dynamicVariablesSelectedValue?.name,
 		dynamicVariablesSelectedValue?.value,
-		dynamicVariablesSelectedValue,
 	]);
 
 	const handleSave = (): void => {

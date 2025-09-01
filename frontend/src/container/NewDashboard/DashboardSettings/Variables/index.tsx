@@ -59,8 +59,10 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 		// eslint-disable-next-line react/jsx-props-no-spreading
 		<tr {...props} ref={setNodeRef} style={style} {...attributes}>
 			{React.Children.map(children, (child) => {
-				if ((child as React.ReactElement).key === 'name') {
-					return React.cloneElement(child as React.ReactElement, {
+				const childElement = child as React.ReactElement;
+				if (childElement.key === 'name') {
+					return React.cloneElement(childElement, {
+						key: 'name-with-drag',
 						children: (
 							<div className="variable-name-drag">
 								<HolderOutlined
@@ -75,7 +77,7 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 					});
 				}
 
-				return child;
+				return childElement;
 			})}
 		</tr>
 	);
@@ -134,6 +136,19 @@ function VariablesSetting({
 
 	const updateMutation = useUpdateDashboard();
 
+	const addDynamicVariableToPanels = useAddDynamicVariableToPanels();
+
+	const { dynamicVariables } = useGetDynamicVariables();
+
+	const dynamicVariableToWidgetsMap = useMemo(
+		() =>
+			createDynamicVariableToWidgetsMap(
+				dynamicVariables,
+				(widgets as Widgets[]) || [],
+			),
+		[dynamicVariables, widgets],
+	);
+
 	useEffect(() => {
 		const tableRowData = [];
 		const variableOrderArr = [];
@@ -164,43 +179,23 @@ function VariablesSetting({
 		tableRowData.sort((a, b) => a.order - b.order);
 		variableOrderArr.sort((a, b) => a - b);
 
-		setVariablesTableData(tableRowData);
+		// Apply dynamic variables widget IDs if available
+		const processedTableRowData = tableRowData.map(
+			(variable: IDashboardVariable) => {
+				if (variable.type === 'DYNAMIC') {
+					return {
+						...variable,
+						dynamicVariablesWidgetIds: dynamicVariableToWidgetsMap[variable.id] || [],
+					};
+				}
+				return variable;
+			},
+		);
+
+		setVariablesTableData(processedTableRowData);
 		setVariablesOrderArr(variableOrderArr);
 		setExistingVariableNamesMap(variableNamesMap);
-	}, [variables]);
-
-	const addDynamicVariableToPanels = useAddDynamicVariableToPanels();
-
-	const { dynamicVariables } = useGetDynamicVariables();
-
-	const dynamicVariableToWidgetsMap = useMemo(
-		() =>
-			createDynamicVariableToWidgetsMap(
-				dynamicVariables,
-				(widgets as Widgets[]) || [],
-			),
-		[dynamicVariables, widgets],
-	);
-
-	// initialize and adjust dynamicVariablesWidgetIds values for all variables
-	useEffect(() => {
-		// Only update dynamic variables without changing the order
-		if (variablesTableData.length > 0) {
-			const updatedVariablesArr = variablesTableData.map(
-				(variable: IDashboardVariable) => {
-					if (variable.type === 'DYNAMIC') {
-						return {
-							...variable,
-							dynamicVariablesWidgetIds:
-								dynamicVariableToWidgetsMap[variable.id] || [],
-						};
-					}
-					return variable;
-				},
-			);
-			setVariablesTableData(updatedVariablesArr);
-		}
-	}, [dynamicVariableToWidgetsMap, variablesTableData]);
+	}, [variables, dynamicVariableToWidgetsMap]);
 
 	const updateVariables = (
 		updatedVariablesData: Dashboard['data']['variables'],
