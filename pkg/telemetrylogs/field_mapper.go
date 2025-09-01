@@ -44,6 +44,7 @@ var (
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
 		}},
+		"resource":      {Name: "resource", Type: schema.JSONColumnType{}},
 		"scope_name":    {Name: "scope_name", Type: schema.ColumnTypeString},
 		"scope_version": {Name: "scope_version", Type: schema.ColumnTypeString},
 		"scope_string": {Name: "scope_string", Type: schema.MapColumnType{
@@ -53,7 +54,8 @@ var (
 	}
 )
 
-type fieldMapper struct{}
+type fieldMapper struct {
+}
 
 func NewFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
@@ -62,7 +64,7 @@ func NewFieldMapper() qbtypes.FieldMapper {
 func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		return logsV2Columns["resources_string"], nil
+		return logsV2Columns["resource"], nil
 	case telemetrytypes.FieldContextScope:
 		switch key.Name {
 		case "name", "scope.name", "scope_name":
@@ -102,6 +104,18 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 	}
 
 	switch column.Type {
+	case schema.JSONColumnType{}:
+		oldColumn := logsV2Columns["resources_string"]
+		oldKeyName := fmt.Sprintf("%s['%s']", oldColumn.Name, key.Name)
+		// have to add ::string as clickHouse throws an error :- data types Variant/Dynamic are not allowed in GROUP BY
+		// once clickHouse dependency is updated, we need to check if we can remove it.
+		if key.Materialized {
+			oldKeyName = telemetrytypes.FieldKeyToMaterializedColumnName(key)
+			return fmt.Sprintf("multiIf(resource.%s IS NOT NULL, resource.%s::String, %s_exists`==true, %s, NULL)", key.Name, key.Name, oldKeyName[:len(oldKeyName)-1], oldKeyName), nil
+		} else {
+			return fmt.Sprintf("multiIf(resource.%s IS NOT NULL, resource.%s::String, mapContains(%s, '%s'), %s, NULL)", key.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
+		}
+
 	case schema.ColumnTypeString,
 		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 		schema.ColumnTypeUInt64,
