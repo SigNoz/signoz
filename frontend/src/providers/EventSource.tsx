@@ -121,7 +121,9 @@ export function EventSourceProvider({
 
 	const handleStartOpenConnection = useCallback(
 		(filterExpression?: string): void => {
-			const eventSourceUrl = `${ENVIRONMENT.baseURL}${apiV3}logs/livetail?filter=${filterExpression}`;
+			const eventSourceUrl = `${
+				ENVIRONMENT.baseURL
+			}${apiV3}logs/livetail?filter=${encodeURIComponent(filterExpression || '')}`;
 
 			eventSourceRef.current = new EventSourcePolyfill(eventSourceUrl, {
 				headers: {

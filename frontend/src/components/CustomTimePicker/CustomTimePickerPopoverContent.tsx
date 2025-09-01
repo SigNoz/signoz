@@ -15,7 +15,6 @@ import {
 	RelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs from 'dayjs';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { Clock, PenLine } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import {
@@ -80,12 +79,18 @@ function CustomTimePickerPopoverContent({
 		pathname,
 	]);
 
-	const urlQuery = useUrlQuery();
+	const url = new URLSearchParams(window.location.search);
 
-	const panelTypeFromURL = urlQuery.get(QueryParams.panelTypes);
+	let panelTypeFromURL = url.get(QueryParams.panelTypes);
+
+	try {
+		panelTypeFromURL = JSON.parse(panelTypeFromURL as string);
+	} catch {
+		// fallback → leave as-is
+	}
 
 	const isLogsListView =
-		panelTypeFromURL !== 'table' && panelTypeFromURL !== 'chart'; // we do not select list view in the url
+		panelTypeFromURL !== 'table' && panelTypeFromURL !== 'graph'; // we do not select list view in the url
 
 	const { timezone } = useTimezone();
 	const activeTimezoneOffset = timezone.offset;

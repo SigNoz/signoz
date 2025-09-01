@@ -21,7 +21,7 @@
 	.live-logs-list-loading {
 		padding: 16px;
 		text-align: center;
-		color: var(--text-color-secondary);
+		color: var(--text-vanilla-100);
 	}
 
 	.live-logs-list-loading {
@@ -39,6 +39,16 @@
 			.loading-gif {
 				height: 72px;
 				margin-left: -24px;
+			}
+		}
+	}
+}
+
+.lightMode {
+	.live-logs-list-loading {
+		.loading-live-logs-content {
+			.ant-typography {
+				color: var(--text-ink-500);
 			}
 		}
 	}
