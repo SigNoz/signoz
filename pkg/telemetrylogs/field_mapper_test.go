@@ -2,7 +2,6 @@ package telemetrylogs
 
 import (
 	"context"
-	"strconv"
 	"testing"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
@@ -27,7 +26,7 @@ func TestGetColumn(t *testing.T) {
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			expectedCol:   logsV2Columns["resources_string"],
+			expectedCol:   logsV2Columns["resource"],
 			expectedError: nil,
 		},
 		{
@@ -185,11 +184,10 @@ func TestGetFieldKeyName(t *testing.T) {
 	ctx := context.Background()
 
 	testCases := []struct {
-		name                string
-		key                 telemetrytypes.TelemetryFieldKey
-		resourceJSONEnabled bool
-		expectedResult      string
-		expectedError       error
+		name           string
+		key            telemetrytypes.TelemetryFieldKey
+		expectedResult string
+		expectedError  error
 	}{
 		{
 			name: "Simple column type - timestamp",
@@ -236,17 +234,18 @@ func TestGetFieldKeyName(t *testing.T) {
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			expectedResult:      "'resource.service.name'",
-			resourceJSONEnabled: true,
-			expectedError:       nil,
+			expectedResult: "multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+			expectedError:  nil,
 		},
 		{
-			name: "Map column type - resource attribute - legacy",
+			name: "Map column type - resource attribute - Materialized",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "service.name",
-				FieldContext: telemetrytypes.FieldContextResource,
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Materialized:  true,
 			},
-			expectedResult: "resources_string['service.name']",
+			expectedResult: "multiIf(resource.service.name IS NOT NULL, resource.service.name::String, `resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL)",
 			expectedError:  nil,
 		},
 		{
@@ -262,7 +261,6 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Setenv("RESOURCE_JSON_COLUMN_ENABLED", strconv.FormatBool(tc.resourceJSONEnabled))
 			fm := NewFieldMapper()
 			result, err := fm.FieldFor(ctx, &tc.key)
 

@@ -3,8 +3,6 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
-	"os"
-	"strconv"
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
@@ -57,28 +55,16 @@ var (
 )
 
 type fieldMapper struct {
-	resourceJSONColumnEnabled bool
 }
 
 func NewFieldMapper() qbtypes.FieldMapper {
-	resourceJSONColumnEnabled := false
-	resourceJSONColumnEnabledStr := os.Getenv("RESOURCE_JSON_COLUMN_ENABLED")
-	if val, err := strconv.ParseBool(resourceJSONColumnEnabledStr); err == nil {
-		resourceJSONColumnEnabled = val
-	}
-
-	return &fieldMapper{
-		resourceJSONColumnEnabled: resourceJSONColumnEnabled,
-	}
+	return &fieldMapper{}
 }
 
 func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		if m.resourceJSONColumnEnabled {
-			return logsV2Columns["resource"], nil
-		}
-		return logsV2Columns["resources_string"], nil
+		return logsV2Columns["resource"], nil
 	case telemetrytypes.FieldContextScope:
 		switch key.Name {
 		case "name", "scope.name", "scope_name":
@@ -119,7 +105,18 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 
 	switch column.Type {
 	case schema.JSONColumnType{}:
-		return fmt.Sprintf("'resource.%s'", key.Name), nil
+		oldColumn := logsV2Columns["resources_string"]
+		oldKeyName := fmt.Sprintf("%s['%s']", oldColumn.Name, key.Name)
+		// have to add ::string as clickhouse throws an error data types Variant/Dynamic are not allowed in GROUP BY
+		// once clickHouse dependency is updated, we need to check if we can remove it.
+		if key.Materialized {
+			oldKeyName = telemetrytypes.FieldKeyToMaterializedColumnName(key)
+			return fmt.Sprintf("multiIf(resource.%s IS NOT NULL, resource.%s::String, %s_exists`==true, %s, NULL)", key.Name, key.Name, oldKeyName[:len(oldKeyName)-1], oldKeyName), nil
+		} else {
+			return fmt.Sprintf("multiIf(resource.%s IS NOT NULL, resource.%s::String, mapContains(%s, '%s'), %s, NULL)", key.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
+		}
+
+		// use coalesce for backward compatibility
 	case schema.ColumnTypeString,
 		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 		schema.ColumnTypeUInt64,

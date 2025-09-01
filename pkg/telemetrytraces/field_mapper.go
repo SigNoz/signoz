@@ -3,8 +3,6 @@ package telemetrytraces
 import (
 	"context"
 	"fmt"
-	"os"
-	"strconv"
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
@@ -161,20 +159,12 @@ var (
 )
 
 type defaultFieldMapper struct {
-	resourceJSONColumnEnabled bool
 }
 
 var _ qbtypes.FieldMapper = (*defaultFieldMapper)(nil)
 
 func NewFieldMapper() *defaultFieldMapper {
-	resourceJSONColumnEnabled := false
-	resourceJSONColumnEnabledStr := os.Getenv("RESOURCE_JSON_COLUMN_ENABLED")
-	if val, err := strconv.ParseBool(resourceJSONColumnEnabledStr); err == nil {
-		resourceJSONColumnEnabled = val
-	}
-	return &defaultFieldMapper{
-		resourceJSONColumnEnabled: resourceJSONColumnEnabled,
-	}
+	return &defaultFieldMapper{}
 }
 
 func (m *defaultFieldMapper) getColumn(
@@ -183,10 +173,7 @@ func (m *defaultFieldMapper) getColumn(
 ) (*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		if m.resourceJSONColumnEnabled {
-			return indexV3Columns["resource"], nil
-		}
-		return indexV3Columns["resources_string"], nil
+		return indexV3Columns["resource"], nil
 	case telemetrytypes.FieldContextScope:
 		return nil, qbtypes.ErrColumnNotFound
 	case telemetrytypes.FieldContextAttribute:
@@ -251,7 +238,17 @@ func (m *defaultFieldMapper) FieldFor(
 
 	switch column.Type {
 	case schema.JSONColumnType{}:
-		return fmt.Sprintf("'resource.%s'", key.Name), nil
+		oldColumn := indexV3Columns["resources_string"]
+		oldKeyName := fmt.Sprintf("%s['%s']", oldColumn.Name, key.Name)
+		// have to add ::string as clickhouse throws an error data types Variant/Dynamic are not allowed in GROUP BY
+		// once clickHouse dependency is updated, we need to check if we can remove it.
+		if key.Materialized {
+			oldKeyName = telemetrytypes.FieldKeyToMaterializedColumnName(key)
+			return fmt.Sprintf("multiIf(resource.%s IS NOT NULL, resource.%s::String, %s_exists`==true, %s, NULL)", key.Name, key.Name, oldKeyName[:len(oldKeyName)-1], oldKeyName), nil
+		} else {
+			return fmt.Sprintf("multiIf(resource.%s IS NOT NULL, resource.%s::String, mapContains(%s, '%s'), %s, NULL)", key.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
+		}
+
 	case schema.ColumnTypeString,
 		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 		schema.ColumnTypeUInt64,

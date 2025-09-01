@@ -2,7 +2,6 @@ package telemetrytraces
 
 import (
 	"context"
-	"strconv"
 	"testing"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -15,11 +14,10 @@ func TestGetFieldKeyName(t *testing.T) {
 	ctx := context.Background()
 
 	testCases := []struct {
-		name                string
-		key                 telemetrytypes.TelemetryFieldKey
-		resourceJSONEnabled bool
-		expectedResult      string
-		expectedError       error
+		name           string
+		key            telemetrytypes.TelemetryFieldKey
+		expectedResult string
+		expectedError  error
 	}{
 		{
 			name: "Simple column type - timestamp",
@@ -66,9 +64,8 @@ func TestGetFieldKeyName(t *testing.T) {
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			expectedResult:      "'resource.service.name'",
-			resourceJSONEnabled: true,
-			expectedError:       nil,
+			expectedResult: "multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+			expectedError:  nil,
 		},
 		{
 			name: "Map column type - resource attribute - legacy",
@@ -76,7 +73,7 @@ func TestGetFieldKeyName(t *testing.T) {
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			expectedResult: "resources_string['service.name']",
+			expectedResult: "multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
 			expectedError:  nil,
 		},
 		{
@@ -92,7 +89,6 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Setenv("RESOURCE_JSON_COLUMN_ENABLED", strconv.FormatBool(tc.resourceJSONEnabled))
 			fm := NewFieldMapper()
 			result, err := fm.FieldFor(ctx, &tc.key)
 
