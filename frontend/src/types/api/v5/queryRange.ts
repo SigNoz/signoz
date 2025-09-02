@@ -135,8 +135,6 @@ export interface TelemetryFieldKey {
 	fieldContext?: FieldContext;
 	fieldDataType?: FieldDataType;
 	materialized?: boolean;
-	isColumn?: boolean;
-	isJSON?: boolean;
 	isIndexed?: boolean;
 }
 
@@ -209,7 +207,7 @@ export interface SecondaryAggregation {
 
 export interface BaseBuilderQuery {
 	name?: string;
-	stepInterval?: Step;
+	stepInterval?: Step | null;
 	disabled?: boolean;
 	filter?: Filter;
 	groupBy?: GroupByKey[];

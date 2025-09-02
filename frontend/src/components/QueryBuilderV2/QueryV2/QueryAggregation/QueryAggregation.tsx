@@ -84,9 +84,7 @@ function QueryAggregationOptions({
 
 						<div className="query-aggregation-interval-input-container">
 							<InputWithLabel
-								initialValue={
-									queryData?.stepInterval ? queryData?.stepInterval : undefined
-								}
+								initialValue={queryData?.stepInterval ? queryData?.stepInterval : null}
 								className="query-aggregation-interval-input"
 								label="Seconds"
 								placeholder="Auto"

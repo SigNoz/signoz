@@ -236,18 +236,19 @@ func (r *WhereClauseRewriter) VisitComparison(ctx *parser.ComparisonContext) int
 		}
 	} else if ctx.LIKE() != nil || ctx.ILIKE() != nil {
 		if ctx.LIKE() != nil {
-			r.rewritten.WriteString(" LIKE ")
+			if ctx.NOT() != nil {
+				r.rewritten.WriteString(" NOT LIKE ")
+			} else {
+				r.rewritten.WriteString(" LIKE ")
+			}
+
 		} else {
-			r.rewritten.WriteString(" ILIKE ")
-		}
-		if ctx.Value(0) != nil {
-			r.rewritten.WriteString(ctx.Value(0).GetText())
-		}
-	} else if ctx.NOT_LIKE() != nil || ctx.NOT_ILIKE() != nil {
-		if ctx.NOT_LIKE() != nil {
-			r.rewritten.WriteString(" NOT LIKE ")
-		} else {
-			r.rewritten.WriteString(" NOT ILIKE ")
+			if ctx.NOT() != nil {
+				r.rewritten.WriteString(" NOT ILIKE ")
+			} else {
+				r.rewritten.WriteString(" ILIKE ")
+			}
+
 		}
 		if ctx.Value(0) != nil {
 			r.rewritten.WriteString(ctx.Value(0).GetText())
@@ -367,6 +368,8 @@ func (r *WhereClauseRewriter) VisitFunctionCall(ctx *parser.FunctionCallContext)
 		r.rewritten.WriteString("hasany")
 	} else if ctx.HASALL() != nil {
 		r.rewritten.WriteString("hasall")
+	} else if ctx.HASTOKEN() != nil {
+		r.rewritten.WriteString("hasToken")
 	}
 
 	r.rewritten.WriteString("(")

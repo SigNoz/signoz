@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
@@ -38,6 +39,7 @@ type querier struct {
 	meterStmtBuilder         qbtypes.StatementBuilder[qbtypes.MetricAggregation]
 	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder
 	bucketCache              BucketCache
+	liveDataRefreshSeconds   time.Duration
 }
 
 var _ Querier = (*querier)(nil)
@@ -66,6 +68,7 @@ func New(
 		meterStmtBuilder:         meterStmtBuilder,
 		traceOperatorStmtBuilder: traceOperatorStmtBuilder,
 		bucketCache:              bucketCache,
+		liveDataRefreshSeconds:   5,
 	}
 }
 
@@ -400,6 +403,100 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		}
 	}
 	return qbResp, qbErr
+}
+
+func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, client *qbtypes.RawStream) {
+
+	event := &qbtypes.QBEvent{
+		Version:         "v5",
+		NumberOfQueries: len(req.CompositeQuery.Queries),
+		PanelType:       req.RequestType.StringValue(),
+	}
+
+	for _, query := range req.CompositeQuery.Queries {
+		event.QueryType = query.Type.StringValue()
+		if query.Type == qbtypes.QueryTypeBuilder {
+			switch spec := query.Spec.(type) {
+			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+				event.FilterApplied = spec.Filter != nil && spec.Filter.Expression != ""
+			default:
+				// return if it's not log aggregation
+				client.Error <- errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported builder spec type %T", query.Spec)
+				return
+			}
+		} else {
+			// return if it's not of type query builder
+			client.Error <- errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported query type %s", query.Type)
+			return
+		}
+	}
+
+	queries := make(map[string]qbtypes.Query)
+	query := req.CompositeQuery.Queries[0]
+	spec := query.Spec.(qbtypes.QueryBuilderQuery[qbtypes.LogAggregation])
+	// add the new id to the id filter
+	if spec.Filter == nil || spec.Filter.Expression == "" {
+		spec.Filter = &qbtypes.Filter{Expression: "id > $id"}
+	} else {
+		spec.Filter.Expression = fmt.Sprintf("%s and id > $id", spec.Filter.Expression)
+	}
+
+	tsStart := req.Start
+	if tsStart == 0 {
+		tsStart = uint64(time.Now().UnixNano())
+	} else {
+		tsStart = uint64(utils.GetEpochNanoSecs(int64(tsStart)))
+	}
+	updatedLogID := ""
+
+	ticker := time.NewTicker(time.Duration(q.liveDataRefreshSeconds) * time.Second)
+	defer ticker.Stop()
+
+	// we are creating a custom ticker wrapper to trigger it instantly
+	tick := make(chan time.Time, 1)
+	tick <- time.Now() // initial tick
+	go func() {
+		for t := range ticker.C {
+			tick <- t
+		}
+	}()
+
+	for {
+		select {
+		case <-ctx.Done():
+			done := true
+			client.Done <- &done
+			return
+		case <-tick:
+			// timestamp end is not specified here
+			timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: tsStart}, req.RequestType)
+			bq := newBuilderQuery(q.telemetryStore, q.logStmtBuilder, spec, timeRange, req.RequestType, map[string]qbtypes.VariableItem{
+				"id": {
+					Value: updatedLogID,
+				},
+			})
+			queries[spec.Name] = bq
+
+			qbResp, qbErr := q.run(ctx, orgID, queries, req, nil, event)
+			if qbErr != nil {
+				client.Error <- qbErr
+				return
+			}
+
+			if qbResp == nil || len(qbResp.Data.Results) == 0 || qbResp.Data.Results[0] == nil {
+				continue
+			}
+			data := qbResp.Data.Results[0].(*qbtypes.RawData)
+			for i := len(data.Rows) - 1; i >= 0; i-- {
+				client.Logs <- data.Rows[i]
+				if i == 0 {
+					tsStart = uint64(data.Rows[i].Timestamp.UnixNano())
+					updatedLogID = data.Rows[i].Data["id"].(string)
+				}
+			}
+
+		}
+	}
 }
 
 func (q *querier) run(
