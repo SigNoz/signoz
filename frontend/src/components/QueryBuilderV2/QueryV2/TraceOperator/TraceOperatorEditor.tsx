@@ -375,6 +375,13 @@ function TraceOperatorEditor({
 									run: closeCompletion,
 								},
 								{
+									key: 'Enter',
+									preventDefault: true,
+									// Prevent default behavior of Enter to add new line
+									// and instead run a custom action
+									run: (): boolean => true,
+								},
+								{
 									key: 'Mod-Enter',
 									preventDefault: true,
 									run: (): boolean => {
@@ -385,6 +392,12 @@ function TraceOperatorEditor({
 										}
 										return true;
 									},
+								},
+								{
+									key: 'Shift-Enter',
+									preventDefault: true,
+									// Prevent default behavior of Shift-Enter to add new line
+									run: (): boolean => true,
 								},
 							]),
 						),
