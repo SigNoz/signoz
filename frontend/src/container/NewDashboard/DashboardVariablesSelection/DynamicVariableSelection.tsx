@@ -403,7 +403,25 @@ function DynamicVariableSelection({
 			}
 			setTempSelection(undefined);
 		}
+
+		// Always reset filtered data when dropdown closes, regardless of tempSelection state
+		if (!visible) {
+			setFilteredOptionsData(optionsData);
+			setRelatedValues(originalRelatedValues);
+			setApiSearchText('');
+		}
 	};
+
+	useEffect(
+		() => (): void => {
+			// Cleanup on unmount
+			setTempSelection(undefined);
+			setFilteredOptionsData([]);
+			setRelatedValues([]);
+			setApiSearchText('');
+		},
+		[],
+	);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const finalSelectedValues = useMemo(() => {
