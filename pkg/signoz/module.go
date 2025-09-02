@@ -9,6 +9,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
+	"github.com/SigNoz/signoz/pkg/modules/export"
+	"github.com/SigNoz/signoz/pkg/modules/export/implexport"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -21,6 +23,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
+	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
@@ -36,6 +39,7 @@ type Modules struct {
 	Dashboard   dashboard.Module
 	QuickFilter quickfilter.Module
 	TraceFunnel tracefunnel.Module
+	Export      export.Module
 }
 
 func NewModules(
@@ -46,6 +50,7 @@ func NewModules(
 	orgGetter organization.Getter,
 	alertmanager alertmanager.Alertmanager,
 	analytics analytics.Analytics,
+	querier querier.Querier,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
@@ -60,5 +65,6 @@ func NewModules(
 		User:        user,
 		QuickFilter: quickfilter,
 		TraceFunnel: impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
+		Export:      implexport.NewModule(querier),
 	}
 }

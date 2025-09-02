@@ -126,6 +126,13 @@ var (
 	OrderDirectionDesc = OrderDirection{valuer.NewString("desc")}
 )
 
+var (
+	OrderDirectionMap = map[string]OrderDirection{
+		"asc":  OrderDirectionAsc,
+		"desc": OrderDirectionDesc,
+	}
+)
+
 type ReduceTo struct {
 	valuer.String
 }

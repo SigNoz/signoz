@@ -2,12 +2,40 @@ package telemetrylogs
 
 import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 
+const (
+
+	// Internal Columns
+	LogsV2IdColumn                   = "id"
+	LogsV2TimestampBucketStartColumn = "ts_bucket_start"
+	LogsV2ResourceFingerPrintColumn  = "resource_fingerprint"
+
+	// Intrinsic Columns
+	LogsV2TimestampColumn         = "timestamp"
+	LogsV2ObservedTimestampColumn = "observed_timestamp"
+	LogsV2BodyColumn              = "body"
+	LogsV2TraceIDColumn           = "trace_id"
+	LogsV2SpanIDColumn            = "span_id"
+	LogsV2TraceFlagsColumn        = "trace_flags"
+	LogsV2SeverityTextColumn      = "severity_text"
+	LogsV2SeverityNumberColumn    = "severity_number"
+	LogsV2ScopeNameColumn         = "scope_name"
+	LogsV2ScopeVersionColumn      = "scope_version"
+
+	// Contextual Columns
+	LogsV2AttributesStringColumn = "attributes_string"
+	LogsV2AttributesNumberColumn = "attributes_number"
+	LogsV2AttributesBoolColumn   = "attributes_bool"
+	LogsV2ResourcesStringColumn  = "resources_string"
+	LogsV2ScopeStringColumn      = "scope_string"
+)
+
 var (
 	DefaultFullTextColumn = &telemetrytypes.TelemetryFieldKey{
 		Name:          "body",
 		Signal:        telemetrytypes.SignalLogs,
 		FieldContext:  telemetrytypes.FieldContextLog,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
+		Materialized:  true,
 	}
 	BodyJSONStringSearchPrefix = `body.`
 	IntrinsicFields            = map[string]telemetrytypes.TelemetryFieldKey{
@@ -16,24 +44,28 @@ var (
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextLog,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
+			Materialized:  true,
 		},
 		"trace_id": {
 			Name:          "trace_id",
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextLog,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
+			Materialized:  true,
 		},
 		"span_id": {
 			Name:          "span_id",
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextLog,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
+			Materialized:  true,
 		},
 		"trace_flags": {
 			Name:          "trace_flags",
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextLog,
 			FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			Materialized:  true,
 		},
 		"severity_text": {
 			Name:          "severity_text",
@@ -41,6 +73,7 @@ var (
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextLog,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
+			Materialized:  true,
 		},
 		"severity_number": {
 			Name:          "severity_number",
@@ -48,6 +81,7 @@ var (
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextLog,
 			FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			Materialized:  true,
 		},
 		"scope_name": {
 			Name:          "scope_name",
@@ -55,12 +89,51 @@ var (
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextScope,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
+			Materialized:  true,
 		},
 		"scope_version": {
 			Name:          "scope_version",
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextScope,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
+			Materialized:  true,
+		},
+	}
+	ContextFields = map[string]telemetrytypes.TelemetryFieldKey{
+		"attributes_string": {
+			Name:          "attributes_string",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+			Materialized:  true,
+		},
+		"attributes_number": {
+			Name:          "attributes_number",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			Materialized:  true,
+		},
+		"attributes_bool": {
+			Name:          "attributes_bool",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeBool,
+			Materialized:  true,
+		},
+		"resources_string": {
+			Name:          "resources_string",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+			Materialized:  true,
+		},
+		"scope_string": {
+			Name:          "scope_string",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextScope,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+			Materialized:  true,
 		},
 	}
 )

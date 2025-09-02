@@ -1,10 +1,12 @@
-package api
+package implexport
 
 import (
 	"net/url"
 	"strconv"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/assert"
 )
@@ -238,10 +240,14 @@ func TestGetExportQueryColumns(t *testing.T) {
 		expectedError   bool
 	}{
 		{
-			name:            "no columns specified",
-			queryParams:     url.Values{},
-			expectedColumns: nil,
-			expectedError:   false,
+			name:        "no columns specified",
+			queryParams: url.Values{},
+			expectedColumns: []telemetrytypes.TelemetryFieldKey{
+				{Name: "timestamp"},
+				{Name: "id"},
+				{Name: "body"},
+			},
+			expectedError: false,
 		},
 		{
 			name: "single column",
@@ -249,7 +255,7 @@ func TestGetExportQueryColumns(t *testing.T) {
 				"columns": {"timestamp"},
 			},
 			expectedColumns: []telemetrytypes.TelemetryFieldKey{
-				telemetrytypes.TelemetryFieldKey{Name: "timestamp"},
+				{Name: "timestamp"},
 			},
 			expectedError: false,
 		},
@@ -259,9 +265,9 @@ func TestGetExportQueryColumns(t *testing.T) {
 				"columns": {"timestamp", "message", "level"},
 			},
 			expectedColumns: []telemetrytypes.TelemetryFieldKey{
-				telemetrytypes.TelemetryFieldKey{Name: "timestamp"},
-				telemetrytypes.TelemetryFieldKey{Name: "message"},
-				telemetrytypes.TelemetryFieldKey{Name: "level"},
+				{Name: "timestamp"},
+				{Name: "message"},
+				{Name: "level"},
 			},
 			expectedError: false,
 		},
@@ -271,8 +277,8 @@ func TestGetExportQueryColumns(t *testing.T) {
 				"columns": {"timestamp", "", "level"},
 			},
 			expectedColumns: []telemetrytypes.TelemetryFieldKey{
-				telemetrytypes.TelemetryFieldKey{Name: "timestamp"},
-				telemetrytypes.TelemetryFieldKey{Name: "level"},
+				{Name: "timestamp"},
+				{Name: "level"},
 			},
 			expectedError: false,
 		},
@@ -282,19 +288,19 @@ func TestGetExportQueryColumns(t *testing.T) {
 				"columns": {"timestamp", "   ", "level"},
 			},
 			expectedColumns: []telemetrytypes.TelemetryFieldKey{
-				telemetrytypes.TelemetryFieldKey{Name: "timestamp"},
-				telemetrytypes.TelemetryFieldKey{Name: "level"},
+				{Name: "timestamp"},
+				{Name: "level"},
 			},
 			expectedError: false,
 		},
 		{
 			name: "invalid column name (should error out)",
 			queryParams: url.Values{
-				"columns": {"timestamp", "attributes.user:string", "level"},
+				"columns": {"timestamp", "attributes.user:", "level"},
 			},
 			expectedColumns: []telemetrytypes.TelemetryFieldKey{
-				telemetrytypes.TelemetryFieldKey{Name: "timestamp"},
-				telemetrytypes.TelemetryFieldKey{Name: "level"},
+				{Name: "timestamp"},
+				{Name: "level"},
 			},
 			expectedError: true,
 		},
@@ -304,9 +310,9 @@ func TestGetExportQueryColumns(t *testing.T) {
 				"columns": {"timestamp", "attribute.user:string", "level"},
 			},
 			expectedColumns: []telemetrytypes.TelemetryFieldKey{
-				telemetrytypes.TelemetryFieldKey{Name: "timestamp"},
-				telemetrytypes.TelemetryFieldKey{Name: "user", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
-				telemetrytypes.TelemetryFieldKey{Name: "level"},
+				{Name: "timestamp"},
+				{Name: "user", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+				{Name: "level"},
 			},
 			expectedError: false,
 		},
@@ -316,9 +322,9 @@ func TestGetExportQueryColumns(t *testing.T) {
 				"columns": {"timestamp", "attribute.user.string", "level"},
 			},
 			expectedColumns: []telemetrytypes.TelemetryFieldKey{
-				telemetrytypes.TelemetryFieldKey{Name: "timestamp"},
-				telemetrytypes.TelemetryFieldKey{Name: "user.string", FieldContext: telemetrytypes.FieldContextAttribute},
-				telemetrytypes.TelemetryFieldKey{Name: "level"},
+				{Name: "timestamp"},
+				{Name: "user.string", FieldContext: telemetrytypes.FieldContextAttribute},
+				{Name: "level"},
 			},
 			expectedError: false,
 		},
@@ -334,6 +340,239 @@ func TestGetExportQueryColumns(t *testing.T) {
 				assert.Equal(t, len(tt.expectedColumns), len(columns))
 				for i, expectedCol := range tt.expectedColumns {
 					assert.Equal(t, expectedCol, columns[i])
+				}
+			}
+		})
+	}
+}
+
+func TestGetExportQueryOrderBy(t *testing.T) {
+	tests := []struct {
+		name          string
+		queryParams   url.Values
+		expectedOrder []qbtypes.OrderBy
+		expectedError bool
+	}{
+		{
+			name:        "no order specified",
+			queryParams: url.Values{},
+			expectedOrder: []qbtypes.OrderBy{
+				{
+					Direction: qbtypes.OrderDirectionAsc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: telemetrylogs.LogsV2TimestampColumn,
+						},
+					},
+				},
+				{
+					Direction: qbtypes.OrderDirectionAsc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: telemetrylogs.LogsV2IdColumn,
+						},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name: "single order error, direction not specified",
+			queryParams: url.Values{
+				"order_by": {"timestamp"},
+			},
+			expectedOrder: nil,
+			expectedError: true,
+		},
+		{
+			name: "single order error",
+			queryParams: url.Values{
+				"order_by": {"timestamp:asc"},
+			},
+			expectedOrder: []qbtypes.OrderBy{
+				{
+					Direction: qbtypes.OrderDirectionAsc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: telemetrylogs.LogsV2TimestampColumn,
+						},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name: "multiple orders",
+			queryParams: url.Values{
+				"order_by": {"timestamp:asc", "body:desc", "id:asc"},
+			},
+			expectedOrder: []qbtypes.OrderBy{
+				{
+					Direction: qbtypes.OrderDirectionAsc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: telemetrylogs.LogsV2TimestampColumn,
+						},
+					},
+				},
+				{
+					Direction: qbtypes.OrderDirectionDesc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: telemetrylogs.LogsV2BodyColumn,
+						},
+					},
+				},
+				{
+					Direction: qbtypes.OrderDirectionAsc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: telemetrylogs.LogsV2IdColumn,
+						},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name: "empty order name (should be skipped)",
+			queryParams: url.Values{
+				"order_by": {"timestamp:asc", "", "id:asc"},
+			},
+			expectedOrder: []qbtypes.OrderBy{
+				{
+					Direction: qbtypes.OrderDirectionAsc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: telemetrylogs.LogsV2TimestampColumn,
+						},
+					},
+				},
+				{
+					Direction: qbtypes.OrderDirectionAsc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: telemetrylogs.LogsV2IdColumn,
+						},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name: "whitespace order name (should be skipped)",
+			queryParams: url.Values{
+				"order_by": {"timestamp:asc", "   ", "id:asc"},
+			},
+			expectedOrder: []qbtypes.OrderBy{
+				{
+					Direction: qbtypes.OrderDirectionAsc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: telemetrylogs.LogsV2TimestampColumn,
+						},
+					},
+				},
+				{
+					Direction: qbtypes.OrderDirectionAsc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: telemetrylogs.LogsV2IdColumn,
+						},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name: "invalid order name (should error out)",
+			queryParams: url.Values{
+				"order_by": {"timestamp:asc", "attributes.user:", "id:asc"},
+			},
+			expectedOrder: nil,
+			expectedError: true,
+		},
+		{
+			name: "valid order name (should be included)",
+			queryParams: url.Values{
+				"order_by": {"timestamp:asc", "attribute.user:string:desc", "id:asc"},
+			},
+			expectedOrder: []qbtypes.OrderBy{
+				{
+					Direction: qbtypes.OrderDirectionAsc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: telemetrylogs.LogsV2TimestampColumn,
+						},
+					},
+				},
+				{
+					Direction: qbtypes.OrderDirectionDesc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:          "user",
+							FieldContext:  telemetrytypes.FieldContextAttribute,
+							FieldDataType: telemetrytypes.FieldDataTypeString,
+						},
+					},
+				},
+				{
+					Direction: qbtypes.OrderDirectionAsc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: telemetrylogs.LogsV2IdColumn,
+						},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name: "valid order name (should be included)",
+			queryParams: url.Values{
+				"order_by": {"timestamp:asc", "attribute.user.string:desc", "id:asc"},
+			},
+			expectedOrder: []qbtypes.OrderBy{
+				{
+					Direction: qbtypes.OrderDirectionAsc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: telemetrylogs.LogsV2TimestampColumn,
+						},
+					},
+				},
+				{
+					Direction: qbtypes.OrderDirectionDesc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:         "user.string",
+							FieldContext: telemetrytypes.FieldContextAttribute,
+						},
+					},
+				},
+				{
+					Direction: qbtypes.OrderDirectionAsc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: telemetrylogs.LogsV2IdColumn,
+						},
+					},
+				},
+			},
+			expectedError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			order, err := getExportQueryOrderBy(tt.queryParams)
+			if tt.expectedError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, len(tt.expectedOrder), len(order))
+				for i, expectedOrd := range tt.expectedOrder {
+					assert.Equal(t, expectedOrd, order[i])
 				}
 			}
 		})

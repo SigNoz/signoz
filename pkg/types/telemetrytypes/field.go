@@ -40,32 +40,20 @@ func (f TelemetryFieldKey) String() string {
 	return sb.String()
 }
 
-// GetFieldKeyFromKeyText returns a TelemetryFieldKey from a key text.
-// The key text is expected to be in the format of
-// Either
-// 1. `FieldName`
-// 2. `fieldContext.fieldName:fieldDataType`
-// Using a regex to extract the components.
-var complexFieldRegex = regexp.MustCompile(`^(\w+)\.([\w\.]+):(\w+)$`)
+// ValidateFieldKeyText validates a key text
+// ValidateFieldKeyText validates that a field key text is in one of the valid formats:
+// - Simple field name: "name"
+// - Field with context: "context.name"
+// - Field with both context and type: "context.name:type"
+// Field names can contain single dots for hierarchical fields (e.g. "http.status.code")
+// Note: If a data type is specified, a context must also be specified
+// Note: Consecutive dots (e.g. "http..status") are not allowed
+var fieldTextRegex = regexp.MustCompile(`^(?:(\w+)\.(?:[\w-]+(?:\.[\w-]+)*?)(?::(\w+))?|[\w-]+)$`)
 
 func ValidateFieldKeyText(key string) error {
-
-	// Try complex format (fieldContext.fieldName:fieldDataType)
-	matches := complexFieldRegex.FindStringSubmatch(key)
-	if matches == nil {
-		return nil
+	if !fieldTextRegex.MatchString(key) {
+		return fmt.Errorf("invalid key format")
 	}
-
-	// Validate field context
-	if _, ok := fieldContexts[matches[1]]; !ok {
-		return fmt.Errorf("invalid field context: %s", matches[1])
-	}
-
-	// Validate data type
-	if _, ok := fieldDataTypes[matches[3]]; !ok {
-		return fmt.Errorf("invalid field data type: %s", matches[3])
-	}
-
 	return nil
 }
 

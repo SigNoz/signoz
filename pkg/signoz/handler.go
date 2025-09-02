@@ -6,6 +6,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
+	"github.com/SigNoz/signoz/pkg/modules/export"
+	"github.com/SigNoz/signoz/pkg/modules/export/implexport"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -29,6 +31,7 @@ type Handlers struct {
 	Dashboard    dashboard.Handler
 	QuickFilter  quickfilter.Handler
 	TraceFunnel  tracefunnel.Handler
+	Export       export.Handler
 }
 
 func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Handlers {
@@ -41,5 +44,6 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Han
 		Dashboard:    impldashboard.NewHandler(modules.Dashboard, providerSettings),
 		QuickFilter:  implquickfilter.NewHandler(modules.QuickFilter),
 		TraceFunnel:  impltracefunnel.NewHandler(modules.TraceFunnel),
+		Export:       implexport.NewHandler(modules.Export),
 	}
 }

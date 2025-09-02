@@ -220,13 +220,26 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
+	// Select timestamp and id by default
+	sb.Select(LogsV2TimestampColumn)
+	sb.SelectMore(LogsV2IdColumn)
 	if len(query.SelectFields) == 0 {
-		// Select default columns
-		sb.Select(
-			"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string",
-		)
+		// Select all default columns
+		sb.SelectMore(LogsV2TraceIDColumn)
+		sb.SelectMore(LogsV2SpanIDColumn)
+		sb.SelectMore(LogsV2TraceFlagsColumn)
+		sb.SelectMore(LogsV2SeverityTextColumn)
+		sb.SelectMore(LogsV2SeverityNumberColumn)
+		sb.SelectMore(LogsV2ScopeNameColumn)
+		sb.SelectMore(LogsV2ScopeVersionColumn)
+		sb.SelectMore(LogsV2BodyColumn)
+		sb.SelectMore(LogsV2AttributesStringColumn)
+		sb.SelectMore(LogsV2AttributesNumberColumn)
+		sb.SelectMore(LogsV2AttributesBoolColumn)
+		sb.SelectMore(LogsV2ResourcesStringColumn)
+		sb.SelectMore(LogsV2ScopeStringColumn)
+
 	} else {
-		sb.Select("timestamp, id") // always select id, timestamp by default
 		// Select specified columns
 		for _, field := range query.SelectFields {
 			// get column expression for the field
