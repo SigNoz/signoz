@@ -1,7 +1,7 @@
 package model
 
 import (
-	"fmt"
+	"errors"
 
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 )
@@ -57,7 +57,7 @@ func Unauthorized(err error) *ApiError {
 func BadRequestStr(s string) *ApiError {
 	return &ApiError{
 		Typ: basemodel.ErrorBadData,
-		Err: fmt.Errorf(s),
+		Err: errors.New(s),
 	}
 }
 
@@ -73,7 +73,7 @@ func InternalError(err error) *ApiError {
 func InternalErrorStr(s string) *ApiError {
 	return &ApiError{
 		Typ: basemodel.ErrorInternal,
-		Err: fmt.Errorf(s),
+		Err: errors.New(s),
 	}
 }
 

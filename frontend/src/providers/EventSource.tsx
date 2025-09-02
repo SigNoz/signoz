@@ -27,10 +27,7 @@ interface IEventSourceContext {
 	isConnectionError: boolean;
 	initialLoading: boolean;
 	reconnectDueToError: boolean;
-	handleStartOpenConnection: (urlProps: {
-		url?: string;
-		queryString: string;
-	}) => void;
+	handleStartOpenConnection: (filterExpression?: string) => void;
 	handleCloseConnection: () => void;
 	handleSetInitialLoading: (value: boolean) => void;
 }
@@ -123,12 +120,10 @@ export function EventSourceProvider({
 	}, [destroyEventSourceSession]);
 
 	const handleStartOpenConnection = useCallback(
-		(urlProps: { url?: string; queryString: string }): void => {
-			const { url, queryString } = urlProps;
-
-			const eventSourceUrl = url
-				? `${url}/?${queryString}`
-				: `${ENVIRONMENT.baseURL}${apiV3}logs/livetail?${queryString}`;
+		(filterExpression?: string): void => {
+			const eventSourceUrl = `${
+				ENVIRONMENT.baseURL
+			}${apiV3}logs/livetail?filter=${encodeURIComponent(filterExpression || '')}`;
 
 			eventSourceRef.current = new EventSourcePolyfill(eventSourceUrl, {
 				headers: {
