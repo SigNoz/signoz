@@ -524,11 +524,20 @@ function DynamicVariableSelection({
 						onDropdownVisibleChange={handleDropdownVisibleChange}
 						errorMessage={errorMessage}
 						// eslint-disable-next-line react/no-unstable-nested-components
-						maxTagPlaceholder={(omittedValues): JSX.Element => (
-							<Tooltip title={omittedValues.map(({ value }) => value).join(', ')}>
-								<span>+ {omittedValues.length} </span>
-							</Tooltip>
-						)}
+						maxTagPlaceholder={(omittedValues): JSX.Element => {
+							const maxDisplayValues = 10;
+							const valuesToShow = omittedValues.slice(0, maxDisplayValues);
+							const hasMore = omittedValues.length > maxDisplayValues;
+							const tooltipText =
+								valuesToShow.map(({ value }) => value).join(', ') +
+								(hasMore ? ` + ${omittedValues.length - maxDisplayValues} more` : '');
+
+							return (
+								<Tooltip title={tooltipText}>
+									<span>+ {omittedValues.length} </span>
+								</Tooltip>
+							);
+						}}
 						onClear={(): void => {
 							handleChange([]);
 						}}
