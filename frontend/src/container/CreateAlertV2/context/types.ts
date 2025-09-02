@@ -13,7 +13,7 @@ export interface ICreateAlertProviderProps {
 }
 
 export enum AlertCreationStep {
-	ALERT_DEFINATION = 0,
+	ALERT_DEFINITION = 0,
 	ALERT_CONDITION = 1,
 	EVALUATION_SETTINGS = 2,
 	NOTIFICATION_SETTINGS = 3,
