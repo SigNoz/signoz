@@ -409,6 +409,7 @@ func (r *QueryRangeRequest) GetQueriesSupportingZeroDefault() map[string]bool {
 		expr = strings.ToLower(expr)
 		// only pure additive/counting operations should default to zero,
 		// while statistical/analytical operations should show gaps when there's no data to analyze.
+		// TODO: use newExprVisitor for getting the function used in the expression
 		if strings.HasPrefix(expr, "count(") ||
 			strings.HasPrefix(expr, "count_distinct(") ||
 			strings.HasPrefix(expr, "sum(") ||
