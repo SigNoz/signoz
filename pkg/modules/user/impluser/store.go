@@ -839,3 +839,9 @@ func (store *store) CountAPIKeyByOrgID(ctx context.Context, orgID valuer.UUID) (
 
 	return int64(count), nil
 }
+
+func (store *store) RunInTx(ctx context.Context, cb func(ctx context.Context) error) error {
+	return store.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		return cb(ctx)
+	})
+}

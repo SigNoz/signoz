@@ -15,7 +15,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
@@ -626,34 +625,33 @@ func (m *Module) UpdateDomain(ctx context.Context, domain *types.GettableOrgDoma
 	return m.store.UpdateDomain(ctx, domain)
 }
 
-func (m *Module) Register(ctx context.Context, req *types.PostableRegisterOrgAndAdmin) (*types.User, error) {
-	if req.Email == "" {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "email is required")
-	}
-
-	if req.Password == "" {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "password is required")
-	}
-
+func (module *Module) Register(ctx context.Context, req *types.PostableRegisterOrgAndAdmin) (*types.User, error) {
 	organization := types.NewOrganization(req.OrgDisplayName)
-	err := m.orgSetter.Create(ctx, organization)
-	if err != nil {
-		return nil, model.InternalError(err)
-	}
-
 	user, err := types.NewUser(req.Name, req.Email, types.RoleAdmin.String(), organization.ID.StringValue())
 	if err != nil {
-		return nil, model.InternalError(err)
+		return nil, err
 	}
 
 	password, err := types.NewFactorPassword(req.Password, user.ID.StringValue())
 	if err != nil {
-		return nil, model.InternalError(err)
+		return nil, err
 	}
 
-	user, err = m.CreateUserWithPassword(ctx, user, password)
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		err = module.orgSetter.Create(ctx, organization)
+		if err != nil {
+			return err
+		}
+
+		_, err = module.CreateUserWithPassword(ctx, user, password)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
-		return nil, model.InternalError(err)
+		return nil, err
 	}
 
 	return user, nil
