@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/SigNoz/signoz/pkg/alertmanager/routestrategy"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"strings"
 )
 
 type RouteManager struct {
@@ -181,6 +182,29 @@ func (m *RouteManager) DeleteNotificationPolicy(ctx context.Context, orgID, rout
 
 // DeleteChannel removes specific channel from all routes
 func (m *RouteManager) DeleteChannel(ctx context.Context, orgID, channelName string) error {
+
+	//check whether can we delete the rule
+	rules, err := m.ruleStore.GetStoredRules(ctx, orgID)
+	if err != nil {
+		return err
+	}
+	ruleNames := []string{}
+	for _, rule := range rules {
+		postableRule, err := ruletypes.ParsePostableRule([]byte(rule.Data))
+		if err != nil {
+			return err
+		}
+		for _, channel := range postableRule.PreferredChannels {
+			if channel == channelName {
+				ruleNames = append(ruleNames, postableRule.AlertName)
+			}
+		}
+	}
+
+	if len(ruleNames) > 0 {
+		return fmt.Errorf("cant delete channel used in rules %s", strings.Join(ruleNames, ","))
+	}
+
 	// Get current alertmanager config
 	cfg, err := m.alertmanager.GetConfig(ctx, orgID)
 	if err != nil {
