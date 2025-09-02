@@ -23,7 +23,7 @@ export function getBaseMeta(
 ): BaseAutocompleteData | null {
 	const steps = query.builder.queryData;
 	for (let i = 0; i < steps.length; i++) {
-		const { groupBy } = steps[i];
+		const { groupBy = [] } = steps[i];
 		for (let j = 0; j < groupBy.length; j++) {
 			if (groupBy[j].key === filterKey) {
 				return groupBy[j];
