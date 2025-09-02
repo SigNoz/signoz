@@ -64,7 +64,7 @@ func TestModuleExportSuccess(t *testing.T) {
 
 	// Expect QueryRange to be called with appropriate parameters
 	mockQuerier.EXPECT().QueryRange(gomock.Any(), orgID, rangeRequest).Do(func(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) {
-		assert.Equal(t, ctx.Value(CLICKHOUSE_CONTEXT_MAX_THREADS_KEY), CLICKHOUSE_CONTEXT_MAX_THREADS)
+		assert.Equal(t, ctx.Value(CLICKHOUSE_CONTEXT_MAX_THREADS_KEY), CLICKHOUSE_CONTEXT_EXPORT_MAX_THREADS)
 	}).Return(mockResponse, nil).AnyTimes()
 
 	// Call Export and verify results
@@ -126,7 +126,7 @@ func TestModuleExportFailure(t *testing.T) {
 
 	mockQuerier.EXPECT().
 		QueryRange(gomock.Any(), orgID, rangeRequest).Do(func(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) {
-		assert.Equal(t, ctx.Value(CLICKHOUSE_CONTEXT_MAX_THREADS_KEY), CLICKHOUSE_CONTEXT_MAX_THREADS)
+		assert.Equal(t, ctx.Value(CLICKHOUSE_CONTEXT_MAX_THREADS_KEY), CLICKHOUSE_CONTEXT_EXPORT_MAX_THREADS)
 	}).Return(nil, errors.New("query failed"))
 
 	rowChan, errChan := module.Export(ctx, orgID, rangeRequest)
@@ -202,12 +202,12 @@ func TestModuleExportPartialFailure(t *testing.T) {
 
 	mockQuerier.EXPECT().
 		QueryRange(gomock.Any(), orgID, rangeRequest).Do(func(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) {
-		assert.Equal(t, ctx.Value(CLICKHOUSE_CONTEXT_MAX_THREADS_KEY), CLICKHOUSE_CONTEXT_MAX_THREADS)
+		assert.Equal(t, ctx.Value(CLICKHOUSE_CONTEXT_MAX_THREADS_KEY), CLICKHOUSE_CONTEXT_EXPORT_MAX_THREADS)
 	}).Return(mockResponse, nil).Times(1)
 
 	mockQuerier.EXPECT().
 		QueryRange(gomock.Any(), orgID, rangeRequest).Do(func(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) {
-		assert.Equal(t, ctx.Value(CLICKHOUSE_CONTEXT_MAX_THREADS_KEY), CLICKHOUSE_CONTEXT_MAX_THREADS)
+		assert.Equal(t, ctx.Value(CLICKHOUSE_CONTEXT_MAX_THREADS_KEY), CLICKHOUSE_CONTEXT_EXPORT_MAX_THREADS)
 	}).Return(nil, errors.New("query failed")).Times(1)
 
 	rowChan, errChan := module.Export(ctx, orgID, rangeRequest)

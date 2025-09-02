@@ -14,7 +14,7 @@ import (
 const MAX_EXPORT_ROW_COUNT_LIMIT = 50000
 const DEFAULT_EXPORT_ROW_COUNT_LIMIT = 10000
 const MAX_EXPORT_BYTES_LIMIT = 10 * 1024 * 1024 * 1024 // 10 GB
-const CLICKHOUSE_CONTEXT_MAX_THREADS = 2
+const CLICKHOUSE_CONTEXT_EXPORT_MAX_THREADS = 2
 const CHUNK_SIZE = 5000
 
 type ctxKey string
@@ -53,7 +53,7 @@ func (m *Module) Export(ctx context.Context, orgID valuer.UUID, rangeRequest *qb
 			rangeRequest.CompositeQuery.Queries[0].Spec = spec
 
 			// Set clickhouse max threads
-			ctx := context.WithValue(ctx, CLICKHOUSE_CONTEXT_MAX_THREADS_KEY, CLICKHOUSE_CONTEXT_MAX_THREADS)
+			ctx := context.WithValue(ctx, CLICKHOUSE_CONTEXT_MAX_THREADS_KEY, CLICKHOUSE_CONTEXT_EXPORT_MAX_THREADS)
 
 			response, err := m.querier.QueryRange(ctx, orgID, rangeRequest)
 			if err != nil {
