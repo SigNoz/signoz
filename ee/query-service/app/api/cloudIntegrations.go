@@ -192,7 +192,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 		))
 	}
 
-	password, err := types.NewFactorPassword(uuid.NewString())
+	password, err := types.NewFactorPassword(uuid.NewString(), newUser.ID.StringValue())
 
 	integrationUser, err := ah.Signoz.Modules.User.CreateUserWithPassword(ctx, newUser, password)
 	if err != nil {

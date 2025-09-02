@@ -3,14 +3,12 @@ package types
 import (
 	"context"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -45,11 +43,11 @@ type UserStore interface {
 
 	// password
 	CreatePassword(ctx context.Context, password *FactorPassword) (*FactorPassword, error)
-	CreateResetPasswordToken(ctx context.Context, resetPasswordRequest *ResetPasswordRequest) error
+	CreateResetPasswordToken(ctx context.Context, resetPasswordRequest *ResetPasswordToken) error
 	GetPasswordByID(ctx context.Context, id string) (*FactorPassword, error)
 	GetPasswordByUserID(ctx context.Context, id string) (*FactorPassword, error)
-	GetResetPassword(ctx context.Context, token string) (*ResetPasswordRequest, error)
-	GetResetPasswordByPasswordID(ctx context.Context, passwordID string) (*ResetPasswordRequest, error)
+	GetResetPassword(ctx context.Context, token string) (*ResetPasswordToken, error)
+	GetResetPasswordByPasswordID(ctx context.Context, passwordID string) (*ResetPasswordToken, error)
 	UpdatePassword(ctx context.Context, userID string, password string) error
 	UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, userID string, password string) error
 
@@ -143,88 +141,7 @@ func (p *PostableAcceptInvite) Validate() error {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invite token is required")
 	}
 
-	if p.Password == "" || len(p.Password) < 8 {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "password must be at least 8 characters long")
-	}
-
 	return nil
-}
-
-type FactorPassword struct {
-	bun.BaseModel `bun:"table:factor_password"`
-
-	Identifiable
-	TimeAuditable
-	Password  string `bun:"password,type:text,notnull" json:"password"`
-	Temporary bool   `bun:"temporary,type:boolean,notnull" json:"temporary"`
-	UserID    string `bun:"user_id,type:text,notnull,unique,references:user(id)" json:"userId"`
-}
-
-func NewFactorPassword(password string) (*FactorPassword, error) {
-
-	if password == "" && len(password) < 8 {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "password must be at least 8 characters long")
-	}
-
-	password = strings.TrimSpace(password)
-
-	hashedPassword, err := HashPassword(password)
-	if err != nil {
-		return nil, err
-	}
-
-	return &FactorPassword{
-		Identifiable: Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
-		TimeAuditable: TimeAuditable{
-			CreatedAt: time.Now(),
-		},
-		Password:  hashedPassword,
-		Temporary: false,
-	}, nil
-}
-
-func HashPassword(password string) (string, error) {
-	// bcrypt automatically handles salting and uses a secure work factor
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-	return string(hashedPassword), nil
-}
-
-func ComparePassword(hashedPassword, password string) bool {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)) == nil
-}
-
-type ResetPasswordRequest struct {
-	bun.BaseModel `bun:"table:reset_password_token"`
-
-	Identifiable
-	Token      string `bun:"token,type:text,notnull" json:"token"`
-	PasswordID string `bun:"password_id,type:text,notnull,unique" json:"passwordId"`
-}
-
-func NewResetPasswordRequest(passwordID string) (*ResetPasswordRequest, error) {
-	return &ResetPasswordRequest{
-		Identifiable: Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
-		Token:      valuer.GenerateUUID().String(),
-		PasswordID: passwordID,
-	}, nil
-}
-
-type PostableResetPassword struct {
-	Password string `json:"password"`
-	Token    string `json:"token"`
-}
-
-type ChangePasswordRequest struct {
-	UserId      string `json:"userId"`
-	OldPassword string `json:"oldPassword"`
-	NewPassword string `json:"newPassword"`
 }
 
 type PostableLoginRequest struct {

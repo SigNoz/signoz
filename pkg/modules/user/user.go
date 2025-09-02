@@ -41,9 +41,9 @@ type Module interface {
 	CanUsePassword(ctx context.Context, email string) (bool, error)
 
 	// password
-	CreateResetPasswordToken(ctx context.Context, userID string) (*types.ResetPasswordRequest, error)
+	CreateResetPasswordToken(ctx context.Context, userID string) (*types.ResetPasswordToken, error)
 	GetPasswordByUserID(ctx context.Context, id string) (*types.FactorPassword, error)
-	GetResetPassword(ctx context.Context, token string) (*types.ResetPasswordRequest, error)
+	GetResetPassword(ctx context.Context, token string) (*types.ResetPasswordToken, error)
 	UpdatePassword(ctx context.Context, userID string, password string) error
 	UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, passwordID string, password string) error
 

@@ -274,7 +274,7 @@ func (m *Module) DeleteUser(ctx context.Context, orgID string, id string, delete
 	return nil
 }
 
-func (m *Module) CreateResetPasswordToken(ctx context.Context, userID string) (*types.ResetPasswordRequest, error) {
+func (m *Module) CreateResetPasswordToken(ctx context.Context, userID string) (*types.ResetPasswordToken, error) {
 	password, err := m.store.GetPasswordByUserID(ctx, userID)
 	if err != nil {
 		// if the user does not have a password, we need to create a new one
@@ -298,7 +298,7 @@ func (m *Module) CreateResetPasswordToken(ctx context.Context, userID string) (*
 		}
 	}
 
-	resetPasswordRequest, err := types.NewResetPasswordRequest(password.ID.StringValue())
+	resetPasswordRequest, err := types.NewResetPasswordToken(password.ID.StringValue())
 	if err != nil {
 		return nil, err
 	}
@@ -325,12 +325,12 @@ func (m *Module) GetPasswordByUserID(ctx context.Context, id string) (*types.Fac
 	return m.store.GetPasswordByUserID(ctx, id)
 }
 
-func (m *Module) GetResetPassword(ctx context.Context, token string) (*types.ResetPasswordRequest, error) {
+func (m *Module) GetResetPassword(ctx context.Context, token string) (*types.ResetPasswordToken, error) {
 	return m.store.GetResetPassword(ctx, token)
 }
 
 func (m *Module) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, passwordID string, password string) error {
-	hashedPassword, err := types.HashPassword(password)
+	hashedPassword, err := types.NewHashedPassword(password)
 	if err != nil {
 		return err
 	}
@@ -344,10 +344,11 @@ func (m *Module) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, 
 }
 
 func (m *Module) UpdatePassword(ctx context.Context, userID string, password string) error {
-	hashedPassword, err := types.HashPassword(password)
+	hashedPassword, err := types.NewHashedPassword(password)
 	if err != nil {
 		return err
 	}
+
 	return m.store.UpdatePassword(ctx, userID, hashedPassword)
 }
 
@@ -386,8 +387,8 @@ func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, passwor
 		return nil, err
 	}
 
-	if !types.ComparePassword(existingPassword.Password, password) {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid password")
+	if !existingPassword.Equals(password) {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "password is incorrect")
 	}
 
 	return dbUser, nil
@@ -651,7 +652,7 @@ func (m *Module) Register(ctx context.Context, req *types.PostableRegisterOrgAnd
 		return nil, model.InternalError(err)
 	}
 
-	password, err := types.NewFactorPassword(req.Password)
+	password, err := types.NewFactorPassword(req.Password, user.ID.StringValue())
 	if err != nil {
 		return nil, model.InternalError(err)
 	}

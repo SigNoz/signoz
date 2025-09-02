@@ -79,7 +79,7 @@ func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else {
-		password, err := types.NewFactorPassword(req.Password)
+		password, err := types.NewFactorPassword(req.Password, user.ID.StringValue())
 		if err != nil {
 			render.Error(w, err)
 			return
@@ -405,7 +405,7 @@ func (h *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !types.ComparePassword(password.Password, req.OldPassword) {
+	if !password.Equals(req.OldPassword) {
 		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "old password is incorrect"))
 		return
 	}
