@@ -385,7 +385,7 @@ func TestGetExportQueryOrderBy(t *testing.T) {
 			expectedError: true,
 		},
 		{
-			name: "single order error",
+			name: "single order no error",
 			queryParams: url.Values{
 				"order_by": {"timestamp:asc"},
 			},
@@ -395,6 +395,14 @@ func TestGetExportQueryOrderBy(t *testing.T) {
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
 							Name: telemetrylogs.LogsV2TimestampColumn,
+						},
+					},
+				},
+				{
+					Direction: qbtypes.OrderDirectionAsc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: telemetrylogs.LogsV2IDColumn,
 						},
 					},
 				},
@@ -412,14 +420,6 @@ func TestGetExportQueryOrderBy(t *testing.T) {
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
 							Name: telemetrylogs.LogsV2TimestampColumn,
-						},
-					},
-				},
-				{
-					Direction: qbtypes.OrderDirectionDesc,
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2BodyColumn,
 						},
 					},
 				},
@@ -487,7 +487,7 @@ func TestGetExportQueryOrderBy(t *testing.T) {
 		{
 			name: "invalid order name (should error out)",
 			queryParams: url.Values{
-				"order_by": {"timestamp:asc", "attributes.user:", "id:asc"},
+				"order_by": {"attributes.user:", "id:asc"},
 			},
 			expectedOrder: nil,
 			expectedError: true,
@@ -495,17 +495,9 @@ func TestGetExportQueryOrderBy(t *testing.T) {
 		{
 			name: "valid order name (should be included)",
 			queryParams: url.Values{
-				"order_by": {"timestamp:asc", "attribute.user:string:desc", "id:asc"},
+				"order_by": {"attribute.user:string:desc", "id:asc"},
 			},
 			expectedOrder: []qbtypes.OrderBy{
-				{
-					Direction: qbtypes.OrderDirectionAsc,
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2TimestampColumn,
-						},
-					},
-				},
 				{
 					Direction: qbtypes.OrderDirectionDesc,
 					Key: qbtypes.OrderByKey{
@@ -516,45 +508,21 @@ func TestGetExportQueryOrderBy(t *testing.T) {
 						},
 					},
 				},
-				{
-					Direction: qbtypes.OrderDirectionAsc,
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2IDColumn,
-						},
-					},
-				},
 			},
 			expectedError: false,
 		},
 		{
 			name: "valid order name (should be included)",
 			queryParams: url.Values{
-				"order_by": {"timestamp:asc", "attribute.user.string:desc", "id:asc"},
+				"order_by": {"attribute.user.string:desc", "id:asc"},
 			},
 			expectedOrder: []qbtypes.OrderBy{
-				{
-					Direction: qbtypes.OrderDirectionAsc,
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2TimestampColumn,
-						},
-					},
-				},
 				{
 					Direction: qbtypes.OrderDirectionDesc,
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
 							Name:         "user.string",
 							FieldContext: telemetrytypes.FieldContextAttribute,
-						},
-					},
-				},
-				{
-					Direction: qbtypes.OrderDirectionAsc,
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2IDColumn,
 						},
 					},
 				},

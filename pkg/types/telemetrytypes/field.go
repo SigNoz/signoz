@@ -40,14 +40,27 @@ func (f TelemetryFieldKey) String() string {
 	return sb.String()
 }
 
-// ValidateFieldKeyText validates a key text
 // ValidateFieldKeyText validates that a field key text is in one of the valid formats:
 // - Simple field name: "name"
 // - Field with context: "context.name"
+// - Field with context and nested fields: "context.name.subfield"
 // - Field with both context and type: "context.name:type"
-// Field names can contain single dots for hierarchical fields (e.g. "http.status.code")
+// - Field with context, nested fields and type: "context.name.subfield:type"
+//
+// Examples of valid formats:
+// - "name"              (Simple field)
+// - "http.method"       (Context + field)
+// - "http.status.code"  (Context + nested fields)
+// - "trace.id:string"   (Context + field + type)
+// - "db.query.time:int" (Context + nested fields + type)
+//
+// Invalid formats:
+// - "name:"            (Type separator without type)
+// - ".name"            (Leading dot)
+// - "http..status"     (Consecutive dots)
+// - "name:type:extra"  (Multiple type separators)
+//
 // Note: If a data type is specified, a context must also be specified
-// Note: Consecutive dots (e.g. "http..status") are not allowed
 var fieldTextRegex = regexp.MustCompile(`^(?:(\w+)\.(?:[\w-]+(?:\.[\w-]+)*?)(?::(\w+))?|[\w-]+)$`)
 
 func ValidateFieldKeyText(key string) error {

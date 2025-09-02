@@ -56,7 +56,7 @@ func NewHandler(module export.Module) export.Handler {
 //
 //   - order_by (optional): Sorting specification ["column:direction" or "context.field:type:direction"]
 //     Direction: "asc" or "desc"
-//     Default: ["timestamp:asc", "id:asc"]
+//     Default: ["timestamp:desc", "id:desc"]
 //
 // Response Headers:
 //   - Content-Type: "text/csv" or "application/jsonl"
@@ -99,13 +99,6 @@ func (handler *handler) Export(rw http.ResponseWriter, r *http.Request) {
 	default:
 		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid source: must be logs"))
 	}
-
-	flusher, ok := rw.(http.Flusher)
-	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "export is not supported"))
-		return
-	}
-	flusher.Flush()
 }
 
 func (handler *handler) exportMetrics(rw http.ResponseWriter, r *http.Request) {
@@ -120,7 +113,6 @@ func (handler *handler) exportLogs(rw http.ResponseWriter, r *http.Request) {
 	// Set up response headers
 	rw.Header().Set("Cache-Control", "no-cache")
 	rw.Header().Set("Content-Encoding", "gzip")
-	rw.Header().Add("Trailer", "X-Total-Bytes, X-Total-Rows, X-Response-Complete")
 
 	queryParams := r.URL.Query()
 
@@ -437,46 +429,13 @@ func getsizeOfStringSlice(slice []string) uint64 {
 // Each "order_by" parameter should be in the format "column:direction"
 // Each "column" should be a valid telemetry field key in the format "context.field:type" or "context.field" or "field"
 func getExportQueryOrderBy(queryParams url.Values) (orderBy []qbtypes.OrderBy, err error) {
-	orderByParams := queryParams["order_by"]
+	orderByParam := queryParams.Get("order_by")
 
-	orderBy = make([]qbtypes.OrderBy, 0, len(orderByParams))
-
-	for _, orderByStr := range orderByParams {
-		// Skip empty strings
-		orderByStr = strings.TrimSpace(orderByStr)
-		if orderByStr == "" {
-			continue
-		}
-
-		parts := strings.Split(orderByStr, ":")
-		if len(parts) != 2 && len(parts) != 3 {
-			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order_by format: %s", orderByStr)
-		}
-
-		column := strings.Join(parts[:len(parts)-1], ":")
-		direction := parts[len(parts)-1]
-
-		orderDirection, ok := qbtypes.OrderDirectionMap[direction]
-		if !ok {
-			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order_by direction: %s", direction)
-		}
-
-		if err := telemetrytypes.ValidateFieldKeyText(column); err != nil {
-			return nil, err
-		}
-		orderByKey := telemetrytypes.GetFieldKeyFromKeyText(column)
-
-		orderBy = append(orderBy, qbtypes.OrderBy{
-			Key: qbtypes.OrderByKey{
-				TelemetryFieldKey: orderByKey,
-			},
-			Direction: orderDirection,
-		})
-	}
-	if len(orderBy) == 0 {
+	orderByParam = strings.TrimSpace(orderByParam)
+	if orderByParam == "" {
 		return []qbtypes.OrderBy{
 			{
-				Direction: qbtypes.OrderDirectionAsc,
+				Direction: qbtypes.OrderDirectionDesc,
 				Key: qbtypes.OrderByKey{
 					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
 						Name: telemetrylogs.LogsV2TimestampColumn,
@@ -484,7 +443,7 @@ func getExportQueryOrderBy(queryParams url.Values) (orderBy []qbtypes.OrderBy, e
 				},
 			},
 			{
-				Direction: qbtypes.OrderDirectionAsc,
+				Direction: qbtypes.OrderDirectionDesc,
 				Key: qbtypes.OrderByKey{
 					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
 						Name: telemetrylogs.LogsV2IDColumn,
@@ -494,5 +453,41 @@ func getExportQueryOrderBy(queryParams url.Values) (orderBy []qbtypes.OrderBy, e
 		}, nil
 	}
 
+	parts := strings.Split(orderByParam, ":")
+	if len(parts) != 2 && len(parts) != 3 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order_by format: %s, should be <column>:<direction>", orderByParam)
+	}
+
+	column := strings.Join(parts[:len(parts)-1], ":")
+	direction := parts[len(parts)-1]
+
+	orderDirection, ok := qbtypes.OrderDirectionMap[direction]
+	if !ok {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order_by direction: %s, should be one of %s, %s", direction, qbtypes.OrderDirectionAsc, qbtypes.OrderDirectionDesc)
+	}
+
+	if err := telemetrytypes.ValidateFieldKeyText(column); err != nil {
+		return nil, err
+	}
+	orderByKey := telemetrytypes.GetFieldKeyFromKeyText(column)
+
+	orderBy = append(orderBy, qbtypes.OrderBy{
+		Key: qbtypes.OrderByKey{
+			TelemetryFieldKey: orderByKey,
+		},
+		Direction: orderDirection,
+	})
+
+	// If we are ordering by the timestamp column, also order by the ID column
+	if orderByKey.Name == telemetrylogs.LogsV2TimestampColumn {
+		orderBy = append(orderBy, qbtypes.OrderBy{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name: telemetrylogs.LogsV2IDColumn,
+				},
+			},
+			Direction: orderDirection,
+		})
+	}
 	return orderBy, nil
 }
