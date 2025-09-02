@@ -699,7 +699,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					onClick={(e): void => {
 						e.stopPropagation();
 						e.preventDefault();
-						handleItemSelection();
+						handleItemSelection('option');
 						setActiveChipIndex(-1);
 						setActiveIndex(-1);
 					}}
@@ -746,18 +746,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								<div className="option-badge">{capitalize(option.type)}</div>
 							)}
 							{option.value && ensureValidOption(option.value) && (
-								<Button
-									type="text"
-									className="only-btn"
-									onClick={(e): void => {
-										e.stopPropagation();
-										e.preventDefault();
-										handleItemSelection('option');
-										setActiveChipIndex(-1);
-										setActiveIndex(-1);
-									}}
-									size="middle"
-								>
+								<Button type="text" className="only-btn">
 									{currentToggleTagValue({ option: option.value })}
 								</Button>
 							)}
