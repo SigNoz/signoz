@@ -255,83 +255,22 @@ func (m *Manager) Pause(b bool) {
 }
 
 func (m *Manager) initiate(ctx context.Context) error {
-	// Debug logging to check all potential nil pointers
-	zap.L().Debug("initiate: starting rules manager initialization")
-	
-	if m == nil {
-		zap.L().Error("initiate: Manager is nil")
-		return fmt.Errorf("manager is nil")
-	}
-	
-	if m.orgGetter == nil {
-		zap.L().Error("initiate: orgGetter is nil")
-		return fmt.Errorf("orgGetter is nil")
-	}
-	
-	if m.ruleStore == nil {
-		zap.L().Error("initiate: ruleStore is nil")
-		return fmt.Errorf("ruleStore is nil")
-	}
-	
-	zap.L().Debug("initiate: calling ListByOwnedKeyRange")
 	orgs, err := m.orgGetter.ListByOwnedKeyRange(ctx)
 	if err != nil {
 		return err
 	}
 
-	// Debug logging to understand what organizations we got
-	zap.L().Debug("loaded organizations", zap.Int("count", len(orgs)))
-	for i, org := range orgs {
-		if org == nil {
-			zap.L().Error("organization at index is nil", zap.Int("index", i))
-		} else {
-			zap.L().Debug("organization details", zap.Int("index", i), 
-				zap.String("orgID", fmt.Sprintf("%+v", org.ID)), 
-				zap.Bool("isZero", org.ID.IsZero()),
-				zap.String("displayName", org.DisplayName),
-				zap.String("name", org.Name))
-		}
-	}
-
 	var loadErrors []error
 	for _, org := range orgs {
-		// Debug logging to identify nil pointer issue
-		if org == nil {
-			zap.L().Error("organization is nil")
-			continue
-		}
-		if org.ID.IsZero() {
-			zap.L().Error("organization ID is zero-valued", zap.Any("org", org))
-			continue
-		}
-		zap.L().Debug("processing organization", zap.String("orgID", org.ID.StringValue()))
-		
-		zap.L().Debug("calling GetStoredRules", zap.String("orgID", org.ID.StringValue()))
 		storedRules, err := m.ruleStore.GetStoredRules(ctx, org.ID.StringValue())
 		if err != nil {
-			zap.L().Error("GetStoredRules failed", zap.Error(err), zap.String("orgID", org.ID.StringValue()))
 			return err
 		}
-		zap.L().Debug("retrieved stored rules", zap.Int("count", len(storedRules)), zap.String("orgID", org.ID.StringValue()))
-		
 		if len(storedRules) == 0 {
-			zap.L().Debug("no stored rules found, returning nil")
 			return nil
 		}
 
-		for i, rec := range storedRules {
-			zap.L().Debug("processing stored rule", zap.Int("index", i), zap.Any("rec", rec))
-			
-			if rec == nil {
-				zap.L().Error("stored rule record is nil", zap.Int("index", i))
-				continue
-			}
-			
-			if rec.ID.IsZero() {
-				zap.L().Error("stored rule ID is zero-valued", zap.Int("index", i), zap.Any("rec", rec))
-				continue
-			}
-			
+		for _, rec := range storedRules {
 			taskName := fmt.Sprintf("%s-groupname", rec.ID.StringValue())
 			parsedRule, err := ruletypes.ParsePostableRule([]byte(rec.Data))
 
