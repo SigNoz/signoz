@@ -329,10 +329,14 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 	return module.store.UpdatePassword(ctx, password)
 }
 
-func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, passwd string) error {
+func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, oldpasswd string, passwd string) error {
 	password, err := module.store.GetPasswordByUserID(ctx, userID)
 	if err != nil {
 		return err
+	}
+
+	if !password.Equals(oldpasswd) {
+		return errors.New(errors.TypeInvalidInput, types.ErrCodeIncorrectPassword, "old password is incorrect")
 	}
 
 	if err := password.Update(passwd); err != nil {

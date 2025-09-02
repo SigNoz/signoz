@@ -65,10 +65,6 @@ func (request *ChangePasswordRequest) UnmarshalJSON(data []byte) error {
 		return ErrInvalidPassword
 	}
 
-	if !comparePassword(temp.OldPassword, temp.NewPassword) {
-		return errors.New(errors.TypeInvalidInput, ErrCodeIncorrectPassword, "old password is incorrect")
-	}
-
 	*request = ChangePasswordRequest(temp)
 	return nil
 }

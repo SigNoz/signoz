@@ -48,7 +48,7 @@ type Module interface {
 	UpdatePasswordByResetPasswordToken(ctx context.Context, token string, password string) error
 
 	// Updates password of user to the new password. It also deletes all reset password tokens for the user.
-	UpdatePassword(ctx context.Context, userID valuer.UUID, password string) error
+	UpdatePassword(ctx context.Context, userID valuer.UUID, oldPassword string, password string) error
 
 	// Auth Domain
 	GetAuthDomainByEmail(ctx context.Context, email string) (*types.GettableOrgDomain, error)

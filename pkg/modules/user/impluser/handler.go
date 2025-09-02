@@ -392,7 +392,7 @@ func (handler *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := handler.module.UpdatePassword(ctx, req.UserID, req.NewPassword)
+	err := handler.module.UpdatePassword(ctx, req.UserID, req.OldPassword, req.NewPassword)
 	if err != nil {
 		render.Error(w, err)
 		return
