@@ -1,4 +1,4 @@
-// Generated from src/TraceOperator/TraceOperatorGrammer.g4 by ANTLR 4.13.1
+// Generated from ./TraceOperatorGrammer.g4 by ANTLR 4.13.1
 // noinspection ES6UnusedImports,JSUnusedGlobalSymbols,JSUnusedLocalSymbols
 
 import {
@@ -33,10 +33,10 @@ export default class TraceOperatorGrammerParser extends Parser {
 	public static readonly RULE_expression = 1;
 	public static readonly RULE_atom = 2;
 	public static readonly RULE_operator = 3;
-	public static readonly literalNames: (string | null)[] = [ null, "'('", 
-                                                            "')'", "'=>'", 
-                                                            "'&&'", "'||'", 
-                                                            "'NOT'", "'->'" ];
+	public static readonly literalNames: (string | null)[] = [ null, "'NOT'", 
+                                                            "'('", "')'", 
+                                                            "'=>'", "'&&'", 
+                                                            "'||'", "'->'" ];
 	public static readonly symbolicNames: (string | null)[] = [ null, null, 
                                                              null, null, 
                                                              null, null, 
@@ -82,7 +82,7 @@ export default class TraceOperatorGrammerParser extends Parser {
 				this.state = 11;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-			} while (_la===1 || _la===8);
+			} while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 262) !== 0));
 			this.state = 13;
 			this.match(TraceOperatorGrammerParser.EOF);
 			}
@@ -106,7 +106,7 @@ export default class TraceOperatorGrammerParser extends Parser {
 		let localctx: ExpressionContext = new ExpressionContext(this, this._ctx, this.state);
 		this.enterRule(localctx, 2, TraceOperatorGrammerParser.RULE_expression);
 		try {
-			this.state = 36;
+			this.state = 38;
 			this._errHandler.sync(this);
 			switch ( this._interp.adaptivePredict(this._input, 1, this._ctx) ) {
 			case 1:
@@ -116,55 +116,64 @@ export default class TraceOperatorGrammerParser extends Parser {
 				this.match(TraceOperatorGrammerParser.T__0);
 				this.state = 16;
 				this.expression();
-				this.state = 17;
-				this.match(TraceOperatorGrammerParser.T__1);
-				this.state = 18;
-				this.operator();
-				this.state = 19;
-				this.expression();
 				}
 				break;
 			case 2:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 21;
-				this.match(TraceOperatorGrammerParser.T__0);
-				this.state = 22;
-				this.expression();
-				this.state = 23;
+				this.state = 17;
 				this.match(TraceOperatorGrammerParser.T__1);
+				this.state = 18;
+				this.expression();
+				this.state = 19;
+				this.match(TraceOperatorGrammerParser.T__2);
+				this.state = 20;
+				this.operator();
+				this.state = 21;
+				this.expression();
 				}
 				break;
 			case 3:
 				this.enterOuterAlt(localctx, 3);
 				{
+				this.state = 23;
+				this.match(TraceOperatorGrammerParser.T__1);
+				this.state = 24;
+				this.expression();
 				this.state = 25;
-				localctx._left = this.atom();
-				this.state = 26;
-				this.operator();
-				this.state = 27;
-				localctx._right = this.atom();
+				this.match(TraceOperatorGrammerParser.T__2);
 				}
 				break;
 			case 4:
 				this.enterOuterAlt(localctx, 4);
 				{
-				this.state = 29;
+				this.state = 27;
 				localctx._left = this.atom();
-				this.state = 30;
+				this.state = 28;
 				this.operator();
-				this.state = 31;
-				this.match(TraceOperatorGrammerParser.T__0);
-				this.state = 32;
-				localctx._expr = this.expression();
-				this.state = 33;
-				this.match(TraceOperatorGrammerParser.T__1);
+				this.state = 29;
+				localctx._right = this.expression();
 				}
 				break;
 			case 5:
 				this.enterOuterAlt(localctx, 5);
 				{
+				this.state = 31;
+				localctx._left = this.atom();
+				this.state = 32;
+				this.operator();
+				this.state = 33;
+				this.match(TraceOperatorGrammerParser.T__1);
+				this.state = 34;
+				localctx._expr = this.expression();
 				this.state = 35;
+				this.match(TraceOperatorGrammerParser.T__2);
+				}
+				break;
+			case 6:
+				this.enterOuterAlt(localctx, 6);
+				{
+				this.state = 37;
 				this.atom();
 				}
 				break;
@@ -191,7 +200,7 @@ export default class TraceOperatorGrammerParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 38;
+			this.state = 40;
 			this.match(TraceOperatorGrammerParser.IDENTIFIER);
 			}
 		}
@@ -217,9 +226,9 @@ export default class TraceOperatorGrammerParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 40;
+			this.state = 42;
 			_la = this._input.LA(1);
-			if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 248) !== 0))) {
+			if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 242) !== 0))) {
 			this._errHandler.recoverInline(this);
 			}
 			else {
@@ -243,19 +252,19 @@ export default class TraceOperatorGrammerParser extends Parser {
 		return localctx;
 	}
 
-	public static readonly _serializedATN: number[] = [4,1,9,43,2,0,7,0,2,1,
+	public static readonly _serializedATN: number[] = [4,1,9,45,2,0,7,0,2,1,
 	7,1,2,2,7,2,2,3,7,3,1,0,4,0,10,8,0,11,0,12,0,11,1,0,1,0,1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,
-	37,8,1,1,2,1,2,1,3,1,3,1,3,0,0,4,0,2,4,6,0,1,1,0,3,7,43,0,9,1,0,0,0,2,36,
-	1,0,0,0,4,38,1,0,0,0,6,40,1,0,0,0,8,10,3,2,1,0,9,8,1,0,0,0,10,11,1,0,0,
-	0,11,9,1,0,0,0,11,12,1,0,0,0,12,13,1,0,0,0,13,14,5,0,0,1,14,1,1,0,0,0,15,
-	16,5,1,0,0,16,17,3,2,1,0,17,18,5,2,0,0,18,19,3,6,3,0,19,20,3,2,1,0,20,37,
-	1,0,0,0,21,22,5,1,0,0,22,23,3,2,1,0,23,24,5,2,0,0,24,37,1,0,0,0,25,26,3,
-	4,2,0,26,27,3,6,3,0,27,28,3,4,2,0,28,37,1,0,0,0,29,30,3,4,2,0,30,31,3,6,
-	3,0,31,32,5,1,0,0,32,33,3,2,1,0,33,34,5,2,0,0,34,37,1,0,0,0,35,37,3,4,2,
-	0,36,15,1,0,0,0,36,21,1,0,0,0,36,25,1,0,0,0,36,29,1,0,0,0,36,35,1,0,0,0,
-	37,3,1,0,0,0,38,39,5,8,0,0,39,5,1,0,0,0,40,41,7,0,0,0,41,7,1,0,0,0,2,11,
-	36];
+	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+	1,1,3,1,39,8,1,1,2,1,2,1,3,1,3,1,3,0,0,4,0,2,4,6,0,1,2,0,1,1,4,7,46,0,9,
+	1,0,0,0,2,38,1,0,0,0,4,40,1,0,0,0,6,42,1,0,0,0,8,10,3,2,1,0,9,8,1,0,0,0,
+	10,11,1,0,0,0,11,9,1,0,0,0,11,12,1,0,0,0,12,13,1,0,0,0,13,14,5,0,0,1,14,
+	1,1,0,0,0,15,16,5,1,0,0,16,39,3,2,1,0,17,18,5,2,0,0,18,19,3,2,1,0,19,20,
+	5,3,0,0,20,21,3,6,3,0,21,22,3,2,1,0,22,39,1,0,0,0,23,24,5,2,0,0,24,25,3,
+	2,1,0,25,26,5,3,0,0,26,39,1,0,0,0,27,28,3,4,2,0,28,29,3,6,3,0,29,30,3,2,
+	1,0,30,39,1,0,0,0,31,32,3,4,2,0,32,33,3,6,3,0,33,34,5,2,0,0,34,35,3,2,1,
+	0,35,36,5,3,0,0,36,39,1,0,0,0,37,39,3,4,2,0,38,15,1,0,0,0,38,17,1,0,0,0,
+	38,23,1,0,0,0,38,27,1,0,0,0,38,31,1,0,0,0,38,37,1,0,0,0,39,3,1,0,0,0,40,
+	41,5,8,0,0,41,5,1,0,0,0,42,43,7,0,0,0,43,7,1,0,0,0,2,11,38];
 
 	private static __ATN: ATN;
 	public static get _ATN(): ATN {
@@ -311,7 +320,7 @@ export class QueryContext extends ParserRuleContext {
 
 export class ExpressionContext extends ParserRuleContext {
 	public _left!: AtomContext;
-	public _right!: AtomContext;
+	public _right!: ExpressionContext;
 	public _expr!: ExpressionContext;
 	constructor(parser?: TraceOperatorGrammerParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
@@ -326,11 +335,8 @@ export class ExpressionContext extends ParserRuleContext {
 	public operator(): OperatorContext {
 		return this.getTypedRuleContext(OperatorContext, 0) as OperatorContext;
 	}
-	public atom_list(): AtomContext[] {
-		return this.getTypedRuleContexts(AtomContext) as AtomContext[];
-	}
-	public atom(i: number): AtomContext {
-		return this.getTypedRuleContext(AtomContext, i) as AtomContext;
+	public atom(): AtomContext {
+		return this.getTypedRuleContext(AtomContext, 0) as AtomContext;
 	}
     public get ruleIndex(): number {
     	return TraceOperatorGrammerParser.RULE_expression;

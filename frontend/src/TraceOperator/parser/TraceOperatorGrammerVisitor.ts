@@ -1,4 +1,4 @@
-// Generated from src/TraceOperator/TraceOperatorGrammer.g4 by ANTLR 4.13.1
+// Generated from ./TraceOperatorGrammer.g4 by ANTLR 4.13.1
 
 import {ParseTreeVisitor} from 'antlr4';
 

@@ -5,9 +5,10 @@ query   : expression+ EOF;
 
 // Expression rules
 expression
-    : '(' expression ')' operator expression            // Parenthesized operator expression
+    : 'NOT' expression                                   // NOT prefix expression
+    | '(' expression ')' operator expression            // Parenthesized operator expression
     | '(' expression ')'                                 // Parenthesized expression
-    | left=atom operator right=atom                      // Comparison expression
+    | left=atom operator right=expression                // Binary operator with expression on right
     | left=atom operator '(' expr=expression ')'         // Expression with parentheses inside
     | atom                                               // Simple expression (atom)
     ;
