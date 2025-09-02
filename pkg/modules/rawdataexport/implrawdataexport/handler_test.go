@@ -358,7 +358,7 @@ func TestGetExportQueryOrderBy(t *testing.T) {
 			queryParams: url.Values{},
 			expectedOrder: []qbtypes.OrderBy{
 				{
-					Direction: qbtypes.OrderDirectionAsc,
+					Direction: qbtypes.OrderDirectionDesc,
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
 							Name: telemetrylogs.LogsV2TimestampColumn,
@@ -366,7 +366,7 @@ func TestGetExportQueryOrderBy(t *testing.T) {
 					},
 				},
 				{
-					Direction: qbtypes.OrderDirectionAsc,
+					Direction: qbtypes.OrderDirectionDesc,
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
 							Name: telemetrylogs.LogsV2IDColumn,
