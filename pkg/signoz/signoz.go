@@ -5,8 +5,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
-	"github.com/SigNoz/signoz/pkg/authz"
-	"github.com/SigNoz/signoz/pkg/authz/openfgaauthz"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -266,12 +264,6 @@ func New(
 		return nil, err
 	}
 
-	authzProviderFactory := openfgaauthz.NewProviderFactory(config.SQLStore)
-	authz, err := authzProviderFactory.New(ctx, providerSettings, authz.Config{})
-	if err != nil {
-		return nil, err
-	}
-
 	// Initialize all modules
 	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
 
@@ -307,7 +299,6 @@ func New(
 		factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanager),
 		factory.NewNamedService(factory.MustNewName("licensing"), licensing),
 		factory.NewNamedService(factory.MustNewName("statsreporter"), statsReporter),
-		factory.NewNamedService(factory.MustNewName("authz"), authz),
 	)
 	if err != nil {
 		return nil, err
