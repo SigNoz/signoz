@@ -2,6 +2,7 @@ package querybuildertypesv5
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 	"time"
 
@@ -1525,6 +1526,117 @@ func TestValidateUniqueTraceOperator(t *testing.T) {
 				}
 			} else {
 				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestQueryRangeRequest_GetQueriesSupportingZeroDefault(t *testing.T) {
+	tests := []struct {
+		name           string
+		CompositeQuery CompositeQuery
+		want           map[string]bool
+	}{
+		{
+			name: "test count on traces - support zeroDefault",
+			CompositeQuery: CompositeQuery{
+				Queries: []QueryEnvelope{
+					{
+						Type: QueryTypeBuilder,
+						Spec: QueryBuilderQuery[TraceAggregation]{
+							Name:   "A",
+							Signal: telemetrytypes.SignalTraces,
+							Filter: &Filter{
+								Expression: "service.name = demo",
+							},
+							Aggregations: []TraceAggregation{
+								{
+									Expression: "count()",
+								},
+							},
+						},
+					},
+					{
+						Type: QueryTypeBuilder,
+						Spec: QueryBuilderQuery[TraceAggregation]{
+							Name:   "B",
+							Signal: telemetrytypes.SignalTraces,
+							Aggregations: []TraceAggregation{
+								{
+									Expression: "count()",
+								},
+							},
+						},
+					},
+					{
+						Type: QueryTypeFormula,
+						Spec: QueryBuilderFormula{
+							Expression: "A / B * 100",
+						},
+					},
+				},
+			},
+			want: map[string]bool{
+				"A": true,
+				"B": true,
+			},
+		},
+		{
+			name: "test rate on logs - support zeroDefault",
+			CompositeQuery: CompositeQuery{
+				Queries: []QueryEnvelope{
+					{
+						Type: QueryTypeBuilder,
+						Spec: QueryBuilderQuery[TraceAggregation]{
+							Name:   "A",
+							Signal: telemetrytypes.SignalTraces,
+							Filter: &Filter{
+								Expression: "service.name = demo",
+							},
+							Aggregations: []TraceAggregation{
+								{
+									Expression: "rate()",
+								},
+							},
+						},
+					},
+				},
+			},
+			want: map[string]bool{
+				"A": true,
+			},
+		},
+		{
+			name: "test min on logs - doesn't support zeroDefault",
+			CompositeQuery: CompositeQuery{
+				Queries: []QueryEnvelope{
+					{
+						Type: QueryTypeBuilder,
+						Spec: QueryBuilderQuery[TraceAggregation]{
+							Name:   "A",
+							Signal: telemetrytypes.SignalTraces,
+							Filter: &Filter{
+								Expression: "service.name = demo",
+							},
+							Aggregations: []TraceAggregation{
+								{
+									Expression: "min(duration)",
+								},
+							},
+						},
+					},
+				},
+			},
+			want: map[string]bool{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &QueryRangeRequest{
+				CompositeQuery: tt.CompositeQuery,
+			}
+			if got := r.GetQueriesSupportingZeroDefault(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("QueryRangeRequest.GetQueriesSupportingZeroDefault() = %v, want %v", got, tt.want)
 			}
 		})
 	}

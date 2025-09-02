@@ -326,20 +326,7 @@ func (q *querier) processTimeSeriesFormula(
 		}
 	}
 
-	canDefaultZero := make(map[string]bool)
-	for _, q := range req.CompositeQuery.Queries {
-		if q.Type == qbtypes.QueryTypeBuilder {
-			if query, ok := q.Spec.(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]); ok {
-				if len(query.Aggregations) == 1 && canDefaultZeroAgg(query.Aggregations[0].Expression) {
-					canDefaultZero[query.Name] = true
-				}
-			} else if query, ok := q.Spec.(qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]); ok {
-				if len(query.Aggregations) == 1 && canDefaultZeroAgg(query.Aggregations[0].Expression) {
-					canDefaultZero[query.Name] = true
-				}
-			}
-		}
-	}
+	canDefaultZero := req.GetQueriesSupportingZeroDefault()
 	// Create formula evaluator
 	evaluator, err := qbtypes.NewFormulaEvaluator(formula.Expression, canDefaultZero)
 	if err != nil {
@@ -490,20 +477,7 @@ func (q *querier) processScalarFormula(
 		}
 	}
 
-	canDefaultZero := make(map[string]bool)
-	for _, q := range req.CompositeQuery.Queries {
-		if q.Type == qbtypes.QueryTypeBuilder {
-			if query, ok := q.Spec.(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]); ok {
-				if len(query.Aggregations) == 1 && canDefaultZeroAgg(query.Aggregations[0].Expression) {
-					canDefaultZero[query.Name] = true
-				}
-			} else if query, ok := q.Spec.(qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]); ok {
-				if len(query.Aggregations) == 1 && canDefaultZeroAgg(query.Aggregations[0].Expression) {
-					canDefaultZero[query.Name] = true
-				}
-			}
-		}
-	}
+	canDefaultZero := req.GetQueriesSupportingZeroDefault()
 	evaluator, err := qbtypes.NewFormulaEvaluator(formula.Expression, canDefaultZero)
 	if err != nil {
 		q.logger.ErrorContext(ctx, "failed to create formula evaluator", "error", err, "formula", formula.Name)
@@ -1004,16 +978,4 @@ func (q *querier) calculateFormulaStep(expression string, req *qbtypes.QueryRang
 	}
 
 	return result
-}
-
-// canDefaultZeroAgg returns a boolean if we can use default 0 if the data at a timestamp doesn't exist
-func canDefaultZeroAgg(expr string) bool {
-	// only pure additive/counting operations should default to zero,
-	// while statistical/analytical operations should show gaps when there's no data to analyze.
-	if strings.HasPrefix(expr, "count(") ||
-		strings.HasPrefix(expr, "count_distinct(") ||
-		strings.HasPrefix(expr, "sum(") {
-		return true
-	}
-	return false
 }
