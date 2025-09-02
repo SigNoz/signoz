@@ -1,11 +1,10 @@
-package implexport
+package implrawdataexport
 
 import (
 	"compress/gzip"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -13,7 +12,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/export"
+	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -22,10 +21,10 @@ import (
 )
 
 type handler struct {
-	module export.Module
+	module rawdataexport.Module
 }
 
-func NewHandler(module export.Module) export.Handler {
+func NewHandler(module rawdataexport.Module) rawdataexport.Handler {
 	return &handler{module: module}
 }
 
@@ -82,7 +81,7 @@ func NewHandler(module export.Module) export.Handler {
 //	Export with filter and ordering:
 //	  GET /api/v1/export?start=1693612800000000000&end=1693699199000000000
 //	      &filter=severity="error"&order_by=timestamp:desc&limit=1000
-func (handler *handler) Export(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 	source, err := getExportQuerySource(r.URL.Query())
 	if err != nil {
 		render.Error(rw, err)
@@ -189,13 +188,19 @@ func (handler *handler) exportLogs(rw http.ResponseWriter, r *http.Request) {
 
 	queryRangeRequest.CompositeQuery.Queries[0].Spec = spec
 
-	gzipWriter := gzip.NewWriter(rw)
+	// Create the gzip writer
+	gzipWriter, err := gzip.NewWriterLevel(rw, gzip.BestCompression)
+	if err != nil {
+		render.Error(rw, fmt.Errorf("error creating gzip writer: %w", err))
+		return
+	}
+
 	defer gzipWriter.Close()
 
 	// This will signal Export module to stop sending data
 	doneChan := make(chan any)
 	defer close(doneChan)
-	rowChan, errChan := handler.module.Export(r.Context(), orgID, &queryRangeRequest, doneChan)
+	rowChan, errChan := handler.module.ExportRawData(r.Context(), orgID, &queryRangeRequest, doneChan)
 
 	switch format {
 	case "csv", "":
@@ -259,7 +264,7 @@ func (handler *handler) exportLogsCSV(rowChan <-chan *qbtypes.RawRow, errChan <-
 	}
 }
 
-func (handler *handler) exportLogsJSONL(rowChan <-chan *qbtypes.RawRow, errChan <-chan error, gzipWriter io.Writer) error {
+func (handler *handler) exportLogsJSONL(rowChan <-chan *qbtypes.RawRow, errChan <-chan error, gzipWriter *gzip.Writer) error {
 
 	totalBytes := uint64(0)
 	for {

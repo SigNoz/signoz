@@ -1,10 +1,10 @@
-package implexport
+package implrawdataexport
 
 import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/modules/export"
+	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
@@ -25,13 +25,13 @@ type Module struct {
 	querier querier.Querier
 }
 
-func NewModule(querier querier.Querier) export.Module {
+func NewModule(querier querier.Querier) rawdataexport.Module {
 	return &Module{
 		querier: querier,
 	}
 }
 
-func (m *Module) Export(ctx context.Context, orgID valuer.UUID, rangeRequest *qbtypes.QueryRangeRequest, doneChan chan any) (chan *qbtypes.RawRow, chan error) {
+func (m *Module) ExportRawData(ctx context.Context, orgID valuer.UUID, rangeRequest *qbtypes.QueryRangeRequest, doneChan chan any) (chan *qbtypes.RawRow, chan error) {
 
 	spec := rangeRequest.CompositeQuery.Queries[0].Spec.(qbtypes.QueryBuilderQuery[qbtypes.LogAggregation])
 	rowCountLimit := spec.Limit
@@ -44,12 +44,10 @@ func (m *Module) Export(ctx context.Context, orgID valuer.UUID, rangeRequest *qb
 
 		rowCount := 0
 
-		cursor := ""
 		for rowCount < rowCountLimit {
 			spec.Limit = min(CHUNK_SIZE, rowCountLimit-rowCount)
-			if cursor != "" {
-				spec.Cursor = cursor
-			}
+			spec.Offset = rowCount
+
 			rangeRequest.CompositeQuery.Queries[0].Spec = spec
 
 			// Set clickhouse max threads
@@ -68,8 +66,6 @@ func (m *Module) Export(ctx context.Context, orgID valuer.UUID, rangeRequest *qb
 					errChan <- errors.NewInvalidInputf(errors.CodeInvalidInput, "expected RawData, got %T", result)
 					return
 				}
-
-				cursor = resultData.NextCursor
 
 				newRowsCount += len(resultData.Rows)
 				for _, row := range resultData.Rows {

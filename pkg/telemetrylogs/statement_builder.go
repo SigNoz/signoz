@@ -242,6 +242,9 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	} else {
 		// Select specified columns
 		for _, field := range query.SelectFields {
+			if field.Name == LogsV2TimestampColumn || field.Name == LogsV2IDColumn {
+				continue
+			}
 			// get column expression for the field
 			colExpr, err := b.fm.ColumnExpressionFor(ctx, &field, keys)
 			if err != nil {
