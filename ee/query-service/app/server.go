@@ -447,6 +447,7 @@ func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertma
 		OrgGetter:           orgGetter,
 		RouteStore:          routeStore,
 		RoutingManager:      routeManager,
+		RuleStore:           ruleStore,
 	}
 
 	// create RouteManager
