@@ -20,7 +20,6 @@ const activeTab = 'active-tab';
 export default function LeftToolbarActions({
 	items,
 	selectedView,
-
 	onChangeSelectedView,
 	showFilter,
 	handleFilterVisibilityChange,
