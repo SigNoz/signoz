@@ -1,9 +1,10 @@
 services:
   clickhouse:
-    image: clickhouse/clickhouse-server:24.1.2-alpine
+    image: clickhouse/clickhouse-server:25.5-alpine
     container_name: clickhouse
     volumes:
       - ${PWD}/fs/etc/clickhouse-server/config.d/config.xml:/etc/clickhouse-server/config.d/config.xml
+      - ${PWD}/fs/etc/clickhouse-server/config.d/cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
       - ${PWD}/fs/etc/clickhouse-server/users.d/users.xml:/etc/clickhouse-server/users.d/users.xml
       - ${PWD}/fs/tmp/var/lib/clickhouse/:/var/lib/clickhouse/
       - ${PWD}/fs/tmp/var/lib/clickhouse/user_scripts/:/var/lib/clickhouse/user_scripts/
