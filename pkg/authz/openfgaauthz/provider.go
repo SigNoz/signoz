@@ -5,7 +5,6 @@ import (
 
 	authz "github.com/SigNoz/signoz/pkg/authz"
 
-	"github.com/SigNoz/signoz/pkg/authz/openfgaauthz/schema"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -17,17 +16,18 @@ import (
 type provider struct {
 	config        authz.Config
 	settings      factory.ScopedProviderSettings
+	openfgaSchema []openfgapkgtransformer.ModuleFile
 	openfgaServer *openfgapkgserver.Server
 	stopChan      chan struct{}
 }
 
-func NewProviderFactory(sqlstoreConfig sqlstore.Config) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+func NewProviderFactory(sqlstoreConfig sqlstore.Config, openfgaSchema []openfgapkgtransformer.ModuleFile) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("openfga"), func(ctx context.Context, ps factory.ProviderSettings, config authz.Config) (authz.AuthZ, error) {
-		return newOpenfgaProvider(ctx, ps, config, sqlstoreConfig)
+		return newOpenfgaProvider(ctx, ps, config, sqlstoreConfig, openfgaSchema)
 	})
 }
 
-func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstoreConfig sqlstore.Config) (authz.AuthZ, error) {
+func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstoreConfig sqlstore.Config, openfgaSchema []openfgapkgtransformer.ModuleFile) (authz.AuthZ, error) {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/authz/openfgaauthz")
 
 	// setup connections and run the migrations
@@ -52,6 +52,7 @@ func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, 
 		config:        config,
 		settings:      scopedProviderSettings,
 		openfgaServer: openfgaServer,
+		openfgaSchema: openfgaSchema,
 		stopChan:      make(chan struct{}),
 	}, nil
 }
@@ -98,7 +99,7 @@ func (provider *provider) getOrCreateStore(ctx context.Context, name string) (st
 }
 
 func (provider *provider) getOrCreateModel(ctx context.Context, storeID string) (string, error) {
-	schema, err := openfgapkgtransformer.TransformModuleFilesToModel(schema.Modules, "1.1")
+	schema, err := openfgapkgtransformer.TransformModuleFilesToModel(provider.openfgaSchema, "1.1")
 	if err != nil {
 		return "", err
 	}
