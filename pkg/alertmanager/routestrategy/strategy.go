@@ -388,8 +388,11 @@ func (crs *ChannelRoutingStrategy) findDefaultRuleSection(config *alertmanagerty
 	}
 
 	//create default base rule route
-
+	baseRoute := crs.createDefaultBaseRuleRoute()
 	config.AlertmanagerConfig().Route.Routes = append(config.AlertmanagerConfig().Route.Routes, crs.createDefaultBaseRuleRoute())
+	config.AlertmanagerConfig().Receivers = append(config.AlertmanagerConfig().Receivers, amconfig.Receiver{
+		Name: baseRoute.Receiver,
+	})
 	return len(routes)
 }
 

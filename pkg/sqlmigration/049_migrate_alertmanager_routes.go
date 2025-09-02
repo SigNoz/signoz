@@ -88,6 +88,9 @@ func (migration *migrateAlertmanagerRoutes) Up(ctx context.Context, db *bun.DB) 
 		if severity == "" {
 			severity = "critical"
 		}
+		if _, ok := ruleReceiverMap[dbRule.ID.String()]; !ok {
+			continue
+		}
 		postableRule.Thresholds = map[string][]string{
 			severity: ruleReceiverMap[dbRule.ID.String()],
 		}
