@@ -70,7 +70,8 @@ const useAggregateDrilldown = ({
 				endTime: timeRangeData.endTime,
 			},
 		};
-	}, [aggregateData, queryRange]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [aggregateData]);
 
 	const { breakoutConfig } = useBreakout({
 		query,
