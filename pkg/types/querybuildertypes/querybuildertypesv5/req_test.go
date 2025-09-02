@@ -1587,13 +1587,13 @@ func TestQueryRangeRequest_GetQueriesSupportingZeroDefault(t *testing.T) {
 				Queries: []QueryEnvelope{
 					{
 						Type: QueryTypeBuilder,
-						Spec: QueryBuilderQuery[TraceAggregation]{
+						Spec: QueryBuilderQuery[LogAggregation]{
 							Name:   "A",
 							Signal: telemetrytypes.SignalTraces,
 							Filter: &Filter{
 								Expression: "service.name = demo",
 							},
-							Aggregations: []TraceAggregation{
+							Aggregations: []LogAggregation{
 								{
 									Expression: "rate()",
 								},
@@ -1612,13 +1612,13 @@ func TestQueryRangeRequest_GetQueriesSupportingZeroDefault(t *testing.T) {
 				Queries: []QueryEnvelope{
 					{
 						Type: QueryTypeBuilder,
-						Spec: QueryBuilderQuery[TraceAggregation]{
+						Spec: QueryBuilderQuery[LogAggregation]{
 							Name:   "A",
 							Signal: telemetrytypes.SignalTraces,
 							Filter: &Filter{
 								Expression: "service.name = demo",
 							},
-							Aggregations: []TraceAggregation{
+							Aggregations: []LogAggregation{
 								{
 									Expression: "min(duration)",
 								},
