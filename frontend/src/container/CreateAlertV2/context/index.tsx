@@ -37,7 +37,7 @@ export function CreateAlertProvider(
 		INITIAL_ALERT_STATE,
 	);
 	const [step, setStep] = useState<AlertCreationStep>(
-		AlertCreationStep.ALERT_DEFINATION,
+		AlertCreationStep.ALERT_DEFINITION,
 	);
 
 	const contextValue: ICreateAlertContextProps = useMemo(
