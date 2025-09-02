@@ -151,7 +151,7 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 
 jest.mock('hooks/logs/useCopyLogLink', () => ({
 	useCopyLogLink: jest.fn().mockReturnValue({
-		activeLogId: ACTIVE_LOG_ID,
+		activeLogId: undefined,
 	}),
 }));
 
@@ -174,6 +174,7 @@ const renderer = (): RenderResult =>
 					listQueryKeyRef={{ current: {} }}
 					chartQueryKeyRef={{ current: {} }}
 					setWarning={(): void => {}}
+					showLiveLogs={false}
 				/>
 			</PreferenceContextProvider>
 		</VirtuosoMockContext.Provider>,
@@ -235,6 +236,7 @@ describe('LogsExplorerViews -', () => {
 						listQueryKeyRef={{ current: {} }}
 						chartQueryKeyRef={{ current: {} }}
 						setWarning={(): void => {}}
+						showLiveLogs={false}
 					/>
 				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,

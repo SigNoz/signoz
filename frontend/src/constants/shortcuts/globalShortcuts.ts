@@ -6,6 +6,8 @@ export const GlobalShortcuts = {
 	NavigateToAlerts: 'a+shift',
 	NavigateToExceptions: 'e+shift',
 	NavigateToMessagingQueues: 'm+shift',
+	ToggleSidebar: 'b+shift',
+	NavigateToHome: 'h+shift',
 };
 
 export const GlobalShortcutsName = {
@@ -16,14 +18,18 @@ export const GlobalShortcutsName = {
 	NavigateToAlerts: 'shift+a',
 	NavigateToExceptions: 'shift+e',
 	NavigateToMessagingQueues: 'shift+m',
+	ToggleSidebar: 'shift+b',
+	NavigateToHome: 'shift+h',
 };
 
 export const GlobalShortcutsDescription = {
+	NavigateToHome: 'Navigate to Home',
 	NavigateToServices: 'Navigate to Services page',
-	NavigateToTraces: 'Navigate to Traces page',
-	NavigateToLogs: 'Navigate to logs page',
-	NavigateToDashboards: 'Navigate to dashboards page',
-	NavigateToAlerts: 'Navigate to alerts page',
-	NavigateToExceptions: 'Navigate to Exceptions page',
-	NavigateToMessagingQueues: 'Navigate to Messaging Queues page',
+	NavigateToTraces: 'Navigate to Traces Explorer',
+	NavigateToLogs: 'Navigate to Logs Explorer',
+	NavigateToDashboards: 'Navigate to Dashboards List',
+	NavigateToAlerts: 'Navigate to Alerts List',
+	NavigateToExceptions: 'Navigate to Exceptions List',
+	NavigateToMessagingQueues: 'Navigate to Messaging Queues',
+	ToggleSidebar: 'Toggle sidebar visibility',
 };

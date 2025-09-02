@@ -14,6 +14,7 @@ export const getKeySuggestions = (
 		metricName = '',
 		fieldContext = '',
 		fieldDataType = '',
+		signalSource = '',
 	} = props;
 
 	const encodedSignal = encodeURIComponent(signal);
@@ -21,8 +22,9 @@ export const getKeySuggestions = (
 	const encodedMetricName = encodeURIComponent(metricName);
 	const encodedFieldContext = encodeURIComponent(fieldContext);
 	const encodedFieldDataType = encodeURIComponent(fieldDataType);
+	const encodedSource = encodeURIComponent(signalSource);
 
 	return axios.get(
-		`/fields/keys?signal=${encodedSignal}&searchText=${encodedSearchText}&metricName=${encodedMetricName}&fieldContext=${encodedFieldContext}&fieldDataType=${encodedFieldDataType}`,
+		`/fields/keys?signal=${encodedSignal}&searchText=${encodedSearchText}&metricName=${encodedMetricName}&fieldContext=${encodedFieldContext}&fieldDataType=${encodedFieldDataType}&source=${encodedSource}`,
 	);
 };

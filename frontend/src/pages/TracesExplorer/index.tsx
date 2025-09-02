@@ -10,7 +10,6 @@ import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
-import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import ExportPanel from 'container/ExportPanel';
@@ -65,10 +64,11 @@ function TracesExplorer(): JSX.Element {
 		},
 	});
 
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [searchParams] = useSearchParams();
 
 	// Get panel type from URL
 	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
+	const [isLoadingQueries, setIsLoadingQueries] = useState<boolean>(false);
 
 	const [selectedView, setSelectedView] = useState<ExplorerViews>(() =>
 		getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
@@ -86,14 +86,6 @@ function TracesExplorer(): JSX.Element {
 			}
 		}
 	}, [panelTypesFromUrl, selectedView]);
-
-	// Update URL when selectedView changes
-	useEffect(() => {
-		setSearchParams((prev: URLSearchParams) => {
-			prev.set(QueryParams.selectedExplorerView, selectedView);
-			return prev;
-		});
-	}, [selectedView, setSearchParams]);
 
 	const [shouldReset, setShouldReset] = useState(false);
 
@@ -140,6 +132,7 @@ function TracesExplorer(): JSX.Element {
 			}
 
 			setSelectedView(view);
+
 			handleExplorerTabChange(
 				view === ExplorerViews.TIMESERIES ? PANEL_TYPES.TIME_SERIES : view,
 			);
@@ -217,6 +210,35 @@ function TracesExplorer(): JSX.Element {
 	);
 
 	useShareBuilderUrl({ defaultValue: defaultQuery, forceReset: shouldReset });
+
+	const isMultipleQueries = useMemo(() => {
+		const builder = currentQuery?.builder;
+		const queriesLen = builder?.queryData?.length ?? 0;
+		const formulasLen = builder?.queryFormulas?.length ?? 0;
+		return queriesLen > 1 || formulasLen > 0;
+	}, [currentQuery]);
+
+	const isGroupByExist = useMemo(() => {
+		const queryData = currentQuery?.builder?.queryData ?? [];
+		return queryData.some((q) => (q?.groupBy?.length ?? 0) > 0);
+	}, [currentQuery]);
+	useEffect(() => {
+		const shouldChangeView = isMultipleQueries || isGroupByExist;
+
+		if (
+			(selectedView === ExplorerViews.LIST ||
+				selectedView === ExplorerViews.TRACE) &&
+			shouldChangeView
+		) {
+			// Switch to timeseries view automatically
+			handleChangeSelectedView(ExplorerViews.TIMESERIES);
+		}
+	}, [
+		selectedView,
+		isMultipleQueries,
+		isGroupByExist,
+		handleChangeSelectedView,
+	]);
 
 	useEffect(() => {
 		if (shouldReset) {
@@ -322,7 +344,8 @@ function TracesExplorer(): JSX.Element {
 							}
 							rightActions={
 								<RightToolbarActions
-									onStageRunQuery={(): void => handleRunQuery(true, true)}
+									onStageRunQuery={(): void => handleRunQuery()}
+									isLoadingQueries={isLoadingQueries}
 								/>
 							}
 						/>
@@ -344,13 +367,21 @@ function TracesExplorer(): JSX.Element {
 
 						{selectedView === ExplorerViews.LIST && (
 							<div className="trace-explorer-list-view">
-								<ListView isFilterApplied={isFilterApplied} setWarning={setWarning} />
+								<ListView
+									isFilterApplied={isFilterApplied}
+									setWarning={setWarning}
+									setIsLoadingQueries={setIsLoadingQueries}
+								/>
 							</div>
 						)}
 
 						{selectedView === ExplorerViews.TRACE && (
 							<div className="trace-explorer-traces-view">
-								<TracesView isFilterApplied={isFilterApplied} setWarning={setWarning} />
+								<TracesView
+									isFilterApplied={isFilterApplied}
+									setWarning={setWarning}
+									setIsLoadingQueries={setIsLoadingQueries}
+								/>
 							</div>
 						)}
 
@@ -360,13 +391,17 @@ function TracesExplorer(): JSX.Element {
 									dataSource={DataSource.TRACES}
 									isFilterApplied={isFilterApplied}
 									setWarning={setWarning}
+									setIsLoadingQueries={setIsLoadingQueries}
 								/>
 							</div>
 						)}
 
 						{selectedView === ExplorerViews.TABLE && (
 							<div className="trace-explorer-table-view">
-								<TableView setWarning={setWarning} />
+								<TableView
+									setWarning={setWarning}
+									setIsLoadingQueries={setIsLoadingQueries}
+								/>
 							</div>
 						)}
 					</div>

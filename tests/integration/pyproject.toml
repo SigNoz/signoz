@@ -10,11 +10,11 @@ python = "^3.13"
 pytest = "^8.3.5"
 psycopg2 = "^2.9.10"
 testcontainers = "^4.10.0"
-requests = "^2.32.3"
 wiremock = "^2.6.1"
 numpy = "^2.3.2"
 clickhouse-connect = "^0.8.18"
 svix-ksuid = "^0.6.2"
+requests = "^2.32.4"
 
 
 [tool.poetry.group.dev.dependencies]

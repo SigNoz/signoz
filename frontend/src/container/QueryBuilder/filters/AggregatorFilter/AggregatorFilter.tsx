@@ -12,7 +12,6 @@ import useDebounce from 'hooks/useDebounce';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { getAutocompleteValueAndType } from 'lib/newQueryBuilder/getAutocompleteValueAndType';
-import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { SuccessResponse } from 'types/api';
@@ -25,7 +24,6 @@ import { DataSource } from 'types/common/queryBuilder';
 import { ExtendedSelectOption } from 'types/common/select';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { removePrefix } from '../GroupByFilter/utils';
 import { selectStyle } from '../QueryBuilderSearch/config';
 import OptionRenderer from '../QueryBuilderSearch/OptionRenderer';
 // ** Types
@@ -38,6 +36,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	defaultValue,
 	onSelect,
 	index,
+	signalSource,
 }: AgregatorFilterProps): JSX.Element {
 	const queryClient = useQueryClient();
 	const [optionsData, setOptionsData] = useState<ExtendedSelectOption[]>([]);
@@ -73,6 +72,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				searchText: debouncedValue,
 				aggregateOperator: queryAggregation.timeAggregation,
 				dataSource: query.dataSource,
+				source: signalSource || '',
 			}),
 		{
 			enabled:
@@ -83,19 +83,8 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 					data?.payload?.attributeKeys?.map(({ id: _, ...item }) => ({
 						label: (
 							<OptionRenderer
-								label={transformStringWithPrefix({
-									str: item.key,
-									prefix: item.type || '',
-									condition: !item.isColumn,
-								})}
-								value={removePrefix(
-									transformStringWithPrefix({
-										str: item.key,
-										prefix: item.type || '',
-										condition: !item.isColumn,
-									}),
-									!item.isColumn && item.type ? item.type : '',
-								)}
+								label={item.key}
+								value={item.key}
 								dataType={item.dataType}
 								type={item.type || ''}
 							/>
@@ -152,10 +141,17 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		setSearchText(text);
 	}, []);
 
-	const placeholder: string =
-		query.dataSource === DataSource.METRICS
-			? `Search metric name`
-			: 'Aggregate attribute';
+	const getPlaceholder = useCallback(() => {
+		if (signalSource === 'meter') {
+			return 'Meter name';
+		}
+
+		if (query.dataSource === DataSource.METRICS) {
+			return 'Metric name';
+		}
+
+		return 'Aggregate attribute';
+	}, [signalSource, query.dataSource]);
 
 	const getAttributesData = useCallback(
 		(): BaseAutocompleteData[] =>
@@ -272,24 +268,15 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		[getAttributesData, onSelect],
 	);
 
-	const value = removePrefix(
-		transformStringWithPrefix({
-			str:
-				(query.aggregations?.[0] as MetricAggregation)?.metricName ||
-				query.aggregateAttribute?.key ||
-				'',
-			prefix: query.aggregateAttribute?.type || '',
-			condition: !query.aggregateAttribute?.isColumn,
-		}),
-		!query.aggregateAttribute?.isColumn && query.aggregateAttribute?.type
-			? query.aggregateAttribute?.type
-			: '',
-	);
+	const value =
+		(query.aggregations?.[0] as MetricAggregation)?.metricName ||
+		query.aggregateAttribute?.key ||
+		'';
 
 	return (
 		<AutoComplete
 			getPopupContainer={popupContainer}
-			placeholder={placeholder}
+			placeholder={getPlaceholder()}
 			style={selectStyle}
 			filterOption={false}
 			onSearch={handleSearchText}

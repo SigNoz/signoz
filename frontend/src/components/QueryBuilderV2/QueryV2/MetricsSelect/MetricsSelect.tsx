@@ -9,10 +9,12 @@ export const MetricsSelect = memo(function MetricsSelect({
 	query,
 	index,
 	version,
+	signalSource,
 }: {
 	query: IBuilderQuery;
 	index: number;
 	version: string;
+	signalSource: 'meter' | '';
 }): JSX.Element {
 	const { handleChangeAggregatorAttribute } = useQueryOperations({
 		index,
@@ -26,6 +28,7 @@ export const MetricsSelect = memo(function MetricsSelect({
 				onChange={handleChangeAggregatorAttribute}
 				query={query}
 				index={index}
+				signalSource={signalSource || ''}
 			/>
 		</div>
 	);

@@ -1,3 +1,5 @@
+import './LogsExplorerChart.styles.scss';
+
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
@@ -15,7 +17,6 @@ import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { LogsExplorerChartProps } from './LogsExplorerChart.interfaces';
-import { CardStyled } from './LogsExplorerChart.styled';
 import { getColorsForSeverityLabels } from './utils';
 
 function LogsExplorerChart({
@@ -24,6 +25,7 @@ function LogsExplorerChart({
 	isLabelEnabled = true,
 	className,
 	isLogsExplorerViews = false,
+	isShowingLiveLogs = false,
 }: LogsExplorerChartProps): JSX.Element {
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
@@ -54,6 +56,11 @@ function LogsExplorerChart({
 
 	const onDragSelect = useCallback(
 		(start: number, end: number): void => {
+			// Do not allow dragging on live logs chart
+			if (isShowingLiveLogs) {
+				return;
+			}
+
 			const startTimestamp = Math.trunc(start);
 			const endTimestamp = Math.trunc(end);
 
@@ -74,7 +81,7 @@ function LogsExplorerChart({
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 			safeNavigate(generatedUrl);
 		},
-		[dispatch, location.pathname, safeNavigate, urlQuery],
+		[dispatch, location.pathname, safeNavigate, urlQuery, isShowingLiveLogs],
 	);
 
 	const graphData = useMemo(
@@ -100,9 +107,11 @@ function LogsExplorerChart({
 	);
 
 	return (
-		<CardStyled className={className}>
+		<div className={`${className} logs-frequency-chart-container`}>
 			{isLoading ? (
-				<Spinner size="default" height="100%" />
+				<div className="logs-frequency-chart-loading">
+					<Spinner size="default" height="100%" />
+				</div>
 			) : (
 				<Graph
 					name="logsExplorerChart"
@@ -115,7 +124,7 @@ function LogsExplorerChart({
 					maxTime={chartMaxTime}
 				/>
 			)}
-		</CardStyled>
+		</div>
 	);
 }
 

@@ -3,6 +3,7 @@ package querybuilder
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 
@@ -20,6 +21,7 @@ var searchTroubleshootingGuideURL = "https://signoz.io/docs/userguide/search-tro
 // filterExpressionVisitor implements the FilterQueryVisitor interface
 // to convert the parsed filter expressions into ClickHouse WHERE clause
 type filterExpressionVisitor struct {
+	logger             *slog.Logger
 	fieldMapper        qbtypes.FieldMapper
 	conditionBuilder   qbtypes.ConditionBuilder
 	warnings           []string
@@ -41,6 +43,7 @@ type filterExpressionVisitor struct {
 }
 
 type FilterExprVisitorOpts struct {
+	Logger             *slog.Logger
 	FieldMapper        qbtypes.FieldMapper
 	ConditionBuilder   qbtypes.ConditionBuilder
 	FieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
@@ -58,6 +61,7 @@ type FilterExprVisitorOpts struct {
 // newFilterExpressionVisitor creates a new filterExpressionVisitor
 func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVisitor {
 	return &filterExpressionVisitor{
+		logger:             opts.Logger,
 		fieldMapper:        opts.FieldMapper,
 		conditionBuilder:   opts.ConditionBuilder,
 		fieldKeys:          opts.FieldKeys,
@@ -91,8 +95,6 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWher
 		opts.Builder = sb
 	}
 
-	visitor := newFilterExpressionVisitor(opts)
-
 	// Set up error handling
 	lexerErrorListener := NewErrorListener()
 	lexer.RemoveErrorListeners()
@@ -106,6 +108,17 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWher
 
 	// Parse the query
 	tree := parser.Query()
+
+	// override skipResourceFilter if the expression contains OR
+	for _, tok := range tokens.GetAllTokens() {
+		if tok.GetTokenType() == grammar.FilterQueryParserOR {
+			opts.SkipResourceFilter = false
+			break
+		}
+	}
+	tokens.Reset()
+
+	visitor := newFilterExpressionVisitor(opts)
 
 	// Handle syntax errors
 	if len(parserErrorListener.SyntaxErrors) > 0 {
@@ -294,8 +307,9 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 		child := ctx.GetChild(0)
 		if keyCtx, ok := child.(*grammar.KeyContext); ok {
 			// create a full text search condition on the body field
+
 			keyText := keyCtx.GetText()
-			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, keyText, v.builder)
+			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(keyText), v.builder)
 			if err != nil {
 				v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 				return ""
@@ -315,7 +329,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 				v.errors = append(v.errors, fmt.Sprintf("unsupported value type: %s", valCtx.GetText()))
 				return ""
 			}
-			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, text, v.builder)
+			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder)
 			if err != nil {
 				v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 				return ""
@@ -368,6 +382,9 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		// if there is only one condition, return it directly, one less `()` wrapper
 		if len(conds) == 1 {
 			return conds[0]
+		}
+		if op.IsNegativeOperator() {
+			return v.builder.And(conds...)
 		}
 		return v.builder.Or(conds...)
 	}
@@ -433,6 +450,9 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		if len(conds) == 1 {
 			return conds[0]
 		}
+		if op.IsNegativeOperator() {
+			return v.builder.And(conds...)
+		}
 		return v.builder.Or(conds...)
 	}
 
@@ -461,6 +481,9 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		}
 		if len(conds) == 1 {
 			return conds[0]
+		}
+		if op.IsNegativeOperator() {
+			return v.builder.And(conds...)
 		}
 		return v.builder.Or(conds...)
 	}
@@ -507,12 +530,14 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			op = qbtypes.FilterOperatorGreaterThanOrEq
 		} else if ctx.LIKE() != nil {
 			op = qbtypes.FilterOperatorLike
+			if ctx.NOT() != nil {
+				op = qbtypes.FilterOperatorNotLike
+			}
 		} else if ctx.ILIKE() != nil {
 			op = qbtypes.FilterOperatorILike
-		} else if ctx.NOT_LIKE() != nil {
-			op = qbtypes.FilterOperatorNotLike
-		} else if ctx.NOT_ILIKE() != nil {
-			op = qbtypes.FilterOperatorNotILike
+			if ctx.NOT() != nil {
+				op = qbtypes.FilterOperatorNotILike
+			}
 		} else if ctx.REGEXP() != nil {
 			op = qbtypes.FilterOperatorRegexp
 			if ctx.NOT() != nil {
@@ -536,6 +561,9 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		}
 		if len(conds) == 1 {
 			return conds[0]
+		}
+		if op.IsNegativeOperator() {
+			return v.builder.And(conds...)
 		}
 		return v.builder.Or(conds...)
 	}
@@ -590,7 +618,7 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 		v.errors = append(v.errors, "full text search is not supported")
 		return ""
 	}
-	cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, text, v.builder)
+	cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder)
 	if err != nil {
 		v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 		return ""
@@ -612,6 +640,8 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		functionName = "hasAny"
 	} else if ctx.HASALL() != nil {
 		functionName = "hasAll"
+	} else if ctx.HASTOKEN() != nil {
+		functionName = "hasToken"
 	} else {
 		// Default fallback
 		v.errors = append(v.errors, fmt.Sprintf("unknown function `%s`", ctx.GetText()))
@@ -634,28 +664,49 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 	for _, key := range keys {
 		var fieldName string
 
-		if strings.HasPrefix(key.Name, v.jsonBodyPrefix) {
-			fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
-		} else {
-			// TODO(add docs for json body search)
-			if v.mainErrorURL == "" {
-				v.mainErrorURL = "https://signoz.io/docs/userguide/search-troubleshooting/#function-supports-only-body-json-search"
-			}
-			v.errors = append(v.errors, fmt.Sprintf("function `%s` supports only body JSON search", functionName))
-			return ""
-		}
+		if functionName == "hasToken" {
 
-		var cond string
-		// Map our functions to ClickHouse equivalents
-		switch functionName {
-		case "has":
-			cond = fmt.Sprintf("has(%s, %s)", fieldName, v.builder.Var(value[0]))
-		case "hasAny":
-			cond = fmt.Sprintf("hasAny(%s, %s)", fieldName, v.builder.Var(value))
-		case "hasAll":
-			cond = fmt.Sprintf("hasAll(%s, %s)", fieldName, v.builder.Var(value))
+			if key.Name != "body" {
+				if v.mainErrorURL == "" {
+					v.mainErrorURL = "https://signoz.io/docs/userguide/functions-reference/#hastoken-function"
+				}
+				v.errors = append(v.errors, fmt.Sprintf("function `%s` only supports body field as first parameter", functionName))
+			}
+
+			// this will only work with string.
+			if _, ok := value[0].(string); !ok {
+				if v.mainErrorURL == "" {
+					v.mainErrorURL = "https://signoz.io/docs/userguide/functions-reference/#hastoken-function"
+				}
+				v.errors = append(v.errors, fmt.Sprintf("function `%s` expects value parameter to be a string", functionName))
+				return ""
+			}
+			conds = append(conds, fmt.Sprintf("hasToken(LOWER(%s), LOWER(%s))", key.Name, v.builder.Var(value[0])))
+		} else {
+			// this is that all other functions only support array fields
+			if strings.HasPrefix(key.Name, v.jsonBodyPrefix) {
+				fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
+			} else {
+				// TODO(add docs for json body search)
+				if v.mainErrorURL == "" {
+					v.mainErrorURL = "https://signoz.io/docs/userguide/search-troubleshooting/#function-supports-only-body-json-search"
+				}
+				v.errors = append(v.errors, fmt.Sprintf("function `%s` supports only body JSON search", functionName))
+				return ""
+			}
+
+			var cond string
+			// Map our functions to ClickHouse equivalents
+			switch functionName {
+			case "has":
+				cond = fmt.Sprintf("has(%s, %s)", fieldName, v.builder.Var(value[0]))
+			case "hasAny":
+				cond = fmt.Sprintf("hasAny(%s, %s)", fieldName, v.builder.Var(value))
+			case "hasAll":
+				cond = fmt.Sprintf("hasAll(%s, %s)", fieldName, v.builder.Var(value))
+			}
+			conds = append(conds, cond)
 		}
-		conds = append(conds, cond)
 	}
 
 	if len(conds) == 1 {
@@ -786,15 +837,35 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	}
 
 	if len(fieldKeysForName) > 1 && !v.keysWithWarnings[keyName] {
-		v.mainWarnURL = "https://signoz.io/docs/userguide/field-context-data-types/"
-		// this is warning state, we must have a unambiguous key
-		v.warnings = append(v.warnings, fmt.Sprintf(
-			"key `%s` is ambiguous, found %d different combinations of field context / data type: %v",
+		warnMsg := fmt.Sprintf(
+			"Key `%s` is ambiguous, found %d different combinations of field context / data type: %v.",
 			fieldKey.Name,
 			len(fieldKeysForName),
 			fieldKeysForName,
-		))
+		)
+		mixedFieldContext := map[string]bool{}
+		for _, item := range fieldKeysForName {
+			mixedFieldContext[item.FieldContext.StringValue()] = true
+		}
+
+		if mixedFieldContext[telemetrytypes.FieldContextResource.StringValue()] &&
+			mixedFieldContext[telemetrytypes.FieldContextAttribute.StringValue()] {
+			filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
+			for _, item := range fieldKeysForName {
+				if item.FieldContext != telemetrytypes.FieldContextResource {
+					continue
+				}
+				filteredKeys = append(filteredKeys, item)
+			}
+			fieldKeysForName = filteredKeys
+			warnMsg += " " + "Using `resource` context by default. To query attributes explicitly, " +
+				fmt.Sprintf("use the fully qualified name (e.g., 'attribute.%s')", fieldKey.Name)
+		}
+		v.mainWarnURL = "https://signoz.io/docs/userguide/field-context-data-types/"
+		// this is warning state, we must have a unambiguous key
+		v.warnings = append(v.warnings, warnMsg)
 		v.keysWithWarnings[keyName] = true
+		v.logger.Warn("ambiguous key", "field_key_name", fieldKey.Name) //nolint:sloglint
 	}
 
 	return fieldKeysForName

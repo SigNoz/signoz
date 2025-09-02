@@ -137,5 +137,11 @@
 		h6 {
 			color: var(--text-ink-500);
 		}
+
+		code {
+			background-color: var(--bg-vanilla-300);
+			border: 1px solid var(--bg-vanilla-300);
+			color: var(--text-ink-500);
+		}
 	}
 }

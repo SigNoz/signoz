@@ -18,11 +18,13 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 	index,
 	version,
 	panelType,
+	signalSource = '',
 }: {
 	query: IBuilderQuery;
 	index: number;
 	version: string;
 	panelType: PANEL_TYPES | null;
+	signalSource: string;
 }): JSX.Element {
 	const { setAggregationOptions } = useQueryBuilderV2Context();
 	const {
@@ -158,7 +160,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 											label="Seconds"
 											placeholder="Auto"
 											labelAfter
-											initialValue={query?.stepInterval ?? undefined}
+											initialValue={query?.stepInterval ?? null}
 										/>
 									</div>
 								</div>
@@ -208,6 +210,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 										disabled={!queryAggregation.metricName}
 										query={query}
 										onChange={handleChangeGroupByKeys}
+										signalSource={signalSource}
 									/>
 								</div>
 							</div>
@@ -244,6 +247,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 									disabled={!queryAggregation.metricName}
 									query={query}
 									onChange={handleChangeGroupByKeys}
+									signalSource={signalSource}
 								/>
 							</div>
 						</div>
@@ -279,7 +283,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 									label="Seconds"
 									placeholder="Auto"
 									labelAfter
-									initialValue={query?.stepInterval ?? undefined}
+									initialValue={query?.stepInterval ?? null}
 									className="histogram-every-input"
 								/>
 							</div>

@@ -138,9 +138,7 @@ function Explorer(): JSX.Element {
 					<div className="explore-header-right-actions">
 						{!isEmpty(warning) && <WarningPopover warningData={warning} />}
 						<DateTimeSelector showAutoRefresh />
-						<RightToolbarActions
-							onStageRunQuery={(): void => handleRunQuery(true, true)}
-						/>
+						<RightToolbarActions onStageRunQuery={(): void => handleRunQuery()} />
 					</div>
 				</div>
 				<QueryBuilderV2
@@ -189,7 +187,7 @@ function Explorer(): JSX.Element {
 				query={exportDefaultQuery}
 				sourcepage={DataSource.METRICS}
 				onExport={handleExport}
-				isOneChartPerQuery={showOneChartPerQuery}
+				isOneChartPerQuery={false}
 				splitedQueries={splitedQueries}
 			/>
 		</Sentry.ErrorBoundary>

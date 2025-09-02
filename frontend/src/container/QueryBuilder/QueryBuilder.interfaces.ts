@@ -17,8 +17,9 @@ export type QueryBuilderConfig =
 	| {
 			queryVariant: 'static';
 			initialDataSource: DataSource;
+			signalSource?: string;
 	  }
-	| { queryVariant: 'dropdown' };
+	| { queryVariant: 'dropdown'; signalSource?: string };
 
 export type QueryBuilderProps = {
 	config?: QueryBuilderConfig;

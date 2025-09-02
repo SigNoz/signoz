@@ -6,6 +6,7 @@ import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKey
 import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import { has } from 'lodash-es';
 import { AllTraceFilterKeyValue } from 'pages/TracesExplorer/Filter/filterUtils';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -64,17 +65,6 @@ const useOptionsMenu = ({
 	const [isFocused, setIsFocused] = useState<boolean>(false);
 	const debouncedSearchText = useDebounce(searchText, 300);
 
-	// const initialQueryParams = useMemo(
-	// 	() => ({
-	// 		searchText: '',
-	// 		aggregateAttribute: '',
-	// 		tagType: undefined,
-	// 		dataSource,
-	// 		aggregateOperator,
-	// 	}),
-	// 	[dataSource, aggregateOperator],
-	// );
-
 	const initialQueryParamsV5: QueryKeyRequestProps = useMemo(
 		() => ({
 			signal: dataSource,
@@ -87,22 +77,6 @@ const useOptionsMenu = ({
 		query: optionsQuery,
 		redirectWithQuery: redirectWithOptionsData,
 	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
-
-	// const initialQueries = useMemo(
-	// 	() =>
-	// 		initialOptions?.selectColumns?.map((column) => ({
-	// 			queryKey: column,
-	// 			queryFn: (): Promise<
-	// 				SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse
-	// 			> =>
-	// 				getAggregateKeys({
-	// 					...initialQueryParams,
-	// 					searchText: column,
-	// 				}),
-	// 			enabled: !!column && !optionsQuery,
-	// 		})) || [],
-	// 	[initialOptions?.selectColumns, initialQueryParams, optionsQuery],
-	// );
 
 	const initialQueriesV5 = useMemo(
 		() =>
@@ -452,7 +426,9 @@ const useOptionsMenu = ({
 		() => ({
 			addColumn: {
 				isFetching: isSearchedAttributesFetchingV5,
-				value: preferences?.columns || defaultOptionsQuery.selectColumns,
+				value:
+					preferences?.columns.filter((item) => has(item, 'name')) ||
+					defaultOptionsQuery.selectColumns.filter((item) => has(item, 'name')),
 				options: optionsFromAttributeKeys || [],
 				onFocus: handleFocus,
 				onBlur: handleBlur,

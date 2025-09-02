@@ -134,8 +134,6 @@ export interface TelemetryFieldKey {
 	fieldContext?: FieldContext;
 	fieldDataType?: FieldDataType;
 	materialized?: boolean;
-	isColumn?: boolean;
-	isJSON?: boolean;
 	isIndexed?: boolean;
 }
 
@@ -208,7 +206,7 @@ export interface SecondaryAggregation {
 
 export interface BaseBuilderQuery {
 	name?: string;
-	stepInterval?: Step;
+	stepInterval?: Step | null;
 	disabled?: boolean;
 	filter?: Filter;
 	groupBy?: GroupByKey[];
@@ -239,10 +237,17 @@ export interface MetricBuilderQuery extends BaseBuilderQuery {
 	aggregations?: MetricAggregation[];
 }
 
+export interface MeterBuilderQuery extends BaseBuilderQuery {
+	signal: 'metrics';
+	source: 'meter';
+	aggregations?: MetricAggregation[];
+}
+
 export type BuilderQuery =
 	| TraceBuilderQuery
 	| LogBuilderQuery
-	| MetricBuilderQuery;
+	| MetricBuilderQuery
+	| MeterBuilderQuery;
 
 export interface QueryBuilderFormula {
 	name: string;

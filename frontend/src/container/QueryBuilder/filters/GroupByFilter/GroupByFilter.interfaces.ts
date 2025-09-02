@@ -5,4 +5,5 @@ export type GroupByFilterProps = {
 	query: IBuilderQuery;
 	onChange: (values: BaseAutocompleteData[]) => void;
 	disabled: boolean;
+	signalSource?: string;
 };
