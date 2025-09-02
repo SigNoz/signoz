@@ -324,8 +324,6 @@ function QueryBuilderSearchV2(
 								key: 'body',
 								dataType: DataTypes.String,
 								type: '',
-								isColumn: true,
-								isJSON: false,
 								// eslint-disable-next-line sonarjs/no-duplicate-string
 								id: 'body--string----true',
 							},
@@ -355,8 +353,6 @@ function QueryBuilderSearchV2(
 								key: 'body',
 								dataType: DataTypes.String,
 								type: '',
-								isColumn: true,
-								isJSON: false,
 								id: 'body--string----true',
 							},
 							op: OPERATORS.CONTAINS,
@@ -458,7 +454,7 @@ function QueryBuilderSearchV2(
 			if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
 				event.preventDefault();
 				event.stopPropagation();
-				handleRunQuery(false, true);
+				handleRunQuery();
 				setIsOpen(false);
 			}
 		},
@@ -484,8 +480,6 @@ function QueryBuilderSearchV2(
 							key: 'body',
 							dataType: DataTypes.String,
 							type: '',
-							isColumn: true,
-							isJSON: false,
 							id: 'body--string----true',
 						},
 						op: OPERATORS.CONTAINS,
@@ -599,8 +593,6 @@ function QueryBuilderSearchV2(
 						key: tagKey,
 						dataType: DataTypes.EMPTY,
 						type: '',
-						isColumn: false,
-						isJSON: false,
 					},
 					op: tagOperator,
 					value: '',
@@ -696,8 +688,6 @@ function QueryBuilderSearchV2(
 										key: tagKey,
 										dataType: DataTypes.EMPTY,
 										type: '',
-										isColumn: false,
-										isJSON: false,
 									},
 								},
 						  ]
@@ -731,8 +721,6 @@ function QueryBuilderSearchV2(
 										key: tagKey,
 										dataType: DataTypes.EMPTY,
 										type: '',
-										isColumn: false,
-										isJSON: false,
 									},
 								},
 						  ]

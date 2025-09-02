@@ -78,8 +78,6 @@ export const getFiltersFromKeyValue = (
 		key,
 		dataType: dataType || DataTypes.String,
 		type: type || '',
-		isColumn: false,
-		isJSON: false,
 		id: `${key}--${dataType || DataTypes.String}--${type || ''}--false`,
 	},
 	op: op || '=',

@@ -57,6 +57,7 @@ export function QueryTable({
 		setSubMenu,
 		contextLinks,
 		panelType,
+		queryRange: props.queryRange,
 	});
 
 	const { columns: newColumns, dataSource: newDataSource } = useMemo(() => {

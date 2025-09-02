@@ -8,6 +8,10 @@ import TraceDetail from '..';
 
 window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
+jest.mock('@signozhq/badge', () => ({
+	Badge: jest.fn(),
+}));
+
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: (): { pathname: string; search: string } => ({

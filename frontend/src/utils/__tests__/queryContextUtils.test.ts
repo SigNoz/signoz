@@ -1,13 +1,5 @@
 /* eslint-disable */
 
-// Mock all dependencies before importing the function
-// Global variable to store the current test input
-let currentTestInput = '';
-
-// Now import the function after all mocks are set up
-// Import the mocked antlr4 to access CharStreams
-import * as antlr4 from 'antlr4';
-
 import {
 	createContext,
 	extractQueryPairs,
@@ -15,214 +7,114 @@ import {
 	getCurrentValueIndexAtCursor,
 } from '../queryContextUtils';
 
-jest.mock('antlr4', () => ({
-	CharStreams: {
-		fromString: jest.fn().mockImplementation((input: string) => {
-			currentTestInput = input;
-			return {
-				inputSource: { strdata: input },
-			};
-		}),
-	},
-	CommonTokenStream: jest.fn().mockImplementation(() => {
-		// Use the dynamically captured input string from the current test
-		const input = currentTestInput;
-
-		// Generate tokens dynamically based on the input
-		const tokens = [];
-		let currentPos = 0;
-		let i = 0;
-
-		while (i < input.length) {
-			// Skip whitespace
-			while (i < input.length && /\s/.test(input[i])) {
-				i++;
-				currentPos++;
-			}
-			if (i >= input.length) break;
-
-			// Handle array brackets
-			if (input[i] === '[') {
-				tokens.push({
-					type: 3, // LBRACK
-					text: '[',
-					start: currentPos,
-					stop: currentPos,
-					channel: 0,
-				});
-				i++;
-				currentPos++;
-				continue;
-			}
-
-			if (input[i] === ']') {
-				tokens.push({
-					type: 4, // RBRACK
-					text: ']',
-					start: currentPos,
-					stop: currentPos,
-					channel: 0,
-				});
-				i++;
-				currentPos++;
-				continue;
-			}
-
-			if (input[i] === ',') {
-				tokens.push({
-					type: 5, // COMMA
-					text: ',',
-					start: currentPos,
-					stop: currentPos,
-					channel: 0,
-				});
-				i++;
-				currentPos++;
-				continue;
-			}
-
-			// Find the end of the current token
-			let tokenEnd = i;
-			let inQuotes = false;
-			let quoteChar = '';
-
-			while (tokenEnd < input.length) {
-				const char = input[tokenEnd];
-
-				if (
-					!inQuotes &&
-					(char === ' ' || char === '[' || char === ']' || char === ',')
-				) {
-					break;
-				}
-
-				if ((char === '"' || char === "'") && !inQuotes) {
-					inQuotes = true;
-					quoteChar = char;
-				} else if (char === quoteChar && inQuotes) {
-					inQuotes = false;
-					quoteChar = '';
-				}
-
-				tokenEnd++;
-			}
-
-			const tokenText = input.substring(i, tokenEnd);
-
-			// Determine token type
-			let tokenType = 28; // Default to QUOTED_TEXT
-
-			if (tokenText === 'IN') {
-				tokenType = 19;
-			} else if (tokenText === 'AND') {
-				tokenType = 21;
-			} else if (tokenText === '=') {
-				tokenType = 6;
-			} else if (tokenText === '<') {
-				tokenType = 9;
-			} else if (tokenText === '>') {
-				tokenType = 10;
-			} else if (tokenText === '!=') {
-				tokenType = 7;
-			} else if (tokenText.includes('.')) {
-				tokenType = 29; // KEY
-			} else if (/^\d+$/.test(tokenText)) {
-				tokenType = 27; // NUMBER
-			} else if (
-				(tokenText.startsWith("'") && tokenText.endsWith("'")) ||
-				(tokenText.startsWith('"') && tokenText.endsWith('"'))
-			) {
-				tokenType = 28; // QUOTED_TEXT
-			}
-
-			tokens.push({
-				type: tokenType,
-				text: tokenText,
-				start: currentPos,
-				stop: currentPos + tokenText.length - 1,
-				channel: 0,
-			});
-
-			currentPos += tokenText.length;
-			i = tokenEnd;
-		}
-
-		return {
-			fill: jest.fn(),
-			tokens: [
-				...tokens,
-				// EOF
-				{ type: -1, text: '', start: 0, stop: 0, channel: 0 },
-			],
-		};
-	}),
-	Token: {
-		EOF: -1,
-	},
-}));
-
-jest.mock('parser/FilterQueryLexer', () => ({
-	__esModule: true,
-	default: class MockFilterQueryLexer {
-		static readonly KEY = 29;
-
-		static readonly IN = 19;
-
-		static readonly EQUALS = 6;
-
-		static readonly LT = 9;
-
-		static readonly AND = 21;
-
-		static readonly LPAREN = 1;
-
-		static readonly RPAREN = 2;
-
-		static readonly LBRACK = 3;
-
-		static readonly RBRACK = 4;
-
-		static readonly COMMA = 5;
-
-		static readonly NOT = 20;
-
-		static readonly OR = 22;
-
-		static readonly EOF = -1;
-
-		static readonly QUOTED_TEXT = 28;
-
-		static readonly NUMBER = 27;
-
-		static readonly WS = 30;
-
-		static readonly FREETEXT = 31;
-	},
-}));
-
-jest.mock('parser/analyzeQuery', () => ({}));
-
-jest.mock('../tokenUtils', () => ({
-	isOperatorToken: jest.fn((tokenType: number) =>
-		[6, 9, 19, 20].includes(tokenType),
-	),
-	isMultiValueOperator: jest.fn((operator: string) => operator === 'IN'),
-	isValueToken: jest.fn((tokenType: number) => [27, 28, 29].includes(tokenType)),
-	isConjunctionToken: jest.fn((tokenType: number) =>
-		[21, 22].includes(tokenType),
-	),
-	isQueryPairComplete: jest.fn((pair: any) => {
-		if (!pair) return false;
-		if (pair.operator === 'EXISTS') {
-			return !!pair.key && !!pair.operator;
-		}
-		return Boolean(pair.key && pair.operator && pair.value);
-	}),
-}));
-
 describe('extractQueryPairs', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+	});
+
+	test('should extract NOT EXISTS and NOT LIKE correctly', () => {
+		const input = "active NOT EXISTS AND name NOT LIKE '%tmp%'";
+
+		const result = extractQueryPairs(input);
+
+		expect(result).toEqual([
+			{
+				key: 'active',
+				operator: 'EXISTS',
+				value: undefined,
+				valueList: [],
+				valuesPosition: [],
+				hasNegation: true,
+				isMultiValue: false,
+				position: expect.any(Object),
+				isComplete: false,
+			},
+			{
+				key: 'name',
+				operator: 'LIKE',
+				value: "'%tmp%'",
+				valueList: [],
+				valuesPosition: [],
+				hasNegation: true,
+				isMultiValue: false,
+				position: expect.any(Object),
+				isComplete: true,
+			},
+		]);
+	});
+
+	test('should extract IN with numeric list inside parentheses', () => {
+		const input = 'id IN (1, 2, 3)';
+		const result = extractQueryPairs(input);
+		expect(result).toEqual([
+			expect.objectContaining({
+				key: 'id',
+				operator: 'IN',
+				isMultiValue: true,
+				isComplete: true,
+				value: expect.stringMatching(/^\(.*\)$/),
+				valueList: ['1', '2', '3'],
+				valuesPosition: expect.arrayContaining([
+					expect.objectContaining({
+						start: expect.any(Number),
+						end: expect.any(Number),
+					}),
+				]),
+			}),
+		]);
+	});
+
+	test('should handle extra whitespace and separators in IN lists', () => {
+		const input = "label IN [ 'a' ,  'b' ,  'c' ]";
+		const result = extractQueryPairs(input);
+		expect(result).toEqual([
+			expect.objectContaining({
+				key: 'label',
+				operator: 'IN',
+				isMultiValue: true,
+				isComplete: true,
+				value: expect.stringMatching(/^\[.*\]$/),
+				valueList: ["'a'", "'b'", "'c'"],
+			}),
+		]);
+	});
+
+	test('should return incomplete pair when value is missing', () => {
+		const input = 'a =';
+		const result = extractQueryPairs(input);
+		expect(result).toEqual([
+			expect.objectContaining({
+				key: 'a',
+				operator: '=',
+				value: undefined,
+				isComplete: false,
+			}),
+		]);
+	});
+
+	test('should parse pairs within grouping parentheses with conjunctions', () => {
+		const input = "(name = 'x' AND age > 10) OR active EXISTS";
+		const result = extractQueryPairs(input);
+		expect(result).toEqual([
+			expect.objectContaining({
+				key: 'name',
+				operator: '=',
+				value: "'x'",
+				isComplete: true,
+			}),
+			expect.objectContaining({
+				key: 'age',
+				operator: '>',
+				value: '10',
+				isComplete: true,
+			}),
+			expect.objectContaining({
+				key: 'active',
+				operator: 'EXISTS',
+				value: undefined,
+				isComplete: false,
+			}),
+		]);
 	});
 
 	test('should extract query pairs from complex query with IN operator and multiple conditions', () => {
@@ -376,24 +268,6 @@ describe('extractQueryPairs', () => {
 				isComplete: true,
 			},
 		]);
-	});
-
-	test('should handle error gracefully and return empty array', () => {
-		// Mock console.error to suppress output during test
-		const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-		// Mock CharStreams to throw an error
-		jest.mocked(antlr4.CharStreams.fromString).mockImplementation(() => {
-			throw new Error('Mock error');
-		});
-
-		const input = 'some query';
-		const result = extractQueryPairs(input);
-
-		expect(result).toEqual([]);
-
-		// Restore console.error
-		consoleSpy.mockRestore();
 	});
 
 	test('should handle recursion guard', () => {

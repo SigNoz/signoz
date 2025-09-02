@@ -82,7 +82,6 @@ function BreakoutOptions({
 					key: keyData.name,
 					dataType: DataTypes.EMPTY,
 					type: '',
-					isColumn: true,
 				});
 			});
 		});

@@ -119,7 +119,6 @@ describe('LogsExplorerList - empty states', () => {
 											key: 'trace_id',
 											type: '',
 											dataType: 'string',
-											isColumn: true,
 										},
 										op: '=',
 										value: 'test-trace-id',
@@ -142,6 +141,7 @@ describe('LogsExplorerList - empty states', () => {
 						listQueryKeyRef={{ current: {} }}
 						chartQueryKeyRef={{ current: {} }}
 						setWarning={(): void => {}}
+						showLiveLogs={false}
 					/>
 				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,
@@ -184,7 +184,6 @@ describe('LogsExplorerList - empty states', () => {
 											key: 'service.name',
 											type: '',
 											dataType: 'string',
-											isColumn: true,
 										},
 										op: '=',
 										value: 'test-service-name',
@@ -207,6 +206,7 @@ describe('LogsExplorerList - empty states', () => {
 						listQueryKeyRef={{ current: {} }}
 						chartQueryKeyRef={{ current: {} }}
 						setWarning={(): void => {}}
+						showLiveLogs={false}
 					/>
 				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,

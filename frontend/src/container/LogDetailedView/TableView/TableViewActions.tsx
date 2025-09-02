@@ -33,11 +33,7 @@ interface ITableViewActionsProps {
 	isListViewPanel: boolean;
 	isfilterInLoading: boolean;
 	isfilterOutLoading: boolean;
-	onGroupByAttribute?: (
-		fieldKey: string,
-		isJSON?: boolean,
-		dataType?: DataTypes,
-	) => Promise<void>;
+	onGroupByAttribute?: (fieldKey: string, dataType?: DataTypes) => Promise<void>;
 	onClickHandler: (
 		operator: string,
 		fieldKey: string,

@@ -180,7 +180,7 @@ function PendingInvitesContainer(): JSX.Element {
 	];
 
 	return (
-		<div>
+		<div className="pending-invites-container-wrapper">
 			<InviteUserModal
 				form={form}
 				isInviteTeamMemberModalOpen={isInviteTeamMemberModalOpen}
@@ -189,7 +189,7 @@ function PendingInvitesContainer(): JSX.Element {
 				shouldCallApi
 			/>
 
-			<Space direction="vertical" size="middle">
+			<div className="pending-invites-container">
 				<TitleWrapper>
 					<Typography.Title level={3}>
 						{t('pending_invites')}
@@ -218,7 +218,7 @@ function PendingInvitesContainer(): JSX.Element {
 					loading={getPendingInvitesResponse.status === 'loading'}
 					bordered
 				/>
-			</Space>
+			</div>
 		</div>
 	);
 }

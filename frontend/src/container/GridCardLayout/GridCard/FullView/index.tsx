@@ -283,7 +283,7 @@ function FullView({
 								/>
 								<RightToolbarActions
 									onStageRunQuery={(): void => {
-										handleRunQuery(true, true);
+										handleRunQuery();
 									}}
 								/>
 							</>

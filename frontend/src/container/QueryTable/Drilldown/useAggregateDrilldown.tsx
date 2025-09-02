@@ -1,8 +1,12 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import useDashboardVarConfig from 'container/QueryTable/Drilldown/useDashboardVarConfig';
 import { useMemo } from 'react';
+import { UseQueryResult } from 'react-query';
+import { SuccessResponse } from 'types/api';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { getTimeRange } from 'utils/getTimeRange';
 
 import { ContextMenuItem } from './contextConfig';
 import { FilterData, getQueryData } from './drilldownUtils';
@@ -29,6 +33,7 @@ const useAggregateDrilldown = ({
 	aggregateData,
 	contextLinks,
 	panelType,
+	queryRange,
 }: {
 	query: Query;
 	widgetId: string;
@@ -38,31 +43,57 @@ const useAggregateDrilldown = ({
 	aggregateData: AggregateData | null;
 	contextLinks?: ContextLinksData;
 	panelType?: PANEL_TYPES;
+	queryRange?: UseQueryResult<
+		SuccessResponse<MetricRangePayloadProps, unknown>,
+		Error
+	>;
 }): {
 	aggregateDrilldownConfig: {
 		header?: string | React.ReactNode;
 		items?: ContextMenuItem;
 	};
 } => {
+	// Ensure aggregateData has timeRange, fallback to widget time or global time if not provided
+	const aggregateDataWithTimeRange = useMemo(() => {
+		if (!aggregateData) return null;
+
+		// If timeRange is already provided, use it
+		if (aggregateData.timeRange) return aggregateData;
+
+		// Try to get widget-specific time range first, then fall back to global time
+		const timeRangeData = getTimeRange(queryRange);
+
+		return {
+			...aggregateData,
+			timeRange: {
+				startTime: timeRangeData.startTime,
+				endTime: timeRangeData.endTime,
+			},
+		};
+	}, [aggregateData, queryRange]);
+
 	const { breakoutConfig } = useBreakout({
 		query,
 		widgetId,
 		onClose,
-		aggregateData,
+		aggregateData: aggregateDataWithTimeRange,
 		setSubMenu,
 	});
 
 	const fieldVariables = useMemo(() => {
-		if (!aggregateData?.filters) return {};
+		if (!aggregateDataWithTimeRange?.filters) return {};
 
 		// Extract field variables from aggregation data filters
 		const fieldVars: Record<string, string | number | boolean> = {};
 
 		// Get groupBy fields from the specific queryData item that matches the queryName
 		const groupByFields: string[] = [];
-		if (aggregateData.queryName) {
+		if (aggregateDataWithTimeRange.queryName) {
 			// Find the specific queryData item that matches the queryName
-			const matchingQueryData = getQueryData(query, aggregateData.queryName);
+			const matchingQueryData = getQueryData(
+				query,
+				aggregateDataWithTimeRange.queryName,
+			);
 
 			if (matchingQueryData?.groupBy) {
 				matchingQueryData.groupBy.forEach((field) => {
@@ -73,7 +104,7 @@ const useAggregateDrilldown = ({
 			}
 		}
 
-		aggregateData.filters.forEach((filter) => {
+		aggregateDataWithTimeRange.filters.forEach((filter) => {
 			if (filter.filterKey && filter.filterValue !== undefined) {
 				// Check if this field is present in groupBy from the query
 				const isFieldInGroupBy = groupByFields.includes(filter.filterKey);
@@ -88,14 +119,18 @@ const useAggregateDrilldown = ({
 		});
 
 		return fieldVars;
-	}, [aggregateData?.filters, aggregateData?.queryName, query]);
+	}, [
+		aggregateDataWithTimeRange?.filters,
+		aggregateDataWithTimeRange?.queryName,
+		query,
+	]);
 
 	const { dashbaordVariablesConfig } = useDashboardVarConfig({
 		setSubMenu,
 		fieldVariables,
 		query,
 		// panelType,
-		aggregateData,
+		aggregateData: aggregateDataWithTimeRange,
 		widgetId,
 		onClose,
 	});
@@ -103,7 +138,7 @@ const useAggregateDrilldown = ({
 	const { baseAggregateOptionsConfig } = useBaseAggregateOptions({
 		query,
 		onClose,
-		aggregateData,
+		aggregateData: aggregateDataWithTimeRange,
 		subMenu,
 		setSubMenu,
 		contextLinks,
@@ -112,8 +147,10 @@ const useAggregateDrilldown = ({
 	});
 
 	const aggregateDrilldownConfig = useMemo(() => {
-		if (!aggregateData) {
-			console.warn('aggregateData is null in aggregateDrilldownConfig');
+		if (!aggregateDataWithTimeRange) {
+			console.warn(
+				'aggregateDataWithTimeRange is null in aggregateDrilldownConfig',
+			);
 			return {};
 		}
 
@@ -129,7 +166,7 @@ const useAggregateDrilldown = ({
 		return baseAggregateOptionsConfig;
 	}, [
 		subMenu,
-		aggregateData,
+		aggregateDataWithTimeRange,
 		breakoutConfig,
 		baseAggregateOptionsConfig,
 		dashbaordVariablesConfig,
