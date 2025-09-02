@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 
+	"github.com/SigNoz/signoz/pkg/authz"
 	openfgapkgtransformer "github.com/openfga/language/pkg/go/transformer"
 )
 
@@ -12,13 +13,9 @@ var (
 	baseDSL string
 )
 
-type Schema interface {
-	Get(context.Context) []openfgapkgtransformer.ModuleFile
-}
-
 type schema struct{}
 
-func NewSchema() Schema {
+func NewSchema() authz.Schema {
 	return &schema{}
 }
 
