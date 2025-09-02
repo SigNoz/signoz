@@ -198,9 +198,9 @@ func NewLicense(data []byte, organizationID valuer.UUID) (*License, error) {
 	case PlanNameEnterprise:
 		features = append(features, EnterprisePlan...)
 	case PlanNameBasic:
-		features = append(features, BasicPlan...)
+		features = append(features, EnterprisePlan...)
 	default:
-		features = append(features, BasicPlan...)
+		features = append(features, EnterprisePlan...)
 	}
 
 	if len(featuresFromZeus) > 0 {
