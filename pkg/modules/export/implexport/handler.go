@@ -200,7 +200,10 @@ func (handler *handler) exportLogs(rw http.ResponseWriter, r *http.Request) {
 	gzipWriter := gzip.NewWriter(rw)
 	defer gzipWriter.Close()
 
-	rowChan, errChan := handler.module.Export(r.Context(), orgID, &queryRangeRequest)
+	// This will signal Export module to stop sending data
+	doneChan := make(chan any)
+	defer close(doneChan)
+	rowChan, errChan := handler.module.Export(r.Context(), orgID, &queryRangeRequest, doneChan)
 
 	switch format {
 	case "csv", "":
@@ -210,6 +213,7 @@ func (handler *handler) exportLogs(rw http.ResponseWriter, r *http.Request) {
 			render.Error(rw, err)
 			return
 		}
+		csvWriter.Flush()
 	case "jsonl":
 		err := handler.exportLogsJSONL(rowChan, errChan, gzipWriter)
 		if err != nil {

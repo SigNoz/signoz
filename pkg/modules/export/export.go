@@ -9,7 +9,7 @@ import (
 )
 
 type Module interface {
-	Export(ctx context.Context, orgID valuer.UUID, rangeRequest *qbtypes.QueryRangeRequest) (chan *qbtypes.RawRow, chan error)
+	Export(ctx context.Context, orgID valuer.UUID, rangeRequest *qbtypes.QueryRangeRequest, doneChan chan any) (chan *qbtypes.RawRow, chan error)
 }
 
 type Handler interface {

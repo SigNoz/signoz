@@ -31,7 +31,7 @@ func NewModule(querier querier.Querier) export.Module {
 	}
 }
 
-func (m *Module) Export(ctx context.Context, orgID valuer.UUID, rangeRequest *qbtypes.QueryRangeRequest) (chan *qbtypes.RawRow, chan error) {
+func (m *Module) Export(ctx context.Context, orgID valuer.UUID, rangeRequest *qbtypes.QueryRangeRequest, doneChan chan any) (chan *qbtypes.RawRow, chan error) {
 
 	spec := rangeRequest.CompositeQuery.Queries[0].Spec.(qbtypes.QueryBuilderQuery[qbtypes.LogAggregation])
 	rowCountLimit := spec.Limit
@@ -75,6 +75,8 @@ func (m *Module) Export(ctx context.Context, orgID valuer.UUID, rangeRequest *qb
 				for _, row := range resultData.Rows {
 					select {
 					case rowChan <- row:
+					case <-doneChan:
+						return
 					case <-ctx.Done():
 						errChan <- ctx.Err()
 						return
