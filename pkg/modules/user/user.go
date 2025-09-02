@@ -40,12 +40,15 @@ type Module interface {
 	PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (string, error)
 	CanUsePassword(ctx context.Context, email string) (bool, error)
 
-	// password
-	CreateResetPasswordToken(ctx context.Context, userID string) (*types.ResetPasswordToken, error)
-	GetPasswordByUserID(ctx context.Context, id string) (*types.FactorPassword, error)
-	GetResetPassword(ctx context.Context, token string) (*types.ResetPasswordToken, error)
-	UpdatePassword(ctx context.Context, userID string, password string) error
-	UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, passwordID string, password string) error
+	// Get or Create a reset password token for a user. If the password does not exist, a new one is randomly generated.
+	GetOrCreateResetPasswordToken(ctx context.Context, userID valuer.UUID) (*types.ResetPasswordToken, error)
+
+	// Updates password of a user using a reset password token. It also deletes all reset password tokens for the user.
+	// This is used to reset the password of a user when they forget their password.
+	UpdatePasswordByResetPasswordToken(ctx context.Context, token string, password string) error
+
+	// Updates password of user to the new password. It also deletes all reset password tokens for the user.
+	UpdatePassword(ctx context.Context, userID valuer.UUID, password string) error
 
 	// Auth Domain
 	GetAuthDomainByEmail(ctx context.Context, email string) (*types.GettableOrgDomain, error)

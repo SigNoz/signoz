@@ -335,7 +335,7 @@ func (h *handler) LoginPrecheck(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusOK, resp)
 }
 
-func (h *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Request) {
+func (handler *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -348,13 +348,13 @@ func (h *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// check if the id lies in the same org as the claims
-	_, err = h.module.GetUserByID(ctx, claims.OrgID, id)
+	user, err := handler.module.GetUserByID(ctx, claims.OrgID, id)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	token, err := h.module.CreateResetPasswordToken(ctx, id)
+	token, err := handler.module.GetOrCreateResetPasswordToken(ctx, user.ID)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -363,7 +363,7 @@ func (h *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Request) 
 	render.Success(w, http.StatusOK, token)
 }
 
-func (h *handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+func (handler *handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -373,22 +373,16 @@ func (h *handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entry, err := h.module.GetResetPassword(ctx, req.Token)
+	err := handler.module.UpdatePasswordByResetPasswordToken(ctx, req.Token, req.Password)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	err = h.module.UpdatePasswordAndDeleteResetPasswordEntry(ctx, entry.PasswordID, req.Password)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	render.Success(w, http.StatusOK, nil)
+	render.Success(w, http.StatusNoContent, nil)
 }
 
-func (h *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
+func (handler *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -398,25 +392,13 @@ func (h *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get the current password
-	password, err := h.module.GetPasswordByUserID(ctx, req.UserId)
+	err := handler.module.UpdatePassword(ctx, req.UserID, req.NewPassword)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	if !password.Equals(req.OldPassword) {
-		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "old password is incorrect"))
-		return
-	}
-
-	err = h.module.UpdatePassword(ctx, req.UserId, req.NewPassword)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	render.Success(w, http.StatusOK, nil)
+	render.Success(w, http.StatusNoContent, nil)
 }
 
 func (h *handler) Login(w http.ResponseWriter, r *http.Request) {

@@ -274,82 +274,72 @@ func (m *Module) DeleteUser(ctx context.Context, orgID string, id string, delete
 	return nil
 }
 
-func (m *Module) CreateResetPasswordToken(ctx context.Context, userID string) (*types.ResetPasswordToken, error) {
-	password, err := m.store.GetPasswordByUserID(ctx, userID)
+func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID valuer.UUID) (*types.ResetPasswordToken, error) {
+	password, err := module.store.GetPasswordByUserID(ctx, userID)
 	if err != nil {
-		// if the user does not have a password, we need to create a new one
-		// this will happen for SSO users
-		if errors.Ast(err, errors.TypeNotFound) {
-			password, err = m.store.CreatePassword(ctx, &types.FactorPassword{
-				Identifiable: types.Identifiable{
-					ID: valuer.GenerateUUID(),
-				},
-				TimeAuditable: types.TimeAuditable{
-					CreatedAt: time.Now(),
-				},
-				Password: valuer.GenerateUUID().String(),
-				UserID:   userID,
-			})
-			if err != nil {
-				return nil, err
-			}
-		} else {
+		if !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
 		}
 	}
 
-	resetPasswordRequest, err := types.NewResetPasswordToken(password.ID.StringValue())
+	if password == nil {
+		// if the user does not have a password, we need to create a new one (common for SSO/SAML users)
+		password, err = types.GenerateFactorPassword(userID.String())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	resetPasswordToken, err := types.NewResetPasswordToken(password.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	// check if a reset password token already exists for this user
-	existingRequest, err := m.store.GetResetPasswordByPasswordID(ctx, resetPasswordRequest.PasswordID)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		return nil, err
-	}
-
-	if existingRequest != nil {
-		return existingRequest, nil
-	}
-
-	err = m.store.CreateResetPasswordToken(ctx, resetPasswordRequest)
+	err = module.store.CreateResetPasswordToken(ctx, resetPasswordToken)
 	if err != nil {
-		return nil, err
+		if !errors.Ast(err, errors.TypeAlreadyExists) {
+			return nil, err
+		}
+
+		// if the token already exists, we return the existing token
+		resetPasswordToken, err = module.store.GetResetPasswordTokenByPasswordID(ctx, password.ID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return resetPasswordRequest, nil
+	return resetPasswordToken, nil
 }
 
-func (m *Module) GetPasswordByUserID(ctx context.Context, id string) (*types.FactorPassword, error) {
-	return m.store.GetPasswordByUserID(ctx, id)
-}
-
-func (m *Module) GetResetPassword(ctx context.Context, token string) (*types.ResetPasswordToken, error) {
-	return m.store.GetResetPassword(ctx, token)
-}
-
-func (m *Module) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, passwordID string, password string) error {
-	hashedPassword, err := types.NewHashedPassword(password)
+func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, token string, passwd string) error {
+	resetPasswordToken, err := module.store.GetResetPasswordToken(ctx, token)
 	if err != nil {
 		return err
 	}
 
-	existingPassword, err := m.store.GetPasswordByID(ctx, passwordID)
+	password, err := module.store.GetPassword(ctx, resetPasswordToken.PasswordID)
 	if err != nil {
 		return err
 	}
 
-	return m.store.UpdatePasswordAndDeleteResetPasswordEntry(ctx, existingPassword.UserID, hashedPassword)
+	if err := password.Update(passwd); err != nil {
+		return err
+	}
+
+	return module.store.UpdatePassword(ctx, password)
 }
 
-func (m *Module) UpdatePassword(ctx context.Context, userID string, password string) error {
-	hashedPassword, err := types.NewHashedPassword(password)
+func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, passwd string) error {
+	password, err := module.store.GetPasswordByUserID(ctx, userID)
 	if err != nil {
 		return err
 	}
 
-	return m.store.UpdatePassword(ctx, userID, hashedPassword)
+	if err := password.Update(passwd); err != nil {
+		return err
+	}
+
+	return module.store.UpdatePassword(ctx, password)
 }
 
 func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, password, refreshToken string) (*types.User, error) {
@@ -382,13 +372,13 @@ func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, passwor
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "please provide an orgID")
 	}
 
-	existingPassword, err := m.store.GetPasswordByUserID(ctx, dbUser.ID.StringValue())
+	existingPassword, err := m.store.GetPasswordByUserID(ctx, dbUser.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	if !existingPassword.Equals(password) {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "password is incorrect")
+		return nil, errors.New(errors.TypeInvalidInput, types.ErrCodeIncorrectPassword, "password is incorrect")
 	}
 
 	return dbUser, nil

@@ -372,125 +372,120 @@ func (store *store) DeleteUser(ctx context.Context, orgID string, id string) err
 	return nil
 }
 
-func (store *store) CreateResetPasswordToken(ctx context.Context, resetPasswordRequest *types.ResetPasswordToken) error {
-	_, err := store.sqlstore.BunDB().NewInsert().
-		Model(resetPasswordRequest).
+func (store *store) CreateResetPasswordToken(ctx context.Context, resetPasswordToken *types.ResetPasswordToken) error {
+	_, err := store.
+		sqlstore.
+		BunDB().
+		NewInsert().
+		Model(resetPasswordToken).
 		Exec(ctx)
-
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrResetPasswordTokenAlreadyExists, "reset password token with password id: %s already exists", resetPasswordRequest.PasswordID)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrResetPasswordTokenAlreadyExists, "reset password token for password  %s already exists", resetPasswordToken.PasswordID)
 	}
+
 	return nil
 }
 
-func (store *store) GetPasswordByID(ctx context.Context, id string) (*types.FactorPassword, error) {
+func (store *store) GetPassword(ctx context.Context, id valuer.UUID) (*types.FactorPassword, error) {
 	password := new(types.FactorPassword)
-	err := store.sqlstore.BunDB().NewSelect().
+
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
 		Model(password).
 		Where("id = ?", id).
 		Scan(ctx)
 	if err != nil {
 		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrPasswordNotFound, "password with id: %s does not exist", id)
 	}
+
 	return password, nil
 }
 
-func (store *store) GetPasswordByUserID(ctx context.Context, id string) (*types.FactorPassword, error) {
+func (store *store) GetPasswordByUserID(ctx context.Context, userID valuer.UUID) (*types.FactorPassword, error) {
 	password := new(types.FactorPassword)
-	err := store.sqlstore.BunDB().NewSelect().
+
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
 		Model(password).
-		Where("user_id = ?", id).
+		Where("user_id = ?", userID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrPasswordNotFound, "password with user id: %s does not exist", id)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrPasswordNotFound, "password for user %s does not exist", userID)
 	}
 	return password, nil
 }
 
-func (store *store) GetResetPasswordByPasswordID(ctx context.Context, passwordID string) (*types.ResetPasswordToken, error) {
-	resetPasswordRequest := new(types.ResetPasswordToken)
-	err := store.sqlstore.BunDB().NewSelect().
-		Model(resetPasswordRequest).
+func (store *store) GetResetPasswordTokenByPasswordID(ctx context.Context, passwordID valuer.UUID) (*types.ResetPasswordToken, error) {
+	resetPasswordToken := new(types.ResetPasswordToken)
+
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(resetPasswordToken).
 		Where("password_id = ?", passwordID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token with password id: %s does not exist", passwordID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token for password %s does not exist", passwordID)
 	}
-	return resetPasswordRequest, nil
+
+	return resetPasswordToken, nil
 }
 
-func (store *store) GetResetPassword(ctx context.Context, token string) (*types.ResetPasswordToken, error) {
+func (store *store) GetResetPasswordToken(ctx context.Context, token string) (*types.ResetPasswordToken, error) {
 	resetPasswordRequest := new(types.ResetPasswordToken)
-	err := store.sqlstore.BunDB().NewSelect().
+
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
 		Model(resetPasswordRequest).
 		Where("token = ?", token).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token with token: %s does not exist", token)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token does not exist", token)
 	}
+
 	return resetPasswordRequest, nil
 }
 
-func (store *store) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, userID string, password string) error {
+func (store *store) UpdatePassword(ctx context.Context, factorPassword *types.FactorPassword) error {
 	tx, err := store.sqlstore.BunDB().BeginTx(ctx, nil)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to start transaction")
+		return err
 	}
 
 	defer func() {
 		_ = tx.Rollback()
 	}()
 
-	factorPassword := &types.FactorPassword{
-		UserID:   userID,
-		Password: password,
-		TimeAuditable: types.TimeAuditable{
-			UpdatedAt: time.Now(),
-		},
-	}
-	_, err = tx.NewUpdate().
+	_, err = tx.
+		NewUpdate().
 		Model(factorPassword).
-		Column("password").
-		Column("updated_at").
-		Where("user_id = ?", userID).
+		Where("user_id = ?", factorPassword.UserID).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapNotFoundErrf(err, types.ErrPasswordNotFound, "password with user id: %s does not exist", userID)
+		return store.sqlstore.WrapNotFoundErrf(err, types.ErrPasswordNotFound, "password for user %s does not exist", factorPassword.UserID)
 	}
 
-	_, err = tx.NewDelete().
+	_, err = tx.
+		NewDelete().
 		Model(&types.ResetPasswordToken{}).
-		Where("password_id = ?", userID).
+		Where("password_id = ?", factorPassword.ID).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token with password id: %s does not exist", userID)
+		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to commit transaction")
+		return err
 	}
 
-	return nil
-}
-
-func (store *store) UpdatePassword(ctx context.Context, userID string, password string) error {
-	factorPassword := &types.FactorPassword{
-		UserID:   userID,
-		Password: password,
-		TimeAuditable: types.TimeAuditable{
-			UpdatedAt: time.Now(),
-		},
-	}
-	_, err := store.sqlstore.BunDB().NewUpdate().
-		Model(factorPassword).
-		Column("password").
-		Column("updated_at").
-		Where("user_id = ?", userID).
-		Exec(ctx)
-	if err != nil {
-		return store.sqlstore.WrapNotFoundErrf(err, types.ErrPasswordNotFound, "password with user id: %s does not exist", userID)
-	}
 	return nil
 }
 

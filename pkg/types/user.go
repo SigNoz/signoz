@@ -44,12 +44,11 @@ type UserStore interface {
 	// password
 	CreatePassword(ctx context.Context, password *FactorPassword) (*FactorPassword, error)
 	CreateResetPasswordToken(ctx context.Context, resetPasswordRequest *ResetPasswordToken) error
-	GetPasswordByID(ctx context.Context, id string) (*FactorPassword, error)
-	GetPasswordByUserID(ctx context.Context, id string) (*FactorPassword, error)
-	GetResetPassword(ctx context.Context, token string) (*ResetPasswordToken, error)
-	GetResetPasswordByPasswordID(ctx context.Context, passwordID string) (*ResetPasswordToken, error)
-	UpdatePassword(ctx context.Context, userID string, password string) error
-	UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, userID string, password string) error
+	GetPassword(ctx context.Context, id valuer.UUID) (*FactorPassword, error)
+	GetPasswordByUserID(ctx context.Context, userID valuer.UUID) (*FactorPassword, error)
+	GetResetPasswordToken(ctx context.Context, token string) (*ResetPasswordToken, error)
+	GetResetPasswordTokenByPasswordID(ctx context.Context, passwordID valuer.UUID) (*ResetPasswordToken, error)
+	UpdatePassword(ctx context.Context, password *FactorPassword) error
 
 	// Auth Domain
 	GetDomainByName(ctx context.Context, name string) (*StorableOrgDomain, error)

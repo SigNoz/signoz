@@ -1,24 +1,27 @@
 package types
 
 import (
+	"encoding/json"
 	"slices"
 	"time"
 	"unicode"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/sethvargo/go-password/password"
 	"github.com/uptrace/bun"
 	"golang.org/x/crypto/bcrypt"
 )
 
 var (
-	symbols                                []rune = []rune("!@#$%^&*")
+	symbols                                []rune = []rune("~!@#$%^&*()_+`-={}|[]\\:\"<>?,./")
 	minPasswordLength                      int    = 12
 	ErrInvalidPassword                            = errors.Newf(errors.TypeInvalidInput, errors.MustNewCode("invalid_password"), "password must be at least %d characters long, should contain at least one uppercase letter [A-Z], one lowercase letter [a-z], one number [0-9], and one symbol [%c].", minPasswordLength, symbols)
 	ErrCodeResetPasswordTokenAlreadyExists        = errors.MustNewCode("reset_password_token_already_exists")
 	ErrCodePasswordNotFound                       = errors.MustNewCode("password_not_found")
 	ErrCodeResetPasswordTokenNotFound             = errors.MustNewCode("reset_password_token_not_found")
 	ErrCodePasswordAlreadyExists                  = errors.MustNewCode("password_already_exists")
+	ErrCodeIncorrectPassword                      = errors.MustNewCode("incorrect_password")
 )
 
 type PostableResetPassword struct {
@@ -27,17 +30,17 @@ type PostableResetPassword struct {
 }
 
 type ChangePasswordRequest struct {
-	UserId      string `json:"userId"`
-	OldPassword string `json:"oldPassword"`
-	NewPassword string `json:"newPassword"`
+	UserID      valuer.UUID `json:"userId"`
+	OldPassword string      `json:"oldPassword"`
+	NewPassword string      `json:"newPassword"`
 }
 
 type ResetPasswordToken struct {
 	bun.BaseModel `bun:"table:reset_password_token"`
 
 	Identifiable
-	Token      string `bun:"token,type:text,notnull" json:"token"`
-	PasswordID string `bun:"password_id,type:text,notnull,unique" json:"passwordId"`
+	Token      string      `bun:"token,type:text,notnull" json:"token"`
+	PasswordID valuer.UUID `bun:"password_id,type:text,notnull,unique" json:"passwordId"`
 }
 
 type FactorPassword struct {
@@ -48,6 +51,42 @@ type FactorPassword struct {
 	Temporary bool   `bun:"temporary,type:boolean,notnull" json:"temporary"`
 	UserID    string `bun:"user_id,type:text,notnull,unique,references:user(id)" json:"userId"`
 	TimeAuditable
+}
+
+func (request *ChangePasswordRequest) UnmarshalJSON(data []byte) error {
+	type Alias ChangePasswordRequest
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if !IsPasswordValid(temp.NewPassword) {
+		return ErrInvalidPassword
+	}
+
+	if !comparePassword(temp.OldPassword, temp.NewPassword) {
+		return errors.New(errors.TypeInvalidInput, ErrCodeIncorrectPassword, "old password is incorrect")
+	}
+
+	*request = ChangePasswordRequest(temp)
+	return nil
+}
+
+func (request *PostableResetPassword) UnmarshalJSON(data []byte) error {
+	type Alias PostableResetPassword
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if !IsPasswordValid(temp.Password) {
+		return ErrInvalidPassword
+	}
+
+	*request = PostableResetPassword(temp)
+	return nil
 }
 
 func NewFactorPassword(password string, userID string) (*FactorPassword, error) {
@@ -74,6 +113,15 @@ func NewFactorPassword(password string, userID string) (*FactorPassword, error) 
 	}, nil
 }
 
+func GenerateFactorPassword(userID string) (*FactorPassword, error) {
+	password, err := password.Generate(12, 1, 1, false, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewFactorPassword(password+"Z", userID)
+}
+
 func NewHashedPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -83,7 +131,7 @@ func NewHashedPassword(password string) (string, error) {
 	return string(hashedPassword), nil
 }
 
-func NewResetPasswordToken(passwordID string) (*ResetPasswordToken, error) {
+func NewResetPasswordToken(passwordID valuer.UUID) (*ResetPasswordToken, error) {
 	return &ResetPasswordToken{
 		Identifiable: Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -149,5 +197,9 @@ func (f *FactorPassword) Update(password string) error {
 }
 
 func (f *FactorPassword) Equals(password string) bool {
-	return bcrypt.CompareHashAndPassword([]byte(f.Password), []byte(password)) == nil
+	return comparePassword(f.Password, password)
+}
+
+func comparePassword(hashedPassword string, password string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)) == nil
 }
