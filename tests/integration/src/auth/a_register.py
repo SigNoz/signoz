@@ -23,7 +23,7 @@ def test_register(signoz: types.SigNoz, get_jwt_token) -> None:
             "orgId": "",
             "orgName": "integration.test",
             "email": "admin@integration.test",
-            "password123Z$": "password123Z$",
+            "password": "password123Z$",
         },
         timeout=2,
     )
@@ -100,7 +100,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
         json={
-            "password123Z$": "password123Z$",
+            "password": "password123Z$",
             "displayName": "editor",
             "token": f"{found_invite['token']}",
         },
@@ -192,7 +192,7 @@ def test_revoke_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
         json={
-            "password123Z$": "password123Z$",
+            "password": "password123Z$",
             "displayName": "viewer",
             "token": f"{found_invite["token"]}",
         },
