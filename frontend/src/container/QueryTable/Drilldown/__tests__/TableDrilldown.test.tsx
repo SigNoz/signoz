@@ -284,7 +284,7 @@ describe('TableDrilldown', () => {
 		// Original: "service.name = '$service.name' AND trace_id EXISTS AND deployment.environment = '$env'"
 		// New: trace_id = 'df2cfb0e57bb8736207689851478cd50'
 		expect(firstQueryData.filter.expression).toContain(
-			"service.name = '$service.name' AND trace_id EXISTS AND deployment.environment = '$env'",
+			"service.name in $service.name AND trace_id EXISTS AND deployment.environment = '$env'",
 		);
 		expect(firstQueryData.filter.expression).toContain(
 			"trace_id = 'df2cfb0e57bb8736207689851478cd50'",
