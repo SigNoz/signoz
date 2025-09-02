@@ -97,7 +97,12 @@ function VariablesSetting({
 
 	const { notifications } = useNotifications();
 
-	const { variables = {}, widgets = [] } = selectedDashboard?.data || {};
+	const variables = useMemo(() => selectedDashboard?.data?.variables || {}, [
+		selectedDashboard?.data?.variables,
+	]);
+	const widgets = useMemo(() => selectedDashboard?.data?.widgets || [], [
+		selectedDashboard?.data?.widgets,
+	]);
 
 	const [variablesTableData, setVariablesTableData] = useState<any>([]);
 	const [variblesOrderArr, setVariablesOrderArr] = useState<number[]>([]);
