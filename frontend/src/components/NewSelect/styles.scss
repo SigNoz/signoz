@@ -78,6 +78,7 @@ $custom-border-color: #2c3044;
 		scrollbar-width: thin;
 		background-color: var(--bg-ink-400);
 		border-color: var(--bg-slate-400);
+		cursor: text;
 
 		&::-webkit-scrollbar {
 			width: 6px;
@@ -90,6 +91,16 @@ $custom-border-color: #2c3044;
 
 		&::-webkit-scrollbar-track {
 			background-color: var(--bg-slate-400);
+		}
+	}
+
+	// Ensure adequate space for input area
+	.ant-select-selection-search {
+		min-width: 60px !important;
+		flex: 1 1 auto;
+		.ant-select-selection-search-input {
+			min-width: 60px !important;
+			cursor: text;
 		}
 	}
 
@@ -679,6 +690,7 @@ $custom-border-color: #2c3044;
 		.ant-select-selector {
 			background-color: var(--bg-vanilla-100);
 			border-color: #e9e9e9;
+			cursor: text; // Make entire selector clickable for input focus
 
 			&::-webkit-scrollbar-thumb {
 				background-color: #ccc;
@@ -687,6 +699,20 @@ $custom-border-color: #2c3044;
 			&::-webkit-scrollbar-track {
 				background-color: #f0f0f0;
 			}
+		}
+
+		.ant-select-selection-search {
+			min-width: 60px !important;
+			flex: 1 1 auto;
+
+			.ant-select-selection-search-input {
+				min-width: 60px !important;
+				cursor: text;
+			}
+		}
+
+		.ant-select-selector {
+			cursor: text;
 		}
 
 		.ant-select-selection-placeholder {
