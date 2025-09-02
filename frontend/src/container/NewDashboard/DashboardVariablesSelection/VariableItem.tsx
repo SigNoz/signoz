@@ -126,6 +126,7 @@ function VariableItem({
 								valueNotInList = true;
 							}
 						}
+
 						// variablesData.allSelected is added for the case where on change of options we need to update the
 						// local storage
 						if (
@@ -133,31 +134,32 @@ function VariableItem({
 							variableData.name &&
 							(validVariableUpdate() || valueNotInList || variableData.allSelected)
 						) {
-							const value = variableData.selectedValue;
-							let allSelected = false;
-							// The default value for multi-select is ALL and first value for
-							// single select
-							// console.log(valueNotInList);
-							// if (valueNotInList) {
-							// 	if (variableData.multiSelect) {
-							// 		value = newOptionsData;
-							// 		allSelected = true;
-							// 	} else {
-							// 		[value] = newOptionsData;
-							// 	}
-							// } else
+							if (
+								variableData.allSelected &&
+								variableData.multiSelect &&
+								variableData.showALLOption
+							) {
+								onValueUpdate(variableData.name, variableData.id, newOptionsData, true);
 
-							if (variableData.multiSelect) {
-								const { selectedValue } = variableData;
-								allSelected =
-									newOptionsData.length > 0 &&
-									Array.isArray(selectedValue) &&
-									selectedValue.length === newOptionsData.length &&
-									newOptionsData.every((option) => selectedValue.includes(option));
-							}
+								// Update tempSelection to maintain ALL state when dropdown is open
+								if (tempSelection !== undefined) {
+									setTempSelection(newOptionsData.map((option) => option.toString()));
+								}
+							} else {
+								const value = variableData.selectedValue;
+								let allSelected = false;
 
-							if (variableData && variableData?.name && variableData?.id) {
-								onValueUpdate(variableData.name, variableData.id, value, allSelected);
+								if (variableData.multiSelect) {
+									const { selectedValue } = variableData;
+									allSelected =
+										newOptionsData.length > 0 &&
+										Array.isArray(selectedValue) &&
+										newOptionsData.every((option) => selectedValue.includes(option));
+								}
+
+								if (variableData && variableData?.name && variableData?.id) {
+									onValueUpdate(variableData.name, variableData.id, value, allSelected);
+								}
 							}
 						}
 
@@ -245,10 +247,14 @@ function VariableItem({
 				return;
 			}
 			if (variableData.name) {
-				if (
-					value === ALL_SELECT_VALUE ||
-					(Array.isArray(value) && value.includes(ALL_SELECT_VALUE))
-				) {
+				// Check if ALL is effectively selected by comparing with available options
+				const isAllSelected =
+					Array.isArray(value) &&
+					value.length > 0 &&
+					optionsData.every((option) => value.includes(option.toString()));
+
+				if (isAllSelected && variableData.showALLOption) {
+					// For ALL selection, pass null to avoid storing values
 					onValueUpdate(variableData.name, variableData.id, optionsData, true);
 				} else {
 					onValueUpdate(variableData.name, variableData.id, value, false);
@@ -262,6 +268,7 @@ function VariableItem({
 			variableData.id,
 			onValueUpdate,
 			optionsData,
+			variableData.showALLOption,
 		],
 	);
 
