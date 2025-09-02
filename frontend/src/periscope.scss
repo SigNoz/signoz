@@ -81,6 +81,23 @@
 		border-radius: 2px;
 		border: 1px solid rgba(37, 225, 146, 0.1);
 		background: rgba(37, 225, 146, 0.1) !important;
+		box-shadow: none !important;
+	}
+
+	&.warning {
+		color: var(--bg-amber-500) !important;
+		border-radius: 2px;
+		border: 1px solid rgba(255, 184, 0, 0.1);
+		background: rgba(255, 184, 0, 0.1) !important;
+		box-shadow: none !important;
+	}
+
+	&.danger {
+		color: var(--bg-cherry-500) !important;
+		border-radius: 2px;
+		border: 1px solid rgba(255, 184, 0, 0.1);
+		background: rgba(255, 184, 0, 0.1) !important;
+		box-shadow: none !important;
 	}
 }
 

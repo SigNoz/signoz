@@ -647,11 +647,14 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	};
 
 	useEffect(() => {
+		registerShortcut(GlobalShortcuts.NavigateToHome, () =>
+			onClickHandler(ROUTES.HOME, null),
+		);
 		registerShortcut(GlobalShortcuts.NavigateToServices, () =>
 			onClickHandler(ROUTES.APPLICATION, null),
 		);
 		registerShortcut(GlobalShortcuts.NavigateToTraces, () =>
-			onClickHandler(ROUTES.TRACE, null),
+			onClickHandler(ROUTES.TRACES_EXPLORER, null),
 		);
 
 		registerShortcut(GlobalShortcuts.NavigateToLogs, () =>
@@ -674,6 +677,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		);
 
 		return (): void => {
+			deregisterShortcut(GlobalShortcuts.NavigateToHome);
 			deregisterShortcut(GlobalShortcuts.NavigateToServices);
 			deregisterShortcut(GlobalShortcuts.NavigateToTraces);
 			deregisterShortcut(GlobalShortcuts.NavigateToLogs);

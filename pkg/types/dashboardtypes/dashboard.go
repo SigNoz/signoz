@@ -7,7 +7,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -270,20 +269,15 @@ func (dashboard *Dashboard) Update(updatableDashboard UpdatableDashboard, update
 	return nil
 }
 
-func (dashboard *Dashboard) CanLockUnlock(ctx context.Context, updatedBy string) error {
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		return err
-	}
-
-	if dashboard.CreatedBy != updatedBy && claims.Role != types.RoleAdmin {
+func (dashboard *Dashboard) CanLockUnlock(role types.Role, updatedBy string) error {
+	if dashboard.CreatedBy != updatedBy && role != types.RoleAdmin {
 		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
 	}
 	return nil
 }
 
-func (dashboard *Dashboard) LockUnlock(ctx context.Context, lock bool, updatedBy string) error {
-	err := dashboard.CanLockUnlock(ctx, updatedBy)
+func (dashboard *Dashboard) LockUnlock(lock bool, role types.Role, updatedBy string) error {
+	err := dashboard.CanLockUnlock(role, updatedBy)
 	if err != nil {
 		return err
 	}

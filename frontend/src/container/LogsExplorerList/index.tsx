@@ -89,6 +89,7 @@ function LogsExplorerList({
 			});
 		}
 	}, [isLoading, isFetching, isError, logs.length]);
+
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
 			if (options.format === 'raw') {
