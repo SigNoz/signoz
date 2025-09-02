@@ -186,12 +186,12 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 	}
 
 	keySelectors := getKeySelectors(*query)
-	b.stmtBuilder.logger.InfoContext(b.ctx, "Key selectors for query", "queryName", queryName, "keySelectors", keySelectors)
+	b.stmtBuilder.logger.DebugContext(b.ctx, "Key selectors for query", "queryName", queryName, "keySelectors", keySelectors)
 	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(b.ctx, keySelectors)
 	if err != nil {
 		return "", err
 	}
-	b.stmtBuilder.logger.InfoContext(b.ctx, "Retrieved keys for query", "queryName", queryName, "keysCount", len(keys))
+	b.stmtBuilder.logger.DebugContext(b.ctx, "Retrieved keys for query", "queryName", queryName, "keysCount", len(keys))
 
 	sb := sqlbuilder.NewSelectBuilder()
 	// Select all columns plus add the level identifier
@@ -200,7 +200,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 	sb.From("base_spans AS s")
 
 	if query.Filter != nil && query.Filter.Expression != "" {
-		b.stmtBuilder.logger.InfoContext(b.ctx, "Applying filter to query CTE", "queryName", queryName, "filter", query.Filter.Expression)
+		b.stmtBuilder.logger.DebugContext(b.ctx, "Applying filter to query CTE", "queryName", queryName, "filter", query.Filter.Expression)
 		filterWhereClause, err := querybuilder.PrepareWhereClause(
 			query.Filter.Expression,
 			querybuilder.FilterExprVisitorOpts{
@@ -216,16 +216,16 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 			return "", err
 		}
 		if filterWhereClause != nil {
-			b.stmtBuilder.logger.InfoContext(b.ctx, "Adding where clause", "whereClause", filterWhereClause.WhereClause)
+			b.stmtBuilder.logger.DebugContext(b.ctx, "Adding where clause", "whereClause", filterWhereClause.WhereClause)
 			sb.AddWhereClause(filterWhereClause.WhereClause)
 		} else {
 			b.stmtBuilder.logger.WarnContext(b.ctx, "PrepareWhereClause returned nil", "filter", query.Filter.Expression)
 		}
 	} else {
 		if query.Filter == nil {
-			b.stmtBuilder.logger.InfoContext(b.ctx, "No filter for query CTE", "queryName", queryName, "reason", "filter is nil")
+			b.stmtBuilder.logger.DebugContext(b.ctx, "No filter for query CTE", "queryName", queryName, "reason", "filter is nil")
 		} else {
-			b.stmtBuilder.logger.InfoContext(b.ctx, "No filter for query CTE", "queryName", queryName, "reason", "filter expression is empty")
+			b.stmtBuilder.logger.DebugContext(b.ctx, "No filter for query CTE", "queryName", queryName, "reason", "filter expression is empty")
 		}
 	}
 
@@ -360,7 +360,7 @@ func (b *traceOperatorCTEBuilder) buildOrCTE(leftCTE, rightCTE string) (string, 
 
 func (b *traceOperatorCTEBuilder) buildNotCTE(leftCTE, rightCTE string) (string, []any, []string) {
 	sb := sqlbuilder.NewSelectBuilder()
-	
+
 	// Handle unary NOT case (rightCTE is empty)
 	if rightCTE == "" {
 		// Unary NOT: select all spans from traces that do NOT contain spans from leftCTE
@@ -373,7 +373,7 @@ func (b *traceOperatorCTEBuilder) buildNotCTE(leftCTE, rightCTE string) (string,
 		sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 		return sql, args, []string{"base_spans", leftCTE}
 	}
-	
+
 	// Binary NOT (exclude): select spans from leftCTE that are NOT in rightCTE traces
 	sb.Select("l.*")
 	sb.From(fmt.Sprintf("%s AS l", leftCTE))
@@ -522,85 +522,12 @@ func (b *traceOperatorCTEBuilder) getKeySelectors() []*telemetrytypes.FieldKeySe
 	return keySelectors
 }
 
-func (b *traceOperatorCTEBuilder) getRequiredAttributeColumns() []string {
-	requiredColumns := make(map[string]bool)
-
-	allKeySelectors := b.getKeySelectors()
-
-	for _, selector := range allKeySelectors {
-		if b.isIntrinsicField(selector.Name) {
-			continue
-		}
-		if strings.ToLower(selector.Name) == SpanSearchScopeRoot || strings.ToLower(selector.Name) == SpanSearchScopeEntryPoint {
-			continue
-		}
-		switch selector.FieldContext {
-		case telemetrytypes.FieldContextResource:
-			requiredColumns["resources_string"] = true
-		case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextUnspecified:
-			switch selector.FieldDataType {
-			case telemetrytypes.FieldDataTypeString:
-				requiredColumns["attributes_string"] = true
-			case telemetrytypes.FieldDataTypeNumber:
-				requiredColumns["attributes_number"] = true
-			case telemetrytypes.FieldDataTypeBool:
-				requiredColumns["attributes_bool"] = true
-			default:
-				requiredColumns["attributes_string"] = true
-			}
-		}
-	}
-
-	result := make([]string, 0, len(requiredColumns))
-	for col := range requiredColumns {
-		result = append(result, col)
-	}
-	return result
-}
-
-func (b *traceOperatorCTEBuilder) isIntrinsicField(fieldName string) bool {
-	_, isIntrinsic := IntrinsicFields[fieldName]
-	if isIntrinsic {
-		return true
-	}
-	_, isIntrinsicDeprecated := IntrinsicFieldsDeprecated[fieldName]
-	if isIntrinsicDeprecated {
-		return true
-	}
-	_, isCalculated := CalculatedFields[fieldName]
-	if isCalculated {
-		return true
-	}
-	_, isCalculatedDeprecated := CalculatedFieldsDeprecated[fieldName]
-	if isCalculatedDeprecated {
-		return true
-	}
-	_, isDefault := DefaultFields[fieldName]
-	return isDefault
-}
-
 func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
-	stepIntervalSeconds := int64(b.operator.StepInterval.Seconds())
-	if stepIntervalSeconds <= 0 {
-		timeRangeSeconds := (b.end - b.start) / querybuilder.NsToSeconds
-		if timeRangeSeconds > 3600 {
-			stepIntervalSeconds = 300
-		} else if timeRangeSeconds > 1800 {
-			stepIntervalSeconds = 120
-		} else {
-			stepIntervalSeconds = 60
-		}
-
-		b.stmtBuilder.logger.WarnContext(b.ctx,
-			"trace operator stepInterval not set, using default",
-			"defaultSeconds", stepIntervalSeconds)
-	}
-
 	sb.Select(fmt.Sprintf(
 		"toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts",
-		stepIntervalSeconds,
+		int64(b.operator.StepInterval.Seconds()),
 	))
 
 	keySelectors := b.getKeySelectors()
@@ -640,7 +567,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*q
 		rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
 			b.ctx,
 			agg.Expression,
-			uint64(stepIntervalSeconds),
+			uint64(b.operator.StepInterval.Seconds()),
 			keys,
 		)
 		if err != nil {
