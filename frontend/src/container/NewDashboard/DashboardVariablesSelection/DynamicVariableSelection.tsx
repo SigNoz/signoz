@@ -159,6 +159,7 @@ function DynamicVariableSelection({
 			dynamicVariablesKey,
 			minTime,
 			maxTime,
+			debouncedApiSearchText,
 		],
 		{
 			enabled: variableData.type === 'DYNAMIC',
@@ -180,8 +181,10 @@ function DynamicVariableSelection({
 				const newNormalizedValues = data.data?.normalizedValues || [];
 				const newRelatedValues = data.data?.relatedValues || [];
 
-				setOptionsData(newNormalizedValues);
-				setIsComplete(data.data?.complete || false);
+				if (!debouncedApiSearchText) {
+					setOptionsData(newNormalizedValues);
+					setIsComplete(data.data?.complete || false);
+				}
 				setFilteredOptionsData(newNormalizedValues);
 				setRelatedValues(newRelatedValues);
 				setOriginalRelatedValues(newRelatedValues);
@@ -494,11 +497,7 @@ function DynamicVariableSelection({
 			<div className="variable-value">
 				{variableData.multiSelect ? (
 					<CustomMultiSelect
-						key={
-							selectValue && Array.isArray(selectValue)
-								? selectValue.join(' ')
-								: selectValue || variableData.id
-						}
+						key={variableData.id}
 						options={getOptionsForDynamicVariable(
 							filteredOptionsData || [],
 							relatedValues || [],
@@ -552,11 +551,7 @@ function DynamicVariableSelection({
 					/>
 				) : (
 					<CustomSelect
-						key={
-							selectValue && Array.isArray(selectValue)
-								? selectValue.join(' ')
-								: selectValue || variableData.id
-						}
+						key={variableData.id}
 						onChange={handleChange}
 						bordered={false}
 						placeholder="Select value"
