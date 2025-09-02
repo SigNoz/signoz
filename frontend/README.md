@@ -26,10 +26,12 @@ docker compose up
 Follow the steps below
 
 1. ```git clone https://github.com/SigNoz/signoz.git && cd signoz/frontend```
-1. change baseURL to ```<test environment URL>``` in file ```src/constants/env.ts```
-
-1. ```yarn install```
-1. ```yarn dev```
+2. Set the Environment Variable
+    ```bash
+   FRONTEND_API_ENDPOINT=http://localhost:8080
+    ``` 
+4. ```yarn install```
+5. ```yarn dev```
 
 ```Note: Please ping us in #contributing channel in our slack community and we will DM you with <test environment URL>```
 
