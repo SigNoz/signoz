@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/SigNoz/signoz/pkg/nfrouting"
 	"net/http"
 	"net/http/httputil"
 	"time"
@@ -61,6 +62,7 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		FieldsAPI:                     fields.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.TelemetryStore),
 		Signoz:                        signoz,
 		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier, signoz.Analytics),
+		NotificationRoutesAPI:         nfrouting.NewAPI(signoz.Analytics, signoz.RouteStore, opts.RoutingManager),
 	})
 
 	if err != nil {
