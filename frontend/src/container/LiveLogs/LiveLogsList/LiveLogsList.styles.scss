@@ -1,0 +1,55 @@
+.live-logs-container {
+	.live-logs-content {
+		.live-logs-chart-container {
+			padding: 0px 8px;
+
+			.logs-frequency-chart {
+				.ant-card-body {
+					height: 140px;
+					min-height: 140px;
+					padding: 0 16px 22px 16px;
+					font-family: 'Geist Mono';
+				}
+
+				margin-bottom: 0px;
+			}
+		}
+	}
+}
+
+.live-logs-list {
+	.live-logs-list-loading {
+		padding: 16px;
+		text-align: center;
+		color: var(--text-vanilla-100);
+	}
+
+	.live-logs-list-loading {
+		height: 100%;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 100%;
+
+		.loading-live-logs-content {
+			display: flex;
+			align-items: flex-start;
+			flex-direction: column;
+
+			.loading-gif {
+				height: 72px;
+				margin-left: -24px;
+			}
+		}
+	}
+}
+
+.lightMode {
+	.live-logs-list-loading {
+		.loading-live-logs-content {
+			.ant-typography {
+				color: var(--text-ink-500);
+			}
+		}
+	}
+}
