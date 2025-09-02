@@ -369,7 +369,7 @@ func TestGetExportQueryOrderBy(t *testing.T) {
 					Direction: qbtypes.OrderDirectionAsc,
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2IdColumn,
+							Name: telemetrylogs.LogsV2IDColumn,
 						},
 					},
 				},
@@ -427,7 +427,7 @@ func TestGetExportQueryOrderBy(t *testing.T) {
 					Direction: qbtypes.OrderDirectionAsc,
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2IdColumn,
+							Name: telemetrylogs.LogsV2IDColumn,
 						},
 					},
 				},
@@ -452,7 +452,7 @@ func TestGetExportQueryOrderBy(t *testing.T) {
 					Direction: qbtypes.OrderDirectionAsc,
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2IdColumn,
+							Name: telemetrylogs.LogsV2IDColumn,
 						},
 					},
 				},
@@ -477,7 +477,7 @@ func TestGetExportQueryOrderBy(t *testing.T) {
 					Direction: qbtypes.OrderDirectionAsc,
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2IdColumn,
+							Name: telemetrylogs.LogsV2IDColumn,
 						},
 					},
 				},
@@ -520,7 +520,7 @@ func TestGetExportQueryOrderBy(t *testing.T) {
 					Direction: qbtypes.OrderDirectionAsc,
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2IdColumn,
+							Name: telemetrylogs.LogsV2IDColumn,
 						},
 					},
 				},
@@ -554,7 +554,7 @@ func TestGetExportQueryOrderBy(t *testing.T) {
 					Direction: qbtypes.OrderDirectionAsc,
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2IdColumn,
+							Name: telemetrylogs.LogsV2IDColumn,
 						},
 					},
 				},

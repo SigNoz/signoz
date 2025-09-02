@@ -5,7 +5,7 @@ import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 const (
 
 	// Internal Columns
-	LogsV2IdColumn                   = "id"
+	LogsV2IDColumn                   = "id"
 	LogsV2TimestampBucketStartColumn = "ts_bucket_start"
 	LogsV2ResourceFingerPrintColumn  = "resource_fingerprint"
 

@@ -222,7 +222,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 
 	// Select timestamp and id by default
 	sb.Select(LogsV2TimestampColumn)
-	sb.SelectMore(LogsV2IdColumn)
+	sb.SelectMore(LogsV2IDColumn)
 	if len(query.SelectFields) == 0 {
 		// Select all default columns
 		sb.SelectMore(LogsV2TraceIDColumn)

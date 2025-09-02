@@ -165,7 +165,7 @@ func (handler *handler) exportLogs(rw http.ResponseWriter, r *http.Request) {
 
 	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgId is invalid"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgID is invalid"))
 		return
 	}
 
@@ -411,7 +411,7 @@ func getExportQueryColumns(queryParams url.Values) (columns []telemetrytypes.Tel
 			Name: telemetrylogs.LogsV2TimestampColumn,
 		})
 		columns = append(columns, telemetrytypes.TelemetryFieldKey{
-			Name: telemetrylogs.LogsV2IdColumn,
+			Name: telemetrylogs.LogsV2IDColumn,
 		})
 		columns = append(columns, telemetrytypes.TelemetryFieldKey{
 			Name: telemetrylogs.LogsV2BodyColumn,
@@ -483,7 +483,7 @@ func getExportQueryOrderBy(queryParams url.Values) (orderBy []qbtypes.OrderBy, e
 				Direction: qbtypes.OrderDirectionAsc,
 				Key: qbtypes.OrderByKey{
 					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-						Name: telemetrylogs.LogsV2IdColumn,
+						Name: telemetrylogs.LogsV2IDColumn,
 					},
 				},
 			},
