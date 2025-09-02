@@ -4989,19 +4989,15 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build the v5 query range request for domain listing
-	queryRangeRequest, err := thirdpartyapi.BuildDomainList(thirdPartyQueryRequest)
+	queryRangeParams, err := thirdPartyApi.BuildDomainList(thirdPartyQueryRequest)
 	if err != nil {
-		zap.L().Error("Failed to build domain list query", zap.Error(err))
-		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
-		render.Error(w, apiErrObj)
+		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
 
-	// Validate the v5 query range request
-	if err := queryRangeRequest.Validate(); err != nil {
-		zap.L().Error("Query validation failed", zap.Error(err))
-		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
-		render.Error(w, apiErrObj)
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
 		return
 	}
 
@@ -5053,19 +5049,15 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build the v5 query range request for domain info
-	queryRangeRequest, err := thirdpartyapi.BuildDomainInfo(thirdPartyQueryRequest)
+	queryRangeParams, err := thirdPartyApi.BuildDomainInfo(thirdPartyQueryRequest)
 	if err != nil {
-		zap.L().Error("Failed to build domain info query", zap.Error(err))
-		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
-		render.Error(w, apiErrObj)
+		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
 
-	// Validate the v5 query range request
-	if err := queryRangeRequest.Validate(); err != nil {
-		zap.L().Error("Query validation failed", zap.Error(err))
-		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
-		render.Error(w, apiErrObj)
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
 		return
 	}
 
