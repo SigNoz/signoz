@@ -11,7 +11,7 @@ var (
 	baseDSL string
 )
 
-var SchemaModules = []transformer.ModuleFile{
+var Modules = []transformer.ModuleFile{
 	{
 		Name:     "base.fga",
 		Contents: baseDSL,
