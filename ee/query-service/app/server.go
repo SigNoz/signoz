@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
-	"github.com/SigNoz/signoz/pkg/types/nfroutingtypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"log/slog"
 	"net"
@@ -102,7 +101,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 	)
 
 	ruleStore := sqlrulestore.NewRuleStore(signoz.SQLStore)
-	routeManager := alertmanager.NewManagerWithChannelRoutingStrategy(signoz.Alertmanager, ruleStore)
+	routeManager := alertmanager.NewManagerWithChannelRoutingStrategy(signoz.Alertmanager, ruleStore, signoz.RouteStore)
 
 	rm, err := makeRulesManager(
 		reader,
@@ -115,7 +114,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		signoz.Querier,
 		signoz.Instrumentation.Logger(),
 		ruleStore,
-		signoz.RouteStore,
 		routeManager,
 	)
 
@@ -428,7 +426,7 @@ func (s *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
-func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, querier querier.Querier, logger *slog.Logger, ruleStore ruletypes.RuleStore, routeStore nfroutingtypes.RouteStore, routeManager *alertmanager.RouteManager) (*baserules.Manager, error) {
+func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, querier querier.Querier, logger *slog.Logger, ruleStore ruletypes.RuleStore, routeManager *alertmanager.RouteManager) (*baserules.Manager, error) {
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
 		TelemetryStore:      telemetryStore,
@@ -445,7 +443,6 @@ func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertma
 		Alertmanager:        alertmanager,
 		SQLStore:            sqlstore,
 		OrgGetter:           orgGetter,
-		RouteStore:          routeStore,
 		RoutingManager:      routeManager,
 		RuleStore:           ruleStore,
 	}

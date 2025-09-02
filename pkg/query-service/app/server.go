@@ -31,7 +31,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/nfroutingtypes"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
@@ -89,7 +88,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 	)
 
 	ruleStore := sqlrulestore.NewRuleStore(signoz.SQLStore)
-	routeManager := alertmanager.NewManagerWithChannelRoutingStrategy(signoz.Alertmanager, ruleStore)
+	routeManager := alertmanager.NewManagerWithChannelRoutingStrategy(signoz.Alertmanager, ruleStore, signoz.RouteStore)
 
 	rm, err := makeRulesManager(
 		reader,
@@ -102,7 +101,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		signoz.Querier,
 		signoz.Instrumentation.Logger(),
 		ruleStore,
-		signoz.RouteStore,
 		routeManager,
 	)
 	if err != nil {
@@ -390,7 +388,7 @@ func (s *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
-func makeRulesManager(ch interfaces.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, querier querierAPI.Querier, logger *slog.Logger, ruleStore ruletypes.RuleStore, routeStore nfroutingtypes.RouteStore, routeManager *alertmanager.RouteManager) (*rules.Manager, error) {
+func makeRulesManager(ch interfaces.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, querier querierAPI.Querier, logger *slog.Logger, ruleStore ruletypes.RuleStore, routeManager *alertmanager.RouteManager) (*rules.Manager, error) {
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
 		TelemetryStore: telemetryStore,
@@ -405,7 +403,6 @@ func makeRulesManager(ch interfaces.Reader, cache cache.Cache, alertmanager aler
 		SQLStore:       sqlstore,
 		OrgGetter:      orgGetter,
 		Alertmanager:   alertmanager,
-		RouteStore:     routeStore,
 		RoutingManager: routeManager,
 		RuleStore:      ruleStore,
 	}

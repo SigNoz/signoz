@@ -230,11 +230,12 @@ func (crs *ChannelRoutingStrategy) DeleteChannel(config *alertmanagertypes.Confi
 		return fmt.Errorf("invalid config")
 	}
 
-	// Remove channel routes from all notification policies
-	crs.removeChannelFromRoutes(config.AlertmanagerConfig().Route.Routes, channelName)
-
-	// Also clean up empty policy routes that have no channel routes left
-	crs.cleanupEmptyPolicyRoutes(config)
+	for i, existingReceiver := range config.AlertmanagerConfig().Receivers {
+		if existingReceiver.Name == channelName {
+			config.AlertmanagerConfig().Receivers = append(config.AlertmanagerConfig().Receivers[:i], config.AlertmanagerConfig().Receivers[i+1:]...)
+			break
+		}
+	}
 
 	return nil
 }
@@ -402,7 +403,7 @@ func (crs *ChannelRoutingStrategy) isDefaultRuleRoute(route *amconfig.Route) boo
 }
 
 func (crs *ChannelRoutingStrategy) isNotificationRuleRoute(route *amconfig.Route) bool {
-	return route.Receiver == defaultNotificationPolicyReceiverName
+	return strings.HasPrefix(route.Receiver, defaultNotificationPolicyReceiverName)
 }
 
 // isSystemMatcher checks if matcher is a system/metadata matcher

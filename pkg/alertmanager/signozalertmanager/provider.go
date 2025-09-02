@@ -2,7 +2,6 @@ package signozalertmanager
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/alertmanager/routestrategy"
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/matcher/compat"
 	"time"
@@ -18,13 +17,12 @@ import (
 )
 
 type provider struct {
-	service       *alertmanager.Service
-	config        alertmanager.Config
-	settings      factory.ScopedProviderSettings
-	configStore   alertmanagertypes.ConfigStore
-	stateStore    alertmanagertypes.StateStore
-	stopC         chan struct{}
-	routeStrategy routestrategy.RoutingStrategy
+	service     *alertmanager.Service
+	config      alertmanager.Config
+	settings    factory.ScopedProviderSettings
+	configStore alertmanagertypes.ConfigStore
+	stateStore  alertmanagertypes.StateStore
+	stopC       chan struct{}
 }
 
 func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
@@ -136,17 +134,8 @@ func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgI
 }
 
 func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, channelID valuer.UUID) error {
-	channel, err := provider.configStore.GetChannelByID(ctx, orgID, channelID)
-	if err != nil {
-		return err
-	}
-
 	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
-		return err
-	}
-
-	if err := config.DeleteReceiver(channel.Name); err != nil {
 		return err
 	}
 

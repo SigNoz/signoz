@@ -27,7 +27,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/nfroutingtypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/go-openapi/strfmt"
@@ -101,7 +100,6 @@ type ManagerOptions struct {
 	Alertmanager        alertmanager.Alertmanager
 	SQLStore            sqlstore.SQLStore
 	OrgGetter           organization.Getter
-	RouteStore          nfroutingtypes.RouteStore
 	RoutingManager      *alertmanager.RouteManager
 	RuleStore           ruletypes.RuleStore
 }
@@ -126,7 +124,6 @@ type Manager struct {
 	alertmanager   alertmanager.Alertmanager
 	sqlstore       sqlstore.SQLStore
 	orgGetter      organization.Getter
-	routeStore     nfroutingtypes.RouteStore
 	routingManager *alertmanager.RouteManager
 }
 
@@ -224,7 +221,6 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		alertmanager:        o.Alertmanager,
 		sqlstore:            o.SQLStore,
 		orgGetter:           o.OrgGetter,
-		routeStore:          o.RouteStore,
 		routingManager:      o.RoutingManager,
 	}
 

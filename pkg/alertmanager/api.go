@@ -235,6 +235,18 @@ func (api *API) DeleteChannelByID(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	channel, err := api.alertmanager.GetChannelByID(ctx, claims.OrgID, id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = api.routeManager.DeleteChannel(ctx, claims.OrgID, channel.Name)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	err = api.alertmanager.DeleteChannelByID(ctx, claims.OrgID, id)
 	if err != nil {
 		render.Error(rw, err)
