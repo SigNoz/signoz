@@ -52,7 +52,7 @@ def test_apply_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
         ],
     )
 
-    access_token = get_jwt_token("admin@integration.test", "password")
+    access_token = get_jwt_token("admin@integration.test", "password123Z$")
 
     response = requests.post(
         url=signoz.self.host_configs["8080"].get("/api/v3/licenses"),
@@ -111,7 +111,7 @@ def test_refresh_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None
         ],
     )
 
-    access_token = get_jwt_token("admin@integration.test", "password")
+    access_token = get_jwt_token("admin@integration.test", "password123Z$")
 
     response = requests.put(
         url=signoz.self.host_configs["8080"].get("/api/v3/licenses"),
@@ -163,7 +163,7 @@ def test_license_checkout(signoz: SigNoz, make_http_mocks, get_jwt_token) -> Non
         ],
     )
 
-    access_token = get_jwt_token("admin@integration.test", "password")
+    access_token = get_jwt_token("admin@integration.test", "password123Z$")
 
     response = requests.post(
         url=signoz.self.host_configs["8080"].get("/api/v1/checkout"),
@@ -210,7 +210,7 @@ def test_license_portal(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
         ],
     )
 
-    access_token = get_jwt_token("admin@integration.test", "password")
+    access_token = get_jwt_token("admin@integration.test", "password123Z$")
 
     response = requests.post(
         url=signoz.self.host_configs["8080"].get("/api/v1/portal"),
