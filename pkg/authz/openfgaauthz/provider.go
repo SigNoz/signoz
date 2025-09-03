@@ -5,7 +5,7 @@ import (
 
 	authz "github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/authztypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -13,6 +13,10 @@ import (
 	openfgapkgtransformer "github.com/openfga/language/pkg/go/transformer"
 	openfgapkgserver "github.com/openfga/openfga/pkg/server"
 	"google.golang.org/protobuf/encoding/protojson"
+)
+
+var (
+	openfgaDefaultStore = valuer.NewString("signoz")
 )
 
 type provider struct {
@@ -60,7 +64,7 @@ func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, 
 }
 
 func (provider *provider) Start(ctx context.Context) error {
-	storeId, err := provider.getOrCreateStore(ctx, authztypes.OpenfgaDefaultStore.StringValue())
+	storeId, err := provider.getOrCreateStore(ctx, openfgaDefaultStore.StringValue())
 	if err != nil {
 		return err
 	}
@@ -202,7 +206,7 @@ func (provider *provider) isModelEqual(expected *openfgav1.AuthorizationModel, a
 }
 
 func (provider *provider) Check(ctx context.Context, tupleReq *openfgav1.CheckRequestTupleKey) (bool, error) {
-	storeID, err := provider.getStore(ctx, authztypes.OpenfgaDefaultStore.String())
+	storeID, err := provider.getStore(ctx, openfgaDefaultStore.StringValue())
 	if err != nil {
 		return false, err
 	}

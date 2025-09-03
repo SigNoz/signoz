@@ -4,6 +4,8 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/gorilla/mux"
@@ -14,7 +16,8 @@ const (
 )
 
 type AuthZ struct {
-	logger *slog.Logger
+	logger       *slog.Logger
+	authzService authz.AuthZ
 }
 
 func NewAuthZ(logger *slog.Logger) *AuthZ {
@@ -100,6 +103,26 @@ func (middleware *AuthZ) SelfAccess(next http.HandlerFunc) http.HandlerFunc {
 
 func (middleware *AuthZ) OpenAccess(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		next(rw, req)
+	})
+}
+
+// each individual APIs should be responsible for defining the relation and the object being accessed, subject will be derived from the request
+func (middleware *AuthZ) Check(next http.HandlerFunc, relation string) http.HandlerFunc {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		checkRequestTupleKey := authtypes.NewTuple("", "", "")
+		allow, err := middleware.authzService.Check(req.Context(), checkRequestTupleKey)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		if !allow {
+			middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "tuple", checkRequestTupleKey)
+			render.Error(rw, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "subject %s cannot %s resource %s", "", relation, ""))
+			return
+		}
+
 		next(rw, req)
 	})
 }
