@@ -39,33 +39,17 @@ func NewAPIKey(id valuer.UUID) *APIKey {
 	return &APIKey{valuer.NewString("apikey:" + id.String())}
 }
 
-func NewSubject(comment map[string]string) (string, error) {
-	authType, ok := comment["auth_type"]
-	if !ok {
-		return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "auth_type is missing in comment context")
-	}
-
-	switch authType {
-	case ctxtypes.AuthTypeAPIKey.StringValue():
-		userID, ok := comment["user_id"]
-		if !ok {
-			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "user_id is missing in comment context for auth_type %s", authType)
-		}
-		userSubject := NewUser(valuer.MustNewUUID(userID))
-
+func NewSubjectFromAuth(auth ctxtypes.Auth) (string, error) {
+	switch auth.Type {
+	case ctxtypes.AuthTypeJWT:
+		userSubject := NewUser(auth.UserID)
 		return userSubject.StringValue(), nil
-	case ctxtypes.AuthTypeAPIKey.StringValue():
-		apiKeyID, ok := comment["api_key_id"]
-		if !ok {
-			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "api_key_id is missing in comment context for auth_type %s", authType)
-		}
-		apiKeySubject := NewAPIKey(valuer.MustNewUUID(apiKeyID))
-
+	case ctxtypes.AuthTypeAPIKey:
+		apiKeySubject := NewAPIKey(auth.APIKeyID)
 		return apiKeySubject.StringValue(), nil
 	default:
-		return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid auth_type %s", authType)
+		return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid auth_type %s", auth.Type)
 	}
-
 }
 
 func NewRole(role types.Role) *Role {

@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authztypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 const (
@@ -31,20 +30,19 @@ func NewOpenfgaAuthZ(authzService authz.AuthZ, logger *slog.Logger) *OpenfgaAuth
 // each individual APIs should be responsible for defining the relation and the object being accessed, subject will be derived from the request
 func (middleware *OpenfgaAuthZ) Check(next http.HandlerFunc, relation authztypes.Relation) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		comment := ctxtypes.CommentFromContext(req.Context()).Map()
-		subject, err := authztypes.NewSubject(comment)
+		auth, ok := ctxtypes.AuthFromContext(req.Context())
+		if !ok {
+			render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auth is missing from context"))
+			return
+		}
+
+		subject, err := authztypes.NewSubjectFromAuth(auth)
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 
-		orgID, ok := comment["org_id"]
-		if !ok {
-			render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "org_id is missing from comment context"))
-			return
-		}
-		object := authztypes.NewOrganization(valuer.MustNewUUID(orgID))
-
+		object := authztypes.NewOrganization(auth.OrgID)
 		checkRequestTupleKey := authztypes.GenerateOpenfgaTuple(subject, relation, object.StringValue())
 		allow, err := middleware.authzService.Check(req.Context(), checkRequestTupleKey)
 		if err != nil {

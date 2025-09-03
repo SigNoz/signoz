@@ -98,11 +98,17 @@ func (a *APIKey) Wrap(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = ctxtypes.SetAuthType(ctx, ctxtypes.AuthTypeAPIKey)
+		ctx = ctxtypes.SetAuth(
+			ctx,
+			ctxtypes.Auth{
+				Type:     ctxtypes.AuthTypeAPIKey,
+				APIKeyID: apiKey.ID,
+				UserID:   valuer.MustNewUUID(claims.UserID),
+				OrgID:    valuer.MustNewUUID(claims.OrgID),
+			})
 
 		comment := ctxtypes.CommentFromContext(ctx)
 		comment.Set("auth_type", ctxtypes.AuthTypeAPIKey.StringValue())
-		comment.Set("api_key_id", apiKey.ID.String())
 		comment.Set("user_id", claims.UserID)
 		comment.Set("org_id", claims.OrgID)
 
