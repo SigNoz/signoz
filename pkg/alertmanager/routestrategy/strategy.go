@@ -57,6 +57,9 @@ func (crs *ChannelRoutingStrategy) AddChannel(config *alertmanagertypes.Config, 
 
 // AddDirectRules adds rules directly to default rule route with thresholds
 func (crs *ChannelRoutingStrategy) AddDirectRules(config *alertmanagertypes.Config, ruleId string, postableRule ruletypes.PostableRule) error {
+	if ruleId == "" {
+		return fmt.Errorf("invalid ruleId %s", ruleId)
+	}
 	if config.AlertmanagerConfig().Route == nil {
 		return fmt.Errorf("AlertManager config has no root route")
 	}
@@ -151,11 +154,10 @@ func (crs *ChannelRoutingStrategy) DeleteDirectRules(ruleId string, config *aler
 	for _, route := range routes {
 		if crs.isDefaultRuleRoute(route) {
 			for _, childRoute := range route.Routes {
-				if crs.isDefaultRuleRouteWithRuleId(childRoute, ruleId) {
-					continue
+				if !(getRuleReceiverName(ruleId) == childRoute.Receiver) {
+					filteredRoutes = append(filteredRoutes, childRoute)
 				}
 			}
-			filteredRoutes = append(filteredRoutes, route)
 			route.Routes = filteredRoutes
 			break
 		}
@@ -168,7 +170,6 @@ func (crs *ChannelRoutingStrategy) DeleteDirectRules(ruleId string, config *aler
 		}
 	}
 	config.AlertmanagerConfig().Receivers = filteredReceivers
-	config.AlertmanagerConfig().Route.Routes = filteredRoutes
 	return nil
 }
 
@@ -266,10 +267,6 @@ func (crs *ChannelRoutingStrategy) createDefaultBaseRuleRoute() *amconfig.Route 
 func (crs *ChannelRoutingStrategy) createThresholdRoute(threshold string, receivers []string, groupBy []string, renotify ruletypes.Duration) ([]*amconfig.Route, error) {
 	thresholdMatcher, _ := labels.NewMatcher(labels.MatchEqual, "threshold.name", threshold)
 	matchers := []labels.Matcher{*thresholdMatcher}
-	var groupByLabels []model.LabelName
-	for _, group := range groupBy {
-		groupByLabels = append(groupByLabels, model.LabelName(group))
-	}
 	repeatInterval := (*model.Duration)(&renotify)
 
 	configMatchers := crs.convertToConfigMatchers(matchers)
@@ -280,7 +277,7 @@ func (crs *ChannelRoutingStrategy) createThresholdRoute(threshold string, receiv
 			Receiver:       receiver,
 			Matchers:       configMatchers,
 			Continue:       false,
-			GroupBy:        groupByLabels,
+			GroupByStr:     groupBy,
 			RepeatInterval: repeatInterval,
 		}
 		thresholdRoutes = append(thresholdRoutes, thresholdRoute)
@@ -305,8 +302,8 @@ func getNotificationPolicyReceiverName(routeId string) string {
 	return defaultNotificationPolicyReceiverName + "_" + routeId
 }
 
-func getRuleReceiverName(routeId string) string {
-	return defaultRuleReceiverName + "_" + routeId
+func getRuleReceiverName(ruleId string) string {
+	return defaultRuleReceiverName + "_" + ruleId
 }
 
 // createPolicyChannelRoute creates channel route without rule matchers (parent for rule-specific routes)
@@ -323,17 +320,13 @@ func (crs *ChannelRoutingStrategy) createRuleSpecificChannelRoute(receiver strin
 	// Create single ruleId matcher
 	ruleIDMatcher, _ := labels.NewMatcher(labels.MatchEqual, "ruleId", ruleId)
 	matchers := []labels.Matcher{*ruleIDMatcher}
-	var groupByLabels []model.LabelName
-	for _, group := range postableRule.GroupBy {
-		groupByLabels = append(groupByLabels, model.LabelName(group))
-	}
 	repeatInterval := (*model.Duration)(&postableRule.Renotify)
 
 	ruleRoute := &amconfig.Route{
 		Receiver:       receiver,
 		Matchers:       crs.convertToConfigMatchers(matchers),
 		Continue:       true,
-		GroupBy:        groupByLabels,
+		GroupByStr:     postableRule.GroupBy,
 		RepeatInterval: repeatInterval,
 	}
 
@@ -539,21 +532,6 @@ func (crs *ChannelRoutingStrategy) extractChannels(route *amconfig.Route) []stri
 	}
 
 	return channels
-}
-
-// isDefaultRuleRouteWithRuleId checks if route is a default rule route with specific ruleId
-func (crs *ChannelRoutingStrategy) isDefaultRuleRouteWithRuleId(route *amconfig.Route, ruleId string) bool {
-	if !crs.isDefaultRuleRoute(route) {
-		return false
-	}
-
-	// Check if route has the specific ruleId
-	for _, matcher := range route.Matchers {
-		if matcher.Name == "ruleId" && matcher.Value == ruleId {
-			return true
-		}
-	}
-	return false
 }
 
 // removeFromRuleIDMatcher removes a specific rule ID from existing ruleId matcher
