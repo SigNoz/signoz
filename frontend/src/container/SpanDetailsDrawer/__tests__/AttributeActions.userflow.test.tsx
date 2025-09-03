@@ -120,7 +120,6 @@ const renderSpanDetailsDrawer = (span: Span = createMockSpan()): any => {
 					isSpanDetailsDocked={false}
 					setIsSpanDetailsDocked={jest.fn()}
 					selectedSpan={span}
-					traceID={span.traceId}
 					traceStartTime={span.timestamp}
 					traceEndTime={span.timestamp + span.durationNano}
 				/>
