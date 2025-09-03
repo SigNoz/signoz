@@ -3,27 +3,22 @@ import './spanLogs.styles.scss';
 import cx from 'classnames';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueriesMap,
 	OPERATORS,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
-import { useHandleLogsPagination } from 'hooks/infraMonitoring/useHandleLogsPagination';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
-import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
-import { MouseEvent, useCallback, useEffect, useMemo } from 'react';
-import { useQuery } from 'react-query';
+import { MouseEvent, useCallback, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
 import {
@@ -34,7 +29,7 @@ import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
-import { getSpanLogsQueryPayload } from './constants';
+import { useSpanContextLogs } from './useSpanContextLogs';
 
 interface SpanLogsProps {
 	traceId: string;
@@ -45,63 +40,35 @@ interface SpanLogsProps {
 	};
 }
 
-/**
- * Creates tag filters for querying logs by trace_id
- * @param traceId - The trace identifier
- * @returns Tag filters for the query builder
- */
-function createSpanLogsFilters(traceId: string): TagFilter {
-	const traceIdKey: BaseAutocompleteData = {
-		id: uuid(),
-		dataType: DataTypes.String,
-		isColumn: true,
-		type: '',
-		isJSON: false,
-		key: 'trace_id',
-	};
-
-	return {
-		items: [
-			{
-				id: uuid(),
-				op: getOperatorValue(OPERATORS.IN),
-				value: traceId,
-				key: traceIdKey,
-			},
-		],
-		op: 'AND',
-	};
-}
-
 function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const { updateAllQueriesOperators } = useQueryBuilder();
 
-	const filters = useMemo(() => createSpanLogsFilters(traceId), [traceId]);
+	const {
+		logs,
+		isLoading,
+		isError,
+		isFetching,
+		isLogSpanRelated,
+	} = useSpanContextLogs({
+		traceId,
+		spanId,
+		timeRange,
+	});
 
-	const basePayload = getSpanLogsQueryPayload(
-		timeRange.startTime,
-		timeRange.endTime,
-		filters,
-	);
-
-	// Create trace_id and span_id filters for logs explorer navigation
+	// Create trace_id and span_id filters for span logs explorer navigation
 	const createSpanLogsFilter = useCallback((): TagFilter => {
 		const traceIdKey: BaseAutocompleteData = {
 			id: uuid(),
 			dataType: DataTypes.String,
-			isColumn: true,
 			type: '',
-			isJSON: false,
 			key: 'trace_id',
 		};
 
 		const spanIdKey: BaseAutocompleteData = {
 			id: uuid(),
 			dataType: DataTypes.String,
-			isColumn: true,
 			type: '',
-			isJSON: false,
 			key: 'span_id',
 		};
 
@@ -124,26 +91,52 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 		};
 	}, [traceId, spanId]);
 
-	// Navigate to logs explorer with trace_id and span_id filters and activeLogId
+	// Create trace_id only filters for context logs explorer navigation
+	const createTraceOnlyFilter = useCallback((): TagFilter => {
+		const traceIdKey: BaseAutocompleteData = {
+			id: uuid(),
+			dataType: DataTypes.String,
+			type: '',
+			key: 'trace_id',
+		};
+
+		return {
+			items: [
+				{
+					id: uuid(),
+					op: getOperatorValue(OPERATORS['=']),
+					value: traceId,
+					key: traceIdKey,
+				},
+			],
+			op: 'AND',
+		};
+	}, [traceId]);
+
+	// Navigate to logs explorer with appropriate filters based on log type
 	const handleLogClick = useCallback(
 		(log: ILog, event: MouseEvent): void => {
-			const spanLogsFilter = createSpanLogsFilter();
+			// Determine if this is a span log or context log
+			const isSpanLog = isLogSpanRelated(log.id);
 
-			// Create base query with trace_id and span_id filters
+			// Use appropriate filters: span logs get trace+span filters, context logs get trace-only filters
+			const filters = isSpanLog ? createSpanLogsFilter() : createTraceOnlyFilter();
+
+			// Create base query
 			const baseQuery = updateAllQueriesOperators(
 				initialQueriesMap[DataSource.LOGS],
 				PANEL_TYPES.LIST,
 				DataSource.LOGS,
 			);
 
-			// Add trace_id and span_id filters to the query
+			// Add appropriate filters to the query
 			const updatedQuery = {
 				...baseQuery,
 				builder: {
 					...baseQuery.builder,
 					queryData: baseQuery.builder.queryData.map((queryData) => ({
 						...queryData,
-						filters: spanLogsFilter,
+						filters,
 					})),
 				},
 			};
@@ -167,7 +160,9 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 			}
 		},
 		[
+			isLogSpanRelated,
 			createSpanLogsFilter,
+			createTraceOnlyFilter,
 			updateAllQueriesOperators,
 			timeRange.startTime,
 			timeRange.endTime,
@@ -175,45 +170,8 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 		],
 	);
 
-	const {
-		logs,
-		hasReachedEndOfLogs,
-		isPaginating,
-		currentPage,
-		setIsPaginating,
-		handleNewData,
-		loadMoreLogs,
-		queryPayload,
-	} = useHandleLogsPagination({
-		timeRange,
-		filters,
-		excludeFilterKeys: [],
-		basePayload,
-	});
-
-	const { data, isLoading, isFetching, isError } = useQuery({
-		queryKey: [
-			REACT_QUERY_KEY.SPAN_LOGS,
-			traceId,
-			spanId,
-			timeRange.startTime,
-			timeRange.endTime,
-			currentPage,
-		],
-		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
-		enabled: !!queryPayload && !!traceId && !!spanId,
-		keepPreviousData: isPaginating,
-	});
-
-	useEffect(() => {
-		if (data?.payload?.data?.newResult?.data?.result) {
-			handleNewData(data.payload.data.newResult.data.result);
-		}
-	}, [data, handleNewData]);
-
-	useEffect(() => {
-		setIsPaginating(false);
-	}, [data, setIsPaginating]);
+	// Footer rendering for pagination
+	const hasReachedEndOfLogs = false; // Simplified for now
 
 	const getItemContent = useCallback(
 		(_: number, logToRender: ILog): JSX.Element => {
@@ -277,7 +235,6 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 							className="span-logs-virtuoso"
 							key="span-logs-virtuoso"
 							data={logs}
-							endReached={loadMoreLogs}
 							totalCount={logs.length}
 							itemContent={getItemContent}
 							style={{ height: `calc(${logs.length} * ${24}px + 40px)` }}
@@ -290,7 +247,7 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 				</PreferenceContextProvider>
 			</div>
 		),
-		[logs, loadMoreLogs, getItemContent, renderFooter],
+		[logs, getItemContent, renderFooter],
 	);
 
 	const renderNoLogsFound = (): JSX.Element => (
@@ -301,10 +258,14 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 
 	return (
 		<div className={cx('span-logs', { 'span-logs-empty': logs.length === 0 })}>
-			{isLoading && <LogsLoading />}
-			{!isLoading && !isError && logs.length === 0 && renderNoLogsFound()}
-			{isError && !isLoading && <LogsError />}
-			{!isLoading && !isError && logs.length > 0 && renderContent}
+			{(isLoading || isFetching) && <LogsLoading />}
+			{!isLoading &&
+				!isFetching &&
+				!isError &&
+				logs.length === 0 &&
+				renderNoLogsFound()}
+			{isError && !isLoading && !isFetching && <LogsError />}
+			{!isLoading && !isFetching && !isError && logs.length > 0 && renderContent}
 		</div>
 	);
 }
