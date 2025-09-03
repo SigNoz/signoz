@@ -20,6 +20,20 @@ const mockQueryClient = {
 	fetchQuery: jest.fn(),
 };
 
+jest.mock('uplot', () => {
+	const paths = {
+		spline: jest.fn(),
+		bars: jest.fn(),
+	};
+	const uplotMock = jest.fn(() => ({
+		paths,
+	}));
+	return {
+		paths,
+		default: uplotMock,
+	};
+});
+
 // Mock the hooks
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): any => ({
