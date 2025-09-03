@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
@@ -132,7 +133,7 @@ func (handler *handler) exportLogs(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
-	rw.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"data_exported.%s.gz\"", format))
+	rw.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"data_exported_%s.%s.gz\"", time.Now().Format("2006-01-02_150405"), format))
 
 	filterExpression := queryParams.Get("filter")
 
