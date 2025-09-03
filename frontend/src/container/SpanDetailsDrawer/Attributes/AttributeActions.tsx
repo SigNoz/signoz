@@ -2,7 +2,13 @@ import { Button, Popover, Spin, Tooltip } from 'antd';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import { OPERATORS } from 'constants/antlrQueryConstants';
 import { useTraceActions } from 'hooks/trace/useTraceActions';
-import { ArrowDownToDot, ArrowUpFromDot, Copy, Ellipsis } from 'lucide-react';
+import {
+	ArrowDownToDot,
+	ArrowUpFromDot,
+	Copy,
+	Ellipsis,
+	Pin,
+} from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
 interface AttributeRecord {
@@ -12,10 +18,14 @@ interface AttributeRecord {
 
 interface AttributeActionsProps {
 	record: AttributeRecord;
+	isPinned?: boolean;
+	onTogglePin: (fieldKey: string) => void;
 }
 
 export default function AttributeActions({
 	record,
+	isPinned,
+	onTogglePin,
 }: AttributeActionsProps): JSX.Element {
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [isFilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
@@ -79,6 +89,10 @@ export default function AttributeActions({
 		setIsOpen(false);
 	}, [onCopyFieldValue, textToCopy]);
 
+	const handleTogglePin = useCallback((): void => {
+		onTogglePin(record.field);
+	}, [onTogglePin, record.field]);
+
 	const moreActionsContent = (
 		<div className="attribute-actions-menu">
 			<Button
@@ -111,6 +125,14 @@ export default function AttributeActions({
 
 	return (
 		<div className="action-btn">
+			<Tooltip title={isPinned ? 'Unpin attribute' : 'Pin attribute'}>
+				<Button
+					className={`filter-btn periscope-btn ${isPinned ? 'pinned' : ''}`}
+					aria-label={isPinned ? 'Unpin attribute' : 'Pin attribute'}
+					icon={<Pin size={14} fill={isPinned ? 'currentColor' : 'none'} />}
+					onClick={handleTogglePin}
+				/>
+			</Tooltip>
 			<Tooltip title="Filter for value">
 				<Button
 					className="filter-btn periscope-btn"
@@ -158,3 +180,7 @@ export default function AttributeActions({
 		</div>
 	);
 }
+
+AttributeActions.defaultProps = {
+	isPinned: false,
+};

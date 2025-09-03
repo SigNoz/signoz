@@ -152,6 +152,7 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 			onCancel={(): void => toggleModal(false)}
 			centered
 			data-testid="invite-team-members-modal"
+			className="invite-user-modal"
 			destroyOnClose
 			footer={[
 				<Button key="back" onClick={(): void => toggleModal(false)} type="default">

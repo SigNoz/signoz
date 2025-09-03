@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
@@ -106,7 +107,13 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, err := handler.module.Update(ctx, orgID, dashboardID, claims.Email, req)
+	diff := 0
+	// Allow multiple deletions for API key requests; enforce for others
+	if authType, ok := ctxtypes.AuthTypeFromContext(ctx); ok && authType == ctxtypes.AuthTypeJWT {
+		diff = 1
+	}
+
+	dashboard, err := handler.module.Update(ctx, orgID, dashboardID, claims.Email, req, diff)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -149,7 +156,7 @@ func (handler *handler) LockUnlock(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.LockUnlock(ctx, orgID, dashboardID, claims.Email, *req.Locked)
+	err = handler.module.LockUnlock(ctx, orgID, dashboardID, claims.Email, claims.Role, *req.Locked)
 	if err != nil {
 		render.Error(rw, err)
 		return
