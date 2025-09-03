@@ -11,12 +11,13 @@ import (
 )
 
 type traceOperatorStatementBuilder struct {
-	logger           *slog.Logger
-	metadataStore    telemetrytypes.MetadataStore
-	fm               qbtypes.FieldMapper
-	cb               qbtypes.ConditionBuilder
-	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
-	aggExprRewriter  qbtypes.AggExprRewriter
+	logger                    *slog.Logger
+	metadataStore             telemetrytypes.MetadataStore
+	fm                        qbtypes.FieldMapper
+	cb                        qbtypes.ConditionBuilder
+	traceStmtBuilder          qbtypes.StatementBuilder[qbtypes.TraceAggregation]
+	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
+	aggExprRewriter           qbtypes.AggExprRewriter
 }
 
 var _ qbtypes.TraceOperatorStatementBuilder = (*traceOperatorStatementBuilder)(nil)
@@ -27,16 +28,18 @@ func NewTraceOperatorStatementBuilder(
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
+	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	aggExprRewriter qbtypes.AggExprRewriter,
 ) *traceOperatorStatementBuilder {
 	tracesSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrytraces")
 	return &traceOperatorStatementBuilder{
-		logger:           tracesSettings.Logger(),
-		metadataStore:    metadataStore,
-		fm:               fieldMapper,
-		cb:               conditionBuilder,
-		traceStmtBuilder: traceStmtBuilder,
-		aggExprRewriter:  aggExprRewriter,
+		logger:                    tracesSettings.Logger(),
+		metadataStore:             metadataStore,
+		fm:                        fieldMapper,
+		cb:                        conditionBuilder,
+		traceStmtBuilder:          traceStmtBuilder,
+		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
+		aggExprRewriter:           aggExprRewriter,
 	}
 }
 
@@ -64,6 +67,10 @@ func (b *traceOperatorStatementBuilder) Build(
 	if compositeQuery == nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "compositeQuery cannot be nil")
 	}
+
+	b.logger.DebugContext(ctx, "Building trace operator query",
+		"expression", query.Expression,
+		"requestType", requestType)
 
 	// Build the CTE-based query
 	builder := &traceOperatorCTEBuilder{
