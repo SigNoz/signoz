@@ -14,7 +14,7 @@ type storeConfig struct {
 	sqlstoreConfig sqlstore.Config
 }
 
-func NewStore(cfg storeConfig) (storage.OpenFGADatastore, error) {
+func NewSQLStore(cfg storeConfig) (storage.OpenFGADatastore, error) {
 	switch cfg.sqlstoreConfig.Provider {
 	case "sqlite":
 		err := migrate.RunMigrations(migrate.MigrationConfig{Engine: cfg.sqlstoreConfig.Provider, URI: "file:" + cfg.sqlstoreConfig.Sqlite.Path + "?_foreign_keys=true"})
