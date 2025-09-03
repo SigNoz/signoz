@@ -117,8 +117,6 @@ const renderSpanDetailsDrawer = (span: Span = createMockSpan()): any => {
 		<MemoryRouter>
 			<Route>
 				<SpanDetailsDrawer
-					isSpanDetailsDocked={false}
-					setIsSpanDetailsDocked={jest.fn()}
 					selectedSpan={span}
 					traceID={span.traceId}
 					traceStartTime={span.timestamp}

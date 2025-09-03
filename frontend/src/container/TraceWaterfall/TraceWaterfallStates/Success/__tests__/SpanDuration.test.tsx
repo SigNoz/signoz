@@ -59,7 +59,7 @@ jest.mock('uplot', () => {
 });
 
 describe('SpanDuration', () => {
-	const mockSetSelectedSpan = jest.fn();
+	const mockHandleOpenSpanDrawer = jest.fn();
 	const mockUrlQuerySet = jest.fn();
 	const mockSafeNavigate = jest.fn();
 	const mockUrlQueryGet = jest.fn();
@@ -86,7 +86,7 @@ describe('SpanDuration', () => {
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
 				selectedSpan={undefined}
-				setSelectedSpan={mockSetSelectedSpan}
+				handleOpenSpanDrawer={mockHandleOpenSpanDrawer}
 			/>,
 		);
 
@@ -95,7 +95,7 @@ describe('SpanDuration', () => {
 		fireEvent.click(spanElement);
 
 		// Verify setSelectedSpan was called with the correct span
-		expect(mockSetSelectedSpan).toHaveBeenCalledWith(mockSpan);
+		expect(mockHandleOpenSpanDrawer).toHaveBeenCalledWith(mockSpan);
 
 		// Verify URL query was updated
 		expect(mockUrlQuerySet).toHaveBeenCalledWith('spanId', 'test-span-id');
@@ -112,7 +112,7 @@ describe('SpanDuration', () => {
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
 				selectedSpan={undefined}
-				setSelectedSpan={mockSetSelectedSpan}
+				handleOpenSpanDrawer={mockHandleOpenSpanDrawer}
 			/>,
 		);
 
@@ -138,7 +138,7 @@ describe('SpanDuration', () => {
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
 				selectedSpan={mockSpan}
-				setSelectedSpan={mockSetSelectedSpan}
+				handleOpenSpanDrawer={mockHandleOpenSpanDrawer}
 			/>,
 		);
 
