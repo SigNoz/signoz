@@ -1,4 +1,4 @@
-import { Select, Space } from 'antd';
+import { Button, Select, Space } from 'antd';
 import styled from 'styled-components';
 
 export const SelectDrawer = styled(Select)`
@@ -18,4 +18,15 @@ export const SpaceContainer = styled(Space)`
 	& .ant-form-item {
 		margin-bottom: 0px;
 	}
+`;
+
+export const TeamMemberRow = styled.div`
+	display: flex;
+	align-items: center;
+	gap: 8px;
+`;
+
+export const RemoveButton = styled(Button)`
+	margin-left: 8px;
+	vertical-align: middle;
 `;
