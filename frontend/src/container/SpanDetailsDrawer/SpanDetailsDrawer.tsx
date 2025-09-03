@@ -1,7 +1,6 @@
 import './SpanDetailsDrawer.styles.scss';
 
 import { Button, Tabs, TabsProps, Tooltip, Typography } from 'antd';
-import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -10,8 +9,8 @@ import { getTraceToLogsQuery } from 'container/TraceDetail/SelectedSpanDetails/c
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { Anvil, Bookmark, Link2, PanelRight, Search } from 'lucide-react';
-import { Dispatch, SetStateAction, useState } from 'react';
+import { Anvil, Bookmark, Link2, Search } from 'lucide-react';
+import { useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { formatEpochTimestamp } from 'utils/timeUtils';
 
@@ -21,8 +20,6 @@ import LinkedSpans from './LinkedSpans/LinkedSpans';
 
 const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
 interface ISpanDetailsDrawerProps {
-	isSpanDetailsDocked: boolean;
-	setIsSpanDetailsDocked: Dispatch<SetStateAction<boolean>>;
 	selectedSpan: Span | undefined;
 	traceID: string;
 	traceStartTime: number;
@@ -30,14 +27,7 @@ interface ISpanDetailsDrawerProps {
 }
 
 function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
-	const {
-		isSpanDetailsDocked,
-		setIsSpanDetailsDocked,
-		selectedSpan,
-		traceStartTime,
-		traceID,
-		traceEndTime,
-	} = props;
+	const { selectedSpan, traceStartTime, traceID, traceEndTime } = props;
 
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
 	const color = generateColor(
@@ -115,131 +105,119 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		);
 	};
 
+	if (!selectedSpan) {
+		return <div />;
+	}
+
 	return (
-		<div
-			className={cx(
-				'span-details-drawer',
-				isSpanDetailsDocked ? 'span-details-drawer-docked' : '',
-			)}
-		>
-			<section className="header">
-				{!isSpanDetailsDocked && (
-					<div className="heading">
-						<div className="dot" style={{ background: color }} />
-						<Typography.Text className="text">Span Details</Typography.Text>
+		<div className="span-details-drawer">
+			<section className="description">
+				<div className="item">
+					<Typography.Text className="attribute-key">span name</Typography.Text>
+					<Tooltip title={selectedSpan.name}>
+						<div className="value-wrapper">
+							<Typography.Text className="attribute-value" ellipsis>
+								{selectedSpan.name}
+							</Typography.Text>
+						</div>
+					</Tooltip>
+				</div>
+				<div className="item">
+					<Typography.Text className="attribute-key">span id</Typography.Text>
+					<div className="value-wrapper">
+						<Typography.Text className="attribute-value">
+							{selectedSpan.spanId}
+						</Typography.Text>
+					</div>
+				</div>
+				<div className="item">
+					<Typography.Text className="attribute-key">start time</Typography.Text>
+					<div className="value-wrapper">
+						<Typography.Text className="attribute-value">
+							{formatEpochTimestamp(selectedSpan.timestamp)}
+						</Typography.Text>
+					</div>
+				</div>
+				<div className="item">
+					<Typography.Text className="attribute-key">duration</Typography.Text>
+					<div className="value-wrapper">
+						<Typography.Text className="attribute-value">
+							{getYAxisFormattedValue(`${selectedSpan.durationNano}`, 'ns')}
+						</Typography.Text>
+					</div>
+				</div>
+				{selectedSpan.serviceName && (
+					<div className="item">
+						<Typography.Text className="attribute-key">service</Typography.Text>
+						<div className="service">
+							<div className="dot" style={{ backgroundColor: color }} />
+							<div className="value-wrapper">
+								<Tooltip title={selectedSpan.serviceName}>
+									<Typography.Text className="service-value" ellipsis>
+										{selectedSpan.serviceName}
+									</Typography.Text>
+								</Tooltip>
+							</div>
+						</div>
 					</div>
 				)}
-				<PanelRight
-					size={14}
-					cursor="pointer"
-					onClick={(): void => setIsSpanDetailsDocked((prev) => !prev)}
+				{selectedSpan.spanKind && (
+					<div className="item">
+						<Typography.Text className="attribute-key">span kind</Typography.Text>
+						<div className="value-wrapper">
+							<Typography.Text className="attribute-value">
+								{selectedSpan.spanKind}
+							</Typography.Text>
+						</div>
+					</div>
+				)}
+				{selectedSpan.statusCodeString && (
+					<div className="item">
+						<Typography.Text className="attribute-key">
+							status code string
+						</Typography.Text>
+						<div className="value-wrapper">
+							<Typography.Text className="attribute-value">
+								{selectedSpan.statusCodeString}
+							</Typography.Text>
+						</div>
+					</div>
+				)}
+
+				{selectedSpan.statusMessage && (
+					<div className="item">
+						<Typography.Text className="attribute-key">
+							status message
+						</Typography.Text>
+						<div className="value-wrapper">
+							<Typography.Text className="attribute-value">
+								{selectedSpan.statusMessage}
+							</Typography.Text>
+						</div>
+					</div>
+				)}
+			</section>
+
+			<Button onClick={onLogsHandler} className="related-logs">
+				Go to related logs
+			</Button>
+
+			<section className="attributes-events">
+				<Tabs
+					items={getItems(selectedSpan, traceStartTime)}
+					addIcon
+					defaultActiveKey="attributes"
+					className="details-drawer-tabs"
+					tabBarExtraContent={
+						<Search
+							size={14}
+							className="search-icon"
+							cursor="pointer"
+							onClick={(): void => setIsSearchVisible((prev) => !prev)}
+						/>
+					}
 				/>
 			</section>
-			{selectedSpan && !isSpanDetailsDocked && (
-				<>
-					<section className="description">
-						<div className="item">
-							<Typography.Text className="attribute-key">span name</Typography.Text>
-							<Tooltip title={selectedSpan.name}>
-								<div className="value-wrapper">
-									<Typography.Text className="attribute-value" ellipsis>
-										{selectedSpan.name}
-									</Typography.Text>
-								</div>
-							</Tooltip>
-						</div>
-						<div className="item">
-							<Typography.Text className="attribute-key">span id</Typography.Text>
-							<div className="value-wrapper">
-								<Typography.Text className="attribute-value">
-									{selectedSpan.spanId}
-								</Typography.Text>
-							</div>
-						</div>
-						<div className="item">
-							<Typography.Text className="attribute-key">start time</Typography.Text>
-							<div className="value-wrapper">
-								<Typography.Text className="attribute-value">
-									{formatEpochTimestamp(selectedSpan.timestamp)}
-								</Typography.Text>
-							</div>
-						</div>
-						<div className="item">
-							<Typography.Text className="attribute-key">duration</Typography.Text>
-							<div className="value-wrapper">
-								<Typography.Text className="attribute-value">
-									{getYAxisFormattedValue(`${selectedSpan.durationNano}`, 'ns')}
-								</Typography.Text>
-							</div>
-						</div>
-						<div className="item">
-							<Typography.Text className="attribute-key">service</Typography.Text>
-							<div className="service">
-								<div className="dot" style={{ backgroundColor: color }} />
-								<div className="value-wrapper">
-									<Tooltip title={selectedSpan.serviceName}>
-										<Typography.Text className="service-value" ellipsis>
-											{selectedSpan.serviceName}
-										</Typography.Text>
-									</Tooltip>
-								</div>
-							</div>
-						</div>
-						<div className="item">
-							<Typography.Text className="attribute-key">span kind</Typography.Text>
-							<div className="value-wrapper">
-								<Typography.Text className="attribute-value">
-									{selectedSpan.spanKind}
-								</Typography.Text>
-							</div>
-						</div>
-						<div className="item">
-							<Typography.Text className="attribute-key">
-								status code string
-							</Typography.Text>
-							<div className="value-wrapper">
-								<Typography.Text className="attribute-value">
-									{selectedSpan.statusCodeString}
-								</Typography.Text>
-							</div>
-						</div>
-
-						{selectedSpan.statusMessage && (
-							<div className="item">
-								<Typography.Text className="attribute-key">
-									status message
-								</Typography.Text>
-								<div className="value-wrapper">
-									<Typography.Text className="attribute-value">
-										{selectedSpan.statusMessage}
-									</Typography.Text>
-								</div>
-							</div>
-						)}
-					</section>
-
-					<Button onClick={onLogsHandler} className="related-logs">
-						Go to related logs
-					</Button>
-
-					<section className="attributes-events">
-						<Tabs
-							items={getItems(selectedSpan, traceStartTime)}
-							addIcon
-							defaultActiveKey="attributes"
-							className="details-drawer-tabs"
-							tabBarExtraContent={
-								<Search
-									size={14}
-									className="search-icon"
-									cursor="pointer"
-									onClick={(): void => setIsSearchVisible((prev) => !prev)}
-								/>
-							}
-						/>
-					</section>
-				</>
-			)}
 		</div>
 	);
 }

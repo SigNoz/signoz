@@ -2,6 +2,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './Success.styles.scss';
 
+import { DrawerWrapper } from '@signozhq/drawer';
 import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { Virtualizer } from '@tanstack/react-virtual';
 import { Button, Tooltip, Typography } from 'antd';
@@ -9,6 +10,7 @@ import cx from 'classnames';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import { TableV3 } from 'components/TableV3/TableV3';
 import { themeColors } from 'constants/theme';
+import SpanDetailsDrawer from 'container/SpanDetailsDrawer/SpanDetailsDrawer';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import AddSpanToFunnelModal from 'container/TraceWaterfall/AddSpanToFunnelModal/AddSpanToFunnelModal';
 import SpanLineActionButtons from 'container/TraceWaterfall/SpanLineActionButtons';
@@ -192,13 +194,15 @@ function SpanOverview({
 export function SpanDuration({
 	span,
 	traceMetadata,
-	setSelectedSpan,
+
 	selectedSpan,
+	handleOpenSpanDrawer,
 }: {
 	span: Span;
 	traceMetadata: ITraceMetadata;
 	selectedSpan: Span | undefined;
-	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
+
+	handleOpenSpanDrawer: (span: Span) => void;
 }): JSX.Element {
 	const { time, timeUnitName } = convertTimeToRelevantUnit(
 		span.durationNano / 1e6,
@@ -257,7 +261,7 @@ export function SpanDuration({
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
 			onClick={(): void => {
-				setSelectedSpan(span);
+				handleOpenSpanDrawer(span);
 				if (span?.spanId) {
 					urlQuery.set('spanId', span?.spanId);
 				}
@@ -320,14 +324,15 @@ function getWaterfallColumns({
 	selectedSpan,
 	setSelectedSpan,
 	handleAddSpanToFunnel,
+	handleOpenSpanDrawer,
 }: {
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	uncollapsedNodes: string[];
 	traceMetadata: ITraceMetadata;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
-
 	handleAddSpanToFunnel: (span: Span) => void;
+	handleOpenSpanDrawer: (span: Span) => void;
 }): ColumnDef<Span, any>[] {
 	const waterfallColumns: ColumnDef<Span, any>[] = [
 		columnDefHelper.display({
@@ -364,7 +369,7 @@ function getWaterfallColumns({
 					span={props.row.original}
 					traceMetadata={traceMetadata}
 					selectedSpan={selectedSpan}
-					setSelectedSpan={setSelectedSpan}
+					handleOpenSpanDrawer={handleOpenSpanDrawer}
 				/>
 			),
 		}),
@@ -428,6 +433,23 @@ function Success(props: ISuccessProps): JSX.Element {
 		setSelectedSpanToAddToFunnel(span);
 	}, []);
 
+	const drawerTriggerRef = useRef<HTMLDivElement>(null);
+	const handleOpenSpanDrawer = useCallback(
+		(span: Span): void => {
+			setSelectedSpan(span);
+			// Trigger the drawer click programmatically
+			setTimeout(() => {
+				if (drawerTriggerRef.current) {
+					const button = drawerTriggerRef.current.querySelector('button');
+					if (button) {
+						button.click();
+					}
+				}
+			}, 0);
+		},
+		[setSelectedSpan],
+	);
+
 	const columns = useMemo(
 		() =>
 			getWaterfallColumns({
@@ -437,6 +459,7 @@ function Success(props: ISuccessProps): JSX.Element {
 				selectedSpan,
 				setSelectedSpan,
 				handleAddSpanToFunnel,
+				handleOpenSpanDrawer,
 			}),
 		[
 			handleCollapseUncollapse,
@@ -445,6 +468,7 @@ function Success(props: ISuccessProps): JSX.Element {
 			selectedSpan,
 			setSelectedSpan,
 			handleAddSpanToFunnel,
+			handleOpenSpanDrawer,
 		],
 	);
 
@@ -522,6 +546,30 @@ function Success(props: ISuccessProps): JSX.Element {
 					isOpen={isAddSpanToFunnelModalOpen}
 					onClose={(): void => setIsAddSpanToFunnelModalOpen(false)}
 				/>
+			)}
+
+			{selectedSpan && (
+				<div ref={drawerTriggerRef} style={{ display: 'none' }}>
+					<DrawerWrapper
+						key={`drawer-${selectedSpan.spanId}`}
+						trigger={<Button>Open Span Details</Button>}
+						header={{
+							title: 'Span details',
+							description: '',
+						}}
+						content={
+							<SpanDetailsDrawer
+								selectedSpan={selectedSpan}
+								traceID={traceMetadata.traceId}
+								traceStartTime={traceMetadata.startTime}
+								traceEndTime={traceMetadata.endTime}
+							/>
+						}
+						className="span-drawer"
+						direction="right"
+						type="panel"
+					/>
+				</div>
 			)}
 		</div>
 	);

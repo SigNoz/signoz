@@ -1,9 +1,9 @@
 .span-details-drawer {
 	display: flex;
 	flex-direction: column;
-	width: 450px;
+	height: 100%;
+
 	border-left: 1px solid var(--bg-slate-400);
-	overflow-y: auto;
 
 	&::-webkit-scrollbar {
 		width: 0.1rem;
@@ -43,7 +43,7 @@
 
 	.description {
 		display: flex;
-		flex-direction: column;
+		flex-wrap: wrap;
 		gap: 16px;
 		padding: 10px 12px;
 
@@ -143,7 +143,29 @@
 	}
 
 	.attributes-events {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		overflow: hidden;
+
 		.details-drawer-tabs {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+
+			.ant-tabs-content-holder {
+				flex: 1;
+				overflow: hidden;
+
+				.ant-tabs-content {
+					height: 100%;
+
+					.ant-tabs-tabpane {
+						height: 100%;
+						overflow: hidden;
+					}
+				}
+			}
 			.ant-tabs-extra-content {
 				display: flex;
 				align-items: center;
@@ -212,14 +234,6 @@
 				background: unset;
 			}
 		}
-	}
-}
-
-.span-details-drawer-docked {
-	width: 48px;
-
-	.header {
-		justify-content: center;
 	}
 }
 

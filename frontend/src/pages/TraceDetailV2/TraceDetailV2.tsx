@@ -3,7 +3,6 @@ import './TraceDetailV2.styles.scss';
 import { Button, Tabs } from 'antd';
 import FlamegraphImg from 'assets/TraceDetail/Flamegraph';
 import TraceFlamegraph from 'container/PaginatedTraceFlamegraph/PaginatedTraceFlamegraph';
-import SpanDetailsDrawer from 'container/SpanDetailsDrawer/SpanDetailsDrawer';
 import TraceMetadata from 'container/TraceMetadata/TraceMetadata';
 import TraceWaterfall, {
 	IInterestedSpan,
@@ -30,7 +29,6 @@ function TraceDetailsV2(): JSX.Element {
 		traceFlamegraphStatsWidth,
 		setTraceFlamegraphStatsWidth,
 	] = useState<number>(450);
-	const [isSpanDetailsDocked, setIsSpanDetailsDocked] = useState<boolean>(false);
 	const [selectedSpan, setSelectedSpan] = useState<Span>();
 
 	useEffect(() => {
@@ -58,12 +56,6 @@ function TraceDetailsV2(): JSX.Element {
 		}
 	}, [traceData]);
 
-	useEffect(() => {
-		if (selectedSpan) {
-			setIsSpanDetailsDocked(false);
-		}
-	}, [selectedSpan]);
-
 	const noData = useMemo(
 		() =>
 			!isFetchingTraceData &&
@@ -75,12 +67,6 @@ function TraceDetailsV2(): JSX.Element {
 			traceData?.payload?.spans?.length,
 		],
 	);
-
-	useEffect(() => {
-		if (noData) {
-			setIsSpanDetailsDocked(true);
-		}
-	}, [noData]);
 
 	const items = [
 		{
@@ -122,10 +108,7 @@ function TraceDetailsV2(): JSX.Element {
 
 	return (
 		<div className="trace-layout">
-			<div
-				className="trace-left-content"
-				style={{ width: `calc(100% - ${isSpanDetailsDocked ? 48 : 330}px)` }}
-			>
+			<div className="trace-left-content">
 				<TraceMetadata
 					traceID={traceId}
 					duration={
@@ -145,14 +128,6 @@ function TraceDetailsV2(): JSX.Element {
 					<NoData />
 				)}
 			</div>
-			<SpanDetailsDrawer
-				isSpanDetailsDocked={isSpanDetailsDocked}
-				setIsSpanDetailsDocked={setIsSpanDetailsDocked}
-				selectedSpan={selectedSpan}
-				traceID={traceId}
-				traceStartTime={traceData?.payload?.startTimestampMillis || 0}
-				traceEndTime={traceData?.payload?.endTimestampMillis || 0}
-			/>
 		</div>
 	);
 }

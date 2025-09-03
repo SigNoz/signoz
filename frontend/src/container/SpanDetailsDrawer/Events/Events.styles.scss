@@ -1,4 +1,11 @@
 .events-table {
+	display: flex;
+	flex-direction: column;
+	height: calc(
+		100% - 12px - 16px - 36px
+	); //12px -> attributes padding, 16px -> tabs margin bottom, 36px -> tabs height
+	overflow: hidden;
+
 	.no-events {
 		display: flex;
 		justify-content: center;
@@ -10,6 +17,8 @@
 		flex-direction: column;
 		gap: 12px;
 		padding: 12px;
+		flex: 1;
+		overflow-y: auto;
 
 		.event {
 			.ant-collapse {
