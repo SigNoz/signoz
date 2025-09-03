@@ -211,7 +211,7 @@ function TracesExplorer(): JSX.Element {
 	const traceOperatorCalloutDescription = useMemo(() => {
 		if (currentQuery.builder.queryData.length === 0) return '';
 		const firstQuery = currentQuery.builder.queryData[0];
-		return `Please use a Trace Operator to combine results of multiple span queries. Else you'd only see the the results from query "${firstQuery.queryName}"`;
+		return `Please use a Trace Operator to combine results of multiple span queries. Else you'd only see the results from query "${firstQuery.queryName}"`;
 	}, [currentQuery]);
 
 	useEffect(() => {

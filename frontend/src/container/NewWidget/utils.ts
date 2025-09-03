@@ -526,6 +526,10 @@ export function handleQueryChange(
 
 				return tempQuery;
 			}),
+			queryTraceOperator:
+				newPanelType === PANEL_TYPES.LIST
+					? []
+					: supersetQuery.builder.queryTraceOperator,
 		},
 	};
 }
