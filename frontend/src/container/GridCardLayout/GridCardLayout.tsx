@@ -11,7 +11,9 @@ import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { DEFAULT_ROW_NAME } from 'container/NewDashboard/DashboardDescription/utils';
+import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { createDynamicVariableToWidgetsMap } from 'hooks/dashboard/utils';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -82,6 +84,17 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	const { user } = useAppContext();
 
 	const isDarkMode = useIsDarkMode();
+
+	// Add dynamic variables mapping at parent level
+	const { dynamicVariables } = useGetDynamicVariables();
+	const dynamicVariableToWidgetsMap = useMemo(
+		() =>
+			createDynamicVariableToWidgetsMap(
+				dynamicVariables,
+				(widgets as Widgets[]) || [],
+			),
+		[dynamicVariables, widgets],
+	);
 
 	const [dashboardLayout, setDashboardLayout] = useState<Layout[]>([]);
 
@@ -584,6 +597,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 									version={ENTITY_VERSION_V5}
 									onDragSelect={onDragSelect}
 									dataAvailable={checkIfDataExists}
+									dynamicVariableToWidgetsMap={dynamicVariableToWidgetsMap}
 								/>
 							</Card>
 						</CardContainer>

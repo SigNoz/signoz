@@ -4,8 +4,6 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
-import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
-import { createDynamicVariableToWidgetsMap } from 'hooks/dashboard/utils';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
@@ -54,6 +52,7 @@ function GridCardGraph({
 	customTimeRange,
 	customOnRowClick,
 	customTimeRangeWindowForCoRelation,
+	dynamicVariableToWidgetsMap,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -70,12 +69,6 @@ function GridCardGraph({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-
-	const { dynamicVariables } = useGetDynamicVariables();
-	const dynamicVariableToWidgetsMap = useMemo(
-		() => createDynamicVariableToWidgetsMap(dynamicVariables, [widget]),
-		[dynamicVariables, widget],
-	);
 
 	const handleBackNavigation = (): void => {
 		const searchParams = new URLSearchParams(window.location.search);
@@ -252,8 +245,8 @@ function GridCardGraph({
 					? Object.entries(variables).reduce((acc, [id, variable]) => {
 							if (
 								variable.type !== 'DYNAMIC' ||
-								(dynamicVariableToWidgetsMap?.[id] &&
-									dynamicVariableToWidgetsMap?.[id].includes(widget.id))
+								(dynamicVariableToWidgetsMap?.[variable.id] &&
+									dynamicVariableToWidgetsMap?.[variable.id].includes(widget.id))
 							) {
 								return { ...acc, [id]: variable.selectedValue };
 							}
