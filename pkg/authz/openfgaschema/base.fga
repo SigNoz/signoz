@@ -2,9 +2,11 @@ module base
 
 type user
 
+type apikey
+
 type role 
   relations
-    define assignee: [user]
+    define assignee: [user,apikey]
 
 type organisation 
   relations

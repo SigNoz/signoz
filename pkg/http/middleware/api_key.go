@@ -102,6 +102,7 @@ func (a *APIKey) Wrap(next http.Handler) http.Handler {
 
 		comment := ctxtypes.CommentFromContext(ctx)
 		comment.Set("auth_type", ctxtypes.AuthTypeAPIKey.StringValue())
+		comment.Set("api_key_id", apiKey.ID.String())
 		comment.Set("user_id", claims.UserID)
 		comment.Set("org_id", claims.OrgID)
 

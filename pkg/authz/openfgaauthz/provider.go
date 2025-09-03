@@ -4,6 +4,8 @@ import (
 	"context"
 
 	authz "github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/authztypes"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -58,7 +60,7 @@ func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, 
 }
 
 func (provider *provider) Start(ctx context.Context) error {
-	storeId, err := provider.getOrCreateStore(ctx, "signoz")
+	storeId, err := provider.getOrCreateStore(ctx, authztypes.OpenfgaDefaultStore.StringValue())
 	if err != nil {
 		return err
 	}
@@ -98,6 +100,21 @@ func (provider *provider) getOrCreateStore(ctx context.Context, name string) (st
 	return store.Id, nil
 }
 
+func (provider *provider) getStore(ctx context.Context, name string) (string, error) {
+	stores, err := provider.openfgaServer.ListStores(ctx, &openfgav1.ListStoresRequest{})
+	if err != nil {
+		return "", err
+	}
+
+	for _, store := range stores.GetStores() {
+		if store.GetName() == name {
+			return store.Id, nil
+		}
+	}
+
+	return "", errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "no store found with name %s", name)
+}
+
 func (provider *provider) getOrCreateModel(ctx context.Context, storeID string) (string, error) {
 	schema, err := openfgapkgtransformer.TransformModuleFilesToModel(provider.openfgaSchema, "1.1")
 	if err != nil {
@@ -132,6 +149,30 @@ func (provider *provider) getOrCreateModel(ctx context.Context, storeID string) 
 	return authorizationModel.AuthorizationModelId, nil
 }
 
+func (provider *provider) getModel(ctx context.Context, storeID string) (string, error) {
+	schema, err := openfgapkgtransformer.TransformModuleFilesToModel(provider.openfgaSchema, "1.1")
+	if err != nil {
+		return "", err
+	}
+
+	authorisationModels, err := provider.openfgaServer.ReadAuthorizationModels(ctx, &openfgav1.ReadAuthorizationModelsRequest{StoreId: storeID})
+	if err != nil {
+		return "", err
+	}
+
+	for _, authModel := range authorisationModels.GetAuthorizationModels() {
+		equal, err := provider.isModelEqual(schema, authModel)
+		if err != nil {
+			return "", err
+		}
+		if equal {
+			return authModel.Id, nil
+		}
+	}
+
+	return "", errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "no model in sync with latest schema found with storeID %s", storeID)
+}
+
 // the language model doesn't have any equality check
 // https://github.com/openfga/language/blob/main/pkg/go/transformer/module-to-model_test.go#L38
 func (provider *provider) isModelEqual(expected *openfgav1.AuthorizationModel, actual *openfgav1.AuthorizationModel) (bool, error) {
@@ -157,4 +198,29 @@ func (provider *provider) isModelEqual(expected *openfgav1.AuthorizationModel, a
 	}
 
 	return string(expectedAuthModelBytes) == string(actualAuthModelBytes), nil
+
+}
+
+func (provider *provider) Check(ctx context.Context, tupleReq *openfgav1.CheckRequestTupleKey) (bool, error) {
+	storeID, err := provider.getStore(ctx, authztypes.OpenfgaDefaultStore.String())
+	if err != nil {
+		return false, err
+	}
+	modelID, err := provider.getModel(ctx, storeID)
+	if err != nil {
+		return false, err
+	}
+
+	checkResponse, err := provider.openfgaServer.Check(
+		ctx,
+		&openfgav1.CheckRequest{
+			StoreId:              storeID,
+			AuthorizationModelId: modelID,
+			TupleKey:             tupleReq,
+		})
+	if err != nil {
+		return false, err
+	}
+
+	return checkResponse.Allowed, nil
 }
