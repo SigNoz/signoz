@@ -76,17 +76,19 @@ export default function TraceOperator({
 
 	const spanSourceOptions = useMemo(
 		() =>
-			currentQuery.builder.queryData.map((query) => ({
-				value: query.queryName,
-				label: (
-					<div className="qb-trace-operator-span-source-label">
-						<span className="qb-trace-operator-span-source-label-query">Query</span>
-						<p className="qb-trace-operator-span-source-label-query-name">
-							{query.queryName}
-						</p>
-					</div>
-				),
-			})),
+			currentQuery.builder.queryData
+				.filter((query) => query.dataSource === DataSource.TRACES)
+				.map((query) => ({
+					value: query.queryName,
+					label: (
+						<div className="qb-trace-operator-span-source-label">
+							<span className="qb-trace-operator-span-source-label-query">Query</span>
+							<p className="qb-trace-operator-span-source-label-query-name">
+								{query.queryName}
+							</p>
+						</div>
+					),
+				})),
 		[currentQuery.builder.queryData],
 	);
 
@@ -99,7 +101,7 @@ export default function TraceOperator({
 						!isListViewPanel && 'qb-trace-operator-arrow',
 					)}
 				>
-					<Typography.Text className="label">TRACES MATCHING</Typography.Text>
+					<Typography.Text className="label">TRACE OPERATOR</Typography.Text>
 					<div className="qb-trace-operator-editor-container">
 						<TraceOperatorEditor
 							value={traceOperator?.expression || ''}
