@@ -1,0 +1,89 @@
+import './styles.scss';
+
+import { Button } from 'antd';
+import classNames from 'classnames';
+import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import QuerySectionComponent from 'container/FormAlertRules/QuerySection';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { BarChart2, DraftingCompass, ScrollText } from 'lucide-react';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
+
+import { useCreateAlertState } from '../context';
+import Stepper from '../Stepper';
+import ChartPreview from './ChartPreview';
+
+function QuerySection(): JSX.Element {
+	const {
+		currentQuery,
+		handleRunQuery,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
+	const { alertType, setAlertType, alertDef } = useCreateAlertState();
+
+	const tabs = [
+		{
+			label: 'Metrics',
+			icon: <BarChart2 size={14} data-testid="threshold-view" />,
+			value: AlertTypes.METRICS_BASED_ALERT,
+		},
+		{
+			label: 'Logs',
+			icon: <ScrollText size={14} data-testid="anomaly-view" />,
+			value: AlertTypes.LOGS_BASED_ALERT,
+		},
+		{
+			label: 'Traces',
+			icon: <DraftingCompass size={14} data-testid="traces-view" />,
+			value: AlertTypes.TRACES_BASED_ALERT,
+		},
+	];
+
+	const handleAlertTypeChange = (value: AlertTypes): void => {
+		setAlertType(value);
+		redirectWithQueryBuilderData(
+			initialQueriesMap[ALERTS_DATA_SOURCE_MAP[value]],
+		);
+	};
+
+	return (
+		<div className="query-section">
+			<Stepper
+				stepNumber={1}
+				label="Define the signal you want to set an alert on"
+			/>
+			<ChartPreview />
+			<div className="query-section-tabs">
+				<div className="query-section-query-actions">
+					{tabs.map((tab) => (
+						<Button
+							key={tab.value}
+							className={classNames('list-view-tab', 'explorer-view-option', {
+								'active-tab': alertType === tab.value,
+							})}
+							onClick={(): void => {
+								handleAlertTypeChange(tab.value as AlertTypes);
+							}}
+						>
+							{tab.icon}
+							{tab.label}
+						</Button>
+					))}
+				</div>
+			</div>
+			<QuerySectionComponent
+				queryCategory={currentQuery.queryType}
+				setQueryCategory={(): void => {}}
+				alertType={alertType}
+				runQuery={handleRunQuery}
+				alertDef={alertDef}
+				panelType={PANEL_TYPES.TIME_SERIES}
+				key={currentQuery.queryType}
+				ruleId=""
+				hideTitle
+			/>
+		</div>
+	);
+}
+
+export default QuerySection;
