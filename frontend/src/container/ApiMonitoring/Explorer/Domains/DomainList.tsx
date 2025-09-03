@@ -99,8 +99,6 @@ function DomainList(): JSX.Element {
 							key: 'kind_string',
 							dataType: 'string',
 							type: '',
-							isColumn: true,
-							isJSON: false,
 						},
 						op: '=',
 						value: 'Client',

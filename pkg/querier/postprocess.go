@@ -110,6 +110,10 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 
 	if req.RequestType == qbtypes.RequestTypeTimeSeries && req.FormatOptions != nil && req.FormatOptions.FillGaps {
 		for name := range typedResults {
+			if req.SkipFillGaps(name) {
+				continue
+			}
+
 			funcs := []qbtypes.Function{{Name: qbtypes.FunctionNameFillZero}}
 			funcs = q.prepareFillZeroArgsWithStep(funcs, req, req.StepIntervalForQuery(name))
 			// empty time series if it doesn't exist
@@ -322,9 +326,8 @@ func (q *querier) processTimeSeriesFormula(
 		}
 	}
 
+	canDefaultZero := req.GetQueriesSupportingZeroDefault()
 	// Create formula evaluator
-	// TODO(srikanthccv): add conditional default zero
-	canDefaultZero := make(map[string]bool)
 	evaluator, err := qbtypes.NewFormulaEvaluator(formula.Expression, canDefaultZero)
 	if err != nil {
 		q.logger.ErrorContext(ctx, "failed to create formula evaluator", "error", err, "formula", formula.Name)
@@ -474,7 +477,7 @@ func (q *querier) processScalarFormula(
 		}
 	}
 
-	canDefaultZero := make(map[string]bool)
+	canDefaultZero := req.GetQueriesSupportingZeroDefault()
 	evaluator, err := qbtypes.NewFormulaEvaluator(formula.Expression, canDefaultZero)
 	if err != nil {
 		q.logger.ErrorContext(ctx, "failed to create formula evaluator", "error", err, "formula", formula.Name)

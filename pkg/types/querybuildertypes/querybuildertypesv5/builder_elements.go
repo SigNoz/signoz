@@ -117,6 +117,25 @@ func (f FilterOperator) AddDefaultExistsFilter() bool {
 	return false
 }
 
+func (f FilterOperator) IsNegativeOperator() bool {
+	switch f {
+	case
+		FilterOperatorEqual,
+		FilterOperatorGreaterThan,
+		FilterOperatorGreaterThanOrEq,
+		FilterOperatorLessThan,
+		FilterOperatorLessThanOrEq,
+		FilterOperatorLike,
+		FilterOperatorILike,
+		FilterOperatorBetween,
+		FilterOperatorIn,
+		FilterOperatorRegexp,
+		FilterOperatorContains:
+		return false
+	}
+	return true
+}
+
 type OrderDirection struct {
 	valuer.String
 }

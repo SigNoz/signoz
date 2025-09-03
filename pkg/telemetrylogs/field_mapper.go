@@ -60,7 +60,6 @@ func NewFieldMapper() qbtypes.FieldMapper {
 }
 
 func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
-
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		return logsV2Columns["resources_string"], nil
@@ -171,7 +170,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 				correction, found := telemetrytypes.SuggestCorrection(field.Name, maps.Keys(keys))
 				if found {
 					// we found a close match, in the error message send the suggestion
-					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
+					return "", errors.Wrap(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
 				} else {
 					// not even a close match, return an error
 					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name)

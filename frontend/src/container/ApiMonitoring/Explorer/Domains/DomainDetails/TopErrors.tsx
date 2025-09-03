@@ -58,8 +58,6 @@ function TopErrors({
 									id: '92b8a1c1',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.URL_PATH,
 										type: 'tag',
 									},

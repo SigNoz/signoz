@@ -319,6 +319,23 @@ func (r *QueryRangeRequest) IsAnomalyRequest() (*QueryBuilderQuery[MetricAggrega
 	return &q, hasAnomaly
 }
 
+// We do not support fill gaps for these queries. Maybe support in future?
+func (r *QueryRangeRequest) SkipFillGaps(name string) bool {
+	for _, query := range r.CompositeQuery.Queries {
+		switch spec := query.Spec.(type) {
+		case PromQuery:
+			if spec.Name == name {
+				return true
+			}
+		case ClickHouseQuery:
+			if spec.Name == name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
 func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 	// Define a type alias to avoid infinite recursion
@@ -385,4 +402,38 @@ func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 type FormatOptions struct {
 	FillGaps               bool `json:"fillGaps,omitempty"`
 	FormatTableResultForUI bool `json:"formatTableResultForUI,omitempty"`
+}
+
+func (r *QueryRangeRequest) GetQueriesSupportingZeroDefault() map[string]bool {
+	canDefaultZeroAgg := func(expr string) bool {
+		expr = strings.ToLower(expr)
+		// only pure additive/counting operations should default to zero,
+		// while statistical/analytical operations should show gaps when there's no data to analyze.
+		// TODO: use newExprVisitor for getting the function used in the expression
+		if strings.HasPrefix(expr, "count(") ||
+			strings.HasPrefix(expr, "count_distinct(") ||
+			strings.HasPrefix(expr, "sum(") ||
+			strings.HasPrefix(expr, "rate(") {
+			return true
+		}
+		return false
+
+	}
+
+	canDefaultZero := make(map[string]bool)
+	for _, q := range r.CompositeQuery.Queries {
+		if q.Type == QueryTypeBuilder {
+			if query, ok := q.Spec.(QueryBuilderQuery[TraceAggregation]); ok {
+				if len(query.Aggregations) == 1 && canDefaultZeroAgg(query.Aggregations[0].Expression) {
+					canDefaultZero[query.Name] = true
+				}
+			} else if query, ok := q.Spec.(QueryBuilderQuery[LogAggregation]); ok {
+				if len(query.Aggregations) == 1 && canDefaultZeroAgg(query.Aggregations[0].Expression) {
+					canDefaultZero[query.Name] = true
+				}
+			}
+		}
+	}
+
+	return canDefaultZero
 }

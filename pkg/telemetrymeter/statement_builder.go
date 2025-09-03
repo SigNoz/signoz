@@ -75,8 +75,9 @@ func (b *meterQueryStatementBuilder) buildPipelineStatement(
 
 	if b.metricsStatementBuilder.CanShortCircuitDelta(query) {
 		// spatial_aggregation_cte directly for certain delta queries
-		frag, args := b.buildTemporalAggDeltaFastPath(ctx, start, end, query, keys, variables)
-		if frag != "" {
+		if frag, args, err := b.buildTemporalAggDeltaFastPath(ctx, start, end, query, keys, variables); err != nil {
+			return nil, err
+		} else if frag != "" {
 			cteFragments = append(cteFragments, frag)
 			cteArgs = append(cteArgs, args)
 		}
@@ -107,7 +108,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
-) (string, []any) {
+) (string, []any, error) {
 	var filterWhere *querybuilder.PreparedWhereClause
 	var err error
 	stepSec := int64(query.StepInterval.Seconds())
@@ -121,7 +122,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	for _, g := range query.GroupBy {
 		col, err := b.fm.ColumnExpressionFor(ctx, &g.TelemetryFieldKey, keys)
 		if err != nil {
-			return "", []any{}
+			return "", []any{}, err
 		}
 		sb.SelectMore(col)
 	}
@@ -149,7 +150,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 			Variables:        variables,
 		})
 		if err != nil {
-			return "", []any{}
+			return "", []any{}, err
 		}
 	}
 	if filterWhere != nil {
@@ -163,7 +164,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args
+	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args, nil
 }
 
 func (b *meterQueryStatementBuilder) buildTemporalAggregationCTE(
