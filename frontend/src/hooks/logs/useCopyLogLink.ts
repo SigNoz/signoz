@@ -1,6 +1,7 @@
+import { toast } from '@signozhq/sonner';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import {
@@ -21,9 +22,10 @@ import { UseCopyLogLink } from './types';
 
 export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 	const urlQuery = useUrlQuery();
-	const { pathname } = useLocation();
+	const { pathname, search } = useLocation();
 	const [, setCopy] = useCopyToClipboard();
-	const { notifications } = useNotifications();
+
+	const { safeNavigate } = useSafeNavigate();
 
 	const { queryData: activeLogId } = useUrlQueryData<string | null>(
 		QueryParams.activeLogId,
@@ -58,12 +60,18 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 			const link = `${window.location.origin}${pathname}?${urlQuery.toString()}`;
 
 			setCopy(link);
-			notifications.success({
-				message: 'Copied to clipboard',
-			});
+
+			toast.success('Copied to clipboard', { position: 'top-right' });
 		},
-		[logId, urlQuery, minTime, maxTime, pathname, setCopy, notifications],
+		[logId, urlQuery, minTime, maxTime, pathname, setCopy],
 	);
+
+	const onClearActiveLog = useCallback(() => {
+		const currentUrlQuery = new URLSearchParams(search);
+		currentUrlQuery.delete(QueryParams.activeLogId);
+		const newUrl = `${pathname}?${currentUrlQuery.toString()}`;
+		safeNavigate(newUrl);
+	}, [pathname, search, safeNavigate]);
 
 	useEffect(() => {
 		if (!isActiveLog) return;
@@ -81,5 +89,6 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 		isLogsExplorerPage,
 		activeLogId,
 		onLogCopy,
+		onClearActiveLog,
 	};
 };
