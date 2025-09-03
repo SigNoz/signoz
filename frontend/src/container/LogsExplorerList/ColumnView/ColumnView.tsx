@@ -4,7 +4,6 @@ import { ColumnDef, DataTable, Row } from '@signozhq/table';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import LogStateIndicator from 'components/Logs/LogStateIndicator/LogStateIndicator';
-import { getLogIndicatorTypeForTable } from 'components/Logs/LogStateIndicator/utils';
 import { useTableView } from 'components/Logs/TableView/useTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -169,10 +168,14 @@ function ColumnView({
 					getValue: () => string | JSX.Element;
 				}): string | JSX.Element => {
 					if (field.key === 'state-indicator') {
-						const type = getLogIndicatorTypeForTable(row.original);
 						const fontSize = options.fontSize as FontSize;
 
-						return <LogStateIndicator type={type} fontSize={fontSize} />;
+						return (
+							<LogStateIndicator
+								severityText={row.original?.severity_text}
+								fontSize={fontSize}
+							/>
+						);
 					}
 
 					const isTimestamp = field.key === 'timestamp';
