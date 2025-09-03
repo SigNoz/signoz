@@ -99,41 +99,4 @@ var (
 			Materialized:  true,
 		},
 	}
-	ContextFields = map[string]telemetrytypes.TelemetryFieldKey{
-		"attributes_string": {
-			Name:          "attributes_string",
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  telemetrytypes.FieldContextLog,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-			Materialized:  true,
-		},
-		"attributes_number": {
-			Name:          "attributes_number",
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  telemetrytypes.FieldContextLog,
-			FieldDataType: telemetrytypes.FieldDataTypeNumber,
-			Materialized:  true,
-		},
-		"attributes_bool": {
-			Name:          "attributes_bool",
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  telemetrytypes.FieldContextLog,
-			FieldDataType: telemetrytypes.FieldDataTypeBool,
-			Materialized:  true,
-		},
-		"resources_string": {
-			Name:          "resources_string",
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  telemetrytypes.FieldContextLog,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-			Materialized:  true,
-		},
-		"scope_string": {
-			Name:          "scope_string",
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  telemetrytypes.FieldContextScope,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-			Materialized:  true,
-		},
-	}
 )
