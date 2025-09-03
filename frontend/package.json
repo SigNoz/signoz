@@ -57,6 +57,7 @@
 		"@uiw/codemirror-theme-github": "4.24.1",
 		"@uiw/react-codemirror": "4.23.10",
 		"@uiw/react-md-editor": "3.23.5",
+		"@signozhq/drawer": "0.0.3",
 		"@visx/group": "3.3.0",
 		"@visx/hierarchy": "3.12.0",
 		"@visx/shape": "3.5.0",

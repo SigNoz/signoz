@@ -62,8 +62,8 @@
 		.trace-left-content {
 			display: flex;
 			flex-direction: column;
-			gap: 25px;
 			padding-top: 16px;
+			width: 100%;
 
 			.flamegraph-waterfall-toggle {
 				display: flex;
