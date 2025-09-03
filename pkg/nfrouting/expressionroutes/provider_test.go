@@ -25,7 +25,7 @@ func newMockRouteStore() *mockRouteStore {
 func (m *mockRouteStore) GetByID(ctx context.Context, id valuer.UUID) (*nfroutingtypes.ExpressionRoute, error) {
 	for _, orgRoutes := range m.routes {
 		for _, route := range orgRoutes {
-			if route.ID.StringValue() == id {
+			if route.ID.StringValue() == id.StringValue() {
 				return &route, nil
 			}
 		}
@@ -38,7 +38,7 @@ func (m *mockRouteStore) Create(ctx context.Context, route *nfroutingtypes.Expre
 		m.routes[route.OrgID] = make([]nfroutingtypes.ExpressionRoute, 0)
 	}
 	m.routes[route.OrgID] = append(m.routes[route.OrgID], *route)
-	return
+	return route.ID, nil
 }
 
 func (m *mockRouteStore) Update(ctx context.Context, route *nfroutingtypes.ExpressionRoute) error {
@@ -131,7 +131,7 @@ func TestRouteStore_CRUD_Operations(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test GetByID
-	retrieved, err := mockStore.GetByID(ctx, route.ID.StringValue())
+	retrieved, err := mockStore.GetByID(ctx, route.ID)
 	require.NoError(t, err)
 	require.NotNil(t, retrieved)
 	assert.Equal(t, route.Expression, retrieved.Expression)
@@ -149,7 +149,7 @@ func TestRouteStore_CRUD_Operations(t *testing.T) {
 	err = mockStore.Update(ctx, route)
 	require.NoError(t, err)
 
-	updated, err := mockStore.GetByID(ctx, route.ID.StringValue())
+	updated, err := mockStore.GetByID(ctx, route.ID)
 	require.NoError(t, err)
 	assert.Equal(t, `labels["severity"] == "warning"`, updated.Expression)
 
@@ -157,7 +157,7 @@ func TestRouteStore_CRUD_Operations(t *testing.T) {
 	err = mockStore.Delete(ctx, route.ID.StringValue())
 	require.NoError(t, err)
 
-	deleted, err := mockStore.GetByID(ctx, route.ID.StringValue())
+	deleted, err := mockStore.GetByID(ctx, route.ID)
 	require.NoError(t, err)
 	assert.Nil(t, deleted)
 
