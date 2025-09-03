@@ -4,6 +4,20 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { CreateAlertProvider } from '../../context';
 import CreateAlertHeader from '../CreateAlertHeader';
 
+jest.mock('uplot', () => {
+	const paths = {
+		spline: jest.fn(),
+		bars: jest.fn(),
+	};
+	const uplotMock = jest.fn(() => ({
+		paths,
+	}));
+	return {
+		paths,
+		default: uplotMock,
+	};
+});
+
 const renderCreateAlertHeader = (): ReturnType<typeof render> =>
 	render(
 		<CreateAlertProvider>
