@@ -565,6 +565,8 @@ function Success(props: ISuccessProps): JSX.Element {
 								traceEndTime={traceMetadata.endTime}
 							/>
 						}
+						showOverlay={false}
+						allowOutsideClick={false}
 						className="span-drawer"
 						direction="right"
 						type="panel"
