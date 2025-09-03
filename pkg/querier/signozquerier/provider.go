@@ -96,6 +96,7 @@ func newProvider(
 		traceFieldMapper,
 		traceConditionBuilder,
 		traceStmtBuilder, // Pass the regular trace statement builder
+		resourceFilterStmtBuilder, // Pass the resource filter statement builder
 		traceAggExprRewriter,
 	)
 

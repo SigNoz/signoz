@@ -64,7 +64,7 @@ func (b *traceOperatorCTEBuilder) build(requestType qbtypes.RequestType) (*qbtyp
 		}
 	}
 
-	err := b.buildBaseSpansCTE()
+	err := b.buildAllSpansCTE()
 	if err != nil {
 		return nil, err
 	}
@@ -103,6 +103,11 @@ func (b *traceOperatorCTEBuilder) build(requestType qbtypes.RequestType) (*qbtyp
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + finalStmt.Query
 	finalArgs := querybuilder.PrependArgs(cteArgs, finalStmt.Args)
 
+	b.stmtBuilder.logger.DebugContext(b.ctx, "Final trace operator query built",
+		"operator_expression", b.operator.Expression,
+		"cte_count", len(cteFragments),
+		"args_count", len(finalArgs))
+
 	return &qbtypes.Statement{
 		Query:    finalSQL,
 		Args:     finalArgs,
@@ -122,11 +127,9 @@ func (b *traceOperatorCTEBuilder) buildTimeConstantsCTE() string {
 		b.start, b.end, startBucket, endBucket)
 }
 
-// buildBaseSpansCTE
-func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() error {
+func (b *traceOperatorCTEBuilder) buildAllSpansCTE() error {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("*")
-	// add a stable alias for downstream consumers
 	sb.SelectMore(sqlbuilder.Escape("resource_string_service$$name") + " AS `service.name`")
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
@@ -139,9 +142,22 @@ func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() error {
 		sb.LE("ts_bucket_start", endBucket),
 	)
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	b.addCTE("base_spans", sql, args, nil)
+	b.stmtBuilder.logger.DebugContext(b.ctx, "Built all_spans CTE")
+	b.addCTE("all_spans", sql, args, nil)
 	return nil
 }
+
+func (b *traceOperatorCTEBuilder) buildResourceFilterCTE(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) (*qbtypes.Statement, error) {
+	return b.stmtBuilder.resourceFilterStmtBuilder.Build(
+		b.ctx,
+		b.start,
+		b.end,
+		qbtypes.RequestTypeRaw,
+		query,
+		nil,
+	)
+}
+
 
 func (b *traceOperatorCTEBuilder) buildExpressionCTEs(expr *qbtypes.TraceOperand) (string, error) {
 	if expr == nil {
@@ -193,11 +209,38 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 	}
 	b.stmtBuilder.logger.DebugContext(b.ctx, "Retrieved keys for query", "queryName", queryName, "keysCount", len(keys))
 
-	sb := sqlbuilder.NewSelectBuilder()
-	// Select all columns plus add the level identifier
-	sb.Select("*", fmt.Sprintf("'%s' AS level", cteName))
+	// Build resource filter CTE for this specific query
+	resourceFilterCTEName := fmt.Sprintf("__resource_filter_%s", cteName)
+	resourceStmt, err := b.buildResourceFilterCTE(*query)
+	if err != nil {
+		return "", err
+	}
 
-	sb.From("base_spans AS s")
+	if resourceStmt != nil && resourceStmt.Query != "" {
+		b.stmtBuilder.logger.DebugContext(b.ctx, "Built resource filter CTE for query",
+			"queryName", queryName,
+			"resourceFilterCTEName", resourceFilterCTEName)
+		b.addCTE(resourceFilterCTEName, resourceStmt.Query, resourceStmt.Args, nil)
+	} else {
+		b.stmtBuilder.logger.DebugContext(b.ctx, "No resource filter needed for query", "queryName", queryName)
+		resourceFilterCTEName = ""
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("*", fmt.Sprintf("'%s' AS level", cteName))
+	sb.SelectMore(sqlbuilder.Escape("resource_string_service$$name") + " AS `service.name`")
+	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
+	if resourceFilterCTEName != "" {
+		sb.Where(fmt.Sprintf("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM %s)", resourceFilterCTEName))
+	}
+	startBucket := b.start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
+	endBucket := b.end / querybuilder.NsToSeconds
+	sb.Where(
+		sb.GE("timestamp", fmt.Sprintf("%d", b.start)),
+		sb.L("timestamp", fmt.Sprintf("%d", b.end)),
+		sb.GE("ts_bucket_start", startBucket),
+		sb.LE("ts_bucket_start", endBucket),
+	)
 
 	if query.Filter != nil && query.Filter.Expression != "" {
 		b.stmtBuilder.logger.DebugContext(b.ctx, "Applying filter to query CTE", "queryName", queryName, "filter", query.Filter.Expression)
@@ -208,7 +251,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 				FieldMapper:        b.stmtBuilder.fm,
 				ConditionBuilder:   b.stmtBuilder.cb,
 				FieldKeys:          keys,
-				SkipResourceFilter: false,
+				SkipResourceFilter: true,
 			},
 		)
 		if err != nil {
@@ -230,7 +273,14 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 	}
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	b.addCTE(cteName, sql, args, []string{"base_spans"})
+	b.stmtBuilder.logger.DebugContext(b.ctx, "Built query CTE",
+		"queryName", queryName,
+		"cteName", cteName)
+	dependencies := []string{}
+	if resourceFilterCTEName != "" {
+		dependencies = append(dependencies, resourceFilterCTEName)
+	}
+	b.addCTE(cteName, sql, args, dependencies)
 
 	return cteName, nil
 }
@@ -280,6 +330,11 @@ func (b *traceOperatorCTEBuilder) buildOperatorCTE(op qbtypes.TraceOperatorType,
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %s", op.StringValue())
 	}
 
+	b.stmtBuilder.logger.DebugContext(b.ctx, "Built operator CTE",
+		"operator", op.StringValue(),
+		"cteName", cteName,
+		"leftCTE", leftCTE,
+		"rightCTE", rightCTE)
 	b.addCTE(cteName, sql, args, dependsOn)
 	return cteName, nil
 }
@@ -300,7 +355,6 @@ func (b *traceOperatorCTEBuilder) buildDirectDescendantCTE(parentCTE, childCTE s
 }
 
 func (b *traceOperatorCTEBuilder) buildIndirectDescendantCTE(ancestorCTE, descendantCTE string) (string, []any, []string) {
-	// Walk up from descendant spans to find all their ancestors, then join with ancestor CTE
 	sql := fmt.Sprintf(`
 		WITH RECURSIVE up AS (
 			SELECT
@@ -317,7 +371,7 @@ func (b *traceOperatorCTEBuilder) buildIndirectDescendantCTE(ancestorCTE, descen
 				p.span_id,
 				p.parent_span_id,
 				up.depth + 1
-			FROM base_spans AS p
+			FROM all_spans AS p
 			JOIN up ON p.trace_id = up.trace_id AND p.span_id = up.parent_span_id
 			WHERE up.depth < 100
 		)
@@ -330,7 +384,7 @@ func (b *traceOperatorCTEBuilder) buildIndirectDescendantCTE(ancestorCTE, descen
 		) AS ancestors ON ancestors.trace_id = a.trace_id AND ancestors.span_id = a.span_id
 	`, descendantCTE, ancestorCTE)
 
-	return sql, nil, []string{ancestorCTE, descendantCTE, "base_spans"}
+	return sql, nil, []string{ancestorCTE, descendantCTE, "all_spans"}
 }
 
 func (b *traceOperatorCTEBuilder) buildAndCTE(leftCTE, rightCTE string) (string, []any, []string) {
@@ -363,18 +417,16 @@ func (b *traceOperatorCTEBuilder) buildNotCTE(leftCTE, rightCTE string) (string,
 
 	// Handle unary NOT case (rightCTE is empty)
 	if rightCTE == "" {
-		// Unary NOT: select all spans from traces that do NOT contain spans from leftCTE
 		sb.Select("b.*")
-		sb.From("base_spans AS b")
+		sb.From("all_spans AS b")
 		sb.Where(fmt.Sprintf(
 			"b.trace_id GLOBAL NOT IN (SELECT DISTINCT trace_id FROM %s)",
 			leftCTE,
 		))
 		sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-		return sql, args, []string{"base_spans", leftCTE}
+		return sql, args, []string{"all_spans", leftCTE}
 	}
 
-	// Binary NOT (exclude): select spans from leftCTE that are NOT in rightCTE traces
 	sb.Select("l.*")
 	sb.From(fmt.Sprintf("%s AS l", leftCTE))
 	sb.Where(fmt.Sprintf(
@@ -697,7 +749,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(selectFromCTE string) (*qbtype
 		"trace_id as `trace_id`",
 	)
 
-	sb.From("base_spans")
+	sb.From("all_spans")
 	sb.Where(
 		fmt.Sprintf("trace_id GLOBAL IN (%s)", traceSubquery),
 		"parent_span_id = ''",
