@@ -1,3 +1,14 @@
 .create-alert-v2-container {
 	background-color: var(--bg-ink-500);
 }
+
+.top-nav-container {
+	background: repeating-linear-gradient(
+		-45deg,
+		#0f0f0f,
+		#0f0f0f 10px,
+		#101010 10px,
+		#101010 20px
+	);
+	margin-bottom: 0;
+}

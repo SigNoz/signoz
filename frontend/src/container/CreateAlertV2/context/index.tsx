@@ -1,3 +1,4 @@
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
 	createContext,
 	useContext,
@@ -5,14 +6,16 @@ import {
 	useReducer,
 	useState,
 } from 'react';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { AlertDef } from 'types/api/alerts/def';
 
 import { INITIAL_ALERT_STATE } from './constants';
+import { ICreateAlertContextProps, ICreateAlertProviderProps } from './types';
 import {
-	AlertCreationStep,
-	ICreateAlertContextProps,
-	ICreateAlertProviderProps,
-} from './types';
-import { alertCreationReducer } from './utils';
+	alertCreationReducer,
+	buildInitialAlertDef,
+	getInitialAlertType,
+} from './utils';
 
 const CreateAlertContext = createContext<ICreateAlertContextProps | null>(null);
 
@@ -36,18 +39,21 @@ export function CreateAlertProvider(
 		alertCreationReducer,
 		INITIAL_ALERT_STATE,
 	);
-	const [step, setStep] = useState<AlertCreationStep>(
-		AlertCreationStep.ALERT_DEFINITION,
+	const { currentQuery } = useQueryBuilder();
+	const [alertType, setAlertType] = useState<AlertTypes>(
+		getInitialAlertType(currentQuery),
 	);
+	const [alertDef] = useState<AlertDef>(buildInitialAlertDef(alertType));
 
 	const contextValue: ICreateAlertContextProps = useMemo(
 		() => ({
 			alertState,
 			setAlertState,
-			step,
-			setStep,
+			alertType,
+			setAlertType,
+			alertDef,
 		}),
-		[alertState, setAlertState, step, setStep],
+		[alertState, alertType, alertDef],
 	);
 
 	return (
