@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/user"
+	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -18,10 +19,10 @@ import (
 )
 
 type handler struct {
-	module user.Module
+	module root.Module
 }
 
-func NewHandler(module user.Module) user.Handler {
+func NewHandler(module root.Module) root.Handler {
 	return &handler{module: module}
 }
 
@@ -30,8 +31,8 @@ func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	req := new(types.PostableAcceptInvite)
-	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to decode user"))
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -85,7 +86,7 @@ func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_, err = h.module.CreateUserWithPassword(ctx, user, password)
+		err = h.module.CreateUser(ctx, user, root.WithFactorPassword(password))
 		if err != nil {
 			render.Error(w, err)
 			return

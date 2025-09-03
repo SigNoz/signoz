@@ -49,7 +49,7 @@ type FactorPassword struct {
 	Identifiable
 	Password  string `bun:"password,type:text,notnull" json:"password"`
 	Temporary bool   `bun:"temporary,type:boolean,notnull" json:"temporary"`
-	UserID    string `bun:"user_id,type:text,notnull,unique,references:user(id)" json:"userId"`
+	UserID    string `bun:"user_id,type:text,notnull,unique" json:"userId"`
 	TimeAuditable
 }
 
@@ -116,6 +116,15 @@ func GenerateFactorPassword(userID string) (*FactorPassword, error) {
 	}
 
 	return NewFactorPassword(password+"Z", userID)
+}
+
+func MustGenerateFactorPassword(userID string) *FactorPassword {
+	password, err := GenerateFactorPassword(userID)
+	if err != nil {
+		panic(err)
+	}
+
+	return password
 }
 
 func NewHashedPassword(password string) (string, error) {

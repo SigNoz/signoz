@@ -8,6 +8,22 @@ from fixtures.logger import setup_logger
 logger = setup_logger(__name__)
 
 
+def test_register_with_invalid_password(signoz: types.SigNoz) -> None:
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/register"),
+        json={
+            "name": "admin",
+            "orgId": "",
+            "orgName": "integration.test",
+            "email": "admin@integration.test",
+            "password": "password",
+        },
+        timeout=2,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
 def test_register(signoz: types.SigNoz, get_jwt_token) -> None:
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/version"), timeout=2

@@ -104,55 +104,29 @@ func (store *store) ListInvite(ctx context.Context, orgID string) ([]*types.Invi
 	return *invites, nil
 }
 
-func (store *store) CreatePassword(ctx context.Context, password *types.FactorPassword) (*types.FactorPassword, error) {
-	_, err := store.sqlstore.BunDB().NewInsert().
+func (store *store) CreatePassword(ctx context.Context, password *types.FactorPassword) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewInsert().
 		Model(password).
 		Exec(ctx)
-
 	if err != nil {
-		return nil, store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrPasswordAlreadyExists, "password with user id: %s already exists", password.UserID)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrPasswordAlreadyExists, "password for user %s already exists", password.UserID)
 	}
 
-	return password, nil
-}
-
-func (store *store) CreateUserWithPassword(ctx context.Context, user *types.User, password *types.FactorPassword) (*types.User, error) {
-	tx, err := store.sqlstore.BunDB().BeginTx(ctx, nil)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to start transaction")
-	}
-
-	defer func() {
-		_ = tx.Rollback()
-	}()
-
-	if _, err := tx.NewInsert().
-		Model(user).
-		Exec(ctx); err != nil {
-		return nil, store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrUserAlreadyExists, "user with email: %s already exists in org: %s", user.Email, user.OrgID)
-	}
-
-	password.UserID = user.ID.StringValue()
-	if _, err := tx.NewInsert().
-		Model(password).
-		Exec(ctx); err != nil {
-		return nil, store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrPasswordAlreadyExists, "password with email: %s already exists in org: %s", user.Email, user.OrgID)
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to commit transaction")
-	}
-
-	return user, nil
+	return nil
 }
 
 func (store *store) CreateUser(ctx context.Context, user *types.User) error {
-	_, err := store.sqlstore.BunDB().NewInsert().
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewInsert().
 		Model(user).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrUserAlreadyExists, "user with email: %s already exists in org: %s", user.Email, user.OrgID)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrUserAlreadyExists, "user with email %s already exists in org %s", user.Email, user.OrgID)
 	}
 	return nil
 }

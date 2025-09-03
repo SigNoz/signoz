@@ -67,12 +67,12 @@ func NewUser(displayName string, email string, role string, orgID string) (*User
 }
 
 type PostableRegisterOrgAndAdmin struct {
-	PostableAcceptInvite
 	Name           string `json:"name"`
 	OrgID          string `json:"orgId"`
 	OrgDisplayName string `json:"orgDisplayName"`
 	OrgName        string `json:"orgName"`
 	Email          string `json:"email"`
+	Password       string `json:"password"`
 }
 
 type PostableAcceptInvite struct {
@@ -155,6 +155,10 @@ func (request *PostableRegisterOrgAndAdmin) UnmarshalJSON(data []byte) error {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
 	}
 
+	if !IsPasswordValid(temp.Password) {
+		return ErrInvalidPassword
+	}
+
 	*request = PostableRegisterOrgAndAdmin(temp)
 	return nil
 }
@@ -167,8 +171,7 @@ type UserStore interface {
 	GetInviteByToken(ctx context.Context, token string) (*GettableInvite, error)
 	GetInviteByEmailInOrg(ctx context.Context, orgID string, email string) (*Invite, error)
 
-	// user
-	CreateUserWithPassword(ctx context.Context, user *User, password *FactorPassword) (*User, error)
+	// Creates a user.
 	CreateUser(ctx context.Context, user *User) error
 	GetUserByID(ctx context.Context, orgID string, id string) (*GettableUser, error)
 	GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*GettableUser, error)
@@ -178,8 +181,8 @@ type UserStore interface {
 	UpdateUser(ctx context.Context, orgID string, id string, user *User) (*User, error)
 	DeleteUser(ctx context.Context, orgID string, id string) error
 
-	// password
-	CreatePassword(ctx context.Context, password *FactorPassword) (*FactorPassword, error)
+	// Creates a password.
+	CreatePassword(ctx context.Context, password *FactorPassword) error
 	CreateResetPasswordToken(ctx context.Context, resetPasswordRequest *ResetPasswordToken) error
 	GetPassword(ctx context.Context, id valuer.UUID) (*FactorPassword, error)
 	GetPasswordByUserID(ctx context.Context, userID valuer.UUID) (*FactorPassword, error)

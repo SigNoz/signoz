@@ -12,16 +12,28 @@ import (
 )
 
 type Module interface {
+	// Creates the organization and the first user of that organization.
+	CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email string, password string) (*types.User, error)
+
+	// Creates a user and sends an analytics event.
+	CreateUser(ctx context.Context, user *types.User, opts ...CreateUserOption) error
+
+	// Get or Create a reset password token for a user. If the password does not exist, a new one is randomly generated.
+	GetOrCreateResetPasswordToken(ctx context.Context, userID valuer.UUID) (*types.ResetPasswordToken, error)
+
+	// Updates password of a user using a reset password token. It also deletes all reset password tokens for the user.
+	// This is used to reset the password of a user when they forget their password.
+	UpdatePasswordByResetPasswordToken(ctx context.Context, token string, password string) error
+
+	// Updates password of user to the new password. It also deletes all reset password tokens for the user.
+	UpdatePassword(ctx context.Context, userID valuer.UUID, oldPassword string, password string) error
+
 	// invite
 	CreateBulkInvite(ctx context.Context, orgID, userID string, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error)
 	ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error)
 	DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error
 	GetInviteByToken(ctx context.Context, token string) (*types.GettableInvite, error)
 	GetInviteByEmailInOrg(ctx context.Context, orgID string, email string) (*types.Invite, error)
-
-	// user
-	CreateUserWithPassword(ctx context.Context, user *types.User, password *types.FactorPassword) (*types.User, error)
-	CreateUser(ctx context.Context, user *types.User) error
 	GetUserByID(ctx context.Context, orgID string, id string) (*types.GettableUser, error)
 	GetUsersByEmail(ctx context.Context, email string) ([]*types.GettableUser, error) // public function
 	GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*types.GettableUser, error)
@@ -40,16 +52,6 @@ type Module interface {
 	PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (string, error)
 	CanUsePassword(ctx context.Context, email string) (bool, error)
 
-	// Get or Create a reset password token for a user. If the password does not exist, a new one is randomly generated.
-	GetOrCreateResetPasswordToken(ctx context.Context, userID valuer.UUID) (*types.ResetPasswordToken, error)
-
-	// Updates password of a user using a reset password token. It also deletes all reset password tokens for the user.
-	// This is used to reset the password of a user when they forget their password.
-	UpdatePasswordByResetPasswordToken(ctx context.Context, token string, password string) error
-
-	// Updates password of user to the new password. It also deletes all reset password tokens for the user.
-	UpdatePassword(ctx context.Context, userID valuer.UUID, oldPassword string, password string) error
-
 	// Auth Domain
 	GetAuthDomainByEmail(ctx context.Context, email string) (*types.GettableOrgDomain, error)
 	GetDomainFromSsoResponse(ctx context.Context, url *url.URL) (*types.GettableOrgDomain, error)
@@ -65,9 +67,6 @@ type Module interface {
 	ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error)
 	RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UUID) error
 	GetAPIKey(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.StorableAPIKeyUser, error)
-
-	// Register
-	Register(ctx context.Context, req *types.PostableRegisterOrgAndAdmin) (*types.User, error)
 
 	statsreporter.StatsCollector
 }

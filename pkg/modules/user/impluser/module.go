@@ -13,7 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/modules/user"
+	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -34,7 +34,7 @@ type Module struct {
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics) user.Module {
+func NewModule(store types.UserStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics) root.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:     store,
@@ -131,27 +131,28 @@ func (m *Module) GetInviteByEmailInOrg(ctx context.Context, orgID string, email 
 	return m.store.GetInviteByEmailInOrg(ctx, orgID, email)
 }
 
-func (m *Module) CreateUserWithPassword(ctx context.Context, user *types.User, password *types.FactorPassword) (*types.User, error) {
-	user, err := m.store.CreateUserWithPassword(ctx, user, password)
-	if err != nil {
-		return nil, err
-	}
+func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
+	createUserOpts := root.NewCreateUserOptions(opts...)
 
-	traitsOrProperties := types.NewTraitsFromUser(user)
-	m.analytics.IdentifyUser(ctx, user.OrgID, user.ID.String(), traitsOrProperties)
-	m.analytics.TrackUser(ctx, user.OrgID, user.ID.String(), "User Created", traitsOrProperties)
+	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.CreateUser(ctx, input); err != nil {
+			return err
+		}
 
-	return user, nil
-}
+		if createUserOpts.FactorPassword != nil {
+			if err := module.store.CreatePassword(ctx, createUserOpts.FactorPassword); err != nil {
+				return err
+			}
+		}
 
-func (m *Module) CreateUser(ctx context.Context, user *types.User) error {
-	if err := m.store.CreateUser(ctx, user); err != nil {
+		return nil
+	}); err != nil {
 		return err
 	}
 
-	traitsOrProperties := types.NewTraitsFromUser(user)
-	m.analytics.IdentifyUser(ctx, user.OrgID, user.ID.String(), traitsOrProperties)
-	m.analytics.TrackUser(ctx, user.OrgID, user.ID.String(), "User Created", traitsOrProperties)
+	traitsOrProperties := types.NewTraitsFromUser(input)
+	module.analytics.IdentifyUser(ctx, input.OrgID, input.ID.String(), traitsOrProperties)
+	module.analytics.TrackUser(ctx, input.OrgID, input.ID.String(), "User Created", traitsOrProperties)
 
 	return nil
 }
@@ -177,7 +178,6 @@ func (m *Module) ListUsers(ctx context.Context, orgID string) ([]*types.Gettable
 }
 
 func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *types.User, updatedBy string) (*types.User, error) {
-
 	existingUser, err := m.GetUserByID(ctx, orgID, id)
 	if err != nil {
 		return nil, err
@@ -201,7 +201,7 @@ func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *
 		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "only admins can change roles")
 	}
 
-	// Make sure that the request is not demoting the last admin user.
+	// Make sure that th e request is not demoting the last admin user.
 	// also an admin user can only change role of their own or other user
 	if user.Role != existingUser.Role && existingUser.Role == types.RoleAdmin.String() {
 		adminUsers, err := m.GetUsersByRoleInOrg(ctx, orgID, types.RoleAdmin)
@@ -283,10 +283,7 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 
 	if password == nil {
 		// if the user does not have a password, we need to create a new one (common for SSO/SAML users)
-		password, err = types.GenerateFactorPassword(userID.String())
-		if err != nil {
-			return nil, err
-		}
+		password = types.MustGenerateFactorPassword(userID.String())
 	}
 
 	resetPasswordToken, err := types.NewResetPasswordToken(password.ID)
@@ -625,32 +622,30 @@ func (m *Module) UpdateDomain(ctx context.Context, domain *types.GettableOrgDoma
 	return m.store.UpdateDomain(ctx, domain)
 }
 
-func (module *Module) Register(ctx context.Context, req *types.PostableRegisterOrgAndAdmin) (*types.User, error) {
-	organization := types.NewOrganization(req.OrgDisplayName)
-	user, err := types.NewUser(req.Name, req.Email, types.RoleAdmin.String(), organization.ID.StringValue())
+func (module *Module) CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email string, passwd string) (*types.User, error) {
+	user, err := types.NewUser(name, email, types.RoleAdmin.String(), organization.ID.StringValue())
 	if err != nil {
 		return nil, err
 	}
 
-	password, err := types.NewFactorPassword(req.Password, user.ID.StringValue())
+	password, err := types.NewFactorPassword(passwd, user.ID.StringValue())
 	if err != nil {
 		return nil, err
 	}
 
-	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		err = module.orgSetter.Create(ctx, organization)
+	if err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		err := module.orgSetter.Create(ctx, organization)
 		if err != nil {
 			return err
 		}
 
-		_, err = module.CreateUserWithPassword(ctx, user, password)
+		err = module.CreateUser(ctx, user, root.WithFactorPassword(password))
 		if err != nil {
 			return err
 		}
 
 		return nil
-	})
-	if err != nil {
+	}); err != nil {
 		return nil, err
 	}
 
