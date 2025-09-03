@@ -105,7 +105,7 @@ def test_change_password(signoz: types.SigNoz, get_jwt_token) -> None:
     # Try changing the password with a good old password
     response = requests.post(
         signoz.self.host_configs["8080"].get(
-            "/api/v1/changePassword/{found_user['id']}"
+            f"/api/v1/changePassword/{found_user['id']}"
         ),
         json={
             "userId": f"{found_user['id']}",
