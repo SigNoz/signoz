@@ -44,11 +44,19 @@ describe('handleQueryChange', () => {
 			superset as Query,
 			PANEL_TYPES.TABLE,
 		);
-		const q = output.builder.queryData[0];
-		expect(q.aggregateOperator).toBe('noop');
-		expect(q.offset).toBe(0);
-		expect(q.pageSize).toBe(10);
-		expect(q.orderBy).toBeUndefined();
+		const firstQuery = output.builder.queryData[0];
+		expect(firstQuery.aggregateOperator).toBe('noop');
+		expect(firstQuery.offset).toBe(0);
+		expect(firstQuery.pageSize).toBe(10);
+		expect(firstQuery.orderBy).toBeUndefined();
+		expect(firstQuery.queryName).toBe('A');
+
+		const secondQuery = output.builder.queryData[1];
+		expect(secondQuery.aggregateOperator).toBe('noop');
+		expect(secondQuery.offset).toBe(0);
+		expect(secondQuery.pageSize).toBe(10);
+		expect(secondQuery.orderBy).toBeUndefined();
+		expect(secondQuery.queryName).toBe('B');
 	});
 
 	test('resets noop and pagination when leaving LIST', () => {
@@ -67,5 +75,6 @@ describe('handleQueryChange', () => {
 		expect(q.offset).toBeUndefined();
 		expect(q.pageSize).toBeUndefined();
 		expect(q.orderBy).toBeUndefined();
+		expect(q.queryName).toBe('A');
 	});
 });
