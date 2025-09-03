@@ -30,6 +30,7 @@ import { TriangleAlert } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { IDetailedError, IValidationResult } from 'types/antlrQueryTypes';
 import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 import { validateTraceOperatorQuery } from 'utils/queryValidationUtils';
 
 import { getTraceOperatorContextAtCursor } from './utils/traceOperatorContextUtils';
@@ -82,15 +83,20 @@ function TraceOperatorEditor({
 		message: '',
 		errors: [],
 	});
+	// Track if the query was changed externally (from props) vs internally (user input)
+	const [isExternalQueryChange, setIsExternalQueryChange] = useState(false);
+	const [lastExternalValue, setLastExternalValue] = useState<string>('');
 	const { currentQuery, handleRunQuery } = useQueryBuilder();
 
 	const queryOptions = useMemo(
 		() =>
-			currentQuery.builder.queryData.map((query) => ({
-				label: query.queryName,
-				type: 'atom',
-				apply: query.queryName,
-			})),
+			currentQuery.builder.queryData
+				.filter((query) => query.dataSource === DataSource.TRACES) // Only show trace queries
+				.map((query) => ({
+					label: query.queryName,
+					type: 'atom',
+					apply: query.queryName,
+				})),
 		[currentQuery.builder.queryData],
 	);
 
@@ -122,6 +128,23 @@ function TraceOperatorEditor({
 			});
 		}
 	};
+
+	// Detect external value changes and mark for validation
+	useEffect(() => {
+		const newValue = value || '';
+		if (newValue !== lastExternalValue) {
+			setIsExternalQueryChange(true);
+			setLastExternalValue(newValue);
+		}
+	}, [value, lastExternalValue]);
+
+	// Validate when the value changes externally (including on mount)
+	useEffect(() => {
+		if (isExternalQueryChange && value) {
+			handleQueryValidation(value);
+			setIsExternalQueryChange(false);
+		}
+	}, [isExternalQueryChange, value]);
 
 	// Enhanced autosuggestion function with context awareness
 	function autoSuggestions(context: CompletionContext): CompletionResult | null {
@@ -330,6 +353,9 @@ function TraceOperatorEditor({
 	);
 
 	const handleChange = (newValue: string): void => {
+		// Mark as internal change to avoid triggering external validation
+		setIsExternalQueryChange(false);
+		setLastExternalValue(newValue);
 		onChange(newValue);
 	};
 

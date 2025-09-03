@@ -120,7 +120,10 @@ export default function QBEntityOptions({
 								className={cx(
 									'periscope-btn',
 									entityType === 'query' ? 'query-name' : 'formula-name',
-									hasTraceOperator || isListViewPanel ? 'has-trace-operator' : '',
+									query?.dataSource === DataSource.TRACES &&
+										(hasTraceOperator || (showTraceOperator && isListViewPanel))
+										? 'has-trace-operator'
+										: '',
 									isLogsExplorerPage && lastUsedQuery === index ? 'sync-btn' : '',
 								)}
 							>
