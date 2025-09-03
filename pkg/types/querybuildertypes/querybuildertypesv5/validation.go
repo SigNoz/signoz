@@ -145,6 +145,25 @@ func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
 		}
 	}
 
+	if requestType == RequestTypeRaw {
+		if err := q.validateSelectFields(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (q *QueryBuilderQuery[T]) validateSelectFields() error {
+	// isRoot and isEntryPoint are returned by the Metadata API, so if someone sends them, we have to reject the request.
+	for _, v := range q.SelectFields {
+		if v.Name == "isRoot" || v.Name == "isEntryPoint" {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"isRoot and isEntryPoint fields are not supported in selectFields",
+			)
+		}
+	}
 	return nil
 }
 
