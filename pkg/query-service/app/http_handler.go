@@ -5150,33 +5150,30 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getSpanPercentileDetails(w http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
-		render.Error(w, err)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
 		return
 	}
 
 	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
-		render.Error(w, err)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
 		return
 	}
 
 	spanPercentileRequest, apiErr := ParseSpanPercentileRequestBody(r)
 	if apiErr != nil {
-		zap.L().Error("Failed to parse request body", zap.Error(apiErr))
 		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, apiErr.Error()))
 		return
 	}
 
 	queryRangeRequest, err := spanpercentile.BuildSpanPercentileQuery(spanPercentileRequest)
 	if err != nil {
-		zap.L().Error("Failed to build span percentile query", zap.Error(err))
 		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
 		render.Error(w, apiErrObj)
 		return
 	}
 
 	if err := queryRangeRequest.Validate(); err != nil {
-		zap.L().Error("Query validation failed", zap.Error(err))
 		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
 		render.Error(w, apiErrObj)
 		return
@@ -5184,7 +5181,6 @@ func (aH *APIHandler) getSpanPercentileDetails(w http.ResponseWriter, r *http.Re
 
 	result, err := aH.Signoz.Querier.QueryRange(r.Context(), orgID, queryRangeRequest)
 	if err != nil {
-		zap.L().Error("Query execution failed", zap.Error(err))
 		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
 		render.Error(w, apiErrObj)
 		return
