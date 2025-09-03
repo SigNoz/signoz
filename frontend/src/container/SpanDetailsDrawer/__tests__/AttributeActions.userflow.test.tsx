@@ -54,6 +54,22 @@ jest.mock('react-query', () => ({
 	useQueryClient: (): any => mockQueryClient,
 }));
 
+jest.mock('uplot', () => {
+	const paths = {
+		spline: jest.fn(),
+		bars: jest.fn(),
+	};
+	const uplotMock = jest.fn(() => ({
+		paths,
+	}));
+	return {
+		paths,
+		default: uplotMock,
+	};
+});
+
+jest.mock('@signozhq/sonner', () => ({ toast: jest.fn() }));
+
 // Mock the API response for getAggregateKeys
 const mockAggregateKeysResponse = {
 	payload: {
@@ -123,12 +139,11 @@ const renderSpanDetailsDrawer = (span: Span = createMockSpan()): any => {
 							isSpanDetailsDocked={false}
 							setIsSpanDetailsDocked={jest.fn()}
 							selectedSpan={span}
-							traceID={span.traceId}
 							traceStartTime={span.timestamp}
 							traceEndTime={span.timestamp + span.durationNano}
 						/>
 					</Route>
-				</MemoryRouter>{' '}
+				</MemoryRouter>
 			</AppProvider>
 		</MockQueryClientProvider>,
 	);
