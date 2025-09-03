@@ -51,7 +51,7 @@ import {
 export const MAX_FORMULAS = 20;
 export const MAX_QUERIES = 26;
 
-export const TRACE_OPERATOR_QUERY_NAME = 'T1';
+export const TRACE_OPERATOR_QUERY_NAME = 'Trace Operator';
 
 export const idDivider = '--';
 export const selectValueDivider = '__';

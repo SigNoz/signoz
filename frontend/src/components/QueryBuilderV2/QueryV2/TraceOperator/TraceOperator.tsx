@@ -5,7 +5,6 @@ import './TraceOperator.styles.scss';
 
 import { Button, Select, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
-// import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Trash2 } from 'lucide-react';
