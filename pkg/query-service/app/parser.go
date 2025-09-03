@@ -16,15 +16,16 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/SigNoz/govaluate"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/thirdPartyApi"
+
+	"github.com/SigNoz/govaluate"
 	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
-	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
@@ -982,17 +983,12 @@ func ParseQueueBody(r *http.Request) (*queues2.QueueListRequest, *model.ApiError
 }
 
 // ParseRequestBody for third party APIs
-func ParseRequestBody(r *http.Request) (*thirdpartyapitypes.ThirdPartyApiRequest, error) {
-	req := new(thirdpartyapitypes.ThirdPartyApiRequest)
-	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		return nil, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "cannot parse the request body: %v", err)
+func ParseRequestBody(r *http.Request) (*thirdPartyApi.ThirdPartyApis, *model.ApiError) {
+	thirdPartApis := new(thirdPartyApi.ThirdPartyApis)
+	if err := json.NewDecoder(r.Body).Decode(thirdPartApis); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
-
-	if err := req.Validate(); err != nil {
-		return nil, err
-	}
-
-	return req, nil
+	return thirdPartApis, nil
 }
 
 // ParseSpanPercentileRequestBody parses the request body for span percentile requests
