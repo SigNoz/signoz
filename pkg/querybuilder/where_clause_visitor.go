@@ -95,8 +95,6 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWher
 		opts.Builder = sb
 	}
 
-	visitor := newFilterExpressionVisitor(opts)
-
 	// Set up error handling
 	lexerErrorListener := NewErrorListener()
 	lexer.RemoveErrorListeners()
@@ -110,6 +108,17 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWher
 
 	// Parse the query
 	tree := parser.Query()
+
+	// override skipResourceFilter if the expression contains OR
+	for _, tok := range tokens.GetAllTokens() {
+		if tok.GetTokenType() == grammar.FilterQueryParserOR {
+			opts.SkipResourceFilter = false
+			break
+		}
+	}
+	tokens.Reset()
+
+	visitor := newFilterExpressionVisitor(opts)
 
 	// Handle syntax errors
 	if len(parserErrorListener.SyntaxErrors) > 0 {
@@ -374,6 +383,9 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		if len(conds) == 1 {
 			return conds[0]
 		}
+		if op.IsNegativeOperator() {
+			return v.builder.And(conds...)
+		}
 		return v.builder.Or(conds...)
 	}
 
@@ -438,6 +450,9 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		if len(conds) == 1 {
 			return conds[0]
 		}
+		if op.IsNegativeOperator() {
+			return v.builder.And(conds...)
+		}
 		return v.builder.Or(conds...)
 	}
 
@@ -466,6 +481,9 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		}
 		if len(conds) == 1 {
 			return conds[0]
+		}
+		if op.IsNegativeOperator() {
+			return v.builder.And(conds...)
 		}
 		return v.builder.Or(conds...)
 	}
@@ -543,6 +561,9 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		}
 		if len(conds) == 1 {
 			return conds[0]
+		}
+		if op.IsNegativeOperator() {
+			return v.builder.And(conds...)
 		}
 		return v.builder.Or(conds...)
 	}
