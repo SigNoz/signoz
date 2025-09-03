@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
-	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
 
 	//qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"io"
