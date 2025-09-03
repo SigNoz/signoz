@@ -507,6 +507,7 @@ export const getDomainMetricsQueryPayload = (
 						legend: '',
 					},
 				],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{
@@ -816,6 +817,7 @@ export const getEndPointsQueryPayload = (
 							legend: 'error percentage',
 						},
 					],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -965,6 +967,7 @@ export const getTopErrorsQueryPayload = (
 					},
 				],
 				queryFormulas: [],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{
@@ -1729,6 +1732,7 @@ export const getEndPointDetailsQueryPayload = (
 						legend: 'error percentage',
 					},
 				],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{
@@ -1928,6 +1932,7 @@ export const getEndPointDetailsQueryPayload = (
 					},
 				],
 				queryFormulas: [],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{
@@ -2016,6 +2021,7 @@ export const getEndPointDetailsQueryPayload = (
 					},
 				],
 				queryFormulas: [],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{
@@ -2287,6 +2293,7 @@ export const getEndPointDetailsQueryPayload = (
 						legend: 'error percentage',
 					},
 				],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{
@@ -2376,6 +2383,7 @@ export const getEndPointDetailsQueryPayload = (
 					},
 				],
 				queryFormulas: [],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{
@@ -2464,6 +2472,7 @@ export const getEndPointDetailsQueryPayload = (
 					},
 				],
 				queryFormulas: [],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{
@@ -2558,6 +2567,7 @@ export const getEndPointZeroStateQueryPayload = (
 					},
 				],
 				queryFormulas: [],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{
@@ -3135,6 +3145,7 @@ export const getStatusCodeBarChartWidgetData = (
 				},
 			],
 			queryFormulas: [],
+			queryTraceOperator: [],
 		},
 		clickhouse_sql: [
 			{
