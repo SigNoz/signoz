@@ -14,6 +14,7 @@ import (
 
 const defaultRuleReceiverName = "default-rule-receiver"
 const defaultNotificationPolicyReceiverName = "default-notification-policy"
+const defaultChannelReceiverName = "default-channel-receiver"
 
 type RoutingStrategy interface {
 	AddDirectRules(config *alertmanagertypes.Config, ruleId string, postableRule ruletypes.PostableRule) error
@@ -90,7 +91,7 @@ func (crs *ChannelRoutingStrategy) AddNotificationPolicyRules(config *alertmanag
 	// Add a new child route with single ruleId matcher for each channel route
 	for _, policyRoute := range notificationPolicyRoutes {
 		for _, channelRoute := range policyRoute.Routes {
-			ruleSpecificRoute := crs.createRuleSpecificChannelRoute(channelRoute.Receiver, ruleId, postableRule)
+			ruleSpecificRoute := crs.createRuleSpecificChannelRoute(getChannelFormPolicyChannelReceiverName(channelRoute.Receiver), ruleId, postableRule)
 			channelRoute.Routes = append(channelRoute.Routes, ruleSpecificRoute)
 		}
 	}
@@ -123,9 +124,10 @@ func (crs *ChannelRoutingStrategy) AddNotificationPolicy(config *alertmanagertyp
 	policyRoute := crs.createNotificationPolicyRoute(parsedMatchers, routeId)
 
 	// Create channel routes for each receiver
+	var channelReceivers []alertmanagertypes.Receiver
 	for _, receiver := range receivers {
 		channelRoute := crs.createPolicyChannelRoute(receiver)
-
+		channelReceivers = append(channelReceivers, alertmanagertypes.Receiver{Name: getPolicyChannelReceiverName(receiver)})
 		for ruleId, postableRule := range ruleIds {
 			ruleSpecificRoute := crs.createRuleSpecificChannelRoute(receiver, ruleId, postableRule)
 			channelRoute.Routes = append(channelRoute.Routes, ruleSpecificRoute)
@@ -133,8 +135,8 @@ func (crs *ChannelRoutingStrategy) AddNotificationPolicy(config *alertmanagertyp
 
 		policyRoute.Routes = append(policyRoute.Routes, channelRoute)
 	}
-
 	config.AlertmanagerConfig().Route.Routes = slices.Insert(config.AlertmanagerConfig().Route.Routes, 0, policyRoute)
+	config.AlertmanagerConfig().Receivers = append(config.AlertmanagerConfig().Receivers, channelReceivers...)
 	config.AlertmanagerConfig().Receivers = append(config.AlertmanagerConfig().Receivers, alertmanagertypes.Receiver{Name: getNotificationPolicyReceiverName(routeId)})
 	return nil
 }
@@ -306,10 +308,18 @@ func getRuleReceiverName(ruleId string) string {
 	return defaultRuleReceiverName + "_" + ruleId
 }
 
+func getPolicyChannelReceiverName(channelId string) string {
+	return defaultChannelReceiverName + "_" + channelId
+}
+
+func getChannelFormPolicyChannelReceiverName(channelId string) string {
+	return strings.Replace(channelId, defaultChannelReceiverName, "", -1)
+}
+
 // createPolicyChannelRoute creates channel route without rule matchers (parent for rule-specific routes)
 func (crs *ChannelRoutingStrategy) createPolicyChannelRoute(receiver string) *amconfig.Route {
 	return &amconfig.Route{
-		Receiver: receiver,
+		Receiver: getPolicyChannelReceiverName(receiver),
 		Continue: true,                // Continue to rule-specific child routes
 		Routes:   []*amconfig.Route{}, // Will contain rule-specific routes
 	}

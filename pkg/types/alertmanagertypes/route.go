@@ -21,10 +21,6 @@ func NewRouteFromRouteConfig(route *config.Route, cfg RouteConfig) (*config.Rout
 		route.RepeatInterval = (*model.Duration)(&cfg.RepeatInterval)
 	}
 
-	if err := route.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
-		return nil, err
-	}
-
 	return route, nil
 }
 
@@ -35,4 +31,17 @@ func NewRouteFromReceiver(receiver Receiver) (*config.Route, error) {
 	}
 
 	return route, nil
+}
+
+func UnmarshalRouteConfig(route *config.Route) error {
+	for _, childRoute := range route.Routes {
+		if err := UnmarshalRouteConfig(childRoute); err != nil {
+			return err
+		}
+	}
+	if err := route.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
+		return err
+	}
+
+	return nil
 }

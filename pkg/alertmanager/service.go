@@ -189,6 +189,10 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 	//	return server, nil
 	//}
 
+	if err := config.AlertmanagerConfig().UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
+		return nil, err
+	}
+
 	err = service.configStore.Set(ctx, config)
 	if err != nil {
 		return nil, err
