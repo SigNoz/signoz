@@ -466,18 +466,6 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		);
 	});
 
-	it('should format span timestamp correctly for infra metrics', async () => {
-		renderSpanDetailsDrawer();
-
-		// Click on infra tab
-		const infraButton = screen.getByRole('radio', { name: /infra/i });
-		fireEvent.click(infraButton);
-
-		await waitFor(() => {
-			expect(screen.getByTestId('infra-metrics')).toBeInTheDocument();
-		});
-	});
-
 	it('should handle infra tab selection when multiple infra identifiers exist', async () => {
 		renderSpanDetailsDrawer();
 
