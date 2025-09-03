@@ -313,7 +313,7 @@ func getPolicyChannelReceiverName(channelId string) string {
 }
 
 func getChannelFormPolicyChannelReceiverName(channelId string) string {
-	return strings.Replace(channelId, defaultChannelReceiverName, "", -1)
+	return strings.Replace(channelId, defaultChannelReceiverName+"_", "", -1)
 }
 
 // createPolicyChannelRoute creates channel route without rule matchers (parent for rule-specific routes)
