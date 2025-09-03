@@ -9,5 +9,5 @@ import (
 
 type AuthZ interface {
 	factory.Service
-	Check(context.Context, *openfgav1.CheckRequestTupleKey) (bool, error)
+	Check(context.Context, *openfgav1.CheckRequestTupleKey) error
 }

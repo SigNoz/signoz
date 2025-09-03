@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/authz"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/gorilla/mux"
@@ -111,15 +110,9 @@ func (middleware *AuthZ) OpenAccess(next http.HandlerFunc) http.HandlerFunc {
 func (middleware *AuthZ) Check(next http.HandlerFunc, relation string) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		checkRequestTupleKey := authtypes.NewTuple("", "", "")
-		allow, err := middleware.authzService.Check(req.Context(), checkRequestTupleKey)
+		err := middleware.authzService.Check(req.Context(), checkRequestTupleKey)
 		if err != nil {
 			render.Error(rw, err)
-			return
-		}
-
-		if !allow {
-			middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "tuple", checkRequestTupleKey)
-			render.Error(rw, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "subject %s cannot %s resource %s", "", relation, ""))
 			return
 		}
 
