@@ -4,66 +4,67 @@ import (
 	"context"
 
 	authz "github.com/SigNoz/signoz/pkg/authz"
-	"github.com/SigNoz/signoz/pkg/authz/openfgaauthz/schema"
+
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-	language "github.com/openfga/language/pkg/go/transformer"
-	"github.com/openfga/openfga/pkg/server"
+	openfgapkgtransformer "github.com/openfga/language/pkg/go/transformer"
+	openfgapkgserver "github.com/openfga/openfga/pkg/server"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type provider struct {
-	config   authz.Config
-	settings factory.ScopedProviderSettings
-	server   *server.Server
-	stopChan chan struct{}
+	config        authz.Config
+	settings      factory.ScopedProviderSettings
+	openfgaSchema []openfgapkgtransformer.ModuleFile
+	openfgaServer *openfgapkgserver.Server
+	stopChan      chan struct{}
 }
 
-func NewProviderFactory(sqlstoreConfig sqlstore.Config) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+func NewProviderFactory(sqlstoreConfig sqlstore.Config, openfgaSchema []openfgapkgtransformer.ModuleFile) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("openfga"), func(ctx context.Context, ps factory.ProviderSettings, config authz.Config) (authz.AuthZ, error) {
-		return newOpenfgaProvider(ctx, ps, config, sqlstoreConfig)
+		return newOpenfgaProvider(ctx, ps, config, sqlstoreConfig, openfgaSchema)
 	})
 }
 
-func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstoreConfig sqlstore.Config) (authz.AuthZ, error) {
+func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstoreConfig sqlstore.Config, openfgaSchema []openfgapkgtransformer.ModuleFile) (authz.AuthZ, error) {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/authz/openfgaauthz")
 
 	// setup connections and run the migrations
-	sqlstore, err := NewStore(storeConfig{sqlstoreConfig: sqlstoreConfig})
+	sqlstore, err := NewSQLStore(storeConfig{sqlstoreConfig: sqlstoreConfig})
 	if err != nil {
 		scopedProviderSettings.Logger().DebugContext(ctx, "failed to initialize sqlstore for authz")
 		return nil, err
 	}
 
 	// setup the openfga server
-	opts := []server.OpenFGAServiceV1Option{
-		server.WithDatastore(sqlstore),
-		server.WithLogger(NewLogger(scopedProviderSettings.Logger())),
+	opts := []openfgapkgserver.OpenFGAServiceV1Option{
+		openfgapkgserver.WithDatastore(sqlstore),
+		openfgapkgserver.WithLogger(NewLogger(scopedProviderSettings.Logger())),
 	}
-	openfgaServer, err := server.NewServerWithOpts(opts...)
+	openfgaServer, err := openfgapkgserver.NewServerWithOpts(opts...)
 	if err != nil {
 		scopedProviderSettings.Logger().DebugContext(ctx, "failed to create authz server")
 		return nil, err
 	}
 
 	return &provider{
-		config:   config,
-		settings: scopedProviderSettings,
-		server:   openfgaServer,
-		stopChan: make(chan struct{}),
+		config:        config,
+		settings:      scopedProviderSettings,
+		openfgaServer: openfgaServer,
+		openfgaSchema: openfgaSchema,
+		stopChan:      make(chan struct{}),
 	}, nil
 }
 
 func (provider *provider) Start(ctx context.Context) error {
-	storeId, err := provider.getOrCreateStore(ctx)
+	storeId, err := provider.getOrCreateStore(ctx, "signoz")
 	if err != nil {
-		provider.settings.Logger().DebugContext(ctx, "failed to getOrCreateStore")
 		return err
 	}
 
-	err = provider.getOrCreateAuthorisationModel(ctx, storeId)
+	_, err = provider.getOrCreateModel(ctx, storeId)
 	if err != nil {
-		provider.settings.Logger().DebugContext(ctx, "failed to getOrCreateAuthorisationModel")
 		return err
 	}
 
@@ -72,24 +73,24 @@ func (provider *provider) Start(ctx context.Context) error {
 }
 
 func (provider *provider) Stop(ctx context.Context) error {
-	provider.server.Close()
+	provider.openfgaServer.Close()
 	close(provider.stopChan)
 	return nil
 }
 
-func (provider *provider) getOrCreateStore(ctx context.Context) (string, error) {
-	stores, err := provider.server.ListStores(ctx, &openfgav1.ListStoresRequest{})
+func (provider *provider) getOrCreateStore(ctx context.Context, name string) (string, error) {
+	stores, err := provider.openfgaServer.ListStores(ctx, &openfgav1.ListStoresRequest{})
 	if err != nil {
 		return "", err
 	}
 
 	for _, store := range stores.GetStores() {
-		if store.GetName() == "signoz" {
+		if store.GetName() == name {
 			return store.Id, nil
 		}
 	}
 
-	store, err := provider.server.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: "signoz"})
+	store, err := provider.openfgaServer.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: name})
 	if err != nil {
 		return "", err
 	}
@@ -97,32 +98,63 @@ func (provider *provider) getOrCreateStore(ctx context.Context) (string, error) 
 	return store.Id, nil
 }
 
-func (provider *provider) getOrCreateAuthorisationModel(ctx context.Context, storeId string) error {
-	schema, err := language.TransformModuleFilesToModel(schema.SchemaModules, "1.1")
+func (provider *provider) getOrCreateModel(ctx context.Context, storeID string) (string, error) {
+	schema, err := openfgapkgtransformer.TransformModuleFilesToModel(provider.openfgaSchema, "1.1")
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	authorisationModels, err := provider.server.ReadAuthorizationModels(ctx, &openfgav1.ReadAuthorizationModelsRequest{StoreId: storeId})
+	authorisationModels, err := provider.openfgaServer.ReadAuthorizationModels(ctx, &openfgav1.ReadAuthorizationModelsRequest{StoreId: storeID})
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	for _, authModel := range authorisationModels.GetAuthorizationModels() {
-		if authModel.Id == schema.Id {
-			return nil
+		equal, err := provider.isModelEqual(schema, authModel)
+		if err != nil {
+			return "", err
+		}
+		if equal {
+			return authModel.Id, nil
 		}
 	}
 
-	_, err = provider.server.WriteAuthorizationModel(ctx, &openfgav1.WriteAuthorizationModelRequest{
-		StoreId:         storeId,
+	authorizationModel, err := provider.openfgaServer.WriteAuthorizationModel(ctx, &openfgav1.WriteAuthorizationModelRequest{
+		StoreId:         storeID,
 		TypeDefinitions: schema.TypeDefinitions,
 		SchemaVersion:   schema.SchemaVersion,
 		Conditions:      schema.Conditions,
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return authorizationModel.AuthorizationModelId, nil
+}
+
+// the language model doesn't have any equality check
+// https://github.com/openfga/language/blob/main/pkg/go/transformer/module-to-model_test.go#L38
+func (provider *provider) isModelEqual(expected *openfgav1.AuthorizationModel, actual *openfgav1.AuthorizationModel) (bool, error) {
+	// we need to initialize a new model since the model extracted from schema doesn't have id
+	expectedAuthModel := openfgav1.AuthorizationModel{
+		SchemaVersion:   expected.SchemaVersion,
+		TypeDefinitions: expected.TypeDefinitions,
+		Conditions:      expected.Conditions,
+	}
+	expectedAuthModelBytes, err := protojson.Marshal(&expectedAuthModel)
+	if err != nil {
+		return false, err
+	}
+
+	actualAuthModel := openfgav1.AuthorizationModel{
+		SchemaVersion:   actual.SchemaVersion,
+		TypeDefinitions: actual.TypeDefinitions,
+		Conditions:      actual.Conditions,
+	}
+	actualAuthModelBytes, err := protojson.Marshal(&actualAuthModel)
+	if err != nil {
+		return false, err
+	}
+
+	return string(expectedAuthModelBytes) == string(actualAuthModelBytes), nil
 }
