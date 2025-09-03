@@ -90,6 +90,8 @@ function VariablesSetting({
 }): JSX.Element {
 	const variableToDelete = useRef<IDashboardVariable | null>(null);
 	const [deleteVariableModal, setDeleteVariableModal] = useState(false);
+	const variableToApplyToAll = useRef<IDashboardVariable | null>(null);
+	const [applyToAllModal, setApplyToAllModal] = useState(false);
 
 	const { t } = useTranslation(['dashboard']);
 
@@ -303,6 +305,28 @@ function VariablesSetting({
 		setDeleteVariableModal(false);
 	};
 
+	const onApplyToAllHandler = (variable: IDashboardVariable): void => {
+		variableToApplyToAll.current = variable;
+		setApplyToAllModal(true);
+	};
+
+	const handleApplyToAllConfirm = (): void => {
+		if (variableToApplyToAll.current) {
+			onVariableSaveHandler(
+				variableViewMode || 'EDIT',
+				variableToApplyToAll.current,
+				true,
+			);
+		}
+		variableToApplyToAll.current = null;
+		setApplyToAllModal(false);
+	};
+
+	const handleApplyToAllCancel = (): void => {
+		variableToApplyToAll.current = null;
+		setApplyToAllModal(false);
+	};
+
 	const validateVariableName = (name: string): boolean =>
 		!existingVariableNamesMap[name];
 
@@ -326,9 +350,7 @@ function VariablesSetting({
 						{variable.type === 'DYNAMIC' && (
 							<Button
 								type="text"
-								onClick={(): void =>
-									onVariableSaveHandler(variableViewMode || 'EDIT', variable, true)
-								}
+								onClick={(): void => onApplyToAllHandler(variable)}
 								className="apply-to-all-button"
 								loading={updateMutation.isLoading}
 							>
@@ -477,6 +499,25 @@ function VariablesSetting({
 						{variableToDelete?.current?.name}
 					</span>
 					?
+				</Typography.Text>
+			</Modal>
+			<Modal
+				title="Apply variable to all panels"
+				centered
+				open={applyToAllModal}
+				onOk={handleApplyToAllConfirm}
+				onCancel={handleApplyToAllCancel}
+				okText="Apply to all"
+				cancelText="Cancel"
+				okButtonProps={{ danger: true }}
+			>
+				<Typography.Text>
+					Are you sure you want to apply variable{' '}
+					<span className="delete-variable-name">
+						{variableToApplyToAll?.current?.name}
+					</span>{' '}
+					to all panels? This action may affect panels where this variable is not
+					applicable.
 				</Typography.Text>
 			</Modal>
 		</>

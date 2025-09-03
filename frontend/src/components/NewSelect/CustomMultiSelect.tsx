@@ -23,6 +23,7 @@ import React, {
 	useRef,
 	useState,
 } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { CustomMultiSelectProps, CustomTagProps, OptionData } from './types';
@@ -1563,7 +1564,19 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				{/* Non-section options when not searching */}
 				{enhancedNonSectionOptions.length > 0 && (
 					<div className="no-section-options">
-						{mapOptions(enhancedNonSectionOptions)}
+						<Virtuoso
+							style={{
+								minHeight: Math.min(300, enhancedNonSectionOptions.length * 40),
+								maxHeight: enhancedNonSectionOptions.length * 40,
+							}}
+							data={enhancedNonSectionOptions}
+							itemContent={(index, item): React.ReactNode =>
+								(mapOptions([item]) as unknown) as React.ReactElement
+							}
+							totalCount={enhancedNonSectionOptions.length}
+							itemSize={(): number => 40}
+							overscan={5}
+						/>
 					</div>
 				)}
 
@@ -1576,10 +1589,24 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 									{section.label}
 								</div>
 								<div role="group" aria-label={`${section.label} options`}>
-									{section.options && mapOptions(section.options)}
+									<Virtuoso
+										style={{
+											minHeight: Math.min(300, (section.options?.length || 0) * 40),
+											maxHeight: (section.options?.length || 0) * 40,
+										}}
+										data={section.options || []}
+										itemContent={(index, item): React.ReactNode =>
+											(mapOptions([item]) as unknown) as React.ReactElement
+										}
+										totalCount={section.options?.length || 0}
+										itemSize={(): number => 40}
+										overscan={5}
+									/>
 								</div>
 							</div>
-						) : null,
+						) : (
+							<div key={section.label} />
+						),
 					)}
 
 				{/* Navigation help footer */}
