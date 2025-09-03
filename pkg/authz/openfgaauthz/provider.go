@@ -2,6 +2,7 @@ package openfgaauthz
 
 import (
 	"context"
+	"sync"
 
 	authz "github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -27,20 +28,20 @@ type provider struct {
 	openfgaServer *openfgapkgserver.Server
 	storeID       string
 	modelID       string
+	mtx           sync.RWMutex
 	stopChan      chan struct{}
 }
 
-func NewProviderFactory(sqlstoreConfig sqlstore.Config, openfgaSchema []openfgapkgtransformer.ModuleFile) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("openfga"), func(ctx context.Context, ps factory.ProviderSettings, config authz.Config) (authz.AuthZ, error) {
-		return newOpenfgaProvider(ctx, ps, config, sqlstoreConfig, openfgaSchema)
+		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema)
 	})
 }
 
-func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstoreConfig sqlstore.Config, openfgaSchema []openfgapkgtransformer.ModuleFile) (authz.AuthZ, error) {
+func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile) (authz.AuthZ, error) {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/authz/openfgaauthz")
 
-	// setup connections and run the migrations
-	sqlstore, err := NewSQLStore(storeConfig{sqlstoreConfig: sqlstoreConfig})
+	store, err := NewSQLStore(sqlstore)
 	if err != nil {
 		scopedProviderSettings.Logger().DebugContext(ctx, "failed to initialize sqlstore for authz")
 		return nil, err
@@ -48,7 +49,7 @@ func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, 
 
 	// setup the openfga server
 	opts := []openfgapkgserver.OpenFGAServiceV1Option{
-		openfgapkgserver.WithDatastore(sqlstore),
+		openfgapkgserver.WithDatastore(store),
 		openfgapkgserver.WithLogger(NewLogger(scopedProviderSettings.Logger())),
 	}
 	openfgaServer, err := openfgapkgserver.NewServerWithOpts(opts...)
@@ -62,6 +63,7 @@ func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, 
 		settings:      scopedProviderSettings,
 		openfgaServer: openfgaServer,
 		openfgaSchema: openfgaSchema,
+		mtx:           sync.RWMutex{},
 		stopChan:      make(chan struct{}),
 	}, nil
 }
@@ -76,8 +78,11 @@ func (provider *provider) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	provider.mtx.Lock()
 	provider.modelID = modelID
 	provider.storeID = storeId
+	provider.mtx.Unlock()
 
 	<-provider.stopChan
 	return nil
