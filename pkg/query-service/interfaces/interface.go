@@ -25,6 +25,7 @@ type Reader interface {
 	GetDependencyGraph(ctx context.Context, query *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error)
 
 	GetTTL(ctx context.Context, orgID string, ttlParams *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError)
+	GetCustomRetentionTTL(ctx context.Context, orgID string) (*model.GetCustomRetentionTTLResponse, error)
 
 	// GetDisks returns a list of disks configured in the underlying DB. It is supported by
 	// clickhouse only.
@@ -47,6 +48,7 @@ type Reader interface {
 
 	// Setter Interfaces
 	SetTTL(ctx context.Context, orgID string, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)
+	SetTTLV2(ctx context.Context, orgID string, params *model.CustomRetentionTTLParams) (*model.CustomRetentionTTLResponse, error)
 
 	FetchTemporality(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]map[v3.Temporality]bool, error)
 	GetMetricAggregateAttributes(ctx context.Context, orgID valuer.UUID, req *v3.AggregateAttributeRequest, skipSignozMetrics bool) (*v3.AggregateAttributeResponse, error)
@@ -63,8 +65,6 @@ type Reader interface {
 	// QB V3 metrics/traces/logs
 	GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error)
 	GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error)
-	LiveTailLogsV3(ctx context.Context, query string, timestampStart uint64, idStart string, client *model.LogsLiveTailClient)
-	LiveTailLogsV4(ctx context.Context, query string, timestampStart uint64, idStart string, client *model.LogsLiveTailClientV2)
 	// Logs
 	GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
 	GetLogFieldsFromNames(ctx context.Context, fieldNames []string) (*model.GetFieldsResponse, *model.ApiError)

@@ -259,7 +259,7 @@ describe('TableDrilldown Breakout Functionality', () => {
 
 		// Verify that the original filters are preserved and new filters are added
 		expect(aggregateQueryData.filter.expression).toContain(
-			"service.name = '$service.name' AND trace_id EXISTS AND deployment.environment = '$env'",
+			"service.name in $service.name AND trace_id EXISTS AND deployment.environment = '$env'",
 		);
 		// The new filter from the clicked data should also be present
 		expect(aggregateQueryData.filter.expression).toContain(

@@ -174,6 +174,31 @@
 	cursor: pointer;
 }
 
+.time-input-prefix {
+	.live-dot-icon {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background-color: var(--bg-forest-500);
+		animation: ripple 1s infinite;
+
+		margin-right: 4px;
+		margin-left: 4px;
+	}
+}
+
+@keyframes ripple {
+	0% {
+		box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+	}
+	70% {
+		box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+	}
+}
+
 .time-input-suffix-icon-badge {
 	display: flex;
 	align-items: center;

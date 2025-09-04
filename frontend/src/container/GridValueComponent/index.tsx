@@ -54,6 +54,7 @@ function GridValueComponent({
 		setSubMenu,
 		contextLinks: contextLinks || { linksData: [] },
 		panelType: widget?.panelTypes,
+		queryRange: queryResponse,
 	});
 
 	if (data.length === 0) {
