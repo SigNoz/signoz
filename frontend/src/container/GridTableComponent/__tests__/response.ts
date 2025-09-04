@@ -458,6 +458,7 @@ export const widgetQueryQBv5MultiAggregations = {
 			},
 		],
 		queryFormulas: [],
+		queryTraceOperator: [],
 	},
 	id: 'qb-v5-multi-aggregations-test',
 	queryType: 'builder',
