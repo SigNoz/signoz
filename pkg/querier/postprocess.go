@@ -332,9 +332,8 @@ func (q *querier) processTimeSeriesFormula(
 		}
 	}
 
+	canDefaultZero := req.GetQueriesSupportingZeroDefault()
 	// Create formula evaluator
-	// TODO(srikanthccv): add conditional default zero
-	canDefaultZero := make(map[string]bool)
 	evaluator, err := qbtypes.NewFormulaEvaluator(formula.Expression, canDefaultZero)
 	if err != nil {
 		q.logger.ErrorContext(ctx, "failed to create formula evaluator", "error", err, "formula", formula.Name)
@@ -484,7 +483,7 @@ func (q *querier) processScalarFormula(
 		}
 	}
 
-	canDefaultZero := make(map[string]bool)
+	canDefaultZero := req.GetQueriesSupportingZeroDefault()
 	evaluator, err := qbtypes.NewFormulaEvaluator(formula.Expression, canDefaultZero)
 	if err != nil {
 		q.logger.ErrorContext(ctx, "failed to create formula evaluator", "error", err, "formula", formula.Name)
