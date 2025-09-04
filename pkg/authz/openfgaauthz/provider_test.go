@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestProviderLifecycle(t *testing.T) {
+func TestProviderStartStop(t *testing.T) {
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	sqlstore := sqlstoretest.New(sqlstore.Config{Provider: "postgres"}, sqlmock.QueryMatcherRegexp)
 
