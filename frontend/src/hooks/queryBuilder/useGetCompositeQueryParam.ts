@@ -47,13 +47,15 @@ export const useGetCompositeQueryParam = (): Query | null => {
 
 						// Convert aggregation if needed
 						if (!query.aggregations && query.aggregateOperator) {
-							const convertedAggregation = convertAggregationToExpression(
-								query.aggregateOperator,
-								query.aggregateAttribute as BaseAutocompleteData,
-								query.dataSource,
-								query.timeAggregation,
-								query.spaceAggregation,
-							) as any; // Type assertion to handle union type
+							const convertedAggregation = convertAggregationToExpression({
+								aggregateOperator: query.aggregateOperator,
+								aggregateAttribute: query.aggregateAttribute as BaseAutocompleteData,
+								dataSource: query.dataSource,
+								timeAggregation: query.timeAggregation,
+								spaceAggregation: query.spaceAggregation,
+								reduceTo: query.reduceTo,
+								temporality: query.temporality,
+							}) as any; // Type assertion to handle union type
 							convertedQuery.aggregations = convertedAggregation;
 						}
 						return convertedQuery;
