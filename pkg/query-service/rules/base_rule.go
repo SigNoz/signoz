@@ -123,9 +123,13 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	if p.RuleCondition == nil || !p.RuleCondition.IsValid() {
 		return nil, fmt.Errorf("invalid rule condition")
 	}
+	//will remove later post multi threshsold
 	if p.NotificationPolicies {
 		p.Labels["notification_policy"] = "true"
+	} else {
+		p.Labels["notification_policy"] = "false"
 	}
+	p.Labels["threshold.name"] = p.Labels["severity"]
 	baseRule := &BaseRule{
 		id:                id,
 		orgID:             orgID,
