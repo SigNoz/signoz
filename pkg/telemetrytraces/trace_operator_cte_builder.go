@@ -110,6 +110,7 @@ func (b *traceOperatorCTEBuilder) build(requestType qbtypes.RequestType) (*qbtyp
 	}, nil
 }
 
+// Will be used in Indirect descendant Query, will not be used in any other query
 func (b *traceOperatorCTEBuilder) buildAllSpansCTE() error {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("*")
