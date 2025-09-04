@@ -58,11 +58,6 @@ func (b *traceOperatorCTEBuilder) collectQueries() error {
 }
 
 func (b *traceOperatorCTEBuilder) build(requestType qbtypes.RequestType) (*qbtypes.Statement, error) {
-	if len(b.queries) == 0 {
-		if err := b.collectQueries(); err != nil {
-			return nil, err
-		}
-	}
 
 	err := b.buildAllSpansCTE()
 	if err != nil {
@@ -115,13 +110,6 @@ func (b *traceOperatorCTEBuilder) build(requestType qbtypes.RequestType) (*qbtyp
 	}, nil
 }
 
-func (b *traceOperatorCTEBuilder) buildTimeConstantsCTE() string {
-	startBucket := b.start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
-	endBucket := b.end / querybuilder.NsToSeconds
-
-	return fmt.Sprintf(`toDateTime64(%d, 9) AS t_from, toDateTime64(%d, 9) AS t_to, %d AS bucket_from, %d AS bucket_to`, b.start, b.end, startBucket, endBucket)
-}
-
 func (b *traceOperatorCTEBuilder) buildAllSpansCTE() error {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("*")
@@ -140,6 +128,13 @@ func (b *traceOperatorCTEBuilder) buildAllSpansCTE() error {
 	b.stmtBuilder.logger.DebugContext(b.ctx, "Built all_spans CTE")
 	b.addCTE("all_spans", sql, args, nil)
 	return nil
+}
+
+func (b *traceOperatorCTEBuilder) buildTimeConstantsCTE() string {
+	startBucket := b.start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
+	endBucket := b.end / querybuilder.NsToSeconds
+
+	return fmt.Sprintf(`toDateTime64(%d, 9) AS t_from, toDateTime64(%d, 9) AS t_to, %d AS bucket_from, %d AS bucket_to`, b.start, b.end, startBucket, endBucket)
 }
 
 func (b *traceOperatorCTEBuilder) buildResourceFilterCTE(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) (*qbtypes.Statement, error) {
@@ -221,8 +216,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 	}
 
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("*", fmt.Sprintf("'%s' AS level", cteName))
-	sb.SelectMore(sqlbuilder.Escape("resource_string_service$$name") + " AS `service.name`")
+	sb.Select("*")
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 	if resourceFilterCTEName != "" {
 		sb.Where(fmt.Sprintf("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM %s)", resourceFilterCTEName))
@@ -369,11 +363,7 @@ func (b *traceOperatorCTEBuilder) buildAndCTE(leftCTE, rightCTE string) (string,
 }
 
 func (b *traceOperatorCTEBuilder) buildOrCTE(leftCTE, rightCTE string) (string, []string) {
-	sql := fmt.Sprintf(`
-		SELECT * FROM %s
-		UNION DISTINCT
-		SELECT * FROM %s
-	`, leftCTE, rightCTE)
+	sql := fmt.Sprintf(`SELECT * FROM %s UNION DISTINCT SELECT * FROM %s`, leftCTE, rightCTE)
 
 	return sql, []string{leftCTE, rightCTE}
 }
