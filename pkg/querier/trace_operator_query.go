@@ -3,6 +3,7 @@ package querier
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -32,6 +33,53 @@ func (q *traceOperatorQuery) Fingerprint() string {
 	parts := []string{"trace_operator"}
 
 	parts = append(parts, fmt.Sprintf("expr=%s", q.spec.Expression))
+
+	if err := q.spec.ParseExpression(); err != nil {
+		return ""
+	}
+
+	referencedQueries := q.spec.CollectReferencedQueries(q.spec.ParsedExpression)
+
+	queryFingerprints := make(map[string]string)
+
+	if q.compositeQuery != nil {
+		for _, query := range q.compositeQuery.Queries {
+			if query.Type == qbtypes.QueryTypeBuilder {
+				switch spec := query.Spec.(type) {
+				case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+					if contains(referencedQueries, spec.Name) {
+						// Create a temporary builder query to get its fingerprint
+						timeRange := qbtypes.TimeRange{From: q.fromMS, To: q.toMS}
+						tempQuery := newBuilderQuery(q.telemetryStore, nil, spec, timeRange, q.kind, nil)
+						fingerprint := tempQuery.Fingerprint()
+						if fingerprint != "" {
+							queryFingerprints[spec.Name] = fingerprint
+						} else {
+							// If any referenced query has no fingerprint, disable caching
+							return ""
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Add referenced query fingerprints in sorted order for consistency
+	if len(queryFingerprints) > 0 {
+		var sortedNames []string
+		for name := range queryFingerprints {
+			sortedNames = append(sortedNames, name)
+		}
+		sort.Strings(sortedNames)
+
+		for _, name := range sortedNames {
+			parts = append(parts, fmt.Sprintf("ref_%s=%s", name, queryFingerprints[name]))
+		}
+	}
+
+	// Add time range since it affects the query results
+	parts = append(parts, fmt.Sprintf("from=%d", q.fromMS))
+	parts = append(parts, fmt.Sprintf("to=%d", q.toMS))
 
 	// Add returnSpansFrom if specified
 	if q.spec.ReturnSpansFrom != "" {
@@ -142,4 +190,14 @@ func (q *traceOperatorQuery) executeWithContext(ctx context.Context, query strin
 			DurationMS:   uint64(elapsed.Milliseconds()),
 		},
 	}, nil
+}
+
+// contains checks if a slice contains a specific string
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }
