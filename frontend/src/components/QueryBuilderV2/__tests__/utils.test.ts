@@ -949,7 +949,6 @@ describe('convertAggregationToExpression', () => {
 			DataSource.TRACES,
 		);
 
-
 		expect(result).toEqual([
 			{
 				expression: 'count()',
