@@ -280,6 +280,7 @@ func sanitizeForSQL(s string) string {
 		"&&":  "AND",
 		"||":  "OR",
 		"NOT": "NOT",
+		" ":   "_",
 	}
 
 	result := s
