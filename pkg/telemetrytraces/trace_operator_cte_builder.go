@@ -58,10 +58,10 @@ func (b *traceOperatorCTEBuilder) collectQueries() error {
 }
 
 func (b *traceOperatorCTEBuilder) build(requestType qbtypes.RequestType) (*qbtypes.Statement, error) {
-	if len(b.queries) == 0 {
-		if err := b.collectQueries(); err != nil {
-			return nil, err
-		}
+
+	err := b.buildAllSpansCTE()
+	if err != nil {
+		return nil, err
 	}
 
 	rootCTEName, err := b.buildExpressionCTEs(b.operator.ParsedExpression)
@@ -108,6 +108,26 @@ func (b *traceOperatorCTEBuilder) build(requestType qbtypes.RequestType) (*qbtyp
 		Args:     finalArgs,
 		Warnings: finalStmt.Warnings,
 	}, nil
+}
+
+func (b *traceOperatorCTEBuilder) buildAllSpansCTE() error {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("*")
+	sb.SelectMore(sqlbuilder.Escape("resource_string_service$$name") + " AS `service.name`")
+
+	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
+	startBucket := b.start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
+	endBucket := b.end / querybuilder.NsToSeconds
+	sb.Where(
+		sb.GE("timestamp", fmt.Sprintf("%d", b.start)),
+		sb.L("timestamp", fmt.Sprintf("%d", b.end)),
+		sb.GE("ts_bucket_start", startBucket),
+		sb.LE("ts_bucket_start", endBucket),
+	)
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	b.stmtBuilder.logger.DebugContext(b.ctx, "Built all_spans CTE")
+	b.addCTE("all_spans", sql, args, nil)
+	return nil
 }
 
 func (b *traceOperatorCTEBuilder) buildTimeConstantsCTE() string {
@@ -260,7 +280,6 @@ func sanitizeForSQL(s string) string {
 		"&&":  "AND",
 		"||":  "OR",
 		"NOT": "NOT",
-		" ":   "_",
 	}
 
 	result := s
@@ -343,11 +362,7 @@ func (b *traceOperatorCTEBuilder) buildAndCTE(leftCTE, rightCTE string) (string,
 }
 
 func (b *traceOperatorCTEBuilder) buildOrCTE(leftCTE, rightCTE string) (string, []string) {
-	sql := fmt.Sprintf(`
-		SELECT * FROM %s
-		UNION DISTINCT
-		SELECT * FROM %s
-	`, leftCTE, rightCTE)
+	sql := fmt.Sprintf(`SELECT * FROM %s UNION DISTINCT SELECT * FROM %s`, leftCTE, rightCTE)
 
 	return sql, []string{leftCTE, rightCTE}
 }
