@@ -316,6 +316,56 @@ func (q *QueryBuilderTraceOperator) CollectReferencedQueries(operand *TraceOpera
 	return unique
 }
 
+// Copy creates a deep copy of QueryBuilderTraceOperator
+func (q QueryBuilderTraceOperator) Copy() QueryBuilderTraceOperator {
+	// Start with a shallow copy
+	c := q
+
+	if q.Filter != nil {
+		c.Filter = q.Filter.Copy()
+	}
+
+	if q.Order != nil {
+		c.Order = make([]OrderBy, len(q.Order))
+		for i, o := range q.Order {
+			c.Order[i] = o.Copy()
+		}
+	}
+
+	if q.Aggregations != nil {
+		c.Aggregations = make([]TraceAggregation, len(q.Aggregations))
+		copy(c.Aggregations, q.Aggregations)
+	}
+
+	if q.GroupBy != nil {
+		c.GroupBy = make([]GroupByKey, len(q.GroupBy))
+		for i, gb := range q.GroupBy {
+			c.GroupBy[i] = gb.Copy()
+		}
+	}
+
+	if q.Having != nil {
+		c.Having = q.Having.Copy()
+	}
+
+	if q.SelectFields != nil {
+		c.SelectFields = make([]telemetrytypes.TelemetryFieldKey, len(q.SelectFields))
+		copy(c.SelectFields, q.SelectFields)
+	}
+
+	if q.Functions != nil {
+		c.Functions = make([]Function, len(q.Functions))
+		for i, f := range q.Functions {
+			c.Functions[i] = f.Copy()
+		}
+	}
+
+	// Note: ParsedExpression is not copied as it's internal and will be re-parsed when needed
+	c.ParsedExpression = nil
+
+	return c
+}
+
 // ValidateUniqueTraceOperator ensures only one trace operator exists in queries
 func ValidateUniqueTraceOperator(queries []QueryEnvelope) error {
 	traceOperatorCount := 0

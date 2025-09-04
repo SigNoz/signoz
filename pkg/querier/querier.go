@@ -764,10 +764,11 @@ func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtyp
 		}
 		return newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
 	case *traceOperatorQuery:
+		specCopy := qt.spec.Copy()
 		return &traceOperatorQuery{
 			telemetryStore: q.telemetryStore,
 			stmtBuilder:    q.traceOperatorStmtBuilder,
-			spec:           qt.spec,
+			spec:           specCopy,
 			fromMS:         uint64(timeRange.From),
 			toMS:           uint64(timeRange.To),
 			compositeQuery: qt.compositeQuery,
