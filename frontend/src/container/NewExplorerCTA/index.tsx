@@ -2,10 +2,11 @@ import './NewExplorerCTA.styles.scss';
 
 import { Badge, Button } from 'antd';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+// import history from 'lib/history';
 import { Undo } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
+import { handleNavigateWithMetaKey } from 'utils/metaKeyHandler';
 
 import { buttonText, RIBBON_STYLES } from './config';
 
@@ -21,17 +22,25 @@ function NewExplorerCTA(): JSX.Element | null {
 		[location.pathname],
 	);
 
-	const onClickHandler = useCallback((): void => {
-		if (location.pathname === ROUTES.LOGS_EXPLORER) {
-			history.push(ROUTES.OLD_LOGS_EXPLORER);
-		} else if (location.pathname === ROUTES.TRACE) {
-			history.push(ROUTES.TRACES_EXPLORER);
-		} else if (location.pathname === ROUTES.OLD_LOGS_EXPLORER) {
-			history.push(ROUTES.LOGS_EXPLORER);
-		} else if (location.pathname === ROUTES.TRACES_EXPLORER) {
-			history.push(ROUTES.TRACE);
-		}
-	}, [location.pathname]);
+	const onClickHandler = useCallback(
+		(event?: React.MouseEvent): void => {
+			let targetRoute = '';
+			if (location.pathname === ROUTES.LOGS_EXPLORER) {
+				targetRoute = ROUTES.OLD_LOGS_EXPLORER;
+			} else if (location.pathname === ROUTES.TRACE) {
+				targetRoute = ROUTES.TRACES_EXPLORER;
+			} else if (location.pathname === ROUTES.OLD_LOGS_EXPLORER) {
+				targetRoute = ROUTES.LOGS_EXPLORER;
+			} else if (location.pathname === ROUTES.TRACES_EXPLORER) {
+				targetRoute = ROUTES.TRACE;
+			}
+
+			if (targetRoute) {
+				handleNavigateWithMetaKey(targetRoute, event);
+			}
+		},
+		[location.pathname],
+	);
 
 	const button = useMemo(
 		() => (
