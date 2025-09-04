@@ -288,3 +288,68 @@ export const MOCK_KEY_SUGGESTIONS_SINGLE_RESPONSE = {
 		},
 	},
 };
+
+export const MOCK_QUERY_RANGE_REQUEST = {
+	schemaVersion: 'v1',
+	start: 1756972732000,
+	end: 1756974532000,
+	requestType: 'scalar',
+	compositeQuery: {
+		queries: [
+			{
+				type: 'builder_query',
+				spec: {
+					name: 'A',
+					signal: 'logs',
+					stepInterval: 60,
+					disabled: false,
+					filter: {
+						expression:
+							'service.name EXISTS AND trace_id EXISTS AND k8s.pod.name EXISTS service.name in $service.name',
+					},
+					groupBy: [
+						{
+							name: 'service.name',
+							fieldDataType: 'string',
+							fieldContext: 'resource',
+						},
+						{
+							name: 'trace_id',
+							fieldDataType: 'string',
+							fieldContext: '',
+						},
+						{
+							name: 'k8s.pod.name',
+							fieldDataType: 'string',
+							fieldContext: 'resource',
+						},
+					],
+					having: {
+						expression: '',
+					},
+					aggregations: [
+						{
+							expression: 'count()',
+						},
+					],
+				},
+			},
+		],
+	},
+	formatOptions: {
+		formatTableResultForUI: true,
+		fillGaps: false,
+	},
+	variables: {
+		SIGNOZ_START_TIME: {
+			value: 1756972732000,
+		},
+		SIGNOZ_END_TIME: {
+			value: 1756974532000,
+		},
+		'service.name': {
+			value: '__all__',
+			type: 'dynamic',
+		},
+	},
+};
