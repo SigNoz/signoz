@@ -785,41 +785,45 @@ describe('convertAggregationToExpression', () => {
 	};
 
 	it('should return undefined when no aggregateOperator is provided', () => {
-		const result = convertAggregationToExpression(
-			'',
-			mockAttribute,
-			DataSource.METRICS,
-		);
+		const result = convertAggregationToExpression({
+			aggregateOperator: '',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.METRICS,
+		});
 		expect(result).toBeUndefined();
 	});
 
 	it('should convert metrics aggregation with required temporality field', () => {
-		const result = convertAggregationToExpression(
-			'sum',
-			mockAttribute,
-			DataSource.METRICS,
-			'avg',
-			'max',
-			'test_alias',
-		);
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'sum',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.METRICS,
+			timeAggregation: 'avg',
+			spaceAggregation: 'max',
+			alias: 'test_alias',
+			reduceTo: 'sum',
+			temporality: 'delta',
+		});
 
 		expect(result).toEqual([
 			{
 				metricName: 'test_metric',
 				timeAggregation: 'avg',
 				spaceAggregation: 'max',
+				reduceTo: 'sum',
+				temporality: 'delta',
 			},
 		]);
 	});
 
 	it('should handle noop operators by converting to count', () => {
-		const result = convertAggregationToExpression(
-			'noop',
-			mockAttribute,
-			DataSource.METRICS,
-			'noop',
-			'noop',
-		);
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'noop',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.METRICS,
+			timeAggregation: 'noop',
+			spaceAggregation: 'noop',
+		});
 
 		expect(result).toEqual([
 			{
@@ -831,11 +835,11 @@ describe('convertAggregationToExpression', () => {
 	});
 
 	it('should handle missing attribute key gracefully', () => {
-		const result = convertAggregationToExpression(
-			'sum',
-			{ ...mockAttribute, key: '' },
-			DataSource.METRICS,
-		);
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'sum',
+			aggregateAttribute: { ...mockAttribute, key: '' },
+			dataSource: DataSource.METRICS,
+		});
 
 		expect(result).toEqual([
 			{
@@ -847,14 +851,12 @@ describe('convertAggregationToExpression', () => {
 	});
 
 	it('should convert traces aggregation to expression format', () => {
-		const result = convertAggregationToExpression(
-			'count',
-			mockAttribute,
-			DataSource.TRACES,
-			undefined,
-			undefined,
-			'trace_alias',
-		);
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'count',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.TRACES,
+			alias: 'trace_alias',
+		});
 
 		expect(result).toEqual([
 			{
@@ -865,14 +867,12 @@ describe('convertAggregationToExpression', () => {
 	});
 
 	it('should convert logs aggregation to expression format', () => {
-		const result = convertAggregationToExpression(
-			'avg',
-			mockAttribute,
-			DataSource.LOGS,
-			undefined,
-			undefined,
-			'log_alias',
-		);
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'avg',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.LOGS,
+			alias: 'log_alias',
+		});
 
 		expect(result).toEqual([
 			{
@@ -883,11 +883,11 @@ describe('convertAggregationToExpression', () => {
 	});
 
 	it('should handle aggregation without attribute key for traces/logs', () => {
-		const result = convertAggregationToExpression(
-			'count',
-			{ ...mockAttribute, key: '' },
-			DataSource.TRACES,
-		);
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'count',
+			aggregateAttribute: { ...mockAttribute, key: '' },
+			dataSource: DataSource.TRACES,
+		});
 
 		expect(result).toEqual([
 			{
@@ -897,11 +897,11 @@ describe('convertAggregationToExpression', () => {
 	});
 
 	it('should handle missing alias for traces/logs', () => {
-		const result = convertAggregationToExpression(
-			'sum',
-			mockAttribute,
-			DataSource.LOGS,
-		);
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'sum',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.LOGS,
+		});
 
 		expect(result).toEqual([
 			{
@@ -911,11 +911,11 @@ describe('convertAggregationToExpression', () => {
 	});
 
 	it('should use aggregateOperator as fallback for time and space aggregation', () => {
-		const result = convertAggregationToExpression(
-			'max',
-			mockAttribute,
-			DataSource.METRICS,
-		);
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'max',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.METRICS,
+		});
 
 		expect(result).toEqual([
 			{
@@ -927,27 +927,29 @@ describe('convertAggregationToExpression', () => {
 	});
 
 	it('should handle undefined aggregateAttribute parameter with metrics', () => {
-		const result = convertAggregationToExpression(
-			'sum',
-			(undefined as unknown) as BaseAutocompleteData,
-			DataSource.METRICS,
-		);
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'sum',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.METRICS,
+		});
 
 		expect(result).toEqual([
 			{
-				metricName: '',
+				metricName: 'test_metric',
 				timeAggregation: 'sum',
 				spaceAggregation: 'sum',
+				reduceTo: undefined,
+				temporality: undefined,
 			},
 		]);
 	});
 
 	it('should handle undefined aggregateAttribute parameter with traces', () => {
-		const result = convertAggregationToExpression(
-			'noop',
-			(undefined as unknown) as BaseAutocompleteData,
-			DataSource.TRACES,
-		);
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'noop',
+			aggregateAttribute: (undefined as unknown) as BaseAutocompleteData,
+			dataSource: DataSource.TRACES,
+		});
 
 		expect(result).toEqual([
 			{
@@ -957,13 +959,11 @@ describe('convertAggregationToExpression', () => {
 	});
 
 	it('should handle undefined aggregateAttribute parameter with logs', () => {
-		const result = convertAggregationToExpression(
-			'noop',
-			(undefined as unknown) as BaseAutocompleteData,
-			DataSource.LOGS,
-		);
-
-		console.log({ result });
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'noop',
+			aggregateAttribute: (undefined as unknown) as BaseAutocompleteData,
+			dataSource: DataSource.LOGS,
+		});
 
 		expect(result).toEqual([
 			{

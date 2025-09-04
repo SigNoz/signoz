@@ -22,7 +22,7 @@ import {
 	TraceAggregation,
 } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 import { unquote } from 'utils/stringUtils';
 import { isFunctionOperator, isNonValueOperator } from 'utils/tokenUtils';
@@ -580,14 +580,25 @@ export const convertHavingToExpression = (
  * @returns New aggregation format based on data source
  *
  */
-export const convertAggregationToExpression = (
-	aggregateOperator: string,
-	aggregateAttribute: BaseAutocompleteData,
-	dataSource: DataSource,
-	timeAggregation?: string,
-	spaceAggregation?: string,
-	alias?: string,
-): (TraceAggregation | LogAggregation | MetricAggregation)[] | undefined => {
+export const convertAggregationToExpression = ({
+	aggregateOperator,
+	aggregateAttribute,
+	dataSource,
+	timeAggregation,
+	spaceAggregation,
+	alias,
+	reduceTo,
+	temporality,
+}: {
+	aggregateOperator: string;
+	aggregateAttribute: BaseAutocompleteData;
+	dataSource: DataSource;
+	timeAggregation?: string;
+	spaceAggregation?: string;
+	alias?: string;
+	reduceTo?: ReduceOperators;
+	temporality?: string;
+}): (TraceAggregation | LogAggregation | MetricAggregation)[] | undefined => {
 	// Skip if no operator or attribute key
 	if (!aggregateOperator) {
 		return undefined;
@@ -606,6 +617,8 @@ export const convertAggregationToExpression = (
 		return [
 			{
 				metricName: aggregateAttribute?.key || '',
+				reduceTo,
+				temporality,
 				timeAggregation: (normalizedTimeAggregation || normalizedOperator) as any,
 				spaceAggregation: (normalizedSpaceAggregation || normalizedOperator) as any,
 			} as MetricAggregation,
