@@ -211,22 +211,19 @@ export const transformContextVariables = (
 
 	// Process variables array from useContextVariables
 	variables.forEach((variable) => {
-		let source = 'Dashboard variable';
+		let source = VARIABLE_SOURCE_CONFIG.DASHBOARD.label as string; // Default to dashboard
 
-		// Check if it's a timestamp variable
+		// Check if it's a timestamp variable (special case - use name-based detection)
 		if (variable.name.toLowerCase().includes('timestamp')) {
 			source = VARIABLE_SOURCE_CONFIG.TIMESTAMP.label;
 		}
-		// Check if it's a custom/field variable (usually has dots or specific patterns)
-		else if (
-			variable.name.includes('.') ||
-			variable.name.toLowerCase().includes('custom')
-		) {
-			source = VARIABLE_SOURCE_CONFIG.QUERY.label;
-		}
-		// Check if it's from global variables
+		// Use the actual source property from the variable
 		else if (variable.source === 'global') {
 			source = VARIABLE_SOURCE_CONFIG.GLOBAL.label;
+		} else if (variable.source === 'custom') {
+			source = VARIABLE_SOURCE_CONFIG.QUERY.label;
+		} else if (variable.source === 'dashboard') {
+			source = VARIABLE_SOURCE_CONFIG.DASHBOARD.label;
 		}
 
 		// Group variables by source
