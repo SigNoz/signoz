@@ -1,10 +1,16 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable import/no-unresolved */
 import { negateOperator, OPERATORS } from 'constants/antlrQueryConstants';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 
 import {
+	convertAggregationToExpression,
 	convertFiltersToExpression,
 	convertFiltersToExpressionWithExistingQuery,
 } from '../utils';
@@ -767,5 +773,204 @@ describe('convertFiltersToExpression', () => {
 
 		expect(result.filters.items).toHaveLength(2);
 		expect(result.filter.expression).toBe("service.name = 'old-service'");
+	});
+});
+
+describe('convertAggregationToExpression', () => {
+	const mockAttribute: BaseAutocompleteData = {
+		id: 'test-id',
+		key: 'test_metric',
+		type: 'string',
+		dataType: DataTypes.String,
+	};
+
+	it('should return undefined when no aggregateOperator is provided', () => {
+		const result = convertAggregationToExpression(
+			'',
+			mockAttribute,
+			DataSource.METRICS,
+		);
+		expect(result).toBeUndefined();
+	});
+
+	it('should convert metrics aggregation with required temporality field', () => {
+		const result = convertAggregationToExpression(
+			'sum',
+			mockAttribute,
+			DataSource.METRICS,
+			'avg',
+			'max',
+			'test_alias',
+		);
+
+		expect(result).toEqual([
+			{
+				metricName: 'test_metric',
+				timeAggregation: 'avg',
+				spaceAggregation: 'max',
+			},
+		]);
+	});
+
+	it('should handle noop operators by converting to count', () => {
+		const result = convertAggregationToExpression(
+			'noop',
+			mockAttribute,
+			DataSource.METRICS,
+			'noop',
+			'noop',
+		);
+
+		expect(result).toEqual([
+			{
+				metricName: 'test_metric',
+				timeAggregation: 'count',
+				spaceAggregation: 'count',
+			},
+		]);
+	});
+
+	it('should handle missing attribute key gracefully', () => {
+		const result = convertAggregationToExpression(
+			'sum',
+			{ ...mockAttribute, key: '' },
+			DataSource.METRICS,
+		);
+
+		expect(result).toEqual([
+			{
+				metricName: '',
+				timeAggregation: 'sum',
+				spaceAggregation: 'sum',
+			},
+		]);
+	});
+
+	it('should convert traces aggregation to expression format', () => {
+		const result = convertAggregationToExpression(
+			'count',
+			mockAttribute,
+			DataSource.TRACES,
+			undefined,
+			undefined,
+			'trace_alias',
+		);
+
+		expect(result).toEqual([
+			{
+				expression: 'count(test_metric)',
+				alias: 'trace_alias',
+			},
+		]);
+	});
+
+	it('should convert logs aggregation to expression format', () => {
+		const result = convertAggregationToExpression(
+			'avg',
+			mockAttribute,
+			DataSource.LOGS,
+			undefined,
+			undefined,
+			'log_alias',
+		);
+
+		expect(result).toEqual([
+			{
+				expression: 'avg(test_metric)',
+				alias: 'log_alias',
+			},
+		]);
+	});
+
+	it('should handle aggregation without attribute key for traces/logs', () => {
+		const result = convertAggregationToExpression(
+			'count',
+			{ ...mockAttribute, key: '' },
+			DataSource.TRACES,
+		);
+
+		expect(result).toEqual([
+			{
+				expression: 'count()',
+			},
+		]);
+	});
+
+	it('should handle missing alias for traces/logs', () => {
+		const result = convertAggregationToExpression(
+			'sum',
+			mockAttribute,
+			DataSource.LOGS,
+		);
+
+		expect(result).toEqual([
+			{
+				expression: 'sum(test_metric)',
+			},
+		]);
+	});
+
+	it('should use aggregateOperator as fallback for time and space aggregation', () => {
+		const result = convertAggregationToExpression(
+			'max',
+			mockAttribute,
+			DataSource.METRICS,
+		);
+
+		expect(result).toEqual([
+			{
+				metricName: 'test_metric',
+				timeAggregation: 'max',
+				spaceAggregation: 'max',
+			},
+		]);
+	});
+
+	it('should handle undefined aggregateAttribute parameter with metrics', () => {
+		const result = convertAggregationToExpression(
+			'sum',
+			(undefined as unknown) as BaseAutocompleteData,
+			DataSource.METRICS,
+		);
+
+		expect(result).toEqual([
+			{
+				metricName: '',
+				timeAggregation: 'sum',
+				spaceAggregation: 'sum',
+			},
+		]);
+	});
+
+	it('should handle undefined aggregateAttribute parameter with traces', () => {
+		const result = convertAggregationToExpression(
+			'noop',
+			(undefined as unknown) as BaseAutocompleteData,
+			DataSource.TRACES,
+		);
+
+		console.log({ result });
+
+		expect(result).toEqual([
+			{
+				expression: 'count()',
+			},
+		]);
+	});
+
+	it('should handle undefined aggregateAttribute parameter with logs', () => {
+		const result = convertAggregationToExpression(
+			'noop',
+			(undefined as unknown) as BaseAutocompleteData,
+			DataSource.LOGS,
+		);
+
+		console.log({ result });
+
+		expect(result).toEqual([
+			{
+				expression: 'count()',
+			},
+		]);
 	});
 });
