@@ -22,6 +22,7 @@ import cx from 'classnames';
 import {
 	TRACE_OPERATOR_OPERATORS,
 	TRACE_OPERATOR_OPERATORS_LABELS,
+	TRACE_OPERATOR_OPERATORS_WITH_PRIORITY,
 } from 'constants/antlrQueryConstants';
 import { getInvolvedQueriesInTraceOperator } from 'container/FormAlertRules/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -224,12 +225,6 @@ function TraceOperatorEditor({
 				option.label.toLowerCase().includes(searchText),
 			);
 
-			// // Add boost to exact matches
-			// options = options.map((option) => ({
-			// 	...option,
-			// 	boost: option.label.toLowerCase() === searchText ? 100 : 0,
-			// }));
-
 			// Add space after selection for atoms
 			const optionsWithSpace = addSpaceToOptions(options);
 
@@ -249,6 +244,7 @@ function TraceOperatorEditor({
 					: operator,
 				type: 'operator',
 				apply: operator,
+				boost: TRACE_OPERATOR_OPERATORS_WITH_PRIORITY[operator] * -10,
 			}));
 
 			// Add space after selection for operators
@@ -290,6 +286,7 @@ function TraceOperatorEditor({
 						: operator,
 					type: 'operator',
 					apply: operator,
+					boost: TRACE_OPERATOR_OPERATORS_WITH_PRIORITY[operator] * -10,
 				}));
 
 				// Add space after selection for closing parenthesis context

@@ -6,6 +6,7 @@ import clickhouse_connect
 import clickhouse_connect.driver
 import clickhouse_connect.driver.client
 import py
+from sqlalchemy import Engine
 from testcontainers.core.container import Network
 
 LegacyPath = py.path.local
@@ -76,7 +77,7 @@ class TestContainerDocker:
 class TestContainerSQL:
     __test__ = False
     container: TestContainerDocker
-    conn: any
+    conn: Engine
     env: Dict[str, str]
 
     def __cache__(self) -> dict:

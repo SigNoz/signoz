@@ -106,13 +106,29 @@ function TracesExplorer(): JSX.Element {
 				handleSetConfig(PANEL_TYPES.LIST, DataSource.TRACES);
 			}
 
+			if (
+				(selectedView === ExplorerViews.TRACE ||
+					selectedView === ExplorerViews.LIST) &&
+				stagedQuery?.builder?.queryTraceOperator &&
+				stagedQuery.builder.queryTraceOperator.length > 0
+			) {
+				// remove order by from trace operator
+				stagedQuery.builder.queryTraceOperator[0].orderBy = [];
+			}
+
 			setSelectedView(view);
 
 			handleExplorerTabChange(
 				view === ExplorerViews.TIMESERIES ? PANEL_TYPES.TIME_SERIES : view,
 			);
 		},
-		[handleSetConfig, handleExplorerTabChange, selectedView, setSelectedView],
+		[
+			handleSetConfig,
+			handleExplorerTabChange,
+			selectedView,
+			setSelectedView,
+			stagedQuery,
+		],
 	);
 
 	const listQuery = useMemo(() => {
