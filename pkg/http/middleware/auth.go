@@ -51,8 +51,10 @@ func (a *Auth) Wrap(next http.Handler) http.Handler {
 			return
 		}
 
+		ctx = ctxtypes.SetAuthType(ctx, ctxtypes.AuthTypeJWT)
+
 		comment := ctxtypes.CommentFromContext(ctx)
-		comment.Set("auth_type", "jwt")
+		comment.Set("auth_type", ctxtypes.AuthTypeJWT.StringValue())
 		comment.Set("user_id", claims.UserID)
 		comment.Set("org_id", claims.OrgID)
 

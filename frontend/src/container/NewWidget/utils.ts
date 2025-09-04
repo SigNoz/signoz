@@ -393,6 +393,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		[DataSource.LOGS]: {
 			builder: {
 				queryData: [
+					'queryName',
 					'filters',
 					'filter',
 					'limit',
@@ -404,12 +405,13 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		},
 		[DataSource.METRICS]: {
 			builder: {
-				queryData: ['filters', 'filter', 'aggregations'],
+				queryData: ['queryName', 'filters', 'filter', 'aggregations'],
 			},
 		},
 		[DataSource.TRACES]: {
 			builder: {
 				queryData: [
+					'queryName',
 					'filters',
 					'filter',
 					'limit',

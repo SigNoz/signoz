@@ -157,6 +157,7 @@ function UserFunction({
 			</Space>
 			<Modal
 				title="Edit member details"
+				className="edit-member-details-modal"
 				open={isModalVisible}
 				onOk={(): void => onModalToggleHandler(setIsModalVisible, false)}
 				onCancel={(): void => onModalToggleHandler(setIsModalVisible, false)}
@@ -285,7 +286,7 @@ function Members(): JSX.Element {
 	];
 
 	return (
-		<Space direction="vertical" size="middle">
+		<div className="members-container">
 			<Typography.Title level={3}>
 				Members{' '}
 				{!isLoading && dataSource && (
@@ -300,7 +301,7 @@ function Members(): JSX.Element {
 				loading={status === 'loading'}
 				bordered
 			/>
-		</Space>
+		</div>
 	);
 }
 

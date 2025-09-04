@@ -244,7 +244,7 @@ function AuthDomains(): JSX.Element {
 				/>
 			</Modal>
 
-			<Space direction="vertical" size="middle">
+			<div className="auth-domains-container">
 				<AddDomain refetch={refetch} />
 
 				<ResizeTable
@@ -255,7 +255,7 @@ function AuthDomains(): JSX.Element {
 					rowKey={(record: AuthDomain): string => record.name + v4()}
 					bordered
 				/>
-			</Space>
+			</div>
 		</>
 	);
 }

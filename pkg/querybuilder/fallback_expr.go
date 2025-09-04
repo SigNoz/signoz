@@ -82,7 +82,7 @@ func CollisionHandledFinalExpr(
 			correction, found := telemetrytypes.SuggestCorrection(field.Name, maps.Keys(keys))
 			if found {
 				// we found a close match, in the error message send the suggestion
-				return "", nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
+				return "", nil, errors.Wrap(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
 			} else {
 				// not even a close match, return an error
 				return "", nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name)

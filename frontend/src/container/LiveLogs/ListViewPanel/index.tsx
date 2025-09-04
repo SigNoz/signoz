@@ -13,7 +13,7 @@ import { useCallback } from 'react';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { SpinnerWrapper, Wrapper } from './styles';
+import { SpinnerWrapper } from './styles';
 
 function ListViewPanel(): JSX.Element {
 	const { config } = useOptionsMenu({
@@ -42,7 +42,7 @@ function ListViewPanel(): JSX.Element {
 	}, [config]);
 
 	return (
-		<Wrapper>
+		<div className="live-logs-settings-panel">
 			<Select
 				getPopupContainer={popupContainer}
 				style={defaultSelectStyle}
@@ -68,7 +68,7 @@ function ListViewPanel(): JSX.Element {
 					<Spinner style={{ height: 'auto' }} />
 				</SpinnerWrapper>
 			)}
-		</Wrapper>
+		</div>
 	);
 }
 

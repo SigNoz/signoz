@@ -86,6 +86,8 @@ queries.active
 .devenv/**/tmp/**
 .qodo
 
+.dev
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/

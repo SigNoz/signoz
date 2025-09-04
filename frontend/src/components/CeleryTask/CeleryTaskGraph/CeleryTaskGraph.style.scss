@@ -20,13 +20,15 @@
 		.ant-card-body {
 			height: calc(100% - 18px);
 
-			.widget-graph-container {
-				&.bar {
-					height: calc(100% - 110px);
-				}
+			.widget-graph-component-container {
+				.widget-graph-container {
+					&.bar-panel-container {
+						height: calc(100% - 110px);
+					}
 
-				&.graph {
-					height: calc(100% - 80px);
+					&.graph-panel-container {
+						height: calc(100% - 80px);
+					}
 				}
 			}
 		}
@@ -82,9 +84,11 @@
 		.ant-card-body {
 			height: calc(100% - 18px);
 
-			.widget-graph-container {
-				&.bar {
-					height: calc(100% - 110px);
+			.widget-graph-component-container {
+				.widget-graph-container {
+					&.bar-panel-container {
+						height: calc(100% - 110px);
+					}
 				}
 			}
 		}

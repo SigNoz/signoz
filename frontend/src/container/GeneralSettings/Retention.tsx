@@ -9,6 +9,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { TTTLType } from 'types/api/settings/common';
 
 import {
 	Input,
@@ -20,11 +21,13 @@ import {
 	convertHoursValueToRelevantUnit,
 	SettingPeriod,
 	TimeUnits,
+	TimeUnitsValues,
 } from './utils';
 
 const { Option } = Select;
 
 function Retention({
+	type,
 	retentionValue,
 	setRetentionValue,
 	text,
@@ -50,7 +53,9 @@ function Retention({
 		if (!interacted.current) setSelectTimeUnit(initialTimeUnitValue);
 	}, [initialTimeUnitValue]);
 
-	const menuItems = TimeUnits.map((option) => (
+	const menuItems = TimeUnits.filter((option) =>
+		type === 'logs' ? option.value !== TimeUnitsValues.hr : true,
+	).map((option) => (
 		<Option key={option.value} value={option.value}>
 			{option.key}
 		</Option>
@@ -124,6 +129,7 @@ function Retention({
 }
 
 interface RetentionProps {
+	type: TTTLType;
 	retentionValue: number | null;
 	text: string;
 	setRetentionValue: Dispatch<SetStateAction<number | null>>;

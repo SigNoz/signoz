@@ -32,6 +32,17 @@
 				}
 			}
 
+			.item-key-wrapper {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+
+				.pin-icon {
+					color: var(--bg-robin-400);
+					flex-shrink: 0;
+				}
+			}
+
 			.item-key {
 				color: var(--bg-vanilla-100);
 				font-family: Inter;

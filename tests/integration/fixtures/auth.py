@@ -8,7 +8,7 @@ from fixtures import dev, types
 
 USER_ADMIN_NAME = "admin"
 USER_ADMIN_EMAIL = "admin@integration.test"
-USER_ADMIN_PASSWORD = "password"
+USER_ADMIN_PASSWORD = "password123Z$"
 
 
 @pytest.fixture(name="create_user_admin", scope="package")

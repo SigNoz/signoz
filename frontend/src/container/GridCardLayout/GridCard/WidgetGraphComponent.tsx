@@ -325,6 +325,7 @@ function WidgetGraphComponent({
 				setHovered(false);
 			}}
 			id={widget.id}
+			className="widget-graph-component-container"
 		>
 			<Modal
 				destroyOnClose
@@ -396,7 +397,10 @@ function WidgetGraphComponent({
 			)}
 			{(queryResponse.isSuccess || widget.panelTypes === PANEL_TYPES.LIST) && (
 				<div
-					className={cx('widget-graph-container', widget.panelTypes)}
+					className={cx(
+						'widget-graph-container',
+						`${widget.panelTypes}-panel-container`,
+					)}
 					ref={graphRef}
 				>
 					<PanelWrapper

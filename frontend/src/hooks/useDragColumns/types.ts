@@ -7,4 +7,5 @@ export type UseDragColumns<T> = {
 		fromIndex: number,
 		toIndex: number,
 	) => void;
+	onColumnOrderChange: (newColumns: ColumnsType<T>) => void;
 };

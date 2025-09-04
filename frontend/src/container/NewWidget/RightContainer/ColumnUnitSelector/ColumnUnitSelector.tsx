@@ -73,7 +73,6 @@ export function ColumnUnitSelector(
 			<Typography.Text className="heading">Column Units</Typography.Text>
 			{aggregationQueries.map(({ value, label }) => (
 				<YAxisUnitSelector
-					defaultValue={columnUnits[value]}
 					value={columnUnits[value] || ''}
 					onSelect={(unitValue: string): void =>
 						handleColumnUnitSelect(value, unitValue)

@@ -1,0 +1,174 @@
+import { Button, Switch, Typography } from 'antd';
+import { WsDataEvent } from 'api/common/getQueryStats';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
+import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
+import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
+import { LOCALSTORAGE } from 'constants/localStorage';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import Download from 'container/DownloadV2/DownloadV2';
+import { useOptionsMenu } from 'container/OptionsMenu';
+import useClickOutside from 'hooks/useClickOutside';
+import { ArrowUp10, Minus, Sliders } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { DataSource, StringOperators } from 'types/common/queryBuilder';
+
+import QueryStatus from './QueryStatus';
+
+function LogsActionsContainer({
+	listQuery,
+	queryStats,
+	selectedPanelType,
+	showFrequencyChart,
+	handleToggleFrequencyChart,
+	orderBy,
+	setOrderBy,
+	flattenLogData,
+	isFetching,
+	isLoading,
+	isError,
+	isSuccess,
+}: {
+	listQuery: any;
+	selectedPanelType: PANEL_TYPES;
+	showFrequencyChart: boolean;
+	handleToggleFrequencyChart: () => void;
+	orderBy: string;
+	setOrderBy: (value: string) => void;
+	flattenLogData: any;
+	isFetching: boolean;
+	isLoading: boolean;
+	isError: boolean;
+	isSuccess: boolean;
+	queryStats: WsDataEvent | undefined;
+}): JSX.Element {
+	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
+	const menuRef = useRef<HTMLDivElement>(null);
+
+	const { options, config } = useOptionsMenu({
+		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
+		dataSource: DataSource.LOGS,
+		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
+	});
+
+	const formatItems = [
+		{
+			key: 'raw',
+			label: 'Raw',
+			data: {
+				title: 'max lines per row',
+			},
+		},
+		{
+			key: 'list',
+			label: 'Default',
+		},
+		{
+			key: 'table',
+			label: 'Column',
+			data: {
+				title: 'columns',
+			},
+		},
+	];
+
+	const handleToggleShowFormatOptions = (): void =>
+		setShowFormatMenuItems(!showFormatMenuItems);
+
+	useClickOutside({
+		ref: menuRef,
+		onClickOutside: () => {
+			if (showFormatMenuItems) {
+				setShowFormatMenuItems(false);
+			}
+		},
+	});
+
+	return (
+		<div className="logs-actions-container">
+			<div className="tab-options">
+				<div className="tab-options-left">
+					{selectedPanelType === PANEL_TYPES.LIST && (
+						<div className="frequency-chart-view-controller">
+							<Typography>Frequency chart</Typography>
+							<Switch
+								size="small"
+								checked={showFrequencyChart}
+								defaultChecked
+								onChange={handleToggleFrequencyChart}
+							/>
+						</div>
+					)}
+				</div>
+
+				<div className="tab-options-right">
+					{selectedPanelType === PANEL_TYPES.LIST && (
+						<>
+							<div className="order-by-container">
+								<div className="order-by-label">
+									Order by <Minus size={14} /> <ArrowUp10 size={14} />
+								</div>
+
+								<ListViewOrderBy
+									value={orderBy}
+									onChange={(value): void => setOrderBy(value)}
+									dataSource={DataSource.LOGS}
+								/>
+							</div>
+							<Download
+								data={flattenLogData}
+								isLoading={isFetching}
+								fileName="log_data"
+							/>
+							<div className="format-options-container" ref={menuRef}>
+								<Button
+									className="periscope-btn ghost"
+									onClick={handleToggleShowFormatOptions}
+									icon={<Sliders size={14} />}
+									data-testid="periscope-btn"
+								/>
+
+								{showFormatMenuItems && (
+									<LogsFormatOptionsMenu
+										title="FORMAT"
+										items={formatItems}
+										selectedOptionFormat={options.format}
+										config={config}
+									/>
+								)}
+							</div>
+						</>
+					)}
+
+					{(selectedPanelType === PANEL_TYPES.TIME_SERIES ||
+						selectedPanelType === PANEL_TYPES.TABLE) && (
+						<div className="query-stats">
+							<QueryStatus
+								loading={isLoading || isFetching}
+								error={isError}
+								success={isSuccess}
+							/>
+
+							{queryStats?.read_rows && (
+								<Typography.Text className="rows">
+									{getYAxisFormattedValue(queryStats.read_rows?.toString(), 'short')}{' '}
+									rows
+								</Typography.Text>
+							)}
+
+							{queryStats?.elapsed_ms && (
+								<>
+									<div className="divider" />
+									<Typography.Text className="time">
+										{getYAxisFormattedValue(queryStats?.elapsed_ms?.toString(), 'ms')}
+									</Typography.Text>
+								</>
+							)}
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+export default LogsActionsContainer;

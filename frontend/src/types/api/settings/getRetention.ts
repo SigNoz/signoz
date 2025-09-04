@@ -17,7 +17,9 @@ export interface PayloadPropsTraces {
 }
 
 export interface PayloadPropsLogs {
-	logs_ttl_duration_hrs: number;
+	version: 'v1' | 'v2';
+	default_ttl_days: number;
+	logs_ttl_duration_hrs?: number;
 	logs_move_ttl_duration_hrs?: number;
 	status: TStatus;
 	expected_logs_ttl_duration_hrs?: number;

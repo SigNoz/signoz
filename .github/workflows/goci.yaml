@@ -18,7 +18,7 @@ jobs:
     with:
       PRIMUS_REF: main
       GO_TEST_CONTEXT: ./...
-      GO_VERSION: 1.23
+      GO_VERSION: 1.24
   fmt:
     if: |
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
@@ -27,7 +27,7 @@ jobs:
     secrets: inherit
     with:
       PRIMUS_REF: main
-      GO_VERSION: 1.23
+      GO_VERSION: 1.24
   lint:
     if: |
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
@@ -36,7 +36,7 @@ jobs:
     secrets: inherit
     with:
       PRIMUS_REF: main
-      GO_VERSION: 1.23
+      GO_VERSION: 1.24
   deps:
     if: |
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
@@ -45,7 +45,7 @@ jobs:
     secrets: inherit
     with:
       PRIMUS_REF: main
-      GO_VERSION: 1.23
+      GO_VERSION: 1.24
   build:
     if: |
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
@@ -57,7 +57,7 @@ jobs:
       - name: go-install
         uses: actions/setup-go@v5
         with:
-          go-version: "1.23"
+          go-version: "1.24"
       - name: qemu-install
         uses: docker/setup-qemu-action@v3
       - name: aarch64-install

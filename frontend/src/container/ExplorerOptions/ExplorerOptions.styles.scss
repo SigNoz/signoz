@@ -1,6 +1,6 @@
 .explorer-options-container {
 	position: fixed;
-	bottom: 8px;
+	bottom: 0px;
 	left: calc(50% + 240px);
 	transform: translate(calc(-50% - 120px), 0);
 	transition: left 0.2s linear;
@@ -74,6 +74,7 @@
 	display: flex;
 	gap: 16px;
 	z-index: 1;
+
 	.ant-select-selector {
 		padding: 0 !important;
 	}

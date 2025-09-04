@@ -6,7 +6,7 @@ from fixtures import types
 
 
 def test_api_key(signoz: types.SigNoz, get_jwt_token) -> None:
-    admin_token = get_jwt_token("admin@integration.test", "password")
+    admin_token = get_jwt_token("admin@integration.test", "password123Z$")
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/pats"),

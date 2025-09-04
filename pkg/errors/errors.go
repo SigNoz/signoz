@@ -79,6 +79,16 @@ func Wrapf(cause error, t typ, code Code, format string, args ...interface{}) *b
 	}
 }
 
+// Wrap returns a new error by wrapping another error with base.
+func Wrap(cause error, t typ, code Code, message string) *base {
+	return &base{
+		t: t,
+		c: code,
+		m: message,
+		e: cause,
+	}
+}
+
 // WithAdditional wraps an existing base error with a new formatted message.
 // It is used when the original error already contains type and code.
 func WithAdditional(cause error, format string, args ...interface{}) *base {

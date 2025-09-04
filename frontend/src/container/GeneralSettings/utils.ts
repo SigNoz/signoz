@@ -5,19 +5,26 @@ export interface ITimeUnit {
 	key: string;
 	multiplier: number;
 }
+
+export enum TimeUnitsValues {
+	hr = 'hr',
+	day = 'day',
+	month = 'month',
+}
+
 export const TimeUnits: ITimeUnit[] = [
 	{
-		value: 'hr',
+		value: TimeUnitsValues.hr,
 		key: 'Hours',
 		multiplier: 1,
 	},
 	{
-		value: 'day',
+		value: TimeUnitsValues.day,
 		key: 'Days',
 		multiplier: 1 / 24,
 	},
 	{
-		value: 'month',
+		value: TimeUnitsValues.month,
 		key: 'Months',
 		multiplier: 1 / (24 * 30),
 	},

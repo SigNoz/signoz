@@ -775,6 +775,13 @@ function MultiIngestionSettings(): JSX.Element {
 						children: (
 							<div className="ingestion-key-info-container">
 								<Row>
+									<Col span={6}> ID </Col>
+									<Col span={12}>
+										<Typography.Text>{APIKey.id}</Typography.Text>
+									</Col>
+								</Row>
+
+								<Row>
 									<Col span={6}> Created on </Col>
 									<Col span={12}>
 										<Typography.Text>{createdOn}</Typography.Text>

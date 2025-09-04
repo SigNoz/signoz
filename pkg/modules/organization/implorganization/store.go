@@ -20,7 +20,7 @@ func NewStore(sqlstore sqlstore.SQLStore) types.OrganizationStore {
 func (store *store) Create(ctx context.Context, organization *types.Organization) error {
 	_, err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewInsert().
 		Model(organization).
 		Exec(ctx)

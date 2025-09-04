@@ -2,15 +2,14 @@ package types
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -23,59 +22,6 @@ var (
 	ErrAPIKeyAlreadyExists             = errors.MustNewCode("api_key_already_exists")
 	ErrAPIKeyNotFound                  = errors.MustNewCode("api_key_not_found")
 )
-
-type UserStore interface {
-	// invite
-	CreateBulkInvite(ctx context.Context, invites []*Invite) error
-	ListInvite(ctx context.Context, orgID string) ([]*Invite, error)
-	DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error
-	GetInviteByToken(ctx context.Context, token string) (*GettableInvite, error)
-	GetInviteByEmailInOrg(ctx context.Context, orgID string, email string) (*Invite, error)
-
-	// user
-	CreateUserWithPassword(ctx context.Context, user *User, password *FactorPassword) (*User, error)
-	CreateUser(ctx context.Context, user *User) error
-	GetUserByID(ctx context.Context, orgID string, id string) (*GettableUser, error)
-	GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*GettableUser, error)
-	GetUsersByEmail(ctx context.Context, email string) ([]*GettableUser, error)
-	GetUsersByRoleInOrg(ctx context.Context, orgID string, role Role) ([]*GettableUser, error)
-	ListUsers(ctx context.Context, orgID string) ([]*GettableUser, error)
-	UpdateUser(ctx context.Context, orgID string, id string, user *User) (*User, error)
-	DeleteUser(ctx context.Context, orgID string, id string) error
-
-	// password
-	CreatePassword(ctx context.Context, password *FactorPassword) (*FactorPassword, error)
-	CreateResetPasswordToken(ctx context.Context, resetPasswordRequest *ResetPasswordRequest) error
-	GetPasswordByID(ctx context.Context, id string) (*FactorPassword, error)
-	GetPasswordByUserID(ctx context.Context, id string) (*FactorPassword, error)
-	GetResetPassword(ctx context.Context, token string) (*ResetPasswordRequest, error)
-	GetResetPasswordByPasswordID(ctx context.Context, passwordID string) (*ResetPasswordRequest, error)
-	UpdatePassword(ctx context.Context, userID string, password string) error
-	UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, userID string, password string) error
-
-	// Auth Domain
-	GetDomainByName(ctx context.Context, name string) (*StorableOrgDomain, error)
-	// org domain (auth domains) CRUD ops
-	GetDomainFromSsoResponse(ctx context.Context, relayState *url.URL) (*GettableOrgDomain, error)
-	ListDomains(ctx context.Context, orgId valuer.UUID) ([]*GettableOrgDomain, error)
-	GetDomain(ctx context.Context, id uuid.UUID) (*GettableOrgDomain, error)
-	CreateDomain(ctx context.Context, d *GettableOrgDomain) error
-	UpdateDomain(ctx context.Context, domain *GettableOrgDomain) error
-	DeleteDomain(ctx context.Context, id uuid.UUID) error
-
-	// Temporary func for SSO
-	GetDefaultOrgID(ctx context.Context) (string, error)
-
-	// API KEY
-	CreateAPIKey(ctx context.Context, apiKey *StorableAPIKey) error
-	UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *StorableAPIKey, updaterID valuer.UUID) error
-	ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*StorableAPIKeyUser, error)
-	RevokeAPIKey(ctx context.Context, id valuer.UUID, revokedByUserID valuer.UUID) error
-	GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*StorableAPIKeyUser, error)
-	CountAPIKeyByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
-
-	CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
-}
 
 type GettableUser struct {
 	User
@@ -121,12 +67,12 @@ func NewUser(displayName string, email string, role string, orgID string) (*User
 }
 
 type PostableRegisterOrgAndAdmin struct {
-	PostableAcceptInvite
 	Name           string `json:"name"`
 	OrgID          string `json:"orgId"`
 	OrgDisplayName string `json:"orgDisplayName"`
 	OrgName        string `json:"orgName"`
 	Email          string `json:"email"`
+	Password       string `json:"password"`
 }
 
 type PostableAcceptInvite struct {
@@ -136,95 +82,6 @@ type PostableAcceptInvite struct {
 
 	// reference URL to track where the register request is coming from
 	SourceURL string `json:"sourceUrl"`
-}
-
-func (p *PostableAcceptInvite) Validate() error {
-	if p.InviteToken == "" {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invite token is required")
-	}
-
-	if p.Password == "" || len(p.Password) < 8 {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "password must be at least 8 characters long")
-	}
-
-	return nil
-}
-
-type FactorPassword struct {
-	bun.BaseModel `bun:"table:factor_password"`
-
-	Identifiable
-	TimeAuditable
-	Password  string `bun:"password,type:text,notnull" json:"password"`
-	Temporary bool   `bun:"temporary,type:boolean,notnull" json:"temporary"`
-	UserID    string `bun:"user_id,type:text,notnull,unique,references:user(id)" json:"userId"`
-}
-
-func NewFactorPassword(password string) (*FactorPassword, error) {
-
-	if password == "" && len(password) < 8 {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "password must be at least 8 characters long")
-	}
-
-	password = strings.TrimSpace(password)
-
-	hashedPassword, err := HashPassword(password)
-	if err != nil {
-		return nil, err
-	}
-
-	return &FactorPassword{
-		Identifiable: Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
-		TimeAuditable: TimeAuditable{
-			CreatedAt: time.Now(),
-		},
-		Password:  hashedPassword,
-		Temporary: false,
-	}, nil
-}
-
-func HashPassword(password string) (string, error) {
-	// bcrypt automatically handles salting and uses a secure work factor
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-	return string(hashedPassword), nil
-}
-
-func ComparePassword(hashedPassword, password string) bool {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)) == nil
-}
-
-type ResetPasswordRequest struct {
-	bun.BaseModel `bun:"table:reset_password_token"`
-
-	Identifiable
-	Token      string `bun:"token,type:text,notnull" json:"token"`
-	PasswordID string `bun:"password_id,type:text,notnull,unique" json:"passwordId"`
-}
-
-func NewResetPasswordRequest(passwordID string) (*ResetPasswordRequest, error) {
-	return &ResetPasswordRequest{
-		Identifiable: Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
-		Token:      valuer.GenerateUUID().String(),
-		PasswordID: passwordID,
-	}, nil
-}
-
-type PostableResetPassword struct {
-	Password string `json:"password"`
-	Token    string `json:"token"`
-}
-
-type ChangePasswordRequest struct {
-	UserId      string `json:"userId"`
-	OldPassword string `json:"oldPassword"`
-	NewPassword string `json:"newPassword"`
 }
 
 type PostableLoginRequest struct {
@@ -264,4 +121,98 @@ func NewTraitsFromUser(user *User) map[string]any {
 		"display_name": user.DisplayName,
 		"created_at":   user.CreatedAt,
 	}
+}
+
+func (request *PostableAcceptInvite) UnmarshalJSON(data []byte) error {
+	type Alias PostableAcceptInvite
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if temp.InviteToken == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invite token is required")
+	}
+
+	if !IsPasswordValid(temp.Password) {
+		return ErrInvalidPassword
+	}
+
+	*request = PostableAcceptInvite(temp)
+	return nil
+}
+
+func (request *PostableRegisterOrgAndAdmin) UnmarshalJSON(data []byte) error {
+	type Alias PostableRegisterOrgAndAdmin
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if temp.Email == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
+	}
+
+	if !IsPasswordValid(temp.Password) {
+		return ErrInvalidPassword
+	}
+
+	*request = PostableRegisterOrgAndAdmin(temp)
+	return nil
+}
+
+type UserStore interface {
+	// invite
+	CreateBulkInvite(ctx context.Context, invites []*Invite) error
+	ListInvite(ctx context.Context, orgID string) ([]*Invite, error)
+	DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error
+	GetInviteByToken(ctx context.Context, token string) (*GettableInvite, error)
+	GetInviteByEmailInOrg(ctx context.Context, orgID string, email string) (*Invite, error)
+
+	// Creates a user.
+	CreateUser(ctx context.Context, user *User) error
+	GetUserByID(ctx context.Context, orgID string, id string) (*GettableUser, error)
+	GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*GettableUser, error)
+	GetUsersByEmail(ctx context.Context, email string) ([]*GettableUser, error)
+	GetUsersByRoleInOrg(ctx context.Context, orgID string, role Role) ([]*GettableUser, error)
+	ListUsers(ctx context.Context, orgID string) ([]*GettableUser, error)
+	UpdateUser(ctx context.Context, orgID string, id string, user *User) (*User, error)
+	DeleteUser(ctx context.Context, orgID string, id string) error
+
+	// Creates a password.
+	CreatePassword(ctx context.Context, password *FactorPassword) error
+	CreateResetPasswordToken(ctx context.Context, resetPasswordRequest *ResetPasswordToken) error
+	GetPassword(ctx context.Context, id valuer.UUID) (*FactorPassword, error)
+	GetPasswordByUserID(ctx context.Context, userID valuer.UUID) (*FactorPassword, error)
+	GetResetPasswordToken(ctx context.Context, token string) (*ResetPasswordToken, error)
+	GetResetPasswordTokenByPasswordID(ctx context.Context, passwordID valuer.UUID) (*ResetPasswordToken, error)
+	UpdatePassword(ctx context.Context, password *FactorPassword) error
+
+	// Auth Domain
+	GetDomainByName(ctx context.Context, name string) (*StorableOrgDomain, error)
+	// org domain (auth domains) CRUD ops
+	GetDomainFromSsoResponse(ctx context.Context, relayState *url.URL) (*GettableOrgDomain, error)
+	ListDomains(ctx context.Context, orgId valuer.UUID) ([]*GettableOrgDomain, error)
+	GetDomain(ctx context.Context, id uuid.UUID) (*GettableOrgDomain, error)
+	CreateDomain(ctx context.Context, d *GettableOrgDomain) error
+	UpdateDomain(ctx context.Context, domain *GettableOrgDomain) error
+	DeleteDomain(ctx context.Context, id uuid.UUID) error
+
+	// Temporary func for SSO
+	GetDefaultOrgID(ctx context.Context) (string, error)
+
+	// API KEY
+	CreateAPIKey(ctx context.Context, apiKey *StorableAPIKey) error
+	UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *StorableAPIKey, updaterID valuer.UUID) error
+	ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*StorableAPIKeyUser, error)
+	RevokeAPIKey(ctx context.Context, id valuer.UUID, revokedByUserID valuer.UUID) error
+	GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*StorableAPIKeyUser, error)
+	CountAPIKeyByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
+
+	CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
+
+	// Transaction
+	RunInTx(ctx context.Context, cb func(ctx context.Context) error) error
 }

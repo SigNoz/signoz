@@ -4,6 +4,7 @@
 import './AppLayout.styles.scss';
 
 import * as Sentry from '@sentry/react';
+import { Toaster } from '@signozhq/sonner';
 import { Flex } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -852,6 +853,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			{showChangelogModal && changelog && (
 				<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
 			)}
+
+			<Toaster />
 		</Layout>
 	);
 }

@@ -2,6 +2,7 @@ import http
 import json
 
 import requests
+from sqlalchemy import sql
 from wiremock.client import (
     HttpMethods,
     Mapping,
@@ -52,7 +53,7 @@ def test_apply_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
         ],
     )
 
-    access_token = get_jwt_token("admin@integration.test", "password")
+    access_token = get_jwt_token("admin@integration.test", "password123Z$")
 
     response = requests.post(
         url=signoz.self.host_configs["8080"].get("/api/v3/licenses"),
@@ -111,7 +112,7 @@ def test_refresh_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None
         ],
     )
 
-    access_token = get_jwt_token("admin@integration.test", "password")
+    access_token = get_jwt_token("admin@integration.test", "password123Z$")
 
     response = requests.put(
         url=signoz.self.host_configs["8080"].get("/api/v3/licenses"),
@@ -121,12 +122,13 @@ def test_refresh_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None
 
     assert response.status_code == http.HTTPStatus.NO_CONTENT
 
-    cursor = signoz.sqlstore.conn.cursor()
-    cursor.execute(
-        "SELECT data FROM license WHERE id='0196360e-90cd-7a74-8313-1aa815ce2a67'"
-    )
-    record = cursor.fetchone()[0]
-    assert json.loads(record)["valid_from"] == 1732146922
+    with signoz.sqlstore.conn.connect() as conn:
+        result = conn.execute(
+            sql.text("SELECT data FROM license WHERE id=:id"),
+            {"id": "0196360e-90cd-7a74-8313-1aa815ce2a67"},
+        )
+        record = result.fetchone()[0]
+        assert json.loads(record)["valid_from"] == 1732146922
 
     response = requests.post(
         url=signoz.zeus.host_configs["8080"].get("/__admin/requests/count"),
@@ -163,7 +165,7 @@ def test_license_checkout(signoz: SigNoz, make_http_mocks, get_jwt_token) -> Non
         ],
     )
 
-    access_token = get_jwt_token("admin@integration.test", "password")
+    access_token = get_jwt_token("admin@integration.test", "password123Z$")
 
     response = requests.post(
         url=signoz.self.host_configs["8080"].get("/api/v1/checkout"),
@@ -210,7 +212,7 @@ def test_license_portal(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
         ],
     )
 
-    access_token = get_jwt_token("admin@integration.test", "password")
+    access_token = get_jwt_token("admin@integration.test", "password123Z$")
 
     response = requests.post(
         url=signoz.self.host_configs["8080"].get("/api/v1/portal"),
