@@ -252,7 +252,10 @@ describe('TableDrilldown Breakout Functionality', () => {
 		expect(aggregateQueryData.legend).toBeDefined();
 
 		// Check that the queryParams contain the expandedWidgetId
-		expect(queryParams).toEqual({ expandedWidgetId: 'test-widget' });
+		expect(queryParams).toEqual({
+			expandedWidgetId: 'test-widget',
+			graphType: 'graph',
+		});
 
 		// Check that newTab is true
 		expect(newTab).toBe(true);
