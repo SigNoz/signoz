@@ -338,7 +338,7 @@ function FullView({
 							disabled: isDashboardLocked,
 							'height-widget':
 								widget?.mergeAllActiveQueries || widget?.stackedBarChart,
-							'list-graph-container': isListView,
+							'full-view-graph-container': isListView,
 						})}
 						ref={fullViewRef}
 					>
