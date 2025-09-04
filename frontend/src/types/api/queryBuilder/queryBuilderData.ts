@@ -123,7 +123,7 @@ export type BuilderClickHouseResource = Record<string, IClickHouseQuery>;
 export type BuilderPromQLResource = Record<string, IPromQLQuery>;
 export type BuilderQueryDataResourse = Record<
 	string,
-	IBuilderQuery | IBuilderFormula
+	IBuilderQuery | IBuilderFormula | IBuilderTraceOperator
 >;
 
 export type MapData =
