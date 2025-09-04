@@ -124,7 +124,8 @@ def test_refresh_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None
 
     with signoz.sqlstore.conn.connect() as conn:
         result = conn.execute(
-            sql.text("SELECT data FROM license WHERE id=:id"), {"id": "0196360e-90cd-7a74-8313-1aa815ce2a67"}
+            sql.text("SELECT data FROM license WHERE id=:id"),
+            {"id": "0196360e-90cd-7a74-8313-1aa815ce2a67"},
         )
         record = result.fetchone()[0]
         assert json.loads(record)["valid_from"] == 1732146922
