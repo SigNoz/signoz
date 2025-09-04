@@ -605,7 +605,7 @@ export const convertAggregationToExpression = (
 	if (dataSource === DataSource.METRICS) {
 		return [
 			{
-				metricName: aggregateAttribute.key,
+				metricName: aggregateAttribute?.key || '',
 				timeAggregation: (normalizedTimeAggregation || normalizedOperator) as any,
 				spaceAggregation: (normalizedSpaceAggregation || normalizedOperator) as any,
 			} as MetricAggregation,
@@ -613,7 +613,9 @@ export const convertAggregationToExpression = (
 	}
 
 	// For traces and logs, use expression format
-	const expression = `${normalizedOperator}(${aggregateAttribute.key})`;
+	const expression = aggregateAttribute?.key
+		? `${normalizedOperator}(${aggregateAttribute?.key})`
+		: `${normalizedOperator}()`;
 
 	if (dataSource === DataSource.TRACES) {
 		return [
