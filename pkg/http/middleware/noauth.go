@@ -20,11 +20,12 @@ func NewNoAuth() *NoAuth {
 func (n *NoAuth) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Create a default internal claims context when auth is disabled
+		// Use well-known UUIDs that should exist in a properly setup SigNoz instance
 		claims := authtypes.Claims{
-			UserID: "internal-user",
-			Role:   types.RoleAdmin, // Give admin role to bypass authorization checks
-			Email:  "internal@signoz.io",
-			OrgID:  "default-org",
+			UserID: "00000000-0000-0000-0000-000000000001", // Default admin user ID
+			Role:   types.RoleAdmin,                        // Give admin role to bypass authorization checks
+			Email:  "admin@signoz.internal",
+			OrgID:  "00000000-0000-0000-0000-000000000001", // Default organization ID
 		}
 
 		ctx := authtypes.NewContextWithClaims(r.Context(), claims)
@@ -34,7 +35,7 @@ func (n *NoAuth) Wrap(next http.Handler) http.Handler {
 		comment.Set("auth_type", ctxtypes.AuthTypeInternal.StringValue())
 		comment.Set("user_id", claims.UserID)
 		comment.Set("org_id", claims.OrgID)
-
+		comment.Set("auth_disabled", "true")
 		r = r.WithContext(ctxtypes.NewContextWithComment(ctx, comment))
 
 		next.ServeHTTP(w, r)

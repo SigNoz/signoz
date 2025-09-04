@@ -13,7 +13,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import APIError from 'types/api/error';
 import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck';
@@ -56,21 +56,65 @@ function Login({
 		queryFn: getUserVersion,
 		queryKey: ['getUserVersion', user?.accessJwt],
 		enabled: true,
+		retry: 1, // Only retry once to avoid prolonged error states
 	});
+
+	// Helper function to handle automatic login when auth is disabled
+	const handleAuthDisabledLogin = useCallback(() => {
+		afterLogin('default-user', 'dummy-jwt-token', 'dummy-refresh-token');
+		const fromPathname = getLocalStorageApi(
+			LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
+		);
+		if (fromPathname) {
+			history.push(fromPathname);
+			setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
+		} else {
+			history.push(ROUTES.APPLICATION);
+		}
+	}, []);
+
+	// Helper function to handle successful version response
+	const handleVersionSuccess = useCallback(
+		(payload: { setupCompleted: boolean; authEnabled: boolean }) => {
+			const { setupCompleted, authEnabled } = payload;
+
+			if (!authEnabled) {
+				handleAuthDisabledLogin();
+				return;
+			}
+
+			if (!setupCompleted) {
+				history.push(ROUTES.SIGN_UP);
+			}
+		},
+		[handleAuthDisabledLogin],
+	);
+
+	// Helper function to handle version response errors
+	const handleVersionError = useCallback(() => {
+		getUserVersion()
+			.then((response) => {
+				if (response?.payload?.authEnabled === false) {
+					handleAuthDisabledLogin();
+				}
+			})
+			.catch(() => {
+				console.log('Unable to check authentication status');
+			});
+	}, [handleAuthDisabledLogin]);
 
 	useEffect(() => {
 		if (
 			getUserVersionResponse.isFetched &&
-			getUserVersionResponse.data &&
-			getUserVersionResponse.data.payload
+			getUserVersionResponse.data?.payload
 		) {
-			const { setupCompleted } = getUserVersionResponse.data.payload;
-			if (!setupCompleted) {
-				// no org account registered yet, re-route user to sign up first
-				history.push(ROUTES.SIGN_UP);
-			}
+			handleVersionSuccess(getUserVersionResponse.data.payload);
 		}
-	}, [getUserVersionResponse]);
+
+		if (getUserVersionResponse.isError && getUserVersionResponse.error) {
+			handleVersionError();
+		}
+	}, [getUserVersionResponse, handleVersionSuccess, handleVersionError]);
 
 	const [form] = Form.useForm<FormValues>();
 

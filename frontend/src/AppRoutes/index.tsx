@@ -3,6 +3,7 @@ import { ConfigProvider } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
+import getUserVersion from 'api/v1/version/getVersion';
 import AppLoading from 'components/AppLoading/AppLoading';
 import KBarCommandPalette from 'components/KBarCommandPalette/KBarCommandPalette';
 import NotFound from 'components/NotFound';
@@ -351,8 +352,21 @@ function App(): JSX.Element {
 		// if the required calls fails then return a something went wrong error
 		// this needs to be on top of data missing error because if there is an error, data will never be loaded and it will
 		// move to indefinitive loading
+		// Exception: If authentication is disabled (versionData?.authEnabled === false), ignore user fetch errors
 		if (userFetchError && pathname !== ROUTES.SOMETHING_WENT_WRONG) {
-			history.replace(ROUTES.SOMETHING_WENT_WRONG);
+			// Check if authentication is disabled via version API
+			getUserVersion()
+				.then((response) => {
+					// If auth is enabled OR we can't determine auth status, show error
+					if (response?.payload?.authEnabled !== false) {
+						history.replace(ROUTES.SOMETHING_WENT_WRONG);
+					}
+					// If auth is disabled, ignore the userFetchError
+				})
+				.catch(() => {
+					// If we can't check auth status, assume auth is enabled and show error
+					history.replace(ROUTES.SOMETHING_WENT_WRONG);
+				});
 		}
 
 		// if all of the data is not set then return a spinner, this is required because there is some gap between loading states and data setting
