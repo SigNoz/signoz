@@ -254,9 +254,11 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				}
 
 				if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepInterval(req.Start, req.End)) {
-					spec.StepInterval = qbtypes.Step{
+					newStep := qbtypes.Step{
 						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepInterval(req.Start, req.End)),
 					}
+					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
+					spec.StepInterval = newStep
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
 			}
