@@ -218,15 +218,11 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, error) {
 	r := baseapp.NewRouter()
 
-	// Apply authentication middleware conditionally based on configuration
-	if s.config.APIServer.Auth.Enabled {
-		r.Use(middleware.NewAuth(s.jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
-	} else {
-		r.Use(middleware.NewNoAuth().Wrap)
-	}
-	if s.config.APIServer.Auth.Enabled {
-		r.Use(middleware.NewAPIKey(s.signoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.signoz.Instrumentation.Logger(), s.signoz.Sharder).Wrap)
-	}
+	// Set up authentication middleware using helper
+	authSetup := middleware.NewAuthSetup(s.config.APIServer, s.jwt, s.signoz.SQLStore, s.signoz.Sharder, s.signoz.Instrumentation.Logger())
+	authSetup.ApplyAuthMiddleware(r)
+	authSetup.ApplyAPIKeyMiddleware(r)
+
 	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
 		s.config.APIServer.Timeout.ExcludedRoutes,
 		s.config.APIServer.Timeout.Default,
@@ -256,15 +252,11 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	r := baseapp.NewRouter()
 	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger())
 
-	// Apply authentication middleware conditionally based on configuration
-	if s.config.APIServer.Auth.Enabled {
-		r.Use(middleware.NewAuth(s.jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
-	} else {
-		r.Use(middleware.NewNoAuth().Wrap)
-	}
-	if s.config.APIServer.Auth.Enabled {
-		r.Use(middleware.NewAPIKey(s.signoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.signoz.Instrumentation.Logger(), s.signoz.Sharder).Wrap)
-	}
+	// Set up authentication middleware using helper
+	authSetup := middleware.NewAuthSetup(s.config.APIServer, s.jwt, s.signoz.SQLStore, s.signoz.Sharder, s.signoz.Instrumentation.Logger())
+	authSetup.ApplyAuthMiddleware(r)
+	authSetup.ApplyAPIKeyMiddleware(r)
+
 	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
 		s.config.APIServer.Timeout.ExcludedRoutes,
 		s.config.APIServer.Timeout.Default,
