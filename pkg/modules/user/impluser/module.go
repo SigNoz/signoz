@@ -284,6 +284,10 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 	if password == nil {
 		// if the user does not have a password, we need to create a new one (common for SSO/SAML users)
 		password = types.MustGenerateFactorPassword(userID.String())
+
+		if err := module.store.CreatePassword(ctx, password); err != nil {
+			return nil, err
+		}
 	}
 
 	resetPasswordToken, err := types.NewResetPasswordToken(password.ID)
