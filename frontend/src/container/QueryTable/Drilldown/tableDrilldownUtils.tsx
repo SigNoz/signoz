@@ -1,9 +1,10 @@
-import { OPERATORS } from 'constants/queryBuilder';
+import { OPERATORS, PANEL_TYPES } from 'constants/queryBuilder';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { addFilterToSelectedQuery, FilterData } from './drilldownUtils';
+import { BreakoutAttributeType } from './types';
 import { AggregateData } from './useAggregateDrilldown';
 
 export const isEmptyFilterValue = (value: any): boolean =>
@@ -42,13 +43,32 @@ export const getFiltersToAddToView = (clickedData: any): FilterData[] => {
 	);
 };
 
+export const getBreakoutPanelType = (
+	breakoutQuery: Query,
+	currentPanelType?: PANEL_TYPES,
+	groupBy?: BreakoutAttributeType,
+): PANEL_TYPES => {
+	// Check if the query is grouped by a number data type
+	const hasNumberGroupBy = groupBy?.dataType === 'number';
+
+	if (hasNumberGroupBy) {
+		return PANEL_TYPES.HISTOGRAM;
+	}
+
+	if (currentPanelType === PANEL_TYPES.VALUE) {
+		return PANEL_TYPES.TABLE;
+	}
+
+	return currentPanelType || PANEL_TYPES.TIME_SERIES;
+};
+
 /**
  * Creates a breakout query by adding filters and updating the groupBy
  */
 export const getBreakoutQuery = (
 	query: Query,
 	aggregateData: AggregateData | null,
-	groupBy: BaseAutocompleteData,
+	groupBy: BreakoutAttributeType,
 	filtersToAdd: FilterData[],
 ): Query => {
 	if (!aggregateData) {
@@ -63,27 +83,12 @@ export const getBreakoutQuery = (
 	);
 	const newQuery = cloneDeep(queryWithFilters);
 
-	// OLD LOGIC - Preserved all queries, modified only the matching one
-	// newQuery.builder.queryData = newQuery.builder.queryData.map(
-	// 	(item: IBuilderQuery) => {
-	// 		if (item.queryName === aggregateData.queryName) {
-	// 			return {
-	// 				...item,
-	// 				groupBy: [groupBy],
-	// 				orderBy: [],
-	// 				legend: item.legend && groupBy.key ? `{{${groupBy.key}}}` : '',
-	// 			};
-	// 		}
-	// 		return item;
-	// 	},
-	// );
-
-	// NEW LOGIC - Filter to keep only the query that matches queryName
+	// Filter to keep only the query that matches queryName
 	newQuery.builder.queryData = newQuery.builder.queryData
 		.filter((item: IBuilderQuery) => item.queryName === aggregateData.queryName)
 		.map((item: IBuilderQuery) => ({
 			...item,
-			groupBy: [groupBy],
+			groupBy: [{ key: groupBy.key, type: groupBy.type } as BaseAutocompleteData],
 			orderBy: [],
 			legend: item.legend && groupBy.key ? `{{${groupBy.key}}}` : '',
 		}));

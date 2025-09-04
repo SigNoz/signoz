@@ -1,14 +1,15 @@
 import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ArrowLeft } from 'lucide-react';
 import ContextMenu from 'periscope/components/ContextMenu';
 import { useCallback, useMemo } from 'react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import BreakoutOptions from './BreakoutOptions';
 import { getQueryData } from './drilldownUtils';
-import { getBreakoutQuery } from './tableDrilldownUtils';
+import { getBreakoutPanelType, getBreakoutQuery } from './tableDrilldownUtils';
+import { BreakoutAttributeType } from './types';
 import { AggregateData } from './useAggregateDrilldown';
 
 interface UseBreakoutProps {
@@ -17,6 +18,7 @@ interface UseBreakoutProps {
 	onClose: () => void;
 	aggregateData: AggregateData | null;
 	setSubMenu: (subMenu: string) => void;
+	panelType?: PANEL_TYPES;
 }
 
 interface BreakoutConfig {
@@ -30,17 +32,21 @@ const useBreakout = ({
 	onClose,
 	aggregateData,
 	setSubMenu,
+	panelType,
 }: UseBreakoutProps): {
 	breakoutConfig: BreakoutConfig;
-	handleBreakoutClick: (groupBy: BaseAutocompleteData) => void;
+	handleBreakoutClick: (groupBy: BreakoutAttributeType) => void;
 } => {
 	const { redirectWithQueryBuilderData } = useQueryBuilder();
 
 	const redirectToViewMode = useCallback(
-		(query: Query): void => {
+		(query: Query, panelType?: PANEL_TYPES): void => {
 			redirectWithQueryBuilderData(
 				query,
-				{ [QueryParams.expandedWidgetId]: widgetId },
+				{
+					[QueryParams.expandedWidgetId]: widgetId,
+					...(panelType && { [QueryParams.graphType]: panelType }),
+				},
 				undefined,
 				true,
 			);
@@ -49,7 +55,7 @@ const useBreakout = ({
 	);
 
 	const handleBreakoutClick = useCallback(
-		(groupBy: BaseAutocompleteData): void => {
+		(groupBy: BreakoutAttributeType): void => {
 			if (!aggregateData) {
 				console.warn('aggregateData is null in handleBreakoutClick');
 				return;
@@ -63,10 +69,16 @@ const useBreakout = ({
 				filtersToAdd,
 			);
 
-			redirectToViewMode(breakoutQuery);
+			const breakoutPanelType = getBreakoutPanelType(
+				breakoutQuery,
+				panelType,
+				groupBy,
+			);
+
+			redirectToViewMode(breakoutQuery, breakoutPanelType);
 			onClose();
 		},
-		[query, aggregateData, redirectToViewMode, onClose],
+		[query, aggregateData, redirectToViewMode, onClose, panelType],
 	);
 
 	const handleBackClick = useCallback(() => {

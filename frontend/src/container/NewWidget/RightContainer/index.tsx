@@ -511,6 +511,7 @@ function RightContainer({
 					<ContextLinks
 						contextLinks={contextLinks}
 						setContextLinks={setContextLinks}
+						selectedWidget={selectedWidget}
 					/>
 				</section>
 			)}

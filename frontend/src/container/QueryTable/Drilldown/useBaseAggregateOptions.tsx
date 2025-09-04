@@ -16,6 +16,7 @@ import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { ContextMenuItem } from './contextConfig';
+import { getDataLinks } from './dataLinksUtils';
 import { getAggregateColumnHeader, getViewQuery } from './drilldownUtils';
 import { getBaseContextConfig } from './menuOptions';
 import { AggregateData } from './useAggregateDrilldown';
@@ -105,7 +106,10 @@ const useBaseAggregateOptions = ({
 				50, // maxLength for labels
 			);
 
-			return processedLinks.map(({ id, label, url }) => (
+			const dataLinks = getDataLinks(query, aggregateData);
+			const allLinks = [...dataLinks, ...processedLinks];
+
+			return allLinks.map(({ id, label, url }) => (
 				<ContextMenu.Item
 					key={id}
 					icon={<LinkOutlined />}
@@ -120,7 +124,7 @@ const useBaseAggregateOptions = ({
 		} catch (error) {
 			return [];
 		}
-	}, [contextLinks, processedVariables, onClose]);
+	}, [contextLinks, processedVariables, onClose, aggregateData, query]);
 
 	const handleBaseDrilldown = useCallback(
 		(key: string): void => {
@@ -189,7 +193,7 @@ const useBaseAggregateOptions = ({
 			handleBaseDrilldown,
 			setSubMenu,
 			showDashboardVariablesOption,
-			showBreakoutOption: panelType !== PANEL_TYPES.VALUE,
+			showBreakoutOption: true,
 		}).filter((item) => !item.hidden);
 
 		return {
@@ -248,7 +252,6 @@ const useBaseAggregateOptions = ({
 		resolvedQuery,
 		showDashboardVariablesOption,
 		setSubMenu,
-		panelType,
 	]);
 
 	return { baseAggregateOptionsConfig };

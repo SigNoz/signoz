@@ -1,4 +1,4 @@
-import { PlusOutlined } from '@ant-design/icons';
+import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import {
 	Button,
 	Form,
@@ -30,7 +30,7 @@ function InviteTeamMembers({ form, onFinish }: Props): JSX.Element {
 				initialValues={{ members: [{ email: '', name: '', role: 'VIEWER' }] }}
 			>
 				<Form.List name="members">
-					{(fields, { add }): JSX.Element => (
+					{(fields, { add, remove }): JSX.Element => (
 						<SpaceContainer direction="vertical" align="center" size="middle">
 							{fields.map(({ key, name }) => (
 								<Space key={key} direction="horizontal" align="start">
@@ -56,6 +56,14 @@ function InviteTeamMembers({ form, onFinish }: Props): JSX.Element {
 											<Select.Option value="EDITOR">EDITOR</Select.Option>
 										</SelectDrawer>
 									</Form.Item>
+									<Button
+										type="text"
+										icon={<DeleteOutlined />}
+										onClick={(): void => remove(name)}
+										danger
+										data-testid={`delete-member-${name}`}
+										disabled={fields.length === 1}
+									/>
 								</Space>
 							))}
 							<Form.Item>

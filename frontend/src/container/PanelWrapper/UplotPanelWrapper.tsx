@@ -177,7 +177,11 @@ function UplotPanelWrapper({
 
 					// Use the stepInterval from the specific query, fallback to default
 					const stepInterval = specificQuery?.spec?.stepInterval || 60;
-					timeRange = getTimeRangeFromStepInterval(stepInterval, xValue);
+					timeRange = getTimeRangeFromStepInterval(
+						stepInterval,
+						xValue,
+						specificQuery?.spec?.signal,
+					);
 				}
 			}
 

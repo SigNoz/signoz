@@ -1,5 +1,6 @@
 import { defaultStyles } from '@visx/tooltip';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 export const tooltipStyles = {
 	...defaultStyles,
@@ -92,8 +93,10 @@ export const getTimeRangeFromUplotAxis = (
 export const getTimeRangeFromStepInterval = (
 	stepInterval: number,
 	xValue: number,
+	signal: DataSource,
 ): { startTime: number; endTime: number } => {
-	const startTime = xValue;
+	const startTime =
+		signal === DataSource.METRICS ? xValue - stepInterval : xValue;
 	const endTime = xValue + stepInterval;
 	return { startTime, endTime };
 };

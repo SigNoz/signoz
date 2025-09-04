@@ -30,6 +30,10 @@ export const TimeContainer = styled.div<Props>`
 	.time-container {
 		display: flex;
 	}
+	.drildown-options-container {
+		display: flex;
+		align-items: center;
+	}
 `;
 
 export const GraphContainer = styled.div<GraphContainerProps>`

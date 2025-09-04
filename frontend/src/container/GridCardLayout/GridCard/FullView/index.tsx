@@ -35,7 +35,7 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import GetMinMax from 'lib/getMinMax';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
@@ -46,6 +46,7 @@ import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
 import { getLocalStorageGraphVisibilityState } from '../utils';
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
+import PanelTypeSelector from './PanelTypeSelector';
 import { GraphContainer, TimeContainer } from './styles';
 import { FullViewProps } from './types';
 
@@ -98,17 +99,26 @@ function FullView({
 
 	const updatedQuery = widget?.query;
 
+	// Panel type derived from URL with fallback to widget setting
+	const selectedPanelType = useMemo(() => {
+		const urlPanelType = urlQuery.get(QueryParams.graphType) as PANEL_TYPES;
+		if (urlPanelType && Object.values(PANEL_TYPES).includes(urlPanelType)) {
+			return urlPanelType;
+		}
+		return widget?.panelTypes || PANEL_TYPES.TIME_SERIES;
+	}, [urlQuery, widget?.panelTypes]);
+
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
-		if (widget.panelTypes !== PANEL_TYPES.LIST) {
+		if (selectedPanelType !== PANEL_TYPES.LIST) {
 			return {
 				selectedTime: selectedTime.enum,
-				graphType: getGraphType(widget.panelTypes),
+				graphType: getGraphType(selectedPanelType),
 				query: updatedQuery,
 				globalSelectedInterval: globalSelectedTime,
 				variables: getDashboardVariables(selectedDashboard?.data.variables),
 				fillGaps: widget.fillSpans,
-				formatForWeb: widget.panelTypes === PANEL_TYPES.TABLE,
-				originalGraphType: widget?.panelTypes,
+				formatForWeb: selectedPanelType === PANEL_TYPES.TABLE,
+				originalGraphType: selectedPanelType,
 			};
 		}
 		updatedQuery.builder.queryData[0].pageSize = 10;
@@ -127,11 +137,17 @@ function FullView({
 		};
 	});
 
-	const { dashboardEditView, handleResetQuery, showResetQuery } = useDrilldown({
+	const {
+		drilldownQuery,
+		dashboardEditView,
+		handleResetQuery,
+		showResetQuery,
+	} = useDrilldown({
 		enableDrillDown,
 		widget,
 		setRequestData,
 		selectedDashboard,
+		selectedPanelType,
 	});
 
 	useEffect(() => {
@@ -141,12 +157,33 @@ function FullView({
 		}));
 	}, [selectedTime]);
 
+	// Update requestData when panel type changes
+	useEffect(() => {
+		setRequestData((prev) => {
+			if (selectedPanelType !== PANEL_TYPES.LIST) {
+				return {
+					...prev,
+					graphType: getGraphType(selectedPanelType),
+					formatForWeb: selectedPanelType === PANEL_TYPES.TABLE,
+					originalGraphType: selectedPanelType,
+				};
+			}
+			// For LIST panels, ensure proper configuration
+			return {
+				...prev,
+				graphType: PANEL_TYPES.LIST,
+				formatForWeb: false,
+				originalGraphType: selectedPanelType,
+			};
+		});
+	}, [selectedPanelType]);
+
 	const response = useGetQueryRange(
 		requestData,
 		// selectedDashboard?.data?.version || version || DEFAULT_ENTITY_VERSION,
 		ENTITY_VERSION_V5,
 		{
-			queryKey: [widget?.query, widget?.panelTypes, requestData, version],
+			queryKey: [widget?.query, selectedPanelType, requestData, version],
 			enabled: !isDependedDataLoaded,
 			keepPreviousData: true,
 		},
@@ -189,18 +226,18 @@ function FullView({
 	}, [originalName, response.data?.payload.data.result]);
 
 	const canModifyChart = useChartMutable({
-		panelType: widget.panelTypes,
+		panelType: selectedPanelType,
 		panelTypeAndGraphManagerVisibility: PANEL_TYPES_VS_FULL_VIEW_TABLE,
 	});
 
-	if (response.data && widget.panelTypes === PANEL_TYPES.BAR) {
+	if (response.data && selectedPanelType === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(
 			response.data?.payload.data.result,
 		);
 		response.data.payload.data.result = sortedSeriesData;
 	}
 
-	if (response.data && widget.panelTypes === PANEL_TYPES.PIE) {
+	if (response.data && selectedPanelType === PANEL_TYPES.PIE) {
 		const transformedData = populateMultipleResults(response?.data);
 		// eslint-disable-next-line no-param-reassign
 		response.data = transformedData;
@@ -212,13 +249,13 @@ function FullView({
 		});
 	}, [graphsVisibilityStates]);
 
-	const isListView = widget.panelTypes === PANEL_TYPES.LIST;
+	const isListView = selectedPanelType === PANEL_TYPES.LIST;
 
-	const isTablePanel = widget.panelTypes === PANEL_TYPES.TABLE;
+	const isTablePanel = selectedPanelType === PANEL_TYPES.TABLE;
 
 	const [searchTerm, setSearchTerm] = useState<string>('');
 
-	if (response.isLoading && widget.panelTypes !== PANEL_TYPES.LIST) {
+	if (response.isLoading && selectedPanelType !== PANEL_TYPES.LIST) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
 	}
 
@@ -228,7 +265,7 @@ function FullView({
 				<>
 					<div className="full-view-header-container">
 						{fullViewOptions && (
-							<TimeContainer $panelType={widget.panelTypes}>
+							<TimeContainer $panelType={selectedPanelType}>
 								{enableDrillDown && (
 									<div className="drildown-options-container">
 										{showResetQuery && (
@@ -249,6 +286,12 @@ function FullView({
 												Switch to Edit Mode
 											</Button>
 										)}
+										<PanelTypeSelector
+											selectedPanelType={selectedPanelType}
+											disabled={response.isFetching || response.isLoading}
+											query={drilldownQuery}
+											widgetId={widget?.id || ''}
+										/>
 									</div>
 								)}
 								<div className="time-container">
@@ -275,9 +318,9 @@ function FullView({
 						{enableDrillDown && (
 							<>
 								<QueryBuilderV2
-									panelType={widget.panelTypes}
+									panelType={selectedPanelType}
 									version={selectedDashboard?.data?.version || 'v3'}
-									isListViewPanel={widget.panelTypes === PANEL_TYPES.LIST}
+									isListViewPanel={selectedPanelType === PANEL_TYPES.LIST}
 									// filterConfigs={filterConfigs}
 									// queryComponents={queryComponents}
 								/>
@@ -330,6 +373,7 @@ function FullView({
 								searchTerm={searchTerm}
 								onClickHandler={onClickHandler}
 								enableDrillDown={enableDrillDown}
+								selectedGraph={selectedPanelType}
 							/>
 						</GraphContainer>
 					</div>

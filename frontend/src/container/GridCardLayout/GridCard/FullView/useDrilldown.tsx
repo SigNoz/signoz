@@ -1,3 +1,5 @@
+import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
@@ -10,6 +12,7 @@ import {
 	useRef,
 } from 'react';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 
 export interface DrilldownQueryProps {
@@ -17,9 +20,11 @@ export interface DrilldownQueryProps {
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	enableDrillDown: boolean;
 	selectedDashboard: Dashboard | undefined;
+	selectedPanelType: PANEL_TYPES;
 }
 
 export interface UseDrilldownReturn {
+	drilldownQuery: Query;
 	dashboardEditView: string;
 	handleResetQuery: () => void;
 	showResetQuery: boolean;
@@ -30,6 +35,7 @@ const useDrilldown = ({
 	widget,
 	setRequestData,
 	selectedDashboard,
+	selectedPanelType,
 }: DrilldownQueryProps): UseDrilldownReturn => {
 	const isMounted = useRef(false);
 	const { redirectWithQueryBuilderData, currentQuery } = useQueryBuilder();
@@ -57,7 +63,7 @@ const useDrilldown = ({
 	const dashboardEditView = selectedDashboard?.id
 		? generateExportToDashboardLink({
 				query: currentQuery,
-				panelType: widget.panelTypes,
+				panelType: selectedPanelType,
 				dashboardId: selectedDashboard?.id || '',
 				widgetId: widget.id,
 		  })
@@ -71,10 +77,19 @@ const useDrilldown = ({
 	);
 
 	const handleResetQuery = useCallback((): void => {
-		redirectWithQueryBuilderData(widget.query);
-	}, [redirectWithQueryBuilderData, widget.query]);
+		redirectWithQueryBuilderData(
+			widget.query,
+			{
+				[QueryParams.expandedWidgetId]: widget.id,
+				[QueryParams.graphType]: widget.panelTypes,
+			},
+			undefined,
+			true,
+		);
+	}, [redirectWithQueryBuilderData, widget.query, widget.id, widget.panelTypes]);
 
 	return {
+		drilldownQuery: compositeQuery || widget.query,
 		dashboardEditView,
 		handleResetQuery,
 		showResetQuery,

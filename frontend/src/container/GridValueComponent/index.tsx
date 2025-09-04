@@ -65,17 +65,20 @@ function GridValueComponent({
 		);
 	}
 
+	const isQueryTypeBuilder = widget?.query?.queryType === 'builder';
+
 	return (
 		<>
 			<TitleContainer isDashboardPage={isDashboardPage}>
 				<Typography>{gridTitle}</Typography>
 			</TitleContainer>
 			<ValueContainer
+				showClickable={enableDrillDown && isQueryTypeBuilder}
 				onClick={(e): void => {
 					const queryName = (queryResponse?.data?.params as any)?.compositeQuery
 						?.queries[0]?.spec?.name;
 
-					if (!enableDrillDown || !queryName) return;
+					if (!enableDrillDown || !queryName || !isQueryTypeBuilder) return;
 
 					// when multiple queries are present, we need to get the query name from the queryResponse
 					// since value panel shows result for the first query

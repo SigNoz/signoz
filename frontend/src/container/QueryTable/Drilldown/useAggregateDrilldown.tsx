@@ -79,6 +79,7 @@ const useAggregateDrilldown = ({
 		onClose,
 		aggregateData: aggregateDataWithTimeRange,
 		setSubMenu,
+		panelType,
 	});
 
 	const fieldVariables = useMemo(() => {
