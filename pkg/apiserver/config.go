@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Timeout Timeout `mapstructure:"timeout"`
 	Logging Logging `mapstructure:"logging"`
+	Auth    Auth    `mapstructure:"auth"`
 }
 
 type Timeout struct {
@@ -24,6 +25,11 @@ type Timeout struct {
 type Logging struct {
 	// The list of routes that are excluded from the logging
 	ExcludedRoutes []string `mapstructure:"excluded_routes"`
+}
+
+type Auth struct {
+	// Whether authentication is enabled
+	Enabled bool `mapstructure:"enabled"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -46,6 +52,9 @@ func newConfig() factory.Config {
 				"/api/v1/version",
 				"/",
 			},
+		},
+		Auth: Auth{
+			Enabled: true, // Default to enabled for security
 		},
 	}
 }

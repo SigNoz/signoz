@@ -182,13 +182,20 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 
 	r := NewRouter()
 
-	r.Use(middleware.NewAuth(s.jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
+	// Apply authentication middleware conditionally based on configuration
+	if s.config.APIServer.Auth.Enabled {
+		r.Use(middleware.NewAuth(s.jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
+	} else {
+		r.Use(middleware.NewNoAuth().Wrap)
+	}
 	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
 		s.config.APIServer.Timeout.ExcludedRoutes,
 		s.config.APIServer.Timeout.Default,
 		s.config.APIServer.Timeout.Max,
 	).Wrap)
-	r.Use(middleware.NewAPIKey(s.signoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.signoz.Instrumentation.Logger(), s.signoz.Sharder).Wrap)
+	if s.config.APIServer.Auth.Enabled {
+		r.Use(middleware.NewAPIKey(s.signoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.signoz.Instrumentation.Logger(), s.signoz.Sharder).Wrap)
+	}
 	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
 
 	api.RegisterPrivateRoutes(r)
@@ -212,13 +219,20 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server, error) {
 	r := NewRouter()
 
-	r.Use(middleware.NewAuth(s.jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
+	// Apply authentication middleware conditionally based on configuration
+	if s.config.APIServer.Auth.Enabled {
+		r.Use(middleware.NewAuth(s.jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
+	} else {
+		r.Use(middleware.NewNoAuth().Wrap)
+	}
 	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
 		s.config.APIServer.Timeout.ExcludedRoutes,
 		s.config.APIServer.Timeout.Default,
 		s.config.APIServer.Timeout.Max,
 	).Wrap)
-	r.Use(middleware.NewAPIKey(s.signoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.signoz.Instrumentation.Logger(), s.signoz.Sharder).Wrap)
+	if s.config.APIServer.Auth.Enabled {
+		r.Use(middleware.NewAPIKey(s.signoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.signoz.Instrumentation.Logger(), s.signoz.Sharder).Wrap)
+	}
 	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
 	r.Use(middleware.NewComment().Wrap)
 
