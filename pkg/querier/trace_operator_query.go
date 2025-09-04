@@ -2,8 +2,6 @@ package querier
 
 import (
 	"context"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -24,61 +22,7 @@ type traceOperatorQuery struct {
 var _ qbtypes.Query = (*traceOperatorQuery)(nil)
 
 func (q *traceOperatorQuery) Fingerprint() string {
-
-	if q.kind == qbtypes.RequestTypeRaw {
-		return ""
-	}
-
-	parts := []string{"trace_operator"}
-
-	parts = append(parts, fmt.Sprintf("expr=%s", q.spec.Expression))
-
-	// Add returnSpansFrom if specified
-	if q.spec.ReturnSpansFrom != "" {
-		parts = append(parts, fmt.Sprintf("return=%s", q.spec.ReturnSpansFrom))
-	}
-
-	// Add step interval if present
-	parts = append(parts, fmt.Sprintf("step=%s", q.spec.StepInterval.String()))
-
-	// Add filter if present
-	if q.spec.Filter != nil && q.spec.Filter.Expression != "" {
-		parts = append(parts, fmt.Sprintf("filter=%s", q.spec.Filter.Expression))
-	}
-
-	// Add aggregations
-	if len(q.spec.Aggregations) > 0 {
-		aggParts := []string{}
-		for _, agg := range q.spec.Aggregations {
-			aggParts = append(aggParts, agg.Expression)
-		}
-		parts = append(parts, fmt.Sprintf("aggs=[%s]", strings.Join(aggParts, ",")))
-	}
-
-	// Add group by
-	if len(q.spec.GroupBy) > 0 {
-		groupByParts := []string{}
-		for _, gb := range q.spec.GroupBy {
-			groupByParts = append(groupByParts, fingerprintGroupByKey(gb))
-		}
-		parts = append(parts, fmt.Sprintf("groupby=[%s]", strings.Join(groupByParts, ",")))
-	}
-
-	// Add order by
-	if len(q.spec.Order) > 0 {
-		orderParts := []string{}
-		for _, o := range q.spec.Order {
-			orderParts = append(orderParts, fingerprintOrderBy(o))
-		}
-		parts = append(parts, fmt.Sprintf("order=[%s]", strings.Join(orderParts, ",")))
-	}
-
-	// Add limit
-	if q.spec.Limit > 0 {
-		parts = append(parts, fmt.Sprintf("limit=%d", q.spec.Limit))
-	}
-
-	return strings.Join(parts, "&")
+	return ""
 }
 
 func (q *traceOperatorQuery) Window() (uint64, uint64) {
@@ -142,4 +86,14 @@ func (q *traceOperatorQuery) executeWithContext(ctx context.Context, query strin
 			DurationMS:   uint64(elapsed.Milliseconds()),
 		},
 	}, nil
+}
+
+// contains checks if a slice contains a specific string
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }

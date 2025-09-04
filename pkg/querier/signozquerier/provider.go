@@ -95,7 +95,7 @@ func newProvider(
 		telemetryMetadataStore,
 		traceFieldMapper,
 		traceConditionBuilder,
-		traceStmtBuilder, // Pass the regular trace statement builder
+		traceStmtBuilder,          // Pass the regular trace statement builder
 		resourceFilterStmtBuilder, // Pass the resource filter statement builder
 		traceAggExprRewriter,
 	)
@@ -158,7 +158,7 @@ func newProvider(
 		cfg.FluxInterval,
 	)
 
-	// Create and return the querier - ADD traceOperatorStmtBuilder parameter
+	// Create and return the querier
 	return querier.New(
 		settings,
 		telemetryStore,

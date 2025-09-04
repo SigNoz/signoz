@@ -254,9 +254,11 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				}
 
 				if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepInterval(req.Start, req.End)) {
-					spec.StepInterval = qbtypes.Step{
+					newStep := qbtypes.Step{
 						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepInterval(req.Start, req.End)),
 					}
+					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
+					spec.StepInterval = newStep
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
 			}
@@ -762,10 +764,11 @@ func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtyp
 		}
 		return newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
 	case *traceOperatorQuery:
+		specCopy := qt.spec.Copy()
 		return &traceOperatorQuery{
 			telemetryStore: q.telemetryStore,
 			stmtBuilder:    q.traceOperatorStmtBuilder,
-			spec:           qt.spec,
+			spec:           specCopy,
 			fromMS:         uint64(timeRange.From),
 			toMS:           uint64(timeRange.To),
 			compositeQuery: qt.compositeQuery,
