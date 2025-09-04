@@ -94,13 +94,20 @@ function UpdateContextLinks({
 	const getCurrentDomain = (): string => window.location.origin;
 
 	// Function to handle variable selection from dropdown
-	const handleVariableSelect = (variableName: string): void => {
+	const handleVariableSelect = (
+		variableName: string,
+		cursorPosition?: number,
+	): void => {
 		// Get current URL value from form
 		const currentValue = form.getFieldValue(CONTEXT_LINK_FIELDS.URL) || '';
 
-		// For now, just append the variable to the end
-		// In the future, we can implement cursor position logic
-		const newValue = currentValue + variableName;
+		// Insert at cursor position if provided, otherwise append to end
+		const newValue =
+			cursorPosition !== undefined
+				? currentValue.slice(0, cursorPosition) +
+				  variableName +
+				  currentValue.slice(cursorPosition)
+				: currentValue + variableName;
 
 		// Update form value
 		form.setFieldValue(CONTEXT_LINK_FIELDS.URL, newValue);
@@ -122,12 +129,18 @@ function UpdateContextLinks({
 	const handleParamVariableSelect = (
 		index: number,
 		variableName: string,
+		cursorPosition?: number,
 	): void => {
 		// Get current parameter value
 		const currentValue = params[index].value;
 
-		// Append the variable to the current value
-		const newValue = currentValue + variableName;
+		// Insert at cursor position if provided, otherwise append to end
+		const newValue =
+			cursorPosition !== undefined
+				? currentValue.slice(0, cursorPosition) +
+				  variableName +
+				  currentValue.slice(cursorPosition)
+				: currentValue + variableName;
 
 		// Update the parameter value
 		handleParamChange(index, 'value', newValue);
@@ -229,12 +242,22 @@ function UpdateContextLinks({
 							onVariableSelect={handleVariableSelect}
 							variables={transformedVariables}
 						>
-							{({ setIsOpen }): JSX.Element => (
+							{({ setIsOpen, setCursorPosition }): JSX.Element => (
 								<div className="url-input-trigger">
 									<Input
 										value={url}
-										onChange={(e): void =>
-											form.setFieldValue(CONTEXT_LINK_FIELDS.URL, e.target.value)
+										onChange={(e): void => {
+											setCursorPosition(e.target.selectionStart || 0);
+											form.setFieldValue(CONTEXT_LINK_FIELDS.URL, e.target.value);
+										}}
+										onFocus={(): void => setIsOpen(true)}
+										// eslint-disable-next-line sonarjs/no-identical-functions
+										onClick={(e): void =>
+											setCursorPosition((e.target as HTMLInputElement).selectionStart || 0)
+										}
+										// eslint-disable-next-line sonarjs/no-identical-functions
+										onKeyUp={(e): void =>
+											setCursorPosition((e.target as HTMLInputElement).selectionStart || 0)
 										}
 										autoComplete="off"
 										autoCorrect="off"
@@ -242,7 +265,6 @@ function UpdateContextLinks({
 										spellCheck="false"
 										className="url-input-field"
 										placeholder={`${getCurrentDomain()}/trace/{{_traceId}}`}
-										onFocus={(): void => setIsOpen(true)}
 									/>
 								</div>
 							)}
@@ -277,20 +299,33 @@ function UpdateContextLinks({
 									</Col>
 									<Col span={16}>
 										<VariablesDropdown
-											onVariableSelect={(variableName): void =>
-												handleParamVariableSelect(index, variableName)
+											onVariableSelect={(variableName, cursorPosition): void =>
+												handleParamVariableSelect(index, variableName, cursorPosition)
 											}
 											variables={transformedVariables}
 										>
-											{({ setIsOpen }): JSX.Element => (
+											{({ setIsOpen, setCursorPosition }): JSX.Element => (
 												<TextArea
 													rows={1}
 													placeholder="Value"
 													value={param.value}
-													onChange={(event): void =>
-														handleParamChange(index, 'value', event.target.value)
-													}
+													onChange={(event): void => {
+														setCursorPosition(event.target.selectionStart || 0);
+														handleParamChange(index, 'value', event.target.value);
+													}}
 													onFocus={(): void => setIsOpen(true)}
+													// eslint-disable-next-line sonarjs/no-identical-functions
+													onClick={(e): void =>
+														setCursorPosition(
+															(e.target as HTMLTextAreaElement).selectionStart || 0,
+														)
+													}
+													// eslint-disable-next-line sonarjs/no-identical-functions
+													onKeyUp={(e): void =>
+														setCursorPosition(
+															(e.target as HTMLTextAreaElement).selectionStart || 0,
+														)
+													}
 												/>
 											)}
 										</VariablesDropdown>

@@ -4,12 +4,14 @@ import { Dropdown, Typography } from 'antd';
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 interface VariablesDropdownProps {
-	onVariableSelect: (variableName: string) => void;
+	onVariableSelect: (variableName: string, cursorPosition?: number) => void;
 	variables: VariableItem[];
 	children: (props: {
-		onVariableSelect: (variableName: string) => void;
+		onVariableSelect: (variableName: string, cursorPosition?: number) => void;
 		isOpen: boolean;
 		setIsOpen: (open: boolean) => void;
+		cursorPosition: number | null;
+		setCursorPosition: (position: number | null) => void;
 	}) => ReactNode;
 }
 
@@ -24,6 +26,7 @@ function VariablesDropdown({
 	children,
 }: VariablesDropdownProps): JSX.Element {
 	const [isOpen, setIsOpen] = useState(false);
+	const [cursorPosition, setCursorPosition] = useState<number | null>(null);
 	const wrapperRef = useRef<HTMLDivElement>(null);
 
 	// Click outside handler
@@ -65,7 +68,7 @@ function VariablesDropdown({
 					items: dropdownItems,
 					onClick: ({ key }): void => {
 						const variableName = key as string;
-						onVariableSelect(`{{${variableName}}}`);
+						onVariableSelect(`{{${variableName}}}`, cursorPosition || undefined);
 						setIsOpen(false);
 					},
 				}}
@@ -74,7 +77,13 @@ function VariablesDropdown({
 				trigger={['click']}
 				getPopupContainer={(): HTMLElement => wrapperRef.current || document.body}
 			>
-				{children({ onVariableSelect, isOpen, setIsOpen })}
+				{children({
+					onVariableSelect,
+					isOpen,
+					setIsOpen,
+					cursorPosition,
+					setCursorPosition,
+				})}
 			</Dropdown>
 		</div>
 	);
