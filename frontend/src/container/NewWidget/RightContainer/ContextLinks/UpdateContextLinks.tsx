@@ -257,15 +257,15 @@ function UpdateContextLinks({
 					{params.length > 0 && (
 						<div className="url-parameters-section">
 							<Row gutter={[8, 8]} className="parameter-header">
-								<Col span={4}>Key</Col>
-								<Col span={18}>Value</Col>
+								<Col span={6}>Key</Col>
+								<Col span={16}>Value</Col>
 								<Col span={2}>{/* Empty column for spacing */}</Col>
 							</Row>
 
 							{params.map((param, index) => (
 								// eslint-disable-next-line react/no-array-index-key
 								<Row gutter={[8, 8]} key={index} className="parameter-row">
-									<Col span={4}>
+									<Col span={6}>
 										<Input
 											id={`param-key-${index}`}
 											placeholder="Key"
@@ -275,7 +275,7 @@ function UpdateContextLinks({
 											}
 										/>
 									</Col>
-									<Col span={18}>
+									<Col span={16}>
 										<VariablesDropdown
 											onVariableSelect={(variableName): void =>
 												handleParamVariableSelect(index, variableName)
