@@ -1,6 +1,7 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridTableComponent from 'container/GridTableComponent';
 import { GRID_TABLE_CONFIG } from 'container/GridTableComponent/config';
+import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 import { PanelWrapperProps } from './panelWrapper.types';
 
@@ -17,6 +18,9 @@ function TablePanelWrapper({
 	const panelData =
 		(queryResponse.data?.payload?.data?.result?.[0] as any)?.table || [];
 	const { thresholds } = widget;
+
+	const queryRangeRequest = queryResponse.data?.params as QueryRangeRequestV5;
+
 	return (
 		<GridTableComponent
 			data={panelData}
@@ -35,7 +39,7 @@ function TablePanelWrapper({
 			contextLinks={widget.contextLinks}
 			enableDrillDown={enableDrillDown}
 			panelType={widget.panelTypes}
-			queryRange={queryResponse}
+			queryRangeRequest={queryRangeRequest}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...GRID_TABLE_CONFIG}
 		/>

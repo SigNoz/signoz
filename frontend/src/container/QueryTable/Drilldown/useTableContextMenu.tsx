@@ -2,12 +2,10 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { ClickedData } from 'periscope/components/ContextMenu/types';
 import { useMemo } from 'react';
-import { UseQueryResult } from 'react-query';
-import { SuccessResponse } from 'types/api';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { getTimeRange } from 'utils/getTimeRange';
+import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
+import { getTimeRangeFromQueryRangeRequest } from 'utils/getTimeRange';
 
 import { ConfigType } from './contextConfig';
 import { isValidQueryName } from './drilldownUtils';
@@ -25,10 +23,7 @@ interface UseTableContextMenuProps {
 	setSubMenu: (subMenu: string) => void;
 	contextLinks?: ContextLinksData;
 	panelType?: PANEL_TYPES;
-	queryRange?: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
-		Error
-	>;
+	queryRangeRequest?: QueryRangeRequestV5;
 }
 
 export function useTableContextMenu({
@@ -41,7 +36,7 @@ export function useTableContextMenu({
 	setSubMenu,
 	contextLinks,
 	panelType,
-	queryRange,
+	queryRangeRequest,
 }: UseTableContextMenuProps): {
 	menuItemsConfig: {
 		header?: string | React.ReactNode;
@@ -62,7 +57,7 @@ export function useTableContextMenu({
 		return {
 			queryName: String(clickedData.column.queryName || ''),
 			filters: getFiltersToAddToView(clickedData) || [],
-			timeRange: getTimeRange(queryRange) as {
+			timeRange: getTimeRangeFromQueryRangeRequest(queryRangeRequest) as {
 				startTime: number;
 				endTime: number;
 			},
