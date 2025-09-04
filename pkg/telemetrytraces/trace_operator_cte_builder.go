@@ -196,8 +196,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(queryName string) (string, error
 	}
 
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("*", fmt.Sprintf("'%s' AS level", cteName))
-	sb.SelectMore(sqlbuilder.Escape("resource_string_service$$name") + " AS `service.name`")
+	sb.Select("*")
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 	if resourceFilterCTEName != "" {
 		sb.Where(fmt.Sprintf("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM %s)", resourceFilterCTEName))
