@@ -1,8 +1,10 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { initialQueryState } from 'constants/queryBuilder';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
+	IBuilderTraceOperator,
 	IClickHouseQuery,
 	IPromQLQuery,
 	Query,
@@ -22,10 +24,13 @@ import { v4 as uuid } from 'uuid';
 import { transformQueryBuilderDataModel } from '../transformQueryBuilderDataModel';
 
 const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
-	const builderQueries: Record<string, IBuilderQuery | IBuilderFormula> = {};
+	const builderQueries: Record<
+		string,
+		IBuilderQuery | IBuilderFormula | IBuilderTraceOperator
+	> = {};
 	const builderQueryTypes: Record<
 		string,
-		'builder_query' | 'builder_formula'
+		'builder_query' | 'builder_formula' | 'builder_trace_operator'
 	> = {};
 	const promQueries: IPromQLQuery[] = [];
 	const clickhouseQueries: IClickHouseQuery[] = [];
@@ -45,6 +50,11 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 					(spec as unknown) as QueryBuilderFormula,
 				);
 				builderQueryTypes[spec.name] = 'builder_formula';
+			}
+		} else if (q.type === 'builder_trace_operator') {
+			if (spec.name) {
+				builderQueries[spec.name] = (spec as unknown) as IBuilderTraceOperator;
+				builderQueryTypes[spec.name] = 'builder_trace_operator';
 			}
 		} else if (q.type === 'promql') {
 			const promSpec = spec as PromQuery;

@@ -2,6 +2,7 @@ FROM node:18-bullseye AS build
 
 WORKDIR /opt/
 COPY ./frontend/ ./
+ENV NODE_OPTIONS=--max-old-space-size=8192
 RUN CI=1 yarn install
 RUN CI=1 yarn build
 

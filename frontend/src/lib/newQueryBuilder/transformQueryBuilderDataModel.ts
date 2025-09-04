@@ -13,7 +13,10 @@ import { QueryBuilderData } from 'types/common/queryBuilder';
 
 export const transformQueryBuilderDataModel = (
 	data: BuilderQueryDataResourse,
-	queryTypes?: Record<string, 'builder_query' | 'builder_formula'>,
+	queryTypes?: Record<
+		string,
+		'builder_query' | 'builder_formula' | 'builder_trace_operator'
+	>,
 ): QueryBuilderData => {
 	const queryData: QueryBuilderData['queryData'] = [];
 	const queryFormulas: QueryBuilderData['queryFormulas'] = [];
@@ -24,10 +27,14 @@ export const transformQueryBuilderDataModel = (
 			? queryTypes[key] === 'builder_formula'
 			: FORMULA_REGEXP.test(value.queryName);
 
+		const isTraceOperator = queryTypes
+			? queryTypes[key] === 'builder_trace_operator'
+			: TRACE_OPERATOR_REGEXP.test(value.queryName);
+
 		if (isFormula) {
 			const formula = value as IBuilderFormula;
 			queryFormulas.push({ ...initialFormulaBuilderFormValues, ...formula });
-		} else if (TRACE_OPERATOR_REGEXP.test(value.queryName)) {
+		} else if (isTraceOperator) {
 			const traceOperator = value as IBuilderTraceOperator;
 			queryTraceOperator.push({ ...traceOperator });
 		} else {

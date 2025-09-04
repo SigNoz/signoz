@@ -3,12 +3,12 @@
 
 import './TraceOperator.styles.scss';
 
-import { Button, Select, Tooltip, Typography } from 'antd';
+import { Button, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Trash2 } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import {
 	IBuilderQuery,
 	IBuilderTraceOperator,
@@ -26,7 +26,7 @@ export default function TraceOperator({
 	traceOperator: IBuilderTraceOperator;
 	isListViewPanel?: boolean;
 }): JSX.Element {
-	const { panelType, currentQuery, removeTraceOperator } = useQueryBuilder();
+	const { panelType, removeTraceOperator } = useQueryBuilder();
 	const { handleChangeQueryData } = useQueryOperations({
 		index: 0,
 		query: traceOperator,
@@ -57,37 +57,6 @@ export default function TraceOperator({
 			]);
 		},
 		[handleChangeQueryData],
-	);
-
-	const handleChangeSpanSource = useCallback(
-		(value: string) => {
-			handleChangeQueryData('returnSpansFrom', value);
-		},
-		[handleChangeQueryData],
-	);
-
-	const defaultSpanSource = useMemo(
-		() =>
-			traceOperator.returnSpansFrom ||
-			currentQuery.builder.queryData[0].queryName ||
-			'',
-		[currentQuery.builder.queryData, traceOperator?.returnSpansFrom],
-	);
-
-	const spanSourceOptions = useMemo(
-		() =>
-			currentQuery.builder.queryData.map((query) => ({
-				value: query.queryName,
-				label: (
-					<div className="qb-trace-operator-span-source-label">
-						<span className="qb-trace-operator-span-source-label-query">Query</span>
-						<p className="qb-trace-operator-span-source-label-query-name">
-							{query.queryName}
-						</p>
-					</div>
-				),
-			})),
-		[currentQuery.builder.queryData],
 	);
 
 	return (
@@ -135,19 +104,7 @@ export default function TraceOperator({
 								isListViewPanel={false}
 								showReduceTo={false}
 								panelType={panelType}
-							>
-								<div className="qb-trace-operator-label-with-input arrow-left">
-									<Typography.Text className="label">Using spans from</Typography.Text>
-									<Select
-										bordered={false}
-										defaultValue={defaultSpanSource}
-										style={{ minWidth: 120 }}
-										onChange={handleChangeSpanSource}
-										options={spanSourceOptions}
-										listItemHeight={24}
-									/>
-								</div>
-							</QueryAddOns>
+							/>
 						</div>
 					</div>
 				)}
