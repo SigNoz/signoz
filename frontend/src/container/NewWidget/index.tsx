@@ -47,6 +47,7 @@ import {
 import { Props } from 'types/api/dashboard/update';
 import { IField } from 'types/api/logs/fields';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -295,6 +296,24 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		customLegendColors,
 		columnWidths,
 	]);
+
+	const [initialYAxisUnit, setInitialYAxisUnit] = useState<string | undefined>(
+		selectedWidget?.yAxisUnit,
+	);
+
+	useEffect(() => {
+		const compositeQuery = query.get('compositeQuery');
+		if (compositeQuery) {
+			try {
+				const decoded = decodeURIComponent(compositeQuery);
+				const parsedQuery = JSON.parse(decoded) as Query;
+				setYAxisUnit(parsedQuery.unit || 'none');
+				setInitialYAxisUnit(parsedQuery.unit);
+			} catch (error) {
+				setYAxisUnit('none');
+			}
+		}
+	}, [query]);
 
 	const closeModal = (): void => {
 		setSaveModal(false);
@@ -768,6 +787,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							setStackedBarChart={setStackedBarChart}
 							opacity={opacity}
 							yAxisUnit={yAxisUnit}
+							initialYAxisUnit={initialYAxisUnit}
 							columnUnits={columnUnits}
 							setColumnUnits={setColumnUnits}
 							bucketCount={bucketCount}

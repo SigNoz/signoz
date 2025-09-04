@@ -1,3 +1,4 @@
+import { MetricDetails } from 'api/metricsExplorer/getMetricDetails';
 import { RelatedMetric } from 'api/metricsExplorer/getRelatedMetrics';
 import { Dispatch, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
@@ -12,6 +13,15 @@ export enum ExplorerTabs {
 export interface TimeSeriesProps {
 	showOneChartPerQuery: boolean;
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
+	areAllMetricUnitsSame: boolean;
+	isMetricUnitsLoading: boolean;
+	isMetricUnitsError: boolean;
+	metricUnits: string[];
+	metricNames: string[];
+	metrics: (MetricDetails | undefined)[];
+	setIsMetricDetailsOpen: (isOpen: boolean) => void;
+	yAxisUnit: string;
+	setYAxisUnit: (unit: string) => void;
 }
 
 export interface RelatedMetricsProps {
