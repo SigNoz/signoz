@@ -222,7 +222,6 @@ export interface BaseBuilderQuery {
 	functions?: QueryFunction[];
 	legend?: string;
 	expression?: string; // for trace operator
-	returnSpansFrom?: string; // for trace operator
 }
 
 export interface TraceBuilderQuery extends BaseBuilderQuery {
