@@ -13,9 +13,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/modules/user"
+	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
@@ -35,7 +34,7 @@ type Module struct {
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics) user.Module {
+func NewModule(store types.UserStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics) root.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:     store,
@@ -132,27 +131,28 @@ func (m *Module) GetInviteByEmailInOrg(ctx context.Context, orgID string, email 
 	return m.store.GetInviteByEmailInOrg(ctx, orgID, email)
 }
 
-func (m *Module) CreateUserWithPassword(ctx context.Context, user *types.User, password *types.FactorPassword) (*types.User, error) {
-	user, err := m.store.CreateUserWithPassword(ctx, user, password)
-	if err != nil {
-		return nil, err
-	}
+func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
+	createUserOpts := root.NewCreateUserOptions(opts...)
 
-	traitsOrProperties := types.NewTraitsFromUser(user)
-	m.analytics.IdentifyUser(ctx, user.OrgID, user.ID.String(), traitsOrProperties)
-	m.analytics.TrackUser(ctx, user.OrgID, user.ID.String(), "User Created", traitsOrProperties)
+	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.CreateUser(ctx, input); err != nil {
+			return err
+		}
 
-	return user, nil
-}
+		if createUserOpts.FactorPassword != nil {
+			if err := module.store.CreatePassword(ctx, createUserOpts.FactorPassword); err != nil {
+				return err
+			}
+		}
 
-func (m *Module) CreateUser(ctx context.Context, user *types.User) error {
-	if err := m.store.CreateUser(ctx, user); err != nil {
+		return nil
+	}); err != nil {
 		return err
 	}
 
-	traitsOrProperties := types.NewTraitsFromUser(user)
-	m.analytics.IdentifyUser(ctx, user.OrgID, user.ID.String(), traitsOrProperties)
-	m.analytics.TrackUser(ctx, user.OrgID, user.ID.String(), "User Created", traitsOrProperties)
+	traitsOrProperties := types.NewTraitsFromUser(input)
+	module.analytics.IdentifyUser(ctx, input.OrgID, input.ID.String(), traitsOrProperties)
+	module.analytics.TrackUser(ctx, input.OrgID, input.ID.String(), "User Created", traitsOrProperties)
 
 	return nil
 }
@@ -178,7 +178,6 @@ func (m *Module) ListUsers(ctx context.Context, orgID string) ([]*types.Gettable
 }
 
 func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *types.User, updatedBy string) (*types.User, error) {
-
 	existingUser, err := m.GetUserByID(ctx, orgID, id)
 	if err != nil {
 		return nil, err
@@ -202,7 +201,7 @@ func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *
 		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "only admins can change roles")
 	}
 
-	// Make sure that the request is not demoting the last admin user.
+	// Make sure that th e request is not demoting the last admin user.
 	// also an admin user can only change role of their own or other user
 	if user.Role != existingUser.Role && existingUser.Role == types.RoleAdmin.String() {
 		adminUsers, err := m.GetUsersByRoleInOrg(ctx, orgID, types.RoleAdmin)
@@ -274,81 +273,77 @@ func (m *Module) DeleteUser(ctx context.Context, orgID string, id string, delete
 	return nil
 }
 
-func (m *Module) CreateResetPasswordToken(ctx context.Context, userID string) (*types.ResetPasswordRequest, error) {
-	password, err := m.store.GetPasswordByUserID(ctx, userID)
+func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID valuer.UUID) (*types.ResetPasswordToken, error) {
+	password, err := module.store.GetPasswordByUserID(ctx, userID)
 	if err != nil {
-		// if the user does not have a password, we need to create a new one
-		// this will happen for SSO users
-		if errors.Ast(err, errors.TypeNotFound) {
-			password, err = m.store.CreatePassword(ctx, &types.FactorPassword{
-				Identifiable: types.Identifiable{
-					ID: valuer.GenerateUUID(),
-				},
-				TimeAuditable: types.TimeAuditable{
-					CreatedAt: time.Now(),
-				},
-				Password: valuer.GenerateUUID().String(),
-				UserID:   userID,
-			})
-			if err != nil {
-				return nil, err
-			}
-		} else {
+		if !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
 		}
 	}
 
-	resetPasswordRequest, err := types.NewResetPasswordRequest(password.ID.StringValue())
+	if password == nil {
+		// if the user does not have a password, we need to create a new one (common for SSO/SAML users)
+		password = types.MustGenerateFactorPassword(userID.String())
+
+		if err := module.store.CreatePassword(ctx, password); err != nil {
+			return nil, err
+		}
+	}
+
+	resetPasswordToken, err := types.NewResetPasswordToken(password.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	// check if a reset password token already exists for this user
-	existingRequest, err := m.store.GetResetPasswordByPasswordID(ctx, resetPasswordRequest.PasswordID)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		return nil, err
-	}
-
-	if existingRequest != nil {
-		return existingRequest, nil
-	}
-
-	err = m.store.CreateResetPasswordToken(ctx, resetPasswordRequest)
+	err = module.store.CreateResetPasswordToken(ctx, resetPasswordToken)
 	if err != nil {
-		return nil, err
+		if !errors.Ast(err, errors.TypeAlreadyExists) {
+			return nil, err
+		}
+
+		// if the token already exists, we return the existing token
+		resetPasswordToken, err = module.store.GetResetPasswordTokenByPasswordID(ctx, password.ID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return resetPasswordRequest, nil
+	return resetPasswordToken, nil
 }
 
-func (m *Module) GetPasswordByUserID(ctx context.Context, id string) (*types.FactorPassword, error) {
-	return m.store.GetPasswordByUserID(ctx, id)
-}
-
-func (m *Module) GetResetPassword(ctx context.Context, token string) (*types.ResetPasswordRequest, error) {
-	return m.store.GetResetPassword(ctx, token)
-}
-
-func (m *Module) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, passwordID string, password string) error {
-	hashedPassword, err := types.HashPassword(password)
+func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, token string, passwd string) error {
+	resetPasswordToken, err := module.store.GetResetPasswordToken(ctx, token)
 	if err != nil {
 		return err
 	}
 
-	existingPassword, err := m.store.GetPasswordByID(ctx, passwordID)
+	password, err := module.store.GetPassword(ctx, resetPasswordToken.PasswordID)
 	if err != nil {
 		return err
 	}
 
-	return m.store.UpdatePasswordAndDeleteResetPasswordEntry(ctx, existingPassword.UserID, hashedPassword)
+	if err := password.Update(passwd); err != nil {
+		return err
+	}
+
+	return module.store.UpdatePassword(ctx, password)
 }
 
-func (m *Module) UpdatePassword(ctx context.Context, userID string, password string) error {
-	hashedPassword, err := types.HashPassword(password)
+func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, oldpasswd string, passwd string) error {
+	password, err := module.store.GetPasswordByUserID(ctx, userID)
 	if err != nil {
 		return err
 	}
-	return m.store.UpdatePassword(ctx, userID, hashedPassword)
+
+	if !password.Equals(oldpasswd) {
+		return errors.New(errors.TypeInvalidInput, types.ErrCodeIncorrectPassword, "old password is incorrect")
+	}
+
+	if err := password.Update(passwd); err != nil {
+		return err
+	}
+
+	return module.store.UpdatePassword(ctx, password)
 }
 
 func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, password, refreshToken string) (*types.User, error) {
@@ -381,13 +376,13 @@ func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, passwor
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "please provide an orgID")
 	}
 
-	existingPassword, err := m.store.GetPasswordByUserID(ctx, dbUser.ID.StringValue())
+	existingPassword, err := m.store.GetPasswordByUserID(ctx, dbUser.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	if !types.ComparePassword(existingPassword.Password, password) {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid password")
+	if !existingPassword.Equals(password) {
+		return nil, errors.New(errors.TypeInvalidInput, types.ErrCodeIncorrectPassword, "password is incorrect")
 	}
 
 	return dbUser, nil
@@ -631,34 +626,31 @@ func (m *Module) UpdateDomain(ctx context.Context, domain *types.GettableOrgDoma
 	return m.store.UpdateDomain(ctx, domain)
 }
 
-func (m *Module) Register(ctx context.Context, req *types.PostableRegisterOrgAndAdmin) (*types.User, error) {
-	if req.Email == "" {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "email is required")
-	}
-
-	if req.Password == "" {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "password is required")
-	}
-
-	organization := types.NewOrganization(req.OrgDisplayName)
-	err := m.orgSetter.Create(ctx, organization)
+func (module *Module) CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email string, passwd string) (*types.User, error) {
+	user, err := types.NewUser(name, email, types.RoleAdmin.String(), organization.ID.StringValue())
 	if err != nil {
-		return nil, model.InternalError(err)
+		return nil, err
 	}
 
-	user, err := types.NewUser(req.Name, req.Email, types.RoleAdmin.String(), organization.ID.StringValue())
+	password, err := types.NewFactorPassword(passwd, user.ID.StringValue())
 	if err != nil {
-		return nil, model.InternalError(err)
+		return nil, err
 	}
 
-	password, err := types.NewFactorPassword(req.Password)
-	if err != nil {
-		return nil, model.InternalError(err)
-	}
+	if err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		err := module.orgSetter.Create(ctx, organization)
+		if err != nil {
+			return err
+		}
 
-	user, err = m.CreateUserWithPassword(ctx, user, password)
-	if err != nil {
-		return nil, model.InternalError(err)
+		err = module.CreateUser(ctx, user, root.WithFactorPassword(password))
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	return user, nil
