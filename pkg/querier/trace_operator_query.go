@@ -2,9 +2,6 @@ package querier
 
 import (
 	"context"
-	"fmt"
-	"sort"
-	"strings"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -25,108 +22,7 @@ type traceOperatorQuery struct {
 var _ qbtypes.Query = (*traceOperatorQuery)(nil)
 
 func (q *traceOperatorQuery) Fingerprint() string {
-
-	if q.kind == qbtypes.RequestTypeRaw {
-		return ""
-	}
-
-	parts := []string{"trace_operator"}
-
-	parts = append(parts, fmt.Sprintf("expr=%s", q.spec.Expression))
-
-	if err := q.spec.ParseExpression(); err != nil {
-		return ""
-	}
-
-	referencedQueries := q.spec.CollectReferencedQueries(q.spec.ParsedExpression)
-
-	queryFingerprints := make(map[string]string)
-
-	if q.compositeQuery != nil {
-		for _, query := range q.compositeQuery.Queries {
-			if query.Type == qbtypes.QueryTypeBuilder {
-				switch spec := query.Spec.(type) {
-				case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
-					if contains(referencedQueries, spec.Name) {
-						// Create a temporary builder query to get its fingerprint
-						timeRange := qbtypes.TimeRange{From: q.fromMS, To: q.toMS}
-						tempQuery := newBuilderQuery(q.telemetryStore, nil, spec, timeRange, q.kind, nil)
-						fingerprint := tempQuery.Fingerprint()
-						if fingerprint != "" {
-							queryFingerprints[spec.Name] = fingerprint
-						} else {
-							// If any referenced query has no fingerprint, disable caching
-							return ""
-						}
-					}
-				}
-			}
-		}
-	}
-
-	// Add referenced query fingerprints in sorted order for consistency
-	if len(queryFingerprints) > 0 {
-		var sortedNames []string
-		for name := range queryFingerprints {
-			sortedNames = append(sortedNames, name)
-		}
-		sort.Strings(sortedNames)
-
-		for _, name := range sortedNames {
-			parts = append(parts, fmt.Sprintf("ref_%s=%s", name, queryFingerprints[name]))
-		}
-	}
-
-	// Add time range since it affects the query results
-	parts = append(parts, fmt.Sprintf("from=%d", q.fromMS))
-	parts = append(parts, fmt.Sprintf("to=%d", q.toMS))
-
-	// Add returnSpansFrom if specified
-	if q.spec.ReturnSpansFrom != "" {
-		parts = append(parts, fmt.Sprintf("return=%s", q.spec.ReturnSpansFrom))
-	}
-
-	// Add step interval if present
-	parts = append(parts, fmt.Sprintf("step=%s", q.spec.StepInterval.String()))
-
-	// Add filter if present
-	if q.spec.Filter != nil && q.spec.Filter.Expression != "" {
-		parts = append(parts, fmt.Sprintf("filter=%s", q.spec.Filter.Expression))
-	}
-
-	// Add aggregations
-	if len(q.spec.Aggregations) > 0 {
-		aggParts := []string{}
-		for _, agg := range q.spec.Aggregations {
-			aggParts = append(aggParts, agg.Expression)
-		}
-		parts = append(parts, fmt.Sprintf("aggs=[%s]", strings.Join(aggParts, ",")))
-	}
-
-	// Add group by
-	if len(q.spec.GroupBy) > 0 {
-		groupByParts := []string{}
-		for _, gb := range q.spec.GroupBy {
-			groupByParts = append(groupByParts, fingerprintGroupByKey(gb))
-		}
-		parts = append(parts, fmt.Sprintf("groupby=[%s]", strings.Join(groupByParts, ",")))
-	}
-
-	// Add order by
-	if len(q.spec.Order) > 0 {
-		orderParts := []string{}
-		for _, o := range q.spec.Order {
-			orderParts = append(orderParts, fingerprintOrderBy(o))
-		}
-		parts = append(parts, fmt.Sprintf("order=[%s]", strings.Join(orderParts, ",")))
-	}
-
-	// Add limit
-	if q.spec.Limit > 0 {
-		parts = append(parts, fmt.Sprintf("limit=%d", q.spec.Limit))
-	}
-
-	return strings.Join(parts, "&")
+	return ""
 }
 
 func (q *traceOperatorQuery) Window() (uint64, uint64) {
