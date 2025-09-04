@@ -345,7 +345,6 @@ function RightContainer({
 
 				{allowYAxisUnit && (
 					<YAxisUnitSelector
-						defaultValue={yAxisUnit}
 						onSelect={setYAxisUnit}
 						value={yAxisUnit || ''}
 						fieldLabel={
