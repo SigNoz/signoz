@@ -56,6 +56,27 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
 		},
+		"duration_nano": {
+			{
+				Name:          "duration_nano",
+				FieldContext:  telemetrytypes.FieldContextSpan,
+				FieldDataType: telemetrytypes.FieldDataTypeInt64,
+			},
+		},
+		"http.method": {
+			{
+				Name:          "http.method",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		"response_status_code": {
+			{
+				Name:          "response_status_code",
+				FieldContext:  telemetrytypes.FieldContextSpan,
+				FieldDataType: telemetrytypes.FieldDataTypeInt64,
+			},
+		},
 	}
 	for _, keys := range keysMap {
 		for _, key := range keys {

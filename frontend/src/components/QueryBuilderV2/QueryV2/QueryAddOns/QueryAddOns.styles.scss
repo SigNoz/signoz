@@ -1,7 +1,11 @@
+.query-add-ons {
+	width: 100%;
+}
+
 .add-ons-list {
 	display: flex;
-	justify-content: space-between;
 	align-items: center;
+	gap: 16px;
 
 	.add-ons-tabs {
 		display: flex;
