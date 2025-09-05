@@ -13,21 +13,19 @@ import { getFiltersFromKeyValue } from './utils';
 export const useAddDynamicVariableToPanels = (): ((
 	dashboard: Dashboard | undefined,
 	variableConfig: IDashboardVariable,
+	widgetIds?: string[],
 	applyToAll?: boolean,
 ) => Dashboard | undefined) =>
 	useCallback(
 		(
 			dashboard: Dashboard | undefined,
 			variableConfig: IDashboardVariable,
+			widgetIds?: string[],
 			applyToAll?: boolean,
 		): Dashboard | undefined => {
 			if (!variableConfig) return dashboard;
 
-			const {
-				dynamicVariablesAttribute,
-				name,
-				dynamicVariablesWidgetIds,
-			} = variableConfig;
+			const { dynamicVariablesAttribute, name } = variableConfig;
 
 			const tagFilters: TagFilterItem = getFiltersFromKeyValue(
 				dynamicVariablesAttribute || '',
@@ -39,7 +37,7 @@ export const useAddDynamicVariableToPanels = (): ((
 			return addTagFiltersToDashboard(
 				dashboard,
 				tagFilters,
-				dynamicVariablesWidgetIds,
+				widgetIds,
 				applyToAll,
 			);
 		},

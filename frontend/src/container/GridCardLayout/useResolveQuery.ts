@@ -2,13 +2,14 @@ import { getSubstituteVars } from 'api/dashboard/substitute_vars';
 import { prepareQueryRangePayloadV5 } from 'api/v5/v5';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
-import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
-import { useCallback } from 'react';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useCallback, useMemo } from 'react';
 import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
@@ -35,7 +36,15 @@ function useUpdatedQuery(): UseUpdatedQueryResult {
 
 	const queryRangeMutation = useMutation(getSubstituteVars);
 
-	const { dynamicVariables } = useGetDynamicVariables();
+	const { selectedDashboard } = useDashboard();
+
+	const dynamicVariables = useMemo(
+		() =>
+			Object.values(selectedDashboard?.data?.variables || {})?.filter(
+				(variable: IDashboardVariable) => variable.type === 'DYNAMIC',
+			),
+		[selectedDashboard],
+	);
 
 	const getUpdatedQuery = useCallback(
 		async ({
