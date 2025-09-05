@@ -227,7 +227,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 	)
 
 	if query.Filter != nil && query.Filter.Expression != "" {
-		b.stmtBuilder.logger.DebugContext(ctx, "Applying filter to query CTE", "queryName", queryName, "filter", query.Filter.Expression)
+		b.stmtBuilder.logger.DebugContext(ctx, "Applying filter to query CTE", "query_name", queryName, "filter", query.Filter.Expression)
 		filterWhereClause, err := querybuilder.PrepareWhereClause(
 			query.Filter.Expression,
 			querybuilder.FilterExprVisitorOpts{
@@ -243,14 +243,14 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 			return "", err
 		}
 		if filterWhereClause != nil {
-			b.stmtBuilder.logger.DebugContext(ctx, "Adding where clause", "whereClause", filterWhereClause.WhereClause)
+			b.stmtBuilder.logger.DebugContext(ctx, "Adding where clause", "where_clause", filterWhereClause.WhereClause)
 			sb.AddWhereClause(filterWhereClause.WhereClause)
 		} else {
 			b.stmtBuilder.logger.WarnContext(ctx, "PrepareWhereClause returned nil", "filter", query.Filter.Expression)
 		}
 	} else {
 		if query.Filter == nil {
-			b.stmtBuilder.logger.DebugContext(ctx, "No filter for query CTE", "queryName", queryName, "reason", "filter is nil")
+			b.stmtBuilder.logger.DebugContext(ctx, "No filter for query CTE", "query_name", queryName, "reason", "filter is nil")
 		} else {
 			b.stmtBuilder.logger.DebugContext(ctx, "No filter for query CTE", "queryName", queryName, "reason", "filter expression is empty")
 		}
@@ -615,9 +615,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
 	// Add HAVING clause if specified
-	if err := b.addHavingClause(sb); err != nil {
-		return nil, err
-	}
+	b.addHavingClause(sb)
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 	return &qbtypes.Statement{
@@ -626,7 +624,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 	}, nil
 }
 
-func (b *traceOperatorCTEBuilder) buildTraceSummaryCTE(selectFromCTE string) error {
+func (b *traceOperatorCTEBuilder) buildTraceSummaryCTE(selectFromCTE string) {
 	sb := sqlbuilder.NewSelectBuilder()
 
 	sb.Select(
@@ -640,15 +638,10 @@ func (b *traceOperatorCTEBuilder) buildTraceSummaryCTE(selectFromCTE string) err
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	b.addCTE("trace_summary", sql, args, []string{"all_spans", selectFromCTE})
-
-	return nil
 }
 
 func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFromCTE string) (*qbtypes.Statement, error) {
-	err := b.buildTraceSummaryCTE(selectFromCTE)
-	if err != nil {
-		return nil, err
-	}
+	b.buildTraceSummaryCTE(selectFromCTE)
 
 	sb := sqlbuilder.NewSelectBuilder()
 
@@ -735,9 +728,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 		sb.GroupBy(groupByKeys...)
 	}
 
-	if err := b.addHavingClause(sb); err != nil {
-		return nil, err
-	}
+	b.addHavingClause(sb)
 
 	orderApplied := false
 	for _, orderBy := range b.operator.Order {
@@ -874,16 +865,10 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 		sb.OrderBy("__result_0 DESC")
 	}
 
-	// Note: Do not apply limit in SQL for scalar queries - it should be applied post-processing
-	// to limit series count, not data points. The current SQL LIMIT would limit the number
-	// of data points returned, but we want to limit the number of series instead.
-
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
 	// Add HAVING clause if specified
-	if err := b.addHavingClause(sb); err != nil {
-		return nil, err
-	}
+	b.addHavingClause(sb)
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 	return &qbtypes.Statement{
@@ -892,13 +877,12 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 	}, nil
 }
 
-func (b *traceOperatorCTEBuilder) addHavingClause(sb *sqlbuilder.SelectBuilder) error {
+func (b *traceOperatorCTEBuilder) addHavingClause(sb *sqlbuilder.SelectBuilder) {
 	if b.operator.Having != nil && b.operator.Having.Expression != "" {
 		rewriter := querybuilder.NewHavingExpressionRewriter()
 		rewrittenExpr := rewriter.RewriteForTraces(b.operator.Having.Expression, b.operator.Aggregations)
 		sb.Having(rewrittenExpr)
 	}
-	return nil
 }
 
 func (b *traceOperatorCTEBuilder) addCTE(name, sql string, args []any, dependsOn []string) {
