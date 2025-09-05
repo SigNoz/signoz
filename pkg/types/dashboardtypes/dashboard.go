@@ -231,7 +231,7 @@ func (storableDashboardData *StorableDashboardData) GetWidgetIds() []string {
 	return widgetIds
 }
 
-func (dashboard *Dashboard) CanUpdate(data StorableDashboardData) error {
+func (dashboard *Dashboard) CanUpdate(ctx context.Context, data StorableDashboardData, diff int) error {
 	if dashboard.Locked {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
 	}
@@ -251,15 +251,17 @@ func (dashboard *Dashboard) CanUpdate(data StorableDashboardData) error {
 			differenceMap[id] = true
 		}
 	}
-	if len(difference) > 1 {
+
+	// Allow multiple decisions only if diff == 0
+	if diff > 0 && len(difference) > diff {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "deleting more than one panel is not supported")
 	}
 
 	return nil
 }
 
-func (dashboard *Dashboard) Update(updatableDashboard UpdatableDashboard, updatedBy string) error {
-	err := dashboard.CanUpdate(updatableDashboard)
+func (dashboard *Dashboard) Update(ctx context.Context, updatableDashboard UpdatableDashboard, updatedBy string, diff int) error {
+	err := dashboard.CanUpdate(ctx, updatableDashboard, diff)
 	if err != nil {
 		return err
 	}
