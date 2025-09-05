@@ -8,6 +8,7 @@ import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import AnomalyAlertEvaluationView from 'container/AnomalyAlertEvaluationView';
+import { Threshold } from 'container/CreateAlertV2/context/types';
 import { getLocalStorageGraphVisibilityState } from 'container/GridCardLayout/GridCard/utils';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
@@ -51,7 +52,7 @@ import { getTimeRange } from 'utils/getTimeRange';
 
 import { AlertDetectionTypes } from '..';
 import { ChartContainer } from './styles';
-import { getThresholdLabel } from './utils';
+import { getThresholds } from './utils';
 
 export interface ChartPreviewProps {
 	name: string;
@@ -85,7 +86,25 @@ function ChartPreview({
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const dispatch = useDispatch();
-	const threshold = alertDef?.condition.target || 0;
+	const thresholds: Threshold[] = useMemo(
+		() =>
+			alertDef?.condition.thresholds || [
+				{
+					thresholdValue: alertDef?.condition.target || 0,
+					unit: alertDef?.condition.targetUnit || '',
+					label: '',
+					color: '',
+					channels: [],
+					recoveryThresholdValue: 0,
+					id: '',
+				},
+			],
+		[
+			alertDef?.condition.target,
+			alertDef?.condition.targetUnit,
+			alertDef?.condition.thresholds,
+		],
+	);
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 	const [graphVisibility, setGraphVisibility] = useState<boolean[]>([]);
@@ -264,24 +283,7 @@ function ChartPreview({
 				maxTimeScale,
 				isDarkMode,
 				onDragSelect,
-				thresholds: [
-					{
-						index: '0', // no impact
-						keyIndex: 0,
-						moveThreshold: (): void => {},
-						selectedGraph: PANEL_TYPES.TIME_SERIES, // no impact
-						thresholdValue: threshold,
-						thresholdLabel: `${t(
-							'preview_chart_threshold_label',
-						)} (y=${getThresholdLabel(
-							optionName,
-							threshold,
-							alertDef?.condition.targetUnit,
-							yAxisUnit,
-						)})`,
-						thresholdUnit: alertDef?.condition.targetUnit,
-					},
-				],
+				thresholds: getThresholds(thresholds, t, optionName, yAxisUnit),
 				softMax: null,
 				softMin: null,
 				panelType: graphType,
@@ -303,10 +305,9 @@ function ChartPreview({
 			maxTimeScale,
 			isDarkMode,
 			onDragSelect,
-			threshold,
+			thresholds,
 			t,
 			optionName,
-			alertDef?.condition.targetUnit,
 			graphType,
 			timezone.value,
 			currentQuery,

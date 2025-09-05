@@ -13,10 +13,14 @@ import { useLocation } from 'react-router-dom';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 
-import { INITIAL_ALERT_STATE } from './constants';
+import {
+	INITIAL_ALERT_STATE,
+	INITIAL_ALERT_THRESHOLD_STATE,
+} from './constants';
 import { ICreateAlertContextProps, ICreateAlertProviderProps } from './types';
 import {
 	alertCreationReducer,
+	alertThresholdReducer,
 	buildInitialAlertDef,
 	getInitialAlertTypeFromURL,
 } from './utils';
@@ -72,15 +76,36 @@ export function CreateAlertProvider(
 		[redirectWithQueryBuilderData],
 	);
 
+	const [thresholdState, setThresholdState] = useReducer(
+		alertThresholdReducer,
+		INITIAL_ALERT_THRESHOLD_STATE,
+	);
+
+	const alertDefV2: AlertDef = useMemo(
+		() => ({
+			...alertDef,
+			condition: {
+				...alertDef.condition,
+				thresholds: thresholdState.thresholds,
+				matchType: thresholdState.matchType,
+				operator: thresholdState.operator,
+				selectedQuery: thresholdState.selectedQuery,
+			},
+		}),
+		[alertDef, thresholdState],
+	);
+
 	const contextValue: ICreateAlertContextProps = useMemo(
 		() => ({
 			alertState,
 			setAlertState,
 			alertType,
 			setAlertType: handleAlertTypeChange,
-			alertDef,
+			alertDef: alertDefV2,
+			thresholdState,
+			setThresholdState,
 		}),
-		[alertState, alertType, handleAlertTypeChange, alertDef],
+		[alertState, alertType, handleAlertTypeChange, alertDefV2, thresholdState],
 	);
 
 	return (

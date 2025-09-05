@@ -8,6 +8,8 @@ export interface ICreateAlertContextProps {
 	alertType: AlertTypes;
 	setAlertType: Dispatch<AlertTypes>;
 	alertDef: AlertDef;
+	thresholdState: AlertThresholdState;
+	setThresholdState: Dispatch<AlertThresholdAction>;
 }
 
 export interface ICreateAlertProviderProps {
@@ -31,3 +33,41 @@ export type CreateAlertAction =
 	| { type: 'SET_ALERT_NAME'; payload: string }
 	| { type: 'SET_ALERT_DESCRIPTION'; payload: string }
 	| { type: 'SET_ALERT_LABELS'; payload: Labels };
+
+export interface Threshold {
+	id: string;
+	label: string;
+	thresholdValue: number;
+	recoveryThresholdValue: number;
+	unit: string;
+	channels: string[];
+	color: string;
+}
+
+export enum AlertThresholdOperator {
+	IS_ABOVE = '1',
+	IS_BELOW = '2',
+	IS_EQUAL_TO = '3',
+	IS_NOT_EQUAL_TO = '4',
+}
+
+export enum AlertThresholdMatchType {
+	AT_LEAST_ONCE = '1',
+	ALL_THE_TIME = '2',
+	ON_AVERAGE = '3',
+	IN_TOTAL = '4',
+	LAST = '5',
+}
+
+export interface AlertThresholdState {
+	selectedQuery: string;
+	operator: AlertThresholdOperator;
+	matchType: AlertThresholdMatchType;
+	thresholds: Threshold[];
+}
+
+export type AlertThresholdAction =
+	| { type: 'SET_SELECTED_QUERY'; payload: string }
+	| { type: 'SET_OPERATOR'; payload: AlertThresholdOperator }
+	| { type: 'SET_MATCH_TYPE'; payload: AlertThresholdMatchType }
+	| { type: 'SET_THRESHOLDS'; payload: Threshold[] };
