@@ -2,6 +2,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
 	createContext,
 	useContext,
+	useEffect,
 	useMemo,
 	useReducer,
 	useState,
@@ -9,10 +10,14 @@ import {
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 
-import { INITIAL_ALERT_STATE } from './constants';
+import {
+	INITIAL_ALERT_STATE,
+	INITIAL_ALERT_THRESHOLD_STATE,
+} from './constants';
 import { ICreateAlertContextProps, ICreateAlertProviderProps } from './types';
 import {
 	alertCreationReducer,
+	alertThresholdReducer,
 	buildInitialAlertDef,
 	getInitialAlertType,
 } from './utils';
@@ -43,7 +48,39 @@ export function CreateAlertProvider(
 	const [alertType, setAlertType] = useState<AlertTypes>(
 		getInitialAlertType(currentQuery),
 	);
-	const [alertDef] = useState<AlertDef>(buildInitialAlertDef(alertType));
+
+	const [alertDef, setAlertDef] = useState<AlertDef>(
+		buildInitialAlertDef(alertType),
+	);
+
+	const [thresholdState, setThresholdState] = useReducer(
+		alertThresholdReducer,
+		INITIAL_ALERT_THRESHOLD_STATE,
+	);
+
+	useEffect(() => {
+		setAlertDef(buildInitialAlertDef(alertType));
+		setThresholdState({
+			type: 'RESET',
+		});
+	}, [alertType]);
+
+	const alertDefV2: AlertDef = useMemo(
+		() => ({
+			...alertDef,
+			condition: {
+				...alertDef.condition,
+				thresholds: thresholdState.thresholds,
+				matchType: thresholdState.matchType,
+				operator: thresholdState.operator,
+				selectedQuery: thresholdState.selectedQuery,
+				evaluationWindow: thresholdState.evaluationWindow,
+				algorithm: thresholdState.algorithm,
+				seasonality: thresholdState.seasonality,
+			},
+		}),
+		[alertDef, thresholdState],
+	);
 
 	const contextValue: ICreateAlertContextProps = useMemo(
 		() => ({
@@ -51,9 +88,11 @@ export function CreateAlertProvider(
 			setAlertState,
 			alertType,
 			setAlertType,
-			alertDef,
+			alertDef: alertDefV2,
+			thresholdState,
+			setThresholdState,
 		}),
-		[alertState, alertType, alertDef],
+		[alertState, alertType, alertDefV2, thresholdState],
 	);
 
 	return (
