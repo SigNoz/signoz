@@ -11,6 +11,7 @@ import { AlertDef } from 'types/api/alerts/def';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { INITIAL_ALERT_THRESHOLD_STATE } from './constants';
 import {
 	AlertState,
 	AlertThresholdAction,
@@ -98,6 +99,8 @@ export const alertThresholdReducer = (
 			return { ...state, matchType: action.payload };
 		case 'SET_THRESHOLDS':
 			return { ...state, thresholds: action.payload };
+		case 'RESET':
+			return INITIAL_ALERT_THRESHOLD_STATE;
 		default:
 			return state;
 	}
