@@ -15,7 +15,6 @@ export const isEmptyFilterValue = (value: any): boolean =>
  */
 export const getFiltersToAddToView = (clickedData: any): FilterData[] => {
 	if (!clickedData) {
-		console.warn('clickedData is null in getFiltersToAddToView');
 		return [];
 	}
 
@@ -72,7 +71,6 @@ export const getBreakoutQuery = (
 	filtersToAdd: FilterData[],
 ): Query => {
 	if (!aggregateData) {
-		console.warn('aggregateData is null in getBreakoutQuery');
 		return query;
 	}
 

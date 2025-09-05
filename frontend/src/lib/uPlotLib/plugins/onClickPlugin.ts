@@ -153,8 +153,6 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 						// @ts-ignore
 						if (item?.show && item?._focus) {
-							console.log('>> outputMetric', apiResult[index - 1]);
-
 							const { metric: focusedMetric, queryName } = apiResult[index - 1] || [];
 							metric = focusedMetric;
 							outputMetric.queryName = queryName;
@@ -172,10 +170,6 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 						focusedSeriesData &&
 						focusedSeriesData.seriesIndex <= apiResult.length
 					) {
-						console.log(
-							'>> outputMetric',
-							apiResult[focusedSeriesData.seriesIndex - 1],
-						);
 						const { metric: focusedMetric, queryName } =
 							apiResult[focusedSeriesData.seriesIndex - 1] || [];
 						metric = focusedMetric;
@@ -204,19 +198,6 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 					xAxis: u.axes[0],
 					yAxis: u.axes[1],
 				};
-
-				console.log('>> graph click', {
-					xValue,
-					yValue,
-					mouseX,
-					mouseY,
-					metric,
-					outputMetric,
-					absoluteMouseX,
-					absoluteMouseY,
-					axesData,
-					focusedSeries,
-				});
 
 				opts.onClick(
 					xValue,

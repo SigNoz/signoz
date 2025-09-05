@@ -163,7 +163,6 @@ function UplotPanelWrapper({
 				absoluteMouseY,
 				focusedSeries,
 			});
-			console.log('onClickData: ', data);
 			// Compute time range if needed and if axes data is available
 			let timeRange;
 			if (axesData && queryData?.queryName) {

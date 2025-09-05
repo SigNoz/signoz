@@ -39,7 +39,7 @@ function UpdateContextLinks({
 	selectedWidget,
 }: UpdateContextLinksProps): JSX.Element {
 	const [form] = Form.useForm();
-	const label = Form.useWatch(CONTEXT_LINK_FIELDS.LABEL, form);
+	// const label = Form.useWatch(CONTEXT_LINK_FIELDS.LABEL, form);
 	const url = Form.useWatch(CONTEXT_LINK_FIELDS.URL, form);
 
 	const [params, setParams] = useState<
@@ -70,7 +70,7 @@ function UpdateContextLinks({
 	}, [selectedWidget?.query]);
 
 	// Use useContextVariables to get dashboard, global, and field variables
-	const { processedVariables, variables } = useContextVariables({
+	const { variables } = useContextVariables({
 		maxValues: 2,
 		customVariables: fieldVariables,
 	});
@@ -80,15 +80,6 @@ function UpdateContextLinks({
 		() => transformContextVariables(variables),
 		[variables],
 	);
-
-	// Console log all available variables
-	console.log('=== CONTEXT LINKS VARIABLES ===');
-	console.log('Field Variables:', fieldVariables);
-	console.log('All Variables:', variables);
-	console.log('Processed Variables:', processedVariables);
-	console.log('Transformed Variables:', transformedVariables);
-	console.log('Selected Widget Query:', selectedWidget?.query);
-	console.log('================================');
 
 	// Function to get current domain
 	const getCurrentDomain = (): string => window.location.origin;
@@ -146,7 +137,6 @@ function UpdateContextLinks({
 		handleParamChange(index, 'value', newValue);
 	};
 
-	console.log('FORM VALUES', { label, url });
 	useEffect(() => {
 		((window as unknown) as Record<string, unknown>).form = form;
 	}, [form]);
