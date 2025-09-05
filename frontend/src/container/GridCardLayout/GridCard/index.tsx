@@ -52,7 +52,7 @@ function GridCardGraph({
 	customTimeRange,
 	customOnRowClick,
 	customTimeRangeWindowForCoRelation,
-	dynamicVariableToWidgetsMap,
+	widgetsHavingDynamicVariables,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -226,8 +226,8 @@ function GridCardGraph({
 					? Object.entries(variables).reduce((acc, [id, variable]) => {
 							if (
 								variable.type !== 'DYNAMIC' ||
-								(dynamicVariableToWidgetsMap?.[variable.id] &&
-									dynamicVariableToWidgetsMap?.[variable.id].includes(widget.id))
+								(widgetsHavingDynamicVariables?.[variable.id] &&
+									widgetsHavingDynamicVariables?.[variable.id].includes(widget.id))
 							) {
 								return { ...acc, [id]: variable.selectedValue };
 							}

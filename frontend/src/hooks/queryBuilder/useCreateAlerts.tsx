@@ -7,17 +7,16 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
-import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
 import { useNotifications } from 'hooks/useNotifications';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { IDashboardVariable, Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 
@@ -37,7 +36,13 @@ const useCreateAlerts = (
 
 	const { selectedDashboard } = useDashboard();
 
-	const { dynamicVariables } = useGetDynamicVariables();
+	const dynamicVariables = useMemo(
+		() =>
+			Object.values(selectedDashboard?.data?.variables || {})?.filter(
+				(variable: IDashboardVariable) => variable.type === 'DYNAMIC',
+			),
+		[selectedDashboard],
+	);
 
 	return useCallback(() => {
 		if (!widget) return;

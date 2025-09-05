@@ -12,7 +12,6 @@ import {
 } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
-import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { WhereClauseConfig } from 'hooks/queryBuilder/useAutoComplete';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
@@ -32,6 +31,7 @@ import {
 	unset,
 } from 'lodash-es';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	KeyboardEvent,
@@ -42,6 +42,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -247,7 +248,15 @@ function QueryBuilderSearchV2(
 		return false;
 	}, [currentState, query.aggregateAttribute?.dataType, query.dataSource]);
 
-	const { dynamicVariables } = useGetDynamicVariables();
+	const { selectedDashboard } = useDashboard();
+
+	const dynamicVariables = useMemo(
+		() =>
+			Object.values(selectedDashboard?.data?.variables || {})?.filter(
+				(variable: IDashboardVariable) => variable.type === 'DYNAMIC',
+			),
+		[selectedDashboard],
+	);
 
 	const { data, isFetching } = useGetAggregateKeys(
 		{
@@ -793,7 +802,7 @@ function QueryBuilderSearchV2(
 				values.push(...(attributeValues?.payload?.[key] || []));
 
 				// here we want to suggest the variable name matching with the key here, we will go over the dynamic variables for the keys
-				const variableName = dynamicVariables.find(
+				const variableName = dynamicVariables?.find(
 					(variable) =>
 						variable?.dynamicVariablesAttribute === currentFilterItem?.key?.key,
 				)?.name;

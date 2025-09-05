@@ -11,7 +11,6 @@ import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { DEFAULT_ROW_NAME } from 'container/NewDashboard/DashboardDescription/utils';
-import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { createDynamicVariableToWidgetsMap } from 'hooks/dashboard/utils';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -37,7 +36,7 @@ import { ItemCallback, Layout } from 'react-grid-layout';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { IDashboardVariable, Widgets } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
@@ -85,17 +84,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	const isDarkMode = useIsDarkMode();
 
-	// Add dynamic variables mapping at parent level
-	const { dynamicVariables } = useGetDynamicVariables();
-	const dynamicVariableToWidgetsMap = useMemo(
-		() =>
-			createDynamicVariableToWidgetsMap(
-				dynamicVariables,
-				(widgets as Widgets[]) || [],
-			),
-		[dynamicVariables, widgets],
-	);
-
 	const [dashboardLayout, setDashboardLayout] = useState<Layout[]>([]);
 
 	const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
@@ -109,6 +97,22 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	const [currentPanelMap, setCurrentPanelMap] = useState<
 		Record<string, { widgets: Layout[]; collapsed: boolean }>
 	>({});
+
+	const widgetsHavingDynamicVariables = useMemo(() => {
+		const dynamicVariables = Object.values(
+			selectedDashboard?.data?.variables || {},
+		)?.filter((variable: IDashboardVariable) => variable.type === 'DYNAMIC');
+
+		const widgets =
+			selectedDashboard?.data?.widgets?.filter(
+				(widget) => widget.panelTypes !== PANEL_GROUP_TYPES.ROW,
+			) || [];
+
+		return createDynamicVariableToWidgetsMap(
+			dynamicVariables,
+			widgets as Widgets[],
+		);
+	}, [selectedDashboard]);
 
 	useEffect(() => {
 		setCurrentPanelMap(panelMap);
@@ -597,7 +601,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 									version={ENTITY_VERSION_V5}
 									onDragSelect={onDragSelect}
 									dataAvailable={checkIfDataExists}
-									dynamicVariableToWidgetsMap={dynamicVariableToWidgetsMap}
+									widgetsHavingDynamicVariables={widgetsHavingDynamicVariables}
 								/>
 							</Card>
 						</CardContainer>
