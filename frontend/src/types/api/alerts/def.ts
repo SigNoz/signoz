@@ -1,3 +1,4 @@
+import { Threshold } from 'container/CreateAlertV2/context/types';
 import { AlertLabelsProps } from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 
@@ -46,6 +47,7 @@ export interface RuleCondition {
 	requiredNumPoints?: number | undefined;
 	algorithm?: string;
 	seasonality?: string;
+	thresholds?: Threshold[];
 }
 export interface Labels {
 	[key: string]: string | undefined;
