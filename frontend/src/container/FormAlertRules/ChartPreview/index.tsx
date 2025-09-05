@@ -65,6 +65,7 @@ export interface ChartPreviewProps {
 	allowSelectedIntervalForStepGen?: boolean;
 	yAxisUnit: string;
 	setQueryStatus?: (status: string) => void;
+	legendPosition?: LegendPosition;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -80,6 +81,7 @@ function ChartPreview({
 	alertDef,
 	yAxisUnit,
 	setQueryStatus,
+	legendPosition = LegendPosition.BOTTOM,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const dispatch = useDispatch();
@@ -279,7 +281,7 @@ function ChartPreview({
 				graphsVisibilityStates: graphVisibility,
 				setGraphsVisibilityStates: setGraphVisibility,
 				enhancedLegend: true,
-				legendPosition: LegendPosition.BOTTOM,
+				legendPosition,
 			}),
 		[
 			yAxisUnit,
@@ -298,6 +300,7 @@ function ChartPreview({
 			currentQuery,
 			query,
 			graphVisibility,
+			legendPosition,
 		],
 	);
 
@@ -370,6 +373,7 @@ ChartPreview.defaultProps = {
 	allowSelectedIntervalForStepGen: false,
 	alertDef: undefined,
 	setQueryStatus: (): void => {},
+	legendPosition: LegendPosition.BOTTOM,
 };
 
 export default ChartPreview;
