@@ -481,11 +481,10 @@ function VariablesSetting({
 				onCancel={handleApplyToAllCancel}
 				okText="Apply to all"
 				cancelText="Cancel"
-				okButtonProps={{ danger: true }}
 			>
 				<Typography.Text>
 					Are you sure you want to apply variable{' '}
-					<span className="delete-variable-name">
+					<span className="apply-to-all-variable-name">
 						{variableToApplyToAll?.current?.name}
 					</span>{' '}
 					to all panels? This action may affect panels where this variable is not

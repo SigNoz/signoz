@@ -4,6 +4,12 @@
 	font-style: italic;
 }
 
+.apply-to-all-variable-name {
+	font-weight: 700;
+	color: var(--bg-robin-400);
+	font-style: italic;
+}
+
 .dashboard-variable-settings-table {
 	.variable-name-drag {
 		display: flex;
