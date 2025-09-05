@@ -410,6 +410,14 @@ $custom-border-color: #2c3044;
 		margin-top: 4px;
 
 		.group-label {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+
+			:last-child {
+				margin-right: 6px;
+			}
+
 			font-weight: 500;
 			padding: 4px 12px;
 			font-size: 13px;
@@ -454,6 +462,13 @@ $custom-border-color: #2c3044;
 			width: 100%;
 
 			> span:not(.ant-checkbox) {
+				width: 100%;
+			}
+
+			.all-option-text {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
 				width: 100%;
 			}
 

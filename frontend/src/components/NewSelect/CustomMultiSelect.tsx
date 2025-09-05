@@ -12,9 +12,11 @@ import {
 import { Color } from '@signozhq/design-tokens';
 import { Button, Checkbox, Select, Typography } from 'antd';
 import cx from 'classnames';
+import TextToolTip from 'components/TextToolTip/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { capitalize, isEmpty } from 'lodash-es';
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Info } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import React, {
 	useCallback,
@@ -86,6 +88,8 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	const isClickInsideDropdownRef = useRef(false);
 	const justOpenedRef = useRef<boolean>(false);
 	const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
+
+	const isDarkMode = useIsDarkMode();
 
 	// Convert single string value to array for consistency
 	const selectedValues = useMemo(
@@ -1549,12 +1553,27 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								}
 							}}
 						>
-							<Checkbox
-								checked={allOptionsSelected}
-								style={{ width: '100%', height: '100%' }}
-							>
+							<Checkbox checked={allOptionsSelected} className="option-checkbox">
 								<div className="option-content">
-									<div>ALL</div>
+									<div className="all-option-text">
+										ALL
+										<TextToolTip
+											text="Note about ALL in Dynamic Variable"
+											url="https://signoz.io/docs/userguide/manage-variables/#note-about-all"
+											urlText="here"
+											useFilledIcon={false}
+											outlinedIcon={
+												<Info
+													size={14}
+													style={{
+														color: isDarkMode ? '#ffffff' : '#000000',
+														marginTop: 1,
+														marginRight: 5,
+													}}
+												/>
+											}
+										/>
+									</div>
 								</div>
 							</Checkbox>
 						</div>
@@ -1588,6 +1607,21 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							<div className="select-group" key={section.label}>
 								<div className="group-label" role="heading" aria-level={2}>
 									{section.label}
+									<TextToolTip
+										text="Learn more about this section "
+										url="https://signoz.io/docs/userguide/manage-variables/#dynamic-variable-dropdowns-display-values-in-two-sections"
+										urlText="here"
+										useFilledIcon={false}
+										outlinedIcon={
+											<Info
+												size={14}
+												style={{
+													color: isDarkMode ? '#ffffff' : '#000000',
+													marginTop: 1,
+												}}
+											/>
+										}
+									/>
 								</div>
 								<div role="group" aria-label={`${section.label} options`}>
 									<Virtuoso
@@ -1693,6 +1727,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		showIncompleteDataMessage,
 		isScrolledToBottom,
 		enableRegexOption,
+		isDarkMode,
 	]);
 
 	// Custom handler for dropdown visibility changes
