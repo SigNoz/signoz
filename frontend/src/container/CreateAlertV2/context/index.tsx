@@ -2,6 +2,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
 	createContext,
 	useContext,
+	useEffect,
 	useMemo,
 	useReducer,
 	useState,
@@ -47,12 +48,22 @@ export function CreateAlertProvider(
 	const [alertType, setAlertType] = useState<AlertTypes>(
 		getInitialAlertType(currentQuery),
 	);
-	const [alertDef] = useState<AlertDef>(buildInitialAlertDef(alertType));
+
+	const [alertDef, setAlertDef] = useState<AlertDef>(
+		buildInitialAlertDef(alertType),
+	);
 
 	const [thresholdState, setThresholdState] = useReducer(
 		alertThresholdReducer,
 		INITIAL_ALERT_THRESHOLD_STATE,
 	);
+
+	useEffect(() => {
+		setAlertDef(buildInitialAlertDef(alertType));
+		setThresholdState({
+			type: 'RESET',
+		});
+	}, [alertType]);
 
 	const alertDefV2: AlertDef = useMemo(
 		() => ({

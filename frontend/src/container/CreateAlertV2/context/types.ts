@@ -76,4 +76,5 @@ export type AlertThresholdAction =
 	| { type: 'SET_EVALUATION_WINDOW'; payload: string }
 	| { type: 'SET_ALGORITHM'; payload: string }
 	| { type: 'SET_SEASONALITY'; payload: string }
-	| { type: 'SET_THRESHOLDS'; payload: Threshold[] };
+	| { type: 'SET_THRESHOLDS'; payload: Threshold[] }
+	| { type: 'RESET' };
