@@ -58,10 +58,7 @@ func (b *traceOperatorCTEBuilder) collectQueries() error {
 
 func (b *traceOperatorCTEBuilder) build(ctx context.Context, requestType qbtypes.RequestType) (*qbtypes.Statement, error) {
 
-	err := b.buildAllSpansCTE(ctx)
-	if err != nil {
-		return nil, err
-	}
+	b.buildAllSpansCTE(ctx)
 
 	rootCTEName, err := b.buildExpressionCTEs(ctx, b.operator.ParsedExpression)
 	if err != nil {
@@ -110,7 +107,7 @@ func (b *traceOperatorCTEBuilder) build(ctx context.Context, requestType qbtypes
 }
 
 // Will be used in Indirect descendant Query, will not be used in any other query
-func (b *traceOperatorCTEBuilder) buildAllSpansCTE(ctx context.Context) error {
+func (b *traceOperatorCTEBuilder) buildAllSpansCTE(ctx context.Context) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("*")
 	sb.SelectMore(sqlbuilder.Escape("resource_string_service$$name") + " AS `service.name`")
@@ -127,7 +124,6 @@ func (b *traceOperatorCTEBuilder) buildAllSpansCTE(ctx context.Context) error {
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	b.stmtBuilder.logger.DebugContext(ctx, "Built all_spans CTE")
 	b.addCTE("all_spans", sql, args, nil)
-	return nil
 }
 
 func (b *traceOperatorCTEBuilder) buildTimeConstantsCTE() string {
@@ -191,12 +187,12 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 	}
 
 	keySelectors := getKeySelectors(*query)
-	b.stmtBuilder.logger.DebugContext(ctx, "Key selectors for query", "queryName", queryName, "keySelectors", keySelectors)
+	b.stmtBuilder.logger.DebugContext(ctx, "Key selectors for query", "query_name", queryName, "key_selectors", keySelectors)
 	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return "", err
 	}
-	b.stmtBuilder.logger.DebugContext(ctx, "Retrieved keys for query", "queryName", queryName, "keysCount", len(keys))
+	b.stmtBuilder.logger.DebugContext(ctx, "Retrieved keys for query", "query_name", queryName, "keys_count", len(keys))
 
 	// Build resource filter CTE for this specific query
 	resourceFilterCTEName := fmt.Sprintf("__resource_filter_%s", cteName)
@@ -207,11 +203,11 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 
 	if resourceStmt != nil && resourceStmt.Query != "" {
 		b.stmtBuilder.logger.DebugContext(ctx, "Built resource filter CTE for query",
-			"queryName", queryName,
-			"resourceFilterCTEName", resourceFilterCTEName)
+			"query_name", queryName,
+			"resource_filter_cte_name", resourceFilterCTEName)
 		b.addCTE(resourceFilterCTEName, resourceStmt.Query, resourceStmt.Args, nil)
 	} else {
-		b.stmtBuilder.logger.DebugContext(ctx, "No resource filter needed for query", "queryName", queryName)
+		b.stmtBuilder.logger.DebugContext(ctx, "No resource filter needed for query", "query_name", queryName)
 		resourceFilterCTEName = ""
 	}
 
@@ -306,7 +302,8 @@ func (b *traceOperatorCTEBuilder) buildOperatorCTE(ctx context.Context, op qbtyp
 	case qbtypes.TraceOperatorDirectDescendant:
 		sql, args, dependsOn = b.buildDirectDescendantCTE(leftCTE, rightCTE)
 	case qbtypes.TraceOperatorIndirectDescendant:
-		sql, args, dependsOn = b.buildIndirectDescendantCTE(leftCTE, rightCTE)
+		sql, dependsOn = b.buildIndirectDescendantCTE(leftCTE, rightCTE)
+		args = nil
 	case qbtypes.TraceOperatorAnd:
 		sql, args, dependsOn = b.buildAndCTE(leftCTE, rightCTE)
 	case qbtypes.TraceOperatorOr:
@@ -342,9 +339,9 @@ func (b *traceOperatorCTEBuilder) buildDirectDescendantCTE(parentCTE, childCTE s
 	return sql, args, []string{parentCTE, childCTE}
 }
 
-func (b *traceOperatorCTEBuilder) buildIndirectDescendantCTE(ancestorCTE, descendantCTE string) (string, []any, []string) {
+func (b *traceOperatorCTEBuilder) buildIndirectDescendantCTE(ancestorCTE, descendantCTE string) (string, []string) {
 	sql := fmt.Sprintf(`WITH RECURSIVE up AS (SELECT d.trace_id, d.span_id, d.parent_span_id, 0 AS depth FROM %s AS d UNION ALL SELECT p.trace_id, p.span_id, p.parent_span_id, up.depth + 1 FROM all_spans AS p JOIN up ON p.trace_id = up.trace_id AND p.span_id = up.parent_span_id WHERE up.depth < 100) SELECT DISTINCT a.* FROM %s AS a GLOBAL INNER JOIN (SELECT DISTINCT trace_id, span_id FROM up WHERE depth > 0 ) AS ancestors ON ancestors.trace_id = a.trace_id AND ancestors.span_id = a.span_id`, descendantCTE, ancestorCTE)
-	return sql, nil, []string{ancestorCTE, descendantCTE, "all_spans"}
+	return sql, []string{ancestorCTE, descendantCTE, "all_spans"}
 }
 
 func (b *traceOperatorCTEBuilder) buildAndCTE(leftCTE, rightCTE string) (string, []any, []string) {
@@ -618,7 +615,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
 	// Add HAVING clause if specified
-	if err := b.addHavingClause(ctx, sb); err != nil {
+	if err := b.addHavingClause(sb); err != nil {
 		return nil, err
 	}
 
@@ -629,7 +626,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 	}, nil
 }
 
-func (b *traceOperatorCTEBuilder) buildTraceSummaryCTE(ctx context.Context, selectFromCTE string) error {
+func (b *traceOperatorCTEBuilder) buildTraceSummaryCTE(selectFromCTE string) error {
 	sb := sqlbuilder.NewSelectBuilder()
 
 	sb.Select(
@@ -648,7 +645,7 @@ func (b *traceOperatorCTEBuilder) buildTraceSummaryCTE(ctx context.Context, sele
 }
 
 func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFromCTE string) (*qbtypes.Statement, error) {
-	err := b.buildTraceSummaryCTE(ctx, selectFromCTE)
+	err := b.buildTraceSummaryCTE(selectFromCTE)
 	if err != nil {
 		return nil, err
 	}
@@ -738,7 +735,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 		sb.GroupBy(groupByKeys...)
 	}
 
-	if err := b.addHavingClause(ctx, sb); err != nil {
+	if err := b.addHavingClause(sb); err != nil {
 		return nil, err
 	}
 
@@ -884,7 +881,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
 	// Add HAVING clause if specified
-	if err := b.addHavingClause(ctx, sb); err != nil {
+	if err := b.addHavingClause(sb); err != nil {
 		return nil, err
 	}
 
@@ -895,7 +892,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 	}, nil
 }
 
-func (b *traceOperatorCTEBuilder) addHavingClause(ctx context.Context, sb *sqlbuilder.SelectBuilder) error {
+func (b *traceOperatorCTEBuilder) addHavingClause(sb *sqlbuilder.SelectBuilder) error {
 	if b.operator.Having != nil && b.operator.Having.Expression != "" {
 		rewriter := querybuilder.NewHavingExpressionRewriter()
 		rewrittenExpr := rewriter.RewriteForTraces(b.operator.Having.Expression, b.operator.Aggregations)
