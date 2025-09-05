@@ -4,18 +4,11 @@ import {
 } from 'constants/queryBuilder';
 import ContextMenu, { ClickedData } from 'periscope/components/ContextMenu';
 import { ReactNode } from 'react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import BreakoutOptions from './BreakoutOptions';
-import {
-	getAggregateColumnHeader,
-	getBaseMeta,
-	getQueryData,
-} from './drilldownUtils';
-import { AGGREGATE_OPTIONS, SUPPORTED_OPERATORS } from './menuOptions';
-import { getBreakoutQuery } from './tableDrilldownUtils';
-import { AggregateData } from './useAggregateDrilldown';
+import { getBaseMeta } from './drilldownUtils';
+import { SUPPORTED_OPERATORS } from './menuOptions';
+import { BreakoutAttributeType } from './types';
 
 export type ContextMenuItem = ReactNode;
 
@@ -45,7 +38,7 @@ export interface AggregateContextMenuConfig {
 
 export interface BreakoutOptionsProps {
 	queryData: IBuilderQuery;
-	onColumnClick: (groupBy: BaseAutocompleteData) => void;
+	onColumnClick: (groupBy: BreakoutAttributeType) => void;
 }
 
 export function getGroupContextMenuConfig({
@@ -90,64 +83,4 @@ export function getGroupContextMenuConfig({
 	}
 
 	return {};
-}
-
-export function getAggregateContextMenuConfig({
-	subMenu,
-	query,
-	onColumnClick,
-	aggregateData,
-}: {
-	subMenu?: string;
-	query: Query;
-	onColumnClick: (key: string, query?: Query) => void;
-	aggregateData: AggregateData | null;
-}): AggregateContextMenuConfig {
-	if (subMenu === 'breakout') {
-		const queryData = getQueryData(query, aggregateData?.queryName || '');
-		return {
-			header: 'Breakout by',
-			items: (
-				<BreakoutOptions
-					queryData={queryData}
-					onColumnClick={(groupBy: BaseAutocompleteData): void => {
-						// Use aggregateData.filters
-						const filtersToAdd = aggregateData?.filters || [];
-						const breakoutQuery = getBreakoutQuery(
-							query,
-							aggregateData,
-							groupBy,
-							filtersToAdd,
-						);
-						onColumnClick('breakout', breakoutQuery);
-					}}
-				/>
-			),
-		};
-	}
-
-	// Use aggregateData.queryName
-	const queryName = aggregateData?.queryName;
-	const { dataSource, aggregations } = getAggregateColumnHeader(
-		query,
-		queryName as string,
-	);
-
-	return {
-		header: (
-			<div>
-				<div style={{ textTransform: 'capitalize' }}>{dataSource}</div>
-				<div>{aggregations}</div>
-			</div>
-		),
-		items: AGGREGATE_OPTIONS.map(({ key, label, icon }) => (
-			<ContextMenu.Item
-				key={key}
-				icon={icon}
-				onClick={(): void => onColumnClick(key)}
-			>
-				{label}
-			</ContextMenu.Item>
-		)),
-	};
 }

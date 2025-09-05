@@ -20,7 +20,11 @@ import { Button, Modal, Typography } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { GripVertical, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
-import { ContextLinkProps, ContextLinksData } from 'types/api/dashboard/getAll';
+import {
+	ContextLinkProps,
+	ContextLinksData,
+	Widgets,
+} from 'types/api/dashboard/getAll';
 
 import UpdateContextLinks from './UpdateContextLinks';
 import useContextLinkModal from './useContextLinkModal';
@@ -87,9 +91,11 @@ function SortableContextLink({
 function ContextLinks({
 	contextLinks,
 	setContextLinks,
+	selectedWidget,
 }: {
 	contextLinks: ContextLinksData;
 	setContextLinks: Dispatch<SetStateAction<ContextLinksData>>;
+	selectedWidget?: Widgets;
 }): JSX.Element {
 	// Use the custom hook for modal functionality
 	const {
@@ -179,10 +185,15 @@ function ContextLinks({
 					selectedContextLink={selectedContextLink}
 					onSave={handleSaveContextLink}
 					onCancel={handleCancelModal}
+					selectedWidget={selectedWidget}
 				/>
 			</Modal>
 		</div>
 	);
 }
+
+ContextLinks.defaultProps = {
+	selectedWidget: undefined,
+};
 
 export default ContextLinks;

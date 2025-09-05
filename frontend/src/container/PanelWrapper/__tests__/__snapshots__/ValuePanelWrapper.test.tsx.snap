@@ -22,6 +22,7 @@ exports[`Value panel wrappper tests should render tooltip when there are conflic
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+  cursor: default;
 }
 
 .c0 {

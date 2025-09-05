@@ -3,17 +3,16 @@ import './Breakoutoptions.styles.scss';
 import { Input, Skeleton } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import useDebounce from 'hooks/useDebounce';
 import { ContextMenu } from 'periscope/components/ContextMenu';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 
 import { BreakoutOptionsProps } from './contextConfig';
+import { BreakoutAttributeType } from './types';
 
 function OptionsSkeleton(): JSX.Element {
 	return (
@@ -73,14 +72,14 @@ function BreakoutOptions({
 		}
 
 		const { keys } = data.data.data;
-		const transformedOptions: BaseAutocompleteData[] = [];
+		const transformedOptions: BreakoutAttributeType[] = [];
 
 		// Transform the response to match BaseAutocompleteData format
 		Object.values(keys).forEach((keyArray) => {
 			keyArray.forEach((keyData) => {
 				transformedOptions.push({
 					key: keyData.name,
-					dataType: DataTypes.EMPTY,
+					dataType: keyData.fieldDataType as QUERY_BUILDER_KEY_TYPES,
 					type: '',
 				});
 			});
@@ -89,7 +88,7 @@ function BreakoutOptions({
 		// Filter out already selected groupBy keys
 		const groupByKeys = groupBy.map((item: BaseAutocompleteData) => item.key);
 		return transformedOptions.filter(
-			(item: BaseAutocompleteData) => !groupByKeys.includes(item.key),
+			(item: BreakoutAttributeType) => !groupByKeys.includes(item.key),
 		);
 	}, [data, groupBy]);
 
@@ -117,7 +116,7 @@ function BreakoutOptions({
 						{isFetching ? (
 							<OptionsSkeleton />
 						) : (
-							breakoutOptions?.map((item: BaseAutocompleteData) => (
+							breakoutOptions?.map((item: BreakoutAttributeType) => (
 								<ContextMenu.Item
 									key={item.key}
 									onClick={(): void => onColumnClick(item)}

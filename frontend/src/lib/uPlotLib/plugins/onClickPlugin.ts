@@ -153,8 +153,6 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 						// @ts-ignore
 						if (item?.show && item?._focus) {
-							console.log('>> outputMetric', apiResult[index - 1]);
-
 							const { metric: focusedMetric, queryName } = apiResult[index - 1] || [];
 							metric = focusedMetric;
 							outputMetric.queryName = queryName;
@@ -172,10 +170,6 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 						focusedSeriesData &&
 						focusedSeriesData.seriesIndex <= apiResult.length
 					) {
-						console.log(
-							'>> outputMetric',
-							apiResult[focusedSeriesData.seriesIndex - 1],
-						);
 						const { metric: focusedMetric, queryName } =
 							apiResult[focusedSeriesData.seriesIndex - 1] || [];
 						metric = focusedMetric;
@@ -184,23 +178,26 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 					}
 				}
 
+				// Get the actual data point timestamp from the focused series
+				let actualDataTimestamp = xValue; // fallback to click position timestamp
+				if (focusedSeries) {
+					// Get the data index from the focused series
+					const dataIndex = u.posToIdx(event.offsetX);
+					// Get the actual timestamp from the x-axis data (u.data[0])
+					if (u.data[0] && u.data[0][dataIndex] !== undefined) {
+						actualDataTimestamp = u.data[0][dataIndex];
+					}
+				}
+
+				metric = {
+					...metric,
+					clickedTimestamp: actualDataTimestamp,
+				};
+
 				const axesData = {
 					xAxis: u.axes[0],
 					yAxis: u.axes[1],
 				};
-
-				console.log('>> graph click', {
-					xValue,
-					yValue,
-					mouseX,
-					mouseY,
-					metric,
-					outputMetric,
-					absoluteMouseX,
-					absoluteMouseY,
-					axesData,
-					focusedSeries,
-				});
 
 				opts.onClick(
 					xValue,

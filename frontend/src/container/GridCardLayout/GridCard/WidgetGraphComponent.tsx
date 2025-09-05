@@ -238,6 +238,7 @@ function WidgetGraphComponent({
 		const existingSearchParams = new URLSearchParams(search);
 		existingSearchParams.delete(QueryParams.expandedWidgetId);
 		existingSearchParams.delete(QueryParams.compositeQuery);
+		existingSearchParams.delete(QueryParams.graphType);
 		const updatedQueryParams = Object.fromEntries(existingSearchParams.entries());
 		if (queryResponse.data?.payload) {
 			const {

@@ -1,3 +1,5 @@
+/* eslint-disable sonarjs/no-duplicate-string */
+
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Button } from 'antd';
 import ROUTES from 'constants/routes';
@@ -8,6 +10,7 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import store from 'store';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 import useTableContextMenu from '../useTableContextMenu';
 import {
@@ -15,6 +18,7 @@ import {
 	MOCK_COORDINATES,
 	MOCK_FILTER_DATA,
 	MOCK_QUERY,
+	MOCK_QUERY_RANGE_REQUEST,
 	MOCK_QUERY_WITH_FILTER,
 } from './mockTableData';
 
@@ -84,6 +88,8 @@ function MockTableDrilldown(): JSX.Element {
 		coordinates,
 		subMenu,
 		setSubMenu,
+		queryRangeRequest: MOCK_QUERY_RANGE_REQUEST as QueryRangeRequestV5,
+		contextLinks: { linksData: [] }, // Provide empty context links to allow data links to render
 	});
 
 	const handleClick = (type: 'aggregate' | 'filter'): void => {
@@ -204,6 +210,39 @@ describe('TableDrilldown', () => {
 		expect(options).toEqual({ newTab: true });
 	});
 
+	it('should include timestamps in logs explorer URL when "View in Logs" is clicked', (): void => {
+		renderWithProviders(<MockTableDrilldown />);
+
+		// Find and click the button to show context menu
+		const button = screen.getByRole('button', { name: /aggregate/i });
+		fireEvent.click(button);
+
+		// Find and click "View in Logs" option
+		const viewInLogsOption = screen.getByText('View in Logs');
+		fireEvent.click(viewInLogsOption);
+
+		// Verify safeNavigate was called with the correct URL
+		expect(mockSafeNavigate).toHaveBeenCalledTimes(1);
+
+		const [url] = mockSafeNavigate.mock.calls[0];
+
+		// Parse the URL to check query parameters
+		const urlObj = new URL(url, 'http://localhost');
+
+		// Check that timestamp parameters exist and have correct values
+		expect(urlObj.searchParams.has('startTime')).toBe(true);
+		expect(urlObj.searchParams.has('endTime')).toBe(true);
+
+		// Verify the timestamp values match the mock query range request
+		// MOCK_QUERY_RANGE_REQUEST has start: 1756972732000, end: 1756974532000
+		// These should be converted to seconds in the URL (divided by 1000)
+		const expectedStartTime = Math.floor(1756972732000 / 1000).toString();
+		const expectedEndTime = Math.floor(1756974532000 / 1000).toString();
+
+		expect(urlObj.searchParams.get('startTime')).toBe(expectedStartTime);
+		expect(urlObj.searchParams.get('endTime')).toBe(expectedEndTime);
+	});
+
 	it('should navigate to traces explorer with correct query when "View in Traces" is clicked', (): void => {
 		renderWithProviders(<MockTableDrilldown />);
 
@@ -244,6 +283,39 @@ describe('TableDrilldown', () => {
 
 		// Check that newTab option is set to true
 		expect(options).toEqual({ newTab: true });
+	});
+
+	it('should include timestamps in traces explorer URL when "View in Traces" is clicked', (): void => {
+		renderWithProviders(<MockTableDrilldown />);
+
+		// Find and click the button to show context menu
+		const button = screen.getByRole('button', { name: /aggregate/i });
+		fireEvent.click(button);
+
+		// Find and click "View in Traces" option
+		const viewInTracesOption = screen.getByText('View in Traces');
+		fireEvent.click(viewInTracesOption);
+
+		// Verify safeNavigate was called with the correct URL
+		expect(mockSafeNavigate).toHaveBeenCalledTimes(1);
+
+		const [url] = mockSafeNavigate.mock.calls[0];
+
+		// Parse the URL to check query parameters
+		const urlObj = new URL(url, 'http://localhost');
+
+		// Check that timestamp parameters exist and have correct values
+		expect(urlObj.searchParams.has('startTime')).toBe(true);
+		expect(urlObj.searchParams.has('endTime')).toBe(true);
+
+		// Verify the timestamp values match the mock query range request
+		// MOCK_QUERY_RANGE_REQUEST has start: 1756972732000, end: 1756974532000
+		// These should be converted to seconds in the URL (divided by 1000)
+		const expectedStartTime = Math.floor(1756972732000 / 1000).toString();
+		const expectedEndTime = Math.floor(1756974532000 / 1000).toString();
+
+		expect(urlObj.searchParams.get('startTime')).toBe(expectedStartTime);
+		expect(urlObj.searchParams.get('endTime')).toBe(expectedEndTime);
 	});
 
 	it('should show filter options and navigate with correct query when filter option is clicked', (): void => {
@@ -295,6 +367,18 @@ describe('TableDrilldown', () => {
 
 		// Check that newTab is true
 		expect(newTab).toBe(true);
+	});
+
+	it('should show "View Trace Details" link when aggregate data contains trace_id filter', (): void => {
+		renderWithProviders(<MockTableDrilldown />);
+
+		// Find and click the button to show context menu
+		const button = screen.getByRole('button', { name: /aggregate/i });
+		fireEvent.click(button);
+
+		// Check that the "View Trace Details" link is displayed
+		// This should appear because MOCK_AGGREGATE_DATA contains trace_id: 'df2cfb0e57bb8736207689851478cd50'
+		expect(screen.getByText('View Trace Details')).toBeInTheDocument();
 	});
 });
 

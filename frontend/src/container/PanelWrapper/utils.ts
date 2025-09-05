@@ -89,11 +89,16 @@ export const getTimeRangeFromUplotAxis = (
 	return { startTime, endTime };
 };
 
+export const isApmMetric = (metric = ''): boolean =>
+	// if metric starts with 'signoz_', then it is an apm metric
+	metric.startsWith('signoz_');
+
 export const getTimeRangeFromStepInterval = (
 	stepInterval: number,
 	xValue: number,
+	isApmMetric: boolean,
 ): { startTime: number; endTime: number } => {
-	const startTime = xValue;
+	const startTime = isApmMetric ? xValue - stepInterval : xValue;
 	const endTime = xValue + stepInterval;
 	return { startTime, endTime };
 };

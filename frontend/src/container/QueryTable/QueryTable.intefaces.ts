@@ -4,11 +4,9 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { DownloadOptions } from 'container/Download/Download.types';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { ReactNode } from 'react';
-import { UseQueryResult } from 'react-query';
-import { SuccessResponse } from 'types/api';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
 export type QueryTableProps = Omit<
@@ -29,8 +27,5 @@ export type QueryTableProps = Omit<
 	enableDrillDown?: boolean;
 	contextLinks?: ContextLinksData;
 	panelType?: PANEL_TYPES;
-	queryRange?: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
-		Error
-	>;
+	queryRangeRequest?: QueryRangeRequestV5;
 };

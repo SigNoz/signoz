@@ -47,7 +47,7 @@ function GridTableComponent({
 	customOnRowClick,
 	widgetId,
 	panelType,
-	queryRange,
+	queryRangeRequest,
 	...props
 }: GridTableComponentProps): JSX.Element {
 	const { t } = useTranslation(['valueGraph']);
@@ -269,7 +269,7 @@ function GridTableComponent({
 				sticky={sticky}
 				widgetId={widgetId}
 				panelType={panelType}
-				queryRange={queryRange}
+				queryRangeRequest={queryRangeRequest}
 				onRow={
 					openTracesButton || customOnRowClick
 						? (record): React.HTMLAttributes<HTMLElement> => ({

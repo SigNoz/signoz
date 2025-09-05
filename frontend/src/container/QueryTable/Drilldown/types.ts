@@ -1,3 +1,4 @@
+import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import { ReactNode } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -26,6 +27,12 @@ export interface GroupContextMenuConfig {
 export interface AggregateContextMenuConfig {
 	header?: string;
 	items?: ContextMenuItem;
+}
+
+export interface BreakoutAttributeType {
+	key: string;
+	dataType: QUERY_BUILDER_KEY_TYPES;
+	type: string;
 }
 
 export interface BreakoutOptionsProps {

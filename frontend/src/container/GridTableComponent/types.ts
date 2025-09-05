@@ -7,11 +7,9 @@ import {
 } from 'container/NewWidget/RightContainer/Threshold/types';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { UseQueryResult } from 'react-query';
-import { SuccessResponse } from 'types/api';
 import { ColumnUnit, ContextLinksData } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 export type GridTableComponentProps = {
 	query: Query;
@@ -29,10 +27,7 @@ export type GridTableComponentProps = {
 	enableDrillDown?: boolean;
 	contextLinks?: ContextLinksData;
 	panelType?: PANEL_TYPES;
-	queryRange?: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
-		Error
-	>;
+	queryRangeRequest?: QueryRangeRequestV5;
 } & Pick<LogsExplorerTableProps, 'data'> &
 	Omit<TableProps<RowData>, 'columns' | 'dataSource'>;
 

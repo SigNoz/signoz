@@ -611,6 +611,15 @@ function NewWidget({
 		);
 	};
 
+	// add useEffect for graph type change from url
+	useEffect(() => {
+		const graphType = query.get('graphType');
+		if (graphType && graphType !== selectedGraph) {
+			setGraphType(graphType as PANEL_TYPES);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [query]);
+
 	const onSaveDashboard = useCallback((): void => {
 		const widgetId = query.get('widgetId');
 		const selectWidget = widgets?.find((e) => e.id === widgetId);
