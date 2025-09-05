@@ -1,4 +1,4 @@
-// Generated from ./TraceOperatorGrammer.g4 by ANTLR 4.13.1
+// Generated from ./TraceOperatorGrammar.g4 by ANTLR 4.13.1
 // noinspection ES6UnusedImports,JSUnusedGlobalSymbols,JSUnusedLocalSymbols
 
 import {
@@ -11,14 +11,14 @@ import {
 	Token, TokenStream,
 	Interval, IntervalSet
 } from 'antlr4';
-import TraceOperatorGrammerListener from "./TraceOperatorGrammerListener.js";
-import TraceOperatorGrammerVisitor from "./TraceOperatorGrammerVisitor.js";
+import TraceOperatorGrammarListener from "./TraceOperatorGrammarListener.js";
+import TraceOperatorGrammarVisitor from "./TraceOperatorGrammarVisitor.js";
 
 // for running tests with parameters, TODO: discuss strategy for typed parameters in CI
 // eslint-disable-next-line no-unused-vars
 type int = number;
 
-export default class TraceOperatorGrammerParser extends Parser {
+export default class TraceOperatorGrammarParser extends Parser {
 	public static readonly T__0 = 1;
 	public static readonly T__1 = 2;
 	public static readonly T__2 = 3;
@@ -47,11 +47,11 @@ export default class TraceOperatorGrammerParser extends Parser {
 	public static readonly ruleNames: string[] = [
 		"query", "expression", "atom", "operator",
 	];
-	public get grammarFileName(): string { return "TraceOperatorGrammer.g4"; }
-	public get literalNames(): (string | null)[] { return TraceOperatorGrammerParser.literalNames; }
-	public get symbolicNames(): (string | null)[] { return TraceOperatorGrammerParser.symbolicNames; }
-	public get ruleNames(): string[] { return TraceOperatorGrammerParser.ruleNames; }
-	public get serializedATN(): number[] { return TraceOperatorGrammerParser._serializedATN; }
+	public get grammarFileName(): string { return "TraceOperatorGrammar.g4"; }
+	public get literalNames(): (string | null)[] { return TraceOperatorGrammarParser.literalNames; }
+	public get symbolicNames(): (string | null)[] { return TraceOperatorGrammarParser.symbolicNames; }
+	public get ruleNames(): string[] { return TraceOperatorGrammarParser.ruleNames; }
+	public get serializedATN(): number[] { return TraceOperatorGrammarParser._serializedATN; }
 
 	protected createFailedPredicateException(predicate?: string, message?: string): FailedPredicateException {
 		return new FailedPredicateException(this, predicate, message);
@@ -59,12 +59,12 @@ export default class TraceOperatorGrammerParser extends Parser {
 
 	constructor(input: TokenStream) {
 		super(input);
-		this._interp = new ParserATNSimulator(this, TraceOperatorGrammerParser._ATN, TraceOperatorGrammerParser.DecisionsToDFA, new PredictionContextCache());
+		this._interp = new ParserATNSimulator(this, TraceOperatorGrammarParser._ATN, TraceOperatorGrammarParser.DecisionsToDFA, new PredictionContextCache());
 	}
 	// @RuleVersion(0)
 	public query(): QueryContext {
 		let localctx: QueryContext = new QueryContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 0, TraceOperatorGrammerParser.RULE_query);
+		this.enterRule(localctx, 0, TraceOperatorGrammarParser.RULE_query);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
@@ -84,7 +84,7 @@ export default class TraceOperatorGrammerParser extends Parser {
 				_la = this._input.LA(1);
 			} while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 262) !== 0));
 			this.state = 13;
-			this.match(TraceOperatorGrammerParser.EOF);
+			this.match(TraceOperatorGrammarParser.EOF);
 			}
 		}
 		catch (re) {
@@ -104,7 +104,7 @@ export default class TraceOperatorGrammerParser extends Parser {
 	// @RuleVersion(0)
 	public expression(): ExpressionContext {
 		let localctx: ExpressionContext = new ExpressionContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 2, TraceOperatorGrammerParser.RULE_expression);
+		this.enterRule(localctx, 2, TraceOperatorGrammarParser.RULE_expression);
 		try {
 			this.state = 38;
 			this._errHandler.sync(this);
@@ -113,7 +113,7 @@ export default class TraceOperatorGrammerParser extends Parser {
 				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 15;
-				this.match(TraceOperatorGrammerParser.T__0);
+				this.match(TraceOperatorGrammarParser.T__0);
 				this.state = 16;
 				this.expression();
 				}
@@ -122,11 +122,11 @@ export default class TraceOperatorGrammerParser extends Parser {
 				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 17;
-				this.match(TraceOperatorGrammerParser.T__1);
+				this.match(TraceOperatorGrammarParser.T__1);
 				this.state = 18;
 				this.expression();
 				this.state = 19;
-				this.match(TraceOperatorGrammerParser.T__2);
+				this.match(TraceOperatorGrammarParser.T__2);
 				this.state = 20;
 				this.operator();
 				this.state = 21;
@@ -137,11 +137,11 @@ export default class TraceOperatorGrammerParser extends Parser {
 				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 23;
-				this.match(TraceOperatorGrammerParser.T__1);
+				this.match(TraceOperatorGrammarParser.T__1);
 				this.state = 24;
 				this.expression();
 				this.state = 25;
-				this.match(TraceOperatorGrammerParser.T__2);
+				this.match(TraceOperatorGrammarParser.T__2);
 				}
 				break;
 			case 4:
@@ -163,11 +163,11 @@ export default class TraceOperatorGrammerParser extends Parser {
 				this.state = 32;
 				this.operator();
 				this.state = 33;
-				this.match(TraceOperatorGrammerParser.T__1);
+				this.match(TraceOperatorGrammarParser.T__1);
 				this.state = 34;
 				localctx._expr = this.expression();
 				this.state = 35;
-				this.match(TraceOperatorGrammerParser.T__2);
+				this.match(TraceOperatorGrammarParser.T__2);
 				}
 				break;
 			case 6:
@@ -196,12 +196,12 @@ export default class TraceOperatorGrammerParser extends Parser {
 	// @RuleVersion(0)
 	public atom(): AtomContext {
 		let localctx: AtomContext = new AtomContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 4, TraceOperatorGrammerParser.RULE_atom);
+		this.enterRule(localctx, 4, TraceOperatorGrammarParser.RULE_atom);
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 40;
-			this.match(TraceOperatorGrammerParser.IDENTIFIER);
+			this.match(TraceOperatorGrammarParser.IDENTIFIER);
 			}
 		}
 		catch (re) {
@@ -221,7 +221,7 @@ export default class TraceOperatorGrammerParser extends Parser {
 	// @RuleVersion(0)
 	public operator(): OperatorContext {
 		let localctx: OperatorContext = new OperatorContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 6, TraceOperatorGrammerParser.RULE_operator);
+		this.enterRule(localctx, 6, TraceOperatorGrammarParser.RULE_operator);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
@@ -268,25 +268,25 @@ export default class TraceOperatorGrammerParser extends Parser {
 
 	private static __ATN: ATN;
 	public static get _ATN(): ATN {
-		if (!TraceOperatorGrammerParser.__ATN) {
-			TraceOperatorGrammerParser.__ATN = new ATNDeserializer().deserialize(TraceOperatorGrammerParser._serializedATN);
+		if (!TraceOperatorGrammarParser.__ATN) {
+			TraceOperatorGrammarParser.__ATN = new ATNDeserializer().deserialize(TraceOperatorGrammarParser._serializedATN);
 		}
 
-		return TraceOperatorGrammerParser.__ATN;
+		return TraceOperatorGrammarParser.__ATN;
 	}
 
 
-	static DecisionsToDFA = TraceOperatorGrammerParser._ATN.decisionToState.map( (ds: DecisionState, index: number) => new DFA(ds, index) );
+	static DecisionsToDFA = TraceOperatorGrammarParser._ATN.decisionToState.map( (ds: DecisionState, index: number) => new DFA(ds, index) );
 
 }
 
 export class QueryContext extends ParserRuleContext {
-	constructor(parser?: TraceOperatorGrammerParser, parent?: ParserRuleContext, invokingState?: number) {
+	constructor(parser?: TraceOperatorGrammarParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
     	this.parser = parser;
 	}
 	public EOF(): TerminalNode {
-		return this.getToken(TraceOperatorGrammerParser.EOF, 0);
+		return this.getToken(TraceOperatorGrammarParser.EOF, 0);
 	}
 	public expression_list(): ExpressionContext[] {
 		return this.getTypedRuleContexts(ExpressionContext) as ExpressionContext[];
@@ -295,20 +295,20 @@ export class QueryContext extends ParserRuleContext {
 		return this.getTypedRuleContext(ExpressionContext, i) as ExpressionContext;
 	}
     public get ruleIndex(): number {
-    	return TraceOperatorGrammerParser.RULE_query;
+    	return TraceOperatorGrammarParser.RULE_query;
 	}
-	public enterRule(listener: TraceOperatorGrammerListener): void {
+	public enterRule(listener: TraceOperatorGrammarListener): void {
 	    if(listener.enterQuery) {
 	 		listener.enterQuery(this);
 		}
 	}
-	public exitRule(listener: TraceOperatorGrammerListener): void {
+	public exitRule(listener: TraceOperatorGrammarListener): void {
 	    if(listener.exitQuery) {
 	 		listener.exitQuery(this);
 		}
 	}
 	// @Override
-	public accept<Result>(visitor: TraceOperatorGrammerVisitor<Result>): Result {
+	public accept<Result>(visitor: TraceOperatorGrammarVisitor<Result>): Result {
 		if (visitor.visitQuery) {
 			return visitor.visitQuery(this);
 		} else {
@@ -322,7 +322,7 @@ export class ExpressionContext extends ParserRuleContext {
 	public _left!: AtomContext;
 	public _right!: ExpressionContext;
 	public _expr!: ExpressionContext;
-	constructor(parser?: TraceOperatorGrammerParser, parent?: ParserRuleContext, invokingState?: number) {
+	constructor(parser?: TraceOperatorGrammarParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
     	this.parser = parser;
 	}
@@ -339,20 +339,20 @@ export class ExpressionContext extends ParserRuleContext {
 		return this.getTypedRuleContext(AtomContext, 0) as AtomContext;
 	}
     public get ruleIndex(): number {
-    	return TraceOperatorGrammerParser.RULE_expression;
+    	return TraceOperatorGrammarParser.RULE_expression;
 	}
-	public enterRule(listener: TraceOperatorGrammerListener): void {
+	public enterRule(listener: TraceOperatorGrammarListener): void {
 	    if(listener.enterExpression) {
 	 		listener.enterExpression(this);
 		}
 	}
-	public exitRule(listener: TraceOperatorGrammerListener): void {
+	public exitRule(listener: TraceOperatorGrammarListener): void {
 	    if(listener.exitExpression) {
 	 		listener.exitExpression(this);
 		}
 	}
 	// @Override
-	public accept<Result>(visitor: TraceOperatorGrammerVisitor<Result>): Result {
+	public accept<Result>(visitor: TraceOperatorGrammarVisitor<Result>): Result {
 		if (visitor.visitExpression) {
 			return visitor.visitExpression(this);
 		} else {
@@ -363,28 +363,28 @@ export class ExpressionContext extends ParserRuleContext {
 
 
 export class AtomContext extends ParserRuleContext {
-	constructor(parser?: TraceOperatorGrammerParser, parent?: ParserRuleContext, invokingState?: number) {
+	constructor(parser?: TraceOperatorGrammarParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
     	this.parser = parser;
 	}
 	public IDENTIFIER(): TerminalNode {
-		return this.getToken(TraceOperatorGrammerParser.IDENTIFIER, 0);
+		return this.getToken(TraceOperatorGrammarParser.IDENTIFIER, 0);
 	}
     public get ruleIndex(): number {
-    	return TraceOperatorGrammerParser.RULE_atom;
+    	return TraceOperatorGrammarParser.RULE_atom;
 	}
-	public enterRule(listener: TraceOperatorGrammerListener): void {
+	public enterRule(listener: TraceOperatorGrammarListener): void {
 	    if(listener.enterAtom) {
 	 		listener.enterAtom(this);
 		}
 	}
-	public exitRule(listener: TraceOperatorGrammerListener): void {
+	public exitRule(listener: TraceOperatorGrammarListener): void {
 	    if(listener.exitAtom) {
 	 		listener.exitAtom(this);
 		}
 	}
 	// @Override
-	public accept<Result>(visitor: TraceOperatorGrammerVisitor<Result>): Result {
+	public accept<Result>(visitor: TraceOperatorGrammarVisitor<Result>): Result {
 		if (visitor.visitAtom) {
 			return visitor.visitAtom(this);
 		} else {
@@ -395,25 +395,25 @@ export class AtomContext extends ParserRuleContext {
 
 
 export class OperatorContext extends ParserRuleContext {
-	constructor(parser?: TraceOperatorGrammerParser, parent?: ParserRuleContext, invokingState?: number) {
+	constructor(parser?: TraceOperatorGrammarParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
     	this.parser = parser;
 	}
     public get ruleIndex(): number {
-    	return TraceOperatorGrammerParser.RULE_operator;
+    	return TraceOperatorGrammarParser.RULE_operator;
 	}
-	public enterRule(listener: TraceOperatorGrammerListener): void {
+	public enterRule(listener: TraceOperatorGrammarListener): void {
 	    if(listener.enterOperator) {
 	 		listener.enterOperator(this);
 		}
 	}
-	public exitRule(listener: TraceOperatorGrammerListener): void {
+	public exitRule(listener: TraceOperatorGrammarListener): void {
 	    if(listener.exitOperator) {
 	 		listener.exitOperator(this);
 		}
 	}
 	// @Override
-	public accept<Result>(visitor: TraceOperatorGrammerVisitor<Result>): Result {
+	public accept<Result>(visitor: TraceOperatorGrammarVisitor<Result>): Result {
 		if (visitor.visitOperator) {
 			return visitor.visitOperator(this);
 		} else {

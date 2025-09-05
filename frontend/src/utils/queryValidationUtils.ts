@@ -3,8 +3,8 @@
 import { CharStreams, CommonTokenStream } from 'antlr4';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import FilterQueryParser from 'parser/FilterQueryParser';
-import TraceOperatorGrammerLexer from 'TraceOperator/parser/TraceOperatorGrammerLexer';
-import TraceOperatorGrammerParser from 'TraceOperator/parser/TraceOperatorGrammerParser';
+import TraceOperatorGrammarLexer from 'parser/TraceOperatorParser/TraceOperatorGrammarLexer';
+import TraceOperatorGrammarParser from 'parser/TraceOperatorParser/TraceOperatorGrammarParser';
 import { IDetailedError, IValidationResult } from 'types/antlrQueryTypes';
 
 // Custom error listener to capture ANTLR errors
@@ -189,13 +189,13 @@ export const validateTraceOperatorQuery = (
 		const inputStream = CharStreams.fromString(query);
 
 		// Setup lexer
-		const lexer = new TraceOperatorGrammerLexer(inputStream);
+		const lexer = new TraceOperatorGrammarLexer(inputStream);
 		lexer.removeErrorListeners(); // Remove default error listeners
 		lexer.addErrorListener(errorListener);
 
 		// Setup parser
 		const tokenStream = new CommonTokenStream(lexer);
-		const parser = new TraceOperatorGrammerParser(tokenStream);
+		const parser = new TraceOperatorGrammarParser(tokenStream);
 		parser.removeErrorListeners(); // Remove default error listeners
 		parser.addErrorListener(errorListener);
 
