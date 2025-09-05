@@ -95,7 +95,7 @@ func (b *traceOperatorCTEBuilder) build(requestType qbtypes.RequestType) (*qbtyp
 		cteArgs = append(cteArgs, cte.args)
 	}
 
-	finalSQL := querybuilder.CombineCTEs(cteFragments) + finalStmt.Query
+	finalSQL := querybuilder.CombineCTEs(cteFragments) + finalStmt.Query + " SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000"
 	finalArgs := querybuilder.PrependArgs(cteArgs, finalStmt.Args)
 
 	b.stmtBuilder.logger.DebugContext(b.ctx, "Final trace operator query built",
@@ -623,10 +623,9 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*q
 		return nil, err
 	}
 
-	// Add limit support
-	if b.operator.Limit > 0 {
-		sb.Limit(b.operator.Limit)
-	}
+	// Note: Do not apply limit in SQL for time series - it should be applied post-processing 
+	// to limit series count, not data points. The current SQL LIMIT would limit the number
+	// of data points returned, but we want to limit the number of time series instead.
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 	return &qbtypes.Statement{
@@ -861,10 +860,9 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(selectFromCTE string) (*qbtyp
 		sb.OrderBy("__result_0 DESC")
 	}
 
-	// Add limit support
-	if b.operator.Limit > 0 {
-		sb.Limit(b.operator.Limit)
-	}
+	// Note: Do not apply limit in SQL for scalar queries - it should be applied post-processing 
+	// to limit series count, not data points. The current SQL LIMIT would limit the number
+	// of data points returned, but we want to limit the number of series instead.
 
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
