@@ -145,7 +145,6 @@ function QueryAddOns({
 	panelType,
 	index,
 	isForTraceOperator = false,
-	children,
 }: {
 	query: IBuilderQuery;
 	version: string;
@@ -154,7 +153,6 @@ function QueryAddOns({
 	panelType: PANEL_TYPES | null;
 	index: number;
 	isForTraceOperator?: boolean;
-	children?: React.ReactNode;
 }): JSX.Element {
 	const [addOns, setAddOns] = useState<AddOn[]>(ADD_ONS);
 
@@ -491,7 +489,6 @@ function QueryAddOns({
 						</Tooltip>
 					))}
 				</Radio.Group>
-				{children}
 			</div>
 		</div>
 	);
