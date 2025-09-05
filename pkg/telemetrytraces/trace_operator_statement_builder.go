@@ -70,7 +70,7 @@ func (b *traceOperatorStatementBuilder) Build(
 
 	b.logger.DebugContext(ctx, "Building trace operator query",
 		"expression", query.Expression,
-		"requestType", requestType)
+		"request_type", requestType)
 
 	// Build the CTE-based query
 	builder := &traceOperatorCTEBuilder{
