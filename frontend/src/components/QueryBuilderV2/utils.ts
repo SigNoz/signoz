@@ -6,7 +6,7 @@ import {
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep, isEqual, sortBy } from 'lodash-es';
 import { IQueryPair } from 'types/antlrQueryTypes';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -22,7 +22,7 @@ import {
 	TraceAggregation,
 } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 import { unquote } from 'utils/stringUtils';
 import { isFunctionOperator, isNonValueOperator } from 'utils/tokenUtils';
@@ -163,6 +163,19 @@ export const convertExpressionToFilters = (
 
 	return filters;
 };
+const getQueryPairsMap = (query: string): Map<string, IQueryPair> => {
+	const queryPairs = extractQueryPairs(query);
+	const queryPairsMap: Map<string, IQueryPair> = new Map();
+
+	queryPairs.forEach((pair) => {
+		const key = pair.hasNegation
+			? `${pair.key}-not ${pair.operator}`.trim().toLowerCase()
+			: `${pair.key}-${pair.operator}`.trim().toLowerCase();
+		queryPairsMap.set(key, pair);
+	});
+
+	return queryPairsMap;
+};
 
 export const convertFiltersToExpressionWithExistingQuery = (
 	filters: TagFilter,
@@ -195,24 +208,12 @@ export const convertFiltersToExpressionWithExistingQuery = (
 		};
 	}
 
-	// Extract query pairs from the existing query
-	const queryPairs = extractQueryPairs(existingQuery.trim());
-	let queryPairsMap: Map<string, IQueryPair> = new Map();
 	const nonExistingFilters: TagFilterItem[] = [];
 	let modifiedQuery = existingQuery; // We'll modify this query as we proceed
 	const visitedPairs: Set<string> = new Set(); // Set to track visited query pairs
 
 	// Map extracted query pairs to key-specific pair information for faster access
-	if (queryPairs.length > 0) {
-		queryPairsMap = new Map(
-			queryPairs.map((pair) => {
-				const key = pair.hasNegation
-					? `${pair.key}-not ${pair.operator}`.trim().toLowerCase()
-					: `${pair.key}-${pair.operator}`.trim().toLowerCase();
-				return [key, pair];
-			}),
-		);
-	}
+	let queryPairsMap = getQueryPairsMap(existingQuery.trim());
 
 	filters?.items?.forEach((filter) => {
 		const { key, op, value } = filter;
@@ -241,10 +242,37 @@ export const convertFiltersToExpressionWithExistingQuery = (
 				existingPair.position?.valueEnd
 			) {
 				visitedPairs.add(`${key.key}-${op}`.trim().toLowerCase());
+
+				// Check if existing values match current filter values (for array-based operators)
+				if (existingPair.valueList && filter.value && Array.isArray(filter.value)) {
+					// Clean quotes from string values for comparison
+					const cleanValues = (values: any[]): any[] =>
+						values.map((val) => (typeof val === 'string' ? unquote(val) : val));
+
+					const cleanExistingValues = cleanValues(existingPair.valueList);
+					const cleanFilterValues = cleanValues(filter.value);
+
+					// Compare arrays (order-independent) - if identical, keep existing value
+					const isSameValues =
+						cleanExistingValues.length === cleanFilterValues.length &&
+						isEqual(sortBy(cleanExistingValues), sortBy(cleanFilterValues));
+
+					if (isSameValues) {
+						// Values are identical, preserve existing formatting
+						modifiedQuery =
+							modifiedQuery.slice(0, existingPair.position.valueStart) +
+							existingPair.value +
+							modifiedQuery.slice(existingPair.position.valueEnd + 1);
+						return;
+					}
+				}
+
 				modifiedQuery =
 					modifiedQuery.slice(0, existingPair.position.valueStart) +
 					formattedValue +
 					modifiedQuery.slice(existingPair.position.valueEnd + 1);
+
+				queryPairsMap = getQueryPairsMap(modifiedQuery);
 				return;
 			}
 
@@ -270,6 +298,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 							)}${OPERATORS.IN} ${formattedValue} ${modifiedQuery.slice(
 								notInPair.position.valueEnd + 1,
 							)}`;
+							queryPairsMap = getQueryPairsMap(modifiedQuery.trim());
 						}
 						shouldAddToNonExisting = false; // Don't add this to non-existing filters
 					} else if (
@@ -286,6 +315,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 							)}${OPERATORS.IN} ${formattedValue} ${modifiedQuery.slice(
 								equalsPair.position.valueEnd + 1,
 							)}`;
+							queryPairsMap = getQueryPairsMap(modifiedQuery);
 						}
 						shouldAddToNonExisting = false; // Don't add this to non-existing filters
 					} else if (
@@ -302,6 +332,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 							)}${OPERATORS.IN} ${formattedValue} ${modifiedQuery.slice(
 								notEqualsPair.position.valueEnd + 1,
 							)}`;
+							queryPairsMap = getQueryPairsMap(modifiedQuery);
 						}
 						shouldAddToNonExisting = false; // Don't add this to non-existing filters
 					}
@@ -323,6 +354,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 							} ${formattedValue} ${modifiedQuery.slice(
 								notEqualsPair.position.valueEnd + 1,
 							)}`;
+							queryPairsMap = getQueryPairsMap(modifiedQuery);
 						}
 						shouldAddToNonExisting = false; // Don't add this to non-existing filters
 					}
@@ -335,6 +367,23 @@ export const convertFiltersToExpressionWithExistingQuery = (
 		if (
 			queryPairsMap.has(`${filter.key?.key}-${filter.op}`.trim().toLowerCase())
 		) {
+			const existingPair = queryPairsMap.get(
+				`${filter.key?.key}-${filter.op}`.trim().toLowerCase(),
+			);
+			if (
+				existingPair &&
+				existingPair.position?.valueStart &&
+				existingPair.position?.valueEnd
+			) {
+				const formattedValue = formatValueForExpression(value, op);
+				// replace the value with the new value
+				modifiedQuery =
+					modifiedQuery.slice(0, existingPair.position.valueStart) +
+					formattedValue +
+					modifiedQuery.slice(existingPair.position.valueEnd + 1);
+				queryPairsMap = getQueryPairsMap(modifiedQuery);
+			}
+
 			visitedPairs.add(`${filter.key?.key}-${filter.op}`.trim().toLowerCase());
 		}
 
@@ -531,14 +580,25 @@ export const convertHavingToExpression = (
  * @returns New aggregation format based on data source
  *
  */
-export const convertAggregationToExpression = (
-	aggregateOperator: string,
-	aggregateAttribute: BaseAutocompleteData,
-	dataSource: DataSource,
-	timeAggregation?: string,
-	spaceAggregation?: string,
-	alias?: string,
-): (TraceAggregation | LogAggregation | MetricAggregation)[] | undefined => {
+export const convertAggregationToExpression = ({
+	aggregateOperator,
+	aggregateAttribute,
+	dataSource,
+	timeAggregation,
+	spaceAggregation,
+	alias,
+	reduceTo,
+	temporality,
+}: {
+	aggregateOperator: string;
+	aggregateAttribute: BaseAutocompleteData;
+	dataSource: DataSource;
+	timeAggregation?: string;
+	spaceAggregation?: string;
+	alias?: string;
+	reduceTo?: ReduceOperators;
+	temporality?: string;
+}): (TraceAggregation | LogAggregation | MetricAggregation)[] | undefined => {
 	// Skip if no operator or attribute key
 	if (!aggregateOperator) {
 		return undefined;
@@ -556,7 +616,9 @@ export const convertAggregationToExpression = (
 	if (dataSource === DataSource.METRICS) {
 		return [
 			{
-				metricName: aggregateAttribute.key,
+				metricName: aggregateAttribute?.key || '',
+				reduceTo,
+				temporality,
 				timeAggregation: (normalizedTimeAggregation || normalizedOperator) as any,
 				spaceAggregation: (normalizedSpaceAggregation || normalizedOperator) as any,
 			} as MetricAggregation,
@@ -564,7 +626,9 @@ export const convertAggregationToExpression = (
 	}
 
 	// For traces and logs, use expression format
-	const expression = `${normalizedOperator}(${aggregateAttribute.key})`;
+	const expression = aggregateAttribute?.key
+		? `${normalizedOperator}(${aggregateAttribute?.key})`
+		: `${normalizedOperator}()`;
 
 	if (dataSource === DataSource.TRACES) {
 		return [

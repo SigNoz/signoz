@@ -1,9 +1,25 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+/* eslint-disable import/no-unresolved */
+import { negateOperator, OPERATORS } from 'constants/antlrQueryConstants';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
+import { extractQueryPairs } from 'utils/queryContextUtils';
 
-import { convertFiltersToExpression } from '../utils';
+import {
+	convertAggregationToExpression,
+	convertFiltersToExpression,
+	convertFiltersToExpressionWithExistingQuery,
+} from '../utils';
 
 describe('convertFiltersToExpression', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+	});
+
 	it('should handle empty, null, and undefined inputs', () => {
 		// Test null and undefined
 		expect(convertFiltersToExpression(null as any)).toEqual({ expression: '' });
@@ -532,5 +548,427 @@ describe('convertFiltersToExpression', () => {
 			expression:
 				"user_id NOT EXISTS AND description NOT CONTAINS 'error' AND NOT has(tags, 'production') AND NOT hasAny(labels, ['env:prod', 'service:api'])",
 		});
+	});
+
+	it('should return filters with new expression when no existing query', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: { id: 'service.name', key: 'service.name', type: 'string' },
+					op: OPERATORS['='],
+					value: 'test-service',
+				},
+			],
+			op: 'AND',
+		};
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			undefined,
+		);
+
+		expect(result.filters).toEqual(filters);
+		expect(result.filter.expression).toBe("service.name = 'test-service'");
+	});
+
+	it('should handle empty filters', () => {
+		const filters = {
+			items: [],
+			op: 'AND',
+		};
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			undefined,
+		);
+
+		expect(result.filters).toEqual(filters);
+		expect(result.filter.expression).toBe('');
+	});
+
+	it('should handle existing query with matching filters', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: { id: 'service.name', key: 'service.name', type: 'string' },
+					op: OPERATORS['='],
+					value: 'updated-service',
+				},
+			],
+			op: 'AND',
+		};
+
+		const existingQuery = "service.name = 'old-service'";
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			existingQuery,
+		);
+
+		expect(result.filters).toBeDefined();
+		expect(result.filter).toBeDefined();
+		expect(result.filter.expression).toBe("service.name = 'updated-service'");
+		// Ensure parser can parse the existing query
+		expect(extractQueryPairs(existingQuery)).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					key: 'service.name',
+					operator: '=',
+					value: "'old-service'",
+				}),
+			]),
+		);
+	});
+
+	it('should handle IN operator with existing query', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: { id: 'service.name', key: 'service.name', type: 'string' },
+					op: OPERATORS.IN,
+					value: ['service1', 'service2'],
+				},
+			],
+			op: 'AND',
+		};
+
+		const existingQuery = "service.name IN ['old-service']";
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			existingQuery,
+		);
+
+		expect(result.filters).toBeDefined();
+		expect(result.filter).toBeDefined();
+		expect(result.filter.expression).toBe(
+			"service.name IN ['service1', 'service2']",
+		);
+	});
+
+	it('should handle IN operator conversion from equals', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: { id: 'service.name', key: 'service.name', type: 'string' },
+					op: OPERATORS.IN,
+					value: ['service1', 'service2'],
+				},
+			],
+			op: 'AND',
+		};
+
+		const existingQuery = "service.name = 'old-service'";
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			existingQuery,
+		);
+
+		expect(result.filters.items).toHaveLength(1);
+		expect(result.filter.expression).toBe(
+			"service.name IN ['service1', 'service2'] ",
+		);
+	});
+
+	it('should handle NOT IN operator conversion from not equals', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: { id: 'service.name', key: 'service.name', type: 'string' },
+					op: negateOperator(OPERATORS.IN),
+					value: ['service1', 'service2'],
+				},
+			],
+			op: 'AND',
+		};
+
+		const existingQuery = "service.name != 'old-service'";
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			existingQuery,
+		);
+
+		expect(result.filters.items).toHaveLength(1);
+		expect(result.filter.expression).toBe(
+			"service.name NOT IN ['service1', 'service2'] ",
+		);
+	});
+
+	it('should add new filters when they do not exist in existing query', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: { id: 'new.key', key: 'new.key', type: 'string' },
+					op: OPERATORS['='],
+					value: 'new-value',
+				},
+			],
+			op: 'AND',
+		};
+
+		const existingQuery = "service.name = 'old-service'";
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			existingQuery,
+		);
+
+		expect(result.filters.items).toHaveLength(2); // Original + new filter
+		expect(result.filter.expression).toBe(
+			"service.name = 'old-service' new.key = 'new-value'",
+		);
+	});
+
+	it('should handle simple value replacement', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: { id: 'status', key: 'status', type: 'string' },
+					op: OPERATORS['='],
+					value: 'error',
+				},
+			],
+			op: 'AND',
+		};
+
+		const existingQuery = "status = 'success'";
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			existingQuery,
+		);
+
+		expect(result.filters.items).toHaveLength(1);
+		expect(result.filter.expression).toBe("status = 'error'");
+	});
+
+	it('should handle filters with no key gracefully', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: undefined,
+					op: OPERATORS['='],
+					value: 'test-value',
+				},
+			],
+			op: 'AND',
+		};
+
+		const existingQuery = "service.name = 'old-service'";
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			existingQuery,
+		);
+
+		expect(result.filters.items).toHaveLength(2);
+		expect(result.filter.expression).toBe("service.name = 'old-service'");
+	});
+});
+
+describe('convertAggregationToExpression', () => {
+	const mockAttribute: BaseAutocompleteData = {
+		id: 'test-id',
+		key: 'test_metric',
+		type: 'string',
+		dataType: DataTypes.String,
+	};
+
+	it('should return undefined when no aggregateOperator is provided', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: '',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.METRICS,
+		});
+		expect(result).toBeUndefined();
+	});
+
+	it('should convert metrics aggregation with required temporality field', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'sum',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.METRICS,
+			timeAggregation: 'avg',
+			spaceAggregation: 'max',
+			alias: 'test_alias',
+			reduceTo: 'sum',
+			temporality: 'delta',
+		});
+
+		expect(result).toEqual([
+			{
+				metricName: 'test_metric',
+				timeAggregation: 'avg',
+				spaceAggregation: 'max',
+				reduceTo: 'sum',
+				temporality: 'delta',
+			},
+		]);
+	});
+
+	it('should handle noop operators by converting to count', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'noop',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.METRICS,
+			timeAggregation: 'noop',
+			spaceAggregation: 'noop',
+		});
+
+		expect(result).toEqual([
+			{
+				metricName: 'test_metric',
+				timeAggregation: 'count',
+				spaceAggregation: 'count',
+			},
+		]);
+	});
+
+	it('should handle missing attribute key gracefully', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'sum',
+			aggregateAttribute: { ...mockAttribute, key: '' },
+			dataSource: DataSource.METRICS,
+		});
+
+		expect(result).toEqual([
+			{
+				metricName: '',
+				timeAggregation: 'sum',
+				spaceAggregation: 'sum',
+			},
+		]);
+	});
+
+	it('should convert traces aggregation to expression format', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'count',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.TRACES,
+			alias: 'trace_alias',
+		});
+
+		expect(result).toEqual([
+			{
+				expression: 'count(test_metric)',
+				alias: 'trace_alias',
+			},
+		]);
+	});
+
+	it('should convert logs aggregation to expression format', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'avg',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.LOGS,
+			alias: 'log_alias',
+		});
+
+		expect(result).toEqual([
+			{
+				expression: 'avg(test_metric)',
+				alias: 'log_alias',
+			},
+		]);
+	});
+
+	it('should handle aggregation without attribute key for traces/logs', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'count',
+			aggregateAttribute: { ...mockAttribute, key: '' },
+			dataSource: DataSource.TRACES,
+		});
+
+		expect(result).toEqual([
+			{
+				expression: 'count()',
+			},
+		]);
+	});
+
+	it('should handle missing alias for traces/logs', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'sum',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.LOGS,
+		});
+
+		expect(result).toEqual([
+			{
+				expression: 'sum(test_metric)',
+			},
+		]);
+	});
+
+	it('should use aggregateOperator as fallback for time and space aggregation', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'max',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.METRICS,
+		});
+
+		expect(result).toEqual([
+			{
+				metricName: 'test_metric',
+				timeAggregation: 'max',
+				spaceAggregation: 'max',
+			},
+		]);
+	});
+
+	it('should handle undefined aggregateAttribute parameter with metrics', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'sum',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.METRICS,
+		});
+
+		expect(result).toEqual([
+			{
+				metricName: 'test_metric',
+				timeAggregation: 'sum',
+				spaceAggregation: 'sum',
+				reduceTo: undefined,
+				temporality: undefined,
+			},
+		]);
+	});
+
+	it('should handle undefined aggregateAttribute parameter with traces', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'noop',
+			aggregateAttribute: (undefined as unknown) as BaseAutocompleteData,
+			dataSource: DataSource.TRACES,
+		});
+
+		expect(result).toEqual([
+			{
+				expression: 'count()',
+			},
+		]);
+	});
+
+	it('should handle undefined aggregateAttribute parameter with logs', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'noop',
+			aggregateAttribute: (undefined as unknown) as BaseAutocompleteData,
+			dataSource: DataSource.LOGS,
+		});
+
+		expect(result).toEqual([
+			{
+				expression: 'count()',
+			},
+		]);
 	});
 });

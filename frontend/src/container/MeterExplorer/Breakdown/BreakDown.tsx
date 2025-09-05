@@ -1,22 +1,19 @@
 import './BreakDown.styles.scss';
 
-import { Typography } from 'antd';
-// import useFilterConfig from 'components/QuickFilters/hooks/useFilterConfig';
-// import { SignalType } from 'components/QuickFilters/types';
+import { Alert, Typography } from 'antd';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridCard from 'container/GridCardLayout/GridCard';
 import { Card, CardContainer } from 'container/GridCardLayout/styles';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-// import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQueryKeyValueSuggestions';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
-// import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
 import {
@@ -109,68 +106,29 @@ function Section(section: MetricSection): JSX.Element {
 	);
 }
 
-// function FilterDropdown({ attrKey }: { attrKey: string }): JSX.Element {
-// 	const {
-// 		data: keyValueSuggestions,
-// 		isLoading: isLoadingKeyValueSuggestions,
-// 	} = useGetQueryKeyValueSuggestions({
-// 		key: attrKey,
-// 		signal: DataSource.METRICS,
-// 		signalSource: 'meter',
-// 		options: {
-// 			keepPreviousData: true,
-// 		},
-// 	});
-
-// 	const responseData = keyValueSuggestions?.data as any;
-// 	const values = responseData?.data?.values || {};
-// 	const stringValues = values.stringValues || [];
-// 	const numberValues = values.numberValues || [];
-
-// 	const stringOptions = stringValues.filter(
-// 		(value: string | null | undefined): value is string =>
-// 			value !== null && value !== undefined && value !== '',
-// 	);
-
-// 	const numberOptions = numberValues
-// 		.filter(
-// 			(value: number | null | undefined): value is number =>
-// 				value !== null && value !== undefined,
-// 		)
-// 		.map((value: number) => value.toString());
-
-// 	const vals = [...stringOptions, ...numberOptions];
-
-// 	return (
-// 		<div className="filter-dropdown">
-// 			<Typography.Text>{attrKey}</Typography.Text>
-// 			<Select
-// 				loading={isLoadingKeyValueSuggestions}
-// 				options={vals?.map((suggestion: any) => ({
-// 					label: suggestion,
-// 					value: suggestion,
-// 				}))}
-// 				placeholder={`Select ${attrKey}`}
-// 			/>
-// 		</div>
-// 	);
-// }
-
 function BreakDown(): JSX.Element {
-	// const { customFilters } = useFilterConfig({
-	// 	signal: SignalType.METER_EXPLORER,
-	// 	config: [],
-	// });
-
+	const { isCloudUser } = useGetTenantLicense();
 	return (
 		<div className="meter-explorer-breakdown">
 			<section className="meter-explorer-date-time">
-				{/* {customFilters.map((filter) => (
-					<FilterDropdown key={filter.key} attrKey={filter.key} />
-				))} */}
 				<DateTimeSelectionV2 showAutoRefresh={false} />
 			</section>
 			<section className="meter-explorer-graphs">
+				<section className="info">
+					<Alert
+						type="info"
+						showIcon
+						message="Billing is calculated in UTC. To match your meter data with billing, select full-day ranges in UTC time (00:00 – 23:59 UTC). 
+						For example, if you’re in IST, for the billing of Jan 1, select your time range as Jan 1, 5:30 AM – Jan 2, 5:29 AM IST."
+					/>
+					{isCloudUser && (
+						<Alert
+							type="warning"
+							showIcon
+							message="Meter module data is accurate only from 22nd August 2025, 00:00 UTC onwards. Data before this time was collected during the beta phase and may be inaccurate."
+						/>
+					)}
+				</section>
 				<section className="total">
 					<Section
 						id={sections[0].id}

@@ -103,6 +103,19 @@ function MySettings(): JSX.Element {
 		}
 	};
 
+	useEffect(() => {
+		if (autoSwitch) {
+			setTheme('auto');
+			return;
+		}
+
+		if (isDarkMode) {
+			setTheme('dark');
+		} else {
+			setTheme('light');
+		}
+	}, [autoSwitch, isDarkMode]);
+
 	const handleSideNavPinnedChange = (checked: boolean): void => {
 		logEvent('Account Settings: Sidebar Pinned Changed', {
 			pinned: checked,
