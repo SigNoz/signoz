@@ -241,12 +241,12 @@ func (b *logQueryStatementBuilder) buildListQuery(
 
 	} else {
 		// Select specified columns
-		for _, field := range query.SelectFields {
-			if field.Name == LogsV2TimestampColumn || field.Name == LogsV2IDColumn {
+		for index := range query.SelectFields {
+			if query.SelectFields[index].Name == LogsV2TimestampColumn || query.SelectFields[index].Name == LogsV2IDColumn {
 				continue
 			}
-			// get column expression for the field
-			colExpr, err := b.fm.ColumnExpressionFor(ctx, &field, keys)
+			// get column expression for the field - use array index directly to avoid pointer to loop variable
+			colExpr, err := b.fm.ColumnExpressionFor(ctx, &query.SelectFields[index], keys)
 			if err != nil {
 				return nil, err
 			}
