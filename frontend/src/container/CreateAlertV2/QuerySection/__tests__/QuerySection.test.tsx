@@ -136,7 +136,7 @@ describe('QuerySection', () => {
 		expect(screen.getByTestId('stepper')).toBeInTheDocument();
 		expect(screen.getByTestId('step-number')).toHaveTextContent('1');
 		expect(screen.getByTestId('step-label')).toHaveTextContent(
-			'Define the signal you want to set an alert on',
+			'Define the query you want to set an alert on',
 		);
 
 		// Check if ChartPreview is rendered
@@ -155,8 +155,8 @@ describe('QuerySection', () => {
 		expect(screen.getByText('Traces')).toBeInTheDocument();
 
 		// Check if icons are rendered
-		expect(screen.getByTestId('threshold-view')).toBeInTheDocument();
-		expect(screen.getByTestId('anomaly-view')).toBeInTheDocument();
+		expect(screen.getByTestId('metrics-view')).toBeInTheDocument();
+		expect(screen.getByTestId('logs-view')).toBeInTheDocument();
 		expect(screen.getByTestId('traces-view')).toBeInTheDocument();
 	});
 
