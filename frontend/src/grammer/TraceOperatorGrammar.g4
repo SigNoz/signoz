@@ -1,4 +1,4 @@
-grammar TraceOperatorGrammer;
+grammar TraceOperatorGrammar;
 
 // Entry point of the grammar (the root of the parse tree)
 query   : expression+ EOF;

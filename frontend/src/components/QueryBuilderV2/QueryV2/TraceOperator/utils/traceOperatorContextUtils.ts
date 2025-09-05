@@ -2,7 +2,7 @@
 /* eslint-disable no-continue */
 
 import { CharStreams, CommonTokenStream, Token } from 'antlr4';
-import TraceOperatorGrammerLexer from 'TraceOperator/parser/TraceOperatorGrammerLexer';
+import TraceOperatorGrammarLexer from 'parser/TraceOperatorParser/TraceOperatorGrammarLexer';
 import { IToken } from 'types/antlrQueryTypes';
 
 // Trace Operator Context Interface
@@ -41,32 +41,32 @@ export interface ITraceExpressionPair {
 
 // Helper functions to determine token types
 function isAtomToken(tokenType: number): boolean {
-	return tokenType === TraceOperatorGrammerLexer.IDENTIFIER;
+	return tokenType === TraceOperatorGrammarLexer.IDENTIFIER;
 }
 
 function isOperatorToken(tokenType: number): boolean {
 	return [
-		TraceOperatorGrammerLexer.T__2, // '=>'
-		TraceOperatorGrammerLexer.T__3, // '&&'
-		TraceOperatorGrammerLexer.T__4, // '||'
-		TraceOperatorGrammerLexer.T__5, // 'NOT'
-		TraceOperatorGrammerLexer.T__6, // '->'
+		TraceOperatorGrammarLexer.T__2, // '=>'
+		TraceOperatorGrammarLexer.T__3, // '&&'
+		TraceOperatorGrammarLexer.T__4, // '||'
+		TraceOperatorGrammarLexer.T__5, // 'NOT'
+		TraceOperatorGrammarLexer.T__6, // '->'
 	].includes(tokenType);
 }
 
 function isParenthesisToken(tokenType: number): boolean {
 	return (
-		tokenType === TraceOperatorGrammerLexer.T__0 ||
-		tokenType === TraceOperatorGrammerLexer.T__1
+		tokenType === TraceOperatorGrammarLexer.T__0 ||
+		tokenType === TraceOperatorGrammarLexer.T__1
 	);
 }
 
 function isOpeningParenthesis(tokenType: number): boolean {
-	return tokenType === TraceOperatorGrammerLexer.T__0;
+	return tokenType === TraceOperatorGrammarLexer.T__0;
 }
 
 function isClosingParenthesis(tokenType: number): boolean {
-	return tokenType === TraceOperatorGrammerLexer.T__1;
+	return tokenType === TraceOperatorGrammarLexer.T__1;
 }
 
 // Function to create a context object
@@ -119,7 +119,7 @@ function determineTraceTokenContext(
 
 /**
  * Extracts all expression pairs from a trace operator query string
- * This parses the query according to the TraceOperatorGrammer.g4 grammar
+ * This parses the query according to the TraceOperatorGrammar.g4 grammar
  *
  * @param query The trace operator query string to parse
  * @returns An array of ITraceExpressionPair objects representing the expression pairs
@@ -130,7 +130,7 @@ export function extractTraceExpressionPairs(
 	try {
 		const input = query || '';
 		const chars = CharStreams.fromString(input);
-		const lexer = new TraceOperatorGrammerLexer(chars);
+		const lexer = new TraceOperatorGrammarLexer(chars);
 
 		const tokenStream = new CommonTokenStream(lexer);
 		tokenStream.fill();
@@ -145,7 +145,7 @@ export function extractTraceExpressionPairs(
 			i++;
 
 			// Skip EOF and whitespace tokens
-			if (token.type === TraceOperatorGrammerLexer.EOF || token.channel !== 0) {
+			if (token.type === TraceOperatorGrammarLexer.EOF || token.channel !== 0) {
 				continue;
 			}
 
@@ -197,7 +197,7 @@ export function extractTraceExpressionPairs(
 				currentPair.position.operatorEnd = token.stop;
 
 				// If this is a NOT operator, it might be followed by another operator
-				if (token.type === TraceOperatorGrammerLexer.T__5 && i < allTokens.length) {
+				if (token.type === TraceOperatorGrammarLexer.T__5 && i < allTokens.length) {
 					// Look ahead for the next operator
 					const nextToken = allTokens[i];
 					if (isOperatorToken(nextToken.type) && nextToken.channel === 0) {
@@ -357,7 +357,7 @@ export function getTraceOperatorContextAtCursor(
 		// Create input stream and lexer
 		const input = query || '';
 		const chars = CharStreams.fromString(input);
-		const lexer = new TraceOperatorGrammerLexer(chars);
+		const lexer = new TraceOperatorGrammarLexer(chars);
 
 		const tokenStream = new CommonTokenStream(lexer);
 		tokenStream.fill();
@@ -375,7 +375,7 @@ export function getTraceOperatorContextAtCursor(
 		let lastTokenBeforeCursor: IToken | null = null;
 		for (let i = 0; i < allTokens.length; i++) {
 			const token = allTokens[i];
-			if (token.type === TraceOperatorGrammerLexer.EOF) continue;
+			if (token.type === TraceOperatorGrammarLexer.EOF) continue;
 
 			if (token.stop < cursorIndex || token.stop + 1 === cursorIndex) {
 				lastTokenBeforeCursor = token;
@@ -390,7 +390,7 @@ export function getTraceOperatorContextAtCursor(
 		let exactToken: IToken | null = null;
 		for (let i = 0; i < allTokens.length; i++) {
 			const token = allTokens[i];
-			if (token.type === TraceOperatorGrammerLexer.EOF) continue;
+			if (token.type === TraceOperatorGrammarLexer.EOF) continue;
 
 			if (token.start <= cursorIndex && cursorIndex <= token.stop + 1) {
 				exactToken = token;

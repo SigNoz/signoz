@@ -8,6 +8,4 @@ export const TYPE_ADDON_REGEXP = /_(.+)/;
 
 export const SPLIT_FIRST_UNDERSCORE = /(?<!^)_/;
 
-export const TRACE_OPERATOR_REGEXP = new RegExp(
-	`/${TRACE_OPERATOR_QUERY_NAME}/`,
-);
+export const TRACE_OPERATOR_REGEXP = new RegExp(TRACE_OPERATOR_QUERY_NAME);
