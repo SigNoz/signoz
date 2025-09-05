@@ -184,6 +184,22 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 					}
 				}
 
+				// Get the actual data point timestamp from the focused series
+				let actualDataTimestamp = xValue; // fallback to click position timestamp
+				if (focusedSeries) {
+					// Get the data index from the focused series
+					const dataIndex = u.posToIdx(event.offsetX);
+					// Get the actual timestamp from the x-axis data (u.data[0])
+					if (u.data[0] && u.data[0][dataIndex] !== undefined) {
+						actualDataTimestamp = u.data[0][dataIndex];
+					}
+				}
+
+				metric = {
+					...metric,
+					clickedTimestamp: actualDataTimestamp,
+				};
+
 				const axesData = {
 					xAxis: u.axes[0],
 					yAxis: u.axes[1],

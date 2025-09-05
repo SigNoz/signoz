@@ -180,7 +180,7 @@ function UplotPanelWrapper({
 					const stepInterval = specificQuery?.spec?.stepInterval || 60;
 					timeRange = getTimeRangeFromStepInterval(
 						stepInterval,
-						xValue,
+						metric?.clickedTimestamp || xValue, // Use the clicked timestamp if available, otherwise use the click position timestamp
 						specificQuery?.spec?.signal === DataSource.METRICS &&
 							isApmMetric(specificQuery?.spec?.aggregations[0]?.metricName),
 					);
