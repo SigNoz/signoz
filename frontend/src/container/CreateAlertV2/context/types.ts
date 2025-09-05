@@ -63,6 +63,9 @@ export interface AlertThresholdState {
 	selectedQuery: string;
 	operator: AlertThresholdOperator;
 	matchType: AlertThresholdMatchType;
+	evaluationWindow: string;
+	algorithm: string;
+	seasonality: string;
 	thresholds: Threshold[];
 }
 
@@ -70,4 +73,7 @@ export type AlertThresholdAction =
 	| { type: 'SET_SELECTED_QUERY'; payload: string }
 	| { type: 'SET_OPERATOR'; payload: AlertThresholdOperator }
 	| { type: 'SET_MATCH_TYPE'; payload: AlertThresholdMatchType }
+	| { type: 'SET_EVALUATION_WINDOW'; payload: string }
+	| { type: 'SET_ALGORITHM'; payload: string }
+	| { type: 'SET_SEASONALITY'; payload: string }
 	| { type: 'SET_THRESHOLDS'; payload: Threshold[] };
