@@ -1,4 +1,3 @@
-/* eslint-disable react/require-default-props */
 /* eslint-disable sonarjs/no-duplicate-string */
 import './QBEntityOptions.styles.scss';
 

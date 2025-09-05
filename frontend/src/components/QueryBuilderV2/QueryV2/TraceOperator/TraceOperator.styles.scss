@@ -16,37 +16,11 @@
 			width: 1px;
 			background: repeating-linear-gradient(
 				to bottom,
-				#1d212d,
-				#1d212d 4px,
+				var(--bg-slate-400),
+				var(--bg-slate-400) 4px,
 				transparent 4px,
 				transparent 8px
 			);
-		}
-	}
-
-	&-span-source-label {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		height: 24px;
-
-		&-query {
-			font-size: 14px;
-			font-weight: 400;
-			color: var(--bg-vanilla-100);
-		}
-		&-query-name {
-			width: 18px;
-			height: 18px;
-			display: grid;
-			place-content: center;
-			padding: 2px;
-
-			border-radius: 2px;
-			border: 1px solid rgba(242, 71, 105, 0.2);
-			background: rgba(242, 71, 105, 0.1);
-			color: var(--Sakura-400, #f56c87);
-			font-size: 12px;
 		}
 	}
 
@@ -62,8 +36,8 @@
 			width: 20px;
 			background: repeating-linear-gradient(
 				to right,
-				#1d212d,
-				#1d212d 4px,
+				var(--bg-slate-400),
+				var(--bg-slate-400) 4px,
 				transparent 4px,
 				transparent 8px
 			);
