@@ -6,7 +6,7 @@ import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import QuerySectionComponent from 'container/FormAlertRules/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { BarChart2, DraftingCompass, ScrollText } from 'lucide-react';
+import { BarChart2, DraftingCompass, FileText, ScrollText } from 'lucide-react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { useCreateAlertState } from '../context';
@@ -24,18 +24,23 @@ function QuerySection(): JSX.Element {
 	const tabs = [
 		{
 			label: 'Metrics',
-			icon: <BarChart2 size={14} data-testid="threshold-view" />,
+			icon: <BarChart2 size={14} data-testid="metrics-view" />,
 			value: AlertTypes.METRICS_BASED_ALERT,
 		},
 		{
 			label: 'Logs',
-			icon: <ScrollText size={14} data-testid="anomaly-view" />,
+			icon: <ScrollText size={14} data-testid="logs-view" />,
 			value: AlertTypes.LOGS_BASED_ALERT,
 		},
 		{
 			label: 'Traces',
 			icon: <DraftingCompass size={14} data-testid="traces-view" />,
 			value: AlertTypes.TRACES_BASED_ALERT,
+		},
+		{
+			label: 'Exceptions',
+			icon: <FileText size={14} data-testid="exceptions-view" />,
+			value: AlertTypes.EXCEPTIONS_BASED_ALERT,
 		},
 	];
 
@@ -50,7 +55,7 @@ function QuerySection(): JSX.Element {
 		<div className="query-section">
 			<Stepper
 				stepNumber={1}
-				label="Define the signal you want to set an alert on"
+				label="Define the query you want to set an alert on"
 			/>
 			<ChartPreview />
 			<div className="query-section-tabs">
