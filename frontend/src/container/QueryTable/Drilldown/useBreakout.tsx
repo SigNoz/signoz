@@ -70,9 +70,9 @@ const useBreakout = ({
 			);
 
 			const breakoutPanelType = getBreakoutPanelType(
-				breakoutQuery,
+				// breakoutQuery,
 				panelType,
-				groupBy,
+				// groupBy,
 			);
 
 			redirectToViewMode(breakoutQuery, breakoutPanelType);
