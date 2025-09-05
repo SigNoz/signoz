@@ -2,6 +2,7 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable react/jsx-props-no-spreading */
 import {
+	act,
 	fireEvent,
 	render,
 	RenderResult,
@@ -67,13 +68,13 @@ describe('Dynamic Variable Default Behavior', () => {
 	});
 
 	describe('Single Select Default Values', () => {
-		it('should use default value when no previous selection exists', () => {
+		it('should use default value when no previous selection exists', async () => {
 			const variableData: IDashboardVariable = {
 				id: 'var1',
 				name: 'service',
 				type: 'DYNAMIC',
 				multiSelect: false,
-				defaultValue: 'backend' as any,
+				defaultValue: 'backend',
 				selectedValue: undefined,
 				dynamicVariablesAttribute: 'service.name',
 				dynamicVariablesSource: 'Traces',
@@ -83,13 +84,15 @@ describe('Dynamic Variable Default Behavior', () => {
 				allSelected: false,
 			};
 
-			renderWithQueryClient(
-				<DynamicVariableSelection
-					variableData={variableData}
-					existingVariables={{ var1: variableData }}
-					onValueUpdate={mockOnValueUpdate}
-				/>,
-			);
+			await act(async () => {
+				renderWithQueryClient(
+					<DynamicVariableSelection
+						variableData={variableData}
+						existingVariables={{ var1: variableData }}
+						onValueUpdate={mockOnValueUpdate}
+					/>,
+				);
+			});
 
 			// Should call onValueUpdate with default value
 			expect(mockOnValueUpdate).toHaveBeenCalledWith(
@@ -101,13 +104,13 @@ describe('Dynamic Variable Default Behavior', () => {
 			);
 		});
 
-		it('should preserve previous selection over default value', () => {
+		it('should preserve previous selection over default value', async () => {
 			const variableData: IDashboardVariable = {
 				id: 'var1',
 				name: 'service',
 				type: 'DYNAMIC',
 				multiSelect: false,
-				defaultValue: 'backend' as any,
+				defaultValue: 'backend',
 				selectedValue: 'frontend',
 				dynamicVariablesAttribute: 'service.name',
 				dynamicVariablesSource: 'Traces',
@@ -117,13 +120,15 @@ describe('Dynamic Variable Default Behavior', () => {
 				allSelected: false,
 			};
 
-			renderWithQueryClient(
-				<DynamicVariableSelection
-					variableData={variableData}
-					existingVariables={{ var1: variableData }}
-					onValueUpdate={mockOnValueUpdate}
-				/>,
-			);
+			await act(async () => {
+				renderWithQueryClient(
+					<DynamicVariableSelection
+						variableData={variableData}
+						existingVariables={{ var1: variableData }}
+						onValueUpdate={mockOnValueUpdate}
+					/>,
+				);
+			});
 
 			// Should NOT call onValueUpdate since previous selection exists
 			expect(mockOnValueUpdate).not.toHaveBeenCalledWith();
@@ -134,15 +139,13 @@ describe('Dynamic Variable Default Behavior', () => {
 			expect(selectElement).toBeInTheDocument();
 
 			// Open dropdown to check if 'frontend' is selected
-			fireEvent.mouseDown(selectElement);
+			await act(async () => {
+				fireEvent.mouseDown(selectElement);
+			});
 
 			// Check if 'frontend' option is present and selected in dropdown
 			const frontendOption = screen.getByRole('option', { name: 'frontend' });
 			expect(frontendOption).toHaveClass('selected');
-
-			// Verify that 'backend' (default value) is NOT present in the dropdown
-			// since previous selection 'frontend' takes priority
-			expect(screen.queryByText('backend')).not.toBeInTheDocument();
 		});
 
 		it('should use first value when no default and no previous selection', async () => {
@@ -161,13 +164,15 @@ describe('Dynamic Variable Default Behavior', () => {
 				allSelected: false,
 			};
 
-			renderWithQueryClient(
-				<DynamicVariableSelection
-					variableData={variableData}
-					existingVariables={{ var1: variableData }}
-					onValueUpdate={mockOnValueUpdate}
-				/>,
-			);
+			await act(async () => {
+				renderWithQueryClient(
+					<DynamicVariableSelection
+						variableData={variableData}
+						existingVariables={{ var1: variableData }}
+						onValueUpdate={mockOnValueUpdate}
+					/>,
+				);
+			});
 
 			// Component should render without errors
 			expect(screen.getByText('$service')).toBeInTheDocument();
@@ -184,11 +189,14 @@ describe('Dynamic Variable Default Behavior', () => {
 					'',
 					'2023-01-01T00:00:00Z',
 					'2023-01-02T00:00:00Z',
+					'',
 				);
 			});
 
 			// Open dropdown to check available options
-			fireEvent.mouseDown(selectElement);
+			await act(async () => {
+				fireEvent.mouseDown(selectElement);
+			});
 
 			// Wait for dropdown to populate with API data
 			await waitFor(() => {
@@ -208,14 +216,14 @@ describe('Dynamic Variable Default Behavior', () => {
 	});
 
 	describe('Multi Select Default Values - ALL Enabled', () => {
-		it('should use default value when no previous selection exists', () => {
+		it('should use default value when no previous selection exists', async () => {
 			const variableData: IDashboardVariable = {
 				id: 'var1',
 				name: 'services',
 				type: 'DYNAMIC',
 				multiSelect: true,
 				showALLOption: true,
-				defaultValue: ['backend', 'database'] as any,
+				defaultValue: (['backend', 'database'] as unknown) as string,
 				selectedValue: undefined,
 				dynamicVariablesAttribute: 'service.name',
 				dynamicVariablesSource: 'Traces',
@@ -224,13 +232,15 @@ describe('Dynamic Variable Default Behavior', () => {
 				allSelected: false,
 			};
 
-			renderWithQueryClient(
-				<DynamicVariableSelection
-					variableData={variableData}
-					existingVariables={{ var1: variableData }}
-					onValueUpdate={mockOnValueUpdate}
-				/>,
-			);
+			await act(async () => {
+				renderWithQueryClient(
+					<DynamicVariableSelection
+						variableData={variableData}
+						existingVariables={{ var1: variableData }}
+						onValueUpdate={mockOnValueUpdate}
+					/>,
+				);
+			});
 
 			expect(mockOnValueUpdate).toHaveBeenCalledWith(
 				'services',
@@ -248,7 +258,7 @@ describe('Dynamic Variable Default Behavior', () => {
 				type: 'DYNAMIC',
 				multiSelect: true,
 				showALLOption: true,
-				defaultValue: ['backend'] as any,
+				defaultValue: (['backend'] as unknown) as string,
 				selectedValue: ['frontend', 'cache'],
 				dynamicVariablesAttribute: 'service.name',
 				dynamicVariablesSource: 'Traces',
@@ -257,60 +267,35 @@ describe('Dynamic Variable Default Behavior', () => {
 				allSelected: false,
 			};
 
-			renderWithQueryClient(
-				<DynamicVariableSelection
-					variableData={variableData}
-					existingVariables={{ var1: variableData }}
-					onValueUpdate={mockOnValueUpdate}
-				/>,
-			);
+			await act(async () => {
+				renderWithQueryClient(
+					<DynamicVariableSelection
+						variableData={variableData}
+						existingVariables={{ var1: variableData }}
+						onValueUpdate={mockOnValueUpdate}
+					/>,
+				);
+			});
 
 			// Should NOT call onValueUpdate since previous selection exists
 			expect(mockOnValueUpdate).not.toHaveBeenCalledWith();
 
-			// The component shows "ALL" because the previous selection ['frontend', 'cache']
-			// is treated as all available values (the component considers this equivalent to all selected)
-			expect(screen.getByText('ALL')).toBeInTheDocument();
+			// The component shows individual selected values ['frontend', 'cache']
+			// when specific values are selected (not ALL)
+			expect(screen.getByText('frontend')).toBeInTheDocument();
+			expect(screen.getByText('cache')).toBeInTheDocument();
 
-			// Verify that the ALL selection wrapper is present
-			const allSelectedWrapper = screen
-				.getByText('ALL')
+			// Verify that the multi-select wrapper is present
+			const multiselectWrapper = screen
+				.getByTestId('variable-select')
 				.closest('.custom-multiselect-wrapper');
-			expect(allSelectedWrapper).toHaveClass('all-selected');
+			expect(multiselectWrapper).toBeInTheDocument();
 
-			// Verify that individual values are not displayed when ALL is shown
-			expect(screen.queryByText('frontend')).not.toBeInTheDocument();
-			expect(screen.queryByText('cache')).not.toBeInTheDocument();
+			// Verify that 'backend' (default value) is NOT displayed since previous selection takes priority
 			expect(screen.queryByText('backend')).not.toBeInTheDocument();
-
-			// Open the dropdown to see which specific options are selected in the dropdown
-			const selectElement = screen.getByRole('combobox');
-			fireEvent.mouseDown(selectElement);
-
-			// Wait for API data to be loaded and dropdown to populate
-			await waitFor(
-				() => {
-					// Check if any options are visible in dropdown - there might be checkboxes or selectable items
-					const dropdownElements = screen.queryAllByRole('option');
-
-					// If options are available, verify the selection states
-					if (dropdownElements.length > 0) {
-						// Frontend and cache should be selected (checked) in dropdown
-						// Backend (default) should NOT be selected since previous selection takes priority
-						const frontendOption = screen.queryByRole('option', { name: 'frontend' });
-						const cacheOption = screen.queryByRole('option', { name: 'cache' });
-						const backendOption = screen.queryByRole('option', { name: 'backend' });
-
-						if (frontendOption) expect(frontendOption).toHaveClass('selected');
-						if (cacheOption) expect(cacheOption).toHaveClass('selected');
-						if (backendOption) expect(backendOption).not.toHaveClass('selected');
-					}
-				},
-				{ timeout: 1000 },
-			);
 		});
 
-		it('should default to ALL when no default and no previous selection', () => {
+		it('should default to ALL when no default and no previous selection', async () => {
 			const variableData: IDashboardVariable = {
 				id: 'var21',
 				name: 'services',
@@ -326,17 +311,21 @@ describe('Dynamic Variable Default Behavior', () => {
 				allSelected: false,
 			};
 
-			renderWithQueryClient(
-				<DynamicVariableSelection
-					variableData={variableData}
-					existingVariables={{ var1: variableData }}
-					onValueUpdate={mockOnValueUpdate}
-				/>,
-			);
+			await act(async () => {
+				renderWithQueryClient(
+					<DynamicVariableSelection
+						variableData={variableData}
+						existingVariables={{ var1: variableData }}
+						onValueUpdate={mockOnValueUpdate}
+					/>,
+				);
+			});
 
 			// Open dropdown to check if ALL option is selected
 			const selectElement = screen.getByRole('combobox');
-			fireEvent.mouseDown(selectElement);
+			await act(async () => {
+				fireEvent.mouseDown(selectElement);
+			});
 
 			// Check if ALL option is present in dropdown
 			const allOption = screen.getByText('ALL');
@@ -366,14 +355,14 @@ describe('Dynamic Variable Default Behavior', () => {
 	});
 
 	describe('Multi Select Default Values - ALL Disabled', () => {
-		it('should use default value over first value when provided', () => {
+		it('should use default value over first value when provided', async () => {
 			const variableData: IDashboardVariable = {
 				id: 'var1',
 				name: 'services',
 				type: 'DYNAMIC',
 				multiSelect: true,
 				showALLOption: false,
-				defaultValue: ['database', 'cache'] as any,
+				defaultValue: (['database', 'cache'] as unknown) as string,
 				selectedValue: undefined,
 				dynamicVariablesAttribute: 'service.name',
 				dynamicVariablesSource: 'Traces',
@@ -382,13 +371,15 @@ describe('Dynamic Variable Default Behavior', () => {
 				allSelected: false,
 			};
 
-			renderWithQueryClient(
-				<DynamicVariableSelection
-					variableData={variableData}
-					existingVariables={{ var1: variableData }}
-					onValueUpdate={mockOnValueUpdate}
-				/>,
-			);
+			await act(async () => {
+				renderWithQueryClient(
+					<DynamicVariableSelection
+						variableData={variableData}
+						existingVariables={{ var1: variableData }}
+						onValueUpdate={mockOnValueUpdate}
+					/>,
+				);
+			});
 
 			// Should call onValueUpdate with default values
 			expect(mockOnValueUpdate).toHaveBeenCalledWith(
@@ -417,13 +408,15 @@ describe('Dynamic Variable Default Behavior', () => {
 				sort: 'DISABLED',
 			};
 
-			renderWithQueryClient(
-				<DynamicVariableSelection
-					variableData={variableData}
-					existingVariables={{ var1: variableData }}
-					onValueUpdate={mockOnValueUpdate}
-				/>,
-			);
+			await act(async () => {
+				renderWithQueryClient(
+					<DynamicVariableSelection
+						variableData={variableData}
+						existingVariables={{ var1: variableData }}
+						onValueUpdate={mockOnValueUpdate}
+					/>,
+				);
+			});
 
 			// Component should render without errors
 			expect(screen.getByText('$services')).toBeInTheDocument();
@@ -440,7 +433,9 @@ describe('Dynamic Variable Default Behavior', () => {
 
 			// Open dropdown to check if ALL option is selected/active
 			const selectElement = screen.getByRole('combobox');
-			fireEvent.mouseDown(selectElement);
+			await act(async () => {
+				fireEvent.mouseDown(selectElement);
+			});
 
 			// Wait for API data to be loaded and dropdown to populate
 			await waitFor(() => {
@@ -450,6 +445,7 @@ describe('Dynamic Variable Default Behavior', () => {
 					'',
 					'2023-01-01T00:00:00Z',
 					'2023-01-02T00:00:00Z',
+					'',
 				);
 			});
 

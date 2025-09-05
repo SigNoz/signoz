@@ -103,7 +103,7 @@ describe('getFieldValues API', () => {
 
 		// Verify API was called with value parameter
 		expect(ApiBaseInstance.get).toHaveBeenCalledWith('/fields/values', {
-			params: { name: 'service.name', value: 'front' },
+			params: { name: 'service.name', searchText: 'front' },
 		});
 	});
 
