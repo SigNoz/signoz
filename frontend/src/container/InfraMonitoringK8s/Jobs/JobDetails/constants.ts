@@ -108,6 +108,7 @@ export const getJobMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -191,6 +192,7 @@ export const getJobMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -287,6 +289,7 @@ export const getJobMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -383,6 +386,7 @@ export const getJobMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{

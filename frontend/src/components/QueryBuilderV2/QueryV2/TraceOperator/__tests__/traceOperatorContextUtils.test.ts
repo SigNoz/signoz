@@ -8,7 +8,7 @@ import {
 	createTraceOperatorContext,
 	extractTraceExpressionPairs,
 	getTraceOperatorContextAtCursor,
-} from './traceOperatorContextUtils';
+} from '../utils/traceOperatorContextUtils';
 
 describe('traceOperatorContextUtils', () => {
 	describe('createTraceOperatorContext', () => {
