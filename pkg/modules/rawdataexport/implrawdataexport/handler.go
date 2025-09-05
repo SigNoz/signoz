@@ -301,77 +301,67 @@ func (handler *handler) exportLogsJSONL(rowChan <-chan *qbtypes.RawRow, errChan 
 	}
 }
 
-func getExportQuerySource(queryParams url.Values) (source string, err error) {
+func getExportQuerySource(queryParams url.Values) (string, error) {
 	switch queryParams.Get("source") {
 	case "logs", "":
-		source = "logs"
+		return "logs", nil
 	case "metrics":
-		source = "metrics"
-		err = errors.NewInvalidInputf(errors.CodeInvalidInput, "metrics export not yet supported")
+		return "metrics", errors.NewInvalidInputf(errors.CodeInvalidInput, "metrics export not yet supported")
 	case "traces":
-		source = "traces"
-		err = errors.NewInvalidInputf(errors.CodeInvalidInput, "traces export not yet supported")
+		return "traces", errors.NewInvalidInputf(errors.CodeInvalidInput, "traces export not yet supported")
 	default:
-		err = errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid source: must be logs, metrics or traces")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid source: must be logs, metrics or traces")
 	}
-	return
 }
 
-func getExportQueryFormat(queryParams url.Values) (format string, err error) {
+func getExportQueryFormat(queryParams url.Values) (string, error) {
 	switch queryParams.Get("format") {
 	case "csv", "":
-		format = "csv"
+		return "csv", nil
 	case "jsonl":
-		format = "jsonl"
+		return "jsonl", nil
 	default:
-		err = errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid format: must be csv or jsonl")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid format: must be csv or jsonl")
 	}
-	return
 }
 
-func getExportQueryLimit(queryParams url.Values) (limit int, err error) {
+func getExportQueryLimit(queryParams url.Values) (int, error) {
 
 	limitStr := queryParams.Get("limit")
 	if limitStr == "" {
-		limit = DefaultExportRowCountLimit
+		return DefaultExportRowCountLimit, nil
 	} else {
-		limit, err = strconv.Atoi(limitStr)
+		limit, err := strconv.Atoi(limitStr)
 		if err != nil {
-			err = errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid limit format: %s", err.Error())
-			return
+			return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid limit format: %s", err.Error())
 		}
 		if limit <= 0 {
-			err = errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be positive")
-			return
+			return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be positive")
 		}
 		if limit > MaxExportRowCountLimit {
-			err = errors.NewInvalidInputf(errors.CodeInvalidInput, "limit cannot be more than %d", MaxExportRowCountLimit)
-			return
+			return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "limit cannot be more than %d", MaxExportRowCountLimit)
 		}
+		return limit, nil
 	}
-	return
 }
 
-func getExportQueryTimeRange(queryParams url.Values) (startTime uint64, endTime uint64, err error) {
+func getExportQueryTimeRange(queryParams url.Values) (uint64, uint64, error) {
 
 	startTimeStr := queryParams.Get("start")
 	endTimeStr := queryParams.Get("end")
 
 	if startTimeStr == "" || endTimeStr == "" {
-		err = errors.NewInvalidInputf(errors.CodeInvalidInput, "start and end time are required")
-		return
+		return 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "start and end time are required")
 	}
-	startTime, err = strconv.ParseUint(startTimeStr, 10, 64)
+	startTime, err := strconv.ParseUint(startTimeStr, 10, 64)
 	if err != nil {
-		err = errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid start time format: %s", err.Error())
-		return
+		return 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid start time format: %s", err.Error())
 	}
-	endTime, err = strconv.ParseUint(endTimeStr, 10, 64)
+	endTime, err := strconv.ParseUint(endTimeStr, 10, 64)
 	if err != nil {
-		err = errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid end time format: %s", err.Error())
-		return
+		return 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid end time format: %s", err.Error())
 	}
-	return
+	return startTime, endTime, nil
 }
 
 func constructCSVHeaderFromQueryResponse(data map[string]any) []string {
@@ -431,10 +421,10 @@ func constructCSVRecordFromQueryResponse(data map[string]any, headerToIndexMappi
 
 // getExportQueryColumns parses the "columns" query parameters and returns a slice of TelemetryFieldKey structs.
 // Each column should be a valid telemetry field key in the format "context.field:type" or "context.field" or "field"
-func getExportQueryColumns(queryParams url.Values) (columns []telemetrytypes.TelemetryFieldKey, err error) {
+func getExportQueryColumns(queryParams url.Values) []telemetrytypes.TelemetryFieldKey {
 	columnParams := queryParams["columns"]
 
-	columns = make([]telemetrytypes.TelemetryFieldKey, 0, len(columnParams))
+	columns := make([]telemetrytypes.TelemetryFieldKey, 0, len(columnParams))
 
 	for _, columnStr := range columnParams {
 		// Skip empty strings
@@ -446,7 +436,7 @@ func getExportQueryColumns(queryParams url.Values) (columns []telemetrytypes.Tel
 		columns = append(columns, telemetrytypes.GetFieldKeyFromKeyText(columnStr))
 	}
 
-	return columns, nil
+	return columns
 }
 
 func getsizeOfStringSlice(slice []string) uint64 {
@@ -460,7 +450,7 @@ func getsizeOfStringSlice(slice []string) uint64 {
 // getExportQueryOrderBy parses the "order_by" query parameters and returns a slice of OrderBy structs.
 // Each "order_by" parameter should be in the format "column:direction"
 // Each "column" should be a valid telemetry field key in the format "context.field:type" or "context.field" or "field"
-func getExportQueryOrderBy(queryParams url.Values) (orderBy []qbtypes.OrderBy, err error) {
+func getExportQueryOrderBy(queryParams url.Values) ([]qbtypes.OrderBy, error) {
 	orderByParam := queryParams.Get("order_by")
 
 	orderByParam = strings.TrimSpace(orderByParam)
@@ -483,12 +473,14 @@ func getExportQueryOrderBy(queryParams url.Values) (orderBy []qbtypes.OrderBy, e
 
 	orderByKey := telemetrytypes.GetFieldKeyFromKeyText(column)
 
-	orderBy = append(orderBy, qbtypes.OrderBy{
-		Key: qbtypes.OrderByKey{
-			TelemetryFieldKey: orderByKey,
+	orderBy := []qbtypes.OrderBy{
+		{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: orderByKey,
+			},
+			Direction: orderDirection,
 		},
-		Direction: orderDirection,
-	})
+	}
 
 	// If we are ordering by the timestamp column, also order by the ID column
 	if orderByKey.Name == telemetrylogs.LogsV2TimestampColumn {

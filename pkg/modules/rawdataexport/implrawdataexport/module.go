@@ -30,12 +30,13 @@ func (m *Module) ExportRawData(ctx context.Context, orgID valuer.UUID, rangeRequ
 	errChan := make(chan error, 1)
 
 	go func() {
-		defer close(rowChan)
 		// Set clickhouse max threads
 		ctx := ctxtypes.SetClickhouseMaxThreads(ctx, ClickhouseExportRawDataMaxThreads)
 		// Set clickhouse timeout
 		contextWithTimeout, cancel := context.WithTimeout(ctx, ClickhouseExportRawDataTimeout)
 		defer cancel()
+		defer close(errChan)
+		defer close(rowChan)
 
 		rowCount := 0
 
