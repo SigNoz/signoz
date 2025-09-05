@@ -15,7 +15,6 @@ export const isEmptyFilterValue = (value: any): boolean =>
  */
 export const getFiltersToAddToView = (clickedData: any): FilterData[] => {
 	if (!clickedData) {
-		console.warn('clickedData is null in getFiltersToAddToView');
 		return [];
 	}
 
@@ -44,16 +43,16 @@ export const getFiltersToAddToView = (clickedData: any): FilterData[] => {
 };
 
 export const getBreakoutPanelType = (
-	breakoutQuery: Query,
+	// breakoutQuery: Query,
 	currentPanelType?: PANEL_TYPES,
-	groupBy?: BreakoutAttributeType,
+	// groupBy?: BreakoutAttributeType,
 ): PANEL_TYPES => {
-	// Check if the query is grouped by a number data type
-	const hasNumberGroupBy = groupBy?.dataType === 'number';
+	// // Check if the query is grouped by a number data type
+	// const hasNumberGroupBy = groupBy?.dataType === 'number';
 
-	if (hasNumberGroupBy) {
-		return PANEL_TYPES.HISTOGRAM;
-	}
+	// if (hasNumberGroupBy) {
+	// 	return PANEL_TYPES.HISTOGRAM;
+	// }
 
 	if (currentPanelType === PANEL_TYPES.VALUE) {
 		return PANEL_TYPES.TABLE;
@@ -72,7 +71,6 @@ export const getBreakoutQuery = (
 	filtersToAdd: FilterData[],
 ): Query => {
 	if (!aggregateData) {
-		console.warn('aggregateData is null in getBreakoutQuery');
 		return query;
 	}
 

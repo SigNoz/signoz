@@ -19,12 +19,13 @@ import { ContextMenu, useCoordinates } from 'periscope/components/ContextMenu';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useTimezone } from 'providers/Timezone';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { DataSource } from 'types/common/queryBuilder';
 import uPlot from 'uplot';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import { PanelWrapperProps } from './panelWrapper.types';
-import { getTimeRangeFromStepInterval } from './utils';
+import { getTimeRangeFromStepInterval, isApmMetric } from './utils';
 
 function UplotPanelWrapper({
 	queryResponse,
@@ -162,7 +163,6 @@ function UplotPanelWrapper({
 				absoluteMouseY,
 				focusedSeries,
 			});
-			console.log('onClickData: ', data);
 			// Compute time range if needed and if axes data is available
 			let timeRange;
 			if (axesData && queryData?.queryName) {
@@ -179,8 +179,9 @@ function UplotPanelWrapper({
 					const stepInterval = specificQuery?.spec?.stepInterval || 60;
 					timeRange = getTimeRangeFromStepInterval(
 						stepInterval,
-						xValue,
-						specificQuery?.spec?.signal,
+						metric?.clickedTimestamp || xValue, // Use the clicked timestamp if available, otherwise use the click position timestamp
+						specificQuery?.spec?.signal === DataSource.METRICS &&
+							isApmMetric(specificQuery?.spec?.aggregations[0]?.metricName),
 					);
 				}
 			}

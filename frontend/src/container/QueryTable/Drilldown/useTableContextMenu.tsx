@@ -79,9 +79,6 @@ export function useTableContextMenu({
 
 	const menuItemsConfig = useMemo(() => {
 		if (!coordinates || (!clickedData && !aggregateData)) {
-			if (!clickedData) {
-				console.warn('clickedData is null in menuItemsConfig');
-			}
 			return {};
 		}
 

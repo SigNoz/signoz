@@ -57,7 +57,6 @@ const useBreakout = ({
 	const handleBreakoutClick = useCallback(
 		(groupBy: BreakoutAttributeType): void => {
 			if (!aggregateData) {
-				console.warn('aggregateData is null in handleBreakoutClick');
 				return;
 			}
 
@@ -70,9 +69,9 @@ const useBreakout = ({
 			);
 
 			const breakoutPanelType = getBreakoutPanelType(
-				breakoutQuery,
+				// breakoutQuery,
 				panelType,
-				groupBy,
+				// groupBy,
 			);
 
 			redirectToViewMode(breakoutQuery, breakoutPanelType);
@@ -87,7 +86,6 @@ const useBreakout = ({
 
 	const breakoutConfig = useMemo(() => {
 		if (!aggregateData) {
-			console.warn('aggregateData is null in breakoutConfig');
 			return {};
 		}
 

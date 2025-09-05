@@ -113,9 +113,6 @@ const useAggregateDrilldown = ({
 
 				if (isFieldInGroupBy) {
 					fieldVars[filter.filterKey] = filter.filterValue;
-					console.log(
-						`Field "${filter.filterKey}" is in groupBy, adding to fieldVariables`,
-					);
 				}
 			}
 		});
@@ -150,9 +147,6 @@ const useAggregateDrilldown = ({
 
 	const aggregateDrilldownConfig = useMemo(() => {
 		if (!aggregateDataWithTimeRange) {
-			console.warn(
-				'aggregateDataWithTimeRange is null in aggregateDrilldownConfig',
-			);
 			return {};
 		}
 

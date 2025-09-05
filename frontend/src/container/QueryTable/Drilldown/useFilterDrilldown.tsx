@@ -67,7 +67,6 @@ const useFilterDrilldown = ({
 
 	const filterDrilldownConfig = useMemo(() => {
 		if (!clickedData) {
-			console.warn('clickedData is null in filterDrilldownConfig');
 			return {};
 		}
 		return getGroupContextMenuConfig({
