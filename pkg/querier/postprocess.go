@@ -74,6 +74,7 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 			}
 		case qbtypes.QueryBuilderTraceOperator:
 			if result, ok := typedResults[spec.Name]; ok {
+				result = postProcessTraceOperator(q, result, spec, req)
 				typedResults[spec.Name] = result
 			}
 		}
@@ -215,6 +216,27 @@ func postProcessMetricQuery(
 
 	return result
 }
+
+// postProcessTraceOperator applies postprocessing to a trace operator query result
+func postProcessTraceOperator(
+	q *querier,
+	result *qbtypes.Result,
+	query qbtypes.QueryBuilderTraceOperator,
+	req *qbtypes.QueryRangeRequest,
+) *qbtypes.Result {
+
+	result = q.applySeriesLimit(result, query.Limit, query.Order)
+
+	// Apply functions if any
+	if len(query.Functions) > 0 {
+		step := query.StepInterval.Duration.Milliseconds()
+		functions := q.prepareFillZeroArgsWithStep(query.Functions, req, step)
+		result = q.applyFunctions(result, functions)
+	}
+
+	return result
+}
+
 
 // applyMetricReduceTo applies reduce to operation using the metric's ReduceTo field
 func (q *querier) applyMetricReduceTo(result *qbtypes.Result, reduceOp qbtypes.ReduceTo) *qbtypes.Result {
