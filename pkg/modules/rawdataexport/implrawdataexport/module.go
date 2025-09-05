@@ -6,20 +6,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/querier"
-	"github.com/SigNoz/signoz/pkg/valuer"
-
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
-
-const MAX_EXPORT_ROW_COUNT_LIMIT = 50000
-const DEFAULT_EXPORT_ROW_COUNT_LIMIT = 10000
-const MAX_EXPORT_BYTES_LIMIT = 10 * 1024 * 1024 * 1024 // 10 GB
-const CLICKHOUSE_CONTEXT_EXPORT_MAX_THREADS = 2
-const CHUNK_SIZE = 5000
-
-type ctxKey string
-
-const CLICKHOUSE_CONTEXT_MAX_THREADS_KEY ctxKey = "clickhouse_max_threads"
 
 type Module struct {
 	querier querier.Querier
@@ -45,15 +35,17 @@ func (m *Module) ExportRawData(ctx context.Context, orgID valuer.UUID, rangeRequ
 		rowCount := 0
 
 		for rowCount < rowCountLimit {
-			spec.Limit = min(CHUNK_SIZE, rowCountLimit-rowCount)
+			spec.Limit = min(ChunkSize, rowCountLimit-rowCount)
 			spec.Offset = rowCount
 
 			rangeRequest.CompositeQuery.Queries[0].Spec = spec
 
 			// Set clickhouse max threads
-			ctx := context.WithValue(ctx, CLICKHOUSE_CONTEXT_MAX_THREADS_KEY, CLICKHOUSE_CONTEXT_EXPORT_MAX_THREADS)
+			ctx := ctxtypes.SetClickhouseMaxThreads(ctx, ClickhouseExportRawDataMaxThreads)
+			// Set clickhouse timeout
+			contextWithTimeout, _ := context.WithTimeout(ctx, ClickhouseExportRawDataTimeout)
 
-			response, err := m.querier.QueryRange(ctx, orgID, rangeRequest)
+			response, err := m.querier.QueryRange(contextWithTimeout, orgID, rangeRequest)
 			if err != nil {
 				errChan <- err
 				return
@@ -63,7 +55,7 @@ func (m *Module) ExportRawData(ctx context.Context, orgID valuer.UUID, rangeRequ
 			for _, result := range response.Data.Results {
 				resultData, ok := result.(*qbtypes.RawData)
 				if !ok {
-					errChan <- errors.NewInvalidInputf(errors.CodeInvalidInput, "expected RawData, got %T", result)
+					errChan <- errors.NewInternalf(errors.CodeInternal, "expected RawData, got %T", result)
 					return
 				}
 

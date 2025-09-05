@@ -119,7 +119,7 @@ func TestGetExportQueryLimit(t *testing.T) {
 		{
 			name:          "default limit",
 			queryParams:   url.Values{},
-			expectedLimit: DEFAULT_EXPORT_ROW_COUNT_LIMIT,
+			expectedLimit: DefaultExportRowCountLimit,
 			expectedError: false,
 		},
 		{
@@ -130,8 +130,8 @@ func TestGetExportQueryLimit(t *testing.T) {
 		},
 		{
 			name:          "maximum limit",
-			queryParams:   url.Values{"limit": {strconv.Itoa(MAX_EXPORT_ROW_COUNT_LIMIT)}},
-			expectedLimit: MAX_EXPORT_ROW_COUNT_LIMIT,
+			queryParams:   url.Values{"limit": {strconv.Itoa(MaxExportRowCountLimit)}},
+			expectedLimit: MaxExportRowCountLimit,
 			expectedError: false,
 		},
 		{

@@ -1,10 +1,10 @@
 package implrawdataexport
 
 import (
-	"compress/gzip"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -59,11 +59,13 @@ func NewHandler(module rawdataexport.Module) rawdataexport.Handler {
 //     Default: ["timestamp:desc", "id:desc"]
 //
 // Response Headers:
-//   - Content-Type: "text/csv" or "application/jsonl"
-//   - Content-Encoding: "gzip"
-//   - Content-Disposition: "attachment; filename=\"data_exported.[format].gz\""
+//   - Content-Type: "text/csv" or "application/x-ndjson"
+//   - Content-Encoding: "gzip" (handled by HTTP middleware)
+//   - Content-Disposition: "attachment; filename=\"data_exported.[format]\""
 //   - Cache-Control: "no-cache"
-//   - Trailers: X-Total-Bytes, X-Total-Rows, X-Response-Complete
+//   - Vary: "Accept-Encoding"
+//   - Transfer-Encoding: "chunked"
+//   - Trailers: X-Response-Complete
 //
 // Response Format:
 //
@@ -112,7 +114,10 @@ func (handler *handler) exportTraces(rw http.ResponseWriter, r *http.Request) {
 func (handler *handler) exportLogs(rw http.ResponseWriter, r *http.Request) {
 	// Set up response headers
 	rw.Header().Set("Cache-Control", "no-cache")
-	rw.Header().Set("Content-Encoding", "gzip")
+	rw.Header().Set("Vary", "Accept-Encoding") // Indicate that response varies based on Accept-Encoding
+	rw.Header().Set("Access-Control-Expose-Headers", "Content-Disposition, X-Response-Complete")
+	rw.Header().Set("Trailers", "X-Response-Complete")
+	rw.Header().Set("Transfer-Encoding", "chunked")
 
 	queryParams := r.URL.Query()
 
@@ -133,7 +138,10 @@ func (handler *handler) exportLogs(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
-	rw.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"data_exported_%s.%s.gz\"", time.Now().Format("2006-01-02_150405"), format))
+
+	// Set appropriate content type and filename
+	filename := fmt.Sprintf("data_exported_%s.%s", time.Now().Format("2006-01-02_150405"), format)
+	rw.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
 
 	filterExpression := queryParams.Get("filter")
 
@@ -189,41 +197,39 @@ func (handler *handler) exportLogs(rw http.ResponseWriter, r *http.Request) {
 
 	queryRangeRequest.CompositeQuery.Queries[0].Spec = spec
 
-	// Create the gzip writer
-	gzipWriter, err := gzip.NewWriterLevel(rw, gzip.BestCompression)
-	if err != nil {
-		render.Error(rw, fmt.Errorf("error creating gzip writer: %w", err))
-		return
-	}
-
-	defer gzipWriter.Close()
-
 	// This will signal Export module to stop sending data
 	doneChan := make(chan any)
 	defer close(doneChan)
 	rowChan, errChan := handler.module.ExportRawData(r.Context(), orgID, &queryRangeRequest, doneChan)
 
+	var isComplete bool
+
 	switch format {
 	case "csv", "":
-		csvWriter := csv.NewWriter(gzipWriter)
-		err := handler.exportLogsCSV(rowChan, errChan, csvWriter)
+		rw.Header().Set("Content-Type", "text/csv")
+		csvWriter := csv.NewWriter(rw)
+		isComplete, err = handler.exportLogsCSV(rowChan, errChan, csvWriter)
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 		csvWriter.Flush()
 	case "jsonl":
-		err := handler.exportLogsJSONL(rowChan, errChan, gzipWriter)
+		rw.Header().Set("Content-Type", "application/x-ndjson")
+		isComplete, err = handler.exportLogsJSONL(rowChan, errChan, rw)
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 	default:
 		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid format: must be csv or jsonl"))
+		return
 	}
+
+	rw.Header().Set("X-Response-Complete", strconv.FormatBool(isComplete))
 }
 
-func (handler *handler) exportLogsCSV(rowChan <-chan *qbtypes.RawRow, errChan <-chan error, csvWriter *csv.Writer) error {
+func (handler *handler) exportLogsCSV(rowChan <-chan *qbtypes.RawRow, errChan <-chan error, csvWriter *csv.Writer) (bool, error) {
 	var header []string
 
 	headerToIndexMapping := make(map[string]int, len(header))
@@ -233,15 +239,14 @@ func (handler *handler) exportLogsCSV(rowChan <-chan *qbtypes.RawRow, errChan <-
 		select {
 		case row, ok := <-rowChan:
 			if !ok {
-				return nil
+				return true, nil
 			}
 			if header == nil {
 				// Initialize and write header for CSV
-
 				header = constructCSVHeaderFromQueryResponse(row.Data)
 
 				if err := csvWriter.Write(header); err != nil {
-					return err
+					return false, err
 				}
 
 				for i, col := range header {
@@ -250,47 +255,47 @@ func (handler *handler) exportLogsCSV(rowChan <-chan *qbtypes.RawRow, errChan <-
 			}
 			record := constructCSVRecordFromQueryResponse(row.Data, headerToIndexMapping)
 			if err := csvWriter.Write(record); err != nil {
-				return fmt.Errorf("error writing CSV record: %w", err)
+				return false, err
 			}
 
 			totalBytes += getsizeOfStringSlice(record)
-			if totalBytes > MAX_EXPORT_BYTES_LIMIT {
-				return nil
+			if totalBytes > MaxExportBytesLimit {
+				return false, nil
 			}
 		case err := <-errChan:
 			if err != nil {
-				return fmt.Errorf("error processing row: %w", err)
+				return false, err
 			}
 		}
 	}
 }
 
-func (handler *handler) exportLogsJSONL(rowChan <-chan *qbtypes.RawRow, errChan <-chan error, gzipWriter *gzip.Writer) error {
+func (handler *handler) exportLogsJSONL(rowChan <-chan *qbtypes.RawRow, errChan <-chan error, writer io.Writer) (bool, error) {
 
 	totalBytes := uint64(0)
 	for {
 		select {
 		case row, ok := <-rowChan:
 			if !ok {
-				return nil
+				return true, nil
 			}
 			// Handle JSON format (JSONL - one object per line)
 			jsonBytes, _ := json.Marshal(row.Data)
 			totalBytes += uint64(len(jsonBytes)) + 1 // +1 for newline
 
-			if _, err := gzipWriter.Write(jsonBytes); err != nil {
-				return fmt.Errorf("error writing JSON: %w", err)
+			if _, err := writer.Write(jsonBytes); err != nil {
+				return false, errors.NewUnexpectedf(errors.CodeInternal, "error writing JSON: %s", err)
 			}
-			if _, err := gzipWriter.Write([]byte("\n")); err != nil {
-				return fmt.Errorf("error writing JSON newline: %w", err)
+			if _, err := writer.Write([]byte("\n")); err != nil {
+				return false, errors.NewUnexpectedf(errors.CodeInternal, "error writing JSON newline: %s", err)
 			}
 
-			if totalBytes > MAX_EXPORT_BYTES_LIMIT {
-				return nil
+			if totalBytes > MaxExportBytesLimit {
+				return false, nil
 			}
 		case err := <-errChan:
 			if err != nil {
-				return fmt.Errorf("error processing row: %w", err)
+				return false, err
 			}
 		}
 	}
@@ -328,7 +333,7 @@ func getExportQueryLimit(queryParams url.Values) (limit int, err error) {
 
 	limitStr := queryParams.Get("limit")
 	if limitStr == "" {
-		limit = DEFAULT_EXPORT_ROW_COUNT_LIMIT
+		limit = DefaultExportRowCountLimit
 	} else {
 		limit, err = strconv.Atoi(limitStr)
 		if err != nil {
@@ -339,8 +344,8 @@ func getExportQueryLimit(queryParams url.Values) (limit int, err error) {
 			err = errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be positive")
 			return
 		}
-		if limit > MAX_EXPORT_ROW_COUNT_LIMIT {
-			err = errors.NewInvalidInputf(errors.CodeInvalidInput, "limit cannot be more than %d", MAX_EXPORT_ROW_COUNT_LIMIT)
+		if limit > MaxExportRowCountLimit {
+			err = errors.NewInvalidInputf(errors.CodeInvalidInput, "limit cannot be more than %d", MaxExportRowCountLimit)
 			return
 		}
 	}
@@ -379,9 +384,46 @@ func constructCSVHeaderFromQueryResponse(data map[string]any) []string {
 
 func constructCSVRecordFromQueryResponse(data map[string]any, headerToIndexMapping map[string]int) []string {
 	record := make([]string, len(headerToIndexMapping))
+
 	for key, value := range data {
-		if index, exists := headerToIndexMapping[key]; exists {
-			record[index] = fmt.Sprintf("%v", value)
+		if index, exists := headerToIndexMapping[key]; exists && value != nil {
+
+			var valueStr string
+			switch v := value.(type) {
+			case string:
+				valueStr = v
+			case int:
+				valueStr = strconv.FormatInt(int64(v), 10)
+			case int32:
+				valueStr = strconv.FormatInt(int64(v), 10)
+			case int64:
+				valueStr = strconv.FormatInt(v, 10)
+			case uint:
+				valueStr = strconv.FormatUint(uint64(v), 10)
+			case uint32:
+				valueStr = strconv.FormatUint(uint64(v), 10)
+			case uint64:
+				valueStr = strconv.FormatUint(v, 10)
+			case float32:
+				valueStr = strconv.FormatFloat(float64(v), 'f', -1, 32)
+			case float64:
+				valueStr = strconv.FormatFloat(v, 'f', -1, 64)
+			case bool:
+				valueStr = strconv.FormatBool(v)
+			case time.Time:
+				valueStr = v.Format(time.RFC3339Nano)
+			case []byte:
+				valueStr = string(v)
+			case fmt.Stringer:
+				valueStr = v.String()
+
+			default:
+				// For all other complex types (maps, structs, etc.)
+				jsonBytes, _ := json.Marshal(v)
+				valueStr = string(jsonBytes)
+			}
+
+			record[index] = valueStr
 		}
 	}
 	return record
@@ -401,23 +443,7 @@ func getExportQueryColumns(queryParams url.Values) (columns []telemetrytypes.Tel
 			continue
 		}
 
-		if err := telemetrytypes.ValidateFieldKeyText(columnStr); err != nil {
-			return nil, err
-		}
-
 		columns = append(columns, telemetrytypes.GetFieldKeyFromKeyText(columnStr))
-	}
-
-	if len(columns) == 0 {
-		columns = append(columns, telemetrytypes.TelemetryFieldKey{
-			Name: telemetrylogs.LogsV2TimestampColumn,
-		})
-		columns = append(columns, telemetrytypes.TelemetryFieldKey{
-			Name: telemetrylogs.LogsV2IDColumn,
-		})
-		columns = append(columns, telemetrytypes.TelemetryFieldKey{
-			Name: telemetrylogs.LogsV2BodyColumn,
-		})
 	}
 
 	return columns, nil
@@ -439,24 +465,7 @@ func getExportQueryOrderBy(queryParams url.Values) (orderBy []qbtypes.OrderBy, e
 
 	orderByParam = strings.TrimSpace(orderByParam)
 	if orderByParam == "" {
-		return []qbtypes.OrderBy{
-			{
-				Direction: qbtypes.OrderDirectionDesc,
-				Key: qbtypes.OrderByKey{
-					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-						Name: telemetrylogs.LogsV2TimestampColumn,
-					},
-				},
-			},
-			{
-				Direction: qbtypes.OrderDirectionDesc,
-				Key: qbtypes.OrderByKey{
-					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-						Name: telemetrylogs.LogsV2IDColumn,
-					},
-				},
-			},
-		}, nil
+		orderByParam = DefaultExportOrderBy
 	}
 
 	parts := strings.Split(orderByParam, ":")
@@ -472,9 +481,6 @@ func getExportQueryOrderBy(queryParams url.Values) (orderBy []qbtypes.OrderBy, e
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order_by direction: %s, should be one of %s, %s", direction, qbtypes.OrderDirectionAsc, qbtypes.OrderDirectionDesc)
 	}
 
-	if err := telemetrytypes.ValidateFieldKeyText(column); err != nil {
-		return nil, err
-	}
 	orderByKey := telemetrytypes.GetFieldKeyFromKeyText(column)
 
 	orderBy = append(orderBy, qbtypes.OrderBy{

@@ -35,7 +35,6 @@ var (
 		Signal:        telemetrytypes.SignalLogs,
 		FieldContext:  telemetrytypes.FieldContextLog,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
-		Materialized:  true,
 	}
 	BodyJSONStringSearchPrefix = `body.`
 	IntrinsicFields            = map[string]telemetrytypes.TelemetryFieldKey{
@@ -44,28 +43,24 @@ var (
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextLog,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
-			Materialized:  true,
 		},
 		"trace_id": {
 			Name:          "trace_id",
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextLog,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
-			Materialized:  true,
 		},
 		"span_id": {
 			Name:          "span_id",
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextLog,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
-			Materialized:  true,
 		},
 		"trace_flags": {
 			Name:          "trace_flags",
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextLog,
 			FieldDataType: telemetrytypes.FieldDataTypeNumber,
-			Materialized:  true,
 		},
 		"severity_text": {
 			Name:          "severity_text",
@@ -73,7 +68,6 @@ var (
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextLog,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
-			Materialized:  true,
 		},
 		"severity_number": {
 			Name:          "severity_number",
@@ -81,7 +75,6 @@ var (
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextLog,
 			FieldDataType: telemetrytypes.FieldDataTypeNumber,
-			Materialized:  true,
 		},
 		"scope_name": {
 			Name:          "scope_name",
@@ -89,14 +82,12 @@ var (
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextScope,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
-			Materialized:  true,
 		},
 		"scope_version": {
 			Name:          "scope_version",
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextScope,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
-			Materialized:  true,
 		},
 	}
 )
