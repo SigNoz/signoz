@@ -64,7 +64,7 @@ describe('VariableItem Component - Creation Flow', () => {
 	const mockOnSave = jest.fn();
 	const mockOnCancel = jest.fn();
 	const mockValidateName = jest.fn();
-
+	const mockValidateAttributeKey = jest.fn();
 	// Constants to avoid string duplication
 	const VARIABLE_NAME_PLACEHOLDER = 'Unique name of the variable';
 	const VARIABLE_DESCRIPTION_PLACEHOLDER =
@@ -79,6 +79,7 @@ describe('VariableItem Component - Creation Flow', () => {
 		onSave: mockOnSave,
 		validateName: mockValidateName,
 		mode: 'ADD' as const,
+		validateAttributeKey: mockValidateAttributeKey,
 	};
 
 	beforeEach(() => {

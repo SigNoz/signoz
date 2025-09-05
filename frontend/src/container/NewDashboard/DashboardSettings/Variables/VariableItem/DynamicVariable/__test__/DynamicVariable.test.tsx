@@ -25,6 +25,7 @@ describe('DynamicVariable Component', () => {
 	const DEFAULT_PROPS = {
 		setDynamicVariablesSelectedValue: mockSetDynamicVariablesSelectedValue,
 		dynamicVariablesSelectedValue: undefined,
+		errorAttributeKeyMessage: '',
 	};
 
 	const mockFieldKeysResponse = {
