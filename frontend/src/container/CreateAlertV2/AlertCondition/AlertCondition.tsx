@@ -8,6 +8,7 @@ import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { useCreateAlertState } from '../context';
 import Stepper from '../Stepper';
 import AlertThreshold from './AlertThreshold';
+import AnomalyThreshold from './AnomalyThreshold';
 
 function AlertCondition(): JSX.Element {
 	const { alertType, setAlertType } = useCreateAlertState();
@@ -61,7 +62,8 @@ function AlertCondition(): JSX.Element {
 					))}
 				</div>
 			</div>
-			{alertType === AlertTypes.METRICS_BASED_ALERT && <AlertThreshold />}
+			{alertType !== AlertTypes.ANOMALY_BASED_ALERT && <AlertThreshold />}
+			{alertType === AlertTypes.ANOMALY_BASED_ALERT && <AnomalyThreshold />}
 		</div>
 	);
 }

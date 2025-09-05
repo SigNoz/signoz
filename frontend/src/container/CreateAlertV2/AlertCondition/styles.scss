@@ -61,7 +61,8 @@
 	}
 }
 
-.alert-threshold-container {
+.alert-threshold-container,
+.anomaly-threshold-container {
 	padding: 24px;
 	padding-right: 72px;
 	background-color: var(--bg-ink-500);
