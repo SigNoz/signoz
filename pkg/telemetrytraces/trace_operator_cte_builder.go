@@ -252,14 +252,14 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 		if query.Filter == nil {
 			b.stmtBuilder.logger.DebugContext(ctx, "No filter for query CTE", "query_name", queryName, "reason", "filter is nil")
 		} else {
-			b.stmtBuilder.logger.DebugContext(ctx, "No filter for query CTE", "queryName", queryName, "reason", "filter expression is empty")
+			b.stmtBuilder.logger.DebugContext(ctx, "No filter for query CTE", "query_name", queryName, "reason", "filter expression is empty")
 		}
 	}
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	b.stmtBuilder.logger.DebugContext(ctx, "Built query CTE",
-		"queryName", queryName,
-		"cteName", cteName)
+		"query_name", queryName,
+		"cte_name", cteName)
 	dependencies := []string{}
 	if resourceFilterCTEName != "" {
 		dependencies = append(dependencies, resourceFilterCTEName)
@@ -317,9 +317,9 @@ func (b *traceOperatorCTEBuilder) buildOperatorCTE(ctx context.Context, op qbtyp
 
 	b.stmtBuilder.logger.DebugContext(ctx, "Built operator CTE",
 		"operator", op.StringValue(),
-		"cteName", cteName,
-		"leftCTE", leftCTE,
-		"rightCTE", rightCTE)
+		"cte_name", cteName,
+		"left_cte", leftCTE,
+		"right_cte", rightCTE)
 	b.addCTE(cteName, sql, args, dependsOn)
 	return cteName, nil
 }
