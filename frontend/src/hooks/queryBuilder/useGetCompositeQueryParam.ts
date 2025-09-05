@@ -1,6 +1,6 @@
+import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/queryProcessor';
 import {
 	convertAggregationToExpression,
-	convertFiltersToExpressionWithExistingQuery,
 	convertHavingToExpression,
 } from 'components/QueryBuilderV2/utils';
 import { QueryParams } from 'constants/query';
