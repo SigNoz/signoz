@@ -23,6 +23,7 @@ import {
 } from 'container/LogDetailedView/utils';
 import useInitialQuery from 'container/LogsExplorerContext/useInitialQuery';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
@@ -39,7 +40,7 @@ import {
 	TextSelect,
 	X,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useCopyToClipboard, useLocation } from 'react-use';
 import { AppState } from 'store/reducers';
@@ -94,6 +95,8 @@ function LogDetailInner({
 
 	const { notifications } = useNotifications();
 
+	const { onLogCopy } = useCopyLogLink(log?.id);
+
 	const LogJsonData = log ? aggregateAttributesResourcesToString(log) : '';
 
 	const handleModeChange = (e: RadioChangeEvent): void => {
@@ -145,6 +148,34 @@ function LogDetailInner({
 		};
 		safeNavigate(`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`);
 	};
+
+	const handleQueryExpressionChange = useCallback(
+		(value: string, queryIndex: number) => {
+			// update the query at the given index
+			setContextQuery((prev) => {
+				if (!prev) return prev;
+
+				return {
+					...prev,
+					builder: {
+						...prev.builder,
+						queryData: prev.builder.queryData.map((query, idx) =>
+							idx === queryIndex
+								? {
+										...query,
+										filter: {
+											...query.filter,
+											expression: value,
+										},
+								  }
+								: query,
+						),
+					},
+				};
+			});
+		},
+		[],
+	);
 
 	const handleRunQuery = (expression: string): void => {
 		let updatedContextQuery = cloneDeep(contextQuery);
@@ -305,11 +336,19 @@ function LogDetailInner({
 						onClick={handleFilterVisible}
 					/>
 				)}
+
+				<Tooltip title="Copy Log Link" placement="left" aria-label="Copy Log Link">
+					<Button
+						className="action-btn"
+						icon={<Copy size={16} />}
+						onClick={onLogCopy}
+					/>
+				</Tooltip>
 			</div>
 			{isFilterVisible && contextQuery?.builder.queryData[0] && (
 				<div className="log-detail-drawer-query-container">
 					<QuerySearch
-						onChange={(): void => {}}
+						onChange={(value): void => handleQueryExpressionChange(value, 0)}
 						dataSource={DataSource.LOGS}
 						queryData={contextQuery?.builder.queryData[0]}
 						onRun={handleRunQuery}
