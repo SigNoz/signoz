@@ -8,6 +8,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { convertVariablesToDbFormat } from './util';
 
+// Note: This logic completely mimics the logic in DashboardVariableSelection.tsx
+// but is separated to avoid unnecessary logic addition.
 interface UseDashboardVariableUpdateReturn {
 	onValueUpdate: (
 		name: string,
@@ -27,6 +29,7 @@ interface UseDashboardVariableUpdateReturn {
 	updateVariables: (
 		updatedVariablesData: Dashboard['data']['variables'],
 		currentRequestedId?: string,
+		widgetIds?: string[],
 		applyToAll?: boolean,
 	) => void;
 }
@@ -50,7 +53,12 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 			haveCustomValuesSelected?: boolean,
 		): void => {
 			if (id) {
-				updateLocalStorageDashboardVariables(name, value, allSelected);
+				// Performance optimization: For dynamic variables with allSelected=true, we don't store
+				// individual values in localStorage since we can always derive them from available options.
+				// This makes localStorage much lighter and more efficient.
+				// currently all the variables are dynamic
+				const isDynamic = true;
+				updateLocalStorageDashboardVariables(name, value, allSelected, isDynamic);
 
 				if (selectedDashboard) {
 					setSelectedDashboard((prev) => {
@@ -100,6 +108,7 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 		(
 			updatedVariablesData: Dashboard['data']['variables'],
 			currentRequestedId?: string,
+			widgetIds?: string[],
 			applyToAll?: boolean,
 		): void => {
 			if (!selectedDashboard) {
@@ -111,6 +120,7 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 					addDynamicVariableToPanels(
 						selectedDashboard,
 						updatedVariablesData[currentRequestedId || ''],
+						widgetIds,
 						applyToAll,
 					)) ||
 				selectedDashboard;
@@ -216,7 +226,7 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 
 			// Convert to dashboard format and update
 			const updatedVariables = convertVariablesToDbFormat(tableRowData);
-			updateVariables(updatedVariables, newVariable.id);
+			updateVariables(updatedVariables, newVariable.id, [], false);
 		},
 		[selectedDashboard, updateVariables],
 	);
