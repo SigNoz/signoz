@@ -10,7 +10,12 @@ import { AlertDef } from 'types/api/alerts/def';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { AlertState, CreateAlertAction } from './types';
+import {
+	AlertState,
+	AlertThresholdAction,
+	AlertThresholdState,
+	CreateAlertAction,
+} from './types';
 
 export const alertCreationReducer = (
 	state: AlertState,
@@ -68,3 +73,21 @@ export function buildInitialAlertDef(alertType: AlertTypes): AlertDef {
 			return alertDefaults;
 	}
 }
+
+export const alertThresholdReducer = (
+	state: AlertThresholdState,
+	action: AlertThresholdAction,
+): AlertThresholdState => {
+	switch (action.type) {
+		case 'SET_SELECTED_QUERY':
+			return { ...state, selectedQuery: action.payload };
+		case 'SET_OPERATOR':
+			return { ...state, operator: action.payload };
+		case 'SET_MATCH_TYPE':
+			return { ...state, matchType: action.payload };
+		case 'SET_THRESHOLDS':
+			return { ...state, thresholds: action.payload };
+		default:
+			return state;
+	}
+};
