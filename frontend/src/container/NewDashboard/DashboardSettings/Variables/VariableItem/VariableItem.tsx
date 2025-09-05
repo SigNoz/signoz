@@ -63,6 +63,10 @@ interface VariableItemProps {
 		widgetIds?: string[],
 	) => void;
 	validateName: (arg0: string) => boolean;
+	validateAttributeKey: (
+		attributeKey: string,
+		currentVariableId?: string,
+	) => boolean;
 	mode: TVariableMode;
 }
 function VariableItem({
@@ -71,6 +75,7 @@ function VariableItem({
 	onCancel,
 	onSave,
 	validateName,
+	validateAttributeKey,
 	mode,
 }: VariableItemProps): JSX.Element {
 	const [variableName, setVariableName] = useState<string>(
@@ -117,6 +122,16 @@ function VariableItem({
 		setDynamicVariablesSelectedValue,
 	] = useState<{ name: string; value: string }>();
 
+	// Error messages
+	const [errorName, setErrorName] = useState<boolean>(false);
+	const [errorNameMessage, setErrorNameMessage] = useState<string>('');
+	const [errorAttributeKey, setErrorAttributeKey] = useState<boolean>(false);
+	const [
+		errorAttributeKeyMessage,
+		setErrorAttributeKeyMessage,
+	] = useState<string>('');
+	const [errorPreview, setErrorPreview] = useState<string | null>(null);
+
 	useEffect(() => {
 		if (
 			variableData.dynamicVariablesAttribute &&
@@ -132,10 +147,30 @@ function VariableItem({
 		variableData.dynamicVariablesSource,
 	]);
 
-	// Error messages
-	const [errorName, setErrorName] = useState<boolean>(false);
-	const [errorNameMessage, setErrorNameMessage] = useState<string>('');
-	const [errorPreview, setErrorPreview] = useState<string | null>(null);
+	// Validate attribute key uniqueness for dynamic variables
+	useEffect(() => {
+		if (queryType === 'DYNAMIC' && dynamicVariablesSelectedValue?.name) {
+			if (
+				!validateAttributeKey(dynamicVariablesSelectedValue.name, variableData.id)
+			) {
+				setErrorAttributeKey(true);
+				setErrorAttributeKeyMessage(
+					'A variable with this attribute key already exists',
+				);
+			} else {
+				setErrorAttributeKey(false);
+				setErrorAttributeKeyMessage('');
+			}
+		} else {
+			setErrorAttributeKey(false);
+			setErrorAttributeKeyMessage('');
+		}
+	}, [
+		queryType,
+		dynamicVariablesSelectedValue?.name,
+		validateAttributeKey,
+		variableData.id,
+	]);
 
 	// Auto-set variable name to selected attribute name in creation mode when user hasn't manually changed it
 	useEffect(() => {
@@ -149,7 +184,10 @@ function VariableItem({
 			setVariableName(newName);
 
 			// Trigger validation for the auto-set name
-			if (!validateName(newName)) {
+			if (/\s/.test(newName)) {
+				setErrorName(true);
+				setErrorNameMessage('Variable name cannot contain whitespaces');
+			} else if (!validateName(newName)) {
 				setErrorName(true);
 				setErrorNameMessage('Variable name already exists');
 			} else {
@@ -440,6 +478,11 @@ function VariableItem({
 										setErrorName(true);
 										setErrorNameMessage(REQUIRED_NAME_MESSAGE);
 									}
+									// Check for whitespace in name
+									else if (/\s/.test(value)) {
+										setErrorName(true);
+										setErrorNameMessage('Variable name cannot contain whitespaces');
+									}
 									// Check for duplicate name
 									else if (!validateName(value) && value !== variableData.name) {
 										setErrorName(true);
@@ -563,6 +606,7 @@ function VariableItem({
 							<DynamicVariable
 								setDynamicVariablesSelectedValue={setDynamicVariablesSelectedValue}
 								dynamicVariablesSelectedValue={dynamicVariablesSelectedValue}
+								errorAttributeKeyMessage={errorAttributeKeyMessage}
 							/>
 						</div>
 					)}
@@ -773,7 +817,7 @@ function VariableItem({
 					<Button
 						type="primary"
 						onClick={handleSave}
-						disabled={errorName}
+						disabled={errorName || errorAttributeKey}
 						icon={<Check size={14} />}
 						className="footer-btn-save"
 					>

@@ -302,6 +302,20 @@ function VariablesSetting({
 	const validateVariableName = (name: string): boolean =>
 		!existingVariableNamesMap[name];
 
+	const validateAttributeKey = (
+		attributeKey: string,
+		currentVariableId?: string,
+	): boolean => {
+		// Check if any other dynamic variable already uses this attribute key
+		const isDuplicateAttributeKey = Object.values(variables).some(
+			(variable: IDashboardVariable) =>
+				variable.type === 'DYNAMIC' &&
+				variable.dynamicVariablesAttribute === attributeKey &&
+				variable.id !== currentVariableId, // Exclude current variable being edited
+		);
+		return !isDuplicateAttributeKey;
+	};
+
 	const columns = [
 		{
 			title: 'Variable',
@@ -407,6 +421,7 @@ function VariablesSetting({
 					onSave={onVariableSaveHandler}
 					onCancel={onDoneVariableViewMode}
 					validateName={validateVariableName}
+					validateAttributeKey={validateAttributeKey}
 					mode={variableViewMode}
 				/>
 			) : (
