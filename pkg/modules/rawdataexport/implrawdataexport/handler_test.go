@@ -137,7 +137,7 @@ func TestGetExportQueryLimit(t *testing.T) {
 		{
 			name:          "limit exceeds maximum",
 			queryParams:   url.Values{"limit": {"100000"}},
-			expectedLimit: 100000,
+			expectedLimit: 0,
 			expectedError: true,
 		},
 		{
@@ -149,7 +149,7 @@ func TestGetExportQueryLimit(t *testing.T) {
 		{
 			name:          "negative limit",
 			queryParams:   url.Values{"limit": {"-100"}},
-			expectedLimit: -100,
+			expectedLimit: 0,
 			expectedError: true,
 		},
 	}
@@ -237,17 +237,11 @@ func TestGetExportQueryColumns(t *testing.T) {
 		name            string
 		queryParams     url.Values
 		expectedColumns []telemetrytypes.TelemetryFieldKey
-		expectedError   bool
 	}{
 		{
 			name:        "no columns specified",
 			queryParams: url.Values{},
-			expectedColumns: []telemetrytypes.TelemetryFieldKey{
-				{Name: "timestamp"},
-				{Name: "id"},
-				{Name: "body"},
-			},
-			expectedError: false,
+			expectedColumns: []telemetrytypes.TelemetryFieldKey{},
 		},
 		{
 			name: "single column",
@@ -257,7 +251,6 @@ func TestGetExportQueryColumns(t *testing.T) {
 			expectedColumns: []telemetrytypes.TelemetryFieldKey{
 				{Name: "timestamp"},
 			},
-			expectedError: false,
 		},
 		{
 			name: "multiple columns",
@@ -269,7 +262,6 @@ func TestGetExportQueryColumns(t *testing.T) {
 				{Name: "message"},
 				{Name: "level"},
 			},
-			expectedError: false,
 		},
 		{
 			name: "empty column name (should be skipped)",
@@ -280,7 +272,6 @@ func TestGetExportQueryColumns(t *testing.T) {
 				{Name: "timestamp"},
 				{Name: "level"},
 			},
-			expectedError: false,
 		},
 		{
 			name: "whitespace column name (should be skipped)",
@@ -291,21 +282,9 @@ func TestGetExportQueryColumns(t *testing.T) {
 				{Name: "timestamp"},
 				{Name: "level"},
 			},
-			expectedError: false,
 		},
 		{
-			name: "invalid column name (should error out)",
-			queryParams: url.Values{
-				"columns": {"timestamp", "attributes.user:", "level"},
-			},
-			expectedColumns: []telemetrytypes.TelemetryFieldKey{
-				{Name: "timestamp"},
-				{Name: "level"},
-			},
-			expectedError: true,
-		},
-		{
-			name: "valid column name (should be included)",
+			name: "valid column name with data type",
 			queryParams: url.Values{
 				"columns": {"timestamp", "attribute.user:string", "level"},
 			},
@@ -314,10 +293,9 @@ func TestGetExportQueryColumns(t *testing.T) {
 				{Name: "user", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
 				{Name: "level"},
 			},
-			expectedError: false,
 		},
 		{
-			name: "valid column name (should be included)",
+			name: "valid column name with dot notation",
 			queryParams: url.Values{
 				"columns": {"timestamp", "attribute.user.string", "level"},
 			},
@@ -326,21 +304,15 @@ func TestGetExportQueryColumns(t *testing.T) {
 				{Name: "user.string", FieldContext: telemetrytypes.FieldContextAttribute},
 				{Name: "level"},
 			},
-			expectedError: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			columns, err := getExportQueryColumns(tt.queryParams)
-			if tt.expectedError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, len(tt.expectedColumns), len(columns))
-				for i, expectedCol := range tt.expectedColumns {
-					assert.Equal(t, expectedCol, columns[i])
-				}
+			columns := getExportQueryColumns(tt.queryParams)
+			assert.Equal(t, len(tt.expectedColumns), len(columns))
+			for i, expectedCol := range tt.expectedColumns {
+				assert.Equal(t, expectedCol, columns[i])
 			}
 		})
 	}

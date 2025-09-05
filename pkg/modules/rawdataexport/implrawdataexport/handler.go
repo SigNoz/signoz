@@ -151,11 +151,7 @@ func (handler *handler) exportLogs(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	columns, err := getExportQueryColumns(queryParams)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	columns := getExportQueryColumns(queryParams)
 
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
