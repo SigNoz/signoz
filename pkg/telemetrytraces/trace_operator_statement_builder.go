@@ -74,7 +74,6 @@ func (b *traceOperatorStatementBuilder) Build(
 
 	// Build the CTE-based query
 	builder := &traceOperatorCTEBuilder{
-		ctx:            ctx,
 		start:          start,
 		end:            end,
 		operator:       &query,
@@ -92,5 +91,5 @@ func (b *traceOperatorStatementBuilder) Build(
 	}
 
 	// Build the query
-	return builder.build(requestType)
+	return builder.build(ctx, requestType)
 }
