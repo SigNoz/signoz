@@ -107,7 +107,10 @@ function ListView({
 		}
 
 		// add order by to trace operator
-		if (query.builder.queryTraceOperator.length > 0) {
+		if (
+			query.builder.queryTraceOperator &&
+			query.builder.queryTraceOperator.length > 0
+		) {
 			query.builder.queryTraceOperator[0].orderBy = [
 				{
 					columnName: orderBy.split(':')[0],

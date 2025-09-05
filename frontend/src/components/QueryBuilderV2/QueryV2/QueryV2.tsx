@@ -155,7 +155,7 @@ export const QueryV2 = memo(function QueryV2({
 							</div>
 
 							{!isCollapsed && showInlineQuerySearch && (
-								<div className="qb-search-filter-container" style={{ flex: 1 }}>
+								<div className="qb-search-filter-container">
 									<div className="query-search-container">
 										<QuerySearch
 											key={`query-search-${query.queryName}-${query.dataSource}`}

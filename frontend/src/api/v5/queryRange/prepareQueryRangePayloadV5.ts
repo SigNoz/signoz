@@ -346,11 +346,22 @@ function createTraceOperatorBaseSpec(
 		| TelemetryFieldKey
 	)[])?.filter((c) => ('key' in c ? c?.key : c?.name));
 
+	const {
+		stepInterval,
+		groupBy,
+		limit,
+		offset,
+		legend,
+		having,
+		orderBy,
+		pageSize,
+	} = queryData;
+
 	return {
-		stepInterval: queryData?.stepInterval || undefined,
+		stepInterval: stepInterval || undefined,
 		groupBy:
-			queryData.groupBy?.length > 0
-				? queryData.groupBy.map(
+			groupBy?.length > 0
+				? groupBy.map(
 						(item: any): GroupByKey => ({
 							name: item.key,
 							fieldDataType: item?.dataType,
@@ -364,15 +375,12 @@ function createTraceOperatorBaseSpec(
 				: undefined,
 		limit:
 			panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.LIST
-				? queryData.limit || queryData.pageSize || undefined
-				: queryData.limit || undefined,
-		offset:
-			requestType === 'raw' || requestType === 'trace'
-				? queryData.offset
-				: undefined,
+				? limit || pageSize || undefined
+				: limit || undefined,
+		offset: requestType === 'raw' || requestType === 'trace' ? offset : undefined,
 		order:
-			queryData.orderBy?.length > 0
-				? queryData.orderBy.map(
+			orderBy?.length > 0
+				? orderBy.map(
 						(order: any): OrderBy => ({
 							key: {
 								name: order.columnName,
@@ -381,8 +389,8 @@ function createTraceOperatorBaseSpec(
 						}),
 				  )
 				: undefined,
-		legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
-		having: isEmpty(queryData.having) ? undefined : (queryData?.having as Having),
+		legend: isEmpty(legend) ? undefined : legend,
+		having: isEmpty(having) ? undefined : (having as Having),
 		selectFields: isEmpty(nonEmptySelectColumns)
 			? undefined
 			: nonEmptySelectColumns?.map(

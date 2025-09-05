@@ -109,7 +109,7 @@ function TracesExplorer(): JSX.Element {
 				stagedQuery.builder.queryTraceOperator.length > 0
 			) {
 				// remove order by from trace operator
-				stagedQuery.builder.queryTraceOperator[0].orderBy = [];
+				set(stagedQuery, 'builder.queryTraceOperator[0].orderBy', []);
 			}
 
 			setSelectedView(view);
