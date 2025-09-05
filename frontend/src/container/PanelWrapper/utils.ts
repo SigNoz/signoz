@@ -1,6 +1,5 @@
 import { defaultStyles } from '@visx/tooltip';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
 
 export const tooltipStyles = {
 	...defaultStyles,
@@ -90,13 +89,16 @@ export const getTimeRangeFromUplotAxis = (
 	return { startTime, endTime };
 };
 
+export const isApmMetric = (metric = ''): boolean =>
+	// if metric starts with 'signoz_', then it is an apm metric
+	metric.startsWith('signoz_');
+
 export const getTimeRangeFromStepInterval = (
 	stepInterval: number,
 	xValue: number,
-	signal: DataSource,
+	isApmMetric: boolean,
 ): { startTime: number; endTime: number } => {
-	const startTime =
-		signal === DataSource.METRICS ? xValue - stepInterval : xValue;
+	const startTime = isApmMetric ? xValue - stepInterval : xValue;
 	const endTime = xValue + stepInterval;
 	return { startTime, endTime };
 };
