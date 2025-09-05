@@ -1,6 +1,7 @@
 /* eslint-disable react/require-default-props */
 import { Button, Tooltip, Typography } from 'antd';
 import { DraftingCompass, Plus, Sigma } from 'lucide-react';
+import BetaTag from 'periscope/components/BetaTag/BetaTag';
 
 export default function QueryFooter({
 	addNewBuilderQuery,
@@ -80,7 +81,10 @@ export default function QueryFooter({
 								icon={<DraftingCompass size={16} />}
 								onClick={(): void => addTraceOperator?.()}
 							>
-								Add Trace Matching
+								<div className="qb-trace-operator-button-container-text">
+									Add Trace Matching
+									<BetaTag />
+								</div>
 							</Button>
 						</Tooltip>
 					</div>
