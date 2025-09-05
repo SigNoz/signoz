@@ -29,9 +29,7 @@ export interface IBuilderFormula {
 	orderBy?: OrderByPayload[];
 }
 
-export type IBuilderTraceOperator = IBuilderQuery & {
-	returnSpansFrom?: string;
-};
+export type IBuilderTraceOperator = IBuilderQuery;
 
 export interface TagFilterItem {
 	id: string;
@@ -92,7 +90,6 @@ export type IBuilderQuery = {
 	offset?: number;
 	selectColumns?: BaseAutocompleteData[] | TelemetryFieldKey[];
 	source?: 'meter' | '';
-	returnSpansFrom?: string;
 };
 
 export interface IClickHouseQuery {

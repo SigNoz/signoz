@@ -2,7 +2,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 
 import { Token } from 'antlr4';
-import TraceOperatorGrammerLexer from 'TraceOperator/parser/TraceOperatorGrammerLexer';
+import TraceOperatorGrammarLexer from 'parser/TraceOperatorParser/TraceOperatorGrammarLexer';
 
 import {
 	createTraceOperatorContext,
@@ -14,7 +14,7 @@ describe('traceOperatorContextUtils', () => {
 	describe('createTraceOperatorContext', () => {
 		it('should create a context object with all required properties', () => {
 			const mockToken = {
-				type: TraceOperatorGrammerLexer.IDENTIFIER,
+				type: TraceOperatorGrammarLexer.IDENTIFIER,
 				text: 'test',
 				start: 0,
 				stop: 3,
@@ -33,7 +33,7 @@ describe('traceOperatorContextUtils', () => {
 			);
 
 			expect(context).toEqual({
-				tokenType: TraceOperatorGrammerLexer.IDENTIFIER,
+				tokenType: TraceOperatorGrammarLexer.IDENTIFIER,
 				text: 'test',
 				start: 0,
 				stop: 3,
@@ -51,7 +51,7 @@ describe('traceOperatorContextUtils', () => {
 
 		it('should create a context object with default values', () => {
 			const mockToken = {
-				type: TraceOperatorGrammerLexer.IDENTIFIER,
+				type: TraceOperatorGrammarLexer.IDENTIFIER,
 				text: 'test',
 				start: 0,
 				stop: 3,
@@ -66,7 +66,7 @@ describe('traceOperatorContextUtils', () => {
 			);
 
 			expect(context).toEqual({
-				tokenType: TraceOperatorGrammerLexer.IDENTIFIER,
+				tokenType: TraceOperatorGrammarLexer.IDENTIFIER,
 				text: 'test',
 				start: 0,
 				stop: 3,

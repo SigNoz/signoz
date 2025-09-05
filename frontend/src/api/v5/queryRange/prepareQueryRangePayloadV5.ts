@@ -418,7 +418,6 @@ export function convertTraceOperatorToV5(
 
 			const spec: QueryEnvelope['spec'] = {
 				name: queryName,
-				returnSpansFrom: traceOperatorData.returnSpansFrom || '',
 				...baseSpec,
 				expression: traceOperatorData.expression || '',
 				aggregations: aggregations as TraceAggregation[],
