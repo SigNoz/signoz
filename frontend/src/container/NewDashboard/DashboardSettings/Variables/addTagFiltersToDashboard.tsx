@@ -83,8 +83,8 @@ const updateSingleWidget = (
 			...widget.query,
 			builder: {
 				...widget.query.builder,
-				queryData: widget.query.builder.queryData.map(
-					(queryData) => updateQueryFilters(queryData, filter), // todo - Sagar: check for multiple query or not
+				queryData: widget.query.builder.queryData.map((queryData) =>
+					updateQueryFilters(queryData, filter),
 				),
 			},
 		},
@@ -127,6 +127,7 @@ const removeIfPresent = (
 			expression: removeKeysFromExpression(
 				queryData.filter?.expression ?? '',
 				filter.key?.key ? [filter.key.key] : [],
+				true,
 			),
 		},
 	};
@@ -147,8 +148,8 @@ const updateAfterRemoval = (
 			...widget.query,
 			builder: {
 				...widget.query.builder,
-				queryData: widget.query.builder.queryData.map(
-					(queryData) => removeIfPresent(queryData, filter), // todo - Sagar: check for multiple query or not
+				queryData: widget.query.builder.queryData.map((queryData) =>
+					removeIfPresent(queryData, filter),
 				),
 			},
 		},

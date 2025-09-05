@@ -27,7 +27,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { prepareQueryRangePayload } from './prepareQueryRangePayload';
 import { QueryData } from 'types/api/widgets/getQuery';
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
-import { DynamicVariable } from 'hooks/dashboard/useGetDynamicVariables';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 /**
  * Validates if metric name is available for METRICS data source
@@ -189,7 +189,7 @@ export const getLegend = (
 export async function GetMetricQueryRange(
 	props: GetQueryResultsProps,
 	version: string,
-	dynamicVariables?: DynamicVariable[],
+	dynamicVariables?: IDashboardVariable[],
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
 	isInfraMonitoring?: boolean,
@@ -368,5 +368,5 @@ export interface GetQueryResultsProps {
 	end?: number;
 	step?: number;
 	originalGraphType?: PANEL_TYPES;
-	dynamicVariables?: DynamicVariable[];
+	dynamicVariables?: IDashboardVariable[];
 }

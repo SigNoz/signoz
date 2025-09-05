@@ -23,6 +23,7 @@ import React, {
 	useRef,
 	useState,
 } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { CustomMultiSelectProps, CustomTagProps, OptionData } from './types';
@@ -66,6 +67,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	onDropdownVisibleChange,
 	showIncompleteDataMessage = false,
 	showLabels = false,
+	enableRegexOption = false,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -546,12 +548,37 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 			// Reset active index when search changes if dropdown is open
 			if (isOpen && trimmedValue) {
-				setActiveIndex(0);
+				setActiveIndex(-1);
+				// see if the trimmed value matched any option and set that active index
+				const matchedOption = filteredOptions.find(
+					(option) =>
+						option.label.toLowerCase() === trimmedValue.toLowerCase() ||
+						option.value?.toLowerCase() === trimmedValue.toLowerCase(),
+				);
+				if (matchedOption) {
+					setActiveIndex(1);
+				} else {
+					// check if the trimmed value is a regex pattern and set that active index
+					const isRegex =
+						trimmedValue.startsWith('.*') && trimmedValue.endsWith('.*');
+					if (isRegex && enableRegexOption) {
+						setActiveIndex(0);
+					} else {
+						setActiveIndex(enableRegexOption ? 1 : 0);
+					}
+				}
 			}
 
 			if (onSearch) onSearch(trimmedValue);
 		},
-		[onSearch, isOpen, selectedValues, onChange],
+		[
+			onSearch,
+			isOpen,
+			selectedValues,
+			onChange,
+			filteredOptions,
+			enableRegexOption,
+		],
 	);
 
 	// ===== UI & Rendering Functions =====
@@ -819,7 +846,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				}
 
 				// Add Regex to flat list
-				if (!isEmpty(searchText)) {
+				if (!isEmpty(searchText) && enableRegexOption) {
 					// Only add regex wrapper if it doesn't already look like a regex pattern
 					const isAlreadyRegex =
 						searchText.startsWith('.*') && searchText.endsWith('.*');
@@ -1361,6 +1388,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			extendSelection,
 			onDropdownVisibleChange,
 			handleSelectAll,
+			enableRegexOption,
 		],
 	);
 
@@ -1411,7 +1439,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		const customOptions: OptionData[] = [];
 
 		// add regex options first since they appear first in the UI
-		if (!isEmpty(searchText)) {
+		if (!isEmpty(searchText) && enableRegexOption) {
 			// Only add regex wrapper if it doesn't already look like a regex pattern
 			const isAlreadyRegex =
 				searchText.startsWith('.*') && searchText.endsWith('.*');
@@ -1434,8 +1462,17 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			});
 		}
 
-		// Now add all custom options at the beginning
-		const enhancedNonSectionOptions = [...customOptions, ...nonSectionOptions];
+		// Now add all custom options at the beginning, removing duplicates based on value
+		const allOptions = [...customOptions, ...nonSectionOptions];
+		const seenValues = new Set<string>();
+		const enhancedNonSectionOptions = allOptions.filter((option) => {
+			const value = option.value || '';
+			if (seenValues.has(value)) {
+				return false;
+			}
+			seenValues.add(value);
+			return true;
+		});
 
 		const allOptionValues = getAllAvailableValues(processedOptions);
 		const allOptionsSelected =
@@ -1527,7 +1564,19 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				{/* Non-section options when not searching */}
 				{enhancedNonSectionOptions.length > 0 && (
 					<div className="no-section-options">
-						{mapOptions(enhancedNonSectionOptions)}
+						<Virtuoso
+							style={{
+								minHeight: Math.min(300, enhancedNonSectionOptions.length * 40),
+								maxHeight: enhancedNonSectionOptions.length * 40,
+							}}
+							data={enhancedNonSectionOptions}
+							itemContent={(index, item): React.ReactNode =>
+								(mapOptions([item]) as unknown) as React.ReactElement
+							}
+							totalCount={enhancedNonSectionOptions.length}
+							itemSize={(): number => 40}
+							overscan={5}
+						/>
 					</div>
 				)}
 
@@ -1540,10 +1589,24 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 									{section.label}
 								</div>
 								<div role="group" aria-label={`${section.label} options`}>
-									{section.options && mapOptions(section.options)}
+									<Virtuoso
+										style={{
+											minHeight: Math.min(300, (section.options?.length || 0) * 40),
+											maxHeight: (section.options?.length || 0) * 40,
+										}}
+										data={section.options || []}
+										itemContent={(index, item): React.ReactNode =>
+											(mapOptions([item]) as unknown) as React.ReactElement
+										}
+										totalCount={section.options?.length || 0}
+										itemSize={(): number => 40}
+										overscan={5}
+									/>
 								</div>
 							</div>
-						) : null,
+						) : (
+							<div key={section.label} />
+						),
 					)}
 
 				{/* Navigation help footer */}
@@ -1573,15 +1636,17 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							<div className="navigation-text">
 								{errorMessage || SOMETHING_WENT_WRONG}
 							</div>
-							<div className="navigation-icons">
-								<ReloadOutlined
-									twoToneColor={Color.BG_CHERRY_400}
-									onClick={(e): void => {
-										e.stopPropagation();
-										if (onRetry) onRetry();
-									}}
-								/>
-							</div>
+							{onRetry && (
+								<div className="navigation-icons">
+									<ReloadOutlined
+										twoToneColor={Color.BG_CHERRY_400}
+										onClick={(e): void => {
+											e.stopPropagation();
+											onRetry();
+										}}
+									/>
+								</div>
+							)}
 						</div>
 					)}
 
@@ -1626,6 +1691,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		onRetry,
 		showIncompleteDataMessage,
 		isScrolledToBottom,
+		enableRegexOption,
 	]);
 
 	// Custom handler for dropdown visibility changes

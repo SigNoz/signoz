@@ -16,19 +16,13 @@ import { Button, Modal, Row, Space, Table, Typography } from 'antd';
 import { RowProps } from 'antd/lib';
 import { convertVariablesToDbFormat } from 'container/NewDashboard/DashboardVariablesSelection/util';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
-import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { createDynamicVariableToWidgetsMap } from 'hooks/dashboard/utils';
 import { useNotifications } from 'hooks/useNotifications';
 import { PenLine, Trash2 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-	Dashboard,
-	IDashboardVariable,
-	Widgets,
-} from 'types/api/dashboard/getAll';
+import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { TVariableMode } from './types';
 import VariableItem from './VariableItem/VariableItem';
@@ -59,8 +53,10 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 		// eslint-disable-next-line react/jsx-props-no-spreading
 		<tr {...props} ref={setNodeRef} style={style} {...attributes}>
 			{React.Children.map(children, (child) => {
-				if ((child as React.ReactElement).key === 'name') {
-					return React.cloneElement(child as React.ReactElement, {
+				const childElement = child as React.ReactElement;
+				if (childElement.key === 'name') {
+					return React.cloneElement(childElement, {
+						key: 'name-with-drag',
 						children: (
 							<div className="variable-name-drag">
 								<HolderOutlined
@@ -75,7 +71,7 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 					});
 				}
 
-				return child;
+				return childElement;
 			})}
 		</tr>
 	);
@@ -88,6 +84,8 @@ function VariablesSetting({
 }): JSX.Element {
 	const variableToDelete = useRef<IDashboardVariable | null>(null);
 	const [deleteVariableModal, setDeleteVariableModal] = useState(false);
+	const variableToApplyToAll = useRef<IDashboardVariable | null>(null);
+	const [applyToAllModal, setApplyToAllModal] = useState(false);
 
 	const { t } = useTranslation(['dashboard']);
 
@@ -95,7 +93,9 @@ function VariablesSetting({
 
 	const { notifications } = useNotifications();
 
-	const { variables = {}, widgets = [] } = selectedDashboard?.data || {};
+	const variables = useMemo(() => selectedDashboard?.data?.variables || {}, [
+		selectedDashboard?.data?.variables,
+	]);
 
 	const [variablesTableData, setVariablesTableData] = useState<any>([]);
 	const [variblesOrderArr, setVariablesOrderArr] = useState<number[]>([]);
@@ -134,6 +134,8 @@ function VariablesSetting({
 
 	const updateMutation = useUpdateDashboard();
 
+	const addDynamicVariableToPanels = useAddDynamicVariableToPanels();
+
 	useEffect(() => {
 		const tableRowData = [];
 		const variableOrderArr = [];
@@ -169,40 +171,10 @@ function VariablesSetting({
 		setExistingVariableNamesMap(variableNamesMap);
 	}, [variables]);
 
-	const addDynamicVariableToPanels = useAddDynamicVariableToPanels();
-
-	const { dynamicVariables } = useGetDynamicVariables();
-
-	const dynamicVariableToWidgetsMap = useMemo(
-		() =>
-			createDynamicVariableToWidgetsMap(
-				dynamicVariables,
-				(widgets as Widgets[]) || [],
-			),
-		[dynamicVariables, widgets],
-	);
-
-	// initialize and adjust dynamicVariablesWidgetIds values for all variables
-	useEffect(() => {
-		const newVariablesArr = Object.values(variables).map(
-			(variable: IDashboardVariable) => {
-				if (variable.type === 'DYNAMIC') {
-					return {
-						...variable,
-						dynamicVariablesWidgetIds: dynamicVariableToWidgetsMap[variable.id] || [],
-					};
-				}
-
-				return variable;
-			},
-		);
-
-		setVariablesTableData(newVariablesArr);
-	}, [variables, dynamicVariableToWidgetsMap]);
-
 	const updateVariables = (
 		updatedVariablesData: Dashboard['data']['variables'],
 		currentRequestedId?: string,
+		widgetIds?: string[],
 		applyToAll?: boolean,
 	): void => {
 		if (!selectedDashboard) {
@@ -211,9 +183,11 @@ function VariablesSetting({
 
 		const newDashboard =
 			(currentRequestedId &&
+				updatedVariablesData[currentRequestedId || '']?.type === 'DYNAMIC' &&
 				addDynamicVariableToPanels(
 					selectedDashboard,
 					updatedVariablesData[currentRequestedId || ''],
+					widgetIds,
 					applyToAll,
 				)) ||
 			selectedDashboard;
@@ -251,6 +225,7 @@ function VariablesSetting({
 	const onVariableSaveHandler = (
 		mode: TVariableMode,
 		variableData: IDashboardVariable,
+		widgetIds?: string[],
 		applyToAll?: boolean,
 	): void => {
 		const updatedVariableData = {
@@ -275,7 +250,7 @@ function VariablesSetting({
 		const variables = convertVariablesToDbFormat(newVariablesArr);
 
 		setVariablesTableData(newVariablesArr);
-		updateVariables(variables, variableData?.id, applyToAll);
+		updateVariables(variables, variableData?.id, widgetIds, applyToAll);
 		onDoneVariableViewMode();
 	};
 
@@ -301,8 +276,45 @@ function VariablesSetting({
 		setDeleteVariableModal(false);
 	};
 
+	const onApplyToAllHandler = (variable: IDashboardVariable): void => {
+		variableToApplyToAll.current = variable;
+		setApplyToAllModal(true);
+	};
+
+	const handleApplyToAllConfirm = (): void => {
+		if (variableToApplyToAll.current) {
+			onVariableSaveHandler(
+				variableViewMode || 'EDIT',
+				variableToApplyToAll.current,
+				[],
+				true,
+			);
+		}
+		variableToApplyToAll.current = null;
+		setApplyToAllModal(false);
+	};
+
+	const handleApplyToAllCancel = (): void => {
+		variableToApplyToAll.current = null;
+		setApplyToAllModal(false);
+	};
+
 	const validateVariableName = (name: string): boolean =>
 		!existingVariableNamesMap[name];
+
+	const validateAttributeKey = (
+		attributeKey: string,
+		currentVariableId?: string,
+	): boolean => {
+		// Check if any other dynamic variable already uses this attribute key
+		const isDuplicateAttributeKey = Object.values(variables).some(
+			(variable: IDashboardVariable) =>
+				variable.type === 'DYNAMIC' &&
+				variable.dynamicVariablesAttribute === attributeKey &&
+				variable.id !== currentVariableId, // Exclude current variable being edited
+		);
+		return !isDuplicateAttributeKey;
+	};
 
 	const columns = [
 		{
@@ -324,9 +336,7 @@ function VariablesSetting({
 						{variable.type === 'DYNAMIC' && (
 							<Button
 								type="text"
-								onClick={(): void =>
-									onVariableSaveHandler(variableViewMode || 'EDIT', variable, true)
-								}
+								onClick={(): void => onApplyToAllHandler(variable)}
 								className="apply-to-all-button"
 								loading={updateMutation.isLoading}
 							>
@@ -411,6 +421,7 @@ function VariablesSetting({
 					onSave={onVariableSaveHandler}
 					onCancel={onDoneVariableViewMode}
 					validateName={validateVariableName}
+					validateAttributeKey={validateAttributeKey}
 					mode={variableViewMode}
 				/>
 			) : (
@@ -475,6 +486,24 @@ function VariablesSetting({
 						{variableToDelete?.current?.name}
 					</span>
 					?
+				</Typography.Text>
+			</Modal>
+			<Modal
+				title="Apply variable to all panels"
+				centered
+				open={applyToAllModal}
+				onOk={handleApplyToAllConfirm}
+				onCancel={handleApplyToAllCancel}
+				okText="Apply to all"
+				cancelText="Cancel"
+			>
+				<Typography.Text>
+					Are you sure you want to apply variable{' '}
+					<span className="apply-to-all-variable-name">
+						{variableToApplyToAll?.current?.name}
+					</span>{' '}
+					to all panels? This action may affect panels where this variable is not
+					applicable.
 				</Typography.Text>
 			</Modal>
 		</>

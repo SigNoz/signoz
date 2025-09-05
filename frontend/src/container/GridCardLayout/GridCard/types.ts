@@ -71,6 +71,7 @@ export interface GridCardGraphProps {
 	customOnRowClick?: (record: RowData) => void;
 	customTimeRangeWindowForCoRelation?: string | undefined;
 	enableDrillDown?: boolean;
+	widgetsHavingDynamicVariables?: Record<string, string[]>;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {
