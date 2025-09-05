@@ -84,9 +84,9 @@ export const QueryV2 = memo(function QueryV2({
 			return false;
 		}
 		return (
-			hasTraceOperator || (isListViewPanel && dataSource === DataSource.TRACES)
+			dataSource === DataSource.TRACES && (hasTraceOperator || isListViewPanel)
 		);
-	}, [hasTraceOperator, isListViewPanel, dataSource, showTraceOperator]);
+	}, [hasTraceOperator, isListViewPanel, showTraceOperator, dataSource]);
 
 	const handleChangeAggregateEvery = useCallback(
 		(value: IBuilderQuery['stepInterval']) => {
@@ -121,7 +121,7 @@ export const QueryV2 = memo(function QueryV2({
 			ref={ref}
 		>
 			<div className="qb-content-section">
-				{isMultiQueryAllowed && (
+				{(!showOnlyWhereClause || showTraceOperator) && (
 					<div className="qb-header-container">
 						<div className="query-actions-container">
 							<div className="query-actions-left-container">
@@ -241,7 +241,7 @@ export const QueryV2 = memo(function QueryV2({
 
 						{!showOnlyWhereClause &&
 							!isListViewPanel &&
-							!hasTraceOperator &&
+							!(hasTraceOperator && dataSource === DataSource.TRACES) &&
 							dataSource !== DataSource.METRICS && (
 								<QueryAggregation
 									dataSource={dataSource}
@@ -264,16 +264,17 @@ export const QueryV2 = memo(function QueryV2({
 							/>
 						)}
 
-						{!showOnlyWhereClause && !hasTraceOperator && (
-							<QueryAddOns
-								index={index}
-								query={query}
-								version="v3"
-								isListViewPanel={isListViewPanel}
-								showReduceTo={showReduceTo}
-								panelType={panelType}
-							/>
-						)}
+						{!showOnlyWhereClause &&
+							!(hasTraceOperator && query.dataSource === DataSource.TRACES) && (
+								<QueryAddOns
+									index={index}
+									query={query}
+									version="v3"
+									isListViewPanel={isListViewPanel}
+									showReduceTo={showReduceTo}
+									panelType={panelType}
+								/>
+							)}
 					</div>
 				)}
 			</div>

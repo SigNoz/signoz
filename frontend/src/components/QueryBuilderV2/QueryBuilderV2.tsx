@@ -59,11 +59,8 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	]);
 
 	const isMultiQueryAllowed = useMemo(
-		() =>
-			!showOnlyWhereClause ||
-			!isListViewPanel ||
-			(currentDataSource === DataSource.TRACES && showTraceOperator),
-		[showOnlyWhereClause, currentDataSource, showTraceOperator, isListViewPanel],
+		() => !isListViewPanel || showTraceOperator,
+		[showTraceOperator, isListViewPanel],
 	);
 
 	const listViewLogFilterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
@@ -120,12 +117,17 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		return undefined;
 	}, [currentQuery.builder.queryTraceOperator]);
 
-	const shouldShowTraceOperator = useMemo(
+	const hasAtLeastOneTraceQuery = useMemo(
 		() =>
-			showTraceOperator &&
-			currentDataSource === DataSource.TRACES &&
-			Boolean(traceOperator),
-		[currentDataSource, showTraceOperator, traceOperator],
+			currentQuery.builder.queryData.some(
+				(query) => query.dataSource === DataSource.TRACES,
+			),
+		[currentQuery.builder.queryData],
+	);
+
+	const hasTraceOperator = useMemo(
+		() => showTraceOperator && hasAtLeastOneTraceQuery && Boolean(traceOperator),
+		[showTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
 	);
 
 	const shouldShowFooter = useMemo(
@@ -135,6 +137,11 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		[isListViewPanel, showTraceOperator, showOnlyWhereClause, currentDataSource],
 	);
 
+	const showQueryList = useMemo(
+		() => (!showOnlyWhereClause && !isListViewPanel) || showTraceOperator,
+		[isListViewPanel, showOnlyWhereClause, showTraceOperator],
+	);
+
 	const showFormula = useMemo(() => {
 		if (currentDataSource === DataSource.TRACES) {
 			return !isListViewPanel;
@@ -142,6 +149,11 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 
 		return true;
 	}, [isListViewPanel, currentDataSource]);
+
+	const showAddTraceOperator = useMemo(
+		() => showTraceOperator && !traceOperator && hasAtLeastOneTraceQuery,
+		[showTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
+	);
 
 	return (
 		<QueryBuilderV2Provider>
@@ -157,7 +169,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							queryComponents={queryComponents}
 							isMultiQueryAllowed={isMultiQueryAllowed}
 							showTraceOperator={showTraceOperator}
-							hasTraceOperator={shouldShowTraceOperator}
+							hasTraceOperator={hasTraceOperator}
 							version={version}
 							isAvailableToDisable={false}
 							queryVariant={config?.queryVariant || 'dropdown'}
@@ -177,7 +189,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 								isMultiQueryAllowed={isMultiQueryAllowed}
 								isAvailableToDisable={false}
 								showTraceOperator={showTraceOperator}
-								hasTraceOperator={shouldShowTraceOperator}
+								hasTraceOperator={hasTraceOperator}
 								queryVariant={config?.queryVariant || 'dropdown'}
 								showOnlyWhereClause={showOnlyWhereClause}
 								isListViewPanel={isListViewPanel}
@@ -215,11 +227,11 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							addNewBuilderQuery={addNewBuilderQuery}
 							addNewFormula={addNewFormula}
 							addTraceOperator={addTraceOperator}
-							showAddTraceOperator={showTraceOperator && !traceOperator}
+							showAddTraceOperator={showAddTraceOperator}
 						/>
 					)}
 
-					{shouldShowTraceOperator && (
+					{hasTraceOperator && (
 						<TraceOperator
 							isListViewPanel={isListViewPanel}
 							traceOperator={traceOperator as IBuilderTraceOperator}
@@ -227,7 +239,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 					)}
 				</div>
 
-				{isMultiQueryAllowed && (
+				{showQueryList && (
 					<div className="query-names-section">
 						{currentQuery.builder.queryData.map((query) => (
 							<div key={query.queryName} className="query-name">
