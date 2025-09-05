@@ -7,11 +7,16 @@ import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQ
 import cx from 'classnames';
 import Editor from 'components/Editor';
 import { CustomSelect } from 'components/NewSelect';
+import { PANEL_GROUP_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import {
+	createDynamicVariableToWidgetsMap,
+	getWidgetsHavingDynamicVariableAttribute,
+} from 'hooks/dashboard/utils';
 import { useGetFieldValues } from 'hooks/dynamicVariables/useGetFieldValues';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
-import { map } from 'lodash-es';
+import { isEmpty, map } from 'lodash-es';
 import {
 	ArrowLeft,
 	Check,
@@ -21,7 +26,8 @@ import {
 	Pyramid,
 	X,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -30,6 +36,7 @@ import {
 	TSortVariableValuesType,
 	TVariableQueryType,
 	VariableSortTypeArr,
+	Widgets,
 } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as generateUUID } from 'uuid';
@@ -50,7 +57,11 @@ interface VariableItemProps {
 	variableData: IDashboardVariable;
 	existingVariables: Record<string, IDashboardVariable>;
 	onCancel: () => void;
-	onSave: (mode: TVariableMode, variableData: IDashboardVariable) => void;
+	onSave: (
+		mode: TVariableMode,
+		variableData: IDashboardVariable,
+		widgetIds?: string[],
+	) => void;
 	validateName: (arg0: string) => boolean;
 	mode: TVariableMode;
 }
@@ -185,11 +196,40 @@ function VariableItem({
 
 	const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
 
+	const { selectedDashboard } = useDashboard();
+
 	useEffect(() => {
-		if (queryType === 'DYNAMIC') {
-			setSelectedWidgets(variableData?.dynamicVariablesWidgetIds || []);
+		const dynamicVariables = Object.values(
+			selectedDashboard?.data?.variables || {},
+		)?.filter((variable: IDashboardVariable) => variable.type === 'DYNAMIC');
+
+		const widgets =
+			selectedDashboard?.data?.widgets?.filter(
+				(widget) => widget.panelTypes !== PANEL_GROUP_TYPES.ROW,
+			) || [];
+		const widgetsHavingDynamicVariables = createDynamicVariableToWidgetsMap(
+			dynamicVariables,
+			widgets as Widgets[],
+		);
+
+		if (variableData?.id && variableData.id in widgetsHavingDynamicVariables) {
+			setSelectedWidgets(widgetsHavingDynamicVariables[variableData.id] || []);
+		} else if (dynamicVariablesSelectedValue?.name) {
+			const widgets = getWidgetsHavingDynamicVariableAttribute(
+				dynamicVariablesSelectedValue?.name,
+				(selectedDashboard?.data?.widgets?.filter(
+					(widget) => widget.panelTypes !== PANEL_GROUP_TYPES.ROW,
+				) || []) as Widgets[],
+				variableData.name,
+			);
+			setSelectedWidgets(widgets || []);
 		}
-	}, [queryType, variableData?.dynamicVariablesWidgetIds]);
+	}, [
+		dynamicVariablesSelectedValue?.name,
+		selectedDashboard,
+		variableData.id,
+		variableData.name,
+	]);
 
 	useEffect(() => {
 		if (queryType === 'CUSTOM') {
@@ -233,6 +273,42 @@ function VariableItem({
 		dynamicVariablesSelectedValue?.value,
 	]);
 
+	const variableValue = useMemo(() => {
+		if (variableMultiSelect) {
+			let value = variableData.selectedValue;
+			if (isEmpty(value)) {
+				if (variableData.showALLOption) {
+					if (variableDefaultValue) {
+						value = variableDefaultValue;
+					} else {
+						value = previewValues;
+					}
+				} else if (variableDefaultValue) {
+					value = variableDefaultValue;
+				} else {
+					value = previewValues?.[0];
+				}
+			}
+
+			return value;
+		}
+
+		if (isEmpty(variableData.selectedValue)) {
+			if (variableDefaultValue) {
+				return variableDefaultValue;
+			}
+			return previewValues?.[0]?.toString();
+		}
+
+		return variableData.selectedValue || variableDefaultValue;
+	}, [
+		variableMultiSelect,
+		variableData.selectedValue,
+		variableData.showALLOption,
+		variableDefaultValue,
+		previewValues,
+	]);
+
 	const handleSave = (): void => {
 		// Check for cyclic dependencies
 		const newVariable = {
@@ -259,10 +335,8 @@ function VariableItem({
 				dynamicVariablesAttribute: dynamicVariablesSelectedValue?.name,
 				dynamicVariablesSource: dynamicVariablesSelectedValue?.value,
 			}),
-			...(queryType === 'DYNAMIC' && {
-				dynamicVariablesWidgetIds:
-					selectedWidgets?.length > 0 ? selectedWidgets : [],
-			}),
+			selectedValue: variableValue,
+			allSelected: variableData.allSelected,
 		};
 
 		const allVariables = [...Object.values(existingVariables), newVariable];
@@ -279,7 +353,7 @@ function VariableItem({
 			return;
 		}
 
-		onSave(mode, newVariable);
+		onSave(mode, newVariable, selectedWidgets);
 	};
 
 	// Fetches the preview values for the SQL variable query

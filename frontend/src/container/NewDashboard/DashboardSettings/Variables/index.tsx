@@ -16,19 +16,13 @@ import { Button, Modal, Row, Space, Table, Typography } from 'antd';
 import { RowProps } from 'antd/lib';
 import { convertVariablesToDbFormat } from 'container/NewDashboard/DashboardVariablesSelection/util';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
-import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { createDynamicVariableToWidgetsMap } from 'hooks/dashboard/utils';
 import { useNotifications } from 'hooks/useNotifications';
 import { PenLine, Trash2 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-	Dashboard,
-	IDashboardVariable,
-	Widgets,
-} from 'types/api/dashboard/getAll';
+import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { TVariableMode } from './types';
 import VariableItem from './VariableItem/VariableItem';
@@ -102,9 +96,6 @@ function VariablesSetting({
 	const variables = useMemo(() => selectedDashboard?.data?.variables || {}, [
 		selectedDashboard?.data?.variables,
 	]);
-	const widgets = useMemo(() => selectedDashboard?.data?.widgets || [], [
-		selectedDashboard?.data?.widgets,
-	]);
 
 	const [variablesTableData, setVariablesTableData] = useState<any>([]);
 	const [variblesOrderArr, setVariablesOrderArr] = useState<number[]>([]);
@@ -145,17 +136,6 @@ function VariablesSetting({
 
 	const addDynamicVariableToPanels = useAddDynamicVariableToPanels();
 
-	const { dynamicVariables } = useGetDynamicVariables();
-
-	const dynamicVariableToWidgetsMap = useMemo(
-		() =>
-			createDynamicVariableToWidgetsMap(
-				dynamicVariables,
-				(widgets as Widgets[]) || [],
-			),
-		[dynamicVariables, widgets],
-	);
-
 	useEffect(() => {
 		const tableRowData = [];
 		const variableOrderArr = [];
@@ -186,27 +166,15 @@ function VariablesSetting({
 		tableRowData.sort((a, b) => a.order - b.order);
 		variableOrderArr.sort((a, b) => a - b);
 
-		// Apply dynamic variables widget IDs if available
-		const processedTableRowData = tableRowData.map(
-			(variable: IDashboardVariable) => {
-				if (variable.type === 'DYNAMIC') {
-					return {
-						...variable,
-						dynamicVariablesWidgetIds: dynamicVariableToWidgetsMap[variable.id] || [],
-					};
-				}
-				return variable;
-			},
-		);
-
-		setVariablesTableData(processedTableRowData);
+		setVariablesTableData(tableRowData);
 		setVariablesOrderArr(variableOrderArr);
 		setExistingVariableNamesMap(variableNamesMap);
-	}, [variables, dynamicVariableToWidgetsMap]);
+	}, [variables]);
 
 	const updateVariables = (
 		updatedVariablesData: Dashboard['data']['variables'],
 		currentRequestedId?: string,
+		widgetIds?: string[],
 		applyToAll?: boolean,
 	): void => {
 		if (!selectedDashboard) {
@@ -215,9 +183,11 @@ function VariablesSetting({
 
 		const newDashboard =
 			(currentRequestedId &&
+				updatedVariablesData[currentRequestedId || '']?.type === 'DYNAMIC' &&
 				addDynamicVariableToPanels(
 					selectedDashboard,
 					updatedVariablesData[currentRequestedId || ''],
+					widgetIds,
 					applyToAll,
 				)) ||
 			selectedDashboard;
@@ -255,6 +225,7 @@ function VariablesSetting({
 	const onVariableSaveHandler = (
 		mode: TVariableMode,
 		variableData: IDashboardVariable,
+		widgetIds?: string[],
 		applyToAll?: boolean,
 	): void => {
 		const updatedVariableData = {
@@ -279,7 +250,7 @@ function VariablesSetting({
 		const variables = convertVariablesToDbFormat(newVariablesArr);
 
 		setVariablesTableData(newVariablesArr);
-		updateVariables(variables, variableData?.id, applyToAll);
+		updateVariables(variables, variableData?.id, widgetIds, applyToAll);
 		onDoneVariableViewMode();
 	};
 
@@ -315,6 +286,7 @@ function VariablesSetting({
 			onVariableSaveHandler(
 				variableViewMode || 'EDIT',
 				variableToApplyToAll.current,
+				[],
 				true,
 			);
 		}

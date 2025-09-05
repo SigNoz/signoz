@@ -2,6 +2,7 @@ import { CustomMultiSelect } from 'components/NewSelect';
 import { PANEL_GROUP_TYPES } from 'constants/queryBuilder';
 import { generateGridTitle } from 'container/GridPanelSwitch/utils';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import React from 'react';
 
 export function WidgetSelector({
 	selectedWidgets,
@@ -21,7 +22,7 @@ export function WidgetSelector({
 	// and excluding row widgets since they are not panels that can have variables
 	const widgets = Object.values(
 		(selectedDashboard?.data?.widgets || []).reduce(
-			(acc: Record<string, any>, widget) => {
+			(acc: Record<string, any>, widget: any) => {
 				if (
 					widget.id &&
 					layoutIds.has(widget.id) &&
@@ -35,14 +36,26 @@ export function WidgetSelector({
 		),
 	);
 
+	// Filter selectedWidgets to only include widgets that are present in the current layout
+	const validSelectedWidgets = selectedWidgets.filter((widgetId) =>
+		layoutIds.has(widgetId),
+	);
+
+	// Update selectedWidgets if any invalid widgets were removed
+	React.useEffect(() => {
+		if (validSelectedWidgets.length !== selectedWidgets.length) {
+			setSelectedWidgets(validSelectedWidgets);
+		}
+	}, [validSelectedWidgets, selectedWidgets.length, setSelectedWidgets]);
+
 	return (
 		<CustomMultiSelect
 			placeholder="Select Panels"
-			options={widgets.map((widget) => ({
+			options={widgets.map((widget: any) => ({
 				label: generateGridTitle(widget.title),
 				value: widget.id,
 			}))}
-			value={selectedWidgets}
+			value={validSelectedWidgets}
 			onChange={(value): void => setSelectedWidgets(value as string[])}
 			showLabels
 		/>

@@ -535,6 +535,12 @@ export const removeKeysFromExpression = (
 				}
 			}
 		});
+
+		// Clean up any remaining trailing AND/OR operators and extra whitespace
+		updatedExpression = updatedExpression
+			.replace(/\s+(AND|OR)\s*$/i, '') // Remove trailing AND/OR
+			.replace(/^(AND|OR)\s+/i, '') // Remove leading AND/OR
+			.trim();
 	}
 
 	return updatedExpression;
