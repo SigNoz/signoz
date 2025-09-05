@@ -623,10 +623,6 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*q
 		return nil, err
 	}
 
-	// Note: Do not apply limit in SQL for time series - it should be applied post-processing 
-	// to limit series count, not data points. The current SQL LIMIT would limit the number
-	// of data points returned, but we want to limit the number of time series instead.
-
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 	return &qbtypes.Statement{
 		Query: sql,
@@ -634,7 +630,31 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*q
 	}, nil
 }
 
+func (b *traceOperatorCTEBuilder) buildTraceSummaryCTE(selectFromCTE string) error {
+	sb := sqlbuilder.NewSelectBuilder()
+
+	sb.Select(
+		"trace_id",
+		"count() AS total_span_count",
+		"any(timestamp) AS first_timestamp",
+	)
+
+	sb.From("all_spans")
+	sb.Where(fmt.Sprintf("trace_id GLOBAL IN (SELECT DISTINCT trace_id FROM %s)", selectFromCTE))
+	sb.GroupBy("trace_id")
+
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	b.addCTE("trace_summary", sql, args, []string{"all_spans", selectFromCTE})
+
+	return nil
+}
+
 func (b *traceOperatorCTEBuilder) buildTraceQuery(selectFromCTE string) (*qbtypes.Statement, error) {
+	err := b.buildTraceSummaryCTE(selectFromCTE)
+	if err != nil {
+		return nil, err
+	}
+
 	sb := sqlbuilder.NewSelectBuilder()
 
 	keySelectors := b.getKeySelectors()
@@ -694,24 +714,24 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(selectFromCTE string) (*qbtype
 		sb.SelectMore(fmt.Sprintf("%s AS %s", rewritten, alias))
 	}
 
-	traceSubquery := fmt.Sprintf("SELECT DISTINCT trace_id FROM %s", selectFromCTE)
-
 	sb.Select(
-		"any(timestamp) as timestamp",
-		"any(`service.name`) as `service.name`", // <-- use alias, no $$ here
-		"any(name) as `name`",
-		"count() as span_count",
-		"any(duration_nano) as `duration_nano`",
-		"trace_id as `trace_id`",
+		"any(root.timestamp) as timestamp",
+		"any(root.`service.name`) as `service.name`",
+		"any(root.name) as `name`",
+		"summary.total_span_count as span_count", // Updated column name
+		"any(root.duration_nano) as `duration_nano`",
+		"root.trace_id as `trace_id`",
 	)
 
-	sb.From("all_spans")
-	sb.Where(
-		fmt.Sprintf("trace_id GLOBAL IN (%s)", traceSubquery),
-		"parent_span_id = ''",
+	sb.From("all_spans as root")
+	sb.JoinWithOption(
+		sqlbuilder.InnerJoin,
+		"trace_summary as summary",
+		"root.trace_id = summary.trace_id",
 	)
+	sb.Where("root.parent_span_id = ''")
 
-	sb.GroupBy("trace_id")
+	sb.GroupBy("root.trace_id", "summary.total_span_count")
 	if len(b.operator.GroupBy) > 0 {
 		groupByKeys := make([]string, len(b.operator.GroupBy))
 		for i, gb := range b.operator.GroupBy {
@@ -720,7 +740,6 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(selectFromCTE string) (*qbtype
 		sb.GroupBy(groupByKeys...)
 	}
 
-	// Add HAVING clause if specified
 	if err := b.addHavingClause(sb); err != nil {
 		return nil, err
 	}
@@ -860,7 +879,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(selectFromCTE string) (*qbtyp
 		sb.OrderBy("__result_0 DESC")
 	}
 
-	// Note: Do not apply limit in SQL for scalar queries - it should be applied post-processing 
+	// Note: Do not apply limit in SQL for scalar queries - it should be applied post-processing
 	// to limit series count, not data points. The current SQL LIMIT would limit the number
 	// of data points returned, but we want to limit the number of series instead.
 
