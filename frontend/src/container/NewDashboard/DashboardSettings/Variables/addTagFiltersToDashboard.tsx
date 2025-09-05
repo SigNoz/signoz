@@ -127,6 +127,7 @@ const removeIfPresent = (
 			expression: removeKeysFromExpression(
 				queryData.filter?.expression ?? '',
 				filter.key?.key ? [filter.key.key] : [],
+				true,
 			),
 		},
 	};
