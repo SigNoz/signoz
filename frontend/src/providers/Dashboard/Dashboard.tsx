@@ -2,11 +2,13 @@
 import { Modal } from 'antd';
 import getDashboard from 'api/v1/dashboards/id/get';
 import locked from 'api/v1/dashboards/id/lock';
+import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs, { Dayjs } from 'dayjs';
 import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
+import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useTabVisibility from 'hooks/useTabFocus';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -16,6 +18,7 @@ import isEqual from 'lodash-es/isEqual';
 import isUndefined from 'lodash-es/isUndefined';
 import omitBy from 'lodash-es/omitBy';
 import { useAppContext } from 'providers/App/App';
+import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import {
 	createContext,
@@ -198,6 +201,12 @@ export function DashboardProvider({
 		updateLocalStorageDashboardVariables,
 	} = useDashboardVariablesFromLocalStorage(dashboardId);
 
+	const {
+		getUrlVariables,
+		updateUrlVariable,
+		clearUrlVariables,
+	} = useVariablesFromUrl();
+
 	const updatedTimeRef = useRef<Dayjs | null>(null); // Using ref to store the updated time
 	const modalRef = useRef<any>(null);
 
@@ -208,6 +217,14 @@ export function DashboardProvider({
 
 	const [isDashboardFetching, setIsDashboardFetching] = useState<boolean>(false);
 
+	// Clear variable configs when not on dashboard pages
+	useEffect(() => {
+		const isOnDashboardPage = !!isDashboardPage || !!isDashboardWidgetPage;
+		if (!isOnDashboardPage) {
+			clearUrlVariables();
+		}
+	}, [isDashboardPage, isDashboardWidgetPage, clearUrlVariables]);
+
 	const mergeDBWithLocalStorage = (
 		data: Dashboard,
 		localStorageVariables: any,
@@ -217,10 +234,27 @@ export function DashboardProvider({
 			const updatedVariables = data.data.variables;
 			Object.keys(data.data.variables).forEach((variable) => {
 				const variableData = data.data.variables[variable];
-				const updatedVariable = {
+
+				const variablesFromUrl = getUrlVariables();
+				// values from url
+				const urlVariable = variableData?.name
+					? variablesFromUrl[variableData?.name] || variablesFromUrl[variableData.id]
+					: variablesFromUrl[variableData.id];
+
+				let updatedVariable = {
 					...data.data.variables[variable],
 					...localStorageVariables[variableData.name as any],
 				};
+
+				// respect the url variable if it is set, override the others
+				if (urlVariable) {
+					updatedVariable = {
+						...updatedVariable,
+						...(urlVariable !== ALL_SELECTED_VALUE &&
+							updatedVariable?.showALLOption && { selectedValue: urlVariable }),
+						...(urlVariable === ALL_SELECTED_VALUE && { allSelected: true }),
+					};
+				}
 
 				updatedVariables[variable] = updatedVariable;
 			});
@@ -280,7 +314,7 @@ export function DashboardProvider({
 					});
 				} catch (error) {
 					showErrorModal(error as APIError);
-					return;
+					throw error;
 				} finally {
 					setIsDashboardFetching(false);
 				}
@@ -289,9 +323,17 @@ export function DashboardProvider({
 			onError: (error) => {
 				showErrorModal(error as APIError);
 			},
-			onSuccess: (data: SuccessResponseV2<Dashboard>) => {
+			// eslint-disable-next-line sonarjs/cognitive-complexity
+			onSuccess: (data) => {
+				// if the url variable is not set for any variable, set it to the default value
+				const variables = data?.data?.data?.variables;
+				if (variables) {
+					initializeDefaultVariables(variables, getUrlVariables, updateUrlVariable);
+				}
+
+				if (!data?.data) return;
 				const updatedDashboardData = transformDashboardVariables(data?.data);
-				const updatedDate = dayjs(updatedDashboardData?.updatedAt);
+				const updatedDate = dayjs(updatedDashboardData.updatedAt);
 
 				setIsDashboardLocked(updatedDashboardData?.locked || false);
 
