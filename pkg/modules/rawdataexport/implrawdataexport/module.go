@@ -31,6 +31,11 @@ func (m *Module) ExportRawData(ctx context.Context, orgID valuer.UUID, rangeRequ
 
 	go func() {
 		defer close(rowChan)
+		// Set clickhouse max threads
+		ctx := ctxtypes.SetClickhouseMaxThreads(ctx, ClickhouseExportRawDataMaxThreads)
+		// Set clickhouse timeout
+		contextWithTimeout, cancel := context.WithTimeout(ctx, ClickhouseExportRawDataTimeout)
+		defer cancel()
 
 		rowCount := 0
 
@@ -39,11 +44,6 @@ func (m *Module) ExportRawData(ctx context.Context, orgID valuer.UUID, rangeRequ
 			spec.Offset = rowCount
 
 			rangeRequest.CompositeQuery.Queries[0].Spec = spec
-
-			// Set clickhouse max threads
-			ctx := ctxtypes.SetClickhouseMaxThreads(ctx, ClickhouseExportRawDataMaxThreads)
-			// Set clickhouse timeout
-			contextWithTimeout, _ := context.WithTimeout(ctx, ClickhouseExportRawDataTimeout)
 
 			response, err := m.querier.QueryRange(contextWithTimeout, orgID, rangeRequest)
 			if err != nil {
