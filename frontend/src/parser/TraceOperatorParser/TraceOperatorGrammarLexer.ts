@@ -1,4 +1,4 @@
-// Generated from ./TraceOperatorGrammer.g4 by ANTLR 4.13.1
+// Generated from ./TraceOperatorGrammar.g4 by ANTLR 4.13.1
 // noinspection ES6UnusedImports,JSUnusedGlobalSymbols,JSUnusedLocalSymbols
 import {
 	ATN,
@@ -11,7 +11,7 @@ import {
 	PredictionContextCache,
 	Token
 } from "antlr4";
-export default class TraceOperatorGrammerLexer extends Lexer {
+export default class TraceOperatorGrammarLexer extends Lexer {
 	public static readonly T__0 = 1;
 	public static readonly T__1 = 2;
 	public static readonly T__2 = 3;
@@ -44,20 +44,20 @@ export default class TraceOperatorGrammerLexer extends Lexer {
 
 	constructor(input: CharStream) {
 		super(input);
-		this._interp = new LexerATNSimulator(this, TraceOperatorGrammerLexer._ATN, TraceOperatorGrammerLexer.DecisionsToDFA, new PredictionContextCache());
+		this._interp = new LexerATNSimulator(this, TraceOperatorGrammarLexer._ATN, TraceOperatorGrammarLexer.DecisionsToDFA, new PredictionContextCache());
 	}
 
-	public get grammarFileName(): string { return "TraceOperatorGrammer.g4"; }
+	public get grammarFileName(): string { return "TraceOperatorGrammar.g4"; }
 
-	public get literalNames(): (string | null)[] { return TraceOperatorGrammerLexer.literalNames; }
-	public get symbolicNames(): (string | null)[] { return TraceOperatorGrammerLexer.symbolicNames; }
-	public get ruleNames(): string[] { return TraceOperatorGrammerLexer.ruleNames; }
+	public get literalNames(): (string | null)[] { return TraceOperatorGrammarLexer.literalNames; }
+	public get symbolicNames(): (string | null)[] { return TraceOperatorGrammarLexer.symbolicNames; }
+	public get ruleNames(): string[] { return TraceOperatorGrammarLexer.ruleNames; }
 
-	public get serializedATN(): number[] { return TraceOperatorGrammerLexer._serializedATN; }
+	public get serializedATN(): number[] { return TraceOperatorGrammarLexer._serializedATN; }
 
-	public get channelNames(): string[] { return TraceOperatorGrammerLexer.channelNames; }
+	public get channelNames(): string[] { return TraceOperatorGrammarLexer.channelNames; }
 
-	public get modeNames(): string[] { return TraceOperatorGrammerLexer.modeNames; }
+	public get modeNames(): string[] { return TraceOperatorGrammarLexer.modeNames; }
 
 	public static readonly _serializedATN: number[] = [4,0,9,57,6,-1,2,0,7,
 	0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,7,7,7,2,8,7,8,1,0,1,
@@ -80,13 +80,13 @@ export default class TraceOperatorGrammerLexer extends Lexer {
 
 	private static __ATN: ATN;
 	public static get _ATN(): ATN {
-		if (!TraceOperatorGrammerLexer.__ATN) {
-			TraceOperatorGrammerLexer.__ATN = new ATNDeserializer().deserialize(TraceOperatorGrammerLexer._serializedATN);
+		if (!TraceOperatorGrammarLexer.__ATN) {
+			TraceOperatorGrammarLexer.__ATN = new ATNDeserializer().deserialize(TraceOperatorGrammarLexer._serializedATN);
 		}
 
-		return TraceOperatorGrammerLexer.__ATN;
+		return TraceOperatorGrammarLexer.__ATN;
 	}
 
 
-	static DecisionsToDFA = TraceOperatorGrammerLexer._ATN.decisionToState.map( (ds: DecisionState, index: number) => new DFA(ds, index) );
+	static DecisionsToDFA = TraceOperatorGrammarLexer._ATN.decisionToState.map( (ds: DecisionState, index: number) => new DFA(ds, index) );
 }
