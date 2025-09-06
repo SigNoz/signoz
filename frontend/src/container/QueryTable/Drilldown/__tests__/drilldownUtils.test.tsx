@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+/* eslint-disable sonarjs/no-identical-functions */
 
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -168,7 +169,7 @@ describe('drilldownUtils', () => {
 				expect(filterExpression).not.toContain('span.kind = SPAN_KIND_SERVER');
 
 				// Rule 4: status.code → status_code_string with value mapping
-				expect(filterExpression).toContain("status_code_string = 'Ok'");
+				expect(filterExpression).toContain('status_code_string = Ok');
 				expect(filterExpression).not.toContain('status.code = STATUS_CODE_OK');
 			}
 		});
@@ -199,7 +200,7 @@ describe('drilldownUtils', () => {
 				expect(filterExpression).not.toContain('span.kind = SPAN_KIND_SERVER');
 
 				// Rule 4: status.code → status_code_string with value mapping
-				expect(filterExpression).toContain("status_code_string = 'Ok'");
+				expect(filterExpression).toContain('status_code_string = Ok');
 				expect(filterExpression).not.toContain('status.code = STATUS_CODE_OK');
 			}
 		});
@@ -259,7 +260,7 @@ describe('drilldownUtils', () => {
 				// All transformations should be applied
 				expect(filterExpression).toContain('name = "POST"');
 				expect(filterExpression).toContain('kind = 3');
-				expect(filterExpression).toContain("status_code_string = 'Error'");
+				expect(filterExpression).toContain('status_code_string = Error');
 				expect(filterExpression).toContain('http.status_code = 500');
 			}
 		});
@@ -328,7 +329,44 @@ describe('drilldownUtils', () => {
 				);
 				const filterExpression = result?.builder.queryData[0]?.filter?.expression;
 
-				expect(filterExpression).toContain(`status_code_string = '${expected}'`);
+				expect(filterExpression).toContain(`status_code_string = ${expected}`);
+				expect(filterExpression).not.toContain(`status.code = ${input}`);
+			});
+		});
+
+		it('should handle quoted status code values (browser scenario)', () => {
+			const statusCodeTests = [
+				{ input: '"STATUS_CODE_UNSET"', expected: '"Unset"' },
+				{ input: '"STATUS_CODE_OK"', expected: '"Ok"' },
+				{ input: '"STATUS_CODE_ERROR"', expected: '"Error"' },
+			];
+
+			statusCodeTests.forEach(({ input, expected }) => {
+				const testQuery: Query = {
+					...mockMetricsQuery,
+					builder: {
+						...mockMetricsQuery.builder,
+						queryData: [
+							{
+								...mockMetricsQuery.builder.queryData[0],
+								filter: {
+									expression: `status.code = ${input}`,
+								},
+							},
+						],
+					},
+				};
+
+				const result = getViewQuery(
+					testQuery,
+					mockFilters,
+					'view_logs',
+					'metrics_query',
+				);
+				const filterExpression = result?.builder.queryData[0]?.filter?.expression;
+
+				// Should preserve the quoting from the original expression
+				expect(filterExpression).toContain(`status_code_string = ${expected}`);
 				expect(filterExpression).not.toContain(`status.code = ${input}`);
 			});
 		});
