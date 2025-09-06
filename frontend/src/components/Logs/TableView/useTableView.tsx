@@ -11,7 +11,6 @@ import { useTimezone } from 'providers/Timezone';
 import { useMemo } from 'react';
 
 import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
-import { getLogIndicatorTypeForTable } from '../LogStateIndicator/utils';
 import {
 	defaultListViewPanelStyle,
 	defaultTableStyle,
@@ -93,8 +92,9 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 					children: (
 						<div className={cx('state-indicator', fontSize)}>
 							<LogStateIndicator
-								type={getLogIndicatorTypeForTable(item)}
 								fontSize={fontSize}
+								severityText={item.severity_text as string}
+								severityNumber={item.severity_number as number}
 							/>
 						</div>
 					),
