@@ -11,7 +11,7 @@ import (
 	contribsdkconfig "go.opentelemetry.io/contrib/config"
 	sdkmetric "go.opentelemetry.io/otel/metric"
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.34.0"
 	sdktrace "go.opentelemetry.io/otel/trace"
 )
 
