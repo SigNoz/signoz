@@ -59,6 +59,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	allowClear = false,
 	onRetry,
 	showIncompleteDataMessage = false,
+	showRetryButton = true,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -555,7 +556,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 							<div className="navigation-text">
 								{errorMessage || SOMETHING_WENT_WRONG}
 							</div>
-							{onRetry && (
+							{onRetry && showRetryButton && (
 								<div className="navigation-icons">
 									<ReloadOutlined
 										twoToneColor={Color.BG_CHERRY_400}
@@ -605,6 +606,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 		onRetry,
 		showIncompleteDataMessage,
 		isScrolledToBottom,
+		showRetryButton,
 	]);
 
 	// Handle dropdown visibility changes

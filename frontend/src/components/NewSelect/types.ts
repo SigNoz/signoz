@@ -28,6 +28,7 @@ export interface CustomSelectProps extends Omit<SelectProps, 'options'> {
 	allowClear?: SelectProps['allowClear'];
 	onRetry?: () => void;
 	showIncompleteDataMessage?: boolean;
+	showRetryButton?: boolean;
 }
 
 export interface CustomTagProps {
@@ -63,4 +64,5 @@ export interface CustomMultiSelectProps
 	showLabels?: boolean;
 	enableRegexOption?: boolean;
 	isDynamicVariable?: boolean;
+	showRetryButton?: boolean;
 }

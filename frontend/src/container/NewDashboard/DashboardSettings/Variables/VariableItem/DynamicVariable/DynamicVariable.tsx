@@ -14,6 +14,7 @@ import {
 	useState,
 } from 'react';
 import { FieldKey } from 'types/api/dynamicVariables/getFieldKeys';
+import { isRetryableError as checkIfRetryableError } from 'utils/errorUtils';
 
 enum AttributeSource {
 	ALL_SOURCES = 'All Sources',
@@ -56,6 +57,7 @@ function DynamicVariable({
 	const [selectedAttribute, setSelectedAttribute] = useState<string>();
 	const [apiSearchText, setApiSearchText] = useState<string>('');
 	const [errorMessage, setErrorMessage] = useState<string>();
+	const [isRetryableError, setIsRetryableError] = useState<boolean>(true);
 	const debouncedApiSearchText = useDebounce(apiSearchText, DEBOUNCE_DELAY);
 
 	const [filteredAttributes, setFilteredAttributes] = useState<
@@ -92,6 +94,15 @@ function DynamicVariable({
 			setFilteredAttributes(newAttributes);
 		}
 	}, [data]);
+
+	// Handle error from useGetFieldKeys
+	useEffect(() => {
+		if (error) {
+			// Check if error is retryable (5xx) or not (4xx)
+			const isRetryable = checkIfRetryableError(error);
+			setIsRetryableError(isRetryable);
+		}
+	}, [error]);
 
 	// refetch when attributeSource changes
 	useEffect(() => {
@@ -166,8 +177,10 @@ function DynamicVariable({
 					onRetry={(): void => {
 						// reset error message
 						setErrorMessage(undefined);
+						setIsRetryableError(true);
 						refetch();
 					}}
+					showRetryButton={isRetryableError}
 				/>
 				<Typography className="dynamic-variable-from-text">from</Typography>
 				<Select

@@ -71,6 +71,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	showLabels = false,
 	enableRegexOption = false,
 	isDynamicVariable = false,
+	showRetryButton = true,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -1674,7 +1675,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							<div className="navigation-text">
 								{errorMessage || SOMETHING_WENT_WRONG}
 							</div>
-							{onRetry && (
+							{onRetry && showRetryButton && (
 								<div className="navigation-icons">
 									<ReloadOutlined
 										twoToneColor={Color.BG_CHERRY_400}
@@ -1732,6 +1733,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		enableRegexOption,
 		isDarkMode,
 		isDynamicVariable,
+		showRetryButton,
 	]);
 
 	// Custom handler for dropdown visibility changes
