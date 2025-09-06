@@ -70,6 +70,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	showIncompleteDataMessage = false,
 	showLabels = false,
 	enableRegexOption = false,
+	isDynamicVariable = false,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -1557,22 +1558,24 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								<div className="option-content">
 									<div className="all-option-text">
 										ALL
-										<TextToolTip
-											text="Note about ALL in Dynamic Variable"
-											url="https://signoz.io/docs/userguide/manage-variables/#note-about-all"
-											urlText="here"
-											useFilledIcon={false}
-											outlinedIcon={
-												<Info
-													size={14}
-													style={{
-														color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
-														marginTop: 1,
-														marginRight: 5,
-													}}
-												/>
-											}
-										/>
+										{isDynamicVariable && (
+											<TextToolTip
+												text="Note about ALL in Dynamic Variable"
+												url="https://signoz.io/docs/userguide/manage-variables/#note-about-all"
+												urlText="here"
+												useFilledIcon={false}
+												outlinedIcon={
+													<Info
+														size={14}
+														style={{
+															color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+															marginTop: 1,
+															marginRight: 5,
+														}}
+													/>
+												}
+											/>
+										)}
 									</div>
 								</div>
 							</Checkbox>
@@ -1728,6 +1731,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		isScrolledToBottom,
 		enableRegexOption,
 		isDarkMode,
+		isDynamicVariable,
 	]);
 
 	// Custom handler for dropdown visibility changes

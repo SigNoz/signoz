@@ -62,4 +62,5 @@ export interface CustomMultiSelectProps
 	showIncompleteDataMessage?: boolean;
 	showLabels?: boolean;
 	enableRegexOption?: boolean;
+	isDynamicVariable?: boolean;
 }
