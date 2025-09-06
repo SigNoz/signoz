@@ -226,7 +226,7 @@ describe('VariableItem Component', () => {
 				name: '',
 				type: 'DYNAMIC',
 				dynamicVariablesAttribute: 'service name', // Contains whitespace
-				dynamicVariablesSource: 'All Sources',
+				dynamicVariablesSource: 'All telemetry',
 			};
 
 			renderVariableItem(dynamicVariable);
@@ -247,7 +247,7 @@ describe('VariableItem Component', () => {
 				name: 'test-variable',
 				type: 'DYNAMIC',
 				dynamicVariablesAttribute: 'service.name',
-				dynamicVariablesSource: 'All Sources',
+				dynamicVariablesSource: 'All telemetry',
 			};
 
 			renderVariableItem(
@@ -283,7 +283,7 @@ describe('VariableItem Component', () => {
 				name: 'test-variable',
 				type: 'DYNAMIC',
 				dynamicVariablesAttribute: 'service.name',
-				dynamicVariablesSource: 'All Sources',
+				dynamicVariablesSource: 'All telemetry',
 			};
 
 			renderVariableItem(
@@ -326,7 +326,7 @@ describe('VariableItem Component', () => {
 				name: 'test-variable',
 				type: 'DYNAMIC',
 				dynamicVariablesAttribute: 'service.name',
-				dynamicVariablesSource: 'All Sources',
+				dynamicVariablesSource: 'All telemetry',
 			};
 
 			renderVariableItem(

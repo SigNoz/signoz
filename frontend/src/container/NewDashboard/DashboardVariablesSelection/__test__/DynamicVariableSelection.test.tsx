@@ -181,7 +181,7 @@ describe('DynamicVariableSelection Component', () => {
 		fireEvent.mouseDown(selectElement);
 
 		// The loading text should appear in the dropdown
-		expect(screen.getByText('We are updating the values...')).toBeInTheDocument();
+		expect(screen.getByText('Refreshing values...')).toBeInTheDocument();
 	});
 
 	it('handles error state correctly', () => {
