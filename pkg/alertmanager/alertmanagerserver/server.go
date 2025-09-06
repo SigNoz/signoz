@@ -78,7 +78,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		stateStore: stateStore,
 		stopc:      make(chan struct{}),
 	}
-	signozRegisterer := prometheus.WrapRegistererWithPrefix(srvConfig.Metrics.Prefix, registry)
+	signozRegisterer := prometheus.WrapRegistererWithPrefix("signoz_", registry)
 	// initialize marker
 	server.marker = alertmanagertypes.NewMarker(signozRegisterer)
 
@@ -402,22 +402,14 @@ func (server *Server) Stop(ctx context.Context) error {
 
 // initMetricsServer initializes the HTTP server for serving Prometheus metrics
 func (server *Server) initMetricsServer() error {
-	if server.srvConfig.Metrics.Address == "" {
-		server.logger.Info("metrics server disabled (no address configured)")
-		return nil
-	}
-
 	mux := http.NewServeMux()
-	path := server.srvConfig.Metrics.Path
-	if path == "" {
-		path = "/metrics"
-	}
-
+	path := "/metrics"
+	address := ":9093"
 	// Register metrics handler using standard net/http
 	mux.Handle(path, promhttp.HandlerFor(server.registry.(prometheus.Gatherer), promhttp.HandlerOpts{}))
 
 	server.metricsServer = &http.Server{
-		Addr:    server.srvConfig.Metrics.Address,
+		Addr:    address,
 		Handler: mux,
 	}
 

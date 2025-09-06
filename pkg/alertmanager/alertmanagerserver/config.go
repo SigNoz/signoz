@@ -28,9 +28,6 @@ type Config struct {
 
 	// Configuration for the notification log.
 	NFLog NFLogConfig `mapstructure:"nflog"`
-
-	// Configuration for metrics server.
-	Metrics MetricsConfig `mapstructure:"metrics"`
 }
 
 type AlertsConfig struct {
@@ -113,12 +110,6 @@ func NewConfig() Config {
 		NFLog: NFLogConfig{
 			MaintenanceInterval: 15 * time.Minute,
 			Retention:           120 * time.Hour,
-		},
-		// Metrics server configuration
-		Metrics: MetricsConfig{
-			Address: ":9093",
-			Path:    "/metrics",
-			Prefix:  "signoz_",
 		},
 	}
 }
