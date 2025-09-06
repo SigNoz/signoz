@@ -196,9 +196,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 	server.dispatcherMetrics = dispatch.NewDispatcherMetrics(false, signozRegisterer)
 
 	// Initialize metrics server
-	if err := server.initMetricsServer(); err != nil {
-		return nil, err
-	}
+	server.initMetricsServer()
 
 	return server, nil
 }
@@ -401,7 +399,7 @@ func (server *Server) Stop(ctx context.Context) error {
 }
 
 // initMetricsServer initializes the HTTP server for serving Prometheus metrics
-func (server *Server) initMetricsServer() error {
+func (server *Server) initMetricsServer() {
 	mux := http.NewServeMux()
 	path := "/metrics"
 	address := ":9093"
@@ -413,7 +411,6 @@ func (server *Server) initMetricsServer() error {
 		Handler: mux,
 	}
 
-	return nil
 }
 
 // StartMetricsServer starts the metrics HTTP server using standard net/http
