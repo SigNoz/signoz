@@ -156,25 +156,6 @@ function GridCardGraph({
 		};
 	});
 
-	// TODO [vikrantgupta25] remove this useEffect with refactor as this is prone to race condition
-	// this is added to tackle the case of async communication between VariableItem.tsx and GridCard.tsx
-	// useEffect(() => {
-	// 	if (variablesToGetUpdated.length > 0) {
-	// 		queryClient.cancelQueries([
-	// 			maxTime,
-	// 			minTime,
-	// 			globalSelectedInterval,
-	// 			variables,
-	// 			widget?.query,
-	// 			widget?.panelTypes,
-	// 			widget.timePreferance,
-	// 			widget.fillSpans,
-	// 			requestData,
-	// 		]);
-	// 	}
-	// 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	// }, [variablesToGetUpdated]);
-
 	useEffect(() => {
 		if (!isEqual(updatedQuery, requestData.query)) {
 			setRequestData((prev) => ({

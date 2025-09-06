@@ -1,6 +1,6 @@
 import { getFieldKeys } from 'api/dynamicVariables/getFieldKeys';
 import { useQuery, UseQueryResult } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { SuccessResponseV2 } from 'types/api';
 import { FieldKeyResponse } from 'types/api/dynamicVariables/getFieldKeys';
 
 interface UseGetFieldKeysProps {
@@ -25,10 +25,8 @@ export const useGetFieldKeys = ({
 	signal,
 	name,
 	enabled = true,
-}: UseGetFieldKeysProps): UseQueryResult<
-	SuccessResponse<FieldKeyResponse> | ErrorResponse
-> =>
-	useQuery<SuccessResponse<FieldKeyResponse> | ErrorResponse>({
+}: UseGetFieldKeysProps): UseQueryResult<SuccessResponseV2<FieldKeyResponse>> =>
+	useQuery<SuccessResponseV2<FieldKeyResponse>>({
 		queryKey: ['fieldKeys', signal, name],
 		queryFn: () => getFieldKeys(signal, name),
 		enabled,

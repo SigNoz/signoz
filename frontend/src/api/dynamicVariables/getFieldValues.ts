@@ -1,5 +1,7 @@
 import { ApiBaseInstance } from 'api';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
+import { AxiosError } from 'axios';
+import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 import { FieldValueResponse } from 'types/api/dynamicVariables/getFieldValues';
 
 /**
@@ -14,7 +16,7 @@ export const getFieldValues = async (
 	value?: string,
 	startUnixMilli?: number,
 	endUnixMilli?: number,
-): Promise<SuccessResponse<FieldValueResponse> | ErrorResponse> => {
+): Promise<SuccessResponseV2<FieldValueResponse>> => {
 	const params: Record<string, string> = {};
 
 	if (signal) {
@@ -37,27 +39,29 @@ export const getFieldValues = async (
 		params.endUnixMilli = Math.floor(endUnixMilli / 1000000).toString();
 	}
 
-	const response = await ApiBaseInstance.get('/fields/values', { params });
+	try {
+		const response = await ApiBaseInstance.get('/fields/values', { params });
 
-	// Normalize values from different types (stringValues, boolValues, etc.)
-	if (response.data?.data?.values) {
-		const allValues: string[] = [];
-		Object.values(response.data.data.values).forEach((valueArray: any) => {
-			if (Array.isArray(valueArray)) {
-				allValues.push(...valueArray.map(String));
-			}
-		});
+		// Normalize values from different types (stringValues, boolValues, etc.)
+		if (response.data?.data?.values) {
+			const allValues: string[] = [];
+			Object.values(response.data.data.values).forEach((valueArray: any) => {
+				if (Array.isArray(valueArray)) {
+					allValues.push(...valueArray.map(String));
+				}
+			});
 
-		// Add a normalized values array to the response
-		response.data.data.normalizedValues = allValues;
+			// Add a normalized values array to the response
+			response.data.data.normalizedValues = allValues;
+		}
+
+		return {
+			httpStatusCode: response.status,
+			data: response.data.data,
+		};
+	} catch (error) {
+		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 	}
-
-	return {
-		statusCode: 200,
-		error: null,
-		message: response.data.status,
-		payload: response.data.data,
-	};
 };
 
 export default getFieldValues;

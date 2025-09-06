@@ -81,11 +81,11 @@ function DynamicVariable({
 		name: debouncedApiSearchText,
 	});
 
-	const isComplete = useMemo(() => data?.payload?.complete === true, [data]);
+	const isComplete = useMemo(() => data?.data?.complete === true, [data]);
 
 	useEffect(() => {
 		if (data) {
-			const newAttributes = data.payload?.keys ?? {};
+			const newAttributes = data.data?.keys ?? {};
 			setAttributes(newAttributes);
 			setFilteredAttributes(newAttributes);
 		}

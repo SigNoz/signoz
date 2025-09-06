@@ -1,6 +1,6 @@
 import { getFieldValues } from 'api/dynamicVariables/getFieldValues';
 import { useQuery, UseQueryResult } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { SuccessResponseV2 } from 'types/api';
 import { FieldValueResponse } from 'types/api/dynamicVariables/getFieldValues';
 
 interface UseGetFieldValuesProps {
@@ -35,9 +35,9 @@ export const useGetFieldValues = ({
 	endUnixMilli,
 	enabled = true,
 }: UseGetFieldValuesProps): UseQueryResult<
-	SuccessResponse<FieldValueResponse> | ErrorResponse
+	SuccessResponseV2<FieldValueResponse>
 > =>
-	useQuery<SuccessResponse<FieldValueResponse> | ErrorResponse>({
+	useQuery<SuccessResponseV2<FieldValueResponse>>({
 		queryKey: ['fieldValues', signal, name, value, startUnixMilli, endUnixMilli],
 		queryFn: () =>
 			getFieldValues(signal, name, value, startUnixMilli, endUnixMilli),

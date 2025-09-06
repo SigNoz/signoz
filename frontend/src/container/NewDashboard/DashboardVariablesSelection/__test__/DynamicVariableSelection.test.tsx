@@ -44,11 +44,11 @@ const mockQueryResult = {
 
 // Sample data for testing
 const mockApiResponse = {
-	payload: {
+	data: {
 		normalizedValues: ['frontend', 'backend', 'database'],
 		complete: true,
 	},
-	statusCode: 200,
+	httpStatusCode: 200,
 };
 
 // Mock scrollIntoView since it's not available in JSDOM

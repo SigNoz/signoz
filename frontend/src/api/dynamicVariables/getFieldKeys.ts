@@ -1,5 +1,7 @@
 import { ApiBaseInstance } from 'api';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
+import { AxiosError } from 'axios';
+import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 import { FieldKeyResponse } from 'types/api/dynamicVariables/getFieldKeys';
 
 /**
@@ -10,7 +12,7 @@ import { FieldKeyResponse } from 'types/api/dynamicVariables/getFieldKeys';
 export const getFieldKeys = async (
 	signal?: 'traces' | 'logs' | 'metrics',
 	name?: string,
-): Promise<SuccessResponse<FieldKeyResponse> | ErrorResponse> => {
+): Promise<SuccessResponseV2<FieldKeyResponse>> => {
 	const params: Record<string, string> = {};
 
 	if (signal) {
@@ -21,14 +23,16 @@ export const getFieldKeys = async (
 		params.name = name;
 	}
 
-	const response = await ApiBaseInstance.get('/fields/keys', { params });
+	try {
+		const response = await ApiBaseInstance.get('/fields/keys', { params });
 
-	return {
-		statusCode: 200,
-		error: null,
-		message: response.data.status,
-		payload: response.data.data,
-	};
+		return {
+			httpStatusCode: response.status,
+			data: response.data.data,
+		};
+	} catch (error) {
+		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+	}
 };
 
 export default getFieldKeys;
