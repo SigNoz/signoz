@@ -449,6 +449,8 @@ func (v *variableReplacementVisitor) VisitValue(ctx *grammar.ValueContext) any {
 		originalValue = ctx.NUMBER().GetText()
 	} else if ctx.KEY() != nil {
 		originalValue = ctx.KEY().GetText()
+	} else if ctx.BOOL() != nil {
+		originalValue = ctx.BOOL().GetText()
 	}
 
 	// Check if this is a variable (starts with $)
