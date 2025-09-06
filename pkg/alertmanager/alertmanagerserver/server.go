@@ -3,6 +3,7 @@ package alertmanagerserver
 import (
 	"context"
 	"log/slog"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -19,6 +20,7 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/model"
 )
 
@@ -62,6 +64,9 @@ type Server struct {
 	tmpl              *template.Template
 	wg                sync.WaitGroup
 	stopc             chan struct{}
+
+	// metrics server for exposing prometheus metrics
+	metricsServer *http.Server
 }
 
 func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore) (*Server, error) {
@@ -73,8 +78,9 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		stateStore: stateStore,
 		stopc:      make(chan struct{}),
 	}
+	signozRegisterer := prometheus.WrapRegistererWithPrefix(srvConfig.Metrics.Prefix, registry)
 	// initialize marker
-	server.marker = alertmanagertypes.NewMarker(server.registry)
+	server.marker = alertmanagertypes.NewMarker(signozRegisterer)
 
 	// get silences for initial state
 	state, err := server.stateStore.Get(ctx, server.orgID)
@@ -97,7 +103,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 			MaxSilences:         func() int { return srvConfig.Silences.Max },
 			MaxSilenceSizeBytes: func() int { return srvConfig.Silences.MaxSizeBytes },
 		},
-		Metrics: server.registry,
+		Metrics: signozRegisterer,
 		Logger:  server.logger,
 	})
 	if err != nil {
@@ -116,7 +122,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 	server.nflog, err = nflog.New(nflog.Options{
 		SnapshotReader: strings.NewReader(nflogSnapshot),
 		Retention:      server.srvConfig.NFLog.Retention,
-		Metrics:        server.registry,
+		Metrics:        signozRegisterer,
 		Logger:         server.logger,
 	})
 	if err != nil {
@@ -181,13 +187,18 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		})
 	}()
 
-	server.alerts, err = mem.NewAlerts(ctx, server.marker, server.srvConfig.Alerts.GCInterval, nil, server.logger, server.registry)
+	server.alerts, err = mem.NewAlerts(ctx, server.marker, server.srvConfig.Alerts.GCInterval, nil, server.logger, signozRegisterer)
 	if err != nil {
 		return nil, err
 	}
 
-	server.pipelineBuilder = notify.NewPipelineBuilder(server.registry, featurecontrol.NoopFlags{})
-	server.dispatcherMetrics = dispatch.NewDispatcherMetrics(false, server.registry)
+	server.pipelineBuilder = notify.NewPipelineBuilder(signozRegisterer, featurecontrol.NoopFlags{})
+	server.dispatcherMetrics = dispatch.NewDispatcherMetrics(false, signozRegisterer)
+
+	// Initialize metrics server
+	if err := server.initMetricsServer(); err != nil {
+		return nil, err
+	}
 
 	return server, nil
 }
@@ -370,6 +381,13 @@ func (server *Server) Stop(ctx context.Context) error {
 		server.inhibitor.Stop()
 	}
 
+	// Stop metrics server
+	if server.metricsServer != nil {
+		if err := server.metricsServer.Shutdown(ctx); err != nil {
+			server.logger.ErrorContext(ctx, "failed to shutdown metrics server", "error", err)
+		}
+	}
+
 	// Close the alert provider.
 	server.alerts.Close()
 
@@ -380,4 +398,46 @@ func (server *Server) Stop(ctx context.Context) error {
 	server.wg.Wait()
 
 	return nil
+}
+
+// initMetricsServer initializes the HTTP server for serving Prometheus metrics
+func (server *Server) initMetricsServer() error {
+	if server.srvConfig.Metrics.Address == "" {
+		server.logger.Info("metrics server disabled (no address configured)")
+		return nil
+	}
+
+	mux := http.NewServeMux()
+	path := server.srvConfig.Metrics.Path
+	if path == "" {
+		path = "/metrics"
+	}
+
+	// Register metrics handler using standard net/http
+	mux.Handle(path, promhttp.HandlerFor(server.registry.(prometheus.Gatherer), promhttp.HandlerOpts{}))
+
+	server.metricsServer = &http.Server{
+		Addr:    server.srvConfig.Metrics.Address,
+		Handler: mux,
+	}
+
+	return nil
+}
+
+// StartMetricsServer starts the metrics HTTP server using standard net/http
+func (server *Server) StartMetricsServer(ctx context.Context) {
+	if server.metricsServer == nil {
+		return
+	}
+
+	server.wg.Add(1)
+	go func() {
+		defer server.wg.Done()
+		server.logger.InfoContext(ctx, "starting metrics server", "address", server.metricsServer.Addr)
+
+		// Standard net/http server approach
+		if err := server.metricsServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			server.logger.ErrorContext(ctx, "metrics server failed", "error", err)
+		}
+	}()
 }
