@@ -3,9 +3,10 @@ import {
 	getTagToken,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
-import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
 import { isEmpty } from 'lodash-es';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { WhereClauseConfig } from './useAutoComplete';
@@ -31,8 +32,16 @@ export const useOptions = (
 	const operators = useOperators(key, keys);
 
 	// get matching dynamic variables to suggest
-	const { dynamicVariables } = useGetDynamicVariables();
-	const variableName = dynamicVariables.find(
+	const { selectedDashboard } = useDashboard();
+
+	const dynamicVariables = useMemo(
+		() =>
+			Object.values(selectedDashboard?.data?.variables || {})?.filter(
+				(variable: IDashboardVariable) => variable.type === 'DYNAMIC',
+			),
+		[selectedDashboard],
+	);
+	const variableName = dynamicVariables?.find(
 		(variable) => variable?.dynamicVariablesAttribute === key,
 	)?.name;
 

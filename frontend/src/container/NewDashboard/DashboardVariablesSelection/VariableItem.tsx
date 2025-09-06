@@ -126,6 +126,7 @@ function VariableItem({
 								valueNotInList = true;
 							}
 						}
+
 						// variablesData.allSelected is added for the case where on change of options we need to update the
 						// local storage
 						if (
@@ -133,20 +134,32 @@ function VariableItem({
 							variableData.name &&
 							(validVariableUpdate() || valueNotInList || variableData.allSelected)
 						) {
-							const value = variableData.selectedValue;
-							let allSelected = false;
+							if (
+								variableData.allSelected &&
+								variableData.multiSelect &&
+								variableData.showALLOption
+							) {
+								onValueUpdate(variableData.name, variableData.id, newOptionsData, true);
 
-							if (variableData.multiSelect) {
-								const { selectedValue } = variableData;
-								allSelected =
-									newOptionsData.length > 0 &&
-									Array.isArray(selectedValue) &&
-									selectedValue.length === newOptionsData.length &&
-									newOptionsData.every((option) => selectedValue.includes(option));
-							}
+								// Update tempSelection to maintain ALL state when dropdown is open
+								if (tempSelection !== undefined) {
+									setTempSelection(newOptionsData.map((option) => option.toString()));
+								}
+							} else {
+								const value = variableData.selectedValue;
+								let allSelected = false;
 
-							if (variableData && variableData?.name && variableData?.id) {
-								onValueUpdate(variableData.name, variableData.id, value, allSelected);
+								if (variableData.multiSelect) {
+									const { selectedValue } = variableData;
+									allSelected =
+										newOptionsData.length > 0 &&
+										Array.isArray(selectedValue) &&
+										newOptionsData.every((option) => selectedValue.includes(option));
+								}
+
+								if (variableData && variableData?.name && variableData?.id) {
+									onValueUpdate(variableData.name, variableData.id, value, allSelected);
+								}
 							}
 						}
 
@@ -170,7 +183,7 @@ function VariableItem({
 		}
 	};
 
-	const { isLoading } = useQuery(
+	const { isLoading, refetch } = useQuery(
 		[
 			REACT_QUERY_KEY.DASHBOARD_BY_ID,
 			variableData.name || '',
@@ -234,10 +247,14 @@ function VariableItem({
 				return;
 			}
 			if (variableData.name) {
-				if (
-					value === ALL_SELECT_VALUE ||
-					(Array.isArray(value) && value.includes(ALL_SELECT_VALUE))
-				) {
+				// Check if ALL is effectively selected by comparing with available options
+				const isAllSelected =
+					Array.isArray(value) &&
+					value.length > 0 &&
+					optionsData.every((option) => value.includes(option.toString()));
+
+				if (isAllSelected && variableData.showALLOption) {
+					// For ALL selection, pass null to avoid storing values
 					onValueUpdate(variableData.name, variableData.id, optionsData, true);
 				} else {
 					onValueUpdate(variableData.name, variableData.id, value, false);
@@ -251,6 +268,7 @@ function VariableItem({
 			variableData.id,
 			onValueUpdate,
 			optionsData,
+			variableData.showALLOption,
 		],
 	);
 
@@ -408,17 +426,30 @@ function VariableItem({
 							onDropdownVisibleChange={handleDropdownVisibleChange}
 							errorMessage={errorMessage}
 							// eslint-disable-next-line react/no-unstable-nested-components
-							maxTagPlaceholder={(omittedValues): JSX.Element => (
-								<Tooltip title={omittedValues.map(({ value }) => value).join(', ')}>
-									<span>+ {omittedValues.length} </span>
-								</Tooltip>
-							)}
+							maxTagPlaceholder={(omittedValues): JSX.Element => {
+								const maxDisplayValues = 10;
+								const valuesToShow = omittedValues.slice(0, maxDisplayValues);
+								const hasMore = omittedValues.length > maxDisplayValues;
+								const tooltipText =
+									valuesToShow.map(({ value }) => value).join(', ') +
+									(hasMore ? ` + ${omittedValues.length - maxDisplayValues} more` : '');
+
+								return (
+									<Tooltip title={tooltipText}>
+										<span>+ {omittedValues.length} </span>
+									</Tooltip>
+								);
+							}}
 							onClear={(): void => {
 								handleChange([]);
 							}}
 							enableAllSelection={enableSelectAll}
 							maxTagTextLength={30}
 							allowClear={selectValue !== ALL_SELECT_VALUE && selectValue !== 'ALL'}
+							onRetry={(): void => {
+								setErrorMessage(null);
+								refetch();
+							}}
 						/>
 					) : (
 						<CustomSelect
@@ -444,6 +475,10 @@ function VariableItem({
 							}))}
 							value={selectValue}
 							errorMessage={errorMessage}
+							onRetry={(): void => {
+								setErrorMessage(null);
+								refetch();
+							}}
 						/>
 					))
 				)}

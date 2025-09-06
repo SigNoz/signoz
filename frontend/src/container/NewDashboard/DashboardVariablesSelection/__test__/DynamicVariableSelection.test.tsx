@@ -234,6 +234,7 @@ describe('DynamicVariableSelection Component', () => {
 				'service:"frontend"|services:["frontend","backend"]', // The actual dynamicVariablesKey
 				'2023-01-01T00:00:00Z', // minTime from useSelector mock
 				'2023-01-02T00:00:00Z', // maxTime from useSelector mock
+				'',
 			],
 			expect.objectContaining({
 				enabled: true, // Type is 'DYNAMIC'

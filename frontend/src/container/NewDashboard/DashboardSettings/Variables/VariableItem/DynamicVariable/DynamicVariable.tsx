@@ -25,6 +25,7 @@ enum AttributeSource {
 function DynamicVariable({
 	setDynamicVariablesSelectedValue,
 	dynamicVariablesSelectedValue,
+	errorAttributeKeyMessage,
 }: {
 	setDynamicVariablesSelectedValue: Dispatch<
 		SetStateAction<
@@ -41,6 +42,7 @@ function DynamicVariable({
 				value: string;
 		  }
 		| undefined;
+	errorAttributeKeyMessage?: string;
 }): JSX.Element {
 	const sources = [
 		AttributeSource.ALL_SOURCES,
@@ -53,7 +55,7 @@ function DynamicVariable({
 	const [attributes, setAttributes] = useState<Record<string, FieldKey[]>>({});
 	const [selectedAttribute, setSelectedAttribute] = useState<string>();
 	const [apiSearchText, setApiSearchText] = useState<string>('');
-
+	const [errorMessage, setErrorMessage] = useState<string>();
 	const debouncedApiSearchText = useDebounce(apiSearchText, DEBOUNCE_DELAY);
 
 	const [filteredAttributes, setFilteredAttributes] = useState<
@@ -142,38 +144,53 @@ function DynamicVariable({
 		dynamicVariablesSelectedValue?.value,
 	]);
 
-	const errorMessage = (error as any)?.message;
+	const errorText = (error as any)?.message || errorMessage;
 	return (
 		<div className="dynamic-variable-container">
-			<CustomSelect
-				placeholder="Select an Attribute"
-				options={Object.keys(filteredAttributes).map((key) => ({
-					label: key,
-					value: key,
-				}))}
-				loading={isLoading}
-				status={errorMessage ? 'error' : undefined}
-				onChange={(value): void => {
-					setSelectedAttribute(value);
-				}}
-				showSearch
-				errorMessage={errorMessage as any}
-				value={selectedAttribute || dynamicVariablesSelectedValue?.name}
-				onSearch={handleSearch}
-				onRetry={(): void => {
-					refetch();
-				}}
-			/>
-			<Typography className="dynamic-variable-from-text">from</Typography>
-			<Select
-				placeholder="Source"
-				defaultValue={AttributeSource.ALL_SOURCES}
-				options={sources.map((source) => ({ label: source, value: source }))}
-				onChange={(value): void => setAttributeSource(value as AttributeSource)}
-				value={attributeSource || dynamicVariablesSelectedValue?.value}
-			/>
+			<div className="dynamic-variable-config-container">
+				<CustomSelect
+					placeholder="Select an Attribute"
+					options={Object.keys(filteredAttributes).map((key) => ({
+						label: key,
+						value: key,
+					}))}
+					loading={isLoading}
+					status={errorText ? 'error' : undefined}
+					onChange={(value): void => {
+						setSelectedAttribute(value);
+					}}
+					showSearch
+					errorMessage={errorText as any}
+					value={selectedAttribute || dynamicVariablesSelectedValue?.name}
+					onSearch={handleSearch}
+					onRetry={(): void => {
+						// reset error message
+						setErrorMessage(undefined);
+						refetch();
+					}}
+				/>
+				<Typography className="dynamic-variable-from-text">from</Typography>
+				<Select
+					placeholder="Source"
+					defaultValue={AttributeSource.ALL_SOURCES}
+					options={sources.map((source) => ({ label: source, value: source }))}
+					onChange={(value): void => setAttributeSource(value as AttributeSource)}
+					value={attributeSource || dynamicVariablesSelectedValue?.value}
+				/>
+			</div>
+			{errorAttributeKeyMessage && (
+				<div>
+					<Typography.Text type="warning">
+						{errorAttributeKeyMessage}
+					</Typography.Text>
+				</div>
+			)}
 		</div>
 	);
 }
+
+DynamicVariable.defaultProps = {
+	errorAttributeKeyMessage: '',
+};
 
 export default DynamicVariable;

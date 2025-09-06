@@ -12,9 +12,11 @@ import {
 import { Color } from '@signozhq/design-tokens';
 import { Button, Checkbox, Select, Typography } from 'antd';
 import cx from 'classnames';
+import TextToolTip from 'components/TextToolTip/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { capitalize, isEmpty } from 'lodash-es';
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Info } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import React, {
 	useCallback,
@@ -23,6 +25,7 @@ import React, {
 	useRef,
 	useState,
 } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { CustomMultiSelectProps, CustomTagProps, OptionData } from './types';
@@ -65,6 +68,8 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	maxTagTextLength,
 	onDropdownVisibleChange,
 	showIncompleteDataMessage = false,
+	showLabels = false,
+	enableRegexOption = false,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -83,6 +88,8 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	const isClickInsideDropdownRef = useRef(false);
 	const justOpenedRef = useRef<boolean>(false);
 	const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
+
+	const isDarkMode = useIsDarkMode();
 
 	// Convert single string value to array for consistency
 	const selectedValues = useMemo(
@@ -546,12 +553,37 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 			// Reset active index when search changes if dropdown is open
 			if (isOpen && trimmedValue) {
-				setActiveIndex(0);
+				setActiveIndex(-1);
+				// see if the trimmed value matched any option and set that active index
+				const matchedOption = filteredOptions.find(
+					(option) =>
+						option.label.toLowerCase() === trimmedValue.toLowerCase() ||
+						option.value?.toLowerCase() === trimmedValue.toLowerCase(),
+				);
+				if (matchedOption) {
+					setActiveIndex(1);
+				} else {
+					// check if the trimmed value is a regex pattern and set that active index
+					const isRegex =
+						trimmedValue.startsWith('.*') && trimmedValue.endsWith('.*');
+					if (isRegex && enableRegexOption) {
+						setActiveIndex(0);
+					} else {
+						setActiveIndex(enableRegexOption ? 1 : 0);
+					}
+				}
 			}
 
 			if (onSearch) onSearch(trimmedValue);
 		},
-		[onSearch, isOpen, selectedValues, onChange],
+		[
+			onSearch,
+			isOpen,
+			selectedValues,
+			onChange,
+			filteredOptions,
+			enableRegexOption,
+		],
 	);
 
 	// ===== UI & Rendering Functions =====
@@ -819,7 +851,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				}
 
 				// Add Regex to flat list
-				if (!isEmpty(searchText)) {
+				if (!isEmpty(searchText) && enableRegexOption) {
 					// Only add regex wrapper if it doesn't already look like a regex pattern
 					const isAlreadyRegex =
 						searchText.startsWith('.*') && searchText.endsWith('.*');
@@ -1361,6 +1393,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			extendSelection,
 			onDropdownVisibleChange,
 			handleSelectAll,
+			enableRegexOption,
 		],
 	);
 
@@ -1411,7 +1444,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		const customOptions: OptionData[] = [];
 
 		// add regex options first since they appear first in the UI
-		if (!isEmpty(searchText)) {
+		if (!isEmpty(searchText) && enableRegexOption) {
 			// Only add regex wrapper if it doesn't already look like a regex pattern
 			const isAlreadyRegex =
 				searchText.startsWith('.*') && searchText.endsWith('.*');
@@ -1434,8 +1467,17 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			});
 		}
 
-		// Now add all custom options at the beginning
-		const enhancedNonSectionOptions = [...customOptions, ...nonSectionOptions];
+		// Now add all custom options at the beginning, removing duplicates based on value
+		const allOptions = [...customOptions, ...nonSectionOptions];
+		const seenValues = new Set<string>();
+		const enhancedNonSectionOptions = allOptions.filter((option) => {
+			const value = option.value || '';
+			if (seenValues.has(value)) {
+				return false;
+			}
+			seenValues.add(value);
+			return true;
+		});
 
 		const allOptionValues = getAllAvailableValues(processedOptions);
 		const allOptionsSelected =
@@ -1511,12 +1553,27 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								}
 							}}
 						>
-							<Checkbox
-								checked={allOptionsSelected}
-								style={{ width: '100%', height: '100%' }}
-							>
+							<Checkbox checked={allOptionsSelected} className="option-checkbox">
 								<div className="option-content">
-									<div>ALL</div>
+									<div className="all-option-text">
+										ALL
+										<TextToolTip
+											text="Note about ALL in Dynamic Variable"
+											url="https://signoz.io/docs/userguide/manage-variables/#note-about-all"
+											urlText="here"
+											useFilledIcon={false}
+											outlinedIcon={
+												<Info
+													size={14}
+													style={{
+														color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+														marginTop: 1,
+														marginRight: 5,
+													}}
+												/>
+											}
+										/>
+									</div>
 								</div>
 							</Checkbox>
 						</div>
@@ -1527,7 +1584,19 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				{/* Non-section options when not searching */}
 				{enhancedNonSectionOptions.length > 0 && (
 					<div className="no-section-options">
-						{mapOptions(enhancedNonSectionOptions)}
+						<Virtuoso
+							style={{
+								minHeight: Math.min(300, enhancedNonSectionOptions.length * 40),
+								maxHeight: enhancedNonSectionOptions.length * 40,
+							}}
+							data={enhancedNonSectionOptions}
+							itemContent={(index, item): React.ReactNode =>
+								(mapOptions([item]) as unknown) as React.ReactElement
+							}
+							totalCount={enhancedNonSectionOptions.length}
+							itemSize={(): number => 40}
+							overscan={5}
+						/>
 					</div>
 				)}
 
@@ -1538,12 +1607,41 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							<div className="select-group" key={section.label}>
 								<div className="group-label" role="heading" aria-level={2}>
 									{section.label}
+									<TextToolTip
+										text="Learn more about this section "
+										url="https://signoz.io/docs/userguide/manage-variables/#dynamic-variable-dropdowns-display-values-in-two-sections"
+										urlText="here"
+										useFilledIcon={false}
+										outlinedIcon={
+											<Info
+												size={14}
+												style={{
+													color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+													marginTop: 1,
+												}}
+											/>
+										}
+									/>
 								</div>
 								<div role="group" aria-label={`${section.label} options`}>
-									{section.options && mapOptions(section.options)}
+									<Virtuoso
+										style={{
+											minHeight: Math.min(300, (section.options?.length || 0) * 40),
+											maxHeight: (section.options?.length || 0) * 40,
+										}}
+										data={section.options || []}
+										itemContent={(index, item): React.ReactNode =>
+											(mapOptions([item]) as unknown) as React.ReactElement
+										}
+										totalCount={section.options?.length || 0}
+										itemSize={(): number => 40}
+										overscan={5}
+									/>
 								</div>
 							</div>
-						) : null,
+						) : (
+							<div key={section.label} />
+						),
 					)}
 
 				{/* Navigation help footer */}
@@ -1573,15 +1671,17 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							<div className="navigation-text">
 								{errorMessage || SOMETHING_WENT_WRONG}
 							</div>
-							<div className="navigation-icons">
-								<ReloadOutlined
-									twoToneColor={Color.BG_CHERRY_400}
-									onClick={(e): void => {
-										e.stopPropagation();
-										if (onRetry) onRetry();
-									}}
-								/>
-							</div>
+							{onRetry && (
+								<div className="navigation-icons">
+									<ReloadOutlined
+										twoToneColor={Color.BG_CHERRY_400}
+										onClick={(e): void => {
+											e.stopPropagation();
+											onRetry();
+										}}
+									/>
+								</div>
+							)}
 						</div>
 					)}
 
@@ -1626,6 +1726,8 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		onRetry,
 		showIncompleteDataMessage,
 		isScrolledToBottom,
+		enableRegexOption,
+		isDarkMode,
 	]);
 
 	// Custom handler for dropdown visibility changes
@@ -1710,7 +1812,11 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	// Custom Tag Render (needs significant updates)
 	const tagRender = useCallback(
 		(props: CustomTagProps): React.ReactElement => {
-			const { label, value, closable, onClose } = props;
+			const { label: labelProp, value, closable, onClose } = props;
+
+			const label = showLabels
+				? options.find((option) => option.value === value)?.label || labelProp
+				: labelProp;
 
 			// If the display value is the special ALL value, render the ALL tag
 			if (allOptionShown) {

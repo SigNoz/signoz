@@ -52,6 +52,7 @@ function GridCardGraph({
 	customTimeRange,
 	customOnRowClick,
 	customTimeRangeWindowForCoRelation,
+	widgetsHavingDynamicVariables,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -62,6 +63,7 @@ function GridCardGraph({
 		toScrollWidgetId,
 		setToScrollWidgetId,
 		setDashboardQueryRangeCalled,
+		variablesToGetUpdated,
 	} = useDashboard();
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -175,6 +177,27 @@ function GridCardGraph({
 		[requestData.query],
 	);
 
+	// Bring back dependency on variable chaining for panels to refetch,
+	// but only for non-dynamic variables. We derive a stable token from
+	// the head of the variablesToGetUpdated queue when it's non-dynamic.
+	const nonDynamicVariableChainToken = useMemo(() => {
+		if (!variablesToGetUpdated || variablesToGetUpdated.length === 0) {
+			return undefined;
+		}
+		if (!variables) {
+			return undefined;
+		}
+		const headName = variablesToGetUpdated[0];
+		const variableObj = Object.values(variables).find(
+			(variable) => variable?.name === headName,
+		);
+		if (variableObj && variableObj.type !== 'DYNAMIC') {
+			return headName;
+		}
+		return undefined;
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [variablesToGetUpdated, variables]);
+
 	const queryResponse = useGetQueryRange(
 		{
 			...requestData,
@@ -194,24 +217,29 @@ function GridCardGraph({
 				maxTime,
 				minTime,
 				globalSelectedInterval,
-				variables,
 				widget?.query,
 				widget?.panelTypes,
 				widget.timePreferance,
 				widget.fillSpans,
 				requestData,
 				variables
-					? Object.entries(variables).reduce(
-							(acc, [id, variable]) => ({
-								...acc,
-								[id]: variable.selectedValue,
-							}),
-							{},
-					  )
+					? Object.entries(variables).reduce((acc, [id, variable]) => {
+							if (
+								variable.type !== 'DYNAMIC' ||
+								(widgetsHavingDynamicVariables?.[variable.id] &&
+									widgetsHavingDynamicVariables?.[variable.id].includes(widget.id))
+							) {
+								return { ...acc, [id]: variable.selectedValue };
+							}
+							return acc;
+					  }, {})
 					: {},
 				...(customTimeRange && customTimeRange.startTime && customTimeRange.endTime
 					? [customTimeRange.startTime, customTimeRange.endTime]
 					: []),
+				// Include non-dynamic variable chaining token to drive refetches
+				// only when a non-dynamic variable is at the head of the queue
+				...(nonDynamicVariableChainToken ? [nonDynamicVariableChainToken] : []),
 			],
 			retry(failureCount, error): boolean {
 				if (
@@ -224,7 +252,7 @@ function GridCardGraph({
 				return failureCount < 2;
 			},
 			keepPreviousData: true,
-			enabled: queryEnabledCondition,
+			enabled: queryEnabledCondition && !nonDynamicVariableChainToken,
 			refetchOnMount: false,
 			onError: (error) => {
 				const errorMessage =
