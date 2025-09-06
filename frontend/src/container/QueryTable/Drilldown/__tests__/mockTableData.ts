@@ -178,6 +178,7 @@ export const MOCK_QUERY = {
 			},
 		],
 		queryFormulas: [],
+		queryTraceOperator: [],
 	},
 	clickhouse_sql: [
 		{
