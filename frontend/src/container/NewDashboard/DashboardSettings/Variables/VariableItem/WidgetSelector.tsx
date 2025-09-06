@@ -3,6 +3,7 @@ import { PANEL_GROUP_TYPES } from 'constants/queryBuilder';
 import { generateGridTitle } from 'container/GridPanelSwitch/utils';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import React from 'react';
+import { WidgetRow, Widgets } from 'types/api/dashboard/getAll';
 
 export function WidgetSelector({
 	selectedWidgets,
@@ -22,7 +23,7 @@ export function WidgetSelector({
 	// and excluding row widgets since they are not panels that can have variables
 	const widgets = Object.values(
 		(selectedDashboard?.data?.widgets || []).reduce(
-			(acc: Record<string, any>, widget: any) => {
+			(acc: Record<string, WidgetRow | Widgets>, widget: WidgetRow | Widgets) => {
 				if (
 					widget.id &&
 					layoutIds.has(widget.id) &&
@@ -51,7 +52,7 @@ export function WidgetSelector({
 	return (
 		<CustomMultiSelect
 			placeholder="Select Panels"
-			options={widgets.map((widget: any) => ({
+			options={widgets.map((widget: WidgetRow | Widgets) => ({
 				label: generateGridTitle(widget.title),
 				value: widget.id,
 			}))}

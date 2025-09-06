@@ -67,6 +67,7 @@ export const getFieldValues = async (
 
 			// Add a normalized values array to the response
 			response.data.data.normalizedValues = allValues;
+
 			// Add relatedValues to the response as per FieldValueResponse
 			if (response.data?.data?.values?.relatedValues) {
 				response.data.data.relatedValues =

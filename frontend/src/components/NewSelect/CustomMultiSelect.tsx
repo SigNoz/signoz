@@ -1566,7 +1566,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 												<Info
 													size={14}
 													style={{
-														color: isDarkMode ? '#ffffff' : '#000000',
+														color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
 														marginTop: 1,
 														marginRight: 5,
 													}}
@@ -1616,7 +1616,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 											<Info
 												size={14}
 												style={{
-													color: isDarkMode ? '#ffffff' : '#000000',
+													color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
 													marginTop: 1,
 												}}
 											/>

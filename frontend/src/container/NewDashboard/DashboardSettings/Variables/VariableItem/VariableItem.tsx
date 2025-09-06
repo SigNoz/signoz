@@ -2,6 +2,7 @@
 import './VariableItem.styles.scss';
 
 import { orange } from '@ant-design/colors';
+import { Color } from '@signozhq/design-tokens';
 import { Button, Collapse, Input, Select, Switch, Tag, Typography } from 'antd';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import cx from 'classnames';
@@ -530,7 +531,7 @@ function VariableItem({
 									<Info
 										size={14}
 										style={{
-											color: isDarkMode ? '#ffffff' : '#000000',
+											color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
 											marginTop: 1,
 										}}
 									/>
@@ -627,7 +628,7 @@ function VariableItem({
 										<Info
 											size={14}
 											style={{
-												color: isDarkMode ? '#ffffff' : '#000000',
+												color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
 												marginTop: 1,
 											}}
 										/>
