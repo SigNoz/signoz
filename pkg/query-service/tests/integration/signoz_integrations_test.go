@@ -18,6 +18,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/nfgrouping"
+	"github.com/SigNoz/signoz/pkg/nfgrouping/nfgroupingtest"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
@@ -588,7 +590,11 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	require.NoError(t, err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(testDB), sharder)
-	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, testDB, orgGetter)
+	notificationGroups, err := nfgroupingtest.New(context.TODO(), providerSettings, nfgrouping.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, testDB, orgGetter, notificationGroups)
 	require.NoError(t, err)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()

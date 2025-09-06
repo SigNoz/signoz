@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/nfgrouping"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/featurecontrol"
@@ -49,29 +50,31 @@ type Server struct {
 	stateStore alertmanagertypes.StateStore
 
 	// alertmanager primitives from upstream alertmanager
-	alerts            *mem.Alerts
-	nflog             *nflog.Log
-	dispatcher        *dispatch.Dispatcher
-	dispatcherMetrics *dispatch.DispatcherMetrics
-	inhibitor         *inhibit.Inhibitor
-	silencer          *silence.Silencer
-	silences          *silence.Silences
-	timeIntervals     map[string][]timeinterval.TimeInterval
-	pipelineBuilder   *notify.PipelineBuilder
-	marker            *alertmanagertypes.MemMarker
-	tmpl              *template.Template
-	wg                sync.WaitGroup
-	stopc             chan struct{}
+	alerts             *mem.Alerts
+	nflog              *nflog.Log
+	dispatcher         *Dispatcher
+	dispatcherMetrics  *DispatcherMetrics
+	inhibitor          *inhibit.Inhibitor
+	silencer           *silence.Silencer
+	silences           *silence.Silences
+	timeIntervals      map[string][]timeinterval.TimeInterval
+	pipelineBuilder    *notify.PipelineBuilder
+	marker             *alertmanagertypes.MemMarker
+	tmpl               *template.Template
+	wg                 sync.WaitGroup
+	stopc              chan struct{}
+	notificationGroups nfgrouping.NotificationGroups
 }
 
-func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore) (*Server, error) {
+func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore, groups nfgrouping.NotificationGroups) (*Server, error) {
 	server := &Server{
-		logger:     logger.With("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver"),
-		registry:   registry,
-		srvConfig:  srvConfig,
-		orgID:      orgID,
-		stateStore: stateStore,
-		stopc:      make(chan struct{}),
+		logger:             logger.With("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver"),
+		registry:           registry,
+		srvConfig:          srvConfig,
+		orgID:              orgID,
+		stateStore:         stateStore,
+		stopc:              make(chan struct{}),
+		notificationGroups: groups,
 	}
 	// initialize marker
 	server.marker = alertmanagertypes.NewMarker(server.registry)
@@ -187,7 +190,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 	}
 
 	server.pipelineBuilder = notify.NewPipelineBuilder(server.registry, featurecontrol.NoopFlags{})
-	server.dispatcherMetrics = dispatch.NewDispatcherMetrics(false, server.registry)
+	server.dispatcherMetrics = NewDispatcherMetrics(false, server.registry)
 
 	return server, nil
 }
@@ -292,7 +295,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		return d
 	}
 
-	server.dispatcher = dispatch.NewDispatcher(
+	server.dispatcher = NewDispatcher(
 		server.alerts,
 		routes,
 		pipeline,
@@ -301,6 +304,8 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		nil,
 		server.logger,
 		server.dispatcherMetrics,
+		server.notificationGroups,
+		server.orgID,
 	)
 
 	// Do not try to add these to server.wg as there seems to be a race condition if
