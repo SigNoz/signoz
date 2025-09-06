@@ -12,6 +12,7 @@ import {
 } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
+import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { WhereClauseConfig } from 'hooks/queryBuilder/useAutoComplete';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
@@ -245,6 +246,8 @@ function QueryBuilderSearchV2(
 
 		return false;
 	}, [currentState, query.aggregateAttribute?.dataType, query.dataSource]);
+
+	const { dynamicVariables } = useGetDynamicVariables();
 
 	const { data, isFetching } = useGetAggregateKeys(
 		{
@@ -788,6 +791,19 @@ function QueryBuilderSearchV2(
 				const dataType = currentFilterItem?.key?.dataType || DataTypes.String;
 				const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
 				values.push(...(attributeValues?.payload?.[key] || []));
+
+				// here we want to suggest the variable name matching with the key here, we will go over the dynamic variables for the keys
+				const variableName = dynamicVariables.find(
+					(variable) =>
+						variable?.dynamicVariablesAttribute === currentFilterItem?.key?.key,
+				)?.name;
+
+				if (variableName) {
+					const variableValue = `$${variableName}`;
+					if (!values.includes(variableValue)) {
+						values.unshift(variableValue);
+					}
+				}
 			}
 
 			setDropdownOptions(
@@ -807,6 +823,8 @@ function QueryBuilderSearchV2(
 		searchValue,
 		suggestionsData?.payload?.attributes,
 		operatorConfigKey,
+		currentFilterItem?.key?.key,
+		dynamicVariables,
 	]);
 
 	// keep the query in sync with the selected tags in logs explorer page

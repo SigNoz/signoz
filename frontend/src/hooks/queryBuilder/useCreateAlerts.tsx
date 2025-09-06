@@ -7,6 +7,7 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
+import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
 import { useNotifications } from 'hooks/useNotifications';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import history from 'lib/history';
@@ -36,6 +37,8 @@ const useCreateAlerts = (
 
 	const { selectedDashboard } = useDashboard();
 
+	const { dynamicVariables } = useGetDynamicVariables();
+
 	return useCallback(() => {
 		if (!widget) return;
 
@@ -64,6 +67,7 @@ const useCreateAlerts = (
 			selectedTime: widget.timePreferance,
 			variables: getDashboardVariables(selectedDashboard?.data.variables),
 			originalGraphType: widget.panelTypes,
+			dynamicVariables,
 		});
 		queryRangeMutation.mutate(queryPayload, {
 			onSuccess: (data) => {
@@ -92,6 +96,7 @@ const useCreateAlerts = (
 		selectedDashboard?.data.variables,
 		selectedDashboard?.data.version,
 		widget,
+		dynamicVariables,
 	]);
 };
 

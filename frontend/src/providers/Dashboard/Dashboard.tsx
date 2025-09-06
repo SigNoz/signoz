@@ -280,7 +280,7 @@ export function DashboardProvider({
 					});
 				} catch (error) {
 					showErrorModal(error as APIError);
-					return;
+					throw error;
 				} finally {
 					setIsDashboardFetching(false);
 				}

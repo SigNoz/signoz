@@ -1,0 +1,26 @@
+.variables-dropdown-container {
+	.url-input-trigger {
+		width: 100%;
+
+		.url-input-field {
+			width: 100%;
+		}
+	}
+
+	// Override Ant Design dropdown styles
+	.ant-dropdown-menu {
+		max-height: 300px;
+		overflow-y: auto;
+		padding: 8px 0;
+	}
+}
+
+.variable-row {
+	display: flex;
+	justify-content: space-between;
+
+	.variable-source {
+		color: #666;
+		font-size: 12px;
+	}
+}
