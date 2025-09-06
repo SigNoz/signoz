@@ -27,6 +27,17 @@ func TestReplaceVariablesInExpression(t *testing.T) {
 			expected: "service.name = 'auth-service'",
 		},
 		{
+			name:       "simple bool check",
+			expression: "has_error = true",
+			variables: map[string]qbtypes.VariableItem{
+				"service": {
+					Type:  qbtypes.DynamicVariableType,
+					Value: "auth-service",
+				},
+			},
+			expected: "has_error = true",
+		},
+		{
 			name:       "simple string variable replacement",
 			expression: "service.name = $service",
 			variables: map[string]qbtypes.VariableItem{
