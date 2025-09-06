@@ -54,11 +54,12 @@ import { WidgetRowHeader } from './WidgetRow';
 
 interface GraphLayoutProps {
 	handle: FullScreenHandle;
+	enableDrillDown?: boolean;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function GraphLayout(props: GraphLayoutProps): JSX.Element {
-	const { handle } = props;
+	const { handle, enableDrillDown = false } = props;
 	const { safeNavigate } = useSafeNavigate();
 	const {
 		selectedDashboard,
@@ -601,6 +602,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 									version={ENTITY_VERSION_V5}
 									onDragSelect={onDragSelect}
 									dataAvailable={checkIfDataExists}
+									enableDrillDown={enableDrillDown}
 									widgetsHavingDynamicVariables={widgetsHavingDynamicVariables}
 								/>
 							</Card>
@@ -688,3 +690,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 }
 
 export default GraphLayout;
+
+GraphLayout.defaultProps = {
+	enableDrillDown: false,
+};
