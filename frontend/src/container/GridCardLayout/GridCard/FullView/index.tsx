@@ -13,6 +13,7 @@ import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
+import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -33,6 +34,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import GetMinMax from 'lib/getMinMax';
+import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -40,6 +42,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
+import { Warning } from 'types/api';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
@@ -293,6 +296,9 @@ function FullView({
 											widgetId={widget?.id || ''}
 										/>
 									</div>
+								)}
+								{!isEmpty(response.data?.warning) && (
+									<WarningPopover warningData={response.data?.warning as Warning} />
 								)}
 								<div className="time-container">
 									{response.isFetching && (

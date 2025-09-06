@@ -377,7 +377,7 @@ const transformMetricsToLogsTraces = (
 				const valueRegex = new RegExp(`\\b${oldValue}\\b`, 'g');
 				transformedExpression = transformedExpression.replace(
 					valueRegex,
-					`'${newValue}'`,
+					`${newValue}`,
 				);
 			},
 		);
