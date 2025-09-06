@@ -19,6 +19,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useEffectOnce } from 'react-use';
+import { handleNavigateWithMetaKey } from 'utils/metaKeyHandler';
 
 import ModuleStepsContainer from './common/ModuleStepsContainer/ModuleStepsContainer';
 import { stepsMap } from './constants/stepsConfig';
@@ -61,7 +62,7 @@ export interface ModuleProps {
 export interface SelectedModuleStepProps {
 	id: string;
 	title: string;
-	component: any;
+	component: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export const useCases = {
@@ -317,10 +318,18 @@ export default function Onboarding(): JSX.Element {
 			{activeStep === 1 && (
 				<div className="onboarding-page">
 					<div
-						onClick={(): void => {
+						onClick={(e): void => {
 							logEvent('Onboarding V2: Skip Button Clicked', {});
-							history.push(ROUTES.APPLICATION);
+							handleNavigateWithMetaKey(ROUTES.APPLICATION, e);
 						}}
+						onKeyDown={(e): void => {
+							if (e.key === 'Enter') {
+								logEvent('Onboarding V2: Skip Button Clicked', {});
+								handleNavigateWithMetaKey(ROUTES.APPLICATION);
+							}
+						}}
+						role="button"
+						tabIndex={0}
 						className="skip-to-console"
 					>
 						{t('skip')}
@@ -332,7 +341,7 @@ export default function Onboarding(): JSX.Element {
 					<div className="modulesContainer">
 						<div className="moduleContainerRowStyles">
 							{Object.keys(ModulesMap).map((module) => {
-								const selectedUseCase = (useCases as any)[module];
+								const selectedUseCase = (useCases as any)[module]; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 								return (
 									<Card

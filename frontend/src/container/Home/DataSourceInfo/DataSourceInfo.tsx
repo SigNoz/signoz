@@ -3,12 +3,13 @@ import { Button, Skeleton, Tag, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
-import history from 'lib/history';
+// import history from 'lib/history';
 import { Globe, Link2 } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
+import { handleNavigateWithMetaKey } from 'utils/metaKeyHandler';
 
 import { DOCS_LINKS } from '../constants';
 
@@ -84,14 +85,14 @@ function DataSourceInfo({
 								icon={<img src="/Icons/container-plus.svg" alt="plus" />}
 								role="button"
 								tabIndex={0}
-								onClick={(): void => {
+								onClick={(e): void => {
 									logEvent('Homepage: Connect dataSource clicked', {});
 
 									if (
 										activeLicense &&
 										activeLicense.platform === LicensePlatform.CLOUD
 									) {
-										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+										handleNavigateWithMetaKey(ROUTES.GET_STARTED_WITH_CLOUD, e);
 									} else {
 										window?.open(
 											DOCS_LINKS.ADD_DATA_SOURCE,
@@ -108,7 +109,7 @@ function DataSourceInfo({
 											activeLicense &&
 											activeLicense.platform === LicensePlatform.CLOUD
 										) {
-											history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+											handleNavigateWithMetaKey(ROUTES.GET_STARTED_WITH_CLOUD);
 										} else {
 											window?.open(
 												DOCS_LINKS.ADD_DATA_SOURCE,

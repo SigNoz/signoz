@@ -116,7 +116,7 @@ const ServicesListTable = memo(
 		onRowClick,
 	}: {
 		services: ServicesList[];
-		onRowClick: (record: ServicesList) => void;
+		onRowClick: (record: ServicesList, event: React.MouseEvent) => void;
 	}): JSX.Element => (
 		<div className="services-list-container home-data-item-container metrics-services-list">
 			<div className="services-list">
@@ -125,8 +125,8 @@ const ServicesListTable = memo(
 					dataSource={services}
 					pagination={false}
 					className="services-table"
-					onRow={(record): { onClick: () => void } => ({
-						onClick: (): void => onRowClick(record),
+					onRow={(record): { onClick: (event: React.MouseEvent) => void } => ({
+						onClick: (event: React.MouseEvent): void => onRowClick(record, event),
 					})}
 				/>
 			</div>
@@ -284,11 +284,17 @@ function ServiceMetrics({
 	}, [onUpdateChecklistDoneItem, loadingUserPreferences, servicesExist]);
 
 	const handleRowClick = useCallback(
-		(record: ServicesList) => {
+		(record: ServicesList, event: React.MouseEvent) => {
+			const path = `${ROUTES.APPLICATION}/${record.serviceName}`;
 			logEvent('Homepage: Service clicked', {
 				serviceName: record.serviceName,
 			});
-			safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+
+			if (event.metaKey || event.ctrlKey) {
+				window.open(path, '_blank');
+			} else {
+				safeNavigate(path);
+			}
 		},
 		[safeNavigate],
 	);

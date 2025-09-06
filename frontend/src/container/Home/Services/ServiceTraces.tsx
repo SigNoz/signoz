@@ -172,13 +172,19 @@ export default function ServiceTraces({
 						dataSource={top5Services}
 						pagination={false}
 						className="services-table"
-						onRow={(record): { onClick: () => void } => ({
-							onClick: (): void => {
+						onRow={(record): { onClick: (e: React.MouseEvent) => void } => ({
+							onClick: (e: React.MouseEvent): void => {
 								logEvent('Homepage: Service clicked', {
 									serviceName: record.serviceName,
 								});
 
-								safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+								const path = `${ROUTES.APPLICATION}/${record.serviceName}`;
+
+								if (e.metaKey || e.ctrlKey) {
+									window.open(path, '_blank');
+								} else {
+									safeNavigate(path);
+								}
 							},
 						})}
 					/>
