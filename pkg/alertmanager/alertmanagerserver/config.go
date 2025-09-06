@@ -28,6 +28,9 @@ type Config struct {
 
 	// Configuration for the notification log.
 	NFLog NFLogConfig `mapstructure:"nflog"`
+
+	// Configuration for metrics server.
+	Metrics MetricsConfig `mapstructure:"metrics"`
 }
 
 type AlertsConfig struct {
@@ -62,6 +65,17 @@ type NFLogConfig struct {
 
 	// Retention of the notification logs.
 	Retention time.Duration `mapstructure:"retention"`
+}
+
+type MetricsConfig struct {
+	// Address to serve Prometheus metrics on (e.g., ":9093")
+	Address string `mapstructure:"address"`
+
+	// Path to serve metrics on (defaults to "/metrics")
+	Path string `mapstructure:"path"`
+
+	// Prefix to attach to all metrics
+	Prefix string `mapstructure:"prefix"`
 }
 
 func NewConfig() Config {
@@ -99,6 +113,12 @@ func NewConfig() Config {
 		NFLog: NFLogConfig{
 			MaintenanceInterval: 15 * time.Minute,
 			Retention:           120 * time.Hour,
+		},
+		// Metrics server configuration
+		Metrics: MetricsConfig{
+			Address: ":9093",
+			Path:    "/metrics",
+			Prefix:  "signoz_",
 		},
 	}
 }
