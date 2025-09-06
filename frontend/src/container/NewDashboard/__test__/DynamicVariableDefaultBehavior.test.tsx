@@ -25,10 +25,8 @@ jest.mock('api/dynamicVariables/getFieldValues', () => ({
 describe('Dynamic Variable Default Behavior', () => {
 	const mockOnValueUpdate = jest.fn();
 	const mockApiResponse = {
-		statusCode: 200,
-		error: null,
-		message: 'success',
-		payload: {
+		httpStatusCode: 200,
+		data: {
 			values: {
 				stringValues: ['frontend', 'backend', 'database', 'cache'],
 			},
