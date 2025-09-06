@@ -548,7 +548,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 							<div className="navigation-icons">
 								<LoadingOutlined />
 							</div>
-							<div className="navigation-text">We are updating the values...</div>
+							<div className="navigation-text">Refreshing values...</div>
 						</div>
 					)}
 					{errorMessage && !loading && (
@@ -575,7 +575,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 						!loading &&
 						!errorMessage && (
 							<div className="navigation-text-incomplete">
-								Use search for more options
+								Don't see the value? Use search
 							</div>
 						)}
 

@@ -1555,31 +1555,39 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								}
 							}}
 						>
-							<Checkbox checked={allOptionsSelected} className="option-checkbox">
-								<div className="option-content">
-									<div className="all-option-text">
-										ALL
-										{isDynamicVariable && (
-											<TextToolTip
-												text="Note about ALL in Dynamic Variable"
-												url="https://signoz.io/docs/userguide/manage-variables/#note-about-all"
-												urlText="here"
-												useFilledIcon={false}
-												outlinedIcon={
-													<Info
-														size={14}
-														style={{
-															color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
-															marginTop: 1,
-															marginRight: 5,
-														}}
-													/>
-												}
-											/>
-										)}
+							<div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+								<Checkbox checked={allOptionsSelected} className="option-checkbox">
+									<div className="option-content">
+										<div className="all-option-text">
+											ALL
+										</div>
 									</div>
+								</Checkbox>
+								<div
+									onClick={(e): void => {
+											e.stopPropagation();
+									}}
+									onMouseDown={(e): void => {
+											e.stopPropagation();
+									}}
+								>
+									{isDynamicVariable && (<TextToolTip
+										text="ALL in dynamic variable = No filter applied (unlike other variable types where ALL sends all selected values). Learn more"
+										url="https://signoz.io/docs/userguide/manage-variables/#note-about-all"
+										urlText="here"
+										useFilledIcon={false}
+										outlinedIcon={
+											<Info
+												size={14}
+												style={{
+													color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+													marginLeft: 5,
+												}}
+											/>
+										}
+									/>)}
 								</div>
-							</Checkbox>
+							</div>
 						</div>
 						<div className="divider" />
 					</>
@@ -1612,7 +1620,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								<div className="group-label" role="heading" aria-level={2}>
 									{section.label}
 									<TextToolTip
-										text="Learn more about this section "
+										text="Related values: Filtered by other variable selections. All values: Unfiltered complete list. Learn more"
 										url="https://signoz.io/docs/userguide/manage-variables/#dynamic-variable-dropdowns-display-values-in-two-sections"
 										urlText="here"
 										useFilledIcon={false}
@@ -1667,7 +1675,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							<div className="navigation-icons">
 								<LoadingOutlined />
 							</div>
-							<div className="navigation-text">We are updating the values...</div>
+							<div className="navigation-text">Refreshing values...</div>
 						</div>
 					)}
 					{errorMessage && !loading && (
@@ -1694,7 +1702,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						!loading &&
 						!errorMessage && (
 							<div className="navigation-text-incomplete">
-								Use search for more options
+								Don't see the value? Use search
 							</div>
 						)}
 

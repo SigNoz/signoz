@@ -224,7 +224,7 @@ function VariableItem({
 
 	const { data: fieldValues } = useGetFieldValues({
 		signal:
-			dynamicVariablesSelectedValue?.value === 'All Sources'
+			dynamicVariablesSelectedValue?.value === 'All telemetry'
 				? undefined
 				: (dynamicVariablesSelectedValue?.value?.toLowerCase() as
 						| 'traces'
@@ -523,8 +523,8 @@ function VariableItem({
 						<LabelContainer className="variable-type-label-container">
 							<Typography className="typography-variables">Variable Type</Typography>
 							<TextToolTip
-								text="Learn more about supported variable types "
-								url="https://signoz.io/docs/userguide/manage-variables/#dynamic-variable"
+								text="Learn more about supported variable types"
+								url="https://signoz.io/docs/userguide/manage-variables/#supported-variable-types"
 								urlText="here"
 								useFilledIcon={false}
 								outlinedIcon={
@@ -619,21 +619,23 @@ function VariableItem({
 								<Tag bordered={false} className="sidenav-beta-tag" color="warning">
 									Not Recommended
 								</Tag>
-								<TextToolTip
-									text="Learn why we don't recommend "
-									url="https://signoz.io/docs/userguide/manage-variables/#why-avoid-clickhouse-query-variables"
-									urlText="here"
-									useFilledIcon={false}
-									outlinedIcon={
-										<Info
-											size={14}
-											style={{
-												color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
-												marginTop: 1,
-											}}
-										/>
-									}
-								/>
+								<div onClick={(e): void => e.stopPropagation()}>
+									<TextToolTip
+										text="Learn why we don't recommend"
+										url="https://signoz.io/docs/userguide/manage-variables/#why-avoid-clickhouse-query-variables"
+										urlText="here"
+										useFilledIcon={false}
+										outlinedIcon={
+											<Info
+												size={14}
+												style={{
+													color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+													marginTop: 1,
+												}}
+											/>
+										}
+									/>
+								</div>
 							</Button>
 						</div>
 					</VariableItemRow>
@@ -756,9 +758,6 @@ function VariableItem({
 							<VariableItemRow className="sort-values-section">
 								<LabelContainer>
 									<Typography className="typography-variables">Sort Values</Typography>
-									<Typography className="typography-sort">
-										Sort the query output values
-									</Typography>
 								</LabelContainer>
 
 								<Select
