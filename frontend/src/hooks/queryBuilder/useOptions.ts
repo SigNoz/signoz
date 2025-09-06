@@ -3,6 +3,7 @@ import {
 	getTagToken,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
+import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
 import { isEmpty } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -24,9 +25,18 @@ export const useOptions = (
 	result: string[],
 	isFetching: boolean,
 	whereClauseConfig?: WhereClauseConfig,
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): Option[] => {
 	const [options, setOptions] = useState<Option[]>([]);
 	const operators = useOperators(key, keys);
+
+	// get matching dynamic variables to suggest
+	const { dynamicVariables } = useGetDynamicVariables();
+	const variableName = dynamicVariables.find(
+		(variable) => variable?.dynamicVariablesAttribute === key,
+	)?.name;
+
+	const variableAsValue = variableName ? `$${variableName}` : '';
 
 	const getLabel = useCallback(
 		(data: BaseAutocompleteData): Option['label'] => data?.key,
@@ -57,7 +67,13 @@ export const useOptions = (
 	const getOptionsWithValidOperator = useCallback(
 		(key: string, results: string[], searchValue: string) => {
 			const hasAllResults = results.every((value) => result.includes(value));
-			const values = getKeyOpValue(results);
+
+			let newResults = results;
+			if (!isEmpty(variableAsValue)) {
+				newResults = [variableAsValue, ...newResults];
+			}
+
+			const values = getKeyOpValue(newResults);
 
 			return hasAllResults
 				? [
@@ -74,7 +90,7 @@ export const useOptions = (
 						...values,
 				  ];
 		},
-		[getKeyOpValue, result],
+		[getKeyOpValue, result, variableAsValue],
 	);
 
 	const getKeyOperatorOptions = useCallback(
@@ -122,7 +138,10 @@ export const useOptions = (
 			newOptions = getKeyOperatorOptions(key);
 		} else if (key && operator) {
 			if (isMulti) {
-				newOptions = results.map((item) => ({
+				const resultsWithVariable = isEmpty(variableAsValue)
+					? results
+					: [variableAsValue, ...results];
+				newOptions = resultsWithVariable.map((item) => ({
 					label: checkCommaInValue(String(item)),
 					value: String(item),
 				}));
@@ -155,6 +174,7 @@ export const useOptions = (
 		getKeyOperatorOptions,
 		getOptionsWithValidOperator,
 		isFetching,
+		variableAsValue,
 	]);
 
 	return useMemo(
