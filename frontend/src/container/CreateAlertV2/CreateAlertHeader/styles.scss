@@ -1,0 +1,151 @@
+.alert-header {
+	background-color: var(--bg-ink-500);
+	font-family: inherit;
+	color: var(--text-vanilla-100);
+
+	/* Top bar with diagonal stripes */
+	&__tab-bar {
+		height: 32px;
+		display: flex;
+		align-items: center;
+		background: repeating-linear-gradient(
+			-45deg,
+			#0f0f0f,
+			#0f0f0f 10px,
+			#101010 10px,
+			#101010 20px
+		);
+		padding-left: 0;
+	}
+
+	/* Tab block visuals */
+	&__tab {
+		display: flex;
+		align-items: center;
+		background-color: var(--bg-ink-500);
+		padding: 0 12px;
+		height: 32px;
+		font-size: 13px;
+		color: var(--text-vanilla-100);
+		margin-left: 12px;
+		margin-top: 12px;
+	}
+
+	&__tab::before {
+		content: '•';
+		margin-right: 6px;
+		font-size: 14px;
+		color: var(--bg-slate-100);
+	}
+
+	&__content {
+		padding: 16px;
+		background: var(--bg-ink-500);
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	&__input.title {
+		font-size: 18px;
+		font-weight: 500;
+		background-color: transparent;
+		color: var(--text-vanilla-100);
+	}
+
+	&__input:focus,
+	&__input:active {
+		border: none;
+		outline: none;
+	}
+
+	&__input.description {
+		font-size: 14px;
+		background-color: transparent;
+		color: var(--text-vanilla-300);
+	}
+}
+
+.labels-input {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	&__add-button {
+		width: fit-content;
+		font-size: 13px;
+		color: #ccc;
+		border: 1px solid #333;
+		background-color: transparent;
+		cursor: pointer;
+		padding: 4px 8px;
+		border-radius: 4px;
+
+		&:hover {
+			border-color: #555;
+			color: #fff;
+		}
+	}
+
+	&__existing-labels {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	&__label-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		background-color: #ad7f581a;
+		color: var(--bg-sienna-400);
+		padding: 4px 8px;
+		border-radius: 16px;
+		font-size: 12px;
+		border: 1px solid var(--bg-sienna-500);
+		font-family: 'Geist Mono';
+	}
+
+	&__remove-button {
+		background: none;
+		border: none;
+		color: var(--bg-sienna-400);
+		cursor: pointer;
+		padding: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 10px;
+
+		&:hover {
+			color: var(--text-vanilla-100);
+		}
+	}
+
+	&__input-container {
+		display: flex;
+		align-items: center;
+		background-color: transparent;
+		border: none;
+	}
+
+	&__input {
+		flex: 1;
+		background-color: transparent;
+		border: none;
+		outline: none;
+		padding: 6px 8px;
+		color: #fff;
+		font-size: 13px;
+
+		&::placeholder {
+			color: #888;
+		}
+
+		&:focus,
+		&:active {
+			border: none;
+			outline: none;
+		}
+	}
+}
