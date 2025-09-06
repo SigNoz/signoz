@@ -2,6 +2,8 @@ package signozalertmanager
 
 import (
 	"context"
+	"github.com/prometheus/alertmanager/featurecontrol"
+	"github.com/prometheus/alertmanager/matcher/compat"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
@@ -54,6 +56,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 }
 
 func (provider *provider) Start(ctx context.Context) error {
+	compat.InitFromFlags(provider.settings.Logger(), featurecontrol.NoopFlags{})
 	if err := provider.service.SyncServers(ctx); err != nil {
 		provider.settings.Logger().ErrorContext(ctx, "failed to sync alertmanager servers", "error", err)
 		return err
@@ -131,17 +134,8 @@ func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgI
 }
 
 func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, channelID valuer.UUID) error {
-	channel, err := provider.configStore.GetChannelByID(ctx, orgID, channelID)
-	if err != nil {
-		return err
-	}
-
 	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
-		return err
-	}
-
-	if err := config.DeleteReceiver(channel.Name); err != nil {
 		return err
 	}
 

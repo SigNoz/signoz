@@ -3,6 +3,9 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/nfrouting"
+	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"log/slog"
 	"net"
 	"net/http"
@@ -16,7 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/querier"
 	querierAPI "github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
@@ -85,6 +87,9 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		signoz.Cache,
 	)
 
+	ruleStore := sqlrulestore.NewRuleStore(signoz.SQLStore)
+	routeManager := alertmanager.NewManagerWithChannelRoutingStrategy(signoz.Alertmanager, ruleStore, signoz.RouteStore)
+
 	rm, err := makeRulesManager(
 		reader,
 		signoz.Cache,
@@ -95,6 +100,8 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		signoz.Modules.OrgGetter,
 		signoz.Querier,
 		signoz.Instrumentation.Logger(),
+		ruleStore,
+		routeManager,
 	)
 	if err != nil {
 		return nil, err
@@ -115,11 +122,12 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
 		FluxInterval:                  config.Querier.FluxInterval,
-		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
+		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager, routeManager),
 		LicensingAPI:                  nooplicensing.NewLicenseAPI(),
 		FieldsAPI:                     fields.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.TelemetryStore),
 		Signoz:                        signoz,
 		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier, signoz.Analytics),
+		NotificationRoutesAPI:         nfrouting.NewAPI(signoz.Analytics, signoz.RouteStore, routeManager),
 	})
 	if err != nil {
 		return nil, err
@@ -380,17 +388,7 @@ func (s *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
-func makeRulesManager(
-	ch interfaces.Reader,
-	cache cache.Cache,
-	alertmanager alertmanager.Alertmanager,
-	sqlstore sqlstore.SQLStore,
-	telemetryStore telemetrystore.TelemetryStore,
-	prometheus prometheus.Prometheus,
-	orgGetter organization.Getter,
-	querier querier.Querier,
-	logger *slog.Logger,
-) (*rules.Manager, error) {
+func makeRulesManager(ch interfaces.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, querier querierAPI.Querier, logger *slog.Logger, ruleStore ruletypes.RuleStore, routeManager *alertmanager.RouteManager) (*rules.Manager, error) {
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
 		TelemetryStore: telemetryStore,
@@ -405,9 +403,11 @@ func makeRulesManager(
 		SQLStore:       sqlstore,
 		OrgGetter:      orgGetter,
 		Alertmanager:   alertmanager,
+		RoutingManager: routeManager,
+		RuleStore:      ruleStore,
 	}
 
-	// create Manager
+	// create RouteManager
 	manager, err := rules.NewManager(managerOpts)
 	if err != nil {
 		return nil, fmt.Errorf("rule manager error: %v", err)

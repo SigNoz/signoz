@@ -16,11 +16,13 @@ import (
 
 type API struct {
 	alertmanager Alertmanager
+	routeManager *RouteManager
 }
 
-func NewAPI(alertmanager Alertmanager) *API {
+func NewAPI(alertmanager Alertmanager, routeManager *RouteManager) *API {
 	return &API{
 		alertmanager: alertmanager,
+		routeManager: routeManager,
 	}
 }
 
@@ -230,6 +232,18 @@ func (api *API) DeleteChannelByID(rw http.ResponseWriter, req *http.Request) {
 	id, err := valuer.NewUUID(idString)
 	if err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		return
+	}
+
+	channel, err := api.alertmanager.GetChannelByID(ctx, claims.OrgID, id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = api.routeManager.DeleteChannel(ctx, claims.OrgID, channel.Name)
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 

@@ -14,8 +14,6 @@ import (
 
 	"errors"
 
-	"github.com/go-openapi/strfmt"
-
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -31,6 +29,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/go-openapi/strfmt"
 )
 
 type PrepareTaskOptions struct {
@@ -101,6 +100,8 @@ type ManagerOptions struct {
 	Alertmanager        alertmanager.Alertmanager
 	SQLStore            sqlstore.SQLStore
 	OrgGetter           organization.Getter
+	RoutingManager      *alertmanager.RouteManager
+	RuleStore           ruletypes.RuleStore
 }
 
 // The Manager manages recording and alerting rules.
@@ -120,9 +121,10 @@ type Manager struct {
 	prepareTaskFunc     func(opts PrepareTaskOptions) (Task, error)
 	prepareTestRuleFunc func(opts PrepareTestRuleOptions) (int, *model.ApiError)
 
-	alertmanager alertmanager.Alertmanager
-	sqlstore     sqlstore.SQLStore
-	orgGetter    organization.Getter
+	alertmanager   alertmanager.Alertmanager
+	sqlstore       sqlstore.SQLStore
+	orgGetter      organization.Getter
+	routingManager *alertmanager.RouteManager
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -202,13 +204,12 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 // by calling the Run method.
 func NewManager(o *ManagerOptions) (*Manager, error) {
 	o = defaultOptions(o)
-	ruleStore := sqlrulestore.NewRuleStore(o.SQLStore)
 	maintenanceStore := sqlrulestore.NewMaintenanceStore(o.SQLStore)
 
 	m := &Manager{
 		tasks:               map[string]Task{},
 		rules:               map[string]Rule{},
-		ruleStore:           ruleStore,
+		ruleStore:           o.RuleStore,
 		maintenanceStore:    maintenanceStore,
 		opts:                o,
 		block:               make(chan struct{}),
@@ -220,6 +221,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		alertmanager:        o.Alertmanager,
 		sqlstore:            o.SQLStore,
 		orgGetter:           o.OrgGetter,
+		routingManager:      o.RoutingManager,
 	}
 
 	return m, nil
@@ -351,33 +353,11 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 	existingRule.Data = ruleStr
 
 	return m.ruleStore.EditRule(ctx, existingRule, func(ctx context.Context) error {
-		cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
-		if err != nil {
-			return err
-		}
 
-		var preferredChannels []string
-		if len(parsedRule.PreferredChannels) == 0 {
-			channels, err := m.alertmanager.ListChannels(ctx, claims.OrgID)
-			if err != nil {
-				return err
-			}
-
-			for _, channel := range channels {
-				preferredChannels = append(preferredChannels, channel.Name)
-			}
+		if parsedRule.NotificationPolicies {
+			err = m.routingManager.AddNotificationPolicyRules(ctx, orgID.StringValue(), id.StringValue(), *parsedRule)
 		} else {
-			preferredChannels = parsedRule.PreferredChannels
-		}
-
-		err = cfg.UpdateRuleIDMatcher(id.StringValue(), preferredChannels)
-		if err != nil {
-			return err
-		}
-
-		err = m.alertmanager.SetConfig(ctx, cfg)
-		if err != nil {
-			return err
+			err = m.routingManager.AddDirectRules(ctx, orgID.StringValue(), id.StringValue(), *parsedRule)
 		}
 
 		err = m.syncRuleStateWithTask(ctx, orgID, prepareTaskName(existingRule.ID.StringValue()), parsedRule)
@@ -457,25 +437,21 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		return err
 	}
 
-	_, err = m.ruleStore.GetStoredRule(ctx, id)
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		return err
+	}
+
+	storedRule, err := m.GetRule(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	return m.ruleStore.DeleteRule(ctx, id, func(ctx context.Context) error {
-		cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
-		if err != nil {
-			return err
-		}
-
-		err = cfg.DeleteRuleIDMatcher(id.StringValue())
-		if err != nil {
-			return err
-		}
-
-		err = m.alertmanager.SetConfig(ctx, cfg)
-		if err != nil {
-			return err
+		if storedRule.NotificationPolicies {
+			err = m.routingManager.DeleteNotificationPolicyRules(ctx, orgID.StringValue(), id.StringValue())
+		} else {
+			err = m.routingManager.DeleteDirectRules(ctx, orgID.StringValue(), id.StringValue())
 		}
 
 		taskName := prepareTaskName(id.StringValue())
@@ -537,31 +513,12 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 	}
 
 	id, err := m.ruleStore.CreateRule(ctx, storedRule, func(ctx context.Context, id valuer.UUID) error {
-		cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
-		if err != nil {
-			return err
-		}
 
-		var preferredChannels []string
-		if len(parsedRule.PreferredChannels) == 0 {
-			channels, err := m.alertmanager.ListChannels(ctx, claims.OrgID)
-			if err != nil {
-				return err
-			}
-
-			for _, channel := range channels {
-				preferredChannels = append(preferredChannels, channel.Name)
-			}
+		if parsedRule.NotificationPolicies {
+			err = m.routingManager.AddNotificationPolicyRules(ctx, orgID.StringValue(), id.StringValue(), *parsedRule)
 		} else {
-			preferredChannels = parsedRule.PreferredChannels
+			err = m.routingManager.AddDirectRules(ctx, orgID.StringValue(), id.StringValue(), *parsedRule)
 		}
-
-		err = cfg.CreateRuleIDMatcher(id.StringValue(), preferredChannels)
-		if err != nil {
-			return err
-		}
-
-		err = m.alertmanager.SetConfig(ctx, cfg)
 		if err != nil {
 			return err
 		}
