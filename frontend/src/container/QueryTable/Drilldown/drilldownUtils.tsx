@@ -271,7 +271,7 @@ const VIEW_QUERY_MAP: Record<string, IBuilderQuery> = {
 };
 
 /**
- * TEMP LOGIC - REMOVE AFTER TESTING
+ * TEMP LOGIC - TO BE REMOVED LATER
  * Transforms metric query filters to logs/traces format
  * Applies the following transformations:
  * - Rule 2: operation → name

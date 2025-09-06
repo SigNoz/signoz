@@ -21,7 +21,7 @@ interface UseDashboardVariableUpdateReturn {
 	createVariable: (
 		name: string,
 		value: IDashboardVariable['selectedValue'],
-		type?: IDashboardVariable['type'],
+		// type?: IDashboardVariable['type'],
 		description?: string,
 		source?: 'logs' | 'traces' | 'metrics' | 'all sources',
 		widgetId?: string,
@@ -158,7 +158,7 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 		(
 			name: string,
 			value: IDashboardVariable['selectedValue'],
-			type: IDashboardVariable['type'] = 'DYNAMIC',
+			// type: IDashboardVariable['type'] = 'DYNAMIC',
 			description = '',
 			source: 'logs' | 'traces' | 'metrics' | 'all sources' = 'all sources',
 			// widgetId?: string,
@@ -167,8 +167,6 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 				console.warn('No dashboard selected for variable creation');
 				return;
 			}
-
-			console.log('createVariable', { name, value, type, description, source });
 
 			// Get current dashboard variables
 			const currentVariables = selectedDashboard.data.variables || {};

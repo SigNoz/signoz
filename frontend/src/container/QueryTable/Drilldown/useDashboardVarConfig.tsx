@@ -46,11 +46,6 @@ const useDashboardVarConfig = ({
 		[selectedDashboard],
 	);
 
-	console.log('dynamicDashboardVariables', {
-		dynamicDashboardVariables,
-		fieldVariables,
-	});
-
 	// Function to determine the source from query data
 	const getSourceFromQuery = useCallback(():
 		| 'logs'
@@ -115,7 +110,7 @@ const useDashboardVarConfig = ({
 			createVariable(
 				fieldName,
 				fieldValue,
-				'DYNAMIC',
+				// 'DYNAMIC',
 				`Variable created from drilldown for field: ${fieldName} (source: ${source})`,
 				source,
 				// widgetId,

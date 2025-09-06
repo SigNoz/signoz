@@ -560,7 +560,6 @@ export const getDefaultWidgetData = (
 		dataType: field.fieldDataType ?? '',
 	})),
 	selectedTracesFields: defaultTraceSelectedColumns,
-	// contextLinks: { linksData: [] },
 });
 
 export const PANEL_TYPE_TO_QUERY_TYPES: Record<PANEL_TYPES, EQueryType[]> = {
