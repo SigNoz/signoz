@@ -139,34 +139,6 @@ jest.mock('hooks/queryBuilder/useGetAggregateValues', () => ({
 	})),
 }));
 
-// Mock the dynamic variables hook to test variable suggestion feature
-const mockDynamicVariables = [
-	{
-		id: 'var1',
-		name: 'service',
-		type: 'DYNAMIC',
-		dynamicVariablesAttribute: 'service.name',
-		dynamicVariablesSource: 'Traces',
-		selectedValue: 'frontend',
-		multiSelect: false,
-		showALLOption: false,
-		allSelected: false,
-		description: '',
-		sort: 'DISABLED',
-		dashboardName: 'Test Dashboard',
-		dashboardId: 'dashboard-123',
-	},
-];
-
-jest.mock('hooks/dashboard/useGetDynamicVariables', () => ({
-	useGetDynamicVariables: jest.fn(() => ({
-		dynamicVariables: mockDynamicVariables,
-		isLoading: false,
-		isError: false,
-		refetch: jest.fn(),
-	})),
-}));
-
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
 		safeNavigate: jest.fn(),
