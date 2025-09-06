@@ -33,7 +33,7 @@ func TestIntegrationLifecycle(t *testing.T) {
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
 	analytics := analyticstest.New()
-	modules := signoz.NewModules(store, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
+	modules := signoz.NewModules(store, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, nil)
 	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	if apiErr != nil {
 		t.Fatalf("could not create test user: %v", apiErr)
