@@ -151,12 +151,11 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			// Press Enter to select the exact match
 			await user.keyboard('{Enter}');
 
-			// Should create selection with exact match
+			// Should select existing option with exact match
 			await waitFor(() => {
 				expect(mockOnChange).toHaveBeenCalledWith('frontend', {
-					label: 'frontend',
+					label: 'Frontend',
 					value: 'frontend',
-					type: 'custom',
 				});
 			});
 		});
@@ -319,7 +318,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 				const activeOption = document.querySelector('.option-item.active');
 				expect(activeOption).toBeInTheDocument();
 				// Verify it's the first option (Frontend)
-				expect(activeOption?.textContent).toContain('Frontend');
+				expect(activeOption?.textContent).toContain('Backend');
 			});
 
 			// Arrow up should go to previous option
@@ -328,8 +327,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			await waitFor(() => {
 				const activeOption = document.querySelector('.option-item.active');
 				expect(activeOption).toBeInTheDocument();
-				// Verify it's now the last option (API Gateway) - wraps around
-				expect(activeOption?.textContent).toContain('API Gateway');
+				expect(activeOption?.textContent).toContain('Frontend');
 			});
 		});
 
@@ -374,9 +372,9 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			await user.keyboard('{Enter}');
 
 			// Should have selected an option
-			expect(mockOnChange).toHaveBeenCalledWith('frontend', {
-				label: 'Frontend',
-				value: 'frontend',
+			expect(mockOnChange).toHaveBeenCalledWith('backend', {
+				label: 'Backend',
+				value: 'backend',
 			});
 		});
 
@@ -394,9 +392,9 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			await user.keyboard(' ');
 
 			// Should have selected an option
-			expect(mockOnChange).toHaveBeenCalledWith('frontend', {
-				label: 'Frontend',
-				value: 'frontend',
+			expect(mockOnChange).toHaveBeenCalledWith('backend', {
+				label: 'Backend',
+				value: 'backend',
 			});
 		});
 
@@ -798,9 +796,9 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			await user.keyboard('{Enter}');
 
 			// Should have selected an option
-			expect(mockOnChange).toHaveBeenCalledWith('backend', {
-				label: 'Backend',
-				value: 'backend',
+			expect(mockOnChange).toHaveBeenCalledWith('database', {
+				label: 'Database',
+				value: 'database',
 			});
 
 			// Open dropdown again

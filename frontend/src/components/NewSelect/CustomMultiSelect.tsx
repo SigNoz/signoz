@@ -12,9 +12,11 @@ import {
 import { Color } from '@signozhq/design-tokens';
 import { Button, Checkbox, Select, Typography } from 'antd';
 import cx from 'classnames';
+import TextToolTip from 'components/TextToolTip/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { capitalize, isEmpty } from 'lodash-es';
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Info } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import React, {
 	useCallback,
@@ -23,11 +25,13 @@ import React, {
 	useRef,
 	useState,
 } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { CustomMultiSelectProps, CustomTagProps, OptionData } from './types';
 import {
 	filterOptionsBySearch,
+	handleScrollToBottom,
 	prioritizeOrAddOptionForMultiSelect,
 	SPACEKEY,
 } from './utils';
@@ -63,6 +67,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	onRetry,
 	maxTagTextLength,
 	onDropdownVisibleChange,
+	showIncompleteDataMessage = false,
+	showLabels = false,
+	enableRegexOption = false,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -79,6 +86,10 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	const optionRefs = useRef<Record<number, HTMLDivElement | null>>({});
 	const [visibleOptions, setVisibleOptions] = useState<OptionData[]>([]);
 	const isClickInsideDropdownRef = useRef(false);
+	const justOpenedRef = useRef<boolean>(false);
+	const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
+
+	const isDarkMode = useIsDarkMode();
 
 	// Convert single string value to array for consistency
 	const selectedValues = useMemo(
@@ -125,6 +136,12 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		return allAvailableValues.every((val) => selectedValues.includes(val));
 	}, [selectedValues, allAvailableValues, enableAllSelection]);
 
+	// Define allOptionShown earlier in the code
+	const allOptionShown = useMemo(
+		() => value === ALL_SELECTED_VALUE || value === 'ALL',
+		[value],
+	);
+
 	// Value passed to the underlying Ant Select component
 	const displayValue = useMemo(
 		() => (isAllSelected ? [ALL_SELECTED_VALUE] : selectedValues),
@@ -133,9 +150,17 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 	// ===== Internal onChange Handler =====
 	const handleInternalChange = useCallback(
-		(newValue: string | string[]): void => {
+		(newValue: string | string[], directCaller?: boolean): void => {
 			// Ensure newValue is an array
 			const currentNewValue = Array.isArray(newValue) ? newValue : [];
+
+			if (
+				(allOptionShown || isAllSelected) &&
+				!directCaller &&
+				currentNewValue.length === 0
+			) {
+				return;
+			}
 
 			if (!onChange) return;
 
@@ -176,7 +201,14 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				}
 			}
 		},
-		[onChange, allAvailableValues, options, enableAllSelection],
+		[
+			allOptionShown,
+			isAllSelected,
+			onChange,
+			allAvailableValues,
+			options,
+			enableAllSelection,
+		],
 	);
 
 	// ===== Existing Callbacks (potentially needing adjustment later) =====
@@ -512,13 +544,46 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			}
 
 			// Normal single value handling
-			setSearchText(value.trim());
+			const trimmedValue = value.trim();
+			setSearchText(trimmedValue);
 			if (!isOpen) {
 				setIsOpen(true);
+				justOpenedRef.current = true;
 			}
-			if (onSearch) onSearch(value.trim());
+
+			// Reset active index when search changes if dropdown is open
+			if (isOpen && trimmedValue) {
+				setActiveIndex(-1);
+				// see if the trimmed value matched any option and set that active index
+				const matchedOption = filteredOptions.find(
+					(option) =>
+						option.label.toLowerCase() === trimmedValue.toLowerCase() ||
+						option.value?.toLowerCase() === trimmedValue.toLowerCase(),
+				);
+				if (matchedOption) {
+					setActiveIndex(1);
+				} else {
+					// check if the trimmed value is a regex pattern and set that active index
+					const isRegex =
+						trimmedValue.startsWith('.*') && trimmedValue.endsWith('.*');
+					if (isRegex && enableRegexOption) {
+						setActiveIndex(0);
+					} else {
+						setActiveIndex(enableRegexOption ? 1 : 0);
+					}
+				}
+			}
+
+			if (onSearch) onSearch(trimmedValue);
 		},
-		[onSearch, isOpen, selectedValues, onChange],
+		[
+			onSearch,
+			isOpen,
+			selectedValues,
+			onChange,
+			filteredOptions,
+			enableRegexOption,
+		],
 	);
 
 	// ===== UI & Rendering Functions =====
@@ -543,7 +608,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							// Create a unique key that doesn't rely on array index
 							const uniqueKey = `${text.substring(0, 3)}-${part.substring(0, 3)}-${i}`;
 
-							return part.trim().toLowerCase() === searchQuery.trim().toLowerCase() ? (
+							return part.toLowerCase() === searchQuery.toLowerCase() ? (
 								<span key={uniqueKey} className="highlight-text">
 									{part}
 								</span>
@@ -555,6 +620,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				);
 			} catch (error) {
 				// If regex fails, return the original text without highlighting
+				console.error('Error in text highlighting:', error);
 				return text;
 			}
 		},
@@ -567,10 +633,10 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 		if (isAllSelected) {
 			// If all are selected, deselect all
-			handleInternalChange([]);
+			handleInternalChange([], true);
 		} else {
 			// Otherwise, select all
-			handleInternalChange([ALL_SELECTED_VALUE]);
+			handleInternalChange([ALL_SELECTED_VALUE], true);
 		}
 	}, [options, isAllSelected, handleInternalChange]);
 
@@ -745,6 +811,26 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	// Enhanced keyboard navigation with support for maxTagCount
 	const handleKeyDown = useCallback(
 		(e: React.KeyboardEvent<HTMLElement>): void => {
+			// Simple early return if ALL is selected - block all possible keyboard interactions
+			// that could remove the ALL tag, but still allow dropdown navigation and search
+			if (
+				(allOptionShown || isAllSelected) &&
+				(e.key === 'Backspace' || e.key === 'Delete')
+			) {
+				// Only prevent default if the input is empty or cursor is at start position
+				const activeElement = document.activeElement as HTMLInputElement;
+				const isInputActive = activeElement?.tagName === 'INPUT';
+				const isInputEmpty = isInputActive && !activeElement?.value;
+				const isCursorAtStart =
+					isInputActive && activeElement?.selectionStart === 0;
+
+				if (isInputEmpty || isCursorAtStart) {
+					e.preventDefault();
+					e.stopPropagation();
+					return;
+				}
+			}
+
 			// Get flattened list of all selectable options
 			const getFlatOptions = (): OptionData[] => {
 				if (!visibleOptions) return [];
@@ -765,7 +851,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				}
 
 				// Add Regex to flat list
-				if (!isEmpty(searchText)) {
+				if (!isEmpty(searchText) && enableRegexOption) {
 					// Only add regex wrapper if it doesn't already look like a regex pattern
 					const isAlreadyRegex =
 						searchText.startsWith('.*') && searchText.endsWith('.*');
@@ -790,6 +876,17 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			};
 
 			const flatOptions = getFlatOptions();
+
+			// If we just opened the dropdown and have options, set first option as active
+			if (justOpenedRef.current && flatOptions.length > 0) {
+				setActiveIndex(0);
+				justOpenedRef.current = false;
+			}
+
+			// If no option is active but we have options and dropdown is open, activate the first one
+			if (isOpen && activeIndex === -1 && flatOptions.length > 0) {
+				setActiveIndex(0);
+			}
 
 			// Get the active input element to check cursor position
 			const activeElement = document.activeElement as HTMLInputElement;
@@ -1225,7 +1322,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						e.stopPropagation();
 						e.preventDefault();
 						setIsOpen(true);
-						setActiveIndex(0);
+						justOpenedRef.current = true; // Set flag to initialize active option on next render
 						setActiveChipIndex(-1);
 						break;
 
@@ -1271,9 +1368,14 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			}
 		},
 		[
+			allOptionShown,
+			isAllSelected,
+			isOpen,
+			activeIndex,
+			getVisibleChipIndices,
+			getLastVisibleChipIndex,
 			selectedChips,
 			isSelectionMode,
-			isOpen,
 			activeChipIndex,
 			selectedValues,
 			visibleOptions,
@@ -1289,11 +1391,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			startSelection,
 			selectionEnd,
 			extendSelection,
-			activeIndex,
-			handleSelectAll,
-			getVisibleChipIndices,
-			getLastVisibleChipIndex,
 			onDropdownVisibleChange,
+			handleSelectAll,
+			enableRegexOption,
 		],
 	);
 
@@ -1318,6 +1418,14 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		setIsOpen(false);
 	}, []);
 
+	// Add a scroll handler for the dropdown
+	const handleDropdownScroll = useCallback(
+		(e: React.UIEvent<HTMLDivElement>): void => {
+			setIsScrolledToBottom(handleScrollToBottom(e));
+		},
+		[],
+	);
+
 	// Custom dropdown render with sections support
 	const customDropdownRender = useCallback((): React.ReactElement => {
 		// Process options based on current search
@@ -1336,7 +1444,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		const customOptions: OptionData[] = [];
 
 		// add regex options first since they appear first in the UI
-		if (!isEmpty(searchText)) {
+		if (!isEmpty(searchText) && enableRegexOption) {
 			// Only add regex wrapper if it doesn't already look like a regex pattern
 			const isAlreadyRegex =
 				searchText.startsWith('.*') && searchText.endsWith('.*');
@@ -1359,8 +1467,17 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			});
 		}
 
-		// Now add all custom options at the beginning
-		const enhancedNonSectionOptions = [...customOptions, ...nonSectionOptions];
+		// Now add all custom options at the beginning, removing duplicates based on value
+		const allOptions = [...customOptions, ...nonSectionOptions];
+		const seenValues = new Set<string>();
+		const enhancedNonSectionOptions = allOptions.filter((option) => {
+			const value = option.value || '';
+			if (seenValues.has(value)) {
+				return false;
+			}
+			seenValues.add(value);
+			return true;
+		});
 
 		const allOptionValues = getAllAvailableValues(processedOptions);
 		const allOptionsSelected =
@@ -1394,6 +1511,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				onMouseDown={handleDropdownMouseDown}
 				onClick={handleDropdownClick}
 				onKeyDown={handleKeyDown}
+				onScroll={handleDropdownScroll}
 				onBlur={handleBlur}
 				role="listbox"
 				aria-multiselectable="true"
@@ -1435,12 +1553,27 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								}
 							}}
 						>
-							<Checkbox
-								checked={allOptionsSelected}
-								style={{ width: '100%', height: '100%' }}
-							>
+							<Checkbox checked={allOptionsSelected} className="option-checkbox">
 								<div className="option-content">
-									<div>ALL</div>
+									<div className="all-option-text">
+										ALL
+										<TextToolTip
+											text="Note about ALL in Dynamic Variable"
+											url="https://signoz.io/docs/userguide/manage-variables/#note-about-all"
+											urlText="here"
+											useFilledIcon={false}
+											outlinedIcon={
+												<Info
+													size={14}
+													style={{
+														color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+														marginTop: 1,
+														marginRight: 5,
+													}}
+												/>
+											}
+										/>
+									</div>
 								</div>
 							</Checkbox>
 						</div>
@@ -1451,7 +1584,19 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				{/* Non-section options when not searching */}
 				{enhancedNonSectionOptions.length > 0 && (
 					<div className="no-section-options">
-						{mapOptions(enhancedNonSectionOptions)}
+						<Virtuoso
+							style={{
+								minHeight: Math.min(300, enhancedNonSectionOptions.length * 40),
+								maxHeight: enhancedNonSectionOptions.length * 40,
+							}}
+							data={enhancedNonSectionOptions}
+							itemContent={(index, item): React.ReactNode =>
+								(mapOptions([item]) as unknown) as React.ReactElement
+							}
+							totalCount={enhancedNonSectionOptions.length}
+							itemSize={(): number => 40}
+							overscan={5}
+						/>
 					</div>
 				)}
 
@@ -1462,25 +1607,57 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							<div className="select-group" key={section.label}>
 								<div className="group-label" role="heading" aria-level={2}>
 									{section.label}
+									<TextToolTip
+										text="Learn more about this section "
+										url="https://signoz.io/docs/userguide/manage-variables/#dynamic-variable-dropdowns-display-values-in-two-sections"
+										urlText="here"
+										useFilledIcon={false}
+										outlinedIcon={
+											<Info
+												size={14}
+												style={{
+													color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+													marginTop: 1,
+												}}
+											/>
+										}
+									/>
 								</div>
 								<div role="group" aria-label={`${section.label} options`}>
-									{section.options && mapOptions(section.options)}
+									<Virtuoso
+										style={{
+											minHeight: Math.min(300, (section.options?.length || 0) * 40),
+											maxHeight: (section.options?.length || 0) * 40,
+										}}
+										data={section.options || []}
+										itemContent={(index, item): React.ReactNode =>
+											(mapOptions([item]) as unknown) as React.ReactElement
+										}
+										totalCount={section.options?.length || 0}
+										itemSize={(): number => 40}
+										overscan={5}
+									/>
 								</div>
 							</div>
-						) : null,
+						) : (
+							<div key={section.label} />
+						),
 					)}
 
 				{/* Navigation help footer */}
 				<div className="navigation-footer" role="note">
-					{!loading && !errorMessage && !noDataMessage && (
-						<section className="navigate">
-							<ArrowDown size={8} className="icons" />
-							<ArrowUp size={8} className="icons" />
-							<ArrowLeft size={8} className="icons" />
-							<ArrowRight size={8} className="icons" />
-							<span className="keyboard-text">to navigate</span>
-						</section>
-					)}
+					{!loading &&
+						!errorMessage &&
+						!noDataMessage &&
+						!(showIncompleteDataMessage && isScrolledToBottom) && (
+							<section className="navigate">
+								<ArrowDown size={8} className="icons" />
+								<ArrowUp size={8} className="icons" />
+								<ArrowLeft size={8} className="icons" />
+								<ArrowRight size={8} className="icons" />
+								<span className="keyboard-text">to navigate</span>
+							</section>
+						)}
 					{loading && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
@@ -1494,21 +1671,33 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							<div className="navigation-text">
 								{errorMessage || SOMETHING_WENT_WRONG}
 							</div>
-							<div className="navigation-icons">
-								<ReloadOutlined
-									twoToneColor={Color.BG_CHERRY_400}
-									onClick={(e): void => {
-										e.stopPropagation();
-										if (onRetry) onRetry();
-									}}
-								/>
-							</div>
+							{onRetry && (
+								<div className="navigation-icons">
+									<ReloadOutlined
+										twoToneColor={Color.BG_CHERRY_400}
+										onClick={(e): void => {
+											e.stopPropagation();
+											onRetry();
+										}}
+									/>
+								</div>
+							)}
 						</div>
 					)}
 
-					{noDataMessage && !loading && (
-						<div className="navigation-text">{noDataMessage}</div>
-					)}
+					{showIncompleteDataMessage &&
+						isScrolledToBottom &&
+						!loading &&
+						!errorMessage && (
+							<div className="navigation-text-incomplete">
+								Use search for more options
+							</div>
+						)}
+
+					{noDataMessage &&
+						!loading &&
+						!(showIncompleteDataMessage && isScrolledToBottom) &&
+						!errorMessage && <div className="navigation-text">{noDataMessage}</div>}
 				</div>
 			</div>
 		);
@@ -1525,6 +1714,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		handleDropdownMouseDown,
 		handleDropdownClick,
 		handleKeyDown,
+		handleDropdownScroll,
 		handleBlur,
 		activeIndex,
 		loading,
@@ -1534,12 +1724,25 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		renderOptionWithIndex,
 		handleSelectAll,
 		onRetry,
+		showIncompleteDataMessage,
+		isScrolledToBottom,
+		enableRegexOption,
+		isDarkMode,
 	]);
 
 	// Custom handler for dropdown visibility changes
 	const handleDropdownVisibleChange = useCallback(
 		(visible: boolean): void => {
 			setIsOpen(visible);
+			if (visible) {
+				justOpenedRef.current = true;
+				setActiveIndex(0);
+				setActiveChipIndex(-1);
+			} else {
+				setSearchText('');
+				setActiveIndex(-1);
+				// Don't clear activeChipIndex when dropdown closes to maintain tag focus
+			}
 			// Pass through to the parent component's handler if provided
 			if (onDropdownVisibleChange) {
 				onDropdownVisibleChange(visible);
@@ -1609,55 +1812,16 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	// Custom Tag Render (needs significant updates)
 	const tagRender = useCallback(
 		(props: CustomTagProps): React.ReactElement => {
-			const { label, value, closable, onClose } = props;
+			const { label: labelProp, value, closable, onClose } = props;
+
+			const label = showLabels
+				? options.find((option) => option.value === value)?.label || labelProp
+				: labelProp;
 
 			// If the display value is the special ALL value, render the ALL tag
-			if (value === ALL_SELECTED_VALUE && isAllSelected) {
-				const handleAllTagClose = (
-					e: React.MouseEvent | React.KeyboardEvent,
-				): void => {
-					e.stopPropagation();
-					e.preventDefault();
-					handleInternalChange([]); // Clear selection when ALL tag is closed
-				};
-
-				const handleAllTagKeyDown = (e: React.KeyboardEvent): void => {
-					if (e.key === 'Enter' || e.key === SPACEKEY) {
-						handleAllTagClose(e);
-					}
-					// Prevent Backspace/Delete propagation if needed, handle in main keydown handler
-				};
-
-				return (
-					<div
-						className={cx('ant-select-selection-item', {
-							'ant-select-selection-item-active': activeChipIndex === 0, // Treat ALL tag as index 0 when active
-							'ant-select-selection-item-selected': selectedChips.includes(0),
-						})}
-						style={
-							activeChipIndex === 0 || selectedChips.includes(0)
-								? {
-										borderColor: Color.BG_ROBIN_500,
-										backgroundColor: Color.BG_SLATE_400,
-								  }
-								: undefined
-						}
-					>
-						<span className="ant-select-selection-item-content">ALL</span>
-						{closable && (
-							<span
-								className="ant-select-selection-item-remove"
-								onClick={handleAllTagClose}
-								onKeyDown={handleAllTagKeyDown}
-								role="button"
-								tabIndex={0}
-								aria-label="Remove ALL tag (deselect all)"
-							>
-								×
-							</span>
-						)}
-					</div>
-				);
+			if (allOptionShown) {
+				// Don't render a visible tag - will be shown as placeholder
+				return <div style={{ display: 'none' }} />;
 			}
 
 			// If not isAllSelected, render individual tags using previous logic
@@ -1737,52 +1901,69 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			// Fallback for safety, should not be reached
 			return <div />;
 		},
-		[
-			isAllSelected,
-			handleInternalChange,
-			activeChipIndex,
-			selectedChips,
-			selectedValues,
-			maxTagCount,
-		],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[isAllSelected, activeChipIndex, selectedChips, selectedValues, maxTagCount],
 	);
+
+	// Simple onClear handler to prevent clearing ALL
+	const onClearHandler = useCallback((): void => {
+		// Skip clearing if ALL is selected
+		if (allOptionShown || isAllSelected) {
+			return;
+		}
+
+		// Normal clear behavior
+		handleInternalChange([], true);
+		if (onClear) onClear();
+	}, [onClear, handleInternalChange, allOptionShown, isAllSelected]);
 
 	// ===== Component Rendering =====
 	return (
-		<Select
-			ref={selectRef}
-			className={cx('custom-multiselect', className, {
-				'has-selection': selectedChips.length > 0 && !isAllSelected,
-				'is-all-selected': isAllSelected,
+		<div
+			className={cx('custom-multiselect-wrapper', {
+				'all-selected': allOptionShown || isAllSelected,
 			})}
-			placeholder={placeholder}
-			mode="multiple"
-			showSearch
-			filterOption={false}
-			onSearch={handleSearch}
-			value={displayValue}
-			onChange={handleInternalChange}
-			onClear={(): void => handleInternalChange([])}
-			onDropdownVisibleChange={handleDropdownVisibleChange}
-			open={isOpen}
-			defaultActiveFirstOption={defaultActiveFirstOption}
-			popupMatchSelectWidth={dropdownMatchSelectWidth}
-			allowClear={allowClear}
-			getPopupContainer={getPopupContainer ?? popupContainer}
-			suffixIcon={<DownOutlined style={{ cursor: 'default' }} />}
-			dropdownRender={customDropdownRender}
-			menuItemSelectedIcon={null}
-			popupClassName={cx('custom-multiselect-dropdown-container', popupClassName)}
-			notFoundContent={<div className="empty-message">{noDataMessage}</div>}
-			onKeyDown={handleKeyDown}
-			tagRender={tagRender as any}
-			placement={placement}
-			listHeight={300}
-			searchValue={searchText}
-			maxTagTextLength={maxTagTextLength}
-			maxTagCount={isAllSelected ? 1 : maxTagCount}
-			{...rest}
-		/>
+		>
+			{(allOptionShown || isAllSelected) && !searchText && (
+				<div className="all-text">ALL</div>
+			)}
+			<Select
+				ref={selectRef}
+				className={cx('custom-multiselect', className, {
+					'has-selection': selectedChips.length > 0 && !isAllSelected,
+					'is-all-selected': isAllSelected,
+				})}
+				placeholder={placeholder}
+				mode="multiple"
+				showSearch
+				filterOption={false}
+				onSearch={handleSearch}
+				value={displayValue}
+				onChange={(newValue): void => {
+					handleInternalChange(newValue, false);
+				}}
+				onClear={onClearHandler}
+				onDropdownVisibleChange={handleDropdownVisibleChange}
+				open={isOpen}
+				defaultActiveFirstOption={defaultActiveFirstOption}
+				popupMatchSelectWidth={dropdownMatchSelectWidth}
+				allowClear={allowClear}
+				getPopupContainer={getPopupContainer ?? popupContainer}
+				suffixIcon={<DownOutlined style={{ cursor: 'default' }} />}
+				dropdownRender={customDropdownRender}
+				menuItemSelectedIcon={null}
+				popupClassName={cx('custom-multiselect-dropdown-container', popupClassName)}
+				notFoundContent={<div className="empty-message">{noDataMessage}</div>}
+				onKeyDown={handleKeyDown}
+				tagRender={tagRender as any}
+				placement={placement}
+				listHeight={300}
+				searchValue={searchText}
+				maxTagTextLength={maxTagTextLength}
+				maxTagCount={isAllSelected ? undefined : maxTagCount}
+				{...rest}
+			/>
+		</div>
 	);
 };
 

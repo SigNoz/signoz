@@ -14,8 +14,8 @@ import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
-import { debounce, isArray, isString } from 'lodash-es';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { debounce, isArray, isEmpty, isString } from 'lodash-es';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -24,11 +24,9 @@ import { VariableResponseProps } from 'types/api/dashboard/variables/query';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { variablePropsToPayloadVariables } from '../utils';
+import { ALL_SELECT_VALUE, variablePropsToPayloadVariables } from '../utils';
 import { SelectItemStyle } from './styles';
 import { areArraysEqual, checkAPIInvocation, IDependencyData } from './util';
-
-const ALL_SELECT_VALUE = '__ALL__';
 
 interface VariableItemProps {
 	variableData: IDashboardVariable;
@@ -44,7 +42,7 @@ interface VariableItemProps {
 	dependencyData: IDependencyData | null;
 }
 
-const getSelectValue = (
+export const getSelectValue = (
 	selectedValue: IDashboardVariable['selectedValue'],
 	variableData: IDashboardVariable,
 ): string | string[] | undefined => {
@@ -128,6 +126,7 @@ function VariableItem({
 								valueNotInList = true;
 							}
 						}
+
 						// variablesData.allSelected is added for the case where on change of options we need to update the
 						// local storage
 						if (
@@ -135,20 +134,32 @@ function VariableItem({
 							variableData.name &&
 							(validVariableUpdate() || valueNotInList || variableData.allSelected)
 						) {
-							const value = variableData.selectedValue;
-							let allSelected = false;
+							if (
+								variableData.allSelected &&
+								variableData.multiSelect &&
+								variableData.showALLOption
+							) {
+								onValueUpdate(variableData.name, variableData.id, newOptionsData, true);
 
-							if (variableData.multiSelect) {
-								const { selectedValue } = variableData;
-								allSelected =
-									newOptionsData.length > 0 &&
-									Array.isArray(selectedValue) &&
-									selectedValue.length === newOptionsData.length &&
-									newOptionsData.every((option) => selectedValue.includes(option));
-							}
+								// Update tempSelection to maintain ALL state when dropdown is open
+								if (tempSelection !== undefined) {
+									setTempSelection(newOptionsData.map((option) => option.toString()));
+								}
+							} else {
+								const value = variableData.selectedValue;
+								let allSelected = false;
 
-							if (variableData && variableData?.name && variableData?.id) {
-								onValueUpdate(variableData.name, variableData.id, value, allSelected);
+								if (variableData.multiSelect) {
+									const { selectedValue } = variableData;
+									allSelected =
+										newOptionsData.length > 0 &&
+										Array.isArray(selectedValue) &&
+										newOptionsData.every((option) => selectedValue.includes(option));
+								}
+
+								if (variableData && variableData?.name && variableData?.id) {
+									onValueUpdate(variableData.name, variableData.id, value, allSelected);
+								}
 							}
 						}
 
@@ -172,7 +183,7 @@ function VariableItem({
 		}
 	};
 
-	const { isLoading } = useQuery(
+	const { isLoading, refetch } = useQuery(
 		[
 			REACT_QUERY_KEY.DASHBOARD_BY_ID,
 			variableData.name || '',
@@ -223,28 +234,43 @@ function VariableItem({
 		},
 	);
 
-	const handleChange = (inputValue: string | string[]): void => {
-		const value = variableData.multiSelect && !inputValue ? [] : inputValue;
+	const handleChange = useCallback(
+		(inputValue: string | string[]): void => {
+			const value = variableData.multiSelect && !inputValue ? [] : inputValue;
 
-		if (
-			value === variableData.selectedValue ||
-			(Array.isArray(value) &&
-				Array.isArray(variableData.selectedValue) &&
-				areArraysEqual(value, variableData.selectedValue))
-		) {
-			return;
-		}
-		if (variableData.name) {
 			if (
-				value === ALL_SELECT_VALUE ||
-				(Array.isArray(value) && value.includes(ALL_SELECT_VALUE))
+				value === variableData.selectedValue ||
+				(Array.isArray(value) &&
+					Array.isArray(variableData.selectedValue) &&
+					areArraysEqual(value, variableData.selectedValue))
 			) {
-				onValueUpdate(variableData.name, variableData.id, optionsData, true);
-			} else {
-				onValueUpdate(variableData.name, variableData.id, value, false);
+				return;
 			}
-		}
-	};
+			if (variableData.name) {
+				// Check if ALL is effectively selected by comparing with available options
+				const isAllSelected =
+					Array.isArray(value) &&
+					value.length > 0 &&
+					optionsData.every((option) => value.includes(option.toString()));
+
+				if (isAllSelected && variableData.showALLOption) {
+					// For ALL selection, pass null to avoid storing values
+					onValueUpdate(variableData.name, variableData.id, optionsData, true);
+				} else {
+					onValueUpdate(variableData.name, variableData.id, value, false);
+				}
+			}
+		},
+		[
+			variableData.multiSelect,
+			variableData.selectedValue,
+			variableData.name,
+			variableData.id,
+			onValueUpdate,
+			optionsData,
+			variableData.showALLOption,
+		],
+	);
 
 	// Add a handler for tracking temporary selection changes
 	const handleTempChange = (inputValue: string | string[]): void => {
@@ -282,6 +308,59 @@ function VariableItem({
 		variableData.allSelected && enableSelectAll
 			? 'ALL'
 			: selectedValueStringified;
+
+	// Apply default value on first render if no selection exists
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	const finalSelectedValues = useMemo(() => {
+		if (variableData.multiSelect) {
+			let value = tempSelection || selectedValue;
+			if (isEmpty(value)) {
+				if (variableData.showALLOption) {
+					if (variableData.defaultValue) {
+						value = variableData.defaultValue;
+					} else {
+						value = optionsData;
+					}
+				} else if (variableData.defaultValue) {
+					value = variableData.defaultValue;
+				} else {
+					value = optionsData?.[0];
+				}
+			}
+
+			return value;
+		}
+		if (isEmpty(selectedValue)) {
+			if (variableData.defaultValue) {
+				return variableData.defaultValue;
+			}
+			return optionsData[0]?.toString();
+		}
+
+		return selectedValue;
+	}, [
+		variableData.multiSelect,
+		variableData.showALLOption,
+		variableData.defaultValue,
+		selectedValue,
+		tempSelection,
+		optionsData,
+	]);
+
+	useEffect(() => {
+		if (
+			(variableData.multiSelect && !(tempSelection || selectValue)) ||
+			isEmpty(selectValue)
+		) {
+			handleChange(finalSelectedValues as string[] | string);
+		}
+	}, [
+		finalSelectedValues,
+		handleChange,
+		selectValue,
+		tempSelection,
+		variableData.multiSelect,
+	]);
 
 	useEffect(() => {
 		// Fetch options for CUSTOM Type
@@ -330,7 +409,7 @@ function VariableItem({
 								label: option.toString(),
 								value: option.toString(),
 							}))}
-							defaultValue={selectValue}
+							defaultValue={variableData.defaultValue || selectValue}
 							onChange={handleTempChange}
 							bordered={false}
 							placeholder="Select value"
@@ -341,22 +420,36 @@ function VariableItem({
 							data-testid="variable-select"
 							className="variable-select"
 							popupClassName="dropdown-styles"
-							maxTagCount={4}
+							maxTagCount={2}
 							getPopupContainer={popupContainer}
-							allowClear
 							value={tempSelection || selectValue}
 							onDropdownVisibleChange={handleDropdownVisibleChange}
 							errorMessage={errorMessage}
 							// eslint-disable-next-line react/no-unstable-nested-components
-							maxTagPlaceholder={(omittedValues): JSX.Element => (
-								<Tooltip title={omittedValues.map(({ value }) => value).join(', ')}>
-									<span>+ {omittedValues.length} </span>
-								</Tooltip>
-							)}
+							maxTagPlaceholder={(omittedValues): JSX.Element => {
+								const maxDisplayValues = 10;
+								const valuesToShow = omittedValues.slice(0, maxDisplayValues);
+								const hasMore = omittedValues.length > maxDisplayValues;
+								const tooltipText =
+									valuesToShow.map(({ value }) => value).join(', ') +
+									(hasMore ? ` + ${omittedValues.length - maxDisplayValues} more` : '');
+
+								return (
+									<Tooltip title={tooltipText}>
+										<span>+ {omittedValues.length} </span>
+									</Tooltip>
+								);
+							}}
 							onClear={(): void => {
 								handleChange([]);
 							}}
 							enableAllSelection={enableSelectAll}
+							maxTagTextLength={30}
+							allowClear={selectValue !== ALL_SELECT_VALUE && selectValue !== 'ALL'}
+							onRetry={(): void => {
+								setErrorMessage(null);
+								refetch();
+							}}
 						/>
 					) : (
 						<CustomSelect
@@ -365,7 +458,7 @@ function VariableItem({
 									? selectValue.join(' ')
 									: selectValue || variableData.id
 							}
-							defaultValue={selectValue}
+							defaultValue={variableData.defaultValue || selectValue}
 							onChange={handleChange}
 							bordered={false}
 							placeholder="Select value"
@@ -382,6 +475,10 @@ function VariableItem({
 							}))}
 							value={selectValue}
 							errorMessage={errorMessage}
+							onRetry={(): void => {
+								setErrorMessage(null);
+								refetch();
+							}}
 						/>
 					))
 				)}

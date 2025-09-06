@@ -7,9 +7,11 @@ import {
 	GetQueryResultsProps,
 } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { SuccessResponse, Warning } from 'types/api';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
@@ -35,6 +37,16 @@ export const useGetQueryRange: UseGetQueryRange = (
 	options,
 	headers,
 ) => {
+	const { selectedDashboard } = useDashboard();
+
+	const dynamicVariables = useMemo(
+		() =>
+			Object.values(selectedDashboard?.data?.variables || {})?.filter(
+				(variable: IDashboardVariable) => variable.type === 'DYNAMIC',
+			),
+		[selectedDashboard],
+	);
+
 	const newRequestData: GetQueryResultsProps = useMemo(() => {
 		const firstQueryData = requestData.query.builder?.queryData[0];
 		const isListWithSingleTimestampOrder =
@@ -138,7 +150,13 @@ export const useGetQueryRange: UseGetQueryRange = (
 		APIError | Error
 	>({
 		queryFn: async ({ signal }) =>
-			GetMetricQueryRange(modifiedRequestData, version, signal, headers),
+			GetMetricQueryRange(
+				modifiedRequestData,
+				version,
+				dynamicVariables,
+				signal,
+				headers,
+			),
 		...options,
 		retry,
 		queryKey,

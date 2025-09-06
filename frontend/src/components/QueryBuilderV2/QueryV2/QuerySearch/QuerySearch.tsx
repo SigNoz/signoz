@@ -32,12 +32,14 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
 import { Info, TriangleAlert } from 'lucide-react';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	IDetailedError,
 	IQueryContext,
 	IValidationResult,
 } from 'types/antlrQueryTypes';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
@@ -161,13 +163,15 @@ function QuerySearch({
 
 	const { handleRunQuery } = useQueryBuilder();
 
-	// const {
-	// 	data: queryKeySuggestions,
-	// 	refetch: refetchQueryKeySuggestions,
-	// } = useGetQueryKeySuggestions({
-	// 	signal: dataSource,
-	// 	name: searchText || '',
-	// });
+	const { selectedDashboard } = useDashboard();
+
+	const dynamicVariables = useMemo(
+		() =>
+			Object.values(selectedDashboard?.data?.variables || {})?.filter(
+				(variable: IDashboardVariable) => variable.type === 'DYNAMIC',
+			),
+		[selectedDashboard],
+	);
 
 	// Add back the generateOptions function and useEffect
 	const generateOptions = (keys: {
@@ -982,6 +986,25 @@ function QuerySearch({
 				option.label.toLowerCase().includes(searchText),
 			);
 
+			// Add dynamic variables suggestions for the current key
+			const variableName = dynamicVariables?.find(
+				(variable) => variable?.dynamicVariablesAttribute === keyName,
+			)?.name;
+
+			if (variableName) {
+				const variableValue = `$${variableName}`;
+				const variableOption = {
+					label: variableValue,
+					type: 'variable',
+					apply: variableValue,
+				};
+
+				// Add variable suggestion at the beginning if it matches the search text
+				if (variableValue.toLowerCase().includes(searchText.toLowerCase())) {
+					options = [variableOption, ...options];
+				}
+			}
+
 			// Trigger fetch only if needed
 			const shouldFetch =
 				// Fetch only if key is available
@@ -1033,6 +1056,9 @@ function QuerySearch({
 					processedOption.apply = option.label;
 				} else if (option.type === 'array') {
 					// Arrays are already formatted as arrays
+					processedOption.apply = option.label;
+				} else if (option.type === 'variable') {
+					// Variables should be used as-is (they already have the $ prefix)
 					processedOption.apply = option.label;
 				}
 
@@ -1243,7 +1269,10 @@ function QuerySearch({
 					>
 						<Info
 							size={14}
-							style={{ opacity: 0.9, color: isDarkMode ? '#ffffff' : '#000000' }}
+							style={{
+								opacity: 0.9,
+								color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+							}}
 						/>
 					</a>
 				</Tooltip>

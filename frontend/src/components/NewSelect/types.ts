@@ -27,6 +27,7 @@ export interface CustomSelectProps extends Omit<SelectProps, 'options'> {
 	errorMessage?: string | null;
 	allowClear?: SelectProps['allowClear'];
 	onRetry?: () => void;
+	showIncompleteDataMessage?: boolean;
 }
 
 export interface CustomTagProps {
@@ -57,4 +58,8 @@ export interface CustomMultiSelectProps
 	maxTagCount?: number;
 	allowClear?: SelectProps['allowClear'];
 	onRetry?: () => void;
+	maxTagTextLength?: number;
+	showIncompleteDataMessage?: boolean;
+	showLabels?: boolean;
+	enableRegexOption?: boolean;
 }

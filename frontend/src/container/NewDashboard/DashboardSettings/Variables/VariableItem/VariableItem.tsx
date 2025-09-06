@@ -2,30 +2,47 @@
 import './VariableItem.styles.scss';
 
 import { orange } from '@ant-design/colors';
+import { Color } from '@signozhq/design-tokens';
 import { Button, Collapse, Input, Select, Switch, Tag, Typography } from 'antd';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import cx from 'classnames';
 import Editor from 'components/Editor';
+import { CustomSelect } from 'components/NewSelect';
+import TextToolTip from 'components/TextToolTip';
+import { PANEL_GROUP_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import {
+	createDynamicVariableToWidgetsMap,
+	getWidgetsHavingDynamicVariableAttribute,
+} from 'hooks/dashboard/utils';
+import { useGetFieldValues } from 'hooks/dynamicVariables/useGetFieldValues';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
-import { map } from 'lodash-es';
+import { isEmpty, map } from 'lodash-es';
 import {
 	ArrowLeft,
 	Check,
 	ClipboardType,
 	DatabaseZap,
+	Info,
 	LayoutList,
+	Pyramid,
 	X,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import {
 	IDashboardVariable,
 	TSortVariableValuesType,
 	TVariableQueryType,
 	VariableSortTypeArr,
+	Widgets,
 } from 'types/api/dashboard/getAll';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as generateUUID } from 'uuid';
 
 import {
@@ -34,7 +51,9 @@ import {
 } from '../../../DashboardVariablesSelection/util';
 import { variablePropsToPayloadVariables } from '../../../utils';
 import { TVariableMode } from '../types';
+import DynamicVariable from './DynamicVariable/DynamicVariable';
 import { LabelContainer, VariableItemRow } from './styles';
+import { WidgetSelector } from './WidgetSelector';
 
 const { Option } = Select;
 
@@ -42,8 +61,16 @@ interface VariableItemProps {
 	variableData: IDashboardVariable;
 	existingVariables: Record<string, IDashboardVariable>;
 	onCancel: () => void;
-	onSave: (mode: TVariableMode, variableData: IDashboardVariable) => void;
+	onSave: (
+		mode: TVariableMode,
+		variableData: IDashboardVariable,
+		widgetIds?: string[],
+	) => void;
 	validateName: (arg0: string) => boolean;
+	validateAttributeKey: (
+		attributeKey: string,
+		currentVariableId?: string,
+	) => boolean;
 	mode: TVariableMode;
 }
 function VariableItem({
@@ -52,16 +79,21 @@ function VariableItem({
 	onCancel,
 	onSave,
 	validateName,
+	validateAttributeKey,
 	mode,
 }: VariableItemProps): JSX.Element {
 	const [variableName, setVariableName] = useState<string>(
 		variableData.name || '',
 	);
+	const [
+		hasUserManuallyChangedName,
+		setHasUserManuallyChangedName,
+	] = useState<boolean>(false);
 	const [variableDescription, setVariableDescription] = useState<string>(
 		variableData.description || '',
 	);
 	const [queryType, setQueryType] = useState<TVariableQueryType>(
-		variableData.type || 'QUERY',
+		variableData.type || 'DYNAMIC',
 	);
 	const [variableQueryValue, setVariableQueryValue] = useState<string>(
 		variableData.queryValue || '',
@@ -85,10 +117,163 @@ function VariableItem({
 		variableData.showALLOption || false,
 	);
 	const [previewValues, setPreviewValues] = useState<string[]>([]);
+	const [variableDefaultValue, setVariableDefaultValue] = useState<string>(
+		(variableData.defaultValue as string) || '',
+	);
+
+	const isDarkMode = useIsDarkMode();
+
+	const [
+		dynamicVariablesSelectedValue,
+		setDynamicVariablesSelectedValue,
+	] = useState<{ name: string; value: string }>();
 
 	// Error messages
 	const [errorName, setErrorName] = useState<boolean>(false);
+	const [errorNameMessage, setErrorNameMessage] = useState<string>('');
+	const [errorAttributeKey, setErrorAttributeKey] = useState<boolean>(false);
+	const [
+		errorAttributeKeyMessage,
+		setErrorAttributeKeyMessage,
+	] = useState<string>('');
 	const [errorPreview, setErrorPreview] = useState<string | null>(null);
+
+	useEffect(() => {
+		if (
+			variableData.dynamicVariablesAttribute &&
+			variableData.dynamicVariablesSource
+		) {
+			setDynamicVariablesSelectedValue({
+				name: variableData.dynamicVariablesAttribute,
+				value: variableData.dynamicVariablesSource,
+			});
+		}
+	}, [
+		variableData.dynamicVariablesAttribute,
+		variableData.dynamicVariablesSource,
+	]);
+
+	// Validate attribute key uniqueness for dynamic variables
+	useEffect(() => {
+		if (queryType === 'DYNAMIC' && dynamicVariablesSelectedValue?.name) {
+			if (
+				!validateAttributeKey(dynamicVariablesSelectedValue.name, variableData.id)
+			) {
+				setErrorAttributeKey(true);
+				setErrorAttributeKeyMessage(
+					'A variable with this attribute key already exists',
+				);
+			} else {
+				setErrorAttributeKey(false);
+				setErrorAttributeKeyMessage('');
+			}
+		} else {
+			setErrorAttributeKey(false);
+			setErrorAttributeKeyMessage('');
+		}
+	}, [
+		queryType,
+		dynamicVariablesSelectedValue?.name,
+		validateAttributeKey,
+		variableData.id,
+	]);
+
+	// Auto-set variable name to selected attribute name in creation mode when user hasn't manually changed it
+	useEffect(() => {
+		if (
+			mode === 'ADD' && // Only in creation mode
+			queryType === 'DYNAMIC' && // Only for dynamic variables
+			dynamicVariablesSelectedValue?.name && // Attribute is selected
+			!hasUserManuallyChangedName // User hasn't manually changed the name
+		) {
+			const newName = dynamicVariablesSelectedValue.name;
+			setVariableName(newName);
+
+			// Trigger validation for the auto-set name
+			if (/\s/.test(newName)) {
+				setErrorName(true);
+				setErrorNameMessage('Variable name cannot contain whitespaces');
+			} else if (!validateName(newName)) {
+				setErrorName(true);
+				setErrorNameMessage('Variable name already exists');
+			} else {
+				setErrorName(false);
+				setErrorNameMessage('');
+			}
+		}
+	}, [
+		mode,
+		queryType,
+		dynamicVariablesSelectedValue?.name,
+		hasUserManuallyChangedName,
+		validateName,
+	]);
+
+	const REQUIRED_NAME_MESSAGE = 'Variable name is required';
+
+	// Initialize error state for empty name
+	useEffect(() => {
+		if (!variableName.trim()) {
+			setErrorName(true);
+		}
+	}, [variableName]);
+
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const { data: fieldValues } = useGetFieldValues({
+		signal:
+			dynamicVariablesSelectedValue?.value === 'All Sources'
+				? undefined
+				: (dynamicVariablesSelectedValue?.value?.toLowerCase() as
+						| 'traces'
+						| 'logs'
+						| 'metrics'),
+		name: dynamicVariablesSelectedValue?.name || '',
+		enabled:
+			!!dynamicVariablesSelectedValue?.name &&
+			!!dynamicVariablesSelectedValue?.value,
+		startUnixMilli: minTime,
+		endUnixMilli: maxTime,
+	});
+
+	const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
+
+	const { selectedDashboard } = useDashboard();
+
+	useEffect(() => {
+		const dynamicVariables = Object.values(
+			selectedDashboard?.data?.variables || {},
+		)?.filter((variable: IDashboardVariable) => variable.type === 'DYNAMIC');
+
+		const widgets =
+			selectedDashboard?.data?.widgets?.filter(
+				(widget) => widget.panelTypes !== PANEL_GROUP_TYPES.ROW,
+			) || [];
+		const widgetsHavingDynamicVariables = createDynamicVariableToWidgetsMap(
+			dynamicVariables,
+			widgets as Widgets[],
+		);
+
+		if (variableData?.id && variableData.id in widgetsHavingDynamicVariables) {
+			setSelectedWidgets(widgetsHavingDynamicVariables[variableData.id] || []);
+		} else if (dynamicVariablesSelectedValue?.name) {
+			const widgets = getWidgetsHavingDynamicVariableAttribute(
+				dynamicVariablesSelectedValue?.name,
+				(selectedDashboard?.data?.widgets?.filter(
+					(widget) => widget.panelTypes !== PANEL_GROUP_TYPES.ROW,
+				) || []) as Widgets[],
+				variableData.name,
+			);
+			setSelectedWidgets(widgets || []);
+		}
+	}, [
+		dynamicVariablesSelectedValue?.name,
+		selectedDashboard,
+		variableData.id,
+		variableData.name,
+	]);
 
 	useEffect(() => {
 		if (queryType === 'CUSTOM') {
@@ -110,6 +295,64 @@ function VariableItem({
 		variableSortType,
 	]);
 
+	useEffect(() => {
+		if (
+			queryType === 'DYNAMIC' &&
+			fieldValues &&
+			dynamicVariablesSelectedValue?.name &&
+			dynamicVariablesSelectedValue?.value
+		) {
+			setPreviewValues(
+				sortValues(
+					fieldValues.data?.normalizedValues || [],
+					variableSortType,
+				) as never,
+			);
+		}
+	}, [
+		fieldValues,
+		variableSortType,
+		queryType,
+		dynamicVariablesSelectedValue?.name,
+		dynamicVariablesSelectedValue?.value,
+	]);
+
+	const variableValue = useMemo(() => {
+		if (variableMultiSelect) {
+			let value = variableData.selectedValue;
+			if (isEmpty(value)) {
+				if (variableData.showALLOption) {
+					if (variableDefaultValue) {
+						value = variableDefaultValue;
+					} else {
+						value = previewValues;
+					}
+				} else if (variableDefaultValue) {
+					value = variableDefaultValue;
+				} else {
+					value = previewValues?.[0];
+				}
+			}
+
+			return value;
+		}
+
+		if (isEmpty(variableData.selectedValue)) {
+			if (variableDefaultValue) {
+				return variableDefaultValue;
+			}
+			return previewValues?.[0]?.toString();
+		}
+
+		return variableData.selectedValue || variableDefaultValue;
+	}, [
+		variableMultiSelect,
+		variableData.selectedValue,
+		variableData.showALLOption,
+		variableDefaultValue,
+		previewValues,
+	]);
+
 	const handleSave = (): void => {
 		// Check for cyclic dependencies
 		const newVariable = {
@@ -120,15 +363,24 @@ function VariableItem({
 			customValue: variableCustomValue,
 			textboxValue: variableTextboxValue,
 			multiSelect: variableMultiSelect,
-			showALLOption: variableShowALLOption,
+			showALLOption: queryType === 'DYNAMIC' ? true : variableShowALLOption,
 			sort: variableSortType,
 			...(queryType === 'TEXTBOX' && {
 				selectedValue: (variableData.selectedValue ||
 					variableTextboxValue) as never,
 			}),
+			...(queryType !== 'TEXTBOX' && {
+				defaultValue: variableDefaultValue as never,
+			}),
 			modificationUUID: generateUUID(),
 			id: variableData.id || generateUUID(),
 			order: variableData.order,
+			...(queryType === 'DYNAMIC' && {
+				dynamicVariablesAttribute: dynamicVariablesSelectedValue?.name,
+				dynamicVariablesSource: dynamicVariablesSelectedValue?.value,
+			}),
+			selectedValue: variableValue,
+			allSelected: variableData.allSelected,
 		};
 
 		const allVariables = [...Object.values(existingVariables), newVariable];
@@ -145,7 +397,7 @@ function VariableItem({
 			return;
 		}
 
-		onSave(mode, newVariable);
+		onSave(mode, newVariable, selectedWidgets);
 	};
 
 	// Fetches the preview values for the SQL variable query
@@ -223,17 +475,34 @@ function VariableItem({
 								placeholder="Unique name of the variable"
 								value={variableName}
 								className="name-input"
-								onChange={(e): void => {
-									setVariableName(e.target.value);
-									setErrorName(
-										!validateName(e.target.value) && e.target.value !== variableData.name,
-									);
+								onChange={({ target: { value } }): void => {
+									setVariableName(value);
+									setHasUserManuallyChangedName(true); // Mark that user has manually changed the name
+
+									// Check for empty name
+									if (!value.trim()) {
+										setErrorName(true);
+										setErrorNameMessage(REQUIRED_NAME_MESSAGE);
+									}
+									// Check for whitespace in name
+									else if (/\s/.test(value)) {
+										setErrorName(true);
+										setErrorNameMessage('Variable name cannot contain whitespaces');
+									}
+									// Check for duplicate name
+									else if (!validateName(value) && value !== variableData.name) {
+										setErrorName(true);
+										setErrorNameMessage('Variable name already exists');
+									}
+									// No errors
+									else {
+										setErrorName(false);
+										setErrorNameMessage('');
+									}
 								}}
 							/>
 							<div>
-								<Typography.Text type="warning">
-									{errorName ? 'Variable name already exists' : ''}
-								</Typography.Text>
+								<Typography.Text type="warning">{errorNameMessage}</Typography.Text>
 							</div>
 						</div>
 					</VariableItemRow>
@@ -251,25 +520,47 @@ function VariableItem({
 						/>
 					</VariableItemRow>
 					<VariableItemRow className="variable-type-section">
-						<LabelContainer>
+						<LabelContainer className="variable-type-label-container">
 							<Typography className="typography-variables">Variable Type</Typography>
+							<TextToolTip
+								text="Learn more about supported variable types "
+								url="https://signoz.io/docs/userguide/manage-variables/#dynamic-variable"
+								urlText="here"
+								useFilledIcon={false}
+								outlinedIcon={
+									<Info
+										size={14}
+										style={{
+											color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+											marginTop: 1,
+										}}
+									/>
+								}
+							/>
 						</LabelContainer>
 
 						<div className="variable-type-btn-group">
 							<Button
 								type="text"
-								icon={<DatabaseZap size={14} />}
+								icon={<Pyramid size={14} />}
 								className={cx(
 									// eslint-disable-next-line sonarjs/no-duplicate-string
 									'variable-type-btn',
-									queryType === 'QUERY' ? 'selected' : '',
+									queryType === 'DYNAMIC' ? 'selected' : '',
 								)}
 								onClick={(): void => {
-									setQueryType('QUERY');
+									setQueryType('DYNAMIC');
 									setPreviewValues([]);
+									// Reset manual change flag if no name is entered
+									if (!variableName.trim()) {
+										setHasUserManuallyChangedName(false);
+									}
 								}}
 							>
-								Query
+								Dynamic
+								<Tag bordered={false} className="sidenav-beta-tag" color="geekblue">
+									Beta
+								</Tag>
 							</Button>
 							<Button
 								type="text"
@@ -281,6 +572,10 @@ function VariableItem({
 								onClick={(): void => {
 									setQueryType('TEXTBOX');
 									setPreviewValues([]);
+									// Reset manual change flag if no name is entered
+									if (!variableName.trim()) {
+										setHasUserManuallyChangedName(false);
+									}
 								}}
 							>
 								Textbox
@@ -295,12 +590,62 @@ function VariableItem({
 								onClick={(): void => {
 									setQueryType('CUSTOM');
 									setPreviewValues([]);
+									// Reset manual change flag if no name is entered
+									if (!variableName.trim()) {
+										setHasUserManuallyChangedName(false);
+									}
 								}}
 							>
 								Custom
 							</Button>
+							<Button
+								type="text"
+								icon={<DatabaseZap size={14} />}
+								className={cx(
+									// eslint-disable-next-line sonarjs/no-duplicate-string
+									'variable-type-btn',
+									queryType === 'QUERY' ? 'selected' : '',
+								)}
+								onClick={(): void => {
+									setQueryType('QUERY');
+									setPreviewValues([]);
+									// Reset manual change flag if no name is entered
+									if (!variableName.trim()) {
+										setHasUserManuallyChangedName(false);
+									}
+								}}
+							>
+								Query
+								<Tag bordered={false} className="sidenav-beta-tag" color="warning">
+									Not Recommended
+								</Tag>
+								<TextToolTip
+									text="Learn why we don't recommend "
+									url="https://signoz.io/docs/userguide/manage-variables/#why-avoid-clickhouse-query-variables"
+									urlText="here"
+									useFilledIcon={false}
+									outlinedIcon={
+										<Info
+											size={14}
+											style={{
+												color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+												marginTop: 1,
+											}}
+										/>
+									}
+								/>
+							</Button>
 						</div>
 					</VariableItemRow>
+					{queryType === 'DYNAMIC' && (
+						<div className="variable-dynamic-section">
+							<DynamicVariable
+								setDynamicVariablesSelectedValue={setDynamicVariablesSelectedValue}
+								dynamicVariablesSelectedValue={dynamicVariablesSelectedValue}
+								errorAttributeKeyMessage={errorAttributeKeyMessage}
+							/>
+						</div>
+					)}
 					{queryType === 'QUERY' && (
 						<div className="query-container">
 							<LabelContainer>
@@ -388,7 +733,9 @@ function VariableItem({
 							/>
 						</VariableItemRow>
 					)}
-					{(queryType === 'QUERY' || queryType === 'CUSTOM') && (
+					{(queryType === 'QUERY' ||
+						queryType === 'CUSTOM' ||
+						queryType === 'DYNAMIC') && (
 						<>
 							<VariableItemRow className="variables-preview-section">
 								<LabelContainer style={{ width: '100%' }}>
@@ -444,7 +791,7 @@ function VariableItem({
 									}}
 								/>
 							</VariableItemRow>
-							{variableMultiSelect && (
+							{variableMultiSelect && queryType !== 'DYNAMIC' && (
 								<VariableItemRow className="all-option-section">
 									<LabelContainer>
 										<Typography className="typography-variables">
@@ -457,7 +804,39 @@ function VariableItem({
 									/>
 								</VariableItemRow>
 							)}
+							<VariableItemRow className="default-value-section">
+								<LabelContainer>
+									<Typography className="typography-variables">Default Value</Typography>
+									<Typography className="default-value-description">
+										{queryType === 'QUERY'
+											? 'Click Test Run Query to see the values or add custom value'
+											: 'Select a value from the preview values or add custom value'}
+									</Typography>
+								</LabelContainer>
+								<CustomSelect
+									placeholder="Select a default value"
+									value={variableDefaultValue}
+									onChange={(value): void => setVariableDefaultValue(value)}
+									options={previewValues.map((value) => ({
+										label: value,
+										value,
+									}))}
+								/>
+							</VariableItemRow>
 						</>
+					)}
+					{queryType === 'DYNAMIC' && (
+						<VariableItemRow className="dynamic-variable-section">
+							<LabelContainer>
+								<Typography className="typography-variables">
+									Select Panels to apply this variable
+								</Typography>
+							</LabelContainer>
+							<WidgetSelector
+								selectedWidgets={selectedWidgets}
+								setSelectedWidgets={setSelectedWidgets}
+							/>
+						</VariableItemRow>
 					)}
 				</div>
 			</div>
@@ -474,7 +853,7 @@ function VariableItem({
 					<Button
 						type="primary"
 						onClick={handleSave}
-						disabled={errorName}
+						disabled={errorName || errorAttributeKey}
 						icon={<Check size={14} />}
 						className="footer-btn-save"
 					>
