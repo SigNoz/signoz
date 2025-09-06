@@ -1,10 +1,12 @@
 import './DynamicVariable.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { Select, Typography } from 'antd';
 import CustomSelect from 'components/NewSelect/CustomSelect';
 import TextToolTip from 'components/TextToolTip';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { useGetFieldKeys } from 'hooks/dynamicVariables/useGetFieldKeys';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { Info } from 'lucide-react';
 import {
@@ -17,8 +19,6 @@ import {
 } from 'react';
 import { FieldKey } from 'types/api/dynamicVariables/getFieldKeys';
 import { isRetryableError as checkIfRetryableError } from 'utils/errorUtils';
-import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Color } from '@signozhq/design-tokens';
 
 enum AttributeSource {
 	ALL_TELEMETRY = 'All telemetry',

@@ -601,9 +601,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 			// Check loading message is shown
 			await waitFor(() => {
-				expect(
-					screen.getByText('Refreshing values...'),
-				).toBeInTheDocument();
+				expect(screen.getByText('Refreshing values...')).toBeInTheDocument();
 			});
 		});
 
@@ -677,9 +675,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 				const loadingFooter = document.querySelector('.navigation-loading');
 				expect(loadingFooter).toBeInTheDocument();
-				expect(
-					screen.getByText('Refreshing values...'),
-				).toBeInTheDocument();
+				expect(screen.getByText('Refreshing values...')).toBeInTheDocument();
 			});
 		});
 

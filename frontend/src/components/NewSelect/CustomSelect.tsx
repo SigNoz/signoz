@@ -575,7 +575,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 						!loading &&
 						!errorMessage && (
 							<div className="navigation-text-incomplete">
-								Don't see the value? Use search
+								Don&apos;t see the value? Use search
 							</div>
 						)}
 
