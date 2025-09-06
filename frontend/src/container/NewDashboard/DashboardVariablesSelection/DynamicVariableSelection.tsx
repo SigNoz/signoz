@@ -167,7 +167,7 @@ function DynamicVariableSelection({
 			enabled: variableData.type === 'DYNAMIC',
 			queryFn: () =>
 				getFieldValues(
-					variableData.dynamicVariablesSource?.toLowerCase() === 'all sources'
+					variableData.dynamicVariablesSource?.toLowerCase() === 'all telemetry'
 						? undefined
 						: (variableData.dynamicVariablesSource?.toLowerCase() as
 								| 'traces'
