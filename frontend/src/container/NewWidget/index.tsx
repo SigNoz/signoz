@@ -718,8 +718,10 @@ function NewWidget({
 	const handleSwitchToViewMode = useCallback(() => {
 		if (!query.get('widgetId')) return;
 		const widgetId = query.get('widgetId') || '';
+		const graphType = query.get('graphType') || '';
 		const queryParams = {
 			[QueryParams.expandedWidgetId]: widgetId,
+			[QueryParams.graphType]: graphType,
 			[QueryParams.compositeQuery]: encodeURIComponent(
 				JSON.stringify(currentQuery),
 			),

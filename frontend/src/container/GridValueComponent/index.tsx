@@ -69,7 +69,8 @@ function GridValueComponent({
 		);
 	}
 
-	const isQueryTypeBuilder = widget?.query?.queryType === 'builder';
+	const isQueryTypeBuilder =
+		widget?.query?.queryType === EQueryType.QUERY_BUILDER;
 
 	return (
 		<>
