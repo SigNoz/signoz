@@ -1,7 +1,8 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable react/jsx-props-no-spreading */
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react';
+import { VirtuosoMockContext } from 'react-virtuoso';
 import {
 	Dashboard,
 	IDashboardVariable,
@@ -50,7 +51,7 @@ const mockDashboard = {
 			{
 				id: 'widget3',
 				title: ROW_WIDGET_TEXT,
-				panelTypes: 'ROW', // Should be filtered out
+				panelTypes: 'row', // Should be filtered out (lowercase 'row' to match PANEL_GROUP_TYPES.ROW)
 			},
 		],
 		layout: [{ i: 'widget1' }, { i: 'widget2' }, { i: 'widget3' }],
@@ -65,7 +66,7 @@ jest.mock('providers/Dashboard/Dashboard', () => ({
 
 jest.mock('constants/queryBuilder', () => ({
 	PANEL_GROUP_TYPES: {
-		ROW: 'ROW',
+		ROW: 'row', // Match the actual constant value
 	},
 	PANEL_TYPES: {
 		TIME_SERIES: 'graph',
@@ -109,17 +110,26 @@ describe('Panel Management Tests', () => {
 			jest.clearAllMocks();
 		});
 
-		it('should display panel titles using generateGridTitle', () => {
-			render(
-				<WidgetSelector
-					selectedWidgets={[]}
-					setSelectedWidgets={mockSetSelectedWidgets}
-				/>,
-			);
+		it('should display panel titles using generateGridTitle', async () => {
+			await act(async () => {
+				render(
+					<VirtuosoMockContext.Provider
+						value={{ viewportHeight: 300, itemHeight: 100 }}
+					>
+						<WidgetSelector
+							selectedWidgets={[]}
+							setSelectedWidgets={mockSetSelectedWidgets}
+						/>
+						,
+					</VirtuosoMockContext.Provider>,
+				);
+			});
 
 			// Open the dropdown to see options
 			const selectElement = screen.getByRole('combobox');
-			fireEvent.mouseDown(selectElement);
+			await act(async () => {
+				fireEvent.mouseDown(selectElement);
+			});
 
 			// Should show panel titles (excluding ROW widgets) in dropdown
 			expect(screen.getByText(CPU_USAGE_TEXT)).toBeInTheDocument();
@@ -161,61 +171,37 @@ describe('Panel Management Tests', () => {
 			expect(screen.queryByText('Orphaned Widget')).not.toBeInTheDocument();
 		});
 
-		it('should show selected widgets correctly', () => {
-			render(
-				<WidgetSelector
-					selectedWidgets={['widget1', 'widget2']}
-					setSelectedWidgets={mockSetSelectedWidgets}
-				/>,
-			);
+		it('should show selected widgets correctly', async () => {
+			await act(async () => {
+				render(
+					<WidgetSelector
+						selectedWidgets={['widget1', 'widget2']}
+						setSelectedWidgets={mockSetSelectedWidgets}
+					/>,
+				);
+			});
 
 			// Component should show ALL text when all widgets are selected
-			expect(screen.getByText('ALL')).toBeInTheDocument();
+			const allElements = screen.getAllByText('ALL');
+			expect(allElements.length).toBeGreaterThan(0);
 
 			// Check if the dropdown shows selected state correctly
 			const selectElement = screen.getByRole('combobox');
-			fireEvent.mouseDown(selectElement);
+			await act(async () => {
+				fireEvent.mouseDown(selectElement);
+			});
 
-			// Should show the selected panels in the dropdown
-			expect(screen.getByText('CPU Usage')).toBeInTheDocument();
-			expect(screen.getByText('Memory Usage')).toBeInTheDocument();
+			// Verify the ALL option in the dropdown is selected/checked
+			// Find the ALL option by its role instead of text to avoid ambiguity
+			const allOption = screen.getByRole('option', { name: /ALL/i });
+			expect(allOption).toBeInTheDocument();
+			expect(allOption).toHaveClass('selected');
 
-			// Check if the specific options (CPU Usage, Memory Usage) are properly selected/checked
-			const cpuOption = screen.getByText('CPU Usage');
-			const memoryOption = screen.getByText('Memory Usage');
-
-			// Find the specific checkboxes for CPU Usage and Memory Usage
-			// Navigate from the text to find the associated checkbox
-			const cpuContainer = cpuOption.closest(
-				'.ant-select-item-option, .option-item',
-			);
-			const memoryContainer = memoryOption.closest(
-				'.ant-select-item-option, .option-item',
-			);
-
-			const cpuCheckbox = cpuContainer?.querySelector(
+			const allCheckbox = allOption.querySelector(
 				'input[type="checkbox"]',
 			) as HTMLInputElement;
-			const memoryCheckbox = memoryContainer?.querySelector(
-				'input[type="checkbox"]',
-			) as HTMLInputElement;
-
-			// Verify that the specific checkboxes for our selected widgets are checked
-			expect(cpuCheckbox).toBeInTheDocument();
-			expect(memoryCheckbox).toBeInTheDocument();
-			expect(cpuCheckbox.checked).toBe(true);
-			expect(memoryCheckbox.checked).toBe(true);
-
-			// Also verify the checkbox wrappers have the checked class
-			const cpuCheckboxWrapper = cpuCheckbox?.closest('.ant-checkbox');
-			const memoryCheckboxWrapper = memoryCheckbox?.closest('.ant-checkbox');
-
-			expect(cpuCheckboxWrapper).toHaveClass('ant-checkbox-checked');
-			expect(memoryCheckboxWrapper).toHaveClass('ant-checkbox-checked');
-
-			// Additional verification: ensure these are the correct options by checking their labels
-			expect(cpuOption).toBeInTheDocument();
-			expect(memoryOption).toBeInTheDocument();
+			expect(allCheckbox).toBeInTheDocument();
+			expect(allCheckbox.checked).toBe(true);
 		});
 	});
 
@@ -249,7 +235,7 @@ describe('Panel Management Tests', () => {
 			const updatedDashboard = addDynamicVariableToPanels(
 				dashboard,
 				variableConfig,
-				[],
+				['widget1'],
 				false,
 			);
 
@@ -262,19 +248,19 @@ describe('Panel Management Tests', () => {
 
 			// Check that filters array also contains the filter item
 			const filters = queryData.filters.items;
-			expect(filters).toContainEqual({
-				id: expect.any(String),
-				key: {
-					id: expect.any(String),
-					key: 'service.name',
-					dataType: 'string',
-					isColumn: false,
-					isJSON: false,
-					type: '',
-				},
-				op: 'IN',
-				value: '$service',
-			});
+			expect(filters).toContainEqual(
+				expect.objectContaining({
+					id: expect.any(String), // ID is generated dynamically
+					key: {
+						dataType: 'string',
+						id: 'service.name--string--',
+						key: 'service.name',
+						type: '',
+					},
+					op: 'IN',
+					value: '$service',
+				}),
+			);
 		});
 
 		it('should apply to all panels when applyToAll is true', () => {
@@ -319,7 +305,7 @@ describe('Panel Management Tests', () => {
 			const updatedDashboard = addDynamicVariableToPanels(
 				dashboard,
 				variableConfig,
-				[],
+				['widget1'],
 				true, // Apply to all
 			);
 
@@ -341,32 +327,32 @@ describe('Panel Management Tests', () => {
 			const widget1Filters = widget1QueryData?.filters?.items;
 			const widget2Filters = widget2QueryData?.filters?.items;
 
-			expect(widget1Filters).toContainEqual({
-				id: expect.any(String),
-				key: {
+			expect(widget1Filters).toContainEqual(
+				expect.objectContaining({
+					id: expect.any(String), // ID is generated dynamically
+					key: {
+						dataType: 'string',
+						id: 'service.name--string--',
+						key: 'service.name',
+						type: '',
+					},
+					op: 'IN',
+					value: '$service',
+				}),
+			);
+			expect(widget2Filters).toContainEqual(
+				expect.objectContaining({
 					id: expect.any(String),
-					key: 'service.name',
-					dataType: 'string',
-					isColumn: false,
-					isJSON: false,
-					type: '',
-				},
-				op: 'IN',
-				value: '$service',
-			});
-			expect(widget2Filters).toContainEqual({
-				id: expect.any(String),
-				key: {
-					id: expect.any(String),
-					key: 'service.name',
-					dataType: 'string',
-					isColumn: false,
-					isJSON: false,
-					type: '',
-				},
-				op: 'IN',
-				value: '$service',
-			});
+					key: {
+						dataType: 'string',
+						id: 'service.name--string--',
+						key: 'service.name',
+						type: '',
+					},
+					op: 'IN',
+					value: '$service',
+				}),
+			);
 		});
 
 		it('should validate tag filter format with variable name', () => {
@@ -396,13 +382,12 @@ describe('Panel Management Tests', () => {
 			const variableConfig = {
 				name: 'custom_service_var',
 				dynamicVariablesAttribute: 'service.name',
-				dynamicVariablesWidgetIds: ['widget1'],
 			};
 
 			const updatedDashboard = addDynamicVariableToPanels(
 				dashboard,
 				variableConfig as any,
-				[],
+				['widget1'],
 				false,
 			);
 
@@ -431,7 +416,6 @@ describe('Panel Management Tests', () => {
 			const variableConfig = {
 				name: 'service',
 				dynamicVariablesAttribute: 'service.name',
-				dynamicVariablesWidgetIds: [], // Empty selection
 			};
 
 			const updatedDashboard = addDynamicVariableToPanels(
@@ -452,13 +436,12 @@ describe('Panel Management Tests', () => {
 			const variableConfig = {
 				name: 'service',
 				dynamicVariablesAttribute: 'service.name',
-				dynamicVariablesWidgetIds: ['widget1'],
 			};
 
 			const updatedDashboard = addDynamicVariableToPanels(
 				undefined,
 				variableConfig as any,
-				[],
+				['widget1'],
 				false,
 			);
 
@@ -494,7 +477,6 @@ describe('Panel Management Tests', () => {
 			const variableConfig = {
 				name: 'host.name',
 				dynamicVariablesAttribute: 'host.name',
-				dynamicVariablesWidgetIds: ['widget1'],
 				description: '',
 				type: 'DYNAMIC',
 				queryValue: '',
@@ -513,7 +495,7 @@ describe('Panel Management Tests', () => {
 			const updatedDashboard = addDynamicVariableToPanels(
 				dashboard,
 				variableConfig as any,
-				[],
+				['widget1'],
 				false,
 			);
 

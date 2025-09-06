@@ -2,11 +2,13 @@
 import './VariableItem.styles.scss';
 
 import { orange } from '@ant-design/colors';
+import { Color } from '@signozhq/design-tokens';
 import { Button, Collapse, Input, Select, Switch, Tag, Typography } from 'antd';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import cx from 'classnames';
 import Editor from 'components/Editor';
 import { CustomSelect } from 'components/NewSelect';
+import TextToolTip from 'components/TextToolTip';
 import { PANEL_GROUP_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
@@ -14,6 +16,7 @@ import {
 	getWidgetsHavingDynamicVariableAttribute,
 } from 'hooks/dashboard/utils';
 import { useGetFieldValues } from 'hooks/dynamicVariables/useGetFieldValues';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import { isEmpty, map } from 'lodash-es';
@@ -22,6 +25,7 @@ import {
 	Check,
 	ClipboardType,
 	DatabaseZap,
+	Info,
 	LayoutList,
 	Pyramid,
 	X,
@@ -116,6 +120,8 @@ function VariableItem({
 	const [variableDefaultValue, setVariableDefaultValue] = useState<string>(
 		(variableData.defaultValue as string) || '',
 	);
+
+	const isDarkMode = useIsDarkMode();
 
 	const [
 		dynamicVariablesSelectedValue,
@@ -298,7 +304,7 @@ function VariableItem({
 		) {
 			setPreviewValues(
 				sortValues(
-					fieldValues.payload?.normalizedValues || [],
+					fieldValues.data?.normalizedValues || [],
 					variableSortType,
 				) as never,
 			);
@@ -514,8 +520,23 @@ function VariableItem({
 						/>
 					</VariableItemRow>
 					<VariableItemRow className="variable-type-section">
-						<LabelContainer>
+						<LabelContainer className="variable-type-label-container">
 							<Typography className="typography-variables">Variable Type</Typography>
+							<TextToolTip
+								text="Learn more about supported variable types "
+								url="https://signoz.io/docs/userguide/manage-variables/#dynamic-variable"
+								urlText="here"
+								useFilledIcon={false}
+								outlinedIcon={
+									<Info
+										size={14}
+										style={{
+											color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+											marginTop: 1,
+										}}
+									/>
+								}
+							/>
 						</LabelContainer>
 
 						<div className="variable-type-btn-group">
@@ -598,6 +619,21 @@ function VariableItem({
 								<Tag bordered={false} className="sidenav-beta-tag" color="warning">
 									Not Recommended
 								</Tag>
+								<TextToolTip
+									text="Learn why we don't recommend "
+									url="https://signoz.io/docs/userguide/manage-variables/#why-avoid-clickhouse-query-variables"
+									urlText="here"
+									useFilledIcon={false}
+									outlinedIcon={
+										<Info
+											size={14}
+											style={{
+												color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+												marginTop: 1,
+											}}
+										/>
+									}
+								/>
 							</Button>
 						</div>
 					</VariableItemRow>

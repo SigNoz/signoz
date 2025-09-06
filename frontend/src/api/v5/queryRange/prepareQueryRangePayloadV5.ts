@@ -1,11 +1,15 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+/* eslint-disable sonarjs/no-identical-functions */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	IBuilderTraceOperator,
+} from 'types/api/queryBuilder/queryBuilderData';
 import {
 	BaseBuilderQuery,
 	FieldContext,
@@ -333,6 +337,109 @@ export function convertBuilderQueriesToV5(
 	);
 }
 
+function createTraceOperatorBaseSpec(
+	queryData: IBuilderTraceOperator,
+	requestType: RequestType,
+	panelType?: PANEL_TYPES,
+): BaseBuilderQuery {
+	const nonEmptySelectColumns = (queryData.selectColumns as (
+		| BaseAutocompleteData
+		| TelemetryFieldKey
+	)[])?.filter((c) => ('key' in c ? c?.key : c?.name));
+
+	const {
+		stepInterval,
+		groupBy,
+		limit,
+		offset,
+		legend,
+		having,
+		orderBy,
+		pageSize,
+	} = queryData;
+
+	return {
+		stepInterval: stepInterval || undefined,
+		groupBy:
+			groupBy?.length > 0
+				? groupBy.map(
+						(item: any): GroupByKey => ({
+							name: item.key,
+							fieldDataType: item?.dataType,
+							fieldContext: item?.type,
+							description: item?.description,
+							unit: item?.unit,
+							signal: item?.signal,
+							materialized: item?.materialized,
+						}),
+				  )
+				: undefined,
+		limit:
+			panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.LIST
+				? limit || pageSize || undefined
+				: limit || undefined,
+		offset: requestType === 'raw' || requestType === 'trace' ? offset : undefined,
+		order:
+			orderBy?.length > 0
+				? orderBy.map(
+						(order: any): OrderBy => ({
+							key: {
+								name: order.columnName,
+							},
+							direction: order.order,
+						}),
+				  )
+				: undefined,
+		legend: isEmpty(legend) ? undefined : legend,
+		having: isEmpty(having) ? undefined : (having as Having),
+		selectFields: isEmpty(nonEmptySelectColumns)
+			? undefined
+			: nonEmptySelectColumns?.map(
+					(column: any): TelemetryFieldKey => ({
+						name: column.name ?? column.key,
+						fieldDataType:
+							column?.fieldDataType ?? (column?.dataType as FieldDataType),
+						fieldContext: column?.fieldContext ?? (column?.type as FieldContext),
+						signal: column?.signal ?? undefined,
+					}),
+			  ),
+	};
+}
+
+export function convertTraceOperatorToV5(
+	traceOperator: Record<string, IBuilderTraceOperator>,
+	requestType: RequestType,
+	panelType?: PANEL_TYPES,
+): QueryEnvelope[] {
+	return Object.entries(traceOperator).map(
+		([queryName, traceOperatorData]): QueryEnvelope => {
+			const baseSpec = createTraceOperatorBaseSpec(
+				traceOperatorData,
+				requestType,
+				panelType,
+			);
+
+			// Skip aggregation for raw request type
+			const aggregations =
+				requestType === 'raw'
+					? undefined
+					: createAggregation(traceOperatorData, panelType);
+
+			const spec: QueryEnvelope['spec'] = {
+				name: queryName,
+				...baseSpec,
+				expression: traceOperatorData.expression || '',
+				aggregations: aggregations as TraceAggregation[],
+			};
+
+			return {
+				type: 'builder_trace_operator' as QueryType,
+				spec,
+			};
+		},
+	);
+}
+
 /**
  * Converts PromQL queries to V5 format
  */
@@ -415,14 +522,28 @@ export const prepareQueryRangePayloadV5 = ({
 
 	switch (query.queryType) {
 		case EQueryType.QUERY_BUILDER: {
-			const { queryData: data, queryFormulas } = query.builder;
+			const { queryData: data, queryFormulas, queryTraceOperator } = query.builder;
 			const currentQueryData = mapQueryDataToApi(data, 'queryName', tableParams);
 			const currentFormulas = mapQueryDataToApi(queryFormulas, 'queryName');
+
+			const filteredTraceOperator =
+				queryTraceOperator && queryTraceOperator.length > 0
+					? queryTraceOperator.filter((traceOperator) =>
+							Boolean(traceOperator.expression.trim()),
+					  )
+					: [];
+
+			const currentTraceOperator = mapQueryDataToApi(
+				filteredTraceOperator,
+				'queryName',
+				tableParams,
+			);
 
 			// Combine legend maps
 			legendMap = {
 				...currentQueryData.newLegendMap,
 				...currentFormulas.newLegendMap,
+				...currentTraceOperator.newLegendMap,
 			};
 
 			// Convert builder queries
@@ -455,8 +576,14 @@ export const prepareQueryRangePayloadV5 = ({
 				}),
 			);
 
-			// Combine both types
-			queries = [...builderQueries, ...formulaQueries];
+			const traceOperatorQueries = convertTraceOperatorToV5(
+				currentTraceOperator.data,
+				requestType,
+				graphType,
+			);
+
+			// Combine all query types
+			queries = [...builderQueries, ...formulaQueries, ...traceOperatorQueries];
 			break;
 		}
 		case EQueryType.PROM: {

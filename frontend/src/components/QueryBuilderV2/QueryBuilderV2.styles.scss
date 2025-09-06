@@ -22,6 +22,10 @@
 		flex: 1;
 
 		position: relative;
+
+		.qb-trace-view-selector-container {
+			padding: 12px 8px 8px 8px;
+		}
 	}
 
 	.qb-content-section {
@@ -179,7 +183,7 @@
 		flex-direction: column;
 		gap: 8px;
 
-		margin-left: 32px;
+		margin-left: 26px;
 		padding-bottom: 16px;
 		padding-left: 8px;
 
@@ -195,8 +199,8 @@
 			}
 
 			.formula-container {
-				margin-left: 82px;
-				padding: 4px 0px;
+				padding: 8px;
+				margin-left: 74px;
 
 				.ant-col {
 					&::before {
@@ -291,6 +295,13 @@
 					);
 				}
 			}
+			.qb-trace-operator-button-container {
+				&-text {
+					display: flex;
+					align-items: center;
+					gap: 8px;
+				}
+			}
 		}
 	}
 
@@ -331,6 +342,12 @@
 					);
 					left: 15px;
 				}
+
+				&.has-trace-operator {
+					&::before {
+						height: 0px;
+					}
+				}
 			}
 
 			.formula-name {
@@ -347,7 +364,7 @@
 
 				&::before {
 					content: '';
-					height: 65px;
+					height: 128px;
 					content: '';
 					position: absolute;
 					left: 0;
@@ -387,6 +404,7 @@
 	}
 
 	.qb-search-filter-container {
+		flex: 1;
 		display: flex;
 		flex-direction: row;
 		align-items: flex-start;

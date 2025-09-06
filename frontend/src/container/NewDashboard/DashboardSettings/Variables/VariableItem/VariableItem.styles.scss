@@ -89,6 +89,12 @@
 			margin-bottom: 0px;
 			align-items: center;
 
+			.variable-type-label-container {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+
 			.typography-variables {
 				color: var(--bg-vanilla-400);
 				font-family: Inter;
@@ -120,7 +126,7 @@
 					display: flex;
 					align-items: center;
 					justify-content: center;
-					gap: 8px;
+					gap: 4px;
 				}
 
 				.variable-type-btn + .variable-type-btn {

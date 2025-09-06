@@ -173,6 +173,30 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	}),
 }));
 
+// Mock dashboard provider with dynamic variables
+const mockDashboard = {
+	data: {
+		variables: {
+			service: {
+				id: 'service',
+				name: 'service',
+				type: 'DYNAMIC',
+				dynamicVariablesAttribute: 'service.name',
+				description: '',
+				sort: 'DISABLED',
+				multiSelect: false,
+				showALLOption: false,
+			},
+		},
+	},
+};
+
+jest.mock('providers/Dashboard/Dashboard', () => ({
+	useDashboard: (): any => ({
+		selectedDashboard: mockDashboard,
+	}),
+}));
+
 describe('Suggestion Key -> Operator -> Value Flow', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();

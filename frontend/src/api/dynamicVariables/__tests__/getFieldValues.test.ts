@@ -18,6 +18,7 @@ describe('getFieldValues API', () => {
 	it('should call the API with correct parameters (no options)', async () => {
 		// Mock API response
 		(ApiBaseInstance.get as jest.Mock).mockResolvedValueOnce({
+			status: 200,
 			data: {
 				status: 'success',
 				data: {
@@ -41,6 +42,7 @@ describe('getFieldValues API', () => {
 	it('should call the API with signal parameter', async () => {
 		// Mock API response
 		(ApiBaseInstance.get as jest.Mock).mockResolvedValueOnce({
+			status: 200,
 			data: {
 				status: 'success',
 				data: {
@@ -64,6 +66,7 @@ describe('getFieldValues API', () => {
 	it('should call the API with name parameter', async () => {
 		// Mock API response
 		(ApiBaseInstance.get as jest.Mock).mockResolvedValueOnce({
+			status: 200,
 			data: {
 				status: 'success',
 				data: {
@@ -87,6 +90,7 @@ describe('getFieldValues API', () => {
 	it('should call the API with value parameter', async () => {
 		// Mock API response
 		(ApiBaseInstance.get as jest.Mock).mockResolvedValueOnce({
+			status: 200,
 			data: {
 				status: 'success',
 				data: {
@@ -103,13 +107,14 @@ describe('getFieldValues API', () => {
 
 		// Verify API was called with value parameter
 		expect(ApiBaseInstance.get).toHaveBeenCalledWith('/fields/values', {
-			params: { name: 'service.name', value: 'front' },
+			params: { name: 'service.name', searchText: 'front' },
 		});
 	});
 
 	it('should call the API with time range parameters', async () => {
 		// Mock API response
 		(ApiBaseInstance.get as jest.Mock).mockResolvedValueOnce({
+			status: 200,
 			data: {
 				status: 'success',
 				data: {
@@ -146,6 +151,7 @@ describe('getFieldValues API', () => {
 	it('should normalize the response values', async () => {
 		// Mock API response with multiple value types
 		const mockResponse = {
+			status: 200,
 			data: {
 				status: 'success',
 				data: {
@@ -165,18 +171,19 @@ describe('getFieldValues API', () => {
 		const result = await getFieldValues('traces', 'mixed.values');
 
 		// Verify the response has normalized values array
-		expect(result.payload?.normalizedValues).toContain('frontend');
-		expect(result.payload?.normalizedValues).toContain('backend');
-		expect(result.payload?.normalizedValues).toContain('200');
-		expect(result.payload?.normalizedValues).toContain('404');
-		expect(result.payload?.normalizedValues).toContain('true');
-		expect(result.payload?.normalizedValues).toContain('false');
-		expect(result.payload?.normalizedValues?.length).toBe(6);
+		expect(result.data?.normalizedValues).toContain('frontend');
+		expect(result.data?.normalizedValues).toContain('backend');
+		expect(result.data?.normalizedValues).toContain('200');
+		expect(result.data?.normalizedValues).toContain('404');
+		expect(result.data?.normalizedValues).toContain('true');
+		expect(result.data?.normalizedValues).toContain('false');
+		expect(result.data?.normalizedValues?.length).toBe(6);
 	});
 
 	it('should return a properly formatted success response', async () => {
 		// Create mock response
 		const mockApiResponse = {
+			status: 200,
 			data: {
 				status: 'success',
 				data: {
@@ -194,12 +201,10 @@ describe('getFieldValues API', () => {
 		// Call the function
 		const result = await getFieldValues('traces', 'service.name');
 
-		// Verify the returned structure
+		// Verify the returned structure matches SuccessResponseV2 format
 		expect(result).toEqual({
-			statusCode: 200,
-			error: null,
-			message: 'success',
-			payload: expect.objectContaining({
+			httpStatusCode: 200,
+			data: expect.objectContaining({
 				values: expect.any(Object),
 				normalizedValues: expect.any(Array),
 				complete: true,

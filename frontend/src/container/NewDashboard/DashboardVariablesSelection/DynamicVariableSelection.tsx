@@ -178,12 +178,12 @@ function DynamicVariableSelection({
 					existingQuery,
 				),
 			onSuccess: (data) => {
-				const newNormalizedValues = data.payload?.normalizedValues || [];
-				const newRelatedValues = data.payload?.relatedValues || [];
+				const newNormalizedValues = data.data?.normalizedValues || [];
+				const newRelatedValues = data.data?.relatedValues || [];
 
 				if (!debouncedApiSearchText) {
 					setOptionsData(newNormalizedValues);
-					setIsComplete(data.payload?.complete || false);
+					setIsComplete(data.data?.complete || false);
 				}
 				setFilteredOptionsData(newNormalizedValues);
 				setRelatedValues(newRelatedValues);

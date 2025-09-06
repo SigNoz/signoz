@@ -29,7 +29,7 @@ describe('DynamicVariable Component', () => {
 	};
 
 	const mockFieldKeysResponse = {
-		payload: {
+		data: {
 			keys: {
 				'service.name': [],
 				'http.status_code': [],
@@ -37,7 +37,7 @@ describe('DynamicVariable Component', () => {
 			},
 			complete: true,
 		},
-		statusCode: 200,
+		httpStatusCode: 200,
 	};
 
 	beforeEach(() => {
@@ -241,7 +241,7 @@ describe('DynamicVariable Component', () => {
 		fireEvent.mouseDown(attributeSelectElement);
 
 		// Mock the filter function behavior
-		const attributeKeys = Object.keys(mockFieldKeysResponse.payload.keys);
+		const attributeKeys = Object.keys(mockFieldKeysResponse.data.keys);
 
 		// Only "http.status_code" should match the filter
 		const expectedFilteredKeys = attributeKeys.filter((key) =>
@@ -269,12 +269,13 @@ describe('DynamicVariable Component', () => {
 		// and needs to be fetched from the server
 		(useGetFieldKeys as jest.Mock).mockReturnValue({
 			data: {
-				payload: {
+				data: {
 					keys: {
 						'http.status_code': [],
 					},
 					complete: false, // This indicates server-side filtering is needed
 				},
+				httpStatusCode: 200,
 			},
 			error: null,
 			isLoading: false,

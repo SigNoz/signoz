@@ -16,6 +16,7 @@ describe('getFieldKeys API', () => {
 	});
 
 	const mockSuccessResponse = {
+		status: 200,
 		data: {
 			status: 'success',
 			data: {
@@ -57,6 +58,7 @@ describe('getFieldKeys API', () => {
 	it('should call API with name parameter when provided', async () => {
 		// Mock successful API response
 		(ApiBaseInstance.get as jest.Mock).mockResolvedValueOnce({
+			status: 200,
 			data: {
 				status: 'success',
 				data: {
@@ -78,6 +80,7 @@ describe('getFieldKeys API', () => {
 	it('should call API with both signal and name when provided', async () => {
 		// Mock successful API response
 		(ApiBaseInstance.get as jest.Mock).mockResolvedValueOnce({
+			status: 200,
 			data: {
 				status: 'success',
 				data: {
@@ -103,12 +106,10 @@ describe('getFieldKeys API', () => {
 		// Call the function
 		const result = await getFieldKeys('traces');
 
-		// Verify the returned structure matches our expected format
+		// Verify the returned structure matches SuccessResponseV2 format
 		expect(result).toEqual({
-			statusCode: 200,
-			error: null,
-			message: 'success',
-			payload: mockSuccessResponse.data.data,
+			httpStatusCode: 200,
+			data: mockSuccessResponse.data.data,
 		});
 	});
 });

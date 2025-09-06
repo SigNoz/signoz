@@ -43,7 +43,11 @@ function GridValueComponent({
 		query: widget?.query || {
 			queryType: EQueryType.QUERY_BUILDER,
 			promql: [],
-			builder: { queryFormulas: [], queryData: [] },
+			builder: {
+				queryFormulas: [],
+				queryData: [],
+				queryTraceOperator: [],
+			},
 			clickhouse_sql: [],
 			id: '',
 		},
