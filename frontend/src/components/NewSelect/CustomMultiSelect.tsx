@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable no-nested-ternary */
@@ -1558,34 +1560,34 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							<div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
 								<Checkbox checked={allOptionsSelected} className="option-checkbox">
 									<div className="option-content">
-										<div className="all-option-text">
-											ALL
-										</div>
+										<div className="all-option-text">ALL</div>
 									</div>
 								</Checkbox>
 								<div
 									onClick={(e): void => {
-											e.stopPropagation();
+										e.stopPropagation();
 									}}
 									onMouseDown={(e): void => {
-											e.stopPropagation();
+										e.stopPropagation();
 									}}
 								>
-									{isDynamicVariable && (<TextToolTip
-										text="ALL in dynamic variable = No filter applied (unlike other variable types where ALL sends all selected values). Learn more"
-										url="https://signoz.io/docs/userguide/manage-variables/#note-about-all"
-										urlText="here"
-										useFilledIcon={false}
-										outlinedIcon={
-											<Info
-												size={14}
-												style={{
-													color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
-													marginLeft: 5,
-												}}
-											/>
-										}
-									/>)}
+									{isDynamicVariable && (
+										<TextToolTip
+											text="ALL in dynamic variable = No filter applied (unlike other variable types where ALL sends all selected values). Learn more"
+											url="https://signoz.io/docs/userguide/manage-variables/#note-about-all"
+											urlText="here"
+											useFilledIcon={false}
+											outlinedIcon={
+												<Info
+													size={14}
+													style={{
+														color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+														marginLeft: 5,
+													}}
+												/>
+											}
+										/>
+									)}
 								</div>
 							</div>
 						</div>
@@ -1702,7 +1704,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						!loading &&
 						!errorMessage && (
 							<div className="navigation-text-incomplete">
-								Don't see the value? Use search
+								Don&apos;t see the value? Use search
 							</div>
 						)}
 
