@@ -45,6 +45,7 @@
 		"@sentry/webpack-plugin": "2.22.6",
 		"@signozhq/badge": "0.0.2",
 		"@signozhq/calendar": "0.0.0",
+		"@signozhq/callout": "0.0.2",
 		"@signozhq/design-tokens": "1.1.4",
 		"@signozhq/input": "0.0.2",
 		"@signozhq/popover": "0.0.0",

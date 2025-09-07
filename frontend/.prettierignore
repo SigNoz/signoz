@@ -11,3 +11,5 @@ public/
 
 # Ignore all files in parser folder:
 src/parser/**
+
+src/TraceOperator/parser/**

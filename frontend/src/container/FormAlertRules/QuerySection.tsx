@@ -54,6 +54,7 @@ function QuerySection({
 				queryVariant: 'static',
 				initialDataSource: ALERTS_DATA_SOURCE_MAP[alertType],
 			}}
+			showTraceOperator={alertType === AlertTypes.TRACES_BASED_ALERT}
 			showFunctions={
 				(alertType === AlertTypes.METRICS_BASED_ALERT &&
 					alertDef.version === ENTITY_VERSION_V4) ||
