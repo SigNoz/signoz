@@ -9,6 +9,8 @@ export interface ICreateAlertContextProps {
 	setAlertType: Dispatch<AlertTypes>;
 	thresholdState: AlertThresholdState;
 	setThresholdState: Dispatch<AlertThresholdAction>;
+	advancedOptions: AdvancedOptionsState;
+	setAdvancedOptions: Dispatch<AdvancedOptionsAction>;
 }
 
 export interface ICreateAlertProviderProps {
@@ -100,4 +102,33 @@ export type AlertThresholdAction =
 	| { type: 'SET_ALGORITHM'; payload: string }
 	| { type: 'SET_SEASONALITY'; payload: string }
 	| { type: 'SET_THRESHOLDS'; payload: Threshold[] }
+	| { type: 'RESET' };
+
+export interface AdvancedOptionsState {
+	sendNotificationIfDataIsMissing: {
+		toleranceLimit: number;
+		timeUnit: string;
+	};
+	enforceMinimumDatapoints: {
+		minimumDatapoints: number;
+	};
+	delayEvaluation: {
+		delay: number;
+		timeUnit: string;
+	};
+}
+
+export type AdvancedOptionsAction =
+	| {
+			type: 'SET_SEND_NOTIFICATION_IF_DATA_IS_MISSING';
+			payload: { toleranceLimit: number; timeUnit: string };
+	  }
+	| {
+			type: 'SET_ENFORCE_MINIMUM_DATAPOINTS';
+			payload: { minimumDatapoints: number };
+	  }
+	| {
+			type: 'SET_DELAY_EVALUATION';
+			payload: { delay: number; timeUnit: string };
+	  }
 	| { type: 'RESET' };
