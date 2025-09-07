@@ -172,9 +172,6 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 		return nil, err
 	}
 
-	// Start the metrics server for this alertmanager instance
-	server.StartMetricsServer(ctx)
-
 	beforeCompareAndSelectHash := config.StoreableConfig().Hash
 	config, err = service.compareAndSelectConfig(ctx, config)
 	if err != nil {

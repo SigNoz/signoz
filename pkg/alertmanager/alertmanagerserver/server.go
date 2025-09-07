@@ -20,7 +20,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/model"
 )
 
@@ -194,9 +193,6 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 
 	server.pipelineBuilder = notify.NewPipelineBuilder(signozRegisterer, featurecontrol.NoopFlags{})
 	server.dispatcherMetrics = dispatch.NewDispatcherMetrics(false, signozRegisterer)
-
-	// Initialize metrics server
-	server.initMetricsServer()
 
 	return server, nil
 }
@@ -379,13 +375,6 @@ func (server *Server) Stop(ctx context.Context) error {
 		server.inhibitor.Stop()
 	}
 
-	// Stop metrics server
-	if server.metricsServer != nil {
-		if err := server.metricsServer.Shutdown(ctx); err != nil {
-			server.logger.ErrorContext(ctx, "failed to shutdown metrics server", "error", err)
-		}
-	}
-
 	// Close the alert provider.
 	server.alerts.Close()
 
@@ -396,37 +385,4 @@ func (server *Server) Stop(ctx context.Context) error {
 	server.wg.Wait()
 
 	return nil
-}
-
-// initMetricsServer initializes the HTTP server for serving Prometheus metrics
-func (server *Server) initMetricsServer() {
-	mux := http.NewServeMux()
-	path := "/metrics"
-	address := ":9093"
-	// Register metrics handler using standard net/http
-	mux.Handle(path, promhttp.HandlerFor(server.registry.(prometheus.Gatherer), promhttp.HandlerOpts{}))
-
-	server.metricsServer = &http.Server{
-		Addr:    address,
-		Handler: mux,
-	}
-
-}
-
-// StartMetricsServer starts the metrics HTTP server using standard net/http
-func (server *Server) StartMetricsServer(ctx context.Context) {
-	if server.metricsServer == nil {
-		return
-	}
-
-	server.wg.Add(1)
-	go func() {
-		defer server.wg.Done()
-		server.logger.InfoContext(ctx, "starting metrics server", "address", server.metricsServer.Addr)
-
-		// Standard net/http server approach
-		if err := server.metricsServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			server.logger.ErrorContext(ctx, "metrics server failed", "error", err)
-		}
-	}()
 }

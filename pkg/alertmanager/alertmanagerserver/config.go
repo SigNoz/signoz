@@ -64,17 +64,6 @@ type NFLogConfig struct {
 	Retention time.Duration `mapstructure:"retention"`
 }
 
-type MetricsConfig struct {
-	// Address to serve Prometheus metrics on (e.g., ":9093")
-	Address string `mapstructure:"address"`
-
-	// Path to serve metrics on (defaults to "/metrics")
-	Path string `mapstructure:"path"`
-
-	// Prefix to attach to all metrics
-	Prefix string `mapstructure:"prefix"`
-}
-
 func NewConfig() Config {
 	return Config{
 		ExternalURL: &url.URL{
