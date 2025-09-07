@@ -4323,6 +4323,20 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
+"@signozhq/resizable@0.0.0":
+  version "0.0.0"
+  resolved "https://registry.yarnpkg.com/@signozhq/resizable/-/resizable-0.0.0.tgz#a517818b9f9bcdaeafc55ae134be86522bc90e9f"
+  integrity sha512-yAkJdMgTkh8kv42ZuabwTZguxalwYqIp4b44YdSrw6jRUSq9tscUBXVllNN79T71lPUtc5AV13uQ4Qm5AcfVbQ==
+  dependencies:
+    "@radix-ui/react-icons" "^1.3.0"
+    "@radix-ui/react-slot" "^1.1.0"
+    class-variance-authority "^0.7.0"
+    clsx "^2.1.1"
+    lucide-react "^0.445.0"
+    react-resizable-panels "^3.0.5"
+    tailwind-merge "^2.5.2"
+    tailwindcss-animate "^1.0.7"
+
 "@signozhq/sonner@0.1.0":
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/@signozhq/sonner/-/sonner-0.1.0.tgz#1310cc530c60459608246550eb977a1ae27b6ce4"
@@ -15451,6 +15465,11 @@ react-remove-scroll@^2.6.3:
     tslib "^2.1.0"
     use-callback-ref "^1.3.3"
     use-sidecar "^1.1.3"
+
+react-resizable-panels@^3.0.5:
+  version "3.0.5"
+  resolved "https://registry.yarnpkg.com/react-resizable-panels/-/react-resizable-panels-3.0.5.tgz#50a20645263eed02344de4a70d1319bbc0014bbd"
+  integrity sha512-3z1yN25DMTXLg2wfyFrW32r5k4WEcUa3F7cJ2EgtNK07lnOs4mpM8yWLGunCpkhcQRwJX4fqoLcIh/pHPxzlmQ==
 
 react-resizable@3.0.4:
   version "3.0.4"
