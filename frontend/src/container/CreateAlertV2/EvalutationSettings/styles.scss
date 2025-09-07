@@ -1,0 +1,113 @@
+.evaluation-settings-container {
+	margin: 16px;
+
+	.advanced-options-container {
+		.ant-collapse {
+			.ant-collapse-item {
+				.ant-collapse-header {
+					background-color: var(--bg-ink-400);
+					border: 1px solid var(--bg-slate-500);
+
+					.ant-collapse-header-text {
+						color: var(--bg-vanilla-400);
+						font-family: Inter;
+					}
+				}
+
+				.ant-collapse-content {
+					.ant-collapse-content-box {
+						background-color: var(--bg-ink-400);
+					}
+				}
+			}
+		}
+
+		.advanced-option-item {
+			display: flex;
+			justify-content: space-between;
+			align-items: flex-start;
+			padding: 16px;
+			border-bottom: 1px solid var(--bg-slate-500);
+
+			.advanced-option-item-left-content {
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+
+				.advanced-option-item-title {
+					color: var(--bg-vanilla-300);
+					font-family: Inter;
+					font-size: 14px;
+					font-weight: 500;
+				}
+
+				.advanced-option-item-description {
+					color: var(--bg-vanilla-400);
+					font-family: Inter;
+					font-size: 14px;
+					font-weight: 400;
+				}
+
+				.advanced-option-item-input {
+					margin-top: 16px;
+
+					.ant-input {
+						background-color: var(--bg-ink-400);
+						border: 1px solid var(--bg-slate-400);
+						color: var(--bg-vanilla-100);
+						height: 32px;
+
+						&::placeholder {
+							font-family: 'Space Mono';
+						}
+
+						&:hover {
+							border-color: var(--bg-vanilla-300);
+						}
+
+						&:focus {
+							border-color: var(--bg-vanilla-300);
+							box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+						}
+					}
+
+					.ant-select {
+						.ant-select-selector {
+							background-color: var(--bg-ink-400);
+							border: 1px solid var(--bg-slate-400);
+							color: var(--bg-vanilla-100);
+							height: 32px;
+
+							&:hover {
+								border-color: var(--bg-vanilla-300);
+							}
+
+							&:focus {
+								border-color: var(--bg-vanilla-300);
+								box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+							}
+
+							.ant-select-selection-placeholder {
+								font-family: 'Space Mono';
+							}
+						}
+
+						.ant-select-selection-item {
+							color: var(--bg-vanilla-100);
+						}
+
+						.ant-select-arrow {
+							color: var(--bg-vanilla-400);
+						}
+					}
+				}
+			}
+
+			.advanced-option-item-right-content {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+		}
+	}
+}
