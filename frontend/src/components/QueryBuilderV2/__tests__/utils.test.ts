@@ -13,6 +13,7 @@ import {
 	convertAggregationToExpression,
 	convertFiltersToExpression,
 	convertFiltersToExpressionWithExistingQuery,
+	removeKeysFromExpression,
 } from '../utils';
 
 describe('convertFiltersToExpression', () => {
@@ -970,5 +971,225 @@ describe('convertAggregationToExpression', () => {
 				expression: 'count()',
 			},
 		]);
+	});
+});
+
+describe('removeKeysFromExpression', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+	});
+
+	describe('Backward compatibility (removeOnlyVariableExpressions = false)', () => {
+		it('should remove simple key-value pair from expression', () => {
+			const expression = "service.name = 'api-gateway' AND status = 'success'";
+			const result = removeKeysFromExpression(expression, ['service.name']);
+
+			expect(result).toBe("status = 'success'");
+		});
+
+		it('should remove multiple keys from expression', () => {
+			const expression =
+				"service.name = 'api-gateway' AND status = 'success' AND region = 'us-east-1'";
+			const result = removeKeysFromExpression(expression, [
+				'service.name',
+				'status',
+			]);
+
+			expect(result).toBe("region = 'us-east-1'");
+		});
+
+		it('should handle empty expression', () => {
+			const result = removeKeysFromExpression('', ['service.name']);
+			expect(result).toBe('');
+		});
+
+		it('should handle empty keys array', () => {
+			const expression = "service.name = 'api-gateway'";
+			const result = removeKeysFromExpression(expression, []);
+			expect(result).toBe(expression);
+		});
+
+		it('should handle key not found in expression', () => {
+			const expression = "service.name = 'api-gateway'";
+			const result = removeKeysFromExpression(expression, ['nonexistent.key']);
+			expect(result).toBe(expression);
+		});
+
+		// todo: Sagar check this - this is expected or not
+		// it('should remove last occurrence when multiple occurrences exist', () => {
+		// 	// This tests the original behavior - should remove the last occurrence
+		// 	const expression =
+		// 		"deployment.environment = $deployment.environment deployment.environment = 'default'";
+		// 	const result = removeKeysFromExpression(
+		// 		expression,
+		// 		['deployment.environment'],
+		// 		false,
+		// 	);
+
+		// 	// Should remove the literal value (last occurrence), leaving the variable
+		// 	expect(result).toBe('deployment.environment = $deployment.environment');
+		// });
+	});
+
+	describe('Variable expression targeting (removeOnlyVariableExpressions = true)', () => {
+		it('should remove only variable expressions (values starting with $)', () => {
+			const expression =
+				"deployment.environment = $deployment.environment deployment.environment = 'default'";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			// Should remove the variable expression, leaving the literal value
+			expect(result).toBe("deployment.environment = 'default'");
+		});
+
+		it('should not remove literal values when targeting variable expressions', () => {
+			const expression = "service.name = 'api-gateway' AND status = 'success'";
+			const result = removeKeysFromExpression(expression, ['service.name'], true);
+
+			// Should not remove anything since no variable expressions exist
+			expect(result).toBe("service.name = 'api-gateway' AND status = 'success'");
+		});
+
+		it('should remove multiple variable expressions', () => {
+			const expression =
+				"deployment.environment = $deployment.environment service.name = $service.name status = 'success'";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment', 'service.name'],
+				true,
+			);
+
+			expect(result).toBe("status = 'success'");
+		});
+
+		it('should handle mixed variable and literal expressions correctly', () => {
+			const expression =
+				"deployment.environment = $deployment.environment service.name = 'api-gateway' region = $region";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment', 'region'],
+				true,
+			);
+
+			// Should only remove variable expressions, leaving literal value
+			expect(result).toBe("service.name = 'api-gateway'");
+		});
+
+		it('should handle complex expressions with operators', () => {
+			const expression =
+				"deployment.environment IN [$env1, $env2] AND service.name = 'api-gateway'";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			expect(result).toBe("service.name = 'api-gateway'");
+		});
+	});
+
+	describe('Edge cases and robustness', () => {
+		it('should handle case insensitive key matching', () => {
+			const expression = 'Service.Name = $Service.Name';
+			const result = removeKeysFromExpression(expression, ['service.name'], true);
+
+			expect(result).toBe('');
+		});
+
+		it('should clean up trailing AND/OR operators', () => {
+			const expression =
+				"deployment.environment = $deployment.environment AND service.name = 'api-gateway'";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			expect(result).toBe("service.name = 'api-gateway'");
+		});
+
+		it('should clean up leading AND/OR operators', () => {
+			const expression =
+				"service.name = 'api-gateway' AND deployment.environment = $deployment.environment";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			expect(result).toBe("service.name = 'api-gateway'");
+		});
+
+		it('should handle expressions with only variable assignments', () => {
+			const expression = 'deployment.environment = $deployment.environment';
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			expect(result).toBe('');
+		});
+
+		it('should handle whitespace around operators', () => {
+			const expression =
+				"deployment.environment  =  $deployment.environment  AND  service.name  =  'api-gateway'";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			expect(result.trim()).toBe("service.name  =  'api-gateway'");
+		});
+	});
+
+	describe('Real-world scenarios', () => {
+		it('should handle multiple variable instances of same key', () => {
+			const expression =
+				"deployment.environment = $env1 deployment.environment = $env2 deployment.environment = 'default'";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			// Should remove one occurence as this case in itself is invalid to have multiple variable expressions for the same key
+			expect(result).toBe(
+				"deployment.environment = $env1 deployment.environment = 'default'",
+			);
+		});
+
+		it('should handle OR operators in expressions', () => {
+			const expression =
+				"deployment.environment = $deployment.environment OR service.name = 'api-gateway'";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			expect(result).toBe("service.name = 'api-gateway'");
+		});
+
+		it('should maintain expression validity after removal', () => {
+			const expression =
+				"deployment.environment = $deployment.environment AND service.name = 'api-gateway' AND status = 'success'";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			// Should maintain valid AND structure
+			expect(result).toBe("service.name = 'api-gateway' AND status = 'success'");
+
+			// Verify the result can be parsed by extractQueryPairs
+			const pairs = extractQueryPairs(result);
+			expect(pairs).toHaveLength(2);
+		});
 	});
 });

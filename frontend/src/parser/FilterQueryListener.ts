@@ -198,4 +198,3 @@ export default class FilterQueryListener extends ParseTreeListener {
 	 */
 	exitKey?: (ctx: KeyContext) => void;
 }
-

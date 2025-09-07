@@ -131,6 +131,7 @@ describe('GridCardLayout Utils', () => {
 					},
 				],
 				queryFormulas: [],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [],
 			promql: [],
@@ -171,6 +172,7 @@ describe('GridCardLayout Utils', () => {
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 			};
 
@@ -195,6 +197,7 @@ describe('GridCardLayout Utils', () => {
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 			};
 
@@ -240,6 +243,7 @@ describe('GridCardLayout Utils', () => {
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 			};
 
@@ -268,6 +272,7 @@ describe('GridCardLayout Utils', () => {
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 			};
 
