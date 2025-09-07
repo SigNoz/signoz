@@ -7,6 +7,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import AlertCondition from './AlertCondition';
 import { CreateAlertProvider } from './context';
 import CreateAlertHeader from './CreateAlertHeader';
+import EvaluationSettings from './EvalutationSettings';
 import QuerySection from './QuerySection';
 
 function CreateAlertV2({
@@ -22,6 +23,7 @@ function CreateAlertV2({
 				<CreateAlertHeader />
 				<QuerySection />
 				<AlertCondition />
+				<EvaluationSettings />
 			</CreateAlertProvider>
 		</div>
 	);

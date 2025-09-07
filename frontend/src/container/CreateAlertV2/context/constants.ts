@@ -3,6 +3,7 @@ import getRandomColor from 'lib/getRandomColor';
 import { v4 } from 'uuid';
 
 import {
+	AdvancedOptionsState,
 	AlertState,
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
@@ -68,6 +69,20 @@ export const INITIAL_ALERT_THRESHOLD_STATE: AlertThresholdState = {
 	algorithm: Algorithm.STANDARD,
 	seasonality: Seasonality.HOURLY,
 	thresholds: [INITIAL_CRITICAL_THRESHOLD],
+};
+
+export const INITIAL_ADVANCED_OPTIONS_STATE: AdvancedOptionsState = {
+	sendNotificationIfDataIsMissing: {
+		toleranceLimit: 0,
+		timeUnit: '',
+	},
+	enforceMinimumDatapoints: {
+		minimumDatapoints: 0,
+	},
+	delayEvaluation: {
+		delay: 0,
+		timeUnit: '',
+	},
 };
 
 export const THRESHOLD_OPERATOR_OPTIONS = [

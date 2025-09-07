@@ -11,8 +11,13 @@ import { AlertDef } from 'types/api/alerts/def';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { INITIAL_ALERT_THRESHOLD_STATE } from './constants';
 import {
+	INITIAL_ADVANCED_OPTIONS_STATE,
+	INITIAL_ALERT_THRESHOLD_STATE,
+} from './constants';
+import {
+	AdvancedOptionsAction,
+	AdvancedOptionsState,
 	AlertState,
 	AlertThresholdAction,
 	AlertThresholdState,
@@ -106,6 +111,24 @@ export const alertThresholdReducer = (
 			return { ...state, thresholds: action.payload };
 		case 'RESET':
 			return INITIAL_ALERT_THRESHOLD_STATE;
+		default:
+			return state;
+	}
+};
+
+export const advancedOptionsReducer = (
+	state: AdvancedOptionsState,
+	action: AdvancedOptionsAction,
+): AdvancedOptionsState => {
+	switch (action.type) {
+		case 'SET_SEND_NOTIFICATION_IF_DATA_IS_MISSING':
+			return { ...state, sendNotificationIfDataIsMissing: action.payload };
+		case 'SET_ENFORCE_MINIMUM_DATAPOINTS':
+			return { ...state, enforceMinimumDatapoints: action.payload };
+		case 'SET_DELAY_EVALUATION':
+			return { ...state, delayEvaluation: action.payload };
+		case 'RESET':
+			return INITIAL_ADVANCED_OPTIONS_STATE;
 		default:
 			return state;
 	}
