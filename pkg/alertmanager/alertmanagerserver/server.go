@@ -3,7 +3,6 @@ package alertmanagerserver
 import (
 	"context"
 	"log/slog"
-	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -63,9 +62,6 @@ type Server struct {
 	tmpl              *template.Template
 	wg                sync.WaitGroup
 	stopc             chan struct{}
-
-	// metrics server for exposing prometheus metrics
-	metricsServer *http.Server
 }
 
 func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore) (*Server, error) {
