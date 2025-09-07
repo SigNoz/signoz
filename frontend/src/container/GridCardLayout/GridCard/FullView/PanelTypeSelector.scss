@@ -3,7 +3,7 @@
 	flex-direction: column;
 	gap: 8px;
 	margin-left: 16px;
-	min-width: 140px;
+	min-width: 180px;
 
 	.typography {
 		font-size: 12px;
@@ -14,7 +14,7 @@
 	}
 
 	.panel-type-select {
-		.select-option {
+		.view-panel-select-option {
 			display: flex;
 			align-items: center;
 			gap: 8px;
@@ -30,5 +30,13 @@
 				line-height: 20px;
 			}
 		}
+	}
+}
+
+.ant-select-item-option-content {
+	.view-panel-select-option {
+		display: flex;
+		align-items: center;
+		gap: 8px;
 	}
 }

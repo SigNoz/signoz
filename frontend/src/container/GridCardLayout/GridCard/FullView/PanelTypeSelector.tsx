@@ -61,7 +61,7 @@ function PanelTypeSelector({
 			>
 				{GraphTypes.map((item) => (
 					<Option key={item.name} value={item.name}>
-						<div className="select-option">
+						<div className="view-panel-select-option">
 							<div className="icon">{item.icon}</div>
 							<Typography.Text className="display">{item.display}</Typography.Text>
 						</div>
