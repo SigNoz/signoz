@@ -74,6 +74,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		stopc:      make(chan struct{}),
 	}
 	signozRegisterer := prometheus.WrapRegistererWithPrefix("signoz_", registry)
+	signozRegisterer = prometheus.WrapRegistererWith(prometheus.Labels{"org_id": server.orgID}, signozRegisterer)
 	// initialize marker
 	server.marker = alertmanagertypes.NewMarker(signozRegisterer)
 
