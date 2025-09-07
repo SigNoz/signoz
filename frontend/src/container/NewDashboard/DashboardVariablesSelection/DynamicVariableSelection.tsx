@@ -586,6 +586,7 @@ function DynamicVariableSelection({
 							refetch();
 						}}
 						showIncompleteDataMessage={!isComplete && filteredOptionsData.length > 0}
+						isDynamicVariable
 						showRetryButton={isRetryableError}
 					/>
 				)}

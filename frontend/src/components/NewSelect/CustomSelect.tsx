@@ -13,9 +13,11 @@ import {
 import { Color } from '@signozhq/design-tokens';
 import { Select } from 'antd';
 import cx from 'classnames';
+import TextToolTip from 'components/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { capitalize, isEmpty } from 'lodash-es';
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowUp, Info } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import React, {
 	useCallback,
@@ -60,6 +62,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	onRetry,
 	showIncompleteDataMessage = false,
 	showRetryButton = true,
+	isDynamicVariable = false,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -67,6 +70,8 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	const [searchText, setSearchText] = useState('');
 	const [activeOptionIndex, setActiveOptionIndex] = useState<number>(-1);
 	const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
+
+	const isDarkMode = useIsDarkMode();
 
 	// Refs for element access and scroll behavior
 	const selectRef = useRef<BaseSelectRef>(null);
@@ -523,6 +528,23 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 							<div className="select-group" key={section.label}>
 								<div className="group-label" role="heading" aria-level={2}>
 									{section.label}
+									{isDynamicVariable && (
+										<TextToolTip
+											text="Related values: Filtered by other variable selections. All values: Unfiltered complete list. Learn more"
+											url="https://signoz.io/docs/userguide/manage-variables/#dynamic-variable-dropdowns-display-values-in-two-sections"
+											urlText="here"
+											useFilledIcon={false}
+											outlinedIcon={
+												<Info
+													size={14}
+													style={{
+														color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+														marginTop: 1,
+													}}
+												/>
+											}
+										/>
+									)}
 								</div>
 								<div role="group" aria-label={`${section.label} options`}>
 									{section.options && mapOptions(section.options)}
@@ -607,6 +629,8 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 		showIncompleteDataMessage,
 		isScrolledToBottom,
 		showRetryButton,
+		isDarkMode,
+		isDynamicVariable,
 	]);
 
 	// Handle dropdown visibility changes

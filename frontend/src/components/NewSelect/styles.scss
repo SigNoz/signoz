@@ -801,6 +801,10 @@ $custom-border-color: #2c3044;
 
 		.select-group {
 			.group-label {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+
 				color: rgba(0, 0, 0, 0.85);
 				background-color: #fafafa;
 				border-bottom: 1px solid #f0f0f0;

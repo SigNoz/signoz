@@ -1621,21 +1621,23 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							<div className="select-group" key={section.label}>
 								<div className="group-label" role="heading" aria-level={2}>
 									{section.label}
-									<TextToolTip
-										text="Related values: Filtered by other variable selections. All values: Unfiltered complete list. Learn more"
-										url="https://signoz.io/docs/userguide/manage-variables/#dynamic-variable-dropdowns-display-values-in-two-sections"
-										urlText="here"
-										useFilledIcon={false}
-										outlinedIcon={
-											<Info
-												size={14}
-												style={{
-													color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
-													marginTop: 1,
-												}}
-											/>
-										}
-									/>
+									{isDynamicVariable && (
+										<TextToolTip
+											text="Related values: Filtered by other variable selections. All values: Unfiltered complete list. Learn more"
+											url="https://signoz.io/docs/userguide/manage-variables/#dynamic-variable-dropdowns-display-values-in-two-sections"
+											urlText="here"
+											useFilledIcon={false}
+											outlinedIcon={
+												<Info
+													size={14}
+													style={{
+														color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+														marginTop: 1,
+													}}
+												/>
+											}
+										/>
+									)}
 								</div>
 								<div role="group" aria-label={`${section.label} options`}>
 									<Virtuoso
