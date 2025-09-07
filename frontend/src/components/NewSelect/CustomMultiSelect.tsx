@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable no-nested-ternary */
@@ -70,6 +72,8 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	showIncompleteDataMessage = false,
 	showLabels = false,
 	enableRegexOption = false,
+	isDynamicVariable = false,
+	showRetryButton = true,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -1553,12 +1557,23 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								}
 							}}
 						>
-							<Checkbox checked={allOptionsSelected} className="option-checkbox">
-								<div className="option-content">
-									<div className="all-option-text">
-										ALL
+							<div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+								<Checkbox checked={allOptionsSelected} className="option-checkbox">
+									<div className="option-content">
+										<div className="all-option-text">ALL</div>
+									</div>
+								</Checkbox>
+								<div
+									onClick={(e): void => {
+										e.stopPropagation();
+									}}
+									onMouseDown={(e): void => {
+										e.stopPropagation();
+									}}
+								>
+									{isDynamicVariable && (
 										<TextToolTip
-											text="Note about ALL in Dynamic Variable"
+											text="ALL in dynamic variable = No filter applied (unlike other variable types where ALL sends all selected values). Learn more"
 											url="https://signoz.io/docs/userguide/manage-variables/#note-about-all"
 											urlText="here"
 											useFilledIcon={false}
@@ -1567,15 +1582,14 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 													size={14}
 													style={{
 														color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
-														marginTop: 1,
-														marginRight: 5,
+														marginLeft: 5,
 													}}
 												/>
 											}
 										/>
-									</div>
+									)}
 								</div>
-							</Checkbox>
+							</div>
 						</div>
 						<div className="divider" />
 					</>
@@ -1607,21 +1621,23 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							<div className="select-group" key={section.label}>
 								<div className="group-label" role="heading" aria-level={2}>
 									{section.label}
-									<TextToolTip
-										text="Learn more about this section "
-										url="https://signoz.io/docs/userguide/manage-variables/#dynamic-variable-dropdowns-display-values-in-two-sections"
-										urlText="here"
-										useFilledIcon={false}
-										outlinedIcon={
-											<Info
-												size={14}
-												style={{
-													color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
-													marginTop: 1,
-												}}
-											/>
-										}
-									/>
+									{isDynamicVariable && (
+										<TextToolTip
+											text="Related values: Filtered by other variable selections. All values: Unfiltered complete list. Learn more"
+											url="https://signoz.io/docs/userguide/manage-variables/#dynamic-variable-dropdowns-display-values-in-two-sections"
+											urlText="here"
+											useFilledIcon={false}
+											outlinedIcon={
+												<Info
+													size={14}
+													style={{
+														color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+														marginTop: 1,
+													}}
+												/>
+											}
+										/>
+									)}
 								</div>
 								<div role="group" aria-label={`${section.label} options`}>
 									<Virtuoso
@@ -1663,7 +1679,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							<div className="navigation-icons">
 								<LoadingOutlined />
 							</div>
-							<div className="navigation-text">We are updating the values...</div>
+							<div className="navigation-text">Refreshing values...</div>
 						</div>
 					)}
 					{errorMessage && !loading && (
@@ -1671,7 +1687,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							<div className="navigation-text">
 								{errorMessage || SOMETHING_WENT_WRONG}
 							</div>
-							{onRetry && (
+							{onRetry && showRetryButton && (
 								<div className="navigation-icons">
 									<ReloadOutlined
 										twoToneColor={Color.BG_CHERRY_400}
@@ -1690,7 +1706,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						!loading &&
 						!errorMessage && (
 							<div className="navigation-text-incomplete">
-								Use search for more options
+								Don&apos;t see the value? Use search
 							</div>
 						)}
 
@@ -1728,6 +1744,8 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		isScrolledToBottom,
 		enableRegexOption,
 		isDarkMode,
+		isDynamicVariable,
+		showRetryButton,
 	]);
 
 	// Custom handler for dropdown visibility changes
