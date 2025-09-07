@@ -14,6 +14,7 @@ export type RequestType =
 
 export type QueryType =
 	| 'builder_query'
+	| 'builder_trace_operator'
 	| 'builder_formula'
 	| 'builder_sub_query'
 	| 'builder_join'
@@ -220,6 +221,7 @@ export interface BaseBuilderQuery {
 	secondaryAggregations?: SecondaryAggregation[];
 	functions?: QueryFunction[];
 	legend?: string;
+	expression?: string; // for trace operator
 }
 
 export interface TraceBuilderQuery extends BaseBuilderQuery {
