@@ -17,6 +17,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { isRetryableError as checkIfRetryableError } from 'utils/errorUtils';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { ALL_SELECT_VALUE } from '../utils';
@@ -50,6 +51,7 @@ function DynamicVariableSelection({
 	);
 
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
+	const [isRetryableError, setIsRetryableError] = useState<boolean>(true);
 
 	const [isComplete, setIsComplete] = useState<boolean>(false);
 
@@ -165,7 +167,7 @@ function DynamicVariableSelection({
 			enabled: variableData.type === 'DYNAMIC',
 			queryFn: () =>
 				getFieldValues(
-					variableData.dynamicVariablesSource?.toLowerCase() === 'all sources'
+					variableData.dynamicVariablesSource?.toLowerCase() === 'all telemetry'
 						? undefined
 						: (variableData.dynamicVariablesSource?.toLowerCase() as
 								| 'traces'
@@ -223,6 +225,10 @@ function DynamicVariableSelection({
 							'Please make sure configuration is valid and you have required setup and permissions';
 					}
 					setErrorMessage(message);
+
+					// Check if error is retryable (5xx) or not (4xx)
+					const isRetryable = checkIfRetryableError(error);
+					setIsRetryableError(isRetryable);
 				}
 			},
 		},
@@ -545,9 +551,12 @@ function DynamicVariableSelection({
 						onSearch={handleSearch}
 						onRetry={(): void => {
 							setErrorMessage(null);
+							setIsRetryableError(true);
 							refetch();
 						}}
 						showIncompleteDataMessage={!isComplete && filteredOptionsData.length > 0}
+						isDynamicVariable
+						showRetryButton={isRetryableError}
 					/>
 				) : (
 					<CustomSelect
@@ -570,11 +579,15 @@ function DynamicVariableSelection({
 						defaultValue={variableData.defaultValue}
 						errorMessage={errorMessage}
 						onSearch={handleSearch}
+						// eslint-disable-next-line sonarjs/no-identical-functions
 						onRetry={(): void => {
 							setErrorMessage(null);
+							setIsRetryableError(true);
 							refetch();
 						}}
 						showIncompleteDataMessage={!isComplete && filteredOptionsData.length > 0}
+						isDynamicVariable
+						showRetryButton={isRetryableError}
 					/>
 				)}
 			</div>
