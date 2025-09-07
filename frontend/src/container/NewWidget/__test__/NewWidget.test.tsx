@@ -6,7 +6,13 @@
 // - Handling multiple rows correctly
 // - Handling widgets with different heights
 
-import { placeWidgetAtBottom, placeWidgetBetweenRows } from '../utils';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+
+import {
+	getDefaultWidgetData,
+	placeWidgetAtBottom,
+	placeWidgetBetweenRows,
+} from '../utils';
 
 describe('placeWidgetAtBottom', () => {
 	it('should place widget at (0,0) when layout is empty', () => {
@@ -214,5 +220,18 @@ describe('placeWidgetBetweenRows', () => {
 			{ i: 'widget1', x: 0, y: 0, w: 12, h: 4 },
 			{ i: 'widget2', x: 0, y: 4, w: 8, h: 3 },
 		]);
+	});
+});
+
+describe('getDefaultWidgetData', () => {
+	it('should set stackedBarChart to true by default for new panel creation', () => {
+		const widgetId = 'test-widget-123';
+		const panelType = PANEL_TYPES.BAR;
+
+		const result = getDefaultWidgetData(widgetId, panelType);
+
+		expect(result.stackedBarChart).toBe(true);
+		expect(result.id).toBe(widgetId);
+		expect(result.panelTypes).toBe(panelType);
 	});
 });
