@@ -32,6 +32,7 @@ import {
 import { useLocation } from 'react-router-dom';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
+import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
@@ -368,7 +369,9 @@ function WidgetGraphComponent({
 					onClickHandler={onClickHandler ?? graphClickHandler}
 					customOnDragSelect={customOnDragSelect}
 					setCurrentGraphRef={setCurrentGraphRef}
-					enableDrillDown={enableDrillDown}
+					enableDrillDown={
+						enableDrillDown && widget?.query?.queryType === EQueryType.QUERY_BUILDER
+					}
 				/>
 			</Modal>
 
