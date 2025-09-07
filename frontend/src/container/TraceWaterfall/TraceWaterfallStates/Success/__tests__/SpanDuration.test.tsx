@@ -172,7 +172,9 @@ describe('SpanDuration', () => {
 			/>,
 		);
 
-		const spanElement = screen.getByText('1.16 ms').closest('.span-duration');
+		const spanElement = screen
+			.getByText(SPAN_DURATION_TEXT)
+			.closest('.span-duration');
 		expect(spanElement).toHaveClass(HIGHLIGHTED_SPAN_CLASS);
 		expect(spanElement).not.toHaveClass(INTERESTED_SPAN_CLASS);
 	});
