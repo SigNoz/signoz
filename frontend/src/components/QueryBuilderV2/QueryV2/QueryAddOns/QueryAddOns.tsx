@@ -9,7 +9,7 @@ import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter/Orde
 import { ReduceToFilter } from 'container/QueryBuilder/filters/ReduceToFilter/ReduceToFilter';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { isEmpty } from 'lodash-es';
+import { get, isEmpty } from 'lodash-es';
 import { BarChart2, ChevronUp, ExternalLink, ScrollText } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -32,6 +32,14 @@ const ADD_ONS_KEYS = {
 	ORDER_BY: 'order_by',
 	LIMIT: 'limit',
 	LEGEND_FORMAT: 'legend_format',
+};
+
+const ADD_ONS_KEYS_TO_QUERY_PATH = {
+	[ADD_ONS_KEYS.GROUP_BY]: 'groupBy',
+	[ADD_ONS_KEYS.HAVING]: 'having.expression',
+	[ADD_ONS_KEYS.ORDER_BY]: 'orderBy',
+	[ADD_ONS_KEYS.LIMIT]: 'limit',
+	[ADD_ONS_KEYS.LEGEND_FORMAT]: 'legend',
 };
 
 const ADD_ONS = [
@@ -90,6 +98,9 @@ const REDUCE_TO = {
 	docLink:
 		'https://signoz.io/docs/userguide/query-builder-v5/#reduce-operations',
 };
+
+const hasValue = (value: unknown): boolean =>
+	value != null && value !== '' && !(Array.isArray(value) && value.length === 0);
 
 // Custom tooltip content component
 function TooltipContent({
@@ -202,14 +213,26 @@ function QueryAddOns({
 
 		setAddOns(filteredAddOns);
 
-		// Filter selectedViews to only include add-ons present in filteredAddOns
-		setSelectedViews((prevSelectedViews) =>
-			prevSelectedViews.filter((view) =>
-				filteredAddOns.some((addOn) => addOn.key === view.key),
+		// Create a Set for O(1) lookup performance instead of O(n) array.includes()
+		const activeAddOnKeys = new Set(
+			Object.entries(ADD_ONS_KEYS_TO_QUERY_PATH)
+				.filter(([, path]) => hasValue(get(query, path)))
+				.map(([key]) => key),
+		);
+
+		// Create a Set of available add-on keys for faster filtering
+		const availableAddOnKeys = new Set(filteredAddOns.map((addOn) => addOn.key));
+
+		// Filter and set selected views: add-ons that are both active and available
+		setSelectedViews(
+			ADD_ONS.filter(
+				(addOn) =>
+					activeAddOnKeys.has(addOn.key) && availableAddOnKeys.has(addOn.key),
 			),
 		);
+
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [panelType, isListViewPanel, query.dataSource]);
+	}, [panelType, isListViewPanel, query]);
 
 	const handleOptionClick = (e: RadioChangeEvent): void => {
 		if (selectedViews.find((view) => view.key === e.target.value.key)) {
