@@ -3,6 +3,7 @@ package alertmanagertypes
 import (
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -12,6 +13,12 @@ const (
 	RuleIDMatcherName     string = "ruleId"
 	ruleIDMatcherValueSep string = "|"
 )
+
+// RuleGrouping defines per-rule grouping configuration
+type RuleGrouping struct {
+	GroupBy        []string      `json:"group_by"`        // [service.name, instance]
+	RepeatInterval time.Duration `json:"repeat_interval"` // 12h
+}
 
 var (
 	// noRuleIDMatcher is a matcher that matches no ruleId.

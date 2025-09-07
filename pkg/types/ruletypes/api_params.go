@@ -62,11 +62,41 @@ type PostableRule struct {
 
 	PreferredChannels []string `json:"preferredChannels,omitempty"`
 
-	Version string `json:"version,omitempty"`
+	// Grouping configuration for this rule
+	GroupBy []string `json:"groupBy,omitempty"` // [service.name, instance]
+	Version string   `json:"version,omitempty"`
+
+	// Threshold-based routing configuration
+	ThresholdMapping map[string][]string `json:"thresholdMapping,omitempty"` // {"critical": "critical-receiver", "warning": "warning-receiver"}
 
 	// legacy
-	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
-	OldYaml string `json:"yaml,omitempty"`
+	Expr                 string              `yaml:"expr,omitempty" json:"expr,omitempty"`
+	OldYaml              string              `json:"yaml,omitempty"`
+	NotificationPolicies bool                `yaml:"notificationPolicies,omitempty" json:"notificationPolicies,omitempty"`
+	Renotify             Duration            `yaml:"renotify,omitempty" json:"renotify,omitempty"`
+	Thresholds           map[string][]string `yaml:"thresholds,omitempty" json:"thresholds,omitempty"`
+}
+
+// GetRuleGrouping extracts grouping configuration from PostableRule and provides defaults
+func (pr *PostableRule) GetRuleGrouping() RuleGrouping {
+	grouping := RuleGrouping{}
+
+	// Set GroupBy - default to empty if not provided
+	if len(pr.GroupBy) > 0 {
+		grouping.GroupBy = pr.GroupBy
+	} else {
+		grouping.GroupBy = []string{} // Default: group by all labels
+	}
+
+	return grouping
+}
+
+// RuleGrouping matches the structure in alertmanagertypes
+type RuleGrouping struct {
+	GroupBy        []string      `json:"group_by"`
+	GroupWait      time.Duration `json:"group_wait"`
+	GroupInterval  time.Duration `json:"group_interval"`
+	RepeatInterval time.Duration `json:"repeat_interval"`
 }
 
 func ParsePostableRule(content []byte) (*PostableRule, error) {
@@ -136,6 +166,10 @@ func ParseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*P
 		}
 	}
 
+	if rule.Renotify == 0 {
+		rule.Renotify = Duration(4 * time.Hour) //default time
+	}
+
 	if err := rule.Validate(); err != nil {
 		return nil, err
 	}
@@ -148,7 +182,7 @@ func isValidLabelName(ln string) bool {
 		return false
 	}
 	for i, b := range ln {
-		if !((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_' || (b >= '0' && b <= '9' && i > 0)) {
+		if !((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_' || b == '.' || (b >= '0' && b <= '9' && i > 0)) {
 			return false
 		}
 	}

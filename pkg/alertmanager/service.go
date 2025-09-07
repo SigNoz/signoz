@@ -172,16 +172,22 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 		return nil, err
 	}
 
-	beforeCompareAndSelectHash := config.StoreableConfig().Hash
-	config, err = service.compareAndSelectConfig(ctx, config)
-	if err != nil {
-		return nil, err
-	}
+	// Note: The new routing system is rule-centric rather than matcher-centric.
+	// Individual rules will add themselves to routes when they are created/updated
+	// using the AddRuleToRoutes method, so we don't need to recreate all matchers here.
+	// This function now primarily ensures the base alertmanager config structure
+	// (receivers, global config) is up to date with the channel configuration.
 
-	if beforeCompareAndSelectHash == config.StoreableConfig().Hash {
-		service.settings.Logger().DebugContext(ctx, "skipping config store update for org", "org_id", orgID, "hash", config.StoreableConfig().Hash)
-		return server, nil
-	}
+	//beforeCompareAndSelectHash := config.StoreableConfig().Hash
+	//config, err = service.compareAndSelectConfig(ctx, config)
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	//if beforeCompareAndSelectHash == config.StoreableConfig().Hash {
+	//	service.settings.Logger().DebugContext(ctx, "skipping config store update for org", "org_id", orgID, "hash", config.StoreableConfig().Hash)
+	//	return server, nil
+	//}
 
 	err = service.configStore.Set(ctx, config)
 	if err != nil {

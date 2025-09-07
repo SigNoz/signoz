@@ -185,8 +185,11 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 	if err != nil {
 		return nil, err
 	}
-
-	server.pipelineBuilder = notify.NewPipelineBuilder(server.registry, featurecontrol.NoopFlags{})
+	flags, err := featurecontrol.NewFlags(server.logger, featurecontrol.FeatureUTF8StrictMode)
+	if err != nil {
+		return nil, err
+	}
+	server.pipelineBuilder = notify.NewPipelineBuilder(server.registry, flags)
 	server.dispatcherMetrics = dispatch.NewDispatcherMetrics(false, server.registry)
 
 	return server, nil
@@ -225,7 +228,10 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 
 	server.tmpl.ExternalURL = server.srvConfig.ExternalURL
 
-	// Build the routing tree and record which receivers are used.
+	err = alertmanagertypes.UnmarshalRouteConfig(config.Route)
+	if err != nil {
+		return err
+	}
 	routes := dispatch.NewRoute(config.Route, nil)
 	activeReceivers := make(map[string]struct{})
 	routes.Walk(func(r *dispatch.Route) {
