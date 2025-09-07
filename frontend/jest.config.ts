@@ -10,6 +10,7 @@ const config: Config.InitialOptions = {
 	moduleNameMapper: {
 		'\\.(css|less|scss)$': '<rootDir>/__mocks__/cssMock.ts',
 		'\\.md$': '<rootDir>/__mocks__/cssMock.ts',
+		'^uplot$': '<rootDir>/__mocks__/uplotMock.ts',
 	},
 	globals: {
 		extensionsToTreatAsEsm: ['.ts'],

@@ -9,22 +9,6 @@ import { getFormattedDate } from 'utils/timeUtils';
 
 import BillingContainer from './BillingContainer';
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 window.ResizeObserver =
 	window.ResizeObserver ||
 	jest.fn().mockImplementation(() => ({
