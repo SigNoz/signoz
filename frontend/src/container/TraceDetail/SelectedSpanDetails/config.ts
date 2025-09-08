@@ -67,6 +67,7 @@ export const getTraceToLogsQuery = (
 				},
 			],
 			queryFormulas: [],
+			queryTraceOperator: [],
 		},
 	};
 
