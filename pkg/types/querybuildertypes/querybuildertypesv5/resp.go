@@ -19,6 +19,7 @@ type QBEvent struct {
 	LogsUsed        bool   `json:"logs_used,omitempty"`
 	MetricsUsed     bool   `json:"metrics_used,omitempty"`
 	TracesUsed      bool   `json:"traces_used,omitempty"`
+	Source          string `json:"source,omitempty"`
 	FilterApplied   bool   `json:"filter_applied,omitempty"`
 	GroupByApplied  bool   `json:"group_by_applied,omitempty"`
 	QueryType       string `json:"query_type,omitempty"`
@@ -183,6 +184,13 @@ type RawData struct {
 type RawRow struct {
 	Timestamp time.Time      `json:"timestamp"`
 	Data      map[string]any `json:"data"`
+}
+
+type RawStream struct {
+	Name  string
+	Logs  chan *RawRow
+	Done  chan *bool
+	Error chan error
 }
 
 func roundToNonZeroDecimals(val float64, n int) float64 {

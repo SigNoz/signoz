@@ -23,7 +23,7 @@ export const flattenLabels = (labels: Labels): ILabelRecord[] => {
 		if (!hiddenLabels.includes(key)) {
 			recs.push({
 				key,
-				value: labels[key],
+				value: labels[key] || '',
 			});
 		}
 	});

@@ -37,6 +37,8 @@ func (m *dashboardMigrateV5) Migrate(ctx context.Context, dashboardData map[stri
 		return false
 	}
 
+	m.logger.InfoContext(ctx, "migrating dashboard", "dashboard_name", dashboardData["title"])
+
 	// if there is a white space in variable, replace it
 	if variables, ok := dashboardData["variables"].(map[string]any); ok {
 		for _, variable := range variables {
@@ -72,6 +74,13 @@ func (migration *dashboardMigrateV5) updateWidget(ctx context.Context, widget ma
 	query, ok := widget["query"].(map[string]any)
 	if !ok {
 		return false
+	}
+
+	if qType, ok := query["queryType"]; ok {
+		if qType == "promql" || qType == "clickhouse_sql" {
+			migration.logger.InfoContext(ctx, "nothing to migrate for query type", "query_type", qType)
+			return false
+		}
 	}
 
 	builder, ok := query["builder"].(map[string]any)
