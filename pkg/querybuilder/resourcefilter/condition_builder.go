@@ -31,7 +31,7 @@ func valueForIndexFilter(op qbtypes.FilterOperator, key *telemetrytypes.Telemetr
 		// assuming array will always be for in and not in
 		values := make([]string, 0, len(v))
 		for _, v := range v {
-			values = append(values, fmt.Sprintf(`%%%s":"%s%%`, key.Name, v))
+			values = append(values, fmt.Sprintf(`%%%s":"%s%%`, key.Name, querybuilder.FormatValueForContains(v)))
 		}
 		return values
 	}
@@ -61,7 +61,12 @@ func (b *defaultConditionBuilder) ConditionFor(
 		qbtypes.FilterOperatorILike,
 		qbtypes.FilterOperatorNotILike,
 		qbtypes.FilterOperatorLike,
-		qbtypes.FilterOperatorNotLike:
+		qbtypes.FilterOperatorEqual,
+		qbtypes.FilterOperatorNotEqual,
+		qbtypes.FilterOperatorGreaterThan,
+		qbtypes.FilterOperatorGreaterThanOrEq,
+		qbtypes.FilterOperatorLessThan,
+		qbtypes.FilterOperatorLessThanOrEq:
 		value = querybuilder.FormatValueForContains(value)
 	}
 
@@ -119,7 +124,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 		if len(values) != 2 {
 			return "", qbtypes.ErrBetweenValues
 		}
-		return sb.And(keyIdxFilter, sb.Between(fieldName, values[0], values[1])), nil
+		return sb.And(keyIdxFilter, sb.Between(fieldName, querybuilder.FormatValueForContains(values[0]), querybuilder.FormatValueForContains(values[1]))), nil
 	case qbtypes.FilterOperatorNotBetween:
 		values, ok := value.([]any)
 		if !ok {
@@ -128,7 +133,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 		if len(values) != 2 {
 			return "", qbtypes.ErrBetweenValues
 		}
-		return sb.And(sb.NotBetween(fieldName, values[0], values[1])), nil
+		return sb.And(sb.NotBetween(fieldName, querybuilder.FormatValueForContains(values[0]), querybuilder.FormatValueForContains(values[1]))), nil
 
 	case qbtypes.FilterOperatorIn:
 		values, ok := value.([]any)
@@ -137,7 +142,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 		}
 		inConditions := make([]string, 0, len(values))
 		for _, v := range values {
-			inConditions = append(inConditions, sb.E(fieldName, v))
+			inConditions = append(inConditions, sb.E(fieldName, querybuilder.FormatValueForContains(v)))
 		}
 		mainCondition := sb.Or(inConditions...)
 		valConditions := make([]string, 0, len(values))
@@ -156,7 +161,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 		}
 		notInConditions := make([]string, 0, len(values))
 		for _, v := range values {
-			notInConditions = append(notInConditions, sb.NE(fieldName, v))
+			notInConditions = append(notInConditions, sb.NE(fieldName, querybuilder.FormatValueForContains(v)))
 		}
 		mainCondition := sb.And(notInConditions...)
 		valConditions := make([]string, 0, len(values))

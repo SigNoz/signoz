@@ -143,6 +143,50 @@ func TestConditionBuilder(t *testing.T) {
 			expected:     "simpleJSONHas(labels, 'k8s.namespace.name') <> ?",
 			expectedArgs: []any{true},
 		},
+		{
+			name: "number_equals",
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:         "test_num",
+				FieldContext: telemetrytypes.FieldContextResource,
+			},
+			op:           querybuildertypesv5.FilterOperatorEqual,
+			value:        1,
+			expected:     "simpleJSONExtractString(labels, 'test_num') = ? AND labels LIKE ? AND labels LIKE ?",
+			expectedArgs: []any{"1", "%test_num%", "%test_num\":\"1%"},
+		},
+		{
+			name: "number_gt",
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:         "test_num",
+				FieldContext: telemetrytypes.FieldContextResource,
+			},
+			op:           querybuildertypesv5.FilterOperatorGreaterThan,
+			value:        1,
+			expected:     "simpleJSONExtractString(labels, 'test_num') > ? AND labels LIKE ?",
+			expectedArgs: []any{"1", "%test_num%"},
+		},
+		{
+			name: "number_in",
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:         "test_num",
+				FieldContext: telemetrytypes.FieldContextResource,
+			},
+			op:           querybuildertypesv5.FilterOperatorIn,
+			value:        []any{1, 2},
+			expected:     "(simpleJSONExtractString(labels, 'test_num') = ? OR simpleJSONExtractString(labels, 'test_num') = ?) AND labels LIKE ? AND (labels LIKE ? OR labels LIKE ?)",
+			expectedArgs: []any{"1", "2", "%test_num%", "%test_num\":\"1%", "%test_num\":\"2%"},
+		},
+		{
+			name: "number_between",
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:         "test_num",
+				FieldContext: telemetrytypes.FieldContextResource,
+			},
+			op:           querybuildertypesv5.FilterOperatorBetween,
+			value:        []any{1, 2},
+			expected:     "labels LIKE ? AND simpleJSONExtractString(labels, 'test_num') BETWEEN ? AND ?",
+			expectedArgs: []any{"%test_num%", "1", "2"},
+		},
 	}
 
 	fm := NewFieldMapper()
