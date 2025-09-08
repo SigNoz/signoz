@@ -68,20 +68,6 @@ jest.mock('react-query', () => ({
 	useQueryClient: (): any => mockQueryClient,
 }));
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 jest.mock('@signozhq/sonner', () => ({ toast: jest.fn() }));
 
 // Mock the API response for getAggregateKeys
