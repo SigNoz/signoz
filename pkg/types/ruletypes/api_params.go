@@ -79,11 +79,11 @@ func (p *PostableRule) UnmarshalJSON(data []byte) error {
 	}{
 		Alias: (*Alias)(p),
 	}
-	
+
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
-	
+
 	if len(aux.Evaluation) > 0 {
 		eval, err := UnmarshalEvaluationJSON(aux.Evaluation)
 		if err != nil {
@@ -91,7 +91,7 @@ func (p *PostableRule) UnmarshalJSON(data []byte) error {
 		}
 		p.Evaluation = eval
 	}
-	
+
 	return nil
 }
 
@@ -178,7 +178,7 @@ func ParseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*P
 			NewBasicRuleThreshold(thresholdName, rule.RuleCondition.Target, nil, rule.RuleCondition.MatchType, rule.RuleCondition.CompareOp, rule.RuleCondition.SelectedQuery, rule.RuleCondition.TargetUnit, rule.RuleCondition.CompositeQuery.Unit))
 	}
 	if rule.Evaluation == nil {
-		rule.Evaluation = NewEvaluation("rolling", RollingWindow{EvalWindow: rule.EvalWindow, Frequency: rule.Frequency, RequiredNumPoints: rule.RuleCondition.RequiredNumPoints, RequireMinPoints: rule.RuleCondition.RequireMinPoints})
+		rule.Evaluation = NewEvaluation("rolling", RollingWindow{EvalWindow: rule.EvalWindow, Frequency: rule.Frequency})
 	}
 
 	return rule, nil
