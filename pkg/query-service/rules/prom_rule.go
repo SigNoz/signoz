@@ -230,6 +230,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 				GeneratorURL:      r.GeneratorURL(),
 				Receivers:         r.preferredChannels,
 			}
+			break
 		}
 	}
 

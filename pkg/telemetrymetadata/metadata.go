@@ -202,7 +202,8 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		conds = append(conds, sb.And(fieldKeyConds...))
 		limit += fieldKeySelector.Limit
 	}
-	sb.Where(sb.Or(conds...))
+	// the span_attribute_keys has historically pushed the top level column as attributes
+	sb.Where(sb.Or(conds...)).Where("isColumn = false")
 	sb.GroupBy("tagKey", "tagType", "dataType")
 	if limit == 0 {
 		limit = 1000
@@ -403,7 +404,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		sb := sqlbuilder.Select(
 			"name AS tag_key",
 			fmt.Sprintf("'%s' AS tag_type", fieldContext.TagType()),
-			"datatype AS tag_data_type",
+			"lower(datatype) AS tag_data_type", // in logs, we had some historical data with capital and small case
 			fmt.Sprintf(`%d AS priority`, getPriorityForContext(fieldContext)),
 		).From(tblName)
 
@@ -954,6 +955,40 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 
 	if fieldValueSelector.EndUnixMilli != 0 {
 		sb.Where(sb.LE("unix_milli", fieldValueSelector.EndUnixMilli))
+	}
+
+	if fieldValueSelector.Value != "" {
+		var conds []string
+		if fieldValueSelector.FieldContext != telemetrytypes.FieldContextAttribute &&
+			fieldValueSelector.FieldContext != telemetrytypes.FieldContextResource {
+			origContext := key.FieldContext
+
+			// search on attributes
+			key.FieldContext = telemetrytypes.FieldContextAttribute
+			cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			if err == nil {
+				conds = append(conds, cond)
+			}
+
+			// search on resource
+			key.FieldContext = telemetrytypes.FieldContextResource
+			cond, err = t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			if err == nil {
+				conds = append(conds, cond)
+			}
+			key.FieldContext = origContext
+		} else {
+			cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			if err == nil {
+				conds = append(conds, cond)
+			}
+		}
+
+		if len(conds) != 0 {
+			// see `expr` in condition_builder.go, if key doesn't exist we don't check for value
+			// hence, this is join of conditions on resource and attributes
+			sb.Where(sb.And(conds...))
+		}
 	}
 
 	limit := fieldValueSelector.Limit

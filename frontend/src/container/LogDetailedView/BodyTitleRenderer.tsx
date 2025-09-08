@@ -36,7 +36,6 @@ function BodyTitleRenderer({
 				isFilterIn
 					? QUERY_BUILDER_FUNCTIONS.HAS
 					: negateOperator(QUERY_BUILDER_FUNCTIONS.HAS),
-				true,
 				parentIsArray ? getDataTypes([value]) : getDataTypes(value),
 			);
 		} else {
@@ -44,7 +43,6 @@ function BodyTitleRenderer({
 				`body.${removeObjectFromString(nodeKey)}`,
 				`${value}`,
 				isFilterIn ? OPERATORS['='] : OPERATORS['!='],
-				true,
 				getDataTypes(value),
 			);
 		}

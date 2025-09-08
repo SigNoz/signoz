@@ -478,7 +478,18 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		return resultVector, nil
 	}
 
+	if queryResult == nil {
+		r.logger.WarnContext(ctx, "query result is nil", "rule_name", r.Name(), "query_name", selectedQuery)
+		return resultVector, nil
+	}
+
 	for _, series := range queryResult.Series {
+		if r.Condition() != nil && r.Condition().RequireMinPoints {
+			if len(series.Points) < r.ruleCondition.RequiredNumPoints {
+				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
+				continue
+			}
+		}
 		for _, threshold := range r.Thresholds() {
 			smpl, shouldAlert := threshold.ShouldAlert(*series)
 			if shouldAlert {
@@ -552,6 +563,12 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 	}
 
 	for _, series := range queryResult.Series {
+		if r.Condition() != nil && r.Condition().RequireMinPoints {
+			if len(series.Points) < r.Condition().RequiredNumPoints {
+				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
+				continue
+			}
+		}
 		for _, threshold := range r.Thresholds() {
 			smpl, shouldAlert := threshold.ShouldAlert(*series)
 			if shouldAlert {

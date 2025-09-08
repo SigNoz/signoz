@@ -40,8 +40,6 @@ func (c *CumulativeWindow) MarshalJSON() ([]byte, error) {
 type RollingWindow struct {
 	EvalWindow           Duration          `json:"evalWindow"`
 	Frequency            Duration          `json:"frequency"`
-	RequireMinPoints     bool              `json:"requireMinPoints"`
-	RequiredNumPoints    int               `json:"requiredNumPoints"`
 	SkipEvalForNewGroups []v3.AttributeKey `json:"skipEvalForNewGroups"`
 }
 
@@ -50,15 +48,14 @@ func (rollingWindow *RollingWindow) EvaluationTime(curr time.Time) (time.Time, t
 }
 
 type CumulativeWindow struct {
-	StartsAt             time.Time         `json:"startsAt"`
+	StartsAt             int64             `json:"startsAt"`
 	EvalWindow           Duration          `json:"evalWindow"`
-	RequireMinPoints     bool              `json:"requireMinPoints"`
-	RequiredNumPoints    int               `json:"requiredNumPoints"`
 	SkipEvalForNewGroups []v3.AttributeKey `json:"skipEvalForNewGroups"`
 }
 
 func (cumulativeWindow *CumulativeWindow) EvaluationTime(curr time.Time) (time.Time, time.Time) {
-	if curr.Before(cumulativeWindow.StartsAt) {
+	startsAt := time.UnixMilli(cumulativeWindow.StartsAt)
+	if curr.Before(startsAt) {
 		return curr, curr
 	}
 
@@ -68,9 +65,9 @@ func (cumulativeWindow *CumulativeWindow) EvaluationTime(curr time.Time) (time.T
 	}
 
 	// Calculate the number of complete windows since StartsAt
-	elapsed := curr.Sub(cumulativeWindow.StartsAt)
+	elapsed := curr.Sub(startsAt)
 	windows := int64(elapsed / dur)
-	windowStart := cumulativeWindow.StartsAt.Add(time.Duration(windows) * dur)
+	windowStart := startsAt.Add(time.Duration(windows) * dur)
 	return windowStart, curr
 }
 
