@@ -1,6 +1,9 @@
 package telemetrylogs
 
-import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+import (
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+)
 
 const (
 
@@ -88,6 +91,25 @@ var (
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextScope,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+	}
+
+	DefaultLogsV2SortingOrder = []qbtypes.OrderBy{
+		{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name: LogsV2TimestampColumn,
+				},
+			},
+			Direction: qbtypes.OrderDirectionDesc,
+		},
+		{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name: LogsV2IDColumn,
+				},
+			},
+			Direction: qbtypes.OrderDirectionDesc,
 		},
 	}
 )

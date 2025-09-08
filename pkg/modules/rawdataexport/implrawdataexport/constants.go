@@ -16,7 +16,4 @@ const (
 	ChunkSize                         = 5_000 // 5k
 	ClickhouseExportRawDataMaxThreads = 2
 	ClickhouseExportRawDataTimeout    = 10 * time.Minute
-
-	// Default sorting order for exported data
-	DefaultExportOrderBy = "timestamp:desc"
 )

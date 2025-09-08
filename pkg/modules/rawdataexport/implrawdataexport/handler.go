@@ -116,7 +116,7 @@ func (handler *handler) exportLogs(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Cache-Control", "no-cache")
 	rw.Header().Set("Vary", "Accept-Encoding") // Indicate that response varies based on Accept-Encoding
 	rw.Header().Set("Access-Control-Expose-Headers", "Content-Disposition, X-Response-Complete")
-	rw.Header().Set("Trailers", "X-Response-Complete")
+	rw.Header().Set("Trailer", "X-Response-Complete")
 	rw.Header().Set("Transfer-Encoding", "chunked")
 
 	queryParams := r.URL.Query()
@@ -451,7 +451,7 @@ func getExportQueryOrderBy(queryParams url.Values) ([]qbtypes.OrderBy, error) {
 
 	orderByParam = strings.TrimSpace(orderByParam)
 	if orderByParam == "" {
-		orderByParam = DefaultExportOrderBy
+		return telemetrylogs.DefaultLogsV2SortingOrder, nil
 	}
 
 	parts := strings.Split(orderByParam, ":")

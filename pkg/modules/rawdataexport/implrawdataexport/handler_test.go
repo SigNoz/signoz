@@ -239,8 +239,8 @@ func TestGetExportQueryColumns(t *testing.T) {
 		expectedColumns []telemetrytypes.TelemetryFieldKey
 	}{
 		{
-			name:        "no columns specified",
-			queryParams: url.Values{},
+			name:            "no columns specified",
+			queryParams:     url.Values{},
 			expectedColumns: []telemetrytypes.TelemetryFieldKey{},
 		},
 		{
