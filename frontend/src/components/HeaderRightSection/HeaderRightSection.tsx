@@ -2,8 +2,9 @@ import './HeaderRightSection.styles.scss';
 
 import { Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
+import useClickOutside from 'hooks/useClickOutside';
 import { Globe, Inbox, SquarePen } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import AnnouncementsModal from './AnnouncementsModal';
@@ -26,6 +27,7 @@ function HeaderRightSection({
 	const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
 	const [openShareURLModal, setOpenShareURLModal] = useState(false);
 	const [openAnnouncementsModal, setOpenAnnouncementsModal] = useState(false);
+	const headerRightSectionRef = useRef<HTMLDivElement>(null);
 
 	const handleOpenFeedbackModal = (): void => {
 		logEvent('Feedback: Clicked', {
@@ -35,10 +37,6 @@ function HeaderRightSection({
 		setOpenFeedbackModal(true);
 		setOpenShareURLModal(false);
 		setOpenAnnouncementsModal(false);
-	};
-
-	const handleCloseFeedbackModal = (): void => {
-		setOpenFeedbackModal(false);
 	};
 
 	const handleOpenShareURLModal = (): void => {
@@ -51,8 +49,36 @@ function HeaderRightSection({
 		setOpenAnnouncementsModal(false);
 	};
 
+	const handleCloseFeedbackModal = (): void => {
+		setOpenFeedbackModal(false);
+	};
+
+	const handleCloseShareURLModal = (): void => {
+		setOpenShareURLModal(false);
+	};
+
+	const handleCloseAnnouncementsModal = (): void => {
+		setOpenAnnouncementsModal(false);
+	};
+
+	useClickOutside({
+		ref: headerRightSectionRef,
+		onClickOutside: () => {
+			if (openFeedbackModal) {
+				handleCloseFeedbackModal();
+			}
+
+			if (openShareURLModal) {
+				handleCloseShareURLModal();
+			}
+			if (openAnnouncementsModal) {
+				handleCloseAnnouncementsModal();
+			}
+		},
+	});
+
 	return (
-		<div className="header-right-section-container">
+		<div className="header-right-section-container" ref={headerRightSectionRef}>
 			{enableFeedback && (
 				<Popover
 					rootClassName="shareable-link-popover-root"

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable react/jsx-props-no-spreading */
 // Mock dependencies before imports
@@ -148,9 +149,6 @@ describe('HeaderRightSection', () => {
 		expect(mockLogEvent).toHaveBeenCalledWith('Announcements: Clicked', {
 			page: mockLocation.pathname,
 		});
-		// Note: The announcements modal doesn't open automatically on click based on the component logic
-		// It only logs the event. The modal visibility is controlled by openAnnouncementsModal state
-		// which is not set in the onClick handler
 	});
 
 	it('should close feedback modal when onClose is called', async () => {
