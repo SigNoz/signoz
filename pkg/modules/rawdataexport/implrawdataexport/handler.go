@@ -31,10 +31,10 @@ func NewHandler(module rawdataexport.Module) rawdataexport.Handler {
 	return &handler{module: module}
 }
 
-// Export handles data export requests.
+// ExportRawData handles data export requests.
 //
 // API Documentation:
-// Endpoint: GET /api/v1/export
+// Endpoint: GET /api/v1/export_raw_data
 //
 // Query Parameters:
 //
@@ -53,7 +53,7 @@ func NewHandler(module rawdataexport.Module) rawdataexport.Handler {
 //   - filter (optional): Filter expression to apply to the query
 //
 //   - columns (optional): Specific columns to include in export
-//     Default: ["timestamp", "id", "body"]
+//     Default: all columns are returned
 //     Format: ["context.field:type", "context.field", "field"]
 //
 //   - order_by (optional): Sorting specification ["column:direction" or "context.field:type:direction"]
@@ -77,14 +77,14 @@ func NewHandler(module rawdataexport.Module) rawdataexport.Handler {
 // Example Usage:
 //
 //	Basic CSV export:
-//	  GET /api/v1/export?start=1693612800000000000&end=1693699199000000000
+//	  GET /api/v1/export_raw_data?start=1693612800000000000&end=1693699199000000000
 //
 //	Export with columns and format:
-//	  GET /api/v1/export?start=1693612800000000000&end=1693699199000000000&format=jsonl
+//	  GET /api/v1/export_raw_data?start=1693612800000000000&end=1693699199000000000&format=jsonl
 //	      &columns=timestamp&columns=severity&columns=message
 //
 //	Export with filter and ordering:
-//	  GET /api/v1/export?start=1693612800000000000&end=1693699199000000000
+//	  GET /api/v1/export_raw_data?start=1693612800000000000&end=1693699199000000000
 //	      &filter=severity="error"&order_by=timestamp:desc&limit=1000
 func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 	source, err := getExportQuerySource(r.URL.Query())
