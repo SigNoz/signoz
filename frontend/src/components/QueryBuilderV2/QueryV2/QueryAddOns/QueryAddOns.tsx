@@ -206,21 +206,17 @@ function QueryAddOns({
 			}
 		}
 
-		// add reduce to if showReduceTo is true
 		if (showReduceTo) {
 			filteredAddOns = [...filteredAddOns, REDUCE_TO];
 		}
-
 		setAddOns(filteredAddOns);
 
-		// Create a Set for O(1) lookup performance instead of O(n) array.includes()
 		const activeAddOnKeys = new Set(
 			Object.entries(ADD_ONS_KEYS_TO_QUERY_PATH)
 				.filter(([, path]) => hasValue(get(query, path)))
 				.map(([key]) => key),
 		);
 
-		// Create a Set of available add-on keys for faster filtering
 		const availableAddOnKeys = new Set(filteredAddOns.map((addOn) => addOn.key));
 
 		// Filter and set selected views: add-ons that are both active and available
