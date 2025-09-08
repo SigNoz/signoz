@@ -125,6 +125,7 @@ export const getHostTracesQueryPayload = (
 				},
 			],
 			queryFormulas: [],
+			queryTraceOperator: [],
 		},
 		id: '572f1d91-6ac0-46c0-b726-c21488b34434',
 		queryType: EQueryType.QUERY_BUILDER,

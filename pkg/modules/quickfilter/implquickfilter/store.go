@@ -14,12 +14,10 @@ type store struct {
 	store sqlstore.SQLStore
 }
 
-// NewStore creates a new SQLite store for quick filters
 func NewStore(db sqlstore.SQLStore) quickfiltertypes.QuickFilterStore {
 	return &store{store: db}
 }
 
-// GetQuickFilters retrieves all filters for an organization
 func (s *store) Get(ctx context.Context, orgID valuer.UUID) ([]*quickfiltertypes.StorableQuickFilter, error) {
 	filters := make([]*quickfiltertypes.StorableQuickFilter, 0)
 
@@ -38,7 +36,6 @@ func (s *store) Get(ctx context.Context, orgID valuer.UUID) ([]*quickfiltertypes
 	return filters, nil
 }
 
-// GetSignalFilters retrieves filters for a specific signal in an organization
 func (s *store) GetBySignal(ctx context.Context, orgID valuer.UUID, signal string) (*quickfiltertypes.StorableQuickFilter, error) {
 	filter := new(quickfiltertypes.StorableQuickFilter)
 
@@ -60,7 +57,6 @@ func (s *store) GetBySignal(ctx context.Context, orgID valuer.UUID, signal strin
 	return filter, nil
 }
 
-// UpsertQuickFilter inserts or updates filters for an organization and signal
 func (s *store) Upsert(ctx context.Context, filter *quickfiltertypes.StorableQuickFilter) error {
 	_, err := s.store.
 		BunDB().
@@ -78,9 +74,8 @@ func (s *store) Upsert(ctx context.Context, filter *quickfiltertypes.StorableQui
 }
 
 func (s *store) Create(ctx context.Context, filters []*quickfiltertypes.StorableQuickFilter) error {
-	// Using SQLite-specific conflict resolution
 	_, err := s.store.
-		BunDB().
+		BunDBCtx(ctx).
 		NewInsert().
 		Model(&filters).
 		On("CONFLICT (org_id, signal) DO NOTHING").

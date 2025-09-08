@@ -2,8 +2,12 @@ package openfgaauthz
 
 import (
 	"context"
+	"sync"
 
 	authz "github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -13,25 +17,31 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
+var (
+	openfgaDefaultStore = valuer.NewString("signoz")
+)
+
 type provider struct {
 	config        authz.Config
 	settings      factory.ScopedProviderSettings
 	openfgaSchema []openfgapkgtransformer.ModuleFile
 	openfgaServer *openfgapkgserver.Server
+	storeID       string
+	modelID       string
+	mtx           sync.RWMutex
 	stopChan      chan struct{}
 }
 
-func NewProviderFactory(sqlstoreConfig sqlstore.Config, openfgaSchema []openfgapkgtransformer.ModuleFile) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("openfga"), func(ctx context.Context, ps factory.ProviderSettings, config authz.Config) (authz.AuthZ, error) {
-		return newOpenfgaProvider(ctx, ps, config, sqlstoreConfig, openfgaSchema)
+		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema)
 	})
 }
 
-func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstoreConfig sqlstore.Config, openfgaSchema []openfgapkgtransformer.ModuleFile) (authz.AuthZ, error) {
+func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile) (authz.AuthZ, error) {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/authz/openfgaauthz")
 
-	// setup connections and run the migrations
-	sqlstore, err := NewSQLStore(storeConfig{sqlstoreConfig: sqlstoreConfig})
+	store, err := NewSQLStore(sqlstore)
 	if err != nil {
 		scopedProviderSettings.Logger().DebugContext(ctx, "failed to initialize sqlstore for authz")
 		return nil, err
@@ -39,7 +49,7 @@ func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, 
 
 	// setup the openfga server
 	opts := []openfgapkgserver.OpenFGAServiceV1Option{
-		openfgapkgserver.WithDatastore(sqlstore),
+		openfgapkgserver.WithDatastore(store),
 		openfgapkgserver.WithLogger(NewLogger(scopedProviderSettings.Logger())),
 	}
 	openfgaServer, err := openfgapkgserver.NewServerWithOpts(opts...)
@@ -53,20 +63,26 @@ func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, 
 		settings:      scopedProviderSettings,
 		openfgaServer: openfgaServer,
 		openfgaSchema: openfgaSchema,
+		mtx:           sync.RWMutex{},
 		stopChan:      make(chan struct{}),
 	}, nil
 }
 
 func (provider *provider) Start(ctx context.Context) error {
-	storeId, err := provider.getOrCreateStore(ctx, "signoz")
+	storeId, err := provider.getOrCreateStore(ctx, openfgaDefaultStore.StringValue())
 	if err != nil {
 		return err
 	}
 
-	_, err = provider.getOrCreateModel(ctx, storeId)
+	modelID, err := provider.getOrCreateModel(ctx, storeId)
 	if err != nil {
 		return err
 	}
+
+	provider.mtx.Lock()
+	provider.modelID = modelID
+	provider.storeID = storeId
+	provider.mtx.Unlock()
 
 	<-provider.stopChan
 	return nil
@@ -157,4 +173,24 @@ func (provider *provider) isModelEqual(expected *openfgav1.AuthorizationModel, a
 	}
 
 	return string(expectedAuthModelBytes) == string(actualAuthModelBytes), nil
+
+}
+
+func (provider *provider) Check(ctx context.Context, tupleReq *openfgav1.CheckRequestTupleKey) error {
+	checkResponse, err := provider.openfgaServer.Check(
+		ctx,
+		&openfgav1.CheckRequest{
+			StoreId:              provider.storeID,
+			AuthorizationModelId: provider.modelID,
+			TupleKey:             tupleReq,
+		})
+	if err != nil {
+		return errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthZUnavailable, "authorization server is unavailable").WithAdditional(err.Error())
+	}
+
+	if !checkResponse.Allowed {
+		return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "subject %s cannot %s object %s", tupleReq.User, tupleReq.Relation, tupleReq.Object)
+	}
+
+	return nil
 }

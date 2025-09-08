@@ -1,4 +1,5 @@
-import { QueryClient, QueryClientProvider } from 'react-query';
+/* eslint-disable sonarjs/no-identical-functions */
+/* eslint-disable sonarjs/no-duplicate-string */
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 import {
 	IDashboardVariable,
@@ -26,6 +27,7 @@ jest.mock('uuid', () => ({
 const onCancel = jest.fn();
 const onSave = jest.fn();
 const validateName = jest.fn(() => true);
+const validateAttributeKey = jest.fn(() => true);
 
 // Mode constant
 const VARIABLE_MODE = 'ADD';
@@ -35,6 +37,8 @@ const TEXT = {
 	INCLUDE_ALL_VALUES: 'Include an option for ALL values',
 	ENABLE_MULTI_VALUES: 'Enable multiple values to be checked',
 	VARIABLE_EXISTS: 'Variable name already exists',
+	VARIABLE_WHITESPACE: 'Variable name cannot contain whitespaces',
+	ATTRIBUTE_KEY_EXISTS: 'A variable with this attribute key already exists',
 	SORT_VALUES: 'Sort Values',
 	DEFAULT_VALUE: 'Default Value',
 	ALL_VARIABLES: 'All variables',
@@ -43,6 +47,7 @@ const TEXT = {
 	QUERY: 'Query',
 	TEXTBOX: 'Textbox',
 	CUSTOM: 'Custom',
+	DYNAMIC: 'Dynamic',
 };
 
 // Common test constants
@@ -75,23 +80,6 @@ const TEST_VAR_DESCRIPTIONS = {
 const SAVE_BUTTON_TEXT = 'Save Variable';
 const UNIQUE_NAME_PLACEHOLDER = 'Unique name of the variable';
 
-// Create QueryClient for wrapping the component
-const createTestQueryClient = (): QueryClient =>
-	new QueryClient({
-		defaultOptions: {
-			queries: {
-				retry: false,
-			},
-		},
-	});
-
-// Wrapper component with QueryClientProvider
-const wrapper = ({ children }: { children: React.ReactNode }): JSX.Element => (
-	<QueryClientProvider client={createTestQueryClient()}>
-		{children}
-	</QueryClientProvider>
-);
-
 // Basic variable data for testing
 const basicVariableData: IDashboardVariable = {
 	id: TEST_VAR_IDS.VAR1,
@@ -108,6 +96,7 @@ const renderVariableItem = (
 	variableData: IDashboardVariable = basicVariableData,
 	existingVariables: Record<string, IDashboardVariable> = {},
 	validateNameFn = validateName,
+	validateAttributeKeyFn = validateAttributeKey,
 ): void => {
 	render(
 		<VariableItem
@@ -116,9 +105,9 @@ const renderVariableItem = (
 			onCancel={onCancel}
 			onSave={onSave}
 			validateName={validateNameFn}
+			validateAttributeKey={validateAttributeKeyFn}
 			mode={VARIABLE_MODE}
 		/>,
-		{ wrapper } as any,
 	);
 };
 
@@ -202,6 +191,184 @@ describe('VariableItem Component', () => {
 
 			// Error should not be visible
 			expect(screen.queryByText(TEXT.VARIABLE_EXISTS)).not.toBeInTheDocument();
+		});
+
+		test('shows error when variable name contains whitespace', () => {
+			renderVariableItem({ ...basicVariableData, name: '' });
+
+			// Enter a name with whitespace
+			const nameInput = screen.getByPlaceholderText(UNIQUE_NAME_PLACEHOLDER);
+			fireEvent.change(nameInput, { target: { value: 'variable name' } });
+
+			// Error message should be displayed
+			expect(screen.getByText(TEXT.VARIABLE_WHITESPACE)).toBeInTheDocument();
+
+			// Save button should be disabled
+			const saveButton = screen.getByRole('button', { name: /save variable/i });
+			expect(saveButton).toBeDisabled();
+		});
+
+		test('allows variable name without whitespace', () => {
+			renderVariableItem({ ...basicVariableData, name: '' });
+
+			// Enter a valid name without whitespace
+			const nameInput = screen.getByPlaceholderText(UNIQUE_NAME_PLACEHOLDER);
+			fireEvent.change(nameInput, { target: { value: 'variable.name' } });
+
+			// Error should not be visible
+			expect(screen.queryByText(TEXT.VARIABLE_WHITESPACE)).not.toBeInTheDocument();
+		});
+
+		test('validates whitespace in auto-generated name for dynamic variables', () => {
+			// Create a dynamic variable with empty name
+			const dynamicVariable: IDashboardVariable = {
+				...basicVariableData,
+				name: '',
+				type: 'DYNAMIC',
+				dynamicVariablesAttribute: 'service name', // Contains whitespace
+				dynamicVariablesSource: 'All telemetry',
+			};
+
+			renderVariableItem(dynamicVariable);
+
+			// Error message should be displayed for auto-generated name
+			expect(screen.getByText(TEXT.VARIABLE_WHITESPACE)).toBeInTheDocument();
+		});
+	});
+
+	describe('Dynamic Variable Attribute Key Validation', () => {
+		test('shows error when attribute key already exists', async () => {
+			// Mock validateAttributeKey to return false (attribute key exists)
+			const mockValidateAttributeKey = jest.fn().mockReturnValue(false);
+
+			// Create a dynamic variable
+			const dynamicVariable: IDashboardVariable = {
+				...basicVariableData,
+				name: 'test-variable',
+				type: 'DYNAMIC',
+				dynamicVariablesAttribute: 'service.name',
+				dynamicVariablesSource: 'All telemetry',
+			};
+
+			renderVariableItem(
+				dynamicVariable,
+				{},
+				validateName,
+				mockValidateAttributeKey,
+			);
+
+			// Switch to Dynamic type to trigger the validation
+			const dynamicButton = findButtonByText(TEXT.DYNAMIC);
+			if (dynamicButton) {
+				fireEvent.click(dynamicButton);
+			}
+
+			// Error message should be displayed
+			await waitFor(() => {
+				expect(screen.getByText(TEXT.ATTRIBUTE_KEY_EXISTS)).toBeInTheDocument();
+			});
+
+			// Save button should be disabled
+			const saveButton = screen.getByRole('button', { name: /save variable/i });
+			expect(saveButton).toBeDisabled();
+		});
+
+		test('allows saving when attribute key is unique', async () => {
+			// Mock validateAttributeKey to return true (attribute key is unique)
+			const mockValidateAttributeKey = jest.fn().mockReturnValue(true);
+
+			// Create a dynamic variable
+			const dynamicVariable: IDashboardVariable = {
+				...basicVariableData,
+				name: 'test-variable',
+				type: 'DYNAMIC',
+				dynamicVariablesAttribute: 'service.name',
+				dynamicVariablesSource: 'All telemetry',
+			};
+
+			renderVariableItem(
+				dynamicVariable,
+				{},
+				validateName,
+				mockValidateAttributeKey,
+			);
+
+			// Switch to Dynamic type
+			const dynamicButton = findButtonByText(TEXT.DYNAMIC);
+			if (dynamicButton) {
+				fireEvent.click(dynamicButton);
+			}
+
+			// Error should not be visible
+			await waitFor(() => {
+				expect(
+					screen.queryByText(TEXT.ATTRIBUTE_KEY_EXISTS),
+				).not.toBeInTheDocument();
+			});
+
+			// Save button should not be disabled due to attribute key error
+			const saveButton = screen.getByRole('button', { name: /save variable/i });
+			expect(saveButton).not.toBeDisabled();
+		});
+
+		test('allows same attribute key for current variable being edited', async () => {
+			// Mock validateAttributeKey to return true for same variable
+			const mockValidateAttributeKey = jest.fn().mockImplementation(
+				(attributeKey, currentVariableId) =>
+					// Allow if it's the same variable ID
+					currentVariableId === TEST_VAR_IDS.VAR1,
+			);
+
+			// Create a dynamic variable
+			const dynamicVariable: IDashboardVariable = {
+				...basicVariableData,
+				id: TEST_VAR_IDS.VAR1,
+				name: 'test-variable',
+				type: 'DYNAMIC',
+				dynamicVariablesAttribute: 'service.name',
+				dynamicVariablesSource: 'All telemetry',
+			};
+
+			renderVariableItem(
+				dynamicVariable,
+				{},
+				validateName,
+				mockValidateAttributeKey,
+			);
+
+			// Error should not be visible
+			await waitFor(() => {
+				expect(
+					screen.queryByText(TEXT.ATTRIBUTE_KEY_EXISTS),
+				).not.toBeInTheDocument();
+			});
+		});
+
+		test('does not validate attribute key for non-dynamic variables', async () => {
+			// Mock validateAttributeKey to return false (would show error for dynamic)
+			const mockValidateAttributeKey = jest.fn().mockReturnValue(false);
+
+			// Create a non-dynamic variable
+			const queryVariable: IDashboardVariable = {
+				...basicVariableData,
+				name: 'test-variable',
+				type: 'QUERY',
+			};
+
+			renderVariableItem(
+				queryVariable,
+				{},
+				validateName,
+				mockValidateAttributeKey,
+			);
+
+			// No error should be displayed for query variables
+			expect(
+				screen.queryByText(TEXT.ATTRIBUTE_KEY_EXISTS),
+			).not.toBeInTheDocument();
+
+			// validateAttributeKey should not be called for non-dynamic variables
+			expect(mockValidateAttributeKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -324,6 +491,7 @@ describe('VariableItem Component', () => {
 					multiSelect: false,
 					showALLOption: false,
 				}),
+				expect.anything(), // widgetIds prop
 			);
 		});
 	});

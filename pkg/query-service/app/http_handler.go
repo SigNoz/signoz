@@ -2068,7 +2068,8 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, errv2 := aH.Signoz.Modules.User.Register(r.Context(), &req)
+	organization := types.NewOrganization(req.OrgDisplayName)
+	user, errv2 := aH.Signoz.Modules.User.CreateFirstUser(r.Context(), organization, req.Name, req.Email, req.Password)
 	if errv2 != nil {
 		render.Error(w, errv2)
 		return
