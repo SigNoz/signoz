@@ -370,7 +370,7 @@ func constructCSVHeaderFromQueryResponse(data map[string]any) []string {
 	return header
 }
 
-// sanitizeForCSV sanitizes a string for inclusion in a CSV file by adding `'` at the begining.
+// sanitizeForCSV sanitizes a string for CSV by prefixing a single quote if the first non-whitespace rune is '=', '+', '-', or '@'.
 // Excel and sheets remove these leading single quote when displaying the cell content.
 // TODO: will revisit this in a future PR
 func sanitizeForCSV(s string) string {
