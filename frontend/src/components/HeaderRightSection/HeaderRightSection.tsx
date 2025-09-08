@@ -1,0 +1,119 @@
+import './HeaderRightSection.styles.scss';
+
+import { Button, Popover } from 'antd';
+import logEvent from 'api/common/logEvent';
+import { Globe, Inbox, SquarePen } from 'lucide-react';
+import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+
+import AnnouncementsModal from './AnnouncementsModal';
+import FeedbackModal from './FeedbackModal';
+import ShareURLModal from './ShareURLModal';
+
+interface HeaderRightSectionProps {
+	enableAnnouncements: boolean;
+	enableShare: boolean;
+	enableFeedback: boolean;
+}
+
+function HeaderRightSection({
+	enableAnnouncements,
+	enableShare,
+	enableFeedback,
+}: HeaderRightSectionProps): JSX.Element {
+	const location = useLocation();
+
+	const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
+	const [openShareURLModal, setOpenShareURLModal] = useState(false);
+	const [openAnnouncementsModal, setOpenAnnouncementsModal] = useState(false);
+
+	const handleOpenFeedbackModal = (): void => {
+		logEvent('Feedback: Clicked', {
+			page: location.pathname,
+		});
+
+		setOpenFeedbackModal(true);
+		setOpenShareURLModal(false);
+		setOpenAnnouncementsModal(false);
+	};
+
+	const handleCloseFeedbackModal = (): void => {
+		setOpenFeedbackModal(false);
+	};
+
+	const handleOpenShareURLModal = (): void => {
+		logEvent('Share: Clicked', {
+			page: location.pathname,
+		});
+
+		setOpenShareURLModal(true);
+		setOpenFeedbackModal(false);
+		setOpenAnnouncementsModal(false);
+	};
+
+	return (
+		<div className="header-right-section-container">
+			{enableFeedback && (
+				<Popover
+					rootClassName="shareable-link-popover-root"
+					className="shareable-link-popover"
+					placement="bottomRight"
+					open={openFeedbackModal}
+					content={<FeedbackModal onClose={handleCloseFeedbackModal} />}
+					destroyTooltipOnHide
+					arrow={false}
+				>
+					<Button
+						className="share-link-btn periscope-btn ghost"
+						icon={<SquarePen size={14} />}
+						onClick={handleOpenFeedbackModal}
+					/>
+				</Popover>
+			)}
+
+			{enableAnnouncements && (
+				<Popover
+					rootClassName="shareable-link-popover-root"
+					className="shareable-link-popover"
+					placement="bottomRight"
+					content={<AnnouncementsModal />}
+					open={openAnnouncementsModal}
+					arrow={false}
+					destroyTooltipOnHide
+				>
+					<Button
+						icon={<Inbox size={14} />}
+						className="periscope-btn ghost"
+						onClick={(): void => {
+							logEvent('Announcements: Clicked', {
+								page: location.pathname,
+							});
+						}}
+					/>
+				</Popover>
+			)}
+
+			{enableShare && (
+				<Popover
+					rootClassName="shareable-link-popover-root"
+					className="shareable-link-popover"
+					placement="bottomRight"
+					content={<ShareURLModal />}
+					open={openShareURLModal}
+					destroyTooltipOnHide
+					arrow={false}
+				>
+					<Button
+						className="share-link-btn periscope-btn ghost"
+						icon={<Globe size={14} />}
+						onClick={handleOpenShareURLModal}
+					>
+						Share
+					</Button>
+				</Popover>
+			)}
+		</div>
+	);
+}
+
+export default HeaderRightSection;
