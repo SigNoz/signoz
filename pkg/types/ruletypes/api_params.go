@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/pkg/errors"
+	"github.com/teambition/rrule-go"
 	"go.uber.org/multierr"
 
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
@@ -183,6 +184,13 @@ func ParseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*P
 		rule.Evaluation = NewEvaluation("rolling", RollingWindow{EvalWindow: rule.EvalWindow, Frequency: rule.Frequency})
 	}
 
+	// Validate rrule schedule if present
+	if rule.Schedule != "" {
+		if err := validateRRule(rule.Schedule); err != nil {
+			return nil, fmt.Errorf("invalid schedule format: %w", err)
+		}
+	}
+
 	return rule, nil
 }
 
@@ -344,4 +352,20 @@ type GettableRule struct {
 	CreatedBy *string    `json:"createBy"`
 	UpdatedAt *time.Time `json:"updateAt"`
 	UpdatedBy *string    `json:"updateBy"`
+}
+
+// validateRRule validates the rrule schedule format
+func validateRRule(schedule string) error {
+	if schedule == "" {
+		return nil
+	}
+	testStart := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC)
+	rruleStr := "DTSTART:" + testStart.Format("20060102T150405Z") + "\n" + schedule
+
+	_, err := rrule.StrToRRule(rruleStr)
+	if err != nil {
+		return fmt.Errorf("invalid rrule format: %v", err)
+	}
+
+	return nil
 }
