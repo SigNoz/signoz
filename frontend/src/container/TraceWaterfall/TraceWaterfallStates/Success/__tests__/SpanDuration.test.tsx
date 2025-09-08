@@ -8,6 +8,7 @@ import { SpanDuration } from '../Success';
 
 // Constants to avoid string duplication
 const SPAN_DURATION_TEXT = '1.16 ms';
+const SPAN_DURATION_CLASS = '.span-duration';
 const INTERESTED_SPAN_CLASS = 'interested-span';
 const HIGHLIGHTED_SPAN_CLASS = 'highlighted-span';
 const DIMMED_SPAN_CLASS = 'dimmed-span';
@@ -156,7 +157,9 @@ describe('SpanDuration', () => {
 		);
 
 		// eslint-disable-next-line sonarjs/no-duplicate-string
-		const spanElement = screen.getByText('1.16 ms').closest('.span-duration');
+		const spanElement = screen
+			.getByText(SPAN_DURATION_TEXT)
+			.closest(SPAN_DURATION_CLASS);
 		expect(spanElement).toHaveClass(INTERESTED_SPAN_CLASS);
 	});
 
@@ -174,7 +177,7 @@ describe('SpanDuration', () => {
 
 		const spanElement = screen
 			.getByText(SPAN_DURATION_TEXT)
-			.closest('.span-duration');
+			.closest(SPAN_DURATION_CLASS);
 		expect(spanElement).toHaveClass(HIGHLIGHTED_SPAN_CLASS);
 		expect(spanElement).not.toHaveClass(INTERESTED_SPAN_CLASS);
 	});
@@ -191,7 +194,9 @@ describe('SpanDuration', () => {
 			/>,
 		);
 
-		const spanElement = screen.getByText('1.16 ms').closest('.span-duration');
+		const spanElement = screen
+			.getByText(SPAN_DURATION_TEXT)
+			.closest(SPAN_DURATION_CLASS);
 		expect(spanElement).toHaveClass(DIMMED_SPAN_CLASS);
 		expect(spanElement).not.toHaveClass(HIGHLIGHTED_SPAN_CLASS);
 	});
@@ -208,7 +213,9 @@ describe('SpanDuration', () => {
 			/>,
 		);
 
-		const spanElement = screen.getByText('1.16 ms').closest('.span-duration');
+		const spanElement = screen
+			.getByText(SPAN_DURATION_TEXT)
+			.closest(SPAN_DURATION_CLASS);
 		expect(spanElement).toHaveClass(INTERESTED_SPAN_CLASS);
 		expect(spanElement).not.toHaveClass(HIGHLIGHTED_SPAN_CLASS);
 		expect(spanElement).not.toHaveClass(DIMMED_SPAN_CLASS);
@@ -226,7 +233,9 @@ describe('SpanDuration', () => {
 			/>,
 		);
 
-		const spanElement = screen.getByText('1.16 ms').closest('.span-duration');
+		const spanElement = screen
+			.getByText(SPAN_DURATION_TEXT)
+			.closest(SPAN_DURATION_CLASS);
 		expect(spanElement).toHaveClass(SELECTED_NON_MATCHING_SPAN_CLASS);
 		expect(spanElement).not.toHaveClass(INTERESTED_SPAN_CLASS);
 		expect(spanElement).not.toHaveClass(HIGHLIGHTED_SPAN_CLASS);
@@ -245,7 +254,9 @@ describe('SpanDuration', () => {
 			/>,
 		);
 
-		const spanElement = screen.getByText('1.16 ms').closest('.span-duration');
+		const spanElement = screen
+			.getByText(SPAN_DURATION_TEXT)
+			.closest(SPAN_DURATION_CLASS);
 		expect(spanElement).toHaveClass(INTERESTED_SPAN_CLASS);
 		expect(spanElement).not.toHaveClass(SELECTED_NON_MATCHING_SPAN_CLASS);
 		expect(spanElement).not.toHaveClass(HIGHLIGHTED_SPAN_CLASS);
@@ -264,7 +275,9 @@ describe('SpanDuration', () => {
 			/>,
 		);
 
-		const spanElement = screen.getByText('1.16 ms').closest('.span-duration');
+		const spanElement = screen
+			.getByText(SPAN_DURATION_TEXT)
+			.closest(SPAN_DURATION_CLASS);
 		expect(spanElement).toHaveClass(DIMMED_SPAN_CLASS);
 		expect(spanElement).not.toHaveClass(HIGHLIGHTED_SPAN_CLASS);
 		expect(spanElement).not.toHaveClass(INTERESTED_SPAN_CLASS);
