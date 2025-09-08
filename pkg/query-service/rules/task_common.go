@@ -15,7 +15,7 @@ func runCronScheduledTask(
 	done chan struct{},
 	evalFunc func(),
 ) {
-	rruleStr := "DTSTART=" + scheduleStartsAt.UTC().Format("20060102T150405Z") + "\nRRULE:" + schedule
+	rruleStr := "DTSTART:" + scheduleStartsAt.UTC().Format("20060102T150405Z") + "\n" + schedule
 	parsedSchedule, err := rrule.StrToRRule(rruleStr)
 	if err != nil {
 		zap.L().Error("failed to parse rrule expression", zap.String("rrule", schedule), zap.Error(err))
