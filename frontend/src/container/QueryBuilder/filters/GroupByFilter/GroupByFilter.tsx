@@ -163,12 +163,11 @@ export const GroupByFilter = memo(function GroupByFilter({
 	}, []);
 
 	useEffect(() => {
-		const currentValues: SelectOption<string, string>[] = query.groupBy?.map(
-			(item) => ({
+		const currentValues: SelectOption<string, string>[] =
+			query.groupBy?.map((item) => ({
 				label: `${item.key}`,
 				value: `${item.id}`,
-			}),
-		);
+			})) || [];
 
 		setLocalValues(currentValues);
 	}, [query]);
