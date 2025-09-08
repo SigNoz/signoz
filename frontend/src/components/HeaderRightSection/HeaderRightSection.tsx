@@ -2,9 +2,8 @@ import './HeaderRightSection.styles.scss';
 
 import { Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
-import useClickOutside from 'hooks/useClickOutside';
 import { Globe, Inbox, SquarePen } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import AnnouncementsModal from './AnnouncementsModal';
@@ -27,7 +26,6 @@ function HeaderRightSection({
 	const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
 	const [openShareURLModal, setOpenShareURLModal] = useState(false);
 	const [openAnnouncementsModal, setOpenAnnouncementsModal] = useState(false);
-	const headerRightSectionRef = useRef<HTMLDivElement>(null);
 
 	const handleOpenFeedbackModal = (): void => {
 		logEvent('Feedback: Clicked', {
@@ -53,41 +51,31 @@ function HeaderRightSection({
 		setOpenFeedbackModal(false);
 	};
 
-	const handleCloseShareURLModal = (): void => {
-		setOpenShareURLModal(false);
+	const handleOpenFeedbackModalChange = (open: boolean): void => {
+		setOpenFeedbackModal(open);
 	};
 
-	const handleCloseAnnouncementsModal = (): void => {
-		setOpenAnnouncementsModal(false);
+	const handleOpenAnnouncementsModalChange = (open: boolean): void => {
+		setOpenAnnouncementsModal(open);
 	};
 
-	useClickOutside({
-		ref: headerRightSectionRef,
-		onClickOutside: () => {
-			if (openFeedbackModal) {
-				handleCloseFeedbackModal();
-			}
-
-			if (openShareURLModal) {
-				handleCloseShareURLModal();
-			}
-			if (openAnnouncementsModal) {
-				handleCloseAnnouncementsModal();
-			}
-		},
-	});
+	const handleOpenShareURLModalChange = (open: boolean): void => {
+		setOpenShareURLModal(open);
+	};
 
 	return (
-		<div className="header-right-section-container" ref={headerRightSectionRef}>
+		<div className="header-right-section-container">
 			{enableFeedback && (
 				<Popover
-					rootClassName="shareable-link-popover-root"
+					rootClassName="header-section-popover-root"
 					className="shareable-link-popover"
 					placement="bottomRight"
-					open={openFeedbackModal}
 					content={<FeedbackModal onClose={handleCloseFeedbackModal} />}
 					destroyTooltipOnHide
 					arrow={false}
+					trigger="click"
+					open={openFeedbackModal}
+					onOpenChange={handleOpenFeedbackModalChange}
 				>
 					<Button
 						className="share-link-btn periscope-btn ghost"
@@ -99,13 +87,15 @@ function HeaderRightSection({
 
 			{enableAnnouncements && (
 				<Popover
-					rootClassName="shareable-link-popover-root"
+					rootClassName="header-section-popover-root"
 					className="shareable-link-popover"
 					placement="bottomRight"
 					content={<AnnouncementsModal />}
-					open={openAnnouncementsModal}
 					arrow={false}
 					destroyTooltipOnHide
+					trigger="click"
+					open={openAnnouncementsModal}
+					onOpenChange={handleOpenAnnouncementsModalChange}
 				>
 					<Button
 						icon={<Inbox size={14} />}
@@ -121,13 +111,15 @@ function HeaderRightSection({
 
 			{enableShare && (
 				<Popover
-					rootClassName="shareable-link-popover-root"
+					rootClassName="header-section-popover-root"
 					className="shareable-link-popover"
 					placement="bottomRight"
 					content={<ShareURLModal />}
 					open={openShareURLModal}
 					destroyTooltipOnHide
 					arrow={false}
+					trigger="click"
+					onOpenChange={handleOpenShareURLModalChange}
 				>
 					<Button
 						className="share-link-btn periscope-btn ghost"

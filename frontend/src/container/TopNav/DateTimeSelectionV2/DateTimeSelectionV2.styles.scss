@@ -77,7 +77,7 @@
 }
 
 .date-time-root,
-.shareable-link-popover-root {
+.header-section-popover-root {
 	.ant-popover-inner {
 		border-radius: 4px !important;
 		border: 1px solid var(--bg-slate-400);
@@ -316,7 +316,7 @@
 	}
 
 	.date-time-root,
-	.shareable-link-popover-root {
+	.header-section-popover-root {
 		.ant-popover-inner {
 			border: 1px solid var(--bg-vanilla-400);
 			background: var(--bg-vanilla-100) !important;
