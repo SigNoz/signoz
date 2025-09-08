@@ -12,8 +12,8 @@ function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const handleSubmit = (): void => {
-		logEvent('Feedback submitted', {
-			feedback,
+		logEvent('Feedback: Submitted', {
+			data: feedback,
 			type: activeTab,
 			page: location.pathname,
 		});
@@ -83,7 +83,7 @@ function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 			<div className="feedback-modal-content">
 				<div className="feedback-modal-content-header">
 					<Input.TextArea
-						placeholder="Feedback"
+						placeholder="Write your feedback here..."
 						rows={6}
 						required
 						className="feedback-input"
