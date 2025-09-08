@@ -1,5 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import getRandomColor from 'lib/getRandomColor';
+import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
 import { v4 } from 'uuid';
 
 import {
@@ -9,6 +10,7 @@ import {
 	AlertThresholdOperator,
 	AlertThresholdState,
 	Algorithm,
+	EvaluationWindowState,
 	Seasonality,
 	Threshold,
 	TimeDuration,
@@ -82,6 +84,16 @@ export const INITIAL_ADVANCED_OPTIONS_STATE: AdvancedOptionsState = {
 	delayEvaluation: {
 		delay: 0,
 		timeUnit: '',
+	},
+};
+
+export const INITIAL_EVALUATION_WINDOW_STATE: EvaluationWindowState = {
+	windowType: 'rolling',
+	timeframe: '5m0s',
+	startingAt: {
+		time: '00:00:00',
+		number: '1',
+		timezone: ALL_TIME_ZONES[0],
 	},
 };
 

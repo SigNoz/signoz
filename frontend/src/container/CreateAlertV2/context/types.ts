@@ -11,6 +11,8 @@ export interface ICreateAlertContextProps {
 	setThresholdState: Dispatch<AlertThresholdAction>;
 	advancedOptions: AdvancedOptionsState;
 	setAdvancedOptions: Dispatch<AdvancedOptionsAction>;
+	evaluationWindow: EvaluationWindowState;
+	setEvaluationWindow: Dispatch<EvaluationWindowAction>;
 }
 
 export interface ICreateAlertProviderProps {
@@ -130,5 +132,24 @@ export type AdvancedOptionsAction =
 	| {
 			type: 'SET_DELAY_EVALUATION';
 			payload: { delay: number; timeUnit: string };
+	  }
+	| { type: 'RESET' };
+
+export interface EvaluationWindowState {
+	windowType: 'rolling' | 'cumulative';
+	timeframe: string;
+	startingAt: {
+		time: string;
+		number: string;
+		timezone: string;
+	};
+}
+
+export type EvaluationWindowAction =
+	| { type: 'SET_WINDOW_TYPE'; payload: 'rolling' | 'cumulative' }
+	| { type: 'SET_TIMEFRAME'; payload: string }
+	| {
+			type: 'SET_STARTING_AT';
+			payload: { time: string; number: string; timezone: string };
 	  }
 	| { type: 'RESET' };

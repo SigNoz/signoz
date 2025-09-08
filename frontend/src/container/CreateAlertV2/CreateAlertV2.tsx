@@ -18,14 +18,14 @@ function CreateAlertV2({
 	useShareBuilderUrl({ defaultValue: initialQuery });
 
 	return (
-		<div className="create-alert-v2-container">
-			<CreateAlertProvider>
+		<CreateAlertProvider>
+			<div className="create-alert-v2-container">
 				<CreateAlertHeader />
 				<QuerySection />
 				<AlertCondition />
 				<EvaluationSettings />
-			</CreateAlertProvider>
-		</div>
+			</div>
+		</CreateAlertProvider>
 	);
 }
 

@@ -14,6 +14,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import {
 	INITIAL_ADVANCED_OPTIONS_STATE,
 	INITIAL_ALERT_THRESHOLD_STATE,
+	INITIAL_EVALUATION_WINDOW_STATE,
 } from './constants';
 import {
 	AdvancedOptionsAction,
@@ -22,6 +23,8 @@ import {
 	AlertThresholdAction,
 	AlertThresholdState,
 	CreateAlertAction,
+	EvaluationWindowAction,
+	EvaluationWindowState,
 } from './types';
 
 export const alertCreationReducer = (
@@ -129,6 +132,32 @@ export const advancedOptionsReducer = (
 			return { ...state, delayEvaluation: action.payload };
 		case 'RESET':
 			return INITIAL_ADVANCED_OPTIONS_STATE;
+		default:
+			return state;
+	}
+};
+
+export const evaluationWindowReducer = (
+	state: EvaluationWindowState,
+	action: EvaluationWindowAction,
+): EvaluationWindowState => {
+	switch (action.type) {
+		case 'SET_WINDOW_TYPE':
+			return {
+				...state,
+				windowType: action.payload,
+				startingAt: INITIAL_EVALUATION_WINDOW_STATE.startingAt,
+				timeframe:
+					action.payload === 'rolling'
+						? INITIAL_EVALUATION_WINDOW_STATE.timeframe
+						: 'currentHour',
+			};
+		case 'SET_TIMEFRAME':
+			return { ...state, timeframe: action.payload };
+		case 'SET_STARTING_AT':
+			return { ...state, startingAt: action.payload };
+		case 'RESET':
+			return INITIAL_EVALUATION_WINDOW_STATE;
 		default:
 			return state;
 	}
