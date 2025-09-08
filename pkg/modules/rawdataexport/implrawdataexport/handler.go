@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
@@ -368,6 +370,27 @@ func constructCSVHeaderFromQueryResponse(data map[string]any) []string {
 	return header
 }
 
+// sanitizeForCSV sanitizes a string for inclusion in a CSV file by adding `'` at the begining.
+// Excel and sheets remove these leading single quote when displaying the cell content.
+// TODO: will revisit this in a future PR
+func sanitizeForCSV(s string) string {
+	// Find first non-whitespace rune
+	i := 0
+	for i < len(s) {
+		r, size := utf8.DecodeRuneInString(s[i:])
+		if !unicode.IsSpace(r) {
+			// If first non-space is risky, prefix a single quote
+			switch r {
+			case '=', '+', '-', '@':
+				return "'" + s
+			}
+			return s
+		}
+		i += size
+	}
+	return s // all whitespace
+}
+
 func constructCSVRecordFromQueryResponse(data map[string]any, headerToIndexMapping map[string]int) []string {
 	record := make([]string, len(headerToIndexMapping))
 
@@ -409,7 +432,7 @@ func constructCSVRecordFromQueryResponse(data map[string]any, headerToIndexMappi
 				valueStr = string(jsonBytes)
 			}
 
-			record[index] = valueStr
+			record[index] = sanitizeForCSV(valueStr)
 		}
 	}
 	return record
