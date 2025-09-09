@@ -6,7 +6,6 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { LegendPosition } from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -36,7 +35,7 @@ function ChartPreview(): JSX.Element {
 			yAxisUnit={yAxisUnit || ''}
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
-			legendPosition={LegendPosition.RIGHT}
+			showSideLegend
 		/>
 	);
 
@@ -55,7 +54,7 @@ function ChartPreview(): JSX.Element {
 			yAxisUnit={yAxisUnit || ''}
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
-			legendPosition={LegendPosition.RIGHT}
+			showSideLegend
 		/>
 	);
 
