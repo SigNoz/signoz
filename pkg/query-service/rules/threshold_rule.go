@@ -494,7 +494,6 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 			smpl, shouldAlert := threshold.ShouldAlert(*series)
 			if shouldAlert {
 				resultVector = append(resultVector, smpl)
-				break
 			}
 		}
 	}
@@ -573,7 +572,6 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 			smpl, shouldAlert := threshold.ShouldAlert(*series)
 			if shouldAlert {
 				resultVector = append(resultVector, smpl)
-				break
 			}
 		}
 	}
