@@ -39,11 +39,7 @@ func (r *RuleThresholdData) UnmarshalJSON(data []byte) error {
 		r.Spec = basicThresholds
 
 	default:
-		var genericSpec interface{}
-		if err := json.Unmarshal(raw["spec"], &genericSpec); err != nil {
-			return err
-		}
-		r.Spec = genericSpec
+		return fmt.Errorf("unknown threshold kind: %v", r.Kind)
 	}
 
 	return nil
