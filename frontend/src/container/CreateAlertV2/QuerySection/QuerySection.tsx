@@ -2,8 +2,7 @@ import './styles.scss';
 
 import { Button } from 'antd';
 import classNames from 'classnames';
-import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import QuerySectionComponent from 'container/FormAlertRules/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { BarChart2, DraftingCompass, FileText, ScrollText } from 'lucide-react';
@@ -14,11 +13,7 @@ import Stepper from '../Stepper';
 import ChartPreview from './ChartPreview';
 
 function QuerySection(): JSX.Element {
-	const {
-		currentQuery,
-		handleRunQuery,
-		redirectWithQueryBuilderData,
-	} = useQueryBuilder();
+	const { currentQuery, handleRunQuery } = useQueryBuilder();
 	const { alertType, setAlertType, alertDef } = useCreateAlertState();
 
 	const tabs = [
@@ -44,13 +39,6 @@ function QuerySection(): JSX.Element {
 		},
 	];
 
-	const handleAlertTypeChange = (value: AlertTypes): void => {
-		setAlertType(value);
-		redirectWithQueryBuilderData(
-			initialQueriesMap[ALERTS_DATA_SOURCE_MAP[value]],
-		);
-	};
-
 	return (
 		<div className="query-section">
 			<Stepper
@@ -67,7 +55,7 @@ function QuerySection(): JSX.Element {
 								'active-tab': alertType === tab.value,
 							})}
 							onClick={(): void => {
-								handleAlertTypeChange(tab.value as AlertTypes);
+								setAlertType(tab.value as AlertTypes);
 							}}
 						>
 							{tab.icon}

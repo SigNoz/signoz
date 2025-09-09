@@ -1,3 +1,4 @@
+import { QueryParams } from 'constants/query';
 import {
 	alertDefaults,
 	anamolyAlertDefaults,
@@ -67,4 +68,14 @@ export function buildInitialAlertDef(alertType: AlertTypes): AlertDef {
 		default:
 			return alertDefaults;
 	}
+}
+
+export function getInitialAlertTypeFromURL(
+	urlSearchParams: URLSearchParams,
+	currentQuery: Query,
+): AlertTypes {
+	const alertTypeFromURL = urlSearchParams.get(QueryParams.alertType);
+	return alertTypeFromURL
+		? (alertTypeFromURL as AlertTypes)
+		: getInitialAlertType(currentQuery);
 }
