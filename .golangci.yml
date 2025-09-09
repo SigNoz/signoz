@@ -8,6 +8,7 @@ linters:
     - depguard
     - iface
     - unparam
+    - forbidigo
 
 linters-settings:
   sloglint:
