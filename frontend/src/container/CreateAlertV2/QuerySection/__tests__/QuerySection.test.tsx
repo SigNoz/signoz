@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
-import { initialQueriesMap } from 'constants/queryBuilder';
+import { QueryParams } from 'constants/query';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
@@ -177,7 +176,12 @@ describe('QuerySection', () => {
 
 		// Verify that redirectWithQueryBuilderData was called with correct data
 		expect(mockUseQueryBuilder.redirectWithQueryBuilderData).toHaveBeenCalledWith(
-			initialQueriesMap[ALERTS_DATA_SOURCE_MAP[AlertTypes.LOGS_BASED_ALERT]],
+			expect.any(Object),
+			{
+				[QueryParams.alertType]: AlertTypes.LOGS_BASED_ALERT,
+			},
+			undefined,
+			true,
 		);
 
 		// Click on Traces tab
@@ -186,7 +190,12 @@ describe('QuerySection', () => {
 
 		// Verify that redirectWithQueryBuilderData was called with correct data
 		expect(mockUseQueryBuilder.redirectWithQueryBuilderData).toHaveBeenCalledWith(
-			initialQueriesMap[ALERTS_DATA_SOURCE_MAP[AlertTypes.TRACES_BASED_ALERT]],
+			expect.any(Object),
+			{
+				[QueryParams.alertType]: AlertTypes.TRACES_BASED_ALERT,
+			},
+			undefined,
+			true,
 		);
 	});
 

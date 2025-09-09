@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import store from 'store';
-import { LegendPosition } from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
 
 import { CreateAlertProvider } from '../../context';
@@ -38,7 +37,6 @@ jest.mock(
 					</div>
 					<div data-testid="y-axis-unit">{props.yAxisUnit}</div>
 					<div data-testid={GRAPH_TYPE_TEST_ID}>{props.graphType}</div>
-					<div data-testid="legend-position">{props.legendPosition}</div>
 				</div>
 			);
 		},
@@ -173,9 +171,6 @@ describe('ChartPreview', () => {
 		expect(screen.getByTestId('y-axis-unit')).toHaveTextContent(REQUESTS_PER_SEC);
 		expect(screen.getByTestId(GRAPH_TYPE_TEST_ID)).toHaveTextContent(
 			PANEL_TYPES.TIME_SERIES,
-		);
-		expect(screen.getByTestId('legend-position')).toHaveTextContent(
-			LegendPosition.RIGHT,
 		);
 	});
 
