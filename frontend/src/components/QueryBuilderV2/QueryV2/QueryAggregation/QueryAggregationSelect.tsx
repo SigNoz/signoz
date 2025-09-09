@@ -686,7 +686,10 @@ function QueryAggregationSelect({
 				>
 					<Info
 						size={14}
-						style={{ opacity: 0.9, color: isDarkMode ? '#ffffff' : '#000000' }}
+						style={{
+							opacity: 0.9,
+							color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+						}}
 					/>
 				</div>
 			</Tooltip>

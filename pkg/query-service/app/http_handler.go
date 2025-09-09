@@ -8,9 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
-
-	//qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"io"
 	"math"
 	"net/http"
@@ -48,6 +45,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/inframetrics"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/thirdPartyApi"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logs"
 	logsv3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
 	logsv4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
@@ -543,6 +541,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/dependency_graph", am.ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.AdminAccess(aH.setTTL)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/settings/ttl", am.AdminAccess(aH.setCustomRetentionTTL)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v2/settings/ttl", am.ViewAccess(aH.getCustomRetentionTTL)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.Signoz.Handlers.Apdex.Set)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.Signoz.Handlers.Apdex.Get)).Methods(http.MethodGet)
 
@@ -782,7 +782,7 @@ func (aH *APIHandler) getDowntimeSchedule(w http.ResponseWriter, r *http.Request
 	idStr := mux.Vars(r)["id"]
 	id, err := valuer.NewUUID(idStr)
 	if err != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
 		return
 	}
 
@@ -818,7 +818,7 @@ func (aH *APIHandler) editDowntimeSchedule(w http.ResponseWriter, r *http.Reques
 	idStr := mux.Vars(r)["id"]
 	id, err := valuer.NewUUID(idStr)
 	if err != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
 		return
 	}
 
@@ -846,7 +846,7 @@ func (aH *APIHandler) deleteDowntimeSchedule(w http.ResponseWriter, r *http.Requ
 	idStr := mux.Vars(r)["id"]
 	id, err := valuer.NewUUID(idStr)
 	if err != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
 		return
 	}
 
@@ -1932,6 +1932,47 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (aH *APIHandler) setCustomRetentionTTL(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, errv2 := authtypes.ClaimsFromContext(ctx)
+	if errv2 != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get org id from context"))
+		return
+	}
+
+	var params model.CustomRetentionTTLParams
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "Invalid data"))
+		return
+	}
+
+	// Context is not used here as TTL is long duration DB operation
+	result, apiErr := aH.reader.SetTTLV2(context.Background(), claims.OrgID, &params)
+	if apiErr != nil {
+		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInternal, apiErr.Error()))
+		return
+	}
+
+	aH.WriteJSON(w, r, result)
+}
+
+func (aH *APIHandler) getCustomRetentionTTL(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, errv2 := authtypes.ClaimsFromContext(ctx)
+	if errv2 != nil {
+		render.Error(w, errorsV2.New(errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get org id from context"))
+		return
+	}
+
+	result, apiErr := aH.reader.GetCustomRetentionTTL(r.Context(), claims.OrgID)
+	if apiErr != nil {
+		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInternal, apiErr.Error()))
+		return
+	}
+
+	aH.WriteJSON(w, r, result)
+}
+
 func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 	ttlParams, err := parseGetTTL(r)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
@@ -2024,7 +2065,8 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, errv2 := aH.Signoz.Modules.User.Register(r.Context(), &req)
+	organization := types.NewOrganization(req.OrgDisplayName)
+	user, errv2 := aH.Signoz.Modules.User.CreateFirstUser(r.Context(), organization, req.Name, req.Email, req.Password)
 	if errv2 != nil {
 		render.Error(w, errv2)
 		return
@@ -3333,7 +3375,7 @@ func (aH *APIHandler) calculateConnectionStatus(
 	go func() {
 		defer wg.Done()
 
-		if connectionTests.Metrics == nil || len(connectionTests.Metrics) < 1 {
+		if len(connectionTests.Metrics) < 1 {
 			return
 		}
 
@@ -4025,7 +4067,6 @@ func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(
 func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *middleware.AuthZ) {
 	subRouter := router.PathPrefix("/api/v1/logs").Subrouter()
 	subRouter.HandleFunc("", am.ViewAccess(aH.getLogs)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/tail", am.ViewAccess(aH.tailLogs)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", am.ViewAccess(aH.logFields)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", am.EditAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/aggregate", am.ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
@@ -4070,10 +4111,6 @@ func (aH *APIHandler) logFieldUpdate(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getLogs(w http.ResponseWriter, r *http.Request) {
 	aH.WriteJSON(w, r, map[string]interface{}{"results": []interface{}{}})
-}
-
-func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
-	return
 }
 
 func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
@@ -4979,135 +5016,123 @@ func (aH *APIHandler) getQueueOverview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
 
 	aH.Respond(w, results)
 }
 
 func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
-	// Extract claims from context for organization ID
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
-
 	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	// Parse the request body to get third-party query parameters
 	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 	if apiErr != nil {
-		zap.L().Error("Failed to parse request body", zap.Error(apiErr))
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, apiErr.Error()))
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
 		return
 	}
 
-	// Build the v5 query range request for domain listing
-	queryRangeRequest, err := thirdpartyapi.BuildDomainList(thirdPartyQueryRequest)
+	queryRangeParams, err := thirdPartyApi.BuildDomainList(thirdPartyQueryRequest)
 	if err != nil {
-		zap.L().Error("Failed to build domain list query", zap.Error(err))
-		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
-		render.Error(w, apiErrObj)
+		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
 
-	// Validate the v5 query range request
-	if err := queryRangeRequest.Validate(); err != nil {
-		zap.L().Error("Query validation failed", zap.Error(err))
-		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
-		render.Error(w, apiErrObj)
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
 		return
 	}
 
-	// Execute the query using the v5 querier
-	result, err := aH.Signoz.Querier.QueryRange(r.Context(), orgID, queryRangeRequest)
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
-		zap.L().Error("Query execution failed", zap.Error(err))
-		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
-		render.Error(w, apiErrObj)
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
 		return
 	}
 
-	result = thirdpartyapi.MergeSemconvColumns(result)
+	result, err = postprocess.PostProcessResult(result, queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
 
-	// Filter IP addresses if ShowIp is false
-	var finalResult = result
 	if !thirdPartyQueryRequest.ShowIp {
-		filteredResults := thirdpartyapi.FilterResponse([]*qbtypes.QueryRangeResponse{result})
-		if len(filteredResults) > 0 {
-			finalResult = filteredResults[0]
-		}
+		result = thirdPartyApi.FilterResponse(result)
 	}
 
-	// Send the response
-	aH.Respond(w, finalResult)
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
 }
 
-// getDomainInfo handles requests for domain information using v5 query builder
 func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
-	// Extract claims from context for organization ID
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
-
 	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	// Parse the request body to get third-party query parameters
 	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 	if apiErr != nil {
-		zap.L().Error("Failed to parse request body", zap.Error(apiErr))
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, apiErr.Error()))
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
 		return
 	}
 
-	// Build the v5 query range request for domain info
-	queryRangeRequest, err := thirdpartyapi.BuildDomainInfo(thirdPartyQueryRequest)
+	queryRangeParams, err := thirdPartyApi.BuildDomainInfo(thirdPartyQueryRequest)
 	if err != nil {
-		zap.L().Error("Failed to build domain info query", zap.Error(err))
-		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
-		render.Error(w, apiErrObj)
+		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
 
-	// Validate the v5 query range request
-	if err := queryRangeRequest.Validate(); err != nil {
-		zap.L().Error("Query validation failed", zap.Error(err))
-		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
-		render.Error(w, apiErrObj)
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
 		return
 	}
 
-	// Execute the query using the v5 querier
-	result, err := aH.Signoz.Querier.QueryRange(r.Context(), orgID, queryRangeRequest)
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
-		zap.L().Error("Query execution failed", zap.Error(err))
-		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
-		render.Error(w, apiErrObj)
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
 		return
 	}
 
-	result = thirdpartyapi.MergeSemconvColumns(result)
+	result = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
 
-	// Filter IP addresses if ShowIp is false
-	var finalResult *qbtypes.QueryRangeResponse = result
 	if !thirdPartyQueryRequest.ShowIp {
-		filteredResults := thirdpartyapi.FilterResponse([]*qbtypes.QueryRangeResponse{result})
-		if len(filteredResults) > 0 {
-			finalResult = filteredResults[0]
-		}
+		result = thirdPartyApi.FilterResponse(result)
 	}
 
-	// Send the response
-	aH.Respond(w, finalResult)
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
 }
 
 // RegisterTraceFunnelsRoutes adds trace funnels routes

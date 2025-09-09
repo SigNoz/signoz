@@ -1,0 +1,13 @@
+module base
+
+type user
+
+type role 
+  relations
+    define assignee: [user]
+
+type organisation 
+  relations
+    define admin: [role#assignee]
+    define editor: [role#assignee] or admin
+    define viewer: [role#assignee] or editor

@@ -6,6 +6,7 @@ import { PanelWrapperProps } from './panelWrapper.types';
 function ValuePanelWrapper({
 	widget,
 	queryResponse,
+	enableDrillDown = false,
 }: PanelWrapperProps): JSX.Element {
 	const { yAxisUnit, thresholds } = widget;
 	const data = getUPlotChartData(queryResponse?.data?.payload);
@@ -22,6 +23,10 @@ function ValuePanelWrapper({
 			data={gridValueData}
 			yAxisUnit={yAxisUnit}
 			thresholds={thresholds}
+			widget={widget}
+			queryResponse={queryResponse}
+			contextLinks={widget.contextLinks}
+			enableDrillDown={enableDrillDown}
 		/>
 	);
 }

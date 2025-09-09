@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"math"
 	"net/url"
-	"sort"
 	"sync"
 	"time"
 
@@ -33,6 +32,8 @@ type BaseRule struct {
 	typ ruletypes.AlertType
 
 	ruleCondition *ruletypes.RuleCondition
+
+	Threshold ruletypes.RuleThreshold `yaml:"thresholds,omitempty" json:"thresholds,omitempty"`
 	// evalWindow is the time window used for evaluating the rule
 	// i.e each time we lookback from the current time, we look at data for the last
 	// evalWindow duration
@@ -126,6 +127,10 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	if p.RuleCondition == nil || !p.RuleCondition.IsValid() {
 		return nil, fmt.Errorf("invalid rule condition")
 	}
+	threshold, err := p.RuleCondition.Thresholds.GetRuleThreshold()
+	if err != nil {
+		return nil, err
+	}
 	evaluation, err := p.Evaluation.GetEvaluation()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get evaluation: %w", err)
@@ -146,6 +151,7 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 		Active:            map[uint64]*ruletypes.Alert{},
 		reader:            reader,
 		TemporalityMap:    make(map[string]map[v3.Temporality]bool),
+		Threshold:         threshold,
 		evaluation:        evaluation,
 	}
 
@@ -216,32 +222,6 @@ func (r *BaseRule) HoldDuration() time.Duration {
 
 func (r *BaseRule) TargetVal() float64 {
 	return r.targetVal()
-}
-
-func (r *BaseRule) Thresholds() []ruletypes.RuleThreshold {
-	thresholds := make([]ruletypes.RuleThreshold, len(r.ruleCondition.Thresholds))
-	copy(thresholds, r.ruleCondition.Thresholds)
-
-	// Sort thresholds by target value based on compare operation
-	sort.Slice(thresholds, func(i, j int) bool {
-		compareOp := thresholds[i].CompareOp()
-		targetI := thresholds[i].Target()
-		targetJ := thresholds[j].Target()
-
-		switch compareOp {
-		case ruletypes.ValueIsAbove, ruletypes.ValueAboveOrEq, ruletypes.ValueOutsideBounds:
-			// For "above" operations, sort descending (higher values first)
-			return targetI > targetJ
-		case ruletypes.ValueIsBelow, ruletypes.ValueBelowOrEq:
-			// For "below" operations, sort ascending (lower values first)
-			return targetI < targetJ
-		default:
-			// For equal/not equal operations, use descending as default
-			return targetI > targetJ
-		}
-	})
-
-	return thresholds
 }
 
 func (r *ThresholdRule) hostFromSource() string {

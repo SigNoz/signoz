@@ -12,11 +12,11 @@ import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariab
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { IDashboardVariable, Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 
@@ -35,6 +35,14 @@ const useCreateAlerts = (
 	const { notifications } = useNotifications();
 
 	const { selectedDashboard } = useDashboard();
+
+	const dynamicVariables = useMemo(
+		() =>
+			Object.values(selectedDashboard?.data?.variables || {})?.filter(
+				(variable: IDashboardVariable) => variable.type === 'DYNAMIC',
+			),
+		[selectedDashboard],
+	);
 
 	return useCallback(() => {
 		if (!widget) return;
@@ -64,6 +72,7 @@ const useCreateAlerts = (
 			selectedTime: widget.timePreferance,
 			variables: getDashboardVariables(selectedDashboard?.data.variables),
 			originalGraphType: widget.panelTypes,
+			dynamicVariables,
 		});
 		queryRangeMutation.mutate(queryPayload, {
 			onSuccess: (data) => {
@@ -92,6 +101,7 @@ const useCreateAlerts = (
 		selectedDashboard?.data.variables,
 		selectedDashboard?.data.version,
 		widget,
+		dynamicVariables,
 	]);
 };
 
