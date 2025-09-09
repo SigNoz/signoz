@@ -60,7 +60,7 @@ function ChangelogRenderer({ changelog }: Props): JSX.Element {
 					<div className="changelog-renderer-list">
 						{changelog.features.map((feature) => (
 							<div key={feature.id}>
-								<h2>{feature.title}</h2>
+								<div className="changelog-renderer-section-title">{feature.title}</div>
 								{feature.media && renderMedia(feature.media)}
 								<ReactMarkdown>{feature.description}</ReactMarkdown>
 							</div>
@@ -68,16 +68,16 @@ function ChangelogRenderer({ changelog }: Props): JSX.Element {
 					</div>
 				)}
 				{changelog.bug_fixes && changelog.bug_fixes.length > 0 && (
-					<div>
-						<h2>Bug Fixes</h2>
+					<div className="changelog-renderer-bug-fixes">
+						<div className="changelog-renderer-section-title">Bug Fixes</div>
 						{changelog.bug_fixes && (
 							<ReactMarkdown>{changelog.bug_fixes}</ReactMarkdown>
 						)}
 					</div>
 				)}
 				{changelog.maintenance && changelog.maintenance.length > 0 && (
-					<div>
-						<h2>Maintenance</h2>
+					<div className="changelog-renderer-maintenance">
+						<div className="changelog-renderer-section-title">Maintenance</div>
 						{changelog.maintenance && (
 							<ReactMarkdown>{changelog.maintenance}</ReactMarkdown>
 						)}

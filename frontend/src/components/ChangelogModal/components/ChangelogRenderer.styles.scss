@@ -2,7 +2,7 @@
 	position: relative;
 	padding-left: 20px;
 
-	& :is(h1, h2, h3, h4, h5, h6, p) {
+	& :is(h1, h2, h3, h4, h5, h6, p, &-section-title) {
 		margin-bottom: 12px;
 	}
 
@@ -10,6 +10,12 @@
 		display: flex;
 		flex-direction: column;
 		gap: 32px;
+	}
+
+	&-section-title {
+		font-size: 14px;
+		line-height: 20px;
+		color: var(--text-vanilla-400, #c0c1c3);
 	}
 
 	.changelog-release-date {
@@ -93,22 +99,20 @@
 		}
 	}
 
-	h1,
-	h2,
-	h3,
-	h4,
-	h5,
-	h6 {
+	& :is(h1, h2, h3, h4, h5, h6, p, &-section-title) {
 		font-weight: 600;
 		color: var(--text-vanilla-100, #fff);
 	}
+
+
 
 	h1 {
 		font-size: 24px;
 		line-height: 32px;
 	}
 
-	h2 {
+	h2,
+	&-section-title {
 		font-size: 20px;
 		line-height: 28px;
 	}
@@ -138,7 +142,7 @@
 			background-color: var(--bg-vanilla-300);
 		}
 
-		& :is(h1, h2, h3, h4, h5, h6, p, li) {
+		& :is(h1, h2, h3, h4, h5, h6, p, li, &-section-title) {
 			color: var(--text-ink-500);
 		}
 
