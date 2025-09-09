@@ -56,71 +56,56 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 		timeRange,
 	});
 
-	// Create trace_id and span_id filters for span logs explorer navigation
-	const createSpanLogsFilter = useCallback((): TagFilter => {
-		const traceIdKey: BaseAutocompleteData = {
-			id: uuid(),
-			dataType: DataTypes.String,
-			type: '',
-			key: 'trace_id',
-		};
+	// Create trace_id and span_id filters for logs explorer navigation
+	const createLogsFilter = useCallback(
+		(targetSpanId: string): TagFilter => {
+			const traceIdKey: BaseAutocompleteData = {
+				id: uuid(),
+				dataType: DataTypes.String,
+				type: '',
+				key: 'trace_id',
+			};
 
-		const spanIdKey: BaseAutocompleteData = {
-			id: uuid(),
-			dataType: DataTypes.String,
-			type: '',
-			key: 'span_id',
-		};
+			const spanIdKey: BaseAutocompleteData = {
+				id: uuid(),
+				dataType: DataTypes.String,
+				type: '',
+				key: 'span_id',
+			};
 
-		return {
-			items: [
-				{
-					id: uuid(),
-					op: getOperatorValue(OPERATORS['=']),
-					value: traceId,
-					key: traceIdKey,
-				},
-				{
-					id: uuid(),
-					op: getOperatorValue(OPERATORS['=']),
-					value: spanId,
-					key: spanIdKey,
-				},
-			],
-			op: 'AND',
-		};
-	}, [traceId, spanId]);
+			return {
+				items: [
+					{
+						id: uuid(),
+						op: getOperatorValue(OPERATORS['=']),
+						value: traceId,
+						key: traceIdKey,
+					},
+					{
+						id: uuid(),
+						op: getOperatorValue(OPERATORS['=']),
+						value: targetSpanId,
+						key: spanIdKey,
+					},
+				],
+				op: 'AND',
+			};
+		},
+		[traceId],
+	);
 
-	// Create trace_id only filters for context logs explorer navigation
-	const createTraceOnlyFilter = useCallback((): TagFilter => {
-		const traceIdKey: BaseAutocompleteData = {
-			id: uuid(),
-			dataType: DataTypes.String,
-			type: '',
-			key: 'trace_id',
-		};
-
-		return {
-			items: [
-				{
-					id: uuid(),
-					op: getOperatorValue(OPERATORS['=']),
-					value: traceId,
-					key: traceIdKey,
-				},
-			],
-			op: 'AND',
-		};
-	}, [traceId]);
-
-	// Navigate to logs explorer with appropriate filters based on log type
+	// Navigate to logs explorer with trace_id and span_id filters
 	const handleLogClick = useCallback(
 		(log: ILog, event: MouseEvent): void => {
 			// Determine if this is a span log or context log
 			const isSpanLog = isLogSpanRelated(log.id);
 
-			// Use appropriate filters: span logs get trace+span filters, context logs get trace-only filters
-			const filters = isSpanLog ? createSpanLogsFilter() : createTraceOnlyFilter();
+			// Extract log's span_id (handles both spanID and span_id properties)
+			const logSpanId = log.spanID || log.span_id || '';
+
+			// Use appropriate span ID: current span for span logs, individual log's span for context logs
+			const targetSpanId = isSpanLog ? spanId : logSpanId;
+			const filters = createLogsFilter(targetSpanId);
 
 			// Create base query
 			const baseQuery = updateAllQueriesOperators(
@@ -161,8 +146,8 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 		},
 		[
 			isLogSpanRelated,
-			createSpanLogsFilter,
-			createTraceOnlyFilter,
+			createLogsFilter,
+			spanId,
 			updateAllQueriesOperators,
 			timeRange.startTime,
 			timeRange.endTime,
