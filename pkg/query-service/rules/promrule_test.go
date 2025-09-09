@@ -17,8 +17,10 @@ func TestPromRuleShouldAlert(t *testing.T) {
 		AlertName:  "Test Rule",
 		AlertType:  ruletypes.AlertTypeMetric,
 		RuleType:   ruletypes.RuleTypeProm,
-		EvalWindow: ruletypes.Duration(5 * time.Minute),
-		Frequency:  ruletypes.Duration(1 * time.Minute),
+		Evaluation: ruletypes.NewEvaluationWrapper("rolling", ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		}),
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypePromQL,

@@ -56,9 +56,8 @@ func NewEvaluationWrapper(kind string, spec interface{}) EvaluationWrapper {
 }
 
 func (wrapper *EvaluationWrapper) GetEvaluation() (Evaluation, error) {
-	// If wrapper is empty (not set), return nil
 	if wrapper.Kind == "" && len(wrapper.Spec) == 0 {
-		return nil, nil
+		return nil, fmt.Errorf("invalid rule evaluation")
 	}
 
 	if wrapper.Kind == "" {

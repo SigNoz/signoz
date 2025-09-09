@@ -130,9 +130,7 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	if err != nil {
 		return nil, fmt.Errorf("failed to get evaluation: %w", err)
 	}
-	
-	// If no evaluation is set, we don't assign one (evaluation will be nil)
-	// This is fine for rules that don't need evaluation windows (like PromQL rules)
+
 	baseRule := &BaseRule{
 		id:                id,
 		orgID:             orgID,
