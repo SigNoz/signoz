@@ -141,15 +141,25 @@ func ParseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*P
 	}
 
 	//added alerts v2 fields
-	if len(rule.RuleCondition.Thresholds) == 0 {
+	if rule.RuleCondition.Thresholds == nil {
 		thresholdName := CriticalThresholdName
 		if rule.Labels != nil {
 			if severity, ok := rule.Labels["severity"]; ok {
 				thresholdName = severity
 			}
 		}
-		rule.RuleCondition.Thresholds = append(rule.RuleCondition.Thresholds,
-			NewBasicRuleThreshold(thresholdName, rule.RuleCondition.Target, nil, rule.RuleCondition.MatchType, rule.RuleCondition.CompareOp, rule.RuleCondition.SelectedQuery, rule.RuleCondition.TargetUnit, rule.RuleCondition.CompositeQuery.Unit))
+		thresholdData := RuleThresholdData{
+			Kind: "basic",
+			Spec: []BasicRuleThreshold{{
+				Name:        thresholdName,
+				RuleUnit:    rule.RuleCondition.CompositeQuery.Unit,
+				TargetUnit:  rule.RuleCondition.TargetUnit,
+				TargetValue: rule.RuleCondition.Target,
+				MatchType:   rule.RuleCondition.MatchType,
+				CompareOp:   rule.RuleCondition.CompareOp,
+			}},
+		}
+		rule.RuleCondition.Thresholds = &thresholdData
 	}
 	return rule, nil
 }

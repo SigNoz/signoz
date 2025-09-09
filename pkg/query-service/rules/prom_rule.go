@@ -151,25 +151,26 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 	var alerts = make(map[uint64]*ruletypes.Alert, len(res))
 
 	for _, series := range res {
-		for _, ruleThreshold := range r.Thresholds() {
+
+		if len(series.Floats) == 0 {
+			continue
+		}
+
+		results, err := r.Threshold.ShouldAlert(toCommonSeries(series))
+		if err != nil {
+			return nil, err
+		}
+
+		for _, result := range results {
 			l := make(map[string]string, len(series.Metric))
 			for _, lbl := range series.Metric {
 				l[lbl.Name] = lbl.Value
-			}
-
-			if len(series.Floats) == 0 {
-				continue
-			}
-
-			alertSmpl, shouldAlert := ruleThreshold.ShouldAlert(toCommonSeries(series))
-			if !shouldAlert {
-				continue
 			}
 			r.logger.DebugContext(ctx, "alerting for series", "rule_name", r.Name(), "series", series)
 
 			threshold := valueFormatter.Format(r.targetVal(), r.Unit())
 
-			tmplData := ruletypes.AlertTemplateData(l, valueFormatter.Format(alertSmpl.V, r.Unit()), threshold)
+			tmplData := ruletypes.AlertTemplateData(l, valueFormatter.Format(result.V, r.Unit()), threshold)
 			// Inject some convenience variables that are easier to remember for users
 			// who are not used to Go's templating system.
 			defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
@@ -192,8 +193,8 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 				return result
 			}
 
-			lb := qslabels.NewBuilder(alertSmpl.Metric).Del(qslabels.MetricNameLabel)
-			resultLabels := qslabels.NewBuilder(alertSmpl.Metric).Del(qslabels.MetricNameLabel).Labels()
+			lb := qslabels.NewBuilder(result.Metric).Del(qslabels.MetricNameLabel)
+			resultLabels := qslabels.NewBuilder(result.Metric).Del(qslabels.MetricNameLabel).Labels()
 
 			for name, value := range r.labels.Map() {
 				lb.Set(name, expand(value))
@@ -227,7 +228,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 				Annotations:       annotations,
 				ActiveAt:          ts,
 				State:             model.StatePending,
-				Value:             alertSmpl.V,
+				Value:             result.V,
 				GeneratorURL:      r.GeneratorURL(),
 				Receivers:         r.preferredChannels,
 			}

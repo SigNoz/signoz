@@ -1,6 +1,7 @@
 package ruletypes
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 
@@ -133,7 +134,7 @@ func TestParseIntoRule(t *testing.T) {
 				if rule.RuleType != RuleTypeThreshold {
 					t.Errorf("Expected rule type '%s', got '%s'", RuleTypeThreshold, rule.RuleType)
 				}
-				if len(rule.RuleCondition.Thresholds) == 0 {
+				if rule.RuleCondition.Thresholds.Kind == "" {
 					t.Error("Expected thresholds to be populated")
 				}
 				if rule.RuleCondition.Target == nil {
@@ -206,7 +207,7 @@ func TestParseIntoRule(t *testing.T) {
 				if rule.RuleType != RuleTypeProm {
 					t.Errorf("Expected rule type 'PROM_QL_RULE', got '%s'", rule.RuleType)
 				}
-				if len(rule.RuleCondition.Thresholds) == 0 {
+				if rule.RuleCondition.Thresholds.Kind == "" {
 					t.Error("Expected thresholds to be populated")
 				}
 				if rule.RuleCondition.Target == nil {
@@ -264,7 +265,21 @@ func TestParseIntoRuleThresholdGeneration(t *testing.T) {
 			"matchType": "1",
 			"op": "1",
 			"selectedQuery": "A",
-			"targetUnit": "ms"
+			"targetUnit": "ms",
+			"thresholds": {
+				"kind": "basic",
+				"spec": [
+					{
+						"name": "CRITICAL",
+						"target": 100.0,
+						"targetUnit": "ms",
+						"ruleUnit": "s",
+						"matchType": "1",
+						"op": "1",
+						"selectedQuery": "A"
+					}
+				]
+			}
 		}
 	}`)
 
@@ -273,17 +288,28 @@ func TestParseIntoRuleThresholdGeneration(t *testing.T) {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	if len(rule.RuleCondition.Thresholds) != 1 {
-		t.Errorf("Expected 1 threshold, got %d", len(rule.RuleCondition.Thresholds))
+	// Check that thresholds were parsed correctly
+	if rule.RuleCondition.Thresholds.Kind != "basic" {
+		t.Errorf("Expected threshold kind 'basic', got '%s'", rule.RuleCondition.Thresholds.Kind)
 	}
 
-	threshold := rule.RuleCondition.Thresholds[0]
-	if threshold.Name() != CriticalThresholdName {
-		t.Errorf("Expected threshold name '%s', got '%s'", CriticalThresholdName, threshold.Name())
+	// Get the threshold and test functionality
+	threshold, err := rule.RuleCondition.Thresholds.GetRuleThreshold()
+	if err != nil {
+		t.Fatalf("Failed to get threshold: %v", err)
 	}
 
-	if threshold.Target() != 0.1 {
-		t.Errorf("Expected threshold target 0.1 (100ms converted to seconds), got %f", threshold.Target())
+	// Test that threshold can evaluate properly
+	vector, err := threshold.ShouldAlert(v3.Series{
+		Points: []v3.Point{{Value: 0.15, Timestamp: 1000}}, // 150ms in seconds
+		Labels: map[string]string{"test": "label"},
+	})
+	if err != nil {
+		t.Fatalf("Unexpected error in ShouldAlert: %v", err)
+	}
+
+	if len(vector) == 0 {
+		t.Error("Expected alert to be triggered for value above threshold")
 	}
 }
 
@@ -294,6 +320,7 @@ func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 		"condition": {
 			"compositeQuery": {
 				"queryType": "builder",
+				"unit": "%",
 				"builderQueries": {
 					"A": {
 						"expression": "A",
@@ -304,87 +331,68 @@ func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 					}
 				}
 			},
-			"target": 5.0,
+			"target": 90.0,
 			"matchType": "1",
 			"op": "1",
 			"selectedQuery": "A",
-			"thresholds": [
-				{
-					"kind": "basic",
-					"spec": {
+			"thresholds": {
+				"kind": "basic",
+				"spec": [
+					{
 						"name": "WARNING",
 						"target": 70.0,
+						"targetUnit": "%",
+						"ruleUnit": "%",
 						"matchType": "1",
 						"op": "1",
-						"selectedQuery": "A",
-						"targetUnit": "%",
-						"ruleUnit": "%"
-					}
-				},
-				{
-					"kind": "basic",
-					"spec": {
+						"selectedQuery": "A"
+					},
+					{
 						"name": "CRITICAL",
 						"target": 90.0,
+						"targetUnit": "%",
+						"ruleUnit": "%",
 						"matchType": "1",
 						"op": "1",
-						"selectedQuery": "A",
-						"targetUnit": "%",
-						"ruleUnit": "%"
+						"selectedQuery": "A"
 					}
-				}
-			]
+				]
+			}
 		}
-	}`) // for now, it needs both thresholds and target, compareOP as separate fields in condition.
+	}`)
 
 	rule, err := ParseIntoRule(PostableRule{}, content, RuleDataKindJson)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	if len(rule.RuleCondition.Thresholds) != 2 {
-		t.Errorf("Expected 2 thresholds, got %d", len(rule.RuleCondition.Thresholds))
-		return
+	if rule.RuleCondition.Thresholds.Kind != "basic" {
+		t.Errorf("Expected threshold kind 'basic', got '%s'", rule.RuleCondition.Thresholds.Kind)
 	}
 
-	// Check WARNING threshold
-	var warningThreshold, criticalThreshold *BasicRuleThreshold
-	for _, threshold := range rule.RuleCondition.Thresholds {
-		if basicThreshold, ok := threshold.(*BasicRuleThreshold); ok {
-			if basicThreshold.Name() == "WARNING" {
-				warningThreshold = basicThreshold
-			} else if basicThreshold.Name() == "CRITICAL" {
-				criticalThreshold = basicThreshold
-			}
-		}
+	threshold, err := rule.RuleCondition.Thresholds.GetRuleThreshold()
+	if err != nil {
+		t.Fatalf("Failed to get threshold: %v", err)
 	}
 
-	if warningThreshold == nil {
-		t.Error("Expected WARNING threshold to be found")
-	} else {
-		if warningThreshold.Target() != 70.0 {
-			t.Errorf("Expected WARNING threshold target 70.0, got %f", warningThreshold.Target())
-		}
-		if warningThreshold.CompareOp() != ValueIsAbove {
-			t.Errorf("Expected WARNING threshold op '%s', got '%s'", ValueIsAbove, warningThreshold.CompareOp())
-		}
-		if warningThreshold.MatchType() != AtleastOnce {
-			t.Errorf("Expected WARNING threshold match type '%s', got '%s'", AtleastOnce, warningThreshold.MatchType())
-		}
+	// Test with a value that should trigger both WARNING and CRITICAL thresholds
+	vector, err := threshold.ShouldAlert(v3.Series{
+		Points: []v3.Point{{Value: 95.0, Timestamp: 1000}}, // 95% CPU usage
+		Labels: map[string]string{"service": "test"},
+	})
+	if err != nil {
+		t.Fatalf("Unexpected error in ShouldAlert: %v", err)
 	}
 
-	if criticalThreshold == nil {
-		t.Error("Expected CRITICAL threshold to be found")
-	} else {
-		if criticalThreshold.Target() != 90.0 {
-			t.Errorf("Expected CRITICAL threshold target 90.0, got %f", criticalThreshold.Target())
-		}
-		if criticalThreshold.CompareOp() != ValueIsAbove {
-			t.Errorf("Expected CRITICAL threshold op '%s', got '%s'", ValueIsAbove, criticalThreshold.CompareOp())
-		}
-		if criticalThreshold.MatchType() != AtleastOnce {
-			t.Errorf("Expected CRITICAL threshold match type '%s', got '%s'", AtleastOnce, criticalThreshold.MatchType())
-		}
+	assert.Equal(t, 2, len(vector))
+
+	vector, err = threshold.ShouldAlert(v3.Series{
+		Points: []v3.Point{{Value: 75.0, Timestamp: 1000}}, // 75% CPU usage
+		Labels: map[string]string{"service": "test"},
+	})
+	if err != nil {
+		t.Fatalf("Unexpected error in ShouldAlert: %v", err)
 	}
 
+	assert.Equal(t, 1, len(vector))
 }

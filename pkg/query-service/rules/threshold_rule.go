@@ -490,12 +490,11 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 				continue
 			}
 		}
-		for _, threshold := range r.Thresholds() {
-			smpl, shouldAlert := threshold.ShouldAlert(*series)
-			if shouldAlert {
-				resultVector = append(resultVector, smpl)
-			}
+		resultSeries, err := r.Threshold.ShouldAlert(*series)
+		if err != nil {
+			return nil, err
 		}
+		resultVector = append(resultVector, resultSeries...)
 	}
 
 	return resultVector, nil
@@ -568,12 +567,11 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 				continue
 			}
 		}
-		for _, threshold := range r.Thresholds() {
-			smpl, shouldAlert := threshold.ShouldAlert(*series)
-			if shouldAlert {
-				resultVector = append(resultVector, smpl)
-			}
+		resultSeries, err := r.Threshold.ShouldAlert(*series)
+		if err != nil {
+			return nil, err
 		}
+		resultVector = append(resultVector, resultSeries...)
 	}
 
 	return resultVector, nil

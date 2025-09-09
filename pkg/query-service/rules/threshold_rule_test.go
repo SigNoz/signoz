@@ -801,9 +801,16 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 	}
 
 	for idx, c := range cases {
-		postableRule.RuleCondition.CompareOp = ruletypes.CompareOp(c.compareOp)
-		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
-		postableRule.RuleCondition.Target = &c.target
+		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+			Kind: ruletypes.BasicThresholdKind,
+			Spec: ruletypes.BasicRuleThresholds{
+				{
+					TargetValue: &c.target,
+					MatchType:   ruletypes.MatchType(c.matchType),
+					CompareOp:   ruletypes.CompareOp(c.compareOp),
+				},
+			},
+		}
 
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
 		if err != nil {
@@ -815,10 +822,24 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 			values.Points[i].Timestamp = time.Now().UnixMilli()
 		}
 
-		smpl, shoulAlert := rule.ShouldAlert(c.values)
-		assert.Equal(t, c.expectAlert, shoulAlert, "Test case %d", idx)
-		if shoulAlert {
-			assert.Equal(t, c.expectedAlertSample.Value, smpl.V, "Test case %d", idx)
+		resultVectors, err := rule.Threshold.ShouldAlert(c.values)
+		assert.NoError(t, err, "Test case %d", idx)
+
+		// Compare result vectors with expected behavior
+		if c.expectAlert {
+			assert.NotEmpty(t, resultVectors, "Expected alert but got no result vectors for case %d", idx)
+			if len(resultVectors) > 0 {
+				found := false
+				for _, sample := range resultVectors {
+					if sample.V == c.expectedAlertSample.Value {
+						found = true
+						break
+					}
+				}
+				assert.True(t, found, "Expected alert sample value %.2f not found in result vectors for case %d. Got values: %v", c.expectedAlertSample.Value, idx, getVectorValues(resultVectors))
+			}
+		} else {
+			assert.Empty(t, resultVectors, "Expected no alert but got result vectors for case %d", idx)
 		}
 	}
 }
@@ -894,7 +915,16 @@ func TestPrepareLinksToLogs(t *testing.T) {
 	}
 
 	logger := instrumentationtest.New().Logger()
-
+	postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+		Kind: ruletypes.BasicThresholdKind,
+		Spec: ruletypes.BasicRuleThresholds{
+			{
+				TargetValue: postableRule.RuleCondition.Target,
+				MatchType:   ruletypes.MatchType(postableRule.RuleCondition.MatchType),
+				CompareOp:   ruletypes.CompareOp(postableRule.RuleCondition.CompareOp),
+			},
+		},
+	}
 	rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
 	if err != nil {
 		assert.NoError(t, err)
@@ -944,7 +974,16 @@ func TestPrepareLinksToLogsV5(t *testing.T) {
 	}
 
 	logger := instrumentationtest.New().Logger()
-
+	postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+		Kind: ruletypes.BasicThresholdKind,
+		Spec: ruletypes.BasicRuleThresholds{
+			{
+				TargetValue: postableRule.RuleCondition.Target,
+				MatchType:   ruletypes.MatchType(postableRule.RuleCondition.MatchType),
+				CompareOp:   ruletypes.CompareOp(postableRule.RuleCondition.CompareOp),
+			},
+		},
+	}
 	rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
 	if err != nil {
 		assert.NoError(t, err)
@@ -994,7 +1033,16 @@ func TestPrepareLinksToTracesV5(t *testing.T) {
 	}
 
 	logger := instrumentationtest.New().Logger()
-
+	postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+		Kind: ruletypes.BasicThresholdKind,
+		Spec: ruletypes.BasicRuleThresholds{
+			{
+				TargetValue: postableRule.RuleCondition.Target,
+				MatchType:   ruletypes.MatchType(postableRule.RuleCondition.MatchType),
+				CompareOp:   ruletypes.CompareOp(postableRule.RuleCondition.CompareOp),
+			},
+		},
+	}
 	rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
 	if err != nil {
 		assert.NoError(t, err)
@@ -1037,7 +1085,16 @@ func TestPrepareLinksToTraces(t *testing.T) {
 	}
 
 	logger := instrumentationtest.New().Logger()
-
+	postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+		Kind: ruletypes.BasicThresholdKind,
+		Spec: ruletypes.BasicRuleThresholds{
+			{
+				TargetValue: postableRule.RuleCondition.Target,
+				MatchType:   ruletypes.MatchType(postableRule.RuleCondition.MatchType),
+				CompareOp:   ruletypes.CompareOp(postableRule.RuleCondition.CompareOp),
+			},
+		},
+	}
 	rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
 	if err != nil {
 		assert.NoError(t, err)
@@ -1111,9 +1168,16 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 	logger := instrumentationtest.New().Logger()
 
 	for idx, c := range cases {
-		postableRule.RuleCondition.CompareOp = ruletypes.CompareOp(c.compareOp)
-		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
-		postableRule.RuleCondition.Target = &c.target
+		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+			Kind: ruletypes.BasicThresholdKind,
+			Spec: ruletypes.BasicRuleThresholds{
+				{
+					TargetValue: &c.target,
+					MatchType:   ruletypes.MatchType(c.matchType),
+					CompareOp:   ruletypes.CompareOp(c.compareOp),
+				},
+			},
+		}
 
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
 		if err != nil {
@@ -1125,12 +1189,26 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 			values.Points[i].Timestamp = time.Now().UnixMilli()
 		}
 
-		sample, shoulAlert := rule.ShouldAlert(c.values)
+		vector, err := rule.Threshold.ShouldAlert(c.values)
+		assert.NoError(t, err)
+
 		for name, value := range c.values.Labels {
-			assert.Equal(t, value, sample.Metric.Get(name))
+			for _, sample := range vector {
+				assert.Equal(t, value, sample.Metric.Get(name))
+			}
 		}
 
-		assert.Equal(t, c.expectAlert, shoulAlert, "Test case %d", idx)
+		// Get result vectors from threshold evaluation
+		resultVectors, err := rule.Threshold.ShouldAlert(c.values)
+		assert.NoError(t, err, "Test case %d", idx)
+
+		// Compare result vectors with expected behavior
+		if c.expectAlert {
+			assert.NotEmpty(t, resultVectors, "Expected alert but got no result vectors for case %d", idx)
+			// For this test, we don't have expectedAlertSample, so just verify vectors exist
+		} else {
+			assert.Empty(t, resultVectors, "Expected no alert but got result vectors for case %d", idx)
+		}
 	}
 }
 
@@ -1152,6 +1230,16 @@ func TestThresholdRuleEvalDelay(t *testing.T) {
 			},
 		},
 	}
+	postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+		Kind: ruletypes.BasicThresholdKind,
+		Spec: ruletypes.BasicRuleThresholds{
+			{
+				TargetValue: postableRule.RuleCondition.Target,
+				MatchType:   ruletypes.MatchType(postableRule.RuleCondition.MatchType),
+				CompareOp:   ruletypes.CompareOp(postableRule.RuleCondition.CompareOp),
+			},
+		},
+	}
 
 	// 01:39:47
 	ts := time.Unix(1717205987, 0)
@@ -1169,6 +1257,7 @@ func TestThresholdRuleEvalDelay(t *testing.T) {
 	logger := instrumentationtest.New().Logger()
 
 	for idx, c := range cases {
+
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger) // no eval delay
 		if err != nil {
 			assert.NoError(t, err)
@@ -1199,6 +1288,16 @@ func TestThresholdRuleClickHouseTmpl(t *testing.T) {
 						Query: "SELECT 1 >= {{.start_timestamp_ms}} AND 1 <= {{.end_timestamp_ms}}",
 					},
 				},
+			},
+		},
+	}
+	postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+		Kind: ruletypes.BasicThresholdKind,
+		Spec: ruletypes.BasicRuleThresholds{
+			{
+				TargetValue: postableRule.RuleCondition.Target,
+				MatchType:   ruletypes.MatchType(postableRule.RuleCondition.MatchType),
+				CompareOp:   ruletypes.CompareOp(postableRule.RuleCondition.CompareOp),
 			},
 		},
 	}
@@ -1380,7 +1479,20 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
 		postableRule.RuleCondition.TargetUnit = c.targetUnit
-		postableRule.RuleCondition.Thresholds = []ruletypes.RuleThreshold{ruletypes.NewBasicRuleThreshold(postableRule.AlertName, &c.target, nil, ruletypes.MatchType(c.matchType), ruletypes.CompareOp(c.compareOp), postableRule.RuleCondition.SelectedQuery, c.targetUnit, postableRule.RuleCondition.CompositeQuery.Unit)}
+		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+			Kind: ruletypes.BasicThresholdKind,
+			Spec: ruletypes.BasicRuleThresholds{
+				{
+					Name:          postableRule.AlertName,
+					TargetValue:   &c.target,
+					TargetUnit:    c.targetUnit,
+					RuleUnit:      postableRule.RuleCondition.CompositeQuery.Unit,
+					MatchType:     ruletypes.MatchType(c.matchType),
+					CompareOp:     ruletypes.CompareOp(c.compareOp),
+					SelectedQuery: postableRule.RuleCondition.SelectedQuery,
+				},
+			},
+		}
 		postableRule.Annotations = map[string]string{
 			"description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
@@ -1476,9 +1588,19 @@ func TestThresholdRuleNoData(t *testing.T) {
 			ExpectQuery(queryString).
 			WillReturnRows(rows)
 		var target float64 = 0
-		postableRule.RuleCondition.CompareOp = ruletypes.ValueIsEq
-		postableRule.RuleCondition.MatchType = ruletypes.AtleastOnce
-		postableRule.RuleCondition.Target = &target
+		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+			Kind: ruletypes.BasicThresholdKind,
+			Spec: ruletypes.BasicRuleThresholds{
+				{
+					Name:          postableRule.AlertName,
+					TargetValue:   &target,
+					RuleUnit:      postableRule.RuleCondition.CompositeQuery.Unit,
+					MatchType:     ruletypes.AtleastOnce,
+					CompareOp:     ruletypes.ValueIsEq,
+					SelectedQuery: postableRule.RuleCondition.SelectedQuery,
+				},
+			},
+		}
 		postableRule.Annotations = map[string]string{
 			"description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
@@ -1586,7 +1708,20 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
 		postableRule.RuleCondition.TargetUnit = c.targetUnit
-		postableRule.RuleCondition.Thresholds = []ruletypes.RuleThreshold{ruletypes.NewBasicRuleThreshold(postableRule.AlertName, &c.target, nil, ruletypes.MatchType(c.matchType), ruletypes.CompareOp(c.compareOp), postableRule.RuleCondition.SelectedQuery, c.targetUnit, postableRule.RuleCondition.CompositeQuery.Unit)}
+		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+			Kind: ruletypes.BasicThresholdKind,
+			Spec: ruletypes.BasicRuleThresholds{
+				{
+					Name:          postableRule.AlertName,
+					TargetValue:   &c.target,
+					TargetUnit:    c.targetUnit,
+					RuleUnit:      postableRule.RuleCondition.CompositeQuery.Unit,
+					MatchType:     ruletypes.MatchType(c.matchType),
+					CompareOp:     ruletypes.CompareOp(c.compareOp),
+					SelectedQuery: postableRule.RuleCondition.SelectedQuery,
+				},
+			},
+		}
 		postableRule.Annotations = map[string]string{
 			"description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
@@ -1710,7 +1845,20 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
 		postableRule.RuleCondition.TargetUnit = c.targetUnit
-		postableRule.RuleCondition.Thresholds = []ruletypes.RuleThreshold{ruletypes.NewBasicRuleThreshold(postableRule.AlertName, &c.target, nil, ruletypes.MatchType(c.matchType), ruletypes.CompareOp(c.compareOp), postableRule.RuleCondition.SelectedQuery, c.targetUnit, postableRule.RuleCondition.CompositeQuery.Unit)}
+		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+			Kind: ruletypes.BasicThresholdKind,
+			Spec: ruletypes.BasicRuleThresholds{
+				{
+					Name:          postableRule.AlertName,
+					TargetValue:   &c.target,
+					TargetUnit:    c.targetUnit,
+					RuleUnit:      postableRule.RuleCondition.CompositeQuery.Unit,
+					MatchType:     ruletypes.MatchType(c.matchType),
+					CompareOp:     ruletypes.CompareOp(c.compareOp),
+					SelectedQuery: postableRule.RuleCondition.SelectedQuery,
+				},
+			},
+		}
 		postableRule.Annotations = map[string]string{
 			"description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
@@ -1759,6 +1907,16 @@ func TestThresholdRuleShiftBy(t *testing.T) {
 		EvalWindow: ruletypes.Duration(5 * time.Minute),
 		Frequency:  ruletypes.Duration(1 * time.Minute),
 		RuleCondition: &ruletypes.RuleCondition{
+			Thresholds: &ruletypes.RuleThresholdData{
+				Kind: ruletypes.BasicThresholdKind,
+				Spec: ruletypes.BasicRuleThresholds{
+					{
+						TargetValue: &target,
+						CompareOp:   ruletypes.ValueAboveOrEq,
+						MatchType:   ruletypes.AtleastOnce,
+					},
+				},
+			},
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				BuilderQueries: map[string]*v3.BuilderQuery{
@@ -1790,8 +1948,6 @@ func TestThresholdRuleShiftBy(t *testing.T) {
 					},
 				},
 			},
-			Target:    &target,
-			CompareOp: ruletypes.ValueAboveOrEq,
 		},
 	}
 
@@ -1937,8 +2093,28 @@ func TestMultipleThresholdRule(t *testing.T) {
 		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
 		postableRule.RuleCondition.TargetUnit = c.targetUnit
-		postableRule.RuleCondition.Thresholds = []ruletypes.RuleThreshold{ruletypes.NewBasicRuleThreshold("first_threshold", &c.target, nil, ruletypes.MatchType(c.matchType), ruletypes.CompareOp(c.compareOp), postableRule.RuleCondition.SelectedQuery, c.targetUnit, postableRule.RuleCondition.CompositeQuery.Unit),
-			ruletypes.NewBasicRuleThreshold("second_threshold", &c.secondTarget, nil, ruletypes.MatchType(c.matchType), ruletypes.CompareOp(c.compareOp), postableRule.RuleCondition.SelectedQuery, c.targetUnit, postableRule.RuleCondition.CompositeQuery.Unit),
+		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+			Kind: ruletypes.BasicThresholdKind,
+			Spec: ruletypes.BasicRuleThresholds{
+				{
+					Name:          "first_threshold",
+					TargetValue:   &c.target,
+					TargetUnit:    c.targetUnit,
+					RuleUnit:      postableRule.RuleCondition.CompositeQuery.Unit,
+					MatchType:     ruletypes.MatchType(c.matchType),
+					CompareOp:     ruletypes.CompareOp(c.compareOp),
+					SelectedQuery: postableRule.RuleCondition.SelectedQuery,
+				},
+				{
+					Name:          "second_threshold",
+					TargetValue:   &c.secondTarget,
+					TargetUnit:    c.targetUnit,
+					RuleUnit:      postableRule.RuleCondition.CompositeQuery.Unit,
+					MatchType:     ruletypes.MatchType(c.matchType),
+					CompareOp:     ruletypes.CompareOp(c.compareOp),
+					SelectedQuery: postableRule.RuleCondition.SelectedQuery,
+				},
+			},
 		}
 		postableRule.Annotations = map[string]string{
 			"description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",

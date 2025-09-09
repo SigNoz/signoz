@@ -259,12 +259,11 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 				continue
 			}
 		}
-		for _, threshold := range r.Thresholds() {
-			smpl, shouldAlert := threshold.ShouldAlert(*series)
-			if shouldAlert {
-				resultVector = append(resultVector, smpl)
-			}
+		results, err := r.Threshold.ShouldAlert(*series)
+		if err != nil {
+			return nil, err
 		}
+		resultVector = append(resultVector, results...)
 	}
 	return resultVector, nil
 }
@@ -310,12 +309,11 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 				continue
 			}
 		}
-		for _, threshold := range r.Thresholds() {
-			smpl, shouldAlert := threshold.ShouldAlert(*series)
-			if shouldAlert {
-				resultVector = append(resultVector, smpl)
-			}
+		results, err := r.Threshold.ShouldAlert(*series)
+		if err != nil {
+			return nil, err
 		}
+		resultVector = append(resultVector, results...)
 	}
 	return resultVector, nil
 }
