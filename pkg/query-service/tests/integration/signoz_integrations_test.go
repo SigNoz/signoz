@@ -593,7 +593,7 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
 	analytics := analyticstest.New()
-	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
+	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, nil)
 	handlers := signoz.NewHandlers(modules, providerSettings)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
