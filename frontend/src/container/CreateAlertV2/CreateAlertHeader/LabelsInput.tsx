@@ -1,4 +1,5 @@
 import { CloseOutlined } from '@ant-design/icons';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useCallback, useState } from 'react';
 
 import { LabelInputState, LabelsInputProps } from './types';
@@ -7,6 +8,7 @@ function LabelsInput({
 	labels,
 	onLabelsChange,
 }: LabelsInputProps): JSX.Element {
+	const { notifications } = useNotifications();
 	const [inputState, setInputState] = useState<LabelInputState>({
 		key: '',
 		value: '',
@@ -20,6 +22,7 @@ function LabelsInput({
 	}, []);
 
 	const handleKeyDown = useCallback(
+		// eslint-disable-next-line sonarjs/cognitive-complexity
 		(e: React.KeyboardEvent<HTMLInputElement>) => {
 			if (e.key === 'Enter') {
 				if (inputState.isKeyInput) {
@@ -29,6 +32,12 @@ function LabelsInput({
 						const value = valueParts.join(':'); // Rejoin in case value contains colons
 
 						if (key.trim() && value.trim()) {
+							if (labels[key.trim()]) {
+								notifications.error({
+									message: 'Label with this key already exists',
+								});
+								return;
+							}
 							// Add the label immediately
 							const newLabels = {
 								...labels,
@@ -40,6 +49,12 @@ function LabelsInput({
 							setInputState({ key: '', value: '', isKeyInput: true });
 						}
 					} else if (inputState.key.trim()) {
+						if (labels[inputState.key.trim()]) {
+							notifications.error({
+								message: 'Label with this key already exists',
+							});
+							return;
+						}
 						setInputState((prev) => ({ ...prev, isKeyInput: false }));
 					}
 				} else if (inputState.value.trim()) {
@@ -59,7 +74,7 @@ function LabelsInput({
 				setInputState({ key: '', value: '', isKeyInput: true });
 			}
 		},
-		[inputState, labels, onLabelsChange],
+		[inputState, labels, notifications, onLabelsChange],
 	);
 
 	const handleInputChange = useCallback(
@@ -83,16 +98,11 @@ function LabelsInput({
 	);
 
 	const handleBlur = useCallback(() => {
-		if (!inputState.isKeyInput && inputState.key && !inputState.value) {
-			setInputState((prev) => ({ ...prev, isKeyInput: true, value: '' }));
-		}
 		if (!inputState.key && !inputState.value) {
-			setTimeout(() => {
-				setIsAdding(false);
-				setInputState({ key: '', value: '', isKeyInput: true });
-			}, 200);
+			setIsAdding(false);
+			setInputState({ key: '', value: '', isKeyInput: true });
 		}
-	}, [inputState.isKeyInput, inputState.key, inputState.value]);
+	}, [inputState]);
 
 	return (
 		<div className="labels-input">
