@@ -1,25 +1,21 @@
 import axios from 'api';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/user/loginPrecheck';
+import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
+import { PayloadProps, Signup } from 'types/api/user/loginPrecheck';
 import { Props } from 'types/api/user/signup';
 
-const signup = async (
-	props: Props,
-): Promise<SuccessResponse<null | PayloadProps> | ErrorResponse> => {
+const signup = async (props: Props): Promise<SuccessResponseV2<Signup>> => {
 	try {
-		const response = await axios.post(`/register`, {
+		const response = await axios.post<PayloadProps>(`/register`, {
 			...props,
 		});
 		return {
-			statusCode: 200,
-			error: null,
-			message: response.data.status,
-			payload: response.data?.data,
+			httpStatusCode: response.status,
+			data: response.data.data,
 		};
 	} catch (error) {
-		return ErrorResponseHandler(error as AxiosError);
+		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 	}
 };
 
