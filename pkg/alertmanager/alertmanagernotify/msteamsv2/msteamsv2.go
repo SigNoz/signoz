@@ -230,7 +230,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	return shouldRetry, err
 }
 
-func (n *Notifier) addLabelsAndAnnotationsToBody(alert *types.Alert) []Body {
+func (*Notifier) addLabelsAndAnnotationsToBody(alert *types.Alert) []Body {
 	bodies := []Body{}
 	bodies = append(bodies, Body{
 		Type:   "TextBlock",
