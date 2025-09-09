@@ -1,10 +1,11 @@
 package pipelinetypes
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 // Regex for strptime format placeholders supported by the time parser.
@@ -106,7 +107,7 @@ func RegexForStrptimeLayout(layout string) (string, error) {
 		if regex, ok := ctimeRegex[directive]; ok {
 			return regex
 		}
-		errs = append(errs, errors.New("unsupported ctimefmt directive: "+directive))
+		errs = append(errs, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "unsupported ctimefmt directive: "+directive))
 		return ""
 	}
 
