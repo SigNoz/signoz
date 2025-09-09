@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"slices"
 	"strings"
 
 	commoncfg "github.com/prometheus/common/config"
@@ -38,11 +39,12 @@ type Notifier struct {
 
 // https://learn.microsoft.com/en-us/connectors/teams/?tabs=text1#adaptivecarditemschema
 type Content struct {
-	Schema  string  `json:"$schema"`
-	Type    string  `json:"type"`
-	Version string  `json:"version"`
-	Body    []Body  `json:"body"`
-	Msteams Msteams `json:"msteams,omitempty"`
+	Schema  string   `json:"$schema"`
+	Type    string   `json:"type"`
+	Version string   `json:"version"`
+	Body    []Body   `json:"body"`
+	Msteams Msteams  `json:"msteams,omitempty"`
+	Actions []Action `json:"actions"`
 }
 
 type Body struct {
@@ -53,6 +55,18 @@ type Body struct {
 	Wrap   bool   `json:"wrap,omitempty"`
 	Style  string `json:"style,omitempty"`
 	Color  string `json:"color,omitempty"`
+	Facts  []Fact `json:"facts,omitempty"`
+}
+
+type Action struct {
+	Type  string `json:"type"`
+	Title string `json:"title"`
+	URL   string `json:"url"`
+}
+
+type Fact struct {
+	Title string `json:"title"`
+	Value string `json:"value"`
 }
 
 type Msteams struct {
@@ -108,7 +122,8 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	if err != nil {
 		return false, err
 	}
-	text := tmpl(n.conf.Text)
+
+	titleLink := tmpl(n.conf.Text)
 	if err != nil {
 		return false, err
 	}
@@ -154,10 +169,12 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 							Style:  "heading",
 							Color:  color,
 						},
+					},
+					Actions: []Action{
 						{
-							Type: "TextBlock",
-							Text: text,
-							Wrap: true,
+							Type:  "Action.OpenUrl",
+							Title: "View Alert",
+							URL:   titleLink,
 						},
 					},
 					Msteams: Msteams{
@@ -166,6 +183,20 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 				},
 			},
 		},
+	}
+
+	// add labels and annotations to the body of all alerts
+	for _, alert := range as {
+		t.Attachments[0].Content.Body = append(t.Attachments[0].Content.Body, Body{
+			Type:   "TextBlock",
+			Text:   "Alerts",
+			Weight: "Bolder",
+			Size:   "Medium",
+			Wrap:   true,
+			Color:  color,
+		})
+
+		t.Attachments[0].Content.Body = append(t.Attachments[0].Content.Body, n.addLabelsAndAnnotationsToBody(alert)...)
 	}
 
 	var payload bytes.Buffer
@@ -185,4 +216,48 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return shouldRetry, notify.NewErrorWithReason(notify.GetFailureReasonFromStatusCode(resp.StatusCode), err)
 	}
 	return shouldRetry, err
+}
+
+func (n *Notifier) addLabelsAndAnnotationsToBody(alert *types.Alert) []Body {
+	bodies := []Body{}
+	bodies = append(bodies, Body{
+		Type:   "TextBlock",
+		Text:   "Labels",
+		Weight: "Bolder",
+		Size:   "Medium",
+	})
+
+	facts := []Fact{}
+	for k, v := range alert.Labels {
+		if slices.Contains([]string{"alertname", "severity", "ruleId", "ruleSource"}, string(k)) {
+			continue
+		}
+		facts = append(facts, Fact{Title: string(k), Value: string(v)})
+	}
+	bodies = append(bodies, Body{
+		Type:  "FactSet",
+		Facts: facts,
+	})
+
+	bodies = append(bodies, Body{
+		Type:   "TextBlock",
+		Text:   "Annotations",
+		Weight: "Bolder",
+		Size:   "Medium",
+	})
+
+	annotationsFacts := []Fact{}
+	for k, v := range alert.Annotations {
+		if slices.Contains([]string{"summary", "related_logs", "related_traces"}, string(k)) {
+			continue
+		}
+		annotationsFacts = append(annotationsFacts, Fact{Title: string(k), Value: string(v)})
+	}
+
+	bodies = append(bodies, Body{
+		Type:  "FactSet",
+		Facts: annotationsFacts,
+	})
+
+	return bodies
 }
