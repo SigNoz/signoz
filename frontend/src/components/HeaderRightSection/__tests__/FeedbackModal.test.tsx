@@ -53,7 +53,9 @@ describe('FeedbackModal', () => {
 		expect(screen.getByText('Feedback')).toBeInTheDocument();
 		expect(screen.getByText('Report a bug')).toBeInTheDocument();
 		expect(screen.getByText('Feature request')).toBeInTheDocument();
-		expect(screen.getByPlaceholderText('Feedback')).toBeInTheDocument();
+		expect(
+			screen.getByPlaceholderText('Write your feedback here...'),
+		).toBeInTheDocument();
 		expect(screen.getByRole('button', { name: /submit/i })).toBeInTheDocument();
 	});
 
@@ -87,7 +89,7 @@ describe('FeedbackModal', () => {
 		const user = userEvent.setup();
 		render(<FeedbackModal onClose={mockOnClose} />);
 
-		const textarea = screen.getByPlaceholderText('Feedback');
+		const textarea = screen.getByPlaceholderText('Write your feedback here...');
 		const testFeedback = 'This is my feedback';
 
 		await user.type(textarea, testFeedback);
@@ -99,15 +101,15 @@ describe('FeedbackModal', () => {
 		const user = userEvent.setup();
 		render(<FeedbackModal onClose={mockOnClose} />);
 
-		const textarea = screen.getByPlaceholderText('Feedback');
+		const textarea = screen.getByPlaceholderText('Write your feedback here...');
 		const submitButton = screen.getByRole('button', { name: /submit/i });
 		const testFeedback = 'Test feedback content';
 
 		await user.type(textarea, testFeedback);
 		await user.click(submitButton);
 
-		expect(mockLogEvent).toHaveBeenCalledWith('Feedback submitted', {
-			feedback: testFeedback,
+		expect(mockLogEvent).toHaveBeenCalledWith('Feedback: Submitted', {
+			data: testFeedback,
 			type: 'feedback',
 			page: mockLocation.pathname,
 		});
@@ -127,15 +129,15 @@ describe('FeedbackModal', () => {
 			'Report a bug',
 		);
 
-		const textarea = screen.getByPlaceholderText('Feedback');
+		const textarea = screen.getByPlaceholderText('Write your feedback here...');
 		const submitButton = screen.getByRole('button', { name: /submit/i });
 		const testFeedback = 'This is a bug report';
 
 		await user.type(textarea, testFeedback);
 		await user.click(submitButton);
 
-		expect(mockLogEvent).toHaveBeenCalledWith('Feedback submitted', {
-			feedback: testFeedback,
+		expect(mockLogEvent).toHaveBeenCalledWith('Feedback: Submitted', {
+			data: testFeedback,
 			type: 'reportBug',
 			page: mockLocation.pathname,
 		});
@@ -155,15 +157,15 @@ describe('FeedbackModal', () => {
 			'Feature request',
 		);
 
-		const textarea = screen.getByPlaceholderText('Feedback');
+		const textarea = screen.getByPlaceholderText('Write your feedback here...');
 		const submitButton = screen.getByRole('button', { name: /submit/i });
 		const testFeedback = 'This is a feature request';
 
 		await user.type(textarea, testFeedback);
 		await user.click(submitButton);
 
-		expect(mockLogEvent).toHaveBeenCalledWith('Feedback submitted', {
-			feedback: testFeedback,
+		expect(mockLogEvent).toHaveBeenCalledWith('Feedback: Submitted', {
+			data: testFeedback,
 			type: 'featureRequest',
 			page: mockLocation.pathname,
 		});
