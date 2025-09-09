@@ -18,6 +18,13 @@ jest.mock('uplot', () => {
 	};
 });
 
+jest.mock('react-router-dom', () => ({
+	...jest.requireActual('react-router-dom'),
+	useLocation: (): { search: string } => ({
+		search: '',
+	}),
+}));
+
 const renderCreateAlertHeader = (): ReturnType<typeof render> =>
 	render(
 		<CreateAlertProvider>
