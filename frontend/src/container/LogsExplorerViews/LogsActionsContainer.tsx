@@ -1,14 +1,14 @@
 import { Button, Switch, Typography } from 'antd';
 import { WsDataEvent } from 'api/common/getQueryStats';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
+import LogsDownloadOptionsMenu from 'components/LogsDownloadOptionsMenu/LogsDownloadOptionsMenu';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import Download from 'container/DownloadV2/DownloadV2';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import useClickOutside from 'hooks/useClickOutside';
-import { ArrowUp10, Minus, Sliders } from 'lucide-react';
+import { ArrowUp10, DownloadIcon, Minus, Sliders } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
@@ -22,11 +22,12 @@ function LogsActionsContainer({
 	handleToggleFrequencyChart,
 	orderBy,
 	setOrderBy,
-	flattenLogData,
 	isFetching,
 	isLoading,
 	isError,
 	isSuccess,
+	minTime,
+	maxTime,
 }: {
 	listQuery: any;
 	selectedPanelType: PANEL_TYPES;
@@ -34,15 +35,19 @@ function LogsActionsContainer({
 	handleToggleFrequencyChart: () => void;
 	orderBy: string;
 	setOrderBy: (value: string) => void;
-	flattenLogData: any;
 	isFetching: boolean;
 	isLoading: boolean;
 	isError: boolean;
 	isSuccess: boolean;
 	queryStats: WsDataEvent | undefined;
+	minTime: number;
+	maxTime: number;
 }): JSX.Element {
 	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
-	const menuRef = useRef<HTMLDivElement>(null);
+	const [showDownloadOptions, setShowDownloadOptions] = useState(false);
+	const [isDownloading, setIsDownloading] = useState(false);
+	const formatMenuRef = useRef<HTMLDivElement>(null);
+	const downloadMenuRef = useRef<HTMLDivElement>(null);
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
@@ -74,11 +79,24 @@ function LogsActionsContainer({
 	const handleToggleShowFormatOptions = (): void =>
 		setShowFormatMenuItems(!showFormatMenuItems);
 
+	const handleToggleShowDownloadOptions = (): void => {
+		setShowDownloadOptions(!showDownloadOptions);
+	};
+
 	useClickOutside({
-		ref: menuRef,
+		ref: formatMenuRef,
 		onClickOutside: () => {
 			if (showFormatMenuItems) {
 				setShowFormatMenuItems(false);
+			}
+		},
+	});
+
+	useClickOutside({
+		ref: downloadMenuRef,
+		onClickOutside: () => {
+			if (showDownloadOptions) {
+				setShowDownloadOptions(false);
 			}
 		},
 	});
@@ -114,12 +132,70 @@ function LogsActionsContainer({
 									dataSource={DataSource.LOGS}
 								/>
 							</div>
-							<Download
-								data={flattenLogData}
-								isLoading={isFetching}
-								fileName="log_data"
-							/>
-							<div className="format-options-container" ref={menuRef}>
+							<div className="download-options-container" ref={downloadMenuRef}>
+								<Button
+									className="periscope-btn ghost"
+									onClick={handleToggleShowDownloadOptions}
+									icon={
+										isDownloading ? (
+											<svg
+												width="16"
+												height="16"
+												viewBox="0 0 50 50"
+												aria-label="Downloading"
+											>
+												<circle
+													cx="25"
+													cy="25"
+													r="20"
+													stroke="currentColor"
+													strokeWidth="6"
+													fill="none"
+													opacity="0.2"
+												/>
+												<circle
+													cx="25"
+													cy="25"
+													r="20"
+													stroke="currentColor"
+													strokeWidth="6"
+													fill="none"
+													strokeLinecap="round"
+													strokeDasharray="31.4 188.4"
+												>
+													<animateTransform
+														attributeName="transform"
+														type="rotate"
+														from="0 25 25"
+														to="360 25 25"
+														dur="0.8s"
+														repeatCount="indefinite"
+													/>
+												</circle>
+											</svg>
+										) : (
+											<DownloadIcon size={14} />
+										)
+									}
+									data-testid="periscope-btn"
+									disabled={isDownloading}
+								/>
+
+								{showDownloadOptions && (
+									<LogsDownloadOptionsMenu
+										startTime={minTime}
+										endTime={maxTime}
+										filter={listQuery?.filter?.expression || null}
+										columns={config.addColumn?.value || []}
+										orderBy={orderBy}
+										onClose={(): void => setShowDownloadOptions(false)}
+										onDownloadStart={(): void => setIsDownloading(true)}
+										onDownloadEnd={(): void => setIsDownloading(false)}
+										isDownloading={isDownloading}
+									/>
+								)}
+							</div>
+							<div className="format-options-container" ref={formatMenuRef}>
 								<Button
 									className="periscope-btn ghost"
 									onClick={handleToggleShowFormatOptions}
