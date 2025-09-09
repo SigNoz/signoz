@@ -2,15 +2,13 @@ import '../Explorer.styles.scss';
 
 import { LoadingOutlined } from '@ant-design/icons';
 import { Spin, Table, Typography } from 'antd';
-import axios from 'api';
 import logEvent from 'api/common/logEvent';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import { AxiosError } from 'axios';
+import listOverview from 'api/thirdPartyApis/listOverview';
 import cx from 'classnames';
+import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
-import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -20,18 +18,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { ErrorResponse, SuccessResponse } from 'types/api';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { ApiMonitoringHardcodedAttributeKeys } from '../../constants';
 import { DEFAULT_PARAMS, useApiMonitoringParams } from '../../queryParams';
-import {
-	columnsConfig,
-	formatDataForTable,
-	hardcodedAttributeKeys,
-} from '../../utils';
+import { columnsConfig, formatDataForTable } from '../../utils';
 import DomainDetails from './DomainDetails/DomainDetails';
 
 function DomainList(): JSX.Element {
@@ -76,61 +70,30 @@ function DomainList(): JSX.Element {
 
 	const compositeData = useGetCompositeQueryParam();
 
-	const handleChangeTagFilters = useCallback(
-		(value: IBuilderQuery['filters']) => {
-			handleChangeQueryData('filters', value);
+	const handleSearchChange = useCallback(
+		(value: string) => {
+			(handleChangeQueryData as HandleChangeQueryDataV5)('filter', {
+				expression: value,
+			});
 		},
 		[handleChangeQueryData],
 	);
 
-	const fetchApiOverview = async (): Promise<
-		SuccessResponse<any> | ErrorResponse
-	> => {
-		const requestBody = {
-			start: minTime,
-			end: maxTime,
-			show_ip: showIP,
-			filters: {
-				op: 'AND',
-				items: [
-					{
-						id: '212678b9',
-						key: {
-							key: 'kind_string',
-							dataType: 'string',
-							type: '',
-						},
-						op: '=',
-						value: 'Client',
-					},
-					...(compositeData?.builder?.queryData[0]?.filters?.items || []),
-				],
-			},
-		};
-
-		try {
-			const response = await axios.post(
-				'/third-party-apis/overview/list',
-				requestBody,
-			);
-			return {
-				statusCode: 200,
-				error: null,
-				message: response.data.status,
-				payload: response.data,
-			};
-		} catch (error) {
-			return ErrorResponseHandler(error as AxiosError);
-		}
-	};
-
 	const { data, isLoading, isFetching } = useQuery(
 		[REACT_QUERY_KEY.GET_DOMAINS_LIST, minTime, maxTime, compositeData, showIP],
-		fetchApiOverview,
+		() =>
+			listOverview({
+				start: minTime,
+				end: maxTime,
+				show_ip: Boolean(showIP),
+				filter: {
+					expression: `${compositeData?.builder?.queryData[0]?.filter?.expression}`,
+				},
+			}),
 	);
 
 	const formattedDataForTable = useMemo(
-		() => formatDataForTable(data?.payload?.data?.result[0]?.table?.rows),
+		() => formatDataForTable(data?.data?.data?.result[0]?.table?.rows || []),
 		[data],
 	);
 
@@ -150,13 +113,12 @@ function DomainList(): JSX.Element {
 				showAutoRefresh={false}
 				rightActions={<RightToolbarActions onStageRunQuery={handleRunQuery} />}
 			/>
-			{/* add bottom border here */}
 			<div className={cx('api-monitoring-list-header')}>
-				<QueryBuilderSearchV2
-					query={query}
-					onChange={handleChangeTagFilters}
-					placeholder="Search filters..."
-					hardcodedAttributeKeys={hardcodedAttributeKeys}
+				<QuerySearch
+					dataSource={DataSource.TRACES}
+					queryData={query}
+					onChange={handleSearchChange}
+					hardcodedAttributeKeys={ApiMonitoringHardcodedAttributeKeys}
 				/>
 			</div>
 			<Table
