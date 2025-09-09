@@ -85,7 +85,8 @@ func (p *PostableRule) UnmarshalJSON(data []byte) error {
 	}
 
 	if len(aux.Evaluation) > 0 {
-		eval, err := UnmarshalEvaluationJSON(aux.Evaluation)
+		var wrapper EvaluationWrapper
+		eval, err := wrapper.UnmarshalEvaluationJSON(aux.Evaluation)
 		if err != nil {
 			return err
 		}
@@ -178,7 +179,7 @@ func ParseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*P
 			NewBasicRuleThreshold(thresholdName, rule.RuleCondition.Target, nil, rule.RuleCondition.MatchType, rule.RuleCondition.CompareOp, rule.RuleCondition.SelectedQuery, rule.RuleCondition.TargetUnit, rule.RuleCondition.CompositeQuery.Unit))
 	}
 	if rule.Evaluation == nil {
-		rule.Evaluation = NewEvaluation("rolling", RollingWindow{EvalWindow: rule.EvalWindow, Frequency: rule.Frequency})
+		rule.Evaluation = &RollingWindow{EvalWindow: rule.EvalWindow, Frequency: rule.Frequency}
 	}
 
 	return rule, nil

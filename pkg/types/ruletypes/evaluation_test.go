@@ -3,8 +3,6 @@ package ruletypes
 import (
 	"testing"
 	"time"
-
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
 func TestRollingWindow_EvaluationTime(t *testing.T) {
@@ -41,9 +39,8 @@ func TestRollingWindow_EvaluationTime(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rw := &RollingWindow{
-				EvalWindow:           tt.evalWindow,
-				Frequency:            Duration(1 * time.Minute),
-				SkipEvalForNewGroups: []v3.AttributeKey{},
+				EvalWindow: tt.evalWindow,
+				Frequency:  Duration(1 * time.Minute),
 			}
 
 			gotStart, gotEnd := rw.EvaluationTime(tt.current)
@@ -139,9 +136,8 @@ func TestCumulativeWindow_EvaluationTime(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cw := &CumulativeWindow{
-				StartsAt:             tt.startsAt,
-				EvalWindow:           tt.evalWindow,
-				SkipEvalForNewGroups: []v3.AttributeKey{},
+				StartsAt:   tt.startsAt,
+				EvalWindow: tt.evalWindow,
 			}
 
 			gotStart, gotEnd := cw.EvaluationTime(tt.current)
@@ -161,9 +157,8 @@ func TestCumulativeWindow_UnixMilliConversion(t *testing.T) {
 	unixMilli := baseTime.UnixMilli()
 
 	cw := &CumulativeWindow{
-		StartsAt:             unixMilli,
-		EvalWindow:           Duration(1 * time.Minute),
-		SkipEvalForNewGroups: []v3.AttributeKey{},
+		StartsAt:   unixMilli,
+		EvalWindow: Duration(1 * time.Minute),
 	}
 
 	current := baseTime.Add(30 * time.Second)

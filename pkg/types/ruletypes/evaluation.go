@@ -4,43 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
 type Evaluation interface {
 	EvaluationTime(curr time.Time) (time.Time, time.Time)
-	json.Marshaler
-}
-
-func (r *RollingWindow) MarshalJSON() ([]byte, error) {
-	wrapper := evaluationWrapper{
-		Kind: "rolling",
-	}
-	spec, err := json.Marshal(*r)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal rolling window: %w", err)
-	}
-	wrapper.Spec = spec
-	return json.Marshal(wrapper)
-}
-
-func (c *CumulativeWindow) MarshalJSON() ([]byte, error) {
-	wrapper := evaluationWrapper{
-		Kind: "cumulative",
-	}
-	spec, err := json.Marshal(*c)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal cumulative window: %w", err)
-	}
-	wrapper.Spec = spec
-	return json.Marshal(wrapper)
 }
 
 type RollingWindow struct {
-	EvalWindow           Duration          `json:"evalWindow"`
-	Frequency            Duration          `json:"frequency"`
-	SkipEvalForNewGroups []v3.AttributeKey `json:"skipEvalForNewGroups"`
+	EvalWindow Duration `json:"evalWindow"`
+	Frequency  Duration `json:"frequency"`
 }
 
 func (rollingWindow *RollingWindow) EvaluationTime(curr time.Time) (time.Time, time.Time) {
@@ -48,9 +20,8 @@ func (rollingWindow *RollingWindow) EvaluationTime(curr time.Time) (time.Time, t
 }
 
 type CumulativeWindow struct {
-	StartsAt             int64             `json:"startsAt"`
-	EvalWindow           Duration          `json:"evalWindow"`
-	SkipEvalForNewGroups []v3.AttributeKey `json:"skipEvalForNewGroups"`
+	StartsAt   int64    `json:"startsAt"`
+	EvalWindow Duration `json:"evalWindow"`
 }
 
 func (cumulativeWindow *CumulativeWindow) EvaluationTime(curr time.Time) (time.Time, time.Time) {
@@ -71,32 +42,12 @@ func (cumulativeWindow *CumulativeWindow) EvaluationTime(curr time.Time) (time.T
 	return windowStart, curr
 }
 
-func NewEvaluation(evalType string, params interface{}) Evaluation {
-	switch evalType {
-	case "rolling":
-		p, ok := params.(RollingWindow)
-		if !ok {
-			return nil
-		}
-		return &p
-	case "cumulative":
-		p, ok := params.(CumulativeWindow)
-		if !ok {
-			return nil
-		}
-		return &p
-	default:
-		return nil
-	}
-}
-
-type evaluationWrapper struct {
+type EvaluationWrapper struct {
 	Kind string          `json:"kind"`
 	Spec json.RawMessage `json:"spec"`
 }
 
-func UnmarshalEvaluationJSON(data []byte) (Evaluation, error) {
-	var wrapper evaluationWrapper
+func (wrapper *EvaluationWrapper) UnmarshalEvaluationJSON(data []byte) (Evaluation, error) {
 	if err := json.Unmarshal(data, &wrapper); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal evaluation wrapper: %w", err)
 	}
