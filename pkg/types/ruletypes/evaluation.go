@@ -66,20 +66,20 @@ func (e *EvaluationWrapper) UnmarshalJSON(data []byte) error {
 	case RollingEvaluation:
 		var rollingWindow RollingWindow
 		if err := json.Unmarshal(raw["spec"], &rollingWindow); err != nil {
-			return fmt.Errorf("failed to unmarshal basic thresholds: %v",
+			return fmt.Errorf("failed to unmarshal rolling evaluation: %v",
 				err)
 		}
 		e.Spec = rollingWindow
 	case CumulativeEvaluation:
 		var cumulativeWindow CumulativeWindow
 		if err := json.Unmarshal(raw["spec"], &cumulativeWindow); err != nil {
-			return fmt.Errorf("failed to unmarshal basic thresholds: %v",
+			return fmt.Errorf("failed to unmarshal cumulative evaluation: %v",
 				err)
 		}
 		e.Spec = cumulativeWindow
 
 	default:
-		return fmt.Errorf("unknown threshold kind: %v", e.Kind)
+		return fmt.Errorf("unsupported evaluation kind: %v", e.Kind)
 	}
 
 	return nil
