@@ -55,33 +55,35 @@ function ChangelogRenderer({ changelog }: Props): JSX.Element {
 				<div className="inner-ball" />
 			</div>
 			<span className="changelog-release-date">{formattedReleaseDate}</span>
-			{changelog.features && changelog.features.length > 0 && (
-				<div className="changelog-renderer-list">
-					{changelog.features.map((feature) => (
-						<div key={feature.id}>
-							<h2>{feature.title}</h2>
-							{feature.media && renderMedia(feature.media)}
-							<ReactMarkdown>{feature.description}</ReactMarkdown>
-						</div>
-					))}
-				</div>
-			)}
-			{changelog.bug_fixes && changelog.bug_fixes.length > 0 && (
-				<div>
-					<h2>Bug Fixes</h2>
-					{changelog.bug_fixes && (
-						<ReactMarkdown>{changelog.bug_fixes}</ReactMarkdown>
-					)}
-				</div>
-			)}
-			{changelog.maintenance && changelog.maintenance.length > 0 && (
-				<div>
-					<h2>Maintenance</h2>
-					{changelog.maintenance && (
-						<ReactMarkdown>{changelog.maintenance}</ReactMarkdown>
-					)}
-				</div>
-			)}
+			<div className="changelog-renderer-content">
+				{changelog.features && changelog.features.length > 0 && (
+					<div className="changelog-renderer-list">
+						{changelog.features.map((feature) => (
+							<div key={feature.id}>
+								<h2>{feature.title}</h2>
+								{feature.media && renderMedia(feature.media)}
+								<ReactMarkdown>{feature.description}</ReactMarkdown>
+							</div>
+						))}
+					</div>
+				)}
+				{changelog.bug_fixes && changelog.bug_fixes.length > 0 && (
+					<div>
+						<h2>Bug Fixes</h2>
+						{changelog.bug_fixes && (
+							<ReactMarkdown>{changelog.bug_fixes}</ReactMarkdown>
+						)}
+					</div>
+				)}
+				{changelog.maintenance && changelog.maintenance.length > 0 && (
+					<div>
+						<h2>Maintenance</h2>
+						{changelog.maintenance && (
+							<ReactMarkdown>{changelog.maintenance}</ReactMarkdown>
+						)}
+					</div>
+				)}
+			</div>
 		</div>
 	);
 }

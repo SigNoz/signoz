@@ -2,10 +2,22 @@
 	position: relative;
 	padding-left: 20px;
 
+	& :is(h1, h2, h3, h4, h5, h6, p) {
+		margin-bottom: 12px;
+	}
+
+	&-content {
+		display: flex;
+		flex-direction: column;
+		gap: 32px;
+	}
+
 	.changelog-release-date {
 		font-size: 14px;
 		line-height: 20px;
 		color: var(--text-vanilla-400, #c0c1c3);
+		display: block;
+		margin-bottom: 12px;
 	}
 
 	&-list {
@@ -108,6 +120,7 @@
 		overflow: hidden;
 		border-radius: 4px;
 		border: 1px solid var(--bg-slate-400, #1d212d);
+		margin-bottom: 28px;
 	}
 
 	.changelog-media-video {
