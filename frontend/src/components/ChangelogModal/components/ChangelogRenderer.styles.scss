@@ -137,17 +137,8 @@
 		&-line {
 			background-color: var(--bg-vanilla-300);
 		}
-		li,
-		p {
-			color: var(--text-ink-500);
-		}
 
-		h1,
-		h2,
-		h3,
-		h4,
-		h5,
-		h6 {
+		& :is(h1, h2, h3, h4, h5, h6, p, li) {
 			color: var(--text-ink-500);
 		}
 
