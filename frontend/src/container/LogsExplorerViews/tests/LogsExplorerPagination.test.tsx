@@ -7,14 +7,11 @@ import { logsresponse } from 'mocks-server/__mockdata__/query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import LogsExplorer from 'pages/LogsExplorer';
-import { QueryBuilderContext } from 'providers/QueryBuilder';
 import React from 'react';
-import { I18nextProvider } from 'react-i18next';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import i18n from 'ReactI18';
 import {
 	act,
+	AllTheProviders,
 	fireEvent,
 	render,
 	RenderResult,
@@ -263,9 +260,7 @@ describe.skip('LogsExplorerViews Pagination', () => {
 		act(() => {
 			renderResult = render(
 				<VirtuosoMockContext.Provider value={{ viewportHeight, itemHeight }}>
-					<I18nextProvider i18n={i18n}>
-						<LogsExplorer />
-					</I18nextProvider>
+					<LogsExplorer />
 				</VirtuosoMockContext.Provider>,
 			);
 		});
@@ -439,13 +434,14 @@ function LogsExplorerWithMockContext({
 	);
 
 	return (
-		<MemoryRouter>
-			<QueryBuilderContext.Provider value={contextValue as any}>
-				<VirtuosoMockContext.Provider value={virtuosoContextValue}>
-					<LogsExplorer />
-				</VirtuosoMockContext.Provider>
-			</QueryBuilderContext.Provider>
-		</MemoryRouter>
+		<AllTheProviders
+			queryBuilderOverrides={contextValue as any}
+			initialRoute="/logs"
+		>
+			<VirtuosoMockContext.Provider value={virtuosoContextValue}>
+				<LogsExplorer />
+			</VirtuosoMockContext.Provider>
+		</AllTheProviders>
 	);
 }
 

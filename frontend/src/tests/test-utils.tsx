@@ -8,12 +8,15 @@ import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
-import { QueryBuilderProvider } from 'providers/QueryBuilder';
+import {
+	QueryBuilderContext,
+	QueryBuilderProvider,
+} from 'providers/QueryBuilder';
 import TimezoneProvider from 'providers/Timezone';
 import React, { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
-import { BrowserRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import store from 'store';
@@ -23,6 +26,7 @@ import {
 	LicenseState,
 	LicenseStatus,
 } from 'types/api/licensesV3/getActive';
+import { QueryBuilderContextType } from 'types/common/queryBuilder';
 import { ROLES, USER_ROLES } from 'types/roles';
 
 const queryClient = new QueryClient({
@@ -253,48 +257,95 @@ export function getAppContextMock(
 
 export function AllTheProviders({
 	children,
-	role, // Accept the role as a prop
+	role,
 	appContextOverrides,
+	queryBuilderOverrides,
+	initialRoute,
 }: {
 	children: React.ReactNode;
-	role: string; // Define the role prop
-	appContextOverrides: Partial<IAppContext>;
+	role?: string;
+	appContextOverrides?: Partial<IAppContext>;
+	queryBuilderOverrides?: Partial<QueryBuilderContextType>;
+	initialRoute?: string;
 }): ReactElement {
+	// Set default values
+	const roleValue = role || 'ADMIN';
+	const appContextOverridesValue = appContextOverrides || {};
+	const initialRouteValue = initialRoute || '/';
+
+	const queryBuilderContent = queryBuilderOverrides ? (
+		<QueryBuilderContext.Provider
+			value={queryBuilderOverrides as QueryBuilderContextType}
+		>
+			{children}
+		</QueryBuilderContext.Provider>
+	) : (
+		<QueryBuilderProvider>{children}</QueryBuilderProvider>
+	);
+
 	return (
-		<QueryClientProvider client={queryClient}>
-			<Provider store={mockStored(role)}>
-				<AppContext.Provider value={getAppContextMock(role, appContextOverrides)}>
-					<ResourceProvider>
-						<ErrorModalProvider>
-							<BrowserRouter>
+		<MemoryRouter initialEntries={[initialRouteValue]}>
+			<QueryClientProvider client={queryClient}>
+				<Provider store={mockStored(roleValue)}>
+					<AppContext.Provider
+						value={getAppContextMock(roleValue, appContextOverridesValue)}
+					>
+						<ResourceProvider>
+							<ErrorModalProvider>
 								<TimezoneProvider>
 									<PreferenceContextProvider>
-										<QueryBuilderProvider>{children}</QueryBuilderProvider>
+										{queryBuilderContent}
 									</PreferenceContextProvider>
 								</TimezoneProvider>
-							</BrowserRouter>
-						</ErrorModalProvider>
-					</ResourceProvider>
-				</AppContext.Provider>
-			</Provider>
-		</QueryClientProvider>
+							</ErrorModalProvider>
+						</ResourceProvider>
+					</AppContext.Provider>
+				</Provider>
+			</QueryClientProvider>
+		</MemoryRouter>
 	);
+}
+
+AllTheProviders.defaultProps = {
+	role: 'ADMIN',
+	appContextOverrides: {},
+	queryBuilderOverrides: undefined,
+	initialRoute: '/',
+};
+
+interface ProviderProps {
+	role?: string;
+	appContextOverrides?: Partial<IAppContext>;
+	queryBuilderOverrides?: Partial<QueryBuilderContextType>;
+	initialRoute?: string;
 }
 
 const customRender = (
 	ui: ReactElement,
 	options?: Omit<RenderOptions, 'wrapper'>,
-	role = 'ADMIN', // Set a default role
-	appContextOverrides?: Partial<IAppContext>,
-): RenderResult =>
-	render(ui, {
+	providerProps: ProviderProps = {},
+): RenderResult => {
+	const {
+		role = 'ADMIN',
+		appContextOverrides = {},
+		queryBuilderOverrides,
+		initialRoute = '/',
+	} = providerProps;
+
+	return render(ui, {
 		wrapper: () => (
-			<AllTheProviders role={role} appContextOverrides={appContextOverrides || {}}>
+			<AllTheProviders
+				role={role}
+				appContextOverrides={appContextOverrides}
+				queryBuilderOverrides={queryBuilderOverrides}
+				initialRoute={initialRoute}
+			>
 				{ui}
 			</AllTheProviders>
 		),
 		...options,
 	});
+};
 
 export * from '@testing-library/react';
 export { customRender as render };

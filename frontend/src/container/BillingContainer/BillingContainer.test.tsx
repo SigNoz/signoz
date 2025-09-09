@@ -53,9 +53,15 @@ describe('BillingContainer', () => {
 
 	test('OnTrail', async () => {
 		await act(async () => {
-			render(<BillingContainer />, undefined, undefined, {
-				trialInfo: licensesSuccessResponse.data,
-			});
+			render(
+				<BillingContainer />,
+				{},
+				{
+					appContextOverrides: {
+						trialInfo: licensesSuccessResponse.data,
+					},
+				},
+			);
 		});
 
 		const freeTrailText = await screen.findByText('Free Trial');
@@ -87,9 +93,15 @@ describe('BillingContainer', () => {
 
 	test('OnTrail but trialConvertedToSubscription', async () => {
 		await act(async () => {
-			render(<BillingContainer />, undefined, undefined, {
-				trialInfo: trialConvertedToSubscriptionResponse.data,
-			});
+			render(
+				<BillingContainer />,
+				{},
+				{
+					appContextOverrides: {
+						trialInfo: trialConvertedToSubscriptionResponse.data,
+					},
+				},
+			);
 		});
 
 		const currentBill = await screen.findByText('billing');
@@ -120,9 +132,15 @@ describe('BillingContainer', () => {
 	});
 
 	test('Not on ontrail', async () => {
-		const { findByText } = render(<BillingContainer />, undefined, undefined, {
-			trialInfo: notOfTrailResponse.data,
-		});
+		const { findByText } = render(
+			<BillingContainer />,
+			{},
+			{
+				appContextOverrides: {
+					trialInfo: notOfTrailResponse.data,
+				},
+			},
+		);
 
 		const billingPeriodText = `Your current billing period is from ${getFormattedDate(
 			billingSuccessResponse.data.billingPeriodStart,
