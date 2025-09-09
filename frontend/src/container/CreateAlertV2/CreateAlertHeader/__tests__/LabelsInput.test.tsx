@@ -240,30 +240,7 @@ describe('LabelsInput', () => {
 	});
 
 	describe('Blur Behavior', () => {
-		it('switches back to key input if value input is empty on blur', () => {
-			renderLabelsInput();
-
-			fireEvent.click(screen.getByText(ADD_LABELS_TEXT));
-			const input = screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER);
-
-			// Enter key
-			fireEvent.change(input, { target: { value: 'severity' } });
-			fireEvent.keyDown(input, { key: 'Enter' });
-
-			// Blur with empty value
-			const valueInput = screen.getByPlaceholderText(ENTER_VALUE_PLACEHOLDER);
-			fireEvent.blur(valueInput);
-
-			expect(
-				screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER),
-			).toBeInTheDocument();
-			expect(
-				screen.queryByPlaceholderText(ENTER_VALUE_PLACEHOLDER),
-			).not.toBeInTheDocument();
-		});
-
-		it('closes input after delay when both key and value are empty', () => {
-			jest.useFakeTimers();
+		it('closes input immediately when both key and value are empty', () => {
 			renderLabelsInput();
 
 			fireEvent.click(screen.getByText(ADD_LABELS_TEXT));
@@ -271,15 +248,11 @@ describe('LabelsInput', () => {
 
 			fireEvent.blur(input);
 
-			jest.advanceTimersByTime(200);
-
-			// The input should still be there because the blur logic only closes when both key and value are empty
-			// but we haven't entered any values, so it should remain open
+			// The input should close immediately when both key and value are empty
+			expect(screen.getByText(ADD_LABELS_TEXT)).toBeInTheDocument();
 			expect(
-				screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER),
-			).toBeInTheDocument();
-
-			jest.useRealTimers();
+				screen.queryByPlaceholderText(ENTER_KEY_PLACEHOLDER),
+			).not.toBeInTheDocument();
 		});
 
 		it('does not close input immediately when key has value', () => {
