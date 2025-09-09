@@ -6,6 +6,13 @@ import (
 	"time"
 )
 
+type EvaluationKind string
+
+const (
+	RollingEvaluation    EvaluationKind = "rolling"
+	CumulativeEvaluation EvaluationKind = "cumulative"
+)
+
 type Evaluation interface {
 	EvaluationTime(curr time.Time) (time.Time, time.Time, error)
 }
@@ -43,41 +50,57 @@ func (cumulativeWindow *CumulativeWindow) EvaluationTime(curr time.Time) (time.T
 }
 
 type EvaluationWrapper struct {
-	Kind string          `json:"kind"`
-	Spec json.RawMessage `json:"spec"`
+	Kind EvaluationKind `json:"kind"`
+	Spec any            `json:"spec"`
 }
 
-func NewEvaluationWrapper(kind string, spec interface{}) EvaluationWrapper {
-	specBytes, _ := json.Marshal(spec)
-	return EvaluationWrapper{
-		Kind: kind,
-		Spec: specBytes,
+func (e *EvaluationWrapper) UnmarshalJSON(data []byte) error {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
 	}
+	if err := json.Unmarshal(raw["kind"], &e.Kind); err != nil {
+		return err
+	}
+	switch e.Kind {
+	case RollingEvaluation:
+		var rollingWindow RollingWindow
+		if err := json.Unmarshal(raw["spec"], &rollingWindow); err != nil {
+			return fmt.Errorf("failed to unmarshal basic thresholds: %v",
+				err)
+		}
+		e.Spec = rollingWindow
+	case CumulativeEvaluation:
+		var cumulativeWindow CumulativeWindow
+		if err := json.Unmarshal(raw["spec"], &cumulativeWindow); err != nil {
+			return fmt.Errorf("failed to unmarshal basic thresholds: %v",
+				err)
+		}
+		e.Spec = cumulativeWindow
+
+	default:
+		return fmt.Errorf("unknown threshold kind: %v", e.Kind)
+	}
+
+	return nil
 }
 
 func (wrapper *EvaluationWrapper) GetEvaluation() (Evaluation, error) {
-	if wrapper.Kind == "" && len(wrapper.Spec) == 0 {
-		return nil, fmt.Errorf("invalid rule evaluation")
-	}
-
 	if wrapper.Kind == "" {
 		wrapper.Kind = "rolling"
 	}
 
 	switch wrapper.Kind {
-	case "rolling":
-		var rolling RollingWindow
-		if err := json.Unmarshal(wrapper.Spec, &rolling); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal rolling window: %w", err)
+	case RollingEvaluation:
+		if rolling, ok := wrapper.Spec.(RollingWindow); ok {
+			return &rolling, nil
 		}
-		return &rolling, nil
-	case "cumulative":
-		var cumulative CumulativeWindow
-		if err := json.Unmarshal(wrapper.Spec, &cumulative); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal cumulative window: %w", err)
+	case CumulativeEvaluation:
+		if cumulative, ok := wrapper.Spec.(CumulativeWindow); ok {
+			return &cumulative, nil
 		}
-		return &cumulative, nil
 	default:
 		return nil, fmt.Errorf("unsupported evaluation kind: %s", wrapper.Kind)
 	}
+	return nil, fmt.Errorf("unsupported evaluation kind: %s", wrapper.Kind)
 }

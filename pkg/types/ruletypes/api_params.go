@@ -68,7 +68,7 @@ type PostableRule struct {
 	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
 	OldYaml string `json:"yaml,omitempty"`
 
-	Evaluation EvaluationWrapper `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
+	Evaluation *EvaluationWrapper `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
 }
 
 func ParsePostableRule(content []byte) (*PostableRule, error) {
@@ -163,8 +163,8 @@ func ParseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*P
 		}
 		rule.RuleCondition.Thresholds = &thresholdData
 	}
-	if rule.Evaluation.Kind == "" && len(rule.Evaluation.Spec) == 0 {
-		rule.Evaluation = NewEvaluationWrapper("rolling", RollingWindow{EvalWindow: rule.EvalWindow, Frequency: rule.Frequency})
+	if rule.Evaluation == nil {
+		rule.Evaluation = &EvaluationWrapper{RollingEvaluation, RollingWindow{EvalWindow: rule.EvalWindow, Frequency: rule.Frequency}}
 	}
 
 	return rule, nil

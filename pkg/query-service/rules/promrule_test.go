@@ -25,13 +25,13 @@ func getVectorValues(vectors []ruletypes.Sample) []float64 {
 
 func TestPromRuleShouldAlert(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName:  "Test Rule",
-		AlertType:  ruletypes.AlertTypeMetric,
-		RuleType:   ruletypes.RuleTypeProm,
-		Evaluation: ruletypes.NewEvaluationWrapper("rolling", ruletypes.RollingWindow{
+		AlertName: "Test Rule",
+		AlertType: ruletypes.AlertTypeMetric,
+		RuleType:  ruletypes.RuleTypeProm,
+		Evaluation: &ruletypes.EvaluationWrapper{Kind: "rolling", Spec: ruletypes.RollingWindow{
 			EvalWindow: ruletypes.Duration(5 * time.Minute),
 			Frequency:  ruletypes.Duration(1 * time.Minute),
-		}),
+		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypePromQL,
