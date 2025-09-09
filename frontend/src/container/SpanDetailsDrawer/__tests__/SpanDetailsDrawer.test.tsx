@@ -415,11 +415,11 @@ describe('SpanDetailsDrawer', () => {
 			]),
 		);
 
-		// Verify NO span_id filter is present
+		// Verify that span_id filter is present
 		const hasSpanIdFilter = filters.items.some(
 			(item: any) => item.key?.key === 'span_id',
 		);
-		expect(hasSpanIdFilter).toBe(false);
+		expect(hasSpanIdFilter).toBe(true);
 	});
 
 	it('should open logs explorer in new tab when ctrl+click is used', async () => {
