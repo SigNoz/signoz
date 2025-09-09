@@ -110,7 +110,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return false, err
 	}
 
-	n.logger.Debug("extracted group key", "key", key)
+	n.logger.DebugContext(ctx, "extracted group key", "key", key)
 
 	data := notify.GetTemplateData(ctx, n.tmpl, as, n.logger)
 	tmpl := notify.TmplText(n.tmpl, data, &err)
@@ -204,11 +204,11 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return false, err
 	}
 
-	resp, err := n.postJSONFunc(ctx, n.client, url, &payload)
+	resp, err := n.postJSONFunc(ctx, n.client, url, &payload) //nolint:bodyclose
 	if err != nil {
 		return true, notify.RedactURL(err)
 	}
-	defer notify.Drain(resp)
+	defer notify.Drain(resp) //drain is used to close the body of the response hence the nolint directive
 
 	// https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using?tabs=cURL#rate-limiting-for-connectors
 	shouldRetry, err := n.retrier.Check(resp.StatusCode, resp.Body)
