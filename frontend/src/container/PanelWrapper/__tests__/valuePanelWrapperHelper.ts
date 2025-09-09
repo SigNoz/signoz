@@ -2,7 +2,6 @@ export const valuePanelWidget = {
 	id: 'b8b93086-ef01-47bf-9044-1e7abd583be4',
 	title: 'signoz latency in ms',
 	description: '',
-	isStacked: false,
 	nullZeroValues: 'zero',
 	opacity: '1',
 	panelTypes: 'value',

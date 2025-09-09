@@ -543,7 +543,6 @@ export const getDefaultWidgetData = (
 	id,
 	title: '',
 	description: '',
-	isStacked: false,
 	nullZeroValues: '',
 	opacity: '',
 	panelTypes: name,
