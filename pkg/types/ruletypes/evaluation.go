@@ -7,7 +7,7 @@ import (
 )
 
 type Evaluation interface {
-	EvaluationTime(curr time.Time) (time.Time, time.Time)
+	EvaluationTime(curr time.Time) (time.Time, time.Time, error)
 }
 
 type RollingWindow struct {
@@ -15,8 +15,8 @@ type RollingWindow struct {
 	Frequency  Duration `json:"frequency"`
 }
 
-func (rollingWindow *RollingWindow) EvaluationTime(curr time.Time) (time.Time, time.Time) {
-	return curr.Add(time.Duration(-rollingWindow.EvalWindow)), curr
+func (rollingWindow *RollingWindow) EvaluationTime(curr time.Time) (time.Time, time.Time, error) {
+	return curr.Add(time.Duration(-rollingWindow.EvalWindow)), curr, nil
 }
 
 type CumulativeWindow struct {
@@ -24,22 +24,22 @@ type CumulativeWindow struct {
 	EvalWindow Duration `json:"evalWindow"`
 }
 
-func (cumulativeWindow *CumulativeWindow) EvaluationTime(curr time.Time) (time.Time, time.Time) {
+func (cumulativeWindow *CumulativeWindow) EvaluationTime(curr time.Time) (time.Time, time.Time, error) {
 	startsAt := time.UnixMilli(cumulativeWindow.StartsAt)
 	if curr.Before(startsAt) {
-		return curr, curr
+		return time.Time{}, time.Time{}, fmt.Errorf("current time is before the start time")
 	}
 
 	dur := time.Duration(cumulativeWindow.EvalWindow)
 	if dur <= 0 {
-		return curr, curr
+		return time.Time{}, time.Time{}, fmt.Errorf("duration cannot be less than zero")
 	}
 
 	// Calculate the number of complete windows since StartsAt
 	elapsed := curr.Sub(startsAt)
 	windows := int64(elapsed / dur)
 	windowStart := startsAt.Add(time.Duration(windows) * dur)
-	return windowStart, curr
+	return windowStart, curr, nil
 }
 
 type EvaluationWrapper struct {
@@ -47,9 +47,18 @@ type EvaluationWrapper struct {
 	Spec json.RawMessage `json:"spec"`
 }
 
-func (wrapper *EvaluationWrapper) UnmarshalEvaluationJSON(data []byte) (Evaluation, error) {
-	if err := json.Unmarshal(data, &wrapper); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal evaluation wrapper: %w", err)
+func NewEvaluationWrapper(kind string, spec interface{}) EvaluationWrapper {
+	specBytes, _ := json.Marshal(spec)
+	return EvaluationWrapper{
+		Kind: kind,
+		Spec: specBytes,
+	}
+}
+
+func (wrapper *EvaluationWrapper) GetEvaluation() (Evaluation, error) {
+	// If wrapper is empty (not set), return nil
+	if wrapper.Kind == "" && len(wrapper.Spec) == 0 {
+		return nil, nil
 	}
 
 	if wrapper.Kind == "" {

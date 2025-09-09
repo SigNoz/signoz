@@ -68,32 +68,7 @@ type PostableRule struct {
 	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
 	OldYaml string `json:"yaml,omitempty"`
 
-	Evaluation Evaluation `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
-}
-
-func (p *PostableRule) UnmarshalJSON(data []byte) error {
-	type Alias PostableRule
-	aux := &struct {
-		Evaluation json.RawMessage `json:"evaluation,omitempty"`
-		*Alias
-	}{
-		Alias: (*Alias)(p),
-	}
-
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	if len(aux.Evaluation) > 0 {
-		var wrapper EvaluationWrapper
-		eval, err := wrapper.UnmarshalEvaluationJSON(aux.Evaluation)
-		if err != nil {
-			return err
-		}
-		p.Evaluation = eval
-	}
-
-	return nil
+	Evaluation EvaluationWrapper `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
 }
 
 func ParsePostableRule(content []byte) (*PostableRule, error) {
@@ -178,8 +153,8 @@ func ParseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*P
 		rule.RuleCondition.Thresholds = append(rule.RuleCondition.Thresholds,
 			NewBasicRuleThreshold(thresholdName, rule.RuleCondition.Target, nil, rule.RuleCondition.MatchType, rule.RuleCondition.CompareOp, rule.RuleCondition.SelectedQuery, rule.RuleCondition.TargetUnit, rule.RuleCondition.CompositeQuery.Unit))
 	}
-	if rule.Evaluation == nil {
-		rule.Evaluation = &RollingWindow{EvalWindow: rule.EvalWindow, Frequency: rule.Frequency}
+	if rule.Evaluation.Kind == "" && len(rule.Evaluation.Spec) == 0 {
+		rule.Evaluation = NewEvaluationWrapper("rolling", RollingWindow{EvalWindow: rule.EvalWindow, Frequency: rule.Frequency})
 	}
 
 	return rule, nil

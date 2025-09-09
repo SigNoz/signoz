@@ -126,7 +126,13 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	if p.RuleCondition == nil || !p.RuleCondition.IsValid() {
 		return nil, fmt.Errorf("invalid rule condition")
 	}
-
+	evaluation, err := p.Evaluation.GetEvaluation()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get evaluation: %w", err)
+	}
+	
+	// If no evaluation is set, we don't assign one (evaluation will be nil)
+	// This is fine for rules that don't need evaluation windows (like PromQL rules)
 	baseRule := &BaseRule{
 		id:                id,
 		orgID:             orgID,
@@ -142,7 +148,7 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 		Active:            map[uint64]*ruletypes.Alert{},
 		reader:            reader,
 		TemporalityMap:    make(map[string]map[v3.Temporality]bool),
-		evaluation:        p.Evaluation,
+		evaluation:        evaluation,
 	}
 
 	if baseRule.evalWindow == 0 {
@@ -270,9 +276,12 @@ func (r *BaseRule) Unit() string {
 	return ""
 }
 
-func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time) {
+func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time, error) {
 
-	st, en := r.evaluation.EvaluationTime(ts)
+	st, en, err := r.evaluation.EvaluationTime(ts)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
 	start := st.UnixMilli()
 	end := en.UnixMilli()
 
@@ -284,7 +293,7 @@ func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time) {
 	start = start - (start % (60 * 1000))
 	end = end - (end % (60 * 1000))
 
-	return time.UnixMilli(start), time.UnixMilli(end)
+	return time.UnixMilli(start), time.UnixMilli(end), nil
 }
 
 func (r *BaseRule) SetLastError(err error) {

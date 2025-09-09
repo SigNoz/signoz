@@ -116,7 +116,10 @@ func (r *ThresholdRule) prepareQueryRange(ctx context.Context, ts time.Time) (*v
 		ctx, "prepare query range request v4", "ts", ts.UnixMilli(), "eval_window", r.evalWindow.Milliseconds(), "eval_delay", r.evalDelay.Milliseconds(),
 	)
 
-	startTs, endTs := r.Timestamps(ts)
+	startTs, endTs, err := r.Timestamps(ts)
+	if err != nil {
+		return nil, err
+	}
 	start, end := startTs.UnixMilli(), endTs.UnixMilli()
 
 	if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
@@ -279,7 +282,10 @@ func (r *ThresholdRule) prepareQueryRangeV5(ctx context.Context, ts time.Time) (
 		ctx, "prepare query range request v5", "ts", ts.UnixMilli(), "eval_window", r.evalWindow.Milliseconds(), "eval_delay", r.evalDelay.Milliseconds(),
 	)
 
-	startTs, endTs := r.Timestamps(ts)
+	startTs, endTs, err := r.Timestamps(ts)
+	if err != nil {
+		return nil, err
+	}
 	start, end := startTs.UnixMilli(), endTs.UnixMilli()
 
 	req := &qbtypes.QueryRangeRequest{
