@@ -29,6 +29,7 @@ const (
 
 type Notifier struct {
 	conf         *config.MSTeamsV2Config
+	titleLink    string
 	tmpl         *template.Template
 	logger       *slog.Logger
 	client       *http.Client
@@ -85,7 +86,7 @@ type teamsMessage struct {
 }
 
 // New returns a new notifier that uses the Microsoft Teams Power Platform connector.
-func New(c *config.MSTeamsV2Config, t *template.Template, l *slog.Logger, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(c *config.MSTeamsV2Config, t *template.Template, titleLink string, l *slog.Logger, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := commoncfg.NewClientFromConfig(*c.HTTPConfig, "msteamsv2", httpOpts...)
 	if err != nil {
 		return nil, err
@@ -93,6 +94,7 @@ func New(c *config.MSTeamsV2Config, t *template.Template, l *slog.Logger, httpOp
 
 	n := &Notifier{
 		conf:         c,
+		titleLink:    titleLink,
 		tmpl:         t,
 		logger:       l,
 		client:       client,
@@ -123,7 +125,12 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return false, err
 	}
 
-	titleLink := tmpl(n.conf.Text)
+	text := tmpl(n.conf.Text)
+	if err != nil {
+		return false, err
+	}
+
+	titleLink := tmpl(n.titleLink)
 	if err != nil {
 		return false, err
 	}
@@ -168,6 +175,11 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 							Wrap:   true,
 							Style:  "heading",
 							Color:  color,
+						},
+						{
+							Type: "TextBlock",
+							Text: text,
+							Wrap: true,
 						},
 					},
 					Actions: []Action{

@@ -38,7 +38,9 @@ func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Templ
 	}
 
 	for i, c := range nc.MSTeamsV2Configs {
-		add("msteamsv2", i, c, func(l *slog.Logger) (notify.Notifier, error) { return msteamsv2.New(c, tmpl, l) })
+		add("msteamsv2", i, c, func(l *slog.Logger) (notify.Notifier, error) {
+			return msteamsv2.New(c, tmpl, `{{ template "msteamsv2.default.titleLink" . }}`, l)
+		})
 	}
 
 	if errs.Len() > 0 {

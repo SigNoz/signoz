@@ -32,6 +32,7 @@ func TestMSTeamsV2Retry(t *testing.T) {
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
 		test.CreateTmpl(t),
+		`{{ template "msteamsv2.default.titleLink" . }}`,
 		promslog.NewNopLogger(),
 	)
 	require.NoError(t, err)
@@ -65,6 +66,7 @@ func TestNotifier_Notify_WithReason(t *testing.T) {
 					HTTPConfig: &commoncfg.HTTPClientConfig{},
 				},
 				test.CreateTmpl(t),
+				`{{ template "msteamsv2.default.titleLink" . }}`,
 				promslog.NewNopLogger(),
 			)
 			require.NoError(t, err)
@@ -110,8 +112,9 @@ func TestMSTeamsV2Templating(t *testing.T) {
 	u, _ := url.Parse(srv.URL)
 
 	for _, tc := range []struct {
-		title string
-		cfg   *config.MSTeamsV2Config
+		title     string
+		cfg       *config.MSTeamsV2Config
+		titleLink string
 
 		retry  bool
 		errMsg string
@@ -122,14 +125,16 @@ func TestMSTeamsV2Templating(t *testing.T) {
 				Title: `{{ template "msteams.default.title" . }}`,
 				Text:  `{{ template "msteams.default.text" . }}`,
 			},
-			retry: false,
+			titleLink: `{{ template "msteamsv2.default.titleLink" . }}`,
+			retry:     false,
 		},
 		{
 			title: "title with templating errors",
 			cfg: &config.MSTeamsV2Config{
 				Title: "{{ ",
 			},
-			errMsg: "template: :1: unclosed action",
+			titleLink: `{{ template "msteamsv2.default.titleLink" . }}`,
+			errMsg:    "template: :1: unclosed action",
 		},
 		{
 			title: "message with templating errors",
@@ -137,13 +142,23 @@ func TestMSTeamsV2Templating(t *testing.T) {
 				Title: `{{ template "msteams.default.title" . }}`,
 				Text:  "{{ ",
 			},
-			errMsg: "template: :1: unclosed action",
+			titleLink: `{{ template "msteamsv2.default.titleLink" . }}`,
+			errMsg:    "template: :1: unclosed action",
+		},
+		{
+			title: "message with title link templating errors",
+			cfg: &config.MSTeamsV2Config{
+				Title: `{{ template "msteams.default.title" . }}`,
+				Text:  `{{ template "msteams.default.text" . }}`,
+			},
+			titleLink: `{{ `,
+			errMsg:    "template: :1: unclosed action",
 		},
 	} {
 		t.Run(tc.title, func(t *testing.T) {
 			tc.cfg.WebhookURL = &config.SecretURL{URL: u}
 			tc.cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
-			pd, err := New(tc.cfg, test.CreateTmpl(t), promslog.NewNopLogger())
+			pd, err := New(tc.cfg, test.CreateTmpl(t), tc.titleLink, promslog.NewNopLogger())
 			require.NoError(t, err)
 
 			ctx := context.Background()
@@ -182,6 +197,7 @@ func TestMSTeamsV2RedactedURL(t *testing.T) {
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
 		test.CreateTmpl(t),
+		`{{ template "msteamsv2.default.titleLink" . }}`,
 		promslog.NewNopLogger(),
 	)
 	require.NoError(t, err)
@@ -204,6 +220,7 @@ func TestMSTeamsV2ReadingURLFromFile(t *testing.T) {
 			HTTPConfig:     &commoncfg.HTTPClientConfig{},
 		},
 		test.CreateTmpl(t),
+		`{{ template "msteamsv2.default.titleLink" . }}`,
 		promslog.NewNopLogger(),
 	)
 	require.NoError(t, err)

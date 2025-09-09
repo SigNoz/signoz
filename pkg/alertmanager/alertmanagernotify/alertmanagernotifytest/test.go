@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
@@ -115,7 +116,7 @@ func DefaultRetryCodes() []int {
 
 // CreateTmpl returns a ready-to-use template.
 func CreateTmpl(t *testing.T) *template.Template {
-	tmpl, err := template.FromGlobs([]string{})
+	tmpl, err := alertmanagertypes.FromGlobs([]string{})
 	require.NoError(t, err)
 	tmpl.ExternalURL, _ = url.Parse("http://am")
 	return tmpl
