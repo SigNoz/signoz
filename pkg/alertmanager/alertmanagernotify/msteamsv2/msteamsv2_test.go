@@ -137,15 +137,6 @@ func TestMSTeamsV2Templating(t *testing.T) {
 			errMsg:    "template: :1: unclosed action",
 		},
 		{
-			title: "message with templating errors",
-			cfg: &config.MSTeamsV2Config{
-				Title: `{{ template "msteams.default.title" . }}`,
-				Text:  "{{ ",
-			},
-			titleLink: `{{ template "msteamsv2.default.titleLink" . }}`,
-			errMsg:    "template: :1: unclosed action",
-		},
-		{
 			title: "message with title link templating errors",
 			cfg: &config.MSTeamsV2Config{
 				Title: `{{ template "msteams.default.title" . }}`,

@@ -125,11 +125,6 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return false, err
 	}
 
-	text := tmpl(n.conf.Text)
-	if err != nil {
-		return false, err
-	}
-
 	titleLink := tmpl(n.titleLink)
 	if err != nil {
 		return false, err
@@ -176,11 +171,6 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 							Style:  "heading",
 							Color:  color,
 						},
-						{
-							Type: "TextBlock",
-							Text: text,
-							Wrap: true,
-						},
 					},
 					Actions: []Action{
 						{
@@ -208,7 +198,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 			Color:  color,
 		})
 
-		t.Attachments[0].Content.Body = append(t.Attachments[0].Content.Body, n.addLabelsAndAnnotationsToBody(alert)...)
+		t.Attachments[0].Content.Body = append(t.Attachments[0].Content.Body, n.createLabelsAndAnnotationsBody(alert)...)
 	}
 
 	var payload bytes.Buffer
@@ -230,7 +220,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	return shouldRetry, err
 }
 
-func (*Notifier) addLabelsAndAnnotationsToBody(alert *types.Alert) []Body {
+func (*Notifier) createLabelsAndAnnotationsBody(alert *types.Alert) []Body {
 	bodies := []Body{}
 	bodies = append(bodies, Body{
 		Type:   "TextBlock",
