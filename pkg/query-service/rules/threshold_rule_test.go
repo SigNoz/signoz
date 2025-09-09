@@ -1888,7 +1888,7 @@ func TestMultipleThresholdRule(t *testing.T) {
 				{float64(299316000), "attr", time.Now().Add(3 * time.Second)},         // 299.31 ms
 				{float64(66640400.00000001), "attr", time.Now().Add(4 * time.Second)}, // 66.64 ms
 			},
-			expectAlerts: 4, // Now expects 4: 2 for 500ms threshold (572.58, 572.38) + 2 for 200ms threshold (300.94, 299.31)
+			expectAlerts: 6,   // Expects 6 values exceed 200ms (572.58, 572.38, 300.94, 299.31) + 2 values exceed 500ms (572.58, 572.38)
 			compareOp:    "1", // Above
 			matchType:    "1", // Once
 			target:       200, // 200 ms
