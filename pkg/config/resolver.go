@@ -2,8 +2,12 @@ package config
 
 import (
 	"context"
-	"errors"
-	"fmt"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+)
+
+var (
+	ErrCodeInvalidResolver = errors.MustNewCode("invalid_resolver")
 )
 
 type ResolverConfig struct {
@@ -24,11 +28,11 @@ type Resolver struct {
 
 func NewResolver(config ResolverConfig) (*Resolver, error) {
 	if len(config.Uris) == 0 {
-		return nil, errors.New("cannot build resolver, no uris have been provided")
+		return nil, errors.New(errors.TypeInvalidInput, ErrCodeInvalidResolver, "cannot build resolver, no uris have been provided")
 	}
 
 	if len(config.ProviderFactories) == 0 {
-		return nil, errors.New("cannot build resolver, no providers have been provided")
+		return nil, errors.New(errors.TypeInvalidInput, ErrCodeInvalidResolver, "cannot build resolver, no providers have been provided")
 	}
 
 	uris := make([]Uri, len(config.Uris))
@@ -48,7 +52,7 @@ func NewResolver(config ResolverConfig) (*Resolver, error) {
 		scheme := provider.Scheme()
 		// Check that the scheme is unique.
 		if _, ok := providers[scheme]; ok {
-			return nil, fmt.Errorf("cannot build resolver, duplicate scheme %q found", scheme)
+			return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidResolver, "cannot build resolver, duplicate scheme %q found", scheme)
 		}
 
 		providers[provider.Scheme()] = provider
@@ -70,7 +74,7 @@ func (resolver *Resolver) Do(ctx context.Context) (*Conf, error) {
 		}
 
 		if err = conf.Merge(currentConf); err != nil {
-			return nil, fmt.Errorf("cannot merge config: %w", err)
+			return nil, errors.Newf(errors.TypeInternal, ErrCodeInvalidResolver, "cannot merge config: %s", err.Error())
 		}
 	}
 
@@ -80,7 +84,7 @@ func (resolver *Resolver) Do(ctx context.Context) (*Conf, error) {
 func (resolver *Resolver) get(ctx context.Context, uri Uri) (*Conf, error) {
 	provider, ok := resolver.providers[uri.scheme]
 	if !ok {
-		return nil, fmt.Errorf("cannot find provider with schema %q", uri.scheme)
+		return nil, errors.Newf(errors.TypeInternal, ErrCodeInvalidResolver, "cannot find provider with schema %q", uri.scheme)
 	}
 
 	return provider.Get(ctx, uri)

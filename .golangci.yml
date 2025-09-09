@@ -25,6 +25,10 @@ linters-settings:
         deny:
           - pkg: "go.uber.org/zap"
             desc: "Do not use zap logger. Use slog instead."
+      noerrors:
+        deny:
+          - pkg: "errors"
+            desc: "Do not use errors package. Use github.com/SigNoz/signoz/pkg/errors instead."
   iface:
     enable:
       - identical

@@ -16,7 +16,7 @@ var (
 	CodeForbidden             = Code{"forbidden"}
 	CodeCanceled              = Code{"canceled"}
 	CodeTimeout               = Code{"timeout"}
-	codeUnknown               = Code{"unknown"}
+	CodeUnknown               = Code{"unknown"}
 )
 
 var (

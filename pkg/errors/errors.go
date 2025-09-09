@@ -1,7 +1,7 @@
 package errors
 
 import (
-	"errors"
+	"errors" //nolint:depguard
 	"fmt"
 	"log/slog"
 )
@@ -138,7 +138,7 @@ func Unwrapb(cause error) (typ, Code, string, error, string, []string) {
 		return base.t, base.c, base.m, base.e, base.u, base.a
 	}
 
-	return TypeInternal, codeUnknown, cause.Error(), cause, "", []string{}
+	return TypeInternal, CodeUnknown, cause.Error(), cause, "", []string{}
 }
 
 // Ast checks if the provided error matches the specified custom error type.

@@ -3,8 +3,9 @@ package ruletypes
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"errors"
 	"time"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 type RepeatType string
@@ -61,7 +62,7 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 
 		return nil
 	default:
-		return errors.New("invalid duration")
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid duration")
 	}
 }
 
