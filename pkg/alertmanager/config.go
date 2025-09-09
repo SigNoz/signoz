@@ -47,7 +47,7 @@ func newConfig() factory.Config {
 
 func (c Config) Validate() error {
 	if c.Provider != "signoz" {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "provider must one of [%s], got %s", strings.Join([]string{"signoz"}, ", "), c.Provider)
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "provider must be one of [%s], got %s", strings.Join([]string{"signoz"}, ", "), c.Provider)
 	}
 
 	return nil
