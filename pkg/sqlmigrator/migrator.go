@@ -2,8 +2,9 @@ package sqlmigrator
 
 import (
 	"context"
-	"errors"
 	"time"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -100,7 +101,7 @@ func (migrator *migrator) Lock(ctx context.Context) error {
 	for {
 		select {
 		case <-timer.C:
-			err := errors.New("timed out waiting for lock")
+			err := errors.New(errors.TypeTimeout, errors.CodeTimeout, "timed out waiting for lock")
 			migrator.settings.Logger().ErrorContext(ctx, "cannot acquire lock", "error", err, "lock_timeout", migrator.config.Lock.Timeout.String(), "dialect", migrator.dialect)
 			return err
 		case <-ticker.C:

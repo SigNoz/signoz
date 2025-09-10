@@ -4,7 +4,6 @@ import { ColumnDef, DataTable, Row } from '@signozhq/table';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import LogStateIndicator from 'components/Logs/LogStateIndicator/LogStateIndicator';
-import { getLogIndicatorTypeForTable } from 'components/Logs/LogStateIndicator/utils';
 import { useTableView } from 'components/Logs/TableView/useTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -17,7 +16,7 @@ import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { isEmpty, isEqual } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ILog } from 'types/api/logs/log';
 
 interface ColumnViewProps {
@@ -51,6 +50,8 @@ function ColumnView({
 		onGroupByAttribute: handleGroupByAttribute,
 	} = useActiveLog();
 
+	const [showActiveLog, setShowActiveLog] = useState<boolean>(false);
+
 	const { queryData: activeLogId } = useUrlQueryData<string | null>(
 		QueryParams.activeLogId,
 		null,
@@ -72,9 +73,10 @@ function ColumnView({
 
 			if (log) {
 				handleSetActiveLog(log);
+				setShowActiveLog(true);
 			}
 		}
-	}, [activeLogId, logs, handleSetActiveLog]);
+	}, []);
 
 	const tableViewProps = {
 		logs,
@@ -88,7 +90,6 @@ function ColumnView({
 	const { dataSource, columns } = useTableView({
 		...tableViewProps,
 		onClickExpand: handleSetActiveLog,
-		onOpenLogsContext: handleClearActiveLog,
 	});
 
 	const { draggedColumns, onColumnOrderChange } = useDragColumns<
@@ -167,10 +168,14 @@ function ColumnView({
 					getValue: () => string | JSX.Element;
 				}): string | JSX.Element => {
 					if (field.key === 'state-indicator') {
-						const type = getLogIndicatorTypeForTable(row.original);
 						const fontSize = options.fontSize as FontSize;
 
-						return <LogStateIndicator type={type} fontSize={fontSize} />;
+						return (
+							<LogStateIndicator
+								severityText={row.original?.severity_text}
+								fontSize={fontSize}
+							/>
+						);
 					}
 
 					const isTimestamp = field.key === 'timestamp';
@@ -222,7 +227,20 @@ function ColumnView({
 	const handleRowClick = (row: Row<Record<string, unknown>>): void => {
 		const currentLog = logs.find(({ id }) => id === row.original.id);
 
+		setShowActiveLog(true);
 		handleSetActiveLog(currentLog as ILog);
+	};
+
+	const removeQueryParam = (key: string): void => {
+		const url = new URL(window.location.href);
+		url.searchParams.delete(key);
+		window.history.replaceState({}, '', url);
+	};
+
+	const handleLogDetailClose = (): void => {
+		removeQueryParam(QueryParams.activeLogId);
+		handleClearActiveLog();
+		setShowActiveLog(false);
 	};
 
 	return (
@@ -246,11 +264,11 @@ function ColumnView({
 				scrollToIndexRef={scrollToIndexRef}
 			/>
 
-			{activeLog && (
+			{showActiveLog && activeLog && (
 				<LogDetail
 					selectedTab={VIEW_TYPES.OVERVIEW}
 					log={activeLog}
-					onClose={handleClearActiveLog}
+					onClose={handleLogDetailClose}
 					onAddToQuery={handleAddToQuery}
 					onClickActionItem={handleAddToQuery}
 					onGroupByAttribute={handleGroupByAttribute}

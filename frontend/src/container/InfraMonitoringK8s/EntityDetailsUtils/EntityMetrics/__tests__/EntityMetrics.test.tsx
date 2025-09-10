@@ -50,8 +50,10 @@ jest.mock('container/InfraMonitoringK8s/commonUtils', () => ({
 }));
 
 const mockUseQueries = jest.fn();
+const mockUseQuery = jest.fn();
 jest.mock('react-query', () => ({
 	useQueries: (queryConfigs: any[]): any[] => mockUseQueries(queryConfigs),
+	useQuery: (config: any): any => mockUseQuery(config),
 }));
 
 jest.mock('hooks/useDarkMode', () => ({
@@ -302,6 +304,20 @@ describe('EntityMetrics', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockUseQueries.mockReturnValue(mockQueries);
+		mockUseQuery.mockReturnValue({
+			data: {
+				data: {
+					data: {
+						variables: {},
+						title: 'Test Dashboard',
+					},
+					id: 'test-dashboard-id',
+				},
+			},
+			isLoading: false,
+			isError: false,
+			refetch: jest.fn(),
+		});
 	});
 
 	it('should render metrics with data', () => {

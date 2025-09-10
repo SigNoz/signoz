@@ -52,3 +52,8 @@ type StatementBuilder[T any] interface {
 	// Build builds the query.
 	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderQuery[T], variables map[string]VariableItem) (*Statement, error)
 }
+
+type TraceOperatorStatementBuilder interface {
+	// Build builds the trace operator query.
+	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderTraceOperator, compositeQuery *CompositeQuery) (*Statement, error)
+}
