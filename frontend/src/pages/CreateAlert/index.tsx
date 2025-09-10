@@ -1,6 +1,8 @@
 import CreateAlertRule from 'container/CreateAlertRule';
-import CreateAlertV2 from 'container/CreateAlertV2';
 import { showNewCreateAlertsPage } from 'container/CreateAlertV2/utils';
+import { lazy } from 'react';
+
+const CreateAlertV2 = lazy(() => import('container/CreateAlertV2'));
 
 function CreateAlertPage(): JSX.Element {
 	const showNewCreateAlertsPageFlag = showNewCreateAlertsPage();
