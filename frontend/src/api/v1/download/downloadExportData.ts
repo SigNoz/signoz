@@ -1,7 +1,6 @@
 import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
-import { limit } from 'lib/getChartData';
 import { ErrorV2Resp } from 'types/api';
 import { ExportRawDataProps } from 'types/api/exportRawData/getExportRawData';
 
