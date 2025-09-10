@@ -444,11 +444,14 @@ func (v *variableReplacementVisitor) VisitValue(ctx *grammar.ValueContext) any {
 	// First get the original value
 	var originalValue string
 	if ctx.QUOTED_TEXT() != nil {
-		originalValue = ctx.QUOTED_TEXT().GetText()
+		quotedText := ctx.QUOTED_TEXT().GetText()
+		originalValue = trimQuotes(quotedText)
 	} else if ctx.NUMBER() != nil {
 		originalValue = ctx.NUMBER().GetText()
 	} else if ctx.KEY() != nil {
 		originalValue = ctx.KEY().GetText()
+	} else if ctx.BOOL() != nil {
+		originalValue = ctx.BOOL().GetText()
 	}
 
 	// Check if this is a variable (starts with $)
@@ -477,6 +480,10 @@ func (v *variableReplacementVisitor) VisitValue(ctx *grammar.ValueContext) any {
 	}
 
 	// Return original value if not a variable or variable not found
+	// If it was quoted text and not a variable, return with quotes
+	if ctx.QUOTED_TEXT() != nil && !strings.HasPrefix(originalValue, "$") {
+		return ctx.QUOTED_TEXT().GetText()
+	}
 	return originalValue
 }
 
@@ -515,13 +522,19 @@ func (v *variableReplacementVisitor) formatVariableValue(value any) string {
 	case string:
 		// Quote string values
 		return fmt.Sprintf("'%s'", strings.ReplaceAll(val, "'", "\\'"))
+	case []string:
+		parts := make([]string, len(val))
+		for i, item := range val {
+			parts[i] = fmt.Sprintf("'%s'", strings.ReplaceAll(item, "'", "\\'"))
+		}
+		return "[" + strings.Join(parts, ", ") + "]"
 	case []any:
 		// Format array values
 		parts := make([]string, len(val))
 		for i, item := range val {
 			parts[i] = v.formatVariableValue(item)
 		}
-		return "(" + strings.Join(parts, ", ") + ")"
+		return "[" + strings.Join(parts, ", ") + "]"
 	case int, int32, int64, float32, float64:
 		return fmt.Sprintf("%v", val)
 	case bool:
@@ -529,4 +542,13 @@ func (v *variableReplacementVisitor) formatVariableValue(value any) string {
 	default:
 		return fmt.Sprintf("%v", val)
 	}
+}
+
+func trimQuotes(s string) string {
+	if len(s) >= 2 {
+		if (s[0] == '"' && s[len(s)-1] == '"') || (s[0] == '\'' && s[len(s)-1] == '\'') {
+			return s[1 : len(s)-1]
+		}
+	}
+	return s
 }

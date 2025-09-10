@@ -5,6 +5,7 @@ import { Button, FormInstance, Modal, SelectProps, Typography } from 'antd';
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
 import logEvent from 'api/common/logEvent';
+import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
@@ -149,10 +150,17 @@ function FormAlertRules({
 	]);
 
 	const queryOptions = useMemo(() => {
+		const involvedQueriesInTraceOperator = getInvolvedQueriesInTraceOperator(
+			currentQuery.builder.queryTraceOperator,
+		);
 		const queryConfig: Record<EQueryType, () => SelectProps['options']> = {
 			[EQueryType.QUERY_BUILDER]: () => [
-				...(getSelectedQueryOptions(currentQuery.builder.queryData) || []),
+				...(getSelectedQueryOptions(currentQuery.builder.queryData)?.filter(
+					(option) =>
+						!involvedQueriesInTraceOperator.includes(option.value as string),
+				) || []),
 				...(getSelectedQueryOptions(currentQuery.builder.queryFormulas) || []),
+				...(getSelectedQueryOptions(currentQuery.builder.queryTraceOperator) || []),
 			],
 			[EQueryType.PROM]: () => getSelectedQueryOptions(currentQuery.promql),
 			[EQueryType.CLICKHOUSE]: () =>

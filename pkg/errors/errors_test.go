@@ -1,7 +1,7 @@
 package errors
 
 import (
-	"errors"
+	"errors" //nolint:depguard
 	"testing"
 
 	"github.com/stretchr/testify/assert"

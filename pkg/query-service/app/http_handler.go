@@ -617,6 +617,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v3/licenses/active", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
 		aH.LicensingAPI.Activate(rw, req)
 	})).Methods(http.MethodGet)
+
+	// Export
+	router.HandleFunc("/api/v1/export_raw_data", am.ViewAccess(aH.Signoz.Handlers.RawDataExport.ExportRawData)).Methods(http.MethodGet)
 }
 
 func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *middleware.AuthZ) {
@@ -2061,11 +2064,12 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 
 	var req types.PostableRegisterOrgAndAdmin
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorBadData}, nil)
+		render.Error(w, err)
 		return
 	}
 
-	user, errv2 := aH.Signoz.Modules.User.Register(r.Context(), &req)
+	organization := types.NewOrganization(req.OrgDisplayName)
+	user, errv2 := aH.Signoz.Modules.User.CreateFirstUser(r.Context(), organization, req.Name, req.Email, req.Password)
 	if errv2 != nil {
 		render.Error(w, errv2)
 		return

@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { ColumnsType, ColumnType } from 'antd/es/table';
+import { ColumnType } from 'antd/es/table';
 import { convertUnit } from 'container/NewWidget/RightContainer/dataFormatCategories';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
@@ -8,6 +8,12 @@ import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty, isNaN } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+
+// Custom column type that extends ColumnType to include isValueColumn
+export interface CustomDataColumnType<T> extends ColumnType<T> {
+	isValueColumn?: boolean;
+	queryName?: string;
+}
 
 // Helper function to evaluate the condition based on the operator
 function evaluateCondition(
@@ -150,11 +156,14 @@ export function sortFunction(
 		name: string;
 		queryName: string;
 		isValueColumn: boolean;
+		id: string;
 	},
 ): number {
+	const colId = item.id;
+	const colName = item.name;
 	// assumption :- number values is bigger than 'n/a'
-	const valueA = Number(a[`${item.name}_without_unit`] ?? a[item.name]);
-	const valueB = Number(b[`${item.name}_without_unit`] ?? b[item.name]);
+	const valueA = Number(a[`${colId}_without_unit`] ?? a[colId] ?? a[colName]);
+	const valueB = Number(b[`${colId}_without_unit`] ?? b[colId] ?? b[colName]);
 
 	// if both the values are numbers then return the difference here
 	if (!isNaN(valueA) && !isNaN(valueB)) {
@@ -172,17 +181,18 @@ export function sortFunction(
 	}
 
 	// if both of them are strings do the localecompare
-	return ((a[item.name] as string) || '').localeCompare(
-		(b[item.name] as string) || '',
+	return ((a[colId] as string) || (a[colName] as string) || '').localeCompare(
+		(b[colId] as string) || (b[colName] as string) || '',
 	);
 }
+
 export function createColumnsAndDataSource(
 	data: TableData,
 	currentQuery: Query,
 	renderColumnCell?: QueryTableProps['renderColumnCell'],
-): { columns: ColumnsType<RowData>; dataSource: RowData[] } {
-	const columns: ColumnsType<RowData> =
-		data.columns?.reduce<ColumnsType<RowData>>((acc, item) => {
+): { columns: CustomDataColumnType<RowData>[]; dataSource: RowData[] } {
+	const columns: CustomDataColumnType<RowData>[] =
+		data.columns?.reduce<CustomDataColumnType<RowData>[]>((acc, item) => {
 			// is the column is the value column then we need to check for the available legend
 			const legend = item.isValueColumn
 				? getQueryLegend(currentQuery, item.queryName)
@@ -193,12 +203,14 @@ export function createColumnsAndDataSource(
 					(query) => query.queryName === item.queryName,
 				)?.aggregations?.length || 0;
 
-			const column: ColumnType<RowData> = {
+			const column: CustomDataColumnType<RowData> = {
 				dataIndex: item.id || item.name,
 				// if no legend present then rely on the column name value
 				title: !isNewAggregation && !isEmpty(legend) ? legend : item.name,
 				width: QUERY_TABLE_CONFIG.width,
-				render: renderColumnCell && renderColumnCell[item.name],
+				isValueColumn: item.isValueColumn,
+				queryName: item.queryName,
+				render: renderColumnCell && renderColumnCell[item.id],
 				sorter: (a: RowData, b: RowData): number => sortFunction(a, b, item),
 			};
 
