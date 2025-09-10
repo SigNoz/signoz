@@ -1,6 +1,36 @@
 package telemetrylogs
 
-import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+import (
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+)
+
+const (
+
+	// Internal Columns
+	LogsV2IDColumn                   = "id"
+	LogsV2TimestampBucketStartColumn = "ts_bucket_start"
+	LogsV2ResourceFingerPrintColumn  = "resource_fingerprint"
+
+	// Intrinsic Columns
+	LogsV2TimestampColumn         = "timestamp"
+	LogsV2ObservedTimestampColumn = "observed_timestamp"
+	LogsV2BodyColumn              = "body"
+	LogsV2TraceIDColumn           = "trace_id"
+	LogsV2SpanIDColumn            = "span_id"
+	LogsV2TraceFlagsColumn        = "trace_flags"
+	LogsV2SeverityTextColumn      = "severity_text"
+	LogsV2SeverityNumberColumn    = "severity_number"
+	LogsV2ScopeNameColumn         = "scope_name"
+	LogsV2ScopeVersionColumn      = "scope_version"
+
+	// Contextual Columns
+	LogsV2AttributesStringColumn = "attributes_string"
+	LogsV2AttributesNumberColumn = "attributes_number"
+	LogsV2AttributesBoolColumn   = "attributes_bool"
+	LogsV2ResourcesStringColumn  = "resources_string"
+	LogsV2ScopeStringColumn      = "scope_string"
+)
 
 var (
 	DefaultFullTextColumn = &telemetrytypes.TelemetryFieldKey{
@@ -61,6 +91,25 @@ var (
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextScope,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+	}
+
+	DefaultLogsV2SortingOrder = []qbtypes.OrderBy{
+		{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name: LogsV2TimestampColumn,
+				},
+			},
+			Direction: qbtypes.OrderDirectionDesc,
+		},
+		{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name: LogsV2IDColumn,
+				},
+			},
+			Direction: qbtypes.OrderDirectionDesc,
 		},
 	}
 )
