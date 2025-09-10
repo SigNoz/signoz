@@ -3,17 +3,21 @@ package ruletypes
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/converter"
 	"github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"math"
 	"sort"
 )
 
-type ThresholdKind string
+type ThresholdKind struct {
+	valuer.String
+}
 
-const (
-	BasicThresholdKind ThresholdKind = "basic"
+var (
+	BasicThresholdKind = ThresholdKind{valuer.NewString("basic")}
 )
 
 type RuleThresholdData struct {
@@ -24,22 +28,21 @@ type RuleThresholdData struct {
 func (r *RuleThresholdData) UnmarshalJSON(data []byte) error {
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(data, &raw); err != nil {
-		return err
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal raw rule threshold json: %v", err)
 	}
 	if err := json.Unmarshal(raw["kind"], &r.Kind); err != nil {
-		return err
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal rule threhsold kind: %v", err)
 	}
 	switch r.Kind {
 	case BasicThresholdKind:
 		var basicThresholds BasicRuleThresholds
 		if err := json.Unmarshal(raw["spec"], &basicThresholds); err != nil {
-			return fmt.Errorf("failed to unmarshal basic thresholds: %v",
-				err)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal rule threhsold spec: %v", err)
 		}
 		r.Spec = basicThresholds
 
 	default:
-		return fmt.Errorf("unknown threshold kind: %v", r.Kind)
+		return errors.NewInvalidInputf(errors.CodeUnsupported, "unknown threshold kind")
 	}
 
 	return nil
@@ -362,13 +365,13 @@ func (r *RuleThresholdData) GetRuleThreshold() (RuleThreshold, error) {
 		return nil, fmt.Errorf("rule threshold data is nil")
 	}
 	switch r.Kind {
-	case "basic":
+	case BasicThresholdKind:
 		if thresholds, ok := r.Spec.(BasicRuleThresholds); ok {
 			basic := BasicRuleThresholds(thresholds)
 			return basic, nil
 		}
-		return nil, fmt.Errorf("spec is not a BasicRuleThresholds")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid rule threshold spec")
 	default:
-		return nil, fmt.Errorf("unsupported threshold kind: %s", r.Kind)
+		return nil, errors.NewInvalidInputf(errors.CodeUnsupported, "unknown threshold kind")
 	}
 }
