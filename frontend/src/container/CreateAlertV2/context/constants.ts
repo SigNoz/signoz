@@ -60,47 +60,45 @@ export const INITIAL_ALERT_THRESHOLD_STATE: AlertThresholdState = {
 	selectedQuery: 'A',
 	operator: AlertThresholdOperator.IS_ABOVE,
 	matchType: AlertThresholdMatchType.AT_LEAST_ONCE,
-	evaluationWindow: '1m0s',
+	evaluationWindow: '5m0s',
 	algorithm: 'standard',
 	seasonality: 'hourly',
 	thresholds: [INITIAL_CRITICAL_THRESHOLD],
 };
 
 export const THRESHOLD_OPERATOR_OPTIONS = [
-	{ value: '1', label: 'IS ABOVE' },
-	{ value: '2', label: 'IS BELOW' },
-	{ value: '3', label: 'IS EQUAL TO' },
-	{ value: '4', label: 'IS NOT EQUAL TO' },
+	{ value: AlertThresholdOperator.IS_ABOVE, label: 'IS ABOVE' },
+	{ value: AlertThresholdOperator.IS_BELOW, label: 'IS BELOW' },
+	{ value: AlertThresholdOperator.IS_EQUAL_TO, label: 'IS EQUAL TO' },
+	{ value: AlertThresholdOperator.IS_NOT_EQUAL_TO, label: 'IS NOT EQUAL TO' },
 ];
 
 export const ANOMALY_THRESHOLD_OPERATOR_OPTIONS = [
-	{ value: '1', label: 'IS ABOVE' },
-	{ value: '2', label: 'IS BELOW' },
+	{ value: AlertThresholdOperator.IS_ABOVE, label: 'IS ABOVE' },
+	{ value: AlertThresholdOperator.IS_BELOW, label: 'IS BELOW' },
+	{ value: AlertThresholdOperator.ABOVE_BELOW, label: 'ABOVE/BELOW' },
 ];
 
 export const THRESHOLD_MATCH_TYPE_OPTIONS = [
-	{ value: '1', label: 'AT LEAST ONCE' },
-	{ value: '2', label: 'ALL THE TIME' },
-	{ value: '3', label: 'ON AVERAGE' },
-	{ value: '4', label: 'IN TOTAL' },
-	{ value: '5', label: 'LAST' },
+	{ value: AlertThresholdMatchType.AT_LEAST_ONCE, label: 'AT LEAST ONCE' },
+	{ value: AlertThresholdMatchType.ALL_THE_TIME, label: 'ALL THE TIME' },
+	{ value: AlertThresholdMatchType.ON_AVERAGE, label: 'ON AVERAGE' },
+	{ value: AlertThresholdMatchType.IN_TOTAL, label: 'IN TOTAL' },
+	{ value: AlertThresholdMatchType.LAST, label: 'LAST' },
 ];
 
 export const ANOMALY_THRESHOLD_MATCH_TYPE_OPTIONS = [
-	{ value: '1', label: 'AT LEAST ONCE' },
-	{ value: '2', label: 'ALL THE TIME' },
+	{ value: AlertThresholdMatchType.AT_LEAST_ONCE, label: 'AT LEAST ONCE' },
+	{ value: AlertThresholdMatchType.ALL_THE_TIME, label: 'ALL THE TIME' },
 ];
 
 export const ANAMOLY_TIME_DURATION_OPTIONS = [
-	{ value: '1m0s', label: '1 minute' },
 	{ value: '5m0s', label: '5 minutes' },
 	{ value: '10m0s', label: '10 minutes' },
 	{ value: '15m0s', label: '15 minutes' },
-	{ value: '30m0s', label: '30 minutes' },
 	{ value: '1h0m0s', label: '1 hour' },
 	{ value: '3h0m0s', label: '3 hours' },
-	{ value: '6h0m0s', label: '6 hours' },
-	{ value: '12h0m0s', label: '12 hours' },
+	{ value: '4h0m0s', label: '4 hours' },
 	{ value: '24h0m0s', label: '24 hours' },
 ];
 

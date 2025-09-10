@@ -48,6 +48,7 @@ export enum AlertThresholdOperator {
 	IS_BELOW = '2',
 	IS_EQUAL_TO = '3',
 	IS_NOT_EQUAL_TO = '4',
+	ABOVE_BELOW = '7',
 }
 
 export enum AlertThresholdMatchType {
