@@ -31,7 +31,7 @@ func NewStatsFromRules(rules []*Rule) map[string]any {
 
 		postableRule, err := ParsePostableRule([]byte(rule.Data))
 		if err != nil {
-			zap.L().Error("failed to unmarshal rule from db", zap.String("id", s.ID.StringValue()), zap.Error(err))
+			zap.L().Error("failed to unmarshal rule from db", zap.String("id", rule.ID.StringValue()), zap.Error(err))
 			continue
 		}
 		gettableRule.PostableRule = *postableRule
