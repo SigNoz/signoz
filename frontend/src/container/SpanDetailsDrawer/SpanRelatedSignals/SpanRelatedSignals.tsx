@@ -111,7 +111,7 @@ function SpanRelatedSignals({
 						type: '',
 						isJSON: false,
 					} as BaseAutocompleteData,
-					op: 'IN',
+					op: '=',
 					value: selectedSpan.traceId,
 				},
 			],
@@ -133,7 +133,7 @@ function SpanRelatedSignals({
 		};
 
 		const searchParams = new URLSearchParams();
-		searchParams.set('compositeQuery', JSON.stringify(compositeQuery));
+		searchParams.set(QueryParams.compositeQuery, JSON.stringify(compositeQuery));
 		searchParams.set(QueryParams.startTime, startTimeMs.toString());
 		searchParams.set(QueryParams.endTime, endTimeMs.toString());
 
