@@ -304,7 +304,7 @@ function QueryAddOns({
 			{selectedViews.length > 0 && (
 				<div className="selected-add-ons-content">
 					{selectedViews.find((view) => view.key === 'group_by') && (
-						<div className="add-on-content">
+						<div className="add-on-content" data-testid="group-by-content">
 							<div className="periscope-input-with-label">
 								<Tooltip
 									title={
@@ -340,7 +340,7 @@ function QueryAddOns({
 						</div>
 					)}
 					{selectedViews.find((view) => view.key === 'having') && (
-						<div className="add-on-content">
+						<div className="add-on-content" data-testid="having-content">
 							<div className="periscope-input-with-label">
 								<Tooltip
 									title={
@@ -372,7 +372,7 @@ function QueryAddOns({
 						</div>
 					)}
 					{selectedViews.find((view) => view.key === 'limit') && (
-						<div className="add-on-content">
+						<div className="add-on-content" data-testid="limit-content">
 							<InputWithLabel
 								label="Limit"
 								onChange={handleChangeLimit}
@@ -386,7 +386,7 @@ function QueryAddOns({
 						</div>
 					)}
 					{selectedViews.find((view) => view.key === 'order_by') && (
-						<div className="add-on-content">
+						<div className="add-on-content" data-testid="order-by-content">
 							<div className="periscope-input-with-label">
 								<Tooltip
 									title={
@@ -424,7 +424,7 @@ function QueryAddOns({
 					)}
 
 					{selectedViews.find((view) => view.key === 'reduce_to') && showReduceTo && (
-						<div className="add-on-content">
+						<div className="add-on-content" data-testid="reduce-to-content">
 							<div className="periscope-input-with-label">
 								<Tooltip
 									title={
@@ -455,7 +455,7 @@ function QueryAddOns({
 					)}
 
 					{selectedViews.find((view) => view.key === 'legend_format') && (
-						<div className="add-on-content">
+						<div className="add-on-content" data-testid="legend-format-content">
 							<InputWithLabel
 								label="Legend format"
 								placeholder="Write legend format"
