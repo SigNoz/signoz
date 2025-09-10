@@ -1,5 +1,4 @@
 import { ILog } from 'types/api/logs/log';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Span } from 'types/api/trace/getTraceV2';
 
 // Constants
@@ -204,99 +203,7 @@ export const mockEmptyLogsResponse = {
 	},
 };
 
-// Expected query filters
-export const expectedSpanFilters = {
-	items: [
-		{
-			id: expect.any(String),
-			op: '=',
-			value: TEST_TRACE_ID,
-			key: {
-				id: expect.any(String),
-				dataType: DataTypes.String,
-				isColumn: true,
-				type: '',
-				isJSON: false,
-				key: 'trace_id',
-			},
-		},
-		{
-			id: expect.any(String),
-			op: '=',
-			value: TEST_SPAN_ID,
-			key: {
-				id: expect.any(String),
-				dataType: DataTypes.String,
-				isColumn: true,
-				type: '',
-				isJSON: false,
-				key: 'span_id',
-			},
-		},
-	],
-	op: 'AND',
-};
-
-export const expectedBeforeFilters = {
-	items: [
-		{
-			id: expect.any(String),
-			op: '=',
-			value: TEST_TRACE_ID,
-			key: {
-				id: expect.any(String),
-				dataType: DataTypes.String,
-				isColumn: true,
-				type: '',
-				isJSON: false,
-				key: 'trace_id',
-			},
-		},
-		{
-			id: expect.any(String),
-			op: '<',
-			value: 'span-log-1', // first span log ID
-			key: {
-				id: expect.any(String),
-				dataType: DataTypes.String,
-				isColumn: true,
-				type: '',
-				isJSON: false,
-				key: 'id',
-			},
-		},
-	],
-	op: 'AND',
-};
-
-export const expectedAfterFilters = {
-	items: [
-		{
-			id: expect.any(String),
-			op: '=',
-			value: TEST_TRACE_ID,
-			key: {
-				id: expect.any(String),
-				dataType: DataTypes.String,
-				isColumn: true,
-				type: '',
-				isJSON: false,
-				key: 'trace_id',
-			},
-		},
-		{
-			id: expect.any(String),
-			op: '>',
-			value: 'span-log-2', // last span log ID
-			key: {
-				id: expect.any(String),
-				dataType: DataTypes.String,
-				isColumn: true,
-				type: '',
-				isJSON: false,
-				key: 'id',
-			},
-		},
-	],
-	op: 'AND',
-};
+// Expected v5 filter expressions
+export const expectedSpanFilterExpression = `trace_id = '${TEST_TRACE_ID}' AND span_id = '${TEST_SPAN_ID}'`;
+export const expectedBeforeFilterExpression = `trace_id = '${TEST_TRACE_ID}' AND id < 'span-log-1'`;
+export const expectedAfterFilterExpression = `trace_id = '${TEST_TRACE_ID}' AND id > 'span-log-2'`;

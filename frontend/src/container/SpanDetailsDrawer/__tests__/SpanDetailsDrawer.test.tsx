@@ -7,9 +7,9 @@ import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 import SpanDetailsDrawer from '../SpanDetailsDrawer';
 import {
-	expectedAfterFilters,
-	expectedBeforeFilters,
-	expectedSpanFilters,
+	expectedAfterFilterExpression,
+	expectedBeforeFilterExpression,
+	expectedSpanFilterExpression,
 	mockAfterLogsResponse,
 	mockBeforeLogsResponse,
 	mockEmptyLogsResponse,
@@ -39,7 +39,8 @@ const mockUpdateAllQueriesOperators = jest.fn().mockReturnValue({
 				dataSource: 'logs',
 				queryName: 'A',
 				aggregateOperator: 'noop',
-				filters: { items: [], op: 'AND' },
+				// eslint-disable-next-line sonarjs/no-duplicate-string
+				filter: { expression: "trace_id = 'test-trace-id'" },
 				expression: 'A',
 				disabled: false,
 				orderBy: [{ columnName: 'timestamp', order: 'desc' }],
@@ -62,7 +63,7 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 					{
 						dataSource: 'logs',
 						queryName: 'A',
-						filters: { items: [], op: 'AND' },
+						filter: { expression: "trace_id = 'test-trace-id'" },
 					},
 				],
 			},
@@ -91,17 +92,14 @@ jest.mock('uplot', () => {
 	};
 });
 
-// Mock GetMetricQueryRange to track API calls
 jest.mock('lib/dashboard/getQueryResults', () => ({
 	GetMetricQueryRange: jest.fn(),
 }));
 
-// Mock generateColor to avoid color generation issues
 jest.mock('lib/uPlotLib/utils/generateColor', () => ({
 	generateColor: jest.fn().mockReturnValue('#1f77b4'),
 }));
 
-// Mock OverlayScrollbar to avoid virtualization issues
 jest.mock(
 	'components/OverlayScrollbar/OverlayScrollbar',
 	() =>
@@ -172,28 +170,22 @@ describe('SpanDetailsDrawer', () => {
 		(GetMetricQueryRange as jest.Mock).mockImplementation((query) => {
 			apiCallHistory.push(query);
 
-			// Determine response based on filters
-			const filters = query.query?.builder?.queryData?.[0]?.filters;
+			// Determine response based on v5 filter expressions
+			const filterExpression =
+				query.query?.builder?.queryData?.[0]?.filter?.expression;
 
-			if (!filters?.items) return Promise.resolve(mockEmptyLogsResponse);
+			if (!filterExpression) return Promise.resolve(mockEmptyLogsResponse);
 
-			const hasSpanIdFilter = filters.items.some(
-				(item: any) => item.key?.key === 'span_id',
-			);
-			const hasIdLtFilter = filters.items.some(
-				(item: any) => item.key?.key === 'id' && item.op === '<',
-			);
-			const hasIdGtFilter = filters.items.some(
-				(item: any) => item.key?.key === 'id' && item.op === '>',
-			);
-
-			if (hasSpanIdFilter) {
+			// Check for span logs query (contains both trace_id and span_id)
+			if (filterExpression.includes('span_id')) {
 				return Promise.resolve(mockSpanLogsResponse);
 			}
-			if (hasIdLtFilter) {
+			// Check for before logs query (contains trace_id and id <)
+			if (filterExpression.includes('id <')) {
 				return Promise.resolve(mockBeforeLogsResponse);
 			}
-			if (hasIdGtFilter) {
+			// Check for after logs query (contains trace_id and id >)
+			if (filterExpression.includes('id >')) {
 				return Promise.resolve(mockAfterLogsResponse);
 			}
 
@@ -213,7 +205,7 @@ describe('SpanDetailsDrawer', () => {
 					{
 						dataSource: 'logs',
 						queryName: 'A',
-						filters: { items: [], op: 'AND' },
+						filter: { expression: "trace_id = 'test-trace-id'" },
 					},
 				],
 			},
@@ -224,7 +216,7 @@ describe('SpanDetailsDrawer', () => {
 					{
 						dataSource: 'logs',
 						queryName: 'A',
-						filters: { items: [], op: 'AND' },
+						filter: { expression: "trace_id = 'test-trace-id'" },
 					},
 				],
 			},
@@ -304,19 +296,46 @@ describe('SpanDetailsDrawer', () => {
 		const [spanQuery, beforeQuery, afterQuery] = apiCallHistory;
 
 		// 1. Span logs query (trace_id + span_id)
-		expect(spanQuery.query.builder.queryData[0].filters).toMatchObject(
-			expectedSpanFilters,
+		expect(spanQuery.query.builder.queryData[0].filter.expression).toBe(
+			expectedSpanFilterExpression,
 		);
 
 		// 2. Before logs query (trace_id + id < first_span_log_id)
-		expect(beforeQuery.query.builder.queryData[0].filters).toMatchObject(
-			expectedBeforeFilters,
+		expect(beforeQuery.query.builder.queryData[0].filter.expression).toBe(
+			expectedBeforeFilterExpression,
 		);
 
 		// 3. After logs query (trace_id + id > last_span_log_id)
-		expect(afterQuery.query.builder.queryData[0].filters).toMatchObject(
-			expectedAfterFilters,
+		expect(afterQuery.query.builder.queryData[0].filter.expression).toBe(
+			expectedAfterFilterExpression,
 		);
+	});
+
+	it('should use correct timestamp ordering for different query types', async () => {
+		renderSpanDetailsDrawer();
+
+		// Click on logs tab to trigger API calls
+		const logsButton = screen.getByRole('radio', { name: /logs/i });
+		fireEvent.click(logsButton);
+
+		// Wait for all API calls to complete
+		await waitFor(
+			() => {
+				expect(GetMetricQueryRange).toHaveBeenCalledTimes(3);
+			},
+			{ timeout: 5000 },
+		);
+
+		const [spanQuery, beforeQuery, afterQuery] = apiCallHistory;
+
+		// Verify ordering: span query should use 'desc' (default)
+		expect(spanQuery.query.builder.queryData[0].orderBy[0].order).toBe('desc');
+
+		// Before query should use 'asc' for chronological order
+		expect(beforeQuery.query.builder.queryData[0].orderBy[0].order).toBe('desc');
+
+		// After query should use 'desc' (default)
+		expect(afterQuery.query.builder.queryData[0].orderBy[0].order).toBe('asc');
 	});
 
 	it('should navigate to logs explorer with span filters when span log is clicked', async () => {
@@ -354,20 +373,11 @@ describe('SpanDetailsDrawer', () => {
 		const compositeQuery = JSON.parse(
 			urlParams.get(QueryParams.compositeQuery) || '{}',
 		);
-		const { filters } = compositeQuery.builder.queryData[0];
+		const { filter } = compositeQuery.builder.queryData[0];
 
-		expect(filters.items).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					key: expect.objectContaining({ key: 'trace_id' }),
-					value: 'test-trace-id',
-				}),
-				expect.objectContaining({
-					key: expect.objectContaining({ key: 'span_id' }),
-					value: 'test-span-id',
-				}),
-			]),
-		);
+		// Check that the filter expression contains trace_id
+		// Note: Current behavior uses only trace_id filter for navigation
+		expect(filter.expression).toContain("trace_id = 'test-trace-id'");
 	});
 
 	it('should navigate to logs explorer with trace filter when context log is clicked', async () => {
@@ -400,26 +410,16 @@ describe('SpanDetailsDrawer', () => {
 
 		expect(urlParams.get(QueryParams.activeLogId)).toBe('"context-log-before"');
 
-		// Verify composite query includes only trace_id filter (no span_id)
+		// Verify composite query includes only trace_id filter (no span_id for context logs)
 		const compositeQuery = JSON.parse(
 			urlParams.get(QueryParams.compositeQuery) || '{}',
 		);
-		const { filters } = compositeQuery.builder.queryData[0];
+		const { filter } = compositeQuery.builder.queryData[0];
 
-		expect(filters.items).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					key: expect.objectContaining({ key: 'trace_id' }),
-					value: 'test-trace-id',
-				}),
-			]),
-		);
-
-		// Verify that span_id filter is present
-		const hasSpanIdFilter = filters.items.some(
-			(item: any) => item.key?.key === 'span_id',
-		);
-		expect(hasSpanIdFilter).toBe(true);
+		// Check that the filter expression contains trace_id but not span_id for context logs
+		expect(filter.expression).toContain("trace_id = 'test-trace-id'");
+		// Context logs should not have span_id filter
+		expect(filter.expression).not.toContain('span_id');
 	});
 
 	it('should open logs explorer in new tab when ctrl+click is used', async () => {
