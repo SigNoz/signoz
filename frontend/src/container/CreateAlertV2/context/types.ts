@@ -69,6 +69,27 @@ export interface AlertThresholdState {
 	thresholds: Threshold[];
 }
 
+export enum TimeDuration {
+	ONE_MINUTE = '1m0s',
+	FIVE_MINUTES = '5m0s',
+	TEN_MINUTES = '10m0s',
+	FIFTEEN_MINUTES = '15m0s',
+	ONE_HOUR = '1h0m0s',
+	THREE_HOURS = '3h0m0s',
+	FOUR_HOURS = '4h0m0s',
+	TWENTY_FOUR_HOURS = '24h0m0s',
+}
+
+export enum Algorithm {
+	STANDARD = 'standard',
+}
+
+export enum Seasonality {
+	HOURLY = 'hourly',
+	DAILY = 'daily',
+	WEEKLY = 'weekly',
+}
+
 export type AlertThresholdAction =
 	| { type: 'SET_SELECTED_QUERY'; payload: string }
 	| { type: 'SET_OPERATOR'; payload: AlertThresholdOperator }

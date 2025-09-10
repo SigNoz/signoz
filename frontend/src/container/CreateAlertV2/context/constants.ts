@@ -7,7 +7,10 @@ import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
 	AlertThresholdState,
+	Algorithm,
+	Seasonality,
 	Threshold,
+	TimeDuration,
 } from './types';
 
 export const INITIAL_ALERT_STATE: AlertState = {
@@ -60,9 +63,9 @@ export const INITIAL_ALERT_THRESHOLD_STATE: AlertThresholdState = {
 	selectedQuery: 'A',
 	operator: AlertThresholdOperator.IS_ABOVE,
 	matchType: AlertThresholdMatchType.AT_LEAST_ONCE,
-	evaluationWindow: '5m0s',
-	algorithm: 'standard',
-	seasonality: 'hourly',
+	evaluationWindow: TimeDuration.FIVE_MINUTES,
+	algorithm: Algorithm.STANDARD,
+	seasonality: Seasonality.HOURLY,
 	thresholds: [INITIAL_CRITICAL_THRESHOLD],
 };
 
@@ -93,21 +96,21 @@ export const ANOMALY_THRESHOLD_MATCH_TYPE_OPTIONS = [
 ];
 
 export const ANAMOLY_TIME_DURATION_OPTIONS = [
-	{ value: '5m0s', label: '5 minutes' },
-	{ value: '10m0s', label: '10 minutes' },
-	{ value: '15m0s', label: '15 minutes' },
-	{ value: '1h0m0s', label: '1 hour' },
-	{ value: '3h0m0s', label: '3 hours' },
-	{ value: '4h0m0s', label: '4 hours' },
-	{ value: '24h0m0s', label: '24 hours' },
+	{ value: TimeDuration.FIVE_MINUTES, label: '5 minutes' },
+	{ value: TimeDuration.TEN_MINUTES, label: '10 minutes' },
+	{ value: TimeDuration.FIFTEEN_MINUTES, label: '15 minutes' },
+	{ value: TimeDuration.ONE_HOUR, label: '1 hour' },
+	{ value: TimeDuration.THREE_HOURS, label: '3 hours' },
+	{ value: TimeDuration.FOUR_HOURS, label: '4 hours' },
+	{ value: TimeDuration.TWENTY_FOUR_HOURS, label: '24 hours' },
 ];
 
 export const ANOMALY_ALGORITHM_OPTIONS = [
-	{ value: 'standard', label: 'Standard' },
+	{ value: Algorithm.STANDARD, label: 'Standard' },
 ];
 
 export const ANOMALY_SEASONALITY_OPTIONS = [
-	{ value: 'hourly', label: 'Hourly' },
-	{ value: 'daily', label: 'Daily' },
-	{ value: 'weekly', label: 'Weekly' },
+	{ value: Seasonality.HOURLY, label: 'Hourly' },
+	{ value: Seasonality.DAILY, label: 'Daily' },
+	{ value: Seasonality.WEEKLY, label: 'Weekly' },
 ];
