@@ -134,7 +134,7 @@ func TestParseIntoRule(t *testing.T) {
 				if rule.RuleType != RuleTypeThreshold {
 					t.Errorf("Expected rule type '%s', got '%s'", RuleTypeThreshold, rule.RuleType)
 				}
-				if rule.RuleCondition.Thresholds.Kind == "" {
+				if rule.RuleCondition.Thresholds.Kind.IsZero() {
 					t.Error("Expected thresholds to be populated")
 				}
 				if rule.RuleCondition.Target == nil {
@@ -207,7 +207,7 @@ func TestParseIntoRule(t *testing.T) {
 				if rule.RuleType != RuleTypeProm {
 					t.Errorf("Expected rule type 'PROM_QL_RULE', got '%s'", rule.RuleType)
 				}
-				if rule.RuleCondition.Thresholds.Kind == "" {
+				if rule.RuleCondition.Thresholds.Kind.IsZero() {
 					t.Error("Expected thresholds to be populated")
 				}
 				if rule.RuleCondition.Target == nil {
@@ -289,7 +289,7 @@ func TestParseIntoRuleThresholdGeneration(t *testing.T) {
 	}
 
 	// Check that thresholds were parsed correctly
-	if rule.RuleCondition.Thresholds.Kind != "basic" {
+	if rule.RuleCondition.Thresholds.Kind != BasicThresholdKind {
 		t.Errorf("Expected threshold kind 'basic', got '%s'", rule.RuleCondition.Thresholds.Kind)
 	}
 
@@ -366,7 +366,7 @@ func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	if rule.RuleCondition.Thresholds.Kind != "basic" {
+	if rule.RuleCondition.Thresholds.Kind != BasicThresholdKind {
 		t.Errorf("Expected threshold kind 'basic', got '%s'", rule.RuleCondition.Thresholds.Kind)
 	}
 
