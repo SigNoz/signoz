@@ -24,13 +24,13 @@ interface LogsDownloadOptionsMenuProps {
 	filter: string | null;
 	columns: TelemetryFieldKey[];
 	orderBy: string | null;
-	onClose?: () => void;
-	onDownloadStart?: () => void;
-	onDownloadEnd?: () => void;
-	isDownloading?: boolean;
+	onClose: () => void;
+	onDownloadStart: () => void;
+	onDownloadEnd: () => void;
+	isDownloading: boolean;
 }
 
-function LogsDownloadOptionsMenu({
+export default function LogsDownloadOptionsMenu({
 	startTime,
 	endTime,
 	filter,
@@ -39,7 +39,7 @@ function LogsDownloadOptionsMenu({
 	onClose,
 	onDownloadStart,
 	onDownloadEnd,
-	isDownloading = false,
+	isDownloading,
 }: LogsDownloadOptionsMenuProps): JSX.Element {
 	const [exportFormat, setExportFormat] = useState<string>(DownloadFormats.CSV);
 	const [rowLimit, setRowLimit] = useState<number>(DownloadRowCounts.TEN_K);
@@ -48,8 +48,8 @@ function LogsDownloadOptionsMenu({
 	);
 	const handleExportRawData = async (): Promise<void> => {
 		// Close the menu immediately when export is triggered
-		onClose?.();
-		onDownloadStart?.();
+		onClose();
+		onDownloadStart();
 		try {
 			const downloadOptions = {
 				source: 'logs',
@@ -70,7 +70,7 @@ function LogsDownloadOptionsMenu({
 			console.error('Error exporting logs:', error);
 			message.error('Failed to export logs. Please try again.');
 		} finally {
-			onDownloadEnd?.();
+			onDownloadEnd();
 		}
 	};
 
@@ -132,12 +132,3 @@ function LogsDownloadOptionsMenu({
 		</div>
 	);
 }
-
-LogsDownloadOptionsMenu.defaultProps = {
-	onClose: (): void => {},
-	onDownloadStart: (): void => {},
-	onDownloadEnd: (): void => {},
-	isDownloading: false,
-};
-
-export default LogsDownloadOptionsMenu;

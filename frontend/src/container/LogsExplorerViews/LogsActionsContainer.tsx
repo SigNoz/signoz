@@ -177,7 +177,7 @@ function LogsActionsContainer({
 											<DownloadIcon size={14} />
 										)
 									}
-									data-testid="periscope-btn"
+									data-testid="periscope-btn-download-options"
 									disabled={isDownloading}
 								/>
 
@@ -200,7 +200,7 @@ function LogsActionsContainer({
 									className="periscope-btn ghost"
 									onClick={handleToggleShowFormatOptions}
 									icon={<Sliders size={14} />}
-									data-testid="periscope-btn"
+									data-testid="periscope-btn-format-options"
 								/>
 
 								{showFormatMenuItems && (

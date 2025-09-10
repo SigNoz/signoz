@@ -1,6 +1,7 @@
 import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
+import { limit } from 'lib/getChartData';
 import { ErrorV2Resp } from 'types/api';
 import { ExportRawDataProps } from 'types/api/exportRawData/getExportRawData';
 
@@ -10,10 +11,10 @@ export const downloadExportData = async (
 	try {
 		const queryParams = new URLSearchParams();
 
-		if (props.start) {
+		if (props.start != null && props.start !== undefined) {
 			queryParams.append('start', String(props.start));
 		}
-		if (props.end) {
+		if (props.end != null && props.end !== undefined) {
 			queryParams.append('end', String(props.end));
 		}
 		if (props.filter) {
@@ -25,7 +26,7 @@ export const downloadExportData = async (
 		if (props.orderBy) {
 			queryParams.append('order_by', props.orderBy);
 		}
-		if (props.limit) {
+		if (props.limit && limit > 0) {
 			queryParams.append('limit', String(props.limit));
 		}
 		if (props.format) {
@@ -66,12 +67,6 @@ export const downloadExportData = async (
 		// Trigger download
 		document.body.appendChild(link);
 		link.click();
-
-		// Cleanup
-		setTimeout(() => {
-			document.body.removeChild(link);
-			window.URL.revokeObjectURL(url);
-		}, 100);
 	} catch (error) {
 		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 	}
