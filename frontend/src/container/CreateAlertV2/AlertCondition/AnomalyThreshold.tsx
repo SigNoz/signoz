@@ -41,11 +41,12 @@ function AnomalyThreshold(): JSX.Element {
 			<div className="alert-condition-sentences">
 				{/* Sentence 1 */}
 				<div className="alert-condition-sentence">
-					<Typography.Text className="sentence-text">
+					<Typography.Text data-testid="notification-text" className="sentence-text">
 						Send notification when the observed value for
 					</Typography.Text>
 					<Select
 						value={thresholdState.selectedQuery}
+						data-testid="query-select"
 						onChange={(value): void => {
 							setThresholdState({
 								type: 'SET_SELECTED_QUERY',
@@ -55,11 +56,15 @@ function AnomalyThreshold(): JSX.Element {
 						style={{ width: 80 }}
 						options={queryNames}
 					/>
-					<Typography.Text className="sentence-text">
+					<Typography.Text
+						data-testid="evaluation-window-text"
+						className="sentence-text"
+					>
 						during the last
 					</Typography.Text>
 					<Select
 						value={thresholdState.evaluationWindow}
+						data-testid="evaluation-window-select"
 						onChange={(value): void => {
 							setThresholdState({
 								type: 'SET_EVALUATION_WINDOW',
@@ -72,9 +77,12 @@ function AnomalyThreshold(): JSX.Element {
 				</div>
 				{/* Sentence 2 */}
 				<div className="alert-condition-sentence">
-					<Typography.Text className="sentence-text">is</Typography.Text>
+					<Typography.Text data-testid="threshold-text" className="sentence-text">
+						is
+					</Typography.Text>
 					<Select
 						value={thresholdState.thresholds[0].thresholdValue}
+						data-testid="threshold-value-select"
 						onChange={(value): void => {
 							updateThreshold(
 								thresholdState.thresholds[0].id,
@@ -85,9 +93,12 @@ function AnomalyThreshold(): JSX.Element {
 						style={{ width: 80 }}
 						options={deviationOptions}
 					/>
-					<Typography.Text className="sentence-text">deviations</Typography.Text>
+					<Typography.Text data-testid="deviations-text" className="sentence-text">
+						deviations
+					</Typography.Text>
 					<Select
 						value={thresholdState.operator}
+						data-testid="operator-select"
 						onChange={(value): void => {
 							setThresholdState({
 								type: 'SET_OPERATOR',
@@ -97,11 +108,15 @@ function AnomalyThreshold(): JSX.Element {
 						style={{ width: 80 }}
 						options={ANOMALY_THRESHOLD_OPERATOR_OPTIONS}
 					/>
-					<Typography.Text className="sentence-text">
+					<Typography.Text
+						data-testid="predicted-data-text"
+						className="sentence-text"
+					>
 						the predicted data
 					</Typography.Text>
 					<Select
 						value={thresholdState.matchType}
+						data-testid="match-type-select"
 						onChange={(value): void => {
 							setThresholdState({
 								type: 'SET_MATCH_TYPE',
@@ -114,9 +129,12 @@ function AnomalyThreshold(): JSX.Element {
 				</div>
 				{/* Sentence 3 */}
 				<div className="alert-condition-sentence">
-					<Typography.Text className="sentence-text">using the</Typography.Text>
+					<Typography.Text data-testid="using-the-text" className="sentence-text">
+						using the
+					</Typography.Text>
 					<Select
 						value={thresholdState.algorithm}
+						data-testid="algorithm-select"
 						onChange={(value): void => {
 							setThresholdState({
 								type: 'SET_ALGORITHM',
@@ -126,9 +144,15 @@ function AnomalyThreshold(): JSX.Element {
 						style={{ width: 80 }}
 						options={ANOMALY_ALGORITHM_OPTIONS}
 					/>
-					<Typography.Text className="sentence-text">algorithm with</Typography.Text>
+					<Typography.Text
+						data-testid="algorithm-with-text"
+						className="sentence-text"
+					>
+						algorithm with
+					</Typography.Text>
 					<Select
 						value={thresholdState.seasonality}
+						data-testid="seasonality-select"
 						onChange={(value): void => {
 							setThresholdState({
 								type: 'SET_SEASONALITY',
@@ -138,7 +162,9 @@ function AnomalyThreshold(): JSX.Element {
 						style={{ width: 80 }}
 						options={ANOMALY_SEASONALITY_OPTIONS}
 					/>
-					<Typography.Text className="sentence-text">seasonality</Typography.Text>
+					<Typography.Text data-testid="seasonality-text" className="sentence-text">
+						seasonality
+					</Typography.Text>
 				</div>
 			</div>
 		</div>

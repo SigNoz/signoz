@@ -2,6 +2,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { MemoryRouter } from 'react-router-dom';
 import { Channels } from 'types/api/channels/getAll';
 
 import { CreateAlertProvider } from '../../context';
@@ -113,11 +114,13 @@ const createTestQueryClient = (): QueryClient =>
 const renderAlertThreshold = (): ReturnType<typeof render> => {
 	const queryClient = createTestQueryClient();
 	return render(
-		<QueryClientProvider client={queryClient}>
-			<CreateAlertProvider>
-				<AlertThreshold />
-			</CreateAlertProvider>
-		</QueryClientProvider>,
+		<MemoryRouter>
+			<QueryClientProvider client={queryClient}>
+				<CreateAlertProvider>
+					<AlertThreshold />
+				</CreateAlertProvider>
+			</QueryClientProvider>
+		</MemoryRouter>,
 	);
 };
 

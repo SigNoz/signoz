@@ -2,6 +2,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { MemoryRouter } from 'react-router-dom';
 
 import { CreateAlertProvider } from '../../context';
 import AlertCondition from '../AlertCondition';
@@ -73,6 +74,7 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 			dataSource: string;
 			queryName: string;
 		};
+		redirectWithQueryBuilderData: () => void;
 	} => ({
 		currentQuery: {
 			dataSource: 'METRICS',
@@ -82,6 +84,7 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 				queryFormulas: [],
 			},
 		},
+		redirectWithQueryBuilderData: jest.fn(),
 	}),
 }));
 
@@ -97,11 +100,13 @@ const createTestQueryClient = (): QueryClient =>
 const renderAlertCondition = (): ReturnType<typeof render> => {
 	const queryClient = createTestQueryClient();
 	return render(
-		<QueryClientProvider client={queryClient}>
-			<CreateAlertProvider>
-				<AlertCondition />
-			</CreateAlertProvider>
-		</QueryClientProvider>,
+		<MemoryRouter>
+			<QueryClientProvider client={queryClient}>
+				<CreateAlertProvider>
+					<AlertCondition />
+				</CreateAlertProvider>
+			</QueryClientProvider>
+		</MemoryRouter>,
 	);
 };
 

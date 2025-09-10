@@ -2,6 +2,10 @@
 /* eslint-disable react/destructuring-assignment */
 import { render, screen } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	INITIAL_ALERT_STATE,
+	INITIAL_ALERT_THRESHOLD_STATE,
+} from 'container/CreateAlertV2/context/constants';
 import { buildInitialAlertDef } from 'container/CreateAlertV2/context/utils';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
@@ -112,6 +116,20 @@ const mockUseQueryBuilder = {
 };
 
 const mockAlertDef = buildInitialAlertDef(AlertTypes.METRICS_BASED_ALERT);
+
+// Mock useCreateAlertState to provide the correct yAxisUnit
+jest.mock('../../context', () => ({
+	...jest.requireActual('../../context'),
+	useCreateAlertState: (): any => ({
+		alertState: {
+			...INITIAL_ALERT_STATE,
+			yAxisUnit: REQUESTS_PER_SEC,
+		},
+		thresholdState: INITIAL_ALERT_THRESHOLD_STATE,
+		setAlertState: jest.fn(),
+		setThresholdState: jest.fn(),
+	}),
+}));
 
 const renderChartPreview = (): ReturnType<typeof render> =>
 	render(

@@ -2,7 +2,6 @@ import { Button, Input, Select, Space, Tooltip, Typography } from 'antd';
 import { ChartLine, CircleX } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { enableRecoveryThreshold } from '../utils';
 import { ThresholdItemProps } from './types';
 
 function ThresholdItem({
@@ -14,8 +13,6 @@ function ThresholdItem({
 	units,
 }: ThresholdItemProps): JSX.Element {
 	const [showRecoveryThreshold, setShowRecoveryThreshold] = useState(false);
-
-	const enableRecoveryThresholdFlag = enableRecoveryThreshold();
 
 	const yAxisUnitSelect = useMemo(() => {
 		let component = (
@@ -94,7 +91,7 @@ function ThresholdItem({
 						placeholder="Select notification channels"
 					/>
 					<Button.Group>
-						{!showRecoveryThreshold && enableRecoveryThresholdFlag && (
+						{!showRecoveryThreshold && (
 							<Button
 								type="default"
 								icon={<ChartLine size={16} />}
