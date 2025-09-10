@@ -17,14 +17,14 @@ export interface ChartPreviewProps {
 
 function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 	const { currentQuery, panelType, stagedQuery } = useQueryBuilder();
-	const { thresholdState } = useCreateAlertState();
+	const { thresholdState, alertState } = useCreateAlertState();
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
 	const [, setQueryStatus] = useState<string>('');
 
-	const yAxisUnit = currentQuery.unit || '';
+	const yAxisUnit = alertState.yAxisUnit || '';
 
 	const renderQBChartPreview = (): JSX.Element => (
 		<ChartPreviewComponent

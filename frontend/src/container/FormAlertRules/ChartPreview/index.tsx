@@ -104,6 +104,7 @@ function ChartPreview({
 			alertDef?.condition.targetUnit,
 		],
 	);
+
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 	const [graphVisibility, setGraphVisibility] = useState<boolean[]>([]);

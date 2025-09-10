@@ -2,10 +2,12 @@
 /* eslint-disable react/destructuring-assignment */
 import { render, screen } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { buildInitialAlertDef } from 'container/CreateAlertV2/context/utils';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import store from 'store';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { EQueryType } from 'types/common/dashboard';
 
 import { CreateAlertProvider } from '../../context';
@@ -109,13 +111,15 @@ const mockUseQueryBuilder = {
 	},
 };
 
+const mockAlertDef = buildInitialAlertDef(AlertTypes.METRICS_BASED_ALERT);
+
 const renderChartPreview = (): ReturnType<typeof render> =>
 	render(
 		<Provider store={store}>
 			<QueryClientProvider client={queryClient}>
 				<MemoryRouter>
 					<CreateAlertProvider>
-						<ChartPreview />
+						<ChartPreview alertDef={mockAlertDef} />
 					</CreateAlertProvider>
 				</MemoryRouter>
 			</QueryClientProvider>

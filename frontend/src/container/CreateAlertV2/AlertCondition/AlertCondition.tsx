@@ -61,7 +61,9 @@ function AlertCondition(): JSX.Element {
 									'active-tab': alertType === tab.value,
 								})}
 								onClick={(): void => {
-									handleAlertTypeChange(tab.value as AlertTypes);
+									if (alertType !== tab.value) {
+										handleAlertTypeChange(tab.value as AlertTypes);
+									}
 								}}
 							>
 								{tab.icon}
