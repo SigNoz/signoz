@@ -1,6 +1,6 @@
 import './styles.scss';
 
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import classNames from 'classnames';
 import { Activity, ChartLine } from 'lucide-react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -9,6 +9,7 @@ import { useCreateAlertState } from '../context';
 import Stepper from '../Stepper';
 import AlertThreshold from './AlertThreshold';
 import AnomalyThreshold from './AnomalyThreshold';
+import { ANOMALY_TAB_TOOLTIP, THRESHOLD_TAB_TOOLTIP } from './constants';
 
 function AlertCondition(): JSX.Element {
 	const { alertType, setAlertType } = useCreateAlertState();
@@ -41,24 +42,32 @@ function AlertCondition(): JSX.Element {
 		setAlertType(value);
 	};
 
+	const getTabTooltip = (tab: { value: AlertTypes }): string => {
+		if (tab.value === AlertTypes.ANOMALY_BASED_ALERT) {
+			return ANOMALY_TAB_TOOLTIP;
+		}
+		return THRESHOLD_TAB_TOOLTIP;
+	};
+
 	return (
 		<div className="alert-condition-container">
 			<Stepper stepNumber={2} label="Set alert conditions" />
 			<div className="alert-condition">
 				<div className="alert-condition-tabs">
 					{tabs.map((tab) => (
-						<Button
-							key={tab.value}
-							className={classNames('list-view-tab', 'explorer-view-option', {
-								'active-tab': alertType === tab.value,
-							})}
-							onClick={(): void => {
-								handleAlertTypeChange(tab.value as AlertTypes);
-							}}
-						>
-							{tab.icon}
-							{tab.label}
-						</Button>
+						<Tooltip key={tab.value} title={getTabTooltip(tab)}>
+							<Button
+								className={classNames('list-view-tab', 'explorer-view-option', {
+									'active-tab': alertType === tab.value,
+								})}
+								onClick={(): void => {
+									handleAlertTypeChange(tab.value as AlertTypes);
+								}}
+							>
+								{tab.icon}
+								{tab.label}
+							</Button>
+						</Tooltip>
 					))}
 				</div>
 			</div>
