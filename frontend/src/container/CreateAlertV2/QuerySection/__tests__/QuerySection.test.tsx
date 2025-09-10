@@ -143,6 +143,13 @@ describe('QuerySection', () => {
 
 		// Check if QuerySectionComponent is rendered
 		expect(screen.getByTestId('query-section-component')).toBeInTheDocument();
+		expect(screen.getByTestId('query-category')).toHaveTextContent(
+			QUERY_BUILDER_TEXT,
+		);
+		expect(screen.getByTestId('alert-type')).toHaveTextContent(
+			AlertTypes.METRICS_BASED_ALERT,
+		);
+		expect(screen.getByTestId('panel-type')).toHaveTextContent('graph');
 	});
 
 	it('renders all three alert type tabs', () => {
