@@ -3,7 +3,6 @@ package ruletypes
 import (
 	"context"
 	"encoding/json"
-	"go.uber.org/zap"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/types"
@@ -31,7 +30,6 @@ func NewStatsFromRules(rules []*Rule) map[string]any {
 
 		postableRule, err := ParsePostableRule([]byte(rule.Data))
 		if err != nil {
-			zap.L().Error("failed to unmarshal rule from db", zap.String("id", rule.ID.StringValue()), zap.Error(err))
 			continue
 		}
 		gettableRule.PostableRule = *postableRule
