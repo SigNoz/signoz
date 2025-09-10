@@ -23,6 +23,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
+	"github.com/SigNoz/signoz/pkg/apiserver"
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
@@ -148,6 +149,9 @@ type APIHandler struct {
 	QuerierAPI *querierAPI.API
 
 	Signoz *signoz.SigNoz
+
+	// API Server config for authentication configuration
+	APIServerConfig apiserver.Config
 }
 
 type APIHandlerOpts struct {
@@ -178,6 +182,9 @@ type APIHandlerOpts struct {
 	QuerierAPI *querierAPI.API
 
 	Signoz *signoz.SigNoz
+
+	// API Server config for authentication configuration
+	APIServerConfig apiserver.Config
 }
 
 // NewAPIHandler returns an APIHandler
@@ -239,6 +246,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		Signoz:                        opts.Signoz,
 		FieldsAPI:                     opts.FieldsAPI,
 		QuerierAPI:                    opts.QuerierAPI,
+		APIServerConfig:               opts.APIServerConfig,
 	}
 
 	logsQueryBuilder := logsv4.PrepareLogsQuery
@@ -2011,6 +2019,7 @@ func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 		Version:        version.Info.Version(),
 		EE:             "Y",
 		SetupCompleted: aH.SetupCompleted,
+		AuthEnabled:    aH.APIServerConfig.Auth.Enabled,
 	}
 
 	aH.WriteJSON(w, r, versionResponse)
