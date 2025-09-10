@@ -7,7 +7,6 @@
 		height: 100%;
 		width: 3px;
 		border-radius: 50px;
-		background-color: transparent;
 
 		&.small {
 			min-height: 16px;
@@ -21,24 +20,107 @@
 			min-height: 24px;
 		}
 
-		&.INFO {
-			background-color: var(--bg-robin-500);
+		// Severity variant CSS classes using design tokens
+		// Trace variants -
+		&.severity-trace-0 {
+			background-color: var(--bg-forest-600);
 		}
-		&.WARNING,
-		&.WARN {
-			background-color: var(--bg-amber-500);
+		&.severity-trace-1 {
+			background-color: var(--bg-forest-500);
 		}
-		&.ERROR {
-			background-color: var(--bg-cherry-500);
-		}
-		&.TRACE {
+		&.severity-trace-2 {
 			background-color: var(--bg-forest-400);
 		}
-		&.DEBUG {
+		&.severity-trace-3 {
+			background-color: var(--bg-forest-300);
+		}
+		&.severity-trace-4 {
+			background-color: var(--bg-forest-200);
+		}
+
+		// Debug variants
+		&.severity-debug-0 {
+			background-color: var(--bg-aqua-600);
+		}
+		&.severity-debug-1 {
 			background-color: var(--bg-aqua-500);
 		}
-		&.FATAL {
+		&.severity-debug-2 {
+			background-color: var(--bg-aqua-400);
+		}
+		&.severity-debug-3 {
+			background-color: var(--bg-aqua-300);
+		}
+		&.severity-debug-4 {
+			background-color: var(--bg-aqua-200);
+		}
+
+		// Info variants
+		&.severity-info-0 {
+			background-color: var(--bg-robin-600);
+		}
+		&.severity-info-1 {
+			background-color: var(--bg-robin-500);
+		}
+		&.severity-info-2 {
+			background-color: var(--bg-robin-400);
+		}
+		&.severity-info-3 {
+			background-color: var(--bg-robin-300);
+		}
+		&.severity-info-4 {
+			background-color: var(--bg-robin-200);
+		}
+
+		// Warn variants
+		&.severity-warn-0 {
+			background-color: var(--bg-amber-600);
+		}
+		&.severity-warn-1 {
+			background-color: var(--bg-amber-500);
+		}
+		&.severity-warn-2 {
+			background-color: var(--bg-amber-400);
+		}
+		&.severity-warn-3 {
+			background-color: var(--bg-amber-300);
+		}
+		&.severity-warn-4 {
+			background-color: var(--bg-amber-200);
+		}
+
+		// Error variants
+		&.severity-error-0 {
+			background-color: var(--bg-cherry-600);
+		}
+		&.severity-error-1 {
+			background-color: var(--bg-cherry-500);
+		}
+		&.severity-error-2 {
+			background-color: var(--bg-cherry-400);
+		}
+		&.severity-error-3 {
+			background-color: var(--bg-cherry-300);
+		}
+		&.severity-error-4 {
+			background-color: var(--bg-cherry-200);
+		}
+
+		// Fatal variants
+		&.severity-fatal-0 {
+			background-color: var(--bg-sakura-600);
+		}
+		&.severity-fatal-1 {
 			background-color: var(--bg-sakura-500);
+		}
+		&.severity-fatal-2 {
+			background-color: var(--bg-sakura-400);
+		}
+		&.severity-fatal-3 {
+			background-color: var(--bg-sakura-300);
+		}
+		&.severity-fatal-4 {
+			background-color: var(--bg-sakura-200);
 		}
 	}
 }
