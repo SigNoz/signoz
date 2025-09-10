@@ -26,7 +26,7 @@ export const downloadExportData = async (
 		if (props.orderBy) {
 			queryParams.append('order_by', props.orderBy);
 		}
-		if (props.limit && limit > 0) {
+		if (props.limit && props.limit > 0) {
 			queryParams.append('limit', String(props.limit));
 		}
 		if (props.format) {
