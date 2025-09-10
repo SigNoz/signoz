@@ -279,7 +279,6 @@ func (migration *queryBuilderV5Migration) migrateRules(
 		updated := alertsMigrator.Migrate(ctx, rule.Data)
 
 		if updated {
-			fmt.Println("updated rule", rule.ID)
 			dataJSON, err := json.Marshal(rule.Data)
 			if err != nil {
 				return err

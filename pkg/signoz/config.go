@@ -3,6 +3,7 @@ package signoz
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"os"
 	"path"
@@ -129,7 +130,7 @@ func (df *DeprecatedFlags) RegisterFlags(cmd *cobra.Command) {
 	_ = cmd.Flags().MarkDeprecated("gateway-url", "use SIGNOZ_GATEWAY_URL instead")
 }
 
-func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprecatedFlags DeprecatedFlags) (Config, error) {
+func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.ResolverConfig, deprecatedFlags DeprecatedFlags) (Config, error) {
 	configFactories := []factory.ConfigFactory{
 		version.NewConfigFactory(),
 		instrumentation.NewConfigFactory(),
@@ -161,7 +162,7 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprec
 		return Config{}, err
 	}
 
-	mergeAndEnsureBackwardCompatibility(&config, deprecatedFlags)
+	mergeAndEnsureBackwardCompatibility(ctx, logger, &config, deprecatedFlags)
 
 	if err := validateConfig(config); err != nil {
 		return Config{}, err
@@ -186,88 +187,88 @@ func validateConfig(config Config) error {
 	return nil
 }
 
-func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags DeprecatedFlags) {
+func mergeAndEnsureBackwardCompatibility(ctx context.Context, logger *slog.Logger, config *Config, deprecatedFlags DeprecatedFlags) {
 	if os.Getenv("SIGNOZ_LOCAL_DB_PATH") != "" {
-		fmt.Println("[Deprecated] env SIGNOZ_LOCAL_DB_PATH is deprecated and scheduled for removal. Please use SIGNOZ_SQLSTORE_SQLITE_PATH instead.")
+		logger.WarnContext(ctx, "[Deprecated] env SIGNOZ_LOCAL_DB_PATH is deprecated and scheduled for removal. Please use SIGNOZ_SQLSTORE_SQLITE_PATH instead.")
 		config.SQLStore.Sqlite.Path = os.Getenv("SIGNOZ_LOCAL_DB_PATH")
 	}
 
 	if os.Getenv("CONTEXT_TIMEOUT") != "" {
-		fmt.Println("[Deprecated] env CONTEXT_TIMEOUT is deprecated and scheduled for removal. Please use SIGNOZ_APISERVER_TIMEOUT_DEFAULT instead.")
+		logger.WarnContext(ctx, "[Deprecated] env CONTEXT_TIMEOUT is deprecated and scheduled for removal. Please use SIGNOZ_APISERVER_TIMEOUT_DEFAULT instead.")
 		contextTimeoutDuration, err := time.ParseDuration(os.Getenv("CONTEXT_TIMEOUT") + "s")
 		if err == nil {
 			config.APIServer.Timeout.Default = contextTimeoutDuration
 		} else {
-			fmt.Println("Error parsing CONTEXT_TIMEOUT, using default value of 60s")
+			logger.WarnContext(ctx, "Error parsing CONTEXT_TIMEOUT, using default value of 60s")
 		}
 	}
 
 	if os.Getenv("CONTEXT_TIMEOUT_MAX_ALLOWED") != "" {
-		fmt.Println("[Deprecated] env CONTEXT_TIMEOUT_MAX_ALLOWED is deprecated and scheduled for removal. Please use SIGNOZ_APISERVER_TIMEOUT_MAX instead.")
+		logger.WarnContext(ctx, "[Deprecated] env CONTEXT_TIMEOUT_MAX_ALLOWED is deprecated and scheduled for removal. Please use SIGNOZ_APISERVER_TIMEOUT_MAX instead.")
 
 		contextTimeoutDuration, err := time.ParseDuration(os.Getenv("CONTEXT_TIMEOUT_MAX_ALLOWED") + "s")
 		if err == nil {
 			config.APIServer.Timeout.Max = contextTimeoutDuration
 		} else {
-			fmt.Println("Error parsing CONTEXT_TIMEOUT_MAX_ALLOWED, using default value of 600s")
+			logger.WarnContext(ctx, "Error parsing CONTEXT_TIMEOUT_MAX_ALLOWED, using default value of 600s")
 		}
 	}
 
 	if os.Getenv("STORAGE") != "" {
-		fmt.Println("[Deprecated] env STORAGE is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_PROVIDER instead.")
+		logger.WarnContext(ctx, "[Deprecated] env STORAGE is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_PROVIDER instead.")
 		config.TelemetryStore.Provider = os.Getenv("STORAGE")
 	}
 
 	if os.Getenv("ClickHouseUrl") != "" {
-		fmt.Println("[Deprecated] env ClickHouseUrl is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN instead.")
+		logger.WarnContext(ctx, "[Deprecated] env ClickHouseUrl is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN instead.")
 		config.TelemetryStore.Clickhouse.DSN = os.Getenv("ClickHouseUrl")
 	}
 
 	if deprecatedFlags.MaxIdleConns != 50 {
-		fmt.Println("[Deprecated] flag --max-idle-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__IDLE__CONNS instead.")
+		logger.WarnContext(ctx, "[Deprecated] flag --max-idle-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__IDLE__CONNS instead.")
 		config.TelemetryStore.Connection.MaxIdleConns = deprecatedFlags.MaxIdleConns
 	}
 
 	if deprecatedFlags.MaxOpenConns != 100 {
-		fmt.Println("[Deprecated] flag --max-open-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__OPEN__CONNS instead.")
+		logger.WarnContext(ctx, "[Deprecated] flag --max-open-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__OPEN__CONNS instead.")
 		config.TelemetryStore.Connection.MaxOpenConns = deprecatedFlags.MaxOpenConns
 	}
 
 	if deprecatedFlags.DialTimeout != 5*time.Second {
-		fmt.Println("[Deprecated] flag --dial-timeout is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_DIAL__TIMEOUT instead.")
+		logger.WarnContext(ctx, "[Deprecated] flag --dial-timeout is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_DIAL__TIMEOUT instead.")
 		config.TelemetryStore.Connection.DialTimeout = deprecatedFlags.DialTimeout
 	}
 
 	if os.Getenv("ALERTMANAGER_API_PREFIX") != "" {
-		fmt.Println("[Deprecated] env ALERTMANAGER_API_PREFIX is deprecated and scheduled for removal. Please use SIGNOZ_ALERTMANAGER_LEGACY_API__URL instead.")
+		logger.WarnContext(ctx, "[Deprecated] env ALERTMANAGER_API_PREFIX is deprecated and scheduled for removal. Please use SIGNOZ_ALERTMANAGER_LEGACY_API__URL instead.")
 		u, err := url.Parse(os.Getenv("ALERTMANAGER_API_PREFIX"))
 		if err != nil {
-			fmt.Println("Error parsing ALERTMANAGER_API_PREFIX, using default value")
+			logger.WarnContext(ctx, "Error parsing ALERTMANAGER_API_PREFIX, using default value")
 		} else {
 			config.Alertmanager.Legacy.ApiURL = u
 		}
 	}
 
 	if os.Getenv("ALERTMANAGER_API_CHANNEL_PATH") != "" {
-		fmt.Println("[Deprecated] env ALERTMANAGER_API_CHANNEL_PATH is deprecated and scheduled for complete removal.")
+		logger.WarnContext(ctx, "[Deprecated] env ALERTMANAGER_API_CHANNEL_PATH is deprecated and scheduled for complete removal.")
 	}
 
 	if deprecatedFlags.Config != "" {
-		fmt.Println("[Deprecated] flag --config is deprecated for passing prometheus config. The flag will be used for passing the entire SigNoz config. More details can be found at https://github.com/SigNoz/signoz/issues/6805.")
+		logger.WarnContext(ctx, "[Deprecated] flag --config is deprecated for passing prometheus config. The flag will be used for passing the entire SigNoz config. More details can be found at https://github.com/SigNoz/signoz/issues/6805.")
 	}
 
 	if os.Getenv("INVITE_EMAIL_TEMPLATE") != "" {
-		fmt.Println("[Deprecated] env INVITE_EMAIL_TEMPLATE is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_TEMPLATES_DIRECTORY instead.")
+		logger.WarnContext(ctx, "[Deprecated] env INVITE_EMAIL_TEMPLATE is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_TEMPLATES_DIRECTORY instead.")
 		config.Emailing.Templates.Directory = path.Dir(os.Getenv("INVITE_EMAIL_TEMPLATE"))
 	}
 
 	if os.Getenv("SMTP_ENABLED") != "" {
-		fmt.Println("[Deprecated] env SMTP_ENABLED is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_ENABLED instead.")
+		logger.WarnContext(ctx, "[Deprecated] env SMTP_ENABLED is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_ENABLED instead.")
 		config.Emailing.Enabled = os.Getenv("SMTP_ENABLED") == "true"
 	}
 
 	if os.Getenv("SMTP_HOST") != "" {
-		fmt.Println("[Deprecated] env SMTP_HOST is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_ADDRESS instead.")
+		logger.WarnContext(ctx, "[Deprecated] env SMTP_HOST is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_ADDRESS instead.")
 		if os.Getenv("SMTP_PORT") != "" {
 			config.Emailing.SMTP.Address = os.Getenv("SMTP_HOST") + ":" + os.Getenv("SMTP_PORT")
 		} else {
@@ -276,62 +277,62 @@ func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags Depreca
 	}
 
 	if os.Getenv("SMTP_PORT") != "" {
-		fmt.Println("[Deprecated] env SMTP_PORT is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_ADDRESS instead.")
+		logger.WarnContext(ctx, "[Deprecated] env SMTP_PORT is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_ADDRESS instead.")
 	}
 
 	if os.Getenv("SMTP_USERNAME") != "" {
-		fmt.Println("[Deprecated] env SMTP_USERNAME is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_AUTH_USERNAME instead.")
+		logger.WarnContext(ctx, "[Deprecated] env SMTP_USERNAME is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_AUTH_USERNAME instead.")
 		config.Emailing.SMTP.Auth.Username = os.Getenv("SMTP_USERNAME")
 	}
 
 	if os.Getenv("SMTP_PASSWORD") != "" {
-		fmt.Println("[Deprecated] env SMTP_PASSWORD is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_AUTH_PASSWORD instead.")
+		logger.WarnContext(ctx, "[Deprecated] env SMTP_PASSWORD is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_AUTH_PASSWORD instead.")
 		config.Emailing.SMTP.Auth.Password = os.Getenv("SMTP_PASSWORD")
 	}
 
 	if os.Getenv("SMTP_FROM") != "" {
-		fmt.Println("[Deprecated] env SMTP_FROM is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_FROM instead.")
+		logger.WarnContext(ctx, "[Deprecated] env SMTP_FROM is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_FROM instead.")
 		config.Emailing.SMTP.From = os.Getenv("SMTP_FROM")
 	}
 
 	if os.Getenv("SIGNOZ_SAAS_SEGMENT_KEY") != "" {
-		fmt.Println("[Deprecated] env SIGNOZ_SAAS_SEGMENT_KEY is deprecated and scheduled for removal. Please use SIGNOZ_ANALYTICS_SEGMENT_KEY instead.")
+		logger.WarnContext(ctx, "[Deprecated] env SIGNOZ_SAAS_SEGMENT_KEY is deprecated and scheduled for removal. Please use SIGNOZ_ANALYTICS_SEGMENT_KEY instead.")
 		config.Analytics.Segment.Key = os.Getenv("SIGNOZ_SAAS_SEGMENT_KEY")
 	}
 
 	if os.Getenv("TELEMETRY_ENABLED") != "" {
-		fmt.Println("[Deprecated] env TELEMETRY_ENABLED is deprecated and scheduled for removal. Please use SIGNOZ_ANALYTICS_ENABLED instead.")
+		logger.WarnContext(ctx, "[Deprecated] env TELEMETRY_ENABLED is deprecated and scheduled for removal. Please use SIGNOZ_ANALYTICS_ENABLED instead.")
 		config.Analytics.Enabled = os.Getenv("TELEMETRY_ENABLED") == "true"
 	}
 
 	if deprecatedFlags.FluxInterval != "" {
-		fmt.Println("[Deprecated] flag --flux-interval is deprecated and scheduled for removal. Please use SIGNOZ_QUERIER_FLUX__INTERVAL instead.")
+		logger.WarnContext(ctx, "[Deprecated] flag --flux-interval is deprecated and scheduled for removal. Please use SIGNOZ_QUERIER_FLUX__INTERVAL instead.")
 		fluxInterval, err := time.ParseDuration(deprecatedFlags.FluxInterval)
 		if err != nil {
-			fmt.Println("Error parsing --flux-interval, using default value.")
+			logger.WarnContext(ctx, "Error parsing --flux-interval, using default value.")
 		} else {
 			config.Querier.FluxInterval = fluxInterval
 		}
 	}
 
 	if deprecatedFlags.FluxIntervalForTraceDetail != "" {
-		fmt.Println("[Deprecated] flag --flux-interval-for-trace-detail is deprecated and scheduled for complete removal. Please use SIGNOZ_QUERIER_FLUX__INTERVAL instead.")
+		logger.WarnContext(ctx, "[Deprecated] flag --flux-interval-for-trace-detail is deprecated and scheduled for complete removal. Please use SIGNOZ_QUERIER_FLUX__INTERVAL instead.")
 	}
 
 	if deprecatedFlags.Cluster != "" {
-		fmt.Println("[Deprecated] flag --cluster is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER instead.")
+		logger.WarnContext(ctx, "[Deprecated] flag --cluster is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER instead.")
 		config.TelemetryStore.Clickhouse.Cluster = deprecatedFlags.Cluster
 	}
 
 	if deprecatedFlags.PreferSpanMetrics {
-		fmt.Println("[Deprecated] flag --prefer-span-metrics is deprecated and scheduled for removal. Please use USE_SPAN_METRICS instead.")
+		logger.WarnContext(ctx, "[Deprecated] flag --prefer-span-metrics is deprecated and scheduled for removal. Please use USE_SPAN_METRICS instead.")
 	}
 
 	if deprecatedFlags.GatewayUrl != "" {
-		fmt.Println("[Deprecated] flag --gateway-url is deprecated and scheduled for removal. Please use SIGNOZ_GATEWAY_URL instead.")
+		logger.WarnContext(ctx, "[Deprecated] flag --gateway-url is deprecated and scheduled for removal. Please use SIGNOZ_GATEWAY_URL instead.")
 		u, err := url.Parse(deprecatedFlags.GatewayUrl)
 		if err != nil {
-			fmt.Println("Error parsing --gateway-url, using default value.")
+			logger.WarnContext(ctx, "Error parsing --gateway-url, using default value.")
 		} else {
 			config.Gateway.URL = u
 		}

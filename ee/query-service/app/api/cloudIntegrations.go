@@ -13,11 +13,11 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
@@ -192,14 +192,14 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 		))
 	}
 
-	password, err := types.NewFactorPassword(uuid.NewString())
+	password := types.MustGenerateFactorPassword(newUser.ID.StringValue())
 
-	integrationUser, err := ah.Signoz.Modules.User.CreateUserWithPassword(ctx, newUser, password)
+	err = ah.Signoz.Modules.User.CreateUser(ctx, newUser, user.WithFactorPassword(password))
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration user: %w", err))
 	}
 
-	return integrationUser, nil
+	return newUser, nil
 }
 
 func getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licenseKey string) (

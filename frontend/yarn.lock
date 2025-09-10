@@ -4276,6 +4276,20 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
+"@signozhq/callout@0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@signozhq/callout/-/callout-0.0.2.tgz#131ca15f89a8ee6729fecc4d322f11359c02e5cf"
+  integrity sha512-tmguHm+/JVRKjMElJOFyG7LJcdqCW1hHnFfp8ZkjQ+Gi7MfFt/r2foLZG2DNdOcfxSvhf2zhzr7D+epgvmbQ1A==
+  dependencies:
+    "@radix-ui/react-icons" "^1.3.0"
+    "@radix-ui/react-slot" "^1.1.0"
+    class-variance-authority "^0.7.0"
+    clsx "^2.1.1"
+    lucide-react "^0.445.0"
+    lucide-solid "^0.510.0"
+    tailwind-merge "^2.5.2"
+    tailwindcss-animate "^1.0.7"
+
 "@signozhq/design-tokens@1.1.4":
   version "1.1.4"
   resolved "https://registry.yarnpkg.com/@signozhq/design-tokens/-/design-tokens-1.1.4.tgz#5d5de5bd9d19b6a3631383db015cc4b70c3f7661"
@@ -6885,18 +6899,10 @@ boolbase@^1.0.0:
   resolved "https://registry.npmjs.org/boolbase/-/boolbase-1.0.0.tgz"
   integrity sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==
 
-brace-expansion@^1.1.7:
-  version "1.1.11"
-  resolved "https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.11.tgz"
-  integrity sha512-iCuPHDFgrHX7H2vEI/5xpz07zSHB00TpugqhmYtVmMO6518mCuRMoOYFldEBl0g187ufozdaHgWKcYFb61qGiA==
-  dependencies:
-    balanced-match "^1.0.0"
-    concat-map "0.0.1"
-
-brace-expansion@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-2.0.1.tgz#1edc459e0f0c548486ecf9fc99f2221364b9a0ae"
-  integrity sha512-XnAIvQ8eM+kC6aULx6wuQiwVsnzsi9d3WxzV3FpWTGA19F621kwdbsAcFKXgKUHZWsy+mY6iL1sHTxWEFCytDA==
+brace-expansion@2.0.2, brace-expansion@^1.1.7, brace-expansion@^2.0.1:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-2.0.2.tgz#54fc53237a613d854c7bd37463aad17df87214e7"
+  integrity sha512-Jt0vHyM+jmUBqojB7E1NIYadt0vI0Qxjxd2TErW94wDz+E2LAm5vKMXXwg6ZZBTHPuUlDgQHKXvjGBdfcF1ZDQ==
   dependencies:
     balanced-match "^1.0.0"
 
@@ -7543,11 +7549,6 @@ compute-scroll-into-view@^3.0.2:
   version "3.0.3"
   resolved "https://registry.npmjs.org/compute-scroll-into-view/-/compute-scroll-into-view-3.0.3.tgz"
   integrity sha512-nadqwNxghAGTamwIqQSG433W6OADZx2vCo3UXHNrzTRHK/htu+7+L0zhjEoaeaQVNAi3YgqWDv8+tzf0hRfR+A==
-
-concat-map@0.0.1:
-  version "0.0.1"
-  resolved "https://registry.npmjs.org/concat-map/-/concat-map-0.0.1.tgz"
-  integrity sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==
 
 confusing-browser-globals@^1.0.10:
   version "1.0.11"
@@ -12369,6 +12370,11 @@ lucide-react@^0.445.0:
   version "0.445.0"
   resolved "https://registry.yarnpkg.com/lucide-react/-/lucide-react-0.445.0.tgz#35c42341e98fbf0475b2a6cf74fd25ef7cbfcd62"
   integrity sha512-YrLf3aAHvmd4dZ8ot+mMdNFrFpJD7YRwQ2pUcBhgqbmxtrMP4xDzIorcj+8y+6kpuXBF4JB0NOCTUWIYetJjgA==
+
+lucide-solid@^0.510.0:
+  version "0.510.0"
+  resolved "https://registry.yarnpkg.com/lucide-solid/-/lucide-solid-0.510.0.tgz#f5b17397ef1df3017f62f96f4d00e080abfb492f"
+  integrity sha512-G6rKYxURfSLG/zeOCN/BEl2dq2ezujFKPbcHjl7RLJ4bBQwWk4ZF2Swga/8anWglSVZyqYz7HMrrpb8/+vOcXw==
 
 lz-string@^1.4.4:
   version "1.5.0"

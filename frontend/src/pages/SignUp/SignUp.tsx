@@ -10,13 +10,14 @@ import afterLogin from 'AppRoutes/utils';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { InviteDetails } from 'types/api/user/getInviteDetails';
-import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
+import { Signup as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
 
 import { FormContainer, Label } from './styles';
 import { isPasswordNotValidMessage, isPasswordValid } from './utils';
@@ -109,31 +110,27 @@ function SignUp(): JSX.Element {
 	]);
 
 	const isSignUp = token === null;
+	const { showErrorModal } = useErrorModal();
 
 	const signUp = async (values: FormValues): Promise<void> => {
 		try {
 			const { organizationName, password, email } = values;
-			const response = await signUpApi({
+			await signUpApi({
 				email,
 				orgDisplayName: organizationName,
 				password,
 				token: params.get('token') || undefined,
 			});
 
-			if (response.statusCode === 200) {
-				const loginResponse = await loginApi({
-					email,
-					password,
-				});
-
-				const { data } = loginResponse;
-				await afterLogin(data.userId, data.accessJwt, data.refreshJwt);
-			}
-		} catch (error) {
-			notifications.error({
-				message: (error as APIError).getErrorCode(),
-				description: (error as APIError).getErrorMessage(),
+			const loginResponse = await loginApi({
+				email,
+				password,
 			});
+
+			const { data } = loginResponse;
+			await afterLogin(data.userId, data.accessJwt, data.refreshJwt);
+		} catch (error) {
+			showErrorModal(error as APIError);
 		}
 	};
 

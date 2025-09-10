@@ -73,8 +73,10 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		stateStore: stateStore,
 		stopc:      make(chan struct{}),
 	}
+	signozRegisterer := prometheus.WrapRegistererWithPrefix("signoz_", registry)
+	signozRegisterer = prometheus.WrapRegistererWith(prometheus.Labels{"org_id": server.orgID}, signozRegisterer)
 	// initialize marker
-	server.marker = alertmanagertypes.NewMarker(server.registry)
+	server.marker = alertmanagertypes.NewMarker(signozRegisterer)
 
 	// get silences for initial state
 	state, err := server.stateStore.Get(ctx, server.orgID)
@@ -97,7 +99,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 			MaxSilences:         func() int { return srvConfig.Silences.Max },
 			MaxSilenceSizeBytes: func() int { return srvConfig.Silences.MaxSizeBytes },
 		},
-		Metrics: server.registry,
+		Metrics: signozRegisterer,
 		Logger:  server.logger,
 	})
 	if err != nil {
@@ -116,7 +118,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 	server.nflog, err = nflog.New(nflog.Options{
 		SnapshotReader: strings.NewReader(nflogSnapshot),
 		Retention:      server.srvConfig.NFLog.Retention,
-		Metrics:        server.registry,
+		Metrics:        signozRegisterer,
 		Logger:         server.logger,
 	})
 	if err != nil {
@@ -181,13 +183,13 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		})
 	}()
 
-	server.alerts, err = mem.NewAlerts(ctx, server.marker, server.srvConfig.Alerts.GCInterval, nil, server.logger, server.registry)
+	server.alerts, err = mem.NewAlerts(ctx, server.marker, server.srvConfig.Alerts.GCInterval, nil, server.logger, signozRegisterer)
 	if err != nil {
 		return nil, err
 	}
 
-	server.pipelineBuilder = notify.NewPipelineBuilder(server.registry, featurecontrol.NoopFlags{})
-	server.dispatcherMetrics = dispatch.NewDispatcherMetrics(false, server.registry)
+	server.pipelineBuilder = notify.NewPipelineBuilder(signozRegisterer, featurecontrol.NoopFlags{})
+	server.dispatcherMetrics = dispatch.NewDispatcherMetrics(false, signozRegisterer)
 
 	return server, nil
 }

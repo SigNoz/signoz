@@ -105,7 +105,7 @@ function EntityMetrics<T>({
 				signal,
 			}: QueryFunctionContext): Promise<
 				SuccessResponse<MetricRangePayloadProps>
-			> => GetMetricQueryRange(payload, ENTITY_VERSION_V4, signal),
+			> => GetMetricQueryRange(payload, ENTITY_VERSION_V4, undefined, signal),
 			enabled: !!payload && visibilities[index],
 			keepPreviousData: true,
 		})),
