@@ -354,15 +354,16 @@ describe('SpanDetailsDrawer', () => {
 		const spanLog = screen.getByTestId('raw-log-span-log-1');
 		fireEvent.click(spanLog);
 
-		// Verify navigation was called with correct parameters
+		// Verify window.open was called with correct parameters
 		await waitFor(() => {
-			expect(mockSafeNavigate).toHaveBeenCalledWith(
+			expect(mockWindowOpen).toHaveBeenCalledWith(
 				expect.stringContaining(ROUTES.LOGS_EXPLORER),
+				'_blank',
 			);
 		});
 
 		// Check navigation URL contains expected parameters
-		const navigationCall = mockSafeNavigate.mock.calls[0][0];
+		const navigationCall = mockWindowOpen.mock.calls[0][0];
 		const urlParams = new URLSearchParams(navigationCall.split('?')[1]);
 
 		expect(urlParams.get(QueryParams.activeLogId)).toBe('"span-log-1"');
@@ -378,6 +379,9 @@ describe('SpanDetailsDrawer', () => {
 		// Check that the filter expression contains trace_id
 		// Note: Current behavior uses only trace_id filter for navigation
 		expect(filter.expression).toContain("trace_id = 'test-trace-id'");
+
+		// Verify mockSafeNavigate was NOT called
+		expect(mockSafeNavigate).not.toHaveBeenCalled();
 	});
 
 	it('should navigate to logs explorer with trace filter when context log is clicked', async () => {
@@ -396,16 +400,17 @@ describe('SpanDetailsDrawer', () => {
 		const contextLog = screen.getByTestId('raw-log-context-log-before');
 		fireEvent.click(contextLog);
 
-		// Verify navigation was called
+		// Verify window.open was called
 		// eslint-disable-next-line sonarjs/no-identical-functions
 		await waitFor(() => {
-			expect(mockSafeNavigate).toHaveBeenCalledWith(
+			expect(mockWindowOpen).toHaveBeenCalledWith(
 				expect.stringContaining(ROUTES.LOGS_EXPLORER),
+				'_blank',
 			);
 		});
 
 		// Check navigation URL parameters
-		const navigationCall = mockSafeNavigate.mock.calls[0][0];
+		const navigationCall = mockWindowOpen.mock.calls[0][0];
 		const urlParams = new URLSearchParams(navigationCall.split('?')[1]);
 
 		expect(urlParams.get(QueryParams.activeLogId)).toBe('"context-log-before"');
@@ -420,9 +425,12 @@ describe('SpanDetailsDrawer', () => {
 		expect(filter.expression).toContain("trace_id = 'test-trace-id'");
 		// Context logs should not have span_id filter
 		expect(filter.expression).not.toContain('span_id');
+
+		// Verify mockSafeNavigate was NOT called
+		expect(mockSafeNavigate).not.toHaveBeenCalled();
 	});
 
-	it('should open logs explorer in new tab when ctrl+click is used', async () => {
+	it('should always open logs explorer in new tab regardless of click type', async () => {
 		renderSpanDetailsDrawer();
 
 		// Open logs view
@@ -434,11 +442,12 @@ describe('SpanDetailsDrawer', () => {
 			expect(screen.getByTestId('raw-log-span-log-1')).toBeInTheDocument();
 		});
 
-		// Ctrl+click on a log
+		// Regular click on a log
 		const spanLog = screen.getByTestId('raw-log-span-log-1');
-		fireEvent.click(spanLog, { ctrlKey: true });
+		fireEvent.click(spanLog);
 
-		// Verify window.open was called instead of navigate
+		// Verify window.open was called for new tab
+		// eslint-disable-next-line sonarjs/no-identical-functions
 		await waitFor(() => {
 			expect(mockWindowOpen).toHaveBeenCalledWith(
 				expect.stringContaining(ROUTES.LOGS_EXPLORER),
@@ -446,7 +455,7 @@ describe('SpanDetailsDrawer', () => {
 			);
 		});
 
-		// Verify navigate was NOT called
+		// Verify navigate was NOT called (always opens new tab)
 		expect(mockSafeNavigate).not.toHaveBeenCalled();
 	});
 
