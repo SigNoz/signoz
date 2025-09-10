@@ -1,6 +1,6 @@
 services:
   clickhouse:
-    image: clickhouse/clickhouse-server:24.1.2-alpine
+    image: clickhouse/clickhouse-server:25.5.6
     container_name: clickhouse
     volumes:
       - ${PWD}/fs/etc/clickhouse-server/config.d/config.xml:/etc/clickhouse-server/config.d/config.xml
@@ -23,6 +23,8 @@ services:
       retries: 3
     depends_on:
       - zookeeper
+    environment:
+      - CLICKHOUSE_SKIP_USER_SETUP=1
   zookeeper:
     image: signoz/zookeeper:3.7.1
     container_name: zookeeper
