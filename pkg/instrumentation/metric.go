@@ -2,11 +2,12 @@ package instrumentation
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -87,19 +88,19 @@ func prometheusReaderWithCustomRegistry(ctx context.Context, prometheusConfig *c
 
 	reader, err := otelprom.New(opts...)
 	if err != nil {
-		return nil, fmt.Errorf("error creating otel prometheus exporter: %w", err)
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "error creating otel prometheus exporter: %s", err.Error())
 	}
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		return nil, errors.Join(
-			fmt.Errorf("binding address %s for Prometheus exporter: %w", addr, err),
+			errors.Newf(errors.TypeInternal, errors.CodeInternal, "binding address %s for Prometheus exporter: %s", addr, err.Error()),
 			reader.Shutdown(ctx),
 		)
 	}
 
 	go func() {
 		if err := server.Serve(lis); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			otel.Handle(fmt.Errorf("the Prometheus HTTP server exited unexpectedly: %w", err))
+			otel.Handle(errors.Newf(errors.TypeInternal, errors.CodeInternal, "the Prometheus HTTP server exited unexpectedly: %s", err.Error()))
 		}
 	}()
 
@@ -142,13 +143,13 @@ func meterProviderWithCustomRegistry(ctx context.Context, meterProviderConfig *c
 // metricReaderWithCustomRegistry creates metric readers with custom Prometheus registry support
 func metricReaderWithCustomRegistry(ctx context.Context, r contribsdkconfig.MetricReader, customRegistry *prometheus.Registry) (sdkmetric.Reader, error) {
 	if r.Periodic != nil && r.Pull != nil {
-		return nil, errors.New("must not specify multiple metric reader type")
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "must not specify multiple metric reader type")
 	}
 
 	if r.Pull != nil {
 		return pullReaderWithCustomRegistry(ctx, r.Pull.Exporter, customRegistry)
 	}
-	return nil, errors.New("no valid metric reader")
+	return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no valid metric reader")
 }
 
 // pullReaderWithCustomRegistry creates pull readers with custom Prometheus registry support
@@ -156,5 +157,6 @@ func pullReaderWithCustomRegistry(ctx context.Context, exporter contribsdkconfig
 	if exporter.Prometheus != nil {
 		return prometheusReaderWithCustomRegistry(ctx, exporter.Prometheus, customRegistry)
 	}
-	return nil, errors.New("no valid metric exporter")
+
+	return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no valid metric exporter")
 }

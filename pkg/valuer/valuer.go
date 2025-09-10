@@ -6,6 +6,12 @@ import (
 	"encoding"
 	"encoding/json"
 	"fmt"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+)
+
+var (
+	ErrCodeUnknownValuerScan = errors.MustNewCode("unknown_valuer_scan")
 )
 
 type Valuer interface {

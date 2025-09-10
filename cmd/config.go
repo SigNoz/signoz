@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"os"
 
@@ -12,9 +11,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/signoz"
 )
 
-func NewSigNozConfig(ctx context.Context, flags signoz.DeprecatedFlags) (signoz.Config, error) {
+func NewSigNozConfig(ctx context.Context, logger *slog.Logger, flags signoz.DeprecatedFlags) (signoz.Config, error) {
 	config, err := signoz.NewConfig(
 		ctx,
+		logger,
 		config.ResolverConfig{
 			Uris: []string{"env:"},
 			ProviderFactories: []config.ProviderFactory{
@@ -31,14 +31,10 @@ func NewSigNozConfig(ctx context.Context, flags signoz.DeprecatedFlags) (signoz.
 	return config, nil
 }
 
-func NewJWTSecret(_ context.Context, _ *slog.Logger) string {
+func NewJWTSecret(ctx context.Context, logger *slog.Logger) string {
 	jwtSecret := os.Getenv("SIGNOZ_JWT_SECRET")
 	if len(jwtSecret) == 0 {
-		fmt.Println("🚨 CRITICAL SECURITY ISSUE: No JWT secret key specified!")
-		fmt.Println("SIGNOZ_JWT_SECRET environment variable is not set. This has dire consequences for the security of the application.")
-		fmt.Println("Without a JWT secret, user sessions are vulnerable to tampering and unauthorized access.")
-		fmt.Println("Please set the SIGNOZ_JWT_SECRET environment variable immediately.")
-		fmt.Println("For more information, please refer to https://github.com/SigNoz/signoz/issues/8400.")
+		logger.ErrorContext(ctx, "🚨 CRITICAL SECURITY ISSUE: No JWT secret key specified!", "error", "SIGNOZ_JWT_SECRET environment variable is not set. This has dire consequences for the security of the application. Without a JWT secret, user sessions are vulnerable to tampering and unauthorized access. Please set the SIGNOZ_JWT_SECRET environment variable immediately. For more information, please refer to https://github.com/SigNoz/signoz/issues/8400.")
 	}
 
 	return jwtSecret
