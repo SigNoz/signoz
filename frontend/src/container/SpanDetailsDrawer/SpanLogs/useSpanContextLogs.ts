@@ -105,6 +105,7 @@ const createContextFilters = (
 	return convertFiltersToExpression(filters);
 };
 
+const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
 export const useSpanContextLogs = ({
 	traceId,
 	spanId,
@@ -139,6 +140,7 @@ export const useSpanContextLogs = ({
 		],
 		queryFn: () => GetMetricQueryRange(spanQueryPayload, ENTITY_VERSION_V5),
 		enabled: !!traceId && !!spanId,
+		staleTime: FIVE_MINUTES_IN_MS,
 	});
 
 	// Extract span logs and track their IDs
@@ -201,6 +203,7 @@ export const useSpanContextLogs = ({
 		queryFn: () =>
 			GetMetricQueryRange(beforeQueryPayload as any, ENTITY_VERSION_V5),
 		enabled: !!beforeQueryPayload && !!firstSpanLog,
+		staleTime: FIVE_MINUTES_IN_MS,
 	});
 
 	// Phase 3: Fetch context logs after last span log
@@ -230,6 +233,7 @@ export const useSpanContextLogs = ({
 		queryFn: () =>
 			GetMetricQueryRange(afterQueryPayload as any, ENTITY_VERSION_V5),
 		enabled: !!afterQueryPayload && !!lastSpanLog,
+		staleTime: FIVE_MINUTES_IN_MS,
 	});
 
 	// Extract context logs
