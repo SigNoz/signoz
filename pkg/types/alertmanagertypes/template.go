@@ -21,6 +21,7 @@ func FromGlobs(paths []string) (*alertmanagertemplate.Template, error) {
 	
 	{{ define "__ruleIdPath" }}{{ range .CommonLabels.SortedPairs }}{{ if eq .Name "ruleId" }}{{ if match "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" .Value }}/edit?ruleId={{ .Value | urlquery }}{{ end }}{{ end }}{{ end }}{{ end }}
 	{{ define "__alertmanagerURL" }}{{ .ExternalURL }}/alerts{{ template "__ruleIdPath" . }}{{ end }}
+	{{ define "msteamsv2.default.titleLink" }}{{ template "__alertmanagerURL" . }}{{ end }}
 	`))); err != nil {
 		return nil, fmt.Errorf("error parsing alertmanager templates: %w", err)
 	}
