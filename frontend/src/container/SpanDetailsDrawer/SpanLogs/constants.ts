@@ -1,10 +1,8 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
-	IBuilderQuery,
-	TagFilter,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { Filter } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,13 +11,15 @@ import { v4 as uuidv4 } from 'uuid';
  * Creates a query payload for fetching logs related to a specific span
  * @param start - Start time in milliseconds
  * @param end - End time in milliseconds
- * @param filters - Tag filters for trace_id and span_id
+ * @param filter - V5 filter expression for trace_id and span_id
+ * @param order - Timestamp ordering ('desc' for newest first, 'asc' for oldest first)
  * @returns Query payload for logs API
  */
 export const getSpanLogsQueryPayload = (
 	start: number,
 	end: number,
-	filters: IBuilderQuery['filters'],
+	filter: Filter,
+	order: 'asc' | 'desc' = 'desc',
 ): GetQueryResultsProps => ({
 	graphType: PANEL_TYPES.LIST,
 	selectedTime: 'GLOBAL_TIME',
@@ -41,7 +41,7 @@ export const getSpanLogsQueryPayload = (
 					timeAggregation: 'rate',
 					spaceAggregation: 'sum',
 					functions: [],
-					filters,
+					filter,
 					expression: 'A',
 					disabled: false,
 					stepInterval: 60,
@@ -50,7 +50,7 @@ export const getSpanLogsQueryPayload = (
 					orderBy: [
 						{
 							columnName: 'timestamp',
-							order: 'desc',
+							order,
 						},
 					],
 					groupBy: [],

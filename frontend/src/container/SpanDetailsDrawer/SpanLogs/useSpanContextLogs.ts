@@ -1,4 +1,5 @@
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { OPERATORS } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
@@ -7,7 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { ILog } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { Filter } from 'types/api/v5/queryRange';
 import { v4 as uuid } from 'uuid';
 
 import { getSpanLogsQueryPayload } from './constants';
@@ -30,29 +31,24 @@ interface UseSpanContextLogsReturn {
 	isLogSpanRelated: (logId: string) => boolean;
 }
 
+const traceIdKey = {
+	id: uuid(),
+	dataType: DataTypes.String,
+	type: '',
+	key: 'trace_id',
+};
 /**
- * Creates tag filters for querying logs by trace_id and span_id (for span logs)
+ * Creates v5 filter expression for querying logs by trace_id and span_id (for span logs)
  */
-const createSpanLogsFilters = (traceId: string, spanId: string): TagFilter => {
-	const traceIdKey = {
-		id: uuid(),
-		dataType: DataTypes.String,
-		isColumn: true,
-		type: '',
-		isJSON: false,
-		key: 'trace_id',
-	};
-
+const createSpanLogsFilters = (traceId: string, spanId: string): Filter => {
 	const spanIdKey = {
 		id: uuid(),
 		dataType: DataTypes.String,
-		isColumn: true,
 		type: '',
-		isJSON: false,
 		key: 'span_id',
 	};
 
-	return {
+	const filters = {
 		items: [
 			{
 				id: uuid(),
@@ -69,35 +65,26 @@ const createSpanLogsFilters = (traceId: string, spanId: string): TagFilter => {
 		],
 		op: 'AND',
 	};
+
+	return convertFiltersToExpression(filters);
 };
 
 /**
- * Creates tag filters for querying context logs with id constraints
+ * Creates v5 filter expression for querying context logs with id constraints
  */
 const createContextFilters = (
 	traceId: string,
 	logId: string,
 	operator: 'lt' | 'gt',
-): TagFilter => {
-	const traceIdKey = {
-		id: uuid(),
-		dataType: DataTypes.String,
-		isColumn: true,
-		type: '',
-		isJSON: false,
-		key: 'trace_id',
-	};
-
+): Filter => {
 	const idKey = {
 		id: uuid(),
 		dataType: DataTypes.String,
-		isColumn: true,
 		type: '',
-		isJSON: false,
 		key: 'id',
 	};
 
-	return {
+	const filters = {
 		items: [
 			{
 				id: uuid(),
@@ -114,6 +101,8 @@ const createContextFilters = (
 		],
 		op: 'AND',
 	};
+
+	return convertFiltersToExpression(filters);
 };
 
 export const useSpanContextLogs = ({
@@ -126,14 +115,14 @@ export const useSpanContextLogs = ({
 	const [isInitializing, setIsInitializing] = useState(false);
 
 	// Phase 1: Fetch span-specific logs (trace_id + span_id)
-	const spanFilters = useMemo(() => createSpanLogsFilters(traceId, spanId), [
+	const spanFilter = useMemo(() => createSpanLogsFilters(traceId, spanId), [
 		traceId,
 		spanId,
 	]);
 	const spanQueryPayload = useMemo(
 		() =>
-			getSpanLogsQueryPayload(timeRange.startTime, timeRange.endTime, spanFilters),
-		[timeRange.startTime, timeRange.endTime, spanFilters],
+			getSpanLogsQueryPayload(timeRange.startTime, timeRange.endTime, spanFilter),
+		[timeRange.startTime, timeRange.endTime, spanFilter],
 	);
 
 	const {
@@ -149,7 +138,7 @@ export const useSpanContextLogs = ({
 			timeRange.startTime,
 			timeRange.endTime,
 		],
-		queryFn: () => GetMetricQueryRange(spanQueryPayload, ENTITY_VERSION_V4),
+		queryFn: () => GetMetricQueryRange(spanQueryPayload, ENTITY_VERSION_V5),
 		enabled: !!traceId && !!spanId,
 	});
 
@@ -188,19 +177,19 @@ export const useSpanContextLogs = ({
 		};
 	}, [spanLogs]);
 	// Phase 2: Fetch context logs before first span log
-	const beforeFilters = useMemo(() => {
+	const beforeFilter = useMemo(() => {
 		if (!firstSpanLog) return null;
 		return createContextFilters(traceId, firstSpanLog.id, 'lt');
 	}, [traceId, firstSpanLog]);
 
 	const beforeQueryPayload = useMemo(() => {
-		if (!beforeFilters) return null;
+		if (!beforeFilter) return null;
 		return getSpanLogsQueryPayload(
 			timeRange.startTime,
 			timeRange.endTime,
-			beforeFilters,
+			beforeFilter,
 		);
-	}, [timeRange.startTime, timeRange.endTime, beforeFilters]);
+	}, [timeRange.startTime, timeRange.endTime, beforeFilter]);
 
 	const { data: beforeData, isFetching: isBeforeFetching } = useQuery({
 		queryKey: [
@@ -211,24 +200,25 @@ export const useSpanContextLogs = ({
 			timeRange.endTime,
 		],
 		queryFn: () =>
-			GetMetricQueryRange(beforeQueryPayload as any, ENTITY_VERSION_V4),
+			GetMetricQueryRange(beforeQueryPayload as any, ENTITY_VERSION_V5),
 		enabled: !!beforeQueryPayload && !!firstSpanLog,
 	});
 
 	// Phase 3: Fetch context logs after last span log
-	const afterFilters = useMemo(() => {
+	const afterFilter = useMemo(() => {
 		if (!lastSpanLog) return null;
 		return createContextFilters(traceId, lastSpanLog.id, 'gt');
 	}, [traceId, lastSpanLog]);
 
 	const afterQueryPayload = useMemo(() => {
-		if (!afterFilters) return null;
+		if (!afterFilter) return null;
 		return getSpanLogsQueryPayload(
 			timeRange.startTime,
 			timeRange.endTime,
-			afterFilters,
+			afterFilter,
+			'asc',
 		);
-	}, [timeRange.startTime, timeRange.endTime, afterFilters]);
+	}, [timeRange.startTime, timeRange.endTime, afterFilter]);
 
 	const { data: afterData, isFetching: isAfterFetching } = useQuery({
 		queryKey: [
@@ -239,7 +229,7 @@ export const useSpanContextLogs = ({
 			timeRange.endTime,
 		],
 		queryFn: () =>
-			GetMetricQueryRange(afterQueryPayload as any, ENTITY_VERSION_V4),
+			GetMetricQueryRange(afterQueryPayload as any, ENTITY_VERSION_V5),
 		enabled: !!afterQueryPayload && !!lastSpanLog,
 	});
 
