@@ -56,13 +56,11 @@ function SearchFilter({
 
 	const updateURLWithQuery = useCallback(
 		(inputQueries?: IQueryStructure[]): void => {
-			history.push({
-				pathname: history.location.pathname,
-				search:
-					inputQueries || queries
-						? `?search=${convertQueriesToURLQuery(inputQueries || queries)}`
-						: '',
-			});
+			const searchQuery =
+				inputQueries || queries
+					? `?search=${convertQueriesToURLQuery(inputQueries || queries)}`
+					: '';
+			history.push(`${history.location.pathname}${searchQuery}`);
 		},
 		[queries],
 	);
@@ -149,10 +147,7 @@ function SearchFilter({
 
 	const clearQueries = (): void => {
 		setQueries([]);
-		history.push({
-			pathname: history.location.pathname,
-			search: ``,
-		});
+		history.push(history.location.pathname);
 	};
 
 	return (

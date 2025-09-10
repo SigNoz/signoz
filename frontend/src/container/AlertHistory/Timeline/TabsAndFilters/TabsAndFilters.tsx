@@ -50,7 +50,7 @@ function TimelineFilters(): JSX.Element {
 
 	const handleFilter = (value: TimelineFilter): void => {
 		searchParams.set('timelineFilter', value);
-		history.push({ search: searchParams.toString() });
+		history.push(`${history.location.pathname}?${searchParams.toString()}`);
 	};
 
 	const tabs = [

@@ -102,9 +102,7 @@ function HorizontalTimelineGraph({
 								urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 								urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 
-								history.push({
-									search: urlQuery.toString(),
-								});
+								history.push(`${history.location.pathname}?${urlQuery.toString()}`);
 							}
 						}
 					},
