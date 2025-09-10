@@ -830,9 +830,12 @@ func (m *Manager) GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.Getta
 		return nil, err
 	}
 	r := &ruletypes.GettableRule{}
-	if err := json.Unmarshal([]byte(s.Data), r); err != nil {
+	postableRule, err := ruletypes.ParsePostableRule([]byte(s.Data))
+	if err != nil {
+		zap.L().Error("failed to unmarshal rule from db", zap.String("id", s.ID.StringValue()), zap.Error(err))
 		return nil, err
 	}
+	r.PostableRule = *postableRule
 	r.Id = id.StringValue()
 	// fetch state of rule from memory
 	if rm, ok := m.rules[r.Id]; !ok {
@@ -1003,15 +1006,16 @@ func (m *Manager) GetAlertDetailsForMetricNames(ctx context.Context, metricNames
 
 	for _, storedRule := range rules {
 		var rule ruletypes.GettableRule
-		if err := json.Unmarshal([]byte(storedRule.Data), &rule); err != nil {
-			zap.L().Error("Invalid rule data", zap.Error(err))
+		postableRule, err := ruletypes.ParsePostableRule([]byte(storedRule.Data))
+		if err != nil {
+			zap.L().Error("failed to unmarshal rule from db", zap.String("id", storedRule.ID.StringValue()), zap.Error(err))
 			continue
 		}
 
 		if rule.AlertType != ruletypes.AlertTypeMetric || rule.RuleCondition == nil || rule.RuleCondition.CompositeQuery == nil {
 			continue
 		}
-
+		rule.PostableRule = *postableRule
 		rule.Id = storedRule.ID.StringValue()
 		rule.CreatedAt = &storedRule.CreatedAt
 		rule.CreatedBy = &storedRule.CreatedBy
