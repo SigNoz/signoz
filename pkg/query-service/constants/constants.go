@@ -696,7 +696,7 @@ var MaxJSONFlatteningDepth = 1
 func init() {
 	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)
 	maps.Copy(StaticFieldsTraces, DeprecatedStaticFieldsTraces)
-	if GetOrDefaultEnv(DotMetricsEnabled, "false") == "true" {
+	if GetOrDefaultEnv(DotMetricsEnabled, "true") == "true" {
 		IsDotMetricsEnabled = true
 	}
 	if GetOrDefaultEnv("USE_SPAN_METRICS", "false") == "true" {
