@@ -7,6 +7,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	signozError "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/pkg/errors"
@@ -85,7 +86,7 @@ func ParseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*P
 	var err error
 	if kind == RuleDataKindJson {
 		if err = json.Unmarshal(content, rule); err != nil {
-			return nil, ErrFailedToParseJSON
+			return nil, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "failed to parse json: %v", err)
 		}
 	} else if kind == RuleDataKindYaml {
 		if err = yaml.Unmarshal(content, rule); err != nil {
@@ -134,32 +135,31 @@ func ParseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*P
 				q.Expression = qLabel
 			}
 		}
+		//added alerts v2 fields
+		if rule.RuleCondition.Thresholds == nil {
+			thresholdName := CriticalThresholdName
+			if rule.Labels != nil {
+				if severity, ok := rule.Labels["severity"]; ok {
+					thresholdName = severity
+				}
+			}
+			thresholdData := RuleThresholdData{
+				Kind: BasicThresholdKind,
+				Spec: BasicRuleThresholds{{
+					Name:        thresholdName,
+					RuleUnit:    rule.RuleCondition.CompositeQuery.Unit,
+					TargetUnit:  rule.RuleCondition.TargetUnit,
+					TargetValue: rule.RuleCondition.Target,
+					MatchType:   rule.RuleCondition.MatchType,
+					CompareOp:   rule.RuleCondition.CompareOp,
+				}},
+			}
+			rule.RuleCondition.Thresholds = &thresholdData
+		}
 	}
 
 	if err := rule.Validate(); err != nil {
 		return nil, err
-	}
-
-	//added alerts v2 fields
-	if rule.RuleCondition.Thresholds == nil {
-		thresholdName := CriticalThresholdName
-		if rule.Labels != nil {
-			if severity, ok := rule.Labels["severity"]; ok {
-				thresholdName = severity
-			}
-		}
-		thresholdData := RuleThresholdData{
-			Kind: BasicThresholdKind,
-			Spec: BasicRuleThresholds{{
-				Name:        thresholdName,
-				RuleUnit:    rule.RuleCondition.CompositeQuery.Unit,
-				TargetUnit:  rule.RuleCondition.TargetUnit,
-				TargetValue: rule.RuleCondition.Target,
-				MatchType:   rule.RuleCondition.MatchType,
-				CompareOp:   rule.RuleCondition.CompareOp,
-			}},
-		}
-		rule.RuleCondition.Thresholds = &thresholdData
 	}
 	return rule, nil
 }
@@ -236,17 +236,18 @@ func (r *PostableRule) Validate() error {
 		errs = append(errs, errors.Errorf("all queries are disabled in rule condition"))
 	}
 
-	if r.RuleType == RuleTypeThreshold {
-		if r.RuleCondition.Target == nil {
-			errs = append(errs, errors.Errorf("rule condition missing the threshold"))
-		}
-		if r.RuleCondition.CompareOp == "" {
-			errs = append(errs, errors.Errorf("rule condition missing the compare op"))
-		}
-		if r.RuleCondition.MatchType == "" {
-			errs = append(errs, errors.Errorf("rule condition missing the match option"))
-		}
-	}
+	//this validation are handled at threshold level
+	//if r.RuleType == RuleTypeThreshold {
+	//	if r.RuleCondition.Target == nil {
+	//		errs = append(errs, errors.Errorf("rule condition missing the threshold"))
+	//	}
+	//	if r.RuleCondition.CompareOp == "" {
+	//		errs = append(errs, errors.Errorf("rule condition missing the compare op"))
+	//	}
+	//	if r.RuleCondition.MatchType == "" {
+	//		errs = append(errs, errors.Errorf("rule condition missing the match option"))
+	//	}
+	//}
 
 	for k, v := range r.Labels {
 		if !isValidLabelName(k) {

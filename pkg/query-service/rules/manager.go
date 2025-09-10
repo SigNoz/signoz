@@ -798,10 +798,12 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules,
 	for _, s := range storedRules {
 
 		ruleResponse := &ruletypes.GettableRule{}
-		if err := json.Unmarshal([]byte(s.Data), ruleResponse); err != nil { // Parse []byte to go struct pointer
+		postableRule, err := ruletypes.ParsePostableRule([]byte(s.Data))
+		if err != nil {
 			zap.L().Error("failed to unmarshal rule from db", zap.String("id", s.ID.StringValue()), zap.Error(err))
 			continue
 		}
+		ruleResponse.PostableRule = *postableRule
 
 		ruleResponse.Id = s.ID.StringValue()
 

@@ -2,7 +2,6 @@ package ruletypes
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/converter"
 	"github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -39,6 +38,9 @@ func (r *RuleThresholdData) UnmarshalJSON(data []byte) error {
 		if err := json.Unmarshal(raw["spec"], &basicThresholds); err != nil {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal rule threhsold spec: %v", err)
 		}
+		if err := basicThresholds.Validate(); err != nil {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid rule threshold spec: %v", err)
+		}
 		r.Spec = basicThresholds
 
 	default:
@@ -64,6 +66,16 @@ type BasicRuleThreshold struct {
 }
 
 type BasicRuleThresholds []BasicRuleThreshold
+
+func (r BasicRuleThresholds) Validate() error {
+	var errs []error
+	for _, basicThreshold := range r {
+		if err := basicThreshold.Validate(); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
+}
 
 func (r BasicRuleThresholds) ShouldAlert(series v3.Series) (Vector, error) {
 	var resultVector Vector
@@ -126,6 +138,41 @@ func (b BasicRuleThreshold) GetCompareOp() CompareOp {
 
 func (b BasicRuleThreshold) GetSelectedQuery() string {
 	return b.SelectedQuery
+}
+
+func (b BasicRuleThreshold) Validate() error {
+	var errs []error
+	if b.Name == "" {
+		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "threshold name cannot be empty"))
+	}
+
+	if b.TargetValue == nil {
+		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "target value cannot be nil"))
+	}
+
+	switch b.CompareOp {
+	case ValueIsAbove, ValueIsBelow, ValueIsEq, ValueIsNotEq, ValueAboveOrEq, ValueBelowOrEq, ValueOutsideBounds:
+		// valid compare operations
+	case CompareOpNone:
+		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "compare operation cannot be none"))
+	default:
+		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid compare operation: %s", string(b.CompareOp)))
+	}
+
+	switch b.MatchType {
+	case AtleastOnce, AllTheTimes, OnAverage, InTotal, Last:
+		// valid match types
+	case MatchTypeNone:
+		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "match type cannot be none"))
+	default:
+		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid match type: %s", string(b.MatchType)))
+	}
+
+	if b.SelectedQuery == "" {
+		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "selected query cannot be empty"))
+	}
+
+	return errors.Join(errs...)
 }
 
 func removeGroupinSetPoints(series v3.Series) []v3.Point {
@@ -361,7 +408,7 @@ func (b BasicRuleThreshold) ShouldAlert(series v3.Series) (Sample, bool) {
 
 func (r *RuleThresholdData) GetRuleThreshold() (RuleThreshold, error) {
 	if r == nil {
-		return nil, fmt.Errorf("rule threshold data is nil")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "rule threshold is nil")
 	}
 	switch r.Kind {
 	case BasicThresholdKind:
