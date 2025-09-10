@@ -2,6 +2,7 @@ import './styles.scss';
 
 import { Button } from 'antd';
 import classNames from 'classnames';
+import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import QuerySectionComponent from 'container/FormAlertRules/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -15,7 +16,13 @@ import { buildAlertDefForChartPreview } from './utils';
 
 function QuerySection(): JSX.Element {
 	const { currentQuery, handleRunQuery } = useQueryBuilder();
-	const { alertType, setAlertType, thresholdState } = useCreateAlertState();
+	const {
+		alertState,
+		setAlertState,
+		alertType,
+		setAlertType,
+		thresholdState,
+	} = useCreateAlertState();
 
 	const alertDef = buildAlertDefForChartPreview({ alertType, thresholdState });
 
@@ -49,6 +56,12 @@ function QuerySection(): JSX.Element {
 				label="Define the query you want to set an alert on"
 			/>
 			<ChartPreview alertDef={alertDef} />
+			<YAxisUnitSelector
+				value={alertState.yAxisUnit}
+				onChange={(value): void => {
+					setAlertState({ type: 'SET_Y_AXIS_UNIT', payload: value });
+				}}
+			/>
 			<div className="query-section-tabs">
 				<div className="query-section-query-actions">
 					{tabs.map((tab) => (

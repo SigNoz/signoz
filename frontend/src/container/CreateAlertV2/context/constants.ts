@@ -17,6 +17,7 @@ export const INITIAL_ALERT_STATE: AlertState = {
 	name: '',
 	description: '',
 	labels: {},
+	yAxisUnit: undefined,
 };
 
 export const INITIAL_CRITICAL_THRESHOLD: Threshold = {
