@@ -3,14 +3,17 @@ package ruletypes
 import (
 	"encoding/json"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"time"
 )
 
-type EvaluationKind string
+type EvaluationKind struct {
+	valuer.String
+}
 
-const (
-	RollingEvaluation    EvaluationKind = "rolling"
-	CumulativeEvaluation EvaluationKind = "cumulative"
+var (
+	RollingEvaluation    = EvaluationKind{valuer.NewString("rolling")}
+	CumulativeEvaluation = EvaluationKind{valuer.NewString("cumulative")}
 )
 
 type Evaluation interface {
@@ -83,18 +86,18 @@ func (e *EvaluationWrapper) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (wrapper *EvaluationWrapper) GetEvaluation() (Evaluation, error) {
-	if wrapper.Kind == "" {
-		wrapper.Kind = "rolling"
+func (e *EvaluationWrapper) GetEvaluation() (Evaluation, error) {
+	if e.Kind.IsZero() {
+		e.Kind = RollingEvaluation
 	}
 
-	switch wrapper.Kind {
+	switch e.Kind {
 	case RollingEvaluation:
-		if rolling, ok := wrapper.Spec.(RollingWindow); ok {
+		if rolling, ok := e.Spec.(RollingWindow); ok {
 			return &rolling, nil
 		}
 	case CumulativeEvaluation:
-		if cumulative, ok := wrapper.Spec.(CumulativeWindow); ok {
+		if cumulative, ok := e.Spec.(CumulativeWindow); ok {
 			return &cumulative, nil
 		}
 	default:
