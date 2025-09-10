@@ -146,7 +146,7 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 	);
 
 	// Footer rendering for pagination
-	const hasReachedEndOfLogs = false; // Simplified for now
+	const hasReachedEndOfLogs = false;
 
 	const getItemContent = useCallback(
 		(_: number, logToRender: ILog): JSX.Element => {
@@ -212,7 +212,6 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 							data={logs}
 							totalCount={logs.length}
 							itemContent={getItemContent}
-							style={{ height: `calc(${logs.length} * ${24}px + 40px)` }}
 							overscan={200}
 							components={{
 								Footer: renderFooter,

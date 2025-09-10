@@ -87,7 +87,7 @@ function SpanRelatedSignals({
 					type: '',
 					isJSON: false,
 				} as BaseAutocompleteData,
-				op: 'IN',
+				op: '=',
 				value: selectedSpan.traceId,
 			},
 		],

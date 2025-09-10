@@ -2,6 +2,11 @@
 	background: rgba(171, 189, 255, 0.04);
 	margin-inline: 16px;
 	padding-top: 15px;
+
+	&,
+	&-list-container {
+		height: 100%;
+	}
 	&-empty {
 		padding-top: 0;
 	}
