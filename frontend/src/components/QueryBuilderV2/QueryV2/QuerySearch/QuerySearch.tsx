@@ -23,6 +23,7 @@ import cx from 'classnames';
 import {
 	negationQueryOperatorSuggestions,
 	OPERATORS,
+	QUERY_BUILDER_FUNCTIONS,
 	QUERY_BUILDER_KEY_TYPES,
 	QUERY_BUILDER_OPERATORS_BY_KEY_TYPE,
 	queryOperatorSuggestions,
@@ -1076,11 +1077,11 @@ function QuerySearch({
 		}
 
 		if (queryContext.isInFunction) {
-			options = [
-				{ label: 'HAS', type: 'function' },
-				{ label: 'HASANY', type: 'function' },
-				{ label: 'HASALL', type: 'function' },
-			];
+			options = Object.values(QUERY_BUILDER_FUNCTIONS).map((option) => ({
+				label: option,
+				apply: `${option}()`,
+				type: 'function',
+			}));
 
 			// Add space after selection for functions
 			const optionsWithSpace = addSpaceToOptions(options);
