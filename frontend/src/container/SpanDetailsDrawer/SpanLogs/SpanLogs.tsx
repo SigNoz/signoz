@@ -15,10 +15,9 @@ import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
-import { MouseEvent, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
 import {
@@ -41,7 +40,6 @@ interface SpanLogsProps {
 }
 
 function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
-	const { safeNavigate } = useSafeNavigate();
 	const { updateAllQueriesOperators } = useQueryBuilder();
 
 	const {
@@ -96,7 +94,7 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 
 	// Navigate to logs explorer with trace_id and span_id filters
 	const handleLogClick = useCallback(
-		(log: ILog, event: MouseEvent): void => {
+		(log: ILog): void => {
 			// Determine if this is a span log or context log
 			const isSpanLog = isLogSpanRelated(log.id);
 
@@ -135,14 +133,7 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 
 			const url = `${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`;
 
-			// Check for Ctrl+click (Windows/Linux) or Cmd+click (Mac) to open in new tab
-			const shouldOpenInNewTab = event.ctrlKey || event.metaKey;
-
-			if (shouldOpenInNewTab) {
-				window.open(url, '_blank');
-			} else {
-				safeNavigate(url);
-			}
+			window.open(url, '_blank');
 		},
 		[
 			isLogSpanRelated,
@@ -151,7 +142,6 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 			updateAllQueriesOperators,
 			timeRange.startTime,
 			timeRange.endTime,
-			safeNavigate,
 		],
 	);
 
