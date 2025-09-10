@@ -151,7 +151,7 @@ func ParseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*P
 			}
 		}
 		thresholdData := RuleThresholdData{
-			Kind: "basic",
+			Kind: BasicThresholdKind,
 			Spec: BasicRuleThresholds{{
 				Name:        thresholdName,
 				RuleUnit:    rule.RuleCondition.CompositeQuery.Unit,
