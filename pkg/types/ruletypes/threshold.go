@@ -359,7 +359,6 @@ func (b BasicRuleThreshold) ShouldAlert(series v3.Series) (Sample, bool) {
 	return alertSmpl, shouldAlert
 }
 
-// BASE RULE WILL HAVE NO IDEA EXCEPTT RULETHREHSOLDS
 func (r *RuleThresholdData) GetRuleThreshold() (RuleThreshold, error) {
 	if r == nil {
 		return nil, fmt.Errorf("rule threshold data is nil")
