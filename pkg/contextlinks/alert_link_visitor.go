@@ -46,6 +46,13 @@ func PrepareFilterExpression(labels map[string]string, whereClause string, group
 		return ""
 	}
 
+	//delete predefined alert labels
+	for _, label := range PredefinedAlertLabels {
+		if _, ok := labels[label]; ok {
+			delete(labels, label)
+		}
+	}
+
 	groupBySet := make(map[string]struct{})
 	for _, item := range groupByItems {
 		groupBySet[item.Name] = struct{}{}
