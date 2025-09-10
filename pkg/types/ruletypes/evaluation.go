@@ -2,7 +2,7 @@ package ruletypes
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"time"
 )
 
@@ -34,12 +34,12 @@ type CumulativeWindow struct {
 func (cumulativeWindow *CumulativeWindow) EvaluationTime(curr time.Time) (time.Time, time.Time, error) {
 	startsAt := time.UnixMilli(cumulativeWindow.StartsAt)
 	if curr.Before(startsAt) {
-		return time.Time{}, time.Time{}, fmt.Errorf("current time is before the start time")
+		return time.Time{}, time.Time{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "current time is before the start time")
 	}
 
 	dur := time.Duration(cumulativeWindow.EvalWindow)
 	if dur <= 0 {
-		return time.Time{}, time.Time{}, fmt.Errorf("duration cannot be less than zero")
+		return time.Time{}, time.Time{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "duration cannot be less than zero")
 	}
 
 	// Calculate the number of complete windows since StartsAt
@@ -66,20 +66,18 @@ func (e *EvaluationWrapper) UnmarshalJSON(data []byte) error {
 	case RollingEvaluation:
 		var rollingWindow RollingWindow
 		if err := json.Unmarshal(raw["spec"], &rollingWindow); err != nil {
-			return fmt.Errorf("failed to unmarshal rolling evaluation: %v",
-				err)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal rolling window: %v", err)
 		}
 		e.Spec = rollingWindow
 	case CumulativeEvaluation:
 		var cumulativeWindow CumulativeWindow
 		if err := json.Unmarshal(raw["spec"], &cumulativeWindow); err != nil {
-			return fmt.Errorf("failed to unmarshal cumulative evaluation: %v",
-				err)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal cumulative window: %v", err)
 		}
 		e.Spec = cumulativeWindow
 
 	default:
-		return fmt.Errorf("unsupported evaluation kind: %v", e.Kind)
+		return errors.NewInvalidInputf(errors.CodeUnsupported, "unknown evaluation kind")
 	}
 
 	return nil
@@ -100,7 +98,7 @@ func (wrapper *EvaluationWrapper) GetEvaluation() (Evaluation, error) {
 			return &cumulative, nil
 		}
 	default:
-		return nil, fmt.Errorf("unsupported evaluation kind: %s", wrapper.Kind)
+		return nil, errors.NewInvalidInputf(errors.CodeUnsupported, "unknown evaluation kind")
 	}
-	return nil, fmt.Errorf("unsupported evaluation kind: %s", wrapper.Kind)
+	return nil, errors.NewInvalidInputf(errors.CodeUnsupported, "unknown evaluation kind")
 }
