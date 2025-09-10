@@ -31,7 +31,7 @@ func (r *RuleThresholdData) UnmarshalJSON(data []byte) error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal raw rule threshold json: %v", err)
 	}
 	if err := json.Unmarshal(raw["kind"], &r.Kind); err != nil {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal rule threhsold kind: %v", err)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal rule threshold kind: %v", err)
 	}
 	switch r.Kind {
 	case BasicThresholdKind:
