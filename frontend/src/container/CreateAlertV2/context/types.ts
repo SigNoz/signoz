@@ -1,11 +1,13 @@
 import { Dispatch } from 'react';
-import { Labels } from 'types/api/alerts/def';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { AlertDef, Labels } from 'types/api/alerts/def';
 
 export interface ICreateAlertContextProps {
 	alertState: AlertState;
 	setAlertState: Dispatch<CreateAlertAction>;
-	step: AlertCreationStep;
-	setStep: Dispatch<AlertCreationStep>;
+	alertType: AlertTypes;
+	setAlertType: Dispatch<AlertTypes>;
+	alertDef: AlertDef;
 }
 
 export interface ICreateAlertProviderProps {
