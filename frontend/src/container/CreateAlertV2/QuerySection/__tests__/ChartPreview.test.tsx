@@ -194,6 +194,9 @@ describe('ChartPreview', () => {
 		expect(screen.getByTestId(GRAPH_TYPE_TEST_ID)).toHaveTextContent(
 			PANEL_TYPES.TIME_SERIES,
 		);
+		expect(screen.getByTestId('name')).toHaveTextContent('');
+		expect(screen.getByTestId('headline')).toBeInTheDocument();
+		expect(screen.getByTestId('selected-interval')).toBeInTheDocument();
 	});
 
 	it('renders PromQL chart preview when query type is PROM', () => {
@@ -257,6 +260,9 @@ describe('ChartPreview', () => {
 		);
 		expect(screen.getByTestId(GRAPH_TYPE_TEST_ID)).toHaveTextContent(
 			PANEL_TYPES.TIME_SERIES,
+		);
+		expect(screen.getByTestId(QUERY_TYPE_TEST_ID)).toHaveTextContent(
+			EQueryType.QUERY_BUILDER,
 		);
 	});
 

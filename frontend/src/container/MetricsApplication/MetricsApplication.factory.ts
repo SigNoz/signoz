@@ -14,7 +14,6 @@ export const getWidgetQueryBuilder = ({
 }: GetWidgetQueryBuilderProps): Widgets => ({
 	description: '',
 	id: id || v4(),
-	isStacked: false,
 	nullZeroValues: '',
 	opacity: '0',
 	panelTypes,

@@ -1,4 +1,5 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import ChartPreviewComponent from 'container/FormAlertRules/ChartPreview';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -8,8 +9,6 @@ import { AppState } from 'store/reducers';
 import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
-
-import { useCreateAlertState } from '../../context';
 
 export interface ChartPreviewProps {
 	alertDef: AlertDef;
