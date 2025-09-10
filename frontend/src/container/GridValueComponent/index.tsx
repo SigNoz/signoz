@@ -11,6 +11,30 @@ import { EQueryType } from 'types/common/dashboard';
 import { TitleContainer, ValueContainer } from './styles';
 import { GridValueComponentProps } from './types';
 
+// Function to preserve original precision while applying units
+const formatValueWithPrecision = (
+	value: number,
+	yAxisUnit?: string,
+): string => {
+	if (!yAxisUnit) {
+		return value.toString();
+	}
+
+	// Get the formatted value with unit but without precision loss
+	try {
+		const formattedValue = getYAxisFormattedValue(String(value), yAxisUnit);
+		// Extract the unit part from the formatted value
+		const unitMatch = formattedValue.match(/([KMB]?)$/);
+		const unit = unitMatch ? unitMatch[1] : '';
+
+		// Return the original value with the unit appended
+		return `${value}${unit}`;
+	} catch (error) {
+		console.error('Error formatting value:', error);
+		return value.toString();
+	}
+};
+
 function GridValueComponent({
 	data,
 	title,
@@ -97,11 +121,7 @@ function GridValueComponent({
 				<ValueGraph
 					thresholds={thresholds || []}
 					rawValue={value}
-					value={
-						yAxisUnit
-							? getYAxisFormattedValue(String(value), yAxisUnit)
-							: value.toString()
-					}
+					value={formatValueWithPrecision(value, yAxisUnit)}
 				/>
 			</ValueContainer>
 			<ContextMenu
