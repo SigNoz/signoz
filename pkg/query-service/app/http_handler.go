@@ -84,9 +84,8 @@ import (
 type status string
 
 const (
-	statusSuccess       status = "success"
-	statusError         status = "error"
-	defaultFluxInterval        = 5 * time.Minute
+	statusSuccess status = "success"
+	statusError   status = "error"
 )
 
 // NewRouter creates and configures a Gorilla Router.
@@ -478,11 +477,6 @@ func (aH *APIHandler) RegisterQueryRangeV5Routes(router *mux.Router, am *middlew
 // todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 	writeHttpResponse(w, data)
-}
-
-// RegisterPrivateRoutes registers routes for this handler on the given router
-func (aH *APIHandler) RegisterPrivateRoutes(router *mux.Router) {
-	router.HandleFunc("/api/v1/channels", aH.AlertmanagerAPI.ListAllChannels).Methods(http.MethodGet)
 }
 
 // RegisterRoutes registers routes for this handler on the given router
