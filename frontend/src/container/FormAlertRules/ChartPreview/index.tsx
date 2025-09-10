@@ -8,6 +8,7 @@ import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import AnomalyAlertEvaluationView from 'container/AnomalyAlertEvaluationView';
+import { INITIAL_CRITICAL_THRESHOLD } from 'container/CreateAlertV2/context/constants';
 import { Threshold } from 'container/CreateAlertV2/context/types';
 import { getLocalStorageGraphVisibilityState } from 'container/GridCardLayout/GridCard/utils';
 import GridPanelSwitch from 'container/GridPanelSwitch';
@@ -67,6 +68,7 @@ export interface ChartPreviewProps {
 	yAxisUnit: string;
 	setQueryStatus?: (status: string) => void;
 	showSideLegend?: boolean;
+	additionalThresholds?: Threshold[];
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -83,26 +85,23 @@ function ChartPreview({
 	yAxisUnit,
 	setQueryStatus,
 	showSideLegend = false,
+	additionalThresholds,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const dispatch = useDispatch();
 	const thresholds: Threshold[] = useMemo(
 		() =>
-			alertDef?.condition.thresholds || [
+			additionalThresholds || [
 				{
+					...INITIAL_CRITICAL_THRESHOLD,
 					thresholdValue: alertDef?.condition.target || 0,
 					unit: alertDef?.condition.targetUnit || '',
-					label: '',
-					color: '',
-					channels: [],
-					recoveryThresholdValue: 0,
-					id: '',
 				},
 			],
 		[
+			additionalThresholds,
 			alertDef?.condition.target,
 			alertDef?.condition.targetUnit,
-			alertDef?.condition.thresholds,
 		],
 	);
 	const [minTimeScale, setMinTimeScale] = useState<number>();
@@ -387,6 +386,7 @@ ChartPreview.defaultProps = {
 	alertDef: undefined,
 	setQueryStatus: (): void => {},
 	showSideLegend: false,
+	additionalThresholds: undefined,
 };
 
 export default ChartPreview;

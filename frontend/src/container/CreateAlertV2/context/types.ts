@@ -1,13 +1,12 @@
 import { Dispatch } from 'react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { AlertDef, Labels } from 'types/api/alerts/def';
+import { Labels } from 'types/api/alerts/def';
 
 export interface ICreateAlertContextProps {
 	alertState: AlertState;
 	setAlertState: Dispatch<CreateAlertAction>;
 	alertType: AlertTypes;
 	setAlertType: Dispatch<AlertTypes>;
-	alertDef: AlertDef;
 	thresholdState: AlertThresholdState;
 	setThresholdState: Dispatch<AlertThresholdAction>;
 }

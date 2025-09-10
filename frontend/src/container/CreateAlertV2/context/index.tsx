@@ -12,7 +12,6 @@ import {
 } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { AlertDef } from 'types/api/alerts/def';
 
 import {
 	INITIAL_ALERT_STATE,
@@ -57,10 +56,6 @@ export function CreateAlertProvider(
 		getInitialAlertTypeFromURL(queryParams, currentQuery),
 	);
 
-	const [alertDef, setAlertDef] = useState<AlertDef>(
-		buildInitialAlertDef(alertType),
-	);
-
 	const handleAlertTypeChange = useCallback(
 		(value: AlertTypes): void => {
 			const queryToRedirect = buildInitialAlertDef(value);
@@ -86,28 +81,10 @@ export function CreateAlertProvider(
 	);
 
 	useEffect(() => {
-		setAlertDef(buildInitialAlertDef(alertType));
 		setThresholdState({
 			type: 'RESET',
 		});
 	}, [alertType]);
-
-	const alertDefV2: AlertDef = useMemo(
-		() => ({
-			...alertDef,
-			condition: {
-				...alertDef.condition,
-				thresholds: thresholdState.thresholds,
-				matchType: thresholdState.matchType,
-				operator: thresholdState.operator,
-				selectedQuery: thresholdState.selectedQuery,
-				evaluationWindow: thresholdState.evaluationWindow,
-				algorithm: thresholdState.algorithm,
-				seasonality: thresholdState.seasonality,
-			},
-		}),
-		[alertDef, thresholdState],
-	);
 
 	const contextValue: ICreateAlertContextProps = useMemo(
 		() => ({
@@ -115,11 +92,10 @@ export function CreateAlertProvider(
 			setAlertState,
 			alertType,
 			setAlertType: handleAlertTypeChange,
-			alertDef: alertDefV2,
 			thresholdState,
 			setThresholdState,
 		}),
-		[alertState, alertType, handleAlertTypeChange, alertDefV2, thresholdState],
+		[alertState, alertType, handleAlertTypeChange, thresholdState],
 	);
 
 	return (
