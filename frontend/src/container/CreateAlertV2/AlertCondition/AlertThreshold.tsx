@@ -8,7 +8,6 @@ import {
 } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Plus } from 'lucide-react';
-import { useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { SuccessResponseV2 } from 'types/api';
 import { Channels } from 'types/api/channels/getAll';
@@ -24,6 +23,7 @@ import {
 } from '../context/constants';
 import ThresholdItem from './ThresholdItem';
 import { UpdateThreshold } from './types';
+import { getQueryNames } from './utils';
 
 function AlertThreshold(): JSX.Element {
 	const { thresholdState, setThresholdState } = useCreateAlertState();
@@ -37,17 +37,7 @@ function AlertThreshold(): JSX.Element {
 
 	const { currentQuery } = useQueryBuilder();
 
-	const queryNames = useMemo(() => {
-		const queries = currentQuery.builder.queryData.map((query) => ({
-			label: query.queryName,
-			value: query.queryName,
-		}));
-		const formulas = currentQuery.builder.queryFormulas.map((formula) => ({
-			label: formula.queryName,
-			value: formula.queryName,
-		}));
-		return [...queries, ...formulas];
-	}, [currentQuery]);
+	const queryNames = getQueryNames(currentQuery);
 
 	const selectedCategory = getCategoryByOptionId(currentQuery?.unit || '');
 	const categorySelectOptions = getCategorySelectOptionByName(
