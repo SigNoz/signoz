@@ -2,10 +2,6 @@ import './styles.scss';
 
 import { Button, Select, Typography } from 'antd';
 import getAllChannels from 'api/channels/getAll';
-import {
-	getCategoryByOptionId,
-	getCategorySelectOptionByName,
-} from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Plus } from 'lucide-react';
 import { useQuery } from 'react-query';
@@ -23,10 +19,18 @@ import {
 } from '../context/constants';
 import ThresholdItem from './ThresholdItem';
 import { UpdateThreshold } from './types';
-import { getQueryNames } from './utils';
+import {
+	getCategoryByOptionId,
+	getCategorySelectOptionByName,
+	getQueryNames,
+} from './utils';
 
 function AlertThreshold(): JSX.Element {
-	const { thresholdState, setThresholdState } = useCreateAlertState();
+	const {
+		alertState,
+		thresholdState,
+		setThresholdState,
+	} = useCreateAlertState();
 	const { data, isLoading: isLoadingChannels } = useQuery<
 		SuccessResponseV2<Channels[]>,
 		APIError
@@ -39,9 +43,9 @@ function AlertThreshold(): JSX.Element {
 
 	const queryNames = getQueryNames(currentQuery);
 
-	const selectedCategory = getCategoryByOptionId(currentQuery?.unit || '');
+	const selectedCategory = getCategoryByOptionId(alertState.yAxisUnit || '');
 	const categorySelectOptions = getCategorySelectOptionByName(
-		selectedCategory?.name,
+		selectedCategory || '',
 	);
 
 	const addThreshold = (): void => {

@@ -39,6 +39,11 @@ export const alertCreationReducer = (
 				...state,
 				labels: action.payload,
 			};
+		case 'SET_Y_AXIS_UNIT':
+			return {
+				...state,
+				yAxisUnit: action.payload,
+			};
 		default:
 			return state;
 	}
