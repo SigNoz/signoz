@@ -10,23 +10,14 @@ import {
 	ANOMALY_THRESHOLD_MATCH_TYPE_OPTIONS,
 	ANOMALY_THRESHOLD_OPERATOR_OPTIONS,
 } from '../context/constants';
+import { getQueryNames } from './utils';
 
 function AnomalyThreshold(): JSX.Element {
 	const { thresholdState, setThresholdState } = useCreateAlertState();
 
 	const { currentQuery } = useQueryBuilder();
 
-	const queryNames = useMemo(() => {
-		const queries = currentQuery.builder.queryData.map((query) => ({
-			label: query.queryName,
-			value: query.queryName,
-		}));
-		const formulas = currentQuery.builder.queryFormulas.map((formula) => ({
-			label: formula.queryName,
-			value: formula.queryName,
-		}));
-		return [...queries, ...formulas];
-	}, [currentQuery]);
+	const queryNames = getQueryNames(currentQuery);
 
 	const deviationOptions = useMemo(() => {
 		const options = [];
