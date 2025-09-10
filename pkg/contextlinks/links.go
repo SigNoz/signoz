@@ -152,9 +152,7 @@ func PrepareFilters(labels map[string]string, whereClauseItems []v3.FilterItem, 
 
 	//delete predefined alert labels
 	for _, label := range PredefinedAlertLabels {
-		if _, ok := labels[label]; ok {
-			delete(labels, label)
-		}
+		delete(labels, label)
 	}
 
 	added := make(map[string]struct{})
