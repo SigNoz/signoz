@@ -10,7 +10,7 @@ jest.mock('@ant-design/icons', () => ({
 }));
 
 const mockOnLabelsChange = jest.fn();
-const mockValidateLabelsKey = jest.fn().mockReturnValue(null); // Mock validation function that always passes
+const mockValidateLabelsKey = jest.fn().mockReturnValue(null);
 
 const defaultProps: LabelsInputProps = {
 	labels: {},

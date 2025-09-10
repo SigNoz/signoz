@@ -17,7 +17,6 @@ import { EQueryType } from 'types/common/dashboard';
 import { CreateAlertProvider } from '../../context';
 import ChartPreview from '../ChartPreview/ChartPreview';
 
-// Constants for duplicate strings
 const REQUESTS_PER_SEC = 'requests/sec';
 const CHART_PREVIEW_NAME = 'Chart Preview';
 const QUERY_TYPE_TEST_ID = 'query-type';
@@ -117,7 +116,6 @@ const mockUseQueryBuilder = {
 
 const mockAlertDef = buildInitialAlertDef(AlertTypes.METRICS_BASED_ALERT);
 
-// Mock useCreateAlertState to provide the correct yAxisUnit
 jest.mock('../../context', () => ({
 	...jest.requireActual('../../context'),
 	useCreateAlertState: (): any => ({
