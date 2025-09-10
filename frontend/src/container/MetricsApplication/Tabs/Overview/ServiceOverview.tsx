@@ -103,23 +103,29 @@ function ServiceOverview({
 		<>
 			<GraphControlsPanel
 				id="Service_button"
-				onViewLogsClick={onViewTracePopupClick({
-					servicename,
-					selectedTraceTags,
-					timestamp: selectedTimeStamp,
-					apmToTraceQuery: apmToLogQuery,
-					isViewLogsClicked: true,
-					stepInterval,
-					safeNavigate,
-				})}
-				onViewTracesClick={onViewTracePopupClick({
-					servicename,
-					selectedTraceTags,
-					timestamp: selectedTimeStamp,
-					apmToTraceQuery,
-					stepInterval,
-					safeNavigate,
-				})}
+				onViewLogsClick={(e: React.MouseEvent): void => {
+					onViewTracePopupClick({
+						servicename,
+						selectedTraceTags,
+						timestamp: selectedTimeStamp,
+						apmToTraceQuery: apmToLogQuery,
+						isViewLogsClicked: true,
+						stepInterval,
+						safeNavigate,
+						openInNewTab: e.metaKey || e.ctrlKey,
+					})();
+				}}
+				onViewTracesClick={(e: React.MouseEvent): void => {
+					onViewTracePopupClick({
+						servicename,
+						selectedTraceTags,
+						timestamp: selectedTimeStamp,
+						apmToTraceQuery,
+						stepInterval,
+						safeNavigate,
+						openInNewTab: e.metaKey || e.ctrlKey,
+					})();
+				}}
 			/>
 			<Card data-testid="service_latency">
 				<GraphContainer>

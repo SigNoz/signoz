@@ -19,7 +19,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useEffectOnce } from 'react-use';
-import { handleNavigateWithMetaKey } from 'utils/metaKeyHandler';
 
 import ModuleStepsContainer from './common/ModuleStepsContainer/ModuleStepsContainer';
 import { stepsMap } from './constants/stepsConfig';
@@ -320,12 +319,12 @@ export default function Onboarding(): JSX.Element {
 					<div
 						onClick={(e): void => {
 							logEvent('Onboarding V2: Skip Button Clicked', {});
-							handleNavigateWithMetaKey(ROUTES.APPLICATION, e);
+							history.push(ROUTES.APPLICATION, e);
 						}}
 						onKeyDown={(e): void => {
 							if (e.key === 'Enter') {
 								logEvent('Onboarding V2: Skip Button Clicked', {});
-								handleNavigateWithMetaKey(ROUTES.APPLICATION);
+								history.push(ROUTES.APPLICATION);
 							}
 						}}
 						role="button"

@@ -2,11 +2,10 @@ import './NewExplorerCTA.styles.scss';
 
 import { Badge, Button } from 'antd';
 import ROUTES from 'constants/routes';
-// import history from 'lib/history';
+import history from 'lib/history';
 import { Undo } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { handleNavigateWithMetaKey } from 'utils/metaKeyHandler';
 
 import { buttonText, RIBBON_STYLES } from './config';
 
@@ -36,7 +35,7 @@ function NewExplorerCTA(): JSX.Element | null {
 			}
 
 			if (targetRoute) {
-				handleNavigateWithMetaKey(targetRoute, event);
+				history.push(targetRoute, event);
 			}
 		},
 		[location.pathname],

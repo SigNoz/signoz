@@ -4,11 +4,10 @@ import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-// import history from 'lib/history';
+import history from 'lib/history';
 import { ArrowUpRight } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
 import DOCLINKS from 'utils/docLinks';
-import { handleNavigateWithMetaKey } from 'utils/metaKeyHandler';
 
 export default function NoLogs({
 	dataSource,
@@ -39,7 +38,7 @@ export default function NoLogs({
 			} else {
 				link = ROUTES.GET_STARTED_LOGS_MANAGEMENT;
 			}
-			handleNavigateWithMetaKey(link, e);
+			history.push(link, e);
 		} else if (dataSource === 'traces') {
 			window.open(DOCLINKS.TRACES_EXPLORER_EMPTY_STATE, '_blank');
 		} else if (dataSource === DataSource.METRICS) {

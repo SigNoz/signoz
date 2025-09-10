@@ -4,13 +4,12 @@ import './HomeChecklist.styles.scss';
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
-// import history from 'lib/history';
+import history from 'lib/history';
 import { ArrowRight, ArrowRightToLine, BookOpenText } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { USER_ROLES } from 'types/roles';
-import { handleNavigateWithMetaKey } from 'utils/metaKeyHandler';
 
 export type ChecklistItem = {
 	id: string;
@@ -93,12 +92,12 @@ function HomeChecklist({
 														});
 
 														if (item.toRoute !== ROUTES.GET_STARTED_WITH_CLOUD) {
-															handleNavigateWithMetaKey(item.toRoute || '', e);
+															history.push(item.toRoute || '', e);
 														} else if (
 															activeLicense &&
 															activeLicense.platform === LicensePlatform.CLOUD
 														) {
-															handleNavigateWithMetaKey(item.toRoute || '', e);
+															history.push(item.toRoute || '', e);
 														} else {
 															window?.open(
 																item.docsLink || '',

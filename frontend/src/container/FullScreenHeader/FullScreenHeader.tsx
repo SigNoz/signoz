@@ -2,8 +2,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './FullScreenHeader.styles.scss';
 
-// import history from 'lib/history';
-import { handleNavigateWithMetaKey } from 'utils/metaKeyHandler';
+import history from 'lib/history';
 
 export default function FullScreenHeader({
 	overrideRoute,
@@ -11,7 +10,7 @@ export default function FullScreenHeader({
 	overrideRoute?: string;
 }): React.ReactElement {
 	const handleLogoClick = (event?: React.MouseEvent): void => {
-		handleNavigateWithMetaKey(overrideRoute || '/', event);
+		history.push(overrideRoute || '/', event);
 	};
 	return (
 		<div className="full-screen-header-container">

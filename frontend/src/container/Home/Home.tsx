@@ -17,7 +17,7 @@ import { getMetricsListQuery } from 'container/MetricsExplorer/Summary/utils';
 import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-// import history from 'lib/history';
+import history from 'lib/history';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CompassIcon, DotIcon, HomeIcon, Plus, Wrench, X } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
@@ -30,7 +30,6 @@ import { UserPreference } from 'types/api/preferences/preference';
 import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { isIngestionActive } from 'utils/app';
-import { handleNavigateWithMetaKey } from 'utils/metaKeyHandler';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import AlertRules from './AlertRules/AlertRules';
@@ -419,14 +418,14 @@ export default function Home(): JSX.Element {
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Logs',
 												});
-												handleNavigateWithMetaKey(ROUTES.LOGS_EXPLORER, e);
+												history.push(ROUTES.LOGS_EXPLORER, e);
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
 													logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Logs',
 													});
-													handleNavigateWithMetaKey(ROUTES.LOGS_EXPLORER);
+													history.push(ROUTES.LOGS_EXPLORER);
 												}
 											}}
 										>
@@ -460,14 +459,14 @@ export default function Home(): JSX.Element {
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Traces',
 												});
-												handleNavigateWithMetaKey(ROUTES.TRACES_EXPLORER, e);
+												history.push(ROUTES.TRACES_EXPLORER, e);
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
 													logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Traces',
 													});
-													handleNavigateWithMetaKey(ROUTES.TRACES_EXPLORER);
+													history.push(ROUTES.TRACES_EXPLORER);
 												}
 											}}
 										>
@@ -501,14 +500,14 @@ export default function Home(): JSX.Element {
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Metrics',
 												});
-												handleNavigateWithMetaKey(ROUTES.METRICS_EXPLORER, e);
+												history.push(ROUTES.METRICS_EXPLORER, e);
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
 													logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Metrics',
 													});
-													handleNavigateWithMetaKey(ROUTES.METRICS_EXPLORER);
+													history.push(ROUTES.METRICS_EXPLORER);
 												}
 											}}
 										>
@@ -555,7 +554,7 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Logs',
 													});
-													handleNavigateWithMetaKey(ROUTES.LOGS_EXPLORER, e);
+													history.push(ROUTES.LOGS_EXPLORER, e);
 												}}
 											>
 												Open Logs Explorer
@@ -569,7 +568,7 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Traces',
 													});
-													handleNavigateWithMetaKey(ROUTES.TRACES_EXPLORER, e);
+													history.push(ROUTES.TRACES_EXPLORER, e);
 												}}
 											>
 												Open Traces Explorer
@@ -583,7 +582,7 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Metrics',
 													});
-													handleNavigateWithMetaKey(ROUTES.METRICS_EXPLORER_EXPLORER, e);
+													history.push(ROUTES.METRICS_EXPLORER_EXPLORER, e);
 												}}
 											>
 												Open Metrics Explorer
@@ -624,7 +623,7 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Dashboards',
 													});
-													handleNavigateWithMetaKey(ROUTES.ALL_DASHBOARD, e);
+													history.push(ROUTES.ALL_DASHBOARD, e);
 												}}
 											>
 												Create dashboard
@@ -666,7 +665,7 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Alerts',
 													});
-													handleNavigateWithMetaKey(ROUTES.ALERTS_NEW, e);
+													history.push(ROUTES.ALERTS_NEW, e);
 												}}
 											>
 												Create an alert

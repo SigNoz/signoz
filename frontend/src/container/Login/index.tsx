@@ -17,7 +17,6 @@ import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import APIError from 'types/api/error';
 import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck';
-import { handleNavigateWithMetaKey } from 'utils/metaKeyHandler';
 
 import { FormContainer, Label, ParentContainer } from './styles';
 
@@ -304,7 +303,7 @@ function Login({
 							If you are admin,{' '}
 							<Typography.Link
 								onClick={(e): void => {
-									handleNavigateWithMetaKey(ROUTES.SIGN_UP, e);
+									history.push(ROUTES.SIGN_UP, e);
 								}}
 								style={{ fontWeight: 700 }}
 							>

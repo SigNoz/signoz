@@ -178,13 +178,7 @@ export default function ServiceTraces({
 									serviceName: record.serviceName,
 								});
 
-								const path = `${ROUTES.APPLICATION}/${record.serviceName}`;
-
-								if (e.metaKey || e.ctrlKey) {
-									window.open(path, '_blank');
-								} else {
-									safeNavigate(path);
-								}
+								safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`, e);
 							},
 						})}
 					/>

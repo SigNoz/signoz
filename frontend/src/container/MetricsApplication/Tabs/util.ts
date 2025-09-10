@@ -43,6 +43,7 @@ interface OnViewTracePopupClickProps {
 	isViewLogsClicked?: boolean;
 	stepInterval?: number;
 	safeNavigate: (url: string) => void;
+	openInNewTab?: boolean;
 }
 
 interface OnViewAPIMonitoringPopupClickProps {
@@ -51,7 +52,7 @@ interface OnViewAPIMonitoringPopupClickProps {
 	stepInterval?: number;
 	domainName: string;
 	isError: boolean;
-
+	openInNewTab?: boolean;
 	safeNavigate: (url: string) => void;
 }
 
@@ -93,6 +94,7 @@ export function onViewTracePopupClick({
 	isViewLogsClicked,
 	stepInterval,
 	safeNavigate,
+	openInNewTab,
 }: OnViewTracePopupClickProps): VoidFunction {
 	return (): void => {
 		const endTime = secondsToMilliseconds(timestamp);
@@ -118,7 +120,11 @@ export function onViewTracePopupClick({
 			queryString,
 		);
 
-		safeNavigate(newPath);
+		if (openInNewTab) {
+			window.open(newPath, '_blank');
+		} else {
+			safeNavigate(newPath);
+		}
 	};
 }
 
@@ -149,6 +155,7 @@ export function onViewAPIMonitoringPopupClick({
 	isError,
 	stepInterval,
 	safeNavigate,
+	openInNewTab,
 }: OnViewAPIMonitoringPopupClickProps): VoidFunction {
 	return (): void => {
 		const endTime = timestamp + (stepInterval || 60);
@@ -190,7 +197,11 @@ export function onViewAPIMonitoringPopupClick({
 			filters,
 		);
 
-		safeNavigate(newPath);
+		if (openInNewTab) {
+			window.open(newPath, '_blank');
+		} else {
+			safeNavigate(newPath);
+		}
 	};
 }
 

@@ -285,16 +285,11 @@ function ServiceMetrics({
 
 	const handleRowClick = useCallback(
 		(record: ServicesList, event: React.MouseEvent) => {
-			const path = `${ROUTES.APPLICATION}/${record.serviceName}`;
 			logEvent('Homepage: Service clicked', {
 				serviceName: record.serviceName,
 			});
 
-			if (event.metaKey || event.ctrlKey) {
-				window.open(path, '_blank');
-			} else {
-				safeNavigate(path);
-			}
+			safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`, event);
 		},
 		[safeNavigate],
 	);

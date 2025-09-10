@@ -120,11 +120,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		});
 		const path = `/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`;
 
-		if (event && (event.metaKey || event.ctrlKey)) {
-			window.open(path, '_blank');
-		} else {
-			history.push(path);
-		}
+		history.push(path, event);
 	};
 
 	const logEventCalledRef = useRef(false);
