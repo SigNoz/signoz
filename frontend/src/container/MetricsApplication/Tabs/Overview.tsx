@@ -235,7 +235,7 @@ function Application(): JSX.Element {
 			timestamp: number,
 			apmToTraceQuery: Query,
 			isViewLogsClicked?: boolean,
-			openInNewTab?: boolean,
+			e?: React.MouseEvent,
 		): (() => void) => (): void => {
 			// eslint-disable-line @typescript-eslint/no-explicit-any
 			const endTime = secondsToMilliseconds(timestamp);
@@ -261,11 +261,7 @@ function Application(): JSX.Element {
 				queryString,
 			);
 
-			if (openInNewTab) {
-				window.open(newPath, '_blank');
-			} else {
-				history.push(newPath);
-			}
+			history.push(newPath, e);
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[stepInterval],
@@ -385,20 +381,10 @@ function Application(): JSX.Element {
 						<GraphControlsPanel
 							id="Error_button"
 							onViewLogsClick={(e: React.MouseEvent): void =>
-								onErrorTrackHandler(
-									selectedTimeStamp,
-									logErrorQuery,
-									undefined,
-									e.metaKey || e.ctrlKey,
-								)()
+								onErrorTrackHandler(selectedTimeStamp, logErrorQuery, undefined, e)()
 							}
 							onViewTracesClick={(e: React.MouseEvent): void =>
-								onErrorTrackHandler(
-									selectedTimeStamp,
-									errorTrackQuery,
-									undefined,
-									e.metaKey || e.ctrlKey,
-								)()
+								onErrorTrackHandler(selectedTimeStamp, errorTrackQuery, undefined, e)()
 							}
 						/>
 

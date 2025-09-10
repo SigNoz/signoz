@@ -38,11 +38,7 @@ export function AlertsEmptyState(): JSX.Element {
 
 	const onClickNewAlertHandler = useCallback((e: React.MouseEvent) => {
 		setLoading(false);
-		if (e.metaKey || e.ctrlKey) {
-			window.open(ROUTES.ALERTS_NEW, '_blank');
-		} else {
-			history.push(ROUTES.ALERTS_NEW);
-		}
+		history.push(ROUTES.ALERTS_NEW, e);
 	}, []);
 
 	return (

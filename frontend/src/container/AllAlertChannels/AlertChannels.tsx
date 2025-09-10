@@ -21,20 +21,12 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 	const [action] = useComponentPermission(['new_alert_action'], user.role);
 
 	const onClickEditHandler = useCallback((id: string, e: React.MouseEvent) => {
-		if (e.metaKey || e.ctrlKey) {
-			window.open(
-				generatePath(ROUTES.CHANNELS_EDIT, {
-					channelId: id,
-				}),
-				'_blank',
-			);
-		} else {
-			history.push(
-				generatePath(ROUTES.CHANNELS_EDIT, {
-					channelId: id,
-				}),
-			);
-		}
+		history.push(
+			generatePath(ROUTES.CHANNELS_EDIT, {
+				channelId: id,
+			}),
+			e,
+		);
 	}, []);
 
 	const columns: ColumnsType<Channels> = [
