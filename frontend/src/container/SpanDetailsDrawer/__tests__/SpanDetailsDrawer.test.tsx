@@ -331,10 +331,10 @@ describe('SpanDetailsDrawer', () => {
 		// Verify ordering: span query should use 'desc' (default)
 		expect(spanQuery.query.builder.queryData[0].orderBy[0].order).toBe('desc');
 
-		// Before query should use 'asc' for chronological order
+		// Before query should use 'desc' (default)
 		expect(beforeQuery.query.builder.queryData[0].orderBy[0].order).toBe('desc');
 
-		// After query should use 'desc' (default)
+		// After query should use 'asc' for chronological order
 		expect(afterQuery.query.builder.queryData[0].orderBy[0].order).toBe('asc');
 	});
 
