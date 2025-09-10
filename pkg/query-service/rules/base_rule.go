@@ -33,7 +33,7 @@ type BaseRule struct {
 
 	ruleCondition *ruletypes.RuleCondition
 
-	Threshold ruletypes.RuleThreshold `yaml:"thresholds,omitempty" json:"thresholds,omitempty"`
+	Threshold ruletypes.RuleThreshold
 	// evalWindow is the time window used for evaluating the rule
 	// i.e each time we lookback from the current time, we look at data for the last
 	// evalWindow duration
