@@ -96,7 +96,7 @@ export const ANOMALY_THRESHOLD_MATCH_TYPE_OPTIONS = [
 	{ value: AlertThresholdMatchType.ALL_THE_TIME, label: 'ALL THE TIME' },
 ];
 
-export const ANAMOLY_TIME_DURATION_OPTIONS = [
+export const ANOMALY_TIME_DURATION_OPTIONS = [
 	{ value: TimeDuration.FIVE_MINUTES, label: '5 minutes' },
 	{ value: TimeDuration.TEN_MINUTES, label: '10 minutes' },
 	{ value: TimeDuration.FIFTEEN_MINUTES, label: '15 minutes' },

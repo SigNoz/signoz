@@ -4,11 +4,11 @@ import { useMemo } from 'react';
 
 import { useCreateAlertState } from '../context';
 import {
-	ANAMOLY_TIME_DURATION_OPTIONS,
 	ANOMALY_ALGORITHM_OPTIONS,
 	ANOMALY_SEASONALITY_OPTIONS,
 	ANOMALY_THRESHOLD_MATCH_TYPE_OPTIONS,
 	ANOMALY_THRESHOLD_OPERATOR_OPTIONS,
+	ANOMALY_TIME_DURATION_OPTIONS,
 } from '../context/constants';
 import { getQueryNames } from './utils';
 
@@ -72,7 +72,7 @@ function AnomalyThreshold(): JSX.Element {
 							});
 						}}
 						style={{ width: 80 }}
-						options={ANAMOLY_TIME_DURATION_OPTIONS}
+						options={ANOMALY_TIME_DURATION_OPTIONS}
 					/>
 				</div>
 				{/* Sentence 2 */}
