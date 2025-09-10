@@ -22,31 +22,6 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	}),
 }));
 
-jest.mock('components/InputWithLabel/InputWithLabel', () => ({
-	__esModule: true,
-	default: ({
-		label,
-		onChange,
-		initialValue,
-		placeholder,
-		onClose,
-		closeIcon,
-	}: any) => (
-		<div>
-			<div>{label}</div>
-			<input
-				data-testid={`input-${label}`}
-				placeholder={placeholder}
-				defaultValue={initialValue}
-				onChange={(e) => onChange(e.target.value)}
-			/>
-			<button data-testid={`close-${label}`} onClick={onClose}>
-				{closeIcon ? 'close' : 'x'}
-			</button>
-		</div>
-	),
-}));
-
 jest.mock('container/QueryBuilder/filters/GroupByFilter/GroupByFilter', () => ({
 	GroupByFilter: ({ onChange }: any) => (
 		<button data-testid="groupby" onClick={() => onChange(['service.name'])}>
