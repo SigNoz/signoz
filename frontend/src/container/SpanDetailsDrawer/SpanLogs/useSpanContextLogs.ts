@@ -112,7 +112,6 @@ export const useSpanContextLogs = ({
 }: UseSpanContextLogsProps): UseSpanContextLogsReturn => {
 	const [allLogs, setAllLogs] = useState<ILog[]>([]);
 	const [spanLogIds, setSpanLogIds] = useState<Set<string>>(new Set());
-	const [isInitializing, setIsInitializing] = useState(false);
 
 	// Phase 1: Fetch span-specific logs (trace_id + span_id)
 	const spanFilter = useMemo(() => createSpanLogsFilters(traceId, spanId), [
@@ -260,7 +259,6 @@ export const useSpanContextLogs = ({
 	useEffect(() => {
 		const combined = [...beforeLogs, ...spanLogs, ...afterLogs];
 		setAllLogs(combined);
-		setIsInitializing(false);
 	}, [beforeLogs, spanLogs, afterLogs]);
 
 	// Helper function to check if a log belongs to the span
@@ -269,15 +267,9 @@ export const useSpanContextLogs = ({
 		[spanLogIds],
 	);
 
-	// Reset when trace/span changes
-	useEffect(() => {
-		setAllLogs([]);
-		setIsInitializing(true);
-	}, [traceId, spanId, timeRange.startTime, timeRange.endTime]);
-
 	return {
 		logs: allLogs,
-		isLoading: isSpanLoading || isInitializing,
+		isLoading: isSpanLoading && spanLogs.length === 0,
 		isError: isSpanError,
 		isFetching: isSpanFetching || isBeforeFetching || isAfterFetching,
 		spanLogIds,
