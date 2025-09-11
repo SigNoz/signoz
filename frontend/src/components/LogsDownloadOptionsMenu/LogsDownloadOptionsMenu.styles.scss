@@ -4,8 +4,8 @@
 		border: 1px solid var(--bg-slate-400);
 		background: linear-gradient(
 			139deg,
-			rgba(18, 19, 23, 0.8) 0%,
-			rgba(18, 19, 23, 0.9) 98.68%
+			var(--bg-ink-400) 0%,
+			var(--bg-ink-500) 98.68%
 		);
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 		backdrop-filter: blur(20px);
@@ -69,8 +69,8 @@
 			border: 1px solid var(--bg-vanilla-300);
 			background: linear-gradient(
 				139deg,
-				rgba(255, 255, 255, 0.8) 0%,
-				rgba(255, 255, 255, 0.9) 98.68%
+				var(--bg-vanilla-100) 0%,
+				var(--bg-vanilla-300) 98.68%
 			);
 			box-shadow: 4px 10px 16px 2px rgba(255, 255, 255, 0.2);
 		}
