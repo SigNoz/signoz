@@ -1,5 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { TIMEZONE_DATA } from 'container/CreateAlertV2/EvaluationSetting/utils';
+import { TIMEZONE_DATA } from 'container/CreateAlertV2/EvaluationSettings/utils';
 import dayjs from 'dayjs';
 import getRandomColor from 'lib/getRandomColor';
 import { v4 } from 'uuid';
