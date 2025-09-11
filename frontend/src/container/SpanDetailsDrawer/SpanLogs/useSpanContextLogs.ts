@@ -259,9 +259,8 @@ export const useSpanContextLogs = ({
 		);
 	}, [afterData]);
 
-	// Combine all logs chronologically
 	useEffect(() => {
-		const combined = [...beforeLogs, ...spanLogs, ...afterLogs];
+		const combined = [...afterLogs.reverse(), ...spanLogs, ...beforeLogs];
 		setAllLogs(combined);
 	}, [beforeLogs, spanLogs, afterLogs]);
 
