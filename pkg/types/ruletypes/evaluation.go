@@ -51,7 +51,7 @@ func (cumulativeWindow *CumulativeWindow) Validate() error {
 	if cumulativeWindow.StartsAt <= 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "startsAt must be a valid timestamp greater than zero")
 	}
-	if time.Now().After(time.Unix(cumulativeWindow.StartsAt, 0)) {
+	if time.Now().Before(time.UnixMilli(cumulativeWindow.StartsAt)) {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "startsAt must be in the past")
 	}
 	return nil
