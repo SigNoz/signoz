@@ -94,7 +94,7 @@ function SpanRelatedSignals({
 		[selectedSpan.traceId],
 	);
 
-	const handleExplorePagesRedirect = useCallback((): void => {
+	const handleExplorerPageRedirect = useCallback((): void => {
 		const startTimeMs = traceStartTime - FIVE_MINUTES_IN_MS;
 		const endTimeMs = traceEndTime + FIVE_MINUTES_IN_MS;
 
@@ -209,7 +209,7 @@ function SpanRelatedSignals({
 							<Button
 								icon={<Compass size={18} />}
 								className="open-in-explorer"
-								onClick={handleExplorePagesRedirect}
+								onClick={handleExplorerPageRedirect}
 							/>
 						)}
 					</div>
@@ -224,6 +224,7 @@ function SpanRelatedSignals({
 									startTime: traceStartTime - FIVE_MINUTES_IN_MS,
 									endTime: traceEndTime + FIVE_MINUTES_IN_MS,
 								}}
+								handleExplorerPageRedirect={handleExplorerPageRedirect}
 							/>
 						</>
 					)}

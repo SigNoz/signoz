@@ -1,5 +1,7 @@
 import './spanLogs.styles.scss';
 
+import { Button } from '@signozhq/button';
+import { Typography } from 'antd';
 import cx from 'classnames';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -16,6 +18,7 @@ import { FontSize } from 'container/OptionsMenu/types';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import createQueryParams from 'lib/createQueryParams';
+import { Compass } from 'lucide-react';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { useCallback, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
@@ -37,9 +40,15 @@ interface SpanLogsProps {
 		startTime: number;
 		endTime: number;
 	};
+	handleExplorerPageRedirect: () => void;
 }
 
-function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
+function SpanLogs({
+	traceId,
+	spanId,
+	timeRange,
+	handleExplorerPageRedirect,
+}: SpanLogsProps): JSX.Element {
 	const { updateAllQueriesOperators } = useQueryBuilder();
 
 	const {
@@ -228,7 +237,26 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 
 	const renderNoLogsFound = (): JSX.Element => (
 		<div className="span-logs-empty-content">
-			<p>No logs found for this span</p>
+			<section className="description">
+				<img src="/Icons/no-data.svg" alt="no-data" className="no-data-img" />
+				<Typography.Text className="no-data-text-1">
+					No logs found for selected span.
+					<span className="no-data-text-2">
+						Try viewing logs for the current trace.
+					</span>
+				</Typography.Text>
+			</section>
+			<section className="action-section">
+				<Button
+					className="action-btn"
+					variant="action"
+					prefixIcon={<Compass size={14} />}
+					onClick={handleExplorerPageRedirect}
+					size="md"
+				>
+					Log Explorer
+				</Button>
+			</section>
 		</div>
 	);
 
