@@ -1,4 +1,4 @@
-// Generated from FilterQuery.g4 by ANTLR 4.13.1
+// Generated from ../../../../grammar/FilterQuery.g4 by ANTLR 4.13.1
 
 import {ParseTreeVisitor} from 'antlr4';
 
@@ -133,3 +133,4 @@ export default class FilterQueryVisitor<Result> extends ParseTreeVisitor<Result>
 	 */
 	visitKey?: (ctx: KeyContext) => Result;
 }
+
