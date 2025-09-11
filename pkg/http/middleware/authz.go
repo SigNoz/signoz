@@ -106,11 +106,15 @@ func (middleware *AuthZ) OpenAccess(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-// each individual APIs should be responsible for defining the relation and the object being accessed, subject will be derived from the request
-func (middleware *AuthZ) Check(next http.HandlerFunc, relation string) http.HandlerFunc {
+func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relation, typed authtypes.Typeable, parentTyped authtypes.Typeable, selector authz.Selector) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		checkRequestTupleKey := authtypes.NewTuple("", "", "")
-		err := middleware.authzService.Check(req.Context(), checkRequestTupleKey)
+		selector, parentSelectors, err := selector.GetSelectors(req)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		err = middleware.authzService.CheckWithTupleCreation(req, relation, typed, selector, parentTyped, parentSelectors...)
 		if err != nil {
 			render.Error(rw, err)
 			return

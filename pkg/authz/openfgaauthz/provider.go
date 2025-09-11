@@ -2,6 +2,7 @@ package openfgaauthz
 
 import (
 	"context"
+	"net/http"
 	"sync"
 
 	authz "github.com/SigNoz/signoz/pkg/authz"
@@ -190,6 +191,31 @@ func (provider *provider) Check(ctx context.Context, tupleReq *openfgav1.CheckRe
 
 	if !checkResponse.Allowed {
 		return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "subject %s cannot %s object %s", tupleReq.User, tupleReq.Relation, tupleReq.Object)
+	}
+
+	return nil
+}
+
+func (provider *provider) CheckWithTupleCreation(req *http.Request, relation authtypes.Relation, typeable authtypes.Typeable, selector authtypes.Selector, parentTypeable authtypes.Typeable, parentSelectors ...authtypes.Selector) error {
+
+	claims, err := authtypes.ClaimsFromContext(req.Context())
+	if err != nil {
+		return err
+	}
+
+	subject, err := authtypes.NewSubject(authtypes.TypeUser, claims.UserID, authtypes.Relation{})
+	if err != nil {
+		return err
+	}
+
+	tuples, err := typeable.Tuples(subject, relation, selector, parentTypeable, parentSelectors...)
+	if err != nil {
+		return err
+	}
+
+	err = provider.Check(req.Context(), tuples[0])
+	if err != nil {
+		return err
 	}
 
 	return nil
