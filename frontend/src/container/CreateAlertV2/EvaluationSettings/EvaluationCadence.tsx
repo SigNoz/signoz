@@ -33,7 +33,7 @@ import {
 	TIMEZONE_DATA,
 } from './utils';
 
-function EvaluationCadenceDetails({
+export function EvaluationCadenceDetails({
 	setIsOpen,
 }: IEvaluationCadenceDetailsProps): JSX.Element {
 	const { advancedOptions, setAdvancedOptions } = useCreateAlertState();
@@ -65,7 +65,7 @@ function EvaluationCadenceDetails({
 			: EVALUATION_CADENCE_REPEAT_EVERY_MONTH_OPTIONS;
 
 	const EditorView = (
-		<div className="editor-view">
+		<div className="editor-view" data-testid="editor-view">
 			<div className="select-group">
 				<Typography.Text>REPEAT EVERY</Typography.Text>
 				<Select
@@ -138,7 +138,7 @@ function EvaluationCadenceDetails({
 	);
 
 	const RRuleView = (
-		<div className="rrule-view">
+		<div className="rrule-view" data-testid="rrule-view">
 			<div className="select-group">
 				<Typography.Text>STARTING ON</Typography.Text>
 				<DatePicker
@@ -425,7 +425,11 @@ function EditCustomSchedule({
 						<Calendar1 size={12} />
 						<Typography.Text>Preview</Typography.Text>
 					</Button>
-					<Button type="default" onClick={handleDiscard}>
+					<Button
+						data-testid="discard-button"
+						type="default"
+						onClick={handleDiscard}
+					>
 						<X size={12} />
 					</Button>
 				</Button.Group>
