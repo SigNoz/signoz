@@ -7,11 +7,6 @@ import { Channels } from 'types/api/channels/getAll';
 import ThresholdItem from '../ThresholdItem';
 import { ThresholdItemProps } from '../types';
 
-// Mock the enableRecoveryThreshold utility
-jest.mock('../../utils', () => ({
-	enableRecoveryThreshold: jest.fn(() => true),
-}));
-
 const TEST_CONSTANTS = {
 	THRESHOLD_ID: 'test-threshold-1',
 	CRITICAL_LABEL: 'CRITICAL',
