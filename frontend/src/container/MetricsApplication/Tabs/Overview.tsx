@@ -310,7 +310,7 @@ function Application(): JSX.Element {
 				apmToTraceQuery,
 				stepInterval,
 				safeNavigate,
-				openInNewTab: e.metaKey || e.ctrlKey,
+				event: e,
 			})();
 		},
 		[

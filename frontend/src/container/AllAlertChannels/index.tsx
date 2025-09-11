@@ -30,8 +30,8 @@ function AlertChannels(): JSX.Element {
 		['add_new_channel'],
 		user.role,
 	);
-	const onToggleHandler = useCallback(() => {
-		history.push(ROUTES.CHANNELS_NEW);
+	const onToggleHandler = useCallback((e: React.MouseEvent) => {
+		history.push(ROUTES.CHANNELS_NEW, e);
 	}, []);
 
 	const { isLoading, data, error } = useQuery<
@@ -78,7 +78,7 @@ function AlertChannels(): JSX.Element {
 						}
 					>
 						<Button
-							onClick={onToggleHandler}
+							onClick={(e: React.MouseEvent): void => onToggleHandler(e)}
 							icon={<PlusOutlined />}
 							disabled={!addNewChannelPermission}
 						>

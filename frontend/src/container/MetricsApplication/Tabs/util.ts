@@ -42,8 +42,8 @@ interface OnViewTracePopupClickProps {
 	apmToTraceQuery: Query;
 	isViewLogsClicked?: boolean;
 	stepInterval?: number;
-	safeNavigate: (url: string) => void;
-	openInNewTab?: boolean;
+	safeNavigate: (url: string, event?: React.MouseEvent) => void;
+	event?: React.MouseEvent;
 }
 
 interface OnViewAPIMonitoringPopupClickProps {
@@ -52,8 +52,8 @@ interface OnViewAPIMonitoringPopupClickProps {
 	stepInterval?: number;
 	domainName: string;
 	isError: boolean;
-	openInNewTab?: boolean;
-	safeNavigate: (url: string) => void;
+	event?: React.MouseEvent;
+	safeNavigate: (url: string, event?: React.MouseEvent) => void;
 }
 
 export function generateExplorerPath(
@@ -84,7 +84,7 @@ export function generateExplorerPath(
  * @param isViewLogsClicked - Whether this is for viewing logs vs traces
  * @param stepInterval - Time interval in seconds
  * @param safeNavigate - Navigation function
- 
+ * @param event - Event object
  */
 export function onViewTracePopupClick({
 	selectedTraceTags,
@@ -94,7 +94,7 @@ export function onViewTracePopupClick({
 	isViewLogsClicked,
 	stepInterval,
 	safeNavigate,
-	openInNewTab,
+	event,
 }: OnViewTracePopupClickProps): VoidFunction {
 	return (): void => {
 		const endTime = secondsToMilliseconds(timestamp);
@@ -120,8 +120,8 @@ export function onViewTracePopupClick({
 			queryString,
 		);
 
-		if (openInNewTab) {
-			window.open(newPath, '_blank');
+		if (event) {
+			safeNavigate(newPath, event);
 		} else {
 			safeNavigate(newPath);
 		}
@@ -155,7 +155,7 @@ export function onViewAPIMonitoringPopupClick({
 	isError,
 	stepInterval,
 	safeNavigate,
-	openInNewTab,
+	event,
 }: OnViewAPIMonitoringPopupClickProps): VoidFunction {
 	return (): void => {
 		const endTime = timestamp + (stepInterval || 60);
@@ -197,8 +197,8 @@ export function onViewAPIMonitoringPopupClick({
 			filters,
 		);
 
-		if (openInNewTab) {
-			window.open(newPath, '_blank');
+		if (event) {
+			safeNavigate(newPath, event);
 		} else {
 			safeNavigate(newPath);
 		}

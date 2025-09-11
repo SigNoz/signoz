@@ -112,7 +112,7 @@ function ServiceOverview({
 						isViewLogsClicked: true,
 						stepInterval,
 						safeNavigate,
-						openInNewTab: e.metaKey || e.ctrlKey,
+						event: e,
 					})();
 				}}
 				onViewTracesClick={(e: React.MouseEvent): void => {
@@ -123,7 +123,7 @@ function ServiceOverview({
 						apmToTraceQuery,
 						stepInterval,
 						safeNavigate,
-						openInNewTab: e.metaKey || e.ctrlKey,
+						event: e,
 					})();
 				}}
 			/>
