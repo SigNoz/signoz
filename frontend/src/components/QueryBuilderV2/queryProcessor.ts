@@ -16,7 +16,6 @@ import { v4 as uuid } from 'uuid';
 
 import { convertFiltersToExpression } from './utils';
 
-// Type definitions for improved type safety
 interface ProcessingResult {
 	type: 'update' | 'add' | 'skip' | 'transform';
 	modifications?: QueryModification[];
@@ -168,10 +167,16 @@ function isInOperator(operator: string): boolean {
 }
 
 // Helper function to handle IN operator transformations
-function handleInTransformations(
+// Generic helper function to handle operator transformations
+function handleOperatorTransformation(
 	filter: TagFilterItem,
 	context: QueryProcessingContext,
 	formattedValue: string,
+	targetOperator: string,
+	transformationConfigs: Array<{
+		operatorKey: string;
+		positionProperty: 'operatorStart' | 'negationStart';
+	}>,
 ): ProcessingResult {
 	const { key } = filter;
 	const { op } = filter;
@@ -181,67 +186,32 @@ function handleInTransformations(
 		return { type: 'add', shouldAddToNonExisting: true };
 	}
 
-	// Check for NOT IN transformation
-	const notInKey = `${key.key}-${OPERATORS.NOT} ${op}`;
-	const notInKeyLower = notInKey.trim().toLowerCase();
-	if (context.queryPairsMap.has(notInKeyLower)) {
-		const notInPair = context.queryPairsMap.get(notInKeyLower);
-		context.visitedPairs.add(notInKeyLower);
+	// Check each transformation configuration
+	const foundConfig = transformationConfigs.find((config) => {
+		const transformationKey = `${key.key}-${config.operatorKey}`;
+		const transformationKeyLower = transformationKey.trim().toLowerCase();
+		return context.queryPairsMap.has(transformationKeyLower);
+	});
 
-		if (notInPair && notInPair.position && notInPair.position.valueEnd) {
-			context.modifiedQuery = `${
-				context.modifiedQuery.slice(0, notInPair.position.negationStart) +
-				OPERATORS.IN
-			} ${formattedValue} ${context.modifiedQuery.slice(
-				notInPair.position.valueEnd + 1,
-			)}`;
-			context.queryPairsMap = getQueryPairsMap(context.modifiedQuery.trim());
-		}
-		// Mark the current filter as visited to prevent it from being added as a new filter
-		context.visitedPairs.add(`${key.key}-${op}`.trim().toLowerCase());
-		return { type: 'transform', shouldAddToNonExisting: false };
-	}
-
-	// Check for equals transformation
-	const equalsKey = `${key.key}-${OPERATORS['=']}`;
-	const equalsKeyLower = equalsKey.trim().toLowerCase();
-	if (context.queryPairsMap.has(equalsKeyLower)) {
-		const equalsPair = context.queryPairsMap.get(equalsKeyLower);
-		context.visitedPairs.add(equalsKeyLower);
-
-		if (equalsPair && equalsPair.position && equalsPair.position.valueEnd) {
-			context.modifiedQuery = `${
-				context.modifiedQuery.slice(0, equalsPair.position.operatorStart) +
-				OPERATORS.IN
-			} ${formattedValue} ${context.modifiedQuery.slice(
-				equalsPair.position.valueEnd + 1,
-			)}`;
-			context.queryPairsMap = getQueryPairsMap(context.modifiedQuery);
-		}
-		// Mark the current filter as visited to prevent it from being added as a new filter
-		context.visitedPairs.add(`${key.key}-${op}`.trim().toLowerCase());
-		return { type: 'transform', shouldAddToNonExisting: false };
-	}
-
-	// Check for not equals transformation
-	const notEqualsKey = `${key.key}-${OPERATORS['!=']}`;
-	const notEqualsKeyLower = notEqualsKey.trim().toLowerCase();
-	if (context.queryPairsMap.has(notEqualsKeyLower)) {
-		const notEqualsPair = context.queryPairsMap.get(notEqualsKeyLower);
-		context.visitedPairs.add(notEqualsKeyLower);
+	if (foundConfig) {
+		const transformationKey = `${key.key}-${foundConfig.operatorKey}`;
+		const transformationKeyLower = transformationKey.trim().toLowerCase();
+		const transformationPair = context.queryPairsMap.get(transformationKeyLower);
+		context.visitedPairs.add(transformationKeyLower);
 
 		if (
-			notEqualsPair &&
-			notEqualsPair.position &&
-			notEqualsPair.position.valueEnd
+			transformationPair &&
+			transformationPair.position &&
+			transformationPair.position.valueEnd
 		) {
+			const startPosition =
+				transformationPair.position[foundConfig.positionProperty];
 			context.modifiedQuery = `${
-				context.modifiedQuery.slice(0, notEqualsPair.position.operatorStart) +
-				OPERATORS.IN
+				context.modifiedQuery.slice(0, startPosition) + targetOperator
 			} ${formattedValue} ${context.modifiedQuery.slice(
-				notEqualsPair.position.valueEnd + 1,
+				transformationPair.position.valueEnd + 1,
 			)}`;
-			context.queryPairsMap = getQueryPairsMap(context.modifiedQuery);
+			context.queryPairsMap = getQueryPairsMap(context.modifiedQuery.trim());
 		}
 		// Mark the current filter as visited to prevent it from being added as a new filter
 		context.visitedPairs.add(`${key.key}-${op}`.trim().toLowerCase());
@@ -251,46 +221,46 @@ function handleInTransformations(
 	return { type: 'add', shouldAddToNonExisting: true };
 }
 
+function handleInTransformations(
+	filter: TagFilterItem,
+	context: QueryProcessingContext,
+	formattedValue: string,
+): ProcessingResult {
+	const transformationConfigs = [
+		{
+			operatorKey: `${OPERATORS.NOT} ${filter.op}`,
+			positionProperty: 'negationStart' as const,
+		},
+		{ operatorKey: OPERATORS['='], positionProperty: 'operatorStart' as const },
+		{ operatorKey: OPERATORS['!='], positionProperty: 'operatorStart' as const },
+	];
+
+	return handleOperatorTransformation(
+		filter,
+		context,
+		formattedValue,
+		OPERATORS.IN,
+		transformationConfigs,
+	);
+}
+
 // Helper function to handle NOT IN operator transformations
 function handleNotInTransformations(
 	filter: TagFilterItem,
 	context: QueryProcessingContext,
 	formattedValue: string,
 ): ProcessingResult {
-	const { key } = filter;
-	const { op } = filter;
+	const transformationConfigs = [
+		{ operatorKey: OPERATORS['!='], positionProperty: 'operatorStart' as const },
+	];
 
-	// Skip if key is not defined
-	if (!key || !key.key) {
-		return { type: 'add', shouldAddToNonExisting: true };
-	}
-
-	// Check for not equals transformation
-	const notEqualsKey = `${key.key}-${OPERATORS['!=']}`;
-	const notEqualsKeyLower = notEqualsKey.trim().toLowerCase();
-	if (context.queryPairsMap.has(notEqualsKeyLower)) {
-		const notEqualsPair = context.queryPairsMap.get(notEqualsKeyLower);
-		context.visitedPairs.add(notEqualsKeyLower);
-
-		if (
-			notEqualsPair &&
-			notEqualsPair.position &&
-			notEqualsPair.position.valueEnd
-		) {
-			context.modifiedQuery = `${
-				context.modifiedQuery.slice(0, notEqualsPair.position.operatorStart) +
-				OPERATORS.NOT
-			} ${OPERATORS.IN} ${formattedValue} ${context.modifiedQuery.slice(
-				notEqualsPair.position.valueEnd + 1,
-			)}`;
-			context.queryPairsMap = getQueryPairsMap(context.modifiedQuery);
-		}
-		// Mark the current filter as visited to prevent it from being added as a new filter
-		context.visitedPairs.add(`${key.key}-${op}`.trim().toLowerCase());
-		return { type: 'transform', shouldAddToNonExisting: false };
-	}
-
-	return { type: 'add', shouldAddToNonExisting: true };
+	return handleOperatorTransformation(
+		filter,
+		context,
+		formattedValue,
+		`${OPERATORS.NOT} ${OPERATORS.IN}`,
+		transformationConfigs,
+	);
 }
 
 // Helper function to handle operator transformations
