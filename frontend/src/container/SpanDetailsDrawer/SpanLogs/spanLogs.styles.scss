@@ -1,17 +1,15 @@
 .span-logs {
-	background: rgba(171, 189, 255, 0.04);
 	margin-inline: 16px;
-	padding-top: 15px;
+	height: calc(100% - 64px - 55px - 56px);
 
-	&,
-	&-list-container {
-		height: 100%;
-	}
-	&-empty {
-		padding-top: 0;
+	&-virtuoso {
+		background: rgba(171, 189, 255, 0.04);
 	}
 	&-list-container .logs-loading-skeleton,
 	&-empty-content {
+		height: 100%;
+		border: 1px solid var(--bg-slate-500);
+		border-top: none;
 		color: var(--bg-vanilla-400);
 		display: flex;
 		flex-direction: column;

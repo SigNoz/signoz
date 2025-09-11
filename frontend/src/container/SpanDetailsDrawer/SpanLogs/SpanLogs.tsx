@@ -161,10 +161,9 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 
 			return (
 				<RawLogView
-					isTextOverflowEllipsisDisabled
 					key={logToRender.id}
 					data={logToRender}
-					linesPerRow={5}
+					linesPerRow={1}
 					fontSize={FontSize.MEDIUM}
 					onLogClick={handleLogClick}
 					isHighlighted={isSpanRelated}
@@ -209,6 +208,9 @@ function SpanLogs({ traceId, spanId, timeRange }: SpanLogsProps): JSX.Element {
 						<Virtuoso
 							className="span-logs-virtuoso"
 							key="span-logs-virtuoso"
+							style={
+								logs.length <= 35 ? { height: `calc(${logs.length} * 22px)` } : {}
+							}
 							data={logs}
 							totalCount={logs.length}
 							itemContent={getItemContent}
