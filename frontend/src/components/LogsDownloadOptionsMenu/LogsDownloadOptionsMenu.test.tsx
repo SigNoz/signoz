@@ -143,7 +143,7 @@ describe('LogsDownloadOptionsMenu', () => {
 		expect(allColumnsRadio).not.toBeChecked();
 	});
 
-	it('calls downloadExportData with correct parameters when export button is clicked', async () => {
+	it('calls downloadExportData with correct parameters when export button is clicked (Selected columns)', async () => {
 		const props = createTestProps();
 		testRenderContent(props);
 		fireEvent.click(screen.getByTestId(TEST_IDS.DOWNLOAD_BUTTON));
