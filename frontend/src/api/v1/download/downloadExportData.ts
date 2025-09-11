@@ -10,27 +10,15 @@ export const downloadExportData = async (
 	try {
 		const queryParams = new URLSearchParams();
 
-		if (props.start != null && props.start !== undefined) {
-			queryParams.append('start', String(props.start));
-		}
-		if (props.end != null && props.end !== undefined) {
-			queryParams.append('end', String(props.end));
-		}
-		if (props.filter) {
-			queryParams.append('filter', props.filter);
-		}
-		(props.columns || []).forEach((col) => {
+		queryParams.append('start', String(props.start));
+		queryParams.append('end', String(props.end));
+		queryParams.append('filter', props.filter);
+		props.columns.forEach((col) => {
 			queryParams.append('columns', col);
 		});
-		if (props.orderBy) {
-			queryParams.append('order_by', props.orderBy);
-		}
-		if (props.limit && props.limit > 0) {
-			queryParams.append('limit', String(props.limit));
-		}
-		if (props.format) {
-			queryParams.append('format', props.format);
-		}
+		queryParams.append('order_by', props.orderBy);
+		queryParams.append('limit', String(props.limit));
+		queryParams.append('format', props.format);
 
 		const response = await axios.get<Blob>(`export_raw_data?${queryParams}`, {
 			responseType: 'blob', // Important: tell axios to handle response as blob

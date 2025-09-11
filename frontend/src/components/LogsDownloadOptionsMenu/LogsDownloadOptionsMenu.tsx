@@ -1,10 +1,10 @@
 import './LogsDownloadOptionsMenu.styles.scss';
 
-import { Button, message, Radio, Typography } from 'antd';
-import downloadExportData from 'api/v1/download/downloadExportData';
-import { TelemetryFieldKey } from 'api/v5/v5';
-import { Download } from 'lucide-react';
-import { useState } from 'react';
+import { Button, message, Popover, Radio, Tooltip, Typography } from 'antd';
+import { downloadExportData } from 'api/v1/download/downloadExportData';
+import { Download, DownloadIcon, Loader2 } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import {
 	DownloadColumnsScopes,
@@ -21,13 +21,9 @@ function convertTelemetryFieldKeyToText(key: TelemetryFieldKey): string {
 interface LogsDownloadOptionsMenuProps {
 	startTime: number;
 	endTime: number;
-	filter: string | null;
+	filter: string;
 	columns: TelemetryFieldKey[];
-	orderBy: string | null;
-	onClose: () => void;
-	onDownloadStart: () => void;
-	onDownloadEnd: () => void;
-	isDownloading: boolean;
+	orderBy: string;
 }
 
 export default function LogsDownloadOptionsMenu({
@@ -36,28 +32,27 @@ export default function LogsDownloadOptionsMenu({
 	filter,
 	columns,
 	orderBy,
-	onClose,
-	onDownloadStart,
-	onDownloadEnd,
-	isDownloading,
 }: LogsDownloadOptionsMenuProps): JSX.Element {
 	const [exportFormat, setExportFormat] = useState<string>(DownloadFormats.CSV);
 	const [rowLimit, setRowLimit] = useState<number>(DownloadRowCounts.TEN_K);
 	const [columnsScope, setColumnsScope] = useState<string>(
 		DownloadColumnsScopes.ALL,
 	);
-	const handleExportRawData = async (): Promise<void> => {
-		// Close the menu immediately when export is triggered
-		onClose();
-		onDownloadStart();
+	const [isDownloading, setIsDownloading] = useState<boolean>(false);
+	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
+
+	const handleExportRawData = useCallback(async (): Promise<void> => {
+		setIsPopoverOpen(false);
 		try {
+			setIsDownloading(true);
 			const downloadOptions = {
 				source: 'logs',
 				start: startTime,
 				end: endTime,
-				...(columnsScope === DownloadColumnsScopes.SELECTED
-					? { columns: columns.map((col) => convertTelemetryFieldKeyToText(col)) }
-					: {}),
+				columns:
+					columnsScope === DownloadColumnsScopes.SELECTED
+						? columns.map((col) => convertTelemetryFieldKeyToText(col))
+						: [],
 				filter,
 				orderBy,
 				format: exportFormat,
@@ -70,65 +65,108 @@ export default function LogsDownloadOptionsMenu({
 			console.error('Error exporting logs:', error);
 			message.error('Failed to export logs. Please try again.');
 		} finally {
-			onDownloadEnd();
+			setIsDownloading(false);
 		}
-	};
+	}, [
+		startTime,
+		endTime,
+		columnsScope,
+		columns,
+		filter,
+		orderBy,
+		exportFormat,
+		rowLimit,
+		setIsDownloading,
+		setIsPopoverOpen,
+	]);
+
+	const popoverContent = useMemo(
+		() => (
+			<div
+				className="export-options-container"
+				role="dialog"
+				aria-label="Export options"
+				aria-modal="true"
+			>
+				<div className="export-format">
+					<Typography.Text className="title">FORMAT</Typography.Text>
+					<Radio.Group
+						value={exportFormat}
+						onChange={(e): void => setExportFormat(e.target.value)}
+					>
+						<Radio value={DownloadFormats.CSV}>csv</Radio>
+						<Radio value={DownloadFormats.JSONL}>jsonl</Radio>
+					</Radio.Group>
+				</div>
+
+				<div className="horizontal-line" />
+
+				<div className="row-limit">
+					<Typography.Text className="title">Number of Rows</Typography.Text>
+					<Radio.Group
+						value={rowLimit}
+						onChange={(e): void => setRowLimit(e.target.value)}
+					>
+						<Radio value={DownloadRowCounts.TEN_K}>10k</Radio>
+						<Radio value={DownloadRowCounts.THIRTY_K}>30k</Radio>
+						<Radio value={DownloadRowCounts.FIFTY_K}>50k</Radio>
+					</Radio.Group>
+				</div>
+
+				<div className="horizontal-line" />
+
+				<div className="columns-scope">
+					<Typography.Text className="title">Columns</Typography.Text>
+					<Radio.Group
+						value={columnsScope}
+						onChange={(e): void => setColumnsScope(e.target.value)}
+					>
+						<Radio value={DownloadColumnsScopes.ALL}>All</Radio>
+						<Radio value={DownloadColumnsScopes.SELECTED}>Selected</Radio>
+					</Radio.Group>
+				</div>
+
+				<Button
+					type="primary"
+					icon={<Download size={16} />}
+					onClick={handleExportRawData}
+					className="export-button"
+					disabled={isDownloading}
+					loading={isDownloading}
+				>
+					<Typography.Text className="text">Export</Typography.Text>
+				</Button>
+			</div>
+		),
+		[exportFormat, rowLimit, columnsScope, isDownloading, handleExportRawData],
+	);
 
 	return (
-		<div
-			className="export-options-container"
-			role="dialog"
-			aria-label="Export options"
-			aria-modal="true"
+		<Popover
+			content={popoverContent}
+			trigger="click"
+			placement="bottomRight"
+			open={isPopoverOpen}
+			onOpenChange={setIsPopoverOpen}
+			rootClassName="logs-download-popover"
+			overlayStyle={{
+				background: 'transparent',
+			}}
 		>
-			<div className="export-format">
-				<Typography.Text className="title">FORMAT</Typography.Text>
-				<Radio.Group
-					value={exportFormat}
-					onChange={(e): void => setExportFormat(e.target.value)}
-				>
-					<Radio value={DownloadFormats.CSV}>csv</Radio>
-					<Radio value={DownloadFormats.JSONL}>jsonl</Radio>
-				</Radio.Group>
-			</div>
-
-			<div className="horizontal-line" />
-
-			<div className="row-limit">
-				<Typography.Text className="title">Number of Rows</Typography.Text>
-				<Radio.Group
-					value={rowLimit}
-					onChange={(e): void => setRowLimit(e.target.value)}
-				>
-					<Radio value={DownloadRowCounts.TEN_K}>10k</Radio>
-					<Radio value={DownloadRowCounts.THIRTY_K}>30k</Radio>
-					<Radio value={DownloadRowCounts.FIFTY_K}>50k</Radio>
-				</Radio.Group>
-			</div>
-
-			<div className="horizontal-line" />
-
-			<div className="columns-scope">
-				<Typography.Text className="title">Columns</Typography.Text>
-				<Radio.Group
-					value={columnsScope}
-					onChange={(e): void => setColumnsScope(e.target.value)}
-				>
-					<Radio value={DownloadColumnsScopes.ALL}>All</Radio>
-					<Radio value={DownloadColumnsScopes.SELECTED}>Selected</Radio>
-				</Radio.Group>
-			</div>
-
-			<Button
-				type="primary"
-				icon={<Download size={14} />}
-				onClick={handleExportRawData}
-				className="export-button"
-				disabled={isDownloading}
-				loading={isDownloading}
-			>
-				<Typography.Text className="text">Export</Typography.Text>
-			</Button>
-		</div>
+			<Tooltip title="Download" placement="top">
+				<Button
+					className="periscope-btn ghost"
+					icon={
+						isDownloading ? (
+							<Loader2 size={18} className="animate-spin" />
+						) : (
+							<DownloadIcon size={15} />
+						)
+					}
+					data-testid="periscope-btn-download-options"
+					disabled={isDownloading}
+				/>
+			</Tooltip>
+		</Popover>
 	);
 }
