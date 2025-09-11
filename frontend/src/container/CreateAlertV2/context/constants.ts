@@ -1,4 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
+import { TIMEZONE_DATA } from 'container/CreateAlertV2/EvalutationSettings/utils';
+import dayjs from 'dayjs';
 import getRandomColor from 'lib/getRandomColor';
 import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
 import { v4 } from 'uuid';
@@ -85,6 +87,24 @@ export const INITIAL_ADVANCED_OPTIONS_STATE: AdvancedOptionsState = {
 		delay: 0,
 		timeUnit: '',
 	},
+	evaluationCadence: {
+		mode: 'default',
+		default: {
+			value: 1,
+			timeUnit: 'm',
+		},
+		custom: {
+			repeatEvery: 'week',
+			startAt: '00:00:00',
+			occurence: [],
+			timezone: TIMEZONE_DATA[0].value,
+		},
+		rrule: {
+			date: dayjs(),
+			startAt: '00:00:00',
+			rrule: '',
+		},
+	},
 };
 
 export const INITIAL_EVALUATION_WINDOW_STATE: EvaluationWindowState = {
@@ -141,4 +161,11 @@ export const ANOMALY_SEASONALITY_OPTIONS = [
 	{ value: Seasonality.HOURLY, label: 'Hourly' },
 	{ value: Seasonality.DAILY, label: 'Daily' },
 	{ value: Seasonality.WEEKLY, label: 'Weekly' },
+];
+
+export const ADVANCED_OPTIONS_TIME_UNIT_OPTIONS = [
+	{ value: 's', label: 'Second' },
+	{ value: 'm', label: 'Minute' },
+	{ value: 'h', label: 'Hours' },
+	{ value: 'd', label: 'Day' },
 ];

@@ -3,6 +3,7 @@ import { Y_AXIS_CATEGORIES } from 'components/YAxisUnitSelector/constants';
 
 import { useCreateAlertState } from '../context';
 import AdvancedOptionItem from './AdvancedOptionItem';
+import EvaluationCadence from './EvaluationCadence';
 
 function AdvancedOptions(): JSX.Element {
 	const { advancedOptions, setAdvancedOptions } = useCreateAlertState();
@@ -15,6 +16,7 @@ function AdvancedOptions(): JSX.Element {
 		<div className="advanced-options-container">
 			<Collapse bordered={false}>
 				<Collapse.Panel header="ADVANCED OPTIONS" key="1">
+					<EvaluationCadence />
 					<AdvancedOptionItem
 						title="Send a notification if data is missing"
 						description="If data is missing for this alert rule for a certain time period, notify in the default notification channel."

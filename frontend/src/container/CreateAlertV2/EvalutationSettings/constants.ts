@@ -19,3 +19,36 @@ export const EVALUATION_WINDOW_TIMEFRAME = {
 		{ label: 'Current month', value: 'currentMonth' },
 	],
 };
+
+export const EVALUATION_CADENCE_REPEAT_EVERY_OPTIONS = [
+	{ label: 'WEEK', value: 'week' },
+	{ label: 'MONTH', value: 'month' },
+];
+
+export const EVALUATION_CADENCE_REPEAT_EVERY_WEEK_OPTIONS = [
+	{ label: 'SUNDAY', value: 'sunday' },
+	{ label: 'MONDAY', value: 'monday' },
+	{ label: 'TUESDAY', value: 'tuesday' },
+	{ label: 'WEDNESDAY', value: 'wednesday' },
+	{ label: 'THURSDAY', value: 'thursday' },
+	{ label: 'FRIDAY', value: 'friday' },
+	{ label: 'SATURDAY', value: 'saturday' },
+];
+
+export const EVALUATION_CADENCE_REPEAT_EVERY_MONTH_OPTIONS = Array.from(
+	{ length: 30 },
+	(_, i) => {
+		const value = String(i + 1);
+		return { label: value, value };
+	},
+);
+
+export const WEEKDAY_MAP: { [key: string]: number } = {
+	sunday: 0,
+	monday: 1,
+	tuesday: 2,
+	wednesday: 3,
+	thursday: 4,
+	friday: 5,
+	saturday: 6,
+};

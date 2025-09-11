@@ -130,6 +130,16 @@ export const advancedOptionsReducer = (
 			return { ...state, enforceMinimumDatapoints: action.payload };
 		case 'SET_DELAY_EVALUATION':
 			return { ...state, delayEvaluation: action.payload };
+		case 'SET_EVALUATION_CADENCE':
+			return {
+				...state,
+				evaluationCadence: { ...state.evaluationCadence, ...action.payload },
+			};
+		case 'SET_EVALUATION_CADENCE_MODE':
+			return {
+				...state,
+				evaluationCadence: { ...state.evaluationCadence, mode: action.payload },
+			};
 		case 'RESET':
 			return INITIAL_ADVANCED_OPTIONS_STATE;
 		default:
