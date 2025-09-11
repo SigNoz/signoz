@@ -149,9 +149,6 @@ export default function LogsDownloadOptionsMenu({
 			open={isPopoverOpen}
 			onOpenChange={setIsPopoverOpen}
 			rootClassName="logs-download-popover"
-			overlayStyle={{
-				background: 'transparent',
-			}}
 		>
 			<Tooltip title="Download" placement="top">
 				<Button
