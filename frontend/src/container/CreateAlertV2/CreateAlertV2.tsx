@@ -7,7 +7,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import AlertCondition from './AlertCondition';
 import { CreateAlertProvider } from './context';
 import CreateAlertHeader from './CreateAlertHeader';
-import EvaluationSettings from './EvalutationSettings';
+import EvaluationSettings from './EvaluationSetting';
 import QuerySection from './QuerySection';
 
 function CreateAlertV2({
