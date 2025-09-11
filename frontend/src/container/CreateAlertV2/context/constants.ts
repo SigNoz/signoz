@@ -2,7 +2,6 @@ import { Color } from '@signozhq/design-tokens';
 import { TIMEZONE_DATA } from 'container/CreateAlertV2/EvalutationSettings/utils';
 import dayjs from 'dayjs';
 import getRandomColor from 'lib/getRandomColor';
-import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
 import { v4 } from 'uuid';
 
 import {
@@ -113,7 +112,7 @@ export const INITIAL_EVALUATION_WINDOW_STATE: EvaluationWindowState = {
 	startingAt: {
 		time: '00:00:00',
 		number: '1',
-		timezone: ALL_TIME_ZONES[0],
+		timezone: TIMEZONE_DATA[0].value,
 	},
 };
 

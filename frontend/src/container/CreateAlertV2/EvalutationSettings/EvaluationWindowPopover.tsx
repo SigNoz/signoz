@@ -1,21 +1,22 @@
 /* eslint-disable jsx-a11y/interactive-supports-focus */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import { Button, Input, Select, Typography } from 'antd';
+import { Button, Select, Typography } from 'antd';
 import classNames from 'classnames';
 import { Check } from 'lucide-react';
 import { useMemo } from 'react';
-import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
 
 import {
 	EVALUATION_WINDOW_TIMEFRAME,
 	EVALUATION_WINDOW_TYPE,
 } from './constants';
+import TimeInput from './TimeInput';
 import {
 	CumulativeWindowTimeframes,
 	IEvaluationWindowDetailsProps,
 	IEvaluationWindowPopoverProps,
 	RollingWindowTimeframes,
 } from './types';
+import { TIMEZONE_DATA } from './utils';
 
 function EvaluationWindowDetails({
 	evaluationWindow,
@@ -37,63 +38,6 @@ function EvaluationWindowDetails({
 		return options;
 	}, []);
 
-	const hhOptions = useMemo(() => {
-		const options = [];
-		for (let i = 0; i < 24; i++) {
-			options.push({ label: i.toString(), value: i });
-		}
-		return options;
-	}, []);
-
-	// eslint-disable-next-line sonarjs/no-identical-functions
-	const mmAndSSOptions = useMemo(() => {
-		const options = [];
-		for (let i = 0; i < 60; i++) {
-			options.push({ label: i.toString(), value: i });
-		}
-		return options;
-	}, []);
-
-	const hhValue = evaluationWindow.startingAt.time?.split(':')?.[0] || '';
-	const mmValue = evaluationWindow.startingAt.time?.split(':')?.[1] || '';
-	const ssValue = evaluationWindow.startingAt.time?.split(':')?.[2] || '';
-
-	const handleHHChange = (value: string): void => {
-		const formattedValue = parseInt(value, 10) < 10 ? `0${value}` : value;
-		setEvaluationWindow({
-			type: 'SET_STARTING_AT',
-			payload: {
-				number: evaluationWindow.startingAt.number,
-				time: `${formattedValue}:${mmValue}:${ssValue}`,
-				timezone: evaluationWindow.startingAt.timezone,
-			},
-		});
-	};
-
-	const handleMMChange = (value: string): void => {
-		const formattedValue = parseInt(value, 10) < 10 ? `0${value}` : value;
-		setEvaluationWindow({
-			type: 'SET_STARTING_AT',
-			payload: {
-				number: evaluationWindow.startingAt.number,
-				time: `${hhValue}:${formattedValue}:${ssValue}`,
-				timezone: evaluationWindow.startingAt.timezone,
-			},
-		});
-	};
-
-	const handleSSChange = (value: string): void => {
-		const formattedValue = parseInt(value, 10) < 10 ? `0${value}` : value;
-		setEvaluationWindow({
-			type: 'SET_STARTING_AT',
-			payload: {
-				number: evaluationWindow.startingAt.number,
-				time: `${hhValue}:${mmValue}:${formattedValue}`,
-				timezone: evaluationWindow.startingAt.timezone,
-			},
-		});
-	};
-
 	if (evaluationWindow.windowType === 'rolling') {
 		return <div />;
 	}
@@ -108,12 +52,23 @@ function EvaluationWindowDetails({
 		evaluationWindow.windowType === 'cumulative' &&
 		evaluationWindow.timeframe === 'currentMonth';
 
-	const handleStartingAtChange = (value: string): void => {
+	const handleNumberChange = (value: string): void => {
 		setEvaluationWindow({
 			type: 'SET_STARTING_AT',
 			payload: {
 				number: value,
 				time: evaluationWindow.startingAt.time,
+				timezone: evaluationWindow.startingAt.timezone,
+			},
+		});
+	};
+
+	const handleTimeChange = (value: string): void => {
+		setEvaluationWindow({
+			type: 'SET_STARTING_AT',
+			payload: {
+				number: evaluationWindow.startingAt.number,
+				time: value,
 				timezone: evaluationWindow.startingAt.timezone,
 			},
 		});
@@ -138,7 +93,7 @@ function EvaluationWindowDetails({
 					<Select
 						options={currentHourOptions}
 						value={evaluationWindow.startingAt.number || null}
-						onChange={handleStartingAtChange}
+						onChange={handleNumberChange}
 						placeholder="Select starting at"
 					/>
 				</div>
@@ -151,27 +106,15 @@ function EvaluationWindowDetails({
 			<div className="evaluation-window-details">
 				<div className="select-group time-select-group">
 					<Typography.Text>STARTING AT</Typography.Text>
-					<Input.Group>
-						<Select options={hhOptions} value={hhValue} onChange={handleHHChange} />
-						<Select
-							options={mmAndSSOptions}
-							value={mmValue}
-							onChange={handleMMChange}
-						/>
-						<Select
-							options={mmAndSSOptions}
-							value={ssValue}
-							onChange={handleSSChange}
-						/>
-					</Input.Group>
+					<TimeInput
+						value={evaluationWindow.startingAt.time}
+						onChange={handleTimeChange}
+					/>
 				</div>
 				<div className="select-group">
 					<Typography.Text>SELECT TIMEZONE</Typography.Text>
 					<Select
-						options={ALL_TIME_ZONES.map((timezone) => ({
-							label: timezone,
-							value: timezone,
-						}))}
+						options={TIMEZONE_DATA}
 						value={evaluationWindow.startingAt.timezone || null}
 						onChange={handleTimezoneChange}
 						placeholder="Select timezone"
@@ -189,33 +132,21 @@ function EvaluationWindowDetails({
 					<Select
 						options={currentMonthOptions}
 						value={evaluationWindow.startingAt.number || null}
-						onChange={handleStartingAtChange}
+						onChange={handleNumberChange}
 						placeholder="Select starting at"
 					/>
 				</div>
 				<div className="select-group time-select-group">
 					<Typography.Text>STARTING AT</Typography.Text>
-					<Input.Group>
-						<Select options={hhOptions} value={hhValue} onChange={handleHHChange} />
-						<Select
-							options={mmAndSSOptions}
-							value={mmValue}
-							onChange={handleMMChange}
-						/>
-						<Select
-							options={mmAndSSOptions}
-							value={ssValue}
-							onChange={handleSSChange}
-						/>
-					</Input.Group>
+					<TimeInput
+						value={evaluationWindow.startingAt.time}
+						onChange={handleTimeChange}
+					/>
 				</div>
 				<div className="select-group">
 					<Typography.Text>SELECT TIMEZONE</Typography.Text>
 					<Select
-						options={ALL_TIME_ZONES.map((timezone) => ({
-							label: timezone,
-							value: timezone,
-						}))}
+						options={TIMEZONE_DATA}
 						value={evaluationWindow.startingAt.timezone || null}
 						onChange={handleTimezoneChange}
 						placeholder="Select timezone"
