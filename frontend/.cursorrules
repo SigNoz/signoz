@@ -37,13 +37,8 @@ Write maintainable tests with descriptive names grouped in describe blocks
 - Domain-specific components
 - Error scenarios and edge cases
 
-**Global Mock Files Available:**
-- `react-router-dom` → `__mocks__/routerMock.ts`
-- `react-query` → `__mocks__/reactQueryMock.ts`
-- `antd` → `__mocks__/antdMock.ts`
+**Global Mock Files Available (from jest.config.ts):**
 - `uplot` → `__mocks__/uplotMock.ts`
-- `hooks/useNotifications` → `__mocks__/notificationMock.ts`
-- `utils/*` → `__mocks__/utilityMock.ts`
 
 # Repo-specific Testing Conventions
 
@@ -83,14 +78,22 @@ server.use(
   rest.get('*/api/v1/foo', (_req, res, ctx) => res(ctx.status(200), ctx.json({ ok: true })))
 );
 ```
-Keep large responses in `__mockdata__`.
+Keep large responses in `mocks-server/__mockdata_`.
 
 ## Interactions
-Always use `userEvent` (not `fireEvent`).
-Always await interactions:
+- Prefer `userEvent` for real user interactions (click, type, select, tab).
+- Use `fireEvent` only for low-level/programmatic events not covered by `userEvent` (e.g., scroll, resize, setting `element.scrollTop` for virtualization). Wrap in `act(...)` if needed.
+- Always await interactions:
 ```ts
 const user = userEvent.setup({ pointerEventsCheck: 0 });
 await user.click(screen.getByRole('button', { name: /save/i }));
+```
+
+```ts
+// Example: virtualized list scroll (no userEvent helper)
+const scroller = container.querySelector('[data-test-id="virtuoso-scroller"]') as HTMLElement;
+scroller.scrollTop = targetScrollTop;
+act(() => { fireEvent.scroll(scroller); });
 ```
 
 ## Timers
@@ -109,7 +112,7 @@ Prefer accessible queries (`getByRole`, `findByRole`, `getByLabelText`).
 Fallback: visible text.
 Last resort: `data-testid`.
 
-# Example Test
+# Example Test (using only configured global mocks)
 ```ts
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { server, rest } from 'mocks-server/server';
