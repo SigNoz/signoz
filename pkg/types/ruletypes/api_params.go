@@ -134,7 +134,7 @@ func (r *PostableRule) processRuleDefaults() error {
 		}
 	}
 	if r.Evaluation == nil {
-		r.Evaluation = &EvaluationWrapper{RollingEvaluation, RollingWindow{EvalWindow: rule.EvalWindow, Frequency: rule.Frequency}}
+		r.Evaluation = &EvaluationWrapper{RollingEvaluation, RollingWindow{EvalWindow: r.EvalWindow, Frequency: r.Frequency}}
 	}
 
 	return r.Validate()

@@ -25,6 +25,16 @@ type RollingWindow struct {
 	Frequency  Duration `json:"frequency"`
 }
 
+func (rollingWindow *RollingWindow) Validate() error {
+	if rollingWindow.EvalWindow <= 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "evalWindow must be greater than zero")
+	}
+	if rollingWindow.Frequency <= 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "frequency must be greater than zero")
+	}
+	return nil
+}
+
 func (rollingWindow *RollingWindow) EvaluationTime(curr time.Time) (time.Time, time.Time, error) {
 	return curr.Add(time.Duration(-rollingWindow.EvalWindow)), curr, nil
 }
@@ -32,6 +42,19 @@ func (rollingWindow *RollingWindow) EvaluationTime(curr time.Time) (time.Time, t
 type CumulativeWindow struct {
 	StartsAt   int64    `json:"startsAt"`
 	EvalWindow Duration `json:"evalWindow"`
+}
+
+func (cumulativeWindow *CumulativeWindow) Validate() error {
+	if cumulativeWindow.EvalWindow <= 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "evalWindow must be greater than zero")
+	}
+	if cumulativeWindow.StartsAt <= 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "startsAt must be a valid timestamp greater than zero")
+	}
+	if time.Now().After(time.Unix(cumulativeWindow.StartsAt, 0)) {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "startsAt must be in the past")
+	}
+	return nil
 }
 
 func (cumulativeWindow *CumulativeWindow) EvaluationTime(curr time.Time) (time.Time, time.Time, error) {
@@ -71,11 +94,19 @@ func (e *EvaluationWrapper) UnmarshalJSON(data []byte) error {
 		if err := json.Unmarshal(raw["spec"], &rollingWindow); err != nil {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal rolling window: %v", err)
 		}
+		err := rollingWindow.Validate()
+		if err != nil {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to validate rolling window: %v", err)
+		}
 		e.Spec = rollingWindow
 	case CumulativeEvaluation:
 		var cumulativeWindow CumulativeWindow
 		if err := json.Unmarshal(raw["spec"], &cumulativeWindow); err != nil {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal cumulative window: %v", err)
+		}
+		err := cumulativeWindow.Validate()
+		if err != nil {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to validate cumulative window: %v", err)
 		}
 		e.Spec = cumulativeWindow
 
