@@ -38,3 +38,16 @@ export interface IEvaluationWindowDetailsProps {
 	evaluationWindow: EvaluationWindowState;
 	setEvaluationWindow: Dispatch<EvaluationWindowAction>;
 }
+
+export interface IEvaluationCadenceDetailsProps {
+	isOpen: boolean;
+	setIsOpen: Dispatch<SetStateAction<boolean>>;
+}
+
+export interface TimeInputProps {
+	value?: string; // Format: "HH:MM:SS"
+	onChange?: (value: string) => void;
+	placeholder?: string;
+	disabled?: boolean;
+	className?: string;
+}
