@@ -1,13 +1,11 @@
-import { fireEvent, screen } from '@testing-library/react';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { render } from 'tests/test-utils';
+import { fireEvent, render, screen } from 'tests/test-utils';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import { SpanDuration } from '../Success';
 
 // Mock the hooks
-jest.mock('hooks/useSafeNavigate');
+// jest.mock('hooks/useSafeNavigate');
 jest.mock('hooks/useUrlQuery');
 jest.mock('@signozhq/badge', () => ({
 	Badge: jest.fn(),
@@ -44,10 +42,17 @@ const mockTraceMetadata = {
 	hasMissingSpans: false,
 };
 
+const mockSafeNavigate = jest.fn();
+
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: mockSafeNavigate,
+	}),
+}));
+
 describe('SpanDuration', () => {
 	const mockSetSelectedSpan = jest.fn();
 	const mockUrlQuerySet = jest.fn();
-	const mockSafeNavigate = jest.fn();
 	const mockUrlQueryGet = jest.fn();
 
 	beforeEach(() => {
@@ -58,11 +63,6 @@ describe('SpanDuration', () => {
 			set: mockUrlQuerySet,
 			get: mockUrlQueryGet,
 			toString: () => 'spanId=test-span-id',
-		});
-
-		// Mock safe navigate hook
-		(useSafeNavigate as jest.Mock).mockReturnValue({
-			safeNavigate: mockSafeNavigate,
 		});
 	});
 

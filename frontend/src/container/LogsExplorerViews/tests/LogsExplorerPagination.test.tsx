@@ -16,6 +16,7 @@ import {
 	render,
 	RenderResult,
 	screen,
+	userEvent,
 	waitFor,
 } from 'tests/test-utils';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -518,13 +519,12 @@ describe('Logs Explorer -> stage and run query', () => {
 		const initialEnd = initialPayload.end;
 
 		// Click the Stage & Run Query button
-		await act(async () => {
-			fireEvent.click(
-				screen.getByRole('button', {
-					name: /stage & run query/i,
-				}),
-			);
-		});
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		await user.click(
+			screen.getByRole('button', {
+				name: /stage & run query/i,
+			}),
+		);
 
 		// Wait for additional API calls to be made after clicking Stage & Run Query
 		await waitFor(

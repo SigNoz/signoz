@@ -90,24 +90,6 @@ jest.mock('react-i18next', () => ({
 	}),
 }));
 
-// jest.mock('react-router-dom', () => ({
-// 	...jest.requireActual('react-router-dom'),
-// 	useLocation: (): { pathname: string } => ({
-// 		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.TRACES_EXPLORER}/`,
-// 	}),
-// }));
-
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
-	}),
-}));
-
-jest.mock('react-router-dom-v5-compat', () => ({
-	...jest.requireActual('react-router-dom-v5-compat'),
-	useNavigationType: (): any => 'PUSH',
-}));
-
 export function getAppContextMock(
 	role: string,
 	appContextOverrides?: Partial<IAppContext>,
