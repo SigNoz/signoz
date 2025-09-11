@@ -38,8 +38,6 @@ import (
 	querierV5 "github.com/SigNoz/signoz/pkg/querier"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-
-	yaml "gopkg.in/yaml.v2"
 )
 
 type ThresholdRule struct {
@@ -792,7 +790,7 @@ func (r *ThresholdRule) String() string {
 		PreferredChannels: r.preferredChannels,
 	}
 
-	byt, err := yaml.Marshal(ar)
+	byt, err := json.Marshal(ar)
 	if err != nil {
 		return fmt.Sprintf("error marshaling alerting rule: %s", err.Error())
 	}

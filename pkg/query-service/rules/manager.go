@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"log/slog"
 	"sort"
 	"strings"
@@ -268,27 +267,14 @@ func (m *Manager) initiate(ctx context.Context) error {
 		for _, rec := range storedRules {
 			taskName := fmt.Sprintf("%s-groupname", rec.ID.StringValue())
 			parsedRule := ruletypes.PostableRule{}
+
 			err := json.Unmarshal([]byte(rec.Data), &parsedRule)
-
 			if err != nil {
-				if errors.Is(err, ruletypes.ErrFailedToParseJSON) {
-					zap.L().Info("failed to load rule in json format, trying yaml now:", zap.String("name", taskName))
-
-					// see if rule is stored in yaml format
-					err = yaml.Unmarshal([]byte(rec.Data), &parsedRule)
-					if err != nil {
-						zap.L().Error("failed to parse and initialize yaml rule", zap.String("name", taskName), zap.Error(err))
-						// just one rule is being parsed so expect just one error
-						loadErrors = append(loadErrors, err)
-						continue
-					}
-				} else {
-					zap.L().Error("failed to parse and initialize rule", zap.String("name", taskName), zap.Error(err))
-					// just one rule is being parsed so expect just one error
-					loadErrors = append(loadErrors, err)
-					continue
-				}
+				zap.L().Info("failed to load rule in json format", zap.String("name", taskName))
+				loadErrors = append(loadErrors, err)
+				continue
 			}
+
 			if !parsedRule.Disabled {
 				err := m.addTask(ctx, org.ID, &parsedRule, taskName)
 				if err != nil {

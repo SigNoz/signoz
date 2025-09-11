@@ -35,7 +35,6 @@ import (
 	anomalyV2 "github.com/SigNoz/signoz/ee/anomaly"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	yaml "gopkg.in/yaml.v2"
 )
 
 const (
@@ -513,7 +512,7 @@ func (r *AnomalyRule) String() string {
 		PreferredChannels: r.PreferredChannels(),
 	}
 
-	byt, err := yaml.Marshal(ar)
+	byt, err := json.Marshal(ar)
 	if err != nil {
 		return fmt.Sprintf("error marshaling alerting rule: %s", err.Error())
 	}
