@@ -15,7 +15,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
-	yaml "gopkg.in/yaml.v2"
 )
 
 type AlertType string
@@ -70,76 +69,51 @@ type PostableRule struct {
 	OldYaml string `json:"yaml,omitempty"`
 }
 
-func ParsePostableRule(content []byte) (*PostableRule, error) {
-	return ParsePostableRuleWithKind(content, "json")
-}
-
-func ParsePostableRuleWithKind(content []byte, kind RuleDataKind) (*PostableRule, error) {
-	return ParseIntoRule(PostableRule{}, content, kind)
-}
-
-// parseIntoRule loads the content (data) into PostableRule and also
-// validates the end result
-func ParseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*PostableRule, error) {
-	rule := &initRule
-
-	var err error
-	if kind == RuleDataKindJson {
-		if err = json.Unmarshal(content, rule); err != nil {
-			return nil, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "failed to parse json: %v", err)
-		}
-	} else if kind == RuleDataKindYaml {
-		if err = yaml.Unmarshal(content, rule); err != nil {
-			return nil, ErrFailedToParseYAML
-		}
-	} else {
-		return nil, ErrInvalidDataType
-	}
-
-	if rule.RuleCondition == nil && rule.Expr != "" {
+func (r *PostableRule) processRuleDefaults() error {
+	if r.RuleCondition == nil && r.Expr != "" {
 		// account for legacy rules
-		rule.RuleType = RuleTypeProm
-		rule.EvalWindow = Duration(5 * time.Minute)
-		rule.Frequency = Duration(1 * time.Minute)
-		rule.RuleCondition = &RuleCondition{
+		r.RuleType = RuleTypeProm
+		r.EvalWindow = Duration(5 * time.Minute)
+		r.Frequency = Duration(1 * time.Minute)
+		r.RuleCondition = &RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypePromQL,
 				PromQueries: map[string]*v3.PromQuery{
 					"A": {
-						Query: rule.Expr,
+						Query: r.Expr,
 					},
 				},
 			},
 		}
 	}
 
-	if rule.EvalWindow == 0 {
-		rule.EvalWindow = Duration(5 * time.Minute)
+	if r.EvalWindow == 0 {
+		r.EvalWindow = Duration(5 * time.Minute)
 	}
 
-	if rule.Frequency == 0 {
-		rule.Frequency = Duration(1 * time.Minute)
+	if r.Frequency == 0 {
+		r.Frequency = Duration(1 * time.Minute)
 	}
 
-	if rule.RuleCondition != nil {
-		if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-			if rule.RuleType == "" {
-				rule.RuleType = RuleTypeThreshold
+	if r.RuleCondition != nil {
+		if r.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+			if r.RuleType == "" {
+				r.RuleType = RuleTypeThreshold
 			}
-		} else if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
-			rule.RuleType = RuleTypeProm
+		} else if r.RuleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
+			r.RuleType = RuleTypeProm
 		}
 
-		for qLabel, q := range rule.RuleCondition.CompositeQuery.BuilderQueries {
+		for qLabel, q := range r.RuleCondition.CompositeQuery.BuilderQueries {
 			if q.AggregateAttribute.Key != "" && q.Expression == "" {
 				q.Expression = qLabel
 			}
 		}
 		//added alerts v2 fields
-		if rule.RuleCondition.Thresholds == nil {
+		if r.RuleCondition.Thresholds == nil {
 			thresholdName := CriticalThresholdName
-			if rule.Labels != nil {
-				if severity, ok := rule.Labels["severity"]; ok {
+			if r.Labels != nil {
+				if severity, ok := r.Labels["severity"]; ok {
 					thresholdName = severity
 				}
 			}
@@ -147,21 +121,36 @@ func ParseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*P
 				Kind: BasicThresholdKind,
 				Spec: BasicRuleThresholds{{
 					Name:        thresholdName,
-					RuleUnit:    rule.RuleCondition.CompositeQuery.Unit,
-					TargetUnit:  rule.RuleCondition.TargetUnit,
-					TargetValue: rule.RuleCondition.Target,
-					MatchType:   rule.RuleCondition.MatchType,
-					CompareOp:   rule.RuleCondition.CompareOp,
+					RuleUnit:    r.RuleCondition.CompositeQuery.Unit,
+					TargetUnit:  r.RuleCondition.TargetUnit,
+					TargetValue: r.RuleCondition.Target,
+					MatchType:   r.RuleCondition.MatchType,
+					CompareOp:   r.RuleCondition.CompareOp,
 				}},
 			}
-			rule.RuleCondition.Thresholds = &thresholdData
+			r.RuleCondition.Thresholds = &thresholdData
 		}
 	}
 
-	if err := rule.Validate(); err != nil {
-		return nil, err
+	return r.Validate()
+}
+
+func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
+	type Alias PostableRule
+	aux := (*Alias)(r)
+	if err := json.Unmarshal(bytes, aux); err != nil {
+		return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "failed to parse json: %v", err)
 	}
-	return rule, nil
+	return r.processRuleDefaults()
+}
+
+func (r *PostableRule) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type Alias PostableRule
+	aux := (*Alias)(r)
+	if err := unmarshal(aux); err != nil {
+		return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "failed to parse yaml: %v", err)
+	}
+	return r.processRuleDefaults()
 }
 
 func isValidLabelName(ln string) bool {

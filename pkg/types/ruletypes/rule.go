@@ -28,12 +28,6 @@ func NewStatsFromRules(rules []*Rule) map[string]any {
 			continue
 		}
 
-		postableRule, err := ParsePostableRule([]byte(rule.Data))
-		if err != nil {
-			continue
-		}
-		gettableRule.PostableRule = *postableRule
-
 		key := "rule.type." + strings.TrimSuffix(strings.ToLower(string(gettableRule.RuleType)), "_rule") + ".count"
 		if _, ok := stats[key]; !ok {
 			stats[key] = int64(1)

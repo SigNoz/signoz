@@ -1,6 +1,7 @@
 package ruletypes
 
 import (
+	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -219,8 +220,7 @@ func TestParseIntoRule(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rule, err := ParseIntoRule(tt.initRule, tt.content, tt.kind)
-
+			err := json.Unmarshal(tt.content, &tt.initRule)
 			if tt.expectError {
 				if err == nil {
 					t.Error("Expected error but got none")
@@ -233,13 +233,8 @@ func TestParseIntoRule(t *testing.T) {
 				return
 			}
 
-			if rule == nil {
-				t.Error("Expected rule but got nil")
-				return
-			}
-
 			if tt.validate != nil {
-				tt.validate(t, rule)
+				tt.validate(t, &tt.initRule)
 			}
 		})
 	}
@@ -282,8 +277,8 @@ func TestParseIntoRuleThresholdGeneration(t *testing.T) {
 			}
 		}
 	}`)
-
-	rule, err := ParseIntoRule(PostableRule{}, content, RuleDataKindJson)
+	rule := PostableRule{}
+	err := json.Unmarshal(content, &rule)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -360,8 +355,8 @@ func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 			}
 		}
 	}`)
-
-	rule, err := ParseIntoRule(PostableRule{}, content, RuleDataKindJson)
+	rule := PostableRule{}
+	err := json.Unmarshal(content, &rule)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
