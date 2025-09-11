@@ -471,7 +471,9 @@ describe('SpanDetailsDrawer', () => {
 
 		// Wait and verify empty state is shown
 		await waitFor(() => {
-			expect(screen.getByText('No logs found for this span')).toBeInTheDocument();
+			expect(
+				screen.getByText(/No logs found for selected span/),
+			).toBeInTheDocument();
 		});
 	});
 
