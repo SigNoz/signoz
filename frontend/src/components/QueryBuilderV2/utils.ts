@@ -36,6 +36,13 @@ const isArrayOperator = (operator: string): boolean => {
 	return arrayOperators.includes(operator);
 };
 
+const isVariable = (value: string | string[] | number | boolean): boolean => {
+	if (Array.isArray(value)) {
+		return value.some((v) => typeof v === 'string' && v.trim().startsWith('$'));
+	}
+	return typeof value === 'string' && value.trim().startsWith('$');
+};
+
 /**
  * Format a value for the expression string
  * @param value - The value to format
@@ -46,6 +53,10 @@ const formatValueForExpression = (
 	value: string[] | string | number | boolean,
 	operator?: string,
 ): string => {
+	if (isVariable(value)) {
+		return String(value);
+	}
+
 	// For IN operators, ensure value is always an array
 	if (isArrayOperator(operator || '')) {
 		const arrayValue = Array.isArray(value) ? value : [value];
@@ -172,11 +183,13 @@ export const convertExpressionToFilters = (
  *
  * @param expression - The full query string.
  * @param keysToRemove - An array of keys (case-insensitive) that should be removed from the expression.
+ * @param removeOnlyVariableExpressions - When true, only removes key-value pairs where the value is a variable (starts with $). When false, uses the original behavior.
  * @returns A new expression string with the specified keys and their associated clauses removed.
  */
 export const removeKeysFromExpression = (
 	expression: string,
 	keysToRemove: string[],
+	removeOnlyVariableExpressions = false,
 ): string => {
 	if (!keysToRemove || keysToRemove.length === 0) {
 		return expression;
@@ -192,9 +205,20 @@ export const removeKeysFromExpression = (
 			let queryPairsMap: Map<string, IQueryPair>;
 
 			if (existingQueryPairs.length > 0) {
+				// Filter query pairs based on the removeOnlyVariableExpressions flag
+				const filteredQueryPairs = removeOnlyVariableExpressions
+					? existingQueryPairs.filter((pair) => {
+							const pairKey = pair.key?.trim().toLowerCase();
+							const matchesKey = pairKey === `${key}`.trim().toLowerCase();
+							if (!matchesKey) return false;
+							const value = pair.value?.toString().trim();
+							return value && value.includes('$');
+					  })
+					: existingQueryPairs;
+
 				// Build a map for quick lookup of query pairs by their lowercase trimmed keys
 				queryPairsMap = new Map(
-					existingQueryPairs.map((pair) => {
+					filteredQueryPairs.map((pair) => {
 						const key = pair.key.trim().toLowerCase();
 						return [key, pair];
 					}),
@@ -230,6 +254,12 @@ export const removeKeysFromExpression = (
 				}
 			}
 		});
+
+		// Clean up any remaining trailing AND/OR operators and extra whitespace
+		updatedExpression = updatedExpression
+			.replace(/\s+(AND|OR)\s*$/i, '') // Remove trailing AND/OR
+			.replace(/^(AND|OR)\s+/i, '') // Remove leading AND/OR
+			.trim();
 	}
 
 	return updatedExpression;

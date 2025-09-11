@@ -53,6 +53,7 @@ const compositeQueryParam = {
 				legend: '',
 			},
 		],
+		queryTraceOperator: [],
 	},
 	promql: [
 		{

@@ -102,7 +102,7 @@ function ListViewOrderBy({
 			onChange={onChange}
 			onSearch={handleSearch}
 			notFoundContent={<Loader isLoading={isLoading} />}
-			placeholder="Select an attribute"
+			placeholder="Select a field"
 			style={{ width: 200 }}
 			options={selectOptions}
 			filterOption={(input, option): boolean =>
