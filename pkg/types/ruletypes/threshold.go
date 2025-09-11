@@ -168,10 +168,6 @@ func (b BasicRuleThreshold) Validate() error {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid match type: %s", string(b.MatchType)))
 	}
 
-	if b.SelectedQuery == "" {
-		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "selected query cannot be empty"))
-	}
-
 	return errors.Join(errs...)
 }
 
