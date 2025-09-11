@@ -32,7 +32,7 @@ func registerServer(parentCmd *cobra.Command, logger *slog.Logger) {
 		Short:              "Run the SigNoz server",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		RunE: func(currCmd *cobra.Command, args []string) error {
-			config, err := cmd.NewSigNozConfig(currCmd.Context(), flags)
+			config, err := cmd.NewSigNozConfig(currCmd.Context(), logger, flags)
 			if err != nil {
 				return err
 			}
