@@ -30,6 +30,15 @@ jest.mock('container/TraceFlameGraph/index.tsx', () => ({
 }));
 
 describe('TraceDetail', () => {
+	beforeEach(() => {
+		jest.useFakeTimers();
+		jest.setSystemTime(new Date('2023-10-20'));
+	});
+
+	afterEach(() => {
+		jest.useRealTimers();
+	});
+
 	it('should render tracedetail', async () => {
 		const { findByText, getByText, getAllByText, getByPlaceholderText } = render(
 			<MemoryRouter initialEntries={['/trace/000000000000000071dc9b0a338729b4']}>

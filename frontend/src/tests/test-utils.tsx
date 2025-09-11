@@ -2,7 +2,6 @@
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import { FeatureKeys } from 'constants/features';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
-import ROUTES from 'constants/routes';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
@@ -28,23 +27,25 @@ import {
 } from 'types/api/licensesV3/getActive';
 import { QueryBuilderContextType } from 'types/common/queryBuilder';
 import { ROLES, USER_ROLES } from 'types/roles';
+// import { MemoryRouter as V5MemoryRouter } from 'react-router-dom-v5-compat';
 
 const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
 			refetchOnWindowFocus: false,
+			retry: false,
 		},
 	},
 });
 
 beforeEach(() => {
-	jest.useFakeTimers();
+	// jest.useFakeTimers();
 	jest.setSystemTime(new Date('2023-10-20'));
 });
 
 afterEach(() => {
 	queryClient.clear();
-	jest.useRealTimers();
+	// jest.useRealTimers();
 });
 
 const mockStore = configureStore([thunk]);
@@ -89,12 +90,12 @@ jest.mock('react-i18next', () => ({
 	}),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.TRACES_EXPLORER}/`,
-	}),
-}));
+// jest.mock('react-router-dom', () => ({
+// 	...jest.requireActual('react-router-dom'),
+// 	useLocation: (): { pathname: string } => ({
+// 		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.TRACES_EXPLORER}/`,
+// 	}),
+// }));
 
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
@@ -348,4 +349,5 @@ const customRender = (
 };
 
 export * from '@testing-library/react';
+export { default as userEvent } from '@testing-library/user-event';
 export { customRender as render };
