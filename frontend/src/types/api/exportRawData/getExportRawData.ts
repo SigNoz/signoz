@@ -3,8 +3,8 @@ export interface ExportRawDataProps {
 	format: string;
 	start: number;
 	end: number;
-	columns?: string[];
-	filter: string | null;
-	orderBy: string | null;
-	limit: number | null;
+	columns: string[];
+	filter: string;
+	orderBy: string;
+	limit: number;
 }
