@@ -49,6 +49,7 @@ type CumulativeWindow struct {
 	StartsAt   int64    `json:"startsAt"`
 	EvalWindow Duration `json:"evalWindow"`
 	Frequency  Duration `json:"frequency"`
+	Timezone   string   `json:"timezone"`
 }
 
 func (cumulativeWindow CumulativeWindow) Validate() error {
@@ -60,6 +61,9 @@ func (cumulativeWindow CumulativeWindow) Validate() error {
 	}
 	if time.Now().Before(time.UnixMilli(cumulativeWindow.StartsAt)) {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "startsAt must be in the past")
+	}
+	if _, err := time.LoadLocation(cumulativeWindow.Timezone); err != nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "timezone is invalid")
 	}
 	if cumulativeWindow.Frequency <= 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "frequency must be greater than zero")
