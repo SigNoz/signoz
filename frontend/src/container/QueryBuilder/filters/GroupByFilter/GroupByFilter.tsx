@@ -163,12 +163,11 @@ export const GroupByFilter = memo(function GroupByFilter({
 	}, []);
 
 	useEffect(() => {
-		const currentValues: SelectOption<string, string>[] = query.groupBy.map(
-			(item) => ({
+		const currentValues: SelectOption<string, string>[] =
+			query.groupBy?.map((item) => ({
 				label: `${item.key}`,
 				value: `${item.id}`,
-			}),
-		);
+			})) || [];
 
 		setLocalValues(currentValues);
 	}, [query]);
@@ -191,7 +190,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}
 			data-testid="group-by"
-			placeholder={localValues.length === 0 ? 'Everything (no breakdown)' : ''}
+			placeholder={localValues?.length === 0 ? 'Everything (no breakdown)' : ''}
 		/>
 	);
 });
