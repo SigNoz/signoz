@@ -4247,7 +4247,7 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/button@^0.0.2":
+"@signozhq/button@0.0.2", "@signozhq/button@^0.0.2":
   version "0.0.2"
   resolved "https://registry.yarnpkg.com/@signozhq/button/-/button-0.0.2.tgz#c13edef1e735134b784a41f874b60a14bc16993f"
   integrity sha512-434/gbTykC00LrnzFPp7c33QPWZkf9n+8+SToLZFTB0rzcaS/xoB4b7QKhvk+8xLCj4zpw6BxfeRAL+gSoOUJw==
