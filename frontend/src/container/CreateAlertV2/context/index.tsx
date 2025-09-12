@@ -14,14 +14,18 @@ import { useLocation } from 'react-router-dom';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import {
+	INITIAL_ADVANCED_OPTIONS_STATE,
 	INITIAL_ALERT_STATE,
 	INITIAL_ALERT_THRESHOLD_STATE,
+	INITIAL_EVALUATION_WINDOW_STATE,
 } from './constants';
 import { ICreateAlertContextProps, ICreateAlertProviderProps } from './types';
 import {
+	advancedOptionsReducer,
 	alertCreationReducer,
 	alertThresholdReducer,
 	buildInitialAlertDef,
+	evaluationWindowReducer,
 	getInitialAlertTypeFromURL,
 } from './utils';
 
@@ -80,6 +84,16 @@ export function CreateAlertProvider(
 		INITIAL_ALERT_THRESHOLD_STATE,
 	);
 
+	const [evaluationWindow, setEvaluationWindow] = useReducer(
+		evaluationWindowReducer,
+		INITIAL_EVALUATION_WINDOW_STATE,
+	);
+
+	const [advancedOptions, setAdvancedOptions] = useReducer(
+		advancedOptionsReducer,
+		INITIAL_ADVANCED_OPTIONS_STATE,
+	);
+
 	useEffect(() => {
 		setThresholdState({
 			type: 'RESET',
@@ -94,8 +108,19 @@ export function CreateAlertProvider(
 			setAlertType: handleAlertTypeChange,
 			thresholdState,
 			setThresholdState,
+			evaluationWindow,
+			setEvaluationWindow,
+			advancedOptions,
+			setAdvancedOptions,
 		}),
-		[alertState, alertType, handleAlertTypeChange, thresholdState],
+		[
+			alertState,
+			alertType,
+			handleAlertTypeChange,
+			thresholdState,
+			evaluationWindow,
+			advancedOptions,
+		],
 	);
 
 	return (
