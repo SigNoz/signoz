@@ -185,7 +185,7 @@ describe('LogsExplorerViews -', () => {
 		lodsQueryServerRequest();
 		const { queryByTestId } = renderer();
 
-		const periscopeButtonTestId = 'periscope-btn';
+		const periscopeButtonTestId = 'periscope-btn-format-options';
 
 		// Test that the periscope button is present
 		expect(queryByTestId(periscopeButtonTestId)).toBeInTheDocument();
