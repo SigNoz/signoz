@@ -17,7 +17,7 @@ var (
 )
 
 type Evaluation interface {
-	EvaluationTime(curr time.Time) (time.Time, time.Time, error)
+	NextWindowFor(curr time.Time) (time.Time, time.Time, error)
 }
 
 type RollingWindow struct {
