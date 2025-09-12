@@ -107,6 +107,25 @@ export function CreateAlertProvider(
 		});
 	}, [alertType]);
 
+	const discardAlertRule = useCallback(() => {
+		setAlertState({
+			type: 'RESET',
+		});
+		setThresholdState({
+			type: 'RESET',
+		});
+		setEvaluationWindow({
+			type: 'RESET',
+		});
+		setAdvancedOptions({
+			type: 'RESET',
+		});
+		setNotificationSettings({
+			type: 'RESET',
+		});
+		handleAlertTypeChange(AlertTypes.METRICS_BASED_ALERT);
+	}, [handleAlertTypeChange]);
+
 	const contextValue: ICreateAlertContextProps = useMemo(
 		() => ({
 			alertState,
@@ -121,6 +140,7 @@ export function CreateAlertProvider(
 			setAdvancedOptions,
 			notificationSettings,
 			setNotificationSettings,
+			discardAlertRule,
 		}),
 		[
 			alertState,
@@ -130,6 +150,7 @@ export function CreateAlertProvider(
 			evaluationWindow,
 			advancedOptions,
 			notificationSettings,
+			discardAlertRule,
 		],
 	);
 
