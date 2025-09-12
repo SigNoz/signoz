@@ -35,7 +35,7 @@ func (rollingWindow *RollingWindow) Validate() error {
 	return nil
 }
 
-func (rollingWindow *RollingWindow) EvaluationTime(curr time.Time) (time.Time, time.Time, error) {
+func (rollingWindow *RollingWindow) NextWindowFor(curr time.Time) (time.Time, time.Time, error) {
 	return curr.Add(time.Duration(-rollingWindow.EvalWindow)), curr, nil
 }
 
@@ -57,7 +57,7 @@ func (cumulativeWindow *CumulativeWindow) Validate() error {
 	return nil
 }
 
-func (cumulativeWindow *CumulativeWindow) EvaluationTime(curr time.Time) (time.Time, time.Time, error) {
+func (cumulativeWindow *CumulativeWindow) NextWindowFor(curr time.Time) (time.Time, time.Time, error) {
 	startsAt := time.UnixMilli(cumulativeWindow.StartsAt)
 	if curr.Before(startsAt) {
 		return time.Time{}, time.Time{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "current time is before the start time")
@@ -80,7 +80,7 @@ type EvaluationEnvelope struct {
 	Spec any            `json:"spec"`
 }
 
-func (e *EvaluationWrapper) UnmarshalJSON(data []byte) error {
+func (e *EvaluationEnvelope) UnmarshalJSON(data []byte) error {
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
@@ -117,7 +117,7 @@ func (e *EvaluationWrapper) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (e *EvaluationWrapper) GetEvaluation() (Evaluation, error) {
+func (e *EvaluationEnvelope) GetEvaluation() (Evaluation, error) {
 	if e.Kind.IsZero() {
 		e.Kind = RollingEvaluation
 	}

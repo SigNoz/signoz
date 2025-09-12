@@ -43,16 +43,16 @@ func TestRollingWindow_EvaluationTime(t *testing.T) {
 				Frequency:  Duration(1 * time.Minute),
 			}
 
-			gotStart, gotEnd, err := rw.EvaluationTime(tt.current)
+			gotStart, gotEnd, err := rw.NextWindowFor(tt.current)
 
 			if err != nil {
-				t.Fatalf("RollingWindow.EvaluationTime() unexpected error = %v", err)
+				t.Fatalf("RollingWindow.NextWindowFor() unexpected error = %v", err)
 			}
 			if !gotStart.Equal(tt.wantStart) {
-				t.Errorf("RollingWindow.EvaluationTime() start time = %v, want %v", gotStart, tt.wantStart)
+				t.Errorf("RollingWindow.NextWindowFor() start time = %v, want %v", gotStart, tt.wantStart)
 			}
 			if !gotEnd.Equal(tt.wantEnd) {
-				t.Errorf("RollingWindow.EvaluationTime() end time = %v, want %v", gotEnd, tt.wantEnd)
+				t.Errorf("RollingWindow.NextWindowFor() end time = %v, want %v", gotEnd, tt.wantEnd)
 			}
 		})
 	}
@@ -141,23 +141,23 @@ func TestCumulativeWindow_EvaluationTime(t *testing.T) {
 				EvalWindow: tt.evalWindow,
 			}
 
-			gotStart, gotEnd, err := cw.EvaluationTime(tt.current)
+			gotStart, gotEnd, err := cw.NextWindowFor(tt.current)
 
 			if tt.wantError {
 				if err == nil {
-					t.Errorf("CumulativeWindow.EvaluationTime() expected error, got none")
+					t.Errorf("CumulativeWindow.NextWindowFor() expected error, got none")
 				}
 				return
 			}
 
 			if err != nil {
-				t.Fatalf("CumulativeWindow.EvaluationTime() unexpected error = %v", err)
+				t.Fatalf("CumulativeWindow.NextWindowFor() unexpected error = %v", err)
 			}
 			if !gotStart.Equal(tt.wantStart) {
-				t.Errorf("CumulativeWindow.EvaluationTime() start time = %v, want %v", gotStart, tt.wantStart)
+				t.Errorf("CumulativeWindow.NextWindowFor() start time = %v, want %v", gotStart, tt.wantStart)
 			}
 			if !gotEnd.Equal(tt.wantEnd) {
-				t.Errorf("CumulativeWindow.EvaluationTime() end time = %v, want %v", gotEnd, tt.wantEnd)
+				t.Errorf("CumulativeWindow.NextWindowFor() end time = %v, want %v", gotEnd, tt.wantEnd)
 			}
 		})
 	}
@@ -173,10 +173,10 @@ func TestCumulativeWindow_UnixMilliConversion(t *testing.T) {
 	}
 
 	current := baseTime.Add(30 * time.Second)
-	start, end, err := cw.EvaluationTime(current)
+	start, end, err := cw.NextWindowFor(current)
 
 	if err != nil {
-		t.Fatalf("CumulativeWindow.EvaluationTime() unexpected error = %v", err)
+		t.Fatalf("CumulativeWindow.NextWindowFor() unexpected error = %v", err)
 	}
 	if !start.Equal(baseTime) {
 		t.Errorf("Unix milli conversion failed: got start time %v, want %v", start, baseTime)

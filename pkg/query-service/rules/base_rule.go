@@ -256,7 +256,7 @@ func (r *BaseRule) Unit() string {
 
 func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time, error) {
 
-	st, en, err := r.evaluation.EvaluationTime(ts)
+	st, en, err := r.evaluation.NextWindowFor(ts)
 	if err != nil {
 		return time.Time{}, time.Time{}, err
 	}

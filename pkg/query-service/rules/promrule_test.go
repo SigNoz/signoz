@@ -28,7 +28,7 @@ func TestPromRuleShouldAlert(t *testing.T) {
 		AlertName: "Test Rule",
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
-		Evaluation: &ruletypes.EvaluationWrapper{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: ruletypes.Duration(5 * time.Minute),
 			Frequency:  ruletypes.Duration(1 * time.Minute),
 		}},

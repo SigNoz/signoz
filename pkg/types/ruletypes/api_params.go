@@ -68,7 +68,7 @@ type PostableRule struct {
 	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
 	OldYaml string `json:"yaml,omitempty"`
 
-	Evaluation *EvaluationWrapper `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
+	Evaluation *EvaluationEnvelope `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
 }
 
 func (r *PostableRule) processRuleDefaults() error {
@@ -134,7 +134,7 @@ func (r *PostableRule) processRuleDefaults() error {
 		}
 	}
 	if r.Evaluation == nil {
-		r.Evaluation = &EvaluationWrapper{RollingEvaluation, RollingWindow{EvalWindow: r.EvalWindow, Frequency: r.Frequency}}
+		r.Evaluation = &EvaluationEnvelope{RollingEvaluation, RollingWindow{EvalWindow: r.EvalWindow, Frequency: r.Frequency}}
 	}
 
 	return r.Validate()
