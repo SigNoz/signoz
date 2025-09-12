@@ -101,7 +101,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			},
 		];
 	}
-	const onLogsHandler = (): void => {
+	const onLogsHandler = (e: React.MouseEvent): void => {
 		const query = getTraceToLogsQuery(traceID, traceStartTime, traceEndTime);
 
 		history.push(
@@ -112,6 +112,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 				// we add 5 minutes to the end time for nano second duration traces
 				[QueryParams.endTime]: traceEndTime + FIVE_MINUTES_IN_MS,
 			})}`,
+			e,
 		);
 	};
 
@@ -218,7 +219,10 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 						)}
 					</section>
 
-					<Button onClick={onLogsHandler} className="related-logs">
+					<Button
+						onClick={(e: React.MouseEvent): void => onLogsHandler(e)}
+						className="related-logs"
+					>
 						Go to related logs
 					</Button>
 

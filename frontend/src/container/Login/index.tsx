@@ -302,8 +302,8 @@ function Login({
 						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
 							If you are admin,{' '}
 							<Typography.Link
-								onClick={(): void => {
-									history.push(ROUTES.SIGN_UP);
+								onClick={(e): void => {
+									history.push(ROUTES.SIGN_UP, e);
 								}}
 								style={{ fontWeight: 700 }}
 							>

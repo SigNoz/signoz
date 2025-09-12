@@ -2,6 +2,8 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
+
+// Had to add event to the props because we need to pass the event to the onCreateNewDashboard function
 import './DashboardTemplatesModal.styles.scss';
 
 import { Button, Input, Modal, Typography } from 'antd';
@@ -118,7 +120,7 @@ const templatesList: DashboardTemplate[] = [
 
 interface DashboardTemplatesModalProps {
 	showNewDashboardTemplatesModal: boolean;
-	onCreateNewDashboard: () => void;
+	onCreateNewDashboard: (event: React.MouseEvent) => void;
 	onCancel: () => void;
 }
 
@@ -204,7 +206,9 @@ export default function DashboardTemplatesModal({
 									type="primary"
 									className="periscope-btn primary"
 									icon={<Plus size={14} />}
-									onClick={onCreateNewDashboard}
+									onClick={(event: React.MouseEvent): void =>
+										onCreateNewDashboard(event)
+									}
 								>
 									New dashboard
 								</Button>
