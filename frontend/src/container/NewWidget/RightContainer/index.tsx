@@ -535,8 +535,6 @@ interface RightContainerProps {
 	setTitle: Dispatch<SetStateAction<string>>;
 	description: string;
 	setDescription: Dispatch<SetStateAction<string>>;
-	stacked: boolean;
-	setStacked: Dispatch<SetStateAction<boolean>>;
 	opacity: string;
 	setOpacity: Dispatch<SetStateAction<string>>;
 	selectedNullZeroValue: string;
