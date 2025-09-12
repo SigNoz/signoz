@@ -38,6 +38,7 @@ const observabilityTools = {
 	AzureAppMonitor: 'Azure App Monitor',
 	GCPNativeO11yTools: 'GCP-native o11y tools',
 	Honeycomb: 'Honeycomb',
+	None: 'None/Starting fresh',
 };
 
 function OrgQuestions({
@@ -52,9 +53,6 @@ function OrgQuestions({
 
 	const [organisationName, setOrganisationName] = useState<string>(
 		orgDetails?.organisationName || '',
-	);
-	const [usesObservability, setUsesObservability] = useState<boolean | null>(
-		orgDetails?.usesObservability || null,
 	);
 	const [observabilityTool, setObservabilityTool] = useState<string | null>(
 		orgDetails?.observabilityTool || null,
@@ -83,7 +81,7 @@ function OrgQuestions({
 			orgDetails.organisationName === organisationName
 		) {
 			logEvent('Org Onboarding: Answered', {
-				usesObservability,
+				usesObservability: !observabilityTool?.includes('None'),
 				observabilityTool,
 				otherTool,
 				usesOtel,
@@ -91,7 +89,7 @@ function OrgQuestions({
 
 			onNext({
 				organisationName,
-				usesObservability,
+				usesObservability: !observabilityTool?.includes('None'),
 				observabilityTool,
 				otherTool,
 				usesOtel,
@@ -114,7 +112,7 @@ function OrgQuestions({
 				});
 
 				logEvent('Org Onboarding: Answered', {
-					usesObservability,
+					usesObservability: !observabilityTool?.includes('None'),
 					observabilityTool,
 					otherTool,
 					usesOtel,
@@ -122,7 +120,7 @@ function OrgQuestions({
 
 				onNext({
 					organisationName,
-					usesObservability,
+					usesObservability: !observabilityTool?.includes('None'),
 					observabilityTool,
 					otherTool,
 					usesOtel,
@@ -152,16 +150,16 @@ function OrgQuestions({
 	};
 
 	const isValidUsesObservability = (): boolean => {
-		if (usesObservability === null) {
-			return false;
-		}
-
-		if (usesObservability && (!observabilityTool || observabilityTool === '')) {
+		if (!observabilityTool || observabilityTool === '') {
 			return false;
 		}
 
 		// eslint-disable-next-line sonarjs/prefer-single-boolean-return
-		if (usesObservability && observabilityTool === 'Others' && otherTool === '') {
+		if (
+			!observabilityTool?.includes('None') &&
+			observabilityTool === 'Others' &&
+			otherTool === ''
+		) {
 			return false;
 		}
 
@@ -177,13 +175,7 @@ function OrgQuestions({
 			setIsNextDisabled(true);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
-		organisationName,
-		usesObservability,
-		usesOtel,
-		observabilityTool,
-		otherTool,
-	]);
+	}, [organisationName, usesOtel, observabilityTool, otherTool]);
 
 	const handleOnNext = (): void => {
 		handleOrgNameUpdate();
@@ -192,7 +184,7 @@ function OrgQuestions({
 	return (
 		<div className="questions-container">
 			<Typography.Title level={3} className="title">
-				Welcome, {user?.displayName}!
+				{user?.displayName ? `Welcome, ${user.displayName}!` : 'Welcome!'}
 			</Typography.Title>
 			<Typography.Paragraph className="sub-title">
 				We&apos;ll help you get the most out of SigNoz, whether you&apos;re new to
@@ -216,7 +208,7 @@ function OrgQuestions({
 						/>
 					</div>
 
-					<div className="form-group">
+					{/* <div className="form-group">
 						<label className="question" htmlFor="usesObservability">
 							Do you currently use any observability/monitoring tool?
 						</label>
@@ -254,61 +246,59 @@ function OrgQuestions({
 								)}
 							</Button>
 						</div>
-					</div>
+					</div> */}
 
-					{usesObservability && (
-						<div className="form-group">
-							<label className="question" htmlFor="observabilityTool">
-								Which observability tool do you currently use?
-							</label>
-							<div className="two-column-grid">
-								{Object.keys(observabilityTools).map((tool) => (
-									<Button
-										key={tool}
-										type="primary"
-										className={`onboarding-questionaire-button ${
-											observabilityTool === tool ? 'active' : ''
-										}`}
-										onClick={(): void => setObservabilityTool(tool)}
-									>
-										{observabilityTools[tool as keyof typeof observabilityTools]}
+					<div className="form-group">
+						<label className="question" htmlFor="observabilityTool">
+							Which observability tool do you currently use?
+						</label>
+						<div className="two-column-grid">
+							{Object.keys(observabilityTools).map((tool) => (
+								<Button
+									key={tool}
+									type="primary"
+									className={`onboarding-questionaire-button ${
+										observabilityTool === tool ? 'active' : ''
+									}`}
+									onClick={(): void => setObservabilityTool(tool)}
+								>
+									{observabilityTools[tool as keyof typeof observabilityTools]}
 
-										{observabilityTool === tool && (
+									{observabilityTool === tool && (
+										<CheckCircle size={12} color={Color.BG_FOREST_500} />
+									)}
+								</Button>
+							))}
+
+							{observabilityTool === 'Others' ? (
+								<Input
+									type="text"
+									className="onboarding-questionaire-other-input"
+									placeholder="Please specify the tool"
+									value={otherTool || ''}
+									autoFocus
+									addonAfter={
+										otherTool && otherTool !== '' ? (
 											<CheckCircle size={12} color={Color.BG_FOREST_500} />
-										)}
-									</Button>
-								))}
-
-								{observabilityTool === 'Others' ? (
-									<Input
-										type="text"
-										className="onboarding-questionaire-other-input"
-										placeholder="Please specify the tool"
-										value={otherTool || ''}
-										autoFocus
-										addonAfter={
-											otherTool && otherTool !== '' ? (
-												<CheckCircle size={12} color={Color.BG_FOREST_500} />
-											) : (
-												''
-											)
-										}
-										onChange={(e): void => setOtherTool(e.target.value)}
-									/>
-								) : (
-									<button
-										type="button"
-										className={`onboarding-questionaire-button ${
-											observabilityTool === 'Others' ? 'active' : ''
-										}`}
-										onClick={(): void => setObservabilityTool('Others')}
-									>
-										Others
-									</button>
-								)}
-							</div>
+										) : (
+											''
+										)
+									}
+									onChange={(e): void => setOtherTool(e.target.value)}
+								/>
+							) : (
+								<Button
+									type="primary"
+									className={`onboarding-questionaire-button ${
+										observabilityTool === 'Others' ? 'active' : ''
+									}`}
+									onClick={(): void => setObservabilityTool('Others')}
+								>
+									Others
+								</Button>
+							)}
 						</div>
-					)}
+					</div>
 
 					<div className="form-group">
 						<div className="question">Do you already use OpenTelemetry?</div>
