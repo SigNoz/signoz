@@ -75,7 +75,7 @@ func (cumulativeWindow *CumulativeWindow) EvaluationTime(curr time.Time) (time.T
 	return windowStart, curr, nil
 }
 
-type EvaluationWrapper struct {
+type EvaluationEnvelope struct {
 	Kind EvaluationKind `json:"kind"`
 	Spec any            `json:"spec"`
 }
