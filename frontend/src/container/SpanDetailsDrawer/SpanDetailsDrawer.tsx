@@ -1,7 +1,6 @@
 import './SpanDetailsDrawer.styles.scss';
 
 import { Button, Tabs, TabsProps, Tooltip, Typography } from 'antd';
-import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -116,12 +115,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 	};
 
 	return (
-		<div
-			className={cx(
-				'span-details-drawer',
-				isSpanDetailsDocked ? 'span-details-drawer-docked' : '',
-			)}
-		>
+		<>
 			<section className="header">
 				{!isSpanDetailsDocked && (
 					<div className="heading">
@@ -240,7 +234,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 					</section>
 				</>
 			)}
-		</div>
+		</>
 	);
 }
 
