@@ -18,6 +18,7 @@ var (
 
 type Evaluation interface {
 	NextWindowFor(curr time.Time) (time.Time, time.Time, error)
+	GetFrequency() Duration
 }
 
 type RollingWindow struct {
@@ -25,7 +26,7 @@ type RollingWindow struct {
 	Frequency  Duration `json:"frequency"`
 }
 
-func (rollingWindow *RollingWindow) Validate() error {
+func (rollingWindow RollingWindow) Validate() error {
 	if rollingWindow.EvalWindow <= 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "evalWindow must be greater than zero")
 	}
@@ -35,16 +36,21 @@ func (rollingWindow *RollingWindow) Validate() error {
 	return nil
 }
 
-func (rollingWindow *RollingWindow) NextWindowFor(curr time.Time) (time.Time, time.Time, error) {
+func (rollingWindow RollingWindow) NextWindowFor(curr time.Time) (time.Time, time.Time, error) {
 	return curr.Add(time.Duration(-rollingWindow.EvalWindow)), curr, nil
+}
+
+func (rollingWindow RollingWindow) GetFrequency() Duration {
+	return rollingWindow.Frequency
 }
 
 type CumulativeWindow struct {
 	StartsAt   int64    `json:"startsAt"`
 	EvalWindow Duration `json:"evalWindow"`
+	Frequency  Duration `json:"frequency"`
 }
 
-func (cumulativeWindow *CumulativeWindow) Validate() error {
+func (cumulativeWindow CumulativeWindow) Validate() error {
 	if cumulativeWindow.EvalWindow <= 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "evalWindow must be greater than zero")
 	}
@@ -57,7 +63,7 @@ func (cumulativeWindow *CumulativeWindow) Validate() error {
 	return nil
 }
 
-func (cumulativeWindow *CumulativeWindow) NextWindowFor(curr time.Time) (time.Time, time.Time, error) {
+func (cumulativeWindow CumulativeWindow) NextWindowFor(curr time.Time) (time.Time, time.Time, error) {
 	startsAt := time.UnixMilli(cumulativeWindow.StartsAt)
 	if curr.Before(startsAt) {
 		return time.Time{}, time.Time{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "current time is before the start time")
@@ -72,7 +78,18 @@ func (cumulativeWindow *CumulativeWindow) NextWindowFor(curr time.Time) (time.Ti
 	elapsed := curr.Sub(startsAt)
 	windows := int64(elapsed / dur)
 	windowStart := startsAt.Add(time.Duration(windows) * dur)
+
+	if windowStart.Equal(curr) && windows > 0 {
+		prevWindowStart := startsAt.Add(time.Duration(windows-1) * dur)
+		prevWindowEnd := windowStart
+		return prevWindowStart, prevWindowEnd, nil
+	}
+
 	return windowStart, curr, nil
+}
+
+func (cumulativeWindow CumulativeWindow) GetFrequency() Duration {
+	return cumulativeWindow.Frequency
 }
 
 type EvaluationEnvelope struct {
@@ -125,11 +142,11 @@ func (e *EvaluationEnvelope) GetEvaluation() (Evaluation, error) {
 	switch e.Kind {
 	case RollingEvaluation:
 		if rolling, ok := e.Spec.(RollingWindow); ok {
-			return &rolling, nil
+			return rolling, nil
 		}
 	case CumulativeEvaluation:
 		if cumulative, ok := e.Spec.(CumulativeWindow); ok {
-			return &cumulative, nil
+			return cumulative, nil
 		}
 	default:
 		return nil, errors.NewInvalidInputf(errors.CodeUnsupported, "unknown evaluation kind")

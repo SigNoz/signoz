@@ -99,8 +99,8 @@ func TestCumulativeWindow_EvaluationTime(t *testing.T) {
 			startsAt:   startsAtUnixMilli,
 			evalWindow: Duration(5 * time.Minute),
 			current:    baseTime.Add(5 * time.Minute),
-			wantStart:  baseTime.Add(5 * time.Minute),
-			wantEnd:    baseTime.Add(5 * time.Minute),
+			wantStart:  baseTime,                      // Previous window start
+			wantEnd:    baseTime.Add(5 * time.Minute), // Previous window end
 		},
 		{
 			name:       "second window - within second interval",
@@ -187,5 +187,284 @@ func TestCumulativeWindow_UnixMilliConversion(t *testing.T) {
 
 	if start.UnixMilli() != unixMilli {
 		t.Errorf("Millisecond precision lost: got %d, want %d", start.UnixMilli(), unixMilli)
+	}
+}
+
+func TestCumulativeWindow_BoundaryConditions(t *testing.T) {
+	baseTime := time.Date(2023, 12, 1, 12, 0, 0, 0, time.UTC)
+	startsAtUnixMilli := baseTime.UnixMilli()
+
+	tests := []struct {
+		name       string
+		startsAt   int64
+		evalWindow Duration
+		current    time.Time
+		wantStart  time.Time
+		wantEnd    time.Time
+		wantError  bool
+	}{
+		{
+			name:       "exact window boundary - end of first window",
+			startsAt:   startsAtUnixMilli,
+			evalWindow: Duration(5 * time.Minute),
+			current:    baseTime.Add(5 * time.Minute),
+			wantStart:  baseTime,                      // Previous window start
+			wantEnd:    baseTime.Add(5 * time.Minute), // Previous window end
+		},
+		{
+			name:       "exact window boundary - end of third window",
+			startsAt:   startsAtUnixMilli,
+			evalWindow: Duration(10 * time.Minute),
+			current:    baseTime.Add(30 * time.Minute),
+			wantStart:  baseTime.Add(20 * time.Minute), // Previous window start
+			wantEnd:    baseTime.Add(30 * time.Minute), // Previous window end
+		},
+		{
+			name:       "one millisecond before window boundary",
+			startsAt:   startsAtUnixMilli,
+			evalWindow: Duration(5 * time.Minute),
+			current:    baseTime.Add(5*time.Minute - 1*time.Millisecond),
+			wantStart:  baseTime,
+			wantEnd:    baseTime.Add(5*time.Minute - 1*time.Millisecond),
+		},
+		{
+			name:       "one millisecond after window boundary",
+			startsAt:   startsAtUnixMilli,
+			evalWindow: Duration(5 * time.Minute),
+			current:    baseTime.Add(5*time.Minute + 1*time.Millisecond),
+			wantStart:  baseTime.Add(5 * time.Minute),
+			wantEnd:    baseTime.Add(5*time.Minute + 1*time.Millisecond),
+		},
+		{
+			name:       "very large eval window - 24 hours",
+			startsAt:   startsAtUnixMilli,
+			evalWindow: Duration(24 * time.Hour),
+			current:    baseTime.Add(25*time.Hour + 30*time.Minute),
+			wantStart:  baseTime.Add(24 * time.Hour),
+			wantEnd:    baseTime.Add(25*time.Hour + 30*time.Minute),
+		},
+		{
+			name:       "exactly at start time with zero offset",
+			startsAt:   startsAtUnixMilli,
+			evalWindow: Duration(1 * time.Hour),
+			current:    baseTime,
+			wantStart:  baseTime,
+			wantEnd:    baseTime,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cw := &CumulativeWindow{
+				StartsAt:   tt.startsAt,
+				EvalWindow: tt.evalWindow,
+			}
+
+			gotStart, gotEnd, err := cw.NextWindowFor(tt.current)
+
+			if tt.wantError {
+				if err == nil {
+					t.Errorf("CumulativeWindow.NextWindowFor() expected error, got none")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("CumulativeWindow.NextWindowFor() unexpected error = %v", err)
+			}
+			if !gotStart.Equal(tt.wantStart) {
+				t.Errorf("CumulativeWindow.NextWindowFor() start time = %v, want %v", gotStart, tt.wantStart)
+			}
+			if !gotEnd.Equal(tt.wantEnd) {
+				t.Errorf("CumulativeWindow.NextWindowFor() end time = %v, want %v", gotEnd, tt.wantEnd)
+			}
+		})
+	}
+}
+
+func TestCumulativeWindow_WindowReset(t *testing.T) {
+	baseTime := time.Date(2023, 12, 1, 12, 0, 0, 0, time.UTC)
+	startsAtUnixMilli := baseTime.UnixMilli()
+
+	tests := []struct {
+		name        string
+		startsAt    int64
+		evalWindow  Duration
+		evaluations []struct {
+			current   time.Time
+			wantStart time.Time
+			wantEnd   time.Time
+		}
+	}{
+		{
+			name:       "window reset progression - 5 minute windows",
+			startsAt:   startsAtUnixMilli,
+			evalWindow: Duration(5 * time.Minute),
+			evaluations: []struct {
+				current   time.Time
+				wantStart time.Time
+				wantEnd   time.Time
+			}{
+				{
+					current:   baseTime.Add(2 * time.Minute),
+					wantStart: baseTime,
+					wantEnd:   baseTime.Add(2 * time.Minute),
+				},
+				{
+					current:   baseTime.Add(4 * time.Minute),
+					wantStart: baseTime,
+					wantEnd:   baseTime.Add(4 * time.Minute),
+				},
+				{
+					current:   baseTime.Add(5 * time.Minute),
+					wantStart: baseTime,                      // Previous window start
+					wantEnd:   baseTime.Add(5 * time.Minute), // Previous window end
+				},
+				{
+					current:   baseTime.Add(7 * time.Minute),
+					wantStart: baseTime.Add(5 * time.Minute),
+					wantEnd:   baseTime.Add(7 * time.Minute),
+				},
+				{
+					current:   baseTime.Add(10 * time.Minute),
+					wantStart: baseTime.Add(5 * time.Minute),  // Previous window start
+					wantEnd:   baseTime.Add(10 * time.Minute), // Previous window end
+				},
+				{
+					current:   baseTime.Add(12 * time.Minute),
+					wantStart: baseTime.Add(10 * time.Minute),
+					wantEnd:   baseTime.Add(12 * time.Minute),
+				},
+			},
+		},
+		{
+			name:       "window reset with irregular intervals",
+			startsAt:   startsAtUnixMilli,
+			evalWindow: Duration(10 * time.Minute),
+			evaluations: []struct {
+				current   time.Time
+				wantStart time.Time
+				wantEnd   time.Time
+			}{
+				{
+					current:   baseTime.Add(1 * time.Minute),
+					wantStart: baseTime,
+					wantEnd:   baseTime.Add(1 * time.Minute),
+				},
+				{
+					current:   baseTime.Add(15 * time.Minute),
+					wantStart: baseTime.Add(10 * time.Minute),
+					wantEnd:   baseTime.Add(15 * time.Minute),
+				},
+				{
+					current:   baseTime.Add(35 * time.Minute),
+					wantStart: baseTime.Add(30 * time.Minute),
+					wantEnd:   baseTime.Add(35 * time.Minute),
+				},
+				{
+					current:   baseTime.Add(40*time.Minute + 30*time.Second),
+					wantStart: baseTime.Add(40 * time.Minute),
+					wantEnd:   baseTime.Add(40*time.Minute + 30*time.Second),
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cw := &CumulativeWindow{
+				StartsAt:   tt.startsAt,
+				EvalWindow: tt.evalWindow,
+			}
+
+			for i, eval := range tt.evaluations {
+				gotStart, gotEnd, err := cw.NextWindowFor(eval.current)
+
+				if err != nil {
+					t.Fatalf("Evaluation %d: CumulativeWindow.NextWindowFor() unexpected error = %v", i+1, err)
+				}
+				if !gotStart.Equal(eval.wantStart) {
+					t.Errorf("Evaluation %d: start time = %v, want %v", i+1, gotStart, eval.wantStart)
+				}
+				if !gotEnd.Equal(eval.wantEnd) {
+					t.Errorf("Evaluation %d: end time = %v, want %v", i+1, gotEnd, eval.wantEnd)
+				}
+			}
+		})
+	}
+}
+
+func TestCumulativeWindow_EdgeCases(t *testing.T) {
+	baseTime := time.Date(2023, 12, 1, 12, 0, 0, 0, time.UTC)
+	startsAtUnixMilli := baseTime.UnixMilli()
+
+	tests := []struct {
+		name       string
+		startsAt   int64
+		evalWindow Duration
+		current    time.Time
+		wantStart  time.Time
+		wantEnd    time.Time
+		wantError  bool
+	}{
+		{
+			name:       "time exactly one nanosecond before start",
+			startsAt:   startsAtUnixMilli,
+			evalWindow: Duration(5 * time.Minute),
+			current:    baseTime.Add(-1 * time.Nanosecond),
+			wantError:  true,
+		},
+		{
+			name:       "maximum time value within first window",
+			startsAt:   1,
+			evalWindow: Duration(time.Duration(1<<63 - 1)),
+			current:    time.Unix(0, 1000000).Add(time.Hour),
+			wantStart:  time.Unix(0, 1000000),
+			wantEnd:    time.Unix(0, 1000000).Add(time.Hour),
+		},
+		{
+			name:       "starts at with millisecond precision",
+			startsAt:   baseTime.Add(123 * time.Millisecond).UnixMilli(),
+			evalWindow: Duration(1 * time.Minute),
+			current:    baseTime.Add(123*time.Millisecond + 30*time.Second),
+			wantStart:  baseTime.Add(123 * time.Millisecond),
+			wantEnd:    baseTime.Add(123*time.Millisecond + 30*time.Second),
+		},
+		{
+			name:       "very large number of elapsed windows",
+			startsAt:   startsAtUnixMilli,
+			evalWindow: Duration(1 * time.Millisecond),
+			current:    baseTime.Add(1 * time.Hour),
+			wantStart:  baseTime.Add(3599999 * time.Millisecond), // Previous window start
+			wantEnd:    baseTime.Add(3600000 * time.Millisecond), // Previous window end (1 hour)
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cw := &CumulativeWindow{
+				StartsAt:   tt.startsAt,
+				EvalWindow: tt.evalWindow,
+			}
+
+			gotStart, gotEnd, err := cw.NextWindowFor(tt.current)
+
+			if tt.wantError {
+				if err == nil {
+					t.Errorf("CumulativeWindow.NextWindowFor() expected error, got none")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("CumulativeWindow.NextWindowFor() unexpected error = %v", err)
+			}
+			if !gotStart.Equal(tt.wantStart) {
+				t.Errorf("CumulativeWindow.NextWindowFor() start time = %v, want %v", gotStart, tt.wantStart)
+			}
+			if !gotEnd.Equal(tt.wantEnd) {
+				t.Errorf("CumulativeWindow.NextWindowFor() end time = %v, want %v", gotEnd, tt.wantEnd)
+			}
+		})
 	}
 }
