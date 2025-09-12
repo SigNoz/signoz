@@ -1,0 +1,71 @@
+apiVersion: clickhouse.altinity.com/v1
+kind: ClickHouseInstallation
+metadata:
+  name: signoz-clickhouse-ha
+  namespace: signoz
+spec:
+  configuration:
+    clusters:
+      - name: "prod"
+        layout:
+          shardsCount: 2
+          replicasCount: 2
+        templates:
+          podTemplate: clickhouse-pod-template
+          dataVolumeClaimTemplate: data-volume-template
+    zookeeper:
+      nodes:
+        - host: signoz-zookeeper-0.signoz-zookeeper-headless
+          port: 2181
+        - host: signoz-zookeeper-1.signoz-zookeeper-headless  
+          port: 2181
+        - host: signoz-zookeeper-2.signoz-zookeeper-headless
+          port: 2181
+    users:
+      admin/networks/ip:
+        - "0.0.0.0/0"
+      admin/password: "27ff0399-0d3a-4bd8-919d-17c2181e6fb9"
+      admin/profile: "default"
+    profiles:
+      default/allow_experimental_window_functions: 1
+      default/allow_nondeterministic_mutations: 1
+    settings:
+      prometheus/endpoint: /metrics
+      prometheus/port: 9363
+  templates:
+    podTemplates:
+      - name: clickhouse-pod-template
+        spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: "app.kubernetes.io/name"
+                        operator: In
+                        values:
+                          - clickhouse
+                  topologyKey: "kubernetes.io/hostname"
+          containers:
+            - name: clickhouse
+              image: docker.io/clickhouse/clickhouse-server:24.1.2-alpine
+              resources:
+                requests:
+                  memory: "8Gi"
+                  cpu: "4"
+              ports:
+                - containerPort: 8123
+                  name: http
+                - containerPort: 9000
+                  name: client
+                - containerPort: 9009
+                  name: interserver
+    volumeClaimTemplates:
+      - name: data-volume-template
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1000Gi
+          storageClassName: gp3
