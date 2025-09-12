@@ -14,6 +14,8 @@ export interface ICreateAlertContextProps {
 	setAdvancedOptions: Dispatch<AdvancedOptionsAction>;
 	evaluationWindow: EvaluationWindowState;
 	setEvaluationWindow: Dispatch<EvaluationWindowAction>;
+	notificationSettings: NotificationSettingsState;
+	setNotificationSettings: Dispatch<NotificationSettingsAction>;
 }
 
 export interface ICreateAlertProviderProps {
@@ -189,3 +191,33 @@ export type EvaluationWindowAction =
 	| { type: 'RESET' };
 
 export type EvaluationCadenceMode = 'default' | 'custom' | 'rrule';
+export interface NotificationSettingsState {
+	multipleNotifications: {
+		enabled: boolean;
+		value: string;
+	};
+	reNotification: {
+		enabled: boolean;
+		value: number;
+		unit: string;
+		conditions: ('firing' | 'no-data')[];
+	};
+	description: string;
+}
+
+export type NotificationSettingsAction =
+	| {
+			type: 'SET_MULTIPLE_NOTIFICATIONS';
+			payload: { enabled: boolean; value: string };
+	  }
+	| {
+			type: 'SET_RE_NOTIFICATION';
+			payload: {
+				enabled: boolean;
+				value: number;
+				unit: string;
+				conditions: ('firing' | 'no-data')[];
+			};
+	  }
+	| { type: 'SET_DESCRIPTION'; payload: string }
+	| { type: 'RESET' };

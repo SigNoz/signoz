@@ -18,6 +18,7 @@ import {
 	INITIAL_ALERT_STATE,
 	INITIAL_ALERT_THRESHOLD_STATE,
 	INITIAL_EVALUATION_WINDOW_STATE,
+	INITIAL_NOTIFICATION_SETTINGS_STATE,
 } from './constants';
 import { ICreateAlertContextProps, ICreateAlertProviderProps } from './types';
 import {
@@ -27,6 +28,7 @@ import {
 	buildInitialAlertDef,
 	evaluationWindowReducer,
 	getInitialAlertTypeFromURL,
+	notificationSettingsReducer,
 } from './utils';
 
 const CreateAlertContext = createContext<ICreateAlertContextProps | null>(null);
@@ -94,6 +96,11 @@ export function CreateAlertProvider(
 		INITIAL_ADVANCED_OPTIONS_STATE,
 	);
 
+	const [notificationSettings, setNotificationSettings] = useReducer(
+		notificationSettingsReducer,
+		INITIAL_NOTIFICATION_SETTINGS_STATE,
+	);
+
 	useEffect(() => {
 		setThresholdState({
 			type: 'RESET',
@@ -112,6 +119,8 @@ export function CreateAlertProvider(
 			setEvaluationWindow,
 			advancedOptions,
 			setAdvancedOptions,
+			notificationSettings,
+			setNotificationSettings,
 		}),
 		[
 			alertState,
@@ -120,6 +129,7 @@ export function CreateAlertProvider(
 			thresholdState,
 			evaluationWindow,
 			advancedOptions,
+			notificationSettings,
 		],
 	);
 
