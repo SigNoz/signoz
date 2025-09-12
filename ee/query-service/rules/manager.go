@@ -3,9 +3,10 @@ package rules
 import (
 	"context"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/errors"
+
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"

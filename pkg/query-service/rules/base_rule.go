@@ -3,13 +3,13 @@ package rules
 import (
 	"context"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"log/slog"
 	"math"
 	"net/url"
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/converter"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
