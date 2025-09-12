@@ -20,7 +20,7 @@ describe('Table panel wrappper tests', () => {
 		expect(container).toMatchSnapshot();
 
 		// the first row of the table should have the latency value with units
-		expect(getByText('4.35 s')).toBeInTheDocument();
+		expect(getByText('4.354 s')).toBeInTheDocument();
 
 		// the rows should have optimised value for human readability
 		expect(getByText('31.3 ms')).toBeInTheDocument();

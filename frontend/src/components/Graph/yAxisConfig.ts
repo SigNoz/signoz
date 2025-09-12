@@ -1,45 +1,33 @@
 import { formattedValueToString, getValueFormat } from '@grafana/data';
+import { isFinite } from 'lodash-es';
 
 export const getYAxisFormattedValue = (
 	value: string,
 	format: string,
+	decimals = 3,
 ): string => {
-	let decimalPrecision: number | undefined;
-	const parsedValue = getValueFormat(format)(
-		parseFloat(value),
-		undefined,
-		undefined,
-		undefined,
-	);
 	try {
-		const decimalSplitted = parsedValue.text.split('.');
-		if (decimalSplitted.length === 1) {
-			decimalPrecision = 0;
-		} else {
-			const decimalDigits = decimalSplitted[1].split('');
-			decimalPrecision = decimalDigits.length;
-			let nonZeroCtr = 0;
-			for (let idx = 0; idx < decimalDigits.length; idx += 1) {
-				if (decimalDigits[idx] !== '0') {
-					nonZeroCtr += 1;
-					if (nonZeroCtr >= 2) {
-						decimalPrecision = idx + 1;
-					}
-				} else if (nonZeroCtr) {
-					decimalPrecision = idx;
-					break;
-				}
-			}
+		const numValue = parseFloat(value);
+
+		// Handle special values
+		if (!isFinite(numValue)) {
+			if (numValue === Infinity) return '∞';
+			if (numValue === -Infinity) return '-∞';
+			return 'NaN';
 		}
 
-		return formattedValueToString(
-			getValueFormat(format)(
-				parseFloat(value),
-				decimalPrecision,
-				undefined,
-				undefined,
-			),
-		);
+		const formatter = getValueFormat(format);
+
+		// Format with specified decimals (default 3)
+		const formattedValue = formatter(numValue, decimals);
+
+		// Remove unnecessary trailing zeros by parsing and converting back
+		const cleanText = parseFloat(formattedValue.text).toString();
+
+		return formattedValueToString({
+			...formattedValue,
+			text: cleanText,
+		});
 	} catch (error) {
 		console.error(error);
 	}
