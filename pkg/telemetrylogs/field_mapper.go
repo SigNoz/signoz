@@ -111,9 +111,10 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 		// once clickHouse dependency is updated, we need to check if we can remove it.
 		if key.Materialized {
 			oldKeyName = telemetrytypes.FieldKeyToMaterializedColumnName(key)
-			return fmt.Sprintf("multiIf(resource.%s IS NOT NULL, resource.%s::String, %s_exists`==true, %s, NULL)", key.Name, key.Name, oldKeyName[:len(oldKeyName)-1], oldKeyName), nil
+			oldKeyNameExists := telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
+			return fmt.Sprintf("multiIf(resource.`%s` IS NOT NULL, resource.`%s`::String, %s==true, %s, NULL)", key.Name, key.Name, oldKeyNameExists, oldKeyName), nil
 		} else {
-			return fmt.Sprintf("multiIf(resource.%s IS NOT NULL, resource.%s::String, mapContains(%s, '%s'), %s, NULL)", key.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
+			return fmt.Sprintf("multiIf(resource.`%s` IS NOT NULL, resource.`%s`::String, mapContains(%s, '%s'), %s, NULL)", key.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
 		}
 
 	case schema.ColumnTypeString,

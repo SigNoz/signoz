@@ -64,7 +64,7 @@ func TestGetFieldKeyName(t *testing.T) {
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			expectedResult: "multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
 			expectedError:  nil,
 		},
 		{
@@ -73,7 +73,7 @@ func TestGetFieldKeyName(t *testing.T) {
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			expectedResult: "multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
 			expectedError:  nil,
 		},
 		{
