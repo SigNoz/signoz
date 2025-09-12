@@ -105,16 +105,6 @@ Eg: The **bootstrap** integration test suite validates core system functionality
 
 Other test suites can be **pipelines, auth, querier.**
 
-### Test Naming Convention
-
-Tests are prefixed with letters to control execution order:
-- `a_` - First to run
-- `b_` - Second to run
-- `c_` - Third to run
-- etc.
-
-This ensures proper test dependencies and setup order.
-
 ## How to write an integration test?
 
 Now start writing an integration test. Create a new file `src/bootstrap/e_version.py` and paste the following:
