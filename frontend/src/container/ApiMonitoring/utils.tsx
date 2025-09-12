@@ -32,7 +32,13 @@ import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
+import { domainNameKey } from './constants';
 import { SPAN_ATTRIBUTES } from './Explorer/Domains/DomainDetails/constants';
+import {
+	APIDomainsRowData,
+	APIMonitoringResponseRow,
+	EndPointsResponseRow,
+} from './types';
 
 export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
@@ -242,54 +248,6 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		className: `column`,
 	},
 ];
-
-// Rename this to a proper name
-export const hardcodedAttributeKeys: BaseAutocompleteData[] = [
-	{
-		key: 'deployment.environment',
-		dataType: DataTypes.String,
-		type: 'resource',
-	},
-	{
-		key: 'service.name',
-		dataType: DataTypes.String,
-		type: 'resource',
-	},
-	{
-		key: 'rpc.method',
-		dataType: DataTypes.String,
-		type: 'tag',
-	},
-];
-
-const domainNameKey = SPAN_ATTRIBUTES.SERVER_NAME;
-
-interface APIMonitoringResponseRow {
-	data: {
-		endpoints: number | string;
-		error_rate: number | string;
-		lastseen: number | string;
-		[domainNameKey]: string;
-		p99: number | string;
-		rps: number | string;
-	};
-}
-
-interface EndPointsResponseRow {
-	data: {
-		[key: string]: string | number | undefined;
-	};
-}
-
-export interface APIDomainsRowData {
-	key: string;
-	domainName: string;
-	endpointCount: number | string;
-	rate: number | string;
-	errorRate: number | string;
-	latency: number | string;
-	lastUsed: string;
-}
 
 // Rename this to a proper name
 export const formatDataForTable = (
