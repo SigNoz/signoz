@@ -1,6 +1,9 @@
 $top-nav-background-1: #0f0f0f;
 $top-nav-background-2: #101010;
 
+$top-nav-background-1-light: #f5f5f5;
+$top-nav-background-2-light: #e5e5e5;
+
 .create-alert-v2-container {
 	background-color: var(--bg-ink-500);
 	padding-bottom: 100px;
@@ -15,4 +18,20 @@ $top-nav-background-2: #101010;
 		$top-nav-background-2 20px
 	);
 	margin-bottom: 0;
+}
+
+.lightMode {
+	.create-alert-v2-container {
+		background-color: var(--bg-vanilla-100);
+	}
+
+	.top-nav-container {
+		background: repeating-linear-gradient(
+			-45deg,
+			$top-nav-background-1-light,
+			$top-nav-background-1-light 10px,
+			$top-nav-background-2-light 10px,
+			$top-nav-background-2-light 20px
+		);
+	}
 }

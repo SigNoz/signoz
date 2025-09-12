@@ -30,3 +30,22 @@
 		color: var(--bg-vanilla-400);
 	}
 }
+
+.lightMode {
+	.create-alert-v2-footer {
+		background-color: var(--bg-vanilla-100);
+		border-top: 1px solid var(--bg-vanilla-300);
+
+		.ant-btn-default {
+			background-color: var(--bg-vanilla-300);
+			border: 1px solid var(--bg-vanilla-400);
+			color: var(--bg-ink-400);
+		}
+
+		.ant-btn-primary {
+			.ant-typography {
+				color: var(--bg-vanilla-100);
+			}
+		}
+	}
+}

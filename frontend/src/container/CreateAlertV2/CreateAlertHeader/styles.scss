@@ -149,3 +149,75 @@
 		}
 	}
 }
+
+.lightMode {
+	.alert-header {
+		background-color: var(--bg-vanilla-100);
+		color: var(--text-ink-100);
+
+		&__tab-bar {
+			background: repeating-linear-gradient(
+				-45deg,
+				#f5f5f5,
+				#f5f5f5 10px,
+				#e5e5e5 10px,
+				#e5e5e5 20px
+			);
+		}
+
+		&__tab {
+			background-color: var(--bg-vanilla-100);
+			color: var(--text-ink-100);
+		}
+
+		&__tab::before {
+			color: var(--bg-ink-100);
+		}
+
+		&__content {
+			background: var(--bg-vanilla-100);
+		}
+
+		&__input.title {
+			color: var(--text-ink-100);
+		}
+
+		&__input.description {
+			color: var(--text-ink-300);
+		}
+	}
+
+	.labels-input {
+		&__add-button {
+			color: var(--bg-ink-400);
+			border: 1px solid var(--bg-vanilla-300);
+
+			&:hover {
+				border-color: var(--bg-ink-300);
+				color: var(--bg-ink-500);
+			}
+		}
+
+		&__label-pill {
+			background-color: #ad7f581a;
+			color: var(--bg-sienna-400);
+			border: 1px solid var(--bg-sienna-500);
+		}
+
+		&__remove-button {
+			color: var(--bg-sienna-400);
+
+			&:hover {
+				color: var(--text-ink-100);
+			}
+		}
+
+		&__input {
+			color: var(--bg-ink-500);
+
+			&::placeholder {
+				color: var(--bg-ink-300);
+			}
+		}
+	}
+}
