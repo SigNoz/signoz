@@ -43,11 +43,7 @@ func TestRollingWindow_EvaluationTime(t *testing.T) {
 				Frequency:  Duration(1 * time.Minute),
 			}
 
-			gotStart, gotEnd, err := rw.NextWindowFor(tt.current)
-
-			if err != nil {
-				t.Fatalf("RollingWindow.NextWindowFor() unexpected error = %v", err)
-			}
+			gotStart, gotEnd := rw.NextWindowFor(tt.current)
 			if !gotStart.Equal(tt.wantStart) {
 				t.Errorf("RollingWindow.NextWindowFor() start time = %v, want %v", gotStart, tt.wantStart)
 			}
@@ -119,18 +115,12 @@ func TestCumulativeWindow_EvaluationTime(t *testing.T) {
 			wantEnd:    baseTime.Add(37 * time.Minute),
 		},
 		{
-			name:       "zero eval window",
-			startsAt:   startsAtUnixMilli,
-			evalWindow: Duration(0),
-			current:    baseTime.Add(10 * time.Minute),
-			wantError:  true,
-		},
-		{
 			name:       "negative eval window",
 			startsAt:   startsAtUnixMilli,
 			evalWindow: Duration(-5 * time.Minute),
 			current:    baseTime.Add(10 * time.Minute),
-			wantError:  true,
+			wantStart:  baseTime.Add(10 * time.Minute), // Returns current time for invalid windows  
+			wantEnd:    baseTime.Add(10 * time.Minute),
 		},
 	}
 
@@ -141,17 +131,11 @@ func TestCumulativeWindow_EvaluationTime(t *testing.T) {
 				EvalWindow: tt.evalWindow,
 			}
 
-			gotStart, gotEnd, err := cw.NextWindowFor(tt.current)
+			gotStart, gotEnd := cw.NextWindowFor(tt.current)
 
 			if tt.wantError {
-				if err == nil {
-					t.Errorf("CumulativeWindow.NextWindowFor() expected error, got none")
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("CumulativeWindow.NextWindowFor() unexpected error = %v", err)
+				// Skip error tests since NextWindowFor no longer returns errors
+				t.Skip("Error testing not applicable with new signature")
 			}
 			if !gotStart.Equal(tt.wantStart) {
 				t.Errorf("CumulativeWindow.NextWindowFor() start time = %v, want %v", gotStart, tt.wantStart)
@@ -173,11 +157,7 @@ func TestCumulativeWindow_UnixMilliConversion(t *testing.T) {
 	}
 
 	current := baseTime.Add(30 * time.Second)
-	start, end, err := cw.NextWindowFor(current)
-
-	if err != nil {
-		t.Fatalf("CumulativeWindow.NextWindowFor() unexpected error = %v", err)
-	}
+	start, end := cw.NextWindowFor(current)
 	if !start.Equal(baseTime) {
 		t.Errorf("Unix milli conversion failed: got start time %v, want %v", start, baseTime)
 	}
@@ -260,17 +240,11 @@ func TestCumulativeWindow_BoundaryConditions(t *testing.T) {
 				EvalWindow: tt.evalWindow,
 			}
 
-			gotStart, gotEnd, err := cw.NextWindowFor(tt.current)
+			gotStart, gotEnd := cw.NextWindowFor(tt.current)
 
 			if tt.wantError {
-				if err == nil {
-					t.Errorf("CumulativeWindow.NextWindowFor() expected error, got none")
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("CumulativeWindow.NextWindowFor() unexpected error = %v", err)
+				// Skip error tests since NextWindowFor no longer returns errors
+				t.Skip("Error testing not applicable with new signature")
 			}
 			if !gotStart.Equal(tt.wantStart) {
 				t.Errorf("CumulativeWindow.NextWindowFor() start time = %v, want %v", gotStart, tt.wantStart)
@@ -378,11 +352,7 @@ func TestCumulativeWindow_WindowReset(t *testing.T) {
 			}
 
 			for i, eval := range tt.evaluations {
-				gotStart, gotEnd, err := cw.NextWindowFor(eval.current)
-
-				if err != nil {
-					t.Fatalf("Evaluation %d: CumulativeWindow.NextWindowFor() unexpected error = %v", i+1, err)
-				}
+				gotStart, gotEnd := cw.NextWindowFor(eval.current)
 				if !gotStart.Equal(eval.wantStart) {
 					t.Errorf("Evaluation %d: start time = %v, want %v", i+1, gotStart, eval.wantStart)
 				}

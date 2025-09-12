@@ -255,12 +255,9 @@ func (r *BaseRule) Unit() string {
 	return ""
 }
 
-func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time, error) {
+func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time) {
 
-	st, en, err := r.evaluation.NextWindowFor(ts)
-	if err != nil {
-		return time.Time{}, time.Time{}, err
-	}
+	st, en := r.evaluation.NextWindowFor(ts)
 	start := st.UnixMilli()
 	end := en.UnixMilli()
 
@@ -272,7 +269,7 @@ func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time, error) {
 	start = start - (start % (60 * 1000))
 	end = end - (end % (60 * 1000))
 
-	return time.UnixMilli(start), time.UnixMilli(end), nil
+	return time.UnixMilli(start), time.UnixMilli(end)
 }
 
 func (r *BaseRule) SetLastError(err error) {

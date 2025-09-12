@@ -166,10 +166,7 @@ func (r *AnomalyRule) prepareQueryRange(ctx context.Context, ts time.Time) (*v3.
 		ctx, "prepare query range request v4", "ts", ts.UnixMilli(), "eval_window", r.EvalWindow().Milliseconds(), "eval_delay", r.EvalDelay().Milliseconds(),
 	)
 
-	st, en, err := r.Timestamps(ts)
-	if err != nil {
-		return nil, err
-	}
+	st, en := r.Timestamps(ts)
 	start := st.UnixMilli()
 	end := en.UnixMilli()
 
@@ -194,10 +191,7 @@ func (r *AnomalyRule) prepareQueryRangeV5(ctx context.Context, ts time.Time) (*q
 
 	r.logger.InfoContext(ctx, "prepare query range request v5", "ts", ts.UnixMilli(), "eval_window", r.EvalWindow().Milliseconds(), "eval_delay", r.EvalDelay().Milliseconds())
 
-	startTs, endTs, err := r.Timestamps(ts)
-	if err != nil {
-		return nil, err
-	}
+	startTs, endTs := r.Timestamps(ts)
 	start, end := startTs.UnixMilli(), endTs.UnixMilli()
 
 	req := &qbtypes.QueryRangeRequest{

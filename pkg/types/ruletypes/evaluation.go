@@ -18,7 +18,7 @@ var (
 )
 
 type Evaluation interface {
-	NextWindowFor(curr time.Time) (time.Time, time.Time, error)
+	NextWindowFor(curr time.Time) (time.Time, time.Time)
 	GetFrequency() Duration
 }
 
@@ -37,8 +37,8 @@ func (rollingWindow RollingWindow) Validate() error {
 	return nil
 }
 
-func (rollingWindow RollingWindow) NextWindowFor(curr time.Time) (time.Time, time.Time, error) {
-	return curr.Add(time.Duration(-rollingWindow.EvalWindow)), curr, nil
+func (rollingWindow RollingWindow) NextWindowFor(curr time.Time) (time.Time, time.Time) {
+	return curr.Add(time.Duration(-rollingWindow.EvalWindow)), curr
 }
 
 func (rollingWindow RollingWindow) GetFrequency() Duration {
@@ -67,16 +67,9 @@ func (cumulativeWindow CumulativeWindow) Validate() error {
 	return nil
 }
 
-func (cumulativeWindow CumulativeWindow) NextWindowFor(curr time.Time) (time.Time, time.Time, error) {
+func (cumulativeWindow CumulativeWindow) NextWindowFor(curr time.Time) (time.Time, time.Time) {
 	startsAt := time.UnixMilli(cumulativeWindow.StartsAt)
-	if curr.Before(startsAt) {
-		return time.Time{}, time.Time{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "current time is before the start time")
-	}
-
 	dur := time.Duration(cumulativeWindow.EvalWindow)
-	if dur <= 0 {
-		return time.Time{}, time.Time{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "duration cannot be less than zero")
-	}
 
 	// Calculate the number of complete windows since StartsAt
 	elapsed := curr.Sub(startsAt)
@@ -86,10 +79,10 @@ func (cumulativeWindow CumulativeWindow) NextWindowFor(curr time.Time) (time.Tim
 	if windowStart.Equal(curr) && windows > 0 {
 		prevWindowStart := startsAt.Add(time.Duration(windows-1) * dur)
 		prevWindowEnd := windowStart
-		return prevWindowStart, prevWindowEnd, nil
+		return prevWindowStart, prevWindowEnd
 	}
 
-	return windowStart, curr, nil
+	return windowStart, curr
 }
 
 func (cumulativeWindow CumulativeWindow) GetFrequency() Duration {
