@@ -11,6 +11,7 @@ import TraceWaterfall, {
 import useGetTraceV2 from 'hooks/trace/useGetTraceV2';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { defaultTo } from 'lodash-es';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Span, TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
@@ -41,6 +42,14 @@ function TraceDetailsV2(): JSX.Element {
 	}, [urlQuery]);
 
 	const [uncollapsedNodes, setUncollapsedNodes] = useState<string[]>([]);
+
+	const [isFlamegraphCollapsed, setIsFlamegraphCollapsed] = useState(false);
+	const toggleFlamegraph = (): void => {
+		setIsFlamegraphCollapsed((prev) => !prev);
+	};
+	const getFlamegraphButtonIcon = (isCollapsed: boolean): JSX.Element =>
+		isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />;
+
 	const {
 		data: traceData,
 		isFetching: isFetchingTraceData,
@@ -89,20 +98,24 @@ function TraceDetailsV2(): JSX.Element {
 					type="text"
 					icon={<FlamegraphImg />}
 					className="flamegraph-waterfall-toggle"
+					onClick={toggleFlamegraph}
 				>
 					Flamegraph
+					{getFlamegraphButtonIcon(isFlamegraphCollapsed)}
 				</Button>
 			),
 			key: 'flamegraph',
 			children: (
 				<>
-					<TraceFlamegraph
-						serviceExecTime={traceData?.payload?.serviceNameToTotalDurationMap || {}}
-						startTime={traceData?.payload?.startTimestampMillis || 0}
-						endTime={traceData?.payload?.endTimestampMillis || 0}
-						traceFlamegraphStatsWidth={traceFlamegraphStatsWidth}
-						selectedSpan={selectedSpan}
-					/>
+					{!isFlamegraphCollapsed && (
+						<TraceFlamegraph
+							serviceExecTime={traceData?.payload?.serviceNameToTotalDurationMap || {}}
+							startTime={traceData?.payload?.startTimestampMillis || 0}
+							endTime={traceData?.payload?.endTimestampMillis || 0}
+							traceFlamegraphStatsWidth={traceFlamegraphStatsWidth}
+							selectedSpan={selectedSpan}
+						/>
+					)}
 					<TraceWaterfall
 						traceData={traceData}
 						isFetchingTraceData={isFetchingTraceData}
