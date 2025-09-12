@@ -5280,6 +5280,41 @@ func (r *ClickHouseReader) GetActiveTimeSeriesForMetricName(ctx context.Context,
 }
 
 func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.UUID, req *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError) {
+	// Add timeout context to prevent hanging queries
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	
+	// Implement retry mechanism for transient failures
+	maxRetries := 3
+	retryDelay := 100 * time.Millisecond
+	
+	var lastErr error
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if attempt > 0 {
+			zap.L().Info("Retrying ListSummaryMetrics query", zap.Int("attempt", attempt+1))
+			time.Sleep(retryDelay)
+			retryDelay *= 2 // Exponential backoff
+		}
+		
+		result, err := r.listSummaryMetricsWithRetry(ctx, orgID, req)
+		if err == nil {
+			return result, nil
+		}
+		
+		lastErr = err
+		// Don't retry on certain error types
+		if err.Typ == "TimeoutError" || err.Typ == "BadRequest" {
+			return nil, err
+		}
+	}
+	
+	return &metrics_explorer.SummaryListMetricsResponse{}, &model.ApiError{
+		Typ: "ClickHouseError", 
+		Err: fmt.Errorf("failed after %d attempts: %v", maxRetries, lastErr),
+	}
+}
+
+func (r *ClickHouseReader) listSummaryMetricsWithRetry(ctx context.Context, orgID valuer.UUID, req *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError) {
 	var args []interface{}
 
 	// Build filter conditions (if any)
@@ -5313,20 +5348,20 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 
 	metricsQuery := fmt.Sprintf(
 		`SELECT 
-		    t.metric_name AS metric_name,
-		    ANY_VALUE(t.description) AS description,
-		    ANY_VALUE(t.type) AS metric_type,
-		    ANY_VALUE(t.unit) AS metric_unit,
-		    uniq(t.fingerprint) AS timeseries,
-			uniq(metric_name) OVER() AS total
-		FROM %s.%s AS t
-		WHERE unix_milli BETWEEN ? AND ?
-		AND NOT startsWith(metric_name, 'signoz')
-		AND __normalized = ?
-		%s
-		GROUP BY t.metric_name
-		%s
-		LIMIT %d OFFSET %d;`,
+			    t.metric_name AS metric_name,
+			    ANY_VALUE(t.description) AS description,
+			    ANY_VALUE(t.type) AS metric_type,
+			    ANY_VALUE(t.unit) AS metric_unit,
+			    uniq(t.fingerprint) AS timeseries,
+				uniq(metric_name) OVER() AS total
+			FROM %s.%s AS t
+			WHERE unix_milli BETWEEN ? AND ?
+			AND NOT startsWith(metric_name, 'signoz')
+			AND __normalized = ?
+			%s
+			GROUP BY t.metric_name
+			%s
+			LIMIT %d OFFSET %d SETTINGS max_threads = 4, max_memory_usage = 1000000000, log_queries = 1;`,
 		signozMetricDBName, tsTable, whereClause, orderByClauseFirstQuery, firstQueryLimit, req.Offset)
 
 	args = append(args, start, end)
@@ -5338,6 +5373,10 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 	zap.L().Info("Time taken to execute metrics query to fetch metrics with high time series", zap.String("query", metricsQuery), zap.Any("args", args), zap.Duration("duration", queryDuration))
 	if err != nil {
 		zap.L().Error("Error executing metrics query", zap.Error(err))
+		// Check if it's a timeout error
+		if ctx.Err() == context.DeadlineExceeded {
+			return &metrics_explorer.SummaryListMetricsResponse{}, &model.ApiError{Typ: "TimeoutError", Err: fmt.Errorf("query timeout: %v", err)}
+		}
 		return &metrics_explorer.SummaryListMetricsResponse{}, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	defer rows.Close()
@@ -5435,7 +5474,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 	}
 
 	// Append LIMIT clause.
-	sb.WriteString(fmt.Sprintf("LIMIT %d;", req.Limit))
+	sb.WriteString(fmt.Sprintf("LIMIT %d SETTINGS max_threads = 4, max_memory_usage = 1000000000;", req.Limit))
 	sampleQuery = sb.String()
 	begin = time.Now()
 	rows, err = r.db.Query(valueCtx, sampleQuery, args...)
@@ -5443,6 +5482,10 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 	zap.L().Info("Time taken to execute list summary query", zap.String("query", sampleQuery), zap.Any("args", args), zap.Duration("duration", queryDuration))
 	if err != nil {
 		zap.L().Error("Error executing samples query", zap.Error(err))
+		// Check if it's a timeout error
+		if ctx.Err() == context.DeadlineExceeded {
+			return &response, &model.ApiError{Typ: "TimeoutError", Err: fmt.Errorf("query timeout: %v", err)}
+		}
 		return &response, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	defer rows.Close()
@@ -5466,8 +5509,20 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 	//get updated metrics data
 	batch, apiError := r.GetUpdatedMetricsMetadata(ctx, orgID, metricNames...)
 	if apiError != nil {
-		zap.L().Error("Error in getting metrics cached metadata", zap.Error(apiError))
+		zap.L().Error("Error in getting metrics cached metadata", zap.Error(apiError), zap.Strings("metric_names", metricNames), zap.String("org_id", orgID.String()))
+		// Continue with default metadata instead of failing
+		batch = make(map[string]metrics_explorer.MetricDetailsDTO)
 	}
+	
+	// Log summary information for debugging
+	zap.L().Info("Metrics summary processed successfully", 
+		zap.Int("total_metrics", len(response.Metrics)), 
+		zap.Int("total_metric_names", len(metricNames)),
+		zap.Duration("total_duration", time.Since(startTime)),
+		zap.String("org_id", orgID.String()),
+		zap.Int64("start_time", req.Start),
+		zap.Int64("end_time", req.End),
+	)
 
 	var filteredMetrics []metrics_explorer.MetricDetail
 	for i := range response.Metrics {

@@ -1,3 +1,63 @@
+.metrics-explorer-summary-container {
+	height: 100%;
+	overflow-y: auto;
+}
+
+.metrics-summary-error {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	padding: 2rem;
+
+	.error-content {
+		text-align: center;
+		max-width: 400px;
+
+		h3 {
+			margin-bottom: 0.5rem;
+			color: #ff4d4f;
+		}
+
+		p {
+			margin-bottom: 1.5rem;
+			color: #666;
+			line-height: 1.5;
+		}
+
+		.error-actions {
+			display: flex;
+			gap: 1rem;
+			justify-content: center;
+
+			.retry-button,
+			.reload-button {
+				padding: 0.5rem 1rem;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				font-size: 0.9rem;
+				transition: opacity 0.2s;
+
+				&:hover {
+					opacity: 0.8;
+				}
+			}
+
+			.retry-button {
+				background-color: #1890ff;
+				color: white;
+			}
+
+			.reload-button {
+				background-color: #f0f0f0;
+				color: #333;
+				border: 1px solid #d9d9d9;
+			}
+		}
+	}
+}
+
 .metrics-explorer-summary-tab {
 	display: flex;
 	flex-direction: column;

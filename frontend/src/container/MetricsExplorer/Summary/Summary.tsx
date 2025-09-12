@@ -143,11 +143,18 @@ function Summary(): JSX.Element {
 		[isMetricsError, metricsData],
 	);
 
+	// Error retry mechanism
+	const [retryCount, setRetryCount] = useState(0);
+	const handleRetry = useCallback(() => {
+		setRetryCount(prev => prev + 1);
+	}, []);
+
 	const {
 		data: treeMapData,
 		isLoading: isTreeMapLoading,
 		isFetching: isTreeMapFetching,
 		isError: isTreeMapError,
+		refetch: refetchTreeMap,
 	} = useGetMetricsTreeMap(metricsTreemapQuery, {
 		enabled: !!metricsTreemapQuery && !isInspectModalOpen,
 		queryKey: [
@@ -156,6 +163,7 @@ function Summary(): JSX.Element {
 			heatmapView,
 			minTime,
 			maxTime,
+			retryCount,
 		],
 	});
 
@@ -163,6 +171,22 @@ function Summary(): JSX.Element {
 		() => isTreeMapError || treeMapData?.statusCode !== 200,
 		[isTreeMapError, treeMapData],
 	);
+
+	const {
+		refetch: refetchMetricsList,
+	} = useGetMetricsList(metricsListQuery, {
+		enabled: !!metricsListQuery && !isInspectModalOpen,
+		queryKey: [
+			'metricsList',
+			queryFiltersWithoutId,
+			orderBy,
+			pageSize,
+			currentPage,
+			minTime,
+			maxTime,
+			retryCount,
+		],
+	});
 
 	const handleFilterChange = useCallback(
 		(value: TagFilter) => {
@@ -303,6 +327,21 @@ function Summary(): JSX.Element {
 				<MetricsSearch query={searchQuery} onChange={handleFilterChange} />
 				{isMetricsLoading || isTreeMapLoading ? (
 					<MetricsLoading />
+				) : isListViewError ? (
+					<div className="metrics-summary-error">
+						<div className="error-content">
+							<h3>Unable to load metrics summary</h3>
+							<p>There was an error loading the metrics summary. This might be due to a temporary issue with the database connection.</p>
+							<div className="error-actions">
+								<button onClick={handleRetry} className="retry-button">
+									Try Again
+								</button>
+								<button onClick={() => window.location.reload()} className="reload-button">
+									Reload Page
+								</button>
+							</div>
+						</div>
+					</div>
 				) : isMetricsListDataEmpty && isMetricsTreeMapDataEmpty ? (
 					<NoLogs dataSource={DataSource.METRICS} />
 				) : (
