@@ -104,8 +104,8 @@ github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd h1:Bk43AsDYe0fhkbj57eGXx8H3ZJ4zhmQXBnrW523ktj8=
 github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd/go.mod h1:nxRcH/OEdM8QxzH37xkGzomr1O0JpYBRS6pwjsWW6Pc=
-github.com/SigNoz/signoz-otel-collector v0.128.1 h1:D0bKMrRNgcKreKKYoakCr5jTWj1srupbNwGIvpHMihw=
-github.com/SigNoz/signoz-otel-collector v0.128.1/go.mod h1:vFQLsJFzQwVkO1ltIMH+z9KKuTZTn/P0lKu2mNYDBpE=
+github.com/SigNoz/signoz-otel-collector v0.129.4 h1:DGDu9y1I1FU+HX4eECPGmfhnXE4ys4yr7LL6znbf6to=
+github.com/SigNoz/signoz-otel-collector v0.129.4/go.mod h1:xyR+coBzzO04p6Eu+ql2RVYUl/jFD+8hD9lArcc9U7g=
 github.com/Yiling-J/theine-go v0.6.1 h1:njE/rBBviU/Sq2G7PJKdLdwXg8j1azvZQulIjmshD+o=
 github.com/Yiling-J/theine-go v0.6.1/go.mod h1:08QpMa5JZ2pKN+UJCRrCasWYO1IKCdl54Xa836rpmDU=
 github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5/go.mod h1:SkGFH1ia65gfNATL8TAiHDNxPzPdmEL5uirI2Uyuz6c=
