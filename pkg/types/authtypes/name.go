@@ -10,16 +10,18 @@ var (
 	nameRegex = regexp.MustCompile("")
 )
 
-type Name string
+type Name struct {
+	val string
+}
 
 func MustNewName(name string) Name {
 	if !nameRegex.MatchString(name) {
 		panic(errors.NewInternalf(errors.CodeInternal, "name must confirm to regex %s", nameRegex.String()))
 	}
 
-	return Name(name)
+	return Name{val: name}
 }
 
-func (name *Name) String() string {
-	return string(*name)
+func (name Name) String() string {
+	return name.val
 }

@@ -197,7 +197,6 @@ func (provider *provider) Check(ctx context.Context, tupleReq *openfgav1.CheckRe
 }
 
 func (provider *provider) CheckWithTupleCreation(req *http.Request, relation authtypes.Relation, typeable authtypes.Typeable, selector authtypes.Selector, parentTypeable authtypes.Typeable, parentSelectors ...authtypes.Selector) error {
-
 	claims, err := authtypes.ClaimsFromContext(req.Context())
 	if err != nil {
 		return err
@@ -213,10 +212,25 @@ func (provider *provider) CheckWithTupleCreation(req *http.Request, relation aut
 		return err
 	}
 
-	err = provider.Check(req.Context(), tuples[0])
+	err = provider.sequentialCheck(req.Context(), tuples)
 	if err != nil {
-		return err
+		return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "subject %s cannot %s object %s", subject, relation.StringValue(), typeable.Type().StringValue())
 	}
 
 	return nil
+}
+
+func (provider *provider) sequentialCheck(ctx context.Context, tuplesReq []*openfgav1.CheckRequestTupleKey) error {
+	for _, tupleReq := range tuplesReq {
+		err := provider.Check(ctx, tupleReq)
+		if err != nil && errors.Ast(err, errors.TypeInternal) {
+			// return at the first internal error as the evaluation will be incorrect
+			return err
+		}
+		if err == nil {
+			return nil
+		}
+	}
+
+	return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "all the sequential tuples are forbidden access")
 }

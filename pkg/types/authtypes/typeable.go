@@ -15,15 +15,17 @@ var (
 )
 
 var (
-	TypeUser      = Type{valuer.NewString("user")}
-	TypeRole      = Type{valuer.NewString("role")}
-	TypeResource  = Type{valuer.NewString("resource")}
-	TypeResources = Type{valuer.NewString("resources")}
+	TypeUser         = Type{valuer.NewString("user")}
+	TypeRole         = Type{valuer.NewString("role")}
+	TypeOrganization = Type{valuer.NewString("organization")}
+	TypeResource     = Type{valuer.NewString("resource")}
+	TypeResources    = Type{valuer.NewString("resources")}
 )
 
 var (
-	TypedUser = user{}
-	TypedRole = role{}
+	TypedUser         = &user{}
+	TypedRole         = &role{}
+	TypedOrganization = &organization{}
 )
 
 type Typeable interface {

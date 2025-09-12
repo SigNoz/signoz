@@ -7,35 +7,42 @@ import (
 )
 
 var (
-	typeUserSelectorRegex      = regexp.MustCompile("")
-	typeRoleSelectorRegex      = regexp.MustCompile("")
-	typeResourceSelectorRegex  = regexp.MustCompile("")
-	typeResourcesSelectorRegex = regexp.MustCompile("")
+	typeUserSelectorRegex         = regexp.MustCompile("")
+	typeRoleSelectorRegex         = regexp.MustCompile("")
+	typeOrganizationSelectorRegex = regexp.MustCompile("")
+	typeResourceSelectorRegex     = regexp.MustCompile("")
+	typeResourcesSelectorRegex    = regexp.MustCompile("")
 )
 
-type Selector string
+type Selector struct {
+	val string
+}
 
 func NewSelector(typed Type, selector string) (Selector, error) {
 	switch typed {
 	case TypeUser:
 		if !typeUserSelectorRegex.MatchString(selector) {
-			return Selector(""), errors.NewInternalf(errors.CodeInternal, "name must confirm to regex %s", typeUserSelectorRegex.String())
+			return Selector{}, errors.NewInternalf(errors.CodeInternal, "name must confirm to regex %s", typeUserSelectorRegex.String())
 		}
 	case TypeRole:
 		if !typeRoleSelectorRegex.MatchString(selector) {
-			return Selector(""), errors.NewInternalf(errors.CodeInternal, "name must confirm to regex %s", typeRoleSelectorRegex.String())
+			return Selector{}, errors.NewInternalf(errors.CodeInternal, "name must confirm to regex %s", typeRoleSelectorRegex.String())
+		}
+	case TypeOrganization:
+		if !typeOrganizationSelectorRegex.MatchString(selector) {
+			return Selector{}, errors.NewInternalf(errors.CodeInternal, "name must confirm to regex %s", typeOrganizationSelectorRegex.String())
 		}
 	case TypeResource:
 		if !typeResourceSelectorRegex.MatchString(selector) {
-			return Selector(""), errors.NewInternalf(errors.CodeInternal, "name must confirm to regex %s", typeResourceSelectorRegex.String())
+			return Selector{}, errors.NewInternalf(errors.CodeInternal, "name must confirm to regex %s", typeResourceSelectorRegex.String())
 		}
 	case TypeResources:
 		if !typeResourcesSelectorRegex.MatchString(selector) {
-			return Selector(""), errors.NewInternalf(errors.CodeInternal, "name must confirm to regex %s", typeResourcesSelectorRegex.String())
+			return Selector{}, errors.NewInternalf(errors.CodeInternal, "name must confirm to regex %s", typeResourcesSelectorRegex.String())
 		}
 	}
 
-	return Selector(selector), nil
+	return Selector{val: selector}, nil
 }
 
 func MustNewSelector(typed Type, input string) Selector {
@@ -47,6 +54,6 @@ func MustNewSelector(typed Type, input string) Selector {
 	return selector
 }
 
-func (selector *Selector) String() string {
-	return string(*selector)
+func (selector Selector) String() string {
+	return selector.val
 }
