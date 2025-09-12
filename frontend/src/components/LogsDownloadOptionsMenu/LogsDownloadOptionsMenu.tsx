@@ -134,7 +134,7 @@ export default function LogsDownloadOptionsMenu({
 					disabled={isDownloading}
 					loading={isDownloading}
 				>
-					<Typography.Text className="text">Export</Typography.Text>
+					Export
 				</Button>
 			</div>
 		),
@@ -146,6 +146,7 @@ export default function LogsDownloadOptionsMenu({
 			content={popoverContent}
 			trigger="click"
 			placement="bottomRight"
+			arrow={false}
 			open={isPopoverOpen}
 			onOpenChange={setIsPopoverOpen}
 			rootClassName="logs-download-popover"
