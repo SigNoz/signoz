@@ -131,5 +131,93 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 				}),
 			);
 		});
+
+		it('should preserve aggregation operators when metric type remains the same (GAUGE to GAUGE)', () => {
+			const result = renderHookWithProps();
+			const newAttribute: BaseAutocompleteData = {
+				key: 'new_gauge_metric',
+				dataType: DataTypes.Float64,
+				type: ATTRIBUTE_TYPES.GAUGE,
+			};
+
+			act(() => {
+				result.current.handleChangeAggregatorAttribute(newAttribute);
+			});
+
+			expect(mockHandleSetQueryData).toHaveBeenCalledWith(
+				0,
+				expect.objectContaining({
+					aggregateAttribute: newAttribute,
+					aggregateOperator: MetricAggregateOperator.AVG, // Preserved from original
+					timeAggregation: MetricAggregateOperator.AVG, // Preserved from original
+					spaceAggregation: '', // Preserved from original
+				}),
+			);
+		});
+
+		it('should reset aggregation operators when metric type changes (GAUGE to SUM)', () => {
+			const result = renderHookWithProps();
+			const newAttribute: BaseAutocompleteData = {
+				key: 'new_sum_metric',
+				dataType: DataTypes.Float64,
+				type: ATTRIBUTE_TYPES.SUM,
+			};
+
+			act(() => {
+				result.current.handleChangeAggregatorAttribute(newAttribute);
+			});
+
+			expect(mockHandleSetQueryData).toHaveBeenCalledWith(
+				0,
+				expect.objectContaining({
+					aggregateAttribute: newAttribute,
+					aggregateOperator: MetricAggregateOperator.RATE, // Reset for SUM type
+					timeAggregation: MetricAggregateOperator.RATE, // Reset for SUM type
+					spaceAggregation: '', // Reset
+				}),
+			);
+		});
+
+		it('should preserve aggregation operators when metric type remains the same (SUM to SUM)', () => {
+			const sumMockQuery: IBuilderQuery = {
+				...defaultMockQuery,
+				aggregateAttribute: {
+					key: 'original_sum_metric',
+					dataType: DataTypes.Float64,
+					type: ATTRIBUTE_TYPES.SUM,
+				} as BaseAutocompleteData,
+				aggregateOperator: MetricAggregateOperator.RATE,
+				timeAggregation: MetricAggregateOperator.RATE,
+				spaceAggregation: MetricAggregateOperator.SUM,
+			};
+
+			const { result } = renderHook(() =>
+				useQueryOperations({
+					query: sumMockQuery,
+					index: 0,
+					entityVersion: ENTITY_VERSION_V4,
+				}),
+			);
+
+			const newAttribute: BaseAutocompleteData = {
+				key: 'new_sum_metric',
+				dataType: DataTypes.Float64,
+				type: ATTRIBUTE_TYPES.SUM,
+			};
+
+			act(() => {
+				result.current.handleChangeAggregatorAttribute(newAttribute);
+			});
+
+			expect(mockHandleSetQueryData).toHaveBeenCalledWith(
+				0,
+				expect.objectContaining({
+					aggregateAttribute: newAttribute,
+					aggregateOperator: MetricAggregateOperator.RATE, // Preserved from original
+					timeAggregation: MetricAggregateOperator.RATE, // Preserved from original
+					spaceAggregation: MetricAggregateOperator.SUM, // Preserved from original
+				}),
+			);
+		});
 	});
 });

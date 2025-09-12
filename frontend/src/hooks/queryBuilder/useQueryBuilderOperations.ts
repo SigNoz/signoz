@@ -229,32 +229,42 @@ export const useQueryOperations: UseQueryOperations = ({
 				}
 
 				if (!isEditMode) {
-					if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.SUM) {
-						newQuery.aggregateOperator = MetricAggregateOperator.RATE;
-						newQuery.timeAggregation = MetricAggregateOperator.RATE;
-					} else if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.GAUGE) {
-						newQuery.aggregateOperator = MetricAggregateOperator.AVG;
-						newQuery.timeAggregation = MetricAggregateOperator.AVG;
-					} else {
-						newQuery.timeAggregation = '';
-					}
+					// Check if metric type has changed to determine if we should reset aggregation operators
+					const previousMetricType = query.aggregateAttribute?.type;
+					const currentMetricType = newQuery.aggregateAttribute?.type;
+					const metricTypeChanged = previousMetricType !== currentMetricType;
 
-					newQuery.spaceAggregation = '';
-
-					// Handled query with unknown metric to avoid 400 and 500 errors
-					// With metric value typed and not available then - time - 'avg', space - 'avg'
-					// If not typed - time - 'rate', space - 'sum', op - 'count'
-					if (isEmpty(newQuery.aggregateAttribute?.type)) {
-						if (!isEmpty(newQuery.aggregateAttribute?.key)) {
+					// Only reset aggregation operators if metric type has changed
+					if (metricTypeChanged) {
+						if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.SUM) {
+							newQuery.aggregateOperator = MetricAggregateOperator.RATE;
+							newQuery.timeAggregation = MetricAggregateOperator.RATE;
+						} else if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.GAUGE) {
 							newQuery.aggregateOperator = MetricAggregateOperator.AVG;
 							newQuery.timeAggregation = MetricAggregateOperator.AVG;
-							newQuery.spaceAggregation = MetricAggregateOperator.AVG;
 						} else {
-							newQuery.aggregateOperator = MetricAggregateOperator.COUNT;
-							newQuery.timeAggregation = MetricAggregateOperator.RATE;
-							newQuery.spaceAggregation = MetricAggregateOperator.SUM;
+							newQuery.timeAggregation = '';
+						}
+
+						newQuery.spaceAggregation = '';
+
+						// Handled query with unknown metric to avoid 400 and 500 errors
+						// With metric value typed and not available then - time - 'avg', space - 'avg'
+						// If not typed - time - 'rate', space - 'sum', op - 'count'
+						if (isEmpty(newQuery.aggregateAttribute?.type)) {
+							if (!isEmpty(newQuery.aggregateAttribute?.key)) {
+								newQuery.aggregateOperator = MetricAggregateOperator.AVG;
+								newQuery.timeAggregation = MetricAggregateOperator.AVG;
+								newQuery.spaceAggregation = MetricAggregateOperator.AVG;
+							} else {
+								newQuery.aggregateOperator = MetricAggregateOperator.COUNT;
+								newQuery.timeAggregation = MetricAggregateOperator.RATE;
+								newQuery.spaceAggregation = MetricAggregateOperator.SUM;
+							}
 						}
 					}
+					// If metric type hasn't changed, preserve existing aggregation operators
+					// The aggregation operators will remain as they were in the original query
 				}
 			}
 
@@ -267,58 +277,77 @@ export const useQueryOperations: UseQueryOperations = ({
 				}
 
 				if (!isEditMode) {
-					if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.SUM) {
-						newQuery.aggregations = [
-							{
-								timeAggregation: MetricAggregateOperator.RATE,
-								metricName: newQuery.aggregateAttribute?.key || '',
-								temporality: '',
-								spaceAggregation: '',
-							},
-						];
-					} else if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.GAUGE) {
-						newQuery.aggregations = [
-							{
-								timeAggregation: MetricAggregateOperator.AVG,
-								metricName: newQuery.aggregateAttribute?.key || '',
-								temporality: '',
-								spaceAggregation: '',
-							},
-						];
-					} else {
-						newQuery.aggregations = [
-							{
-								timeAggregation: '',
-								metricName: newQuery.aggregateAttribute?.key || '',
-								temporality: '',
-								spaceAggregation: '',
-							},
-						];
-					}
+					// Check if metric type has changed to determine if we should reset aggregation operators
+					const previousMetricType = query.aggregateAttribute?.type;
+					const currentMetricType = newQuery.aggregateAttribute?.type;
+					const metricTypeChanged = previousMetricType !== currentMetricType;
 
-					newQuery.aggregateOperator = '';
-					newQuery.spaceAggregation = '';
-
-					// Handled query with unknown metric to avoid 400 and 500 errors
-					// With metric value typed and not available then - time - 'avg', space - 'avg'
-					// If not typed - time - 'rate', space - 'sum', op - 'count'
-					if (isEmpty(newQuery.aggregateAttribute?.type)) {
-						if (!isEmpty(newQuery.aggregateAttribute?.key)) {
+					// Only reset aggregation operators if metric type has changed
+					if (metricTypeChanged) {
+						if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.SUM) {
+							newQuery.aggregations = [
+								{
+									timeAggregation: MetricAggregateOperator.RATE,
+									metricName: newQuery.aggregateAttribute?.key || '',
+									temporality: '',
+									spaceAggregation: '',
+								},
+							];
+						} else if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.GAUGE) {
 							newQuery.aggregations = [
 								{
 									timeAggregation: MetricAggregateOperator.AVG,
 									metricName: newQuery.aggregateAttribute?.key || '',
 									temporality: '',
-									spaceAggregation: MetricAggregateOperator.AVG,
+									spaceAggregation: '',
 								},
 							];
 						} else {
 							newQuery.aggregations = [
 								{
-									timeAggregation: MetricAggregateOperator.COUNT,
+									timeAggregation: '',
 									metricName: newQuery.aggregateAttribute?.key || '',
 									temporality: '',
-									spaceAggregation: MetricAggregateOperator.SUM,
+									spaceAggregation: '',
+								},
+							];
+						}
+
+						newQuery.aggregateOperator = '';
+						newQuery.spaceAggregation = '';
+
+						// Handled query with unknown metric to avoid 400 and 500 errors
+						// With metric value typed and not available then - time - 'avg', space - 'avg'
+						// If not typed - time - 'rate', space - 'sum', op - 'count'
+						if (isEmpty(newQuery.aggregateAttribute?.type)) {
+							if (!isEmpty(newQuery.aggregateAttribute?.key)) {
+								newQuery.aggregations = [
+									{
+										timeAggregation: MetricAggregateOperator.AVG,
+										metricName: newQuery.aggregateAttribute?.key || '',
+										temporality: '',
+										spaceAggregation: MetricAggregateOperator.AVG,
+									},
+								];
+							} else {
+								newQuery.aggregations = [
+									{
+										timeAggregation: MetricAggregateOperator.COUNT,
+										metricName: newQuery.aggregateAttribute?.key || '',
+										temporality: '',
+										spaceAggregation: MetricAggregateOperator.SUM,
+									},
+								];
+							}
+						}
+					} else {
+						// If metric type hasn't changed, preserve existing aggregation operators but update metric name
+						const currentAggregation = query.aggregations?.[0] as MetricAggregation;
+						if (currentAggregation) {
+							newQuery.aggregations = [
+								{
+									...currentAggregation,
+									metricName: newQuery.aggregateAttribute?.key || '',
 								},
 							];
 						}
