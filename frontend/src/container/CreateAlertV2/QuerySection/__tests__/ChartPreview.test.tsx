@@ -2,16 +2,21 @@
 /* eslint-disable react/destructuring-assignment */
 import { render, screen } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	INITIAL_ALERT_STATE,
+	INITIAL_ALERT_THRESHOLD_STATE,
+} from 'container/CreateAlertV2/context/constants';
+import { buildInitialAlertDef } from 'container/CreateAlertV2/context/utils';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import store from 'store';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { EQueryType } from 'types/common/dashboard';
 
 import { CreateAlertProvider } from '../../context';
 import ChartPreview from '../ChartPreview/ChartPreview';
 
-// Constants for duplicate strings
 const REQUESTS_PER_SEC = 'requests/sec';
 const CHART_PREVIEW_NAME = 'Chart Preview';
 const QUERY_TYPE_TEST_ID = 'query-type';
@@ -109,13 +114,28 @@ const mockUseQueryBuilder = {
 	},
 };
 
+const mockAlertDef = buildInitialAlertDef(AlertTypes.METRICS_BASED_ALERT);
+
+jest.mock('../../context', () => ({
+	...jest.requireActual('../../context'),
+	useCreateAlertState: (): any => ({
+		alertState: {
+			...INITIAL_ALERT_STATE,
+			yAxisUnit: REQUESTS_PER_SEC,
+		},
+		thresholdState: INITIAL_ALERT_THRESHOLD_STATE,
+		setAlertState: jest.fn(),
+		setThresholdState: jest.fn(),
+	}),
+}));
+
 const renderChartPreview = (): ReturnType<typeof render> =>
 	render(
 		<Provider store={store}>
 			<QueryClientProvider client={queryClient}>
 				<MemoryRouter>
 					<CreateAlertProvider>
-						<ChartPreview />
+						<ChartPreview alertDef={mockAlertDef} />
 					</CreateAlertProvider>
 				</MemoryRouter>
 			</QueryClientProvider>
