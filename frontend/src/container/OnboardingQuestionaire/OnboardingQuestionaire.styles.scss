@@ -290,6 +290,37 @@
 			gap: 10px;
 		}
 
+		.checkbox-grid {
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+			margin-top: 12px;
+		}
+
+		.checkbox-item {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+
+			.ant-checkbox-wrapper {
+				color: var(--bg-vanilla-100);
+				font-size: 14px;
+				font-weight: 400;
+
+				.ant-checkbox {
+					.ant-checkbox-inner {
+						border-color: var(--bg-vanilla-300);
+						background-color: var(--bg-vanilla-100);
+					}
+
+					&.ant-checkbox-checked .ant-checkbox-inner {
+						background-color: var(--bg-forest-500);
+						border-color: var(--bg-forest-500);
+					}
+				}
+			}
+		}
+
 		.onboarding-questionaire-button,
 		.add-another-member-button,
 		.remove-team-member-button {
@@ -525,6 +556,12 @@
 
 			.question {
 				color: var(--bg-slate-300);
+			}
+
+			.checkbox-item {
+				.ant-checkbox-wrapper {
+					color: var(--bg-slate-300);
+				}
 			}
 
 			input[type='text'] {
