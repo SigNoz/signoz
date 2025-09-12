@@ -12,6 +12,12 @@ type EvaluationKind struct {
 	valuer.String
 }
 
+var allowedCumulativeWindows = []Duration{
+	Duration(1 * time.Hour),
+	Duration(24 * time.Hour),
+	Duration(24 * 30 * time.Hour),
+}
+
 var (
 	RollingEvaluation    = EvaluationKind{valuer.NewString("rolling")}
 	CumulativeEvaluation = EvaluationKind{valuer.NewString("cumulative")}
@@ -56,6 +62,17 @@ func (cumulativeWindow CumulativeWindow) Validate() error {
 	if cumulativeWindow.EvalWindow <= 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "evalWindow must be greater than zero")
 	}
+	isValidWindow := false
+	for _, allowed := range allowedCumulativeWindows {
+		if cumulativeWindow.EvalWindow == allowed {
+			isValidWindow = true
+			break
+		}
+	}
+	if !isValidWindow {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "evalWindow must be one of: current hour (1h), current day (24h), or current month (720h)")
+	}
+
 	if cumulativeWindow.StartsAt <= 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "startsAt must be a valid timestamp greater than zero")
 	}

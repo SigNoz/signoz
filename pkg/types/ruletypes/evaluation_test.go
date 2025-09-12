@@ -381,12 +381,13 @@ func TestEvaluationEnvelope_UnmarshalJSON(t *testing.T) {
 		},
 		{
 			name:      "cumulative evaluation with valid data",
-			jsonInput: `{"kind":"cumulative","spec":{"startsAt":1701432000000,"evalWindow":"10m","frequency":"2m"}}`,
+			jsonInput: `{"kind":"cumulative","spec":{"startsAt":1701432000000,"evalWindow":"1h","frequency":"2m","timezone":"UTC"}}`,
 			wantKind:  CumulativeEvaluation,
 			wantSpec: CumulativeWindow{
 				StartsAt:   1701432000000,
-				EvalWindow: Duration(10 * time.Minute),
+				EvalWindow: Duration(1 * time.Hour),
 				Frequency:  Duration(2 * time.Minute),
+				Timezone:   "UTC",
 			},
 		},
 		{
@@ -406,17 +407,22 @@ func TestEvaluationEnvelope_UnmarshalJSON(t *testing.T) {
 		},
 		{
 			name:      "cumulative evaluation with validation error - zero frequency",
-			jsonInput: `{"kind":"cumulative","spec":{"startsAt":1701432000000,"evalWindow":"5m","frequency":"0s"}}`,
+			jsonInput: `{"kind":"cumulative","spec":{"startsAt":1701432000000,"evalWindow":"1h","frequency":"0s","timezone":"UTC"}}`,
+			wantError: true,
+		},
+		{
+			name:      "cumulative evaluation with validation error - invalid evalWindow",
+			jsonInput: `{"kind":"cumulative","spec":{"startsAt":1701432000000,"evalWindow":"10m","frequency":"1m","timezone":"UTC"}}`,
 			wantError: true,
 		},
 		{
 			name:      "cumulative evaluation with validation error - future startsAt",
-			jsonInput: `{"kind":"cumulative","spec":{"startsAt":9999999999999,"evalWindow":"5m","frequency":"1m"}}`,
+			jsonInput: `{"kind":"cumulative","spec":{"startsAt":9999999999999,"evalWindow":"1h","frequency":"1m","timezone":"UTC"}}`,
 			wantError: true,
 		},
 		{
 			name:      "unknown evaluation kind",
-			jsonInput: `{"kind":"unknown","spec":{"evalWindow":"5m","frequency":"1m"}}`,
+			jsonInput: `{"kind":"unknown","spec":{"evalWindow":"5m","frequency":"1h"}}`,
 			wantError: true,
 		},
 		{
@@ -484,6 +490,9 @@ func TestEvaluationEnvelope_UnmarshalJSON(t *testing.T) {
 				}
 				if gotSpec.Frequency != wantSpec.Frequency {
 					t.Errorf("CumulativeWindow.Frequency = %v, want %v", gotSpec.Frequency, wantSpec.Frequency)
+				}
+				if gotSpec.Timezone != wantSpec.Timezone {
+					t.Errorf("CumulativeWindow.Timezone = %v, want %v", gotSpec.Timezone, wantSpec.Timezone)
 				}
 			}
 		})
