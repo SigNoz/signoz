@@ -2,9 +2,10 @@ package ruletypes
 
 import (
 	"encoding/json"
+	"time"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"time"
 )
 
 type EvaluationKind struct {
