@@ -16,12 +16,10 @@ import (
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
-	yaml "gopkg.in/yaml.v2"
-
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 type PromRule struct {
@@ -151,84 +149,87 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 	var alerts = make(map[uint64]*ruletypes.Alert, len(res))
 
 	for _, series := range res {
-		l := make(map[string]string, len(series.Metric))
-		for _, lbl := range series.Metric {
-			l[lbl.Name] = lbl.Value
-		}
 
 		if len(series.Floats) == 0 {
 			continue
 		}
 
-		alertSmpl, shouldAlert := r.ShouldAlert(toCommonSeries(series))
-		if !shouldAlert {
-			continue
-		}
-		r.logger.DebugContext(ctx, "alerting for series", "rule_name", r.Name(), "series", series)
-
-		threshold := valueFormatter.Format(r.targetVal(), r.Unit())
-
-		tmplData := ruletypes.AlertTemplateData(l, valueFormatter.Format(alertSmpl.V, r.Unit()), threshold)
-		// Inject some convenience variables that are easier to remember for users
-		// who are not used to Go's templating system.
-		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
-
-		expand := func(text string) string {
-
-			tmpl := ruletypes.NewTemplateExpander(
-				ctx,
-				defs+text,
-				"__alert_"+r.Name(),
-				tmplData,
-				times.Time(timestamp.FromTime(ts)),
-				nil,
-			)
-			result, err := tmpl.Expand()
-			if err != nil {
-				result = fmt.Sprintf("<error expanding template: %s>", err)
-				r.logger.WarnContext(ctx, "Expanding alert template failed", "rule_name", r.Name(), "error", err, "data", tmplData)
-			}
-			return result
-		}
-
-		lb := qslabels.NewBuilder(alertSmpl.Metric).Del(qslabels.MetricNameLabel)
-		resultLabels := qslabels.NewBuilder(alertSmpl.Metric).Del(qslabels.MetricNameLabel).Labels()
-
-		for name, value := range r.labels.Map() {
-			lb.Set(name, expand(value))
-		}
-
-		lb.Set(qslabels.AlertNameLabel, r.Name())
-		lb.Set(qslabels.AlertRuleIdLabel, r.ID())
-		lb.Set(qslabels.RuleSourceLabel, r.GeneratorURL())
-
-		annotations := make(qslabels.Labels, 0, len(r.annotations.Map()))
-		for name, value := range r.annotations.Map() {
-			annotations = append(annotations, qslabels.Label{Name: name, Value: expand(value)})
-		}
-
-		lbs := lb.Labels()
-		h := lbs.Hash()
-		resultFPs[h] = struct{}{}
-
-		if _, ok := alerts[h]; ok {
-			err = fmt.Errorf("vector contains metrics with the same labelset after applying alert labels")
-			// We have already acquired the lock above hence using SetHealth and
-			// SetLastError will deadlock.
-			r.health = ruletypes.HealthBad
-			r.lastError = err
+		results, err := r.Threshold.ShouldAlert(toCommonSeries(series))
+		if err != nil {
 			return nil, err
 		}
 
-		alerts[h] = &ruletypes.Alert{
-			Labels:            lbs,
-			QueryResultLables: resultLabels,
-			Annotations:       annotations,
-			ActiveAt:          ts,
-			State:             model.StatePending,
-			Value:             alertSmpl.V,
-			GeneratorURL:      r.GeneratorURL(),
-			Receivers:         r.preferredChannels,
+		for _, result := range results {
+			l := make(map[string]string, len(series.Metric))
+			for _, lbl := range series.Metric {
+				l[lbl.Name] = lbl.Value
+			}
+			r.logger.DebugContext(ctx, "alerting for series", "rule_name", r.Name(), "series", series)
+
+			threshold := valueFormatter.Format(r.targetVal(), r.Unit())
+
+			tmplData := ruletypes.AlertTemplateData(l, valueFormatter.Format(result.V, r.Unit()), threshold)
+			// Inject some convenience variables that are easier to remember for users
+			// who are not used to Go's templating system.
+			defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
+
+			expand := func(text string) string {
+
+				tmpl := ruletypes.NewTemplateExpander(
+					ctx,
+					defs+text,
+					"__alert_"+r.Name(),
+					tmplData,
+					times.Time(timestamp.FromTime(ts)),
+					nil,
+				)
+				result, err := tmpl.Expand()
+				if err != nil {
+					result = fmt.Sprintf("<error expanding template: %s>", err)
+					r.logger.WarnContext(ctx, "Expanding alert template failed", "rule_name", r.Name(), "error", err, "data", tmplData)
+				}
+				return result
+			}
+
+			lb := qslabels.NewBuilder(result.Metric).Del(qslabels.MetricNameLabel)
+			resultLabels := qslabels.NewBuilder(result.Metric).Del(qslabels.MetricNameLabel).Labels()
+
+			for name, value := range r.labels.Map() {
+				lb.Set(name, expand(value))
+			}
+
+			lb.Set(qslabels.AlertNameLabel, r.Name())
+			lb.Set(qslabels.AlertRuleIdLabel, r.ID())
+			lb.Set(qslabels.RuleSourceLabel, r.GeneratorURL())
+
+			annotations := make(qslabels.Labels, 0, len(r.annotations.Map()))
+			for name, value := range r.annotations.Map() {
+				annotations = append(annotations, qslabels.Label{Name: name, Value: expand(value)})
+			}
+
+			lbs := lb.Labels()
+			h := lbs.Hash()
+			resultFPs[h] = struct{}{}
+
+			if _, ok := alerts[h]; ok {
+				err = fmt.Errorf("vector contains metrics with the same labelset after applying alert labels")
+				// We have already acquired the lock above hence using SetHealth and
+				// SetLastError will deadlock.
+				r.health = ruletypes.HealthBad
+				r.lastError = err
+				return nil, err
+			}
+
+			alerts[h] = &ruletypes.Alert{
+				Labels:            lbs,
+				QueryResultLables: resultLabels,
+				Annotations:       annotations,
+				ActiveAt:          ts,
+				State:             model.StatePending,
+				Value:             result.V,
+				GeneratorURL:      r.GeneratorURL(),
+				Receivers:         r.preferredChannels,
+			}
 		}
 	}
 
@@ -327,7 +328,7 @@ func (r *PromRule) String() string {
 		PreferredChannels: r.preferredChannels,
 	}
 
-	byt, err := yaml.Marshal(ar)
+	byt, err := json.Marshal(ar)
 	if err != nil {
 		return fmt.Sprintf("error marshaling alerting rule: %s", err.Error())
 	}
