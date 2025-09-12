@@ -71,6 +71,11 @@ func (cumulativeWindow CumulativeWindow) NextWindowFor(curr time.Time) (time.Tim
 	startsAt := time.UnixMilli(cumulativeWindow.StartsAt)
 	dur := time.Duration(cumulativeWindow.EvalWindow)
 
+	// Guard against divide by zero
+	if dur <= 0 {
+		return curr, curr
+	}
+
 	// Calculate the number of complete windows since StartsAt
 	elapsed := curr.Sub(startsAt)
 	windows := int64(elapsed / dur)

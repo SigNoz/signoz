@@ -1,6 +1,7 @@
 package ruletypes
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 )
@@ -65,14 +66,14 @@ func TestCumulativeWindow_EvaluationTime(t *testing.T) {
 		current    time.Time
 		wantStart  time.Time
 		wantEnd    time.Time
-		wantError  bool
 	}{
 		{
 			name:       "current time before starts at",
 			startsAt:   startsAtUnixMilli,
 			evalWindow: Duration(5 * time.Minute),
 			current:    baseTime.Add(-1 * time.Hour),
-			wantError:  true,
+			wantStart:  baseTime.Add(-1 * time.Hour), // Returns current time when before startsAt
+			wantEnd:    baseTime.Add(-1 * time.Hour),
 		},
 		{
 			name:       "first window - exact start time",
@@ -115,11 +116,19 @@ func TestCumulativeWindow_EvaluationTime(t *testing.T) {
 			wantEnd:    baseTime.Add(37 * time.Minute),
 		},
 		{
+			name:       "zero eval window",
+			startsAt:   startsAtUnixMilli,
+			evalWindow: Duration(0),
+			current:    baseTime.Add(10 * time.Minute),
+			wantStart:  baseTime.Add(10 * time.Minute), // Returns current time for invalid windows
+			wantEnd:    baseTime.Add(10 * time.Minute),
+		},
+		{
 			name:       "negative eval window",
 			startsAt:   startsAtUnixMilli,
 			evalWindow: Duration(-5 * time.Minute),
 			current:    baseTime.Add(10 * time.Minute),
-			wantStart:  baseTime.Add(10 * time.Minute), // Returns current time for invalid windows  
+			wantStart:  baseTime.Add(10 * time.Minute), // Returns current time for invalid windows
 			wantEnd:    baseTime.Add(10 * time.Minute),
 		},
 	}
@@ -132,11 +141,6 @@ func TestCumulativeWindow_EvaluationTime(t *testing.T) {
 			}
 
 			gotStart, gotEnd := cw.NextWindowFor(tt.current)
-
-			if tt.wantError {
-				// Skip error tests since NextWindowFor no longer returns errors
-				t.Skip("Error testing not applicable with new signature")
-			}
 			if !gotStart.Equal(tt.wantStart) {
 				t.Errorf("CumulativeWindow.NextWindowFor() start time = %v, want %v", gotStart, tt.wantStart)
 			}
@@ -181,7 +185,6 @@ func TestCumulativeWindow_BoundaryConditions(t *testing.T) {
 		current    time.Time
 		wantStart  time.Time
 		wantEnd    time.Time
-		wantError  bool
 	}{
 		{
 			name:       "exact window boundary - end of first window",
@@ -241,11 +244,6 @@ func TestCumulativeWindow_BoundaryConditions(t *testing.T) {
 			}
 
 			gotStart, gotEnd := cw.NextWindowFor(tt.current)
-
-			if tt.wantError {
-				// Skip error tests since NextWindowFor no longer returns errors
-				t.Skip("Error testing not applicable with new signature")
-			}
 			if !gotStart.Equal(tt.wantStart) {
 				t.Errorf("CumulativeWindow.NextWindowFor() start time = %v, want %v", gotStart, tt.wantStart)
 			}
@@ -358,6 +356,134 @@ func TestCumulativeWindow_WindowReset(t *testing.T) {
 				}
 				if !gotEnd.Equal(eval.wantEnd) {
 					t.Errorf("Evaluation %d: end time = %v, want %v", i+1, gotEnd, eval.wantEnd)
+				}
+			}
+		})
+	}
+}
+
+func TestEvaluationEnvelope_UnmarshalJSON(t *testing.T) {
+	tests := []struct {
+		name      string
+		jsonInput string
+		wantKind  EvaluationKind
+		wantSpec  interface{}
+		wantError bool
+	}{
+		{
+			name:      "rolling evaluation with valid data",
+			jsonInput: `{"kind":"rolling","spec":{"evalWindow":"5m","frequency":"1m"}}`,
+			wantKind:  RollingEvaluation,
+			wantSpec: RollingWindow{
+				EvalWindow: Duration(5 * time.Minute),
+				Frequency:  Duration(1 * time.Minute),
+			},
+		},
+		{
+			name:      "cumulative evaluation with valid data",
+			jsonInput: `{"kind":"cumulative","spec":{"startsAt":1701432000000,"evalWindow":"10m","frequency":"2m"}}`,
+			wantKind:  CumulativeEvaluation,
+			wantSpec: CumulativeWindow{
+				StartsAt:   1701432000000,
+				EvalWindow: Duration(10 * time.Minute),
+				Frequency:  Duration(2 * time.Minute),
+			},
+		},
+		{
+			name:      "rolling evaluation with validation error - zero evalWindow",
+			jsonInput: `{"kind":"rolling","spec":{"evalWindow":"0s","frequency":"1m"}}`,
+			wantError: true,
+		},
+		{
+			name:      "rolling evaluation with validation error - zero frequency",
+			jsonInput: `{"kind":"rolling","spec":{"evalWindow":"5m","frequency":"0s"}}`,
+			wantError: true,
+		},
+		{
+			name:      "cumulative evaluation with validation error - zero evalWindow",
+			jsonInput: `{"kind":"cumulative","spec":{"startsAt":1701432000000,"evalWindow":"0s","frequency":"1m"}}`,
+			wantError: true,
+		},
+		{
+			name:      "cumulative evaluation with validation error - zero frequency",
+			jsonInput: `{"kind":"cumulative","spec":{"startsAt":1701432000000,"evalWindow":"5m","frequency":"0s"}}`,
+			wantError: true,
+		},
+		{
+			name:      "cumulative evaluation with validation error - future startsAt",
+			jsonInput: `{"kind":"cumulative","spec":{"startsAt":9999999999999,"evalWindow":"5m","frequency":"1m"}}`,
+			wantError: true,
+		},
+		{
+			name:      "unknown evaluation kind",
+			jsonInput: `{"kind":"unknown","spec":{"evalWindow":"5m","frequency":"1m"}}`,
+			wantError: true,
+		},
+		{
+			name:      "invalid JSON",
+			jsonInput: `{"kind":"rolling","spec":invalid}`,
+			wantError: true,
+		},
+		{
+			name:      "missing kind field",
+			jsonInput: `{"spec":{"evalWindow":"5m","frequency":"1m"}}`,
+			wantError: true,
+		},
+		{
+			name:      "missing spec field",
+			jsonInput: `{"kind":"rolling"}`,
+			wantError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var envelope EvaluationEnvelope
+			err := json.Unmarshal([]byte(tt.jsonInput), &envelope)
+
+			if tt.wantError {
+				if err == nil {
+					t.Errorf("EvaluationEnvelope.UnmarshalJSON() expected error, got none")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("EvaluationEnvelope.UnmarshalJSON() unexpected error = %v", err)
+			}
+
+			if envelope.Kind != tt.wantKind {
+				t.Errorf("EvaluationEnvelope.Kind = %v, want %v", envelope.Kind, tt.wantKind)
+			}
+
+			// Check spec content based on type
+			switch tt.wantKind {
+			case RollingEvaluation:
+				gotSpec, ok := envelope.Spec.(RollingWindow)
+				if !ok {
+					t.Fatalf("Expected RollingWindow spec, got %T", envelope.Spec)
+				}
+				wantSpec := tt.wantSpec.(RollingWindow)
+				if gotSpec.EvalWindow != wantSpec.EvalWindow {
+					t.Errorf("RollingWindow.EvalWindow = %v, want %v", gotSpec.EvalWindow, wantSpec.EvalWindow)
+				}
+				if gotSpec.Frequency != wantSpec.Frequency {
+					t.Errorf("RollingWindow.Frequency = %v, want %v", gotSpec.Frequency, wantSpec.Frequency)
+				}
+			case CumulativeEvaluation:
+				gotSpec, ok := envelope.Spec.(CumulativeWindow)
+				if !ok {
+					t.Fatalf("Expected CumulativeWindow spec, got %T", envelope.Spec)
+				}
+				wantSpec := tt.wantSpec.(CumulativeWindow)
+				if gotSpec.StartsAt != wantSpec.StartsAt {
+					t.Errorf("CumulativeWindow.StartsAt = %v, want %v", gotSpec.StartsAt, wantSpec.StartsAt)
+				}
+				if gotSpec.EvalWindow != wantSpec.EvalWindow {
+					t.Errorf("CumulativeWindow.EvalWindow = %v, want %v", gotSpec.EvalWindow, wantSpec.EvalWindow)
+				}
+				if gotSpec.Frequency != wantSpec.Frequency {
+					t.Errorf("CumulativeWindow.Frequency = %v, want %v", gotSpec.Frequency, wantSpec.Frequency)
 				}
 			}
 		})
