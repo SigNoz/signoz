@@ -61,12 +61,15 @@ func (b *defaultConditionBuilder) ConditionFor(
 		qbtypes.FilterOperatorILike,
 		qbtypes.FilterOperatorNotILike,
 		qbtypes.FilterOperatorLike,
+		qbtypes.FilterOperatorNotLike,
 		qbtypes.FilterOperatorEqual,
 		qbtypes.FilterOperatorNotEqual,
 		qbtypes.FilterOperatorGreaterThan,
 		qbtypes.FilterOperatorGreaterThanOrEq,
 		qbtypes.FilterOperatorLessThan,
-		qbtypes.FilterOperatorLessThanOrEq:
+		qbtypes.FilterOperatorLessThanOrEq,
+		qbtypes.FilterOperatorNotRegexp,
+		qbtypes.FilterOperatorRegexp:
 		value = querybuilder.FormatValueForContains(value)
 	}
 

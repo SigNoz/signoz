@@ -187,6 +187,17 @@ func TestConditionBuilder(t *testing.T) {
 			expected:     "labels LIKE ? AND simpleJSONExtractString(labels, 'test_num') BETWEEN ? AND ?",
 			expectedArgs: []any{"%test_num%", "1", "2"},
 		},
+		{
+			name: "string_regexp",
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:         "k8s.namespace.name",
+				FieldContext: telemetrytypes.FieldContextResource,
+			},
+			op:           querybuildertypesv5.FilterOperatorRegexp,
+			value:        "ban.*",
+			expected:     "match(simpleJSONExtractString(labels, 'k8s.namespace.name'), ?) AND labels LIKE ?",
+			expectedArgs: []any{"ban.*", "%k8s.namespace.name%"},
+		},
 	}
 
 	fm := NewFieldMapper()
