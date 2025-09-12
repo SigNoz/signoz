@@ -199,19 +199,23 @@ func (c *conditionBuilder) conditionFor(
 				return sb.NE(leftOperand, true), nil
 			}
 		default:
-			return "", fmt.Errorf("exists operator is not supported for column type %s", column.Type)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
 		}
 	}
-	return "", fmt.Errorf("unsupported operator: %v", operator)
+	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
 }
 
-func (c *conditionBuilder) ConditionFor(
+func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
+	if c.isSpanScopeField(key.Name) {
+		return c.buildSpanScopeCondition(key, operator, value)
+	}
+
 	condition, err := c.conditionFor(ctx, key, operator, value, sb)
 	if err != nil {
 		return "", err
@@ -219,9 +223,11 @@ func (c *conditionBuilder) ConditionFor(
 
 	if operator.AddDefaultExistsFilter() {
 		// skip adding exists filter for intrinsic fields
-		// with an exception for body json search
 		field, _ := c.fm.FieldFor(ctx, key)
-		if slices.Contains(maps.Keys(IntrinsicFields), field) && !strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+		if slices.Contains(maps.Keys(IntrinsicFields), field) ||
+			slices.Contains(maps.Keys(IntrinsicFieldsDeprecated), field) ||
+			slices.Contains(maps.Keys(CalculatedFields), field) ||
+			slices.Contains(maps.Keys(CalculatedFieldsDeprecated), field) {
 			return condition, nil
 		}
 

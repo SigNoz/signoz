@@ -107,7 +107,7 @@ func (b *traceQueryStatementBuilder) Build(
 		return b.buildTraceQuery(ctx, q, query, start, end, keys, variables)
 	}
 
-	return nil, fmt.Errorf("unsupported request type: %s", requestType)
+	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
 }
 
 func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) []*telemetrytypes.FieldKeySelector {

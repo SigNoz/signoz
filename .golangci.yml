@@ -11,6 +11,10 @@ linters:
     - forbidigo
 
 linters-settings:
+  forbidigo:
+    forbid:
+      - p: "^fmt\\.Errorf$"
+        msg: "Do not use fmt.Errorf. Use github.com/SigNoz/signoz/pkg/errors instead."
   sloglint:
     no-mixed-args: true
     kv-only: true
