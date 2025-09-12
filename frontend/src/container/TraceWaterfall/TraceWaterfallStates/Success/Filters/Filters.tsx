@@ -7,6 +7,7 @@ import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import { uniqBy } from 'lodash-es';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
@@ -116,9 +117,12 @@ function Filters({
 			enabled: filters.items.length > 0,
 			onSuccess: (data) => {
 				if (data?.payload.data.newResult.data.result[0].list) {
-					const spanIds = data?.payload.data.newResult.data.result[0].list.map(
-						(val) => val.data.spanID,
+					const uniqueSpans = uniqBy(
+						data?.payload.data.newResult.data.result[0].list,
+						'data.spanID',
 					);
+
+					const spanIds = uniqueSpans.map((val) => val.data.spanID);
 					setFilteredSpanIds(spanIds);
 					handlePrevNext(0, spanIds[0]);
 					setNoData(false);
