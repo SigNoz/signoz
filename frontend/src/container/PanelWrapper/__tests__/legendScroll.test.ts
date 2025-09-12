@@ -65,8 +65,15 @@ const baseOptions = {
 };
 
 describe('Legend Scroll Position Preservation', () => {
+	let originalRequestAnimationFrame: typeof global.requestAnimationFrame;
+
 	beforeEach(() => {
 		jest.clearAllMocks();
+		originalRequestAnimationFrame = global.requestAnimationFrame;
+	});
+
+	afterEach(() => {
+		global.requestAnimationFrame = originalRequestAnimationFrame;
 	});
 
 	it('should set up scroll position tracking in ready hook', () => {
@@ -131,6 +138,10 @@ describe('Legend Scroll Position Preservation', () => {
 
 		// Verify that requestAnimationFrame was called to restore scroll position
 		expect(mockRequestAnimationFrame).toHaveBeenCalledWith(expect.any(Function));
+
+		// Verify that the legend's scroll position was actually restored
+		expect(legend.scrollTop).toBe(mockScrollPosition.scrollTop);
+		expect(legend.scrollLeft).toBe(mockScrollPosition.scrollLeft);
 	});
 
 	it('should handle missing scroll position parameters gracefully', () => {
@@ -142,18 +153,66 @@ describe('Legend Scroll Position Preservation', () => {
 
 	it('should work for both bottom and right legend positions', () => {
 		const mockSetScrollPosition = jest.fn();
+		const mockScrollPosition = { scrollTop: 30, scrollLeft: 15 };
+
+		// Mock requestAnimationFrame for this test
+		const mockRequestAnimationFrame = jest.fn((callback) => callback());
+		global.requestAnimationFrame = mockRequestAnimationFrame;
+
+		// Test bottom legend position
 		const bottomOptions = getUPlotChartOptions({
 			...baseOptions,
+			legendPosition: LegendPosition.BOTTOM,
+			legendScrollPosition: mockScrollPosition,
 			setLegendScrollPosition: mockSetScrollPosition,
 		});
+
+		// Test right legend position
 		const rightOptions = getUPlotChartOptions({
 			...baseOptions,
 			legendPosition: LegendPosition.RIGHT,
+			legendScrollPosition: mockScrollPosition,
 			setLegendScrollPosition: mockSetScrollPosition,
 		});
 
 		// Both should have ready hooks
 		expect(bottomOptions.hooks?.ready).toBeDefined();
 		expect(rightOptions.hooks?.ready).toBeDefined();
+
+		// Test bottom legend scroll restoration
+		const bottomChart = {
+			root: document.createElement('div'),
+		} as any;
+		const bottomLegend = document.createElement('div');
+		bottomLegend.className = 'u-legend';
+		bottomLegend.scrollTop = 0;
+		bottomLegend.scrollLeft = 0;
+		bottomChart.root.appendChild(bottomLegend);
+
+		// Execute bottom legend ready hook
+		if (bottomOptions.hooks?.ready) {
+			bottomOptions.hooks.ready.forEach((hook) => hook?.(bottomChart));
+		}
+
+		expect(bottomLegend.scrollTop).toBe(mockScrollPosition.scrollTop);
+		expect(bottomLegend.scrollLeft).toBe(mockScrollPosition.scrollLeft);
+
+		// Test right legend scroll restoration
+		const rightChart = {
+			root: document.createElement('div'),
+		} as any;
+		const rightLegend = document.createElement('div');
+		rightLegend.className = 'u-legend';
+		rightLegend.scrollTop = 0;
+		rightLegend.scrollLeft = 0;
+		rightChart.root.appendChild(rightLegend);
+
+		// Execute right legend ready hook
+		if (rightOptions.hooks?.ready) {
+			rightOptions.hooks.ready.forEach((hook) => hook?.(rightChart));
+		}
+
+		expect(rightLegend.scrollTop).toBe(mockScrollPosition.scrollTop);
+		expect(rightLegend.scrollLeft).toBe(mockScrollPosition.scrollLeft);
 	});
 });
