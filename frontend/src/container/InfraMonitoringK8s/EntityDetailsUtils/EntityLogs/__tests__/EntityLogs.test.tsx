@@ -44,20 +44,6 @@ const verifyEntityLogsPayload = ({
 	return queryData;
 };
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 jest.mock(
 	'components/OverlayScrollbar/OverlayScrollbar',
 	() =>

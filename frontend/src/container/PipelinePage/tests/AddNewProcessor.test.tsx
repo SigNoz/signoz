@@ -11,20 +11,6 @@ jest.mock('../PipelineListsView/AddNewProcessor/config', () => ({
 	DEFAULT_PROCESSOR_TYPE: 'json_parser',
 }));
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 const selectedProcessorData = {
 	id: '1',
 	orderId: 1,

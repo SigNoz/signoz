@@ -6,7 +6,7 @@ import { PlannedDowntime } from '../PlannedDowntime';
 
 describe('PlannedDowntime Component', () => {
 	it('renders the PlannedDowntime component properly', () => {
-		render(<PlannedDowntime />, {}, 'ADMIN');
+		render(<PlannedDowntime />, {}, { role: 'ADMIN' });
 
 		// Check if title is rendered
 		expect(screen.getByText('Planned Downtime')).toBeInTheDocument();
@@ -30,7 +30,7 @@ describe('PlannedDowntime Component', () => {
 	});
 
 	it('disables the "New downtime" button for users with VIEWER role', () => {
-		render(<PlannedDowntime />, {}, USER_ROLES.VIEWER);
+		render(<PlannedDowntime />, {}, { role: USER_ROLES.VIEWER });
 
 		// Check if "New downtime" button is disabled for VIEWER
 		const newDowntimeButton = screen.getByRole('button', {

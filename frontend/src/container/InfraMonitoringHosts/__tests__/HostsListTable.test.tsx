@@ -3,20 +3,6 @@ import { render, screen } from '@testing-library/react';
 
 import HostsListTable from '../HostsListTable';
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 const EMPTY_STATE_CONTAINER_CLASS = '.hosts-empty-state-container';
 
 describe('HostsListTable', () => {

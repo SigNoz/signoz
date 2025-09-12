@@ -18,10 +18,6 @@ const MOCK_SEARCH_PARAMS =
 	'?graphType=list&widgetId=36a7b342-c642-4b92-abe4-cb833a244786&compositeQuery=%7B%22id%22%3A%22b325ac88-5e75-4117-a38c-1a2a7caf8115%22%2C%22builder%22%3A%7B%22queryData%22%3A%5B%7B%22dataSource%22%3A%22logs%22%2C%22queryName%22%3A%22A%22%2C%22aggregateOperator%22%3A%22noop%22%2C%22aggregateAttribute%22%3A%7B%22id%22%3A%22------%22%2C%22dataType%22%3A%22%22%2C%22key%22%3A%22%22%2C%22isColumn%22%3Afalse%2C%22type%22%3A%22%22%2C%22isJSON%22%3Afalse%7D%2C%22timeAggregation%22%3A%22rate%22%2C%22spaceAggregation%22%3A%22sum%22%2C%22functions%22%3A%5B%5D%2C%22filters%22%3A%7B%22items%22%3A%5B%5D%2C%22op%22%3A%22AND%22%7D%2C%22expression%22%3A%22A%22%2C%22disabled%22%3Afalse%2C%22stepInterval%22%3A60%2C%22having%22%3A%5B%5D%2C%22limit%22%3Anull%2C%22orderBy%22%3A%5B%7B%22columnName%22%3A%22timestamp%22%2C%22order%22%3A%22desc%22%7D%5D%2C%22groupBy%22%3A%5B%5D%2C%22legend%22%3A%22%22%2C%22reduceTo%22%3A%22avg%22%2C%22offset%22%3A0%2C%22pageSize%22%3A100%7D%5D%2C%22queryFormulas%22%3A%5B%5D%7D%2C%22clickhouse_sql%22%3A%5B%7B%22name%22%3A%22A%22%2C%22legend%22%3A%22%22%2C%22disabled%22%3Afalse%2C%22query%22%3A%22%22%7D%5D%2C%22promql%22%3A%5B%7B%22name%22%3A%22A%22%2C%22query%22%3A%22%22%2C%22legend%22%3A%22%22%2C%22disabled%22%3Afalse%7D%5D%2C%22queryType%22%3A%22builder%22%7D&relativeTime=30m&options=%7B%22selectColumns%22%3A%5B%5D%2C%22maxLines%22%3A2%2C%22format%22%3A%22list%22%2C%22fontSize%22%3A%22small%22%7D';
 
 // Mocks
-jest.mock('uplot', () => ({
-	paths: { spline: jest.fn(), bars: jest.fn() },
-	default: jest.fn(() => ({ paths: { spline: jest.fn(), bars: jest.fn() } })),
-}));
 
 jest.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
 	__esModule: true,

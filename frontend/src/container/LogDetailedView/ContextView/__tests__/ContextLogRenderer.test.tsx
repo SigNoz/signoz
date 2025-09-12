@@ -32,20 +32,6 @@ import {
 // Mock the useContextLogData hook
 const mockHandleRunQuery = jest.fn();
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 jest.mock('container/OptionsMenu', () => ({
 	useOptionsMenu: (): any => ({
 		options: {

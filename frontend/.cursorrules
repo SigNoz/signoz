@@ -1,0 +1,484 @@
+# Persona
+You are an expert developer with deep knowledge of Jest, React Testing Library, MSW, and TypeScript, tasked with creating unit tests for this repository.
+
+# Auto-detect TypeScript Usage
+Check for TypeScript in the project through tsconfig.json or package.json dependencies.
+Adjust syntax based on this detection.
+
+# TypeScript Type Safety for Jest Tests
+**CRITICAL**: All Jest tests MUST be fully type-safe with proper TypeScript types.
+
+**Type Safety Requirements:**
+- Use proper TypeScript interfaces for all mock data
+- Type all Jest mock functions with `jest.MockedFunction<T>`
+- Use generic types for React components and hooks
+- Define proper return types for mock functions
+- Use `as const` for literal types when needed
+- Avoid `any` type – use proper typing instead
+
+# Unit Testing Focus
+Focus on critical functionality (business logic, utility functions, component behavior)
+Mock dependencies (API calls, external modules) before imports
+Test multiple data scenarios (valid inputs, invalid inputs, edge cases)
+Write maintainable tests with descriptive names grouped in describe blocks
+
+# Global vs Local Mocks
+**Use Global Mocks for:**
+- High-frequency dependencies (20+ test files)
+- Core infrastructure (react-router-dom, react-query, antd)
+- Standard implementations across the app
+- Browser APIs (ResizeObserver, matchMedia, localStorage)
+- Utility libraries (date-fns, lodash)
+
+**Use Local Mocks for:**
+- Business logic dependencies (5-15 test files)
+- Test-specific behavior (different data per test)
+- API endpoints with specific responses
+- Domain-specific components
+- Error scenarios and edge cases
+
+**Global Mock Files Available (from jest.config.ts):**
+- `uplot` → `__mocks__/uplotMock.ts`
+
+# Repo-specific Testing Conventions
+
+## Imports
+Always import from our harness:
+```ts
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+```
+For API mocks:
+```ts
+import { server, rest } from 'mocks-server/server';
+```
+Do not import directly from `@testing-library/react`.
+
+## Router
+Use the router built into render:
+```ts
+render(<Page />, undefined, { initialRoute: '/traces-explorer' });
+```
+Only mock `useLocation` / `useParams` if the test depends on them.
+
+## Hook Mocks
+Pattern:
+```ts
+import useFoo from 'hooks/useFoo';
+jest.mock('hooks/useFoo');
+const mockUseFoo = jest.mocked(useFoo);
+mockUseFoo.mockReturnValue(/* minimal shape */ as any);
+```
+Prefer helpers (`rqSuccess`, `rqLoading`, `rqError`) for React Query results.
+
+## MSW
+Global MSW server runs automatically.
+Override per-test:
+```ts
+server.use(
+  rest.get('*/api/v1/foo', (_req, res, ctx) => res(ctx.status(200), ctx.json({ ok: true })))
+);
+```
+Keep large responses in `mocks-server/__mockdata_`.
+
+## Interactions
+- Prefer `userEvent` for real user interactions (click, type, select, tab).
+- Use `fireEvent` only for low-level/programmatic events not covered by `userEvent` (e.g., scroll, resize, setting `element.scrollTop` for virtualization). Wrap in `act(...)` if needed.
+- Always await interactions:
+```ts
+const user = userEvent.setup({ pointerEventsCheck: 0 });
+await user.click(screen.getByRole('button', { name: /save/i }));
+```
+
+```ts
+// Example: virtualized list scroll (no userEvent helper)
+const scroller = container.querySelector('[data-test-id="virtuoso-scroller"]') as HTMLElement;
+scroller.scrollTop = targetScrollTop;
+act(() => { fireEvent.scroll(scroller); });
+```
+
+## Timers
+❌ No global fake timers.
+✅ Per-test only, for debounce/throttle:
+```ts
+jest.useFakeTimers();
+const user = userEvent.setup({ advanceTimers: (ms) => jest.advanceTimersByTime(ms) });
+await user.type(screen.getByRole('textbox'), 'query');
+jest.advanceTimersByTime(400);
+jest.useRealTimers();
+```
+
+## Queries
+Prefer accessible queries (`getByRole`, `findByRole`, `getByLabelText`).
+Fallback: visible text.
+Last resort: `data-testid`.
+
+# Example Test (using only configured global mocks)
+```ts
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { server, rest } from 'mocks-server/server';
+import MyComponent from '../MyComponent';
+
+describe('MyComponent', () => {
+  it('renders and interacts', async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+    server.use(
+      rest.get('*/api/v1/example', (_req, res, ctx) => res(ctx.status(200), ctx.json({ value: 42 })))
+    );
+
+    render(<MyComponent />, undefined, { initialRoute: '/foo' });
+
+    expect(await screen.findByText(/value: 42/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /refresh/i }));
+    await waitFor(() => expect(screen.getByText(/loading/i)).toBeInTheDocument());
+  });
+});
+```
+
+# Anti-patterns
+❌ Importing RTL directly
+❌ Using global fake timers
+❌ Wrapping render in `act(...)`
+❌ Mocking infra dependencies locally (router, react-query)
+✅ Use our harness (`tests/test-utils`)
+✅ Use MSW for API overrides
+✅ Use userEvent + await
+✅ Pin time only in tests that assert relative dates
+
+# Best Practices
+- **Critical Functionality**: Prioritize testing business logic and utilities
+- **Dependency Mocking**: Global mocks for infra, local mocks for business logic
+- **Data Scenarios**: Always test valid, invalid, and edge cases
+- **Descriptive Names**: Make test intent clear
+- **Organization**: Group related tests in describe
+- **Consistency**: Match repo conventions
+- **Edge Cases**: Test null, undefined, unexpected values
+- **Limit Scope**: 3–5 focused tests per file
+- **Use Helpers**: `rqSuccess`, `makeUser`, etc.
+- **No Any**: Enforce type safety
+
+# Example Test
+```ts
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { server, rest } from 'mocks-server/server';
+import MyComponent from '../MyComponent';
+
+describe('MyComponent', () => {
+  it('renders and interacts', async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+    server.use(
+      rest.get('*/api/v1/example', (_req, res, ctx) => res(ctx.status(200), ctx.json({ value: 42 })))
+    );
+
+    render(<MyComponent />, undefined, { initialRoute: '/foo' });
+
+    expect(await screen.findByText(/value: 42/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /refresh/i }));
+    await waitFor(() => expect(screen.getByText(/loading/i)).toBeInTheDocument());
+  });
+});
+```
+
+# Anti-patterns
+❌ Importing RTL directly
+❌ Using global fake timers
+❌ Wrapping render in `act(...)`
+❌ Mocking infra dependencies locally (router, react-query)
+✅ Use our harness (`tests/test-utils`)
+✅ Use MSW for API overrides
+✅ Use userEvent + await
+✅ Pin time only in tests that assert relative dates
+
+# TypeScript Type Safety Examples
+
+## Proper Mock Typing
+```ts
+// ✅ GOOD - Properly typed mocks
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+interface ApiResponse<T> {
+  data: T;
+  status: number;
+  message: string;
+}
+
+// Type the mock functions
+const mockFetchUser = jest.fn() as jest.MockedFunction<(id: number) => Promise<ApiResponse<User>>>;
+const mockUpdateUser = jest.fn() as jest.MockedFunction<(user: User) => Promise<ApiResponse<User>>>;
+
+// Mock implementation with proper typing
+mockFetchUser.mockResolvedValue({
+  data: { id: 1, name: 'John Doe', email: 'john@example.com' },
+  status: 200,
+  message: 'Success'
+});
+
+// ❌ BAD - Using any type
+const mockFetchUser = jest.fn() as any; // Don't do this
+```
+
+## React Component Testing with Types
+```ts
+// ✅ GOOD - Properly typed component testing
+interface ComponentProps {
+  title: string;
+  data: User[];
+  onUserSelect: (user: User) => void;
+  isLoading?: boolean;
+}
+
+const TestComponent: React.FC<ComponentProps> = ({ title, data, onUserSelect, isLoading = false }) => {
+  // Component implementation
+};
+
+describe('TestComponent', () => {
+  it('should render with proper props', () => {
+    // Arrange - Type the props properly
+    const mockProps: ComponentProps = {
+      title: 'Test Title',
+      data: [{ id: 1, name: 'John', email: 'john@example.com' }],
+      onUserSelect: jest.fn() as jest.MockedFunction<(user: User) => void>,
+      isLoading: false
+    };
+    
+    // Act
+    render(<TestComponent {...mockProps} />);
+    
+    // Assert
+    expect(screen.getByText('Test Title')).toBeInTheDocument();
+  });
+});
+```
+
+## Hook Testing with Types
+```ts
+// ✅ GOOD - Properly typed hook testing
+interface UseUserDataReturn {
+  user: User | null;
+  loading: boolean;
+  error: string | null;
+  refetch: () => void;
+}
+
+const useUserData = (id: number): UseUserDataReturn => {
+  // Hook implementation
+};
+
+describe('useUserData', () => {
+  it('should return user data with proper typing', () => {
+    // Arrange
+    const mockUser: User = { id: 1, name: 'John', email: 'john@example.com' };
+    mockFetchUser.mockResolvedValue({
+      data: mockUser,
+      status: 200,
+      message: 'Success'
+    });
+    
+    // Act
+    const { result } = renderHook(() => useUserData(1));
+    
+    // Assert
+    expect(result.current.user).toEqual(mockUser);
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
+});
+```
+
+## Global Mock Type Safety
+```ts
+// ✅ GOOD - Type-safe global mocks
+// In __mocks__/routerMock.ts
+export const mockUseLocation = (overrides: Partial<Location> = {}): Location => ({
+  pathname: '/traces',
+  search: '',
+  hash: '',
+  state: null,
+  key: 'test-key',
+  ...overrides,
+});
+
+// In test files
+const location = useLocation(); // Properly typed from global mock
+expect(location.pathname).toBe('/traces');
+```
+
+# TypeScript Configuration for Jest
+
+## Required Jest Configuration
+```json
+// jest.config.ts
+{
+  "preset": "ts-jest/presets/js-with-ts-esm",
+  "globals": {
+    "ts-jest": {
+      "useESM": true,
+      "isolatedModules": true,
+      "tsconfig": "<rootDir>/tsconfig.jest.json"
+    }
+  },
+  "extensionsToTreatAsEsm": [".ts", ".tsx"],
+  "moduleFileExtensions": ["ts", "tsx", "js", "json"]
+}
+```
+
+## TypeScript Jest Configuration
+```json
+// tsconfig.jest.json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["jest", "@testing-library/jest-dom"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node"
+  },
+  "include": [
+    "src/**/*",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "__mocks__/**/*"
+  ]
+}
+```
+
+## Common Type Safety Patterns
+
+### Mock Function Typing
+```ts
+// ✅ GOOD - Proper mock function typing
+const mockApiCall = jest.fn() as jest.MockedFunction<typeof apiCall>;
+const mockEventHandler = jest.fn() as jest.MockedFunction<(event: Event) => void>;
+
+// ❌ BAD - Using any
+const mockApiCall = jest.fn() as any;
+```
+
+### Generic Mock Typing
+```ts
+// ✅ GOOD - Generic mock typing
+interface MockApiResponse<T> {
+  data: T;
+  status: number;
+}
+
+const mockFetchData = jest.fn() as jest.MockedFunction<
+  <T>(endpoint: string) => Promise<MockApiResponse<T>>
+>;
+
+// Usage
+mockFetchData<User>('/users').mockResolvedValue({
+  data: { id: 1, name: 'John' },
+  status: 200
+});
+```
+
+### React Testing Library with Types
+```ts
+// ✅ GOOD - Typed testing utilities
+import { render, screen, RenderResult } from '@testing-library/react';
+import { ComponentProps } from 'react';
+
+type TestComponentProps = ComponentProps<typeof TestComponent>;
+
+const renderTestComponent = (props: Partial<TestComponentProps> = {}): RenderResult => {
+  const defaultProps: TestComponentProps = {
+    title: 'Test',
+    data: [],
+    onSelect: jest.fn(),
+    ...props
+  };
+  
+  return render(<TestComponent {...defaultProps} />);
+};
+```
+
+### Error Handling with Types
+```ts
+// ✅ GOOD - Typed error handling
+interface ApiError {
+  message: string;
+  code: number;
+  details?: Record<string, unknown>;
+}
+
+const mockApiError: ApiError = {
+  message: 'API Error',
+  code: 500,
+  details: { endpoint: '/users' }
+};
+
+mockFetchUser.mockRejectedValue(new Error(JSON.stringify(mockApiError)));
+```
+
+## Type Safety Checklist
+- [ ] All mock functions use `jest.MockedFunction<T>`
+- [ ] All mock data has proper interfaces
+- [ ] No `any` types in test files
+- [ ] Generic types are used where appropriate
+- [ ] Error types are properly defined
+- [ ] Component props are typed
+- [ ] Hook return types are defined
+- [ ] API response types are defined
+- [ ] Global mocks are type-safe
+- [ ] Test utilities are properly typed
+
+# Mock Decision Tree
+```
+Is it used in 20+ test files?
+├─ YES → Use Global Mock
+│   ├─ react-router-dom
+│   ├─ react-query
+│   ├─ antd components
+│   └─ browser APIs
+│
+└─ NO → Is it business logic?
+    ├─ YES → Use Local Mock
+    │   ├─ API endpoints
+    │   ├─ Custom hooks
+    │   └─ Domain components
+    │
+    └─ NO → Is it test-specific?
+        ├─ YES → Use Local Mock
+        │   ├─ Error scenarios
+        │   ├─ Loading states
+        │   └─ Specific data
+        │
+        └─ NO → Consider Global Mock
+            └─ If it becomes frequently used
+```
+
+# Common Anti-Patterns to Avoid
+
+❌ **Don't mock global dependencies locally:**
+```js
+// BAD - This is already globally mocked
+jest.mock('react-router-dom', () => ({ ... }));
+```
+
+❌ **Don't create global mocks for test-specific data:**
+```js
+// BAD - This should be local
+jest.mock('../api/tracesService', () => ({
+  getTraces: jest.fn(() => specificTestData)
+}));
+```
+
+✅ **Do use global mocks for infrastructure:**
+```js
+// GOOD - Use global mock
+import { useLocation } from 'react-router-dom';
+```
+
+✅ **Do create local mocks for business logic:**
+```js
+// GOOD - Local mock for specific test needs
+jest.mock('../api/tracesService', () => ({
+  getTraces: jest.fn(() => mockTracesData)
+}));
+```

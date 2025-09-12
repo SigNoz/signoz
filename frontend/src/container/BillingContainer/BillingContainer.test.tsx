@@ -9,22 +9,6 @@ import { getFormattedDate } from 'utils/timeUtils';
 
 import BillingContainer from './BillingContainer';
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 window.ResizeObserver =
 	window.ResizeObserver ||
 	jest.fn().mockImplementation(() => ({
@@ -68,44 +52,60 @@ describe('BillingContainer', () => {
 	});
 
 	test('OnTrail', async () => {
-		await act(async () => {
-			render(<BillingContainer />, undefined, undefined, {
-				trialInfo: licensesSuccessResponse.data,
-			});
-		});
+		// Pin "now" so trial end (20 Oct 2023) is tomorrow => "1 days_remaining"
+		jest.useFakeTimers();
+		jest.setSystemTime(new Date('2023-10-20'));
 
-		const freeTrailText = await screen.findByText('Free Trial');
-		expect(freeTrailText).toBeInTheDocument();
-
-		const currentBill = await screen.findByText('billing');
-		expect(currentBill).toBeInTheDocument();
-
-		const dollar0 = await screen.findByText(/\$0/i);
-		expect(dollar0).toBeInTheDocument();
-		const onTrail = await screen.findByText(
-			/You are in free trial period. Your free trial will end on 20 Oct 2023/i,
+		render(
+			<BillingContainer />,
+			{},
+			{ appContextOverrides: { trialInfo: licensesSuccessResponse.data } },
 		);
-		expect(onTrail).toBeInTheDocument();
 
-		const numberOfDayRemaining = await screen.findByText(/1 days_remaining/i);
-		expect(numberOfDayRemaining).toBeInTheDocument();
-		const upgradeButton = await screen.findAllByRole('button', {
+		// If the component schedules any setTimeout on mount, flush them:
+		jest.runOnlyPendingTimers();
+
+		expect(await screen.findByText('Free Trial')).toBeInTheDocument();
+		expect(await screen.findByText('billing')).toBeInTheDocument();
+		expect(await screen.findByText(/\$0/i)).toBeInTheDocument();
+
+		expect(
+			await screen.findByText(
+				/You are in free trial period. Your free trial will end on 20 Oct 2023/i,
+			),
+		).toBeInTheDocument();
+
+		screen.debug(undefined, 1000000);
+
+		expect(await screen.findByText(/1 days_remaining/i)).toBeInTheDocument();
+
+		const upgradeButtons = await screen.findAllByRole('button', {
 			name: /upgrade_plan/i,
 		});
-		expect(upgradeButton[1]).toBeInTheDocument();
-		expect(upgradeButton.length).toBe(2);
-		const checkPaidPlan = await screen.findByText(/checkout_plans/i);
-		expect(checkPaidPlan).toBeInTheDocument();
+		expect(upgradeButtons).toHaveLength(2);
+		expect(upgradeButtons[1]).toBeInTheDocument();
 
-		const link = await screen.findByRole('link', { name: /here/i });
-		expect(link).toBeInTheDocument();
+		expect(await screen.findByText(/checkout_plans/i)).toBeInTheDocument();
+		expect(
+			await screen.findByRole('link', { name: /here/i }),
+		).toBeInTheDocument();
+
+		jest.useRealTimers();
 	});
 
 	test('OnTrail but trialConvertedToSubscription', async () => {
+		jest.useFakeTimers();
+		jest.setSystemTime(new Date('2023-10-20'));
 		await act(async () => {
-			render(<BillingContainer />, undefined, undefined, {
-				trialInfo: trialConvertedToSubscriptionResponse.data,
-			});
+			render(
+				<BillingContainer />,
+				{},
+				{
+					appContextOverrides: {
+						trialInfo: trialConvertedToSubscriptionResponse.data,
+					},
+				},
+			);
 		});
 
 		const currentBill = await screen.findByText('billing');
@@ -133,12 +133,19 @@ describe('BillingContainer', () => {
 			/1 days_remaining/i,
 		);
 		expect(dayRemainingInBillingPeriod).toBeInTheDocument();
+		jest.useRealTimers();
 	});
 
 	test('Not on ontrail', async () => {
-		const { findByText } = render(<BillingContainer />, undefined, undefined, {
-			trialInfo: notOfTrailResponse.data,
-		});
+		const { findByText } = render(
+			<BillingContainer />,
+			{},
+			{
+				appContextOverrides: {
+					trialInfo: notOfTrailResponse.data,
+				},
+			},
+		);
 
 		const billingPeriodText = `Your current billing period is from ${getFormattedDate(
 			billingSuccessResponse.data.billingPeriodStart,

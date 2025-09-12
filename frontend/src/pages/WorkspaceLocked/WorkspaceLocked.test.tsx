@@ -55,7 +55,7 @@ describe('WorkspaceLocked', () => {
 			),
 		);
 
-		render(<WorkspaceLocked />, {}, 'VIEWER');
+		render(<WorkspaceLocked />, {}, { role: 'VIEWER' });
 		const updateCreditCardBtn = await screen.queryByRole('button', {
 			name: /Continue My Journey/i,
 		});

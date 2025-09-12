@@ -6,20 +6,6 @@ import { findByText, fireEvent, render, waitFor } from 'tests/test-utils';
 import { pipelineApiResponseMockData } from '../mocks/pipeline';
 import PipelineListsView from '../PipelineListsView';
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 // Mock useUrlQuery hook
 const mockUrlQuery = {
 	get: jest.fn(),
