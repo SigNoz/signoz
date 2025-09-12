@@ -61,6 +61,9 @@ func (cumulativeWindow CumulativeWindow) Validate() error {
 	if time.Now().Before(time.UnixMilli(cumulativeWindow.StartsAt)) {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "startsAt must be in the past")
 	}
+	if cumulativeWindow.Frequency <= 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "frequency must be greater than zero")
+	}
 	return nil
 }
 
