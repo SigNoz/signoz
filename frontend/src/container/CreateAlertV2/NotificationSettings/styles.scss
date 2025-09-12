@@ -180,3 +180,95 @@
 		}
 	}
 }
+
+.lightMode {
+	.notification-settings-container {
+		.notification-message-container {
+			.ant-tabs {
+				.ant-tabs-nav {
+					.ant-tabs-nav-wrap {
+						border-bottom: 1px solid var(--bg-vanilla-300);
+
+						.ant-tabs-nav-list {
+							.ant-tabs-tab-active {
+								.ant-tabs-tab-btn {
+									color: var(--bg-ink-400);
+								}
+							}
+						}
+					}
+				}
+
+				.ant-tabs-content-holder {
+					.ant-tabs-content {
+						.ant-tabs-tabpane {
+							textarea {
+								background: var(--bg-vanilla-200);
+								border: 1px solid var(--bg-vanilla-300);
+								color: var(--bg-ink-400) !important;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		.multiple-notifications-container {
+			background-color: var(--bg-vanilla-200);
+			border: 1px solid var(--bg-vanilla-300);
+
+			.border-bottom {
+				border-bottom: 1px solid var(--bg-vanilla-300);
+			}
+
+			.ant-radio-group {
+				.ant-radio-wrapper {
+					.ant-select {
+						.ant-select-selector {
+							background-color: var(--bg-vanilla-200);
+							border: 1px solid var(--bg-vanilla-300);
+							color: var(--bg-ink-400);
+						}
+					}
+				}
+			}
+		}
+
+		.re-notification-container {
+			background-color: var(--bg-vanilla-200);
+			border: 1px solid var(--bg-vanilla-300);
+
+			.advanced-option-item {
+				.advanced-option-item-left-content {
+					.advanced-option-item-title {
+						color: var(--bg-ink-300);
+					}
+
+					.advanced-option-item-description {
+						color: var(--bg-ink-400);
+					}
+				}
+			}
+
+			.border-bottom {
+				border-bottom: 1px solid var(--bg-vanilla-300);
+			}
+
+			.re-notification-condition {
+				.ant-typography {
+					color: var(--bg-ink-400);
+				}
+
+				.ant-select {
+					.ant-select-selector {
+						border: 1px solid var(--bg-vanilla-300);
+					}
+				}
+
+				.ant-input {
+					border: 1px solid var(--bg-vanilla-300);
+				}
+			}
+		}
+	}
+}
