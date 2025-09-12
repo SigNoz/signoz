@@ -1,4 +1,5 @@
 import './styles.scss';
+import '../EvaluationSettings/styles.scss';
 
 import { Button, Tooltip } from 'antd';
 import classNames from 'classnames';
@@ -6,13 +7,16 @@ import { Activity, ChartLine } from 'lucide-react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { useCreateAlertState } from '../context';
+import AdvancedOptions from '../EvaluationSettings/AdvancedOptions';
 import Stepper from '../Stepper';
+import { showCondensedLayout } from '../utils';
 import AlertThreshold from './AlertThreshold';
 import AnomalyThreshold from './AnomalyThreshold';
 import { ANOMALY_TAB_TOOLTIP, THRESHOLD_TAB_TOOLTIP } from './constants';
 
 function AlertCondition(): JSX.Element {
 	const { alertType, setAlertType } = useCreateAlertState();
+	const showCondensedLayoutFlag = showCondensedLayout();
 
 	const showMultipleTabs =
 		alertType === AlertTypes.ANOMALY_BASED_ALERT ||
@@ -75,6 +79,11 @@ function AlertCondition(): JSX.Element {
 			</div>
 			{alertType !== AlertTypes.ANOMALY_BASED_ALERT && <AlertThreshold />}
 			{alertType === AlertTypes.ANOMALY_BASED_ALERT && <AnomalyThreshold />}
+			{showCondensedLayoutFlag ? (
+				<div className="condensed-advanced-options-container">
+					<AdvancedOptions />
+				</div>
+			) : null}
 		</div>
 	);
 }
