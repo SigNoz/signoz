@@ -3,6 +3,7 @@ package rules
 import (
 	"context"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"log/slog"
 	"math"
 	"net/url"
@@ -133,7 +134,7 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	}
 	evaluation, err := p.Evaluation.GetEvaluation()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get evaluation: %w", err)
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to get evaluation: %v", err)
 	}
 
 	baseRule := &BaseRule{

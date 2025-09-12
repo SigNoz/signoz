@@ -83,10 +83,10 @@ type EvaluationEnvelope struct {
 func (e *EvaluationEnvelope) UnmarshalJSON(data []byte) error {
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(data, &raw); err != nil {
-		return err
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal evaluation: %v", err)
 	}
 	if err := json.Unmarshal(raw["kind"], &e.Kind); err != nil {
-		return err
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal evaluation kind: %v", err)
 	}
 	switch e.Kind {
 	case RollingEvaluation:
