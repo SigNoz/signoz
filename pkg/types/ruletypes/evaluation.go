@@ -12,12 +12,6 @@ type EvaluationKind struct {
 	valuer.String
 }
 
-var allowedCumulativeWindows = []Duration{
-	Duration(1 * time.Hour),
-	Duration(24 * time.Hour),
-	Duration(24 * 30 * time.Hour),
-}
-
 var (
 	RollingEvaluation    = EvaluationKind{valuer.NewString("rolling")}
 	CumulativeEvaluation = EvaluationKind{valuer.NewString("cumulative")}
@@ -52,33 +46,34 @@ func (rollingWindow RollingWindow) GetFrequency() Duration {
 }
 
 type CumulativeWindow struct {
-	StartsAt   int64    `json:"startsAt"`
-	EvalWindow Duration `json:"evalWindow"`
-	Frequency  Duration `json:"frequency"`
-	Timezone   string   `json:"timezone"`
+	Schedule  CumulativeSchedule `json:"schedule"`
+	Frequency Duration           `json:"frequency"`
+	Timezone  string             `json:"timezone"`
 }
 
+type CumulativeSchedule struct {
+	Type    ScheduleType `json:"type"`
+	Minute  *int         `json:"minute,omitempty"`  // 0-59, for all types
+	Hour    *int         `json:"hour,omitempty"`    // 0-23, for daily/weekly/monthly
+	Day     *int         `json:"day,omitempty"`     // 1-31, for monthly
+	Weekday *int         `json:"weekday,omitempty"` // 0-6 (Sunday=0), for weekly
+}
+
+type ScheduleType string
+
+const (
+	ScheduleTypeHourly  ScheduleType = "hourly"
+	ScheduleTypeDaily   ScheduleType = "daily"
+	ScheduleTypeWeekly  ScheduleType = "weekly"
+	ScheduleTypeMonthly ScheduleType = "monthly"
+)
+
 func (cumulativeWindow CumulativeWindow) Validate() error {
-	if cumulativeWindow.EvalWindow <= 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "evalWindow must be greater than zero")
-	}
-	isValidWindow := false
-	for _, allowed := range allowedCumulativeWindows {
-		if cumulativeWindow.EvalWindow == allowed {
-			isValidWindow = true
-			break
-		}
-	}
-	if !isValidWindow {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "evalWindow must be one of: current hour (1h), current day (24h), or current month (720h)")
+	// Validate schedule
+	if err := cumulativeWindow.Schedule.Validate(); err != nil {
+		return err
 	}
 
-	if cumulativeWindow.StartsAt <= 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "startsAt must be a valid timestamp greater than zero")
-	}
-	if time.Now().Before(time.UnixMilli(cumulativeWindow.StartsAt)) {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "startsAt must be in the past")
-	}
 	if _, err := time.LoadLocation(cumulativeWindow.Timezone); err != nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "timezone is invalid")
 	}
@@ -88,27 +83,139 @@ func (cumulativeWindow CumulativeWindow) Validate() error {
 	return nil
 }
 
+func (cs CumulativeSchedule) Validate() error {
+	switch cs.Type {
+	case ScheduleTypeHourly:
+		if cs.Minute == nil {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "minute must be specified for hourly schedule")
+		}
+		if *cs.Minute < 0 || *cs.Minute > 59 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "minute must be between 0 and 59")
+		}
+	case ScheduleTypeDaily:
+		if cs.Hour == nil || cs.Minute == nil {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "hour and minute must be specified for daily schedule")
+		}
+		if *cs.Hour < 0 || *cs.Hour > 23 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "hour must be between 0 and 23")
+		}
+		if *cs.Minute < 0 || *cs.Minute > 59 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "minute must be between 0 and 59")
+		}
+	case ScheduleTypeWeekly:
+		if cs.Weekday == nil || cs.Hour == nil || cs.Minute == nil {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "weekday, hour and minute must be specified for weekly schedule")
+		}
+		if *cs.Weekday < 0 || *cs.Weekday > 6 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "weekday must be between 0 and 6 (Sunday=0)")
+		}
+		if *cs.Hour < 0 || *cs.Hour > 23 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "hour must be between 0 and 23")
+		}
+		if *cs.Minute < 0 || *cs.Minute > 59 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "minute must be between 0 and 59")
+		}
+	case ScheduleTypeMonthly:
+		if cs.Day == nil || cs.Hour == nil || cs.Minute == nil {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "day, hour and minute must be specified for monthly schedule")
+		}
+		if *cs.Day < 1 || *cs.Day > 31 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "day must be between 1 and 31")
+		}
+		if *cs.Hour < 0 || *cs.Hour > 23 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "hour must be between 0 and 23")
+		}
+		if *cs.Minute < 0 || *cs.Minute > 59 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "minute must be between 0 and 59")
+		}
+	default:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid schedule type")
+	}
+	return nil
+}
+
 func (cumulativeWindow CumulativeWindow) NextWindowFor(curr time.Time) (time.Time, time.Time) {
-	startsAt := time.UnixMilli(cumulativeWindow.StartsAt)
-	dur := time.Duration(cumulativeWindow.EvalWindow)
-
-	// Guard against divide by zero
-	if dur <= 0 {
-		return curr, curr
+	loc := time.UTC
+	if cumulativeWindow.Timezone != "" {
+		if tz, err := time.LoadLocation(cumulativeWindow.Timezone); err == nil {
+			loc = tz
+		}
 	}
 
-	// Calculate the number of complete windows since StartsAt
-	elapsed := curr.Sub(startsAt)
-	windows := int64(elapsed / dur)
-	windowStart := startsAt.Add(time.Duration(windows) * dur)
+	currInTZ := curr.In(loc)
+	windowStart := cumulativeWindow.getLastScheduleTime(currInTZ, loc)
 
-	if windowStart.Equal(curr) && windows > 0 {
-		prevWindowStart := startsAt.Add(time.Duration(windows-1) * dur)
-		prevWindowEnd := windowStart
-		return prevWindowStart, prevWindowEnd
+	return windowStart.In(time.UTC), currInTZ.In(time.UTC)
+}
+
+func (cw CumulativeWindow) getLastScheduleTime(curr time.Time, loc *time.Location) time.Time {
+	schedule := cw.Schedule
+
+	switch schedule.Type {
+	case ScheduleTypeHourly:
+		// Find the most recent hour boundary with the specified minute
+		minute := *schedule.Minute
+		candidate := time.Date(curr.Year(), curr.Month(), curr.Day(), curr.Hour(), minute, 0, 0, loc)
+		if candidate.After(curr) {
+			candidate = candidate.Add(-time.Hour)
+		}
+		return candidate
+
+	case ScheduleTypeDaily:
+		// Find the most recent day boundary with the specified hour and minute
+		hour := *schedule.Hour
+		minute := *schedule.Minute
+		candidate := time.Date(curr.Year(), curr.Month(), curr.Day(), hour, minute, 0, 0, loc)
+		if candidate.After(curr) {
+			candidate = candidate.AddDate(0, 0, -1)
+		}
+		return candidate
+
+	case ScheduleTypeWeekly:
+		weekday := time.Weekday(*schedule.Weekday)
+		hour := *schedule.Hour
+		minute := *schedule.Minute
+
+		// Calculate days to subtract to reach the target weekday
+		daysBack := int(curr.Weekday() - weekday)
+		if daysBack < 0 {
+			daysBack += 7
+		}
+
+		candidate := time.Date(curr.Year(), curr.Month(), curr.Day(), hour, minute, 0, 0, loc).AddDate(0, 0, -daysBack)
+		if candidate.After(curr) {
+			candidate = candidate.AddDate(0, 0, -7)
+		}
+		return candidate
+
+	case ScheduleTypeMonthly:
+		// Find the most recent month boundary with the specified day, hour and minute
+		targetDay := *schedule.Day
+		hour := *schedule.Hour
+		minute := *schedule.Minute
+
+		// Try current month first
+		lastDayOfCurrentMonth := time.Date(curr.Year(), curr.Month()+1, 0, 0, 0, 0, 0, loc).Day()
+		dayInCurrentMonth := targetDay
+		if targetDay > lastDayOfCurrentMonth {
+			dayInCurrentMonth = lastDayOfCurrentMonth
+		}
+
+		candidate := time.Date(curr.Year(), curr.Month(), dayInCurrentMonth, hour, minute, 0, 0, loc)
+		if candidate.After(curr) {
+			prevMonth := curr.AddDate(0, -1, 0)
+			lastDayOfPrevMonth := time.Date(prevMonth.Year(), prevMonth.Month()+1, 0, 0, 0, 0, 0, loc).Day()
+			dayInPrevMonth := targetDay
+			if targetDay > lastDayOfPrevMonth {
+				dayInPrevMonth = lastDayOfPrevMonth
+			}
+			candidate = time.Date(prevMonth.Year(), prevMonth.Month(), dayInPrevMonth, hour, minute, 0, 0, loc)
+		}
+		return candidate
+
+	default:
+		return curr
 	}
-
-	return windowStart, curr
 }
 
 func (cumulativeWindow CumulativeWindow) GetFrequency() Duration {
