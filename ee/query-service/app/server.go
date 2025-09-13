@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/nfgrouping"
 	"log/slog"
 	"net"
 	"net/http"
@@ -90,6 +91,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		signoz.Modules.OrgGetter,
 		signoz.Querier,
 		signoz.Instrumentation.Logger(),
+		signoz.NotificationGroups,
 	)
 
 	if err != nil {
@@ -323,17 +325,7 @@ func (s *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
-func makeRulesManager(
-	ch baseint.Reader,
-	cache cache.Cache,
-	alertmanager alertmanager.Alertmanager,
-	sqlstore sqlstore.SQLStore,
-	telemetryStore telemetrystore.TelemetryStore,
-	prometheus prometheus.Prometheus,
-	orgGetter organization.Getter,
-	querier querier.Querier,
-	logger *slog.Logger,
-) (*baserules.Manager, error) {
+func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, querier querier.Querier, logger *slog.Logger, groups nfgrouping.NotificationGroups) (*baserules.Manager, error) {
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
 		TelemetryStore:      telemetryStore,
@@ -350,6 +342,7 @@ func makeRulesManager(
 		Alertmanager:        alertmanager,
 		SQLStore:            sqlstore,
 		OrgGetter:           orgGetter,
+		NotificationGroups:  groups,
 	}
 
 	// create Manager

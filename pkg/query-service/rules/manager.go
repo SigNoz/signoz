@@ -19,6 +19,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/nfgrouping"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	querierV5 "github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -101,6 +102,7 @@ type ManagerOptions struct {
 	Alertmanager        alertmanager.Alertmanager
 	SQLStore            sqlstore.SQLStore
 	OrgGetter           organization.Getter
+	NotificationGroups  nfgrouping.NotificationGroups
 }
 
 // The Manager manages recording and alerting rules.
@@ -120,9 +122,10 @@ type Manager struct {
 	prepareTaskFunc     func(opts PrepareTaskOptions) (Task, error)
 	prepareTestRuleFunc func(opts PrepareTestRuleOptions) (int, *model.ApiError)
 
-	alertmanager alertmanager.Alertmanager
-	sqlstore     sqlstore.SQLStore
-	orgGetter    organization.Getter
+	alertmanager      alertmanager.Alertmanager
+	sqlstore          sqlstore.SQLStore
+	orgGetter         organization.Getter
+	NotificationGroup nfgrouping.NotificationGroups
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -202,6 +205,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 // by calling the Run method.
 func NewManager(o *ManagerOptions) (*Manager, error) {
 	o = defaultOptions(o)
+
 	ruleStore := sqlrulestore.NewRuleStore(o.SQLStore)
 	maintenanceStore := sqlrulestore.NewMaintenanceStore(o.SQLStore)
 
@@ -220,8 +224,10 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		alertmanager:        o.Alertmanager,
 		sqlstore:            o.SQLStore,
 		orgGetter:           o.OrgGetter,
+		NotificationGroup:   o.NotificationGroups,
 	}
 
+	zap.L().Debug("Manager created successfully with NotificationGroup")
 	return m, nil
 }
 
@@ -276,6 +282,12 @@ func (m *Manager) initiate(ctx context.Context) error {
 			}
 
 			if !parsedRule.Disabled {
+				if parsedRule.NotificationGroups != nil {
+					err = m.NotificationGroup.SetGroupLabels(org.ID.StringValue(), rec.ID.StringValue(), parsedRule.NotificationGroups)
+					if err != nil {
+						zap.L().Error("failed to load the notification group definition", zap.String("name", rec.ID.StringValue()), zap.Error(err))
+					}
+				}
 				err := m.addTask(ctx, org.ID, &parsedRule, taskName)
 				if err != nil {
 					zap.L().Error("failed to load the rule definition", zap.String("name", taskName), zap.Error(err))
@@ -357,6 +369,13 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 			preferredChannels = parsedRule.PreferredChannels
 		}
 
+		if parsedRule.NotificationGroups != nil {
+			err = m.NotificationGroup.SetGroupLabels(claims.OrgID, id.StringValue(), parsedRule.NotificationGroups)
+			if err != nil {
+				return err
+			}
+		}
+
 		err = cfg.UpdateRuleIDMatcher(id.StringValue(), preferredChannels)
 		if err != nil {
 			return err
@@ -366,7 +385,6 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 		if err != nil {
 			return err
 		}
-
 		err = m.syncRuleStateWithTask(ctx, orgID, prepareTaskName(existingRule.ID.StringValue()), &parsedRule)
 		if err != nil {
 			return err
@@ -554,7 +572,13 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 		}
 
 		taskName := prepareTaskName(id.StringValue())
-		if err := m.addTask(ctx, orgID, &parsedRule, taskName); err != nil {
+		if parsedRule.NotificationGroups != nil {
+			err = m.NotificationGroup.SetGroupLabels(claims.OrgID, id.StringValue(), parsedRule.NotificationGroups)
+			if err != nil {
+				return err
+			}
+		}
+		if err = m.addTask(ctx, orgID, &parsedRule, taskName); err != nil {
 			return err
 		}
 

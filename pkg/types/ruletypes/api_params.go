@@ -50,6 +50,8 @@ type PostableRule struct {
 	PreferredChannels []string `json:"preferredChannels,omitempty"`
 
 	Version string `json:"version,omitempty"`
+
+	NotificationGroups []string `yaml:"notificationGroups,omitempty" json:"notificationGroups,omitempty"`
 }
 
 func (r *PostableRule) processRuleDefaults() error {
