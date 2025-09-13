@@ -862,6 +862,34 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 				Materialized:  true,
 			},
 		},
+		"{UserId}": {
+			{
+				Name:          "{UserId}",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		"user@email": {
+			{
+				Name:          "user@email",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		"#user_name": {
+			{
+				Name:          "#user_name",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		"gen_ai.completion.0.content": {
+			{
+				Name:          "gen_ai.completion.0.content",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
 	}
 
 	for _, keys := range keysMap {

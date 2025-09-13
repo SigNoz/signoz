@@ -121,6 +121,38 @@ func TestFilterExprLogs(t *testing.T) {
 			expectedErrorContains: "",
 		},
 
+		{
+			category:              "Key with curly brace",
+			query:                 `{UserId} = "U101"`,
+			shouldPass:            true,
+			expectedQuery:         "WHERE (attributes_string['{UserId}'] = ? AND mapContains(attributes_string, '{UserId}') = ?)",
+			expectedArgs:          []any{"U101", true},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "Key with @symbol",
+			query:                 `user@email = "u@example.com"`,
+			shouldPass:            true,
+			expectedQuery:         "WHERE (attributes_string['user@email'] = ? AND mapContains(attributes_string, 'user@email') = ?)",
+			expectedArgs:          []any{"u@example.com", true},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "Key with @symbol",
+			query:                 `#user_name = "anon42069"`,
+			shouldPass:            true,
+			expectedQuery:         "WHERE (attributes_string['#user_name'] = ? AND mapContains(attributes_string, '#user_name') = ?)",
+			expectedArgs:          []any{"anon42069", true},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "Key with @symbol",
+			query:                 `gen_ai.completion.0.content = "जब तक इस देश में सिनेमा है"`,
+			shouldPass:            true,
+			expectedQuery:         "WHERE (attributes_string['gen_ai.completion.0.content'] = ? AND mapContains(attributes_string, 'gen_ai.completion.0.content') = ?)",
+			expectedArgs:          []any{"जब तक इस देश में सिनेमा है", true},
+			expectedErrorContains: "",
+		},
 		// Searches with special characters
 		{
 			category:              "Special characters",
@@ -2435,6 +2467,14 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 			shouldPass:            true,
 			expectedQuery:         "WHERE (NOT match(LOWER(body), LOWER(?)) AND NOT match(attributes_string['body'], ?))",
 			expectedArgs:          []any{"done", "done"},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "exists",
+			query:                 "body EXISTS",
+			shouldPass:            true,
+			expectedQuery:         "WHERE (body <> ? OR mapContains(attributes_string, 'body') = ?)",
+			expectedArgs:          []any{"", true},
 			expectedErrorContains: "",
 		},
 	}
