@@ -14,6 +14,8 @@
 		.ant-typography {
 			color: var(--bg-vanilla-400);
 			font-size: 14px;
+			line-height: 32px;
+			flex-shrink: 0;
 		}
 
 		.evaluate-alert-conditions-separator {
@@ -25,14 +27,25 @@
 		.ant-btn {
 			display: flex;
 			align-items: center;
-			width: 240px;
+			min-width: 240px;
+			width: auto;
 			justify-content: space-between;
 			background-color: var(--bg-ink-300);
 			border: 1px solid var(--bg-slate-400);
+			padding: 6px 16px;
+			height: auto;
+			min-height: 32px;
 
 			.evaluate-alert-conditions-button-left {
 				color: var(--bg-vanilla-400);
 				font-size: 12px;
+				flex: 1;
+				text-align: left;
+				margin-right: 8px;
+				line-height: 1.3;
+				word-break: break-word;
+				hyphens: auto;
+				padding: 2px 0;
 			}
 
 			.evaluate-alert-conditions-button-right {
@@ -40,12 +53,14 @@
 				align-items: center;
 				color: var(--bg-vanilla-400);
 				gap: 8px;
+				flex-shrink: 0;
 
 				.evaluate-alert-conditions-button-right-text {
 					font-size: 12px;
 					font-weight: 500;
 					background-color: var(--bg-slate-400);
 					padding: 1px 4px;
+					white-space: nowrap;
 				}
 			}
 		}
@@ -84,6 +99,12 @@
 			display: flex;
 			flex-direction: column;
 			gap: 6px;
+
+			.advanced-option-item-header {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
 
 			.advanced-option-item-title {
 				color: var(--bg-vanilla-300);
@@ -157,7 +178,13 @@
 		.advanced-option-item-right-content {
 			display: flex;
 			align-items: center;
-			gap: 8px;
+			gap: 12px;
+
+			.advanced-option-item-input-inline {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
 
 			.advanced-option-item-input-group {
 				display: flex;
@@ -270,6 +297,7 @@
 							justify-content: space-between;
 							margin: 0 -16px;
 							padding: 4px 16px;
+							outline: none;
 
 							.ant-typography {
 								color: var(--bg-vanilla-400);
@@ -288,6 +316,16 @@
 							&:hover {
 								cursor: pointer;
 								background-color: var(--bg-slate-500);
+							}
+
+							&:focus {
+								cursor: pointer;
+								background-color: var(--bg-slate-500);
+								border-left: 2px solid var(--bg-vanilla-300);
+							}
+
+							&:focus.active {
+								border-left: 2px solid var(--bg-robin-500);
 							}
 						}
 					}
@@ -358,6 +396,89 @@
 			.ant-select {
 				width: 40px;
 			}
+		}
+	}
+
+	.custom-duration-title {
+		color: var(--bg-slate-50);
+		font-size: 11px;
+		line-height: 18px;
+		font-weight: 500;
+		margin-bottom: 12px;
+	}
+
+	.custom-duration-inputs {
+		display: flex;
+		gap: 12px;
+		margin-bottom: 16px;
+
+		.select-group {
+			flex: 1;
+
+			.ant-typography {
+				color: var(--bg-slate-50);
+				font-size: 11px;
+				line-height: 18px;
+				font-weight: 500;
+				margin-bottom: 4px;
+			}
+
+			.ant-input {
+				background-color: var(--bg-ink-300);
+				border: 1px solid var(--bg-slate-400);
+				color: var(--bg-vanilla-100);
+				height: 32px;
+
+				&:hover {
+					border-color: var(--bg-vanilla-300);
+				}
+
+				&:focus {
+					border-color: var(--bg-vanilla-300);
+					box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+				}
+			}
+
+			.ant-select {
+				width: 100%;
+
+				.ant-select-selector {
+					background-color: var(--bg-ink-300);
+					border: 1px solid var(--bg-slate-400);
+					color: var(--bg-vanilla-100);
+					height: 32px;
+
+					&:hover {
+						border-color: var(--bg-vanilla-300);
+					}
+
+					&:focus {
+						border-color: var(--bg-vanilla-300);
+						box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+					}
+				}
+
+				.ant-select-selection-item {
+					color: var(--bg-vanilla-100);
+				}
+
+				.ant-select-arrow {
+					color: var(--bg-vanilla-400);
+				}
+			}
+		}
+	}
+
+	.custom-duration-preview {
+		padding: 12px;
+		background-color: var(--bg-ink-300);
+		border: 1px solid var(--bg-slate-400);
+		border-radius: 4px;
+
+		.ant-typography {
+			color: var(--bg-vanilla-300);
+			font-size: 13px;
+			font-weight: 400;
 		}
 	}
 
@@ -674,4 +795,24 @@
 .ant-picker-date-panel-header {
 	background-color: var(--bg-ink-300);
 	border: 1px solid var(--bg-slate-300);
+}
+
+// Custom Schedule Modal Styles
+.selectable-card {
+	.ant-card-body {
+		padding: 12px !important;
+	}
+
+	&:hover {
+		border-color: #1890ff;
+		box-shadow: 0 2px 4px rgba(24, 144, 255, 0.1);
+	}
+}
+
+.selected-card {
+	.ant-card-body {
+		padding: 12px !important;
+	}
+
+	background-color: rgba(24, 144, 255, 0.05);
 }

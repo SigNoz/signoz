@@ -1,7 +1,7 @@
 import { DefaultOptionType } from 'antd/es/select';
 import { Channels } from 'types/api/channels/getAll';
 
-import { Threshold } from '../context/types';
+import { AlertThresholdOperator, Threshold } from '../context/types';
 
 export type UpdateThreshold = {
 	(thresholdId: string, field: 'channels', value: string[]): void;
@@ -20,4 +20,5 @@ export interface ThresholdItemProps {
 	channels: Channels[];
 	isLoadingChannels: boolean;
 	units: DefaultOptionType[];
+	operator: AlertThresholdOperator;
 }

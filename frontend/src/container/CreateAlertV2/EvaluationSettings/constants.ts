@@ -12,6 +12,7 @@ export const EVALUATION_WINDOW_TIMEFRAME = {
 		{ label: 'Last 1 hour', value: '1h0m0s' },
 		{ label: 'Last 2 hours', value: '2h0m0s' },
 		{ label: 'Last 4 hours', value: '4h0m0s' },
+		{ label: 'Custom duration', value: 'custom' },
 	],
 	cumulative: [
 		{ label: 'Current hour', value: 'currentHour' },
@@ -19,6 +20,12 @@ export const EVALUATION_WINDOW_TIMEFRAME = {
 		{ label: 'Current month', value: 'currentMonth' },
 	],
 };
+
+export const TIME_UNIT_OPTIONS = [
+	{ label: 'seconds', value: 's' },
+	{ label: 'minutes', value: 'm' },
+	{ label: 'hours', value: 'h' },
+];
 
 export const EVALUATION_CADENCE_REPEAT_EVERY_OPTIONS = [
 	{ label: 'WEEK', value: 'week' },

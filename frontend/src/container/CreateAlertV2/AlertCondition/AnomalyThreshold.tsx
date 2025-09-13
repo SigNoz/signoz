@@ -1,4 +1,5 @@
 import { Select, Typography } from 'antd';
+import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useMemo } from 'react';
 
@@ -10,6 +11,7 @@ import {
 	ANOMALY_THRESHOLD_OPERATOR_OPTIONS,
 	ANOMALY_TIME_DURATION_OPTIONS,
 } from '../context/constants';
+import { showCondensedLayout } from '../utils';
 import { getQueryNames } from './utils';
 
 function AnomalyThreshold(): JSX.Element {
@@ -36,136 +38,111 @@ function AnomalyThreshold(): JSX.Element {
 		});
 	};
 
+	const showCondensedLayoutFlag = showCondensedLayout();
+
 	return (
-		<div className="anomaly-threshold-container">
-			<div className="alert-condition-sentences">
-				{/* Sentence 1 */}
-				<div className="alert-condition-sentence">
-					<Typography.Text data-testid="notification-text" className="sentence-text">
-						Send notification when the observed value for
-					</Typography.Text>
-					<Select
-						value={thresholdState.selectedQuery}
-						data-testid="query-select"
-						onChange={(value): void => {
-							setThresholdState({
-								type: 'SET_SELECTED_QUERY',
-								payload: value,
-							});
-						}}
-						style={{ width: 80 }}
-						options={queryNames}
-					/>
-					<Typography.Text
-						data-testid="evaluation-window-text"
-						className="sentence-text"
-					>
-						during the last
-					</Typography.Text>
-					<Select
-						value={thresholdState.evaluationWindow}
-						data-testid="evaluation-window-select"
-						onChange={(value): void => {
-							setThresholdState({
-								type: 'SET_EVALUATION_WINDOW',
-								payload: value,
-							});
-						}}
-						style={{ width: 80 }}
-						options={ANOMALY_TIME_DURATION_OPTIONS}
-					/>
-				</div>
-				{/* Sentence 2 */}
-				<div className="alert-condition-sentence">
-					<Typography.Text data-testid="threshold-text" className="sentence-text">
-						is
-					</Typography.Text>
-					<Select
-						value={thresholdState.thresholds[0].thresholdValue}
-						data-testid="threshold-value-select"
-						onChange={(value): void => {
-							updateThreshold(
-								thresholdState.thresholds[0].id,
-								'thresholdValue',
-								value.toString(),
-							);
-						}}
-						style={{ width: 80 }}
-						options={deviationOptions}
-					/>
-					<Typography.Text data-testid="deviations-text" className="sentence-text">
-						deviations
-					</Typography.Text>
-					<Select
-						value={thresholdState.operator}
-						data-testid="operator-select"
-						onChange={(value): void => {
-							setThresholdState({
-								type: 'SET_OPERATOR',
-								payload: value,
-							});
-						}}
-						style={{ width: 80 }}
-						options={ANOMALY_THRESHOLD_OPERATOR_OPTIONS}
-					/>
-					<Typography.Text
-						data-testid="predicted-data-text"
-						className="sentence-text"
-					>
-						the predicted data
-					</Typography.Text>
-					<Select
-						value={thresholdState.matchType}
-						data-testid="match-type-select"
-						onChange={(value): void => {
-							setThresholdState({
-								type: 'SET_MATCH_TYPE',
-								payload: value,
-							});
-						}}
-						style={{ width: 80 }}
-						options={ANOMALY_THRESHOLD_MATCH_TYPE_OPTIONS}
-					/>
-				</div>
-				{/* Sentence 3 */}
-				<div className="alert-condition-sentence">
-					<Typography.Text data-testid="using-the-text" className="sentence-text">
-						using the
-					</Typography.Text>
-					<Select
-						value={thresholdState.algorithm}
-						data-testid="algorithm-select"
-						onChange={(value): void => {
-							setThresholdState({
-								type: 'SET_ALGORITHM',
-								payload: value,
-							});
-						}}
-						style={{ width: 80 }}
-						options={ANOMALY_ALGORITHM_OPTIONS}
-					/>
-					<Typography.Text
-						data-testid="algorithm-with-text"
-						className="sentence-text"
-					>
-						algorithm with
-					</Typography.Text>
-					<Select
-						value={thresholdState.seasonality}
-						data-testid="seasonality-select"
-						onChange={(value): void => {
-							setThresholdState({
-								type: 'SET_SEASONALITY',
-								payload: value,
-							});
-						}}
-						style={{ width: 80 }}
-						options={ANOMALY_SEASONALITY_OPTIONS}
-					/>
-					<Typography.Text data-testid="seasonality-text" className="sentence-text">
-						seasonality
-					</Typography.Text>
-				</div>
+		<div
+			className={classNames('anomaly-threshold-container', {
+				'condensed-anomaly-threshold-container': showCondensedLayoutFlag,
+			})}
+		>
+			{/* Main condition sentence - combined into one row */}
+			<div className="alert-condition-sentence-compact">
+				<Typography.Text className="sentence-text">
+					Send a notification when
+				</Typography.Text>
+				<Select
+					value={thresholdState.selectedQuery}
+					data-testid="query-select"
+					onChange={(value): void => {
+						setThresholdState({
+							type: 'SET_SELECTED_QUERY',
+							payload: value,
+						});
+					}}
+					className="query-select-compact"
+					options={queryNames}
+				/>
+				<Typography.Text className="sentence-text">is</Typography.Text>
+				<Select
+					value={thresholdState.thresholds[0].thresholdValue}
+					data-testid="threshold-value-select"
+					onChange={(value): void => {
+						updateThreshold(
+							thresholdState.thresholds[0].id,
+							'thresholdValue',
+							value.toString(),
+						);
+					}}
+					className="operator-select-compact"
+					options={deviationOptions}
+				/>
+				<Typography.Text className="sentence-text">standard deviations</Typography.Text>
+				<Select
+					value={thresholdState.operator}
+					data-testid="operator-select"
+					onChange={(value): void => {
+						setThresholdState({
+							type: 'SET_OPERATOR',
+							payload: value,
+						});
+					}}
+					className="operator-select-compact"
+					options={ANOMALY_THRESHOLD_OPERATOR_OPTIONS}
+				/>
+				<Typography.Text className="sentence-text">the predicted values</Typography.Text>
+				<Select
+					value={thresholdState.matchType}
+					data-testid="match-type-select"
+					onChange={(value): void => {
+						setThresholdState({
+							type: 'SET_MATCH_TYPE',
+							payload: value,
+						});
+					}}
+					className="match-type-select-compact"
+					options={ANOMALY_THRESHOLD_MATCH_TYPE_OPTIONS}
+				/>
+				<Typography.Text className="sentence-text">during the</Typography.Text>
+				<Select
+					value={thresholdState.evaluationWindow}
+					data-testid="evaluation-window-select"
+					onChange={(value): void => {
+						setThresholdState({
+							type: 'SET_EVALUATION_WINDOW',
+							payload: value,
+						});
+					}}
+					className="operator-select-compact"
+					options={ANOMALY_TIME_DURATION_OPTIONS}
+				/>
+				<Typography.Text className="sentence-text">evaluation window using</Typography.Text>
+				<Select
+					value={thresholdState.algorithm}
+					data-testid="algorithm-select"
+					onChange={(value): void => {
+						setThresholdState({
+							type: 'SET_ALGORITHM',
+							payload: value,
+						});
+					}}
+					className="operator-select-compact"
+					options={ANOMALY_ALGORITHM_OPTIONS}
+				/>
+				<Typography.Text className="sentence-text">algorithm with</Typography.Text>
+				<Select
+					value={thresholdState.seasonality}
+					data-testid="seasonality-select"
+					onChange={(value): void => {
+						setThresholdState({
+							type: 'SET_SEASONALITY',
+							payload: value,
+						});
+					}}
+					className="operator-select-compact"
+					options={ANOMALY_SEASONALITY_OPTIONS}
+				/>
+				<Typography.Text className="sentence-text">seasonality</Typography.Text>
 			</div>
 		</div>
 	);

@@ -9,6 +9,7 @@ import { AppState } from 'store/reducers';
 import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import YAxisUnitSelector from 'components/YAxisUnitSelector';
 
 export interface ChartPreviewProps {
 	alertDef: AlertDef;
@@ -16,7 +17,7 @@ export interface ChartPreviewProps {
 
 function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 	const { currentQuery, panelType, stagedQuery } = useQueryBuilder();
-	const { thresholdState, alertState } = useCreateAlertState();
+	const { thresholdState, alertState, setAlertState } = useCreateAlertState();
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
@@ -28,10 +29,22 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 	const renderQBChartPreview = (): JSX.Element => (
 		<ChartPreviewComponent
 			headline={
-				<PlotTag
-					queryType={currentQuery.queryType}
-					panelType={panelType || PANEL_TYPES.TIME_SERIES}
-				/>
+				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+					<div style={{ display: 'flex', alignItems: 'center' }}>
+						<PlotTag
+							queryType={currentQuery.queryType}
+							panelType={panelType || PANEL_TYPES.TIME_SERIES}
+						/>
+					</div>
+					<div style={{ display: 'flex', alignItems: 'center' }}>
+						<YAxisUnitSelector
+							value={alertState.yAxisUnit}
+							onChange={(value): void => {
+								setAlertState({ type: 'SET_Y_AXIS_UNIT', payload: value });
+							}}
+						/>
+					</div>
+				</div>
 			}
 			name=""
 			query={stagedQuery}
@@ -48,10 +61,22 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 	const renderPromAndChQueryChartPreview = (): JSX.Element => (
 		<ChartPreviewComponent
 			headline={
-				<PlotTag
-					queryType={currentQuery.queryType}
-					panelType={panelType || PANEL_TYPES.TIME_SERIES}
-				/>
+				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+					<div style={{ display: 'flex', alignItems: 'center' }}>
+						<PlotTag
+							queryType={currentQuery.queryType}
+							panelType={panelType || PANEL_TYPES.TIME_SERIES}
+						/>
+					</div>
+					<div style={{ display: 'flex', alignItems: 'center' }}>
+						<YAxisUnitSelector
+							value={alertState.yAxisUnit}
+							onChange={(value): void => {
+								setAlertState({ type: 'SET_Y_AXIS_UNIT', payload: value });
+							}}
+						/>
+					</div>
+				</div>
 			}
 			name="Chart Preview"
 			query={stagedQuery}

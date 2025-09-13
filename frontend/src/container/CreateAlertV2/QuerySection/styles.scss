@@ -4,7 +4,7 @@
 		display: flex;
 		align-items: center;
 		margin-left: 12px;
-		margin-top: 24px;
+		margin-top: -4px;
 
 		.query-section-query-actions {
 			display: flex;
@@ -83,9 +83,11 @@
 
 	.chart-preview-container {
 		margin-right: 4px;
+		margin-bottom: 0;
 		.alert-chart-container {
 			.ant-card {
 				border: 1px solid var(--bg-slate-500);
+				margin-bottom: 0 !important;
 				.ant-card-body {
 					background-color: var(--bg-ink-500);
 				}
@@ -95,6 +97,7 @@
 
 	.alert-query-section-container {
 		margin: 0;
+		margin-top: 0 !important;
 		background-color: var(--bg-ink-500);
 		border: 1px solid var(--bg-slate-400);
 	}

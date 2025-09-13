@@ -55,7 +55,7 @@ function AlertCondition(): JSX.Element {
 
 	return (
 		<div className="alert-condition-container">
-			<Stepper stepNumber={2} label="Set alert conditions" />
+			<Stepper stepNumber={2} label="Alert Conditions" />
 			<div className="alert-condition">
 				<div className="alert-condition-tabs">
 					{tabs.map((tab) => (

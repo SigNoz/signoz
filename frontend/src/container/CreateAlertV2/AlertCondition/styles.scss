@@ -69,6 +69,123 @@
 	border: 1px solid var(--bg-slate-400);
 	width: fit-content;
 
+	// New compact sentence layout
+	.alert-condition-sentence-compact {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		flex-wrap: wrap;
+		margin-bottom: 20px;
+
+		.sentence-text {
+			color: var(--text-vanilla-400);
+			font-size: 13px;
+			line-height: 32px;
+			white-space: nowrap;
+			display: flex;
+			align-items: center;
+			height: 32px;
+			margin: 0;
+			padding: 0;
+			min-height: 32px;
+		}
+
+		strong {
+			color: var(--bg-vanilla-100);
+			font-size: 13px;
+			font-weight: 600;
+			line-height: 32px;
+			height: 32px;
+			display: flex;
+			align-items: center;
+			margin: 0;
+			padding: 0;
+			min-height: 32px;
+		}
+
+		.query-select-compact {
+			width: 60px !important;
+
+			.ant-select-selector {
+				height: 32px !important;
+				background-color: var(--bg-ink-300);
+				border: 1px solid var(--bg-slate-400);
+				color: var(--text-vanilla-400);
+				font-family: 'Space Mono';
+				font-size: 12px;
+				padding: 0 8px;
+
+				&:hover {
+					border-color: var(--bg-vanilla-300);
+				}
+			}
+
+			.ant-select-selection-item {
+				color: var(--bg-vanilla-100);
+				line-height: 30px;
+			}
+
+			.ant-select-arrow {
+				color: var(--bg-vanilla-400);
+			}
+		}
+
+		.operator-select-compact {
+			width: 110px !important;
+
+			.ant-select-selector {
+				height: 32px !important;
+				background-color: var(--bg-ink-300);
+				border: 1px solid var(--bg-slate-400);
+				color: var(--text-vanilla-400);
+				font-family: 'Space Mono';
+				font-size: 12px;
+				padding: 0 8px;
+
+				&:hover {
+					border-color: var(--bg-vanilla-300);
+				}
+			}
+
+			.ant-select-selection-item {
+				color: var(--bg-vanilla-100);
+				line-height: 30px;
+			}
+
+			.ant-select-arrow {
+				color: var(--bg-vanilla-400);
+			}
+		}
+
+		.match-type-select-compact {
+			width: 130px !important;
+
+			.ant-select-selector {
+				height: 32px !important;
+				background-color: var(--bg-ink-300);
+				border: 1px solid var(--bg-slate-400);
+				color: var(--text-vanilla-400);
+				font-family: 'Space Mono';
+				font-size: 12px;
+				padding: 0 8px;
+
+				&:hover {
+					border-color: var(--bg-vanilla-300);
+				}
+			}
+
+			.ant-select-selection-item {
+				color: var(--bg-vanilla-100);
+				line-height: 30px;
+			}
+
+			.ant-select-arrow {
+				color: var(--bg-vanilla-400);
+			}
+		}
+
+	}
+
 	.alert-condition-sentences {
 		display: flex;
 		flex-direction: column;
@@ -114,6 +231,295 @@
 
 				.ant-select-arrow {
 					color: var(--bg-vanilla-400);
+				}
+			}
+		}
+	}
+
+	// New compact threshold item styles
+	.threshold-item-compact {
+		display: flex;
+		flex-direction: column;
+		margin-bottom: 16px;
+
+		.threshold-main-row {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+
+			.threshold-indicator {
+				.threshold-dot {
+					width: 10px;
+					height: 10px;
+					border-radius: 50%;
+					flex-shrink: 0;
+				}
+			}
+
+			.threshold-sentence {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				flex-wrap: wrap;
+
+				.sentence-text {
+					color: var(--text-vanilla-400);
+					font-size: 13px;
+					white-space: nowrap;
+					height: 32px;
+					line-height: 32px;
+					display: inline-flex;
+					align-items: center;
+				}
+
+				.operator-symbol {
+					color: var(--bg-robin-500);
+					font-weight: 600;
+					font-size: 14px;
+					font-family: 'Space Mono', monospace;
+					padding: 0 4px;
+					height: 32px;
+					line-height: 32px;
+					display: inline-flex;
+					align-items: center;
+				}
+
+				.threshold-label-input {
+					width: 100px !important;
+					height: 32px !important;
+					background-color: var(--bg-ink-400);
+					border: 1px solid var(--bg-slate-400);
+					color: var(--bg-vanilla-100);
+					font-size: 13px;
+					font-weight: 600;
+					text-transform: uppercase;
+					padding: 0 10px;
+					line-height: 30px;
+
+					&::placeholder {
+						font-family: 'Space Mono', monospace;
+						font-size: 12px;
+						text-transform: uppercase;
+					}
+
+					&:hover {
+						border-color: var(--bg-vanilla-300);
+					}
+
+					&:focus {
+						border-color: var(--bg-vanilla-300);
+						box-shadow: none;
+					}
+				}
+
+				.threshold-value-input {
+					width: 135px !important;
+					height: 32px !important;
+					background-color: var(--bg-ink-400);
+					border: 1px solid var(--bg-slate-400);
+					color: var(--bg-vanilla-100);
+					font-size: 13px;
+					font-family: 'Space Mono', monospace;
+					padding: 0 10px;
+					text-align: center;
+					line-height: 30px;
+
+					&::placeholder {
+						font-family: 'Space Mono', monospace;
+						font-size: 12px;
+					}
+
+					&:hover {
+						border-color: var(--bg-vanilla-300);
+					}
+
+					&:focus {
+						border-color: var(--bg-vanilla-300);
+						box-shadow: none;
+					}
+
+					// Hide number input spinners
+					&::-webkit-outer-spin-button,
+					&::-webkit-inner-spin-button {
+						-webkit-appearance: none;
+						margin: 0;
+					}
+					&[type='number'] {
+						-moz-appearance: textfield;
+					}
+				}
+
+				.unit-select {
+					width: 150px !important;
+
+					.ant-select-selector {
+						height: 32px !important;
+						background-color: var(--bg-ink-400);
+						border: 1px solid var(--bg-slate-400);
+						color: var(--bg-vanilla-100);
+						font-size: 13px;
+						padding: 0 8px;
+						display: flex;
+						align-items: center;
+
+						.ant-select-selection-item {
+							line-height: 30px;
+							font-size: 13px;
+						}
+
+						.ant-select-selection-placeholder {
+							font-family: 'Space Mono', monospace;
+							font-size: 12px;
+							line-height: 30px;
+						}
+
+						&:hover {
+							border-color: var(--bg-vanilla-300);
+						}
+					}
+
+					.ant-select-arrow {
+						color: var(--bg-vanilla-400);
+						top: 50%;
+						transform: translateY(-50%);
+					}
+				}
+
+				.channels-select {
+					min-width: 200px !important;
+					max-width: 300px !important;
+
+					.ant-select-selector {
+						min-height: 32px !important;
+						height: auto !important;
+						max-height: 80px !important;
+						background-color: var(--bg-ink-400);
+						border: 1px solid var(--bg-slate-400);
+						color: var(--bg-vanilla-100);
+						font-size: 13px;
+						padding: 4px 8px;
+						overflow-y: auto;
+
+						.ant-select-selection-item {
+							height: 22px;
+							line-height: 20px;
+							font-size: 12px;
+							padding: 0 6px;
+							margin: 1px 2px;
+							background-color: var(--bg-slate-500);
+							border: 1px solid var(--bg-slate-400);
+							border-radius: 2px;
+
+							.ant-select-selection-item-content {
+								color: var(--text-vanilla-100);
+							}
+
+							.ant-select-selection-item-remove {
+								color: var(--text-vanilla-400);
+								margin-left: 4px;
+								font-size: 10px;
+
+								&:hover {
+									color: var(--text-vanilla-100);
+								}
+							}
+						}
+
+						.ant-select-selection-overflow-item-suffix {
+							height: 22px;
+							line-height: 22px;
+							font-size: 12px;
+							color: var(--text-vanilla-400);
+						}
+
+						.ant-select-selection-placeholder {
+							font-family: 'Space Mono', monospace;
+							font-size: 12px;
+							line-height: 28px;
+						}
+
+						&:hover {
+							border-color: var(--bg-vanilla-300);
+						}
+					}
+
+					.ant-select-arrow {
+						color: var(--bg-vanilla-400);
+						top: 50%;
+						transform: translateY(-50%);
+					}
+				}
+			}
+
+			.threshold-actions {
+				display: flex;
+				gap: 4px;
+				margin-left: 8px;
+
+				.icon-btn {
+					color: var(--bg-vanilla-400);
+					border: none;
+					background: transparent;
+					padding: 4px;
+					height: 32px;
+					width: 32px;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					border-radius: 4px;
+					transition: all 0.2s;
+
+					&:hover {
+						background-color: var(--bg-slate-400);
+						color: var(--bg-vanilla-100);
+					}
+
+					&.remove-btn:hover {
+						background-color: rgba(248, 113, 113, 0.1);
+						color: var(--bg-sakura-400);
+					}
+				}
+			}
+
+			// Recovery remove button - small and subtle but visible
+			.recovery-remove-btn {
+				color: var(--bg-vanilla-400);
+				border: none;
+				background: transparent;
+				padding: 2px;
+				height: 20px;
+				width: 20px;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				border-radius: 3px;
+				transition: all 0.2s;
+				margin-left: 6px;
+
+				&:hover {
+					background-color: rgba(248, 113, 113, 0.1);
+					color: var(--bg-sakura-400);
+				}
+			}
+
+			// Threshold remove button - more prominent
+			.threshold-remove-btn {
+				color: var(--bg-vanilla-400);
+				border: none;
+				background: transparent;
+				padding: 4px;
+				height: 32px;
+				width: 32px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				border-radius: 4px;
+				transition: all 0.2s;
+
+				&:hover {
+					background-color: rgba(248, 113, 113, 0.15);
+					color: var(--bg-sakura-300);
+					border: 1px solid rgba(248, 113, 113, 0.3);
 				}
 			}
 		}
@@ -316,5 +722,18 @@
 				padding: 1px 4px;
 			}
 		}
+	}
+}
+
+.copyable-tooltip {
+	.ant-tooltip-inner {
+		user-select: text !important;
+		-webkit-user-select: text !important;
+		-moz-user-select: text !important;
+		-ms-user-select: text !important;
+	}
+	
+	.ant-tooltip-content {
+		pointer-events: auto !important;
 	}
 }

@@ -169,6 +169,8 @@ export const evaluationWindowReducer = (
 			return { ...state, timeframe: action.payload };
 		case 'SET_STARTING_AT':
 			return { ...state, startingAt: action.payload };
+		case 'SET_CUSTOM_DURATION':
+			return { ...state, customDuration: action.payload };
 		case 'RESET':
 			return INITIAL_EVALUATION_WINDOW_STATE;
 		default:

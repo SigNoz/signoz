@@ -1,4 +1,4 @@
-import { Button, DatePicker, Input, Select, Typography } from 'antd';
+import { Button, DatePicker, Input, Select, Typography, Tooltip } from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
 import classNames from 'classnames';
 import {
@@ -7,6 +7,7 @@ import {
 	Code,
 	Edit,
 	Edit3Icon,
+	HelpCircle,
 	Info,
 	Plus,
 	X,
@@ -360,14 +361,14 @@ function EditCustomSchedule({
 		if (advancedOptions.evaluationCadence.mode === 'custom') {
 			return (
 				<Typography.Text>
-					<Typography.Text>Every</Typography.Text>
+					<Typography.Text>Every </Typography.Text>
 					<Typography.Text className="highlight">
 						{advancedOptions.evaluationCadence.custom.repeatEvery
 							.charAt(0)
 							.toUpperCase() +
 							advancedOptions.evaluationCadence.custom.repeatEvery.slice(1)}
 					</Typography.Text>
-					<Typography.Text>on</Typography.Text>
+					<Typography.Text> on </Typography.Text>
 					<Typography.Text className="highlight">
 						{advancedOptions.evaluationCadence.custom.occurence
 							.map(
@@ -375,7 +376,7 @@ function EditCustomSchedule({
 							)
 							.join(', ')}
 					</Typography.Text>
-					<Typography.Text>at</Typography.Text>
+					<Typography.Text> at </Typography.Text>
 					<Typography.Text className="highlight">
 						{advancedOptions.evaluationCadence.custom.startAt}
 					</Typography.Text>
@@ -384,11 +385,11 @@ function EditCustomSchedule({
 		}
 		return (
 			<Typography.Text>
-				<Typography.Text>Starting on</Typography.Text>
+				<Typography.Text>Starting on </Typography.Text>
 				<Typography.Text className="highlight">
 					{advancedOptions.evaluationCadence.rrule.date?.format('DD/MM/YYYY')}
 				</Typography.Text>
-				<Typography.Text>at</Typography.Text>
+				<Typography.Text> at </Typography.Text>
 				<Typography.Text className="highlight">
 					{advancedOptions.evaluationCadence.rrule.startAt}
 				</Typography.Text>
@@ -464,21 +465,25 @@ function EvaluationCadence(): JSX.Element {
 		<div className="evaluation-cadence-container">
 			<div className="advanced-option-item evaluation-cadence-item">
 				<div className="advanced-option-item-left-content">
-					<Typography.Text className="advanced-option-item-title">
-						Evaluation cadence
-					</Typography.Text>
+					<div className="advanced-option-item-header">
+						<Typography.Text className="advanced-option-item-title">
+							How often to check
+						</Typography.Text>
+						<Tooltip title="Controls how frequently the alert evaluates your conditions. For most alerts, 1-5 minutes is sufficient." placement="top">
+							<HelpCircle size={14} style={{ color: 'var(--bg-vanilla-400)', cursor: 'help' }} />
+						</Tooltip>
+					</div>
 					<Typography.Text className="advanced-option-item-description">
-						Customize when this Alert Rule will run. By default, it runs every 60
-						seconds (1 minute).
+						How frequently this alert checks your data. Default: Every 1 minute
 					</Typography.Text>
 				</div>
 				{showCustomScheduleButton && (
 					<div className="advanced-option-item-right-content">
-						<Input.Group className="advanced-option-item-input-group">
+						<div className="advanced-option-item-input-inline">
 							<Input
 								type="number"
-								placeholder="Enter time"
-								style={{ width: 180 }}
+								placeholder="1"
+								style={{ width: 80 }}
 								value={advancedOptions.evaluationCadence.default.value}
 								onChange={(value): void =>
 									setAdvancedOptions({
@@ -495,8 +500,8 @@ function EvaluationCadence(): JSX.Element {
 							/>
 							<Select
 								options={ADVANCED_OPTIONS_TIME_UNIT_OPTIONS}
-								placeholder="Select time unit"
-								style={{ width: 120 }}
+								placeholder="minute"
+								style={{ width: 100 }}
 								value={advancedOptions.evaluationCadence.default.timeUnit}
 								onChange={(value): void =>
 									setAdvancedOptions({
@@ -511,13 +516,14 @@ function EvaluationCadence(): JSX.Element {
 									})
 								}
 							/>
-						</Input.Group>
+						</div>
 						<Button
 							className="advanced-option-item-button"
 							onClick={showCustomSchedule}
+							size="small"
 						>
-							<Plus size={12} />
-							<Typography.Text>Add custom schedule</Typography.Text>
+							<Calendar size={12} />
+							<Typography.Text>Custom schedule</Typography.Text>
 						</Button>
 					</div>
 				)}

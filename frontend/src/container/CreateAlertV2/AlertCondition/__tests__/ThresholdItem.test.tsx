@@ -4,6 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { DefaultOptionType } from 'antd/es/select';
 import { Channels } from 'types/api/channels/getAll';
 
+import { AlertThresholdOperator } from '../../context/types';
 import ThresholdItem from '../ThresholdItem';
 import { ThresholdItemProps } from '../types';
 
@@ -54,6 +55,7 @@ const defaultProps: ThresholdItemProps = {
 	channels: mockChannels,
 	isLoadingChannels: false,
 	units: mockUnits,
+	operator: AlertThresholdOperator.IS_ABOVE,
 };
 
 const renderThresholdItem = (

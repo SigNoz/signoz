@@ -4,7 +4,7 @@ import Stepper from '../Stepper';
 import { showCondensedLayout } from '../utils';
 import MultipleNotifications from './MultipleNotifications';
 import NotificationMessage from './NotificationMessage';
-import ReNotification from './ReNotification';
+import NotificationFrequency from './NotificationFrequency';
 
 function NotificationSettings(): JSX.Element {
 	const showCondensedLayoutFlag = showCondensedLayout();
@@ -17,7 +17,7 @@ function NotificationSettings(): JSX.Element {
 			/>
 			<NotificationMessage />
 			<MultipleNotifications />
-			<ReNotification />
+			<NotificationFrequency />
 		</div>
 	);
 }
