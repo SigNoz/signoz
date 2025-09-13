@@ -1,13 +1,14 @@
 /* eslint-disable jsx-a11y/interactive-supports-focus */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import { Button, Select, Typography } from 'antd';
+import { Button, Input, Select, Typography } from 'antd';
 import classNames from 'classnames';
 import { Check } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import {
 	EVALUATION_WINDOW_TIMEFRAME,
 	EVALUATION_WINDOW_TYPE,
+	TIME_UNIT_OPTIONS,
 } from './constants';
 import TimeInput from './TimeInput';
 import {
@@ -16,7 +17,7 @@ import {
 	IEvaluationWindowPopoverProps,
 	RollingWindowTimeframes,
 } from './types';
-import { TIMEZONE_DATA } from './utils';
+import { getDetailedDescription, TIMEZONE_DATA } from './utils';
 
 function EvaluationWindowDetails({
 	evaluationWindow,
@@ -37,6 +38,59 @@ function EvaluationWindowDetails({
 		}
 		return options;
 	}, []);
+
+	if (evaluationWindow.timeframe === 'custom' && evaluationWindow.windowType === 'rolling') {
+		return (
+			<div className="evaluation-window-details">
+				<Typography.Text className="custom-duration-title">
+					SPECIFY CUSTOM DURATION
+				</Typography.Text>
+				<div className="custom-duration-inputs">
+					<div className="select-group">
+						<Typography.Text>VALUE</Typography.Text>
+						<Input
+							type="number"
+							min={1}
+							value={evaluationWindow.customDuration.value}
+							onChange={(e): void => {
+								const value = parseInt(e.target.value, 10) || 1;
+								setEvaluationWindow({
+									type: 'SET_CUSTOM_DURATION',
+									payload: {
+										value,
+										unit: evaluationWindow.customDuration.unit,
+									},
+								});
+							}}
+							placeholder="Enter number"
+						/>
+					</div>
+					<div className="select-group">
+						<Typography.Text>UNIT</Typography.Text>
+						<Select
+							options={TIME_UNIT_OPTIONS}
+							value={evaluationWindow.customDuration.unit}
+							onChange={(unit: string): void => {
+								setEvaluationWindow({
+									type: 'SET_CUSTOM_DURATION',
+									payload: {
+										value: evaluationWindow.customDuration.value,
+										unit,
+									},
+								});
+							}}
+							placeholder="Select unit"
+						/>
+					</div>
+				</div>
+				<div className="custom-duration-preview">
+					<Typography.Text>
+						Window: Last {evaluationWindow.customDuration.value} {TIME_UNIT_OPTIONS.find(opt => opt.value === evaluationWindow.customDuration.unit)?.label || evaluationWindow.customDuration.unit}
+					</Typography.Text>
+				</div>
+			</div>
+		);
+	}
 
 	if (evaluationWindow.windowType === 'rolling') {
 		return <div />;
@@ -84,6 +138,7 @@ function EvaluationWindowDetails({
 			},
 		});
 	};
+
 
 	if (isCurrentHour) {
 		return (
@@ -162,7 +217,73 @@ function EvaluationWindowDetails({
 function EvaluationWindowPopover({
 	evaluationWindow,
 	setEvaluationWindow,
+	isOpen,
+	setIsOpen,
 }: IEvaluationWindowPopoverProps): JSX.Element {
+	const popoverRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent): void => {
+			if (!isOpen || !popoverRef.current) return;
+			
+			if (!popoverRef.current.contains(document.activeElement)) return;
+
+			const currentElement = document.activeElement as HTMLElement;
+			const currentColumn = currentElement.closest('.evaluation-window-content-item');
+			
+			if (!currentColumn) return;
+
+			const columnsElements = popoverRef.current.querySelectorAll('.evaluation-window-content-item');
+			const currentColumnIndex = Array.from(columnsElements).indexOf(currentColumn);
+			const currentColumnItems = currentColumn.querySelectorAll('[tabindex="0"]');
+			const currentItemIndex = Array.from(currentColumnItems).indexOf(currentElement);
+
+			switch (e.key) {
+				case 'ArrowDown':
+					e.preventDefault();
+					const nextItemIndex = currentItemIndex < currentColumnItems.length - 1 ? currentItemIndex + 1 : 0;
+					(currentColumnItems[nextItemIndex] as HTMLElement).focus();
+					break;
+				case 'ArrowUp':
+					e.preventDefault();
+					const prevItemIndex = currentItemIndex > 0 ? currentItemIndex - 1 : currentColumnItems.length - 1;
+					(currentColumnItems[prevItemIndex] as HTMLElement).focus();
+					break;
+				case 'ArrowRight':
+					e.preventDefault();
+					const nextColumnIndex = currentColumnIndex < columnsElements.length - 1 ? currentColumnIndex + 1 : 0;
+					const nextColumnItems = columnsElements[nextColumnIndex].querySelectorAll('[tabindex="0"]');
+					if (nextColumnItems.length > 0) {
+						(nextColumnItems[0] as HTMLElement).focus();
+					}
+					break;
+				case 'ArrowLeft':
+					e.preventDefault();
+					const prevColumnIndex = currentColumnIndex > 0 ? currentColumnIndex - 1 : columnsElements.length - 1;
+					const prevColumnItems = columnsElements[prevColumnIndex].querySelectorAll('[tabindex="0"]');
+					if (prevColumnItems.length > 0) {
+						(prevColumnItems[0] as HTMLElement).focus();
+					}
+					break;
+				case 'Escape':
+					e.preventDefault();
+					setIsOpen(false);
+					break;
+			}
+		};
+
+		document.addEventListener('keydown', handleKeyDown);
+		return () => document.removeEventListener('keydown', handleKeyDown);
+	}, [isOpen, setIsOpen]);
+
+	useEffect(() => {
+		if (popoverRef.current && isOpen) {
+			const firstFocusable = popoverRef.current.querySelector('[tabindex="0"]') as HTMLElement;
+			if (firstFocusable) {
+				setTimeout(() => firstFocusable.focus(), 150);
+			}
+		}
+	}, [isOpen]);
 	const renderEvaluationWindowContent = (
 		label: string,
 		contentOptions: Array<{ label: string; value: string }>,
@@ -181,7 +302,14 @@ function EvaluationWindowPopover({
 						})}
 						key={option.value}
 						role="button"
+						tabIndex={0}
 						onClick={(): void => onChange(option.value)}
+						onKeyDown={(e): void => {
+							if (e.key === 'Enter' || e.key === ' ') {
+								e.preventDefault();
+								onChange(option.value);
+							}
+						}}
 					>
 						<Typography.Text>{option.label}</Typography.Text>
 						{currentValue === option.value && <Check size={12} />}
@@ -191,13 +319,32 @@ function EvaluationWindowPopover({
 		</div>
 	);
 
-	const renderSelectionContent = (): JSX.Element => {
+	const getPopoverDetailedDescription = (): string => {
+		const baseDescription = getDetailedDescription(evaluationWindow);
+		
 		if (evaluationWindow.windowType === 'rolling') {
+			return `Rolling window: ${baseDescription}`;
+		}
+		
+		if (evaluationWindow.windowType === 'cumulative') {
+			if (!evaluationWindow.timeframe) {
+				return 'Cumulative window: Select a timeframe to see configuration';
+			}
+			return `Cumulative window: ${baseDescription}`;
+		}
+
+		return baseDescription;
+	};
+
+	const renderSelectionContent = (): JSX.Element => {
+		if (evaluationWindow.windowType === 'rolling' && evaluationWindow.timeframe !== 'custom') {
 			return (
 				<div className="selection-content">
 					<Typography.Text>
-						A Rolling Window has a fixed size and shifts its starting point over time
-						based on when the rules are evaluated.
+						{getPopoverDetailedDescription()}
+					</Typography.Text>
+					<Typography.Text style={{ marginTop: '8px', fontSize: '12px', color: 'var(--bg-vanilla-400)' }}>
+						A Rolling Window has a fixed size and shifts its starting point over time based on when the rules are evaluated.
 					</Typography.Text>
 					<Button type="link">Read the docs</Button>
 				</div>
@@ -211,9 +358,31 @@ function EvaluationWindowPopover({
 			return (
 				<div className="selection-content">
 					<Typography.Text>
+						Select a timeframe to configure cumulative window
+					</Typography.Text>
+					<Typography.Text style={{ marginTop: '8px', fontSize: '12px', color: 'var(--bg-vanilla-400)' }}>
 						A Cumulative Window has a fixed starting point and expands over time.
 					</Typography.Text>
 					<Button type="link">Read the docs</Button>
+				</div>
+			);
+		}
+
+		if (evaluationWindow.windowType === 'cumulative' && evaluationWindow.timeframe) {
+			return (
+				<div className="selection-content">
+					<Typography.Text>
+						{getPopoverDetailedDescription()}
+					</Typography.Text>
+					<Typography.Text style={{ marginTop: '8px', fontSize: '12px', color: 'var(--bg-vanilla-400)' }}>
+						A Cumulative Window has a fixed starting point and expands over time.
+					</Typography.Text>
+					<div style={{ marginTop: '16px' }}>
+						<EvaluationWindowDetails
+							evaluationWindow={evaluationWindow}
+							setEvaluationWindow={setEvaluationWindow}
+						/>
+					</div>
 				</div>
 			);
 		}
@@ -227,7 +396,7 @@ function EvaluationWindowPopover({
 	};
 
 	return (
-		<div className="evaluation-window-popover">
+		<div className="evaluation-window-popover" ref={popoverRef}>
 			<div className="evaluation-window-content">
 				{renderEvaluationWindowContent(
 					'EVALUATION WINDOW',

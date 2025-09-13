@@ -46,7 +46,7 @@ export interface Threshold {
 	id: string;
 	label: string;
 	thresholdValue: number;
-	recoveryThresholdValue: number;
+	recoveryThresholdValue: number | null;
 	unit: string;
 	channels: string[];
 	color: string;
@@ -178,6 +178,10 @@ export interface EvaluationWindowState {
 		number: string;
 		timezone: string;
 	};
+	customDuration: {
+		value: number;
+		unit: string;
+	};
 }
 
 export type EvaluationWindowAction =
@@ -187,6 +191,7 @@ export type EvaluationWindowAction =
 			type: 'SET_STARTING_AT';
 			payload: { time: string; number: string; timezone: string };
 	  }
+	| { type: 'SET_CUSTOM_DURATION'; payload: { value: number; unit: string } }
 	| { type: 'SET_EVALUATION_CADENCE_MODE'; payload: EvaluationCadenceMode }
 	| { type: 'RESET' };
 

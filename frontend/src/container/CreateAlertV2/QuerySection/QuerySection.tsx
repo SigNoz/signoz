@@ -2,7 +2,6 @@ import './styles.scss';
 
 import { Button } from 'antd';
 import classNames from 'classnames';
-import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import QuerySectionComponent from 'container/FormAlertRules/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -53,15 +52,9 @@ function QuerySection(): JSX.Element {
 		<div className="query-section">
 			<Stepper
 				stepNumber={1}
-				label="Define the query you want to set an alert on"
+				label="Define Query"
 			/>
 			<ChartPreview alertDef={alertDef} />
-			<YAxisUnitSelector
-				value={alertState.yAxisUnit}
-				onChange={(value): void => {
-					setAlertState({ type: 'SET_Y_AXIS_UNIT', payload: value });
-				}}
-			/>
 			<div className="query-section-tabs">
 				<div className="query-section-query-actions">
 					{tabs.map((tab) => (

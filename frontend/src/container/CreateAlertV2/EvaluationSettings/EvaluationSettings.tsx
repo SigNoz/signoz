@@ -40,10 +40,19 @@ function EvaluationSettings(): JSX.Element {
 			}
 			trigger="click"
 			showArrow={false}
+			destroyTooltipOnHide={false}
+			getPopupContainer={() => document.body}
 		>
-			<Button>
+			<Button
+				onKeyDown={(e): void => {
+					if (e.key === 'Enter' || e.key === ' ') {
+						e.preventDefault();
+						setIsEvaluationWindowPopoverOpen(!isEvaluationWindowPopoverOpen);
+					}
+				}}
+			>
 				<div className="evaluate-alert-conditions-button-left">
-					{getTimeframeText(evaluationWindow.windowType, evaluationWindow.timeframe)}
+					{getTimeframeText(evaluationWindow.windowType, evaluationWindow.timeframe, evaluationWindow)}
 				</div>
 				<div className="evaluate-alert-conditions-button-right">
 					<div className="evaluate-alert-conditions-button-right-text">
@@ -72,8 +81,8 @@ function EvaluationSettings(): JSX.Element {
 			<Stepper stepNumber={3} label="Evaluation settings" />
 			{alertType !== AlertTypes.ANOMALY_BASED_ALERT && (
 				<div className="evaluate-alert-conditions-container">
-					<Typography.Text>Evaluate Alert Conditions over</Typography.Text>
-					<div className="evaluate-alert-conditions-separator" />
+					<Typography.Text>Check conditions using data from</Typography.Text>
+					{/* <div className="evaluate-alert-conditions-separator" /> */}
 					{popoverContent}
 				</div>
 			)}

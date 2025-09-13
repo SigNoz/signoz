@@ -276,7 +276,7 @@ function ChartPreview({
 				yAxisUnit,
 				apiResponse: queryResponse?.data?.payload,
 				dimensions: {
-					height: containerDimensions?.height ? containerDimensions.height - 48 : 0,
+					height: 280,
 					width: containerDimensions?.width,
 				},
 				minTimeScale,

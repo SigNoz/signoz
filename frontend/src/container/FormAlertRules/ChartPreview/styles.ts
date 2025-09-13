@@ -6,7 +6,7 @@ export const NotFoundContainer = styled.div`
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	min-height: 55vh;
+	min-height: 280px;
 `;
 
 export const FailedMessageContainer = styled(Tooltip)`
@@ -18,6 +18,7 @@ export const FailedMessageContainer = styled(Tooltip)`
 
 export const ChartContainer = styled(Card)`
 	border-radius: 4px;
+	margin-bottom: 0;
 	&&& {
 		position: relative;
 	}
@@ -36,7 +37,6 @@ export const ChartContainer = styled(Card)`
 
 	.ant-card-body {
 		padding: 1.5rem 0;
-		height: 57vh;
-		/* padding-bottom: 2rem; */
+		height: 328px;
 	}
 `;

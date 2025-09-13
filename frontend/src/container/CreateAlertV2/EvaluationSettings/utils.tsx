@@ -4,8 +4,9 @@ import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 import { rrulestr } from 'rrule';
 
-import { WEEKDAY_MAP } from './constants';
+import { EVALUATION_WINDOW_TIMEFRAME, TIME_UNIT_OPTIONS, WEEKDAY_MAP } from './constants';
 import { CumulativeWindowTimeframes, RollingWindowTimeframes } from './types';
+import { EvaluationWindowState } from '../context/types';
 
 // Extend dayjs with timezone plugins
 dayjs.extend(utc);
@@ -60,10 +61,78 @@ export const getRollingWindowTimeframeText = (
 	}
 };
 
+export const getDetailedDescription = (evaluationWindow: EvaluationWindowState): string => {
+	if (evaluationWindow.windowType === 'rolling') {
+		if (evaluationWindow.timeframe === 'custom') {
+			const unitOption = TIME_UNIT_OPTIONS.find(opt => opt.value === evaluationWindow.customDuration.unit);
+			return `Last ${evaluationWindow.customDuration.value} ${unitOption?.label || evaluationWindow.customDuration.unit}`;
+		}
+		// Convert timeframe to readable format
+		const timeframeOption = EVALUATION_WINDOW_TIMEFRAME.rolling.find(opt => opt.value === evaluationWindow.timeframe);
+		return timeframeOption?.label || evaluationWindow.timeframe;
+	}
+
+	if (evaluationWindow.windowType === 'cumulative') {
+		const timezone = evaluationWindow.startingAt.timezone;
+		const time = evaluationWindow.startingAt.time;
+		const number = evaluationWindow.startingAt.number;
+
+		switch (evaluationWindow.timeframe) {
+			case 'currentHour':
+				return `Current hour, starting from minute ${number} (${timezone})`;
+			case 'currentDay':
+				return `Current day, starting from ${time} (${timezone})`;
+			case 'currentMonth':
+				return `Current month, starting from day ${number} at ${time} (${timezone})`;
+			default:
+				return 'Select timeframe';
+		}
+	}
+
+	return 'Select evaluation window';
+};
+
+export const getCompactDescription = (evaluationWindow: EvaluationWindowState): string => {
+	if (evaluationWindow.windowType === 'rolling') {
+		if (evaluationWindow.timeframe === 'custom') {
+			const unitSymbol = evaluationWindow.customDuration.unit;
+			return `Last ${evaluationWindow.customDuration.value}${unitSymbol}`;
+		}
+		// Convert timeframe to readable format
+		const timeframeOption = EVALUATION_WINDOW_TIMEFRAME.rolling.find(opt => opt.value === evaluationWindow.timeframe);
+		return timeframeOption?.label || evaluationWindow.timeframe;
+	}
+
+	if (evaluationWindow.windowType === 'cumulative') {
+		const time = evaluationWindow.startingAt.time;
+		const number = evaluationWindow.startingAt.number;
+
+		switch (evaluationWindow.timeframe) {
+			case 'currentHour':
+				return `Current hour from min ${number}`;
+			case 'currentDay':
+				return `Current day from ${time}`;
+			case 'currentMonth':
+				return `Current month from day ${number}`;
+			default:
+				return 'Select timeframe';
+		}
+	}
+
+	return 'Select evaluation window';
+};
+
 export const getTimeframeText = (
 	windowType: 'rolling' | 'cumulative',
 	timeframe: string,
+	evaluationWindow?: EvaluationWindowState,
 ): string => {
+	// If we have the full evaluation window object, use detailed description for button
+	if (evaluationWindow) {
+		return getDetailedDescription(evaluationWindow);
+	}
+	
+	// Fallback to simple text for backwards compatibility
 	if (windowType === 'rolling') {
 		return getRollingWindowTimeframeText(timeframe as RollingWindowTimeframes);
 	}
