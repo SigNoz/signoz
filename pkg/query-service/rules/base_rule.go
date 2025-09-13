@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/converter"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -87,6 +88,8 @@ type BaseRule struct {
 	TemporalityMap map[string]map[v3.Temporality]bool
 
 	sqlstore sqlstore.SQLStore
+
+	evaluation ruletypes.Evaluation
 }
 
 type RuleOption func(*BaseRule)
@@ -129,6 +132,10 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	if err != nil {
 		return nil, err
 	}
+	evaluation, err := p.Evaluation.GetEvaluation()
+	if err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to get evaluation: %v", err)
+	}
 
 	baseRule := &BaseRule{
 		id:                id,
@@ -146,6 +153,7 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 		reader:            reader,
 		TemporalityMap:    make(map[string]map[v3.Temporality]bool),
 		Threshold:         threshold,
+		evaluation:        evaluation,
 	}
 
 	if baseRule.evalWindow == 0 {
@@ -248,8 +256,10 @@ func (r *BaseRule) Unit() string {
 }
 
 func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time) {
-	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli()
-	end := ts.UnixMilli()
+
+	st, en := r.evaluation.NextWindowFor(ts)
+	start := st.UnixMilli()
+	end := en.UnixMilli()
 
 	if r.evalDelay > 0 {
 		start = start - int64(r.evalDelay.Milliseconds())
