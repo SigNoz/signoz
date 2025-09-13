@@ -30,6 +30,7 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { isEmpty, isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { EventSourceProvider } from 'providers/EventSource';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
@@ -45,6 +46,7 @@ import { ExplorerViews } from './utils';
 
 function LogsExplorer(): JSX.Element {
 	const [searchParams] = useSearchParams();
+	const [showLiveLogs, setShowLiveLogs] = useState<boolean>(false);
 
 	// Get panel type from URL
 	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
@@ -144,6 +146,11 @@ function LogsExplorer(): JSX.Element {
 			}
 
 			setSelectedView(view);
+
+			if (view !== ExplorerViews.LIST) {
+				setShowLiveLogs(false);
+			}
+
 			handleExplorerTabChange(
 				view === ExplorerViews.TIMESERIES ? PANEL_TYPES.TIME_SERIES : view,
 			);
@@ -335,62 +342,79 @@ function LogsExplorer(): JSX.Element {
 		[],
 	);
 
+	const handleShowLiveLogs = useCallback(() => {
+		setShowLiveLogs(true);
+	}, []);
+
+	const handleExitLiveLogs = useCallback(() => {
+		setShowLiveLogs(false);
+	}, []);
+
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<div className={cx('logs-module-page', showFilters ? 'filter-visible' : '')}>
-				{showFilters && (
-					<section className={cx('log-quick-filter-left-section')}>
-						<QuickFilters
-							className="qf-logs-explorer"
-							signal={SignalType.LOGS}
-							source={QuickFiltersSource.LOGS_EXPLORER}
-							handleFilterVisibilityChange={handleFilterVisibilityChange}
-						/>
-					</section>
-				)}
-				<section className={cx('log-module-right-section')}>
-					<Toolbar
-						showAutoRefresh={false}
-						leftActions={
-							<LeftToolbarActions
-								showFilter={showFilters}
+			<EventSourceProvider>
+				<div
+					className={cx('logs-module-page', showFilters ? 'filter-visible' : '')}
+				>
+					{showFilters && (
+						<section className={cx('log-quick-filter-left-section')}>
+							<QuickFilters
+								className="qf-logs-explorer"
+								signal={SignalType.LOGS}
+								source={QuickFiltersSource.LOGS_EXPLORER}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
-								items={toolbarViews}
-								selectedView={selectedView}
-								onChangeSelectedView={handleChangeSelectedView}
 							/>
-						}
-						warningElement={
-							!isEmpty(warning) ? <WarningPopover warningData={warning} /> : <div />
-						}
-						rightActions={
-							<RightToolbarActions
-								onStageRunQuery={(): void => handleRunQuery(true, true)}
-								listQueryKeyRef={listQueryKeyRef}
-								chartQueryKeyRef={chartQueryKeyRef}
-								isLoadingQueries={isLoadingQueries}
-							/>
-						}
-					/>
+						</section>
+					)}
+					<section className={cx('log-module-right-section')}>
+						<Toolbar
+							showAutoRefresh={false}
+							leftActions={
+								<LeftToolbarActions
+									showFilter={showFilters}
+									handleFilterVisibilityChange={handleFilterVisibilityChange}
+									items={toolbarViews}
+									selectedView={selectedView}
+									onChangeSelectedView={handleChangeSelectedView}
+								/>
+							}
+							warningElement={
+								!isEmpty(warning) ? <WarningPopover warningData={warning} /> : <div />
+							}
+							rightActions={
+								<RightToolbarActions
+									onStageRunQuery={(): void => handleRunQuery()}
+									listQueryKeyRef={listQueryKeyRef}
+									chartQueryKeyRef={chartQueryKeyRef}
+									isLoadingQueries={isLoadingQueries}
+									showLiveLogs={showLiveLogs}
+								/>
+							}
+							showLiveLogs={showLiveLogs}
+							onGoLive={handleShowLiveLogs}
+							onExitLiveLogs={handleExitLiveLogs}
+						/>
 
-					<div className="log-explorer-query-container">
-						<div>
-							<ExplorerCard sourcepage={DataSource.LOGS}>
-								<LogExplorerQuerySection selectedView={selectedView} />
-							</ExplorerCard>
+						<div className="log-explorer-query-container">
+							<div>
+								<ExplorerCard sourcepage={DataSource.LOGS}>
+									<LogExplorerQuerySection selectedView={selectedView} />
+								</ExplorerCard>
+							</div>
+							<div className="logs-explorer-views">
+								<LogsExplorerViewsContainer
+									selectedView={selectedView}
+									listQueryKeyRef={listQueryKeyRef}
+									chartQueryKeyRef={chartQueryKeyRef}
+									setIsLoadingQueries={setIsLoadingQueries}
+									setWarning={setWarning}
+									showLiveLogs={showLiveLogs}
+								/>
+							</div>
 						</div>
-						<div className="logs-explorer-views">
-							<LogsExplorerViewsContainer
-								selectedView={selectedView}
-								listQueryKeyRef={listQueryKeyRef}
-								chartQueryKeyRef={chartQueryKeyRef}
-								setIsLoadingQueries={setIsLoadingQueries}
-								setWarning={setWarning}
-							/>
-						</div>
-					</div>
-				</section>
-			</div>
+					</section>
+				</div>
+			</EventSourceProvider>
 		</Sentry.ErrorBoundary>
 	);
 }

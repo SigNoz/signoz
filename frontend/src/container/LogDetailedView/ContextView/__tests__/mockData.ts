@@ -43,7 +43,6 @@ export const mockQuery: Query = {
 					key: 'body',
 					type: 'string',
 					dataType: DataTypes.String,
-					isColumn: true,
 				},
 				timeAggregation: 'sum',
 				functions: [],
@@ -59,6 +58,7 @@ export const mockQuery: Query = {
 			},
 		],
 		queryFormulas: [],
+		queryTraceOperator: [],
 	},
 	clickhouse_sql: [],
 	id: 'test-query-id',
@@ -69,7 +69,6 @@ const mockBaseAutocompleteData: BaseAutocompleteData = {
 	key: 'service',
 	type: 'string',
 	dataType: DataTypes.String,
-	isColumn: true,
 };
 
 export const mockTagFilter: TagFilter = {

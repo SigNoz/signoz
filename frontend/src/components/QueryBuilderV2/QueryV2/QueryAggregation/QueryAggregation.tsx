@@ -4,7 +4,10 @@ import { Tooltip } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useMemo } from 'react';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	IBuilderTraceOperator,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import QueryAggregationSelect from './QueryAggregationSelect';
@@ -20,7 +23,7 @@ function QueryAggregationOptions({
 	panelType?: string;
 	onAggregationIntervalChange: (value: number) => void;
 	onChange?: (value: string) => void;
-	queryData: IBuilderQuery;
+	queryData: IBuilderQuery | IBuilderTraceOperator;
 }): JSX.Element {
 	const showAggregationInterval = useMemo(() => {
 		// eslint-disable-next-line sonarjs/prefer-single-boolean-return
@@ -81,9 +84,7 @@ function QueryAggregationOptions({
 
 						<div className="query-aggregation-interval-input-container">
 							<InputWithLabel
-								initialValue={
-									queryData?.stepInterval ? queryData?.stepInterval : undefined
-								}
+								initialValue={queryData?.stepInterval ? queryData?.stepInterval : null}
 								className="query-aggregation-interval-input"
 								label="Seconds"
 								placeholder="Auto"

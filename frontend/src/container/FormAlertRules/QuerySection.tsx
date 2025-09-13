@@ -31,6 +31,7 @@ function QuerySection({
 	alertDef,
 	panelType,
 	ruleId,
+	hideTitle,
 }: QuerySectionProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
@@ -54,6 +55,7 @@ function QuerySection({
 				queryVariant: 'static',
 				initialDataSource: ALERTS_DATA_SOURCE_MAP[alertType],
 			}}
+			showTraceOperator={alertType === AlertTypes.TRACES_BASED_ALERT}
 			showFunctions={
 				(alertType === AlertTypes.METRICS_BASED_ALERT &&
 					alertDef.version === ENTITY_VERSION_V4) ||
@@ -217,7 +219,9 @@ function QuerySection({
 
 	return (
 		<>
-			<StepHeading> {t('alert_form_step2', { step: step2Label })}</StepHeading>
+			{!hideTitle && (
+				<StepHeading> {t('alert_form_step2', { step: step2Label })}</StepHeading>
+			)}
 			<FormContainer className="alert-query-section-container">
 				<div>{renderTabs(alertType)}</div>
 				{renderQuerySection(currentTab)}
@@ -234,6 +238,11 @@ interface QuerySectionProps {
 	alertDef: AlertDef;
 	panelType: PANEL_TYPES;
 	ruleId: string;
+	hideTitle?: boolean;
 }
+
+QuerySection.defaultProps = {
+	hideTitle: false,
+};
 
 export default QuerySection;

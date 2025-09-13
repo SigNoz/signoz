@@ -272,27 +272,15 @@ func (m *Manager) initiate(ctx context.Context) error {
 
 		for _, rec := range storedRules {
 			taskName := fmt.Sprintf("%s-groupname", rec.ID.StringValue())
-			parsedRule, err := ruletypes.ParsePostableRule([]byte(rec.Data))
+			parsedRule := ruletypes.PostableRule{}
+
+			err := json.Unmarshal([]byte(rec.Data), &parsedRule)
 			if err != nil {
-				if errors.Is(err, ruletypes.ErrFailedToParseJSON) {
-					zap.L().Info("failed to load rule in json format, trying yaml now:", zap.String("name", taskName))
-
-					// see if rule is stored in yaml format
-					parsedRule, err = ruletypes.ParsePostableRuleWithKind([]byte(rec.Data), ruletypes.RuleDataKindYaml)
-
-					if err != nil {
-						zap.L().Error("failed to parse and initialize yaml rule", zap.String("name", taskName), zap.Error(err))
-						// just one rule is being parsed so expect just one error
-						loadErrors = append(loadErrors, err)
-						continue
-					}
-				} else {
-					zap.L().Error("failed to parse and initialize rule", zap.String("name", taskName), zap.Error(err))
-					// just one rule is being parsed so expect just one error
-					loadErrors = append(loadErrors, err)
-					continue
-				}
+				zap.L().Info("failed to load rule in json format", zap.String("name", taskName))
+				loadErrors = append(loadErrors, err)
+				continue
 			}
+
 			if !parsedRule.Disabled {
 				if parsedRule.NotificationGroups != nil {
 					err = m.NotificationGroup.SetGroupLabels(org.ID.StringValue(), rec.ID.StringValue(), parsedRule.NotificationGroups)
@@ -300,7 +288,7 @@ func (m *Manager) initiate(ctx context.Context) error {
 						zap.L().Error("failed to load the notification group definition", zap.String("name", rec.ID.StringValue()), zap.Error(err))
 					}
 				}
-				err := m.addTask(ctx, org.ID, parsedRule, taskName)
+				err := m.addTask(ctx, org.ID, &parsedRule, taskName)
 				if err != nil {
 					zap.L().Error("failed to load the rule definition", zap.String("name", taskName), zap.Error(err))
 				}
@@ -346,8 +334,8 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 	if err != nil {
 		return err
 	}
-
-	parsedRule, err := ruletypes.ParsePostableRule([]byte(ruleStr))
+	parsedRule := ruletypes.PostableRule{}
+	err = json.Unmarshal([]byte(ruleStr), &parsedRule)
 	if err != nil {
 		return err
 	}
@@ -397,7 +385,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 		if err != nil {
 			return err
 		}
-		err = m.syncRuleStateWithTask(ctx, orgID, prepareTaskName(existingRule.ID.StringValue()), parsedRule)
+		err = m.syncRuleStateWithTask(ctx, orgID, prepareTaskName(existingRule.ID.StringValue()), &parsedRule)
 		if err != nil {
 			return err
 		}
@@ -530,8 +518,8 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 	if err != nil {
 		return nil, err
 	}
-
-	parsedRule, err := ruletypes.ParsePostableRule([]byte(ruleStr))
+	parsedRule := ruletypes.PostableRule{}
+	err = json.Unmarshal([]byte(ruleStr), &parsedRule)
 	if err != nil {
 		return nil, err
 	}
@@ -590,7 +578,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 				return err
 			}
 		}
-		if err = m.addTask(ctx, orgID, parsedRule, taskName); err != nil {
+		if err = m.addTask(ctx, orgID, &parsedRule, taskName); err != nil {
 			return err
 		}
 
@@ -602,7 +590,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 
 	return &ruletypes.GettableRule{
 		Id:           id.StringValue(),
-		PostableRule: *parsedRule,
+		PostableRule: parsedRule,
 	}, nil
 }
 
@@ -820,8 +808,9 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules,
 
 	for _, s := range storedRules {
 
-		ruleResponse := &ruletypes.GettableRule{}
-		if err := json.Unmarshal([]byte(s.Data), ruleResponse); err != nil { // Parse []byte to go struct pointer
+		ruleResponse := ruletypes.GettableRule{}
+		err = json.Unmarshal([]byte(s.Data), &ruleResponse)
+		if err != nil {
 			zap.L().Error("failed to unmarshal rule from db", zap.String("id", s.ID.StringValue()), zap.Error(err))
 			continue
 		}
@@ -839,7 +828,7 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules,
 		ruleResponse.CreatedBy = &s.CreatedBy
 		ruleResponse.UpdatedAt = &s.UpdatedAt
 		ruleResponse.UpdatedBy = &s.UpdatedBy
-		resp = append(resp, ruleResponse)
+		resp = append(resp, &ruleResponse)
 	}
 
 	return &ruletypes.GettableRules{Rules: resp}, nil
@@ -850,8 +839,10 @@ func (m *Manager) GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.Getta
 	if err != nil {
 		return nil, err
 	}
-	r := &ruletypes.GettableRule{}
-	if err := json.Unmarshal([]byte(s.Data), r); err != nil {
+	r := ruletypes.GettableRule{}
+	err = json.Unmarshal([]byte(s.Data), &r)
+	if err != nil {
+		zap.L().Error("failed to unmarshal rule from db", zap.String("id", s.ID.StringValue()), zap.Error(err))
 		return nil, err
 	}
 	r.Id = id.StringValue()
@@ -867,7 +858,7 @@ func (m *Manager) GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.Getta
 	r.UpdatedAt = &s.UpdatedAt
 	r.UpdatedBy = &s.UpdatedBy
 
-	return r, nil
+	return &r, nil
 }
 
 // syncRuleStateWithTask ensures that the state of a stored rule matches
@@ -925,20 +916,14 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 	}
 
 	// storedRule holds the current stored rule from DB
-	storedRule := ruletypes.PostableRule{}
-	if err := json.Unmarshal([]byte(storedJSON.Data), &storedRule); err != nil {
+	patchedRule := ruletypes.PostableRule{}
+	if err := json.Unmarshal([]byte(ruleStr), &patchedRule); err != nil {
 		zap.L().Error("failed to unmarshal stored rule with given id", zap.String("id", id.StringValue()), zap.Error(err))
 		return nil, err
 	}
 
-	// patchedRule is combo of stored rule and patch received in the request
-	patchedRule, err := ruletypes.ParseIntoRule(storedRule, []byte(ruleStr), "json")
-	if err != nil {
-		return nil, err
-	}
-
 	// deploy or un-deploy task according to patched (new) rule state
-	if err := m.syncRuleStateWithTask(ctx, orgID, taskName, patchedRule); err != nil {
+	if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &patchedRule); err != nil {
 		zap.L().Error("failed to sync stored rule state with the task", zap.String("taskName", taskName), zap.Error(err))
 		return nil, err
 	}
@@ -956,7 +941,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 
 	err = m.ruleStore.EditRule(ctx, storedJSON, func(ctx context.Context) error { return nil })
 	if err != nil {
-		if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &storedRule); err != nil {
+		if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &patchedRule); err != nil {
 			zap.L().Error("failed to restore rule after patch failure", zap.String("taskName", taskName), zap.Error(err))
 		}
 		return nil, err
@@ -965,7 +950,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 	// prepare http response
 	response := ruletypes.GettableRule{
 		Id:           id.StringValue(),
-		PostableRule: *patchedRule,
+		PostableRule: patchedRule,
 	}
 
 	// fetch state of rule from memory
@@ -982,15 +967,14 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 // TestNotification prepares a dummy rule for given rule parameters and
 // sends a test notification. returns alert count and error (if any)
 func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleStr string) (int, *model.ApiError) {
-
-	parsedRule, err := ruletypes.ParsePostableRule([]byte(ruleStr))
-
+	parsedRule := ruletypes.PostableRule{}
+	err := json.Unmarshal([]byte(ruleStr), &parsedRule)
 	if err != nil {
 		return 0, model.BadRequest(err)
 	}
 
 	alertCount, apiErr := m.prepareTestRuleFunc(PrepareTestRuleOptions{
-		Rule:             parsedRule,
+		Rule:             &parsedRule,
 		RuleStore:        m.ruleStore,
 		MaintenanceStore: m.maintenanceStore,
 		Logger:           m.logger,
@@ -1024,15 +1008,15 @@ func (m *Manager) GetAlertDetailsForMetricNames(ctx context.Context, metricNames
 
 	for _, storedRule := range rules {
 		var rule ruletypes.GettableRule
-		if err := json.Unmarshal([]byte(storedRule.Data), &rule); err != nil {
-			zap.L().Error("Invalid rule data", zap.Error(err))
+		err = json.Unmarshal([]byte(storedRule.Data), &rule)
+		if err != nil {
+			zap.L().Error("failed to unmarshal rule from db", zap.String("id", storedRule.ID.StringValue()), zap.Error(err))
 			continue
 		}
 
 		if rule.AlertType != ruletypes.AlertTypeMetric || rule.RuleCondition == nil || rule.RuleCondition.CompositeQuery == nil {
 			continue
 		}
-
 		rule.Id = storedRule.ID.StringValue()
 		rule.CreatedAt = &storedRule.CreatedAt
 		rule.CreatedBy = &storedRule.CreatedBy

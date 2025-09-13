@@ -2,7 +2,6 @@ package signoz
 
 import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
-	"github.com/SigNoz/signoz/pkg/alertmanager/legacyalertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/analytics/noopanalytics"
@@ -135,6 +134,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddFactorIndexesFactory(sqlstore, sqlschema),
 		sqlmigration.NewQueryBuilderV5MigrationFactory(sqlstore, telemetryStore),
 		sqlmigration.NewAddMeterQuickFiltersFactory(sqlstore, sqlschema),
+		sqlmigration.NewUpdateTTLSettingForCustomRetentionFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -167,7 +167,6 @@ func NewNotificationGroupingProviderFactories() factory.NamedMap[factory.Provide
 
 func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationGroups nfgrouping.NotificationGroups) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
 	return factory.MustNewNamedMap(
-		legacyalertmanager.NewFactory(sqlstore, orgGetter),
 		signozalertmanager.NewFactory(sqlstore, orgGetter, notificationGroups),
 	)
 }

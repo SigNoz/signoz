@@ -43,8 +43,6 @@ export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 			key: 'deployment.environment',
 			dataType: DataTypes.String,
 			type: 'resource',
-			isColumn: false,
-			isJSON: false,
 		},
 		dataSource: DataSource.TRACES,
 		defaultOpen: true,
@@ -56,8 +54,6 @@ export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 			key: 'service.name',
 			dataType: DataTypes.String,
 			type: 'resource',
-			isColumn: true,
-			isJSON: false,
 		},
 		dataSource: DataSource.TRACES,
 		defaultOpen: true,
@@ -69,8 +65,6 @@ export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 			key: 'rpc.method',
 			dataType: DataTypes.String,
 			type: 'tag',
-			isColumn: true,
-			isJSON: false,
 		},
 		dataSource: DataSource.TRACES,
 		defaultOpen: true,
@@ -255,22 +249,16 @@ export const hardcodedAttributeKeys: BaseAutocompleteData[] = [
 		key: 'deployment.environment',
 		dataType: DataTypes.String,
 		type: 'resource',
-		isColumn: false,
-		isJSON: false,
 	},
 	{
 		key: 'service.name',
 		dataType: DataTypes.String,
 		type: 'resource',
-		isColumn: true,
-		isJSON: false,
 	},
 	{
 		key: 'rpc.method',
 		dataType: DataTypes.String,
 		type: 'tag',
-		isColumn: true,
-		isJSON: false,
 	},
 ];
 
@@ -352,8 +340,6 @@ export const getDomainMetricsQueryPayload = (
 						aggregateOperator: 'count',
 						aggregateAttribute: {
 							dataType: DataTypes.String,
-							isColumn: false,
-							isJSON: false,
 							key: SPAN_ATTRIBUTES.URL_PATH,
 							type: 'tag',
 						},
@@ -366,8 +352,6 @@ export const getDomainMetricsQueryPayload = (
 									id: '4c57937c',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
@@ -394,8 +378,6 @@ export const getDomainMetricsQueryPayload = (
 						aggregateOperator: 'p99',
 						aggregateAttribute: {
 							dataType: DataTypes.Float64,
-							isColumn: true,
-							isJSON: false,
 							key: 'duration_nano',
 							type: '',
 						},
@@ -408,8 +390,6 @@ export const getDomainMetricsQueryPayload = (
 									id: '2cf675cd',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
@@ -437,7 +417,6 @@ export const getDomainMetricsQueryPayload = (
 						aggregateAttribute: {
 							dataType: DataTypes.String,
 							id: '------false',
-							isColumn: false,
 							key: '',
 							type: '',
 						},
@@ -450,8 +429,6 @@ export const getDomainMetricsQueryPayload = (
 									id: '3db0f605',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
@@ -462,8 +439,6 @@ export const getDomainMetricsQueryPayload = (
 									id: '6096f745',
 									key: {
 										dataType: DataTypes.bool,
-										isColumn: true,
-										isJSON: false,
 										key: 'has_error',
 										type: '',
 									},
@@ -491,7 +466,6 @@ export const getDomainMetricsQueryPayload = (
 						aggregateAttribute: {
 							dataType: DataTypes.String,
 							id: 'timestamp------false',
-							isColumn: false,
 							key: 'timestamp',
 							type: '',
 						},
@@ -504,8 +478,6 @@ export const getDomainMetricsQueryPayload = (
 									id: '8ff8dea1',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
@@ -535,6 +507,7 @@ export const getDomainMetricsQueryPayload = (
 						legend: '',
 					},
 				],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{
@@ -639,8 +612,6 @@ export const getEndPointsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.String,
-								isColumn: true,
-								isJSON: false,
 								key: 'span_id',
 								type: '',
 							},
@@ -654,8 +625,6 @@ export const getEndPointsQueryPayload = (
 										id: 'ec316e57',
 										key: {
 											dataType: DataTypes.String,
-											isColumn: false,
-											isJSON: false,
 											key: SPAN_ATTRIBUTES.SERVER_NAME,
 											type: 'tag',
 										},
@@ -668,8 +637,6 @@ export const getEndPointsQueryPayload = (
 											key: 'kind_string',
 											dataType: DataTypes.String,
 											type: '',
-											isColumn: true,
-											isJSON: false,
 										},
 										op: '=',
 										value: 'Client',
@@ -692,8 +659,6 @@ export const getEndPointsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								isColumn: true,
-								isJSON: false,
 								key: 'duration_nano',
 								type: '',
 							},
@@ -707,8 +672,6 @@ export const getEndPointsQueryPayload = (
 										id: '46d57857',
 										key: {
 											dataType: DataTypes.String,
-											isColumn: false,
-											isJSON: false,
 											key: SPAN_ATTRIBUTES.SERVER_NAME,
 											type: 'tag',
 										},
@@ -721,8 +684,6 @@ export const getEndPointsQueryPayload = (
 											key: 'kind_string',
 											dataType: DataTypes.String,
 											type: '',
-											isColumn: true,
-											isJSON: false,
 										},
 										op: '=',
 										value: 'Client',
@@ -746,7 +707,6 @@ export const getEndPointsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.String,
 								id: 'timestamp------false',
-								isColumn: false,
 								key: 'timestamp',
 								type: '',
 							},
@@ -760,8 +720,6 @@ export const getEndPointsQueryPayload = (
 										id: '4a237616',
 										key: {
 											dataType: DataTypes.String,
-											isColumn: false,
-											isJSON: false,
 											key: SPAN_ATTRIBUTES.SERVER_NAME,
 											type: 'tag',
 										},
@@ -774,8 +732,6 @@ export const getEndPointsQueryPayload = (
 											key: 'kind_string',
 											dataType: DataTypes.String,
 											type: '',
-											isColumn: true,
-											isJSON: false,
 										},
 										op: '=',
 										value: 'Client',
@@ -798,8 +754,6 @@ export const getEndPointsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.String,
-								isColumn: true,
-								isJSON: false,
 								key: 'span_id',
 								type: '',
 							},
@@ -813,8 +767,6 @@ export const getEndPointsQueryPayload = (
 										id: 'f162de1e',
 										key: {
 											dataType: DataTypes.String,
-											isColumn: false,
-											isJSON: false,
 											key: SPAN_ATTRIBUTES.SERVER_NAME,
 											type: 'tag',
 										},
@@ -825,8 +777,6 @@ export const getEndPointsQueryPayload = (
 										id: '3df0ac1d',
 										key: {
 											dataType: DataTypes.bool,
-											isColumn: true,
-											isJSON: false,
 											key: 'has_error',
 											type: '',
 										},
@@ -839,8 +789,6 @@ export const getEndPointsQueryPayload = (
 											key: 'kind_string',
 											dataType: DataTypes.String,
 											type: '',
-											isColumn: true,
-											isJSON: false,
 										},
 										op: '=',
 										value: 'Client',
@@ -869,6 +817,7 @@ export const getEndPointsQueryPayload = (
 							legend: 'error percentage',
 						},
 					],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -919,9 +868,7 @@ export const getTopErrorsQueryPayload = (
 							id: '------false',
 							dataType: DataTypes.String,
 							key: '',
-							isColumn: false,
 							type: '',
-							isJSON: false,
 						},
 						timeAggregation: 'rate',
 						spaceAggregation: 'sum',
@@ -935,8 +882,6 @@ export const getTopErrorsQueryPayload = (
 										key: 'kind_string',
 										dataType: DataTypes.String,
 										type: '',
-										isColumn: true,
-										isJSON: false,
 									},
 									op: '=',
 									value: 'Client',
@@ -947,8 +892,6 @@ export const getTopErrorsQueryPayload = (
 										key: SPAN_ATTRIBUTES.URL_PATH,
 										dataType: DataTypes.String,
 										type: 'tag',
-										isColumn: false,
-										isJSON: false,
 									},
 									op: 'exists',
 									value: '',
@@ -961,8 +904,6 @@ export const getTopErrorsQueryPayload = (
 													key: 'status_message',
 													dataType: DataTypes.String,
 													type: '',
-													isColumn: true,
-													isJSON: false,
 												},
 												op: 'exists',
 												value: '',
@@ -975,8 +916,6 @@ export const getTopErrorsQueryPayload = (
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										dataType: DataTypes.String,
 										type: 'tag',
-										isColumn: false,
-										isJSON: false,
 									},
 									op: '=',
 									value: domainName,
@@ -987,8 +926,6 @@ export const getTopErrorsQueryPayload = (
 										key: 'has_error',
 										dataType: DataTypes.bool,
 										type: '',
-										isColumn: true,
-										isJSON: false,
 									},
 									op: '=',
 									value: true,
@@ -1012,13 +949,9 @@ export const getTopErrorsQueryPayload = (
 								key: SPAN_ATTRIBUTES.URL_PATH,
 								dataType: DataTypes.String,
 								type: 'tag',
-								isColumn: false,
-								isJSON: false,
 							},
 							{
 								dataType: DataTypes.String,
-								isColumn: true,
-								isJSON: false,
 								key: 'response_status_code',
 								type: '',
 								id: 'response_status_code--string----true',
@@ -1027,8 +960,6 @@ export const getTopErrorsQueryPayload = (
 								key: 'status_message',
 								dataType: DataTypes.String,
 								type: '',
-								isColumn: true,
-								isJSON: false,
 							},
 						],
 						legend: '',
@@ -1036,6 +967,7 @@ export const getTopErrorsQueryPayload = (
 					},
 				],
 				queryFormulas: [],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{
@@ -1404,8 +1336,6 @@ export const getTopErrorsCoRelationQueryFilters = (
 				key: 'http.url',
 				dataType: DataTypes.String,
 				type: 'tag',
-				isColumn: false,
-				isJSON: false,
 				id: 'http.url--string--tag--false',
 			},
 			op: '=',
@@ -1417,8 +1347,6 @@ export const getTopErrorsCoRelationQueryFilters = (
 				key: 'has_error',
 				dataType: DataTypes.bool,
 				type: '',
-				isColumn: false,
-				isJSON: false,
 			},
 			op: '=',
 			value: 'true',
@@ -1429,8 +1357,6 @@ export const getTopErrorsCoRelationQueryFilters = (
 				key: 'net.peer.name',
 				dataType: DataTypes.String,
 				type: '',
-				isColumn: false,
-				isJSON: false,
 			},
 			op: '=',
 			value: domainName,
@@ -1441,8 +1367,6 @@ export const getTopErrorsCoRelationQueryFilters = (
 				key: 'response_status_code',
 				dataType: DataTypes.String,
 				type: '',
-				isColumn: true,
-				isJSON: false,
 				id: 'response_status_code--string----true',
 			},
 			op: '=',
@@ -1551,8 +1475,6 @@ export const getEndPointDetailsQueryPayload = (
 						aggregateAttribute: {
 							dataType: DataTypes.String,
 							id: '------false',
-							isColumn: false,
-							isJSON: false,
 							key: '',
 							type: '',
 						},
@@ -1566,8 +1488,6 @@ export const getEndPointDetailsQueryPayload = (
 									id: '874562e1',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
@@ -1580,8 +1500,6 @@ export const getEndPointDetailsQueryPayload = (
 										key: 'kind_string',
 										dataType: DataTypes.String,
 										type: '',
-										isColumn: true,
-										isJSON: false,
 									},
 									op: '=',
 									value: 'Client',
@@ -1605,8 +1523,6 @@ export const getEndPointDetailsQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.Float64,
-							isColumn: true,
-							isJSON: false,
 							key: 'duration_nano',
 							type: '',
 						},
@@ -1620,8 +1536,6 @@ export const getEndPointDetailsQueryPayload = (
 									id: '0c5564e0',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
@@ -1634,8 +1548,6 @@ export const getEndPointDetailsQueryPayload = (
 										key: 'kind_string',
 										dataType: DataTypes.String,
 										type: '',
-										isColumn: true,
-										isJSON: false,
 									},
 									op: '=',
 									value: 'Client',
@@ -1659,8 +1571,6 @@ export const getEndPointDetailsQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.String,
-							isColumn: true,
-							isJSON: false,
 							key: 'span_id',
 							type: '',
 						},
@@ -1674,8 +1584,6 @@ export const getEndPointDetailsQueryPayload = (
 									id: '0d656701',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
@@ -1686,8 +1594,6 @@ export const getEndPointDetailsQueryPayload = (
 									id: '83ef9a1b',
 									key: {
 										dataType: DataTypes.bool,
-										isColumn: true,
-										isJSON: false,
 										key: 'has_error',
 										type: '',
 									},
@@ -1700,8 +1606,6 @@ export const getEndPointDetailsQueryPayload = (
 										key: 'kind_string',
 										dataType: DataTypes.String,
 										type: '',
-										isColumn: true,
-										isJSON: false,
 									},
 									op: '=',
 									value: 'Client',
@@ -1726,7 +1630,6 @@ export const getEndPointDetailsQueryPayload = (
 						aggregateAttribute: {
 							dataType: DataTypes.String,
 							id: 'timestamp------false',
-							isColumn: false,
 							key: 'timestamp',
 							type: '',
 						},
@@ -1740,8 +1643,6 @@ export const getEndPointDetailsQueryPayload = (
 									id: '918f5b99',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
@@ -1754,8 +1655,6 @@ export const getEndPointDetailsQueryPayload = (
 										key: 'kind_string',
 										dataType: DataTypes.String,
 										type: '',
-										isColumn: true,
-										isJSON: false,
 									},
 									op: '=',
 									value: 'Client',
@@ -1779,8 +1678,6 @@ export const getEndPointDetailsQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.String,
-							isColumn: true,
-							isJSON: false,
 							key: 'span_id',
 							type: '',
 						},
@@ -1794,8 +1691,6 @@ export const getEndPointDetailsQueryPayload = (
 									id: 'b355d1aa',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
@@ -1808,8 +1703,6 @@ export const getEndPointDetailsQueryPayload = (
 										key: 'kind_string',
 										dataType: DataTypes.String,
 										type: '',
-										isColumn: true,
-										isJSON: false,
 									},
 									op: '=',
 									value: 'Client',
@@ -1839,6 +1732,7 @@ export const getEndPointDetailsQueryPayload = (
 						legend: 'error percentage',
 					},
 				],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{
@@ -1874,8 +1768,6 @@ export const getEndPointDetailsQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.String,
-							isColumn: true,
-							isJSON: false,
 							key: 'span_id',
 							type: '',
 						},
@@ -1889,8 +1781,6 @@ export const getEndPointDetailsQueryPayload = (
 									id: '23450eb8',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
@@ -1903,8 +1793,6 @@ export const getEndPointDetailsQueryPayload = (
 										key: 'kind_string',
 										dataType: DataTypes.String,
 										type: '',
-										isColumn: true,
-										isJSON: false,
 									},
 									op: '=',
 									value: 'Client',
@@ -1917,8 +1805,6 @@ export const getEndPointDetailsQueryPayload = (
 						groupBy: [
 							{
 								dataType: DataTypes.String,
-								isColumn: true,
-								isJSON: false,
 								key: 'response_status_code',
 								type: '',
 							},
@@ -1936,8 +1822,6 @@ export const getEndPointDetailsQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.Float64,
-							isColumn: true,
-							isJSON: false,
 							key: 'duration_nano',
 							type: '',
 						},
@@ -1951,8 +1835,6 @@ export const getEndPointDetailsQueryPayload = (
 									id: '2687dc18',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
@@ -1965,8 +1847,6 @@ export const getEndPointDetailsQueryPayload = (
 										key: 'kind_string',
 										dataType: DataTypes.String,
 										type: '',
-										isColumn: true,
-										isJSON: false,
 									},
 									op: '=',
 									value: 'Client',
@@ -1979,8 +1859,6 @@ export const getEndPointDetailsQueryPayload = (
 						groupBy: [
 							{
 								dataType: DataTypes.String,
-								isColumn: true,
-								isJSON: false,
 								key: 'response_status_code',
 								type: '',
 							},
@@ -2002,7 +1880,6 @@ export const getEndPointDetailsQueryPayload = (
 						aggregateAttribute: {
 							dataType: DataTypes.String,
 							id: '------false',
-							isColumn: false,
 							key: '',
 							type: '',
 						},
@@ -2016,8 +1893,6 @@ export const getEndPointDetailsQueryPayload = (
 									key: {
 										dataType: DataTypes.String,
 										id: 'net.peer.name--string--tag--false',
-										isColumn: false,
-										isJSON: false,
 										key: 'net.peer.name',
 										type: 'tag',
 									},
@@ -2030,8 +1905,6 @@ export const getEndPointDetailsQueryPayload = (
 										key: 'kind_string',
 										dataType: DataTypes.String,
 										type: '',
-										isColumn: true,
-										isJSON: false,
 									},
 									op: '=',
 									value: 'Client',
@@ -2049,8 +1922,6 @@ export const getEndPointDetailsQueryPayload = (
 						groupBy: [
 							{
 								dataType: DataTypes.String,
-								isColumn: true,
-								isJSON: false,
 								key: 'response_status_code',
 								type: '',
 								id: 'response_status_code--string----true',
@@ -2061,6 +1932,7 @@ export const getEndPointDetailsQueryPayload = (
 					},
 				],
 				queryFormulas: [],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{
@@ -2100,7 +1972,6 @@ export const getEndPointDetailsQueryPayload = (
 						aggregateAttribute: {
 							dataType: DataTypes.String,
 							key: '',
-							isColumn: false,
 							type: '',
 						},
 						timeAggregation: 'count',
@@ -2114,8 +1985,6 @@ export const getEndPointDetailsQueryPayload = (
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										dataType: DataTypes.String,
 										type: 'tag',
-										isColumn: false,
-										isJSON: false,
 									},
 									op: '=',
 									value: domainName,
@@ -2126,8 +1995,6 @@ export const getEndPointDetailsQueryPayload = (
 										key: 'kind_string',
 										dataType: DataTypes.String,
 										type: '',
-										isColumn: true,
-										isJSON: false,
 									},
 									op: '=',
 									value: 'Client',
@@ -2148,14 +2015,13 @@ export const getEndPointDetailsQueryPayload = (
 								key: SPAN_ATTRIBUTES.URL_PATH,
 								dataType: DataTypes.String,
 								type: 'tag',
-								isColumn: false,
-								isJSON: false,
 							},
 						],
 						reduceTo: 'avg',
 					},
 				],
 				queryFormulas: [],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{
@@ -2191,8 +2057,6 @@ export const getEndPointDetailsQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.String,
-							isColumn: true,
-							isJSON: false,
 							key: 'span_id',
 							type: '',
 						},
@@ -2206,8 +2070,6 @@ export const getEndPointDetailsQueryPayload = (
 									id: 'b78ff216',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
@@ -2220,8 +2082,6 @@ export const getEndPointDetailsQueryPayload = (
 										key: 'kind_string',
 										dataType: DataTypes.String,
 										type: '',
-										isColumn: true,
-										isJSON: false,
 									},
 									op: '=',
 									value: 'Client',
@@ -2235,8 +2095,6 @@ export const getEndPointDetailsQueryPayload = (
 							{
 								dataType: DataTypes.String,
 								id: 'service.name--string--resource--true',
-								isColumn: true,
-								isJSON: false,
 								key: 'service.name',
 								type: 'resource',
 							},
@@ -2254,8 +2112,6 @@ export const getEndPointDetailsQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.Float64,
-							isColumn: true,
-							isJSON: false,
 							key: 'duration_nano',
 							type: '',
 						},
@@ -2269,8 +2125,6 @@ export const getEndPointDetailsQueryPayload = (
 									id: 'a9024472',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
@@ -2283,8 +2137,6 @@ export const getEndPointDetailsQueryPayload = (
 										key: 'kind_string',
 										dataType: DataTypes.String,
 										type: '',
-										isColumn: true,
-										isJSON: false,
 									},
 									op: '=',
 									value: 'Client',
@@ -2298,8 +2150,6 @@ export const getEndPointDetailsQueryPayload = (
 							{
 								dataType: DataTypes.String,
 								id: 'service.name--string--resource--true',
-								isColumn: true,
-								isJSON: false,
 								key: 'service.name',
 								type: 'resource',
 							},
@@ -2318,7 +2168,6 @@ export const getEndPointDetailsQueryPayload = (
 						aggregateAttribute: {
 							dataType: DataTypes.String,
 							id: '------false',
-							isColumn: false,
 							key: '',
 							type: '',
 						},
@@ -2332,8 +2181,6 @@ export const getEndPointDetailsQueryPayload = (
 									id: '1b6c062d',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
@@ -2346,8 +2193,6 @@ export const getEndPointDetailsQueryPayload = (
 										key: 'kind_string',
 										dataType: DataTypes.String,
 										type: '',
-										isColumn: true,
-										isJSON: false,
 									},
 									op: '=',
 									value: 'Client',
@@ -2361,8 +2206,6 @@ export const getEndPointDetailsQueryPayload = (
 							{
 								dataType: DataTypes.String,
 								id: 'service.name--string--resource--true',
-								isColumn: true,
-								isJSON: false,
 								key: 'service.name',
 								type: 'resource',
 							},
@@ -2380,8 +2223,6 @@ export const getEndPointDetailsQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.String,
-							isColumn: true,
-							isJSON: false,
 							key: 'span_id',
 							type: '',
 						},
@@ -2395,8 +2236,6 @@ export const getEndPointDetailsQueryPayload = (
 									id: 'd14792a8',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
@@ -2406,9 +2245,6 @@ export const getEndPointDetailsQueryPayload = (
 								{
 									id: '3212bf1a',
 									key: {
-										dataType: DataTypes.bool,
-										isColumn: true,
-										isJSON: false,
 										key: 'has_error',
 										type: '',
 									},
@@ -2421,8 +2257,6 @@ export const getEndPointDetailsQueryPayload = (
 										key: 'kind_string',
 										dataType: DataTypes.String,
 										type: '',
-										isColumn: true,
-										isJSON: false,
 									},
 									op: '=',
 									value: 'Client',
@@ -2436,8 +2270,6 @@ export const getEndPointDetailsQueryPayload = (
 							{
 								dataType: DataTypes.String,
 								id: 'service.name--string--resource--true',
-								isColumn: true,
-								isJSON: false,
 								key: 'service.name',
 								type: 'resource',
 							},
@@ -2461,6 +2293,7 @@ export const getEndPointDetailsQueryPayload = (
 						legend: 'error percentage',
 					},
 				],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{
@@ -2497,7 +2330,6 @@ export const getEndPointDetailsQueryPayload = (
 						aggregateAttribute: {
 							dataType: DataTypes.String,
 							id: '------false',
-							isColumn: false,
 							key: '',
 							type: '',
 						},
@@ -2511,8 +2343,6 @@ export const getEndPointDetailsQueryPayload = (
 									id: 'c6724407',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
@@ -2525,8 +2355,6 @@ export const getEndPointDetailsQueryPayload = (
 										key: 'kind_string',
 										dataType: DataTypes.String,
 										type: '',
-										isColumn: true,
-										isJSON: false,
 									},
 									op: '=',
 									value: 'Client',
@@ -2539,8 +2367,6 @@ export const getEndPointDetailsQueryPayload = (
 						groupBy: [
 							{
 								dataType: DataTypes.String,
-								isColumn: true,
-								isJSON: false,
 								key: 'response_status_code',
 								type: '',
 							},
@@ -2557,6 +2383,7 @@ export const getEndPointDetailsQueryPayload = (
 					},
 				],
 				queryFormulas: [],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{
@@ -2592,8 +2419,6 @@ export const getEndPointDetailsQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.Float64,
-							isColumn: true,
-							isJSON: false,
 							key: 'duration_nano',
 							type: '',
 						},
@@ -2607,8 +2432,6 @@ export const getEndPointDetailsQueryPayload = (
 									id: 'aae93366',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
@@ -2621,8 +2444,6 @@ export const getEndPointDetailsQueryPayload = (
 										key: 'kind_string',
 										dataType: DataTypes.String,
 										type: '',
-										isColumn: true,
-										isJSON: false,
 									},
 									op: '=',
 									value: 'Client',
@@ -2635,8 +2456,6 @@ export const getEndPointDetailsQueryPayload = (
 						groupBy: [
 							{
 								dataType: DataTypes.String,
-								isColumn: true,
-								isJSON: false,
 								key: 'response_status_code',
 								type: '',
 							},
@@ -2653,6 +2472,7 @@ export const getEndPointDetailsQueryPayload = (
 					},
 				],
 				queryFormulas: [],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{
@@ -2699,7 +2519,6 @@ export const getEndPointZeroStateQueryPayload = (
 						aggregateAttribute: {
 							dataType: DataTypes.String,
 							key: '',
-							isColumn: false,
 							type: '',
 						},
 						timeAggregation: 'count',
@@ -2713,8 +2532,6 @@ export const getEndPointZeroStateQueryPayload = (
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										dataType: DataTypes.String,
 										type: 'tag',
-										isColumn: false,
-										isJSON: false,
 									},
 									op: '=',
 									value: domainName,
@@ -2725,8 +2542,6 @@ export const getEndPointZeroStateQueryPayload = (
 										key: 'kind_string',
 										dataType: DataTypes.String,
 										type: '',
-										isColumn: true,
-										isJSON: false,
 									},
 									op: '=',
 									value: 'Client',
@@ -2746,14 +2561,13 @@ export const getEndPointZeroStateQueryPayload = (
 								key: SPAN_ATTRIBUTES.URL_PATH,
 								dataType: DataTypes.String,
 								type: 'tag',
-								isColumn: false,
-								isJSON: false,
 							},
 						],
 						reduceTo: 'avg',
 					},
 				],
 				queryFormulas: [],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{
@@ -3280,7 +3094,6 @@ export const getStatusCodeBarChartWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: '------false',
-						isColumn: false,
 						key: '',
 						type: '',
 					},
@@ -3294,8 +3107,6 @@ export const getStatusCodeBarChartWidgetData = (
 								id: 'c6724407',
 								key: {
 									dataType: DataTypes.String,
-									isColumn: false,
-									isJSON: false,
 									key: SPAN_ATTRIBUTES.SERVER_NAME,
 									type: 'tag',
 								},
@@ -3308,8 +3119,6 @@ export const getStatusCodeBarChartWidgetData = (
 											id: '8b1be6f0',
 											key: {
 												dataType: DataTypes.String,
-												isColumn: false,
-												isJSON: false,
 												key: SPAN_ATTRIBUTES.URL_PATH,
 												type: 'tag',
 											},
@@ -3336,6 +3145,7 @@ export const getStatusCodeBarChartWidgetData = (
 				},
 			],
 			queryFormulas: [],
+			queryTraceOperator: [],
 		},
 		clickhouse_sql: [
 			{
@@ -3358,7 +3168,6 @@ export const getStatusCodeBarChartWidgetData = (
 	},
 	description: '',
 	id: '315b15fa-ff0c-442f-89f8-2bf4fb1af2f2',
-	isStacked: false,
 	panelTypes: PANEL_TYPES.BAR,
 	title: '',
 	opacity: '',
@@ -3427,8 +3236,6 @@ export const getAllEndpointsWidgetData = (
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.String,
-						isColumn: true,
-						isJSON: false,
 						key: 'span_id',
 						type: '',
 					},
@@ -3442,8 +3249,6 @@ export const getAllEndpointsWidgetData = (
 								id: 'ec316e57',
 								key: {
 									dataType: DataTypes.String,
-									isColumn: false,
-									isJSON: false,
 									key: SPAN_ATTRIBUTES.SERVER_NAME,
 									type: 'tag',
 								},
@@ -3456,8 +3261,6 @@ export const getAllEndpointsWidgetData = (
 									key: 'kind_string',
 									dataType: DataTypes.String,
 									type: '',
-									isColumn: true,
-									isJSON: false,
 								},
 								op: '=',
 								value: 'Client',
@@ -3483,8 +3286,6 @@ export const getAllEndpointsWidgetData = (
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						isColumn: true,
-						isJSON: false,
 						key: 'duration_nano',
 						type: '',
 					},
@@ -3498,8 +3299,6 @@ export const getAllEndpointsWidgetData = (
 								id: '46d57857',
 								key: {
 									dataType: DataTypes.String,
-									isColumn: false,
-									isJSON: false,
 									key: SPAN_ATTRIBUTES.SERVER_NAME,
 									type: 'tag',
 								},
@@ -3512,8 +3311,6 @@ export const getAllEndpointsWidgetData = (
 									key: 'kind_string',
 									dataType: DataTypes.String,
 									type: '',
-									isColumn: true,
-									isJSON: false,
 								},
 								op: '=',
 								value: 'Client',
@@ -3540,7 +3337,6 @@ export const getAllEndpointsWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: 'timestamp------false',
-						isColumn: false,
 						key: 'timestamp',
 						type: '',
 					},
@@ -3554,8 +3350,6 @@ export const getAllEndpointsWidgetData = (
 								id: '4a237616',
 								key: {
 									dataType: DataTypes.String,
-									isColumn: false,
-									isJSON: false,
 									key: SPAN_ATTRIBUTES.SERVER_NAME,
 									type: 'tag',
 								},
@@ -3568,8 +3362,6 @@ export const getAllEndpointsWidgetData = (
 									key: 'kind_string',
 									dataType: DataTypes.String,
 									type: '',
-									isColumn: true,
-									isJSON: false,
 								},
 								op: '=',
 								value: 'Client',
@@ -3595,8 +3387,6 @@ export const getAllEndpointsWidgetData = (
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.String,
-						isColumn: true,
-						isJSON: false,
 						key: 'span_id',
 						type: '',
 					},
@@ -3610,8 +3400,6 @@ export const getAllEndpointsWidgetData = (
 								id: 'f162de1e',
 								key: {
 									dataType: DataTypes.String,
-									isColumn: false,
-									isJSON: false,
 									key: SPAN_ATTRIBUTES.SERVER_NAME,
 									type: 'tag',
 								},
@@ -3622,13 +3410,11 @@ export const getAllEndpointsWidgetData = (
 								id: '3df0ac1d',
 								key: {
 									dataType: DataTypes.bool,
-									isColumn: true,
-									isJSON: false,
 									key: 'has_error',
 									type: '',
 								},
 								op: '=',
-								value: 'true',
+								value: true,
 							},
 							{
 								id: '212678b9',
@@ -3636,8 +3422,6 @@ export const getAllEndpointsWidgetData = (
 									key: 'kind_string',
 									dataType: DataTypes.String,
 									type: '',
-									isColumn: true,
-									isJSON: false,
 								},
 								op: '=',
 								value: 'Client',
@@ -3773,8 +3557,6 @@ export const getGroupByFiltersFromGroupByValues = (
 				id: groupByAttribute?.id || v4(),
 				key: {
 					dataType: groupByAttribute?.dataType || DataTypes.String,
-					isColumn: groupByAttribute?.isColumn || true,
-					isJSON: groupByAttribute?.isJSON || false,
 					key: groupByAttribute?.key || key,
 					type: groupByAttribute?.type || '',
 				},
@@ -3810,7 +3592,6 @@ export const getRateOverTimeWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: '------false',
-						isColumn: false,
 						key: '',
 						type: '',
 					},
@@ -3824,8 +3605,6 @@ export const getRateOverTimeWidgetData = (
 								id: '3c76fe0b',
 								key: {
 									dataType: DataTypes.String,
-									isColumn: false,
-									isJSON: false,
 									key: SPAN_ATTRIBUTES.SERVER_NAME,
 									type: 'tag',
 								},
@@ -3874,8 +3653,6 @@ export const getLatencyOverTimeWidgetData = (
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						isColumn: true,
-						isJSON: false,
 						key: 'duration_nano',
 						type: '',
 					},
@@ -3889,8 +3666,6 @@ export const getLatencyOverTimeWidgetData = (
 								id: '63adb3ff',
 								key: {
 									dataType: DataTypes.String,
-									isColumn: false,
-									isJSON: false,
 									key: SPAN_ATTRIBUTES.SERVER_NAME,
 									type: 'tag',
 								},
@@ -4000,8 +3775,6 @@ export const getCustomFiltersForBarChart = (
 			key: {
 				dataType: DataTypes.String,
 				id: 'response_status_code--string--tag--false',
-				isColumn: false,
-				isJSON: false,
 				key: 'response_status_code',
 				type: 'tag',
 			},
@@ -4013,8 +3786,6 @@ export const getCustomFiltersForBarChart = (
 			key: {
 				dataType: DataTypes.String,
 				id: 'response_status_code--string--tag--false',
-				isColumn: false,
-				isJSON: false,
 				key: 'response_status_code',
 				type: 'tag',
 			},

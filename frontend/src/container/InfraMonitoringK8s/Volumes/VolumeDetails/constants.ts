@@ -78,8 +78,6 @@ export const getVolumeQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_volume_available--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sVolumeAvailableKey,
 								type: 'Gauge',
 							},
@@ -94,7 +92,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -106,7 +103,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -118,7 +114,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_volume_type--string--tag--false',
-											isColumn: false,
 											key: k8sVolumeTypeKey,
 											type: 'tag',
 										},
@@ -130,7 +125,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_persistentvolumeclaim_name--string--tag--false',
-											isColumn: false,
 											key: k8sPVCNameKey,
 											type: 'tag',
 										},
@@ -154,6 +148,7 @@ export const getVolumeQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: v4(),
@@ -175,8 +170,6 @@ export const getVolumeQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_volume_capacity--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sVolumeCapacityKey,
 								type: 'Gauge',
 							},
@@ -191,7 +184,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -203,7 +195,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -215,7 +206,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_volume_type--string--tag--false',
-											isColumn: false,
 											key: k8sVolumeTypeKey,
 											type: 'tag',
 										},
@@ -227,7 +217,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_persistentvolumeclaim_name--string--tag--false',
-											isColumn: false,
 											key: k8sPVCNameKey,
 											type: 'tag',
 										},
@@ -251,6 +240,7 @@ export const getVolumeQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: v4(),
@@ -272,7 +262,6 @@ export const getVolumeQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_volume_inodes_used--float64----true',
-								isColumn: true,
 								key: k8sVolumeInodesUsedKey,
 								type: '',
 							},
@@ -287,7 +276,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -299,7 +287,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -311,7 +298,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_volume_type--string--tag--false',
-											isColumn: false,
 											key: k8sVolumeTypeKey,
 											type: 'tag',
 										},
@@ -323,7 +309,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_persistentvolumeclaim_name--string--tag--false',
-											isColumn: false,
 											key: k8sPVCNameKey,
 											type: 'tag',
 										},
@@ -347,6 +332,7 @@ export const getVolumeQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: v4(),
@@ -368,7 +354,6 @@ export const getVolumeQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_volume_inodes--float64----true',
-								isColumn: true,
 								key: k8sVolumeInodesKey,
 								type: '',
 							},
@@ -383,7 +368,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -395,7 +379,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -407,7 +390,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_volume_type--string--tag--false',
-											isColumn: false,
 											key: k8sVolumeTypeKey,
 											type: 'tag',
 										},
@@ -419,7 +401,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_persistentvolumeclaim_name--string--tag--false',
-											isColumn: false,
 											key: k8sPVCNameKey,
 											type: 'tag',
 										},
@@ -443,6 +424,7 @@ export const getVolumeQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: v4(),
@@ -464,7 +446,6 @@ export const getVolumeQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_volume_inodes_free--float64----true',
-								isColumn: true,
 								key: k8sVolumeInodesFreeKey,
 								type: '',
 							},
@@ -479,7 +460,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -491,7 +471,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											isColumn: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -503,7 +482,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_volume_type--string--tag--false',
-											isColumn: false,
 											key: k8sVolumeTypeKey,
 											type: 'tag',
 										},
@@ -515,7 +493,6 @@ export const getVolumeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_persistentvolumeclaim_name--string--tag--false',
-											isColumn: false,
 											key: k8sPVCNameKey,
 											type: 'tag',
 										},
@@ -539,6 +516,7 @@ export const getVolumeQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: v4(),

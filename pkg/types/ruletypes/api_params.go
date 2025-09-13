@@ -3,18 +3,15 @@ package ruletypes
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 	"unicode/utf8"
 
+	signozError "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/pkg/errors"
-	"go.uber.org/multierr"
 
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
-	yaml "gopkg.in/yaml.v2"
 )
 
 type AlertType string
@@ -30,30 +27,20 @@ type RuleDataKind string
 
 const (
 	RuleDataKindJson RuleDataKind = "json"
-	RuleDataKindYaml RuleDataKind = "yaml"
 )
-
-var (
-	ErrFailedToParseJSON = errors.New("failed to parse json")
-	ErrFailedToParseYAML = errors.New("failed to parse yaml")
-	ErrInvalidDataType   = errors.New("invalid data type")
-)
-
-// this file contains api request and responses to be
-// served over http
 
 // PostableRule is used to create alerting rule from HTTP api
 type PostableRule struct {
-	AlertName   string    `yaml:"alert,omitempty" json:"alert,omitempty"`
-	AlertType   AlertType `yaml:"alertType,omitempty" json:"alertType,omitempty"`
-	Description string    `yaml:"description,omitempty" json:"description,omitempty"`
-	RuleType    RuleType  `yaml:"ruleType,omitempty" json:"ruleType,omitempty"`
-	EvalWindow  Duration  `yaml:"evalWindow,omitempty" json:"evalWindow,omitempty"`
-	Frequency   Duration  `yaml:"frequency,omitempty" json:"frequency,omitempty"`
+	AlertName   string    `json:"alert,omitempty"`
+	AlertType   AlertType `json:"alertType,omitempty"`
+	Description string    `json:"description,omitempty"`
+	RuleType    RuleType  `json:"ruleType,omitempty"`
+	EvalWindow  Duration  `json:"evalWindow,omitempty"`
+	Frequency   Duration  `json:"frequency,omitempty"`
 
-	RuleCondition *RuleCondition    `yaml:"condition,omitempty" json:"condition,omitempty"`
-	Labels        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
-	Annotations   map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	RuleCondition *RuleCondition    `json:"condition,omitempty"`
+	Labels        map[string]string `json:"labels,omitempty"`
+	Annotations   map[string]string `json:"annotations,omitempty"`
 
 	Disabled bool `json:"disabled"`
 
@@ -64,85 +51,66 @@ type PostableRule struct {
 
 	Version string `json:"version,omitempty"`
 
-	// legacy
-	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
-	OldYaml string `json:"yaml,omitempty"`
-
 	NotificationGroups []string `yaml:"notificationGroups,omitempty" json:"notificationGroups,omitempty"`
 }
 
-func ParsePostableRule(content []byte) (*PostableRule, error) {
-	return ParsePostableRuleWithKind(content, "json")
-}
+func (r *PostableRule) processRuleDefaults() error {
 
-func ParsePostableRuleWithKind(content []byte, kind RuleDataKind) (*PostableRule, error) {
-	return ParseIntoRule(PostableRule{}, content, kind)
-}
-
-// parseIntoRule loads the content (data) into PostableRule and also
-// validates the end result
-func ParseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*PostableRule, error) {
-	rule := &initRule
-
-	var err error
-	if kind == RuleDataKindJson {
-		if err = json.Unmarshal(content, rule); err != nil {
-			return nil, ErrFailedToParseJSON
-		}
-	} else if kind == RuleDataKindYaml {
-		if err = yaml.Unmarshal(content, rule); err != nil {
-			return nil, ErrFailedToParseYAML
-		}
-	} else {
-		return nil, ErrInvalidDataType
+	if r.EvalWindow == 0 {
+		r.EvalWindow = Duration(5 * time.Minute)
 	}
 
-	if rule.RuleCondition == nil && rule.Expr != "" {
-		// account for legacy rules
-		rule.RuleType = RuleTypeProm
-		rule.EvalWindow = Duration(5 * time.Minute)
-		rule.Frequency = Duration(1 * time.Minute)
-		rule.RuleCondition = &RuleCondition{
-			CompositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypePromQL,
-				PromQueries: map[string]*v3.PromQuery{
-					"A": {
-						Query: rule.Expr,
-					},
-				},
-			},
-		}
+	if r.Frequency == 0 {
+		r.Frequency = Duration(1 * time.Minute)
 	}
 
-	if rule.EvalWindow == 0 {
-		rule.EvalWindow = Duration(5 * time.Minute)
-	}
-
-	if rule.Frequency == 0 {
-		rule.Frequency = Duration(1 * time.Minute)
-	}
-
-	if rule.RuleCondition != nil {
-		if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-			if rule.RuleType == "" {
-				rule.RuleType = RuleTypeThreshold
+	if r.RuleCondition != nil {
+		if r.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+			if r.RuleType == "" {
+				r.RuleType = RuleTypeThreshold
 			}
-		} else if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
-			rule.RuleType = RuleTypeProm
+		} else if r.RuleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
+			r.RuleType = RuleTypeProm
 		}
 
-		for qLabel, q := range rule.RuleCondition.CompositeQuery.BuilderQueries {
+		for qLabel, q := range r.RuleCondition.CompositeQuery.BuilderQueries {
 			if q.AggregateAttribute.Key != "" && q.Expression == "" {
 				q.Expression = qLabel
 			}
 		}
+		//added alerts v2 fields
+		if r.RuleCondition.Thresholds == nil {
+			thresholdName := CriticalThresholdName
+			if r.Labels != nil {
+				if severity, ok := r.Labels["severity"]; ok {
+					thresholdName = severity
+				}
+			}
+			thresholdData := RuleThresholdData{
+				Kind: BasicThresholdKind,
+				Spec: BasicRuleThresholds{{
+					Name:        thresholdName,
+					RuleUnit:    r.RuleCondition.CompositeQuery.Unit,
+					TargetUnit:  r.RuleCondition.TargetUnit,
+					TargetValue: r.RuleCondition.Target,
+					MatchType:   r.RuleCondition.MatchType,
+					CompareOp:   r.RuleCondition.CompareOp,
+				}},
+			}
+			r.RuleCondition.Thresholds = &thresholdData
+		}
 	}
 
-	if err := rule.Validate(); err != nil {
-		return nil, err
-	}
+	return r.Validate()
+}
 
-	return rule, nil
+func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
+	type Alias PostableRule
+	aux := (*Alias)(r)
+	if err := json.Unmarshal(bytes, aux); err != nil {
+		return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "failed to parse json: %v", err)
+	}
+	return r.processRuleDefaults()
 }
 
 func isValidLabelName(ln string) bool {
@@ -206,47 +174,35 @@ func (r *PostableRule) Validate() error {
 
 	if r.RuleCondition == nil {
 		// will get panic if we try to access CompositeQuery, so return here
-		return errors.Errorf("rule condition is required")
+		return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "rule condition is required")
 	} else {
 		if r.RuleCondition.CompositeQuery == nil {
-			errs = append(errs, errors.Errorf("composite metric query is required"))
+			errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "composite metric query is required"))
 		}
 	}
 
 	if isAllQueriesDisabled(r.RuleCondition.CompositeQuery) {
-		errs = append(errs, errors.Errorf("all queries are disabled in rule condition"))
-	}
-
-	if r.RuleType == RuleTypeThreshold {
-		if r.RuleCondition.Target == nil {
-			errs = append(errs, errors.Errorf("rule condition missing the threshold"))
-		}
-		if r.RuleCondition.CompareOp == "" {
-			errs = append(errs, errors.Errorf("rule condition missing the compare op"))
-		}
-		if r.RuleCondition.MatchType == "" {
-			errs = append(errs, errors.Errorf("rule condition missing the match option"))
-		}
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "all queries are disabled in rule condition"))
 	}
 
 	for k, v := range r.Labels {
 		if !isValidLabelName(k) {
-			errs = append(errs, errors.Errorf("invalid label name: %s", k))
+			errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid label name: %s", k))
 		}
 
 		if !isValidLabelValue(v) {
-			errs = append(errs, errors.Errorf("invalid label value: %s", v))
+			errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid label value: %s", v))
 		}
 	}
 
 	for k := range r.Annotations {
 		if !isValidLabelName(k) {
-			errs = append(errs, errors.Errorf("invalid annotation name: %s", k))
+			errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid annotation name: %s", k))
 		}
 	}
 
 	errs = append(errs, testTemplateParsing(r)...)
-	return multierr.Combine(errs...)
+	return signozError.Join(errs...)
 }
 
 func testTemplateParsing(rl *PostableRule) (errs []error) {
@@ -274,7 +230,7 @@ func testTemplateParsing(rl *PostableRule) (errs []error) {
 	for _, val := range rl.Labels {
 		err := parseTest(val)
 		if err != nil {
-			errs = append(errs, fmt.Errorf("msg=%s", err.Error()))
+			errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "template parsing error: %s", err.Error()))
 		}
 	}
 
@@ -282,7 +238,7 @@ func testTemplateParsing(rl *PostableRule) (errs []error) {
 	for _, val := range rl.Annotations {
 		err := parseTest(val)
 		if err != nil {
-			errs = append(errs, fmt.Errorf("msg=%s", err.Error()))
+			errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "template parsing error: %s", err.Error()))
 		}
 	}
 

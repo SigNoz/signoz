@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/nfgrouping"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
@@ -76,8 +77,10 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		stopc:              make(chan struct{}),
 		notificationGroups: groups,
 	}
+	signozRegisterer := prometheus.WrapRegistererWithPrefix("signoz_", registry)
+	signozRegisterer = prometheus.WrapRegistererWith(prometheus.Labels{"org_id": server.orgID}, signozRegisterer)
 	// initialize marker
-	server.marker = alertmanagertypes.NewMarker(server.registry)
+	server.marker = alertmanagertypes.NewMarker(signozRegisterer)
 
 	// get silences for initial state
 	state, err := server.stateStore.Get(ctx, server.orgID)
@@ -100,7 +103,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 			MaxSilences:         func() int { return srvConfig.Silences.Max },
 			MaxSilenceSizeBytes: func() int { return srvConfig.Silences.MaxSizeBytes },
 		},
-		Metrics: server.registry,
+		Metrics: signozRegisterer,
 		Logger:  server.logger,
 	})
 	if err != nil {
@@ -119,7 +122,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 	server.nflog, err = nflog.New(nflog.Options{
 		SnapshotReader: strings.NewReader(nflogSnapshot),
 		Retention:      server.srvConfig.NFLog.Retention,
-		Metrics:        server.registry,
+		Metrics:        signozRegisterer,
 		Logger:         server.logger,
 	})
 	if err != nil {
@@ -184,13 +187,13 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		})
 	}()
 
-	server.alerts, err = mem.NewAlerts(ctx, server.marker, server.srvConfig.Alerts.GCInterval, nil, server.logger, server.registry)
+	server.alerts, err = mem.NewAlerts(ctx, server.marker, server.srvConfig.Alerts.GCInterval, nil, server.logger, signozRegisterer)
 	if err != nil {
 		return nil, err
 	}
 
-	server.pipelineBuilder = notify.NewPipelineBuilder(server.registry, featurecontrol.NoopFlags{})
-	server.dispatcherMetrics = NewDispatcherMetrics(false, server.registry)
+	server.pipelineBuilder = notify.NewPipelineBuilder(signozRegisterer, featurecontrol.NoopFlags{})
+	server.dispatcherMetrics = NewDispatcherMetrics(false, signozRegisterer)
 
 	return server, nil
 }
@@ -244,7 +247,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 			server.logger.InfoContext(ctx, "skipping creation of receiver not referenced by any route", "receiver", rcv.Name)
 			continue
 		}
-		integrations, err := alertmanagertypes.NewReceiverIntegrations(rcv, server.tmpl, server.logger)
+		integrations, err := alertmanagernotify.NewReceiverIntegrations(rcv, server.tmpl, server.logger)
 		if err != nil {
 			return err
 		}
@@ -319,7 +322,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 }
 
 func (server *Server) TestReceiver(ctx context.Context, receiver alertmanagertypes.Receiver) error {
-	return alertmanagertypes.TestReceiver(ctx, receiver, server.alertmanagerConfig, server.tmpl, server.logger, alertmanagertypes.NewTestAlert(receiver, time.Now(), time.Now()))
+	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, alertmanagertypes.NewTestAlert(receiver, time.Now(), time.Now()))
 }
 
 func (server *Server) TestAlert(ctx context.Context, postableAlert *alertmanagertypes.PostableAlert, receivers []string) error {
@@ -340,7 +343,7 @@ func (server *Server) TestAlert(ctx context.Context, postableAlert *alertmanager
 				ch <- err
 				return
 			}
-			ch <- alertmanagertypes.TestReceiver(ctx, receiver, server.alertmanagerConfig, server.tmpl, server.logger, alerts[0])
+			ch <- alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, alerts[0])
 		}(receiverName)
 	}
 

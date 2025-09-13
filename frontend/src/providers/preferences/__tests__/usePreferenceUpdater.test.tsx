@@ -84,7 +84,6 @@ describe('usePreferenceUpdater', () => {
 				name: 'new-column',
 				fieldContext: '',
 				fieldDataType: DataTypes.String,
-				isColumn: true,
 			},
 		];
 
@@ -150,7 +149,6 @@ describe('usePreferenceUpdater', () => {
 				name: 'new-trace-column',
 				fieldContext: '',
 				fieldDataType: DataTypes.String,
-				isColumn: true,
 			},
 		];
 
@@ -228,7 +226,6 @@ describe('usePreferenceUpdater', () => {
 					name: 'column',
 					fieldContext: '',
 					fieldDataType: DataTypes.String,
-					isColumn: true,
 				},
 			]);
 		});

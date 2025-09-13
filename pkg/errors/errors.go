@@ -1,13 +1,9 @@
 package errors
 
 import (
-	"errors"
+	"errors" //nolint:depguard
 	"fmt"
 	"log/slog"
-)
-
-var (
-	codeUnknown Code = MustNewCode("unknown")
 )
 
 // base is the fundamental struct that implements the error interface.
@@ -59,7 +55,7 @@ func New(t typ, code Code, message string) *base {
 }
 
 // Newf returns a new base by formatting the error message with the supplied format specifier.
-func Newf(t typ, code Code, format string, args ...interface{}) *base {
+func Newf(t typ, code Code, format string, args ...any) *base {
 	return &base{
 		t: t,
 		c: code,
@@ -70,7 +66,7 @@ func Newf(t typ, code Code, format string, args ...interface{}) *base {
 
 // Wrapf returns a new error by formatting the error message with the supplied format specifier
 // and wrapping another error with base.
-func Wrapf(cause error, t typ, code Code, format string, args ...interface{}) *base {
+func Wrapf(cause error, t typ, code Code, format string, args ...any) *base {
 	return &base{
 		t: t,
 		c: code,
@@ -79,9 +75,19 @@ func Wrapf(cause error, t typ, code Code, format string, args ...interface{}) *b
 	}
 }
 
+// Wrap returns a new error by wrapping another error with base.
+func Wrap(cause error, t typ, code Code, message string) *base {
+	return &base{
+		t: t,
+		c: code,
+		m: message,
+		e: cause,
+	}
+}
+
 // WithAdditional wraps an existing base error with a new formatted message.
 // It is used when the original error already contains type and code.
-func WithAdditional(cause error, format string, args ...interface{}) *base {
+func WithAdditional(cause error, format string, args ...any) *base {
 	t, c, m, e, u, a := Unwrapb(cause)
 	b := &base{
 		t: t,
@@ -132,7 +138,7 @@ func Unwrapb(cause error) (typ, Code, string, error, string, []string) {
 		return base.t, base.c, base.m, base.e, base.u, base.a
 	}
 
-	return TypeInternal, codeUnknown, cause.Error(), cause, "", []string{}
+	return TypeInternal, CodeUnknown, cause.Error(), cause, "", []string{}
 }
 
 // Ast checks if the provided error matches the specified custom error type.
@@ -154,42 +160,52 @@ func Join(errs ...error) error {
 	return errors.Join(errs...)
 }
 
+// As is a wrapper around errors.As.
 func As(err error, target any) bool {
 	return errors.As(err, target)
 }
 
+// Is is a wrapper around errors.Is.
 func Is(err error, target error) bool {
 	return errors.Is(err, target)
 }
 
-func WrapNotFoundf(cause error, code Code, format string, args ...interface{}) *base {
+// WrapNotFoundf is a wrapper around Wrapf with TypeNotFound.
+func WrapNotFoundf(cause error, code Code, format string, args ...any) *base {
 	return Wrapf(cause, TypeNotFound, code, format, args...)
 }
 
-func NewNotFoundf(code Code, format string, args ...interface{}) *base {
+// NewNotFoundf is a wrapper around Newf with TypeNotFound.
+func NewNotFoundf(code Code, format string, args ...any) *base {
 	return Newf(TypeNotFound, code, format, args...)
 }
 
-func WrapInternalf(cause error, code Code, format string, args ...interface{}) *base {
+// WrapInternalf is a wrapper around Wrapf with TypeInternal.
+func WrapInternalf(cause error, code Code, format string, args ...any) *base {
 	return Wrapf(cause, TypeInternal, code, format, args...)
 }
 
-func NewInternalf(code Code, format string, args ...interface{}) *base {
+// NewInternalf is a wrapper around Newf with TypeInternal.
+func NewInternalf(code Code, format string, args ...any) *base {
 	return Newf(TypeInternal, code, format, args...)
 }
 
-func WrapInvalidInputf(cause error, code Code, format string, args ...interface{}) *base {
+// WrapInvalidInputf is a wrapper around Wrapf with TypeInvalidInput.
+func WrapInvalidInputf(cause error, code Code, format string, args ...any) *base {
 	return Wrapf(cause, TypeInvalidInput, code, format, args...)
 }
 
-func NewInvalidInputf(code Code, format string, args ...interface{}) *base {
+// NewInvalidInputf is a wrapper around Newf with TypeInvalidInput.
+func NewInvalidInputf(code Code, format string, args ...any) *base {
 	return Newf(TypeInvalidInput, code, format, args...)
 }
 
-func WrapUnexpectedf(cause error, code Code, format string, args ...interface{}) *base {
+// WrapUnexpectedf is a wrapper around Wrapf with TypeUnexpected.
+func WrapUnexpectedf(cause error, code Code, format string, args ...any) *base {
 	return Wrapf(cause, TypeInvalidInput, code, format, args...)
 }
 
-func NewUnexpectedf(code Code, format string, args ...interface{}) *base {
+// NewUnexpectedf is a wrapper around Newf with TypeUnexpected.
+func NewUnexpectedf(code Code, format string, args ...any) *base {
 	return Newf(TypeInvalidInput, code, format, args...)
 }

@@ -281,7 +281,7 @@ func New(
 	}
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
+	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, querier)
 
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules, providerSettings)

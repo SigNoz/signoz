@@ -53,7 +53,6 @@ const mockProps: WidgetGraphComponentProps = {
 		description: '',
 		fillSpans: false,
 		id: '17f905f6-d355-46bd-a78e-cbc87e6f58cc',
-		isStacked: false,
 		mergeAllActiveQueries: false,
 		nullZeroValues: 'zero',
 		opacity: '1',
@@ -65,8 +64,6 @@ const mockProps: WidgetGraphComponentProps = {
 						aggregateAttribute: {
 							dataType: DataTypes.String,
 							id: 'span_id--string----true',
-							isColumn: true,
-							isJSON: false,
 							key: 'span_id',
 							type: '',
 						},
@@ -92,6 +89,7 @@ const mockProps: WidgetGraphComponentProps = {
 					},
 				],
 				queryFormulas: [],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [
 				{

@@ -192,7 +192,11 @@ function RawLogView({
 			onMouseLeave={handleMouseLeave}
 			fontSize={fontSize}
 		>
-			<LogStateIndicator type={logType} fontSize={fontSize} />
+			<LogStateIndicator
+				fontSize={fontSize}
+				severityText={data.severity_text}
+				severityNumber={data.severity_number}
+			/>
 
 			<RawLogContent
 				className="raw-log-content"

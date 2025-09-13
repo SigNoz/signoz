@@ -32,6 +32,8 @@ type BaseRule struct {
 	typ ruletypes.AlertType
 
 	ruleCondition *ruletypes.RuleCondition
+
+	Threshold ruletypes.RuleThreshold
 	// evalWindow is the time window used for evaluating the rule
 	// i.e each time we lookback from the current time, we look at data for the last
 	// evalWindow duration
@@ -124,22 +126,27 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	if p.RuleCondition == nil || !p.RuleCondition.IsValid() {
 		return nil, fmt.Errorf("invalid rule condition")
 	}
+	threshold, err := p.RuleCondition.Thresholds.GetRuleThreshold()
+	if err != nil {
+		return nil, err
+	}
 
 	baseRule := &BaseRule{
-		id:                  id,
-		orgID:               orgID,
-		name:                p.AlertName,
-		source:              p.Source,
-		typ:                 p.AlertType,
-		ruleCondition:       p.RuleCondition,
-		evalWindow:          time.Duration(p.EvalWindow),
-		labels:              qslabels.FromMap(p.Labels),
-		annotations:         qslabels.FromMap(p.Annotations),
-		preferredChannels:   p.PreferredChannels,
-		health:              ruletypes.HealthUnknown,
-		Active:              map[uint64]*ruletypes.Alert{},
-		reader:              reader,
-		TemporalityMap:      make(map[string]map[v3.Temporality]bool),
+		id:                id,
+		orgID:             orgID,
+		name:              p.AlertName,
+		source:            p.Source,
+		typ:               p.AlertType,
+		ruleCondition:     p.RuleCondition,
+		evalWindow:        time.Duration(p.EvalWindow),
+		labels:            qslabels.FromMap(p.Labels),
+		annotations:       qslabels.FromMap(p.Annotations),
+		preferredChannels: p.PreferredChannels,
+		health:            ruletypes.HealthUnknown,
+		Active:            map[uint64]*ruletypes.Alert{},
+		reader:            reader,
+		TemporalityMap:    make(map[string]map[v3.Temporality]bool),
+		Threshold:         threshold,
 		NotificationGroupBy: p.NotificationGroups,
 	}
 

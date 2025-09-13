@@ -45,19 +45,6 @@ import (
 	"go.uber.org/zap"
 )
 
-type ServerOptions struct {
-	Config                     signoz.Config
-	SigNoz                     *signoz.SigNoz
-	HTTPHostPort               string
-	PrivateHostPort            string
-	PreferSpanMetrics          bool
-	FluxInterval               string
-	FluxIntervalForTraceDetail string
-	Cluster                    string
-	GatewayUrl                 string
-	Jwt                        *authtypes.JWT
-}
-
 // Server runs HTTP, Mux and a grpc server
 type Server struct {
 	config      signoz.Config
@@ -69,11 +56,6 @@ type Server struct {
 	httpConn     net.Listener
 	httpServer   *http.Server
 	httpHostPort string
-
-	// private http
-	privateConn     net.Listener
-	privateHTTP     *http.Server
-	privateHostPort string
 
 	opampServer *opamp.Server
 
@@ -185,7 +167,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		jwt:                jwt,
 		ruleManager:        rm,
 		httpHostPort:       baseconst.HTTPHostPort,
-		privateHostPort:    baseconst.PrivateHostPort,
 		unavailableChannel: make(chan healthcheck.Status),
 		usageManager:       usageManager,
 	}
@@ -198,13 +179,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 
 	s.httpServer = httpServer
 
-	privateServer, err := s.createPrivateServer(apiHandler)
-	if err != nil {
-		return nil, err
-	}
-
-	s.privateHTTP = privateServer
-
 	s.opampServer = opamp.InitializeServer(
 		&opAmpModel.AllAgents, agentConfMgr, signoz.Instrumentation,
 	)
@@ -215,36 +189,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 // HealthCheckStatus returns health check status channel a client can subscribe to
 func (s Server) HealthCheckStatus() chan healthcheck.Status {
 	return s.unavailableChannel
-}
-
-func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, error) {
-	r := baseapp.NewRouter()
-
-	r.Use(middleware.NewAuth(s.jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
-	r.Use(middleware.NewAPIKey(s.signoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.signoz.Instrumentation.Logger(), s.signoz.Sharder).Wrap)
-	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
-		s.config.APIServer.Timeout.ExcludedRoutes,
-		s.config.APIServer.Timeout.Default,
-		s.config.APIServer.Timeout.Max,
-	).Wrap)
-	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
-
-	apiHandler.RegisterPrivateRoutes(r)
-
-	c := cors.New(cors.Options{
-		//todo(amol): find out a way to add exact domain or
-		// ip here for alert manager
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "SIGNOZ-API-KEY", "X-SIGNOZ-QUERY-ID", "Sec-WebSocket-Protocol"},
-	})
-
-	handler := c.Handler(r)
-	handler = handlers.CompressHandler(handler)
-
-	return &http.Server{
-		Handler: handler,
-	}, nil
 }
 
 func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*http.Server, error) {
@@ -312,19 +256,6 @@ func (s *Server) initListeners() error {
 
 	zap.L().Info(fmt.Sprintf("Query server started listening on %s...", s.httpHostPort))
 
-	// listen on private port to support internal services
-	privateHostPort := s.privateHostPort
-
-	if privateHostPort == "" {
-		return fmt.Errorf("baseconst.PrivateHostPort is required")
-	}
-
-	s.privateConn, err = net.Listen("tcp", privateHostPort)
-	if err != nil {
-		return err
-	}
-	zap.L().Info(fmt.Sprintf("Query server started listening on private port %s...", s.privateHostPort))
-
 	return nil
 }
 
@@ -363,26 +294,6 @@ func (s *Server) Start(ctx context.Context) error {
 		}
 	}()
 
-	var privatePort int
-	if port, err := utils.GetPort(s.privateConn.Addr()); err == nil {
-		privatePort = port
-	}
-
-	go func() {
-		zap.L().Info("Starting Private HTTP server", zap.Int("port", privatePort), zap.String("addr", s.privateHostPort))
-
-		switch err := s.privateHTTP.Serve(s.privateConn); err {
-		case nil, http.ErrServerClosed, cmux.ErrListenerClosed:
-			// normal exit, nothing to do
-			zap.L().Info("private http server closed")
-		default:
-			zap.L().Error("Could not start private HTTP server", zap.Error(err))
-		}
-
-		s.unavailableChannel <- healthcheck.Unavailable
-
-	}()
-
 	go func() {
 		zap.L().Info("Starting OpAmp Websocket server", zap.String("addr", baseconst.OpAmpWsEndpoint))
 		err := s.opampServer.Start(baseconst.OpAmpWsEndpoint)
@@ -398,12 +309,6 @@ func (s *Server) Start(ctx context.Context) error {
 func (s *Server) Stop(ctx context.Context) error {
 	if s.httpServer != nil {
 		if err := s.httpServer.Shutdown(ctx); err != nil {
-			return err
-		}
-	}
-
-	if s.privateHTTP != nil {
-		if err := s.privateHTTP.Shutdown(ctx); err != nil {
 			return err
 		}
 	}

@@ -11,7 +11,7 @@ x-common: &common
       max-file: "3"
 x-clickhouse-defaults: &clickhouse-defaults
   !!merge <<: *common
-  image: clickhouse/clickhouse-server:24.1.2-alpine
+  image: clickhouse/clickhouse-server:25.5.6
   tty: true
   deploy:
     labels:
@@ -37,6 +37,8 @@ x-clickhouse-defaults: &clickhouse-defaults
     nofile:
       soft: 262144
       hard: 262144
+  environment:
+    - CLICKHOUSE_SKIP_USER_SETUP=1
 x-zookeeper-defaults: &zookeeper-defaults
   !!merge <<: *common
   image: signoz/zookeeper:3.7.1
@@ -63,7 +65,7 @@ x-db-depend: &db-depend
 services:
   init-clickhouse:
     !!merge <<: *common
-    image: clickhouse/clickhouse-server:24.1.2-alpine
+    image: clickhouse/clickhouse-server:25.5.6
     command:
       - bash
       - -c
@@ -174,7 +176,7 @@ services:
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
     !!merge <<: *db-depend
-    image: signoz/signoz:v0.92.1
+    image: signoz/signoz:v0.94.1
     command:
       - --config=/root/config/prometheus.yml
     ports:
@@ -207,7 +209,7 @@ services:
       retries: 3
   otel-collector:
     !!merge <<: *db-depend
-    image: signoz/signoz-otel-collector:v0.129.0
+    image: signoz/signoz-otel-collector:v0.129.4
     command:
       - --config=/etc/otel-collector-config.yaml
       - --manager-config=/etc/manager-config.yaml
@@ -231,7 +233,7 @@ services:
       - signoz
   schema-migrator:
     !!merge <<: *common
-    image: signoz/signoz-schema-migrator:v0.129.0
+    image: signoz/signoz-schema-migrator:v0.129.4
     deploy:
       restart_policy:
         condition: on-failure

@@ -18,8 +18,6 @@ const compositeQueryParam = {
 					key: 'signoz_latency',
 					dataType: 'float64',
 					type: 'ExponentialHistogram',
-					isColumn: true,
-					isJSON: false,
 					id: 'signoz_latency--float64--ExponentialHistogram--true',
 				},
 				timeAggregation: '',
@@ -40,8 +38,6 @@ const compositeQueryParam = {
 						key: 'service_name',
 						dataType: 'string',
 						type: 'tag',
-						isColumn: false,
-						isJSON: false,
 						id: 'service_name--string--tag--false',
 					},
 				],
@@ -57,6 +53,7 @@ const compositeQueryParam = {
 				legend: '',
 			},
 		],
+		queryTraceOperator: [],
 	},
 	promql: [
 		{
