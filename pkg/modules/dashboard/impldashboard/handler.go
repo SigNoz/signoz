@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -51,11 +50,9 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if querybuilder.QBV5Enabled {
-		dashboardMigrator := transition.NewDashboardMigrateV5(handler.providerSettings.Logger, nil, nil)
-		if req["version"] != "v5" {
-			dashboardMigrator.Migrate(ctx, req)
-		}
+	dashboardMigrator := transition.NewDashboardMigrateV5(handler.providerSettings.Logger, nil, nil)
+	if req["version"] != "v5" {
+		dashboardMigrator.Migrate(ctx, req)
 	}
 
 	dashboard, err := handler.module.Create(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.UserID), req)
