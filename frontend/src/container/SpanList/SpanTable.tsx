@@ -1,11 +1,12 @@
 import { Button } from '@signozhq/button';
 import { ColumnDef, DataTable, Row } from '@signozhq/table';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import { HierarchicalSpanData, ServiceEntrySpan, SpanDataRow } from './types';
-import { fetchServiceSpans, formatDuration } from './utils';
+import { fetchServiceSpans } from './utils';
 
 // Constants
 const SPAN_TYPE_ENTRY = 'entry-span';
@@ -15,6 +16,7 @@ interface SpanTableProps {
 	data: HierarchicalSpanData;
 	traceId?: string;
 	setSelectedSpan?: (span: Span) => void;
+	isLoading?: boolean;
 }
 
 interface TableRowData {
@@ -36,6 +38,7 @@ function SpanTable({
 	data,
 	traceId,
 	setSelectedSpan,
+	isLoading,
 }: SpanTableProps): JSX.Element {
 	const [expandedEntrySpans, setExpandedEntrySpans] = useState<
 		Record<string, ServiceEntrySpan>
@@ -156,17 +159,6 @@ function SpanTable({
 		[],
 	);
 
-	const renderSpanCountCell = useCallback(
-		({ row }: { row: Row<TableRowData> }): JSX.Element => {
-			const { original } = row;
-			if (original.type === SPAN_TYPE_ENTRY && original.spanCount !== undefined) {
-				return <span>{original.spanCount}</span>;
-			}
-			return <span>-</span>;
-		},
-		[],
-	);
-
 	const renderDurationCell = useCallback(
 		({ row }: { row: Row<TableRowData> }): JSX.Element => {
 			const { original } = row;
@@ -190,7 +182,15 @@ function SpanTable({
 	const renderStatusCodeCell = useCallback(
 		({ row }: { row: Row<TableRowData> }): JSX.Element => {
 			const { original } = row;
-			return <span>{original.statusCode}</span>;
+			return <span>{original.statusCode || '-'}</span>;
+		},
+		[],
+	);
+
+	const renderSpanIdCell = useCallback(
+		({ row }: { row: Row<TableRowData> }): JSX.Element => {
+			const { original } = row;
+			return <span className="span-id">{original.spanId}</span>;
 		},
 		[],
 	);
@@ -219,6 +219,13 @@ function SpanTable({
 			cell: renderTimestampCell,
 		},
 		{
+			id: 'spanId',
+			header: 'Span ID',
+			accessorKey: 'spanId',
+			size: 150,
+			cell: renderSpanIdCell,
+		},
+		{
 			id: 'httpMethod',
 			header: 'Method',
 			accessorKey: 'httpMethod',
@@ -238,13 +245,6 @@ function SpanTable({
 			accessorKey: 'serviceName',
 			size: 120,
 			cell: renderServiceCell,
-		},
-		{
-			id: 'spans',
-			header: 'Spans',
-			accessorKey: 'spanCount',
-			size: 80,
-			cell: renderSpanCountCell,
 		},
 		{
 			id: 'duration',
@@ -272,7 +272,10 @@ function SpanTable({
 				spanName: entrySpan.spanData.data.name,
 				serviceName: entrySpan.serviceName,
 				spanCount: spanCount > 0 ? spanCount : undefined,
-				duration: formatDuration(entrySpan.spanData.data.duration_nano),
+				duration: getYAxisFormattedValue(
+					entrySpan.spanData.data.duration_nano.toString(),
+					'ns',
+				),
 				timestamp: entrySpan.spanData.timestamp,
 				statusCode: entrySpan.spanData.data.response_status_code,
 				httpMethod: entrySpan.spanData.data.http_method,
@@ -288,7 +291,10 @@ function SpanTable({
 						type: SPAN_TYPE_SERVICE,
 						spanName: serviceSpan.data.name,
 						serviceName: serviceSpan.data['service.name'],
-						duration: formatDuration(serviceSpan.data.duration_nano),
+						duration: getYAxisFormattedValue(
+							serviceSpan.data.duration_nano.toString(),
+							'ns',
+						),
 						timestamp: serviceSpan.timestamp,
 						statusCode: serviceSpan.data.response_status_code,
 						httpMethod: serviceSpan.data.http_method,
@@ -354,6 +360,7 @@ function SpanTable({
 				fixedHeight={args.fixedHeight}
 				data={flattenedData}
 				onRowClick={handleRowClick}
+				isLoading={isLoading}
 			/>
 		</div>
 	);
@@ -362,6 +369,7 @@ function SpanTable({
 SpanTable.defaultProps = {
 	traceId: undefined,
 	setSelectedSpan: undefined,
+	isLoading: false,
 };
 
 export default SpanTable;
