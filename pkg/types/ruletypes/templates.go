@@ -3,13 +3,14 @@ package ruletypes
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"math"
 	"net/url"
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 
 	html_template "html/template"
 	text_template "text/template"
@@ -73,7 +74,7 @@ func NewTemplateExpander(
 				if len(v) > 0 {
 					return v[0], nil
 				}
-				return nil, errors.New("first() called on vector with no elements")
+				return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "first() called on vector with no elements")
 			},
 			"label": func(label string, s *tmplQueryRecord) string {
 				return s.Labels[label]

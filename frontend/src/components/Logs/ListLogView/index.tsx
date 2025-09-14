@@ -208,7 +208,11 @@ function ListLogView({
 				fontSize={fontSize}
 			>
 				<div className="log-line">
-					<LogStateIndicator type={logType} fontSize={fontSize} />
+					<LogStateIndicator
+						fontSize={fontSize}
+						severityText={logData.severity_text}
+						severityNumber={logData.severity_number}
+					/>
 					<div>
 						<LogContainer fontSize={fontSize}>
 							{updatedSelecedFields.some((field) => field.name === 'body') && (

@@ -6,10 +6,10 @@ import (
 	"log/slog"
 	"math"
 	"net/url"
-	"sort"
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/converter"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -33,6 +33,8 @@ type BaseRule struct {
 	typ ruletypes.AlertType
 
 	ruleCondition *ruletypes.RuleCondition
+
+	Threshold ruletypes.RuleThreshold
 	// evalWindow is the time window used for evaluating the rule
 	// i.e each time we lookback from the current time, we look at data for the last
 	// evalWindow duration
@@ -129,6 +131,14 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	if p.RuleCondition == nil || !p.RuleCondition.IsValid() {
 		return nil, fmt.Errorf("invalid rule condition")
 	}
+	threshold, err := p.RuleCondition.Thresholds.GetRuleThreshold()
+	if err != nil {
+		return nil, err
+	}
+	evaluation, err := p.Evaluation.GetEvaluation()
+	if err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to get evaluation: %v", err)
+	}
 
 	baseRule := &BaseRule{
 		id:                id,
@@ -145,7 +155,8 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 		Active:            map[uint64]*ruletypes.Alert{},
 		reader:            reader,
 		TemporalityMap:    make(map[string]map[v3.Temporality]bool),
-		evaluation:        p.Evaluation,
+		Threshold:         threshold,
+		evaluation:        evaluation,
 		schedule:          p.Schedule,
 		scheduleStartsAt:  time.UnixMilli(p.ScheduleStartsAt),
 	}
@@ -219,40 +230,6 @@ func (r *BaseRule) TargetVal() float64 {
 	return r.targetVal()
 }
 
-func (r *BaseRule) Thresholds() []ruletypes.RuleThreshold {
-	thresholds := make([]ruletypes.RuleThreshold, len(r.ruleCondition.Thresholds))
-	copy(thresholds, r.ruleCondition.Thresholds)
-
-	// Sort thresholds by target value based on compare operation
-	sort.Slice(thresholds, func(i, j int) bool {
-		compareOp := thresholds[i].CompareOp()
-		targetI := thresholds[i].Target()
-		targetJ := thresholds[j].Target()
-
-		switch compareOp {
-		case ruletypes.ValueIsAbove, ruletypes.ValueAboveOrEq, ruletypes.ValueOutsideBounds:
-			// For "above" operations, sort descending (higher values first)
-			return targetI > targetJ
-		case ruletypes.ValueIsBelow, ruletypes.ValueBelowOrEq:
-			// For "below" operations, sort ascending (lower values first)
-			return targetI < targetJ
-		default:
-			// For equal/not equal operations, use descending as default
-			return targetI > targetJ
-		}
-	})
-
-	return thresholds
-}
-
-func (r *BaseRule) IsScheduled() bool {
-	return r.schedule != ""
-}
-
-func (r *BaseRule) GetSchedule() (string, time.Time) {
-	return r.schedule, r.scheduleStartsAt
-}
-
 func (r *ThresholdRule) hostFromSource() string {
 	parsedUrl, err := url.Parse(r.source)
 	if err != nil {
@@ -285,7 +262,7 @@ func (r *BaseRule) Unit() string {
 
 func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time) {
 
-	st, en := r.evaluation.EvaluationTime(ts)
+	st, en := r.evaluation.NextWindowFor(ts)
 	start := st.UnixMilli()
 	end := en.UnixMilli()
 

@@ -35,7 +35,6 @@ import (
 	anomalyV2 "github.com/SigNoz/signoz/ee/anomaly"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	yaml "gopkg.in/yaml.v2"
 )
 
 const (
@@ -252,13 +251,11 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 				continue
 			}
 		}
-		for _, threshold := range r.Thresholds() {
-			smpl, shouldAlert := threshold.ShouldAlert(*series)
-			if shouldAlert {
-				resultVector = append(resultVector, smpl)
-				break //return when one threshold is alerted
-			}
+		results, err := r.Threshold.ShouldAlert(*series)
+		if err != nil {
+			return nil, err
 		}
+		resultVector = append(resultVector, results...)
 	}
 	return resultVector, nil
 }
@@ -304,13 +301,11 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 				continue
 			}
 		}
-		for _, threshold := range r.Thresholds() {
-			smpl, shouldAlert := threshold.ShouldAlert(*series)
-			if shouldAlert {
-				resultVector = append(resultVector, smpl)
-				break
-			}
+		results, err := r.Threshold.ShouldAlert(*series)
+		if err != nil {
+			return nil, err
 		}
+		resultVector = append(resultVector, results...)
 	}
 	return resultVector, nil
 }
@@ -510,7 +505,7 @@ func (r *AnomalyRule) String() string {
 		PreferredChannels: r.PreferredChannels(),
 	}
 
-	byt, err := yaml.Marshal(ar)
+	byt, err := json.Marshal(ar)
 	if err != nil {
 		return fmt.Sprintf("error marshaling alerting rule: %s", err.Error())
 	}

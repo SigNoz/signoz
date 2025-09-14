@@ -2,7 +2,7 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/user/loginPrecheck';
+import { Props, Signup as PayloadProps } from 'types/api/user/loginPrecheck';
 
 const loginPrecheck = async (
 	props: Props,

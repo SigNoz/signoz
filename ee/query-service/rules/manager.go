@@ -3,8 +3,10 @@ package rules
 import (
 	"context"
 	"fmt"
+
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
@@ -20,6 +22,10 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 	var task baserules.Task
 
 	ruleId := baserules.RuleIdFromTaskName(opts.TaskName)
+	evaluation, err := opts.Rule.Evaluation.GetEvaluation()
+	if err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "evaluation is invalid: %v", err)
+	}
 	if opts.Rule.RuleType == ruletypes.RuleTypeThreshold {
 		// create a threshold rule
 		tr, err := baserules.NewThresholdRule(
@@ -40,7 +46,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		rules = append(rules, tr)
 
 		// create ch rule task for evalution
-		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 		if tr.IsScheduled() {
 			task.SetSchedule(tr.GetSchedule())
 		}
@@ -64,7 +70,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		rules = append(rules, pr)
 
 		// create promql rule task for evalution
-		task = newTask(baserules.TaskTypeProm, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		task = newTask(baserules.TaskTypeProm, opts.TaskName, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 		if pr.IsScheduled() {
 			task.SetSchedule(pr.GetSchedule())
 		}
@@ -88,7 +94,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		rules = append(rules, ar)
 
 		// create anomaly rule task for evalution
-		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 		if ar.IsScheduled() {
 			task.SetSchedule(ar.GetSchedule())
 		}

@@ -38,8 +38,6 @@ import (
 	querierV5 "github.com/SigNoz/signoz/pkg/querier"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-
-	yaml "gopkg.in/yaml.v2"
 )
 
 type ThresholdRule struct {
@@ -490,13 +488,11 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 				continue
 			}
 		}
-		for _, threshold := range r.Thresholds() {
-			smpl, shouldAlert := threshold.ShouldAlert(*series)
-			if shouldAlert {
-				resultVector = append(resultVector, smpl)
-				break
-			}
+		resultSeries, err := r.Threshold.ShouldAlert(*series)
+		if err != nil {
+			return nil, err
 		}
+		resultVector = append(resultVector, resultSeries...)
 	}
 
 	return resultVector, nil
@@ -569,13 +565,11 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 				continue
 			}
 		}
-		for _, threshold := range r.Thresholds() {
-			smpl, shouldAlert := threshold.ShouldAlert(*series)
-			if shouldAlert {
-				resultVector = append(resultVector, smpl)
-				break
-			}
+		resultSeries, err := r.Threshold.ShouldAlert(*series)
+		if err != nil {
+			return nil, err
 		}
+		resultVector = append(resultVector, resultSeries...)
 	}
 
 	return resultVector, nil
@@ -795,7 +789,7 @@ func (r *ThresholdRule) String() string {
 		PreferredChannels: r.preferredChannels,
 	}
 
-	byt, err := yaml.Marshal(ar)
+	byt, err := json.Marshal(ar)
 	if err != nil {
 		return fmt.Sprintf("error marshaling alerting rule: %s", err.Error())
 	}
