@@ -407,15 +407,17 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 		}
 
 		alerts[h] = &ruletypes.Alert{
-			Labels:            lbs,
-			QueryResultLables: resultLabels,
-			Annotations:       annotations,
-			ActiveAt:          ts,
-			State:             model.StatePending,
-			Value:             smpl.V,
-			GeneratorURL:      r.GeneratorURL(),
-			Receivers:         r.PreferredChannels(),
-			Missing:           smpl.IsMissing,
+			Labels:             lbs,
+			QueryResultLables:  resultLabels,
+			Annotations:        annotations,
+			ActiveAt:           ts,
+			State:              model.StatePending,
+			Value:              smpl.V,
+			GeneratorURL:       r.GeneratorURL(),
+			Receivers:          r.PreferredChannels(),
+			Missing:            smpl.IsMissing,
+			NotificationGroups: r.NotificationGroupBy,
+			RenotifyInterval:   r.RenotifyInterval,
 		}
 	}
 

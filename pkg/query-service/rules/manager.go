@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"log/slog"
 	"sort"
 	"strings"
@@ -19,7 +20,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/nfgrouping"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	querierV5 "github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -102,7 +102,7 @@ type ManagerOptions struct {
 	Alertmanager        alertmanager.Alertmanager
 	SQLStore            sqlstore.SQLStore
 	OrgGetter           organization.Getter
-	NotificationGroups  nfgrouping.NotificationGroups
+	NotificationGroups  nfmanager.NotificationManager
 }
 
 // The Manager manages recording and alerting rules.
@@ -125,7 +125,7 @@ type Manager struct {
 	alertmanager      alertmanager.Alertmanager
 	sqlstore          sqlstore.SQLStore
 	orgGetter         organization.Getter
-	NotificationGroup nfgrouping.NotificationGroups
+	NotificationGroup nfmanager.NotificationManager
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -282,12 +282,6 @@ func (m *Manager) initiate(ctx context.Context) error {
 			}
 
 			if !parsedRule.Disabled {
-				if parsedRule.NotificationGroups != nil {
-					err = m.NotificationGroup.SetGroupLabels(org.ID.StringValue(), rec.ID.StringValue(), parsedRule.NotificationGroups)
-					if err != nil {
-						zap.L().Error("failed to load the notification group definition", zap.String("name", rec.ID.StringValue()), zap.Error(err))
-					}
-				}
 				err := m.addTask(ctx, org.ID, &parsedRule, taskName)
 				if err != nil {
 					zap.L().Error("failed to load the rule definition", zap.String("name", taskName), zap.Error(err))
@@ -368,14 +362,6 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 		} else {
 			preferredChannels = parsedRule.PreferredChannels
 		}
-
-		if parsedRule.NotificationGroups != nil {
-			err = m.NotificationGroup.SetGroupLabels(claims.OrgID, id.StringValue(), parsedRule.NotificationGroups)
-			if err != nil {
-				return err
-			}
-		}
-
 		err = cfg.UpdateRuleIDMatcher(id.StringValue(), preferredChannels)
 		if err != nil {
 			return err
@@ -572,12 +558,6 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 		}
 
 		taskName := prepareTaskName(id.StringValue())
-		if parsedRule.NotificationGroups != nil {
-			err = m.NotificationGroup.SetGroupLabels(claims.OrgID, id.StringValue(), parsedRule.NotificationGroups)
-			if err != nil {
-				return err
-			}
-		}
 		if err = m.addTask(ctx, orgID, &parsedRule, taskName); err != nil {
 			return err
 		}
@@ -719,14 +699,15 @@ func (m *Manager) prepareNotifyFunc() NotifyFunc {
 
 		for _, alert := range alerts {
 			generatorURL := alert.GeneratorURL
-
 			a := &alertmanagertypes.PostableAlert{
-				Annotations: alert.Annotations.Map(),
-				StartsAt:    strfmt.DateTime(alert.FiredAt),
-				Alert: alertmanagertypes.AlertModel{
-					Labels:       alert.Labels.Map(),
-					GeneratorURL: strfmt.URI(generatorURL),
-				},
+				NotificationGroups: alert.NotificationGroups,
+				RenotifyInterval:   alert.RenotifyInterval,
+			}
+			a.Annotations = alert.Annotations.Map()
+			a.StartsAt = strfmt.DateTime(alert.FiredAt)
+			a.Alert = alertmanagertypes.AlertModel{
+				Labels:       alert.Labels.Map(),
+				GeneratorURL: strfmt.URI(generatorURL),
 			}
 			if !alert.ResolvedAt.IsZero() {
 				a.EndsAt = strfmt.DateTime(alert.ResolvedAt)
@@ -752,13 +733,12 @@ func (m *Manager) prepareTestNotifyFunc() NotifyFunc {
 		alert := alerts[0]
 		generatorURL := alert.GeneratorURL
 
-		a := &alertmanagertypes.PostableAlert{
-			Annotations: alert.Annotations.Map(),
-			StartsAt:    strfmt.DateTime(alert.FiredAt),
-			Alert: alertmanagertypes.AlertModel{
-				Labels:       alert.Labels.Map(),
-				GeneratorURL: strfmt.URI(generatorURL),
-			},
+		a := &alertmanagertypes.PostableAlert{}
+		a.Annotations = alert.Annotations.Map()
+		a.StartsAt = strfmt.DateTime(alert.FiredAt)
+		a.Alert = alertmanagertypes.AlertModel{
+			Labels:       alert.Labels.Map(),
+			GeneratorURL: strfmt.URI(generatorURL),
 		}
 		if !alert.ResolvedAt.IsZero() {
 			a.EndsAt = strfmt.DateTime(alert.ResolvedAt)

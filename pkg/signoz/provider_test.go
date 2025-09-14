@@ -2,6 +2,8 @@ package signoz
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -9,8 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
-	"github.com/SigNoz/signoz/pkg/nfgrouping"
-	"github.com/SigNoz/signoz/pkg/nfgrouping/nfgroupingtest"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlschema/sqlschematest"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -57,8 +57,8 @@ func TestNewProviderFactories(t *testing.T) {
 
 	assert.NotPanics(t, func() {
 		orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)), nil)
-		notificationGroups, _ := nfgroupingtest.New(context.TODO(), instrumentationtest.New().ToProviderSettings(), nfgrouping.Config{})
-		NewAlertmanagerProviderFactories(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual), orgGetter, notificationGroups)
+		notificationManager, _ := nfmanagertest.New(context.TODO(), instrumentationtest.New().ToProviderSettings(), nfmanager.Config{})
+		NewAlertmanagerProviderFactories(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual), orgGetter, notificationManager)
 	})
 
 	assert.NotPanics(t, func() {

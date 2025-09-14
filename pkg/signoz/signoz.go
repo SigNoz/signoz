@@ -3,6 +3,7 @@ package signoz
 import (
 	"context"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	nfgrouping2 "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
@@ -12,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
-	"github.com/SigNoz/signoz/pkg/nfgrouping"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
@@ -49,7 +49,7 @@ type SigNoz struct {
 	StatsReporter      statsreporter.StatsReporter
 	Modules            Modules
 	Handlers           Handlers
-	NotificationGroups nfgrouping.NotificationGroups
+	NotificationGroups nfgrouping2.NotificationManager
 }
 
 func New(
@@ -231,11 +231,11 @@ func New(
 	// Initialize user getter
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 
-	// shared NotificationGroups instance for both alertmanager and rules
-	notificationGroups, err := factory.NewProviderFromNamedMap(
+	// shared NotificationManager instance for both alertmanager and rules
+	notificationManager, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
-		nfgrouping.Config{
+		nfgrouping2.Config{
 			Provider:        "rulebased",
 			DefaultStrategy: "standard",
 		},
@@ -251,7 +251,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Alertmanager,
-		NewAlertmanagerProviderFactories(sqlstore, orgGetter, notificationGroups),
+		NewAlertmanagerProviderFactories(sqlstore, orgGetter, notificationManager),
 		config.Alertmanager.Provider,
 	)
 	if err != nil {
@@ -338,6 +338,6 @@ func New(
 		Sharder:            sharder,
 		Modules:            modules,
 		Handlers:           handlers,
-		NotificationGroups: notificationGroups,
+		NotificationGroups: notificationManager,
 	}, nil
 }

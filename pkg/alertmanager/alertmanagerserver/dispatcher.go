@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"log/slog"
 	"sort"
 	"sync"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/nfgrouping"
 	"github.com/prometheus/common/model"
 
 	"github.com/prometheus/alertmanager/dispatch"
@@ -39,9 +39,9 @@ type Dispatcher struct {
 	ctx    context.Context
 	cancel func()
 
-	logger             *slog.Logger
-	notificationGroups nfgrouping.NotificationGroups
-	orgID              string
+	logger              *slog.Logger
+	notificationManager nfmanager.NotificationManager
+	orgID               string
 }
 
 // We use the upstream Limits interface from Prometheus
@@ -57,7 +57,7 @@ func NewDispatcher(
 	lim Limits,
 	l *slog.Logger,
 	m *DispatcherMetrics,
-	n nfgrouping.NotificationGroups,
+	n nfmanager.NotificationManager,
 	orgID string,
 ) *Dispatcher {
 	if lim == nil {
@@ -66,16 +66,16 @@ func NewDispatcher(
 	}
 
 	disp := &Dispatcher{
-		alerts:             ap,
-		stage:              s,
-		route:              r,
-		marker:             mk,
-		timeout:            to,
-		logger:             l.With("component", "signoz-dispatcher"),
-		metrics:            m,
-		limits:             lim,
-		notificationGroups: n,
-		orgID:              orgID,
+		alerts:              ap,
+		stage:               s,
+		route:               r,
+		marker:              mk,
+		timeout:             to,
+		logger:              l.With("component", "signoz-dispatcher"),
+		metrics:             m,
+		limits:              lim,
+		notificationManager: n,
+		orgID:               orgID,
 	}
 	return disp
 }
@@ -286,10 +286,17 @@ type notifyFunc func(context.Context, ...*types.Alert) bool
 // processAlert determines in which aggregation group the alert falls
 // and inserts it.
 func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
-	groupLabels := d.notificationGroups.GetGroupLabels(d.orgID, alert, route)
+	config, err := d.notificationManager.GetNotificationConfig(d.orgID, alert)
+	if err != nil {
+		d.logger.ErrorContext(d.ctx, "error getting alert notification config", "alert_fingerprint", alert.Fingerprint(), "error", err)
+		return
+	}
+	groupLabels := config.NotificationGroup
 
 	fp := groupLabels.Fingerprint()
-
+	for labelName := range groupLabels {
+		route.RouteOpts.GroupBy[labelName] = struct{}{}
+	}
 	d.mtx.Lock()
 	defer d.mtx.Unlock()
 
@@ -508,3 +515,12 @@ func (ag *aggrGroup) flush(notify func(...*types.Alert) bool) {
 type unlimitedLimits struct{}
 
 func (u *unlimitedLimits) MaxNumberOfAggregationGroups() int { return 0 }
+
+func getRuleIDFromRoute(alert *types.Alert) string {
+	for name, value := range alert.Labels {
+		if string(name) == "ruleId" {
+			return string(value)
+		}
+	}
+	return ""
+}

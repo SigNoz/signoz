@@ -1,0 +1,64 @@
+package nfmanagertest
+
+import (
+	"context"
+	nfgrouping2 "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"time"
+
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
+)
+
+type provider struct {
+	settings factory.ScopedProviderSettings
+	// Mock data for testing
+	mockGroupLabels model.LabelSet
+	mockError       error
+}
+
+// NewFactory creates a new factory for the test notification grouping strategy.
+func NewFactory() factory.ProviderFactory[nfgrouping2.NotificationManager, nfgrouping2.Config] {
+	return factory.NewProviderFactory(
+		factory.MustNewName("test"),
+		func(ctx context.Context, settings factory.ProviderSettings, config nfgrouping2.Config) (nfgrouping2.NotificationManager, error) {
+			return New(ctx, settings, config)
+		},
+	)
+}
+
+// New creates a new test notification grouping strategy provider.
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config nfgrouping2.Config) (nfgrouping2.NotificationManager, error) {
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/nfmanager/nfmanagertest")
+
+	return &provider{
+		settings:        settings,
+		mockGroupLabels: model.LabelSet{},
+	}, nil
+}
+
+// GetNotificationConfig implements the NotificationManager interface for testing.
+func (p *provider) GetNotificationConfig(orgID string, alert *types.Alert) (*nfgrouping2.NotificationConfig, error) {
+	if p.mockError != nil {
+		return nil, p.mockError
+	}
+	return &nfgrouping2.NotificationConfig{
+		NotificationGroup: p.mockGroupLabels,
+		RenotifyInterval:  4 * time.Hour,
+	}, nil
+}
+
+// SetNotificationConfig implements the NotificationManager interface for testing.
+func (p *provider) SetNotificationConfig(orgID string, alert *types.Alert, config *nfgrouping2.NotificationConfig) error {
+	return p.mockError
+}
+
+// SetMockGroupLabels sets mock group labels for testing.
+func (p *provider) SetMockGroupLabels(labels model.LabelSet) {
+	p.mockGroupLabels = labels
+}
+
+// SetMockError sets a mock error for testing.
+func (p *provider) SetMockError(err error) {
+	p.mockError = err
+}

@@ -2,6 +2,7 @@ package alertmanagerserver
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"log/slog"
 	"strings"
 	"sync"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/nfgrouping"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/featurecontrol"
@@ -51,31 +51,31 @@ type Server struct {
 	stateStore alertmanagertypes.StateStore
 
 	// alertmanager primitives from upstream alertmanager
-	alerts             *mem.Alerts
-	nflog              *nflog.Log
-	dispatcher         *Dispatcher
-	dispatcherMetrics  *DispatcherMetrics
-	inhibitor          *inhibit.Inhibitor
-	silencer           *silence.Silencer
-	silences           *silence.Silences
-	timeIntervals      map[string][]timeinterval.TimeInterval
-	pipelineBuilder    *notify.PipelineBuilder
-	marker             *alertmanagertypes.MemMarker
-	tmpl               *template.Template
-	wg                 sync.WaitGroup
-	stopc              chan struct{}
-	notificationGroups nfgrouping.NotificationGroups
+	alerts              *mem.Alerts
+	nflog               *nflog.Log
+	dispatcher          *Dispatcher
+	dispatcherMetrics   *DispatcherMetrics
+	inhibitor           *inhibit.Inhibitor
+	silencer            *silence.Silencer
+	silences            *silence.Silences
+	timeIntervals       map[string][]timeinterval.TimeInterval
+	pipelineBuilder     *notify.PipelineBuilder
+	marker              *alertmanagertypes.MemMarker
+	tmpl                *template.Template
+	wg                  sync.WaitGroup
+	stopc               chan struct{}
+	notificationManager nfmanager.NotificationManager
 }
 
-func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore, groups nfgrouping.NotificationGroups) (*Server, error) {
+func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore, groups nfmanager.NotificationManager) (*Server, error) {
 	server := &Server{
-		logger:             logger.With("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver"),
-		registry:           registry,
-		srvConfig:          srvConfig,
-		orgID:              orgID,
-		stateStore:         stateStore,
-		stopc:              make(chan struct{}),
-		notificationGroups: groups,
+		logger:              logger.With("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver"),
+		registry:            registry,
+		srvConfig:           srvConfig,
+		orgID:               orgID,
+		stateStore:          stateStore,
+		stopc:               make(chan struct{}),
+		notificationManager: groups,
 	}
 	signozRegisterer := prometheus.WrapRegistererWithPrefix("signoz_", registry)
 	signozRegisterer = prometheus.WrapRegistererWith(prometheus.Labels{"org_id": server.orgID}, signozRegisterer)
@@ -208,6 +208,20 @@ func (server *Server) GetAlerts(ctx context.Context, params alertmanagertypes.Ge
 func (server *Server) PutAlerts(ctx context.Context, postableAlerts alertmanagertypes.PostableAlerts) error {
 	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(postableAlerts, time.Duration(server.srvConfig.Global.ResolveTimeout), time.Now())
 
+	for i, alert := range postableAlerts {
+		groups := model.LabelSet{}
+		for _, name := range alert.NotificationGroups {
+			groups[model.LabelName(name)] = model.LabelValue(alert.Labels[name])
+		}
+		config := &nfmanager.NotificationConfig{
+			NotificationGroup: groups,
+			RenotifyInterval:  alert.RenotifyInterval,
+		}
+		groupErr := server.notificationManager.SetNotificationConfig(server.orgID, alerts[i], config)
+		if groupErr != nil {
+			err = append(err, groupErr)
+		}
+	}
 	// Notification sending alert takes precedence over validation errors.
 	if err := server.alerts.Put(alerts...); err != nil {
 		return err
@@ -307,7 +321,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		nil,
 		server.logger,
 		server.dispatcherMetrics,
-		server.notificationGroups,
+		server.notificationManager,
 		server.orgID,
 	)
 

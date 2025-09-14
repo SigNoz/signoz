@@ -2,13 +2,13 @@ package alertmanager
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"sync"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/nfgrouping"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 )
 
@@ -34,7 +34,7 @@ type Service struct {
 	// Mutex to protect the servers map
 	serversMtx sync.RWMutex
 
-	notificationGroups nfgrouping.NotificationGroups
+	notificationManager nfmanager.NotificationManager
 }
 
 func New(
@@ -44,7 +44,7 @@ func New(
 	stateStore alertmanagertypes.StateStore,
 	configStore alertmanagertypes.ConfigStore,
 	orgGetter organization.Getter,
-	groups nfgrouping.NotificationGroups,
+	groups nfmanager.NotificationManager,
 ) *Service {
 	service := &Service{
 		config:             config,
@@ -54,7 +54,7 @@ func New(
 		settings:           settings,
 		servers:            make(map[string]*alertmanagerserver.Server),
 		serversMtx:         sync.RWMutex{},
-		notificationGroups: groups,
+		notificationManager: groups,
 	}
 
 	return service
@@ -172,7 +172,7 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 		return nil, err
 	}
 
-	server, err := alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID, service.stateStore, service.notificationGroups)
+	server, err := alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID, service.stateStore, service.notificationManager)
 	if err != nil {
 		return nil, err
 	}

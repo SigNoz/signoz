@@ -221,14 +221,16 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			}
 
 			alerts[h] = &ruletypes.Alert{
-				Labels:            lbs,
-				QueryResultLables: resultLabels,
-				Annotations:       annotations,
-				ActiveAt:          ts,
-				State:             model.StatePending,
-				Value:             result.V,
-				GeneratorURL:      r.GeneratorURL(),
-				Receivers:         r.preferredChannels,
+				Labels:             lbs,
+				QueryResultLables:  resultLabels,
+				Annotations:        annotations,
+				ActiveAt:           ts,
+				State:              model.StatePending,
+				Value:              result.V,
+				GeneratorURL:       r.GeneratorURL(),
+				Receivers:          r.preferredChannels,
+				NotificationGroups: r.NotificationGroupBy,
+				RenotifyInterval:   r.RenotifyInterval,
 			}
 		}
 	}

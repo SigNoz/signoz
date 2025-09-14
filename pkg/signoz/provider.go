@@ -2,6 +2,10 @@ package signoz
 
 import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	nfgrouping2 "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/rulebasednotification"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/standardnotification"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/analytics/noopanalytics"
@@ -15,10 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/nfgrouping"
-	"github.com/SigNoz/signoz/pkg/nfgrouping/nfgroupingtest"
-	"github.com/SigNoz/signoz/pkg/nfgrouping/rulegrouping"
-	"github.com/SigNoz/signoz/pkg/nfgrouping/standardgrouping"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -157,17 +157,17 @@ func NewPrometheusProviderFactories(telemetryStore telemetrystore.TelemetryStore
 	)
 }
 
-func NewNotificationGroupingProviderFactories() factory.NamedMap[factory.ProviderFactory[nfgrouping.NotificationGroups, nfgrouping.Config]] {
+func NewNotificationGroupingProviderFactories() factory.NamedMap[factory.ProviderFactory[nfgrouping2.NotificationManager, nfgrouping2.Config]] {
 	return factory.MustNewNamedMap(
-		rulegrouping.NewFactory(),
-		standardgrouping.NewFactory(),
-		nfgroupingtest.NewFactory(),
+		rulebasednotification.NewFactory(),
+		standardnotification.NewFactory(),
+		nfmanagertest.NewFactory(),
 	)
 }
 
-func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationGroups nfgrouping.NotificationGroups) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
+func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfgrouping2.NotificationManager) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
 	return factory.MustNewNamedMap(
-		signozalertmanager.NewFactory(sqlstore, orgGetter, notificationGroups),
+		signozalertmanager.NewFactory(sqlstore, orgGetter, notificationManager),
 	)
 }
 

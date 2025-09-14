@@ -2,6 +2,8 @@ package signoz
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"reflect"
 	"testing"
 	"time"
@@ -12,8 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
-	"github.com/SigNoz/signoz/pkg/nfgrouping"
-	"github.com/SigNoz/signoz/pkg/nfgrouping/nfgroupingtest"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -31,9 +31,9 @@ func TestNewHandlers(t *testing.T) {
 	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	require.NoError(t, err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstore), sharder)
-	notificationGroups, err := nfgroupingtest.New(context.TODO(), providerSettings, nfgrouping.Config{})
+	notificationManager, err := nfmanagertest.New(context.TODO(), providerSettings, nfmanager.Config{})
 	require.NoError(t, err)
-	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{}, sqlstore, orgGetter, notificationGroups)
+	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{}, sqlstore, orgGetter, notificationManager)
 	require.NoError(t, err)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()

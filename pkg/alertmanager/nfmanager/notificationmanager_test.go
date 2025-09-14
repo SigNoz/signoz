@@ -1,4 +1,4 @@
-package nfgrouping
+package nfmanager
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 
 func TestNotificationGroupsInterface(t *testing.T) {
 	// Test that the interface can be implemented
-	var ng NotificationGroups = &mockNotificationGroups{}
+	var ng NotificationManager = &mockNotificationGroups{}
 
 	alert := &types.Alert{
 		Alert: model.Alert{
@@ -33,8 +33,13 @@ func TestNotificationGroupsInterface(t *testing.T) {
 	groupLabels := ng.GetGroupLabels("test-org", alert, route)
 	assert.NotNil(t, groupLabels)
 
-	err := ng.SetGroupLabels("test-org", "test-rule", []string{"alertname"})
+	config := &NotificationConfig{GroupByLabels: []string{"alertname"}}
+	err := ng.SetNotificationConfig("test-org", "test-rule", config)
 	assert.NoError(t, err)
+
+	retrievedConfig, err := ng.GetNotificationConfig("test-org", "test-rule")
+	assert.NoError(t, err)
+	assert.NotNil(t, retrievedConfig)
 }
 
 type mockNotificationGroups struct{}
@@ -45,6 +50,10 @@ func (m *mockNotificationGroups) GetGroupLabels(orgID string, alert *types.Alert
 	}
 }
 
-func (m *mockNotificationGroups) SetGroupLabels(orgID string, ruleID string, groupByLabels []string) error {
+func (m *mockNotificationGroups) GetNotificationConfig(orgID string, ruleID string) (*NotificationConfig, error) {
+	return &NotificationConfig{GroupByLabels: []string{"alertname"}}, nil
+}
+
+func (m *mockNotificationGroups) SetNotificationConfig(orgID string, ruleID string, config *NotificationConfig) error {
 	return nil
 }

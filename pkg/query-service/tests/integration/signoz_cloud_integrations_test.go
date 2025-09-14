@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"net/http"
 	"strings"
 	"testing"
@@ -14,8 +16,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics/analyticstest"
 	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
-	"github.com/SigNoz/signoz/pkg/nfgrouping"
-	"github.com/SigNoz/signoz/pkg/nfgrouping/nfgroupingtest"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -375,7 +375,7 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	require.NoError(t, err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(testDB), sharder)
-	notificationGroups, err := nfgroupingtest.New(context.TODO(), providerSettings, nfgrouping.Config{})
+	notificationGroups, err := nfmanagertest.New(context.TODO(), providerSettings, nfmanager.Config{})
 	require.NoError(t, err)
 	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, testDB, orgGetter, notificationGroups)
 	require.NoError(t, err)
