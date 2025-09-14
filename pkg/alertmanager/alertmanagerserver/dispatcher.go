@@ -297,6 +297,7 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 	for labelName := range groupLabels {
 		route.RouteOpts.GroupBy[labelName] = struct{}{}
 	}
+	route.RouteOpts.RepeatInterval = config.RenotifyInterval
 	d.mtx.Lock()
 	defer d.mtx.Unlock()
 
