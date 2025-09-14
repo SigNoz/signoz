@@ -59,13 +59,15 @@ type CumulativeSchedule struct {
 	Weekday *int         `json:"weekday,omitempty"` // 0-6 (Sunday=0), for weekly
 }
 
-type ScheduleType string
+type ScheduleType struct {
+	valuer.String
+}
 
-const (
-	ScheduleTypeHourly  ScheduleType = "hourly"
-	ScheduleTypeDaily   ScheduleType = "daily"
-	ScheduleTypeWeekly  ScheduleType = "weekly"
-	ScheduleTypeMonthly ScheduleType = "monthly"
+var (
+	ScheduleTypeHourly  = ScheduleType{valuer.NewString("hourly")}
+	ScheduleTypeDaily   = ScheduleType{valuer.NewString("daily")}
+	ScheduleTypeWeekly  = ScheduleType{valuer.NewString("weekly")}
+	ScheduleTypeMonthly = ScheduleType{valuer.NewString("monthly")}
 )
 
 func (cumulativeWindow CumulativeWindow) Validate() error {
