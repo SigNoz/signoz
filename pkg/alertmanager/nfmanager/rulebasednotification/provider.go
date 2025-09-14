@@ -30,7 +30,7 @@ func NewFactory() factory.ProviderFactory[nfmanager.NotificationManager, nfmanag
 
 // New creates a new rule-based grouping strategy provider.
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config nfmanager.Config) (nfmanager.NotificationManager, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/nfmanager/rulebasednotification")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/rulebasednotification")
 
 	// Create fallback strategy based on config
 	fallbackStrategy, err := standardnotification.New(ctx, providerSettings, config)
