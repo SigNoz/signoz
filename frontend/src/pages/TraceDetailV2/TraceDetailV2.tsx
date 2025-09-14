@@ -1,9 +1,11 @@
 import './TraceDetailV2.styles.scss';
 
+import { UnorderedListOutlined } from '@ant-design/icons';
 import { Button, Tabs } from 'antd';
 import FlamegraphImg from 'assets/TraceDetail/Flamegraph';
 import TraceFlamegraph from 'container/PaginatedTraceFlamegraph/PaginatedTraceFlamegraph';
 import SpanDetailsDrawer from 'container/SpanDetailsDrawer/SpanDetailsDrawer';
+import SpanList from 'container/SpanList/SpanList';
 import TraceMetadata from 'container/TraceMetadata/TraceMetadata';
 import TraceWaterfall, {
 	IInterestedSpan,
@@ -117,6 +119,19 @@ function TraceDetailsV2(): JSX.Element {
 					/>
 				</>
 			),
+		},
+		{
+			label: (
+				<Button
+					type="text"
+					icon={<UnorderedListOutlined />}
+					className="flamegraph-waterfall-toggle"
+				>
+					Span list
+				</Button>
+			),
+			key: 'span-list',
+			children: <SpanList traceId={traceId} setSelectedSpan={setSelectedSpan} />,
 		},
 	];
 
