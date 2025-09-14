@@ -212,11 +212,11 @@ function SpanTable({
 			cell: renderNameCell,
 		},
 		{
-			id: 'timestamp',
-			header: 'Timestamp',
-			accessorKey: 'timestamp',
-			size: 180,
-			cell: renderTimestampCell,
+			id: 'service',
+			header: 'Service',
+			accessorKey: 'serviceName',
+			size: 120,
+			cell: renderServiceCell,
 		},
 		{
 			id: 'spanId',
@@ -239,19 +239,20 @@ function SpanTable({
 			size: 80,
 			cell: renderStatusCodeCell,
 		},
-		{
-			id: 'service',
-			header: 'Service',
-			accessorKey: 'serviceName',
-			size: 120,
-			cell: renderServiceCell,
-		},
+
 		{
 			id: 'duration',
 			header: 'Duration',
 			accessorKey: 'duration',
 			size: 120,
 			cell: renderDurationCell,
+		},
+		{
+			id: 'timestamp',
+			header: 'Timestamp',
+			accessorKey: 'timestamp',
+			size: 180,
+			cell: renderTimestampCell,
 		},
 	];
 
