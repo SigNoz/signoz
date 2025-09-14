@@ -1,5 +1,5 @@
 export interface UpdateProfileProps {
-	reasons_for_interest_in_signoz: string;
+	reasons_for_interest_in_signoz: string[];
 	uses_otel: boolean;
 	has_existing_observability_tool: boolean;
 	existing_observability_tool: string;
