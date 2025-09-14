@@ -166,6 +166,12 @@ function OnboardingQuestionaire(): JSX.Element {
 			nextPageID: 4,
 		});
 
+		console.log(
+			'signozDetails?.interestInSignoz',
+			orgDetails,
+			signozDetails?.interestInSignoz,
+		);
+
 		updateProfile({
 			uses_otel: orgDetails?.usesOtel as boolean,
 			has_existing_observability_tool: orgDetails?.usesObservability as boolean,
@@ -178,13 +184,13 @@ function OnboardingQuestionaire(): JSX.Element {
 			reasons_for_interest_in_signoz: signozDetails?.interestInSignoz?.includes(
 				'Others',
 			)
-				? [
+				? ([
 						...(signozDetails?.interestInSignoz?.filter(
 							(item) => item !== 'Others',
 						) || []),
-						signozDetails?.otherInterestInSignoz || '',
-				  ].join(', ')
-				: (signozDetails?.interestInSignoz as string[])?.join(', ') || '',
+						signozDetails?.otherInterestInSignoz,
+				  ] as string[])
+				: (signozDetails?.interestInSignoz as string[]),
 			logs_scale_per_day_in_gb: optimiseSignozDetails?.logsPerDay as number,
 			number_of_hosts: optimiseSignozDetails?.hostsPerDay as number,
 			number_of_services: optimiseSignozDetails?.services as number,
