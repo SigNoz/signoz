@@ -3,6 +3,7 @@ package ruletypes
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 	"unicode/utf8"
 
@@ -52,11 +53,9 @@ type PostableRule struct {
 
 	Version string `json:"version,omitempty"`
 
-
-
 	Evaluation       *EvaluationEnvelope `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
-	ScheduleStartsAt int64      `yaml:"startsAt,omitempty" json:"startsAt,omitempty"`
-	Schedule         string     `json:"schedule,omitempty"`
+	ScheduleStartsAt int64               `yaml:"startsAt,omitempty" json:"startsAt,omitempty"`
+	Schedule         string              `json:"schedule,omitempty"`
 }
 
 func (r *PostableRule) processRuleDefaults() error {
@@ -110,9 +109,9 @@ func (r *PostableRule) processRuleDefaults() error {
 	}
 
 	// Validate rrule schedule if present
-	if rule.Schedule != "" {
-		if err := validateRRule(rule.Schedule); err != nil {
-			return nil, fmt.Errorf("invalid schedule format: %w", err)
+	if r.Schedule != "" {
+		if err := validateRRule(r.Schedule); err != nil {
+			return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid rrule")
 		}
 	}
 

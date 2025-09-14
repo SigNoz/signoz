@@ -761,3 +761,11 @@ func (r *BaseRule) PopulateTemporality(ctx context.Context, orgID valuer.UUID, q
 	}
 	return nil
 }
+
+func (r *BaseRule) IsScheduled() bool {
+	return r.schedule != ""
+}
+
+func (r *BaseRule) GetSchedule() (string, time.Time) {
+	return r.schedule, r.scheduleStartsAt
+}
