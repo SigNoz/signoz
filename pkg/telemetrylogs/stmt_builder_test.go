@@ -142,6 +142,111 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			name:        "Time series with NOT predicate containing only non-resource terms",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations: []qbtypes.LogAggregation{
+					{
+						Expression: "count()",
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "NOT (message CONTAINS 'foo' AND hasToken(body, 'bar'))",
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND NOT ((((LOWER(attributes_string['message']) LIKE LOWER(?) AND mapContains(attributes_string, 'message') = ?) AND hasToken(LOWER(body), LOWER(?))))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "%foo%", true, "bar", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "Time series with NOT OR mixed resource/non-resource terms",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations: []qbtypes.LogAggregation{
+					{
+						Expression: "count()",
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "NOT (service.name = 'redis-manual' OR http.method = 'GET')",
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND NOT ((((resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?) OR (attributes_string['http.method'] = ? AND mapContains(attributes_string, 'http.method') = ?)))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "redis-manual", true, "GET", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "Time series with complex NOT expression and nested OR conditions",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations: []qbtypes.LogAggregation{
+					{
+						Expression: "count()",
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "service.name IN 'redis' AND request.type = 'External' AND http.status_code < 500 AND http.status_code >= 400 AND NOT ((http.request.header.tenant_id = '[\"tenant-1\"]' AND http.status_code = 401) OR (http.request.header.tenant_id = '[\"tenant-2\"]' AND http.status_code = 404 AND http.route = '/tenants/{tenant_id}'))",
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE ((simpleJSONExtractString(labels, 'service.name') = ?) AND labels LIKE ? AND (labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (((resources_string['service.name'] = ?) AND mapContains(resources_string, 'service.name') = ?) AND (attributes_string['request.type'] = ? AND mapContains(attributes_string, 'request.type') = ?) AND (toFloat64(attributes_number['http.status_code']) < ? AND mapContains(attributes_number, 'http.status_code') = ?) AND (toFloat64(attributes_number['http.status_code']) >= ? AND mapContains(attributes_number, 'http.status_code') = ?) AND NOT ((((((attributes_string['http.request.header.tenant_id'] = ? AND mapContains(attributes_string, 'http.request.header.tenant_id') = ?) AND (toFloat64(attributes_number['http.status_code']) = ? AND mapContains(attributes_number, 'http.status_code') = ?))) OR (((attributes_string['http.request.header.tenant_id'] = ? AND mapContains(attributes_string, 'http.request.header.tenant_id') = ?) AND (toFloat64(attributes_number['http.status_code']) = ? AND mapContains(attributes_number, 'http.status_code') = ?) AND (attributes_string['http.route'] = ? AND mapContains(attributes_string, 'http.route') = ?))))))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts",
+				Args:  []any{"redis", "%service.name%", "%service.name\":\"redis%", uint64(1747945619), uint64(1747983448), "redis", true, "External", true, float64(500), true, float64(400), true, "[\"tenant-1\"]", true, float64(401), true, "[\"tenant-2\"]", true, float64(404), true, "/tenants/{tenant_id}", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "Time series with complex OR expression containing NOT with nested conditions",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations: []qbtypes.LogAggregation{
+					{
+						Expression: "count()",
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "(service.name IN 'redis' AND request.type = 'External' AND http.status_code < 500 AND http.status_code >= 400 OR NOT ((http.request.header.tenant_id = '[\"tenant-1\"]' AND http.status_code = 401) OR (http.request.header.tenant_id = '[\"tenant-2\"]' AND http.status_code = 404 AND http.route = '/tenants/{tenant_id}')))",
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (((((resources_string['service.name'] = ?) AND mapContains(resources_string, 'service.name') = ?) AND (attributes_string['request.type'] = ? AND mapContains(attributes_string, 'request.type') = ?) AND (toFloat64(attributes_number['http.status_code']) < ? AND mapContains(attributes_number, 'http.status_code') = ?) AND (toFloat64(attributes_number['http.status_code']) >= ? AND mapContains(attributes_number, 'http.status_code') = ?)) OR NOT ((((((attributes_string['http.request.header.tenant_id'] = ? AND mapContains(attributes_string, 'http.request.header.tenant_id') = ?) AND (toFloat64(attributes_number['http.status_code']) = ? AND mapContains(attributes_number, 'http.status_code') = ?))) OR (((attributes_string['http.request.header.tenant_id'] = ? AND mapContains(attributes_string, 'http.request.header.tenant_id') = ?) AND (toFloat64(attributes_number['http.status_code']) = ? AND mapContains(attributes_number, 'http.status_code') = ?) AND (attributes_string['http.route'] = ? AND mapContains(attributes_string, 'http.route') = ?)))))))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "redis", true, "External", true, float64(500), true, float64(400), true, "[\"tenant-1\"]", true, float64(401), true, "[\"tenant-2\"]", true, float64(404), true, "/tenants/{tenant_id}", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "Time series with OR between multiple resource conditions",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations: []qbtypes.LogAggregation{
+					{
+						Expression: "count()",
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "service.name = 'redis' OR service.name = 'driver'",
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE ((simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) OR (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?) OR (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts",
+				Args:  []any{"redis", "%service.name%", "%service.name\":\"redis%", "driver", "%service.name%", "%service.name\":\"driver%", uint64(1747945619), uint64(1747983448), "redis", true, "driver", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+			},
+			expectedErr: nil,
+		},
 	}
 
 	fm := NewFieldMapper()

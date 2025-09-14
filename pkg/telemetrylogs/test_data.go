@@ -862,6 +862,27 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 				Materialized:  true,
 			},
 		},
+		"request.type": {
+			{
+				Name:          "request.type",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		"http.request.header.tenant_id": {
+			{
+				Name:          "http.request.header.tenant_id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		"http.route": {
+			{
+				Name:          "http.route",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
 	}
 
 	for _, keys := range keysMap {

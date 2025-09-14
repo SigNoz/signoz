@@ -164,6 +164,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			FullTextColumn:     b.fullTextColumn,
 			JsonBodyPrefix:     b.jsonBodyPrefix,
 			JsonKeyToKey:       b.jsonKeyToKey,
+			OnlyResourceFilter: true,  // Only process resource terms
 			SkipFullTextFilter: true,
 			SkipFunctionCalls:  true,
 			// there is no need for "key" not found error for resource filtering
