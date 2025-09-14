@@ -11,9 +11,10 @@ import TraceWaterfall, {
 	IInterestedSpan,
 } from 'container/TraceWaterfall/TraceWaterfall';
 import useGetTraceV2 from 'hooks/trace/useGetTraceV2';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { defaultTo } from 'lodash-es';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Span, TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 
@@ -22,6 +23,11 @@ import NoData from './NoData/NoData';
 function TraceDetailsV2(): JSX.Element {
 	const { id: traceId } = useParams<TraceDetailV2URLProps>();
 	const urlQuery = useUrlQuery();
+	const { safeNavigate } = useSafeNavigate();
+	const [activeTab, setActiveTab] = useState<string>(() => {
+		const viewParam = urlQuery.get('view');
+		return viewParam === 'span-list' ? 'span-list' : 'flamegraph';
+	});
 	const [interestedSpanId, setInterestedSpanId] = useState<IInterestedSpan>(
 		() => ({
 			spanId: urlQuery.get('spanId') || '',
@@ -83,6 +89,40 @@ function TraceDetailsV2(): JSX.Element {
 			setIsSpanDetailsDocked(true);
 		}
 	}, [noData]);
+
+	const handleTabChange = useCallback(
+		(key: string) => {
+			const urlQueryParams = new URLSearchParams();
+
+			if (key === 'span-list') {
+				urlQueryParams.set('view', 'span-list');
+
+				setIsSpanDetailsDocked(true);
+				setSelectedSpan(undefined);
+			} else if (selectedSpan) {
+				setIsSpanDetailsDocked(false);
+			}
+
+			safeNavigate({ search: urlQueryParams.toString() });
+			setActiveTab(key);
+		},
+		[safeNavigate, selectedSpan],
+	);
+
+	// Sync tab state with URL changes
+	useEffect(() => {
+		const viewParam = urlQuery.get('view');
+		const newActiveTab = viewParam === 'span-list' ? 'span-list' : 'flamegraph';
+		if (viewParam === 'span-list') {
+			setIsSpanDetailsDocked(true);
+			setSelectedSpan(undefined);
+		} else {
+			setIsSpanDetailsDocked(false);
+		}
+		if (newActiveTab !== activeTab) {
+			setActiveTab(newActiveTab);
+		}
+	}, [urlQuery, activeTab, selectedSpan]);
 
 	const items = [
 		{
@@ -155,7 +195,13 @@ function TraceDetailsV2(): JSX.Element {
 					notFound={noData}
 				/>
 				{!noData ? (
-					<Tabs items={items} animated className="trace-visualisation-tabs" />
+					<Tabs
+						items={items}
+						animated
+						className="trace-visualisation-tabs"
+						activeKey={activeTab}
+						onChange={handleTabChange}
+					/>
 				) : (
 					<NoData />
 				)}

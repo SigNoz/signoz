@@ -447,8 +447,15 @@ function Success(props: ISuccessProps): JSX.Element {
 			handleAddSpanToFunnel,
 		],
 	);
+	const urlQuery = useUrlQuery();
+
+	const viewParam = urlQuery.get('view');
 
 	useEffect(() => {
+		if (viewParam === 'span-list') {
+			return;
+		}
+
 		if (interestedSpanId.spanId !== '' && virtualizerRef.current) {
 			const idx = spans.findIndex(
 				(span) => span.spanId === interestedSpanId.spanId,
@@ -471,7 +478,7 @@ function Success(props: ISuccessProps): JSX.Element {
 				return prev;
 			});
 		}
-	}, [interestedSpanId, setSelectedSpan, spans]);
+	}, [interestedSpanId, setSelectedSpan, spans, viewParam]);
 
 	return (
 		<div className="success-content">
