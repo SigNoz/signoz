@@ -22,11 +22,6 @@ func NewConditionBuilder(fm qbtypes.FieldMapper) *defaultConditionBuilder {
 
 func valueForIndexFilter(op qbtypes.FilterOperator, key *telemetrytypes.TelemetryFieldKey, value any) any {
 	switch v := value.(type) {
-	case string:
-		if op == qbtypes.FilterOperatorEqual || op == qbtypes.FilterOperatorNotEqual {
-			return fmt.Sprintf(`%%%s":"%s%%`, key.Name, v)
-		}
-		return fmt.Sprintf(`%%%s%%%s%%`, key.Name, v)
 	case []any:
 		// assuming array will always be for in and not in
 		values := make([]string, 0, len(v))
@@ -34,9 +29,13 @@ func valueForIndexFilter(op qbtypes.FilterOperator, key *telemetrytypes.Telemetr
 			values = append(values, fmt.Sprintf(`%%%s":"%s%%`, key.Name, querybuilder.FormatValueForContains(v)))
 		}
 		return values
+	default:
+		// format to string for anything else as we store resource values as string
+		if op == qbtypes.FilterOperatorEqual || op == qbtypes.FilterOperatorNotEqual {
+			return fmt.Sprintf(`%%%s":"%s%%`, key.Name, querybuilder.FormatValueForContains(v))
+		}
+		return fmt.Sprintf(`%%%s%%%s%%`, key.Name, querybuilder.FormatValueForContains(v))
 	}
-	// resource table expects string value
-	return fmt.Sprintf(`%%%v%%`, value)
 }
 
 func keyIndexFilter(key *telemetrytypes.TelemetryFieldKey) any {
@@ -55,23 +54,9 @@ func (b *defaultConditionBuilder) ConditionFor(
 		return "true", nil
 	}
 
-	switch op {
-	case qbtypes.FilterOperatorContains,
-		qbtypes.FilterOperatorNotContains,
-		qbtypes.FilterOperatorILike,
-		qbtypes.FilterOperatorNotILike,
-		qbtypes.FilterOperatorLike,
-		qbtypes.FilterOperatorNotLike,
-		qbtypes.FilterOperatorEqual,
-		qbtypes.FilterOperatorNotEqual,
-		qbtypes.FilterOperatorGreaterThan,
-		qbtypes.FilterOperatorGreaterThanOrEq,
-		qbtypes.FilterOperatorLessThan,
-		qbtypes.FilterOperatorLessThanOrEq,
-		qbtypes.FilterOperatorNotRegexp,
-		qbtypes.FilterOperatorRegexp:
-		value = querybuilder.FormatValueForContains(value)
-	}
+	// except for in, not in, between, not between all other operators should have formatted value
+	// as we store resource values as string
+	formattedValue := querybuilder.FormatValueForContains(value)
 
 	column, err := b.fm.ColumnFor(ctx, key)
 	if err != nil {
@@ -89,34 +74,34 @@ func (b *defaultConditionBuilder) ConditionFor(
 	switch op {
 	case qbtypes.FilterOperatorEqual:
 		return sb.And(
-			sb.E(fieldName, value),
+			sb.E(fieldName, formattedValue),
 			keyIdxFilter,
 			sb.Like(column.Name, valueForIndexFilter),
 		), nil
 	case qbtypes.FilterOperatorNotEqual:
 		return sb.And(
-			sb.NE(fieldName, value),
+			sb.NE(fieldName, formattedValue),
 			sb.NotLike(column.Name, valueForIndexFilter),
 		), nil
 	case qbtypes.FilterOperatorGreaterThan:
-		return sb.And(sb.GT(fieldName, value), keyIdxFilter), nil
+		return sb.And(sb.GT(fieldName, formattedValue), keyIdxFilter), nil
 	case qbtypes.FilterOperatorGreaterThanOrEq:
-		return sb.And(sb.GE(fieldName, value), keyIdxFilter), nil
+		return sb.And(sb.GE(fieldName, formattedValue), keyIdxFilter), nil
 	case qbtypes.FilterOperatorLessThan:
-		return sb.And(sb.LT(fieldName, value), keyIdxFilter), nil
+		return sb.And(sb.LT(fieldName, formattedValue), keyIdxFilter), nil
 	case qbtypes.FilterOperatorLessThanOrEq:
-		return sb.And(sb.LE(fieldName, value), keyIdxFilter), nil
+		return sb.And(sb.LE(fieldName, formattedValue), keyIdxFilter), nil
 
 	case qbtypes.FilterOperatorLike, qbtypes.FilterOperatorILike:
 		return sb.And(
-			sb.ILike(fieldName, value),
+			sb.ILike(fieldName, formattedValue),
 			keyIdxFilter,
 			sb.ILike(column.Name, valueForIndexFilter),
 		), nil
 	case qbtypes.FilterOperatorNotLike, qbtypes.FilterOperatorNotILike:
 		// no index filter: as cannot apply `not contains x%y` as y can be somewhere else
 		return sb.And(
-			sb.NotILike(fieldName, value),
+			sb.NotILike(fieldName, formattedValue),
 		), nil
 
 	case qbtypes.FilterOperatorBetween:
@@ -188,24 +173,24 @@ func (b *defaultConditionBuilder) ConditionFor(
 
 	case qbtypes.FilterOperatorRegexp:
 		return sb.And(
-			fmt.Sprintf("match(%s, %s)", fieldName, sb.Var(value)),
+			fmt.Sprintf("match(%s, %s)", fieldName, sb.Var(formattedValue)),
 			keyIdxFilter,
 		), nil
 	case qbtypes.FilterOperatorNotRegexp:
 		return sb.And(
-			fmt.Sprintf("NOT match(%s, %s)", fieldName, sb.Var(value)),
+			fmt.Sprintf("NOT match(%s, %s)", fieldName, sb.Var(formattedValue)),
 		), nil
 
 	case qbtypes.FilterOperatorContains:
 		return sb.And(
-			sb.ILike(fieldName, fmt.Sprintf(`%%%s%%`, value)),
+			sb.ILike(fieldName, fmt.Sprintf(`%%%s%%`, formattedValue)),
 			keyIdxFilter,
 			sb.ILike(column.Name, valueForIndexFilter),
 		), nil
 	case qbtypes.FilterOperatorNotContains:
 		// no index filter: as cannot apply `not contains x%y` as y can be somewhere else
 		return sb.And(
-			sb.NotILike(fieldName, fmt.Sprintf(`%%%s%%`, value)),
+			sb.NotILike(fieldName, fmt.Sprintf(`%%%s%%`, formattedValue)),
 		), nil
 	}
 	return "", qbtypes.ErrUnsupportedOperator
