@@ -88,6 +88,14 @@
 				border: 1px solid var(--bg-slate-500);
 				.ant-card-body {
 					background-color: var(--bg-ink-500);
+
+					.chart-preview-headline {
+						display: flex;
+						align-items: center;
+						justify-content: space-between;
+						gap: 8px;
+						width: 100%;
+					}
 				}
 			}
 		}

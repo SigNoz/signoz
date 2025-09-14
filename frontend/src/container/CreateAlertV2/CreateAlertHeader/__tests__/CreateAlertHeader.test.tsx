@@ -44,14 +44,6 @@ describe('CreateAlertHeader', () => {
 		expect(nameInput).toBeInTheDocument();
 	});
 
-	it('renders description input with placeholder', () => {
-		renderCreateAlertHeader();
-		const descriptionInput = screen.getByPlaceholderText(
-			'Click to add description...',
-		);
-		expect(descriptionInput).toBeInTheDocument();
-	});
-
 	it('renders LabelsInput component', () => {
 		renderCreateAlertHeader();
 		expect(screen.getByText('+ Add labels')).toBeInTheDocument();
@@ -64,14 +56,5 @@ describe('CreateAlertHeader', () => {
 		fireEvent.change(nameInput, { target: { value: 'Test Alert' } });
 
 		expect(nameInput).toHaveValue('Test Alert');
-	});
-
-	it('updates description when typing in description input', () => {
-		renderCreateAlertHeader();
-		const descriptionInput = screen.getByPlaceholderText(
-			'Click to add description...',
-		);
-		fireEvent.change(descriptionInput, { target: { value: 'Test Description' } });
-		expect(descriptionInput).toHaveValue('Test Description');
 	});
 });

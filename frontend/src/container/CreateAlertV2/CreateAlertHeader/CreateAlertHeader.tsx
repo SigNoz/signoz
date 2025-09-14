@@ -49,15 +49,6 @@ function CreateAlertHeader(): JSX.Element {
 					className="alert-header__input title"
 					placeholder="Enter alert rule name"
 				/>
-				<input
-					type="text"
-					value={alertState.description}
-					onChange={(e): void =>
-						setAlertState({ type: 'SET_ALERT_DESCRIPTION', payload: e.target.value })
-					}
-					className="alert-header__input description"
-					placeholder="Click to add description..."
-				/>
 				<LabelsInput
 					labels={alertState.labels}
 					onLabelsChange={(labels: Labels): void =>
