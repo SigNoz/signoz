@@ -107,6 +107,26 @@ func NewTelemetryMetaStore(
 	return t
 }
 
+// normalizeFieldKeySelector parses selector.Name for implicit context/datatype prefixes and fills missing fields accordingly.
+func normalizeFieldKeySelector(sel *telemetrytypes.FieldKeySelector) {
+	if sel == nil {
+		return
+	}
+	// only attempt normalization if either context or datatype not explicitly provided
+	if sel.FieldContext == telemetrytypes.FieldContextUnspecified || sel.FieldDataType == telemetrytypes.FieldDataTypeUnspecified {
+		parsed := telemetrytypes.GetFieldKeyFromKeyText(sel.Name)
+		if sel.FieldContext == telemetrytypes.FieldContextUnspecified && parsed.FieldContext != telemetrytypes.FieldContextUnspecified {
+			sel.FieldContext = parsed.FieldContext
+		}
+		if sel.FieldDataType == telemetrytypes.FieldDataTypeUnspecified && parsed.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+			sel.FieldDataType = parsed.FieldDataType
+		}
+		if parsed.Name != "" && parsed.Name != sel.Name {
+			sel.Name = parsed.Name
+		}
+	}
+}
+
 // tracesTblStatementToFieldKeys returns materialised attribute/resource/scope keys from the traces table
 func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	query := fmt.Sprintf("SHOW CREATE TABLE %s.%s", t.tracesDBName, t.indexV3TblName)
@@ -132,6 +152,10 @@ func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) 
 func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	if len(fieldKeySelectors) == 0 {
 		return nil, true, nil
+	}
+
+	for _, s := range fieldKeySelectors {
+		normalizeFieldKeySelector(s)
 	}
 
 	// pre-fetch the materialised keys from the traces table
@@ -345,6 +369,10 @@ func (t *telemetryMetaStore) logsTblStatementToFieldKeys(ctx context.Context) ([
 func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	if len(fieldKeySelectors) == 0 {
 		return nil, true, nil
+	}
+
+	for _, s := range fieldKeySelectors {
+		normalizeFieldKeySelector(s)
 	}
 
 	// pre-fetch the materialised keys from the logs table
@@ -597,6 +625,10 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 		return nil, true, nil
 	}
 
+	for _, s := range fieldKeySelectors {
+		normalizeFieldKeySelector(s)
+	}
+
 	sb := sqlbuilder.
 		Select("attr_name as name", "attr_type as field_context", "attr_datatype as field_data_type", `
 			CASE
@@ -697,6 +729,10 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 func (t *telemetryMetaStore) getMeterSourceMetricKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	if len(fieldKeySelectors) == 0 {
 		return nil, true, nil
+	}
+
+	for _, s := range fieldKeySelectors {
+		normalizeFieldKeySelector(s)
 	}
 
 	sb := sqlbuilder.Select("DISTINCT arrayJoin(JSONExtractKeys(labels)) as attr_name").From(t.meterDBName + "." + t.meterFieldsTblName)
@@ -892,6 +928,9 @@ func (t *telemetryMetaStore) GetKey(ctx context.Context, fieldKeySelector *telem
 }
 
 func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
+	if fieldValueSelector != nil && fieldValueSelector.FieldKeySelector != nil {
+		normalizeFieldKeySelector(fieldValueSelector.FieldKeySelector)
+	}
 
 	// nothing to return as "related" value if there is nothing to filter on
 	if fieldValueSelector.ExistingQuery == "" {
@@ -1037,6 +1076,9 @@ func (t *telemetryMetaStore) GetRelatedValues(ctx context.Context, fieldValueSel
 }
 
 func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
+	if fieldValueSelector != nil && fieldValueSelector.FieldKeySelector != nil {
+		normalizeFieldKeySelector(fieldValueSelector.FieldKeySelector)
+	}
 	// build the query to get the keys from the spans that match the field selection criteria
 	limit := fieldValueSelector.Limit
 	if limit == 0 {
@@ -1121,6 +1163,9 @@ func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueS
 }
 
 func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
+	if fieldValueSelector != nil && fieldValueSelector.FieldKeySelector != nil {
+		normalizeFieldKeySelector(fieldValueSelector.FieldKeySelector)
+	}
 	// build the query to get the keys from the spans that match the field selection criteria
 	limit := fieldValueSelector.Limit
 	if limit == 0 {
@@ -1204,6 +1249,9 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 
 // getMetricFieldValues returns field values and whether the result is complete
 func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
+	if fieldValueSelector != nil && fieldValueSelector.FieldKeySelector != nil {
+		normalizeFieldKeySelector(fieldValueSelector.FieldKeySelector)
+	}
 	sb := sqlbuilder.
 		Select("DISTINCT attr_string_value").
 		From(t.metricsDBName + "." + t.metricsFieldsTblName)
@@ -1278,6 +1326,9 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 }
 
 func (t *telemetryMetaStore) getMeterSourceMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
+	if fieldValueSelector != nil && fieldValueSelector.FieldKeySelector != nil {
+		normalizeFieldKeySelector(fieldValueSelector.FieldKeySelector)
+	}
 	sb := sqlbuilder.Select("DISTINCT arrayJoin(JSONExtractKeysAndValues(labels, 'String')) AS attr").
 		From(t.meterDBName + "." + t.meterFieldsTblName)
 
