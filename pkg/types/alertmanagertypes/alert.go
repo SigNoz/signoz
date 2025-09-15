@@ -27,15 +27,15 @@ type (
 	// An alias for the Alert type from the alertmanager package.
 	Alert = types.Alert
 
+	PostableAlert = models.PostableAlert
+
+	PostableAlerts = models.PostableAlerts
+
 	// An alias for the GettableAlert type from the alertmanager package.
 	GettableAlert = models.GettableAlert
 
 	// A slice of GettableAlert.
 	GettableAlerts = models.GettableAlerts
-
-	PostableAlert = models.PostableAlert
-
-	PostableAlerts = models.PostableAlerts
 )
 
 type DeprecatedGettableAlert struct {
@@ -85,11 +85,7 @@ func NewDeprecatedGettableAlertsFromGettableAlerts(gettableAlerts GettableAlerts
 
 // Converts a slice of PostableAlert to a slice of Alert.
 func NewAlertsFromPostableAlerts(postableAlerts PostableAlerts, resolveTimeout time.Duration, now time.Time) ([]*types.Alert, []error) {
-	modelsPostableAlerts := make([]*models.PostableAlert, 0, len(postableAlerts))
-	for _, pa := range postableAlerts {
-		modelsPostableAlerts = append(modelsPostableAlerts, pa)
-	}
-	alerts := v2.OpenAPIAlertsToAlerts(modelsPostableAlerts)
+	alerts := v2.OpenAPIAlertsToAlerts(postableAlerts)
 
 	for _, alert := range alerts {
 		alert.UpdatedAt = now

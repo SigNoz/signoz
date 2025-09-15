@@ -5,7 +5,6 @@ import (
 	nfgrouping2 "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/rulebasednotification"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/standardnotification"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/analytics/noopanalytics"
@@ -160,7 +159,6 @@ func NewPrometheusProviderFactories(telemetryStore telemetrystore.TelemetryStore
 func NewNotificationGroupingProviderFactories() factory.NamedMap[factory.ProviderFactory[nfgrouping2.NotificationManager, nfgrouping2.Config]] {
 	return factory.MustNewNamedMap(
 		rulebasednotification.NewFactory(),
-		standardnotification.NewFactory(),
 		nfmanagertest.NewFactory(),
 	)
 }

@@ -148,7 +148,7 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 		reader:              reader,
 		TemporalityMap:      make(map[string]map[v3.Temporality]bool),
 		Threshold:           threshold,
-		NotificationGroupBy: p.NotificationGroups,
+		NotificationGroupBy: p.NotificationGroupBy,
 		RenotifyInterval:    time.Duration(p.ReNotify),
 	}
 

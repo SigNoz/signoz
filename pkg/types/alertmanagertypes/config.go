@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/common/model"
 	"slices"
 	"time"
@@ -20,6 +21,7 @@ import (
 
 const (
 	DefaultReceiverName string = "default-receiver"
+	DefaultGroupBy      string = "alertname"
 )
 
 var (
@@ -406,13 +408,32 @@ type NotificationConfig struct {
 	RenotifyInterval  time.Duration                `json:"renotifyInterval,omitempty"`
 }
 
-func NewNotificationConfig(groups []string, renotifyInterval time.Duration) NotificationConfig {
+func NewNotificationConfig(groups []string, renotifyInterval ruletypes.Duration) NotificationConfig {
+	if len(groups) == 0 && renotifyInterval == 0 {
+		return *GetDefaultNotificationConfig()
+	}
+
+	renotify := time.Duration(4 * time.Hour) // default fallback
+	if renotifyInterval != 0 {
+		renotify = time.Duration(renotifyInterval)
+	}
+
 	set := make(map[model.LabelName]struct{})
 	for _, group := range groups {
 		set[model.LabelName(group)] = struct{}{}
 	}
+
 	return NotificationConfig{
 		NotificationGroup: set,
-		RenotifyInterval:  renotifyInterval,
+		RenotifyInterval:  renotify,
+	}
+}
+
+func GetDefaultNotificationConfig() *NotificationConfig {
+	defaultGroups := make(map[model.LabelName]struct{})
+	defaultGroups[model.LabelName(DefaultGroupBy)] = struct{}{}
+	return &NotificationConfig{
+		NotificationGroup: defaultGroups,
+		RenotifyInterval:  4 * time.Hour,
 	}
 }

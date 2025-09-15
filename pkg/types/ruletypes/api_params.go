@@ -51,8 +51,8 @@ type PostableRule struct {
 
 	Version string `json:"version,omitempty"`
 
-	NotificationGroups []string `json:"notificationGroups,omitempty"`
-	ReNotify           Duration `json:"renotify,omitempty"`
+	NotificationGroupBy []string `json:"notificationGroupBy,omitempty"`
+	ReNotify            Duration `json:"renotify,omitempty"`
 }
 
 func (r *PostableRule) processRuleDefaults() error {

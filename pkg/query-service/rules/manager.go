@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"log/slog"
 	"sort"
 	"strings"
@@ -102,7 +101,6 @@ type ManagerOptions struct {
 	Alertmanager        alertmanager.Alertmanager
 	SQLStore            sqlstore.SQLStore
 	OrgGetter           organization.Getter
-	NotificationGroups  nfmanager.NotificationManager
 }
 
 // The Manager manages recording and alerting rules.
@@ -122,10 +120,9 @@ type Manager struct {
 	prepareTaskFunc     func(opts PrepareTaskOptions) (Task, error)
 	prepareTestRuleFunc func(opts PrepareTestRuleOptions) (int, *model.ApiError)
 
-	alertmanager      alertmanager.Alertmanager
-	sqlstore          sqlstore.SQLStore
-	orgGetter         organization.Getter
-	NotificationGroup nfmanager.NotificationManager
+	alertmanager alertmanager.Alertmanager
+	sqlstore     sqlstore.SQLStore
+	orgGetter    organization.Getter
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -224,7 +221,6 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		alertmanager:        o.Alertmanager,
 		sqlstore:            o.SQLStore,
 		orgGetter:           o.OrgGetter,
-		NotificationGroup:   o.NotificationGroups,
 	}
 
 	zap.L().Debug("Manager created successfully with NotificationGroup")
@@ -280,7 +276,7 @@ func (m *Manager) initiate(ctx context.Context) error {
 				loadErrors = append(loadErrors, err)
 				continue
 			}
-			config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationGroups, time.Duration(parsedRule.ReNotify))
+			config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationGroupBy, parsedRule.ReNotify)
 			err = m.alertmanager.SetNotificationConfig(ctx, org.ID, rec.ID.StringValue(), &config)
 			if err != nil {
 				loadErrors = append(loadErrors, err)
@@ -372,7 +368,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 			return err
 		}
 
-		config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationGroups, time.Duration(parsedRule.ReNotify))
+		config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationGroupBy, parsedRule.ReNotify)
 		err = m.alertmanager.SetNotificationConfig(ctx, orgID, existingRule.ID.StringValue(), &config)
 		if err != nil {
 			return err
@@ -557,7 +553,8 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 		} else {
 			preferredChannels = parsedRule.PreferredChannels
 		}
-		config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationGroups, time.Duration(parsedRule.ReNotify))
+
+		config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationGroupBy, parsedRule.ReNotify)
 		err = m.alertmanager.SetNotificationConfig(ctx, orgID, storedRule.ID.StringValue(), &config)
 		if err != nil {
 			return err

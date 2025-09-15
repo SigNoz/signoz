@@ -44,17 +44,17 @@ func New(
 	stateStore alertmanagertypes.StateStore,
 	configStore alertmanagertypes.ConfigStore,
 	orgGetter organization.Getter,
-	groups nfmanager.NotificationManager,
+	nfManager nfmanager.NotificationManager,
 ) *Service {
 	service := &Service{
-		config:             config,
-		stateStore:         stateStore,
-		configStore:        configStore,
-		orgGetter:          orgGetter,
-		settings:           settings,
-		servers:            make(map[string]*alertmanagerserver.Server),
-		serversMtx:         sync.RWMutex{},
-		notificationManager: groups,
+		config:              config,
+		stateStore:          stateStore,
+		configStore:         configStore,
+		orgGetter:           orgGetter,
+		settings:            settings,
+		servers:             make(map[string]*alertmanagerserver.Server),
+		serversMtx:          sync.RWMutex{},
+		notificationManager: nfManager,
 	}
 
 	return service

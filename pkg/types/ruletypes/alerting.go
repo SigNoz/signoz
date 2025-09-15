@@ -59,9 +59,7 @@ type Alert struct {
 	LastSentAt time.Time
 	ValidUntil time.Time
 
-	Missing            bool
-	NotificationGroups []string
-	RenotifyInterval   time.Duration
+	Missing bool
 }
 
 func (a *Alert) NeedsSending(ts time.Time, resendDelay time.Duration) bool {

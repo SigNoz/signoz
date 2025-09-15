@@ -682,17 +682,15 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		}
 
 		alerts[h] = &ruletypes.Alert{
-			Labels:             lbs,
-			QueryResultLables:  resultLabels,
-			Annotations:        annotations,
-			ActiveAt:           ts,
-			State:              model.StatePending,
-			Value:              smpl.V,
-			GeneratorURL:       r.GeneratorURL(),
-			Receivers:          r.preferredChannels,
-			Missing:            smpl.IsMissing,
-			NotificationGroups: r.NotificationGroupBy,
-			RenotifyInterval:   r.RenotifyInterval,
+			Labels:            lbs,
+			QueryResultLables: resultLabels,
+			Annotations:       annotations,
+			ActiveAt:          ts,
+			State:             model.StatePending,
+			Value:             smpl.V,
+			GeneratorURL:      r.GeneratorURL(),
+			Receivers:         r.preferredChannels,
+			Missing:           smpl.IsMissing,
 		}
 	}
 

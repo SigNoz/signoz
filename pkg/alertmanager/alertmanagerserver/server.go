@@ -67,7 +67,7 @@ type Server struct {
 	notificationManager nfmanager.NotificationManager
 }
 
-func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore, groups nfmanager.NotificationManager) (*Server, error) {
+func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore, nfManager nfmanager.NotificationManager) (*Server, error) {
 	server := &Server{
 		logger:              logger.With("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver"),
 		registry:            registry,
@@ -75,7 +75,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		orgID:               orgID,
 		stateStore:          stateStore,
 		stopc:               make(chan struct{}),
-		notificationManager: groups,
+		notificationManager: nfManager,
 	}
 	signozRegisterer := prometheus.WrapRegistererWithPrefix("signoz_", registry)
 	signozRegisterer = prometheus.WrapRegistererWith(prometheus.Labels{"org_id": server.orgID}, signozRegisterer)

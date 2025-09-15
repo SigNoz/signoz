@@ -3,7 +3,6 @@ package rulebasednotification
 import (
 	"context"
 	nfmanager "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/standardnotification"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"sync"
@@ -13,8 +12,7 @@ import (
 
 type provider struct {
 	settings                             factory.ScopedProviderSettings
-	orgToFingerprintToNotificationConfig map[string]map[string]*alertmanagertypes.NotificationConfig
-	fallbackStrategy                     nfmanager.NotificationManager
+	orgToFingerprintToNotificationConfig map[string]map[string]alertmanagertypes.NotificationConfig
 	mutex                                sync.RWMutex
 }
 
@@ -32,23 +30,16 @@ func NewFactory() factory.ProviderFactory[nfmanager.NotificationManager, nfmanag
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config nfmanager.Config) (nfmanager.NotificationManager, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/rulebasednotification")
 
-	// Create fallback strategy based on config
-	fallbackStrategy, err := standardnotification.New(ctx, providerSettings, config)
-	if err != nil {
-		return nil, err
-	}
-
 	return &provider{
 		settings:                             settings,
-		orgToFingerprintToNotificationConfig: make(map[string]map[string]*alertmanagertypes.NotificationConfig),
-		fallbackStrategy:                     fallbackStrategy,
+		orgToFingerprintToNotificationConfig: make(map[string]map[string]alertmanagertypes.NotificationConfig),
 	}, nil
 }
 
 // GetNotificationConfig retrieves the notification configuration for the specified alert and organization.
 func (r *provider) GetNotificationConfig(orgID string, ruleID string) (*alertmanagertypes.NotificationConfig, error) {
 	if orgID == "" || ruleID == "" {
-		return r.fallbackStrategy.GetNotificationConfig(orgID, ruleID)
+		return alertmanagertypes.GetDefaultNotificationConfig(), nil
 	}
 
 	r.mutex.RLock()
@@ -56,12 +47,13 @@ func (r *provider) GetNotificationConfig(orgID string, ruleID string) (*alertman
 
 	if orgConfigs, exists := r.orgToFingerprintToNotificationConfig[orgID]; exists {
 		if config, configExists := orgConfigs[ruleID]; configExists {
-			return config, nil
+			// Return a copy to prevent external modifications
+			configCopy := config
+			return &configCopy, nil
 		}
 	}
 
-	// Fallback to standard strategy
-	return r.fallbackStrategy.GetNotificationConfig(orgID, ruleID)
+	return alertmanagertypes.GetDefaultNotificationConfig(), nil
 }
 
 // SetNotificationConfig updates the notification configuration for the specified alert and organization.
@@ -75,10 +67,10 @@ func (r *provider) SetNotificationConfig(orgID string, ruleID string, config *al
 
 	// Initialize org map if it doesn't exist
 	if r.orgToFingerprintToNotificationConfig[orgID] == nil {
-		r.orgToFingerprintToNotificationConfig[orgID] = make(map[string]*alertmanagertypes.NotificationConfig)
+		r.orgToFingerprintToNotificationConfig[orgID] = make(map[string]alertmanagertypes.NotificationConfig)
 	}
 
-	r.orgToFingerprintToNotificationConfig[orgID][ruleID] = config
+	r.orgToFingerprintToNotificationConfig[orgID][ruleID] = *config
 
 	return nil
 }

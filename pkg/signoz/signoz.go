@@ -3,7 +3,7 @@ package signoz
 import (
 	"context"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
-	nfgrouping2 "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
@@ -32,24 +32,23 @@ import (
 
 type SigNoz struct {
 	*factory.Registry
-	Instrumentation    instrumentation.Instrumentation
-	Analytics          analytics.Analytics
-	Cache              cache.Cache
-	Web                web.Web
-	SQLStore           sqlstore.SQLStore
-	TelemetryStore     telemetrystore.TelemetryStore
-	Prometheus         prometheus.Prometheus
-	Alertmanager       alertmanager.Alertmanager
-	Querier            querier.Querier
-	Rules              ruler.Ruler
-	Zeus               zeus.Zeus
-	Licensing          licensing.Licensing
-	Emailing           emailing.Emailing
-	Sharder            sharder.Sharder
-	StatsReporter      statsreporter.StatsReporter
-	Modules            Modules
-	Handlers           Handlers
-	NotificationGroups nfgrouping2.NotificationManager
+	Instrumentation instrumentation.Instrumentation
+	Analytics       analytics.Analytics
+	Cache           cache.Cache
+	Web             web.Web
+	SQLStore        sqlstore.SQLStore
+	TelemetryStore  telemetrystore.TelemetryStore
+	Prometheus      prometheus.Prometheus
+	Alertmanager    alertmanager.Alertmanager
+	Querier         querier.Querier
+	Rules           ruler.Ruler
+	Zeus            zeus.Zeus
+	Licensing       licensing.Licensing
+	Emailing        emailing.Emailing
+	Sharder         sharder.Sharder
+	StatsReporter   statsreporter.StatsReporter
+	Modules         Modules
+	Handlers        Handlers
 }
 
 func New(
@@ -235,9 +234,8 @@ func New(
 	notificationManager, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
-		nfgrouping2.Config{
-			Provider:        "rulebased",
-			DefaultStrategy: "standard",
+		nfmanager.Config{
+			Provider: "rulebased",
 		},
 		NewNotificationGroupingProviderFactories(),
 		"rulebased",
@@ -321,23 +319,22 @@ func New(
 	}
 
 	return &SigNoz{
-		Registry:           registry,
-		Analytics:          analytics,
-		Instrumentation:    instrumentation,
-		Cache:              cache,
-		Web:                web,
-		SQLStore:           sqlstore,
-		TelemetryStore:     telemetrystore,
-		Prometheus:         prometheus,
-		Alertmanager:       alertmanager,
-		Querier:            querier,
-		Rules:              ruler,
-		Zeus:               zeus,
-		Licensing:          licensing,
-		Emailing:           emailing,
-		Sharder:            sharder,
-		Modules:            modules,
-		Handlers:           handlers,
-		NotificationGroups: notificationManager,
+		Registry:        registry,
+		Analytics:       analytics,
+		Instrumentation: instrumentation,
+		Cache:           cache,
+		Web:             web,
+		SQLStore:        sqlstore,
+		TelemetryStore:  telemetrystore,
+		Prometheus:      prometheus,
+		Alertmanager:    alertmanager,
+		Querier:         querier,
+		Rules:           ruler,
+		Zeus:            zeus,
+		Licensing:       licensing,
+		Emailing:        emailing,
+		Sharder:         sharder,
+		Modules:         modules,
+		Handlers:        handlers,
 	}, nil
 }
