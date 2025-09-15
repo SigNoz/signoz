@@ -533,10 +533,24 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			if ctx.NOT() != nil {
 				op = qbtypes.FilterOperatorNotLike
 			}
+			// check if LIKE is used without wildcards and add warning
+			if !hasLikeWildcards(value) {
+				v.warnings = append(v.warnings, "LIKE operator used without wildcards (% or _). Consider using = operator for exact matches or add wildcards for pattern matching.")
+				if v.mainWarnURL == "" {
+					v.mainWarnURL = "https://signoz.io/docs/userguide/operators-reference/#string-matching-operators"
+				}
+			}
 		} else if ctx.ILIKE() != nil {
 			op = qbtypes.FilterOperatorILike
 			if ctx.NOT() != nil {
 				op = qbtypes.FilterOperatorNotILike
+			}
+			// check if ILIKE is used without wildcards and add warning
+			if !hasLikeWildcards(value) {
+				v.warnings = append(v.warnings, "ILIKE operator used without wildcards (% or _). Consider using = operator for exact matches or add wildcards for pattern matching.")
+				if v.mainWarnURL == "" {
+					v.mainWarnURL = "https://signoz.io/docs/userguide/operators-reference/#string-matching-operators"
+				}
 			}
 		} else if ctx.REGEXP() != nil {
 			op = qbtypes.FilterOperatorRegexp
@@ -869,6 +883,15 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	}
 
 	return fieldKeysForName
+}
+
+// hasLikeWildcards checks if a value contains LIKE wildcards (% or _)
+func hasLikeWildcards(value any) bool {
+	str, ok := value.(string)
+	if !ok {
+		return false
+	}
+	return strings.Contains(str, "%") || strings.Contains(str, "_")
 }
 
 func trimQuotes(txt string) string {
