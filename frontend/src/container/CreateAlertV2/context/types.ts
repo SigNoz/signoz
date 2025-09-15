@@ -46,7 +46,7 @@ export interface Threshold {
 	id: string;
 	label: string;
 	thresholdValue: number;
-	recoveryThresholdValue: number;
+	recoveryThresholdValue: number | null;
 	unit: string;
 	channels: string[];
 	color: string;
