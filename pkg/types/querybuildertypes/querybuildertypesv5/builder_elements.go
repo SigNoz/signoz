@@ -129,6 +129,7 @@ func (f FilterOperator) IsNegativeOperator() bool {
 		FilterOperatorILike,
 		FilterOperatorBetween,
 		FilterOperatorIn,
+		FilterOperatorExists,
 		FilterOperatorRegexp,
 		FilterOperatorContains:
 		return false
@@ -143,6 +144,13 @@ type OrderDirection struct {
 var (
 	OrderDirectionAsc  = OrderDirection{valuer.NewString("asc")}
 	OrderDirectionDesc = OrderDirection{valuer.NewString("desc")}
+)
+
+var (
+	OrderDirectionMap = map[string]OrderDirection{
+		"asc":  OrderDirectionAsc,
+		"desc": OrderDirectionDesc,
+	}
 )
 
 type ReduceTo struct {

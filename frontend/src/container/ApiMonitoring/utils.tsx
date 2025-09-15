@@ -3126,7 +3126,6 @@ export const getStatusCodeBarChartWidgetData = (
 	},
 	description: '',
 	id: '315b15fa-ff0c-442f-89f8-2bf4fb1af2f2',
-	isStacked: false,
 	panelTypes: PANEL_TYPES.BAR,
 	title: '',
 	opacity: '',

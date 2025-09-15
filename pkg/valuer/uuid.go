@@ -3,9 +3,9 @@ package valuer
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 	"reflect"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/google/uuid"
 )
 
@@ -98,11 +98,11 @@ func (enum UUID) Value() (driver.Value, error) {
 
 func (enum *UUID) Scan(val interface{}) error {
 	if enum == nil {
-		return fmt.Errorf("uuid: (nil \"%s\")", reflect.TypeOf(enum).String())
+		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "uuid: (nil \"%s\")", reflect.TypeOf(enum).String())
 	}
 
 	if val == nil {
-		return fmt.Errorf("uuid: (nil \"%s\")", reflect.TypeOf(val).String())
+		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "uuid: (nil \"%s\")", reflect.TypeOf(val).String())
 	}
 
 	var enumVal UUID
@@ -110,17 +110,17 @@ func (enum *UUID) Scan(val interface{}) error {
 	case string:
 		_enumVal, err := NewUUID(val)
 		if err != nil {
-			return fmt.Errorf("uuid: (invalid-uuid \"%s\")", err.Error())
+			return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "uuid: (invalid-uuid \"%s\")", err.Error())
 		}
 		enumVal = _enumVal
 	case []byte:
 		_enumVal, err := NewUUIDFromBytes(val)
 		if err != nil {
-			return fmt.Errorf("uuid: (invalid-uuid \"%s\")", err.Error())
+			return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "uuid: (invalid-uuid \"%s\")", err.Error())
 		}
 		enumVal = _enumVal
 	default:
-		return fmt.Errorf("uuid: (non-uuid \"%s\")", reflect.TypeOf(val).String())
+		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "uuid: (non-uuid \"%s\")", reflect.TypeOf(val).String())
 	}
 
 	*enum = enumVal

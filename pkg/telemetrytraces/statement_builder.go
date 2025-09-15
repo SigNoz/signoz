@@ -390,6 +390,7 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 	innerSB.Select("trace_id", "duration_nano", sqlbuilder.Escape("resource_string_service$$name as `service.name`"), "name")
 	innerSB.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 	innerSB.Where("parent_span_id = ''")
+	innerSB.Where("trace_id GLOBAL IN __toe")
 
 	// Add time filter to inner query
 	innerSB.Where(
