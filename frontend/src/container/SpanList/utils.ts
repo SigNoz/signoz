@@ -39,6 +39,8 @@ export function transformEntrySpansToHierarchy(
 export async function fetchServiceSpans(
 	traceId: string,
 	serviceName: string,
+	pageSize = 10,
+	offset = 0,
 ): Promise<SpanDataRow[]> {
 	// Use the same payload structure as in SpanList component but with service-specific filter
 	const payload = initialQueriesMap.traces;
@@ -63,8 +65,8 @@ export async function fetchServiceSpans(
 									filter: {
 										expression: `trace_id = '${traceId}' and service.name = '${serviceName}'`,
 									},
-									limit: 10,
-									offset: 0,
+									limit: pageSize,
+									offset,
 									order: [
 										{
 											key: {

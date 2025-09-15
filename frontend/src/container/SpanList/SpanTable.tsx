@@ -19,6 +19,8 @@ interface EntryPagination {
 // Constants
 const SPAN_TYPE_ENTRY = 'entry-span';
 const SPAN_TYPE_SERVICE = 'service-span';
+const SPAN_TYPE_PAGINATION = 'pagination-row';
+const SERVICE_SPAN_PAGE_SIZE = 10;
 
 interface SpanTableProps {
 	data: HierarchicalSpanData;
@@ -30,7 +32,10 @@ interface SpanTableProps {
 
 interface TableRowData {
 	id: string;
-	type: typeof SPAN_TYPE_ENTRY | typeof SPAN_TYPE_SERVICE;
+	type:
+		| typeof SPAN_TYPE_ENTRY
+		| typeof SPAN_TYPE_SERVICE
+		| typeof SPAN_TYPE_PAGINATION;
 	spanName?: string;
 	serviceName?: string;
 	spanCount?: number;
@@ -41,6 +46,7 @@ interface TableRowData {
 	spanId?: string;
 	originalData?: ServiceEntrySpan | SpanDataRow;
 	isLoading?: boolean;
+	entrySpanId?: string; // For pagination rows
 }
 
 function SpanTable({
@@ -54,6 +60,9 @@ function SpanTable({
 		Record<string, ServiceEntrySpan>
 	>({});
 	const [loadingSpans, setLoadingSpans] = useState<Record<string, boolean>>({});
+	const [serviceSpansPagination, setServiceSpansPagination] = useState<
+		Record<string, { currentPage: number; totalCount?: number }>
+	>({});
 
 	const handleEntrySpanClick = useCallback(
 		async (entrySpan: ServiceEntrySpan) => {
@@ -70,10 +79,20 @@ function SpanTable({
 			if (!entrySpan.serviceSpans && traceId) {
 				setLoadingSpans((prev) => ({ ...prev, [spanId]: true }));
 
+				// Initialize pagination state for this entry span
+				setServiceSpansPagination((prev) => ({
+					...prev,
+					[spanId]: { currentPage: 1 },
+				}));
+
 				try {
+					const currentPage = 1;
+					const offset = (currentPage - 1) * SERVICE_SPAN_PAGE_SIZE;
 					const serviceSpans = await fetchServiceSpans(
 						traceId,
 						entrySpan.serviceName,
+						SERVICE_SPAN_PAGE_SIZE,
+						offset,
 					);
 					const updatedEntrySpan = {
 						...entrySpan,
@@ -96,6 +115,48 @@ function SpanTable({
 					...prev,
 					[spanId]: { ...entrySpan, isExpanded: true },
 				}));
+			}
+		},
+		[expandedEntrySpans, traceId],
+	);
+
+	const handleServiceSpanPageChange = useCallback(
+		async (entrySpanId: string, newPage: number) => {
+			if (!traceId) return;
+
+			const entrySpan = expandedEntrySpans[entrySpanId];
+			if (!entrySpan) return;
+
+			setLoadingSpans((prev) => ({ ...prev, [entrySpanId]: true }));
+
+			// Update pagination state
+			setServiceSpansPagination((prev) => ({
+				...prev,
+				[entrySpanId]: { ...prev[entrySpanId], currentPage: newPage },
+			}));
+
+			try {
+				const offset = (newPage - 1) * SERVICE_SPAN_PAGE_SIZE;
+				const serviceSpans = await fetchServiceSpans(
+					traceId,
+					entrySpan.serviceName,
+					SERVICE_SPAN_PAGE_SIZE,
+					offset,
+				);
+
+				// Update the expanded entry span with new service spans
+				setExpandedEntrySpans((prev) => ({
+					...prev,
+					[entrySpanId]: {
+						...entrySpan,
+						serviceSpans,
+						isExpanded: true,
+					},
+				}));
+			} catch (error) {
+				console.error('Failed to fetch service spans for page:', error);
+			} finally {
+				setLoadingSpans((prev) => ({ ...prev, [entrySpanId]: false }));
 			}
 		},
 		[expandedEntrySpans, traceId],
@@ -155,31 +216,62 @@ function SpanTable({
 					</div>
 				);
 			}
+			if (original.type === SPAN_TYPE_PAGINATION) {
+				const { entrySpanId } = original;
+				if (!entrySpanId) return <div />;
+
+				const entrySpan = expandedEntrySpans[entrySpanId];
+				const pagination = serviceSpansPagination[entrySpanId];
+
+				if (!entrySpan || !pagination) return <div />;
+
+				return (
+					<Pagination
+						total={SERVICE_SPAN_PAGE_SIZE * 10} // TODO: Get actual total from API
+						pageSize={SERVICE_SPAN_PAGE_SIZE}
+						current={pagination.currentPage}
+						onPageChange={(page): void => {
+							handleServiceSpanPageChange(entrySpanId, page);
+						}}
+						align="start"
+					/>
+				);
+			}
+
 			// Service span (nested)
 			return <div className="span-name">{original.spanName}</div>;
 		},
-		[expandedEntrySpans, loadingSpans, handleEntrySpanClick],
+		[
+			expandedEntrySpans,
+			loadingSpans,
+			handleEntrySpanClick,
+			serviceSpansPagination,
+			handleServiceSpanPageChange,
+		],
 	);
 
 	const renderServiceCell = useCallback(
-		({ row }: { row: Row<TableRowData> }): JSX.Element => {
+		({ row }: { row: Row<TableRowData> }): JSX.Element | null => {
 			const { original } = row;
+			if (original.type === SPAN_TYPE_PAGINATION) return null;
 			return <span>{original.serviceName}</span>;
 		},
 		[],
 	);
 
 	const renderDurationCell = useCallback(
-		({ row }: { row: Row<TableRowData> }): JSX.Element => {
+		({ row }: { row: Row<TableRowData> }): JSX.Element | null => {
 			const { original } = row;
+			if (original.type === SPAN_TYPE_PAGINATION) return null;
 			return <span>{original.duration}</span>;
 		},
 		[],
 	);
 
 	const renderTimestampCell = useCallback(
-		({ row }: { row: Row<TableRowData> }): JSX.Element => {
+		({ row }: { row: Row<TableRowData> }): JSX.Element | null => {
 			const { original } = row;
+			if (original.type === SPAN_TYPE_PAGINATION) return null;
 			return (
 				<span className="timestamp">
 					{new Date(original.timestamp || '').toLocaleString()}
@@ -190,16 +282,18 @@ function SpanTable({
 	);
 
 	const renderStatusCodeCell = useCallback(
-		({ row }: { row: Row<TableRowData> }): JSX.Element => {
+		({ row }: { row: Row<TableRowData> }): JSX.Element | null => {
 			const { original } = row;
+			if (original.type === SPAN_TYPE_PAGINATION) return null;
 			return <span>{original.statusCode || '-'}</span>;
 		},
 		[],
 	);
 
 	const renderSpanIdCell = useCallback(
-		({ row }: { row: Row<TableRowData> }): JSX.Element => {
+		({ row }: { row: Row<TableRowData> }): JSX.Element | null => {
 			const { original } = row;
+			if (original.type === SPAN_TYPE_PAGINATION) return null;
 			return <span className="span-id">{original.spanId}</span>;
 		},
 		[],
@@ -207,8 +301,9 @@ function SpanTable({
 
 	const renderHttpMethodCell = useCallback(
 		// eslint-disable-next-line react/no-unused-prop-types
-		({ row }: { row: Row<TableRowData> }): JSX.Element => {
+		({ row }: { row: Row<TableRowData> }): JSX.Element | null => {
 			const { original } = row;
+			if (original.type === SPAN_TYPE_PAGINATION) return null;
 			return <span>{original.httpMethod || '-'}</span>;
 		},
 		[],
@@ -313,11 +408,24 @@ function SpanTable({
 						originalData: serviceSpan,
 					});
 				});
+
+				// Add pagination row for service spans (only if there are SERVICE_SPAN_PAGE_SIZE spans)
+				const pagination = serviceSpansPagination[spanId];
+				if (
+					pagination &&
+					expandedSpan.serviceSpans.length === SERVICE_SPAN_PAGE_SIZE
+				) {
+					result.push({
+						id: `${spanId}-pagination`,
+						type: SPAN_TYPE_PAGINATION,
+						entrySpanId: spanId,
+					});
+				}
 			}
 		});
 
 		return result;
-	}, [data.entrySpans, expandedEntrySpans]);
+	}, [data.entrySpans, expandedEntrySpans, serviceSpansPagination]);
 
 	const handleRowClick = useCallback(
 		(row: Row<TableRowData>) => {
@@ -372,7 +480,6 @@ function SpanTable({
 				data={flattenedData}
 				onRowClick={handleRowClick}
 				isLoading={isLoading}
-				pageSizeOptions={[2, 5, 10]}
 			/>
 			<Pagination
 				total={entryPagination.totalCount}
