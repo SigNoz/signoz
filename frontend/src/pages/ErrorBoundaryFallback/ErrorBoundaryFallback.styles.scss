@@ -9,18 +9,39 @@
 
 	color: var(--bg-vanilla-100);
 
-	.error-icon {
-		margin-bottom: 16px;
-	}
-
-	.title,
-	.actions {
+	.error-boundary-fallback-content {
 		display: flex;
-		align-items: center;
+		flex-direction: column;
+		max-width: 520px;
 		gap: 8px;
-	}
 
-	.actions {
-		margin-top: 16px;
+		.title,
+		.actions {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.title {
+			color: var(--bg-vanilla-100);
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 18px; /* 128.571% */
+			letter-spacing: -0.07px;
+		}
+
+		.description {
+			color: var(--bg-vanilla-400);
+			font-size: 13px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 18px;
+			letter-spacing: -0.07px;
+		}
+
+		.actions {
+			margin-top: 16px;
+		}
 	}
 }
