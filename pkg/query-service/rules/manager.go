@@ -174,7 +174,8 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		// create ch rule task for evalution
 		task = newTask(TaskTypeCh, opts.TaskName, taskNamesuffix, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 		if tr.IsScheduled() {
-			task.SetSchedule(tr.GetSchedule())
+			schedule, startTime, timezone := tr.GetSchedule()
+			task.SetSchedule(schedule, startTime, timezone)
 		}
 	} else if opts.Rule.RuleType == ruletypes.RuleTypeProm {
 
@@ -198,7 +199,8 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		// create promql rule task for evalution
 		task = newTask(TaskTypeProm, opts.TaskName, taskNamesuffix, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 		if pr.IsScheduled() {
-			task.SetSchedule(pr.GetSchedule())
+			schedule, startTime, timezone := pr.GetSchedule()
+			task.SetSchedule(schedule, startTime, timezone)
 		}
 	} else {
 		return nil, fmt.Errorf("unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, ruletypes.RuleTypeProm, ruletypes.RuleTypeThreshold)

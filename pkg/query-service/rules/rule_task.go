@@ -40,6 +40,7 @@ type RuleTask struct {
 	// New field for rrule-based scheduling
 	schedule         string
 	scheduleStartsAt time.Time
+	timezone         string
 }
 
 const DefaultFrequency = 1 * time.Minute
@@ -111,7 +112,10 @@ func (g *RuleTask) Run(ctx context.Context) {
 
 	if g.IsCronSchedule() {
 		evalFunc := createCronEvalFunction(&g.pause, g.Eval, g.setEvaluationTime, g.setLastEvaluation, ctx)
-		runCronScheduledTask(g.schedule, g.scheduleStartsAt, g.done, evalFunc)
+		err := runCronScheduledTask(g.schedule, g.scheduleStartsAt, g.timezone, g.done, evalFunc)
+		if err != nil {
+			zap.L().Error("cron scheduler failed", zap.String("rule", g.Name()), zap.Error(err))
+		}
 	} else {
 		evalTimestamp := g.EvalTimestamp(time.Now().UnixNano()).Add(g.frequency)
 		zap.L().Debug("group run to begin at", zap.Time("evalTimestamp", evalTimestamp))
@@ -282,11 +286,12 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 	return nil
 }
 
-func (g *RuleTask) SetSchedule(schedule string, t time.Time) {
+func (g *RuleTask) SetSchedule(schedule string, t time.Time, timezone string) {
 	g.mtx.Lock()
 	defer g.mtx.Unlock()
 	g.schedule = schedule
 	g.scheduleStartsAt = t
+	g.timezone = timezone
 }
 
 // Eval runs a single evaluation cycle in which all rules are evaluated sequentially.

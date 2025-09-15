@@ -8,27 +8,54 @@ import (
 	"go.uber.org/zap"
 )
 
-// runCronScheduledTask handles cron-based scheduling
+// runCronScheduledTask handles cron-based scheduling with timezone support
 func runCronScheduledTask(
 	schedule string,
 	scheduleStartsAt time.Time,
+	timezone string,
 	done chan struct{},
 	evalFunc func(),
-) {
-	rruleStr := "DTSTART:" + scheduleStartsAt.UTC().Format("20060102T150405Z") + "\n" + schedule
-	parsedSchedule, err := rrule.StrToRRule(rruleStr)
+) error {
+	// Load the timezone
+	loc, err := time.LoadLocation(timezone)
 	if err != nil {
-		zap.L().Error("failed to parse rrule expression", zap.String("rrule", schedule), zap.Error(err))
-		return
+		zap.L().Error("failed to load timezone", zap.String("timezone", timezone), zap.Error(err))
+		return err
 	}
 
-	now := time.Now()
+	// Convert start time to the specified timezone
+	startTimeInTZ := scheduleStartsAt.In(loc)
+
+	// Format DTSTART with timezone info
+	var rruleStr string
+	if loc == time.UTC {
+		rruleStr = "DTSTART:" + startTimeInTZ.Format("20060102T150405Z") + "\n" + schedule
+	} else {
+		// For non-UTC timezones, include timezone info
+		rruleStr = "DTSTART;TZID=" + timezone + ":" + startTimeInTZ.Format("20060102T150405") + "\n" + schedule
+	}
+
+	parsedSchedule, err := rrule.StrToRRule(rruleStr)
+	if err != nil {
+		zap.L().Error("failed to parse rrule expression", zap.String("rrule", schedule), zap.String("timezone", timezone), zap.Error(err))
+		return err
+	}
+
+	// Use timezone-aware current time
+	now := time.Now().In(loc)
 	nextRun := parsedSchedule.After(now, false)
+
+	if nextRun.IsZero() {
+		zap.L().Error("no future runs found for schedule", zap.String("schedule", schedule), zap.String("timezone", timezone))
+		return err
+	}
+
+	zap.L().Debug("cron scheduler starting", zap.String("schedule", schedule), zap.String("timezone", timezone), zap.Time("nextRun", nextRun))
 
 	select {
 	case <-time.After(time.Until(nextRun)):
 	case <-done:
-		return
+		return nil
 	}
 
 	evalFunc()
@@ -37,17 +64,24 @@ func runCronScheduledTask(
 	for {
 		nextRun = parsedSchedule.After(currentRun, false)
 
+		if nextRun.IsZero() {
+			zap.L().Info("no more scheduled runs", zap.String("schedule", schedule))
+			return nil
+		}
+
 		select {
 		case <-done:
-			return
+			return nil
 		default:
 			select {
 			case <-done:
-				return
+				return nil
 			case <-time.After(time.Until(nextRun)):
-				now := time.Now()
+				now := time.Now().In(loc)
 				if now.After(nextRun.Add(time.Minute)) {
 					zap.L().Warn("missed scheduled run",
+						zap.String("schedule", schedule),
+						zap.String("timezone", timezone),
 						zap.Time("scheduled", nextRun),
 						zap.Time("actual", now))
 				}

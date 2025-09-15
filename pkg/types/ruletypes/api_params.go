@@ -3,7 +3,6 @@ package ruletypes
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 	"unicode/utf8"
 
@@ -54,8 +53,9 @@ type PostableRule struct {
 	Version string `json:"version,omitempty"`
 
 	Evaluation       *EvaluationEnvelope `json:"evaluation,omitempty"`
-	ScheduleStartsAt int64               `json:"startsAt,omitempty"`
+	ScheduleStartsAt int64               `json:"scheduleStartsAt,omitempty"`
 	Schedule         string              `json:"schedule,omitempty"`
+	ScheduleTimezone string              `json:"scheduleTimezone,omitempty"`
 }
 
 func (r *PostableRule) processRuleDefaults() error {
@@ -110,8 +110,11 @@ func (r *PostableRule) processRuleDefaults() error {
 
 	// Validate rrule schedule if present
 	if r.Schedule != "" {
-		if err := validateRRule(r.Schedule); err != nil {
-			return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid rrule")
+		if r.ScheduleTimezone == "" {
+			r.ScheduleTimezone = "UTC"
+		}
+		if err := validateRRule(r.Schedule, r.ScheduleTimezone, r.ScheduleStartsAt); err != nil {
+			return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid rrule or timezone: %v", err)
 		}
 	}
 
@@ -275,17 +278,30 @@ type GettableRule struct {
 	UpdatedBy *string    `json:"updateBy"`
 }
 
-// validateRRule validates the rrule schedule format
-func validateRRule(schedule string) error {
+// validateRRule validates the rrule schedule format with timezone support
+func validateRRule(schedule, timezone string, at int64) error {
 	if schedule == "" {
 		return nil
 	}
-	testStart := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC)
-	rruleStr := "DTSTART:" + testStart.Format("20060102T150405Z") + "\n" + schedule
 
-	_, err := rrule.StrToRRule(rruleStr)
+	loc, err := time.LoadLocation(timezone)
 	if err != nil {
-		return fmt.Errorf("invalid rrule format: %v", err)
+		return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid timezone: %s", err)
+	}
+
+	startsAt := time.UnixMilli(at)
+
+	rruleStr := "DTSTART;TZID=" + timezone + ":" + startsAt.Format("20060102T150405") + "\n" + schedule
+
+	parsedRule, err := rrule.StrToRRule(rruleStr)
+	if err != nil {
+		return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "rrule parsing error: %s", err)
+	}
+
+	now := time.Now().In(loc)
+	nextOccurrence := parsedRule.After(now, false)
+	if nextOccurrence.IsZero() {
+		return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "schedule will never occur in future")
 	}
 
 	return nil

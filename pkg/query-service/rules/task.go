@@ -29,7 +29,7 @@ type Task interface {
 	Stop()
 	Pause(b bool)
 	IsCronSchedule() bool
-	SetSchedule(string, time.Time)
+	SetSchedule(string, time.Time, string)
 }
 
 // newTask returns an appropriate group for
