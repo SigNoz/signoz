@@ -129,6 +129,7 @@ func (f FilterOperator) IsNegativeOperator() bool {
 		FilterOperatorILike,
 		FilterOperatorBetween,
 		FilterOperatorIn,
+		FilterOperatorExists,
 		FilterOperatorRegexp,
 		FilterOperatorContains:
 		return false

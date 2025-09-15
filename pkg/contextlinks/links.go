@@ -150,6 +150,11 @@ func PrepareLinksToLogs(start, end time.Time, filterItems []v3.FilterItem) strin
 func PrepareFilters(labels map[string]string, whereClauseItems []v3.FilterItem, groupByItems []v3.AttributeKey, keys map[string]v3.AttributeKey) []v3.FilterItem {
 	filterItems := make([]v3.FilterItem, 0)
 
+	//delete predefined alert labels
+	for _, label := range PredefinedAlertLabels {
+		delete(labels, label)
+	}
+
 	added := make(map[string]struct{})
 
 	for _, item := range whereClauseItems {
