@@ -281,11 +281,13 @@ func (m *Manager) initiate(ctx context.Context) error {
 				loadErrors = append(loadErrors, err)
 				continue
 			}
-			config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationGroupBy, parsedRule.ReNotify.ReNotifyInterval, parsedRule.ReNotify.NoDataRenotifyInterval)
-			err = m.alertmanager.SetNotificationConfig(ctx, org.ID, rec.ID.StringValue(), &config)
-			if err != nil {
-				loadErrors = append(loadErrors, err)
-				zap.L().Info("failed to set rule notification config", zap.String("ruleId", rec.ID.StringValue()))
+			if parsedRule.ReNotify != nil {
+				config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationGroupBy, parsedRule.ReNotify.ReNotifyInterval, parsedRule.ReNotify.NoDataRenotifyInterval)
+				err = m.alertmanager.SetNotificationConfig(ctx, org.ID, rec.ID.StringValue(), &config)
+				if err != nil {
+					loadErrors = append(loadErrors, err)
+					zap.L().Info("failed to set rule notification config", zap.String("ruleId", rec.ID.StringValue()))
+				}
 			}
 			if !parsedRule.Disabled {
 				err := m.addTask(ctx, org.ID, &parsedRule, taskName)
@@ -372,11 +374,12 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 		if err != nil {
 			return err
 		}
-
-		config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationGroupBy, parsedRule.ReNotify.ReNotifyInterval, parsedRule.ReNotify.NoDataRenotifyInterval)
-		err = m.alertmanager.SetNotificationConfig(ctx, orgID, existingRule.ID.StringValue(), &config)
-		if err != nil {
-			return err
+		if parsedRule.ReNotify != nil {
+			config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationGroupBy, parsedRule.ReNotify.ReNotifyInterval, parsedRule.ReNotify.NoDataRenotifyInterval)
+			err = m.alertmanager.SetNotificationConfig(ctx, orgID, existingRule.ID.StringValue(), &config)
+			if err != nil {
+				return err
+			}
 		}
 
 		err = m.alertmanager.SetConfig(ctx, cfg)
@@ -559,10 +562,12 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 			preferredChannels = parsedRule.PreferredChannels
 		}
 
-		config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationGroupBy, parsedRule.ReNotify.ReNotifyInterval, parsedRule.ReNotify.NoDataRenotifyInterval)
-		err = m.alertmanager.SetNotificationConfig(ctx, orgID, storedRule.ID.StringValue(), &config)
-		if err != nil {
-			return err
+		if parsedRule.ReNotify != nil {
+			config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationGroupBy, parsedRule.ReNotify.ReNotifyInterval, parsedRule.ReNotify.NoDataRenotifyInterval)
+			err = m.alertmanager.SetNotificationConfig(ctx, orgID, storedRule.ID.StringValue(), &config)
+			if err != nil {
+				return err
+			}
 		}
 
 		err = cfg.CreateRuleIDMatcher(id.StringValue(), preferredChannels)
