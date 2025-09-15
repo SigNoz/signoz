@@ -1,4 +1,5 @@
 import { Button } from '@signozhq/button';
+import Pagination from '@signozhq/pagination';
 import { ColumnDef, DataTable, Row } from '@signozhq/table';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
@@ -7,6 +8,13 @@ import { Span } from 'types/api/trace/getTraceV2';
 
 import { HierarchicalSpanData, ServiceEntrySpan, SpanDataRow } from './types';
 import { fetchServiceSpans } from './utils';
+
+interface EntryPagination {
+	currentPage: number;
+	totalCount: number;
+	pageSize: number;
+	onPageChange: (page: number) => void;
+}
 
 // Constants
 const SPAN_TYPE_ENTRY = 'entry-span';
@@ -17,6 +25,7 @@ interface SpanTableProps {
 	traceId?: string;
 	setSelectedSpan?: (span: Span) => void;
 	isLoading?: boolean;
+	entryPagination: EntryPagination;
 }
 
 interface TableRowData {
@@ -39,6 +48,7 @@ function SpanTable({
 	traceId,
 	setSelectedSpan,
 	isLoading,
+	entryPagination,
 }: SpanTableProps): JSX.Element {
 	const [expandedEntrySpans, setExpandedEntrySpans] = useState<
 		Record<string, ServiceEntrySpan>
@@ -362,6 +372,14 @@ function SpanTable({
 				data={flattenedData}
 				onRowClick={handleRowClick}
 				isLoading={isLoading}
+				pageSizeOptions={[2, 5, 10]}
+			/>
+			<Pagination
+				total={entryPagination.totalCount}
+				pageSize={entryPagination.pageSize}
+				current={entryPagination.currentPage}
+				onPageChange={entryPagination.onPageChange}
+				align="end"
 			/>
 		</div>
 	);

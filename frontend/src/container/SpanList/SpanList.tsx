@@ -3,7 +3,9 @@ import './SpanList.styles.scss';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import { useMemo } from 'react';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { useCallback, useMemo } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import SearchFilters from './SearchFilters';
@@ -17,7 +19,13 @@ interface SpanListProps {
 }
 
 function SpanList({ traceId, setSelectedSpan }: SpanListProps): JSX.Element {
+	const urlQuery = useUrlQuery();
+	const { safeNavigate } = useSafeNavigate();
 	const payload = initialQueriesMap.traces;
+
+	// Entry spans pagination
+	const entryPage = parseInt(urlQuery.get('entryPage') || '1', 10);
+	const entryPageSize = 10;
 
 	const { data, isLoading, isFetching } = useGetQueryRange(
 		{
@@ -38,8 +46,8 @@ function SpanList({ traceId, setSelectedSpan }: SpanListProps): JSX.Element {
 								filter: {
 									expression: `trace_id = '${traceId}' isEntryPoint = 'true'`,
 								},
-								limit: 10,
-								offset: 0,
+								limit: entryPageSize,
+								offset: (entryPage - 1) * entryPageSize,
 								order: [
 									{
 										key: {
@@ -92,6 +100,15 @@ function SpanList({ traceId, setSelectedSpan }: SpanListProps): JSX.Element {
 		ENTITY_VERSION_V5,
 	);
 
+	const handleEntryPageChange = useCallback(
+		(newPage: number) => {
+			const params = new URLSearchParams(window.location.search);
+			params.set('entryPage', newPage.toString());
+			safeNavigate({ search: params.toString() });
+		},
+		[safeNavigate],
+	);
+
 	const hierarchicalData = useMemo(
 		() =>
 			// TODO(shaheer): properly fix the type
@@ -114,6 +131,13 @@ function SpanList({ traceId, setSelectedSpan }: SpanListProps): JSX.Element {
 					isLoading={isLoading || isFetching}
 					traceId={traceId}
 					setSelectedSpan={setSelectedSpan}
+					entryPagination={{
+						currentPage: entryPage,
+						// TODO(shaheer): get the count from query_range
+						totalCount: 10,
+						pageSize: entryPageSize,
+						onPageChange: handleEntryPageChange,
+					}}
 				/>
 			</div>
 		</div>
