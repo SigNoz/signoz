@@ -373,3 +373,72 @@ def test_traces_list(
     assert len(values) == 2
 
     assert set(values) == set(["POST", "PATCH"])
+
+    # Ensure context-prefixed field (resource.service.name) resolves same as canonical service.name
+    response_service = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/values"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "traces",
+            "name": "service.name",
+            "searchText": "",
+        },
+    )
+    assert response_service.status_code == HTTPStatus.OK
+    assert response_service.json()["status"] == "success"
+    service_values = response_service.json()["data"]["values"]["stringValues"]
+
+    response_resource_service = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/values"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "traces",
+            "name": "resource.service.name",
+            "searchText": "",
+        },
+    )
+    assert response_resource_service.status_code == HTTPStatus.OK
+    assert response_resource_service.json()["status"] == "success"
+    resource_service_values = response_resource_service.json()["data"]["values"]["stringValues"]
+
+    assert set(service_values) == set(resource_service_values)
+    assert set(["http-service", "topic-service"]).issubset(set(service_values))
+
+    # Fields Keys should include service.name for both searches
+    response_keys1 = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/keys"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "traces",
+            "searchText": "servic",
+        },
+    )
+    assert response_keys1.status_code == HTTPStatus.OK
+    assert response_keys1.json()["status"] == "success"
+    keys_map1 = response_keys1.json()["data"]["keys"]
+    assert "service.name" in keys_map1
+
+    response_keys2 = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/keys"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "traces",
+            "searchText": "resource.servic",
+        },
+    )
+    assert response_keys2.status_code == HTTPStatus.OK
+    assert response_keys2.json()["status"] == "success"
+    keys_map2 = response_keys2.json()["data"]["keys"]
+    assert "service.name" in keys_map2
