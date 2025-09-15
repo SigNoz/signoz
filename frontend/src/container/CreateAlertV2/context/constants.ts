@@ -113,6 +113,7 @@ export const INITIAL_EVALUATION_WINDOW_STATE: EvaluationWindowState = {
 		time: '00:00:00',
 		number: '1',
 		timezone: TIMEZONE_DATA[0].value,
+		unit: 'm',
 	},
 };
 

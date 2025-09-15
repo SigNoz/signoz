@@ -25,7 +25,6 @@
 		.ant-btn {
 			display: flex;
 			align-items: center;
-			width: 240px;
 			justify-content: space-between;
 			background-color: var(--bg-ink-300);
 			border: 1px solid var(--bg-slate-400);
@@ -33,6 +32,7 @@
 			.evaluate-alert-conditions-button-left {
 				color: var(--bg-vanilla-400);
 				font-size: 12px;
+				padding-right: 16px;
 			}
 
 			.evaluate-alert-conditions-button-right {
@@ -333,7 +333,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
-	min-width: 400px;
+	width: 400px;
 	min-height: 300px;
 	padding: 16px;
 
@@ -363,7 +363,7 @@
 
 	.ant-typography {
 		color: var(--bg-vanilla-400);
-		font-size: 14px;
+		font-size: 13px;
 		font-weight: 500;
 	}
 
@@ -384,6 +384,14 @@
 		&:hover {
 			border-color: var(--bg-ink-400);
 		}
+	}
+
+	.ant-input {
+		background-color: var(--bg-ink-300);
+		border: 1px solid var(--bg-slate-400);
+		color: var(--bg-vanilla-100);
+		height: 32px;
+		width: 60%;
 	}
 }
 

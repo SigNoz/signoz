@@ -1,10 +1,11 @@
 /* eslint-disable jsx-a11y/interactive-supports-focus */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import { Button, Select, Typography } from 'antd';
+import { Button, Input, Select, Typography } from 'antd';
 import classNames from 'classnames';
 import { Check } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { RE_NOTIFICATION_UNIT_OPTIONS } from '../context/constants';
 import {
 	EVALUATION_WINDOW_TIMEFRAME,
 	EVALUATION_WINDOW_TYPE,
@@ -38,7 +39,35 @@ function EvaluationWindowDetails({
 		return options;
 	}, []);
 
-	if (evaluationWindow.windowType === 'rolling') {
+	const displayText = useMemo(() => {
+		if (
+			evaluationWindow.windowType === 'rolling' &&
+			evaluationWindow.timeframe === 'custom'
+		) {
+			return `Last ${evaluationWindow.startingAt.number} ${
+				RE_NOTIFICATION_UNIT_OPTIONS.find(
+					(option) => option.value === evaluationWindow.startingAt.unit,
+				)?.label
+			}${parseInt(evaluationWindow.startingAt.number, 10) > 1 ? 's' : ''}`;
+		}
+		if (evaluationWindow.windowType === 'cumulative') {
+			if (evaluationWindow.timeframe === 'currentHour') {
+				return `Current hour, starting at minute ${evaluationWindow.startingAt.number} (${evaluationWindow.startingAt.timezone})`;
+			}
+			if (evaluationWindow.timeframe === 'currentDay') {
+				return `Current day, starting from ${evaluationWindow.startingAt.time} (${evaluationWindow.startingAt.timezone})`;
+			}
+			if (evaluationWindow.timeframe === 'currentMonth') {
+				return `Current month, starting from day ${evaluationWindow.startingAt.number} at ${evaluationWindow.startingAt.time} (${evaluationWindow.startingAt.timezone})`;
+			}
+		}
+		return '';
+	}, [evaluationWindow]);
+
+	if (
+		evaluationWindow.windowType === 'rolling' &&
+		evaluationWindow.timeframe !== 'custom'
+	) {
 		return <div />;
 	}
 
@@ -59,6 +88,7 @@ function EvaluationWindowDetails({
 				number: value,
 				time: evaluationWindow.startingAt.time,
 				timezone: evaluationWindow.startingAt.timezone,
+				unit: evaluationWindow.startingAt.unit,
 			},
 		});
 	};
@@ -70,6 +100,19 @@ function EvaluationWindowDetails({
 				number: evaluationWindow.startingAt.number,
 				time: value,
 				timezone: evaluationWindow.startingAt.timezone,
+				unit: evaluationWindow.startingAt.unit,
+			},
+		});
+	};
+
+	const handleUnitChange = (value: string): void => {
+		setEvaluationWindow({
+			type: 'SET_STARTING_AT',
+			payload: {
+				number: evaluationWindow.startingAt.number,
+				time: evaluationWindow.startingAt.time,
+				timezone: evaluationWindow.startingAt.timezone,
+				unit: value,
 			},
 		});
 	};
@@ -81,6 +124,7 @@ function EvaluationWindowDetails({
 				number: evaluationWindow.startingAt.number,
 				time: evaluationWindow.startingAt.time,
 				timezone: value,
+				unit: evaluationWindow.startingAt.unit,
 			},
 		});
 	};
@@ -88,6 +132,10 @@ function EvaluationWindowDetails({
 	if (isCurrentHour) {
 		return (
 			<div className="evaluation-window-details">
+				<Typography.Text>
+					A Cumulative Window has a fixed starting point and expands over time.
+				</Typography.Text>
+				<Typography.Text>{displayText}</Typography.Text>
 				<div className="select-group">
 					<Typography.Text>STARTING AT MINUTE</Typography.Text>
 					<Select
@@ -104,6 +152,10 @@ function EvaluationWindowDetails({
 	if (isCurrentDay) {
 		return (
 			<div className="evaluation-window-details">
+				<Typography.Text>
+					A Cumulative Window has a fixed starting point and expands over time.
+				</Typography.Text>
+				<Typography.Text>{displayText}</Typography.Text>
 				<div className="select-group time-select-group">
 					<Typography.Text>STARTING AT</Typography.Text>
 					<TimeInput
@@ -127,6 +179,10 @@ function EvaluationWindowDetails({
 	if (isCurrentMonth) {
 		return (
 			<div className="evaluation-window-details">
+				<Typography.Text>
+					A Cumulative Window has a fixed starting point and expands over time.
+				</Typography.Text>
+				<Typography.Text>{displayText}</Typography.Text>
 				<div className="select-group">
 					<Typography.Text>STARTING ON DAY</Typography.Text>
 					<Select
@@ -156,7 +212,35 @@ function EvaluationWindowDetails({
 		);
 	}
 
-	return <div />;
+	return (
+		<div className="evaluation-window-details">
+			<Typography.Text>
+				A Rolling Window has a fixed size and shifts its starting point over time
+				based on when the rules are evaluated.
+			</Typography.Text>
+			<Typography.Text>Specify custom duration</Typography.Text>
+			<Typography.Text>{displayText}</Typography.Text>
+			<div className="select-group">
+				<Typography.Text>VALUE</Typography.Text>
+				<Input
+					name="value"
+					type="number"
+					value={evaluationWindow.startingAt.number}
+					onChange={(e): void => handleNumberChange(e.target.value)}
+					placeholder="Enter value"
+				/>
+			</div>
+			<div className="select-group time-select-group">
+				<Typography.Text>UNIT</Typography.Text>
+				<Select
+					options={RE_NOTIFICATION_UNIT_OPTIONS}
+					value={evaluationWindow.startingAt.unit || null}
+					onChange={handleUnitChange}
+					placeholder="Select unit"
+				/>
+			</div>
+		</div>
+	);
 }
 
 function EvaluationWindowPopover({
@@ -193,6 +277,14 @@ function EvaluationWindowPopover({
 
 	const renderSelectionContent = (): JSX.Element => {
 		if (evaluationWindow.windowType === 'rolling') {
+			if (evaluationWindow.timeframe === 'custom') {
+				return (
+					<EvaluationWindowDetails
+						evaluationWindow={evaluationWindow}
+						setEvaluationWindow={setEvaluationWindow}
+					/>
+				);
+			}
 			return (
 				<div className="selection-content">
 					<Typography.Text>

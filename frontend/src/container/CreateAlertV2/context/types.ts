@@ -177,6 +177,7 @@ export interface EvaluationWindowState {
 		time: string;
 		number: string;
 		timezone: string;
+		unit: string;
 	};
 }
 
@@ -185,7 +186,7 @@ export type EvaluationWindowAction =
 	| { type: 'SET_TIMEFRAME'; payload: string }
 	| {
 			type: 'SET_STARTING_AT';
-			payload: { time: string; number: string; timezone: string };
+			payload: { time: string; number: string; timezone: string; unit: string };
 	  }
 	| { type: 'SET_EVALUATION_CADENCE_MODE'; payload: EvaluationCadenceMode }
 	| { type: 'RESET' };

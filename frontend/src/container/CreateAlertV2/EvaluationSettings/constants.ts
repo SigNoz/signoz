@@ -12,6 +12,7 @@ export const EVALUATION_WINDOW_TIMEFRAME = {
 		{ label: 'Last 1 hour', value: '1h0m0s' },
 		{ label: 'Last 2 hours', value: '2h0m0s' },
 		{ label: 'Last 4 hours', value: '4h0m0s' },
+		{ label: 'Custom', value: 'custom' },
 	],
 	cumulative: [
 		{ label: 'Current hour', value: 'currentHour' },

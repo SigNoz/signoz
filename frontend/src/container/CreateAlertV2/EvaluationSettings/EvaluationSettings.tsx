@@ -43,7 +43,7 @@ function EvaluationSettings(): JSX.Element {
 		>
 			<Button>
 				<div className="evaluate-alert-conditions-button-left">
-					{getTimeframeText(evaluationWindow.windowType, evaluationWindow.timeframe)}
+					{getTimeframeText(evaluationWindow)}
 				</div>
 				<div className="evaluate-alert-conditions-button-right">
 					<div className="evaluate-alert-conditions-button-right-text">
