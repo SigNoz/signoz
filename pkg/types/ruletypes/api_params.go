@@ -51,6 +51,8 @@ type PostableRule struct {
 
 	Version string `json:"version,omitempty"`
 
+	Evaluation *EvaluationEnvelope `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
+
 	NotificationGroupBy []string `json:"notificationGroupBy,omitempty"`
 	ReNotify            Duration `json:"renotify,omitempty"`
 }
@@ -100,6 +102,9 @@ func (r *PostableRule) processRuleDefaults() error {
 			}
 			r.RuleCondition.Thresholds = &thresholdData
 		}
+	}
+	if r.Evaluation == nil {
+		r.Evaluation = &EvaluationEnvelope{RollingEvaluation, RollingWindow{EvalWindow: r.EvalWindow, Frequency: r.Frequency}}
 	}
 
 	return r.Validate()

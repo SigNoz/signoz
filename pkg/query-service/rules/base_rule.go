@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/converter"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -86,7 +87,10 @@ type BaseRule struct {
 	// should be fast but we can still avoid the query if we have the data in memory
 	TemporalityMap map[string]map[v3.Temporality]bool
 
-	sqlstore            sqlstore.SQLStore
+	sqlstore sqlstore.SQLStore
+
+	evaluation ruletypes.Evaluation
+
 	NotificationGroupBy []string
 	RenotifyInterval    time.Duration
 }
@@ -131,6 +135,10 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	if err != nil {
 		return nil, err
 	}
+	evaluation, err := p.Evaluation.GetEvaluation()
+	if err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to get evaluation: %v", err)
+	}
 
 	baseRule := &BaseRule{
 		id:                  id,
@@ -148,6 +156,7 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 		reader:              reader,
 		TemporalityMap:      make(map[string]map[v3.Temporality]bool),
 		Threshold:           threshold,
+		evaluation:          evaluation,
 		NotificationGroupBy: p.NotificationGroupBy,
 		RenotifyInterval:    time.Duration(p.ReNotify),
 	}
@@ -252,8 +261,10 @@ func (r *BaseRule) Unit() string {
 }
 
 func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time) {
-	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli()
-	end := ts.UnixMilli()
+
+	st, en := r.evaluation.NextWindowFor(ts)
+	start := st.UnixMilli()
+	end := en.UnixMilli()
 
 	if r.evalDelay > 0 {
 		start = start - int64(r.evalDelay.Milliseconds())
