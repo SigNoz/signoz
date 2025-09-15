@@ -510,13 +510,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.editDowntimeSchedule)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.deleteDowntimeSchedule)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/dashboards", am.Check(aH.List, authtypes.RelationList, authtypes.RelationViewer, authtypes.MustNewResources("dashboards"), nil, func(r *http.Request) (authtypes.Selector, []authtypes.Selector, error) {
-		return authtypes.Selector{}, []authtypes.Selector{}, nil
-	})).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.List)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.Signoz.Handlers.Dashboard.Create)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/dashboards/{id}", am.Check(aH.Get, authtypes.RelationRead, authtypes.RelationViewer, authtypes.MustNewResource("dashboard"), authtypes.MustNewResources("dashboards"), func(r *http.Request) (authtypes.Selector, []authtypes.Selector, error) {
-		return authtypes.Selector{}, []authtypes.Selector{}, nil
-	})).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards/{id}", am.ViewAccess(aH.Get)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards/{id}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Update)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{id}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Delete)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/dashboards/{id}/lock", am.EditAccess(aH.Signoz.Handlers.Dashboard.LockUnlock)).Methods(http.MethodPut)
