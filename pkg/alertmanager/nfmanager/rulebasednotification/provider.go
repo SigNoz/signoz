@@ -5,6 +5,7 @@ import (
 	nfmanager "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/prometheus/alertmanager/types"
 	"sync"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -37,9 +38,10 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 }
 
 // GetNotificationConfig retrieves the notification configuration for the specified alert and organization.
-func (r *provider) GetNotificationConfig(orgID string, ruleID string) (*alertmanagertypes.NotificationConfig, error) {
+func (r *provider) GetNotificationConfig(orgID string, ruleID string, alert *types.Alert) (*alertmanagertypes.NotificationConfig, error) {
+	notificationConfig := alertmanagertypes.GetDefaultNotificationConfig()
 	if orgID == "" || ruleID == "" {
-		return alertmanagertypes.GetDefaultNotificationConfig(), nil
+		return &notificationConfig, nil
 	}
 
 	r.mutex.RLock()
@@ -47,19 +49,22 @@ func (r *provider) GetNotificationConfig(orgID string, ruleID string) (*alertman
 
 	if orgConfigs, exists := r.orgToFingerprintToNotificationConfig[orgID]; exists {
 		if config, configExists := orgConfigs[ruleID]; configExists {
-			// Return a copy to prevent external modifications
-			configCopy := config
-			return &configCopy, nil
+			notificationConfig = config
+			return &notificationConfig, nil
 		}
 	}
 
-	return alertmanagertypes.GetDefaultNotificationConfig(), nil
+	return &notificationConfig, nil
 }
 
 // SetNotificationConfig updates the notification configuration for the specified alert and organization.
 func (r *provider) SetNotificationConfig(orgID string, ruleID string, config *alertmanagertypes.NotificationConfig) error {
 	if orgID == "" || ruleID == "" {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "no org or rule id provided")
+	}
+
+	if config == nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "notification config cannot be nil")
 	}
 
 	r.mutex.Lock()

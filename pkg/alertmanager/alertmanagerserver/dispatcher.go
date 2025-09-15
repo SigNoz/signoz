@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"log/slog"
 	"sort"
 	"sync"
@@ -18,6 +17,10 @@ import (
 	"github.com/prometheus/alertmanager/provider"
 	"github.com/prometheus/alertmanager/store"
 	"github.com/prometheus/alertmanager/types"
+)
+
+const (
+	noDataLabel = model.LabelName("noData")
 )
 
 // Dispatcher sorts incoming alerts into aggregation groups and
@@ -288,7 +291,7 @@ type notifyFunc func(context.Context, ...*types.Alert) bool
 // and inserts it.
 func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 	ruleId := getRuleIDFromAlert(alert)
-	config, err := d.notificationManager.GetNotificationConfig(d.orgID, ruleId)
+	config, err := d.notificationManager.GetNotificationConfig(d.orgID, ruleId, alert)
 	if err != nil {
 		d.logger.ErrorContext(d.ctx, "error getting alert notification config", "alert_fingerprint", alert.Fingerprint(), "error", err)
 		return
@@ -320,7 +323,11 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 		return
 	}
 
-	ag = newAggrGroup(d.ctx, groupLabels, route, d.timeout, d.logger, config)
+	if noDataAlert(alert) {
+		ag = newAggrGroup(d.ctx, groupLabels, route, d.timeout, d.logger, config.Renotify.NoDataInterval)
+	} else {
+		ag = newAggrGroup(d.ctx, groupLabels, route, d.timeout, d.logger, config.Renotify.RenotifyInterval)
+	}
 	routeGroups[fp] = ag
 	d.aggrGroupsNum++
 	d.metrics.aggrGroups.Inc()
@@ -369,18 +376,12 @@ type aggrGroup struct {
 }
 
 // newAggrGroup returns a new aggregation group.
-func newAggrGroup(ctx context.Context, labels model.LabelSet, r *dispatch.Route, to func(time.Duration) time.Duration, logger *slog.Logger, config *alertmanagertypes.NotificationConfig) *aggrGroup {
+func newAggrGroup(ctx context.Context, labels model.LabelSet, r *dispatch.Route, to func(time.Duration) time.Duration, logger *slog.Logger, renotify time.Duration) *aggrGroup {
 	if to == nil {
 		to = func(d time.Duration) time.Duration { return d }
 	}
 
-	// Create a copy of RouteOpts instead of using a pointer to avoid shared state
-	opts := r.RouteOpts
-
-	// Override RepeatInterval with rule-specific RenotifyInterval if available
-	if config != nil && config.RenotifyInterval > 0 {
-		opts.RepeatInterval = config.RenotifyInterval
-	}
+	opts := deepCopyRouteOpts(r.RouteOpts, renotify)
 
 	ag := &aggrGroup{
 		labels:   labels,
@@ -535,6 +536,33 @@ func getRuleIDFromAlert(alert *types.Alert) string {
 	return ""
 }
 
+func deepCopyRouteOpts(opts dispatch.RouteOpts, renotify time.Duration) dispatch.RouteOpts {
+	newOpts := opts
+
+	if opts.GroupBy != nil {
+		newOpts.GroupBy = make(map[model.LabelName]struct{}, len(opts.GroupBy))
+		for k, v := range opts.GroupBy {
+			newOpts.GroupBy[k] = v
+		}
+	}
+
+	if opts.MuteTimeIntervals != nil {
+		newOpts.MuteTimeIntervals = make([]string, len(opts.MuteTimeIntervals))
+		copy(newOpts.MuteTimeIntervals, opts.MuteTimeIntervals)
+	}
+
+	if opts.ActiveTimeIntervals != nil {
+		newOpts.ActiveTimeIntervals = make([]string, len(opts.ActiveTimeIntervals))
+		copy(newOpts.ActiveTimeIntervals, opts.ActiveTimeIntervals)
+	}
+
+	if renotify > 0 {
+		newOpts.RepeatInterval = renotify
+	}
+
+	return newOpts
+}
+
 func getGroupLabels(alert *types.Alert, groups map[model.LabelName]struct{}) model.LabelSet {
 	groupLabels := model.LabelSet{}
 	for ln, lv := range alert.Labels {
@@ -544,4 +572,12 @@ func getGroupLabels(alert *types.Alert, groups map[model.LabelName]struct{}) mod
 	}
 
 	return groupLabels
+}
+
+func noDataAlert(alert *types.Alert) bool {
+	if _, ok := alert.Labels[noDataLabel]; ok {
+		return true
+	} else {
+		return false
+	}
 }

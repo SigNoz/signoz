@@ -405,35 +405,39 @@ func init() {
 // NotificationConfig holds configuration for alert notifications timing.
 type NotificationConfig struct {
 	NotificationGroup map[model.LabelName]struct{} `json:"notification_group"`
-	RenotifyInterval  time.Duration                `json:"renotifyInterval,omitempty"`
+	Renotify          ReNotificationConfig         `json:"renotify,omitempty"`
 }
 
-func NewNotificationConfig(groups []string, renotifyInterval ruletypes.Duration) NotificationConfig {
-	if len(groups) == 0 && renotifyInterval == 0 {
-		return *GetDefaultNotificationConfig()
-	}
+type ReNotificationConfig struct {
+	NoDataInterval   time.Duration `json:"noDataInterval,omitempty"`
+	RenotifyInterval time.Duration `json:"renotifyInterval,omitempty"`
+}
 
-	renotify := time.Duration(4 * time.Hour) // default fallback
+func NewNotificationConfig(groups []string, renotifyInterval ruletypes.Duration, noDataRenotifyInterval ruletypes.Duration) NotificationConfig {
+	notificationConfig := GetDefaultNotificationConfig()
+
 	if renotifyInterval != 0 {
-		renotify = time.Duration(renotifyInterval)
+		notificationConfig.Renotify.RenotifyInterval = time.Duration(renotifyInterval)
 	}
 
-	set := make(map[model.LabelName]struct{})
+	if noDataRenotifyInterval != 0 {
+		notificationConfig.Renotify.NoDataInterval = time.Duration(noDataRenotifyInterval)
+	}
 	for _, group := range groups {
-		set[model.LabelName(group)] = struct{}{}
+		notificationConfig.NotificationGroup[model.LabelName(group)] = struct{}{}
 	}
 
-	return NotificationConfig{
-		NotificationGroup: set,
-		RenotifyInterval:  renotify,
-	}
+	return notificationConfig
 }
 
-func GetDefaultNotificationConfig() *NotificationConfig {
+func GetDefaultNotificationConfig() NotificationConfig {
 	defaultGroups := make(map[model.LabelName]struct{})
 	defaultGroups[model.LabelName(DefaultGroupBy)] = struct{}{}
-	return &NotificationConfig{
+	return NotificationConfig{
 		NotificationGroup: defaultGroups,
-		RenotifyInterval:  4 * time.Hour,
+		Renotify: ReNotificationConfig{
+			RenotifyInterval: 876000 * time.Hour,
+			NoDataInterval:   876000 * time.Hour,
+		}, //substitute for no - notify
 	}
 }

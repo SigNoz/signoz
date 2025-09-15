@@ -90,9 +90,6 @@ type BaseRule struct {
 	sqlstore sqlstore.SQLStore
 
 	evaluation ruletypes.Evaluation
-
-	NotificationGroupBy []string
-	RenotifyInterval    time.Duration
 }
 
 type RuleOption func(*BaseRule)
@@ -141,24 +138,22 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	}
 
 	baseRule := &BaseRule{
-		id:                  id,
-		orgID:               orgID,
-		name:                p.AlertName,
-		source:              p.Source,
-		typ:                 p.AlertType,
-		ruleCondition:       p.RuleCondition,
-		evalWindow:          time.Duration(p.EvalWindow),
-		labels:              qslabels.FromMap(p.Labels),
-		annotations:         qslabels.FromMap(p.Annotations),
-		preferredChannels:   p.PreferredChannels,
-		health:              ruletypes.HealthUnknown,
-		Active:              map[uint64]*ruletypes.Alert{},
-		reader:              reader,
-		TemporalityMap:      make(map[string]map[v3.Temporality]bool),
-		Threshold:           threshold,
-		evaluation:          evaluation,
-		NotificationGroupBy: p.NotificationGroupBy,
-		RenotifyInterval:    time.Duration(p.ReNotify),
+		id:                id,
+		orgID:             orgID,
+		name:              p.AlertName,
+		source:            p.Source,
+		typ:               p.AlertType,
+		ruleCondition:     p.RuleCondition,
+		evalWindow:        time.Duration(p.EvalWindow),
+		labels:            qslabels.FromMap(p.Labels),
+		annotations:       qslabels.FromMap(p.Annotations),
+		preferredChannels: p.PreferredChannels,
+		health:            ruletypes.HealthUnknown,
+		Active:            map[uint64]*ruletypes.Alert{},
+		reader:            reader,
+		TemporalityMap:    make(map[string]map[v3.Temporality]bool),
+		Threshold:         threshold,
+		evaluation:        evaluation,
 	}
 
 	if baseRule.evalWindow == 0 {

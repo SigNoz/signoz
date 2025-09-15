@@ -3,6 +3,7 @@ package nfmanager
 import (
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"testing"
+	"time"
 
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/types"
@@ -23,21 +24,17 @@ func TestNotificationGroupsInterface(t *testing.T) {
 		},
 	}
 
-	route := &dispatch.Route{
-		RouteOpts: dispatch.RouteOpts{
-			GroupBy: map[model.LabelName]struct{}{
-				"alertname": {},
-			},
-		},
-	}
-
 	config := &alertmanagertypes.NotificationConfig{
 		NotificationGroup: map[model.LabelName]struct{}{"alertname": {}},
+		Renotify: alertmanagertypes.ReNotificationConfig{
+			RenotifyInterval: 4 * time.Hour,
+			NoDataInterval:   4 * time.Hour,
+		},
 	}
 	err := ng.SetNotificationConfig("test-org", "test-rule", config)
 	assert.NoError(t, err)
 
-	retrievedConfig, err := ng.GetNotificationConfig("test-org", "test-rule")
+	retrievedConfig, err := ng.GetNotificationConfig("test-org", "test-rule", alert)
 	assert.NoError(t, err)
 	assert.NotNil(t, retrievedConfig)
 }
@@ -50,9 +47,13 @@ func (m *mockNotificationGroups) GetGroupLabels(orgID string, alert *types.Alert
 	}
 }
 
-func (m *mockNotificationGroups) GetNotificationConfig(orgID string, ruleID string) (*alertmanagertypes.NotificationConfig, error) {
+func (m *mockNotificationGroups) GetNotificationConfig(orgID string, ruleID string, alert *types.Alert) (*alertmanagertypes.NotificationConfig, error) {
 	return &alertmanagertypes.NotificationConfig{
 		NotificationGroup: map[model.LabelName]struct{}{"alertname": {}},
+		Renotify: alertmanagertypes.ReNotificationConfig{
+			RenotifyInterval: 4 * time.Hour,
+			NoDataInterval:   4 * time.Hour,
+		},
 	}, nil
 }
 

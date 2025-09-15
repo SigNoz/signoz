@@ -63,54 +63,65 @@ func TestProvider_SetNotificationConfig(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:  "valid parameters",
-			orgID: "org1",
-			alert: createTestAlert(model.LabelSet{
-				"alertname": "test_alert",
-				"severity":  "critical",
-			}),
+			name:   "valid parameters",
+			orgID:  "org1",
+			ruleID: "rule1",
 			config: &alertmanagertypes.NotificationConfig{
-				RenotifyInterval: 2 * time.Hour,
+				Renotify: alertmanagertypes.ReNotificationConfig{
+					RenotifyInterval: 2 * time.Hour,
+					NoDataInterval:   2 * time.Hour,
+				},
 			},
 			wantErr: false,
 		},
 		{
-			name:    "empty orgID",
-			orgID:   "",
-			alert:   createTestAlert(model.LabelSet{"alertname": "test"}),
-			config:  &alertmanagertypes.NotificationConfig{RenotifyInterval: time.Hour},
-			wantErr: false, // Should not error but also not set anything
+			name:   "empty orgID",
+			orgID:  "",
+			ruleID: "rule1",
+			config: &alertmanagertypes.NotificationConfig{
+				Renotify: alertmanagertypes.ReNotificationConfig{
+					RenotifyInterval: time.Hour,
+					NoDataInterval:   time.Hour,
+				},
+			},
+			wantErr: true, // Should error due to validation
 		},
 		{
-			name:    "nil alert",
-			orgID:   "org1",
-			alert:   nil,
-			config:  &alertmanagertypes.NotificationConfig{RenotifyInterval: time.Hour},
-			wantErr: false, // Should not error but also not set anything
+			name:   "empty ruleID",
+			orgID:  "org1",
+			ruleID: "",
+			config: &alertmanagertypes.NotificationConfig{
+				Renotify: alertmanagertypes.ReNotificationConfig{
+					RenotifyInterval: time.Hour,
+					NoDataInterval:   time.Hour,
+				},
+			},
+			wantErr: true, // Should error due to validation
 		},
 		{
 			name:    "nil config",
 			orgID:   "org1",
-			alert:   createTestAlert(model.LabelSet{"alertname": "test"}),
+			ruleID:  "rule1",
 			config:  nil,
-			wantErr: false,
+			wantErr: true, // Should error due to nil config
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := provider.SetNotificationConfig(tt.orgID, tt.alert, tt.config)
+			err := provider.SetNotificationConfig(tt.orgID, tt.ruleID, tt.config)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 
 				// If we set a config successfully, we should be able to retrieve it
-				if tt.orgID != "" && tt.alert != nil && tt.config != nil {
-					retrievedConfig, retrieveErr := provider.GetNotificationConfig(tt.orgID, tt.alert)
+				if tt.orgID != "" && tt.ruleID != "" && tt.config != nil {
+					alert := createTestAlert(model.LabelSet{"ruleId": model.LabelValue(tt.ruleID)})
+					retrievedConfig, retrieveErr := provider.GetNotificationConfig(tt.orgID, tt.ruleID, alert)
 					assert.NoError(t, retrieveErr)
 					assert.NotNil(t, retrievedConfig)
-					assert.Equal(t, tt.config.RenotifyInterval, retrievedConfig.RenotifyInterval)
+					assert.Equal(t, tt.config.Renotify, retrievedConfig.Renotify)
 				}
 			}
 		})
@@ -135,17 +146,22 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 	})
 
 	orgID := "test-org"
+	ruleID := "rule1"
 	customConfig := &alertmanagertypes.NotificationConfig{
-		RenotifyInterval: 30 * time.Minute,
+		Renotify: alertmanagertypes.ReNotificationConfig{
+			RenotifyInterval: 30 * time.Minute,
+			NoDataInterval:   30 * time.Minute,
+		},
 	}
 
 	// Set config for alert1
-	err = provider.SetNotificationConfig(orgID, alert1, customConfig)
+	err = provider.SetNotificationConfig(orgID, ruleID, customConfig)
 	require.NoError(t, err)
 
 	tests := []struct {
 		name           string
 		orgID          string
+		ruleID         string
 		alert          *types.Alert
 		expectedConfig *alertmanagertypes.NotificationConfig
 		shouldFallback bool
@@ -153,6 +169,7 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 		{
 			name:           "existing config",
 			orgID:          orgID,
+			ruleID:         ruleID,
 			alert:          alert1,
 			expectedConfig: customConfig,
 			shouldFallback: false,
@@ -160,6 +177,7 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 		{
 			name:           "non-existing config - fallback",
 			orgID:          orgID,
+			ruleID:         "rule2",
 			alert:          alert2,
 			expectedConfig: nil, // Will get fallback from standardnotification
 			shouldFallback: true,
@@ -167,6 +185,7 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 		{
 			name:           "empty orgID - fallback",
 			orgID:          "",
+			ruleID:         ruleID,
 			alert:          alert1,
 			expectedConfig: nil, // Will get fallback
 			shouldFallback: true,
@@ -174,6 +193,7 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 		{
 			name:           "nil alert - fallback",
 			orgID:          orgID,
+			ruleID:         "rule3", // Different ruleID to get fallback
 			alert:          nil,
 			expectedConfig: nil, // Will get fallback
 			shouldFallback: true,
@@ -182,69 +202,20 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config, err := provider.GetNotificationConfig(tt.orgID, tt.alert)
+			config, err := provider.GetNotificationConfig(tt.orgID, tt.ruleID, tt.alert)
 			assert.NoError(t, err)
 
 			if tt.shouldFallback {
-				// Should get fallback config (4 hour default from standard)
+				// Should get fallback config (876000 hour default)
 				assert.NotNil(t, config)
-				assert.Equal(t, 4*time.Hour, config.RenotifyInterval)
+				assert.Equal(t, 876000*time.Hour, config.Renotify.RenotifyInterval)
 			} else {
 				// Should get our custom config
 				assert.NotNil(t, config)
-				assert.Equal(t, tt.expectedConfig.RenotifyInterval, config.RenotifyInterval)
+				assert.Equal(t, tt.expectedConfig.Renotify, config.Renotify)
 			}
 		})
 	}
-}
-
-func TestProvider_FingerprintIsolation(t *testing.T) {
-	ctx := context.Background()
-	providerSettings := createTestProviderSettings()
-	config := nfmanager.Config{}
-
-	provider, err := New(ctx, providerSettings, config)
-	require.NoError(t, err)
-
-	// Create alerts with different fingerprints
-	alert1 := createTestAlert(model.LabelSet{
-		"alertname": "cpu_high",
-		"instance":  "server1",
-	})
-	alert2 := createTestAlert(model.LabelSet{
-		"alertname": "cpu_high",
-		"instance":  "server2", // Different instance = different fingerprint
-	})
-	alert3 := createTestAlert(model.LabelSet{
-		"alertname": "memory_high", // Different alert name = different fingerprint
-		"instance":  "server1",
-	})
-
-	orgID := "test-org"
-	config1 := &alertmanagertypes.NotificationConfig{RenotifyInterval: 1 * time.Hour}
-	config2 := &alertmanagertypes.NotificationConfig{RenotifyInterval: 2 * time.Hour}
-	config3 := &alertmanagertypes.NotificationConfig{RenotifyInterval: 3 * time.Hour}
-
-	// Set different configs for each alert
-	err = provider.SetNotificationConfig(orgID, alert1, config1)
-	require.NoError(t, err)
-	err = provider.SetNotificationConfig(orgID, alert2, config2)
-	require.NoError(t, err)
-	err = provider.SetNotificationConfig(orgID, alert3, config3)
-	require.NoError(t, err)
-
-	// Verify each alert gets its own config
-	retrievedConfig1, err := provider.GetNotificationConfig(orgID, alert1)
-	require.NoError(t, err)
-	assert.Equal(t, 1*time.Hour, retrievedConfig1.RenotifyInterval)
-
-	retrievedConfig2, err := provider.GetNotificationConfig(orgID, alert2)
-	require.NoError(t, err)
-	assert.Equal(t, 2*time.Hour, retrievedConfig2.RenotifyInterval)
-
-	retrievedConfig3, err := provider.GetNotificationConfig(orgID, alert3)
-	require.NoError(t, err)
-	assert.Equal(t, 3*time.Hour, retrievedConfig3.RenotifyInterval)
 }
 
 func TestProvider_ConcurrentAccess(t *testing.T) {
@@ -269,9 +240,12 @@ func TestProvider_ConcurrentAccess(t *testing.T) {
 		defer wg.Done()
 		for i := 0; i < 50; i++ {
 			config := &alertmanagertypes.NotificationConfig{
-				RenotifyInterval: time.Duration(i+1) * time.Minute,
+				Renotify: alertmanagertypes.ReNotificationConfig{
+					RenotifyInterval: time.Duration(i+1) * time.Minute,
+					NoDataInterval:   time.Duration(i+1) * time.Minute,
+				},
 			}
-			err := provider.SetNotificationConfig(orgID, alert, config)
+			err := provider.SetNotificationConfig(orgID, "rule1", config)
 			assert.NoError(t, err)
 		}
 	}()
@@ -281,7 +255,7 @@ func TestProvider_ConcurrentAccess(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		for i := 0; i < 50; i++ {
-			config, err := provider.GetNotificationConfig(orgID, alert)
+			config, err := provider.GetNotificationConfig(orgID, "rule1", alert)
 			assert.NoError(t, err)
 			assert.NotNil(t, config)
 		}
@@ -289,42 +263,4 @@ func TestProvider_ConcurrentAccess(t *testing.T) {
 
 	// Wait for both goroutines to complete
 	wg.Wait()
-}
-
-func TestProvider_OrganizationIsolation(t *testing.T) {
-	ctx := context.Background()
-	providerSettings := createTestProviderSettings()
-	config := nfmanager.Config{}
-
-	provider, err := New(ctx, providerSettings, config)
-	require.NoError(t, err)
-
-	// Same alert for different organizations
-	alert := createTestAlert(model.LabelSet{
-		"alertname": "test_alert",
-		"severity":  "critical",
-	})
-
-	org1Config := &alertmanagertypes.NotificationConfig{RenotifyInterval: 1 * time.Hour}
-	org2Config := &alertmanagertypes.NotificationConfig{RenotifyInterval: 2 * time.Hour}
-
-	// Set different configs for different orgs
-	err = provider.SetNotificationConfig("org1", alert, org1Config)
-	require.NoError(t, err)
-	err = provider.SetNotificationConfig("org2", alert, org2Config)
-	require.NoError(t, err)
-
-	// Verify each org gets its own config
-	retrievedConfig1, err := provider.GetNotificationConfig("org1", alert)
-	require.NoError(t, err)
-	assert.Equal(t, 1*time.Hour, retrievedConfig1.RenotifyInterval)
-
-	retrievedConfig2, err := provider.GetNotificationConfig("org2", alert)
-	require.NoError(t, err)
-	assert.Equal(t, 2*time.Hour, retrievedConfig2.RenotifyInterval)
-
-	// Verify org3 gets fallback
-	retrievedConfig3, err := provider.GetNotificationConfig("org3", alert)
-	require.NoError(t, err)
-	assert.Equal(t, 4*time.Hour, retrievedConfig3.RenotifyInterval) // Standard fallback
 }
