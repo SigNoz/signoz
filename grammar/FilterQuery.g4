@@ -207,12 +207,12 @@ QUOTED_TEXT
         )
     ;
 
-fragment SEGMENT      : [a-zA-Z$_] [a-zA-Z0-9$_:\-/]* ;
+fragment SEGMENT      : [a-zA-Z$_@{#] [a-zA-Z0-9$_@#{}:\-/]* ;
 fragment EMPTY_BRACKS : '[' ']' ;
 fragment OLD_JSON_BRACKS: '[' '*' ']';
 
 KEY
-    : SEGMENT ( '.' SEGMENT | EMPTY_BRACKS | OLD_JSON_BRACKS)*
+    : SEGMENT ( '.' SEGMENT | EMPTY_BRACKS | OLD_JSON_BRACKS | '.' DIGIT+)*
     ;
 
 // Ignore whitespace
