@@ -50,6 +50,8 @@ type PostableRule struct {
 	PreferredChannels []string `json:"preferredChannels,omitempty"`
 
 	Version string `json:"version,omitempty"`
+
+	Evaluation *EvaluationEnvelope `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
 }
 
 func (r *PostableRule) processRuleDefaults() error {
@@ -97,6 +99,9 @@ func (r *PostableRule) processRuleDefaults() error {
 			}
 			r.RuleCondition.Thresholds = &thresholdData
 		}
+	}
+	if r.Evaluation == nil {
+		r.Evaluation = &EvaluationEnvelope{RollingEvaluation, RollingWindow{EvalWindow: r.EvalWindow, Frequency: r.Frequency}}
 	}
 
 	return r.Validate()
