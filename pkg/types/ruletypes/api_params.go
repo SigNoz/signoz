@@ -6,11 +6,11 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/teambition/rrule-go"
+
 	signozError "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/teambition/rrule-go"
-
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 )

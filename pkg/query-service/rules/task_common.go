@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"time"
 
 	"github.com/teambition/rrule-go"
@@ -47,7 +48,7 @@ func runCronScheduledTask(
 
 	if nextRun.IsZero() {
 		zap.L().Error("no future runs found for schedule", zap.String("schedule", schedule), zap.String("timezone", timezone))
-		return err
+		return errors.New(errors.TypeCanceled, errors.CodeCanceled, "no future runs found for schedule")
 	}
 
 	zap.L().Debug("cron scheduler starting", zap.String("schedule", schedule), zap.String("timezone", timezone), zap.Time("nextRun", nextRun))
