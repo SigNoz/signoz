@@ -101,7 +101,7 @@ export const getThresholds = (
 		// Push main threshold
 		const mainThreshold = {
 			index: index.toString(),
-			keyIndex: 0,
+			keyIndex: index,
 			moveThreshold: (): void => {},
 			selectedGraph: PANEL_TYPES.TIME_SERIES,
 			thresholdValue: threshold.thresholdValue,
@@ -121,8 +121,8 @@ export const getThresholds = (
 		// Push recovery threshold
 		if (threshold.recoveryThresholdValue) {
 			const recoveryThreshold = {
-				index: index.toString(),
-				keyIndex: 0,
+				index: (thresholds.length + index).toString(),
+				keyIndex: thresholds.length + index,
 				moveThreshold: (): void => {},
 				selectedGraph: PANEL_TYPES.TIME_SERIES, // no impact
 				thresholdValue: threshold.recoveryThresholdValue,

@@ -254,27 +254,11 @@ describe('AlertThreshold', () => {
 		expect(thresholdItems).toHaveLength(1);
 	});
 
-	it('loads channels from API', async () => {
-		renderAlertThreshold();
-
-		await waitFor(() => {
-			// Channels should be loaded and passed to ThresholdItem
-			expect(screen.getByTestId(/threshold-item-/)).toBeInTheDocument();
-		});
-	});
-
 	it('handles loading state for channels', () => {
 		renderAlertThreshold();
 
 		// Component should render even while channels are loading
 		expect(screen.getByText('Send a notification when')).toBeInTheDocument();
-	});
-
-	it('passes correct props to ThresholdItem', () => {
-		renderAlertThreshold();
-
-		// ThresholdItem should receive the threshold data
-		expect(screen.getByTestId(/threshold-item-/)).toBeInTheDocument();
 	});
 
 	it('renders with correct initial state', () => {

@@ -97,10 +97,13 @@ const createTestQueryClient = (): QueryClient =>
 		},
 	});
 
-const renderAlertCondition = (): ReturnType<typeof render> => {
+const renderAlertCondition = (
+	alertType?: string,
+): ReturnType<typeof render> => {
 	const queryClient = createTestQueryClient();
+	const initialEntries = alertType ? [`/?alertType=${alertType}`] : undefined;
 	return render(
-		<MemoryRouter>
+		<MemoryRouter initialEntries={initialEntries}>
 			<QueryClientProvider client={queryClient}>
 				<CreateAlertProvider>
 					<AlertCondition />
@@ -118,10 +121,34 @@ describe('AlertCondition', () => {
 		);
 	});
 
+	it('verifies default props and initial state', () => {
+		renderAlertCondition();
+
+		// Verify default alertType is METRICS_BASED_ALERT (shows AlertThreshold component)
+		expect(screen.getByTestId(ALERT_THRESHOLD_TEST_ID)).toBeInTheDocument();
+		expect(
+			screen.queryByTestId(ANOMALY_THRESHOLD_TEST_ID),
+		).not.toBeInTheDocument();
+
+		// Verify threshold tab is active by default
+		const thresholdTab = screen.getByText(THRESHOLD_TAB_TEXT);
+		expect(thresholdTab.closest(ACTIVE_TAB_CLASS)).toBeInTheDocument();
+
+		// Verify both tabs are visible (METRICS_BASED_ALERT supports multiple tabs)
+		expect(screen.getByText(THRESHOLD_TAB_TEXT)).toBeInTheDocument();
+		expect(screen.getByText(ANOMALY_TAB_TEXT)).toBeInTheDocument();
+	});
+
 	it('renders threshold tab by default', () => {
 		renderAlertCondition();
 		expect(screen.getByText(THRESHOLD_TAB_TEXT)).toBeInTheDocument();
 		expect(screen.getByTestId(THRESHOLD_VIEW_TEST_ID)).toBeInTheDocument();
+
+		// Verify default props
+		expect(screen.getByTestId(ALERT_THRESHOLD_TEST_ID)).toBeInTheDocument();
+		expect(
+			screen.queryByTestId(ANOMALY_THRESHOLD_TEST_ID),
+		).not.toBeInTheDocument();
 	});
 
 	it('renders anomaly tab when alert type supports multiple tabs', () => {
@@ -190,5 +217,55 @@ describe('AlertCondition', () => {
 		// Anomaly tab should be active now
 		expect(anomalyTab.closest(ACTIVE_TAB_CLASS)).toBeInTheDocument();
 		expect(thresholdTab.closest(ACTIVE_TAB_CLASS)).not.toBeInTheDocument();
+	});
+
+	it('shows multiple tabs for METRICS_BASED_ALERT', () => {
+		renderAlertCondition('METRIC_BASED_ALERT');
+
+		// Both tabs should be visible
+		expect(screen.getByText(THRESHOLD_TAB_TEXT)).toBeInTheDocument();
+		expect(screen.getByText(ANOMALY_TAB_TEXT)).toBeInTheDocument();
+		expect(screen.getByTestId(THRESHOLD_VIEW_TEST_ID)).toBeInTheDocument();
+		expect(screen.getByTestId(ANOMALY_VIEW_TEST_ID)).toBeInTheDocument();
+	});
+
+	it('shows multiple tabs for ANOMALY_BASED_ALERT', () => {
+		renderAlertCondition('ANOMALY_BASED_ALERT');
+
+		// Both tabs should be visible
+		expect(screen.getByText(THRESHOLD_TAB_TEXT)).toBeInTheDocument();
+		expect(screen.getByText(ANOMALY_TAB_TEXT)).toBeInTheDocument();
+		expect(screen.getByTestId(THRESHOLD_VIEW_TEST_ID)).toBeInTheDocument();
+		expect(screen.getByTestId(ANOMALY_VIEW_TEST_ID)).toBeInTheDocument();
+	});
+
+	it('shows only threshold tab for LOGS_BASED_ALERT', () => {
+		renderAlertCondition('LOGS_BASED_ALERT');
+
+		// Only threshold tab should be visible
+		expect(screen.getByText(THRESHOLD_TAB_TEXT)).toBeInTheDocument();
+		expect(screen.queryByText(ANOMALY_TAB_TEXT)).not.toBeInTheDocument();
+		expect(screen.getByTestId(THRESHOLD_VIEW_TEST_ID)).toBeInTheDocument();
+		expect(screen.queryByTestId(ANOMALY_VIEW_TEST_ID)).not.toBeInTheDocument();
+	});
+
+	it('shows only threshold tab for TRACES_BASED_ALERT', () => {
+		renderAlertCondition('TRACES_BASED_ALERT');
+
+		// Only threshold tab should be visible
+		expect(screen.getByText(THRESHOLD_TAB_TEXT)).toBeInTheDocument();
+		expect(screen.queryByText(ANOMALY_TAB_TEXT)).not.toBeInTheDocument();
+		expect(screen.getByTestId(THRESHOLD_VIEW_TEST_ID)).toBeInTheDocument();
+		expect(screen.queryByTestId(ANOMALY_VIEW_TEST_ID)).not.toBeInTheDocument();
+	});
+
+	it('shows only threshold tab for EXCEPTIONS_BASED_ALERT', () => {
+		renderAlertCondition('EXCEPTIONS_BASED_ALERT');
+
+		// Only threshold tab should be visible
+		expect(screen.getByText(THRESHOLD_TAB_TEXT)).toBeInTheDocument();
+		expect(screen.queryByText(ANOMALY_TAB_TEXT)).not.toBeInTheDocument();
+		expect(screen.getByTestId(THRESHOLD_VIEW_TEST_ID)).toBeInTheDocument();
+		expect(screen.queryByTestId(ANOMALY_VIEW_TEST_ID)).not.toBeInTheDocument();
 	});
 });
