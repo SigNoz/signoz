@@ -2,9 +2,9 @@ package alertmanagerserver
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"log/slog"
 	"sort"
 	"sync"
