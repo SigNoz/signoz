@@ -18,6 +18,8 @@ import (
 
 var searchTroubleshootingGuideURL = "https://signoz.io/docs/userguide/search-troubleshooting/"
 
+const stringMatchingOperatorDocURL = "https://signoz.io/docs/userguide/operators-reference/#string-matching-operators"
+
 // filterExpressionVisitor implements the FilterQueryVisitor interface
 // to convert the parsed filter expressions into ClickHouse WHERE clause
 type filterExpressionVisitor struct {
@@ -533,25 +535,13 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			if ctx.NOT() != nil {
 				op = qbtypes.FilterOperatorNotLike
 			}
-			// check if LIKE is used without wildcards and add warning
-			if !hasLikeWildcards(value) {
-				v.warnings = append(v.warnings, "LIKE operator used without wildcards (% or _). Consider using = operator for exact matches or add wildcards for pattern matching.")
-				if v.mainWarnURL == "" {
-					v.mainWarnURL = "https://signoz.io/docs/userguide/operators-reference/#string-matching-operators"
-				}
-			}
+			v.warnIfLikeWithoutWildcards("LIKE", value)
 		} else if ctx.ILIKE() != nil {
 			op = qbtypes.FilterOperatorILike
 			if ctx.NOT() != nil {
 				op = qbtypes.FilterOperatorNotILike
 			}
-			// check if ILIKE is used without wildcards and add warning
-			if !hasLikeWildcards(value) {
-				v.warnings = append(v.warnings, "ILIKE operator used without wildcards (% or _). Consider using = operator for exact matches or add wildcards for pattern matching.")
-				if v.mainWarnURL == "" {
-					v.mainWarnURL = "https://signoz.io/docs/userguide/operators-reference/#string-matching-operators"
-				}
-			}
+			v.warnIfLikeWithoutWildcards("ILIKE", value)
 		} else if ctx.REGEXP() != nil {
 			op = qbtypes.FilterOperatorRegexp
 			if ctx.NOT() != nil {
@@ -583,6 +573,19 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 	}
 
 	return "" // Should not happen with valid input
+}
+
+// warnIfLikeWithoutWildcards adds a guidance warning when LIKE/ILIKE is used without wildcards
+func (v *filterExpressionVisitor) warnIfLikeWithoutWildcards(op string, value any) {
+	if hasLikeWildcards(value) {
+		return
+	}
+
+	msg := op + " operator used without wildcards (% or _). Consider using = operator for exact matches or add wildcards for pattern matching."
+	v.warnings = append(v.warnings, msg)
+	if v.mainWarnURL == "" {
+		v.mainWarnURL = stringMatchingOperatorDocURL
+	}
 }
 
 // VisitInClause handles IN expressions
