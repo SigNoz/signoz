@@ -8,7 +8,6 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { useCallback, useMemo } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 
-import SearchFilters from './SearchFilters';
 import SpanTable from './SpanTable';
 import { SpanDataRow } from './types';
 import { transformEntrySpansToHierarchy } from './utils';
@@ -122,9 +121,6 @@ function SpanList({ traceId, setSelectedSpan }: SpanListProps): JSX.Element {
 
 	return (
 		<div className="span-list">
-			<div className="span-list__header">
-				<SearchFilters />
-			</div>
 			<div className="span-list__content">
 				<SpanTable
 					data={hierarchicalData}
