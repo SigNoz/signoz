@@ -2,7 +2,6 @@ package alertmanager
 
 import (
 	"context"
-
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
@@ -54,6 +53,8 @@ type Alertmanager interface {
 
 	// SetDefaultConfig sets the default config for the organization.
 	SetDefaultConfig(context.Context, string) error
+
+	SetNotificationConfig(ctx context.Context, orgID valuer.UUID, ruleId string, config *alertmanagertypes.NotificationConfig) error
 
 	// Collects stats for the organization.
 	statsreporter.StatsCollector

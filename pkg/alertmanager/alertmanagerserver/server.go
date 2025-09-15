@@ -207,21 +207,6 @@ func (server *Server) GetAlerts(ctx context.Context, params alertmanagertypes.Ge
 
 func (server *Server) PutAlerts(ctx context.Context, postableAlerts alertmanagertypes.PostableAlerts) error {
 	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(postableAlerts, time.Duration(server.srvConfig.Global.ResolveTimeout), time.Now())
-
-	for i, alert := range postableAlerts {
-		groups := model.LabelSet{}
-		for _, name := range alert.NotificationGroups {
-			groups[model.LabelName(name)] = model.LabelValue(alert.Labels[name])
-		}
-		config := &nfmanager.NotificationConfig{
-			NotificationGroup: groups,
-			RenotifyInterval:  alert.RenotifyInterval,
-		}
-		groupErr := server.notificationManager.SetNotificationConfig(server.orgID, alerts[i], config)
-		if groupErr != nil {
-			err = append(err, groupErr)
-		}
-	}
 	// Notification sending alert takes precedence over validation errors.
 	if err := server.alerts.Put(alerts...); err != nil {
 		return err

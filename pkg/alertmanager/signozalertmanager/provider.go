@@ -16,13 +16,13 @@ import (
 )
 
 type provider struct {
-	service            *alertmanager.Service
-	config             alertmanager.Config
-	settings           factory.ScopedProviderSettings
-	configStore        alertmanagertypes.ConfigStore
-	stateStore         alertmanagertypes.StateStore
+	service             *alertmanager.Service
+	config              alertmanager.Config
+	settings            factory.ScopedProviderSettings
+	configStore         alertmanagertypes.ConfigStore
+	stateStore          alertmanagertypes.StateStore
 	notificationManager nfmanager.NotificationManager
-	stopC              chan struct{}
+	stopC               chan struct{}
 }
 
 func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
@@ -46,12 +46,12 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 			orgGetter,
 			notificationManager,
 		),
-		settings:           settings,
-		config:             config,
-		configStore:        configStore,
-		stateStore:         stateStore,
+		settings:            settings,
+		config:              config,
+		configStore:         configStore,
+		stateStore:          stateStore,
 		notificationManager: notificationManager,
-		stopC:              make(chan struct{}),
+		stopC:               make(chan struct{}),
 	}
 
 	return p, nil
@@ -194,4 +194,12 @@ func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[s
 	}
 
 	return alertmanagertypes.NewStatsFromChannels(channels), nil
+}
+
+func (provider *provider) SetNotificationConfig(ctx context.Context, orgID valuer.UUID, ruleId string, config *alertmanagertypes.NotificationConfig) error {
+	err := provider.notificationManager.SetNotificationConfig(orgID.StringValue(), ruleId, config)
+	if err != nil {
+		return err
+	}
+	return nil
 }

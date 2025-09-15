@@ -1,6 +1,7 @@
 package nfmanager
 
 import (
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"testing"
 
 	"github.com/prometheus/alertmanager/dispatch"
@@ -30,10 +31,9 @@ func TestNotificationGroupsInterface(t *testing.T) {
 		},
 	}
 
-	groupLabels := ng.GetGroupLabels("test-org", alert, route)
-	assert.NotNil(t, groupLabels)
-
-	config := &NotificationConfig{GroupByLabels: []string{"alertname"}}
+	config := &alertmanagertypes.NotificationConfig{
+		NotificationGroup: map[model.LabelName]struct{}{"alertname": {}},
+	}
 	err := ng.SetNotificationConfig("test-org", "test-rule", config)
 	assert.NoError(t, err)
 
@@ -50,10 +50,12 @@ func (m *mockNotificationGroups) GetGroupLabels(orgID string, alert *types.Alert
 	}
 }
 
-func (m *mockNotificationGroups) GetNotificationConfig(orgID string, ruleID string) (*NotificationConfig, error) {
-	return &NotificationConfig{GroupByLabels: []string{"alertname"}}, nil
+func (m *mockNotificationGroups) GetNotificationConfig(orgID string, ruleID string) (*alertmanagertypes.NotificationConfig, error) {
+	return &alertmanagertypes.NotificationConfig{
+		NotificationGroup: map[model.LabelName]struct{}{"alertname": {}},
+	}, nil
 }
 
-func (m *mockNotificationGroups) SetNotificationConfig(orgID string, ruleID string, config *NotificationConfig) error {
+func (m *mockNotificationGroups) SetNotificationConfig(orgID string, ruleID string, config *alertmanagertypes.NotificationConfig) error {
 	return nil
 }

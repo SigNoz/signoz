@@ -4,16 +4,16 @@ import (
 	"context"
 	nfmanager "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/standardnotification"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"sync"
 
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/common/model"
 )
 
 type provider struct {
 	settings                             factory.ScopedProviderSettings
-	orgToFingerprintToNotificationConfig map[string]map[model.Fingerprint]*nfmanager.NotificationConfig
+	orgToFingerprintToNotificationConfig map[string]map[string]*alertmanagertypes.NotificationConfig
 	fallbackStrategy                     nfmanager.NotificationManager
 	mutex                                sync.RWMutex
 }
@@ -40,49 +40,45 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 	return &provider{
 		settings:                             settings,
-		orgToFingerprintToNotificationConfig: make(map[string]map[model.Fingerprint]*nfmanager.NotificationConfig),
+		orgToFingerprintToNotificationConfig: make(map[string]map[string]*alertmanagertypes.NotificationConfig),
 		fallbackStrategy:                     fallbackStrategy,
 	}, nil
 }
 
 // GetNotificationConfig retrieves the notification configuration for the specified alert and organization.
-func (r *provider) GetNotificationConfig(orgID string, alert *types.Alert) (*nfmanager.NotificationConfig, error) {
-	if orgID == "" || alert == nil {
-		return r.fallbackStrategy.GetNotificationConfig(orgID, alert)
+func (r *provider) GetNotificationConfig(orgID string, ruleID string) (*alertmanagertypes.NotificationConfig, error) {
+	if orgID == "" || ruleID == "" {
+		return r.fallbackStrategy.GetNotificationConfig(orgID, ruleID)
 	}
-
-	fingerprint := alert.Fingerprint()
 
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
 	if orgConfigs, exists := r.orgToFingerprintToNotificationConfig[orgID]; exists {
-		if config, configExists := orgConfigs[fingerprint]; configExists {
+		if config, configExists := orgConfigs[ruleID]; configExists {
 			return config, nil
 		}
 	}
 
 	// Fallback to standard strategy
-	return r.fallbackStrategy.GetNotificationConfig(orgID, alert)
+	return r.fallbackStrategy.GetNotificationConfig(orgID, ruleID)
 }
 
 // SetNotificationConfig updates the notification configuration for the specified alert and organization.
-func (r *provider) SetNotificationConfig(orgID string, alert *types.Alert, config *nfmanager.NotificationConfig) error {
-	if orgID == "" || alert == nil {
-		return nil
+func (r *provider) SetNotificationConfig(orgID string, ruleID string, config *alertmanagertypes.NotificationConfig) error {
+	if orgID == "" || ruleID == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "no org or rule id provided")
 	}
-
-	fingerprint := alert.Fingerprint()
 
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
 	// Initialize org map if it doesn't exist
 	if r.orgToFingerprintToNotificationConfig[orgID] == nil {
-		r.orgToFingerprintToNotificationConfig[orgID] = make(map[model.Fingerprint]*nfmanager.NotificationConfig)
+		r.orgToFingerprintToNotificationConfig[orgID] = make(map[string]*alertmanagertypes.NotificationConfig)
 	}
 
-	r.orgToFingerprintToNotificationConfig[orgID][fingerprint] = config
+	r.orgToFingerprintToNotificationConfig[orgID][ruleID] = config
 
 	return nil
 }

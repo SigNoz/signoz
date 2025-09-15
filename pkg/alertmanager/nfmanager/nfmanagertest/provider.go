@@ -3,10 +3,10 @@ package nfmanagertest
 import (
 	"context"
 	nfgrouping2 "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 )
 
@@ -38,18 +38,25 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 }
 
 // GetNotificationConfig implements the NotificationManager interface for testing.
-func (p *provider) GetNotificationConfig(orgID string, alert *types.Alert) (*nfgrouping2.NotificationConfig, error) {
+func (p *provider) GetNotificationConfig(orgID string, ruleID string) (*alertmanagertypes.NotificationConfig, error) {
 	if p.mockError != nil {
 		return nil, p.mockError
 	}
-	return &nfgrouping2.NotificationConfig{
-		NotificationGroup: p.mockGroupLabels,
+
+	// Convert LabelSet to map[LabelName]struct{}
+	groupLabels := make(map[model.LabelName]struct{})
+	for labelName := range p.mockGroupLabels {
+		groupLabels[labelName] = struct{}{}
+	}
+
+	return &alertmanagertypes.NotificationConfig{
+		NotificationGroup: groupLabels,
 		RenotifyInterval:  4 * time.Hour,
 	}, nil
 }
 
 // SetNotificationConfig implements the NotificationManager interface for testing.
-func (p *provider) SetNotificationConfig(orgID string, alert *types.Alert, config *nfgrouping2.NotificationConfig) error {
+func (p *provider) SetNotificationConfig(orgID string, ruleID string, config *alertmanagertypes.NotificationConfig) error {
 	return p.mockError
 }
 

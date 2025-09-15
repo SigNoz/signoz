@@ -2,12 +2,12 @@ package standardnotification
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"time"
 
 	nfmanager "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 )
 
@@ -36,16 +36,16 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	}, nil
 }
 
-func (p *provider) GetNotificationConfig(orgID string, alert *types.Alert) (*nfmanager.NotificationConfig, error) {
-	defaultGroups := model.LabelSet{}
-	defaultGroups[DefaultGroupBy] = alert.Labels[DefaultGroupBy]
-	return &nfmanager.NotificationConfig{
+func (p *provider) GetNotificationConfig(orgID string, ruleID string) (*alertmanagertypes.NotificationConfig, error) {
+	defaultGroups := make(map[model.LabelName]struct{})
+	defaultGroups[DefaultGroupBy] = struct{}{}
+	return &alertmanagertypes.NotificationConfig{
 		NotificationGroup: defaultGroups,
 		RenotifyInterval:  4 * time.Hour,
 	}, nil
 }
 
-func (p *provider) SetNotificationConfig(orgID string, alert *types.Alert, config *nfmanager.NotificationConfig) error {
+func (p *provider) SetNotificationConfig(orgID string, ruleID string, config *alertmanagertypes.NotificationConfig) error {
 	// Standard grouping doesn't support dynamic configuration setting
 	// Configuration is determined by default settings
 	return nil

@@ -33,15 +33,10 @@ type (
 	// A slice of GettableAlert.
 	GettableAlerts = models.GettableAlerts
 
-	PostableAlerts []*PostableAlert
-)
+	PostableAlert = models.PostableAlert
 
-// PostableAlert embeds models.PostableAlert and adds custom fields
-type PostableAlert struct {
-	models.PostableAlert
-	NotificationGroups []string      `json:"notificationGroups,omitempty"`
-	RenotifyInterval   time.Duration `json:"renotifyInterval,omitempty"`
-}
+	PostableAlerts = models.PostableAlerts
+)
 
 type DeprecatedGettableAlert struct {
 	*model.Alert
@@ -92,7 +87,7 @@ func NewDeprecatedGettableAlertsFromGettableAlerts(gettableAlerts GettableAlerts
 func NewAlertsFromPostableAlerts(postableAlerts PostableAlerts, resolveTimeout time.Duration, now time.Time) ([]*types.Alert, []error) {
 	modelsPostableAlerts := make([]*models.PostableAlert, 0, len(postableAlerts))
 	for _, pa := range postableAlerts {
-		modelsPostableAlerts = append(modelsPostableAlerts, &pa.PostableAlert)
+		modelsPostableAlerts = append(modelsPostableAlerts, pa)
 	}
 	alerts := v2.OpenAPIAlertsToAlerts(modelsPostableAlerts)
 

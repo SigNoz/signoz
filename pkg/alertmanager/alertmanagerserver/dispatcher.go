@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"log/slog"
 	"sort"
 	"sync"
@@ -286,18 +287,17 @@ type notifyFunc func(context.Context, ...*types.Alert) bool
 // processAlert determines in which aggregation group the alert falls
 // and inserts it.
 func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
-	config, err := d.notificationManager.GetNotificationConfig(d.orgID, alert)
+	ruleId := getRuleIDFromAlert(alert)
+	config, err := d.notificationManager.GetNotificationConfig(d.orgID, ruleId)
 	if err != nil {
 		d.logger.ErrorContext(d.ctx, "error getting alert notification config", "alert_fingerprint", alert.Fingerprint(), "error", err)
 		return
 	}
-	groupLabels := config.NotificationGroup
+
+	groupLabels := getGroupLabels(alert, config.NotificationGroup)
 
 	fp := groupLabels.Fingerprint()
-	for labelName := range groupLabels {
-		route.RouteOpts.GroupBy[labelName] = struct{}{}
-	}
-	route.RouteOpts.RepeatInterval = config.RenotifyInterval
+
 	d.mtx.Lock()
 	defer d.mtx.Unlock()
 
@@ -320,7 +320,7 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 		return
 	}
 
-	ag = newAggrGroup(d.ctx, groupLabels, route, d.timeout, d.logger)
+	ag = newAggrGroup(d.ctx, groupLabels, route, d.timeout, d.logger, config)
 	routeGroups[fp] = ag
 	d.aggrGroupsNum++
 	d.metrics.aggrGroups.Inc()
@@ -369,15 +369,24 @@ type aggrGroup struct {
 }
 
 // newAggrGroup returns a new aggregation group.
-func newAggrGroup(ctx context.Context, labels model.LabelSet, r *dispatch.Route, to func(time.Duration) time.Duration, logger *slog.Logger) *aggrGroup {
+func newAggrGroup(ctx context.Context, labels model.LabelSet, r *dispatch.Route, to func(time.Duration) time.Duration, logger *slog.Logger, config *alertmanagertypes.NotificationConfig) *aggrGroup {
 	if to == nil {
 		to = func(d time.Duration) time.Duration { return d }
 	}
+
+	// Create a copy of RouteOpts instead of using a pointer to avoid shared state
+	opts := r.RouteOpts
+
+	// Override RepeatInterval with rule-specific RenotifyInterval if available
+	if config != nil && config.RenotifyInterval > 0 {
+		opts.RepeatInterval = config.RenotifyInterval
+	}
+
 	ag := &aggrGroup{
 		labels:   labels,
 		routeID:  r.ID(),
 		routeKey: r.Key(),
-		opts:     &r.RouteOpts,
+		opts:     &opts,
 		timeout:  to,
 		alerts:   store.NewAlerts(),
 		done:     make(chan struct{}),
@@ -517,11 +526,22 @@ type unlimitedLimits struct{}
 
 func (u *unlimitedLimits) MaxNumberOfAggregationGroups() int { return 0 }
 
-func getRuleIDFromRoute(alert *types.Alert) string {
+func getRuleIDFromAlert(alert *types.Alert) string {
 	for name, value := range alert.Labels {
 		if string(name) == "ruleId" {
 			return string(value)
 		}
 	}
 	return ""
+}
+
+func getGroupLabels(alert *types.Alert, groups map[model.LabelName]struct{}) model.LabelSet {
+	groupLabels := model.LabelSet{}
+	for ln, lv := range alert.Labels {
+		if _, ok := groups[ln]; ok {
+			groupLabels[ln] = lv
+		}
+	}
+
+	return groupLabels
 }

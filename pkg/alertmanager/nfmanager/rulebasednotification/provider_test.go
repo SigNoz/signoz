@@ -2,6 +2,7 @@ package rulebasednotification
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"sync"
 	"testing"
 	"time"
@@ -57,8 +58,8 @@ func TestProvider_SetNotificationConfig(t *testing.T) {
 	tests := []struct {
 		name    string
 		orgID   string
-		alert   *types.Alert
-		config  *nfmanager.NotificationConfig
+		ruleID  string
+		config  *alertmanagertypes.NotificationConfig
 		wantErr bool
 	}{
 		{
@@ -68,7 +69,7 @@ func TestProvider_SetNotificationConfig(t *testing.T) {
 				"alertname": "test_alert",
 				"severity":  "critical",
 			}),
-			config: &nfmanager.NotificationConfig{
+			config: &alertmanagertypes.NotificationConfig{
 				RenotifyInterval: 2 * time.Hour,
 			},
 			wantErr: false,
@@ -77,21 +78,21 @@ func TestProvider_SetNotificationConfig(t *testing.T) {
 			name:    "empty orgID",
 			orgID:   "",
 			alert:   createTestAlert(model.LabelSet{"alertname": "test"}),
-			config:  &nfmanager.NotificationConfig{RenotifyInterval: time.Hour},
+			config:  &alertmanagertypes.NotificationConfig{RenotifyInterval: time.Hour},
 			wantErr: false, // Should not error but also not set anything
 		},
 		{
 			name:    "nil alert",
 			orgID:   "org1",
 			alert:   nil,
-			config:  &nfmanager.NotificationConfig{RenotifyInterval: time.Hour},
+			config:  &alertmanagertypes.NotificationConfig{RenotifyInterval: time.Hour},
 			wantErr: false, // Should not error but also not set anything
 		},
 		{
-			name:  "nil config",
-			orgID: "org1",
-			alert: createTestAlert(model.LabelSet{"alertname": "test"}),
-			config: nil,
+			name:    "nil config",
+			orgID:   "org1",
+			alert:   createTestAlert(model.LabelSet{"alertname": "test"}),
+			config:  nil,
 			wantErr: false,
 		},
 	}
@@ -134,7 +135,7 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 	})
 
 	orgID := "test-org"
-	customConfig := &nfmanager.NotificationConfig{
+	customConfig := &alertmanagertypes.NotificationConfig{
 		RenotifyInterval: 30 * time.Minute,
 	}
 
@@ -146,7 +147,7 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 		name           string
 		orgID          string
 		alert          *types.Alert
-		expectedConfig *nfmanager.NotificationConfig
+		expectedConfig *alertmanagertypes.NotificationConfig
 		shouldFallback bool
 	}{
 		{
@@ -220,9 +221,9 @@ func TestProvider_FingerprintIsolation(t *testing.T) {
 	})
 
 	orgID := "test-org"
-	config1 := &nfmanager.NotificationConfig{RenotifyInterval: 1 * time.Hour}
-	config2 := &nfmanager.NotificationConfig{RenotifyInterval: 2 * time.Hour}
-	config3 := &nfmanager.NotificationConfig{RenotifyInterval: 3 * time.Hour}
+	config1 := &alertmanagertypes.NotificationConfig{RenotifyInterval: 1 * time.Hour}
+	config2 := &alertmanagertypes.NotificationConfig{RenotifyInterval: 2 * time.Hour}
+	config3 := &alertmanagertypes.NotificationConfig{RenotifyInterval: 3 * time.Hour}
 
 	// Set different configs for each alert
 	err = provider.SetNotificationConfig(orgID, alert1, config1)
@@ -267,7 +268,7 @@ func TestProvider_ConcurrentAccess(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		for i := 0; i < 50; i++ {
-			config := &nfmanager.NotificationConfig{
+			config := &alertmanagertypes.NotificationConfig{
 				RenotifyInterval: time.Duration(i+1) * time.Minute,
 			}
 			err := provider.SetNotificationConfig(orgID, alert, config)
@@ -304,8 +305,8 @@ func TestProvider_OrganizationIsolation(t *testing.T) {
 		"severity":  "critical",
 	})
 
-	org1Config := &nfmanager.NotificationConfig{RenotifyInterval: 1 * time.Hour}
-	org2Config := &nfmanager.NotificationConfig{RenotifyInterval: 2 * time.Hour}
+	org1Config := &alertmanagertypes.NotificationConfig{RenotifyInterval: 1 * time.Hour}
+	org2Config := &alertmanagertypes.NotificationConfig{RenotifyInterval: 2 * time.Hour}
 
 	// Set different configs for different orgs
 	err = provider.SetNotificationConfig("org1", alert, org1Config)

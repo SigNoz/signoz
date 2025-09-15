@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"github.com/prometheus/common/model"
 	"slices"
 	"time"
 
@@ -397,4 +398,21 @@ type ConfigStore interface {
 func init() {
 	commoncfg.MarshalSecretValue = true
 	config.MarshalSecretValue = true
+}
+
+// NotificationConfig holds configuration for alert notifications timing.
+type NotificationConfig struct {
+	NotificationGroup map[model.LabelName]struct{} `json:"notification_group"`
+	RenotifyInterval  time.Duration                `json:"renotifyInterval,omitempty"`
+}
+
+func NewNotificationConfig(groups []string, renotifyInterval time.Duration) NotificationConfig {
+	set := make(map[model.LabelName]struct{})
+	for _, group := range groups {
+		set[model.LabelName(group)] = struct{}{}
+	}
+	return NotificationConfig{
+		NotificationGroup: set,
+		RenotifyInterval:  renotifyInterval,
+	}
 }
