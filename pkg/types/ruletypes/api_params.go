@@ -53,8 +53,8 @@ type PostableRule struct {
 
 	Version string `json:"version,omitempty"`
 
-	Evaluation       *EvaluationEnvelope `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
-	ScheduleStartsAt int64               `yaml:"startsAt,omitempty" json:"startsAt,omitempty"`
+	Evaluation       *EvaluationEnvelope `json:"evaluation,omitempty"`
+	ScheduleStartsAt int64               `json:"startsAt,omitempty"`
 	Schedule         string              `json:"schedule,omitempty"`
 }
 
