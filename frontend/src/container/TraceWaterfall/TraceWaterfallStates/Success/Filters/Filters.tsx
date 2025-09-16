@@ -8,7 +8,7 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -65,10 +65,20 @@ function Filters({
 	);
 	const [noData, setNoData] = useState<boolean>(false);
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
-	const handleFilterChange = (value: TagFilter): void => {
-		setFilters(value);
-	};
 	const [currentSearchedIndex, setCurrentSearchedIndex] = useState<number>(0);
+
+	const handleFilterChange = useCallback(
+		(value: TagFilter): void => {
+			if (value.items.length === 0) {
+				setFilteredSpanIds([]);
+				onFilteredSpansChange?.([], false);
+				setCurrentSearchedIndex(0);
+				setNoData(false);
+			}
+			setFilters(value);
+		},
+		[onFilteredSpansChange],
+	);
 	const { search } = useLocation();
 	const history = useHistory();
 
@@ -137,14 +147,14 @@ function Filters({
 	);
 
 	// Handle when filters are cleared
-	useEffect(() => {
-		if (filters.items.length === 0) {
-			setFilteredSpanIds([]);
-			onFilteredSpansChange?.([], false);
-			setCurrentSearchedIndex(0);
-			setNoData(false);
-		}
-	}, [filters.items.length, onFilteredSpansChange]);
+	// useEffect(() => {
+	// 	if (filters.items.length === 0) {
+	// 		setFilteredSpanIds([]);
+	// 		onFilteredSpansChange?.([], false);
+	// 		setCurrentSearchedIndex(0);
+	// 		setNoData(false);
+	// 	}
+	// }, [filters.items.length, onFilteredSpansChange]);
 
 	return (
 		<div className="filter-row">
