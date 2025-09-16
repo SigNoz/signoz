@@ -88,9 +88,7 @@ func (r *provider) DeleteNotificationConfig(orgID string, ruleID string) error {
 	defer r.mutex.Unlock()
 
 	if _, exists := r.orgToFingerprintToNotificationConfig[orgID]; exists {
-		if _, exists := r.orgToFingerprintToNotificationConfig[orgID][ruleID]; exists {
-			delete(r.orgToFingerprintToNotificationConfig[orgID], ruleID)
-		}
+		delete(r.orgToFingerprintToNotificationConfig[orgID], ruleID)
 	}
 
 	return nil
