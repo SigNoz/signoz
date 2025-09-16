@@ -195,12 +195,7 @@ func (provider *provider) Check(ctx context.Context, tupleReq *openfgav1.CheckRe
 	return nil
 }
 
-func (provider *provider) CheckWithTupleCreation(ctx context.Context, relation authtypes.Relation, typeable authtypes.Typeable, selector authtypes.Selector, parentTypeable authtypes.Typeable, parentSelectors ...authtypes.Selector) error {
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		return err
-	}
-
+func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, relation authtypes.Relation, typeable authtypes.Typeable, selector authtypes.Selector, parentTypeable authtypes.Typeable, parentSelectors ...authtypes.Selector) error {
 	subject, err := authtypes.NewSubject(authtypes.TypeUser, claims.UserID, authtypes.Relation{})
 	if err != nil {
 		return err

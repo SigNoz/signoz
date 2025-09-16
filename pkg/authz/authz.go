@@ -15,5 +15,5 @@ type AuthZ interface {
 	Check(context.Context, *openfgav1.CheckRequestTupleKey) error
 
 	// CheckWithTupleCreation takes upon the responsibility for generating the tuples alongside everything Check does.
-	CheckWithTupleCreation(context.Context, authtypes.Relation, authtypes.Typeable, authtypes.Selector, authtypes.Typeable, ...authtypes.Selector) error
+	CheckWithTupleCreation(context.Context, authtypes.Claims, authtypes.Relation, authtypes.Typeable, authtypes.Selector, authtypes.Typeable, ...authtypes.Selector) error
 }

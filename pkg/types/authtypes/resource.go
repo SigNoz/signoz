@@ -24,7 +24,6 @@ func (resource *resource) Tuples(subject string, relation Relation, selector Sel
 	}
 
 	tuples := make([]*openfgav1.CheckRequestTupleKey, 0)
-	// for each resource if the parent resources selectors are present then we need to add them to tuples
 	for _, selector := range parentSelectors {
 		resourcesTuples, err := parentTypeable.Tuples(subject, relation, selector, nil)
 		if err != nil {
@@ -33,7 +32,6 @@ func (resource *resource) Tuples(subject string, relation Relation, selector Sel
 		tuples = append(tuples, resourcesTuples...)
 	}
 
-	// append the resource tuple
 	object := strings.Join([]string{TypeResource.StringValue(), resource.name.String(), selector.String()}, ":")
 	tuples = append(tuples, &openfgav1.CheckRequestTupleKey{User: subject, Relation: relation.StringValue(), Object: object})
 

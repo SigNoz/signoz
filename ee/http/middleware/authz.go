@@ -109,13 +109,19 @@ func (middleware *AuthZ) OpenAccess(next http.HandlerFunc) http.HandlerFunc {
 // Check middleware accepts the relation, typeable, parentTypeable (for direct access + group relations) and a callback function to derive selector and parentSelectors on per request basis.
 func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relation, translation authtypes.Relation, typeable authtypes.Typeable, parentTypeable authtypes.Typeable, cb authtypes.SelectorCallbackFn) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		claims, err := authtypes.ClaimsFromContext(req.Context())
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
 		selector, parentSelectors, err := cb(req)
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 
-		err = middleware.authzService.CheckWithTupleCreation(req.Context(), relation, typeable, selector, parentTypeable, parentSelectors...)
+		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, relation, typeable, selector, parentTypeable, parentSelectors...)
 		if err != nil {
 			render.Error(rw, err)
 			return
