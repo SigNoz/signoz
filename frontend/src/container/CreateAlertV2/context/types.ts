@@ -193,10 +193,7 @@ export type EvaluationWindowAction =
 
 export type EvaluationCadenceMode = 'default' | 'custom' | 'rrule';
 export interface NotificationSettingsState {
-	multipleNotifications: {
-		enabled: boolean;
-		value: string;
-	};
+	multipleNotifications: string[] | null;
 	reNotification: {
 		enabled: boolean;
 		value: number;
@@ -209,7 +206,7 @@ export interface NotificationSettingsState {
 export type NotificationSettingsAction =
 	| {
 			type: 'SET_MULTIPLE_NOTIFICATIONS';
-			payload: { enabled: boolean; value: string };
+			payload: string[] | null;
 	  }
 	| {
 			type: 'SET_RE_NOTIFICATION';

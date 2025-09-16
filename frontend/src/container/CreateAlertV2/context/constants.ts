@@ -187,10 +187,7 @@ export const RE_NOTIFICATION_UNIT_OPTIONS = [
 ];
 
 export const INITIAL_NOTIFICATION_SETTINGS_STATE: NotificationSettingsState = {
-	multipleNotifications: {
-		enabled: false,
-		value: '',
-	},
+	multipleNotifications: [],
 	reNotification: {
 		enabled: false,
 		value: 0,

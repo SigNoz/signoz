@@ -1,18 +1,22 @@
+import './styles.scss';
+
 import { Switch, Tooltip, Typography } from 'antd';
 import { Info } from 'lucide-react';
 import { useState } from 'react';
 
-import { IAdvancedOptionItemProps } from './types';
+import { IAdvancedOptionItemProps } from '../types';
 
 function AdvancedOptionItem({
 	title,
 	description,
 	input,
 	tooltipText,
+	onToggle,
 }: IAdvancedOptionItemProps): JSX.Element {
 	const [showInput, setShowInput] = useState<boolean>(false);
 
-	const onToggle = (): void => {
+	const handleOnToggle = (): void => {
+		onToggle?.();
 		setShowInput((currentShowInput) => !currentShowInput);
 	};
 
@@ -33,7 +37,7 @@ function AdvancedOptionItem({
 			</div>
 			<div className="advanced-option-item-right-content">
 				{showInput && <div className="advanced-option-item-input">{input}</div>}
-				<Switch onChange={onToggle} />
+				<Switch onChange={handleOnToggle} />
 			</div>
 		</div>
 	);

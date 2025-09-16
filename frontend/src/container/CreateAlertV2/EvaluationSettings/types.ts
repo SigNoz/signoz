@@ -10,6 +10,7 @@ export interface IAdvancedOptionItemProps {
 	description: string;
 	tooltipText?: string;
 	input: JSX.Element;
+	onToggle?: () => void;
 }
 
 export enum RollingWindowTimeframes {

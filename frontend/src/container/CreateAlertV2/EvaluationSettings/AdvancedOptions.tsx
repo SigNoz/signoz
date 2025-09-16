@@ -2,7 +2,7 @@ import { Collapse, Input, Select, Typography } from 'antd';
 import { Y_AXIS_CATEGORIES } from 'components/YAxisUnitSelector/constants';
 
 import { useCreateAlertState } from '../context';
-import AdvancedOptionItem from './AdvancedOptionItem';
+import AdvancedOptionItem from './AdvancedOptionItem/AdvancedOptionItem';
 import EvaluationCadence from './EvaluationCadence';
 
 function AdvancedOptions(): JSX.Element {

@@ -1,5 +1,6 @@
-import { Radio, Select } from 'antd';
+import { Select, Tooltip, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { Info } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { useCreateAlertState } from '../context';
@@ -29,62 +30,70 @@ function MultipleNotifications(): JSX.Element {
 		[selectedQuery],
 	);
 
+	const isMultipleNotificationsEnabled = spaceAggregationOptions.length > 0;
+
+	console.log(notificationSettings.multipleNotifications);
+
+	const multipleNotificationsInput = useMemo(() => {
+		const placeholder = isMultipleNotificationsEnabled
+			? 'Select fields to group by (optional)'
+			: 'No grouping fields available';
+		let input = (
+			<div>
+				<Select
+					options={spaceAggregationOptions}
+					onChange={(value): void => {
+						setNotificationSettings({
+							type: 'SET_MULTIPLE_NOTIFICATIONS',
+							payload: value,
+						});
+					}}
+					value={notificationSettings.multipleNotifications}
+					mode="multiple"
+					placeholder={placeholder}
+					disabled={!isMultipleNotificationsEnabled}
+					maxTagCount={3}
+				/>
+				{isMultipleNotificationsEnabled && (
+					<Typography.Paragraph className="multiple-notifications-select-description">
+						{notificationSettings.multipleNotifications?.length
+							? `Alerts with same ${notificationSettings.multipleNotifications?.join(
+									', ',
+							  )} will be grouped`
+							: 'Empty = all matching alerts combined into one notification'}
+					</Typography.Paragraph>
+				)}
+			</div>
+		);
+		if (!isMultipleNotificationsEnabled) {
+			input = (
+				<Tooltip title="Add 'Group by' fields to your query to enable alert grouping">
+					{input}
+				</Tooltip>
+			);
+		}
+		return input;
+	}, [
+		isMultipleNotificationsEnabled,
+		notificationSettings.multipleNotifications,
+		setNotificationSettings,
+		spaceAggregationOptions,
+	]);
+
 	return (
 		<div className="multiple-notifications-container">
-			<Radio.Group
-				value={
-					notificationSettings.multipleNotifications.enabled ? 'multiple' : 'single'
-				}
-				onChange={(e): void => {
-					const isMultiple = e.target.value === 'multiple';
-					setNotificationSettings({
-						type: 'SET_MULTIPLE_NOTIFICATIONS',
-						payload: {
-							enabled: isMultiple,
-							value: isMultiple ? spaceAggregationOptions[0]?.value || '' : '',
-						},
-					});
-				}}
-			>
-				<Radio value="single" disabled={spaceAggregationOptions.length === 0}>
-					<div className="multiple-notifications-container-item">
-						<div className="multiple-notifications-container-item-title">
-							Single Alert Notification
-						</div>
-						<div className="multiple-notifications-container-item-description">
-							Send a single alert notification when the query meets the conditions
-							defined.
-						</div>
-					</div>
-				</Radio>
-				<div className="border-bottom" />
-				<Radio value="multiple" disabled={spaceAggregationOptions.length === 0}>
-					<div className="multiple-notifications-container-item">
-						<div className="multiple-notifications-container-item-title">
-							Multiple Alert Notifications
-						</div>
-						<div className="multiple-notifications-container-item-description">
-							Send a notification for each
-							<Select
-								options={spaceAggregationOptions}
-								onChange={(value): void => {
-									setNotificationSettings({
-										type: 'SET_MULTIPLE_NOTIFICATIONS',
-										payload: {
-											enabled: true,
-											value,
-										},
-									});
-								}}
-								value={notificationSettings.multipleNotifications.value || null}
-								placeholder="SELECT VALUE"
-								disabled={!notificationSettings.multipleNotifications.enabled}
-							/>
-							meeting the conditions defined.
-						</div>
-					</div>
-				</Radio>
-			</Radio.Group>
+			<div className="multiple-notifications-header">
+				<Typography.Text className="multiple-notifications-header-title">
+					Group alerts by{' '}
+					<Tooltip title="Group similar alerts together to reduce notification volume. Leave empty to combine all matching alerts into one notification without grouping.">
+						<Info size={16} />
+					</Tooltip>
+				</Typography.Text>
+				<Typography.Text className="multiple-notifications-header-description">
+					Combine alerts with the same field values into a single notification.
+				</Typography.Text>
+			</div>
+			{multipleNotificationsInput}
 		</div>
 	);
 }
