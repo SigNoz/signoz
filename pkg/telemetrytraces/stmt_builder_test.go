@@ -552,6 +552,20 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			name:        "List query without any filter",
+			requestType: qbtypes.RequestTypeTrace,
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal: telemetrytypes.SignalTraces,
+				Filter: &qbtypes.Filter{},
+				Limit:  10,
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __toe AS (SELECT trace_id FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ?), __toe_duration_sorted AS (SELECT trace_id, duration_nano, resource_string_service$$name as `service.name`, name FROM signoz_traces.distributed_signoz_index_v3 WHERE parent_span_id = '' AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY duration_nano DESC LIMIT 1 BY trace_id) SELECT __toe_duration_sorted.`service.name` AS `service.name`, __toe_duration_sorted.name AS `name`, count() AS span_count, __toe_duration_sorted.duration_nano AS `duration_nano`, __toe_duration_sorted.trace_id AS `trace_id` FROM __toe INNER JOIN __toe_duration_sorted ON __toe.trace_id = __toe_duration_sorted.trace_id GROUP BY trace_id, duration_nano, name, `service.name` ORDER BY duration_nano DESC LIMIT 1 BY trace_id LIMIT ? SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
 	}
 
 	fm := NewFieldMapper()

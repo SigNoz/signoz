@@ -3,7 +3,6 @@ import './SpanDetailsDrawer.styles.scss';
 import { Button, Tabs, TabsProps, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
-import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { themeColors } from 'constants/theme';
@@ -116,12 +115,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 	}
 
 	return (
-		<div
-			className={cx(
-				'span-details-drawer',
-				isSpanDetailsDocked ? 'span-details-drawer-docked' : '',
-			)}
-		>
+		<>
 			<section className="header">
 				{!isSpanDetailsDocked && (
 					<div className="heading">
@@ -233,24 +227,6 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 											),
 											value: RelatedSignalsViews.LOGS,
 										},
-										// {
-										// 	label: (
-										// 		<div className="view-title">
-										// 			<LogsIcon width={14} height={14} />
-										// 			Metrics
-										// 		</div>
-										// 	),
-										// 	value: RelatedSignalsViews.METRICS,
-										// },
-										// {
-										// 	label: (
-										// 		<div className="view-title">
-										// 			<Server size={14} />
-										// 			Infra
-										// 		</div>
-										// 	),
-										// 	value: RelatedSignalsViews.INFRA,
-										// },
 									]}
 									onChange={handleRelatedSignalsChange}
 									className="related-signals-radio"
@@ -289,7 +265,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 					key={activeDrawerView}
 				/>
 			)}
-		</div>
+		</>
 	);
 }
 
