@@ -26,7 +26,7 @@ func TestGetColumn(t *testing.T) {
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			expectedCol:   logsV2Columns["resources_string"],
+			expectedCol:   logsV2Columns["resource"],
 			expectedError: nil,
 		},
 		{
@@ -234,7 +234,18 @@ func TestGetFieldKeyName(t *testing.T) {
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			expectedResult: "resources_string['service.name']",
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+			expectedError:  nil,
+		},
+		{
+			name: "Map column type - resource attribute - Materialized",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Materialized:  true,
+			},
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL)",
 			expectedError:  nil,
 		},
 		{
@@ -248,10 +259,9 @@ func TestGetFieldKeyName(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			fm := NewFieldMapper()
 			result, err := fm.FieldFor(ctx, &tc.key)
 
 			if tc.expectedError != nil {

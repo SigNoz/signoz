@@ -301,6 +301,7 @@ export const getClusterMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -490,6 +491,7 @@ export const getClusterMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -575,6 +577,7 @@ export const getClusterMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -660,6 +663,7 @@ export const getClusterMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -797,6 +801,7 @@ export const getClusterMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -1050,6 +1055,7 @@ export const getClusterMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -1257,6 +1263,7 @@ export const getClusterMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -1522,6 +1529,7 @@ export const getClusterMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{

@@ -164,6 +164,7 @@ function QuerySection({
 						<QueryBuilderV2
 							panelType={selectedGraph}
 							filterConfigs={filterConfigs}
+							showTraceOperator={selectedGraph !== PANEL_TYPES.LIST}
 							version={selectedDashboard?.data?.version || 'v3'}
 							isListViewPanel={selectedGraph === PANEL_TYPES.LIST}
 							queryComponents={queryComponents}

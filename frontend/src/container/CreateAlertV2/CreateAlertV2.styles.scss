@@ -1,0 +1,17 @@
+$top-nav-background-1: #0f0f0f;
+$top-nav-background-2: #101010;
+
+.create-alert-v2-container {
+	background-color: var(--bg-ink-500);
+}
+
+.top-nav-container {
+	background: repeating-linear-gradient(
+		-45deg,
+		$top-nav-background-1,
+		$top-nav-background-1 10px,
+		$top-nav-background-2 10px,
+		$top-nav-background-2 20px
+	);
+	margin-bottom: 0;
+}
