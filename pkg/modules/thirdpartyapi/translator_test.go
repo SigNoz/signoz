@@ -126,7 +126,7 @@ func TestFilterResponse(t *testing.T) {
 	}
 }
 
-func TestBuildDomainList(t *testing.T) {
+func TestList(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   *thirdpartyapitypes.ThirdPartyApiRequest

@@ -67,6 +67,53 @@ var dualSemconvGroupByKeys = map[string][]qbtypes.GroupByKey{
 	},
 }
 
+func FilterIntermediateColumns(result *qbtypes.QueryRangeResponse) *qbtypes.QueryRangeResponse {
+	if result == nil || result.Data.Results == nil {
+		return result
+	}
+
+	for _, res := range result.Data.Results {
+		scalarData, ok := res.(*qbtypes.ScalarData)
+		if !ok {
+			continue
+		}
+
+		// Filter out columns for intermediate queries used only in formulas
+		filteredColumns := make([]*qbtypes.ColumnDescriptor, 0)
+		intermediateQueryNames := map[string]bool{
+			"error":      true,
+			"total_span": true,
+		}
+
+		columnIndices := make([]int, 0)
+		for i, col := range scalarData.Columns {
+			if col.Type == qbtypes.ColumnTypeAggregation && intermediateQueryNames[col.QueryName] {
+				// Skip intermediate aggregation columns
+				continue
+			}
+			filteredColumns = append(filteredColumns, col)
+			columnIndices = append(columnIndices, i)
+		}
+
+		// Filter data rows to match filtered columns
+		filteredData := make([][]any, 0, len(scalarData.Data))
+		for _, row := range scalarData.Data {
+			filteredRow := make([]any, len(columnIndices))
+			for newIdx, oldIdx := range columnIndices {
+				if oldIdx < len(row) {
+					filteredRow[newIdx] = row[oldIdx]
+				}
+			}
+			filteredData = append(filteredData, filteredRow)
+		}
+
+		scalarData.Columns = filteredColumns
+		scalarData.Data = filteredData
+	}
+
+	return result
+}
+
 func MergeSemconvColumns(result *qbtypes.QueryRangeResponse) *qbtypes.QueryRangeResponse {
 	if result == nil || result.Data.Results == nil {
 		return result
