@@ -54,6 +54,8 @@ export const downloadExportData = async (
 		// Trigger download
 		document.body.appendChild(link);
 		link.click();
+		link.remove();
+		URL.revokeObjectURL(url);
 	} catch (error) {
 		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 	}
