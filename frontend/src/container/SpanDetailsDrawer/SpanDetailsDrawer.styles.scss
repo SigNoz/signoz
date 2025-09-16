@@ -1,9 +1,12 @@
 .span-details-drawer {
 	display: flex;
 	flex-direction: column;
-	width: 450px;
+	height: calc(100vh - 44px); //44px -> trace details top bar
 	border-left: 1px solid var(--bg-slate-400);
 	overflow-y: auto;
+	&:not(&-docked) {
+		min-width: 450px;
+	}
 
 	&::-webkit-scrollbar {
 		width: 0.1rem;
@@ -199,9 +202,19 @@
 
 .span-details-drawer-docked {
 	width: 48px;
+	flex: 0 48px !important;
 
 	.header {
 		justify-content: center;
+	}
+}
+.resizable-handle {
+	box-sizing: border-box;
+	border: 2px solid transparent;
+	&:hover,
+	&[data-resize-handle-state='drag'],
+	&[data-resize-handle-state='hover'] {
+		border-color: rgba(35, 196, 248, 0.2);
 	}
 }
 
