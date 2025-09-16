@@ -1,5 +1,3 @@
-/* eslint-disable jsx-a11y/interactive-supports-focus */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import { Button, Input, Select, Typography } from 'antd';
 import classNames from 'classnames';
 import { Check } from 'lucide-react';
@@ -17,6 +15,7 @@ import {
 	IEvaluationWindowPopoverProps,
 	RollingWindowTimeframes,
 } from './types';
+import { useKeyboardNavigation } from './useKeyboardNavigation';
 import { TIMEZONE_DATA } from './utils';
 
 function EvaluationWindowDetails({
@@ -247,25 +246,58 @@ function EvaluationWindowPopover({
 	evaluationWindow,
 	setEvaluationWindow,
 }: IEvaluationWindowPopoverProps): JSX.Element {
+	const { containerRef, firstItemRef } = useKeyboardNavigation({
+		onSelect: (value: string, sectionId: string): void => {
+			if (sectionId === 'window-type') {
+				setEvaluationWindow({
+					type: 'SET_WINDOW_TYPE',
+					payload: value as 'rolling' | 'cumulative',
+				});
+			} else if (sectionId === 'timeframe') {
+				setEvaluationWindow({
+					type: 'SET_TIMEFRAME',
+					payload: value as RollingWindowTimeframes | CumulativeWindowTimeframes,
+				});
+			}
+		},
+		onEscape: (): void => {
+			const triggerElement = document.querySelector(
+				'[aria-haspopup="true"]',
+			) as HTMLElement;
+			triggerElement?.focus();
+		},
+	});
+
 	const renderEvaluationWindowContent = (
 		label: string,
 		contentOptions: Array<{ label: string; value: string }>,
 		currentValue: string,
 		onChange: (value: string) => void,
+		sectionId: string,
 	): JSX.Element => (
-		<div className="evaluation-window-content-item">
+		<div className="evaluation-window-content-item" data-section-id={sectionId}>
 			<Typography.Text className="evaluation-window-content-item-label">
 				{label}
 			</Typography.Text>
 			<div className="evaluation-window-content-list">
-				{contentOptions.map((option) => (
+				{contentOptions.map((option, index) => (
 					<div
 						className={classNames('evaluation-window-content-list-item', {
 							active: currentValue === option.value,
 						})}
 						key={option.value}
 						role="button"
+						tabIndex={0}
+						data-value={option.value}
+						data-section-id={sectionId}
 						onClick={(): void => onChange(option.value)}
+						onKeyDown={(e): void => {
+							if (e.key === 'Enter' || e.key === ' ') {
+								e.preventDefault();
+								onChange(option.value);
+							}
+						}}
+						ref={index === 0 ? firstItemRef : undefined}
 					>
 						<Typography.Text>{option.label}</Typography.Text>
 						{currentValue === option.value && <Check size={12} />}
@@ -319,7 +351,12 @@ function EvaluationWindowPopover({
 	};
 
 	return (
-		<div className="evaluation-window-popover">
+		<div
+			className="evaluation-window-popover"
+			ref={containerRef}
+			role="menu"
+			aria-label="Evaluation window options"
+		>
 			<div className="evaluation-window-content">
 				{renderEvaluationWindowContent(
 					'EVALUATION WINDOW',
@@ -330,6 +367,7 @@ function EvaluationWindowPopover({
 							type: 'SET_WINDOW_TYPE',
 							payload: value as 'rolling' | 'cumulative',
 						}),
+					'window-type',
 				)}
 				{renderEvaluationWindowContent(
 					'TIMEFRAME',
@@ -340,6 +378,7 @@ function EvaluationWindowPopover({
 							type: 'SET_TIMEFRAME',
 							payload: value as RollingWindowTimeframes | CumulativeWindowTimeframes,
 						}),
+					'timeframe',
 				)}
 				{renderSelectionContent()}
 			</div>
