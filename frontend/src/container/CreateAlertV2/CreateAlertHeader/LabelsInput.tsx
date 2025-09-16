@@ -7,6 +7,7 @@ import { LabelInputState, LabelsInputProps } from './types';
 function LabelsInput({
 	labels,
 	onLabelsChange,
+	validateLabelsKey,
 }: LabelsInputProps): JSX.Element {
 	const { notifications } = useNotifications();
 	const [inputState, setInputState] = useState<LabelInputState>({
@@ -38,6 +39,13 @@ function LabelsInput({
 								});
 								return;
 							}
+							const error = validateLabelsKey(key.trim());
+							if (error) {
+								notifications.error({
+									message: error,
+								});
+								return;
+							}
 							// Add the label immediately
 							const newLabels = {
 								...labels,
@@ -52,6 +60,13 @@ function LabelsInput({
 						if (labels[inputState.key.trim()]) {
 							notifications.error({
 								message: 'Label with this key already exists',
+							});
+							return;
+						}
+						const error = validateLabelsKey(inputState.key.trim());
+						if (error) {
+							notifications.error({
+								message: error,
 							});
 							return;
 						}
@@ -74,7 +89,7 @@ function LabelsInput({
 				setInputState({ key: '', value: '', isKeyInput: true });
 			}
 		},
-		[inputState, labels, notifications, onLabelsChange],
+		[inputState, labels, notifications, onLabelsChange, validateLabelsKey],
 	);
 
 	const handleInputChange = useCallback(
