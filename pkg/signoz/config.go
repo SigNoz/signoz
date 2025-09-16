@@ -239,20 +239,6 @@ func mergeAndEnsureBackwardCompatibility(ctx context.Context, logger *slog.Logge
 		config.TelemetryStore.Connection.DialTimeout = deprecatedFlags.DialTimeout
 	}
 
-	if os.Getenv("ALERTMANAGER_API_PREFIX") != "" {
-		logger.WarnContext(ctx, "[Deprecated] env ALERTMANAGER_API_PREFIX is deprecated and scheduled for removal. Please use SIGNOZ_ALERTMANAGER_LEGACY_API__URL instead.")
-		u, err := url.Parse(os.Getenv("ALERTMANAGER_API_PREFIX"))
-		if err != nil {
-			logger.WarnContext(ctx, "Error parsing ALERTMANAGER_API_PREFIX, using default value")
-		} else {
-			config.Alertmanager.Legacy.ApiURL = u
-		}
-	}
-
-	if os.Getenv("ALERTMANAGER_API_CHANNEL_PATH") != "" {
-		logger.WarnContext(ctx, "[Deprecated] env ALERTMANAGER_API_CHANNEL_PATH is deprecated and scheduled for complete removal.")
-	}
-
 	if deprecatedFlags.Config != "" {
 		logger.WarnContext(ctx, "[Deprecated] flag --config is deprecated for passing prometheus config. The flag will be used for passing the entire SigNoz config. More details can be found at https://github.com/SigNoz/signoz/issues/6805.")
 	}

@@ -1,18 +1,29 @@
+import { QueryParams } from 'constants/query';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import {
 	createContext,
+	useCallback,
 	useContext,
+	useEffect,
 	useMemo,
 	useReducer,
 	useState,
 } from 'react';
+import { useLocation } from 'react-router-dom';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 
-import { INITIAL_ALERT_STATE } from './constants';
 import {
-	AlertCreationStep,
-	ICreateAlertContextProps,
-	ICreateAlertProviderProps,
-} from './types';
-import { alertCreationReducer } from './utils';
+	INITIAL_ALERT_STATE,
+	INITIAL_ALERT_THRESHOLD_STATE,
+} from './constants';
+import { ICreateAlertContextProps, ICreateAlertProviderProps } from './types';
+import {
+	alertCreationReducer,
+	alertThresholdReducer,
+	buildInitialAlertDef,
+	getInitialAlertTypeFromURL,
+} from './utils';
 
 const CreateAlertContext = createContext<ICreateAlertContextProps | null>(null);
 
@@ -36,18 +47,55 @@ export function CreateAlertProvider(
 		alertCreationReducer,
 		INITIAL_ALERT_STATE,
 	);
-	const [step, setStep] = useState<AlertCreationStep>(
-		AlertCreationStep.ALERT_DEFINITION,
+
+	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+	const location = useLocation();
+	const queryParams = new URLSearchParams(location.search);
+
+	const [alertType, setAlertType] = useState<AlertTypes>(() =>
+		getInitialAlertTypeFromURL(queryParams, currentQuery),
 	);
+
+	const handleAlertTypeChange = useCallback(
+		(value: AlertTypes): void => {
+			const queryToRedirect = buildInitialAlertDef(value);
+			const currentQueryToRedirect = mapQueryDataFromApi(
+				queryToRedirect.condition.compositeQuery,
+			);
+			redirectWithQueryBuilderData(
+				currentQueryToRedirect,
+				{
+					[QueryParams.alertType]: value,
+				},
+				undefined,
+				true,
+			);
+			setAlertType(value);
+		},
+		[redirectWithQueryBuilderData],
+	);
+
+	const [thresholdState, setThresholdState] = useReducer(
+		alertThresholdReducer,
+		INITIAL_ALERT_THRESHOLD_STATE,
+	);
+
+	useEffect(() => {
+		setThresholdState({
+			type: 'RESET',
+		});
+	}, [alertType]);
 
 	const contextValue: ICreateAlertContextProps = useMemo(
 		() => ({
 			alertState,
 			setAlertState,
-			step,
-			setStep,
+			alertType,
+			setAlertType: handleAlertTypeChange,
+			thresholdState,
+			setThresholdState,
 		}),
-		[alertState, setAlertState, step, setStep],
+		[alertState, alertType, handleAlertTypeChange, thresholdState],
 	);
 
 	return (
