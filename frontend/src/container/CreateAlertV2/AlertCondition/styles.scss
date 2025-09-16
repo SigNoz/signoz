@@ -294,7 +294,8 @@
 	.ant-btn {
 		display: flex;
 		align-items: center;
-		width: 240px;
+		min-width: 240px;
+		width: auto;
 		justify-content: space-between;
 		background-color: var(--bg-ink-300);
 		border: 1px solid var(--bg-slate-400);
@@ -302,6 +303,7 @@
 		.evaluate-alert-conditions-button-left {
 			color: var(--bg-vanilla-400);
 			font-size: 12px;
+			flex-shrink: 0;
 		}
 
 		.evaluate-alert-conditions-button-right {
@@ -309,6 +311,7 @@
 			align-items: center;
 			color: var(--bg-vanilla-400);
 			gap: 8px;
+			flex-shrink: 0;
 
 			.evaluate-alert-conditions-button-right-text {
 				font-size: 12px;
@@ -486,13 +489,17 @@
 		.ant-btn {
 			background-color: var(--bg-vanilla-300);
 			border: 1px solid var(--bg-vanilla-300);
+			min-width: 240px;
+			width: auto;
 
 			.evaluate-alert-conditions-button-left {
 				color: var(--bg-ink-400);
+				flex-shrink: 0;
 			}
 
 			.evaluate-alert-conditions-button-right {
 				color: var(--bg-ink-400);
+				flex-shrink: 0;
 
 				.evaluate-alert-conditions-button-right-text {
 					background-color: var(--bg-vanilla-300);

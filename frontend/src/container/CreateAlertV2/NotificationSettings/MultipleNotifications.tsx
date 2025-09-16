@@ -32,8 +32,6 @@ function MultipleNotifications(): JSX.Element {
 
 	const isMultipleNotificationsEnabled = spaceAggregationOptions.length > 0;
 
-	console.log(notificationSettings.multipleNotifications);
-
 	const multipleNotificationsInput = useMemo(() => {
 		const placeholder = isMultipleNotificationsEnabled
 			? 'Select fields to group by (optional)'

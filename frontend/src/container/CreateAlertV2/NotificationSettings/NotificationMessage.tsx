@@ -43,17 +43,8 @@ function NotificationMessage(): JSX.Element {
 		<div className="template-variable-content">
 			<Typography.Text strong>Available Template Variables:</Typography.Text>
 			{templateVariables.map((item) => (
-				<div key={item.variable}>
-					<code
-						style={{
-							backgroundColor: 'var(--bg-ink-300)',
-							padding: '2px 4px',
-							borderRadius: '2px',
-							fontSize: '11px',
-						}}
-					>
-						{item.variable}
-					</code>
+				<div className="template-variable-content-item" key={item.variable}>
+					<code>{item.variable}</code>
 					<Typography.Text>{item.description}</Typography.Text>
 				</div>
 			))}
