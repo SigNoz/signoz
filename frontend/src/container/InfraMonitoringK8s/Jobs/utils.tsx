@@ -238,7 +238,7 @@ const columnsConfig = [
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header small-col">Mem Usage(WSS)</div>,
+		title: <div className="column-header small-col">Mem Usage (WSS)</div>,
 		dataIndex: 'memory',
 		key: 'memory',
 		width: 120,
