@@ -149,7 +149,6 @@ function TraceDetailsV2(): JSX.Element {
 				isSpanDetailsDocked={isSpanDetailsDocked}
 				setIsSpanDetailsDocked={setIsSpanDetailsDocked}
 				selectedSpan={selectedSpan}
-				traceID={traceId}
 				traceStartTime={traceData?.payload?.startTimestampMillis || 0}
 				traceEndTime={traceData?.payload?.endTimestampMillis || 0}
 			/>
