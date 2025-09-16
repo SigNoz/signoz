@@ -78,3 +78,20 @@ func (r *provider) SetNotificationConfig(orgID string, ruleID string, config *al
 
 	return nil
 }
+
+func (r *provider) DeleteNotificationConfig(orgID string, ruleID string) error {
+	if orgID == "" || ruleID == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "no org or rule id provided")
+	}
+
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	if _, exists := r.orgToFingerprintToNotificationConfig[orgID]; exists {
+		if _, exists := r.orgToFingerprintToNotificationConfig[orgID][ruleID]; exists {
+			delete(r.orgToFingerprintToNotificationConfig[orgID], ruleID)
+		}
+	}
+
+	return nil
+}

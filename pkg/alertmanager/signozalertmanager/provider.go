@@ -203,3 +203,11 @@ func (provider *provider) SetNotificationConfig(ctx context.Context, orgID value
 	}
 	return nil
 }
+
+func (provider *provider) DeleteNotificationConfig(ctx context.Context, orgID valuer.UUID, ruleId string) error {
+	err := provider.notificationManager.DeleteNotificationConfig(orgID.StringValue(), ruleId)
+	if err != nil {
+		return err
+	}
+	return nil
+}

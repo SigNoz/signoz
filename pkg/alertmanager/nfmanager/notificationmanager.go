@@ -10,4 +10,5 @@ import (
 type NotificationManager interface {
 	GetNotificationConfig(orgID string, ruleID string) (*alertmanagertypes.NotificationConfig, error)
 	SetNotificationConfig(orgID string, ruleID string, config *alertmanagertypes.NotificationConfig) error
+	DeleteNotificationConfig(orgID string, ruleID string) error
 }

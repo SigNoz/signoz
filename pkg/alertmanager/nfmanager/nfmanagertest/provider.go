@@ -63,6 +63,10 @@ func (p *provider) SetNotificationConfig(orgID string, ruleID string, config *al
 	return p.mockError
 }
 
+func (p *provider) DeleteNotificationConfig(orgID string, ruleID string) error {
+	return p.mockError
+}
+
 // SetMockGroupLabels sets mock group labels for testing.
 func (p *provider) SetMockGroupLabels(labels model.LabelSet) {
 	p.mockGroupLabels = labels

@@ -56,6 +56,8 @@ type Alertmanager interface {
 
 	SetNotificationConfig(ctx context.Context, orgID valuer.UUID, ruleId string, config *alertmanagertypes.NotificationConfig) error
 
+	DeleteNotificationConfig(ctx context.Context, orgID valuer.UUID, ruleId string) error
+
 	// Collects stats for the organization.
 	statsreporter.StatsCollector
 }

@@ -468,6 +468,11 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		return err
 	}
 
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		return err
+	}
+
 	return m.ruleStore.DeleteRule(ctx, id, func(ctx context.Context) error {
 		cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
 		if err != nil {
@@ -483,6 +488,8 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		if err != nil {
 			return err
 		}
+
+		err = m.alertmanager.DeleteNotificationConfig(ctx, orgID, id.String())
 
 		taskName := prepareTaskName(id.StringValue())
 		m.deleteTask(taskName)
