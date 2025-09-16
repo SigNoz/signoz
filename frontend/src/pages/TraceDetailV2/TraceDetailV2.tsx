@@ -149,7 +149,7 @@ function TraceDetailsV2(): JSX.Element {
 				)}
 			</ResizablePanel>
 
-			<ResizableHandle withHandle />
+			<ResizableHandle withHandle className="resizable-handle" />
 
 			<ResizablePanel
 				defaultSize={20}

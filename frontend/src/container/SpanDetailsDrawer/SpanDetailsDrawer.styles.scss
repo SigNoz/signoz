@@ -226,6 +226,15 @@
 		justify-content: center;
 	}
 }
+.resizable-handle {
+	box-sizing: border-box;
+	border: 2px solid transparent;
+	&:hover,
+	&[data-resize-handle-state='drag'],
+	&[data-resize-handle-state='hover'] {
+		border-color: rgba(35, 196, 248, 0.2);
+	}
+}
 
 .lightMode {
 	.span-details-drawer {
