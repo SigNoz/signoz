@@ -52,7 +52,6 @@ export const addEmptyWidgetInDashboardJSONWithQuery = (
 					id: widgetId,
 					query,
 					description: '',
-					isStacked: false,
 					nullZeroValues: '',
 					opacity: '',
 					title: '',

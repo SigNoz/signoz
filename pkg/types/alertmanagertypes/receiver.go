@@ -13,12 +13,12 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/config/receiver"
 )
 
 type (
 	// Receiver is the type for the receiver configuration.
-	Receiver = config.Receiver
+	Receiver                 = config.Receiver
+	ReceiverIntegrationsFunc = func(nc Receiver, tmpl *template.Template, logger *slog.Logger) ([]notify.Integration, error)
 )
 
 // Creates a new receiver from a string. The input is initialized with the default values from the upstream alertmanager.
@@ -49,11 +49,7 @@ func NewReceiver(input string) (Receiver, error) {
 	return receiverWithDefaults, nil
 }
 
-func NewReceiverIntegrations(nc Receiver, tmpl *template.Template, logger *slog.Logger) ([]notify.Integration, error) {
-	return receiver.BuildReceiverIntegrations(nc, tmpl, logger)
-}
-
-func TestReceiver(ctx context.Context, receiver Receiver, config *Config, tmpl *template.Template, logger *slog.Logger, alert *Alert) error {
+func TestReceiver(ctx context.Context, receiver Receiver, receiverIntegrationsFunc ReceiverIntegrationsFunc, config *Config, tmpl *template.Template, logger *slog.Logger, alert *Alert) error {
 	ctx = notify.WithGroupKey(ctx, fmt.Sprintf("%s-%s-%d", receiver.Name, alert.Labels.Fingerprint(), time.Now().Unix()))
 	ctx = notify.WithGroupLabels(ctx, alert.Labels)
 	ctx = notify.WithReceiverName(ctx, receiver.Name)
@@ -75,7 +71,7 @@ func TestReceiver(ctx context.Context, receiver Receiver, config *Config, tmpl *
 		return err
 	}
 
-	integrations, err := NewReceiverIntegrations(receiver, tmpl, logger)
+	integrations, err := receiverIntegrationsFunc(receiver, tmpl, logger)
 	if err != nil {
 		return err
 	}
@@ -89,28 +85,4 @@ func TestReceiver(ctx context.Context, receiver Receiver, config *Config, tmpl *
 	}
 
 	return nil
-}
-
-// This is needed by the legacy alertmanager to convert the MSTeamsV2Configs to MSTeamsConfigs
-func MSTeamsV2ReceiverToMSTeamsReceiver(receiver Receiver) Receiver {
-	if receiver.MSTeamsV2Configs == nil {
-		return receiver
-	}
-
-	var msTeamsConfigs []*config.MSTeamsConfig
-	for _, cfg := range receiver.MSTeamsV2Configs {
-		msTeamsConfigs = append(msTeamsConfigs, &config.MSTeamsConfig{
-			NotifierConfig: cfg.NotifierConfig,
-			HTTPConfig:     cfg.HTTPConfig,
-			WebhookURL:     cfg.WebhookURL,
-			WebhookURLFile: cfg.WebhookURLFile,
-			Title:          cfg.Title,
-			Text:           cfg.Text,
-		})
-	}
-
-	receiver.MSTeamsV2Configs = nil
-	receiver.MSTeamsConfigs = msTeamsConfigs
-
-	return receiver
 }

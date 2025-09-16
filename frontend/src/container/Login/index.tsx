@@ -16,7 +16,7 @@ import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import APIError from 'types/api/error';
-import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck';
+import { Signup as PrecheckResultType } from 'types/api/user/loginPrecheck';
 
 import { FormContainer, Label, ParentContainer } from './styles';
 

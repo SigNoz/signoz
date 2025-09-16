@@ -178,10 +178,6 @@ function NewWidget({
 		selectedWidget?.yAxisUnit || 'none',
 	);
 
-	const [stacked, setStacked] = useState<boolean>(
-		selectedWidget?.isStacked || false,
-	);
-
 	const [stackedBarChart, setStackedBarChart] = useState<boolean>(
 		selectedWidget?.stackedBarChart || false,
 	);
@@ -258,7 +254,6 @@ function NewWidget({
 				query: currentQuery,
 				title,
 				description,
-				isStacked: stacked,
 				opacity,
 				nullZeroValues: selectedNullZeroValue,
 				yAxisUnit,
@@ -292,7 +287,6 @@ function NewWidget({
 		selectedTracesFields,
 		softMax,
 		softMin,
-		stacked,
 		thresholds,
 		title,
 		yAxisUnit,
@@ -494,7 +488,6 @@ function NewWidget({
 								...(selectedWidget || ({} as Widgets)),
 								description: selectedWidget?.description || '',
 								timePreferance: selectedTime.enum,
-								isStacked: selectedWidget?.isStacked || false,
 								opacity: selectedWidget?.opacity || '1',
 								nullZeroValues: selectedWidget?.nullZeroValues || 'zero',
 								title: selectedWidget?.title,
@@ -524,7 +517,6 @@ function NewWidget({
 								...(selectedWidget || ({} as Widgets)),
 								description: selectedWidget?.description || '',
 								timePreferance: selectedTime.enum,
-								isStacked: selectedWidget?.isStacked || false,
 								opacity: selectedWidget?.opacity || '1',
 								nullZeroValues: selectedWidget?.nullZeroValues || 'zero',
 								title: selectedWidget?.title,
@@ -818,8 +810,6 @@ function NewWidget({
 							setTitle={setTitle}
 							description={description}
 							setDescription={setDescription}
-							stacked={stacked}
-							setStacked={setStacked}
 							stackedBarChart={stackedBarChart}
 							setStackedBarChart={setStackedBarChart}
 							opacity={opacity}
