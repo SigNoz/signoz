@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 )
 
@@ -39,7 +38,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 }
 
 // GetNotificationConfig implements the NotificationManager interface for testing.
-func (p *provider) GetNotificationConfig(orgID string, ruleID string, alert *types.Alert) (*alertmanagertypes.NotificationConfig, error) {
+func (p *provider) GetNotificationConfig(orgID string, ruleID string) (*alertmanagertypes.NotificationConfig, error) {
 	if p.mockError != nil {
 		return nil, p.mockError
 	}

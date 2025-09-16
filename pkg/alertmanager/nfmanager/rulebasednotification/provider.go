@@ -5,7 +5,6 @@ import (
 	nfmanager "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/prometheus/alertmanager/types"
 	"sync"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -38,7 +37,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 }
 
 // GetNotificationConfig retrieves the notification configuration for the specified alert and organization.
-func (r *provider) GetNotificationConfig(orgID string, ruleID string, alert *types.Alert) (*alertmanagertypes.NotificationConfig, error) {
+func (r *provider) GetNotificationConfig(orgID string, ruleID string) (*alertmanagertypes.NotificationConfig, error) {
 	notificationConfig := alertmanagertypes.GetDefaultNotificationConfig()
 	if orgID == "" || ruleID == "" {
 		return &notificationConfig, nil

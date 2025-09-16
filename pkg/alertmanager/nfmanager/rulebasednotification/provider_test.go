@@ -11,21 +11,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func createTestProviderSettings() factory.ProviderSettings {
 	return instrumentationtest.New().ToProviderSettings()
-}
-
-func createTestAlert(labels model.LabelSet) *types.Alert {
-	return &types.Alert{
-		Alert: model.Alert{
-			Labels: labels,
-		},
-	}
 }
 
 func TestNewFactory(t *testing.T) {
@@ -117,8 +108,7 @@ func TestProvider_SetNotificationConfig(t *testing.T) {
 
 				// If we set a config successfully, we should be able to retrieve it
 				if tt.orgID != "" && tt.ruleID != "" && tt.config != nil {
-					alert := createTestAlert(model.LabelSet{"ruleId": model.LabelValue(tt.ruleID)})
-					retrievedConfig, retrieveErr := provider.GetNotificationConfig(tt.orgID, tt.ruleID, alert)
+					retrievedConfig, retrieveErr := provider.GetNotificationConfig(tt.orgID, tt.ruleID)
 					assert.NoError(t, retrieveErr)
 					assert.NotNil(t, retrievedConfig)
 					assert.Equal(t, tt.config.Renotify, retrievedConfig.Renotify)
@@ -135,15 +125,6 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 
 	provider, err := New(ctx, providerSettings, config)
 	require.NoError(t, err)
-
-	alert1 := createTestAlert(model.LabelSet{
-		"alertname": "test_alert",
-		"severity":  "critical",
-	})
-	alert2 := createTestAlert(model.LabelSet{
-		"alertname": "another_alert",
-		"severity":  "warning",
-	})
 
 	orgID := "test-org"
 	ruleID := "rule1"
@@ -170,7 +151,6 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 			name:           "existing config",
 			orgID:          orgID,
 			ruleID:         ruleID,
-			alert:          alert1,
 			expectedConfig: customConfig,
 			shouldFallback: false,
 		},
@@ -178,7 +158,6 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 			name:           "non-existing config - fallback",
 			orgID:          orgID,
 			ruleID:         "rule2",
-			alert:          alert2,
 			expectedConfig: nil, // Will get fallback from standardnotification
 			shouldFallback: true,
 		},
@@ -186,7 +165,6 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 			name:           "empty orgID - fallback",
 			orgID:          "",
 			ruleID:         ruleID,
-			alert:          alert1,
 			expectedConfig: nil, // Will get fallback
 			shouldFallback: true,
 		},
@@ -202,7 +180,7 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config, err := provider.GetNotificationConfig(tt.orgID, tt.ruleID, tt.alert)
+			config, err := provider.GetNotificationConfig(tt.orgID, tt.ruleID)
 			assert.NoError(t, err)
 
 			if tt.shouldFallback {
@@ -226,10 +204,6 @@ func TestProvider_ConcurrentAccess(t *testing.T) {
 	provider, err := New(ctx, providerSettings, config)
 	require.NoError(t, err)
 
-	alert := createTestAlert(model.LabelSet{
-		"alertname": "test_alert",
-		"severity":  "critical",
-	})
 	orgID := "test-org"
 
 	var wg sync.WaitGroup
@@ -255,7 +229,7 @@ func TestProvider_ConcurrentAccess(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		for i := 0; i < 50; i++ {
-			config, err := provider.GetNotificationConfig(orgID, "rule1", alert)
+			config, err := provider.GetNotificationConfig(orgID, "rule1")
 			assert.NoError(t, err)
 			assert.NotNil(t, config)
 		}
