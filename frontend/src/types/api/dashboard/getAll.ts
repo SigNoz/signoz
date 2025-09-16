@@ -104,7 +104,6 @@ export interface ColumnUnit {
 	[key: string]: string;
 }
 export interface IBaseWidget {
-	isStacked: boolean;
 	id: string;
 	panelTypes: PANEL_TYPES;
 	title: ReactNode;
