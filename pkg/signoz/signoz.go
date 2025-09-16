@@ -237,7 +237,7 @@ func New(
 		nfmanager.Config{
 			Provider: "rulebased",
 		},
-		NewNotificationGroupingProviderFactories(),
+		NewNotificationManagerProviderFactories(),
 		"rulebased",
 	)
 	if err != nil {

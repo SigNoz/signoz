@@ -2,7 +2,7 @@ package nfmanagertest
 
 import (
 	"context"
-	nfgrouping2 "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"time"
 
@@ -18,17 +18,17 @@ type provider struct {
 }
 
 // NewFactory creates a new factory for the test notification grouping strategy.
-func NewFactory() factory.ProviderFactory[nfgrouping2.NotificationManager, nfgrouping2.Config] {
+func NewFactory() factory.ProviderFactory[nfmanager.NotificationManager, nfmanager.Config] {
 	return factory.NewProviderFactory(
 		factory.MustNewName("test"),
-		func(ctx context.Context, settings factory.ProviderSettings, config nfgrouping2.Config) (nfgrouping2.NotificationManager, error) {
+		func(ctx context.Context, settings factory.ProviderSettings, config nfmanager.Config) (nfmanager.NotificationManager, error) {
 			return New(ctx, settings, config)
 		},
 	)
 }
 
 // New creates a new test notification grouping strategy provider.
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config nfgrouping2.Config) (nfgrouping2.NotificationManager, error) {
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config nfmanager.Config) (nfmanager.NotificationManager, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/nfmanager/nfmanagertest")
 
 	return &provider{
