@@ -86,7 +86,7 @@ const getSeries = ({
 				? hiddenGraph[i]
 				: true,
 			label,
-			fill: panelType && panelType === PANEL_TYPES.BAR ? `${color}40` : undefined,
+			fill: panelType && panelType === PANEL_TYPES.BAR ? `${color}` : undefined,
 			stroke: color,
 			width: 2,
 			spanGaps: true,
