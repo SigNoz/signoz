@@ -9,7 +9,6 @@ import {
 } from 'mocks-server/__mockdata__/customQuickFilters';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-// ⬇️ only the pieces we actually need; userEvent comes from your test-utils re-export
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import QuickFilters from '../QuickFilters';
@@ -174,8 +173,6 @@ describe('Quick Filters with custom filters', () => {
 		const settingsButton = icon.closest('button') ?? icon;
 		await user.click(settingsButton);
 
-		// If your modal uses a portal & heading role, this is robust:
-		// expect(await screen.findByRole('heading', { name: /edit quick filters/i })).toBeInTheDocument();
 		expect(await screen.findByText('Edit quick filters')).toBeInTheDocument();
 
 		const addedSection = screen.getByText(ADDED_FILTERS_LABEL).parentElement!;

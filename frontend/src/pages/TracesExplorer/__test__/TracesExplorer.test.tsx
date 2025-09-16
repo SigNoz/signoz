@@ -265,7 +265,6 @@ describe('TracesExplorer - Filters', () => {
 			<Filter setOpen={jest.fn()} />,
 			{},
 			{
-				// initialRoute: initialEntries[0],
 				queryBuilderOverrides: {
 					...qbProviderValue,
 					currentQuery: {

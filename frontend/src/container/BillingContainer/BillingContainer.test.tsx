@@ -51,89 +51,91 @@ describe('BillingContainer', () => {
 		expect(currentBill).toBeInTheDocument();
 	});
 
-	test('OnTrail', async () => {
-		// Pin "now" so trial end (20 Oct 2023) is tomorrow => "1 days_remaining"
-		jest.useFakeTimers();
-		jest.setSystemTime(new Date('2023-10-20'));
-
-		render(
-			<BillingContainer />,
-			{},
-			{ appContextOverrides: { trialInfo: licensesSuccessResponse.data } },
-		);
-
-		// If the component schedules any setTimeout on mount, flush them:
-		jest.runOnlyPendingTimers();
-
-		expect(await screen.findByText('Free Trial')).toBeInTheDocument();
-		expect(await screen.findByText('billing')).toBeInTheDocument();
-		expect(await screen.findByText(/\$0/i)).toBeInTheDocument();
-
-		expect(
-			await screen.findByText(
-				/You are in free trial period. Your free trial will end on 20 Oct 2023/i,
-			),
-		).toBeInTheDocument();
-
-		screen.debug(undefined, 1000000);
-
-		expect(await screen.findByText(/1 days_remaining/i)).toBeInTheDocument();
-
-		const upgradeButtons = await screen.findAllByRole('button', {
-			name: /upgrade_plan/i,
+	describe('Trial scenarios', () => {
+		beforeEach(() => {
+			jest.useFakeTimers();
+			jest.setSystemTime(new Date('2023-10-20'));
 		});
-		expect(upgradeButtons).toHaveLength(2);
-		expect(upgradeButtons[1]).toBeInTheDocument();
 
-		expect(await screen.findByText(/checkout_plans/i)).toBeInTheDocument();
-		expect(
-			await screen.findByRole('link', { name: /here/i }),
-		).toBeInTheDocument();
+		afterEach(() => {
+			jest.useRealTimers();
+		});
 
-		jest.useRealTimers();
-	});
+		test('OnTrail', async () => {
+			// Pin "now" so trial end (20 Oct 2023) is tomorrow => "1 days_remaining"
 
-	test('OnTrail but trialConvertedToSubscription', async () => {
-		jest.useFakeTimers();
-		jest.setSystemTime(new Date('2023-10-20'));
-		await act(async () => {
 			render(
 				<BillingContainer />,
 				{},
-				{
-					appContextOverrides: {
-						trialInfo: trialConvertedToSubscriptionResponse.data,
-					},
-				},
+				{ appContextOverrides: { trialInfo: licensesSuccessResponse.data } },
 			);
+
+			// If the component schedules any setTimeout on mount, flush them:
+			jest.runOnlyPendingTimers();
+
+			expect(await screen.findByText('Free Trial')).toBeInTheDocument();
+			expect(await screen.findByText('billing')).toBeInTheDocument();
+			expect(await screen.findByText(/\$0/i)).toBeInTheDocument();
+
+			expect(
+				await screen.findByText(
+					/You are in free trial period. Your free trial will end on 20 Oct 2023/i,
+				),
+			).toBeInTheDocument();
+
+			expect(await screen.findByText(/1 days_remaining/i)).toBeInTheDocument();
+
+			const upgradeButtons = await screen.findAllByRole('button', {
+				name: /upgrade_plan/i,
+			});
+			expect(upgradeButtons).toHaveLength(2);
+			expect(upgradeButtons[1]).toBeInTheDocument();
+
+			expect(await screen.findByText(/checkout_plans/i)).toBeInTheDocument();
+			expect(
+				await screen.findByRole('link', { name: /here/i }),
+			).toBeInTheDocument();
 		});
 
-		const currentBill = await screen.findByText('billing');
-		expect(currentBill).toBeInTheDocument();
+		test('OnTrail but trialConvertedToSubscription', async () => {
+			await act(async () => {
+				render(
+					<BillingContainer />,
+					{},
+					{
+						appContextOverrides: {
+							trialInfo: trialConvertedToSubscriptionResponse.data,
+						},
+					},
+				);
+			});
 
-		const dollar0 = await screen.findByText(/\$0/i);
-		expect(dollar0).toBeInTheDocument();
+			const currentBill = await screen.findByText('billing');
+			expect(currentBill).toBeInTheDocument();
 
-		const onTrail = await screen.findByText(
-			/You are in free trial period. Your free trial will end on 20 Oct 2023/i,
-		);
-		expect(onTrail).toBeInTheDocument();
+			const dollar0 = await screen.findByText(/\$0/i);
+			expect(dollar0).toBeInTheDocument();
 
-		const receivedCardDetails = await screen.findByText(
-			/card_details_recieved_and_billing_info/i,
-		);
-		expect(receivedCardDetails).toBeInTheDocument();
+			const onTrail = await screen.findByText(
+				/You are in free trial period. Your free trial will end on 20 Oct 2023/i,
+			);
+			expect(onTrail).toBeInTheDocument();
 
-		const manageBillingButton = await screen.findByRole('button', {
-			name: /manage_billing/i,
+			const receivedCardDetails = await screen.findByText(
+				/card_details_recieved_and_billing_info/i,
+			);
+			expect(receivedCardDetails).toBeInTheDocument();
+
+			const manageBillingButton = await screen.findByRole('button', {
+				name: /manage_billing/i,
+			});
+			expect(manageBillingButton).toBeInTheDocument();
+
+			const dayRemainingInBillingPeriod = await screen.findByText(
+				/1 days_remaining/i,
+			);
+			expect(dayRemainingInBillingPeriod).toBeInTheDocument();
 		});
-		expect(manageBillingButton).toBeInTheDocument();
-
-		const dayRemainingInBillingPeriod = await screen.findByText(
-			/1 days_remaining/i,
-		);
-		expect(dayRemainingInBillingPeriod).toBeInTheDocument();
-		jest.useRealTimers();
 	});
 
 	test('Not on ontrail', async () => {

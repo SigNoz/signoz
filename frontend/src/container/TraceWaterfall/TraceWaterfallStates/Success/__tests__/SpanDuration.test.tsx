@@ -5,7 +5,6 @@ import { Span } from 'types/api/trace/getTraceV2';
 import { SpanDuration } from '../Success';
 
 // Mock the hooks
-// jest.mock('hooks/useSafeNavigate');
 jest.mock('hooks/useUrlQuery');
 jest.mock('@signozhq/badge', () => ({
 	Badge: jest.fn(),
