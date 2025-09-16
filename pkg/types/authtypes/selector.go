@@ -25,23 +25,23 @@ func NewSelector(typed Type, selector string) (Selector, error) {
 	switch typed {
 	case TypeUser:
 		if !typeUserSelectorRegex.MatchString(selector) {
-			return Selector{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must confirm to regex %s", typeUserSelectorRegex.String())
+			return Selector{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeUserSelectorRegex.String())
 		}
 	case TypeRole:
 		if !typeRoleSelectorRegex.MatchString(selector) {
-			return Selector{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must confirm to regex %s", typeRoleSelectorRegex.String())
+			return Selector{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeRoleSelectorRegex.String())
 		}
 	case TypeOrganization:
 		if !typeOrganizationSelectorRegex.MatchString(selector) {
-			return Selector{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must confirm to regex %s", typeOrganizationSelectorRegex.String())
+			return Selector{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeOrganizationSelectorRegex.String())
 		}
 	case TypeResource:
 		if !typeResourceSelectorRegex.MatchString(selector) {
-			return Selector{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must confirm to regex %s", typeResourceSelectorRegex.String())
+			return Selector{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeResourceSelectorRegex.String())
 		}
 	case TypeResources:
 		if !typeResourcesSelectorRegex.MatchString(selector) {
-			return Selector{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must confirm to regex %s", typeResourcesSelectorRegex.String())
+			return Selector{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeResourcesSelectorRegex.String())
 		}
 	}
 

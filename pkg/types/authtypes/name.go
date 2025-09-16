@@ -16,7 +16,7 @@ type Name struct {
 
 func MustNewName(name string) Name {
 	if !nameRegex.MatchString(name) {
-		panic(errors.NewInternalf(errors.CodeInternal, "name must confirm to regex %s", nameRegex.String()))
+		panic(errors.NewInternalf(errors.CodeInternal, "name must conform to regex %s", nameRegex.String()))
 	}
 
 	return Name{val: name}
