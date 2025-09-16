@@ -5,7 +5,7 @@ import { RadioChangeEvent } from 'antd/es/radio';
 
 interface Option {
 	value: string;
-	label: string;
+	label: string | React.ReactNode;
 	icon?: React.ReactNode;
 }
 

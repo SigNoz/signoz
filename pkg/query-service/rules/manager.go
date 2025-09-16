@@ -12,12 +12,11 @@ import (
 
 	"go.uber.org/zap"
 
-	"errors"
-
 	"github.com/go-openapi/strfmt"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	querierV5 "github.com/SigNoz/signoz/pkg/querier"
@@ -147,6 +146,12 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 	var task Task
 
 	ruleId := RuleIdFromTaskName(opts.TaskName)
+
+	evaluation, err := opts.Rule.Evaluation.GetEvaluation()
+	if err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "evaluation is invalid: %v", err)
+	}
+
 	if opts.Rule.RuleType == ruletypes.RuleTypeThreshold {
 		// create a threshold rule
 		tr, err := NewThresholdRule(
@@ -167,7 +172,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		rules = append(rules, tr)
 
 		// create ch rule task for evalution
-		task = newTask(TaskTypeCh, opts.TaskName, taskNamesuffix, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		task = newTask(TaskTypeCh, opts.TaskName, taskNamesuffix, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 
 	} else if opts.Rule.RuleType == ruletypes.RuleTypeProm {
 
@@ -189,7 +194,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		rules = append(rules, pr)
 
 		// create promql rule task for evalution
-		task = newTask(TaskTypeProm, opts.TaskName, taskNamesuffix, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		task = newTask(TaskTypeProm, opts.TaskName, taskNamesuffix, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 
 	} else {
 		return nil, fmt.Errorf("unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, ruletypes.RuleTypeProm, ruletypes.RuleTypeThreshold)
@@ -400,7 +405,7 @@ func (m *Manager) editTask(_ context.Context, orgID valuer.UUID, rule *ruletypes
 
 	if err != nil {
 		zap.L().Error("loading tasks failed", zap.Error(err))
-		return errors.New("error preparing rule with given parameters, previous rule set restored")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "error preparing rule with given parameters, previous rule set restored")
 	}
 
 	for _, r := range newTask.Rules() {
@@ -593,7 +598,7 @@ func (m *Manager) addTask(_ context.Context, orgID valuer.UUID, rule *ruletypes.
 
 	if err != nil {
 		zap.L().Error("creating rule task failed", zap.String("name", taskName), zap.Error(err))
-		return errors.New("error loading rules, previous rule set restored")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "error loading rules, previous rule set restored")
 	}
 
 	for _, r := range newTask.Rules() {
