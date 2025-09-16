@@ -1,4 +1,9 @@
 export interface PayloadProps {
+	data: Signup;
+	status: string;
+}
+
+export interface Signup {
 	sso: boolean;
 	ssoUrl?: string;
 	canSelfRegister?: boolean;

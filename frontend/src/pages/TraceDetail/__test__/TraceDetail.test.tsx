@@ -12,6 +12,12 @@ jest.mock('@signozhq/badge', () => ({
 	Badge: jest.fn(),
 }));
 
+jest.mock('@signozhq/resizable', () => ({
+	ResizableHandle: jest.fn(),
+	ResizablePanel: jest.fn(),
+	ResizablePanelGroup: jest.fn(),
+}));
+
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: (): { pathname: string; search: string } => ({

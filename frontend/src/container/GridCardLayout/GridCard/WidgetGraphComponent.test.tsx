@@ -39,7 +39,6 @@ const mockProps: WidgetGraphComponentProps = {
 		description: '',
 		fillSpans: false,
 		id: '17f905f6-d355-46bd-a78e-cbc87e6f58cc',
-		isStacked: false,
 		mergeAllActiveQueries: false,
 		nullZeroValues: 'zero',
 		opacity: '1',

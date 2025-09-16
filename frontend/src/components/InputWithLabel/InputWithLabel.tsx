@@ -49,6 +49,7 @@ function InputWithLabel({
 				value={inputValue}
 				onChange={handleChange}
 				name={label.toLowerCase()}
+				data-testid={`input-${label}`}
 			/>
 			{labelAfter && <Typography.Text className="label">{label}</Typography.Text>}
 			{onClose && (
