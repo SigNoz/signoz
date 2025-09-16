@@ -146,16 +146,6 @@ function Filters({
 		},
 	);
 
-	// Handle when filters are cleared
-	// useEffect(() => {
-	// 	if (filters.items.length === 0) {
-	// 		setFilteredSpanIds([]);
-	// 		onFilteredSpansChange?.([], false);
-	// 		setCurrentSearchedIndex(0);
-	// 		setNoData(false);
-	// 	}
-	// }, [filters.items.length, onFilteredSpansChange]);
-
 	return (
 		<div className="filter-row">
 			<QueryBuilderSearchV2
