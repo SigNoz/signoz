@@ -1,4 +1,4 @@
-import { Button, Switch, Typography } from 'antd';
+import { Switch, Typography } from 'antd';
 import { WsDataEvent } from 'api/common/getQueryStats';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import LogsDownloadOptionsMenu from 'components/LogsDownloadOptionsMenu/LogsDownloadOptionsMenu';
@@ -7,9 +7,7 @@ import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import useClickOutside from 'hooks/useClickOutside';
-import { ArrowUp10, Minus, Sliders } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { ArrowUp10, Minus } from 'lucide-react';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import QueryStatus from './QueryStatus';
@@ -43,9 +41,6 @@ function LogsActionsContainer({
 	minTime: number;
 	maxTime: number;
 }): JSX.Element {
-	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
-	const formatMenuRef = useRef<HTMLDivElement>(null);
-
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
 		dataSource: DataSource.LOGS,
@@ -72,18 +67,6 @@ function LogsActionsContainer({
 			},
 		},
 	];
-
-	const handleToggleShowFormatOptions = (): void =>
-		setShowFormatMenuItems(!showFormatMenuItems);
-
-	useClickOutside({
-		ref: formatMenuRef,
-		onClickOutside: () => {
-			if (showFormatMenuItems) {
-				setShowFormatMenuItems(false);
-			}
-		},
-	});
 
 	return (
 		<div className="logs-actions-container">
@@ -125,22 +108,12 @@ function LogsActionsContainer({
 									orderBy={orderBy}
 								/>
 							</div>
-							<div className="format-options-container" ref={formatMenuRef}>
-								<Button
-									className="periscope-btn ghost"
-									onClick={handleToggleShowFormatOptions}
-									icon={<Sliders size={14} />}
-									data-testid="periscope-btn-format-options"
+							<div className="format-options-container">
+								<LogsFormatOptionsMenu
+									items={formatItems}
+									selectedOptionFormat={options.format}
+									config={config}
 								/>
-
-								{showFormatMenuItems && (
-									<LogsFormatOptionsMenu
-										title="FORMAT"
-										items={formatItems}
-										selectedOptionFormat={options.format}
-										config={config}
-									/>
-								)}
 							</div>
 						</>
 					)}
