@@ -29,7 +29,7 @@ func NewFactory() factory.ProviderFactory[nfmanager.NotificationManager, nfmanag
 
 // New creates a new test notification grouping strategy provider.
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config nfmanager.Config) (nfmanager.NotificationManager, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/nfmanager/nfmanagertest")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest")
 
 	return &provider{
 		settings:        settings,
