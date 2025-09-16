@@ -133,3 +133,4 @@ export default class FilterQueryVisitor<Result> extends ParseTreeVisitor<Result>
 	 */
 	visitKey?: (ctx: KeyContext) => Result;
 }
+

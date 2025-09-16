@@ -10,10 +10,12 @@ jest.mock('@ant-design/icons', () => ({
 }));
 
 const mockOnLabelsChange = jest.fn();
+const mockValidateLabelsKey = jest.fn().mockReturnValue(null);
 
 const defaultProps: LabelsInputProps = {
 	labels: {},
 	onLabelsChange: mockOnLabelsChange,
+	validateLabelsKey: mockValidateLabelsKey,
 };
 
 const ADD_LABELS_TEXT = '+ Add labels';
@@ -33,6 +35,7 @@ const renderLabelsInput = (
 describe('LabelsInput', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		mockValidateLabelsKey.mockReturnValue(null); // Reset validation to always pass
 	});
 
 	describe('Initial Rendering', () => {
@@ -483,7 +486,11 @@ describe('LabelsInput', () => {
 			// Simulate parent component updating labels
 			const firstLabels = { severity: 'high' };
 			rerender(
-				<LabelsInput labels={firstLabels} onLabelsChange={mockOnLabelsChange} />,
+				<LabelsInput
+					labels={firstLabels}
+					onLabelsChange={mockOnLabelsChange}
+					validateLabelsKey={mockValidateLabelsKey}
+				/>,
 			);
 
 			// Add second label
