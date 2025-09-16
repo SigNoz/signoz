@@ -1,6 +1,7 @@
 import './TracesExplorer.styles.scss';
 
 import * as Sentry from '@sentry/react';
+import { Callout } from '@signozhq/callout';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
@@ -35,7 +36,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Warning } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderTraceOperator,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import {
@@ -52,7 +56,6 @@ function TracesExplorer(): JSX.Element {
 		handleRunQuery,
 		stagedQuery,
 		handleSetConfig,
-		updateQueriesData,
 	} = useQueryBuilder();
 
 	const { options } = useOptionsMenu({
@@ -103,32 +106,14 @@ function TracesExplorer(): JSX.Element {
 				handleSetConfig(PANEL_TYPES.LIST, DataSource.TRACES);
 			}
 
-			if (view === ExplorerViews.LIST) {
-				if (
-					selectedView !== ExplorerViews.LIST &&
-					currentQuery?.builder?.queryData?.[0]
-				) {
-					const filterToRetain = currentQuery.builder.queryData[0].filter;
-
-					const newDefaultQuery = updateAllQueriesOperators(
-						initialQueriesMap.traces,
-						PANEL_TYPES.LIST,
-						DataSource.TRACES,
-					);
-
-					const newListQuery = updateQueriesData(
-						newDefaultQuery,
-						'queryData',
-						(item, index) => {
-							if (index === 0) {
-								return { ...item, filter: filterToRetain };
-							}
-							return item;
-						},
-					);
-					setDefaultQuery(newListQuery);
-				}
-				setShouldReset(true);
+			if (
+				(selectedView === ExplorerViews.TRACE ||
+					selectedView === ExplorerViews.LIST) &&
+				stagedQuery?.builder?.queryTraceOperator &&
+				stagedQuery.builder.queryTraceOperator.length > 0
+			) {
+				// remove order by from trace operator
+				set(stagedQuery, 'builder.queryTraceOperator[0].orderBy', []);
 			}
 
 			setSelectedView(view);
@@ -141,10 +126,8 @@ function TracesExplorer(): JSX.Element {
 			handleSetConfig,
 			handleExplorerTabChange,
 			selectedView,
-			currentQuery,
-			updateAllQueriesOperators,
-			updateQueriesData,
 			setSelectedView,
+			stagedQuery,
 		],
 	);
 
@@ -211,19 +194,44 @@ function TracesExplorer(): JSX.Element {
 
 	useShareBuilderUrl({ defaultValue: defaultQuery, forceReset: shouldReset });
 
-	const isMultipleQueries = useMemo(() => {
-		const builder = currentQuery?.builder;
-		const queriesLen = builder?.queryData?.length ?? 0;
-		const formulasLen = builder?.queryFormulas?.length ?? 0;
-		return queriesLen > 1 || formulasLen > 0;
-	}, [currentQuery]);
-
 	const isGroupByExist = useMemo(() => {
 		const queryData = currentQuery?.builder?.queryData ?? [];
 		return queryData.some((q) => (q?.groupBy?.length ?? 0) > 0);
 	}, [currentQuery]);
+
+	const hasMultipleQueries = useMemo(
+		() => currentQuery?.builder?.queryData?.length > 1,
+		[currentQuery],
+	);
+
+	const traceOperator = useMemo((): IBuilderTraceOperator | undefined => {
+		if (
+			currentQuery.builder.queryTraceOperator &&
+			currentQuery.builder.queryTraceOperator.length > 0
+		) {
+			return currentQuery.builder.queryTraceOperator[0];
+		}
+
+		return undefined;
+	}, [currentQuery.builder.queryTraceOperator]);
+
+	const showTraceOperatorCallout = useMemo(
+		() =>
+			(selectedView === ExplorerViews.LIST ||
+				selectedView === ExplorerViews.TRACE) &&
+			hasMultipleQueries &&
+			!traceOperator,
+		[selectedView, hasMultipleQueries, traceOperator],
+	);
+
+	const traceOperatorCalloutDescription = useMemo(() => {
+		if (currentQuery.builder.queryData.length === 0) return '';
+		const firstQuery = currentQuery.builder.queryData[0];
+		return `Please use a Trace Operator to combine results of multiple span queries. Else you'd only see the results from query "${firstQuery.queryName}"`;
+	}, [currentQuery]);
+
 	useEffect(() => {
-		const shouldChangeView = isMultipleQueries || isGroupByExist;
+		const shouldChangeView = isGroupByExist;
 
 		if (
 			(selectedView === ExplorerViews.LIST ||
@@ -233,12 +241,7 @@ function TracesExplorer(): JSX.Element {
 			// Switch to timeseries view automatically
 			handleChangeSelectedView(ExplorerViews.TIMESERIES);
 		}
-	}, [
-		selectedView,
-		isMultipleQueries,
-		isGroupByExist,
-		handleChangeSelectedView,
-	]);
+	}, [selectedView, isGroupByExist, handleChangeSelectedView]);
 
 	useEffect(() => {
 		if (shouldReset) {
@@ -364,6 +367,15 @@ function TracesExplorer(): JSX.Element {
 								onExport={handleExport}
 							/>
 						</div>
+
+						{showTraceOperatorCallout && (
+							<Callout
+								type="info"
+								size="small"
+								showIcon
+								description={traceOperatorCalloutDescription}
+							/>
+						)}
 
 						{selectedView === ExplorerViews.LIST && (
 							<div className="trace-explorer-list-view">
