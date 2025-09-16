@@ -460,7 +460,7 @@ export default function LogsFormatOptionsMenu({
 			<Button
 				className="periscope-btn ghost"
 				icon={<Sliders size={14} />}
-				data-testid="periscope-btn"
+				data-testid="periscope-btn-format-options"
 			/>
 		</Popover>
 	);

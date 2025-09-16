@@ -185,13 +185,16 @@ describe('LogsExplorerViews -', () => {
 		lodsQueryServerRequest();
 		const { queryByTestId } = renderer();
 
-		const periscopeButtonTestId = 'periscope-btn-format-options';
+		const periscopeDownloadButtonTestId = 'periscope-btn-download-options';
+		const periscopeFormatButtonTestId = 'periscope-btn-format-options';
 
 		// Test that the periscope button is present
-		expect(queryByTestId(periscopeButtonTestId)).toBeInTheDocument();
+		expect(queryByTestId(periscopeDownloadButtonTestId)).toBeInTheDocument();
+		expect(queryByTestId(periscopeFormatButtonTestId)).toBeInTheDocument();
 
 		// Test that the menu opens when clicked
-		fireEvent.click(queryByTestId(periscopeButtonTestId) as HTMLElement);
+		fireEvent.click(queryByTestId(periscopeDownloadButtonTestId) as HTMLElement);
+		fireEvent.click(queryByTestId(periscopeFormatButtonTestId) as HTMLElement);
 		expect(document.querySelector('.menu-container')).toBeInTheDocument();
 
 		// Test that the menu items are present
@@ -200,7 +203,8 @@ describe('LogsExplorerViews -', () => {
 		expect(menuItems.length).toBe(expectedMenuItemsCount);
 
 		// Test that the component renders without crashing
-		expect(queryByTestId(periscopeButtonTestId)).toBeInTheDocument();
+		expect(queryByTestId(periscopeDownloadButtonTestId)).toBeInTheDocument();
+		expect(queryByTestId(periscopeFormatButtonTestId)).toBeInTheDocument();
 	});
 
 	it('check isLoading state', async () => {
