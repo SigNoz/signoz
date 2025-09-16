@@ -1,4 +1,4 @@
-import { Collapse, Input, Select } from 'antd';
+import { Collapse, Input, Select, Typography } from 'antd';
 import { Y_AXIS_CATEGORIES } from 'components/YAxisUnitSelector/constants';
 
 import { useCreateAlertState } from '../context';
@@ -18,14 +18,15 @@ function AdvancedOptions(): JSX.Element {
 				<Collapse.Panel header="ADVANCED OPTIONS" key="1">
 					<EvaluationCadence />
 					<AdvancedOptionItem
-						title="Send a notification if data is missing"
-						description="If data is missing for this alert rule for a certain time period, notify in the default notification channel."
+						title="Alert when data stops coming"
+						description="Send notification if no data is received for a specified time period."
+						tooltipText="Useful for monitoring data pipelines or services that should continuously send data. For example, alert if no logs are received for 10 minutes"
 						input={
-							<Input.Group>
+							<div className="advanced-option-item-input-group">
 								<Input
 									placeholder="Enter tolerance limit..."
 									type="number"
-									style={{ width: 240 }}
+									style={{ width: 100 }}
 									onChange={(e): void =>
 										setAdvancedOptions({
 											type: 'SET_SEND_NOTIFICATION_IF_DATA_IS_MISSING',
@@ -53,37 +54,42 @@ function AdvancedOptions(): JSX.Element {
 									}
 									value={advancedOptions.sendNotificationIfDataIsMissing.timeUnit}
 								/>
-							</Input.Group>
+							</div>
 						}
 					/>
 					<AdvancedOptionItem
-						title="Enforce minimum datapoints"
-						description="Run alert evaluation only when there are minimum of pre-defined number of data points in each result group"
+						title="Minimum data required"
+						description="Only trigger alert when there are enough data points to make a reliable decision."
+						tooltipText="Prevents false alarms when there's insufficient data. For example, require at least 5 data points before checking if CPU usage is above 80%."
 						input={
-							<Input
-								placeholder="Enter minimum datapoints..."
-								style={{ width: 360 }}
-								type="number"
-								onChange={(e): void =>
-									setAdvancedOptions({
-										type: 'SET_ENFORCE_MINIMUM_DATAPOINTS',
-										payload: {
-											minimumDatapoints: Number(e.target.value),
-										},
-									})
-								}
-								value={advancedOptions.enforceMinimumDatapoints.minimumDatapoints}
-							/>
+							<div className="advanced-option-item-input-group">
+								<Input
+									placeholder="Enter minimum datapoints..."
+									style={{ width: 100 }}
+									type="number"
+									onChange={(e): void =>
+										setAdvancedOptions({
+											type: 'SET_ENFORCE_MINIMUM_DATAPOINTS',
+											payload: {
+												minimumDatapoints: Number(e.target.value),
+											},
+										})
+									}
+									value={advancedOptions.enforceMinimumDatapoints.minimumDatapoints}
+								/>
+								<Typography.Text>Datapoints</Typography.Text>
+							</div>
 						}
 					/>
 					<AdvancedOptionItem
-						title="Delay evaluation"
-						description="Delay the evaluation of newer groups to prevent noisy alerts."
+						title="Account for data delay"
+						description="Shift the evaluation window backwards to account for data processing delays."
+						tooltipText="Use when your data takes time to arrive on the platform. For example, if logs typically arrive 5 minutes late, set a 5-minute delay so the alert checks the correct time window."
 						input={
-							<Input.Group>
+							<div className="advanced-option-item-input-group">
 								<Input
 									placeholder="Enter delay..."
-									style={{ width: 240 }}
+									style={{ width: 100 }}
 									type="number"
 									onChange={(e): void =>
 										setAdvancedOptions({
@@ -111,7 +117,7 @@ function AdvancedOptions(): JSX.Element {
 									}
 									value={advancedOptions.delayEvaluation.timeUnit}
 								/>
-							</Input.Group>
+							</div>
 						}
 					/>
 				</Collapse.Panel>

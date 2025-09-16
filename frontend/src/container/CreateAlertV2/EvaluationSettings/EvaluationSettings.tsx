@@ -72,7 +72,7 @@ function EvaluationSettings(): JSX.Element {
 			<Stepper stepNumber={3} label="Evaluation settings" />
 			{alertType !== AlertTypes.ANOMALY_BASED_ALERT && (
 				<div className="evaluate-alert-conditions-container">
-					<Typography.Text>Evaluate Alert Conditions over</Typography.Text>
+					<Typography.Text>Check conditions using data from</Typography.Text>
 					<div className="evaluate-alert-conditions-separator" />
 					{popoverContent}
 				</div>

@@ -90,6 +90,9 @@
 				font-family: Inter;
 				font-size: 14px;
 				font-weight: 500;
+				display: flex;
+				align-items: center;
+				gap: 8px;
 			}
 
 			.advanced-option-item-description {
@@ -156,12 +159,13 @@
 
 		.advanced-option-item-right-content {
 			display: flex;
-			align-items: center;
-			gap: 8px;
+			align-items: flex-start;
+			gap: 16px;
 
 			.advanced-option-item-input-group {
 				display: flex;
 				align-items: center;
+				gap: 8px;
 
 				.ant-input {
 					background-color: var(--bg-ink-400);
@@ -184,15 +188,6 @@
 						color: var(--bg-vanilla-100);
 						height: 32px;
 						border: 1px solid var(--bg-slate-400);
-
-						&:hover {
-							border-color: var(--bg-vanilla-300);
-						}
-
-						&:focus {
-							border-color: var(--bg-vanilla-300);
-							box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
-						}
 
 						.ant-select-selection-placeholder {
 							font-family: 'Space Mono';
@@ -682,6 +677,10 @@
 .ant-picker-date-panel-header {
 	background-color: var(--bg-ink-300);
 	border: 1px solid var(--bg-slate-300);
+}
+
+.evaluation-cadence-preview {
+	border: none;
 }
 
 .lightMode {

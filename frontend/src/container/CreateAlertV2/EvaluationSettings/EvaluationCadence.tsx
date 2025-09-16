@@ -1,4 +1,12 @@
-import { Button, DatePicker, Input, Select, Typography } from 'antd';
+import {
+	Button,
+	DatePicker,
+	Input,
+	Modal,
+	Select,
+	Tooltip,
+	Typography,
+} from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
 import classNames from 'classnames';
 import {
@@ -25,7 +33,10 @@ import {
 	EVALUATION_CADENCE_REPEAT_EVERY_WEEK_OPTIONS,
 } from './constants';
 import TimeInput from './TimeInput';
-import { IEvaluationCadenceDetailsProps } from './types';
+import {
+	IEvaluationCadenceDetailsProps,
+	IEvaluationCadencePreviewProps,
+} from './types';
 import {
 	buildAlertScheduleFromCustomSchedule,
 	buildAlertScheduleFromRRule,
@@ -349,10 +360,96 @@ export function EvaluationCadenceDetails({
 	);
 }
 
+function EvaluationCadencePreview({
+	isOpen,
+	setIsOpen,
+}: IEvaluationCadencePreviewProps): JSX.Element {
+	const { advancedOptions } = useCreateAlertState();
+
+	const schedule = useMemo(() => {
+		if (advancedOptions.evaluationCadence.mode === 'rrule') {
+			return buildAlertScheduleFromRRule(
+				advancedOptions.evaluationCadence.rrule.rrule,
+				advancedOptions.evaluationCadence.rrule.date,
+				advancedOptions.evaluationCadence.rrule.startAt,
+				15,
+			);
+		}
+		return buildAlertScheduleFromCustomSchedule(
+			advancedOptions.evaluationCadence.custom.repeatEvery,
+			advancedOptions.evaluationCadence.custom.occurence,
+			advancedOptions.evaluationCadence.custom.startAt,
+			advancedOptions.evaluationCadence.custom.timezone,
+			15,
+		);
+	}, [advancedOptions.evaluationCadence]);
+
+	return (
+		<Modal open={isOpen} onCancel={(): void => setIsOpen(false)} footer={null}>
+			<div className="evaluation-cadence-details evaluation-cadence-preview">
+				<div className="evaluation-cadence-details-content">
+					<div className="evaluation-cadence-details-content-row">
+						{schedule ? (
+							<div className="schedule-preview">
+								<div className="schedule-preview-header">
+									<Calendar size={16} />
+									<Typography.Text className="schedule-preview-title">
+										Schedule Preview
+									</Typography.Text>
+								</div>
+								<div className="schedule-preview-list">
+									{schedule.map((date) => (
+										<div key={date.toISOString()} className="schedule-preview-item">
+											<div className="schedule-preview-timeline">
+												<div className="schedule-preview-timeline-line" />
+											</div>
+											<div className="schedule-preview-content">
+												<div className="schedule-preview-date">
+													{date.toLocaleDateString('en-US', {
+														weekday: 'short',
+														month: 'short',
+														day: 'numeric',
+													})}
+													,{' '}
+													{date.toLocaleTimeString('en-US', {
+														hour12: false,
+														hour: '2-digit',
+														minute: '2-digit',
+														second: '2-digit',
+													})}
+												</div>
+												<div className="schedule-preview-separator" />
+												<div className="schedule-preview-timezone">
+													UTC {date.getTimezoneOffset() <= 0 ? '+' : '-'}{' '}
+													{Math.abs(Math.floor(date.getTimezoneOffset() / 60))}:
+													{String(Math.abs(date.getTimezoneOffset() % 60)).padStart(2, '0')}
+												</div>
+											</div>
+										</div>
+									))}
+								</div>
+							</div>
+						) : (
+							<div className="no-schedule">
+								<Info size={32} />
+								<Typography.Text>
+									Please fill the relevant information to generate a schedule
+								</Typography.Text>
+							</div>
+						)}
+					</div>
+				</div>
+			</div>
+		</Modal>
+	);
+}
+
 function EditCustomSchedule({
 	setIsEvaluationCadenceDetailsVisible,
+	setIsPreviewVisible,
 }: {
 	setIsEvaluationCadenceDetailsVisible: (isOpen: boolean) => void;
+	setIsPreviewVisible: (isOpen: boolean) => void;
 }): JSX.Element {
 	const { advancedOptions, setAdvancedOptions } = useCreateAlertState();
 
@@ -396,8 +493,12 @@ function EditCustomSchedule({
 		);
 	}, [advancedOptions.evaluationCadence]);
 
-	const handlePreviewAndEdit = (): void => {
+	const handleEdit = (): void => {
 		setIsEvaluationCadenceDetailsVisible(true);
+	};
+
+	const handlePreview = (): void => {
+		setIsPreviewVisible(true);
 	};
 
 	const handleDiscard = (): void => {
@@ -417,11 +518,11 @@ function EditCustomSchedule({
 			{displayText}
 			<div className="button-row">
 				<Button.Group>
-					<Button type="default" onClick={handlePreviewAndEdit}>
+					<Button type="default" onClick={handleEdit}>
 						<Edit size={12} />
 						<Typography.Text>Edit custom schedule</Typography.Text>
 					</Button>
-					<Button type="default" onClick={handlePreviewAndEdit}>
+					<Button type="default" onClick={handlePreview}>
 						<Calendar1 size={12} />
 						<Typography.Text>Preview</Typography.Text>
 					</Button>
@@ -444,6 +545,7 @@ function EvaluationCadence(): JSX.Element {
 		setIsEvaluationCadenceDetailsVisible,
 	] = useState(false);
 	const { advancedOptions, setAdvancedOptions } = useCreateAlertState();
+	const [isPreviewVisible, setIsPreviewVisible] = useState(false);
 
 	const showCustomScheduleButton = useMemo(
 		() =>
@@ -465,11 +567,13 @@ function EvaluationCadence(): JSX.Element {
 			<div className="advanced-option-item evaluation-cadence-item">
 				<div className="advanced-option-item-left-content">
 					<Typography.Text className="advanced-option-item-title">
-						Evaluation cadence
+						How often to check
+						<Tooltip title="Controls how frequently the alert evaluates your conditions. For most alerts, 1-5 minutes is sufficient.">
+							<Info size={16} />
+						</Tooltip>
 					</Typography.Text>
 					<Typography.Text className="advanced-option-item-description">
-						Customize when this Alert Rule will run. By default, it runs every 60
-						seconds (1 minute).
+						How frequently this alert checks your data. Default: Every 1 minute
 					</Typography.Text>
 				</div>
 				{showCustomScheduleButton && (
@@ -528,12 +632,19 @@ function EvaluationCadence(): JSX.Element {
 						setIsEvaluationCadenceDetailsVisible={
 							setIsEvaluationCadenceDetailsVisible
 						}
+						setIsPreviewVisible={setIsPreviewVisible}
 					/>
 				)}
 			{isEvaluationCadenceDetailsVisible && (
 				<EvaluationCadenceDetails
 					isOpen={isEvaluationCadenceDetailsVisible}
 					setIsOpen={setIsEvaluationCadenceDetailsVisible}
+				/>
+			)}
+			{isPreviewVisible && (
+				<EvaluationCadencePreview
+					isOpen={isPreviewVisible}
+					setIsOpen={setIsPreviewVisible}
 				/>
 			)}
 		</div>

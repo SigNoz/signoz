@@ -8,6 +8,7 @@ import {
 export interface IAdvancedOptionItemProps {
 	title: string;
 	description: string;
+	tooltipText?: string;
 	input: JSX.Element;
 }
 
@@ -40,6 +41,11 @@ export interface IEvaluationWindowDetailsProps {
 }
 
 export interface IEvaluationCadenceDetailsProps {
+	isOpen: boolean;
+	setIsOpen: Dispatch<SetStateAction<boolean>>;
+}
+
+export interface IEvaluationCadencePreviewProps {
 	isOpen: boolean;
 	setIsOpen: Dispatch<SetStateAction<boolean>>;
 }

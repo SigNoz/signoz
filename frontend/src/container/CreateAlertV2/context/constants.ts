@@ -1,4 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
+import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { TIMEZONE_DATA } from 'container/CreateAlertV2/EvaluationSettings/utils';
 import dayjs from 'dayjs';
 import getRandomColor from 'lib/getRandomColor';
@@ -76,21 +77,21 @@ export const INITIAL_ALERT_THRESHOLD_STATE: AlertThresholdState = {
 
 export const INITIAL_ADVANCED_OPTIONS_STATE: AdvancedOptionsState = {
 	sendNotificationIfDataIsMissing: {
-		toleranceLimit: 0,
-		timeUnit: '',
+		toleranceLimit: 1,
+		timeUnit: UniversalYAxisUnit.MINUTES,
 	},
 	enforceMinimumDatapoints: {
-		minimumDatapoints: 0,
+		minimumDatapoints: 1,
 	},
 	delayEvaluation: {
-		delay: 0,
-		timeUnit: '',
+		delay: 1,
+		timeUnit: UniversalYAxisUnit.MINUTES,
 	},
 	evaluationCadence: {
 		mode: 'default',
 		default: {
 			value: 1,
-			timeUnit: 'm',
+			timeUnit: UniversalYAxisUnit.MINUTES,
 		},
 		custom: {
 			repeatEvery: 'week',
@@ -113,7 +114,7 @@ export const INITIAL_EVALUATION_WINDOW_STATE: EvaluationWindowState = {
 		time: '00:00:00',
 		number: '1',
 		timezone: TIMEZONE_DATA[0].value,
-		unit: 'm',
+		unit: UniversalYAxisUnit.MINUTES,
 	},
 };
 
@@ -164,10 +165,10 @@ export const ANOMALY_SEASONALITY_OPTIONS = [
 ];
 
 export const ADVANCED_OPTIONS_TIME_UNIT_OPTIONS = [
-	{ value: 's', label: 'Second' },
-	{ value: 'm', label: 'Minute' },
-	{ value: 'h', label: 'Hours' },
-	{ value: 'd', label: 'Day' },
+	{ value: UniversalYAxisUnit.SECONDS, label: 'Seconds' },
+	{ value: UniversalYAxisUnit.MINUTES, label: 'Minutes' },
+	{ value: UniversalYAxisUnit.HOURS, label: 'Hours' },
+	{ value: UniversalYAxisUnit.DAYS, label: 'Days' },
 ];
 
 export const NOTIFICATION_MESSAGE_PLACEHOLDER =
@@ -179,10 +180,10 @@ export const RE_NOTIFICATION_CONDITION_OPTIONS = [
 ];
 
 export const RE_NOTIFICATION_UNIT_OPTIONS = [
-	{ value: 'm', label: 'Minute' },
-	{ value: 'h', label: 'Hour' },
-	{ value: 'd', label: 'Day' },
-	{ value: 'w', label: 'Week' },
+	{ value: UniversalYAxisUnit.MINUTES, label: 'Minutes' },
+	{ value: UniversalYAxisUnit.HOURS, label: 'Hours' },
+	{ value: UniversalYAxisUnit.DAYS, label: 'Days' },
+	{ value: UniversalYAxisUnit.WEEKS, label: 'Weeks' },
 ];
 
 export const INITIAL_NOTIFICATION_SETTINGS_STATE: NotificationSettingsState = {
