@@ -21,6 +21,7 @@ type StorableDashboard struct {
 	Locked bool                  `bun:"locked,notnull,default:false"`
 	OrgID  valuer.UUID           `bun:"org_id,notnull"`
 }
+
 type Dashboard struct {
 	types.TimeAuditable
 	types.UserAuditable

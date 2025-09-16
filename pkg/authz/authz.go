@@ -2,14 +2,12 @@ package authz
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
-type SelectorCallbackFn func(*http.Request) (authtypes.Selector, []authtypes.Selector, error)
 type AuthZ interface {
 	factory.Service
 
@@ -17,5 +15,5 @@ type AuthZ interface {
 	Check(context.Context, *openfgav1.CheckRequestTupleKey) error
 
 	// CheckWithTupleCreation takes upon the responsibility for generating the tuples alongside everything Check does.
-	CheckWithTupleCreation(*http.Request, authtypes.Relation, authtypes.Typeable, authtypes.Selector, authtypes.Typeable, ...authtypes.Selector) error
+	CheckWithTupleCreation(context.Context, authtypes.Relation, authtypes.Typeable, authtypes.Selector, authtypes.Typeable, ...authtypes.Selector) error
 }

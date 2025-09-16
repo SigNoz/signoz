@@ -106,7 +106,7 @@ func (middleware *AuthZ) OpenAccess(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func (middleware *AuthZ) Check(next http.HandlerFunc, _ authtypes.Relation, translation authtypes.Relation, _ authtypes.Typeable, _ authtypes.Typeable, _ authz.SelectorCallbackFn) http.HandlerFunc {
+func (middleware *AuthZ) Check(next http.HandlerFunc, _ authtypes.Relation, translation authtypes.Relation, _ authtypes.Typeable, _ authtypes.Typeable, _ authtypes.SelectorCallbackFn) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		claims, err := authtypes.ClaimsFromContext(req.Context())
 		if err != nil {
@@ -114,7 +114,7 @@ func (middleware *AuthZ) Check(next http.HandlerFunc, _ authtypes.Relation, tran
 			return
 		}
 
-		err = middleware.authzService.CheckWithTupleCreation(req, translation, authtypes.TypedOrganization, authtypes.MustNewSelector(authtypes.TypeOrganization, claims.OrgID), nil)
+		err = middleware.authzService.CheckWithTupleCreation(req.Context(), translation, authtypes.TypeableOrganization, authtypes.MustNewSelector(authtypes.TypeOrganization, claims.OrgID), nil)
 		if err != nil {
 			render.Error(rw, err)
 			return

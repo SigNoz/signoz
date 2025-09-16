@@ -11,18 +11,18 @@ var (
 )
 
 func NewSubject(subjectType Type, selector string, relation Relation) (string, error) {
-	if slices.Contains(supportedSubjectTypes, subjectType) {
+	if !slices.Contains(supportedSubjectTypes, subjectType) {
 		return "", errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSubject, "unsupported subject type %s, supported subject types are %v", subjectType.StringValue(), supportedSubjectTypes)
 	}
 
 	switch subjectType {
 	case TypeUser:
 		if !slices.Contains(typeUserSupportedRelations, relation) {
-			return "", errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZUnsupportedRelation, "unsupported relation for typed %s, supported relations are %v", TypeUser.StringValue(), typeUserSupportedRelations)
+			return "", errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZUnsupportedRelation, "unsupported relation for type %s, supported relations are %v", TypeUser.StringValue(), typeUserSupportedRelations)
 		}
 	case TypeRole:
 		if !slices.Contains(typeRoleSupportedRelations, relation) {
-			return "", errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZUnsupportedRelation, "unsupported relation for typed %s, supported relations are %v", TypeRole.StringValue(), typeRoleSupportedRelations)
+			return "", errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZUnsupportedRelation, "unsupported relation for type %s, supported relations are %v", TypeRole.StringValue(), typeRoleSupportedRelations)
 		}
 	}
 

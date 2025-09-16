@@ -41,4 +41,4 @@ type resource
 
 type telemetry
   relations
-      define read: [user, anonymous,role#assignee]
+      define read: [user, anonymous, role#assignee]

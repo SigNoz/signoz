@@ -20,7 +20,7 @@ func MustNewResource(name string) Typeable {
 
 func (resource *resource) Tuples(subject string, relation Relation, selector Selector, parentTypeable Typeable, parentSelectors ...Selector) ([]*openfgav1.CheckRequestTupleKey, error) {
 	if !slices.Contains(typeResourceSupportedRelations, relation) {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZUnsupportedRelation, "unsupported relation for typed %s, supported relations are %v", TypeResource.StringValue(), typeResourceSupportedRelations)
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZUnsupportedRelation, "unsupported relation for type %s, supported relations are %v", TypeResource.StringValue(), typeResourceSupportedRelations)
 	}
 
 	tuples := make([]*openfgav1.CheckRequestTupleKey, 0)

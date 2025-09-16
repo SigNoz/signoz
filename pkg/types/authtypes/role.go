@@ -14,7 +14,7 @@ type role struct{}
 
 func (role *role) Tuples(subject string, relation Relation, selector Selector, parentTypeable Typeable, parentSelectors ...Selector) ([]*openfgav1.CheckRequestTupleKey, error) {
 	if !slices.Contains(typeRoleSupportedRelations, relation) {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZUnsupportedRelation, "unsupported relation for typed %s, supported relations are %v", TypeRole.StringValue(), typeUserSupportedRelations)
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZUnsupportedRelation, "unsupported relation for type %s, supported relations are %v", TypeRole.StringValue(), typeRoleSupportedRelations)
 	}
 
 	tuples := make([]*openfgav1.CheckRequestTupleKey, 0)

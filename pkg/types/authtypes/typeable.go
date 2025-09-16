@@ -23,9 +23,9 @@ var (
 )
 
 var (
-	TypedUser         = &user{}
-	TypedRole         = &role{}
-	TypedOrganization = &organization{}
+	TypeableUser         = &user{}
+	TypeableRole         = &role{}
+	TypeableOrganization = &organization{}
 )
 
 type Typeable interface {

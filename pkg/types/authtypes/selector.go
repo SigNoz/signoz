@@ -1,6 +1,7 @@
 package authtypes
 
 import (
+	"net/http"
 	"regexp"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -13,6 +14,8 @@ var (
 	typeResourceSelectorRegex     = regexp.MustCompile("")
 	typeResourcesSelectorRegex    = regexp.MustCompile("")
 )
+
+type SelectorCallbackFn func(*http.Request) (Selector, []Selector, error)
 
 type Selector struct {
 	val string
