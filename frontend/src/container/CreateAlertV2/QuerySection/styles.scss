@@ -70,6 +70,17 @@
 		}
 	}
 
+	.y-axis-unit-selector-component {
+		margin-top: 16px;
+
+		.ant-select {
+			.ant-select-selector {
+				border: 1px solid var(--bg-slate-400);
+				background: var(--bg-ink-300);
+			}
+		}
+	}
+
 	.chart-preview-container {
 		margin-right: 4px;
 		.alert-chart-container {
