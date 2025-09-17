@@ -3,7 +3,7 @@
 	flex-direction: column;
 	height: calc(100vh - 44px); //44px -> trace details top bar
 	border-left: 1px solid var(--bg-slate-400);
-	overflow-y: auto;
+	overflow-y: auto !important;
 	&:not(&-docked) {
 		min-width: 450px;
 	}
