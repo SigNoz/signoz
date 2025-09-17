@@ -18,6 +18,8 @@ import (
 
 var searchTroubleshootingGuideURL = "https://signoz.io/docs/userguide/search-troubleshooting/"
 
+const stringMatchingOperatorDocURL = "https://signoz.io/docs/userguide/operators-reference/#string-matching-operators"
+
 // filterExpressionVisitor implements the FilterQueryVisitor interface
 // to convert the parsed filter expressions into ClickHouse WHERE clause
 type filterExpressionVisitor struct {
@@ -533,11 +535,13 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			if ctx.NOT() != nil {
 				op = qbtypes.FilterOperatorNotLike
 			}
+			v.warnIfLikeWithoutWildcards("LIKE", value)
 		} else if ctx.ILIKE() != nil {
 			op = qbtypes.FilterOperatorILike
 			if ctx.NOT() != nil {
 				op = qbtypes.FilterOperatorNotILike
 			}
+			v.warnIfLikeWithoutWildcards("ILIKE", value)
 		} else if ctx.REGEXP() != nil {
 			op = qbtypes.FilterOperatorRegexp
 			if ctx.NOT() != nil {
@@ -569,6 +573,19 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 	}
 
 	return "" // Should not happen with valid input
+}
+
+// warnIfLikeWithoutWildcards adds a guidance warning when LIKE/ILIKE is used without wildcards
+func (v *filterExpressionVisitor) warnIfLikeWithoutWildcards(op string, value any) {
+	if hasLikeWildcards(value) {
+		return
+	}
+
+	msg := op + " operator used without wildcards (% or _). Consider using = operator for exact matches or add wildcards for pattern matching."
+	v.warnings = append(v.warnings, msg)
+	if v.mainWarnURL == "" {
+		v.mainWarnURL = stringMatchingOperatorDocURL
+	}
 }
 
 // VisitInClause handles IN expressions
@@ -869,6 +886,15 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	}
 
 	return fieldKeysForName
+}
+
+// hasLikeWildcards checks if a value contains LIKE wildcards (% or _)
+func hasLikeWildcards(value any) bool {
+	str, ok := value.(string)
+	if !ok {
+		return false
+	}
+	return strings.Contains(str, "%") || strings.Contains(str, "_")
 }
 
 func trimQuotes(txt string) string {

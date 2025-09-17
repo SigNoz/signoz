@@ -14,9 +14,10 @@ var (
 	traceExplorerRegex   = regexp.MustCompile(`/traces-explorer(?:\?.*)?$`)
 	metricsExplorerRegex = regexp.MustCompile(`/metrics-explorer/explorer(?:\?.*)?$`)
 	meterRegex           = regexp.MustCompile(`/meter(?:/.*)?(?:\?.*)?$`)
-	dashboardRegex       = regexp.MustCompile(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`)
-	dashboardIDRegex     = regexp.MustCompile(`/dashboard/([a-f0-9\-]+)/`)
-	widgetIDRegex        = regexp.MustCompile(`widgetId=([a-f0-9\-]+)`)
+	dashboardOpenRegex   = regexp.MustCompile(`/dashboard/[a-zA-Z0-9\-]+(?:\?.*)?$`)
+	dashboardEditRegex   = regexp.MustCompile(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`)
+	dashboardIDRegex     = regexp.MustCompile(`/dashboard/([a-zA-Z0-9\-]+)`)
+	widgetIDRegex        = regexp.MustCompile(`widgetId=([a-zA-Z0-9\-]+)`)
 	ruleRegex            = regexp.MustCompile(`/alerts/(new|edit)(?:\?.*)?$`)
 	ruleIDRegex          = regexp.MustCompile(`ruleId=(\d+)`)
 )
@@ -61,11 +62,12 @@ func CommentFromHTTPRequest(req *http.Request) map[string]string {
 	traceExplorerMatched := traceExplorerRegex.MatchString(referrer)
 	metricsExplorerMatched := metricsExplorerRegex.MatchString(referrer)
 	meterMatched := meterRegex.MatchString(referrer)
-	dashboardMatched := dashboardRegex.MatchString(referrer)
+	dashboardViewMatched := dashboardOpenRegex.MatchString(referrer)
+	dashboardEditMatched := dashboardEditRegex.MatchString(referrer)
 	ruleMatched := ruleRegex.MatchString(referrer)
 
 	switch {
-	case dashboardMatched:
+	case dashboardViewMatched, dashboardEditMatched:
 		comments["module_name"] = "dashboard"
 	case ruleMatched:
 		comments["module_name"] = "rule"
@@ -81,7 +83,7 @@ func CommentFromHTTPRequest(req *http.Request) map[string]string {
 		return comments
 	}
 
-	if dashboardMatched {
+	if dashboardViewMatched || dashboardEditMatched {
 		if matches := dashboardIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
 			comments["dashboard_id"] = matches[1]
 		}
