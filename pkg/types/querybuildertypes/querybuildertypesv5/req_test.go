@@ -1684,6 +1684,86 @@ func TestQueryRangeRequest_GetQueriesSupportingZeroDefault(t *testing.T) {
 			},
 		},
 		{
+			name: "test metrics",
+			CompositeQuery: CompositeQuery{
+				Queries: []QueryEnvelope{
+					{
+						Type: QueryTypeBuilder,
+						Spec: QueryBuilderQuery[MetricAggregation]{
+							Name:   "A",
+							Signal: telemetrytypes.SignalTraces,
+							Filter: &Filter{
+								Expression: "service.name = demo",
+							},
+							Aggregations: []MetricAggregation{
+								{
+									MetricName:       "calls",
+									TimeAggregation:  metrictypes.TimeAggregationRate,
+									SpaceAggregation: metrictypes.SpaceAggregationSum,
+								},
+							},
+						},
+					},
+					{
+						Type: QueryTypeBuilder,
+						Spec: QueryBuilderQuery[MetricAggregation]{
+							Name:   "B",
+							Signal: telemetrytypes.SignalTraces,
+							Filter: &Filter{
+								Expression: "service.name = demo",
+							},
+							Aggregations: []MetricAggregation{
+								{
+									MetricName:       "memory.usage",
+									TimeAggregation:  metrictypes.TimeAggregationAvg,
+									SpaceAggregation: metrictypes.SpaceAggregationSum,
+								},
+							},
+						},
+					},
+					{
+						Type: QueryTypeBuilder,
+						Spec: QueryBuilderQuery[MetricAggregation]{
+							Name:   "C",
+							Signal: telemetrytypes.SignalTraces,
+							Filter: &Filter{
+								Expression: "service.name = demo",
+							},
+							Aggregations: []MetricAggregation{
+								{
+									MetricName:       "calls",
+									TimeAggregation:  metrictypes.TimeAggregationIncrease,
+									SpaceAggregation: metrictypes.SpaceAggregationSum,
+								},
+							},
+						},
+					},
+					{
+						Type: QueryTypeBuilder,
+						Spec: QueryBuilderQuery[MetricAggregation]{
+							Name:   "D",
+							Signal: telemetrytypes.SignalTraces,
+							Filter: &Filter{
+								Expression: "service.name = demo",
+							},
+							Aggregations: []MetricAggregation{
+								{
+									MetricName:       "calls",
+									TimeAggregation:  metrictypes.TimeAggregationCount,
+									SpaceAggregation: metrictypes.SpaceAggregationSum,
+								},
+							},
+						},
+					},
+				},
+			},
+			want: map[string]bool{
+				"A": true,
+				"C": true,
+				"D": true,
+			},
+		},
+		{
 			name: "test min on logs - doesn't support zeroDefault",
 			CompositeQuery: CompositeQuery{
 				Queries: []QueryEnvelope{
