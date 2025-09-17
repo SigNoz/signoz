@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	"log/slog"
 	"math/rand"
@@ -20,6 +19,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 type Client struct {
@@ -52,12 +53,12 @@ func New(address string, logger *slog.Logger, opts ...Option) (*Client, error) {
 
 	from, err := mail.ParseAddress(clientOpts.from)
 	if err != nil {
-		return nil, fmt.Errorf("parse 'from' address: %w", err)
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "parse 'from' address: %s", err.Error())
 	}
 
 	host, port, err := net.SplitHostPort(address)
 	if err != nil {
-		return nil, fmt.Errorf("parse 'address': %w", err)
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "parse 'address': %s", err.Error())
 	}
 
 	if clientOpts.headers == nil {
@@ -67,7 +68,7 @@ func New(address string, logger *slog.Logger, opts ...Option) (*Client, error) {
 
 	tls, err := newTLSConfig(clientOpts.tls, host)
 	if err != nil {
-		return nil, fmt.Errorf("create TLS config: %w", err)
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "create TLS config: %s", err.Error())
 	}
 
 	return &Client{
@@ -102,7 +103,7 @@ func (c *Client) Do(ctx context.Context, tos []*mail.Address, subject string, co
 	smtpClient, err = smtp.NewClient(conn, c.host)
 	if err != nil {
 		conn.Close()
-		return fmt.Errorf("failed to create SMTP client: %w", err)
+		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to create SMTP client: %s", err.Error())
 	}
 
 	// Try to clean up after ourselves but don't log anything if something has failed.
@@ -275,7 +276,7 @@ func (c *Client) smtpAuth(_ context.Context, mechs string) (smtp.Auth, error) {
 		case "CRAM-MD5":
 			secret := c.auth.Secret
 			if secret == "" {
-				errs = append(errs, errors.New("missing secret for CRAM-MD5 auth mechanism"))
+				errs = append(errs, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "missing secret for CRAM-MD5 auth mechanism"))
 				continue
 			}
 			return smtp.CRAMMD5Auth(username, secret), nil
@@ -283,7 +284,7 @@ func (c *Client) smtpAuth(_ context.Context, mechs string) (smtp.Auth, error) {
 		case "PLAIN":
 			password := c.auth.Password
 			if password == "" {
-				errs = append(errs, errors.New("missing password for PLAIN auth mechanism"))
+				errs = append(errs, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "missing password for PLAIN auth mechanism"))
 				continue
 			}
 			identity := c.auth.Identity
@@ -292,7 +293,7 @@ func (c *Client) smtpAuth(_ context.Context, mechs string) (smtp.Auth, error) {
 		case "LOGIN":
 			password := c.auth.Password
 			if password == "" {
-				errs = append(errs, errors.New("missing password for LOGIN auth mechanism"))
+				errs = append(errs, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "missing password for LOGIN auth mechanism"))
 				continue
 			}
 
@@ -301,7 +302,7 @@ func (c *Client) smtpAuth(_ context.Context, mechs string) (smtp.Auth, error) {
 	}
 
 	if len(errs) == 0 {
-		errs = append(errs, errors.New("unknown auth mechanism: "+mechs))
+		errs = append(errs, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "unknown auth mechanism: "+mechs))
 	}
 
 	return nil, errors.Join(errs...)

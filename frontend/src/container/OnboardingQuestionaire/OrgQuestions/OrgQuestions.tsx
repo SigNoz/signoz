@@ -192,7 +192,7 @@ function OrgQuestions({
 	return (
 		<div className="questions-container">
 			<Typography.Title level={3} className="title">
-				Welcome, {user?.displayName}!
+				{user?.displayName ? `Welcome, ${user.displayName}!` : 'Welcome!'}
 			</Typography.Title>
 			<Typography.Paragraph className="sub-title">
 				We&apos;ll help you get the most out of SigNoz, whether you&apos;re new to
@@ -296,15 +296,15 @@ function OrgQuestions({
 										onChange={(e): void => setOtherTool(e.target.value)}
 									/>
 								) : (
-									<button
-										type="button"
+									<Button
+										type="primary"
 										className={`onboarding-questionaire-button ${
 											observabilityTool === 'Others' ? 'active' : ''
 										}`}
 										onClick={(): void => setObservabilityTool('Others')}
 									>
 										Others
-									</button>
+									</Button>
 								)}
 							</div>
 						</div>

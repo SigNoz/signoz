@@ -391,6 +391,11 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 	innerSB.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 	innerSB.Where("parent_span_id = ''")
 
+	// this only helps when there is a filter
+	if query.Filter != nil && query.Filter.Expression != "" {
+		innerSB.Where("trace_id GLOBAL IN __toe")
+	}
+
 	// Add time filter to inner query
 	innerSB.Where(
 		innerSB.GE("timestamp", fmt.Sprintf("%d", start)),

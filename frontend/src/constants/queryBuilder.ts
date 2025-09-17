@@ -12,6 +12,7 @@ import {
 	HavingForm,
 	IBuilderFormula,
 	IBuilderQuery,
+	IBuilderTraceOperator,
 	IClickHouseQuery,
 	IPromQLQuery,
 	Query,
@@ -49,6 +50,8 @@ import {
 
 export const MAX_FORMULAS = 20;
 export const MAX_QUERIES = 26;
+
+export const TRACE_OPERATOR_QUERY_NAME = 'Trace Operator';
 
 export const idDivider = '--';
 export const selectValueDivider = '__';
@@ -263,6 +266,11 @@ export const initialFormulaBuilderFormValues: IBuilderFormula = {
 	legend: '',
 };
 
+export const initialQueryBuilderFormTraceOperatorValues: IBuilderTraceOperator = {
+	...initialQueryBuilderFormTracesValues,
+	queryName: TRACE_OPERATOR_QUERY_NAME,
+};
+
 export const initialQueryPromQLData: IPromQLQuery = {
 	name: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
 	query: '',
@@ -280,6 +288,7 @@ export const initialClickHouseData: IClickHouseQuery = {
 export const initialQueryBuilderData: QueryBuilderData = {
 	queryData: [initialQueryBuilderFormValues],
 	queryFormulas: [],
+	queryTraceOperator: [],
 };
 
 export const initialSingleQueryMap: Record<
