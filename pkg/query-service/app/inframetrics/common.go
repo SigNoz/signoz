@@ -207,7 +207,7 @@ var (
 	// TODO(srikanthccv): import metadata yaml from receivers and use generated files to check the metrics
 	podMetricNamesToCheck = []string{
 		GetDotMetrics("k8s_pod_cpu_usage"),
-		GetDotMetrics("k8s_pod_memory_usage"),
+		GetDotMetrics("k8s_pod_memory_working_set"),
 		GetDotMetrics("k8s_pod_cpu_request_utilization"),
 		GetDotMetrics("k8s_pod_memory_request_utilization"),
 		GetDotMetrics("k8s_pod_cpu_limit_utilization"),
@@ -218,7 +218,7 @@ var (
 	nodeMetricNamesToCheck = []string{
 		GetDotMetrics("k8s_node_cpu_usage"),
 		GetDotMetrics("k8s_node_allocatable_cpu"),
-		GetDotMetrics("k8s_node_memory_usage"),
+		GetDotMetrics("k8s_node_memory_working_set"),
 		GetDotMetrics("k8s_node_allocatable_memory"),
 		GetDotMetrics("k8s_node_condition_ready"),
 	}
