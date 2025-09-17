@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 import { getYAxisFormattedValue } from '../yAxisConfig';
 
 describe('getYAxisFormattedValue', () => {
@@ -118,10 +119,19 @@ describe('getYAxisFormattedValue', () => {
 			expect(getYAxisFormattedValue('abc123', 'none')).toBe('NaN');
 		});
 
-		it('should handle very small numbers', () => {
-			expect(getYAxisFormattedValue('0.0001', 'none')).toBe('0');
-			expect(getYAxisFormattedValue('-0.0001', 'none')).toBe('0');
-			expect(getYAxisFormattedValue('0.000000001', 'none')).toBe('0');
+		it('should handle very small numbers with custom decimal logic', () => {
+			expect(getYAxisFormattedValue('0.0001', 'none')).toBe('0.0001');
+			expect(getYAxisFormattedValue('-0.0001', 'none')).toBe('-0.0001');
+			expect(getYAxisFormattedValue('0.000000001', 'none')).toBe('0.000000001');
+		});
+
+		it('should show 3 decimal places after first non-zero digit', () => {
+			// Example: 0.000000250034 should show 0.00000025 (3 places after first non-zero)
+			expect(getYAxisFormattedValue('0.000000250034', 'none')).toBe('0.00000025');
+			// Example: 0.00000025 should show 0.00000025 (exactly 3 places after first non-zero)
+			expect(getYAxisFormattedValue('0.00000025', 'none')).toBe('0.00000025');
+			// trailing zeros removed
+			expect(getYAxisFormattedValue('0.000000250000', 'none')).toBe('0.00000025');
 		});
 
 		it('should handle floating point precision issues', () => {
