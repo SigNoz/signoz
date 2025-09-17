@@ -21,7 +21,7 @@ interface UseFilterConfigReturn {
 	setCustomFilters: React.Dispatch<React.SetStateAction<FilterType[]>>;
 	isCustomFiltersLoading: boolean;
 	isDynamicFilters: boolean;
-	setIsStale: React.Dispatch<React.SetStateAction<boolean>>;
+	refetchCustomFilters: () => void;
 }
 
 const useFilterConfig = ({
@@ -29,26 +29,27 @@ const useFilterConfig = ({
 	config,
 }: UseFilterConfigProps): UseFilterConfigReturn => {
 	const [customFilters, setCustomFilters] = useState<FilterType[]>([]);
-	const [isStale, setIsStale] = useState(true);
 	const isDynamicFilters = useMemo(() => customFilters.length > 0, [
 		customFilters,
 	]);
-	const { isFetching: isCustomFiltersLoading } = useQuery<
+	const { isFetching: isCustomFiltersLoading, refetch } = useQuery<
 		SuccessResponse<PayloadProps> | ErrorResponse,
 		Error
 	>(
 		[REACT_QUERY_KEY.GET_CUSTOM_FILTERS, signal],
 		() => getCustomFilters({ signal: signal || '' }),
 		{
-			onSuccess: (data) => {
-				if ('payload' in data && data.payload?.filters) {
-					setCustomFilters(data.payload.filters || ([] as FilterType[]));
+			enabled: !!signal,
+			refetchOnMount: 'always',
+			keepPreviousData: true,
+			onSuccess: (resp) => {
+				if ('payload' in resp && resp.payload?.filters) {
+					setCustomFilters(resp.payload.filters || ([] as FilterType[]));
 				}
-				setIsStale(false);
 			},
-			enabled: !!signal && isStale,
 		},
 	);
+
 	const filterConfig = useMemo(
 		() => getFilterConfig(signal, customFilters, config),
 		[config, customFilters, signal],
@@ -60,7 +61,7 @@ const useFilterConfig = ({
 		setCustomFilters,
 		isCustomFiltersLoading,
 		isDynamicFilters,
-		setIsStale,
+		refetchCustomFilters: refetch,
 	};
 };
 
