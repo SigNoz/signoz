@@ -293,7 +293,7 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 	ruleId := getRuleIDFromAlert(alert)
 	config, err := d.notificationManager.GetNotificationConfig(d.orgID, ruleId)
 	if err != nil {
-		d.logger.ErrorContext(d.ctx, "error getting alert notification config", "ruleId", ruleId, "error", err)
+		d.logger.ErrorContext(d.ctx, "error getting alert notification config", "rule_id", ruleId, "error", err)
 		return
 	}
 
