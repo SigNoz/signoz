@@ -7,7 +7,6 @@ import {
 } from '@signozhq/resizable';
 import { Button, Tabs } from 'antd';
 import FlamegraphImg from 'assets/TraceDetail/Flamegraph';
-import cx from 'classnames';
 import TraceFlamegraph from 'container/PaginatedTraceFlamegraph/PaginatedTraceFlamegraph';
 import SpanDetailsDrawer from 'container/SpanDetailsDrawer/SpanDetailsDrawer';
 import TraceMetadata from 'container/TraceMetadata/TraceMetadata';
@@ -151,14 +150,7 @@ function TraceDetailsV2(): JSX.Element {
 
 			<ResizableHandle withHandle className="resizable-handle" />
 
-			<ResizablePanel
-				defaultSize={20}
-				minSize={20}
-				maxSize={50}
-				className={cx('span-details-drawer', {
-					'span-details-drawer-docked': isSpanDetailsDocked,
-				})}
-			>
+			<ResizablePanel defaultSize={20} minSize={20} maxSize={50}>
 				<SpanDetailsDrawer
 					isSpanDetailsDocked={isSpanDetailsDocked}
 					setIsSpanDetailsDocked={setIsSpanDetailsDocked}

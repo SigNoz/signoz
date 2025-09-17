@@ -3,6 +3,7 @@ import './SpanDetailsDrawer.styles.scss';
 import { Button, Tabs, TabsProps, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
+import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { themeColors } from 'constants/theme';
@@ -115,7 +116,11 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 	}
 
 	return (
-		<>
+		<div
+			className={cx('span-details-drawer', {
+				'span-details-drawer-docked': isSpanDetailsDocked,
+			})}
+		>
 			<section className="header">
 				{!isSpanDetailsDocked && (
 					<div className="heading">
@@ -265,7 +270,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 					key={activeDrawerView}
 				/>
 			)}
-		</>
+		</div>
 	);
 }
 
