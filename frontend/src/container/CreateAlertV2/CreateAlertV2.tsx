@@ -8,6 +8,7 @@ import AlertCondition from './AlertCondition';
 import { CreateAlertProvider } from './context';
 import CreateAlertHeader from './CreateAlertHeader';
 import EvaluationSettings from './EvaluationSettings';
+import NotificationSettings from './NotificationSettings';
 import QuerySection from './QuerySection';
 import { showCondensedLayout } from './utils';
 
@@ -27,6 +28,7 @@ function CreateAlertV2({
 				<QuerySection />
 				<AlertCondition />
 				{!showCondensedLayoutFlag ? <EvaluationSettings /> : null}
+				<NotificationSettings />
 			</div>
 		</CreateAlertProvider>
 	);
