@@ -116,6 +116,9 @@ def test_logs_list(
         },
     )
 
+    if response.status_code != HTTPStatus.OK:
+        print(response.json())
+
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
 
