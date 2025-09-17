@@ -1,4 +1,6 @@
-import { APIMonitoringResponseRow } from 'container/ApiMonitoring/types';
+import { APIMonitoringResponseColumn } from 'container/ApiMonitoring/types';
+
+import { RequestType } from '../v5/queryRange';
 
 export interface Props {
 	start: number;
@@ -11,16 +13,18 @@ export interface Props {
 
 export interface PayloadProps {
 	data: {
-		result: {
-			table: {
-				columns: {
-					isValueColumn: boolean;
-					name: string;
-					queryName: string;
-				}[];
-				rows: APIMonitoringResponseRow[];
-			};
-		}[];
+		data: {
+			results: {
+				columns: APIMonitoringResponseColumn[];
+				data: string[][];
+			}[];
+		};
+		meta: {
+			rowsScanned: number;
+			bytesScanned: number;
+			durationMs: number;
+		};
+		type: RequestType;
 	};
 	status: string;
 }

@@ -11,6 +11,17 @@ export interface APIMonitoringResponseRow {
 	};
 }
 
+export interface APIMonitoringResponseColumn {
+	name: string;
+	signal: string;
+	fieldContext: string;
+	fieldDataType: string;
+	queryName: string;
+	aggregationIndex: number;
+	meta: Record<string, any>;
+	columnType: string;
+}
+
 export interface EndPointsResponseRow {
 	data: {
 		[key: string]: string | number | undefined;

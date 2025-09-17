@@ -87,13 +87,17 @@ function DomainList(): JSX.Element {
 				end: maxTime,
 				show_ip: Boolean(showIP),
 				filter: {
-					expression: `${compositeData?.builder?.queryData[0]?.filter?.expression}`,
+					expression: `kind_string = 'Client' ${compositeData?.builder?.queryData[0]?.filter?.expression}`,
 				},
 			}),
 	);
 
 	const formattedDataForTable = useMemo(
-		() => formatDataForTable(data?.data?.data?.result[0]?.table?.rows || []),
+		() =>
+			formatDataForTable(
+				data?.data?.data?.data.results[0]?.data || [],
+				data?.data?.data?.data.results[0]?.columns || [],
+			),
 		[data],
 	);
 
