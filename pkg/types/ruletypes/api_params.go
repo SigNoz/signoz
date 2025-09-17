@@ -53,11 +53,11 @@ type PostableRule struct {
 
 	Evaluation *EvaluationEnvelope `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
 
-	NotificationGroupBy []string  `json:"notificationGroupBy,omitempty"`
-	ReNotify            *ReNotify `json:"renotify,omitempty"`
+	NotificationSettings *NotificationSettings `json:"notificationSettings,omitempty"`
 }
 
-type ReNotify struct {
+type NotificationSettings struct {
+	NotificationGroupBy    []string `json:"notificationGroupBy,omitempty"`
 	ReNotifyInterval       Duration `json:"renotify,omitempty"`
 	NoDataRenotifyInterval Duration `json:"noDataRenotify,omitempty"`
 }

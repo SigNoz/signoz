@@ -1,5 +1,4 @@
 // Package nfmanager provides interfaces and implementations for alert notification grouping strategies.
-// It supports multi-tenancy and rule-based grouping configurations.
 package nfmanager
 
 import (

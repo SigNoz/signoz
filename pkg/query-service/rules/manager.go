@@ -281,8 +281,8 @@ func (m *Manager) initiate(ctx context.Context) error {
 				loadErrors = append(loadErrors, err)
 				continue
 			}
-			if parsedRule.ReNotify != nil {
-				config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationGroupBy, parsedRule.ReNotify.ReNotifyInterval, parsedRule.ReNotify.NoDataRenotifyInterval)
+			if parsedRule.NotificationSettings != nil {
+				config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationSettings.NotificationGroupBy, parsedRule.NotificationSettings.ReNotifyInterval, parsedRule.NotificationSettings.NoDataRenotifyInterval)
 				err = m.alertmanager.SetNotificationConfig(ctx, org.ID, rec.ID.StringValue(), &config)
 				if err != nil {
 					loadErrors = append(loadErrors, err)
@@ -374,8 +374,8 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 		if err != nil {
 			return err
 		}
-		if parsedRule.ReNotify != nil {
-			config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationGroupBy, parsedRule.ReNotify.ReNotifyInterval, parsedRule.ReNotify.NoDataRenotifyInterval)
+		if parsedRule.NotificationSettings != nil {
+			config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationSettings.NotificationGroupBy, parsedRule.NotificationSettings.ReNotifyInterval, parsedRule.NotificationSettings.NoDataRenotifyInterval)
 			err = m.alertmanager.SetNotificationConfig(ctx, orgID, existingRule.ID.StringValue(), &config)
 			if err != nil {
 				return err
@@ -569,8 +569,8 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 			preferredChannels = parsedRule.PreferredChannels
 		}
 
-		if parsedRule.ReNotify != nil {
-			config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationGroupBy, parsedRule.ReNotify.ReNotifyInterval, parsedRule.ReNotify.NoDataRenotifyInterval)
+		if parsedRule.NotificationSettings != nil {
+			config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationSettings.NotificationGroupBy, parsedRule.NotificationSettings.ReNotifyInterval, parsedRule.NotificationSettings.NoDataRenotifyInterval)
 			err = m.alertmanager.SetNotificationConfig(ctx, orgID, storedRule.ID.StringValue(), &config)
 			if err != nil {
 				return err

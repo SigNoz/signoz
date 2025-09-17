@@ -234,9 +234,7 @@ func New(
 	notificationManager, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
-		nfmanager.Config{
-			Provider: "rulebased",
-		},
+		nfmanager.Config{},
 		NewNotificationManagerProviderFactories(),
 		"rulebased",
 	)
