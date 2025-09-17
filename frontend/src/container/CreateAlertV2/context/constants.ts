@@ -1,13 +1,17 @@
 import { Color } from '@signozhq/design-tokens';
+import { TIMEZONE_DATA } from 'container/CreateAlertV2/EvaluationSettings/utils';
+import dayjs from 'dayjs';
 import getRandomColor from 'lib/getRandomColor';
 import { v4 } from 'uuid';
 
 import {
+	AdvancedOptionsState,
 	AlertState,
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
 	AlertThresholdState,
 	Algorithm,
+	EvaluationWindowState,
 	Seasonality,
 	Threshold,
 	TimeDuration,
@@ -70,6 +74,48 @@ export const INITIAL_ALERT_THRESHOLD_STATE: AlertThresholdState = {
 	thresholds: [INITIAL_CRITICAL_THRESHOLD],
 };
 
+export const INITIAL_ADVANCED_OPTIONS_STATE: AdvancedOptionsState = {
+	sendNotificationIfDataIsMissing: {
+		toleranceLimit: 0,
+		timeUnit: '',
+	},
+	enforceMinimumDatapoints: {
+		minimumDatapoints: 0,
+	},
+	delayEvaluation: {
+		delay: 0,
+		timeUnit: '',
+	},
+	evaluationCadence: {
+		mode: 'default',
+		default: {
+			value: 1,
+			timeUnit: 'm',
+		},
+		custom: {
+			repeatEvery: 'week',
+			startAt: '00:00:00',
+			occurence: [],
+			timezone: TIMEZONE_DATA[0].value,
+		},
+		rrule: {
+			date: dayjs(),
+			startAt: '00:00:00',
+			rrule: '',
+		},
+	},
+};
+
+export const INITIAL_EVALUATION_WINDOW_STATE: EvaluationWindowState = {
+	windowType: 'rolling',
+	timeframe: '5m0s',
+	startingAt: {
+		time: '00:00:00',
+		number: '1',
+		timezone: TIMEZONE_DATA[0].value,
+	},
+};
+
 export const THRESHOLD_OPERATOR_OPTIONS = [
 	{ value: AlertThresholdOperator.IS_ABOVE, label: 'IS ABOVE' },
 	{ value: AlertThresholdOperator.IS_BELOW, label: 'IS BELOW' },
@@ -114,4 +160,11 @@ export const ANOMALY_SEASONALITY_OPTIONS = [
 	{ value: Seasonality.HOURLY, label: 'Hourly' },
 	{ value: Seasonality.DAILY, label: 'Daily' },
 	{ value: Seasonality.WEEKLY, label: 'Weekly' },
+];
+
+export const ADVANCED_OPTIONS_TIME_UNIT_OPTIONS = [
+	{ value: 's', label: 'Second' },
+	{ value: 'm', label: 'Minute' },
+	{ value: 'h', label: 'Hours' },
+	{ value: 'd', label: 'Day' },
 ];
