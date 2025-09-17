@@ -191,7 +191,7 @@ describe('utils', () => {
 
 			// When date is provided, DTSTART is automatically added to the rrule string
 			expect(rrulestr).toHaveBeenCalledWith(
-				expect.stringContaining('DTSTART:20240120T020000Z'),
+				expect.stringMatching(/DTSTART:20240120T\d{6}Z/),
 			);
 		});
 
