@@ -37,7 +37,7 @@ export const defaultAddedColumns: IEntityColumn[] = [
 		canRemove: false,
 	},
 	{
-		label: 'Memory Usage (bytes)',
+		label: 'Memory Usage (WSS)',
 		value: 'memory',
 		id: 'memory',
 		canRemove: false,
@@ -121,7 +121,7 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Memory Usage (bytes)</div>,
+		title: <div className="column-header-left">Memory Usage (WSS)</div>,
 		dataIndex: 'memory',
 		key: 'memory',
 		width: 80,
@@ -129,7 +129,7 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Memory Alloc (bytes)</div>,
+		title: <div className="column-header-left">Memory Allocatable</div>,
 		dataIndex: 'memory_allocatable',
 		key: 'memory_allocatable',
 		width: 80,

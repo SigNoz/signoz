@@ -3,8 +3,13 @@ import { blue } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
 import { Col, Row, Space } from 'antd';
 import { FontSize } from 'container/OptionsMenu/types';
+import { Info } from 'lucide-react';
 import styled from 'styled-components';
-import { getActiveLogBackground, getDefaultLogBackground } from 'utils/logs';
+import {
+	getActiveLogBackground,
+	getCustomHighlightBackground,
+	getDefaultLogBackground,
+} from 'utils/logs';
 
 import { RawLogContentProps } from './types';
 
@@ -13,6 +18,7 @@ export const RawLogViewContainer = styled(Row)<{
 	$isReadOnly?: boolean;
 	$isActiveLog?: boolean;
 	$isHightlightedLog: boolean;
+	$isCustomHighlighted?: boolean;
 	$logType: string;
 	fontSize: FontSize;
 }>`
@@ -50,6 +56,18 @@ export const RawLogViewContainer = styled(Row)<{
 			  };
 			  transition: background-color 2s ease-in;`
 			: ''}
+
+	${({ $isCustomHighlighted, $isDarkMode, $logType }): string =>
+		getCustomHighlightBackground($isCustomHighlighted, $isDarkMode, $logType)}
+`;
+
+export const InfoIconWrapper = styled(Info)`
+	display: flex;
+	align-items: center;
+	margin-right: 4px;
+	cursor: help;
+	flex-shrink: 0;
+	height: auto;
 `;
 
 export const ExpandIconWrapper = styled(Col)`

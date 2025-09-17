@@ -36,7 +36,7 @@ var (
 	metricNamesForNodes = map[string]string{
 		"cpu":                GetDotMetrics("k8s_node_cpu_usage"),
 		"cpu_allocatable":    GetDotMetrics("k8s_node_allocatable_cpu"),
-		"memory":             GetDotMetrics("k8s_node_memory_usage"),
+		"memory":             GetDotMetrics("k8s_node_memory_working_set"),
 		"memory_allocatable": GetDotMetrics("k8s_node_allocatable_memory"),
 		"node_condition":     GetDotMetrics("k8s_node_condition_ready"),
 	}

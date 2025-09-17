@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/govaluate"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -423,13 +424,25 @@ func (r *QueryRangeRequest) GetQueriesSupportingZeroDefault() map[string]bool {
 	canDefaultZero := make(map[string]bool)
 	for _, q := range r.CompositeQuery.Queries {
 		if q.Type == QueryTypeBuilder {
-			if query, ok := q.Spec.(QueryBuilderQuery[TraceAggregation]); ok {
-				if len(query.Aggregations) == 1 && canDefaultZeroAgg(query.Aggregations[0].Expression) {
-					canDefaultZero[query.Name] = true
+			switch spec := q.Spec.(type) {
+			case QueryBuilderQuery[TraceAggregation]:
+				if len(spec.Aggregations) == 1 && canDefaultZeroAgg(spec.Aggregations[0].Expression) {
+					canDefaultZero[spec.Name] = true
 				}
-			} else if query, ok := q.Spec.(QueryBuilderQuery[LogAggregation]); ok {
-				if len(query.Aggregations) == 1 && canDefaultZeroAgg(query.Aggregations[0].Expression) {
-					canDefaultZero[query.Name] = true
+			case QueryBuilderQuery[LogAggregation]:
+				if len(spec.Aggregations) == 1 && canDefaultZeroAgg(spec.Aggregations[0].Expression) {
+					canDefaultZero[spec.Name] = true
+				}
+			case QueryBuilderQuery[MetricAggregation]:
+				if len(spec.Aggregations) == 1 {
+					timeAgg := spec.Aggregations[0].TimeAggregation
+
+					if timeAgg == metrictypes.TimeAggregationCount ||
+						timeAgg == metrictypes.TimeAggregationCountDistinct ||
+						timeAgg == metrictypes.TimeAggregationRate ||
+						timeAgg == metrictypes.TimeAggregationIncrease {
+						canDefaultZero[spec.Name] = true
+					}
 				}
 			}
 		}

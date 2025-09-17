@@ -3,24 +3,30 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './LogsFormatOptionsMenu.styles.scss';
 
-import { Button, Input, InputNumber, Tooltip, Typography } from 'antd';
+import { Button, Input, InputNumber, Popover, Tooltip, Typography } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
 import cx from 'classnames';
 import { LogViewMode } from 'container/LogsTable';
 import { FontSize, OptionsMenuConfig } from 'container/OptionsMenu/types';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { Check, ChevronLeft, ChevronRight, Minus, Plus, X } from 'lucide-react';
+import {
+	Check,
+	ChevronLeft,
+	ChevronRight,
+	Minus,
+	Plus,
+	Sliders,
+	X,
+} from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface LogsFormatOptionsMenuProps {
-	title: string;
 	items: any;
 	selectedOptionFormat: any;
 	config: OptionsMenuConfig;
 }
 
 export default function LogsFormatOptionsMenu({
-	title,
 	items,
 	selectedOptionFormat,
 	config,
@@ -43,6 +49,7 @@ export default function LogsFormatOptionsMenu({
 	const [selectedValue, setSelectedValue] = useState<string | null>(null);
 	const listRef = useRef<HTMLDivElement>(null);
 	const initialMouseEnterRef = useRef<boolean>(false);
+	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 
 	const onChange = useCallback(
 		(key: LogViewMode) => {
@@ -202,7 +209,7 @@ export default function LogsFormatOptionsMenu({
 		};
 	}, [selectedValue]);
 
-	return (
+	const popoverContent = (
 		<div
 			className={cx(
 				'nested-menu-container',
@@ -344,7 +351,7 @@ export default function LogsFormatOptionsMenu({
 					</div>
 					<div className="horizontal-line" />
 					<div className="menu-container">
-						<div className="title"> {title} </div>
+						<div className="title">FORMAT</div>
 
 						<div className="menu-items">
 							{items.map(
@@ -439,5 +446,22 @@ export default function LogsFormatOptionsMenu({
 				</div>
 			)}
 		</div>
+	);
+	return (
+		<Popover
+			content={popoverContent}
+			trigger="click"
+			placement="bottomRight"
+			arrow={false}
+			open={isPopoverOpen}
+			onOpenChange={setIsPopoverOpen}
+			rootClassName="format-options-popover"
+		>
+			<Button
+				className="periscope-btn ghost"
+				icon={<Sliders size={14} />}
+				data-testid="periscope-btn-format-options"
+			/>
+		</Popover>
 	);
 }

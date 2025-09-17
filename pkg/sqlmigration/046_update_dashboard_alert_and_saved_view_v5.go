@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -60,7 +59,8 @@ func (migration *queryBuilderV5Migration) getTraceDuplicateKeys(ctx context.Cont
 
 	rows, err := migration.telemetryStore.ClickhouseDB().Query(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query trace duplicate keys: %w", err)
+		migration.logger.WarnContext(ctx, "failed to query trace duplicate keys", "error", err)
+		return nil, nil
 	}
 	defer rows.Close()
 
@@ -68,7 +68,8 @@ func (migration *queryBuilderV5Migration) getTraceDuplicateKeys(ctx context.Cont
 	for rows.Next() {
 		var key string
 		if err := rows.Scan(&key); err != nil {
-			return nil, fmt.Errorf("failed to scan trace duplicate key: %w", err)
+			migration.logger.WarnContext(ctx, "failed to scan trace duplicate key", "error", err)
+			continue
 		}
 		keys = append(keys, key)
 	}
@@ -89,7 +90,8 @@ func (migration *queryBuilderV5Migration) getLogDuplicateKeys(ctx context.Contex
 
 	rows, err := migration.telemetryStore.ClickhouseDB().Query(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query log duplicate keys: %w", err)
+		migration.logger.WarnContext(ctx, "failed to query log duplicate keys", "error", err)
+		return nil, nil
 	}
 	defer rows.Close()
 
@@ -97,7 +99,8 @@ func (migration *queryBuilderV5Migration) getLogDuplicateKeys(ctx context.Contex
 	for rows.Next() {
 		var key string
 		if err := rows.Scan(&key); err != nil {
-			return nil, fmt.Errorf("failed to scan log duplicate key: %w", err)
+			migration.logger.WarnContext(ctx, "failed to scan log duplicate key", "error", err)
+			continue
 		}
 		keys = append(keys, key)
 	}

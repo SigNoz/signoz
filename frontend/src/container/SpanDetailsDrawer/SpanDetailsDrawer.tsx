@@ -1,30 +1,27 @@
 import './SpanDetailsDrawer.styles.scss';
 
 import { Button, Tabs, TabsProps, Tooltip, Typography } from 'antd';
-import cx from 'classnames';
+import { RadioChangeEvent } from 'antd/lib';
+import LogsIcon from 'assets/AlertHistory/LogsIcon';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
-import { QueryParams } from 'constants/query';
-import ROUTES from 'constants/routes';
+import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { themeColors } from 'constants/theme';
-import { getTraceToLogsQuery } from 'container/TraceDetail/SelectedSpanDetails/config';
-import createQueryParams from 'lib/createQueryParams';
-import history from 'lib/history';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { Anvil, Bookmark, Link2, PanelRight, Search } from 'lucide-react';
-import { Dispatch, SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { formatEpochTimestamp } from 'utils/timeUtils';
 
 import Attributes from './Attributes/Attributes';
+import { RelatedSignalsViews } from './constants';
 import Events from './Events/Events';
 import LinkedSpans from './LinkedSpans/LinkedSpans';
+import SpanRelatedSignals from './SpanRelatedSignals/SpanRelatedSignals';
 
-const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
 interface ISpanDetailsDrawerProps {
 	isSpanDetailsDocked: boolean;
 	setIsSpanDetailsDocked: Dispatch<SetStateAction<boolean>>;
 	selectedSpan: Span | undefined;
-	traceID: string;
 	traceStartTime: number;
 	traceEndTime: number;
 }
@@ -35,15 +32,30 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		setIsSpanDetailsDocked,
 		selectedSpan,
 		traceStartTime,
-		traceID,
 		traceEndTime,
 	} = props;
 
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
+	const [isRelatedSignalsOpen, setIsRelatedSignalsOpen] = useState<boolean>(
+		false,
+	);
+	const [activeDrawerView, setActiveDrawerView] = useState<RelatedSignalsViews>(
+		RelatedSignalsViews.LOGS,
+	);
 	const color = generateColor(
 		selectedSpan?.serviceName || '',
 		themeColors.traceDetailColors,
 	);
+
+	const handleRelatedSignalsChange = useCallback((e: RadioChangeEvent): void => {
+		const selectedView = e.target.value as RelatedSignalsViews;
+		setActiveDrawerView(selectedView);
+		setIsRelatedSignalsOpen(true);
+	}, []);
+
+	const handleRelatedSignalsClose = useCallback((): void => {
+		setIsRelatedSignalsOpen(false);
+	}, []);
 
 	function getItems(span: Span, startTime: number): TabsProps['items'] {
 		return [
@@ -101,27 +113,9 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			},
 		];
 	}
-	const onLogsHandler = (): void => {
-		const query = getTraceToLogsQuery(traceID, traceStartTime, traceEndTime);
-
-		history.push(
-			`${ROUTES.LOGS_EXPLORER}?${createQueryParams({
-				[QueryParams.compositeQuery]: JSON.stringify(query),
-				// we subtract 5 minutes from the start time to handle the cases when the trace duration is in nanoseconds
-				[QueryParams.startTime]: traceStartTime - FIVE_MINUTES_IN_MS,
-				// we add 5 minutes to the end time for nano second duration traces
-				[QueryParams.endTime]: traceEndTime + FIVE_MINUTES_IN_MS,
-			})}`,
-		);
-	};
 
 	return (
-		<div
-			className={cx(
-				'span-details-drawer',
-				isSpanDetailsDocked ? 'span-details-drawer-docked' : '',
-			)}
-		>
+		<>
 			<section className="header">
 				{!isSpanDetailsDocked && (
 					<div className="heading">
@@ -216,11 +210,30 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 								</div>
 							</div>
 						)}
+						<div className="item">
+							<Typography.Text className="attribute-key">
+								related signals
+							</Typography.Text>
+							<div className="related-signals-section">
+								<SignozRadioGroup
+									value=""
+									options={[
+										{
+											label: (
+												<div className="view-title">
+													<LogsIcon width={14} height={14} />
+													Logs
+												</div>
+											),
+											value: RelatedSignalsViews.LOGS,
+										},
+									]}
+									onChange={handleRelatedSignalsChange}
+									className="related-signals-radio"
+								/>
+							</div>
+						</div>
 					</section>
-
-					<Button onClick={onLogsHandler} className="related-logs">
-						Go to related logs
-					</Button>
 
 					<section className="attributes-events">
 						<Tabs
@@ -240,7 +253,19 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 					</section>
 				</>
 			)}
-		</div>
+
+			{selectedSpan && (
+				<SpanRelatedSignals
+					selectedSpan={selectedSpan}
+					traceStartTime={traceStartTime}
+					traceEndTime={traceEndTime}
+					isOpen={isRelatedSignalsOpen}
+					onClose={handleRelatedSignalsClose}
+					initialView={activeDrawerView}
+					key={activeDrawerView}
+				/>
+			)}
+		</>
 	);
 }
 
