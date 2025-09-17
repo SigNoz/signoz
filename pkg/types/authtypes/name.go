@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	nameRegex = regexp.MustCompile("")
+	nameRegex = regexp.MustCompile("^[a-z]{1,35}$")
 )
 
 type Name struct {

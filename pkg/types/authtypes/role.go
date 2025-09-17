@@ -1,10 +1,8 @@
 package authtypes
 
 import (
-	"slices"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
@@ -13,10 +11,6 @@ var _ Typeable = new(role)
 type role struct{}
 
 func (role *role) Tuples(subject string, relation Relation, selector Selector, parentTypeable Typeable, parentSelectors ...Selector) ([]*openfgav1.CheckRequestTupleKey, error) {
-	if !slices.Contains(typeRoleSupportedRelations, relation) {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZUnsupportedRelation, "unsupported relation for type %s, supported relations are %v", TypeRole.StringValue(), typeRoleSupportedRelations)
-	}
-
 	tuples := make([]*openfgav1.CheckRequestTupleKey, 0)
 	for _, selector := range parentSelectors {
 		resourcesTuples, err := parentTypeable.Tuples(subject, relation, selector, nil)

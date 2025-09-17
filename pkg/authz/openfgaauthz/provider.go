@@ -208,6 +208,9 @@ func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims aut
 
 	err = provider.sequentialCheck(ctx, tuples)
 	if err != nil {
+		if errors.Ast(err, errors.TypeInternal) {
+			return err
+		}
 		return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "subject %s cannot %s object %s", subject, relation.StringValue(), typeable.Type().StringValue())
 	}
 

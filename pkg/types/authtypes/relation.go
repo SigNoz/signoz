@@ -10,18 +10,14 @@ var (
 	RelationList     = Relation{valuer.NewString("list")}
 	RelationBlock    = Relation{valuer.NewString("block")}
 	RelationAssignee = Relation{valuer.NewString("assignee")}
-
-	RelationViewer = Relation{valuer.NewString("viewer")}
-	RelationEditor = Relation{valuer.NewString("editor")}
-	RelationAdmin  = Relation{valuer.NewString("admin")}
 )
 
 var (
-	typeUserSupportedRelations         = []Relation{RelationRead, RelationUpdate, RelationDelete}
-	typeRoleSupportedRelations         = []Relation{RelationAssignee, RelationRead, RelationUpdate, RelationDelete}
-	typeOrganizationSupportedRelations = []Relation{RelationRead, RelationUpdate, RelationViewer, RelationAdmin, RelationEditor}
-	typeResourceSupportedRelations     = []Relation{RelationRead, RelationUpdate, RelationDelete, RelationBlock}
-	typeResourcesSupportedRelations    = []Relation{RelationCreate, RelationRead, RelationUpdate, RelationDelete, RelationList}
+	TypeUserSupportedRelations         = []Relation{RelationRead, RelationUpdate, RelationDelete}
+	TypeRoleSupportedRelations         = []Relation{RelationAssignee, RelationRead, RelationUpdate, RelationDelete}
+	TypeOrganizationSupportedRelations = []Relation{RelationCreate, RelationRead, RelationUpdate, RelationDelete, RelationList}
+	TypeResourceSupportedRelations     = []Relation{RelationRead, RelationUpdate, RelationDelete, RelationBlock}
+	TypeResourcesSupportedRelations    = []Relation{RelationCreate, RelationRead, RelationUpdate, RelationDelete, RelationList}
 )
 
 type Relation struct{ valuer.String }
