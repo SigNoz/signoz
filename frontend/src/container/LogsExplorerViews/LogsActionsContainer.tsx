@@ -1,11 +1,11 @@
 import { Switch, Typography } from 'antd';
 import { WsDataEvent } from 'api/common/getQueryStats';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
+import LogsDownloadOptionsMenu from 'components/LogsDownloadOptionsMenu/LogsDownloadOptionsMenu';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import Download from 'container/DownloadV2/DownloadV2';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { ArrowUp10, Minus } from 'lucide-react';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
@@ -20,11 +20,12 @@ function LogsActionsContainer({
 	handleToggleFrequencyChart,
 	orderBy,
 	setOrderBy,
-	flattenLogData,
 	isFetching,
 	isLoading,
 	isError,
 	isSuccess,
+	minTime,
+	maxTime,
 }: {
 	listQuery: any;
 	selectedPanelType: PANEL_TYPES;
@@ -32,12 +33,13 @@ function LogsActionsContainer({
 	handleToggleFrequencyChart: () => void;
 	orderBy: string;
 	setOrderBy: (value: string) => void;
-	flattenLogData: any;
 	isFetching: boolean;
 	isLoading: boolean;
 	isError: boolean;
 	isSuccess: boolean;
 	queryStats: WsDataEvent | undefined;
+	minTime: number;
+	maxTime: number;
 }): JSX.Element {
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
@@ -97,11 +99,15 @@ function LogsActionsContainer({
 									dataSource={DataSource.LOGS}
 								/>
 							</div>
-							<Download
-								data={flattenLogData}
-								isLoading={isFetching}
-								fileName="log_data"
-							/>
+							<div className="download-options-container">
+								<LogsDownloadOptionsMenu
+									startTime={minTime}
+									endTime={maxTime}
+									filter={listQuery?.filter?.expression || ''}
+									columns={config.addColumn?.value || []}
+									orderBy={orderBy}
+								/>
+							</div>
 							<div className="format-options-container">
 								<LogsFormatOptionsMenu
 									items={formatItems}
