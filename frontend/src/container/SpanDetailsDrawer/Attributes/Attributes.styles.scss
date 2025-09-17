@@ -64,6 +64,10 @@
 				border: 1px solid var(--bg-slate-400);
 				background: var(--bg-slate-500);
 
+				.copy-wrapper {
+					overflow: hidden;
+				}
+
 				.item-value {
 					color: var(--bg-vanilla-400);
 					font-family: Inter;
