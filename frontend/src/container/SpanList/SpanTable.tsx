@@ -1,7 +1,7 @@
 import { Button } from '@signozhq/button';
-import Pagination from '@signozhq/pagination';
 import { ColumnDef, DataTable, Row } from '@signozhq/table';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
+import Controls from 'container/Controls';
 import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
@@ -14,13 +14,15 @@ interface EntryPagination {
 	totalCount: number;
 	pageSize: number;
 	onPageChange: (page: number) => void;
+	onPageSizeChange?: (pageSize: number) => void;
+	isLoading?: boolean;
 }
 
 // Constants
 const SPAN_TYPE_ENTRY = 'entry-span';
 const SPAN_TYPE_SERVICE = 'service-span';
 const SPAN_TYPE_PAGINATION = 'pagination-row';
-const SERVICE_SPAN_PAGE_SIZE = 10;
+const SERVICE_SPAN_PAGE_SIZE = 3;
 
 interface SpanTableProps {
 	data: HierarchicalSpanData;
@@ -61,7 +63,10 @@ function SpanTable({
 	>({});
 	const [loadingSpans, setLoadingSpans] = useState<Record<string, boolean>>({});
 	const [serviceSpansPagination, setServiceSpansPagination] = useState<
-		Record<string, { currentPage: number; totalCount?: number }>
+		Record<
+			string,
+			{ currentPage: number; totalCount?: number; hasMorePages?: boolean }
+		>
 	>({});
 
 	const handleEntrySpanClick = useCallback(
@@ -82,7 +87,7 @@ function SpanTable({
 				// Initialize pagination state for this entry span
 				setServiceSpansPagination((prev) => ({
 					...prev,
-					[spanId]: { currentPage: 1 },
+					[spanId]: { currentPage: 1, hasMorePages: false },
 				}));
 
 				try {
@@ -99,6 +104,15 @@ function SpanTable({
 						serviceSpans,
 						isExpanded: true,
 					};
+
+					// Update hasMorePages based on response length
+					setServiceSpansPagination((prevPagination) => ({
+						...prevPagination,
+						[spanId]: {
+							...prevPagination[spanId],
+							hasMorePages: serviceSpans.length === SERVICE_SPAN_PAGE_SIZE,
+						},
+					}));
 
 					setExpandedEntrySpans((prev) => ({
 						...prev,
@@ -129,12 +143,6 @@ function SpanTable({
 
 			setLoadingSpans((prev) => ({ ...prev, [entrySpanId]: true }));
 
-			// Update pagination state
-			setServiceSpansPagination((prev) => ({
-				...prev,
-				[entrySpanId]: { ...prev[entrySpanId], currentPage: newPage },
-			}));
-
 			try {
 				const offset = (newPage - 1) * SERVICE_SPAN_PAGE_SIZE;
 				const serviceSpans = await fetchServiceSpans(
@@ -143,6 +151,16 @@ function SpanTable({
 					SERVICE_SPAN_PAGE_SIZE,
 					offset,
 				);
+
+				// Update hasMorePages based on response length
+				setServiceSpansPagination((prevPagination) => ({
+					...prevPagination,
+					[entrySpanId]: {
+						...prevPagination[entrySpanId],
+						currentPage: newPage,
+						hasMorePages: serviceSpans.length === SERVICE_SPAN_PAGE_SIZE,
+					},
+				}));
 
 				// Update the expanded entry span with new service spans
 				setExpandedEntrySpans((prev) => ({
@@ -160,6 +178,26 @@ function SpanTable({
 			}
 		},
 		[expandedEntrySpans, traceId],
+	);
+
+	const handleServiceSpanNavigatePrevious = useCallback(
+		(entrySpanId: string) => {
+			const pagination = serviceSpansPagination[entrySpanId];
+			if (pagination && pagination.currentPage > 1) {
+				handleServiceSpanPageChange(entrySpanId, pagination.currentPage - 1);
+			}
+		},
+		[serviceSpansPagination, handleServiceSpanPageChange],
+	);
+
+	const handleServiceSpanNavigateNext = useCallback(
+		(entrySpanId: string) => {
+			const pagination = serviceSpansPagination[entrySpanId];
+			if (pagination && pagination.hasMorePages) {
+				handleServiceSpanPageChange(entrySpanId, pagination.currentPage + 1);
+			}
+		},
+		[serviceSpansPagination, handleServiceSpanPageChange],
 	);
 
 	const handleSpanClick = useCallback(
@@ -226,15 +264,22 @@ function SpanTable({
 				if (!entrySpan || !pagination) return <div />;
 
 				return (
-					<Pagination
-						total={SERVICE_SPAN_PAGE_SIZE * 10} // TODO: Get actual total from API
-						pageSize={SERVICE_SPAN_PAGE_SIZE}
-						current={pagination.currentPage}
-						onPageChange={(page): void => {
-							handleServiceSpanPageChange(entrySpanId, page);
-						}}
-						align="start"
-					/>
+					<div className="service-span-pagination">
+						<Controls
+							offset={(pagination.currentPage - 1) * SERVICE_SPAN_PAGE_SIZE}
+							totalCount={SERVICE_SPAN_PAGE_SIZE * 10}
+							countPerPage={SERVICE_SPAN_PAGE_SIZE}
+							isLoading={loadingSpans[entrySpanId] || false}
+							handleNavigatePrevious={(): void =>
+								handleServiceSpanNavigatePrevious(entrySpanId)
+							}
+							handleNavigateNext={(): void =>
+								handleServiceSpanNavigateNext(entrySpanId)
+							}
+							handleCountItemsPerPageChange={(): void => {}} // Service spans use fixed page size
+							showSizeChanger={false} // Disable page size changer for service spans
+						/>
+					</div>
 				);
 			}
 
@@ -246,7 +291,8 @@ function SpanTable({
 			loadingSpans,
 			handleEntrySpanClick,
 			serviceSpansPagination,
-			handleServiceSpanPageChange,
+			handleServiceSpanNavigatePrevious,
+			handleServiceSpanNavigateNext,
 		],
 	);
 
@@ -409,11 +455,12 @@ function SpanTable({
 					});
 				});
 
-				// Add pagination row for service spans (only if there are SERVICE_SPAN_PAGE_SIZE spans)
+				// Add pagination row for service spans if we have spans and (current page > 1 or more pages available)
 				const pagination = serviceSpansPagination[spanId];
 				if (
 					pagination &&
-					expandedSpan.serviceSpans.length === SERVICE_SPAN_PAGE_SIZE
+					expandedSpan.serviceSpans.length > 0 &&
+					(pagination.currentPage > 1 || pagination.hasMorePages)
 				) {
 					result.push({
 						id: `${spanId}-pagination`,
@@ -458,6 +505,16 @@ function SpanTable({
 		fixedHeight: 600,
 	};
 
+	const handleNavigatePrevious = useCallback(() => {
+		if (entryPagination.currentPage > 1) {
+			entryPagination.onPageChange(entryPagination.currentPage - 1);
+		}
+	}, [entryPagination]);
+
+	const handleNavigateNext = useCallback(() => {
+		entryPagination.onPageChange(entryPagination.currentPage + 1);
+	}, [entryPagination]);
+
 	return (
 		<div className="span-table">
 			<DataTable
@@ -481,12 +538,15 @@ function SpanTable({
 				onRowClick={handleRowClick}
 				isLoading={isLoading}
 			/>
-			<Pagination
-				total={entryPagination.totalCount}
-				pageSize={entryPagination.pageSize}
-				current={entryPagination.currentPage}
-				onPageChange={entryPagination.onPageChange}
-				align="end"
+			<Controls
+				offset={(entryPagination.currentPage - 1) * entryPagination.pageSize}
+				countPerPage={entryPagination.pageSize}
+				totalCount={flattenedData.length}
+				isLoading={entryPagination.isLoading || isLoading || false}
+				handleNavigatePrevious={handleNavigatePrevious}
+				handleNavigateNext={handleNavigateNext}
+				handleCountItemsPerPageChange={(): void => {}}
+				showSizeChanger={false}
 			/>
 		</div>
 	);

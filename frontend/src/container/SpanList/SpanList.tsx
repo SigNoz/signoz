@@ -7,6 +7,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useCallback, useMemo } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
+import { DataSource } from 'types/common/queryBuilder';
 
 import SpanTable from './SpanTable';
 import { SpanDataRow } from './types';
@@ -24,7 +25,7 @@ function SpanList({ traceId, setSelectedSpan }: SpanListProps): JSX.Element {
 
 	// Entry spans pagination
 	const entryPage = parseInt(urlQuery.get('entryPage') || '1', 10);
-	const entryPageSize = 10;
+	const entryPageSize = 5;
 
 	const { data, isLoading, isFetching } = useGetQueryRange(
 		{
@@ -38,61 +39,74 @@ function SpanList({ traceId, setSelectedSpan }: SpanListProps): JSX.Element {
 						{
 							...payload.builder.queryData[0],
 							...{
-								name: 'A',
-								signal: 'traces',
+								queryName: 'A',
+								dataSource: DataSource.TRACES,
 								stepInterval: null,
 								disabled: false,
 								filter: {
 									expression: `trace_id = '${traceId}' isEntryPoint = 'true'`,
 								},
-								limit: entryPageSize,
-								offset: (entryPage - 1) * entryPageSize,
-								order: [
+								aggregateOperator: 'count',
+								timeAggregation: 'rate',
+								spaceAggregation: 'sum',
+								aggregations: [
 									{
-										key: {
-											name: 'timestamp',
-										},
-										direction: 'desc',
+										expression: 'count() ',
+									},
+								],
+								expression: 'A',
+								orderBy: [
+									{
+										columnName: 'timestamp',
+										order: 'desc',
 									},
 								],
 								having: {
 									expression: '',
 								},
-								selectFields: [
-									{
-										name: 'service.name',
-										fieldDataType: 'string',
-										signal: 'traces',
-										fieldContext: 'resource',
-									},
-									{
-										name: 'name',
-										fieldDataType: 'string',
-										signal: 'traces',
-									},
-									{
-										name: 'duration_nano',
-										fieldDataType: '',
-										signal: 'traces',
-										fieldContext: 'span',
-									},
-									{
-										name: 'http_method',
-										fieldDataType: '',
-										signal: 'traces',
-										fieldContext: 'span',
-									},
-									{
-										name: 'response_status_code',
-										fieldDataType: '',
-										signal: 'traces',
-										fieldContext: 'span',
-									},
-								],
+
+								reduceTo: 'avg',
 							},
 						},
 					],
 				},
+			},
+			tableParams: {
+				pagination: {
+					limit: entryPageSize,
+					offset: (entryPage - 1) * entryPageSize,
+				},
+				selectColumns: [
+					{
+						name: 'service.name',
+						fieldDataType: 'string',
+						signal: 'traces',
+						fieldContext: 'resource',
+					},
+					{
+						name: 'name',
+						fieldDataType: 'string',
+						signal: 'traces',
+					},
+					{
+						name: 'duration_nano',
+						fieldDataType: '',
+						signal: 'traces',
+						fieldContext: 'span',
+					},
+					{
+						name: 'http_method',
+						fieldDataType: '',
+						signal: 'traces',
+						fieldContext: 'span',
+					},
+					{
+						name: 'response_status_code',
+						fieldDataType: '',
+						signal: 'traces',
+						fieldContext: 'span',
+					},
+				],
 			},
 		},
 		// version,
@@ -118,6 +132,7 @@ function SpanList({ traceId, setSelectedSpan }: SpanListProps): JSX.Element {
 			),
 		[data?.payload.data.newResult.data.result],
 	);
+	console.log(data);
 
 	return (
 		<div className="span-list">
@@ -129,10 +144,10 @@ function SpanList({ traceId, setSelectedSpan }: SpanListProps): JSX.Element {
 					setSelectedSpan={setSelectedSpan}
 					entryPagination={{
 						currentPage: entryPage,
-						// TODO(shaheer): get the count from query_range
-						totalCount: 10,
+						totalCount: entryPageSize,
 						pageSize: entryPageSize,
 						onPageChange: handleEntryPageChange,
+						isLoading: isLoading || isFetching,
 					}}
 				/>
 			</div>

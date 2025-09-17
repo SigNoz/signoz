@@ -49,7 +49,6 @@
 		"@signozhq/callout": "0.0.2",
 		"@signozhq/design-tokens": "1.1.4",
 		"@signozhq/input": "0.0.2",
-		"@signozhq/pagination": "0.0.2",
 		"@signozhq/popover": "0.0.0",
 		"@signozhq/sonner": "0.1.0",
 		"@signozhq/table": "0.3.7",
