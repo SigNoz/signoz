@@ -34,16 +34,18 @@ export const convertBuilderQueryToIBuilderQuery = (
 		queryName: builderQuery.name,
 		dataSource,
 		legend: builderQuery.legend,
-		groupBy: builderQuery.groupBy?.map((group) => ({
-			key: group?.name,
-			dataType: group?.fieldDataType,
-			type: group?.fieldContext,
-			id: `${group?.name}--${group?.fieldDataType}--${group?.fieldContext}`,
-		})),
-		orderBy: builderQuery.order?.map((order) => ({
-			columnName: order?.key?.name,
-			order: order?.direction,
-		})),
+		groupBy:
+			builderQuery.groupBy?.map((group) => ({
+				key: group?.name,
+				dataType: group?.fieldDataType,
+				type: group?.fieldContext,
+				id: `${group?.name}--${group?.fieldDataType}--${group?.fieldContext}`,
+			})) || [],
+		orderBy:
+			builderQuery.order?.map((order) => ({
+				columnName: order?.key?.name,
+				order: order?.direction,
+			})) || [],
 	} as unknown) as IBuilderQuery;
 
 	return result;
