@@ -114,7 +114,6 @@ export function buildAlertScheduleFromRRule(
 
 		return occurrences;
 	} catch (error) {
-		console.error('Error building RRULE:', error);
 		return null;
 	}
 }
@@ -226,7 +225,6 @@ export function buildAlertScheduleFromCustomSchedule(
 		occurrences.sort((a, b) => a.getTime() - b.getTime());
 		return occurrences.slice(0, maxOccurrences);
 	} catch (error) {
-		console.error('Error building custom schedule:', error);
 		return null;
 	}
 }
