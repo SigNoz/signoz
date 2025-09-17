@@ -1,4 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
+import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { TIMEZONE_DATA } from 'container/CreateAlertV2/EvaluationSettings/utils';
 import dayjs from 'dayjs';
 import getRandomColor from 'lib/getRandomColor';
@@ -20,7 +21,6 @@ import {
 
 export const INITIAL_ALERT_STATE: AlertState = {
 	name: '',
-	description: '',
 	labels: {},
 	yAxisUnit: undefined,
 };
@@ -29,7 +29,7 @@ export const INITIAL_CRITICAL_THRESHOLD: Threshold = {
 	id: v4(),
 	label: 'CRITICAL',
 	thresholdValue: 0,
-	recoveryThresholdValue: 0,
+	recoveryThresholdValue: null,
 	unit: '',
 	channels: [],
 	color: Color.BG_SAKURA_500,
@@ -39,7 +39,7 @@ export const INITIAL_WARNING_THRESHOLD: Threshold = {
 	id: v4(),
 	label: 'WARNING',
 	thresholdValue: 0,
-	recoveryThresholdValue: 0,
+	recoveryThresholdValue: null,
 	unit: '',
 	channels: [],
 	color: Color.BG_AMBER_500,
@@ -49,7 +49,7 @@ export const INITIAL_INFO_THRESHOLD: Threshold = {
 	id: v4(),
 	label: 'INFO',
 	thresholdValue: 0,
-	recoveryThresholdValue: 0,
+	recoveryThresholdValue: null,
 	unit: '',
 	channels: [],
 	color: Color.BG_ROBIN_500,
@@ -59,7 +59,7 @@ export const INITIAL_RANDOM_THRESHOLD: Threshold = {
 	id: v4(),
 	label: '',
 	thresholdValue: 0,
-	recoveryThresholdValue: 0,
+	recoveryThresholdValue: null,
 	unit: '',
 	channels: [],
 	color: getRandomColor(),
@@ -77,21 +77,21 @@ export const INITIAL_ALERT_THRESHOLD_STATE: AlertThresholdState = {
 
 export const INITIAL_ADVANCED_OPTIONS_STATE: AdvancedOptionsState = {
 	sendNotificationIfDataIsMissing: {
-		toleranceLimit: 0,
-		timeUnit: '',
+		toleranceLimit: 1,
+		timeUnit: UniversalYAxisUnit.MINUTES,
 	},
 	enforceMinimumDatapoints: {
-		minimumDatapoints: 0,
+		minimumDatapoints: 1,
 	},
 	delayEvaluation: {
-		delay: 0,
-		timeUnit: '',
+		delay: 1,
+		timeUnit: UniversalYAxisUnit.MINUTES,
 	},
 	evaluationCadence: {
 		mode: 'default',
 		default: {
 			value: 1,
-			timeUnit: 'm',
+			timeUnit: UniversalYAxisUnit.MINUTES,
 		},
 		custom: {
 			repeatEvery: 'week',
@@ -114,14 +114,15 @@ export const INITIAL_EVALUATION_WINDOW_STATE: EvaluationWindowState = {
 		time: '00:00:00',
 		number: '1',
 		timezone: TIMEZONE_DATA[0].value,
+		unit: UniversalYAxisUnit.MINUTES,
 	},
 };
 
 export const THRESHOLD_OPERATOR_OPTIONS = [
-	{ value: AlertThresholdOperator.IS_ABOVE, label: 'IS ABOVE' },
-	{ value: AlertThresholdOperator.IS_BELOW, label: 'IS BELOW' },
-	{ value: AlertThresholdOperator.IS_EQUAL_TO, label: 'IS EQUAL TO' },
-	{ value: AlertThresholdOperator.IS_NOT_EQUAL_TO, label: 'IS NOT EQUAL TO' },
+	{ value: AlertThresholdOperator.IS_ABOVE, label: 'ABOVE' },
+	{ value: AlertThresholdOperator.IS_BELOW, label: 'BELOW' },
+	{ value: AlertThresholdOperator.IS_EQUAL_TO, label: 'EQUAL TO' },
+	{ value: AlertThresholdOperator.IS_NOT_EQUAL_TO, label: 'NOT EQUAL TO' },
 ];
 
 export const ANOMALY_THRESHOLD_OPERATOR_OPTIONS = [
@@ -164,10 +165,10 @@ export const ANOMALY_SEASONALITY_OPTIONS = [
 ];
 
 export const ADVANCED_OPTIONS_TIME_UNIT_OPTIONS = [
-	{ value: 's', label: 'Second' },
-	{ value: 'm', label: 'Minute' },
-	{ value: 'h', label: 'Hours' },
-	{ value: 'd', label: 'Day' },
+	{ value: UniversalYAxisUnit.SECONDS, label: 'Seconds' },
+	{ value: UniversalYAxisUnit.MINUTES, label: 'Minutes' },
+	{ value: UniversalYAxisUnit.HOURS, label: 'Hours' },
+	{ value: UniversalYAxisUnit.DAYS, label: 'Days' },
 ];
 
 export const NOTIFICATION_MESSAGE_PLACEHOLDER =
@@ -179,17 +180,14 @@ export const RE_NOTIFICATION_CONDITION_OPTIONS = [
 ];
 
 export const RE_NOTIFICATION_UNIT_OPTIONS = [
-	{ value: 'm', label: 'Minute' },
-	{ value: 'h', label: 'Hour' },
-	{ value: 'd', label: 'Day' },
-	{ value: 'w', label: 'Week' },
+	{ value: UniversalYAxisUnit.MINUTES, label: 'Minutes' },
+	{ value: UniversalYAxisUnit.HOURS, label: 'Hours' },
+	{ value: UniversalYAxisUnit.DAYS, label: 'Days' },
+	{ value: UniversalYAxisUnit.WEEKS, label: 'Weeks' },
 ];
 
 export const INITIAL_NOTIFICATION_SETTINGS_STATE: NotificationSettingsState = {
-	multipleNotifications: {
-		enabled: false,
-		value: '',
-	},
+	multipleNotifications: [],
 	reNotification: {
 		enabled: false,
 		value: 0,

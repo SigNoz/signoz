@@ -13,6 +13,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import {
 	INITIAL_ADVANCED_OPTIONS_STATE,
+	INITIAL_ALERT_STATE,
 	INITIAL_ALERT_THRESHOLD_STATE,
 	INITIAL_EVALUATION_WINDOW_STATE,
 	INITIAL_NOTIFICATION_SETTINGS_STATE,
@@ -40,11 +41,6 @@ export const alertCreationReducer = (
 				...state,
 				name: action.payload,
 			};
-		case 'SET_ALERT_DESCRIPTION':
-			return {
-				...state,
-				description: action.payload,
-			};
 		case 'SET_ALERT_LABELS':
 			return {
 				...state,
@@ -55,6 +51,8 @@ export const alertCreationReducer = (
 				...state,
 				yAxisUnit: action.payload,
 			};
+		case 'RESET':
+			return INITIAL_ALERT_STATE;
 		default:
 			return state;
 	}

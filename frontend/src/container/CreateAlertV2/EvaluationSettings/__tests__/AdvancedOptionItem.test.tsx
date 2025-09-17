@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import AdvancedOptionItem from '../AdvancedOptionItem';
+import AdvancedOptionItem from '../AdvancedOptionItem/AdvancedOptionItem';
 
 const TEST_INPUT_PLACEHOLDER = 'Test input';
 const TEST_TITLE = 'Test Title';

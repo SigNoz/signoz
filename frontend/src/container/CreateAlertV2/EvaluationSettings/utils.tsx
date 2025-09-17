@@ -4,6 +4,8 @@ import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 import { rrulestr } from 'rrule';
 
+import { RE_NOTIFICATION_UNIT_OPTIONS } from '../context/constants';
+import { EvaluationWindowState } from '../context/types';
 import { WEEKDAY_MAP } from './constants';
 import { CumulativeWindowTimeframes, RollingWindowTimeframes } from './types';
 
@@ -24,16 +26,18 @@ export const getEvaluationWindowTypeText = (
 	}
 };
 
-export const getCumulativeWindowTimeframeText = (timeframe: string): string => {
-	switch (timeframe) {
+export const getCumulativeWindowTimeframeText = (
+	evaluationWindow: EvaluationWindowState,
+): string => {
+	switch (evaluationWindow.timeframe) {
 		case CumulativeWindowTimeframes.CURRENT_HOUR:
-			return 'Current hour';
+			return `Current hour, starting at minute ${evaluationWindow.startingAt.number} (${evaluationWindow.startingAt.timezone})`;
 		case CumulativeWindowTimeframes.CURRENT_DAY:
-			return 'Current day';
+			return `Current day, starting from ${evaluationWindow.startingAt.time} (${evaluationWindow.startingAt.timezone})`;
 		case CumulativeWindowTimeframes.CURRENT_MONTH:
-			return 'Current month';
+			return `Current month, starting from day ${evaluationWindow.startingAt.number} at ${evaluationWindow.startingAt.time} (${evaluationWindow.startingAt.timezone})`;
 		default:
-			return 'Current hour';
+			return '';
 	}
 };
 
@@ -60,14 +64,27 @@ export const getRollingWindowTimeframeText = (
 	}
 };
 
+const getCustomRollingWindowTimeframeText = (
+	evaluationWindow: EvaluationWindowState,
+): string =>
+	`Last ${evaluationWindow.startingAt.number} ${
+		RE_NOTIFICATION_UNIT_OPTIONS.find(
+			(option) => option.value === evaluationWindow.startingAt.unit,
+		)?.label
+	}${parseInt(evaluationWindow.startingAt.number, 10) > 1 ? 's' : ''}`;
+
 export const getTimeframeText = (
-	windowType: 'rolling' | 'cumulative',
-	timeframe: string,
+	evaluationWindow: EvaluationWindowState,
 ): string => {
-	if (windowType === 'rolling') {
-		return getRollingWindowTimeframeText(timeframe as RollingWindowTimeframes);
+	if (evaluationWindow.windowType === 'rolling') {
+		if (evaluationWindow.timeframe === 'custom') {
+			return getCustomRollingWindowTimeframeText(evaluationWindow);
+		}
+		return getRollingWindowTimeframeText(
+			evaluationWindow.timeframe as RollingWindowTimeframes,
+		);
 	}
-	return getCumulativeWindowTimeframeText(timeframe);
+	return getCumulativeWindowTimeframeText(evaluationWindow);
 };
 
 export function buildAlertScheduleFromRRule(

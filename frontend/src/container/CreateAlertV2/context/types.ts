@@ -16,6 +16,7 @@ export interface ICreateAlertContextProps {
 	setEvaluationWindow: Dispatch<EvaluationWindowAction>;
 	notificationSettings: NotificationSettingsState;
 	setNotificationSettings: Dispatch<NotificationSettingsAction>;
+	discardAlertRule: () => void;
 }
 
 export interface ICreateAlertProviderProps {
@@ -31,22 +32,21 @@ export enum AlertCreationStep {
 
 export interface AlertState {
 	name: string;
-	description: string;
 	labels: Labels;
 	yAxisUnit: string | undefined;
 }
 
 export type CreateAlertAction =
 	| { type: 'SET_ALERT_NAME'; payload: string }
-	| { type: 'SET_ALERT_DESCRIPTION'; payload: string }
 	| { type: 'SET_ALERT_LABELS'; payload: Labels }
-	| { type: 'SET_Y_AXIS_UNIT'; payload: string | undefined };
+	| { type: 'SET_Y_AXIS_UNIT'; payload: string | undefined }
+	| { type: 'RESET' };
 
 export interface Threshold {
 	id: string;
 	label: string;
 	thresholdValue: number;
-	recoveryThresholdValue: number;
+	recoveryThresholdValue: number | null;
 	unit: string;
 	channels: string[];
 	color: string;
@@ -177,6 +177,7 @@ export interface EvaluationWindowState {
 		time: string;
 		number: string;
 		timezone: string;
+		unit: string;
 	};
 }
 
@@ -185,17 +186,14 @@ export type EvaluationWindowAction =
 	| { type: 'SET_TIMEFRAME'; payload: string }
 	| {
 			type: 'SET_STARTING_AT';
-			payload: { time: string; number: string; timezone: string };
+			payload: { time: string; number: string; timezone: string; unit: string };
 	  }
 	| { type: 'SET_EVALUATION_CADENCE_MODE'; payload: EvaluationCadenceMode }
 	| { type: 'RESET' };
 
 export type EvaluationCadenceMode = 'default' | 'custom' | 'rrule';
 export interface NotificationSettingsState {
-	multipleNotifications: {
-		enabled: boolean;
-		value: string;
-	};
+	multipleNotifications: string[] | null;
 	reNotification: {
 		enabled: boolean;
 		value: number;
@@ -208,7 +206,7 @@ export interface NotificationSettingsState {
 export type NotificationSettingsAction =
 	| {
 			type: 'SET_MULTIPLE_NOTIFICATIONS';
-			payload: { enabled: boolean; value: string };
+			payload: string[] | null;
 	  }
 	| {
 			type: 'SET_RE_NOTIFICATION';
