@@ -4,6 +4,14 @@ import { Span } from 'types/api/trace/getTraceV2';
 
 import { SpanDuration } from '../Success';
 
+// Constants to avoid string duplication
+const SPAN_DURATION_TEXT = '1.16 ms';
+const SPAN_DURATION_CLASS = '.span-duration';
+const INTERESTED_SPAN_CLASS = 'interested-span';
+const HIGHLIGHTED_SPAN_CLASS = 'highlighted-span';
+const DIMMED_SPAN_CLASS = 'dimmed-span';
+const SELECTED_NON_MATCHING_SPAN_CLASS = 'selected-non-matching-span';
+
 // Mock the hooks
 jest.mock('hooks/useUrlQuery');
 jest.mock('@signozhq/badge', () => ({
@@ -72,11 +80,13 @@ describe('SpanDuration', () => {
 				traceMetadata={mockTraceMetadata}
 				selectedSpan={undefined}
 				setSelectedSpan={mockSetSelectedSpan}
+				filteredSpanIds={[]}
+				isFilterActive={false}
 			/>,
 		);
 
 		// Find and click the span duration element
-		const spanElement = screen.getByText('1.16 ms');
+		const spanElement = screen.getByText(SPAN_DURATION_TEXT);
 		fireEvent.click(spanElement);
 
 		// Verify setSelectedSpan was called with the correct span
@@ -98,10 +108,12 @@ describe('SpanDuration', () => {
 				traceMetadata={mockTraceMetadata}
 				selectedSpan={undefined}
 				setSelectedSpan={mockSetSelectedSpan}
+				filteredSpanIds={[]}
+				isFilterActive={false}
 			/>,
 		);
 
-		const spanElement = screen.getByText('1.16 ms');
+		const spanElement = screen.getByText(SPAN_DURATION_TEXT);
 
 		// Initially, action buttons should not be visible
 		expect(screen.queryByRole('button')).not.toBeInTheDocument();
@@ -124,10 +136,135 @@ describe('SpanDuration', () => {
 				traceMetadata={mockTraceMetadata}
 				selectedSpan={mockSpan}
 				setSelectedSpan={mockSetSelectedSpan}
+				filteredSpanIds={[]}
+				isFilterActive={false}
 			/>,
 		);
 
-		const spanElement = screen.getByText('1.16 ms').closest('.span-duration');
-		expect(spanElement).toHaveClass('interested-span');
+		// eslint-disable-next-line sonarjs/no-duplicate-string
+		const spanElement = screen
+			.getByText(SPAN_DURATION_TEXT)
+			.closest(SPAN_DURATION_CLASS);
+		expect(spanElement).toHaveClass(INTERESTED_SPAN_CLASS);
+	});
+
+	it('applies highlighted-span class when span matches filter', () => {
+		render(
+			<SpanDuration
+				span={mockSpan}
+				traceMetadata={mockTraceMetadata}
+				selectedSpan={undefined}
+				setSelectedSpan={mockSetSelectedSpan}
+				filteredSpanIds={[mockSpan.spanId]}
+				isFilterActive
+			/>,
+		);
+
+		const spanElement = screen
+			.getByText(SPAN_DURATION_TEXT)
+			.closest(SPAN_DURATION_CLASS);
+		expect(spanElement).toHaveClass(HIGHLIGHTED_SPAN_CLASS);
+		expect(spanElement).not.toHaveClass(INTERESTED_SPAN_CLASS);
+	});
+
+	it('applies dimmed-span class when span does not match filter', () => {
+		render(
+			<SpanDuration
+				span={mockSpan}
+				traceMetadata={mockTraceMetadata}
+				selectedSpan={undefined}
+				setSelectedSpan={mockSetSelectedSpan}
+				filteredSpanIds={['other-span-id']}
+				isFilterActive
+			/>,
+		);
+
+		const spanElement = screen
+			.getByText(SPAN_DURATION_TEXT)
+			.closest(SPAN_DURATION_CLASS);
+		expect(spanElement).toHaveClass(DIMMED_SPAN_CLASS);
+		expect(spanElement).not.toHaveClass(HIGHLIGHTED_SPAN_CLASS);
+	});
+
+	it('prioritizes interested-span over highlighted-span when span is selected and matches filter', () => {
+		render(
+			<SpanDuration
+				span={mockSpan}
+				traceMetadata={mockTraceMetadata}
+				selectedSpan={mockSpan}
+				setSelectedSpan={mockSetSelectedSpan}
+				filteredSpanIds={[mockSpan.spanId]}
+				isFilterActive
+			/>,
+		);
+
+		const spanElement = screen
+			.getByText(SPAN_DURATION_TEXT)
+			.closest(SPAN_DURATION_CLASS);
+		expect(spanElement).toHaveClass(INTERESTED_SPAN_CLASS);
+		expect(spanElement).not.toHaveClass(HIGHLIGHTED_SPAN_CLASS);
+		expect(spanElement).not.toHaveClass(DIMMED_SPAN_CLASS);
+	});
+
+	it('applies selected-non-matching-span class when span is selected but does not match filter', () => {
+		render(
+			<SpanDuration
+				span={mockSpan}
+				traceMetadata={mockTraceMetadata}
+				selectedSpan={mockSpan}
+				setSelectedSpan={mockSetSelectedSpan}
+				filteredSpanIds={['different-span-id']}
+				isFilterActive
+			/>,
+		);
+
+		const spanElement = screen
+			.getByText(SPAN_DURATION_TEXT)
+			.closest(SPAN_DURATION_CLASS);
+		expect(spanElement).toHaveClass(SELECTED_NON_MATCHING_SPAN_CLASS);
+		expect(spanElement).not.toHaveClass(INTERESTED_SPAN_CLASS);
+		expect(spanElement).not.toHaveClass(HIGHLIGHTED_SPAN_CLASS);
+		expect(spanElement).not.toHaveClass(DIMMED_SPAN_CLASS);
+	});
+
+	it('applies interested-span class when span is selected and no filter is active', () => {
+		render(
+			<SpanDuration
+				span={mockSpan}
+				traceMetadata={mockTraceMetadata}
+				selectedSpan={mockSpan}
+				setSelectedSpan={mockSetSelectedSpan}
+				filteredSpanIds={[]}
+				isFilterActive={false}
+			/>,
+		);
+
+		const spanElement = screen
+			.getByText(SPAN_DURATION_TEXT)
+			.closest(SPAN_DURATION_CLASS);
+		expect(spanElement).toHaveClass(INTERESTED_SPAN_CLASS);
+		expect(spanElement).not.toHaveClass(SELECTED_NON_MATCHING_SPAN_CLASS);
+		expect(spanElement).not.toHaveClass(HIGHLIGHTED_SPAN_CLASS);
+		expect(spanElement).not.toHaveClass(DIMMED_SPAN_CLASS);
+	});
+
+	it('dims span when filter is active but no matches found', () => {
+		render(
+			<SpanDuration
+				span={mockSpan}
+				traceMetadata={mockTraceMetadata}
+				selectedSpan={undefined}
+				setSelectedSpan={mockSetSelectedSpan}
+				filteredSpanIds={[]} // Empty array but filter is active
+				isFilterActive // This is the key difference
+			/>,
+		);
+
+		const spanElement = screen
+			.getByText(SPAN_DURATION_TEXT)
+			.closest(SPAN_DURATION_CLASS);
+		expect(spanElement).toHaveClass(DIMMED_SPAN_CLASS);
+		expect(spanElement).not.toHaveClass(HIGHLIGHTED_SPAN_CLASS);
+		expect(spanElement).not.toHaveClass(INTERESTED_SPAN_CLASS);
 	});
 });
