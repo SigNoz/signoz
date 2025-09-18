@@ -114,6 +114,22 @@ func (r *PostableRule) processRuleDefaults() error {
 	return r.Validate()
 }
 
+func (r *PostableRule) MarshalJSON() ([]byte, error) {
+	type Alias PostableRule
+
+	switch r.SchemaVersion {
+	case DefaultSchemaVersion:
+		copyStruct := *r
+		aux := Alias(copyStruct)
+		aux.RuleCondition.Thresholds = nil
+		aux.Evaluation = nil
+		return json.Marshal(aux)
+	default:
+		aux := (*Alias)(r)
+		return json.Marshal(aux)
+	}
+}
+
 func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
 	type Alias PostableRule
 	aux := (*Alias)(r)
@@ -269,4 +285,22 @@ type GettableRule struct {
 	CreatedBy *string    `json:"createBy"`
 	UpdatedAt *time.Time `json:"updateAt"`
 	UpdatedBy *string    `json:"updateBy"`
+}
+
+func (g *GettableRule) MarshalJSON() ([]byte, error) {
+	type Alias GettableRule
+
+	switch g.SchemaVersion {
+	case DefaultSchemaVersion:
+		copyStruct := *g
+		aux := Alias(copyStruct)
+		if aux.RuleCondition != nil {
+			aux.RuleCondition.Thresholds = nil
+		}
+		aux.Evaluation = nil
+		return json.Marshal(aux)
+	default:
+		aux := (*Alias)(g)
+		return json.Marshal(aux)
+	}
 }
