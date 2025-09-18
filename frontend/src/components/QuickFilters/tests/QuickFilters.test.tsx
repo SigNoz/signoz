@@ -364,3 +364,141 @@ describe('Quick Filters with custom filters', () => {
 		jest.useRealTimers();
 	});
 });
+
+describe('Quick Filters refetch behavior', () => {
+	it('fetches custom filters on every mount when signal is provided', async () => {
+		let getCalls = 0;
+
+		server.use(
+			rest.get(quickFiltersListURL, (_req, res, ctx) => {
+				getCalls += 1;
+				return res(ctx.status(200), ctx.json(quickFiltersListResponse));
+			}),
+		);
+
+		const { unmount } = render(<TestQuickFilters signal={SIGNAL} />);
+		expect(await screen.findByText(FILTER_SERVICE_NAME)).toBeInTheDocument();
+
+		unmount();
+
+		render(<TestQuickFilters signal={SIGNAL} />);
+		expect(await screen.findByText(FILTER_SERVICE_NAME)).toBeInTheDocument();
+
+		expect(getCalls).toBe(2);
+	});
+
+	it('does not fetch custom filters when signal is undefined', async () => {
+		let getCalls = 0;
+
+		server.use(
+			rest.get(quickFiltersListURL, (_req, res, ctx) => {
+				getCalls += 1;
+				return res(ctx.status(200), ctx.json(quickFiltersListResponse));
+			}),
+		);
+
+		render(<TestQuickFilters signal={undefined} />);
+
+		await waitFor(() => expect(getCalls).toBe(0));
+	});
+
+	it('refetches custom filters after saving settings', async () => {
+		let getCalls = 0;
+		putHandler.mockClear();
+
+		server.use(
+			rest.get(quickFiltersListURL, (_req, res, ctx) => {
+				getCalls += 1;
+				return res(ctx.status(200), ctx.json(quickFiltersListResponse));
+			}),
+			rest.put(saveQuickFiltersURL, async (req, res, ctx) => {
+				putHandler(await req.json());
+				return res(ctx.status(200), ctx.json({}));
+			}),
+		);
+
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<TestQuickFilters signal={SIGNAL} />);
+
+		expect(await screen.findByText(FILTER_SERVICE_NAME)).toBeInTheDocument();
+
+		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
+		const settingsButton = icon.closest('button') ?? icon;
+		await user.click(settingsButton);
+
+		const target = await screen.findByText(FILTER_OS_DESCRIPTION);
+		const removeBtn = target.parentElement?.querySelector(
+			'button',
+		) as HTMLButtonElement;
+		await user.click(removeBtn);
+
+		await user.click(screen.getByText(SAVE_CHANGES_TEXT));
+
+		await waitFor(() => expect(putHandler).toHaveBeenCalled());
+		await waitFor(() => expect(getCalls).toBeGreaterThanOrEqual(2));
+	});
+
+	it('renders updated filters after refetch post-save', async () => {
+		const updatedResponse = {
+			...quickFiltersListResponse,
+			data: {
+				...quickFiltersListResponse.data,
+				filters: [
+					...(quickFiltersListResponse.data.filters ?? []),
+					{
+						key: 'new.custom.filter',
+						dataType: 'string',
+						type: 'resource',
+					} as const,
+				],
+			},
+		};
+
+		let getCount = 0;
+		server.use(
+			rest.get(quickFiltersListURL, (_req, res, ctx) => {
+				getCount += 1;
+				return getCount >= 2
+					? res(ctx.status(200), ctx.json(updatedResponse))
+					: res(ctx.status(200), ctx.json(quickFiltersListResponse));
+			}),
+			rest.put(saveQuickFiltersURL, async (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json({})),
+			),
+		);
+
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<TestQuickFilters signal={SIGNAL} />);
+
+		expect(await screen.findByText(FILTER_SERVICE_NAME)).toBeInTheDocument();
+
+		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
+		const settingsButton = icon.closest('button') ?? icon;
+		await user.click(settingsButton);
+
+		// Make a minimal change so Save button appears
+		const target = await screen.findByText(FILTER_OS_DESCRIPTION);
+		const removeBtn = target.parentElement?.querySelector(
+			'button',
+		) as HTMLButtonElement;
+		await user.click(removeBtn);
+
+		await user.click(screen.getByText(SAVE_CHANGES_TEXT));
+
+		await waitFor(() => {
+			expect(screen.getByText('New Custom Filter')).toBeInTheDocument();
+		});
+	});
+
+	it('shows empty state when GET fails', async () => {
+		server.use(
+			rest.get(quickFiltersListURL, (_req, res, ctx) =>
+				res(ctx.status(500), ctx.json({})),
+			),
+		);
+
+		render(<TestQuickFilters signal={SIGNAL} config={[]} />);
+
+		expect(await screen.findByText('No filters found')).toBeInTheDocument();
+	});
+});
