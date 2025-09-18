@@ -6,7 +6,8 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useCallback, useMemo } from 'react';
-import { Span } from 'types/api/trace/getTraceV2';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { GetTraceV2SuccessResponse, Span } from 'types/api/trace/getTraceV2';
 import { DataSource } from 'types/common/queryBuilder';
 
 import SpanTable from './SpanTable';
@@ -16,9 +17,17 @@ import { transformEntrySpansToHierarchy } from './utils';
 interface SpanListProps {
 	traceId?: string;
 	setSelectedSpan?: (span: Span) => void;
+	traceData:
+		| SuccessResponse<GetTraceV2SuccessResponse, unknown>
+		| ErrorResponse
+		| undefined;
 }
 
-function SpanList({ traceId, setSelectedSpan }: SpanListProps): JSX.Element {
+function SpanList({
+	traceId,
+	setSelectedSpan,
+	traceData,
+}: SpanListProps): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const { safeNavigate } = useSafeNavigate();
 	const payload = initialQueriesMap.traces;
@@ -27,10 +36,28 @@ function SpanList({ traceId, setSelectedSpan }: SpanListProps): JSX.Element {
 	const entryPage = parseInt(urlQuery.get('entryPage') || '1', 10);
 	const entryPageSize = 5;
 
+	const startTimestamp = useMemo(
+		() =>
+			traceData?.payload?.startTimestampMillis != null
+				? traceData.payload.startTimestampMillis / 1e3 - 30 * 60 * 1000
+				: undefined,
+		[traceData?.payload?.startTimestampMillis],
+	);
+
+	const endTimestamp = useMemo(
+		() =>
+			traceData?.payload?.endTimestampMillis != null
+				? traceData.payload.endTimestampMillis / 1e3 + 90 * 60 * 1000
+				: undefined,
+		[traceData?.payload?.endTimestampMillis],
+	);
+
 	const { data, isLoading, isFetching } = useGetQueryRange(
 		{
 			graphType: PANEL_TYPES.LIST,
 			selectedTime: 'GLOBAL_TIME',
+			...(startTimestamp != null ? { start: startTimestamp } : {}),
+			...(endTimestamp != null ? { end: endTimestamp } : {}),
 			query: {
 				...payload,
 				builder: {

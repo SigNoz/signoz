@@ -171,7 +171,13 @@ function TraceDetailsV2(): JSX.Element {
 				</Button>
 			),
 			key: 'span-list',
-			children: <SpanList traceId={traceId} setSelectedSpan={setSelectedSpan} />,
+			children: (
+				<SpanList
+					traceId={traceId}
+					setSelectedSpan={setSelectedSpan}
+					traceData={traceData}
+				/>
+			),
 		},
 	];
 
