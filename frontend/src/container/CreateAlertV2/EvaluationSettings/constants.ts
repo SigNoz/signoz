@@ -1,3 +1,5 @@
+import { generateTimezoneData } from 'components/CustomTimePicker/timezoneUtils';
+
 export const EVALUATION_WINDOW_TYPE = [
 	{ label: 'Rolling', value: 'rolling' },
 	{ label: 'Cumulative', value: 'cumulative' },
@@ -52,3 +54,8 @@ export const WEEKDAY_MAP: { [key: string]: number } = {
 	friday: 5,
 	saturday: 6,
 };
+
+export const TIMEZONE_DATA = generateTimezoneData().map((timezone) => ({
+	label: `${timezone.name} (${timezone.offset})`,
+	value: timezone.value,
+}));

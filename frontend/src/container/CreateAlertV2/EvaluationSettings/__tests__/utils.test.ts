@@ -1,23 +1,12 @@
-import dayjs from 'dayjs';
-import { rrulestr } from 'rrule';
+/* eslint-disable sonarjs/no-duplicate-string */
+/* eslint-disable import/first */
 
-import { CumulativeWindowTimeframes, RollingWindowTimeframes } from '../types';
-import {
-	buildAlertScheduleFromCustomSchedule,
-	buildAlertScheduleFromRRule,
-	getCumulativeWindowTimeframeText,
-	getEvaluationWindowTypeText,
-	getRollingWindowTimeframeText,
-	getTimeframeText,
-	isValidRRule,
-} from '../utils';
-
-const MOCK_DATE_STRING = '2024-01-15T10:30:00Z';
+// Mock dayjs before importing any other modules
+const MOCK_DATE_STRING = '2024-01-15T00:30:00Z';
+const MOCK_DATE_STRING_NON_LEAP_YEAR = '2023-01-15T00:30:00Z';
 const FREQ_DAILY = 'FREQ=DAILY';
 const TEN_THIRTY_TIME = '10:30:00';
 const NINE_AM_TIME = '09:00:00';
-
-// Mock dayjs
 jest.mock('dayjs', () => {
 	const originalDayjs = jest.requireActual('dayjs');
 	const mockDayjs = jest.fn((date?: string | Date) => {
@@ -32,13 +21,48 @@ jest.mock('dayjs', () => {
 	return mockDayjs;
 });
 
+import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
+import { EvaluationWindowState } from 'container/CreateAlertV2/context/types';
+import dayjs, { Dayjs } from 'dayjs';
+import { rrulestr } from 'rrule';
+
+import { RollingWindowTimeframes } from '../types';
+import {
+	buildAlertScheduleFromCustomSchedule,
+	buildAlertScheduleFromRRule,
+	getCumulativeWindowTimeframeText,
+	getCustomRollingWindowTimeframeText,
+	getEvaluationWindowTypeText,
+	getRollingWindowTimeframeText,
+	getTimeframeText,
+	isValidRRule,
+} from '../utils';
+
 jest.mock('rrule', () => ({
 	rrulestr: jest.fn(),
 }));
 
 jest.mock('components/CustomTimePicker/timezoneUtils', () => ({
-	generateTimezoneData: jest.fn().mockReturnValue([]),
+	generateTimezoneData: jest.fn().mockReturnValue([
+		{ name: 'UTC', value: 'UTC', offset: '+00:00' },
+		{ name: 'America/New_York', value: 'America/New_York', offset: '-05:00' },
+		{ name: 'Europe/London', value: 'Europe/London', offset: '+00:00' },
+	]),
 }));
+
+const mockEvaluationWindowState: EvaluationWindowState = {
+	windowType: 'rolling',
+	timeframe: '5m0s',
+	startingAt: {
+		number: '0',
+		timezone: 'UTC',
+		time: '00:00:00',
+		unit: UniversalYAxisUnit.MINUTES,
+	},
+};
+
+const formatDate = (date: Date): string =>
+	dayjs(date).format('DD-MM-YYYY HH:mm:ss');
 
 describe('utils', () => {
 	beforeEach(() => {
@@ -54,34 +78,52 @@ describe('utils', () => {
 			expect(getEvaluationWindowTypeText('cumulative')).toBe('Cumulative');
 		});
 
-		it('should default to Rolling for unknown type', () => {
+		it('should default to empty string for unknown type', () => {
 			expect(
 				getEvaluationWindowTypeText('unknown' as 'rolling' | 'cumulative'),
-			).toBe('Rolling');
+			).toBe('');
 		});
 	});
 
 	describe('getCumulativeWindowTimeframeText', () => {
 		it('should return correct text for current hour', () => {
 			expect(
-				getCumulativeWindowTimeframeText(CumulativeWindowTimeframes.CURRENT_HOUR),
-			).toBe('Current hour');
+				getCumulativeWindowTimeframeText({
+					...mockEvaluationWindowState,
+					windowType: 'cumulative',
+					timeframe: 'currentHour',
+				}),
+			).toBe('Current hour, starting at minute 0 (UTC)');
 		});
 
 		it('should return correct text for current day', () => {
 			expect(
-				getCumulativeWindowTimeframeText(CumulativeWindowTimeframes.CURRENT_DAY),
-			).toBe('Current day');
+				getCumulativeWindowTimeframeText({
+					...mockEvaluationWindowState,
+					windowType: 'cumulative',
+					timeframe: 'currentDay',
+				}),
+			).toBe('Current day, starting from 00:00:00 (UTC)');
 		});
 
 		it('should return correct text for current month', () => {
 			expect(
-				getCumulativeWindowTimeframeText(CumulativeWindowTimeframes.CURRENT_MONTH),
-			).toBe('Current month');
+				getCumulativeWindowTimeframeText({
+					...mockEvaluationWindowState,
+					windowType: 'cumulative',
+					timeframe: 'currentMonth',
+				}),
+			).toBe('Current month, starting from day 0 at 00:00:00 (UTC)');
 		});
 
-		it('should default to Current hour for unknown timeframe', () => {
-			expect(getCumulativeWindowTimeframeText('unknown')).toBe('Current hour');
+		it('should default to empty string for unknown timeframe', () => {
+			expect(
+				getCumulativeWindowTimeframeText({
+					...mockEvaluationWindowState,
+					windowType: 'cumulative',
+					timeframe: 'unknown',
+				}),
+			).toBe('');
 		});
 	});
 
@@ -131,21 +173,45 @@ describe('utils', () => {
 		it('should default to Last 5 minutes for unknown timeframe', () => {
 			expect(
 				getRollingWindowTimeframeText('unknown' as RollingWindowTimeframes),
-			).toBe('Last 5 minutes');
+			).toBe('');
+		});
+	});
+
+	describe('getCustomRollingWindowTimeframeText', () => {
+		it('should return correct text for custom rolling window', () => {
+			expect(getCustomRollingWindowTimeframeText(mockEvaluationWindowState)).toBe(
+				'Last 0 Minutes',
+			);
 		});
 	});
 
 	describe('getTimeframeText', () => {
-		it('should return rolling window text for rolling type', () => {
+		it('should call getCustomRollingWindowTimeframeText for custom rolling window', () => {
 			expect(
-				getTimeframeText('rolling', RollingWindowTimeframes.LAST_1_HOUR),
-			).toBe('Last 1 hour');
+				getTimeframeText({
+					...mockEvaluationWindowState,
+					windowType: 'rolling',
+					timeframe: 'custom',
+					startingAt: {
+						...mockEvaluationWindowState.startingAt,
+						number: '4',
+					},
+				}),
+			).toBe('Last 4 Minutes');
 		});
 
-		it('should return cumulative window text for cumulative type', () => {
+		it('should call getRollingWindowTimeframeText for rolling window', () => {
+			expect(getTimeframeText(mockEvaluationWindowState)).toBe('Last 5 minutes');
+		});
+
+		it('should call getCumulativeWindowTimeframeText for cumulative window', () => {
 			expect(
-				getTimeframeText('cumulative', CumulativeWindowTimeframes.CURRENT_DAY),
-			).toBe('Current day');
+				getTimeframeText({
+					...mockEvaluationWindowState,
+					windowType: 'cumulative',
+					timeframe: 'currentDay',
+				}),
+			).toBe('Current day, starting from 00:00:00 (UTC)');
 		});
 	});
 
@@ -226,39 +292,13 @@ describe('utils', () => {
 	});
 
 	describe('buildAlertScheduleFromCustomSchedule', () => {
-		beforeEach(() => {
-			// Mock dayjs timezone methods
-			((dayjs as unknown) as { tz: jest.Mock }).tz = jest.fn(
-				(date?: string | Date) => {
-					const originalDayjs = jest.requireActual('dayjs');
-					const mockDayjs = originalDayjs(date || MOCK_DATE_STRING);
-					mockDayjs.startOf = jest.fn().mockReturnValue(mockDayjs);
-					mockDayjs.add = jest.fn().mockReturnValue(mockDayjs);
-					mockDayjs.date = jest.fn().mockReturnValue(mockDayjs);
-					mockDayjs.hour = jest.fn().mockReturnValue(mockDayjs);
-					mockDayjs.minute = jest.fn().mockReturnValue(mockDayjs);
-					mockDayjs.second = jest.fn().mockReturnValue(mockDayjs);
-					mockDayjs.daysInMonth = jest.fn().mockReturnValue(31);
-					mockDayjs.day = jest.fn().mockReturnValue(mockDayjs);
-					mockDayjs.isAfter = jest.fn().mockReturnValue(true);
-					mockDayjs.toDate = jest.fn().mockReturnValue(new Date(MOCK_DATE_STRING));
-					return mockDayjs;
-				},
-			);
-		});
-
 		it('should return null for missing required parameters', () => {
+			expect(buildAlertScheduleFromCustomSchedule('', [], '10:30:00')).toBeNull();
 			expect(
-				buildAlertScheduleFromCustomSchedule('', [], '10:30:00', 'UTC'),
+				buildAlertScheduleFromCustomSchedule('week', [], '10:30:00'),
 			).toBeNull();
 			expect(
-				buildAlertScheduleFromCustomSchedule('week', [], '10:30:00', 'UTC'),
-			).toBeNull();
-			expect(
-				buildAlertScheduleFromCustomSchedule('week', ['monday'], '', 'UTC'),
-			).toBeNull();
-			expect(
-				buildAlertScheduleFromCustomSchedule('week', ['monday'], '10:30:00', ''),
+				buildAlertScheduleFromCustomSchedule('week', ['monday'], ''),
 			).toBeNull();
 		});
 
@@ -267,64 +307,227 @@ describe('utils', () => {
 				'month',
 				['1', '15'],
 				'10:30:00',
-				'UTC',
 				5,
 			);
 
 			expect(result).toBeDefined();
 			expect(Array.isArray(result)).toBe(true);
+			expect(result?.map((res) => formatDate(res))).toEqual([
+				'15-01-2024 10:30:00',
+				'01-02-2024 10:30:00',
+				'15-02-2024 10:30:00',
+				'01-03-2024 10:30:00',
+				'15-03-2024 10:30:00',
+			]);
 		});
 
 		it('should generate weekly occurrences', () => {
 			const result = buildAlertScheduleFromCustomSchedule(
 				'week',
 				['monday', 'friday'],
-				'10:30:00',
-				'UTC',
+				'12:30:00',
 				5,
 			);
 
 			expect(result).toBeDefined();
 			expect(Array.isArray(result)).toBe(true);
+			expect(result?.map((res) => formatDate(res))).toEqual([
+				'15-01-2024 12:30:00',
+				'19-01-2024 12:30:00',
+				'22-01-2024 12:30:00',
+				'26-01-2024 12:30:00',
+				'29-01-2024 12:30:00',
+			]);
 		});
 
-		it('should filter invalid days for monthly schedule', () => {
+		it('should generate weekly occurrences including today if alert time is in the future', () => {
+			const result = buildAlertScheduleFromCustomSchedule(
+				'week',
+				['monday', 'friday'],
+				'10:30:00',
+				5,
+			);
+
+			expect(result).toBeDefined();
+			expect(Array.isArray(result)).toBe(true);
+			// today included (15-01-2024 00:30:00)
+			expect(result?.map((res) => formatDate(res))).toEqual([
+				'15-01-2024 10:30:00',
+				'19-01-2024 10:30:00',
+				'22-01-2024 10:30:00',
+				'26-01-2024 10:30:00',
+				'29-01-2024 10:30:00',
+			]);
+		});
+
+		it('should generate weekly occurrences excluding today if alert time is in the past', () => {
+			const result = buildAlertScheduleFromCustomSchedule(
+				'week',
+				['monday', 'friday'],
+				'00:00:00',
+				5,
+			);
+
+			expect(result).toBeDefined();
+			expect(Array.isArray(result)).toBe(true);
+			// today excluded (15-01-2024 00:30:00)
+			expect(result?.map((res) => formatDate(res))).toEqual([
+				'19-01-2024 00:00:00',
+				'22-01-2024 00:00:00',
+				'26-01-2024 00:00:00',
+				'29-01-2024 00:00:00',
+				'02-02-2024 00:00:00',
+			]);
+		});
+
+		it('should generate weekly occurrences excluding today if alert time is in the present (right now)', () => {
+			const result = buildAlertScheduleFromCustomSchedule(
+				'week',
+				['monday', 'friday'],
+				'00:30:00',
+				5,
+			);
+
+			expect(result).toBeDefined();
+			expect(Array.isArray(result)).toBe(true);
+			// today excluded (15-01-2024 00:30:00)
+			expect(result?.map((res) => formatDate(res))).toEqual([
+				'19-01-2024 00:30:00',
+				'22-01-2024 00:30:00',
+				'26-01-2024 00:30:00',
+				'29-01-2024 00:30:00',
+				'02-02-2024 00:30:00',
+			]);
+		});
+
+		it('should generate monthly occurrences including today if alert time is in the future', () => {
 			const result = buildAlertScheduleFromCustomSchedule(
 				'month',
-				['1', 'invalid', '15'],
+				['15'],
 				'10:30:00',
-				'UTC',
+				5,
+			);
+			expect(result).toBeDefined();
+			expect(Array.isArray(result)).toBe(true);
+			// today included (15-01-2024 10:30:00)
+			expect(result?.map((res) => formatDate(res))).toEqual([
+				'15-01-2024 10:30:00',
+				'15-02-2024 10:30:00',
+				'15-03-2024 10:30:00',
+				'15-04-2024 10:30:00',
+				'15-05-2024 10:30:00',
+			]);
+		});
+
+		it('should generate monthly occurrences excluding today if alert time is in the past', () => {
+			const result = buildAlertScheduleFromCustomSchedule(
+				'month',
+				['15'],
+				'00:00:00',
+				5,
+			);
+			expect(result).toBeDefined();
+			expect(Array.isArray(result)).toBe(true);
+			// today excluded (15-01-2024 10:30:00)
+			expect(result?.map((res) => formatDate(res))).toEqual([
+				'15-02-2024 00:00:00',
+				'15-03-2024 00:00:00',
+				'15-04-2024 00:00:00',
+				'15-05-2024 00:00:00',
+				'15-06-2024 00:00:00',
+			]);
+		});
+
+		it('should generate monthly occurrences excluding today if alert time is in the present (right now)', () => {
+			const result = buildAlertScheduleFromCustomSchedule(
+				'month',
+				['15'],
+				'00:30:00',
+				5,
+			);
+			expect(result).toBeDefined();
+			expect(Array.isArray(result)).toBe(true);
+			// today excluded (15-01-2024 10:30:00)
+			expect(result?.map((res) => formatDate(res))).toEqual([
+				'15-02-2024 00:30:00',
+				'15-03-2024 00:30:00',
+				'15-04-2024 00:30:00',
+				'15-05-2024 00:30:00',
+				'15-06-2024 00:30:00',
+			]);
+		});
+
+		it('should account for february 29th in a leap year', () => {
+			const result = buildAlertScheduleFromCustomSchedule(
+				'month',
+				['29'],
+				'10:30:00',
 				5,
 			);
 
 			expect(result).toBeDefined();
 			expect(Array.isArray(result)).toBe(true);
+			expect(result?.map((res) => formatDate(res))).toEqual([
+				'29-01-2024 10:30:00',
+				'29-02-2024 10:30:00',
+				'29-03-2024 10:30:00',
+				'29-04-2024 10:30:00',
+				'29-05-2024 10:30:00',
+			]);
 		});
 
-		it('should filter invalid weekdays for weekly schedule', () => {
-			buildAlertScheduleFromCustomSchedule(
-				'week',
-				['monday', 'invalid', 'friday'],
-				'10:30:00',
-				'UTC',
-				5,
-			);
-
-			// Function should handle invalid weekdays gracefully
-			expect(true).toBe(true);
-		});
-
-		it('should return null on error', () => {
-			// Test with invalid parameters that should cause an error
+		it('should skip 31st on 30-day months', () => {
 			const result = buildAlertScheduleFromCustomSchedule(
-				'invalid_repeat_type',
-				['monday'],
+				'month',
+				['31'],
 				'10:30:00',
-				'UTC',
 				5,
 			);
-			// Should return empty array, not null, for invalid repeat type
-			expect(result).toEqual([]);
+
+			expect(result).toBeDefined();
+			expect(Array.isArray(result)).toBe(true);
+			expect(result?.map((res) => formatDate(res))).toEqual([
+				'31-01-2024 10:30:00',
+				'31-03-2024 10:30:00',
+				'31-05-2024 10:30:00',
+				'31-07-2024 10:30:00',
+				'31-08-2024 10:30:00',
+			]);
+		});
+
+		it('should skip february 29th in a non-leap year', async () => {
+			jest.resetModules(); // clear previous mocks
+
+			jest.doMock('dayjs', () => {
+				const originalDayjs = jest.requireActual('dayjs');
+				const mockDayjs = (date?: string | Date): Dayjs => {
+					if (date) return originalDayjs(date);
+					return originalDayjs(MOCK_DATE_STRING_NON_LEAP_YEAR);
+				};
+				Object.assign(mockDayjs, originalDayjs);
+				return mockDayjs;
+			});
+
+			const { buildAlertScheduleFromCustomSchedule } = await import('../utils');
+			const { default: dayjs } = await import('dayjs');
+
+			const formatDate = (date: Date): string =>
+				dayjs(date).format('DD-MM-YYYY HH:mm:ss');
+
+			const result = buildAlertScheduleFromCustomSchedule(
+				'month',
+				['29'],
+				'10:30:00',
+				5,
+			);
+
+			expect(result?.map((res) => formatDate(res))).toEqual([
+				'29-01-2023 10:30:00',
+				'29-03-2023 10:30:00',
+				'29-04-2023 10:30:00',
+				'29-05-2023 10:30:00',
+				'29-06-2023 10:30:00',
+			]);
 		});
 	});
 

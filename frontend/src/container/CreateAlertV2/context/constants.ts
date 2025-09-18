@@ -1,6 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
-import { TIMEZONE_DATA } from 'container/CreateAlertV2/EvaluationSettings/utils';
+import { TIMEZONE_DATA } from 'container/CreateAlertV2/EvaluationSettings/constants';
 import dayjs from 'dayjs';
 import getRandomColor from 'lib/getRandomColor';
 import { v4 } from 'uuid';

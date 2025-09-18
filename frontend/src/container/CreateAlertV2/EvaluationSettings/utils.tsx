@@ -1,5 +1,4 @@
 import * as Sentry from '@sentry/react';
-import { generateTimezoneData } from 'components/CustomTimePicker/timezoneUtils';
 import dayjs, { Dayjs } from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
@@ -23,7 +22,7 @@ export const getEvaluationWindowTypeText = (
 		case 'cumulative':
 			return 'Cumulative';
 		default:
-			return 'Rolling';
+			return '';
 	}
 };
 
@@ -61,18 +60,18 @@ export const getRollingWindowTimeframeText = (
 		case RollingWindowTimeframes.LAST_4_HOURS:
 			return 'Last 4 hours';
 		default:
-			return 'Last 5 minutes';
+			return '';
 	}
 };
 
-const getCustomRollingWindowTimeframeText = (
+export const getCustomRollingWindowTimeframeText = (
 	evaluationWindow: EvaluationWindowState,
 ): string =>
 	`Last ${evaluationWindow.startingAt.number} ${
 		ADVANCED_OPTIONS_TIME_UNIT_OPTIONS.find(
 			(option) => option.value === evaluationWindow.startingAt.unit,
 		)?.label
-	}${parseInt(evaluationWindow.startingAt.number, 10) > 1 ? 's' : ''}`;
+	}`;
 
 export const getTimeframeText = (
 	evaluationWindow: EvaluationWindowState,
@@ -141,15 +140,15 @@ function generateMonthlyOccurrences(
 	hours: number,
 	minutes: number,
 	seconds: number,
-	timezone: string,
 	maxOccurrences: number,
 ): Date[] {
 	const occurrences: Date[] = [];
-	const currentMonth = dayjs().tz(timezone).startOf('month');
+	const currentMonth = dayjs().startOf('month');
 
-	const currentDate = dayjs().tz(timezone);
+	const currentDate = dayjs();
 
-	for (let monthOffset = 0; monthOffset < maxOccurrences; monthOffset++) {
+	const scanMonths = maxOccurrences + 12;
+	for (let monthOffset = 0; monthOffset < scanMonths; monthOffset++) {
 		const monthDate = currentMonth.add(monthOffset, 'month');
 		targetDays.forEach((day) => {
 			if (occurrences.length >= maxOccurrences) return;
@@ -176,13 +175,12 @@ function generateWeeklyOccurrences(
 	hours: number,
 	minutes: number,
 	seconds: number,
-	timezone: string,
 	maxOccurrences: number,
 ): Date[] {
 	const occurrences: Date[] = [];
-	const currentWeek = dayjs().tz(timezone).startOf('week');
+	const currentWeek = dayjs().startOf('week');
 
-	const currentDate = dayjs().tz(timezone);
+	const currentDate = dayjs();
 
 	for (let weekOffset = 0; weekOffset < maxOccurrences; weekOffset++) {
 		const weekDate = currentWeek.add(weekOffset, 'week');
@@ -207,7 +205,6 @@ export function buildAlertScheduleFromCustomSchedule(
 	repeatEvery: string,
 	occurence: string[],
 	startAt: string,
-	timezone: string,
 	maxOccurrences = 10,
 ): Date[] | null {
 	try {
@@ -227,7 +224,6 @@ export function buildAlertScheduleFromCustomSchedule(
 				hours,
 				minutes,
 				seconds,
-				timezone,
 				maxOccurrences,
 			);
 		} else if (repeatEvery === 'week') {
@@ -239,7 +235,6 @@ export function buildAlertScheduleFromCustomSchedule(
 				hours,
 				minutes,
 				seconds,
-				timezone,
 				maxOccurrences,
 			);
 		}
@@ -256,11 +251,6 @@ export function buildAlertScheduleFromCustomSchedule(
 		return null;
 	}
 }
-
-export const TIMEZONE_DATA = generateTimezoneData().map((timezone) => ({
-	label: `${timezone.name} (${timezone.offset})`,
-	value: timezone.value,
-}));
 
 export function isValidRRule(rruleString: string): boolean {
 	try {
