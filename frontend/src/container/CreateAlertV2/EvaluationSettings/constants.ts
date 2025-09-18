@@ -36,7 +36,7 @@ export const EVALUATION_CADENCE_REPEAT_EVERY_WEEK_OPTIONS = [
 ];
 
 export const EVALUATION_CADENCE_REPEAT_EVERY_MONTH_OPTIONS = Array.from(
-	{ length: 30 },
+	{ length: 31 },
 	(_, i) => {
 		const value = String(i + 1);
 		return { label: value, value };

@@ -25,46 +25,80 @@ function TimeInput({
 		if (value) {
 			const timeParts = value.split(':');
 			if (timeParts.length === 3) {
-				setHours(timeParts[0].padStart(2, '0'));
-				setMinutes(timeParts[1].padStart(2, '0'));
-				setSeconds(timeParts[2].padStart(2, '0'));
+				setHours(timeParts[0]);
+				setMinutes(timeParts[1]);
+				setSeconds(timeParts[2]);
 			}
 		}
 	}, [value]);
 
-	// Format time value
-	const formatTimeValue = (h: string, m: string, s: string): string =>
-		`${h.padStart(2, '0')}:${m.padStart(2, '0')}:${s.padStart(2, '0')}`;
+	const notifyChange = (h: string, m: string, s: string): void => {
+		const rawValue = `${h}:${m}:${s}`;
+		onChange?.(rawValue);
+	};
 
-	// Handle input change
-	const handleTimeChange = (
-		newHours: string,
-		newMinutes: string,
-		newSeconds: string,
-	): void => {
-		const formattedValue = formatTimeValue(newHours, newMinutes, newSeconds);
+	const notifyFormattedChange = (h: string, m: string, s: string): void => {
+		const formattedValue = `${h.padStart(2, '0')}:${m.padStart(
+			2,
+			'0',
+		)}:${s.padStart(2, '0')}`;
 		onChange?.(formattedValue);
 	};
 
-	// Handle hours change
 	const handleHoursChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-		const newHours = e.target.value.replace(/\D/g, '').slice(0, 2);
+		let newHours = e.target.value.replace(/\D/g, '');
+
+		if (newHours.length > 2) {
+			newHours = newHours.slice(0, 2);
+		}
+
+		if (newHours && parseInt(newHours, 10) > 23) {
+			newHours = '23';
+		}
 		setHours(newHours);
-		handleTimeChange(newHours, minutes, seconds);
+		notifyChange(newHours, minutes, seconds);
 	};
 
-	// Handle minutes change
 	const handleMinutesChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-		const newMinutes = e.target.value.replace(/\D/g, '').slice(0, 2);
+		let newMinutes = e.target.value.replace(/\D/g, '');
+		if (newMinutes.length > 2) {
+			newMinutes = newMinutes.slice(0, 2);
+		}
+		if (newMinutes && parseInt(newMinutes, 10) > 59) {
+			newMinutes = '59';
+		}
 		setMinutes(newMinutes);
-		handleTimeChange(hours, newMinutes, seconds);
+		notifyChange(hours, newMinutes, seconds);
 	};
 
-	// Handle seconds change
 	const handleSecondsChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-		const newSeconds = e.target.value.replace(/\D/g, '').slice(0, 2);
+		let newSeconds = e.target.value.replace(/\D/g, '');
+		if (newSeconds.length > 2) {
+			newSeconds = newSeconds.slice(0, 2);
+		}
+		if (newSeconds && parseInt(newSeconds, 10) > 59) {
+			newSeconds = '59';
+		}
 		setSeconds(newSeconds);
-		handleTimeChange(hours, minutes, newSeconds);
+		notifyChange(hours, minutes, newSeconds);
+	};
+
+	const handleHoursBlur = (): void => {
+		const formattedHours = hours.padStart(2, '0');
+		setHours(formattedHours);
+		notifyFormattedChange(formattedHours, minutes, seconds);
+	};
+
+	const handleMinutesBlur = (): void => {
+		const formattedMinutes = minutes.padStart(2, '0');
+		setMinutes(formattedMinutes);
+		notifyFormattedChange(hours, formattedMinutes, seconds);
+	};
+
+	const handleSecondsBlur = (): void => {
+		const formattedSeconds = seconds.padStart(2, '0');
+		setSeconds(formattedSeconds);
+		notifyFormattedChange(hours, minutes, formattedSeconds);
 	};
 
 	// Helper functions for field navigation
@@ -116,30 +150,36 @@ function TimeInput({
 				data-field="hours"
 				value={hours}
 				onChange={handleHoursChange}
+				onBlur={handleHoursBlur}
 				onKeyDown={(e): void => handleKeyDown(e, 'hours')}
 				disabled={disabled}
 				maxLength={2}
 				className="time-input-field"
+				placeholder="00"
 			/>
 			<span className="time-input-separator">:</span>
 			<Input
 				data-field="minutes"
 				value={minutes}
 				onChange={handleMinutesChange}
+				onBlur={handleMinutesBlur}
 				onKeyDown={(e): void => handleKeyDown(e, 'minutes')}
 				disabled={disabled}
 				maxLength={2}
 				className="time-input-field"
+				placeholder="00"
 			/>
 			<span className="time-input-separator">:</span>
 			<Input
 				data-field="seconds"
 				value={seconds}
 				onChange={handleSecondsChange}
+				onBlur={handleSecondsBlur}
 				onKeyDown={(e): void => handleKeyDown(e, 'seconds')}
 				disabled={disabled}
 				maxLength={2}
 				className="time-input-field"
+				placeholder="00"
 			/>
 		</div>
 	);
