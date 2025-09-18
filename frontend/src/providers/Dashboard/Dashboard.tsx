@@ -285,6 +285,7 @@ export function DashboardProvider({
 					setIsDashboardFetching(false);
 				}
 			},
+			staleTime: 0, // Always consider dashboard data stale
 			refetchOnWindowFocus: false,
 			onError: (error) => {
 				showErrorModal(error as APIError);
