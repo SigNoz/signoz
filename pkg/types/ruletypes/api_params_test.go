@@ -422,8 +422,8 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 						"frequency": "2m"
 					}
 				},
-				"frequency":"7m"
-				"evalWindow":"11m"
+				"frequency":"7m",
+				"evalWindow":"11m",
 				"labels": {
 					"severity": "critical"
 				}
@@ -642,6 +642,7 @@ func TestParseIntoRuleThresholdGeneration(t *testing.T) {
 
 func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 	content := []byte(`{
+		"schemaVersion": "v2",
 		"alert": "MultiThresholdAlert",
 		"ruleType": "threshold_rule",
 		"condition": {

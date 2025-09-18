@@ -919,7 +919,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 
 	newStoredJson, err := json.Marshal(&storedRule)
 	if err != nil {
-		zap.L().Error("failed to marshall new stored rule with given id", zap.String("id", id.StringValue()), zap.Error(err))
+		zap.L().Error("failed to marshal new stored rule with given id", zap.String("id", id.StringValue()), zap.Error(err))
 		return nil, err
 	}
 
