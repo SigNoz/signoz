@@ -127,7 +127,11 @@ function TraceDetailsV2(): JSX.Element {
 	];
 
 	return (
-		<ResizablePanelGroup direction="horizontal" autoSaveId="trace-drawer">
+		<ResizablePanelGroup
+			direction="horizontal"
+			autoSaveId="trace-drawer"
+			className="trace-layout"
+		>
 			<ResizablePanel minSize={20} maxSize={80} className="trace-left-content">
 				<TraceMetadata
 					traceID={traceId}
