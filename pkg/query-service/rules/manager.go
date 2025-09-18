@@ -896,33 +896,41 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 		return nil, err
 	}
 
-	// storedRule holds the current stored rule from DB
-	patchedRule := ruletypes.PostableRule{}
-	if err := json.Unmarshal([]byte(ruleStr), &patchedRule); err != nil {
-		zap.L().Error("failed to unmarshal stored rule with given id", zap.String("id", id.StringValue()), zap.Error(err))
+	storedRule := ruletypes.PostableRule{}
+	if err := json.Unmarshal([]byte(storedJSON.Data), &storedRule); err != nil {
+		zap.L().Error("failed to unmarshal rule from db", zap.String("id", id.StringValue()), zap.Error(err))
 		return nil, err
 	}
 
+	// storedRule holds the current stored rule from DB
+	patchedRule := ruletypes.PatchableRule{}
+	if err := json.Unmarshal([]byte(ruleStr), &patchedRule); err != nil {
+		zap.L().Error("failed to unmarshal patched rule with given id", zap.String("id", id.StringValue()), zap.Error(err))
+		return nil, err
+	}
+
+	patchedRule.ApplyTo(&storedRule)
+
 	// deploy or un-deploy task according to patched (new) rule state
-	if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &patchedRule); err != nil {
+	if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &storedRule); err != nil {
 		zap.L().Error("failed to sync stored rule state with the task", zap.String("taskName", taskName), zap.Error(err))
 		return nil, err
 	}
 
-	// prepare rule json to write to update db
-	patchedRuleBytes, err := json.Marshal(patchedRule)
+	newStoredJson, err := json.Marshal(&storedRule)
 	if err != nil {
+		zap.L().Error("failed to marshall new stored rule with given id", zap.String("id", id.StringValue()), zap.Error(err))
 		return nil, err
 	}
 
 	now := time.Now()
-	storedJSON.Data = string(patchedRuleBytes)
+	storedJSON.Data = string(newStoredJson)
 	storedJSON.UpdatedBy = claims.Email
 	storedJSON.UpdatedAt = now
 
 	err = m.ruleStore.EditRule(ctx, storedJSON, func(ctx context.Context) error { return nil })
 	if err != nil {
-		if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &patchedRule); err != nil {
+		if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &storedRule); err != nil {
 			zap.L().Error("failed to restore rule after patch failure", zap.String("taskName", taskName), zap.Error(err))
 		}
 		return nil, err
@@ -931,7 +939,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 	// prepare http response
 	response := ruletypes.GettableRule{
 		Id:           id.StringValue(),
-		PostableRule: patchedRule,
+		PostableRule: storedRule,
 	}
 
 	// fetch state of rule from memory

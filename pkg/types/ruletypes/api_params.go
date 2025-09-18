@@ -23,6 +23,10 @@ const (
 	AlertTypeExceptions AlertType = "EXCEPTIONS_BASED_ALERT"
 )
 
+const (
+	DefaultSchemaVersion = "v1"
+)
+
 type RuleDataKind string
 
 const (
@@ -51,10 +55,15 @@ type PostableRule struct {
 
 	Version string `json:"version,omitempty"`
 
-	Evaluation *EvaluationEnvelope `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
+	Evaluation    *EvaluationEnvelope `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
+	SchemaVersion string              `json:"schemaVersion,omitempty"`
 }
 
 func (r *PostableRule) processRuleDefaults() error {
+
+	if r.SchemaVersion == "" {
+		r.SchemaVersion = DefaultSchemaVersion
+	}
 
 	if r.EvalWindow == 0 {
 		r.EvalWindow = Duration(5 * time.Minute)
@@ -79,7 +88,7 @@ func (r *PostableRule) processRuleDefaults() error {
 			}
 		}
 		//added alerts v2 fields
-		if r.RuleCondition.Thresholds == nil {
+		if r.SchemaVersion == DefaultSchemaVersion {
 			thresholdName := CriticalThresholdName
 			if r.Labels != nil {
 				if severity, ok := r.Labels["severity"]; ok {
@@ -98,13 +107,21 @@ func (r *PostableRule) processRuleDefaults() error {
 				}},
 			}
 			r.RuleCondition.Thresholds = &thresholdData
+			r.Evaluation = &EvaluationEnvelope{RollingEvaluation, RollingWindow{EvalWindow: r.EvalWindow, Frequency: r.Frequency}}
 		}
-	}
-	if r.Evaluation == nil {
-		r.Evaluation = &EvaluationEnvelope{RollingEvaluation, RollingWindow{EvalWindow: r.EvalWindow, Frequency: r.Frequency}}
 	}
 
 	return r.Validate()
+}
+
+type PatchableRule struct {
+	Disabled *bool `json:"disabled"`
+}
+
+func (p *PatchableRule) ApplyTo(target *PostableRule) {
+	if p.Disabled != nil {
+		target.Disabled = *p.Disabled
+	}
 }
 
 func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
