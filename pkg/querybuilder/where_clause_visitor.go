@@ -508,6 +508,10 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			if ok {
 				switch varValues := varItem.Value.(type) {
 				case []any:
+					if len(varValues) == 0 {
+						v.errors = append(v.errors, fmt.Sprintf("malformed request payload: variable `%s` used in expression has an empty list value", strings.TrimPrefix(var_, "$")))
+						return ""
+					}
 					value = varValues[0]
 				case any:
 					value = varValues
