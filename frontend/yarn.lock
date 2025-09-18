@@ -4338,14 +4338,13 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/table@0.3.7":
-  version "0.3.7"
-  resolved "https://registry.yarnpkg.com/@signozhq/table/-/table-0.3.7.tgz#895b710c02af124dfb5117e02bbc6d80ce062063"
-  integrity sha512-XDwRHBTf2q48MOuxkzzr0htWd0/mmvgHoZLl0WAMLk2gddbbNHg9hkCPfVARYOke6mX8Z/4T3e7dzgkRUhDGDg==
+"@signozhq/table@0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@signozhq/table/-/table-0.4.0.tgz#35e40c8a40f362ce65e68258cd7b87c8474918ae"
+  integrity sha512-9Ktem3T9MHITh3+k1xTjhUpVpDJ5xNHijrUVuN6P9a4yP2/kqwXtHC4WGgOxJreUhp+bfvzQr956hR+ZAHnL3g==
   dependencies:
     "@radix-ui/react-icons" "^1.3.0"
     "@radix-ui/react-slot" "^1.1.0"
-    "@signozhq/tooltip" "0.0.2"
     "@tanstack/react-table" "^8.21.3"
     "@tanstack/react-virtual" "^3.13.9"
     "@types/lodash-es" "^4.17.12"

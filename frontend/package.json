@@ -51,7 +51,7 @@
 		"@signozhq/input": "0.0.2",
 		"@signozhq/popover": "0.0.0",
 		"@signozhq/sonner": "0.1.0",
-		"@signozhq/table": "0.3.7",
+		"@signozhq/table": "0.4.0",
 		"@signozhq/tooltip": "0.0.2",
 		"@tanstack/react-table": "8.20.6",
 		"@tanstack/react-virtual": "3.11.2",
