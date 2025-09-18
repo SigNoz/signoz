@@ -121,11 +121,16 @@ func (r *PostableRule) MarshalJSON() ([]byte, error) {
 	case DefaultSchemaVersion:
 		copyStruct := *r
 		aux := Alias(copyStruct)
-		aux.RuleCondition.Thresholds = nil
+		if aux.RuleCondition != nil {
+			aux.RuleCondition.Thresholds = nil
+		}
 		aux.Evaluation = nil
+		aux.SchemaVersion = ""
 		return json.Marshal(aux)
 	default:
-		aux := (*Alias)(r)
+		copyStruct := *r
+		aux := Alias(copyStruct)
+		aux.SchemaVersion = ""
 		return json.Marshal(aux)
 	}
 }
@@ -298,9 +303,12 @@ func (g *GettableRule) MarshalJSON() ([]byte, error) {
 			aux.RuleCondition.Thresholds = nil
 		}
 		aux.Evaluation = nil
+		aux.SchemaVersion = ""
 		return json.Marshal(aux)
 	default:
-		aux := (*Alias)(g)
+		copyStruct := *g
+		aux := Alias(copyStruct)
+		aux.SchemaVersion = ""
 		return json.Marshal(aux)
 	}
 }
