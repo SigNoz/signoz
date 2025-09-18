@@ -510,12 +510,6 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 	if err != nil {
 		return nil, err
 	}
-	marshal, err := json.Marshal(&parsedRule)
-	zap.L().Debug("rule created", zap.String("rule", string(marshal)))
-	if err != nil {
-		zap.L().Error("error marshaling rule to json", zap.Error(err))
-		return nil, err
-	}
 
 	now := time.Now()
 	storedRule := &ruletypes.Rule{
