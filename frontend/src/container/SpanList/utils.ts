@@ -1,6 +1,7 @@
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
+import { uniqBy } from 'lodash-es';
 
 import { HierarchicalSpanData, ServiceEntrySpan, SpanDataRow } from './types';
 
@@ -13,15 +14,15 @@ export function transformEntrySpansToHierarchy(
 		return { entrySpans: [], totalTraceTime: 0 };
 	}
 
-	// const uniqueEntrySpans = uniqBy(entrySpans, 'data.span_id');
+	const uniqueEntrySpans = uniqBy(entrySpans, 'data.span_id');
 
 	// Calculate total trace time from all entry spans
-	entrySpans.forEach((span) => {
+	uniqueEntrySpans.forEach((span) => {
 		totalTraceTime += span.data.duration_nano;
 	});
 
 	// Transform entry spans to ServiceEntrySpan structure
-	const entrySpansList: ServiceEntrySpan[] = entrySpans.map((span) => ({
+	const entrySpansList: ServiceEntrySpan[] = uniqueEntrySpans.map((span) => ({
 		spanData: span,
 		serviceName: span.data['service.name'],
 		isExpanded: false,
