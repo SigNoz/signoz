@@ -902,14 +902,10 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 		return nil, err
 	}
 
-	// storedRule holds the current stored rule from DB
-	patchedRule := ruletypes.PatchableRule{}
-	if err := json.Unmarshal([]byte(ruleStr), &patchedRule); err != nil {
+	if err := json.Unmarshal([]byte(ruleStr), &storedRule); err != nil {
 		zap.L().Error("failed to unmarshal patched rule with given id", zap.String("id", id.StringValue()), zap.Error(err))
 		return nil, err
 	}
-
-	patchedRule.ApplyTo(&storedRule)
 
 	// deploy or un-deploy task according to patched (new) rule state
 	if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &storedRule); err != nil {

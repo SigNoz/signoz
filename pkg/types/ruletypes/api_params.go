@@ -114,16 +114,6 @@ func (r *PostableRule) processRuleDefaults() error {
 	return r.Validate()
 }
 
-type PatchableRule struct {
-	Disabled *bool `json:"disabled"`
-}
-
-func (p *PatchableRule) ApplyTo(target *PostableRule) {
-	if p.Disabled != nil {
-		target.Disabled = *p.Disabled
-	}
-}
-
 func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
 	type Alias PostableRule
 	aux := (*Alias)(r)
