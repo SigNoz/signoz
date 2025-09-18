@@ -4,6 +4,7 @@
 // Mock dayjs before importing any other modules
 const MOCK_DATE_STRING = '2024-01-15T00:30:00Z';
 const MOCK_DATE_STRING_NON_LEAP_YEAR = '2023-01-15T00:30:00Z';
+const MOCK_DATE_STRING_SPANS_MONTHS = '2024-01-31T00:30:00Z';
 const FREQ_DAILY = 'FREQ=DAILY';
 const TEN_THIRTY_TIME = '10:30:00';
 const NINE_AM_TIME = '09:00:00';
@@ -292,16 +293,6 @@ describe('utils', () => {
 	});
 
 	describe('buildAlertScheduleFromCustomSchedule', () => {
-		it('should return null for missing required parameters', () => {
-			expect(buildAlertScheduleFromCustomSchedule('', [], '10:30:00')).toBeNull();
-			expect(
-				buildAlertScheduleFromCustomSchedule('week', [], '10:30:00'),
-			).toBeNull();
-			expect(
-				buildAlertScheduleFromCustomSchedule('week', ['monday'], ''),
-			).toBeNull();
-		});
-
 		it('should generate monthly occurrences', () => {
 			const result = buildAlertScheduleFromCustomSchedule(
 				'month',
@@ -527,6 +518,114 @@ describe('utils', () => {
 				'29-04-2023 10:30:00',
 				'29-05-2023 10:30:00',
 				'29-06-2023 10:30:00',
+			]);
+		});
+
+		it('should generate daily occurrences', () => {
+			const result = buildAlertScheduleFromCustomSchedule(
+				'day',
+				[],
+				'10:40:00',
+				5,
+			);
+			expect(result).toBeDefined();
+			expect(Array.isArray(result)).toBe(true);
+			expect(result?.map((res) => formatDate(res))).toEqual([
+				'15-01-2024 10:40:00',
+				'16-01-2024 10:40:00',
+				'17-01-2024 10:40:00',
+				'18-01-2024 10:40:00',
+				'19-01-2024 10:40:00',
+			]);
+		});
+
+		it('should generate daily occurrences excluding today if alert time is in the past', () => {
+			const result = buildAlertScheduleFromCustomSchedule(
+				'day',
+				[],
+				'00:00:00',
+				5,
+			);
+			expect(result).toBeDefined();
+			expect(Array.isArray(result)).toBe(true);
+			expect(result?.map((res) => formatDate(res))).toEqual([
+				'16-01-2024 00:00:00',
+				'17-01-2024 00:00:00',
+				'18-01-2024 00:00:00',
+				'19-01-2024 00:00:00',
+				'20-01-2024 00:00:00',
+			]);
+		});
+
+		it('should generate daily occurrences excluding today if alert time is in the present (right now)', () => {
+			const result = buildAlertScheduleFromCustomSchedule(
+				'day',
+				[],
+				'00:30:00',
+				5,
+			);
+			expect(result).toBeDefined();
+			expect(Array.isArray(result)).toBe(true);
+			expect(result?.map((res) => formatDate(res))).toEqual([
+				'16-01-2024 00:30:00',
+				'17-01-2024 00:30:00',
+				'18-01-2024 00:30:00',
+				'19-01-2024 00:30:00',
+				'20-01-2024 00:30:00',
+			]);
+		});
+
+		it('should generate daily occurrences including today if alert time is in the future', () => {
+			const result = buildAlertScheduleFromCustomSchedule(
+				'day',
+				[],
+				'10:30:00',
+				5,
+			);
+			expect(result).toBeDefined();
+			expect(Array.isArray(result)).toBe(true);
+			expect(result?.map((res) => formatDate(res))).toEqual([
+				'15-01-2024 10:30:00',
+				'16-01-2024 10:30:00',
+				'17-01-2024 10:30:00',
+				'18-01-2024 10:30:00',
+				'19-01-2024 10:30:00',
+			]);
+		});
+
+		it('daily occurrences should span across months correctly', async () => {
+			jest.resetModules(); // clear previous mocks
+
+			jest.doMock('dayjs', () => {
+				const originalDayjs = jest.requireActual('dayjs');
+				const mockDayjs = (date?: string | Date): Dayjs => {
+					if (date) return originalDayjs(date);
+					return originalDayjs(MOCK_DATE_STRING_SPANS_MONTHS);
+				};
+				Object.assign(mockDayjs, originalDayjs);
+				return mockDayjs;
+			});
+
+			const { buildAlertScheduleFromCustomSchedule } = await import('../utils');
+			const { default: dayjs } = await import('dayjs');
+
+			const formatDate = (date: Date): string =>
+				dayjs(date).format('DD-MM-YYYY HH:mm:ss');
+
+			const result = buildAlertScheduleFromCustomSchedule(
+				'day',
+				[],
+				'10:30:00',
+				5,
+			);
+			expect(result).toBeDefined();
+			expect(Array.isArray(result)).toBe(true);
+			expect(result?.map((res) => formatDate(res))).toEqual([
+				'31-01-2024 10:30:00',
+				'01-02-2024 10:30:00',
+				'02-02-2024 10:30:00',
+				'03-02-2024 10:30:00',
+				'04-02-2024 10:30:00',
 			]);
 		});
 	});

@@ -201,6 +201,34 @@ function generateWeeklyOccurrences(
 	return occurrences;
 }
 
+export function generateDailyOccurrences(
+	hours: number,
+	minutes: number,
+	seconds: number,
+	maxOccurrences: number,
+): Date[] {
+	const occurrences: Date[] = [];
+	const currentDate = dayjs();
+	const currentTime =
+		currentDate.hour() * 3600 + currentDate.minute() * 60 + currentDate.second();
+	const targetTime = hours * 3600 + minutes * 60 + seconds;
+
+	// Start from today if target time is after current time, otherwise start from tomorrow
+	const startDayOffset = targetTime > currentTime ? 0 : 1;
+
+	for (
+		let dayOffset = startDayOffset;
+		dayOffset < startDayOffset + maxOccurrences;
+		dayOffset++
+	) {
+		const dayDate = currentDate.add(dayOffset, 'day');
+		const targetDate = dayDate.hour(hours).minute(minutes).second(seconds);
+		occurrences.push(targetDate.toDate());
+	}
+
+	return occurrences;
+}
+
 export function buildAlertScheduleFromCustomSchedule(
 	repeatEvery: string,
 	occurence: string[],
@@ -208,10 +236,6 @@ export function buildAlertScheduleFromCustomSchedule(
 	maxOccurrences = 10,
 ): Date[] | null {
 	try {
-		if (!repeatEvery || !occurence.length || !startAt || !timezone) {
-			return null;
-		}
-
 		const [hours = 0, minutes = 0, seconds = 0] = startAt.split(':').map(Number);
 		let occurrences: Date[] = [];
 
@@ -232,6 +256,13 @@ export function buildAlertScheduleFromCustomSchedule(
 				.filter((day) => day !== undefined);
 			occurrences = generateWeeklyOccurrences(
 				targetWeekdays,
+				hours,
+				minutes,
+				seconds,
+				maxOccurrences,
+			);
+		} else if (repeatEvery === 'day') {
+			occurrences = generateDailyOccurrences(
 				hours,
 				minutes,
 				seconds,
