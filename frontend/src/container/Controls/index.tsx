@@ -18,6 +18,7 @@ function Controls({
 	handleCountItemsPerPageChange,
 	isLogPanel = false,
 	showSizeChanger = true,
+	nextCursor,
 }: ControlsProps): JSX.Element | null {
 	const isNextAndPreviousDisabled = useMemo(
 		() => isLoading || countPerPage < 0 || totalCount === 0,
@@ -27,11 +28,24 @@ function Controls({
 		() => (isLogPanel ? false : offset <= 0 || isNextAndPreviousDisabled),
 		[isLogPanel, isNextAndPreviousDisabled, offset],
 	);
-	const isNextDisabled = useMemo(
-		() =>
-			isLogPanel ? false : totalCount < countPerPage || isNextAndPreviousDisabled,
-		[countPerPage, isLogPanel, isNextAndPreviousDisabled, totalCount],
-	);
+	const isNextDisabled = useMemo(() => {
+		if (isLogPanel) return false;
+		if (isNextAndPreviousDisabled) return true;
+
+		// If nextCursor is provided, use it to determine if there are more pages
+		if (nextCursor !== undefined) {
+			return nextCursor === '' || nextCursor === null;
+		}
+
+		// Fallback to original logic for components that don't provide nextCursor
+		return totalCount < countPerPage;
+	}, [
+		countPerPage,
+		isLogPanel,
+		isNextAndPreviousDisabled,
+		totalCount,
+		nextCursor,
+	]);
 
 	return (
 		<Container>
@@ -79,6 +93,7 @@ Controls.defaultProps = {
 	perPageOptions: DEFAULT_PER_PAGE_OPTIONS,
 	isLogPanel: false,
 	showSizeChanger: true,
+	nextCursor: undefined,
 };
 
 export interface ControlsProps {
@@ -92,6 +107,7 @@ export interface ControlsProps {
 	handleCountItemsPerPageChange: (value: Pagination['limit']) => void;
 	isLogPanel?: boolean;
 	showSizeChanger?: boolean;
+	nextCursor?: string;
 }
 
 export default memo(Controls);

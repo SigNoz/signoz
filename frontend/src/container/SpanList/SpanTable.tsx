@@ -16,13 +16,14 @@ interface EntryPagination {
 	onPageChange: (page: number) => void;
 	onPageSizeChange?: (pageSize: number) => void;
 	isLoading?: boolean;
+	nextCursor?: string;
 }
 
 // Constants
 const SPAN_TYPE_ENTRY = 'entry-span';
 const SPAN_TYPE_SERVICE = 'service-span';
 const SPAN_TYPE_PAGINATION = 'pagination-row';
-const SERVICE_SPAN_PAGE_SIZE = 3;
+const SERVICE_SPAN_PAGE_SIZE = 10;
 
 interface SpanTableProps {
 	data: HierarchicalSpanData;
@@ -547,6 +548,7 @@ function SpanTable({
 				handleNavigateNext={handleNavigateNext}
 				handleCountItemsPerPageChange={(): void => {}}
 				showSizeChanger={false}
+				nextCursor={entryPagination.nextCursor}
 			/>
 		</div>
 	);

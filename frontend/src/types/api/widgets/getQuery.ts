@@ -78,6 +78,7 @@ export interface QueryDataV3 {
 		}[];
 		columns: Column[];
 	};
+	nextCursor?: string;
 }
 
 export interface Props {

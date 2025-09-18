@@ -34,7 +34,7 @@ function SpanList({
 
 	// Entry spans pagination
 	const entryPage = parseInt(urlQuery.get('entryPage') || '1', 10);
-	const entryPageSize = 5;
+	const entryPageSize = 10;
 
 	const startTimestamp = useMemo(
 		() =>
@@ -159,6 +159,13 @@ function SpanList({
 			),
 		[data?.payload.data.newResult.data.result],
 	);
+
+	// Extract nextCursor from the API response
+	const nextCursor = useMemo(
+		() => data?.payload?.data?.newResult?.data?.result?.[0]?.nextCursor || '',
+		[data?.payload?.data?.newResult?.data?.result],
+	);
+
 	console.log(data);
 
 	return (
@@ -175,6 +182,7 @@ function SpanList({
 						pageSize: entryPageSize,
 						onPageChange: handleEntryPageChange,
 						isLoading: isLoading || isFetching,
+						nextCursor,
 					}}
 				/>
 			</div>
