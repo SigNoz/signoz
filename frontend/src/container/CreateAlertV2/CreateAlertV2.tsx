@@ -7,7 +7,9 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import AlertCondition from './AlertCondition';
 import { CreateAlertProvider } from './context';
 import CreateAlertHeader from './CreateAlertHeader';
+import EvaluationSettings from './EvaluationSettings';
 import QuerySection from './QuerySection';
+import { showCondensedLayout } from './utils';
 
 function CreateAlertV2({
 	initialQuery = initialQueriesMap.metrics,
@@ -16,14 +18,17 @@ function CreateAlertV2({
 }): JSX.Element {
 	useShareBuilderUrl({ defaultValue: initialQuery });
 
+	const showCondensedLayoutFlag = showCondensedLayout();
+
 	return (
-		<div className="create-alert-v2-container">
-			<CreateAlertProvider>
+		<CreateAlertProvider>
+			<div className="create-alert-v2-container">
 				<CreateAlertHeader />
 				<QuerySection />
 				<AlertCondition />
-			</CreateAlertProvider>
-		</div>
+				{!showCondensedLayoutFlag ? <EvaluationSettings /> : null}
+			</div>
+		</CreateAlertProvider>
 	);
 }
 
