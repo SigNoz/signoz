@@ -189,14 +189,15 @@ func TestManager_PatchRule_PayloadVariations(t *testing.T) {
 			if tc.expectedResult != nil {
 				assert.True(t, tc.expectedResult(result), "Expected result validation failed")
 			}
-
-			// Validate task synchronization
-			time.Sleep(100 * time.Millisecond)
-
 			taskName := prepareTaskName(result.Id)
+
 			if result.Disabled {
+				syncCompleted := waitForTaskSync(manager, taskName, false, 2*time.Second)
+				assert.True(t, syncCompleted, "Task synchronization should complete within timeout")
 				assert.NotContains(t, manager.tasks, taskName, "Task should be removed for disabled rule")
 			} else {
+				syncCompleted := waitForTaskSync(manager, taskName, true, 2*time.Second)
+				assert.True(t, syncCompleted, "Task synchronization should complete within timeout")
 				assert.Contains(t, manager.tasks, taskName, "Task should be created/updated for enabled rule")
 				assert.NotNil(t, manager.tasks[taskName], "Task should not be nil")
 				assert.Greater(t, len(manager.rules), 0, "Rules should be updated in manager")
@@ -205,6 +206,21 @@ func TestManager_PatchRule_PayloadVariations(t *testing.T) {
 			mockRuleStore.AssertExpectations(t)
 		})
 	}
+}
+
+func waitForTaskSync(manager *Manager, taskName string, expectedExists bool, timeout time.Duration) bool {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		manager.mtx.RLock()
+		_, exists := manager.tasks[taskName]
+		manager.mtx.RUnlock()
+
+		if exists == expectedExists {
+			return true
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	return false
 }
 
 func setupTestManager(t *testing.T, mockRuleStore *rulestoretest.MockRuleStore, claims *authtypes.Claims) (*Manager, string) {
@@ -404,9 +420,10 @@ func TestCreateRule(t *testing.T) {
 
 			assert.True(t, callbackExecuted, "Callback should have been executed successfully")
 
-			time.Sleep(100 * time.Millisecond)
-
+			// Wait for task creation with proper synchronization
 			taskName := prepareTaskName(result.Id)
+			syncCompleted := waitForTaskSync(manager, taskName, true, 2*time.Second)
+			assert.True(t, syncCompleted, "Task creation should complete within timeout")
 			assert.Contains(t, manager.tasks, taskName, "Task should be created with correct name")
 			assert.NotNil(t, manager.tasks[taskName], "Created task should not be nil")
 			assert.Greater(t, len(manager.rules), 0, "Rules should be added to manager")
@@ -579,9 +596,10 @@ func TestEditRule(t *testing.T) {
 
 			assert.True(t, callbackExecuted, "Callback should have been executed successfully")
 
-			time.Sleep(100 * time.Millisecond)
-
+			// Wait for task update with proper synchronization
 			taskName := prepareTaskName(ruleID.StringValue())
+			syncCompleted := waitForTaskSync(manager, taskName, true, 2*time.Second)
+			assert.True(t, syncCompleted, "Task update should complete within timeout")
 			assert.Contains(t, manager.tasks, taskName, "Task should be updated with correct name")
 			assert.NotNil(t, manager.tasks[taskName], "Updated task should not be nil")
 			assert.Greater(t, len(manager.rules), 0, "Rules should be updated in manager")
