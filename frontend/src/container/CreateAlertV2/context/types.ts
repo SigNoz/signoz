@@ -1,3 +1,4 @@
+import { Dayjs } from 'dayjs';
 import { Dispatch } from 'react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { Labels } from 'types/api/alerts/def';
@@ -9,6 +10,10 @@ export interface ICreateAlertContextProps {
 	setAlertType: Dispatch<AlertTypes>;
 	thresholdState: AlertThresholdState;
 	setThresholdState: Dispatch<AlertThresholdAction>;
+	advancedOptions: AdvancedOptionsState;
+	setAdvancedOptions: Dispatch<AdvancedOptionsAction>;
+	evaluationWindow: EvaluationWindowState;
+	setEvaluationWindow: Dispatch<EvaluationWindowAction>;
 }
 
 export interface ICreateAlertProviderProps {
@@ -101,3 +106,87 @@ export type AlertThresholdAction =
 	| { type: 'SET_SEASONALITY'; payload: string }
 	| { type: 'SET_THRESHOLDS'; payload: Threshold[] }
 	| { type: 'RESET' };
+
+export interface AdvancedOptionsState {
+	sendNotificationIfDataIsMissing: {
+		toleranceLimit: number;
+		timeUnit: string;
+	};
+	enforceMinimumDatapoints: {
+		minimumDatapoints: number;
+	};
+	delayEvaluation: {
+		delay: number;
+		timeUnit: string;
+	};
+	evaluationCadence: {
+		mode: EvaluationCadenceMode;
+		default: {
+			value: number;
+			timeUnit: string;
+		};
+		custom: {
+			repeatEvery: string;
+			startAt: string;
+			occurence: string[];
+			timezone: string;
+		};
+		rrule: {
+			date: Dayjs | null;
+			startAt: string;
+			rrule: string;
+		};
+	};
+}
+
+export type AdvancedOptionsAction =
+	| {
+			type: 'SET_SEND_NOTIFICATION_IF_DATA_IS_MISSING';
+			payload: { toleranceLimit: number; timeUnit: string };
+	  }
+	| {
+			type: 'SET_ENFORCE_MINIMUM_DATAPOINTS';
+			payload: { minimumDatapoints: number };
+	  }
+	| {
+			type: 'SET_DELAY_EVALUATION';
+			payload: { delay: number; timeUnit: string };
+	  }
+	| {
+			type: 'SET_EVALUATION_CADENCE';
+			payload: {
+				default: { value: number; timeUnit: string };
+				custom: {
+					repeatEvery: string;
+					startAt: string;
+					timezone: string;
+					occurence: string[];
+				};
+				rrule: { date: Dayjs | null; startAt: string; rrule: string };
+			};
+	  }
+	| { type: 'SET_EVALUATION_CADENCE_MODE'; payload: EvaluationCadenceMode }
+	| { type: 'RESET' };
+
+export interface EvaluationWindowState {
+	windowType: 'rolling' | 'cumulative';
+	timeframe: string;
+	startingAt: {
+		time: string;
+		number: string;
+		timezone: string;
+		unit: string;
+	};
+}
+
+export type EvaluationWindowAction =
+	| { type: 'SET_WINDOW_TYPE'; payload: 'rolling' | 'cumulative' }
+	| { type: 'SET_TIMEFRAME'; payload: string }
+	| {
+			type: 'SET_STARTING_AT';
+			payload: { time: string; number: string; timezone: string; unit: string };
+	  }
+	| { type: 'SET_EVALUATION_CADENCE_MODE'; payload: EvaluationCadenceMode }
+	| { type: 'RESET' };
+
+export type EvaluationCadenceMode = 'default' | 'custom' | 'rrule';
