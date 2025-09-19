@@ -14,12 +14,21 @@ type Name struct {
 	val string
 }
 
-func MustNewName(name string) Name {
+func NewName(name string) (Name, error) {
 	if !nameRegex.MatchString(name) {
-		panic(errors.NewInternalf(errors.CodeInternal, "name must conform to regex %s", nameRegex.String()))
+		return Name{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "name must conform to regex %s", nameRegex.String())
 	}
 
-	return Name{val: name}
+	return Name{val: name}, nil
+}
+
+func MustNewName(name string) Name {
+	named, err := NewName(name)
+	if err != nil {
+		panic(err)
+	}
+
+	return named
 }
 
 func (name Name) String() string {

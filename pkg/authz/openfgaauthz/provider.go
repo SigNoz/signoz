@@ -176,13 +176,17 @@ func (provider *provider) isModelEqual(expected *openfgav1.AuthorizationModel, a
 
 }
 
-func (provider *provider) Check(ctx context.Context, tupleReq *openfgav1.CheckRequestTupleKey) error {
+func (provider *provider) Check(ctx context.Context, tupleReq *openfgav1.TupleKey) error {
 	checkResponse, err := provider.openfgaServer.Check(
 		ctx,
 		&openfgav1.CheckRequest{
 			StoreId:              provider.storeID,
 			AuthorizationModelId: provider.modelID,
-			TupleKey:             tupleReq,
+			TupleKey: &openfgav1.CheckRequestTupleKey{
+				User:     tupleReq.User,
+				Relation: tupleReq.Relation,
+				Object:   tupleReq.Object,
+			},
 		})
 	if err != nil {
 		return errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthZUnavailable, "authorization server is unavailable").WithAdditional(err.Error())
@@ -217,7 +221,7 @@ func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims aut
 	return nil
 }
 
-func (provider *provider) sequentialCheck(ctx context.Context, tuplesReq []*openfgav1.CheckRequestTupleKey) (bool, error) {
+func (provider *provider) sequentialCheck(ctx context.Context, tuplesReq []*openfgav1.TupleKey) (bool, error) {
 	for _, tupleReq := range tuplesReq {
 		err := provider.Check(ctx, tupleReq)
 		if err == nil {
@@ -230,4 +234,14 @@ func (provider *provider) sequentialCheck(ctx context.Context, tuplesReq []*open
 	}
 
 	return false, nil
+}
+
+func (provider *provider) Write(ctx context.Context, req *openfgav1.WriteRequest) error {
+	_, err := provider.openfgaServer.Write(ctx, &openfgav1.WriteRequest{
+		StoreId:              provider.storeID,
+		AuthorizationModelId: provider.modelID,
+		Writes:               req.Writes,
+	})
+
+	return err
 }

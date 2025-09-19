@@ -30,7 +30,25 @@ var (
 
 type Typeable interface {
 	Type() Type
-	Tuples(subject string, relation Relation, selector Selector, parentType Typeable, parentSelectors ...Selector) ([]*openfgav1.CheckRequestTupleKey, error)
+	Name() Name
+	Tuples(subject string, relation Relation, selector Selector, parentType Typeable, parentSelectors ...Selector) ([]*openfgav1.TupleKey, error)
 }
 
 type Type struct{ valuer.String }
+
+func NewTypeableFromType(typed Type, name Name) (Typeable, error) {
+	switch typed {
+	case TypeRole:
+		return TypeableRole, nil
+	case TypeUser:
+		return TypeableUser, nil
+	case TypeOrganization:
+		return TypeableOrganization, nil
+	case TypeResource:
+		return MustNewResource(name), nil
+	case TypeResources:
+		return MustNewResources(name), nil
+	}
+
+	return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid type")
+}
