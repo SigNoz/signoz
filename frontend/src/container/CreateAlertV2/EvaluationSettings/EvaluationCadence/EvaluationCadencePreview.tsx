@@ -34,7 +34,14 @@ function EvaluationCadencePreview({
 	}, [advancedOptions.evaluationCadence]);
 
 	return (
-		<Modal open={isOpen} onCancel={(): void => setIsOpen(false)} footer={null}>
+		<Modal
+			open={isOpen}
+			onCancel={(): void => setIsOpen(false)}
+			footer={null}
+			className="evaluation-cadence-preview-modal"
+			width={800}
+			centered
+		>
 			<div className="evaluation-cadence-details evaluation-cadence-preview">
 				<div className="evaluation-cadence-details-content">
 					<div className="evaluation-cadence-details-content-row">
