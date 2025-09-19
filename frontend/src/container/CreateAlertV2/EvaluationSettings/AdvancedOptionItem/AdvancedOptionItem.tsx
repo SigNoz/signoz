@@ -27,7 +27,7 @@ function AdvancedOptionItem({
 					{title}
 					{tooltipText && (
 						<Tooltip title={tooltipText}>
-							<Info size={16} />
+							<Info data-testid="tooltip-icon" size={16} />
 						</Tooltip>
 					)}
 				</Typography.Text>

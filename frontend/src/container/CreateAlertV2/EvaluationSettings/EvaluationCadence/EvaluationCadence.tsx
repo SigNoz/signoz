@@ -41,7 +41,7 @@ function EvaluationCadence(): JSX.Element {
 					<Typography.Text className="advanced-option-item-title">
 						How often to check
 						<Tooltip title="Controls how frequently the alert evaluates your conditions. For most alerts, 1-5 minutes is sufficient.">
-							<Info size={16} />
+							<Info data-testid="evaluation-cadence-tooltip-icon" size={16} />
 						</Tooltip>
 					</Typography.Text>
 					<Typography.Text className="advanced-option-item-description">
@@ -49,7 +49,10 @@ function EvaluationCadence(): JSX.Element {
 					</Typography.Text>
 				</div>
 				{showCustomScheduleButton && (
-					<div className="advanced-option-item-right-content">
+					<div
+						className="advanced-option-item-right-content"
+						data-testid="evaluation-cadence-input-group"
+					>
 						<Input.Group className="advanced-option-item-input-group">
 							<Input
 								type="number"

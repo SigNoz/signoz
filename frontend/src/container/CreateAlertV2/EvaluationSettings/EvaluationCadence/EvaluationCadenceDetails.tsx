@@ -1,5 +1,5 @@
 import { Button, DatePicker, Select, Typography } from 'antd';
-import TextArea from 'antd/es/input/TextArea';
+import TextArea from 'antd/lib/input/TextArea';
 import classNames from 'classnames';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import { AdvancedOptionsState } from 'container/CreateAlertV2/context/types';
@@ -291,7 +291,7 @@ function EvaluationCadenceDetails({
 				</div>
 				<div className="evaluation-cadence-details-content-row">
 					{schedule && schedule.length > 0 ? (
-						<div className="schedule-preview">
+						<div className="schedule-preview" data-testid="schedule-preview">
 							<div className="schedule-preview-header">
 								<Calendar size={16} />
 								<Typography.Text className="schedule-preview-title">
@@ -334,7 +334,7 @@ function EvaluationCadenceDetails({
 							</div>
 						</div>
 					) : (
-						<div className="no-schedule">
+						<div className="no-schedule" data-testid="no-schedule">
 							<Info size={32} />
 							<Typography.Text>
 								Please fill the relevant information to generate a schedule

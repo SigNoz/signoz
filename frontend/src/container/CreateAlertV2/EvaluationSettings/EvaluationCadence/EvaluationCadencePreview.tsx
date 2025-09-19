@@ -3,7 +3,7 @@ import { Calendar, Info } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { useCreateAlertState } from '../../context';
-import {} from '../constants';
+import { TIMEZONE_DATA } from '../constants';
 import { IEvaluationCadencePreviewProps } from '../types';
 import {
 	buildAlertScheduleFromCustomSchedule,
@@ -38,8 +38,8 @@ function EvaluationCadencePreview({
 			<div className="evaluation-cadence-details evaluation-cadence-preview">
 				<div className="evaluation-cadence-details-content">
 					<div className="evaluation-cadence-details-content-row">
-						{schedule ? (
-							<div className="schedule-preview">
+						{schedule && schedule.length > 0 ? (
+							<div className="schedule-preview" data-testid="schedule-preview">
 								<div className="schedule-preview-header">
 									<Calendar size={16} />
 									<Typography.Text className="schedule-preview-title">
@@ -69,9 +69,13 @@ function EvaluationCadencePreview({
 												</div>
 												<div className="schedule-preview-separator" />
 												<div className="schedule-preview-timezone">
-													UTC {date.getTimezoneOffset() <= 0 ? '+' : '-'}{' '}
-													{Math.abs(Math.floor(date.getTimezoneOffset() / 60))}:
-													{String(Math.abs(date.getTimezoneOffset() % 60)).padStart(2, '0')}
+													{
+														TIMEZONE_DATA.find(
+															(timezone) =>
+																timezone.value ===
+																advancedOptions.evaluationCadence.custom.timezone,
+														)?.label
+													}
 												</div>
 											</div>
 										</div>
@@ -79,7 +83,7 @@ function EvaluationCadencePreview({
 								</div>
 							</div>
 						) : (
-							<div className="no-schedule">
+							<div className="no-schedule" data-testid="no-schedule">
 								<Info size={32} />
 								<Typography.Text>
 									Please fill the relevant information to generate a schedule
