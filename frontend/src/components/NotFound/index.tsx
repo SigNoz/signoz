@@ -1,4 +1,4 @@
-import NotFoundImage from 'assets/NotFound';
+import NotFoundImage from 'assets/NotFound/NotFound';
 import ROUTES from 'constants/routes';
 
 import { defaultText } from './constant';

@@ -1,7 +1,8 @@
 import DecorativeImage from 'components/DecorativeImage/DecorativeImage';
+import './style.scss';
 
 function NotFound(): JSX.Element {
-	return <DecorativeImage style={{ maxHeight: '480px', maxWidth: '480px' }} src="/Images/notFound404.png" className="not-found-image" />;
+	return <DecorativeImage src="/Images/notFound404.png" className="not-found-image" />;
 }
 
 export default NotFound;

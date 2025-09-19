@@ -16,9 +16,7 @@ function Containers(): JSX.Element {
 			<div className="infra-container-card-container">
 				<div className="dev-status-container">
 					<div className="infra-container-card">
-						<DecorativeImage style={{
-							width: '32px', height: '32px',
-						}} src="/Icons/infraContainers.svg" className="" width="32" height="32" />
+						<DecorativeImage className="container-img" src="/Icons/infraContainers.svg" width="32" height="32" />
 
 						<Text className="infra-container-card-text">
 							{t('containers_visualization_message')}
@@ -27,7 +25,7 @@ function Containers(): JSX.Element {
 
 					<div className="infra-container-working-msg">
 						<Space>
-							<DecorativeImage src="/Icons/broom.svg" className="" width="24" height="24" />
+							<DecorativeImage src="/Icons/broom.svg" width="24" height="24" />
 							<Text className="infra-container-card-text">{t('working_message')}</Text>
 						</Space>
 					</div>
