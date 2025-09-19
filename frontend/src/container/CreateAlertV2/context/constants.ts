@@ -94,7 +94,7 @@ export const INITIAL_ADVANCED_OPTIONS_STATE: AdvancedOptionsState = {
 			timeUnit: UniversalYAxisUnit.MINUTES,
 		},
 		custom: {
-			repeatEvery: 'week',
+			repeatEvery: 'day',
 			startAt: '00:00:00',
 			occurence: [],
 			timezone: TIMEZONE_DATA[0].value,

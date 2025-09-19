@@ -9,6 +9,8 @@ export interface IAdvancedOptionItemProps {
 	title: string;
 	description: string;
 	input: JSX.Element;
+	tooltipText?: string;
+	onToggle?: () => void;
 }
 
 export enum RollingWindowTimeframes {
@@ -44,10 +46,20 @@ export interface IEvaluationCadenceDetailsProps {
 	setIsOpen: Dispatch<SetStateAction<boolean>>;
 }
 
+export interface IEvaluationCadencePreviewProps {
+	isOpen: boolean;
+	setIsOpen: Dispatch<SetStateAction<boolean>>;
+}
+
 export interface TimeInputProps {
 	value?: string; // Format: "HH:MM:SS"
 	onChange?: (value: string) => void;
 	placeholder?: string;
 	disabled?: boolean;
 	className?: string;
+}
+
+export interface IEditCustomScheduleProps {
+	setIsEvaluationCadenceDetailsVisible: (isOpen: boolean) => void;
+	setIsPreviewVisible: (isOpen: boolean) => void;
 }
