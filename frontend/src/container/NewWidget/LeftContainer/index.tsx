@@ -32,7 +32,7 @@ function LeftContainer({
 	const { stagedQuery } = useQueryBuilder();
 	// const { selectedDashboard } = useDashboard();
 
-	const { selectedTime: globalSelectedInterval } = useSelector<
+	const { selectedTime: globalSelectedInterval, minTime, maxTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
@@ -46,6 +46,8 @@ function LeftContainer({
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
 				globalSelectedInterval,
 				requestData,
+				minTime,
+				maxTime,
 			],
 		},
 	);
