@@ -25,7 +25,7 @@ const SCHEDULE_PREVIEW_TEST_ID = 'schedule-preview';
 const NO_SCHEDULE_TEST_ID = 'no-schedule';
 const EDITOR_VIEW_TEST_ID = 'editor-view';
 const RULE_VIEW_TEST_ID = 'rrule-view';
-const SAVE_CUSTOM_SCHEDULE_TEXT = 'save-custom-schedule';
+const SAVE_CUSTOM_SCHEDULE_TEXT = 'Save Custom Schedule';
 
 describe('EvaluationCadenceDetails', () => {
 	it('should render the evaluation cadence details component with editor mode in daily occurence by default', () => {
