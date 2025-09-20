@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 // Mock dependencies before imports
+import { toast } from '@signozhq/sonner';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import logEvent from 'api/common/logEvent';
@@ -11,12 +12,19 @@ import FeedbackModal from '../FeedbackModal';
 
 jest.mock('api/common/logEvent', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: jest.fn(() => Promise.resolve()),
 }));
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: jest.fn(),
+}));
+
+jest.mock('@signozhq/sonner', () => ({
+	toast: {
+		success: jest.fn(),
+		error: jest.fn(),
+	},
 }));
 
 jest.mock('hooks/useGetTenantLicense', () => ({
@@ -27,10 +35,11 @@ jest.mock('pages/Integrations/utils', () => ({
 	handleContactSupport: jest.fn(),
 }));
 
-const mockLogEvent = logEvent as jest.Mock;
+const mockLogEvent = logEvent as jest.MockedFunction<typeof logEvent>;
 const mockUseLocation = useLocation as jest.Mock;
 const mockUseGetTenantLicense = useGetTenantLicense as jest.Mock;
 const mockHandleContactSupport = handleContactSupport as jest.Mock;
+const mockToast = toast as jest.Mocked<typeof toast>;
 
 const mockOnClose = jest.fn();
 
@@ -45,6 +54,8 @@ describe('FeedbackModal', () => {
 		mockUseGetTenantLicense.mockReturnValue({
 			isCloudUser: false,
 		});
+		mockToast.success.mockClear();
+		mockToast.error.mockClear();
 	});
 
 	it('should render feedback modal with all tabs', () => {
@@ -114,6 +125,12 @@ describe('FeedbackModal', () => {
 			page: mockLocation.pathname,
 		});
 		expect(mockOnClose).toHaveBeenCalled();
+		expect(mockToast.success).toHaveBeenCalledWith(
+			'Feedback submitted successfully',
+			{
+				position: 'top-right',
+			},
+		);
 	});
 
 	it('should submit bug report with correct type', async () => {
@@ -142,6 +159,12 @@ describe('FeedbackModal', () => {
 			page: mockLocation.pathname,
 		});
 		expect(mockOnClose).toHaveBeenCalled();
+		expect(mockToast.success).toHaveBeenCalledWith(
+			'Bug report submitted successfully',
+			{
+				position: 'top-right',
+			},
+		);
 	});
 
 	it('should submit feature request with correct type', async () => {
@@ -170,6 +193,12 @@ describe('FeedbackModal', () => {
 			page: mockLocation.pathname,
 		});
 		expect(mockOnClose).toHaveBeenCalled();
+		expect(mockToast.success).toHaveBeenCalledWith(
+			'Feature request submitted successfully',
+			{
+				position: 'top-right',
+			},
+		);
 	});
 
 	it('should call handleContactSupport when contact support link is clicked', async () => {

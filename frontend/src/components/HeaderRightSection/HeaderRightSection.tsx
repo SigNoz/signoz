@@ -3,7 +3,7 @@ import './HeaderRightSection.styles.scss';
 import { Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { Globe, Inbox, SquarePen } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import AnnouncementsModal from './AnnouncementsModal';
@@ -27,7 +27,7 @@ function HeaderRightSection({
 	const [openShareURLModal, setOpenShareURLModal] = useState(false);
 	const [openAnnouncementsModal, setOpenAnnouncementsModal] = useState(false);
 
-	const handleOpenFeedbackModal = (): void => {
+	const handleOpenFeedbackModal = useCallback((): void => {
 		logEvent('Feedback: Clicked', {
 			page: location.pathname,
 		});
@@ -35,9 +35,9 @@ function HeaderRightSection({
 		setOpenFeedbackModal(true);
 		setOpenShareURLModal(false);
 		setOpenAnnouncementsModal(false);
-	};
+	}, [location.pathname]);
 
-	const handleOpenShareURLModal = (): void => {
+	const handleOpenShareURLModal = useCallback((): void => {
 		logEvent('Share: Clicked', {
 			page: location.pathname,
 		});
@@ -45,7 +45,7 @@ function HeaderRightSection({
 		setOpenShareURLModal(true);
 		setOpenFeedbackModal(false);
 		setOpenAnnouncementsModal(false);
-	};
+	}, [location.pathname]);
 
 	const handleCloseFeedbackModal = (): void => {
 		setOpenFeedbackModal(false);
@@ -78,7 +78,7 @@ function HeaderRightSection({
 					onOpenChange={handleOpenFeedbackModalChange}
 				>
 					<Button
-						className="share-link-btn periscope-btn ghost"
+						className="share-feedback-btn periscope-btn ghost"
 						icon={<SquarePen size={14} />}
 						onClick={handleOpenFeedbackModal}
 					/>
@@ -99,7 +99,7 @@ function HeaderRightSection({
 				>
 					<Button
 						icon={<Inbox size={14} />}
-						className="periscope-btn ghost"
+						className="periscope-btn ghost announcements-btn"
 						onClick={(): void => {
 							logEvent('Announcements: Clicked', {
 								page: location.pathname,

@@ -72,7 +72,7 @@ describe('HeaderRightSection', () => {
 
 		// Check for feedback button by class
 		const feedbackButton = document.querySelector(
-			'.share-link-btn[class*="share-link-btn"]',
+			'.share-feedback-btn[class*="share-feedback-btn"]',
 		);
 		expect(feedbackButton).toBeInTheDocument();
 
