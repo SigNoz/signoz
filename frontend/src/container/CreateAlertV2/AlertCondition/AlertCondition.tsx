@@ -6,6 +6,7 @@ import { Activity, ChartLine } from 'lucide-react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { useCreateAlertState } from '../context';
+import EvaluationCadence from '../EvaluationSettings/EvaluationCadence';
 import Stepper from '../Stepper';
 import AlertThreshold from './AlertThreshold';
 import AnomalyThreshold from './AnomalyThreshold';
@@ -75,6 +76,7 @@ function AlertCondition(): JSX.Element {
 			</div>
 			{alertType !== AlertTypes.ANOMALY_BASED_ALERT && <AlertThreshold />}
 			{alertType === AlertTypes.ANOMALY_BASED_ALERT && <AnomalyThreshold />}
+			<EvaluationCadence />
 		</div>
 	);
 }

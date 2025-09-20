@@ -23,6 +23,7 @@ export const EVALUATION_WINDOW_TIMEFRAME = {
 };
 
 export const EVALUATION_CADENCE_REPEAT_EVERY_OPTIONS = [
+	{ label: 'DAY', value: 'day' },
 	{ label: 'WEEK', value: 'week' },
 	{ label: 'MONTH', value: 'month' },
 ];
