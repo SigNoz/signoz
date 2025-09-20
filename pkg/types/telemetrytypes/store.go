@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // MetadataStore is the interface for the telemetry metadata store.
@@ -26,8 +27,8 @@ type MetadataStore interface {
 	GetAllValues(ctx context.Context, fieldValueSelector *FieldValueSelector) (*TelemetryFieldValues, bool, error)
 
 	// FetchTemporality fetches the temporality for metric
-	FetchTemporality(ctx context.Context, metricName string) (metrictypes.Temporality, error)
+	FetchTemporality(ctx context.Context, orgID valuer.UUID, metricName string) (metrictypes.Temporality, error)
 
 	// FetchTemporalityMulti fetches the temporality for multiple metrics
-	FetchTemporalityMulti(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error)
+	FetchTemporalityMulti(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]metrictypes.Temporality, error)
 }
