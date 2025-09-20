@@ -199,12 +199,6 @@ function QuerySearch({
 		500,
 	);
 
-	const closeSuggestions = useCallback(() => {
-		if (editorRef.current) {
-			closeCompletion(editorRef.current);
-		}
-	}, []);
-
 	const toggleSuggestions = useCallback(
 		(timeout?: number) => {
 			const timeoutId = setTimeout(() => {
@@ -212,8 +206,7 @@ function QuerySearch({
 				if (isFocused) {
 					startCompletion(editorRef.current);
 				} else {
-					// closeCompletion(editorRef.current);
-					closeSuggestions();
+					closeCompletion(editorRef.current);
 				}
 			}, timeout);
 
@@ -1346,7 +1339,6 @@ function QuerySearch({
 											query !== queryData.filter?.expression
 										) {
 											onChange(query);
-											// setShouldRunQueryPostUpdate(true);
 										}
 										if (onRun && typeof onRun === 'function') {
 											onRun(query);
