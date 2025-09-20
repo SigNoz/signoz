@@ -85,11 +85,13 @@ function QuerySearch({
 	dataSource,
 	onRun,
 	signalSource,
+	hardcodedAttributeKeys,
 }: {
 	onChange: (value: string) => void;
 	queryData: IBuilderQuery;
 	dataSource: DataSource;
 	signalSource?: string;
+	hardcodedAttributeKeys?: QueryKeyDataSuggestionsProps[];
 	onRun?: (query: string) => void;
 }): JSX.Element {
 	const isDarkMode = useIsDarkMode();
@@ -219,6 +221,11 @@ function QuerySearch({
 				return;
 			}
 
+			if (hardcodedAttributeKeys) {
+				setKeySuggestions(hardcodedAttributeKeys);
+				return;
+			}
+
 			lastFetchedKeyRef.current = searchText || '';
 
 			const response = await getKeySuggestions({
@@ -254,6 +261,7 @@ function QuerySearch({
 			toggleSuggestions,
 			queryData.aggregateAttribute?.key,
 			signalSource,
+			hardcodedAttributeKeys,
 		],
 	);
 
@@ -1483,6 +1491,7 @@ function QuerySearch({
 QuerySearch.defaultProps = {
 	onRun: undefined,
 	signalSource: '',
+	hardcodedAttributeKeys: undefined,
 };
 
 export default QuerySearch;
