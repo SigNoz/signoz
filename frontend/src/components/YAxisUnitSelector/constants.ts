@@ -625,3 +625,115 @@ export const Y_AXIS_CATEGORIES = [
 		],
 	},
 ];
+
+export const UniversalUnitToGrafanaUnit: Record<UniversalYAxisUnit, string> = {
+	// Time
+	[UniversalYAxisUnit.WEEKS]: 'w',
+	[UniversalYAxisUnit.DAYS]: 'd',
+	[UniversalYAxisUnit.HOURS]: 'h',
+	[UniversalYAxisUnit.MINUTES]: 'm',
+	[UniversalYAxisUnit.SECONDS]: 's',
+	[UniversalYAxisUnit.MILLISECONDS]: 'ms',
+	[UniversalYAxisUnit.MICROSECONDS]: 'µs',
+	[UniversalYAxisUnit.NANOSECONDS]: 'ns',
+
+	// Data (Grafana uses 1024-based IEC format)
+	[UniversalYAxisUnit.BYTES]: 'decbytes',
+	[UniversalYAxisUnit.KILOBYTES]: 'deckbytes',
+	[UniversalYAxisUnit.MEGABYTES]: 'decmbytes',
+	[UniversalYAxisUnit.GIGABYTES]: 'decgbytes',
+	[UniversalYAxisUnit.TERABYTES]: 'dectbytes',
+	[UniversalYAxisUnit.PETABYTES]: 'decpbytes',
+	[UniversalYAxisUnit.EXABYTES]: 'decebytes',
+	[UniversalYAxisUnit.ZETTABYTES]: 'deczbytes',
+	[UniversalYAxisUnit.YOTTABYTES]: 'decybytes',
+
+	// Data Rate
+	[UniversalYAxisUnit.BYTES_SECOND]: 'Bps',
+	[UniversalYAxisUnit.KILOBYTES_SECOND]: 'KBs',
+	[UniversalYAxisUnit.MEGABYTES_SECOND]: 'MBs',
+	[UniversalYAxisUnit.GIGABYTES_SECOND]: 'GBs',
+	[UniversalYAxisUnit.TERABYTES_SECOND]: 'TBs',
+	[UniversalYAxisUnit.PETABYTES_SECOND]: 'PBs',
+	[UniversalYAxisUnit.EXABYTES_SECOND]: 'EBs',
+	[UniversalYAxisUnit.ZETTABYTES_SECOND]: 'ZBs',
+	[UniversalYAxisUnit.YOTTABYTES_SECOND]: 'YBs',
+
+	// Bits
+	[UniversalYAxisUnit.BITS]: 'bits',
+	[UniversalYAxisUnit.KILOBITS]: 'kbits',
+	[UniversalYAxisUnit.MEGABITS]: 'mbits',
+	[UniversalYAxisUnit.GIGABITS]: 'gbits',
+	[UniversalYAxisUnit.TERABITS]: 'tbits',
+	[UniversalYAxisUnit.PETABITS]: 'pbits',
+	[UniversalYAxisUnit.EXABITS]: 'ebits',
+	[UniversalYAxisUnit.ZETTABITS]: 'zbits',
+	[UniversalYAxisUnit.YOTTABITS]: 'ybits',
+
+	// Bit Rate
+	[UniversalYAxisUnit.BITS_SECOND]: 'bps',
+	[UniversalYAxisUnit.KILOBITS_SECOND]: 'Kbits',
+	[UniversalYAxisUnit.MEGABITS_SECOND]: 'Mbits',
+	[UniversalYAxisUnit.GIGABITS_SECOND]: 'Gbits',
+	[UniversalYAxisUnit.TERABITS_SECOND]: 'Tbits',
+	[UniversalYAxisUnit.PETABITS_SECOND]: 'Pbits',
+	[UniversalYAxisUnit.EXABITS_SECOND]: 'Ebits',
+	[UniversalYAxisUnit.ZETTABITS_SECOND]: 'Zbits',
+	[UniversalYAxisUnit.YOTTABITS_SECOND]: 'Ybits',
+
+	// Count
+	[UniversalYAxisUnit.COUNT]: 'short',
+	[UniversalYAxisUnit.COUNT_SECOND]: 'cps',
+	[UniversalYAxisUnit.COUNT_MINUTE]: 'cpm',
+
+	// Operations
+	[UniversalYAxisUnit.OPS_SECOND]: 'ops',
+	[UniversalYAxisUnit.OPS_MINUTE]: 'opm',
+
+	// Requests
+	[UniversalYAxisUnit.REQUESTS_SECOND]: 'reqps',
+	[UniversalYAxisUnit.REQUESTS_MINUTE]: 'reqpm',
+
+	// Reads/Writes
+	[UniversalYAxisUnit.READS_SECOND]: 'rps',
+	[UniversalYAxisUnit.WRITES_SECOND]: 'wps',
+	[UniversalYAxisUnit.READS_MINUTE]: 'rpm',
+	[UniversalYAxisUnit.WRITES_MINUTE]: 'wpm',
+
+	// IO Operations
+	[UniversalYAxisUnit.IOOPS_SECOND]: 'iops',
+
+	// Percent
+	[UniversalYAxisUnit.PERCENT]: 'percent',
+	[UniversalYAxisUnit.PERCENT_UNIT]: 'percentunit',
+
+	// None
+	[UniversalYAxisUnit.NONE]: 'none',
+};
+
+export const AdditionalLabelsMappingForGrafanaUnits: Record<string, string> = {
+	// Data
+	decebytes: 'EB',
+	deczbytes: 'ZB',
+	decybytes: 'YB',
+
+	// Data Rate
+	EBs: 'EB/s',
+	ZBs: 'ZB/s',
+	YBs: 'YB/s',
+
+	// Bits
+	kbits: 'kb',
+	mbits: 'mb',
+	gbits: 'gb',
+	tbits: 'tb',
+	pbits: 'pb',
+	ebits: 'eb',
+	zbits: 'zb',
+	ybits: 'yb',
+
+	// Bit rate
+	Ebits: 'Eb/s',
+	Zbits: 'Zb/s',
+	Ybits: 'Yb/s',
+};
