@@ -196,13 +196,12 @@ func TestManager_PatchRule_PayloadVariations(t *testing.T) {
 			if result.Disabled {
 				syncCompleted := waitForTaskSync(manager, taskName, false, 2*time.Second)
 				assert.True(t, syncCompleted, "Task synchronization should complete within timeout")
-				assert.NotContains(t, manager.tasks, taskName, "Task should be removed for disabled rule")
+				assert.Nil(t, findTaskByName(manager.RuleTasks(), taskName), "Task should be removed for disabled rule")
 			} else {
 				syncCompleted := waitForTaskSync(manager, taskName, true, 2*time.Second)
 				assert.True(t, syncCompleted, "Task synchronization should complete within timeout")
-				assert.Contains(t, manager.tasks, taskName, "Task should be created/updated for enabled rule")
-				assert.NotNil(t, manager.tasks[taskName], "Task should not be nil")
-				assert.Greater(t, len(manager.rules), 0, "Rules should be updated in manager")
+				assert.NotNil(t, findTaskByName(manager.RuleTasks(), taskName), "Task should be created/updated for enabled rule")
+				assert.Greater(t, len(manager.Rules()), 0, "Rules should be updated in manager")
 			}
 
 			assert.NoError(t, mockSQLRuleStore.AssertExpectations())
@@ -213,9 +212,8 @@ func TestManager_PatchRule_PayloadVariations(t *testing.T) {
 func waitForTaskSync(manager *Manager, taskName string, expectedExists bool, timeout time.Duration) bool {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
-		manager.mtx.RLock()
-		_, exists := manager.tasks[taskName]
-		manager.mtx.RUnlock()
+		task := findTaskByName(manager.RuleTasks(), taskName)
+		exists := task != nil
 
 		if exists == expectedExists {
 			return true
@@ -223,6 +221,16 @@ func waitForTaskSync(manager *Manager, taskName string, expectedExists bool, tim
 		time.Sleep(10 * time.Millisecond)
 	}
 	return false
+}
+
+// findTaskByName finds a task by name in the slice of tasks
+func findTaskByName(tasks []Task, taskName string) Task {
+	for i := 0; i < len(tasks); i++ {
+		if tasks[i].Name() == taskName {
+			return tasks[i]
+		}
+	}
+	return nil
 }
 
 func setupTestManager(t *testing.T) (*Manager, *rulestoretest.MockSQLRuleStore, string) {
@@ -432,9 +440,8 @@ func TestCreateRule(t *testing.T) {
 			taskName := prepareTaskName(result.Id)
 			syncCompleted := waitForTaskSync(manager, taskName, true, 2*time.Second)
 			assert.True(t, syncCompleted, "Task creation should complete within timeout")
-			assert.Contains(t, manager.tasks, taskName, "Task should be created with correct name")
-			assert.NotNil(t, manager.tasks[taskName], "Created task should not be nil")
-			assert.Greater(t, len(manager.rules), 0, "Rules should be added to manager")
+			assert.NotNil(t, findTaskByName(manager.RuleTasks(), taskName), "Task should be created with correct name")
+			assert.Greater(t, len(manager.Rules()), 0, "Rules should be added to manager")
 
 			assert.NoError(t, mockSQLRuleStore.AssertExpectations())
 		})
@@ -594,9 +601,8 @@ func TestEditRule(t *testing.T) {
 			taskName := prepareTaskName(ruleID.StringValue())
 			syncCompleted := waitForTaskSync(manager, taskName, true, 2*time.Second)
 			assert.True(t, syncCompleted, "Task update should complete within timeout")
-			assert.Contains(t, manager.tasks, taskName, "Task should be updated with correct name")
-			assert.NotNil(t, manager.tasks[taskName], "Updated task should not be nil")
-			assert.Greater(t, len(manager.rules), 0, "Rules should be updated in manager")
+			assert.NotNil(t, findTaskByName(manager.RuleTasks(), taskName), "Task should be updated with correct name")
+			assert.Greater(t, len(manager.Rules()), 0, "Rules should be updated in manager")
 
 			assert.NoError(t, mockSQLRuleStore.AssertExpectations())
 		})

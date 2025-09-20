@@ -130,7 +130,6 @@ func (r *PostableRule) MarshalJSON() ([]byte, error) {
 	default:
 		copyStruct := *r
 		aux := Alias(copyStruct)
-		aux.SchemaVersion = ""
 		return json.Marshal(aux)
 	}
 }
@@ -308,7 +307,6 @@ func (g *GettableRule) MarshalJSON() ([]byte, error) {
 	default:
 		copyStruct := *g
 		aux := Alias(copyStruct)
-		aux.SchemaVersion = ""
 		return json.Marshal(aux)
 	}
 }
