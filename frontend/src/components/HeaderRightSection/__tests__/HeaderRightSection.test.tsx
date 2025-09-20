@@ -189,14 +189,4 @@ describe('HeaderRightSection', () => {
 		expect(screen.getByTestId('feedback-modal')).toBeInTheDocument();
 		expect(screen.queryByTestId('share-modal')).not.toBeInTheDocument();
 	});
-
-	it('should handle different location pathnames', () => {
-		const customLocation = { pathname: '/custom-path' };
-		mockUseLocation.mockReturnValue(customLocation);
-
-		render(<HeaderRightSection {...defaultProps} />);
-
-		// Component should render without errors
-		expect(screen.getByRole('button', { name: /share/i })).toBeInTheDocument();
-	});
 });

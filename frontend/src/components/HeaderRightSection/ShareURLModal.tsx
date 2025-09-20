@@ -35,7 +35,7 @@ function ShareURLModal(): JSX.Element {
 	const endTime = urlQuery.get(QueryParams.endTime);
 	const relativeTime = urlQuery.get(QueryParams.relativeTime);
 
-	const [isValidteRelativeTime, setIsValidteRelativeTime] = useState(false);
+	const [isValidateRelativeTime, setIsValidateRelativeTime] = useState(false);
 	const [isURLCopied, setIsURLCopied] = useState(false);
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 
@@ -43,11 +43,11 @@ function ShareURLModal(): JSX.Element {
 		setEnableAbsoluteTime(selectedTime !== 'custom');
 
 		if (startTime && endTime && selectedTime === 'custom') {
-			setIsValidteRelativeTime(true);
+			setIsValidateRelativeTime(true);
 		}
 
 		if (selectedTime !== 'custom') {
-			setIsValidteRelativeTime(true);
+			setIsValidateRelativeTime(true);
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -133,10 +133,12 @@ function ShareURLModal(): JSX.Element {
 						</Typography.Text>
 
 						<div className="absolute-relative-time-toggler">
-							{!isValidteRelativeTime && <Info size={14} color={Color.BG_AMBER_600} />}
+							{!isValidateRelativeTime && (
+								<Info size={14} color={Color.BG_AMBER_600} />
+							)}
 							<Switch
 								checked={enableAbsoluteTime}
-								disabled={!isValidteRelativeTime}
+								disabled={!isValidateRelativeTime}
 								size="small"
 								onChange={(): void => {
 									setEnableAbsoluteTime((prev) => !prev);
@@ -145,7 +147,7 @@ function ShareURLModal(): JSX.Element {
 						</div>
 					</div>
 
-					{!isValidteRelativeTime && (
+					{!isValidateRelativeTime && (
 						<div className="absolute-relative-time-error">
 							Please select / enter valid relative time to toggle.
 						</div>

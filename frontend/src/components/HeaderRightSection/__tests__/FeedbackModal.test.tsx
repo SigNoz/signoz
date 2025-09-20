@@ -214,11 +214,37 @@ describe('FeedbackModal', () => {
 		expect(docsLink).toHaveAttribute('rel', 'noreferrer');
 	});
 
-	it('should reset form state when component unmounts', () => {
+	it('should reset form state when component unmounts', async () => {
+		const user = userEvent.setup();
+
+		// Render component
 		const { unmount } = render(<FeedbackModal onClose={mockOnClose} />);
 
-		// This test verifies the useEffect cleanup function
-		// The actual reset happens in the cleanup, so we just verify no errors occur
-		expect(() => unmount()).not.toThrow();
+		// Change the form state first
+		const textArea = screen.getByPlaceholderText('Write your feedback here...');
+		await user.type(textArea, 'Some feedback text');
+
+		// Change the active tab
+		const bugTab = screen.getByText('Report a bug');
+		await user.click(bugTab);
+
+		// Verify state has changed
+		expect(textArea).toHaveValue('Some feedback text');
+
+		// Unmount the component - this should trigger cleanup
+		unmount();
+
+		// Re-render the component to verify state was reset
+		render(<FeedbackModal onClose={mockOnClose} />);
+
+		// Verify form state is reset
+		const newTextArea = screen.getByPlaceholderText(
+			'Write your feedback here...',
+		);
+		expect(newTextArea).toHaveValue(''); // Should be empty
+
+		// Verify active tab is reset to default (Feedback tab)
+		const feedbackTab = screen.getByRole('tab', { name: /Feedback/i });
+		expect(feedbackTab).toHaveAttribute('aria-selected', 'true');
 	});
 });

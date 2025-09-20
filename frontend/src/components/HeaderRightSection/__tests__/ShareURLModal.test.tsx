@@ -252,7 +252,8 @@ describe('ShareURLModal', () => {
 		expect(mockUrlQuery.set).toHaveBeenCalledWith('relativeTime', '5min');
 	});
 
-	it('should handle routes that should be shared with time', () => {
+	it('should handle routes that should be shared with time', async () => {
+		const user = userEvent.setup();
 		mockUseLocation.mockReturnValue({
 			pathname: ROUTES.LOGS_EXPLORER,
 		});
@@ -264,5 +265,25 @@ describe('ShareURLModal', () => {
 		render(<ShareURLModal />);
 
 		expect(screen.getByText(ENABLE_ABSOLUTE_TIME_TEXT)).toBeInTheDocument();
+		expect(screen.getByRole('switch')).toBeChecked();
+
+		// on clicking copy page link, the copied url should have startTime and endTime
+		const copyButton = screen.getByRole('button', { name: /copy page link/i });
+
+		await user.click(copyButton);
+
+		expect(mockUrlQuery.set).toHaveBeenCalledWith('startTime', '1000000');
+		expect(mockUrlQuery.set).toHaveBeenCalledWith('endTime', '2000000');
+		expect(mockUrlQuery.delete).toHaveBeenCalledWith('relativeTime');
+
+		// toggle the switch to share url with relative time
+		const toggleSwitch = screen.getByRole('switch');
+		await user.click(toggleSwitch);
+
+		await user.click(copyButton);
+
+		expect(mockUrlQuery.delete).toHaveBeenCalledWith('startTime');
+		expect(mockUrlQuery.delete).toHaveBeenCalledWith('endTime');
+		expect(mockUrlQuery.set).toHaveBeenCalledWith('relativeTime', '5min');
 	});
 });
