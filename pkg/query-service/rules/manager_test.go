@@ -5,6 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
@@ -19,11 +22,18 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestManager_PatchRule_PayloadVariations(t *testing.T) {
+	// Set up test claims and manager once for all test cases
+	claims := &authtypes.Claims{
+		UserID: "550e8400-e29b-41d4-a716-446655440000",
+		Email:  "test@example.com",
+		Role:   "admin",
+	}
+	manager, mockSQLRuleStore, orgId := setupTestManager(t)
+	claims.OrgID = orgId
+
 	testCases := []struct {
 		name           string
 		originalData   string
@@ -151,13 +161,6 @@ func TestManager_PatchRule_PayloadVariations(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockRuleStore := &rulestoretest.MockRuleStore{}
-			claims := &authtypes.Claims{
-				UserID: "550e8400-e29b-41d4-a716-446655440000",
-				Email:  "test@example.com",
-				Role:   "admin",
-			}
-
 			ruleID := valuer.GenerateUUID()
 			existingRule := &ruletypes.Rule{
 				Identifiable: types.Identifiable{
@@ -171,13 +174,12 @@ func TestManager_PatchRule_PayloadVariations(t *testing.T) {
 					CreatedBy: "creator@example.com",
 					UpdatedBy: "creator@example.com",
 				},
-				Data: tc.originalData,
+				Data:  tc.originalData,
+				OrgID: claims.OrgID,
 			}
 
-			mockRuleStore.On("GetStoredRule", mock.Anything, ruleID).Return(existingRule, nil)
-			mockRuleStore.On("EditRule", mock.Anything, mock.AnythingOfType("*ruletypes.Rule"), mock.AnythingOfType("func(context.Context) error")).Return(nil)
-
-			manager, _ := setupTestManager(t, mockRuleStore, claims)
+			mockSQLRuleStore.ExpectGetStoredRule(ruleID, existingRule)
+			mockSQLRuleStore.ExpectEditRule(existingRule)
 
 			ctx := authtypes.NewContextWithClaims(context.Background(), *claims)
 			result, err := manager.PatchRule(ctx, tc.patchData, ruleID)
@@ -203,7 +205,7 @@ func TestManager_PatchRule_PayloadVariations(t *testing.T) {
 				assert.Greater(t, len(manager.rules), 0, "Rules should be updated in manager")
 			}
 
-			mockRuleStore.AssertExpectations(t)
+			assert.NoError(t, mockSQLRuleStore.AssertExpectations())
 		})
 	}
 }
@@ -223,7 +225,7 @@ func waitForTaskSync(manager *Manager, taskName string, expectedExists bool, tim
 	return false
 }
 
-func setupTestManager(t *testing.T, mockRuleStore *rulestoretest.MockRuleStore, claims *authtypes.Claims) (*Manager, string) {
+func setupTestManager(t *testing.T) (*Manager, *rulestoretest.MockSQLRuleStore, string) {
 	settings := instrumentationtest.New().ToProviderSettings()
 	testDB := utils.NewQueryServiceDBForTests(t)
 
@@ -231,15 +233,14 @@ func setupTestManager(t *testing.T, mockRuleStore *rulestoretest.MockRuleStore, 
 	if err != nil {
 		t.Fatalf("Failed to create test org: %v", err)
 	}
-
-	realOrgID, err := utils.GetTestOrgId(testDB)
+	testOrgID, err := utils.GetTestOrgId(testDB)
 	if err != nil {
 		t.Fatalf("Failed to get test org ID: %v", err)
 	}
 
-	claims.OrgID = realOrgID.StringValue()
+	//will replace this with alertmanager mock
 	newConfig := alertmanagerserver.NewConfig()
-	defaultConfig, err := alertmanagertypes.NewDefaultConfig(newConfig.Global, newConfig.Route, realOrgID.StringValue())
+	defaultConfig, err := alertmanagertypes.NewDefaultConfig(newConfig.Global, newConfig.Route, testOrgID.StringValue())
 	if err != nil {
 		t.Fatalf("Failed to create default alertmanager config: %v", err)
 	}
@@ -251,33 +252,46 @@ func setupTestManager(t *testing.T, mockRuleStore *rulestoretest.MockRuleStore, 
 		t.Fatalf("Failed to insert alertmanager config: %v", err)
 	}
 
-	noopSharder, _ := noopsharder.New(context.TODO(), settings, sharder.Config{})
+	noopSharder, err := noopsharder.New(context.TODO(), settings, sharder.Config{})
+	if err != nil {
+		t.Fatalf("Failed to create noop sharder: %v", err)
+	}
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(testDB), noopSharder)
-	alertManager, _ := signozalertmanager.New(context.TODO(), settings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, testDB, orgGetter)
+	alertManager, err := signozalertmanager.New(context.TODO(), settings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, testDB, orgGetter)
+	if err != nil {
+		t.Fatalf("Failed to create alert manager: %v", err)
+	}
+	mockSQLRuleStore := rulestoretest.NewMockSQLRuleStore()
 
-	manager := &Manager{
-		ruleStore:       mockRuleStore,
-		tasks:           make(map[string]Task),
-		rules:           make(map[string]Rule),
-		alertmanager:    alertManager,
-		block:           make(chan struct{}),
-		sqlstore:        testDB,
-		prepareTaskFunc: defaultPrepareTaskFunc,
-		opts: &ManagerOptions{
-			SLogger: instrumentationtest.New().Logger(),
-		},
-		orgGetter: orgGetter,
+	options := ManagerOptions{
+		Context:         context.Background(),
+		Logger:          zap.L(),
+		SLogger:         instrumentationtest.New().Logger(),
+		EvalDelay:       time.Minute,
+		PrepareTaskFunc: defaultPrepareTaskFunc,
+		Alertmanager:    alertManager,
+		OrgGetter:       orgGetter,
+		RuleStore:       mockSQLRuleStore,
+	}
+
+	manager, err := NewManager(&options)
+	if err != nil {
+		t.Fatalf("Failed to create manager: %v", err)
 	}
 
 	close(manager.block)
-	return manager, claims.OrgID
+	return manager, mockSQLRuleStore, testOrgID.StringValue()
 }
 
 func TestCreateRule(t *testing.T) {
+	claims := &authtypes.Claims{
+		Email: "test@example.com",
+	}
+	manager, mockSQLRuleStore, orgId := setupTestManager(t)
+	claims.OrgID = orgId
 	testCases := []struct {
 		name    string
 		ruleStr string
-		claims  *authtypes.Claims
 	}{
 		{
 			name: "validate stored rule data structure",
@@ -314,9 +328,6 @@ func TestCreateRule(t *testing.T) {
 				},
 				"preferredChannels": ["test-alerts"]
 			}`,
-			claims: &authtypes.Claims{
-				Email: "test@example.com",
-			},
 		},
 		{
 			name: "create complete v2 rule with thresholds",
@@ -389,36 +400,33 @@ func TestCreateRule(t *testing.T) {
 				"preferredChannels": ["#test-alerts-v2"],
 				"version": "v5"
 			}`,
-			claims: &authtypes.Claims{
-				Email: "test@example.com",
-			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockRuleStore := &rulestoretest.MockRuleStore{}
-			var callbackExecuted bool
-			mockRuleID := valuer.GenerateUUID()
+			rule := &ruletypes.Rule{
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
+				TimeAuditable: types.TimeAuditable{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
+				UserAuditable: types.UserAuditable{
+					CreatedBy: claims.Email,
+					UpdatedBy: claims.Email,
+				},
+				OrgID: claims.OrgID,
+			}
+			mockSQLRuleStore.ExpectCreateRule(rule)
 
-			mockRuleStore.On("CreateRule", mock.Anything, mock.AnythingOfType("*ruletypes.Rule"), mock.AnythingOfType("func(context.Context, valuer.UUID) error")).Return(mockRuleID, nil).Run(func(args mock.Arguments) {
-				callback := args.Get(2).(func(context.Context, valuer.UUID) error)
-				err := callback(context.Background(), mockRuleID)
-				if err == nil {
-					callbackExecuted = true
-				}
-			})
-
-			manager, _ := setupTestManager(t, mockRuleStore, tc.claims)
-
-			ctx := authtypes.NewContextWithClaims(context.Background(), *tc.claims)
+			ctx := authtypes.NewContextWithClaims(context.Background(), *claims)
 			result, err := manager.CreateRule(ctx, tc.ruleStr)
 
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
-			assert.Equal(t, mockRuleID.StringValue(), result.Id)
-
-			assert.True(t, callbackExecuted, "Callback should have been executed successfully")
+			assert.NotEmpty(t, result.Id, "Result should have a valid ID")
 
 			// Wait for task creation with proper synchronization
 			taskName := prepareTaskName(result.Id)
@@ -428,16 +436,21 @@ func TestCreateRule(t *testing.T) {
 			assert.NotNil(t, manager.tasks[taskName], "Created task should not be nil")
 			assert.Greater(t, len(manager.rules), 0, "Rules should be added to manager")
 
-			mockRuleStore.AssertExpectations(t)
+			assert.NoError(t, mockSQLRuleStore.AssertExpectations())
 		})
 	}
 }
 
 func TestEditRule(t *testing.T) {
+	// Set up test claims and manager once for all test cases
+	claims := &authtypes.Claims{
+		Email: "test@example.com",
+	}
+	manager, mockSQLRuleStore, orgId := setupTestManager(t)
+	claims.OrgID = orgId
 	testCases := []struct {
 		name    string
 		ruleStr string
-		claims  *authtypes.Claims
 	}{
 		{
 			name: "validate edit rule functionality",
@@ -474,10 +487,6 @@ func TestEditRule(t *testing.T) {
 				},
 				"preferredChannels": ["critical-alerts"]
 			}`,
-			claims: &authtypes.Claims{
-				OrgID: "550e8400-e29b-41d4-a716-446655440001",
-				Email: "test@example.com",
-			},
 		},
 		{
 			name: "edit complete v2 rule with thresholds",
@@ -550,17 +559,11 @@ func TestEditRule(t *testing.T) {
 				"preferredChannels": ["#critical-alerts-v2"],
 				"version": "v5"
 			}`,
-			claims: &authtypes.Claims{
-				OrgID: "550e8400-e29b-41d4-a716-446655440001",
-				Email: "test@example.com",
-			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockRuleStore := &rulestoretest.MockRuleStore{}
-			var callbackExecuted bool
 			ruleID := valuer.GenerateUUID()
 
 			existingRule := &ruletypes.Rule{
@@ -575,26 +578,17 @@ func TestEditRule(t *testing.T) {
 					CreatedBy: "creator@example.com",
 					UpdatedBy: "creator@example.com",
 				},
-				Data: `{"alert": "original cpu usage", "disabled": false}`,
+				Data:  `{"alert": "original cpu usage", "disabled": false}`,
+				OrgID: claims.OrgID,
 			}
 
-			mockRuleStore.On("GetStoredRule", mock.Anything, ruleID).Return(existingRule, nil)
-			mockRuleStore.On("EditRule", mock.Anything, mock.AnythingOfType("*ruletypes.Rule"), mock.AnythingOfType("func(context.Context) error")).Return(nil).Run(func(args mock.Arguments) {
-				callback := args.Get(2).(func(context.Context) error)
-				err := callback(context.Background())
-				if err == nil {
-					callbackExecuted = true
-				}
-			})
+			mockSQLRuleStore.ExpectGetStoredRule(ruleID, existingRule)
+			mockSQLRuleStore.ExpectEditRule(existingRule)
 
-			manager, _ := setupTestManager(t, mockRuleStore, tc.claims)
-
-			ctx := authtypes.NewContextWithClaims(context.Background(), *tc.claims)
+			ctx := authtypes.NewContextWithClaims(context.Background(), *claims)
 			err := manager.EditRule(ctx, tc.ruleStr, ruleID)
 
 			assert.NoError(t, err)
-
-			assert.True(t, callbackExecuted, "Callback should have been executed successfully")
 
 			// Wait for task update with proper synchronization
 			taskName := prepareTaskName(ruleID.StringValue())
@@ -604,7 +598,7 @@ func TestEditRule(t *testing.T) {
 			assert.NotNil(t, manager.tasks[taskName], "Updated task should not be nil")
 			assert.Greater(t, len(manager.rules), 0, "Rules should be updated in manager")
 
-			mockRuleStore.AssertExpectations(t)
+			assert.NoError(t, mockSQLRuleStore.AssertExpectations())
 		})
 	}
 }

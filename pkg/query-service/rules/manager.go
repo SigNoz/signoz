@@ -22,7 +22,6 @@ import (
 	querierV5 "github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -98,8 +97,9 @@ type ManagerOptions struct {
 	PrepareTaskFunc     func(opts PrepareTaskOptions) (Task, error)
 	PrepareTestRuleFunc func(opts PrepareTestRuleOptions) (int, *model.ApiError)
 	Alertmanager        alertmanager.Alertmanager
-	SQLStore            sqlstore.SQLStore
 	OrgGetter           organization.Getter
+	RuleStore           ruletypes.RuleStore
+	MaintenanceStore    ruletypes.MaintenanceStore
 }
 
 // The Manager manages recording and alerting rules.
@@ -207,14 +207,12 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 // by calling the Run method.
 func NewManager(o *ManagerOptions) (*Manager, error) {
 	o = defaultOptions(o)
-	ruleStore := sqlrulestore.NewRuleStore(o.SQLStore)
-	maintenanceStore := sqlrulestore.NewMaintenanceStore(o.SQLStore)
 
 	m := &Manager{
 		tasks:               map[string]Task{},
 		rules:               map[string]Rule{},
-		ruleStore:           ruleStore,
-		maintenanceStore:    maintenanceStore,
+		ruleStore:           o.RuleStore,
+		maintenanceStore:    o.MaintenanceStore,
 		opts:                o,
 		block:               make(chan struct{}),
 		logger:              o.Logger,
@@ -223,7 +221,6 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		prepareTaskFunc:     o.PrepareTaskFunc,
 		prepareTestRuleFunc: o.PrepareTestRuleFunc,
 		alertmanager:        o.Alertmanager,
-		sqlstore:            o.SQLStore,
 		orgGetter:           o.OrgGetter,
 	}
 
