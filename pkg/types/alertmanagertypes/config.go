@@ -5,6 +5,8 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/prometheus/common/model"
 	"slices"
 	"time"
 
@@ -19,6 +21,7 @@ import (
 
 const (
 	DefaultReceiverName string = "default-receiver"
+	DefaultGroupBy      string = "alertname"
 )
 
 var (
@@ -397,4 +400,44 @@ type ConfigStore interface {
 func init() {
 	commoncfg.MarshalSecretValue = true
 	config.MarshalSecretValue = true
+}
+
+// NotificationConfig holds configuration for alert notifications timing.
+type NotificationConfig struct {
+	NotificationGroup map[model.LabelName]struct{} `json:"notification_group"`
+	Renotify          ReNotificationConfig         `json:"renotify,omitempty"`
+}
+
+type ReNotificationConfig struct {
+	NoDataInterval   time.Duration `json:"noDataInterval,omitempty"`
+	RenotifyInterval time.Duration `json:"renotifyInterval,omitempty"`
+}
+
+func NewNotificationConfig(groups []string, renotifyInterval ruletypes.Duration, noDataRenotifyInterval ruletypes.Duration) NotificationConfig {
+	notificationConfig := GetDefaultNotificationConfig()
+
+	if renotifyInterval != 0 {
+		notificationConfig.Renotify.RenotifyInterval = time.Duration(renotifyInterval)
+	}
+
+	if noDataRenotifyInterval != 0 {
+		notificationConfig.Renotify.NoDataInterval = time.Duration(noDataRenotifyInterval)
+	}
+	for _, group := range groups {
+		notificationConfig.NotificationGroup[model.LabelName(group)] = struct{}{}
+	}
+
+	return notificationConfig
+}
+
+func GetDefaultNotificationConfig() NotificationConfig {
+	defaultGroups := make(map[model.LabelName]struct{})
+	defaultGroups[model.LabelName(DefaultGroupBy)] = struct{}{}
+	return NotificationConfig{
+		NotificationGroup: defaultGroups,
+		Renotify: ReNotificationConfig{
+			RenotifyInterval: 876000 * time.Hour,
+			NoDataInterval:   876000 * time.Hour,
+		}, //substitute for no - notify
+	}
 }

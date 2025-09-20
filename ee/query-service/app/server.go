@@ -323,17 +323,7 @@ func (s *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
-func makeRulesManager(
-	ch baseint.Reader,
-	cache cache.Cache,
-	alertmanager alertmanager.Alertmanager,
-	sqlstore sqlstore.SQLStore,
-	telemetryStore telemetrystore.TelemetryStore,
-	prometheus prometheus.Prometheus,
-	orgGetter organization.Getter,
-	querier querier.Querier,
-	logger *slog.Logger,
-) (*baserules.Manager, error) {
+func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, querier querier.Querier, logger *slog.Logger) (*baserules.Manager, error) {
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
 		TelemetryStore:      telemetryStore,

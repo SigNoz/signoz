@@ -52,6 +52,14 @@ type PostableRule struct {
 	Version string `json:"version,omitempty"`
 
 	Evaluation *EvaluationEnvelope `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
+
+	NotificationSettings *NotificationSettings `json:"notificationSettings,omitempty"`
+}
+
+type NotificationSettings struct {
+	NotificationGroupBy    []string `json:"notificationGroupBy,omitempty"`
+	ReNotifyInterval       Duration `json:"renotify,omitempty"`
+	NoDataRenotifyInterval Duration `json:"noDataRenotify,omitempty"`
 }
 
 func (r *PostableRule) processRuleDefaults() error {

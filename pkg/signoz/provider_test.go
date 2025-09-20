@@ -1,6 +1,9 @@
 package signoz
 
 import (
+	"context"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -54,7 +57,8 @@ func TestNewProviderFactories(t *testing.T) {
 
 	assert.NotPanics(t, func() {
 		orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)), nil)
-		NewAlertmanagerProviderFactories(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual), orgGetter)
+		notificationManager, _ := nfmanagertest.New(context.TODO(), instrumentationtest.New().ToProviderSettings(), nfmanager.Config{})
+		NewAlertmanagerProviderFactories(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual), orgGetter, notificationManager)
 	})
 
 	assert.NotPanics(t, func() {

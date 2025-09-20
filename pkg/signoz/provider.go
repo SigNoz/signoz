@@ -2,6 +2,9 @@ package signoz
 
 import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/rulebasednotification"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/analytics/noopanalytics"
@@ -153,9 +156,16 @@ func NewPrometheusProviderFactories(telemetryStore telemetrystore.TelemetryStore
 	)
 }
 
-func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter organization.Getter) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
+func NewNotificationManagerProviderFactories() factory.NamedMap[factory.ProviderFactory[nfmanager.NotificationManager, nfmanager.Config]] {
 	return factory.MustNewNamedMap(
-		signozalertmanager.NewFactory(sqlstore, orgGetter),
+		rulebasednotification.NewFactory(),
+		nfmanagertest.NewFactory(),
+	)
+}
+
+func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
+	return factory.MustNewNamedMap(
+		signozalertmanager.NewFactory(sqlstore, orgGetter, notificationManager),
 	)
 }
 

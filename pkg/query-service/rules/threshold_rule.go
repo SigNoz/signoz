@@ -654,6 +654,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		}
 		if smpl.IsMissing {
 			lb.Set(labels.AlertNameLabel, "[No data] "+r.Name())
+			lb.Set(labels.NoDataLabel, "true")
 		}
 
 		// Links with timestamps should go in annotations since labels

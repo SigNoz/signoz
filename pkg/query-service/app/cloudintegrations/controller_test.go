@@ -2,6 +2,8 @@ package cloudintegrations
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"testing"
 	"time"
 
@@ -35,7 +37,9 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	require.NoError(err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlStore), sharder)
-	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter)
+	notificationManager, err := nfmanagertest.New(context.TODO(), providerSettings, nfmanager.Config{})
+	require.NoError(err)
+	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter, notificationManager)
 	require.NoError(err)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
@@ -92,7 +96,9 @@ func TestAgentCheckIns(t *testing.T) {
 	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	require.NoError(err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlStore), sharder)
-	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter)
+	notificationManager, err := nfmanagertest.New(context.TODO(), providerSettings, nfmanager.Config{})
+	require.NoError(err)
+	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter, notificationManager)
 	require.NoError(err)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
@@ -188,7 +194,9 @@ func TestCantDisconnectNonExistentAccount(t *testing.T) {
 	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	require.NoError(err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlStore), sharder)
-	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter)
+	notificationManager, err := nfmanagertest.New(context.TODO(), providerSettings, nfmanager.Config{})
+	require.NoError(err)
+	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter, notificationManager)
 	require.NoError(err)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
@@ -216,7 +224,9 @@ func TestConfigureService(t *testing.T) {
 	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	require.NoError(err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlStore), sharder)
-	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter)
+	notificationManager, err := nfmanagertest.New(context.TODO(), providerSettings, nfmanager.Config{})
+	require.NoError(err)
+	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter, notificationManager)
 	require.NoError(err)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
