@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"log/slog"
 	"net"
 	"net/http"
@@ -334,6 +335,8 @@ func makeRulesManager(
 	querier querier.Querier,
 	logger *slog.Logger,
 ) (*baserules.Manager, error) {
+	ruleStore := sqlrulestore.NewRuleStore(sqlstore)
+	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
 		TelemetryStore:      telemetryStore,
@@ -348,8 +351,9 @@ func makeRulesManager(
 		PrepareTaskFunc:     rules.PrepareTaskFunc,
 		PrepareTestRuleFunc: rules.TestNotification,
 		Alertmanager:        alertmanager,
-		SQLStore:            sqlstore,
 		OrgGetter:           orgGetter,
+		RuleStore:           ruleStore,
+		MaintenanceStore:    maintenanceStore,
 	}
 
 	// create Manager
