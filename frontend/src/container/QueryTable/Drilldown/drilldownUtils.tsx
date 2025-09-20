@@ -1,5 +1,5 @@
 import { PieArcDatum } from '@visx/shape/lib/shapes/Pie';
-import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
+import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/queryProcessor';
 import {
 	initialQueryBuilderFormValuesMap,
 	OPERATORS,
