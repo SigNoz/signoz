@@ -1,6 +1,7 @@
 import './WorkspaceAccessRestricted.styles.scss';
 
 import { Button, Col, Modal, Row, Skeleton, Space, Typography } from 'antd';
+import DecorativeImage from 'components/DecorativeImage/DecorativeImage';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
@@ -113,10 +114,7 @@ function WorkspaceAccessRestricted(): JSX.Element {
 								</Col>
 							</Row>
 							<div className="workspace-access-restricted__creative">
-								<img
-									src="/Images/feature-graphic-correlation.svg"
-									alt="correlation-graphic"
-								/>
+								<DecorativeImage src="/Images/feature-graphic-correlation.svg" />
 							</div>
 						</>
 					)}

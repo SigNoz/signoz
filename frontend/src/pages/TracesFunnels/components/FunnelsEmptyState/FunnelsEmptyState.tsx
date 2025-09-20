@@ -4,6 +4,7 @@ import { Button } from 'antd';
 import LearnMore from 'components/LearnMore/LearnMore';
 import { Plus } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
+import DecorativeImage from 'components/DecorativeImage/DecorativeImage';
 
 interface FunnelsEmptyStateProps {
 	onCreateFunnel?: () => void;
@@ -18,11 +19,7 @@ function FunnelsEmptyState({
 		<div className="funnels-empty">
 			<div className="funnels-empty__content">
 				<section className="funnels-empty__header">
-					<img
-						src="/Icons/alert_emoji.svg"
-						alt="funnels-empty-icon"
-						className="funnels-empty__icon"
-					/>
+					<DecorativeImage src="/Icons/alert_emoji.svg" className="funnels-empty__icon" />
 					<div>
 						<span className="funnels-empty__title">No funnels yet. </span>
 						<span className="funnels-empty__subtitle">

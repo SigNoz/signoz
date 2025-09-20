@@ -9,6 +9,7 @@ import {
 import { Typography } from 'antd';
 import Slack from 'container/SideNav/Slack';
 import store from 'store';
+import DecorativeImage from 'components/DecorativeImage/DecorativeImage';
 
 import { TGetStartedContentSection } from './types';
 
@@ -23,69 +24,63 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 				{
 					title: 'Instrument your Java Application',
 					icon: (
-						<img src={`/Logos/java.png?currentVersion=${currentVersion}`} alt="" />
+						<DecorativeImage src={`/Logos/java.png?currentVersion=${currentVersion}`}  />
 					),
 					url: 'https://signoz.io/docs/instrumentation/java/',
 				},
 				{
 					title: 'Instrument your Python Application',
 					icon: (
-						<img src={`/Logos/python.png?currentVersion=${currentVersion}`} alt="" />
+						<DecorativeImage src={`/Logos/python.png?currentVersion=${currentVersion}`} />
 					),
 					url: 'https://signoz.io/docs/instrumentation/python/',
 				},
 				{
 					title: 'Instrument your JS Application',
 					icon: (
-						<img
-							src={`/Logos/javascript.png?currentVersion=${currentVersion}`}
-							alt=""
-						/>
+						<DecorativeImage src={`/Logos/javascript.png?currentVersion=${currentVersion}`} />
 					),
 					url: 'https://signoz.io/docs/instrumentation/javascript/',
 				},
 				{
 					title: 'Instrument your Go Application',
 					icon: (
-						<img src={`/Logos/go.png?currentVersion=${currentVersion}`} alt="" />
+						<DecorativeImage src={`/Logos/go.png?currentVersion=${currentVersion}`} />
 					),
 					url: 'https://signoz.io/docs/instrumentation/golang/',
 				},
 				{
 					title: 'Instrument your .NET Application',
 					icon: (
-						<img
-							src={`/Logos/ms-net-framework.png?currentVersion=${currentVersion}`}
-							alt=""
-						/>
+						<DecorativeImage src={`/Logos/ms-net-framework.png?currentVersion=${currentVersion}`} />
 					),
 					url: 'https://signoz.io/docs/instrumentation/dotnet/',
 				},
 				{
 					title: 'Instrument your PHP Application',
 					icon: (
-						<img src={`/Logos/php.png?currentVersion=${currentVersion}`} alt="" />
+						<DecorativeImage src={`/Logos/php.png?currentVersion=${currentVersion}`} />
 					),
 					url: 'https://signoz.io/docs/instrumentation/php/',
 				},
 				{
 					title: 'Instrument your Rails Application',
 					icon: (
-						<img src={`/Logos/rails.png?currentVersion=${currentVersion}`} alt="" />
+						<DecorativeImage src={`/Logos/rails.png?currentVersion=${currentVersion}`} />
 					),
 					url: 'https://signoz.io/docs/instrumentation/ruby-on-rails/',
 				},
 				{
 					title: 'Instrument your Rust Application',
 					icon: (
-						<img src={`/Logos/rust.png?currentVersion=${currentVersion}`} alt="" />
+						<DecorativeImage src={`/Logos/rust.png?currentVersion=${currentVersion}`} />
 					),
 					url: 'https://signoz.io/docs/instrumentation/rust/',
 				},
 				{
 					title: 'Instrument your Elixir Application',
 					icon: (
-						<img src={`/Logos/elixir.png?currentVersion=${currentVersion}`} alt="" />
+						<DecorativeImage src={`/Logos/elixir.png?currentVersion=${currentVersion}`} />
 					),
 					url: 'https://signoz.io/docs/instrumentation/elixir/',
 				},
