@@ -784,6 +784,7 @@ describe('TracesExplorer - ', () => {
 
 		expect(historyPush).toHaveBeenCalledWith(
 			expect.stringContaining(`${ROUTES.ALERTS_NEW}`),
+			expect.any(Object),
 		);
 	});
 });
