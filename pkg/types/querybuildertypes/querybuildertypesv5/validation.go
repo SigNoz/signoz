@@ -481,6 +481,69 @@ func (r *QueryRangeRequest) Validate() error {
 		return err
 	}
 
+	// Check if all queries are disabled
+	if err := r.validateAllQueriesNotDisabled(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateAllQueriesNotDisabled validates that at least one query in the composite query is enabled
+func (r *QueryRangeRequest) validateAllQueriesNotDisabled() error {
+	allDisabled := true
+	for _, envelope := range r.CompositeQuery.Queries {
+		switch envelope.Type {
+		case QueryTypeBuilder, QueryTypeSubQuery:
+			switch spec := envelope.Spec.(type) {
+			case QueryBuilderQuery[TraceAggregation]:
+				if !spec.Disabled {
+					allDisabled = false
+				}
+			case QueryBuilderQuery[LogAggregation]:
+				if !spec.Disabled {
+					allDisabled = false
+				}
+			case QueryBuilderQuery[MetricAggregation]:
+				if !spec.Disabled {
+					allDisabled = false
+				}
+			}
+		case QueryTypeFormula:
+			if spec, ok := envelope.Spec.(QueryBuilderFormula); ok && !spec.Disabled {
+				allDisabled = false
+			}
+		case QueryTypeTraceOperator:
+			if spec, ok := envelope.Spec.(QueryBuilderTraceOperator); ok && !spec.Disabled {
+				allDisabled = false
+			}
+		case QueryTypeJoin:
+			if spec, ok := envelope.Spec.(QueryBuilderJoin); ok && !spec.Disabled {
+				allDisabled = false
+			}
+		case QueryTypePromQL:
+			if spec, ok := envelope.Spec.(PromQuery); ok && !spec.Disabled {
+				allDisabled = false
+			}
+		case QueryTypeClickHouseSQL:
+			if spec, ok := envelope.Spec.(ClickHouseQuery); ok && !spec.Disabled {
+				allDisabled = false
+			}
+		}
+
+		// Early exit if we find at least one enabled query
+		if !allDisabled {
+			break
+		}
+	}
+
+	if allDisabled {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"all queries are disabled - at least one query must be enabled",
+		)
+	}
+
 	return nil
 }
 
