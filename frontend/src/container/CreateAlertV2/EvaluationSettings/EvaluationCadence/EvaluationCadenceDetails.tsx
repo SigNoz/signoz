@@ -3,8 +3,8 @@ import TextArea from 'antd/lib/input/TextArea';
 import classNames from 'classnames';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import { AdvancedOptionsState } from 'container/CreateAlertV2/context/types';
-import { Calendar, Code, Edit3Icon, Info } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Code, Edit3Icon } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
 	EVALUATION_CADENCE_REPEAT_EVERY_MONTH_OPTIONS,
@@ -19,16 +19,23 @@ import {
 	buildAlertScheduleFromRRule,
 	isValidRRule,
 } from '../utils';
+import { ScheduleList } from './EvaluationCadencePreview';
 
 function EvaluationCadenceDetails({
 	setIsOpen,
+	setIsCustomScheduleButtonVisible,
 }: IEvaluationCadenceDetailsProps): JSX.Element {
 	const { advancedOptions, setAdvancedOptions } = useCreateAlertState();
 	const [evaluationCadence, setEvaluationCadence] = useState<
 		AdvancedOptionsState['evaluationCadence']
 	>({
 		...advancedOptions.evaluationCadence,
+		mode: 'custom',
 	});
+
+	const [searchTimezoneString, setSearchTimezoneString] = useState('');
+	const [occurenceSearchString, setOccurenceSearchString] = useState('');
+	const [repeatEverySearchString, setRepeatEverySearchString] = useState('');
 
 	const tabs = [
 		{
@@ -51,6 +58,28 @@ function EvaluationCadenceDetails({
 			? EVALUATION_CADENCE_REPEAT_EVERY_WEEK_OPTIONS
 			: EVALUATION_CADENCE_REPEAT_EVERY_MONTH_OPTIONS;
 
+	useEffect(() => {
+		if (!evaluationCadence.custom.occurence.length) {
+			const today = new Date();
+			const dayOfWeek = today.getDay();
+			const dayOfMonth = today.getDate();
+
+			const occurence =
+				evaluationCadence.custom.repeatEvery === 'week'
+					? EVALUATION_CADENCE_REPEAT_EVERY_WEEK_OPTIONS[dayOfWeek].value
+					: dayOfMonth.toString();
+
+			setEvaluationCadence({
+				...evaluationCadence,
+				custom: {
+					...evaluationCadence.custom,
+					occurence: [occurence],
+				},
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [evaluationCadence.custom.repeatEvery]);
+
 	const EditorView = (
 		<div className="editor-view" data-testid="editor-view">
 			<div className="select-group">
@@ -69,6 +98,9 @@ function EvaluationCadenceDetails({
 						})
 					}
 					placeholder="Select repeat every"
+					showSearch
+					searchValue={repeatEverySearchString}
+					onSearch={setRepeatEverySearchString}
 				/>
 			</div>
 			{evaluationCadence.custom.repeatEvery !== 'day' && (
@@ -88,6 +120,9 @@ function EvaluationCadenceDetails({
 							})
 						}
 						placeholder="Select day(s)"
+						showSearch
+						searchValue={occurenceSearchString}
+						onSearch={setOccurenceSearchString}
 					/>
 				</div>
 			)}
@@ -121,6 +156,9 @@ function EvaluationCadenceDetails({
 						})
 					}
 					placeholder="Select timezone"
+					onSearch={setSearchTimezoneString}
+					searchValue={searchTimezoneString}
+					showSearch
 				/>
 			</div>
 		</div>
@@ -177,10 +215,7 @@ function EvaluationCadenceDetails({
 
 	const handleDiscard = (): void => {
 		setIsOpen(false);
-		setAdvancedOptions({
-			type: 'SET_EVALUATION_CADENCE_MODE',
-			payload: 'default',
-		});
+		setIsCustomScheduleButtonVisible(true);
 	};
 
 	const handleSaveCustomSchedule = (): void => {
@@ -290,57 +325,10 @@ function EvaluationCadenceDetails({
 					</div>
 				</div>
 				<div className="evaluation-cadence-details-content-row">
-					{schedule && schedule.length > 0 ? (
-						<div className="schedule-preview" data-testid="schedule-preview">
-							<div className="schedule-preview-header">
-								<Calendar size={16} />
-								<Typography.Text className="schedule-preview-title">
-									Schedule Preview
-								</Typography.Text>
-							</div>
-							<div className="schedule-preview-list">
-								{schedule.map((date) => (
-									<div key={date.toISOString()} className="schedule-preview-item">
-										<div className="schedule-preview-timeline">
-											<div className="schedule-preview-timeline-line" />
-										</div>
-										<div className="schedule-preview-content">
-											<div className="schedule-preview-date">
-												{date.toLocaleDateString('en-US', {
-													weekday: 'short',
-													month: 'short',
-													day: 'numeric',
-												})}
-												,{' '}
-												{date.toLocaleTimeString('en-US', {
-													hour12: false,
-													hour: '2-digit',
-													minute: '2-digit',
-													second: '2-digit',
-												})}
-											</div>
-											<div className="schedule-preview-separator" />
-											<div className="schedule-preview-timezone">
-												{
-													TIMEZONE_DATA.find(
-														(timezone) =>
-															timezone.value === evaluationCadence.custom.timezone,
-													)?.label
-												}
-											</div>
-										</div>
-									</div>
-								))}
-							</div>
-						</div>
-					) : (
-						<div className="no-schedule" data-testid="no-schedule">
-							<Info size={32} />
-							<Typography.Text>
-								Please fill the relevant information to generate a schedule
-							</Typography.Text>
-						</div>
-					)}
+					<ScheduleList
+						schedule={schedule}
+						currentTimezone={evaluationCadence.custom.timezone}
+					/>
 				</div>
 			</div>
 		</div>

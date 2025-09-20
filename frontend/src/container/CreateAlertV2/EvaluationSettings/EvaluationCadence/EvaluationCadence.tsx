@@ -3,7 +3,7 @@ import '../AdvancedOptionItem/styles.scss';
 
 import { Button, Input, Select, Tooltip, Typography } from 'antd';
 import { Info, Plus } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useCreateAlertState } from '../../context';
 import { ADVANCED_OPTIONS_TIME_UNIT_OPTIONS } from '../../context/constants';
@@ -12,26 +12,33 @@ import EvaluationCadenceDetails from './EvaluationCadenceDetails';
 import EvaluationCadencePreview from './EvaluationCadencePreview';
 
 function EvaluationCadence(): JSX.Element {
+	const { advancedOptions, setAdvancedOptions } = useCreateAlertState();
+
 	const [
 		isEvaluationCadenceDetailsVisible,
 		setIsEvaluationCadenceDetailsVisible,
 	] = useState(false);
-	const { advancedOptions, setAdvancedOptions } = useCreateAlertState();
-	const [isPreviewVisible, setIsPreviewVisible] = useState(false);
-
-	const showCustomScheduleButton = useMemo(
-		() =>
-			!isEvaluationCadenceDetailsVisible &&
-			advancedOptions.evaluationCadence.mode === 'default',
-		[isEvaluationCadenceDetailsVisible, advancedOptions.evaluationCadence.mode],
+	const [
+		isCustomScheduleButtonVisible,
+		setIsCustomScheduleButtonVisible,
+	] = useState(true);
+	const [
+		isEvaluationCadencePreviewVisible,
+		setIsEvaluationCadencePreviewVisible,
+	] = useState(false);
+	const [isEditCustomScheduleVisible, setIsEditCustomScheduleVisible] = useState(
+		() => advancedOptions.evaluationCadence.mode !== 'default',
 	);
+
+	useEffect(() => {
+		setIsEditCustomScheduleVisible(
+			advancedOptions.evaluationCadence.mode !== 'default',
+		);
+	}, [advancedOptions.evaluationCadence.mode]);
 
 	const showCustomSchedule = (): void => {
 		setIsEvaluationCadenceDetailsVisible(true);
-		setAdvancedOptions({
-			type: 'SET_EVALUATION_CADENCE_MODE',
-			payload: 'custom',
-		});
+		setIsCustomScheduleButtonVisible(false);
 	};
 
 	return (
@@ -48,7 +55,7 @@ function EvaluationCadence(): JSX.Element {
 						How frequently this alert checks your data. Default: Every 1 minute
 					</Typography.Text>
 				</div>
-				{showCustomScheduleButton && (
+				{isCustomScheduleButtonVisible && (
 					<div
 						className="advanced-option-item-right-content"
 						data-testid="evaluation-cadence-input-group"
@@ -101,25 +108,23 @@ function EvaluationCadence(): JSX.Element {
 					</div>
 				)}
 			</div>
-			{!isEvaluationCadenceDetailsVisible &&
-				advancedOptions.evaluationCadence.mode !== 'default' && (
-					<EditCustomSchedule
-						setIsEvaluationCadenceDetailsVisible={
-							setIsEvaluationCadenceDetailsVisible
-						}
-						setIsPreviewVisible={setIsPreviewVisible}
-					/>
-				)}
+			{isEditCustomScheduleVisible && (
+				<EditCustomSchedule
+					setIsEvaluationCadenceDetailsVisible={setIsEvaluationCadenceDetailsVisible}
+					setIsPreviewVisible={setIsEvaluationCadencePreviewVisible}
+				/>
+			)}
 			{isEvaluationCadenceDetailsVisible && (
 				<EvaluationCadenceDetails
 					isOpen={isEvaluationCadenceDetailsVisible}
 					setIsOpen={setIsEvaluationCadenceDetailsVisible}
+					setIsCustomScheduleButtonVisible={setIsCustomScheduleButtonVisible}
 				/>
 			)}
-			{isPreviewVisible && (
+			{isEvaluationCadencePreviewVisible && (
 				<EvaluationCadencePreview
-					isOpen={isPreviewVisible}
-					setIsOpen={setIsPreviewVisible}
+					isOpen={isEvaluationCadencePreviewVisible}
+					setIsOpen={setIsEvaluationCadencePreviewVisible}
 				/>
 			)}
 		</div>

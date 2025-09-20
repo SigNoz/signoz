@@ -4,11 +4,70 @@ import { useMemo } from 'react';
 
 import { useCreateAlertState } from '../../context';
 import { TIMEZONE_DATA } from '../constants';
-import { IEvaluationCadencePreviewProps } from '../types';
+import { IEvaluationCadencePreviewProps, IScheduleListProps } from '../types';
 import {
 	buildAlertScheduleFromCustomSchedule,
 	buildAlertScheduleFromRRule,
 } from '../utils';
+
+export function ScheduleList({
+	schedule,
+	currentTimezone,
+}: IScheduleListProps): JSX.Element {
+	if (schedule && schedule.length > 0) {
+		return (
+			<div className="schedule-preview" data-testid="schedule-preview">
+				<div className="schedule-preview-header">
+					<Calendar size={16} />
+					<Typography.Text className="schedule-preview-title">
+						Schedule Preview
+					</Typography.Text>
+				</div>
+				<div className="schedule-preview-list">
+					{schedule.map((date) => (
+						<div key={date.toISOString()} className="schedule-preview-item">
+							<div className="schedule-preview-timeline">
+								<div className="schedule-preview-timeline-line" />
+							</div>
+							<div className="schedule-preview-content">
+								<div className="schedule-preview-date">
+									{date.toLocaleDateString('en-US', {
+										weekday: 'short',
+										month: 'short',
+										day: 'numeric',
+									})}
+									,{' '}
+									{date.toLocaleTimeString('en-US', {
+										hour12: false,
+										hour: '2-digit',
+										minute: '2-digit',
+										second: '2-digit',
+									})}
+								</div>
+								<div className="schedule-preview-separator" />
+								<div className="schedule-preview-timezone">
+									{
+										TIMEZONE_DATA.find((timezone) => timezone.value === currentTimezone)
+											?.label
+									}
+								</div>
+							</div>
+						</div>
+					))}
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<div className="no-schedule" data-testid="no-schedule">
+			<Info size={32} />
+			<Typography.Text>
+				Please fill the relevant information to generate a schedule
+			</Typography.Text>
+		</div>
+	);
+}
 
 function EvaluationCadencePreview({
 	isOpen,
@@ -45,58 +104,10 @@ function EvaluationCadencePreview({
 			<div className="evaluation-cadence-details evaluation-cadence-preview">
 				<div className="evaluation-cadence-details-content">
 					<div className="evaluation-cadence-details-content-row">
-						{schedule && schedule.length > 0 ? (
-							<div className="schedule-preview" data-testid="schedule-preview">
-								<div className="schedule-preview-header">
-									<Calendar size={16} />
-									<Typography.Text className="schedule-preview-title">
-										Schedule Preview
-									</Typography.Text>
-								</div>
-								<div className="schedule-preview-list">
-									{schedule.map((date) => (
-										<div key={date.toISOString()} className="schedule-preview-item">
-											<div className="schedule-preview-timeline">
-												<div className="schedule-preview-timeline-line" />
-											</div>
-											<div className="schedule-preview-content">
-												<div className="schedule-preview-date">
-													{date.toLocaleDateString('en-US', {
-														weekday: 'short',
-														month: 'short',
-														day: 'numeric',
-													})}
-													,{' '}
-													{date.toLocaleTimeString('en-US', {
-														hour12: false,
-														hour: '2-digit',
-														minute: '2-digit',
-														second: '2-digit',
-													})}
-												</div>
-												<div className="schedule-preview-separator" />
-												<div className="schedule-preview-timezone">
-													{
-														TIMEZONE_DATA.find(
-															(timezone) =>
-																timezone.value ===
-																advancedOptions.evaluationCadence.custom.timezone,
-														)?.label
-													}
-												</div>
-											</div>
-										</div>
-									))}
-								</div>
-							</div>
-						) : (
-							<div className="no-schedule" data-testid="no-schedule">
-								<Info size={32} />
-								<Typography.Text>
-									Please fill the relevant information to generate a schedule
-								</Typography.Text>
-							</div>
-						)}
+						<ScheduleList
+							schedule={schedule}
+							currentTimezone={advancedOptions.evaluationCadence.custom.timezone}
+						/>
 					</div>
 				</div>
 			</div>

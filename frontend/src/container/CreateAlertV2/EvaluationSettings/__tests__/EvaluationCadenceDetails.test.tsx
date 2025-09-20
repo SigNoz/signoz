@@ -20,6 +20,7 @@ jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue({
 } as any);
 
 const mockSetIsOpen = jest.fn();
+const mockSetIsCustomScheduleButtonVisible = jest.fn();
 
 const SCHEDULE_PREVIEW_TEST_ID = 'schedule-preview';
 const NO_SCHEDULE_TEST_ID = 'no-schedule';
@@ -29,7 +30,13 @@ const SAVE_CUSTOM_SCHEDULE_TEXT = 'Save Custom Schedule';
 
 describe('EvaluationCadenceDetails', () => {
 	it('should render the evaluation cadence details component with editor mode in daily occurence by default', () => {
-		render(<EvaluationCadenceDetails isOpen setIsOpen={mockSetIsOpen} />);
+		render(
+			<EvaluationCadenceDetails
+				isOpen
+				setIsOpen={mockSetIsOpen}
+				setIsCustomScheduleButtonVisible={mockSetIsCustomScheduleButtonVisible}
+			/>,
+		);
 		expect(screen.getByText('Add Custom Schedule')).toBeInTheDocument();
 
 		expect(screen.getByTestId(EDITOR_VIEW_TEST_ID)).toBeInTheDocument();
@@ -46,7 +53,13 @@ describe('EvaluationCadenceDetails', () => {
 	});
 
 	it('when switching to rrule mode, the rrule view should be rendered with no schedule preview', () => {
-		render(<EvaluationCadenceDetails isOpen setIsOpen={mockSetIsOpen} />);
+		render(
+			<EvaluationCadenceDetails
+				isOpen
+				setIsOpen={mockSetIsOpen}
+				setIsCustomScheduleButtonVisible={mockSetIsCustomScheduleButtonVisible}
+			/>,
+		);
 		fireEvent.click(screen.getByText('RRule'));
 		expect(screen.getByTestId(RULE_VIEW_TEST_ID)).toBeInTheDocument();
 
@@ -77,16 +90,20 @@ describe('EvaluationCadenceDetails', () => {
 				},
 			},
 		} as any);
-		render(<EvaluationCadenceDetails isOpen setIsOpen={mockSetIsOpen} />);
+		render(
+			<EvaluationCadenceDetails
+				isOpen
+				setIsOpen={mockSetIsOpen}
+				setIsCustomScheduleButtonVisible={mockSetIsCustomScheduleButtonVisible}
+			/>,
+		);
 
 		// Verify that the "ON DAY(S)" section is rendered for weekly occurrence
 		expect(screen.getByText('ON DAY(S)')).toBeInTheDocument();
 
-		// Verify that the schedule preview is not shown because no days are selected
-		expect(
-			screen.queryByTestId(SCHEDULE_PREVIEW_TEST_ID),
-		).not.toBeInTheDocument();
-		expect(screen.getByTestId(NO_SCHEDULE_TEST_ID)).toBeInTheDocument();
+		// Verify that the schedule preview is shown as today is selected by default
+		expect(screen.getByTestId(SCHEDULE_PREVIEW_TEST_ID)).toBeInTheDocument();
+		expect(screen.queryByTestId(NO_SCHEDULE_TEST_ID)).not.toBeInTheDocument();
 	});
 
 	it('render schedule preview in weekly occurence when days are selected', () => {
@@ -104,7 +121,13 @@ describe('EvaluationCadenceDetails', () => {
 				},
 			},
 		} as any);
-		render(<EvaluationCadenceDetails isOpen setIsOpen={mockSetIsOpen} />);
+		render(
+			<EvaluationCadenceDetails
+				isOpen
+				setIsOpen={mockSetIsOpen}
+				setIsCustomScheduleButtonVisible={mockSetIsCustomScheduleButtonVisible}
+			/>,
+		);
 
 		// Verify that the schedule preview is shown because days are selected
 		expect(screen.getByTestId(SCHEDULE_PREVIEW_TEST_ID)).toBeInTheDocument();
@@ -125,16 +148,20 @@ describe('EvaluationCadenceDetails', () => {
 				},
 			},
 		} as any);
-		render(<EvaluationCadenceDetails isOpen setIsOpen={mockSetIsOpen} />);
+		render(
+			<EvaluationCadenceDetails
+				isOpen
+				setIsOpen={mockSetIsOpen}
+				setIsCustomScheduleButtonVisible={mockSetIsCustomScheduleButtonVisible}
+			/>,
+		);
 
 		// Verify that the "ON DAY(S)" section is rendered for monthly occurrence
 		expect(screen.getByText('ON DAY(S)')).toBeInTheDocument();
 
-		// Verify that the schedule preview is not shown because no days are selected
-		expect(
-			screen.queryByTestId(SCHEDULE_PREVIEW_TEST_ID),
-		).not.toBeInTheDocument();
-		expect(screen.getByTestId(NO_SCHEDULE_TEST_ID)).toBeInTheDocument();
+		// Verify that the schedule preview is  shown as today is selected by default
+		expect(screen.getByTestId(SCHEDULE_PREVIEW_TEST_ID)).toBeInTheDocument();
+		expect(screen.queryByTestId(NO_SCHEDULE_TEST_ID)).not.toBeInTheDocument();
 	});
 
 	it('render schedule preview in monthly occurence when days are selected', () => {
@@ -152,7 +179,13 @@ describe('EvaluationCadenceDetails', () => {
 				},
 			},
 		} as any);
-		render(<EvaluationCadenceDetails isOpen setIsOpen={mockSetIsOpen} />);
+		render(
+			<EvaluationCadenceDetails
+				isOpen
+				setIsOpen={mockSetIsOpen}
+				setIsCustomScheduleButtonVisible={mockSetIsCustomScheduleButtonVisible}
+			/>,
+		);
 
 		// Verify that the schedule preview is shown because days are selected
 		expect(screen.getByTestId(SCHEDULE_PREVIEW_TEST_ID)).toBeInTheDocument();
@@ -160,17 +193,26 @@ describe('EvaluationCadenceDetails', () => {
 	});
 
 	it('discard action works correctly', () => {
-		render(<EvaluationCadenceDetails isOpen setIsOpen={mockSetIsOpen} />);
+		render(
+			<EvaluationCadenceDetails
+				isOpen
+				setIsOpen={mockSetIsOpen}
+				setIsCustomScheduleButtonVisible={mockSetIsCustomScheduleButtonVisible}
+			/>,
+		);
 		fireEvent.click(screen.getByText('Discard'));
 		expect(mockSetIsOpen).toHaveBeenCalledWith(false);
-		expect(mockSetAdvancedOptions).toHaveBeenCalledWith({
-			type: 'SET_EVALUATION_CADENCE_MODE',
-			payload: 'default',
-		});
+		expect(mockSetIsCustomScheduleButtonVisible).toHaveBeenCalledWith(true);
 	});
 
 	it('save custom schedule action works correctly', () => {
-		render(<EvaluationCadenceDetails isOpen setIsOpen={mockSetIsOpen} />);
+		render(
+			<EvaluationCadenceDetails
+				isOpen
+				setIsOpen={mockSetIsOpen}
+				setIsCustomScheduleButtonVisible={mockSetIsCustomScheduleButtonVisible}
+			/>,
+		);
 		fireEvent.click(screen.getByText(SAVE_CUSTOM_SCHEDULE_TEXT));
 		expect(mockSetAdvancedOptions).toHaveBeenCalledTimes(2);
 		expect(mockSetAdvancedOptions).toHaveBeenCalledWith({
@@ -180,6 +222,8 @@ describe('EvaluationCadenceDetails', () => {
 				custom: {
 					...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE.evaluationCadence
 						.custom,
+					// today selected by default
+					occurence: [new Date().getDate().toString()],
 				},
 			},
 		});

@@ -40,6 +40,8 @@ jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue({
 	setAdvancedOptions: mockSetAdvancedOptions,
 } as any);
 
+const EVALUATION_CADENCE_INPUT_GROUP = 'evaluation-cadence-input-group';
+
 describe('EvaluationCadence', () => {
 	it('should render the title, description, tooltip and input group with default values', () => {
 		render(<EvaluationCadence />);
@@ -53,27 +55,28 @@ describe('EvaluationCadence', () => {
 			screen.getByTestId('evaluation-cadence-tooltip-icon'),
 		).toBeInTheDocument();
 		expect(
-			screen.getByTestId('evaluation-cadence-input-group'),
+			screen.getByTestId(EVALUATION_CADENCE_INPUT_GROUP),
 		).toBeInTheDocument();
 		expect(screen.getByPlaceholderText('Enter time')).toHaveValue(1);
 		expect(screen.getByText('Minutes')).toBeInTheDocument();
 		expect(screen.getByText(ADD_CUSTOM_SCHEDULE_TEXT)).toBeInTheDocument();
 	});
 
-	it('should hide the input group when the mode is not default', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce({
-			advancedOptions: {
-				...INITIAL_ADVANCED_OPTIONS_STATE,
-				evaluationCadence: {
-					...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
-					mode: 'custom',
-				},
-			},
-		} as any);
+	it('should hide the input group when add custom schedule button is clicked', () => {
 		render(<EvaluationCadence />);
+
 		expect(
-			screen.queryByTestId('evaluation-cadence-input-group'),
+			screen.getByTestId(EVALUATION_CADENCE_INPUT_GROUP),
+		).toBeInTheDocument();
+
+		fireEvent.click(screen.getByText(ADD_CUSTOM_SCHEDULE_TEXT));
+
+		expect(
+			screen.queryByTestId(EVALUATION_CADENCE_INPUT_GROUP),
 		).not.toBeInTheDocument();
+		expect(
+			screen.getByTestId(EVALUATION_CADENCE_DETAILS_TEST_ID),
+		).toBeInTheDocument();
 	});
 
 	it('should not show the edit custom schedule component in default mode', () => {

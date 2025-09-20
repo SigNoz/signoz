@@ -95,13 +95,13 @@ export const INITIAL_ADVANCED_OPTIONS_STATE: AdvancedOptionsState = {
 		},
 		custom: {
 			repeatEvery: 'day',
-			startAt: '00:00:00',
+			startAt: dayjs().format('HH:mm:ss'),
 			occurence: [],
 			timezone: TIMEZONE_DATA[0].value,
 		},
 		rrule: {
 			date: dayjs(),
-			startAt: '00:00:00',
+			startAt: dayjs().format('HH:mm:ss'),
 			rrule: '',
 		},
 	},
@@ -111,7 +111,7 @@ export const INITIAL_EVALUATION_WINDOW_STATE: EvaluationWindowState = {
 	windowType: 'rolling',
 	timeframe: '5m0s',
 	startingAt: {
-		time: '00:00:00',
+		time: dayjs().format('HH:mm:ss'),
 		number: '1',
 		timezone: TIMEZONE_DATA[0].value,
 		unit: UniversalYAxisUnit.MINUTES,

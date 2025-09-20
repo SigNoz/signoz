@@ -44,6 +44,7 @@ export interface IEvaluationWindowDetailsProps {
 export interface IEvaluationCadenceDetailsProps {
 	isOpen: boolean;
 	setIsOpen: Dispatch<SetStateAction<boolean>>;
+	setIsCustomScheduleButtonVisible: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface IEvaluationCadencePreviewProps {
@@ -62,4 +63,9 @@ export interface TimeInputProps {
 export interface IEditCustomScheduleProps {
 	setIsEvaluationCadenceDetailsVisible: (isOpen: boolean) => void;
 	setIsPreviewVisible: (isOpen: boolean) => void;
+}
+
+export interface IScheduleListProps {
+	schedule: Date[] | null;
+	currentTimezone: string;
 }
