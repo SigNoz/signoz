@@ -1,6 +1,8 @@
 package authtypes
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import (
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
 
 var (
 	RelationCreate   = Relation{valuer.NewString("create")}
@@ -12,12 +14,12 @@ var (
 	RelationAssignee = Relation{valuer.NewString("assignee")}
 )
 
-var (
-	TypeUserSupportedRelations         = []Relation{RelationRead, RelationUpdate, RelationDelete}
-	TypeRoleSupportedRelations         = []Relation{RelationAssignee, RelationRead, RelationUpdate, RelationDelete}
-	TypeOrganizationSupportedRelations = []Relation{RelationCreate, RelationRead, RelationUpdate, RelationDelete, RelationList}
-	TypeResourceSupportedRelations     = []Relation{RelationRead, RelationUpdate, RelationDelete, RelationBlock}
-	TypeResourcesSupportedRelations    = []Relation{RelationCreate, RelationRead, RelationUpdate, RelationDelete, RelationList}
-)
+var TypeableRelations = map[Type][]Relation{
+	TypeUser:         {RelationRead, RelationUpdate, RelationDelete},
+	TypeRole:         {RelationAssignee, RelationRead, RelationUpdate, RelationDelete},
+	TypeOrganization: {RelationCreate, RelationRead, RelationUpdate, RelationDelete, RelationList},
+	TypeResource:     {RelationRead, RelationUpdate, RelationDelete, RelationBlock},
+	TypeResources:    {RelationCreate, RelationRead, RelationUpdate, RelationDelete, RelationList},
+}
 
 type Relation struct{ valuer.String }

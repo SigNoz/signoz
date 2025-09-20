@@ -114,7 +114,7 @@ func (middleware *AuthZ) Check(next http.HandlerFunc, _ authtypes.Relation, tran
 			return
 		}
 
-		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, translation, authtypes.TypeableOrganization, authtypes.MustNewSelector(authtypes.TypeOrganization, claims.OrgID), nil)
+		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, translation, authtypes.TypeableOrganization, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeOrganization, claims.OrgID)})
 		if err != nil {
 			render.Error(rw, err)
 			return
