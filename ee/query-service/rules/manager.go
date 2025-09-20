@@ -47,7 +47,10 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 
 		// create ch rule task for evalution
 		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
-
+		if tr.IsScheduled() {
+			schedule, startTime, timezone := tr.GetSchedule()
+			task.SetSchedule(schedule, startTime, timezone)
+		}
 	} else if opts.Rule.RuleType == ruletypes.RuleTypeProm {
 
 		// create promql rule
@@ -69,7 +72,10 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 
 		// create promql rule task for evalution
 		task = newTask(baserules.TaskTypeProm, opts.TaskName, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
-
+		if pr.IsScheduled() {
+			schedule, startTime, timezone := pr.GetSchedule()
+			task.SetSchedule(schedule, startTime, timezone)
+		}
 	} else if opts.Rule.RuleType == ruletypes.RuleTypeAnomaly {
 		// create anomaly rule
 		ar, err := NewAnomalyRule(
@@ -91,7 +97,10 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 
 		// create anomaly rule task for evalution
 		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
-
+		if ar.IsScheduled() {
+			schedule, startTime, timezone := ar.GetSchedule()
+			task.SetSchedule(schedule, startTime, timezone)
+		}
 	} else {
 		return nil, fmt.Errorf("unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, ruletypes.RuleTypeProm, ruletypes.RuleTypeThreshold)
 	}

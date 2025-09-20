@@ -55,6 +55,7 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/srikanthccv/ClickHouse-go-mock v0.12.0
 	github.com/stretchr/testify v1.10.0
+	github.com/teambition/rrule-go v1.8.2
 	github.com/tidwall/gjson v1.18.0
 	github.com/uptrace/bun v1.2.9
 	github.com/uptrace/bun/dialect/pgdialect v1.2.9

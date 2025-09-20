@@ -36,6 +36,11 @@ type RuleTask struct {
 
 	maintenanceStore ruletypes.MaintenanceStore
 	orgID            valuer.UUID
+
+	// New field for rrule-based scheduling
+	schedule         string
+	scheduleStartsAt time.Time
+	timezone         string
 }
 
 const DefaultFrequency = 1 * time.Minute
@@ -71,6 +76,10 @@ func (g *RuleTask) Key() string {
 	return g.name + ";" + g.file
 }
 
+func (g *RuleTask) IsCronSchedule() bool {
+	return g.schedule != ""
+}
+
 // Name returns the group name.
 func (g *RuleTask) Type() TaskType { return TaskTypeCh }
 
@@ -95,58 +104,37 @@ func NewQueryOriginContext(ctx context.Context, data map[string]interface{}) con
 func (g *RuleTask) Run(ctx context.Context) {
 	defer close(g.terminated)
 
-	// Wait an initial amount to have consistently slotted intervals.
-	evalTimestamp := g.EvalTimestamp(time.Now().UnixNano()).Add(g.frequency)
-	zap.L().Debug("group run to begin at", zap.Time("evalTimestamp", evalTimestamp))
-	select {
-	case <-time.After(time.Until(evalTimestamp)):
-	case <-g.done:
-		return
-	}
-
 	ctx = NewQueryOriginContext(ctx, map[string]interface{}{
 		"ruleRuleTask": map[string]string{
 			"name": g.Name(),
 		},
 	})
 
-	iter := func() {
-		if g.pause {
-			// todo(amol): remove in memory active alerts
-			// and last series state
-			return
+	if g.IsCronSchedule() {
+		evalFunc := createCronEvalFunction(&g.pause, g.Eval, g.setEvaluationTime, g.setLastEvaluation, ctx)
+		err := runCronScheduledTask(g.schedule, g.scheduleStartsAt, g.timezone, g.done, evalFunc)
+		if err != nil {
+			zap.L().Error("cron scheduler failed", zap.String("rule", g.Name()), zap.Error(err))
 		}
-		start := time.Now()
-		g.Eval(ctx, evalTimestamp)
-		timeSinceStart := time.Since(start)
+	} else {
+		evalTimestamp := g.EvalTimestamp(time.Now().UnixNano()).Add(g.frequency)
+		zap.L().Debug("group run to begin at", zap.Time("evalTimestamp", evalTimestamp))
 
-		g.setEvaluationTime(timeSinceStart)
-		g.setLastEvaluation(start)
-	}
+		evalFunc := createIntervalEvalFunction(
+			&g.pause,
+			g.Eval,
+			g.setEvaluationTime,
+			g.setLastEvaluation,
+			ctx,
+			func() time.Time { return evalTimestamp },
+		)
 
-	// The assumption here is that since the ticker was started after having
-	// waited for `evalTimestamp` to pass, the ticks will trigger soon
-	// after each `evalTimestamp + N * g.frequency` occurrence.
-	tick := time.NewTicker(g.frequency)
-	defer tick.Stop()
-
-	iter()
-
-	// let the group iterate and run
-	for {
-		select {
-		case <-g.done:
-			return
-		default:
-			select {
-			case <-g.done:
-				return
-			case <-tick.C:
-				missed := (time.Since(evalTimestamp) / g.frequency) - 1
-				evalTimestamp = evalTimestamp.Add((missed + 1) * g.frequency)
-				iter()
-			}
-		}
+		runIntervalScheduledTask(
+			g.frequency,
+			g.done,
+			func() time.Time { return evalTimestamp },
+			evalFunc,
+		)
 	}
 }
 
@@ -296,6 +284,14 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 	}
 
 	return nil
+}
+
+func (g *RuleTask) SetSchedule(schedule string, t time.Time, timezone string) {
+	g.mtx.Lock()
+	defer g.mtx.Unlock()
+	g.schedule = schedule
+	g.scheduleStartsAt = t
+	g.timezone = timezone
 }
 
 // Eval runs a single evaluation cycle in which all rules are evaluated sequentially.

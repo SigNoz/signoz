@@ -90,6 +90,10 @@ type BaseRule struct {
 	sqlstore sqlstore.SQLStore
 
 	evaluation ruletypes.Evaluation
+
+	schedule         string
+	scheduleStartsAt time.Time
+	timezone         string
 }
 
 type RuleOption func(*BaseRule)
@@ -154,6 +158,9 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 		TemporalityMap:    make(map[string]map[v3.Temporality]bool),
 		Threshold:         threshold,
 		evaluation:        evaluation,
+		schedule:          p.Schedule,
+		scheduleStartsAt:  time.UnixMilli(p.ScheduleStartsAt),
+		timezone:          p.ScheduleTimezone,
 	}
 
 	if baseRule.evalWindow == 0 {
@@ -755,4 +762,12 @@ func (r *BaseRule) PopulateTemporality(ctx context.Context, orgID valuer.UUID, q
 		}
 	}
 	return nil
+}
+
+func (r *BaseRule) IsScheduled() bool {
+	return r.schedule != ""
+}
+
+func (r *BaseRule) GetSchedule() (string, time.Time, string) {
+	return r.schedule, r.scheduleStartsAt, r.timezone
 }
