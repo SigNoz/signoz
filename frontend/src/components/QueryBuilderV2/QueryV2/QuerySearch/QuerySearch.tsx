@@ -106,6 +106,7 @@ function QuerySearch({
 
 	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
 	const [isFocused, setIsFocused] = useState(false);
+	const [hasBeenFocused, setHasBeenFocused] = useState(false);
 
 	const handleQueryValidation = (newQuery: string): void => {
 		try {
@@ -129,13 +130,21 @@ function QuerySearch({
 		// Only update query from external source when editor is not focused
 		// When focused, just update the lastExternalQuery to track changes
 		if (newQuery !== lastExternalQuery) {
-			if (!isFocused) {
-				setQuery(newQuery);
-				setIsExternalQueryChange(true);
-			}
+			setQuery(newQuery);
+			setIsExternalQueryChange(true);
 			setLastExternalQuery(newQuery);
 		}
-	}, [queryData.filter?.expression, lastExternalQuery, isFocused]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [queryData.filter?.expression]);
+
+	useEffect(() => {
+		// Update the query when the editor is blurred and the query has changed
+		// Only call onChange if the editor has been focused before (not on initial mount)
+		if (!isFocused && hasBeenFocused && query !== queryData.filter?.expression) {
+			onChange(query);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isFocused]);
 
 	// Validate query when it changes externally (from queryData)
 	useEffect(() => {
@@ -1363,6 +1372,7 @@ function QuerySearch({
 					}}
 					onFocus={(): void => {
 						setIsFocused(true);
+						setHasBeenFocused(true);
 					}}
 					onBlur={handleBlur}
 					onCreateEditor={(view: EditorView): EditorView => {
