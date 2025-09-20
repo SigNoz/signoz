@@ -1,5 +1,5 @@
 import { toast } from '@signozhq/sonner';
-import { Button, Input, Tabs, Typography } from 'antd';
+import { Button, Input, Radio, RadioChangeEvent, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { handleContactSupport } from 'pages/Integrations/utils';
@@ -63,6 +63,7 @@ function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 				</div>
 			),
 			key: 'feedback',
+			value: 'feedback',
 		},
 		{
 			label: (
@@ -72,6 +73,7 @@ function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 				</div>
 			),
 			key: 'reportBug',
+			value: 'reportBug',
 		},
 		{
 			label: (
@@ -81,6 +83,7 @@ function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 				</div>
 			),
 			key: 'featureRequest',
+			value: 'featureRequest',
 		},
 	];
 
@@ -97,12 +100,13 @@ function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 	return (
 		<div className="feedback-modal-container">
 			<div className="feedback-modal-header">
-				<Tabs
-					defaultActiveKey={activeTab}
-					activeKey={activeTab}
-					onChange={(key: string): void => setActiveTab(key)}
+				<Radio.Group
+					value={activeTab}
+					defaultValue={activeTab}
+					optionType="button"
 					className="feedback-modal-tabs"
-					items={items}
+					options={items}
+					onChange={(e: RadioChangeEvent): void => setActiveTab(e.target.value)}
 				/>
 			</div>
 			<div className="feedback-modal-content">
@@ -124,6 +128,7 @@ function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 					type="primary"
 					onClick={handleSubmit}
 					loading={isLoading}
+					disabled={feedback.length === 0}
 				>
 					Submit
 				</Button>

@@ -79,26 +79,21 @@
 
 .feedback-modal-container {
 	.feedback-modal-tabs {
-		.ant-tabs-nav {
+		width: 100%;
+		display: flex;
+
+		.ant-radio-button-wrapper {
+			flex: 1;
 			margin: 0px !important;
 
-			.ant-tabs-nav-wrap {
-				.ant-tabs-nav-list {
-					width: 100%;
+			border: 1px solid var(--bg-slate-400);
 
-					.ant-tabs-tab {
-						flex: 1;
-						border-radius: 0px;
-					}
-				}
+			&:before {
+				display: none;
 			}
 
-			.ant-tabs-ink-bar {
-				background: var(--bg-slate-400) !important;
-			}
-
-			&::before {
-				border-bottom: none;
+			.ant-radio-button-checked {
+				background-color: var(--bg-slate-400);
 			}
 		}
 
@@ -233,28 +228,18 @@
 
 	.feedback-modal-container {
 		.feedback-modal-tabs {
-			.ant-tabs-nav {
-				.ant-tabs-ink-bar {
-					display: none !important;
+			.ant-radio-button-wrapper {
+				flex: 1;
+				margin: 0px !important;
+
+				border: 1px solid var(--bg-vanilla-300);
+
+				&:before {
+					display: none;
 				}
-			}
 
-			.ant-tabs-nav-list {
-				.ant-tabs-tab {
-					background: var(--bg-vanilla-100);
-					box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.1);
-					border: 1px solid var(--bg-vanilla-300);
-
-					&-active {
-						background: var(--bg-vanilla-300);
-						color: var(--bg-ink-400);
-
-						border-bottom: none !important;
-
-						.ant-tabs-tab-btn {
-							color: var(--bg-ink-400);
-						}
-					}
+				.ant-radio-button-checked {
+					background-color: var(--bg-vanilla-300);
 				}
 			}
 		}

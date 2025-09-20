@@ -6,7 +6,7 @@ import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import { Check, Info, Link2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { matchPath, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
@@ -27,39 +27,28 @@ function ShareURLModal(): JSX.Element {
 		(state) => state.globalTime,
 	);
 
-	const [enableAbsoluteTime, setEnableAbsoluteTime] = useState(false);
-
-	const [shareURLWithTime, setShareURLWithTime] = useState(false);
+	const [enableAbsoluteTime, setEnableAbsoluteTime] = useState(
+		selectedTime !== 'custom',
+	);
 
 	const startTime = urlQuery.get(QueryParams.startTime);
 	const endTime = urlQuery.get(QueryParams.endTime);
 	const relativeTime = urlQuery.get(QueryParams.relativeTime);
 
-	const [isValidateRelativeTime, setIsValidateRelativeTime] = useState(false);
 	const [isURLCopied, setIsURLCopied] = useState(false);
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 
-	useEffect(() => {
-		setEnableAbsoluteTime(selectedTime !== 'custom');
+	const isValidateRelativeTime = useMemo(
+		() =>
+			selectedTime !== 'custom' ||
+			(startTime && endTime && selectedTime === 'custom'),
+		[startTime, endTime, selectedTime],
+	);
 
-		if (startTime && endTime && selectedTime === 'custom') {
-			setIsValidateRelativeTime(true);
-		}
-
-		if (selectedTime !== 'custom') {
-			setIsValidateRelativeTime(true);
-		}
-
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
-	useEffect(() => {
-		if (relativeTime || (startTime && endTime)) {
-			setShareURLWithTime(true);
-		} else {
-			setShareURLWithTime(false);
-		}
-	}, [relativeTime, startTime, endTime]);
+	const shareURLWithTime = useMemo(
+		() => relativeTime || (startTime && endTime),
+		[relativeTime, startTime, endTime],
+	);
 
 	const isRouteToBeSharedWithTime = useMemo(
 		() =>

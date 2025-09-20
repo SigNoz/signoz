@@ -87,7 +87,12 @@ function AllErrors(): JSX.Element {
 							}
 						/>
 						<ResourceAttributesFilterV2 />
-						<RouteTab routes={routes} activeKey={pathname} history={history} />
+						<RouteTab
+							routes={routes}
+							activeKey={pathname}
+							history={history}
+							showRightSection={false}
+						/>
 					</>
 				</TypicalOverlayScrollbar>
 			</section>
