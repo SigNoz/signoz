@@ -35,6 +35,8 @@ export type QueryBuilderProps = {
 	showTraceOperator?: boolean;
 	version: string;
 	onChangeTraceView?: (view: TraceView) => void;
+	onSignalSourceChange?: (value: string) => void;
+	signalSourceChangeEnabled?: boolean;
 };
 
 export enum TraceView {
