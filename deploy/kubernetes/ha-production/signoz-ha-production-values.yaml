@@ -1,0 +1,264 @@
+# Global environment variable overrides
+global:
+  storageClass: "gp3"
+
+clickhouse:
+  # ClickHouse HA configuration with proper scaling
+  enabled: true
+  replicaCount: 3
+  # Override the default cluster name from "cluster" to "prod"
+  cluster: "prod"
+  # Use layout instead of cluster for proper configuration
+  layout:
+    shardsCount: 2
+    replicasCount: 2
+  # Ensure schema migration uses correct cluster topology
+  schemaMigrator:
+    enabled: true
+    env:
+      CLICKHOUSE_SHARDS: "2"
+      CLICKHOUSE_REPLICAS: "2"
+      CLICKHOUSE_CLUSTER: "prod"
+    initContainers:
+      ch-ready:
+        env:
+          CLICKHOUSE_SHARDS: "2"
+          CLICKHOUSE_REPLICAS: "2"
+  
+  # Persistent storage configuration
+  persistence:
+    enabled: true
+    storageClass: "gp3"
+    size: 1000Gi
+    
+  # Resource requirements for production
+  resources:
+    requests:
+      memory: "8Gi"
+      cpu: "4"
+      
+  # Anti-affinity to ensure pods are distributed across nodes
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - clickhouse
+        topologyKey: kubernetes.io/hostname
+        
+  # Node selector for dedicated nodes if needed
+  tolerations: []
+  nodeSelector: {}
+
+# Kafka configuration for HA
+kafka:
+  enabled: true
+  replicaCount: 3
+  
+  # Persistent storage for Kafka
+  persistence:
+    enabled: true
+    storageClass: "gp3"
+    size: 200Gi
+    
+  # Resource requirements
+  resources:
+    requests:
+      memory: "4Gi"
+      cpu: "2"
+      
+  # Anti-affinity configuration
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - kafka
+        topologyKey: kubernetes.io/hostname
+
+# Zookeeper for Kafka coordination
+zookeeper:
+  enabled: true
+  replicaCount: 3
+  
+  persistence:
+    enabled: true
+    storageClass: "gp3"
+    size: 20Gi
+    
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+      
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - zookeeper
+        topologyKey: kubernetes.io/hostname
+
+# SigNoz main service configuration (NEW - 2025-07-21)
+# CRITICAL: Override ClickHouse service name to prevent upgrade issues
+signoz:
+  additionalEnvs:
+    CLICKHOUSE_HOST:
+      value: "clickhouse-signoz-clickhouse-ha"
+    CLICKHOUSE_PORT:
+      value: "9000"
+    CLICKHOUSE_HTTP_PORT:
+      value: "8123"
+    CLICKHOUSE_CLUSTER:
+      value: "prod"
+    CLICKHOUSE_USER:
+      value: "admin"
+    CLICKHOUSE_PASSWORD:
+      value: "27ff0399-0d3a-4bd8-919d-17c2181e6fb9"
+    CLICKHOUSE_SECURE:
+      value: "false"
+
+# SigNoz Query Service HA
+queryService:
+  enabled: true
+  replicaCount: 3
+  
+  # Override the CLICKHOUSE_CLUSTER environment variable
+  extraEnvVars:
+    - name: CLICKHOUSE_CLUSTER
+      value: "prod"
+    - name: CLICKHOUSE_HOST
+      value: "clickhouse-signoz-clickhouse-ha"
+  
+  resources:
+    requests:
+      memory: "2Gi"
+      cpu: "1"
+      
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - query-service
+          topologyKey: kubernetes.io/hostname
+
+# SigNoz Frontend HA
+frontend:
+  enabled: true
+  replicaCount: 3
+  
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+      
+  # Load balancer service
+  service:
+    type: LoadBalancer
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+      service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+      
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - frontend
+          topologyKey: kubernetes.io/hostname
+
+# OtelCollector configuration
+otelCollector:
+  enabled: true
+  replicaCount: 3
+  
+  # CRITICAL: Override ClickHouse service name to prevent upgrade issues (2025-07-21)
+  # This ensures OTel collectors connect to the correct ClickHouse service after upgrades
+  additionalEnvs:
+    CLICKHOUSE_HOST:
+      value: "clickhouse-signoz-clickhouse-ha"
+    CLICKHOUSE_PORT:
+      value: "9000"
+    CLICKHOUSE_HTTP_PORT:
+      value: "8123" 
+    CLICKHOUSE_CLUSTER:
+      value: "prod"
+    CLICKHOUSE_USER:
+      value: "admin"
+    CLICKHOUSE_PASSWORD:
+      value: "27ff0399-0d3a-4bd8-919d-17c2181e6fb9"
+    CLICKHOUSE_SECURE:
+      value: "false"
+    CLICKHOUSE_DATABASE:
+      value: "signoz_metrics"
+    CLICKHOUSE_TRACE_DATABASE:
+      value: "signoz_traces"
+    CLICKHOUSE_LOG_DATABASE:
+      value: "signoz_logs"
+    LOW_CARDINAL_EXCEPTION_GROUPING:
+      value: "false"
+    TENANT_ID:
+      value: "default"
+  
+  resources:
+    requests:
+      memory: "2Gi"
+      cpu: "1"
+      
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - otel-collector
+          topologyKey: kubernetes.io/hostname
+
+# OtelCollectorMetrics configuration
+otelCollectorMetrics:
+  enabled: true
+  replicaCount: 3
+  
+  resources:
+    requests:
+      memory: "2Gi"
+      cpu: "1"
+
+# AlertManager HA
+alertmanager:
+  replicaCount: 2
+  
+  persistence:
+    enabled: true
+    storageClass: "gp3"
+    size: 10Gi
+    
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+
