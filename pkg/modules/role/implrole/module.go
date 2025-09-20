@@ -99,18 +99,19 @@ func (module *module) GetResources(_ context.Context) []*roletypes.Resource {
 	return resources
 }
 
+// todo(vikrantgupta25): make the update for role and tuples in a single transaction
 func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatableRole *roletypes.UpdatableRole) error {
 	storableRole, err := module.store.Get(ctx, orgID, id)
 	if err != nil {
 		return err
 	}
 
-	gettableRole, err := roletypes.NewRoleFromStorableRole(storableRole)
+	role, err := roletypes.NewRoleFromStorableRole(storableRole)
 	if err != nil {
 		return err
 	}
 
-	additions, deletions, err := gettableRole.GetDifference(updatableRole)
+	additions, deletions, err := role.GetDifference(updatableRole)
 	if err != nil {
 		return err
 	}
@@ -127,8 +128,8 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return err
 	}
 
-	gettableRole.Update(updatableRole)
-	updatedRole, err := roletypes.NewStorableRoleFromRole(gettableRole)
+	role.Update(updatableRole)
+	updatedRole, err := roletypes.NewStorableRoleFromRole(role)
 	if err != nil {
 		return err
 	}

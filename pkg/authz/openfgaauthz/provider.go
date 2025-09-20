@@ -199,41 +199,56 @@ func (provider *provider) Check(ctx context.Context, tupleReq *openfgav1.TupleKe
 	return nil
 }
 
-func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, relation authtypes.Relation, typeable authtypes.Typeable, selector authtypes.Selector, parentTypeable authtypes.Typeable, parentSelectors ...authtypes.Selector) error {
+func (provider *provider) BatchCheck(ctx context.Context, tupleReq []*openfgav1.TupleKey) error {
+	batchCheckItems := make([]*openfgav1.BatchCheckItem, 0)
+	for _, tuple := range tupleReq {
+		batchCheckItems = append(batchCheckItems, &openfgav1.BatchCheckItem{
+			TupleKey: &openfgav1.CheckRequestTupleKey{
+				User:     tuple.User,
+				Relation: tuple.Relation,
+				Object:   tuple.Object,
+			},
+		})
+	}
+
+	checkResponse, err := provider.openfgaServer.BatchCheck(
+		ctx,
+		&openfgav1.BatchCheckRequest{
+			StoreId:              provider.storeID,
+			AuthorizationModelId: provider.modelID,
+			Checks:               batchCheckItems,
+		})
+	if err != nil {
+		return errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthZUnavailable, "authorization server is unavailable").WithAdditional(err.Error())
+	}
+
+	for _, checkResponse := range checkResponse.Result {
+		if checkResponse.GetAllowed() {
+			return nil
+		}
+	}
+
+	return errors.New(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "")
+
+}
+
+func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, relation authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector) error {
 	subject, err := authtypes.NewSubject(authtypes.TypeUser, claims.UserID, authtypes.Relation{})
 	if err != nil {
 		return err
 	}
 
-	tuples, err := typeable.Tuples(subject, relation, selector, parentTypeable, parentSelectors...)
+	tuples, err := typeable.Tuples(subject, relation, selectors)
 	if err != nil {
 		return err
 	}
 
-	check, err := provider.sequentialCheck(ctx, tuples)
+	err = provider.BatchCheck(ctx, tuples)
 	if err != nil {
 		return err
-	}
-	if !check {
-		return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "subject %s cannot %s object %s", subject, relation.StringValue(), typeable.Type().StringValue())
 	}
 
 	return nil
-}
-
-func (provider *provider) sequentialCheck(ctx context.Context, tuplesReq []*openfgav1.TupleKey) (bool, error) {
-	for _, tupleReq := range tuplesReq {
-		err := provider.Check(ctx, tupleReq)
-		if err == nil {
-			return true, nil
-		}
-		if errors.Ast(err, errors.TypeInternal) {
-			// return at the first internal error as the evaluation will be incorrect
-			return false, err
-		}
-	}
-
-	return false, nil
 }
 
 func (provider *provider) Write(ctx context.Context, req *openfgav1.WriteRequest) error {

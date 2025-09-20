@@ -2,6 +2,7 @@ package roletypes
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -47,10 +48,15 @@ type Resource struct {
 }
 
 type (
-	PostableRole  = Role
-	GettableRole  = Role
-	UpdatableRole = Role
+	PostableRole = Role
+	GettableRole = Role
 )
+
+type UpdatableRole struct {
+	DisplayName  string         `json:"displayName"`
+	Description  string         `json:"description"`
+	Transactions []*Transaction `json:"transactions"`
+}
 
 func newTransactionsFromString(s string) ([]*Transaction, error) {
 	transactions := make([]*Transaction, 0)
@@ -108,35 +114,60 @@ func (role *Role) GetTuplesFromTransactions() ([]*openfgav1.TupleKey, error) {
 			return nil, err
 		}
 
-		for _, selector := range transaction.Selectors {
-			transactionTuples, err := typeable.Tuples(
-				authtypes.MustNewSubject(
-					authtypes.TypeRole,
-					role.ID.String(),
-					authtypes.RelationAssignee,
-				),
-				transaction.Relation,
-				selector,
-				nil,
-			)
-			if err != nil {
-				return nil, err
-			}
-
-			tuples = append(tuples, transactionTuples...)
+		transactionTuples, err := typeable.Tuples(
+			authtypes.MustNewSubject(
+				authtypes.TypeRole,
+				role.ID.String(),
+				authtypes.RelationAssignee,
+			),
+			transaction.Relation,
+			transaction.Selectors,
+		)
+		if err != nil {
+			return nil, err
 		}
+
+		tuples = append(tuples, transactionTuples...)
 	}
 
 	return tuples, nil
 }
 
-func (role *Role) GetDifference(updatedRole *Role) ([]*openfgav1.TupleKey, []*openfgav1.TupleKeyWithoutCondition, error) {
+func (updatableRole *UpdatableRole) GetTuplesFromTransactions(id valuer.UUID) ([]*openfgav1.TupleKey, error) {
+	tuples := make([]*openfgav1.TupleKey, 0)
+
+	for _, transaction := range updatableRole.Transactions {
+		typeable, err := authtypes.NewTypeableFromType(transaction.Resource.Type, transaction.Resource.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		transactionTuples, err := typeable.Tuples(
+			authtypes.MustNewSubject(
+				authtypes.TypeRole,
+				id.StringValue(),
+				authtypes.RelationAssignee,
+			),
+			transaction.Relation,
+			transaction.Selectors,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		tuples = append(tuples, transactionTuples...)
+	}
+
+	return tuples, nil
+}
+
+func (role *Role) GetDifference(updatableRole *UpdatableRole) ([]*openfgav1.TupleKey, []*openfgav1.TupleKeyWithoutCondition, error) {
 	existingTuples, err := role.GetTuplesFromTransactions()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	updatedTuples, err := updatedRole.GetTuplesFromTransactions()
+	updatedTuples, err := updatableRole.GetTuplesFromTransactions(role.ID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -174,6 +205,5 @@ func (role *Role) Update(updatedRole *UpdatableRole) {
 	role.DisplayName = updatedRole.DisplayName
 	role.Description = updatedRole.Description
 	role.Transactions = updatedRole.Transactions
-	role.CreatedAt = updatedRole.CreatedAt
-	role.UpdatedAt = updatedRole.UpdatedAt
+	role.UpdatedAt = time.Now()
 }

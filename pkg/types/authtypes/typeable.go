@@ -31,7 +31,7 @@ var (
 type Typeable interface {
 	Type() Type
 	Name() Name
-	Tuples(subject string, relation Relation, selector Selector, parentType Typeable, parentSelectors ...Selector) ([]*openfgav1.TupleKey, error)
+	Tuples(subject string, relation Relation, selector []Selector) ([]*openfgav1.TupleKey, error)
 }
 
 type Type struct{ valuer.String }

@@ -16,9 +16,14 @@ func MustNewResources(name Name) Typeable {
 	return &resources{name: name}
 }
 
-func (resources *resources) Tuples(subject string, relation Relation, selector Selector, _ Typeable, _ ...Selector) ([]*openfgav1.TupleKey, error) {
-	object := strings.Join([]string{TypeResources.StringValue(), resources.name.String(), selector.String()}, ":")
-	return []*openfgav1.TupleKey{{User: subject, Relation: relation.StringValue(), Object: object}}, nil
+func (resources *resources) Tuples(subject string, relation Relation, selector []Selector) ([]*openfgav1.TupleKey, error) {
+	tuples := make([]*openfgav1.TupleKey, 0)
+	for _, selector := range selector {
+		object := strings.Join([]string{TypeResources.StringValue(), resources.name.String(), selector.String()}, ":")
+		tuples = append(tuples, &openfgav1.TupleKey{User: subject, Relation: relation.StringValue(), Object: object})
+	}
+
+	return tuples, nil
 }
 
 func (resources *resources) Type() Type {

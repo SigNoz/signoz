@@ -15,7 +15,7 @@ var (
 	typeResourcesSelectorRegex    = regexp.MustCompile(`^org:[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
 )
 
-type SelectorCallbackFn func(*http.Request) (Selector, []Selector, error)
+type SelectorCallbackFn func(*http.Request) ([]Selector, error)
 
 type Selector struct {
 	val string
