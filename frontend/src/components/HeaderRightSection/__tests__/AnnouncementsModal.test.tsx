@@ -14,7 +14,7 @@ describe('AnnouncementsModal', () => {
 
 		const container = screen
 			.getByText('Announcements')
-			.closest('.announcements-modal-content');
+			.closest('.announcements-modal-container');
 		expect(container).toBeInTheDocument();
 
 		const headerContainer = screen

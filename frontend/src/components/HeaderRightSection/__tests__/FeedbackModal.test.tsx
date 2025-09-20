@@ -74,26 +74,23 @@ describe('FeedbackModal', () => {
 		const user = userEvent.setup();
 		render(<FeedbackModal onClose={mockOnClose} />);
 
-		// Initially, feedback tab should be active
-		expect(screen.getByRole('tab', { selected: true })).toHaveTextContent(
-			'Feedback',
-		);
+		// Initially, feedback radio should be active
+		const feedbackRadio = screen.getByRole('radio', { name: 'Feedback' });
+		expect(feedbackRadio).toBeChecked();
 
 		const bugTab = screen.getByText('Report a bug');
 		await user.click(bugTab);
 
-		// Bug tab should now be active
-		expect(screen.getByRole('tab', { selected: true })).toHaveTextContent(
-			'Report a bug',
-		);
+		// Bug radio should now be active
+		const bugRadio = screen.getByRole('radio', { name: 'Report a bug' });
+		expect(bugRadio).toBeChecked();
 
 		const featureTab = screen.getByText('Feature request');
 		await user.click(featureTab);
 
-		// Feature tab should now be active
-		expect(screen.getByRole('tab', { selected: true })).toHaveTextContent(
-			'Feature request',
-		);
+		// Feature radio should now be active
+		const featureRadio = screen.getByRole('radio', { name: 'Feature request' });
+		expect(featureRadio).toBeChecked();
 	});
 
 	it('should update feedback text when typing in textarea', async () => {
@@ -141,10 +138,9 @@ describe('FeedbackModal', () => {
 		const bugTab = screen.getByText('Report a bug');
 		await user.click(bugTab);
 
-		// Verify bug report tab is now active
-		expect(screen.getByRole('tab', { selected: true })).toHaveTextContent(
-			'Report a bug',
-		);
+		// Verify bug report radio is now active
+		const bugRadio = screen.getByRole('radio', { name: 'Report a bug' });
+		expect(bugRadio).toBeChecked();
 
 		const textarea = screen.getByPlaceholderText('Write your feedback here...');
 		const submitButton = screen.getByRole('button', { name: /submit/i });
@@ -175,10 +171,9 @@ describe('FeedbackModal', () => {
 		const featureTab = screen.getByText('Feature request');
 		await user.click(featureTab);
 
-		// Verify feature request tab is now active
-		expect(screen.getByRole('tab', { selected: true })).toHaveTextContent(
-			'Feature request',
-		);
+		// Verify feature request radio is now active
+		const featureRadio = screen.getByRole('radio', { name: 'Feature request' });
+		expect(featureRadio).toBeChecked();
 
 		const textarea = screen.getByPlaceholderText('Write your feedback here...');
 		const submitButton = screen.getByRole('button', { name: /submit/i });
@@ -272,8 +267,8 @@ describe('FeedbackModal', () => {
 		);
 		expect(newTextArea).toHaveValue(''); // Should be empty
 
-		// Verify active tab is reset to default (Feedback tab)
-		const feedbackTab = screen.getByRole('tab', { name: /Feedback/i });
-		expect(feedbackTab).toHaveAttribute('aria-selected', 'true');
+		// Verify active radio is reset to default (Feedback radio)
+		const feedbackRadio = screen.getByRole('radio', { name: 'Feedback' });
+		expect(feedbackRadio).toBeChecked();
 	});
 });
