@@ -1,8 +1,7 @@
 import './DateTimeSelectionV2.styles.scss';
 
 import { SyncOutlined } from '@ant-design/icons';
-import { Color } from '@signozhq/design-tokens';
-import { Button, Popover, Switch, Typography } from 'antd';
+import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import CustomTimePicker from 'components/CustomTimePicker/CustomTimePicker';
@@ -15,16 +14,15 @@ import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import GetMinMax, { isValidTimeFormat } from 'lib/getMinMax';
+import { isValidTimeFormat } from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import { cloneDeep, isObject } from 'lodash-es';
-import { Check, Copy, Info, Send, Undo } from 'lucide-react';
+import { Undo } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import { useCallback, useEffect, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { useNavigationType, useSearchParams } from 'react-router-dom-v5-compat';
-import { useCopyToClipboard } from 'react-use';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
@@ -53,7 +51,6 @@ import { Form, FormContainer, FormItem } from './styles';
 function DateTimeSelection({
 	showAutoRefresh,
 	showRefreshText = true,
-	hideShareModal = false,
 	location,
 	updateTimeInterval,
 	globalTimeLoading,
@@ -81,10 +78,6 @@ function DateTimeSelection({
 	const searchStartTime = urlQuery.get('startTime');
 	const searchEndTime = urlQuery.get('endTime');
 	const relativeTimeFromUrl = urlQuery.get(QueryParams.relativeTime);
-	const [enableAbsoluteTime, setEnableAbsoluteTime] = useState(false);
-	const [isValidteRelativeTime, setIsValidteRelativeTime] = useState(false);
-	const [, handleCopyToClipboard] = useCopyToClipboard();
-	const [isURLCopied, setIsURLCopied] = useState(false);
 
 	// Prioritize props for initial modal time, fallback to URL params
 	let initialModalStartTime = 0;
@@ -324,7 +317,6 @@ function DateTimeSelection({
 			if (isModalTimeSelection) {
 				if (value === 'custom') {
 					setCustomDTPickerVisible(true);
-					setIsValidteRelativeTime(false);
 					return;
 				}
 				onTimeChange?.(value);
@@ -334,15 +326,12 @@ function DateTimeSelection({
 				setIsOpen(false);
 				updateTimeInterval(value);
 				updateLocalStorageForRoutes(value);
-				setIsValidteRelativeTime(true);
 				if (refreshButtonHidden) {
 					setRefreshButtonHidden(false);
 				}
 			} else {
 				setRefreshButtonHidden(true);
 				setCustomDTPickerVisible(true);
-				setIsValidteRelativeTime(false);
-				setEnableAbsoluteTime(false);
 
 				return;
 			}
@@ -458,11 +447,6 @@ function DateTimeSelection({
 		urlQuery.delete('startTime');
 		urlQuery.delete('endTime');
 
-		setIsValidteRelativeTime(true);
-
-		urlQuery.delete('startTime');
-		urlQuery.delete('endTime');
-
 		urlQuery.set(QueryParams.relativeTime, dateTimeStr);
 
 		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
@@ -542,7 +526,6 @@ function DateTimeSelection({
 	const handleRelativeTimeSync = useCallback(
 		(relativeTime: string): void => {
 			updateTimeInterval(relativeTime as Time);
-			setIsValidteRelativeTime(true);
 			setRefreshButtonHidden(false);
 		},
 		[updateTimeInterval],
@@ -625,8 +608,6 @@ function DateTimeSelection({
 
 		const updatedTime = getCustomOrIntervalTime(time, currentRoute);
 
-		setIsValidteRelativeTime(updatedTime !== 'custom');
-
 		const [preStartTime = 0, preEndTime = 0] = getTime() || [];
 
 		setRefreshButtonHidden(updatedTime === 'custom');
@@ -653,95 +634,6 @@ function DateTimeSelection({
 		safeNavigate(generatedUrl);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.pathname, updateTimeInterval, globalTimeLoading]);
-
-	// eslint-disable-next-line sonarjs/cognitive-complexity
-	const shareModalContent = (): JSX.Element => {
-		let currentUrl = window.location.href;
-
-		const startTime = urlQuery.get(QueryParams.startTime);
-		const endTime = urlQuery.get(QueryParams.endTime);
-		const isCustomTime = !!(startTime && endTime && selectedTime === 'custom');
-
-		if (enableAbsoluteTime || isCustomTime) {
-			if (selectedTime === 'custom') {
-				if (searchStartTime && searchEndTime) {
-					urlQuery.set(QueryParams.startTime, searchStartTime.toString());
-					urlQuery.set(QueryParams.endTime, searchEndTime.toString());
-				}
-			} else {
-				const { minTime, maxTime } = GetMinMax(selectedTime);
-
-				urlQuery.set(QueryParams.startTime, minTime.toString());
-				urlQuery.set(QueryParams.endTime, maxTime.toString());
-			}
-
-			urlQuery.delete(QueryParams.relativeTime);
-
-			currentUrl = `${window.location.origin}${
-				location.pathname
-			}?${urlQuery.toString()}`;
-		} else {
-			urlQuery.delete(QueryParams.startTime);
-			urlQuery.delete(QueryParams.endTime);
-
-			urlQuery.set(QueryParams.relativeTime, selectedTime);
-			currentUrl = `${window.location.origin}${
-				location.pathname
-			}?${urlQuery.toString()}`;
-		}
-
-		return (
-			<div className="share-modal-content">
-				<div className="absolute-relative-time-toggler-container">
-					<div className="absolute-relative-time-toggler">
-						{(selectedTime === 'custom' || !isValidteRelativeTime) && (
-							<Info size={14} color={Color.BG_AMBER_600} />
-						)}
-						<Switch
-							checked={enableAbsoluteTime || isCustomTime}
-							disabled={selectedTime === 'custom' || !isValidteRelativeTime}
-							size="small"
-							onChange={(): void => {
-								setEnableAbsoluteTime(!enableAbsoluteTime);
-							}}
-						/>
-					</div>
-
-					<Typography.Text>Enable Absolute Time</Typography.Text>
-				</div>
-
-				{(selectedTime === 'custom' || !isValidteRelativeTime) && (
-					<div className="absolute-relative-time-error">
-						Please select / enter valid relative time to toggle.
-					</div>
-				)}
-
-				<div className="share-link">
-					<Typography.Text ellipsis className="share-url">
-						{currentUrl}
-					</Typography.Text>
-
-					<Button
-						className="periscope-btn copy-url-btn"
-						onClick={(): void => {
-							handleCopyToClipboard(currentUrl);
-							setIsURLCopied(true);
-							setTimeout(() => {
-								setIsURLCopied(false);
-							}, 1000);
-						}}
-						icon={
-							isURLCopied ? (
-								<Check size={14} color={Color.BG_FOREST_500} />
-							) : (
-								<Copy size={14} color={Color.BG_ROBIN_500} />
-							)
-						}
-					/>
-				</div>
-			</div>
-		);
-	};
 
 	const { timezone } = useTimezone();
 
@@ -814,9 +706,6 @@ function DateTimeSelection({
 						onValidCustomDateChange={(dateTime): void => {
 							onValidCustomDateHandler(dateTime.timeStr as CustomTimeType);
 						}}
-						onCustomTimeStatusUpdate={(isValid: boolean): void => {
-							setIsValidteRelativeTime(isValid);
-						}}
 						selectedValue={getSelectedValue()}
 						data-testid="dropDown"
 						items={options}
@@ -842,24 +731,6 @@ function DateTimeSelection({
 								/>
 							</FormItem>
 						</div>
-					)}
-
-					{!hideShareModal && (
-						<Popover
-							rootClassName="shareable-link-popover-root"
-							className="shareable-link-popover"
-							placement="bottomRight"
-							content={shareModalContent}
-							arrow={false}
-							trigger={['hover']}
-						>
-							<Button
-								className="share-link-btn periscope-btn"
-								icon={<Send size={14} />}
-							>
-								Share
-							</Button>
-						</Popover>
 					)}
 				</FormContainer>
 			</Form>

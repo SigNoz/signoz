@@ -7,7 +7,12 @@
 	}
 
 	.all-errors-right-section {
-		padding: 0 10px;
+		.right-toolbar-actions-container {
+			display: flex;
+			gap: 8px;
+			align-items: center;
+			justify-content: flex-end;
+		}
 	}
 
 	.ant-tabs {

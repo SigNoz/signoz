@@ -17,6 +17,7 @@ export default function LogsError(): JSX.Element {
 			window.open('https://signoz.io/slack', '_blank');
 		}
 	};
+
 	return (
 		<div className="logs-error-container">
 			<div className="logs-error-content">
