@@ -268,35 +268,7 @@ function SpanTable({
 	const renderServiceCell = useCallback(
 		({ row }: { row: Row<TableRowData> }): JSX.Element | null => {
 			const { original } = row;
-			if (original.type === SPAN_TYPE_PAGINATION) {
-				const { entrySpanId } = original;
-				if (!entrySpanId) return <div />;
-
-				const entrySpan = expandedEntrySpans[entrySpanId];
-				const pagination = serviceSpansPagination[entrySpanId];
-
-				if (!entrySpan || !pagination) return <div />;
-
-				return (
-					<div className="service-span-pagination">
-						<Controls
-							offset={(pagination.currentPage - 1) * SERVICE_SPAN_PAGE_SIZE}
-							totalCount={SERVICE_SPAN_PAGE_SIZE * 10}
-							countPerPage={SERVICE_SPAN_PAGE_SIZE}
-							isLoading={loadingSpans[entrySpanId] || false}
-							handleNavigatePrevious={(): void =>
-								handleServiceSpanNavigatePrevious(entrySpanId)
-							}
-							handleNavigateNext={(): void =>
-								handleServiceSpanNavigateNext(entrySpanId)
-							}
-							handleCountItemsPerPageChange={(): void => {}} // Service spans use fixed page size
-							showSizeChanger={false} // Disable page size changer for service spans
-							nextCursor={pagination.nextCursor}
-						/>
-					</div>
-				);
-			}
+			if (original.type === SPAN_TYPE_PAGINATION) return null;
 
 			if (original.type === SPAN_TYPE_ENTRY) {
 				const entrySpan = original.originalData as ServiceEntrySpan;
@@ -342,14 +314,7 @@ function SpanTable({
 				</div>
 			);
 		},
-		[
-			expandedEntrySpans,
-			loadingSpans,
-			serviceSpansPagination,
-			handleServiceSpanNavigatePrevious,
-			handleServiceSpanNavigateNext,
-			handleEntrySpanClick,
-		],
+		[expandedEntrySpans, loadingSpans, handleEntrySpanClick],
 	);
 
 	const renderDurationCell = useCallback(
@@ -364,14 +329,48 @@ function SpanTable({
 	const renderTimestampCell = useCallback(
 		({ row }: { row: Row<TableRowData> }): JSX.Element | null => {
 			const { original } = row;
-			if (original.type === SPAN_TYPE_PAGINATION) return null;
+			if (original.type === SPAN_TYPE_PAGINATION) {
+				const { entrySpanId } = original;
+				if (!entrySpanId) return <div />;
+
+				const entrySpan = expandedEntrySpans[entrySpanId];
+				const pagination = serviceSpansPagination[entrySpanId];
+
+				if (!entrySpan || !pagination) return <div />;
+
+				return (
+					<div className="service-span-pagination">
+						<Controls
+							offset={(pagination.currentPage - 1) * SERVICE_SPAN_PAGE_SIZE}
+							totalCount={SERVICE_SPAN_PAGE_SIZE * 10}
+							countPerPage={SERVICE_SPAN_PAGE_SIZE}
+							isLoading={loadingSpans[entrySpanId] || false}
+							handleNavigatePrevious={(): void =>
+								handleServiceSpanNavigatePrevious(entrySpanId)
+							}
+							handleNavigateNext={(): void =>
+								handleServiceSpanNavigateNext(entrySpanId)
+							}
+							handleCountItemsPerPageChange={(): void => {}} // Service spans use fixed page size
+							showSizeChanger={false} // Disable page size changer for service spans
+							nextCursor={pagination.nextCursor}
+						/>
+					</div>
+				);
+			}
 			return (
 				<span className="timestamp">
 					{new Date(original.timestamp || '').toLocaleString()}
 				</span>
 			);
 		},
-		[],
+		[
+			expandedEntrySpans,
+			loadingSpans,
+			serviceSpansPagination,
+			handleServiceSpanNavigatePrevious,
+			handleServiceSpanNavigateNext,
+		],
 	);
 
 	const renderStatusCodeCell = useCallback(
@@ -566,38 +565,42 @@ function SpanTable({
 
 	return (
 		<div className="span-table">
-			<DataTable
-				columns={columns}
-				tableId={args.tableId}
-				enableSorting={args.enableSorting}
-				enableFiltering={args.enableFiltering}
-				enableGlobalFilter={args.enableGlobalFilter}
-				enableColumnReordering={args.enableColumnReordering}
-				enableColumnResizing={args.enableColumnResizing}
-				enableColumnPinning={args.enableColumnPinning}
-				enableRowSelection={args.enableRowSelection}
-				enablePagination={args.enablePagination}
-				showHeaders={args.showHeaders}
-				defaultColumnWidth={args.defaultColumnWidth}
-				minColumnWidth={args.minColumnWidth}
-				maxColumnWidth={args.maxColumnWidth}
-				enableVirtualization={args.enableVirtualization}
-				fixedHeight={args.fixedHeight}
-				data={flattenedData}
-				onRowClick={handleRowClick}
-				isLoading={isLoading}
-			/>
-			<Controls
-				offset={(entryPagination.currentPage - 1) * entryPagination.pageSize}
-				countPerPage={entryPagination.pageSize}
-				totalCount={flattenedData.length}
-				isLoading={entryPagination.isLoading || isLoading || false}
-				handleNavigatePrevious={handleNavigatePrevious}
-				handleNavigateNext={handleNavigateNext}
-				handleCountItemsPerPageChange={(): void => {}}
-				showSizeChanger={false}
-				nextCursor={entryPagination.nextCursor}
-			/>
+			<div className="span-table-content">
+				<DataTable
+					columns={columns}
+					tableId={args.tableId}
+					enableSorting={args.enableSorting}
+					enableFiltering={args.enableFiltering}
+					enableGlobalFilter={args.enableGlobalFilter}
+					enableColumnReordering={args.enableColumnReordering}
+					enableColumnResizing={args.enableColumnResizing}
+					enableColumnPinning={args.enableColumnPinning}
+					enableRowSelection={args.enableRowSelection}
+					enablePagination={args.enablePagination}
+					showHeaders={args.showHeaders}
+					defaultColumnWidth={args.defaultColumnWidth}
+					minColumnWidth={args.minColumnWidth}
+					maxColumnWidth={args.maxColumnWidth}
+					enableVirtualization={args.enableVirtualization}
+					fixedHeight={args.fixedHeight}
+					data={flattenedData}
+					onRowClick={handleRowClick}
+					isLoading={isLoading}
+				/>
+				<div className="entry-pagination">
+					<Controls
+						offset={(entryPagination.currentPage - 1) * entryPagination.pageSize}
+						countPerPage={entryPagination.pageSize}
+						totalCount={flattenedData.length}
+						isLoading={entryPagination.isLoading || isLoading || false}
+						handleNavigatePrevious={handleNavigatePrevious}
+						handleNavigateNext={handleNavigateNext}
+						handleCountItemsPerPageChange={(): void => {}}
+						showSizeChanger={false}
+						nextCursor={entryPagination.nextCursor}
+					/>
+				</div>
+			</div>
 		</div>
 	);
 }

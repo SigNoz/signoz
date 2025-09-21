@@ -72,6 +72,24 @@
 		padding-left: 32px;
 	}
 
+	.span-table-content {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	.entry-pagination {
+		display: flex;
+		justify-content: flex-end;
+		margin-top: 8px;
+	}
+
+	.service-span-pagination {
+		display: flex;
+		justify-content: flex-end;
+		padding-left: 32px;
+	}
+
 	[data-slot='table-header'] {
 		&,
 		[data-slot='table-row']:hover {
