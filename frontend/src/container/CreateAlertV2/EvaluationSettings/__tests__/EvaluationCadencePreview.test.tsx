@@ -6,10 +6,11 @@ import { TIMEZONE_DATA } from '../constants';
 import EvaluationCadencePreview, {
 	ScheduleList,
 } from '../EvaluationCadence/EvaluationCadencePreview';
+import { MOCK_ALERT_CONTEXT_STATE } from './testUtils';
 
-jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue({
-	advancedOptions: INITIAL_ADVANCED_OPTIONS_STATE,
-} as any);
+jest
+	.spyOn(alertState, 'useCreateAlertState')
+	.mockReturnValue(MOCK_ALERT_CONTEXT_STATE);
 
 const mockSetIsOpen = jest.fn();
 
@@ -21,6 +22,7 @@ describe('EvaluationCadencePreview', () => {
 
 	it('should render empty state when no schedule is generated', () => {
 		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce({
+			...MOCK_ALERT_CONTEXT_STATE,
 			advancedOptions: {
 				...INITIAL_ADVANCED_OPTIONS_STATE,
 				evaluationCadence: {
@@ -34,7 +36,7 @@ describe('EvaluationCadencePreview', () => {
 					},
 				},
 			},
-		} as any);
+		});
 		render(<EvaluationCadencePreview isOpen setIsOpen={mockSetIsOpen} />);
 		expect(screen.getByTestId('no-schedule')).toBeInTheDocument();
 	});

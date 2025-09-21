@@ -53,7 +53,9 @@ describe('AdvancedOptionItem', () => {
 			/>,
 		);
 
-		expect(screen.queryByTestId(TEST_INPUT_TEST_ID)).not.toBeInTheDocument();
+		const inputElement = screen.getByTestId(TEST_INPUT_TEST_ID);
+		expect(inputElement).toBeInTheDocument();
+		expect(inputElement).not.toBeVisible();
 	});
 
 	it('should show input when switch is toggled on', async () => {
@@ -66,13 +68,17 @@ describe('AdvancedOptionItem', () => {
 			/>,
 		);
 
-		expect(screen.queryByTestId(TEST_INPUT_TEST_ID)).not.toBeInTheDocument();
+		const initialInputElement = screen.getByTestId(TEST_INPUT_TEST_ID);
+		expect(initialInputElement).toBeInTheDocument();
+		expect(initialInputElement).not.toBeVisible();
 
 		const switchElement = screen.getByRole('switch');
 		await user.click(switchElement);
 
 		expect(switchElement).toBeChecked();
-		expect(screen.getByTestId(TEST_INPUT_TEST_ID)).toBeInTheDocument();
+		const visibleInputElement = screen.getByTestId(TEST_INPUT_TEST_ID);
+		expect(visibleInputElement).toBeInTheDocument();
+		expect(visibleInputElement).toBeVisible();
 	});
 
 	it('should hide input when switch is toggled off', async () => {
@@ -87,15 +93,21 @@ describe('AdvancedOptionItem', () => {
 
 		const switchElement = screen.getByRole('switch');
 
-		expect(screen.queryByTestId(TEST_INPUT_TEST_ID)).not.toBeInTheDocument();
+		const initialInputElement = screen.getByTestId(TEST_INPUT_TEST_ID);
+		expect(initialInputElement).toBeInTheDocument();
+		expect(initialInputElement).not.toBeVisible();
 
 		// First toggle on
 		await user.click(switchElement);
-		expect(screen.getByTestId(TEST_INPUT_TEST_ID)).toBeInTheDocument();
+		const inputElement = screen.getByTestId(TEST_INPUT_TEST_ID);
+		expect(inputElement).toBeInTheDocument();
+		expect(inputElement).toBeVisible();
 
-		// Then toggle off
+		// Then toggle off - input should be hidden but still in DOM
 		await user.click(switchElement);
-		expect(screen.queryByTestId(TEST_INPUT_TEST_ID)).not.toBeInTheDocument();
+		const hiddenInputElement = screen.getByTestId(TEST_INPUT_TEST_ID);
+		expect(hiddenInputElement).toBeInTheDocument();
+		expect(hiddenInputElement).not.toBeVisible();
 	});
 
 	it('should maintain input state when toggling', async () => {
@@ -116,14 +128,16 @@ describe('AdvancedOptionItem', () => {
 		await user.type(inputElement, TEST_VALUE);
 		expect(inputElement).toHaveValue(TEST_VALUE);
 
-		// Toggle off
+		// Toggle off - input should still be in DOM but hidden
 		await user.click(switchElement);
-		expect(screen.queryByTestId(TEST_INPUT_TEST_ID)).not.toBeInTheDocument();
+		const hiddenInputElement = screen.getByTestId(TEST_INPUT_TEST_ID);
+		expect(hiddenInputElement).toBeInTheDocument();
+		expect(hiddenInputElement).not.toBeVisible();
 
-		// Toggle back on - input should be recreated (fresh state)
+		// Toggle back on - input should maintain its previous state
 		await user.click(switchElement);
 		const inputElementAgain = screen.getByTestId(TEST_INPUT_TEST_ID);
-		expect(inputElementAgain).toHaveValue(''); // Fresh input, no previous state
+		expect(inputElementAgain).toHaveValue(TEST_VALUE); // State preserved!
 	});
 
 	it('should not render tooltip icon if tooltipText is not provided', () => {

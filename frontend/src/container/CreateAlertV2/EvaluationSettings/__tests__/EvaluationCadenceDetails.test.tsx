@@ -1,11 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as alertState from 'container/CreateAlertV2/context';
 import { INITIAL_ADVANCED_OPTIONS_STATE } from 'container/CreateAlertV2/context/constants';
+import { AdvancedOptionsState } from 'container/CreateAlertV2/context/types';
 
 import EvaluationCadenceDetails from '../EvaluationCadence/EvaluationCadenceDetails';
+import { MOCK_ALERT_CONTEXT_STATE } from './testUtils';
 
-const INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE = {
+const INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE: AdvancedOptionsState = {
 	...INITIAL_ADVANCED_OPTIONS_STATE,
 	evaluationCadence: {
 		...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
@@ -15,9 +16,10 @@ const INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE = {
 
 const mockSetAdvancedOptions = jest.fn();
 jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue({
+	...MOCK_ALERT_CONTEXT_STATE,
 	advancedOptions: INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE,
 	setAdvancedOptions: mockSetAdvancedOptions,
-} as any);
+});
 
 const mockSetIsOpen = jest.fn();
 const mockSetIsCustomScheduleButtonVisible = jest.fn();
@@ -78,6 +80,7 @@ describe('EvaluationCadenceDetails', () => {
 
 	it('when showing weekly occurence, the occurence options should be rendered', () => {
 		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce({
+			...MOCK_ALERT_CONTEXT_STATE,
 			advancedOptions: {
 				...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE,
 				evaluationCadence: {
@@ -89,7 +92,7 @@ describe('EvaluationCadenceDetails', () => {
 					},
 				},
 			},
-		} as any);
+		});
 		render(
 			<EvaluationCadenceDetails
 				isOpen
@@ -108,6 +111,7 @@ describe('EvaluationCadenceDetails', () => {
 
 	it('render schedule preview in weekly occurence when days are selected', () => {
 		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce({
+			...MOCK_ALERT_CONTEXT_STATE,
 			advancedOptions: {
 				...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE,
 				evaluationCadence: {
@@ -120,7 +124,7 @@ describe('EvaluationCadenceDetails', () => {
 					},
 				},
 			},
-		} as any);
+		});
 		render(
 			<EvaluationCadenceDetails
 				isOpen
@@ -136,6 +140,7 @@ describe('EvaluationCadenceDetails', () => {
 
 	it('when showing monthly occurence, the occurence options should be rendered', () => {
 		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce({
+			...MOCK_ALERT_CONTEXT_STATE,
 			advancedOptions: {
 				...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE,
 				evaluationCadence: {
@@ -147,7 +152,7 @@ describe('EvaluationCadenceDetails', () => {
 					},
 				},
 			},
-		} as any);
+		});
 		render(
 			<EvaluationCadenceDetails
 				isOpen
@@ -166,6 +171,7 @@ describe('EvaluationCadenceDetails', () => {
 
 	it('render schedule preview in monthly occurence when days are selected', () => {
 		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce({
+			...MOCK_ALERT_CONTEXT_STATE,
 			advancedOptions: {
 				...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE,
 				evaluationCadence: {
@@ -178,7 +184,7 @@ describe('EvaluationCadenceDetails', () => {
 					},
 				},
 			},
-		} as any);
+		});
 		render(
 			<EvaluationCadenceDetails
 				isOpen

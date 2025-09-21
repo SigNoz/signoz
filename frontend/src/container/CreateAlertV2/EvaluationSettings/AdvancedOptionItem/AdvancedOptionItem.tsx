@@ -36,7 +36,12 @@ function AdvancedOptionItem({
 				</Typography.Text>
 			</div>
 			<div className="advanced-option-item-right-content">
-				{showInput && <div className="advanced-option-item-input">{input}</div>}
+				<div
+					className="advanced-option-item-input"
+					style={{ display: showInput ? 'block' : 'none' }}
+				>
+					{input}
+				</div>
 				<Switch onChange={handleOnToggle} />
 			</div>
 		</div>

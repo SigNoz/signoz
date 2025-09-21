@@ -1,16 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as alertState from 'container/CreateAlertV2/context';
 import { INITIAL_ADVANCED_OPTIONS_STATE } from 'container/CreateAlertV2/context/constants';
 
 import { TIMEZONE_DATA } from '../constants';
 import EditCustomSchedule from '../EvaluationCadence/EditCustomSchedule';
+import { MOCK_ALERT_CONTEXT_STATE } from './testUtils';
 
 const mockSetAdvancedOptions = jest.fn();
 jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue({
+	...MOCK_ALERT_CONTEXT_STATE,
 	advancedOptions: INITIAL_ADVANCED_OPTIONS_STATE,
 	setAdvancedOptions: mockSetAdvancedOptions,
-} as any);
+});
 
 const mockSetIsEvaluationCadenceDetailsVisible = jest.fn();
 const mockSetIsPreviewVisible = jest.fn();
@@ -20,6 +21,7 @@ const EDIT_CUSTOM_SCHEDULE_TEST_ID = '.edit-custom-schedule';
 describe('EditCustomSchedule', () => {
 	it('should render the correct display text for custom mode with daily occurrence', () => {
 		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce({
+			...MOCK_ALERT_CONTEXT_STATE,
 			advancedOptions: {
 				...INITIAL_ADVANCED_OPTIONS_STATE,
 				evaluationCadence: {
@@ -33,7 +35,7 @@ describe('EditCustomSchedule', () => {
 					},
 				},
 			},
-		} as any);
+		});
 		render(
 			<EditCustomSchedule
 				setIsEvaluationCadenceDetailsVisible={
@@ -52,6 +54,7 @@ describe('EditCustomSchedule', () => {
 
 	it('should render the correct display text for custom mode with weekly occurrence', () => {
 		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce({
+			...MOCK_ALERT_CONTEXT_STATE,
 			advancedOptions: {
 				...INITIAL_ADVANCED_OPTIONS_STATE,
 				evaluationCadence: {
@@ -65,7 +68,7 @@ describe('EditCustomSchedule', () => {
 					},
 				},
 			},
-		} as any);
+		});
 
 		render(
 			<EditCustomSchedule
@@ -86,6 +89,7 @@ describe('EditCustomSchedule', () => {
 
 	it('should render the correct display text for custom mode with monthly occurrence', () => {
 		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce({
+			...MOCK_ALERT_CONTEXT_STATE,
 			advancedOptions: {
 				...INITIAL_ADVANCED_OPTIONS_STATE,
 				evaluationCadence: {
@@ -99,7 +103,7 @@ describe('EditCustomSchedule', () => {
 					},
 				},
 			},
-		} as any);
+		});
 
 		render(
 			<EditCustomSchedule
