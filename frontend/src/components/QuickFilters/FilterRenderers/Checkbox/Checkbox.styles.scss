@@ -4,6 +4,11 @@
 	padding: 12px;
 	gap: 12px;
 	border-bottom: 1px solid var(--bg-slate-400);
+	.filter-values {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
 	.filter-header-checkbox {
 		display: flex;
 		align-items: center;
