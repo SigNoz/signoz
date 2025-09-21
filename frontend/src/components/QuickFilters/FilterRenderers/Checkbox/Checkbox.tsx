@@ -29,6 +29,7 @@ import { v4 as uuid } from 'uuid';
 
 import LogsQuickFilterEmptyState from './LogsQuickFilterEmptyState';
 
+
 const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
 const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in'];
 
@@ -495,9 +496,9 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 
 	return (
 		<div id="accordionGroup" className="checkbox-filter">
-			<h3>
-				<button
-					type="button"
+			<Typography.Title level={3} className="filter-header">
+				<Button
+					type="text"
 					id={headerId}
 					aria-expanded={isOpen}
 					aria-controls={contentId}
@@ -519,22 +520,22 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 						)}
 						<Typography.Text className="title">{filter.title}</Typography.Text>
 					</section>
-					<section className="right-action">
-						{isOpen && !!attributeValues.length && (
-							<Typography.Text
-								className="clear-all"
-								onClick={(e): void => {
-									e.stopPropagation();
-									e.preventDefault();
-									handleClearFilterAttribute();
-								}}
-							>
-								Clear All
-							</Typography.Text>
-						)}
-					</section>
-				</button>
-			</h3>
+				</Button>
+
+				{isOpen && !!attributeValues.length && (
+					<Button
+						type="text"
+						onClick={(e): void => {
+							e.stopPropagation();
+							e.preventDefault();
+							handleClearFilterAttribute();
+						}}
+						className="right-action"
+					>
+						<Typography.Text className="clear-all">Clear All</Typography.Text>
+					</Button>
+				)}
+			</Typography.Title>
 
 			{isOpen &&
 				(isLoading || isLoadingKeyValueSuggestions) &&

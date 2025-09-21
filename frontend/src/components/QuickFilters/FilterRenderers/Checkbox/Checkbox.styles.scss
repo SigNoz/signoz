@@ -4,43 +4,56 @@
 	padding: 12px;
 	gap: 12px;
 	border-bottom: 1px solid var(--bg-slate-400);
+
 	.filter-values {
 		display: flex;
 		flex-direction: column;
 		gap: 12px;
 	}
-	.filter-header-checkbox {
+
+	.filter-header {
 		display: flex;
-		align-items: center;
 		justify-content: space-between;
-		cursor: pointer;
-
-		.left-action {
-			display: flex;
-			align-items: center;
-			gap: 6px;
-
-			.title {
-				color: var(--bg-vanilla-400);
-				font-family: Inter;
-				font-size: 14px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 18px;
-				letter-spacing: -0.07px;
-				text-transform: capitalize;
-			}
-		}
+		padding: 0;
+		margin-bottom: 0;
 
 		.right-action {
-			display: flex;
+			display: inline-flex;
 			align-items: center;
 			min-width: 48px;
+			padding: 0;
+			height: fit-content;
 
 			.clear-all {
 				font-size: 12px;
 				color: var(--bg-robin-500);
 				cursor: pointer;
+			}
+		}
+
+		.filter-header-checkbox {
+			display: inline-block;
+			align-items: center;
+			justify-content: space-between;
+			cursor: pointer;
+			padding: 0;
+			height: fit-content;
+
+			.left-action {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+
+				.title {
+					color: var(--bg-vanilla-400);
+					font-family: Inter;
+					font-size: 14px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 18px;
+					letter-spacing: -0.07px;
+					text-transform: capitalize;
+				}
 			}
 		}
 	}
@@ -87,6 +100,7 @@
 				.only-btn {
 					display: none;
 				}
+
 				.toggle-btn {
 					display: none;
 				}
@@ -104,6 +118,7 @@
 				.toggle-btn {
 					display: none;
 				}
+
 				.only-btn {
 					display: flex;
 					align-items: center;
@@ -137,10 +152,12 @@
 			cursor: pointer;
 		}
 	}
+
 	.go-to-docs {
 		display: flex;
 		flex-direction: column;
 		gap: 44px;
+
 		&__container {
 			display: flex;
 			flex-direction: column;
@@ -150,10 +167,12 @@
 			&-message {
 				color: var(--bg-vanilla-400);
 				font-size: 14px;
-				line-height: 20px; /* 142.857% */
+				line-height: 20px;
+				/* 142.857% */
 				letter-spacing: -0.07px;
 			}
 		}
+
 		&__button {
 			display: flex;
 			align-items: center;
@@ -161,11 +180,13 @@
 			cursor: pointer;
 			margin: 0 0 4px;
 			padding: 0;
+
 			&-text {
 				color: var(--bg-robin-400);
 				font-family: Inter;
 				font-size: 14px;
-				line-height: 20px; /* 142.857% */
+				line-height: 20px;
+				/* 142.857% */
 				letter-spacing: -0.07px;
 			}
 		}
@@ -175,6 +196,7 @@
 .lightMode {
 	.checkbox-filter {
 		border-bottom: 1px solid var(--bg-vanilla-300);
+
 		.filter-header-checkbox {
 			.left-action {
 				.title {
