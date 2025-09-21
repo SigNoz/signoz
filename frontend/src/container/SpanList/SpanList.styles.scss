@@ -123,7 +123,24 @@
 	[data-slot='table-head']:first-of-type {
 		background: #13141a;
 	}
+
 	[data-slot='table-cell']:first-of-type {
 		background: rgba(171, 189, 255, 0.04);
+	}
+}
+
+.lightMode {
+	.span-table {
+		[data-slot='table-row'] {
+			&:hover {
+				background: var(--bg-vanilla-400);
+			}
+		}
+		[data-slot='table-head'] {
+			background: var(--bg-vanilla-100);
+		}
+		[data-slot='table-head']:first-of-type {
+			background: var(--bg-vanilla-200);
+		}
 	}
 }
