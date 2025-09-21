@@ -6,6 +6,8 @@ import { AdvancedOptionsState } from 'container/CreateAlertV2/context/types';
 import EvaluationCadenceDetails from '../EvaluationCadence/EvaluationCadenceDetails';
 import { MOCK_ALERT_CONTEXT_STATE } from './testUtils';
 
+const ENTER_RRULE_PLACEHOLDER = 'Enter RRule';
+
 jest.mock('dayjs', () => {
 	const actualDayjs = jest.requireActual('dayjs');
 	const mockDayjs = (date?: any): any => {
@@ -92,7 +94,9 @@ describe('EvaluationCadenceDetails', () => {
 
 		expect(screen.getByText('STARTING ON')).toBeInTheDocument();
 		expect(screen.getByText('AT')).toBeInTheDocument();
-		expect(screen.getByPlaceholderText('Enter RRule')).toBeInTheDocument();
+		expect(
+			screen.getByPlaceholderText(ENTER_RRULE_PLACEHOLDER),
+		).toBeInTheDocument();
 
 		expect(screen.getByText('Discard')).toBeInTheDocument();
 		expect(screen.getByText(SAVE_CUSTOM_SCHEDULE_TEXT)).toBeInTheDocument();
@@ -249,7 +253,7 @@ describe('EvaluationCadenceDetails', () => {
 					...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE.evaluationCadence
 						.custom,
 					// today selected by default
-					occurence: ['21'],
+					occurence: [new Date().getDate().toString()],
 				},
 			},
 		});
@@ -269,17 +273,23 @@ describe('EvaluationCadenceDetails', () => {
 				/>,
 			);
 
-			// Default tab is custom
-			expect(screen.queryByTestId(EDITOR_VIEW_TEST_ID)).toBeInTheDocument();
-			expect(screen.queryByTestId(RULE_VIEW_TEST_ID)).not.toBeInTheDocument();
-
 			// Switch to RRule tab
 			fireEvent.click(screen.getByText('RRule'));
 			expect(screen.getByTestId(RULE_VIEW_TEST_ID)).toBeInTheDocument();
 			expect(screen.queryByTestId(EDITOR_VIEW_TEST_ID)).not.toBeInTheDocument();
+
+			// Type in the text box
+			expect(screen.getByPlaceholderText(ENTER_RRULE_PLACEHOLDER)).toHaveValue('');
+			fireEvent.change(screen.getByPlaceholderText(ENTER_RRULE_PLACEHOLDER), {
+				target: { value: 'RRULE:FREQ=DAILY' },
+			});
+			// Ensure text box content is updated
+			expect(screen.getByPlaceholderText(ENTER_RRULE_PLACEHOLDER)).toHaveValue(
+				'RRULE:FREQ=DAILY',
+			);
 		});
 
-		it('ensure default tab is custom', () => {
+		it('ensure rrule content is not modified by previous test', () => {
 			render(
 				<EvaluationCadenceDetails
 					isOpen
@@ -287,8 +297,14 @@ describe('EvaluationCadenceDetails', () => {
 					setIsCustomScheduleButtonVisible={mockSetIsCustomScheduleButtonVisible}
 				/>,
 			);
-			expect(screen.queryByTestId(EDITOR_VIEW_TEST_ID)).toBeInTheDocument();
-			expect(screen.queryByTestId(RULE_VIEW_TEST_ID)).not.toBeInTheDocument();
+
+			// Switch to RRule tab
+			fireEvent.click(screen.getByText('RRule'));
+			expect(screen.getByTestId(RULE_VIEW_TEST_ID)).toBeInTheDocument();
+			expect(screen.queryByTestId(EDITOR_VIEW_TEST_ID)).not.toBeInTheDocument();
+
+			// Verify text box content
+			expect(screen.getByPlaceholderText(ENTER_RRULE_PLACEHOLDER)).toHaveValue('');
 		});
 	});
 });
