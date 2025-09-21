@@ -1,11 +1,11 @@
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import { Button, Select } from 'antd';
+import { Select } from 'antd';
 import { DEFAULT_PER_PAGE_OPTIONS, Pagination } from 'hooks/queryPagination';
 import { memo, useMemo } from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { defaultSelectStyle } from './config';
-import { Container } from './styles';
+import { Container, StyledButton } from './styles';
 
 function Controls({
 	offset = 0,
@@ -49,7 +49,7 @@ function Controls({
 
 	return (
 		<Container>
-			<Button
+			<StyledButton
 				loading={isLoading}
 				size="small"
 				type="link"
@@ -57,8 +57,8 @@ function Controls({
 				onClick={handleNavigatePrevious}
 			>
 				<LeftOutlined /> Previous
-			</Button>
-			<Button
+			</StyledButton>
+			<StyledButton
 				loading={isLoading}
 				size="small"
 				type="link"
@@ -66,7 +66,7 @@ function Controls({
 				onClick={handleNavigateNext}
 			>
 				Next <RightOutlined />
-			</Button>
+			</StyledButton>
 
 			{showSizeChanger && (
 				<Select<Pagination['limit']>
