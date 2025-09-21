@@ -219,8 +219,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 						items:
 							idx === lastUsedQuery
 								? item.filters?.items?.filter(
-										(fil) => !isEqual(fil.key?.key, filter.attributeKey.key),
-								  ) || []
+									(fil) => !isEqual(fil.key?.key, filter.attributeKey.key),
+								) || []
 								: [...(item.filters?.items || [])],
 						op: item.filters?.op || 'AND',
 					},
@@ -545,9 +545,6 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				)}
 			{isOpen && !isLoading && !isLoadingKeyValueSuggestions && (
 				<div
-					style={{
-						flexDirection: 'column',
-					}}
 					className="filter-values"
 					id={contentId}
 					role="region"
