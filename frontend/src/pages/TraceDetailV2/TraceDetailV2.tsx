@@ -69,6 +69,8 @@ function TraceDetailsV2(): JSX.Element {
 	useEffect(() => {
 		if (selectedSpan) {
 			setIsSpanDetailsDocked(false);
+		} else {
+			setIsSpanDetailsDocked(true);
 		}
 	}, [selectedSpan]);
 
@@ -113,12 +115,7 @@ function TraceDetailsV2(): JSX.Element {
 	useEffect(() => {
 		const viewParam = urlQuery.get('view');
 		const newActiveTab = viewParam === 'span-list' ? 'span-list' : 'flamegraph';
-		if (viewParam === 'span-list') {
-			setIsSpanDetailsDocked(true);
-			setSelectedSpan(undefined);
-		} else {
-			setIsSpanDetailsDocked(false);
-		}
+
 		if (newActiveTab !== activeTab) {
 			setActiveTab(newActiveTab);
 		}

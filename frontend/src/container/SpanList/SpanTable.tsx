@@ -1,5 +1,6 @@
 import { Button } from '@signozhq/button';
 import { ColumnDef, DataTable, Row } from '@signozhq/table';
+import getTraceV2 from 'api/trace/getTraceV2';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import Controls from 'container/Controls';
 import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
@@ -202,28 +203,32 @@ function SpanTable({
 	);
 
 	const handleSpanClick = useCallback(
-		(span: SpanDataRow) => {
-			if (setSelectedSpan) {
-				// Convert span data to the format expected by SpanDetailsDrawer
-				const convertedSpan = ({
-					id: span.data.span_id,
-					traceID: span.data.trace_id,
-					spanID: span.data.span_id,
-					parentSpanID: '',
-					operationName: span.data.name,
-					startTime: new Date(span.timestamp).getTime() * 1000000, // Convert to nanoseconds
-					duration: span.data.duration_nano,
-					tags: [],
-					logs: [],
-					process: {
-						serviceName: span.data['service.name'],
-						tags: [],
-					},
-				} as unknown) as Span;
-				setSelectedSpan(convertedSpan);
+		async (span: SpanDataRow): Promise<void> => {
+			if (!setSelectedSpan || !traceId) return;
+
+			try {
+				// Make API call to fetch full span details
+				const response = await getTraceV2({
+					traceId,
+					selectedSpanId: span.data.span_id,
+					uncollapsedSpans: [],
+					isSelectedSpanIDUnCollapsed: true,
+				});
+
+				if (response.payload?.spans) {
+					const fullSpan = response.payload.spans.find(
+						(s: Span) => s.spanId === span.data.span_id,
+					);
+					console.log({ fullSpan });
+					if (fullSpan) {
+						setSelectedSpan(fullSpan);
+					}
+				}
+			} catch (error) {
+				console.error('Failed to fetch span details:', error);
 			}
 		},
-		[setSelectedSpan],
+		[setSelectedSpan, traceId],
 	);
 
 	const renderNameCell = useCallback(
@@ -479,8 +484,11 @@ function SpanTable({
 		(row: Row<TableRowData>) => {
 			const { original } = row;
 			if (original.type === SPAN_TYPE_ENTRY) {
-				handleEntrySpanClick(original.originalData as ServiceEntrySpan);
+				// For entry spans, expand/collapse
+				const entrySpan = original.originalData as ServiceEntrySpan;
+				handleEntrySpanClick(entrySpan);
 			} else if (original.type === SPAN_TYPE_SERVICE) {
+				// For service spans, trigger API call to fetch full details
 				handleSpanClick(original.originalData as SpanDataRow);
 			}
 		},
