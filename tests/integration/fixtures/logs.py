@@ -317,6 +317,7 @@ class Logs(ABC):
                 self.scope_name,
                 self.scope_version,
                 self.scope_string,
+                self.resources_string,
             ]
         )
 
