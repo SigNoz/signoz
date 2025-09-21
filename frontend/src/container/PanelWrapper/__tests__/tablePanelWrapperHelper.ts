@@ -2,6 +2,7 @@ export const tablePanelWidgetQuery = {
 	id: '727533b0-7718-4f99-a1db-a1875649325c',
 	title: '',
 	description: '',
+	isStacked: false,
 	nullZeroValues: 'zero',
 	opacity: '1',
 	panelTypes: 'table',

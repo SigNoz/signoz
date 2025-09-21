@@ -6,48 +6,7 @@
 // - Handling multiple rows correctly
 // - Handling widgets with different heights
 
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { DashboardProvider } from 'providers/Dashboard/Dashboard';
-import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
-import { I18nextProvider } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom-v5-compat';
-import i18n from 'ReactI18';
-import { render } from 'tests/test-utils';
-
-import NewWidget from '..';
-import {
-	getDefaultWidgetData,
-	placeWidgetAtBottom,
-	placeWidgetBetweenRows,
-} from '../utils';
-
-const MOCK_SEARCH_PARAMS =
-	'?graphType=bar&widgetId=b473eef0-8eb5-4dd3-8089-c1817734084f&compositeQuery=%7B"id"%3A"f026c678-9abf-42af-a3dc-f73dc8cbb810"%2C"builder"%3A%7B"queryData"%3A%5B%7B"dataSource"%3A"metrics"%2C"queryName"%3A"A"%2C"aggregateOperator"%3A"count"%2C"aggregateAttribute"%3A%7B"id"%3A"----"%2C"dataType"%3A""%2C"key"%3A""%2C"type"%3A""%7D%2C"timeAggregation"%3A"rate"%2C"spaceAggregation"%3A"sum"%2C"filter"%3A%7B"expression"%3A""%7D%2C"aggregations"%3A%5B%7B"metricName"%3A""%2C"temporality"%3A""%2C"timeAggregation"%3A"count"%2C"spaceAggregation"%3A"sum"%2C"reduceTo"%3A"avg"%7D%5D%2C"functions"%3A%5B%5D%2C"filters"%3A%7B"items"%3A%5B%5D%2C"op"%3A"AND"%7D%2C"expression"%3A"A"%2C"disabled"%3Afalse%2C"stepInterval"%3Anull%2C"having"%3A%5B%5D%2C"limit"%3Anull%2C"orderBy"%3A%5B%5D%2C"groupBy"%3A%5B%5D%2C"legend"%3A""%2C"reduceTo"%3A"avg"%2C"source"%3A""%7D%5D%2C"queryFormulas"%3A%5B%5D%2C"queryTraceOperator"%3A%5B%5D%7D%2C"clickhouse_sql"%3A%5B%7B"name"%3A"A"%2C"legend"%3A""%2C"disabled"%3Afalse%2C"query"%3A""%7D%5D%2C"promql"%3A%5B%7B"name"%3A"A"%2C"query"%3A""%2C"legend"%3A""%2C"disabled"%3Afalse%7D%5D%2C"queryType"%3A"builder"%7D&relativeTime=30m';
-// Mocks
-jest.mock('uplot', () => ({
-	paths: { spline: jest.fn(), bars: jest.fn() },
-	default: jest.fn(() => ({ paths: { spline: jest.fn(), bars: jest.fn() } })),
-}));
-
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string; search: string } => ({
-		pathname: '',
-		search: MOCK_SEARCH_PARAMS,
-	}),
-}));
-
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
-		safeNavigate: jest.fn(),
-	}),
-}));
-
-jest.mock('react-router-dom-v5-compat', () => ({
-	...jest.requireActual('react-router-dom-v5-compat'),
-	useSearchParams: jest.fn(),
-	useNavigationType: jest.fn(() => 'PUSH'),
-}));
+import { placeWidgetAtBottom, placeWidgetBetweenRows } from '../utils';
 
 describe('placeWidgetAtBottom', () => {
 	it('should place widget at (0,0) when layout is empty', () => {
@@ -255,57 +214,5 @@ describe('placeWidgetBetweenRows', () => {
 			{ i: 'widget1', x: 0, y: 0, w: 12, h: 4 },
 			{ i: 'widget2', x: 0, y: 4, w: 8, h: 3 },
 		]);
-	});
-});
-
-describe('getDefaultWidgetData', () => {
-	it('should set stackedBarChart to true by default for new panel creation', () => {
-		const widgetId = 'test-widget-123';
-		const panelType = PANEL_TYPES.BAR;
-
-		const result = getDefaultWidgetData(widgetId, panelType);
-
-		expect(result.stackedBarChart).toBe(true);
-		expect(result.id).toBe(widgetId);
-		expect(result.panelTypes).toBe(panelType);
-	});
-});
-
-describe('Stacking bar in new panel', () => {
-	it('New panel should have stack bar - true by default', () => {
-		// Mock useSearchParams to return the expected values
-		(useSearchParams as jest.Mock).mockReturnValue([
-			new URLSearchParams(MOCK_SEARCH_PARAMS),
-			jest.fn(),
-		]);
-
-		const { container, getByText, getByRole } = render(
-			<I18nextProvider i18n={i18n}>
-				<DashboardProvider>
-					<PreferenceContextProvider>
-						<NewWidget
-							selectedGraph={PANEL_TYPES.BAR}
-							fillSpans={undefined}
-							yAxisUnit={undefined}
-						/>
-					</PreferenceContextProvider>
-				</DashboardProvider>
-			</I18nextProvider>,
-		);
-
-		// Verify label is present
-		expect(getByText('Stack series')).toBeInTheDocument();
-
-		// Verify section exists
-		const section = container.querySelector('section > .stack-chart');
-		expect(section).toBeInTheDocument();
-
-		// Verify switch is present and enabled (ant-switch-checked)
-		const switchBtn = section?.querySelector('.ant-switch');
-		expect(switchBtn).toBeInTheDocument();
-		expect(switchBtn).toHaveClass('ant-switch-checked');
-
-		// (Optional) More semantic: verify by role
-		expect(getByRole('switch')).toBeChecked();
 	});
 });

@@ -236,6 +236,7 @@ export const WidgetHeaderProps: any = {
 		description: '',
 		fillSpans: false,
 		id: 'add65f0d-7662-4024-af51-da567759235d',
+		isStacked: false,
 		mergeAllActiveQueries: false,
 		nullZeroValues: 'zero',
 		opacity: '1',

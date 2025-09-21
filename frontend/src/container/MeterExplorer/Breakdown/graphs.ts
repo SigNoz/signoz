@@ -38,6 +38,7 @@ export const getWidgetQueryBuilder = ({
 }: GetWidgetQueryPropsReturn): Widgets => ({
 	description: description || '',
 	id: id || uuid(),
+	isStacked: false,
 	nullZeroValues: nullZeroValues || '',
 	opacity: '1',
 	panelTypes,

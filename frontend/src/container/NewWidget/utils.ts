@@ -543,6 +543,7 @@ export const getDefaultWidgetData = (
 	id,
 	title: '',
 	description: '',
+	isStacked: false,
 	nullZeroValues: '',
 	opacity: '',
 	panelTypes: name,
@@ -553,7 +554,6 @@ export const getDefaultWidgetData = (
 	timePreferance: 'GLOBAL_TIME',
 	softMax: null,
 	softMin: null,
-	stackedBarChart: true,
 	selectedLogFields: defaultLogsSelectedColumns.map((field) => ({
 		...field,
 		type: field.fieldContext ?? '',
