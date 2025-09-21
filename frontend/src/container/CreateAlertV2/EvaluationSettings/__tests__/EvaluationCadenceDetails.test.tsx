@@ -6,6 +6,26 @@ import { AdvancedOptionsState } from 'container/CreateAlertV2/context/types';
 import EvaluationCadenceDetails from '../EvaluationCadence/EvaluationCadenceDetails';
 import { MOCK_ALERT_CONTEXT_STATE } from './testUtils';
 
+jest.mock('dayjs', () => {
+	const actualDayjs = jest.requireActual('dayjs');
+	const mockDayjs = (date?: any): any => {
+		if (date) {
+			return actualDayjs(date);
+		}
+		// 21 Jan 2025
+		return actualDayjs('2025-01-21T16:31:36.982Z');
+	};
+	Object.keys(actualDayjs).forEach((key) => {
+		if (typeof (actualDayjs as any)[key] === 'function') {
+			(mockDayjs as any)[key] = (actualDayjs as any)[key];
+		}
+	});
+	(mockDayjs as any).tz = {
+		guess: (): string => 'Asia/Saigon',
+	};
+	return mockDayjs;
+});
+
 const INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE: AdvancedOptionsState = {
 	...INITIAL_ADVANCED_OPTIONS_STATE,
 	evaluationCadence: {
@@ -229,13 +249,46 @@ describe('EvaluationCadenceDetails', () => {
 					...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE.evaluationCadence
 						.custom,
 					// today selected by default
-					occurence: [new Date().getDate().toString()],
+					occurence: ['21'],
 				},
 			},
 		});
 		expect(mockSetAdvancedOptions).toHaveBeenCalledWith({
 			type: 'SET_EVALUATION_CADENCE_MODE',
 			payload: 'custom',
+		});
+	});
+
+	describe('alert context mock state verification', () => {
+		it('should set the evaluation cadence tab to rrule from custom', () => {
+			render(
+				<EvaluationCadenceDetails
+					isOpen
+					setIsOpen={mockSetIsOpen}
+					setIsCustomScheduleButtonVisible={mockSetIsCustomScheduleButtonVisible}
+				/>,
+			);
+
+			// Default tab is custom
+			expect(screen.queryByTestId(EDITOR_VIEW_TEST_ID)).toBeInTheDocument();
+			expect(screen.queryByTestId(RULE_VIEW_TEST_ID)).not.toBeInTheDocument();
+
+			// Switch to RRule tab
+			fireEvent.click(screen.getByText('RRule'));
+			expect(screen.getByTestId(RULE_VIEW_TEST_ID)).toBeInTheDocument();
+			expect(screen.queryByTestId(EDITOR_VIEW_TEST_ID)).not.toBeInTheDocument();
+		});
+
+		it('ensure default tab is custom', () => {
+			render(
+				<EvaluationCadenceDetails
+					isOpen
+					setIsOpen={mockSetIsOpen}
+					setIsCustomScheduleButtonVisible={mockSetIsCustomScheduleButtonVisible}
+				/>,
+			);
+			expect(screen.queryByTestId(EDITOR_VIEW_TEST_ID)).toBeInTheDocument();
+			expect(screen.queryByTestId(RULE_VIEW_TEST_ID)).not.toBeInTheDocument();
 		});
 	});
 });
