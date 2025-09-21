@@ -8,6 +8,8 @@ import (
 	"net/http"
 	_ "net/http/pprof" // http profiler
 
+	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
+
 	"github.com/gorilla/handlers"
 
 	"github.com/SigNoz/signoz/ee/query-service/app/api"
@@ -324,6 +326,8 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, querier querier.Querier, logger *slog.Logger) (*baserules.Manager, error) {
+	ruleStore := sqlrulestore.NewRuleStore(sqlstore)
+	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
 		TelemetryStore:      telemetryStore,
@@ -338,8 +342,10 @@ func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertma
 		PrepareTaskFunc:     rules.PrepareTaskFunc,
 		PrepareTestRuleFunc: rules.TestNotification,
 		Alertmanager:        alertmanager,
-		SQLStore:            sqlstore,
 		OrgGetter:           orgGetter,
+		RuleStore:           ruleStore,
+		MaintenanceStore:    maintenanceStore,
+		SqlStore:            sqlstore,
 	}
 
 	// create Manager
