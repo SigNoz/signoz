@@ -41,7 +41,7 @@ export async function fetchServiceSpans(
 	serviceName: string,
 	pageSize = 10,
 	offset = 0,
-): Promise<SpanDataRow[]> {
+): Promise<{ spans: SpanDataRow[]; nextCursor: string }> {
 	// Use the same payload structure as in SpanList component but with service-specific filter
 	const payload = initialQueriesMap.traces;
 
@@ -121,12 +121,17 @@ export async function fetchServiceSpans(
 		// Extract spans from the API response using the same path as SpanList component
 		const spans =
 			response?.payload?.data?.newResult?.data?.result?.[0]?.list || [];
+		const nextCursor =
+			response?.payload?.data?.newResult?.data?.result?.[0]?.nextCursor || '';
 
 		// Transform the API response to SpanDataRow format if needed
 		// The API should return the correct format for traces, but we'll handle any potential transformation
-		return (spans as unknown) as SpanDataRow[];
+		return {
+			spans: (spans as unknown) as SpanDataRow[],
+			nextCursor,
+		};
 	} catch (error) {
 		console.error('Failed to fetch service spans:', error);
-		return [];
+		return { spans: [], nextCursor: '' };
 	}
 }

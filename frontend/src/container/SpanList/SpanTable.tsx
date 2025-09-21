@@ -68,7 +68,12 @@ function SpanTable({
 	const [serviceSpansPagination, setServiceSpansPagination] = useState<
 		Record<
 			string,
-			{ currentPage: number; totalCount?: number; hasMorePages?: boolean }
+			{
+				currentPage: number;
+				totalCount?: number;
+				hasMorePages?: boolean;
+				nextCursor?: string;
+			}
 		>
 	>({});
 
@@ -96,7 +101,7 @@ function SpanTable({
 				try {
 					const currentPage = 1;
 					const offset = (currentPage - 1) * SERVICE_SPAN_PAGE_SIZE;
-					const serviceSpans = await fetchServiceSpans(
+					const { spans: serviceSpans, nextCursor } = await fetchServiceSpans(
 						traceId,
 						entrySpan.serviceName,
 						SERVICE_SPAN_PAGE_SIZE,
@@ -108,12 +113,13 @@ function SpanTable({
 						isExpanded: true,
 					};
 
-					// Update hasMorePages based on response length
+					// Update pagination with nextCursor
 					setServiceSpansPagination((prevPagination) => ({
 						...prevPagination,
 						[spanId]: {
 							...prevPagination[spanId],
 							hasMorePages: serviceSpans.length === SERVICE_SPAN_PAGE_SIZE,
+							nextCursor,
 						},
 					}));
 
@@ -148,20 +154,21 @@ function SpanTable({
 
 			try {
 				const offset = (newPage - 1) * SERVICE_SPAN_PAGE_SIZE;
-				const serviceSpans = await fetchServiceSpans(
+				const { spans: serviceSpans, nextCursor } = await fetchServiceSpans(
 					traceId,
 					entrySpan.serviceName,
 					SERVICE_SPAN_PAGE_SIZE,
 					offset,
 				);
 
-				// Update hasMorePages based on response length
+				// Update pagination with nextCursor
 				setServiceSpansPagination((prevPagination) => ({
 					...prevPagination,
 					[entrySpanId]: {
 						...prevPagination[entrySpanId],
 						currentPage: newPage,
 						hasMorePages: serviceSpans.length === SERVICE_SPAN_PAGE_SIZE,
+						nextCursor,
 					},
 				}));
 
@@ -285,6 +292,7 @@ function SpanTable({
 							}
 							handleCountItemsPerPageChange={(): void => {}} // Service spans use fixed page size
 							showSizeChanger={false} // Disable page size changer for service spans
+							nextCursor={pagination.nextCursor}
 						/>
 					</div>
 				);
