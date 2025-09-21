@@ -4,6 +4,7 @@ import getTraceV2 from 'api/trace/getTraceV2';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import Controls from 'container/Controls';
 import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
+import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { useCallback, useMemo, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 
@@ -235,31 +236,31 @@ function SpanTable({
 		({ row }: { row: Row<TableRowData> }): JSX.Element => {
 			const { original } = row;
 			if (original.type === SPAN_TYPE_ENTRY) {
-				const entrySpan = original.originalData as ServiceEntrySpan;
-				const spanId = entrySpan.spanData.data.span_id;
-				const isExpanded = !!expandedEntrySpans[spanId];
-				const isLoading = loadingSpans[spanId];
-
 				return (
-					<div className="span-name-with-expand">
-						<Button
-							variant="ghost"
-							size="sm"
-							loading={isLoading}
-							prefixIcon={
-								!isLoading && isExpanded ? (
-									<ChevronDownIcon size={16} />
-								) : (
-									<ChevronRightIcon size={16} />
-								)
-							}
-							onClick={(): Promise<void> => handleEntrySpanClick(entrySpan)}
-							className="expand-button"
-						/>
-						<span className="span-name-text">{original.spanName}</span>
-					</div>
+					<LineClampedText
+						text={original.spanName || ''}
+						lines={1}
+						tooltipProps={{ placement: 'topLeft' }}
+					/>
 				);
 			}
+			if (original.type === SPAN_TYPE_PAGINATION) return <div />;
+
+			// Service span (nested)
+			return (
+				<LineClampedText
+					text={original.spanName || ''}
+					lines={1}
+					tooltipProps={{ placement: 'topLeft' }}
+				/>
+			);
+		},
+		[],
+	);
+
+	const renderServiceCell = useCallback(
+		({ row }: { row: Row<TableRowData> }): JSX.Element | null => {
+			const { original } = row;
 			if (original.type === SPAN_TYPE_PAGINATION) {
 				const { entrySpanId } = original;
 				if (!entrySpanId) return <div />;
@@ -289,26 +290,58 @@ function SpanTable({
 				);
 			}
 
-			// Service span (nested)
-			return <div className="span-name">{original.spanName}</div>;
+			if (original.type === SPAN_TYPE_ENTRY) {
+				const entrySpan = original.originalData as ServiceEntrySpan;
+				const spanId = entrySpan.spanData.data.span_id;
+				const isExpanded = !!expandedEntrySpans[spanId];
+				const isLoading = loadingSpans[spanId];
+
+				return (
+					<div className="service-cell-with-expand">
+						<Button
+							variant="ghost"
+							size="sm"
+							loading={isLoading}
+							prefixIcon={
+								!isLoading && isExpanded ? (
+									<ChevronDownIcon size={16} />
+								) : (
+									<ChevronRightIcon size={16} />
+								)
+							}
+							onClick={(e): void => {
+								e.stopPropagation();
+								handleEntrySpanClick(entrySpan);
+							}}
+							className="expand-button"
+						/>
+						<LineClampedText
+							text={original.serviceName || ''}
+							lines={1}
+							tooltipProps={{ placement: 'topLeft' }}
+						/>
+					</div>
+				);
+			}
+
+			return (
+				<div className="service-cell-child">
+					<LineClampedText
+						text={original.serviceName || ''}
+						lines={1}
+						tooltipProps={{ placement: 'topLeft' }}
+					/>
+				</div>
+			);
 		},
 		[
 			expandedEntrySpans,
 			loadingSpans,
-			handleEntrySpanClick,
 			serviceSpansPagination,
 			handleServiceSpanNavigatePrevious,
 			handleServiceSpanNavigateNext,
+			handleEntrySpanClick,
 		],
-	);
-
-	const renderServiceCell = useCallback(
-		({ row }: { row: Row<TableRowData> }): JSX.Element | null => {
-			const { original } = row;
-			if (original.type === SPAN_TYPE_PAGINATION) return null;
-			return <span>{original.serviceName}</span>;
-		},
-		[],
 	);
 
 	const renderDurationCell = useCallback(
@@ -363,12 +396,6 @@ function SpanTable({
 
 	const columns: ColumnDef<TableRowData>[] = [
 		{
-			id: 'name',
-			header: 'Span Name',
-			accessorKey: 'spanName',
-			cell: renderNameCell,
-		},
-		{
 			id: 'service',
 			header: 'Service',
 			accessorKey: 'serviceName',
@@ -381,6 +408,12 @@ function SpanTable({
 			accessorKey: 'spanId',
 			size: 150,
 			cell: renderSpanIdCell,
+		},
+		{
+			id: 'name',
+			header: 'Span Name',
+			accessorKey: 'spanName',
+			cell: renderNameCell,
 		},
 		{
 			id: 'httpMethod',
@@ -396,7 +429,6 @@ function SpanTable({
 			size: 80,
 			cell: renderStatusCodeCell,
 		},
-
 		{
 			id: 'duration',
 			header: 'Duration',
@@ -502,7 +534,7 @@ function SpanTable({
 		enableFiltering: false,
 		enableGlobalFilter: false,
 		enableColumnReordering: false,
-		enableColumnResizing: false,
+		enableColumnResizing: true,
 		enableColumnPinning: false,
 		enableRowSelection: false,
 		enablePagination: false,
