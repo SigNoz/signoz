@@ -35,7 +35,6 @@ import (
 	anomalyV2 "github.com/SigNoz/signoz/ee/anomaly"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	yaml "gopkg.in/yaml.v2"
 )
 
 const (
@@ -167,16 +166,9 @@ func (r *AnomalyRule) prepareQueryRange(ctx context.Context, ts time.Time) (*v3.
 		ctx, "prepare query range request v4", "ts", ts.UnixMilli(), "eval_window", r.EvalWindow().Milliseconds(), "eval_delay", r.EvalDelay().Milliseconds(),
 	)
 
-	start := ts.Add(-time.Duration(r.EvalWindow())).UnixMilli()
-	end := ts.UnixMilli()
-
-	if r.EvalDelay() > 0 {
-		start = start - int64(r.EvalDelay().Milliseconds())
-		end = end - int64(r.EvalDelay().Milliseconds())
-	}
-	// round to minute otherwise we could potentially miss data
-	start = start - (start % (60 * 1000))
-	end = end - (end % (60 * 1000))
+	st, en := r.Timestamps(ts)
+	start := st.UnixMilli()
+	end := en.UnixMilli()
 
 	compositeQuery := r.Condition().CompositeQuery
 
@@ -253,10 +245,17 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 	r.logger.InfoContext(ctx, "anomaly scores", "scores", string(scoresJSON))
 
 	for _, series := range queryResult.AnomalyScores {
-		smpl, shouldAlert := r.ShouldAlert(*series)
-		if shouldAlert {
-			resultVector = append(resultVector, smpl)
+		if r.Condition() != nil && r.Condition().RequireMinPoints {
+			if len(series.Points) < r.Condition().RequiredNumPoints {
+				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
+				continue
+			}
 		}
+		results, err := r.Threshold.ShouldAlert(*series)
+		if err != nil {
+			return nil, err
+		}
+		resultVector = append(resultVector, results...)
 	}
 	return resultVector, nil
 }
@@ -296,10 +295,17 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 	r.logger.InfoContext(ctx, "anomaly scores", "scores", string(scoresJSON))
 
 	for _, series := range queryResult.AnomalyScores {
-		smpl, shouldAlert := r.ShouldAlert(*series)
-		if shouldAlert {
-			resultVector = append(resultVector, smpl)
+		if r.Condition().RequireMinPoints {
+			if len(series.Points) < r.Condition().RequiredNumPoints {
+				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
+				continue
+			}
 		}
+		results, err := r.Threshold.ShouldAlert(*series)
+		if err != nil {
+			return nil, err
+		}
+		resultVector = append(resultVector, results...)
 	}
 	return resultVector, nil
 }
@@ -499,7 +505,7 @@ func (r *AnomalyRule) String() string {
 		PreferredChannels: r.PreferredChannels(),
 	}
 
-	byt, err := yaml.Marshal(ar)
+	byt, err := json.Marshal(ar)
 	if err != nil {
 		return fmt.Sprintf("error marshaling alerting rule: %s", err.Error())
 	}

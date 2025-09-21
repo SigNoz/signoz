@@ -1,10 +1,15 @@
 package gateway
 
 import (
-	"errors"
 	"net/url"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+
 	"github.com/SigNoz/signoz/pkg/factory"
+)
+
+var (
+	ErrCodeInvalidGatewayConfig = errors.MustNewCode("invalid_gateway_config")
 )
 
 type Config struct {
@@ -27,7 +32,8 @@ func newConfig() factory.Config {
 
 func (c Config) Validate() error {
 	if c.URL == nil {
-		return errors.New("url is required")
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidGatewayConfig, "url is required")
 	}
+
 	return nil
 }
