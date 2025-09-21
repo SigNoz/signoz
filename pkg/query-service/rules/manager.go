@@ -100,6 +100,7 @@ type ManagerOptions struct {
 	OrgGetter           organization.Getter
 	RuleStore           ruletypes.RuleStore
 	MaintenanceStore    ruletypes.MaintenanceStore
+	SqlStore            sqlstore.SQLStore
 }
 
 // The Manager manages recording and alerting rules.
@@ -222,6 +223,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		prepareTestRuleFunc: o.PrepareTestRuleFunc,
 		alertmanager:        o.Alertmanager,
 		orgGetter:           o.OrgGetter,
+		sqlstore:            o.SqlStore,
 	}
 
 	return m, nil

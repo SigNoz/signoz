@@ -2,6 +2,7 @@ package rulestoretest
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
@@ -60,8 +61,11 @@ func (m *MockSQLRuleStore) GetStoredRules(ctx context.Context, orgID string) ([]
 
 // ExpectCreateRule sets up SQL expectations for CreateRule operation
 func (m *MockSQLRuleStore) ExpectCreateRule(rule *ruletypes.Rule) {
-	rows := sqlmock.NewRows([]string{"deleted"}).AddRow(0)
-	expectedPattern := `INSERT INTO "rule".+` + rule.CreatedBy + `.+` + rule.OrgID + `'\) RETURNING`
+	rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "created_by", "updated_by", "deleted", "data", "org_id"}).
+		AddRow(rule.ID, rule.CreatedAt, rule.UpdatedAt, rule.CreatedBy, rule.UpdatedBy, rule.Deleted, rule.Data, rule.OrgID)
+	expectedPattern := `INSERT INTO "rule" \(.+\) VALUES \(.+` +
+		regexp.QuoteMeta(rule.CreatedBy) + `.+` +
+		regexp.QuoteMeta(rule.OrgID) + `.+\) RETURNING`
 	m.mock.ExpectQuery(expectedPattern).
 		WillReturnRows(rows)
 }

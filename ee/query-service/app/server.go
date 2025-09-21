@@ -3,11 +3,12 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"log/slog"
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
+
+	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 
 	"github.com/gorilla/handlers"
 
@@ -354,6 +355,7 @@ func makeRulesManager(
 		OrgGetter:           orgGetter,
 		RuleStore:           ruleStore,
 		MaintenanceStore:    maintenanceStore,
+		SqlStore:            sqlstore,
 	}
 
 	// create Manager
