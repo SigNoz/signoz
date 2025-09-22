@@ -2,10 +2,11 @@ package rulebasednotification
 
 import (
 	"context"
-	nfmanager "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"sync"
+
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"sync"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 )

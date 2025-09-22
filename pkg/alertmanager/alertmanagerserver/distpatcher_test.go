@@ -3,9 +3,6 @@ package alertmanagerserver
 import (
 	"context"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/prometheus/alertmanager/dispatch"
 	"log/slog"
 	"reflect"
 	"sort"
@@ -13,6 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+
+	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"

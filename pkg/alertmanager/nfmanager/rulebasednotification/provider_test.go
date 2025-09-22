@@ -2,14 +2,14 @@ package rulebasednotification
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"sync"
 	"testing"
 	"time"
 
-	nfmanager "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

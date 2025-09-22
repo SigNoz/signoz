@@ -3,20 +3,20 @@ package alertmanagerserver
 import (
 	"context"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"log/slog"
 	"sort"
 	"sync"
 	"time"
 
-	"github.com/prometheus/common/model"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/errors"
 
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/provider"
 	"github.com/prometheus/alertmanager/store"
 	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
 )
 
 const (

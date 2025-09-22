@@ -5,7 +5,6 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"github.com/prometheus/common/model"
 	"slices"
 	"time"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
+	"github.com/prometheus/common/model"
 	"github.com/uptrace/bun"
 )
 

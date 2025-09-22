@@ -3,7 +3,6 @@ package alertmanagerserver
 import (
 	"bytes"
 	"context"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"io"
 	"log/slog"
 	"net"
@@ -12,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes/alertmanagertypestest"
 	"github.com/go-openapi/strfmt"

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"slices"
 	"time"
 	"unicode/utf8"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 )
 
 type AlertType string

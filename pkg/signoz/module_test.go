@@ -2,13 +2,13 @@ package signoz
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"

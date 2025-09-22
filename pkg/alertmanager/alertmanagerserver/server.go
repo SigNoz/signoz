@@ -2,13 +2,13 @@ package alertmanagerserver
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"log/slog"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/dispatch"

@@ -2,10 +2,10 @@ package rules
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 

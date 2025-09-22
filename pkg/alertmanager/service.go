@@ -2,10 +2,10 @@ package alertmanager
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"sync"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"

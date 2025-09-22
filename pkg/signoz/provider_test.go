@@ -1,10 +1,10 @@
 package signoz
 
 import (
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
