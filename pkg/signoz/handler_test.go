@@ -2,7 +2,6 @@ package signoz
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"reflect"
 	"testing"
@@ -31,7 +30,7 @@ func TestNewHandlers(t *testing.T) {
 	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	require.NoError(t, err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstore), sharder)
-	notificationManager, err := nfmanagertest.New(context.TODO(), providerSettings, nfmanager.Config{})
+	notificationManager := nfmanagertest.NewMock()
 	require.NoError(t, err)
 	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{}, sqlstore, orgGetter, notificationManager)
 	require.NoError(t, err)

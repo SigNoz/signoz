@@ -1,78 +1,75 @@
 package nfmanagertest
 
 import (
-	"context"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"time"
-
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/prometheus/common/model"
 )
 
-type provider struct {
-	settings factory.ScopedProviderSettings
-	// Mock data for testing
-	mockGroupLabels model.LabelSet
-	mockError       error
+// MockNotificationManager is a simple mock implementation of NotificationManager
+type MockNotificationManager struct {
+	configs map[string]*alertmanagertypes.NotificationConfig
+	errors  map[string]error
 }
 
-// NewFactory creates a new factory for the test notification grouping strategy.
-func NewFactory() factory.ProviderFactory[nfmanager.NotificationManager, nfmanager.Config] {
-	return factory.NewProviderFactory(
-		factory.MustNewName("test"),
-		func(ctx context.Context, settings factory.ProviderSettings, config nfmanager.Config) (nfmanager.NotificationManager, error) {
-			return New(ctx, settings, config)
-		},
-	)
+// NewMock creates a new mock notification manager
+func NewMock() *MockNotificationManager {
+	return &MockNotificationManager{
+		configs: make(map[string]*alertmanagertypes.NotificationConfig),
+		errors:  make(map[string]error),
+	}
 }
 
-// New creates a new test notification grouping strategy provider.
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config nfmanager.Config) (nfmanager.NotificationManager, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest")
-
-	return &provider{
-		settings:        settings,
-		mockGroupLabels: model.LabelSet{},
-	}, nil
+func getKey(orgId string, ruleId string) string {
+	return orgId + ":" + ruleId
 }
 
-// GetNotificationConfig implements the NotificationManager interface for testing.
-func (p *provider) GetNotificationConfig(orgID string, ruleID string) (*alertmanagertypes.NotificationConfig, error) {
-	if p.mockError != nil {
-		return nil, p.mockError
+func (m *MockNotificationManager) GetNotificationConfig(orgID string, ruleID string) (*alertmanagertypes.NotificationConfig, error) {
+	key := getKey(orgID, ruleID)
+	if err := m.errors[key]; err != nil {
+		return nil, err
+	}
+	if config := m.configs[key]; config != nil {
+		return config, nil
 	}
 
-	// Convert LabelSet to map[LabelName]struct{}
-	groupLabels := make(map[model.LabelName]struct{})
-	for labelName := range p.mockGroupLabels {
-		groupLabels[labelName] = struct{}{}
+	notificationConfig := alertmanagertypes.GetDefaultNotificationConfig()
+	return &notificationConfig, nil
+}
+
+func (m *MockNotificationManager) SetNotificationConfig(orgID string, ruleID string, config *alertmanagertypes.NotificationConfig) error {
+	key := getKey(orgID, ruleID)
+	if err := m.errors[key]; err != nil {
+		return err
 	}
-
-	return &alertmanagertypes.NotificationConfig{
-		NotificationGroup: groupLabels,
-		Renotify: alertmanagertypes.ReNotificationConfig{
-			RenotifyInterval: 4 * time.Hour,
-			NoDataInterval:   4 * time.Hour,
-		},
-	}, nil
+	m.configs[key] = config
+	return nil
 }
 
-// SetNotificationConfig implements the NotificationManager interface for testing.
-func (p *provider) SetNotificationConfig(orgID string, ruleID string, config *alertmanagertypes.NotificationConfig) error {
-	return p.mockError
+func (m *MockNotificationManager) DeleteNotificationConfig(orgID string, ruleID string) error {
+	key := getKey(orgID, ruleID)
+	if err := m.errors[key]; err != nil {
+		return err
+	}
+	delete(m.configs, key)
+	return nil
 }
 
-func (p *provider) DeleteNotificationConfig(orgID string, ruleID string) error {
-	return p.mockError
+func (m *MockNotificationManager) SetMockConfig(orgID, ruleID string, config *alertmanagertypes.NotificationConfig) {
+	key := getKey(orgID, ruleID)
+	m.configs[key] = config
 }
 
-// SetMockGroupLabels sets mock group labels for testing.
-func (p *provider) SetMockGroupLabels(labels model.LabelSet) {
-	p.mockGroupLabels = labels
+func (m *MockNotificationManager) SetMockError(orgID, ruleID string, err error) {
+	key := getKey(orgID, ruleID)
+	m.errors[key] = err
 }
 
-// SetMockError sets a mock error for testing.
-func (p *provider) SetMockError(err error) {
-	p.mockError = err
+func (m *MockNotificationManager) ClearMockData() {
+	m.configs = make(map[string]*alertmanagertypes.NotificationConfig)
+	m.errors = make(map[string]error)
+}
+
+func (m *MockNotificationManager) HasConfig(orgID, ruleID string) bool {
+	key := getKey(orgID, ruleID)
+	_, exists := m.configs[key]
+	return exists
 }

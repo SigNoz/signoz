@@ -3,7 +3,6 @@ package alertmanagerserver
 import (
 	"bytes"
 	"context"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"io"
 	"log/slog"
@@ -13,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes/alertmanagertypestest"
 	"github.com/go-openapi/strfmt"
@@ -26,8 +24,7 @@ import (
 )
 
 func TestServerSetConfigAndStop(t *testing.T) {
-	notificationManager, err := nfmanagertest.New(context.Background(), factorytest.NewSettings(), nfmanager.Config{})
-	require.NoError(t, err)
+	notificationManager := nfmanagertest.NewMock()
 	server, err := New(context.Background(), slog.New(slog.NewTextHandler(io.Discard, nil)), prometheus.NewRegistry(), NewConfig(), "1", alertmanagertypestest.NewStateStore(), notificationManager)
 	require.NoError(t, err)
 
@@ -39,8 +36,7 @@ func TestServerSetConfigAndStop(t *testing.T) {
 }
 
 func TestServerTestReceiverTypeWebhook(t *testing.T) {
-	notificationManager, err := nfmanagertest.New(context.Background(), factorytest.NewSettings(), nfmanager.Config{})
-	require.NoError(t, err)
+	notificationManager := nfmanagertest.NewMock()
 	server, err := New(context.Background(), slog.New(slog.NewTextHandler(io.Discard, nil)), prometheus.NewRegistry(), NewConfig(), "1", alertmanagertypestest.NewStateStore(), notificationManager)
 	require.NoError(t, err)
 
@@ -88,8 +84,8 @@ func TestServerPutAlerts(t *testing.T) {
 	stateStore := alertmanagertypestest.NewStateStore()
 	srvCfg := NewConfig()
 	srvCfg.Route.GroupInterval = 1 * time.Second
-	notificationManager, err := nfmanagertest.New(context.Background(), factorytest.NewSettings(), nfmanager.Config{})
-	require.NoError(t, err)
+	notificationManager := nfmanagertest.NewMock()
+	// Set up expectation for alerts that will be processed
 	server, err := New(context.Background(), slog.New(slog.NewTextHandler(io.Discard, nil)), prometheus.NewRegistry(), srvCfg, "1", stateStore, notificationManager)
 	require.NoError(t, err)
 

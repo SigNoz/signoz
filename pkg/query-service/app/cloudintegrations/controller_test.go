@@ -2,7 +2,6 @@ package cloudintegrations
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"testing"
 	"time"
@@ -37,7 +36,7 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	require.NoError(err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlStore), sharder)
-	notificationManager, err := nfmanagertest.New(context.TODO(), providerSettings, nfmanager.Config{})
+	notificationManager := nfmanagertest.NewMock()
 	require.NoError(err)
 	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter, notificationManager)
 	require.NoError(err)
@@ -96,7 +95,7 @@ func TestAgentCheckIns(t *testing.T) {
 	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	require.NoError(err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlStore), sharder)
-	notificationManager, err := nfmanagertest.New(context.TODO(), providerSettings, nfmanager.Config{})
+	notificationManager := nfmanagertest.NewMock()
 	require.NoError(err)
 	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter, notificationManager)
 	require.NoError(err)
@@ -194,7 +193,7 @@ func TestCantDisconnectNonExistentAccount(t *testing.T) {
 	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	require.NoError(err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlStore), sharder)
-	notificationManager, err := nfmanagertest.New(context.TODO(), providerSettings, nfmanager.Config{})
+	notificationManager := nfmanagertest.NewMock()
 	require.NoError(err)
 	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter, notificationManager)
 	require.NoError(err)
@@ -224,7 +223,7 @@ func TestConfigureService(t *testing.T) {
 	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	require.NoError(err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlStore), sharder)
-	notificationManager, err := nfmanagertest.New(context.TODO(), providerSettings, nfmanager.Config{})
+	notificationManager := nfmanagertest.NewMock()
 	require.NoError(err)
 	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter, notificationManager)
 	require.NoError(err)

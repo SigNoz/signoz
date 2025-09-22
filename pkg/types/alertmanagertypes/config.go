@@ -5,7 +5,6 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/common/model"
 	"slices"
 	"time"
@@ -404,24 +403,24 @@ func init() {
 
 // NotificationConfig holds configuration for alert notifications timing.
 type NotificationConfig struct {
-	NotificationGroup map[model.LabelName]struct{} `json:"notification_group"`
-	Renotify          ReNotificationConfig         `json:"renotify,omitempty"`
+	NotificationGroup map[model.LabelName]struct{}
+	Renotify          ReNotificationConfig
 }
 
 type ReNotificationConfig struct {
-	NoDataInterval   time.Duration `json:"noDataInterval,omitempty"`
-	RenotifyInterval time.Duration `json:"renotifyInterval,omitempty"`
+	NoDataInterval   time.Duration
+	RenotifyInterval time.Duration
 }
 
-func NewNotificationConfig(groups []string, renotifyInterval ruletypes.Duration, noDataRenotifyInterval ruletypes.Duration) NotificationConfig {
+func NewNotificationConfig(groups []string, renotifyInterval time.Duration, noDataRenotifyInterval time.Duration) NotificationConfig {
 	notificationConfig := GetDefaultNotificationConfig()
 
 	if renotifyInterval != 0 {
-		notificationConfig.Renotify.RenotifyInterval = time.Duration(renotifyInterval)
+		notificationConfig.Renotify.RenotifyInterval = renotifyInterval
 	}
 
 	if noDataRenotifyInterval != 0 {
-		notificationConfig.Renotify.NoDataInterval = time.Duration(noDataRenotifyInterval)
+		notificationConfig.Renotify.NoDataInterval = noDataRenotifyInterval
 	}
 	for _, group := range groups {
 		notificationConfig.NotificationGroup[model.LabelName(group)] = struct{}{}

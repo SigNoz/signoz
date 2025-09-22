@@ -2,7 +2,6 @@ package integrations
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"testing"
 	"time"
@@ -31,7 +30,7 @@ func TestIntegrationLifecycle(t *testing.T) {
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	sharder, _ := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(store), sharder)
-	notificationManager, _ := nfmanagertest.New(context.TODO(), providerSettings, nfmanager.Config{})
+	notificationManager := nfmanagertest.NewMock()
 	alertmanager, _ := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, store, orgGetter, notificationManager)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()

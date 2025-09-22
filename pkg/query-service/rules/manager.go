@@ -280,7 +280,7 @@ func (m *Manager) initiate(ctx context.Context) error {
 				continue
 			}
 			if parsedRule.NotificationSettings != nil {
-				config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationSettings.NotificationGroupBy, parsedRule.NotificationSettings.ReNotifyInterval, parsedRule.NotificationSettings.NoDataRenotifyInterval)
+				config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
 				err = m.alertmanager.SetNotificationConfig(ctx, org.ID, rec.ID.StringValue(), &config)
 				if err != nil {
 					loadErrors = append(loadErrors, err)
@@ -373,7 +373,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 			return err
 		}
 		if parsedRule.NotificationSettings != nil {
-			config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationSettings.NotificationGroupBy, parsedRule.NotificationSettings.ReNotifyInterval, parsedRule.NotificationSettings.NoDataRenotifyInterval)
+			config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
 			err = m.alertmanager.SetNotificationConfig(ctx, orgID, existingRule.ID.StringValue(), &config)
 			if err != nil {
 				return err
@@ -568,7 +568,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 		}
 
 		if parsedRule.NotificationSettings != nil {
-			config := alertmanagertypes.NewNotificationConfig(parsedRule.NotificationSettings.NotificationGroupBy, parsedRule.NotificationSettings.ReNotifyInterval, parsedRule.NotificationSettings.NoDataRenotifyInterval)
+			config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
 			err = m.alertmanager.SetNotificationConfig(ctx, orgID, storedRule.ID.StringValue(), &config)
 			if err != nil {
 				return err
