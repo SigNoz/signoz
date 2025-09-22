@@ -16,8 +16,6 @@ const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
 			refetchOnWindowFocus: false,
-			staleTime: 2 * 60 * 1000, // 2 minutes - data becomes stale after 2 minutes
-			cacheTime: 5 * 60 * 1000, // 5 minutes - cache entries are garbage collected after 5 minutes
 			retry(failureCount, error): boolean {
 				if (
 					// in case of manually throwing errors please make sure to send error.response.status
