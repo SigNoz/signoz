@@ -25,8 +25,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 )
 
-const testMaintenanceInterval = 30 * time.Second
-
 func TestAggrGroup(t *testing.T) {
 	lset := model.LabelSet{
 		"a": "v1",
@@ -467,7 +465,10 @@ route:
 	for ruleID, config := range notiConfigs {
 		nfManager.SetMockConfig(orgId, ruleID, &config)
 	}
-	alerts.Put(inputAlerts...)
+	err = alerts.Put(inputAlerts...)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Let alerts get processed.
 	for i := 0; len(recorder.Alerts()) != 7 && i < 10; i++ {
@@ -691,14 +692,6 @@ func TestDispatcherRaceOnFirstAlertNotDeliveredWhenGroupWaitIsZero(t *testing.T)
 
 	// We expect all alerts to be notified immediately, since they all belong to different groups.
 	require.Len(t, recorder.Alerts(), numAlerts)
-}
-
-type limits struct {
-	groups int
-}
-
-func (l limits) MaxNumberOfAggregationGroups() int {
-	return l.groups
 }
 
 func TestDispatcher_DoMaintenance(t *testing.T) {
