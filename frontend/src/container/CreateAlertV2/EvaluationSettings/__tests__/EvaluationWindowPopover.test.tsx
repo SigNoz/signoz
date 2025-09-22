@@ -6,17 +6,9 @@ import {
 	EVALUATION_WINDOW_TYPE,
 } from '../constants';
 import EvaluationWindowPopover from '../EvaluationWindowPopover';
+import { createMockEvaluationWindowState } from './testUtils';
 
-const mockEvaluationWindow: EvaluationWindowState = {
-	windowType: 'rolling',
-	timeframe: '5m0s',
-	startingAt: {
-		time: '00:00:00',
-		number: '1',
-		timezone: 'UTC',
-		unit: 'minutes',
-	},
-};
+const mockEvaluationWindow: EvaluationWindowState = createMockEvaluationWindowState();
 const mockSetEvaluationWindow = jest.fn();
 
 const EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS =
@@ -70,10 +62,9 @@ describe('EvaluationWindowPopover', () => {
 	it('should render all window type options with cumulative selected', () => {
 		render(
 			<EvaluationWindowPopover
-				evaluationWindow={{
-					...mockEvaluationWindow,
+				evaluationWindow={createMockEvaluationWindowState({
 					windowType: 'cumulative',
-				}}
+				})}
 				setEvaluationWindow={mockSetEvaluationWindow}
 			/>,
 		);
@@ -110,11 +101,10 @@ describe('EvaluationWindowPopover', () => {
 	it('should render all timeframe options in cumulative mode with current hour selected by default', () => {
 		render(
 			<EvaluationWindowPopover
-				evaluationWindow={{
-					...mockEvaluationWindow,
+				evaluationWindow={createMockEvaluationWindowState({
 					windowType: 'cumulative',
 					timeframe: 'currentHour',
-				}}
+				})}
 				setEvaluationWindow={mockSetEvaluationWindow}
 			/>,
 		);
@@ -147,10 +137,9 @@ describe('EvaluationWindowPopover', () => {
 	it('renders EvaluationWindowDetails component in details section for rolling mode with custom timeframe', () => {
 		render(
 			<EvaluationWindowPopover
-				evaluationWindow={{
-					...mockEvaluationWindow,
+				evaluationWindow={createMockEvaluationWindowState({
 					timeframe: 'custom',
-				}}
+				})}
 				setEvaluationWindow={mockSetEvaluationWindow}
 			/>,
 		);
@@ -168,11 +157,10 @@ describe('EvaluationWindowPopover', () => {
 	it('renders EvaluationWindowDetails component in details section for cumulative mode', () => {
 		render(
 			<EvaluationWindowPopover
-				evaluationWindow={{
-					...mockEvaluationWindow,
+				evaluationWindow={createMockEvaluationWindowState({
 					windowType: 'cumulative',
 					timeframe: 'currentHour',
-				}}
+				})}
 				setEvaluationWindow={mockSetEvaluationWindow}
 			/>,
 		);
