@@ -260,3 +260,19 @@ func (provider *provider) Write(ctx context.Context, req *openfgav1.WriteRequest
 
 	return err
 }
+
+func (provider *provider) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, typeable authtypes.Typeable) ([]*authtypes.Object, error) {
+	response, err := provider.openfgaServer.ListObjects(ctx, &openfgav1.ListObjectsRequest{
+		StoreId:              provider.storeID,
+		AuthorizationModelId: provider.modelID,
+		User:                 subject,
+		Relation:             relation.StringValue(),
+		Type:                 typeable.Type().StringValue(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	objects := authtypes.MustNewObjectsFromStringSlice(response.Objects)
+	return objects, nil
+}

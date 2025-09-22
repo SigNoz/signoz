@@ -17,6 +17,9 @@ type AuthZ interface {
 	// CheckWithTupleCreation takes upon the responsibility for generating the tuples alongside everything Check does.
 	CheckWithTupleCreation(context.Context, authtypes.Claims, authtypes.Relation, authtypes.Typeable, []authtypes.Selector) error
 
-	// Write writes the tuples to the authorization server
+	// writes the tuples to upstream server
 	Write(context.Context, *openfgav1.WriteRequest) error
+
+	// lists the selectors for objects assigned to subject (s) with relation (r) on resource (s)
+	ListObjects(context.Context, string, authtypes.Relation, authtypes.Typeable) ([]*authtypes.Object, error)
 }

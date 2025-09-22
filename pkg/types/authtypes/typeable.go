@@ -36,19 +36,36 @@ type Typeable interface {
 
 type Type struct{ valuer.String }
 
-func NewTypeableFromType(typed Type, name Name) (Typeable, error) {
+func MustNewType(input string) Type {
+	switch input {
+	case "user":
+		return TypeUser
+	case "role":
+		return TypeRole
+	case "organization":
+		return TypeOrganization
+	case "resource":
+		return TypeResource
+	case "resources":
+		return TypeResources
+	default:
+		panic(errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid type: %s", input))
+	}
+}
+
+func MustNewTypeableFromType(typed Type, name Name) Typeable {
 	switch typed {
 	case TypeRole:
-		return TypeableRole, nil
+		return TypeableRole
 	case TypeUser:
-		return TypeableUser, nil
+		return TypeableUser
 	case TypeOrganization:
-		return TypeableOrganization, nil
+		return TypeableOrganization
 	case TypeResource:
-		return MustNewResource(name), nil
+		return MustNewResource(name)
 	case TypeResources:
-		return MustNewResources(name), nil
+		return MustNewResources(name)
 	}
 
-	return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid type")
+	panic(errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid type"))
 }

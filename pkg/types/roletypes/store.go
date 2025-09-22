@@ -12,4 +12,5 @@ type Store interface {
 	List(context.Context, valuer.UUID) ([]*StorableRole, error)
 	Update(context.Context, valuer.UUID, *StorableRole) error
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
+	RunInTx(context.Context, func(ctx context.Context) error) error
 }

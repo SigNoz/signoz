@@ -2,6 +2,7 @@ package implrole
 
 import (
 	"context"
+	"slices"
 
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/modules/role"
@@ -25,32 +26,52 @@ func NewModule(ctx context.Context, store roletypes.Store, authz authz.AuthZ, re
 	}, nil
 }
 
-// todo(vikrantgupta25): make the insert for role and tuples in a single transaction
 func (module *module) Create(ctx context.Context, postableRole *roletypes.PostableRole) error {
 	tuples, err := postableRole.GetTuplesFromTransactions()
 	if err != nil {
 		return err
 	}
 
-	err = module.authz.Write(ctx, &openfgav1.WriteRequest{
-		Writes: &openfgav1.WriteRequestWrites{
-			TupleKeys: tuples,
-		},
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		err = module.authz.Write(ctx, &openfgav1.WriteRequest{
+			Writes: &openfgav1.WriteRequestWrites{
+				TupleKeys: tuples,
+			},
+		})
+		if err != nil {
+			return err
+		}
+
+		storableRole, err := roletypes.NewStorableRoleFromPostableRole(postableRole)
+		if err != nil {
+			return err
+		}
+		err = module.store.Create(ctx, storableRole)
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
 	}
 
-	storableRole, err := roletypes.NewStorableRoleFromRole(postableRole)
-	if err != nil {
-		return err
-	}
-	err = module.store.Create(ctx, storableRole)
-	if err != nil {
-		return err
+	return nil
+}
+
+func (module *module) GetResources(_ context.Context) []*authtypes.Resource {
+	typeables := make([]authtypes.Typeable, 0)
+	for _, register := range module.registry {
+		typeables = append(typeables, register.MustGetTypeables()...)
 	}
 
-	return nil
+	resources := make([]*authtypes.Resource, 0)
+	for _, typeable := range typeables {
+		resources = append(resources, &authtypes.Resource{Name: typeable.Name(), Type: typeable.Type()})
+	}
+
+	return resources
 }
 
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*roletypes.GettableRole, error) {
@@ -65,6 +86,34 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 	}
 
 	return gettableRole, nil
+}
+
+func (module *module) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation) ([]*authtypes.Object, error) {
+	storableRole, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]*authtypes.Object, 0)
+	for _, resource := range module.GetResources(ctx) {
+		if slices.Contains(authtypes.TypeableRelations[resource.Type], relation) {
+			resourceObjects, err := module.
+				authz.
+				ListObjects(
+					ctx,
+					authtypes.MustNewSubject(authtypes.TypeRole, storableRole.ID.String(), authtypes.RelationAssignee),
+					relation,
+					authtypes.MustNewTypeableFromType(resource.Type, resource.Name),
+				)
+			if err != nil {
+				return nil, err
+			}
+
+			objects = append(objects, resourceObjects...)
+		}
+	}
+
+	return objects, nil
 }
 
 func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes.GettableRole, error) {
@@ -85,22 +134,7 @@ func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes
 	return gettableRoles, nil
 }
 
-func (module *module) GetResources(_ context.Context) []*roletypes.Resource {
-	resources := make([]*roletypes.Resource, 0)
-	typeables := make([]authtypes.Typeable, 0)
-	for _, register := range module.registry {
-		typeables = append(typeables, register.MustGetTypeables()...)
-	}
-
-	for _, typeable := range typeables {
-		resources = append(resources, &roletypes.Resource{Name: typeable.Name(), Type: typeable.Type()})
-	}
-
-	return resources
-}
-
-// todo(vikrantgupta25): make the update for role and tuples in a single transaction
-func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatableRole *roletypes.UpdatableRole) error {
+func (module *module) Patch(ctx context.Context, orgID valuer.UUID, id valuer.UUID, patchRoleMetadata *roletypes.PatchableRoleMetadata) error {
 	storableRole, err := module.store.Get(ctx, orgID, id)
 	if err != nil {
 		return err
@@ -111,30 +145,39 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return err
 	}
 
-	additions, deletions, err := role.GetDifference(updatableRole)
-	if err != nil {
-		return err
-	}
-
-	err = module.authz.Write(ctx, &openfgav1.WriteRequest{
-		Writes: &openfgav1.WriteRequestWrites{
-			TupleKeys: additions,
-		},
-		Deletes: &openfgav1.WriteRequestDeletes{
-			TupleKeys: deletions,
-		},
-	})
-	if err != nil {
-		return err
-	}
-
-	role.Update(updatableRole)
+	role.PatchMetadata(patchRoleMetadata)
 	updatedRole, err := roletypes.NewStorableRoleFromRole(role)
 	if err != nil {
 		return err
 	}
 
 	err = module.store.Update(ctx, orgID, updatedRole)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation, patchableRelationObjects *roletypes.PatchableRelationObjects) error {
+	insertionTuples, err := patchableRelationObjects.GetInsertionTuples(id, relation)
+	if err != nil {
+		return err
+	}
+
+	deletionTuples, err := patchableRelationObjects.GetDeletionTuples(id, relation)
+	if err != nil {
+		return err
+	}
+
+	err = module.authz.Write(ctx, &openfgav1.WriteRequest{
+		Writes: &openfgav1.WriteRequestWrites{
+			TupleKeys: insertionTuples,
+		},
+		Deletes: &openfgav1.WriteRequestDeletes{
+			TupleKeys: deletionTuples,
+		},
+	})
 	if err != nil {
 		return err
 	}
