@@ -153,6 +153,11 @@ describe('EvaluationWindowDetails', () => {
 				evaluationWindow={createMockEvaluationWindowState({
 					windowType: 'cumulative',
 					timeframe: 'currentDay',
+					startingAt: {
+						...mockEvaluationWindowState.startingAt,
+						time: '00:00:00',
+						timezone: 'UTC',
+					},
 				})}
 				setEvaluationWindow={mockSetEvaluationWindow}
 			/>,
@@ -163,7 +168,11 @@ describe('EvaluationWindowDetails', () => {
 		fireEvent.change(hoursInput, { target: { value: '10' } });
 		expect(mockSetEvaluationWindow).toHaveBeenCalledWith({
 			type: 'SET_STARTING_AT',
-			payload: { ...mockEvaluationWindowState.startingAt, time: '10:00:00' },
+			payload: {
+				...mockEvaluationWindowState.startingAt,
+				time: '10:00:00',
+				timezone: 'UTC',
+			},
 		});
 	});
 
