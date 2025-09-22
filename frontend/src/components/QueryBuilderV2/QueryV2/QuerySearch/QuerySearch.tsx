@@ -1225,12 +1225,20 @@ function QuerySearch({
 	);
 
 	// Effect to handle query run after update
-	useEffect(() => {
-		if (shouldRunQueryPostUpdate) {
-			handleRunQuery();
-			setShouldRunQueryPostUpdate(false);
-		}
-	}, [shouldRunQueryPostUpdate, handleRunQuery]);
+	useEffect(
+		() => {
+			if (shouldRunQueryPostUpdate) {
+				if (onRun && typeof onRun === 'function') {
+					onRun(query);
+				} else {
+					handleRunQuery();
+				}
+				setShouldRunQueryPostUpdate(false);
+			}
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[shouldRunQueryPostUpdate, handleRunQuery, onRun],
+	);
 
 	return (
 		<div className="code-mirror-where-clause">
@@ -1306,6 +1314,7 @@ function QuerySearch({
 					theme={isDarkMode ? copilot : githubLight}
 					onChange={handleChange}
 					onUpdate={handleUpdate}
+					data-testid="query-where-clause-editor"
 					className={cx('query-where-clause-editor', {
 						isValid: validation.isValid === true,
 						hasErrors: validation.errors.length > 0,
@@ -1349,11 +1358,7 @@ function QuerySearch({
 										) {
 											onChange(query);
 										}
-										if (onRun && typeof onRun === 'function') {
-											onRun(query);
-										} else {
-											setShouldRunQueryPostUpdate(true);
-										}
+										setShouldRunQueryPostUpdate(true);
 										return true;
 									},
 								},
