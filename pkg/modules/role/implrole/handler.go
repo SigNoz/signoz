@@ -3,7 +3,14 @@ package implrole
 import (
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
+	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/role"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/roletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/gorilla/mux"
 )
 
 type handler struct {
@@ -14,22 +21,218 @@ func NewHandler(module role.Module) (role.Handler, error) {
 	return &handler{module: module}, nil
 }
 
-func (h *handler) Create(req *http.Request, rw http.ResponseWriter) {}
+func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
-func (h *handler) Get(req *http.Request, rw http.ResponseWriter) {}
+	req := new(roletypes.PostableRole)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
 
-func (h *handler) GetObjects(*http.Request, http.ResponseWriter) {}
+	role, err := handler.module.Create(ctx, orgID, req)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
-func (h *handler) GetResources(*http.Request, http.ResponseWriter) {}
+	render.Success(rw, http.StatusCreated, role.ID.StringValue())
+}
 
-func (h *handler) Patch(*http.Request, http.ResponseWriter) {}
+func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
-func (h *handler) PatchObjects(*http.Request, http.ResponseWriter) {}
+	id, ok := mux.Vars(r)["id"]
+	if !ok {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, roletypes.ErrCodeRoleInvalidInput, "id is missing from the request"))
+		return
+	}
+	roleID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
-func (h *handler) Delete(req *http.Request, rw http.ResponseWriter) {}
+	gettableRole, err := handler.module.Get(ctx, orgID, roleID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
-func (h *handler) GetResourcesAndRelations(req *http.Request, rw http.ResponseWriter) {}
+	render.Success(rw, http.StatusOK, gettableRole)
+}
 
-func (h *handler) List(req *http.Request, rw http.ResponseWriter) {}
+func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
-func (h *handler) Update(req *http.Request, rw http.ResponseWriter) {}
+	id, ok := mux.Vars(r)["id"]
+	if !ok {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, roletypes.ErrCodeRoleInvalidInput, "id is missing from the request"))
+		return
+	}
+	roleID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	relationStr, ok := mux.Vars(r)["relation"]
+	if !ok {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, roletypes.ErrCodeRoleInvalidInput, "relation is missing from the request"))
+		return
+	}
+	relation, err := authtypes.NewRelation(relationStr)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	objects, err := handler.module.GetObjects(ctx, orgID, roleID, relation)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, objects)
+}
+
+func (handler *handler) GetResources(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	resources := handler.module.GetResources(ctx)
+
+	var resourceRelations = struct {
+		Resources []*authtypes.Resource                   `json:"resources"`
+		Relations map[authtypes.Type][]authtypes.Relation `json:"relations"`
+	}{
+		Resources: resources,
+		Relations: authtypes.TypeableRelations,
+	}
+	render.Success(rw, http.StatusOK, resourceRelations)
+}
+
+func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	roles, err := handler.module.List(ctx, orgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, roles)
+}
+
+func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id, ok := mux.Vars(r)["id"]
+	if !ok {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, roletypes.ErrCodeRoleInvalidInput, "id is missing from the request"))
+		return
+	}
+	roleID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req := new(roletypes.PatchableRoleMetadata)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.module.Patch(ctx, orgID, roleID, req)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusAccepted, nil)
+}
+
+// validations
+func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {}
+
+func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id, ok := mux.Vars(r)["id"]
+	if !ok {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, roletypes.ErrCodeRoleInvalidInput, "id is missing from the request"))
+		return
+	}
+	roleID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.module.Delete(ctx, orgID, roleID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}

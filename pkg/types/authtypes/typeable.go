@@ -7,11 +7,8 @@ import (
 )
 
 var (
-	ErrCodeAuthZUnavailable          = errors.MustNewCode("authz_unavailable")
-	ErrCodeAuthZForbidden            = errors.MustNewCode("authz_forbidden")
-	ErrCodeAuthZInvalidSelectorRegex = errors.MustNewCode("authz_invalid_selector_regex")
-	ErrCodeAuthZUnsupportedRelation  = errors.MustNewCode("authz_unsupported_relation")
-	ErrCodeAuthZInvalidSubject       = errors.MustNewCode("authz_invalid_subject")
+	ErrCodeAuthZUnavailable = errors.MustNewCode("authz_unavailable")
+	ErrCodeAuthZForbidden   = errors.MustNewCode("authz_forbidden")
 )
 
 var (
@@ -31,41 +28,68 @@ var (
 type Typeable interface {
 	Type() Type
 	Name() Name
+	Prefix() string
 	Tuples(subject string, relation Relation, selector []Selector) ([]*openfgav1.TupleKey, error)
 }
 
 type Type struct{ valuer.String }
 
 func MustNewType(input string) Type {
+	typed, err := NewType(input)
+	if err != nil {
+		panic(err)
+	}
+
+	return typed
+}
+
+func NewType(input string) (Type, error) {
 	switch input {
 	case "user":
-		return TypeUser
+		return TypeUser, nil
 	case "role":
-		return TypeRole
+		return TypeRole, nil
 	case "organization":
-		return TypeOrganization
+		return TypeOrganization, nil
 	case "resource":
-		return TypeResource
+		return TypeResource, nil
 	case "resources":
-		return TypeResources
+		return TypeResources, nil
 	default:
-		panic(errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid type: %s", input))
+		return Type{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid type: %s", input)
 	}
 }
 
 func MustNewTypeableFromType(typed Type, name Name) Typeable {
-	switch typed {
-	case TypeRole:
-		return TypeableRole
-	case TypeUser:
-		return TypeableUser
-	case TypeOrganization:
-		return TypeableOrganization
-	case TypeResource:
-		return MustNewResource(name)
-	case TypeResources:
-		return MustNewResources(name)
+	typeable, err := NewTypeableFromType(typed, name.String())
+	if err != nil {
+		panic(err)
 	}
 
-	panic(errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid type"))
+	return typeable
+}
+
+func NewTypeableFromType(typed Type, name string) (Typeable, error) {
+	switch typed {
+	case TypeRole:
+		return TypeableRole, nil
+	case TypeUser:
+		return TypeableUser, nil
+	case TypeOrganization:
+		return TypeableOrganization, nil
+	case TypeResource:
+		resource, err := NewResource(name)
+		if err != nil {
+			return nil, err
+		}
+		return resource, nil
+	case TypeResources:
+		resources, err := NewResources(name)
+		if err != nil {
+			return nil, err
+		}
+		return resources, nil
+	}
+
+	return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid type")
 }

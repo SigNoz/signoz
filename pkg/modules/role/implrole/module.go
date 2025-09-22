@@ -26,10 +26,12 @@ func NewModule(ctx context.Context, store roletypes.Store, authz authz.AuthZ, re
 	}, nil
 }
 
-func (module *module) Create(ctx context.Context, postableRole *roletypes.PostableRole) error {
-	tuples, err := postableRole.GetTuplesFromTransactions()
+func (module *module) Create(ctx context.Context, orgID valuer.UUID, postableRole *roletypes.PostableRole) (*roletypes.GettableRole, error) {
+	role := roletypes.NewRole(postableRole.DisplayName, postableRole.Description, orgID)
+
+	tuples, err := postableRole.GetTuplesFromTransactions(role.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
@@ -42,7 +44,7 @@ func (module *module) Create(ctx context.Context, postableRole *roletypes.Postab
 			return err
 		}
 
-		storableRole, err := roletypes.NewStorableRoleFromPostableRole(postableRole)
+		storableRole, err := roletypes.NewStorableRoleFromRole(role)
 		if err != nil {
 			return err
 		}
@@ -54,10 +56,10 @@ func (module *module) Create(ctx context.Context, postableRole *roletypes.Postab
 		return nil
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return role, nil
 }
 
 func (module *module) GetResources(_ context.Context) []*authtypes.Resource {
@@ -116,13 +118,13 @@ func (module *module) GetObjects(ctx context.Context, orgID valuer.UUID, id valu
 	return objects, nil
 }
 
-func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes.GettableRole, error) {
+func (module *module) List(ctx context.Context, orgID valuer.UUID) (roletypes.ListableRoles, error) {
 	storableRoles, err := module.store.List(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	gettableRoles := make([]*roletypes.GettableRole, len(storableRoles))
+	gettableRoles := make(roletypes.ListableRoles, len(storableRoles))
 	for idx, storableRole := range storableRoles {
 		gettableRole, err := roletypes.NewRoleFromStorableRole(storableRole)
 		if err != nil {

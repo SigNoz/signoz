@@ -270,9 +270,8 @@ func (provider *provider) ListObjects(ctx context.Context, subject string, relat
 		Type:                 typeable.Type().StringValue(),
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, errors.TypeInternal, authtypes.ErrCodeAuthZUnavailable, "cannot list objects for subject %s with relation %s for type %s", subject, relation.StringValue(), typeable.Type().StringValue())
 	}
 
-	objects := authtypes.MustNewObjectsFromStringSlice(response.Objects)
-	return objects, nil
+	return authtypes.MustNewObjectsFromStringSlice(response.Objects), nil
 }

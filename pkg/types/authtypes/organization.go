@@ -27,3 +27,7 @@ func (organization *organization) Type() Type {
 func (organization *organization) Name() Name {
 	return MustNewName("organization")
 }
+
+func (organization *organization) Prefix() string {
+	return organization.Type().StringValue()
+}

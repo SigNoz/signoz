@@ -11,7 +11,7 @@ import (
 
 type Module interface {
 	// Creates the role metadata and tuples in authorization server
-	Create(context.Context, *roletypes.PostableRole) error
+	Create(context.Context, valuer.UUID, *roletypes.PostableRole) (*roletypes.GettableRole, error)
 
 	// Gets the role metadata
 	Get(context.Context, valuer.UUID, valuer.UUID) (*roletypes.GettableRole, error)
@@ -20,7 +20,7 @@ type Module interface {
 	GetObjects(context.Context, valuer.UUID, valuer.UUID, authtypes.Relation) ([]*authtypes.Object, error)
 
 	// Lists all the roles metadata for the organization
-	List(context.Context, valuer.UUID) ([]*roletypes.GettableRole, error)
+	List(context.Context, valuer.UUID) (roletypes.ListableRoles, error)
 
 	// Gets all the typeable resources registered from role registry
 	GetResources(context.Context) []*authtypes.Resource
@@ -41,29 +41,26 @@ type RegisterTypeable interface {
 
 type Handler interface {
 	// Creates the role metadata and tuples in authorization server
-	Create(*http.Request, http.ResponseWriter)
+	Create(http.ResponseWriter, *http.Request)
 
 	// Gets the role metadata
-	Get(*http.Request, http.ResponseWriter)
+	Get(http.ResponseWriter, *http.Request)
 
 	// Gets the objects for the given relation and role
-	GetObjects(*http.Request, http.ResponseWriter)
+	GetObjects(http.ResponseWriter, *http.Request)
 
 	// Gets all the resources and the relations
-	GetResources(*http.Request, http.ResponseWriter)
+	GetResources(http.ResponseWriter, *http.Request)
 
 	// Lists all the roles metadata for the organization
-	List(*http.Request, http.ResponseWriter)
-
-	// Gets all the typeable resources and the relations
-	GetResourcesAndRelations(*http.Request, http.ResponseWriter)
+	List(http.ResponseWriter, *http.Request)
 
 	// Patches the role metdata
-	Patch(*http.Request, http.ResponseWriter)
+	Patch(http.ResponseWriter, *http.Request)
 
 	// Patches the objects for the given relation and role
-	PatchObjects(*http.Request, http.ResponseWriter)
+	PatchObjects(http.ResponseWriter, *http.Request)
 
 	// Deletes the role metadata and tuples in authorization server
-	Delete(*http.Request, http.ResponseWriter)
+	Delete(http.ResponseWriter, *http.Request)
 }

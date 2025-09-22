@@ -42,7 +42,7 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 		Where("id = ?", id).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "role with id: %s doesn't exist", id)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, roletypes.ErrCodeRoleNotFound, "role with id: %s doesn't exist", id)
 	}
 
 	return role, nil
@@ -58,7 +58,7 @@ func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes.S
 		Where("orgID = ?", orgID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "no roles found in org_id: %s", orgID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, roletypes.ErrCodeRoleNotFound, "no roles found in org_id: %s", orgID)
 	}
 
 	return roles, nil
@@ -90,7 +90,7 @@ func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUI
 		Where("id = ?", id).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "dashboard with id %s doesn't exist", id)
+		return store.sqlstore.WrapNotFoundErrf(err, roletypes.ErrCodeRoleNotFound, "dashboard with id %s doesn't exist", id)
 	}
 
 	return nil

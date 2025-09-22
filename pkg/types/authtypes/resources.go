@@ -12,8 +12,21 @@ type resources struct {
 	name Name
 }
 
-func MustNewResources(name Name) Typeable {
-	return &resources{name: name}
+func NewResources(name string) (Typeable, error) {
+	named, err := NewName(name)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resources{name: named}, nil
+}
+
+func MustNewResources(name string) Typeable {
+	resources, err := NewResources(name)
+	if err != nil {
+		panic(err)
+	}
+	return resources
 }
 
 func (resources *resources) Tuples(subject string, relation Relation, selector []Selector) ([]*openfgav1.TupleKey, error) {
@@ -32,4 +45,8 @@ func (resources *resources) Type() Type {
 
 func (resources *resources) Name() Name {
 	return resources.name
+}
+
+func (resources *resources) Prefix() string {
+	return strings.Join([]string{resources.Type().StringValue(), resources.Name().String()}, ":")
 }

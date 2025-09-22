@@ -27,3 +27,7 @@ func (role *role) Type() Type {
 func (role *role) Name() Name {
 	return MustNewName("role")
 }
+
+func (role *role) Prefix() string {
+	return role.Type().StringValue()
+}

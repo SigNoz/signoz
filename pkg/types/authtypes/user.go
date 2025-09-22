@@ -27,3 +27,7 @@ func (user *user) Type() Type {
 func (user *user) Name() Name {
 	return MustNewName("user")
 }
+
+func (user *user) Prefix() string {
+	return user.Type().StringValue()
+}
