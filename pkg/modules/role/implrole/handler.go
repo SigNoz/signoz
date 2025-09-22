@@ -186,7 +186,7 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(roletypes.PatchableRoleMetadata)
+	req := new(roletypes.PatchableRole)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
@@ -201,8 +201,61 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusAccepted, nil)
 }
 
-// validations
-func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {}
+func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id, ok := mux.Vars(r)["id"]
+	if !ok {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, roletypes.ErrCodeRoleInvalidInput, "id is missing from the request"))
+		return
+	}
+	roleID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	relationStr, ok := mux.Vars(r)["relation"]
+	if !ok {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, roletypes.ErrCodeRoleInvalidInput, "relation is missing from the request"))
+		return
+	}
+	relation, err := authtypes.NewRelation(relationStr)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req := new(roletypes.PatchableObjects)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	patchableObjects, err := roletypes.NewPatchableObjects(req.Additions, req.Deletions, relation)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.module.PatchObjects(ctx, orgID, roleID, relation, patchableObjects)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusAccepted, nil)
+}
 
 func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

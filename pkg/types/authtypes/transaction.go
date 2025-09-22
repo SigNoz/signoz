@@ -1,6 +1,8 @@
 package authtypes
 
 import (
+	"encoding/json"
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -19,6 +21,15 @@ type Object struct {
 type Transaction struct {
 	Relation Relation
 	Object   Object
+}
+
+func NewObject(resource Resource, selector Selector) (*Object, error) {
+	err := IsValidSelector(resource.Type, selector)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Object{Resource: resource, Selector: selector}, nil
 }
 
 func MustNewObjectFromString(input string) *Object {
@@ -46,4 +57,52 @@ func MustNewObjectsFromStringSlice(input []string) []*Object {
 		objects = append(objects, MustNewObjectFromString(str))
 	}
 	return objects
+}
+
+func (object *Object) UnmarshalJSON(data []byte) error {
+	var shadow = struct {
+		Resource Resource
+		Selector Selector
+	}{}
+
+	err := json.Unmarshal(data, &shadow)
+	if err != nil {
+		return err
+	}
+
+	_object, err := NewObject(shadow.Resource, shadow.Selector)
+	if err != nil {
+		return err
+	}
+
+	*object = *_object
+	return nil
+}
+
+func NewTransaction(relation Relation, object Object) (*Transaction, error) {
+	if !slices.Contains(TypeableRelations[object.Resource.Type], relation) {
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidRelation, "invalid relation %s for type %s", relation.StringValue(), object.Resource.Type.StringValue())
+	}
+
+	return &Transaction{Relation: relation, Object: object}, nil
+}
+
+func (transaction *Transaction) UnmarshalJSON(data []byte) error {
+	var shadow = struct {
+		Relation Relation
+		Object   Object
+	}{}
+
+	err := json.Unmarshal(data, &shadow)
+	if err != nil {
+		return err
+	}
+
+	_transaction, err := NewTransaction(shadow.Relation, shadow.Object)
+	if err != nil {
+		return err
+	}
+
+	*transaction = *_transaction
+	return nil
 }

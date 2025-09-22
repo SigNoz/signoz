@@ -1,6 +1,7 @@
 package authtypes
 
 import (
+	"encoding/json"
 	"net/http"
 	"regexp"
 
@@ -26,30 +27,39 @@ type Selector struct {
 }
 
 func NewSelector(typed Type, selector string) (Selector, error) {
-	switch typed {
-	case TypeUser:
-		if !typeUserSelectorRegex.MatchString(selector) {
-			return Selector{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeUserSelectorRegex.String())
-		}
-	case TypeRole:
-		if !typeRoleSelectorRegex.MatchString(selector) {
-			return Selector{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeRoleSelectorRegex.String())
-		}
-	case TypeOrganization:
-		if !typeOrganizationSelectorRegex.MatchString(selector) {
-			return Selector{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeOrganizationSelectorRegex.String())
-		}
-	case TypeResource:
-		if !typeResourceSelectorRegex.MatchString(selector) {
-			return Selector{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeResourceSelectorRegex.String())
-		}
-	case TypeResources:
-		if !typeResourcesSelectorRegex.MatchString(selector) {
-			return Selector{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeResourcesSelectorRegex.String())
-		}
+	err := IsValidSelector(typed, Selector{val: selector})
+	if err != nil {
+		return Selector{}, err
 	}
 
 	return Selector{val: selector}, nil
+}
+
+func IsValidSelector(typed Type, selector Selector) error {
+	switch typed {
+	case TypeUser:
+		if !typeUserSelectorRegex.MatchString(selector.String()) {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeUserSelectorRegex.String())
+		}
+	case TypeRole:
+		if !typeRoleSelectorRegex.MatchString(selector.String()) {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeRoleSelectorRegex.String())
+		}
+	case TypeOrganization:
+		if !typeOrganizationSelectorRegex.MatchString(selector.String()) {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeOrganizationSelectorRegex.String())
+		}
+	case TypeResource:
+		if !typeResourceSelectorRegex.MatchString(selector.String()) {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeResourceSelectorRegex.String())
+		}
+	case TypeResources:
+		if !typeResourcesSelectorRegex.MatchString(selector.String()) {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeResourcesSelectorRegex.String())
+		}
+	}
+
+	return nil
 }
 
 func MustNewSelector(typed Type, input string) Selector {
@@ -63,4 +73,17 @@ func MustNewSelector(typed Type, input string) Selector {
 
 func (selector Selector) String() string {
 	return selector.val
+}
+
+func (typed *Selector) UnmarshalJSON(data []byte) error {
+	str := ""
+	err := json.Unmarshal(data, &str)
+	if err != nil {
+		return err
+	}
+
+	shadow := Selector{val: str}
+	*typed = shadow
+
+	return nil
 }

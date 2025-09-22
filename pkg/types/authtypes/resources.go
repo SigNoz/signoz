@@ -12,16 +12,11 @@ type resources struct {
 	name Name
 }
 
-func NewResources(name string) (Typeable, error) {
-	named, err := NewName(name)
-	if err != nil {
-		return nil, err
-	}
-
-	return &resources{name: named}, nil
+func NewResources(name Name) (Typeable, error) {
+	return &resources{name: name}, nil
 }
 
-func MustNewResources(name string) Typeable {
+func MustNewResources(name Name) Typeable {
 	resources, err := NewResources(name)
 	if err != nil {
 		panic(err)

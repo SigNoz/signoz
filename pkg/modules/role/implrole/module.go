@@ -136,7 +136,7 @@ func (module *module) List(ctx context.Context, orgID valuer.UUID) (roletypes.Li
 	return gettableRoles, nil
 }
 
-func (module *module) Patch(ctx context.Context, orgID valuer.UUID, id valuer.UUID, patchRoleMetadata *roletypes.PatchableRoleMetadata) error {
+func (module *module) Patch(ctx context.Context, orgID valuer.UUID, id valuer.UUID, patchRoleMetadata *roletypes.PatchableRole) error {
 	storableRole, err := module.store.Get(ctx, orgID, id)
 	if err != nil {
 		return err
@@ -161,7 +161,7 @@ func (module *module) Patch(ctx context.Context, orgID valuer.UUID, id valuer.UU
 	return nil
 }
 
-func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation, patchableRelationObjects *roletypes.PatchableRelationObjects) error {
+func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation, patchableRelationObjects *roletypes.PatchableObjects) error {
 	insertionTuples, err := patchableRelationObjects.GetInsertionTuples(id, relation)
 	if err != nil {
 		return err

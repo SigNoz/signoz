@@ -26,10 +26,10 @@ type Module interface {
 	GetResources(context.Context) []*authtypes.Resource
 
 	// Patches the roles metadata
-	Patch(context.Context, valuer.UUID, valuer.UUID, *roletypes.PatchableRoleMetadata) error
+	Patch(context.Context, valuer.UUID, valuer.UUID, *roletypes.PatchableRole) error
 
 	// Patches the objects in authorization server associated with the given role and relation
-	PatchObjects(context.Context, valuer.UUID, valuer.UUID, authtypes.Relation, *roletypes.PatchableRelationObjects) error
+	PatchObjects(context.Context, valuer.UUID, valuer.UUID, authtypes.Relation, *roletypes.PatchableObjects) error
 
 	// Deletes the role metadata and tuples in authorization server
 	Delete(context.Context, valuer.UUID, valuer.UUID) error

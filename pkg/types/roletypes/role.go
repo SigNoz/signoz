@@ -49,12 +49,12 @@ type (
 	GettableRole  = Role
 )
 
-type PatchableRoleMetadata struct {
+type PatchableRole struct {
 	DisplayName *string `json:"displayName"`
 	Description *string `json:"description"`
 }
 
-type PatchableRelationObjects struct {
+type PatchableObjects struct {
 	Additions []*authtypes.Object `json:"additions"`
 	Deletions []*authtypes.Object `json:"deletions"`
 }
@@ -99,36 +99,37 @@ func NewRole(displayName, description string, orgID valuer.UUID) *Role {
 	}
 }
 
-func (role *Role) PatchMetadata(patchableRoleMetadata *PatchableRoleMetadata) {
-	if patchableRoleMetadata.DisplayName != nil {
-		role.DisplayName = *patchableRoleMetadata.DisplayName
+func NewPatchableObjects(additions []*authtypes.Object, deletions []*authtypes.Object, relation authtypes.Relation) (*PatchableObjects, error) {
+	for _, object := range additions {
+		if !slices.Contains(authtypes.TypeableRelations[object.Resource.Type], relation) {
+			return nil, errors.Newf(errors.TypeInvalidInput, authtypes.ErrCodeAuthZInvalidRelation, "relation %s is invalid for type %s", relation.StringValue(), object.Resource.Type.StringValue())
+		}
 	}
-	if patchableRoleMetadata.Description != nil {
-		role.Description = *patchableRoleMetadata.Description
+
+	for _, object := range deletions {
+		if !slices.Contains(authtypes.TypeableRelations[object.Resource.Type], relation) {
+			return nil, errors.Newf(errors.TypeInvalidInput, authtypes.ErrCodeAuthZInvalidRelation, "relation %s is invalid for type %s", relation.StringValue(), object.Resource.Type.StringValue())
+		}
+	}
+
+	return &PatchableObjects{Additions: additions, Deletions: deletions}, nil
+}
+
+func (role *Role) PatchMetadata(patchableRole *PatchableRole) {
+	if patchableRole.DisplayName != nil {
+		role.DisplayName = *patchableRole.DisplayName
+	}
+	if patchableRole.Description != nil {
+		role.Description = *patchableRole.Description
 	}
 	role.UpdatedAt = time.Now()
 }
 
 func (role *PostableRole) UnmarshalJSON(data []byte) error {
-	type shadowResource struct {
-		Name string
-		Type string
-	}
-
-	type shadowObject struct {
-		Resource shadowResource
-		Selector string
-	}
-
-	type shadowTransactions struct {
-		Relation string
-		Object   shadowObject
-	}
-
 	type shadowPostableRole struct {
-		DisplayName  string               `json:"displayName"`
-		Description  string               `json:"description"`
-		Transactions []shadowTransactions `json:"transactions"`
+		DisplayName  string                   `json:"displayName"`
+		Description  string                   `json:"description"`
+		Transactions []*authtypes.Transaction `json:"transactions"`
 	}
 
 	var shadowRole shadowPostableRole
@@ -140,46 +141,9 @@ func (role *PostableRole) UnmarshalJSON(data []byte) error {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "displayName is missing from the request")
 	}
 
-	transactions := make([]*authtypes.Transaction, 0)
-	for _, shadowTransaction := range shadowRole.Transactions {
-		typed, err := authtypes.NewType(shadowTransaction.Object.Resource.Type)
-		if err != nil {
-			return err
-		}
-		name, err := authtypes.NewName(shadowTransaction.Object.Resource.Name)
-		if err != nil {
-			return err
-		}
-
-		relation, err := authtypes.NewRelation(shadowTransaction.Relation)
-		if err != nil {
-			return err
-		}
-
-		if !slices.Contains(authtypes.TypeableRelations[typed], relation) {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidTypeRelation, "relation %s is invalid for type %s", shadowTransaction.Relation, shadowTransaction.Object.Resource.Type)
-		}
-
-		selector, err := authtypes.NewSelector(typed, shadowTransaction.Object.Selector)
-		if err != nil {
-			return err
-		}
-
-		transactions = append(transactions, &authtypes.Transaction{
-			Relation: relation,
-			Object: authtypes.Object{
-				Resource: authtypes.Resource{
-					Name: name,
-					Type: typed,
-				},
-				Selector: selector,
-			},
-		})
-	}
-
 	role.DisplayName = shadowRole.DisplayName
 	role.Description = shadowRole.Description
-	role.Transactions = transactions
+	role.Transactions = shadowRole.Transactions
 
 	return nil
 }
@@ -208,7 +172,7 @@ func (role *PostableRole) GetTuplesFromTransactions(id valuer.UUID) ([]*openfgav
 	return tuples, nil
 }
 
-func (patch *PatchableRelationObjects) GetInsertionTuples(id valuer.UUID, relation authtypes.Relation) ([]*openfgav1.TupleKey, error) {
+func (patch *PatchableObjects) GetInsertionTuples(id valuer.UUID, relation authtypes.Relation) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, object := range patch.Additions {
@@ -232,7 +196,7 @@ func (patch *PatchableRelationObjects) GetInsertionTuples(id valuer.UUID, relati
 	return tuples, nil
 }
 
-func (patch *PatchableRelationObjects) GetDeletionTuples(id valuer.UUID, relation authtypes.Relation) ([]*openfgav1.TupleKeyWithoutCondition, error) {
+func (patch *PatchableObjects) GetDeletionTuples(id valuer.UUID, relation authtypes.Relation) ([]*openfgav1.TupleKeyWithoutCondition, error) {
 	tuples := make([]*openfgav1.TupleKeyWithoutCondition, 0)
 
 	for _, object := range patch.Deletions {

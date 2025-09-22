@@ -1,6 +1,7 @@
 package authtypes
 
 import (
+	"encoding/json"
 	"regexp"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -33,4 +34,20 @@ func MustNewName(name string) Name {
 
 func (name Name) String() string {
 	return name.val
+}
+
+func (name *Name) UnmarshalJSON(data []byte) error {
+	nameStr := ""
+	err := json.Unmarshal(data, &nameStr)
+	if err != nil {
+		return err
+	}
+
+	shadow, err := NewName(nameStr)
+	if err != nil {
+		return err
+	}
+
+	*name = shadow
+	return nil
 }

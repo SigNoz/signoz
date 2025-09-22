@@ -1,6 +1,8 @@
 package authtypes
 
 import (
+	"encoding/json"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -60,16 +62,23 @@ func NewType(input string) (Type, error) {
 	}
 }
 
-func MustNewTypeableFromType(typed Type, name Name) Typeable {
-	typeable, err := NewTypeableFromType(typed, name.String())
+func (typed *Type) UnmarshalJSON(data []byte) error {
+	str := ""
+	err := json.Unmarshal(data, &str)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	return typeable
+	shadow, err := NewType(str)
+	if err != nil {
+		return err
+	}
+
+	*typed = shadow
+	return nil
 }
 
-func NewTypeableFromType(typed Type, name string) (Typeable, error) {
+func NewTypeableFromType(typed Type, name Name) (Typeable, error) {
 	switch typed {
 	case TypeRole:
 		return TypeableRole, nil
@@ -92,4 +101,13 @@ func NewTypeableFromType(typed Type, name string) (Typeable, error) {
 	}
 
 	return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid type")
+}
+
+func MustNewTypeableFromType(typed Type, name Name) Typeable {
+	typeable, err := NewTypeableFromType(typed, name)
+	if err != nil {
+		panic(err)
+	}
+
+	return typeable
 }
