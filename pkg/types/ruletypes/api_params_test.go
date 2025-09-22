@@ -240,6 +240,338 @@ func TestParseIntoRule(t *testing.T) {
 	}
 }
 
+func TestParseIntoRuleSchemaVersioning(t *testing.T) {
+	tests := []struct {
+		name        string
+		initRule    PostableRule
+		content     []byte
+		kind        RuleDataKind
+		expectError bool
+		validate    func(*testing.T, *PostableRule)
+	}{
+		{
+			name:     "schema v1 - threshold name from severity label",
+			initRule: PostableRule{},
+			content: []byte(`{
+				"alert": "SeverityLabelTest",
+				"schemaVersion": "v1",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"builderQueries": {
+							"A": {
+								"aggregateAttribute": {
+									"key": "cpu_usage"
+								}
+							}
+						},
+						"unit": "percent"
+					},
+					"target": 85.0,
+					"targetUnit": "%",
+					"matchType": "1",
+					"op": "1"
+				},
+				"labels": {
+					"severity": "warning",
+					"team": "platform"
+				}
+			}`),
+			kind:        RuleDataKindJson,
+			expectError: false,
+			validate: func(t *testing.T, rule *PostableRule) {
+				if rule.RuleCondition.Thresholds == nil {
+					t.Fatal("Expected Thresholds to be populated for v1")
+				}
+
+				threshold := rule.RuleCondition.Thresholds
+				if threshold.Kind != BasicThresholdKind {
+					t.Errorf("Expected BasicThresholdKind, got %s", threshold.Kind)
+				}
+
+				specs, ok := threshold.Spec.(BasicRuleThresholds)
+				if !ok {
+					t.Fatalf("Expected BasicRuleThresholds, got %T", threshold.Spec)
+				}
+
+				if len(specs) != 1 {
+					t.Fatalf("Expected 1 threshold spec, got %d", len(specs))
+				}
+
+				spec := specs[0]
+				if spec.Name != "warning" {
+					t.Errorf("Expected threshold name 'warning' from severity label, got '%s'", spec.Name)
+				}
+
+				// Verify all fields are copied from RuleCondition
+				if spec.RuleUnit != "percent" {
+					t.Errorf("Expected RuleUnit 'percent', got '%s'", spec.RuleUnit)
+				}
+				if spec.TargetUnit != "%" {
+					t.Errorf("Expected TargetUnit '%%', got '%s'", spec.TargetUnit)
+				}
+				if *spec.TargetValue != 85.0 {
+					t.Errorf("Expected TargetValue 85.0, got %v", *spec.TargetValue)
+				}
+				if spec.MatchType != rule.RuleCondition.MatchType {
+					t.Error("Expected MatchType to be copied from RuleCondition")
+				}
+				if spec.CompareOp != rule.RuleCondition.CompareOp {
+					t.Error("Expected CompareOp to be copied from RuleCondition")
+				}
+
+				// Verify evaluation envelope is populated
+				if rule.Evaluation == nil {
+					t.Fatal("Expected Evaluation to be populated for v1")
+				}
+				if rule.Evaluation.Kind != RollingEvaluation {
+					t.Errorf("Expected RollingEvaluation, got %s", rule.Evaluation.Kind)
+				}
+
+				// Verify evaluation window matches rule settings
+				if window, ok := rule.Evaluation.Spec.(RollingWindow); ok {
+					if window.EvalWindow != rule.EvalWindow {
+						t.Errorf("Expected Evaluation EvalWindow %v, got %v", rule.EvalWindow, window.EvalWindow)
+					}
+					if window.Frequency != rule.Frequency {
+						t.Errorf("Expected Evaluation Frequency %v, got %v", rule.Frequency, window.Frequency)
+					}
+				} else {
+					t.Errorf("Expected RollingWindow spec, got %T", rule.Evaluation.Spec)
+				}
+			},
+		},
+		{
+			name:     "schema v1 - uses critical threshold when no labels",
+			initRule: PostableRule{},
+			content: []byte(`{
+				"alert": "NoLabelsTest",
+				"schemaVersion": "v1",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"builderQueries": {
+							"A": {
+								"aggregateAttribute": {
+									"key": "memory_usage"
+								}
+							}
+						}
+					},
+					"target": 90.0,
+					"matchType": "1",
+					"op": "1"
+				}
+			}`),
+			kind:        RuleDataKindJson,
+			expectError: false,
+			validate: func(t *testing.T, rule *PostableRule) {
+				if rule.RuleCondition.Thresholds == nil {
+					t.Fatal("Expected Thresholds to be populated")
+				}
+
+				specs, ok := rule.RuleCondition.Thresholds.Spec.(BasicRuleThresholds)
+				if !ok {
+					t.Fatalf("Expected BasicRuleThresholds, got %T", rule.RuleCondition.Thresholds.Spec)
+				}
+				spec := specs[0]
+				// Should default to CriticalThresholdName when no severity label
+				if spec.Name != CriticalThresholdName {
+					t.Errorf("Expected threshold name '%s', got '%s'", CriticalThresholdName, spec.Name)
+				}
+			},
+		},
+		{
+			name:     "schema v1 - overwrites existing thresholds and evaluation",
+			initRule: PostableRule{},
+			content: []byte(`{
+				"alert": "OverwriteTest",
+				"schemaVersion": "v1",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"builderQueries": {
+							"A": {
+								"aggregateAttribute": {
+									"key": "cpu_usage"
+								}
+							}
+						},
+						"unit": "percent"
+					},
+					"target": 80.0,
+					"targetUnit": "%",
+					"matchType": "1",
+					"op": "1",
+					"thresholds": {
+						"kind": "basic",
+						"spec": [{
+							"name": "existing_threshold",
+							"target": 50.0,
+							"targetUnit": "MB",
+							"ruleUnit": "bytes",
+							"matchType": "1",
+							"op": "1"
+						}]
+					}
+				},
+				"evaluation": {
+					"kind": "rolling",
+					"spec": {
+						"evalWindow": "10m",
+						"frequency": "2m"
+					}
+				},
+				"frequency":"7m",
+				"evalWindow":"11m",
+				"labels": {
+					"severity": "critical"
+				}
+			}`),
+			kind:        RuleDataKindJson,
+			expectError: false,
+			validate: func(t *testing.T, rule *PostableRule) {
+				if rule.RuleCondition.Thresholds == nil {
+					t.Fatal("Expected Thresholds to be populated")
+				}
+
+				specs, ok := rule.RuleCondition.Thresholds.Spec.(BasicRuleThresholds)
+				if !ok {
+					t.Fatalf("Expected BasicRuleThresholds, got %T", rule.RuleCondition.Thresholds.Spec)
+				}
+
+				if len(specs) != 1 {
+					t.Fatalf("Expected 1 threshold spec, got %d", len(specs))
+				}
+
+				spec := specs[0]
+				if spec.Name != "critical" {
+					t.Errorf("Expected threshold name 'critical' (overwritten), got '%s'", spec.Name)
+				}
+
+				if *spec.TargetValue != 80.0 {
+					t.Errorf("Expected TargetValue 80.0 (overwritten), got %v", *spec.TargetValue)
+				}
+				if spec.TargetUnit != "%" {
+					t.Errorf("Expected TargetUnit '%%' (overwritten), got '%s'", spec.TargetUnit)
+				}
+				if spec.RuleUnit != "percent" {
+					t.Errorf("Expected RuleUnit 'percent' (overwritten), got '%s'", spec.RuleUnit)
+				}
+
+				if rule.Evaluation == nil {
+					t.Fatal("Expected Evaluation to be populated")
+				}
+				if window, ok := rule.Evaluation.Spec.(RollingWindow); ok {
+					if window.EvalWindow != rule.EvalWindow {
+						t.Errorf("Expected Evaluation EvalWindow to be overwritten to %v, got %v", rule.EvalWindow, window.EvalWindow)
+					}
+					if window.Frequency != rule.Frequency {
+						t.Errorf("Expected Evaluation Frequency to be overwritten to %v, got %v", rule.Frequency, window.Frequency)
+					}
+				} else {
+					t.Errorf("Expected RollingWindow spec, got %T", rule.Evaluation.Spec)
+				}
+			},
+		},
+		{
+			name:     "schema v2 - does not populate thresholds and evaluation",
+			initRule: PostableRule{},
+			content: []byte(`{
+				"alert": "V2Test",
+				"schemaVersion": "v2",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"builderQueries": {
+							"A": {
+								"aggregateAttribute": {
+									"key": "test_metric"
+								}
+							}
+						}
+					},
+					"target": 100.0,
+					"matchType": "1",
+					"op": "1"
+				}
+			}`),
+			kind:        RuleDataKindJson,
+			expectError: false,
+			validate: func(t *testing.T, rule *PostableRule) {
+				if rule.SchemaVersion != "v2" {
+					t.Errorf("Expected schemaVersion 'v2', got '%s'", rule.SchemaVersion)
+				}
+
+				if rule.RuleCondition.Thresholds != nil {
+					t.Error("Expected Thresholds to be nil for v2")
+				}
+				if rule.Evaluation != nil {
+					t.Error("Expected Evaluation to be nil for v2")
+				}
+
+				if rule.EvalWindow != Duration(5*time.Minute) {
+					t.Error("Expected default EvalWindow to be applied")
+				}
+				if rule.RuleType != RuleTypeThreshold {
+					t.Error("Expected RuleType to be auto-detected")
+				}
+			},
+		},
+		{
+			name:     "default schema version - defaults to v1 behavior",
+			initRule: PostableRule{},
+			content: []byte(`{
+				"alert": "DefaultSchemaTest",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"builderQueries": {
+							"A": {
+								"aggregateAttribute": {
+									"key": "test_metric"
+								}
+							}
+						}
+					},
+					"target": 75.0,
+					"matchType": "1",
+					"op": "1"
+				}
+			}`),
+			kind:        RuleDataKindJson,
+			expectError: false,
+			validate: func(t *testing.T, rule *PostableRule) {
+				if rule.SchemaVersion != DefaultSchemaVersion {
+					t.Errorf("Expected default schemaVersion '%s', got '%s'", DefaultSchemaVersion, rule.SchemaVersion)
+				}
+				if rule.RuleCondition.Thresholds == nil {
+					t.Error("Expected Thresholds to be populated for default schema version")
+				}
+				if rule.Evaluation == nil {
+					t.Error("Expected Evaluation to be populated for default schema version")
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rule := tt.initRule
+			err := json.Unmarshal(tt.content, &rule)
+			if tt.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tt.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			if tt.validate != nil && err == nil {
+				tt.validate(t, &rule)
+			}
+		})
+	}
+}
+
 func TestParseIntoRuleThresholdGeneration(t *testing.T) {
 	content := []byte(`{
 		"alert": "TestThresholds",
@@ -310,6 +642,7 @@ func TestParseIntoRuleThresholdGeneration(t *testing.T) {
 
 func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 	content := []byte(`{
+		"schemaVersion": "v2",
 		"alert": "MultiThresholdAlert",
 		"ruleType": "threshold_rule",
 		"condition": {
