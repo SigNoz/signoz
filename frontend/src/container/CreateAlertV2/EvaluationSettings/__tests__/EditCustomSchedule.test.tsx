@@ -4,14 +4,14 @@ import { INITIAL_ADVANCED_OPTIONS_STATE } from 'container/CreateAlertV2/context/
 
 import { TIMEZONE_DATA } from '../constants';
 import EditCustomSchedule from '../EvaluationCadence/EditCustomSchedule';
-import { MOCK_ALERT_CONTEXT_STATE } from './testUtils';
+import { createMockAlertContextState } from './testUtils';
 
 const mockSetAdvancedOptions = jest.fn();
-jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue({
-	...MOCK_ALERT_CONTEXT_STATE,
-	advancedOptions: INITIAL_ADVANCED_OPTIONS_STATE,
-	setAdvancedOptions: mockSetAdvancedOptions,
-});
+jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue(
+	createMockAlertContextState({
+		setAdvancedOptions: mockSetAdvancedOptions,
+	}),
+);
 
 const mockSetIsEvaluationCadenceDetailsVisible = jest.fn();
 const mockSetIsPreviewVisible = jest.fn();
@@ -20,22 +20,23 @@ const EDIT_CUSTOM_SCHEDULE_TEST_ID = '.edit-custom-schedule';
 
 describe('EditCustomSchedule', () => {
 	it('should render the correct display text for custom mode with daily occurrence', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce({
-			...MOCK_ALERT_CONTEXT_STATE,
-			advancedOptions: {
-				...INITIAL_ADVANCED_OPTIONS_STATE,
-				evaluationCadence: {
-					...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
-					mode: 'custom',
-					custom: {
-						repeatEvery: 'day',
-						startAt: '00:00:00',
-						occurence: [],
-						timezone: TIMEZONE_DATA[0].value,
+		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+			createMockAlertContextState({
+				advancedOptions: {
+					...INITIAL_ADVANCED_OPTIONS_STATE,
+					evaluationCadence: {
+						...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
+						mode: 'custom',
+						custom: {
+							repeatEvery: 'day',
+							startAt: '00:00:00',
+							occurence: [],
+							timezone: TIMEZONE_DATA[0].value,
+						},
 					},
 				},
-			},
-		});
+			}),
+		);
 		render(
 			<EditCustomSchedule
 				setIsEvaluationCadenceDetailsVisible={
@@ -53,22 +54,23 @@ describe('EditCustomSchedule', () => {
 	});
 
 	it('should render the correct display text for custom mode with weekly occurrence', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce({
-			...MOCK_ALERT_CONTEXT_STATE,
-			advancedOptions: {
-				...INITIAL_ADVANCED_OPTIONS_STATE,
-				evaluationCadence: {
-					...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
-					mode: 'custom',
-					custom: {
-						repeatEvery: 'week',
-						startAt: '00:00:00',
-						occurence: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
-						timezone: TIMEZONE_DATA[0].value,
+		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+			createMockAlertContextState({
+				advancedOptions: {
+					...INITIAL_ADVANCED_OPTIONS_STATE,
+					evaluationCadence: {
+						...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
+						mode: 'custom',
+						custom: {
+							repeatEvery: 'week',
+							startAt: '00:00:00',
+							occurence: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
+							timezone: TIMEZONE_DATA[0].value,
+						},
 					},
 				},
-			},
-		});
+			}),
+		);
 
 		render(
 			<EditCustomSchedule
@@ -88,22 +90,23 @@ describe('EditCustomSchedule', () => {
 	});
 
 	it('should render the correct display text for custom mode with monthly occurrence', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce({
-			...MOCK_ALERT_CONTEXT_STATE,
-			advancedOptions: {
-				...INITIAL_ADVANCED_OPTIONS_STATE,
-				evaluationCadence: {
-					...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
-					mode: 'custom',
-					custom: {
-						repeatEvery: 'month',
-						startAt: '00:00:00',
-						occurence: ['1'],
-						timezone: TIMEZONE_DATA[0].value,
+		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+			createMockAlertContextState({
+				advancedOptions: {
+					...INITIAL_ADVANCED_OPTIONS_STATE,
+					evaluationCadence: {
+						...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
+						mode: 'custom',
+						custom: {
+							repeatEvery: 'month',
+							startAt: '00:00:00',
+							occurence: ['1'],
+							timezone: TIMEZONE_DATA[0].value,
+						},
 					},
 				},
-			},
-		});
+			}),
+		);
 
 		render(
 			<EditCustomSchedule

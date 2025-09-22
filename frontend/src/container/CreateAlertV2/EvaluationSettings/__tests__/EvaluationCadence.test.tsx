@@ -4,7 +4,7 @@ import { INITIAL_ADVANCED_OPTIONS_STATE } from 'container/CreateAlertV2/context/
 
 import { TIMEZONE_DATA } from '../constants';
 import EvaluationCadence from '../EvaluationCadence';
-import { MOCK_ALERT_CONTEXT_STATE } from './testUtils';
+import { createMockAlertContextState } from './testUtils';
 
 jest.mock('../EvaluationCadence/EditCustomSchedule', () => ({
 	__esModule: true,
@@ -39,11 +39,11 @@ const EVALUATION_CADENCE_DETAILS_TEST_ID = 'evaluation-cadence-details';
 const ADD_CUSTOM_SCHEDULE_TEXT = 'Add custom schedule';
 const EVALUATION_CADENCE_PREVIEW_TEST_ID = 'evaluation-cadence-preview';
 
-jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue({
-	...MOCK_ALERT_CONTEXT_STATE,
-	advancedOptions: INITIAL_ADVANCED_OPTIONS_STATE,
-	setAdvancedOptions: mockSetAdvancedOptions,
-});
+jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue(
+	createMockAlertContextState({
+		setAdvancedOptions: mockSetAdvancedOptions,
+	}),
+);
 
 const EVALUATION_CADENCE_INPUT_GROUP = 'evaluation-cadence-input-group';
 
@@ -90,22 +90,23 @@ describe('EvaluationCadence', () => {
 	});
 
 	it('should show the custom schedule text when the mode is custom with selected values', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce({
-			...MOCK_ALERT_CONTEXT_STATE,
-			advancedOptions: {
-				...INITIAL_ADVANCED_OPTIONS_STATE,
-				evaluationCadence: {
-					...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
-					mode: 'custom',
-					custom: {
-						repeatEvery: 'day',
-						startAt: '00:00:00',
-						occurence: [],
-						timezone: TIMEZONE_DATA[0].value,
+		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+			createMockAlertContextState({
+				advancedOptions: {
+					...INITIAL_ADVANCED_OPTIONS_STATE,
+					evaluationCadence: {
+						...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
+						mode: 'custom',
+						custom: {
+							repeatEvery: 'day',
+							startAt: '00:00:00',
+							occurence: [],
+							timezone: TIMEZONE_DATA[0].value,
+						},
 					},
 				},
-			},
-		});
+			}),
+		);
 		render(<EvaluationCadence />);
 		expect(screen.getByTestId('edit-custom-schedule')).toBeInTheDocument();
 	});
@@ -138,16 +139,17 @@ describe('EvaluationCadence', () => {
 	});
 
 	it('should show evaluation cadence preview component when clicked on preview button in custom mode', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce({
-			...MOCK_ALERT_CONTEXT_STATE,
-			advancedOptions: {
-				...INITIAL_ADVANCED_OPTIONS_STATE,
-				evaluationCadence: {
-					...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
-					mode: 'custom',
+		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+			createMockAlertContextState({
+				advancedOptions: {
+					...INITIAL_ADVANCED_OPTIONS_STATE,
+					evaluationCadence: {
+						...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
+						mode: 'custom',
+					},
 				},
-			},
-		});
+			}),
+		);
 		render(<EvaluationCadence />);
 		expect(
 			screen.queryByTestId(EVALUATION_CADENCE_PREVIEW_TEST_ID),

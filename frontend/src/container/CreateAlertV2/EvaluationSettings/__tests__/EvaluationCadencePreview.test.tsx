@@ -6,11 +6,11 @@ import { TIMEZONE_DATA } from '../constants';
 import EvaluationCadencePreview, {
 	ScheduleList,
 } from '../EvaluationCadence/EvaluationCadencePreview';
-import { MOCK_ALERT_CONTEXT_STATE } from './testUtils';
+import { createMockAlertContextState } from './testUtils';
 
 jest
 	.spyOn(alertState, 'useCreateAlertState')
-	.mockReturnValue(MOCK_ALERT_CONTEXT_STATE);
+	.mockReturnValue(createMockAlertContextState());
 
 const mockSetIsOpen = jest.fn();
 
@@ -21,22 +21,23 @@ describe('EvaluationCadencePreview', () => {
 	});
 
 	it('should render empty state when no schedule is generated', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce({
-			...MOCK_ALERT_CONTEXT_STATE,
-			advancedOptions: {
-				...INITIAL_ADVANCED_OPTIONS_STATE,
-				evaluationCadence: {
-					...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
-					mode: 'custom',
-					custom: {
-						repeatEvery: 'week',
-						startAt: '00:00:00',
-						occurence: [],
-						timezone: TIMEZONE_DATA[0].value,
+		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+			createMockAlertContextState({
+				advancedOptions: {
+					...INITIAL_ADVANCED_OPTIONS_STATE,
+					evaluationCadence: {
+						...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
+						mode: 'custom',
+						custom: {
+							repeatEvery: 'week',
+							startAt: '00:00:00',
+							occurence: [],
+							timezone: TIMEZONE_DATA[0].value,
+						},
 					},
 				},
-			},
-		});
+			}),
+		);
 		render(<EvaluationCadencePreview isOpen setIsOpen={mockSetIsOpen} />);
 		expect(screen.getByTestId('no-schedule')).toBeInTheDocument();
 	});
