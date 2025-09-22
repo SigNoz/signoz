@@ -35,7 +35,7 @@ function EvaluationWindowDetails({
 				ADVANCED_OPTIONS_TIME_UNIT_OPTIONS.find(
 					(option) => option.value === evaluationWindow.startingAt.unit,
 				)?.label
-			}${parseInt(evaluationWindow.startingAt.number, 10) > 1 ? 's' : ''}`;
+			}`;
 		}
 		if (evaluationWindow.windowType === 'cumulative') {
 			if (evaluationWindow.timeframe === 'currentHour') {

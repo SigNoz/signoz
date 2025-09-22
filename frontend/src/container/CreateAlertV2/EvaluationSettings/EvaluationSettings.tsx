@@ -34,8 +34,6 @@ function EvaluationSettings(): JSX.Element {
 				<EvaluationWindowPopover
 					evaluationWindow={evaluationWindow}
 					setEvaluationWindow={setEvaluationWindow}
-					isOpen={isEvaluationWindowPopoverOpen}
-					setIsOpen={setIsEvaluationWindowPopoverOpen}
 				/>
 			}
 			trigger="click"
@@ -61,7 +59,10 @@ function EvaluationSettings(): JSX.Element {
 
 	if (showCondensedLayoutFlag) {
 		return (
-			<div className="condensed-evaluation-settings-container">
+			<div
+				className="condensed-evaluation-settings-container"
+				data-testid="condensed-evaluation-settings-container"
+			>
 				{popoverContent}
 			</div>
 		);

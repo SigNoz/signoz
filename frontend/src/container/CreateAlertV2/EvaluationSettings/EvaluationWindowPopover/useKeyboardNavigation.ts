@@ -5,7 +5,7 @@ interface UseKeyboardNavigationOptions {
 	onEscape?: () => void;
 }
 
-export const useKeyboardNavigationIEvaluationWindowPopover = ({
+export const useKeyboardNavigationForEvaluationWindowPopover = ({
 	onSelect,
 	onEscape,
 }: UseKeyboardNavigationOptions = {}): {

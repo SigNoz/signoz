@@ -12,7 +12,7 @@ import {
 	RollingWindowTimeframes,
 } from '../types';
 import EvaluationWindowDetails from './EvaluationWindowDetails';
-import { useKeyboardNavigationIEvaluationWindowPopover } from './useKeyboardNavigation';
+import { useKeyboardNavigationForEvaluationWindowPopover } from './useKeyboardNavigation';
 
 function EvaluationWindowPopover({
 	evaluationWindow,
@@ -21,7 +21,7 @@ function EvaluationWindowPopover({
 	const {
 		containerRef,
 		firstItemRef,
-	} = useKeyboardNavigationIEvaluationWindowPopover({
+	} = useKeyboardNavigationForEvaluationWindowPopover({
 		onSelect: (value: string, sectionId: string): void => {
 			if (sectionId === 'window-type') {
 				setEvaluationWindow({
