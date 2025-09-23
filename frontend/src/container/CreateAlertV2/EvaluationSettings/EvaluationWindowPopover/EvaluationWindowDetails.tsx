@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { ADVANCED_OPTIONS_TIME_UNIT_OPTIONS } from '../../context/constants';
 import {
-	CUMMULATIVE_WINDOW_DESCRIPTION,
+	CUMULATIVE_WINDOW_DESCRIPTION,
 	ROLLING_WINDOW_DESCRIPTION,
 	TIMEZONE_DATA,
 } from '../constants';
@@ -116,7 +116,7 @@ function EvaluationWindowDetails({
 	if (isCurrentHour) {
 		return (
 			<div className="evaluation-window-details">
-				<Typography.Text>{CUMMULATIVE_WINDOW_DESCRIPTION}</Typography.Text>
+				<Typography.Text>{CUMULATIVE_WINDOW_DESCRIPTION}</Typography.Text>
 				<Typography.Text>{displayText}</Typography.Text>
 				<div className="select-group">
 					<Typography.Text>STARTING AT MINUTE</Typography.Text>
@@ -134,7 +134,7 @@ function EvaluationWindowDetails({
 	if (isCurrentDay) {
 		return (
 			<div className="evaluation-window-details">
-				<Typography.Text>{CUMMULATIVE_WINDOW_DESCRIPTION}</Typography.Text>
+				<Typography.Text>{CUMULATIVE_WINDOW_DESCRIPTION}</Typography.Text>
 				<Typography.Text>{displayText}</Typography.Text>
 				<div className="select-group time-select-group">
 					<Typography.Text>STARTING AT</Typography.Text>
@@ -159,7 +159,7 @@ function EvaluationWindowDetails({
 	if (isCurrentMonth) {
 		return (
 			<div className="evaluation-window-details">
-				<Typography.Text>{CUMMULATIVE_WINDOW_DESCRIPTION}</Typography.Text>
+				<Typography.Text>{CUMULATIVE_WINDOW_DESCRIPTION}</Typography.Text>
 				<Typography.Text>{displayText}</Typography.Text>
 				<div className="select-group">
 					<Typography.Text>STARTING ON DAY</Typography.Text>
