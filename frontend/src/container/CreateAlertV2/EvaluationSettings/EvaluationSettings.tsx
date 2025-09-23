@@ -57,6 +57,7 @@ function EvaluationSettings(): JSX.Element {
 		</Popover>
 	);
 
+	// Layout consists of only the evaluation window popover
 	if (showCondensedLayoutFlag) {
 		return (
 			<div
@@ -68,6 +69,10 @@ function EvaluationSettings(): JSX.Element {
 		);
 	}
 
+	// Layout consists of
+	// - Stepper header
+	// - Evaluation window popover
+	// - Advanced options
 	return (
 		<div className="evaluation-settings-container">
 			<Stepper stepNumber={3} label="Evaluation settings" />
