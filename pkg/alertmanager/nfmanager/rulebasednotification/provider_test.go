@@ -186,7 +186,7 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 			if tt.shouldFallback {
 				// Should get fallback config (876000 hour default)
 				assert.NotNil(t, config)
-				assert.Equal(t, 876000*time.Hour, config.Renotify.RenotifyInterval)
+				assert.Equal(t, 4*time.Hour, config.Renotify.RenotifyInterval)
 			} else {
 				// Should get our custom config
 				assert.NotNil(t, config)

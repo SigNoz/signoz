@@ -929,7 +929,7 @@ func TestDispatcherRaceOnFirstAlertNotDeliveredWhenGroupWaitIsZero(t *testing.T)
 	route := &dispatch.Route{
 		RouteOpts: dispatch.RouteOpts{
 			Receiver:       "default",
-			GroupBy:        map[model.LabelName]struct{}{"alertname": {}},
+			GroupBy:        map[model.LabelName]struct{}{"ruleId": {}},
 			GroupWait:      0,
 			GroupInterval:  1 * time.Hour, // Should never hit in this test.
 			RepeatInterval: 1 * time.Hour, // Should never hit in this test.
@@ -946,7 +946,7 @@ func TestDispatcherRaceOnFirstAlertNotDeliveredWhenGroupWaitIsZero(t *testing.T)
 
 	// Push all alerts.
 	for i := 0; i < numAlerts; i++ {
-		alert := newAlert(model.LabelSet{"alertname": model.LabelValue(fmt.Sprintf("Alert_%d", i))})
+		alert := newAlert(model.LabelSet{"ruleId": model.LabelValue(fmt.Sprintf("Alert_%d", i))})
 		require.NoError(t, alerts.Put(alert))
 	}
 
