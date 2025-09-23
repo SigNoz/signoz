@@ -106,7 +106,7 @@ function QuerySearch({
 
 	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
 	const [isFocused, setIsFocused] = useState(false);
-	const [hasBeenFocused, setHasBeenFocused] = useState(false);
+	const [hasInteractedWithQB, setHasInteractedWithQB] = useState(false); // to track if the user has interacted with the query builder
 
 	const handleQueryValidation = (newQuery: string): void => {
 		try {
@@ -140,7 +140,11 @@ function QuerySearch({
 	useEffect(() => {
 		// Update the query when the editor is blurred and the query has changed
 		// Only call onChange if the editor has been focused before (not on initial mount)
-		if (!isFocused && hasBeenFocused && query !== queryData.filter?.expression) {
+		if (
+			!isFocused &&
+			hasInteractedWithQB &&
+			query !== queryData.filter?.expression
+		) {
 			onChange(query);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1377,7 +1381,7 @@ function QuerySearch({
 					}}
 					onFocus={(): void => {
 						setIsFocused(true);
-						setHasBeenFocused(true);
+						setHasInteractedWithQB(true);
 					}}
 					onBlur={handleBlur}
 					onCreateEditor={(view: EditorView): EditorView => {
