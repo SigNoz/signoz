@@ -3,6 +3,7 @@ import classNames from 'classnames';
 import { Check } from 'lucide-react';
 
 import {
+	CUMULATIVE_WINDOW_DESCRIPTION,
 	EVALUATION_WINDOW_TIMEFRAME,
 	EVALUATION_WINDOW_TYPE,
 	ROLLING_WINDOW_DESCRIPTION,
@@ -107,9 +108,7 @@ function EvaluationWindowPopover({
 		) {
 			return (
 				<div className="selection-content">
-					<Typography.Text>
-						A Cumulative Window has a fixed starting point and expands over time.
-					</Typography.Text>
+					<Typography.Text>{CUMULATIVE_WINDOW_DESCRIPTION}</Typography.Text>
 					<Button type="link">Read the docs</Button>
 				</div>
 			);
