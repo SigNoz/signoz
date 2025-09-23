@@ -265,7 +265,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         "value",
-			expectedSQL:   "sdfsdf",
+			expectedSQL:   "",
 			expectedError: qbtypes.ErrColumnNotFound,
 		},
 	}
