@@ -61,9 +61,9 @@ export function AboutSigNozQuestions({
 
 	const handleInterestChange = (option: string, checked: boolean): void => {
 		if (checked) {
-			setInterestInSignoz([...interestInSignoz, option]);
+			setInterestInSignoz((prev) => [...prev, option]);
 		} else {
-			setInterestInSignoz(interestInSignoz.filter((item) => item !== option));
+			setInterestInSignoz((prev) => prev.filter((item) => item !== option));
 		}
 	};
 
