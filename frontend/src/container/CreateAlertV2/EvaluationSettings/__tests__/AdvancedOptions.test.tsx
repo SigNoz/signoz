@@ -14,6 +14,8 @@ jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue(
 const ALERT_WHEN_DATA_STOPS_COMING_TEXT = 'Alert when data stops coming';
 const MINIMUM_DATA_REQUIRED_TEXT = 'Minimum data required';
 const ACCOUNT_FOR_DATA_DELAY_TEXT = 'Account for data delay';
+const ADVANCED_OPTION_ITEM_CLASS = '.advanced-option-item';
+const SWITCH_ROLE_SELECTOR = '[role="switch"]';
 
 describe('AdvancedOptions', () => {
 	it('should render evaluation cadence and the advanced options minimized by default', () => {
@@ -59,8 +61,12 @@ describe('AdvancedOptions', () => {
 		const collapse = screen.getByRole('button', { name: /ADVANCED OPTIONS/i });
 		fireEvent.click(collapse);
 
-		const switches = screen.getAllByRole('switch');
-		const alertWhenDataStopsComingSwitch = switches[0];
+		const alertWhenDataStopsComingContainer = screen
+			.getByText(ALERT_WHEN_DATA_STOPS_COMING_TEXT)
+			.closest(ADVANCED_OPTION_ITEM_CLASS);
+		const alertWhenDataStopsComingSwitch = alertWhenDataStopsComingContainer?.querySelector(
+			SWITCH_ROLE_SELECTOR,
+		) as HTMLElement;
 
 		fireEvent.click(alertWhenDataStopsComingSwitch);
 
@@ -84,8 +90,12 @@ describe('AdvancedOptions', () => {
 		const collapse = screen.getByRole('button', { name: /ADVANCED OPTIONS/i });
 		fireEvent.click(collapse);
 
-		const switches = screen.getAllByRole('switch');
-		const minimumDataRequiredSwitch = switches[1];
+		const minimumDataRequiredContainer = screen
+			.getByText(MINIMUM_DATA_REQUIRED_TEXT)
+			.closest(ADVANCED_OPTION_ITEM_CLASS);
+		const minimumDataRequiredSwitch = minimumDataRequiredContainer?.querySelector(
+			SWITCH_ROLE_SELECTOR,
+		) as HTMLElement;
 
 		fireEvent.click(minimumDataRequiredSwitch);
 
@@ -108,8 +118,12 @@ describe('AdvancedOptions', () => {
 		const collapse = screen.getByRole('button', { name: /ADVANCED OPTIONS/i });
 		fireEvent.click(collapse);
 
-		const switches = screen.getAllByRole('switch');
-		const accountForDataDelaySwitch = switches[2];
+		const accountForDataDelayContainer = screen
+			.getByText(ACCOUNT_FOR_DATA_DELAY_TEXT)
+			.closest(ADVANCED_OPTION_ITEM_CLASS);
+		const accountForDataDelaySwitch = accountForDataDelayContainer?.querySelector(
+			SWITCH_ROLE_SELECTOR,
+		) as HTMLElement;
 
 		fireEvent.click(accountForDataDelaySwitch);
 

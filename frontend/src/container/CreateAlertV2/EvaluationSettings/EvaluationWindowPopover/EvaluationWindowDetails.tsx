@@ -2,9 +2,14 @@ import { Input, Select, Typography } from 'antd';
 import { useMemo } from 'react';
 
 import { ADVANCED_OPTIONS_TIME_UNIT_OPTIONS } from '../../context/constants';
-import { TIMEZONE_DATA } from '../constants';
+import {
+	CUMMULATIVE_WINDOW_DESCRIPTION,
+	ROLLING_WINDOW_DESCRIPTION,
+	TIMEZONE_DATA,
+} from '../constants';
 import TimeInput from '../TimeInput';
 import { IEvaluationWindowDetailsProps } from '../types';
+import { getCumulativeWindowTimeframeText } from '../utils';
 
 function EvaluationWindowDetails({
 	evaluationWindow,
@@ -38,15 +43,7 @@ function EvaluationWindowDetails({
 			}`;
 		}
 		if (evaluationWindow.windowType === 'cumulative') {
-			if (evaluationWindow.timeframe === 'currentHour') {
-				return `Current hour, starting at minute ${evaluationWindow.startingAt.number} (${evaluationWindow.startingAt.timezone})`;
-			}
-			if (evaluationWindow.timeframe === 'currentDay') {
-				return `Current day, starting from ${evaluationWindow.startingAt.time} (${evaluationWindow.startingAt.timezone})`;
-			}
-			if (evaluationWindow.timeframe === 'currentMonth') {
-				return `Current month, starting from day ${evaluationWindow.startingAt.number} at ${evaluationWindow.startingAt.time} (${evaluationWindow.startingAt.timezone})`;
-			}
+			return getCumulativeWindowTimeframeText(evaluationWindow);
 		}
 		return '';
 	}, [evaluationWindow]);
@@ -119,9 +116,7 @@ function EvaluationWindowDetails({
 	if (isCurrentHour) {
 		return (
 			<div className="evaluation-window-details">
-				<Typography.Text>
-					A Cumulative Window has a fixed starting point and expands over time.
-				</Typography.Text>
+				<Typography.Text>{CUMMULATIVE_WINDOW_DESCRIPTION}</Typography.Text>
 				<Typography.Text>{displayText}</Typography.Text>
 				<div className="select-group">
 					<Typography.Text>STARTING AT MINUTE</Typography.Text>
@@ -139,9 +134,7 @@ function EvaluationWindowDetails({
 	if (isCurrentDay) {
 		return (
 			<div className="evaluation-window-details">
-				<Typography.Text>
-					A Cumulative Window has a fixed starting point and expands over time.
-				</Typography.Text>
+				<Typography.Text>{CUMMULATIVE_WINDOW_DESCRIPTION}</Typography.Text>
 				<Typography.Text>{displayText}</Typography.Text>
 				<div className="select-group time-select-group">
 					<Typography.Text>STARTING AT</Typography.Text>
@@ -166,9 +159,7 @@ function EvaluationWindowDetails({
 	if (isCurrentMonth) {
 		return (
 			<div className="evaluation-window-details">
-				<Typography.Text>
-					A Cumulative Window has a fixed starting point and expands over time.
-				</Typography.Text>
+				<Typography.Text>{CUMMULATIVE_WINDOW_DESCRIPTION}</Typography.Text>
 				<Typography.Text>{displayText}</Typography.Text>
 				<div className="select-group">
 					<Typography.Text>STARTING ON DAY</Typography.Text>
@@ -201,10 +192,7 @@ function EvaluationWindowDetails({
 
 	return (
 		<div className="evaluation-window-details">
-			<Typography.Text>
-				A Rolling Window has a fixed size and shifts its starting point over time
-				based on when the rules are evaluated.
-			</Typography.Text>
+			<Typography.Text>{ROLLING_WINDOW_DESCRIPTION}</Typography.Text>
 			<Typography.Text>Specify custom duration</Typography.Text>
 			<Typography.Text>{displayText}</Typography.Text>
 			<div className="select-group">

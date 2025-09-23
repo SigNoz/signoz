@@ -5,6 +5,7 @@ import { Check } from 'lucide-react';
 import {
 	EVALUATION_WINDOW_TIMEFRAME,
 	EVALUATION_WINDOW_TYPE,
+	ROLLING_WINDOW_DESCRIPTION,
 } from '../constants';
 import {
 	CumulativeWindowTimeframes,
@@ -94,10 +95,7 @@ function EvaluationWindowPopover({
 			}
 			return (
 				<div className="selection-content">
-					<Typography.Text>
-						A Rolling Window has a fixed size and shifts its starting point over time
-						based on when the rules are evaluated.
-					</Typography.Text>
+					<Typography.Text>{ROLLING_WINDOW_DESCRIPTION}</Typography.Text>
 					<Button type="link">Read the docs</Button>
 				</div>
 			);

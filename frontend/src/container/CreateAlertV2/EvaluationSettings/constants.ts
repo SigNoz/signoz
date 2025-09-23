@@ -61,3 +61,9 @@ export const TIMEZONE_DATA = generateTimezoneData().map((timezone) => ({
 	label: `${timezone.name} (${timezone.offset})`,
 	value: timezone.value,
 }));
+
+export const CUMMULATIVE_WINDOW_DESCRIPTION =
+	'A Cumulative Window has a fixed starting point and expands over time.';
+
+export const ROLLING_WINDOW_DESCRIPTION =
+	'A Rolling Window has a fixed size and shifts its starting point over time based on when the rules are evaluated.';
