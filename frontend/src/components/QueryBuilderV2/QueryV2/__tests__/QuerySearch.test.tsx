@@ -1,7 +1,4 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable import/named */
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
@@ -23,7 +20,9 @@ jest.mock('hooks/useDarkMode', () => ({
 }));
 
 jest.mock('providers/Dashboard/Dashboard', () => ({
-	useDashboard: () => ({ selectedDashboard: undefined }),
+	useDashboard: (): { selectedDashboard: undefined } => ({
+		selectedDashboard: undefined,
+	}),
 }));
 
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => {
@@ -45,7 +44,7 @@ jest.mock('@codemirror/autocomplete', () => ({
 
 // Mock language and themes used by CodeMirror
 jest.mock('@codemirror/lang-javascript', () => ({
-	javascript: () => ({}),
+	javascript: (): Record<string, unknown> => ({}),
 }));
 
 jest.mock('@uiw/codemirror-theme-copilot', () => ({
@@ -70,133 +69,139 @@ jest.mock('api/querySuggestions/getValueSuggestion', () => ({
 }));
 
 // Mock CodeMirror to a simple textarea to make it testable and call onUpdate
-jest.mock('@uiw/react-codemirror', () => {
-	// Minimal EditorView shape used by the component
-	class EditorViewMock {}
-	(EditorViewMock as any).domEventHandlers = (_handlers: unknown) =>
-		({} as unknown);
-	(EditorViewMock as any).lineWrapping = {} as unknown;
-	(EditorViewMock as any).editable = { of: (_v: unknown) => ({}) } as unknown;
+jest.mock(
+	'@uiw/react-codemirror',
+	(): Record<string, unknown> => {
+		// Minimal EditorView shape used by the component
+		class EditorViewMock {}
+		(EditorViewMock as any).domEventHandlers = (): unknown => ({} as unknown);
+		(EditorViewMock as any).lineWrapping = {} as unknown;
+		(EditorViewMock as any).editable = { of: () => ({}) } as unknown;
 
-	const keymap = { of: (arr: unknown) => arr } as unknown;
-	const Prec = { highest: (ext: unknown) => ext } as unknown;
+		const keymap = { of: (arr: unknown) => arr } as unknown;
+		const Prec = { highest: (ext: unknown) => ext } as unknown;
 
-	type CodeMirrorProps = {
-		value?: string;
-		onChange?: (v: string) => void;
-		onFocus?: () => void;
-		onBlur?: () => void;
-		placeholder?: string;
-		onCreateEditor?: (view: unknown) => unknown;
-		onUpdate?: (arg: {
-			view: {
-				state: {
-					selection: { main: { head: number } };
-					doc: {
-						toString: () => string;
-						lineAt: (
-							_pos: number,
-						) => { number: number; from: number; to: number; text: string };
+		type CodeMirrorProps = {
+			value?: string;
+			onChange?: (v: string) => void;
+			onFocus?: () => void;
+			onBlur?: () => void;
+			placeholder?: string;
+			onCreateEditor?: (view: unknown) => unknown;
+			onUpdate?: (arg: {
+				view: {
+					state: {
+						selection: { main: { head: number } };
+						doc: {
+							toString: () => string;
+							lineAt: (
+								_pos: number,
+							) => { number: number; from: number; to: number; text: string };
+						};
 					};
 				};
-			};
-		}) => void;
-		'data-testid'?: string;
-		extensions?: unknown[];
-	};
-
-	function CodeMirrorMock({
-		value,
-		onChange,
-		onFocus,
-		onBlur,
-		placeholder,
-		onCreateEditor,
-		onUpdate,
-		'data-testid': dataTestId,
-		extensions,
-	}: CodeMirrorProps): JSX.Element {
-		const [localValue, setLocalValue] = React.useState<string>(value ?? '');
-
-		// Provide a fake editor instance
-		React.useEffect(() => {
-			if (onCreateEditor) {
-				onCreateEditor(new EditorViewMock() as any);
-			}
-			// eslint-disable-next-line react-hooks/exhaustive-deps
-		}, []);
-
-		// Call onUpdate whenever localValue changes to simulate cursor and doc
-		React.useEffect(() => {
-			if (onUpdate) {
-				const text = String(localValue ?? '');
-				const head = text.length;
-				onUpdate({
-					view: {
-						state: {
-							selection: { main: { head } },
-							doc: {
-								toString: (): string => text,
-								lineAt: (_pos: number) => ({
-									number: 1,
-									from: 0,
-									to: text.length,
-									text,
-								}),
-							},
-						},
-					},
-				});
-			}
-			// eslint-disable-next-line react-hooks/exhaustive-deps
-		}, [localValue]);
-
-		const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
-			const isModEnter = e.key === 'Enter' && (e.metaKey || e.ctrlKey);
-			if (!isModEnter) return;
-			const exts: unknown[] = Array.isArray(extensions) ? extensions : [];
-			const flat: unknown[] = exts.flatMap((x: unknown) =>
-				Array.isArray(x) ? x : [x],
-			);
-			const keyBindings = flat.filter(
-				(x) =>
-					Boolean(x) &&
-					typeof x === 'object' &&
-					'key' in (x as Record<string, unknown>),
-			) as Array<{ key?: string; run?: () => boolean | void }>;
-			keyBindings
-				.filter((b) => b.key === 'Mod-Enter' && typeof b.run === 'function')
-				.forEach((b) => {
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					b.run!();
-				});
+			}) => void;
+			'data-testid'?: string;
+			extensions?: unknown[];
 		};
 
-		return (
-			<textarea
-				data-testid={dataTestId || 'query-where-clause-editor'}
-				placeholder={placeholder}
-				value={localValue}
-				onChange={(e): void => {
-					setLocalValue(e.target.value);
-					onChange && onChange(e.target.value);
-				}}
-				onFocus={onFocus}
-				onBlur={onBlur}
-				onKeyDown={handleKeyDown}
-				style={{ width: '100%', minHeight: 80 }}
-			/>
-		);
-	}
+		function CodeMirrorMock({
+			value,
+			onChange,
+			onFocus,
+			onBlur,
+			placeholder,
+			onCreateEditor,
+			onUpdate,
+			'data-testid': dataTestId,
+			extensions,
+		}: CodeMirrorProps): JSX.Element {
+			const [localValue, setLocalValue] = React.useState<string>(value ?? '');
 
-	return {
-		__esModule: true,
-		default: CodeMirrorMock,
-		EditorView: EditorViewMock,
-		keymap,
-		Prec,
-	};
-});
+			// Provide a fake editor instance
+			React.useEffect(() => {
+				if (onCreateEditor) {
+					onCreateEditor(new EditorViewMock() as any);
+				}
+				// eslint-disable-next-line react-hooks/exhaustive-deps
+			}, []);
+
+			// Call onUpdate whenever localValue changes to simulate cursor and doc
+			React.useEffect(() => {
+				if (onUpdate) {
+					const text = String(localValue ?? '');
+					const head = text.length;
+					onUpdate({
+						view: {
+							state: {
+								selection: { main: { head } },
+								doc: {
+									toString: (): string => text,
+									lineAt: () => ({
+										number: 1,
+										from: 0,
+										to: text.length,
+										text,
+									}),
+								},
+							},
+						},
+					});
+				}
+				// eslint-disable-next-line react-hooks/exhaustive-deps
+			}, [localValue]);
+
+			const handleKeyDown = (
+				e: React.KeyboardEvent<HTMLTextAreaElement>,
+			): void => {
+				const isModEnter = e.key === 'Enter' && (e.metaKey || e.ctrlKey);
+				if (!isModEnter) return;
+				const exts: unknown[] = Array.isArray(extensions) ? extensions : [];
+				const flat: unknown[] = exts.flatMap((x: unknown) =>
+					Array.isArray(x) ? x : [x],
+				);
+				const keyBindings = flat.filter(
+					(x) =>
+						Boolean(x) &&
+						typeof x === 'object' &&
+						'key' in (x as Record<string, unknown>),
+				) as Array<{ key?: string; run?: () => boolean | void }>;
+				keyBindings
+					.filter((b) => b.key === 'Mod-Enter' && typeof b.run === 'function')
+					.forEach((b) => {
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						b.run!();
+					});
+			};
+
+			return (
+				<textarea
+					data-testid={dataTestId || 'query-where-clause-editor'}
+					placeholder={placeholder}
+					value={localValue}
+					onChange={(e): void => {
+						setLocalValue(e.target.value);
+						if (onChange) {
+							onChange(e.target.value);
+						}
+					}}
+					onFocus={onFocus}
+					onBlur={onBlur}
+					onKeyDown={handleKeyDown}
+					style={{ width: '100%', minHeight: 80 }}
+				/>
+			);
+		}
+
+		return {
+			__esModule: true,
+			default: CodeMirrorMock,
+			EditorView: EditorViewMock,
+			keymap,
+			Prec,
+		};
+	},
+);
 const handleRunQueryMock = ((UseQBModule as unknown) as {
 	handleRunQuery: jest.MockedFunction<() => void>;
 }).handleRunQuery;

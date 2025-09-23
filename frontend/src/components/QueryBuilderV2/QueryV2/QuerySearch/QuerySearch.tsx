@@ -106,7 +106,7 @@ function QuerySearch({
 
 	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
 	const [isFocused, setIsFocused] = useState(false);
-	const [hasInteractedWithQB, setHasInteractedWithQB] = useState(false); // to track if the user has interacted with the query builder
+	const [hasInteractedWithQB, setHasInteractedWithQB] = useState(false);
 
 	const handleQueryValidation = (newQuery: string): void => {
 		try {
@@ -1231,6 +1231,9 @@ function QuerySearch({
 	// Effect to handle query run after update
 	useEffect(
 		() => {
+			// Only run the query post updating the filter expression.
+			// This runs the query in the next update cycle of react, when it's guaranteed that the query is updated.
+			// Because both the things are sequential and react batches the updates so it was still taking the old query.
 			if (shouldRunQueryPostUpdate) {
 				if (onRun && typeof onRun === 'function') {
 					onRun(query);
