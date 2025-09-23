@@ -115,7 +115,7 @@ func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relatio
 			return
 		}
 
-		selector, err := cb(req)
+		selector, err := cb(req.Context(), claims)
 		if err != nil {
 			render.Error(rw, err)
 			return
