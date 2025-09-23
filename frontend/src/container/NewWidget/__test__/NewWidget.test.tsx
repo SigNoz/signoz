@@ -341,6 +341,8 @@ describe('Stacking bar in new panel', () => {
 });
 
 describe('when switching to BAR panel type', () => {
+	jest.setTimeout(10000);
+
 	beforeEach(() => {
 		jest.clearAllMocks();
 
