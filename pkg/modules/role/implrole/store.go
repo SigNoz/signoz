@@ -90,7 +90,7 @@ func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUI
 		Where("id = ?", id).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapNotFoundErrf(err, roletypes.ErrCodeRoleNotFound, "dashboard with id %s doesn't exist", id)
+		return store.sqlstore.WrapNotFoundErrf(err, roletypes.ErrCodeRoleNotFound, "role with id %s doesn't exist", id)
 	}
 
 	return nil
