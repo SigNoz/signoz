@@ -315,12 +315,27 @@
 				}
 			}
 
-			.interested-span {
+			.interested-span,
+			.selected-non-matching-span {
 				border-radius: 4px;
 				background: rgba(171, 189, 255, 0.06) !important;
 
 				.span-overview-content {
 					background: unset;
+				}
+			}
+
+			.dimmed-span {
+				opacity: 0.4;
+			}
+			.highlighted-span {
+				opacity: 1;
+			}
+
+			.selected-non-matching-span {
+				.span-overview-content,
+				.span-line-text {
+					opacity: 0.5;
 				}
 			}
 		}

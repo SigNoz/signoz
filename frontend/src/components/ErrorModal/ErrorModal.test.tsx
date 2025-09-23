@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import APIError from 'types/api/error';
 
 import ErrorModal from './ErrorModal';
@@ -56,9 +56,8 @@ describe('ErrorModal Component', () => {
 
 		// Click the close button
 		const closeButton = screen.getByTestId('close-button');
-		act(() => {
-			fireEvent.click(closeButton);
-		});
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		await user.click(closeButton);
 
 		// Check if onClose was called
 		expect(onCloseMock).toHaveBeenCalledTimes(1);
@@ -149,9 +148,8 @@ it('should open the modal when the trigger component is clicked', async () => {
 
 	// Click the trigger component
 	const triggerButton = screen.getByText('Open Error Modal');
-	act(() => {
-		fireEvent.click(triggerButton);
-	});
+	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	await user.click(triggerButton);
 
 	// Check if the modal is displayed
 	expect(screen.getByText('An error occurred')).toBeInTheDocument();
@@ -170,18 +168,15 @@ it('should close the modal when the onCancel event is triggered', async () => {
 
 	// Click the trigger component
 	const triggerButton = screen.getByText('error');
-	act(() => {
-		fireEvent.click(triggerButton);
-	});
+	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	await user.click(triggerButton);
 
 	await waitFor(() => {
 		expect(screen.getByText('An error occurred')).toBeInTheDocument();
 	});
 
 	// Trigger the onCancel event
-	act(() => {
-		fireEvent.click(screen.getByTestId('close-button'));
-	});
+	await user.click(screen.getByTestId('close-button'));
 
 	// Check if the modal is closed
 	expect(onCloseMock).toHaveBeenCalledTimes(1);
