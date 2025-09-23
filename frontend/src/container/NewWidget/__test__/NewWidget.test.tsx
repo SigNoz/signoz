@@ -353,17 +353,13 @@ describe('when switching to BAR panel type', () => {
 
 	it('should preserve saved stacking value of true', async () => {
 		const { getByTestId, getByText, container } = render(
-			<I18nextProvider i18n={i18n}>
-				<DashboardProvider>
-					<PreferenceContextProvider>
-						<NewWidget
-							selectedGraph={PANEL_TYPES.BAR}
-							fillSpans={undefined}
-							yAxisUnit={undefined}
-						/>
-					</PreferenceContextProvider>
-				</DashboardProvider>
-			</I18nextProvider>,
+			<DashboardProvider>
+				<NewWidget
+					selectedGraph={PANEL_TYPES.BAR}
+					fillSpans={undefined}
+					yAxisUnit={undefined}
+				/>
+			</DashboardProvider>,
 		);
 
 		await userEvent.click(getByText('Bar')); // Panel Type Selected
