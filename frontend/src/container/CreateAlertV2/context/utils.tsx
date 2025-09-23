@@ -11,7 +11,21 @@ import { AlertDef } from 'types/api/alerts/def';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { AlertState, CreateAlertAction } from './types';
+import {
+	INITIAL_ADVANCED_OPTIONS_STATE,
+	INITIAL_ALERT_THRESHOLD_STATE,
+	INITIAL_EVALUATION_WINDOW_STATE,
+} from './constants';
+import {
+	AdvancedOptionsAction,
+	AdvancedOptionsState,
+	AlertState,
+	AlertThresholdAction,
+	AlertThresholdState,
+	CreateAlertAction,
+	EvaluationWindowAction,
+	EvaluationWindowState,
+} from './types';
 
 export const alertCreationReducer = (
 	state: AlertState,
@@ -32,6 +46,11 @@ export const alertCreationReducer = (
 			return {
 				...state,
 				labels: action.payload,
+			};
+		case 'SET_Y_AXIS_UNIT':
+			return {
+				...state,
+				yAxisUnit: action.payload,
 			};
 		default:
 			return state;
@@ -79,3 +98,77 @@ export function getInitialAlertTypeFromURL(
 		? (alertTypeFromURL as AlertTypes)
 		: getInitialAlertType(currentQuery);
 }
+
+export const alertThresholdReducer = (
+	state: AlertThresholdState,
+	action: AlertThresholdAction,
+): AlertThresholdState => {
+	switch (action.type) {
+		case 'SET_SELECTED_QUERY':
+			return { ...state, selectedQuery: action.payload };
+		case 'SET_OPERATOR':
+			return { ...state, operator: action.payload };
+		case 'SET_MATCH_TYPE':
+			return { ...state, matchType: action.payload };
+		case 'SET_THRESHOLDS':
+			return { ...state, thresholds: action.payload };
+		case 'RESET':
+			return INITIAL_ALERT_THRESHOLD_STATE;
+		default:
+			return state;
+	}
+};
+
+export const advancedOptionsReducer = (
+	state: AdvancedOptionsState,
+	action: AdvancedOptionsAction,
+): AdvancedOptionsState => {
+	switch (action.type) {
+		case 'SET_SEND_NOTIFICATION_IF_DATA_IS_MISSING':
+			return { ...state, sendNotificationIfDataIsMissing: action.payload };
+		case 'SET_ENFORCE_MINIMUM_DATAPOINTS':
+			return { ...state, enforceMinimumDatapoints: action.payload };
+		case 'SET_DELAY_EVALUATION':
+			return { ...state, delayEvaluation: action.payload };
+		case 'SET_EVALUATION_CADENCE':
+			return {
+				...state,
+				evaluationCadence: { ...state.evaluationCadence, ...action.payload },
+			};
+		case 'SET_EVALUATION_CADENCE_MODE':
+			return {
+				...state,
+				evaluationCadence: { ...state.evaluationCadence, mode: action.payload },
+			};
+		case 'RESET':
+			return INITIAL_ADVANCED_OPTIONS_STATE;
+		default:
+			return state;
+	}
+};
+
+export const evaluationWindowReducer = (
+	state: EvaluationWindowState,
+	action: EvaluationWindowAction,
+): EvaluationWindowState => {
+	switch (action.type) {
+		case 'SET_WINDOW_TYPE':
+			return {
+				...state,
+				windowType: action.payload,
+				startingAt: INITIAL_EVALUATION_WINDOW_STATE.startingAt,
+				timeframe:
+					action.payload === 'rolling'
+						? INITIAL_EVALUATION_WINDOW_STATE.timeframe
+						: 'currentHour',
+			};
+		case 'SET_TIMEFRAME':
+			return { ...state, timeframe: action.payload };
+		case 'SET_STARTING_AT':
+			return { ...state, startingAt: action.payload };
+		case 'RESET':
+			return INITIAL_EVALUATION_WINDOW_STATE;
+		default:
+			return state;
+	}
+};

@@ -12,18 +12,16 @@ import (
 
 	"go.uber.org/zap"
 
-	"errors"
-
 	"github.com/go-openapi/strfmt"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	querierV5 "github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -99,8 +97,10 @@ type ManagerOptions struct {
 	PrepareTaskFunc     func(opts PrepareTaskOptions) (Task, error)
 	PrepareTestRuleFunc func(opts PrepareTestRuleOptions) (int, *model.ApiError)
 	Alertmanager        alertmanager.Alertmanager
-	SQLStore            sqlstore.SQLStore
 	OrgGetter           organization.Getter
+	RuleStore           ruletypes.RuleStore
+	MaintenanceStore    ruletypes.MaintenanceStore
+	SqlStore            sqlstore.SQLStore
 }
 
 // The Manager manages recording and alerting rules.
@@ -147,6 +147,12 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 	var task Task
 
 	ruleId := RuleIdFromTaskName(opts.TaskName)
+
+	evaluation, err := opts.Rule.Evaluation.GetEvaluation()
+	if err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "evaluation is invalid: %v", err)
+	}
+
 	if opts.Rule.RuleType == ruletypes.RuleTypeThreshold {
 		// create a threshold rule
 		tr, err := NewThresholdRule(
@@ -167,7 +173,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		rules = append(rules, tr)
 
 		// create ch rule task for evalution
-		task = newTask(TaskTypeCh, opts.TaskName, taskNamesuffix, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		task = newTask(TaskTypeCh, opts.TaskName, taskNamesuffix, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 
 	} else if opts.Rule.RuleType == ruletypes.RuleTypeProm {
 
@@ -189,7 +195,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		rules = append(rules, pr)
 
 		// create promql rule task for evalution
-		task = newTask(TaskTypeProm, opts.TaskName, taskNamesuffix, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		task = newTask(TaskTypeProm, opts.TaskName, taskNamesuffix, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 
 	} else {
 		return nil, fmt.Errorf("unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, ruletypes.RuleTypeProm, ruletypes.RuleTypeThreshold)
@@ -202,14 +208,12 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 // by calling the Run method.
 func NewManager(o *ManagerOptions) (*Manager, error) {
 	o = defaultOptions(o)
-	ruleStore := sqlrulestore.NewRuleStore(o.SQLStore)
-	maintenanceStore := sqlrulestore.NewMaintenanceStore(o.SQLStore)
 
 	m := &Manager{
 		tasks:               map[string]Task{},
 		rules:               map[string]Rule{},
-		ruleStore:           ruleStore,
-		maintenanceStore:    maintenanceStore,
+		ruleStore:           o.RuleStore,
+		maintenanceStore:    o.MaintenanceStore,
 		opts:                o,
 		block:               make(chan struct{}),
 		logger:              o.Logger,
@@ -218,8 +222,8 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		prepareTaskFunc:     o.PrepareTaskFunc,
 		prepareTestRuleFunc: o.PrepareTestRuleFunc,
 		alertmanager:        o.Alertmanager,
-		sqlstore:            o.SQLStore,
 		orgGetter:           o.OrgGetter,
+		sqlstore:            o.SqlStore,
 	}
 
 	return m, nil
@@ -400,7 +404,7 @@ func (m *Manager) editTask(_ context.Context, orgID valuer.UUID, rule *ruletypes
 
 	if err != nil {
 		zap.L().Error("loading tasks failed", zap.Error(err))
-		return errors.New("error preparing rule with given parameters, previous rule set restored")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "error preparing rule with given parameters, previous rule set restored")
 	}
 
 	for _, r := range newTask.Rules() {
@@ -593,7 +597,7 @@ func (m *Manager) addTask(_ context.Context, orgID valuer.UUID, rule *ruletypes.
 
 	if err != nil {
 		zap.L().Error("creating rule task failed", zap.String("name", taskName), zap.Error(err))
-		return errors.New("error loading rules, previous rule set restored")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "error loading rules, previous rule set restored")
 	}
 
 	for _, r := range newTask.Rules() {
@@ -891,33 +895,37 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 		return nil, err
 	}
 
-	// storedRule holds the current stored rule from DB
-	patchedRule := ruletypes.PostableRule{}
-	if err := json.Unmarshal([]byte(ruleStr), &patchedRule); err != nil {
-		zap.L().Error("failed to unmarshal stored rule with given id", zap.String("id", id.StringValue()), zap.Error(err))
+	storedRule := ruletypes.PostableRule{}
+	if err := json.Unmarshal([]byte(storedJSON.Data), &storedRule); err != nil {
+		zap.L().Error("failed to unmarshal rule from db", zap.String("id", id.StringValue()), zap.Error(err))
+		return nil, err
+	}
+
+	if err := json.Unmarshal([]byte(ruleStr), &storedRule); err != nil {
+		zap.L().Error("failed to unmarshal patched rule with given id", zap.String("id", id.StringValue()), zap.Error(err))
 		return nil, err
 	}
 
 	// deploy or un-deploy task according to patched (new) rule state
-	if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &patchedRule); err != nil {
+	if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &storedRule); err != nil {
 		zap.L().Error("failed to sync stored rule state with the task", zap.String("taskName", taskName), zap.Error(err))
 		return nil, err
 	}
 
-	// prepare rule json to write to update db
-	patchedRuleBytes, err := json.Marshal(patchedRule)
+	newStoredJson, err := json.Marshal(&storedRule)
 	if err != nil {
+		zap.L().Error("failed to marshal new stored rule with given id", zap.String("id", id.StringValue()), zap.Error(err))
 		return nil, err
 	}
 
 	now := time.Now()
-	storedJSON.Data = string(patchedRuleBytes)
+	storedJSON.Data = string(newStoredJson)
 	storedJSON.UpdatedBy = claims.Email
 	storedJSON.UpdatedAt = now
 
 	err = m.ruleStore.EditRule(ctx, storedJSON, func(ctx context.Context) error { return nil })
 	if err != nil {
-		if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &patchedRule); err != nil {
+		if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &storedRule); err != nil {
 			zap.L().Error("failed to restore rule after patch failure", zap.String("taskName", taskName), zap.Error(err))
 		}
 		return nil, err
@@ -926,7 +934,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 	// prepare http response
 	response := ruletypes.GettableRule{
 		Id:           id.StringValue(),
-		PostableRule: patchedRule,
+		PostableRule: storedRule,
 	}
 
 	// fetch state of rule from memory

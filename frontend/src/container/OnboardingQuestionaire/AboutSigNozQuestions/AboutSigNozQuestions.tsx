@@ -109,7 +109,7 @@ export function AboutSigNozQuestions({
 
 						<TextArea
 							className="discover-signoz-input"
-							placeholder="e.g., Google Search, Hacker News, Reddit, a friend, ChatGPT, a blog post, a conference, etc."
+							placeholder={`e.g., googling "datadog alternative", a post on r/devops, from a friend/colleague, a LinkedIn post, ChatGPT, etc.`}
 							value={discoverSignoz}
 							autoFocus
 							rows={4}
