@@ -7,14 +7,11 @@ import { initialQueriesMap } from 'constants/queryBuilder';
 import * as UseQBModule from 'hooks/queryBuilder/useQueryBuilder';
 import React from 'react';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-// Mock API suggestion endpoints to avoid network calls
 import type { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
 
-// Import the component and mocked APIs after mocks are set up
 import QuerySearch from '../QuerySearch/QuerySearch';
 
-// Mock infrastructure/business dependencies locally for this test
 jest.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
 }));
@@ -34,7 +31,6 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => {
 	};
 });
 
-// Mock codemirror autocomplete to avoid accessing real EditorView internals
 jest.mock('@codemirror/autocomplete', () => ({
 	autocompletion: (): Record<string, unknown> => ({}),
 	closeCompletion: (): boolean => true,
@@ -42,7 +38,6 @@ jest.mock('@codemirror/autocomplete', () => ({
 	startCompletion: (): boolean => true,
 }));
 
-// Mock language and themes used by CodeMirror
 jest.mock('@codemirror/lang-javascript', () => ({
 	javascript: (): Record<string, unknown> => ({}),
 }));
