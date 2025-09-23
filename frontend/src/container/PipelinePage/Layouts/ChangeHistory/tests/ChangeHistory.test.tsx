@@ -10,20 +10,6 @@ import store from 'store';
 import ChangeHistory from '../index';
 import { pipelineData, pipelineDataHistory } from './testUtils';
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {

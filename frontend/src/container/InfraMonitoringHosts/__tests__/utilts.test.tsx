@@ -4,20 +4,6 @@ import { formatDataForTable, GetHostsQuickFiltersConfig } from '../utils';
 
 const PROGRESS_BAR_CLASS = '.progress-bar';
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 describe('InfraMonitoringHosts utils', () => {
 	describe('formatDataForTable', () => {
 		it('should format host data correctly', () => {
