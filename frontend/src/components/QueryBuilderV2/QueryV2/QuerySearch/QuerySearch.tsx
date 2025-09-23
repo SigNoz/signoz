@@ -80,7 +80,7 @@ const stopEventsExtension = EditorView.domEventHandlers({
 });
 
 function QuerySearch({
-	placeholder = "Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
+	placeholder,
 	onChange,
 	queryData,
 	dataSource,
