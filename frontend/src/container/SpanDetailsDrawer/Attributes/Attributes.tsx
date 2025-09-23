@@ -20,10 +20,11 @@ interface AttributeRecord {
 interface IAttributesProps {
 	span: Span;
 	isSearchVisible: boolean;
+	shouldFocusOnToggle?: boolean;
 }
 
 function Attributes(props: IAttributesProps): JSX.Element {
-	const { span, isSearchVisible } = props;
+	const { span, isSearchVisible, shouldFocusOnToggle } = props;
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
 
 	const flattenSpanData: Record<string, string> = useMemo(
@@ -69,7 +70,7 @@ function Attributes(props: IAttributesProps): JSX.Element {
 			{isSearchVisible &&
 				(datasource.length > 0 || fieldSearchInput.length > 0) && (
 					<Input
-						autoFocus
+						autoFocus={shouldFocusOnToggle}
 						placeholder="Search for attribute..."
 						className="search-input"
 						value={fieldSearchInput}
@@ -117,5 +118,9 @@ function Attributes(props: IAttributesProps): JSX.Element {
 		</div>
 	);
 }
+
+Attributes.defaultProps = {
+	shouldFocusOnToggle: false,
+};
 
 export default Attributes;
