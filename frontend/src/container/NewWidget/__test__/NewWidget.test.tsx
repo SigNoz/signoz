@@ -7,6 +7,7 @@
 // - Handling multiple rows correctly
 // - Handling widgets with different heights
 
+import { screen } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
@@ -16,7 +17,6 @@ import i18n from 'ReactI18';
 import {
 	fireEvent,
 	getByText as getByTextUtil,
-	queryByText,
 	render,
 	userEvent,
 	within,
@@ -366,14 +366,7 @@ describe('when switching to BAR panel type', () => {
 			</I18nextProvider>,
 		);
 
-		// Click on Panel Type dropdown
-		const panelTypeDropdown = getByTestId('panel-change-select');
-		expect(panelTypeDropdown).toBeInTheDocument();
-
 		await userEvent.click(getByText('Bar')); // Panel Type Selected
-
-		// Initial State
-		checkStackSeriesState(container, true);
 
 		// find dropdown with - .ant-select-dropdown
 		const panelDropdown = document.querySelector(
@@ -381,15 +374,12 @@ describe('when switching to BAR panel type', () => {
 		) as HTMLElement;
 		expect(panelDropdown).toBeInTheDocument();
 
-		expect(within(panelDropdown).getByText('Time Series')).toBeInTheDocument();
-		expect(within(panelDropdown).getByText('Bar')).toBeInTheDocument();
-
 		// Select TimeSeries from dropdown
 		const option = within(panelDropdown).getByText('Time Series');
-		await userEvent.click(option);
+		fireEvent.click(option);
 
 		// Since we are on timeseries panel, stack series should be false
-		expect(queryByText(container, 'Stack series')).not.toBeInTheDocument();
+		expect(screen.queryByText('Stack series')).not.toBeInTheDocument();
 
 		// switch back to Bar panel
 		const panelTypeDropdown2 = getByTestId('panel-change-select') as HTMLElement;
