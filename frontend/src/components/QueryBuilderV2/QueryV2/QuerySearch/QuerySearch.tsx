@@ -80,6 +80,7 @@ const stopEventsExtension = EditorView.domEventHandlers({
 });
 
 function QuerySearch({
+	placeholder = "Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
 	onChange,
 	queryData,
 	dataSource,
@@ -87,6 +88,7 @@ function QuerySearch({
 	signalSource,
 	hardcodedAttributeKeys,
 }: {
+	placeholder?: string;
 	onChange: (value: string) => void;
 	queryData: IBuilderQuery;
 	dataSource: DataSource;
@@ -1344,7 +1346,7 @@ function QuerySearch({
 							]),
 						),
 					]}
-					placeholder="Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')"
+					placeholder={placeholder}
 					basicSetup={{
 						lineNumbers: false,
 					}}
@@ -1492,6 +1494,8 @@ QuerySearch.defaultProps = {
 	onRun: undefined,
 	signalSource: '',
 	hardcodedAttributeKeys: undefined,
+	placeholder:
+		"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
 };
 
 export default QuerySearch;
