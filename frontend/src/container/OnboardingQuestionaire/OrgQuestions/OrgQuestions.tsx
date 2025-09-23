@@ -208,46 +208,6 @@ function OrgQuestions({
 						/>
 					</div>
 
-					{/* <div className="form-group">
-						<label className="question" htmlFor="usesObservability">
-							Do you currently use any observability/monitoring tool?
-						</label>
-
-						<div className="two-column-grid">
-							<Button
-								type="primary"
-								name="usesObservability"
-								className={`onboarding-questionaire-button ${
-									usesObservability === true ? 'active' : ''
-								}`}
-								onClick={(): void => {
-									setUsesObservability(true);
-								}}
-							>
-								Yes{' '}
-								{usesObservability === true && (
-									<CheckCircle size={12} color={Color.BG_FOREST_500} />
-								)}
-							</Button>
-							<Button
-								type="primary"
-								className={`onboarding-questionaire-button ${
-									usesObservability === false ? 'active' : ''
-								}`}
-								onClick={(): void => {
-									setUsesObservability(false);
-									setObservabilityTool(null);
-									setOtherTool('');
-								}}
-							>
-								No{' '}
-								{usesObservability === false && (
-									<CheckCircle size={12} color={Color.BG_FOREST_500} />
-								)}
-							</Button>
-						</div>
-					</div> */}
-
 					<div className="form-group">
 						<label className="question" htmlFor="observabilityTool">
 							Which observability tool do you currently use?
