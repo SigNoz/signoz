@@ -94,6 +94,7 @@
 				border-radius: 4px;
 				font-size: 14px;
 				padding: 12px;
+				font-weight: 400;
 
 				&::placeholder {
 					color: var(--bg-vanilla-400);
@@ -303,19 +304,19 @@
 			gap: 8px;
 
 			.ant-checkbox-wrapper {
-				color: var(--bg-vanilla-100);
+				color: var(--bg-vanilla-400);
 				font-size: 14px;
 				font-weight: 400;
 
 				.ant-checkbox {
 					.ant-checkbox-inner {
-						border-color: var(--bg-vanilla-300);
-						background-color: var(--bg-vanilla-100);
+						border-color: var(--bg-slate-100);
+						background-color: var(--bg-ink-200);
 					}
 
 					&.ant-checkbox-checked .ant-checkbox-inner {
-						background-color: var(--bg-forest-500);
-						border-color: var(--bg-forest-500);
+						background-color: var(--bg-robin-500);
+						border-color: var(--bg-robin-500);
 					}
 				}
 			}
@@ -497,6 +498,7 @@
 					border: 1px solid var(--bg-vanilla-300);
 					background: var(--bg-vanilla-100);
 					color: var(--text-ink-300);
+					font-weight: 400;
 
 					&::placeholder {
 						color: var(--bg-slate-400);
@@ -560,7 +562,19 @@
 
 			.checkbox-item {
 				.ant-checkbox-wrapper {
-					color: var(--bg-slate-300);
+					color: var(--bg-ink-300);
+
+					.ant-checkbox {
+						.ant-checkbox-inner {
+							border-color: var(--bg-vanilla-300);
+							background-color: var(--bg-vanilla-100);
+						}
+
+						&.ant-checkbox-checked .ant-checkbox-inner {
+							background-color: var(--bg-robin-500);
+							border-color: var(--bg-robin-500);
+						}
+					}
 				}
 			}
 
