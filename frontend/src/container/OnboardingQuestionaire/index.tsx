@@ -169,12 +169,6 @@ function OnboardingQuestionaire(): JSX.Element {
 			nextPageID: 4,
 		});
 
-		console.log(
-			'signozDetails?.interestInSignoz',
-			orgDetails,
-			signozDetails?.interestInSignoz,
-		);
-
 		updateProfile({
 			uses_otel: orgDetails?.usesOtel as boolean,
 			has_existing_observability_tool: orgDetails?.usesObservability as boolean,
