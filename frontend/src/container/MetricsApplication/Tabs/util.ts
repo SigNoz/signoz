@@ -42,7 +42,7 @@ interface OnViewTracePopupClickProps {
 	apmToTraceQuery: Query;
 	isViewLogsClicked?: boolean;
 	stepInterval?: number;
-	safeNavigate: (url: string) => void;
+	safeNavigate: (url: string, event?: React.MouseEvent) => void;
 }
 
 interface OnViewAPIMonitoringPopupClickProps {
@@ -52,7 +52,7 @@ interface OnViewAPIMonitoringPopupClickProps {
 	domainName: string;
 	isError: boolean;
 
-	safeNavigate: (url: string) => void;
+	safeNavigate: (url: string, event?: React.MouseEvent) => void;
 }
 
 export function generateExplorerPath(
@@ -93,8 +93,8 @@ export function onViewTracePopupClick({
 	isViewLogsClicked,
 	stepInterval,
 	safeNavigate,
-}: OnViewTracePopupClickProps): VoidFunction {
-	return (): void => {
+}: OnViewTracePopupClickProps): (event: React.MouseEvent) => void {
+	return (event: React.MouseEvent): void => {
 		const endTime = secondsToMilliseconds(timestamp);
 		const startTime = secondsToMilliseconds(timestamp - (stepInterval || 60));
 
@@ -118,7 +118,11 @@ export function onViewTracePopupClick({
 			queryString,
 		);
 
-		safeNavigate(newPath);
+		if (event) {
+			safeNavigate(newPath, event);
+		} else {
+			safeNavigate(newPath);
+		}
 	};
 }
 
@@ -149,8 +153,8 @@ export function onViewAPIMonitoringPopupClick({
 	isError,
 	stepInterval,
 	safeNavigate,
-}: OnViewAPIMonitoringPopupClickProps): VoidFunction {
-	return (): void => {
+}: OnViewAPIMonitoringPopupClickProps): (event: React.MouseEvent) => void {
+	return (event: React.MouseEvent): void => {
 		const endTime = timestamp + (stepInterval || 60);
 		const startTime = timestamp - (stepInterval || 60);
 		const filters = {
@@ -190,7 +194,11 @@ export function onViewAPIMonitoringPopupClick({
 			filters,
 		);
 
-		safeNavigate(newPath);
+		if (event) {
+			safeNavigate(newPath, event);
+		} else {
+			safeNavigate(newPath);
+		}
 	};
 }
 
