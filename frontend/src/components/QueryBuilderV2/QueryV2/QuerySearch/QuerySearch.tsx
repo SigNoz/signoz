@@ -80,16 +80,20 @@ const stopEventsExtension = EditorView.domEventHandlers({
 });
 
 function QuerySearch({
+	placeholder,
 	onChange,
 	queryData,
 	dataSource,
 	onRun,
 	signalSource,
+	hardcodedAttributeKeys,
 }: {
+	placeholder?: string;
 	onChange: (value: string) => void;
 	queryData: IBuilderQuery;
 	dataSource: DataSource;
 	signalSource?: string;
+	hardcodedAttributeKeys?: QueryKeyDataSuggestionsProps[];
 	onRun?: (query: string) => void;
 }): JSX.Element {
 	const isDarkMode = useIsDarkMode();
@@ -239,6 +243,11 @@ function QuerySearch({
 				return;
 			}
 
+			if (hardcodedAttributeKeys) {
+				setKeySuggestions(hardcodedAttributeKeys);
+				return;
+			}
+
 			lastFetchedKeyRef.current = searchText || '';
 
 			const response = await getKeySuggestions({
@@ -274,6 +283,7 @@ function QuerySearch({
 			toggleSuggestions,
 			queryData.aggregateAttribute?.key,
 			signalSource,
+			hardcodedAttributeKeys,
 		],
 	);
 
@@ -1378,7 +1388,7 @@ function QuerySearch({
 							]),
 						),
 					]}
-					placeholder="Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')"
+					placeholder={placeholder}
 					basicSetup={{
 						lineNumbers: false,
 					}}
@@ -1530,6 +1540,9 @@ function QuerySearch({
 QuerySearch.defaultProps = {
 	onRun: undefined,
 	signalSource: '',
+	hardcodedAttributeKeys: undefined,
+	placeholder:
+		"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
 };
 
 export default QuerySearch;
