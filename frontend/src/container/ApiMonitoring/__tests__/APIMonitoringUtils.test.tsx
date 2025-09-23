@@ -3,10 +3,11 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
-import { SPAN_ATTRIBUTES } from './Explorer/Domains/DomainDetails/constants';
+import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
 import {
 	endPointStatusCodeColumns,
 	extractPortAndEndpoint,
+	formatDataForTable,
 	formatTopErrorsDataForTable,
 	getAllEndpointsWidgetData,
 	getCustomFiltersForBarChart,
@@ -24,7 +25,8 @@ import {
 	getTopErrorsCoRelationQueryFilters,
 	getTopErrorsQueryPayload,
 	TopErrorsResponseRow,
-} from './utils';
+} from '../utils';
+import { APIMonitoringColumnsMock } from './mock';
 
 // Mock or define DataTypes since it seems to be missing from imports
 const DataTypes = {
@@ -34,9 +36,9 @@ const DataTypes = {
 };
 
 // Mock the external utils dependencies that are used within our tested functions
-jest.mock('./utils', () => {
+jest.mock('../utils', () => {
 	// Import the actual module to partial mock
-	const originalModule = jest.requireActual('./utils');
+	const originalModule = jest.requireActual('../utils');
 
 	// Return a mocked version
 	return {
@@ -157,6 +159,54 @@ describe('API Monitoring Utils', () => {
 		});
 	});
 
+	// New tests for formatDataForTable
+	describe('formatDataForTable', () => {
+		it('should format rows correctly with valid data', () => {
+			const columns = APIMonitoringColumnsMock;
+			const data = [
+				[
+					'test-domain', // domainName
+					'10', // endpoints
+					'25', // rps
+					'2.5', // error_rate
+					'15000000', // p99 (ns) -> 15 ms
+					'2025-09-17T12:54:17.040Z', // lastseen
+				],
+			];
+
+			const result = formatDataForTable(data as any, columns as any);
+
+			expect(result).toHaveLength(1);
+			expect(result[0].domainName).toBe('test-domain');
+			expect(result[0].endpointCount).toBe('10');
+			expect(result[0].rate).toBe('25');
+			expect(result[0].errorRate).toBe('2.5');
+			expect(result[0].latency).toBe(15);
+			expect(result[0].lastUsed).toBe('2025-09-17T12:54:17.040Z');
+		});
+
+		it('should handle n/a and undefined values', () => {
+			const columns = APIMonitoringColumnsMock;
+			const data = [
+				[
+					'test-domain',
+					'n/a', // endpoints -> 0
+					'n/a', // rps -> '-'
+					'n/a', // error_rate -> 0
+					'n/a', // p99 -> '-'
+					'n/a', // lastseen -> '-'
+				],
+			];
+
+			const result = formatDataForTable(data as any, columns as any);
+
+			expect(result[0].endpointCount).toBe(0);
+			expect(result[0].rate).toBe('-');
+			expect(result[0].errorRate).toBe(0);
+			expect(result[0].latency).toBe('-');
+			expect(result[0].lastUsed).toBe('-');
+		});
+	});
 	describe('getGroupByFiltersFromGroupByValues', () => {
 		it('should convert row data to filters correctly', () => {
 			// Arrange
@@ -1288,7 +1338,7 @@ describe('API Monitoring Utils', () => {
 			// Setup a mock
 			jest
 				.spyOn(
-					jest.requireActual('./utils'),
+					jest.requireActual('../utils'),
 					'getFormattedEndPointStatusCodeChartData',
 				)
 				.mockReturnValue({
