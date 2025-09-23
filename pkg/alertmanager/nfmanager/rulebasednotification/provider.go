@@ -49,8 +49,15 @@ func (r *provider) GetNotificationConfig(orgID string, ruleID string) (*alertman
 
 	if orgConfigs, exists := r.orgToFingerprintToNotificationConfig[orgID]; exists {
 		if config, configExists := orgConfigs[ruleID]; configExists {
-			notificationConfig = config.DeepCopy()
-			return &notificationConfig, nil
+			if config.Renotify.RenotifyInterval != 0 {
+				notificationConfig.Renotify.RenotifyInterval = config.Renotify.RenotifyInterval
+			}
+			if config.Renotify.NoDataInterval != 0 {
+				notificationConfig.Renotify.NoDataInterval = config.Renotify.NoDataInterval
+			}
+			for k, v := range config.NotificationGroup {
+				notificationConfig.NotificationGroup[k] = v
+			}
 		}
 	}
 

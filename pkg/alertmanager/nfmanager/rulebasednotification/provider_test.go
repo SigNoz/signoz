@@ -2,6 +2,7 @@ package rulebasednotification
 
 import (
 	"context"
+	"github.com/prometheus/common/model"
 	"sync"
 	"testing"
 	"time"
@@ -135,8 +136,19 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 		},
 	}
 
+	ruleId1 := "rule-1"
+	customConfig1 := &alertmanagertypes.NotificationConfig{
+		NotificationGroup: map[model.LabelName]struct{}{
+			model.LabelName("group1"): {},
+			model.LabelName("group2"): {},
+		},
+	}
+
 	// Set config for alert1
 	err = provider.SetNotificationConfig(orgID, ruleID, customConfig)
+	require.NoError(t, err)
+
+	err = provider.SetNotificationConfig(orgID, ruleId1, customConfig1)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -148,18 +160,36 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 		shouldFallback bool
 	}{
 		{
-			name:           "existing config",
-			orgID:          orgID,
-			ruleID:         ruleID,
-			expectedConfig: customConfig,
+			name:   "existing config",
+			orgID:  orgID,
+			ruleID: ruleID,
+			expectedConfig: &alertmanagertypes.NotificationConfig{
+				NotificationGroup: map[model.LabelName]struct{}{
+					model.LabelName("ruleId"): {},
+				},
+				Renotify: alertmanagertypes.ReNotificationConfig{
+					RenotifyInterval: 30 * time.Minute,
+					NoDataInterval:   30 * time.Minute,
+				},
+			},
 			shouldFallback: false,
 		},
 		{
-			name:           "non-existing config - fallback",
-			orgID:          orgID,
-			ruleID:         "rule2",
-			expectedConfig: nil, // Will get fallback from standardnotification
-			shouldFallback: true,
+			name:   "non-existing config - fallback",
+			orgID:  orgID,
+			ruleID: ruleId1,
+			expectedConfig: &alertmanagertypes.NotificationConfig{
+				NotificationGroup: map[model.LabelName]struct{}{
+					model.LabelName("group1"): {},
+					model.LabelName("group2"): {},
+					model.LabelName("ruleId"): {},
+				},
+				Renotify: alertmanagertypes.ReNotificationConfig{
+					RenotifyInterval: 4 * time.Hour,
+					NoDataInterval:   4 * time.Hour,
+				},
+			}, // Will get fallback from standardnotification
+			shouldFallback: false,
 		},
 		{
 			name:           "empty orgID - fallback",
@@ -190,7 +220,7 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 			} else {
 				// Should get our custom config
 				assert.NotNil(t, config)
-				assert.Equal(t, tt.expectedConfig.Renotify, config.Renotify)
+				assert.Equal(t, tt.expectedConfig, config)
 			}
 		})
 	}
