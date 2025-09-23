@@ -27,7 +27,7 @@ func MustNewResources(name Name) Typeable {
 func (resources *resources) Tuples(subject string, relation Relation, selector []Selector) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 	for _, selector := range selector {
-		object := strings.Join([]string{TypeResources.StringValue(), resources.name.String(), selector.String()}, ":")
+		object := resources.Prefix() + "/" + selector.String()
 		tuples = append(tuples, &openfgav1.TupleKey{User: subject, Relation: relation.StringValue(), Object: object})
 	}
 

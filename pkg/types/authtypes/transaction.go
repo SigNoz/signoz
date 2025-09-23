@@ -9,18 +9,18 @@ import (
 )
 
 type Resource struct {
-	Name Name
-	Type Type
+	Name Name `json:"name"`
+	Type Type `json:"type"`
 }
 
 type Object struct {
-	Resource Resource
-	Selector Selector
+	Resource Resource `json:"resource"`
+	Selector Selector `json:"selector"`
 }
 
 type Transaction struct {
-	Relation Relation
-	Object   Object
+	Relation Relation `json:"relation"`
+	Object   Object   `json:"object"`
 }
 
 func NewObject(resource Resource, selector Selector) (*Object, error) {

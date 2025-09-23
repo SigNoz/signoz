@@ -1,8 +1,8 @@
 package authtypes
 
 import (
+	"context"
 	"encoding/json"
-	"net/http"
 	"regexp"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -17,10 +17,10 @@ var (
 	typeRoleSelectorRegex         = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
 	typeOrganizationSelectorRegex = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
 	typeResourceSelectorRegex     = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
-	typeResourcesSelectorRegex    = regexp.MustCompile(`^org:[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
+	typeResourcesSelectorRegex    = regexp.MustCompile(`^org/[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
 )
 
-type SelectorCallbackFn func(*http.Request) ([]Selector, error)
+type SelectorCallbackFn func(context.Context, Claims) ([]Selector, error)
 
 type Selector struct {
 	val string
