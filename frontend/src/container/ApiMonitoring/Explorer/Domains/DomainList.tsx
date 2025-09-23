@@ -3,19 +3,18 @@ import '../Explorer.styles.scss';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Spin, Table, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import listOverview from 'api/thirdPartyApis/listOverview';
 import cx from 'classnames';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { initialQueriesMap } from 'constants/queryBuilder';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import { useListOverview } from 'hooks/thirdPartyApis/useListOverview';
+import { get } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -47,6 +46,21 @@ function DomainList(): JSX.Element {
 		entityVersion: '',
 	});
 
+	const compositeData = useGetCompositeQueryParam();
+
+	const { data, isLoading, isFetching } = useListOverview({
+		start: minTime,
+		end: maxTime,
+		show_ip: Boolean(showIP),
+		filter: {
+			expression: `kind_string = 'Client' ${get(
+				compositeData,
+				'builder.queryData[0].filter.expression',
+				'',
+			)}`,
+		},
+	});
+
 	// initialise tab with default query.
 	useShareBuilderUrl({
 		defaultValue: {
@@ -68,8 +82,6 @@ function DomainList(): JSX.Element {
 		},
 	});
 
-	const compositeData = useGetCompositeQueryParam();
-
 	const handleSearchChange = useCallback(
 		(value: string) => {
 			(handleChangeQueryData as HandleChangeQueryDataV5)('filter', {
@@ -77,19 +89,6 @@ function DomainList(): JSX.Element {
 			});
 		},
 		[handleChangeQueryData],
-	);
-
-	const { data, isLoading, isFetching } = useQuery(
-		[REACT_QUERY_KEY.GET_DOMAINS_LIST, minTime, maxTime, compositeData, showIP],
-		() =>
-			listOverview({
-				start: minTime,
-				end: maxTime,
-				show_ip: Boolean(showIP),
-				filter: {
-					expression: `kind_string = 'Client' ${compositeData?.builder?.queryData[0]?.filter?.expression}`,
-				},
-			}),
 	);
 
 	const formattedDataForTable = useMemo(

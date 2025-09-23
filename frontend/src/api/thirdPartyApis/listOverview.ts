@@ -7,15 +7,14 @@ import { PayloadProps, Props } from 'types/api/thirdPartyApis/listOverview';
 const listOverview = async (
 	props: Props,
 ): Promise<SuccessResponseV2<PayloadProps>> => {
-	// eslint-disable-next-line @typescript-eslint/naming-convention
-	const { start, end, show_ip, filter } = props;
+	const { start, end, show_ip: showIp, filter } = props;
 	try {
 		const response = await ApiBaseInstance.post(
 			`/third-party-apis/overview/list`,
 			{
 				start,
 				end,
-				show_ip,
+				show_ip: showIp,
 				filter,
 			},
 		);
