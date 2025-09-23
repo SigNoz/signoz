@@ -8,6 +8,8 @@ import (
 	"net/http"
 	_ "net/http/pprof" // http profiler
 
+	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
+
 	"github.com/gorilla/handlers"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
@@ -308,20 +310,24 @@ func makeRulesManager(
 	querier querier.Querier,
 	logger *slog.Logger,
 ) (*rules.Manager, error) {
+	ruleStore := sqlrulestore.NewRuleStore(sqlstore)
+	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
-		TelemetryStore: telemetryStore,
-		Prometheus:     prometheus,
-		Context:        context.Background(),
-		Logger:         zap.L(),
-		Reader:         ch,
-		Querier:        querier,
-		SLogger:        logger,
-		Cache:          cache,
-		EvalDelay:      constants.GetEvalDelay(),
-		SQLStore:       sqlstore,
-		OrgGetter:      orgGetter,
-		Alertmanager:   alertmanager,
+		TelemetryStore:   telemetryStore,
+		Prometheus:       prometheus,
+		Context:          context.Background(),
+		Logger:           zap.L(),
+		Reader:           ch,
+		Querier:          querier,
+		SLogger:          logger,
+		Cache:            cache,
+		EvalDelay:        constants.GetEvalDelay(),
+		OrgGetter:        orgGetter,
+		Alertmanager:     alertmanager,
+		RuleStore:        ruleStore,
+		MaintenanceStore: maintenanceStore,
+		SqlStore:         sqlstore,
 	}
 
 	// create Manager
