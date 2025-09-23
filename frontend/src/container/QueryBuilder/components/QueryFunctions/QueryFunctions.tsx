@@ -93,8 +93,6 @@ export default function QueryFunctions({
 		})),
 	);
 
-	console.log({ functions });
-
 	const isDarkMode = useIsDarkMode();
 
 	const hasAnomalyFunction = functions.some((func) => func.name === 'anomaly');
