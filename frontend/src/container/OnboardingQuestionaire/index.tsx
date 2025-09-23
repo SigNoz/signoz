@@ -145,6 +145,9 @@ function OnboardingQuestionaire(): JSX.Element {
 			},
 			onError: (error) => {
 				showErrorNotification(notifications, error as AxiosError);
+
+				// Allow user to proceed even if API fails
+				setCurrentStep(4);
 			},
 		},
 	);
@@ -180,7 +183,6 @@ function OnboardingQuestionaire(): JSX.Element {
 					? (orgDetails?.otherTool as string)
 					: (orgDetails?.observabilityTool as string),
 			where_did_you_discover_signoz: signozDetails?.discoverSignoz as string,
-			// TODO: clarity needed, what if we change string to string[]?
 			reasons_for_interest_in_signoz: signozDetails?.interestInSignoz?.includes(
 				'Others',
 			)
