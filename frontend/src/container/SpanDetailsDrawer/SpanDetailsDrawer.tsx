@@ -35,7 +35,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		traceEndTime,
 	} = props;
 
-	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
+	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(true);
 	const [isRelatedSignalsOpen, setIsRelatedSignalsOpen] = useState<boolean>(
 		false,
 	);
