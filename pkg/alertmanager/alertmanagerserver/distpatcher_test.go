@@ -335,62 +335,289 @@ func TestGroupLabels(t *testing.T) {
 	}
 }
 
-func TestGroupByAllLabels(t *testing.T) {
-	a := &types.Alert{
-		Alert: model.Alert{
-			Labels: model.LabelSet{
-				"a": "v1",
-				"b": "v2",
-				"c": "v3",
-			},
-		},
-	}
-
-	// Test grouping by all labels (empty GroupBy map should group by all)
-	allLabelsGroup := map[model.LabelName]struct{}{
-		"a": {},
-		"b": {},
-		"c": {},
-	}
-
-	expLs := model.LabelSet{
-		"a": "v1",
-		"b": "v2",
-		"c": "v3",
-	}
-
-	ls := getGroupLabels(a, allLabelsGroup)
-
-	if !reflect.DeepEqual(ls, expLs) {
-		t.Fatalf("expected labels are %v, but got %v", expLs, ls)
-	}
-}
-
-func TestGroups(t *testing.T) {
+func TestAggrRouteMap(t *testing.T) {
 	confData := `receivers:
-- name: 'kafka'
-- name: 'prod'
-- name: 'testing'
+- name: 'slack'
+- name: 'email' 
+- name: 'pagerduty'
 
 route:
   group_by: ['alertname']
   group_wait: 10ms
   group_interval: 10ms
-  receiver: 'prod'
+  receiver: 'slack'
   routes:
-  - match:
-      env: 'testing'
-    receiver: 'testing'
-    group_by: ['alertname', 'service']
-  - match:
-      env: 'prod'
-    receiver: 'prod'
-    group_by: ['alertname', 'service', 'cluster']
+  - matchers:
+    - 'ruleId=~"ruleId-OtherAlert|ruleId-TestingAlert"'
+    receiver: 'slack'
+  - matchers:
+    - 'ruleId=~"ruleId-HighLatency|ruleId-HighErrorRate"'
+    receiver: 'email'
     continue: true
-  - match:
-      kafka: 'yes'
-    receiver: 'kafka'
-    group_by: ['alertname', 'service', 'cluster']`
+  - matchers:
+    - 'ruleId="ruleId-HighLatency"'
+    receiver: 'pagerduty'`
+	conf, err := config.Load(confData)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	logger := promslog.NewNopLogger()
+	route := dispatch.NewRoute(conf.Route, nil)
+	marker := types.NewMarker(prometheus.NewRegistry())
+	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, nil, logger, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer alerts.Close()
+
+	timeout := func(d time.Duration) time.Duration { return time.Duration(0) }
+	recorder := &recordStage{alerts: make(map[string]map[model.Fingerprint]*types.Alert)}
+	metrics := NewDispatcherMetrics(false, prometheus.NewRegistry())
+	nfManager := nfmanagertest.NewMock()
+	orgId := "test-org"
+	dispatcher := NewDispatcher(alerts, route, recorder, marker, timeout, nil, logger, metrics, nfManager, orgId)
+	go dispatcher.Run()
+	defer dispatcher.Stop()
+	inputAlerts := []*types.Alert{
+		newAlert(model.LabelSet{"ruleId": "ruleId-OtherAlert", "cluster": "cc", "service": "dd"}),
+		newAlert(model.LabelSet{"env": "testing", "ruleId": "ruleId-TestingAlert", "service": "api", "instance": "inst1"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighErrorRate", "cluster": "aa", "service": "api", "instance": "inst1"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighErrorRate", "cluster": "aa", "service": "api", "instance": "inst2"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighErrorRate", "cluster": "bb", "service": "api", "instance": "inst1"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighLatency", "cluster": "bb", "service": "db", "kafka": "yes", "instance": "inst3"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighLatency", "cluster": "bb", "service": "db", "kafka": "yes", "instance": "inst4"}),
+	}
+	notiConfigs := map[string]alertmanagertypes.NotificationConfig{
+		"ruleId-OtherAlert": {
+			NotificationGroup: map[model.LabelName]struct{}{
+				model.LabelName("ruleId"):  {},
+				model.LabelName("cluster"): {},
+				model.LabelName("service"): {},
+			},
+			Renotify: alertmanagertypes.ReNotificationConfig{
+				RenotifyInterval: 10,
+			},
+		},
+		"ruleId-TestingAlert": {
+			NotificationGroup: map[model.LabelName]struct{}{
+				model.LabelName("ruleId"):   {},
+				model.LabelName("service"):  {},
+				model.LabelName("instance"): {},
+			},
+			Renotify: alertmanagertypes.ReNotificationConfig{
+				RenotifyInterval: 11,
+			},
+		},
+		"ruleId-HighErrorRate": {
+			NotificationGroup: map[model.LabelName]struct{}{
+				model.LabelName("ruleId"):   {},
+				model.LabelName("cluster"):  {},
+				model.LabelName("instance"): {},
+			},
+			Renotify: alertmanagertypes.ReNotificationConfig{
+				RenotifyInterval: 12,
+			},
+		},
+		"ruleId-HighLatency": {
+			NotificationGroup: map[model.LabelName]struct{}{
+				model.LabelName("ruleId"):  {},
+				model.LabelName("service"): {},
+				model.LabelName("kafka"):   {},
+			},
+			Renotify: alertmanagertypes.ReNotificationConfig{
+				RenotifyInterval: 13,
+			},
+		},
+	}
+
+	for ruleID, config := range notiConfigs {
+		nfManager.SetMockConfig(orgId, ruleID, &config)
+	}
+	err = alerts.Put(inputAlerts...)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Let alerts get processed.
+	for i := 0; len(recorder.Alerts()) != 9 && i < 10; i++ {
+		time.Sleep(200 * time.Millisecond)
+	}
+	require.Len(t, recorder.Alerts(), 9)
+
+	alertGroups, receivers := dispatcher.Groups(
+		func(*dispatch.Route) bool {
+			return true
+		}, func(*types.Alert, time.Time) bool {
+			return true
+		},
+	)
+
+	dispatcher.mtx.RLock()
+	aggrGroupsPerRoute := dispatcher.aggrGroupsPerRoute
+	dispatcher.mtx.RUnlock()
+
+	require.NotEmpty(t, aggrGroupsPerRoute, "Should have aggregation groups per route")
+
+	routeIDsFound := make(map[string]bool)
+	totalAggrGroups := 0
+
+	//first lets check for valid route id
+	for route, groups := range aggrGroupsPerRoute {
+		routeID := route.ID()
+		routeIDsFound[routeID] = true
+		expectedReceiver := ""
+		switch routeID {
+		case "{}/{ruleId=~\"ruleId-OtherAlert|ruleId-TestingAlert\"}/0":
+			expectedReceiver = "slack"
+		case "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}/1":
+			expectedReceiver = "email"
+		case "{}/{ruleId=\"ruleId-HighLatency\"}/2":
+			expectedReceiver = "pagerduty"
+		}
+		if expectedReceiver != "" {
+			require.Equal(t, expectedReceiver, route.RouteOpts.Receiver,
+				"Route %s should have receiver %s", routeID, expectedReceiver)
+		}
+		totalAggrGroups += len(groups)
+	}
+
+	require.Equal(t, 7, totalAggrGroups, "Should have exactly 7 aggregation groups")
+
+	// Verify specific route group counts
+	expectedGroupCounts := map[string]int{
+		"{}/{ruleId=~\"ruleId-OtherAlert|ruleId-TestingAlert\"}/0":   2, // OtherAlert + TestingAlert
+		"{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}/1": 4, // 3 HighErrorRate + 1 HighLatency
+		"{}/{ruleId=\"ruleId-HighLatency\"}/2":                       1, // 1 HighLatency group
+	}
+
+	for route, groups := range aggrGroupsPerRoute {
+		routeID := route.ID()
+		if expectedCount, exists := expectedGroupCounts[routeID]; exists {
+			require.Equal(t, expectedCount, len(groups),
+				"Route %s should have %d groups, got %d", routeID, expectedCount, len(groups))
+		}
+	}
+
+	require.Equal(t, AlertGroups{
+		&AlertGroup{
+			Alerts: []*types.Alert{inputAlerts[5], inputAlerts[6]},
+			Labels: model.LabelSet{
+				"kafka":   "yes",
+				"ruleId":  "ruleId-HighLatency",
+				"service": "db",
+			},
+			Receiver: "email",
+			GroupKey: "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}:{kafka=\"yes\", ruleId=\"ruleId-HighLatency\", service=\"db\"}",
+			RouteID:  "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}/1",
+			Renotify: 13,
+		},
+		&AlertGroup{
+			Alerts: []*types.Alert{inputAlerts[5], inputAlerts[6]},
+			Labels: model.LabelSet{
+				"kafka":   "yes",
+				"ruleId":  "ruleId-HighLatency",
+				"service": "db",
+			},
+			Receiver: "pagerduty",
+			GroupKey: "{}/{ruleId=\"ruleId-HighLatency\"}:{kafka=\"yes\", ruleId=\"ruleId-HighLatency\", service=\"db\"}",
+			RouteID:  "{}/{ruleId=\"ruleId-HighLatency\"}/2",
+			Renotify: 13,
+		},
+		&AlertGroup{
+			Alerts: []*types.Alert{inputAlerts[1]},
+			Labels: model.LabelSet{
+				"instance": "inst1",
+				"ruleId":   "ruleId-TestingAlert",
+				"service":  "api",
+			},
+			Renotify: 11,
+			Receiver: "slack",
+			GroupKey: "{}/{ruleId=~\"ruleId-OtherAlert|ruleId-TestingAlert\"}:{instance=\"inst1\", ruleId=\"ruleId-TestingAlert\", service=\"api\"}",
+			RouteID:  "{}/{ruleId=~\"ruleId-OtherAlert|ruleId-TestingAlert\"}/0",
+		},
+		&AlertGroup{
+			Alerts: []*types.Alert{inputAlerts[2]},
+			Labels: model.LabelSet{
+				"cluster":  "aa",
+				"instance": "inst1",
+				"ruleId":   "ruleId-HighErrorRate",
+			},
+			Renotify: 12,
+			Receiver: "email",
+			GroupKey: "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}:{cluster=\"aa\", instance=\"inst1\", ruleId=\"ruleId-HighErrorRate\"}",
+			RouteID:  "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}/1",
+		},
+		&AlertGroup{
+			Alerts: []*types.Alert{inputAlerts[3]},
+			Labels: model.LabelSet{
+				"cluster":  "aa",
+				"instance": "inst2",
+				"ruleId":   "ruleId-HighErrorRate",
+			},
+			Renotify: 12,
+			Receiver: "email",
+			GroupKey: "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}:{cluster=\"aa\", instance=\"inst2\", ruleId=\"ruleId-HighErrorRate\"}",
+			RouteID:  "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}/1",
+		},
+		&AlertGroup{
+			Alerts: []*types.Alert{inputAlerts[4]},
+			Labels: model.LabelSet{
+				"cluster":  "bb",
+				"instance": "inst1",
+				"ruleId":   "ruleId-HighErrorRate",
+			},
+			Renotify: 12,
+			Receiver: "email",
+			GroupKey: "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}:{cluster=\"bb\", instance=\"inst1\", ruleId=\"ruleId-HighErrorRate\"}",
+			RouteID:  "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}/1",
+		},
+		&AlertGroup{
+			Alerts: []*types.Alert{inputAlerts[0]},
+			Labels: model.LabelSet{
+				"cluster": "cc",
+				"ruleId":  "ruleId-OtherAlert",
+				"service": "dd",
+			},
+			Renotify: 10,
+			Receiver: "slack",
+			GroupKey: "{}/{ruleId=~\"ruleId-OtherAlert|ruleId-TestingAlert\"}:{cluster=\"cc\", ruleId=\"ruleId-OtherAlert\", service=\"dd\"}",
+			RouteID:  "{}/{ruleId=~\"ruleId-OtherAlert|ruleId-TestingAlert\"}/0",
+		},
+	}, alertGroups)
+	require.Equal(t, map[model.Fingerprint][]string{
+		inputAlerts[0].Fingerprint(): {"slack"},
+		inputAlerts[1].Fingerprint(): {"slack"},
+		inputAlerts[2].Fingerprint(): {"email"},
+		inputAlerts[3].Fingerprint(): {"email"},
+		inputAlerts[4].Fingerprint(): {"email"},
+		inputAlerts[5].Fingerprint(): {"email", "pagerduty"},
+		inputAlerts[6].Fingerprint(): {"email", "pagerduty"},
+	}, receivers)
+}
+
+func TestGroupsWithNodata(t *testing.T) {
+	confData := `receivers:
+- name: 'slack'
+- name: 'email' 
+- name: 'pagerduty'
+
+route:
+  group_by: ['alertname']
+  group_wait: 10ms
+  group_interval: 10ms
+  receiver: 'slack'
+  routes:
+  - matchers:
+    - 'ruleId=~"ruleId-OtherAlert|ruleId-TestingAlert"'
+    receiver: 'slack'
+  - matchers:
+    - 'ruleId=~"ruleId-HighLatency|ruleId-HighErrorRate"'
+    receiver: 'email'
+    continue: true
+  - matchers:
+    - 'ruleId="ruleId-HighLatency"'
+    receiver: 'pagerduty'`
 	conf, err := config.Load(confData)
 	if err != nil {
 		t.Fatal(err)
@@ -417,19 +644,21 @@ route:
 	// Create alerts. the dispatcher will automatically create the groups.
 	inputAlerts := []*types.Alert{
 		// Matches the parent route.
-		newAlert(model.LabelSet{"ruleId": "OtherAlert", "cluster": "cc", "service": "dd"}),
+		newAlert(model.LabelSet{"ruleId": "ruleId-OtherAlert", "cluster": "cc", "service": "dd"}),
 		// Matches the first sub-route.
-		newAlert(model.LabelSet{"env": "testing", "ruleId": "TestingAlert", "service": "api", "instance": "inst1"}),
+		newAlert(model.LabelSet{"env": "testing", "ruleId": "ruleId-TestingAlert", "service": "api", "instance": "inst1"}),
 		// Matches the second sub-route.
-		newAlert(model.LabelSet{"env": "prod", "ruleId": "HighErrorRate", "cluster": "aa", "service": "api", "instance": "inst1"}),
-		newAlert(model.LabelSet{"env": "prod", "ruleId": "HighErrorRate", "cluster": "aa", "service": "api", "instance": "inst2"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighErrorRate", "cluster": "aa", "service": "api", "instance": "inst1"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighErrorRate", "cluster": "aa", "service": "api", "instance": "inst2"}),
 		// Matches the second sub-route.
-		newAlert(model.LabelSet{"env": "prod", "ruleId": "HighErrorRate", "cluster": "bb", "service": "api", "instance": "inst1"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighErrorRate", "cluster": "bb", "service": "api", "instance": "inst1"}),
 		// Matches the second and third sub-route.
-		newAlert(model.LabelSet{"env": "prod", "ruleId": "HighLatency", "cluster": "bb", "service": "db", "kafka": "yes", "instance": "inst3"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighLatency", "cluster": "bb", "service": "db", "kafka": "yes", "instance": "inst3"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighLatency", "cluster": "bb", "service": "db", "kafka": "yes", "instance": "inst4"}),
+		newAlert(model.LabelSet{"ruleId": "ruleId-HighLatency", "nodata": "true"}),
 	}
 	notiConfigs := map[string]alertmanagertypes.NotificationConfig{
-		"OtherAlert": {
+		"ruleId-OtherAlert": {
 			NotificationGroup: map[model.LabelName]struct{}{
 				model.LabelName("ruleId"):  {},
 				model.LabelName("cluster"): {},
@@ -439,25 +668,35 @@ route:
 				RenotifyInterval: 10,
 			},
 		},
-		"TestingAlert": {
+		"ruleId-TestingAlert": {
 			NotificationGroup: map[model.LabelName]struct{}{
 				model.LabelName("ruleId"):   {},
 				model.LabelName("service"):  {},
 				model.LabelName("instance"): {},
 			},
+			Renotify: alertmanagertypes.ReNotificationConfig{
+				RenotifyInterval: 11,
+			},
 		},
-		"HighErrorRate": {
+		"ruleId-HighErrorRate": {
 			NotificationGroup: map[model.LabelName]struct{}{
 				model.LabelName("ruleId"):   {},
 				model.LabelName("cluster"):  {},
 				model.LabelName("instance"): {},
 			},
+			Renotify: alertmanagertypes.ReNotificationConfig{
+				RenotifyInterval: 12,
+			},
 		},
-		"HighLatency": {
+		"ruleId-HighLatency": {
 			NotificationGroup: map[model.LabelName]struct{}{
 				model.LabelName("ruleId"):  {},
 				model.LabelName("service"): {},
 				model.LabelName("kafka"):   {},
+			},
+			Renotify: alertmanagertypes.ReNotificationConfig{
+				RenotifyInterval: 13,
+				NoDataInterval:   14,
 			},
 		},
 	}
@@ -471,10 +710,10 @@ route:
 	}
 
 	// Let alerts get processed.
-	for i := 0; len(recorder.Alerts()) != 7 && i < 10; i++ {
+	for i := 0; len(recorder.Alerts()) != 11 && i < 15; i++ {
 		time.Sleep(200 * time.Millisecond)
 	}
-	require.Len(t, recorder.Alerts(), 7)
+	require.Len(t, recorder.Alerts(), 11)
 
 	alertGroups, receivers := dispatcher.Groups(
 		func(*dispatch.Route) bool {
@@ -486,90 +725,121 @@ route:
 
 	require.Equal(t, AlertGroups{
 		&AlertGroup{
-			Alerts: []*types.Alert{inputAlerts[5]},
+			Alerts: []*types.Alert{inputAlerts[7]},
 			Labels: model.LabelSet{
-				"kafka":   "yes",
-				"ruleId":  "HighLatency",
-				"service": "db",
+				"ruleId": "ruleId-HighLatency",
+				"nodata": "true",
 			},
-			Receiver: "kafka",
-			GroupKey: "{}/{kafka=\"yes\"}:{kafka=\"yes\", ruleId=\"HighLatency\", service=\"db\"}",
-			RouteID:  "{}/{kafka=\"yes\"}/2",
+			Receiver: "email",
+			GroupKey: "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}:{nodata=\"true\", ruleId=\"ruleId-HighLatency\"}",
+			RouteID:  "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}/1",
+			Renotify: 14,
 		},
 		&AlertGroup{
-			Alerts: []*types.Alert{inputAlerts[5]},
+			Alerts: []*types.Alert{inputAlerts[7]},
+			Labels: model.LabelSet{
+				"ruleId": "ruleId-HighLatency",
+				"nodata": "true",
+			},
+			Receiver: "pagerduty",
+			GroupKey: "{}/{ruleId=\"ruleId-HighLatency\"}:{nodata=\"true\", ruleId=\"ruleId-HighLatency\"}",
+			RouteID:  "{}/{ruleId=\"ruleId-HighLatency\"}/2",
+			Renotify: 14,
+		},
+		&AlertGroup{
+			Alerts: []*types.Alert{inputAlerts[5], inputAlerts[6]},
 			Labels: model.LabelSet{
 				"kafka":   "yes",
-				"ruleId":  "HighLatency",
+				"ruleId":  "ruleId-HighLatency",
 				"service": "db",
 			},
-			Receiver: "prod",
-			GroupKey: "{}/{env=\"prod\"}:{kafka=\"yes\", ruleId=\"HighLatency\", service=\"db\"}",
-			RouteID:  "{}/{env=\"prod\"}/1",
+			Receiver: "email",
+			GroupKey: "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}:{kafka=\"yes\", ruleId=\"ruleId-HighLatency\", service=\"db\"}",
+			RouteID:  "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}/1",
+			Renotify: 13,
+		},
+		&AlertGroup{
+			Alerts: []*types.Alert{inputAlerts[5], inputAlerts[6]},
+			Labels: model.LabelSet{
+				"kafka":   "yes",
+				"ruleId":  "ruleId-HighLatency",
+				"service": "db",
+			},
+			Receiver: "pagerduty",
+			GroupKey: "{}/{ruleId=\"ruleId-HighLatency\"}:{kafka=\"yes\", ruleId=\"ruleId-HighLatency\", service=\"db\"}",
+			RouteID:  "{}/{ruleId=\"ruleId-HighLatency\"}/2",
+			Renotify: 13,
 		},
 		&AlertGroup{
 			Alerts: []*types.Alert{inputAlerts[1]},
 			Labels: model.LabelSet{
 				"instance": "inst1",
-				"ruleId":   "TestingAlert",
+				"ruleId":   "ruleId-TestingAlert",
 				"service":  "api",
 			},
-			Receiver: "testing",
-			GroupKey: "{}/{env=\"testing\"}:{instance=\"inst1\", ruleId=\"TestingAlert\", service=\"api\"}",
-			RouteID:  "{}/{env=\"testing\"}/0",
+			Receiver: "slack",
+			GroupKey: "{}/{ruleId=~\"ruleId-OtherAlert|ruleId-TestingAlert\"}:{instance=\"inst1\", ruleId=\"ruleId-TestingAlert\", service=\"api\"}",
+			RouteID:  "{}/{ruleId=~\"ruleId-OtherAlert|ruleId-TestingAlert\"}/0",
+			Renotify: 11,
 		},
 		&AlertGroup{
 			Alerts: []*types.Alert{inputAlerts[2]},
 			Labels: model.LabelSet{
 				"cluster":  "aa",
 				"instance": "inst1",
-				"ruleId":   "HighErrorRate",
+				"ruleId":   "ruleId-HighErrorRate",
 			},
-			Receiver: "prod",
-			GroupKey: "{}/{env=\"prod\"}:{cluster=\"aa\", instance=\"inst1\", ruleId=\"HighErrorRate\"}",
-			RouteID:  "{}/{env=\"prod\"}/1",
+			Receiver: "email",
+			GroupKey: "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}:{cluster=\"aa\", instance=\"inst1\", ruleId=\"ruleId-HighErrorRate\"}",
+			RouteID:  "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}/1",
+			Renotify: 12,
 		},
 		&AlertGroup{
 			Alerts: []*types.Alert{inputAlerts[3]},
 			Labels: model.LabelSet{
 				"cluster":  "aa",
 				"instance": "inst2",
-				"ruleId":   "HighErrorRate",
+				"ruleId":   "ruleId-HighErrorRate",
 			},
-			Receiver: "prod",
-			GroupKey: "{}/{env=\"prod\"}:{cluster=\"aa\", instance=\"inst2\", ruleId=\"HighErrorRate\"}",
-			RouteID:  "{}/{env=\"prod\"}/1",
+			Receiver: "email",
+			GroupKey: "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}:{cluster=\"aa\", instance=\"inst2\", ruleId=\"ruleId-HighErrorRate\"}",
+			RouteID:  "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}/1",
+			Renotify: 12,
 		},
 		&AlertGroup{
 			Alerts: []*types.Alert{inputAlerts[4]},
 			Labels: model.LabelSet{
 				"cluster":  "bb",
 				"instance": "inst1",
-				"ruleId":   "HighErrorRate",
+				"ruleId":   "ruleId-HighErrorRate",
 			},
-			Receiver: "prod",
-			GroupKey: "{}/{env=\"prod\"}:{cluster=\"bb\", instance=\"inst1\", ruleId=\"HighErrorRate\"}",
-			RouteID:  "{}/{env=\"prod\"}/1",
+			Receiver: "email",
+			GroupKey: "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}:{cluster=\"bb\", instance=\"inst1\", ruleId=\"ruleId-HighErrorRate\"}",
+			RouteID:  "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}/1",
+			Renotify: 12,
 		},
 		&AlertGroup{
 			Alerts: []*types.Alert{inputAlerts[0]},
 			Labels: model.LabelSet{
 				"cluster": "cc",
-				"ruleId":  "OtherAlert",
+				"ruleId":  "ruleId-OtherAlert",
 				"service": "dd",
 			},
-			Receiver: "prod",
-			GroupKey: "{}:{cluster=\"cc\", ruleId=\"OtherAlert\", service=\"dd\"}",
-			RouteID:  "{}",
+			Receiver: "slack",
+			GroupKey: "{}/{ruleId=~\"ruleId-OtherAlert|ruleId-TestingAlert\"}:{cluster=\"cc\", ruleId=\"ruleId-OtherAlert\", service=\"dd\"}",
+			RouteID:  "{}/{ruleId=~\"ruleId-OtherAlert|ruleId-TestingAlert\"}/0",
+			Renotify: 10,
 		},
 	}, alertGroups)
 	require.Equal(t, map[model.Fingerprint][]string{
-		inputAlerts[0].Fingerprint(): {"prod"},
-		inputAlerts[1].Fingerprint(): {"testing"},
-		inputAlerts[2].Fingerprint(): {"prod"},
-		inputAlerts[3].Fingerprint(): {"prod"},
-		inputAlerts[4].Fingerprint(): {"prod"},
-		inputAlerts[5].Fingerprint(): {"kafka", "prod"},
+		inputAlerts[0].Fingerprint(): {"slack"},
+		inputAlerts[1].Fingerprint(): {"slack"},
+		inputAlerts[2].Fingerprint(): {"email"},
+		inputAlerts[3].Fingerprint(): {"email"},
+		inputAlerts[4].Fingerprint(): {"email"},
+		inputAlerts[5].Fingerprint(): {"email", "pagerduty"},
+		inputAlerts[6].Fingerprint(): {"email", "pagerduty"},
+		inputAlerts[7].Fingerprint(): {"email", "pagerduty"},
 	}, receivers)
 }
 

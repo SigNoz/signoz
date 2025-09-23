@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	noDataLabel = model.LabelName("noData")
+	noDataLabel = model.LabelName("nodata")
 )
 
 // Dispatcher sorts incoming alerts into aggregation groups and
@@ -161,6 +161,7 @@ type AlertGroup struct {
 	Receiver string
 	GroupKey string
 	RouteID  string
+	Renotify time.Duration
 }
 
 type AlertGroups []*AlertGroup
@@ -199,6 +200,7 @@ func (d *Dispatcher) Groups(routeFilter func(*dispatch.Route) bool, alertFilter 
 				Receiver: receiver,
 				GroupKey: ag.GroupKey(),
 				RouteID:  ag.routeID,
+				Renotify: ag.opts.RepeatInterval,
 			}
 
 			alerts := ag.alerts.List()
@@ -257,31 +259,6 @@ func (d *Dispatcher) Stop() {
 	<-d.done
 }
 
-// GetStats returns statistics about the dispatcher for SigNoz monitoring
-func (d *Dispatcher) GetStats() map[string]interface{} {
-	if d == nil {
-		return nil
-	}
-
-	d.mtx.RLock()
-	defer d.mtx.RUnlock()
-
-	stats := map[string]interface{}{
-		"total_aggregation_groups": d.aggrGroupsNum,
-		"routes_count":             len(d.aggrGroupsPerRoute),
-	}
-
-	// Count groups per route
-	routeStats := make(map[string]int)
-	for route, groups := range d.aggrGroupsPerRoute {
-		routeKey := route.Key()
-		routeStats[routeKey] = len(groups)
-	}
-	stats["groups_per_route"] = routeStats
-
-	return stats
-}
-
 // notifyFunc is a function that performs notification for the alert
 // with the given fingerprint. It aborts on context cancelation.
 // Returns false iff notifying failed.
@@ -322,12 +299,15 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 		d.logger.ErrorContext(d.ctx, "Too many aggregation groups, cannot create new group for alert", "groups", d.aggrGroupsNum, "limit", limit, "alert", alert.Name())
 		return
 	}
+	renotifyInterval := config.Renotify.RenotifyInterval
 
 	if noDataAlert(alert) {
-		ag = newAggrGroup(d.ctx, groupLabels, route, d.timeout, d.logger, config.Renotify.NoDataInterval)
-	} else {
-		ag = newAggrGroup(d.ctx, groupLabels, route, d.timeout, d.logger, config.Renotify.RenotifyInterval)
+		renotifyInterval = config.Renotify.NoDataInterval
+		groupLabels[noDataLabel] = alert.Labels[noDataLabel]
 	}
+
+	ag = newAggrGroup(d.ctx, groupLabels, route, d.timeout, d.logger, renotifyInterval)
+
 	routeGroups[fp] = ag
 	d.aggrGroupsNum++
 	d.metrics.aggrGroups.Inc()

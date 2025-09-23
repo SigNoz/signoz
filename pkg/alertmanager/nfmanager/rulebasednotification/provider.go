@@ -49,7 +49,7 @@ func (r *provider) GetNotificationConfig(orgID string, ruleID string) (*alertman
 
 	if orgConfigs, exists := r.orgToFingerprintToNotificationConfig[orgID]; exists {
 		if config, configExists := orgConfigs[ruleID]; configExists {
-			notificationConfig = config
+			notificationConfig = config.DeepCopy()
 			return &notificationConfig, nil
 		}
 	}
@@ -75,7 +75,7 @@ func (r *provider) SetNotificationConfig(orgID string, ruleID string, config *al
 		r.orgToFingerprintToNotificationConfig[orgID] = make(map[string]alertmanagertypes.NotificationConfig)
 	}
 
-	r.orgToFingerprintToNotificationConfig[orgID][ruleID] = *config
+	r.orgToFingerprintToNotificationConfig[orgID][ruleID] = config.DeepCopy()
 
 	return nil
 }

@@ -85,7 +85,6 @@ func TestServerPutAlerts(t *testing.T) {
 	srvCfg := NewConfig()
 	srvCfg.Route.GroupInterval = 1 * time.Second
 	notificationManager := nfmanagertest.NewMock()
-	// Set up expectation for alerts that will be processed
 	server, err := New(context.Background(), slog.New(slog.NewTextHandler(io.Discard, nil)), prometheus.NewRegistry(), srvCfg, "1", stateStore, notificationManager)
 	require.NoError(t, err)
 

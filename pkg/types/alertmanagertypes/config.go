@@ -20,7 +20,7 @@ import (
 
 const (
 	DefaultReceiverName string = "default-receiver"
-	DefaultGroupBy      string = "alertname"
+	DefaultGroupBy      string = "ruleId"
 )
 
 var (
@@ -407,6 +407,17 @@ type NotificationConfig struct {
 	Renotify          ReNotificationConfig
 }
 
+func (nc *NotificationConfig) DeepCopy() NotificationConfig {
+	deepCopy := *nc
+	deepCopy.NotificationGroup = make(map[model.LabelName]struct{})
+	deepCopy.Renotify.NoDataInterval = nc.Renotify.NoDataInterval
+	deepCopy.Renotify.RenotifyInterval = nc.Renotify.RenotifyInterval
+	for k, v := range nc.NotificationGroup {
+		deepCopy.NotificationGroup[k] = v
+	}
+	return deepCopy
+}
+
 type ReNotificationConfig struct {
 	NoDataInterval   time.Duration
 	RenotifyInterval time.Duration
@@ -435,8 +446,8 @@ func GetDefaultNotificationConfig() NotificationConfig {
 	return NotificationConfig{
 		NotificationGroup: defaultGroups,
 		Renotify: ReNotificationConfig{
-			RenotifyInterval: 876000 * time.Hour,
-			NoDataInterval:   876000 * time.Hour,
+			RenotifyInterval: 4 * time.Hour,
+			NoDataInterval:   4 * time.Hour,
 		}, //substitute for no - notify
 	}
 }
