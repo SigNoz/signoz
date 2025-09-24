@@ -1,6 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryParams } from 'constants/query';
-import * as useSafeNavigate from 'hooks/useSafeNavigate';
 
 import DashboardsAndAlertsPopover from '../DashboardsAndAlertsPopover';
 
@@ -24,9 +23,11 @@ const mockAlerts = [mockAlert1, mockAlert2];
 const mockDashboards = [mockDashboard1, mockDashboard2];
 
 const mockSafeNavigate = jest.fn();
-jest.spyOn(useSafeNavigate, 'useSafeNavigate').mockReturnValue({
-	safeNavigate: mockSafeNavigate,
-});
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: mockSafeNavigate,
+	}),
+}));
 
 const mockSetQuery = jest.fn();
 const mockUrlQuery = {

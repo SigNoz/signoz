@@ -3,6 +3,7 @@ package signoz
 import (
 	"context"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
@@ -12,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
-	"github.com/SigNoz/signoz/pkg/nfgrouping"
 	"github.com/SigNoz/signoz/pkg/nfrouting"
 	"github.com/SigNoz/signoz/pkg/nfrouting/nfroutingstore/sqlroutingstore"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -35,24 +35,23 @@ import (
 
 type SigNoz struct {
 	*factory.Registry
-	Instrumentation    instrumentation.Instrumentation
-	Analytics          analytics.Analytics
-	Cache              cache.Cache
-	Web                web.Web
-	SQLStore           sqlstore.SQLStore
-	TelemetryStore     telemetrystore.TelemetryStore
-	Prometheus         prometheus.Prometheus
-	Alertmanager       alertmanager.Alertmanager
-	Querier            querier.Querier
-	Rules              ruler.Ruler
-	Zeus               zeus.Zeus
-	Licensing          licensing.Licensing
-	Emailing           emailing.Emailing
-	Sharder            sharder.Sharder
-	StatsReporter      statsreporter.StatsReporter
-	Modules            Modules
-	Handlers           Handlers
-	NotificationGroups nfgrouping.NotificationGroups
+	Instrumentation instrumentation.Instrumentation
+	Analytics       analytics.Analytics
+	Cache           cache.Cache
+	Web             web.Web
+	SQLStore        sqlstore.SQLStore
+	TelemetryStore  telemetrystore.TelemetryStore
+	Prometheus      prometheus.Prometheus
+	Alertmanager    alertmanager.Alertmanager
+	Querier         querier.Querier
+	Rules           ruler.Ruler
+	Zeus            zeus.Zeus
+	Licensing       licensing.Licensing
+	Emailing        emailing.Emailing
+	Sharder         sharder.Sharder
+	StatsReporter   statsreporter.StatsReporter
+	Modules         Modules
+	Handlers        Handlers
 	RouteStore         routingtypes.RouteStore
 }
 
@@ -235,15 +234,12 @@ func New(
 	// Initialize user getter
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 
-	// shared NotificationGroups instance for both alertmanager and rules
-	notificationGroups, err := factory.NewProviderFromNamedMap(
+	// shared NotificationManager instance for both alertmanager and rules
+	notificationManager, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
-		nfgrouping.Config{
-			Provider:        "rulebased",
-			DefaultStrategy: "standard",
-		},
-		NewNotificationGroupingProviderFactories(),
+		nfmanager.Config{},
+		NewNotificationManagerProviderFactories(),
 		"rulebased",
 	)
 	if err != nil {
@@ -268,7 +264,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Alertmanager,
-		NewAlertmanagerProviderFactories(sqlstore, orgGetter, notificationGroups, notificationRoutes),
+		NewAlertmanagerProviderFactories(sqlstore, orgGetter, notificationManager, notificationRoutes),
 		config.Alertmanager.Provider,
 	)
 	if err != nil {
@@ -298,7 +294,7 @@ func New(
 	}
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
+	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, querier)
 
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules, providerSettings)
@@ -338,24 +334,23 @@ func New(
 	}
 
 	return &SigNoz{
-		Registry:           registry,
-		Analytics:          analytics,
-		Instrumentation:    instrumentation,
-		Cache:              cache,
-		Web:                web,
-		SQLStore:           sqlstore,
-		TelemetryStore:     telemetrystore,
-		Prometheus:         prometheus,
-		Alertmanager:       alertmanager,
-		Querier:            querier,
-		Rules:              ruler,
-		Zeus:               zeus,
-		Licensing:          licensing,
-		Emailing:           emailing,
-		Sharder:            sharder,
-		Modules:            modules,
-		Handlers:           handlers,
-		NotificationGroups: notificationGroups,
+		Registry:        registry,
+		Analytics:       analytics,
+		Instrumentation: instrumentation,
+		Cache:           cache,
+		Web:             web,
+		SQLStore:        sqlstore,
+		TelemetryStore:  telemetrystore,
+		Prometheus:      prometheus,
+		Alertmanager:    alertmanager,
+		Querier:         querier,
+		Rules:           ruler,
+		Zeus:            zeus,
+		Licensing:       licensing,
+		Emailing:        emailing,
+		Sharder:         sharder,
+		Modules:         modules,
+		Handlers:        handlers,
 		RouteStore:         routeStore,
 	}, nil
 }

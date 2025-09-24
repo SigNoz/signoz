@@ -7,32 +7,32 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/nfgrouping"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type provider struct {
-	service            *alertmanager.Service
-	config             alertmanager.Config
-	settings           factory.ScopedProviderSettings
-	configStore        alertmanagertypes.ConfigStore
-	stateStore         alertmanagertypes.StateStore
-	notificationGroups nfgrouping.NotificationGroups
-	stopC              chan struct{}
+	service             *alertmanager.Service
+	config              alertmanager.Config
+	settings            factory.ScopedProviderSettings
+	configStore         alertmanagertypes.ConfigStore
+	stateStore          alertmanagertypes.StateStore
+	notificationManager nfmanager.NotificationManager
+	stopC               chan struct{}
 }
 
-func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationGroups nfgrouping.NotificationGroups, nfRoutes nfrouting.NotificationRoutes) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
+func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager, nfRoutes nfrouting.NotificationRoutes) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, settings factory.ProviderSettings, config alertmanager.Config) (alertmanager.Alertmanager, error) {
-		return New(ctx, settings, config, sqlstore, orgGetter, notificationGroups, nfRoutes)
+		return New(ctx, settings, config, sqlstore, orgGetter, notificationManager, nfRoutes)
 	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationGroups nfgrouping.NotificationGroups, nfRoutes nfrouting.NotificationRoutes) (*provider, error) {
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager, nfRoutes nfrouting.NotificationRoutes) (*provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
@@ -45,15 +45,15 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 			stateStore,
 			configStore,
 			orgGetter,
-			notificationGroups,
+			notificationManager,
 			nfRoutes,
 		),
-		settings:           settings,
-		config:             config,
-		configStore:        configStore,
-		stateStore:         stateStore,
-		notificationGroups: notificationGroups,
-		stopC:              make(chan struct{}),
+		settings:            settings,
+		config:              config,
+		configStore:         configStore,
+		stateStore:          stateStore,
+		notificationManager: notificationManager,
+		stopC:               make(chan struct{}),
 	}
 
 	return p, nil
@@ -196,4 +196,20 @@ func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[s
 	}
 
 	return alertmanagertypes.NewStatsFromChannels(channels), nil
+}
+
+func (provider *provider) SetNotificationConfig(ctx context.Context, orgID valuer.UUID, ruleId string, config *alertmanagertypes.NotificationConfig) error {
+	err := provider.notificationManager.SetNotificationConfig(orgID.StringValue(), ruleId, config)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (provider *provider) DeleteNotificationConfig(ctx context.Context, orgID valuer.UUID, ruleId string) error {
+	err := provider.notificationManager.DeleteNotificationConfig(orgID.StringValue(), ruleId)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -7,13 +7,12 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics/analyticstest"
 	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
-	"github.com/SigNoz/signoz/pkg/nfgrouping"
-	"github.com/SigNoz/signoz/pkg/nfgrouping/nfgroupingtest"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -31,12 +30,12 @@ func TestIntegrationLifecycle(t *testing.T) {
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	sharder, _ := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(store), sharder)
-	notificationGroups, _ := nfgroupingtest.New(context.TODO(), providerSettings, nfgrouping.Config{})
-	alertmanager, _ := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, store, orgGetter, notificationGroups)
+	notificationManager := nfmanagertest.NewMock()
+	alertmanager, _ := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, store, orgGetter, notificationManager)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
 	analytics := analyticstest.New()
-	modules := signoz.NewModules(store, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
+	modules := signoz.NewModules(store, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, nil)
 	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	if apiErr != nil {
 		t.Fatalf("could not create test user: %v", apiErr)

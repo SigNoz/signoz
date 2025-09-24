@@ -1,9 +1,10 @@
 package client
 
 import (
-	"errors"
 	"net/smtp"
 	"strings"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 type loginAuth struct {
@@ -27,7 +28,7 @@ func (auth *loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
 		case "password:":
 			return []byte(auth.password), nil
 		default:
-			return nil, errors.New("unexpected server challenge")
+			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "unexpected server challenge")
 		}
 	}
 	return nil, nil

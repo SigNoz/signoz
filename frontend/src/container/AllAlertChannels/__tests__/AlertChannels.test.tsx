@@ -22,6 +22,8 @@ jest.mock('react-router-dom', () => ({
 
 describe('Alert Channels Settings List page', () => {
 	beforeEach(async () => {
+		jest.useFakeTimers();
+		jest.setSystemTime(new Date('2023-10-20'));
 		render(<AlertChannels />);
 		await waitFor(() =>
 			expect(screen.getByText('sending_channels_note')).toBeInTheDocument(),
@@ -29,6 +31,7 @@ describe('Alert Channels Settings List page', () => {
 	});
 	afterEach(() => {
 		jest.restoreAllMocks();
+		jest.useRealTimers();
 	});
 	describe('Should display the Alert Channels page properly', () => {
 		it('Should check if "The alerts will be sent to all the configured channels." is visible ', () => {

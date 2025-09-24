@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/govaluate"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -88,8 +89,8 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 
 	case QueryTypeTraceOperator:
 		var spec QueryBuilderTraceOperator
-		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
-			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid trace operator spec")
+		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "trace operator spec"); err != nil {
+			return wrapUnmarshalError(err, "invalid trace operator spec: %v", err)
 		}
 		q.Spec = spec
 
@@ -113,7 +114,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 			"unknown query type %q",
 			shadow.Type,
 		).WithAdditional(
-			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql",
+			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, builder_trace_operator, promql, clickhouse_sql",
 		)
 	}
 
@@ -423,13 +424,25 @@ func (r *QueryRangeRequest) GetQueriesSupportingZeroDefault() map[string]bool {
 	canDefaultZero := make(map[string]bool)
 	for _, q := range r.CompositeQuery.Queries {
 		if q.Type == QueryTypeBuilder {
-			if query, ok := q.Spec.(QueryBuilderQuery[TraceAggregation]); ok {
-				if len(query.Aggregations) == 1 && canDefaultZeroAgg(query.Aggregations[0].Expression) {
-					canDefaultZero[query.Name] = true
+			switch spec := q.Spec.(type) {
+			case QueryBuilderQuery[TraceAggregation]:
+				if len(spec.Aggregations) == 1 && canDefaultZeroAgg(spec.Aggregations[0].Expression) {
+					canDefaultZero[spec.Name] = true
 				}
-			} else if query, ok := q.Spec.(QueryBuilderQuery[LogAggregation]); ok {
-				if len(query.Aggregations) == 1 && canDefaultZeroAgg(query.Aggregations[0].Expression) {
-					canDefaultZero[query.Name] = true
+			case QueryBuilderQuery[LogAggregation]:
+				if len(spec.Aggregations) == 1 && canDefaultZeroAgg(spec.Aggregations[0].Expression) {
+					canDefaultZero[spec.Name] = true
+				}
+			case QueryBuilderQuery[MetricAggregation]:
+				if len(spec.Aggregations) == 1 {
+					timeAgg := spec.Aggregations[0].TimeAggregation
+
+					if timeAgg == metrictypes.TimeAggregationCount ||
+						timeAgg == metrictypes.TimeAggregationCountDistinct ||
+						timeAgg == metrictypes.TimeAggregationRate ||
+						timeAgg == metrictypes.TimeAggregationIncrease {
+						canDefaultZero[spec.Name] = true
+					}
 				}
 			}
 		}

@@ -29,6 +29,8 @@ func getqueryInfo(spec any) queryInfo {
 		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval}
 	case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
 		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval}
+	case qbtypes.QueryBuilderTraceOperator:
+		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval}
 	case qbtypes.QueryBuilderFormula:
 		return queryInfo{Name: s.Name, Disabled: s.Disabled}
 	case qbtypes.PromQuery:
@@ -68,6 +70,11 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 		case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
 			if result, ok := typedResults[spec.Name]; ok {
 				result = postProcessMetricQuery(q, result, spec, req)
+				typedResults[spec.Name] = result
+			}
+		case qbtypes.QueryBuilderTraceOperator:
+			if result, ok := typedResults[spec.Name]; ok {
+				result = postProcessTraceOperator(q, result, spec, req)
 				typedResults[spec.Name] = result
 			}
 		}
@@ -209,6 +216,27 @@ func postProcessMetricQuery(
 
 	return result
 }
+
+// postProcessTraceOperator applies postprocessing to a trace operator query result
+func postProcessTraceOperator(
+	q *querier,
+	result *qbtypes.Result,
+	query qbtypes.QueryBuilderTraceOperator,
+	req *qbtypes.QueryRangeRequest,
+) *qbtypes.Result {
+
+	result = q.applySeriesLimit(result, query.Limit, query.Order)
+
+	// Apply functions if any
+	if len(query.Functions) > 0 {
+		step := query.StepInterval.Duration.Milliseconds()
+		functions := q.prepareFillZeroArgsWithStep(query.Functions, req, step)
+		result = q.applyFunctions(result, functions)
+	}
+
+	return result
+}
+
 
 // applyMetricReduceTo applies reduce to operation using the metric's ReduceTo field
 func (q *querier) applyMetricReduceTo(result *qbtypes.Result, reduceOp qbtypes.ReduceTo) *qbtypes.Result {

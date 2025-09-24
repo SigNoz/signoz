@@ -6,10 +6,10 @@ import (
 	"sync"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/nfgrouping"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 )
 
@@ -35,8 +35,7 @@ type Service struct {
 	// Mutex to protect the servers map
 	serversMtx sync.RWMutex
 
-	notificationGroups nfgrouping.NotificationGroups
-
+	notificationManager nfmanager.NotificationManager
 	notificationRoutes nfrouting.NotificationRoutes
 }
 
@@ -47,18 +46,18 @@ func New(
 	stateStore alertmanagertypes.StateStore,
 	configStore alertmanagertypes.ConfigStore,
 	orgGetter organization.Getter,
-	groups nfgrouping.NotificationGroups,
+	nfManager nfmanager.NotificationManager,
 	nfRoutes nfrouting.NotificationRoutes,
 ) *Service {
 	service := &Service{
-		config:             config,
-		stateStore:         stateStore,
-		configStore:        configStore,
-		orgGetter:          orgGetter,
-		settings:           settings,
-		servers:            make(map[string]*alertmanagerserver.Server),
-		serversMtx:         sync.RWMutex{},
-		notificationGroups: groups,
+		config:              config,
+		stateStore:          stateStore,
+		configStore:         configStore,
+		orgGetter:           orgGetter,
+		settings:            settings,
+		servers:             make(map[string]*alertmanagerserver.Server),
+		serversMtx:          sync.RWMutex{},
+		notificationManager: nfManager,
 		notificationRoutes: nfRoutes,
 	}
 
@@ -177,7 +176,7 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 		return nil, err
 	}
 
-	server, err := alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID, service.stateStore, service.notificationGroups, service.notificationRoutes)
+	server, err := alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID, service.stateStore, service.notificationManager, service.notificationRoutes)
 	if err != nil {
 		return nil, err
 	}

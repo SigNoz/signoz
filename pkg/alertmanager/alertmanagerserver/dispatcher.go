@@ -2,7 +2,6 @@ package alertmanagerserver
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/SigNoz/signoz/pkg/nfrouting"
 	"log/slog"
@@ -10,14 +9,19 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/nfgrouping"
-	"github.com/prometheus/common/model"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/errors"
 
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/provider"
 	"github.com/prometheus/alertmanager/store"
 	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
+)
+
+const (
+	noDataLabel = model.LabelName("nodata")
 )
 
 // Dispatcher sorts incoming alerts into aggregation groups and
@@ -41,9 +45,9 @@ type Dispatcher struct {
 	ctx    context.Context
 	cancel func()
 
-	logger             *slog.Logger
-	notificationGroups nfgrouping.NotificationGroups
-	orgID              string
+	logger              *slog.Logger
+	notificationManager nfmanager.NotificationManager
+	orgID               string
 }
 
 // We use the upstream Limits interface from Prometheus
@@ -81,7 +85,7 @@ func NewDispatcher(
 	lim Limits,
 	l *slog.Logger,
 	m *DispatcherMetrics,
-	n nfgrouping.NotificationGroups,
+	n nfmanager.NotificationManager,
 	orgID string,
 	nfRoutes nfrouting.NotificationRoutes,
 ) *Dispatcher {
@@ -91,16 +95,16 @@ func NewDispatcher(
 	}
 
 	disp := &Dispatcher{
-		alerts:             ap,
-		stage:              s,
-		route:              r,
-		marker:             mk,
-		timeout:            to,
-		logger:             l.With("component", "signoz-dispatcher"),
-		metrics:            m,
-		limits:             lim,
-		notificationGroups: n,
-		orgID:              orgID,
+		alerts:              ap,
+		stage:               s,
+		route:               r,
+		marker:              mk,
+		timeout:             to,
+		logger:              l.With("component", "signoz-dispatcher"),
+		metrics:             m,
+		limits:              lim,
+		notificationManager: n,
+		orgID:               orgID,
 		nfRoute:            nfRoutes,
 	}
 	return disp
@@ -185,6 +189,7 @@ type AlertGroup struct {
 	Receiver string
 	GroupKey string
 	RouteID  string
+	Renotify time.Duration
 }
 
 type AlertGroups []*AlertGroup
@@ -223,6 +228,7 @@ func (d *Dispatcher) Groups(routeFilter func(*dispatch.Route) bool, alertFilter 
 				Receiver: receiver,
 				GroupKey: ag.GroupKey(),
 				RouteID:  ag.routeID,
+				Renotify: ag.opts.RepeatInterval,
 			}
 
 			alerts := ag.alerts.List()
@@ -281,31 +287,6 @@ func (d *Dispatcher) Stop() {
 	<-d.done
 }
 
-// GetStats returns statistics about the dispatcher for SigNoz monitoring
-func (d *Dispatcher) GetStats() map[string]interface{} {
-	if d == nil {
-		return nil
-	}
-
-	d.mtx.RLock()
-	defer d.mtx.RUnlock()
-
-	stats := map[string]interface{}{
-		"total_aggregation_groups": d.aggrGroupsNum,
-		"routes_count":             len(d.aggrGroupsPerRoute),
-	}
-
-	// Count groups per route
-	routeStats := make(map[string]int)
-	for route, groups := range d.aggrGroupsPerRoute {
-		routeKey := route.Key()
-		routeStats[routeKey] = len(groups)
-	}
-	stats["groups_per_route"] = routeStats
-
-	return stats
-}
-
 // notifyFunc is a function that performs notification for the alert
 // with the given fingerprint. It aborts on context cancelation.
 // Returns false iff notifying failed.
@@ -314,7 +295,14 @@ type notifyFunc func(context.Context, ...*types.Alert) bool
 // processAlert determines in which aggregation group the alert falls
 // and inserts it.
 func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
-	groupLabels := d.notificationGroups.GetGroupLabels(d.orgID, alert, route)
+	ruleId := getRuleIDFromAlert(alert)
+	config, err := d.notificationManager.GetNotificationConfig(d.orgID, ruleId)
+	if err != nil {
+		d.logger.ErrorContext(d.ctx, "error getting alert notification config", "rule_id", ruleId, "error", err)
+		return
+	}
+
+	groupLabels := getGroupLabels(alert, config.NotificationGroup)
 
 	fp := groupLabels.Fingerprint()
 
@@ -339,8 +327,15 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 		d.logger.ErrorContext(d.ctx, "Too many aggregation groups, cannot create new group for alert", "groups", d.aggrGroupsNum, "limit", limit, "alert", alert.Name())
 		return
 	}
+	renotifyInterval := config.Renotify.RenotifyInterval
 
-	ag = newAggrGroup(d.ctx, groupLabels, route, d.timeout, d.logger)
+	if noDataAlert(alert) {
+		renotifyInterval = config.Renotify.NoDataInterval
+		groupLabels[noDataLabel] = alert.Labels[noDataLabel]
+	}
+
+	ag = newAggrGroup(d.ctx, groupLabels, route, d.timeout, d.logger, renotifyInterval)
+
 	routeGroups[fp] = ag
 	d.aggrGroupsNum++
 	d.metrics.aggrGroups.Inc()
@@ -389,15 +384,18 @@ type aggrGroup struct {
 }
 
 // newAggrGroup returns a new aggregation group.
-func newAggrGroup(ctx context.Context, labels model.LabelSet, r *dispatch.Route, to func(time.Duration) time.Duration, logger *slog.Logger) *aggrGroup {
+func newAggrGroup(ctx context.Context, labels model.LabelSet, r *dispatch.Route, to func(time.Duration) time.Duration, logger *slog.Logger, renotify time.Duration) *aggrGroup {
 	if to == nil {
 		to = func(d time.Duration) time.Duration { return d }
 	}
+
+	opts := deepCopyRouteOpts(r.RouteOpts, renotify)
+
 	ag := &aggrGroup{
 		labels:   labels,
 		routeID:  r.ID(),
 		routeKey: r.Key(),
-		opts:     &r.RouteOpts,
+		opts:     &opts,
 		timeout:  to,
 		alerts:   store.NewAlerts(),
 		done:     make(chan struct{}),
@@ -536,3 +534,58 @@ func (ag *aggrGroup) flush(notify func(...*types.Alert) bool) {
 type unlimitedLimits struct{}
 
 func (u *unlimitedLimits) MaxNumberOfAggregationGroups() int { return 0 }
+
+func getRuleIDFromAlert(alert *types.Alert) string {
+	for name, value := range alert.Labels {
+		if string(name) == "ruleId" {
+			return string(value)
+		}
+	}
+	return ""
+}
+
+func deepCopyRouteOpts(opts dispatch.RouteOpts, renotify time.Duration) dispatch.RouteOpts {
+	newOpts := opts
+
+	if opts.GroupBy != nil {
+		newOpts.GroupBy = make(map[model.LabelName]struct{}, len(opts.GroupBy))
+		for k, v := range opts.GroupBy {
+			newOpts.GroupBy[k] = v
+		}
+	}
+
+	if opts.MuteTimeIntervals != nil {
+		newOpts.MuteTimeIntervals = make([]string, len(opts.MuteTimeIntervals))
+		copy(newOpts.MuteTimeIntervals, opts.MuteTimeIntervals)
+	}
+
+	if opts.ActiveTimeIntervals != nil {
+		newOpts.ActiveTimeIntervals = make([]string, len(opts.ActiveTimeIntervals))
+		copy(newOpts.ActiveTimeIntervals, opts.ActiveTimeIntervals)
+	}
+
+	if renotify > 0 {
+		newOpts.RepeatInterval = renotify
+	}
+
+	return newOpts
+}
+
+func getGroupLabels(alert *types.Alert, groups map[model.LabelName]struct{}) model.LabelSet {
+	groupLabels := model.LabelSet{}
+	for ln, lv := range alert.Labels {
+		if _, ok := groups[ln]; ok {
+			groupLabels[ln] = lv
+		}
+	}
+
+	return groupLabels
+}
+
+func noDataAlert(alert *types.Alert) bool {
+	if _, ok := alert.Labels[noDataLabel]; ok {
+		return true
+	} else {
+		return false
+	}
+}
