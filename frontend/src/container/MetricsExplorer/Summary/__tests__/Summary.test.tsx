@@ -11,19 +11,6 @@ import store from 'store';
 import Summary from '../Summary';
 import { TreemapViewType } from '../types';
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
 jest.mock('d3-hierarchy', () => ({
 	stratify: jest.fn().mockReturnValue({
 		id: jest.fn().mockReturnValue({

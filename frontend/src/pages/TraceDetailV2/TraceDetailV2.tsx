@@ -1,7 +1,13 @@
 import './TraceDetailV2.styles.scss';
 
+import {
+	ResizableHandle,
+	ResizablePanel,
+	ResizablePanelGroup,
+} from '@signozhq/resizable';
 import { Button, Tabs } from 'antd';
 import FlamegraphImg from 'assets/TraceDetail/Flamegraph';
+import cx from 'classnames';
 import TraceFlamegraph from 'container/PaginatedTraceFlamegraph/PaginatedTraceFlamegraph';
 import SpanDetailsDrawer from 'container/SpanDetailsDrawer/SpanDetailsDrawer';
 import TraceMetadata from 'container/TraceMetadata/TraceMetadata';
@@ -121,11 +127,12 @@ function TraceDetailsV2(): JSX.Element {
 	];
 
 	return (
-		<div className="trace-layout">
-			<div
-				className="trace-left-content"
-				style={{ width: `calc(100% - ${isSpanDetailsDocked ? 48 : 330}px)` }}
-			>
+		<ResizablePanelGroup
+			direction="horizontal"
+			autoSaveId="trace-drawer"
+			className="trace-layout"
+		>
+			<ResizablePanel minSize={20} maxSize={80} className="trace-left-content">
 				<TraceMetadata
 					traceID={traceId}
 					duration={
@@ -144,16 +151,27 @@ function TraceDetailsV2(): JSX.Element {
 				) : (
 					<NoData />
 				)}
-			</div>
-			<SpanDetailsDrawer
-				isSpanDetailsDocked={isSpanDetailsDocked}
-				setIsSpanDetailsDocked={setIsSpanDetailsDocked}
-				selectedSpan={selectedSpan}
-				traceID={traceId}
-				traceStartTime={traceData?.payload?.startTimestampMillis || 0}
-				traceEndTime={traceData?.payload?.endTimestampMillis || 0}
-			/>
-		</div>
+			</ResizablePanel>
+
+			<ResizableHandle withHandle className="resizable-handle" />
+
+			<ResizablePanel
+				defaultSize={20}
+				minSize={20}
+				maxSize={50}
+				className={cx('span-details-drawer', {
+					'span-details-drawer-docked': isSpanDetailsDocked,
+				})}
+			>
+				<SpanDetailsDrawer
+					isSpanDetailsDocked={isSpanDetailsDocked}
+					setIsSpanDetailsDocked={setIsSpanDetailsDocked}
+					selectedSpan={selectedSpan}
+					traceStartTime={traceData?.payload?.startTimestampMillis || 0}
+					traceEndTime={traceData?.payload?.endTimestampMillis || 0}
+				/>
+			</ResizablePanel>
+		</ResizablePanelGroup>
 	);
 }
 
