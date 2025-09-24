@@ -87,7 +87,7 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 
 	const onClickUpdateWorkspace = (): void => {
 		window.open(
-			'https://github.com/SigNoz/signoz/releases',
+			'https://signoz.io/docs/operate/migration/upgrade-standard',
 			'_blank',
 			'noopener,noreferrer',
 		);
