@@ -9,26 +9,23 @@ function MultipleNotifications(): JSX.Element {
 	const {
 		notificationSettings,
 		setNotificationSettings,
-		thresholdState,
 	} = useCreateAlertState();
 	const { currentQuery } = useQueryBuilder();
 
-	const selectedQuery = useMemo(
-		() =>
-			currentQuery.builder.queryData.find(
-				(query) => query.queryName === thresholdState.selectedQuery,
-			),
-		[currentQuery, thresholdState.selectedQuery],
-	);
-
-	const spaceAggregationOptions = useMemo(
-		() =>
-			selectedQuery?.groupBy?.map((groupBy) => ({
-				label: groupBy.key,
-				value: groupBy.key,
-			})) || [],
-		[selectedQuery],
-	);
+	const spaceAggregationOptions = useMemo(() => {
+		const allGroupBys = currentQuery.builder.queryData?.reduce<string[]>(
+			(acc, query) => {
+				const groupByKeys = query.groupBy?.map((groupBy) => groupBy.key) || [];
+				return [...acc, ...groupByKeys];
+			},
+			[],
+		);
+		const uniqueGroupBys = [...new Set(allGroupBys)];
+		return uniqueGroupBys.map((key) => ({
+			label: key,
+			value: key,
+		}));
+	}, [currentQuery.builder.queryData]);
 
 	const isMultipleNotificationsEnabled = spaceAggregationOptions.length > 0;
 

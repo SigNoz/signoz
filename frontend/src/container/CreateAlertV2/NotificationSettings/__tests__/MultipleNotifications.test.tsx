@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import * as createAlertContext from 'container/CreateAlertV2/context';
 import {
 	INITIAL_ALERT_THRESHOLD_STATE,
@@ -138,5 +139,34 @@ describe('MultipleNotifications', () => {
 		).toBeInTheDocument();
 		const select = screen.getByRole(COMBOBOX_ROLE);
 		expect(select).toHaveAttribute(ARIA_DISABLED_ATTR, FALSE);
+	});
+
+	it('should render unique group by options from all queries', async () => {
+		useQueryBuilder.mockReturnValue({
+			currentQuery: {
+				builder: {
+					queryData: [
+						{
+							queryName: 'test-query-1',
+							groupBy: [{ key: 'http.status_code' }],
+						},
+						{
+							queryName: 'test-query-2',
+							groupBy: [{ key: 'service' }],
+						},
+					],
+				},
+			},
+		});
+
+		render(<MultipleNotifications />);
+
+		const select = screen.getByRole(COMBOBOX_ROLE);
+		await userEvent.click(select);
+
+		expect(
+			screen.getByRole('option', { name: 'http.status_code' }),
+		).toBeInTheDocument();
+		expect(screen.getByRole('option', { name: 'service' })).toBeInTheDocument();
 	});
 });
