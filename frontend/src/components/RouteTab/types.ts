@@ -13,4 +13,5 @@ export interface RouteTabProps {
 	activeKey: TabsProps['activeKey'];
 	onChangeHandler?: (key: string) => void;
 	history: History<unknown>;
+	showRightSection: boolean;
 }
