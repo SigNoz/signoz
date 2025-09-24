@@ -278,7 +278,7 @@ func TestUTF8Validation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.True(t, model.ValidationScheme.IsValidLabelName(model.UTF8Validation, tc.label))
+			assert.Equal(t, tc.pass, model.ValidationScheme.IsValidLabelName(model.UTF8Validation, tc.label))
 		})
 	}
 }
