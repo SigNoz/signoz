@@ -38,7 +38,7 @@ export default function NoLogs({
 			} else {
 				link = ROUTES.GET_STARTED_LOGS_MANAGEMENT;
 			}
-			history.push(link);
+			history.push(link, e);
 		} else if (dataSource === 'traces') {
 			window.open(DOCLINKS.TRACES_EXPLORER_EMPTY_STATE, '_blank');
 		} else if (dataSource === DataSource.METRICS) {
@@ -59,7 +59,12 @@ export default function NoLogs({
 					</span>
 				</Typography>
 
-				<Typography.Link className="send-logs-link" onClick={handleLinkClick}>
+				<Typography.Link
+					className="send-logs-link"
+					onClick={(e: React.MouseEvent<HTMLAnchorElement, MouseEvent>): void =>
+						handleLinkClick(e)
+					}
+				>
 					Sending {dataSource} to SigNoz <ArrowUpRight size={16} />
 				</Typography.Link>
 			</div>
