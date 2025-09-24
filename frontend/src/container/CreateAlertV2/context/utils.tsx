@@ -41,11 +41,6 @@ export const alertCreationReducer = (
 				...state,
 				name: action.payload,
 			};
-		case 'SET_ALERT_DESCRIPTION':
-			return {
-				...state,
-				description: action.payload,
-			};
 		case 'SET_ALERT_LABELS':
 			return {
 				...state,

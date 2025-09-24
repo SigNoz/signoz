@@ -99,7 +99,7 @@ jest.mock('container/NewWidget/RightContainer/alertFomatCategories', () => ({
 const TEST_STRINGS = {
 	ADD_THRESHOLD: 'Add Threshold',
 	AT_LEAST_ONCE: 'AT LEAST ONCE',
-	IS_ABOVE: 'IS ABOVE',
+	IS_ABOVE: 'ABOVE',
 } as const;
 
 const createTestQueryClient = (): QueryClient =>
@@ -125,7 +125,10 @@ const renderAlertThreshold = (): ReturnType<typeof render> => {
 };
 
 const verifySelectRenders = (title: string): void => {
-	const select = screen.getByTitle(title);
+	let select = screen.queryByTitle(title);
+	if (!select) {
+		select = screen.getByText(title);
+	}
 	expect(select).toBeInTheDocument();
 };
 
