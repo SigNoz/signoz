@@ -2,6 +2,7 @@ import './styles.scss';
 
 import { Button, Select, Typography } from 'antd';
 import getAllChannels from 'api/channels/getAll';
+import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Plus } from 'lucide-react';
 import { useQuery } from 'react-query';
@@ -17,6 +18,8 @@ import {
 	THRESHOLD_MATCH_TYPE_OPTIONS,
 	THRESHOLD_OPERATOR_OPTIONS,
 } from '../context/constants';
+import EvaluationSettings from '../EvaluationSettings/EvaluationSettings';
+import { showCondensedLayout } from '../utils';
 import ThresholdItem from './ThresholdItem';
 import { UpdateThreshold } from './types';
 import {
@@ -37,6 +40,7 @@ function AlertThreshold(): JSX.Element {
 	>(['getChannels'], {
 		queryFn: () => getAllChannels(),
 	});
+	const showCondensedLayoutFlag = showCondensedLayout();
 	const channels = data?.data || [];
 
 	const { currentQuery } = useQueryBuilder();
@@ -81,8 +85,18 @@ function AlertThreshold(): JSX.Element {
 		});
 	};
 
+	const evaluationWindowContext = showCondensedLayoutFlag ? (
+		<EvaluationSettings />
+	) : (
+		<strong>Evaluation Window.</strong>
+	);
+
 	return (
-		<div className="alert-threshold-container">
+		<div
+			className={classNames('alert-threshold-container', {
+				'condensed-alert-threshold-container': showCondensedLayoutFlag,
+			})}
+		>
 			{/* Main condition sentence */}
 			<div className="alert-condition-sentences">
 				<div className="alert-condition-sentence">
@@ -128,7 +142,7 @@ function AlertThreshold(): JSX.Element {
 						options={THRESHOLD_MATCH_TYPE_OPTIONS}
 					/>
 					<Typography.Text className="sentence-text">
-						during the <strong>Evaluation Window.</strong>
+						during the {evaluationWindowContext}
 					</Typography.Text>
 				</div>
 			</div>
