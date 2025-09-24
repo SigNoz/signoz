@@ -88,6 +88,21 @@
 		"link": "https://signoz.io/docs/migration/migrate-from-signoz-self-host-to-signoz-cloud/"
 	},
 	{
+		"dataSource": "migrate-from-existing-opentelemetry",
+		"label": "From Existing OpenTelemetry",
+		"tags": ["migrate to SigNoz"],
+		"module": "home",
+		"relatedSearchKeywords": [
+			"apm migration",
+			"opentelemetry",
+			"migration guide",
+			"migrate",
+			"migration"
+		],
+		"imgUrl": "/Logos/opentelemetry.svg",
+		"link": "https://signoz.io/docs/migration/migrate-from-opentelemetry-to-signoz/"
+	},
+	{
 		"dataSource": "java",
 		"entityID": "dataSource",
 		"label": "Java",
