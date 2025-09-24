@@ -14,6 +14,8 @@ export interface ICreateAlertContextProps {
 	setAdvancedOptions: Dispatch<AdvancedOptionsAction>;
 	evaluationWindow: EvaluationWindowState;
 	setEvaluationWindow: Dispatch<EvaluationWindowAction>;
+	notificationSettings: NotificationSettingsState;
+	setNotificationSettings: Dispatch<NotificationSettingsAction>;
 }
 
 export interface ICreateAlertProviderProps {
@@ -38,7 +40,8 @@ export type CreateAlertAction =
 	| { type: 'SET_ALERT_NAME'; payload: string }
 	| { type: 'SET_ALERT_DESCRIPTION'; payload: string }
 	| { type: 'SET_ALERT_LABELS'; payload: Labels }
-	| { type: 'SET_Y_AXIS_UNIT'; payload: string | undefined };
+	| { type: 'SET_Y_AXIS_UNIT'; payload: string | undefined }
+	| { type: 'RESET' };
 
 export interface Threshold {
 	id: string;
@@ -190,3 +193,31 @@ export type EvaluationWindowAction =
 	| { type: 'RESET' };
 
 export type EvaluationCadenceMode = 'default' | 'custom' | 'rrule';
+
+export interface NotificationSettingsState {
+	multipleNotifications: string[] | null;
+	reNotification: {
+		enabled: boolean;
+		value: number;
+		unit: string;
+		conditions: ('firing' | 'no-data')[];
+	};
+	description: string;
+}
+
+export type NotificationSettingsAction =
+	| {
+			type: 'SET_MULTIPLE_NOTIFICATIONS';
+			payload: string[] | null;
+	  }
+	| {
+			type: 'SET_RE_NOTIFICATION';
+			payload: {
+				enabled: boolean;
+				value: number;
+				unit: string;
+				conditions: ('firing' | 'no-data')[];
+			};
+	  }
+	| { type: 'SET_DESCRIPTION'; payload: string }
+	| { type: 'RESET' };

@@ -3,6 +3,7 @@ import {
 	INITIAL_ALERT_STATE,
 	INITIAL_ALERT_THRESHOLD_STATE,
 	INITIAL_EVALUATION_WINDOW_STATE,
+	INITIAL_NOTIFICATION_SETTINGS_STATE,
 } from 'container/CreateAlertV2/context/constants';
 import {
 	EvaluationWindowState,
@@ -23,6 +24,8 @@ export const createMockAlertContextState = (
 	setAdvancedOptions: jest.fn(),
 	evaluationWindow: INITIAL_EVALUATION_WINDOW_STATE,
 	setEvaluationWindow: jest.fn(),
+	notificationSettings: INITIAL_NOTIFICATION_SETTINGS_STATE,
+	setNotificationSettings: jest.fn(),
 	...overrides,
 });
 
