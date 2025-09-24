@@ -45,6 +45,13 @@ function UplotPanelWrapper({
 	const isDarkMode = useIsDarkMode();
 	const lineChartRef = useRef<ToggleGraphProps>();
 	const graphRef = useRef<HTMLDivElement>(null);
+	const legendScrollPositionRef = useRef<{
+		scrollTop: number;
+		scrollLeft: number;
+	}>({
+		scrollTop: 0,
+		scrollLeft: 0,
+	});
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 	const { currentQuery } = useQueryBuilder();
@@ -227,6 +234,13 @@ function UplotPanelWrapper({
 				enhancedLegend: true, // Enable enhanced legend
 				legendPosition: widget?.legendPosition,
 				query: widget?.query || currentQuery,
+				legendScrollPosition: legendScrollPositionRef.current,
+				setLegendScrollPosition: (position: {
+					scrollTop: number;
+					scrollLeft: number;
+				}) => {
+					legendScrollPositionRef.current = position;
+				},
 			}),
 		[
 			queryResponse.data?.payload,
