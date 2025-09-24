@@ -1,6 +1,6 @@
 import './TopNav.styles.scss';
 
-import { Col, Row, Space } from 'antd';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import ROUTES from 'constants/routes';
 import { useMemo } from 'react';
 import { matchPath, useHistory } from 'react-router-dom';
@@ -46,16 +46,9 @@ function TopNav(): JSX.Element | null {
 
 	return !isRouteToSkip ? (
 		<div className="top-nav-container">
-			<Col span={24} style={{ marginTop: '1rem' }}>
-				<Row justify="end">
-					<Space align="center" size={16} direction="horizontal">
-						<NewExplorerCTA />
-						<div>
-							<DateTimeSelector showAutoRefresh />
-						</div>
-					</Space>
-				</Row>
-			</Col>
+			<NewExplorerCTA />
+			<DateTimeSelector showAutoRefresh />
+			<HeaderRightSection enableShare enableFeedback enableAnnouncements={false} />
 		</div>
 	) : null;
 }

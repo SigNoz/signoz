@@ -205,6 +205,7 @@ export default function Support(): JSX.Element {
 							<div className="support-channel-action">
 								<Button
 									type="default"
+									className="periscope-btn secondary"
 									onClick={(): void => handleChannelClick(channel)}
 								>
 									<Text ellipsis>{channel.btnText} </Text>
@@ -240,7 +241,7 @@ export default function Support(): JSX.Element {
 						loading={isLoadingBilling}
 						disabled={isLoadingBilling}
 						onClick={handleAddCreditCard}
-						className="add-credit-card-btn"
+						className="add-credit-card-btn periscope-btn primary"
 					>
 						Add Credit Card
 					</Button>,
