@@ -29,32 +29,11 @@ func NewModule(ctx context.Context, store roletypes.Store, authz authz.AuthZ, re
 func (module *module) Create(ctx context.Context, orgID valuer.UUID, postableRole *roletypes.PostableRole) (*roletypes.GettableRole, error) {
 	role := roletypes.NewRole(postableRole.DisplayName, postableRole.Description, orgID)
 
-	tuples, err := postableRole.GetTuplesFromTransactions(role.ID)
+	storableRole, err := roletypes.NewStorableRoleFromRole(role)
 	if err != nil {
 		return nil, err
 	}
-
-	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		err = module.authz.Write(ctx, &openfgav1.WriteRequest{
-			Writes: &openfgav1.WriteRequestWrites{
-				TupleKeys: tuples,
-			},
-		})
-		if err != nil {
-			return err
-		}
-
-		storableRole, err := roletypes.NewStorableRoleFromRole(role)
-		if err != nil {
-			return err
-		}
-		err = module.store.Create(ctx, storableRole)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+	err = module.store.Create(ctx, storableRole)
 	if err != nil {
 		return nil, err
 	}

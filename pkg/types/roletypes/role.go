@@ -39,9 +39,8 @@ type Role struct {
 }
 
 type PostableRole struct {
-	DisplayName  string                   `json:"displayName"`
-	Description  string                   `json:"description"`
-	Transactions []*authtypes.Transaction `json:"transactions"`
+	DisplayName string `json:"displayName"`
+	Description string `json:"description"`
 }
 
 type (
@@ -127,9 +126,8 @@ func (role *Role) PatchMetadata(patchableRole *PatchableRole) {
 
 func (role *PostableRole) UnmarshalJSON(data []byte) error {
 	type shadowPostableRole struct {
-		DisplayName  string                   `json:"displayName"`
-		Description  string                   `json:"description"`
-		Transactions []*authtypes.Transaction `json:"transactions"`
+		DisplayName string `json:"displayName"`
+		Description string `json:"description"`
 	}
 
 	var shadowRole shadowPostableRole
@@ -143,33 +141,8 @@ func (role *PostableRole) UnmarshalJSON(data []byte) error {
 
 	role.DisplayName = shadowRole.DisplayName
 	role.Description = shadowRole.Description
-	role.Transactions = shadowRole.Transactions
 
 	return nil
-}
-
-func (role *PostableRole) GetTuplesFromTransactions(id valuer.UUID) ([]*openfgav1.TupleKey, error) {
-	tuples := make([]*openfgav1.TupleKey, 0)
-	for _, transaction := range role.Transactions {
-		typeable := authtypes.MustNewTypeableFromType(transaction.Object.Resource.Type, transaction.Object.Resource.Name)
-		transactionTuples, err := typeable.Tuples(
-			authtypes.MustNewSubject(
-				authtypes.TypeRole,
-				id.String(),
-				authtypes.RelationAssignee,
-			),
-			transaction.Relation,
-			[]authtypes.Selector{transaction.Object.Selector},
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		tuples = append(tuples, transactionTuples...)
-
-	}
-
-	return tuples, nil
 }
 
 func (patch *PatchableObjects) GetInsertionTuples(id valuer.UUID, relation authtypes.Relation) ([]*openfgav1.TupleKey, error) {

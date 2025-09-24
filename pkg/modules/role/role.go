@@ -10,7 +10,7 @@ import (
 )
 
 type Module interface {
-	// Creates the role metadata and tuples in authorization server
+	// Creates the role metadata
 	Create(context.Context, valuer.UUID, *roletypes.PostableRole) (*roletypes.GettableRole, error)
 
 	// Gets the role metadata
