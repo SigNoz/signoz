@@ -648,7 +648,6 @@ def test_logs_time_series_count(
         },
     )
 
-    print(response.json())
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
 
