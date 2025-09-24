@@ -79,18 +79,26 @@ func parseFieldKeyRequest(r *http.Request) (*telemetrytypes.FieldKeySelector, er
 	}
 
 	name := r.URL.Query().Get("searchText")
+	parsed := telemetrytypes.GetFieldKeyFromKeyText(name)
 
 	req = telemetrytypes.FieldKeySelector{
 		StartUnixMilli:    startUnixMilli,
 		EndUnixMilli:      endUnixMilli,
 		Signal:            signal,
 		Source:            source,
-		Name:              name,
+		Name:              parsed.Name,
 		FieldContext:      fieldContext,
 		FieldDataType:     fieldDataType,
 		Limit:             req.Limit,
 		SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
 		MetricContext:     metricContext,
+	}
+
+	if req.FieldContext == telemetrytypes.FieldContextUnspecified && parsed.FieldContext != telemetrytypes.FieldContextUnspecified {
+		req.FieldContext = parsed.FieldContext
+	}
+	if req.FieldDataType == telemetrytypes.FieldDataTypeUnspecified && parsed.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+		req.FieldDataType = parsed.FieldDataType
 	}
 	return &req, nil
 }
@@ -102,7 +110,18 @@ func parseFieldValueRequest(r *http.Request) (*telemetrytypes.FieldValueSelector
 	}
 
 	name := r.URL.Query().Get("name")
-	keySelector.Name = name
+	if name != "" {
+		parsed := telemetrytypes.GetFieldKeyFromKeyText(name)
+		keySelector.Name = parsed.Name
+		if keySelector.FieldContext == telemetrytypes.FieldContextUnspecified && parsed.FieldContext != telemetrytypes.FieldContextUnspecified {
+			keySelector.FieldContext = parsed.FieldContext
+		}
+		if keySelector.FieldDataType == telemetrytypes.FieldDataTypeUnspecified && parsed.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+			keySelector.FieldDataType = parsed.FieldDataType
+		}
+	} else {
+		keySelector.Name = name
+	}
 	existingQuery := r.URL.Query().Get("existingQuery")
 	value := r.URL.Query().Get("searchText")
 
