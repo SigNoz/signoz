@@ -340,6 +340,8 @@ describe('Stacking bar in new panel', () => {
 	});
 });
 
+const STACKING_STATE_ATTR = 'data-stacking-state';
+
 describe('when switching to BAR panel type', () => {
 	jest.setTimeout(10000);
 
@@ -364,6 +366,11 @@ describe('when switching to BAR panel type', () => {
 			</DashboardProvider>,
 		);
 
+		expect(getByTestId('panel-change-select')).toHaveAttribute(
+			STACKING_STATE_ATTR,
+			'true',
+		);
+
 		await userEvent.click(getByText('Bar')); // Panel Type Selected
 
 		// find dropdown with - .ant-select-dropdown
@@ -375,6 +382,11 @@ describe('when switching to BAR panel type', () => {
 		// Select TimeSeries from dropdown
 		const option = within(panelDropdown).getByText('Time Series');
 		fireEvent.click(option);
+
+		expect(getByTestId('panel-change-select')).toHaveAttribute(
+			STACKING_STATE_ATTR,
+			'false',
+		);
 
 		// Since we are on timeseries panel, stack series should be false
 		expect(screen.queryByText('Stack series')).not.toBeInTheDocument();
@@ -396,5 +408,10 @@ describe('when switching to BAR panel type', () => {
 
 		// Stack series should be true
 		checkStackSeriesState(container, true);
+
+		expect(getByTestId('panel-change-select')).toHaveAttribute(
+			STACKING_STATE_ATTR,
+			'true',
+		);
 	});
 });
