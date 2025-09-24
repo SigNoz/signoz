@@ -13,6 +13,7 @@ import {
 	AlertThresholdState,
 	Algorithm,
 	EvaluationWindowState,
+	NotificationSettingsState,
 	Seasonality,
 	Threshold,
 	TimeDuration,
@@ -170,3 +171,22 @@ export const ADVANCED_OPTIONS_TIME_UNIT_OPTIONS = [
 	{ value: UniversalYAxisUnit.HOURS, label: 'Hours' },
 	{ value: UniversalYAxisUnit.DAYS, label: 'Days' },
 ];
+
+export const NOTIFICATION_MESSAGE_PLACEHOLDER =
+	'This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})';
+
+export const RE_NOTIFICATION_CONDITION_OPTIONS = [
+	{ value: 'firing', label: 'Firing' },
+	{ value: 'no-data', label: 'No Data' },
+];
+
+export const INITIAL_NOTIFICATION_SETTINGS_STATE: NotificationSettingsState = {
+	multipleNotifications: [],
+	reNotification: {
+		enabled: false,
+		value: 1,
+		unit: UniversalYAxisUnit.MINUTES,
+		conditions: [],
+	},
+	description: NOTIFICATION_MESSAGE_PLACEHOLDER,
+};
