@@ -1,4 +1,5 @@
-import { render, screen, userEvent } from 'tests/test-utils';
+import React from 'react';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import Success from '../Success';
@@ -97,61 +98,63 @@ jest.mock('components/TableV3/TableV3', () => ({
 	}: {
 		columns: unknown[];
 		data: Span[];
-	}): JSX.Element => (
-		<div data-testid="trace-table">
-			{data.map((row: Span) => {
-				// Get the span overview column (first column)
-				const spanOverviewColumn = columns[0] as {
-					cell?: (props: any) => JSX.Element;
-				};
-				const spanDurationColumn = columns[1] as {
-					cell?: (props: any) => JSX.Element;
-				};
+	}): JSX.Element => {
+		// Get the current props from the columns (which contain the current state)
+		const spanOverviewColumn = columns[0] as {
+			cell?: (props: any) => JSX.Element;
+		};
+		const spanDurationColumn = columns[1] as {
+			cell?: (props: any) => JSX.Element;
+		};
 
-				// Create proper cell props that match what TanStack Table expects
-				const cellProps = {
-					row: {
-						original: row,
+		return (
+			<div data-testid="trace-table">
+				{data.map((row: Span) => {
+					// Create proper cell props that match what TanStack Table expects
+					const cellProps = {
+						row: {
+							original: row,
+							getValue: (): Span => row,
+							getAllCells: (): any[] => [],
+							getVisibleCells: (): any[] => [],
+							getUniqueValues: (): any[] => [],
+							getIsSelected: (): boolean => false,
+							getIsSomeSelected: (): boolean => false,
+							getIsAllSelected: (): boolean => false,
+							getCanSelect: (): boolean => true,
+							getCanSelectSubRows: (): boolean => true,
+							getCanSelectAll: (): boolean => true,
+							toggleSelected: (): void => {},
+							getToggleSelectedHandler: (): (() => void) => (): void => {},
+						},
+						column: { id: 'span-name' },
+						table: {},
+						cell: {},
+						renderValue: (): Span => row,
 						getValue: (): Span => row,
-						getAllCells: (): any[] => [],
-						getVisibleCells: (): any[] => [],
-						getUniqueValues: (): any[] => [],
-						getIsSelected: (): boolean => false,
-						getIsSomeSelected: (): boolean => false,
-						getIsAllSelected: (): boolean => false,
-						getCanSelect: (): boolean => true,
-						getCanSelectSubRows: (): boolean => true,
-						getCanSelectAll: (): boolean => true,
-						toggleSelected: (): void => {},
-						getToggleSelectedHandler: (): (() => void) => (): void => {},
-					},
-					column: { id: 'span-name' },
-					table: {},
-					cell: {},
-					renderValue: (): Span => row,
-					getValue: (): Span => row,
-				};
+					};
 
-				const durationCellProps = {
-					...cellProps,
-					column: { id: 'span-duration' },
-				};
+					const durationCellProps = {
+						...cellProps,
+						column: { id: 'span-duration' },
+					};
 
-				return (
-					<div key={row.spanId} data-testid={`table-row-${row.spanId}`}>
-						{/* Render span overview column */}
-						<div data-testid={`cell-0-${row.spanId}`}>
-							{spanOverviewColumn?.cell?.(cellProps)}
+					return (
+						<div key={row.spanId} data-testid={`table-row-${row.spanId}`}>
+							{/* Render span overview column */}
+							<div data-testid={`cell-0-${row.spanId}`}>
+								{spanOverviewColumn?.cell?.(cellProps)}
+							</div>
+							{/* Render span duration column */}
+							<div data-testid={`cell-1-${row.spanId}`}>
+								{spanDurationColumn?.cell?.(durationCellProps)}
+							</div>
 						</div>
-						{/* Render span duration column */}
-						<div data-testid={`cell-1-${row.spanId}`}>
-							{spanDurationColumn?.cell?.(durationCellProps)}
-						</div>
-					</div>
-				);
-			})}
-		</div>
-	),
+					);
+				})}
+			</div>
+		);
+	},
 }));
 
 const mockTraceMetadata = {
@@ -191,10 +194,34 @@ const mockSpans = [
 	createMockSpan('span-3', 1),
 ];
 
-// No need for custom wrapper - using test-utils render function
+// Shared TestComponent for all tests
+function TestComponent(): JSX.Element {
+	const [selectedSpan, setSelectedSpan] = React.useState<Span | undefined>(
+		undefined,
+	);
 
-describe('UnifiedSpanClick', () => {
+	return (
+		<Success
+			spans={mockSpans}
+			traceMetadata={mockTraceMetadata}
+			interestedSpanId={{ spanId: '', isUncollapsed: false }}
+			uncollapsedNodes={mockSpans.map((s) => s.spanId)}
+			setInterestedSpanId={jest.fn()}
+			setTraceFlamegraphStatsWidth={jest.fn()}
+			selectedSpan={selectedSpan}
+			setSelectedSpan={setSelectedSpan}
+		/>
+	);
+}
+
+describe('Span Click User Flows', () => {
 	const FIRST_SPAN_TEST_ID = 'cell-0-span-1';
+	const FIRST_SPAN_DURATION_TEST_ID = 'cell-1-span-1';
+	const SECOND_SPAN_TEST_ID = 'cell-0-span-2';
+	const SPAN_OVERVIEW_CLASS = '.span-overview';
+	const SPAN_DURATION_CLASS = '.span-duration';
+	const INTERESTED_SPAN_CLASS = 'interested-span';
+	const SECOND_SPAN_DURATION_TEST_ID = 'cell-1-span-2';
 
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -202,10 +229,7 @@ describe('UnifiedSpanClick', () => {
 		Array.from(mockUrlQuery.keys()).forEach((key) => mockUrlQuery.delete(key));
 	});
 
-	it('clicking span overview calls handleSpanClick correctly', async () => {
-		const setSelectedSpan = jest.fn() as jest.MockedFunction<
-			React.Dispatch<React.SetStateAction<Span | undefined>>
-		>;
+	it('clicking span updates URL with spanId parameter', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		render(
@@ -217,162 +241,172 @@ describe('UnifiedSpanClick', () => {
 				setInterestedSpanId={jest.fn()}
 				setTraceFlamegraphStatsWidth={jest.fn()}
 				selectedSpan={undefined}
-				setSelectedSpan={setSelectedSpan}
+				setSelectedSpan={jest.fn()}
 			/>,
 			undefined,
 			{ initialRoute: '/trace' },
 		);
 
-		// Find the span overview area (first cell in the table row)
+		// Initially URL should not have spanId
+		expect(mockUrlQuery.get('spanId')).toBeNull();
+
+		// Click on the actual span element (not the wrapper)
 		const spanOverview = screen.getByTestId(FIRST_SPAN_TEST_ID);
+		const spanElement = spanOverview.querySelector(
+			SPAN_OVERVIEW_CLASS,
+		) as HTMLElement;
+		await user.click(spanElement);
 
-		// Click on span overview
-		await user.click(spanOverview);
-
-		// Verify setSelectedSpan was called
-		expect(setSelectedSpan).toHaveBeenCalled();
-
-		// Check if the first argument is a span object
-		const firstCall = setSelectedSpan.mock.calls[0][0];
-		if (typeof firstCall === 'function') {
-			// If it's a function, call it to get the actual value
-			const result = firstCall(undefined);
-			expect(result).toEqual(expect.objectContaining({ spanId: 'span-1' }));
-		} else {
-			// If it's an object, check it directly
-			expect(firstCall).toEqual(expect.objectContaining({ spanId: 'span-1' }));
-		}
-
-		// For now, let's just verify that the span selection is working
-		// The navigation issue might be due to the complex mock setup
-		// TODO: Fix navigation test once the basic functionality is working
+		// Verify URL was updated with spanId
+		expect(mockUrlQuery.get('spanId')).toBe('span-1');
+		expect(mockSafeNavigate).toHaveBeenCalledWith({
+			search: expect.stringContaining('spanId=span-1'),
+		});
 	});
 
-	it('clicking span duration calls handleSpanClick correctly', async () => {
-		const setSelectedSpan = jest.fn() as jest.MockedFunction<
-			React.Dispatch<React.SetStateAction<Span | undefined>>
-		>;
+	it('clicking span duration visually selects the span', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(
-			<Success
-				spans={mockSpans}
-				traceMetadata={mockTraceMetadata}
-				interestedSpanId={{ spanId: '', isUncollapsed: false }}
-				uncollapsedNodes={mockSpans.map((s) => s.spanId)}
-				setInterestedSpanId={jest.fn()}
-				setTraceFlamegraphStatsWidth={jest.fn()}
-				selectedSpan={undefined}
-				setSelectedSpan={setSelectedSpan}
-			/>,
-			undefined,
-			{ initialRoute: '/trace' },
-		);
+		render(<TestComponent />, undefined, {
+			initialRoute: '/trace',
+		});
 
-		// Find the span duration area (second cell in the table row)
-		const spanDuration = screen.getByTestId('cell-1-span-1');
+		// Wait for initial render and selection
+		await waitFor(() => {
+			const spanDuration = screen.getByTestId(FIRST_SPAN_DURATION_TEST_ID);
+			const spanDurationElement = spanDuration.querySelector(
+				SPAN_DURATION_CLASS,
+			) as HTMLElement;
+			expect(spanDurationElement).toHaveClass(INTERESTED_SPAN_CLASS);
+		});
 
-		// Click on span duration bar
-		await user.click(spanDuration);
+		// Click on span-2 to test selection change
+		const span2Duration = screen.getByTestId(SECOND_SPAN_DURATION_TEST_ID);
+		const span2DurationElement = span2Duration.querySelector(
+			SPAN_DURATION_CLASS,
+		) as HTMLElement;
+		await user.click(span2DurationElement);
 
-		// Verify setSelectedSpan was called
-		expect(setSelectedSpan).toHaveBeenCalled();
+		// Wait for the state update and re-render
+		await waitFor(() => {
+			const spanDuration = screen.getByTestId(FIRST_SPAN_DURATION_TEST_ID);
+			const spanDurationElement = spanDuration.querySelector(
+				SPAN_DURATION_CLASS,
+			) as HTMLElement;
+			const span2Duration = screen.getByTestId(SECOND_SPAN_DURATION_TEST_ID);
+			const span2DurationElement = span2Duration.querySelector(
+				SPAN_DURATION_CLASS,
+			) as HTMLElement;
 
-		// Check if the first argument is a span object
-		const firstCall = setSelectedSpan.mock.calls[0][0];
-		if (typeof firstCall === 'function') {
-			// If it's a function, call it to get the actual value
-			const result = firstCall(undefined);
-			expect(result).toEqual(expect.objectContaining({ spanId: 'span-1' }));
-		} else {
-			// If it's an object, check it directly
-			expect(firstCall).toEqual(expect.objectContaining({ spanId: 'span-1' }));
-		}
+			expect(spanDurationElement).not.toHaveClass(INTERESTED_SPAN_CLASS);
+			expect(span2DurationElement).toHaveClass(INTERESTED_SPAN_CLASS);
+		});
 	});
 
-	it('verifies both click areas use the same unified handleSpanClick function', async () => {
-		const setSelectedSpan = jest.fn() as jest.MockedFunction<
-			React.Dispatch<React.SetStateAction<Span | undefined>>
-		>;
+	it('both click areas produce the same visual result', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(
-			<Success
-				spans={mockSpans}
-				traceMetadata={mockTraceMetadata}
-				interestedSpanId={{ spanId: '', isUncollapsed: false }}
-				uncollapsedNodes={mockSpans.map((s) => s.spanId)}
-				setInterestedSpanId={jest.fn()}
-				setTraceFlamegraphStatsWidth={jest.fn()}
-				selectedSpan={undefined}
-				setSelectedSpan={setSelectedSpan}
-			/>,
-			undefined,
-			{ initialRoute: '/trace' },
-		);
+		render(<TestComponent />, undefined, {
+			initialRoute: '/trace',
+		});
 
-		// Test that both span overview and duration use the same handler
-		const spanOverview = screen.getByTestId(FIRST_SPAN_TEST_ID);
+		// Wait for initial render and selection
+		await waitFor(() => {
+			const spanOverview = screen.getByTestId(FIRST_SPAN_TEST_ID);
+			const spanDuration = screen.getByTestId(FIRST_SPAN_DURATION_TEST_ID);
+			const spanOverviewElement = spanOverview.querySelector(
+				SPAN_OVERVIEW_CLASS,
+			) as HTMLElement;
+			const spanDurationElement = spanDuration.querySelector(
+				SPAN_DURATION_CLASS,
+			) as HTMLElement;
 
-		// Click span overview first
-		await user.click(spanOverview);
-		expect(setSelectedSpan).toHaveBeenCalledTimes(1);
+			// Initially both areas should show the same visual selection (first span is auto-selected)
+			expect(spanOverviewElement).toHaveClass(INTERESTED_SPAN_CLASS);
+			expect(spanDurationElement).toHaveClass(INTERESTED_SPAN_CLASS);
+		});
 
-		// Verify the first click worked
-		const firstCall = setSelectedSpan.mock.calls[0][0];
-		const firstSpan =
-			typeof firstCall === 'function' ? firstCall(undefined) : firstCall;
-		expect(firstSpan).toEqual(expect.objectContaining({ spanId: 'span-1' }));
+		// Click span-2 to test selection change
+		const span2Overview = screen.getByTestId(SECOND_SPAN_TEST_ID);
+		const span2Element = span2Overview.querySelector(
+			SPAN_OVERVIEW_CLASS,
+		) as HTMLElement;
+		await user.click(span2Element);
 
-		// TODO: Fix multiple click handling in mock TableV3
-		// The mock is not properly handling multiple clicks
-		// This test verifies that the basic click functionality works
+		// Wait for the state update and re-render
+		await waitFor(() => {
+			const spanOverview = screen.getByTestId(FIRST_SPAN_TEST_ID);
+			const spanDuration = screen.getByTestId(FIRST_SPAN_DURATION_TEST_ID);
+			const spanOverviewElement = spanOverview.querySelector(
+				SPAN_OVERVIEW_CLASS,
+			) as HTMLElement;
+			const spanDurationElement = spanDuration.querySelector(
+				SPAN_DURATION_CLASS,
+			) as HTMLElement;
+
+			// Now span-2 should be selected, span-1 should not
+			expect(spanOverviewElement).not.toHaveClass(INTERESTED_SPAN_CLASS);
+			expect(spanDurationElement).not.toHaveClass(INTERESTED_SPAN_CLASS);
+
+			// Check that span-2 is selected
+			const span2Overview = screen.getByTestId(SECOND_SPAN_TEST_ID);
+			const span2Duration = screen.getByTestId(SECOND_SPAN_DURATION_TEST_ID);
+			const span2OverviewElement = span2Overview.querySelector(
+				SPAN_OVERVIEW_CLASS,
+			) as HTMLElement;
+			const span2DurationElement = span2Duration.querySelector(
+				SPAN_DURATION_CLASS,
+			) as HTMLElement;
+
+			expect(span2OverviewElement).toHaveClass(INTERESTED_SPAN_CLASS);
+			expect(span2DurationElement).toHaveClass(INTERESTED_SPAN_CLASS);
+		});
 	});
 
-	it('handles multiple span clicks correctly updating URL each time', async () => {
-		const setSelectedSpan = jest.fn() as jest.MockedFunction<
-			React.Dispatch<React.SetStateAction<Span | undefined>>
-		>;
+	it('clicking different spans updates selection correctly', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(
-			<Success
-				spans={mockSpans}
-				traceMetadata={mockTraceMetadata}
-				interestedSpanId={{ spanId: '', isUncollapsed: false }}
-				uncollapsedNodes={mockSpans.map((s) => s.spanId)}
-				setInterestedSpanId={jest.fn()}
-				setTraceFlamegraphStatsWidth={jest.fn()}
-				selectedSpan={undefined}
-				setSelectedSpan={setSelectedSpan}
-			/>,
-			undefined,
-			{ initialRoute: '/trace' },
-		);
+		render(<TestComponent />, undefined, {
+			initialRoute: '/trace',
+		});
 
-		// Click first span
-		const span1Overview = screen.getByTestId(FIRST_SPAN_TEST_ID);
-		await user.click(span1Overview);
+		// Wait for initial render and selection
+		await waitFor(() => {
+			const span1Overview = screen.getByTestId(FIRST_SPAN_TEST_ID);
+			const span1Element = span1Overview.querySelector(
+				SPAN_OVERVIEW_CLASS,
+			) as HTMLElement;
+			expect(span1Element).toHaveClass(INTERESTED_SPAN_CLASS);
+		});
 
-		// Verify the first click worked
-		expect(setSelectedSpan).toHaveBeenCalledTimes(1);
-		const firstCall = setSelectedSpan.mock.calls[0][0];
-		const firstSpan =
-			typeof firstCall === 'function' ? firstCall(undefined) : firstCall;
-		expect(firstSpan).toEqual(expect.objectContaining({ spanId: 'span-1' }));
+		// Click second span
+		const span2Overview = screen.getByTestId(SECOND_SPAN_TEST_ID);
+		const span2Element = span2Overview.querySelector(
+			SPAN_OVERVIEW_CLASS,
+		) as HTMLElement;
+		await user.click(span2Element);
 
-		// TODO: Fix multiple click handling in mock TableV3
-		// The mock is not properly handling multiple clicks
-		// This test verifies that the basic click functionality works
+		// Wait for the state update and re-render
+		await waitFor(() => {
+			const span1Overview = screen.getByTestId(FIRST_SPAN_TEST_ID);
+			const span1Element = span1Overview.querySelector(
+				SPAN_OVERVIEW_CLASS,
+			) as HTMLElement;
+			const span2Overview = screen.getByTestId(SECOND_SPAN_TEST_ID);
+			const span2Element = span2Overview.querySelector(
+				SPAN_OVERVIEW_CLASS,
+			) as HTMLElement;
+
+			// Second span should be selected, first should not
+			expect(span1Element).not.toHaveClass(INTERESTED_SPAN_CLASS);
+			expect(span2Element).toHaveClass(INTERESTED_SPAN_CLASS);
+		});
 	});
 
-	it('preserves existing URL parameters when setting spanId', async () => {
-		const setSelectedSpan = jest.fn() as jest.MockedFunction<
-			React.Dispatch<React.SetStateAction<Span | undefined>>
-		>;
+	it('preserves existing URL parameters when selecting spans', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		// Pre-populate URL query with existing parameters
+		// Pre-populate URL with existing parameters
 		mockUrlQuery.set('existingParam', 'existingValue');
 		mockUrlQuery.set('anotherParam', 'anotherValue');
 
@@ -385,68 +419,29 @@ describe('UnifiedSpanClick', () => {
 				setInterestedSpanId={jest.fn()}
 				setTraceFlamegraphStatsWidth={jest.fn()}
 				selectedSpan={undefined}
-				setSelectedSpan={setSelectedSpan}
+				setSelectedSpan={jest.fn()}
 			/>,
 			undefined,
 			{ initialRoute: '/trace' },
 		);
 
+		// Click on the actual span element (not the wrapper)
 		const spanOverview = screen.getByTestId(FIRST_SPAN_TEST_ID);
-		await user.click(spanOverview);
+		const spanElement = spanOverview.querySelector(
+			SPAN_OVERVIEW_CLASS,
+		) as HTMLElement;
+		await user.click(spanElement);
 
-		// Verify setSelectedSpan was called
-		expect(setSelectedSpan).toHaveBeenCalled();
+		// Verify existing parameters are preserved and spanId is added
+		expect(mockUrlQuery.get('existingParam')).toBe('existingValue');
+		expect(mockUrlQuery.get('anotherParam')).toBe('anotherValue');
+		expect(mockUrlQuery.get('spanId')).toBe('span-1');
 
-		// Check if the first argument is a span object
-		const firstCall = setSelectedSpan.mock.calls[0][0];
-		if (typeof firstCall === 'function') {
-			// If it's a function, call it to get the actual value
-			const result = firstCall(undefined);
-			expect(result).toEqual(expect.objectContaining({ spanId: 'span-1' }));
-		} else {
-			// If it's an object, check it directly
-			expect(firstCall).toEqual(expect.objectContaining({ spanId: 'span-1' }));
-		}
-
-		// TODO: Test URL parameter preservation once navigation is working
-	});
-
-	it('demonstrates unified behavior between span overview and duration columns', async () => {
-		const setSelectedSpan = jest.fn() as jest.MockedFunction<
-			React.Dispatch<React.SetStateAction<Span | undefined>>
-		>;
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-		render(
-			<Success
-				spans={mockSpans}
-				traceMetadata={mockTraceMetadata}
-				interestedSpanId={{ spanId: '', isUncollapsed: false }}
-				uncollapsedNodes={mockSpans.map((s) => s.spanId)}
-				setInterestedSpanId={jest.fn()}
-				setTraceFlamegraphStatsWidth={jest.fn()}
-				selectedSpan={undefined}
-				setSelectedSpan={setSelectedSpan}
-			/>,
-			undefined,
-			{ initialRoute: '/trace' },
-		);
-
-		// Test span overview click
-		const spanOverview = screen.getByTestId(FIRST_SPAN_TEST_ID);
-		await user.click(spanOverview);
-
-		// Verify the click worked
-		expect(setSelectedSpan).toHaveBeenCalledTimes(1);
-		const overviewCall = setSelectedSpan.mock.calls[0];
-		const overviewSpan =
-			typeof overviewCall[0] === 'function'
-				? overviewCall[0](undefined)
-				: overviewCall[0];
-		expect(overviewSpan).toEqual(expect.objectContaining({ spanId: 'span-1' }));
-
-		// TODO: Fix multiple click handling in mock TableV3
-		// The mock is not properly handling multiple clicks
-		// This test verifies that the basic click functionality works
+		// Verify navigation was called with all parameters
+		expect(mockSafeNavigate).toHaveBeenCalledWith({
+			search: expect.stringMatching(
+				/existingParam=existingValue.*anotherParam=anotherValue.*spanId=span-1/,
+			),
+		});
 	});
 });

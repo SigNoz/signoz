@@ -4,18 +4,21 @@ import { Span } from 'types/api/trace/getTraceV2';
 import SpanHoverCard from '../SpanHoverCard';
 
 // Mock dayjs completely for testing
-jest.mock('dayjs', () =>
-	jest.fn(() => ({
+jest.mock('dayjs', () => {
+	const mockDayjs = jest.fn(() => ({
 		format: jest.fn((formatString: string) => {
 			if (formatString === 'D/M/YY - HH:mm:ss') {
 				return '15/3/24 - 14:23:45';
 			}
 			return 'mock-date';
 		}),
+	}));
+	Object.assign(mockDayjs, {
 		extend: jest.fn(),
 		tz: { guess: jest.fn(() => 'UTC') },
-	})),
-);
+	});
+	return mockDayjs;
+});
 
 // Mock the time conversion utility
 jest.mock('container/TraceDetail/utils', () => ({
