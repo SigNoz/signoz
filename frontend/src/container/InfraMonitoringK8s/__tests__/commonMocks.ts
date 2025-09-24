@@ -56,19 +56,6 @@ const setupCommonMocks = (): void => {
 		useNavigationType: (): any => 'PUSH',
 	}));
 
-	jest.mock('hooks/useUrlQuery', () => ({
-		__esModule: true,
-		default: jest.fn(() => ({
-			set: jest.fn(),
-			delete: jest.fn(),
-			get: jest.fn(),
-			has: jest.fn(),
-			entries: jest.fn(() => []),
-			append: jest.fn(),
-			toString: jest.fn(() => ''),
-		})),
-	}));
-
 	jest.mock('lib/getMinMax', () => ({
 		__esModule: true,
 		default: jest.fn().mockImplementation(() => ({
