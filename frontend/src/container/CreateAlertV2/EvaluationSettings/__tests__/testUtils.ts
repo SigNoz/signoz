@@ -3,8 +3,12 @@ import {
 	INITIAL_ALERT_STATE,
 	INITIAL_ALERT_THRESHOLD_STATE,
 	INITIAL_EVALUATION_WINDOW_STATE,
+	INITIAL_NOTIFICATION_SETTINGS_STATE,
 } from 'container/CreateAlertV2/context/constants';
-import { ICreateAlertContextProps } from 'container/CreateAlertV2/context/types';
+import {
+	EvaluationWindowState,
+	ICreateAlertContextProps,
+} from 'container/CreateAlertV2/context/types';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 export const createMockAlertContextState = (
@@ -20,5 +24,14 @@ export const createMockAlertContextState = (
 	setAdvancedOptions: jest.fn(),
 	evaluationWindow: INITIAL_EVALUATION_WINDOW_STATE,
 	setEvaluationWindow: jest.fn(),
+	notificationSettings: INITIAL_NOTIFICATION_SETTINGS_STATE,
+	setNotificationSettings: jest.fn(),
+	...overrides,
+});
+
+export const createMockEvaluationWindowState = (
+	overrides?: Partial<EvaluationWindowState>,
+): EvaluationWindowState => ({
+	...INITIAL_EVALUATION_WINDOW_STATE,
 	...overrides,
 });
