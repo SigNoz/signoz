@@ -26,7 +26,7 @@ interface LogsFormatOptionsMenuProps {
 	config: OptionsMenuConfig;
 }
 
-export default function LogsFormatOptionsMenu({
+function LogsFormatOptionsMenu({
 	items,
 	selectedOptionFormat,
 	config,
@@ -49,7 +49,6 @@ export default function LogsFormatOptionsMenu({
 	const [selectedValue, setSelectedValue] = useState<string | null>(null);
 	const listRef = useRef<HTMLDivElement>(null);
 	const initialMouseEnterRef = useRef<boolean>(false);
-	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 
 	const onChange = useCallback(
 		(key: LogViewMode) => {
@@ -209,7 +208,7 @@ export default function LogsFormatOptionsMenu({
 		};
 	}, [selectedValue]);
 
-	const popoverContent = (
+	return (
 		<div
 			className={cx(
 				'nested-menu-container',
@@ -447,9 +446,23 @@ export default function LogsFormatOptionsMenu({
 			)}
 		</div>
 	);
+}
+
+function OptionsPopover({
+	items,
+	selectedOptionFormat,
+	config,
+}: LogsFormatOptionsMenuProps): JSX.Element {
+	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 	return (
 		<Popover
-			content={popoverContent}
+			content={
+				<LogsFormatOptionsMenu
+					items={items}
+					selectedOptionFormat={selectedOptionFormat}
+					config={config}
+				/>
+			}
 			trigger="click"
 			placement="bottomRight"
 			arrow={false}
@@ -465,3 +478,5 @@ export default function LogsFormatOptionsMenu({
 		</Popover>
 	);
 }
+
+export default OptionsPopover;
