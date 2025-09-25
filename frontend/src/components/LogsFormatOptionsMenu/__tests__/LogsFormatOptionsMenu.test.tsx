@@ -1,7 +1,7 @@
 import { FontSize } from 'container/OptionsMenu/types';
 import { fireEvent, render, waitFor } from 'tests/test-utils';
 
-import OptionsPopover from '../LogsFormatOptionsMenu';
+import LogsFormatOptionsMenu from '../LogsFormatOptionsMenu';
 
 const mockUpdateFormatting = jest.fn();
 
@@ -36,7 +36,7 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		];
 
 		const { getByTestId } = render(
-			<OptionsPopover
+			<LogsFormatOptionsMenu
 				items={items}
 				selectedOptionFormat="table"
 				config={{

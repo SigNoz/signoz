@@ -26,7 +26,7 @@ interface LogsFormatOptionsMenuProps {
 	config: OptionsMenuConfig;
 }
 
-function LogsFormatOptionsMenu({
+function OptionsMenu({
 	items,
 	selectedOptionFormat,
 	config,
@@ -448,7 +448,7 @@ function LogsFormatOptionsMenu({
 	);
 }
 
-function OptionsPopover({
+function LogsFormatOptionsMenu({
 	items,
 	selectedOptionFormat,
 	config,
@@ -457,7 +457,7 @@ function OptionsPopover({
 	return (
 		<Popover
 			content={
-				<LogsFormatOptionsMenu
+				<OptionsMenu
 					items={items}
 					selectedOptionFormat={selectedOptionFormat}
 					config={config}
@@ -480,4 +480,4 @@ function OptionsPopover({
 	);
 }
 
-export default OptionsPopover;
+export default LogsFormatOptionsMenu;
