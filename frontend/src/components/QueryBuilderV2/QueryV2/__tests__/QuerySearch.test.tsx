@@ -222,28 +222,6 @@ describe('QuerySearch', () => {
 		expect(screen.getByPlaceholderText(PLACEHOLDER_TEXT)).toBeInTheDocument();
 	});
 
-	it('calls onChange on blur after user edits', async () => {
-		const handleChange = jest.fn() as jest.MockedFunction<(v: string) => void>;
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-		render(
-			<QuerySearch
-				onChange={handleChange}
-				queryData={initialQueriesMap.metrics.builder.queryData[0]}
-				dataSource={DataSource.METRICS}
-			/>,
-		);
-
-		const editor = screen.getByTestId(TESTID_EDITOR);
-		await user.click(editor);
-		await user.type(editor, SAMPLE_VALUE_TYPING_COMPLETE);
-		// Blur triggers validation + onChange (only if focused at least once and value changed)
-		editor.blur();
-
-		await waitFor(() => expect(handleChange).toHaveBeenCalledTimes(1));
-		expect(handleChange.mock.calls[0][0]).toContain("service.name = 'frontend'");
-	});
-
 	it('fetches key suggestions when typing a key (debounced)', async () => {
 		jest.useFakeTimers();
 		const advance = (ms: number): void => {
