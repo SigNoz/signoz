@@ -11,19 +11,16 @@ import (
 type Tokenizer interface {
 	factory.Service
 	// Create a new token.
-	CreateToken(context.Context, *authtypes.AuthenticatedUser) (*authtypes.Token, error)
+	CreateToken(context.Context, *authtypes.AuthenticatedUser, map[string]string) (*authtypes.Token, error)
 
 	// Get user from token.
-	GetAuthenticatedUser(context.Context, *authtypes.Token) (*authtypes.AuthenticatedUser, error)
+	GetAuthenticatedUser(context.Context, string) (*authtypes.AuthenticatedUser, error)
 
 	// Rotate the input token and return a new token.
-	RotateToken(context.Context, *authtypes.Token) (*authtypes.Token, error)
+	RotateToken(context.Context, string) (*authtypes.Token, error)
 
 	// Delete the token.
-	DeleteToken(context.Context, *authtypes.Token) error
-
-	// List all tokens related to the input token.
-	ListTokens(context.Context, *authtypes.Token) ([]*authtypes.Token, error)
+	DeleteToken(context.Context, string) error
 
 	statsreporter.StatsCollector
 }
