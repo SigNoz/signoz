@@ -80,7 +80,11 @@ export const getYAxisFormattedValue = (
 	// For all other standard formats, delegate to grafana/data's built-in formatter.
 	try {
 		const formatter = getValueFormat(format);
-		const formattedValue = formatter(numValue, decimalPlaces || 3, undefined);
+		const formattedValue = formatter(
+			numValue,
+			decimalPlaces && decimalPlaces >= 3 ? decimalPlaces : 3,
+			undefined,
+		);
 		if (formattedValue.text && formattedValue.text.includes('.')) {
 			formattedValue.text = formatWithSignificantDecimals(
 				parseFloat(formattedValue.text),

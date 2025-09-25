@@ -66,6 +66,8 @@ describe('getYAxisFormattedValue - units', () => {
 		expect(getYAxisFormattedValue('1500', 'ms')).toBe('1.5 s');
 		expect(getYAxisFormattedValue('500', 'ms')).toBe('500 ms');
 		expect(getYAxisFormattedValue('60000', 'ms')).toBe('1 min');
+		expect(getYAxisFormattedValue('295.429', 'ms')).toBe('295.429 ms');
+		expect(getYAxisFormattedValue('4353.81', 'ms')).toBe('4.354 s');
 	});
 
 	test('s', () => {
