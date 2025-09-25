@@ -64,8 +64,9 @@ function ThresholdItem({
 	};
 
 	const addRecoveryThreshold = (): void => {
-		setShowRecoveryThreshold(true);
-		updateThreshold(threshold.id, 'recoveryThresholdValue', 0);
+		// Recovery threshold - hidden for now
+		// setShowRecoveryThreshold(true);
+		// updateThreshold(threshold.id, 'recoveryThresholdValue', 0);
 	};
 
 	const removeRecoveryThreshold = (): void => {
@@ -128,7 +129,8 @@ function ThresholdItem({
 							option?.label?.toLowerCase().includes(input.toLowerCase()) || false
 						}
 					/>
-					{showRecoveryThreshold && (
+					{/* Recovery threshold - hidden for now */}
+					{/* {showRecoveryThreshold && (
 						<>
 							<Typography.Text className="sentence-text">recover on</Typography.Text>
 							<Input
@@ -149,9 +151,9 @@ function ThresholdItem({
 								/>
 							</Tooltip>
 						</>
-					)}
+					)} */}
 					<Button.Group>
-						{!showRecoveryThreshold && (
+						{/* {!showRecoveryThreshold && (
 							<Tooltip title="Add recovery threshold">
 								<Button
 									type="default"
@@ -160,7 +162,7 @@ function ThresholdItem({
 									onClick={addRecoveryThreshold}
 								/>
 							</Tooltip>
-						)}
+						)} */}
 						{showRemoveButton && (
 							<Tooltip title="Remove threshold">
 								<Button

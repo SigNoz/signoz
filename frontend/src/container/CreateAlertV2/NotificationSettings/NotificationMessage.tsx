@@ -57,23 +57,23 @@ function NotificationMessage(): JSX.Element {
 				<div className="notification-message-header-content">
 					<Typography.Text className="notification-message-header-title">
 						Notification Message
-						<Tooltip title="Customize the message content sent in alert notifications. Template variables like {{alertname}}, {{value}}, and {{threshold}} will be replaced with actual values when the alert fires.">
+						{/* <Tooltip title="Customize the message content sent in alert notifications. Template variables like {{alertname}}, {{value}}, and {{threshold}} will be replaced with actual values when the alert fires.">
 							<Info size={16} />
-						</Tooltip>
+						</Tooltip> */}
 					</Typography.Text>
 					<Typography.Text className="notification-message-header-description">
 						Custom message content for alert notifications. Use template variables to
 						include dynamic information.
 					</Typography.Text>
 				</div>
-				<div className="notification-message-header-actions">
+				{/* <div className="notification-message-header-actions">
 					<Popover content={templateVariableContent}>
 						<Button type="text">
 							<Info size={12} />
 							Variables
 						</Button>
 					</Popover>
-				</div>
+				</div> */}
 			</div>
 			<TextArea
 				value={notificationSettings.description}

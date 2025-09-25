@@ -98,13 +98,14 @@ function EvaluationCadence(): JSX.Element {
 								}
 							/>
 						</Input.Group>
-						<Button
+						{/* Add custom schedule - hidden for now */}
+						{/* <Button
 							className="advanced-option-item-button"
 							onClick={showCustomSchedule}
 						>
 							<Plus size={12} />
 							<Typography.Text>Add custom schedule</Typography.Text>
-						</Button>
+						</Button> */}
 					</div>
 				)}
 			</div>
