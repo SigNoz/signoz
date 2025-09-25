@@ -5,6 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import logEvent from 'api/common/logEvent';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useLocation } from 'react-router-dom';
 
 import HeaderRightSection from '../HeaderRightSection';
@@ -44,8 +45,13 @@ jest.mock('../AnnouncementsModal', () => ({
 	),
 }));
 
+jest.mock('hooks/useGetTenantLicense', () => ({
+	useGetTenantLicense: jest.fn(),
+}));
+
 const mockLogEvent = logEvent as jest.Mock;
 const mockUseLocation = useLocation as jest.Mock;
+const mockUseGetTenantLicense = useGetTenantLicense as jest.Mock;
 
 const defaultProps = {
 	enableAnnouncements: true,
@@ -61,6 +67,13 @@ describe('HeaderRightSection', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockUseLocation.mockReturnValue(mockLocation);
+		// Default to licensed user (Enterprise or Cloud)
+		mockUseGetTenantLicense.mockReturnValue({
+			isCloudUser: true,
+			isEnterpriseSelfHostedUser: false,
+			isCommunityUser: false,
+			isCommunityEnterpriseUser: false,
+		});
 	});
 
 	it('should render all buttons when all features are enabled', () => {
@@ -188,5 +201,85 @@ describe('HeaderRightSection', () => {
 		await user.click(feedbackButton!);
 		expect(screen.getByTestId('feedback-modal')).toBeInTheDocument();
 		expect(screen.queryByTestId('share-modal')).not.toBeInTheDocument();
+	});
+
+	it('should show feedback button for Cloud users when feedback is enabled', () => {
+		mockUseGetTenantLicense.mockReturnValue({
+			isCloudUser: true,
+			isEnterpriseSelfHostedUser: false,
+			isCommunityUser: false,
+			isCommunityEnterpriseUser: false,
+		});
+
+		render(<HeaderRightSection {...defaultProps} />);
+
+		const feedbackButton = document.querySelector('.lucide-square-pen');
+		expect(feedbackButton).toBeInTheDocument();
+	});
+
+	it('should show feedback button for Enterprise self-hosted users when feedback is enabled', () => {
+		mockUseGetTenantLicense.mockReturnValue({
+			isCloudUser: false,
+			isEnterpriseSelfHostedUser: true,
+			isCommunityUser: false,
+			isCommunityEnterpriseUser: false,
+		});
+
+		render(<HeaderRightSection {...defaultProps} />);
+
+		const feedbackButton = document.querySelector('.lucide-square-pen');
+		expect(feedbackButton).toBeInTheDocument();
+	});
+
+	it('should hide feedback button for Community users even when feedback is enabled', () => {
+		mockUseGetTenantLicense.mockReturnValue({
+			isCloudUser: false,
+			isEnterpriseSelfHostedUser: false,
+			isCommunityUser: true,
+			isCommunityEnterpriseUser: false,
+		});
+
+		render(<HeaderRightSection {...defaultProps} />);
+
+		const feedbackButton = document.querySelector('.lucide-square-pen');
+		expect(feedbackButton).not.toBeInTheDocument();
+	});
+
+	it('should hide feedback button for Community Enterprise users even when feedback is enabled', () => {
+		mockUseGetTenantLicense.mockReturnValue({
+			isCloudUser: false,
+			isEnterpriseSelfHostedUser: false,
+			isCommunityUser: false,
+			isCommunityEnterpriseUser: true,
+		});
+
+		render(<HeaderRightSection {...defaultProps} />);
+
+		const feedbackButton = document.querySelector('.lucide-square-pen');
+		expect(feedbackButton).not.toBeInTheDocument();
+	});
+
+	it('should render correct number of buttons when feedback is hidden due to license', () => {
+		mockUseGetTenantLicense.mockReturnValue({
+			isCloudUser: false,
+			isEnterpriseSelfHostedUser: false,
+			isCommunityUser: true,
+			isCommunityEnterpriseUser: false,
+		});
+
+		render(<HeaderRightSection {...defaultProps} />);
+
+		// Should have 2 buttons (announcements + share) instead of 3
+		const buttons = screen.getAllByRole('button');
+		expect(buttons).toHaveLength(2);
+
+		// Verify which buttons are present
+		expect(screen.getByRole('button', { name: /share/i })).toBeInTheDocument();
+		const inboxIcon = document.querySelector('.lucide-inbox');
+		expect(inboxIcon).toBeInTheDocument();
+
+		// Verify feedback button is not present
+		const feedbackIcon = document.querySelector('.lucide-square-pen');
+		expect(feedbackIcon).not.toBeInTheDocument();
 	});
 });
