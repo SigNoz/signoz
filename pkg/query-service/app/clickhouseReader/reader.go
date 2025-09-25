@@ -1875,6 +1875,7 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 		response.DefaultTTLDays = customTTL.TTL
 		response.TTLConditions = ttlConditions
 		response.Status = customTTL.Status
+		response.ColdStorageTTLDays = customTTL.ColdStorageTTL
 
 	} else {
 		// V1 - Traditional TTL
