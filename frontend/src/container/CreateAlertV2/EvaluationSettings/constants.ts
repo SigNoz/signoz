@@ -14,6 +14,7 @@ export const EVALUATION_WINDOW_TIMEFRAME = {
 		{ label: 'Last 1 hour', value: '1h0m0s' },
 		{ label: 'Last 2 hours', value: '2h0m0s' },
 		{ label: 'Last 4 hours', value: '4h0m0s' },
+		{ label: 'Custom', value: 'custom' },
 	],
 	cumulative: [
 		{ label: 'Current hour', value: 'currentHour' },
@@ -60,3 +61,9 @@ export const TIMEZONE_DATA = generateTimezoneData().map((timezone) => ({
 	label: `${timezone.name} (${timezone.offset})`,
 	value: timezone.value,
 }));
+
+export const CUMULATIVE_WINDOW_DESCRIPTION =
+	'A Cumulative Window has a fixed starting point and expands over time.';
+
+export const ROLLING_WINDOW_DESCRIPTION =
+	'A Rolling Window has a fixed size and shifts its starting point over time based on when the rules are evaluated.';
