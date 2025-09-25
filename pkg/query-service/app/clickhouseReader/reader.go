@@ -1642,10 +1642,8 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 
 	// Calculate cold storage duration
 	coldStorageDuration := -1
-	coldStorageDurationDays := 0
 	if len(params.ColdStorageVolume) > 0 && params.ToColdStorageDuration > 0 {
-		coldStorageDuration = int(params.ToColdStorageDuration)
-		coldStorageDurationDays = int(params.ToColdStorageDuration / (24 * 3600)) // Convert seconds to days
+		coldStorageDuration = int(params.ToColdStorageDuration) // Already in days
 	}
 
 	tableNames := []string{
@@ -1673,9 +1671,9 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			tableNames[0], r.cluster, multiIfExpr),
 	}
 
-	if len(params.ColdStorageVolume) > 0 && coldStorageDurationDays > 0 {
+	if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 {
 		queries = append(queries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
-			tableNames[0], r.cluster, coldStorageDurationDays))
+			tableNames[0], r.cluster, coldStorageDuration))
 
 		queries = append(queries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days_cold) TO VOLUME '%s'`,
 			tableNames[0], r.cluster, params.ColdStorageVolume))
@@ -1688,9 +1686,9 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			tableNames[1], r.cluster, resourceMultiIfExpr),
 	}
 
-	if len(params.ColdStorageVolume) > 0 && coldStorageDurationDays > 0 {
+	if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 {
 		resourceQueries = append(resourceQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
-			tableNames[1], r.cluster, coldStorageDurationDays))
+			tableNames[1], r.cluster, coldStorageDuration))
 
 		resourceQueries = append(resourceQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days) DELETE, toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days_cold) TO VOLUME '%s'`,
 			tableNames[1], r.cluster, params.ColdStorageVolume))
@@ -1728,7 +1726,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			return nil, errorsV2.Wrapf(dbErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "error inserting TTL settings")
 		}
 
-		if len(params.ColdStorageVolume) > 0 && coldStorageDurationDays > 0 {
+		if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 {
 			err := r.setColdStorage(ctx, tableName, params.ColdStorageVolume)
 			if err != nil {
 				zap.L().Error("error in setting cold storage", zap.Error(err))
