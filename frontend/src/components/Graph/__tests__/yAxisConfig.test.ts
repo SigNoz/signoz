@@ -19,7 +19,11 @@ describe('getYAxisFormattedValue - none', () => {
 	test('trims to three significant decimals and removes trailing zeros', () => {
 		expect(getYAxisFormattedValue('0.000000250034', 'none')).toBe('0.00000025');
 		expect(getYAxisFormattedValue('0.00000025', 'none')).toBe('0.00000025');
+
+		// Big precision, limiting the javascript precision (~16 digits)
 		expect(getYAxisFormattedValue('1.0000000000000001', 'none')).toBe('1');
+		expect(getYAxisFormattedValue('1.00555555559595876', 'none')).toBe('1.00555');
+
 		expect(getYAxisFormattedValue('0.000000001', 'none')).toBe('0.000000001');
 		expect(getYAxisFormattedValue('0.000000250000', 'none')).toBe('0.00000025');
 	});
@@ -125,8 +129,11 @@ describe('getYAxisFormattedValue - units', () => {
 			'0.00000025%',
 		);
 		expect(getYAxisFormattedValue('0.00000025', 'percent')).toBe('0.00000025%');
-		// Too big
+		// Big precision, limiting the javascript precision (~16 digits)
 		expect(getYAxisFormattedValue('1.0000000000000001', 'percent')).toBe('1%');
+		expect(getYAxisFormattedValue('1.00555555559595876', 'percent')).toBe(
+			'1.00555%',
+		);
 	});
 
 	test('ratio', () => {
