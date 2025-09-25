@@ -262,7 +262,11 @@ describe('Quick Filters with custom filters', () => {
 			);
 		});
 
-		await user.click(screen.getByRole('button', { name: DISCARD_TEXT }));
+		const discardBtn = screen
+			.getByText(DISCARD_TEXT)
+			.closest('button') as HTMLButtonElement;
+		expect(discardBtn).not.toBeNull();
+		await user.click(discardBtn);
 
 		await waitFor(() => {
 			expect(addedSection).toContainElement(
@@ -289,7 +293,11 @@ describe('Quick Filters with custom filters', () => {
 		expect(removeBtn).not.toBeNull();
 		await user.click(removeBtn as HTMLButtonElement);
 
-		await user.click(screen.getByRole('button', { name: SAVE_CHANGES_TEXT }));
+		const saveBtn = screen
+			.getByText(SAVE_CHANGES_TEXT)
+			.closest('button') as HTMLButtonElement;
+		expect(saveBtn).not.toBeNull();
+		await user.click(saveBtn);
 
 		await waitFor(() => {
 			expect(putHandler).toHaveBeenCalled();

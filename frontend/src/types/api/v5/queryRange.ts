@@ -68,7 +68,7 @@ export type FunctionName =
 	| 'runningDiff'
 	| 'log2'
 	| 'log10'
-	| 'cumSum'
+	| 'cumulativeSum'
 	| 'ewma3'
 	| 'ewma5'
 	| 'ewma7'
