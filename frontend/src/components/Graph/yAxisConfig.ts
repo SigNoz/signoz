@@ -63,8 +63,6 @@ export const getYAxisFormattedValue = (
 ): string => {
 	const numValue = parseFloat(value);
 
-	console.log('numValue', numValue, value);
-
 	// Handle non-numeric or special values first.
 	if (isNaN(numValue)) return 'NaN';
 	if (numValue === Infinity) return '∞';
