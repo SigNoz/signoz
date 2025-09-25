@@ -2,7 +2,8 @@ package alertmanager
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/nfrouting"
+	"github.com/prometheus/alertmanager/featurecontrol"
+	"github.com/prometheus/alertmanager/matcher/compat"
 	"sync"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
@@ -36,7 +37,6 @@ type Service struct {
 	serversMtx sync.RWMutex
 
 	notificationManager nfmanager.NotificationManager
-	notificationRoutes nfrouting.NotificationRoutes
 }
 
 func New(
@@ -47,7 +47,6 @@ func New(
 	configStore alertmanagertypes.ConfigStore,
 	orgGetter organization.Getter,
 	nfManager nfmanager.NotificationManager,
-	nfRoutes nfrouting.NotificationRoutes,
 ) *Service {
 	service := &Service{
 		config:              config,
@@ -58,13 +57,13 @@ func New(
 		servers:             make(map[string]*alertmanagerserver.Server),
 		serversMtx:          sync.RWMutex{},
 		notificationManager: nfManager,
-		notificationRoutes: nfRoutes,
 	}
 
 	return service
 }
 
 func (service *Service) SyncServers(ctx context.Context) error {
+	compat.InitFromFlags(service.settings.Logger(), featurecontrol.NoopFlags{})
 	orgs, err := service.orgGetter.ListByOwnedKeyRange(ctx)
 	if err != nil {
 		return err
@@ -176,7 +175,7 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 		return nil, err
 	}
 
-	server, err := alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID, service.stateStore, service.notificationManager, service.notificationRoutes)
+	server, err := alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID, service.stateStore, service.notificationManager)
 	if err != nil {
 		return nil, err
 	}

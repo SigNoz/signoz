@@ -193,6 +193,20 @@ func (c *Config) SetRouteConfig(routeConfig RouteConfig) error {
 	return nil
 }
 
+func (c *Config) AddInhibitRules(rules []config.InhibitRule) error {
+	if c.alertmanagerConfig == nil {
+		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "config is nil")
+	}
+
+	c.alertmanagerConfig.InhibitRules = append(c.alertmanagerConfig.InhibitRules, rules...)
+
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
+	c.storeableConfig.UpdatedAt = time.Now()
+
+	return nil
+}
+
 func (c *Config) AlertmanagerConfig() *config.Config {
 	return c.alertmanagerConfig
 }
@@ -403,8 +417,9 @@ func init() {
 
 // NotificationConfig holds configuration for alert notifications timing.
 type NotificationConfig struct {
-	NotificationGroup map[model.LabelName]struct{}
-	Renotify          ReNotificationConfig
+	NotificationGroup  map[model.LabelName]struct{}
+	Renotify           ReNotificationConfig
+	NotificationPolicy bool
 }
 
 func (nc *NotificationConfig) DeepCopy() NotificationConfig {
@@ -415,6 +430,7 @@ func (nc *NotificationConfig) DeepCopy() NotificationConfig {
 	for k, v := range nc.NotificationGroup {
 		deepCopy.NotificationGroup[k] = v
 	}
+	deepCopy.NotificationPolicy = nc.NotificationPolicy
 	return deepCopy
 }
 

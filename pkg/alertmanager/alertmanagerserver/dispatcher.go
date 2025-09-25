@@ -3,7 +3,7 @@ package alertmanagerserver
 import (
 	"context"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/nfrouting"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"log/slog"
 	"sort"
 	"sync"
@@ -28,7 +28,6 @@ const (
 // assigns the correct notifiers to each.
 type Dispatcher struct {
 	route   *dispatch.Route
-	nfRoute nfrouting.NotificationRoutes
 	alerts  provider.Alerts
 	stage   notify.Stage
 	marker  types.GroupMarker
@@ -48,32 +47,11 @@ type Dispatcher struct {
 	logger              *slog.Logger
 	notificationManager nfmanager.NotificationManager
 	orgID               string
+	receiverRoutes      map[string]*dispatch.Route
 }
 
 // We use the upstream Limits interface from Prometheus
 type Limits = dispatch.Limits
-
-// createRouteFromChannel creates a dispatch.Route from a channel name
-func (d *Dispatcher) createRouteFromChannel(channel string) *dispatch.Route {
-	// Create route options with the channel as receiver
-	routeOpts := dispatch.RouteOpts{
-		Receiver:            channel,
-		GroupWait:           5 * time.Second,
-		GroupInterval:       30 * time.Second,
-		RepeatInterval:      4 * time.Hour,
-		GroupBy:             make(map[model.LabelName]struct{}),
-		GroupByAll:          false,
-		MuteTimeIntervals:   []string{},
-		ActiveTimeIntervals: []string{},
-	}
-
-	// Create a new route with these options
-	route := &dispatch.Route{
-		RouteOpts: routeOpts,
-	}
-
-	return route
-}
 
 // NewDispatcher returns a new Dispatcher.
 func NewDispatcher(
@@ -87,7 +65,6 @@ func NewDispatcher(
 	m *DispatcherMetrics,
 	n nfmanager.NotificationManager,
 	orgID string,
-	nfRoutes nfrouting.NotificationRoutes,
 ) *Dispatcher {
 	if lim == nil {
 		// Use a simple implementation when no limits are provided
@@ -105,7 +82,6 @@ func NewDispatcher(
 		limits:              lim,
 		notificationManager: n,
 		orgID:               orgID,
-		nfRoute:            nfRoutes,
 	}
 	return disp
 }
@@ -116,6 +92,7 @@ func (d *Dispatcher) Run() {
 
 	d.mtx.Lock()
 	d.aggrGroupsPerRoute = map[*dispatch.Route]map[model.Fingerprint]*aggrGroup{}
+	d.receiverRoutes = map[string]*dispatch.Route{}
 	d.aggrGroupsNum = 0
 	d.metrics.aggrGroups.Set(0)
 	d.ctx, d.cancel = context.WithCancel(context.Background())
@@ -151,9 +128,9 @@ func (d *Dispatcher) run(it provider.AlertIterator) {
 			}
 
 			now := time.Now()
-			channels := d.nfRoute.Match(d.ctx, d.orgID, alert.Labels)
+			channels, _ := d.notificationManager.Match(d.ctx, d.orgID, getRuleIDFromAlert(alert), alert.Labels)
 			for _, channel := range channels {
-				route := d.createRouteFromChannel(channel)
+				route := d.getOrCreateRoute(channel)
 				d.processAlert(alert, route)
 			}
 			d.metrics.processingDuration.Observe(time.Since(now).Seconds())
@@ -588,4 +565,26 @@ func noDataAlert(alert *types.Alert) bool {
 	} else {
 		return false
 	}
+}
+
+func (d *Dispatcher) getOrCreateRoute(receiver string) *dispatch.Route {
+	if route, exists := d.receiverRoutes[receiver]; exists {
+		return route
+	}
+	route := &dispatch.Route{
+		RouteOpts: dispatch.RouteOpts{
+			Receiver:      receiver,
+			GroupWait:     30 * time.Second,
+			GroupInterval: 5 * time.Minute,
+			GroupByAll:    false,
+		},
+		Matchers: labels.Matchers{{
+			Name:  "__receiver__",
+			Value: receiver,
+			Type:  labels.MatchEqual,
+		}},
+	}
+
+	d.receiverRoutes[receiver] = route
+	return route
 }

@@ -13,15 +13,60 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
+
+type mockRouteStore struct {
+	mock.Mock
+}
+
+func (m *mockRouteStore) GetByID(ctx context.Context, orgID string, id string) (*alertmanagertypes.ExpressionRoute, error) {
+	args := m.Called(ctx, orgID, id)
+	return args.Get(0).(*alertmanagertypes.ExpressionRoute), args.Error(1)
+}
+
+func (m *mockRouteStore) Create(ctx context.Context, route *alertmanagertypes.ExpressionRoute) error {
+	args := m.Called(ctx, route)
+	return args.Error(0)
+}
+
+func (m *mockRouteStore) CreateBatch(ctx context.Context, routes []*alertmanagertypes.ExpressionRoute) error {
+	args := m.Called(ctx, routes)
+	return args.Error(0)
+}
+
+func (m *mockRouteStore) Delete(ctx context.Context, orgID string, id string) error {
+	args := m.Called(ctx, orgID, id)
+	return args.Error(0)
+}
+
+func (m *mockRouteStore) GetAllByKindAndOrgID(ctx context.Context, orgID string, kind alertmanagertypes.ExpressionKind) ([]*alertmanagertypes.ExpressionRoute, error) {
+	args := m.Called(ctx, orgID, kind)
+	return args.Get(0).([]*alertmanagertypes.ExpressionRoute), args.Error(1)
+}
+
+func (m *mockRouteStore) GetAllByName(ctx context.Context, orgID string, name string) ([]*alertmanagertypes.ExpressionRoute, error) {
+	args := m.Called(ctx, orgID, name)
+	return args.Get(0).([]*alertmanagertypes.ExpressionRoute), args.Error(1)
+}
+
+func (m *mockRouteStore) DeleteRouteByName(ctx context.Context, orgID string, name string) error {
+	args := m.Called(ctx, orgID, name)
+	return args.Error(0)
+}
 
 func createTestProviderSettings() factory.ProviderSettings {
 	return instrumentationtest.New().ToProviderSettings()
 }
 
+func createTestRouteStore() alertmanagertypes.RouteStore {
+	return &mockRouteStore{}
+}
+
 func TestNewFactory(t *testing.T) {
-	providerFactory := NewFactory()
+	routeStore := createTestRouteStore()
+	providerFactory := NewFactory(routeStore)
 	assert.NotNil(t, providerFactory)
 	assert.Equal(t, "rulebased", providerFactory.Name().String())
 }
@@ -31,7 +76,8 @@ func TestNew(t *testing.T) {
 	providerSettings := createTestProviderSettings()
 	config := nfmanager.Config{}
 
-	provider, err := New(ctx, providerSettings, config)
+	routeStore := createTestRouteStore()
+	provider, err := New(ctx, providerSettings, config, routeStore)
 	require.NoError(t, err)
 	assert.NotNil(t, provider)
 
@@ -44,7 +90,8 @@ func TestProvider_SetNotificationConfig(t *testing.T) {
 	providerSettings := createTestProviderSettings()
 	config := nfmanager.Config{}
 
-	provider, err := New(ctx, providerSettings, config)
+	routeStore := createTestRouteStore()
+	provider, err := New(ctx, providerSettings, config, routeStore)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -124,7 +171,8 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 	providerSettings := createTestProviderSettings()
 	config := nfmanager.Config{}
 
-	provider, err := New(ctx, providerSettings, config)
+	routeStore := createTestRouteStore()
+	provider, err := New(ctx, providerSettings, config, routeStore)
 	require.NoError(t, err)
 
 	orgID := "test-org"
@@ -165,7 +213,7 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 			ruleID: ruleID,
 			expectedConfig: &alertmanagertypes.NotificationConfig{
 				NotificationGroup: map[model.LabelName]struct{}{
-					model.LabelName("ruleId"): {},
+					model.LabelName(ruleID): {},
 				},
 				Renotify: alertmanagertypes.ReNotificationConfig{
 					RenotifyInterval: 30 * time.Minute,
@@ -182,7 +230,7 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 				NotificationGroup: map[model.LabelName]struct{}{
 					model.LabelName("group1"): {},
 					model.LabelName("group2"): {},
-					model.LabelName("ruleId"): {},
+					model.LabelName(ruleID):   {},
 				},
 				Renotify: alertmanagertypes.ReNotificationConfig{
 					RenotifyInterval: 4 * time.Hour,
@@ -231,7 +279,8 @@ func TestProvider_ConcurrentAccess(t *testing.T) {
 	providerSettings := createTestProviderSettings()
 	config := nfmanager.Config{}
 
-	provider, err := New(ctx, providerSettings, config)
+	routeStore := createTestRouteStore()
+	provider, err := New(ctx, providerSettings, config, routeStore)
 	require.NoError(t, err)
 
 	orgID := "test-org"
@@ -267,4 +316,226 @@ func TestProvider_ConcurrentAccess(t *testing.T) {
 
 	// Wait for both goroutines to complete
 	wg.Wait()
+}
+
+func TestProvider_EvaluateExpression(t *testing.T) {
+	provider := &provider{}
+
+	tests := []struct {
+		name       string
+		expression string
+		labelSet   model.LabelSet
+		expected   bool
+	}{
+		{
+			name:       "simple equality check - match",
+			expression: `threshold.name == 'auth' && ruleId == 'rule1'`,
+			labelSet: model.LabelSet{
+				"threshold.name": "auth",
+				"ruleId":         "rule1",
+			},
+			expected: true,
+		},
+		{
+			name:       "simple equality check - no match",
+			expression: `service == "payment"`,
+			labelSet: model.LabelSet{
+				"service": "auth",
+				"env":     "production",
+			},
+			expected: false,
+		},
+		{
+			name:       "multiple conditions with AND - both match",
+			expression: `service == "auth" && env == "production"`,
+			labelSet: model.LabelSet{
+				"service": "auth",
+				"env":     "production",
+			},
+			expected: true,
+		},
+		{
+			name:       "multiple conditions with AND - one doesn't match",
+			expression: `service == "auth" && env == "staging"`,
+			labelSet: model.LabelSet{
+				"service": "auth",
+				"env":     "production",
+			},
+			expected: false,
+		},
+		{
+			name:       "multiple conditions with OR - one matches",
+			expression: `service == "payment" || env == "production"`,
+			labelSet: model.LabelSet{
+				"service": "auth",
+				"env":     "production",
+			},
+			expected: true,
+		},
+		{
+			name:       "multiple conditions with OR - none match",
+			expression: `service == "payment" || env == "staging"`,
+			labelSet: model.LabelSet{
+				"service": "auth",
+				"env":     "production",
+			},
+			expected: false,
+		},
+		{
+			name:       "in operator - value in list",
+			expression: `service in ["auth", "payment", "notification"]`,
+			labelSet: model.LabelSet{
+				"service": "auth",
+			},
+			expected: true,
+		},
+		{
+			name:       "in operator - value not in list",
+			expression: `service in ["payment", "notification"]`,
+			labelSet: model.LabelSet{
+				"service": "auth",
+			},
+			expected: false,
+		},
+		{
+			name:       "contains operator - substring match",
+			expression: `host contains "prod"`,
+			labelSet: model.LabelSet{
+				"host": "prod-server-01",
+			},
+			expected: true,
+		},
+		{
+			name:       "contains operator - no substring match",
+			expression: `host contains "staging"`,
+			labelSet: model.LabelSet{
+				"host": "prod-server-01",
+			},
+			expected: false,
+		},
+		{
+			name:       "complex expression with parentheses",
+			expression: `(service == "auth" && env == "production") || critical == "true"`,
+			labelSet: model.LabelSet{
+				"service":  "payment",
+				"env":      "staging",
+				"critical": "true",
+			},
+			expected: true,
+		},
+		{
+			name:       "missing label key",
+			expression: `"missing_key" == "value"`,
+			labelSet: model.LabelSet{
+				"service": "auth",
+			},
+			expected: false,
+		},
+		{
+			name:       "rule-based expression with threshold name and ruleId",
+			expression: `'threshold.name' == "high-cpu" && ruleId == "rule-123"`,
+			labelSet: model.LabelSet{
+				"threshold.name": "high-cpu",
+				"ruleId":         "rule-123",
+				"service":        "auth",
+			},
+			expected: true,
+		},
+		{
+			name:       "alertname and ruleId combination",
+			expression: `alertname == "HighCPUUsage" && ruleId == "cpu-alert-001"`,
+			labelSet: model.LabelSet{
+				"alertname": "HighCPUUsage",
+				"ruleId":    "cpu-alert-001",
+				"severity":  "critical",
+			},
+			expected: true,
+		},
+		{
+			name:       "kubernetes namespace filtering",
+			expression: `k8s.namespace.name == "auth" && service in ["auth", "payment"]`,
+			labelSet: model.LabelSet{
+				"k8s.namespace.name": "auth",
+				"service":            "auth",
+				"host":               "k8s-node-1",
+			},
+			expected: true,
+		},
+		{
+			name:       "migration expression format from SQL migration",
+			expression: `threshold.name' == "HighCPUUsage" && ruleId == "rule-uuid-123"`,
+			labelSet: model.LabelSet{
+				"threshold.name": "HighCPUUsage",
+				"ruleId":         "rule-uuid-123",
+				"severity":       "warning",
+			},
+			expected: true,
+		},
+		{
+			name:       "invalid expression syntax",
+			expression: `service == "auth"`, // missing closing bracket
+			labelSet: model.LabelSet{
+				"service": "auth",
+			},
+			expected: false,
+		},
+		{
+			name:       "empty expression",
+			expression: ``,
+			labelSet: model.LabelSet{
+				"service": "auth",
+			},
+			expected: false,
+		},
+		{
+			name:       "expression with non-boolean result",
+			expression: `service`, // returns string, not boolean
+			labelSet: model.LabelSet{
+				"service": "auth",
+			},
+			expected: false,
+		},
+		{
+			name:       "case sensitive matching",
+			expression: `service == "Auth"`, // capital A
+			labelSet: model.LabelSet{
+				"service": "auth", // lowercase a
+			},
+			expected: false,
+		},
+		{
+			name:       "numeric comparison as strings",
+			expression: `port == "8080"`,
+			labelSet: model.LabelSet{
+				"port": "8080",
+			},
+			expected: true,
+		},
+		{
+			name:       "quoted string with special characters",
+			expression: `service == "auth-service-v2"`,
+			labelSet: model.LabelSet{
+				"service": "auth-service-v2",
+			},
+			expected: true,
+		},
+		{
+			name:       "boolean operators precedence",
+			expression: `service == "auth" && env == "prod" || critical == "true"`,
+			labelSet: model.LabelSet{
+				"service":  "payment",
+				"env":      "staging",
+				"critical": "true",
+			},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := provider.evaluateExpr(tt.expression, tt.labelSet)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, result, "Expression: %s", tt.expression)
+		})
+	}
 }

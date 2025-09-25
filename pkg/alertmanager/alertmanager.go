@@ -2,6 +2,7 @@ package alertmanager
 
 import (
 	"context"
+	amConfig "github.com/prometheus/alertmanager/config"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -58,6 +59,16 @@ type Alertmanager interface {
 	SetNotificationConfig(ctx context.Context, orgID valuer.UUID, ruleId string, config *alertmanagertypes.NotificationConfig) error
 
 	DeleteNotificationConfig(ctx context.Context, orgID valuer.UUID, ruleId string) error
+
+	// Notification Policy CRUD
+	CreateNotificationRoute(ctx context.Context, route *alertmanagertypes.PolicyRouteRequest) error
+	CreateNotificationRoutes(ctx context.Context, routeRequests []*alertmanagertypes.PolicyRouteRequest) error
+	GetNotificationRouteByID(ctx context.Context, routeID string) (*alertmanagertypes.ExpressionRoute, error)
+	GetAllNotificationRoutes(ctx context.Context) ([]*alertmanagertypes.ExpressionRoute, error)
+	UpdateNotificationRoute(ctx context.Context, route *alertmanagertypes.ExpressionRoute) error
+	DeleteNotificationRouteByID(ctx context.Context, routeID string) error
+
+	CreateInhibitRules(ctx context.Context, orgID valuer.UUID, rules []amConfig.InhibitRule) error
 
 	// Collects stats for the organization.
 	statsreporter.StatsCollector

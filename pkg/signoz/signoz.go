@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfroutingstore/sqlroutingstore"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
@@ -13,8 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
-	"github.com/SigNoz/signoz/pkg/nfrouting"
-	"github.com/SigNoz/signoz/pkg/nfrouting/nfroutingstore/sqlroutingstore"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
@@ -25,8 +24,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/routingtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
 
@@ -52,7 +51,7 @@ type SigNoz struct {
 	StatsReporter   statsreporter.StatsReporter
 	Modules         Modules
 	Handlers        Handlers
-	RouteStore         routingtypes.RouteStore
+	RouteStore      alertmanagertypes.RouteStore
 }
 
 func New(
@@ -234,26 +233,15 @@ func New(
 	// Initialize user getter
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 
+	// will need to create factory for all stores
+	routeStore := sqlroutingstore.NewStore(sqlstore)
 	// shared NotificationManager instance for both alertmanager and rules
 	notificationManager, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		nfmanager.Config{},
-		NewNotificationManagerProviderFactories(),
+		NewNotificationManagerProviderFactories(routeStore),
 		"rulebased",
-	)
-	if err != nil {
-		return nil, err
-	}
-	routeStore := sqlroutingstore.NewStore(sqlstore)
-	notificationRoutes, err := factory.NewProviderFromNamedMap(
-		ctx,
-		providerSettings,
-		nfrouting.Config{
-			Provider: "expression",
-		},
-		NewNotificationRoutingProviderFactories(routeStore),
-		"expression",
 	)
 	if err != nil {
 		return nil, err
@@ -264,7 +252,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Alertmanager,
-		NewAlertmanagerProviderFactories(sqlstore, orgGetter, notificationManager, notificationRoutes),
+		NewAlertmanagerProviderFactories(sqlstore, orgGetter, notificationManager),
 		config.Alertmanager.Provider,
 	)
 	if err != nil {
@@ -351,6 +339,6 @@ func New(
 		Sharder:         sharder,
 		Modules:         modules,
 		Handlers:        handlers,
-		RouteStore:         routeStore,
+		RouteStore:      routeStore,
 	}, nil
 }

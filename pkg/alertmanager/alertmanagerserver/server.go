@@ -2,7 +2,6 @@ package alertmanagerserver
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/nfrouting"
 	"log/slog"
 	"strings"
 	"sync"
@@ -66,10 +65,9 @@ type Server struct {
 	wg                  sync.WaitGroup
 	stopc               chan struct{}
 	notificationManager nfmanager.NotificationManager
-	notificationRouting nfrouting.NotificationRoutes
 }
 
-func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore, nfManager nfmanager.NotificationManager, nfRoutes nfrouting.NotificationRoutes) (*Server, error) {
+func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore, nfManager nfmanager.NotificationManager) (*Server, error) {
 	server := &Server{
 		logger:              logger.With("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver"),
 		registry:            registry,
@@ -78,7 +76,6 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		stateStore:          stateStore,
 		stopc:               make(chan struct{}),
 		notificationManager: nfManager,
-		notificationRouting: nfRoutes,
 	}
 	signozRegisterer := prometheus.WrapRegistererWithPrefix("signoz_", registry)
 	signozRegisterer = prometheus.WrapRegistererWith(prometheus.Labels{"org_id": server.orgID}, signozRegisterer)
@@ -311,7 +308,6 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		server.dispatcherMetrics,
 		server.notificationManager,
 		server.orgID,
-		server.notificationRouting,
 	)
 
 	// Do not try to add these to server.wg as there seems to be a race condition if

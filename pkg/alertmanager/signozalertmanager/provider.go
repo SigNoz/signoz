@@ -2,7 +2,9 @@ package signozalertmanager
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/nfrouting"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	amConfig "github.com/prometheus/alertmanager/config"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
@@ -26,13 +28,13 @@ type provider struct {
 	stopC               chan struct{}
 }
 
-func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager, nfRoutes nfrouting.NotificationRoutes) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
+func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, settings factory.ProviderSettings, config alertmanager.Config) (alertmanager.Alertmanager, error) {
-		return New(ctx, settings, config, sqlstore, orgGetter, notificationManager, nfRoutes)
+		return New(ctx, settings, config, sqlstore, orgGetter, notificationManager)
 	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager, nfRoutes nfrouting.NotificationRoutes) (*provider, error) {
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager) (*provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
@@ -46,7 +48,6 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 			configStore,
 			orgGetter,
 			notificationManager,
-			nfRoutes,
 		),
 		settings:            settings,
 		config:              config,
@@ -212,4 +213,140 @@ func (provider *provider) DeleteNotificationConfig(ctx context.Context, orgID va
 		return err
 	}
 	return nil
+}
+
+func (provider *provider) CreateNotificationRoute(ctx context.Context, routeRequest *alertmanagertypes.PolicyRouteRequest) error {
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := routeRequest.Validate(); err != nil {
+		return err
+	}
+
+	route := alertmanagertypes.ExpressionRoute{
+		Expression:     routeRequest.Expression,
+		ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+		Priority:       routeRequest.Actions.Priority,
+		Name:           routeRequest.Name,
+		Description:    routeRequest.Description,
+		Enabled:        true,
+		Tags:           routeRequest.Tags,
+		OrgID:          claims.OrgID,
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		UserAuditable: types.UserAuditable{
+			CreatedBy: claims.UserID,
+			UpdatedBy: claims.UserID,
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+	}
+
+	route.Channels = routeRequest.Actions.Channels
+	return provider.notificationManager.CreateRoute(ctx, claims.OrgID, &route)
+}
+
+func (provider *provider) CreateNotificationRoutes(ctx context.Context, routeRequests []*alertmanagertypes.PolicyRouteRequest) error {
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	if len(routeRequests) == 0 {
+		return nil
+	}
+
+	routes := make([]*alertmanagertypes.ExpressionRoute, 0, len(routeRequests))
+
+	for _, routeRequest := range routeRequests {
+		if err := routeRequest.Validate(); err != nil {
+			return err
+		}
+
+		route := &alertmanagertypes.ExpressionRoute{
+			Expression:     routeRequest.Expression,
+			ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+			Priority:       routeRequest.Actions.Priority,
+			Name:           routeRequest.Name,
+			Description:    routeRequest.Description,
+			Enabled:        true,
+			Tags:           routeRequest.Tags,
+			OrgID:          claims.OrgID,
+			Channels:       routeRequest.Actions.Channels,
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			UserAuditable: types.UserAuditable{
+				CreatedBy: claims.UserID,
+				UpdatedBy: claims.UserID,
+			},
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
+		}
+
+		routes = append(routes, route)
+	}
+
+	return provider.notificationManager.CreateRoutes(ctx, claims.OrgID, routes)
+}
+
+func (provider *provider) GetNotificationRouteByID(ctx context.Context, routeID string) (*alertmanagertypes.ExpressionRoute, error) {
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return provider.notificationManager.GetRouteByID(ctx, claims.OrgID, routeID)
+}
+
+func (provider *provider) GetAllNotificationRoutes(ctx context.Context) ([]*alertmanagertypes.ExpressionRoute, error) {
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return provider.notificationManager.GetAllRoutes(ctx, claims.OrgID)
+}
+
+func (provider *provider) UpdateNotificationRoute(ctx context.Context, route *alertmanagertypes.ExpressionRoute) error {
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return errors.NewInvalidInputf(errors.CodeUnauthenticated, "invalid claims: %v", err)
+	}
+	err = provider.DeleteNotificationRouteByID(ctx, route.ID.StringValue())
+	if err != nil {
+		return errors.NewInvalidInputf(errors.CodeInternal, "error deleting the route: %v", err)
+	}
+
+	return provider.notificationManager.CreateRoute(ctx, claims.OrgID, route)
+}
+
+func (provider *provider) DeleteNotificationRouteByID(ctx context.Context, routeID string) error {
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return errors.NewInvalidInputf(errors.CodeUnauthenticated, "invalid claims: %v", err)
+	}
+	if routeID == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "routeID cannot be empty")
+	}
+
+	return provider.notificationManager.DeleteRoute(ctx, claims.OrgID, routeID)
+}
+
+func (provider *provider) CreateInhibitRules(ctx context.Context, orgID valuer.UUID, rules []amConfig.InhibitRule) error {
+	config, err := provider.configStore.Get(ctx, orgID.String())
+	if err != nil {
+		return err
+	}
+
+	if err := config.AddInhibitRules(rules); err != nil {
+		return err
+	}
+
+	return provider.configStore.Set(ctx, config)
 }

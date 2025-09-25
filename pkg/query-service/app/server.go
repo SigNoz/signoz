@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/nfrouting"
 	"log/slog"
 	"net"
 	"net/http"
@@ -118,7 +117,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		FieldsAPI:                     fields.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.TelemetryStore),
 		Signoz:                        signoz,
 		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier, signoz.Analytics),
-		NotificationRoutesAPI:         nfrouting.NewAPI(signoz.Analytics, signoz.RouteStore),
 	})
 	if err != nil {
 		return nil, err

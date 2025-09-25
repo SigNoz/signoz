@@ -10,8 +10,6 @@ import (
 	"fmt"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
 
-	//qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/nfrouting"
 	"io"
 	"math"
 	"net/http"
@@ -150,8 +148,6 @@ type APIHandler struct {
 	QuerierAPI *querierAPI.API
 
 	Signoz *signoz.SigNoz
-
-	NotificationRoutesAPI *nfrouting.API
 }
 
 type APIHandlerOpts struct {
@@ -182,8 +178,6 @@ type APIHandlerOpts struct {
 	QuerierAPI *querierAPI.API
 
 	Signoz *signoz.SigNoz
-
-	NotificationRoutesAPI *nfrouting.API
 }
 
 // NewAPIHandler returns an APIHandler
@@ -245,7 +239,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		Signoz:                        opts.Signoz,
 		FieldsAPI:                     opts.FieldsAPI,
 		QuerierAPI:                    opts.QuerierAPI,
-		NotificationRoutesAPI:         opts.NotificationRoutesAPI,
 	}
 
 	logsQueryBuilder := logsv4.PrepareLogsQuery
@@ -498,6 +491,11 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/channels", am.EditAccess(aH.AlertmanagerAPI.CreateChannel)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/testChannel", am.EditAccess(aH.AlertmanagerAPI.TestReceiver)).Methods(http.MethodPost)
 
+	router.HandleFunc("/api/v1/notification-policy", am.ViewAccess(aH.AlertmanagerAPI.GetAllNotificationPolicies)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/notification-policy/{id}", am.ViewAccess(aH.AlertmanagerAPI.GetNotificationPolicyByID)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/notification-policy", am.AdminAccess(aH.AlertmanagerAPI.CreateNotificationPolicy)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/notification-policy/{id}", am.AdminAccess(aH.AlertmanagerAPI.DeleteNotificationPolicyByID)).Methods(http.MethodDelete)
+
 	router.HandleFunc("/api/v1/alerts", am.ViewAccess(aH.AlertmanagerAPI.GetAlerts)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/rules", am.ViewAccess(aH.listRules)).Methods(http.MethodGet)
@@ -622,12 +620,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	// Export
 	router.HandleFunc("/api/v1/export_raw_data", am.ViewAccess(aH.Signoz.Handlers.RawDataExport.ExportRawData)).Methods(http.MethodGet)
-
-	//notification routes
-	router.HandleFunc("/api/v1/notification-routes", am.ViewAccess(aH.NotificationRoutesAPI.GetAllNotificationRoutesByOrgID)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/notification-routes/{id}", am.ViewAccess(aH.NotificationRoutesAPI.GetNotificationRouteByID)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/notification-routes", am.AdminAccess(aH.NotificationRoutesAPI.CreateNotificationRoute)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/notification-routes/{id}", am.AdminAccess(aH.NotificationRoutesAPI.DeleteNotificationRouteByID)).Methods(http.MethodDelete)
 
 }
 
