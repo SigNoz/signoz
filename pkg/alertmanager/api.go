@@ -353,3 +353,33 @@ func (api *API) DeleteNotificationPolicyByID(rw http.ResponseWriter, req *http.R
 
 	render.Success(rw, http.StatusNoContent, nil)
 }
+
+func (api *API) UpdateNotificationPolicy(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
+	defer cancel()
+
+	vars := mux.Vars(req)
+	policyID := vars["id"]
+	if policyID == "" {
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "policy ID is required"))
+		return
+	}
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	defer req.Body.Close()
+	var policy alertmanagertypes.PolicyRouteRequest
+	err = json.Unmarshal(body, &policy)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	err = api.alertmanager.UpdateNotificationRouteById(ctx, policyID, &policy)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	render.Success(rw, http.StatusNoContent, nil)
+}

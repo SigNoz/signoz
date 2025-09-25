@@ -313,17 +313,59 @@ func (provider *provider) GetAllNotificationRoutes(ctx context.Context) ([]*aler
 	return provider.notificationManager.GetAllRoutes(ctx, claims.OrgID)
 }
 
-func (provider *provider) UpdateNotificationRoute(ctx context.Context, route *alertmanagertypes.ExpressionRoute) error {
+func (provider *provider) UpdateNotificationRouteById(ctx context.Context, routeID string, route *alertmanagertypes.PolicyRouteRequest) error {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return errors.NewInvalidInputf(errors.CodeUnauthenticated, "invalid claims: %v", err)
 	}
-	err = provider.DeleteNotificationRouteByID(ctx, route.ID.StringValue())
-	if err != nil {
-		return errors.NewInvalidInputf(errors.CodeInternal, "error deleting the route: %v", err)
+
+	if routeID == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "routeID cannot be empty")
 	}
 
-	return provider.notificationManager.CreateRoute(ctx, claims.OrgID, route)
+	if route == nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "route cannot be nil")
+	}
+
+	if err := route.Validate(); err != nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid route: %v", err)
+	}
+
+	// First fetch the existing route to get current values
+	existingRoute, err := provider.notificationManager.GetRouteByID(ctx, claims.OrgID, routeID)
+	if err != nil {
+		return errors.NewInvalidInputf(errors.CodeNotFound, "route not found: %v", err)
+	}
+
+	// Create updated route with new values but preserve ID and audit fields
+	updatedRoute := &alertmanagertypes.ExpressionRoute{
+		Expression:     route.Expression,
+		ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+		Priority:       route.Actions.Priority,
+		Name:           route.Name,
+		Description:    route.Description,
+		Enabled:        true,
+		Tags:           route.Tags,
+		OrgID:          claims.OrgID,
+		Channels:       route.Actions.Channels,
+		Identifiable:   existingRoute.Identifiable, // Preserve existing ID
+		UserAuditable: types.UserAuditable{
+			CreatedBy: existingRoute.CreatedBy, // Preserve original creator
+			UpdatedBy: claims.UserID,          // Update modifier
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: existingRoute.CreatedAt, // Preserve original creation time
+			UpdatedAt: time.Now(),              // Set new update time
+		},
+	}
+
+	// Delete the existing route and create the updated one
+	err = provider.notificationManager.DeleteRoute(ctx, claims.OrgID, routeID)
+	if err != nil {
+		return errors.NewInvalidInputf(errors.CodeInternal, "error deleting existing route: %v", err)
+	}
+
+	return provider.notificationManager.CreateRoute(ctx, claims.OrgID, updatedRoute)
 }
 
 func (provider *provider) DeleteNotificationRouteByID(ctx context.Context, routeID string) error {
@@ -349,4 +391,21 @@ func (provider *provider) CreateInhibitRules(ctx context.Context, orgID valuer.U
 	}
 
 	return provider.configStore.Set(ctx, config)
+}
+
+func (provider *provider) DeleteAllNotificationRoutesByName(ctx context.Context, names string) error {
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return errors.NewInvalidInputf(errors.CodeUnauthenticated, "invalid claims: %v", err)
+	}
+	return provider.notificationManager.DeleteAllRoutesByName(ctx, claims.OrgID, names)
+}
+
+func (provider *provider) UpdateAllNotificationRoutesByName(ctx context.Context, names string, routes []*alertmanagertypes.PolicyRouteRequest) error {
+	err := provider.DeleteAllNotificationRoutesByName(ctx, names)
+	if err != nil {
+		return errors.NewInvalidInputf(errors.CodeInternal, "error deleting the routes: %v", err)
+	}
+
+	return provider.CreateNotificationRoutes(ctx, routes)
 }

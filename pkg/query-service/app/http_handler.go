@@ -495,6 +495,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/notification-policy/{id}", am.ViewAccess(aH.AlertmanagerAPI.GetNotificationPolicyByID)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/notification-policy", am.AdminAccess(aH.AlertmanagerAPI.CreateNotificationPolicy)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/notification-policy/{id}", am.AdminAccess(aH.AlertmanagerAPI.DeleteNotificationPolicyByID)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/notification-policy/{id}", am.AdminAccess(aH.AlertmanagerAPI.UpdateNotificationPolicy)).Methods(http.MethodPut)
 
 	router.HandleFunc("/api/v1/alerts", am.ViewAccess(aH.AlertmanagerAPI.GetAlerts)).Methods(http.MethodGet)
 

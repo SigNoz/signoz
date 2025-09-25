@@ -153,7 +153,6 @@ func (r *provider) GetAllRoutes(ctx context.Context, orgID string) ([]*alertmana
 	return r.routeStore.GetAllByKindAndOrgID(ctx, orgID, alertmanagertypes.PolicyBasedExpression)
 }
 
-// DeleteRoute deletes a route by ID
 func (r *provider) DeleteRoute(ctx context.Context, orgID string, routeID string) error {
 	if routeID == "" {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "routeID cannot be empty")

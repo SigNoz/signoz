@@ -318,6 +318,27 @@ func (c *Config) CreateRuleIDMatcher(ruleID string, receiverNames []string) erro
 	return nil
 }
 
+func (c *Config) DeleteRuleIdInhibitor(ruleID string) error {
+	if c.alertmanagerConfig.InhibitRules == nil {
+		return nil // already nil
+	}
+
+	var filteredRules []config.InhibitRule
+	for _, inhibitor := range c.alertmanagerConfig.InhibitRules {
+		sourceContainsRuleID := matcherContainsRuleID(inhibitor.SourceMatchers, ruleID)
+		targetContainsRuleID := matcherContainsRuleID(inhibitor.TargetMatchers, ruleID)
+		if !sourceContainsRuleID && !targetContainsRuleID {
+			filteredRules = append(filteredRules, inhibitor)
+		}
+	}
+	c.alertmanagerConfig.InhibitRules = filteredRules
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
+	c.storeableConfig.UpdatedAt = time.Now()
+
+	return nil
+}
+
 func (c *Config) UpdateRuleIDMatcher(ruleID string, receiverNames []string) error {
 	err := c.DeleteRuleIDMatcher(ruleID)
 	if err != nil {

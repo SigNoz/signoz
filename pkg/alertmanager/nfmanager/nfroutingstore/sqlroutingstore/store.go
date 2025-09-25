@@ -43,7 +43,7 @@ func (store *store) Create(ctx context.Context, route *routeTypes.ExpressionRout
 func (store *store) CreateBatch(ctx context.Context, route []*routeTypes.ExpressionRoute) error {
 	_, err := store.sqlstore.BunDBCtx(ctx).NewInsert().Model(&route).Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "expression routes already exist")
+		return errors.NewInternalf(errors.CodeInternal, "error creating expression routes: %v", err)
 	}
 
 	return nil

@@ -128,7 +128,11 @@ func (d *Dispatcher) run(it provider.AlertIterator) {
 			}
 
 			now := time.Now()
-			channels, _ := d.notificationManager.Match(d.ctx, d.orgID, getRuleIDFromAlert(alert), alert.Labels)
+			channels, err := d.notificationManager.Match(d.ctx, d.orgID, getRuleIDFromAlert(alert), alert.Labels)
+			if err != nil {
+				d.logger.ErrorContext(d.ctx, "Error on alert match", "err", err)
+				continue
+			}
 			for _, channel := range channels {
 				route := d.getOrCreateRoute(channel)
 				d.processAlert(alert, route)

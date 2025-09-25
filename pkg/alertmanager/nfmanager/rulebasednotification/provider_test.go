@@ -2,6 +2,7 @@ package rulebasednotification
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfroutingstore/nfroutingstoretest"
 	"github.com/prometheus/common/model"
 	"sync"
 	"testing"
@@ -13,59 +14,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
-
-type mockRouteStore struct {
-	mock.Mock
-}
-
-func (m *mockRouteStore) GetByID(ctx context.Context, orgID string, id string) (*alertmanagertypes.ExpressionRoute, error) {
-	args := m.Called(ctx, orgID, id)
-	return args.Get(0).(*alertmanagertypes.ExpressionRoute), args.Error(1)
-}
-
-func (m *mockRouteStore) Create(ctx context.Context, route *alertmanagertypes.ExpressionRoute) error {
-	args := m.Called(ctx, route)
-	return args.Error(0)
-}
-
-func (m *mockRouteStore) CreateBatch(ctx context.Context, routes []*alertmanagertypes.ExpressionRoute) error {
-	args := m.Called(ctx, routes)
-	return args.Error(0)
-}
-
-func (m *mockRouteStore) Delete(ctx context.Context, orgID string, id string) error {
-	args := m.Called(ctx, orgID, id)
-	return args.Error(0)
-}
-
-func (m *mockRouteStore) GetAllByKindAndOrgID(ctx context.Context, orgID string, kind alertmanagertypes.ExpressionKind) ([]*alertmanagertypes.ExpressionRoute, error) {
-	args := m.Called(ctx, orgID, kind)
-	return args.Get(0).([]*alertmanagertypes.ExpressionRoute), args.Error(1)
-}
-
-func (m *mockRouteStore) GetAllByName(ctx context.Context, orgID string, name string) ([]*alertmanagertypes.ExpressionRoute, error) {
-	args := m.Called(ctx, orgID, name)
-	return args.Get(0).([]*alertmanagertypes.ExpressionRoute), args.Error(1)
-}
-
-func (m *mockRouteStore) DeleteRouteByName(ctx context.Context, orgID string, name string) error {
-	args := m.Called(ctx, orgID, name)
-	return args.Error(0)
-}
 
 func createTestProviderSettings() factory.ProviderSettings {
 	return instrumentationtest.New().ToProviderSettings()
 }
 
-func createTestRouteStore() alertmanagertypes.RouteStore {
-	return &mockRouteStore{}
-}
-
 func TestNewFactory(t *testing.T) {
-	routeStore := createTestRouteStore()
+	routeStore := nfroutingstoretest.NewMockSQLRouteStore()
 	providerFactory := NewFactory(routeStore)
 	assert.NotNil(t, providerFactory)
 	assert.Equal(t, "rulebased", providerFactory.Name().String())
@@ -76,7 +33,7 @@ func TestNew(t *testing.T) {
 	providerSettings := createTestProviderSettings()
 	config := nfmanager.Config{}
 
-	routeStore := createTestRouteStore()
+	routeStore := nfroutingstoretest.NewMockSQLRouteStore()
 	provider, err := New(ctx, providerSettings, config, routeStore)
 	require.NoError(t, err)
 	assert.NotNil(t, provider)
@@ -90,7 +47,7 @@ func TestProvider_SetNotificationConfig(t *testing.T) {
 	providerSettings := createTestProviderSettings()
 	config := nfmanager.Config{}
 
-	routeStore := createTestRouteStore()
+	routeStore := nfroutingstoretest.NewMockSQLRouteStore()
 	provider, err := New(ctx, providerSettings, config, routeStore)
 	require.NoError(t, err)
 
@@ -171,7 +128,7 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 	providerSettings := createTestProviderSettings()
 	config := nfmanager.Config{}
 
-	routeStore := createTestRouteStore()
+	routeStore := nfroutingstoretest.NewMockSQLRouteStore()
 	provider, err := New(ctx, providerSettings, config, routeStore)
 	require.NoError(t, err)
 
@@ -192,7 +149,6 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 		},
 	}
 
-	// Set config for alert1
 	err = provider.SetNotificationConfig(orgID, ruleID, customConfig)
 	require.NoError(t, err)
 
@@ -236,7 +192,7 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 					RenotifyInterval: 4 * time.Hour,
 					NoDataInterval:   4 * time.Hour,
 				},
-			}, // Will get fallback from standardnotification
+			},
 			shouldFallback: false,
 		},
 		{
@@ -279,7 +235,7 @@ func TestProvider_ConcurrentAccess(t *testing.T) {
 	providerSettings := createTestProviderSettings()
 	config := nfmanager.Config{}
 
-	routeStore := createTestRouteStore()
+	routeStore := nfroutingstoretest.NewMockSQLRouteStore()
 	provider, err := New(ctx, providerSettings, config, routeStore)
 	require.NoError(t, err)
 
@@ -536,6 +492,238 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 			result, err := provider.evaluateExpr(tt.expression, tt.labelSet)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, result, "Expression: %s", tt.expression)
+		})
+	}
+}
+
+func TestProvider_DeleteRoute(t *testing.T) {
+	ctx := context.Background()
+	providerSettings := createTestProviderSettings()
+	config := nfmanager.Config{}
+
+	routeStore := nfroutingstoretest.NewMockSQLRouteStore()
+	provider, err := New(ctx, providerSettings, config, routeStore)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name    string
+		orgID   string
+		routeID string
+		wantErr bool
+	}{
+		{
+			name:    "valid parameters",
+			orgID:   "test-org-123",
+			routeID: "route-uuid-456",
+			wantErr: false,
+		},
+		{
+			name:    "empty routeID",
+			orgID:   "test-org-123",
+			routeID: "",
+			wantErr: true,
+		},
+		{
+			name:    "valid orgID with valid routeID",
+			orgID:   "another-org",
+			routeID: "another-route-id",
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if !tt.wantErr {
+				routeStore.ExpectDelete(tt.orgID, tt.routeID)
+			}
+
+			err := provider.DeleteRoute(ctx, tt.orgID, tt.routeID)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.NoError(t, routeStore.ExpectationsWereMet())
+			}
+		})
+	}
+}
+
+func TestProvider_CreateRoute(t *testing.T) {
+	ctx := context.Background()
+	providerSettings := createTestProviderSettings()
+	config := nfmanager.Config{}
+
+	routeStore := nfroutingstoretest.NewMockSQLRouteStore()
+	provider, err := New(ctx, providerSettings, config, routeStore)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name    string
+		orgID   string
+		route   *alertmanagertypes.ExpressionRoute
+		wantErr bool
+	}{
+		{
+			name:  "valid route",
+			orgID: "test-org-123",
+			route: &alertmanagertypes.ExpressionRoute{
+				Expression:     `service == "auth"`,
+				ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+				Priority:       "1",
+				Name:           "auth-service-route",
+				Description:    "Route for auth service alerts",
+				Enabled:        true,
+				OrgID:          "test-org-123",
+				Channels:       []string{"slack-channel"},
+			},
+			wantErr: false,
+		},
+		{
+			name:    "nil route",
+			orgID:   "test-org-123",
+			route:   nil,
+			wantErr: true,
+		},
+		{
+			name:  "invalid route - missing expression",
+			orgID: "test-org-123",
+			route: &alertmanagertypes.ExpressionRoute{
+				Expression:     "", // empty expression
+				ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+				Priority:       "1",
+				Name:           "invalid-route",
+				OrgID:          "test-org-123",
+			},
+			wantErr: true,
+		},
+		{
+			name:  "invalid route - missing name",
+			orgID: "test-org-123",
+			route: &alertmanagertypes.ExpressionRoute{
+				Expression:     `service == "auth"`,
+				ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+				Priority:       "1",
+				Name:           "", // empty name
+				OrgID:          "test-org-123",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if !tt.wantErr && tt.route != nil {
+				routeStore.ExpectCreate(tt.route)
+			}
+
+			err := provider.CreateRoute(ctx, tt.orgID, tt.route)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.NoError(t, routeStore.ExpectationsWereMet())
+			}
+		})
+	}
+}
+
+func TestProvider_CreateRoutes(t *testing.T) {
+	ctx := context.Background()
+	providerSettings := createTestProviderSettings()
+	config := nfmanager.Config{}
+
+	routeStore := nfroutingstoretest.NewMockSQLRouteStore()
+	provider, err := New(ctx, providerSettings, config, routeStore)
+	require.NoError(t, err)
+
+	validRoute1 := &alertmanagertypes.ExpressionRoute{
+		Expression:     `service == "auth"`,
+		ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+		Name:           "auth-route",
+		Description:    "Auth service route",
+		Enabled:        true,
+		OrgID:          "test-org",
+		Channels:       []string{"slack-auth"},
+	}
+
+	validRoute2 := &alertmanagertypes.ExpressionRoute{
+		Expression:     `service == "payment"`,
+		ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+		Priority:       "2",
+		Name:           "payment-route",
+		Description:    "Payment service route",
+		Enabled:        true,
+		OrgID:          "test-org",
+		Channels:       []string{"slack-payment"},
+	}
+
+	invalidRoute := &alertmanagertypes.ExpressionRoute{
+		Expression:     "", // empty expression - invalid
+		ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+		Name:           "invalid-route",
+		OrgID:          "test-org",
+	}
+
+	tests := []struct {
+		name    string
+		orgID   string
+		routes  []*alertmanagertypes.ExpressionRoute
+		wantErr bool
+	}{
+		{
+			name:    "valid routes",
+			orgID:   "test-org",
+			routes:  []*alertmanagertypes.ExpressionRoute{validRoute1, validRoute2},
+			wantErr: false,
+		},
+		{
+			name:    "empty routes list",
+			orgID:   "test-org",
+			routes:  []*alertmanagertypes.ExpressionRoute{},
+			wantErr: true,
+		},
+		{
+			name:    "nil routes list",
+			orgID:   "test-org",
+			routes:  nil,
+			wantErr: true,
+		},
+		{
+			name:    "routes with nil route",
+			orgID:   "test-org",
+			routes:  []*alertmanagertypes.ExpressionRoute{validRoute1, nil},
+			wantErr: true,
+		},
+		{
+			name:    "routes with invalid route",
+			orgID:   "test-org",
+			routes:  []*alertmanagertypes.ExpressionRoute{validRoute1, invalidRoute},
+			wantErr: true,
+		},
+		{
+			name:    "single valid route",
+			orgID:   "test-org",
+			routes:  []*alertmanagertypes.ExpressionRoute{validRoute1},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if !tt.wantErr && len(tt.routes) > 0 {
+				routeStore.ExpectCreateBatch(tt.routes)
+			}
+
+			err := provider.CreateRoutes(ctx, tt.orgID, tt.routes)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.NoError(t, routeStore.ExpectationsWereMet())
+			}
 		})
 	}
 }
