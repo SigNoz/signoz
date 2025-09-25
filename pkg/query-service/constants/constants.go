@@ -223,6 +223,15 @@ const (
 		"attributes_bool, " +
 		"resources_string, " +
 		"scope_string "
+	// LogsSQLSelectV3 is similar to V2 but does NOT select the legacy `body` string column.
+	// It instead selects JSON/body maps so the reader can compose the final body.
+	LogsSQLSelectV3 = "SELECT " +
+		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, " +
+		"attributes_string, " +
+		"attributes_number, " +
+		"attributes_bool, " +
+		"resources_string, " +
+		"scope_string "
 	TracesExplorerViewSQLSelectWithSubQuery = "(SELECT traceID, durationNano, " +
 		"serviceName, name FROM %s.%s WHERE parentSpanID = '' AND %s ORDER BY durationNano DESC LIMIT 1 BY traceID"
 	TracesExplorerViewSQLSelectBeforeSubQuery = "SELECT subQuery.serviceName as `subQuery.serviceName`, subQuery.name as `subQuery.name`, count() AS " +

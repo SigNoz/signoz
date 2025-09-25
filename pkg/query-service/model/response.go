@@ -598,13 +598,43 @@ type SignozLog struct {
 	TraceFlags         uint32             `json:"trace_flags" ch:"trace_flags"`
 	SeverityText       string             `json:"severity_text" ch:"severity_text"`
 	SeverityNumber     uint8              `json:"severity_number" ch:"severity_number"`
-	Body               string             `json:"body" ch:"body"`
+	Body               any                `json:"body" ch:"body"`
+	BodyV2             map[string]any     `json:"-" ch:"body_v2"`
+	Promoted           map[string]any     `json:"-" ch:"promoted"`
 	Resources_string   map[string]string  `json:"resources_string" ch:"resources_string"`
 	Attributes_string  map[string]string  `json:"attributes_string" ch:"attributes_string"`
 	Attributes_int64   map[string]int64   `json:"attributes_int" ch:"attributes_int64"`
 	Attributes_float64 map[string]float64 `json:"attributes_float" ch:"attributes_float64"`
 	Attributes_bool    map[string]bool    `json:"attributes_bool" ch:"attributes_bool"`
 }
+
+// MarshalJSON implements json.Marshaler for SignozLog to allow composing
+// a structured body from BodyV2 and Promoted if present.
+func (l *SignozLog) MarshalJSON() ([]byte, error) {
+	type Alias SignozLog
+
+	// Create a shallow copy to avoid mutating the receiver
+	clone := *l
+
+	// If BodyV2/Promoted are present, merge them into Body for output
+	if (clone.Body == nil) && (len(clone.BodyV2) > 0 || len(clone.Promoted) > 0) {
+		merged := map[string]any{}
+		if clone.BodyV2 != nil {
+			for k, v := range clone.BodyV2 {
+				merged[k] = v
+			}
+		}
+		if clone.Promoted != nil {
+			for k, v := range clone.Promoted {
+				merged[k] = v
+			}
+		}
+		clone.Body = merged
+	}
+
+	return json.Marshal((*Alias)(&clone))
+}
+
 type GetLogsAggregatesResponse struct {
 	Items map[int64]LogsAggregatesResponseItem `json:"items"`
 }

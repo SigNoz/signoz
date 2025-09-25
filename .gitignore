@@ -49,6 +49,7 @@ ee/query-service/tests/test-deploy/data/
 # local data
 *.backup
 *.db
+**/db
 /deploy/docker/clickhouse-setup/data/
 /deploy/docker-swarm/clickhouse-setup/data/
 bin/
