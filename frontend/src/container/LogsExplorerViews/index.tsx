@@ -173,8 +173,8 @@ function LogsExplorerViewsContainer({
 		}
 
 		let updatedFilterExpression = listQuery.filter?.expression || '';
-		if (activeLogId && Boolean(updatedFilterExpression.trim())) {
-			updatedFilterExpression = `${updatedFilterExpression} AND id <= '${activeLogId}'`;
+		if (activeLogId) {
+			updatedFilterExpression = `${updatedFilterExpression} id <= '${activeLogId}'`.trim();
 		}
 
 		const modifiedQueryData: IBuilderQuery = {
@@ -327,9 +327,7 @@ function LogsExplorerViewsContainer({
 					],
 					op: 'AND',
 				};
-				if (updatedFilterExpression.trim()) {
-					updatedFilterExpression = `${updatedFilterExpression} AND id <= '${activeLogId}'`;
-				}
+				updatedFilterExpression = `${updatedFilterExpression} id <= '${activeLogId}'`.trim();
 			}
 
 			// Create orderBy array based on orderDirection
