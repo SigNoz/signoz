@@ -469,6 +469,7 @@ function OptionsPopover({
 			open={isPopoverOpen}
 			onOpenChange={setIsPopoverOpen}
 			rootClassName="format-options-popover"
+			destroyTooltipOnHide
 		>
 			<Button
 				className="periscope-btn ghost"
