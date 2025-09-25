@@ -28,21 +28,31 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		mockUpdateFormatting.mockClear();
 	});
 
-	it('opens, toggles selection, updates max-lines and font-size', async () => {
+	function setup(): {
+		getByTestId: ReturnType<typeof render>['getByTestId'];
+		findItemByLabel: (label: string) => Element | undefined;
+		formatOnChange: jest.Mock<any, any>;
+		maxLinesOnChange: jest.Mock<any, any>;
+		fontSizeOnChange: jest.Mock<any, any>;
+	} {
 		const items = [
 			{ key: 'raw', label: 'Raw', data: { title: 'max lines per row' } },
 			{ key: 'list', label: 'Default' },
 			{ key: 'table', label: 'Column', data: { title: 'columns' } },
 		];
 
+		const formatOnChange = jest.fn();
+		const maxLinesOnChange = jest.fn();
+		const fontSizeOnChange = jest.fn();
+
 		const { getByTestId } = render(
 			<LogsFormatOptionsMenu
 				items={items}
 				selectedOptionFormat="table"
 				config={{
-					format: { value: 'table', onChange: jest.fn() },
-					maxLines: { value: 2, onChange: jest.fn() },
-					fontSize: { value: FontSize.SMALL, onChange: jest.fn() },
+					format: { value: 'table', onChange: formatOnChange },
+					maxLines: { value: 2, onChange: maxLinesOnChange },
+					fontSize: { value: FontSize.SMALL, onChange: fontSizeOnChange },
 					addColumn: {
 						isFetching: false,
 						value: [],
@@ -57,6 +67,7 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 			/>,
 		);
 
+		// Open the popover menu by default for each test
 		const formatButton = getByTestId('periscope-btn-format-options');
 		fireEvent.click(formatButton);
 
@@ -65,17 +76,39 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		const findItemByLabel = (label: string): Element | undefined =>
 			getMenuItems().find((el) => (el.textContent || '').includes(label));
 
-		const columnItem = findItemByLabel('Column') as Element;
-		expect(columnItem.querySelector('svg')).toBeTruthy();
+		return {
+			getByTestId,
+			findItemByLabel,
+			formatOnChange,
+			maxLinesOnChange,
+			fontSizeOnChange,
+		};
+	}
 
+	// Covers: opens menu, changes format selection, updates max-lines, changes font size
+	it('opens and toggles format selection', async () => {
+		const { findItemByLabel, formatOnChange } = setup();
+
+		// Assert initial selection
+		const columnItem = findItemByLabel('Column') as Element;
+		expect(document.querySelectorAll('.menu-items .item svg')).toHaveLength(1);
+		expect(columnItem.querySelector('svg')).toBeInTheDocument();
+
+		// Change selection to 'Raw'
 		const rawItem = findItemByLabel('Raw') as Element;
 		fireEvent.click(rawItem as HTMLElement);
 		await waitFor(() => {
-			expect(
-				(findItemByLabel('Raw') as Element).querySelector('svg'),
-			).toBeTruthy();
+			const rawEl = findItemByLabel('Raw') as Element;
+			expect(document.querySelectorAll('.menu-items .item svg')).toHaveLength(1);
+			expect(rawEl.querySelector('svg')).toBeInTheDocument();
 		});
+		expect(formatOnChange).toHaveBeenCalledWith('raw');
+	});
 
+	it('increments max-lines and calls onChange', async () => {
+		const { maxLinesOnChange } = setup();
+
+		// Increment max lines
 		const input = document.querySelector(
 			'.max-lines-per-row-input input',
 		) as HTMLInputElement;
@@ -85,21 +118,40 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		);
 		const incrementBtn = buttons[1] as HTMLElement;
 		fireEvent.click(incrementBtn);
+
 		await waitFor(() => {
 			expect(Number(input.value)).toBe(initial + 1);
 		});
+		await waitFor(() => {
+			expect(maxLinesOnChange).toHaveBeenCalledWith(initial + 1);
+		});
+	});
 
+	it('changes font size to MEDIUM and calls onChange', async () => {
+		const { fontSizeOnChange } = setup();
+		// Open font dropdown
 		const fontButton = document.querySelector(
 			'.font-size-container .value',
 		) as HTMLElement;
 		fireEvent.click(fontButton);
+
+		// Choose MEDIUM
 		const optionButtons = Array.from(
 			document.querySelectorAll('.font-size-dropdown .option-btn'),
 		);
 		const mediumBtn = optionButtons[1] as HTMLElement;
 		fireEvent.click(mediumBtn);
+
 		await waitFor(() => {
-			expect((optionButtons[1] as Element).querySelector('svg')).toBeTruthy();
+			expect(
+				document.querySelectorAll('.font-size-dropdown .option-btn .icon'),
+			).toHaveLength(1);
+			expect(
+				(optionButtons[1] as Element).querySelector('.icon'),
+			).toBeInTheDocument();
+		});
+		await waitFor(() => {
+			expect(fontSizeOnChange).toHaveBeenCalledWith(FontSize.MEDIUM);
 		});
 	});
 });
