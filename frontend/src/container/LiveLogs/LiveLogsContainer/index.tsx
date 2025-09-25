@@ -8,7 +8,6 @@ import GoToTop from 'container/GoToTop';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import useClickOutside from 'hooks/useClickOutside';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useEventSourceEvent } from 'hooks/useEventSourceEvent';
 import { useEventSource } from 'providers/EventSource';
@@ -40,9 +39,6 @@ function LiveLogsContainer(): JSX.Element {
 
 	const batchedEventsRef = useRef<ILiveLogsLog[]>([]);
 
-	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
-	const menuRef = useRef<HTMLDivElement>(null);
-
 	const prevFilterExpressionRef = useRef<string | null>(null);
 
 	const { options, config } = useOptionsMenu({
@@ -71,15 +67,6 @@ function LiveLogsContainer(): JSX.Element {
 			},
 		},
 	];
-
-	useClickOutside({
-		ref: menuRef,
-		onClickOutside: () => {
-			if (showFormatMenuItems) {
-				setShowFormatMenuItems(false);
-			}
-		},
-	});
 
 	const {
 		handleStartOpenConnection,
@@ -227,13 +214,11 @@ function LiveLogsContainer(): JSX.Element {
 						/>
 					</div>
 
-					<div className="format-options-container" ref={menuRef}>
-						<LogsFormatOptionsMenu
-							items={formatItems}
-							selectedOptionFormat={options.format}
-							config={config}
-						/>
-					</div>
+					<LogsFormatOptionsMenu
+						items={formatItems}
+						selectedOptionFormat={options.format}
+						config={config}
+					/>
 				</div>
 
 				{showLiveLogsFrequencyChart && (
