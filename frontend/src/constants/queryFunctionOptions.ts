@@ -125,7 +125,7 @@ export const queryFunctionsTypesConfig: QueryFunctionConfigType = {
 	log10: {
 		showInput: false,
 	},
-	cumSum: {
+	cumulativeSum: {
 		showInput: false,
 	},
 	ewma3: {
