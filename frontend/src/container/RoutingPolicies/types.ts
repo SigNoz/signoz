@@ -11,26 +11,37 @@ export interface RoutingPolicy {
 	updatedBy: string | undefined;
 }
 
+type HandlePolicyDetailsModalOpen = (
+	mode: PolicyDetailsModalMode,
+	routingPolicy: RoutingPolicy | null,
+) => void;
+
+type HandlePolicyDetailsModalAction = (
+	mode: PolicyDetailsModalMode,
+	routingPolicyData: {
+		name: string;
+		expression: string;
+		channels: string[];
+		userEmail: string;
+	},
+) => void;
+
+type HandleDeleteModalOpen = (routingPolicy: RoutingPolicy) => void;
+
 export type PolicyDetailsModalMode = 'create' | 'edit' | null;
 
 export interface RoutingPolicyListProps {
 	routingPolicies: RoutingPolicy[];
 	isRoutingPoliciesLoading: boolean;
 	isRoutingPoliciesError: boolean;
-	handlePolicyDetailsModalOpen: (
-		mode: PolicyDetailsModalMode,
-		routingPolicy: RoutingPolicy,
-	) => void;
-	handleDeleteModalOpen: (routingPolicy: RoutingPolicy) => void;
+	handlePolicyDetailsModalOpen: HandlePolicyDetailsModalOpen;
+	handleDeleteModalOpen: HandleDeleteModalOpen;
 }
 
 export interface RoutingPolicyListItemProps {
 	routingPolicy: RoutingPolicy;
-	handlePolicyDetailsModalOpen: (
-		mode: PolicyDetailsModalMode,
-		routingPolicy: RoutingPolicy,
-	) => void;
-	handleDeleteModalOpen: (routingPolicy: RoutingPolicy) => void;
+	handlePolicyDetailsModalOpen: HandlePolicyDetailsModalOpen;
+	handleDeleteModalOpen: HandleDeleteModalOpen;
 }
 
 export interface PolicyListItemHeaderProps {
@@ -48,15 +59,7 @@ export interface CreateRoutingPolicyProps {
 	closeModal: () => void;
 	mode: PolicyDetailsModalMode;
 	channels: Channels[];
-	handlePolicyDetailsModalAction: (
-		mode: PolicyDetailsModalMode,
-		routingPolicyData: {
-			name: string;
-			expression: string;
-			channels: string[];
-			userEmail: string;
-		},
-	) => void;
+	handlePolicyDetailsModalAction: HandlePolicyDetailsModalAction;
 	isPolicyDetailsModalActionLoading: boolean;
 }
 
@@ -88,16 +91,8 @@ export interface UseRoutingPoliciesReturn {
 	// Policy Details Modal
 	policyDetailsModalState: PolicyDetailsModalState;
 	handlePolicyDetailsModalClose: () => void;
-	handlePolicyDetailsModalOpen: (mode: PolicyDetailsModalMode) => void;
-	handlePolicyDetailsModalAction: (
-		mode: PolicyDetailsModalMode,
-		routingPolicyData: {
-			name: string;
-			expression: string;
-			channels: string[];
-			userEmail: string;
-		},
-	) => void;
+	handlePolicyDetailsModalOpen: HandlePolicyDetailsModalOpen;
+	handlePolicyDetailsModalAction: HandlePolicyDetailsModalAction;
 	isPolicyDetailsModalActionLoading: boolean;
 }
 

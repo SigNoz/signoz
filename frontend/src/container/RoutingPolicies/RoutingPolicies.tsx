@@ -73,7 +73,7 @@ function RoutingPolicies(): JSX.Element {
 						<Button
 							icon={<PlusOutlined />}
 							type="primary"
-							onClick={(): void => handlePolicyDetailsModalOpen('create')}
+							onClick={(): void => handlePolicyDetailsModalOpen('create', null)}
 							disabled={disableCreateButton}
 						>
 							New routing policy

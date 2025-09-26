@@ -7,7 +7,7 @@ export const MOCK_ROUTING_POLICY_1: RoutingPolicy = {
 	id: '1',
 	name: 'Routing Policy 1',
 	expression: 'expression 1',
-	channels: ['channel 1'],
+	channels: ['1'],
 	createdAt: '2021-01-04',
 	updatedAt: undefined,
 	createdBy: 'user1@signoz.io',
@@ -25,7 +25,7 @@ export const MOCK_ROUTING_POLICY_2: RoutingPolicy = {
 	updatedBy: 'user2@signoz.io',
 };
 
-const MOCK_CHANNEL_1: Channels = {
+export const MOCK_CHANNEL_1: Channels = {
 	name: 'Channel 1',
 	created_at: '2021-01-01',
 	data: 'data 1',
@@ -33,7 +33,7 @@ const MOCK_CHANNEL_1: Channels = {
 	type: 'type 1',
 	updated_at: '2021-01-01',
 };
-const MOCK_CHANNEL_2: Channels = {
+export const MOCK_CHANNEL_2: Channels = {
 	name: 'Channel 2',
 	created_at: '2021-01-02',
 	data: 'data 2',

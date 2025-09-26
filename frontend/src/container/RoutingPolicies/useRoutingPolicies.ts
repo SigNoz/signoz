@@ -69,7 +69,13 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 	const channels = data?.data || [];
 
 	// Handlers
-	const handlePolicyDetailsModalOpen = (mode: PolicyDetailsModalMode): void => {
+	const handlePolicyDetailsModalOpen = (
+		mode: PolicyDetailsModalMode,
+		routingPolicy: RoutingPolicy | null,
+	): void => {
+		if (routingPolicy) {
+			setSelectedRoutingPolicy(routingPolicy);
+		}
 		setPolicyDetailsModalState((prev) => ({
 			...prev,
 			isOpen: true,
