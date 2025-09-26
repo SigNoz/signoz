@@ -111,8 +111,8 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 			},
 			value:             float64(200),
 			tblFieldName:      "attribute_string_http$$status_code",
-			expectedFieldName: "toFloat64OrNull(attribute_string_http$$status_code)",
-			expectedValue:     float64(200),
+			expectedFieldName: "attribute_string_http$$status_code",
+			expectedValue:     "toString(200)",
 		},
 		{
 			name: "service_enabled_string_field_with_bool_value",
@@ -144,8 +144,8 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 			},
 			value:             []any{float64(100.5), float64(200.3), float64(150.7)},
 			tblFieldName:      "attribute_string_response$$times",
-			expectedFieldName: "toFloat64OrNull(attribute_string_response$$times)",
-			expectedValue:     []any{float64(100.5), float64(200.3), float64(150.7)},
+			expectedFieldName: "attribute_string_response$$times",
+			expectedValue:     []any{"toString(100.5)", "toString(200.3)", "toString(150.7)"},
 		},
 		{
 			name: "error_codes_string_field_with_mixed_array",
@@ -156,10 +156,21 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 			value:             []any{float64(500), "TIMEOUT", float64(503)},
 			tblFieldName:      "attribute_string_error$$codes",
 			expectedFieldName: "attribute_string_error$$codes",
-			expectedValue:     []any{"500", "TIMEOUT", "503"},
+			expectedValue:     []any{"toString(500)", "TIMEOUT", "toString(503)"},
 		},
 
 		// numbers
+		{
+			name: "http_request_duration_float_field_with_numeric_value",
+			key: &TelemetryFieldKey{
+				Name:          "http.request.duration",
+				FieldDataType: FieldDataTypeFloat64,
+			},
+			value:             1234.56,
+			tblFieldName:      "attribute_float64_http$$request$$duration",
+			expectedFieldName: "attribute_float64_http$$request$$duration",
+			expectedValue:     1234.56,
+		},
 		{
 			name: "http_request_duration_float_field_with_string_value",
 			key: &TelemetryFieldKey{
@@ -168,8 +179,19 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 			},
 			value:             "1234.56",
 			tblFieldName:      "attribute_float64_http$$request$$duration",
-			expectedFieldName: "toString(attribute_float64_http$$request$$duration)",
-			expectedValue:     "1234.56",
+			expectedFieldName: "attribute_float64_http$$request$$duration",
+			expectedValue:     "toFloat64OrNull('1234.56')",
+		},
+		{
+			name: "error_codes_numer_field_with_mixed_array",
+			key: &TelemetryFieldKey{
+				Name:          "error.codes",
+				FieldDataType: FieldDataTypeNumber,
+			},
+			value:             []any{float64(500), "TIMEOUT", float64(503)},
+			tblFieldName:      "attribute_number_error$$codes",
+			expectedFieldName: "attribute_number_error$$codes",
+			expectedValue:     []any{float64(500), "toFloat64OrNull('TIMEOUT')", float64(503)},
 		},
 
 		// bools
@@ -181,8 +203,8 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 			},
 			value:             "true",
 			tblFieldName:      "attribute_bool_feature$$enabled",
-			expectedFieldName: "toString(attribute_bool_feature$$enabled)",
-			expectedValue:     "true",
+			expectedFieldName: "attribute_bool_feature$$enabled",
+			expectedValue:     true,
 		},
 		{
 			name: "feature_flags_bool_field_with_mixed_array",
@@ -192,8 +214,8 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 			},
 			value:             []any{true, "enabled", false},
 			tblFieldName:      "attribute_bool_feature$$flags",
-			expectedFieldName: "toString(attribute_bool_feature$$flags)",
-			expectedValue:     []any{"true", "enabled", "false"},
+			expectedFieldName: "attribute_bool_feature$$flags",
+			expectedValue:     []any{true, false, false},
 		},
 	}
 

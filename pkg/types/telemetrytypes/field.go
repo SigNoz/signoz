@@ -149,14 +149,9 @@ func DataTypeCollisionHandledFieldName(key *TelemetryFieldKey, value any, tblFie
 	case FieldDataTypeString:
 		switch v := value.(type) {
 		case float64:
-			// try to convert the string value to to number
-			tblFieldName = castFloat(tblFieldName)
+			value = castString(fmt.Sprintf("%v", v))
 		case []any:
-			if allFloats(v) {
-				tblFieldName = castFloat(tblFieldName)
-			} else if hasString(v) {
-				_, value = castString(tblFieldName), toStrings(v)
-			}
+			value = toStrings(v)
 		case bool:
 			// we don't have a toBoolOrNull in ClickHouse, so we need to convert the bool to a string
 			value = fmt.Sprintf("%t", v)
@@ -164,69 +159,57 @@ func DataTypeCollisionHandledFieldName(key *TelemetryFieldKey, value any, tblFie
 
 	case FieldDataTypeFloat64, FieldDataTypeInt64, FieldDataTypeNumber:
 		switch v := value.(type) {
-		// why? ; CH returns an error for a simple check
-		// attributes_number['http.status_code'] = 200 but not for attributes_number['http.status_code'] >= 200
-		// DB::Exception: Bad get: has UInt64, requested Float64.
-		// How is it working in v4? v4 prepares the full query with values in query string
-		// When we format the float it becomes attributes_number['http.status_code'] = 200.000
-		// Which CH gladly accepts and doesn't throw error
-		// However, when passed as query args, the default formatter
-		// https://github.com/ClickHouse/clickhouse-go/blob/757e102f6d8c6059d564ce98795b4ce2a101b1a5/bind.go#L393
-		// is used which prepares the
-		// final query as attributes_number['http.status_code'] = 200 giving this error
-		// This following is one way to workaround it
-		case float32, float64:
-			tblFieldName = castFloatHack(tblFieldName)
 		case string:
-			// try to convert the number attribute to string
-			tblFieldName = castString(tblFieldName) // numeric col vs string literal
+			value = castFloat(fmt.Sprintf("'%v'", v))
 		case []any:
-			if allFloats(v) {
-				tblFieldName = castFloatHack(tblFieldName)
-			} else if hasString(v) {
-				tblFieldName, value = castString(tblFieldName), toStrings(v)
-			}
+			value = toFloat64s(v)
 		}
 
 	case FieldDataTypeBool:
+		// if the key type is bool, we can consider the value as false
+		// unless the value is true
 		switch v := value.(type) {
 		case string:
-			tblFieldName = castString(tblFieldName)
+			value = (v == "true")
 		case []any:
-			if hasString(v) {
-				tblFieldName, value = castString(tblFieldName), toStrings(v)
+			for i, item := range v {
+				if str, ok := item.(string); ok {
+					v[i] = (str == "true")
+				} else if b, ok := item.(bool); ok {
+					v[i] = b
+				} else {
+					v[i] = false
+				}
 			}
+			value = v
 		}
 	}
 	return tblFieldName, value
 }
 
-func castFloat(col string) string     { return fmt.Sprintf("toFloat64OrNull(%s)", col) }
-func castFloatHack(col string) string { return fmt.Sprintf("toFloat64(%s)", col) }
-func castString(col string) string    { return fmt.Sprintf("toString(%s)", col) }
-
-func allFloats(in []any) bool {
-	for _, x := range in {
-		if _, ok := x.(float64); !ok {
-			return false
-		}
-	}
-	return true
-}
-
-func hasString(in []any) bool {
-	for _, x := range in {
-		if _, ok := x.(string); ok {
-			return true
-		}
-	}
-	return false
-}
+func castFloat(col string) string  { return fmt.Sprintf("toFloat64OrNull(%s)", col) }
+func castString(col string) string { return fmt.Sprintf("toString(%s)", col) }
 
 func toStrings(in []any) []any {
 	out := make([]any, len(in))
 	for i, x := range in {
-		out[i] = fmt.Sprintf("%v", x)
+		if _, ok := x.(string); !ok {
+			out[i] = castString(fmt.Sprintf("%v", x))
+		} else {
+			out[i] = x
+		}
+	}
+	return out
+}
+
+func toFloat64s(in []any) []any {
+	out := make([]any, len(in))
+	for i, x := range in {
+		if str, ok := x.(string); ok {
+			out[i] = castFloat(fmt.Sprintf("'%v'", str))
+		} else {
+			out[i] = x
+		}
 	}
 	return out
 }
