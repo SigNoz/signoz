@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
@@ -136,5 +136,71 @@ describe('Exceptions - All Errors', () => {
 				tags: TAG_FROM_QUERY,
 			}),
 		);
+	});
+
+	describe('pagination edge cases', () => {
+		it('should navigate to page 2 when pageSize=100 and clicking next', async () => {
+			// Arrange: start with pageSize=100 and offset=0
+			render(
+				<Exceptions
+					initUrl={[
+						`/exceptions?pageSize=100&offset=0&order=ascending&orderParam=serviceName`,
+					]}
+				/>,
+			);
+
+			// Wait for initial load
+			await screen.findByText(/redis timeout/i);
+
+			const nextPageItem = screen.getByTitle('Next Page');
+			const nextPageButton = nextPageItem.querySelector(
+				'button',
+			) as HTMLButtonElement;
+			fireEvent.click(nextPageButton);
+
+			await waitFor(() => {
+				const qp = new URLSearchParams(window.location.search);
+				expect(qp.get('offset')).toBe('100');
+			});
+			const queryParams = new URLSearchParams(window.location.search);
+			expect(queryParams.get('pageSize')).toBe('100');
+			expect(queryParams.get('offset')).toBe('100');
+		});
+
+		it('initializes current page from URL (offset/pageSize)', async () => {
+			// offset=100, pageSize=100 => current page should be 2
+			render(
+				<Exceptions
+					initUrl={[
+						`/exceptions?pageSize=100&offset=100&order=ascending&orderParam=serviceName`,
+					]}
+				/>,
+			);
+			await screen.findByText(/redis timeout/i);
+			const activeItem = document.querySelector('.ant-pagination-item-active');
+			expect(activeItem?.textContent).toBe('2');
+			const qp = new URLSearchParams(window.location.search);
+			expect(qp.get('pageSize')).toBe('100');
+			expect(qp.get('offset')).toBe('100');
+		});
+
+		it('clicking a numbered page updates offset correctly', async () => {
+			// pageSize=100, click page 3 => offset = 200
+			render(
+				<Exceptions
+					initUrl={[
+						`/exceptions?pageSize=100&offset=0&order=ascending&orderParam=serviceName`,
+					]}
+				/>,
+			);
+			await screen.findByText(/redis timeout/i);
+			const page3Item = screen.getByTitle('3');
+			const page3Anchor = page3Item.querySelector('a') as HTMLAnchorElement;
+			fireEvent.click(page3Anchor);
+			await waitFor(() => {
+				const qp = new URLSearchParams(window.location.search);
+				expect(qp.get('offset')).toBe('200');
+			});
+		});
 	});
 });
