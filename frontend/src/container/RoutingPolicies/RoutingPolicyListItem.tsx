@@ -31,6 +31,7 @@ function PolicyListItemHeader({
 							e.stopPropagation();
 							handleEdit();
 						}}
+						data-testid="edit-routing-policy"
 					/>
 					<Trash2
 						size={14}
@@ -40,6 +41,7 @@ function PolicyListItemHeader({
 							e.stopPropagation();
 							handleDelete();
 						}}
+						data-testid="delete-routing-policy"
 					/>
 				</div>
 			)}
