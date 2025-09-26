@@ -113,12 +113,12 @@ func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) 
 	statements := []telemetrytypes.ShowCreateTableStatement{}
 	err := t.telemetrystore.ClickhouseDB().Select(ctx, &statements, query)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTblStatement.Error())
+		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTblStatement.Error())
 	}
 
 	materialisedKeys, err := ExtractFieldKeysFromTblStatement(statements[0].Statement)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
+		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
 	}
 
 	for idx := range materialisedKeys {
@@ -202,7 +202,8 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		conds = append(conds, sb.And(fieldKeyConds...))
 		limit += fieldKeySelector.Limit
 	}
-	sb.Where(sb.Or(conds...))
+	// the span_attribute_keys has historically pushed the top level column as attributes
+	sb.Where(sb.Or(conds...)).Where("isColumn = false")
 	sb.GroupBy("tagKey", "tagType", "dataType")
 	if limit == 0 {
 		limit = 1000
@@ -219,7 +220,7 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
+		return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
 	}
 	defer rows.Close()
 	keys := []*telemetrytypes.TelemetryFieldKey{}
@@ -237,7 +238,7 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		var priority uint8
 		err = rows.Scan(&name, &fieldContext, &fieldDataType, &priority)
 		if err != nil {
-			return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
+			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
 		}
 		key, ok := mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()]
 
@@ -256,7 +257,7 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 	}
 
 	if rows.Err() != nil {
-		return nil, false, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
+		return nil, false, errors.Wrap(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
 	}
 
 	// hit the limit? (only counting DB results)
@@ -325,12 +326,12 @@ func (t *telemetryMetaStore) logsTblStatementToFieldKeys(ctx context.Context) ([
 	statements := []telemetrytypes.ShowCreateTableStatement{}
 	err := t.telemetrystore.ClickhouseDB().Select(ctx, &statements, query)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTblStatement.Error())
+		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTblStatement.Error())
 	}
 
 	materialisedKeys, err := ExtractFieldKeysFromTblStatement(statements[0].Statement)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
+		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 	}
 
 	for idx := range materialisedKeys {
@@ -403,7 +404,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		sb := sqlbuilder.Select(
 			"name AS tag_key",
 			fmt.Sprintf("'%s' AS tag_type", fieldContext.TagType()),
-			"datatype AS tag_data_type",
+			"lower(datatype) AS tag_data_type", // in logs, we had some historical data with capital and small case
 			fmt.Sprintf(`%d AS priority`, getPriorityForContext(fieldContext)),
 		).From(tblName)
 
@@ -478,7 +479,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, mainQuery, allArgs...)
 	if err != nil {
-		return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
+		return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 	}
 	defer rows.Close()
 
@@ -508,7 +509,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		var priority uint8
 		err = rows.Scan(&name, &fieldContext, &fieldDataType, &priority)
 		if err != nil {
-			return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
+			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 		}
 		key, ok := mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()]
 
@@ -527,7 +528,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	}
 
 	if rows.Err() != nil {
-		return nil, false, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
+		return nil, false, errors.Wrap(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 	}
 
 	// hit the limit? (only counting DB results)
@@ -653,7 +654,7 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+		return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
 	}
 	defer rows.Close()
 
@@ -672,7 +673,7 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 		var priority uint8
 		err = rows.Scan(&name, &fieldContext, &fieldDataType, &priority)
 		if err != nil {
-			return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
 		}
 		keys = append(keys, &telemetrytypes.TelemetryFieldKey{
 			Name:          name,
@@ -683,7 +684,7 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 	}
 
 	if rows.Err() != nil {
-		return nil, false, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+		return nil, false, errors.Wrap(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
 	}
 
 	// hit the limit?
@@ -727,7 +728,7 @@ func (t *telemetryMetaStore) getMeterSourceMetricKeys(ctx context.Context, field
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMeterKeys.Error())
+		return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMeterKeys.Error())
 	}
 	defer rows.Close()
 
@@ -743,7 +744,7 @@ func (t *telemetryMetaStore) getMeterSourceMetricKeys(ctx context.Context, field
 		var name string
 		err = rows.Scan(&name)
 		if err != nil {
-			return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMeterKeys.Error())
+			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMeterKeys.Error())
 		}
 		keys = append(keys, &telemetrytypes.TelemetryFieldKey{
 			Name:   name,
@@ -752,7 +753,7 @@ func (t *telemetryMetaStore) getMeterSourceMetricKeys(ctx context.Context, field
 	}
 
 	if rows.Err() != nil {
-		return nil, false, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMeterKeys.Error())
+		return nil, false, errors.Wrap(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMeterKeys.Error())
 	}
 
 	// hit the limit?
@@ -956,6 +957,40 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 		sb.Where(sb.LE("unix_milli", fieldValueSelector.EndUnixMilli))
 	}
 
+	if fieldValueSelector.Value != "" {
+		var conds []string
+		if fieldValueSelector.FieldContext != telemetrytypes.FieldContextAttribute &&
+			fieldValueSelector.FieldContext != telemetrytypes.FieldContextResource {
+			origContext := key.FieldContext
+
+			// search on attributes
+			key.FieldContext = telemetrytypes.FieldContextAttribute
+			cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			if err == nil {
+				conds = append(conds, cond)
+			}
+
+			// search on resource
+			key.FieldContext = telemetrytypes.FieldContextResource
+			cond, err = t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			if err == nil {
+				conds = append(conds, cond)
+			}
+			key.FieldContext = origContext
+		} else {
+			cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			if err == nil {
+				conds = append(conds, cond)
+			}
+		}
+
+		if len(conds) != 0 {
+			// see `expr` in condition_builder.go, if key doesn't exist we don't check for value
+			// hence, this is join of conditions on resource and attributes
+			sb.Where(sb.And(conds...))
+		}
+	}
+
 	limit := fieldValueSelector.Limit
 	if limit == 0 {
 		limit = 50
@@ -1046,7 +1081,7 @@ func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueS
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
+		return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 	}
 	defer rows.Close()
 
@@ -1061,7 +1096,7 @@ func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueS
 		var stringValue string
 		var numberValue float64
 		if err := rows.Scan(&stringValue, &numberValue); err != nil {
-			return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
+			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 		}
 
 		// Only add values if we haven't hit the limit yet
@@ -1128,7 +1163,7 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
+		return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 	}
 	defer rows.Close()
 
@@ -1143,7 +1178,7 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 		var stringValue string
 		var numberValue float64
 		if err := rows.Scan(&stringValue, &numberValue); err != nil {
-			return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
+			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 		}
 
 		// Only add values if we haven't hit the limit yet
@@ -1216,7 +1251,7 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+		return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
 	}
 	defer rows.Close()
 
@@ -1231,7 +1266,7 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 
 		var stringValue string
 		if err := rows.Scan(&stringValue); err != nil {
-			return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
 		}
 		values.StringValues = append(values.StringValues, stringValue)
 	}
@@ -1270,7 +1305,7 @@ func (t *telemetryMetaStore) getMeterSourceMetricFieldValues(ctx context.Context
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMeterValues.Error())
+		return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMeterValues.Error())
 	}
 	defer rows.Close()
 
@@ -1285,7 +1320,7 @@ func (t *telemetryMetaStore) getMeterSourceMetricFieldValues(ctx context.Context
 
 		var attribute []string
 		if err := rows.Scan(&attribute); err != nil {
-			return nil, false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMeterValues.Error())
+			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMeterValues.Error())
 		}
 		if len(attribute) > 1 {
 			values.StringValues = append(values.StringValues, attribute[1])

@@ -8,6 +8,8 @@ import (
 	"net/http"
 	_ "net/http/pprof" // http profiler
 
+	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
+
 	"github.com/gorilla/handlers"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
@@ -53,11 +55,6 @@ type Server struct {
 	httpConn     net.Listener
 	httpServer   *http.Server
 	httpHostPort string
-
-	// private http
-	privateConn     net.Listener
-	privateHTTP     *http.Server
-	privateHostPort string
 
 	opampServer *opamp.Server
 
@@ -131,7 +128,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		jwt:                jwt,
 		ruleManager:        rm,
 		httpHostPort:       constants.HTTPHostPort,
-		privateHostPort:    constants.PrivateHostPort,
 		unavailableChannel: make(chan healthcheck.Status),
 	}
 
@@ -142,13 +138,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 	}
 
 	s.httpServer = httpServer
-
-	privateServer, err := s.createPrivateServer(apiHandler)
-	if err != nil {
-		return nil, err
-	}
-
-	s.privateHTTP = privateServer
 
 	opAmpModel.Init(signoz.SQLStore, signoz.Instrumentation.Logger(), signoz.Modules.OrgGetter)
 
@@ -178,37 +167,6 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 	return s.unavailableChannel
 }
 
-func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
-
-	r := NewRouter()
-
-	r.Use(middleware.NewAuth(s.jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
-	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
-		s.config.APIServer.Timeout.ExcludedRoutes,
-		s.config.APIServer.Timeout.Default,
-		s.config.APIServer.Timeout.Max,
-	).Wrap)
-	r.Use(middleware.NewAPIKey(s.signoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.signoz.Instrumentation.Logger(), s.signoz.Sharder).Wrap)
-	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
-
-	api.RegisterPrivateRoutes(r)
-
-	c := cors.New(cors.Options{
-		//todo(amol): find out a way to add exact domain or
-		// ip here for alert manager
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-SIGNOZ-QUERY-ID", "Sec-WebSocket-Protocol"},
-	})
-
-	handler := c.Handler(r)
-	handler = handlers.CompressHandler(handler)
-
-	return &http.Server{
-		Handler: handler,
-	}, nil
-}
-
 func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server, error) {
 	r := NewRouter()
 
@@ -220,6 +178,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	).Wrap)
 	r.Use(middleware.NewAPIKey(s.signoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.signoz.Instrumentation.Logger(), s.signoz.Sharder).Wrap)
 	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
+	r.Use(middleware.NewComment().Wrap)
 
 	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger())
 
@@ -274,19 +233,6 @@ func (s *Server) initListeners() error {
 
 	zap.L().Info(fmt.Sprintf("Query server started listening on %s...", s.httpHostPort))
 
-	// listen on private port to support internal services
-	privateHostPort := s.privateHostPort
-
-	if privateHostPort == "" {
-		return fmt.Errorf("constants.PrivateHostPort is required")
-	}
-
-	s.privateConn, err = net.Listen("tcp", privateHostPort)
-	if err != nil {
-		return err
-	}
-	zap.L().Info(fmt.Sprintf("Query server started listening on private port %s...", s.privateHostPort))
-
 	return nil
 }
 
@@ -325,26 +271,6 @@ func (s *Server) Start(ctx context.Context) error {
 		}
 	}()
 
-	var privatePort int
-	if port, err := utils.GetPort(s.privateConn.Addr()); err == nil {
-		privatePort = port
-	}
-	fmt.Println("starting private http")
-	go func() {
-		zap.L().Info("Starting Private HTTP server", zap.Int("port", privatePort), zap.String("addr", s.privateHostPort))
-
-		switch err := s.privateHTTP.Serve(s.privateConn); err {
-		case nil, http.ErrServerClosed, cmux.ErrListenerClosed:
-			// normal exit, nothing to do
-			zap.L().Info("private http server closed")
-		default:
-			zap.L().Error("Could not start private HTTP server", zap.Error(err))
-		}
-
-		s.unavailableChannel <- healthcheck.Unavailable
-
-	}()
-
 	go func() {
 		zap.L().Info("Starting OpAmp Websocket server", zap.String("addr", constants.OpAmpWsEndpoint))
 		err := s.opampServer.Start(constants.OpAmpWsEndpoint)
@@ -360,12 +286,6 @@ func (s *Server) Start(ctx context.Context) error {
 func (s *Server) Stop(ctx context.Context) error {
 	if s.httpServer != nil {
 		if err := s.httpServer.Shutdown(context.Background()); err != nil {
-			return err
-		}
-	}
-
-	if s.privateHTTP != nil {
-		if err := s.privateHTTP.Shutdown(context.Background()); err != nil {
 			return err
 		}
 	}
@@ -390,20 +310,24 @@ func makeRulesManager(
 	querier querier.Querier,
 	logger *slog.Logger,
 ) (*rules.Manager, error) {
+	ruleStore := sqlrulestore.NewRuleStore(sqlstore)
+	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
-		TelemetryStore: telemetryStore,
-		Prometheus:     prometheus,
-		Context:        context.Background(),
-		Logger:         zap.L(),
-		Reader:         ch,
-		Querier:        querier,
-		SLogger:        logger,
-		Cache:          cache,
-		EvalDelay:      constants.GetEvalDelay(),
-		SQLStore:       sqlstore,
-		OrgGetter:      orgGetter,
-		Alertmanager:   alertmanager,
+		TelemetryStore:   telemetryStore,
+		Prometheus:       prometheus,
+		Context:          context.Background(),
+		Logger:           zap.L(),
+		Reader:           ch,
+		Querier:          querier,
+		SLogger:          logger,
+		Cache:            cache,
+		EvalDelay:        constants.GetEvalDelay(),
+		OrgGetter:        orgGetter,
+		Alertmanager:     alertmanager,
+		RuleStore:        ruleStore,
+		MaintenanceStore: maintenanceStore,
+		SqlStore:         sqlstore,
 	}
 
 	// create Manager

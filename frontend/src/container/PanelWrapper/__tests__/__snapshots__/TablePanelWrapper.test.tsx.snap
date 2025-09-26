@@ -266,48 +266,34 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         <td
                           class="ant-table-cell"
                         >
-                          <div>
-                            <div
-                              class="line-clamped-wrapper__text"
-                            >
-                              demo-app
+                          <div
+                            class=""
+                            role="button"
+                            tabindex="0"
+                          >
+                            <div>
+                              <div
+                                class="line-clamped-wrapper__text"
+                              >
+                                demo-app
+                              </div>
                             </div>
                           </div>
                         </td>
                         <td
                           class="ant-table-cell"
                         >
-                          <div>
-                            <div
-                              class="line-clamped-wrapper__text"
-                            >
-                              4.35 s
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr
-                        class="ant-table-row ant-table-row-level-0"
-                      >
-                        <td
-                          class="ant-table-cell"
-                        >
-                          <div>
-                            <div
-                              class="line-clamped-wrapper__text"
-                            >
-                              customer
-                            </div>
-                          </div>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                        >
-                          <div>
-                            <div
-                              class="line-clamped-wrapper__text"
-                            >
-                              431 ms
+                          <div
+                            class=""
+                            role="button"
+                            tabindex="0"
+                          >
+                            <div>
+                              <div
+                                class="line-clamped-wrapper__text"
+                              >
+                                4.35 s
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -318,48 +304,34 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         <td
                           class="ant-table-cell"
                         >
-                          <div>
-                            <div
-                              class="line-clamped-wrapper__text"
-                            >
-                              mysql
+                          <div
+                            class=""
+                            role="button"
+                            tabindex="0"
+                          >
+                            <div>
+                              <div
+                                class="line-clamped-wrapper__text"
+                              >
+                                customer
+                              </div>
                             </div>
                           </div>
                         </td>
                         <td
                           class="ant-table-cell"
                         >
-                          <div>
-                            <div
-                              class="line-clamped-wrapper__text"
-                            >
-                              431 ms
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr
-                        class="ant-table-row ant-table-row-level-0"
-                      >
-                        <td
-                          class="ant-table-cell"
-                        >
-                          <div>
-                            <div
-                              class="line-clamped-wrapper__text"
-                            >
-                              frontend
-                            </div>
-                          </div>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                        >
-                          <div>
-                            <div
-                              class="line-clamped-wrapper__text"
-                            >
-                              287 ms
+                          <div
+                            class=""
+                            role="button"
+                            tabindex="0"
+                          >
+                            <div>
+                              <div
+                                class="line-clamped-wrapper__text"
+                              >
+                                431 ms
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -370,48 +342,34 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         <td
                           class="ant-table-cell"
                         >
-                          <div>
-                            <div
-                              class="line-clamped-wrapper__text"
-                            >
-                              driver
+                          <div
+                            class=""
+                            role="button"
+                            tabindex="0"
+                          >
+                            <div>
+                              <div
+                                class="line-clamped-wrapper__text"
+                              >
+                                mysql
+                              </div>
                             </div>
                           </div>
                         </td>
                         <td
                           class="ant-table-cell"
                         >
-                          <div>
-                            <div
-                              class="line-clamped-wrapper__text"
-                            >
-                              230 ms
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr
-                        class="ant-table-row ant-table-row-level-0"
-                      >
-                        <td
-                          class="ant-table-cell"
-                        >
-                          <div>
-                            <div
-                              class="line-clamped-wrapper__text"
-                            >
-                              route
-                            </div>
-                          </div>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                        >
-                          <div>
-                            <div
-                              class="line-clamped-wrapper__text"
-                            >
-                              66.4 ms
+                          <div
+                            class=""
+                            role="button"
+                            tabindex="0"
+                          >
+                            <div>
+                              <div
+                                class="line-clamped-wrapper__text"
+                              >
+                                431 ms
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -422,22 +380,148 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         <td
                           class="ant-table-cell"
                         >
-                          <div>
-                            <div
-                              class="line-clamped-wrapper__text"
-                            >
-                              redis
+                          <div
+                            class=""
+                            role="button"
+                            tabindex="0"
+                          >
+                            <div>
+                              <div
+                                class="line-clamped-wrapper__text"
+                              >
+                                frontend
+                              </div>
                             </div>
                           </div>
                         </td>
                         <td
                           class="ant-table-cell"
                         >
-                          <div>
-                            <div
-                              class="line-clamped-wrapper__text"
-                            >
-                              31.3 ms
+                          <div
+                            class=""
+                            role="button"
+                            tabindex="0"
+                          >
+                            <div>
+                              <div
+                                class="line-clamped-wrapper__text"
+                              >
+                                287 ms
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr
+                        class="ant-table-row ant-table-row-level-0"
+                      >
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div
+                            class=""
+                            role="button"
+                            tabindex="0"
+                          >
+                            <div>
+                              <div
+                                class="line-clamped-wrapper__text"
+                              >
+                                driver
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div
+                            class=""
+                            role="button"
+                            tabindex="0"
+                          >
+                            <div>
+                              <div
+                                class="line-clamped-wrapper__text"
+                              >
+                                230 ms
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr
+                        class="ant-table-row ant-table-row-level-0"
+                      >
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div
+                            class=""
+                            role="button"
+                            tabindex="0"
+                          >
+                            <div>
+                              <div
+                                class="line-clamped-wrapper__text"
+                              >
+                                route
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div
+                            class=""
+                            role="button"
+                            tabindex="0"
+                          >
+                            <div>
+                              <div
+                                class="line-clamped-wrapper__text"
+                              >
+                                66.4 ms
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr
+                        class="ant-table-row ant-table-row-level-0"
+                      >
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div
+                            class=""
+                            role="button"
+                            tabindex="0"
+                          >
+                            <div>
+                              <div
+                                class="line-clamped-wrapper__text"
+                              >
+                                redis
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div
+                            class=""
+                            role="button"
+                            tabindex="0"
+                          >
+                            <div>
+                              <div
+                                class="line-clamped-wrapper__text"
+                              >
+                                31.3 ms
+                              </div>
                             </div>
                           </div>
                         </td>

@@ -64,6 +64,10 @@ func (c *conditionBuilder) conditionFor(
 			return sb.ILike(tblFieldName, value), nil
 		case qbtypes.FilterOperatorNotLike:
 			return sb.NotILike(tblFieldName, value), nil
+		case qbtypes.FilterOperatorRegexp:
+			return fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, tblFieldName, sb.Var(value)), nil
+		case qbtypes.FilterOperatorNotRegexp:
+			return fmt.Sprintf(`NOT match(LOWER(%s), LOWER(%s))`, tblFieldName, sb.Var(value)), nil
 		}
 	}
 
@@ -161,6 +165,13 @@ func (c *conditionBuilder) conditionFor(
 
 		var value any
 		switch column.Type {
+		case schema.JSONColumnType{}:
+			value = "NULL"
+			if operator == qbtypes.FilterOperatorExists {
+				return sb.NE(tblFieldName, value), nil
+			} else {
+				return sb.E(tblFieldName, value), nil
+			}
 		case schema.ColumnTypeString, schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}:
 			value = ""
 			if operator == qbtypes.FilterOperatorExists {

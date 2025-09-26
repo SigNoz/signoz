@@ -36,6 +36,11 @@ func getQueryIdentifier(envelope QueryEnvelope, index int) string {
 			return fmt.Sprintf("formula '%s'", spec.Name)
 		}
 		return fmt.Sprintf("formula at position %d", index+1)
+	case QueryTypeTraceOperator:
+		if spec, ok := envelope.Spec.(QueryBuilderTraceOperator); ok && spec.Name != "" {
+			return fmt.Sprintf("trace operator '%s'", spec.Name)
+		}
+		return fmt.Sprintf("trace operator at position %d", index+1)
 	case QueryTypeJoin:
 		if spec, ok := envelope.Spec.(QueryBuilderJoin); ok && spec.Name != "" {
 			return fmt.Sprintf("join '%s'", spec.Name)
@@ -108,7 +113,7 @@ func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
 	}
 
 	// Validate aggregations only for non-raw request types
-	if requestType != RequestTypeRaw && requestType != RequestTypeTrace {
+	if requestType != RequestTypeRaw && requestType != RequestTypeRawStream && requestType != RequestTypeTrace {
 		if err := q.validateAggregations(); err != nil {
 			return err
 		}
@@ -145,6 +150,25 @@ func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
 		}
 	}
 
+	if requestType == RequestTypeRaw {
+		if err := q.validateSelectFields(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (q *QueryBuilderQuery[T]) validateSelectFields() error {
+	// isRoot and isEntryPoint are returned by the Metadata API, so if someone sends them, we have to reject the request.
+	for _, v := range q.SelectFields {
+		if v.Name == "isRoot" || v.Name == "isEntryPoint" {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"isRoot and isEntryPoint fields are not supported in selectFields",
+			)
+		}
+	}
 	return nil
 }
 
@@ -431,7 +455,7 @@ func (q *QueryBuilderQuery[T]) validateHaving() error {
 // ValidateQueryRangeRequest validates the entire query range request
 func (r *QueryRangeRequest) Validate() error {
 	// Validate time range
-	if r.Start >= r.End {
+	if r.RequestType != RequestTypeRawStream && r.Start >= r.End {
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"start time must be before end time",
@@ -440,7 +464,7 @@ func (r *QueryRangeRequest) Validate() error {
 
 	// Validate request type
 	switch r.RequestType {
-	case RequestTypeRaw, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeTrace:
+	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeTrace:
 		// Valid request types
 	default:
 		return errors.NewInvalidInputf(
@@ -455,6 +479,69 @@ func (r *QueryRangeRequest) Validate() error {
 	// Validate composite query
 	if err := r.validateCompositeQuery(); err != nil {
 		return err
+	}
+
+	// Check if all queries are disabled
+	if err := r.validateAllQueriesNotDisabled(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateAllQueriesNotDisabled validates that at least one query in the composite query is enabled
+func (r *QueryRangeRequest) validateAllQueriesNotDisabled() error {
+	allDisabled := true
+	for _, envelope := range r.CompositeQuery.Queries {
+		switch envelope.Type {
+		case QueryTypeBuilder, QueryTypeSubQuery:
+			switch spec := envelope.Spec.(type) {
+			case QueryBuilderQuery[TraceAggregation]:
+				if !spec.Disabled {
+					allDisabled = false
+				}
+			case QueryBuilderQuery[LogAggregation]:
+				if !spec.Disabled {
+					allDisabled = false
+				}
+			case QueryBuilderQuery[MetricAggregation]:
+				if !spec.Disabled {
+					allDisabled = false
+				}
+			}
+		case QueryTypeFormula:
+			if spec, ok := envelope.Spec.(QueryBuilderFormula); ok && !spec.Disabled {
+				allDisabled = false
+			}
+		case QueryTypeTraceOperator:
+			if spec, ok := envelope.Spec.(QueryBuilderTraceOperator); ok && !spec.Disabled {
+				allDisabled = false
+			}
+		case QueryTypeJoin:
+			if spec, ok := envelope.Spec.(QueryBuilderJoin); ok && !spec.Disabled {
+				allDisabled = false
+			}
+		case QueryTypePromQL:
+			if spec, ok := envelope.Spec.(PromQuery); ok && !spec.Disabled {
+				allDisabled = false
+			}
+		case QueryTypeClickHouseSQL:
+			if spec, ok := envelope.Spec.(ClickHouseQuery); ok && !spec.Disabled {
+				allDisabled = false
+			}
+		}
+
+		// Early exit if we find at least one enabled query
+		if !allDisabled {
+			break
+		}
+	}
+
+	if allDisabled {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"all queries are disabled - at least one query must be enabled",
+		)
 	}
 
 	return nil
@@ -564,6 +651,24 @@ func (r *QueryRangeRequest) validateCompositeQuery() error {
 					queryId,
 				)
 			}
+		case QueryTypeTraceOperator:
+			spec, ok := envelope.Spec.(QueryBuilderTraceOperator)
+			if !ok {
+				queryId := getQueryIdentifier(envelope, i)
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"invalid spec for %s",
+					queryId,
+				)
+			}
+			if spec.Expression == "" {
+				queryId := getQueryIdentifier(envelope, i)
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"expression is required for %s",
+					queryId,
+				)
+			}
 		case QueryTypePromQL:
 			// PromQL validation is handled separately
 			spec, ok := envelope.Spec.(PromQuery)
@@ -610,7 +715,7 @@ func (r *QueryRangeRequest) validateCompositeQuery() error {
 				envelope.Type,
 				queryId,
 			).WithAdditional(
-				"Valid query types are: builder_query, builder_formula, builder_join, promql, clickhouse_sql",
+				"Valid query types are: builder_query, builder_formula, builder_join, promql, clickhouse_sql, trace_operator",
 			)
 		}
 	}
@@ -678,6 +783,21 @@ func validateQueryEnvelope(envelope QueryEnvelope, requestType RequestType) erro
 			)
 		}
 		return nil
+	case QueryTypeTraceOperator:
+		spec, ok := envelope.Spec.(QueryBuilderTraceOperator)
+		if !ok {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"invalid trace operator spec",
+			)
+		}
+		if spec.Expression == "" {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"trace operator expression is required",
+			)
+		}
+		return nil
 	case QueryTypePromQL:
 		spec, ok := envelope.Spec.(PromQuery)
 		if !ok {
@@ -714,7 +834,7 @@ func validateQueryEnvelope(envelope QueryEnvelope, requestType RequestType) erro
 			"unknown query type: %s",
 			envelope.Type,
 		).WithAdditional(
-			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql",
+			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql, trace_operator",
 		)
 	}
 }

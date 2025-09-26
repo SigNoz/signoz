@@ -2,3 +2,4 @@ node_modules
 build
 *.typegen.ts
 i18-generate-hash.js
+src/parser/TraceOperatorParser/**

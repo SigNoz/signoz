@@ -27,6 +27,39 @@ func TestReplaceVariablesInExpression(t *testing.T) {
 			expected: "service.name = 'auth-service'",
 		},
 		{
+			name:       "simple bool check",
+			expression: "has_error = true",
+			variables: map[string]qbtypes.VariableItem{
+				"service": {
+					Type:  qbtypes.DynamicVariableType,
+					Value: "auth-service",
+				},
+			},
+			expected: "has_error = true",
+		},
+		{
+			name:       "variable inside quotes",
+			expression: "service.name ='$service'",
+			variables: map[string]qbtypes.VariableItem{
+				"service": {
+					Type:  qbtypes.DynamicVariableType,
+					Value: "auth-service",
+				},
+			},
+			expected: "service.name = 'auth-service'",
+		},
+		{
+			name:       "IN clause with variable inside quotes",
+			expression: "service.name IN '$service'",
+			variables: map[string]qbtypes.VariableItem{
+				"service": {
+					Type:  qbtypes.DynamicVariableType,
+					Value: []string{"auth-service"},
+				},
+			},
+			expected: "service.name IN ['auth-service']",
+		},
+		{
 			name:       "simple string variable replacement",
 			expression: "service.name = $service",
 			variables: map[string]qbtypes.VariableItem{
@@ -101,7 +134,7 @@ func TestReplaceVariablesInExpression(t *testing.T) {
 					Value: []any{"auth", "api", "web"},
 				},
 			},
-			expected: "service.name IN ('auth', 'api', 'web')",
+			expected: "service.name IN ['auth', 'api', 'web']",
 		},
 		{
 			name:       "array variable with mixed types",
@@ -112,7 +145,7 @@ func TestReplaceVariablesInExpression(t *testing.T) {
 					Value: []any{1, 2, "three", 4.5},
 				},
 			},
-			expected: "id IN (1, 2, 'three', 4.5)",
+			expected: "id IN [1, 2, 'three', 4.5]",
 		},
 		{
 			name:       "multiple variables in expression",
@@ -185,7 +218,7 @@ func TestReplaceVariablesInExpression(t *testing.T) {
 					Value: []any{"test", "debug"},
 				},
 			},
-			expected: "service.name NOT IN ('test', 'debug')",
+			expected: "service.name NOT IN ['test', 'debug']",
 		},
 		{
 			name:       "variable in BETWEEN clause",
@@ -233,7 +266,18 @@ func TestReplaceVariablesInExpression(t *testing.T) {
 					Value: []any{"error", "warning", "info"},
 				},
 			},
-			expected: "hasAny(tags, ('error', 'warning', 'info'))",
+			expected: "hasAny(tags, ['error', 'warning', 'info'])",
+		},
+		{
+			name:       "variable in hasToken function",
+			expression: "hasToken(tags, $tags)",
+			variables: map[string]qbtypes.VariableItem{
+				"tags": {
+					Type:  qbtypes.DynamicVariableType,
+					Value: "test",
+				},
+			},
+			expected: "hasToken(tags, 'test')",
 		},
 		{
 			name:       "empty array variable",
@@ -244,7 +288,7 @@ func TestReplaceVariablesInExpression(t *testing.T) {
 					Value: []any{},
 				},
 			},
-			expected: "service.name IN ()",
+			expected: "service.name IN []",
 		},
 		{
 			name:       "expression with OR and variables",
@@ -295,7 +339,7 @@ func TestReplaceVariablesInExpression(t *testing.T) {
 					Value: 500,
 				},
 			},
-			expected: "(service.name IN ('auth', 'api') AND env = 'prod') OR (status_code >= 500)",
+			expected: "(service.name IN ['auth', 'api'] AND env = 'prod') OR (status_code >= 500)",
 		},
 		{
 			name:       "float variable",
@@ -435,17 +479,17 @@ func TestFormatVariableValue(t *testing.T) {
 		{
 			name:     "array of strings",
 			value:    []any{"a", "b", "c"},
-			expected: "('a', 'b', 'c')",
+			expected: "['a', 'b', 'c']",
 		},
 		{
 			name:     "array of mixed types",
 			value:    []any{"string", 123, true, 45.6},
-			expected: "('string', 123, true, 45.6)",
+			expected: "['string', 123, true, 45.6]",
 		},
 		{
 			name:     "empty array",
 			value:    []any{},
-			expected: "()",
+			expected: "[]",
 		},
 		{
 			name:     "nil value",

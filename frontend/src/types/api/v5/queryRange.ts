@@ -14,6 +14,7 @@ export type RequestType =
 
 export type QueryType =
 	| 'builder_query'
+	| 'builder_trace_operator'
 	| 'builder_formula'
 	| 'builder_sub_query'
 	| 'builder_join'
@@ -67,7 +68,7 @@ export type FunctionName =
 	| 'runningDiff'
 	| 'log2'
 	| 'log10'
-	| 'cumSum'
+	| 'cumulativeSum'
 	| 'ewma3'
 	| 'ewma5'
 	| 'ewma7'
@@ -134,8 +135,6 @@ export interface TelemetryFieldKey {
 	fieldContext?: FieldContext;
 	fieldDataType?: FieldDataType;
 	materialized?: boolean;
-	isColumn?: boolean;
-	isJSON?: boolean;
 	isIndexed?: boolean;
 }
 
@@ -208,7 +207,7 @@ export interface SecondaryAggregation {
 
 export interface BaseBuilderQuery {
 	name?: string;
-	stepInterval?: Step;
+	stepInterval?: Step | null;
 	disabled?: boolean;
 	filter?: Filter;
 	groupBy?: GroupByKey[];
@@ -222,6 +221,7 @@ export interface BaseBuilderQuery {
 	secondaryAggregations?: SecondaryAggregation[];
 	functions?: QueryFunction[];
 	legend?: string;
+	expression?: string; // for trace operator
 }
 
 export interface TraceBuilderQuery extends BaseBuilderQuery {

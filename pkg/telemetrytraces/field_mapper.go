@@ -50,6 +50,7 @@ var (
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
 		}},
+		"resource": {Name: "resource", Type: schema.JSONColumnType{}},
 
 		"events": {Name: "events", Type: schema.ArrayColumnType{
 			ElementType: schema.ColumnTypeString,
@@ -157,7 +158,8 @@ var (
 	}
 )
 
-type defaultFieldMapper struct{}
+type defaultFieldMapper struct {
+}
 
 var _ qbtypes.FieldMapper = (*defaultFieldMapper)(nil)
 
@@ -171,7 +173,7 @@ func (m *defaultFieldMapper) getColumn(
 ) (*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		return indexV3Columns["resources_string"], nil
+		return indexV3Columns["resource"], nil
 	case telemetrytypes.FieldContextScope:
 		return nil, qbtypes.ErrColumnNotFound
 	case telemetrytypes.FieldContextAttribute:
@@ -235,6 +237,23 @@ func (m *defaultFieldMapper) FieldFor(
 	}
 
 	switch column.Type {
+	case schema.JSONColumnType{}:
+		// json is only supported for resource context as of now
+		if key.FieldContext != telemetrytypes.FieldContextResource {
+			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
+		}
+		oldColumn := indexV3Columns["resources_string"]
+		oldKeyName := fmt.Sprintf("%s['%s']", oldColumn.Name, key.Name)
+		// have to add ::string as clickHouse throws an error :- data types Variant/Dynamic are not allowed in GROUP BY
+		// once clickHouse dependency is updated, we need to check if we can remove it.
+		if key.Materialized {
+			oldKeyName = telemetrytypes.FieldKeyToMaterializedColumnName(key)
+			oldKeyNameExists := telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
+			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, %s==true, %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldKeyNameExists, oldKeyName), nil
+		} else {
+			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
+		}
+
 	case schema.ColumnTypeString,
 		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 		schema.ColumnTypeUInt64,
@@ -305,7 +324,7 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 				correction, found := telemetrytypes.SuggestCorrection(field.Name, maps.Keys(keys))
 				if found {
 					// we found a close match, in the error message send the suggestion
-					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "%s", correction)
+					return "", errors.Wrap(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
 				} else {
 					// not even a close match, return an error
 					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name)

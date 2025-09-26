@@ -1,4 +1,6 @@
-import { Divider, Space } from 'antd';
+import './OrganizationSettings.styles.scss';
+
+import { Space } from 'antd';
 import { useAppContext } from 'providers/App/App';
 
 import AuthDomains from './AuthDomains';
@@ -24,7 +26,6 @@ function OrganizationSettings(): JSX.Element {
 			<PendingInvitesContainer />
 
 			<Members />
-			<Divider />
 			<AuthDomains />
 		</div>
 	);

@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/user"
+	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -18,10 +19,10 @@ import (
 )
 
 type handler struct {
-	module user.Module
+	module root.Module
 }
 
-func NewHandler(module user.Module) user.Handler {
+func NewHandler(module root.Module) root.Handler {
 	return &handler{module: module}
 }
 
@@ -30,8 +31,8 @@ func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	req := new(types.PostableAcceptInvite)
-	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to decode user"))
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -79,13 +80,13 @@ func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else {
-		password, err := types.NewFactorPassword(req.Password)
+		password, err := types.NewFactorPassword(req.Password, user.ID.StringValue())
 		if err != nil {
 			render.Error(w, err)
 			return
 		}
 
-		_, err = h.module.CreateUserWithPassword(ctx, user, password)
+		err = h.module.CreateUser(ctx, user, root.WithFactorPassword(password))
 		if err != nil {
 			render.Error(w, err)
 			return
@@ -335,7 +336,7 @@ func (h *handler) LoginPrecheck(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusOK, resp)
 }
 
-func (h *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Request) {
+func (handler *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -348,13 +349,13 @@ func (h *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// check if the id lies in the same org as the claims
-	_, err = h.module.GetUserByID(ctx, claims.OrgID, id)
+	user, err := handler.module.GetUserByID(ctx, claims.OrgID, id)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	token, err := h.module.CreateResetPasswordToken(ctx, id)
+	token, err := handler.module.GetOrCreateResetPasswordToken(ctx, user.ID)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -363,7 +364,7 @@ func (h *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Request) 
 	render.Success(w, http.StatusOK, token)
 }
 
-func (h *handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+func (handler *handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -373,22 +374,16 @@ func (h *handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entry, err := h.module.GetResetPassword(ctx, req.Token)
+	err := handler.module.UpdatePasswordByResetPasswordToken(ctx, req.Token, req.Password)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	err = h.module.UpdatePasswordAndDeleteResetPasswordEntry(ctx, entry.PasswordID, req.Password)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	render.Success(w, http.StatusOK, nil)
+	render.Success(w, http.StatusNoContent, nil)
 }
 
-func (h *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
+func (handler *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -398,25 +393,13 @@ func (h *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get the current password
-	password, err := h.module.GetPasswordByUserID(ctx, req.UserId)
+	err := handler.module.UpdatePassword(ctx, req.UserID, req.OldPassword, req.NewPassword)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	if !types.ComparePassword(password.Password, req.OldPassword) {
-		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "old password is incorrect"))
-		return
-	}
-
-	err = h.module.UpdatePassword(ctx, req.UserId, req.NewPassword)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	render.Success(w, http.StatusOK, nil)
+	render.Success(w, http.StatusNoContent, nil)
 }
 
 func (h *handler) Login(w http.ResponseWriter, r *http.Request) {

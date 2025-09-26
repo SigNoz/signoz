@@ -81,8 +81,6 @@ export const getDeploymentMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_cpu_usage--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodCpuUtilizationKey,
 								type: 'Gauge',
 							},
@@ -97,8 +95,6 @@ export const getDeploymentMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_deployment_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sDeploymentNameKey,
 											type: 'tag',
 										},
@@ -124,8 +120,6 @@ export const getDeploymentMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_cpu_request--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sContainerCpuRequestKey,
 								type: 'Gauge',
 							},
@@ -140,8 +134,6 @@ export const getDeploymentMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -167,8 +159,6 @@ export const getDeploymentMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_cpu_limit--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sContainerCpuLimitKey,
 								type: 'Gauge',
 							},
@@ -183,8 +173,6 @@ export const getDeploymentMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -208,6 +196,7 @@ export const getDeploymentMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -243,8 +232,6 @@ export const getDeploymentMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_usage--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemoryUsageKey,
 								type: 'Gauge',
 							},
@@ -259,8 +246,6 @@ export const getDeploymentMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_deployment_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sDeploymentNameKey,
 											type: 'tag',
 										},
@@ -286,8 +271,6 @@ export const getDeploymentMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_memory_request--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sContainerMemoryRequestKey,
 								type: 'Gauge',
 							},
@@ -302,8 +285,6 @@ export const getDeploymentMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -329,8 +310,6 @@ export const getDeploymentMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_memory_limit--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sContainerMemoryLimitKey,
 								type: 'Gauge',
 							},
@@ -345,8 +324,6 @@ export const getDeploymentMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -370,6 +347,7 @@ export const getDeploymentMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -405,8 +383,6 @@ export const getDeploymentMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_network_io--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodNetworkIoKey,
 								type: 'Sum',
 							},
@@ -421,8 +397,6 @@ export const getDeploymentMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_deployment_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sDeploymentNameKey,
 											type: 'tag',
 										},
@@ -437,16 +411,12 @@ export const getDeploymentMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'direction--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'direction',
 									type: 'tag',
 								},
 								{
 									dataType: DataTypes.String,
 									id: 'interface--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'interface',
 									type: 'tag',
 								},
@@ -463,6 +433,7 @@ export const getDeploymentMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -498,8 +469,6 @@ export const getDeploymentMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_network_errors--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodNetworkErrorsKey,
 								type: 'Sum',
 							},
@@ -514,8 +483,6 @@ export const getDeploymentMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_deployment_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sDeploymentNameKey,
 											type: 'tag',
 										},
@@ -530,16 +497,12 @@ export const getDeploymentMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'direction--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'direction',
 									type: 'tag',
 								},
 								{
 									dataType: DataTypes.String,
 									id: 'interface--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'interface',
 									type: 'tag',
 								},
@@ -556,6 +519,7 @@ export const getDeploymentMetricsQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{

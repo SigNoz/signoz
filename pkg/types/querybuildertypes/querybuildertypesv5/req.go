@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/govaluate"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -88,8 +89,8 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 
 	case QueryTypeTraceOperator:
 		var spec QueryBuilderTraceOperator
-		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
-			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid trace operator spec")
+		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "trace operator spec"); err != nil {
+			return wrapUnmarshalError(err, "invalid trace operator spec: %v", err)
 		}
 		q.Spec = spec
 
@@ -113,7 +114,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 			"unknown query type %q",
 			shadow.Type,
 		).WithAdditional(
-			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql",
+			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, builder_trace_operator, promql, clickhouse_sql",
 		)
 	}
 
@@ -319,6 +320,23 @@ func (r *QueryRangeRequest) IsAnomalyRequest() (*QueryBuilderQuery[MetricAggrega
 	return &q, hasAnomaly
 }
 
+// We do not support fill gaps for these queries. Maybe support in future?
+func (r *QueryRangeRequest) SkipFillGaps(name string) bool {
+	for _, query := range r.CompositeQuery.Queries {
+		switch spec := query.Spec.(type) {
+		case PromQuery:
+			if spec.Name == name {
+				return true
+			}
+		case ClickHouseQuery:
+			if spec.Name == name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
 func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 	// Define a type alias to avoid infinite recursion
@@ -385,4 +403,50 @@ func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 type FormatOptions struct {
 	FillGaps               bool `json:"fillGaps,omitempty"`
 	FormatTableResultForUI bool `json:"formatTableResultForUI,omitempty"`
+}
+
+func (r *QueryRangeRequest) GetQueriesSupportingZeroDefault() map[string]bool {
+	canDefaultZeroAgg := func(expr string) bool {
+		expr = strings.ToLower(expr)
+		// only pure additive/counting operations should default to zero,
+		// while statistical/analytical operations should show gaps when there's no data to analyze.
+		// TODO: use newExprVisitor for getting the function used in the expression
+		if strings.HasPrefix(expr, "count(") ||
+			strings.HasPrefix(expr, "count_distinct(") ||
+			strings.HasPrefix(expr, "sum(") ||
+			strings.HasPrefix(expr, "rate(") {
+			return true
+		}
+		return false
+
+	}
+
+	canDefaultZero := make(map[string]bool)
+	for _, q := range r.CompositeQuery.Queries {
+		if q.Type == QueryTypeBuilder {
+			switch spec := q.Spec.(type) {
+			case QueryBuilderQuery[TraceAggregation]:
+				if len(spec.Aggregations) == 1 && canDefaultZeroAgg(spec.Aggregations[0].Expression) {
+					canDefaultZero[spec.Name] = true
+				}
+			case QueryBuilderQuery[LogAggregation]:
+				if len(spec.Aggregations) == 1 && canDefaultZeroAgg(spec.Aggregations[0].Expression) {
+					canDefaultZero[spec.Name] = true
+				}
+			case QueryBuilderQuery[MetricAggregation]:
+				if len(spec.Aggregations) == 1 {
+					timeAgg := spec.Aggregations[0].TimeAggregation
+
+					if timeAgg == metrictypes.TimeAggregationCount ||
+						timeAgg == metrictypes.TimeAggregationCountDistinct ||
+						timeAgg == metrictypes.TimeAggregationRate ||
+						timeAgg == metrictypes.TimeAggregationIncrease {
+						canDefaultZero[spec.Name] = true
+					}
+				}
+			}
+		}
+	}
+
+	return canDefaultZero
 }

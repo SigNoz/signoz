@@ -74,6 +74,7 @@ export function isFunctionToken(tokenType: number): boolean {
 		FilterQueryLexer.HAS,
 		FilterQueryLexer.HASANY,
 		FilterQueryLexer.HASALL,
+		FilterQueryLexer.HASTOKEN,
 	].includes(tokenType);
 }
 
@@ -100,16 +101,36 @@ export function isFunctionOperator(operator: string): boolean {
 	const functionOperators = Object.values(QUERY_BUILDER_FUNCTIONS);
 
 	const sanitizedOperator = operator.trim();
-	// Check if it's a direct function operator
-	if (functionOperators.includes(sanitizedOperator)) {
+	// Check if it's a direct function operator (case-insensitive)
+	if (
+		functionOperators.some(
+			(func) => func.toLowerCase() === sanitizedOperator.toLowerCase(),
+		)
+	) {
 		return true;
 	}
 
 	// Check if it's a NOT function operator (e.g., "NOT has")
 	if (sanitizedOperator.toUpperCase().startsWith(OPERATORS.NOT)) {
 		const operatorWithoutNot = sanitizedOperator.substring(4).toLowerCase();
-		return functionOperators.includes(operatorWithoutNot);
+		return functionOperators.some(
+			(func) => func.toLowerCase() === operatorWithoutNot,
+		);
 	}
 
+	return false;
+}
+
+export function isNonValueOperator(operator: string): boolean {
+	const upperOperator = operator.toUpperCase();
+	// Check if it's a direct non-value operator
+	if (NON_VALUE_OPERATORS.includes(upperOperator)) {
+		return true;
+	}
+	// Check if it's a NOT non-value operator (e.g., "NOT EXISTS")
+	if (upperOperator.startsWith(OPERATORS.NOT)) {
+		const operatorWithoutNot = upperOperator.substring(4).trim(); // Remove "NOT " prefix
+		return NON_VALUE_OPERATORS.includes(operatorWithoutNot);
+	}
 	return false;
 }

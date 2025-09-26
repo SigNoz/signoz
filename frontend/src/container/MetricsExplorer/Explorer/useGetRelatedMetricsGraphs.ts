@@ -71,6 +71,7 @@ export const useGetRelatedMetricsGraphs = ({
 									builder: {
 										queryData: [metric.query],
 										queryFormulas: [],
+										queryTraceOperator: [],
 									},
 									clickhouse_sql: [],
 									id: uuidv4(),

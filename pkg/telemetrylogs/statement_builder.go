@@ -79,7 +79,7 @@ func (b *logQueryStatementBuilder) Build(
 	q := sqlbuilder.NewSelectBuilder()
 
 	switch requestType {
-	case qbtypes.RequestTypeRaw:
+	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeRawStream:
 		return b.buildListQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeTimeSeries:
 		return b.buildTimeSeriesQuery(ctx, q, query, start, end, keys, variables)
@@ -220,10 +220,39 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	// Select default columns
-	sb.Select(
-		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string",
-	)
+	// Select timestamp and id by default
+	sb.Select(LogsV2TimestampColumn)
+	sb.SelectMore(LogsV2IDColumn)
+	if len(query.SelectFields) == 0 {
+		// Select all default columns
+		sb.SelectMore(LogsV2TraceIDColumn)
+		sb.SelectMore(LogsV2SpanIDColumn)
+		sb.SelectMore(LogsV2TraceFlagsColumn)
+		sb.SelectMore(LogsV2SeverityTextColumn)
+		sb.SelectMore(LogsV2SeverityNumberColumn)
+		sb.SelectMore(LogsV2ScopeNameColumn)
+		sb.SelectMore(LogsV2ScopeVersionColumn)
+		sb.SelectMore(LogsV2BodyColumn)
+		sb.SelectMore(LogsV2AttributesStringColumn)
+		sb.SelectMore(LogsV2AttributesNumberColumn)
+		sb.SelectMore(LogsV2AttributesBoolColumn)
+		sb.SelectMore(LogsV2ResourcesStringColumn)
+		sb.SelectMore(LogsV2ScopeStringColumn)
+
+	} else {
+		// Select specified columns
+		for index := range query.SelectFields {
+			if query.SelectFields[index].Name == LogsV2TimestampColumn || query.SelectFields[index].Name == LogsV2IDColumn {
+				continue
+			}
+			// get column expression for the field - use array index directly to avoid pointer to loop variable
+			colExpr, err := b.fm.ColumnExpressionFor(ctx, &query.SelectFields[index], keys)
+			if err != nil {
+				return nil, err
+			}
+			sb.SelectMore(colExpr)
+		}
+	}
 
 	// From table
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
@@ -303,7 +332,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonBodyPrefix, b.jsonKeyToKey)
 		if err != nil {
 			return nil, err
 		}
@@ -449,7 +478,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	var allGroupByArgs []any
 
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonBodyPrefix, b.jsonKeyToKey)
 		if err != nil {
 			return nil, err
 		}
@@ -575,9 +604,17 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 
 	// add time filter
 	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
-	endBucket := end / querybuilder.NsToSeconds
+	var endBucket uint64
+	if end != 0 {
+		endBucket = end / querybuilder.NsToSeconds
+	}
 
-	sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.L("timestamp", fmt.Sprintf("%d", end)), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
+	if start != 0 {
+		sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.GE("ts_bucket_start", startBucket))
+	}
+	if end != 0 {
+		sb.Where(sb.L("timestamp", fmt.Sprintf("%d", end)), sb.LE("ts_bucket_start", endBucket))
+	}
 
 	return preparedWhereClause, nil
 }

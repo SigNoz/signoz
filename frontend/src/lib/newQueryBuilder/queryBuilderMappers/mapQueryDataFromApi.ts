@@ -1,8 +1,10 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { initialQueryState } from 'constants/queryBuilder';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
+	IBuilderTraceOperator,
 	IClickHouseQuery,
 	IPromQLQuery,
 	Query,
@@ -21,11 +23,15 @@ import { v4 as uuid } from 'uuid';
 
 import { transformQueryBuilderDataModel } from '../transformQueryBuilderDataModel';
 
-const mapQueryFromV5 = (
-	compositeQuery: ICompositeMetricQuery,
-	query?: Query,
-): Query => {
-	const builderQueries: Record<string, IBuilderQuery | IBuilderFormula> = {};
+const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
+	const builderQueries: Record<
+		string,
+		IBuilderQuery | IBuilderFormula | IBuilderTraceOperator
+	> = {};
+	const builderQueryTypes: Record<
+		string,
+		'builder_query' | 'builder_formula' | 'builder_trace_operator'
+	> = {};
 	const promQueries: IPromQLQuery[] = [];
 	const clickhouseQueries: IClickHouseQuery[] = [];
 
@@ -36,12 +42,19 @@ const mapQueryFromV5 = (
 				builderQueries[spec.name] = convertBuilderQueryToIBuilderQuery(
 					spec as BuilderQuery,
 				);
+				builderQueryTypes[spec.name] = 'builder_query';
 			}
 		} else if (q.type === 'builder_formula') {
 			if (spec.name) {
 				builderQueries[spec.name] = convertQueryBuilderFormulaToIBuilderFormula(
 					(spec as unknown) as QueryBuilderFormula,
 				);
+				builderQueryTypes[spec.name] = 'builder_formula';
+			}
+		} else if (q.type === 'builder_trace_operator') {
+			if (spec.name) {
+				builderQueries[spec.name] = (spec as unknown) as IBuilderTraceOperator;
+				builderQueryTypes[spec.name] = 'builder_trace_operator';
 			}
 		} else if (q.type === 'promql') {
 			const promSpec = spec as PromQuery;
@@ -62,7 +75,7 @@ const mapQueryFromV5 = (
 		}
 	});
 	return {
-		builder: transformQueryBuilderDataModel(builderQueries, query?.builder),
+		builder: transformQueryBuilderDataModel(builderQueries, builderQueryTypes),
 		promql: promQueries,
 		clickhouse_sql: clickhouseQueries,
 		queryType: compositeQuery.queryType,
@@ -71,15 +84,9 @@ const mapQueryFromV5 = (
 	};
 };
 
-const mapQueryFromV3 = (
-	compositeQuery: ICompositeMetricQuery,
-	query?: Query,
-): Query => {
+const mapQueryFromV3 = (compositeQuery: ICompositeMetricQuery): Query => {
 	const builder = compositeQuery.builderQueries
-		? transformQueryBuilderDataModel(
-				compositeQuery.builderQueries,
-				query?.builder,
-		  )
+		? transformQueryBuilderDataModel(compositeQuery.builderQueries)
 		: initialQueryState.builder;
 
 	const promql = compositeQuery.promQueries
@@ -109,10 +116,9 @@ const mapQueryFromV3 = (
 
 export const mapQueryDataFromApi = (
 	compositeQuery: ICompositeMetricQuery,
-	query?: Query,
 ): Query => {
 	if (compositeQuery.queries && compositeQuery.queries.length > 0) {
-		return mapQueryFromV5(compositeQuery, query);
+		return mapQueryFromV5(compositeQuery);
 	}
-	return mapQueryFromV3(compositeQuery, query);
+	return mapQueryFromV3(compositeQuery);
 };

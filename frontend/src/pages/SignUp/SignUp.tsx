@@ -10,20 +10,19 @@ import afterLogin from 'AppRoutes/utils';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { ArrowRight } from 'lucide-react';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { InviteDetails } from 'types/api/user/getInviteDetails';
-import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
+import { Signup as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
 
 import { FormContainer, Label } from './styles';
 import { isPasswordNotValidMessage, isPasswordValid } from './utils';
 
 type FormValues = {
-	firstName: string;
 	email: string;
 	organizationName: string;
 	password: string;
@@ -111,42 +110,36 @@ function SignUp(): JSX.Element {
 	]);
 
 	const isSignUp = token === null;
+	const { showErrorModal } = useErrorModal();
 
 	const signUp = async (values: FormValues): Promise<void> => {
 		try {
-			const { organizationName, password, firstName, email } = values;
-			const response = await signUpApi({
+			const { organizationName, password, email } = values;
+			await signUpApi({
 				email,
-				name: firstName,
 				orgDisplayName: organizationName,
 				password,
 				token: params.get('token') || undefined,
 			});
 
-			if (response.statusCode === 200) {
-				const loginResponse = await loginApi({
-					email,
-					password,
-				});
-
-				const { data } = loginResponse;
-				await afterLogin(data.userId, data.accessJwt, data.refreshJwt);
-			}
-		} catch (error) {
-			notifications.error({
-				message: (error as APIError).getErrorCode(),
-				description: (error as APIError).getErrorMessage(),
+			const loginResponse = await loginApi({
+				email,
+				password,
 			});
+
+			const { data } = loginResponse;
+			await afterLogin(data.userId, data.accessJwt, data.refreshJwt);
+		} catch (error) {
+			showErrorModal(error as APIError);
 		}
 	};
 
 	const acceptInvite = async (values: FormValues): Promise<void> => {
 		try {
-			const { password, email, firstName } = values;
+			const { password, email } = values;
 			await accept({
 				password,
 				token: params.get('token') || '',
-				displayName: firstName,
 			});
 			const loginResponse = await loginApi({
 				email,
@@ -208,7 +201,6 @@ function SignUp(): JSX.Element {
 				if (!isPasswordValid(values.password)) {
 					logEvent('Account Creation Page - Invalid Password', {
 						email: values.email,
-						name: values.firstName,
 					});
 					setIsPasswordPolicyError(true);
 					setLoading(false);
@@ -219,7 +211,6 @@ function SignUp(): JSX.Element {
 					await signUp(values);
 					logEvent('Account Created Successfully', {
 						email: values.email,
-						name: values.firstName,
 					});
 				} else {
 					await acceptInvite(values);
@@ -234,11 +225,6 @@ function SignUp(): JSX.Element {
 			}
 		})();
 	};
-
-	const getIsNameVisible = (): boolean =>
-		!(form.getFieldValue('firstName') === 0 && !isSignUp);
-
-	const isNameVisible = getIsNameVisible();
 
 	const handleValuesChange: (changedValues: Partial<FormValues>) => void = (
 		changedValues,
@@ -260,7 +246,6 @@ function SignUp(): JSX.Element {
 			loading ||
 			!values.email ||
 			(!precheck.sso && (!values.password || !values.confirmPassword)) ||
-			(!isDetailsDisable && !values.firstName) ||
 			confirmPasswordError ||
 			isPasswordPolicyError
 		);
@@ -288,8 +273,8 @@ function SignUp(): JSX.Element {
 				>
 					<div className="signup-form-header">
 						<Typography.Paragraph className="signup-form-header-text">
-							Create your account to monitor, trace, and troubleshoot your applications
-							effortlessly.
+							You&apos;re almost in. Create a password to start monitoring your
+							applications with SigNoz.
 						</Typography.Paragraph>
 					</div>
 
@@ -307,47 +292,22 @@ function SignUp(): JSX.Element {
 						</FormContainer.Item>
 					</div>
 
-					{isNameVisible && (
-						<div className="first-name-container">
-							<Label htmlFor="signupFirstName">Name</Label>{' '}
-							<FormContainer.Item noStyle name="firstName">
-								<Input
-									placeholder="Your Name"
-									required
-									id="signupFirstName"
-									disabled={isDetailsDisable && form.getFieldValue('firstName')}
-								/>
-							</FormContainer.Item>
-						</div>
-					)}
-
-					<div className="org-name-container">
-						<Label htmlFor="organizationName">Organization Name</Label>{' '}
-						<FormContainer.Item noStyle name="organizationName">
-							<Input
-								placeholder="Your Company"
-								id="organizationName"
-								disabled={isDetailsDisable}
-							/>
-						</FormContainer.Item>
-					</div>
-
 					{!precheck.sso && (
-						<div className="password-section">
+						<>
 							<div className="password-container">
-								<label htmlFor="Password">Password</label>{' '}
+								<Label htmlFor="currentPassword">Password</Label>
 								<FormContainer.Item noStyle name="password">
 									<Input.Password required id="currentPassword" />
 								</FormContainer.Item>
 							</div>
 
 							<div className="password-container">
-								<label htmlFor="ConfirmPassword">Confirm Password</label>{' '}
+								<Label htmlFor="confirmPassword">Confirm Password</Label>
 								<FormContainer.Item noStyle name="confirmPassword">
 									<Input.Password required id="confirmPassword" />
 								</FormContainer.Item>
 							</div>
-						</div>
+						</>
 					)}
 
 					<div className="password-error-container">
@@ -382,9 +342,9 @@ function SignUp(): JSX.Element {
 							loading={loading}
 							disabled={isValidForm()}
 							className="periscope-btn primary next-btn"
-							icon={<ArrowRight size={12} />}
+							block
 						>
-							Sign Up
+							Access My Workspace
 						</Button>
 					</div>
 				</FormContainer>

@@ -33,20 +33,6 @@ const lodsQueryServerRequest = (): void =>
 		),
 	);
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 // mocking the graph components in this test as this should be handled separately
 jest.mock(
 	'container/TimeSeriesView/TimeSeriesView',
@@ -151,7 +137,7 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 
 jest.mock('hooks/logs/useCopyLogLink', () => ({
 	useCopyLogLink: jest.fn().mockReturnValue({
-		activeLogId: ACTIVE_LOG_ID,
+		activeLogId: undefined,
 	}),
 }));
 
@@ -174,6 +160,7 @@ const renderer = (): RenderResult =>
 					listQueryKeyRef={{ current: {} }}
 					chartQueryKeyRef={{ current: {} }}
 					setWarning={(): void => {}}
+					showLiveLogs={false}
 				/>
 			</PreferenceContextProvider>
 		</VirtuosoMockContext.Provider>,
@@ -184,13 +171,16 @@ describe('LogsExplorerViews -', () => {
 		lodsQueryServerRequest();
 		const { queryByTestId } = renderer();
 
-		const periscopeButtonTestId = 'periscope-btn';
+		const periscopeDownloadButtonTestId = 'periscope-btn-download-options';
+		const periscopeFormatButtonTestId = 'periscope-btn-format-options';
 
 		// Test that the periscope button is present
-		expect(queryByTestId(periscopeButtonTestId)).toBeInTheDocument();
+		expect(queryByTestId(periscopeDownloadButtonTestId)).toBeInTheDocument();
+		expect(queryByTestId(periscopeFormatButtonTestId)).toBeInTheDocument();
 
 		// Test that the menu opens when clicked
-		fireEvent.click(queryByTestId(periscopeButtonTestId) as HTMLElement);
+		fireEvent.click(queryByTestId(periscopeDownloadButtonTestId) as HTMLElement);
+		fireEvent.click(queryByTestId(periscopeFormatButtonTestId) as HTMLElement);
 		expect(document.querySelector('.menu-container')).toBeInTheDocument();
 
 		// Test that the menu items are present
@@ -199,7 +189,8 @@ describe('LogsExplorerViews -', () => {
 		expect(menuItems.length).toBe(expectedMenuItemsCount);
 
 		// Test that the component renders without crashing
-		expect(queryByTestId(periscopeButtonTestId)).toBeInTheDocument();
+		expect(queryByTestId(periscopeDownloadButtonTestId)).toBeInTheDocument();
+		expect(queryByTestId(periscopeFormatButtonTestId)).toBeInTheDocument();
 	});
 
 	it('check isLoading state', async () => {
@@ -235,6 +226,7 @@ describe('LogsExplorerViews -', () => {
 						listQueryKeyRef={{ current: {} }}
 						chartQueryKeyRef={{ current: {} }}
 						setWarning={(): void => {}}
+						showLiveLogs={false}
 					/>
 				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,

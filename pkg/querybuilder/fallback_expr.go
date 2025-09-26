@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -23,6 +24,8 @@ func CollisionHandledFinalExpr(
 	cb qbtypes.ConditionBuilder,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	requiredDataType telemetrytypes.FieldDataType,
+	jsonBodyPrefix string,
+	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) (string, []any, error) {
 
 	if requiredDataType != telemetrytypes.FieldDataTypeString &&
@@ -79,7 +82,7 @@ func CollisionHandledFinalExpr(
 			correction, found := telemetrytypes.SuggestCorrection(field.Name, maps.Keys(keys))
 			if found {
 				// we found a close match, in the error message send the suggestion
-				return "", nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
+				return "", nil, errors.Wrap(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
 			} else {
 				// not even a close match, return an error
 				return "", nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name)
@@ -100,7 +103,15 @@ func CollisionHandledFinalExpr(
 		if err != nil {
 			return "", nil, err
 		}
-		colName, _ = telemetrytypes.DataTypeCollisionHandledFieldName(field, dummyValue, colName)
+
+		if strings.HasPrefix(field.Name, jsonBodyPrefix) && jsonBodyPrefix != "" && jsonKeyToKey != nil {
+			// TODO(nitya): enable group by on body column?
+			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the body column")
+			// colName, _ = jsonKeyToKey(context.Background(), field, qbtypes.FilterOperatorUnknown, dummyValue)
+		} else {
+			colName, _ = telemetrytypes.DataTypeCollisionHandledFieldName(field, dummyValue, colName)
+		}
+
 		stmts = append(stmts, colName)
 	}
 
@@ -174,4 +185,12 @@ func FormatValueForContains(value any) string {
 			return fmt.Sprintf("%v", value)
 		}
 	}
+}
+
+func FormatFullTextSearch(input string) string {
+	if _, err := regexp.Compile(input); err != nil {
+		// Not a valid regex -> treat as literal substring
+		return regexp.QuoteMeta(input)
+	}
+	return input
 }

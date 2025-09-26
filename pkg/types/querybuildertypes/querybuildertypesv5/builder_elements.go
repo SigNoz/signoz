@@ -117,6 +117,26 @@ func (f FilterOperator) AddDefaultExistsFilter() bool {
 	return false
 }
 
+func (f FilterOperator) IsNegativeOperator() bool {
+	switch f {
+	case
+		FilterOperatorEqual,
+		FilterOperatorGreaterThan,
+		FilterOperatorGreaterThanOrEq,
+		FilterOperatorLessThan,
+		FilterOperatorLessThanOrEq,
+		FilterOperatorLike,
+		FilterOperatorILike,
+		FilterOperatorBetween,
+		FilterOperatorIn,
+		FilterOperatorExists,
+		FilterOperatorRegexp,
+		FilterOperatorContains:
+		return false
+	}
+	return true
+}
+
 type OrderDirection struct {
 	valuer.String
 }
@@ -124,6 +144,13 @@ type OrderDirection struct {
 var (
 	OrderDirectionAsc  = OrderDirection{valuer.NewString("asc")}
 	OrderDirectionDesc = OrderDirection{valuer.NewString("desc")}
+)
+
+var (
+	OrderDirectionMap = map[string]OrderDirection{
+		"asc":  OrderDirectionAsc,
+		"desc": OrderDirectionDesc,
+	}
 )
 
 type ReduceTo struct {

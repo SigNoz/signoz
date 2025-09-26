@@ -102,10 +102,10 @@ func (b Build) PrettyPrint(cfg Config) {
 		"                       :**********=                        ",
 	}
 
-	fmt.Println()
+	fmt.Println() //nolint:forbidigo
 	for _, line := range ascii {
-		fmt.Print(line)
-		fmt.Println()
+		fmt.Print(line) //nolint:forbidigo
+		fmt.Println()   //nolint:forbidigo
 	}
-	fmt.Println()
+	fmt.Println() //nolint:forbidigo
 }

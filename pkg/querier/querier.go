@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
@@ -23,16 +24,22 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+var (
+	intervalWarn = "Query %s is requesting aggregation interval %v seconds, which is smaller than the minimum allowed interval of %v seconds for selected time range. Using the minimum instead"
+)
+
 type querier struct {
-	logger            *slog.Logger
-	telemetryStore    telemetrystore.TelemetryStore
-	metadataStore     telemetrytypes.MetadataStore
-	promEngine        prometheus.Prometheus
-	traceStmtBuilder  qbtypes.StatementBuilder[qbtypes.TraceAggregation]
-	logStmtBuilder    qbtypes.StatementBuilder[qbtypes.LogAggregation]
-	metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation]
-	meterStmtBuilder  qbtypes.StatementBuilder[qbtypes.MetricAggregation]
-	bucketCache       BucketCache
+	logger                   *slog.Logger
+	telemetryStore           telemetrystore.TelemetryStore
+	metadataStore            telemetrytypes.MetadataStore
+	promEngine               prometheus.Prometheus
+	traceStmtBuilder         qbtypes.StatementBuilder[qbtypes.TraceAggregation]
+	logStmtBuilder           qbtypes.StatementBuilder[qbtypes.LogAggregation]
+	metricStmtBuilder        qbtypes.StatementBuilder[qbtypes.MetricAggregation]
+	meterStmtBuilder         qbtypes.StatementBuilder[qbtypes.MetricAggregation]
+	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder
+	bucketCache              BucketCache
+	liveDataRefreshSeconds   time.Duration
 }
 
 var _ Querier = (*querier)(nil)
@@ -46,19 +53,22 @@ func New(
 	logStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
 	meterStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
+	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder,
 	bucketCache BucketCache,
 ) *querier {
 	querierSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier")
 	return &querier{
-		logger:            querierSettings.Logger(),
-		telemetryStore:    telemetryStore,
-		metadataStore:     metadataStore,
-		promEngine:        promEngine,
-		traceStmtBuilder:  traceStmtBuilder,
-		logStmtBuilder:    logStmtBuilder,
-		metricStmtBuilder: metricStmtBuilder,
-		meterStmtBuilder:  meterStmtBuilder,
-		bucketCache:       bucketCache,
+		logger:                   querierSettings.Logger(),
+		telemetryStore:           telemetryStore,
+		metadataStore:            metadataStore,
+		promEngine:               promEngine,
+		traceStmtBuilder:         traceStmtBuilder,
+		logStmtBuilder:           logStmtBuilder,
+		metricStmtBuilder:        metricStmtBuilder,
+		meterStmtBuilder:         meterStmtBuilder,
+		traceOperatorStmtBuilder: traceOperatorStmtBuilder,
+		bucketCache:              bucketCache,
+		liveDataRefreshSeconds:   5,
 	}
 }
 
@@ -120,6 +130,27 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		NumberOfQueries: len(req.CompositeQuery.Queries),
 		PanelType:       req.RequestType.StringValue(),
 	}
+	intervalWarnings := []string{}
+
+	dependencyQueries := make(map[string]bool)
+	traceOperatorQueries := make(map[string]qbtypes.QueryBuilderTraceOperator)
+
+	for _, query := range req.CompositeQuery.Queries {
+		if query.Type == qbtypes.QueryTypeTraceOperator {
+			if spec, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator); ok {
+				// Parse expression to find dependencies
+				if err := spec.ParseExpression(); err != nil {
+					return nil, fmt.Errorf("failed to parse trace operator expression: %w", err)
+				}
+
+				deps := spec.CollectReferencedQueries(spec.ParsedExpression)
+				for _, dep := range deps {
+					dependencyQueries[dep] = true
+				}
+				traceOperatorQueries[spec.Name] = spec
+			}
+		}
+	}
 
 	// First pass: collect all metric names that need temporality
 	metricNames := make([]string, 0)
@@ -147,9 +178,11 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					}
 				}
 				if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepInterval(req.Start, req.End)) {
-					spec.StepInterval = qbtypes.Step{
+					newStep := qbtypes.Step{
 						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepInterval(req.Start, req.End)),
 					}
+					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
+					spec.StepInterval = newStep
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
 			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
@@ -162,9 +195,11 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					}
 				}
 				if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepInterval(req.Start, req.End)) {
-					spec.StepInterval = qbtypes.Step{
+					newStep := qbtypes.Step{
 						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepInterval(req.Start, req.End)),
 					}
+					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
+					spec.StepInterval = newStep
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
 			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
@@ -181,9 +216,11 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 						}
 					}
 					if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)) {
-						spec.StepInterval = qbtypes.Step{
+						newStep := qbtypes.Step{
 							Duration: time.Second * time.Duration(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)),
 						}
+						intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
+						spec.StepInterval = newStep
 					}
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
@@ -208,6 +245,23 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					event.TracesUsed = strings.Contains(spec.Query, "signoz_traces")
 				}
 			}
+		} else if query.Type == qbtypes.QueryTypeTraceOperator {
+			if spec, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator); ok {
+				if spec.StepInterval.Seconds() == 0 {
+					spec.StepInterval = qbtypes.Step{
+						Duration: time.Second * time.Duration(querybuilder.RecommendedStepInterval(req.Start, req.End)),
+					}
+				}
+
+				if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepInterval(req.Start, req.End)) {
+					newStep := qbtypes.Step{
+						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepInterval(req.Start, req.End)),
+					}
+					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
+					spec.StepInterval = newStep
+				}
+				req.CompositeQuery.Queries[idx].Spec = spec
+			}
 		}
 	}
 
@@ -228,6 +282,38 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	steps := make(map[string]qbtypes.Step)
 
 	for _, query := range req.CompositeQuery.Queries {
+		var queryName string
+		var isTraceOperator bool
+
+		switch query.Type {
+		case qbtypes.QueryTypeTraceOperator:
+			if spec, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator); ok {
+				queryName = spec.Name
+				isTraceOperator = true
+			}
+		case qbtypes.QueryTypePromQL:
+			if spec, ok := query.Spec.(qbtypes.PromQuery); ok {
+				queryName = spec.Name
+			}
+		case qbtypes.QueryTypeClickHouseSQL:
+			if spec, ok := query.Spec.(qbtypes.ClickHouseQuery); ok {
+				queryName = spec.Name
+			}
+		case qbtypes.QueryTypeBuilder:
+			switch spec := query.Spec.(type) {
+			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+				queryName = spec.Name
+			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+				queryName = spec.Name
+			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+				queryName = spec.Name
+			}
+		}
+
+		if !isTraceOperator && dependencyQueries[queryName] {
+			continue
+		}
+
 		switch query.Type {
 		case qbtypes.QueryTypePromQL:
 			promQuery, ok := query.Spec.(qbtypes.PromQuery)
@@ -244,6 +330,22 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 			}
 			chSQLQuery := newchSQLQuery(q.logger, q.telemetryStore, chQuery, nil, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType, tmplVars)
 			queries[chQuery.Name] = chSQLQuery
+		case qbtypes.QueryTypeTraceOperator:
+			traceOpQuery, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator)
+			if !ok {
+				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid trace operator query spec %T", query.Spec)
+			}
+			toq := &traceOperatorQuery{
+				telemetryStore: q.telemetryStore,
+				stmtBuilder:    q.traceOperatorStmtBuilder,
+				spec:           traceOpQuery,
+				compositeQuery: &req.CompositeQuery,
+				fromMS:         uint64(req.Start),
+				toMS:           uint64(req.End),
+				kind:           req.RequestType,
+			}
+			queries[traceOpQuery.Name] = toq
+			steps[traceOpQuery.Name] = traceOpQuery.StepInterval
 		case qbtypes.QueryTypeBuilder:
 			switch spec := query.Spec.(type) {
 			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
@@ -275,6 +377,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				var bq *builderQuery[qbtypes.MetricAggregation]
 
 				if spec.Source == telemetrytypes.SourceMeter {
+					event.Source = telemetrytypes.SourceMeter.StringValue()
 					bq = newBuilderQuery(q.telemetryStore, q.meterStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
 				} else {
 					bq = newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
@@ -290,8 +393,112 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event)
 	if qbResp != nil {
 		qbResp.QBEvent = event
+		if len(intervalWarnings) != 0 && req.RequestType == qbtypes.RequestTypeTimeSeries {
+			if qbResp.Warning == nil {
+				qbResp.Warning = &qbtypes.QueryWarnData{
+					Warnings: make([]qbtypes.QueryWarnDataAdditional, len(intervalWarnings)),
+				}
+				for idx := range intervalWarnings {
+					qbResp.Warning.Warnings[idx] = qbtypes.QueryWarnDataAdditional{Message: intervalWarnings[idx]}
+				}
+			}
+		}
 	}
 	return qbResp, qbErr
+}
+
+func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, client *qbtypes.RawStream) {
+
+	event := &qbtypes.QBEvent{
+		Version:         "v5",
+		NumberOfQueries: len(req.CompositeQuery.Queries),
+		PanelType:       req.RequestType.StringValue(),
+	}
+
+	for _, query := range req.CompositeQuery.Queries {
+		event.QueryType = query.Type.StringValue()
+		if query.Type == qbtypes.QueryTypeBuilder {
+			switch spec := query.Spec.(type) {
+			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+				event.FilterApplied = spec.Filter != nil && spec.Filter.Expression != ""
+			default:
+				// return if it's not log aggregation
+				client.Error <- errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported builder spec type %T", query.Spec)
+				return
+			}
+		} else {
+			// return if it's not of type query builder
+			client.Error <- errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported query type %s", query.Type)
+			return
+		}
+	}
+
+	queries := make(map[string]qbtypes.Query)
+	query := req.CompositeQuery.Queries[0]
+	spec := query.Spec.(qbtypes.QueryBuilderQuery[qbtypes.LogAggregation])
+	// add the new id to the id filter
+	if spec.Filter == nil || spec.Filter.Expression == "" {
+		spec.Filter = &qbtypes.Filter{Expression: "id > $id"}
+	} else {
+		spec.Filter.Expression = fmt.Sprintf("%s and id > $id", spec.Filter.Expression)
+	}
+
+	tsStart := req.Start
+	if tsStart == 0 {
+		tsStart = uint64(time.Now().UnixNano())
+	} else {
+		tsStart = uint64(utils.GetEpochNanoSecs(int64(tsStart)))
+	}
+	updatedLogID := ""
+
+	ticker := time.NewTicker(time.Duration(q.liveDataRefreshSeconds) * time.Second)
+	defer ticker.Stop()
+
+	// we are creating a custom ticker wrapper to trigger it instantly
+	tick := make(chan time.Time, 1)
+	tick <- time.Now() // initial tick
+	go func() {
+		for t := range ticker.C {
+			tick <- t
+		}
+	}()
+
+	for {
+		select {
+		case <-ctx.Done():
+			done := true
+			client.Done <- &done
+			return
+		case <-tick:
+			// timestamp end is not specified here
+			timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: tsStart}, req.RequestType)
+			bq := newBuilderQuery(q.telemetryStore, q.logStmtBuilder, spec, timeRange, req.RequestType, map[string]qbtypes.VariableItem{
+				"id": {
+					Value: updatedLogID,
+				},
+			})
+			queries[spec.Name] = bq
+
+			qbResp, qbErr := q.run(ctx, orgID, queries, req, nil, event)
+			if qbErr != nil {
+				client.Error <- qbErr
+				return
+			}
+
+			if qbResp == nil || len(qbResp.Data.Results) == 0 || qbResp.Data.Results[0] == nil {
+				continue
+			}
+			data := qbResp.Data.Results[0].(*qbtypes.RawData)
+			for i := len(data.Rows) - 1; i >= 0; i-- {
+				client.Logs <- data.Rows[i]
+				if i == 0 {
+					tsStart = uint64(data.Rows[i].Timestamp.UnixNano())
+					updatedLogID = data.Rows[i].Data["id"].(string)
+				}
+			}
+
+		}
+	}
 }
 
 func (q *querier) run(
@@ -363,6 +570,15 @@ func (q *querier) run(
 			if err != nil {
 				return nil, err
 			}
+			switch v := result.Value.(type) {
+			case *qbtypes.TimeSeriesData:
+				v.QueryName = name
+			case *qbtypes.ScalarData:
+				v.QueryName = name
+			case *qbtypes.RawData:
+				v.QueryName = name
+			}
+
 			results[name] = result.Value
 			warnings = append(warnings, result.Warnings...)
 			warningsDocURL = result.WarningsDocURL
@@ -547,7 +763,17 @@ func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtyp
 			return newBuilderQuery(q.telemetryStore, q.meterStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
 		}
 		return newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
-
+	case *traceOperatorQuery:
+		specCopy := qt.spec.Copy()
+		return &traceOperatorQuery{
+			telemetryStore: q.telemetryStore,
+			stmtBuilder:    q.traceOperatorStmtBuilder,
+			spec:           specCopy,
+			fromMS:         uint64(timeRange.From),
+			toMS:           uint64(timeRange.To),
+			compositeQuery: qt.compositeQuery,
+			kind:           qt.kind,
+		}
 	default:
 		return nil
 	}

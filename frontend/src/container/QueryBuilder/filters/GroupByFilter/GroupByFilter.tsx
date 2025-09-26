@@ -8,7 +8,6 @@ import useDebounce from 'hooks/useDebounce';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 // ** Components
 // ** Helpers
-import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { isEqual, uniqWith } from 'lodash-es';
 import {
 	memo,
@@ -27,7 +26,6 @@ import { popupContainer } from 'utils/selectPopupContainer';
 import { selectStyle } from '../QueryBuilderSearch/config';
 import OptionRenderer from '../QueryBuilderSearch/OptionRenderer';
 import { GroupByFilterProps } from './GroupByFilter.interfaces';
-import { removePrefix } from './utils';
 
 export const GroupByFilter = memo(function GroupByFilter({
 	query,
@@ -80,19 +78,8 @@ export const GroupByFilter = memo(function GroupByFilter({
 						label: (
 							<OptionRenderer
 								key={item.key}
-								label={transformStringWithPrefix({
-									str: item.key,
-									prefix: item.type || '',
-									condition: !item.isColumn,
-								})}
-								value={removePrefix(
-									transformStringWithPrefix({
-										str: item.key,
-										prefix: item.type || '',
-										condition: !item.isColumn,
-									}),
-									!item.isColumn && item.type ? item.type : '',
-								)}
+								label={item.key}
+								value={item.key}
 								dataType={item.dataType || ''}
 								type={item.type || ''}
 							/>
@@ -176,19 +163,11 @@ export const GroupByFilter = memo(function GroupByFilter({
 	}, []);
 
 	useEffect(() => {
-		const currentValues: SelectOption<string, string>[] = query.groupBy.map(
-			(item) => ({
-				label: `${removePrefix(
-					transformStringWithPrefix({
-						str: item.key,
-						prefix: item.type || '',
-						condition: !item.isColumn,
-					}),
-					!item.isColumn && item.type ? item.type : '',
-				)}`,
+		const currentValues: SelectOption<string, string>[] =
+			query.groupBy?.map((item) => ({
+				label: `${item.key}`,
 				value: `${item.id}`,
-			}),
-		);
+			})) || [];
 
 		setLocalValues(currentValues);
 	}, [query]);
@@ -211,7 +190,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}
 			data-testid="group-by"
-			placeholder={localValues.length === 0 ? 'Everything (no breakdown)' : ''}
+			placeholder={localValues?.length === 0 ? 'Everything (no breakdown)' : ''}
 		/>
 	);
 });

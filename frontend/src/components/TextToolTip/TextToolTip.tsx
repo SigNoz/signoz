@@ -8,7 +8,7 @@ import {
 import { Tooltip } from 'antd';
 import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 
 import { style } from './constant';
 
@@ -17,6 +17,8 @@ function TextToolTip({
 	url,
 	useFilledIcon = true,
 	urlText,
+	filledIcon,
+	outlinedIcon,
 }: TextToolTipProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
@@ -62,27 +64,44 @@ function TextToolTip({
 		[isDarkMode],
 	);
 
-	return (
-		<Tooltip overlay={overlay}>
-			{useFilledIcon ? (
-				<QuestionCircleFilled style={iconStyle} />
-			) : (
-				<QuestionCircleOutlined style={iconOutlinedStyle} />
-			)}
-		</Tooltip>
+	// Use provided icons or fallback to default icons
+	const defaultFilledIcon = <QuestionCircleFilled style={iconStyle} />;
+	const defaultOutlinedIcon = (
+		<QuestionCircleOutlined style={iconOutlinedStyle} />
 	);
+
+	const renderIcon = (): ReactNode => {
+		if (useFilledIcon) {
+			return filledIcon ? (
+				<div style={{ color: iconStyle.color }}>{filledIcon}</div>
+			) : (
+				defaultFilledIcon
+			);
+		}
+		return outlinedIcon ? (
+			<div style={{ color: iconOutlinedStyle.color }}>{outlinedIcon}</div>
+		) : (
+			defaultOutlinedIcon
+		);
+	};
+
+	return <Tooltip overlay={overlay}>{renderIcon()}</Tooltip>;
 }
 
 TextToolTip.defaultProps = {
 	url: '',
 	urlText: '',
 	useFilledIcon: true,
+	filledIcon: undefined,
+	outlinedIcon: undefined,
 };
 interface TextToolTipProps {
 	url?: string;
 	text: string;
 	useFilledIcon?: boolean;
 	urlText?: string;
+	filledIcon?: ReactNode;
+	outlinedIcon?: ReactNode;
 }
 
 export default TextToolTip;

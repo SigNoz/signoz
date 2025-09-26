@@ -1,14 +1,11 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './LogsExplorerViews.styles.scss';
 
-import { Button, Switch, Typography } from 'antd';
+import getFromLocalstorage from 'api/browser/localstorage/get';
+import setToLocalstorage from 'api/browser/localstorage/set';
 import { getQueryStats, WsDataEvent } from 'api/common/getQueryStats';
 import logEvent from 'api/common/logEvent';
-import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
-import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
-import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
@@ -20,36 +17,24 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
-import Download from 'container/DownloadV2/DownloadV2';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import GoToTop from 'container/GoToTop';
+import {} from 'container/LiveLogs/constants';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
-import { useOptionsMenu } from 'container/OptionsMenu';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
-import dayjs from 'dayjs';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import useClickOutside from 'hooks/useClickOutside';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { FlatLogData } from 'lib/logs/flatLogData';
 import { getPaginationQueryDataV2 } from 'lib/newQueryBuilder/getPaginationQueryData';
-import {
-	cloneDeep,
-	defaultTo,
-	isEmpty,
-	isUndefined,
-	omit,
-	set,
-} from 'lodash-es';
-import { ArrowUp10, Minus, Sliders } from 'lucide-react';
+import { cloneDeep, defaultTo, isEmpty, isUndefined, set } from 'lodash-es';
+import LiveLogs from 'pages/LiveLogs';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
-import { useTimezone } from 'providers/Timezone';
 import {
 	Dispatch,
 	memo,
@@ -75,16 +60,12 @@ import {
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
-import {
-	DataSource,
-	LogsAggregatorOperator,
-	StringOperators,
-} from 'types/common/queryBuilder';
+import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
 
-import QueryStatus from './QueryStatus';
+import LogsActionsContainer from './LogsActionsContainer';
 
 function LogsExplorerViewsContainer({
 	selectedView,
@@ -92,6 +73,7 @@ function LogsExplorerViewsContainer({
 	listQueryKeyRef,
 	chartQueryKeyRef,
 	setWarning,
+	showLiveLogs,
 }: {
 	selectedView: ExplorerViews;
 	setIsLoadingQueries: React.Dispatch<React.SetStateAction<boolean>>;
@@ -100,10 +82,17 @@ function LogsExplorerViewsContainer({
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	chartQueryKeyRef: MutableRefObject<any>;
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
+	showLiveLogs: boolean;
 }): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const dispatch = useDispatch();
-	const [showFrequencyChart, setShowFrequencyChart] = useState(true);
+
+	const [showFrequencyChart, setShowFrequencyChart] = useState(false);
+
+	useEffect(() => {
+		const frequencyChart = getFromLocalstorage(LOCALSTORAGE.SHOW_FREQUENCY_CHART);
+		setShowFrequencyChart(frequencyChart === 'true');
+	}, []);
 
 	// this is to respect the panel type present in the URL rather than defaulting it to list always.
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
@@ -141,7 +130,6 @@ function LogsExplorerViewsContainer({
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
-	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
 	const [queryId, setQueryId] = useState<string>(v4());
 	const [queryStats, setQueryStats] = useState<WsDataEvent>();
 	const [listChartQuery, setListChartQuery] = useState<Query | null>(null);
@@ -153,12 +141,6 @@ function LogsExplorerViewsContainer({
 
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);
-
-	const { options, config } = useOptionsMenu({
-		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: DataSource.LOGS,
-		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
-	});
 
 	const isMultipleQueries = useMemo(
 		() =>
@@ -197,8 +179,6 @@ function LogsExplorerViewsContainer({
 					key: 'severity_text',
 					dataType: DataTypes.String,
 					type: '',
-					isColumn: true,
-					isJSON: false,
 					id: 'severity_text--string----true',
 				},
 			],
@@ -214,7 +194,6 @@ function LogsExplorerViewsContainer({
 								key: 'id',
 								type: '',
 								dataType: DataTypes.String,
-								isColumn: true,
 							},
 							op: OPERATORS['<='],
 							value: activeLogId,
@@ -256,7 +235,6 @@ function LogsExplorerViewsContainer({
 	} = useGetExplorerQueryRange(
 		listChartQuery,
 		PANEL_TYPES.TIME_SERIES,
-		// ENTITY_VERSION_V4,
 		ENTITY_VERSION_V5,
 		{
 			enabled:
@@ -279,7 +257,6 @@ function LogsExplorerViewsContainer({
 	} = useGetExplorerQueryRange(
 		requestData,
 		panelType,
-		// ENTITY_VERSION_V4,
 		ENTITY_VERSION_V5,
 		{
 			keepPreviousData: true,
@@ -331,7 +308,6 @@ function LogsExplorerViewsContainer({
 								key: 'id',
 								type: '',
 								dataType: DataTypes.String,
-								isColumn: true,
 							},
 							op: OPERATORS['<='],
 							value: activeLogId,
@@ -484,8 +460,7 @@ function LogsExplorerViewsContainer({
 	);
 
 	useEffect(() => {
-		const shouldChangeView =
-			(isMultipleQueries || isGroupByExist) && selectedView !== ExplorerViews.LIST;
+		const shouldChangeView = isMultipleQueries || isGroupByExist;
 
 		if (selectedPanelType === PANEL_TYPES.LIST && shouldChangeView) {
 			handleExplorerTabChange(PANEL_TYPES.TIME_SERIES);
@@ -602,41 +577,6 @@ function LogsExplorerViewsContainer({
 		return isGroupByExist ? data.payload.data.result : firstPayloadQueryArray;
 	}, [stagedQuery, panelType, data, listChartData, listQuery]);
 
-	const formatItems = [
-		{
-			key: 'raw',
-			label: 'Raw',
-			data: {
-				title: 'max lines per row',
-			},
-		},
-		{
-			key: 'list',
-			label: 'Default',
-		},
-		{
-			key: 'table',
-			label: 'Column',
-			data: {
-				title: 'columns',
-			},
-		},
-	];
-
-	const handleToggleShowFormatOptions = (): void =>
-		setShowFormatMenuItems(!showFormatMenuItems);
-
-	const menuRef = useRef<HTMLDivElement>(null);
-
-	useClickOutside({
-		ref: menuRef,
-		onClickOutside: () => {
-			if (showFormatMenuItems) {
-				setShowFormatMenuItems(false);
-			}
-		},
-	});
-
 	useEffect(() => {
 		if (
 			isLoading ||
@@ -656,141 +596,70 @@ function LogsExplorerViewsContainer({
 		setIsLoadingQueries,
 	]);
 
-	const { timezone } = useTimezone();
+	const handleToggleFrequencyChart = useCallback(() => {
+		const newShowFrequencyChart = !showFrequencyChart;
 
-	const flattenLogData = useMemo(
-		() =>
-			logs.map((log) => {
-				const timestamp =
-					typeof log.timestamp === 'string'
-						? dayjs(log.timestamp)
-								.tz(timezone.value)
-								.format(DATE_TIME_FORMATS.ISO_DATETIME_MS)
-						: dayjs(log.timestamp / 1e6)
-								.tz(timezone.value)
-								.format(DATE_TIME_FORMATS.ISO_DATETIME_MS);
+		// store the value in local storage
+		setToLocalstorage(
+			LOCALSTORAGE.SHOW_FREQUENCY_CHART,
+			newShowFrequencyChart?.toString() || 'false',
+		);
 
-				return FlatLogData({
-					timestamp,
-					body: log.body,
-					...omit(log, 'timestamp', 'body'),
-				});
-			}),
-		[logs, timezone.value],
-	);
+		setShowFrequencyChart(newShowFrequencyChart);
+	}, [showFrequencyChart]);
 
 	return (
 		<div className="logs-explorer-views-container">
 			<div className="logs-explorer-views-types">
-				<div className="logs-actions-container">
-					<div className="tab-options">
-						<div className="tab-options-left">
-							{selectedPanelType === PANEL_TYPES.LIST && (
-								<div className="frequency-chart-view-controller">
-									<Typography>Frequency chart</Typography>
-									<Switch
-										size="small"
-										checked={showFrequencyChart}
-										defaultChecked
-										onChange={(): void => setShowFrequencyChart(!showFrequencyChart)}
-									/>
-								</div>
-							)}
-						</div>
-
-						<div className="tab-options-right">
-							{selectedPanelType === PANEL_TYPES.LIST && (
-								<>
-									<div className="order-by-container">
-										<div className="order-by-label">
-											Order by <Minus size={14} /> <ArrowUp10 size={14} />
-										</div>
-
-										<ListViewOrderBy
-											value={orderBy}
-											onChange={(value): void => setOrderBy(value)}
-											dataSource={DataSource.LOGS}
-										/>
-									</div>
-									<Download
-										data={flattenLogData}
-										isLoading={isFetching}
-										fileName="log_data"
-									/>
-									<div className="format-options-container" ref={menuRef}>
-										<Button
-											className="periscope-btn ghost"
-											onClick={handleToggleShowFormatOptions}
-											icon={<Sliders size={14} />}
-											data-testid="periscope-btn"
-										/>
-
-										{showFormatMenuItems && (
-											<LogsFormatOptionsMenu
-												title="FORMAT"
-												items={formatItems}
-												selectedOptionFormat={options.format}
-												config={config}
-											/>
-										)}
-									</div>
-								</>
-							)}
-
-							{(selectedPanelType === PANEL_TYPES.TIME_SERIES ||
-								selectedPanelType === PANEL_TYPES.TABLE) && (
-								<div className="query-stats">
-									<QueryStatus
-										loading={isLoading || isFetching}
-										error={isError}
-										success={isSuccess}
-									/>
-
-									{queryStats?.read_rows && (
-										<Typography.Text className="rows">
-											{getYAxisFormattedValue(queryStats.read_rows?.toString(), 'short')}{' '}
-											rows
-										</Typography.Text>
-									)}
-
-									{queryStats?.elapsed_ms && (
-										<>
-											<div className="divider" />
-											<Typography.Text className="time">
-												{getYAxisFormattedValue(queryStats?.elapsed_ms?.toString(), 'ms')}
-											</Typography.Text>
-										</>
-									)}
-								</div>
-							)}
-						</div>
-					</div>
-				</div>
-
-				{selectedPanelType === PANEL_TYPES.LIST && showFrequencyChart && (
-					<LogsExplorerChart
-						className="logs-histogram"
-						isLoading={isFetchingListChartData || isLoadingListChartData}
-						data={chartData}
-						isLogsExplorerViews={panelType === PANEL_TYPES.LIST}
+				{!showLiveLogs && (
+					<LogsActionsContainer
+						listQuery={listQuery}
+						queryStats={queryStats}
+						selectedPanelType={selectedPanelType}
+						showFrequencyChart={showFrequencyChart}
+						handleToggleFrequencyChart={handleToggleFrequencyChart}
+						orderBy={orderBy}
+						setOrderBy={setOrderBy}
+						isFetching={isFetching}
+						isLoading={isLoading}
+						isError={isError}
+						isSuccess={isSuccess}
+						minTime={minTime}
+						maxTime={maxTime}
 					/>
 				)}
 
+				{selectedPanelType === PANEL_TYPES.LIST &&
+					showFrequencyChart &&
+					!showLiveLogs && (
+						<div className="logs-frequency-chart-container">
+							<LogsExplorerChart
+								className="logs-frequency-chart"
+								isLoading={isFetchingListChartData || isLoadingListChartData}
+								data={chartData}
+								isLogsExplorerViews={panelType === PANEL_TYPES.LIST}
+							/>
+						</div>
+					)}
+
 				<div className="logs-explorer-views-type-content">
-					{selectedPanelType === PANEL_TYPES.LIST && (
+					{showLiveLogs && <LiveLogs />}
+
+					{selectedPanelType === PANEL_TYPES.LIST && !showLiveLogs && (
 						<LogsExplorerList
 							isLoading={isLoading}
 							isFetching={isFetching}
 							currentStagedQueryData={listQuery}
 							logs={logs}
 							onEndReached={handleEndReached}
+							isFrequencyChartVisible={showFrequencyChart}
 							isError={isError}
 							error={error as APIError}
 							isFilterApplied={!isEmpty(listQuery?.filters?.items)}
 						/>
 					)}
 
-					{selectedPanelType === PANEL_TYPES.TIME_SERIES && (
+					{selectedPanelType === PANEL_TYPES.TIME_SERIES && !showLiveLogs && (
 						<TimeSeriesView
 							isLoading={isLoading || isFetching}
 							data={data}
@@ -802,7 +671,7 @@ function LogsExplorerViewsContainer({
 						/>
 					)}
 
-					{selectedPanelType === PANEL_TYPES.TABLE && (
+					{selectedPanelType === PANEL_TYPES.TABLE && !showLiveLogs && (
 						<LogsExplorerTable
 							data={
 								(data?.payload?.data?.newResult?.data?.result ||

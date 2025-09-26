@@ -25,6 +25,7 @@ export const useGetQueryKeySuggestions: UseGetQueryKeySuggestions = (
 		fieldContext,
 		fieldDataType,
 		metricName,
+		signalSource,
 	}: QueryKeyRequestProps,
 	options?: UseQueryOptions<
 		AxiosResponse<QueryKeySuggestionsResponseProps>,
@@ -42,6 +43,7 @@ export const useGetQueryKeySuggestions: UseGetQueryKeySuggestions = (
 			metricName,
 			fieldContext,
 			fieldDataType,
+			signalSource,
 		];
 	}, [
 		options?.queryKey,
@@ -50,6 +52,7 @@ export const useGetQueryKeySuggestions: UseGetQueryKeySuggestions = (
 		metricName,
 		fieldContext,
 		fieldDataType,
+		signalSource,
 	]);
 	return useQuery<AxiosResponse<QueryKeySuggestionsResponseProps>, AxiosError>({
 		queryKey,
@@ -60,6 +63,7 @@ export const useGetQueryKeySuggestions: UseGetQueryKeySuggestions = (
 				metricName,
 				fieldContext,
 				fieldDataType,
+				signalSource,
 			}),
 		...options,
 	});
