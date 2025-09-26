@@ -132,7 +132,7 @@ function MetricDetails({
 							Open in Explorer
 						</Button>
 						{/* Show the based on the feature flag. Will remove before releasing the feature */}
-						{showInspectFeature && (
+						{showInspectFeature && openInspectModal && (
 							<Button
 								className="inspect-metrics-button"
 								aria-label="Inspect Metric"
