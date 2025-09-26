@@ -850,7 +850,7 @@ route:
 		totalAggrGroups += len(groups)
 	}
 
-	require.Equal(t, 9, totalAggrGroups, "Should have exactly 6 aggregation groups")
+	require.Equal(t, 9, totalAggrGroups, "Should have exactly 9 aggregation groups")
 
 	expectedGroupCounts := map[string]int{
 		"{__receiver__=\"slack\"}":     2, // OtherAlert critical + TestingAlert warning
