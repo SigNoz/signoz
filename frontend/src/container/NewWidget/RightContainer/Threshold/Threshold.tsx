@@ -357,7 +357,8 @@ function Threshold({
 				</div>
 				{isInvalidUnitComparison && (
 					<Typography.Text className="invalid-unit">
-						Threshold unit ({unit}) is not valid in comparison with the column unit (
+						Threshold unit ({unit}) is not valid in comparison with the{' '}
+						{selectedGraph === PANEL_TYPES.TABLE ? 'column' : 'y-axis'} unit (
 						{selectedGraph === PANEL_TYPES.TABLE
 							? getColumnUnit(tableSelectedOption, columnUnits || {}) || 'none'
 							: yAxisUnit || 'none'}
