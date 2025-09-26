@@ -415,3 +415,56 @@ func isValidOtelValue(val string) bool {
 	}
 	return true
 }
+
+// Validate validates the pipeline configuration
+func (p *Pipeline) Validate() error {
+	if p.OrderId <= 1 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "orderId with value > 1 is required")
+	}
+	if p.Name == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "pipeline name is required")
+	}
+	if p.Alias == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "pipeline alias is required")
+	}
+	if p.Filter != "" {
+		if _, err := govaluate.NewEvaluableExpressionWithFunctions(p.Filter, FilterFunctions); err != nil {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "filter for pipeline %v is not correct: %v", p.Name, err.Error())
+		}
+	}
+
+	seenIds := make(map[string]bool)
+	seenOutputs := make(map[string]bool)
+
+	for _, op := range p.Config {
+		if op.OrderId <= 1 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "orderId with value > 1 is required in operator")
+		}
+		if op.ID == "" {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "id of an operator cannot be empty")
+		}
+		if op.Type == "" {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "type of an operator cannot be empty")
+		}
+		if op.Output == nil {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "output of operator %s cannot be nil", op.ID)
+		}
+		if *op.Output == "" && op.Type != "trace_parser" {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "output of operator %s should be empty", op.ID)
+		}
+
+		if seenIds[op.ID] {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "duplicate id cannot be present")
+		}
+		seenIds[op.ID] = true
+
+		if seenOutputs[*op.Output] && *op.Output != "" {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "duplicate output cannot be present")
+		}
+		seenOutputs[*op.Output] = true
+
+		if op.ID == *op.Output {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "id and output cannot be same")
+		}
+	}
+}
