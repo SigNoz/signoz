@@ -159,6 +159,8 @@ function ListView({
 				pagination: paginationConfig,
 				selectColumns: options?.selectColumns,
 			},
+			start: Math.floor(minTime / 1000),
+			end: Math.floor(maxTime / 1000),
 		},
 		// ENTITY_VERSION_V4,
 		ENTITY_VERSION_V5,
