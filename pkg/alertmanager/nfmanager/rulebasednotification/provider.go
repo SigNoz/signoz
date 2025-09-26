@@ -239,7 +239,7 @@ func (r *provider) evaluateExpr(expression string, labelSet model.LabelSet) (boo
 
 	program, err := expr.Compile(expression, expr.Env(env))
 	if err != nil {
-		return false, errors.NewInternalf(errors.CodeInternal, "error compling expression %s: %v", expression, err)
+		return false, errors.NewInternalf(errors.CodeInternal, "error compiling expression %s: %v", expression, err)
 	}
 
 	output, err := expr.Run(program, env)

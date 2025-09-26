@@ -92,7 +92,7 @@ func (r *PostableRule) GetRuleRouteRequest(ruleId string) ([]*alertmanagertypes.
 	receivers := threshold.GetRuleReceivers()
 	routeRequests := make([]*alertmanagertypes.PolicyRouteRequest, 0)
 	for _, receiver := range receivers {
-		expression := fmt.Sprintf(`%s == "%s" and %s == "%s"`, LabelThresholdName, receiver.Name, LabelRuleId, ruleId)
+		expression := fmt.Sprintf(`%s == "%s" && %s == "%s"`, LabelThresholdName, receiver.Name, LabelRuleId, ruleId)
 		routeRequests = append(routeRequests, &alertmanagertypes.PolicyRouteRequest{
 			Actions: alertmanagertypes.Actions{
 				Channels: receiver.Channels,
