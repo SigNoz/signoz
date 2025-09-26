@@ -5,7 +5,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Flex, Input, Tooltip, Typography } from 'antd';
 import { Search } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useMemo } from 'react';
+import { ChangeEvent, useMemo } from 'react';
 import { USER_ROLES } from 'types/roles';
 
 import DeleteRoutingPolicy from './DeleteRoutingPolicy';
@@ -26,7 +26,7 @@ function RoutingPolicies(): JSX.Element {
 		isLoadingChannels,
 		// Search
 		searchTerm,
-		handleSearch,
+		setSearchTerm,
 		// Delete Modal
 		isDeleteModalOpen,
 		handleDeleteModalOpen,
@@ -50,6 +50,10 @@ function RoutingPolicies(): JSX.Element {
 		}
 		return '';
 	}, [user?.role]);
+
+	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
+		setSearchTerm(e.target.value || '');
+	};
 
 	return (
 		<div className="routing-policies-container">

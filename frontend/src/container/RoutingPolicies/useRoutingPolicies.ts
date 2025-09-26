@@ -7,7 +7,7 @@ import { useCreateRoutingPolicy } from 'hooks/routingPolicies/useCreateRoutingPo
 import { useDeleteRoutingPolicy } from 'hooks/routingPolicies/useDeleteRoutingPolicy';
 import { useGetRoutingPolicies } from 'hooks/routingPolicies/useGetRoutingPolicies';
 import { useUpdateRoutingPolicy } from 'hooks/routingPolicies/useUpdateRoutingPolicy';
-import { ChangeEvent, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { SuccessResponseV2 } from 'types/api';
 import { Channels } from 'types/api/channels/getAll';
@@ -69,10 +69,6 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 	const channels = data?.data || [];
 
 	// Handlers
-	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
-		setSearchTerm(e.target.value || '');
-	};
-
 	const handlePolicyDetailsModalOpen = (mode: PolicyDetailsModalMode): void => {
 		setPolicyDetailsModalState((prev) => ({
 			...prev,
@@ -212,7 +208,7 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		isLoadingChannels,
 		// Search
 		searchTerm,
-		handleSearch,
+		setSearchTerm,
 		// Delete Modal
 		isDeleteModalOpen,
 		handleDeleteModalOpen,

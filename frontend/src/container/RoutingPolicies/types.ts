@@ -1,4 +1,3 @@
-import { ChangeEvent } from 'react';
 import { Channels } from 'types/api/channels/getAll';
 
 export interface RoutingPolicy {
@@ -79,7 +78,7 @@ export interface UseRoutingPoliciesReturn {
 	isLoadingChannels: boolean;
 	// Search
 	searchTerm: string;
-	handleSearch: (e: ChangeEvent<HTMLInputElement>) => void;
+	setSearchTerm: (searchTerm: string) => void;
 	// Delete Modal
 	isDeleteModalOpen: boolean;
 	handleDeleteModalOpen: (routingPolicy: RoutingPolicy) => void;
