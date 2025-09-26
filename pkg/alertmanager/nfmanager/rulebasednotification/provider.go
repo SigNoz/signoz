@@ -200,6 +200,7 @@ func (r *provider) Match(ctx context.Context, orgID string, ruleID string, set m
 	for _, route := range expressionRoutes {
 		evaluateExpr, err := r.evaluateExpr(route.Expression, set)
 		if err != nil {
+			r.settings.Logger().ErrorContext(ctx, "error evaluating expression: %v", err)
 			continue
 		}
 		if evaluateExpr {

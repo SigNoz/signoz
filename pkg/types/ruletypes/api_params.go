@@ -81,7 +81,7 @@ func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanager
 	if slices.Contains(ns.AlertStates, model.StateFiring) {
 		renotifyInterval = ns.ReNotifyInterval
 	}
-	return alertmanagertypes.NewNotificationConfig(ns.NotificationGroupBy, time.Duration(renotifyInterval), time.Duration(noDataRenotifyInterval))
+	return alertmanagertypes.NewNotificationConfig(ns.NotificationGroupBy, time.Duration(renotifyInterval), time.Duration(noDataRenotifyInterval), ns.NotificationPolicy)
 }
 
 func (r *PostableRule) GetRuleRouteRequest(ruleId string) ([]*alertmanagertypes.PolicyRouteRequest, error) {
@@ -97,6 +97,7 @@ func (r *PostableRule) GetRuleRouteRequest(ruleId string) ([]*alertmanagertypes.
 			Actions: alertmanagertypes.Actions{
 				Channels: receiver.Channels,
 			},
+			Kind:       alertmanagertypes.RuleBasedExpression,
 			Expression: expression,
 			Name:       ruleId,
 		})

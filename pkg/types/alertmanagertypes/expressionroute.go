@@ -20,6 +20,7 @@ type PolicyRouteRequest struct {
 	Name        string
 	Description string
 	Tags        []string
+	Kind        ExpressionKind
 }
 
 func (req *PolicyRouteRequest) Validate() error {

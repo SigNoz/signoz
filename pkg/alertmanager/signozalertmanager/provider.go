@@ -238,8 +238,8 @@ func (provider *provider) CreateNotificationRoute(ctx context.Context, routeRequ
 			ID: valuer.GenerateUUID(),
 		},
 		UserAuditable: types.UserAuditable{
-			CreatedBy: claims.UserID,
-			UpdatedBy: claims.UserID,
+			CreatedBy: claims.Email,
+			UpdatedBy: claims.Email,
 		},
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
@@ -282,8 +282,8 @@ func (provider *provider) CreateNotificationRoutes(ctx context.Context, routeReq
 				ID: valuer.GenerateUUID(),
 			},
 			UserAuditable: types.UserAuditable{
-				CreatedBy: claims.UserID,
-				UpdatedBy: claims.UserID,
+				CreatedBy: claims.Email,
+				UpdatedBy: claims.Email,
 			},
 			TimeAuditable: types.TimeAuditable{
 				CreatedAt: time.Now(),
@@ -351,7 +351,7 @@ func (provider *provider) UpdateNotificationRouteById(ctx context.Context, route
 		Identifiable:   existingRoute.Identifiable, // Preserve existing ID
 		UserAuditable: types.UserAuditable{
 			CreatedBy: existingRoute.CreatedBy, // Preserve original creator
-			UpdatedBy: claims.UserID,          // Update modifier
+			UpdatedBy: claims.Email,            // Update modifier
 		},
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: existingRoute.CreatedAt, // Preserve original creation time

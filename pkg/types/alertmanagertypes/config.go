@@ -460,7 +460,7 @@ type ReNotificationConfig struct {
 	RenotifyInterval time.Duration
 }
 
-func NewNotificationConfig(groups []string, renotifyInterval time.Duration, noDataRenotifyInterval time.Duration) NotificationConfig {
+func NewNotificationConfig(groups []string, renotifyInterval time.Duration, noDataRenotifyInterval time.Duration, policy bool) NotificationConfig {
 	notificationConfig := GetDefaultNotificationConfig()
 
 	if renotifyInterval != 0 {
@@ -473,6 +473,8 @@ func NewNotificationConfig(groups []string, renotifyInterval time.Duration, noDa
 	for _, group := range groups {
 		notificationConfig.NotificationGroup[model.LabelName(group)] = struct{}{}
 	}
+
+	notificationConfig.NotificationPolicy = policy
 
 	return notificationConfig
 }

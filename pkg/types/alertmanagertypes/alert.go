@@ -27,6 +27,8 @@ type (
 	// An alias for the Alert type from the alertmanager package.
 	Alert = types.Alert
 
+	AlertSlice = types.AlertSlice
+
 	PostableAlert = models.PostableAlert
 
 	PostableAlerts = models.PostableAlerts

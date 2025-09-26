@@ -93,8 +93,6 @@ require (
 	modernc.org/sqlite v1.39.0 // indirect
 )
 
-require github.com/google/cel-go v0.26.0 // indirect
-
 require (
 	cel.dev/expr v0.24.0 // indirect
 	cloud.google.com/go/auth v0.16.1 // indirect
