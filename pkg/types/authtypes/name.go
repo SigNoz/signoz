@@ -1,6 +1,7 @@
 package authtypes
 
 import (
+	"encoding/json"
 	"regexp"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -14,14 +15,39 @@ type Name struct {
 	val string
 }
 
-func MustNewName(name string) Name {
+func NewName(name string) (Name, error) {
 	if !nameRegex.MatchString(name) {
-		panic(errors.NewInternalf(errors.CodeInternal, "name must conform to regex %s", nameRegex.String()))
+		return Name{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "name must conform to regex %s", nameRegex.String())
 	}
 
-	return Name{val: name}
+	return Name{val: name}, nil
+}
+
+func MustNewName(name string) Name {
+	named, err := NewName(name)
+	if err != nil {
+		panic(err)
+	}
+
+	return named
 }
 
 func (name Name) String() string {
 	return name.val
+}
+
+func (name *Name) UnmarshalJSON(data []byte) error {
+	nameStr := ""
+	err := json.Unmarshal(data, &nameStr)
+	if err != nil {
+		return err
+	}
+
+	shadow, err := NewName(nameStr)
+	if err != nil {
+		return err
+	}
+
+	*name = shadow
+	return nil
 }
