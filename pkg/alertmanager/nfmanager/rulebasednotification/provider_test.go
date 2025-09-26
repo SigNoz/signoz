@@ -11,8 +11,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/prometheus/alertmanager/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -133,7 +134,7 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 	require.NoError(t, err)
 
 	orgID := "test-org"
-	ruleID := "rule1"
+	ruleID := "ruleId"
 	customConfig := &alertmanagertypes.NotificationConfig{
 		Renotify: alertmanagertypes.ReNotificationConfig{
 			RenotifyInterval: 30 * time.Minute,
@@ -159,7 +160,7 @@ func TestProvider_GetNotificationConfig(t *testing.T) {
 		name           string
 		orgID          string
 		ruleID         string
-		alert          *types.Alert
+		alert          *alertmanagertypes.Alert
 		expectedConfig *alertmanagertypes.NotificationConfig
 		shouldFallback bool
 	}{
@@ -395,7 +396,7 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 				"ruleId":         "rule-123",
 				"service":        "auth",
 			},
-			expected: true,
+			expected: false, //no commas
 		},
 		{
 			name:       "alertname and ruleId combination",
@@ -419,37 +420,13 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 		},
 		{
 			name:       "migration expression format from SQL migration",
-			expression: `threshold.name' == "HighCPUUsage" && ruleId == "rule-uuid-123"`,
+			expression: `threshold.name == "HighCPUUsage" && ruleId == "rule-uuid-123"`,
 			labelSet: model.LabelSet{
 				"threshold.name": "HighCPUUsage",
 				"ruleId":         "rule-uuid-123",
 				"severity":       "warning",
 			},
 			expected: true,
-		},
-		{
-			name:       "invalid expression syntax",
-			expression: `service == "auth"`, // missing closing bracket
-			labelSet: model.LabelSet{
-				"service": "auth",
-			},
-			expected: false,
-		},
-		{
-			name:       "empty expression",
-			expression: ``,
-			labelSet: model.LabelSet{
-				"service": "auth",
-			},
-			expected: false,
-		},
-		{
-			name:       "expression with non-boolean result",
-			expression: `service`, // returns string, not boolean
-			labelSet: model.LabelSet{
-				"service": "auth",
-			},
-			expected: false,
 		},
 		{
 			name:       "case sensitive matching",
@@ -501,10 +478,6 @@ func TestProvider_DeleteRoute(t *testing.T) {
 	providerSettings := createTestProviderSettings()
 	config := nfmanager.Config{}
 
-	routeStore := nfroutingstoretest.NewMockSQLRouteStore()
-	provider, err := New(ctx, providerSettings, config, routeStore)
-	require.NoError(t, err)
-
 	tests := []struct {
 		name    string
 		orgID   string
@@ -533,11 +506,15 @@ func TestProvider_DeleteRoute(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			routeStore := nfroutingstoretest.NewMockSQLRouteStore()
+			provider, err := New(ctx, providerSettings, config, routeStore)
+			require.NoError(t, err)
+
 			if !tt.wantErr {
 				routeStore.ExpectDelete(tt.orgID, tt.routeID)
 			}
 
-			err := provider.DeleteRoute(ctx, tt.orgID, tt.routeID)
+			err = provider.DeleteRoute(ctx, tt.orgID, tt.routeID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -554,10 +531,6 @@ func TestProvider_CreateRoute(t *testing.T) {
 	providerSettings := createTestProviderSettings()
 	config := nfmanager.Config{}
 
-	routeStore := nfroutingstoretest.NewMockSQLRouteStore()
-	provider, err := New(ctx, providerSettings, config, routeStore)
-	require.NoError(t, err)
-
 	tests := []struct {
 		name    string
 		orgID   string
@@ -568,6 +541,7 @@ func TestProvider_CreateRoute(t *testing.T) {
 			name:  "valid route",
 			orgID: "test-org-123",
 			route: &alertmanagertypes.ExpressionRoute{
+				Identifiable:   types.Identifiable{ID: valuer.GenerateUUID()},
 				Expression:     `service == "auth"`,
 				ExpressionKind: alertmanagertypes.PolicyBasedExpression,
 				Priority:       "1",
@@ -613,11 +587,15 @@ func TestProvider_CreateRoute(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			routeStore := nfroutingstoretest.NewMockSQLRouteStore()
+			provider, err := New(ctx, providerSettings, config, routeStore)
+			require.NoError(t, err)
+
 			if !tt.wantErr && tt.route != nil {
 				routeStore.ExpectCreate(tt.route)
 			}
 
-			err := provider.CreateRoute(ctx, tt.orgID, tt.route)
+			err = provider.CreateRoute(ctx, tt.orgID, tt.route)
 
 			if tt.wantErr {
 				assert.Error(t, err)

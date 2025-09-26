@@ -38,6 +38,10 @@ type (
 	GettableAlerts = models.GettableAlerts
 )
 
+const (
+	NoDataLabel = model.LabelName("nodata")
+)
+
 type DeprecatedGettableAlert struct {
 	*model.Alert
 	Status      types.AlertStatus `json:"status"`
@@ -306,4 +310,12 @@ func receiversMatchFilter(receivers []string, filter *regexp.Regexp) bool {
 	}
 
 	return false
+}
+
+func NoDataAlert(alert *types.Alert) bool {
+	if _, ok := alert.Labels[NoDataLabel]; ok {
+		return true
+	} else {
+		return false
+	}
 }

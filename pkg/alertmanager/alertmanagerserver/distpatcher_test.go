@@ -622,35 +622,25 @@ route:
 }
 
 func TestGroupsWithNodata(t *testing.T) {
+	// Simplified config with just receivers and default route - no hardcoded routing rules
 	confData := `receivers:
 - name: 'slack'
-- name: 'email' 
+- name: 'email'
 - name: 'pagerduty'
 
 route:
   group_by: ['alertname']
   group_wait: 10ms
   group_interval: 10ms
-  receiver: 'slack'
-  routes:
-  - matchers:
-    - 'ruleId=~"ruleId-OtherAlert|ruleId-TestingAlert"'
-    receiver: 'slack'
-  - matchers:
-    - 'ruleId=~"ruleId-HighLatency|ruleId-HighErrorRate"'
-    receiver: 'email'
-    continue: true
-  - matchers:
-    - 'ruleId="ruleId-HighLatency"'
-    receiver: 'pagerduty'`
+  receiver: 'slack'`
 	conf, err := config.Load(confData)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	logger := promslog.NewNopLogger()
+	providerSettings := createTestProviderSettings()
+	logger := providerSettings.Logger
 	route := dispatch.NewRoute(conf.Route, nil)
-	marker := amTypes.NewMarker(prometheus.NewRegistry())
+	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
 	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, nil, logger, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -660,28 +650,109 @@ route:
 	timeout := func(d time.Duration) time.Duration { return time.Duration(0) }
 	recorder := &recordStage{alerts: make(map[string]map[model.Fingerprint]*amTypes.Alert)}
 	metrics := NewDispatcherMetrics(false, prometheus.NewRegistry())
-	nfManager := nfmanagertest.NewMock()
+	store := nfroutingstoretest.NewMockSQLRouteStore()
+	nfManager, err := rulebasednotification.New(context.Background(), providerSettings, nfmanager.Config{}, store)
+	if err != nil {
+		t.Fatal(err)
+	}
 	orgId := "test-org"
+
+	ctx := context.Background()
+	routes := []*alertmanagertypes.ExpressionRoute{
+		{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			Expression:     `ruleId == "ruleId-OtherAlert" && threshold.name == "critical"`,
+			ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+			Priority:       "1",
+			Name:           "ruleId-OtherAlert",
+			Description:    "Route for OtherAlert critical to Slack",
+			Enabled:        true,
+			OrgID:          orgId,
+			Channels:       []string{"slack"},
+		},
+		{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			Expression:     `ruleId == "ruleId-TestingAlert" && threshold.name == "warning"`,
+			ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+			Priority:       "2",
+			Name:           "ruleId-TestingAlert",
+			Description:    "Route for TestingAlert warning to Slack",
+			Enabled:        true,
+			OrgID:          orgId,
+			Channels:       []string{"slack"},
+		},
+		{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			Expression:     `ruleId == "ruleId-HighErrorRate" && threshold.name == "critical"`,
+			ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+			Priority:       "3",
+			Name:           "ruleId-HighErrorRate",
+			Description:    "Route for HighErrorRate critical to Email",
+			Enabled:        true,
+			OrgID:          orgId,
+			Channels:       []string{"email"},
+		},
+		{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			Expression:     `ruleId == "ruleId-HighLatency" && threshold.name == "warning"`,
+			ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+			Priority:       "4",
+			Name:           "ruleId-HighLatency",
+			Description:    "Route for HighLatency warning to Email",
+			Enabled:        true,
+			OrgID:          orgId,
+			Channels:       []string{"email"},
+		},
+		{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			Expression:     `ruleId == "ruleId-HighLatency" && threshold.name == "critical"`,
+			ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+			Priority:       "5",
+			Name:           "ruleId-HighLatency",
+			Description:    "Route for HighLatency critical to PagerDuty",
+			Enabled:        true,
+			OrgID:          orgId,
+			Channels:       []string{"pagerduty"},
+		},
+	}
+	// Set up SQL mock expectations for the CreateBatch call
+	store.ExpectCreateBatch(routes)
+	err = nfManager.CreateRoutes(ctx, orgId, routes)
+	require.NoError(t, err)
+
 	dispatcher := NewDispatcher(alerts, route, recorder, marker, timeout, nil, logger, metrics, nfManager, orgId)
 	go dispatcher.Run()
 	defer dispatcher.Stop()
 
-	// Create alerts. the dispatcher will automatically create the groups.
 	inputAlerts := []*amTypes.Alert{
-		// Matches the parent route.
-		newAlert(model.LabelSet{"ruleId": "ruleId-OtherAlert", "cluster": "cc", "service": "dd"}),
-		// Matches the first sub-route.
-		newAlert(model.LabelSet{"env": "testing", "ruleId": "ruleId-TestingAlert", "service": "api", "instance": "inst1"}),
-		// Matches the second sub-route.
-		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighErrorRate", "cluster": "aa", "service": "api", "instance": "inst1"}),
-		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighErrorRate", "cluster": "aa", "service": "api", "instance": "inst2"}),
-		// Matches the second sub-route.
-		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighErrorRate", "cluster": "bb", "service": "api", "instance": "inst1"}),
-		// Matches the second and third sub-route.
-		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighLatency", "cluster": "bb", "service": "db", "kafka": "yes", "instance": "inst3"}),
-		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighLatency", "cluster": "bb", "service": "db", "kafka": "yes", "instance": "inst4"}),
+		newAlert(model.LabelSet{"ruleId": "ruleId-OtherAlert", "cluster": "cc", "service": "dd", "threshold.name": "critical"}),
+		newAlert(model.LabelSet{"env": "testing", "ruleId": "ruleId-TestingAlert", "service": "api", "instance": "inst1", "threshold.name": "warning"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighErrorRate", "cluster": "aa", "service": "api", "instance": "inst1", "threshold.name": "critical"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighErrorRate", "cluster": "aa", "service": "api", "instance": "inst2", "threshold.name": "critical"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighErrorRate", "cluster": "bb", "service": "api", "instance": "inst1", "threshold.name": "critical"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighLatency", "cluster": "bb", "service": "db", "kafka": "yes", "instance": "inst3", "threshold.name": "warning"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighLatency", "cluster": "bb", "service": "db", "kafka": "yes", "instance": "inst4", "threshold.name": "critical"}),
 		newAlert(model.LabelSet{"ruleId": "ruleId-HighLatency", "nodata": "true"}),
 	}
+	// Set up expectations with route filtering for each alert
+	store.ExpectGetAllByName(orgId, "ruleId-OtherAlert", []*alertmanagertypes.ExpressionRoute{routes[0]})
+	store.ExpectGetAllByName(orgId, "ruleId-TestingAlert", []*alertmanagertypes.ExpressionRoute{routes[1]})
+	store.ExpectGetAllByName(orgId, "ruleId-HighErrorRate", []*alertmanagertypes.ExpressionRoute{routes[2]})
+	store.ExpectGetAllByName(orgId, "ruleId-HighErrorRate", []*alertmanagertypes.ExpressionRoute{routes[2]})
+	store.ExpectGetAllByName(orgId, "ruleId-HighErrorRate", []*alertmanagertypes.ExpressionRoute{routes[2]})
+	store.ExpectGetAllByName(orgId, "ruleId-HighLatency", []*alertmanagertypes.ExpressionRoute{routes[3], routes[4]})
+	store.ExpectGetAllByName(orgId, "ruleId-HighLatency", []*alertmanagertypes.ExpressionRoute{routes[3], routes[4]})
+	store.ExpectGetAllByName(orgId, "ruleId-HighLatency", []*alertmanagertypes.ExpressionRoute{routes[3], routes[4]})
 	notiConfigs := map[string]alertmanagertypes.NotificationConfig{
 		"ruleId-OtherAlert": {
 			NotificationGroup: map[model.LabelName]struct{}{
@@ -692,6 +763,7 @@ route:
 			Renotify: alertmanagertypes.ReNotificationConfig{
 				RenotifyInterval: 10,
 			},
+			NotificationPolicy: false,
 		},
 		"ruleId-TestingAlert": {
 			NotificationGroup: map[model.LabelName]struct{}{
@@ -702,6 +774,7 @@ route:
 			Renotify: alertmanagertypes.ReNotificationConfig{
 				RenotifyInterval: 11,
 			},
+			NotificationPolicy: false,
 		},
 		"ruleId-HighErrorRate": {
 			NotificationGroup: map[model.LabelName]struct{}{
@@ -712,6 +785,7 @@ route:
 			Renotify: alertmanagertypes.ReNotificationConfig{
 				RenotifyInterval: 12,
 			},
+			NotificationPolicy: false,
 		},
 		"ruleId-HighLatency": {
 			NotificationGroup: map[model.LabelName]struct{}{
@@ -723,22 +797,23 @@ route:
 				RenotifyInterval: 13,
 				NoDataInterval:   14,
 			},
+			NotificationPolicy: false,
 		},
 	}
 
 	for ruleID, config := range notiConfigs {
-		nfManager.SetMockConfig(orgId, ruleID, &config)
+		err := nfManager.SetNotificationConfig(orgId, ruleID, &config)
+		require.NoError(t, err)
 	}
 	err = alerts.Put(inputAlerts...)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Let alerts get processed.
-	for i := 0; len(recorder.Alerts()) != 11 && i < 15; i++ {
-		time.Sleep(200 * time.Millisecond)
+	for i := 0; len(recorder.Alerts()) != 9 && i < 15; i++ {
+		time.Sleep(400 * time.Millisecond)
 	}
-	require.Len(t, recorder.Alerts(), 11)
+	require.Len(t, recorder.Alerts(), 9)
 
 	alertGroups, receivers := dispatcher.Groups(
 		func(*dispatch.Route) bool {
@@ -748,124 +823,292 @@ route:
 		},
 	)
 
-	require.Equal(t, AlertGroups{
-		&AlertGroup{
-			Alerts: []*amTypes.Alert{inputAlerts[7]},
-			Labels: model.LabelSet{
-				"ruleId": "ruleId-HighLatency",
-				"nodata": "true",
-			},
-			Receiver: "email",
-			GroupKey: "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}:{nodata=\"true\", ruleId=\"ruleId-HighLatency\"}",
-			RouteID:  "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}/1",
-			Renotify: 14,
-		},
-		&AlertGroup{
-			Alerts: []*amTypes.Alert{inputAlerts[7]},
-			Labels: model.LabelSet{
-				"ruleId": "ruleId-HighLatency",
-				"nodata": "true",
-			},
-			Receiver: "pagerduty",
-			GroupKey: "{}/{ruleId=\"ruleId-HighLatency\"}:{nodata=\"true\", ruleId=\"ruleId-HighLatency\"}",
-			RouteID:  "{}/{ruleId=\"ruleId-HighLatency\"}/2",
-			Renotify: 14,
-		},
-		&AlertGroup{
-			Alerts: []*amTypes.Alert{inputAlerts[5], inputAlerts[6]},
-			Labels: model.LabelSet{
-				"kafka":   "yes",
-				"ruleId":  "ruleId-HighLatency",
-				"service": "db",
-			},
-			Receiver: "email",
-			GroupKey: "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}:{kafka=\"yes\", ruleId=\"ruleId-HighLatency\", service=\"db\"}",
-			RouteID:  "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}/1",
-			Renotify: 13,
-		},
-		&AlertGroup{
-			Alerts: []*amTypes.Alert{inputAlerts[5], inputAlerts[6]},
-			Labels: model.LabelSet{
-				"kafka":   "yes",
-				"ruleId":  "ruleId-HighLatency",
-				"service": "db",
-			},
-			Receiver: "pagerduty",
-			GroupKey: "{}/{ruleId=\"ruleId-HighLatency\"}:{kafka=\"yes\", ruleId=\"ruleId-HighLatency\", service=\"db\"}",
-			RouteID:  "{}/{ruleId=\"ruleId-HighLatency\"}/2",
-			Renotify: 13,
-		},
-		&AlertGroup{
-			Alerts: []*amTypes.Alert{inputAlerts[1]},
-			Labels: model.LabelSet{
-				"instance": "inst1",
-				"ruleId":   "ruleId-TestingAlert",
-				"service":  "api",
-			},
-			Receiver: "slack",
-			GroupKey: "{}/{ruleId=~\"ruleId-OtherAlert|ruleId-TestingAlert\"}:{instance=\"inst1\", ruleId=\"ruleId-TestingAlert\", service=\"api\"}",
-			RouteID:  "{}/{ruleId=~\"ruleId-OtherAlert|ruleId-TestingAlert\"}/0",
-			Renotify: 11,
-		},
-		&AlertGroup{
-			Alerts: []*amTypes.Alert{inputAlerts[2]},
-			Labels: model.LabelSet{
-				"cluster":  "aa",
-				"instance": "inst1",
-				"ruleId":   "ruleId-HighErrorRate",
-			},
-			Receiver: "email",
-			GroupKey: "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}:{cluster=\"aa\", instance=\"inst1\", ruleId=\"ruleId-HighErrorRate\"}",
-			RouteID:  "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}/1",
-			Renotify: 12,
-		},
-		&AlertGroup{
-			Alerts: []*amTypes.Alert{inputAlerts[3]},
-			Labels: model.LabelSet{
-				"cluster":  "aa",
-				"instance": "inst2",
-				"ruleId":   "ruleId-HighErrorRate",
-			},
-			Receiver: "email",
-			GroupKey: "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}:{cluster=\"aa\", instance=\"inst2\", ruleId=\"ruleId-HighErrorRate\"}",
-			RouteID:  "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}/1",
-			Renotify: 12,
-		},
-		&AlertGroup{
-			Alerts: []*amTypes.Alert{inputAlerts[4]},
-			Labels: model.LabelSet{
-				"cluster":  "bb",
-				"instance": "inst1",
-				"ruleId":   "ruleId-HighErrorRate",
-			},
-			Receiver: "email",
-			GroupKey: "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}:{cluster=\"bb\", instance=\"inst1\", ruleId=\"ruleId-HighErrorRate\"}",
-			RouteID:  "{}/{ruleId=~\"ruleId-HighLatency|ruleId-HighErrorRate\"}/1",
-			Renotify: 12,
-		},
-		&AlertGroup{
-			Alerts: []*amTypes.Alert{inputAlerts[0]},
-			Labels: model.LabelSet{
-				"cluster": "cc",
-				"ruleId":  "ruleId-OtherAlert",
-				"service": "dd",
-			},
-			Receiver: "slack",
-			GroupKey: "{}/{ruleId=~\"ruleId-OtherAlert|ruleId-TestingAlert\"}:{cluster=\"cc\", ruleId=\"ruleId-OtherAlert\", service=\"dd\"}",
-			RouteID:  "{}/{ruleId=~\"ruleId-OtherAlert|ruleId-TestingAlert\"}/0",
-			Renotify: 10,
-		},
-	}, alertGroups)
-	require.Equal(t, map[model.Fingerprint][]string{
-		inputAlerts[0].Fingerprint(): {"slack"},
-		inputAlerts[1].Fingerprint(): {"slack"},
-		inputAlerts[2].Fingerprint(): {"email"},
-		inputAlerts[3].Fingerprint(): {"email"},
-		inputAlerts[4].Fingerprint(): {"email"},
-		inputAlerts[5].Fingerprint(): {"email", "pagerduty"},
-		inputAlerts[6].Fingerprint(): {"email", "pagerduty"},
+	dispatcher.mtx.RLock()
+	aggrGroupsPerRoute := dispatcher.aggrGroupsPerRoute
+	dispatcher.mtx.RUnlock()
+
+	require.NotEmpty(t, aggrGroupsPerRoute, "Should have aggregation groups per route")
+
+	routeIDsFound := make(map[string]bool)
+	totalAggrGroups := 0
+
+	for route, groups := range aggrGroupsPerRoute {
+		routeID := route.ID()
+		routeIDsFound[routeID] = true
+		expectedReceiver := ""
+		switch routeID {
+		case "{__receiver__=\"slack\"}":
+			expectedReceiver = "slack"
+		case "{__receiver__=\"email\"}":
+			expectedReceiver = "email"
+		case "{__receiver__=\"pagerduty\"}":
+			expectedReceiver = "pagerduty"
+		}
+		if expectedReceiver != "" {
+			require.Equal(t, expectedReceiver, route.RouteOpts.Receiver,
+				"Route %s should have receiver %s", routeID, expectedReceiver)
+		}
+		totalAggrGroups += len(groups)
+	}
+
+	require.Equal(t, 9, totalAggrGroups, "Should have exactly 6 aggregation groups")
+
+	expectedGroupCounts := map[string]int{
+		"{__receiver__=\"slack\"}":     2, // OtherAlert critical + TestingAlert warning
+		"{__receiver__=\"email\"}":     5,
+		"{__receiver__=\"pagerduty\"}": 2,
+	}
+
+	for route, groups := range aggrGroupsPerRoute {
+		routeID := route.ID()
+		if expectedCount, exists := expectedGroupCounts[routeID]; exists {
+			require.Equal(t, expectedCount, len(groups),
+				"Route %s should have %d groups, got %d", routeID, expectedCount, len(groups))
+		}
+	}
+
+	// Verify alert groups contain expected alerts
+	require.Len(t, alertGroups, 9)
+
+	// Verify receivers mapping - exact expectations based on actual routing behavior
+	expectedReceivers := map[model.Fingerprint][]string{
+		inputAlerts[0].Fingerprint(): {"slack"}, // OtherAlert critical -> slack
+		inputAlerts[1].Fingerprint(): {"slack"}, // TestingAlert warning -> slack
+		inputAlerts[2].Fingerprint(): {"email"}, // HighErrorRate critical -> email
+		inputAlerts[3].Fingerprint(): {"email"}, // HighErrorRate critical -> email
+		inputAlerts[4].Fingerprint(): {"email"}, // HighErrorRate critical -> email
+		inputAlerts[5].Fingerprint(): {"email"}, // HighLatency warning -> email
+		inputAlerts[6].Fingerprint(): {"pagerduty"},
 		inputAlerts[7].Fingerprint(): {"email", "pagerduty"},
-	}, receivers)
+	}
+	require.Equal(t, expectedReceivers, receivers)
+}
+
+func TestGroupsWithNotificationPolicy(t *testing.T) {
+	// Simplified config with just receivers and default route - no hardcoded routing rules
+	confData := `receivers:
+- name: 'slack'
+- name: 'email'
+- name: 'pagerduty'
+
+route:
+  group_by: ['alertname']
+  group_wait: 10ms
+  group_interval: 10ms
+  receiver: 'slack'`
+	conf, err := config.Load(confData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	providerSettings := createTestProviderSettings()
+	logger := providerSettings.Logger
+	route := dispatch.NewRoute(conf.Route, nil)
+	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
+	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, nil, logger, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer alerts.Close()
+
+	timeout := func(d time.Duration) time.Duration { return time.Duration(0) }
+	recorder := &recordStage{alerts: make(map[string]map[model.Fingerprint]*amTypes.Alert)}
+	metrics := NewDispatcherMetrics(false, prometheus.NewRegistry())
+	store := nfroutingstoretest.NewMockSQLRouteStore()
+	nfManager, err := rulebasednotification.New(context.Background(), providerSettings, nfmanager.Config{}, store)
+	if err != nil {
+		t.Fatal(err)
+	}
+	orgId := "test-org"
+
+	ctx := context.Background()
+	routes := []*alertmanagertypes.ExpressionRoute{
+		{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			Expression:     `cluster == "bb" && threshold.name == "critical"`,
+			ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+			Priority:       "1",
+			Name:           "ruleId-OtherAlert",
+			Description:    "Route for OtherAlert critical to Slack",
+			Enabled:        true,
+			OrgID:          orgId,
+			Channels:       []string{"slack"},
+		},
+		{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			Expression:     `service == "db" && threshold.name == "critical"`,
+			ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+			Priority:       "2",
+			Name:           "ruleId-TestingAlert",
+			Description:    "Route for TestingAlert warning to Slack",
+			Enabled:        true,
+			OrgID:          orgId,
+			Channels:       []string{"slack"},
+		},
+		{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			Expression:     `cluster == "bb" && instance == "inst1"`,
+			ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+			Priority:       "3",
+			Name:           "ruleId-HighErrorRate",
+			Description:    "Route for HighErrorRate critical to Email",
+			Enabled:        true,
+			OrgID:          orgId,
+			Channels:       []string{"email"},
+		},
+	}
+	// Set up SQL mock expectations for the CreateBatch call
+	store.ExpectCreateBatch(routes)
+	err = nfManager.CreateRoutes(ctx, orgId, routes)
+	require.NoError(t, err)
+
+	dispatcher := NewDispatcher(alerts, route, recorder, marker, timeout, nil, logger, metrics, nfManager, orgId)
+	go dispatcher.Run()
+	defer dispatcher.Stop()
+
+	inputAlerts := []*amTypes.Alert{
+		newAlert(model.LabelSet{"ruleId": "ruleId-OtherAlert", "cluster": "cc", "service": "db", "threshold.name": "critical"}),
+		newAlert(model.LabelSet{"env": "testing", "ruleId": "ruleId-TestingAlert", "service": "api", "instance": "inst1", "threshold.name": "warning"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighErrorRate", "cluster": "aa", "service": "api", "instance": "inst1", "threshold.name": "critical"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighErrorRate", "cluster": "aa", "service": "api", "instance": "inst2", "threshold.name": "critical"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighErrorRate", "cluster": "bb", "service": "api", "instance": "inst1", "threshold.name": "critical"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighLatency", "cluster": "bb", "service": "db", "kafka": "yes", "instance": "inst1", "threshold.name": "warning"}),
+		newAlert(model.LabelSet{"env": "prod", "ruleId": "ruleId-HighLatency", "cluster": "bb", "service": "db", "kafka": "yes", "instance": "inst4", "threshold.name": "critical"}),
+		newAlert(model.LabelSet{"ruleId": "ruleId-HighLatency", "nodata": "true"}),
+	}
+	// Set up expectations with route filtering for each alert
+	for _, _ = range inputAlerts {
+		store.ExpectGetAllByKindAndOrgID(orgId, alertmanagertypes.PolicyBasedExpression, routes)
+	}
+	notiConfigs := map[string]alertmanagertypes.NotificationConfig{
+		"ruleId-OtherAlert": {
+			NotificationGroup: map[model.LabelName]struct{}{
+				model.LabelName("ruleId"):  {},
+				model.LabelName("cluster"): {},
+				model.LabelName("service"): {},
+			},
+			Renotify: alertmanagertypes.ReNotificationConfig{
+				RenotifyInterval: 10,
+			},
+			NotificationPolicy: true,
+		},
+		"ruleId-TestingAlert": {
+			NotificationGroup: map[model.LabelName]struct{}{
+				model.LabelName("ruleId"):   {},
+				model.LabelName("service"):  {},
+				model.LabelName("instance"): {},
+			},
+			Renotify: alertmanagertypes.ReNotificationConfig{
+				RenotifyInterval: 11,
+			},
+			NotificationPolicy: true,
+		},
+		"ruleId-HighErrorRate": {
+			NotificationGroup: map[model.LabelName]struct{}{
+				model.LabelName("ruleId"):   {},
+				model.LabelName("cluster"):  {},
+				model.LabelName("instance"): {},
+			},
+			Renotify: alertmanagertypes.ReNotificationConfig{
+				RenotifyInterval: 12,
+			},
+			NotificationPolicy: true,
+		},
+		"ruleId-HighLatency": {
+			NotificationGroup: map[model.LabelName]struct{}{
+				model.LabelName("ruleId"):  {},
+				model.LabelName("service"): {},
+				model.LabelName("kafka"):   {},
+			},
+			Renotify: alertmanagertypes.ReNotificationConfig{
+				RenotifyInterval: 13,
+				NoDataInterval:   14,
+			},
+			NotificationPolicy: true,
+		},
+	}
+
+	for ruleID, config := range notiConfigs {
+		err := nfManager.SetNotificationConfig(orgId, ruleID, &config)
+		require.NoError(t, err)
+	}
+	err = alerts.Put(inputAlerts...)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for i := 0; len(recorder.Alerts()) != 3 && i < 15; i++ {
+		time.Sleep(400 * time.Millisecond)
+	}
+	require.Len(t, recorder.Alerts(), 5)
+
+	alertGroups, receivers := dispatcher.Groups(
+		func(*dispatch.Route) bool {
+			return true
+		}, func(*amTypes.Alert, time.Time) bool {
+			return true
+		},
+	)
+
+	dispatcher.mtx.RLock()
+	aggrGroupsPerRoute := dispatcher.aggrGroupsPerRoute
+	dispatcher.mtx.RUnlock()
+
+	require.NotEmpty(t, aggrGroupsPerRoute, "Should have aggregation groups per route")
+
+	routeIDsFound := make(map[string]bool)
+	totalAggrGroups := 0
+
+	for route, groups := range aggrGroupsPerRoute {
+		routeID := route.ID()
+		routeIDsFound[routeID] = true
+		expectedReceiver := ""
+		switch routeID {
+		case "{__receiver__=\"slack\"}":
+			expectedReceiver = "slack"
+		case "{__receiver__=\"email\"}":
+			expectedReceiver = "email"
+		case "{__receiver__=\"pagerduty\"}":
+			expectedReceiver = "pagerduty"
+		}
+		if expectedReceiver != "" {
+			require.Equal(t, expectedReceiver, route.RouteOpts.Receiver,
+				"Route %s should have receiver %s", routeID, expectedReceiver)
+		}
+		totalAggrGroups += len(groups)
+	}
+
+	require.Equal(t, 5, totalAggrGroups, "Should have exactly 5 aggregation groups")
+
+	expectedGroupCounts := map[string]int{
+		"{__receiver__=\"slack\"}": 3,
+		"{__receiver__=\"email\"}": 2,
+	}
+
+	for route, groups := range aggrGroupsPerRoute {
+		routeID := route.ID()
+		if expectedCount, exists := expectedGroupCounts[routeID]; exists {
+			require.Equal(t, expectedCount, len(groups),
+				"Route %s should have %d groups, got %d", routeID, expectedCount, len(groups))
+		}
+	}
+
+	// Verify alert groups contain expected alerts
+	require.Len(t, alertGroups, 5)
+
+	// Verify receivers mapping - based on NotificationPolicy routing without ruleID
+	expectedReceivers := map[model.Fingerprint][]string{
+		inputAlerts[0].Fingerprint(): {"slack"},
+		inputAlerts[6].Fingerprint(): {"slack"},
+		inputAlerts[4].Fingerprint(): {"email", "slack"},
+		inputAlerts[5].Fingerprint(): {"email"},
+	}
+	require.Equal(t, expectedReceivers, receivers)
 }
 
 type recordStage struct {
@@ -942,36 +1185,75 @@ func TestDispatcherRace(t *testing.T) {
 
 func TestDispatcherRaceOnFirstAlertNotDeliveredWhenGroupWaitIsZero(t *testing.T) {
 	const numAlerts = 5000
+	confData := `receivers:
+- name: 'slack'
+- name: 'email'
+- name: 'pagerduty'
 
-	logger := promslog.NewNopLogger()
-	marker := amTypes.NewMarker(prometheus.NewRegistry())
+route:
+  group_by: ['alertname']
+  group_wait: 1h
+  group_interval: 1h
+  receiver: 'slack'`
+	conf, err := config.Load(confData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	route := dispatch.NewRoute(conf.Route, nil)
+	providerSettings := createTestProviderSettings()
+	logger := providerSettings.Logger
+	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
 	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, nil, logger, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer alerts.Close()
-
-	route := &dispatch.Route{
-		RouteOpts: dispatch.RouteOpts{
-			Receiver:       "default",
-			GroupBy:        map[model.LabelName]struct{}{"ruleId": {}},
-			GroupWait:      0,
-			GroupInterval:  1 * time.Hour, // Should never hit in this test.
-			RepeatInterval: 1 * time.Hour, // Should never hit in this test.
-		},
-	}
-
 	timeout := func(d time.Duration) time.Duration { return d }
 	recorder := &recordStage{alerts: make(map[string]map[model.Fingerprint]*amTypes.Alert)}
 	metrics := NewDispatcherMetrics(false, prometheus.NewRegistry())
-	nfManager := nfmanagertest.NewMock()
-	dispatcher := NewDispatcher(alerts, route, recorder, marker, timeout, nil, logger, metrics, nfManager, "test-org")
+	store := nfroutingstoretest.NewMockSQLRouteStore()
+	nfManager, err := rulebasednotification.New(context.Background(), providerSettings, nfmanager.Config{}, store)
+	if err != nil {
+		t.Fatal(err)
+	}
+	orgId := "test-org"
+
+	dispatcher := NewDispatcher(alerts, route, recorder, marker, timeout, nil, logger, metrics, nfManager, orgId)
 	go dispatcher.Run()
 	defer dispatcher.Stop()
 
-	// Push all alerts.
+	// Push all alerts and set up notification configs.
 	for i := 0; i < numAlerts; i++ {
-		alert := newAlert(model.LabelSet{"ruleId": model.LabelValue(fmt.Sprintf("Alert_%d", i))})
+		ruleId := fmt.Sprintf("Alert_%d", i)
+
+		// Set up notification config for this ruleId
+		notifConfig := alertmanagertypes.NotificationConfig{
+			NotificationGroup: map[model.LabelName]struct{}{
+				model.LabelName("ruleId"): {},
+			},
+			Renotify: alertmanagertypes.ReNotificationConfig{
+				RenotifyInterval: 1 * time.Hour,
+			},
+			NotificationPolicy: false,
+		}
+		route := &alertmanagertypes.ExpressionRoute{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			Expression:     fmt.Sprintf(`ruleId == "%s"`, ruleId),
+			ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+			Priority:       "1",
+			Name:           ruleId,
+			Description:    "Route for OtherAlert critical to Slack",
+			Enabled:        true,
+			OrgID:          orgId,
+			Channels:       []string{"slack"},
+		}
+		store.ExpectGetAllByName(orgId, ruleId, []*alertmanagertypes.ExpressionRoute{route})
+		err := nfManager.SetNotificationConfig(orgId, ruleId, &notifConfig)
+		require.NoError(t, err)
+
+		alert := newAlert(model.LabelSet{"ruleId": model.LabelValue(ruleId)})
 		require.NoError(t, alerts.Put(alert))
 	}
 
@@ -981,11 +1263,9 @@ func TestDispatcherRaceOnFirstAlertNotDeliveredWhenGroupWaitIsZero(t *testing.T)
 			break
 		}
 
-		// Throttle.
 		time.Sleep(10 * time.Millisecond)
 	}
 
-	// We expect all alerts to be notified immediately, since they all belong to different groups.
 	require.Len(t, recorder.Alerts(), numAlerts)
 }
 

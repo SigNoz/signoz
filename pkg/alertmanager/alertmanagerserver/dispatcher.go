@@ -3,6 +3,7 @@ package alertmanagerserver
 import (
 	"context"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"log/slog"
 	"sort"
@@ -18,10 +19,6 @@ import (
 	"github.com/prometheus/alertmanager/store"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-)
-
-const (
-	noDataLabel = model.LabelName("nodata")
 )
 
 // Dispatcher sorts incoming alerts into aggregation groups and
@@ -310,9 +307,9 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 	}
 	renotifyInterval := config.Renotify.RenotifyInterval
 
-	if noDataAlert(alert) {
+	if alertmanagertypes.NoDataAlert(alert) {
 		renotifyInterval = config.Renotify.NoDataInterval
-		groupLabels[noDataLabel] = alert.Labels[noDataLabel]
+		groupLabels[alertmanagertypes.NoDataLabel] = alert.Labels[alertmanagertypes.NoDataLabel]
 	}
 
 	ag = newAggrGroup(d.ctx, groupLabels, route, d.timeout, d.logger, renotifyInterval)
@@ -561,14 +558,6 @@ func getGroupLabels(alert *types.Alert, groups map[model.LabelName]struct{}) mod
 	}
 
 	return groupLabels
-}
-
-func noDataAlert(alert *types.Alert) bool {
-	if _, ok := alert.Labels[noDataLabel]; ok {
-		return true
-	} else {
-		return false
-	}
 }
 
 func (d *Dispatcher) getOrCreateRoute(receiver string) *dispatch.Route {

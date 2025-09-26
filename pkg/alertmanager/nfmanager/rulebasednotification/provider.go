@@ -188,6 +188,13 @@ func (r *provider) Match(ctx context.Context, orgID string, ruleID string, set m
 			return []string{}, errors.NewInternalf(errors.CodeInternal, "error getting expression routes: %v", err)
 		}
 	}
+	if _, ok := set[alertmanagertypes.NoDataLabel]; ok && !config.NotificationPolicy {
+		var matchedChannels []string
+		for _, expressionRoute := range expressionRoutes {
+			matchedChannels = append(matchedChannels, expressionRoute.Channels...)
+		}
+		return matchedChannels, nil
+	}
 
 	var matchedChannels []string
 	for _, route := range expressionRoutes {

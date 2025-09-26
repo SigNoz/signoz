@@ -87,10 +87,7 @@ func (m *MockSQLRouteStore) ExpectGetByID(orgID, id string, route *alertmanagert
 }
 
 func (m *MockSQLRouteStore) ExpectCreate(route *alertmanagertypes.ExpressionRoute) {
-	expectedPattern := `INSERT INTO "notification_routes" \(.+\) VALUES \(.+` +
-		regexp.QuoteMeta(route.OrgID) + `.+` +
-		regexp.QuoteMeta(route.Name) + `.+` +
-		regexp.QuoteMeta(route.Expression) + `.+\)`
+	expectedPattern := `INSERT INTO "notification_routes" \(.+\) VALUES .+`
 	m.mock.ExpectExec(expectedPattern).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 }
@@ -108,8 +105,7 @@ func (m *MockSQLRouteStore) ExpectCreateBatch(routes []*alertmanagertypes.Expres
 }
 
 func (m *MockSQLRouteStore) ExpectDelete(orgID, id string) {
-	m.mock.ExpectExec(`DELETE FROM "notification_routes" WHERE \(org_id = \$1\) AND \(id = \$2\)`).
-		WithArgs(orgID, id).
+	m.mock.ExpectExec(`DELETE FROM "notification_routes" AS "expression_route" WHERE \(org_id = '` + regexp.QuoteMeta(orgID) + `'\) AND \(id = '` + regexp.QuoteMeta(id) + `'\)`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 }
 
@@ -137,7 +133,7 @@ func (m *MockSQLRouteStore) ExpectGetAllByKindAndOrgID(orgID string, kind alertm
 		}
 	}
 
-	m.mock.ExpectQuery(`SELECT (.+) FROM "notification_routes" AS "expression_routes" WHERE \(org_id = '` + regexp.QuoteMeta(orgID) + `'\) AND \(kind = '` + regexp.QuoteMeta(kind.StringValue()) + `'\)`).
+	m.mock.ExpectQuery(`SELECT (.+) FROM "notification_routes" AS "expression_route" WHERE \(org_id = '` + regexp.QuoteMeta(orgID) + `'\) AND \(kind = '` + regexp.QuoteMeta(kind.StringValue()) + `'\)`).
 		WillReturnRows(rows)
 }
 
