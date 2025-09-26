@@ -17,6 +17,7 @@ import { IntegrationConnectionStatus } from 'types/api/integrations/types';
 
 import { INTEGRATION_TELEMETRY_EVENTS } from '../utils';
 import TestConnection, { ConnectionStates } from './TestConnection';
+import DecorativeImage from 'components/DecorativeImage/DecorativeImage';
 
 interface IntegrationDetailHeaderProps {
 	id: string;
@@ -120,7 +121,7 @@ function IntegrationDetailHeader(
 			<div className="integration-detail-header" key={id}>
 				<div style={{ display: 'flex', gap: '10px' }}>
 					<div className="image-container">
-						<img src={icon} alt={title} className="image" />
+						<DecorativeImage src={icon} className="image" />
 					</div>
 					<div className="details">
 						<Typography.Text className="heading">{title}</Typography.Text>
