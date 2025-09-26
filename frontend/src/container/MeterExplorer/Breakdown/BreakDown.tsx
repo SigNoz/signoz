@@ -119,7 +119,7 @@ function BreakDown(): JSX.Element {
 						type="info"
 						showIcon
 						message="Billing is calculated in UTC. To match your meter data with billing, select full-day ranges in UTC time (00:00 – 23:59 UTC). 
-						For example, if you’re in IST, for the billing of Jan 1, select your time range as Jan 1, 5:30 AM – Jan 2, 5:29 AM IST."
+						For example, if you’re in PST, for the billing of Jan 2, select your time range as Jan 1, 5:00 PM – Jan 2, 4:59 PM PST." // to PT timezone (PST)
 					/>
 					{isCloudUser && (
 						<Alert
