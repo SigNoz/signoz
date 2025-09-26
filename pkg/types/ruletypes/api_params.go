@@ -3,6 +3,8 @@ package ruletypes
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"slices"
 	"time"
 	"unicode/utf8"
 
@@ -12,6 +14,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 )
 
 type AlertType string
@@ -57,6 +60,47 @@ type PostableRule struct {
 
 	Evaluation    *EvaluationEnvelope `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
 	SchemaVersion string              `json:"schemaVersion,omitempty"`
+
+	NotificationSettings *NotificationSettings `json:"notificationSettings,omitempty"`
+}
+
+type NotificationSettings struct {
+	NotificationGroupBy []string           `json:"notificationGroupBy,omitempty"`
+	ReNotifyInterval    Duration           `json:"renotify,omitempty"`
+	AlertStates         []model.AlertState `json:"alertStates,omitempty"`
+}
+
+func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanagertypes.NotificationConfig {
+	var renotifyInterval Duration
+	var noDataRenotifyInterval Duration
+	if slices.Contains(ns.AlertStates, model.StateNoData) {
+		noDataRenotifyInterval = ns.ReNotifyInterval
+	}
+	if slices.Contains(ns.AlertStates, model.StateFiring) {
+		renotifyInterval = ns.ReNotifyInterval
+	}
+	return alertmanagertypes.NewNotificationConfig(ns.NotificationGroupBy, time.Duration(renotifyInterval), time.Duration(noDataRenotifyInterval))
+}
+
+func (ns *NotificationSettings) UnmarshalJSON(data []byte) error {
+	type Alias NotificationSettings
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(ns),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	// Validate states after unmarshaling
+	for _, state := range ns.AlertStates {
+		if state != model.StateFiring && state != model.StateNoData {
+			return fmt.Errorf("invalid alert state: %s", state)
+		}
+	}
+	return nil
 }
 
 func (r *PostableRule) processRuleDefaults() error {
