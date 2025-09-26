@@ -595,6 +595,13 @@ function NewWidget({
 			selectedGraph,
 		);
 		setGraphType(type);
+
+		// with a single source of truth for stacking, we can use the saved stacking value as a default value
+		const savedStackingValue = getWidget()?.stackedBarChart;
+		setStackedBarChart(
+			type === PANEL_TYPES.BAR ? savedStackingValue || false : false,
+		);
+
 		redirectWithQueryBuilderData(
 			updatedQuery,
 			{ [QueryParams.graphType]: type },
