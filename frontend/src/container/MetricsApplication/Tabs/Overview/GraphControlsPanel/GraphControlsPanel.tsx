@@ -6,9 +6,9 @@ import { Binoculars, DraftingCompass, ScrollText } from 'lucide-react';
 
 interface GraphControlsPanelProps {
 	id: string;
-	onViewLogsClick?: () => void;
-	onViewTracesClick: () => void;
-	onViewAPIMonitoringClick?: () => void;
+	onViewLogsClick?: (e: React.MouseEvent) => void;
+	onViewTracesClick: (e: React.MouseEvent) => void;
+	onViewAPIMonitoringClick?: (e: React.MouseEvent) => void;
 }
 
 function GraphControlsPanel({
@@ -23,7 +23,7 @@ function GraphControlsPanel({
 				type="link"
 				icon={<DraftingCompass size={14} />}
 				size="small"
-				onClick={onViewTracesClick}
+				onClick={(e: React.MouseEvent): void => onViewTracesClick(e)}
 				style={{ color: Color.BG_VANILLA_100 }}
 			>
 				View traces
@@ -33,7 +33,7 @@ function GraphControlsPanel({
 					type="link"
 					icon={<ScrollText size={14} />}
 					size="small"
-					onClick={onViewLogsClick}
+					onClick={(e: React.MouseEvent): void => onViewLogsClick(e)}
 					style={{ color: Color.BG_VANILLA_100 }}
 				>
 					View logs
@@ -44,7 +44,7 @@ function GraphControlsPanel({
 					type="link"
 					icon={<Binoculars size={14} />}
 					size="small"
-					onClick={onViewAPIMonitoringClick}
+					onClick={(e: React.MouseEvent): void => onViewAPIMonitoringClick(e)}
 					style={{ color: Color.BG_VANILLA_100 }}
 				>
 					View External APIs

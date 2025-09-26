@@ -79,7 +79,7 @@ function OldLogsExplorer(): JSX.Element {
 		});
 		const params = new URLSearchParams(location.search);
 		params.set(QueryParams.order, value);
-		history.push({ search: params.toString() });
+		history.push(`${history.location.pathname}?${params.toString()}`);
 	};
 
 	return (
