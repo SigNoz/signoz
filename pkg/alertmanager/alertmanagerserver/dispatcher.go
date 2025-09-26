@@ -577,8 +577,6 @@ func (d *Dispatcher) getOrCreateRoute(receiver string) *dispatch.Route {
 			Type:  labels.MatchEqual,
 		}},
 	}
-	d.mtx.Lock()
 	d.receiverRoutes[receiver] = route
-	defer d.mtx.Unlock()
 	return route
 }

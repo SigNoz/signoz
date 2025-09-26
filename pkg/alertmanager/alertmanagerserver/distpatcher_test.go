@@ -809,7 +809,7 @@ route:
 		t.Fatal(err)
 	}
 
-	for i := 0; len(recorder.Alerts()) != 9 && i < 25; i++ {
+	for i := 0; len(recorder.Alerts()) != 9; i++ {
 		time.Sleep(400 * time.Millisecond)
 	}
 	require.Len(t, recorder.Alerts(), 9)
@@ -981,7 +981,7 @@ route:
 		newAlert(model.LabelSet{"ruleId": "ruleId-HighLatency", "nodata": "true"}),
 	}
 	// Set up expectations with route filtering for each alert
-	for _, _ = range inputAlerts {
+	for i := 0; i < len(inputAlerts); i++ {
 		store.ExpectGetAllByKindAndOrgID(orgId, alertmanagertypes.PolicyBasedExpression, routes)
 	}
 	notiConfigs := map[string]alertmanagertypes.NotificationConfig{

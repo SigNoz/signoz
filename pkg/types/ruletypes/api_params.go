@@ -113,7 +113,7 @@ func (r *PostableRule) GetInhibitRules(ruleId string) ([]config.InhibitRule, err
 	}
 	var groups []string
 	if r.NotificationSettings != nil {
-		for k, _ := range r.NotificationSettings.GetAlertManagerNotificationConfig().NotificationGroup {
+		for k := range r.NotificationSettings.GetAlertManagerNotificationConfig().NotificationGroup {
 			groups = append(groups, string(k))
 		}
 	}

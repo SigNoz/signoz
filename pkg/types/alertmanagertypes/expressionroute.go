@@ -33,7 +33,7 @@ func (req *PolicyRouteRequest) Validate() error {
 		return fmt.Errorf("name required")
 	}
 
-	if req.Actions.Channels == nil || len(req.Actions.Channels) == 0 {
+	if len(req.Actions.Channels) == 0 {
 		return fmt.Errorf("channels required")
 	}
 	return nil
