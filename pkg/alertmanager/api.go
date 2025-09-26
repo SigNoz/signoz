@@ -376,7 +376,7 @@ func (api *API) UpdateNotificationPolicy(rw http.ResponseWriter, req *http.Reque
 		render.Error(rw, err)
 		return
 	}
-	err = api.alertmanager.UpdateNotificationRouteById(ctx, policyID, &policy)
+	err = api.alertmanager.UpdateNotificationRouteByID(ctx, policyID, &policy)
 	if err != nil {
 		render.Error(rw, err)
 		return

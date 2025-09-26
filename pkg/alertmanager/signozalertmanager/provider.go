@@ -313,7 +313,7 @@ func (provider *provider) GetAllNotificationRoutes(ctx context.Context) ([]*aler
 	return provider.notificationManager.GetAllRoutes(ctx, claims.OrgID)
 }
 
-func (provider *provider) UpdateNotificationRouteById(ctx context.Context, routeID string, route *alertmanagertypes.PolicyRouteRequest) error {
+func (provider *provider) UpdateNotificationRouteByID(ctx context.Context, routeID string, route *alertmanagertypes.PolicyRouteRequest) error {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return errors.NewInvalidInputf(errors.CodeUnauthenticated, "invalid claims: %v", err)
