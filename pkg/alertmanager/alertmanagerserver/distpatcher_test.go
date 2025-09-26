@@ -3,11 +3,6 @@ package alertmanagerserver
 import (
 	"context"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfroutingstore/nfroutingstoretest"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/rulebasednotification"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"log/slog"
 	"reflect"
 	"sort"
@@ -15,20 +10,25 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfroutingstore/nfroutingstoretest"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/rulebasednotification"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/dispatch"
+	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/provider/mem"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
-	"github.com/stretchr/testify/require"
 
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/provider/mem"
+	"github.com/stretchr/testify/require"
 )
 
 func createTestProviderSettings() factory.ProviderSettings {
@@ -551,7 +551,7 @@ route:
 	// Verify specific route group counts
 	expectedGroupCounts := map[string]int{
 		"{__receiver__=\"slack\"}":     2, // OtherAlert + TestingAlert
-		"{__receiver__=\"pagerduty\"}": 2, // 3 HighErrorRate + 1 HighLatency
+		"{__receiver__=\"pagerduty\"}": 2,
 	}
 
 	for route, groups := range aggrGroupsPerRoute {

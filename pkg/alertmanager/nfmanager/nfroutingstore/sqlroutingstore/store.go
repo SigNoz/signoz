@@ -3,6 +3,7 @@ package sqlroutingstore
 import (
 	"context"
 	"database/sql"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	routeTypes "github.com/SigNoz/signoz/pkg/types/alertmanagertypes"

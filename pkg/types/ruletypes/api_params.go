@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/prometheus/alertmanager/config"
 	"slices"
 	"time"
 	"unicode/utf8"
@@ -16,6 +15,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+
+	"github.com/prometheus/alertmanager/config"
 )
 
 type AlertType string

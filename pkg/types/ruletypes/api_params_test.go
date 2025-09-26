@@ -2,9 +2,10 @@ package ruletypes
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )

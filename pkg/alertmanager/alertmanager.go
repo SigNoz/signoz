@@ -2,6 +2,7 @@ package alertmanager
 
 import (
 	"context"
+
 	amConfig "github.com/prometheus/alertmanager/config"
 
 	"github.com/SigNoz/signoz/pkg/errors"

@@ -2,9 +2,10 @@ package alertmanager
 
 import (
 	"context"
+	"sync"
+
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/matcher/compat"
-	"sync"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
