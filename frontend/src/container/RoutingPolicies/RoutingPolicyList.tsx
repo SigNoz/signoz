@@ -13,8 +13,8 @@ function RoutingPolicyList({
 }: RoutingPolicyListProps): JSX.Element {
 	const columns: TableProps<RoutingPolicy>['columns'] = [
 		{
-			title: 'Downtime',
-			key: 'downtime',
+			title: 'Routing Policy',
+			key: 'routingPolicy',
 			render: (data: RoutingPolicy): JSX.Element => (
 				<RoutingPolicyListItem
 					routingPolicy={data}

@@ -22,6 +22,7 @@ function DeleteRoutingPolicy({
 					onClick={handleClose}
 					className="cancel-btn"
 					icon={<X size={16} />}
+					disabled={isDeletingRoutingPolicy}
 				>
 					Cancel
 				</Button>,
