@@ -57,6 +57,7 @@ function RoutingPolicyList({
 			dataSource={routingPolicies}
 			loading={isRoutingPoliciesLoading}
 			showHeader={false}
+			rowKey="id"
 			pagination={{
 				pageSize: 5,
 				showSizeChanger: false,
