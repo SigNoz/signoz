@@ -13,6 +13,7 @@ import {
 	AlertThresholdState,
 	Algorithm,
 	EvaluationWindowState,
+	NotificationSettingsState,
 	Seasonality,
 	Threshold,
 	TimeDuration,
@@ -94,14 +95,14 @@ export const INITIAL_ADVANCED_OPTIONS_STATE: AdvancedOptionsState = {
 			timeUnit: UniversalYAxisUnit.MINUTES,
 		},
 		custom: {
-			repeatEvery: 'week',
-			startAt: '00:00:00',
+			repeatEvery: 'day',
+			startAt: dayjs().format('HH:mm:ss'),
 			occurence: [],
 			timezone: TIMEZONE_DATA[0].value,
 		},
 		rrule: {
 			date: dayjs(),
-			startAt: '00:00:00',
+			startAt: dayjs().format('HH:mm:ss'),
 			rrule: '',
 		},
 	},
@@ -111,7 +112,7 @@ export const INITIAL_EVALUATION_WINDOW_STATE: EvaluationWindowState = {
 	windowType: 'rolling',
 	timeframe: '5m0s',
 	startingAt: {
-		time: '00:00:00',
+		time: dayjs().format('HH:mm:ss'),
 		number: '1',
 		timezone: TIMEZONE_DATA[0].value,
 		unit: UniversalYAxisUnit.MINUTES,
@@ -170,3 +171,22 @@ export const ADVANCED_OPTIONS_TIME_UNIT_OPTIONS = [
 	{ value: UniversalYAxisUnit.HOURS, label: 'Hours' },
 	{ value: UniversalYAxisUnit.DAYS, label: 'Days' },
 ];
+
+export const NOTIFICATION_MESSAGE_PLACEHOLDER =
+	'This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})';
+
+export const RE_NOTIFICATION_CONDITION_OPTIONS = [
+	{ value: 'firing', label: 'Firing' },
+	{ value: 'no-data', label: 'No Data' },
+];
+
+export const INITIAL_NOTIFICATION_SETTINGS_STATE: NotificationSettingsState = {
+	multipleNotifications: [],
+	reNotification: {
+		enabled: false,
+		value: 1,
+		unit: UniversalYAxisUnit.MINUTES,
+		conditions: [],
+	},
+	description: NOTIFICATION_MESSAGE_PLACEHOLDER,
+};

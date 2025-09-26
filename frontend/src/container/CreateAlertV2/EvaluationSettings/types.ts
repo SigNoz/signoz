@@ -9,6 +9,8 @@ export interface IAdvancedOptionItemProps {
 	title: string;
 	description: string;
 	input: JSX.Element;
+	tooltipText?: string;
+	onToggle?: () => void;
 }
 
 export enum RollingWindowTimeframes {
@@ -30,8 +32,6 @@ export enum CumulativeWindowTimeframes {
 export interface IEvaluationWindowPopoverProps {
 	evaluationWindow: EvaluationWindowState;
 	setEvaluationWindow: Dispatch<EvaluationWindowAction>;
-	isOpen: boolean;
-	setIsOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface IEvaluationWindowDetailsProps {
@@ -42,6 +42,12 @@ export interface IEvaluationWindowDetailsProps {
 export interface IEvaluationCadenceDetailsProps {
 	isOpen: boolean;
 	setIsOpen: Dispatch<SetStateAction<boolean>>;
+	setIsCustomScheduleButtonVisible: Dispatch<SetStateAction<boolean>>;
+}
+
+export interface IEvaluationCadencePreviewProps {
+	isOpen: boolean;
+	setIsOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface TimeInputProps {
@@ -50,4 +56,14 @@ export interface TimeInputProps {
 	placeholder?: string;
 	disabled?: boolean;
 	className?: string;
+}
+
+export interface IEditCustomScheduleProps {
+	setIsEvaluationCadenceDetailsVisible: (isOpen: boolean) => void;
+	setIsPreviewVisible: (isOpen: boolean) => void;
+}
+
+export interface IScheduleListProps {
+	schedule: Date[] | null;
+	currentTimezone: string;
 }
