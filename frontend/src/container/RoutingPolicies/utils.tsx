@@ -3,33 +3,10 @@ import { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolici
 import { UpdateRoutingPolicyBody } from 'api/routingPolicies/updateRoutingPolicy';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
-import { INITIAL_CREATE_ROUTING_POLICY_STATE } from './constants';
-import {
-	CreateRoutingPolicyAction,
-	CreateRoutingPolicyState,
-	RoutingPolicy,
-} from './types';
+import { RoutingPolicy } from './types';
 
 export function showRoutingPoliciesPage(): boolean {
 	return localStorage.getItem('showRoutingPoliciesPage') === 'true';
-}
-
-export function createRoutingPolicyReducer(
-	state: CreateRoutingPolicyState,
-	action: CreateRoutingPolicyAction,
-): CreateRoutingPolicyState {
-	switch (action.type) {
-		case 'SET_NAME':
-			return { ...state, name: action.payload };
-		case 'SET_EXPRESSION':
-			return { ...state, expression: action.payload };
-		case 'SET_CHANNELS':
-			return { ...state, channels: action.payload };
-		case 'RESET':
-			return INITIAL_CREATE_ROUTING_POLICY_STATE;
-		default:
-			return state;
-	}
 }
 
 export function mapApiResponseToRoutingPolicies(

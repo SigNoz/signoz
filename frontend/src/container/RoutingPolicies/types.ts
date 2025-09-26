@@ -54,7 +54,7 @@ export interface PolicyListItemContentProps {
 	routingPolicy: RoutingPolicy;
 }
 
-export interface CreateRoutingPolicyProps {
+export interface RoutingPolicyDetailsProps {
 	routingPolicy: RoutingPolicy | null;
 	closeModal: () => void;
 	mode: PolicyDetailsModalMode;
@@ -101,14 +101,8 @@ export interface PolicyDetailsModalState {
 	isOpen: boolean;
 }
 
-export interface CreateRoutingPolicyState {
+export interface RoutingPolicyDetailsFormState {
 	name: string;
 	expression: string;
 	channels: string[];
 }
-
-export type CreateRoutingPolicyAction =
-	| { type: 'SET_NAME'; payload: string }
-	| { type: 'SET_EXPRESSION'; payload: string }
-	| { type: 'SET_CHANNELS'; payload: string[] }
-	| { type: 'RESET' };

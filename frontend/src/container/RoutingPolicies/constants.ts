@@ -1,6 +1,6 @@
-import { CreateRoutingPolicyState } from './types';
+import { RoutingPolicyDetailsFormState } from './types';
 
-export const INITIAL_CREATE_ROUTING_POLICY_STATE: CreateRoutingPolicyState = {
+export const INITIAL_ROUTING_POLICY_DETAILS_FORM_STATE: RoutingPolicyDetailsFormState = {
 	name: '',
 	expression: '',
 	channels: [],

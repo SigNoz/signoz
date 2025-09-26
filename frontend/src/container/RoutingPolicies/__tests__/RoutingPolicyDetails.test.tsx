@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import * as appHooks from 'providers/App/App';
 
 import RoutingPolicyDetails from '../RoutingPolicyDetails';
@@ -119,10 +119,20 @@ describe('RoutingPolicyDetails', () => {
 		const channelOption = await screen.findByText('Channel 1');
 		fireEvent.click(channelOption);
 
+		// Wait for the form to be valid before submitting
+		await waitFor(() => {
+			expect(screen.getByDisplayValue(NEW_NAME)).toBeInTheDocument();
+		});
+
 		const saveButton = screen.getByRole('button', {
 			name: 'Save Routing Policy',
 		});
 		fireEvent.click(saveButton);
+
+		// Wait for the form submission to complete
+		await waitFor(() => {
+			expect(mockHandlePolicyDetailsModalAction).toHaveBeenCalled();
+		});
 
 		expect(mockHandlePolicyDetailsModalAction).toHaveBeenCalledWith('create', {
 			name: NEW_NAME,
@@ -132,7 +142,7 @@ describe('RoutingPolicyDetails', () => {
 		});
 	});
 
-	it('editing and saving the routing policy works correctly', () => {
+	it('editing and saving the routing policy works correctly', async () => {
 		render(
 			<RoutingPolicyDetails
 				routingPolicy={mockRoutingPolicy}
@@ -155,10 +165,20 @@ describe('RoutingPolicyDetails', () => {
 		fireEvent.change(nameInput, { target: { value: NEW_NAME } });
 		fireEvent.change(expressionTextarea, { target: { value: NEW_EXPRESSION } });
 
+		// Wait for the form to be valid before submitting
+		await waitFor(() => {
+			expect(screen.getByDisplayValue(NEW_NAME)).toBeInTheDocument();
+		});
+
 		const saveButton = screen.getByRole('button', {
 			name: SAVE_BUTTON_TEXT,
 		});
 		fireEvent.click(saveButton);
+
+		// Wait for the form submission to complete
+		await waitFor(() => {
+			expect(mockHandlePolicyDetailsModalAction).toHaveBeenCalled();
+		});
 
 		expect(mockHandlePolicyDetailsModalAction).toHaveBeenCalledWith('edit', {
 			name: NEW_NAME,
