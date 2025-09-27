@@ -122,6 +122,9 @@ type AuthDomainStore interface {
 	// Get by name.
 	GetByName(ctx context.Context, name string) (*AuthDomain, error)
 
+	// Get by name and orgID.
+	GetByNameAndOrgID(ctx context.Context, name string, orgID valuer.UUID) (*AuthDomain, error)
+
 	// List org domains by orgID.
 	ListByOrgID(ctx context.Context, orgId valuer.UUID) ([]*AuthDomain, error)
 
