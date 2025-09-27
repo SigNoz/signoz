@@ -129,8 +129,8 @@ type TokenStore interface {
 	// Create a new token.
 	Create(context.Context, *StorableToken) error
 
-	// Get an authenticated user by userID.
-	GetAuthenticatedUserByUserID(context.Context, valuer.UUID) (*AuthenticatedUser, error)
+	// Get an identity by userID.
+	GetIdentityByUserID(context.Context, valuer.UUID) (*Identity, error)
 
 	// Get a token by AccessToken.
 	GetByAccessToken(context.Context, string) (*StorableToken, error)
@@ -141,6 +141,9 @@ type TokenStore interface {
 	// List all tokens by orgID.
 	ListByOrgID(context.Context, valuer.UUID) ([]*StorableToken, error)
 
+	// List all tokens by userID.
+	ListByUserID(context.Context, valuer.UUID) ([]*StorableToken, error)
+
 	// Update a token.
 	Update(context.Context, *StorableToken) error
 
@@ -149,4 +152,7 @@ type TokenStore interface {
 
 	// Delete many tokens by IDs.
 	DeleteMany(context.Context, []valuer.UUID) error
+
+	// Delete a token by userID.
+	DeleteByUserID(context.Context, valuer.UUID) error
 }

@@ -34,6 +34,28 @@ type Invite struct {
 	InviteLink string `bun:"-" json:"inviteLink"`
 }
 
+type InviteEmailData struct {
+	CustomerName string
+	InviterName  string
+	InviterEmail string
+	Link         string
+}
+
+type PostableInvite struct {
+	Name            string `json:"name"`
+	Email           string `json:"email"`
+	Role            Role   `json:"role"`
+	FrontendBaseUrl string `json:"frontendBaseUrl"`
+}
+
+type PostableBulkInviteRequest struct {
+	Invites []PostableInvite `json:"invites"`
+}
+
+type GettableCreateInviteResponse struct {
+	InviteToken string `json:"token"`
+}
+
 func NewInvite(orgID, role, name, email string) (*Invite, error) {
 	if email == "" {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
@@ -61,26 +83,4 @@ func NewInvite(orgID, role, name, email string) (*Invite, error) {
 	}
 
 	return invite, nil
-}
-
-type InviteEmailData struct {
-	CustomerName string
-	InviterName  string
-	InviterEmail string
-	Link         string
-}
-
-type PostableInvite struct {
-	Name            string `json:"name"`
-	Email           string `json:"email"`
-	Role            Role   `json:"role"`
-	FrontendBaseUrl string `json:"frontendBaseUrl"`
-}
-
-type PostableBulkInviteRequest struct {
-	Invites []PostableInvite `json:"invites"`
-}
-
-type GettableCreateInviteResponse struct {
-	InviteToken string `json:"token"`
 }

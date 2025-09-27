@@ -43,9 +43,51 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 	}
 }
 
+func (m *Module) AcceptInvite(ctx context.Context, token string, password string) (*types.User, error) {
+	invite, err := m.store.GetInviteByToken(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	role, err := types.NewRole(invite.Role)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := types.NewUser(invite.Name, invite.Email, role, invite.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	factorPassword, err := types.NewFactorPassword(password, user.ID.StringValue())
+	if err != nil {
+		return nil, err
+	}
+
+	err = m.CreateUser(ctx, user, root.WithFactorPassword(factorPassword))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := m.DeleteInvite(ctx, invite.OrgID, invite.ID); err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Invite, error) {
+	invite, err := m.store.GetInviteByToken(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	return &invite.Invite, nil
+}
+
 // CreateBulk implements invite.Module.
 func (m *Module) CreateBulkInvite(ctx context.Context, orgID, userID string, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error) {
-	creator, err := m.GetUserByID(ctx, orgID, userID)
+	creator, err := m.store.GetUser(ctx, valuer.MustNewUUID(userID))
 	if err != nil {
 		return nil, err
 	}
@@ -54,16 +96,17 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID, userID string, bul
 
 	for _, invite := range bulkInvites.Invites {
 		// check if user exists
-		existingUser, err := m.GetUserByEmailInOrg(ctx, orgID, invite.Email)
+		existingUser, err := m.store.GetUserByEmailAndOrgID(ctx, invite.Email, valuer.MustNewUUID(orgID))
 		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
 		}
+
 		if existingUser != nil {
 			return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with the same email")
 		}
 
 		// Check if an invite already exists
-		existingInvite, err := m.GetInviteByEmailInOrg(ctx, orgID, invite.Email)
+		existingInvite, err := m.store.GetInviteByEmailInOrg(ctx, orgID, invite.Email)
 		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
 		}
@@ -120,14 +163,6 @@ func (m *Module) DeleteInvite(ctx context.Context, orgID string, id valuer.UUID)
 	return m.store.DeleteInvite(ctx, orgID, id)
 }
 
-func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.GettableInvite, error) {
-	return m.store.GetInviteByToken(ctx, token)
-}
-
-func (m *Module) GetInviteByEmailInOrg(ctx context.Context, orgID string, email string) (*types.Invite, error) {
-	return m.store.GetInviteByEmailInOrg(ctx, orgID, email)
-}
-
 func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
 	createUserOpts := root.NewCreateUserOptions(opts...)
 
@@ -154,21 +189,13 @@ func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ..
 	return nil
 }
 
-func (m *Module) GetUserByID(ctx context.Context, orgID string, id string) (*types.GettableUser, error) {
-	return m.store.GetUserByID(ctx, orgID, id)
-}
-
-func (m *Module) ListUsers(ctx context.Context, orgID string) ([]*types.GettableUser, error) {
-	return m.store.ListUsers(ctx, orgID)
-}
-
 func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *types.User, updatedBy string) (*types.User, error) {
-	existingUser, err := m.GetUserByID(ctx, orgID, id)
+	existingUser, err := m.store.GetUser(ctx, valuer.MustNewUUID(id))
 	if err != nil {
 		return nil, err
 	}
 
-	requestor, err := m.GetUserByID(ctx, orgID, updatedBy)
+	requestor, err := m.store.GetUser(ctx, valuer.MustNewUUID(updatedBy))
 	if err != nil {
 		return nil, err
 	}
@@ -224,13 +251,15 @@ func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *
 		}
 	}
 
-	// Update tokenizer cache
+	if err := m.tokenizer.DeleteIdentity(ctx, valuer.MustNewUUID(id)); err != nil {
+		return nil, err
+	}
 
 	return updatedUser, nil
 }
 
 func (m *Module) DeleteUser(ctx context.Context, orgID string, id string, deletedBy string) error {
-	user, err := m.store.GetUserByID(ctx, orgID, id)
+	user, err := m.store.GetUser(ctx, valuer.MustNewUUID(id))
 	if err != nil {
 		return err
 	}
@@ -240,7 +269,7 @@ func (m *Module) DeleteUser(ctx context.Context, orgID string, id string, delete
 	}
 
 	// don't allow to delete the last admin user
-	adminUsers, err := m.GetUsersByRoleInOrg(ctx, orgID, types.RoleAdmin)
+	adminUsers, err := m.store.GetUsersByRoleInOrg(ctx, orgID, types.RoleAdmin)
 	if err != nil {
 		return err
 	}
@@ -295,8 +324,6 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 		}
 	}
 
-	// Update tokenizer cache
-
 	return resetPasswordToken, nil
 }
 
@@ -332,32 +359,37 @@ func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, ol
 		return err
 	}
 
-	return module.store.UpdatePassword(ctx, password)
+	if err := module.store.UpdatePassword(ctx, password); err != nil {
+		return err
+	}
 
-	// Update tokenizer cache
+	return module.tokenizer.DeleteTokensByUserID(ctx, userID)
 }
 
 func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opts ...root.CreateUserOption) (*types.User, error) {
-	user, err := module.store.GetUserByEmailAndOrgID(ctx, user.Email, valuer.MustNewUUID(user.OrgID))
+	existingUser, err := module.store.GetUserByEmailAndOrgID(ctx, user.Email, valuer.MustNewUUID(user.OrgID))
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
 		}
 	}
 
-	if user == nil {
-		user, err = types.NewUser(user.DisplayName, user.Email, user.Role, user.OrgID)
-		if err != nil {
-			return nil, err
-		}
-
-		err = module.CreateUser(ctx, user, opts...)
-		if err != nil {
-			return nil, err
-		}
+	if existingUser != nil {
+		return existingUser, nil
 	}
 
-	return user, nil
+	newUser, err := types.NewUser(user.DisplayName, user.Email, user.Role, user.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = module.CreateUser(ctx, newUser, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return newUser, nil
+
 }
 
 func (m *Module) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {

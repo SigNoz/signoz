@@ -150,7 +150,7 @@ type UserStore interface {
 
 	// Creates a user.
 	CreateUser(ctx context.Context, user *User) error
-	GetUserByID(ctx context.Context, orgID string, id string) (*GettableUser, error)
+	GetUser(context.Context, valuer.UUID) (*User, error)
 	GetUserByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*User, error)
 	GetUsersByEmail(ctx context.Context, email string) ([]*User, error)
 	GetUsersByRoleInOrg(ctx context.Context, orgID string, role Role) ([]*GettableUser, error)

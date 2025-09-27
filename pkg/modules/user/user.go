@@ -30,16 +30,15 @@ type Module interface {
 	// Updates password of user to the new password. It also deletes all reset password tokens for the user.
 	UpdatePassword(ctx context.Context, userID valuer.UUID, oldPassword string, password string) error
 
+	UpdateUser(ctx context.Context, orgID string, id string, user *types.User, updatedBy string) (*types.User, error)
+	DeleteUser(ctx context.Context, orgID string, id string, deletedBy string) error
+
 	// invite
 	CreateBulkInvite(ctx context.Context, orgID, userID string, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error)
 	ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error)
 	DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error
-	GetInviteByToken(ctx context.Context, token string) (*types.GettableInvite, error)
-	GetInviteByEmailInOrg(ctx context.Context, orgID string, email string) (*types.Invite, error)
-	GetUserByID(ctx context.Context, orgID string, id string) (*types.GettableUser, error)
-	ListUsers(ctx context.Context, orgID string) ([]*types.GettableUser, error)
-	UpdateUser(ctx context.Context, orgID string, id string, user *types.User, updatedBy string) (*types.User, error)
-	DeleteUser(ctx context.Context, orgID string, id string, deletedBy string) error
+	AcceptInvite(ctx context.Context, token string, password string) (*types.User, error)
+	GetInviteByToken(ctx context.Context, token string) (*types.Invite, error)
 
 	// API KEY
 	CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error
@@ -54,6 +53,12 @@ type Module interface {
 type Getter interface {
 	// Get gets the users based on the given id
 	ListByOrgID(context.Context, valuer.UUID) ([]*types.User, error)
+
+	// Get users by email.
+	GetUsersByEmail(context.Context, string) ([]*types.User, error)
+
+	// Get user by id.
+	GetUser(context.Context, valuer.UUID) (*types.User, error)
 }
 
 type Handler interface {
