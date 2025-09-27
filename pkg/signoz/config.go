@@ -29,6 +29,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/spf13/cobra"
@@ -92,6 +93,9 @@ type Config struct {
 
 	// Gateway config
 	Gateway gateway.Config `mapstructure:"gateway"`
+
+	// Tokenizer config
+	Tokenizer tokenizer.Config `mapstructure:"tokenizer"`
 }
 
 // DeprecatedFlags are the flags that are deprecated and scheduled for removal.
@@ -150,6 +154,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		sharder.NewConfigFactory(),
 		statsreporter.NewConfigFactory(),
 		gateway.NewConfigFactory(),
+		tokenizer.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)

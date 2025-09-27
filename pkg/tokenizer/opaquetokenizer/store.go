@@ -42,7 +42,7 @@ func (store *store) GetAuthenticatedUserByUserID(ctx context.Context, userID val
 		Where("id = ?", userID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrUserNotFound, "user with id: %s does not exist", userID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with id: %s does not exist", userID)
 	}
 
 	return authtypes.NewAuthenticatedUser(userID, valuer.MustNewUUID(user.OrgID), user.Email, types.Role(user.Role)), nil
