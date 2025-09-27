@@ -7,7 +7,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/ssotypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -40,10 +39,10 @@ type StorableAuthDomain struct {
 }
 
 type AuthDomainConfig struct {
-	SSOEnabled    bool                        `json:"ssoEnabled"`
-	AuthNProvider AuthNProvider               `json:"ssoType"`
-	SAML          *ssotypes.SamlConfig        `json:"samlConfig"`
-	Google        *ssotypes.GoogleOAuthConfig `json:"googleAuthConfig"`
+	SSOEnabled    bool          `json:"ssoEnabled"`
+	AuthNProvider AuthNProvider `json:"ssoType"`
+	SAML          *SamlConfig   `json:"samlConfig"`
+	Google        *GoogleConfig `json:"googleAuthConfig"`
 }
 
 type AuthDomain struct {
