@@ -6,7 +6,6 @@ export interface UpdateRoutingPolicyBody {
 	name: string;
 	expression: string;
 	channels: string[];
-	updatedBy: string;
 }
 
 // TODO: Add the correct interface

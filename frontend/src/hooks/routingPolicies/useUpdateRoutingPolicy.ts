@@ -5,7 +5,7 @@ import updateRoutingPolicy, {
 import { useMutation, UseMutationResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
-interface UseUpdateMetricMetadataProps {
+interface UseUpdateRoutingPolicyProps {
 	id: string;
 	payload: UpdateRoutingPolicyBody;
 }
@@ -13,12 +13,12 @@ interface UseUpdateMetricMetadataProps {
 export function useUpdateRoutingPolicy(): UseMutationResult<
 	SuccessResponse<UpdateRoutingPolicyResponse> | ErrorResponse,
 	Error,
-	UseUpdateMetricMetadataProps
+	UseUpdateRoutingPolicyProps
 > {
 	return useMutation<
 		SuccessResponse<UpdateRoutingPolicyResponse> | ErrorResponse,
 		Error,
-		UseUpdateMetricMetadataProps
+		UseUpdateRoutingPolicyProps
 	>({
 		mutationFn: ({ id, payload }) => updateRoutingPolicy(id, payload),
 	});

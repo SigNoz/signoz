@@ -6,7 +6,6 @@ export interface CreateRoutingPolicyBody {
 	name: string;
 	expression: string;
 	channels: string[];
-	createdBy: string;
 }
 
 // TODO: Add the correct interface

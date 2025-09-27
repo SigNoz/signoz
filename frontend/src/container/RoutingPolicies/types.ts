@@ -22,7 +22,6 @@ type HandlePolicyDetailsModalAction = (
 		name: string;
 		expression: string;
 		channels: string[];
-		userEmail: string;
 	},
 ) => void;
 

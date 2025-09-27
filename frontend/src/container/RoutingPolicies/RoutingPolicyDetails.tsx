@@ -10,7 +10,6 @@ import {
 } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { ModalTitle } from 'container/PipelinePage/PipelineListsView/styles';
-import { useAppContext } from 'providers/App/App';
 import { useMemo } from 'react';
 
 import { INITIAL_ROUTING_POLICY_DETAILS_FORM_STATE } from './constants';
@@ -27,7 +26,6 @@ function RoutingPolicyDetails({
 	handlePolicyDetailsModalAction,
 	isPolicyDetailsModalActionLoading,
 }: RoutingPolicyDetailsProps): JSX.Element {
-	const { user } = useAppContext();
 	const [form] = useForm();
 
 	const initialFormState = useMemo(() => {
@@ -49,7 +47,6 @@ function RoutingPolicyDetails({
 			name: form.getFieldValue('name'),
 			expression: form.getFieldValue('expression'),
 			channels: form.getFieldValue('channels'),
-			userEmail: user.email,
 		});
 	};
 	return (
@@ -96,7 +93,7 @@ function RoutingPolicyDetails({
 							]}
 						>
 							<Input.TextArea
-								placeholder="e.g. http.status_code >= 500 AND service.name = 'frontend'"
+								placeholder='e.g. service.name = "payment" && threshold.name = "critical"'
 								autoSize={{ minRows: 1, maxRows: 6 }}
 								style={{ resize: 'none' }}
 							/>

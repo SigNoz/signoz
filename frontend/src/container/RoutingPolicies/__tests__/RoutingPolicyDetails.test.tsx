@@ -1,15 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import * as appHooks from 'providers/App/App';
 
 import RoutingPolicyDetails from '../RoutingPolicyDetails';
 import {
-	getAppContextMockState,
 	MOCK_CHANNEL_1,
 	MOCK_CHANNEL_2,
 	MOCK_ROUTING_POLICY_1,
 } from './testUtils';
-
-jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
 
 const mockHandlePolicyDetailsModalAction = jest.fn();
 const mockCloseModal = jest.fn();
@@ -107,7 +103,7 @@ describe('RoutingPolicyDetails', () => {
 		expect(nameInput).toBeInTheDocument();
 
 		const expressionTextarea = screen.getByPlaceholderText(
-			"e.g. http.status_code >= 500 AND service.name = 'frontend'",
+			'e.g. service.name = "payment" && threshold.name = "critical"',
 		);
 		expect(expressionTextarea).toBeInTheDocument();
 
@@ -138,7 +134,6 @@ describe('RoutingPolicyDetails', () => {
 			name: NEW_NAME,
 			expression: NEW_EXPRESSION,
 			channels: ['1'],
-			userEmail: 'user@signoz.io',
 		});
 	});
 
@@ -184,7 +179,6 @@ describe('RoutingPolicyDetails', () => {
 			name: NEW_NAME,
 			expression: NEW_EXPRESSION,
 			channels: ['1'],
-			userEmail: 'user@signoz.io',
 		});
 	});
 

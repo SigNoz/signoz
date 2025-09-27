@@ -33,26 +33,23 @@ export function mapRoutingPolicyToCreateApiPayload(
 	name: string,
 	expression: string,
 	channels: string[],
-	userEmail: string,
 ): CreateRoutingPolicyBody {
 	return {
 		name,
 		expression,
 		channels,
-		createdBy: userEmail,
 	};
 }
 
+// eslint-disable-next-line sonarjs/no-identical-functions
 export function mapRoutingPolicyToUpdateApiPayload(
 	name: string,
 	expression: string,
 	channels: string[],
-	userEmail: string,
 ): UpdateRoutingPolicyBody {
 	return {
 		name,
 		expression,
 		channels,
-		updatedBy: userEmail,
 	};
 }
