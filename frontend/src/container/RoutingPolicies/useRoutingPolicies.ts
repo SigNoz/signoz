@@ -64,10 +64,15 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		data,
 		isLoading: isLoadingChannels,
 		isError: isErrorChannels,
+		refetch: refetchChannels,
 	} = useQuery<SuccessResponseV2<Channels[]>, APIError>(['getChannels'], {
 		queryFn: () => getAllChannels(),
 	});
 	const channels = data?.data || [];
+
+	const refreshChannels = (): void => {
+		refetchChannels();
+	};
 
 	// Handlers
 	const handlePolicyDetailsModalOpen = (
@@ -211,6 +216,7 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		channels,
 		isLoadingChannels,
 		isErrorChannels,
+		refreshChannels,
 		// Search
 		searchTerm,
 		setSearchTerm,

@@ -62,6 +62,7 @@ export interface RoutingPolicyDetailsProps {
 	isLoadingChannels: boolean;
 	handlePolicyDetailsModalAction: HandlePolicyDetailsModalAction;
 	isPolicyDetailsModalActionLoading: boolean;
+	refreshChannels: () => void;
 }
 
 export interface DeleteRoutingPolicyProps {
@@ -81,6 +82,7 @@ export interface UseRoutingPoliciesReturn {
 	channels: Channels[];
 	isLoadingChannels: boolean;
 	isErrorChannels: boolean;
+	refreshChannels: () => void;
 	// Search
 	searchTerm: string;
 	setSearchTerm: (searchTerm: string) => void;

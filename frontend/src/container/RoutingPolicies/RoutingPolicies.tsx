@@ -25,6 +25,7 @@ function RoutingPolicies(): JSX.Element {
 		channels,
 		isLoadingChannels,
 		isErrorChannels,
+		refreshChannels,
 		// Search
 		searchTerm,
 		setSearchTerm,
@@ -98,6 +99,7 @@ function RoutingPolicies(): JSX.Element {
 						isLoadingChannels={isLoadingChannels}
 						handlePolicyDetailsModalAction={handlePolicyDetailsModalAction}
 						isPolicyDetailsModalActionLoading={isPolicyDetailsModalActionLoading}
+						refreshChannels={refreshChannels}
 					/>
 				)}
 				{isDeleteModalOpen && (

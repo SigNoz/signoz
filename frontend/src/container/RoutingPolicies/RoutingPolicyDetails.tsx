@@ -30,6 +30,7 @@ function RoutingPolicyDetails({
 	routingPolicy,
 	handlePolicyDetailsModalAction,
 	isPolicyDetailsModalActionLoading,
+	refreshChannels,
 }: RoutingPolicyDetailsProps): JSX.Element {
 	const [form] = useForm();
 	const { user } = useAppContext();
@@ -57,22 +58,29 @@ function RoutingPolicyDetails({
 	};
 
 	const notificationChannelsNotFoundContent = (
-		<Flex style={{ padding: '8px' }} gap={8} vertical align="center">
-			<Typography.Text strong>No notification channels found</Typography.Text>
-			{user?.role === USER_ROLES.ADMIN ? (
-				<Button
-					type="default"
-					onClick={(): void => {
-						window.open(ROUTES.CHANNELS_NEW, '_blank');
-					}}
-				>
-					Create a new channel
-				</Button>
-			) : (
-				<Typography.Text>
-					Please ask your admin to create a notification channel
-				</Typography.Text>
-			)}
+		<Flex justify="space-between">
+			<Flex gap={4} align="center">
+				<Typography.Text>No channels yet.</Typography.Text>
+				{user?.role === USER_ROLES.ADMIN ? (
+					<Typography.Text>
+						Create one
+						<Button
+							style={{ padding: '0 4px' }}
+							type="link"
+							onClick={(): void => {
+								window.open(ROUTES.CHANNELS_NEW, '_blank');
+							}}
+						>
+							here.
+						</Button>
+					</Typography.Text>
+				) : (
+					<Typography.Text>Please ask your admin to create one.</Typography.Text>
+				)}
+			</Flex>
+			<Button type="text" onClick={refreshChannels}>
+				Refresh
+			</Button>
 		</Flex>
 	);
 

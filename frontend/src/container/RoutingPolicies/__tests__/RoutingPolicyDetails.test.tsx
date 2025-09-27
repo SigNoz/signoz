@@ -15,11 +15,12 @@ const mockHandlePolicyDetailsModalAction = jest.fn();
 const mockCloseModal = jest.fn();
 const mockChannels = [MOCK_CHANNEL_1, MOCK_CHANNEL_2];
 const mockRoutingPolicy = MOCK_ROUTING_POLICY_1;
+const mockRefreshChannels = jest.fn();
 
 const NEW_NAME = 'New Name';
 const NEW_EXPRESSION = 'New Expression';
 const SAVE_BUTTON_TEXT = 'Save Routing Policy';
-const NO_CHANNELS_FOUND_TEXT = 'No notification channels found';
+const NO_CHANNELS_FOUND_TEXT = 'No channels yet.';
 
 describe('RoutingPolicyDetails', () => {
 	it('renders base create layout with header, 3 inputs and footer', () => {
@@ -33,6 +34,7 @@ describe('RoutingPolicyDetails', () => {
 				isPolicyDetailsModalActionLoading={false}
 				isErrorChannels={false}
 				isLoadingChannels={false}
+				refreshChannels={mockRefreshChannels}
 			/>,
 		);
 
@@ -58,6 +60,7 @@ describe('RoutingPolicyDetails', () => {
 				isPolicyDetailsModalActionLoading={false}
 				isErrorChannels={false}
 				isLoadingChannels={false}
+				refreshChannels={mockRefreshChannels}
 			/>,
 		);
 
@@ -84,6 +87,7 @@ describe('RoutingPolicyDetails', () => {
 				isPolicyDetailsModalActionLoading={false}
 				isErrorChannels={false}
 				isLoadingChannels={false}
+				refreshChannels={mockRefreshChannels}
 			/>,
 		);
 
@@ -109,6 +113,7 @@ describe('RoutingPolicyDetails', () => {
 				isPolicyDetailsModalActionLoading={false}
 				isErrorChannels={false}
 				isLoadingChannels={false}
+				refreshChannels={mockRefreshChannels}
 			/>,
 		);
 
@@ -161,6 +166,7 @@ describe('RoutingPolicyDetails', () => {
 				isPolicyDetailsModalActionLoading={false}
 				isErrorChannels={false}
 				isLoadingChannels={false}
+				refreshChannels={mockRefreshChannels}
 			/>,
 		);
 
@@ -208,6 +214,7 @@ describe('RoutingPolicyDetails', () => {
 				isPolicyDetailsModalActionLoading={false}
 				isErrorChannels={false}
 				isLoadingChannels={false}
+				refreshChannels={mockRefreshChannels}
 			/>,
 		);
 
@@ -227,6 +234,7 @@ describe('RoutingPolicyDetails', () => {
 				isPolicyDetailsModalActionLoading
 				isErrorChannels={false}
 				isLoadingChannels={false}
+				refreshChannels={mockRefreshChannels}
 			/>,
 		);
 
@@ -250,6 +258,7 @@ describe('RoutingPolicyDetails', () => {
 				isPolicyDetailsModalActionLoading={false}
 				isErrorChannels={false}
 				isLoadingChannels={false}
+				refreshChannels={mockRefreshChannels}
 			/>,
 		);
 
@@ -272,6 +281,7 @@ describe('RoutingPolicyDetails', () => {
 				isPolicyDetailsModalActionLoading={false}
 				isErrorChannels={false}
 				isLoadingChannels
+				refreshChannels={mockRefreshChannels}
 			/>,
 		);
 
@@ -290,6 +300,7 @@ describe('RoutingPolicyDetails', () => {
 				isPolicyDetailsModalActionLoading={false}
 				isErrorChannels
 				isLoadingChannels={false}
+				refreshChannels={mockRefreshChannels}
 			/>,
 		);
 
@@ -309,6 +320,7 @@ describe('RoutingPolicyDetails', () => {
 				isPolicyDetailsModalActionLoading={false}
 				isErrorChannels={false}
 				isLoadingChannels={false}
+				refreshChannels={mockRefreshChannels}
 			/>,
 		);
 
@@ -329,6 +341,7 @@ describe('RoutingPolicyDetails', () => {
 				isPolicyDetailsModalActionLoading={false}
 				isErrorChannels={false}
 				isLoadingChannels={false}
+				refreshChannels={mockRefreshChannels}
 			/>,
 		);
 
@@ -336,7 +349,7 @@ describe('RoutingPolicyDetails', () => {
 		fireEvent.mouseDown(channelSelect);
 
 		expect(screen.getByText(NO_CHANNELS_FOUND_TEXT)).toBeInTheDocument();
-		expect(screen.getByText('Create a new channel')).toBeInTheDocument();
+		expect(screen.getByText('Create one')).toBeInTheDocument();
 	});
 
 	it('should show admin message for non-admin users in empty state', () => {
@@ -354,6 +367,7 @@ describe('RoutingPolicyDetails', () => {
 				isPolicyDetailsModalActionLoading={false}
 				isErrorChannels={false}
 				isLoadingChannels={false}
+				refreshChannels={mockRefreshChannels}
 			/>,
 		);
 
@@ -362,8 +376,33 @@ describe('RoutingPolicyDetails', () => {
 
 		expect(screen.getByText(NO_CHANNELS_FOUND_TEXT)).toBeInTheDocument();
 		expect(
-			screen.getByText('Please ask your admin to create a notification channel'),
+			screen.getByText('Please ask your admin to create one.'),
 		).toBeInTheDocument();
-		expect(screen.queryByText('Create a new channel')).not.toBeInTheDocument();
+		expect(screen.queryByText('Create one')).not.toBeInTheDocument();
+	});
+
+	it('should call refreshChannels when refresh button is clicked in empty state', () => {
+		render(
+			<RoutingPolicyDetails
+				routingPolicy={mockRoutingPolicy}
+				closeModal={mockCloseModal}
+				mode="create"
+				channels={[]}
+				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
+				isPolicyDetailsModalActionLoading={false}
+				isErrorChannels={false}
+				isLoadingChannels={false}
+				refreshChannels={mockRefreshChannels}
+			/>,
+		);
+
+		const channelSelect = screen.getByRole('combobox');
+		fireEvent.mouseDown(channelSelect);
+
+		const refreshButton = screen.getByText('Refresh');
+		expect(refreshButton).toBeInTheDocument();
+
+		fireEvent.click(refreshButton);
+		expect(mockRefreshChannels).toHaveBeenCalledTimes(1);
 	});
 });
