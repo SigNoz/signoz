@@ -21,16 +21,23 @@ var _ cachetypes.Cacheable = (*Token)(nil)
 
 type StorableToken = Token
 
+type GettableToken struct {
+	AccessToken  string `json:"accessToken"`
+	ExpiresIn    int    `json:"expiresIn"`
+	TokenType    string `json:"tokenType"`
+	RefreshToken string `json:"refreshToken"`
+}
+
 type Token struct {
-	ID             valuer.UUID
-	Meta           map[string]string
-	AccessToken    string
-	RefreshToken   string
-	LastObservedAt time.Time `bun:"last_observed_at,nullzero"`
-	RotatedAt      time.Time `bun:"rotated_at,nullzero"`
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	UserID         valuer.UUID
+	ID             valuer.UUID       `bun:"id,pk,type:text"`
+	Meta           map[string]string `bun:"meta,notnull"`
+	AccessToken    string            `bun:"access_token,notnull"`
+	RefreshToken   string            `bun:"refresh_token,notnull"`
+	LastObservedAt time.Time         `bun:"last_observed_at,nullzero"`
+	RotatedAt      time.Time         `bun:"rotated_at,nullzero"`
+	CreatedAt      time.Time         `bun:"created_at,notnull"`
+	UpdatedAt      time.Time         `bun:"updated_at,notnull"`
+	UserID         valuer.UUID       `bun:"user_id,notnull"`
 }
 
 func NewToken(meta map[string]string, userID valuer.UUID) (*Token, error) {
@@ -48,6 +55,13 @@ func NewToken(meta map[string]string, userID valuer.UUID) (*Token, error) {
 		UpdatedAt:      time.Now(),
 		UserID:         userID,
 	}, nil
+}
+
+func NewGettableTokenFromToken(token *Token) *GettableToken {
+	return &GettableToken{
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+	}
 }
 
 func (typ *Token) IsValid(rotationInterval time.Duration, idleDuration time.Duration, maxDuration time.Duration) error {
