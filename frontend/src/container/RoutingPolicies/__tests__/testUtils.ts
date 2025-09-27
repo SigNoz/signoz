@@ -67,6 +67,7 @@ export function getUseRoutingPoliciesMockData(
 		handlePolicyDetailsModalOpen: jest.fn(),
 		handlePolicyDetailsModalAction: jest.fn(),
 		isPolicyDetailsModalActionLoading: false,
+		isErrorChannels: false,
 		...overrides,
 	};
 }

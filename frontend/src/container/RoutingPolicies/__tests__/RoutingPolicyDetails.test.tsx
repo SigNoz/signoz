@@ -1,11 +1,15 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import * as appHooks from 'providers/App/App';
 
 import RoutingPolicyDetails from '../RoutingPolicyDetails';
 import {
+	getAppContextMockState,
 	MOCK_CHANNEL_1,
 	MOCK_CHANNEL_2,
 	MOCK_ROUTING_POLICY_1,
 } from './testUtils';
+
+jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
 
 const mockHandlePolicyDetailsModalAction = jest.fn();
 const mockCloseModal = jest.fn();
@@ -15,6 +19,7 @@ const mockRoutingPolicy = MOCK_ROUTING_POLICY_1;
 const NEW_NAME = 'New Name';
 const NEW_EXPRESSION = 'New Expression';
 const SAVE_BUTTON_TEXT = 'Save Routing Policy';
+const NO_CHANNELS_FOUND_TEXT = 'No notification channels found';
 
 describe('RoutingPolicyDetails', () => {
 	it('renders base create layout with header, 3 inputs and footer', () => {
@@ -26,6 +31,8 @@ describe('RoutingPolicyDetails', () => {
 				channels={mockChannels}
 				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
 				isPolicyDetailsModalActionLoading={false}
+				isErrorChannels={false}
+				isLoadingChannels={false}
 			/>,
 		);
 
@@ -49,6 +56,8 @@ describe('RoutingPolicyDetails', () => {
 				channels={mockChannels}
 				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
 				isPolicyDetailsModalActionLoading={false}
+				isErrorChannels={false}
+				isLoadingChannels={false}
 			/>,
 		);
 
@@ -73,6 +82,8 @@ describe('RoutingPolicyDetails', () => {
 				channels={mockChannels}
 				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
 				isPolicyDetailsModalActionLoading={false}
+				isErrorChannels={false}
+				isLoadingChannels={false}
 			/>,
 		);
 
@@ -96,6 +107,8 @@ describe('RoutingPolicyDetails', () => {
 				channels={mockChannels}
 				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
 				isPolicyDetailsModalActionLoading={false}
+				isErrorChannels={false}
+				isLoadingChannels={false}
 			/>,
 		);
 
@@ -146,6 +159,8 @@ describe('RoutingPolicyDetails', () => {
 				channels={mockChannels}
 				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
 				isPolicyDetailsModalActionLoading={false}
+				isErrorChannels={false}
+				isLoadingChannels={false}
 			/>,
 		);
 
@@ -191,6 +206,8 @@ describe('RoutingPolicyDetails', () => {
 				channels={mockChannels}
 				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
 				isPolicyDetailsModalActionLoading={false}
+				isErrorChannels={false}
+				isLoadingChannels={false}
 			/>,
 		);
 
@@ -208,6 +225,8 @@ describe('RoutingPolicyDetails', () => {
 				channels={mockChannels}
 				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
 				isPolicyDetailsModalActionLoading
+				isErrorChannels={false}
+				isLoadingChannels={false}
 			/>,
 		);
 
@@ -229,6 +248,8 @@ describe('RoutingPolicyDetails', () => {
 				channels={mockChannels}
 				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
 				isPolicyDetailsModalActionLoading={false}
+				isErrorChannels={false}
+				isLoadingChannels={false}
 			/>,
 		);
 
@@ -238,5 +259,111 @@ describe('RoutingPolicyDetails', () => {
 		fireEvent.click(saveButton);
 
 		expect(mockHandlePolicyDetailsModalAction).not.toHaveBeenCalled();
+	});
+
+	it('notification channels select should be disabled when channels are loading', () => {
+		render(
+			<RoutingPolicyDetails
+				routingPolicy={mockRoutingPolicy}
+				closeModal={mockCloseModal}
+				mode="create"
+				channels={[]}
+				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
+				isPolicyDetailsModalActionLoading={false}
+				isErrorChannels={false}
+				isLoadingChannels
+			/>,
+		);
+
+		const channelSelect = screen.getByRole('combobox');
+		expect(channelSelect).toBeDisabled();
+	});
+
+	it('should show error state when channels fail to load', () => {
+		render(
+			<RoutingPolicyDetails
+				routingPolicy={mockRoutingPolicy}
+				closeModal={mockCloseModal}
+				mode="create"
+				channels={[]}
+				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
+				isPolicyDetailsModalActionLoading={false}
+				isErrorChannels
+				isLoadingChannels={false}
+			/>,
+		);
+
+		const channelSelect = screen.getByRole('combobox');
+		const selectContainer = channelSelect.closest('.ant-select');
+		expect(selectContainer).toHaveClass('ant-select-status-error');
+	});
+
+	it('should show empty state when no channels are available', () => {
+		render(
+			<RoutingPolicyDetails
+				routingPolicy={mockRoutingPolicy}
+				closeModal={mockCloseModal}
+				mode="create"
+				channels={[]}
+				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
+				isPolicyDetailsModalActionLoading={false}
+				isErrorChannels={false}
+				isLoadingChannels={false}
+			/>,
+		);
+
+		const channelSelect = screen.getByRole('combobox');
+		fireEvent.mouseDown(channelSelect);
+
+		expect(screen.getByText(NO_CHANNELS_FOUND_TEXT)).toBeInTheDocument();
+	});
+
+	it('should show create channel button for admin users in empty state', () => {
+		render(
+			<RoutingPolicyDetails
+				routingPolicy={mockRoutingPolicy}
+				closeModal={mockCloseModal}
+				mode="create"
+				channels={[]}
+				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
+				isPolicyDetailsModalActionLoading={false}
+				isErrorChannels={false}
+				isLoadingChannels={false}
+			/>,
+		);
+
+		const channelSelect = screen.getByRole('combobox');
+		fireEvent.mouseDown(channelSelect);
+
+		expect(screen.getByText(NO_CHANNELS_FOUND_TEXT)).toBeInTheDocument();
+		expect(screen.getByText('Create a new channel')).toBeInTheDocument();
+	});
+
+	it('should show admin message for non-admin users in empty state', () => {
+		jest
+			.spyOn(appHooks, 'useAppContext')
+			.mockReturnValue(getAppContextMockState({ role: 'VIEWER' }));
+
+		render(
+			<RoutingPolicyDetails
+				routingPolicy={mockRoutingPolicy}
+				closeModal={mockCloseModal}
+				mode="create"
+				channels={[]}
+				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
+				isPolicyDetailsModalActionLoading={false}
+				isErrorChannels={false}
+				isLoadingChannels={false}
+			/>,
+		);
+
+		const channelSelect = screen.getByRole('combobox');
+		fireEvent.mouseDown(channelSelect);
+
+		expect(screen.getByText(NO_CHANNELS_FOUND_TEXT)).toBeInTheDocument();
+		expect(
+			screen.getByText('Please ask your admin to create a notification channel'),
+		).toBeInTheDocument();
+		expect(screen.queryByText('Create a new channel')).not.toBeInTheDocument();
 	});
 });

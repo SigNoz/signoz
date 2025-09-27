@@ -24,6 +24,7 @@ function RoutingPolicies(): JSX.Element {
 		// Channels
 		channels,
 		isLoadingChannels,
+		isErrorChannels,
 		// Search
 		searchTerm,
 		setSearchTerm,
@@ -41,8 +42,7 @@ function RoutingPolicies(): JSX.Element {
 		isPolicyDetailsModalActionLoading,
 	} = useRoutingPolicies();
 
-	const disableCreateButton =
-		user?.role === USER_ROLES.VIEWER || isLoadingChannels;
+	const disableCreateButton = user?.role === USER_ROLES.VIEWER;
 
 	const tooltipTitle = useMemo(() => {
 		if (user?.role === USER_ROLES.VIEWER) {
@@ -94,6 +94,8 @@ function RoutingPolicies(): JSX.Element {
 						closeModal={handlePolicyDetailsModalClose}
 						mode={policyDetailsModalState.mode}
 						channels={channels}
+						isErrorChannels={isErrorChannels}
+						isLoadingChannels={isLoadingChannels}
 						handlePolicyDetailsModalAction={handlePolicyDetailsModalAction}
 						isPolicyDetailsModalActionLoading={isPolicyDetailsModalActionLoading}
 					/>

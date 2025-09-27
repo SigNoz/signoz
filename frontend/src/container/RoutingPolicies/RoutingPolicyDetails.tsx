@@ -9,8 +9,11 @@ import {
 	Typography,
 } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
+import ROUTES from 'constants/routes';
 import { ModalTitle } from 'container/PipelinePage/PipelineListsView/styles';
+import { useAppContext } from 'providers/App/App';
 import { useMemo } from 'react';
+import { USER_ROLES } from 'types/roles';
 
 import { INITIAL_ROUTING_POLICY_DETAILS_FORM_STATE } from './constants';
 import {
@@ -22,11 +25,14 @@ function RoutingPolicyDetails({
 	closeModal,
 	mode,
 	channels,
+	isErrorChannels,
+	isLoadingChannels,
 	routingPolicy,
 	handlePolicyDetailsModalAction,
 	isPolicyDetailsModalActionLoading,
 }: RoutingPolicyDetailsProps): JSX.Element {
 	const [form] = useForm();
+	const { user } = useAppContext();
 
 	const initialFormState = useMemo(() => {
 		if (mode === 'edit') {
@@ -49,6 +55,27 @@ function RoutingPolicyDetails({
 			channels: form.getFieldValue('channels'),
 		});
 	};
+
+	const notificationChannelsNotFoundContent = (
+		<Flex style={{ padding: '8px' }} gap={8} vertical align="center">
+			<Typography.Text strong>No notification channels found</Typography.Text>
+			{user?.role === USER_ROLES.ADMIN ? (
+				<Button
+					type="default"
+					onClick={(): void => {
+						window.open(ROUTES.CHANNELS_NEW, '_blank');
+					}}
+				>
+					Create a new channel
+				</Button>
+			) : (
+				<Typography.Text>
+					Please ask your admin to create a notification channel
+				</Typography.Text>
+			)}
+		</Flex>
+	);
+
 	return (
 		<Modal
 			title={<ModalTitle level={4}>{modalTitle}</ModalTitle>}
@@ -126,6 +153,9 @@ function RoutingPolicyDetails({
 								filterOption={(input, option): boolean =>
 									option?.label?.toLowerCase().includes(input.toLowerCase()) || false
 								}
+								status={isErrorChannels ? 'error' : undefined}
+								disabled={isLoadingChannels}
+								notFoundContent={notificationChannelsNotFoundContent}
 							/>
 						</Form.Item>
 					</div>

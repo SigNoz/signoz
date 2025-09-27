@@ -58,6 +58,8 @@ export interface RoutingPolicyDetailsProps {
 	closeModal: () => void;
 	mode: PolicyDetailsModalMode;
 	channels: Channels[];
+	isErrorChannels: boolean;
+	isLoadingChannels: boolean;
 	handlePolicyDetailsModalAction: HandlePolicyDetailsModalAction;
 	isPolicyDetailsModalActionLoading: boolean;
 }
@@ -78,6 +80,7 @@ export interface UseRoutingPoliciesReturn {
 	// Channels
 	channels: Channels[];
 	isLoadingChannels: boolean;
+	isErrorChannels: boolean;
 	// Search
 	searchTerm: string;
 	setSearchTerm: (searchTerm: string) => void;

@@ -60,10 +60,11 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 	}, [routingPolicies, searchTerm]);
 
 	// Channels list
-	const { data, isLoading: isLoadingChannels } = useQuery<
-		SuccessResponseV2<Channels[]>,
-		APIError
-	>(['getChannels'], {
+	const {
+		data,
+		isLoading: isLoadingChannels,
+		isError: isErrorChannels,
+	} = useQuery<SuccessResponseV2<Channels[]>, APIError>(['getChannels'], {
 		queryFn: () => getAllChannels(),
 	});
 	const channels = data?.data || [];
@@ -209,6 +210,7 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		// Channels
 		channels,
 		isLoadingChannels,
+		isErrorChannels,
 		// Search
 		searchTerm,
 		setSearchTerm,
