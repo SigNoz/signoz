@@ -22,5 +22,3 @@ type CallbackAuthN interface {
 	// Handle the callback from the provider.
 	HandleCallback(context.Context, *url.Values) (authtypes.CallbackIdentity, error)
 }
-
-type SAMLAuthN interface{}

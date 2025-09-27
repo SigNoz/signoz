@@ -1,5 +1,13 @@
 package implsession
 
+// func handleSsoError(w http.ResponseWriter, r *http.Request, redirectURL string) {
+// 	ssoError := []byte("Login failed. Please contact your system administrator")
+// 	dst := make([]byte, base64.StdEncoding.EncodedLen(len(ssoError)))
+// 	base64.StdEncoding.Encode(dst, ssoError)
+
+// 	http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectURL, string(dst)), http.StatusSeeOther)
+// }
+
 // func (h *handler) LoginPrecheck(w http.ResponseWriter, r *http.Request) {
 // 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 // 	defer cancel()
