@@ -448,20 +448,6 @@ func (store *store) UpdatePassword(ctx context.Context, factorPassword *types.Fa
 	return nil
 }
 
-func (store *store) GetDomainByName(ctx context.Context, name string) (*types.StorableOrgDomain, error) {
-	domain := new(types.StorableOrgDomain)
-	err := store.sqlstore.BunDB().NewSelect().
-		Model(domain).
-		Where("name = ?", name).
-		Limit(1).
-		Scan(ctx)
-
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeNotFound, errors.CodeNotFound, "failed to get domain from name")
-	}
-	return domain, nil
-}
-
 // --- API KEY ---
 func (store *store) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {
 	_, err := store.sqlstore.BunDB().NewInsert().
