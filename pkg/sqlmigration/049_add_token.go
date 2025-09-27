@@ -16,7 +16,7 @@ type addToken struct {
 }
 
 func NewAddTokenFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.NewProviderFactory(factory.MustNewName("update_users"), func(ctx context.Context, providerSettings factory.ProviderSettings, config Config) (SQLMigration, error) {
+	return factory.NewProviderFactory(factory.MustNewName("add_token"), func(ctx context.Context, providerSettings factory.ProviderSettings, config Config) (SQLMigration, error) {
 		return newAddToken(ctx, providerSettings, config, sqlstore, sqlschema)
 	})
 }
