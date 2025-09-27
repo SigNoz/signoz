@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log/slog"
-	"time"
 
 	"github.com/SigNoz/signoz/cmd"
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
@@ -17,7 +16,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/SigNoz/signoz/pkg/zeus/noopzeus"
@@ -56,12 +54,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		return err
 	}
 
-	jwt := authtypes.NewJWT(cmd.NewJWTSecret(ctx, logger), 30*time.Minute, 30*24*time.Hour)
-
 	signoz, err := signoz.New(
 		ctx,
 		config,
-		jwt,
 		zeus.Config{},
 		noopzeus.NewProviderFactory(),
 		licensing.Config{},
@@ -82,7 +77,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		return err
 	}
 
-	server, err := app.NewServer(config, signoz, jwt)
+	server, err := app.NewServer(config, signoz)
 	if err != nil {
 		logger.ErrorContext(ctx, "failed to create server", "error", err)
 		return err
