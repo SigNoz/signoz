@@ -147,7 +147,7 @@ function RoutingPolicyDetails({
 							]}
 						>
 							<Input.TextArea
-								placeholder='e.g. service.name = "payment" && threshold.name = "critical"'
+								placeholder='e.g. service.name == "payment" && threshold.name == "critical"'
 								autoSize={{ minRows: 1, maxRows: 6 }}
 								style={{ resize: 'none' }}
 							/>

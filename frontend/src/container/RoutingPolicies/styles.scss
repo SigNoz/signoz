@@ -18,7 +18,7 @@
 		}
 
 		.subtitle {
-			color: var(---bg-vanilla-400);
+			color: var(--bg-vanilla-400);
 			font-size: var(--font-size-sm);
 			font-style: normal;
 			font-weight: var(--font-weight-normal);
@@ -409,6 +409,44 @@
 					}
 				}
 			}
+		}
+	}
+
+	.delete-policy-modal {
+		.ant-modal-content {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-100);
+
+			.ant-modal-header {
+				background: var(--bg-vanilla-100);
+			}
+
+			.ant-modal-body {
+				.ant-typography {
+					color: var(--bg-slate-400);
+				}
+			}
+
+			.ant-modal-footer {
+				.cancel-btn {
+					background: var(--bg-vanilla-300);
+					color: var(--bg-slate-100);
+				}
+
+				.delete-btn {
+					background: var(--bg-cherry-500);
+					color: var(--bg-vanilla-100);
+				}
+
+				.delete-btn:hover {
+					color: var(--bg-vanilla-100);
+					background: var(--bg-cherry-600);
+				}
+			}
+		}
+
+		.title {
+			color: var(--bg-slate-100);
 		}
 	}
 }

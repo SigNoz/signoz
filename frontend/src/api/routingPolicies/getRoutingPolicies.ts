@@ -1,7 +1,7 @@
 import axios from 'api';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { ErrorResponseV2, ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 
 export interface ApiRoutingPolicy {
 	id: string;
@@ -23,7 +23,7 @@ export interface GetRoutingPoliciesResponse {
 export const getRoutingPolicies = async (
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
-): Promise<SuccessResponse<GetRoutingPoliciesResponse> | ErrorResponse> => {
+): Promise<SuccessResponseV2<GetRoutingPoliciesResponse> | ErrorResponseV2> => {
 	try {
 		const response = await axios.get('/notification-policy', {
 			signal,
@@ -31,12 +31,10 @@ export const getRoutingPolicies = async (
 		});
 
 		return {
-			statusCode: 200,
-			error: null,
-			message: response.data.status,
-			payload: response.data,
+			httpStatusCode: response.status,
+			data: response.data,
 		};
 	} catch (error) {
-		return ErrorResponseHandler(error as AxiosError);
+		return ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 	}
 };

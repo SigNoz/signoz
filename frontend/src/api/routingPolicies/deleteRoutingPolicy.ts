@@ -1,7 +1,8 @@
 import axios from 'api';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
+import { AxiosError } from 'axios';
+import { ErrorResponseV2, ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 
-// TODO: Add the correct interface
 export interface DeleteRoutingPolicyResponse {
 	success: boolean;
 	message: string;
@@ -9,15 +10,21 @@ export interface DeleteRoutingPolicyResponse {
 
 const deleteRoutingPolicy = async (
 	routingPolicyId: string,
-): Promise<SuccessResponse<DeleteRoutingPolicyResponse> | ErrorResponse> => {
-	const response = await axios.delete(`/notification-policy/${routingPolicyId}`);
+): Promise<
+	SuccessResponseV2<DeleteRoutingPolicyResponse> | ErrorResponseV2
+> => {
+	try {
+		const response = await axios.delete(
+			`/notification-policy/${routingPolicyId}`,
+		);
 
-	return {
-		statusCode: 200,
-		error: null,
-		message: response.data.status,
-		payload: response.data.data,
-	};
+		return {
+			httpStatusCode: response.status,
+			data: response.data,
+		};
+	} catch (error) {
+		return ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+	}
 };
 
 export default deleteRoutingPolicy;

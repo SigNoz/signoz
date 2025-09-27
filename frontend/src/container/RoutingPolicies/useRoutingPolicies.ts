@@ -2,6 +2,7 @@ import './styles.scss';
 
 import { toast } from '@signozhq/sonner';
 import getAllChannels from 'api/channels/getAll';
+import { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolicies';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useCreateRoutingPolicy } from 'hooks/routingPolicies/useCreateRoutingPolicy';
 import { useDeleteRoutingPolicy } from 'hooks/routingPolicies/useDeleteRoutingPolicy';
@@ -52,7 +53,7 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 
 	const routingPoliciesData = useMemo(() => {
 		const unfilteredRoutingPolicies = mapApiResponseToRoutingPolicies(
-			routingPolicies,
+			routingPolicies as SuccessResponseV2<GetRoutingPoliciesResponse>,
 		);
 		return unfilteredRoutingPolicies.filter((routingPolicy) =>
 			routingPolicy.name.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -82,20 +83,18 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		if (routingPolicy) {
 			setSelectedRoutingPolicy(routingPolicy);
 		}
-		setPolicyDetailsModalState((prev) => ({
-			...prev,
+		setPolicyDetailsModalState({
 			isOpen: true,
 			mode,
-		}));
+		});
 	};
 
 	const handlePolicyDetailsModalClose = (): void => {
 		setSelectedRoutingPolicy(null);
-		setPolicyDetailsModalState((prev) => ({
-			...prev,
+		setPolicyDetailsModalState({
 			isOpen: false,
 			mode: null,
-		}));
+		});
 	};
 
 	const handleDeleteModalOpen = (routingPolicy: RoutingPolicy): void => {
@@ -146,8 +145,8 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 						queryClient.invalidateQueries(REACT_QUERY_KEY.GET_ROUTING_POLICIES);
 						handlePolicyDetailsModalClose();
 					},
-					onError: () => {
-						toast.error('Failed to create routing policy');
+					onError: (error) => {
+						toast.error(`Error: ${error.message}`);
 					},
 				},
 			);

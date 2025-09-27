@@ -9,6 +9,8 @@ import {
 	MOCK_ROUTING_POLICY_1,
 } from './testUtils';
 
+const ROUTING_POLICY_DETAILS_TEST_ID = 'routing-policy-details';
+
 jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
 
 jest.mock('../RoutingPolicyList', () => ({
@@ -54,7 +56,7 @@ describe('RoutingPolicies', () => {
 		).toBeInTheDocument();
 		expect(screen.getByTestId('routing-policy-list')).toBeInTheDocument();
 		expect(
-			screen.queryByTestId('routing-policy-details'),
+			screen.queryByTestId(ROUTING_POLICY_DETAILS_TEST_ID),
 		).not.toBeInTheDocument();
 		expect(screen.queryByTestId('delete-routing-policy')).not.toBeInTheDocument();
 	});
@@ -66,7 +68,7 @@ describe('RoutingPolicies', () => {
 		).toBeEnabled();
 	});
 
-	it('should disable the "New routing policy" button for users with NON_ADMIN roles', () => {
+	it('should disable the "New routing policy" button for users with VIEWER role', () => {
 		jest
 			.spyOn(appHooks, 'useAppContext')
 			.mockReturnValueOnce(getAppContextMockState({ role: 'VIEWER' }));
@@ -95,6 +97,9 @@ describe('RoutingPolicies', () => {
 		});
 		fireEvent.click(newRoutingPolicyButton);
 		expect(mockHandlePolicyDetailsModalOpen).toHaveBeenCalledWith('create', null);
+		expect(
+			screen.getByTestId(ROUTING_POLICY_DETAILS_TEST_ID),
+		).toBeInTheDocument();
 	});
 
 	it('policy details modal is open based on modal state', () => {
@@ -107,7 +112,9 @@ describe('RoutingPolicies', () => {
 			}),
 		);
 		render(<RoutingPolicies />);
-		expect(screen.getByTestId('routing-policy-details')).toBeInTheDocument();
+		expect(
+			screen.getByTestId(ROUTING_POLICY_DETAILS_TEST_ID),
+		).toBeInTheDocument();
 	});
 
 	it('delete modal is open based on modal state', () => {

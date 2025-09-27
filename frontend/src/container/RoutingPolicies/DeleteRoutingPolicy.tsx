@@ -38,7 +38,7 @@ function DeleteRoutingPolicy({
 			]}
 		>
 			<Typography.Text className="delete-text">
-				{`Are you sure you want to delete - ${routingPolicy?.name} routing policy? Deleting a routing policy is irreversible and cannot be undone.`}
+				{`Are you sure you want to delete ${routingPolicy?.name} routing policy? Deleting a routing policy is irreversible and cannot be undone.`}
 			</Typography.Text>
 		</Modal>
 	);

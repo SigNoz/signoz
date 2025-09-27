@@ -1,7 +1,8 @@
 import axios from 'api';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
+import { AxiosError } from 'axios';
+import { ErrorResponseV2, ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 
-// TODO: Add the correct interface
 export interface CreateRoutingPolicyBody {
 	name: string;
 	expression: string;
@@ -11,7 +12,6 @@ export interface CreateRoutingPolicyBody {
 	description?: string;
 }
 
-// TODO: Add the correct interface
 export interface CreateRoutingPolicyResponse {
 	success: boolean;
 	message: string;
@@ -19,19 +19,22 @@ export interface CreateRoutingPolicyResponse {
 
 const createRoutingPolicy = async (
 	props: CreateRoutingPolicyBody,
-): Promise<SuccessResponse<CreateRoutingPolicyResponse> | ErrorResponse> => {
-	// TODO: Add the correct endpoint
-	const response = await axios.post(`/notification-policy`, {
-		...props,
-		description: props.description || '',
-	});
-
-	return {
-		statusCode: 200,
-		error: null,
-		message: response.data.status,
-		payload: response.data.data,
-	};
+): Promise<
+	SuccessResponseV2<CreateRoutingPolicyResponse> | ErrorResponseV2
+> => {
+	try {
+		const response = await axios.post(`/notification-policy`, {
+			...props,
+			description: props.description || '',
+			name: '',
+		});
+		return {
+			httpStatusCode: response.status,
+			data: response.data,
+		};
+	} catch (error) {
+		return ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+	}
 };
 
 export default createRoutingPolicy;

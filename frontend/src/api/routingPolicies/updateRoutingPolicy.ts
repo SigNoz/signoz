@@ -1,5 +1,7 @@
 import axios from 'api';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
+import { AxiosError } from 'axios';
+import { ErrorResponseV2, ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 
 export interface UpdateRoutingPolicyBody {
 	name: string;
@@ -18,18 +20,21 @@ export interface UpdateRoutingPolicyResponse {
 const updateRoutingPolicy = async (
 	id: string,
 	props: UpdateRoutingPolicyBody,
-): Promise<SuccessResponse<UpdateRoutingPolicyResponse> | ErrorResponse> => {
-	// TODO: Add the correct endpoint
-	const response = await axios.put(`/notification-policy/${id}`, {
-		...props,
-	});
+): Promise<
+	SuccessResponseV2<UpdateRoutingPolicyResponse> | ErrorResponseV2
+> => {
+	try {
+		const response = await axios.put(`/notification-policy/${id}`, {
+			...props,
+		});
 
-	return {
-		statusCode: 200,
-		error: null,
-		message: response.data.status,
-		payload: response.data.data,
-	};
+		return {
+			httpStatusCode: response.status,
+			data: response.data,
+		};
+	} catch (error) {
+		return ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+	}
 };
 
 export default updateRoutingPolicy;

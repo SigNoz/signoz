@@ -5,17 +5,17 @@ import {
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { ErrorResponseV2, SuccessResponseV2 } from 'types/api';
 
 type UseGetRoutingPolicies = (
 	options?: UseQueryOptions<
-		SuccessResponse<GetRoutingPoliciesResponse> | ErrorResponse,
+		SuccessResponseV2<GetRoutingPoliciesResponse> | ErrorResponseV2,
 		Error
 	>,
 
 	headers?: Record<string, string>,
 ) => UseQueryResult<
-	SuccessResponse<GetRoutingPoliciesResponse> | ErrorResponse,
+	SuccessResponseV2<GetRoutingPoliciesResponse> | ErrorResponseV2,
 	Error
 >;
 
@@ -23,18 +23,13 @@ export const useGetRoutingPolicies: UseGetRoutingPolicies = (
 	options,
 	headers,
 ) => {
-	const queryKey = useMemo(() => {
-		if (options?.queryKey && Array.isArray(options.queryKey)) {
-			return [...options.queryKey];
-		}
-		if (options?.queryKey && typeof options.queryKey === 'string') {
-			return options.queryKey;
-		}
-		return [REACT_QUERY_KEY.GET_ROUTING_POLICIES];
-	}, [options?.queryKey]);
+	const queryKey = useMemo(
+		() => options?.queryKey || [REACT_QUERY_KEY.GET_ROUTING_POLICIES],
+		[options?.queryKey],
+	);
 
 	return useQuery<
-		SuccessResponse<GetRoutingPoliciesResponse> | ErrorResponse,
+		SuccessResponseV2<GetRoutingPoliciesResponse> | ErrorResponseV2,
 		Error
 	>({
 		queryFn: ({ signal }) => getRoutingPolicies(signal, headers),

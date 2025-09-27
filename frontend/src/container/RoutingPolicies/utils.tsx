@@ -1,7 +1,7 @@
 import { CreateRoutingPolicyBody } from 'api/routingPolicies/createRoutingPolicy';
 import { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolicies';
 import { UpdateRoutingPolicyBody } from 'api/routingPolicies/updateRoutingPolicy';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { SuccessResponseV2 } from 'types/api';
 
 import { RoutingPolicy } from './types';
 
@@ -10,13 +10,10 @@ export function showRoutingPoliciesPage(): boolean {
 }
 
 export function mapApiResponseToRoutingPolicies(
-	response:
-		| SuccessResponse<GetRoutingPoliciesResponse, unknown>
-		| ErrorResponse
-		| undefined,
+	response: SuccessResponseV2<GetRoutingPoliciesResponse>,
 ): RoutingPolicy[] {
 	return (
-		response?.payload?.data?.map((policyData) => ({
+		response?.data?.data?.map((policyData) => ({
 			id: policyData.id,
 			name: policyData.name,
 			expression: policyData.expression,

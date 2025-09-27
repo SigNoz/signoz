@@ -2,15 +2,15 @@ import deleteRoutingPolicy, {
 	DeleteRoutingPolicyResponse,
 } from 'api/routingPolicies/deleteRoutingPolicy';
 import { useMutation, UseMutationResult } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { ErrorResponseV2, SuccessResponseV2 } from 'types/api';
 
 export function useDeleteRoutingPolicy(): UseMutationResult<
-	SuccessResponse<DeleteRoutingPolicyResponse> | ErrorResponse,
+	SuccessResponseV2<DeleteRoutingPolicyResponse> | ErrorResponseV2,
 	Error,
 	string
 > {
 	return useMutation<
-		SuccessResponse<DeleteRoutingPolicyResponse> | ErrorResponse,
+		SuccessResponseV2<DeleteRoutingPolicyResponse> | ErrorResponseV2,
 		Error,
 		string
 	>({
