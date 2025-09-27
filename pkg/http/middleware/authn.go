@@ -89,7 +89,7 @@ func (a *AuthN) contextFromRequest(ctx context.Context, values ...string) (conte
 		bearerToken = value
 	}
 
-	authenticatedUser, err := a.tokenizer.GetAuthenticatedUser(ctx, bearerToken)
+	authenticatedUser, err := a.tokenizer.GetIdentity(ctx, bearerToken)
 	if err != nil {
 		return ctx, err
 	}
