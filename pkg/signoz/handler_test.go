@@ -4,7 +4,6 @@ import (
 	"context"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
@@ -17,7 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/tokenizer/tokenizertest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,9 +33,9 @@ func TestNewHandlers(t *testing.T) {
 	require.NoError(t, err)
 	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{}, sqlstore, orgGetter, notificationManager)
 	require.NoError(t, err)
-	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
+	tokenizer := tokenizertest.New()
 	emailing := emailingtest.New()
-	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, nil, nil)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil)
 
 	handlers := NewHandlers(modules, providerSettings)
 

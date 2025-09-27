@@ -3,7 +3,6 @@ package impluser
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"slices"
 	"strings"
 	"time"
@@ -14,19 +13,17 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/google/uuid"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
 
 type Module struct {
 	store     types.UserStore
-	jwt       *authtypes.JWT
+	tokenizer tokenizer.Tokenizer
 	emailing  emailing.Emailing
 	settings  factory.ScopedProviderSettings
 	orgSetter organization.Setter
@@ -34,11 +31,11 @@ type Module struct {
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics) root.Module {
+func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics) root.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:     store,
-		jwt:       jwt,
+		tokenizer: tokenizer,
 		emailing:  emailing,
 		settings:  settings,
 		orgSetter: orgSetter,
@@ -161,18 +158,6 @@ func (m *Module) GetUserByID(ctx context.Context, orgID string, id string) (*typ
 	return m.store.GetUserByID(ctx, orgID, id)
 }
 
-func (m *Module) GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*types.GettableUser, error) {
-	return m.store.GetUserByEmailInOrg(ctx, orgID, email)
-}
-
-func (m *Module) GetUsersByEmail(ctx context.Context, email string) ([]*types.GettableUser, error) {
-	return m.store.GetUsersByEmail(ctx, email)
-}
-
-func (m *Module) GetUsersByRoleInOrg(ctx context.Context, orgID string, role types.Role) ([]*types.GettableUser, error) {
-	return m.store.GetUsersByRoleInOrg(ctx, orgID, role)
-}
-
 func (m *Module) ListUsers(ctx context.Context, orgID string) ([]*types.GettableUser, error) {
 	return m.store.ListUsers(ctx, orgID)
 }
@@ -197,14 +182,14 @@ func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *
 		user.Role = existingUser.Role
 	}
 
-	if user.Role != existingUser.Role && requestor.Role != types.RoleAdmin.String() {
+	if user.Role != existingUser.Role && requestor.Role != types.RoleAdmin {
 		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "only admins can change roles")
 	}
 
 	// Make sure that th e request is not demoting the last admin user.
 	// also an admin user can only change role of their own or other user
-	if user.Role != existingUser.Role && existingUser.Role == types.RoleAdmin.String() {
-		adminUsers, err := m.GetUsersByRoleInOrg(ctx, orgID, types.RoleAdmin)
+	if user.Role != existingUser.Role && existingUser.Role == types.RoleAdmin {
+		adminUsers, err := m.store.GetUsersByRoleInOrg(ctx, orgID, types.RoleAdmin)
 		if err != nil {
 			return nil, err
 		}
@@ -232,12 +217,14 @@ func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *
 		if err := m.emailing.SendHTML(ctx, existingUser.Email, "Your Role Has Been Updated in SigNoz", emailtypes.TemplateNameUpdateRole, map[string]any{
 			"CustomerName":   existingUser.DisplayName,
 			"UpdatedByEmail": requestor.Email,
-			"OldRole":        cases.Title(language.English).String(strings.ToLower(existingUser.Role)),
-			"NewRole":        cases.Title(language.English).String(strings.ToLower(updatedUser.Role)),
+			"OldRole":        cases.Title(language.English).String(strings.ToLower(existingUser.Role.String())),
+			"NewRole":        cases.Title(language.English).String(strings.ToLower(updatedUser.Role.String())),
 		}); err != nil {
 			m.settings.Logger().ErrorContext(ctx, "failed to send email", "error", err)
 		}
 	}
+
+	// Update tokenizer cache
 
 	return updatedUser, nil
 }
@@ -258,7 +245,7 @@ func (m *Module) DeleteUser(ctx context.Context, orgID string, id string, delete
 		return err
 	}
 
-	if len(adminUsers) == 1 && user.Role == types.RoleAdmin.String() {
+	if len(adminUsers) == 1 && user.Role == types.RoleAdmin {
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot delete the last admin")
 	}
 
@@ -308,6 +295,8 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 		}
 	}
 
+	// Update tokenizer cache
+
 	return resetPasswordToken, nil
 }
 
@@ -344,246 +333,31 @@ func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, ol
 	}
 
 	return module.store.UpdatePassword(ctx, password)
+
+	// Update tokenizer cache
 }
 
-func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, password, refreshToken string) (*types.User, error) {
-	if refreshToken != "" {
-		// parse the refresh token
-		claims, err := m.jwt.Claims(refreshToken)
+func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opts ...root.CreateUserOption) (*types.User, error) {
+	user, err := module.store.GetUserByEmailAndOrgID(ctx, user.Email, valuer.MustNewUUID(user.OrgID))
+	if err != nil {
+		if !errors.Ast(err, errors.TypeNotFound) {
+			return nil, err
+		}
+	}
+
+	if user == nil {
+		user, err = types.NewUser(user.DisplayName, user.Email, user.Role, user.OrgID)
 		if err != nil {
 			return nil, err
 		}
 
-		user, err := m.store.GetUserByID(ctx, claims.OrgID, claims.UserID)
+		err = module.CreateUser(ctx, user, opts...)
 		if err != nil {
 			return nil, err
 		}
-		return &user.User, nil
-	}
-
-	var dbUser *types.User
-	// when the orgID is not provided we login if the user exists in just one org
-	users, err := m.store.GetUsersByEmail(ctx, email)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(users) == 0 {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "user with email: %s does not exist", email)
-	} else if len(users) == 1 {
-		dbUser = &users[0].User
-	} else {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "please provide an orgID")
-	}
-
-	existingPassword, err := m.store.GetPasswordByUserID(ctx, dbUser.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	if !existingPassword.Equals(password) {
-		return nil, errors.New(errors.TypeInvalidInput, types.ErrCodeIncorrectPassword, "password is incorrect")
-	}
-
-	return dbUser, nil
-}
-
-func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl string) (*types.GettableLoginPrecheck, error) {
-	// assume user is valid unless proven otherwise and assign default values for rest of the fields
-	resp := &types.GettableLoginPrecheck{IsUser: true, CanSelfRegister: false, SSO: false, SSOUrl: "", SSOError: ""}
-
-	// check if email is a valid user
-	users, err := m.GetUsersByEmail(ctx, email)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(users) == 0 {
-		resp.IsUser = false
-	}
-
-	if len(users) > 1 {
-		resp.SelectOrg = true
-		resp.Orgs = make([]string, len(users))
-		for i, user := range users {
-			resp.Orgs[i] = user.OrgID
-		}
-	}
-
-	// TODO(Nitya): in multitenancy this should use orgId as well.
-	orgDomain, err := m.GetAuthDomainByEmail(ctx, email)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		return nil, err
-	}
-
-	if orgDomain != nil && orgDomain.SsoEnabled {
-		// this is to allow self registration
-		resp.IsUser = true
-
-		// saml is enabled for this domain, lets prepare sso url
-		if sourceUrl == "" {
-			sourceUrl = constants.GetDefaultSiteURL()
-		}
-
-		// parse source url that generated the login request
-		var err error
-		escapedUrl, _ := url.QueryUnescape(sourceUrl)
-		siteUrl, err := url.Parse(escapedUrl)
-		if err != nil {
-			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse referer")
-		}
-
-		// build Idp URL that will authenticat the user
-		// the front-end will redirect user to this url
-		resp.SSOUrl, err = orgDomain.BuildSsoUrl(siteUrl)
-		if err != nil {
-			m.settings.Logger().ErrorContext(ctx, "failed to prepare saml request for domain", "domain", orgDomain.Name, "error", err)
-			return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to prepare saml request for domain")
-		}
-
-		// set SSO to true, as the url is generated correctly
-		resp.SSO = true
-	}
-
-	return resp, nil
-}
-
-func (m *Module) GetJWTForUser(ctx context.Context, user *types.User) (types.GettableUserJwt, error) {
-	role, err := types.NewRole(user.Role)
-	if err != nil {
-		return types.GettableUserJwt{}, err
-	}
-
-	accessJwt, accessClaims, err := m.jwt.AccessToken(user.OrgID, user.ID.String(), user.Email, role)
-	if err != nil {
-		return types.GettableUserJwt{}, err
-	}
-
-	refreshJwt, refreshClaims, err := m.jwt.RefreshToken(user.OrgID, user.ID.String(), user.Email, role)
-	if err != nil {
-		return types.GettableUserJwt{}, err
-	}
-
-	return types.GettableUserJwt{
-		AccessJwt:        accessJwt,
-		RefreshJwt:       refreshJwt,
-		AccessJwtExpiry:  accessClaims.ExpiresAt.Unix(),
-		RefreshJwtExpiry: refreshClaims.ExpiresAt.Unix(),
-	}, nil
-}
-
-func (m *Module) CreateUserForSAMLRequest(ctx context.Context, email string) (*types.User, error) {
-	// get auth domain from email domain
-	_, err := m.GetAuthDomainByEmail(ctx, email)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		return nil, err
-	}
-
-	// get name from email
-	parts := strings.Split(email, "@")
-	if len(parts) < 2 {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid email format")
-	}
-	name := parts[0]
-
-	defaultOrgID, err := m.store.GetDefaultOrgID(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	user, err := types.NewUser(name, email, types.RoleViewer.String(), defaultOrgID)
-	if err != nil {
-		return nil, err
-	}
-
-	err = m.CreateUser(ctx, user)
-	if err != nil {
-		return nil, err
 	}
 
 	return user, nil
-
-}
-
-func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (string, error) {
-	users, err := m.GetUsersByEmail(ctx, email)
-	if err != nil {
-		m.settings.Logger().ErrorContext(ctx, "failed to get user with email received from auth provider", "error", err)
-		return "", err
-	}
-	user := &types.User{}
-
-	if len(users) == 0 {
-		newUser, err := m.CreateUserForSAMLRequest(ctx, email)
-		user = newUser
-		if err != nil {
-			m.settings.Logger().ErrorContext(ctx, "failed to create user with email received from auth provider", "error", err)
-			return "", err
-		}
-	} else {
-		user = &users[0].User
-	}
-
-	tokenStore, err := m.GetJWTForUser(ctx, user)
-	if err != nil {
-		m.settings.Logger().ErrorContext(ctx, "failed to generate token for SSO login user", "error", err)
-		return "", err
-	}
-
-	return fmt.Sprintf("%s?jwt=%s&usr=%s&refreshjwt=%s",
-		redirectUri,
-		tokenStore.AccessJwt,
-		user.ID,
-		tokenStore.RefreshJwt), nil
-}
-
-func (m *Module) CanUsePassword(ctx context.Context, email string) (bool, error) {
-	domain, err := m.GetAuthDomainByEmail(ctx, email)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		return false, err
-	}
-
-	if domain != nil && domain.SsoEnabled {
-		// sso is enabled, check if the user has admin role
-		users, err := m.GetUsersByEmail(ctx, email)
-		if err != nil {
-			return false, err
-		}
-
-		if len(users) == 0 {
-			return false, errors.New(errors.TypeNotFound, errors.CodeNotFound, "user not found")
-		}
-
-		if users[0].Role != types.RoleAdmin.String() {
-			return false, errors.New(errors.TypeForbidden, errors.CodeForbidden, "auth method not supported")
-		}
-
-	}
-
-	return true, nil
-}
-
-func (m *Module) GetAuthDomainByEmail(ctx context.Context, email string) (*types.GettableOrgDomain, error) {
-
-	if email == "" {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
-	}
-
-	components := strings.Split(email, "@")
-	if len(components) < 2 {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid email format")
-	}
-
-	domain, err := m.store.GetDomainByName(ctx, components[1])
-	if err != nil {
-		return nil, err
-	}
-
-	gettableDomain := &types.GettableOrgDomain{StorableOrgDomain: *domain}
-	if err := gettableDomain.LoadConfig(domain.Data); err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to load domain config")
-	}
-	return gettableDomain, nil
 }
 
 func (m *Module) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {
@@ -606,28 +380,8 @@ func (m *Module) RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UU
 	return m.store.RevokeAPIKey(ctx, id, removedByUserID)
 }
 
-func (m *Module) GetDomainFromSsoResponse(ctx context.Context, url *url.URL) (*types.GettableOrgDomain, error) {
-	return m.store.GetDomainFromSsoResponse(ctx, url)
-}
-
-func (m *Module) CreateDomain(ctx context.Context, domain *types.GettableOrgDomain) error {
-	return m.store.CreateDomain(ctx, domain)
-}
-
-func (m *Module) DeleteDomain(ctx context.Context, id uuid.UUID) error {
-	return m.store.DeleteDomain(ctx, id)
-}
-
-func (m *Module) ListDomains(ctx context.Context, orgID valuer.UUID) ([]*types.GettableOrgDomain, error) {
-	return m.store.ListDomains(ctx, orgID)
-}
-
-func (m *Module) UpdateDomain(ctx context.Context, domain *types.GettableOrgDomain) error {
-	return m.store.UpdateDomain(ctx, domain)
-}
-
 func (module *Module) CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email string, passwd string) (*types.User, error) {
-	user, err := types.NewUser(name, email, types.RoleAdmin.String(), organization.ID.StringValue())
+	user, err := types.NewUser(name, email, types.RoleAdmin, organization.ID.StringValue())
 	if err != nil {
 		return nil, err
 	}
@@ -656,14 +410,14 @@ func (module *Module) CreateFirstUser(ctx context.Context, organization *types.O
 	return user, nil
 }
 
-func (m *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+func (module *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
 	stats := make(map[string]any)
-	count, err := m.store.CountByOrgID(ctx, orgID)
+	count, err := module.store.CountByOrgID(ctx, orgID)
 	if err == nil {
 		stats["user.count"] = count
 	}
 
-	count, err = m.store.CountAPIKeyByOrgID(ctx, orgID)
+	count, err = module.store.CountAPIKeyByOrgID(ctx, orgID)
 	if err == nil {
 		stats["factor.api_key.count"] = count
 	}

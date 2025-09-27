@@ -1,0 +1,56 @@
+package tokenizertest
+
+import (
+	"context"
+
+	"github.com/SigNoz/signoz/pkg/tokenizer"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
+
+var _ tokenizer.Tokenizer = (*Provider)(nil)
+
+type Provider struct {
+	config tokenizer.Config
+	stopC  chan struct{}
+}
+
+func New() *Provider {
+	return &Provider{stopC: make(chan struct{})}
+}
+
+// Collect implements tokenizer.Tokenizer.
+func (provider *Provider) Collect(context.Context, valuer.UUID) (map[string]any, error) {
+	panic("unimplemented")
+}
+
+// CreateToken implements tokenizer.Tokenizer.
+func (provider *Provider) CreateToken(context.Context, *authtypes.AuthenticatedUser, map[string]string) (*authtypes.Token, error) {
+	panic("unimplemented")
+}
+
+// DeleteToken implements tokenizer.Tokenizer.
+func (provider *Provider) DeleteToken(context.Context, string) error {
+	panic("unimplemented")
+}
+
+// GetAuthenticatedUser implements tokenizer.Tokenizer.
+func (provider *Provider) GetAuthenticatedUser(context.Context, string) (*authtypes.AuthenticatedUser, error) {
+	panic("unimplemented")
+}
+
+// RotateToken implements tokenizer.Tokenizer.
+func (provider *Provider) RotateToken(context.Context, string) (*authtypes.Token, error) {
+	panic("unimplemented")
+}
+
+// Start implements tokenizer.Tokenizer.
+func (provider *Provider) Start(context.Context) error {
+	panic("unimplemented")
+}
+
+// Stop implements tokenizer.Tokenizer.
+func (provider *Provider) Stop(context.Context) error {
+	close(provider.stopC)
+	return nil
+}
