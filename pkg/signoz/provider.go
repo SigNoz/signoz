@@ -135,6 +135,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewQueryBuilderV5MigrationFactory(sqlstore, telemetryStore),
 		sqlmigration.NewAddMeterQuickFiltersFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateTTLSettingForCustomRetentionFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddTokenFactory(sqlstore, sqlschema),
 	)
 }
 
