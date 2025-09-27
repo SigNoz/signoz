@@ -19,6 +19,7 @@ const mockRefreshChannels = jest.fn();
 
 const NEW_NAME = 'New Name';
 const NEW_EXPRESSION = 'New Expression';
+const NEW_DESCRIPTION = 'New Description';
 const SAVE_BUTTON_TEXT = 'Save Routing Policy';
 const NO_CHANNELS_FOUND_TEXT = 'No channels yet.';
 
@@ -125,13 +126,19 @@ describe('RoutingPolicyDetails', () => {
 		);
 		expect(expressionTextarea).toBeInTheDocument();
 
+		const descriptionTextarea = screen.getByPlaceholderText(
+			'e.g. This is a routing policy that...',
+		);
+		expect(descriptionTextarea).toBeInTheDocument();
+
 		fireEvent.change(nameInput, { target: { value: NEW_NAME } });
 		fireEvent.change(expressionTextarea, { target: { value: NEW_EXPRESSION } });
+		fireEvent.change(descriptionTextarea, { target: { value: NEW_DESCRIPTION } });
 
 		const channelSelect = screen.getByRole('combobox');
 		fireEvent.mouseDown(channelSelect);
-		const channelOption = await screen.findByText('Channel 1');
-		fireEvent.click(channelOption);
+		const channelOptions = await screen.findAllByText('Channel 1');
+		fireEvent.click(channelOptions[1]);
 
 		// Wait for the form to be valid before submitting
 		await waitFor(() => {
@@ -151,7 +158,8 @@ describe('RoutingPolicyDetails', () => {
 		expect(mockHandlePolicyDetailsModalAction).toHaveBeenCalledWith('create', {
 			name: NEW_NAME,
 			expression: NEW_EXPRESSION,
-			channels: ['1'],
+			description: NEW_DESCRIPTION,
+			channels: ['Channel 1'],
 		});
 	});
 
@@ -178,8 +186,14 @@ describe('RoutingPolicyDetails', () => {
 		);
 		expect(expressionTextarea).toBeInTheDocument();
 
+		const descriptionTextarea = screen.getByDisplayValue(
+			mockRoutingPolicy.description || 'description 1',
+		);
+		expect(descriptionTextarea).toBeInTheDocument();
+
 		fireEvent.change(nameInput, { target: { value: NEW_NAME } });
 		fireEvent.change(expressionTextarea, { target: { value: NEW_EXPRESSION } });
+		fireEvent.change(descriptionTextarea, { target: { value: NEW_DESCRIPTION } });
 
 		// Wait for the form to be valid before submitting
 		await waitFor(() => {
@@ -199,7 +213,8 @@ describe('RoutingPolicyDetails', () => {
 		expect(mockHandlePolicyDetailsModalAction).toHaveBeenCalledWith('edit', {
 			name: NEW_NAME,
 			expression: NEW_EXPRESSION,
-			channels: ['1'],
+			description: NEW_DESCRIPTION,
+			channels: ['Channel 1'],
 		});
 	});
 

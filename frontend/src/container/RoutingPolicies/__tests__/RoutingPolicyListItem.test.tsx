@@ -5,6 +5,13 @@ import { ROLES, USER_ROLES } from 'types/roles';
 import RoutingPolicyListItem from '../RoutingPolicyListItem';
 import { getAppContextMockState, MOCK_ROUTING_POLICY_1 } from './testUtils';
 
+const mockFormatTimezoneAdjustedTimestamp = jest.fn();
+jest.mock('providers/Timezone', () => ({
+	useTimezone: (): any => ({
+		formatTimezoneAdjustedTimestamp: mockFormatTimezoneAdjustedTimestamp,
+	}),
+}));
+
 jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
 
 const mockRoutingPolicy = MOCK_ROUTING_POLICY_1;
@@ -44,6 +51,9 @@ describe('RoutingPolicyListItem', () => {
 		expect(screen.getByText(mockRoutingPolicy.channels[0])).toBeInTheDocument();
 		expect(
 			screen.getByText(mockRoutingPolicy.createdBy || 'user1@signoz.io'),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(mockRoutingPolicy.description || 'description 1'),
 		).toBeInTheDocument();
 	});
 
@@ -93,5 +103,24 @@ describe('RoutingPolicyListItem', () => {
 		expect(
 			screen.queryByTestId(DELETE_ROUTING_POLICY_TEST_ID),
 		).not.toBeInTheDocument();
+	});
+
+	it('in details panel, show "-" for undefined values', () => {
+		render(
+			<RoutingPolicyListItem
+				routingPolicy={mockRoutingPolicy}
+				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
+				handleDeleteModalOpen={mockHandleDeleteModalOpen}
+			/>,
+		);
+
+		// Expand the details panel
+		fireEvent.click(screen.getByText(mockRoutingPolicy.name));
+
+		const updatedByRow = screen.getByText('Updated by').parentElement;
+		expect(updatedByRow).toHaveTextContent('-');
+
+		const updatedOnRow = screen.getByText('Updated on').parentElement;
+		expect(updatedOnRow).toHaveTextContent('-');
 	});
 });

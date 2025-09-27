@@ -84,8 +84,6 @@ describe('RoutingPoliciesList', () => {
 				handleDeleteModalOpen={mockHandleDeleteModalOpen}
 			/>,
 		);
-		expect(
-			screen.getByText('There are no routing policies yet.'),
-		).toBeInTheDocument();
+		expect(screen.getByText('No routing policies found.')).toBeInTheDocument();
 	});
 });
