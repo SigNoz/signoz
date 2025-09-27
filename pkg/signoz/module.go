@@ -25,7 +25,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 )
 
@@ -44,7 +44,7 @@ type Modules struct {
 
 func NewModules(
 	sqlstore sqlstore.SQLStore,
-	jwt *authtypes.JWT,
+	tokenizer tokenizer.Tokenizer,
 	emailing emailing.Emailing,
 	providerSettings factory.ProviderSettings,
 	orgGetter organization.Getter,
@@ -54,7 +54,7 @@ func NewModules(
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
-	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), jwt, emailing, providerSettings, orgSetter, analytics)
+	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, analytics)
 	return Modules{
 		OrgGetter:     orgGetter,
 		OrgSetter:     orgSetter,
