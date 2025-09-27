@@ -23,11 +23,7 @@ const createRoutingPolicy = async (
 	SuccessResponseV2<CreateRoutingPolicyResponse> | ErrorResponseV2
 > => {
 	try {
-		const response = await axios.post(`/notification-policy`, {
-			...props,
-			description: props.description || '',
-			name: '',
-		});
+		const response = await axios.post(`/notification-policy`, props);
 		return {
 			httpStatusCode: response.status,
 			data: response.data,
