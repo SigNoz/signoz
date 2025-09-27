@@ -51,8 +51,14 @@ func (r *RuleThresholdData) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type RuleReceivers struct {
+	Channels []string `json:"channels"`
+	Name     string   `json:"name"`
+}
+
 type RuleThreshold interface {
 	ShouldAlert(series v3.Series) (Vector, error)
+	GetRuleReceivers() []RuleReceivers
 }
 
 type BasicRuleThreshold struct {
@@ -64,9 +70,23 @@ type BasicRuleThreshold struct {
 	MatchType      MatchType `json:"matchType"`
 	CompareOp      CompareOp `json:"op"`
 	SelectedQuery  string    `json:"selectedQuery"`
+	Channels       []string  `json:"channels"`
 }
 
 type BasicRuleThresholds []BasicRuleThreshold
+
+func (r BasicRuleThresholds) GetRuleReceivers() []RuleReceivers {
+	thresholds := []BasicRuleThreshold(r)
+	var receiverRoutes []RuleReceivers
+	sortThresholds(thresholds)
+	for _, threshold := range thresholds {
+		receiverRoutes = append(receiverRoutes, RuleReceivers{
+			Name:     threshold.Name,
+			Channels: threshold.Channels,
+		})
+	}
+	return receiverRoutes
+}
 
 func (r BasicRuleThresholds) Validate() error {
 	var errs []error
@@ -81,6 +101,17 @@ func (r BasicRuleThresholds) Validate() error {
 func (r BasicRuleThresholds) ShouldAlert(series v3.Series) (Vector, error) {
 	var resultVector Vector
 	thresholds := []BasicRuleThreshold(r)
+	sortThresholds(thresholds)
+	for _, threshold := range thresholds {
+		smpl, shouldAlert := threshold.ShouldAlert(series)
+		if shouldAlert {
+			resultVector = append(resultVector, smpl)
+		}
+	}
+	return resultVector, nil
+}
+
+func sortThresholds(thresholds []BasicRuleThreshold) {
 	sort.Slice(thresholds, func(i, j int) bool {
 		compareOp := thresholds[i].GetCompareOp()
 		targetI := thresholds[i].Target()
@@ -98,13 +129,6 @@ func (r BasicRuleThresholds) ShouldAlert(series v3.Series) (Vector, error) {
 			return targetI > targetJ
 		}
 	})
-	for _, threshold := range thresholds {
-		smpl, shouldAlert := threshold.ShouldAlert(series)
-		if shouldAlert {
-			resultVector = append(resultVector, smpl)
-		}
-	}
-	return resultVector, nil
 }
 
 func (b BasicRuleThreshold) GetName() string {

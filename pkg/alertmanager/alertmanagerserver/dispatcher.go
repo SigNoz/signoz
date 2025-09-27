@@ -10,17 +10,15 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/provider"
 	"github.com/prometheus/alertmanager/store"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-)
-
-const (
-	noDataLabel = model.LabelName("nodata")
 )
 
 // Dispatcher sorts incoming alerts into aggregation groups and
@@ -46,6 +44,7 @@ type Dispatcher struct {
 	logger              *slog.Logger
 	notificationManager nfmanager.NotificationManager
 	orgID               string
+	receiverRoutes      map[string]*dispatch.Route
 }
 
 // We use the upstream Limits interface from Prometheus
@@ -90,6 +89,7 @@ func (d *Dispatcher) Run() {
 
 	d.mtx.Lock()
 	d.aggrGroupsPerRoute = map[*dispatch.Route]map[model.Fingerprint]*aggrGroup{}
+	d.receiverRoutes = map[string]*dispatch.Route{}
 	d.aggrGroupsNum = 0
 	d.metrics.aggrGroups.Set(0)
 	d.ctx, d.cancel = context.WithCancel(context.Background())
@@ -125,8 +125,14 @@ func (d *Dispatcher) run(it provider.AlertIterator) {
 			}
 
 			now := time.Now()
-			for _, r := range d.route.Match(alert.Labels) {
-				d.processAlert(alert, r)
+			channels, err := d.notificationManager.Match(d.ctx, d.orgID, getRuleIDFromAlert(alert), alert.Labels)
+			if err != nil {
+				d.logger.ErrorContext(d.ctx, "Error on alert match", "err", err)
+				continue
+			}
+			for _, channel := range channels {
+				route := d.getOrCreateRoute(channel)
+				d.processAlert(alert, route)
 			}
 			d.metrics.processingDuration.Observe(time.Since(now).Seconds())
 
@@ -301,9 +307,9 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 	}
 	renotifyInterval := config.Renotify.RenotifyInterval
 
-	if noDataAlert(alert) {
+	if alertmanagertypes.NoDataAlert(alert) {
 		renotifyInterval = config.Renotify.NoDataInterval
-		groupLabels[noDataLabel] = alert.Labels[noDataLabel]
+		groupLabels[alertmanagertypes.NoDataLabel] = alert.Labels[alertmanagertypes.NoDataLabel]
 	}
 
 	ag = newAggrGroup(d.ctx, groupLabels, route, d.timeout, d.logger, renotifyInterval)
@@ -554,10 +560,23 @@ func getGroupLabels(alert *types.Alert, groups map[model.LabelName]struct{}) mod
 	return groupLabels
 }
 
-func noDataAlert(alert *types.Alert) bool {
-	if _, ok := alert.Labels[noDataLabel]; ok {
-		return true
-	} else {
-		return false
+func (d *Dispatcher) getOrCreateRoute(receiver string) *dispatch.Route {
+	if route, exists := d.receiverRoutes[receiver]; exists {
+		return route
 	}
+	route := &dispatch.Route{
+		RouteOpts: dispatch.RouteOpts{
+			Receiver:      receiver,
+			GroupWait:     30 * time.Second,
+			GroupInterval: 5 * time.Minute,
+			GroupByAll:    false,
+		},
+		Matchers: labels.Matchers{{
+			Name:  "__receiver__",
+			Value: receiver,
+			Type:  labels.MatchEqual,
+		}},
+	}
+	d.receiverRoutes[receiver] = route
+	return route
 }

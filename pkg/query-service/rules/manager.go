@@ -350,39 +350,43 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 	existingRule.Data = ruleStr
 
 	return m.ruleStore.EditRule(ctx, existingRule, func(ctx context.Context) error {
-		cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
-		if err != nil {
-			return err
-		}
-
-		var preferredChannels []string
-		if len(parsedRule.PreferredChannels) == 0 {
-			channels, err := m.alertmanager.ListChannels(ctx, claims.OrgID)
-			if err != nil {
-				return err
-			}
-
-			for _, channel := range channels {
-				preferredChannels = append(preferredChannels, channel.Name)
-			}
-		} else {
-			preferredChannels = parsedRule.PreferredChannels
-		}
-		err = cfg.UpdateRuleIDMatcher(id.StringValue(), preferredChannels)
-		if err != nil {
-			return err
-		}
 		if parsedRule.NotificationSettings != nil {
 			config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
-			err = m.alertmanager.SetNotificationConfig(ctx, orgID, existingRule.ID.StringValue(), &config)
+			err = m.alertmanager.SetNotificationConfig(ctx, orgID, id.StringValue(), &config)
 			if err != nil {
 				return err
 			}
-		}
-
-		err = m.alertmanager.SetConfig(ctx, cfg)
-		if err != nil {
-			return err
+			if !parsedRule.NotificationSettings.NotificationPolicy {
+				request, err := parsedRule.GetRuleRouteRequest(id.StringValue())
+				if err != nil {
+					return err
+				}
+				err = m.alertmanager.UpdateAllNotificationRoutesByName(ctx, id.StringValue(), request)
+				if err != nil {
+					return err
+				}
+				amConfig, err := m.alertmanager.GetConfig(ctx, orgID.StringValue())
+				if err != nil {
+					return err
+				}
+				// move ruleId inhibitor deletion to alertmanager
+				err = amConfig.DeleteRuleIdInhibitor(id.StringValue())
+				if err != nil {
+					return err
+				}
+				err = m.alertmanager.SetConfig(ctx, amConfig)
+				if err != nil {
+					return err
+				}
+				inhibitRules, err := parsedRule.GetInhibitRules(id.StringValue())
+				if err != nil {
+					return err
+				}
+				err = m.alertmanager.CreateInhibitRules(ctx, orgID, inhibitRules)
+				if err != nil {
+					return err
+				}
+			}
 		}
 		err = m.syncRuleStateWithTask(ctx, orgID, prepareTaskName(existingRule.ID.StringValue()), &parsedRule)
 		if err != nil {
@@ -548,41 +552,30 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 	}
 
 	id, err := m.ruleStore.CreateRule(ctx, storedRule, func(ctx context.Context, id valuer.UUID) error {
-		cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
-		if err != nil {
-			return err
-		}
-
-		var preferredChannels []string
-		if len(parsedRule.PreferredChannels) == 0 {
-			channels, err := m.alertmanager.ListChannels(ctx, claims.OrgID)
-			if err != nil {
-				return err
-			}
-
-			for _, channel := range channels {
-				preferredChannels = append(preferredChannels, channel.Name)
-			}
-		} else {
-			preferredChannels = parsedRule.PreferredChannels
-		}
-
 		if parsedRule.NotificationSettings != nil {
 			config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
-			err = m.alertmanager.SetNotificationConfig(ctx, orgID, storedRule.ID.StringValue(), &config)
+			err = m.alertmanager.SetNotificationConfig(ctx, orgID, id.StringValue(), &config)
 			if err != nil {
 				return err
 			}
-		}
-
-		err = cfg.CreateRuleIDMatcher(id.StringValue(), preferredChannels)
-		if err != nil {
-			return err
-		}
-
-		err = m.alertmanager.SetConfig(ctx, cfg)
-		if err != nil {
-			return err
+			if !parsedRule.NotificationSettings.NotificationPolicy {
+				request, err := parsedRule.GetRuleRouteRequest(id.StringValue())
+				if err != nil {
+					return err
+				}
+				err = m.alertmanager.CreateNotificationRoutes(ctx, request)
+				if err != nil {
+					return err
+				}
+				inhibitRules, err := parsedRule.GetInhibitRules(id.StringValue())
+				if err != nil {
+					return err
+				}
+				err = m.alertmanager.CreateInhibitRules(ctx, orgID, inhibitRules)
+				if err != nil {
+					return err
+				}
+			}
 		}
 
 		taskName := prepareTaskName(id.StringValue())

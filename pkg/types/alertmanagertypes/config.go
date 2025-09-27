@@ -193,6 +193,20 @@ func (c *Config) SetRouteConfig(routeConfig RouteConfig) error {
 	return nil
 }
 
+func (c *Config) AddInhibitRules(rules []config.InhibitRule) error {
+	if c.alertmanagerConfig == nil {
+		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "config is nil")
+	}
+
+	c.alertmanagerConfig.InhibitRules = append(c.alertmanagerConfig.InhibitRules, rules...)
+
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
+	c.storeableConfig.UpdatedAt = time.Now()
+
+	return nil
+}
+
 func (c *Config) AlertmanagerConfig() *config.Config {
 	return c.alertmanagerConfig
 }
@@ -304,6 +318,27 @@ func (c *Config) CreateRuleIDMatcher(ruleID string, receiverNames []string) erro
 	return nil
 }
 
+func (c *Config) DeleteRuleIdInhibitor(ruleID string) error {
+	if c.alertmanagerConfig.InhibitRules == nil {
+		return nil // already nil
+	}
+
+	var filteredRules []config.InhibitRule
+	for _, inhibitor := range c.alertmanagerConfig.InhibitRules {
+		sourceContainsRuleID := matcherContainsRuleID(inhibitor.SourceMatchers, ruleID)
+		targetContainsRuleID := matcherContainsRuleID(inhibitor.TargetMatchers, ruleID)
+		if !sourceContainsRuleID && !targetContainsRuleID {
+			filteredRules = append(filteredRules, inhibitor)
+		}
+	}
+	c.alertmanagerConfig.InhibitRules = filteredRules
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
+	c.storeableConfig.UpdatedAt = time.Now()
+
+	return nil
+}
+
 func (c *Config) UpdateRuleIDMatcher(ruleID string, receiverNames []string) error {
 	err := c.DeleteRuleIDMatcher(ruleID)
 	if err != nil {
@@ -403,8 +438,9 @@ func init() {
 
 // NotificationConfig holds configuration for alert notifications timing.
 type NotificationConfig struct {
-	NotificationGroup map[model.LabelName]struct{}
-	Renotify          ReNotificationConfig
+	NotificationGroup  map[model.LabelName]struct{}
+	Renotify           ReNotificationConfig
+	NotificationPolicy bool
 }
 
 func (nc *NotificationConfig) DeepCopy() NotificationConfig {
@@ -415,6 +451,7 @@ func (nc *NotificationConfig) DeepCopy() NotificationConfig {
 	for k, v := range nc.NotificationGroup {
 		deepCopy.NotificationGroup[k] = v
 	}
+	deepCopy.NotificationPolicy = nc.NotificationPolicy
 	return deepCopy
 }
 
@@ -423,7 +460,7 @@ type ReNotificationConfig struct {
 	RenotifyInterval time.Duration
 }
 
-func NewNotificationConfig(groups []string, renotifyInterval time.Duration, noDataRenotifyInterval time.Duration) NotificationConfig {
+func NewNotificationConfig(groups []string, renotifyInterval time.Duration, noDataRenotifyInterval time.Duration, policy bool) NotificationConfig {
 	notificationConfig := GetDefaultNotificationConfig()
 
 	if renotifyInterval != 0 {
@@ -436,6 +473,8 @@ func NewNotificationConfig(groups []string, renotifyInterval time.Duration, noDa
 	for _, group := range groups {
 		notificationConfig.NotificationGroup[model.LabelName(group)] = struct{}{}
 	}
+
+	notificationConfig.NotificationPolicy = policy
 
 	return notificationConfig
 }

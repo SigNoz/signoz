@@ -4,6 +4,9 @@ import (
 	"context"
 	"sync"
 
+	"github.com/prometheus/alertmanager/featurecontrol"
+	"github.com/prometheus/alertmanager/matcher/compat"
+
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -61,6 +64,7 @@ func New(
 }
 
 func (service *Service) SyncServers(ctx context.Context) error {
+	compat.InitFromFlags(service.settings.Logger(), featurecontrol.NoopFlags{})
 	orgs, err := service.orgGetter.ListByOwnedKeyRange(ctx)
 	if err != nil {
 		return err

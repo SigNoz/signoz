@@ -15,6 +15,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+
+	"github.com/prometheus/alertmanager/config"
 )
 
 type AlertType string
@@ -68,6 +70,7 @@ type NotificationSettings struct {
 	NotificationGroupBy []string           `json:"notificationGroupBy,omitempty"`
 	ReNotifyInterval    Duration           `json:"renotify,omitempty"`
 	AlertStates         []model.AlertState `json:"alertStates,omitempty"`
+	NotificationPolicy  bool               `json:"notificationPolicy,omitempty"`
 }
 
 func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanagertypes.NotificationConfig {
@@ -79,7 +82,70 @@ func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanager
 	if slices.Contains(ns.AlertStates, model.StateFiring) {
 		renotifyInterval = ns.ReNotifyInterval
 	}
-	return alertmanagertypes.NewNotificationConfig(ns.NotificationGroupBy, time.Duration(renotifyInterval), time.Duration(noDataRenotifyInterval))
+	return alertmanagertypes.NewNotificationConfig(ns.NotificationGroupBy, time.Duration(renotifyInterval), time.Duration(noDataRenotifyInterval), ns.NotificationPolicy)
+}
+
+func (r *PostableRule) GetRuleRouteRequest(ruleId string) ([]*alertmanagertypes.PolicyRouteRequest, error) {
+	threshold, err := r.RuleCondition.Thresholds.GetRuleThreshold()
+	if err != nil {
+		return nil, err
+	}
+	receivers := threshold.GetRuleReceivers()
+	routeRequests := make([]*alertmanagertypes.PolicyRouteRequest, 0)
+	for _, receiver := range receivers {
+		expression := fmt.Sprintf(`%s == "%s" && %s == "%s"`, LabelThresholdName, receiver.Name, LabelRuleId, ruleId)
+		routeRequests = append(routeRequests, &alertmanagertypes.PolicyRouteRequest{
+			Actions: alertmanagertypes.Actions{
+				Channels: receiver.Channels,
+			},
+			Kind:       alertmanagertypes.RuleBasedExpression,
+			Expression: expression,
+			Name:       ruleId,
+		})
+	}
+	return routeRequests, nil
+}
+
+func (r *PostableRule) GetInhibitRules(ruleId string) ([]config.InhibitRule, error) {
+	threshold, err := r.RuleCondition.Thresholds.GetRuleThreshold()
+	if err != nil {
+		return nil, err
+	}
+	var groups []string
+	if r.NotificationSettings != nil {
+		for k := range r.NotificationSettings.GetAlertManagerNotificationConfig().NotificationGroup {
+			groups = append(groups, string(k))
+		}
+	}
+	receivers := threshold.GetRuleReceivers()
+	var inhibitRules []config.InhibitRule
+	for i := 0; i < len(receivers)-1; i++ {
+		rule := config.InhibitRule{
+			SourceMatchers: config.Matchers{
+				{
+					Name:  LabelThresholdName,
+					Value: receivers[i].Name,
+				},
+				{
+					Name:  LabelRuleId,
+					Value: ruleId,
+				},
+			},
+			TargetMatchers: config.Matchers{
+				{
+					Name:  LabelThresholdName,
+					Value: receivers[i+1].Name,
+				},
+				{
+					Name:  LabelRuleId,
+					Value: ruleId,
+				},
+			},
+			Equal: groups,
+		}
+		inhibitRules = append(inhibitRules, rule)
+	}
+	return inhibitRules, nil
 }
 
 func (ns *NotificationSettings) UnmarshalJSON(data []byte) error {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfroutingstore/sqlroutingstore"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
@@ -23,6 +24,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -49,6 +51,7 @@ type SigNoz struct {
 	StatsReporter   statsreporter.StatsReporter
 	Modules         Modules
 	Handlers        Handlers
+	RouteStore      alertmanagertypes.RouteStore
 }
 
 func New(
@@ -230,12 +233,14 @@ func New(
 	// Initialize user getter
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 
+	// will need to create factory for all stores
+	routeStore := sqlroutingstore.NewStore(sqlstore)
 	// shared NotificationManager instance for both alertmanager and rules
 	notificationManager, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		nfmanager.Config{},
-		NewNotificationManagerProviderFactories(),
+		NewNotificationManagerProviderFactories(routeStore),
 		"rulebased",
 	)
 	if err != nil {
@@ -334,5 +339,6 @@ func New(
 		Sharder:         sharder,
 		Modules:         modules,
 		Handlers:        handlers,
+		RouteStore:      routeStore,
 	}, nil
 }

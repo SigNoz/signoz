@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
 
-	//qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"io"
 	"math"
 	"net/http"
@@ -492,6 +491,12 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/channels", am.EditAccess(aH.AlertmanagerAPI.CreateChannel)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/testChannel", am.EditAccess(aH.AlertmanagerAPI.TestReceiver)).Methods(http.MethodPost)
 
+	router.HandleFunc("/api/v1/notification-policy", am.ViewAccess(aH.AlertmanagerAPI.GetAllNotificationPolicies)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/notification-policy/{id}", am.ViewAccess(aH.AlertmanagerAPI.GetNotificationPolicyByID)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/notification-policy", am.AdminAccess(aH.AlertmanagerAPI.CreateNotificationPolicy)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/notification-policy/{id}", am.AdminAccess(aH.AlertmanagerAPI.DeleteNotificationPolicyByID)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/notification-policy/{id}", am.AdminAccess(aH.AlertmanagerAPI.UpdateNotificationPolicy)).Methods(http.MethodPut)
+
 	router.HandleFunc("/api/v1/alerts", am.ViewAccess(aH.AlertmanagerAPI.GetAlerts)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/rules", am.ViewAccess(aH.listRules)).Methods(http.MethodGet)
@@ -616,6 +621,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	// Export
 	router.HandleFunc("/api/v1/export_raw_data", am.ViewAccess(aH.Signoz.Handlers.RawDataExport.ExportRawData)).Methods(http.MethodGet)
+
 }
 
 func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *middleware.AuthZ) {
