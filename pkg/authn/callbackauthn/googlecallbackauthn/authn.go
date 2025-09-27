@@ -39,16 +39,16 @@ func New(ctx context.Context, store authtypes.AuthNStore) (*AuthN, error) {
 	}, nil
 }
 
-func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, orgDomain *authtypes.OrgDomain) (string, error) {
-	if orgDomain.OrgDomainConfig().AuthNProvider != authtypes.AuthNProviderGoogle {
-		return "", errors.Newf(errors.TypeInternal, authtypes.ErrCodeOrgDomainMismatch, "domain type is not google")
+func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *authtypes.AuthDomain) (string, error) {
+	if authDomain.AuthDomainConfig().AuthNProvider != authtypes.AuthNProviderGoogle {
+		return "", errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthDomainMismatch, "domain type is not google")
 	}
 
-	oauth2Config := a.oauth2Config(siteURL, orgDomain)
+	oauth2Config := a.oauth2Config(siteURL, authDomain)
 
 	return oauth2Config.AuthCodeURL(
-		authtypes.NewState(siteURL, orgDomain.StorableOrgDomain().ID).URL.String(),
-		oauth2.SetAuthURLParam("hd", orgDomain.StorableOrgDomain().Name),
+		authtypes.NewState(siteURL, authDomain.StorableAuthDomain().ID).URL.String(),
+		oauth2.SetAuthURLParam("hd", authDomain.StorableAuthDomain().Name),
 	), nil
 }
 
@@ -65,13 +65,13 @@ func (a *AuthN) HandleCallback(ctx context.Context, query *url.Values) (authtype
 	}
 
 	// Retrieve org domain from id. After this stage, we have the organization of the user.
-	orgDomain, err := a.store.GetOrgDomainFromID(ctx, state.DomainID)
+	authDomain, err := a.store.GetAuthDomainFromID(ctx, state.DomainID)
 	if err != nil {
 		return authtypes.CallbackIdentity{}, errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get org domain from id").WithAdditional(err.Error())
 	}
 
 	// Prepare oauth2 config and exchange code for token.
-	oauth2Config := a.oauth2Config(state.URL, orgDomain)
+	oauth2Config := a.oauth2Config(state.URL, authDomain)
 
 	token, err := oauth2Config.Exchange(ctx, query.Get("code"))
 	if err != nil {
@@ -86,7 +86,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query *url.Values) (authtype
 
 	// Verify id token.
 	verifier := a.oidcProvider.Verifier(&oidc.Config{
-		ClientID: orgDomain.OrgDomainConfig().Google.ClientID,
+		ClientID: authDomain.AuthDomainConfig().Google.ClientID,
 	})
 
 	idToken, err := verifier.Verify(ctx, rawIDToken)
@@ -108,21 +108,22 @@ func (a *AuthN) HandleCallback(ctx context.Context, query *url.Values) (authtype
 	}
 
 	// Check if hosted domain is the same as the org domain.
-	if claims.HostedDomain != orgDomain.StorableOrgDomain().Name {
+	if claims.HostedDomain != authDomain.StorableAuthDomain().Name {
 		return authtypes.CallbackIdentity{}, errors.Newf(errors.TypeInternal, errors.CodeInternal, "oidc: unexpected hd claim %v", claims.HostedDomain)
 	}
 
 	return authtypes.CallbackIdentity{
 		Name:  claims.Name,
 		Email: claims.Email,
+		OrgID: authDomain.StorableAuthDomain().OrgID,
 	}, nil
 
 }
 
-func (a *AuthN) oauth2Config(siteURL *url.URL, orgDomain *authtypes.OrgDomain) *oauth2.Config {
+func (a *AuthN) oauth2Config(siteURL *url.URL, authDomain *authtypes.AuthDomain) *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     orgDomain.OrgDomainConfig().Google.ClientID,
-		ClientSecret: orgDomain.OrgDomainConfig().Google.ClientSecret,
+		ClientID:     authDomain.AuthDomainConfig().Google.ClientID,
+		ClientSecret: authDomain.AuthDomainConfig().Google.ClientSecret,
 		Endpoint:     a.oidcProvider.Endpoint(),
 		Scopes:       scopes,
 		RedirectURL: (&url.URL{

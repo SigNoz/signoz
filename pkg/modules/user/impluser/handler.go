@@ -19,10 +19,11 @@ import (
 
 type handler struct {
 	module root.Module
+	getter root.Getter
 }
 
-func NewHandler(module root.Module) root.Handler {
-	return &handler{module: module}
+func NewHandler(module root.Module, getter root.Getter) root.Handler {
+	return &handler{module: module, getter: getter}
 }
 
 func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
@@ -35,72 +36,13 @@ func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get invite object
-	invite, err := h.module.GetInviteByToken(ctx, req.InviteToken)
+	user, err := h.module.AcceptInvite(ctx, req.InviteToken, req.Password)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	orgDomain, err := h.module.GetAuthDomainByEmail(ctx, invite.Email)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		render.Error(w, err)
-		return
-	}
-
-	precheckResp := &types.GettableLoginPrecheck{
-		SSO:    false,
-		IsUser: false,
-	}
-
-	if invite.Name == "" && req.DisplayName != "" {
-		invite.Name = req.DisplayName
-	}
-
-	user, err := types.NewUser(invite.Name, invite.Email, invite.Role, invite.OrgID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	if orgDomain != nil && orgDomain.SsoEnabled {
-		// sso is enabled, create user and respond precheck data
-		err = h.module.CreateUser(ctx, user)
-		if err != nil {
-			render.Error(w, err)
-			return
-		}
-
-		// check if sso is enforced for the org
-		precheckResp, err = h.module.LoginPrecheck(ctx, invite.OrgID, user.Email, req.SourceURL)
-		if err != nil {
-			render.Error(w, err)
-			return
-		}
-
-	} else {
-		password, err := types.NewFactorPassword(req.Password, user.ID.StringValue())
-		if err != nil {
-			render.Error(w, err)
-			return
-		}
-
-		err = h.module.CreateUser(ctx, user, root.WithFactorPassword(password))
-		if err != nil {
-			render.Error(w, err)
-			return
-		}
-
-		precheckResp.IsUser = true
-	}
-
-	// delete the invite
-	if err := h.module.DeleteInvite(ctx, invite.OrgID, invite.ID); err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	render.Success(w, http.StatusOK, precheckResp)
+	render.Success(w, http.StatusCreated, user)
 }
 
 func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
@@ -224,13 +166,13 @@ func (h *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
 
-	claims, err := authtypes.ClaimsFromContext(ctx)
+	_, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	user, err := h.module.GetUserByID(ctx, claims.OrgID, id)
+	user, err := h.getter.GetUser(ctx, valuer.MustNewUUID(id))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -249,7 +191,7 @@ func (h *handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := h.module.ListUsers(ctx, claims.OrgID)
+	users, err := h.getter.ListByOrgID(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -311,14 +253,14 @@ func (handler *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Req
 
 	id := mux.Vars(r)["id"]
 
-	claims, err := authtypes.ClaimsFromContext(ctx)
+	_, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
 	// check if the id lies in the same org as the claims
-	user, err := handler.module.GetUserByID(ctx, claims.OrgID, id)
+	user, err := handler.getter.GetUser(ctx, valuer.MustNewUUID(id))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -506,7 +448,7 @@ func (h *handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the user
-	createdByUser, err := h.module.GetUserByID(ctx, orgID.String(), existingAPIKey.UserID.String())
+	createdByUser, err := h.getter.GetUser(ctx, existingAPIKey.UserID)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -563,7 +505,7 @@ func (h *handler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the user
-	createdByUser, err := h.module.GetUserByID(ctx, orgID.String(), existingAPIKey.UserID.String())
+	createdByUser, err := h.getter.GetUser(ctx, existingAPIKey.UserID)
 	if err != nil {
 		render.Error(w, err)
 		return

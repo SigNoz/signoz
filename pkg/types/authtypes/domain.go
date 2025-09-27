@@ -9,40 +9,59 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/ssotypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/gofrs/uuid"
 	"github.com/uptrace/bun"
 )
 
 var (
-	ErrCodeOrgDomainInvalidConfig = errors.MustNewCode("org_domain_invalid_config")
-	ErrCodeOrgDomainMismatch      = errors.MustNewCode("org_domain_mismatch")
-	ErrCodeOrgDomainNotFound      = errors.MustNewCode("org_domain_not_found")
+	ErrCodeAuthDomainInvalidConfig = errors.MustNewCode("auth_domain_invalid_config")
+	ErrCodeAuthDomainMismatch      = errors.MustNewCode("auth_domain_mismatch")
+	ErrCodeAuthDomainNotFound      = errors.MustNewCode("auth_domain_not_found")
+	ErrCodeAuthDomainAlreadyExists = errors.MustNewCode("auth_domain_already_exists")
 )
 
-type StorableOrgDomain struct {
+type GettableAuthDomain struct {
+	*StorableAuthDomain
+	*AuthDomainConfig
+}
+
+type PostableAuthDomain struct {
+	AuthDomainConfig
+	Name string `json:"name"`
+}
+
+type StorableAuthDomain struct {
 	bun.BaseModel `bun:"table:org_domains"`
 
 	types.Identifiable
-	Name  string      `bun:"name"`
-	Data  string      `bun:"data"`
-	OrgID valuer.UUID `bun:"org_id"`
+	Name  string      `bun:"name" json:"name"`
+	Data  string      `bun:"data" json:"-"`
+	OrgID valuer.UUID `bun:"org_id" json:"orgId"`
 	types.TimeAuditable
 }
 
-type OrgDomainConfig struct {
+type AuthDomainConfig struct {
 	SSOEnabled    bool                        `json:"ssoEnabled"`
 	AuthNProvider AuthNProvider               `json:"ssoType"`
 	SAML          *ssotypes.SamlConfig        `json:"samlConfig"`
 	Google        *ssotypes.GoogleOAuthConfig `json:"googleAuthConfig"`
 }
 
-type OrgDomain struct {
-	storableOrgDomain *StorableOrgDomain
-	orgDomainConfig   *OrgDomainConfig
+type AuthDomain struct {
+	storableAuthDomain *StorableAuthDomain
+	authDomainConfig   *AuthDomainConfig
 }
 
-func NewOrgDomain(name string, data string, orgID valuer.UUID) (*OrgDomain, error) {
-	storableOrgDomain := &StorableOrgDomain{
+func NewAuthDomainFromConfig(name string, config AuthDomainConfig, orgID valuer.UUID) (*AuthDomain, error) {
+	data, err := json.Marshal(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewAuthDomain(name, string(data), orgID)
+}
+
+func NewAuthDomain(name string, data string, orgID valuer.UUID) (*AuthDomain, error) {
+	storableAuthDomain := &StorableAuthDomain{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
@@ -55,35 +74,64 @@ func NewOrgDomain(name string, data string, orgID valuer.UUID) (*OrgDomain, erro
 		},
 	}
 
-	return NewOrgDomainFromStorableOrgDomain(storableOrgDomain)
+	return NewAuthDomainFromStorableAuthDomain(storableAuthDomain)
 }
 
-func NewOrgDomainFromStorableOrgDomain(storableOrgDomain *StorableOrgDomain) (*OrgDomain, error) {
-	orgDomainConfig := new(OrgDomainConfig)
-	if err := json.Unmarshal([]byte(storableOrgDomain.Data), orgDomainConfig); err != nil {
+func NewAuthDomainFromStorableAuthDomain(storableAuthDomain *StorableAuthDomain) (*AuthDomain, error) {
+	authDomainConfig := new(AuthDomainConfig)
+	if err := json.Unmarshal([]byte(storableAuthDomain.Data), authDomainConfig); err != nil {
 		return nil, err
 	}
 
-	return &OrgDomain{
-		storableOrgDomain: storableOrgDomain,
-		orgDomainConfig:   orgDomainConfig,
+	return &AuthDomain{
+		storableAuthDomain: storableAuthDomain,
+		authDomainConfig:   authDomainConfig,
 	}, nil
 }
 
-func (typ *OrgDomain) StorableOrgDomain() *StorableOrgDomain {
-	return typ.storableOrgDomain
+func NewGettableAuthDomainFromAuthDomain(authDomain *AuthDomain) *GettableAuthDomain {
+	return &GettableAuthDomain{
+		StorableAuthDomain: authDomain.StorableAuthDomain(),
+		AuthDomainConfig:   authDomain.AuthDomainConfig(),
+	}
 }
 
-func (typ *OrgDomain) OrgDomainConfig() *OrgDomainConfig {
-	return typ.orgDomainConfig
+func (typ *AuthDomain) StorableAuthDomain() *StorableAuthDomain {
+	return typ.storableAuthDomain
 }
 
-type OrgDomainStore interface {
-	GetOrgDomainByNameAndOrgID(ctx context.Context, name string, orgID valuer.UUID) (*StorableOrgDomain, error)
-	GetDomainByName(ctx context.Context, name string) (*StorableOrgDomain, error)
-	ListDomains(ctx context.Context, orgId valuer.UUID) ([]*GettableOrgDomain, error)
-	GetDomain(ctx context.Context, id uuid.UUID) (*GettableOrgDomain, error)
-	CreateDomain(ctx context.Context, d *GettableOrgDomain) error
-	UpdateDomain(ctx context.Context, domain *GettableOrgDomain) error
-	DeleteDomain(ctx context.Context, id uuid.UUID) error
+func (typ *AuthDomain) AuthDomainConfig() *AuthDomainConfig {
+	return typ.authDomainConfig
+}
+
+func (typ *AuthDomain) Update(config *AuthDomainConfig) error {
+	data, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+
+	typ.authDomainConfig = config
+	typ.storableAuthDomain.Data = string(data)
+	typ.storableAuthDomain.UpdatedAt = time.Now()
+	return nil
+}
+
+type AuthDomainStore interface {
+	// Get org domain by id.
+	Get(ctx context.Context, id valuer.UUID) (*AuthDomain, error)
+
+	// Get by name.
+	GetByName(ctx context.Context, name string) (*AuthDomain, error)
+
+	// List org domains by orgID.
+	ListByOrgID(ctx context.Context, orgId valuer.UUID) ([]*AuthDomain, error)
+
+	// Create auth domain.
+	Create(ctx context.Context, domain *AuthDomain) error
+
+	// Update by id.
+	Update(ctx context.Context, domain *AuthDomain) error
+
+	// Delete by id.
+	Delete(ctx context.Context, id valuer.UUID) error
 }

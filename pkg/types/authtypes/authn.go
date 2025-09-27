@@ -2,6 +2,7 @@ package authtypes
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 	"strings"
 
@@ -69,10 +70,36 @@ func NewStateFromString(state string) (State, error) {
 	}, nil
 }
 
+func NewIdentity(userID valuer.UUID, orgID valuer.UUID, email string, role types.Role) *Identity {
+	return &Identity{
+		UserID: userID,
+		OrgID:  orgID,
+		Email:  email,
+		Role:   role,
+	}
+}
+
+func (typ Identity) MarshalBinary() ([]byte, error) {
+	return json.Marshal(typ)
+}
+
+func (typ *Identity) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, typ)
+}
+
+func (typ *Identity) ToClaims() Claims {
+	return Claims{
+		UserID: typ.UserID.String(),
+		Email:  typ.Email,
+		Role:   typ.Role,
+		OrgID:  typ.OrgID.String(),
+	}
+}
+
 type AuthNStore interface {
 	// Get user and factor password by email and orgID.
 	GetUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*types.User, *types.FactorPassword, error)
 
 	// Get org domain from id.
-	GetOrgDomainFromID(ctx context.Context, domainID valuer.UUID) (*OrgDomain, error)
+	GetAuthDomainFromID(ctx context.Context, domainID valuer.UUID) (*AuthDomain, error)
 }

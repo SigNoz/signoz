@@ -31,7 +31,7 @@ func (store *store) Create(ctx context.Context, token *authtypes.StorableToken) 
 	return nil
 }
 
-func (store *store) GetAuthenticatedUserByUserID(ctx context.Context, userID valuer.UUID) (*authtypes.AuthenticatedUser, error) {
+func (store *store) GetIdentityByUserID(ctx context.Context, userID valuer.UUID) (*authtypes.Identity, error) {
 	user := new(types.User)
 
 	err := store.
@@ -45,7 +45,7 @@ func (store *store) GetAuthenticatedUserByUserID(ctx context.Context, userID val
 		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with id: %s does not exist", userID)
 	}
 
-	return authtypes.NewAuthenticatedUser(userID, valuer.MustNewUUID(user.OrgID), user.Email, types.Role(user.Role)), nil
+	return authtypes.NewIdentity(userID, valuer.MustNewUUID(user.OrgID), user.Email, types.Role(user.Role)), nil
 }
 
 func (store *store) GetByAccessToken(ctx context.Context, accessToken string) (*authtypes.StorableToken, error) {
@@ -151,4 +151,36 @@ func (store *store) DeleteMany(ctx context.Context, tokenIDs []valuer.UUID) erro
 	}
 
 	return nil
+}
+
+func (store *store) DeleteByUserID(ctx context.Context, userID valuer.UUID) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewDelete().
+		Model(new(authtypes.StorableToken)).
+		Where("user_id = ?", userID).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (store *store) ListByUserID(ctx context.Context, userID valuer.UUID) ([]*authtypes.StorableToken, error) {
+	var tokens []*authtypes.StorableToken
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&tokens).
+		Where("user_id = ?", userID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return tokens, nil
 }
