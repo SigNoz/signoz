@@ -25,7 +25,7 @@ func (provider *Provider) Collect(context.Context, valuer.UUID) (map[string]any,
 }
 
 // CreateToken implements tokenizer.Tokenizer.
-func (provider *Provider) CreateToken(context.Context, *authtypes.AuthenticatedUser, map[string]string) (*authtypes.Token, error) {
+func (provider *Provider) CreateToken(context.Context, *authtypes.Identity, map[string]string) (*authtypes.Token, error) {
 	panic("unimplemented")
 }
 
@@ -34,8 +34,8 @@ func (provider *Provider) DeleteToken(context.Context, string) error {
 	panic("unimplemented")
 }
 
-// GetAuthenticatedUser implements tokenizer.Tokenizer.
-func (provider *Provider) GetAuthenticatedUser(context.Context, string) (*authtypes.AuthenticatedUser, error) {
+// GetIdentity implements tokenizer.Tokenizer.
+func (provider *Provider) GetIdentity(context.Context, string) (*authtypes.Identity, error) {
 	panic("unimplemented")
 }
 
@@ -53,4 +53,12 @@ func (provider *Provider) Start(context.Context) error {
 func (provider *Provider) Stop(context.Context) error {
 	close(provider.stopC)
 	return nil
+}
+
+func (provider *Provider) DeleteIdentity(context.Context, valuer.UUID) error {
+	panic("unimplemented")
+}
+
+func (provider *Provider) DeleteTokensByUserID(context.Context, valuer.UUID) error {
+	panic("unimplemented")
 }

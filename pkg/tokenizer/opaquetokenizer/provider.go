@@ -61,8 +61,8 @@ func (provider *provider) Start(ctx context.Context) error {
 	}
 }
 
-func (provider *provider) CreateToken(ctx context.Context, authenticatedUser *authtypes.AuthenticatedUser, meta map[string]string) (*authtypes.Token, error) {
-	token, err := authtypes.NewToken(meta, authenticatedUser.UserID)
+func (provider *provider) CreateToken(ctx context.Context, identity *authtypes.Identity, meta map[string]string) (*authtypes.Token, error) {
+	token, err := authtypes.NewToken(meta, identity.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -71,14 +71,14 @@ func (provider *provider) CreateToken(ctx context.Context, authenticatedUser *au
 		return nil, err
 	}
 
-	if err := provider.setAuthenticatedUser(ctx, authenticatedUser); err != nil {
+	if err := provider.setIdentity(ctx, identity); err != nil {
 		return nil, err
 	}
 
 	return token, nil
 }
 
-func (provider *provider) GetAuthenticatedUser(ctx context.Context, accessToken string) (*authtypes.AuthenticatedUser, error) {
+func (provider *provider) GetIdentity(ctx context.Context, accessToken string) (*authtypes.Identity, error) {
 	token, err := provider.getOrGetSetToken(ctx, accessToken)
 	if err != nil {
 		return nil, err
@@ -88,12 +88,12 @@ func (provider *provider) GetAuthenticatedUser(ctx context.Context, accessToken 
 		return nil, err
 	}
 
-	authenticatedUser, err := provider.getOrGetSetAuthenticatedUser(ctx, token.UserID)
+	identity, err := provider.getOrGetSetIdentity(ctx, token.UserID)
 	if err != nil {
 		return nil, err
 	}
 
-	return authenticatedUser, nil
+	return identity, nil
 }
 
 func (provider *provider) DeleteToken(ctx context.Context, accessToken string) error {
@@ -120,6 +120,26 @@ func (provider *provider) RotateToken(ctx context.Context, accessToken string) (
 	}
 
 	return token, nil
+}
+
+func (provider *provider) DeleteTokensByUserID(ctx context.Context, userID valuer.UUID) error {
+	tokens, err := provider.tokenStore.ListByUserID(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	for _, token := range tokens {
+		if err := provider.DeleteToken(ctx, token.AccessToken); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (provider *provider) DeleteIdentity(ctx context.Context, userID valuer.UUID) error {
+	provider.cache.Delete(ctx, emptyOrgID, "identity::"+userID.String())
+	return nil
 }
 
 func (provider *provider) Stop(context.Context) error {
@@ -198,8 +218,8 @@ func (provider *provider) setToken(ctx context.Context, token *authtypes.Token, 
 	return provider.tokenStore.Update(ctx, token)
 }
 
-func (provider *provider) setAuthenticatedUser(ctx context.Context, authenticatedUser *authtypes.AuthenticatedUser) error {
-	err := provider.cache.Set(ctx, emptyOrgID, "user::"+authenticatedUser.UserID.String(), authenticatedUser, -1)
+func (provider *provider) setIdentity(ctx context.Context, identity *authtypes.Identity) error {
+	err := provider.cache.Set(ctx, emptyOrgID, "identity::"+identity.UserID.String(), identity, -1)
 	if err != nil {
 		return err
 	}
@@ -207,9 +227,9 @@ func (provider *provider) setAuthenticatedUser(ctx context.Context, authenticate
 	return nil
 }
 
-func (provider *provider) getOrGetSetAuthenticatedUser(ctx context.Context, userID valuer.UUID) (*authtypes.AuthenticatedUser, error) {
-	authenticatedUser := new(authtypes.AuthenticatedUser)
-	err := provider.cache.Get(ctx, emptyOrgID, "user::"+userID.String(), authenticatedUser, false)
+func (provider *provider) getOrGetSetIdentity(ctx context.Context, userID valuer.UUID) (*authtypes.Identity, error) {
+	identity := new(authtypes.Identity)
+	err := provider.cache.Get(ctx, emptyOrgID, "identity::"+userID.String(), identity, false)
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
@@ -217,11 +237,11 @@ func (provider *provider) getOrGetSetAuthenticatedUser(ctx context.Context, user
 	}
 
 	if err != nil {
-		authenticatedUser, err = provider.tokenStore.GetAuthenticatedUserByUserID(ctx, userID)
+		identity, err = provider.tokenStore.GetIdentityByUserID(ctx, userID)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return authenticatedUser, nil
+	return identity, nil
 }

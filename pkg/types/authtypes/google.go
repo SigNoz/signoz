@@ -19,15 +19,15 @@ func (config *GoogleConfig) UnmarshalJSON(data []byte) error {
 	}
 
 	if temp.ClientID == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeOrgDomainInvalidConfig, "google: clientId is required")
+		return errors.New(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "google: clientId is required")
 	}
 
 	if temp.ClientSecret == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeOrgDomainInvalidConfig, "google: clientSecret is required")
+		return errors.New(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "google: clientSecret is required")
 	}
 
 	if temp.RedirectURI == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeOrgDomainInvalidConfig, "google: redirectURI is required")
+		return errors.New(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "google: redirectURI is required")
 	}
 
 	*config = temp

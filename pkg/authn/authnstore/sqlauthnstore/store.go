@@ -47,19 +47,19 @@ func (store *store) GetUserAndFactorPasswordByEmailAndOrgID(ctx context.Context,
 	return user, factorPassword, nil
 }
 
-func (store *store) GetOrgDomainFromID(ctx context.Context, domainID valuer.UUID) (*authtypes.OrgDomain, error) {
-	storableOrgDomain := new(authtypes.StorableOrgDomain)
+func (store *store) GetAuthDomainFromID(ctx context.Context, domainID valuer.UUID) (*authtypes.AuthDomain, error) {
+	storableAuthDomain := new(authtypes.StorableAuthDomain)
 
 	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
-		Model(storableOrgDomain).
+		Model(storableAuthDomain).
 		Where("id = ?", domainID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeOrgDomainNotFound, "org domain with id %s does not exist", domainID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeAuthDomainNotFound, "auth domain with id %s does not exist", domainID)
 	}
 
-	return authtypes.NewOrgDomainFromStorableOrgDomain(storableOrgDomain)
+	return authtypes.NewAuthDomainFromStorableAuthDomain(storableAuthDomain)
 }
