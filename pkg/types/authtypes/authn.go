@@ -30,6 +30,7 @@ type CallbackIdentity struct {
 	Name  string      `json:"name"`
 	Email string      `json:"email"`
 	OrgID valuer.UUID `json:"orgId"`
+	State State       `json:"state"`
 }
 
 type State struct {

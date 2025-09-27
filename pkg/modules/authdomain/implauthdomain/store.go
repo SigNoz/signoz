@@ -58,7 +58,7 @@ func (store *store) Get(ctx context.Context, id valuer.UUID) (*authtypes.AuthDom
 		Where("id = ?", id).
 		Scan(ctx)
 	if err != nil {
-		return nil, err
+		return nil, store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeAuthDomainNotFound, "auth domain with id %s does not exist", id)
 	}
 
 	return authtypes.NewAuthDomainFromStorableAuthDomain(authDomain)
@@ -75,7 +75,25 @@ func (store *store) GetByName(ctx context.Context, name string) (*authtypes.Auth
 		Where("name = ?", name).
 		Scan(ctx)
 	if err != nil {
-		return nil, err
+		return nil, store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeAuthDomainNotFound, "auth domain with name %s does not exist", name)
+	}
+
+	return authtypes.NewAuthDomainFromStorableAuthDomain(authDomain)
+}
+
+func (store *store) GetByNameAndOrgID(ctx context.Context, name string, orgID valuer.UUID) (*authtypes.AuthDomain, error) {
+	authDomain := new(authtypes.StorableAuthDomain)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(authDomain).
+		Where("name = ?", name).
+		Where("org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeAuthDomainNotFound, "auth domain with name %s and org id %s does not exist", name, orgID)
 	}
 
 	return authtypes.NewAuthDomainFromStorableAuthDomain(authDomain)

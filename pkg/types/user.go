@@ -83,13 +83,6 @@ type PostableAcceptInvite struct {
 	SourceURL string `json:"sourceUrl"`
 }
 
-type PostableLoginRequest struct {
-	OrgID        string `json:"orgId"`
-	Email        string `json:"email"`
-	Password     string `json:"password"`
-	RefreshToken string `json:"refreshToken"`
-}
-
 func NewTraitsFromUser(user *User) map[string]any {
 	return map[string]any{
 		"name":         user.DisplayName,

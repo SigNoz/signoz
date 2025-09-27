@@ -12,7 +12,7 @@ type AuthN interface{}
 
 type PasswordAuthN interface {
 	// Authenticate a user using email, password and orgID
-	Authenticate(context.Context, string, string, valuer.UUID) (authtypes.Identity, error)
+	Authenticate(context.Context, string, string, valuer.UUID) (*authtypes.Identity, error)
 }
 
 type CallbackAuthN interface {
@@ -20,5 +20,5 @@ type CallbackAuthN interface {
 	LoginURL(context.Context, *url.URL, *authtypes.AuthDomain) (string, error)
 
 	// Handle the callback from the provider.
-	HandleCallback(context.Context, *url.Values) (authtypes.CallbackIdentity, error)
+	HandleCallback(context.Context, url.Values) (*authtypes.CallbackIdentity, error)
 }

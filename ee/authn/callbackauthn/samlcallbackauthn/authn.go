@@ -52,42 +52,43 @@ func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *auth
 	return url, nil
 }
 
-func (a *AuthN) HandleCallback(ctx context.Context, formValues *url.Values) (authtypes.CallbackIdentity, error) {
+func (a *AuthN) HandleCallback(ctx context.Context, formValues url.Values) (*authtypes.CallbackIdentity, error) {
 	state, err := authtypes.NewStateFromString(formValues.Get("RelayState"))
 	if err != nil {
-		return authtypes.CallbackIdentity{}, err
+		return nil, err
 	}
 
 	authDomain, err := a.store.GetAuthDomainFromID(ctx, state.DomainID)
 	if err != nil {
-		return authtypes.CallbackIdentity{}, err
+		return nil, err
 	}
 
 	_, err = a.licensing.GetActive(ctx, authDomain.StorableAuthDomain().OrgID)
 	if err != nil {
-		return authtypes.CallbackIdentity{}, err
+		return nil, err
 	}
 
 	sp, err := a.serviceProvider(state.URL, authDomain)
 	if err != nil {
-		return authtypes.CallbackIdentity{}, err
+		return nil, err
 	}
 
 	assertionInfo, err := sp.RetrieveAssertionInfo(formValues.Get("SAMLResponse"))
 	if err != nil {
-		return authtypes.CallbackIdentity{}, err
+		return nil, err
 	}
 
 	if assertionInfo.WarningInfo.InvalidTime {
-		return authtypes.CallbackIdentity{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "saml: expired saml response")
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "saml: expired saml response")
 	}
 
 	email := assertionInfo.NameID
 	if email == "" {
-		return authtypes.CallbackIdentity{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "saml: invalid email in the SSO response")
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "saml: invalid email in the SSO response")
 	}
 
-	return authtypes.CallbackIdentity{
+	return &authtypes.CallbackIdentity{
+		Name:  "",
 		Email: email,
 		OrgID: authDomain.StorableAuthDomain().OrgID,
 	}, nil
