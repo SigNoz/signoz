@@ -20,20 +20,15 @@ func New(store authtypes.AuthNStore) *AuthN {
 	return &AuthN{store: store}
 }
 
-func (a *AuthN) Authenticate(ctx context.Context, email string, password string, orgID valuer.UUID) (authtypes.Identity, error) {
+func (a *AuthN) Authenticate(ctx context.Context, email string, password string, orgID valuer.UUID) (*authtypes.Identity, error) {
 	user, factorPassword, err := a.store.GetUserAndFactorPasswordByEmailAndOrgID(ctx, email, orgID)
 	if err != nil {
-		return authtypes.Identity{}, err
+		return nil, err
 	}
 
 	if !factorPassword.Equals(password) {
-		return authtypes.Identity{}, errors.New(errors.TypeInvalidInput, types.ErrCodeIncorrectPassword, "invalid password")
+		return nil, errors.New(errors.TypeInvalidInput, types.ErrCodeIncorrectPassword, "invalid password")
 	}
 
-	return authtypes.Identity{
-		UserID: user.ID,
-		OrgID:  orgID,
-		Email:  user.Email,
-		Role:   user.Role,
-	}, nil
+	return authtypes.NewIdentity(user.ID, orgID, user.Email, user.Role), nil
 }

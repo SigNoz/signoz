@@ -73,6 +73,8 @@ type Handler interface {
 	ListUsers(http.ResponseWriter, *http.Request)
 	UpdateUser(http.ResponseWriter, *http.Request)
 	DeleteUser(http.ResponseWriter, *http.Request)
+	GetUser(http.ResponseWriter, *http.Request)
+	GetMyUser(http.ResponseWriter, *http.Request)
 
 	// Reset Password
 	GetResetPasswordToken(http.ResponseWriter, *http.Request)
