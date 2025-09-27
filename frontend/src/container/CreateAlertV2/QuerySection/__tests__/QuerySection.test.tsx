@@ -135,7 +135,7 @@ describe('QuerySection', () => {
 		expect(screen.getByTestId('stepper')).toBeInTheDocument();
 		expect(screen.getByTestId('step-number')).toHaveTextContent('1');
 		expect(screen.getByTestId('step-label')).toHaveTextContent(
-			'Define the query you want to set an alert on',
+			'Define the query',
 		);
 
 		// Check if ChartPreview is rendered

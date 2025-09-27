@@ -1,7 +1,9 @@
-import { Button, Input, Select, Space, Tooltip, Typography } from 'antd';
-import { ChartLine, CircleX } from 'lucide-react';
+import { Button, Input, Select, Tooltip, Typography } from 'antd';
+import { ChartLine, CircleX, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { useCreateAlertState } from '../context';
+import { AlertThresholdOperator } from '../context/types';
 import { ThresholdItemProps } from './types';
 
 function ThresholdItem({
@@ -12,6 +14,7 @@ function ThresholdItem({
 	channels,
 	units,
 }: ThresholdItemProps): JSX.Element {
+	const { thresholdState } = useCreateAlertState();
 	const [showRecoveryThreshold, setShowRecoveryThreshold] = useState(false);
 
 	const yAxisUnitSelect = useMemo(() => {
@@ -45,6 +48,31 @@ function ThresholdItem({
 		return component;
 	}, [units, threshold.unit, updateThreshold, threshold.id]);
 
+	const getOperatorSymbol = (): string => {
+		switch (thresholdState.operator) {
+			case AlertThresholdOperator.IS_ABOVE:
+				return '>';
+			case AlertThresholdOperator.IS_BELOW:
+				return '<';
+			case AlertThresholdOperator.IS_EQUAL_TO:
+				return '=';
+			case AlertThresholdOperator.IS_NOT_EQUAL_TO:
+				return '!=';
+			default:
+				return '';
+		}
+	};
+
+	const addRecoveryThreshold = (): void => {
+		setShowRecoveryThreshold(true);
+		updateThreshold(threshold.id, 'recoveryThresholdValue', 0);
+	};
+
+	const removeRecoveryThreshold = (): void => {
+		setShowRecoveryThreshold(false);
+		updateThreshold(threshold.id, 'recoveryThresholdValue', null);
+	};
+
 	return (
 		<div key={threshold.id} className="threshold-item">
 			<div className="threshold-row">
@@ -54,80 +82,98 @@ function ThresholdItem({
 						style={{ backgroundColor: threshold.color }}
 					/>
 				</div>
-				<Space className="threshold-controls">
-					<div className="threshold-inputs">
-						<Input.Group>
-							<Input
-								placeholder="Enter threshold name"
-								value={threshold.label}
-								onChange={(e): void =>
-									updateThreshold(threshold.id, 'label', e.target.value)
-								}
-								style={{ width: 260 }}
-							/>
-							<Input
-								placeholder="Enter threshold value"
-								value={threshold.thresholdValue}
-								onChange={(e): void =>
-									updateThreshold(threshold.id, 'thresholdValue', e.target.value)
-								}
-								style={{ width: 210 }}
-							/>
-							{yAxisUnitSelect}
-						</Input.Group>
-					</div>
-					<Typography.Text className="sentence-text">to</Typography.Text>
+				<div className="threshold-controls">
+					<Input
+						placeholder="Enter threshold name"
+						value={threshold.label}
+						onChange={(e): void =>
+							updateThreshold(threshold.id, 'label', e.target.value)
+						}
+						style={{ width: 200 }}
+					/>
+					<Typography.Text className="sentence-text">on value</Typography.Text>
+					<Typography.Text className="sentence-text highlighted-text">
+						{getOperatorSymbol()}
+					</Typography.Text>
+					<Input
+						placeholder="Enter threshold value"
+						value={threshold.thresholdValue}
+						onChange={(e): void =>
+							updateThreshold(threshold.id, 'thresholdValue', e.target.value)
+						}
+						style={{ width: 100 }}
+						type="number"
+					/>
+					{yAxisUnitSelect}
+					<Typography.Text className="sentence-text">send to</Typography.Text>
 					<Select
 						value={threshold.channels}
 						onChange={(value): void =>
 							updateThreshold(threshold.id, 'channels', value)
 						}
-						style={{ width: 260 }}
+						style={{ width: 350 }}
 						options={channels.map((channel) => ({
 							value: channel.id,
 							label: channel.name,
 						}))}
 						mode="multiple"
 						placeholder="Select notification channels"
+						showSearch
+						maxTagCount={2}
+						maxTagPlaceholder={(omittedValues): string =>
+							`+${omittedValues.length} more`
+						}
+						maxTagTextLength={10}
+						filterOption={(input, option): boolean =>
+							option?.label?.toLowerCase().includes(input.toLowerCase()) || false
+						}
 					/>
+					{showRecoveryThreshold && (
+						<>
+							<Typography.Text className="sentence-text">recover on</Typography.Text>
+							<Input
+								placeholder="Enter recovery threshold value"
+								value={threshold.recoveryThresholdValue ?? ''}
+								onChange={(e): void =>
+									updateThreshold(threshold.id, 'recoveryThresholdValue', e.target.value)
+								}
+								style={{ width: 100 }}
+								type="number"
+							/>
+							<Tooltip title="Remove recovery threshold">
+								<Button
+									type="default"
+									icon={<Trash size={16} />}
+									onClick={removeRecoveryThreshold}
+									className="icon-btn"
+								/>
+							</Tooltip>
+						</>
+					)}
 					<Button.Group>
 						{!showRecoveryThreshold && (
-							<Button
-								type="default"
-								icon={<ChartLine size={16} />}
-								className="icon-btn"
-								onClick={(): void => setShowRecoveryThreshold(true)}
-							/>
+							<Tooltip title="Add recovery threshold">
+								<Button
+									type="default"
+									icon={<ChartLine size={16} />}
+									className="icon-btn"
+									onClick={addRecoveryThreshold}
+								/>
+							</Tooltip>
 						)}
 						{showRemoveButton && (
-							<Button
-								type="default"
-								icon={<CircleX size={16} />}
-								onClick={(): void => removeThreshold(threshold.id)}
-								className="icon-btn"
-							/>
+							<Tooltip title="Remove threshold">
+								<Button
+									type="default"
+									icon={<CircleX size={16} />}
+									onClick={(): void => removeThreshold(threshold.id)}
+									className="icon-btn"
+								/>
+							</Tooltip>
 						)}
 					</Button.Group>
-				</Space>
+				</div>
 			</div>
-			{showRecoveryThreshold && (
-				<Input.Group className="recovery-threshold-input-group">
-					<Input
-						placeholder="Recovery threshold"
-						disabled
-						style={{ width: 260 }}
-						className="recovery-threshold-label"
-					/>
-					<Input
-						placeholder="Enter recovery threshold value"
-						value={threshold.recoveryThresholdValue}
-						onChange={(e): void =>
-							updateThreshold(threshold.id, 'recoveryThresholdValue', e.target.value)
-						}
-						style={{ width: 210 }}
-					/>
-				</Input.Group>
-			)}
 		</div>
 	);
 }

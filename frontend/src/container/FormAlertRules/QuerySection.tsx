@@ -1,7 +1,7 @@
 import './QuerySection.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, Tabs, Tooltip } from 'antd';
+import { Button, Tabs, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
@@ -95,6 +95,7 @@ function QuerySection({
 					<Tooltip title="Query Builder">
 						<Button className="nav-btns" data-testid="query-builder-tab">
 							<Atom size={14} />
+							<Typography.Text>Query Builder</Typography.Text>
 						</Button>
 					</Tooltip>
 				),
@@ -105,6 +106,7 @@ function QuerySection({
 					<Tooltip title="ClickHouse">
 						<Button className="nav-btns">
 							<Terminal size={14} />
+							<Typography.Text>ClickHouse Query</Typography.Text>
 						</Button>
 					</Tooltip>
 				),
@@ -117,6 +119,7 @@ function QuerySection({
 							<PromQLIcon
 								fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
 							/>
+							<Typography.Text>PromQL</Typography.Text>
 						</Button>
 					</Tooltip>
 				),

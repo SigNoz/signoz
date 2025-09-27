@@ -26,6 +26,7 @@ export const createMockAlertContextState = (
 	setEvaluationWindow: jest.fn(),
 	notificationSettings: INITIAL_NOTIFICATION_SETTINGS_STATE,
 	setNotificationSettings: jest.fn(),
+	discardAlertRule: jest.fn(),
 	...overrides,
 });
 

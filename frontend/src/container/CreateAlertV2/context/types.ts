@@ -16,6 +16,7 @@ export interface ICreateAlertContextProps {
 	setEvaluationWindow: Dispatch<EvaluationWindowAction>;
 	notificationSettings: NotificationSettingsState;
 	setNotificationSettings: Dispatch<NotificationSettingsAction>;
+	discardAlertRule: () => void;
 }
 
 export interface ICreateAlertProviderProps {
@@ -31,14 +32,12 @@ export enum AlertCreationStep {
 
 export interface AlertState {
 	name: string;
-	description: string;
 	labels: Labels;
 	yAxisUnit: string | undefined;
 }
 
 export type CreateAlertAction =
 	| { type: 'SET_ALERT_NAME'; payload: string }
-	| { type: 'SET_ALERT_DESCRIPTION'; payload: string }
 	| { type: 'SET_ALERT_LABELS'; payload: Labels }
 	| { type: 'SET_Y_AXIS_UNIT'; payload: string | undefined }
 	| { type: 'RESET' };
@@ -47,7 +46,7 @@ export interface Threshold {
 	id: string;
 	label: string;
 	thresholdValue: number;
-	recoveryThresholdValue: number;
+	recoveryThresholdValue: number | null;
 	unit: string;
 	channels: string[];
 	color: string;

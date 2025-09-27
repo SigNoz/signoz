@@ -21,7 +21,6 @@ import {
 
 export const INITIAL_ALERT_STATE: AlertState = {
 	name: '',
-	description: '',
 	labels: {},
 	yAxisUnit: undefined,
 };
@@ -30,7 +29,7 @@ export const INITIAL_CRITICAL_THRESHOLD: Threshold = {
 	id: v4(),
 	label: 'CRITICAL',
 	thresholdValue: 0,
-	recoveryThresholdValue: 0,
+	recoveryThresholdValue: null,
 	unit: '',
 	channels: [],
 	color: Color.BG_SAKURA_500,
@@ -40,7 +39,7 @@ export const INITIAL_WARNING_THRESHOLD: Threshold = {
 	id: v4(),
 	label: 'WARNING',
 	thresholdValue: 0,
-	recoveryThresholdValue: 0,
+	recoveryThresholdValue: null,
 	unit: '',
 	channels: [],
 	color: Color.BG_AMBER_500,
@@ -50,7 +49,7 @@ export const INITIAL_INFO_THRESHOLD: Threshold = {
 	id: v4(),
 	label: 'INFO',
 	thresholdValue: 0,
-	recoveryThresholdValue: 0,
+	recoveryThresholdValue: null,
 	unit: '',
 	channels: [],
 	color: Color.BG_ROBIN_500,
@@ -60,7 +59,7 @@ export const INITIAL_RANDOM_THRESHOLD: Threshold = {
 	id: v4(),
 	label: '',
 	thresholdValue: 0,
-	recoveryThresholdValue: 0,
+	recoveryThresholdValue: null,
 	unit: '',
 	channels: [],
 	color: getRandomColor(),
@@ -120,10 +119,10 @@ export const INITIAL_EVALUATION_WINDOW_STATE: EvaluationWindowState = {
 };
 
 export const THRESHOLD_OPERATOR_OPTIONS = [
-	{ value: AlertThresholdOperator.IS_ABOVE, label: 'IS ABOVE' },
-	{ value: AlertThresholdOperator.IS_BELOW, label: 'IS BELOW' },
-	{ value: AlertThresholdOperator.IS_EQUAL_TO, label: 'IS EQUAL TO' },
-	{ value: AlertThresholdOperator.IS_NOT_EQUAL_TO, label: 'IS NOT EQUAL TO' },
+	{ value: AlertThresholdOperator.IS_ABOVE, label: 'ABOVE' },
+	{ value: AlertThresholdOperator.IS_BELOW, label: 'BELOW' },
+	{ value: AlertThresholdOperator.IS_EQUAL_TO, label: 'EQUAL TO' },
+	{ value: AlertThresholdOperator.IS_NOT_EQUAL_TO, label: 'NOT EQUAL TO' },
 ];
 
 export const ANOMALY_THRESHOLD_OPERATOR_OPTIONS = [

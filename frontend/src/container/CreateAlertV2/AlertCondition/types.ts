@@ -8,7 +8,7 @@ export type UpdateThreshold = {
 	(
 		thresholdId: string,
 		field: Exclude<keyof Threshold, 'channels'>,
-		value: string,
+		value: string | number | null,
 	): void;
 };
 
