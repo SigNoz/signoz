@@ -40,7 +40,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystorehook"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/tokenizer/opaquetokenizer"
-	routeTypes "github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/SigNoz/signoz/pkg/web/noopweb"
@@ -137,6 +137,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddMeterQuickFiltersFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateTTLSettingForCustomRetentionFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddRoutePolicyFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddTokenFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -159,7 +160,7 @@ func NewPrometheusProviderFactories(telemetryStore telemetrystore.TelemetryStore
 	)
 }
 
-func NewNotificationManagerProviderFactories(routeStore routeTypes.RouteStore) factory.NamedMap[factory.ProviderFactory[nfmanager.NotificationManager, nfmanager.Config]] {
+func NewNotificationManagerProviderFactories(routeStore alertmanagertypes.RouteStore) factory.NamedMap[factory.ProviderFactory[nfmanager.NotificationManager, nfmanager.Config]] {
 	return factory.MustNewNamedMap(
 		rulebasednotification.NewFactory(routeStore),
 	)
