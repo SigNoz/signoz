@@ -97,9 +97,6 @@ describe('RoutingPolicies', () => {
 		});
 		fireEvent.click(newRoutingPolicyButton);
 		expect(mockHandlePolicyDetailsModalOpen).toHaveBeenCalledWith('create', null);
-		expect(
-			screen.getByTestId(ROUTING_POLICY_DETAILS_TEST_ID),
-		).toBeInTheDocument();
 	});
 
 	it('policy details modal is open based on modal state', () => {

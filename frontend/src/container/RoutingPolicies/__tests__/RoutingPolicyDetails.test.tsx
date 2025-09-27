@@ -122,7 +122,7 @@ describe('RoutingPolicyDetails', () => {
 		expect(nameInput).toBeInTheDocument();
 
 		const expressionTextarea = screen.getByPlaceholderText(
-			'e.g. service.name = "payment" && threshold.name = "critical"',
+			'e.g. service.name == "payment" && threshold.name == "critical"',
 		);
 		expect(expressionTextarea).toBeInTheDocument();
 

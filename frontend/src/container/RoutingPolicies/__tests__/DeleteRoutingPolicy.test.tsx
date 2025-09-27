@@ -25,7 +25,7 @@ describe('DeleteRoutingPolicy', () => {
 		).toBeInTheDocument();
 		expect(
 			screen.getByText(
-				`Are you sure you want to delete - ${mockRoutingPolicy.name} routing policy? Deleting a routing policy is irreversible and cannot be undone.`,
+				`Are you sure you want to delete ${mockRoutingPolicy.name} routing policy? Deleting a routing policy is irreversible and cannot be undone.`,
 			),
 		).toBeInTheDocument();
 		expect(
