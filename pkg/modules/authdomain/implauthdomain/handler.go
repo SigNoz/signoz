@@ -2,55 +2,68 @@ package implauthdomain
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
-func (h *handler) CreateDomain(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+type handler struct {
+	module authdomain.Module
+}
+
+func NewHandler(module authdomain.Module) authdomain.Handler {
+	return &handler{module: module}
+}
+
+func (handler *handler) Create(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
 	defer cancel()
 
-	req := types.GettableOrgDomain{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	if err := req.ValidNew(); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	err := h.module.CreateDomain(ctx, &req)
+	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusAccepted, req)
+	body := new(authtypes.PostableAuthDomain)
+	if err := binding.JSON.BindBody(req.Body, body); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	authDomain, err := authtypes.NewAuthDomainFromConfig(body.Name, body.AuthDomainConfig, valuer.MustNewUUID(claims.OrgID))
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.module.Create(ctx, authDomain)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusCreated, authDomain)
 }
 
-func (h *handler) DeleteDomain(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+func (handler *handler) Delete(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
 	defer cancel()
 
-	domainIdStr := mux.Vars(r)["id"]
-	domainId, err := uuid.Parse(domainIdStr)
+	domainId, err := valuer.NewUUID(mux.Vars(req)["id"])
 	if err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid domain id"))
 		return
 	}
 
-	err = h.module.DeleteDomain(ctx, domainId)
+	err = handler.module.Delete(ctx, domainId)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -59,7 +72,7 @@ func (h *handler) DeleteDomain(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (h *handler) ListDomains(rw http.ResponseWriter, r *http.Request) {
+func (h *handler) List(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -75,38 +88,43 @@ func (h *handler) ListDomains(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	domains, err := h.module.ListDomains(r.Context(), orgID)
+	domains, err := h.module.ListByOrgID(ctx, orgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
+	authDomains := make([]*authtypes.GettableAuthDomain, len(domains))
+	for i, domain := range domains {
+		authDomains[i] = authtypes.NewGettableAuthDomainFromAuthDomain(domain)
+	}
+
 	render.Success(rw, http.StatusOK, domains)
 }
 
-func (h *handler) UpdateDomain(rw http.ResponseWriter, r *http.Request) {
+func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	domainIdStr := mux.Vars(r)["id"]
-	domainId, err := uuid.Parse(domainIdStr)
+	domainID, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid domain id"))
 		return
 	}
 
-	req := types.GettableOrgDomain{StorableOrgDomain: types.StorableOrgDomain{ID: domainId}}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(rw, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "unable to unmarshal the payload"))
+	body := new(authtypes.PostableAuthDomain)
+	if err := binding.JSON.BindBody(r.Body, body); err != nil {
+		render.Error(rw, err)
 		return
 	}
 
-	req.ID = domainId
-	if err := req.Valid(nil); err != nil {
-		render.Error(rw, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request"))
+	authDomain, err := h.module.Get(ctx, domainID)
+	if err != nil {
+		render.Error(rw, err)
+		return
 	}
 
-	err = h.module.UpdateDomain(ctx, &req)
+	err = authDomain.Update(&body.AuthDomainConfig)
 	if err != nil {
 		render.Error(rw, err)
 		return

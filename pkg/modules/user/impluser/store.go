@@ -169,24 +169,21 @@ func (store *store) getOrgNameByID(ctx context.Context, orgID string) (string, e
 	return org.DisplayName, nil
 }
 
-func (store *store) GetUserByID(ctx context.Context, orgID string, id string) (*types.GettableUser, error) {
+func (store *store) GetUser(ctx context.Context, id valuer.UUID) (*types.User, error) {
 	user := new(types.User)
-	err := store.sqlstore.BunDB().NewSelect().
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
 		Model(user).
-		Where("org_id = ?", orgID).
 		Where("id = ?", id).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with id: %s does not exist in org: %s", id, orgID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with id %s does not exist", id)
 	}
 
-	// remove this in next PR
-	orgName, err := store.getOrgNameByID(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &types.GettableUser{User: *user, Organization: orgName}, nil
+	return user, nil
 }
 
 func (store *store) GetUserByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*types.User, error) {
