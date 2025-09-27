@@ -10,8 +10,7 @@ export interface DeleteRoutingPolicyResponse {
 const deleteRoutingPolicy = async (
 	routingPolicyId: string,
 ): Promise<SuccessResponse<DeleteRoutingPolicyResponse> | ErrorResponse> => {
-	// TODO: Add the correct endpoint
-	const response = await axios.delete(`/routing-policies/${routingPolicyId}`);
+	const response = await axios.delete(`/notification-policy/${routingPolicyId}`);
 
 	return {
 		statusCode: 200,

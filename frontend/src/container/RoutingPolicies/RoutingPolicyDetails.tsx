@@ -41,6 +41,7 @@ function RoutingPolicyDetails({
 				name: routingPolicy?.name || '',
 				expression: routingPolicy?.expression || '',
 				channels: routingPolicy?.channels || [],
+				description: routingPolicy?.description || '',
 			};
 		}
 		return INITIAL_ROUTING_POLICY_DETAILS_FORM_STATE;
@@ -54,6 +55,7 @@ function RoutingPolicyDetails({
 			name: form.getFieldValue('name'),
 			expression: form.getFieldValue('expression'),
 			channels: form.getFieldValue('channels'),
+			description: form.getFieldValue('description'),
 		});
 	};
 
@@ -117,6 +119,23 @@ function RoutingPolicyDetails({
 						</Form.Item>
 					</div>
 					<div className="input-group">
+						<Typography.Text>Description</Typography.Text>
+						<Form.Item
+							name="description"
+							rules={[
+								{
+									required: false,
+								},
+							]}
+						>
+							<Input.TextArea
+								placeholder="e.g. This is a routing policy that..."
+								autoSize={{ minRows: 1, maxRows: 6 }}
+								style={{ resize: 'none' }}
+							/>
+						</Form.Item>
+					</div>
+					<div className="input-group">
 						<Typography.Text>Expression</Typography.Text>
 						<Form.Item
 							name="expression"
@@ -147,7 +166,7 @@ function RoutingPolicyDetails({
 						>
 							<Select
 								options={channels.map((channel) => ({
-									value: channel.id,
+									value: channel.name,
 									label: channel.name,
 								}))}
 								mode="multiple"

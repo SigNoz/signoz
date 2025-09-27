@@ -1,7 +1,9 @@
 import { Color } from '@signozhq/design-tokens';
 import { Collapse, Flex, Tag, Typography } from 'antd';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { PenLine, Trash2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
+import { useTimezone } from 'providers/Timezone';
 import { USER_ROLES } from 'types/roles';
 
 import {
@@ -22,6 +24,7 @@ function PolicyListItemHeader({
 	return (
 		<Flex className="policy-list-item-header" justify="space-between">
 			<Typography>{name}</Typography>
+
 			{isEditEnabled && (
 				<div className="action-btn">
 					<PenLine
@@ -52,6 +55,8 @@ function PolicyListItemHeader({
 function PolicyListItemContent({
 	routingPolicy,
 }: PolicyListItemContentProps): JSX.Element {
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
 	return (
 		<div className="policy-list-item-content">
 			<div className="policy-list-item-content-row">
@@ -60,15 +65,37 @@ function PolicyListItemContent({
 			</div>
 			<div className="policy-list-item-content-row">
 				<Typography>Created on</Typography>
-				<Typography>{routingPolicy.createdAt}</Typography>
-			</div>
-			<div className="policy-list-item-content-row">
-				<Typography>Updated on</Typography>
-				<Typography>{routingPolicy.updatedAt}</Typography>
+				<Typography>
+					{routingPolicy.createdAt
+						? formatTimezoneAdjustedTimestamp(
+								routingPolicy.createdAt,
+								DATE_TIME_FORMATS.MONTH_DATETIME,
+						  )
+						: '-'}
+				</Typography>
 			</div>
 			<div className="policy-list-item-content-row">
 				<Typography>Updated by</Typography>
-				<Typography>{routingPolicy.updatedBy}</Typography>
+				<Typography>{routingPolicy.updatedBy || '-'}</Typography>
+			</div>
+			<div className="policy-list-item-content-row">
+				<Typography>Updated on</Typography>
+				<Typography>
+					{routingPolicy.updatedAt
+						? formatTimezoneAdjustedTimestamp(
+								routingPolicy.updatedAt,
+								DATE_TIME_FORMATS.MONTH_DATETIME,
+						  )
+						: '-'}
+				</Typography>
+			</div>
+			<div className="policy-list-item-content-row">
+				<Typography>Expression</Typography>
+				<Typography>{routingPolicy.expression}</Typography>
+			</div>
+			<div className="policy-list-item-content-row">
+				<Typography>Description</Typography>
+				<Typography>{routingPolicy.description || '-'}</Typography>
 			</div>
 			<div className="policy-list-item-content-row">
 				<Typography>Channels</Typography>
@@ -77,10 +104,6 @@ function PolicyListItemContent({
 						<Tag key={channel}>{channel}</Tag>
 					))}
 				</div>
-			</div>
-			<div className="policy-list-item-content-row">
-				<Typography>Expression</Typography>
-				<Typography>{routingPolicy.expression}</Typography>
 			</div>
 		</div>
 	);

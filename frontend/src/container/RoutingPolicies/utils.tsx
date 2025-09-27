@@ -16,10 +16,11 @@ export function mapApiResponseToRoutingPolicies(
 		| undefined,
 ): RoutingPolicy[] {
 	return (
-		response?.payload?.data?.routingPolicies?.map((policyData) => ({
+		response?.payload?.data?.map((policyData) => ({
 			id: policyData.id,
 			name: policyData.name,
 			expression: policyData.expression,
+			description: policyData.description,
 			channels: policyData.channels,
 			createdAt: policyData.createdAt,
 			updatedAt: policyData.updatedAt,
@@ -33,11 +34,15 @@ export function mapRoutingPolicyToCreateApiPayload(
 	name: string,
 	expression: string,
 	channels: string[],
+	description: string,
 ): CreateRoutingPolicyBody {
 	return {
 		name,
 		expression,
-		channels,
+		actions: {
+			channels,
+		},
+		description,
 	};
 }
 
@@ -46,10 +51,14 @@ export function mapRoutingPolicyToUpdateApiPayload(
 	name: string,
 	expression: string,
 	channels: string[],
+	description: string,
 ): UpdateRoutingPolicyBody {
 	return {
 		name,
 		expression,
-		channels,
+		actions: {
+			channels,
+		},
+		description,
 	};
 }

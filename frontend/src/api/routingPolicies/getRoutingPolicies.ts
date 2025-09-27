@@ -3,11 +3,11 @@ import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
-// TODO: Add the correct interface
 export interface ApiRoutingPolicy {
 	id: string;
 	name: string;
 	expression: string;
+	description: string;
 	channels: string[];
 	createdAt: string;
 	updatedAt: string;
@@ -15,13 +15,9 @@ export interface ApiRoutingPolicy {
 	updatedBy: string;
 }
 
-// TODO: Add the correct interface
 export interface GetRoutingPoliciesResponse {
 	status: string;
-	data?: {
-		routingPolicies?: ApiRoutingPolicy[];
-		total?: number;
-	};
+	data?: ApiRoutingPolicy[];
 }
 
 export const getRoutingPolicies = async (
@@ -29,8 +25,7 @@ export const getRoutingPolicies = async (
 	headers?: Record<string, string>,
 ): Promise<SuccessResponse<GetRoutingPoliciesResponse> | ErrorResponse> => {
 	try {
-		// TODO: Add the correct endpoint
-		const response = await axios.get('/routing-policies', {
+		const response = await axios.get('/notification-policy', {
 			signal,
 			headers,
 		});

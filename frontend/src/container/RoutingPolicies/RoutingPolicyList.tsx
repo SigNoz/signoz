@@ -42,7 +42,7 @@ function RoutingPolicyList({
 						Something went wrong while fetching routing policies.
 					</Typography.Text>
 				) : (
-					<Typography.Text>There are no routing policies yet.</Typography.Text>
+					<Typography.Text>No routing policies found.</Typography.Text>
 				)}
 			</div>
 		),

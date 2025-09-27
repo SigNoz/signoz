@@ -127,6 +127,7 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 			name: string;
 			expression: string;
 			channels: string[];
+			description: string;
 		},
 	): void => {
 		if (mode === 'create') {
@@ -136,6 +137,7 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 						routingPolicyData.name,
 						routingPolicyData.expression,
 						routingPolicyData.channels,
+						routingPolicyData.description,
 					),
 				},
 				{
@@ -157,6 +159,7 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 						routingPolicyData.name,
 						routingPolicyData.expression,
 						routingPolicyData.channels,
+						routingPolicyData.description,
 					),
 				},
 				{

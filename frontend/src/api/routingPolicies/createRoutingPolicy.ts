@@ -5,7 +5,10 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 export interface CreateRoutingPolicyBody {
 	name: string;
 	expression: string;
-	channels: string[];
+	actions: {
+		channels: string[];
+	};
+	description?: string;
 }
 
 // TODO: Add the correct interface
@@ -18,8 +21,9 @@ const createRoutingPolicy = async (
 	props: CreateRoutingPolicyBody,
 ): Promise<SuccessResponse<CreateRoutingPolicyResponse> | ErrorResponse> => {
 	// TODO: Add the correct endpoint
-	const response = await axios.post(`/routing-policies`, {
+	const response = await axios.post(`/notification-policy`, {
 		...props,
+		description: props.description || '',
 	});
 
 	return {

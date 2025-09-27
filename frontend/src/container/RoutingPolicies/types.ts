@@ -5,6 +5,7 @@ export interface RoutingPolicy {
 	name: string;
 	expression: string;
 	channels: string[];
+	description: string | undefined;
 	createdAt: string | undefined;
 	updatedAt: string | undefined;
 	createdBy: string | undefined;
@@ -22,6 +23,7 @@ type HandlePolicyDetailsModalAction = (
 		name: string;
 		expression: string;
 		channels: string[];
+		description: string;
 	},
 ) => void;
 
@@ -109,4 +111,5 @@ export interface RoutingPolicyDetailsFormState {
 	name: string;
 	expression: string;
 	channels: string[];
+	description: string;
 }

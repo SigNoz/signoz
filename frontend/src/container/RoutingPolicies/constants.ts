@@ -4,4 +4,5 @@ export const INITIAL_ROUTING_POLICY_DETAILS_FORM_STATE: RoutingPolicyDetailsForm
 	name: '',
 	expression: '',
 	channels: [],
+	description: '',
 };
