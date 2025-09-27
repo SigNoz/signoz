@@ -15,11 +15,6 @@ var (
 	ErrInviteNotFound      = errors.MustNewCode("invite_not_found")
 )
 
-type GettableEEInvite struct {
-	GettableInvite
-	PreCheck *GettableLoginPrecheck `bun:"-" json:"precheck"`
-}
-
 type GettableInvite struct {
 	Invite
 	Organization string `bun:"organization,type:text,notnull" json:"organization"`
@@ -37,6 +32,28 @@ type Invite struct {
 	Role  string `bun:"role,type:text,notnull" json:"role"`
 
 	InviteLink string `bun:"-" json:"inviteLink"`
+}
+
+type InviteEmailData struct {
+	CustomerName string
+	InviterName  string
+	InviterEmail string
+	Link         string
+}
+
+type PostableInvite struct {
+	Name            string `json:"name"`
+	Email           string `json:"email"`
+	Role            Role   `json:"role"`
+	FrontendBaseUrl string `json:"frontendBaseUrl"`
+}
+
+type PostableBulkInviteRequest struct {
+	Invites []PostableInvite `json:"invites"`
+}
+
+type GettableCreateInviteResponse struct {
+	InviteToken string `json:"token"`
 }
 
 func NewInvite(orgID, role, name, email string) (*Invite, error) {
@@ -66,26 +83,4 @@ func NewInvite(orgID, role, name, email string) (*Invite, error) {
 	}
 
 	return invite, nil
-}
-
-type InviteEmailData struct {
-	CustomerName string
-	InviterName  string
-	InviterEmail string
-	Link         string
-}
-
-type PostableInvite struct {
-	Name            string `json:"name"`
-	Email           string `json:"email"`
-	Role            Role   `json:"role"`
-	FrontendBaseUrl string `json:"frontendBaseUrl"`
-}
-
-type PostableBulkInviteRequest struct {
-	Invites []PostableInvite `json:"invites"`
-}
-
-type GettableCreateInviteResponse struct {
-	InviteToken string `json:"token"`
 }

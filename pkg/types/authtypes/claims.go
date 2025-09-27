@@ -1,6 +1,7 @@
 package authtypes
 
 import (
+	"context"
 	"log/slog"
 	"slices"
 
@@ -8,6 +9,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/golang-jwt/jwt/v5"
 )
+
+type claimsKey struct{}
 
 var _ jwt.ClaimsValidator = (*Claims)(nil)
 
@@ -17,6 +20,21 @@ type Claims struct {
 	Email  string     `json:"email"`
 	Role   types.Role `json:"role"`
 	OrgID  string     `json:"orgId"`
+}
+
+// NewContextWithClaims attaches individual claims to the context.
+func NewContextWithClaims(ctx context.Context, claims Claims) context.Context {
+	ctx = context.WithValue(ctx, claimsKey{}, claims)
+	return ctx
+}
+
+func ClaimsFromContext(ctx context.Context) (Claims, error) {
+	claims, ok := ctx.Value(claimsKey{}).(Claims)
+	if !ok {
+		return Claims{}, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated")
+	}
+
+	return claims, nil
 }
 
 func (c *Claims) Validate() error {

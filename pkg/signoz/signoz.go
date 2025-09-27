@@ -23,7 +23,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
 
@@ -47,6 +47,7 @@ type SigNoz struct {
 	Emailing        emailing.Emailing
 	Sharder         sharder.Sharder
 	StatsReporter   statsreporter.StatsReporter
+	Tokenizer       tokenizer.Tokenizer
 	Modules         Modules
 	Handlers        Handlers
 }
@@ -54,7 +55,6 @@ type SigNoz struct {
 func New(
 	ctx context.Context,
 	config Config,
-	jwt *authtypes.JWT,
 	zeusConfig zeus.Config,
 	zeusProviderFactory factory.ProviderFactory[zeus.Zeus, zeus.Config],
 	licenseConfig licensing.Config,
@@ -224,6 +224,18 @@ func New(
 		return nil, err
 	}
 
+	// Initialize tokenizer from the available tokenizer provider factories
+	tokenizer, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.Tokenizer,
+		NewTokenizerProviderFactories(cache, sqlstore, sharder),
+		"opaque",
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize organization getter
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstore), sharder)
 
@@ -277,7 +289,7 @@ func New(
 	}
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, querier)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier)
 
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules, providerSettings)
@@ -290,6 +302,7 @@ func New(
 		modules.SavedView,
 		modules.User,
 		licensing,
+		tokenizer,
 	}
 
 	// Initialize stats reporter from the available stats reporter provider factories
@@ -311,6 +324,7 @@ func New(
 		factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanager),
 		factory.NewNamedService(factory.MustNewName("licensing"), licensing),
 		factory.NewNamedService(factory.MustNewName("statsreporter"), statsReporter),
+		factory.NewNamedService(factory.MustNewName("tokenizer"), tokenizer),
 	)
 	if err != nil {
 		return nil, err
@@ -332,6 +346,7 @@ func New(
 		Licensing:       licensing,
 		Emailing:        emailing,
 		Sharder:         sharder,
+		Tokenizer:       tokenizer,
 		Modules:         modules,
 		Handlers:        handlers,
 	}, nil
