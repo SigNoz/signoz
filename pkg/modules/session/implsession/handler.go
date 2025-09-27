@@ -1,84 +1,99 @@
 package implsession
 
-// func handleSsoError(w http.ResponseWriter, r *http.Request, redirectURL string) {
-// 	ssoError := []byte("Login failed. Please contact your system administrator")
-// 	dst := make([]byte, base64.StdEncoding.EncodedLen(len(ssoError)))
-// 	base64.StdEncoding.Encode(dst, ssoError)
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"net/url"
+	"time"
 
-// 	http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectURL, string(dst)), http.StatusSeeOther)
-// }
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
+	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/modules/session"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+)
 
-// func (h *handler) LoginPrecheck(w http.ResponseWriter, r *http.Request) {
-// 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-// 	defer cancel()
+type handler struct {
+	module session.Module
+}
 
-// 	email := r.URL.Query().Get("email")
-// 	sourceUrl := r.URL.Query().Get("ref")
-// 	orgID := r.URL.Query().Get("orgID")
+func NewHandler(module session.Module) session.Handler {
+	return &handler{module: module}
+}
 
-// 	resp, err := h.module.LoginPrecheck(ctx, orgID, email, sourceUrl)
-// 	if err != nil {
-// 		render.Error(w, err)
-// 		return
-// 	}
+func (handler *handler) GetSessionContext(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
+	defer cancel()
 
-// 	render.Success(w, http.StatusOK, resp)
-// }
+	email := req.URL.Query().Get("email")
 
-// func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
-// 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-// 	defer cancel()
+	siteURL, err := url.Parse(req.URL.Query().Get("ref"))
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
-// 	var req types.PostableLoginRequest
-// 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-// 		render.Error(w, err)
-// 		return
-// 	}
+	sessionContext, err := handler.module.GetSessionContext(ctx, email, siteURL)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
-// 	if req.RefreshToken == "" {
-// 		_, err := h.module.CanUsePassword(ctx, req.Email)
-// 		if err != nil {
-// 			render.Error(w, err)
-// 			return
-// 		}
-// 	}
+	render.Success(rw, http.StatusOK, sessionContext)
+}
 
-// 	user, err := h.module.GetAuthenticatedUser(ctx, req.OrgID, req.Email, req.Password, req.RefreshToken)
-// 	if err != nil {
-// 		render.Error(w, err)
-// 		return
-// 	}
+func (handler *handler) CreateSessionByEmailPassword(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 15*time.Second)
+	defer cancel()
 
-// 	jwt, err := h.module.GetJWTForUser(ctx, user)
-// 	if err != nil {
-// 		render.Error(w, err)
-// 		return
-// 	}
+	body := new(authtypes.PostableEmailPasswordSession)
+	if err := binding.JSON.BindBody(req.Body, body); err != nil {
+		render.Error(rw, err)
+		return
+	}
 
-// 	gettableLoginResponse := &types.GettableLoginResponse{
-// 		GettableUserJwt: jwt,
-// 		UserID:          user.ID.String(),
-// 	}
+	token, err := handler.module.CreatePasswordAuthNSession(ctx, authtypes.AuthNProviderEmailPassword, body.Email, body.Password, body.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
-// 	render.Success(w, http.StatusOK, gettableLoginResponse)
-// }
+	render.Success(rw, http.StatusOK, token)
+}
 
-// func (h *handler) GetCurrentUserFromJWT(w http.ResponseWriter, r *http.Request) {
-// 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-// 	defer cancel()
+func (handler *handler) CreateSessionByGoogleCallback(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 15*time.Second)
+	defer cancel()
 
-// 	claims, err := authtypes.ClaimsFromContext(ctx)
-// 	if err != nil {
-// 		render.Error(w, err)
-// 		return
-// 	}
+	values := req.URL.Query()
 
-// 	user, err := h.module.GetUserByID(ctx, claims.OrgID, claims.UserID)
-// 	if err != nil {
-// 		render.Error(w, err)
-// 		return
-// 	}
+	redirectURL, err := handler.module.CreateCallbackAuthNSession(ctx, authtypes.AuthNProviderGoogle, values)
+	if err != nil {
+		t, c, m, _, _, _ := errors.Unwrapb(err)
+		http.Redirect(rw, req, fmt.Sprintf("/ssoerror?type=%s&code=%s&message=%s", t, c.String(), m), http.StatusSeeOther)
+		return
+	}
 
-// 	render.Success(w, http.StatusOK, user)
+	http.Redirect(rw, req, redirectURL, http.StatusSeeOther)
+}
 
-// }
+func (handler *handler) CreateSessionBySAMLCallback(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 15*time.Second)
+	defer cancel()
+
+	err := req.ParseForm()
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	redirectURL, err := handler.module.CreateCallbackAuthNSession(ctx, authtypes.AuthNProviderSAML, req.Form)
+	if err != nil {
+		t, c, m, _, _, _ := errors.Unwrapb(err)
+		http.Redirect(rw, req, fmt.Sprintf("/ssoerror?type=%s&code=%s&message=%s", t, c.String(), m), http.StatusSeeOther)
+		return
+	}
+
+	http.Redirect(rw, req, redirectURL, http.StatusSeeOther)
+}
