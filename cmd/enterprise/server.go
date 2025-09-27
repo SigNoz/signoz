@@ -21,7 +21,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/spf13/cobra"
@@ -59,12 +58,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		return err
 	}
 
-	jwt := authtypes.NewJWT(cmd.NewJWTSecret(ctx, logger), 30*time.Minute, 30*24*time.Hour)
-
 	signoz, err := signoz.New(
 		ctx,
 		config,
-		jwt,
 		enterprisezeus.Config(),
 		httpzeus.NewProviderFactory(),
 		enterpriselicensing.Config(24*time.Hour, 3),
@@ -90,7 +86,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		return err
 	}
 
-	server, err := enterpriseapp.NewServer(config, signoz, jwt)
+	server, err := enterpriseapp.NewServer(config, signoz)
 	if err != nil {
 		logger.ErrorContext(ctx, "failed to create server", "error", err)
 		return err
