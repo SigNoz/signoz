@@ -27,7 +27,7 @@ type provider struct {
 	sharder    sharder.Sharder
 }
 
-func NewProviderFactory(cache cache.Cache, tokenStore authtypes.TokenStore, sharder sharder.Sharder) factory.ProviderFactory[tokenizer.Tokenizer, tokenizer.Config] {
+func NewFactory(cache cache.Cache, tokenStore authtypes.TokenStore, sharder sharder.Sharder) factory.ProviderFactory[tokenizer.Tokenizer, tokenizer.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("opaque"), func(ctx context.Context, providerSettings factory.ProviderSettings, config tokenizer.Config) (tokenizer.Tokenizer, error) {
 		return New(ctx, providerSettings, config, cache, tokenStore, sharder)
 	})

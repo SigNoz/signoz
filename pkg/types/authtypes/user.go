@@ -34,10 +34,10 @@ func (user *user) Type() Type {
 }
 
 type AuthenticatedUser struct {
-	UserID valuer.UUID
-	OrgID  valuer.UUID
-	Email  string     `json:"email"`
-	Role   types.Role `json:"role"`
+	UserID valuer.UUID `json:"userId"`
+	OrgID  valuer.UUID `json:"orgId"`
+	Email  string      `json:"email"`
+	Role   types.Role  `json:"role"`
 }
 
 func NewAuthenticatedUser(userID valuer.UUID, orgID valuer.UUID, email string, role types.Role) *AuthenticatedUser {
@@ -55,4 +55,13 @@ func (typ AuthenticatedUser) MarshalBinary() ([]byte, error) {
 
 func (typ *AuthenticatedUser) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, typ)
+}
+
+func (typ *AuthenticatedUser) ToClaims() Claims {
+	return Claims{
+		UserID: typ.UserID.String(),
+		Email:  typ.Email,
+		Role:   typ.Role,
+		OrgID:  typ.OrgID.String(),
+	}
 }

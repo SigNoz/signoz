@@ -13,6 +13,8 @@ import (
 	"github.com/uptrace/bun"
 )
 
+type OrgDomain = StorableOrgDomain
+
 type StorableOrgDomain struct {
 	bun.BaseModel `bun:"table:org_domains"`
 
