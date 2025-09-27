@@ -192,6 +192,8 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 		return nil, err
 	}
 
+	fmt.Println("====> final Query:", stmt.Query)
+	fmt.Println("====> final Args:", stmt.Args)
 	// Execute the query with proper context for partial value detection
 	result, err := q.executeWithContext(ctx, stmt.Query, stmt.Args)
 	if err != nil {
