@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/sethvargo/go-password/password"
+	"github.com/uptrace/bun"
 )
 
 var (
@@ -29,6 +30,8 @@ type GettableToken struct {
 }
 
 type Token struct {
+	bun.BaseModel `bun:"table:token"`
+
 	ID             valuer.UUID       `bun:"id,pk,type:text"`
 	Meta           map[string]string `bun:"meta,notnull"`
 	AccessToken    string            `bun:"access_token,notnull"`
@@ -41,8 +44,8 @@ type Token struct {
 }
 
 func NewToken(meta map[string]string, userID valuer.UUID) (*Token, error) {
-	accessToken := password.MustGenerate(32, 10, 0, true, false)
-	refreshToken := password.MustGenerate(32, 1, 0, true, false)
+	accessToken := password.MustGenerate(32, 10, 0, true, true)
+	refreshToken := password.MustGenerate(32, 12, 0, true, true)
 
 	return &Token{
 		ID:             valuer.GenerateUUID(),
@@ -80,7 +83,7 @@ func (typ *Token) IsValid(rotationInterval time.Duration, idleDuration time.Dura
 
 func (typ *Token) IsExpired(idleDuration time.Duration, maxDuration time.Duration) error {
 	// If now - last_seen_at > idle_duration, the token will be considered as expired.
-	if typ.LastObservedAt.Before(time.Now().Add(-idleDuration)) {
+	if !typ.LastObservedAt.IsZero() && typ.LastObservedAt.Before(time.Now().Add(-idleDuration)) {
 		return errors.New(errors.TypeUnauthenticated, ErrCodeTokenExpired, "token has not been used for too long")
 	}
 
@@ -93,7 +96,11 @@ func (typ *Token) IsExpired(idleDuration time.Duration, maxDuration time.Duratio
 }
 
 func (typ *Token) IsRotationRequired(rotationInterval time.Duration) error {
-	if typ.RotatedAt.Before(time.Now().Add(-rotationInterval)) {
+	if !typ.RotatedAt.IsZero() && typ.RotatedAt.Before(time.Now().Add(-rotationInterval)) {
+		return errors.New(errors.TypeUnauthenticated, ErrCodeTokenRotationRequired, "token needs to be rotated")
+	}
+
+	if typ.RotatedAt.IsZero() && typ.CreatedAt.Before(time.Now().Add(-rotationInterval)) {
 		return errors.New(errors.TypeUnauthenticated, ErrCodeTokenRotationRequired, "token needs to be rotated")
 	}
 
@@ -102,8 +109,8 @@ func (typ *Token) IsRotationRequired(rotationInterval time.Duration) error {
 
 func (typ *Token) Rotate() error {
 	// Generate new access and refresh tokens.
-	typ.AccessToken = password.MustGenerate(32, 10, 0, true, false)
-	typ.RefreshToken = password.MustGenerate(32, 1, 0, true, false)
+	typ.AccessToken = password.MustGenerate(32, 10, 0, true, true)
+	typ.RefreshToken = password.MustGenerate(32, 12, 0, true, true)
 
 	// Reset the last observed at time.
 	typ.LastObservedAt = time.Time{}
