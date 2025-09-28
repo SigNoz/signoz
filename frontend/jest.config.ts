@@ -3,6 +3,7 @@ import type { Config } from '@jest/types';
 const USE_SAFE_NAVIGATE_MOCK_PATH = '<rootDir>/__mocks__/useSafeNavigate.ts';
 
 const config: Config.InitialOptions = {
+	silent: true,
 	clearMocks: true,
 	coverageDirectory: 'coverage',
 	coverageReporters: ['text', 'cobertura', 'html', 'json-summary'],
