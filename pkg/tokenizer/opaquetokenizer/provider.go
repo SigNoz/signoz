@@ -2,6 +2,7 @@ package opaquetokenizer
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache"
@@ -62,6 +63,21 @@ func (provider *provider) Start(ctx context.Context) error {
 }
 
 func (provider *provider) CreateToken(ctx context.Context, identity *authtypes.Identity, meta map[string]string) (*authtypes.Token, error) {
+	existingTokens, err := provider.tokenStore.ListByUserID(ctx, identity.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(existingTokens) >= provider.config.MaxTokens {
+		slices.SortFunc(existingTokens, func(a, b *authtypes.Token) int {
+			return a.CreatedAt.Compare(b.CreatedAt)
+		})
+
+		if err := provider.DeleteToken(ctx, existingTokens[0].AccessToken); err != nil {
+			return nil, err
+		}
+	}
+
 	token, err := authtypes.NewToken(meta, identity.UserID)
 	if err != nil {
 		return nil, err
