@@ -10,12 +10,11 @@ import (
 )
 
 type instrumentation struct {
-	bun.QueryHook
 	bunOtel *bunotel.QueryHook
 }
 
 func NewInstrumentationFactory() factory.ProviderFactory[sqlstore.SQLStoreHook, sqlstore.Config] {
-	return factory.NewProviderFactory(factory.MustNewName("instrumentation"), NewLogging)
+	return factory.NewProviderFactory(factory.MustNewName("instrumentation"), NewInstrumentation)
 }
 
 func NewInstrumentation(ctx context.Context, providerSettings factory.ProviderSettings, config sqlstore.Config) (sqlstore.SQLStoreHook, error) {
