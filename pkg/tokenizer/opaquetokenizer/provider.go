@@ -200,6 +200,11 @@ func (provider *provider) getOrGetSetToken(ctx context.Context, accessToken stri
 		if err != nil {
 			return nil, err
 		}
+
+		err := provider.cache.Set(ctx, emptyOrgID, cachetypes.NewSha1CacheKey(accessToken), token, provider.config.MaxDuration)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return token, nil

@@ -27,7 +27,12 @@ type AuthN struct {
 }
 
 func NewAuthN(headers []string, sharder sharder.Sharder, tokenizer tokenizer.Tokenizer, logger *slog.Logger) *AuthN {
-	return &AuthN{tokenizer: tokenizer, headers: headers, sharder: sharder, logger: logger}
+	return &AuthN{
+		headers:   headers,
+		sharder:   sharder,
+		tokenizer: tokenizer,
+		logger:    logger,
+	}
 }
 
 func (a *AuthN) Wrap(next http.Handler) http.Handler {
@@ -42,6 +47,8 @@ func (a *AuthN) Wrap(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
+
+		r = r.WithContext(ctx)
 
 		claims, err := authtypes.ClaimsFromContext(ctx)
 		if err != nil {

@@ -59,7 +59,7 @@ func (handler *handler) CreateSessionByEmailPassword(rw http.ResponseWriter, req
 		return
 	}
 
-	render.Success(rw, http.StatusOK, token)
+	render.Success(rw, http.StatusOK, authtypes.NewGettableTokenFromToken(token))
 }
 
 func (handler *handler) CreateSessionByGoogleCallback(rw http.ResponseWriter, req *http.Request) {
