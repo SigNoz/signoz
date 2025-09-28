@@ -2,8 +2,6 @@ package authtypes
 
 import (
 	"encoding/json"
-
-	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 type GoogleConfig struct {
@@ -20,17 +18,7 @@ func (config *GoogleConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if temp.ClientID == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "google: clientId is required")
-	}
-
-	if temp.ClientSecret == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "google: clientSecret is required")
-	}
-
-	if temp.RedirectURI == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "google: redirectURI is required")
-	}
+	// Unfortunately, we have not being doing validations till now and putting validations here will break the existing data.
 
 	*config = GoogleConfig(temp)
 	return nil
