@@ -1,4 +1,5 @@
 import { QueryParams } from 'constants/query';
+import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { useCreateAlertRule } from 'hooks/alerts/useCreateAlertRule';
 import { useTestAlertRule } from 'hooks/alerts/useTestAlertRule';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -74,6 +75,10 @@ export function CreateAlertProvider(
 				currentQueryToRedirect,
 				{
 					[QueryParams.alertType]: value,
+					[QueryParams.ruleType]:
+						value === AlertTypes.ANOMALY_BASED_ALERT
+							? AlertDetectionTypes.ANOMALY_DETECTION_ALERT
+							: AlertDetectionTypes.THRESHOLD_ALERT,
 				},
 				undefined,
 				true,

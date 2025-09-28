@@ -1,9 +1,11 @@
-import { CreateAlertRuleProps } from 'api/alerts/createAlertRule';
+import {
+	CreateAlertRuleProps,
+	CreateAlertRuleResponse,
+} from 'api/alerts/createAlertRule';
 import { Dayjs } from 'dayjs';
 import { Dispatch } from 'react';
 import { UseMutateFunction } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { ApiAlertRule } from 'types/api/alerts/alertsV2';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { Labels } from 'types/api/alerts/def';
 
@@ -22,14 +24,14 @@ export interface ICreateAlertContextProps {
 	setNotificationSettings: Dispatch<NotificationSettingsAction>;
 	isCreatingAlertRule: boolean;
 	createAlertRule: UseMutateFunction<
-		SuccessResponse<ApiAlertRule, unknown> | ErrorResponse,
+		SuccessResponse<CreateAlertRuleResponse, unknown> | ErrorResponse,
 		Error,
 		CreateAlertRuleProps,
 		unknown
 	>;
 	isTestingAlertRule: boolean;
 	testAlertRule: UseMutateFunction<
-		SuccessResponse<ApiAlertRule, unknown> | ErrorResponse,
+		SuccessResponse<CreateAlertRuleResponse, unknown> | ErrorResponse,
 		Error,
 		CreateAlertRuleProps,
 		unknown
@@ -132,9 +134,11 @@ export interface AdvancedOptionsState {
 	sendNotificationIfDataIsMissing: {
 		toleranceLimit: number;
 		timeUnit: string;
+		enabled: boolean;
 	};
 	enforceMinimumDatapoints: {
 		minimumDatapoints: number;
+		enabled: boolean;
 	};
 	delayEvaluation: {
 		delay: number;
@@ -166,8 +170,16 @@ export type AdvancedOptionsAction =
 			payload: { toleranceLimit: number; timeUnit: string };
 	  }
 	| {
+			type: 'TOGGLE_SEND_NOTIFICATION_IF_DATA_IS_MISSING';
+			payload: boolean;
+	  }
+	| {
 			type: 'SET_ENFORCE_MINIMUM_DATAPOINTS';
 			payload: { minimumDatapoints: number };
+	  }
+	| {
+			type: 'TOGGLE_ENFORCE_MINIMUM_DATAPOINTS';
+			payload: boolean;
 	  }
 	| {
 			type: 'SET_DELAY_EVALUATION';
@@ -221,6 +233,7 @@ export interface NotificationSettingsState {
 		conditions: ('firing' | 'no-data')[];
 	};
 	description: string;
+	routingPolicies: boolean;
 }
 
 export type NotificationSettingsAction =
@@ -238,4 +251,5 @@ export type NotificationSettingsAction =
 			};
 	  }
 	| { type: 'SET_DESCRIPTION'; payload: string }
+	| { type: 'SET_ROUTING_POLICIES'; payload: boolean }
 	| { type: 'RESET' };

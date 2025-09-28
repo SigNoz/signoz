@@ -1,4 +1,4 @@
-import { Button, Flex, Typography } from 'antd';
+import { Button, Flex, Switch, Typography } from 'antd';
 import { BaseOptionType, DefaultOptionType, SelectProps } from 'antd/es/select';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
 import { Y_AXIS_CATEGORIES } from 'components/YAxisUnitSelector/constants';
@@ -12,6 +12,8 @@ import { IUser } from 'providers/App/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { USER_ROLES } from 'types/roles';
+
+import { RoutingPolicyBannerProps } from './types';
 
 export function getQueryNames(currentQuery: Query): BaseOptionType[] {
 	const involvedQueriesInTraceOperator = getInvolvedQueriesInTraceOperator(
@@ -385,5 +387,27 @@ export function NotificationChannelsNotFoundContent({
 				Refresh
 			</Button>
 		</Flex>
+	);
+}
+
+export function RoutingPolicyBanner({
+	notificationSettings,
+	setNotificationSettings,
+}: RoutingPolicyBannerProps): JSX.Element {
+	return (
+		<div className="routing-policies-info-banner">
+			<Typography.Text>
+				Use <strong>Routing Policies</strong> for multi-dimensional routing
+			</Typography.Text>
+			<Switch
+				checked={notificationSettings.routingPolicies}
+				onChange={(value): void => {
+					setNotificationSettings({
+						type: 'SET_ROUTING_POLICIES',
+						payload: value,
+					});
+				}}
+			/>
+		</div>
 	);
 }

@@ -130,9 +130,38 @@ export const advancedOptionsReducer = (
 ): AdvancedOptionsState => {
 	switch (action.type) {
 		case 'SET_SEND_NOTIFICATION_IF_DATA_IS_MISSING':
-			return { ...state, sendNotificationIfDataIsMissing: action.payload };
+			return {
+				...state,
+				sendNotificationIfDataIsMissing: {
+					...state.sendNotificationIfDataIsMissing,
+					toleranceLimit: action.payload.toleranceLimit,
+					timeUnit: action.payload.timeUnit,
+				},
+			};
+		case 'TOGGLE_SEND_NOTIFICATION_IF_DATA_IS_MISSING':
+			return {
+				...state,
+				sendNotificationIfDataIsMissing: {
+					...state.sendNotificationIfDataIsMissing,
+					enabled: action.payload,
+				},
+			};
 		case 'SET_ENFORCE_MINIMUM_DATAPOINTS':
-			return { ...state, enforceMinimumDatapoints: action.payload };
+			return {
+				...state,
+				enforceMinimumDatapoints: {
+					...state.enforceMinimumDatapoints,
+					minimumDatapoints: action.payload.minimumDatapoints,
+				},
+			};
+		case 'TOGGLE_ENFORCE_MINIMUM_DATAPOINTS':
+			return {
+				...state,
+				enforceMinimumDatapoints: {
+					...state.enforceMinimumDatapoints,
+					enabled: action.payload,
+				},
+			};
 		case 'SET_DELAY_EVALUATION':
 			return { ...state, delayEvaluation: action.payload };
 		case 'SET_EVALUATION_CADENCE':
@@ -189,6 +218,8 @@ export const notificationSettingsReducer = (
 			return { ...state, reNotification: action.payload };
 		case 'SET_DESCRIPTION':
 			return { ...state, description: action.payload };
+		case 'SET_ROUTING_POLICIES':
+			return { ...state, routingPolicies: action.payload };
 		case 'RESET':
 			return INITIAL_NOTIFICATION_SETTINGS_STATE;
 		default:

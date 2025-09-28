@@ -20,7 +20,7 @@ function ThresholdItem({
 	isLoadingChannels,
 }: ThresholdItemProps): JSX.Element {
 	const { user } = useAppContext();
-	const { thresholdState } = useCreateAlertState();
+	const { thresholdState, notificationSettings } = useCreateAlertState();
 	const [showRecoveryThreshold, setShowRecoveryThreshold] = useState(false);
 
 	const yAxisUnitSelect = useMemo(() => {
@@ -111,37 +111,41 @@ function ThresholdItem({
 						type="number"
 					/>
 					{yAxisUnitSelect}
-					<Typography.Text className="sentence-text">send to</Typography.Text>
-					<Select
-						value={threshold.channels}
-						onChange={(value): void =>
-							updateThreshold(threshold.id, 'channels', value)
-						}
-						style={{ width: 350 }}
-						options={channels.map((channel) => ({
-							value: channel.id,
-							label: channel.name,
-						}))}
-						mode="multiple"
-						placeholder="Select notification channels"
-						showSearch
-						maxTagCount={2}
-						maxTagPlaceholder={(omittedValues): string =>
-							`+${omittedValues.length} more`
-						}
-						maxTagTextLength={10}
-						filterOption={(input, option): boolean =>
-							option?.label?.toLowerCase().includes(input.toLowerCase()) || false
-						}
-						status={isErrorChannels ? 'error' : undefined}
-						disabled={isLoadingChannels}
-						notFoundContent={
-							<NotificationChannelsNotFoundContent
-								user={user}
-								refreshChannels={refreshChannels}
+					{!notificationSettings.routingPolicies && (
+						<>
+							<Typography.Text className="sentence-text">send to</Typography.Text>
+							<Select
+								value={threshold.channels}
+								onChange={(value): void =>
+									updateThreshold(threshold.id, 'channels', value)
+								}
+								style={{ width: 350 }}
+								options={channels.map((channel) => ({
+									value: channel.name,
+									label: channel.name,
+								}))}
+								mode="multiple"
+								placeholder="Select notification channels"
+								showSearch
+								maxTagCount={2}
+								maxTagPlaceholder={(omittedValues): string =>
+									`+${omittedValues.length} more`
+								}
+								maxTagTextLength={10}
+								filterOption={(input, option): boolean =>
+									option?.label?.toLowerCase().includes(input.toLowerCase()) || false
+								}
+								status={isErrorChannels ? 'error' : undefined}
+								disabled={isLoadingChannels}
+								notFoundContent={
+									<NotificationChannelsNotFoundContent
+										user={user}
+										refreshChannels={refreshChannels}
+									/>
+								}
 							/>
-						}
-					/>
+						</>
+					)}
 					{showRecoveryThreshold && (
 						<>
 							<Typography.Text className="sentence-text">recover on</Typography.Text>

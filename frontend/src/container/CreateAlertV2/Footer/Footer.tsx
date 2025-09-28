@@ -1,11 +1,17 @@
 import './styles.scss';
 
-import { Button, Typography } from 'antd';
+import { toast } from '@signozhq/sonner';
+import { Button, Tooltip, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Check, Send, X } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
 
 import { useCreateAlertState } from '../context';
-import { buildCreateThresholdAlertRulePayload } from './utils';
+import {
+	buildCreateThresholdAlertRulePayload,
+	validateCreateAlertState,
+} from './utils';
 
 function Footer(): JSX.Element {
 	const {
@@ -22,10 +28,33 @@ function Footer(): JSX.Element {
 		isTestingAlertRule,
 	} = useCreateAlertState();
 	const { currentQuery } = useQueryBuilder();
+	const { safeNavigate } = useSafeNavigate();
 
 	const handleDiscard = (): void => discardAlertRule();
 
-	const handleTestNotification = (): void => {
+	const alertValidationMessage = useMemo(
+		() =>
+			validateCreateAlertState({
+				alertType,
+				basicAlertState,
+				thresholdState,
+				advancedOptions,
+				evaluationWindow,
+				notificationSettings,
+				query: currentQuery,
+			}),
+		[
+			alertType,
+			basicAlertState,
+			thresholdState,
+			advancedOptions,
+			evaluationWindow,
+			notificationSettings,
+			currentQuery,
+		],
+	);
+
+	const handleTestNotification = useCallback((): void => {
 		const payload = buildCreateThresholdAlertRulePayload({
 			alertType,
 			basicAlertState,
@@ -36,12 +65,25 @@ function Footer(): JSX.Element {
 			query: currentQuery,
 		});
 		testAlertRule(payload, {
-			onSuccess: () => {},
-			onError: () => {},
+			onSuccess: () => {
+				toast.success('Test notification sent successfully');
+			},
+			onError: (error) => {
+				toast.error(error.message);
+			},
 		});
-	};
+	}, [
+		alertType,
+		basicAlertState,
+		thresholdState,
+		advancedOptions,
+		evaluationWindow,
+		notificationSettings,
+		currentQuery,
+		testAlertRule,
+	]);
 
-	const handleSaveAlert = (): void => {
+	const handleSaveAlert = useCallback((): void => {
 		const payload = buildCreateThresholdAlertRulePayload({
 			alertType,
 			basicAlertState,
@@ -52,12 +94,58 @@ function Footer(): JSX.Element {
 			query: currentQuery,
 		});
 		createAlertRule(payload, {
-			onSuccess: () => {},
-			onError: () => {},
+			onSuccess: () => {
+				toast.success('Alert rule created successfully');
+				safeNavigate('/alerts');
+			},
+			onError: (error) => {
+				toast.error(error.message);
+			},
 		});
-	};
+	}, [
+		alertType,
+		basicAlertState,
+		thresholdState,
+		advancedOptions,
+		evaluationWindow,
+		notificationSettings,
+		currentQuery,
+		createAlertRule,
+		safeNavigate,
+	]);
 
-	const disableButtons = isCreatingAlertRule || isTestingAlertRule;
+	const disableButtons =
+		isCreatingAlertRule || isTestingAlertRule || !!alertValidationMessage;
+
+	const saveAlertButton = useMemo(() => {
+		let button = (
+			<Button type="primary" onClick={handleSaveAlert} disabled={disableButtons}>
+				<Check size={14} />
+				<Typography.Text>Save Alert Rule</Typography.Text>
+			</Button>
+		);
+		if (alertValidationMessage) {
+			button = <Tooltip title={alertValidationMessage}>{button}</Tooltip>;
+		}
+		return button;
+	}, [alertValidationMessage, disableButtons, handleSaveAlert]);
+
+	const testAlertButton = useMemo(() => {
+		let button = (
+			<Button
+				type="default"
+				onClick={handleTestNotification}
+				disabled={disableButtons}
+			>
+				<Send size={14} />
+				<Typography.Text>Test Notification</Typography.Text>
+			</Button>
+		);
+		if (alertValidationMessage) {
+			button = <Tooltip title={alertValidationMessage}>{button}</Tooltip>;
+		}
+		return button;
+	}, [alertValidationMessage, disableButtons, handleTestNotification]);
 
 	return (
 		<div className="create-alert-v2-footer">
@@ -65,18 +153,8 @@ function Footer(): JSX.Element {
 				<X size={14} /> Discard
 			</Button>
 			<div className="button-group">
-				<Button
-					type="default"
-					onClick={handleTestNotification}
-					disabled={disableButtons}
-				>
-					<Send size={14} />
-					<Typography.Text>Test Notification</Typography.Text>
-				</Button>
-				<Button type="primary" onClick={handleSaveAlert} disabled={disableButtons}>
-					<Check size={14} />
-					<Typography.Text>Save Alert Rule</Typography.Text>
-				</Button>
+				{testAlertButton}
+				{saveAlertButton}
 			</div>
 		</div>
 	);

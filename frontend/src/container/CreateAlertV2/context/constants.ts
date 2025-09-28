@@ -79,9 +79,11 @@ export const INITIAL_ADVANCED_OPTIONS_STATE: AdvancedOptionsState = {
 	sendNotificationIfDataIsMissing: {
 		toleranceLimit: 15,
 		timeUnit: UniversalYAxisUnit.MINUTES,
+		enabled: false,
 	},
 	enforceMinimumDatapoints: {
 		minimumDatapoints: 0,
+		enabled: false,
 	},
 	delayEvaluation: {
 		delay: 5,
@@ -168,7 +170,6 @@ export const ADVANCED_OPTIONS_TIME_UNIT_OPTIONS = [
 	{ value: UniversalYAxisUnit.SECONDS, label: 'Seconds' },
 	{ value: UniversalYAxisUnit.MINUTES, label: 'Minutes' },
 	{ value: UniversalYAxisUnit.HOURS, label: 'Hours' },
-	{ value: UniversalYAxisUnit.DAYS, label: 'Days' },
 ];
 
 export const NOTIFICATION_MESSAGE_PLACEHOLDER =
@@ -188,4 +189,5 @@ export const INITIAL_NOTIFICATION_SETTINGS_STATE: NotificationSettingsState = {
 		conditions: [],
 	},
 	description: NOTIFICATION_MESSAGE_PLACEHOLDER,
+	routingPolicies: false,
 };

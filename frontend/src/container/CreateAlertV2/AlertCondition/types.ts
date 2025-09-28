@@ -1,7 +1,11 @@
 import { DefaultOptionType } from 'antd/es/select';
 import { Channels } from 'types/api/channels/getAll';
 
-import { Threshold } from '../context/types';
+import {
+	NotificationSettingsAction,
+	NotificationSettingsState,
+	Threshold,
+} from '../context/types';
 
 export type UpdateThreshold = {
 	(thresholdId: string, field: 'channels', value: string[]): void;
@@ -29,4 +33,11 @@ export interface AnomalyAndThresholdProps {
 	isLoadingChannels: boolean;
 	isErrorChannels: boolean;
 	refreshChannels: () => void;
+}
+
+export interface RoutingPolicyBannerProps {
+	notificationSettings: NotificationSettingsState;
+	setNotificationSettings: (
+		notificationSettings: NotificationSettingsAction,
+	) => void;
 }

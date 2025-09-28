@@ -23,6 +23,7 @@ import {
 	getCategorySelectOptionByName,
 	getMatchTypeTooltip,
 	getQueryNames,
+	RoutingPolicyBanner,
 } from './utils';
 
 function AlertThreshold({
@@ -35,6 +36,8 @@ function AlertThreshold({
 		alertState,
 		thresholdState,
 		setThresholdState,
+		notificationSettings,
+		setNotificationSettings,
 	} = useCreateAlertState();
 
 	const showCondensedLayoutFlag = showCondensedLayout();
@@ -225,6 +228,11 @@ function AlertThreshold({
 					Add Threshold
 				</Button>
 			</div>
+
+			<RoutingPolicyBanner
+				notificationSettings={notificationSettings}
+				setNotificationSettings={setNotificationSettings}
+			/>
 		</div>
 	);
 }

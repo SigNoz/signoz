@@ -12,7 +12,11 @@ import {
 	ANOMALY_TIME_DURATION_OPTIONS,
 } from '../context/constants';
 import { AnomalyAndThresholdProps } from './types';
-import { getQueryNames, NotificationChannelsNotFoundContent } from './utils';
+import {
+	getQueryNames,
+	NotificationChannelsNotFoundContent,
+	RoutingPolicyBanner,
+} from './utils';
 
 function AnomalyThreshold({
 	channels,
@@ -21,7 +25,12 @@ function AnomalyThreshold({
 	refreshChannels,
 }: AnomalyAndThresholdProps): JSX.Element {
 	const { user } = useAppContext();
-	const { thresholdState, setThresholdState } = useCreateAlertState();
+	const {
+		thresholdState,
+		setThresholdState,
+		notificationSettings,
+		setNotificationSettings,
+	} = useCreateAlertState();
 
 	const { currentQuery } = useQueryBuilder();
 
@@ -167,41 +176,56 @@ function AnomalyThreshold({
 						}}
 						options={ANOMALY_SEASONALITY_OPTIONS}
 					/>
-					<Typography.Text data-testid="seasonality-text" className="sentence-text">
-						seasonality to
-					</Typography.Text>
-					<Select
-						value={thresholdState.thresholds[0].channels}
-						onChange={(value): void =>
-							updateThreshold(thresholdState.thresholds[0].id, 'channels', value)
-						}
-						style={{ width: 350 }}
-						options={channels.map((channel) => ({
-							value: channel.id,
-							label: channel.name,
-						}))}
-						mode="multiple"
-						placeholder="Select notification channels"
-						showSearch
-						maxTagCount={2}
-						maxTagPlaceholder={(omittedValues): string =>
-							`+${omittedValues.length} more`
-						}
-						maxTagTextLength={10}
-						filterOption={(input, option): boolean =>
-							option?.label?.toLowerCase().includes(input.toLowerCase()) || false
-						}
-						status={isErrorChannels ? 'error' : undefined}
-						disabled={isLoadingChannels}
-						notFoundContent={
-							<NotificationChannelsNotFoundContent
-								user={user}
-								refreshChannels={refreshChannels}
+					{notificationSettings.routingPolicies ? (
+						<>
+							<Typography.Text
+								data-testid="seasonality-text"
+								className="sentence-text"
+							>
+								seasonality to
+							</Typography.Text>
+							<Select
+								value={thresholdState.thresholds[0].channels}
+								onChange={(value): void =>
+									updateThreshold(thresholdState.thresholds[0].id, 'channels', value)
+								}
+								style={{ width: 350 }}
+								options={channels.map((channel) => ({
+									value: channel.id,
+									label: channel.name,
+								}))}
+								mode="multiple"
+								placeholder="Select notification channels"
+								showSearch
+								maxTagCount={2}
+								maxTagPlaceholder={(omittedValues): string =>
+									`+${omittedValues.length} more`
+								}
+								maxTagTextLength={10}
+								filterOption={(input, option): boolean =>
+									option?.label?.toLowerCase().includes(input.toLowerCase()) || false
+								}
+								status={isErrorChannels ? 'error' : undefined}
+								disabled={isLoadingChannels}
+								notFoundContent={
+									<NotificationChannelsNotFoundContent
+										user={user}
+										refreshChannels={refreshChannels}
+									/>
+								}
 							/>
-						}
-					/>
+						</>
+					) : (
+						<Typography.Text data-testid="seasonality-text" className="sentence-text">
+							seasonality
+						</Typography.Text>
+					)}
 				</div>
 			</div>
+			<RoutingPolicyBanner
+				notificationSettings={notificationSettings}
+				setNotificationSettings={setNotificationSettings}
+			/>
 		</div>
 	);
 }

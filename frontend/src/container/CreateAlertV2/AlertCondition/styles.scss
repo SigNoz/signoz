@@ -278,6 +278,21 @@
 			}
 		}
 	}
+
+	.routing-policies-info-banner {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		margin-top: 16px;
+		background-color: #4568dc1a;
+		border: 1px solid var(--bg-robin-500);
+		padding: 8px 16px;
+
+		.ant-typography {
+			color: var(--bg-robin-500);
+		}
+	}
 }
 
 .anomaly-threshold-container {
