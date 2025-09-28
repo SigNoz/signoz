@@ -3,16 +3,10 @@
 <body>
     Hi {{.CustomerName}},<br>
     Your role in <strong>SigNoz</strong> has been updated by {{.UpdatedByEmail}}.
-
     <p>
         <strong>Previous Role:</strong> {{.OldRole}}<br>
         <strong>New Role:</strong> {{.NewRole}}
     </p>
-
-    <p>
-        Please note that you will need to log out and log back in for the changes to take effect.
-    </p>
-
     {{if eq .OldRole "Admin"}}
         <p>
             If you were not expecting this change or have any questions, please contact us at <a href="mailto:support@signoz.io">support@signoz.io</a>.
@@ -22,7 +16,6 @@
             If you were not expecting this change or have any questions, please reach out to your administrator.
         </p>
     {{end}}
-
     <p>Best regards,<br>The SigNoz Team</p>
 </body>
 </html>
