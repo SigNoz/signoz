@@ -28,10 +28,14 @@ func NewInstrumentation(ctx context.Context, providerSettings factory.ProviderSe
 	}, nil
 }
 
-func (hook instrumentation) BeforeQuery(ctx context.Context, event *bun.QueryEvent) context.Context {
+func (hook *instrumentation) Init(db *bun.DB) {
+	hook.bunOtel.Init(db)
+}
+
+func (hook *instrumentation) BeforeQuery(ctx context.Context, event *bun.QueryEvent) context.Context {
 	return hook.bunOtel.BeforeQuery(ctx, event)
 }
 
-func (hook instrumentation) AfterQuery(ctx context.Context, event *bun.QueryEvent) {
+func (hook *instrumentation) AfterQuery(ctx context.Context, event *bun.QueryEvent) {
 	hook.bunOtel.AfterQuery(ctx, event)
 }
