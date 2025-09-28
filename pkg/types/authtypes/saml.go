@@ -13,7 +13,9 @@ type SamlConfig struct {
 }
 
 func (config *SamlConfig) UnmarshalJSON(data []byte) error {
-	var temp SamlConfig
+	type Alias SamlConfig
+
+	var temp Alias
 	if err := json.Unmarshal(data, &temp); err != nil {
 		return err
 	}
@@ -23,6 +25,6 @@ func (config *SamlConfig) UnmarshalJSON(data []byte) error {
 	}
 
 	// TODO: Some validations on certificates
-	*config = temp
+	*config = SamlConfig(temp)
 	return nil
 }

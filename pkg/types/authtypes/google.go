@@ -13,7 +13,9 @@ type GoogleConfig struct {
 }
 
 func (config *GoogleConfig) UnmarshalJSON(data []byte) error {
-	var temp GoogleConfig
+	type Alias GoogleConfig
+
+	var temp Alias
 	if err := json.Unmarshal(data, &temp); err != nil {
 		return err
 	}
@@ -30,6 +32,6 @@ func (config *GoogleConfig) UnmarshalJSON(data []byte) error {
 		return errors.New(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "google: redirectURI is required")
 	}
 
-	*config = temp
+	*config = GoogleConfig(temp)
 	return nil
 }
