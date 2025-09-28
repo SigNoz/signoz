@@ -135,6 +135,14 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 	return fmt.Sprintf("%s?access_token=%s&refresh_token=%s&user_id=%s", callbackIdentity.State.URL.JoinPath("login").String(), token.AccessToken, token.RefreshToken, user.ID.String()), nil
 }
 
+func (module *module) RotateSession(ctx context.Context, accessToken string, refreshToken string) (*authtypes.Token, error) {
+	return module.tokenizer.RotateToken(ctx, accessToken, refreshToken)
+}
+
+func (module *module) DeleteSession(ctx context.Context, accessToken string) error {
+	return module.tokenizer.DeleteToken(ctx, accessToken)
+}
+
 func getProvider[T authn.AuthN](authNProvider authtypes.AuthNProvider, authNs map[authtypes.AuthNProvider]authn.AuthN) (T, error) {
 	var provider T
 

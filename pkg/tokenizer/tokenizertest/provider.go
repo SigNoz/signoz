@@ -11,8 +11,7 @@ import (
 var _ tokenizer.Tokenizer = (*Provider)(nil)
 
 type Provider struct {
-	config tokenizer.Config
-	stopC  chan struct{}
+	stopC chan struct{}
 }
 
 func New() *Provider {
@@ -40,7 +39,7 @@ func (provider *Provider) GetIdentity(context.Context, string) (*authtypes.Ident
 }
 
 // RotateToken implements tokenizer.Tokenizer.
-func (provider *Provider) RotateToken(context.Context, string) (*authtypes.Token, error) {
+func (provider *Provider) RotateToken(context.Context, string, string) (*authtypes.Token, error) {
 	panic("unimplemented")
 }
 
