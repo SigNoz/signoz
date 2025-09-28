@@ -2,8 +2,6 @@ package authtypes
 
 import (
 	"encoding/json"
-
-	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 type SamlConfig struct {
@@ -20,11 +18,7 @@ func (config *SamlConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if temp.SamlCert == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "saml: samlCert is required")
-	}
-
-	// TODO: Some validations on certificates
+	// Unfortunately, we have not being doing validations till now and putting validations here will break the existing data.
 	*config = SamlConfig(temp)
 	return nil
 }
