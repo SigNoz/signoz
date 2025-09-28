@@ -38,9 +38,10 @@ func New(ctx context.Context, settings factory.ProviderSettings, config cache.Co
 }
 
 func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey string, data cachetypes.Cacheable, ttl time.Duration) error {
-	_, span := provider.settings.Tracer().Start(ctx, "set", trace.WithAttributes(
+	_, span := provider.settings.Tracer().Start(ctx, "memory.set", trace.WithAttributes(
 		attribute.String(semconv.AttributeDBSystem, "memory"),
 		attribute.String(semconv.AttributeDBStatement, "set "+strings.Join([]string{orgID.StringValue(), cacheKey}, "::")),
+		attribute.String(semconv.AttributeDBOperation, "SET"),
 	))
 	defer span.End()
 
@@ -50,11 +51,13 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 	}
 
 	if cloneable, ok := data.(cachetypes.Cloneable); ok {
+		span.SetAttributes(attribute.Bool("db.cloneable", true))
 		toCache := cloneable.Clone()
 		provider.cc.Set(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, ttl)
 		return nil
 	}
 
+	span.SetAttributes(attribute.Bool("db.cloneable", false))
 	toCache, err := data.MarshalBinary()
 	if err != nil {
 		return err
@@ -65,9 +68,10 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 }
 
 func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey string, dest cachetypes.Cacheable, allowExpired bool) error {
-	_, span := provider.settings.Tracer().Start(ctx, "get", trace.WithAttributes(
+	_, span := provider.settings.Tracer().Start(ctx, "memory.get", trace.WithAttributes(
 		attribute.String(semconv.AttributeDBSystem, "memory"),
 		attribute.String(semconv.AttributeDBStatement, "get "+strings.Join([]string{orgID.StringValue(), cacheKey}, "::")),
+		attribute.String(semconv.AttributeDBOperation, "GET"),
 	))
 	defer span.End()
 
@@ -82,6 +86,7 @@ func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey s
 	}
 
 	if cloneable, ok := cachedData.(cachetypes.Cloneable); ok {
+		span.SetAttributes(attribute.Bool("db.cloneable", true))
 		// check if the destination value is settable
 		dstv := reflect.ValueOf(dest)
 		if !dstv.Elem().CanSet() {
@@ -102,6 +107,7 @@ func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey s
 	}
 
 	if fromCache, ok := cachedData.([]byte); ok {
+		span.SetAttributes(attribute.Bool("db.cloneable", false))
 		if err = dest.UnmarshalBinary(fromCache); err != nil {
 			return err
 		}
@@ -112,7 +118,14 @@ func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey s
 	return errors.NewInternalf(errors.CodeInternal, "unrecognized: (value: \"%s\")", reflect.TypeOf(cachedData).String())
 }
 
-func (provider *provider) Delete(_ context.Context, orgID valuer.UUID, cacheKey string) {
+func (provider *provider) Delete(ctx context.Context, orgID valuer.UUID, cacheKey string) {
+	_, span := provider.settings.Tracer().Start(ctx, "memory.delete", trace.WithAttributes(
+		attribute.String(semconv.AttributeDBSystem, "memory"),
+		attribute.String(semconv.AttributeDBStatement, "delete "+strings.Join([]string{orgID.StringValue(), cacheKey}, "::")),
+		attribute.String(semconv.AttributeDBOperation, "DELETE"),
+	))
+	defer span.End()
+
 	provider.cc.Delete(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
 }
 
