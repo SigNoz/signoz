@@ -141,8 +141,10 @@ func (migration *addNotificationRoutes) migrateRulesToNotificationRoutes(ctx con
 		return nil
 	}
 
-	channelsByOrg := migration.getAllChannelsByOrg(db)
-
+	channelsByOrg, err := migration.getAllChannelsByOrg(db)
+	if err != nil {
+		return err
+	}
 	for _, r := range rules {
 		existingRouteCount, err := db.NewSelect().
 			Model((*expressionRoute)(nil)).
@@ -218,7 +220,7 @@ func (migration *addNotificationRoutes) convertRulesToRoutes(rules []*rule, chan
 	return routes
 }
 
-func (migration *addNotificationRoutes) getAllChannelsByOrg(db *bun.DB) map[string][]string {
+func (migration *addNotificationRoutes) getAllChannelsByOrg(db *bun.DB) (map[string][]string, error) {
 	type channel struct {
 		bun.BaseModel `bun:"table:notification_channel"`
 		types.Identifiable
@@ -234,7 +236,7 @@ func (migration *addNotificationRoutes) getAllChannelsByOrg(db *bun.DB) map[stri
 		Model(&channels).
 		Scan(context.Background())
 	if err != nil {
-		return map[string][]string{} // Return empty map on error
+		return nil, err
 	}
 
 	// Group channels by org ID
@@ -243,7 +245,7 @@ func (migration *addNotificationRoutes) getAllChannelsByOrg(db *bun.DB) map[stri
 		channelsByOrg[ch.OrgID] = append(channelsByOrg[ch.OrgID], ch.Name)
 	}
 
-	return channelsByOrg
+	return channelsByOrg, nil
 }
 
 func (migration *addNotificationRoutes) Down(ctx context.Context, db *bun.DB) error {

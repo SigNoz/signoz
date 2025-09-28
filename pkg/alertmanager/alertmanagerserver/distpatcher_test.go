@@ -1214,6 +1214,7 @@ route:
 	recorder := &recordStage{alerts: make(map[string]map[model.Fingerprint]*alertmanagertypes.Alert)}
 	metrics := NewDispatcherMetrics(false, prometheus.NewRegistry())
 	store := nfroutingstoretest.NewMockSQLRouteStore()
+	store.MatchExpectationsInOrder(false)
 	nfManager, err := rulebasednotification.New(context.Background(), providerSettings, nfmanager.Config{}, store)
 	if err != nil {
 		t.Fatal(err)
