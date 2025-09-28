@@ -32,7 +32,13 @@ import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
+import { domainNameKey } from './constants';
 import { SPAN_ATTRIBUTES } from './Explorer/Domains/DomainDetails/constants';
+import {
+	APIDomainsRowData,
+	APIMonitoringResponseColumn,
+	EndPointsResponseRow,
+} from './types';
 
 export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
@@ -243,84 +249,47 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 	},
 ];
 
-// Rename this to a proper name
-export const hardcodedAttributeKeys: BaseAutocompleteData[] = [
-	{
-		key: 'deployment.environment',
-		dataType: DataTypes.String,
-		type: 'resource',
-	},
-	{
-		key: 'service.name',
-		dataType: DataTypes.String,
-		type: 'resource',
-	},
-	{
-		key: 'rpc.method',
-		dataType: DataTypes.String,
-		type: 'tag',
-	},
-];
-
-const domainNameKey = SPAN_ATTRIBUTES.SERVER_NAME;
-
-interface APIMonitoringResponseRow {
-	data: {
-		endpoints: number | string;
-		error_rate: number | string;
-		lastseen: number | string;
-		[domainNameKey]: string;
-		p99: number | string;
-		rps: number | string;
-	};
-}
-
-interface EndPointsResponseRow {
-	data: {
-		[key: string]: string | number | undefined;
-	};
-}
-
-export interface APIDomainsRowData {
-	key: string;
-	domainName: string;
-	endpointCount: number | string;
-	rate: number | string;
-	errorRate: number | string;
-	latency: number | string;
-	lastUsed: string;
-}
-
-// Rename this to a proper name
 export const formatDataForTable = (
-	data: APIMonitoringResponseRow[],
-): APIDomainsRowData[] =>
-	data?.map((domain) => ({
-		key: v4(),
-		domainName: domain?.data[domainNameKey] || '-',
-		endpointCount:
-			domain?.data?.endpoints === 'n/a' || domain?.data?.endpoints === undefined
-				? 0
-				: domain?.data?.endpoints,
-		rate:
-			domain?.data?.rps === 'n/a' || domain?.data?.rps === undefined
-				? '-'
-				: domain?.data?.rps,
-		errorRate:
-			domain?.data?.error_rate === 'n/a' || domain?.data?.error_rate === undefined
-				? 0
-				: domain?.data?.error_rate,
-		latency:
-			domain?.data?.p99 === 'n/a' || domain?.data?.p99 === undefined
-				? '-'
-				: Math.round(Number(domain?.data?.p99) / 1000000), // Convert from nanoseconds to milliseconds
-		lastUsed:
-			domain?.data?.lastseen === 'n/a' || domain?.data?.lastseen === undefined
-				? '-'
-				: new Date(
-						Math.floor(Number(domain?.data?.lastseen) / 1000000),
-				  ).toISOString(), // Convert from nanoseconds to milliseconds
-	}));
+	data: string[][],
+	columns: APIMonitoringResponseColumn[],
+): APIDomainsRowData[] => {
+	const indexMap = columns.reduce((acc, column, index) => {
+		if (column.name === domainNameKey) {
+			acc[column.name] = index;
+		} else {
+			acc[column.queryName] = index;
+		}
+		return acc;
+	}, {} as Record<string, number>);
+
+	return data.map((row) => {
+		const rowData: APIDomainsRowData = {
+			key: v4(),
+			domainName: row[indexMap[domainNameKey]],
+			endpointCount:
+				row[indexMap.endpoints] === 'n/a' || row[indexMap.endpoints] === undefined
+					? 0
+					: row[indexMap.endpoints],
+			rate:
+				row[indexMap.rps] === 'n/a' || row[indexMap.rps] === undefined
+					? '-'
+					: row[indexMap.rps],
+			errorRate:
+				row[indexMap.error_rate] === 'n/a' || row[indexMap.error_rate] === undefined
+					? 0
+					: row[indexMap.error_rate],
+			latency:
+				row[indexMap.p99] === 'n/a' || row[indexMap.p99] === undefined
+					? '-'
+					: Math.round(Number(row[indexMap.p99]) / 1000000),
+			lastUsed:
+				row[indexMap.lastseen] === 'n/a' || row[indexMap.lastseen] === undefined
+					? '-'
+					: new Date(row[indexMap.lastseen]).toISOString(),
+		};
+		return rowData;
+	});
+};
 
 export const getDomainMetricsQueryPayload = (
 	domainName: string,

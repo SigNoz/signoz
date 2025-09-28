@@ -22,7 +22,6 @@ import (
 	querierV5 "github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -98,8 +97,10 @@ type ManagerOptions struct {
 	PrepareTaskFunc     func(opts PrepareTaskOptions) (Task, error)
 	PrepareTestRuleFunc func(opts PrepareTestRuleOptions) (int, *model.ApiError)
 	Alertmanager        alertmanager.Alertmanager
-	SQLStore            sqlstore.SQLStore
 	OrgGetter           organization.Getter
+	RuleStore           ruletypes.RuleStore
+	MaintenanceStore    ruletypes.MaintenanceStore
+	SqlStore            sqlstore.SQLStore
 }
 
 // The Manager manages recording and alerting rules.
@@ -207,14 +208,12 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 // by calling the Run method.
 func NewManager(o *ManagerOptions) (*Manager, error) {
 	o = defaultOptions(o)
-	ruleStore := sqlrulestore.NewRuleStore(o.SQLStore)
-	maintenanceStore := sqlrulestore.NewMaintenanceStore(o.SQLStore)
 
 	m := &Manager{
 		tasks:               map[string]Task{},
 		rules:               map[string]Rule{},
-		ruleStore:           ruleStore,
-		maintenanceStore:    maintenanceStore,
+		ruleStore:           o.RuleStore,
+		maintenanceStore:    o.MaintenanceStore,
 		opts:                o,
 		block:               make(chan struct{}),
 		logger:              o.Logger,
@@ -223,10 +222,11 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		prepareTaskFunc:     o.PrepareTaskFunc,
 		prepareTestRuleFunc: o.PrepareTestRuleFunc,
 		alertmanager:        o.Alertmanager,
-		sqlstore:            o.SQLStore,
 		orgGetter:           o.OrgGetter,
+		sqlstore:            o.SqlStore,
 	}
 
+	zap.L().Debug("Manager created successfully with NotificationGroup")
 	return m, nil
 }
 
@@ -279,7 +279,14 @@ func (m *Manager) initiate(ctx context.Context) error {
 				loadErrors = append(loadErrors, err)
 				continue
 			}
-
+			if parsedRule.NotificationSettings != nil {
+				config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
+				err = m.alertmanager.SetNotificationConfig(ctx, org.ID, rec.ID.StringValue(), &config)
+				if err != nil {
+					loadErrors = append(loadErrors, err)
+					zap.L().Info("failed to set rule notification config", zap.String("ruleId", rec.ID.StringValue()))
+				}
+			}
 			if !parsedRule.Disabled {
 				err := m.addTask(ctx, org.ID, &parsedRule, taskName)
 				if err != nil {
@@ -361,17 +368,22 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 		} else {
 			preferredChannels = parsedRule.PreferredChannels
 		}
-
 		err = cfg.UpdateRuleIDMatcher(id.StringValue(), preferredChannels)
 		if err != nil {
 			return err
+		}
+		if parsedRule.NotificationSettings != nil {
+			config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
+			err = m.alertmanager.SetNotificationConfig(ctx, orgID, existingRule.ID.StringValue(), &config)
+			if err != nil {
+				return err
+			}
 		}
 
 		err = m.alertmanager.SetConfig(ctx, cfg)
 		if err != nil {
 			return err
 		}
-
 		err = m.syncRuleStateWithTask(ctx, orgID, prepareTaskName(existingRule.ID.StringValue()), &parsedRule)
 		if err != nil {
 			return err
@@ -454,6 +466,11 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		return err
 	}
 
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		return err
+	}
+
 	return m.ruleStore.DeleteRule(ctx, id, func(ctx context.Context) error {
 		cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
 		if err != nil {
@@ -469,6 +486,8 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		if err != nil {
 			return err
 		}
+
+		err = m.alertmanager.DeleteNotificationConfig(ctx, orgID, id.String())
 
 		taskName := prepareTaskName(id.StringValue())
 		m.deleteTask(taskName)
@@ -548,6 +567,14 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 			preferredChannels = parsedRule.PreferredChannels
 		}
 
+		if parsedRule.NotificationSettings != nil {
+			config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
+			err = m.alertmanager.SetNotificationConfig(ctx, orgID, storedRule.ID.StringValue(), &config)
+			if err != nil {
+				return err
+			}
+		}
+
 		err = cfg.CreateRuleIDMatcher(id.StringValue(), preferredChannels)
 		if err != nil {
 			return err
@@ -559,7 +586,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 		}
 
 		taskName := prepareTaskName(id.StringValue())
-		if err := m.addTask(ctx, orgID, &parsedRule, taskName); err != nil {
+		if err = m.addTask(ctx, orgID, &parsedRule, taskName); err != nil {
 			return err
 		}
 
@@ -733,13 +760,12 @@ func (m *Manager) prepareTestNotifyFunc() NotifyFunc {
 		alert := alerts[0]
 		generatorURL := alert.GeneratorURL
 
-		a := &alertmanagertypes.PostableAlert{
-			Annotations: alert.Annotations.Map(),
-			StartsAt:    strfmt.DateTime(alert.FiredAt),
-			Alert: alertmanagertypes.AlertModel{
-				Labels:       alert.Labels.Map(),
-				GeneratorURL: strfmt.URI(generatorURL),
-			},
+		a := &alertmanagertypes.PostableAlert{}
+		a.Annotations = alert.Annotations.Map()
+		a.StartsAt = strfmt.DateTime(alert.FiredAt)
+		a.Alert = alertmanagertypes.AlertModel{
+			Labels:       alert.Labels.Map(),
+			GeneratorURL: strfmt.URI(generatorURL),
 		}
 		if !alert.ResolvedAt.IsZero() {
 			a.EndsAt = strfmt.DateTime(alert.ResolvedAt)
@@ -896,33 +922,37 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 		return nil, err
 	}
 
-	// storedRule holds the current stored rule from DB
-	patchedRule := ruletypes.PostableRule{}
-	if err := json.Unmarshal([]byte(ruleStr), &patchedRule); err != nil {
-		zap.L().Error("failed to unmarshal stored rule with given id", zap.String("id", id.StringValue()), zap.Error(err))
+	storedRule := ruletypes.PostableRule{}
+	if err := json.Unmarshal([]byte(storedJSON.Data), &storedRule); err != nil {
+		zap.L().Error("failed to unmarshal rule from db", zap.String("id", id.StringValue()), zap.Error(err))
+		return nil, err
+	}
+
+	if err := json.Unmarshal([]byte(ruleStr), &storedRule); err != nil {
+		zap.L().Error("failed to unmarshal patched rule with given id", zap.String("id", id.StringValue()), zap.Error(err))
 		return nil, err
 	}
 
 	// deploy or un-deploy task according to patched (new) rule state
-	if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &patchedRule); err != nil {
+	if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &storedRule); err != nil {
 		zap.L().Error("failed to sync stored rule state with the task", zap.String("taskName", taskName), zap.Error(err))
 		return nil, err
 	}
 
-	// prepare rule json to write to update db
-	patchedRuleBytes, err := json.Marshal(patchedRule)
+	newStoredJson, err := json.Marshal(&storedRule)
 	if err != nil {
+		zap.L().Error("failed to marshal new stored rule with given id", zap.String("id", id.StringValue()), zap.Error(err))
 		return nil, err
 	}
 
 	now := time.Now()
-	storedJSON.Data = string(patchedRuleBytes)
+	storedJSON.Data = string(newStoredJson)
 	storedJSON.UpdatedBy = claims.Email
 	storedJSON.UpdatedAt = now
 
 	err = m.ruleStore.EditRule(ctx, storedJSON, func(ctx context.Context) error { return nil })
 	if err != nil {
-		if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &patchedRule); err != nil {
+		if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &storedRule); err != nil {
 			zap.L().Error("failed to restore rule after patch failure", zap.String("taskName", taskName), zap.Error(err))
 		}
 		return nil, err
@@ -931,7 +961,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 	// prepare http response
 	response := ruletypes.GettableRule{
 		Id:           id.StringValue(),
-		PostableRule: patchedRule,
+		PostableRule: storedRule,
 	}
 
 	// fetch state of rule from memory

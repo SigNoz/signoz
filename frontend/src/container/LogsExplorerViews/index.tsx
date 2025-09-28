@@ -59,6 +59,7 @@ import {
 	Query,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { Filter } from 'types/api/v5/queryRange';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -171,6 +172,11 @@ function LogsExplorerViewsContainer({
 			return;
 		}
 
+		let updatedFilterExpression = listQuery.filter?.expression || '';
+		if (activeLogId) {
+			updatedFilterExpression = `${updatedFilterExpression} id <= '${activeLogId}'`.trim();
+		}
+
 		const modifiedQueryData: IBuilderQuery = {
 			...listQuery,
 			aggregateOperator: LogsAggregatorOperator.COUNT,
@@ -183,6 +189,10 @@ function LogsExplorerViewsContainer({
 				},
 			],
 			legend: '{{severity_text}}',
+			filter: {
+				...listQuery?.filter,
+				expression: updatedFilterExpression || '',
+			},
 			...(activeLogId && {
 				filters: {
 					...listQuery?.filters,
@@ -286,6 +296,7 @@ function LogsExplorerViewsContainer({
 				page: number;
 				pageSize: number;
 				filters: TagFilter;
+				filter: Filter;
 			},
 		): Query | null => {
 			if (!query) return null;
@@ -297,6 +308,7 @@ function LogsExplorerViewsContainer({
 
 			// Add filter for activeLogId if present
 			let updatedFilters = params.filters;
+			let updatedFilterExpression = params.filter?.expression || '';
 			if (activeLogId) {
 				updatedFilters = {
 					...params.filters,
@@ -315,6 +327,7 @@ function LogsExplorerViewsContainer({
 					],
 					op: 'AND',
 				};
+				updatedFilterExpression = `${updatedFilterExpression} id <= '${activeLogId}'`.trim();
 			}
 
 			// Create orderBy array based on orderDirection
@@ -336,6 +349,9 @@ function LogsExplorerViewsContainer({
 								...(listQuery || initialQueryBuilderFormValues),
 								...paginateData,
 								...(updatedFilters ? { filters: updatedFilters } : {}),
+								filter: {
+									expression: updatedFilterExpression || '',
+								},
 								...(selectedView === ExplorerViews.LIST
 									? { order: newOrderBy, orderBy: newOrderBy }
 									: { order: [] }),
@@ -368,7 +384,7 @@ function LogsExplorerViewsContainer({
 		if (isLimit) return;
 		if (logs.length < pageSize) return;
 
-		const { limit, filters } = listQuery;
+		const { limit, filters, filter } = listQuery;
 
 		const nextLogsLength = logs.length + pageSize;
 
@@ -379,6 +395,7 @@ function LogsExplorerViewsContainer({
 
 		const newRequestData = getRequestData(stagedQuery, {
 			filters: filters || { items: [], op: 'AND' },
+			filter: filter || { expression: '' },
 			page: page + 1,
 			pageSize: nextPageSize,
 		});
@@ -526,6 +543,7 @@ function LogsExplorerViewsContainer({
 
 			const newRequestData = getRequestData(stagedQuery, {
 				filters: listQuery?.filters || initialFilters,
+				filter: listQuery?.filter || { expression: '' },
 				page: 1,
 				pageSize,
 			});

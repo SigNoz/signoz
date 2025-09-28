@@ -3,6 +3,8 @@ package ruletypes
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"slices"
 	"time"
 	"unicode/utf8"
 
@@ -12,6 +14,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 )
 
 type AlertType string
@@ -21,6 +24,10 @@ const (
 	AlertTypeTraces     AlertType = "TRACES_BASED_ALERT"
 	AlertTypeLogs       AlertType = "LOGS_BASED_ALERT"
 	AlertTypeExceptions AlertType = "EXCEPTIONS_BASED_ALERT"
+)
+
+const (
+	DefaultSchemaVersion = "v1"
 )
 
 type RuleDataKind string
@@ -51,10 +58,56 @@ type PostableRule struct {
 
 	Version string `json:"version,omitempty"`
 
-	Evaluation *EvaluationEnvelope `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
+	Evaluation    *EvaluationEnvelope `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
+	SchemaVersion string              `json:"schemaVersion,omitempty"`
+
+	NotificationSettings *NotificationSettings `json:"notificationSettings,omitempty"`
+}
+
+type NotificationSettings struct {
+	NotificationGroupBy []string           `json:"notificationGroupBy,omitempty"`
+	ReNotifyInterval    Duration           `json:"renotify,omitempty"`
+	AlertStates         []model.AlertState `json:"alertStates,omitempty"`
+}
+
+func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanagertypes.NotificationConfig {
+	var renotifyInterval Duration
+	var noDataRenotifyInterval Duration
+	if slices.Contains(ns.AlertStates, model.StateNoData) {
+		noDataRenotifyInterval = ns.ReNotifyInterval
+	}
+	if slices.Contains(ns.AlertStates, model.StateFiring) {
+		renotifyInterval = ns.ReNotifyInterval
+	}
+	return alertmanagertypes.NewNotificationConfig(ns.NotificationGroupBy, time.Duration(renotifyInterval), time.Duration(noDataRenotifyInterval))
+}
+
+func (ns *NotificationSettings) UnmarshalJSON(data []byte) error {
+	type Alias NotificationSettings
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(ns),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	// Validate states after unmarshaling
+	for _, state := range ns.AlertStates {
+		if state != model.StateFiring && state != model.StateNoData {
+			return fmt.Errorf("invalid alert state: %s", state)
+		}
+	}
+	return nil
 }
 
 func (r *PostableRule) processRuleDefaults() error {
+
+	if r.SchemaVersion == "" {
+		r.SchemaVersion = DefaultSchemaVersion
+	}
 
 	if r.EvalWindow == 0 {
 		r.EvalWindow = Duration(5 * time.Minute)
@@ -79,7 +132,7 @@ func (r *PostableRule) processRuleDefaults() error {
 			}
 		}
 		//added alerts v2 fields
-		if r.RuleCondition.Thresholds == nil {
+		if r.SchemaVersion == DefaultSchemaVersion {
 			thresholdName := CriticalThresholdName
 			if r.Labels != nil {
 				if severity, ok := r.Labels["severity"]; ok {
@@ -98,13 +151,31 @@ func (r *PostableRule) processRuleDefaults() error {
 				}},
 			}
 			r.RuleCondition.Thresholds = &thresholdData
+			r.Evaluation = &EvaluationEnvelope{RollingEvaluation, RollingWindow{EvalWindow: r.EvalWindow, Frequency: r.Frequency}}
 		}
-	}
-	if r.Evaluation == nil {
-		r.Evaluation = &EvaluationEnvelope{RollingEvaluation, RollingWindow{EvalWindow: r.EvalWindow, Frequency: r.Frequency}}
 	}
 
 	return r.Validate()
+}
+
+func (r *PostableRule) MarshalJSON() ([]byte, error) {
+	type Alias PostableRule
+
+	switch r.SchemaVersion {
+	case DefaultSchemaVersion:
+		copyStruct := *r
+		aux := Alias(copyStruct)
+		if aux.RuleCondition != nil {
+			aux.RuleCondition.Thresholds = nil
+		}
+		aux.Evaluation = nil
+		aux.SchemaVersion = ""
+		return json.Marshal(aux)
+	default:
+		copyStruct := *r
+		aux := Alias(copyStruct)
+		return json.Marshal(aux)
+	}
 }
 
 func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
@@ -262,4 +333,24 @@ type GettableRule struct {
 	CreatedBy *string    `json:"createBy"`
 	UpdatedAt *time.Time `json:"updateAt"`
 	UpdatedBy *string    `json:"updateBy"`
+}
+
+func (g *GettableRule) MarshalJSON() ([]byte, error) {
+	type Alias GettableRule
+
+	switch g.SchemaVersion {
+	case DefaultSchemaVersion:
+		copyStruct := *g
+		aux := Alias(copyStruct)
+		if aux.RuleCondition != nil {
+			aux.RuleCondition.Thresholds = nil
+		}
+		aux.Evaluation = nil
+		aux.SchemaVersion = ""
+		return json.Marshal(aux)
+	default:
+		copyStruct := *g
+		aux := Alias(copyStruct)
+		return json.Marshal(aux)
+	}
 }

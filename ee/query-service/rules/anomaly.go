@@ -387,6 +387,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 		}
 		if smpl.IsMissing {
 			lb.Set(labels.AlertNameLabel, "[No data] "+r.Name())
+			lb.Set(labels.NoDataLabel, "true")
 		}
 
 		lbs := lb.Labels()
