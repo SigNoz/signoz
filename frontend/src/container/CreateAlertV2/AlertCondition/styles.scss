@@ -280,6 +280,14 @@
 	}
 }
 
+.anomaly-threshold-container {
+	.ant-select {
+		.ant-select-selector {
+			width: 200px;
+		}
+	}
+}
+
 .condensed-alert-threshold-container,
 .condensed-anomaly-threshold-container {
 	width: 100%;

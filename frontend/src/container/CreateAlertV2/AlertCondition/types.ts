@@ -20,4 +20,6 @@ export interface ThresholdItemProps {
 	channels: Channels[];
 	isLoadingChannels: boolean;
 	units: DefaultOptionType[];
+	isErrorChannels: boolean;
+	refreshChannels: () => void;
 }

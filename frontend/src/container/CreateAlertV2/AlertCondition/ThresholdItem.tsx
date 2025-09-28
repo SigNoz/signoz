@@ -1,6 +1,9 @@
-import { Button, Input, Select, Tooltip, Typography } from 'antd';
-import { ChartLine, CircleX, Trash } from 'lucide-react';
+import { Button, Flex, Input, Select, Tooltip, Typography } from 'antd';
+import ROUTES from 'constants/routes';
+import { CircleX, Trash } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { useMemo, useState } from 'react';
+import { USER_ROLES } from 'types/roles';
 
 import { useCreateAlertState } from '../context';
 import { AlertThresholdOperator } from '../context/types';
@@ -13,7 +16,11 @@ function ThresholdItem({
 	showRemoveButton,
 	channels,
 	units,
+	isErrorChannels,
+	refreshChannels,
+	isLoadingChannels,
 }: ThresholdItemProps): JSX.Element {
+	const { user } = useAppContext();
 	const { thresholdState } = useCreateAlertState();
 	const [showRecoveryThreshold, setShowRecoveryThreshold] = useState(false);
 
@@ -48,6 +55,33 @@ function ThresholdItem({
 		return component;
 	}, [units, threshold.unit, updateThreshold, threshold.id]);
 
+	const notificationChannelsNotFoundContent = (
+		<Flex justify="space-between">
+			<Flex gap={4} align="center">
+				<Typography.Text>No channels yet.</Typography.Text>
+				{user?.role === USER_ROLES.ADMIN ? (
+					<Typography.Text>
+						Create one
+						<Button
+							style={{ padding: '0 4px' }}
+							type="link"
+							onClick={(): void => {
+								window.open(ROUTES.CHANNELS_NEW, '_blank');
+							}}
+						>
+							here.
+						</Button>
+					</Typography.Text>
+				) : (
+					<Typography.Text>Please ask your admin to create one.</Typography.Text>
+				)}
+			</Flex>
+			<Button type="text" onClick={refreshChannels}>
+				Refresh
+			</Button>
+		</Flex>
+	);
+
 	const getOperatorSymbol = (): string => {
 		switch (thresholdState.operator) {
 			case AlertThresholdOperator.IS_ABOVE:
@@ -63,10 +97,10 @@ function ThresholdItem({
 		}
 	};
 
-	const addRecoveryThreshold = (): void => {
-		setShowRecoveryThreshold(true);
-		updateThreshold(threshold.id, 'recoveryThresholdValue', 0);
-	};
+	// const addRecoveryThreshold = (): void => {
+	// 	setShowRecoveryThreshold(true);
+	// 	updateThreshold(threshold.id, 'recoveryThresholdValue', 0);
+	// };
 
 	const removeRecoveryThreshold = (): void => {
 		setShowRecoveryThreshold(false);
@@ -127,6 +161,9 @@ function ThresholdItem({
 						filterOption={(input, option): boolean =>
 							option?.label?.toLowerCase().includes(input.toLowerCase()) || false
 						}
+						status={isErrorChannels ? 'error' : undefined}
+						disabled={isLoadingChannels}
+						notFoundContent={notificationChannelsNotFoundContent}
 					/>
 					{showRecoveryThreshold && (
 						<>
@@ -151,7 +188,8 @@ function ThresholdItem({
 						</>
 					)}
 					<Button.Group>
-						{!showRecoveryThreshold && (
+						{/* TODO: Add recovery threshold back once the functionality is implemented */}
+						{/* {!showRecoveryThreshold && (
 							<Tooltip title="Add recovery threshold">
 								<Button
 									type="default"
@@ -160,7 +198,7 @@ function ThresholdItem({
 									onClick={addRecoveryThreshold}
 								/>
 							</Tooltip>
-						)}
+						)} */}
 						{showRemoveButton && (
 							<Tooltip title="Remove threshold">
 								<Button

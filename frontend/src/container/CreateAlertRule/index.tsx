@@ -2,6 +2,8 @@ import { Form, Row } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
+import CreateAlertV2 from 'container/CreateAlertV2';
+import { showNewCreateAlertsPage } from 'container/CreateAlertV2/utils';
 import FormAlertRules, { AlertDetectionTypes } from 'container/FormAlertRules';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
@@ -123,6 +125,12 @@ function CreateRules(): JSX.Element {
 				<SelectAlertType onSelect={onSelectType} />
 			</Row>
 		);
+	}
+
+	const showNewCreateAlertsPageFlag = showNewCreateAlertsPage();
+
+	if (showNewCreateAlertsPageFlag) {
+		return <CreateAlertV2 alertType={alertType} />;
 	}
 
 	return (

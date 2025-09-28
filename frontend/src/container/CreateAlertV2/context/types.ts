@@ -1,5 +1,9 @@
+import { CreateAlertRuleProps } from 'api/alerts/createAlertRule';
 import { Dayjs } from 'dayjs';
 import { Dispatch } from 'react';
+import { UseMutateFunction } from 'react-query';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { ApiAlertRule } from 'types/api/alerts/alertsV2';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { Labels } from 'types/api/alerts/def';
 
@@ -16,11 +20,26 @@ export interface ICreateAlertContextProps {
 	setEvaluationWindow: Dispatch<EvaluationWindowAction>;
 	notificationSettings: NotificationSettingsState;
 	setNotificationSettings: Dispatch<NotificationSettingsAction>;
+	isCreatingAlertRule: boolean;
+	createAlertRule: UseMutateFunction<
+		SuccessResponse<ApiAlertRule, unknown> | ErrorResponse,
+		Error,
+		CreateAlertRuleProps,
+		unknown
+	>;
+	isTestingAlertRule: boolean;
+	testAlertRule: UseMutateFunction<
+		SuccessResponse<ApiAlertRule, unknown> | ErrorResponse,
+		Error,
+		CreateAlertRuleProps,
+		unknown
+	>;
 	discardAlertRule: () => void;
 }
 
 export interface ICreateAlertProviderProps {
 	children: React.ReactNode;
+	initialAlertType: AlertTypes;
 }
 
 export enum AlertCreationStep {

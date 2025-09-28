@@ -81,7 +81,8 @@ function AdvancedOptions(): JSX.Element {
 							</div>
 						}
 					/>
-					<AdvancedOptionItem
+					{/* TODO: Add back when the functionality is implemented */}
+					{/* <AdvancedOptionItem
 						title="Account for data delay"
 						description="Shift the evaluation window backwards to account for data processing delays."
 						tooltipText="Use when your data takes time to arrive on the platform. For example, if logs typically arrive 5 minutes late, set a 5-minute delay so the alert checks the correct time window."
@@ -119,7 +120,7 @@ function AdvancedOptions(): JSX.Element {
 								/>
 							</div>
 						}
-					/>
+					/> */}
 				</Collapse.Panel>
 			</Collapse>
 		</div>

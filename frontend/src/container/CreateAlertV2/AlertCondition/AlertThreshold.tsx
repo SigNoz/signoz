@@ -36,10 +36,12 @@ function AlertThreshold(): JSX.Element {
 		thresholdState,
 		setThresholdState,
 	} = useCreateAlertState();
-	const { data, isLoading: isLoadingChannels } = useQuery<
-		SuccessResponseV2<Channels[]>,
-		APIError
-	>(['getChannels'], {
+	const {
+		data,
+		isLoading: isLoadingChannels,
+		isError: isErrorChannels,
+		refetch: refetchChannels,
+	} = useQuery<SuccessResponseV2<Channels[]>, APIError>(['getChannels'], {
 		queryFn: () => getAllChannels(),
 	});
 	const showCondensedLayoutFlag = showCondensedLayout();
@@ -87,6 +89,35 @@ function AlertThreshold(): JSX.Element {
 		});
 	};
 
+	const onTooltipOpenChange = (open: boolean): void => {
+		// Stop propagation of click events on tooltip text to dropdown
+		if (open) {
+			setTimeout(() => {
+				const tooltipElement = document.querySelector(
+					'.copyable-tooltip .ant-tooltip-inner',
+				);
+				if (tooltipElement) {
+					tooltipElement.addEventListener(
+						'click',
+						(e) => {
+							e.stopPropagation();
+							e.preventDefault();
+						},
+						true,
+					);
+					tooltipElement.addEventListener(
+						'mousedown',
+						(e) => {
+							e.stopPropagation();
+							e.preventDefault();
+						},
+						true,
+					);
+				}
+			}, 0);
+		}
+	};
+
 	const matchTypeOptionsWithTooltips = THRESHOLD_MATCH_TYPE_OPTIONS.map(
 		(option) => ({
 			...option,
@@ -109,6 +140,7 @@ function AlertThreshold(): JSX.Element {
 					mouseEnterDelay={0.2}
 					trigger={['hover', 'click']}
 					destroyTooltipOnHide={false}
+					onOpenChange={onTooltipOpenChange}
 				>
 					<span style={{ display: 'block', width: '100%' }}>{option.label}</span>
 				</Tooltip>
@@ -188,6 +220,8 @@ function AlertThreshold(): JSX.Element {
 						channels={channels}
 						isLoadingChannels={isLoadingChannels}
 						units={categorySelectOptions}
+						isErrorChannels={isErrorChannels}
+						refreshChannels={refetchChannels}
 					/>
 				))}
 				<Button

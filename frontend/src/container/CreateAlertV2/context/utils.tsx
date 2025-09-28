@@ -94,6 +94,10 @@ export function getInitialAlertTypeFromURL(
 	urlSearchParams: URLSearchParams,
 	currentQuery: Query,
 ): AlertTypes {
+	const ruleType = urlSearchParams.get(QueryParams.ruleType);
+	if (ruleType === 'anomaly_rule') {
+		return AlertTypes.ANOMALY_BASED_ALERT;
+	}
 	const alertTypeFromURL = urlSearchParams.get(QueryParams.alertType);
 	return alertTypeFromURL
 		? (alertTypeFromURL as AlertTypes)

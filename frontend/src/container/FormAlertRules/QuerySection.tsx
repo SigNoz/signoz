@@ -71,6 +71,7 @@ function QuerySection({
 				<Tooltip title="Query Builder">
 					<Button className="nav-btns">
 						<Atom size={14} />
+						<Typography.Text>Query Builder</Typography.Text>
 					</Button>
 				</Tooltip>
 			),
@@ -81,6 +82,7 @@ function QuerySection({
 				<Tooltip title="ClickHouse">
 					<Button className="nav-btns">
 						<Terminal size={14} />
+						<Typography.Text>ClickHouse Query</Typography.Text>
 					</Button>
 				</Tooltip>
 			),

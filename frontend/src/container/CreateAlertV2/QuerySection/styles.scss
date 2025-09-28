@@ -77,6 +77,14 @@
 			.ant-select-selector {
 				border: 1px solid var(--bg-slate-400);
 				background: var(--bg-ink-300);
+
+				&:hover {
+					border-color: var(--bg-vanilla-300);
+				}
+
+				&:focus {
+					border-color: var(--bg-vanilla-300);
+				}
 			}
 		}
 	}
@@ -91,10 +99,14 @@
 
 					.chart-preview-headline {
 						display: flex;
-						align-items: center;
+						align-items: flex-start;
 						justify-content: space-between;
 						gap: 8px;
 						width: 100%;
+
+						.y-axis-unit-selector-component {
+							margin-top: 0;
+						}
 					}
 				}
 			}
@@ -143,6 +155,15 @@
 				.ant-select-selector {
 					border: 1px solid var(--bg-vanilla-300);
 					background: var(--bg-vanilla-300);
+
+					&:hover {
+						border-color: var(--bg-ink-300);
+					}
+
+					&:focus {
+						border-color: var(--bg-ink-300);
+						box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+					}
 				}
 			}
 		}

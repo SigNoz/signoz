@@ -35,3 +35,13 @@ $top-nav-background-2-light: #e5e5e5;
 		);
 	}
 }
+
+.sticky-page-spinner {
+	position: fixed;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	background: rgba(0, 0, 0, 0.35);
+	z-index: 10000;
+	pointer-events: auto;
+}

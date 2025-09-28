@@ -1,3 +1,8 @@
+import { Spin } from 'antd';
+import { createPortal } from 'react-dom';
+
+import { useCreateAlertState } from './context';
+
 // UI side feature flag
 export const showNewCreateAlertsPage = (): boolean =>
 	localStorage.getItem('showNewCreateAlertsPage') === 'true';
@@ -7,3 +12,26 @@ export const showNewCreateAlertsPage = (): boolean =>
 // Layout 2 - Condensed layout
 export const showCondensedLayout = (): boolean =>
 	localStorage.getItem('showCondensedLayout') === 'true';
+
+export function switchBetweenOldAndNewCreateAlertPages(): void {
+	const isNewAlertPage = showNewCreateAlertsPage();
+	if (isNewAlertPage) {
+		localStorage.setItem('showNewCreateAlertsPage', 'false');
+	} else {
+		localStorage.setItem('showNewCreateAlertsPage', 'true');
+	}
+	window.location.reload();
+}
+
+export function Spinner(): JSX.Element | null {
+	const { isCreatingAlertRule } = useCreateAlertState();
+
+	if (!isCreatingAlertRule) return null;
+
+	return createPortal(
+		<div className="sticky-page-spinner">
+			<Spin size="large" spinning />
+		</div>,
+		document.body,
+	);
+}

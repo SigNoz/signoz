@@ -1,4 +1,6 @@
 import { QueryParams } from 'constants/query';
+import { useCreateAlertRule } from 'hooks/alerts/useCreateAlertRule';
+import { useTestAlertRule } from 'hooks/alerts/useTestAlertRule';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import {
@@ -126,6 +128,16 @@ export function CreateAlertProvider(
 		handleAlertTypeChange(AlertTypes.METRICS_BASED_ALERT);
 	}, [handleAlertTypeChange]);
 
+	const {
+		mutate: createAlertRule,
+		isLoading: isCreatingAlertRule,
+	} = useCreateAlertRule();
+
+	const {
+		mutate: testAlertRule,
+		isLoading: isTestingAlertRule,
+	} = useTestAlertRule();
+
 	const contextValue: ICreateAlertContextProps = useMemo(
 		() => ({
 			alertState,
@@ -141,6 +153,10 @@ export function CreateAlertProvider(
 			notificationSettings,
 			setNotificationSettings,
 			discardAlertRule,
+			createAlertRule,
+			isCreatingAlertRule,
+			testAlertRule,
+			isTestingAlertRule,
 		}),
 		[
 			alertState,
@@ -151,6 +167,10 @@ export function CreateAlertProvider(
 			advancedOptions,
 			notificationSettings,
 			discardAlertRule,
+			createAlertRule,
+			isCreatingAlertRule,
+			testAlertRule,
+			isTestingAlertRule,
 		],
 	);
 
