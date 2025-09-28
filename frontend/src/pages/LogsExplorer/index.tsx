@@ -54,7 +54,8 @@ function LogsExplorer(): JSX.Element {
 	const [selectedView, setSelectedView] = useState<ExplorerViews>(() =>
 		getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
 	);
-	const { preferences } = usePreferenceContext();
+	const { logs } = usePreferenceContext();
+	const { preferences } = logs;
 
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
 		const localStorageValue = getLocalStorageKey(
