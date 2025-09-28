@@ -40,6 +40,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
+	"go.opentelemetry.io/otel/propagation"
 	"go.uber.org/zap"
 )
 
@@ -167,6 +169,7 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server, error) {
 	r := NewRouter()
 
+	r.Use(otelmux.Middleware("apiserver", otelmux.WithMeterProvider(s.signoz.Instrumentation.MeterProvider()), otelmux.WithTracerProvider(s.signoz.Instrumentation.TracerProvider()), otelmux.WithPropagators(propagation.NewCompositeTextMapPropagator())))
 	r.Use(middleware.NewAuthN([]string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Tokenizer, s.signoz.Instrumentation.Logger()).Wrap)
 	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
 		s.config.APIServer.Timeout.ExcludedRoutes,
