@@ -12,6 +12,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	gocache "github.com/patrickmn/go-cache"
+	semconv "go.opentelemetry.io/collector/semconv/v1.6.1"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type provider struct {
@@ -35,6 +38,12 @@ func New(ctx context.Context, settings factory.ProviderSettings, config cache.Co
 }
 
 func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey string, data cachetypes.Cacheable, ttl time.Duration) error {
+	_, span := provider.settings.Tracer().Start(ctx, "set", trace.WithAttributes(
+		attribute.String(semconv.AttributeDBSystem, "memory"),
+		attribute.String(semconv.AttributeDBStatement, "set "+strings.Join([]string{orgID.StringValue(), cacheKey}, "::")),
+	))
+	defer span.End()
+
 	err := cachetypes.CheckCacheablePointer(data)
 	if err != nil {
 		return err
@@ -55,7 +64,13 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 	return nil
 }
 
-func (provider *provider) Get(_ context.Context, orgID valuer.UUID, cacheKey string, dest cachetypes.Cacheable, allowExpired bool) error {
+func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey string, dest cachetypes.Cacheable, allowExpired bool) error {
+	_, span := provider.settings.Tracer().Start(ctx, "get", trace.WithAttributes(
+		attribute.String(semconv.AttributeDBSystem, "memory"),
+		attribute.String(semconv.AttributeDBStatement, "get "+strings.Join([]string{orgID.StringValue(), cacheKey}, "::")),
+	))
+	defer span.End()
+
 	err := cachetypes.CheckCacheablePointer(dest)
 	if err != nil {
 		return err
