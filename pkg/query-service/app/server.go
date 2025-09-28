@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
+	"slices"
 
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 
@@ -169,7 +170,16 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server, error) {
 	r := NewRouter()
 
-	r.Use(otelmux.Middleware("apiserver", otelmux.WithMeterProvider(s.signoz.Instrumentation.MeterProvider()), otelmux.WithTracerProvider(s.signoz.Instrumentation.TracerProvider()), otelmux.WithPropagators(propagation.NewCompositeTextMapPropagator())))
+	r.Use(otelmux.Middleware(
+		"apiserver",
+		otelmux.WithMeterProvider(s.signoz.Instrumentation.MeterProvider()),
+		otelmux.WithTracerProvider(s.signoz.Instrumentation.TracerProvider()),
+		otelmux.WithPropagators(propagation.NewCompositeTextMapPropagator(propagation.Baggage{}, propagation.TraceContext{})),
+		otelmux.WithFilter(func(r *http.Request) bool {
+			return !slices.Contains([]string{"/api/v1/health"}, r.URL.Path)
+		}),
+		otelmux.WithPublicEndpoint(),
+	))
 	r.Use(middleware.NewAuthN([]string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Tokenizer, s.signoz.Instrumentation.Logger()).Wrap)
 	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
 		s.config.APIServer.Timeout.ExcludedRoutes,
