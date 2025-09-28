@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/instrumentation/loghandler"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
@@ -107,7 +108,7 @@ func New(ctx context.Context, cfg Config, build version.Build, serviceName strin
 		meterProvider:             meterProvider,
 		meterProviderShutdownFunc: meterProviderShutdownFunc,
 		prometheusRegistry:        prometheusRegistry,
-		logger:                    NewLogger(cfg),
+		logger:                    NewLogger(cfg, loghandler.NewCorrelation()),
 		startCh:                   make(chan struct{}),
 	}, nil
 }

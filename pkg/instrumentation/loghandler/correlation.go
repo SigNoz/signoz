@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -31,12 +30,6 @@ func (h *correlation) Wrap(next LogHandler) LogHandler {
 		if spanContext.HasSpanID() {
 			spanID := spanContext.SpanID().String()
 			record.AddAttrs(slog.String("span_id", spanID))
-		}
-
-		// Setting span status if the log is an error.
-		// Purposely leaving as codes.Unset (default) otherwise.
-		if record.Level >= slog.LevelError {
-			span.SetStatus(codes.Error, record.Message)
 		}
 
 		return next.Handle(ctx, record)
