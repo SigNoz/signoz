@@ -198,7 +198,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 		"apiserver",
 		otelmux.WithMeterProvider(s.signoz.Instrumentation.MeterProvider()),
 		otelmux.WithTracerProvider(s.signoz.Instrumentation.TracerProvider()),
-		otelmux.WithPropagators(propagation.NewCompositeTextMapPropagator()),
+		otelmux.WithPropagators(propagation.NewCompositeTextMapPropagator(propagation.Baggage{}, propagation.TraceContext{})),
 		otelmux.WithFilter(func(r *http.Request) bool {
 			return !slices.Contains([]string{"/api/v1/health"}, r.URL.Path)
 		}),
