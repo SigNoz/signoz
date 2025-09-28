@@ -18,6 +18,12 @@ type Module interface {
 
 	// Create a session for a user using callback authn providers.
 	CreateCallbackAuthNSession(ctx context.Context, authNProvider authtypes.AuthNProvider, values url.Values) (string, error)
+
+	// Rotate a token.
+	RotateSession(ctx context.Context, accessToken string, refreshToken string) (*authtypes.Token, error)
+
+	// Delete a session.
+	DeleteSession(ctx context.Context, accessToken string) error
 }
 
 type Handler interface {
@@ -32,4 +38,10 @@ type Handler interface {
 
 	// Create a session for a user using saml callback.
 	CreateSessionBySAMLCallback(http.ResponseWriter, *http.Request)
+
+	// Rotate a token.
+	RotateSession(http.ResponseWriter, *http.Request)
+
+	// Delete a session.
+	DeleteSession(http.ResponseWriter, *http.Request)
 }
