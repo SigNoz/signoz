@@ -23,3 +23,10 @@ export interface ThresholdItemProps {
 	isErrorChannels: boolean;
 	refreshChannels: () => void;
 }
+
+export interface AnomalyAndThresholdProps {
+	channels: Channels[];
+	isLoadingChannels: boolean;
+	isErrorChannels: boolean;
+	refreshChannels: () => void;
+}

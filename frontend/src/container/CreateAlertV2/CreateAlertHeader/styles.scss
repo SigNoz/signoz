@@ -3,21 +3,6 @@
 	font-family: inherit;
 	color: var(--text-vanilla-100);
 
-	/* Top bar with diagonal stripes */
-	&__tab-bar {
-		height: 32px;
-		display: flex;
-		align-items: center;
-		background: repeating-linear-gradient(
-			-45deg,
-			#0f0f0f,
-			#0f0f0f 10px,
-			#101010 10px,
-			#101010 20px
-		);
-		padding-left: 0;
-	}
-
 	/* Tab block visuals */
 	&__tab {
 		display: flex;
@@ -63,6 +48,15 @@
 		font-size: 14px;
 		background-color: transparent;
 		color: var(--text-vanilla-300);
+	}
+
+	.ant-btn {
+		display: flex;
+		gap: 4px;
+		align-items: center;
+		color: var(--text-vanilla-100);
+		border: 1px solid var(--bg-slate-300);
+		margin-right: 16px;
 	}
 }
 
@@ -154,16 +148,6 @@
 	.alert-header {
 		background-color: var(--bg-vanilla-100);
 		color: var(--text-ink-100);
-
-		&__tab-bar {
-			background: repeating-linear-gradient(
-				-45deg,
-				#f5f5f5,
-				#f5f5f5 10px,
-				#e5e5e5 10px,
-				#e5e5e5 20px
-			);
-		}
 
 		&__tab {
 			background-color: var(--bg-vanilla-100);

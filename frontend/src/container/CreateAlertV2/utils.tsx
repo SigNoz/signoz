@@ -13,16 +13,6 @@ export const showNewCreateAlertsPage = (): boolean =>
 export const showCondensedLayout = (): boolean =>
 	localStorage.getItem('showCondensedLayout') === 'true';
 
-export function switchBetweenOldAndNewCreateAlertPages(): void {
-	const isNewAlertPage = showNewCreateAlertsPage();
-	if (isNewAlertPage) {
-		localStorage.setItem('showNewCreateAlertsPage', 'false');
-	} else {
-		localStorage.setItem('showNewCreateAlertsPage', 'true');
-	}
-	window.location.reload();
-}
-
 export function Spinner(): JSX.Element | null {
 	const { isCreatingAlertRule } = useCreateAlertState();
 

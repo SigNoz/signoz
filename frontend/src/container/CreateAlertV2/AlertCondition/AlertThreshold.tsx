@@ -2,14 +2,9 @@ import './styles.scss';
 import '../EvaluationSettings/styles.scss';
 
 import { Button, Select, Tooltip, Typography } from 'antd';
-import getAllChannels from 'api/channels/getAll';
 import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Plus } from 'lucide-react';
-import { useQuery } from 'react-query';
-import { SuccessResponseV2 } from 'types/api';
-import { Channels } from 'types/api/channels/getAll';
-import APIError from 'types/api/error';
 
 import { useCreateAlertState } from '../context';
 import {
@@ -22,7 +17,7 @@ import {
 import EvaluationSettings from '../EvaluationSettings/EvaluationSettings';
 import { showCondensedLayout } from '../utils';
 import ThresholdItem from './ThresholdItem';
-import { UpdateThreshold } from './types';
+import { AnomalyAndThresholdProps, UpdateThreshold } from './types';
 import {
 	getCategoryByOptionId,
 	getCategorySelectOptionByName,
@@ -30,22 +25,19 @@ import {
 	getQueryNames,
 } from './utils';
 
-function AlertThreshold(): JSX.Element {
+function AlertThreshold({
+	channels,
+	isLoadingChannels,
+	isErrorChannels,
+	refreshChannels,
+}: AnomalyAndThresholdProps): JSX.Element {
 	const {
 		alertState,
 		thresholdState,
 		setThresholdState,
 	} = useCreateAlertState();
-	const {
-		data,
-		isLoading: isLoadingChannels,
-		isError: isErrorChannels,
-		refetch: refetchChannels,
-	} = useQuery<SuccessResponseV2<Channels[]>, APIError>(['getChannels'], {
-		queryFn: () => getAllChannels(),
-	});
+
 	const showCondensedLayoutFlag = showCondensedLayout();
-	const channels = data?.data || [];
 
 	const { currentQuery } = useQueryBuilder();
 
@@ -221,7 +213,7 @@ function AlertThreshold(): JSX.Element {
 						isLoadingChannels={isLoadingChannels}
 						units={categorySelectOptions}
 						isErrorChannels={isErrorChannels}
-						refreshChannels={refetchChannels}
+						refreshChannels={refreshChannels}
 					/>
 				))}
 				<Button

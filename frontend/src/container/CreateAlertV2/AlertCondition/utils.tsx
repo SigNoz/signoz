@@ -1,13 +1,17 @@
+import { Button, Flex, Typography } from 'antd';
 import { BaseOptionType, DefaultOptionType, SelectProps } from 'antd/es/select';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
 import { Y_AXIS_CATEGORIES } from 'components/YAxisUnitSelector/constants';
+import ROUTES from 'constants/routes';
 import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
 } from 'container/CreateAlertV2/context/types';
 import { getSelectedQueryOptions } from 'container/FormAlertRules/utils';
+import { IUser } from 'providers/App/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import { USER_ROLES } from 'types/roles';
 
 export function getQueryNames(currentQuery: Query): BaseOptionType[] {
 	const involvedQueriesInTraceOperator = getInvolvedQueriesInTraceOperator(
@@ -348,3 +352,38 @@ export const getMatchTypeTooltip = (
 			return '';
 	}
 };
+
+export function NotificationChannelsNotFoundContent({
+	user,
+	refreshChannels,
+}: {
+	user: IUser;
+	refreshChannels: () => void;
+}): JSX.Element {
+	return (
+		<Flex justify="space-between">
+			<Flex gap={4} align="center">
+				<Typography.Text>No channels yet.</Typography.Text>
+				{user?.role === USER_ROLES.ADMIN ? (
+					<Typography.Text>
+						Create one
+						<Button
+							style={{ padding: '0 4px' }}
+							type="link"
+							onClick={(): void => {
+								window.open(ROUTES.CHANNELS_NEW, '_blank');
+							}}
+						>
+							here.
+						</Button>
+					</Typography.Text>
+				) : (
+					<Typography.Text>Please ask your admin to create one.</Typography.Text>
+				)}
+			</Flex>
+			<Button type="text" onClick={refreshChannels}>
+				Refresh
+			</Button>
+		</Flex>
+	);
+}
