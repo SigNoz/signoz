@@ -64,8 +64,12 @@ func (provider *provider) Start(ctx context.Context) error {
 }
 
 func (provider *provider) CreateToken(ctx context.Context, identity *authtypes.Identity, meta map[string]string) (*authtypes.Token, error) {
+	ctx, span := provider.settings.Tracer().Start(ctx, "tokenizer.CreateToken")
+	defer span.End()
+
 	existingTokens, err := provider.tokenStore.ListByUserID(ctx, identity.UserID)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -75,20 +79,24 @@ func (provider *provider) CreateToken(ctx context.Context, identity *authtypes.I
 		})
 
 		if err := provider.DeleteToken(ctx, existingTokens[0].AccessToken); err != nil {
+			span.RecordError(err)
 			return nil, err
 		}
 	}
 
 	token, err := authtypes.NewToken(meta, identity.UserID)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
 	if err := provider.setToken(ctx, token, true); err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
 	if err := provider.setIdentity(ctx, identity); err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -96,17 +104,23 @@ func (provider *provider) CreateToken(ctx context.Context, identity *authtypes.I
 }
 
 func (provider *provider) GetIdentity(ctx context.Context, accessToken string) (*authtypes.Identity, error) {
+	ctx, span := provider.settings.Tracer().Start(ctx, "tokenizer.GetIdentity")
+	defer span.End()
+
 	token, err := provider.getOrGetSetToken(ctx, accessToken)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
 	if err := token.IsValid(provider.config.RotationInterval, provider.config.IdleDuration, provider.config.MaxDuration); err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
 	identity, err := provider.getOrGetSetIdentity(ctx, token.UserID)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -114,29 +128,46 @@ func (provider *provider) GetIdentity(ctx context.Context, accessToken string) (
 }
 
 func (provider *provider) DeleteToken(ctx context.Context, accessToken string) error {
+	ctx, span := provider.settings.Tracer().Start(ctx, "tokenizer.DeleteToken")
+	defer span.End()
+
 	provider.cache.Delete(ctx, emptyOrgID, cachetypes.NewSha1CacheKey(accessToken))
-	return provider.tokenStore.DeleteByAccessToken(ctx, accessToken)
+	if err := provider.tokenStore.DeleteByAccessToken(ctx, accessToken); err != nil {
+		span.RecordError(err)
+		return err
+	}
+
+	return nil
 }
 
 func (provider *provider) RotateToken(ctx context.Context, accessToken string, refreshToken string) (*authtypes.Token, error) {
+	ctx, span := provider.settings.Tracer().Start(ctx, "tokenizer.RotateToken")
+	defer span.End()
+
 	token, err := provider.tokenStore.GetByAccessToken(ctx, accessToken)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
 	if token.RefreshToken != refreshToken {
-		return nil, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid refresh token")
+		err := errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid refresh token")
+		span.RecordError(err)
+		return nil, err
 	}
 
 	if err := token.IsExpired(provider.config.IdleDuration, provider.config.MaxDuration); err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
 	if err := token.Rotate(); err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
 	if err := provider.setToken(ctx, token, false); err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
