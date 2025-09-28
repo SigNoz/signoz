@@ -361,23 +361,15 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 				if err != nil {
 					return err
 				}
-				err = m.alertmanager.UpdateAllNotificationRoutesByName(ctx, id.StringValue(), request)
+				err = m.alertmanager.UpdateAllRoutePoliciesByRuleId(ctx, id.StringValue(), request)
 				if err != nil {
 					return err
 				}
-				amConfig, err := m.alertmanager.GetConfig(ctx, orgID.StringValue())
+				err = m.alertmanager.DeleteAllInhibitRulesByRuleId(ctx, orgID, id.StringValue())
 				if err != nil {
 					return err
 				}
-				// move ruleId inhibitor deletion to alertmanager
-				err = amConfig.DeleteRuleIdInhibitor(id.StringValue())
-				if err != nil {
-					return err
-				}
-				err = m.alertmanager.SetConfig(ctx, amConfig)
-				if err != nil {
-					return err
-				}
+
 				inhibitRules, err := parsedRule.GetInhibitRules(id.StringValue())
 				if err != nil {
 					return err
@@ -563,7 +555,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 				if err != nil {
 					return err
 				}
-				err = m.alertmanager.CreateNotificationRoutes(ctx, request)
+				_, err = m.alertmanager.CreateRoutePolicies(ctx, request)
 				if err != nil {
 					return err
 				}

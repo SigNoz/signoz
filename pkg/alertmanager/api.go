@@ -285,27 +285,33 @@ func (api *API) CreateNotificationPolicy(rw http.ResponseWriter, req *http.Reque
 		return
 	}
 	defer req.Body.Close()
-	var policy alertmanagertypes.PolicyRouteRequest
+	var policy alertmanagertypes.PostableExpressionRoute
 	err = json.Unmarshal(body, &policy)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = api.alertmanager.CreateNotificationRoute(ctx, &policy)
+	// Validate the postable route
+	if err := policy.Validate(); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	result, err := api.alertmanager.CreateRoutePolicy(ctx, &policy)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusNoContent, nil)
+	render.Success(rw, http.StatusCreated, result)
 }
 
 func (api *API) GetAllNotificationPolicies(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
-	policies, err := api.alertmanager.GetAllNotificationRoutes(ctx)
+	policies, err := api.alertmanager.GetAllRoutePolicies(ctx)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -325,7 +331,7 @@ func (api *API) GetNotificationPolicyByID(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	policy, err := api.alertmanager.GetNotificationRouteByID(ctx, policyID)
+	policy, err := api.alertmanager.GetRoutePolicyByID(ctx, policyID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -345,7 +351,7 @@ func (api *API) DeleteNotificationPolicyByID(rw http.ResponseWriter, req *http.R
 		return
 	}
 
-	err := api.alertmanager.DeleteNotificationRouteByID(ctx, policyID)
+	err := api.alertmanager.DeleteRoutePolicyByID(ctx, policyID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -370,16 +376,23 @@ func (api *API) UpdateNotificationPolicy(rw http.ResponseWriter, req *http.Reque
 		return
 	}
 	defer req.Body.Close()
-	var policy alertmanagertypes.PolicyRouteRequest
+	var policy alertmanagertypes.PostableExpressionRoute
 	err = json.Unmarshal(body, &policy)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
-	err = api.alertmanager.UpdateNotificationRouteByID(ctx, policyID, &policy)
+
+	// Validate the postable route
+	if err := policy.Validate(); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	result, err := api.alertmanager.UpdateRoutePolicyByID(ctx, policyID, &policy)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
-	render.Success(rw, http.StatusNoContent, nil)
+	render.Success(rw, http.StatusOK, result)
 }

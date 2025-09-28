@@ -47,8 +47,8 @@ func (m *MockSQLRouteStore) Delete(ctx context.Context, orgId string, id string)
 	return m.routeStore.Delete(ctx, orgId, id)
 }
 
-func (m *MockSQLRouteStore) GetAllByKindAndOrgID(ctx context.Context, orgID string, kind alertmanagertypes.ExpressionKind) ([]*alertmanagertypes.ExpressionRoute, error) {
-	return m.routeStore.GetAllByKindAndOrgID(ctx, orgID, kind)
+func (m *MockSQLRouteStore) GetAllByKind(ctx context.Context, orgID string, kind alertmanagertypes.ExpressionKind) ([]*alertmanagertypes.ExpressionRoute, error) {
+	return m.routeStore.GetAllByKind(ctx, orgID, kind)
 }
 
 func (m *MockSQLRouteStore) GetAllByName(ctx context.Context, orgID string, name string) ([]*alertmanagertypes.ExpressionRoute, error) {

@@ -62,16 +62,17 @@ type Alertmanager interface {
 	DeleteNotificationConfig(ctx context.Context, orgID valuer.UUID, ruleId string) error
 
 	// Notification Policy CRUD
-	CreateNotificationRoute(ctx context.Context, route *alertmanagertypes.PolicyRouteRequest) error
-	CreateNotificationRoutes(ctx context.Context, routeRequests []*alertmanagertypes.PolicyRouteRequest) error
-	GetNotificationRouteByID(ctx context.Context, routeID string) (*alertmanagertypes.ExpressionRoute, error)
-	GetAllNotificationRoutes(ctx context.Context) ([]*alertmanagertypes.ExpressionRoute, error)
-	UpdateNotificationRouteByID(ctx context.Context, routeID string, route *alertmanagertypes.PolicyRouteRequest) error
-	DeleteNotificationRouteByID(ctx context.Context, routeID string) error
-	DeleteAllNotificationRoutesByName(ctx context.Context, names string) error
-	UpdateAllNotificationRoutesByName(ctx context.Context, names string, routes []*alertmanagertypes.PolicyRouteRequest) error
+	CreateRoutePolicy(ctx context.Context, route *alertmanagertypes.PostableExpressionRoute) (*alertmanagertypes.GettableExpressionRoute, error)
+	CreateRoutePolicies(ctx context.Context, routeRequests []*alertmanagertypes.PostableExpressionRoute) ([]*alertmanagertypes.GettableExpressionRoute, error)
+	GetRoutePolicyByID(ctx context.Context, routeID string) (*alertmanagertypes.GettableExpressionRoute, error)
+	GetAllRoutePolicies(ctx context.Context) ([]*alertmanagertypes.GettableExpressionRoute, error)
+	UpdateRoutePolicyByID(ctx context.Context, routeID string, route *alertmanagertypes.PostableExpressionRoute) (*alertmanagertypes.GettableExpressionRoute, error)
+	DeleteRoutePolicyByID(ctx context.Context, routeID string) error
+	DeleteAllRoutePoliciesByRuleId(ctx context.Context, names string) error
+	UpdateAllRoutePoliciesByRuleId(ctx context.Context, names string, routes []*alertmanagertypes.PostableExpressionRoute) error
 
 	CreateInhibitRules(ctx context.Context, orgID valuer.UUID, rules []amConfig.InhibitRule) error
+	DeleteAllInhibitRulesByRuleId(ctx context.Context, orgID valuer.UUID, ruleId string) error
 
 	// Collects stats for the organization.
 	statsreporter.StatsCollector

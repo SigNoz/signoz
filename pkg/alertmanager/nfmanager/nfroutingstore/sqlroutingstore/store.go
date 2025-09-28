@@ -59,7 +59,7 @@ func (store *store) Delete(ctx context.Context, orgId string, id string) error {
 	return nil
 }
 
-func (store *store) GetAllByKindAndOrgID(ctx context.Context, orgID string, kind routeTypes.ExpressionKind) ([]*routeTypes.ExpressionRoute, error) {
+func (store *store) GetAllByKind(ctx context.Context, orgID string, kind routeTypes.ExpressionKind) ([]*routeTypes.ExpressionRoute, error) {
 	var routes []*routeTypes.ExpressionRoute
 	err := store.sqlstore.BunDBCtx(ctx).NewSelect().Model(&routes).Where("org_id = ?", orgID).Where("kind = ?", kind).Scan(ctx)
 	if err != nil {

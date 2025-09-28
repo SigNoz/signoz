@@ -150,7 +150,7 @@ func (r *provider) GetAllRoutes(ctx context.Context, orgID string) ([]*alertmana
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "orgID cannot be empty")
 	}
 
-	return r.routeStore.GetAllByKindAndOrgID(ctx, orgID, alertmanagertypes.PolicyBasedExpression)
+	return r.routeStore.GetAllByKind(ctx, orgID, alertmanagertypes.PolicyBasedExpression)
 }
 
 func (r *provider) DeleteRoute(ctx context.Context, orgID string, routeID string) error {
@@ -178,7 +178,7 @@ func (r *provider) Match(ctx context.Context, orgID string, ruleID string, set m
 	}
 	var expressionRoutes []*alertmanagertypes.ExpressionRoute
 	if config.NotificationPolicy {
-		expressionRoutes, err = r.routeStore.GetAllByKindAndOrgID(ctx, orgID, alertmanagertypes.PolicyBasedExpression)
+		expressionRoutes, err = r.routeStore.GetAllByKind(ctx, orgID, alertmanagertypes.PolicyBasedExpression)
 		if err != nil {
 			return []string{}, errors.NewInternalf(errors.CodeInternal, "error getting expression routes: %v", err)
 		}

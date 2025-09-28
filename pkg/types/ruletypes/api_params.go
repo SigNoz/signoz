@@ -85,22 +85,24 @@ func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanager
 	return alertmanagertypes.NewNotificationConfig(ns.NotificationGroupBy, time.Duration(renotifyInterval), time.Duration(noDataRenotifyInterval), ns.NotificationPolicy)
 }
 
-func (r *PostableRule) GetRuleRouteRequest(ruleId string) ([]*alertmanagertypes.PolicyRouteRequest, error) {
+func (r *PostableRule) GetRuleRouteRequest(ruleId string) ([]*alertmanagertypes.PostableExpressionRoute, error) {
 	threshold, err := r.RuleCondition.Thresholds.GetRuleThreshold()
 	if err != nil {
 		return nil, err
 	}
 	receivers := threshold.GetRuleReceivers()
-	routeRequests := make([]*alertmanagertypes.PolicyRouteRequest, 0)
+	routeRequests := make([]*alertmanagertypes.PostableExpressionRoute, 0)
 	for _, receiver := range receivers {
 		expression := fmt.Sprintf(`%s == "%s" && %s == "%s"`, LabelThresholdName, receiver.Name, LabelRuleId, ruleId)
-		routeRequests = append(routeRequests, &alertmanagertypes.PolicyRouteRequest{
-			Actions: alertmanagertypes.Actions{
-				Channels: receiver.Channels,
-			},
-			Kind:       alertmanagertypes.RuleBasedExpression,
-			Expression: expression,
-			Name:       ruleId,
+		routeRequests = append(routeRequests, &alertmanagertypes.PostableExpressionRoute{
+			Expression:     expression,
+			ExpressionKind: alertmanagertypes.RuleBasedExpression,
+			Channels:       receiver.Channels,
+			Priority:       "", // Default empty priority
+			Name:           ruleId,
+			Description:    fmt.Sprintf("Auto-generated route for rule %s", ruleId),
+			Enabled:        true,
+			Tags:           []string{"auto-generated", "rule-based"},
 		})
 	}
 	return routeRequests, nil

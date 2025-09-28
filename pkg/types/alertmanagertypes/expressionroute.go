@@ -2,7 +2,7 @@ package alertmanagertypes
 
 import (
 	"context"
-	"fmt"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -10,55 +10,54 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type Actions struct {
-	Channels []string `json:"channels"`
-	Priority string   `json:"priority"`
+type PostableExpressionRoute struct {
+	Expression     string         `json:"expression"`
+	ExpressionKind ExpressionKind `json:"kind"`
+	Channels       []string       `json:"channels"`
+	Priority       string         `json:"priority"`
+	Name           string         `json:"name"`
+	Description    string         `json:"description"`
+	Enabled        bool           `json:"enabled"`
+	Tags           []string       `json:"tags,omitempty"`
 }
 
-type PolicyRouteRequest struct {
-	Expression  string
-	Actions     Actions
-	Name        string
-	Description string
-	Tags        []string
-	Kind        ExpressionKind
-}
-
-func (req *PolicyRouteRequest) Validate() error {
-	if req.Expression == "" {
-		return fmt.Errorf("expression required")
+func (p *PostableExpressionRoute) Validate() error {
+	if p.Expression == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "expression is required")
 	}
 
-	if req.Name == "" {
-		return fmt.Errorf("name required")
+	if p.Name == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "name is required")
 	}
 
-	if len(req.Actions.Channels) == 0 {
-		return fmt.Errorf("channels required")
+	if len(p.Channels) == 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "at least one channel is required")
 	}
+
+	// Validate channels are not empty
+	for i, channel := range p.Channels {
+		if channel == "" {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "channel at index %d cannot be empty", i)
+		}
+	}
+
+	if p.ExpressionKind != PolicyBasedExpression && p.ExpressionKind != RuleBasedExpression {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported expression kind: %s", p.ExpressionKind.StringValue())
+	}
+
 	return nil
 }
 
-// ToExpressionRoute converts PolicyRouteRequest to ExpressionRoute
-func (req *PolicyRouteRequest) ToExpressionRoute(orgID, userID string, kind ExpressionKind) *ExpressionRoute {
-	return &ExpressionRoute{
-		Expression:  req.Expression,
-		Channels:    req.Actions.Channels,
-		Priority:    req.Actions.Priority,
-		Name:        req.Name,
-		Description: req.Description,
-		Enabled:     true,
-		Tags:        req.Tags,
-		OrgID:       orgID,
-		Identifiable: types.Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
-		ExpressionKind: kind,
-		UserAuditable: types.UserAuditable{
-			CreatedBy: userID,
-			UpdatedBy: userID,
-		},
-	}
+type GettableExpressionRoute struct {
+	PostableExpressionRoute // Embedded
+
+	ID string `json:"id"`
+
+	// Audit fields
+	CreatedAt *time.Time `json:"createdAt"`
+	UpdatedAt *time.Time `json:"updatedAt"`
+	CreatedBy *string    `json:"createdBy"`
+	UpdatedBy *string    `json:"updatedBy"`
 }
 
 type ExpressionKind struct {
@@ -70,27 +69,24 @@ var (
 	PolicyBasedExpression = ExpressionKind{valuer.NewString("policy")}
 )
 
+// ExpressionRoute represents the database model for expression routes
 type ExpressionRoute struct {
 	bun.BaseModel `bun:"table:notification_routes"`
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
 
-	// Core routing fields
 	Expression     string         `bun:"expression,type:text,notnull" json:"expression"`
 	ExpressionKind ExpressionKind `bun:"kind,type:text" json:"kind"`
 
-	// Action configuration (stored as JSON)
 	Channels []string `bun:"channels,type:jsonb" json:"channels"`
 	Priority string   `bun:"priority,type:text" json:"priority"`
 
-	// Extensibility fields
 	Name        string   `bun:"name,type:text" json:"name"`
 	Description string   `bun:"description,type:text" json:"description"`
 	Enabled     bool     `bun:"enabled,type:boolean,default:true" json:"enabled"`
 	Tags        []string `bun:"tags,type:jsonb" json:"tags,omitempty"`
 
-	// Organization/tenant isolation
 	OrgID string `bun:"org_id,type:text,notnull" json:"orgId"`
 }
 
@@ -134,7 +130,7 @@ type RouteStore interface {
 	Create(ctx context.Context, route *ExpressionRoute) error
 	CreateBatch(ctx context.Context, routes []*ExpressionRoute) error
 	Delete(ctx context.Context, orgId string, id string) error
-	GetAllByKindAndOrgID(ctx context.Context, orgID string, kind ExpressionKind) ([]*ExpressionRoute, error)
+	GetAllByKind(ctx context.Context, orgID string, kind ExpressionKind) ([]*ExpressionRoute, error)
 	GetAllByName(ctx context.Context, orgID string, name string) ([]*ExpressionRoute, error)
 	DeleteRouteByName(ctx context.Context, orgID string, name string) error
 }

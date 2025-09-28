@@ -143,14 +143,27 @@ func (migration *addNotificationRoutes) migrateRulesToNotificationRoutes(ctx con
 
 	channelsByOrg := migration.getAllChannelsByOrg(db)
 
-	routes := migration.convertRulesToRoutes(rules, channelsByOrg)
-
-	if len(routes) > 0 {
-		_, err = db.NewInsert().
-			Model(&routes).
-			Exec(ctx)
+	for _, r := range rules {
+		existingRouteCount, err := db.NewSelect().
+			Model((*expressionRoute)(nil)).
+			Where("name = ? AND kind = ? AND org_id = ?", r.ID.StringValue(), "rule", r.OrgID).
+			Count(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to insert notification routes: %w", err)
+			return fmt.Errorf("failed to check existing route for rule %s: %w", r.ID.StringValue(), err)
+		}
+
+		if existingRouteCount > 0 {
+			continue
+		}
+
+		routeList := migration.convertRulesToRoutes([]*rule{r}, channelsByOrg)
+		if len(routeList) > 0 {
+			_, err = db.NewInsert().
+				Model(&routeList[0]).
+				Exec(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to insert notification route for rule %s: %w", r.ID.StringValue(), err)
+			}
 		}
 	}
 
@@ -194,7 +207,7 @@ func (migration *addNotificationRoutes) convertRulesToRoutes(rules []*rule, chan
 			ExpressionKind: "rule",
 			Channels:       gettableRule.PreferredChannels,
 			Name:           r.ID.StringValue(),
-			Description:    fmt.Sprintf("Auto-migrated route from rule %s", gettableRule.AlertName),
+			Description:    "",
 			Enabled:        !gettableRule.Disabled,
 			Tags:           []string{},
 			OrgID:          r.OrgID,
