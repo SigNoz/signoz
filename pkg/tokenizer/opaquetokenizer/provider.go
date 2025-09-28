@@ -24,8 +24,8 @@ type provider struct {
 	settings   factory.ScopedProviderSettings
 	cache      cache.Cache
 	tokenStore authtypes.TokenStore
-	stopC      chan struct{}
 	sharder    sharder.Sharder
+	stopC      chan struct{}
 }
 
 func NewFactory(cache cache.Cache, tokenStore authtypes.TokenStore, sharder sharder.Sharder) factory.ProviderFactory[tokenizer.Tokenizer, tokenizer.Config] {
@@ -42,6 +42,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		settings:   settings,
 		cache:      cache,
 		tokenStore: tokenStore,
+		sharder:    sharder,
 		stopC:      make(chan struct{}),
 	}, nil
 }
