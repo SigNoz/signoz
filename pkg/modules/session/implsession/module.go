@@ -64,7 +64,7 @@ func (module *module) GetSessionContext(ctx context.Context, email string, siteU
 	orgDomain, err := module.authDomain.GetByNameAndOrgID(ctx, components[1], valuer.MustNewUUID(user.OrgID))
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
-			return context, err
+			return context, nil
 		}
 
 		return nil, err
