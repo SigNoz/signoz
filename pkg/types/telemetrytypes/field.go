@@ -175,11 +175,10 @@ func DataTypeCollisionHandledFieldName(key *TelemetryFieldKey, value any, tblFie
 		// is used which prepares the
 		// final query as attributes_number['http.status_code'] = 200 giving this error
 		// This following is one way to workaround it
+
+		// if the key is a number, the value is a string, we will let clickHouse handle the conversion
 		case float32, float64:
 			tblFieldName = castFloatHack(tblFieldName)
-		case string:
-			// try to convert the number attribute to string
-			tblFieldName = castString(tblFieldName) // numeric col vs string literal
 		case []any:
 			if allFloats(v) {
 				tblFieldName = castFloatHack(tblFieldName)

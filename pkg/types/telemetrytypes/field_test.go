@@ -161,6 +161,7 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 
 		// numbers
 		{
+			// if the key is a number, the value is a string, we will let clickHouse handle the conversion
 			name: "http_request_duration_float_field_with_string_value",
 			key: &TelemetryFieldKey{
 				Name:          "http.request.duration",
@@ -168,7 +169,7 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 			},
 			value:             "1234.56",
 			tblFieldName:      "attribute_float64_http$$request$$duration",
-			expectedFieldName: "toString(attribute_float64_http$$request$$duration)",
+			expectedFieldName: "attribute_float64_http$$request$$duration",
 			expectedValue:     "1234.56",
 		},
 
