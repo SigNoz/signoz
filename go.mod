@@ -17,8 +17,7 @@ require (
 	github.com/go-co-op/gocron v1.30.1
 	github.com/go-openapi/runtime v0.28.0
 	github.com/go-openapi/strfmt v0.23.0
-	github.com/go-redis/redis/v8 v8.11.5
-	github.com/go-redis/redismock/v8 v8.11.5
+	github.com/go-redis/redismock/v9 v9.2.0
 	github.com/go-viper/mapstructure/v2 v2.4.0
 	github.com/gojek/heimdall/v7 v7.0.3
 	github.com/golang-jwt/jwt/v5 v5.3.0
@@ -44,6 +43,8 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/common v0.66.1
 	github.com/prometheus/prometheus v0.304.1
+	github.com/redis/go-redis/extra/redisotel/v9 v9.15.1
+	github.com/redis/go-redis/v9 v9.15.1
 	github.com/rs/cors v1.11.1
 	github.com/russellhaering/gosaml2 v0.9.0
 	github.com/russellhaering/goxmldsig v1.2.0
@@ -56,9 +57,10 @@ require (
 	github.com/srikanthccv/ClickHouse-go-mock v0.12.0
 	github.com/stretchr/testify v1.11.1
 	github.com/tidwall/gjson v1.18.0
-	github.com/uptrace/bun v1.2.9
+	github.com/uptrace/bun v1.2.15
 	github.com/uptrace/bun/dialect/pgdialect v1.2.9
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.9
+	github.com/uptrace/bun/extra/bunotel v1.2.15
 	go.opentelemetry.io/collector/confmap v1.34.0
 	go.opentelemetry.io/collector/otelcol v0.128.0
 	go.opentelemetry.io/collector/pdata v1.34.0
@@ -86,7 +88,9 @@ require (
 require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
+	github.com/redis/go-redis/extra/rediscmd/v9 v9.15.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	github.com/uptrace/opentelemetry-go-extra/otelsql v0.3.2 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	modernc.org/libc v1.66.3 // indirect
 	modernc.org/mathutil v1.7.1 // indirect

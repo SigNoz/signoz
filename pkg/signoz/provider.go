@@ -69,9 +69,8 @@ func NewWebProviderFactories() factory.NamedMap[factory.ProviderFactory[web.Web,
 }
 
 func NewSQLStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]] {
-	hook := sqlstorehook.NewLoggingFactory()
 	return factory.MustNewNamedMap(
-		sqlitesqlstore.NewFactory(hook),
+		sqlitesqlstore.NewFactory(sqlstorehook.NewLoggingFactory(), sqlstorehook.NewInstrumentationFactory()),
 	)
 }
 
