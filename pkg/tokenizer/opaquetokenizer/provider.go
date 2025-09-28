@@ -300,6 +300,11 @@ func (provider *provider) getOrGetSetIdentity(ctx context.Context, userID valuer
 		return nil, err
 	}
 
+	err = provider.cache.Set(ctx, emptyOrgID, identityCacheKey(userID), identity, -1)
+	if err != nil {
+		return nil, err
+	}
+
 	return identity, nil
 }
 
