@@ -72,7 +72,7 @@ func (m *MockSQLRouteStore) ExpectGetByID(orgID, id string, route *alertmanagert
 			route.Priority,
 			route.Description,
 			route.Enabled,
-			"[]", // tags as JSON
+			"[]",                                          // tags as JSON
 			`["`+strings.Join(route.Channels, `","`)+`"]`, // channels as JSON
 			"0001-01-01T00:00:00Z",                        // created_at
 			"0001-01-01T00:00:00Z",                        // updated_at
@@ -123,7 +123,7 @@ func (m *MockSQLRouteStore) ExpectGetAllByKindAndOrgID(orgID string, kind alertm
 				route.Priority,
 				route.Description,
 				route.Enabled,
-				"[]", // tags as JSON
+				"[]",                                          // tags as JSON
 				`["`+strings.Join(route.Channels, `","`)+`"]`, // channels as JSON
 				"0001-01-01T00:00:00Z",                        // created_at
 				"0001-01-01T00:00:00Z",                        // updated_at
@@ -151,7 +151,7 @@ func (m *MockSQLRouteStore) ExpectGetAllByName(orgID, name string, routes []*ale
 				route.Priority,
 				route.Description,
 				route.Enabled,
-				"[]", // tags as JSON
+				"[]",                                          // tags as JSON
 				`["`+strings.Join(route.Channels, `","`)+`"]`, // channels as JSON
 				"0001-01-01T00:00:00Z",                        // created_at
 				"0001-01-01T00:00:00Z",                        // updated_at
@@ -173,4 +173,8 @@ func (m *MockSQLRouteStore) ExpectDeleteRouteByName(orgID, name string) {
 
 func (m *MockSQLRouteStore) ExpectationsWereMet() error {
 	return m.mock.ExpectationsWereMet()
+}
+
+func (m *MockSQLRouteStore) MatchExpectationsInOrder(match bool) {
+	m.mock.MatchExpectationsInOrder(match)
 }

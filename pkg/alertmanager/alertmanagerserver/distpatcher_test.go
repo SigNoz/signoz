@@ -354,8 +354,8 @@ func TestAggrRouteMap(t *testing.T) {
 
 route:
   group_by: ['alertname']
-  group_wait: 10ms
-  group_interval: 10ms
+  group_wait: 1m
+  group_interval: 1m
   receiver: 'slack'`
 	conf, err := config.Load(confData)
 	if err != nil {
@@ -375,6 +375,7 @@ route:
 	recorder := &recordStage{alerts: make(map[string]map[model.Fingerprint]*alertmanagertypes.Alert)}
 	metrics := NewDispatcherMetrics(false, prometheus.NewRegistry())
 	store := nfroutingstoretest.NewMockSQLRouteStore()
+	store.MatchExpectationsInOrder(false)
 	nfManager, err := rulebasednotification.New(context.Background(), providerSettings, nfmanager.Config{}, store)
 	if err != nil {
 		t.Fatal(err)
@@ -650,6 +651,7 @@ route:
 	recorder := &recordStage{alerts: make(map[string]map[model.Fingerprint]*alertmanagertypes.Alert)}
 	metrics := NewDispatcherMetrics(false, prometheus.NewRegistry())
 	store := nfroutingstoretest.NewMockSQLRouteStore()
+	store.MatchExpectationsInOrder(false)
 	nfManager, err := rulebasednotification.New(context.Background(), providerSettings, nfmanager.Config{}, store)
 	if err != nil {
 		t.Fatal(err)
@@ -913,6 +915,7 @@ route:
 	recorder := &recordStage{alerts: make(map[string]map[model.Fingerprint]*alertmanagertypes.Alert)}
 	metrics := NewDispatcherMetrics(false, prometheus.NewRegistry())
 	store := nfroutingstoretest.NewMockSQLRouteStore()
+	store.MatchExpectationsInOrder(false)
 	nfManager, err := rulebasednotification.New(context.Background(), providerSettings, nfmanager.Config{}, store)
 	if err != nil {
 		t.Fatal(err)
