@@ -209,30 +209,30 @@ func (provider *provider) gc(ctx context.Context) error {
 
 func (provider *provider) getOrGetSetToken(ctx context.Context, accessToken string) (*authtypes.Token, error) {
 	token := new(authtypes.Token)
-	err := provider.cache.Get(ctx, emptyOrgID, cachetypes.NewSha1CacheKey(accessToken), token, false)
-	if err != nil {
-		if !errors.Ast(err, errors.TypeNotFound) {
-			return nil, err
-		}
+	err := provider.cache.Get(ctx, emptyOrgID, accessTokenCacheKey(accessToken), token, false)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil, err
 	}
 
-	if err != nil {
-		token, err = provider.tokenStore.GetByAccessToken(ctx, accessToken)
-		if err != nil {
-			return nil, err
-		}
+	if err == nil {
+		return token, nil
+	}
 
-		err := provider.cache.Set(ctx, emptyOrgID, cachetypes.NewSha1CacheKey(accessToken), token, provider.config.MaxDuration)
-		if err != nil {
-			return nil, err
-		}
+	token, err = provider.tokenStore.GetByAccessToken(ctx, accessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	err = provider.cache.Set(ctx, emptyOrgID, accessTokenCacheKey(accessToken), token, provider.config.MaxDuration)
+	if err != nil {
+		return nil, err
 	}
 
 	return token, nil
 }
 
 func (provider *provider) setToken(ctx context.Context, token *authtypes.Token, create bool) error {
-	err := provider.cache.Set(ctx, emptyOrgID, cachetypes.NewSha1CacheKey(token.AccessToken), token, provider.config.MaxDuration)
+	err := provider.cache.Set(ctx, emptyOrgID, accessTokenCacheKey(token.AccessToken), token, provider.config.MaxDuration)
 	if err != nil {
 		return err
 	}
@@ -245,7 +245,7 @@ func (provider *provider) setToken(ctx context.Context, token *authtypes.Token, 
 }
 
 func (provider *provider) setIdentity(ctx context.Context, identity *authtypes.Identity) error {
-	err := provider.cache.Set(ctx, emptyOrgID, "identity::"+identity.UserID.String(), identity, -1)
+	err := provider.cache.Set(ctx, emptyOrgID, identityCacheKey(identity.UserID), identity, -1)
 	if err != nil {
 		return err
 	}
@@ -255,19 +255,27 @@ func (provider *provider) setIdentity(ctx context.Context, identity *authtypes.I
 
 func (provider *provider) getOrGetSetIdentity(ctx context.Context, userID valuer.UUID) (*authtypes.Identity, error) {
 	identity := new(authtypes.Identity)
-	err := provider.cache.Get(ctx, emptyOrgID, "identity::"+userID.String(), identity, false)
-	if err != nil {
-		if !errors.Ast(err, errors.TypeNotFound) {
-			return nil, err
-		}
+	err := provider.cache.Get(ctx, emptyOrgID, identityCacheKey(userID), identity, false)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil, err
 	}
 
+	if err == nil {
+		return identity, nil
+	}
+
+	identity, err = provider.tokenStore.GetIdentityByUserID(ctx, userID)
 	if err != nil {
-		identity, err = provider.tokenStore.GetIdentityByUserID(ctx, userID)
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	return identity, nil
+}
+
+func accessTokenCacheKey(accessToken string) string {
+	return cachetypes.NewSha1CacheKey(accessToken)
+}
+
+func identityCacheKey(userID valuer.UUID) string {
+	return "identity::" + userID.String()
 }
