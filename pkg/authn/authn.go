@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+// This can either be a password authn or a callback authn.
 type AuthN interface{}
 
 type PasswordAuthN interface {
