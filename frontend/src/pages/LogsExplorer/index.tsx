@@ -54,7 +54,7 @@ function LogsExplorer(): JSX.Element {
 	const [selectedView, setSelectedView] = useState<ExplorerViews>(() =>
 		getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
 	);
-	const { preferences, loading: preferencesLoading } = usePreferenceContext();
+	const { preferences } = usePreferenceContext();
 
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
 		const localStorageValue = getLocalStorageKey(
@@ -273,7 +273,7 @@ function LogsExplorer(): JSX.Element {
 	);
 
 	useEffect(() => {
-		if (!preferences || preferencesLoading) {
+		if (!preferences) {
 			return;
 		}
 		const migratedQuery = migrateOptionsQuery({
@@ -295,12 +295,7 @@ function LogsExplorer(): JSX.Element {
 		) {
 			redirectWithOptionsData(migratedQuery);
 		}
-	}, [
-		migrateOptionsQuery,
-		preferences,
-		redirectWithOptionsData,
-		preferencesLoading,
-	]);
+	}, [migrateOptionsQuery, preferences, redirectWithOptionsData]);
 
 	const toolbarViews = useMemo(
 		() => ({
