@@ -11,7 +11,6 @@ import (
 )
 
 type logging struct {
-	bun.QueryHook
 	logger *slog.Logger
 	level  slog.Level
 }
