@@ -57,10 +57,10 @@ require (
 	github.com/srikanthccv/ClickHouse-go-mock v0.12.0
 	github.com/stretchr/testify v1.11.1
 	github.com/tidwall/gjson v1.18.0
-	github.com/uptrace/bun v1.2.15
+	github.com/uptrace/bun v1.2.9
 	github.com/uptrace/bun/dialect/pgdialect v1.2.9
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.9
-	github.com/uptrace/bun/extra/bunotel v1.2.15
+	github.com/uptrace/bun/extra/bunotel v1.2.9
 	go.opentelemetry.io/collector/confmap v1.34.0
 	go.opentelemetry.io/collector/otelcol v0.128.0
 	go.opentelemetry.io/collector/pdata v1.34.0
