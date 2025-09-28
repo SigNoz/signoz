@@ -1221,15 +1221,9 @@ route:
 	}
 	orgId := "test-org"
 
-	dispatcher := NewDispatcher(alerts, route, recorder, marker, timeout, nil, logger, metrics, nfManager, orgId)
-	go dispatcher.Run()
-	defer dispatcher.Stop()
-
-	// Push all alerts and set up notification configs.
 	for i := 0; i < numAlerts; i++ {
 		ruleId := fmt.Sprintf("Alert_%d", i)
 
-		// Set up notification config for this ruleId
 		notifConfig := alertmanagertypes.NotificationConfig{
 			NotificationGroup: map[model.LabelName]struct{}{
 				model.LabelName("ruleId"): {},
@@ -1252,15 +1246,22 @@ route:
 			OrgID:          orgId,
 			Channels:       []string{"slack"},
 		}
+
 		store.ExpectGetAllByName(orgId, ruleId, []*alertmanagertypes.ExpressionRoute{route})
 		err := nfManager.SetNotificationConfig(orgId, ruleId, &notifConfig)
 		require.NoError(t, err)
+	}
 
+	dispatcher := NewDispatcher(alerts, route, recorder, marker, timeout, nil, logger, metrics, nfManager, orgId)
+	go dispatcher.Run()
+	defer dispatcher.Stop()
+
+	for i := 0; i < numAlerts; i++ {
+		ruleId := fmt.Sprintf("Alert_%d", i)
 		alert := newAlert(model.LabelSet{"ruleId": model.LabelValue(ruleId)})
 		require.NoError(t, alerts.Put(alert))
 	}
 
-	// Wait until the alerts have been notified or the waiting timeout expires.
 	for deadline := time.Now().Add(5 * time.Second); time.Now().Before(deadline); {
 		if len(recorder.Alerts()) >= numAlerts {
 			break
