@@ -5045,8 +5045,10 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	availability := thirdpartyapi.CheckColumnAvailability(r.Context(), aH.Signoz.Querier, orgID, thirdPartyQueryRequest.Start, thirdPartyQueryRequest.End)
+
 	// Build the v5 query range request for domain listing
-	queryRangeRequest, err := thirdpartyapi.BuildDomainList(thirdPartyQueryRequest)
+	queryRangeRequest, err := thirdpartyapi.BuildDomainList(thirdPartyQueryRequest, availability)
 	if err != nil {
 		zap.L().Error("Failed to build domain list query", zap.Error(err))
 		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
@@ -5065,6 +5067,7 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 
 	result = thirdpartyapi.MergeSemconvColumns(result)
 	result = thirdpartyapi.FilterIntermediateColumns(result)
+	result = thirdpartyapi.FilterNullValues(result)
 
 	// Filter IP addresses if ShowIp is false
 	var finalResult = result
@@ -5102,8 +5105,16 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check column availability for semconv attributes
+	availability := thirdpartyapi.CheckColumnAvailability(r.Context(), aH.Signoz.Querier, orgID, thirdPartyQueryRequest.Start, thirdPartyQueryRequest.End)
+	zap.L().Debug("Column availability detected for domain info",
+		zap.Bool("http_url", availability.HttpURL),
+		zap.Bool("url_full", availability.URLFull),
+		zap.Bool("net_peer_name", availability.NetPeerName),
+		zap.Bool("server_address", availability.ServerAddress))
+
 	// Build the v5 query range request for domain info
-	queryRangeRequest, err := thirdpartyapi.BuildDomainInfo(thirdPartyQueryRequest)
+	queryRangeRequest, err := thirdpartyapi.BuildDomainInfo(thirdPartyQueryRequest, availability)
 	if err != nil {
 		zap.L().Error("Failed to build domain info query", zap.Error(err))
 		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
@@ -5122,6 +5133,7 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 
 	result = thirdpartyapi.MergeSemconvColumns(result)
 	result = thirdpartyapi.FilterIntermediateColumns(result)
+	result = thirdpartyapi.FilterNullValues(result)
 
 	// Filter IP addresses if ShowIp is false
 	var finalResult *qbtypes.QueryRangeResponse = result
