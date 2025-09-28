@@ -97,3 +97,47 @@ func (handler *handler) CreateSessionBySAMLCallback(rw http.ResponseWriter, req 
 
 	http.Redirect(rw, req, redirectURL, http.StatusSeeOther)
 }
+
+func (handler *handler) RotateSession(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
+	defer cancel()
+
+	body := new(authtypes.PostableRotateToken)
+	if err := binding.JSON.BindBody(req.Body, body); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	accessToken, err := authtypes.AccessTokenFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	token, err := handler.module.RotateSession(ctx, accessToken, body.RefreshToken)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, authtypes.NewGettableTokenFromToken(token))
+}
+
+func (handler *handler) DeleteSession(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
+	defer cancel()
+
+	accessToken, err := authtypes.AccessTokenFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.module.DeleteSession(ctx, accessToken)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}

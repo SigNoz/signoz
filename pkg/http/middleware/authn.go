@@ -44,6 +44,7 @@ func (a *AuthN) Wrap(next http.Handler) http.Handler {
 
 		ctx, err := a.contextFromRequest(r.Context(), values...)
 		if err != nil {
+			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -77,6 +78,25 @@ func (a *AuthN) Wrap(next http.Handler) http.Handler {
 }
 
 func (a *AuthN) contextFromRequest(ctx context.Context, values ...string) (context.Context, error) {
+	ctx, err := a.contextFromAccessToken(ctx, values...)
+	if err != nil {
+		return ctx, err
+	}
+
+	accessToken, err := authtypes.AccessTokenFromContext(ctx)
+	if err != nil {
+		return ctx, err
+	}
+
+	authenticatedUser, err := a.tokenizer.GetIdentity(ctx, accessToken)
+	if err != nil {
+		return ctx, err
+	}
+
+	return authtypes.NewContextWithClaims(ctx, authenticatedUser.ToClaims()), nil
+}
+
+func (a *AuthN) contextFromAccessToken(ctx context.Context, values ...string) (context.Context, error) {
 	var value string
 	for _, v := range values {
 		if v != "" {
@@ -96,12 +116,7 @@ func (a *AuthN) contextFromRequest(ctx context.Context, values ...string) (conte
 		bearerToken = value
 	}
 
-	authenticatedUser, err := a.tokenizer.GetIdentity(ctx, bearerToken)
-	if err != nil {
-		return ctx, err
-	}
-
-	return authtypes.NewContextWithClaims(ctx, authenticatedUser.ToClaims()), nil
+	return authtypes.NewContextWithAccessToken(ctx, bearerToken), nil
 }
 
 func parseBearerAuth(auth string) (string, bool) {

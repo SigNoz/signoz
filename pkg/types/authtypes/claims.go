@@ -11,6 +11,7 @@ import (
 )
 
 type claimsKey struct{}
+type accessTokenKey struct{}
 
 var _ jwt.ClaimsValidator = (*Claims)(nil)
 
@@ -35,6 +36,19 @@ func ClaimsFromContext(ctx context.Context) (Claims, error) {
 	}
 
 	return claims, nil
+}
+
+func NewContextWithAccessToken(ctx context.Context, accessToken string) context.Context {
+	return context.WithValue(ctx, accessTokenKey{}, accessToken)
+}
+
+func AccessTokenFromContext(ctx context.Context) (string, error) {
+	accessToken, ok := ctx.Value(accessTokenKey{}).(string)
+	if !ok {
+		return "", errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated")
+	}
+
+	return accessToken, nil
 }
 
 func (c *Claims) Validate() error {

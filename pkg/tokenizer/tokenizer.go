@@ -18,7 +18,7 @@ type Tokenizer interface {
 	GetIdentity(context.Context, string) (*authtypes.Identity, error)
 
 	// Rotate the input token and return a new token.
-	RotateToken(context.Context, string) (*authtypes.Token, error)
+	RotateToken(context.Context, string, string) (*authtypes.Token, error)
 
 	// Delete the token by access token.
 	DeleteToken(context.Context, string) error
