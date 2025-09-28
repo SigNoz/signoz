@@ -56,7 +56,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 
 	// add enterprise sqlstore factories to the community sqlstore factories
 	sqlstoreFactories := signoz.NewSQLStoreProviderFactories()
-	if err := sqlstoreFactories.Add(postgressqlstore.NewFactory(sqlstorehook.NewLoggingFactory())); err != nil {
+	if err := sqlstoreFactories.Add(postgressqlstore.NewFactory(sqlstorehook.NewLoggingFactory(), sqlstorehook.NewInstrumentationFactory())); err != nil {
 		logger.ErrorContext(ctx, "failed to add postgressqlstore factory", "error", err)
 		return err
 	}
