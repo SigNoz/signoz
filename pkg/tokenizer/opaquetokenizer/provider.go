@@ -101,13 +101,17 @@ func (provider *provider) DeleteToken(ctx context.Context, accessToken string) e
 	return provider.tokenStore.DeleteByAccessToken(ctx, accessToken)
 }
 
-func (provider *provider) RotateToken(ctx context.Context, accessToken string) (*authtypes.Token, error) {
-	token, err := provider.getOrGetSetToken(ctx, accessToken)
+func (provider *provider) RotateToken(ctx context.Context, accessToken string, refreshToken string) (*authtypes.Token, error) {
+	token, err := provider.tokenStore.GetByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := token.IsValid(provider.config.RotationInterval, provider.config.IdleDuration, provider.config.MaxDuration); err != nil {
+	if token.RefreshToken != refreshToken {
+		return nil, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid refresh token")
+	}
+
+	if err := token.IsExpired(provider.config.IdleDuration, provider.config.MaxDuration); err != nil {
 		return nil, err
 	}
 

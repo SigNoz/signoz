@@ -65,6 +65,24 @@ func (store *store) GetByAccessToken(ctx context.Context, accessToken string) (*
 	return token, nil
 }
 
+func (store *store) GetByUserIDAndRefreshToken(ctx context.Context, userID valuer.UUID, refreshToken string) (*authtypes.StorableToken, error) {
+	token := new(authtypes.StorableToken)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(token).
+		Where("user_id = ?", userID).
+		Where("refresh_token = ?", refreshToken).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeTokenNotFound, "token with user id: %s and refresh token: %s does not exist", userID, refreshToken)
+	}
+
+	return token, nil
+}
+
 func (store *store) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*authtypes.StorableToken, error) {
 	tokens := make([]*authtypes.StorableToken, 0)
 
