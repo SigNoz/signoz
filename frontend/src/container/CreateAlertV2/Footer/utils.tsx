@@ -6,6 +6,7 @@ import {
 	BasicThreshold,
 	PostableAlertRuleV2,
 } from 'types/api/alerts/alertTypesV2';
+import { EQueryType } from 'types/common/dashboard';
 import { compositeQueryToQueryEnvelope } from 'utils/compositeQueryToQueryEnvelope';
 
 import {
@@ -256,9 +257,14 @@ export function buildCreateThresholdAlertRulePayload(
 	// Evaluation
 	const evaluationProps = getEvaluationProps(evaluationWindow, advancedOptions);
 
+	let ruleType: string = AlertDetectionTypes.THRESHOLD_ALERT;
+	if (query.queryType === EQueryType.PROM) {
+		ruleType = 'promql_rule';
+	}
+
 	return {
 		alert: basicAlertState.name,
-		ruleType: AlertDetectionTypes.THRESHOLD_ALERT,
+		ruleType,
 		alertType,
 		condition: {
 			thresholds: {
@@ -266,6 +272,7 @@ export function buildCreateThresholdAlertRulePayload(
 				spec: thresholds,
 			},
 			compositeQuery,
+			selectedQueryName: thresholdState.selectedQuery,
 			...alertOnAbsentProps,
 			...enforceMinimumDatapointsProps,
 		},

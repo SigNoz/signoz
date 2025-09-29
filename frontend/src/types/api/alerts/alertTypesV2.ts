@@ -1,5 +1,3 @@
-import { AlertDetectionTypes } from 'container/FormAlertRules';
-
 import { AlertTypes } from './alertTypes';
 import { ICompositeMetricQuery } from './compositeQuery';
 import { Labels } from './def';
@@ -17,13 +15,14 @@ export interface PostableAlertRuleV2 {
 	schemaVersion: string;
 	alert: string;
 	alertType: AlertTypes;
-	ruleType: AlertDetectionTypes;
+	ruleType: string;
 	condition: {
 		thresholds?: {
 			kind: string;
 			spec: BasicThreshold[];
 		};
 		compositeQuery: ICompositeMetricQuery;
+		selectedQueryName?: string;
 		alertOnAbsent?: boolean;
 		absentFor?: number;
 		requireMinPoints?: boolean;
