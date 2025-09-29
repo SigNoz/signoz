@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 
-  "github.com/SigNoz/signoz/pkg/modules/spanpercentile"
+	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
 
 	//qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -5151,38 +5151,38 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getSpanPercentileDetails(w http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
 		return
 	}
 
 	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
 		return
 	}
 
 	spanPercentileRequest, apiErr := ParseSpanPercentileRequestBody(r)
 	if apiErr != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, apiErr.Error()))
+		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, apiErr.Error()))
 		return
 	}
 
 	queryRangeRequest, err := spanpercentile.BuildSpanPercentileQuery(spanPercentileRequest)
 	if err != nil {
-		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
+		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
 		render.Error(w, apiErrObj)
 		return
 	}
 
 	if err := queryRangeRequest.Validate(); err != nil {
-		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
+		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
 		render.Error(w, apiErrObj)
 		return
 	}
 
 	result, err := aH.Signoz.Querier.QueryRange(r.Context(), orgID, queryRangeRequest)
 	if err != nil {
-		apiErrObj := errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
+		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
 		render.Error(w, apiErrObj)
 		return
 	}
