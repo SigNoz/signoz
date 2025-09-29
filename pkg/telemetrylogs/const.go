@@ -16,6 +16,8 @@ const (
 	LogsV2TimestampColumn         = "timestamp"
 	LogsV2ObservedTimestampColumn = "observed_timestamp"
 	LogsV2BodyColumn              = "body"
+	LogsV2BodyV2Column            = "body_v2"
+	LogsV2PromotedColumn          = "promoted"
 	LogsV2TraceIDColumn           = "trace_id"
 	LogsV2SpanIDColumn            = "span_id"
 	LogsV2TraceFlagsColumn        = "trace_flags"

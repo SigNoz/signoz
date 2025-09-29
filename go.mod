@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	dario.cat/mergo v1.0.1
-	github.com/AfterShip/clickhouse-sql-parser v0.4.11
+	github.com/AfterShip/clickhouse-sql-parser v0.4.13
 	github.com/ClickHouse/clickhouse-go/v2 v2.40.1
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd
@@ -337,4 +337,8 @@ require (
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
+)
+
+replace (
+	github.com/SigNoz/signoz-otel-collector v0.111.39 => ../signoz-otel-collector
 )
