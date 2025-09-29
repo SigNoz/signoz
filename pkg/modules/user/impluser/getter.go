@@ -17,20 +17,15 @@ func NewGetter(store types.UserStore) user.Getter {
 }
 
 func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error) {
-	gettableUsers, err := module.store.ListUsers(ctx, orgID.StringValue())
+	users, err := module.store.ListUsersByOrgID(ctx, orgID)
 	if err != nil {
 		return nil, err
-	}
-
-	users := make([]*types.User, len(gettableUsers))
-	for i, user := range gettableUsers {
-		users[i] = &user.User
 	}
 
 	return users, nil
 }
 
-func (module *getter) GetUsersByEmail(ctx context.Context, email string) ([]*types.User, error) {
+func (module *getter) GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*types.User, error) {
 	users, err := module.store.GetUsersByEmail(ctx, email)
 	if err != nil {
 		return nil, err
