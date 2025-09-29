@@ -11,7 +11,7 @@ import (
 
 type Module interface {
 	// Creates the organization and the first user of that organization.
-	CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email string, password string) (*types.User, error)
+	CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email valuer.Email, password string) (*types.User, error)
 
 	// Creates a user and sends an analytics event.
 	CreateUser(ctx context.Context, user *types.User, opts ...CreateUserOption) error
@@ -30,11 +30,11 @@ type Module interface {
 	// Updates password of user to the new password. It also deletes all reset password tokens for the user.
 	UpdatePassword(ctx context.Context, userID valuer.UUID, oldPassword string, password string) error
 
-	UpdateUser(ctx context.Context, orgID string, id string, user *types.User, updatedBy string) (*types.User, error)
-	DeleteUser(ctx context.Context, orgID string, id string, deletedBy string) error
+	UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.User, updatedBy string) (*types.User, error)
+	DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error
 
 	// invite
-	CreateBulkInvite(ctx context.Context, orgID, userID string, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error)
+	CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error)
 	ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error)
 	DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error
 	AcceptInvite(ctx context.Context, token string, password string) (*types.User, error)
@@ -55,7 +55,7 @@ type Getter interface {
 	ListByOrgID(context.Context, valuer.UUID) ([]*types.User, error)
 
 	// Get users by email.
-	GetUsersByEmail(context.Context, string) ([]*types.User, error)
+	GetUsersByEmail(context.Context, valuer.Email) ([]*types.User, error)
 
 	// Get user by id.
 	GetUser(context.Context, valuer.UUID) (*types.User, error)

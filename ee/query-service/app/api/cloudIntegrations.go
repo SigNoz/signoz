@@ -169,9 +169,9 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 	ctx context.Context, orgId string, cloudProvider string,
 ) (*types.User, *basemodel.ApiError) {
 	cloudIntegrationUserName := fmt.Sprintf("%s-integration", cloudProvider)
-	email := fmt.Sprintf("%s@signoz.io", cloudIntegrationUserName)
+	email := valuer.MustNewEmail(fmt.Sprintf("%s@signoz.io", cloudIntegrationUserName))
 
-	cloudIntegrationUser, err := types.NewUser(cloudIntegrationUserName, email, types.RoleViewer, orgId)
+	cloudIntegrationUser, err := types.NewUser(cloudIntegrationUserName, email, types.RoleViewer, valuer.MustNewUUID(orgId))
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration user: %w", err))
 	}

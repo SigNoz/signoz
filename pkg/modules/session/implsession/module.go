@@ -37,7 +37,7 @@ func NewModule(authNs map[authtypes.AuthNProvider]authn.AuthN, user user.Module,
 	}
 }
 
-func (module *module) GetSessionContext(ctx context.Context, email string, siteURL *url.URL) (*authtypes.SessionContext, error) {
+func (module *module) GetSessionContext(ctx context.Context, email valuer.Email, siteURL *url.URL) (*authtypes.SessionContext, error) {
 	context := authtypes.NewSessionContext()
 
 	users, err := module.userGetter.GetUsersByEmail(ctx, email)
@@ -67,7 +67,7 @@ func (module *module) GetSessionContext(ctx context.Context, email string, siteU
 
 	context.Exists = true
 	for _, user := range users {
-		org, err := module.orgGetter.Get(ctx, valuer.MustNewUUID(user.OrgID))
+		org, err := module.orgGetter.Get(ctx, user.OrgID)
 		if err != nil {
 			return nil, err
 		}
@@ -110,13 +110,13 @@ func (module *module) getOrgSessionContext(ctx context.Context, org *types.Organ
 	return authtypes.NewOrgSessionContext(org.ID, org.Name).AddCallbackAuthNSupport(authDomain.AuthDomainConfig().AuthNProvider, loginURL), nil
 }
 
-func (module *module) CreatePasswordAuthNSession(ctx context.Context, authNProvider authtypes.AuthNProvider, email string, password string, orgID valuer.UUID) (*authtypes.Token, error) {
+func (module *module) CreatePasswordAuthNSession(ctx context.Context, authNProvider authtypes.AuthNProvider, email valuer.Email, password string, orgID valuer.UUID) (*authtypes.Token, error) {
 	passwordAuthN, err := getProvider[authn.PasswordAuthN](authNProvider, module.authNs)
 	if err != nil {
 		return nil, err
 	}
 
-	identity, err := passwordAuthN.Authenticate(ctx, email, password, orgID)
+	identity, err := passwordAuthN.Authenticate(ctx, email.String(), password, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 		return "", err
 	}
 
-	user, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, types.RoleViewer, callbackIdentity.OrgID.String())
+	user, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, types.RoleViewer, callbackIdentity.OrgID)
 	if err != nil {
 		return "", err
 	}
@@ -145,7 +145,7 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 		return "", err
 	}
 
-	token, err := module.tokenizer.CreateToken(ctx, authtypes.NewIdentity(user.ID, valuer.MustNewUUID(user.OrgID), user.Email, user.Role), map[string]string{})
+	token, err := module.tokenizer.CreateToken(ctx, authtypes.NewIdentity(user.ID, user.OrgID, user.Email, user.Role), map[string]string{})
 	if err != nil {
 		return "", err
 	}

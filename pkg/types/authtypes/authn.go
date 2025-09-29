@@ -20,17 +20,17 @@ var (
 type AuthNProvider struct{ valuer.String }
 
 type Identity struct {
-	UserID valuer.UUID `json:"userId"`
-	OrgID  valuer.UUID `json:"orgId"`
-	Email  string      `json:"email"`
-	Role   types.Role  `json:"role"`
+	UserID valuer.UUID  `json:"userId"`
+	OrgID  valuer.UUID  `json:"orgId"`
+	Email  valuer.Email `json:"email"`
+	Role   types.Role   `json:"role"`
 }
 
 type CallbackIdentity struct {
-	Name  string      `json:"name"`
-	Email string      `json:"email"`
-	OrgID valuer.UUID `json:"orgId"`
-	State State       `json:"state"`
+	Name  string       `json:"name"`
+	Email valuer.Email `json:"email"`
+	OrgID valuer.UUID  `json:"orgId"`
+	State State        `json:"state"`
 }
 
 type State struct {
@@ -71,7 +71,7 @@ func NewStateFromString(state string) (State, error) {
 	}, nil
 }
 
-func NewIdentity(userID valuer.UUID, orgID valuer.UUID, email string, role types.Role) *Identity {
+func NewIdentity(userID valuer.UUID, orgID valuer.UUID, email valuer.Email, role types.Role) *Identity {
 	return &Identity{
 		UserID: userID,
 		OrgID:  orgID,
@@ -91,7 +91,7 @@ func (typ *Identity) UnmarshalBinary(data []byte) error {
 func (typ *Identity) ToClaims() Claims {
 	return Claims{
 		UserID: typ.UserID.String(),
-		Email:  typ.Email,
+		Email:  typ.Email.String(),
 		Role:   typ.Role,
 		OrgID:  typ.OrgID.String(),
 	}

@@ -22,24 +22,30 @@ var (
 	ErrAPIKeyNotFound                  = errors.MustNewCode("api_key_not_found")
 )
 
-type GettableUser struct {
-	User
-	Organization string `json:"organization"`
-}
+type GettableUser = User
 
 type User struct {
 	bun.BaseModel `bun:"table:users"`
 
 	Identifiable
+	DisplayName string       `bun:"display_name" json:"displayName"`
+	Email       valuer.Email `bun:"email,type:text" json:"email"`
+	Role        Role         `bun:"role,type:text" json:"role"`
+	OrgID       valuer.UUID  `bun:"org_id,type:text" json:"orgId"`
 	TimeAuditable
-	DisplayName string `bun:"display_name,type:text,notnull" json:"displayName"`
-	Email       string `bun:"email,type:text,notnull,unique:org_email" json:"email"`
-	Role        Role   `bun:"role,type:text,notnull" json:"role"`
-	OrgID       string `bun:"org_id,type:text,notnull,unique:org_email" json:"orgId"`
 }
 
-func NewUser(displayName string, email string, role Role, orgID string) (*User, error) {
-	if email == "" {
+type PostableRegisterOrgAndAdmin struct {
+	Name           string       `json:"name"`
+	OrgID          string       `json:"orgId"`
+	OrgDisplayName string       `json:"orgDisplayName"`
+	OrgName        string       `json:"orgName"`
+	Email          valuer.Email `json:"email"`
+	Password       string       `json:"password"`
+}
+
+func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUID) (*User, error) {
+	if email.IsZero() {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
 	}
 
@@ -47,7 +53,7 @@ func NewUser(displayName string, email string, role Role, orgID string) (*User, 
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "role is required")
 	}
 
-	if orgID == "" {
+	if orgID.IsZero() {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgID is required")
 	}
 
@@ -55,32 +61,15 @@ func NewUser(displayName string, email string, role Role, orgID string) (*User, 
 		Identifiable: Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
-		TimeAuditable: TimeAuditable{
-			CreatedAt: time.Now(),
-		},
 		DisplayName: displayName,
 		Email:       email,
 		Role:        role,
 		OrgID:       orgID,
+		TimeAuditable: TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
 	}, nil
-}
-
-type PostableRegisterOrgAndAdmin struct {
-	Name           string `json:"name"`
-	OrgID          string `json:"orgId"`
-	OrgDisplayName string `json:"orgDisplayName"`
-	OrgName        string `json:"orgName"`
-	Email          string `json:"email"`
-	Password       string `json:"password"`
-}
-
-type PostableAcceptInvite struct {
-	DisplayName string `json:"displayName"`
-	InviteToken string `json:"token"`
-	Password    string `json:"password"`
-
-	// reference URL to track where the register request is coming from
-	SourceURL string `json:"sourceUrl"`
 }
 
 func NewTraitsFromUser(user *User) map[string]any {
@@ -93,36 +82,12 @@ func NewTraitsFromUser(user *User) map[string]any {
 	}
 }
 
-func (request *PostableAcceptInvite) UnmarshalJSON(data []byte) error {
-	type Alias PostableAcceptInvite
-
-	var temp Alias
-	if err := json.Unmarshal(data, &temp); err != nil {
-		return err
-	}
-
-	if temp.InviteToken == "" {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invite token is required")
-	}
-
-	if !IsPasswordValid(temp.Password) {
-		return ErrInvalidPassword
-	}
-
-	*request = PostableAcceptInvite(temp)
-	return nil
-}
-
 func (request *PostableRegisterOrgAndAdmin) UnmarshalJSON(data []byte) error {
 	type Alias PostableRegisterOrgAndAdmin
 
 	var temp Alias
 	if err := json.Unmarshal(data, &temp); err != nil {
 		return err
-	}
-
-	if temp.Email == "" {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
 	}
 
 	if !IsPasswordValid(temp.Password) {
@@ -138,17 +103,32 @@ type UserStore interface {
 	CreateBulkInvite(ctx context.Context, invites []*Invite) error
 	ListInvite(ctx context.Context, orgID string) ([]*Invite, error)
 	DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error
-	GetInviteByToken(ctx context.Context, token string) (*GettableInvite, error)
-	GetInviteByEmailInOrg(ctx context.Context, orgID string, email string) (*Invite, error)
+
+	// Get invite by token.
+	GetInviteByToken(ctx context.Context, token string) (*Invite, error)
+
+	// Get invite by email and org.
+	GetInviteByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*Invite, error)
 
 	// Creates a user.
 	CreateUser(ctx context.Context, user *User) error
+
+	// Get user by id.
 	GetUser(context.Context, valuer.UUID) (*User, error)
-	GetUserByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*User, error)
-	GetUsersByEmail(ctx context.Context, email string) ([]*User, error)
-	GetUsersByRoleInOrg(ctx context.Context, orgID string, role Role) ([]*GettableUser, error)
-	ListUsers(ctx context.Context, orgID string) ([]*GettableUser, error)
-	UpdateUser(ctx context.Context, orgID string, id string, user *User) (*User, error)
+
+	// Get user by email and orgID.
+	GetUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*User, error)
+
+	// Get users by email.
+	GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*User, error)
+
+	// Get users by role and org.
+	GetUsersByRoleAndOrgID(ctx context.Context, role Role, orgID valuer.UUID) ([]*User, error)
+
+	// List users by org.
+	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*User, error)
+
+	UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *User) (*User, error)
 	DeleteUser(ctx context.Context, orgID string, id string) error
 
 	// Creates a password.

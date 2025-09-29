@@ -8,9 +8,9 @@ import (
 )
 
 type PostableEmailPasswordSession struct {
-	Email    string      `json:"email"`
-	Password string      `json:"password"`
-	OrgID    valuer.UUID `json:"orgId"`
+	Email    valuer.Email `json:"email"`
+	Password string       `json:"password"`
+	OrgID    valuer.UUID  `json:"orgId"`
 }
 
 func (typ *PostableEmailPasswordSession) UnmarshalJSON(data []byte) error {
@@ -21,7 +21,7 @@ func (typ *PostableEmailPasswordSession) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if temp.Email == "" {
+	if temp.Email.IsZero() {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
 	}
 

@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
 )
@@ -112,9 +113,14 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "oidc: unexpected hd claim %v", claims.HostedDomain)
 	}
 
+	email, err := valuer.NewEmail(claims.Email)
+	if err != nil {
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "oidc: failed to parse email: %v", err)
+	}
+
 	return &authtypes.CallbackIdentity{
 		Name:  claims.Name,
-		Email: claims.Email,
+		Email: email,
 		OrgID: authDomain.StorableAuthDomain().OrgID,
 	}, nil
 
