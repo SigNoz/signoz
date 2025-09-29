@@ -280,7 +280,7 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 		return
 	}
 
-	groupLabels := getGroupLabels(alert, config.NotificationGroup)
+	groupLabels := getGroupLabels(alert, config.NotificationGroup, config.GroupByAll)
 
 	fp := groupLabels.Fingerprint()
 
@@ -549,14 +549,13 @@ func deepCopyRouteOpts(opts dispatch.RouteOpts, renotify time.Duration) dispatch
 	return newOpts
 }
 
-func getGroupLabels(alert *types.Alert, groups map[model.LabelName]struct{}) model.LabelSet {
+func getGroupLabels(alert *types.Alert, groups map[model.LabelName]struct{}, groupByAll bool) model.LabelSet {
 	groupLabels := model.LabelSet{}
 	for ln, lv := range alert.Labels {
-		if _, ok := groups[ln]; ok {
+		if _, ok := groups[ln]; ok || groupByAll {
 			groupLabels[ln] = lv
 		}
 	}
-
 	return groupLabels
 }
 

@@ -21,6 +21,7 @@ import (
 const (
 	DefaultReceiverName string = "default-receiver"
 	DefaultGroupBy      string = "ruleId"
+	DefaultGroupByAll   string = "__all__"
 )
 
 var (
@@ -441,6 +442,7 @@ type NotificationConfig struct {
 	NotificationGroup  map[model.LabelName]struct{}
 	Renotify           ReNotificationConfig
 	NotificationPolicy bool
+	GroupByAll         bool
 }
 
 func (nc *NotificationConfig) DeepCopy() NotificationConfig {
@@ -472,6 +474,9 @@ func NewNotificationConfig(groups []string, renotifyInterval time.Duration, noDa
 	}
 	for _, group := range groups {
 		notificationConfig.NotificationGroup[model.LabelName(group)] = struct{}{}
+		if group == DefaultGroupByAll {
+			notificationConfig.GroupByAll = true
+		}
 	}
 
 	notificationConfig.NotificationPolicy = policy

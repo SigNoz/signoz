@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/query-service/converter"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -166,24 +165,6 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	return baseRule, nil
 }
 
-func (r *BaseRule) targetVal(thresholdName string) float64 {
-	if r.ruleCondition == nil || thresholdName == "" {
-		return 0
-	}
-
-	thresholdValue, thresholdUnit := r.Threshold.GetTargetValueForThreshold(thresholdName)
-
-	// get the converter for the target unit
-	unitConverter := converter.FromUnit(converter.Unit(thresholdUnit))
-	// convert the target value to the y-axis unit
-	value := unitConverter.Convert(converter.Value{
-		F: *thresholdValue,
-		U: converter.Unit(thresholdUnit),
-	}, converter.Unit(r.Unit()))
-
-	return value.F
-}
-
 func (r *BaseRule) matchType() ruletypes.MatchType {
 	if r.ruleCondition == nil {
 		return ruletypes.AtleastOnce
@@ -220,10 +201,6 @@ func (r *BaseRule) EvalWindow() time.Duration {
 
 func (r *BaseRule) HoldDuration() time.Duration {
 	return r.holdDuration
-}
-
-func (r *BaseRule) TargetVal(thresholdName string) float64 {
-	return r.targetVal(thresholdName)
 }
 
 func (r *ThresholdRule) hostFromSource() string {

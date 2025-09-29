@@ -338,7 +338,7 @@ func TestGroupLabels(t *testing.T) {
 		"b": "v2",
 	}
 
-	ls := getGroupLabels(a, route.RouteOpts.GroupBy)
+	ls := getGroupLabels(a, route.RouteOpts.GroupBy, false)
 
 	if !reflect.DeepEqual(ls, expLs) {
 		t.Fatalf("expected labels are %v, but got %v", expLs, ls)

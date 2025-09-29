@@ -511,10 +511,13 @@ func TestCreateRule(t *testing.T) {
                     "notificationGroupBy": [
                          "k8s.node.name"
                     ],
-                    "renotify": "10m",
-                    "alertStates": [
-                        "firing"
-                    ]
+                    "renotify": {
+						"interval":	"10m",
+						"enabled":	true,
+                    	"alertStates": [
+                        	"firing"
+                    	]
+					}
                 },
 				"labels": {
 					"severity": "warning"
@@ -743,15 +746,18 @@ func TestEditRule(t *testing.T) {
 				"labels": {
 					"severity": "critical"
 				},
-				 "notificationSettings": {
-        			"notificationGroupBy": [
-           				 "k8s.node.name"
-        			],
-        			"renotify": "10m",
-        			"alertStates": [
-            			"firing"
-        			]
-    			},
+				"notificationSettings": {
+                    "notificationGroupBy": [
+                         "k8s.node.name"
+                    ],
+                    "renotify": {
+						"interval":	"10m",
+						"enabled":	true,
+                    	"alertStates": [
+                        	"firing"
+                    	]
+					}
+                },
 				"annotations": {
 					"description": "This alert is fired when memory usage crosses the threshold",
 					"summary": "Memory usage threshold exceeded"

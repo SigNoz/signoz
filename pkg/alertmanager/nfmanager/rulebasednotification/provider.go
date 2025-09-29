@@ -64,6 +64,7 @@ func (r *provider) GetNotificationConfig(orgID string, ruleID string) (*alertman
 				notificationConfig.NotificationGroup[k] = v
 			}
 			notificationConfig.NotificationPolicy = config.NotificationPolicy
+			notificationConfig.GroupByAll = config.GroupByAll
 		}
 	}
 

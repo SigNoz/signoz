@@ -610,7 +610,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 
 		value := valueFormatter.Format(smpl.V, r.Unit())
 		//todo(aniket): handle different threshold
-		threshold := valueFormatter.Format(r.targetVal(l[ruletypes.LabelThresholdName]), r.Unit())
+		threshold := valueFormatter.Format(smpl.Target, smpl.TargetUnit)
 		r.logger.DebugContext(ctx, "Alert template data for rule", "rule_name", r.Name(), "formatter", valueFormatter.Name(), "value", value, "threshold", threshold)
 
 		tmplData := ruletypes.AlertTemplateData(l, value, threshold)

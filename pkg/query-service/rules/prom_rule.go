@@ -165,7 +165,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			}
 			r.logger.DebugContext(ctx, "alerting for series", "rule_name", r.Name(), "series", series)
 
-			threshold := valueFormatter.Format(r.targetVal(l[ruletypes.LabelThresholdName]), r.Unit())
+			threshold := valueFormatter.Format(result.Target, result.TargetUnit)
 
 			tmplData := ruletypes.AlertTemplateData(l, valueFormatter.Format(result.V, r.Unit()), threshold)
 			// Inject some convenience variables that are easier to remember for users

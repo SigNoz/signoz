@@ -67,22 +67,32 @@ type PostableRule struct {
 }
 
 type NotificationSettings struct {
-	NotificationGroupBy []string           `json:"notificationGroupBy,omitempty"`
-	ReNotifyInterval    Duration           `json:"renotify,omitempty"`
-	AlertStates         []model.AlertState `json:"alertStates,omitempty"`
-	NotificationPolicy  bool               `json:"notificationPolicy,omitempty"`
+	NotificationGroupBy []string `json:"notificationGroupBy,omitempty"`
+	Renotify            Renotify `json:"renotify,omitempty"`
+	NotificationPolicy  bool     `json:"notificationPolicy,omitempty"`
+}
+
+type Renotify struct {
+	Enabled          bool               `json:"enabled"`
+	ReNotifyInterval Duration           `json:"interval,omitempty"`
+	AlertStates      []model.AlertState `json:"alertStates,omitempty"`
 }
 
 func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanagertypes.NotificationConfig {
-	var renotifyInterval Duration
-	var noDataRenotifyInterval Duration
-	if slices.Contains(ns.AlertStates, model.StateNoData) {
-		noDataRenotifyInterval = ns.ReNotifyInterval
+	var renotifyInterval time.Duration
+	var noDataRenotifyInterval time.Duration
+	if ns.Renotify.Enabled {
+		if slices.Contains(ns.Renotify.AlertStates, model.StateNoData) {
+			noDataRenotifyInterval = time.Duration(ns.Renotify.ReNotifyInterval)
+		}
+		if slices.Contains(ns.Renotify.AlertStates, model.StateFiring) {
+			renotifyInterval = time.Duration(ns.Renotify.ReNotifyInterval)
+		}
+	} else {
+		renotifyInterval = 8760 * time.Hour //1 year for no renotify substitute
+		noDataRenotifyInterval = 8760 * time.Hour
 	}
-	if slices.Contains(ns.AlertStates, model.StateFiring) {
-		renotifyInterval = ns.ReNotifyInterval
-	}
-	return alertmanagertypes.NewNotificationConfig(ns.NotificationGroupBy, time.Duration(renotifyInterval), time.Duration(noDataRenotifyInterval), ns.NotificationPolicy)
+	return alertmanagertypes.NewNotificationConfig(ns.NotificationGroupBy, renotifyInterval, noDataRenotifyInterval, ns.NotificationPolicy)
 }
 
 func (r *PostableRule) GetRuleRouteRequest(ruleId string) ([]*alertmanagertypes.PostableExpressionRoute, error) {
@@ -162,7 +172,7 @@ func (ns *NotificationSettings) UnmarshalJSON(data []byte) error {
 	}
 
 	// Validate states after unmarshaling
-	for _, state := range ns.AlertStates {
+	for _, state := range ns.Renotify.AlertStates {
 		if state != model.StateFiring && state != model.StateNoData {
 			return fmt.Errorf("invalid alert state: %s", state)
 		}
@@ -221,12 +231,14 @@ func (r *PostableRule) processRuleDefaults() error {
 			r.RuleCondition.Thresholds = &thresholdData
 			r.Evaluation = &EvaluationEnvelope{RollingEvaluation, RollingWindow{EvalWindow: r.EvalWindow, Frequency: r.Frequency}}
 			r.NotificationSettings = &NotificationSettings{
-				ReNotifyInterval:   Duration(4 * time.Hour),
-				NotificationPolicy: false,
-				AlertStates:        []model.AlertState{model.StateFiring},
+				Renotify: Renotify{
+					Enabled:          true,
+					ReNotifyInterval: Duration(4 * time.Hour),
+					AlertStates:      []model.AlertState{model.StateFiring},
+				},
 			}
 			if r.RuleCondition.AlertOnAbsent {
-				r.NotificationSettings.AlertStates = append(r.NotificationSettings.AlertStates, model.StateNoData)
+				r.NotificationSettings.Renotify.AlertStates = append(r.NotificationSettings.Renotify.AlertStates, model.StateNoData)
 			}
 		}
 	}
