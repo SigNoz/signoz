@@ -420,7 +420,17 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "FREETEXT with conditions",
 			query:                 "critical NOT resolved status=open",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND NOT (match(LOWER(body), LOWER(?))) AND (attributes_number['status'] = ? AND mapContains(attributes_number, 'status') = ?))",
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND NOT (match(LOWER(body), LOWER(?))) AND (toString(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?))",
+			expectedArgs:          []any{"critical", "resolved", "open", true},
+			expectedErrorContains: "",
+		},
+		{
+			// this will result in failure from the DB side.
+			// user will have to use attribute.status:string > open
+			category:              "FREETEXT with conditions",
+			query:                 "critical NOT resolved status > open",
+			shouldPass:            true,
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND NOT (match(LOWER(body), LOWER(?))) AND (attributes_number['status'] > ? AND mapContains(attributes_number, 'status') = ?))",
 			expectedArgs:          []any{"critical", "resolved", "open", true},
 			expectedErrorContains: "",
 		},

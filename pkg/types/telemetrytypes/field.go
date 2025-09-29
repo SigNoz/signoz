@@ -137,7 +137,7 @@ type FieldValueSelector struct {
 	Limit         int    `json:"limit"`
 }
 
-func DataTypeCollisionHandledFieldName(key *TelemetryFieldKey, value any, tblFieldName string) (string, any) {
+func DataTypeCollisionHandledFieldName(key *TelemetryFieldKey, value any, tblFieldName string, isComparisonOperator bool) (string, any) {
 	// This block of code exists to handle the data type collisions
 	// We don't want to fail the requests when there is a key with more than one data type
 	// Let's take an example of `http.status_code`, and consider user sent a string value and number value
@@ -179,6 +179,11 @@ func DataTypeCollisionHandledFieldName(key *TelemetryFieldKey, value any, tblFie
 		// if the key is a number, the value is a string, we will let clickHouse handle the conversion
 		case float32, float64:
 			tblFieldName = castFloatHack(tblFieldName)
+		case string:
+			if !isComparisonOperator {
+				// try to convert the number attribute to string
+				tblFieldName = castString(tblFieldName) // numeric col vs string literal
+			}
 		case []any:
 			if allFloats(v) {
 				tblFieldName = castFloatHack(tblFieldName)

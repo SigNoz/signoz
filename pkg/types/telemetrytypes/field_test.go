@@ -96,12 +96,13 @@ func TestGetFieldKeyFromKeyText(t *testing.T) {
 
 func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 	tests := []struct {
-		name              string
-		key               *TelemetryFieldKey
-		value             any
-		tblFieldName      string
-		expectedFieldName string
-		expectedValue     any
+		name                 string
+		key                  *TelemetryFieldKey
+		value                any
+		tblFieldName         string
+		expectedFieldName    string
+		expectedValue        any
+		isComparisonOperator bool
 	}{
 		{
 			name: "http_status_code_string_field_with_numeric_value",
@@ -161,7 +162,6 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 
 		// numbers
 		{
-			// if the key is a number, the value is a string, we will let clickHouse handle the conversion
 			name: "http_request_duration_float_field_with_string_value",
 			key: &TelemetryFieldKey{
 				Name:          "http.request.duration",
@@ -169,8 +169,21 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 			},
 			value:             "1234.56",
 			tblFieldName:      "attribute_float64_http$$request$$duration",
-			expectedFieldName: "attribute_float64_http$$request$$duration",
+			expectedFieldName: "toString(attribute_float64_http$$request$$duration)",
 			expectedValue:     "1234.56",
+		},
+		{
+			// we won't cast to string if it's a comparison operator
+			name: "http_request_duration_float_field_with_string_value_comparison_operator",
+			key: &TelemetryFieldKey{
+				Name:          "http.request.duration",
+				FieldDataType: FieldDataTypeFloat64,
+			},
+			value:                "9",
+			tblFieldName:         "attribute_float64_http$$request$$duration",
+			expectedFieldName:    "attribute_float64_http$$request$$duration",
+			expectedValue:        "9",
+			isComparisonOperator: true,
 		},
 
 		// bools
@@ -200,7 +213,7 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resultFieldName, resultValue := DataTypeCollisionHandledFieldName(tt.key, tt.value, tt.tblFieldName)
+			resultFieldName, resultValue := DataTypeCollisionHandledFieldName(tt.key, tt.value, tt.tblFieldName, tt.isComparisonOperator)
 			assert.Equal(t, tt.expectedFieldName, resultFieldName)
 			assert.Equal(t, tt.expectedValue, resultValue)
 		})

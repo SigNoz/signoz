@@ -94,7 +94,7 @@ func CollisionHandledFinalExpr(
 					return "", nil, err
 				}
 				colName, _ = fm.FieldFor(ctx, key)
-				colName, _ = telemetrytypes.DataTypeCollisionHandledFieldName(key, dummyValue, colName)
+				colName, _ = telemetrytypes.DataTypeCollisionHandledFieldName(key, dummyValue, colName, false)
 				stmts = append(stmts, colName)
 			}
 		}
@@ -109,7 +109,7 @@ func CollisionHandledFinalExpr(
 			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the body column")
 			// colName, _ = jsonKeyToKey(context.Background(), field, qbtypes.FilterOperatorUnknown, dummyValue)
 		} else {
-			colName, _ = telemetrytypes.DataTypeCollisionHandledFieldName(field, dummyValue, colName)
+			colName, _ = telemetrytypes.DataTypeCollisionHandledFieldName(field, dummyValue, colName, false)
 		}
 
 		stmts = append(stmts, colName)
