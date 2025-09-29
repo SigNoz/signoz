@@ -342,7 +342,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 			l[lbl.Name] = lbl.Value
 		}
 		value := valueFormatter.Format(smpl.V, r.Unit())
-		threshold := valueFormatter.Format(r.TargetVal(l[ruletypes.LabelThresholdName]), r.Unit())
+		threshold := valueFormatter.Format(smpl.Target, smpl.TargetUnit)
 		r.logger.DebugContext(ctx, "Alert template data for rule", "rule_name", r.Name(), "formatter", valueFormatter.Name(), "value", value, "threshold", threshold)
 
 		tmplData := ruletypes.AlertTemplateData(l, value, threshold)
