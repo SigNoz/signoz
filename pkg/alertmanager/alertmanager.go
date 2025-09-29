@@ -68,8 +68,8 @@ type Alertmanager interface {
 	GetAllRoutePolicies(ctx context.Context) ([]*alertmanagertypes.GettableExpressionRoute, error)
 	UpdateRoutePolicyByID(ctx context.Context, routeID string, route *alertmanagertypes.PostableExpressionRoute) (*alertmanagertypes.GettableExpressionRoute, error)
 	DeleteRoutePolicyByID(ctx context.Context, routeID string) error
-	DeleteAllRoutePoliciesByRuleId(ctx context.Context, names string) error
-	UpdateAllRoutePoliciesByRuleId(ctx context.Context, names string, routes []*alertmanagertypes.PostableExpressionRoute) error
+	DeleteAllRoutePoliciesByRuleId(ctx context.Context, ruleId string) error
+	UpdateAllRoutePoliciesByRuleId(ctx context.Context, ruleId string, routes []*alertmanagertypes.PostableExpressionRoute) error
 
 	CreateInhibitRules(ctx context.Context, orgID valuer.UUID, rules []amConfig.InhibitRule) error
 	DeleteAllInhibitRulesByRuleId(ctx context.Context, orgID valuer.UUID, ruleId string) error

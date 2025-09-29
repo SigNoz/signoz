@@ -59,6 +59,7 @@ type RuleReceivers struct {
 type RuleThreshold interface {
 	ShouldAlert(series v3.Series) (Vector, error)
 	GetRuleReceivers() []RuleReceivers
+	GetTargetValueForThreshold(thresholdName string) (*float64, string)
 }
 
 type BasicRuleThreshold struct {
@@ -73,6 +74,15 @@ type BasicRuleThreshold struct {
 }
 
 type BasicRuleThresholds []BasicRuleThreshold
+
+func (r BasicRuleThresholds) GetTargetValueForThreshold(thresholdName string) (*float64, string) {
+	for _, threshold := range r {
+		if threshold.Name == thresholdName {
+			return threshold.TargetValue, threshold.TargetUnit
+		}
+	}
+	return nil, ""
+}
 
 func (r BasicRuleThresholds) GetRuleReceivers() []RuleReceivers {
 	thresholds := []BasicRuleThreshold(r)
