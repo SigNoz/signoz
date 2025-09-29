@@ -50,7 +50,6 @@ function LogsExplorerList({
 	isFilterApplied,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
-
 	const { activeLogId } = useCopyLogLink();
 
 	const {

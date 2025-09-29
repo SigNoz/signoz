@@ -9,7 +9,7 @@ import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter/Orde
 import { ReduceToFilter } from 'container/QueryBuilder/filters/ReduceToFilter/ReduceToFilter';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { isEmpty } from 'lodash-es';
+import { get, isEmpty } from 'lodash-es';
 import { BarChart2, ChevronUp, ExternalLink, ScrollText } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -32,6 +32,14 @@ const ADD_ONS_KEYS = {
 	ORDER_BY: 'order_by',
 	LIMIT: 'limit',
 	LEGEND_FORMAT: 'legend_format',
+};
+
+const ADD_ONS_KEYS_TO_QUERY_PATH = {
+	[ADD_ONS_KEYS.GROUP_BY]: 'groupBy',
+	[ADD_ONS_KEYS.HAVING]: 'having.expression',
+	[ADD_ONS_KEYS.ORDER_BY]: 'orderBy',
+	[ADD_ONS_KEYS.LIMIT]: 'limit',
+	[ADD_ONS_KEYS.LEGEND_FORMAT]: 'legend',
 };
 
 const ADD_ONS = [
@@ -91,6 +99,9 @@ const REDUCE_TO = {
 		'https://signoz.io/docs/userguide/query-builder-v5/#reduce-operations',
 };
 
+const hasValue = (value: unknown): boolean =>
+	value != null && value !== '' && !(Array.isArray(value) && value.length === 0);
+
 // Custom tooltip content component
 function TooltipContent({
 	label,
@@ -144,6 +155,7 @@ function QueryAddOns({
 	showReduceTo,
 	panelType,
 	index,
+	isForTraceOperator = false,
 }: {
 	query: IBuilderQuery;
 	version: string;
@@ -151,6 +163,7 @@ function QueryAddOns({
 	showReduceTo: boolean;
 	panelType: PANEL_TYPES | null;
 	index: number;
+	isForTraceOperator?: boolean;
 }): JSX.Element {
 	const [addOns, setAddOns] = useState<AddOn[]>(ADD_ONS);
 
@@ -160,6 +173,7 @@ function QueryAddOns({
 		index,
 		query,
 		entityVersion: '',
+		isForTraceOperator,
 	});
 
 	const { handleSetQueryData } = useQueryBuilder();
@@ -192,21 +206,29 @@ function QueryAddOns({
 			}
 		}
 
-		// add reduce to if showReduceTo is true
 		if (showReduceTo) {
 			filteredAddOns = [...filteredAddOns, REDUCE_TO];
 		}
-
 		setAddOns(filteredAddOns);
 
-		// Filter selectedViews to only include add-ons present in filteredAddOns
-		setSelectedViews((prevSelectedViews) =>
-			prevSelectedViews.filter((view) =>
-				filteredAddOns.some((addOn) => addOn.key === view.key),
+		const activeAddOnKeys = new Set(
+			Object.entries(ADD_ONS_KEYS_TO_QUERY_PATH)
+				.filter(([, path]) => hasValue(get(query, path)))
+				.map(([key]) => key),
+		);
+
+		const availableAddOnKeys = new Set(filteredAddOns.map((addOn) => addOn.key));
+
+		// Filter and set selected views: add-ons that are both active and available
+		setSelectedViews(
+			ADD_ONS.filter(
+				(addOn) =>
+					activeAddOnKeys.has(addOn.key) && availableAddOnKeys.has(addOn.key),
 			),
 		);
+
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [panelType, isListViewPanel, query.dataSource]);
+	}, [panelType, isListViewPanel, query]);
 
 	const handleOptionClick = (e: RadioChangeEvent): void => {
 		if (selectedViews.find((view) => view.key === e.target.value.key)) {
@@ -282,7 +304,7 @@ function QueryAddOns({
 			{selectedViews.length > 0 && (
 				<div className="selected-add-ons-content">
 					{selectedViews.find((view) => view.key === 'group_by') && (
-						<div className="add-on-content">
+						<div className="add-on-content" data-testid="group-by-content">
 							<div className="periscope-input-with-label">
 								<Tooltip
 									title={
@@ -318,7 +340,7 @@ function QueryAddOns({
 						</div>
 					)}
 					{selectedViews.find((view) => view.key === 'having') && (
-						<div className="add-on-content">
+						<div className="add-on-content" data-testid="having-content">
 							<div className="periscope-input-with-label">
 								<Tooltip
 									title={
@@ -350,7 +372,7 @@ function QueryAddOns({
 						</div>
 					)}
 					{selectedViews.find((view) => view.key === 'limit') && (
-						<div className="add-on-content">
+						<div className="add-on-content" data-testid="limit-content">
 							<InputWithLabel
 								label="Limit"
 								onChange={handleChangeLimit}
@@ -364,7 +386,7 @@ function QueryAddOns({
 						</div>
 					)}
 					{selectedViews.find((view) => view.key === 'order_by') && (
-						<div className="add-on-content">
+						<div className="add-on-content" data-testid="order-by-content">
 							<div className="periscope-input-with-label">
 								<Tooltip
 									title={
@@ -402,7 +424,7 @@ function QueryAddOns({
 					)}
 
 					{selectedViews.find((view) => view.key === 'reduce_to') && showReduceTo && (
-						<div className="add-on-content">
+						<div className="add-on-content" data-testid="reduce-to-content">
 							<div className="periscope-input-with-label">
 								<Tooltip
 									title={
@@ -433,7 +455,7 @@ function QueryAddOns({
 					)}
 
 					{selectedViews.find((view) => view.key === 'legend_format') && (
-						<div className="add-on-content">
+						<div className="add-on-content" data-testid="legend-format-content">
 							<InputWithLabel
 								label="Legend format"
 								placeholder="Write legend format"

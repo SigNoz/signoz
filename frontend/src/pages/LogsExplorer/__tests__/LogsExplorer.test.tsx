@@ -28,20 +28,6 @@ jest.mock('react-router-dom', () => ({
 	}),
 }));
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 // mocking the graph components in this test as this should be handled separately
 jest.mock(
 	'container/TimeSeriesView/TimeSeriesView',
@@ -206,6 +192,7 @@ describe('Logs Explorer Tests', () => {
 									initialQueryBuilderFormValues,
 									initialQueryBuilderFormValues,
 								],
+								queryTraceOperator: [],
 							},
 						},
 						setSupersetQuery: jest.fn(),
@@ -215,6 +202,10 @@ describe('Logs Explorer Tests', () => {
 						panelType: PANEL_TYPES.TIME_SERIES,
 						isEnabledQuery: false,
 						lastUsedQuery: 0,
+						handleSetTraceOperatorData: noop,
+						removeAllQueryBuilderEntities: noop,
+						removeTraceOperator: noop,
+						addTraceOperator: noop,
 						setLastUsedQuery: noop,
 						handleSetQueryData: noop,
 						handleSetFormulaData: noop,

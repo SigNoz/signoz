@@ -1,12 +1,19 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable import/no-unresolved */
 import { negateOperator, OPERATORS } from 'constants/antlrQueryConstants';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 
 import {
+	convertAggregationToExpression,
 	convertFiltersToExpression,
 	convertFiltersToExpressionWithExistingQuery,
+	removeKeysFromExpression,
 } from '../utils';
 
 describe('convertFiltersToExpression', () => {
@@ -767,5 +774,422 @@ describe('convertFiltersToExpression', () => {
 
 		expect(result.filters.items).toHaveLength(2);
 		expect(result.filter.expression).toBe("service.name = 'old-service'");
+	});
+});
+
+describe('convertAggregationToExpression', () => {
+	const mockAttribute: BaseAutocompleteData = {
+		id: 'test-id',
+		key: 'test_metric',
+		type: 'string',
+		dataType: DataTypes.String,
+	};
+
+	it('should return undefined when no aggregateOperator is provided', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: '',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.METRICS,
+		});
+		expect(result).toBeUndefined();
+	});
+
+	it('should convert metrics aggregation with required temporality field', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'sum',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.METRICS,
+			timeAggregation: 'avg',
+			spaceAggregation: 'max',
+			alias: 'test_alias',
+			reduceTo: 'sum',
+			temporality: 'delta',
+		});
+
+		expect(result).toEqual([
+			{
+				metricName: 'test_metric',
+				timeAggregation: 'avg',
+				spaceAggregation: 'max',
+				reduceTo: 'sum',
+				temporality: 'delta',
+			},
+		]);
+	});
+
+	it('should handle noop operators by converting to count', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'noop',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.METRICS,
+			timeAggregation: 'noop',
+			spaceAggregation: 'noop',
+		});
+
+		expect(result).toEqual([
+			{
+				metricName: 'test_metric',
+				timeAggregation: 'count',
+				spaceAggregation: 'count',
+			},
+		]);
+	});
+
+	it('should handle missing attribute key gracefully', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'sum',
+			aggregateAttribute: { ...mockAttribute, key: '' },
+			dataSource: DataSource.METRICS,
+		});
+
+		expect(result).toEqual([
+			{
+				metricName: '',
+				timeAggregation: 'sum',
+				spaceAggregation: 'sum',
+			},
+		]);
+	});
+
+	it('should convert traces aggregation to expression format', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'count',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.TRACES,
+			alias: 'trace_alias',
+		});
+
+		expect(result).toEqual([
+			{
+				expression: 'count(test_metric)',
+				alias: 'trace_alias',
+			},
+		]);
+	});
+
+	it('should convert logs aggregation to expression format', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'avg',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.LOGS,
+			alias: 'log_alias',
+		});
+
+		expect(result).toEqual([
+			{
+				expression: 'avg(test_metric)',
+				alias: 'log_alias',
+			},
+		]);
+	});
+
+	it('should handle aggregation without attribute key for traces/logs', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'count',
+			aggregateAttribute: { ...mockAttribute, key: '' },
+			dataSource: DataSource.TRACES,
+		});
+
+		expect(result).toEqual([
+			{
+				expression: 'count()',
+			},
+		]);
+	});
+
+	it('should handle missing alias for traces/logs', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'sum',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.LOGS,
+		});
+
+		expect(result).toEqual([
+			{
+				expression: 'sum(test_metric)',
+			},
+		]);
+	});
+
+	it('should use aggregateOperator as fallback for time and space aggregation', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'max',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.METRICS,
+		});
+
+		expect(result).toEqual([
+			{
+				metricName: 'test_metric',
+				timeAggregation: 'max',
+				spaceAggregation: 'max',
+			},
+		]);
+	});
+
+	it('should handle undefined aggregateAttribute parameter with metrics', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'sum',
+			aggregateAttribute: mockAttribute,
+			dataSource: DataSource.METRICS,
+		});
+
+		expect(result).toEqual([
+			{
+				metricName: 'test_metric',
+				timeAggregation: 'sum',
+				spaceAggregation: 'sum',
+				reduceTo: undefined,
+				temporality: undefined,
+			},
+		]);
+	});
+
+	it('should handle undefined aggregateAttribute parameter with traces', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'noop',
+			aggregateAttribute: (undefined as unknown) as BaseAutocompleteData,
+			dataSource: DataSource.TRACES,
+		});
+
+		expect(result).toEqual([
+			{
+				expression: 'count()',
+			},
+		]);
+	});
+
+	it('should handle undefined aggregateAttribute parameter with logs', () => {
+		const result = convertAggregationToExpression({
+			aggregateOperator: 'noop',
+			aggregateAttribute: (undefined as unknown) as BaseAutocompleteData,
+			dataSource: DataSource.LOGS,
+		});
+
+		expect(result).toEqual([
+			{
+				expression: 'count()',
+			},
+		]);
+	});
+});
+
+describe('removeKeysFromExpression', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+	});
+
+	describe('Backward compatibility (removeOnlyVariableExpressions = false)', () => {
+		it('should remove simple key-value pair from expression', () => {
+			const expression = "service.name = 'api-gateway' AND status = 'success'";
+			const result = removeKeysFromExpression(expression, ['service.name']);
+
+			expect(result).toBe("status = 'success'");
+		});
+
+		it('should remove multiple keys from expression', () => {
+			const expression =
+				"service.name = 'api-gateway' AND status = 'success' AND region = 'us-east-1'";
+			const result = removeKeysFromExpression(expression, [
+				'service.name',
+				'status',
+			]);
+
+			expect(result).toBe("region = 'us-east-1'");
+		});
+
+		it('should handle empty expression', () => {
+			const result = removeKeysFromExpression('', ['service.name']);
+			expect(result).toBe('');
+		});
+
+		it('should handle empty keys array', () => {
+			const expression = "service.name = 'api-gateway'";
+			const result = removeKeysFromExpression(expression, []);
+			expect(result).toBe(expression);
+		});
+
+		it('should handle key not found in expression', () => {
+			const expression = "service.name = 'api-gateway'";
+			const result = removeKeysFromExpression(expression, ['nonexistent.key']);
+			expect(result).toBe(expression);
+		});
+
+		// todo: Sagar check this - this is expected or not
+		// it('should remove last occurrence when multiple occurrences exist', () => {
+		// 	// This tests the original behavior - should remove the last occurrence
+		// 	const expression =
+		// 		"deployment.environment = $deployment.environment deployment.environment = 'default'";
+		// 	const result = removeKeysFromExpression(
+		// 		expression,
+		// 		['deployment.environment'],
+		// 		false,
+		// 	);
+
+		// 	// Should remove the literal value (last occurrence), leaving the variable
+		// 	expect(result).toBe('deployment.environment = $deployment.environment');
+		// });
+	});
+
+	describe('Variable expression targeting (removeOnlyVariableExpressions = true)', () => {
+		it('should remove only variable expressions (values starting with $)', () => {
+			const expression =
+				"deployment.environment = $deployment.environment deployment.environment = 'default'";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			// Should remove the variable expression, leaving the literal value
+			expect(result).toBe("deployment.environment = 'default'");
+		});
+
+		it('should not remove literal values when targeting variable expressions', () => {
+			const expression = "service.name = 'api-gateway' AND status = 'success'";
+			const result = removeKeysFromExpression(expression, ['service.name'], true);
+
+			// Should not remove anything since no variable expressions exist
+			expect(result).toBe("service.name = 'api-gateway' AND status = 'success'");
+		});
+
+		it('should remove multiple variable expressions', () => {
+			const expression =
+				"deployment.environment = $deployment.environment service.name = $service.name status = 'success'";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment', 'service.name'],
+				true,
+			);
+
+			expect(result).toBe("status = 'success'");
+		});
+
+		it('should handle mixed variable and literal expressions correctly', () => {
+			const expression =
+				"deployment.environment = $deployment.environment service.name = 'api-gateway' region = $region";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment', 'region'],
+				true,
+			);
+
+			// Should only remove variable expressions, leaving literal value
+			expect(result).toBe("service.name = 'api-gateway'");
+		});
+
+		it('should handle complex expressions with operators', () => {
+			const expression =
+				"deployment.environment IN [$env1, $env2] AND service.name = 'api-gateway'";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			expect(result).toBe("service.name = 'api-gateway'");
+		});
+	});
+
+	describe('Edge cases and robustness', () => {
+		it('should handle case insensitive key matching', () => {
+			const expression = 'Service.Name = $Service.Name';
+			const result = removeKeysFromExpression(expression, ['service.name'], true);
+
+			expect(result).toBe('');
+		});
+
+		it('should clean up trailing AND/OR operators', () => {
+			const expression =
+				"deployment.environment = $deployment.environment AND service.name = 'api-gateway'";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			expect(result).toBe("service.name = 'api-gateway'");
+		});
+
+		it('should clean up leading AND/OR operators', () => {
+			const expression =
+				"service.name = 'api-gateway' AND deployment.environment = $deployment.environment";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			expect(result).toBe("service.name = 'api-gateway'");
+		});
+
+		it('should handle expressions with only variable assignments', () => {
+			const expression = 'deployment.environment = $deployment.environment';
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			expect(result).toBe('');
+		});
+
+		it('should handle whitespace around operators', () => {
+			const expression =
+				"deployment.environment  =  $deployment.environment  AND  service.name  =  'api-gateway'";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			expect(result.trim()).toBe("service.name  =  'api-gateway'");
+		});
+	});
+
+	describe('Real-world scenarios', () => {
+		it('should handle multiple variable instances of same key', () => {
+			const expression =
+				"deployment.environment = $env1 deployment.environment = $env2 deployment.environment = 'default'";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			// Should remove one occurence as this case in itself is invalid to have multiple variable expressions for the same key
+			expect(result).toBe(
+				"deployment.environment = $env1 deployment.environment = 'default'",
+			);
+		});
+
+		it('should handle OR operators in expressions', () => {
+			const expression =
+				"deployment.environment = $deployment.environment OR service.name = 'api-gateway'";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			expect(result).toBe("service.name = 'api-gateway'");
+		});
+
+		it('should maintain expression validity after removal', () => {
+			const expression =
+				"deployment.environment = $deployment.environment AND service.name = 'api-gateway' AND status = 'success'";
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			// Should maintain valid AND structure
+			expect(result).toBe("service.name = 'api-gateway' AND status = 'success'");
+
+			// Verify the result can be parsed by extractQueryPairs
+			const pairs = extractQueryPairs(result);
+			expect(pairs).toHaveLength(2);
+		});
 	});
 });

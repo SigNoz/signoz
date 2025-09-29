@@ -593,6 +593,7 @@ class Traces(ABC):
                 self.db_operation,
                 self.has_error,
                 self.is_remote,
+                self.resources_string,
             ],
             dtype=object,
         )
@@ -681,6 +682,7 @@ def insert_traces(
                 "db_operation",
                 "has_error",
                 "is_remote",
+                "resource",
             ],
             data=[trace.np_arr() for trace in traces],
         )

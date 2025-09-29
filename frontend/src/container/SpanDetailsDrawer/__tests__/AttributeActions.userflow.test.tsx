@@ -2,6 +2,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ROUTES from 'constants/routes';
+import { AppProvider } from 'providers/App/App';
+import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import { MemoryRouter, Route } from 'react-router-dom';
 import { Span } from 'types/api/trace/getTraceV2';
 
@@ -17,6 +19,20 @@ const mockSetCopy = jest.fn();
 const mockQueryClient = {
 	fetchQuery: jest.fn(),
 };
+
+jest.mock('uplot', () => {
+	const paths = {
+		spline: jest.fn(),
+		bars: jest.fn(),
+	};
+	const uplotMock = jest.fn(() => ({
+		paths,
+	}));
+	return {
+		paths,
+		default: uplotMock,
+	};
+});
 
 // Mock the hooks
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
@@ -51,6 +67,8 @@ jest.mock('react-query', () => ({
 	...jest.requireActual('react-query'),
 	useQueryClient: (): any => mockQueryClient,
 }));
+
+jest.mock('@signozhq/sonner', () => ({ toast: jest.fn() }));
 
 // Mock the API response for getAggregateKeys
 const mockAggregateKeysResponse = {
@@ -109,23 +127,25 @@ const createMockSpan = (): Span => ({
 	subTreeNodeCount: 0,
 	level: 0,
 });
-
 const renderSpanDetailsDrawer = (span: Span = createMockSpan()): any => {
 	const user = userEvent.setup();
 
 	const component = render(
-		<MemoryRouter>
-			<Route>
-				<SpanDetailsDrawer
-					isSpanDetailsDocked={false}
-					setIsSpanDetailsDocked={jest.fn()}
-					selectedSpan={span}
-					traceID={span.traceId}
-					traceStartTime={span.timestamp}
-					traceEndTime={span.timestamp + span.durationNano}
-				/>
-			</Route>
-		</MemoryRouter>,
+		<MockQueryClientProvider>
+			<AppProvider>
+				<MemoryRouter>
+					<Route>
+						<SpanDetailsDrawer
+							isSpanDetailsDocked={false}
+							setIsSpanDetailsDocked={jest.fn()}
+							selectedSpan={span}
+							traceStartTime={span.timestamp}
+							traceEndTime={span.timestamp + span.durationNano}
+						/>
+					</Route>
+				</MemoryRouter>
+			</AppProvider>
+		</MockQueryClientProvider>,
 	);
 
 	return { ...component, user };

@@ -1640,6 +1640,12 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 		return nil, err
 	}
 
+	// Calculate cold storage duration
+	coldStorageDuration := -1
+	if len(params.ColdStorageVolume) > 0 && params.ToColdStorageDuration > 0 {
+		coldStorageDuration = int(params.ToColdStorageDuration) // Already in days
+	}
+
 	tableNames := []string{
 		r.logsDB + "." + r.logsLocalTableV2,
 		r.logsDB + "." + r.logsResourceLocalTableV2,
@@ -1655,25 +1661,47 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 		}
 	}
 
-	// Build multiIf expressions for both tables
 	multiIfExpr := r.buildMultiIfExpression(params.TTLConditions, params.DefaultTTLDays, false)
 	resourceMultiIfExpr := r.buildMultiIfExpression(params.TTLConditions, params.DefaultTTLDays, true)
 
-	ttlPayload := map[string]string{
-		tableNames[0]: fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT %s`,
+	ttlPayload := make(map[string][]string)
+
+	queries := []string{
+		fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT %s`,
 			tableNames[0], r.cluster, multiIfExpr),
-		tableNames[1]: fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT %s`,
+	}
+
+	if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 {
+		queries = append(queries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
+			tableNames[0], r.cluster, coldStorageDuration))
+
+		queries = append(queries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days_cold) TO VOLUME '%s' SETTINGS materialize_ttl_after_modify=0`,
+			tableNames[0], r.cluster, params.ColdStorageVolume))
+	}
+
+	ttlPayload[tableNames[0]] = queries
+
+	resourceQueries := []string{
+		fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT %s`,
 			tableNames[1], r.cluster, resourceMultiIfExpr),
 	}
+
+	if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 {
+		resourceQueries = append(resourceQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
+			tableNames[1], r.cluster, coldStorageDuration))
+
+		resourceQueries = append(resourceQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days) DELETE, toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days_cold) TO VOLUME '%s' SETTINGS materialize_ttl_after_modify=0`,
+			tableNames[1], r.cluster, params.ColdStorageVolume))
+	}
+
+	ttlPayload[tableNames[1]] = resourceQueries
 
 	ttlConditionsJSON, err := json.Marshal(params.TTLConditions)
 	if err != nil {
 		return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error marshalling TTL condition")
 	}
 
-	// Execute the TTL modifications synchronously
-	for tableName, query := range ttlPayload {
-		// Store the operation in the database
+	for tableName, queries := range ttlPayload {
 		customTTL := types.TTLSetting{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
@@ -1682,12 +1710,13 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			TransactionID: uuid,
-			TableName:     tableName,
-			TTL:           params.DefaultTTLDays,
-			Condition:     string(ttlConditionsJSON),
-			Status:        constants.StatusPending,
-			OrgID:         orgID,
+			TransactionID:  uuid,
+			TableName:      tableName,
+			TTL:            params.DefaultTTLDays,
+			Condition:      string(ttlConditionsJSON),
+			Status:         constants.StatusPending,
+			ColdStorageTTL: coldStorageDuration,
+			OrgID:          orgID,
 		}
 
 		// Insert TTL setting record
@@ -1697,19 +1726,24 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			return nil, errorsV2.Wrapf(dbErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "error inserting TTL settings")
 		}
 
-		zap.L().Debug("Executing custom retention TTL request: ", zap.String("request", query))
-
-		// Execute the ALTER TABLE query
-		if err := r.db.Exec(ctx, query); err != nil {
-			zap.L().Error("error while setting custom retention ttl", zap.Error(err))
-
-			// Update status to failed
-			r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusFailed)
-
-			return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting custom retention TTL for table %s", tableName)
+		if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 {
+			err := r.setColdStorage(ctx, tableName, params.ColdStorageVolume)
+			if err != nil {
+				zap.L().Error("error in setting cold storage", zap.Error(err))
+				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusFailed)
+				return nil, errorsV2.Wrapf(err.Err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting cold storage for table %s", tableName)
+			}
 		}
 
-		// Update status to success
+		for i, query := range queries {
+			zap.L().Debug("Executing custom retention TTL request: ", zap.String("request", query), zap.Int("step", i+1))
+			if err := r.db.Exec(ctx, query); err != nil {
+				zap.L().Error("error while setting custom retention ttl", zap.Error(err))
+				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusFailed)
+				return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting custom retention TTL for table %s, query: %s", tableName, query)
+			}
+		}
+
 		r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusSuccess)
 	}
 
@@ -1841,6 +1875,7 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 		response.DefaultTTLDays = customTTL.TTL
 		response.TTLConditions = ttlConditions
 		response.Status = customTTL.Status
+		response.ColdStorageTTLDays = customTTL.ColdStorageTTL
 
 	} else {
 		// V1 - Traditional TTL

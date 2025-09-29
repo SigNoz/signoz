@@ -1,3 +1,4 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
@@ -32,20 +33,6 @@ const lodsQueryServerRequest = (): void =>
 			res(ctx.status(200), ctx.json(logsQueryRangeSuccessResponse)),
 		),
 	);
-
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
 
 // mocking the graph components in this test as this should be handled separately
 jest.mock(
@@ -185,13 +172,16 @@ describe('LogsExplorerViews -', () => {
 		lodsQueryServerRequest();
 		const { queryByTestId } = renderer();
 
-		const periscopeButtonTestId = 'periscope-btn';
+		const periscopeDownloadButtonTestId = 'periscope-btn-download-options';
+		const periscopeFormatButtonTestId = 'periscope-btn-format-options';
 
 		// Test that the periscope button is present
-		expect(queryByTestId(periscopeButtonTestId)).toBeInTheDocument();
+		expect(queryByTestId(periscopeDownloadButtonTestId)).toBeInTheDocument();
+		expect(queryByTestId(periscopeFormatButtonTestId)).toBeInTheDocument();
 
 		// Test that the menu opens when clicked
-		fireEvent.click(queryByTestId(periscopeButtonTestId) as HTMLElement);
+		fireEvent.click(queryByTestId(periscopeDownloadButtonTestId) as HTMLElement);
+		fireEvent.click(queryByTestId(periscopeFormatButtonTestId) as HTMLElement);
 		expect(document.querySelector('.menu-container')).toBeInTheDocument();
 
 		// Test that the menu items are present
@@ -200,7 +190,8 @@ describe('LogsExplorerViews -', () => {
 		expect(menuItems.length).toBe(expectedMenuItemsCount);
 
 		// Test that the component renders without crashing
-		expect(queryByTestId(periscopeButtonTestId)).toBeInTheDocument();
+		expect(queryByTestId(periscopeDownloadButtonTestId)).toBeInTheDocument();
+		expect(queryByTestId(periscopeFormatButtonTestId)).toBeInTheDocument();
 	});
 
 	it('check isLoading state', async () => {
@@ -271,6 +262,68 @@ describe('LogsExplorerViews -', () => {
 
 				// Verify the total number of filters (original + 1 new activeLogId filter)
 				expect(firstQuery.filters?.items.length).toBe(expectedFiltersLength);
+
+				// Verify the filter expression
+				expect(firstQuery.filter?.expression).toBe(`id <= '${ACTIVE_LOG_ID}'`);
+			}
+		});
+	});
+
+	it('should update filter expression with activeLogId when present with existing filter expression', async () => {
+		// Mock useCopyLogLink to return an activeLogId
+		(useCopyLogLink as jest.Mock).mockReturnValue({
+			activeLogId: ACTIVE_LOG_ID,
+		});
+
+		// Create a custom QueryBuilderContext with an existing filter expression
+		const customContext = {
+			...mockQueryBuilderContextValue,
+			panelType: PANEL_TYPES.LIST,
+			stagedQuery: {
+				...mockQueryBuilderContextValue.stagedQuery,
+				builder: {
+					...mockQueryBuilderContextValue.stagedQuery.builder,
+					queryData: [
+						{
+							...mockQueryBuilderContextValue.stagedQuery.builder.queryData[0],
+							filter: { expression: "service = 'frontend'" },
+						},
+					],
+				},
+			},
+		};
+
+		lodsQueryServerRequest();
+
+		render(
+			<QueryBuilderContext.Provider value={customContext as any}>
+				<PreferenceContextProvider>
+					<LogsExplorerViews
+						selectedView={ExplorerViews.LIST}
+						setIsLoadingQueries={(): void => {}}
+						listQueryKeyRef={{ current: {} }}
+						chartQueryKeyRef={{ current: {} }}
+						setWarning={(): void => {}}
+						showLiveLogs={false}
+					/>
+				</PreferenceContextProvider>
+			</QueryBuilderContext.Provider>,
+		);
+
+		await waitFor(() => {
+			// Find the call made for LIST panel type (main logs list request)
+			const listCall = (useGetExplorerQueryRange as jest.Mock).mock.calls.find(
+				(call) => call[1] === PANEL_TYPES.LIST && call[0],
+			);
+
+			expect(listCall).toBeDefined();
+			if (listCall) {
+				const queryArg = listCall[0];
+				const firstQuery = queryArg.builder.queryData[0];
+				// It should append the activeLogId condition to existing expression
+				expect(firstQuery.filter?.expression).toBe(
+					"service = 'frontend' id <= 'test-log-id'",
+				);
 			}
 		});
 	});
