@@ -24,9 +24,12 @@ describe('EvaluationWindowDetails', () => {
 			/>,
 		);
 		expect(
-			screen.getByText(
-				'A Rolling Window has a fixed size and shifts its starting point over time based on when the rules are evaluated.',
-			),
+			screen.getAllByText(
+				(_, element) =>
+					element?.textContent?.includes(
+						'Monitors data over a fixed time period that moves forward continuously',
+					) ?? false,
+			)[0],
 		).toBeInTheDocument();
 		expect(screen.getByText('Specify custom duration')).toBeInTheDocument();
 		expect(screen.getByText('Last 5 Minutes')).toBeInTheDocument();

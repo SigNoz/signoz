@@ -3,8 +3,8 @@ import { useMemo } from 'react';
 
 import { ADVANCED_OPTIONS_TIME_UNIT_OPTIONS } from '../../context/constants';
 import {
-	CUMULATIVE_WINDOW_DESCRIPTION,
-	ROLLING_WINDOW_DESCRIPTION,
+	getCumulativeWindowDescription,
+	getRollingWindowDescription,
 	TIMEZONE_DATA,
 } from '../constants';
 import TimeInput from '../TimeInput';
@@ -116,7 +116,9 @@ function EvaluationWindowDetails({
 	if (isCurrentHour) {
 		return (
 			<div className="evaluation-window-details">
-				<Typography.Text>{CUMULATIVE_WINDOW_DESCRIPTION}</Typography.Text>
+				<Typography.Text>
+					{getCumulativeWindowDescription(evaluationWindow.timeframe)}
+				</Typography.Text>
 				<Typography.Text>{displayText}</Typography.Text>
 				<div className="select-group">
 					<Typography.Text>STARTING AT MINUTE</Typography.Text>
@@ -134,7 +136,9 @@ function EvaluationWindowDetails({
 	if (isCurrentDay) {
 		return (
 			<div className="evaluation-window-details">
-				<Typography.Text>{CUMULATIVE_WINDOW_DESCRIPTION}</Typography.Text>
+				<Typography.Text>
+					{getCumulativeWindowDescription(evaluationWindow.timeframe)}
+				</Typography.Text>
 				<Typography.Text>{displayText}</Typography.Text>
 				<div className="select-group time-select-group">
 					<Typography.Text>STARTING AT</Typography.Text>
@@ -159,7 +163,9 @@ function EvaluationWindowDetails({
 	if (isCurrentMonth) {
 		return (
 			<div className="evaluation-window-details">
-				<Typography.Text>{CUMULATIVE_WINDOW_DESCRIPTION}</Typography.Text>
+				<Typography.Text>
+					{getCumulativeWindowDescription(evaluationWindow.timeframe)}
+				</Typography.Text>
 				<Typography.Text>{displayText}</Typography.Text>
 				<div className="select-group">
 					<Typography.Text>STARTING ON DAY</Typography.Text>
@@ -192,7 +198,9 @@ function EvaluationWindowDetails({
 
 	return (
 		<div className="evaluation-window-details">
-			<Typography.Text>{ROLLING_WINDOW_DESCRIPTION}</Typography.Text>
+			<Typography.Text>
+				{getRollingWindowDescription(evaluationWindow.timeframe)}
+			</Typography.Text>
 			<Typography.Text>Specify custom duration</Typography.Text>
 			<Typography.Text>{displayText}</Typography.Text>
 			<div className="select-group">
