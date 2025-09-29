@@ -95,8 +95,8 @@ func NewRole(displayName, description string, orgID valuer.UUID) *Role {
 }
 
 func NewPatchableObjects(additions []*authtypes.Object, deletions []*authtypes.Object, relation authtypes.Relation) (*PatchableObjects, error) {
-	if additions == nil && deletions == nil {
-		return nil, errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty object patch request recieved, atleast one of additions or deletions must be present")
+	if len(additions) == 0 && len(deletions) == 0 {
+		return nil, errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty object patch request received, at least one of additions or deletions must be present")
 	}
 
 	for _, object := range additions {
@@ -157,7 +157,7 @@ func (role *PatchableRole) UnmarshalJSON(data []byte) error {
 	}
 
 	if shadowRole.DisplayName == nil && shadowRole.Description == nil {
-		return errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty role patch request recieved, one of displayName or description must be present")
+		return errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty role patch request received, at least one of displayName or description must be present")
 	}
 
 	role.DisplayName = shadowRole.DisplayName
