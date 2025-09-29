@@ -3,19 +3,19 @@ package authtypes
 import "github.com/SigNoz/signoz/pkg/valuer"
 
 type SessionContext struct {
-	Exists        bool                 `json:"exists"`
-	Organizations []*OrgSessionContext `json:"orgs"`
+	Exists bool                 `json:"exists"`
+	Orgs   []*OrgSessionContext `json:"orgs"`
 }
 
 type OrgSessionContext struct {
-	ID            valuer.UUID             `json:"id"`
-	Name          string                  `json:"name"`
-	AuthNSupports map[string]AuthNSupport `json:"authNSupports"`
+	ID           valuer.UUID  `json:"id"`
+	Name         string       `json:"name"`
+	AuthNSupport AuthNSupport `json:"authNSupport"`
 }
 
 type AuthNSupport struct {
-	Callback map[AuthNProvider]CallbackAuthNSupport `json:"callback,omitempty"`
-	Password map[AuthNProvider]PasswordAuthNSupport `json:"password,omitempty"`
+	Callback []CallbackAuthNSupport `json:"callback,omitempty"`
+	Password []PasswordAuthNSupport `json:"password,omitempty"`
 }
 
 type CallbackAuthNSupport struct {
@@ -28,27 +28,27 @@ type PasswordAuthNSupport struct {
 }
 
 func NewSessionContext() *SessionContext {
-	return &SessionContext{Exists: false, Organizations: []*OrgSessionContext{}}
+	return &SessionContext{Exists: false, Orgs: []*OrgSessionContext{}}
 }
 
 func NewOrgSessionContext(orgID valuer.UUID, name string) *OrgSessionContext {
-	return &OrgSessionContext{ID: orgID, Name: name, AuthNSupports: map[string]AuthNSupport{
-		"password": {Password: map[AuthNProvider]PasswordAuthNSupport{}},
-		"callback": {Callback: map[AuthNProvider]CallbackAuthNSupport{}},
+	return &OrgSessionContext{ID: orgID, Name: name, AuthNSupport: AuthNSupport{
+		Password: []PasswordAuthNSupport{},
+		Callback: []CallbackAuthNSupport{},
 	}}
 }
 
 func (s *SessionContext) AddOrgContext(orgContext *OrgSessionContext) *SessionContext {
-	s.Organizations = append(s.Organizations, orgContext)
+	s.Orgs = append(s.Orgs, orgContext)
 	return s
 }
 
 func (s *OrgSessionContext) AddPasswordAuthNSupport(provider AuthNProvider) *OrgSessionContext {
-	s.AuthNSupports["password"].Password[provider] = PasswordAuthNSupport{Provider: provider}
+	s.AuthNSupport.Password = append(s.AuthNSupport.Password, PasswordAuthNSupport{Provider: provider})
 	return s
 }
 
 func (s *OrgSessionContext) AddCallbackAuthNSupport(provider AuthNProvider, url string) *OrgSessionContext {
-	s.AuthNSupports["callback"].Callback[provider] = CallbackAuthNSupport{Provider: provider, URL: url}
+	s.AuthNSupport.Callback = append(s.AuthNSupport.Callback, CallbackAuthNSupport{Provider: provider, URL: url})
 	return s
 }
