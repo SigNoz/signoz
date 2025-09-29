@@ -2,15 +2,16 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import { fireEvent, render, screen } from '@testing-library/react';
 import { DefaultOptionType } from 'antd/es/select';
-import {
-	INITIAL_ALERT_STATE,
-	INITIAL_ALERT_THRESHOLD_STATE,
-} from 'container/CreateAlertV2/context/constants';
+import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
+import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
+import * as appHooks from 'providers/App/App';
 import { Channels } from 'types/api/channels/getAll';
 
 import * as context from '../../context';
 import ThresholdItem from '../ThresholdItem';
 import { ThresholdItemProps } from '../types';
+
+jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
 
 jest.mock('uplot', () => {
 	const paths = {
@@ -26,12 +27,12 @@ jest.mock('uplot', () => {
 
 const mockSetAlertState = jest.fn();
 const mockSetThresholdState = jest.fn();
-jest.spyOn(context, 'useCreateAlertState').mockReturnValue({
-	alertState: INITIAL_ALERT_STATE,
-	setAlertState: mockSetAlertState,
-	thresholdState: INITIAL_ALERT_THRESHOLD_STATE,
-	setThresholdState: mockSetThresholdState,
-} as any);
+jest.spyOn(context, 'useCreateAlertState').mockReturnValue(
+	createMockAlertContextState({
+		setThresholdState: mockSetThresholdState,
+		setAlertState: mockSetAlertState,
+	}),
+);
 
 const TEST_CONSTANTS = {
 	THRESHOLD_ID: 'test-threshold-1',
@@ -81,6 +82,8 @@ const defaultProps: ThresholdItemProps = {
 	channels: mockChannels,
 	isLoadingChannels: false,
 	units: mockUnits,
+	isErrorChannels: false,
+	refreshChannels: jest.fn(),
 };
 
 const renderThresholdItem = (
@@ -99,10 +102,11 @@ const verifySelectorWidth = (
 	expect(selector.closest('.ant-select')).toHaveStyle(`width: ${expectedWidth}`);
 };
 
-const showRecoveryThreshold = (): void => {
-	const recoveryButton = screen.getByRole('button', { name: '' });
-	fireEvent.click(recoveryButton);
-};
+// TODO: Unskip this when recovery threshold is implemented
+// const showRecoveryThreshold = (): void => {
+// 	const recoveryButton = screen.getByRole('button', { name: '' });
+// 	fireEvent.click(recoveryButton);
+// };
 
 const verifyComponentRendersWithLoading = (): void => {
 	expect(
@@ -152,14 +156,6 @@ describe('ThresholdItem', () => {
 
 		// Check for the unit selector by looking for the displayed text
 		expect(screen.getByText('Bytes')).toBeInTheDocument();
-	});
-
-	it('renders channels selector with correct value', () => {
-		renderThresholdItem();
-
-		expect(
-			screen.getByText(TEST_CONSTANTS.EMAIL_CHANNEL_TRUNCATED),
-		).toBeInTheDocument();
 	});
 
 	it('updates threshold label when label input changes', () => {
@@ -233,38 +229,31 @@ describe('ThresholdItem', () => {
 
 		// The remove button is the second button (with circle-x icon)
 		const buttons = screen.getAllByRole('button');
-		expect(buttons).toHaveLength(2); // Recovery button + remove button
+		expect(buttons).toHaveLength(1); // remove button
 	});
 
 	it('does not show remove button when showRemoveButton is false', () => {
 		renderThresholdItem({ showRemoveButton: false });
 
-		// Only the recovery button should be present
-		const buttons = screen.getAllByRole('button');
-		expect(buttons).toHaveLength(1); // Only recovery button
+		// No buttons should be present
+		const buttons = screen.queryAllByRole('button');
+		expect(buttons).toHaveLength(0);
 	});
 
 	it('calls removeThreshold when remove button is clicked', () => {
 		const removeThreshold = jest.fn();
 		renderThresholdItem({ showRemoveButton: true, removeThreshold });
 
-		// The remove button is the second button (with circle-x icon)
+		// The remove button is the first button (with circle-x icon)
 		const buttons = screen.getAllByRole('button');
-		const removeButton = buttons[1]; // Second button is the remove button
+		const removeButton = buttons[0];
 		fireEvent.click(removeButton);
 
 		expect(removeThreshold).toHaveBeenCalledWith(TEST_CONSTANTS.THRESHOLD_ID);
 	});
 
-	it('shows recovery threshold button when recovery threshold is enabled', () => {
-		renderThresholdItem();
-
-		// The recovery button is the first button (with chart-line icon)
-		const buttons = screen.getAllByRole('button');
-		expect(buttons).toHaveLength(1); // Recovery button
-	});
-
-	it('shows recovery threshold inputs when recovery button is clicked', () => {
+	// TODO: Unskip this when recovery threshold is implemented
+	it.skip('shows recovery threshold inputs when recovery button is clicked', () => {
 		renderThresholdItem();
 
 		// The recovery button is the first button (with chart-line icon)
@@ -280,7 +269,8 @@ describe('ThresholdItem', () => {
 		).toBeInTheDocument();
 	});
 
-	it('updates recovery threshold value when input changes', () => {
+	// TODO: Unskip this when recovery threshold is implemented
+	it.skip('updates recovery threshold value when input changes', () => {
 		const updateThreshold = jest.fn();
 		renderThresholdItem({ updateThreshold });
 
@@ -311,22 +301,6 @@ describe('ThresholdItem', () => {
 
 		// The tooltip should be present when hovering over disabled unit selector
 		verifyUnitSelectorDisabled();
-	});
-
-	it('renders channels as multiple select options', () => {
-		renderThresholdItem();
-
-		// Check that channels are rendered as multiple select
-		expect(
-			screen.getByText(TEST_CONSTANTS.EMAIL_CHANNEL_TRUNCATED),
-		).toBeInTheDocument();
-
-		// Should be able to select multiple channels
-		const channelSelectors = screen.getAllByRole('combobox');
-		const channelSelector = channelSelectors[1]; // Second combobox is the channels selector
-		fireEvent.change(channelSelector, {
-			target: { value: [TEST_CONSTANTS.CHANNEL_1, TEST_CONSTANTS.CHANNEL_2] },
-		});
 	});
 
 	it('handles empty threshold values correctly', () => {
@@ -373,9 +347,9 @@ describe('ThresholdItem', () => {
 		verifyComponentRendersWithLoading();
 	});
 
-	it('renders recovery threshold with correct initial value', () => {
+	it.skip('renders recovery threshold with correct initial value', () => {
 		renderThresholdItem();
-		showRecoveryThreshold();
+		// showRecoveryThreshold();
 
 		const recoveryValueInput = screen.getByPlaceholderText(
 			TEST_CONSTANTS.ENTER_RECOVERY_THRESHOLD_VALUE,

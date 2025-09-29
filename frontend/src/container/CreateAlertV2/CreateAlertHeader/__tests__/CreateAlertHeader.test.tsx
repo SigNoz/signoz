@@ -1,8 +1,20 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import { fireEvent, render, screen } from '@testing-library/react';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 
+import * as useCreateAlertRuleHook from '../../../../hooks/alerts/useCreateAlertRule';
+import * as useTestAlertRuleHook from '../../../../hooks/alerts/useTestAlertRule';
 import { CreateAlertProvider } from '../../context';
 import CreateAlertHeader from '../CreateAlertHeader';
+
+jest.spyOn(useCreateAlertRuleHook, 'useCreateAlertRule').mockReturnValue({
+	mutate: jest.fn(),
+	isLoading: false,
+} as any);
+jest.spyOn(useTestAlertRuleHook, 'useTestAlertRule').mockReturnValue({
+	mutate: jest.fn(),
+	isLoading: false,
+} as any);
 
 jest.mock('uplot', () => {
 	const paths = {
@@ -27,7 +39,7 @@ jest.mock('react-router-dom', () => ({
 
 const renderCreateAlertHeader = (): ReturnType<typeof render> =>
 	render(
-		<CreateAlertProvider>
+		<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
 			<CreateAlertHeader />
 		</CreateAlertProvider>,
 	);
