@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strings"
 
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
@@ -23,15 +23,17 @@ type module struct {
 	userGetter user.Getter
 	authDomain authdomain.Module
 	tokenizer  tokenizer.Tokenizer
+	orgGetter  organization.Getter
 }
 
-func NewModule(authNs map[authtypes.AuthNProvider]authn.AuthN, user user.Module, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer) session.Module {
+func NewModule(authNs map[authtypes.AuthNProvider]authn.AuthN, user user.Module, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter) session.Module {
 	return &module{
 		authNs:     authNs,
 		user:       user,
 		userGetter: userGetter,
 		authDomain: authDomain,
 		tokenizer:  tokenizer,
+		orgGetter:  orgGetter,
 	}
 }
 
@@ -44,52 +46,68 @@ func (module *module) GetSessionContext(ctx context.Context, email string, siteU
 	}
 
 	if len(users) == 0 {
-		context.IsUser = false
-	}
+		context.Exists = false
 
-	if len(users) > 1 {
-		context.SelectOrg = true
+		orgs, err := module.orgGetter.ListByOwnedKeyRange(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, org := range orgs {
+			orgContext, err := module.getOrgSessionContext(ctx, org, siteURL)
+			if err != nil {
+				return nil, err
+			}
+
+			context = context.AddOrgContext(orgContext)
+		}
+
 		return context, nil
 	}
 
-	// There exists only 1 user with this email, therefore we can perform checks on the organization.
-	user := users[0]
-	context.OrgID = valuer.MustNewUUID(user.OrgID)
+	context.Exists = true
+	for _, user := range users {
+		org, err := module.orgGetter.Get(ctx, valuer.MustNewUUID(user.OrgID))
+		if err != nil {
+			return nil, err
+		}
 
-	components := strings.Split(email, "@")
-	if len(components) < 2 {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid email format")
+		orgContext, err := module.getOrgSessionContext(ctx, org, siteURL)
+		if err != nil {
+			return nil, err
+		}
+
+		context = context.AddOrgContext(orgContext)
 	}
 
-	orgDomain, err := module.authDomain.GetByNameAndOrgID(ctx, components[1], valuer.MustNewUUID(user.OrgID))
+	return context, nil
+}
+
+func (module *module) getOrgSessionContext(ctx context.Context, org *types.Organization, siteURL *url.URL) (*authtypes.OrgSessionContext, error) {
+	authDomain, err := module.authDomain.GetByNameAndOrgID(ctx, org.Name, org.ID)
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
-			return context, nil
+			return authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword), nil
 		}
 
 		return nil, err
 	}
 
-	if !orgDomain.AuthDomainConfig().SSOEnabled {
-		return context, nil
+	if !authDomain.AuthDomainConfig().SSOEnabled {
+		return authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword), nil
 	}
 
-	// this is to allow self registration
-	context.IsUser = true
-	context.SSO = true
-
-	provider, err := getProvider[authn.CallbackAuthN](orgDomain.AuthDomainConfig().AuthNProvider, module.authNs)
-	if err != nil {
-		return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "authn provider not found")
-	}
-
-	loginURL, err := provider.LoginURL(ctx, siteURL, orgDomain)
+	provider, err := getProvider[authn.CallbackAuthN](authDomain.AuthDomainConfig().AuthNProvider, module.authNs)
 	if err != nil {
 		return nil, err
 	}
 
-	context.SSOUrl = loginURL
-	return context, nil
+	loginURL, err := provider.LoginURL(ctx, siteURL, authDomain)
+	if err != nil {
+		return nil, err
+	}
+
+	return authtypes.NewOrgSessionContext(org.ID, org.Name).AddCallbackAuthNSupport(authDomain.AuthDomainConfig().AuthNProvider, loginURL), nil
 }
 
 func (module *module) CreatePasswordAuthNSession(ctx context.Context, authNProvider authtypes.AuthNProvider, email string, password string, orgID valuer.UUID) (*authtypes.Token, error) {
