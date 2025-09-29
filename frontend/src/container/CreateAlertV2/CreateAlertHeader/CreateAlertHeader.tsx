@@ -1,6 +1,5 @@
 import './styles.scss';
 
-import { Flex } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useCallback, useMemo } from 'react';
 import { Labels } from 'types/api/alerts/def';
@@ -39,26 +38,24 @@ function CreateAlertHeader(): JSX.Element {
 			<div className="alert-header__tab-bar">
 				<div className="alert-header__tab">New Alert Rule</div>
 			</div>
-			<Flex justify="space-between">
-				<div className="alert-header__content">
-					<input
-						type="text"
-						value={alertState.name}
-						onChange={(e): void =>
-							setAlertState({ type: 'SET_ALERT_NAME', payload: e.target.value })
-						}
-						className="alert-header__input title"
-						placeholder="Enter alert rule name"
-					/>
-					<LabelsInput
-						labels={alertState.labels}
-						onLabelsChange={(labels: Labels): void =>
-							setAlertState({ type: 'SET_ALERT_LABELS', payload: labels })
-						}
-						validateLabelsKey={validateLabelsKey}
-					/>
-				</div>
-			</Flex>
+			<div className="alert-header__content">
+				<input
+					type="text"
+					value={alertState.name}
+					onChange={(e): void =>
+						setAlertState({ type: 'SET_ALERT_NAME', payload: e.target.value })
+					}
+					className="alert-header__input title"
+					placeholder="Enter alert rule name"
+				/>
+				<LabelsInput
+					labels={alertState.labels}
+					onLabelsChange={(labels: Labels): void =>
+						setAlertState({ type: 'SET_ALERT_LABELS', payload: labels })
+					}
+					validateLabelsKey={validateLabelsKey}
+				/>
+			</div>
 		</div>
 	);
 }

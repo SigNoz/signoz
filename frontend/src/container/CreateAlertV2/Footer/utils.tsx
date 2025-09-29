@@ -1,8 +1,11 @@
-import { CreateAlertRuleProps } from 'api/alerts/createAlertRule';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
+import {
+	BasicThreshold,
+	PostableAlertRuleV2,
+} from 'types/api/alerts/alertTypesV2';
 import { compositeQueryToQueryEnvelope } from 'utils/compositeQueryToQueryEnvelope';
 
 import {
@@ -51,8 +54,8 @@ export function validateCreateAlertState(
 // Get notification settings props for create alert api payload
 export function getNotificationSettingsProps(
 	notificationSettings: NotificationSettingsState,
-): CreateAlertRuleProps['notificationSettings'] {
-	const notificationSettingsProps: CreateAlertRuleProps['notificationSettings'] = {
+): PostableAlertRuleV2['notificationSettings'] {
+	const notificationSettingsProps: PostableAlertRuleV2['notificationSettings'] = {
 		notificationGroupBy: notificationSettings.multipleNotifications || [],
 		alertStates: notificationSettings.reNotification.enabled
 			? notificationSettings.reNotification.conditions
@@ -73,7 +76,7 @@ export function getNotificationSettingsProps(
 // Get alert on absent props for create alert api payload
 export function getAlertOnAbsentProps(
 	advancedOptions: AdvancedOptionsState,
-): Partial<CreateAlertRuleProps['condition']> {
+): Partial<PostableAlertRuleV2['condition']> {
 	if (advancedOptions.sendNotificationIfDataIsMissing.enabled) {
 		return {
 			alertOnAbsent: true,
@@ -88,7 +91,7 @@ export function getAlertOnAbsentProps(
 // Get enforce minimum datapoints props for create alert api payload
 export function getEnforceMinimumDatapointsProps(
 	advancedOptions: AdvancedOptionsState,
-): Partial<CreateAlertRuleProps['condition']> {
+): Partial<PostableAlertRuleV2['condition']> {
 	if (advancedOptions.enforceMinimumDatapoints.enabled) {
 		return {
 			requireMinPoints: true,
@@ -105,7 +108,7 @@ export function getEnforceMinimumDatapointsProps(
 export function getEvaluationProps(
 	evaluationWindow: EvaluationWindowState,
 	advancedOptions: AdvancedOptionsState,
-): CreateAlertRuleProps['evaluation'] {
+): PostableAlertRuleV2['evaluation'] {
 	const frequency = getFormattedTimeValue(
 		advancedOptions.evaluationCadence.default.value,
 		advancedOptions.evaluationCadence.default.timeUnit,
@@ -202,7 +205,7 @@ export function getEvaluationProps(
 // Build Create Threshold Alert Rule Payload
 export function buildCreateThresholdAlertRulePayload(
 	args: BuildCreateAlertRulePayloadArgs,
-): CreateAlertRuleProps {
+): PostableAlertRuleV2 {
 	const {
 		alertType,
 		basicAlertState,
@@ -226,14 +229,16 @@ export function buildCreateThresholdAlertRulePayload(
 	});
 
 	// Thresholds
-	const thresholds = thresholdState.thresholds.map((threshold) => ({
-		name: threshold.label,
-		target: parseFloat(threshold.thresholdValue.toString()),
-		matchType: thresholdState.matchType,
-		op: thresholdState.operator,
-		selectedQuery: thresholdState.selectedQuery,
-		channels: threshold.channels,
-	}));
+	const thresholds: BasicThreshold[] = thresholdState.thresholds.map(
+		(threshold) => ({
+			name: threshold.label,
+			target: parseFloat(threshold.thresholdValue.toString()),
+			matchType: thresholdState.matchType,
+			op: thresholdState.operator,
+			channels: threshold.channels,
+			targetUnit: threshold.unit,
+		}),
+	);
 
 	// Alert on absent data
 	const alertOnAbsentProps = getAlertOnAbsentProps(advancedOptions);
@@ -270,21 +275,21 @@ export function buildCreateThresholdAlertRulePayload(
 			description: notificationSettings.description,
 			summary: notificationSettings.description,
 		},
-		preferredChannels: [],
 		notificationSettings: notificationSettingsProps,
 		version: 'v5',
 		schemaVersion: 'v2alpha1',
+		source: window?.location.toString(),
 	};
 }
 
 // Build Create Anomaly Alert Rule Payload
+// TODO: Update this function before enabling anomaly alert rule creation
 export function buildCreateAnomalyAlertRulePayload(
 	args: BuildCreateAlertRulePayloadArgs,
-): CreateAlertRuleProps {
+): PostableAlertRuleV2 {
 	const {
 		alertType,
 		basicAlertState,
-		thresholdState,
 		query,
 		notificationSettings,
 		evaluationWindow,
@@ -318,12 +323,6 @@ export function buildCreateAnomalyAlertRulePayload(
 		alertType,
 		condition: {
 			compositeQuery,
-			op: thresholdState.operator,
-			target: thresholdState.thresholds[0].thresholdValue,
-			matchType: thresholdState.matchType,
-			algorithm: thresholdState.algorithm,
-			seasonality: thresholdState.seasonality,
-			selectedQueryName: thresholdState.selectedQuery,
 			...alertOnAbsentProps,
 			...enforceMinimumDatapointsProps,
 		},
@@ -332,10 +331,10 @@ export function buildCreateAnomalyAlertRulePayload(
 			description: notificationSettings.description,
 			summary: notificationSettings.description,
 		},
-		preferredChannels: [...thresholdState.thresholds[0].channels],
 		notificationSettings: notificationSettingsProps,
 		evaluation: evaluationProps,
 		version: '',
 		schemaVersion: '',
+		source: window?.location.toString(),
 	};
 }

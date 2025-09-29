@@ -3,7 +3,7 @@ import './styles.scss';
 import { Button, Tooltip } from 'antd';
 import getAllChannels from 'api/channels/getAll';
 import classNames from 'classnames';
-import { Activity, ChartLine } from 'lucide-react';
+import { ChartLine } from 'lucide-react';
 import { useQuery } from 'react-query';
 import { SuccessResponseV2 } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -42,15 +42,16 @@ function AlertCondition(): JSX.Element {
 			icon: <ChartLine size={14} data-testid="threshold-view" />,
 			value: AlertTypes.METRICS_BASED_ALERT,
 		},
-		...(showMultipleTabs
-			? [
-					{
-						label: 'Anomaly',
-						icon: <Activity size={14} data-testid="anomaly-view" />,
-						value: AlertTypes.ANOMALY_BASED_ALERT,
-					},
-			  ]
-			: []),
+		// Hide anomaly tab for now
+		// ...(showMultipleTabs
+		// 	? [
+		// 			{
+		// 				label: 'Anomaly',
+		// 				icon: <Activity size={14} data-testid="anomaly-view" />,
+		// 				value: AlertTypes.ANOMALY_BASED_ALERT,
+		// 			},
+		// 	  ]
+		// 	: []),
 	];
 
 	const handleAlertTypeChange = (value: AlertTypes): void => {

@@ -1,20 +1,17 @@
-import {
-	CreateAlertRuleProps,
-	CreateAlertRuleResponse,
-} from 'api/alerts/createAlertRule';
-import testAlertRule from 'api/alerts/testAlertRule';
+import testAlertRule, { TestAlertRuleResponse } from 'api/alerts/testAlertRule';
 import { useMutation, UseMutationResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
+import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 
 export function useTestAlertRule(): UseMutationResult<
-	SuccessResponse<CreateAlertRuleResponse> | ErrorResponse,
+	SuccessResponse<TestAlertRuleResponse> | ErrorResponse,
 	Error,
-	CreateAlertRuleProps
+	PostableAlertRuleV2
 > {
 	return useMutation<
-		SuccessResponse<CreateAlertRuleResponse> | ErrorResponse,
+		SuccessResponse<TestAlertRuleResponse> | ErrorResponse,
 		Error,
-		CreateAlertRuleProps
+		PostableAlertRuleV2
 	>({
 		mutationFn: (alertData) => testAlertRule(alertData),
 	});

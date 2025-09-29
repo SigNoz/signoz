@@ -1,12 +1,11 @@
-import {
-	CreateAlertRuleProps,
-	CreateAlertRuleResponse,
-} from 'api/alerts/createAlertRule';
+import { CreateAlertRuleResponse } from 'api/alerts/createAlertRule';
+import { TestAlertRuleResponse } from 'api/alerts/testAlertRule';
 import { Dayjs } from 'dayjs';
 import { Dispatch } from 'react';
 import { UseMutateFunction } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 import { Labels } from 'types/api/alerts/def';
 
 export interface ICreateAlertContextProps {
@@ -26,14 +25,14 @@ export interface ICreateAlertContextProps {
 	createAlertRule: UseMutateFunction<
 		SuccessResponse<CreateAlertRuleResponse, unknown> | ErrorResponse,
 		Error,
-		CreateAlertRuleProps,
+		PostableAlertRuleV2,
 		unknown
 	>;
 	isTestingAlertRule: boolean;
 	testAlertRule: UseMutateFunction<
-		SuccessResponse<CreateAlertRuleResponse, unknown> | ErrorResponse,
+		SuccessResponse<TestAlertRuleResponse, unknown> | ErrorResponse,
 		Error,
-		CreateAlertRuleProps,
+		PostableAlertRuleV2,
 		unknown
 	>;
 	discardAlertRule: () => void;

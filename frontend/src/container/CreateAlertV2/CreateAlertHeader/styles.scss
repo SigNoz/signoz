@@ -29,6 +29,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
+		min-width: 300px;
+		flex: 1;
 	}
 
 	&__input.title {
@@ -36,6 +38,8 @@
 		font-weight: 500;
 		background-color: transparent;
 		color: var(--text-vanilla-100);
+		width: 100%;
+		min-width: 300px;
 	}
 
 	&__input:focus,

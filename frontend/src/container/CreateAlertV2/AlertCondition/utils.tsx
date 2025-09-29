@@ -397,7 +397,7 @@ export function RoutingPolicyBanner({
 	return (
 		<div className="routing-policies-info-banner">
 			<Typography.Text>
-				Use <strong>Routing Policies</strong> for multi-dimensional routing
+				Use <strong>Routing Policies</strong> for dynamic routing
 			</Typography.Text>
 			<Switch
 				checked={notificationSettings.routingPolicies}

@@ -129,7 +129,10 @@ function CreateRules(): JSX.Element {
 
 	const showNewCreateAlertsPageFlag = showNewCreateAlertsPage();
 
-	if (showNewCreateAlertsPageFlag) {
+	if (
+		showNewCreateAlertsPageFlag &&
+		alertType !== AlertTypes.ANOMALY_BASED_ALERT
+	) {
 		return <CreateAlertV2 alertType={alertType} />;
 	}
 

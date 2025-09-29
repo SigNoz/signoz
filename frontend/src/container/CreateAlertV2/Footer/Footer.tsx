@@ -65,7 +65,13 @@ function Footer(): JSX.Element {
 			query: currentQuery,
 		});
 		testAlertRule(payload, {
-			onSuccess: () => {
+			onSuccess: (response) => {
+				if (response.payload?.data?.alertCount === 0) {
+					toast.error(
+						'No alerts found during the evaluation. This happens when rule condition is unsatisfied. You may adjust the rule threshold and retry.',
+					);
+					return;
+				}
 				toast.success('Test notification sent successfully');
 			},
 			onError: (error) => {
