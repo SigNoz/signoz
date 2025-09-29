@@ -484,6 +484,19 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		}
 
 		err = m.alertmanager.DeleteNotificationConfig(ctx, orgID, id.String())
+		if err != nil {
+			return err
+		}
+
+		err = m.alertmanager.DeleteAllRoutePoliciesByRuleId(ctx, id.String())
+		if err != nil {
+			return err
+		}
+
+		err = m.alertmanager.DeleteAllInhibitRulesByRuleId(ctx, orgID, id.String())
+		if err != nil {
+			return err
+		}
 
 		taskName := prepareTaskName(id.StringValue())
 		m.deleteTask(taskName)
