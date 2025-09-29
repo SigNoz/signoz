@@ -84,7 +84,7 @@ func (b *spanPercentileCTEBuilder) build() (*qbtypes.Statement, error) {
 		cteArgs = append(cteArgs, cte.args)
 	}
 
-	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL + " SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000"
+	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
 
 	// For ClickHouseSQL, we need to interpolate all args into the SQL since it doesn't support parameterized queries
@@ -187,7 +187,8 @@ func (b *spanPercentileCTEBuilder) buildMainQuery() (string, []any) {
 		"t.deployment_environment",
 	)
 
-	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	return query, args
 }
 
 func (b *spanPercentileCTEBuilder) addCTE(name, sql string, args []any) {
