@@ -3,10 +3,22 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter } from 'react-router-dom';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { Channels } from 'types/api/channels/getAll';
 
 import { CreateAlertProvider } from '../../context';
 import AlertThreshold from '../AlertThreshold';
+
+const mockChannels: Channels[] = [];
+const mockRefreshChannels = jest.fn();
+const mockIsLoadingChannels = false;
+const mockIsErrorChannels = false;
+const mockProps = {
+	channels: mockChannels,
+	isLoadingChannels: mockIsLoadingChannels,
+	isErrorChannels: mockIsErrorChannels,
+	refreshChannels: mockRefreshChannels,
+};
 
 jest.mock('uplot', () => {
 	const paths = {
@@ -116,8 +128,8 @@ const renderAlertThreshold = (): ReturnType<typeof render> => {
 	return render(
 		<MemoryRouter>
 			<QueryClientProvider client={queryClient}>
-				<CreateAlertProvider>
-					<AlertThreshold />
+				<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
+					<AlertThreshold {...mockProps} />
 				</CreateAlertProvider>
 			</QueryClientProvider>
 		</MemoryRouter>,
