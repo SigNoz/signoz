@@ -49,12 +49,7 @@ func (m *Module) AcceptInvite(ctx context.Context, token string, password string
 		return nil, err
 	}
 
-	role, err := types.NewRole(invite.Role)
-	if err != nil {
-		return nil, err
-	}
-
-	user, err := types.NewUser(invite.Name, invite.Email, role, invite.OrgID)
+	user, err := types.NewUser(invite.Name, invite.Email, invite.Role, invite.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +64,7 @@ func (m *Module) AcceptInvite(ctx context.Context, token string, password string
 		return nil, err
 	}
 
-	if err := m.DeleteInvite(ctx, invite.OrgID, invite.ID); err != nil {
+	if err := m.DeleteInvite(ctx, invite.OrgID.String(), invite.ID); err != nil {
 		return nil, err
 	}
 
@@ -82,12 +77,12 @@ func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Inv
 		return nil, err
 	}
 
-	return &invite.Invite, nil
+	return invite, nil
 }
 
 // CreateBulk implements invite.Module.
-func (m *Module) CreateBulkInvite(ctx context.Context, orgID, userID string, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error) {
-	creator, err := m.store.GetUser(ctx, valuer.MustNewUUID(userID))
+func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error) {
+	creator, err := m.store.GetUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +91,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID, userID string, bul
 
 	for _, invite := range bulkInvites.Invites {
 		// check if user exists
-		existingUser, err := m.store.GetUserByEmailAndOrgID(ctx, invite.Email, valuer.MustNewUUID(orgID))
+		existingUser, err := m.store.GetUserByEmailAndOrgID(ctx, invite.Email, orgID)
 		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
 		}
@@ -106,7 +101,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID, userID string, bul
 		}
 
 		// Check if an invite already exists
-		existingInvite, err := m.store.GetInviteByEmailInOrg(ctx, orgID, invite.Email)
+		existingInvite, err := m.store.GetInviteByEmailAndOrgID(ctx, invite.Email, orgID)
 		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
 		}
@@ -119,10 +114,11 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID, userID string, bul
 			return nil, err
 		}
 
-		newInvite, err := types.NewInvite(orgID, role.String(), invite.Name, invite.Email)
+		newInvite, err := types.NewInvite(invite.Name, role, orgID, invite.Email)
 		if err != nil {
 			return nil, err
 		}
+
 		newInvite.InviteLink = fmt.Sprintf("%s/signup?token=%s", invite.FrontendBaseUrl, newInvite.Token)
 		invites = append(invites, newInvite)
 	}
@@ -133,7 +129,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID, userID string, bul
 	}
 
 	for i := 0; i < len(invites); i++ {
-		m.analytics.TrackUser(ctx, orgID, creator.ID.String(), "Invite Sent", map[string]any{"invitee_email": invites[i].Email, "invitee_role": invites[i].Role})
+		m.analytics.TrackUser(ctx, orgID.String(), creator.ID.String(), "Invite Sent", map[string]any{"invitee_email": invites[i].Email, "invitee_role": invites[i].Role})
 
 		// if the frontend base url is not provided, we don't send the email
 		if bulkInvites.Invites[i].FrontendBaseUrl == "" {
@@ -141,7 +137,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID, userID string, bul
 			continue
 		}
 
-		if err := m.emailing.SendHTML(ctx, invites[i].Email, "You are invited to join a team in SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
+		if err := m.emailing.SendHTML(ctx, invites[i].Email.String(), "You are invited to join a team in SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
 			"CustomerName": invites[i].Name,
 			"InviterName":  creator.DisplayName,
 			"InviterEmail": creator.Email,
@@ -183,13 +179,13 @@ func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ..
 	}
 
 	traitsOrProperties := types.NewTraitsFromUser(input)
-	module.analytics.IdentifyUser(ctx, input.OrgID, input.ID.String(), traitsOrProperties)
-	module.analytics.TrackUser(ctx, input.OrgID, input.ID.String(), "User Created", traitsOrProperties)
+	module.analytics.IdentifyUser(ctx, input.OrgID.String(), input.ID.String(), traitsOrProperties)
+	module.analytics.TrackUser(ctx, input.OrgID.String(), input.ID.String(), "User Created", traitsOrProperties)
 
 	return nil
 }
 
-func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *types.User, updatedBy string) (*types.User, error) {
+func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.User, updatedBy string) (*types.User, error) {
 	existingUser, err := m.store.GetUser(ctx, valuer.MustNewUUID(id))
 	if err != nil {
 		return nil, err
@@ -216,7 +212,7 @@ func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *
 	// Make sure that th e request is not demoting the last admin user.
 	// also an admin user can only change role of their own or other user
 	if user.Role != existingUser.Role && existingUser.Role == types.RoleAdmin {
-		adminUsers, err := m.store.GetUsersByRoleInOrg(ctx, orgID, types.RoleAdmin)
+		adminUsers, err := m.store.GetUsersByRoleAndOrgID(ctx, types.RoleAdmin, orgID)
 		if err != nil {
 			return nil, err
 		}
@@ -234,14 +230,14 @@ func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *
 	}
 
 	traits := types.NewTraitsFromUser(updatedUser)
-	m.analytics.IdentifyUser(ctx, user.OrgID, user.ID.String(), traits)
+	m.analytics.IdentifyUser(ctx, user.OrgID.String(), user.ID.String(), traits)
 
 	traits["updated_by"] = updatedBy
-	m.analytics.TrackUser(ctx, user.OrgID, user.ID.String(), "User Updated", traits)
+	m.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Updated", traits)
 
 	// if the role is updated then send an email
 	if existingUser.Role != updatedUser.Role {
-		if err := m.emailing.SendHTML(ctx, existingUser.Email, "Your Role Has Been Updated in SigNoz", emailtypes.TemplateNameUpdateRole, map[string]any{
+		if err := m.emailing.SendHTML(ctx, existingUser.Email.String(), "Your Role Has Been Updated in SigNoz", emailtypes.TemplateNameUpdateRole, map[string]any{
 			"CustomerName":   existingUser.DisplayName,
 			"UpdatedByEmail": requestor.Email,
 			"OldRole":        cases.Title(language.English).String(strings.ToLower(existingUser.Role.String())),
@@ -258,18 +254,18 @@ func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *
 	return updatedUser, nil
 }
 
-func (m *Module) DeleteUser(ctx context.Context, orgID string, id string, deletedBy string) error {
+func (m *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error {
 	user, err := m.store.GetUser(ctx, valuer.MustNewUUID(id))
 	if err != nil {
 		return err
 	}
 
-	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(user.Email)) {
+	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(user.Email.String())) {
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "integration user cannot be deleted")
 	}
 
 	// don't allow to delete the last admin user
-	adminUsers, err := m.store.GetUsersByRoleInOrg(ctx, orgID, types.RoleAdmin)
+	adminUsers, err := m.store.GetUsersByRoleAndOrgID(ctx, types.RoleAdmin, orgID)
 	if err != nil {
 		return err
 	}
@@ -278,11 +274,11 @@ func (m *Module) DeleteUser(ctx context.Context, orgID string, id string, delete
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot delete the last admin")
 	}
 
-	if err := m.store.DeleteUser(ctx, orgID, user.ID.StringValue()); err != nil {
+	if err := m.store.DeleteUser(ctx, orgID.String(), user.ID.StringValue()); err != nil {
 		return err
 	}
 
-	m.analytics.TrackUser(ctx, user.OrgID, user.ID.String(), "User Deleted", map[string]any{
+	m.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Deleted", map[string]any{
 		"deleted_by": deletedBy,
 	})
 
@@ -367,7 +363,7 @@ func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, ol
 }
 
 func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opts ...root.CreateUserOption) (*types.User, error) {
-	existingUser, err := module.store.GetUserByEmailAndOrgID(ctx, user.Email, valuer.MustNewUUID(user.OrgID))
+	existingUser, err := module.store.GetUserByEmailAndOrgID(ctx, user.Email, user.OrgID)
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
@@ -412,8 +408,8 @@ func (m *Module) RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UU
 	return m.store.RevokeAPIKey(ctx, id, removedByUserID)
 }
 
-func (module *Module) CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email string, passwd string) (*types.User, error) {
-	user, err := types.NewUser(name, email, types.RoleAdmin, organization.ID.StringValue())
+func (module *Module) CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email valuer.Email, passwd string) (*types.User, error) {
+	user, err := types.NewUser(name, email, types.RoleAdmin, organization.ID)
 	if err != nil {
 		return nil, err
 	}
