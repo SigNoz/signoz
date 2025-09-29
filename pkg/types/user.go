@@ -76,7 +76,7 @@ func NewTraitsFromUser(user *User) map[string]any {
 	return map[string]any{
 		"name":         user.DisplayName,
 		"role":         user.Role,
-		"email":        user.Email,
+		"email":        user.Email.String(),
 		"display_name": user.DisplayName,
 		"created_at":   user.CreatedAt,
 	}
