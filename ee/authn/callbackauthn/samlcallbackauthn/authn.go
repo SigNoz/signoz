@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	saml2 "github.com/russellhaering/gosaml2"
 	dsig "github.com/russellhaering/goxmldsig"
 )
@@ -82,8 +83,8 @@ func (a *AuthN) HandleCallback(ctx context.Context, formValues url.Values) (*aut
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "saml: expired saml response")
 	}
 
-	email := assertionInfo.NameID
-	if email == "" {
+	email, err := valuer.NewEmail(assertionInfo.NameID)
+	if err != nil {
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "saml: invalid email in the SSO response")
 	}
 

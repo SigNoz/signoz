@@ -61,7 +61,7 @@ func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	invites, err := h.module.CreateBulkInvite(ctx, claims.OrgID, claims.UserID, &types.PostableBulkInviteRequest{
+	invites, err := h.module.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), &types.PostableBulkInviteRequest{
 		Invites: []types.PostableInvite{req},
 	})
 	if err != nil {
@@ -94,7 +94,7 @@ func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.module.CreateBulkInvite(ctx, claims.OrgID, claims.UserID, &req)
+	_, err = h.module.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), &req)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -237,7 +237,7 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedUser, err := h.module.UpdateUser(ctx, claims.OrgID, id, &user, claims.UserID)
+	updatedUser, err := h.module.UpdateUser(ctx, valuer.MustNewUUID(claims.OrgID), id, &user, claims.UserID)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -258,7 +258,7 @@ func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.module.DeleteUser(ctx, claims.OrgID, id, claims.UserID); err != nil {
+	if err := h.module.DeleteUser(ctx, valuer.MustNewUUID(claims.OrgID), id, claims.UserID); err != nil {
 		render.Error(w, err)
 		return
 	}
@@ -342,18 +342,6 @@ func (h *handler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgId is not a valid uuid-v7"))
-		return
-	}
-
-	userID, err := valuer.NewUUID(claims.UserID)
-	if err != nil {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "userId is not a valid uuid-v7"))
-		return
-	}
-
 	req := new(types.PostableAPIKey)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to decode api key"))
@@ -362,7 +350,7 @@ func (h *handler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
 
 	apiKey, err := types.NewStorableAPIKey(
 		req.Name,
-		userID,
+		valuer.MustNewUUID(claims.UserID),
 		req.Role,
 		req.ExpiresInDays,
 	)
@@ -377,7 +365,7 @@ func (h *handler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createdApiKey, err := h.module.GetAPIKey(ctx, orgID, apiKey.ID)
+	createdApiKey, err := h.module.GetAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), apiKey.ID)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -397,13 +385,7 @@ func (h *handler) ListAPIKeys(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgId is not a valid uuid-v7"))
-		return
-	}
-
-	apiKeys, err := h.module.ListAPIKeys(ctx, orgID)
+	apiKeys, err := h.module.ListAPIKeys(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -434,18 +416,6 @@ func (h *handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgId is not a valid uuid-v7"))
-		return
-	}
-
-	userID, err := valuer.NewUUID(claims.UserID)
-	if err != nil {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "userId is not a valid uuid-v7"))
-		return
-	}
-
 	req := types.StorableAPIKey{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to decode api key"))
@@ -460,7 +430,7 @@ func (h *handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//get the API Key
-	existingAPIKey, err := h.module.GetAPIKey(ctx, orgID, id)
+	existingAPIKey, err := h.module.GetAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -473,12 +443,12 @@ func (h *handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(createdByUser.Email)) {
+	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(createdByUser.Email.String())) {
 		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "API Keys for integration users cannot be revoked"))
 		return
 	}
 
-	err = h.module.UpdateAPIKey(ctx, id, &req, userID)
+	err = h.module.UpdateAPIKey(ctx, id, &req, valuer.MustNewUUID(claims.UserID))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -504,20 +474,8 @@ func (h *handler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgId is not a valid uuid-v7"))
-		return
-	}
-
-	userID, err := valuer.NewUUID(claims.UserID)
-	if err != nil {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "userId is not a valid uuid-v7"))
-		return
-	}
-
 	//get the API Key
-	existingAPIKey, err := h.module.GetAPIKey(ctx, orgID, id)
+	existingAPIKey, err := h.module.GetAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -530,12 +488,12 @@ func (h *handler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(createdByUser.Email)) {
+	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(createdByUser.Email.String())) {
 		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "API Keys for integration users cannot be revoked"))
 		return
 	}
 
-	if err := h.module.RevokeAPIKey(ctx, id, userID); err != nil {
+	if err := h.module.RevokeAPIKey(ctx, id, valuer.MustNewUUID(claims.UserID)); err != nil {
 		render.Error(w, err)
 		return
 	}

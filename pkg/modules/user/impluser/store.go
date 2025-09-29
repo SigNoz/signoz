@@ -48,17 +48,18 @@ func (store *store) DeleteInvite(ctx context.Context, orgID string, id valuer.UU
 	return nil
 }
 
-// GetInviteByEmailInOrg implements types.InviteStore.
-func (store *store) GetInviteByEmailInOrg(ctx context.Context, orgID string, email string) (*types.Invite, error) {
+func (store *store) GetInviteByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.Invite, error) {
 	invite := new(types.Invite)
-	err := store.sqlstore.BunDB().NewSelect().
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).NewSelect().
 		Model(invite).
 		Where("email = ?", email).
 		Where("org_id = ?", orgID).
 		Scan(ctx)
-
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite with email: %s does not exist in org: %s", email, orgID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite with email %s does not exist in org %s", email, orgID)
 	}
 
 	return invite, nil
@@ -66,26 +67,19 @@ func (store *store) GetInviteByEmailInOrg(ctx context.Context, orgID string, ema
 
 func (store *store) GetInviteByToken(ctx context.Context, token string) (*types.GettableInvite, error) {
 	invite := new(types.Invite)
-	err := store.sqlstore.BunDB().NewSelect().
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
 		Model(invite).
 		Where("token = ?", token).
 		Scan(ctx)
-
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite with token: %s does not exist", token)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite does not exist", token)
 	}
 
-	orgName, err := store.getOrgNameByID(ctx, invite.OrgID)
-	if err != nil {
-		return nil, err
-	}
-
-	gettableInvite := &types.GettableInvite{
-		Invite:       *invite,
-		Organization: orgName,
-	}
-
-	return gettableInvite, nil
+	return invite, nil
 }
 
 func (store *store) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error) {
@@ -127,7 +121,7 @@ func (store *store) CreateUser(ctx context.Context, user *types.User) error {
 	return nil
 }
 
-func (store *store) GetUsersByEmail(ctx context.Context, email string) ([]*types.User, error) {
+func (store *store) GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*types.User, error) {
 	var users []*types.User
 
 	err := store.
@@ -142,31 +136,6 @@ func (store *store) GetUsersByEmail(ctx context.Context, email string) ([]*types
 	}
 
 	return users, nil
-}
-
-func (store *store) GetDefaultOrgID(ctx context.Context) (string, error) {
-	org := new(types.Organization)
-	err := store.sqlstore.BunDB().NewSelect().
-		Model(org).
-		Limit(1).
-		Scan(ctx)
-	if err != nil {
-		return "", store.sqlstore.WrapNotFoundErrf(err, types.ErrOrganizationNotFound, "default org does not exist")
-	}
-	return org.ID.String(), nil
-}
-
-// this is temporary function, we plan to remove this in the next PR.
-func (store *store) getOrgNameByID(ctx context.Context, orgID string) (string, error) {
-	org := new(types.Organization)
-	err := store.sqlstore.BunDB().NewSelect().
-		Model(org).
-		Where("id = ?", orgID).
-		Scan(ctx)
-	if err != nil {
-		return "", store.sqlstore.WrapNotFoundErrf(err, types.ErrOrganizationNotFound, "org with id: %s does not exist", orgID)
-	}
-	return org.DisplayName, nil
 }
 
 func (store *store) GetUser(ctx context.Context, id valuer.UUID) (*types.User, error) {
@@ -186,7 +155,7 @@ func (store *store) GetUser(ctx context.Context, id valuer.UUID) (*types.User, e
 	return user, nil
 }
 
-func (store *store) GetUserByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*types.User, error) {
+func (store *store) GetUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error) {
 	user := new(types.User)
 	err := store.
 		sqlstore.
@@ -203,30 +172,25 @@ func (store *store) GetUserByEmailAndOrgID(ctx context.Context, email string, or
 	return user, nil
 }
 
-func (store *store) GetUsersByRoleInOrg(ctx context.Context, orgID string, role types.Role) ([]*types.GettableUser, error) {
-	users := new([]*types.User)
-	err := store.sqlstore.BunDB().NewSelect().
-		Model(users).
+func (store *store) GetUsersByRoleAndOrgID(ctx context.Context, role types.Role, orgID valuer.UUID) ([]*types.User, error) {
+	var users []*types.User
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&users).
 		Where("org_id = ?", orgID).
 		Where("role = ?", role).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with role: %s does not exist in org: %s", role, orgID)
-	}
-
-	// remove this in next PR
-	orgName, err := store.getOrgNameByID(ctx, orgID)
-	if err != nil {
 		return nil, err
 	}
-	usersWithOrg := []*types.GettableUser{}
-	for _, user := range *users {
-		usersWithOrg = append(usersWithOrg, &types.GettableUser{User: *user, Organization: orgName})
-	}
-	return usersWithOrg, nil
+
+	return users, nil
 }
 
-func (store *store) UpdateUser(ctx context.Context, orgID string, id string, user *types.User) (*types.User, error) {
+func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.User) (*types.User, error) {
 	user.UpdatedAt = time.Now()
 	_, err := store.sqlstore.BunDB().NewUpdate().
 		Model(user).
@@ -242,30 +206,24 @@ func (store *store) UpdateUser(ctx context.Context, orgID string, id string, use
 	return user, nil
 }
 
-func (store *store) ListUsers(ctx context.Context, orgID string) ([]*types.GettableUser, error) {
+func (store *store) ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.GettableUser, error) {
 	users := []*types.User{}
-	err := store.sqlstore.BunDB().NewSelect().
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
 		Model(&users).
 		Where("org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "users with org id: %s does not exist", orgID)
-	}
-
-	// remove this in next PR
-	orgName, err := store.getOrgNameByID(ctx, orgID)
-	if err != nil {
 		return nil, err
 	}
-	usersWithOrg := []*types.GettableUser{}
-	for _, user := range users {
-		usersWithOrg = append(usersWithOrg, &types.GettableUser{User: *user, Organization: orgName})
-	}
-	return usersWithOrg, nil
+
+	return users, nil
 }
 
 func (store *store) DeleteUser(ctx context.Context, orgID string, id string) error {
-
 	tx, err := store.sqlstore.BunDB().BeginTx(ctx, nil)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to start transaction")
