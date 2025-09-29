@@ -8,6 +8,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spanpercentiletypes"
 	"github.com/huandu/go-sqlbuilder"
+	"strings"
 )
 
 func BuildSpanPercentileQuery(req *spanpercentiletypes.SpanPercentileRequest) (*qbtypes.QueryRangeRequest, error) {
@@ -15,124 +16,17 @@ func BuildSpanPercentileQuery(req *spanpercentiletypes.SpanPercentileRequest) (*
 		return nil, err
 	}
 
-	start := querybuilder.ToNanoSecs(req.Start)
-	end := querybuilder.ToNanoSecs(req.End)
-
-	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
-	endBucket := end / querybuilder.NsToSeconds
-
-	var cteFragments []string
-	var cteArgs [][]any
-
-	// Build resource filter CTE if filters are present
-	if req.Filter != nil && req.Filter.Expression != "" {
-		resourceFilterBuilder := sqlbuilder.NewSelectBuilder()
-		resourceFilterBuilder.Select("fingerprint")
-		resourceFilterBuilder.From(fmt.Sprintf("%s.%s", resourcefilter.TracesDBName, resourcefilter.TraceResourceV3TableName))
-
-		// Add time filter for resource table
-		resourceFilterBuilder.Where(
-			fmt.Sprintf("seen_at_ts_bucket_start >= %d", startBucket),
-			fmt.Sprintf("seen_at_ts_bucket_start <= %d", endBucket),
-		)
-
-		// Add filter expression conditions to resource filter
-		resourceFilterBuilder.Where(fmt.Sprintf("(%s)", req.Filter.Expression))
-
-		resourceFilterSQL, resourceFilterArgs := resourceFilterBuilder.BuildWithFlavor(sqlbuilder.ClickHouse)
-		cteFragments = append(cteFragments, fmt.Sprintf("__resource_filter AS (%s)", resourceFilterSQL))
-		cteArgs = append(cteArgs, resourceFilterArgs)
+	builder := &spanPercentileCTEBuilder{
+		start:   querybuilder.ToNanoSecs(req.Start),
+		end:     querybuilder.ToNanoSecs(req.End),
+		spanID:  req.SpanID,
+		filter:  req.Filter,
+		request: req,
 	}
 
-	// Build base spans CTE
-	baseSpansBuilder := sqlbuilder.NewSelectBuilder()
-	baseSpansBuilder.Select("*", sqlbuilder.Escape("resource_string_service$$name as `service.name`"))
-	baseSpansBuilder.From(fmt.Sprintf("%s.%s", telemetrytraces.DBName, telemetrytraces.SpanIndexV3TableName))
-	baseSpansBuilder.Where(
-		baseSpansBuilder.GE("timestamp", fmt.Sprintf("%d", start)),
-		baseSpansBuilder.L("timestamp", fmt.Sprintf("%d", end)),
-		baseSpansBuilder.GE("ts_bucket_start", startBucket),
-		baseSpansBuilder.LE("ts_bucket_start", endBucket),
-	)
-
-	baseSpansSQL, baseSpansArgs := baseSpansBuilder.BuildWithFlavor(sqlbuilder.ClickHouse)
-	cteFragments = append(cteFragments, fmt.Sprintf("base_spans AS (%s)", baseSpansSQL))
-	cteArgs = append(cteArgs, baseSpansArgs)
-
-	// Build target span query with resource filtering if applicable
-	targetSpanBuilder := sqlbuilder.NewSelectBuilder()
-	targetSpanBuilder.Select(
-		"duration_nano",
-		"name",
-		"`service.name` as service_name",
-		"resources_string['deployment.environment'] as deployment_environment",
-	)
-
-	if req.Filter != nil && req.Filter.Expression != "" {
-		// Use resource filtered query
-		targetSpanBuilder.From("base_spans")
-		targetSpanBuilder.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
-	} else {
-		// Use base spans directly
-		targetSpanBuilder.From("base_spans")
-	}
-
-	targetSpanBuilder.Where(fmt.Sprintf("span_id = '%s'", req.SpanID))
-	targetSpanBuilder.SQL("LIMIT 1")
-
-	targetSpanSQL, targetSpanArgs := targetSpanBuilder.BuildWithFlavor(sqlbuilder.ClickHouse)
-	cteFragments = append(cteFragments, fmt.Sprintf("target_span AS (%s)", targetSpanSQL))
-	cteArgs = append(cteArgs, targetSpanArgs)
-
-	// Build main aggregation query
-	mainBuilder := sqlbuilder.NewSelectBuilder()
-	mainBuilder.Select(
-		fmt.Sprintf("'%s' as span_id", req.SpanID),
-		"t.duration_nano",
-		"t.duration_nano as duration_ms",
-		"t.name as span_name",
-		"t.service_name",
-		"t.deployment_environment",
-		"round((sum(multiIf(s.duration_nano < t.duration_nano, 1, 0)) * 100.0) / count(*), 2) as percentile_position",
-		"quantile(0.50)(s.duration_nano) as p50_duration_ms",
-		"quantile(0.90)(s.duration_nano) as p90_duration_ms",
-		"quantile(0.99)(s.duration_nano) as p99_duration_ms",
-		"count(*) as total_spans_in_group",
-	)
-
-	mainBuilder.SQL("FROM target_span t")
-
-	if req.Filter != nil && req.Filter.Expression != "" {
-		// Join with resource filtered spans
-		mainBuilder.SQL("CROSS JOIN base_spans s")
-		mainBuilder.Where("s.resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
-	} else {
-		// Join with base spans directly
-		mainBuilder.SQL("CROSS JOIN base_spans s")
-	}
-
-	mainBuilder.Where(
-		"s.name = t.name",
-		"s.`service.name` = t.service_name",
-		"s.resources_string['deployment.environment'] = t.deployment_environment",
-	)
-
-	mainBuilder.GroupBy(
-		"t.duration_nano",
-		"t.name",
-		"t.service_name",
-		"t.deployment_environment",
-	)
-
-	mainSQL, mainArgs := mainBuilder.BuildWithFlavor(sqlbuilder.ClickHouse)
-
-	// Combine CTEs with main query
-	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL + " SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000"
-	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
-
-	stmt := &qbtypes.Statement{
-		Query: finalSQL,
-		Args:  finalArgs,
+	stmt, err := builder.build()
+	if err != nil {
+		return nil, err
 	}
 
 	query := qbtypes.QueryEnvelope{
@@ -155,4 +49,167 @@ func BuildSpanPercentileQuery(req *spanpercentiletypes.SpanPercentileRequest) (*
 			FormatTableResultForUI: true,
 		},
 	}, nil
+}
+
+type cteNode struct {
+	name string
+	sql  string
+	args []any
+}
+
+type spanPercentileCTEBuilder struct {
+	start   uint64
+	end     uint64
+	spanID  string
+	filter  *qbtypes.Filter
+	request *spanpercentiletypes.SpanPercentileRequest
+	ctes    []cteNode
+}
+
+func (b *spanPercentileCTEBuilder) build() (*qbtypes.Statement, error) {
+	// Build CTEs in order
+	b.buildResourceFilterCTE()
+	b.buildBaseSpansCTE()
+	b.buildTargetSpanCTE()
+
+	// Build main query
+	mainSQL, mainArgs := b.buildMainQuery()
+
+	// Combine CTEs with main query
+	var cteFragments []string
+	var cteArgs [][]any
+
+	for _, cte := range b.ctes {
+		cteFragments = append(cteFragments, fmt.Sprintf("%s AS (%s)", cte.name, cte.sql))
+		cteArgs = append(cteArgs, cte.args)
+	}
+
+	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL + " SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000"
+	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
+
+	// For ClickHouseSQL, we need to interpolate all args into the SQL since it doesn't support parameterized queries
+	interpolatedSQL := b.interpolateArgs(finalSQL, finalArgs)
+
+	return &qbtypes.Statement{
+		Query: interpolatedSQL,
+		Args:  nil, // No args for ClickHouseSQL
+	}, nil
+}
+
+func (b *spanPercentileCTEBuilder) buildResourceFilterCTE() {
+	if b.filter == nil || b.filter.Expression == "" {
+		return
+	}
+
+	startBucket := b.start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
+	endBucket := b.end / querybuilder.NsToSeconds
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("fingerprint")
+	sb.From(fmt.Sprintf("%s.%s", resourcefilter.TracesDBName, resourcefilter.TraceResourceV3TableName))
+	sb.Where(
+		sb.GE("seen_at_ts_bucket_start", fmt.Sprintf("%d", startBucket)),
+		sb.LE("seen_at_ts_bucket_start", fmt.Sprintf("%d", endBucket)),
+	)
+	sb.Where(fmt.Sprintf("(%s)", b.filter.Expression))
+
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	b.addCTE("__resource_filter", sql, args)
+}
+
+func (b *spanPercentileCTEBuilder) buildBaseSpansCTE() {
+	startBucket := b.start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
+	endBucket := b.end / querybuilder.NsToSeconds
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("*")
+	sb.SelectMore(sqlbuilder.Escape("resource_string_service$$name") + " AS `service.name`")
+	sb.From(fmt.Sprintf("%s.%s", telemetrytraces.DBName, telemetrytraces.SpanIndexV3TableName))
+	sb.Where(
+		sb.GE("timestamp", fmt.Sprintf("%d", b.start)),
+		sb.L("timestamp", fmt.Sprintf("%d", b.end)),
+		sb.GE("ts_bucket_start", startBucket),
+		sb.LE("ts_bucket_start", endBucket),
+	)
+
+	if b.filter != nil && b.filter.Expression != "" {
+		sb.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
+	}
+
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	b.addCTE("base_spans", sql, args)
+}
+
+func (b *spanPercentileCTEBuilder) buildTargetSpanCTE() {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(
+		"duration_nano",
+		"name",
+		"`service.name` as service_name",
+		"resources_string['deployment.environment'] as deployment_environment",
+	)
+	sb.From("base_spans")
+	sb.Where(fmt.Sprintf("span_id = '%s'", b.spanID))
+	sb.SQL("LIMIT 1")
+
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	b.addCTE("target_span", sql, args)
+}
+
+func (b *spanPercentileCTEBuilder) buildMainQuery() (string, []any) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(
+		fmt.Sprintf("'%s' as span_id", b.spanID),
+		"t.duration_nano",
+		"t.duration_nano as duration_ms",
+		"t.name as span_name",
+		"t.service_name",
+		"t.deployment_environment",
+		"round((sum(multiIf(s.duration_nano < t.duration_nano, 1, 0)) * 100.0) / count(*), 2) as percentile_position",
+		"quantile(0.50)(s.duration_nano) as p50_duration_ms",
+		"quantile(0.90)(s.duration_nano) as p90_duration_ms",
+		"quantile(0.99)(s.duration_nano) as p99_duration_ms",
+		"count(*) as total_spans_in_group",
+	)
+
+	sb.SQL("FROM target_span t")
+	sb.SQL("CROSS JOIN base_spans s")
+	sb.Where(
+		"s.name = t.name",
+		"s.`service.name` = t.service_name",
+		"s.resources_string['deployment.environment'] = t.deployment_environment",
+	)
+
+	sb.GroupBy(
+		"t.duration_nano",
+		"t.name",
+		"t.service_name",
+		"t.deployment_environment",
+	)
+
+	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+}
+
+func (b *spanPercentileCTEBuilder) addCTE(name, sql string, args []any) {
+	b.ctes = append(b.ctes, cteNode{
+		name: name,
+		sql:  sql,
+		args: args,
+	})
+}
+
+func (b *spanPercentileCTEBuilder) interpolateArgs(sql string, args []any) string {
+	result := sql
+	for _, arg := range args {
+		// Replace first occurrence of ? with the argument value
+		switch v := arg.(type) {
+		case string:
+			result = strings.Replace(result, "?", fmt.Sprintf("'%s'", v), 1)
+		case int, int64, uint64, float64:
+			result = strings.Replace(result, "?", fmt.Sprintf("%v", v), 1)
+		default:
+			result = strings.Replace(result, "?", fmt.Sprintf("%v", v), 1)
+		}
+	}
+	return result
 }
