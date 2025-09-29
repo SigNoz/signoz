@@ -69,7 +69,6 @@ type BasicRuleThreshold struct {
 	RecoveryTarget *float64  `json:"recoveryTarget"`
 	MatchType      MatchType `json:"matchType"`
 	CompareOp      CompareOp `json:"op"`
-	SelectedQuery  string    `json:"selectedQuery"`
 	Channels       []string  `json:"channels"`
 }
 
@@ -159,10 +158,6 @@ func (b BasicRuleThreshold) GetMatchType() MatchType {
 
 func (b BasicRuleThreshold) GetCompareOp() CompareOp {
 	return b.CompareOp
-}
-
-func (b BasicRuleThreshold) GetSelectedQuery() string {
-	return b.SelectedQuery
 }
 
 func (b BasicRuleThreshold) Validate() error {

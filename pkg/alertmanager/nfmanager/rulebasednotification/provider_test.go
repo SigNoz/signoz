@@ -546,7 +546,6 @@ func TestProvider_CreateRoute(t *testing.T) {
 				Identifiable:   types.Identifiable{ID: valuer.GenerateUUID()},
 				Expression:     `service == "auth"`,
 				ExpressionKind: alertmanagertypes.PolicyBasedExpression,
-				Priority:       "1",
 				Name:           "auth-service-route",
 				Description:    "Route for auth service alerts",
 				Enabled:        true,
@@ -567,7 +566,6 @@ func TestProvider_CreateRoute(t *testing.T) {
 			route: &alertmanagertypes.ExpressionRoute{
 				Expression:     "", // empty expression
 				ExpressionKind: alertmanagertypes.PolicyBasedExpression,
-				Priority:       "1",
 				Name:           "invalid-route",
 				OrgID:          "test-org-123",
 			},
@@ -579,7 +577,6 @@ func TestProvider_CreateRoute(t *testing.T) {
 			route: &alertmanagertypes.ExpressionRoute{
 				Expression:     `service == "auth"`,
 				ExpressionKind: alertmanagertypes.PolicyBasedExpression,
-				Priority:       "1",
 				Name:           "", // empty name
 				OrgID:          "test-org-123",
 			},
@@ -631,7 +628,6 @@ func TestProvider_CreateRoutes(t *testing.T) {
 	validRoute2 := &alertmanagertypes.ExpressionRoute{
 		Expression:     `service == "payment"`,
 		ExpressionKind: alertmanagertypes.PolicyBasedExpression,
-		Priority:       "2",
 		Name:           "payment-route",
 		Description:    "Payment service route",
 		Enabled:        true,

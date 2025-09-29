@@ -5,6 +5,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/prometheus/alertmanager/featurecontrol"
+	"github.com/prometheus/alertmanager/matcher/compat"
+	"log/slog"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -43,7 +46,6 @@ type expressionRoute struct {
 	ExpressionKind string `bun:"kind,type:text" json:"kind"`
 
 	Channels []string `bun:"channels,type:jsonb" json:"channels"`
-	Priority string   `bun:"priority,type:text" json:"priority"`
 
 	Name        string   `bun:"name,type:text" json:"name"`
 	Description string   `bun:"description,type:text" json:"description"`
@@ -66,6 +68,7 @@ type rule struct {
 type addNotificationRoutes struct {
 	sqlstore  sqlstore.SQLStore
 	sqlschema sqlschema.SQLSchema
+	logger    *slog.Logger
 }
 
 func NewAddNotificationRoutesFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
@@ -74,10 +77,11 @@ func NewAddNotificationRoutesFactory(sqlstore sqlstore.SQLStore, sqlschema sqlsc
 	})
 }
 
-func newAddNotificationRoutes(_ context.Context, _ factory.ProviderSettings, _ Config, sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) (SQLMigration, error) {
+func newAddNotificationRoutes(_ context.Context, settings factory.ProviderSettings, _ Config, sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) (SQLMigration, error) {
 	return &addNotificationRoutes{
 		sqlstore:  sqlstore,
 		sqlschema: sqlschema,
+		logger:    settings.Logger,
 	}, nil
 }
 
@@ -125,8 +129,17 @@ func (migration *addNotificationRoutes) Up(ctx context.Context, db *bun.DB) erro
 }
 
 func (migration *addNotificationRoutes) migrateRulesToNotificationRoutes(ctx context.Context, db *bun.DB) error {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
 	var rules []*rule
-	err := db.NewSelect().
+	err = tx.NewSelect().
 		Model(&rules).
 		Where("deleted = ?", 0).
 		Scan(ctx)
@@ -134,50 +147,69 @@ func (migration *addNotificationRoutes) migrateRulesToNotificationRoutes(ctx con
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil // No rules to migrate
 		}
-		return fmt.Errorf("failed to fetch rules: %w", err)
+		return errors.NewInternalf(errors.CodeInternal, "failed to fetch rules")
 	}
 
 	if len(rules) == 0 {
+		if err := tx.Commit(); err != nil {
+			return err
+		}
 		return nil
 	}
 
-	channelsByOrg, err := migration.getAllChannelsByOrg(db)
+	channelsByOrg, err := migration.getAllChannelsInTx(ctx, tx)
 	if err != nil {
-		return err
+		return errors.NewInternalf(errors.CodeInternal, "fetching channels error: %v", err)
 	}
+
+	var routesToInsert []*expressionRoute
+
 	for _, r := range rules {
-		existingRouteCount, err := db.NewSelect().
+		existingRouteCount, err := tx.NewSelect().
 			Model((*expressionRoute)(nil)).
 			Where("name = ? AND kind = ? AND org_id = ?", r.ID.StringValue(), "rule", r.OrgID).
 			Count(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to check existing route for rule %s: %w", r.ID.StringValue(), err)
+			return errors.NewInternalf(errors.CodeInternal, "failed to check existing route for rule %s", r.ID.StringValue())
 		}
 
 		if existingRouteCount > 0 {
 			continue
 		}
 
-		routeList := migration.convertRulesToRoutes([]*rule{r}, channelsByOrg)
-		if len(routeList) > 0 {
-			_, err = db.NewInsert().
-				Model(&routeList[0]).
-				Exec(ctx)
-			if err != nil {
-				return fmt.Errorf("failed to insert notification route for rule %s: %w", r.ID.StringValue(), err)
-			}
+		routeList, err := migration.convertRulesToRoutes([]*rule{r}, channelsByOrg)
+		if err != nil {
+			return errors.NewInternalf(errors.CodeInternal, "converting rules to routes error: %v", err)
 		}
+		if len(routeList) > 0 {
+			routesToInsert = append(routesToInsert, routeList...)
+		}
+	}
+
+	// Insert all routes in a single batch operation
+	if len(routesToInsert) > 0 {
+		_, err = tx.NewInsert().
+			Model(&routesToInsert).
+			Exec(ctx)
+		if err != nil {
+			return errors.NewInternalf(errors.CodeInternal, "failed to insert notification routes")
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (migration *addNotificationRoutes) convertRulesToRoutes(rules []*rule, channelsByOrg map[string][]string) []*expressionRoute {
+func (migration *addNotificationRoutes) convertRulesToRoutes(rules []*rule, channelsByOrg map[string][]string) ([]*expressionRoute, error) {
 	var routes []*expressionRoute
-
+	var errorList []error
 	for _, r := range rules {
 		var gettableRule ruletypes.GettableRule
 		if err := json.Unmarshal([]byte(r.Data), &gettableRule); err != nil {
+			errorList = append(errorList, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal gettableRule for rule %s : error : %v", r.ID.StringValue(), err))
 			continue
 		}
 
@@ -216,11 +248,13 @@ func (migration *addNotificationRoutes) convertRulesToRoutes(rules []*rule, chan
 		}
 		routes = append(routes, route)
 	}
-
-	return routes
+	if len(errorList) > 0 {
+		return nil, errors.Join(errorList...)
+	}
+	return routes, nil
 }
 
-func (migration *addNotificationRoutes) getAllChannelsByOrg(db *bun.DB) (map[string][]string, error) {
+func (migration *addNotificationRoutes) getAllChannelsInTx(ctx context.Context, tx bun.Tx) (map[string][]string, error) {
 	type channel struct {
 		bun.BaseModel `bun:"table:notification_channel"`
 		types.Identifiable
@@ -232,11 +266,11 @@ func (migration *addNotificationRoutes) getAllChannelsByOrg(db *bun.DB) (map[str
 	}
 
 	var channels []*channel
-	err := db.NewSelect().
+	err := tx.NewSelect().
 		Model(&channels).
-		Scan(context.Background())
+		Scan(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewInternalf(errors.CodeInternal, "failed to fetch all channels")
 	}
 
 	// Group channels by org ID

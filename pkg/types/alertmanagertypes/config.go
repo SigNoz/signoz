@@ -318,7 +318,7 @@ func (c *Config) CreateRuleIDMatcher(ruleID string, receiverNames []string) erro
 	return nil
 }
 
-func (c *Config) DeleteRuleIdInhibitor(ruleID string) error {
+func (c *Config) DeleteRuleIDInhibitor(ruleID string) error {
 	if c.alertmanagerConfig.InhibitRules == nil {
 		return nil // already nil
 	}

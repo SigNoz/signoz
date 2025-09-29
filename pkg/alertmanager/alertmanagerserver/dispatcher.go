@@ -561,6 +561,8 @@ func getGroupLabels(alert *types.Alert, groups map[model.LabelName]struct{}) mod
 }
 
 func (d *Dispatcher) getOrCreateRoute(receiver string) *dispatch.Route {
+	d.mtx.Lock()
+	defer d.mtx.Unlock()
 	if route, exists := d.receiverRoutes[receiver]; exists {
 		return route
 	}

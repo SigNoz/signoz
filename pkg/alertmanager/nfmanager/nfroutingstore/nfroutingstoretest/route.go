@@ -60,7 +60,7 @@ func (m *MockSQLRouteStore) DeleteRouteByName(ctx context.Context, orgID string,
 }
 
 func (m *MockSQLRouteStore) ExpectGetByID(orgID, id string, route *alertmanagertypes.ExpressionRoute) {
-	rows := sqlmock.NewRows([]string{"id", "org_id", "name", "expression", "kind", "priority", "description", "enabled", "tags", "channels", "created_at", "updated_at", "created_by", "updated_by"})
+	rows := sqlmock.NewRows([]string{"id", "org_id", "name", "expression", "kind", "description", "enabled", "tags", "channels", "created_at", "updated_at", "created_by", "updated_by"})
 
 	if route != nil {
 		rows.AddRow(
@@ -69,10 +69,9 @@ func (m *MockSQLRouteStore) ExpectGetByID(orgID, id string, route *alertmanagert
 			route.Name,
 			route.Expression,
 			route.ExpressionKind.StringValue(),
-			route.Priority,
 			route.Description,
 			route.Enabled,
-			"[]",                                          // tags as JSON
+			"[]", // tags as JSON
 			`["`+strings.Join(route.Channels, `","`)+`"]`, // channels as JSON
 			"0001-01-01T00:00:00Z",                        // created_at
 			"0001-01-01T00:00:00Z",                        // updated_at
@@ -110,7 +109,7 @@ func (m *MockSQLRouteStore) ExpectDelete(orgID, id string) {
 }
 
 func (m *MockSQLRouteStore) ExpectGetAllByKindAndOrgID(orgID string, kind alertmanagertypes.ExpressionKind, routes []*alertmanagertypes.ExpressionRoute) {
-	rows := sqlmock.NewRows([]string{"id", "org_id", "name", "expression", "kind", "priority", "description", "enabled", "tags", "channels", "created_at", "updated_at", "created_by", "updated_by"})
+	rows := sqlmock.NewRows([]string{"id", "org_id", "name", "expression", "kind", "description", "enabled", "tags", "channels", "created_at", "updated_at", "created_by", "updated_by"})
 
 	for _, route := range routes {
 		if route.OrgID == orgID && route.ExpressionKind == kind {
@@ -120,10 +119,9 @@ func (m *MockSQLRouteStore) ExpectGetAllByKindAndOrgID(orgID string, kind alertm
 				route.Name,
 				route.Expression,
 				route.ExpressionKind.StringValue(),
-				route.Priority,
 				route.Description,
 				route.Enabled,
-				"[]",                                          // tags as JSON
+				"[]", // tags as JSON
 				`["`+strings.Join(route.Channels, `","`)+`"]`, // channels as JSON
 				"0001-01-01T00:00:00Z",                        // created_at
 				"0001-01-01T00:00:00Z",                        // updated_at
@@ -138,7 +136,7 @@ func (m *MockSQLRouteStore) ExpectGetAllByKindAndOrgID(orgID string, kind alertm
 }
 
 func (m *MockSQLRouteStore) ExpectGetAllByName(orgID, name string, routes []*alertmanagertypes.ExpressionRoute) {
-	rows := sqlmock.NewRows([]string{"id", "org_id", "name", "expression", "kind", "priority", "description", "enabled", "tags", "channels", "created_at", "updated_at", "created_by", "updated_by"})
+	rows := sqlmock.NewRows([]string{"id", "org_id", "name", "expression", "kind", "description", "enabled", "tags", "channels", "created_at", "updated_at", "created_by", "updated_by"})
 
 	for _, route := range routes {
 		if route.OrgID == orgID && route.Name == name {
@@ -148,10 +146,9 @@ func (m *MockSQLRouteStore) ExpectGetAllByName(orgID, name string, routes []*ale
 				route.Name,
 				route.Expression,
 				route.ExpressionKind.StringValue(),
-				route.Priority,
 				route.Description,
 				route.Enabled,
-				"[]",                                          // tags as JSON
+				"[]", // tags as JSON
 				`["`+strings.Join(route.Channels, `","`)+`"]`, // channels as JSON
 				"0001-01-01T00:00:00Z",                        // created_at
 				"0001-01-01T00:00:00Z",                        // updated_at
@@ -166,8 +163,7 @@ func (m *MockSQLRouteStore) ExpectGetAllByName(orgID, name string, routes []*ale
 }
 
 func (m *MockSQLRouteStore) ExpectDeleteRouteByName(orgID, name string) {
-	m.mock.ExpectExec(`DELETE FROM "notification_routes" WHERE \(org_id = \$1\) AND \(name = \$2\)`).
-		WithArgs(orgID, name).
+	m.mock.ExpectExec(`DELETE FROM "notification_routes" AS "expression_route" WHERE \(org_id = '` + regexp.QuoteMeta(orgID) + `'\) AND \(name = '` + regexp.QuoteMeta(name) + `'\)`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 }
 

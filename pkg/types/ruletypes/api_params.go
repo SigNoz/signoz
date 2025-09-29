@@ -98,7 +98,6 @@ func (r *PostableRule) GetRuleRouteRequest(ruleId string) ([]*alertmanagertypes.
 			Expression:     expression,
 			ExpressionKind: alertmanagertypes.RuleBasedExpression,
 			Channels:       receiver.Channels,
-			Priority:       "", // Default empty priority
 			Name:           ruleId,
 			Description:    fmt.Sprintf("Auto-generated route for rule %s", ruleId),
 			Enabled:        true,
@@ -216,10 +215,19 @@ func (r *PostableRule) processRuleDefaults() error {
 					TargetValue: r.RuleCondition.Target,
 					MatchType:   r.RuleCondition.MatchType,
 					CompareOp:   r.RuleCondition.CompareOp,
+					Channels:    r.PreferredChannels,
 				}},
 			}
 			r.RuleCondition.Thresholds = &thresholdData
 			r.Evaluation = &EvaluationEnvelope{RollingEvaluation, RollingWindow{EvalWindow: r.EvalWindow, Frequency: r.Frequency}}
+			r.NotificationSettings = &NotificationSettings{
+				ReNotifyInterval:   Duration(4 * time.Hour),
+				NotificationPolicy: false,
+				AlertStates:        []model.AlertState{model.StateFiring},
+			}
+			if r.RuleCondition.AlertOnAbsent {
+				r.NotificationSettings.AlertStates = append(r.NotificationSettings.AlertStates, model.StateNoData)
+			}
 		}
 	}
 
@@ -260,7 +268,7 @@ func isValidLabelName(ln string) bool {
 		return false
 	}
 	for i, b := range ln {
-		if !((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_' || (b >= '0' && b <= '9' && i > 0)) {
+		if !((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_' || b == '.' || (b >= '0' && b <= '9' && i > 0)) {
 			return false
 		}
 	}

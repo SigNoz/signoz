@@ -233,7 +233,6 @@ func (provider *provider) CreateRoutePolicy(ctx context.Context, routeRequest *a
 	route := alertmanagertypes.ExpressionRoute{
 		Expression:     routeRequest.Expression,
 		ExpressionKind: routeRequest.ExpressionKind,
-		Priority:       routeRequest.Priority,
 		Name:           routeRequest.Name,
 		Description:    routeRequest.Description,
 		Enabled:        routeRequest.Enabled,
@@ -294,7 +293,6 @@ func (provider *provider) CreateRoutePolicies(ctx context.Context, routeRequests
 		route := &alertmanagertypes.ExpressionRoute{
 			Expression:     routeRequest.Expression,
 			ExpressionKind: routeRequest.ExpressionKind,
-			Priority:       routeRequest.Priority,
 			Name:           routeRequest.Name,
 			Description:    routeRequest.Description,
 			Enabled:        routeRequest.Enabled,
@@ -353,7 +351,6 @@ func (provider *provider) GetRoutePolicyByID(ctx context.Context, routeID string
 			Expression:     route.Expression,
 			ExpressionKind: route.ExpressionKind,
 			Channels:       route.Channels,
-			Priority:       route.Priority,
 			Name:           route.Name,
 			Description:    route.Description,
 			Enabled:        route.Enabled,
@@ -389,7 +386,6 @@ func (provider *provider) GetAllRoutePolicies(ctx context.Context) ([]*alertmana
 				Expression:     route.Expression,
 				ExpressionKind: route.ExpressionKind,
 				Channels:       route.Channels,
-				Priority:       route.Priority,
 				Name:           route.Name,
 				Description:    route.Description,
 				Enabled:        route.Enabled,
@@ -436,7 +432,6 @@ func (provider *provider) UpdateRoutePolicyByID(ctx context.Context, routeID str
 	updatedRoute := &alertmanagertypes.ExpressionRoute{
 		Expression:     route.Expression,
 		ExpressionKind: route.ExpressionKind,
-		Priority:       route.Priority,
 		Name:           route.Name,
 		Description:    route.Description,
 		Enabled:        route.Enabled,
@@ -530,7 +525,7 @@ func (provider *provider) DeleteAllInhibitRulesByRuleId(ctx context.Context, org
 		return err
 	}
 
-	if err := config.DeleteRuleIdInhibitor(ruleId); err != nil {
+	if err := config.DeleteRuleIDInhibitor(ruleId); err != nil {
 		return err
 	}
 

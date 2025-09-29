@@ -14,7 +14,6 @@ type PostableExpressionRoute struct {
 	Expression     string         `json:"expression"`
 	ExpressionKind ExpressionKind `json:"kind"`
 	Channels       []string       `json:"channels"`
-	Priority       string         `json:"priority"`
 	Name           string         `json:"name"`
 	Description    string         `json:"description"`
 	Enabled        bool           `json:"enabled"`
@@ -80,7 +79,6 @@ type ExpressionRoute struct {
 	ExpressionKind ExpressionKind `bun:"kind,type:text" json:"kind"`
 
 	Channels []string `bun:"channels,type:jsonb" json:"channels"`
-	Priority string   `bun:"priority,type:text" json:"priority"`
 
 	Name        string   `bun:"name,type:text" json:"name"`
 	Description string   `bun:"description,type:text" json:"description"`
