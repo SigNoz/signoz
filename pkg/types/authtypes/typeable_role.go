@@ -6,11 +6,11 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
-var _ Typeable = new(role)
+var _ Typeable = new(typeableRole)
 
-type role struct{}
+type typeableRole struct{}
 
-func (role *role) Tuples(subject string, relation Relation, selector []Selector) ([]*openfgav1.TupleKey, error) {
+func (typeableRole *typeableRole) Tuples(subject string, relation Relation, selector []Selector) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 	for _, selector := range selector {
 		object := strings.Join([]string{TypeRole.StringValue(), selector.String()}, ":")
@@ -20,14 +20,14 @@ func (role *role) Tuples(subject string, relation Relation, selector []Selector)
 	return tuples, nil
 }
 
-func (role *role) Type() Type {
+func (typeableRole *typeableRole) Type() Type {
 	return TypeRole
 }
 
-func (role *role) Name() Name {
+func (typeableRole *typeableRole) Name() Name {
 	return MustNewName("role")
 }
 
-func (role *role) Prefix() string {
-	return role.Type().StringValue()
+func (typeableRole *typeableRole) Prefix() string {
+	return typeableRole.Type().StringValue()
 }

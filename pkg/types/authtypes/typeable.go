@@ -22,9 +22,9 @@ var (
 )
 
 var (
-	TypeableUser         = &user{}
-	TypeableRole         = &role{}
-	TypeableOrganization = &organization{}
+	TypeableUser         = &typeableUser{}
+	TypeableRole         = &typeableRole{}
+	TypeableOrganization = &typeableOrganization{}
 )
 
 type Typeable interface {
@@ -87,13 +87,13 @@ func NewTypeableFromType(typed Type, name Name) (Typeable, error) {
 	case TypeOrganization:
 		return TypeableOrganization, nil
 	case TypeResource:
-		resource, err := NewResource(name)
+		resource, err := NewTypeableResource(name)
 		if err != nil {
 			return nil, err
 		}
 		return resource, nil
 	case TypeResources:
-		resources, err := NewResources(name)
+		resources, err := NewTypeableResources(name)
 		if err != nil {
 			return nil, err
 		}
