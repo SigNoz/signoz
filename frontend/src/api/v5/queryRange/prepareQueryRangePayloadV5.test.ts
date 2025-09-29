@@ -634,4 +634,70 @@ describe('prepareQueryRangePayloadV5', () => {
 			}),
 		);
 	});
+
+	it('builds payload for builder queries with filters array but no filter expression', () => {
+		const props: GetQueryResultsProps = {
+			query: {
+				queryType: EQueryType.QUERY_BUILDER,
+				id: 'q8',
+				unit: undefined,
+				promql: [],
+				clickhouse_sql: [],
+				builder: {
+					queryData: [
+						baseBuilderQuery({
+							dataSource: DataSource.LOGS,
+							filter: { expression: '' },
+							filters: {
+								items: [
+									{
+										id: '1',
+										key: { key: 'service.name', type: 'string' },
+										op: '=',
+										value: 'payment-service',
+									},
+									{
+										id: '2',
+										key: { key: 'http.status_code', type: 'number' },
+										op: '>=',
+										value: 400,
+									},
+									{
+										id: '3',
+										key: { key: 'message', type: 'string' },
+										op: 'contains',
+										value: 'error',
+									},
+								],
+								op: 'AND',
+							},
+						}),
+					],
+					queryFormulas: [],
+					queryTraceOperator: [],
+				},
+			},
+			graphType: PANEL_TYPES.LIST,
+			selectedTime: 'GLOBAL_TIME',
+			start,
+			end,
+		};
+
+		const result = prepareQueryRangePayloadV5(props);
+
+		expect(result.legendMap).toEqual({ A: 'Legend A' });
+		expect(result.queryPayload.compositeQuery.queries).toHaveLength(1);
+
+		const builderQuery = result.queryPayload.compositeQuery.queries.find(
+			(q) => q.type === 'builder_query',
+		) as QueryEnvelope;
+		const logSpec = builderQuery.spec as LogBuilderQuery;
+
+		expect(logSpec.name).toBe('A');
+		expect(logSpec.signal).toBe('logs');
+		expect(logSpec.filter).toEqual({
+			expression:
+				"service.name = 'payment-service' AND http.status_code >= 400 AND message contains 'error'",
+		});
+	});
 });
