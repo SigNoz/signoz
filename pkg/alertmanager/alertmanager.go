@@ -55,6 +55,10 @@ type Alertmanager interface {
 	// SetDefaultConfig sets the default config for the organization.
 	SetDefaultConfig(context.Context, string) error
 
+	SetNotificationConfig(ctx context.Context, orgID valuer.UUID, ruleId string, config *alertmanagertypes.NotificationConfig) error
+
+	DeleteNotificationConfig(ctx context.Context, orgID valuer.UUID, ruleId string) error
+
 	// Collects stats for the organization.
 	statsreporter.StatsCollector
 }
