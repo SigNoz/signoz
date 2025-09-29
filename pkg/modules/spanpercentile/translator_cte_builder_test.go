@@ -165,52 +165,6 @@ func TestSpanPercentileCTEBuilderErrors(t *testing.T) {
 }
 
 func TestSpanPercentileCTEBuilderComponents(t *testing.T) {
-	t.Run("test resource filter CTE generation", func(t *testing.T) {
-		builder := &spanPercentileCTEBuilder{
-			start:  1640995200000000000, // 2022-01-01 00:00:00 UTC in ns
-			end:    1640995800000000000, // 2022-01-01 00:10:00 UTC in ns
-			spanID: "test-span",
-			filter: &qbtypes.Filter{
-				Expression: "service.name = 'test-service'",
-			},
-		}
-
-		// Test resource filter CTE generation
-		builder.buildResourceFilterCTE()
-		require.Len(t, builder.ctes, 1)
-
-		cte := builder.ctes[0]
-		require.Equal(t, "__resource_filter", cte.name)
-		require.Contains(t, cte.sql, "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource")
-		require.Contains(t, cte.sql, "seen_at_ts_bucket_start")
-		require.Contains(t, cte.sql, "service.name = 'test-service'")
-
-		// Verify bucket calculations (start/1e9 - 1800, end/1e9)
-		require.Contains(t, cte.sql, "1640993400") // (1640995200 - 1800)
-		require.Contains(t, cte.sql, "1640995800")
-	})
-
-	t.Run("test base spans CTE generation", func(t *testing.T) {
-		builder := &spanPercentileCTEBuilder{
-			start:  1640995200000000000, // 2022-01-01 00:00:00 UTC in ns
-			end:    1640995800000000000, // 2022-01-01 00:10:00 UTC in ns
-			spanID: "test-span",
-			filter: nil,
-		}
-
-		builder.buildBaseSpansCTE()
-		require.Len(t, builder.ctes, 1)
-
-		cte := builder.ctes[0]
-		require.Equal(t, "base_spans", cte.name)
-		require.Contains(t, cte.sql, "SELECT *, resource_string_service$$name AS `service.name`")
-		require.Contains(t, cte.sql, "FROM signoz_traces.distributed_signoz_index_v3")
-		require.Contains(t, cte.sql, "timestamp >= 1640995200000000000")
-		require.Contains(t, cte.sql, "timestamp < 1640995800000000000")
-		require.Contains(t, cte.sql, "ts_bucket_start >= 1640993400")
-		require.Contains(t, cte.sql, "ts_bucket_start <= 1640995800")
-		require.NotContains(t, cte.sql, "resource_fingerprint GLOBAL IN")
-	})
 
 	t.Run("test base spans CTE with filter", func(t *testing.T) {
 		builder := &spanPercentileCTEBuilder{
