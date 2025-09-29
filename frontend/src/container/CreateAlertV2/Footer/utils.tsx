@@ -271,7 +271,6 @@ export function buildCreateThresholdAlertRulePayload(
 				kind: 'basic',
 				spec: thresholds,
 			},
-			selectedQueryName: thresholdState.selectedQuery,
 			compositeQuery,
 			selectedQueryName: thresholdState.selectedQuery,
 			...alertOnAbsentProps,
