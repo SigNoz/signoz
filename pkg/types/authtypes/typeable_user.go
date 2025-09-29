@@ -13,7 +13,7 @@ type typeableUser struct{}
 func (typeableUser *typeableUser) Tuples(subject string, relation Relation, selector []Selector) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 	for _, selector := range selector {
-		object := strings.Join([]string{TypeUser.StringValue(), selector.String()}, ":")
+		object := strings.Join([]string{typeableUser.Type().StringValue(), selector.String()}, ":")
 		tuples = append(tuples, &openfgav1.TupleKey{User: subject, Relation: relation.StringValue(), Object: object})
 	}
 

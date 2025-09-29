@@ -6,14 +6,14 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
-var _ Typeable = new(typeableesource)
+var _ Typeable = new(typeableResource)
 
-type typeableesource struct {
+type typeableResource struct {
 	name Name
 }
 
 func NewTypeableResource(name Name) (Typeable, error) {
-	return &typeableesource{name: name}, nil
+	return &typeableResource{name: name}, nil
 }
 
 func MustNewTypeableResource(name Name) Typeable {
@@ -24,24 +24,24 @@ func MustNewTypeableResource(name Name) Typeable {
 	return typeableesource
 }
 
-func (typeableesource *typeableesource) Tuples(subject string, relation Relation, selector []Selector) ([]*openfgav1.TupleKey, error) {
+func (typeableResource *typeableResource) Tuples(subject string, relation Relation, selector []Selector) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 	for _, selector := range selector {
-		object := typeableesource.Prefix() + "/" + selector.String()
+		object := typeableResource.Prefix() + "/" + selector.String()
 		tuples = append(tuples, &openfgav1.TupleKey{User: subject, Relation: relation.StringValue(), Object: object})
 	}
 
 	return tuples, nil
 }
 
-func (typeableesource *typeableesource) Type() Type {
+func (typeableResource *typeableResource) Type() Type {
 	return TypeResource
 }
 
-func (typeableesource *typeableesource) Name() Name {
-	return typeableesource.name
+func (typeableResource *typeableResource) Name() Name {
+	return typeableResource.name
 }
 
-func (typeableesource *typeableesource) Prefix() string {
-	return strings.Join([]string{typeableesource.Type().StringValue(), typeableesource.Name().String()}, ":")
+func (typeableResource *typeableResource) Prefix() string {
+	return strings.Join([]string{typeableResource.Type().StringValue(), typeableResource.Name().String()}, ":")
 }
