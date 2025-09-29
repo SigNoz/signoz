@@ -177,7 +177,7 @@ export const NOTIFICATION_MESSAGE_PLACEHOLDER =
 
 export const RE_NOTIFICATION_CONDITION_OPTIONS = [
 	{ value: 'firing', label: 'Firing' },
-	{ value: 'no-data', label: 'No Data' },
+	{ value: 'nodata', label: 'No Data' },
 ];
 
 export const INITIAL_NOTIFICATION_SETTINGS_STATE: NotificationSettingsState = {

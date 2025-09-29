@@ -1,6 +1,8 @@
 import { AlertLabelsProps } from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 
+import { BasicThreshold, PostableAlertRuleV2 } from './alertTypesV2';
+
 // default match type for threshold
 export const defaultMatchType = '1';
 
@@ -31,6 +33,10 @@ export interface AlertDef {
 	preferredChannels?: string[];
 	broadcastToAll?: boolean;
 	version?: string;
+	// alert v2 fields
+	schemaVersion?: string;
+	notificationSettings?: PostableAlertRuleV2['notificationSettings'];
+	evaluation?: PostableAlertRuleV2['evaluation'];
 }
 
 export interface RuleCondition {
@@ -46,6 +52,10 @@ export interface RuleCondition {
 	requiredNumPoints?: number | undefined;
 	algorithm?: string;
 	seasonality?: string;
+	thresholds?: {
+		kind: string;
+		spec: BasicThreshold[];
+	};
 }
 export interface Labels {
 	[key: string]: string | undefined;

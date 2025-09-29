@@ -26,6 +26,9 @@ function Footer(): JSX.Element {
 		isCreatingAlertRule,
 		testAlertRule,
 		isTestingAlertRule,
+		updateAlertRule,
+		isUpdatingAlertRule,
+		isEditMode,
 	} = useCreateAlertState();
 	const { currentQuery } = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
@@ -99,15 +102,27 @@ function Footer(): JSX.Element {
 			notificationSettings,
 			query: currentQuery,
 		});
-		createAlertRule(payload, {
-			onSuccess: () => {
-				toast.success('Alert rule created successfully');
-				safeNavigate('/alerts');
-			},
-			onError: (error) => {
-				toast.error(error.message);
-			},
-		});
+		if (isEditMode) {
+			updateAlertRule(payload, {
+				onSuccess: () => {
+					toast.success('Alert rule updated successfully');
+					safeNavigate('/alerts');
+				},
+				onError: (error) => {
+					toast.error(error.message);
+				},
+			});
+		} else {
+			createAlertRule(payload, {
+				onSuccess: () => {
+					toast.success('Alert rule created successfully');
+					safeNavigate('/alerts');
+				},
+				onError: (error) => {
+					toast.error(error.message);
+				},
+			});
+		}
 	}, [
 		alertType,
 		basicAlertState,
@@ -116,12 +131,17 @@ function Footer(): JSX.Element {
 		evaluationWindow,
 		notificationSettings,
 		currentQuery,
+		isEditMode,
+		updateAlertRule,
 		createAlertRule,
 		safeNavigate,
 	]);
 
 	const disableButtons =
-		isCreatingAlertRule || isTestingAlertRule || !!alertValidationMessage;
+		isCreatingAlertRule ||
+		isTestingAlertRule ||
+		isUpdatingAlertRule ||
+		!!alertValidationMessage;
 
 	const saveAlertButton = useMemo(() => {
 		let button = (

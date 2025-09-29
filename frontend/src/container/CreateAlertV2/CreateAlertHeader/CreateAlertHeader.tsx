@@ -8,7 +8,7 @@ import { useCreateAlertState } from '../context';
 import LabelsInput from './LabelsInput';
 
 function CreateAlertHeader(): JSX.Element {
-	const { alertState, setAlertState } = useCreateAlertState();
+	const { alertState, setAlertState, isEditMode } = useCreateAlertState();
 
 	const { currentQuery } = useQueryBuilder();
 
@@ -32,6 +32,22 @@ function CreateAlertHeader(): JSX.Element {
 		},
 		[groupByLabels],
 	);
+
+	if (isEditMode) {
+		return (
+			<div className="alert-header">
+				<div className="alert-header__content">
+					<LabelsInput
+						labels={alertState.labels}
+						onLabelsChange={(labels: Labels): void =>
+							setAlertState({ type: 'SET_ALERT_LABELS', payload: labels })
+						}
+						validateLabelsKey={validateLabelsKey}
+					/>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="alert-header">

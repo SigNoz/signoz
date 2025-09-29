@@ -1,5 +1,6 @@
 import { CreateAlertRuleResponse } from 'api/alerts/createAlertRule';
 import { TestAlertRuleResponse } from 'api/alerts/testAlertRule';
+import { UpdateAlertRuleResponse } from 'api/alerts/updateAlertRule';
 import { Dayjs } from 'dayjs';
 import { Dispatch } from 'react';
 import { UseMutateFunction } from 'react-query';
@@ -7,6 +8,8 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 import { Labels } from 'types/api/alerts/def';
+
+import { GetCreateAlertLocalStateFromAlertDefReturn } from '../types';
 
 export interface ICreateAlertContextProps {
 	alertState: AlertState;
@@ -36,11 +39,22 @@ export interface ICreateAlertContextProps {
 		unknown
 	>;
 	discardAlertRule: () => void;
+	isUpdatingAlertRule: boolean;
+	updateAlertRule: UseMutateFunction<
+		SuccessResponse<UpdateAlertRuleResponse, unknown> | ErrorResponse,
+		Error,
+		PostableAlertRuleV2,
+		unknown
+	>;
+	isEditMode: boolean;
 }
 
 export interface ICreateAlertProviderProps {
 	children: React.ReactNode;
 	initialAlertType: AlertTypes;
+	initialAlertState: GetCreateAlertLocalStateFromAlertDefReturn;
+	isEditMode?: boolean;
+	ruleId?: string;
 }
 
 export enum AlertCreationStep {
@@ -60,6 +74,7 @@ export type CreateAlertAction =
 	| { type: 'SET_ALERT_NAME'; payload: string }
 	| { type: 'SET_ALERT_LABELS'; payload: Labels }
 	| { type: 'SET_Y_AXIS_UNIT'; payload: string | undefined }
+	| { type: 'SET_INITIAL_STATE'; payload: AlertState }
 	| { type: 'RESET' };
 
 export interface Threshold {
@@ -127,6 +142,7 @@ export type AlertThresholdAction =
 	| { type: 'SET_ALGORITHM'; payload: string }
 	| { type: 'SET_SEASONALITY'; payload: string }
 	| { type: 'SET_THRESHOLDS'; payload: Threshold[] }
+	| { type: 'SET_INITIAL_STATE'; payload: AlertThresholdState }
 	| { type: 'RESET' };
 
 export interface AdvancedOptionsState {
@@ -198,6 +214,7 @@ export type AdvancedOptionsAction =
 			};
 	  }
 	| { type: 'SET_EVALUATION_CADENCE_MODE'; payload: EvaluationCadenceMode }
+	| { type: 'SET_INITIAL_STATE'; payload: AdvancedOptionsState }
 	| { type: 'RESET' };
 
 export interface EvaluationWindowState {
@@ -219,6 +236,7 @@ export type EvaluationWindowAction =
 			payload: { time: string; number: string; timezone: string; unit: string };
 	  }
 	| { type: 'SET_EVALUATION_CADENCE_MODE'; payload: EvaluationCadenceMode }
+	| { type: 'SET_INITIAL_STATE'; payload: EvaluationWindowState }
 	| { type: 'RESET' };
 
 export type EvaluationCadenceMode = 'default' | 'custom' | 'rrule';
@@ -229,7 +247,7 @@ export interface NotificationSettingsState {
 		enabled: boolean;
 		value: number;
 		unit: string;
-		conditions: ('firing' | 'no-data')[];
+		conditions: ('firing' | 'nodata')[];
 	};
 	description: string;
 	routingPolicies: boolean;
@@ -246,9 +264,10 @@ export type NotificationSettingsAction =
 				enabled: boolean;
 				value: number;
 				unit: string;
-				conditions: ('firing' | 'no-data')[];
+				conditions: ('firing' | 'nodata')[];
 			};
 	  }
 	| { type: 'SET_DESCRIPTION'; payload: string }
 	| { type: 'SET_ROUTING_POLICIES'; payload: boolean }
+	| { type: 'SET_INITIAL_STATE'; payload: NotificationSettingsState }
 	| { type: 'RESET' };

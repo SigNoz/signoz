@@ -1,7 +1,31 @@
+import { Color } from '@signozhq/design-tokens';
 import { Spin } from 'antd';
+import { TIMEZONE_DATA } from 'components/CustomTimePicker/timezoneUtils';
+import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
+import { getRandomColor } from 'container/ExplorerOptions/utils';
 import { createPortal } from 'react-dom';
+import { AlertDef } from 'types/api/alerts/def';
+import { v4 } from 'uuid';
 
 import { useCreateAlertState } from './context';
+import {
+	INITIAL_ADVANCED_OPTIONS_STATE,
+	INITIAL_ALERT_STATE,
+	INITIAL_ALERT_THRESHOLD_STATE,
+	INITIAL_EVALUATION_WINDOW_STATE,
+	INITIAL_NOTIFICATION_SETTINGS_STATE,
+} from './context/constants';
+import {
+	AdvancedOptionsState,
+	AlertState,
+	AlertThresholdMatchType,
+	AlertThresholdOperator,
+	AlertThresholdState,
+	EvaluationWindowState,
+	NotificationSettingsState,
+} from './context/types';
+import { EVALUATION_WINDOW_TIMEFRAME } from './EvaluationSettings/constants';
+import { GetCreateAlertLocalStateFromAlertDefReturn } from './types';
 
 // UI side feature flag
 export const showNewCreateAlertsPage = (): boolean =>
@@ -24,4 +48,253 @@ export function Spinner(): JSX.Element | null {
 		</div>,
 		document.body,
 	);
+}
+
+function getColorForThreshold(thresholdLabel: string): string {
+	if (thresholdLabel === 'CRITICAL') {
+		return Color.BG_SAKURA_500;
+	}
+	if (thresholdLabel === 'WARNING') {
+		return Color.BG_AMBER_500;
+	}
+	if (thresholdLabel === 'INFO') {
+		return Color.BG_ROBIN_500;
+	}
+	return getRandomColor();
+}
+
+function parseGoTime(
+	input: string,
+): { time: number; unit: UniversalYAxisUnit } {
+	const regex = /(\d+)([hms])/g;
+	const matches = [...input.matchAll(regex)];
+
+	const nonZero = matches.find(([, value]) => parseInt(value, 10) > 0);
+	if (!nonZero) {
+		throw new Error(`Invalid Go time format: ${input}`);
+	}
+
+	const time = parseInt(nonZero[1], 10);
+	const unitMap: Record<string, UniversalYAxisUnit> = {
+		h: UniversalYAxisUnit.HOURS,
+		m: UniversalYAxisUnit.MINUTES,
+		s: UniversalYAxisUnit.SECONDS,
+	};
+
+	return { time, unit: unitMap[nonZero[2]] };
+}
+
+// eslint-disable-next-line sonarjs/cognitive-complexity
+export function getEvaluationWindowStateFromAlertDef(
+	alertDef: AlertDef,
+): EvaluationWindowState {
+	const windowType = alertDef.evaluation?.kind as 'rolling' | 'cumulative';
+
+	function getRollingWindowTimeframe(): string {
+		if (
+			// Default values for rolling window
+			EVALUATION_WINDOW_TIMEFRAME.rolling
+				.map((option) => option.value)
+				.includes(alertDef.evaluation?.spec?.evalWindow || '')
+		) {
+			return alertDef.evaluation?.spec?.evalWindow || '';
+		}
+		return 'custom';
+	}
+
+	function getCumulativeWindowTimeframe(): string {
+		switch (alertDef.evaluation?.spec?.schedule?.type) {
+			case 'hourly':
+				return 'currentHour';
+			case 'daily':
+				return 'currentDay';
+			case 'monthly':
+				return 'currentMonth';
+			default:
+				return 'currentHour';
+		}
+	}
+
+	function convertHourToTime(hour: number): string {
+		return `${hour.toString().padStart(2, '0')}:00:00`;
+	}
+
+	function getCumulativeWindowStartingAt(): EvaluationWindowState['startingAt'] {
+		const timeframe = getCumulativeWindowTimeframe();
+		if (timeframe === 'currentHour') {
+			return {
+				...INITIAL_EVALUATION_WINDOW_STATE.startingAt,
+				number: alertDef.evaluation?.spec?.schedule?.minute?.toString() || '0',
+			};
+		}
+		if (timeframe === 'currentDay') {
+			return {
+				...INITIAL_EVALUATION_WINDOW_STATE.startingAt,
+				time: convertHourToTime(alertDef.evaluation?.spec?.schedule?.hour || 0),
+				timezone: alertDef.evaluation?.spec?.timezone || TIMEZONE_DATA[0].value,
+			};
+		}
+		if (timeframe === 'currentMonth') {
+			return {
+				...INITIAL_EVALUATION_WINDOW_STATE.startingAt,
+				number: alertDef.evaluation?.spec?.schedule?.day?.toString() || '0',
+				timezone: alertDef.evaluation?.spec?.timezone || TIMEZONE_DATA[0].value,
+			};
+		}
+		return INITIAL_EVALUATION_WINDOW_STATE.startingAt;
+	}
+
+	if (windowType === 'rolling') {
+		const timeframe = getRollingWindowTimeframe();
+		if (timeframe === 'custom') {
+			return {
+				...INITIAL_EVALUATION_WINDOW_STATE,
+				windowType,
+				timeframe,
+				startingAt: {
+					...INITIAL_EVALUATION_WINDOW_STATE.startingAt,
+					number: parseGoTime(timeframe).time.toString(),
+					unit: parseGoTime(timeframe).unit,
+				},
+			};
+		}
+		return {
+			...INITIAL_EVALUATION_WINDOW_STATE,
+			windowType,
+			timeframe,
+		};
+	}
+
+	return {
+		...INITIAL_EVALUATION_WINDOW_STATE,
+		windowType,
+		timeframe: getCumulativeWindowTimeframe(),
+		startingAt: getCumulativeWindowStartingAt(),
+	};
+}
+
+export function getNotificationSettingsStateFromAlertDef(
+	alertDef: AlertDef,
+): NotificationSettingsState {
+	const description = alertDef.annotations?.description || '';
+	const multipleNotifications =
+		alertDef.notificationSettings?.notificationGroupBy || [];
+	const routingPolicies =
+		alertDef.notificationSettings?.notificationPolicy || false;
+
+	const reNotificationEnabled = Boolean(alertDef.notificationSettings?.renotify);
+	const reNotificationConditions =
+		alertDef.notificationSettings?.alertStates?.map(
+			(state) => state as 'firing' | 'nodata',
+		) || [];
+	const reNotificationValue = alertDef.notificationSettings?.renotify
+		? parseGoTime(alertDef.notificationSettings.renotify).time
+		: 1;
+	const reNotificationUnit = alertDef.notificationSettings?.renotify
+		? parseGoTime(alertDef.notificationSettings.renotify).unit
+		: UniversalYAxisUnit.MINUTES;
+
+	return {
+		...INITIAL_NOTIFICATION_SETTINGS_STATE,
+		description,
+		multipleNotifications,
+		routingPolicies,
+		reNotification: {
+			enabled: reNotificationEnabled,
+			conditions: reNotificationConditions,
+			value: reNotificationValue,
+			unit: reNotificationUnit,
+		},
+	};
+}
+
+export function getAdvancedOptionsStateFromAlertDef(
+	alertDef: AlertDef,
+): AdvancedOptionsState {
+	return {
+		...INITIAL_ADVANCED_OPTIONS_STATE,
+		sendNotificationIfDataIsMissing: {
+			...INITIAL_ADVANCED_OPTIONS_STATE.sendNotificationIfDataIsMissing,
+			toleranceLimit: alertDef.condition.absentFor || 0,
+			enabled: alertDef.condition.alertOnAbsent || false,
+		},
+		enforceMinimumDatapoints: {
+			...INITIAL_ADVANCED_OPTIONS_STATE.enforceMinimumDatapoints,
+			minimumDatapoints: alertDef.condition.requiredNumPoints || 0,
+			enabled: alertDef.condition.requireMinPoints || false,
+		},
+		evaluationCadence: {
+			...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
+			mode: 'default',
+			default: {
+				...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence.default,
+				value: parseGoTime(alertDef.evaluation?.spec?.frequency || '1m').time,
+				timeUnit: parseGoTime(alertDef.evaluation?.spec?.frequency || '1m').unit,
+			},
+		},
+	};
+}
+
+export function getThresholdStateFromAlertDef(
+	alertDef: AlertDef,
+): AlertThresholdState {
+	return {
+		...INITIAL_ALERT_THRESHOLD_STATE,
+		thresholds:
+			alertDef.condition.thresholds?.spec.map((threshold) => ({
+				id: v4(),
+				label: threshold.name,
+				thresholdValue: threshold.target,
+				recoveryThresholdValue: null,
+				unit: threshold.targetUnit,
+				color: getColorForThreshold(threshold.name),
+				channels: threshold.channels,
+			})) || [],
+		selectedQuery: alertDef.condition.selectedQueryName || '',
+		operator:
+			(alertDef.condition.op as AlertThresholdOperator) ||
+			AlertThresholdOperator.IS_ABOVE,
+		matchType:
+			(alertDef.condition.matchType as AlertThresholdMatchType) ||
+			AlertThresholdMatchType.AT_LEAST_ONCE,
+	};
+}
+
+export function getCreateAlertLocalStateFromAlertDef(
+	alertDef: AlertDef | undefined,
+): GetCreateAlertLocalStateFromAlertDefReturn {
+	if (!alertDef) {
+		return {
+			basicAlertState: INITIAL_ALERT_STATE,
+			thresholdState: INITIAL_ALERT_THRESHOLD_STATE,
+			advancedOptionsState: INITIAL_ADVANCED_OPTIONS_STATE,
+			evaluationWindowState: INITIAL_EVALUATION_WINDOW_STATE,
+			notificationSettingsState: INITIAL_NOTIFICATION_SETTINGS_STATE,
+		};
+	}
+	// Basic alert state
+	const basicAlertState: AlertState = {
+		...INITIAL_ALERT_STATE,
+		name: alertDef.alert,
+		labels: alertDef.labels || {},
+		yAxisUnit: alertDef.condition.compositeQuery.unit,
+	};
+
+	const thresholdState = getThresholdStateFromAlertDef(alertDef);
+
+	const advancedOptionsState = getAdvancedOptionsStateFromAlertDef(alertDef);
+
+	const evaluationWindowState = getEvaluationWindowStateFromAlertDef(alertDef);
+
+	const notificationSettingsState = getNotificationSettingsStateFromAlertDef(
+		alertDef,
+	);
+
+	return {
+		basicAlertState,
+		thresholdState,
+		advancedOptionsState,
+		evaluationWindowState,
+		notificationSettingsState,
+	};
 }

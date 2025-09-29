@@ -3,6 +3,7 @@ import './CreateAlertV2.styles.scss';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
+import { useMemo } from 'react';
 
 import AlertCondition from './AlertCondition';
 import { CreateAlertProvider } from './context';
@@ -13,23 +14,44 @@ import Footer from './Footer';
 import NotificationSettings from './NotificationSettings';
 import QuerySection from './QuerySection';
 import { CreateAlertV2Props } from './types';
-import { showCondensedLayout, Spinner } from './utils';
+import {
+	getCreateAlertLocalStateFromAlertDef,
+	showCondensedLayout,
+	Spinner,
+} from './utils';
 
-function CreateAlertV2({ alertType }: CreateAlertV2Props): JSX.Element {
-	const queryToRedirect = buildInitialAlertDef(alertType);
-	const currentQueryToRedirect = mapQueryDataFromApi(
-		queryToRedirect.condition.compositeQuery,
-	);
+function CreateAlertV2({
+	alertType,
+	initialAlertDef,
+	ruleId,
+	isEditMode,
+}: CreateAlertV2Props): JSX.Element {
+	const currentQueryToRedirect = useMemo(() => {
+		const basicAlertDef = buildInitialAlertDef(alertType);
+		return mapQueryDataFromApi(
+			initialAlertDef?.condition.compositeQuery ||
+				basicAlertDef.condition.compositeQuery,
+		);
+	}, [initialAlertDef, alertType]);
 
 	useShareBuilderUrl({ defaultValue: currentQueryToRedirect });
 
 	const showCondensedLayoutFlag = showCondensedLayout();
 
+	const initialAlertState = getCreateAlertLocalStateFromAlertDef(
+		initialAlertDef,
+	);
+
 	return (
-		<CreateAlertProvider initialAlertType={alertType}>
+		<CreateAlertProvider
+			initialAlertType={alertType}
+			initialAlertState={initialAlertState}
+			isEditMode={isEditMode}
+			ruleId={ruleId}
+		>
 			<Spinner />
 			<div className="create-alert-v2-container">
-				<CreateAlertHeader />
+				{!isEditMode && <CreateAlertHeader />}
 				<QuerySection />
 				<AlertCondition />
 				{!showCondensedLayoutFlag ? <EvaluationSettings /> : null}
