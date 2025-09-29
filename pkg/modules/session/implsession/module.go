@@ -85,12 +85,12 @@ func (module *module) GetSessionContext(ctx context.Context, email string, siteU
 
 func (module *module) getOrgSessionContext(ctx context.Context, org *types.Organization, siteURL *url.URL) (*authtypes.OrgSessionContext, error) {
 	authDomain, err := module.authDomain.GetByNameAndOrgID(ctx, org.Name, org.ID)
-	if err != nil {
-		if !errors.Ast(err, errors.TypeNotFound) {
-			return authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword), nil
-		}
-
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
+	}
+
+	if authDomain == nil {
+		return authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword), nil
 	}
 
 	if !authDomain.AuthDomainConfig().SSOEnabled {
