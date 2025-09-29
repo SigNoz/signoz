@@ -829,10 +829,10 @@ def test_datatype_collision(
     Insert logs with data type collision scenarios to test DataTypeCollisionHandledFieldName function
 
     Tests:
-    1. severity_number comparison with string value (numeric field with string comparison)
+    1. severity_number comparison with string value
     2. http.status_code with mixed string/number values
     3. response.time with string values in numeric field
-    4. Edge cases: empty strings, zero values
+    4. Edge cases: empty strings
     """
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     logs: List[Logs] = []
@@ -926,7 +926,7 @@ def test_datatype_collision(
 
     token = get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
-    # count() of all logs for the where severity_number 
+    # count() of all logs for the where severity_number > '7'
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -976,10 +976,9 @@ def test_datatype_collision(
     assert len(results) == 1
 
     count = results[0]["data"][0][0]
-    # Should return logs with severity_number > 7:
     assert count == 5
 
-    # Test 2: severity_number comparison with string value (data type collision test)
+    # Test 2: severity_number comparison with string value
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
