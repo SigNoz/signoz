@@ -24,10 +24,7 @@ func BuildSpanPercentileQuery(req *spanpercentiletypes.SpanPercentileRequest) (*
 		request: req,
 	}
 
-	stmt, err := builder.build()
-	if err != nil {
-		return nil, err
-	}
+	stmt := builder.build()
 
 	query := qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeClickHouseSQL,
@@ -66,16 +63,14 @@ type spanPercentileCTEBuilder struct {
 	ctes    []cteNode
 }
 
-func (b *spanPercentileCTEBuilder) build() (*qbtypes.Statement, error) {
-	// Build CTEs in order
+func (b *spanPercentileCTEBuilder) build() *qbtypes.Statement {
+
 	b.buildResourceFilterCTE()
 	b.buildBaseSpansCTE()
 	b.buildTargetSpanCTE()
 
-	// Build main query
 	mainSQL, mainArgs := b.buildMainQuery()
 
-	// Combine CTEs with main query
 	var cteFragments []string
 	var cteArgs [][]any
 
@@ -87,13 +82,12 @@ func (b *spanPercentileCTEBuilder) build() (*qbtypes.Statement, error) {
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
 
-	// For ClickHouseSQL, we need to interpolate all args into the SQL since it doesn't support parameterized queries
 	interpolatedSQL := b.interpolateArgs(finalSQL, finalArgs)
 
 	return &qbtypes.Statement{
 		Query: interpolatedSQL,
-		Args:  nil, // No args for ClickHouseSQL
-	}, nil
+		Args:  nil,
+	}
 }
 
 func (b *spanPercentileCTEBuilder) buildResourceFilterCTE() {
@@ -202,7 +196,6 @@ func (b *spanPercentileCTEBuilder) addCTE(name, sql string, args []any) {
 func (b *spanPercentileCTEBuilder) interpolateArgs(sql string, args []any) string {
 	result := sql
 	for _, arg := range args {
-		// Replace first occurrence of ? with the argument value
 		switch v := arg.(type) {
 		case string:
 			result = strings.Replace(result, "?", fmt.Sprintf("'%s'", v), 1)
