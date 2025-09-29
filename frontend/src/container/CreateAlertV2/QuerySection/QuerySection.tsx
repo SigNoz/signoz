@@ -7,6 +7,8 @@ import QuerySectionComponent from 'container/FormAlertRules/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { BarChart2, DraftingCompass, FileText, ScrollText } from 'lucide-react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 
 import { useCreateAlertState } from '../context';
 import Stepper from '../Stepper';
@@ -14,10 +16,19 @@ import ChartPreview from './ChartPreview';
 import { buildAlertDefForChartPreview } from './utils';
 
 function QuerySection(): JSX.Element {
-	const { currentQuery, handleRunQuery } = useQueryBuilder();
+	const {
+		currentQuery,
+		handleRunQuery,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
 	const { alertType, setAlertType, thresholdState } = useCreateAlertState();
 
 	const alertDef = buildAlertDefForChartPreview({ alertType, thresholdState });
+
+	const onQueryCategoryChange = (val: EQueryType): void => {
+		const query: Query = { ...currentQuery, queryType: val };
+		redirectWithQueryBuilderData(query);
+	};
 
 	const tabs = [
 		{
@@ -66,7 +77,7 @@ function QuerySection(): JSX.Element {
 			</div>
 			<QuerySectionComponent
 				queryCategory={currentQuery.queryType}
-				setQueryCategory={(): void => {}}
+				setQueryCategory={onQueryCategoryChange}
 				alertType={alertType}
 				runQuery={handleRunQuery}
 				alertDef={alertDef}
