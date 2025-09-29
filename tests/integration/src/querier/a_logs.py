@@ -816,3 +816,378 @@ def test_logs_time_series_count(
         ),
         "value": 9,
     } in series[1]["values"]
+
+
+def test_datatype_collision(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_jwt_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+) -> None:
+    """
+    Setup:
+    Insert logs with data type collision scenarios to test DataTypeCollisionHandledFieldName function
+
+    Tests:
+    1. severity_number comparison with string value (numeric field with string comparison)
+    2. http.status_code with mixed string/number values
+    3. response.time with string values in numeric field
+    4. Edge cases: empty strings, zero values
+    """
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    logs: List[Logs] = []
+
+    # Logs with string values in numeric fields
+    severity_levels = ["DEBUG", "INFO", "WARN"]
+    for i in range(3):
+        logs.append(
+            Logs(
+                timestamp=now - timedelta(microseconds=i + 1),
+                resources={
+                    "deployment.environment": "production",
+                    "service.name": "java",
+                    "os.type": "linux",
+                    "host.name": f"linux-00{i%2}",
+                    "cloud.provider": "integration",
+                    "cloud.account.id": f"00{i%2}",
+                },
+                attributes={
+                    "log.iostream": "stdout",
+                    "logtag": "F",
+                    "code.file": "/opt/Integration.java",
+                    "code.function": "com.example.Integration.process",
+                    "code.line": i + 1,
+                    "telemetry.sdk.language": "java",
+                    "http.status_code": "200",  # String value
+                    "response.time": "123.45",  # String value
+                },
+                body=f"Test log {i+1} with string values",
+                severity_text=severity_levels[i],  # DEBUG(5-8), INFO(9-12), WARN(13-16)
+            )
+        )
+
+    # Logs with numeric values in string fields
+    severity_levels_2 = ["ERROR", "FATAL", "TRACE", "DEBUG"]
+    for i in range(4):
+        logs.append(
+            Logs(
+                timestamp=now - timedelta(microseconds=i + 10),
+                resources={
+                    "deployment.environment": "production",
+                    "service.name": "go",
+                    "os.type": "linux",
+                    "host.name": f"linux-00{i%2}",
+                    "cloud.provider": "integration",
+                    "cloud.account.id": f"00{i%2}",
+                },
+                attributes={
+                    "log.iostream": "stdout",
+                    "logtag": "F",
+                    "code.file": "/opt/integration.go",
+                    "code.function": "com.example.Integration.process",
+                    "code.line": i + 1,
+                    "telemetry.sdk.language": "go",
+                    "http.status_code": 404,     # Numeric value
+                    "response.time": 456.78,     # Numeric value
+                },
+                body=f"Test log {i+4} with numeric values",
+                severity_text=severity_levels_2[i],  # ERROR(17-20), FATAL(21-24), TRACE(1-4), DEBUG(5-8)
+            )
+        )
+
+    # Edge case: empty string and zero value
+    logs.append(
+        Logs(
+            timestamp=now - timedelta(microseconds=20),
+            resources={
+                "deployment.environment": "production",
+                "service.name": "python",
+                "os.type": "linux",
+                "host.name": "linux-002",
+                "cloud.provider": "integration",
+                "cloud.account.id": "002",
+            },
+            attributes={
+                "log.iostream": "stdout",
+                "logtag": "F",
+                "code.file": "/opt/integration.py",
+                "code.function": "com.example.Integration.process",
+                "code.line": 1,
+                "telemetry.sdk.language": "python",
+                "http.status_code": "",          # Empty string
+                "response.time": 0,              # Zero value
+            },
+            body="Edge case test log",
+            severity_text="ERROR",
+        )
+    )
+
+    insert_logs(logs)
+
+    token = get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+
+    # count() of all logs for the where severity_number 
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json={
+            "schemaVersion": "v1",
+            "start": int(
+                (
+                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+                    - timedelta(minutes=5)
+                ).timestamp()
+                * 1000
+            ),
+            "end": int(
+                datetime.now(tz=timezone.utc)
+                .replace(second=0, microsecond=0)
+                .timestamp()
+                * 1000
+            ),
+            "requestType": "scalar",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": False,
+                            "filter": {"expression": "severity_number > '7'"},
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": True, "fillGaps": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+
+    count = results[0]["data"][0][0]
+    # Should return logs with severity_number > 7:
+    assert count == 5
+
+    # Test 2: severity_number comparison with string value (data type collision test)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json={
+            "schemaVersion": "v1",
+            "start": int(
+                (
+                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+                    - timedelta(minutes=5)
+                ).timestamp()
+                * 1000
+            ),
+            "end": int(
+                datetime.now(tz=timezone.utc)
+                .replace(second=0, microsecond=0)
+                .timestamp()
+                * 1000
+            ),
+            "requestType": "scalar",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": False,
+                            "filter": {"expression": "severity_number = '13'"},  # String comparison with numeric field
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": True, "fillGaps": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+
+    count = results[0]["data"][0][0]
+    # WARN severity maps to 13-16 range, so should find 1 log with severity_number = 13
+    assert count == 1
+
+    # Test 3: http.status_code with numeric value (query contains number, actual value is string "200")
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json={
+            "schemaVersion": "v1",
+            "start": int(
+                (
+                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+                    - timedelta(minutes=5)
+                ).timestamp()
+                * 1000
+            ),
+            "end": int(
+                datetime.now(tz=timezone.utc)
+                .replace(second=0, microsecond=0)
+                .timestamp()
+                * 1000
+            ),
+            "requestType": "scalar",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": False,
+                            "filter": {"expression": "http.status_code = 200"},  # Numeric comparison with string field
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": True, "fillGaps": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+
+    count = results[0]["data"][0][0]
+    # Should return 3 logs with http.status_code = "200" (first 3 logs have string value "200")
+    assert count == 3
+
+    # Test 4: http.status_code with string value (query contains string, actual value is numeric 404)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json={
+            "schemaVersion": "v1",
+            "start": int(
+                (
+                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+                    - timedelta(minutes=5)
+                ).timestamp()
+                * 1000
+            ),
+            "end": int(
+                datetime.now(tz=timezone.utc)
+                .replace(second=0, microsecond=0)
+                .timestamp()
+                * 1000
+            ),
+            "requestType": "scalar",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": False,
+                            "filter": {"expression": "http.status_code = '404'"},  # String comparison with numeric field
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": True, "fillGaps": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+
+    count = results[0]["data"][0][0]
+    # Should return 4 logs with http.status_code = 404 (next 4 logs have numeric value 404)
+    assert count == 4
+
+
+    # Test 5: Edge case - empty string comparison
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json={
+            "schemaVersion": "v1",
+            "start": int(
+                (
+                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+                    - timedelta(minutes=5)
+                ).timestamp()
+                * 1000
+            ),
+            "end": int(
+                datetime.now(tz=timezone.utc)
+                .replace(second=0, microsecond=0)
+                .timestamp()
+                * 1000
+            ),
+            "requestType": "scalar",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": False,
+                            "filter": {"expression": "http.status_code = ''"},  # Empty string comparison
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": True, "fillGaps": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+
+    count = results[0]["data"][0][0]
+    # Should return 1 log with empty http.status_code (edge case log)
+    assert count == 1
