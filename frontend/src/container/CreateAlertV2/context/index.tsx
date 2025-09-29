@@ -1,4 +1,7 @@
 import { QueryParams } from 'constants/query';
+import { AlertDetectionTypes } from 'container/FormAlertRules';
+import { useCreateAlertRule } from 'hooks/alerts/useCreateAlertRule';
+import { useTestAlertRule } from 'hooks/alerts/useTestAlertRule';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import {
@@ -72,6 +75,10 @@ export function CreateAlertProvider(
 				currentQueryToRedirect,
 				{
 					[QueryParams.alertType]: value,
+					[QueryParams.ruleType]:
+						value === AlertTypes.ANOMALY_BASED_ALERT
+							? AlertDetectionTypes.ANOMALY_DETECTION_ALERT
+							: AlertDetectionTypes.THRESHOLD_ALERT,
 				},
 				undefined,
 				true,
@@ -107,6 +114,35 @@ export function CreateAlertProvider(
 		});
 	}, [alertType]);
 
+	const discardAlertRule = useCallback(() => {
+		setAlertState({
+			type: 'RESET',
+		});
+		setThresholdState({
+			type: 'RESET',
+		});
+		setEvaluationWindow({
+			type: 'RESET',
+		});
+		setAdvancedOptions({
+			type: 'RESET',
+		});
+		setNotificationSettings({
+			type: 'RESET',
+		});
+		handleAlertTypeChange(AlertTypes.METRICS_BASED_ALERT);
+	}, [handleAlertTypeChange]);
+
+	const {
+		mutate: createAlertRule,
+		isLoading: isCreatingAlertRule,
+	} = useCreateAlertRule();
+
+	const {
+		mutate: testAlertRule,
+		isLoading: isTestingAlertRule,
+	} = useTestAlertRule();
+
 	const contextValue: ICreateAlertContextProps = useMemo(
 		() => ({
 			alertState,
@@ -121,6 +157,11 @@ export function CreateAlertProvider(
 			setAdvancedOptions,
 			notificationSettings,
 			setNotificationSettings,
+			discardAlertRule,
+			createAlertRule,
+			isCreatingAlertRule,
+			testAlertRule,
+			isTestingAlertRule,
 		}),
 		[
 			alertState,
@@ -130,6 +171,11 @@ export function CreateAlertProvider(
 			evaluationWindow,
 			advancedOptions,
 			notificationSettings,
+			discardAlertRule,
+			createAlertRule,
+			isCreatingAlertRule,
+			testAlertRule,
+			isTestingAlertRule,
 		],
 	);
 
