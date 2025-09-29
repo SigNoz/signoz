@@ -70,12 +70,12 @@ func (object *Object) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	_object, err := NewObject(shadow.Resource, shadow.Selector)
+	obj, err := NewObject(shadow.Resource, shadow.Selector)
 	if err != nil {
 		return err
 	}
 
-	*object = *_object
+	*object = *obj
 	return nil
 }
 
@@ -98,11 +98,11 @@ func (transaction *Transaction) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	_transaction, err := NewTransaction(shadow.Relation, shadow.Object)
+	txn, err := NewTransaction(shadow.Relation, shadow.Object)
 	if err != nil {
 		return err
 	}
 
-	*transaction = *_transaction
+	*transaction = *txn
 	return nil
 }

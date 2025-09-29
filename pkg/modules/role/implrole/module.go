@@ -26,13 +26,14 @@ func NewModule(ctx context.Context, store roletypes.Store, authz authz.AuthZ, re
 	}, nil
 }
 
-func (module *module) Create(ctx context.Context, orgID valuer.UUID, postableRole *roletypes.PostableRole) (*roletypes.GettableRole, error) {
-	role := roletypes.NewRole(postableRole.DisplayName, postableRole.Description, orgID)
+func (module *module) Create(ctx context.Context, orgID valuer.UUID, displayName, description string) (*roletypes.Role, error) {
+	role := roletypes.NewRole(displayName, description, orgID)
 
 	storableRole, err := roletypes.NewStorableRoleFromRole(role)
 	if err != nil {
 		return nil, err
 	}
+
 	err = module.store.Create(ctx, storableRole)
 	if err != nil {
 		return nil, err
@@ -55,18 +56,18 @@ func (module *module) GetResources(_ context.Context) []*authtypes.Resource {
 	return resources
 }
 
-func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*roletypes.GettableRole, error) {
+func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*roletypes.Role, error) {
 	storableRole, err := module.store.Get(ctx, orgID, id)
 	if err != nil {
 		return nil, err
 	}
 
-	gettableRole, err := roletypes.NewRoleFromStorableRole(storableRole)
+	role, err := roletypes.NewRoleFromStorableRole(storableRole)
 	if err != nil {
 		return nil, err
 	}
 
-	return gettableRole, nil
+	return role, nil
 }
 
 func (module *module) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation) ([]*authtypes.Object, error) {
@@ -97,25 +98,25 @@ func (module *module) GetObjects(ctx context.Context, orgID valuer.UUID, id valu
 	return objects, nil
 }
 
-func (module *module) List(ctx context.Context, orgID valuer.UUID) (roletypes.ListableRoles, error) {
+func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes.Role, error) {
 	storableRoles, err := module.store.List(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	gettableRoles := make(roletypes.ListableRoles, len(storableRoles))
+	roles := make([]*roletypes.Role, len(storableRoles))
 	for idx, storableRole := range storableRoles {
-		gettableRole, err := roletypes.NewRoleFromStorableRole(storableRole)
+		role, err := roletypes.NewRoleFromStorableRole(storableRole)
 		if err != nil {
 			return nil, err
 		}
-		gettableRoles[idx] = gettableRole
+		roles[idx] = role
 	}
 
-	return gettableRoles, nil
+	return roles, nil
 }
 
-func (module *module) Patch(ctx context.Context, orgID valuer.UUID, id valuer.UUID, patchRoleMetadata *roletypes.PatchableRole) error {
+func (module *module) Patch(ctx context.Context, orgID valuer.UUID, id valuer.UUID, displayName, description *string) error {
 	storableRole, err := module.store.Get(ctx, orgID, id)
 	if err != nil {
 		return err
@@ -126,7 +127,7 @@ func (module *module) Patch(ctx context.Context, orgID valuer.UUID, id valuer.UU
 		return err
 	}
 
-	role.PatchMetadata(patchRoleMetadata)
+	role.PatchMetadata(displayName, description)
 	updatedRole, err := roletypes.NewStorableRoleFromRole(role)
 	if err != nil {
 		return err
@@ -140,20 +141,20 @@ func (module *module) Patch(ctx context.Context, orgID valuer.UUID, id valuer.UU
 	return nil
 }
 
-func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation, patchableRelationObjects *roletypes.PatchableObjects) error {
-	insertionTuples, err := patchableRelationObjects.GetInsertionTuples(id, relation)
+func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation, additions, deletions []*authtypes.Object) error {
+	additionTuples, err := roletypes.GetAdditionTuples(id, relation, additions)
 	if err != nil {
 		return err
 	}
 
-	deletionTuples, err := patchableRelationObjects.GetDeletionTuples(id, relation)
+	deletionTuples, err := roletypes.GetDeletionTuples(id, relation, deletions)
 	if err != nil {
 		return err
 	}
 
 	err = module.authz.Write(ctx, &openfgav1.WriteRequest{
 		Writes: &openfgav1.WriteRequestWrites{
-			TupleKeys: insertionTuples,
+			TupleKeys: additionTuples,
 		},
 		Deletes: &openfgav1.WriteRequestDeletes{
 			TupleKeys: deletionTuples,

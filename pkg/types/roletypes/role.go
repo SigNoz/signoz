@@ -15,6 +15,7 @@ import (
 
 var (
 	ErrCodeRoleInvalidInput                 = errors.MustNewCode("role_invalid_input")
+	ErrCodeRoleEmptyPatch                   = errors.MustNewCode("role_empty_patch")
 	ErrCodeInvalidTypeRelation              = errors.MustNewCode("role_invalid_type_relation")
 	ErrCodeRoleNotFound                     = errors.MustNewCode("role_not_found")
 	ErrCodeRoleFailedTransactionsFromString = errors.MustNewCode("role_failed_transactions_from_string")
@@ -42,11 +43,6 @@ type PostableRole struct {
 	DisplayName string `json:"displayName"`
 	Description string `json:"description"`
 }
-
-type (
-	ListableRoles = []*Role
-	GettableRole  = Role
-)
 
 type PatchableRole struct {
 	DisplayName *string `json:"displayName"`
@@ -99,6 +95,10 @@ func NewRole(displayName, description string, orgID valuer.UUID) *Role {
 }
 
 func NewPatchableObjects(additions []*authtypes.Object, deletions []*authtypes.Object, relation authtypes.Relation) (*PatchableObjects, error) {
+	if additions == nil && deletions == nil {
+		return nil, errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty object patch request recieved, atleast one of additions or deletions must be present")
+	}
+
 	for _, object := range additions {
 		if !slices.Contains(authtypes.TypeableRelations[object.Resource.Type], relation) {
 			return nil, errors.Newf(errors.TypeInvalidInput, authtypes.ErrCodeAuthZInvalidRelation, "relation %s is invalid for type %s", relation.StringValue(), object.Resource.Type.StringValue())
@@ -114,12 +114,12 @@ func NewPatchableObjects(additions []*authtypes.Object, deletions []*authtypes.O
 	return &PatchableObjects{Additions: additions, Deletions: deletions}, nil
 }
 
-func (role *Role) PatchMetadata(patchableRole *PatchableRole) {
-	if patchableRole.DisplayName != nil {
-		role.DisplayName = *patchableRole.DisplayName
+func (role *Role) PatchMetadata(displayName, description *string) {
+	if displayName != nil {
+		role.DisplayName = *displayName
 	}
-	if patchableRole.Description != nil {
-		role.Description = *patchableRole.Description
+	if description != nil {
+		role.Description = *description
 	}
 	role.UpdatedAt = time.Now()
 }
@@ -136,7 +136,7 @@ func (role *PostableRole) UnmarshalJSON(data []byte) error {
 	}
 
 	if shadowRole.DisplayName == "" {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "displayName is missing from the request")
+		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "displayName is missing from the request")
 	}
 
 	role.DisplayName = shadowRole.DisplayName
@@ -145,10 +145,31 @@ func (role *PostableRole) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (patch *PatchableObjects) GetInsertionTuples(id valuer.UUID, relation authtypes.Relation) ([]*openfgav1.TupleKey, error) {
+func (role *PatchableRole) UnmarshalJSON(data []byte) error {
+	type shadowPatchableRole struct {
+		DisplayName *string `json:"displayName"`
+		Description *string `json:"description"`
+	}
+
+	var shadowRole shadowPatchableRole
+	if err := json.Unmarshal(data, &shadowRole); err != nil {
+		return err
+	}
+
+	if shadowRole.DisplayName == nil && shadowRole.Description == nil {
+		return errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty role patch request recieved, one of displayName or description must be present")
+	}
+
+	role.DisplayName = shadowRole.DisplayName
+	role.Description = shadowRole.Description
+
+	return nil
+}
+
+func GetAdditionTuples(id valuer.UUID, relation authtypes.Relation, additions []*authtypes.Object) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
-	for _, object := range patch.Additions {
+	for _, object := range additions {
 		typeable := authtypes.MustNewTypeableFromType(object.Resource.Type, object.Resource.Name)
 		transactionTuples, err := typeable.Tuples(
 			authtypes.MustNewSubject(
@@ -169,10 +190,10 @@ func (patch *PatchableObjects) GetInsertionTuples(id valuer.UUID, relation autht
 	return tuples, nil
 }
 
-func (patch *PatchableObjects) GetDeletionTuples(id valuer.UUID, relation authtypes.Relation) ([]*openfgav1.TupleKeyWithoutCondition, error) {
+func GetDeletionTuples(id valuer.UUID, relation authtypes.Relation, deletions []*authtypes.Object) ([]*openfgav1.TupleKeyWithoutCondition, error) {
 	tuples := make([]*openfgav1.TupleKeyWithoutCondition, 0)
 
-	for _, object := range patch.Deletions {
+	for _, object := range deletions {
 		typeable := authtypes.MustNewTypeableFromType(object.Resource.Type, object.Resource.Name)
 		transactionTuples, err := typeable.Tuples(
 			authtypes.MustNewSubject(

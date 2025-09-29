@@ -40,7 +40,7 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, err := handler.module.Create(ctx, orgID, req)
+	role, err := handler.module.Create(ctx, orgID, req.DisplayName, req.Description)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -73,13 +73,13 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gettableRole, err := handler.module.Get(ctx, orgID, roleID)
+	role, err := handler.module.Get(ctx, orgID, roleID)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, gettableRole)
+	render.Success(rw, http.StatusOK, role)
 }
 
 func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
@@ -192,7 +192,7 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.Patch(ctx, orgID, roleID, req)
+	err = handler.module.Patch(ctx, orgID, roleID, req.DisplayName, req.Description)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -248,7 +248,7 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.PatchObjects(ctx, orgID, roleID, relation, patchableObjects)
+	err = handler.module.PatchObjects(ctx, orgID, roleID, relation, patchableObjects.Additions, patchableObjects.Deletions)
 	if err != nil {
 		render.Error(rw, err)
 		return
