@@ -102,13 +102,14 @@ func TestSpanPercentileCTEBuilder(t *testing.T) {
 				request: c.request,
 			}
 
-			stmt, err := builder.build()
+			stmt := builder.build()
 
 			if c.expectedErr != nil {
+				// Since build() no longer returns an error, we should test validation at the request level
+				_, err := BuildSpanPercentileQuery(c.request)
 				require.Error(t, err)
 				require.Contains(t, err.Error(), c.expectedErr.Error())
 			} else {
-				require.NoError(t, err)
 				require.Equal(t, c.expected.Query, stmt.Query)
 				require.Equal(t, c.expected.Args, stmt.Args)
 			}
@@ -129,7 +130,7 @@ func TestSpanPercentileCTEBuilderErrors(t *testing.T) {
 				Start:  1640995200000,
 				End:    1640995800000,
 			},
-			expectedErr: "span_id cannot be empty",
+			expectedErr: "span_id is required",
 		},
 		{
 			name: "invalid time range - start after end",
@@ -141,22 +142,16 @@ func TestSpanPercentileCTEBuilderErrors(t *testing.T) {
 			expectedErr: "start time must be before end time",
 		},
 		{
-			name: "zero start time",
-			request: &spanpercentiletypes.SpanPercentileRequest{
-				SpanID: "valid-span-id",
-				Start:  0,
-				End:    1640995800000,
-			},
-			expectedErr: "start time must be greater than 0",
-		},
-		{
-			name: "zero end time",
+			name: "empty filter expression",
 			request: &spanpercentiletypes.SpanPercentileRequest{
 				SpanID: "valid-span-id",
 				Start:  1640995200000,
-				End:    0,
+				End:    1640995800000,
+				Filter: &qbtypes.Filter{
+					Expression: "",
+				},
 			},
-			expectedErr: "end time must be greater than 0",
+			expectedErr: "filter expression cannot be empty when filter is provided",
 		},
 	}
 
@@ -389,8 +384,7 @@ func TestSpanPercentileTimestampCalculations(t *testing.T) {
 			require.Equal(t, tc.expectedEndNs, builder.end)
 
 			// Build and verify the generated SQL contains correct timestamps
-			stmt, err := builder.build()
-			require.NoError(t, err)
+			stmt := builder.build()
 
 			// Check nanosecond timestamps in query
 			require.Contains(t, stmt.Query, fmt.Sprintf("%d", tc.expectedStartNs))
