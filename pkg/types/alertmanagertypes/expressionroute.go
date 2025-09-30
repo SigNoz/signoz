@@ -2,6 +2,7 @@ package alertmanagertypes
 
 import (
 	"context"
+	"github.com/expr-lang/expr"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -16,7 +17,6 @@ type PostableRoutePolicy struct {
 	Channels       []string       `json:"channels"`
 	Name           string         `json:"name"`
 	Description    string         `json:"description"`
-	Enabled        bool           `json:"enabled"`
 	Tags           []string       `json:"tags,omitempty"`
 }
 
@@ -42,6 +42,11 @@ func (p *PostableRoutePolicy) Validate() error {
 
 	if p.ExpressionKind != PolicyBasedExpression && p.ExpressionKind != RuleBasedExpression {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported expression kind: %s", p.ExpressionKind.StringValue())
+	}
+
+	_, err := expr.Compile(p.Expression)
+	if err != nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid expression syntax: %v", err)
 	}
 
 	return nil

@@ -110,7 +110,6 @@ func (r *PostableRule) GetRuleRouteRequest(ruleId string) ([]*alertmanagertypes.
 			Channels:       receiver.Channels,
 			Name:           ruleId,
 			Description:    fmt.Sprintf("Auto-generated route for rule %s", ruleId),
-			Enabled:        true,
 			Tags:           []string{"auto-generated", "rule-based"},
 		})
 	}
