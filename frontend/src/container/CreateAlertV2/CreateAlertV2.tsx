@@ -3,7 +3,6 @@ import './CreateAlertV2.styles.scss';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
-import { useMemo } from 'react';
 
 import AlertCondition from './AlertCondition';
 import { CreateAlertProvider } from './context';
@@ -14,42 +13,23 @@ import Footer from './Footer';
 import NotificationSettings from './NotificationSettings';
 import QuerySection from './QuerySection';
 import { CreateAlertV2Props } from './types';
-import {
-	getCreateAlertLocalStateFromAlertDef,
-	showCondensedLayout,
-	Spinner,
-} from './utils';
+import { showCondensedLayout, Spinner } from './utils';
 
-function CreateAlertV2({
-	alertType,
-	initialAlert,
-	ruleId,
-	isEditMode,
-}: CreateAlertV2Props): JSX.Element {
-	const currentQueryToRedirect = useMemo(() => {
-		const basicAlertDef = buildInitialAlertDef(alertType);
-		return mapQueryDataFromApi(
-			initialAlert?.condition.compositeQuery ||
-				basicAlertDef.condition.compositeQuery,
-		);
-	}, [initialAlert, alertType]);
+function CreateAlertV2({ alertType }: CreateAlertV2Props): JSX.Element {
+	const queryToRedirect = buildInitialAlertDef(alertType);
+	const currentQueryToRedirect = mapQueryDataFromApi(
+		queryToRedirect.condition.compositeQuery,
+	);
 
 	useShareBuilderUrl({ defaultValue: currentQueryToRedirect });
 
 	const showCondensedLayoutFlag = showCondensedLayout();
 
-	const initialAlertState = getCreateAlertLocalStateFromAlertDef(initialAlert);
-
 	return (
-		<CreateAlertProvider
-			initialAlertType={alertType}
-			initialAlertState={initialAlertState}
-			isEditMode={isEditMode}
-			ruleId={ruleId}
-		>
+		<CreateAlertProvider initialAlertType={alertType}>
 			<Spinner />
 			<div className="create-alert-v2-container">
-				{!isEditMode && <CreateAlertHeader />}
+				<CreateAlertHeader />
 				<QuerySection />
 				<AlertCondition />
 				{!showCondensedLayoutFlag ? <EvaluationSettings /> : null}
