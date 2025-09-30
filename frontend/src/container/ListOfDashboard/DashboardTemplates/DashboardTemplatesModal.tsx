@@ -118,7 +118,7 @@ const templatesList: DashboardTemplate[] = [
 
 interface DashboardTemplatesModalProps {
 	showNewDashboardTemplatesModal: boolean;
-	onCreateNewDashboard: () => void;
+	onCreateNewDashboard: (event: React.MouseEvent) => void;
 	onCancel: () => void;
 }
 
@@ -204,7 +204,9 @@ export default function DashboardTemplatesModal({
 									type="primary"
 									className="periscope-btn primary"
 									icon={<Plus size={14} />}
-									onClick={onCreateNewDashboard}
+									onClick={(event: React.MouseEvent): void =>
+										onCreateNewDashboard(event)
+									}
 								>
 									New dashboard
 								</Button>

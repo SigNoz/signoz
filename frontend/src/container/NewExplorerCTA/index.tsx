@@ -21,23 +21,31 @@ function NewExplorerCTA(): JSX.Element | null {
 		[location.pathname],
 	);
 
-	const onClickHandler = useCallback((): void => {
-		if (location.pathname === ROUTES.LOGS_EXPLORER) {
-			history.push(ROUTES.OLD_LOGS_EXPLORER);
-		} else if (location.pathname === ROUTES.TRACE) {
-			history.push(ROUTES.TRACES_EXPLORER);
-		} else if (location.pathname === ROUTES.OLD_LOGS_EXPLORER) {
-			history.push(ROUTES.LOGS_EXPLORER);
-		} else if (location.pathname === ROUTES.TRACES_EXPLORER) {
-			history.push(ROUTES.TRACE);
-		}
-	}, [location.pathname]);
+	const onClickHandler = useCallback(
+		(event?: React.MouseEvent): void => {
+			let targetRoute = '';
+			if (location.pathname === ROUTES.LOGS_EXPLORER) {
+				targetRoute = ROUTES.OLD_LOGS_EXPLORER;
+			} else if (location.pathname === ROUTES.TRACE) {
+				targetRoute = ROUTES.TRACES_EXPLORER;
+			} else if (location.pathname === ROUTES.OLD_LOGS_EXPLORER) {
+				targetRoute = ROUTES.LOGS_EXPLORER;
+			} else if (location.pathname === ROUTES.TRACES_EXPLORER) {
+				targetRoute = ROUTES.TRACE;
+			}
+
+			if (targetRoute) {
+				history.push(targetRoute, event);
+			}
+		},
+		[location.pathname],
+	);
 
 	const button = useMemo(
 		() => (
 			<Button
 				icon={<Undo size={16} />}
-				onClick={onClickHandler}
+				onClick={(event: React.MouseEvent): void => onClickHandler(event)}
 				data-testid="newExplorerCTA"
 				type="text"
 				className="periscope-btn link"
