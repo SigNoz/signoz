@@ -38,9 +38,9 @@ export const showCondensedLayout = (): boolean =>
 	localStorage.getItem('showCondensedLayout') === 'true';
 
 export function Spinner(): JSX.Element | null {
-	const { isCreatingAlertRule } = useCreateAlertState();
+	const { isCreatingAlertRule, isUpdatingAlertRule } = useCreateAlertState();
 
-	if (!isCreatingAlertRule) return null;
+	if (!isCreatingAlertRule && !isUpdatingAlertRule) return null;
 
 	return createPortal(
 		<div className="sticky-page-spinner">
