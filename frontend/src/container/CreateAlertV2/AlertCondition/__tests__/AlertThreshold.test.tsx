@@ -108,6 +108,11 @@ jest.mock('container/NewWidget/RightContainer/alertFomatCategories', () => ({
 	]),
 }));
 
+jest.mock('container/CreateAlertV2/utils', () => ({
+	...jest.requireActual('container/CreateAlertV2/utils'),
+	showCondensedLayout: jest.fn().mockReturnValue(false),
+}));
+
 const TEST_STRINGS = {
 	ADD_THRESHOLD: 'Add Threshold',
 	AT_LEAST_ONCE: 'AT LEAST ONCE',
