@@ -4,11 +4,13 @@ import { getYAxisFormattedValue } from '../yAxisConfig';
 describe('getYAxisFormattedValue - none', () => {
 	test('large integers and decimals', () => {
 		expect(getYAxisFormattedValue('250034', 'none')).toBe('250034');
-		expect(getYAxisFormattedValue('250034897', 'none')).toBe('250034897');
-		expect(getYAxisFormattedValue('250034897.02354', 'none')).toBe(
-			'250034897.0235',
+		expect(getYAxisFormattedValue('250034897.12345', 'none')).toBe(
+			'250034897.12345',
 		);
-		expect(getYAxisFormattedValue('9999999.9999', 'none')).toBe('9999999.999');
+		expect(getYAxisFormattedValue('250034897.02354', 'none')).toBe(
+			'250034897.02354',
+		);
+		expect(getYAxisFormattedValue('9999999.9999', 'none')).toBe('9999999.9999');
 	});
 
 	test('preserves leading zeros after decimal until first non-zero', () => {
@@ -17,12 +19,16 @@ describe('getYAxisFormattedValue - none', () => {
 	});
 
 	test('trims to three significant decimals and removes trailing zeros', () => {
-		expect(getYAxisFormattedValue('0.000000250034', 'none')).toBe('0.00000025');
+		expect(getYAxisFormattedValue('0.000000250034', 'none')).toBe(
+			'0.00000025003',
+		);
 		expect(getYAxisFormattedValue('0.00000025', 'none')).toBe('0.00000025');
 
 		// Big precision, limiting the javascript precision (~16 digits)
 		expect(getYAxisFormattedValue('1.0000000000000001', 'none')).toBe('1');
-		expect(getYAxisFormattedValue('1.00555555559595876', 'none')).toBe('1.00555');
+		expect(getYAxisFormattedValue('1.00555555559595876', 'none')).toBe(
+			'1.0055555',
+		);
 
 		expect(getYAxisFormattedValue('0.000000001', 'none')).toBe('0.000000001');
 		expect(getYAxisFormattedValue('0.000000250000', 'none')).toBe('0.00000025');
@@ -30,8 +36,8 @@ describe('getYAxisFormattedValue - none', () => {
 
 	test('whole numbers normalize', () => {
 		expect(getYAxisFormattedValue('1000', 'none')).toBe('1000');
-		expect(getYAxisFormattedValue('99.5458', 'none')).toBe('99.545');
-		expect(getYAxisFormattedValue('1.234567', 'none')).toBe('1.234');
+		expect(getYAxisFormattedValue('99.5458', 'none')).toBe('99.5458');
+		expect(getYAxisFormattedValue('1.234567', 'none')).toBe('1.23456');
 		expect(getYAxisFormattedValue('99.998', 'none')).toBe('99.998');
 	});
 
@@ -71,7 +77,7 @@ describe('getYAxisFormattedValue - units', () => {
 		expect(getYAxisFormattedValue('500', 'ms')).toBe('500 ms');
 		expect(getYAxisFormattedValue('60000', 'ms')).toBe('1 min');
 		expect(getYAxisFormattedValue('295.429', 'ms')).toBe('295.429 ms');
-		expect(getYAxisFormattedValue('4353.81', 'ms')).toBe('4.354 s');
+		expect(getYAxisFormattedValue('4353.81', 'ms')).toBe('4.35381 s');
 	});
 
 	test('s', () => {
@@ -110,7 +116,7 @@ describe('getYAxisFormattedValue - units', () => {
 		expect(getYAxisFormattedValue('999', 'short')).toBe('999');
 
 		expect(getYAxisFormattedValue('1000000', 'short')).toBe('1 Mil');
-		expect(getYAxisFormattedValue('1555600', 'short')).toBe('1.556 Mil');
+		expect(getYAxisFormattedValue('1555600', 'short')).toBe('1.5556 Mil');
 		expect(getYAxisFormattedValue('999999', 'short')).toBe('999.999 K');
 
 		expect(getYAxisFormattedValue('1000000000', 'short')).toBe('1 Bil');
@@ -120,19 +126,19 @@ describe('getYAxisFormattedValue - units', () => {
 
 	test('percent', () => {
 		expect(getYAxisFormattedValue('0.15', 'percent')).toBe('0.15%');
-		expect(getYAxisFormattedValue('0.1234', 'percent')).toBe('0.123%');
-		expect(getYAxisFormattedValue('0.123499', 'percent')).toBe('0.123%');
+		expect(getYAxisFormattedValue('0.1234', 'percent')).toBe('0.1234%');
+		expect(getYAxisFormattedValue('0.123499', 'percent')).toBe('0.12349%');
 		expect(getYAxisFormattedValue('1.5', 'percent')).toBe('1.5%');
 		expect(getYAxisFormattedValue('0.0001', 'percent')).toBe('0.0001%');
 		expect(getYAxisFormattedValue('0.000000001', 'percent')).toBe('1e-9%');
 		expect(getYAxisFormattedValue('0.000000250034', 'percent')).toBe(
-			'0.00000025%',
+			'0.00000025003%',
 		);
 		expect(getYAxisFormattedValue('0.00000025', 'percent')).toBe('0.00000025%');
 		// Big precision, limiting the javascript precision (~16 digits)
 		expect(getYAxisFormattedValue('1.0000000000000001', 'percent')).toBe('1%');
 		expect(getYAxisFormattedValue('1.00555555559595876', 'percent')).toBe(
-			'1.00555%',
+			'1.0055555%',
 		);
 	});
 

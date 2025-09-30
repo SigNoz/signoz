@@ -1,19 +1,21 @@
 import { formattedValueToString, getValueFormat } from '@grafana/data';
+import * as Sentry from '@sentry/react';
 import { isNaN } from 'lodash-es';
 
 /**
- * Formats a number for display, showing up to 3 significant decimal places.
+ * Formats a number for display, preserving leading zeros after the decimal point
+ * and showing up to 5 digits after the first non-zero decimal digit.
  * It avoids scientific notation and removes unnecessary trailing zeros.
  *
  * @example
- * formatWithSignificantDecimals(1.2345); // "1.234"
- * formatWithSignificantDecimals(0.0012345); // "0.00123"
- * formatWithSignificantDecimals(5.0); // "5"
+ * formatDecimalWithLeadingZeros(1.2345); // "1.234"
+ * formatDecimalWithLeadingZeros(0.0012345); // "0.00123"
+ * formatDecimalWithLeadingZeros(5.0); // "5"
  *
  * @param value The number to format.
  * @returns The formatted string.
  */
-const formatWithSignificantDecimals = (value: number): string => {
+const formatDecimalWithLeadingZeros = (value: number): string => {
 	if (value === 0) {
 		return '0';
 	}
@@ -32,15 +34,15 @@ const formatWithSignificantDecimals = (value: number): string => {
 	}
 
 	// Find the index of the first non-zero digit in the decimal part.
-	const firstSignificantIndex = decimalPart.search(/[^0]/);
+	const firstNonZeroIndex = decimalPart.search(/[^0]/);
 
 	// If the decimal part consists only of zeros, return just the integer part.
-	if (firstSignificantIndex === -1) {
+	if (firstNonZeroIndex === -1) {
 		return integerPart;
 	}
 
-	// Determine the number of decimals to keep: leading zeros + up to 3 significant digits.
-	const decimalsToKeep = firstSignificantIndex + 3;
+	// Determine the number of decimals to keep: leading zeros + up to 5 significant digits.
+	const decimalsToKeep = firstNonZeroIndex + 5;
 	const trimmedDecimalPart = decimalPart.substring(0, decimalsToKeep);
 
 	// Remove any trailing zeros from the result to keep it clean.
@@ -72,7 +74,7 @@ export const getYAxisFormattedValue = (
 
 	// Use high-precision formatter for the 'none' format.
 	if (format === 'none') {
-		return formatWithSignificantDecimals(numValue);
+		return formatDecimalWithLeadingZeros(numValue);
 	}
 
 	// For all other standard formats, delegate to grafana/data's built-in formatter.
@@ -80,18 +82,23 @@ export const getYAxisFormattedValue = (
 		const formatter = getValueFormat(format);
 		const formattedValue = formatter(
 			numValue,
-			decimalPlaces && decimalPlaces >= 3 ? decimalPlaces : 3,
+			decimalPlaces && decimalPlaces >= 5 ? decimalPlaces : 5,
 			undefined,
 		);
 		if (formattedValue.text && formattedValue.text.includes('.')) {
-			formattedValue.text = formatWithSignificantDecimals(
+			formattedValue.text = formatDecimalWithLeadingZeros(
 				parseFloat(formattedValue.text),
 			);
 		}
 
 		return formattedValueToString(formattedValue);
 	} catch (error) {
-		console.error('Error applying formatter:', error);
+		Sentry.captureEvent({
+			message: `Error applying formatter: ${
+				error instanceof Error ? error.message : 'Unknown error'
+			}`,
+			level: 'error',
+		});
 		// Fallback
 		return numValue.toString();
 	}
