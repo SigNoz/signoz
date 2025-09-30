@@ -8,6 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/session"
@@ -19,6 +20,7 @@ import (
 )
 
 type module struct {
+	settings   factory.ScopedProviderSettings
 	authNs     map[authtypes.AuthNProvider]authn.AuthN
 	user       user.Module
 	userGetter user.Getter
@@ -27,8 +29,9 @@ type module struct {
 	orgGetter  organization.Getter
 }
 
-func NewModule(authNs map[authtypes.AuthNProvider]authn.AuthN, user user.Module, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter) session.Module {
+func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.AuthNProvider]authn.AuthN, user user.Module, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter) session.Module {
 	return &module{
+		settings:   factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/session/implsession"),
 		authNs:     authNs,
 		user:       user,
 		userGetter: userGetter,
@@ -136,6 +139,7 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 
 	callbackIdentity, err := callbackAuthN.HandleCallback(ctx, values)
 	if err != nil {
+		module.settings.Logger().ErrorContext(ctx, "failed to handle callback", "error", err, "authNProvider", authNProvider)
 		return "", err
 	}
 

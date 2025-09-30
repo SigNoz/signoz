@@ -76,7 +76,7 @@ func (handler *handler) CreateSessionByGoogleCallback(rw http.ResponseWriter, re
 	redirectURL, err := handler.module.CreateCallbackAuthNSession(ctx, authtypes.AuthNProviderGoogle, values)
 	if err != nil {
 		t, c, m, _, _, _ := errors.Unwrapb(err)
-		http.Redirect(rw, req, fmt.Sprintf("/ssoerror?type=%s&code=%s&message=%s", t, c.String(), m), http.StatusSeeOther)
+		http.Redirect(rw, req, fmt.Sprintf("/authncallbackerror?type=%s&code=%s&message=%s", t.String(), c.String(), m), http.StatusSeeOther)
 		return
 	}
 
