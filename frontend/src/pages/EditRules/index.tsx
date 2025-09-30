@@ -92,9 +92,9 @@ function EditRules(): JSX.Element {
 		return <Spinner tip="Loading Rules..." />;
 	}
 
-	let initalV2AlertValue: PostableAlertRuleV2 | null = null;
+	let initialV2AlertValue: PostableAlertRuleV2 | null = null;
 	if (data.payload.data.schemaVersion === NEW_ALERT_SCHEMA_VERSION) {
-		initalV2AlertValue = data.payload.data as PostableAlertRuleV2;
+		initialV2AlertValue = data.payload.data as PostableAlertRuleV2;
 	}
 
 	return (
@@ -102,7 +102,7 @@ function EditRules(): JSX.Element {
 			<EditRulesContainer
 				ruleId={ruleId || ''}
 				initialValue={data.payload.data}
-				initalV2AlertValue={initalV2AlertValue}
+				initialV2AlertValue={initialV2AlertValue}
 			/>
 		</div>
 	);

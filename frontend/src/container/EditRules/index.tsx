@@ -11,19 +11,19 @@ import { AlertDef } from 'types/api/alerts/def';
 function EditRules({
 	initialValue,
 	ruleId,
-	initalV2AlertValue,
+	initialV2AlertValue,
 }: EditRulesProps): JSX.Element {
 	const [formInstance] = Form.useForm();
 
 	if (
-		initalV2AlertValue !== null &&
-		initalV2AlertValue.schemaVersion === NEW_ALERT_SCHEMA_VERSION
+		initialV2AlertValue !== null &&
+		initialV2AlertValue.schemaVersion === NEW_ALERT_SCHEMA_VERSION
 	) {
 		return (
 			<CreateAlertV2
 				alertType={initialValue.alertType as AlertTypes}
 				ruleId={ruleId}
-				initialAlert={initalV2AlertValue}
+				initialAlert={initialV2AlertValue}
 				isEditMode
 			/>
 		);
@@ -46,7 +46,7 @@ function EditRules({
 interface EditRulesProps {
 	initialValue: AlertDef;
 	ruleId: string;
-	initalV2AlertValue: PostableAlertRuleV2 | null;
+	initialV2AlertValue: PostableAlertRuleV2 | null;
 }
 
 export default EditRules;
