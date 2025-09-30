@@ -22,25 +22,23 @@ import {
 
 function CreateAlertV2({
 	alertType,
-	initialAlertDef,
+	initialAlert,
 	ruleId,
 	isEditMode,
 }: CreateAlertV2Props): JSX.Element {
 	const currentQueryToRedirect = useMemo(() => {
 		const basicAlertDef = buildInitialAlertDef(alertType);
 		return mapQueryDataFromApi(
-			initialAlertDef?.condition.compositeQuery ||
+			initialAlert?.condition.compositeQuery ||
 				basicAlertDef.condition.compositeQuery,
 		);
-	}, [initialAlertDef, alertType]);
+	}, [initialAlert, alertType]);
 
 	useShareBuilderUrl({ defaultValue: currentQueryToRedirect });
 
 	const showCondensedLayoutFlag = showCondensedLayout();
 
-	const initialAlertState = getCreateAlertLocalStateFromAlertDef(
-		initialAlertDef,
-	);
+	const initialAlertState = getCreateAlertLocalStateFromAlertDef(initialAlert);
 
 	return (
 		<CreateAlertProvider

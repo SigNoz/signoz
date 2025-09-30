@@ -1,5 +1,5 @@
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { AlertDef } from 'types/api/alerts/def';
+import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 
 import {
 	AdvancedOptionsState,
@@ -12,7 +12,7 @@ import {
 export interface CreateAlertV2Props {
 	alertType: AlertTypes;
 	ruleId?: string;
-	initialAlertDef?: AlertDef;
+	initialAlert?: PostableAlertRuleV2;
 	isEditMode?: boolean;
 }
 

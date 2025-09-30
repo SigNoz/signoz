@@ -1,8 +1,8 @@
 import { Color } from '@signozhq/design-tokens';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
-import { alertDefaults } from 'container/CreateAlertRule/defaults';
-import { AlertDef } from 'types/api/alerts/def';
+import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 
+import { defaultPostableAlertRuleV2 } from '../constants';
 import { INITIAL_ALERT_STATE } from '../context/constants';
 import {
 	AlertThresholdMatchType,
@@ -50,10 +50,10 @@ describe('CreateAlertV2 utils', () => {
 
 	describe('getEvaluationWindowStateFromAlertDef', () => {
 		it('for rolling window with non-custom timeframe', () => {
-			const args: AlertDef = {
-				...alertDefaults,
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
 				evaluation: {
-					...alertDefaults.evaluation,
+					...defaultPostableAlertRuleV2.evaluation,
 					kind: 'rolling',
 					spec: {
 						evalWindow: '5m0s',
@@ -69,10 +69,10 @@ describe('CreateAlertV2 utils', () => {
 		});
 
 		it('for rolling window with custom timeframe', () => {
-			const args: AlertDef = {
-				...alertDefaults,
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
 				evaluation: {
-					...alertDefaults.evaluation,
+					...defaultPostableAlertRuleV2.evaluation,
 					kind: 'rolling',
 					spec: {
 						evalWindow: '13m0s',
@@ -92,10 +92,9 @@ describe('CreateAlertV2 utils', () => {
 		});
 
 		it('for cumulative window with current hour', () => {
-			const args: AlertDef = {
-				...alertDefaults,
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
 				evaluation: {
-					...alertDefaults.evaluation,
 					kind: 'cumulative',
 					spec: {
 						schedule: {
@@ -117,10 +116,10 @@ describe('CreateAlertV2 utils', () => {
 		});
 
 		it('for cumulative window with current day', () => {
-			const args: AlertDef = {
-				...alertDefaults,
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
 				evaluation: {
-					...alertDefaults.evaluation,
+					...defaultPostableAlertRuleV2.evaluation,
 					kind: 'cumulative',
 					spec: {
 						schedule: {
@@ -143,10 +142,10 @@ describe('CreateAlertV2 utils', () => {
 		});
 
 		it('for cumulative window with current month', () => {
-			const args: AlertDef = {
-				...alertDefaults,
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
 				evaluation: {
-					...alertDefaults.evaluation,
+					...defaultPostableAlertRuleV2.evaluation,
 					kind: 'cumulative',
 					spec: {
 						schedule: {
@@ -175,11 +174,8 @@ describe('CreateAlertV2 utils', () => {
 
 	describe('getNotificationSettingsStateFromAlertDef', () => {
 		it('should return the correct notification settings state for the given alert def', () => {
-			const args: AlertDef = {
-				...alertDefaults,
-				annotations: {
-					description: 'test description',
-				},
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
 				notificationSettings: {
 					notificationGroupBy: ['email'],
 					renotify: '1m0s',
@@ -197,14 +193,15 @@ describe('CreateAlertV2 utils', () => {
 					unit: UniversalYAxisUnit.MINUTES,
 					conditions: ['firing'],
 				},
-				description: 'test description',
+				description:
+					'This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})',
 				routingPolicies: true,
 			});
 		});
 
 		it('when renotification is not provided', () => {
-			const args: AlertDef = {
-				...alertDefaults,
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
 				notificationSettings: {
 					notificationGroupBy: ['email'],
 				},
@@ -225,12 +222,12 @@ describe('CreateAlertV2 utils', () => {
 
 	describe('getAdvancedOptionsStateFromAlertDef', () => {
 		it('should return the correct advanced options state for the given alert def', () => {
-			const args: AlertDef = {
-				...alertDefaults,
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
 				condition: {
-					...alertDefaults.condition,
+					...defaultPostableAlertRuleV2.condition,
 					compositeQuery: {
-						...alertDefaults.condition.compositeQuery,
+						...defaultPostableAlertRuleV2.condition.compositeQuery,
 						unit: UniversalYAxisUnit.MINUTES,
 					},
 					requiredNumPoints: 13,
@@ -239,7 +236,7 @@ describe('CreateAlertV2 utils', () => {
 					absentFor: 12,
 				},
 				evaluation: {
-					...alertDefaults.evaluation,
+					...defaultPostableAlertRuleV2.evaluation,
 					spec: {
 						frequency: '1m0s',
 					},
@@ -269,10 +266,14 @@ describe('CreateAlertV2 utils', () => {
 	});
 
 	describe('getThresholdStateFromAlertDef', () => {
-		const args: AlertDef = {
-			...alertDefaults,
+		const args: PostableAlertRuleV2 = {
+			...defaultPostableAlertRuleV2,
+			annotations: {
+				summary: 'test summary',
+				description: 'test description',
+			},
 			condition: {
-				...alertDefaults.condition,
+				...defaultPostableAlertRuleV2.condition,
 				thresholds: {
 					kind: 'basic',
 					spec: [
@@ -311,17 +312,21 @@ describe('CreateAlertV2 utils', () => {
 
 	describe('getCreateAlertLocalStateFromAlertDef', () => {
 		it('should return the correct create alert local state for the given alert def', () => {
-			const args: AlertDef = {
-				...alertDefaults,
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
+				annotations: {
+					summary: 'test summary',
+					description: 'test description',
+				},
 				alert: 'test-alert',
 				labels: {
 					severity: 'warning',
 					team: 'test-team',
 				},
 				condition: {
-					...alertDefaults.condition,
+					...defaultPostableAlertRuleV2.condition,
 					compositeQuery: {
-						...alertDefaults.condition.compositeQuery,
+						...defaultPostableAlertRuleV2.condition.compositeQuery,
 						unit: UniversalYAxisUnit.MINUTES,
 					},
 				},

@@ -4,7 +4,7 @@ import { TIMEZONE_DATA } from 'components/CustomTimePicker/timezoneUtils';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { getRandomColor } from 'container/ExplorerOptions/utils';
 import { createPortal } from 'react-dom';
-import { AlertDef } from 'types/api/alerts/def';
+import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 import { v4 } from 'uuid';
 
 import { useCreateAlertState } from './context';
@@ -86,7 +86,7 @@ export function parseGoTime(
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function getEvaluationWindowStateFromAlertDef(
-	alertDef: AlertDef,
+	alertDef: PostableAlertRuleV2,
 ): EvaluationWindowState {
 	const windowType = alertDef.evaluation?.kind as 'rolling' | 'cumulative';
 
@@ -185,7 +185,7 @@ export function getEvaluationWindowStateFromAlertDef(
 }
 
 export function getNotificationSettingsStateFromAlertDef(
-	alertDef: AlertDef,
+	alertDef: PostableAlertRuleV2,
 ): NotificationSettingsState {
 	const description = alertDef.annotations?.description || '';
 	const multipleNotifications =
@@ -220,7 +220,7 @@ export function getNotificationSettingsStateFromAlertDef(
 }
 
 export function getAdvancedOptionsStateFromAlertDef(
-	alertDef: AlertDef,
+	alertDef: PostableAlertRuleV2,
 ): AdvancedOptionsState {
 	return {
 		...INITIAL_ADVANCED_OPTIONS_STATE,
@@ -247,7 +247,7 @@ export function getAdvancedOptionsStateFromAlertDef(
 }
 
 export function getThresholdStateFromAlertDef(
-	alertDef: AlertDef,
+	alertDef: PostableAlertRuleV2,
 ): AlertThresholdState {
 	return {
 		...INITIAL_ALERT_THRESHOLD_STATE,
@@ -263,16 +263,17 @@ export function getThresholdStateFromAlertDef(
 			})) || [],
 		selectedQuery: alertDef.condition.selectedQueryName || '',
 		operator:
-			(alertDef.condition.op as AlertThresholdOperator) ||
+			(alertDef.condition.thresholds?.spec[0].op as AlertThresholdOperator) ||
 			AlertThresholdOperator.IS_ABOVE,
 		matchType:
-			(alertDef.condition.matchType as AlertThresholdMatchType) ||
+			(alertDef.condition.thresholds?.spec[0]
+				.matchType as AlertThresholdMatchType) ||
 			AlertThresholdMatchType.AT_LEAST_ONCE,
 	};
 }
 
 export function getCreateAlertLocalStateFromAlertDef(
-	alertDef: AlertDef | undefined,
+	alertDef: PostableAlertRuleV2 | undefined,
 ): GetCreateAlertLocalStateFromAlertDefReturn {
 	if (!alertDef) {
 		return {
