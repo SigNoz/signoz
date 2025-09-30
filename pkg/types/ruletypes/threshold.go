@@ -132,10 +132,6 @@ func sortThresholds(thresholds []BasicRuleThreshold) {
 	})
 }
 
-func (b BasicRuleThreshold) getName() string {
-	return b.Name
-}
-
 func (b BasicRuleThreshold) target(ruleUnit string) float64 {
 	unitConverter := converter.FromUnit(converter.Unit(b.TargetUnit))
 	// convert the target value to the y-axis unit
@@ -144,18 +140,6 @@ func (b BasicRuleThreshold) target(ruleUnit string) float64 {
 		U: converter.Unit(b.TargetUnit),
 	}, converter.Unit(ruleUnit))
 	return value.F
-}
-
-func (b BasicRuleThreshold) getRecoveryTarget() float64 {
-	if b.RecoveryTarget == nil {
-		return 0
-	} else {
-		return *b.RecoveryTarget
-	}
-}
-
-func (b BasicRuleThreshold) getMatchType() MatchType {
-	return b.MatchType
 }
 
 func (b BasicRuleThreshold) getCompareOp() CompareOp {
