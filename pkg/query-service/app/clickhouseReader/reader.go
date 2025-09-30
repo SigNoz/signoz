@@ -1276,11 +1276,6 @@ func getLocalTableName(tableName string) string {
 
 }
 
-// Deprecated: Use SetTTLV2 for logs
-func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
-	return nil, &model.ApiError{Typ: model.ErrorNotImplemented, Err: fmt.Errorf("setTTL for logs is deprecated, please use SetTTLV2")}
-}
-
 func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 	// uuid is used as transaction id
 	uuidWithHyphen := uuid.New()
@@ -1337,8 +1332,8 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 			ColdStorageQuery: ttlV2ColdStorage,
 		},
 		r.spanAttributesKeysTable: {
-			TTLQuery:         ttlV2,
-			TTLColumn:        "timestamp",
+			TTLQuery:  ttlV2,
+			TTLColumn: "timestamp",
 		},
 	}
 
@@ -1409,7 +1404,6 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 	}
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
-
 
 func (r *ClickHouseReader) hasCustomRetentionColumn(ctx context.Context) (bool, error) {
 	// Directly query for the _retention_days column existence
@@ -1898,8 +1892,6 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string, params *mod
 		return r.setTTLTraces(ctx, orgID, params)
 	case constants.MetricsTTL:
 		return r.setTTLMetrics(ctx, orgID, params)
-	case constants.LogsTTL:
-		return r.setTTLLogs(ctx, orgID, params)
 
 	default:
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting ttl. ttl type should be <metrics|traces>, got %v", params.Type)}
