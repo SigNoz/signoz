@@ -116,7 +116,7 @@ export function CreateAlertProvider(
 	}, [alertType]);
 
 	useEffect(() => {
-		if (isEditMode) {
+		if (isEditMode && initialAlertState) {
 			setAlertState({
 				type: 'SET_INITIAL_STATE',
 				payload: initialAlertState.basicAlertState,

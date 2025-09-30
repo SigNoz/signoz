@@ -4,6 +4,7 @@ import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import * as useCreateAlertRuleHook from '../../../../hooks/alerts/useCreateAlertRule';
 import * as useTestAlertRuleHook from '../../../../hooks/alerts/useTestAlertRule';
+import * as useUpdateAlertRuleHook from '../../../../hooks/alerts/useUpdateAlertRule';
 import { CreateAlertProvider } from '../../context';
 import CreateAlertHeader from '../CreateAlertHeader';
 
@@ -12,6 +13,10 @@ jest.spyOn(useCreateAlertRuleHook, 'useCreateAlertRule').mockReturnValue({
 	isLoading: false,
 } as any);
 jest.spyOn(useTestAlertRuleHook, 'useTestAlertRule').mockReturnValue({
+	mutate: jest.fn(),
+	isLoading: false,
+} as any);
+jest.spyOn(useUpdateAlertRuleHook, 'useUpdateAlertRule').mockReturnValue({
 	mutate: jest.fn(),
 	isLoading: false,
 } as any);

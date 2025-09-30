@@ -52,7 +52,7 @@ export interface ICreateAlertContextProps {
 export interface ICreateAlertProviderProps {
 	children: React.ReactNode;
 	initialAlertType: AlertTypes;
-	initialAlertState: GetCreateAlertLocalStateFromAlertDefReturn;
+	initialAlertState?: GetCreateAlertLocalStateFromAlertDefReturn;
 	isEditMode?: boolean;
 	ruleId?: string;
 }

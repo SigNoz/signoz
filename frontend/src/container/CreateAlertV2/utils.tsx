@@ -115,8 +115,10 @@ export function getEvaluationWindowStateFromAlertDef(
 		}
 	}
 
-	function convertHourToTime(hour: number): string {
-		return `${hour.toString().padStart(2, '0')}:00:00`;
+	function convertApiFieldToTime(hour: number, minute: number): string {
+		return `${hour.toString().padStart(2, '0')}:${minute
+			.toString()
+			.padStart(2, '0')}:00`;
 	}
 
 	function getCumulativeWindowStartingAt(): EvaluationWindowState['startingAt'] {
@@ -130,7 +132,10 @@ export function getEvaluationWindowStateFromAlertDef(
 		if (timeframe === 'currentDay') {
 			return {
 				...INITIAL_EVALUATION_WINDOW_STATE.startingAt,
-				time: convertHourToTime(alertDef.evaluation?.spec?.schedule?.hour || 0),
+				time: convertApiFieldToTime(
+					alertDef.evaluation?.spec?.schedule?.hour || 0,
+					alertDef.evaluation?.spec?.schedule?.minute || 0,
+				),
 				timezone: alertDef.evaluation?.spec?.timezone || TIMEZONE_DATA[0].value,
 			};
 		}
@@ -139,6 +144,10 @@ export function getEvaluationWindowStateFromAlertDef(
 				...INITIAL_EVALUATION_WINDOW_STATE.startingAt,
 				number: alertDef.evaluation?.spec?.schedule?.day?.toString() || '0',
 				timezone: alertDef.evaluation?.spec?.timezone || TIMEZONE_DATA[0].value,
+				time: convertApiFieldToTime(
+					alertDef.evaluation?.spec?.schedule?.hour || 0,
+					alertDef.evaluation?.spec?.schedule?.minute || 0,
+				),
 			};
 		}
 		return INITIAL_EVALUATION_WINDOW_STATE.startingAt;

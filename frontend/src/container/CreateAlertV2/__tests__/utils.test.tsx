@@ -126,6 +126,7 @@ describe('CreateAlertV2 utils', () => {
 						schedule: {
 							type: 'daily',
 							hour: 14,
+							minute: 15,
 						},
 					},
 				},
@@ -136,7 +137,7 @@ describe('CreateAlertV2 utils', () => {
 				windowType: 'cumulative',
 				timeframe: 'currentDay',
 				startingAt: {
-					time: '14:00:00',
+					time: '14:15:00',
 				},
 			});
 		});
@@ -151,6 +152,8 @@ describe('CreateAlertV2 utils', () => {
 						schedule: {
 							type: 'monthly',
 							day: 12,
+							hour: 16,
+							minute: 34,
 						},
 						timezone: 'UTC',
 					},
@@ -164,6 +167,7 @@ describe('CreateAlertV2 utils', () => {
 				startingAt: {
 					number: '12',
 					timezone: 'UTC',
+					time: '16:34:00',
 				},
 			});
 		});
