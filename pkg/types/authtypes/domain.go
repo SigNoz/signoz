@@ -43,6 +43,7 @@ type AuthDomainConfig struct {
 	AuthNProvider AuthNProvider `json:"ssoType"`
 	SAML          *SamlConfig   `json:"samlConfig"`
 	Google        *GoogleConfig `json:"googleAuthConfig"`
+	OIDC          *OIDCConfig   `json:"oidcConfig"`
 }
 
 type AuthDomain struct {

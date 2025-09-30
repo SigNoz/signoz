@@ -20,6 +20,7 @@ var (
 	AuthNProviderGoogleAuth    = AuthNProvider{valuer.NewString("google_auth")} // Same as Google, to be removed after users are migrated to google
 	AuthNProviderSAML          = AuthNProvider{valuer.NewString("saml")}
 	AuthNProviderEmailPassword = AuthNProvider{valuer.NewString("email_password")}
+	AuthNProviderOIDC          = AuthNProvider{valuer.NewString("oidc")}
 )
 
 type AuthNProvider struct{ valuer.String }
