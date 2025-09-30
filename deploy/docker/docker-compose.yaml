@@ -154,9 +154,11 @@ services:
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
       - ../common/signoz/otel-collector-opamp-config.yaml:/etc/manager-config.yaml
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
       - LOW_CARDINAL_EXCEPTION_GROUPING=false
+    user: root
     ports:
       # - "1777:1777"     # pprof extension
       - "4317:4317" # OTLP gRPC receiver
@@ -164,6 +166,9 @@ services:
     depends_on:
       signoz:
         condition: service_healthy
+    networks:
+      - signoz-net
+      - postgres-net
   schema-migrator-sync:
     !!merge <<: *common
     image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.129.6}
@@ -185,9 +190,33 @@ services:
       - --dsn=tcp://clickhouse:9000
       - --up=
     restart: on-failure
+  # NVIDIA DCGM Exporter - 收集 GPU 指標
+  dcgm-exporter:
+    image: nvcr.io/nvidia/k8s/dcgm-exporter:3.1.7-3.1.4-ubuntu20.04
+    ports:
+      - "9400:9400"
+    volumes:
+      - /var/run/nvidia-persistenced:/var/run/nvidia-persistenced:ro
+    environment:
+      - DCGM_EXPORTER_LISTEN=:9400
+      - DCGM_EXPORTER_KUBERNETES=false
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+    networks:
+      - signoz-net
 networks:
   signoz-net:
     name: signoz-net
+  postgres-net:
+    name: postgres-sql_postgres-network
+    external: true
 volumes:
   clickhouse:
     name: signoz-clickhouse

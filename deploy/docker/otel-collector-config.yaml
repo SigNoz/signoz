@@ -1,10 +1,33 @@
 receivers:
+  postgresql:
+    # The endpoint of the postgresql server. Whether using TCP or Unix sockets, this value should be host:port. If transport is set to unix, the endpoint will internally be translated from host:port to /host.s.PGSQL.port
+    endpoint: pgbouncer:5432
+    # The frequency at which to collect metrics from the Postgres instance.
+    collection_interval: 60s
+    # The username used to access the postgres instance
+    username: monitoring
+    # The password used to access the postgres instance
+    password: everbot2025
+    # The list of databases for which the receiver will attempt to collect statistics. If an empty list is provided, the receiver will attempt to collect statistics for all non-template databases
+    databases: []
+    # # Defines the network to use for connecting to the server. Valid Values are `tcp` or `unix`
+    # transport: tcp
+    tls:
+      # set to false if SSL is enabled on the server
+      insecure: true
   otlp:
     protocols:
       grpc:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
+  httpcheck:
+    targets:
+      - endpoint: https://api.everbot.com.tw/swagger
+        method: GET
+      - endpoint: https://llm-dcp.everbot.com.tw/api/health
+        method: GET
+    collection_interval: 10s
   prometheus:
     config:
       global:
@@ -16,6 +39,43 @@ receivers:
               - localhost:8888
             labels:
               job_name: otel-collector
+        - job_name: nvidia-dcgm
+          scrape_interval: 10s
+          metrics_path: /metrics
+          static_configs:
+          - targets:
+              - dcgm-exporter:9400
+  docker_stats:
+    endpoint: unix:///var/run/docker.sock
+    metrics:
+      container.cpu.utilization:
+        enabled: true
+      container.memory.percent:
+        enabled: true
+      container.network.io.usage.rx_bytes:
+        enabled: true
+      container.network.io.usage.tx_bytes:
+        enabled: true
+      container.network.io.usage.rx_dropped:
+        enabled: true
+      container.network.io.usage.tx_dropped:
+        enabled: true
+      container.memory.usage.limit:
+        enabled: true
+      container.memory.usage.total:
+        enabled: true
+      container.blockio.io_service_bytes_recursive:
+        enabled: true
+  hostmetrics:
+    collection_interval: 30s  # Frequency of metrics collection.
+    scrapers:
+      cpu: {}
+      load: {}
+      memory: {}
+      disk: {}
+      filesystem: {}
+      network: {}
+      process: {}
 processors:
   batch:
     send_batch_size: 10000
@@ -25,6 +85,31 @@ processors:
     # Using OTEL_RESOURCE_ATTRIBUTES envvar, env detector adds custom labels.
     detectors: [env, system]
     timeout: 2s
+    system:
+      hostname_sources: [os]
+  resource/env:
+    attributes:
+    - key: deployment.environment
+      value: staging
+      action: upsert
+  resourcedetection/docker:
+    detectors: [env, docker]
+    timeout: 2s
+    override: false
+  resource/nvidia-dcgm:
+    attributes:
+      - key: server.address
+        from_attribute: net.host.name
+        action: insert
+      - key: server.port
+        from_attribute: net.host.port
+        action: insert
+      - key: service.name
+        value: nvidia-dcgm
+        action: update
+      - key: INSTANA_PLUGIN
+        value: dcgm
+        action: insert
   signozspanmetrics/delta:
     metrics_exporter: signozclickhousemetrics
     metrics_flush_interval: 60s
@@ -79,14 +164,22 @@ service:
       processors: [signozspanmetrics/delta, batch]
       exporters: [clickhousetraces]
     metrics:
-      receivers: [otlp]
-      processors: [batch]
+      receivers: [otlp, docker_stats, httpcheck]
+      processors: [batch, resourcedetection/docker]
       exporters: [signozclickhousemetrics]
     metrics/prometheus:
       receivers: [prometheus]
-      processors: [batch]
+      processors: [batch, resource/nvidia-dcgm]
       exporters: [signozclickhousemetrics]
     logs:
       receivers: [otlp]
       processors: [batch]
       exporters: [clickhouselogsexporter]
+    metrics/hostmetrics:
+      receivers: [hostmetrics]
+      processors: [resourcedetection, resource/env]
+      exporters: [signozclickhousemetrics]
+    metrics/postgresql:
+      receivers: [postgresql]
+      processors: [resourcedetection]
+      exporters: [signozclickhousemetrics]
