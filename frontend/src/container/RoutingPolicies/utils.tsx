@@ -36,9 +36,7 @@ export function mapRoutingPolicyToCreateApiPayload(
 	return {
 		name,
 		expression,
-		actions: {
-			channels,
-		},
+		channels,
 		description,
 	};
 }
@@ -53,9 +51,7 @@ export function mapRoutingPolicyToUpdateApiPayload(
 	return {
 		name,
 		expression,
-		actions: {
-			channels,
-		},
+		channels,
 		description,
 	};
 }

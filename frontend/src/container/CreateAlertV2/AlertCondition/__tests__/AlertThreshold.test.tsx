@@ -108,6 +108,11 @@ jest.mock('container/NewWidget/RightContainer/alertFomatCategories', () => ({
 	]),
 }));
 
+jest.mock('container/CreateAlertV2/utils', () => ({
+	...jest.requireActual('container/CreateAlertV2/utils'),
+	showCondensedLayout: jest.fn().mockReturnValue(false),
+}));
+
 const TEST_STRINGS = {
 	ADD_THRESHOLD: 'Add Threshold',
 	AT_LEAST_ONCE: 'AT LEAST ONCE',
@@ -204,11 +209,11 @@ describe('AlertThreshold', () => {
 
 		// First addition should add WARNING threshold
 		fireEvent.click(addButton);
-		expect(screen.getByText('WARNING')).toBeInTheDocument();
+		expect(screen.getByText('warning')).toBeInTheDocument();
 
 		// Second addition should add INFO threshold
 		fireEvent.click(addButton);
-		expect(screen.getByText('INFO')).toBeInTheDocument();
+		expect(screen.getByText('info')).toBeInTheDocument();
 
 		// Third addition should add random threshold
 		fireEvent.click(addButton);
@@ -280,7 +285,7 @@ describe('AlertThreshold', () => {
 		renderAlertThreshold();
 
 		// Should have initial critical threshold
-		expect(screen.getByText('CRITICAL')).toBeInTheDocument();
+		expect(screen.getByText('critical')).toBeInTheDocument();
 		verifySelectRenders(TEST_STRINGS.IS_ABOVE);
 		verifySelectRenders(TEST_STRINGS.AT_LEAST_ONCE);
 	});

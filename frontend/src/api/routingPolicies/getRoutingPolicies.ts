@@ -25,7 +25,7 @@ export const getRoutingPolicies = async (
 	headers?: Record<string, string>,
 ): Promise<SuccessResponseV2<GetRoutingPoliciesResponse> | ErrorResponseV2> => {
 	try {
-		const response = await axios.get('/notification-policy', {
+		const response = await axios.get('/route_policies', {
 			signal,
 			headers,
 		});

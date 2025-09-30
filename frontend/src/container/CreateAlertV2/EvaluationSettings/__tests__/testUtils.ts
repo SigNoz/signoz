@@ -31,6 +31,9 @@ export const createMockAlertContextState = (
 	isCreatingAlertRule: false,
 	isTestingAlertRule: false,
 	createAlertRule: jest.fn(),
+	isUpdatingAlertRule: false,
+	updateAlertRule: jest.fn(),
+	isEditMode: false,
 	...overrides,
 });
 
