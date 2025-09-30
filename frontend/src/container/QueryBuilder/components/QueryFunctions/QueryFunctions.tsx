@@ -5,13 +5,14 @@ import cx from 'classnames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { cloneDeep, pullAt } from 'lodash-es';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
 import { normalizeFunctionName } from 'utils/functionNameNormalizer';
 
 import Function from './Function';
+import FunctionsSearchModal from './FunctionsSearchModal';
 import { toFloat64 } from './utils';
 
 const defaultMetricFunctionStruct: QueryFunction = {
@@ -93,6 +94,11 @@ export default function QueryFunctions({
 		})),
 	);
 
+	const [
+		isFunctionsSearchModalOpen,
+		setIsFunctionsSearchModalOpen,
+	] = useState<boolean>(false);
+
 	const isDarkMode = useIsDarkMode();
 
 	const hasAnomalyFunction = functions.some((func) => func.name === 'anomaly');
@@ -124,8 +130,9 @@ export default function QueryFunctions({
 		}
 
 		setFunctions(functionsCopy);
-
 		onChange(functionsCopy);
+		// Open the modal after we've successfully added the function
+		setIsFunctionsSearchModalOpen(true);
 	};
 
 	const handleDeleteFunction = (
@@ -236,6 +243,11 @@ export default function QueryFunctions({
 					<Plus size={14} color={!isDarkMode ? '#0B0C0E' : 'white'} />
 				</Button>
 			</Tooltip>
+
+			<FunctionsSearchModal
+				isOpen={isFunctionsSearchModalOpen}
+				onClose={(): void => setIsFunctionsSearchModalOpen(false)}
+			/>
 		</div>
 	);
 }
