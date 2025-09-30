@@ -2,6 +2,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryParams } from 'constants/query';
+import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
@@ -104,7 +105,7 @@ const renderQuerySection = (): ReturnType<typeof render> =>
 		<Provider store={store}>
 			<QueryClientProvider client={queryClient}>
 				<MemoryRouter>
-					<CreateAlertProvider>
+					<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
 						<QuerySection />
 					</CreateAlertProvider>
 				</MemoryRouter>
@@ -135,7 +136,7 @@ describe('QuerySection', () => {
 		expect(screen.getByTestId('stepper')).toBeInTheDocument();
 		expect(screen.getByTestId('step-number')).toHaveTextContent('1');
 		expect(screen.getByTestId('step-label')).toHaveTextContent(
-			'Define the query you want to set an alert on',
+			'Define the query',
 		);
 
 		// Check if ChartPreview is rendered
@@ -186,6 +187,7 @@ describe('QuerySection', () => {
 			expect.any(Object),
 			{
 				[QueryParams.alertType]: AlertTypes.LOGS_BASED_ALERT,
+				[QueryParams.ruleType]: AlertDetectionTypes.THRESHOLD_ALERT,
 			},
 			undefined,
 			true,
@@ -200,6 +202,7 @@ describe('QuerySection', () => {
 			expect.any(Object),
 			{
 				[QueryParams.alertType]: AlertTypes.TRACES_BASED_ALERT,
+				[QueryParams.ruleType]: AlertDetectionTypes.THRESHOLD_ALERT,
 			},
 			undefined,
 			true,

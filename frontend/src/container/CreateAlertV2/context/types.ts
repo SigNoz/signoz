@@ -1,6 +1,11 @@
+import { CreateAlertRuleResponse } from 'api/alerts/createAlertRule';
+import { TestAlertRuleResponse } from 'api/alerts/testAlertRule';
 import { Dayjs } from 'dayjs';
 import { Dispatch } from 'react';
+import { UseMutateFunction } from 'react-query';
+import { ErrorResponse, SuccessResponse } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 import { Labels } from 'types/api/alerts/def';
 
 export interface ICreateAlertContextProps {
@@ -16,10 +21,26 @@ export interface ICreateAlertContextProps {
 	setEvaluationWindow: Dispatch<EvaluationWindowAction>;
 	notificationSettings: NotificationSettingsState;
 	setNotificationSettings: Dispatch<NotificationSettingsAction>;
+	isCreatingAlertRule: boolean;
+	createAlertRule: UseMutateFunction<
+		SuccessResponse<CreateAlertRuleResponse, unknown> | ErrorResponse,
+		Error,
+		PostableAlertRuleV2,
+		unknown
+	>;
+	isTestingAlertRule: boolean;
+	testAlertRule: UseMutateFunction<
+		SuccessResponse<TestAlertRuleResponse, unknown> | ErrorResponse,
+		Error,
+		PostableAlertRuleV2,
+		unknown
+	>;
+	discardAlertRule: () => void;
 }
 
 export interface ICreateAlertProviderProps {
 	children: React.ReactNode;
+	initialAlertType: AlertTypes;
 }
 
 export enum AlertCreationStep {
@@ -31,14 +52,12 @@ export enum AlertCreationStep {
 
 export interface AlertState {
 	name: string;
-	description: string;
 	labels: Labels;
 	yAxisUnit: string | undefined;
 }
 
 export type CreateAlertAction =
 	| { type: 'SET_ALERT_NAME'; payload: string }
-	| { type: 'SET_ALERT_DESCRIPTION'; payload: string }
 	| { type: 'SET_ALERT_LABELS'; payload: Labels }
 	| { type: 'SET_Y_AXIS_UNIT'; payload: string | undefined }
 	| { type: 'RESET' };
@@ -47,7 +66,7 @@ export interface Threshold {
 	id: string;
 	label: string;
 	thresholdValue: number;
-	recoveryThresholdValue: number;
+	recoveryThresholdValue: number | null;
 	unit: string;
 	channels: string[];
 	color: string;
@@ -114,9 +133,11 @@ export interface AdvancedOptionsState {
 	sendNotificationIfDataIsMissing: {
 		toleranceLimit: number;
 		timeUnit: string;
+		enabled: boolean;
 	};
 	enforceMinimumDatapoints: {
 		minimumDatapoints: number;
+		enabled: boolean;
 	};
 	delayEvaluation: {
 		delay: number;
@@ -148,8 +169,16 @@ export type AdvancedOptionsAction =
 			payload: { toleranceLimit: number; timeUnit: string };
 	  }
 	| {
+			type: 'TOGGLE_SEND_NOTIFICATION_IF_DATA_IS_MISSING';
+			payload: boolean;
+	  }
+	| {
 			type: 'SET_ENFORCE_MINIMUM_DATAPOINTS';
 			payload: { minimumDatapoints: number };
+	  }
+	| {
+			type: 'TOGGLE_ENFORCE_MINIMUM_DATAPOINTS';
+			payload: boolean;
 	  }
 	| {
 			type: 'SET_DELAY_EVALUATION';
@@ -203,6 +232,7 @@ export interface NotificationSettingsState {
 		conditions: ('firing' | 'no-data')[];
 	};
 	description: string;
+	routingPolicies: boolean;
 }
 
 export type NotificationSettingsAction =
@@ -220,4 +250,5 @@ export type NotificationSettingsAction =
 			};
 	  }
 	| { type: 'SET_DESCRIPTION'; payload: string }
+	| { type: 'SET_ROUTING_POLICIES'; payload: boolean }
 	| { type: 'RESET' };
