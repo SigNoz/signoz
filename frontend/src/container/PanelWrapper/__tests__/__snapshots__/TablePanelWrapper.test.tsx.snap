@@ -292,7 +292,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                               <div
                                 class="line-clamped-wrapper__text"
                               >
-                                4.354 s
+                                4.35381 s
                               </div>
                             </div>
                           </div>
