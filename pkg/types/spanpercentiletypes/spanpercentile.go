@@ -12,7 +12,6 @@ type SpanPercentileRequest struct {
 	Filter *qbtypes.Filter `json:"filters,omitempty"`
 }
 
-// Validate validates the SpanPercentileRequest
 func (req *SpanPercentileRequest) Validate() error {
 	if req.SpanID == "" {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "span_id is required")

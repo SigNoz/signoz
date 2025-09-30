@@ -64,7 +64,6 @@ type spanPercentileCTEBuilder struct {
 }
 
 func (b *spanPercentileCTEBuilder) build() *qbtypes.Statement {
-
 	b.buildResourceFilterCTE()
 	b.buildBaseSpansCTE()
 	b.buildTargetSpanCTE()
