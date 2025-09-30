@@ -12,8 +12,8 @@ import (
 // MockNotificationManager is a simple mock implementation of NotificationManager
 type MockNotificationManager struct {
 	configs      map[string]*alertmanagertypes.NotificationConfig
-	routes       map[string]*alertmanagertypes.ExpressionRoute
-	routesByName map[string][]*alertmanagertypes.ExpressionRoute
+	routes       map[string]*alertmanagertypes.RoutePolicy
+	routesByName map[string][]*alertmanagertypes.RoutePolicy
 	errors       map[string]error
 }
 
@@ -21,8 +21,8 @@ type MockNotificationManager struct {
 func NewMock() *MockNotificationManager {
 	return &MockNotificationManager{
 		configs:      make(map[string]*alertmanagertypes.NotificationConfig),
-		routes:       make(map[string]*alertmanagertypes.ExpressionRoute),
-		routesByName: make(map[string][]*alertmanagertypes.ExpressionRoute),
+		routes:       make(map[string]*alertmanagertypes.RoutePolicy),
+		routesByName: make(map[string][]*alertmanagertypes.RoutePolicy),
 		errors:       make(map[string]error),
 	}
 }
@@ -74,8 +74,8 @@ func (m *MockNotificationManager) SetMockError(orgID, ruleID string, err error) 
 
 func (m *MockNotificationManager) ClearMockData() {
 	m.configs = make(map[string]*alertmanagertypes.NotificationConfig)
-	m.routes = make(map[string]*alertmanagertypes.ExpressionRoute)
-	m.routesByName = make(map[string][]*alertmanagertypes.ExpressionRoute)
+	m.routes = make(map[string]*alertmanagertypes.RoutePolicy)
+	m.routesByName = make(map[string][]*alertmanagertypes.RoutePolicy)
 	m.errors = make(map[string]error)
 }
 
@@ -87,7 +87,7 @@ func (m *MockNotificationManager) HasConfig(orgID, ruleID string) bool {
 
 // Route Policy CRUD
 
-func (m *MockNotificationManager) CreateRoute(ctx context.Context, orgID string, route *alertmanagertypes.ExpressionRoute) error {
+func (m *MockNotificationManager) CreateRoutePolicy(ctx context.Context, orgID string, route *alertmanagertypes.RoutePolicy) error {
 	key := getKey(orgID, "create_route")
 	if err := m.errors[key]; err != nil {
 		return err
@@ -109,7 +109,7 @@ func (m *MockNotificationManager) CreateRoute(ctx context.Context, orgID string,
 	return nil
 }
 
-func (m *MockNotificationManager) CreateRoutes(ctx context.Context, orgID string, routes []*alertmanagertypes.ExpressionRoute) error {
+func (m *MockNotificationManager) CreateRoutePolicies(ctx context.Context, orgID string, routes []*alertmanagertypes.RoutePolicy) error {
 	key := getKey(orgID, "create_routes")
 	if err := m.errors[key]; err != nil {
 		return err
@@ -127,7 +127,7 @@ func (m *MockNotificationManager) CreateRoutes(ctx context.Context, orgID string
 		}
 	}
 	for _, route := range routes {
-		if err := m.CreateRoute(ctx, orgID, route); err != nil {
+		if err := m.CreateRoutePolicy(ctx, orgID, route); err != nil {
 			return err
 		}
 	}
@@ -135,7 +135,7 @@ func (m *MockNotificationManager) CreateRoutes(ctx context.Context, orgID string
 	return nil
 }
 
-func (m *MockNotificationManager) GetRouteByID(ctx context.Context, orgID string, routeID string) (*alertmanagertypes.ExpressionRoute, error) {
+func (m *MockNotificationManager) GetRoutePolicyByID(ctx context.Context, orgID string, routeID string) (*alertmanagertypes.RoutePolicy, error) {
 	key := getKey(orgID, "get_route")
 	if err := m.errors[key]; err != nil {
 		return nil, err
@@ -154,7 +154,7 @@ func (m *MockNotificationManager) GetRouteByID(ctx context.Context, orgID string
 	return route, nil
 }
 
-func (m *MockNotificationManager) GetAllRoutes(ctx context.Context, orgID string) ([]*alertmanagertypes.ExpressionRoute, error) {
+func (m *MockNotificationManager) GetAllRoutePolicies(ctx context.Context, orgID string) ([]*alertmanagertypes.RoutePolicy, error) {
 	key := getKey(orgID, "get_all_routes")
 	if err := m.errors[key]; err != nil {
 		return nil, err
@@ -164,7 +164,7 @@ func (m *MockNotificationManager) GetAllRoutes(ctx context.Context, orgID string
 		return nil, fmt.Errorf("orgID cannot be empty")
 	}
 
-	var routes []*alertmanagertypes.ExpressionRoute
+	var routes []*alertmanagertypes.RoutePolicy
 	for routeKey, route := range m.routes {
 		if route.OrgID == orgID {
 			routes = append(routes, route)
@@ -175,7 +175,7 @@ func (m *MockNotificationManager) GetAllRoutes(ctx context.Context, orgID string
 	return routes, nil
 }
 
-func (m *MockNotificationManager) DeleteRoute(ctx context.Context, orgID string, routeID string) error {
+func (m *MockNotificationManager) DeleteRoutePolicy(ctx context.Context, orgID string, routeID string) error {
 	key := getKey(orgID, "delete_route")
 	if err := m.errors[key]; err != nil {
 		return err
@@ -194,7 +194,7 @@ func (m *MockNotificationManager) DeleteRoute(ctx context.Context, orgID string,
 
 	nameKey := getKey(orgID, route.Name)
 	if nameRoutes, exists := m.routesByName[nameKey]; exists {
-		var filtered []*alertmanagertypes.ExpressionRoute
+		var filtered []*alertmanagertypes.RoutePolicy
 		for _, r := range nameRoutes {
 			if r.ID.StringValue() != routeID {
 				filtered = append(filtered, r)
@@ -210,7 +210,7 @@ func (m *MockNotificationManager) DeleteRoute(ctx context.Context, orgID string,
 	return nil
 }
 
-func (m *MockNotificationManager) DeleteAllRoutesByName(ctx context.Context, orgID string, name string) error {
+func (m *MockNotificationManager) DeleteAllRoutePoliciesByName(ctx context.Context, orgID string, name string) error {
 	key := getKey(orgID, "delete_routes_by_name")
 	if err := m.errors[key]; err != nil {
 		return err
@@ -251,8 +251,8 @@ func (m *MockNotificationManager) Match(ctx context.Context, orgID string, ruleI
 		return nil, err
 	}
 
-	var expressionRoutes []*alertmanagertypes.ExpressionRoute
-	if config.NotificationPolicy {
+	var expressionRoutes []*alertmanagertypes.RoutePolicy
+	if config.UsePolicy {
 		for _, route := range m.routes {
 			if route.OrgID == orgID && route.ExpressionKind == alertmanagertypes.PolicyBasedExpression {
 				expressionRoutes = append(expressionRoutes, route)
@@ -295,7 +295,7 @@ func (m *MockNotificationManager) evaluateExpr(expression string, labelSet model
 
 // Helper methods for testing
 
-func (m *MockNotificationManager) SetMockRoute(orgID string, route *alertmanagertypes.ExpressionRoute) {
+func (m *MockNotificationManager) SetMockRoute(orgID string, route *alertmanagertypes.RoutePolicy) {
 	routeKey := getKey(orgID, route.ID.StringValue())
 	m.routes[routeKey] = route
 
@@ -309,8 +309,8 @@ func (m *MockNotificationManager) SetMockRouteError(orgID, operation string, err
 }
 
 func (m *MockNotificationManager) ClearMockRoutes() {
-	m.routes = make(map[string]*alertmanagertypes.ExpressionRoute)
-	m.routesByName = make(map[string][]*alertmanagertypes.ExpressionRoute)
+	m.routes = make(map[string]*alertmanagertypes.RoutePolicy)
+	m.routesByName = make(map[string][]*alertmanagertypes.RoutePolicy)
 }
 
 func (m *MockNotificationManager) GetRouteCount() int {

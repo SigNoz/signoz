@@ -383,7 +383,7 @@ route:
 	orgId := "test-org"
 
 	ctx := context.Background()
-	routes := []*alertmanagertypes.ExpressionRoute{
+	routes := []*alertmanagertypes.RoutePolicy{
 		{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
@@ -423,7 +423,7 @@ route:
 	}
 	// Set up SQL mock expectations for the CreateBatch call
 	store.ExpectCreateBatch(routes)
-	err = nfManager.CreateRoutes(ctx, orgId, routes)
+	err = nfManager.CreateRoutePolicies(ctx, orgId, routes)
 	require.NoError(t, err)
 
 	// Set up expectations for getting routes during matching (multiple calls expected)
@@ -455,7 +455,7 @@ route:
 			Renotify: alertmanagertypes.ReNotificationConfig{
 				RenotifyInterval: 10,
 			},
-			NotificationPolicy: false,
+			UsePolicy: false,
 		},
 		"ruleId-TestingAlert": {
 			NotificationGroup: map[model.LabelName]struct{}{
@@ -466,7 +466,7 @@ route:
 			Renotify: alertmanagertypes.ReNotificationConfig{
 				RenotifyInterval: 11,
 			},
-			NotificationPolicy: false,
+			UsePolicy: false,
 		},
 		"ruleId-HighErrorRate": {
 			NotificationGroup: map[model.LabelName]struct{}{
@@ -477,7 +477,7 @@ route:
 			Renotify: alertmanagertypes.ReNotificationConfig{
 				RenotifyInterval: 12,
 			},
-			NotificationPolicy: false,
+			UsePolicy: false,
 		},
 		"ruleId-HighLatency": {
 			NotificationGroup: map[model.LabelName]struct{}{
@@ -488,7 +488,7 @@ route:
 			Renotify: alertmanagertypes.ReNotificationConfig{
 				RenotifyInterval: 13,
 			},
-			NotificationPolicy: false,
+			UsePolicy: false,
 		},
 	}
 
@@ -544,11 +544,11 @@ route:
 		totalAggrGroups += len(groups)
 	}
 
-	require.Equal(t, 4, totalAggrGroups, "Should have exactly 6 aggregation groups")
+	require.Equal(t, 4, totalAggrGroups, "Should have exactly 4 aggregation groups")
 
 	// Verify specific route group counts
 	expectedGroupCounts := map[string]int{
-		"{__receiver__=\"slack\"}":     2, // OtherAlert + TestingAlert
+		"{__receiver__=\"slack\"}":     2,
 		"{__receiver__=\"pagerduty\"}": 2,
 	}
 
@@ -656,7 +656,7 @@ route:
 	orgId := "test-org"
 
 	ctx := context.Background()
-	routes := []*alertmanagertypes.ExpressionRoute{
+	routes := []*alertmanagertypes.RoutePolicy{
 		{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
@@ -720,7 +720,7 @@ route:
 	}
 	// Set up SQL mock expectations for the CreateBatch call
 	store.ExpectCreateBatch(routes)
-	err = nfManager.CreateRoutes(ctx, orgId, routes)
+	err = nfManager.CreateRoutePolicies(ctx, orgId, routes)
 	require.NoError(t, err)
 
 	dispatcher := NewDispatcher(alerts, route, recorder, marker, timeout, nil, logger, metrics, nfManager, orgId)
@@ -738,14 +738,14 @@ route:
 		newAlert(model.LabelSet{"ruleId": "ruleId-HighLatency", "nodata": "true"}),
 	}
 	// Set up expectations with route filtering for each alert
-	store.ExpectGetAllByName(orgId, "ruleId-OtherAlert", []*alertmanagertypes.ExpressionRoute{routes[0]})
-	store.ExpectGetAllByName(orgId, "ruleId-TestingAlert", []*alertmanagertypes.ExpressionRoute{routes[1]})
-	store.ExpectGetAllByName(orgId, "ruleId-HighErrorRate", []*alertmanagertypes.ExpressionRoute{routes[2]})
-	store.ExpectGetAllByName(orgId, "ruleId-HighErrorRate", []*alertmanagertypes.ExpressionRoute{routes[2]})
-	store.ExpectGetAllByName(orgId, "ruleId-HighErrorRate", []*alertmanagertypes.ExpressionRoute{routes[2]})
-	store.ExpectGetAllByName(orgId, "ruleId-HighLatency", []*alertmanagertypes.ExpressionRoute{routes[3], routes[4]})
-	store.ExpectGetAllByName(orgId, "ruleId-HighLatency", []*alertmanagertypes.ExpressionRoute{routes[3], routes[4]})
-	store.ExpectGetAllByName(orgId, "ruleId-HighLatency", []*alertmanagertypes.ExpressionRoute{routes[3], routes[4]})
+	store.ExpectGetAllByName(orgId, "ruleId-OtherAlert", []*alertmanagertypes.RoutePolicy{routes[0]})
+	store.ExpectGetAllByName(orgId, "ruleId-TestingAlert", []*alertmanagertypes.RoutePolicy{routes[1]})
+	store.ExpectGetAllByName(orgId, "ruleId-HighErrorRate", []*alertmanagertypes.RoutePolicy{routes[2]})
+	store.ExpectGetAllByName(orgId, "ruleId-HighErrorRate", []*alertmanagertypes.RoutePolicy{routes[2]})
+	store.ExpectGetAllByName(orgId, "ruleId-HighErrorRate", []*alertmanagertypes.RoutePolicy{routes[2]})
+	store.ExpectGetAllByName(orgId, "ruleId-HighLatency", []*alertmanagertypes.RoutePolicy{routes[3], routes[4]})
+	store.ExpectGetAllByName(orgId, "ruleId-HighLatency", []*alertmanagertypes.RoutePolicy{routes[3], routes[4]})
+	store.ExpectGetAllByName(orgId, "ruleId-HighLatency", []*alertmanagertypes.RoutePolicy{routes[3], routes[4]})
 	notiConfigs := map[string]alertmanagertypes.NotificationConfig{
 		"ruleId-OtherAlert": {
 			NotificationGroup: map[model.LabelName]struct{}{
@@ -756,7 +756,7 @@ route:
 			Renotify: alertmanagertypes.ReNotificationConfig{
 				RenotifyInterval: 10,
 			},
-			NotificationPolicy: false,
+			UsePolicy: false,
 		},
 		"ruleId-TestingAlert": {
 			NotificationGroup: map[model.LabelName]struct{}{
@@ -767,7 +767,7 @@ route:
 			Renotify: alertmanagertypes.ReNotificationConfig{
 				RenotifyInterval: 11,
 			},
-			NotificationPolicy: false,
+			UsePolicy: false,
 		},
 		"ruleId-HighErrorRate": {
 			NotificationGroup: map[model.LabelName]struct{}{
@@ -778,7 +778,7 @@ route:
 			Renotify: alertmanagertypes.ReNotificationConfig{
 				RenotifyInterval: 12,
 			},
-			NotificationPolicy: false,
+			UsePolicy: false,
 		},
 		"ruleId-HighLatency": {
 			NotificationGroup: map[model.LabelName]struct{}{
@@ -790,7 +790,7 @@ route:
 				RenotifyInterval: 13,
 				NoDataInterval:   14,
 			},
-			NotificationPolicy: false,
+			UsePolicy: false,
 		},
 	}
 
@@ -847,7 +847,7 @@ route:
 	require.Equal(t, 9, totalAggrGroups, "Should have exactly 9 aggregation groups")
 
 	expectedGroupCounts := map[string]int{
-		"{__receiver__=\"slack\"}":     2, // OtherAlert critical + TestingAlert warning
+		"{__receiver__=\"slack\"}":     2,
 		"{__receiver__=\"email\"}":     5,
 		"{__receiver__=\"pagerduty\"}": 2,
 	}
@@ -915,7 +915,7 @@ route:
 	orgId := "test-org"
 
 	ctx := context.Background()
-	routes := []*alertmanagertypes.ExpressionRoute{
+	routes := []*alertmanagertypes.RoutePolicy{
 		{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
@@ -955,7 +955,7 @@ route:
 	}
 	// Set up SQL mock expectations for the CreateBatch call
 	store.ExpectCreateBatch(routes)
-	err = nfManager.CreateRoutes(ctx, orgId, routes)
+	err = nfManager.CreateRoutePolicies(ctx, orgId, routes)
 	require.NoError(t, err)
 
 	dispatcher := NewDispatcher(alerts, route, recorder, marker, timeout, nil, logger, metrics, nfManager, orgId)
@@ -986,7 +986,7 @@ route:
 			Renotify: alertmanagertypes.ReNotificationConfig{
 				RenotifyInterval: 10,
 			},
-			NotificationPolicy: true,
+			UsePolicy: true,
 		},
 		"ruleId-TestingAlert": {
 			NotificationGroup: map[model.LabelName]struct{}{
@@ -997,7 +997,7 @@ route:
 			Renotify: alertmanagertypes.ReNotificationConfig{
 				RenotifyInterval: 11,
 			},
-			NotificationPolicy: true,
+			UsePolicy: true,
 		},
 		"ruleId-HighErrorRate": {
 			NotificationGroup: map[model.LabelName]struct{}{
@@ -1008,7 +1008,7 @@ route:
 			Renotify: alertmanagertypes.ReNotificationConfig{
 				RenotifyInterval: 12,
 			},
-			NotificationPolicy: true,
+			UsePolicy: true,
 		},
 		"ruleId-HighLatency": {
 			NotificationGroup: map[model.LabelName]struct{}{
@@ -1020,7 +1020,7 @@ route:
 				RenotifyInterval: 13,
 				NoDataInterval:   14,
 			},
-			NotificationPolicy: true,
+			UsePolicy: true,
 		},
 	}
 
@@ -1220,9 +1220,9 @@ route:
 			Renotify: alertmanagertypes.ReNotificationConfig{
 				RenotifyInterval: 1 * time.Hour,
 			},
-			NotificationPolicy: false,
+			UsePolicy: false,
 		}
-		route := &alertmanagertypes.ExpressionRoute{
+		route := &alertmanagertypes.RoutePolicy{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
@@ -1235,7 +1235,7 @@ route:
 			Channels:       []string{"slack"},
 		}
 
-		store.ExpectGetAllByName(orgId, ruleId, []*alertmanagertypes.ExpressionRoute{route})
+		store.ExpectGetAllByName(orgId, ruleId, []*alertmanagertypes.RoutePolicy{route})
 		err := nfManager.SetNotificationConfig(orgId, ruleId, &notifConfig)
 		require.NoError(t, err)
 	}

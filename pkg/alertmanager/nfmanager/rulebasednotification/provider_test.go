@@ -516,7 +516,7 @@ func TestProvider_DeleteRoute(t *testing.T) {
 				routeStore.ExpectDelete(tt.orgID, tt.routeID)
 			}
 
-			err = provider.DeleteRoute(ctx, tt.orgID, tt.routeID)
+			err = provider.DeleteRoutePolicy(ctx, tt.orgID, tt.routeID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -536,13 +536,13 @@ func TestProvider_CreateRoute(t *testing.T) {
 	tests := []struct {
 		name    string
 		orgID   string
-		route   *alertmanagertypes.ExpressionRoute
+		route   *alertmanagertypes.RoutePolicy
 		wantErr bool
 	}{
 		{
 			name:  "valid route",
 			orgID: "test-org-123",
-			route: &alertmanagertypes.ExpressionRoute{
+			route: &alertmanagertypes.RoutePolicy{
 				Identifiable:   types.Identifiable{ID: valuer.GenerateUUID()},
 				Expression:     `service == "auth"`,
 				ExpressionKind: alertmanagertypes.PolicyBasedExpression,
@@ -563,7 +563,7 @@ func TestProvider_CreateRoute(t *testing.T) {
 		{
 			name:  "invalid route - missing expression",
 			orgID: "test-org-123",
-			route: &alertmanagertypes.ExpressionRoute{
+			route: &alertmanagertypes.RoutePolicy{
 				Expression:     "", // empty expression
 				ExpressionKind: alertmanagertypes.PolicyBasedExpression,
 				Name:           "invalid-route",
@@ -574,7 +574,7 @@ func TestProvider_CreateRoute(t *testing.T) {
 		{
 			name:  "invalid route - missing name",
 			orgID: "test-org-123",
-			route: &alertmanagertypes.ExpressionRoute{
+			route: &alertmanagertypes.RoutePolicy{
 				Expression:     `service == "auth"`,
 				ExpressionKind: alertmanagertypes.PolicyBasedExpression,
 				Name:           "", // empty name
@@ -594,7 +594,7 @@ func TestProvider_CreateRoute(t *testing.T) {
 				routeStore.ExpectCreate(tt.route)
 			}
 
-			err = provider.CreateRoute(ctx, tt.orgID, tt.route)
+			err = provider.CreateRoutePolicy(ctx, tt.orgID, tt.route)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -615,7 +615,7 @@ func TestProvider_CreateRoutes(t *testing.T) {
 	provider, err := New(ctx, providerSettings, config, routeStore)
 	require.NoError(t, err)
 
-	validRoute1 := &alertmanagertypes.ExpressionRoute{
+	validRoute1 := &alertmanagertypes.RoutePolicy{
 		Expression:     `service == "auth"`,
 		ExpressionKind: alertmanagertypes.PolicyBasedExpression,
 		Name:           "auth-route",
@@ -625,7 +625,7 @@ func TestProvider_CreateRoutes(t *testing.T) {
 		Channels:       []string{"slack-auth"},
 	}
 
-	validRoute2 := &alertmanagertypes.ExpressionRoute{
+	validRoute2 := &alertmanagertypes.RoutePolicy{
 		Expression:     `service == "payment"`,
 		ExpressionKind: alertmanagertypes.PolicyBasedExpression,
 		Name:           "payment-route",
@@ -635,7 +635,7 @@ func TestProvider_CreateRoutes(t *testing.T) {
 		Channels:       []string{"slack-payment"},
 	}
 
-	invalidRoute := &alertmanagertypes.ExpressionRoute{
+	invalidRoute := &alertmanagertypes.RoutePolicy{
 		Expression:     "", // empty expression - invalid
 		ExpressionKind: alertmanagertypes.PolicyBasedExpression,
 		Name:           "invalid-route",
@@ -645,19 +645,19 @@ func TestProvider_CreateRoutes(t *testing.T) {
 	tests := []struct {
 		name    string
 		orgID   string
-		routes  []*alertmanagertypes.ExpressionRoute
+		routes  []*alertmanagertypes.RoutePolicy
 		wantErr bool
 	}{
 		{
 			name:    "valid routes",
 			orgID:   "test-org",
-			routes:  []*alertmanagertypes.ExpressionRoute{validRoute1, validRoute2},
+			routes:  []*alertmanagertypes.RoutePolicy{validRoute1, validRoute2},
 			wantErr: false,
 		},
 		{
 			name:    "empty routes list",
 			orgID:   "test-org",
-			routes:  []*alertmanagertypes.ExpressionRoute{},
+			routes:  []*alertmanagertypes.RoutePolicy{},
 			wantErr: true,
 		},
 		{
@@ -669,19 +669,19 @@ func TestProvider_CreateRoutes(t *testing.T) {
 		{
 			name:    "routes with nil route",
 			orgID:   "test-org",
-			routes:  []*alertmanagertypes.ExpressionRoute{validRoute1, nil},
+			routes:  []*alertmanagertypes.RoutePolicy{validRoute1, nil},
 			wantErr: true,
 		},
 		{
 			name:    "routes with invalid route",
 			orgID:   "test-org",
-			routes:  []*alertmanagertypes.ExpressionRoute{validRoute1, invalidRoute},
+			routes:  []*alertmanagertypes.RoutePolicy{validRoute1, invalidRoute},
 			wantErr: true,
 		},
 		{
 			name:    "single valid route",
 			orgID:   "test-org",
-			routes:  []*alertmanagertypes.ExpressionRoute{validRoute1},
+			routes:  []*alertmanagertypes.RoutePolicy{validRoute1},
 			wantErr: false,
 		},
 	}
@@ -692,7 +692,7 @@ func TestProvider_CreateRoutes(t *testing.T) {
 				routeStore.ExpectCreateBatch(tt.routes)
 			}
 
-			err := provider.CreateRoutes(ctx, tt.orgID, tt.routes)
+			err := provider.CreateRoutePolicies(ctx, tt.orgID, tt.routes)
 
 			if tt.wantErr {
 				assert.Error(t, err)

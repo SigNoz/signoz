@@ -10,7 +10,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type PostableExpressionRoute struct {
+type PostableRoutePolicy struct {
 	Expression     string         `json:"expression"`
 	ExpressionKind ExpressionKind `json:"kind"`
 	Channels       []string       `json:"channels"`
@@ -20,7 +20,7 @@ type PostableExpressionRoute struct {
 	Tags           []string       `json:"tags,omitempty"`
 }
 
-func (p *PostableExpressionRoute) Validate() error {
+func (p *PostableRoutePolicy) Validate() error {
 	if p.Expression == "" {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "expression is required")
 	}
@@ -47,8 +47,8 @@ func (p *PostableExpressionRoute) Validate() error {
 	return nil
 }
 
-type GettableExpressionRoute struct {
-	PostableExpressionRoute // Embedded
+type GettableRoutePolicy struct {
+	PostableRoutePolicy // Embedded
 
 	ID string `json:"id"`
 
@@ -68,9 +68,9 @@ var (
 	PolicyBasedExpression = ExpressionKind{valuer.NewString("policy")}
 )
 
-// ExpressionRoute represents the database model for expression routes
-type ExpressionRoute struct {
-	bun.BaseModel `bun:"table:notification_routes"`
+// RoutePolicy represents the database model for expression routes
+type RoutePolicy struct {
+	bun.BaseModel `bun:"table:route_policy"`
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
@@ -88,9 +88,9 @@ type ExpressionRoute struct {
 	OrgID string `bun:"org_id,type:text,notnull" json:"orgId"`
 }
 
-func (er *ExpressionRoute) Validate() error {
+func (er *RoutePolicy) Validate() error {
 	if er == nil {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "expression route cannot be nil")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "route_policy cannot be nil")
 	}
 
 	if er.Expression == "" {
@@ -124,11 +124,11 @@ func (er *ExpressionRoute) Validate() error {
 }
 
 type RouteStore interface {
-	GetByID(ctx context.Context, orgId string, id string) (*ExpressionRoute, error)
-	Create(ctx context.Context, route *ExpressionRoute) error
-	CreateBatch(ctx context.Context, routes []*ExpressionRoute) error
+	GetByID(ctx context.Context, orgId string, id string) (*RoutePolicy, error)
+	Create(ctx context.Context, route *RoutePolicy) error
+	CreateBatch(ctx context.Context, routes []*RoutePolicy) error
 	Delete(ctx context.Context, orgId string, id string) error
-	GetAllByKind(ctx context.Context, orgID string, kind ExpressionKind) ([]*ExpressionRoute, error)
-	GetAllByName(ctx context.Context, orgID string, name string) ([]*ExpressionRoute, error)
+	GetAllByKind(ctx context.Context, orgID string, kind ExpressionKind) ([]*RoutePolicy, error)
+	GetAllByName(ctx context.Context, orgID string, name string) ([]*RoutePolicy, error)
 	DeleteRouteByName(ctx context.Context, orgID string, name string) error
 }

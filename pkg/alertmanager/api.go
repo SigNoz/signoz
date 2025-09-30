@@ -275,7 +275,7 @@ func (api *API) CreateChannel(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (api *API) CreateNotificationPolicy(rw http.ResponseWriter, req *http.Request) {
+func (api *API) CreateRoutePolicy(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -285,12 +285,14 @@ func (api *API) CreateNotificationPolicy(rw http.ResponseWriter, req *http.Reque
 		return
 	}
 	defer req.Body.Close()
-	var policy alertmanagertypes.PostableExpressionRoute
+	var policy alertmanagertypes.PostableRoutePolicy
 	err = json.Unmarshal(body, &policy)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
+
+	policy.ExpressionKind = alertmanagertypes.PolicyBasedExpression
 
 	// Validate the postable route
 	if err := policy.Validate(); err != nil {
@@ -307,7 +309,7 @@ func (api *API) CreateNotificationPolicy(rw http.ResponseWriter, req *http.Reque
 	render.Success(rw, http.StatusCreated, result)
 }
 
-func (api *API) GetAllNotificationPolicies(rw http.ResponseWriter, req *http.Request) {
+func (api *API) GetAllRoutePolicies(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -320,7 +322,7 @@ func (api *API) GetAllNotificationPolicies(rw http.ResponseWriter, req *http.Req
 	render.Success(rw, http.StatusOK, policies)
 }
 
-func (api *API) GetNotificationPolicyByID(rw http.ResponseWriter, req *http.Request) {
+func (api *API) GetRoutePolicyByID(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -340,7 +342,7 @@ func (api *API) GetNotificationPolicyByID(rw http.ResponseWriter, req *http.Requ
 	render.Success(rw, http.StatusOK, policy)
 }
 
-func (api *API) DeleteNotificationPolicyByID(rw http.ResponseWriter, req *http.Request) {
+func (api *API) DeleteRoutePolicyByID(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -360,7 +362,7 @@ func (api *API) DeleteNotificationPolicyByID(rw http.ResponseWriter, req *http.R
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (api *API) UpdateNotificationPolicy(rw http.ResponseWriter, req *http.Request) {
+func (api *API) UpdateRoutePolicy(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -376,12 +378,13 @@ func (api *API) UpdateNotificationPolicy(rw http.ResponseWriter, req *http.Reque
 		return
 	}
 	defer req.Body.Close()
-	var policy alertmanagertypes.PostableExpressionRoute
+	var policy alertmanagertypes.PostableRoutePolicy
 	err = json.Unmarshal(body, &policy)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
+	policy.ExpressionKind = alertmanagertypes.PolicyBasedExpression
 
 	// Validate the postable route
 	if err := policy.Validate(); err != nil {

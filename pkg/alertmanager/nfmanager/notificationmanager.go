@@ -16,12 +16,12 @@ type NotificationManager interface {
 	DeleteNotificationConfig(orgID string, ruleID string) error
 
 	// Route Policy CRUD
-	CreateRoute(ctx context.Context, orgID string, route *alertmanagertypes.ExpressionRoute) error
-	CreateRoutes(ctx context.Context, orgID string, routes []*alertmanagertypes.ExpressionRoute) error
-	GetRouteByID(ctx context.Context, orgID string, routeID string) (*alertmanagertypes.ExpressionRoute, error)
-	GetAllRoutes(ctx context.Context, orgID string) ([]*alertmanagertypes.ExpressionRoute, error)
-	DeleteRoute(ctx context.Context, orgID string, routeID string) error
-	DeleteAllRoutesByName(ctx context.Context, orgID string, name string) error
+	CreateRoutePolicy(ctx context.Context, orgID string, route *alertmanagertypes.RoutePolicy) error
+	CreateRoutePolicies(ctx context.Context, orgID string, routes []*alertmanagertypes.RoutePolicy) error
+	GetRoutePolicyByID(ctx context.Context, orgID string, routeID string) (*alertmanagertypes.RoutePolicy, error)
+	GetAllRoutePolicies(ctx context.Context, orgID string) ([]*alertmanagertypes.RoutePolicy, error)
+	DeleteRoutePolicy(ctx context.Context, orgID string, routeID string) error
+	DeleteAllRoutePoliciesByName(ctx context.Context, orgID string, name string) error
 
 	// Route matching
 	Match(ctx context.Context, orgID string, ruleID string, set model.LabelSet) ([]string, error)

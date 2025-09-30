@@ -31,15 +31,15 @@ func (m *MockSQLRouteStore) Mock() sqlmock.Sqlmock {
 	return m.mock
 }
 
-func (m *MockSQLRouteStore) GetByID(ctx context.Context, orgId string, id string) (*alertmanagertypes.ExpressionRoute, error) {
+func (m *MockSQLRouteStore) GetByID(ctx context.Context, orgId string, id string) (*alertmanagertypes.RoutePolicy, error) {
 	return m.routeStore.GetByID(ctx, orgId, id)
 }
 
-func (m *MockSQLRouteStore) Create(ctx context.Context, route *alertmanagertypes.ExpressionRoute) error {
+func (m *MockSQLRouteStore) Create(ctx context.Context, route *alertmanagertypes.RoutePolicy) error {
 	return m.routeStore.Create(ctx, route)
 }
 
-func (m *MockSQLRouteStore) CreateBatch(ctx context.Context, routes []*alertmanagertypes.ExpressionRoute) error {
+func (m *MockSQLRouteStore) CreateBatch(ctx context.Context, routes []*alertmanagertypes.RoutePolicy) error {
 	return m.routeStore.CreateBatch(ctx, routes)
 }
 
@@ -47,11 +47,11 @@ func (m *MockSQLRouteStore) Delete(ctx context.Context, orgId string, id string)
 	return m.routeStore.Delete(ctx, orgId, id)
 }
 
-func (m *MockSQLRouteStore) GetAllByKind(ctx context.Context, orgID string, kind alertmanagertypes.ExpressionKind) ([]*alertmanagertypes.ExpressionRoute, error) {
+func (m *MockSQLRouteStore) GetAllByKind(ctx context.Context, orgID string, kind alertmanagertypes.ExpressionKind) ([]*alertmanagertypes.RoutePolicy, error) {
 	return m.routeStore.GetAllByKind(ctx, orgID, kind)
 }
 
-func (m *MockSQLRouteStore) GetAllByName(ctx context.Context, orgID string, name string) ([]*alertmanagertypes.ExpressionRoute, error) {
+func (m *MockSQLRouteStore) GetAllByName(ctx context.Context, orgID string, name string) ([]*alertmanagertypes.RoutePolicy, error) {
 	return m.routeStore.GetAllByName(ctx, orgID, name)
 }
 
@@ -59,7 +59,7 @@ func (m *MockSQLRouteStore) DeleteRouteByName(ctx context.Context, orgID string,
 	return m.routeStore.DeleteRouteByName(ctx, orgID, name)
 }
 
-func (m *MockSQLRouteStore) ExpectGetByID(orgID, id string, route *alertmanagertypes.ExpressionRoute) {
+func (m *MockSQLRouteStore) ExpectGetByID(orgID, id string, route *alertmanagertypes.RoutePolicy) {
 	rows := sqlmock.NewRows([]string{"id", "org_id", "name", "expression", "kind", "description", "enabled", "tags", "channels", "created_at", "updated_at", "created_by", "updated_by"})
 
 	if route != nil {
@@ -80,35 +80,35 @@ func (m *MockSQLRouteStore) ExpectGetByID(orgID, id string, route *alertmanagert
 		)
 	}
 
-	m.mock.ExpectQuery(`SELECT (.+) FROM "notification_routes" AS "expression_route" WHERE \(id = \$1\) AND \(org_id = \$2\)`).
+	m.mock.ExpectQuery(`SELECT (.+) FROM "route_policy" WHERE \(id = \$1\) AND \(org_id = \$2\)`).
 		WithArgs(id, orgID).
 		WillReturnRows(rows)
 }
 
-func (m *MockSQLRouteStore) ExpectCreate(route *alertmanagertypes.ExpressionRoute) {
-	expectedPattern := `INSERT INTO "notification_routes" \(.+\) VALUES .+`
+func (m *MockSQLRouteStore) ExpectCreate(route *alertmanagertypes.RoutePolicy) {
+	expectedPattern := `INSERT INTO "route_policy" \(.+\) VALUES .+`
 	m.mock.ExpectExec(expectedPattern).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 }
 
-func (m *MockSQLRouteStore) ExpectCreateBatch(routes []*alertmanagertypes.ExpressionRoute) {
+func (m *MockSQLRouteStore) ExpectCreateBatch(routes []*alertmanagertypes.RoutePolicy) {
 	if len(routes) == 0 {
 		return
 	}
 
-	// Simplified pattern that should match any INSERT into notification_routes
-	expectedPattern := `INSERT INTO "notification_routes" \(.+\) VALUES .+`
+	// Simplified pattern that should match any INSERT into route_policy
+	expectedPattern := `INSERT INTO "route_policy" \(.+\) VALUES .+`
 
 	m.mock.ExpectExec(expectedPattern).
 		WillReturnResult(sqlmock.NewResult(1, int64(len(routes))))
 }
 
 func (m *MockSQLRouteStore) ExpectDelete(orgID, id string) {
-	m.mock.ExpectExec(`DELETE FROM "notification_routes" AS "expression_route" WHERE \(org_id = '` + regexp.QuoteMeta(orgID) + `'\) AND \(id = '` + regexp.QuoteMeta(id) + `'\)`).
+	m.mock.ExpectExec(`DELETE FROM "route_policy" AS "route_policy" WHERE \(org_id = '` + regexp.QuoteMeta(orgID) + `'\) AND \(id = '` + regexp.QuoteMeta(id) + `'\)`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 }
 
-func (m *MockSQLRouteStore) ExpectGetAllByKindAndOrgID(orgID string, kind alertmanagertypes.ExpressionKind, routes []*alertmanagertypes.ExpressionRoute) {
+func (m *MockSQLRouteStore) ExpectGetAllByKindAndOrgID(orgID string, kind alertmanagertypes.ExpressionKind, routes []*alertmanagertypes.RoutePolicy) {
 	rows := sqlmock.NewRows([]string{"id", "org_id", "name", "expression", "kind", "description", "enabled", "tags", "channels", "created_at", "updated_at", "created_by", "updated_by"})
 
 	for _, route := range routes {
@@ -131,11 +131,11 @@ func (m *MockSQLRouteStore) ExpectGetAllByKindAndOrgID(orgID string, kind alertm
 		}
 	}
 
-	m.mock.ExpectQuery(`SELECT (.+) FROM "notification_routes" AS "expression_route" WHERE \(org_id = '` + regexp.QuoteMeta(orgID) + `'\) AND \(kind = '` + regexp.QuoteMeta(kind.StringValue()) + `'\)`).
+	m.mock.ExpectQuery(`SELECT (.+) FROM "route_policy" WHERE \(org_id = '` + regexp.QuoteMeta(orgID) + `'\) AND \(kind = '` + regexp.QuoteMeta(kind.StringValue()) + `'\)`).
 		WillReturnRows(rows)
 }
 
-func (m *MockSQLRouteStore) ExpectGetAllByName(orgID, name string, routes []*alertmanagertypes.ExpressionRoute) {
+func (m *MockSQLRouteStore) ExpectGetAllByName(orgID, name string, routes []*alertmanagertypes.RoutePolicy) {
 	rows := sqlmock.NewRows([]string{"id", "org_id", "name", "expression", "kind", "description", "enabled", "tags", "channels", "created_at", "updated_at", "created_by", "updated_by"})
 
 	for _, route := range routes {
@@ -158,12 +158,12 @@ func (m *MockSQLRouteStore) ExpectGetAllByName(orgID, name string, routes []*ale
 		}
 	}
 
-	m.mock.ExpectQuery(`SELECT (.+) FROM "notification_routes" AS "expression_route" WHERE \(org_id = '` + regexp.QuoteMeta(orgID) + `'\) AND \(name = '` + regexp.QuoteMeta(name) + `'\)`).
+	m.mock.ExpectQuery(`SELECT (.+) FROM "route_policy" WHERE \(org_id = '` + regexp.QuoteMeta(orgID) + `'\) AND \(name = '` + regexp.QuoteMeta(name) + `'\)`).
 		WillReturnRows(rows)
 }
 
 func (m *MockSQLRouteStore) ExpectDeleteRouteByName(orgID, name string) {
-	m.mock.ExpectExec(`DELETE FROM "notification_routes" AS "expression_route" WHERE \(org_id = '` + regexp.QuoteMeta(orgID) + `'\) AND \(name = '` + regexp.QuoteMeta(name) + `'\)`).
+	m.mock.ExpectExec(`DELETE FROM "route_policy" AS "route_policy" WHERE \(org_id = '` + regexp.QuoteMeta(orgID) + `'\) AND \(name = '` + regexp.QuoteMeta(name) + `'\)`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 }
 

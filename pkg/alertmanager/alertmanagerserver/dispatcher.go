@@ -272,6 +272,7 @@ type notifyFunc func(context.Context, ...*types.Alert) bool
 
 // processAlert determines in which aggregation group the alert falls
 // and inserts it.
+// no data alert will only have ruleId and no data label
 func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 	ruleId := getRuleIDFromAlert(alert)
 	config, err := d.notificationManager.GetNotificationConfig(d.orgID, ruleId)
@@ -279,8 +280,14 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 		d.logger.ErrorContext(d.ctx, "error getting alert notification config", "rule_id", ruleId, "error", err)
 		return
 	}
+	renotifyInterval := config.Renotify.RenotifyInterval
 
 	groupLabels := getGroupLabels(alert, config.NotificationGroup, config.GroupByAll)
+
+	if alertmanagertypes.NoDataAlert(alert) {
+		renotifyInterval = config.Renotify.NoDataInterval
+		groupLabels[alertmanagertypes.NoDataLabel] = alert.Labels[alertmanagertypes.NoDataLabel] //to create new group key for no data alerts
+	}
 
 	fp := groupLabels.Fingerprint()
 
@@ -304,12 +311,6 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 		d.metrics.aggrGroupLimitReached.Inc()
 		d.logger.ErrorContext(d.ctx, "Too many aggregation groups, cannot create new group for alert", "groups", d.aggrGroupsNum, "limit", limit, "alert", alert.Name())
 		return
-	}
-	renotifyInterval := config.Renotify.RenotifyInterval
-
-	if alertmanagertypes.NoDataAlert(alert) {
-		renotifyInterval = config.Renotify.NoDataInterval
-		groupLabels[alertmanagertypes.NoDataLabel] = alert.Labels[alertmanagertypes.NoDataLabel]
 	}
 
 	ag = newAggrGroup(d.ctx, groupLabels, route, d.timeout, d.logger, renotifyInterval)

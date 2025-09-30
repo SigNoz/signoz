@@ -35,7 +35,7 @@ type userAuditable struct {
 }
 
 type expressionRoute struct {
-	bun.BaseModel `bun:"table:notification_routes"`
+	bun.BaseModel `bun:"table:route_policy"`
 	identifiable
 	timeAuditable
 	userAuditable
@@ -63,27 +63,27 @@ type rule struct {
 	OrgID   string `bun:"org_id,type:text"`
 }
 
-type addNotificationRoutes struct {
+type addRoutePolicies struct {
 	sqlstore  sqlstore.SQLStore
 	sqlschema sqlschema.SQLSchema
 	logger    *slog.Logger
 }
 
-func NewAddNotificationRoutesFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.NewProviderFactory(factory.MustNewName("add_notification_routes"), func(ctx context.Context, providerSettings factory.ProviderSettings, config Config) (SQLMigration, error) {
-		return newAddNotificationRoutes(ctx, providerSettings, config, sqlstore, sqlschema)
+func NewAddRoutePolicyFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
+	return factory.NewProviderFactory(factory.MustNewName("add_route_policy"), func(ctx context.Context, providerSettings factory.ProviderSettings, config Config) (SQLMigration, error) {
+		return newAddRoutePolicy(ctx, providerSettings, config, sqlstore, sqlschema)
 	})
 }
 
-func newAddNotificationRoutes(_ context.Context, settings factory.ProviderSettings, _ Config, sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) (SQLMigration, error) {
-	return &addNotificationRoutes{
+func newAddRoutePolicy(_ context.Context, settings factory.ProviderSettings, _ Config, sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) (SQLMigration, error) {
+	return &addRoutePolicies{
 		sqlstore:  sqlstore,
 		sqlschema: sqlschema,
 		logger:    settings.Logger,
 	}, nil
 }
 
-func (migration *addNotificationRoutes) Register(migrations *migrate.Migrations) error {
+func (migration *addRoutePolicies) Register(migrations *migrate.Migrations) error {
 	if err := migrations.Register(migration.Up, migration.Down); err != nil {
 		return err
 	}
@@ -91,42 +91,7 @@ func (migration *addNotificationRoutes) Register(migrations *migrate.Migrations)
 	return nil
 }
 
-func (migration *addNotificationRoutes) Up(ctx context.Context, db *bun.DB) error {
-	// Create the notification_routes table
-	_, err := db.NewCreateTable().
-		Model((*expressionRoute)(nil)).
-		IfNotExists().
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	indexes := []string{
-		"CREATE INDEX IF NOT EXISTS idx_notification_routes_org_id ON notification_routes (org_id)",
-		"CREATE INDEX IF NOT EXISTS idx_notification_routes_enabled ON notification_routes (enabled)",
-		"CREATE INDEX IF NOT EXISTS idx_notification_routes_org_enabled ON notification_routes (org_id, enabled)",
-		"CREATE INDEX IF NOT EXISTS idx_notification_routes_kind ON notification_routes (kind)",
-		"CREATE INDEX IF NOT EXISTS idx_notification_routes_org_kind ON notification_routes (org_id, kind)",
-		"CREATE INDEX IF NOT EXISTS idx_notification_routes_name ON notification_routes (name)",
-		"CREATE INDEX IF NOT EXISTS idx_notification_routes_org_route_name ON notification_routes (org_id, name)",
-	}
-
-	for _, indexSQL := range indexes {
-		_, err := db.ExecContext(ctx, indexSQL)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = migration.migrateRulesToNotificationRoutes(ctx, db)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (migration *addNotificationRoutes) migrateRulesToNotificationRoutes(ctx context.Context, db *bun.DB) error {
+func (migration *addRoutePolicies) Up(ctx context.Context, db *bun.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -136,8 +101,101 @@ func (migration *addNotificationRoutes) migrateRulesToNotificationRoutes(ctx con
 		_ = tx.Rollback()
 	}()
 
+	// Create the notification_routes table
+	_, err = tx.NewCreateTable().
+		Model((*expressionRoute)(nil)).
+		IfNotExists().
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Create indexes
+	_, err = tx.NewCreateIndex().
+		Model((*expressionRoute)(nil)).
+		Index("idx_route_policy_org_id").
+		Column("org_id").
+		IfNotExists().
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.NewCreateIndex().
+		Model((*expressionRoute)(nil)).
+		Index("idx_route_policy_enabled").
+		Column("enabled").
+		IfNotExists().
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.NewCreateIndex().
+		Model((*expressionRoute)(nil)).
+		Index("idx_route_policy_org_enabled").
+		Column("org_id", "enabled").
+		IfNotExists().
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.NewCreateIndex().
+		Model((*expressionRoute)(nil)).
+		Index("idx_route_policy_kind").
+		Column("kind").
+		IfNotExists().
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.NewCreateIndex().
+		Model((*expressionRoute)(nil)).
+		Index("idx_route_policy_org_kind").
+		Column("org_id", "kind").
+		IfNotExists().
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.NewCreateIndex().
+		Model((*expressionRoute)(nil)).
+		Index("idx_route_policy_name").
+		Column("name").
+		IfNotExists().
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.NewCreateIndex().
+		Model((*expressionRoute)(nil)).
+		Index("idx_route_policy_org_route_name").
+		Column("org_id", "name").
+		IfNotExists().
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = migration.migrateRulesToNotificationRoutes(ctx, tx)
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (migration *addRoutePolicies) migrateRulesToNotificationRoutes(ctx context.Context, tx bun.Tx) error {
 	var rules []*rule
-	err = tx.NewSelect().
+	err := tx.NewSelect().
 		Model(&rules).
 		Where("deleted = ?", 0).
 		Scan(ctx)
@@ -149,9 +207,6 @@ func (migration *addNotificationRoutes) migrateRulesToNotificationRoutes(ctx con
 	}
 
 	if len(rules) == 0 {
-		if err := tx.Commit(); err != nil {
-			return err
-		}
 		return nil
 	}
 
@@ -194,14 +249,10 @@ func (migration *addNotificationRoutes) migrateRulesToNotificationRoutes(ctx con
 		}
 	}
 
-	if err := tx.Commit(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
-func (migration *addNotificationRoutes) convertRulesToRoutes(rules []*rule, channelsByOrg map[string][]string) ([]*expressionRoute, error) {
+func (migration *addRoutePolicies) convertRulesToRoutes(rules []*rule, channelsByOrg map[string][]string) ([]*expressionRoute, error) {
 	var routes []*expressionRoute
 	var errorList []error
 	for _, r := range rules {
@@ -240,7 +291,7 @@ func (migration *addNotificationRoutes) convertRulesToRoutes(rules []*rule, chan
 			Channels:       gettableRule.PreferredChannels,
 			Name:           r.ID.StringValue(),
 			Description:    "",
-			Enabled:        !gettableRule.Disabled,
+			Enabled:        true,
 			Tags:           []string{},
 			OrgID:          r.OrgID,
 		}
@@ -252,7 +303,7 @@ func (migration *addNotificationRoutes) convertRulesToRoutes(rules []*rule, chan
 	return routes, nil
 }
 
-func (migration *addNotificationRoutes) getAllChannelsInTx(ctx context.Context, tx bun.Tx) (map[string][]string, error) {
+func (migration *addRoutePolicies) getAllChannelsInTx(ctx context.Context, tx bun.Tx) (map[string][]string, error) {
 	type channel struct {
 		bun.BaseModel `bun:"table:notification_channel"`
 		types.Identifiable
@@ -280,10 +331,10 @@ func (migration *addNotificationRoutes) getAllChannelsInTx(ctx context.Context, 
 	return channelsByOrg, nil
 }
 
-func (migration *addNotificationRoutes) Down(ctx context.Context, db *bun.DB) error {
+func (migration *addRoutePolicies) Down(ctx context.Context, db *bun.DB) error {
 	// Drop the table if it exists
 	_, err := db.NewDropTable().
-		Table("notification_routes").
+		Table("route_policy").
 		IfExists().
 		Exec(ctx)
 	return err

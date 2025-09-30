@@ -62,14 +62,14 @@ type Alertmanager interface {
 	DeleteNotificationConfig(ctx context.Context, orgID valuer.UUID, ruleId string) error
 
 	// Notification Policy CRUD
-	CreateRoutePolicy(ctx context.Context, route *alertmanagertypes.PostableExpressionRoute) (*alertmanagertypes.GettableExpressionRoute, error)
-	CreateRoutePolicies(ctx context.Context, routeRequests []*alertmanagertypes.PostableExpressionRoute) ([]*alertmanagertypes.GettableExpressionRoute, error)
-	GetRoutePolicyByID(ctx context.Context, routeID string) (*alertmanagertypes.GettableExpressionRoute, error)
-	GetAllRoutePolicies(ctx context.Context) ([]*alertmanagertypes.GettableExpressionRoute, error)
-	UpdateRoutePolicyByID(ctx context.Context, routeID string, route *alertmanagertypes.PostableExpressionRoute) (*alertmanagertypes.GettableExpressionRoute, error)
+	CreateRoutePolicy(ctx context.Context, route *alertmanagertypes.PostableRoutePolicy) (*alertmanagertypes.GettableRoutePolicy, error)
+	CreateRoutePolicies(ctx context.Context, routeRequests []*alertmanagertypes.PostableRoutePolicy) ([]*alertmanagertypes.GettableRoutePolicy, error)
+	GetRoutePolicyByID(ctx context.Context, routeID string) (*alertmanagertypes.GettableRoutePolicy, error)
+	GetAllRoutePolicies(ctx context.Context) ([]*alertmanagertypes.GettableRoutePolicy, error)
+	UpdateRoutePolicyByID(ctx context.Context, routeID string, route *alertmanagertypes.PostableRoutePolicy) (*alertmanagertypes.GettableRoutePolicy, error)
 	DeleteRoutePolicyByID(ctx context.Context, routeID string) error
 	DeleteAllRoutePoliciesByRuleId(ctx context.Context, ruleId string) error
-	UpdateAllRoutePoliciesByRuleId(ctx context.Context, ruleId string, routes []*alertmanagertypes.PostableExpressionRoute) error
+	UpdateAllRoutePoliciesByRuleId(ctx context.Context, ruleId string, routes []*alertmanagertypes.PostableRoutePolicy) error
 
 	CreateInhibitRules(ctx context.Context, orgID valuer.UUID, rules []amConfig.InhibitRule) error
 	DeleteAllInhibitRulesByRuleId(ctx context.Context, orgID valuer.UUID, ruleId string) error

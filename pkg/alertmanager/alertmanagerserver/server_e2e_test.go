@@ -35,7 +35,7 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 	require.NoError(t, err)
 	orgID := "test-org"
 
-	routes := []*alertmanagertypes.ExpressionRoute{
+	routes := []*alertmanagertypes.RoutePolicy{
 		{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
@@ -63,7 +63,7 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 	}
 
 	store.ExpectCreateBatch(routes)
-	err = notificationManager.CreateRoutes(ctx, orgID, routes)
+	err = notificationManager.CreateRoutePolicies(ctx, orgID, routes)
 	require.NoError(t, err)
 
 	for range routes {
@@ -80,7 +80,7 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 		Renotify: alertmanagertypes.ReNotificationConfig{
 			RenotifyInterval: 5 * time.Minute,
 		},
-		NotificationPolicy: false,
+		UsePolicy: false,
 	}
 
 	err = notificationManager.SetNotificationConfig(orgID, "high-cpu-usage", &notifConfig)

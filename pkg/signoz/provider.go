@@ -134,7 +134,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewQueryBuilderV5MigrationFactory(sqlstore, telemetryStore),
 		sqlmigration.NewAddMeterQuickFiltersFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateTTLSettingForCustomRetentionFactory(sqlstore, sqlschema),
-		sqlmigration.NewAddNotificationRoutesFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddRoutePolicyFactory(sqlstore, sqlschema),
 	)
 }
 

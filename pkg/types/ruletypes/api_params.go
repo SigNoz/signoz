@@ -95,16 +95,16 @@ func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanager
 	return alertmanagertypes.NewNotificationConfig(ns.NotificationGroupBy, renotifyInterval, noDataRenotifyInterval, ns.NotificationPolicy)
 }
 
-func (r *PostableRule) GetRuleRouteRequest(ruleId string) ([]*alertmanagertypes.PostableExpressionRoute, error) {
+func (r *PostableRule) GetRuleRouteRequest(ruleId string) ([]*alertmanagertypes.PostableRoutePolicy, error) {
 	threshold, err := r.RuleCondition.Thresholds.GetRuleThreshold()
 	if err != nil {
 		return nil, err
 	}
 	receivers := threshold.GetRuleReceivers()
-	routeRequests := make([]*alertmanagertypes.PostableExpressionRoute, 0)
+	routeRequests := make([]*alertmanagertypes.PostableRoutePolicy, 0)
 	for _, receiver := range receivers {
 		expression := fmt.Sprintf(`%s == "%s" && %s == "%s"`, LabelThresholdName, receiver.Name, LabelRuleId, ruleId)
-		routeRequests = append(routeRequests, &alertmanagertypes.PostableExpressionRoute{
+		routeRequests = append(routeRequests, &alertmanagertypes.PostableRoutePolicy{
 			Expression:     expression,
 			ExpressionKind: alertmanagertypes.RuleBasedExpression,
 			Channels:       receiver.Channels,

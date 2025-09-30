@@ -63,7 +63,7 @@ func (r *provider) GetNotificationConfig(orgID string, ruleID string) (*alertman
 			for k, v := range config.NotificationGroup {
 				notificationConfig.NotificationGroup[k] = v
 			}
-			notificationConfig.NotificationPolicy = config.NotificationPolicy
+			notificationConfig.UsePolicy = config.UsePolicy
 			notificationConfig.GroupByAll = config.GroupByAll
 		}
 	}
@@ -109,36 +109,36 @@ func (r *provider) DeleteNotificationConfig(orgID string, ruleID string) error {
 	return nil
 }
 
-func (r *provider) CreateRoute(ctx context.Context, orgID string, route *alertmanagertypes.ExpressionRoute) error {
+func (r *provider) CreateRoutePolicy(ctx context.Context, orgID string, route *alertmanagertypes.RoutePolicy) error {
 	if route == nil {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "route cannot be nil")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "route policy cannot be nil")
 	}
 
 	err := route.Validate()
 	if err != nil {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "Invalid route: %v", err)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid route policy: %v", err)
 	}
 
 	return r.routeStore.Create(ctx, route)
 }
 
-func (r *provider) CreateRoutes(ctx context.Context, orgID string, routes []*alertmanagertypes.ExpressionRoute) error {
+func (r *provider) CreateRoutePolicies(ctx context.Context, orgID string, routes []*alertmanagertypes.RoutePolicy) error {
 	if len(routes) == 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "routes cannot be empty")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "route policies cannot be empty")
 	}
 
 	for _, route := range routes {
 		if route == nil {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "route cannot be nil")
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "route policy cannot be nil")
 		}
 		if err := route.Validate(); err != nil {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "route with name %s: %s", route.Name, err.Error())
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "route policy with name %s: %s", route.Name, err.Error())
 		}
 	}
 	return r.routeStore.CreateBatch(ctx, routes)
 }
 
-func (r *provider) GetRouteByID(ctx context.Context, orgID string, routeID string) (*alertmanagertypes.ExpressionRoute, error) {
+func (r *provider) GetRoutePolicyByID(ctx context.Context, orgID string, routeID string) (*alertmanagertypes.RoutePolicy, error) {
 	if routeID == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "routeID cannot be empty")
 	}
@@ -146,7 +146,7 @@ func (r *provider) GetRouteByID(ctx context.Context, orgID string, routeID strin
 	return r.routeStore.GetByID(ctx, orgID, routeID)
 }
 
-func (r *provider) GetAllRoutes(ctx context.Context, orgID string) ([]*alertmanagertypes.ExpressionRoute, error) {
+func (r *provider) GetAllRoutePolicies(ctx context.Context, orgID string) ([]*alertmanagertypes.RoutePolicy, error) {
 	if orgID == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "orgID cannot be empty")
 	}
@@ -154,7 +154,7 @@ func (r *provider) GetAllRoutes(ctx context.Context, orgID string) ([]*alertmana
 	return r.routeStore.GetAllByKind(ctx, orgID, alertmanagertypes.PolicyBasedExpression)
 }
 
-func (r *provider) DeleteRoute(ctx context.Context, orgID string, routeID string) error {
+func (r *provider) DeleteRoutePolicy(ctx context.Context, orgID string, routeID string) error {
 	if routeID == "" {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "routeID cannot be empty")
 	}
@@ -162,7 +162,7 @@ func (r *provider) DeleteRoute(ctx context.Context, orgID string, routeID string
 	return r.routeStore.Delete(ctx, orgID, routeID)
 }
 
-func (r *provider) DeleteAllRoutesByName(ctx context.Context, orgID string, name string) error {
+func (r *provider) DeleteAllRoutePoliciesByName(ctx context.Context, orgID string, name string) error {
 	if orgID == "" {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "orgID cannot be empty")
 	}
@@ -177,20 +177,20 @@ func (r *provider) Match(ctx context.Context, orgID string, ruleID string, set m
 	if err != nil {
 		return nil, errors.NewInternalf(errors.CodeInternal, "error getting notification configuration: %v", err)
 	}
-	var expressionRoutes []*alertmanagertypes.ExpressionRoute
-	if config.NotificationPolicy {
+	var expressionRoutes []*alertmanagertypes.RoutePolicy
+	if config.UsePolicy {
 		expressionRoutes, err = r.routeStore.GetAllByKind(ctx, orgID, alertmanagertypes.PolicyBasedExpression)
 		if err != nil {
-			return []string{}, errors.NewInternalf(errors.CodeInternal, "error getting expression routes: %v", err)
+			return []string{}, errors.NewInternalf(errors.CodeInternal, "error getting route policies: %v", err)
 		}
 	} else {
 		expressionRoutes, err = r.routeStore.GetAllByName(ctx, orgID, ruleID)
 		if err != nil {
-			return []string{}, errors.NewInternalf(errors.CodeInternal, "error getting expression routes: %v", err)
+			return []string{}, errors.NewInternalf(errors.CodeInternal, "error getting route policies: %v", err)
 		}
 	}
 	var matchedChannels []string
-	if _, ok := set[alertmanagertypes.NoDataLabel]; ok && !config.NotificationPolicy {
+	if _, ok := set[alertmanagertypes.NoDataLabel]; ok && !config.UsePolicy {
 		for _, expressionRoute := range expressionRoutes {
 			matchedChannels = append(matchedChannels, expressionRoute.Channels...)
 		}
@@ -238,17 +238,17 @@ func (r *provider) evaluateExpr(expression string, labelSet model.LabelSet) (boo
 
 	program, err := expr.Compile(expression, expr.Env(env))
 	if err != nil {
-		return false, errors.NewInternalf(errors.CodeInternal, "error compiling expression %s: %v", expression, err)
+		return false, errors.NewInternalf(errors.CodeInternal, "error compiling route policy %s: %v", expression, err)
 	}
 
 	output, err := expr.Run(program, env)
 	if err != nil {
-		return false, errors.NewInternalf(errors.CodeInternal, "error running expression %s: %v", expression, err)
+		return false, errors.NewInternalf(errors.CodeInternal, "error running route policy %s: %v", expression, err)
 	}
 
 	if boolVal, ok := output.(bool); ok {
 		return boolVal, nil
 	}
 
-	return false, errors.NewInternalf(errors.CodeInternal, "error in evaluating expression %s: %v", expression, err)
+	return false, errors.NewInternalf(errors.CodeInternal, "error in evaluating route policy %s: %v", expression, err)
 }

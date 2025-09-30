@@ -439,10 +439,10 @@ func init() {
 
 // NotificationConfig holds configuration for alert notifications timing.
 type NotificationConfig struct {
-	NotificationGroup  map[model.LabelName]struct{}
-	Renotify           ReNotificationConfig
-	NotificationPolicy bool
-	GroupByAll         bool
+	NotificationGroup map[model.LabelName]struct{}
+	Renotify          ReNotificationConfig
+	UsePolicy         bool
+	GroupByAll        bool
 }
 
 func (nc *NotificationConfig) DeepCopy() NotificationConfig {
@@ -453,7 +453,7 @@ func (nc *NotificationConfig) DeepCopy() NotificationConfig {
 	for k, v := range nc.NotificationGroup {
 		deepCopy.NotificationGroup[k] = v
 	}
-	deepCopy.NotificationPolicy = nc.NotificationPolicy
+	deepCopy.UsePolicy = nc.UsePolicy
 	return deepCopy
 }
 
@@ -479,7 +479,7 @@ func NewNotificationConfig(groups []string, renotifyInterval time.Duration, noDa
 		}
 	}
 
-	notificationConfig.NotificationPolicy = policy
+	notificationConfig.UsePolicy = policy
 
 	return notificationConfig
 }

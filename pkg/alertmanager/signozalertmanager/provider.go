@@ -216,7 +216,7 @@ func (provider *provider) DeleteNotificationConfig(ctx context.Context, orgID va
 	return nil
 }
 
-func (provider *provider) CreateRoutePolicy(ctx context.Context, routeRequest *alertmanagertypes.PostableExpressionRoute) (*alertmanagertypes.GettableExpressionRoute, error) {
+func (provider *provider) CreateRoutePolicy(ctx context.Context, routeRequest *alertmanagertypes.PostableRoutePolicy) (*alertmanagertypes.GettableRoutePolicy, error) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -230,7 +230,7 @@ func (provider *provider) CreateRoutePolicy(ctx context.Context, routeRequest *a
 		return nil, err
 	}
 
-	route := alertmanagertypes.ExpressionRoute{
+	route := alertmanagertypes.RoutePolicy{
 		Expression:     routeRequest.Expression,
 		ExpressionKind: routeRequest.ExpressionKind,
 		Name:           routeRequest.Name,
@@ -252,22 +252,22 @@ func (provider *provider) CreateRoutePolicy(ctx context.Context, routeRequest *a
 		},
 	}
 
-	err = provider.notificationManager.CreateRoute(ctx, orgID.String(), &route)
+	err = provider.notificationManager.CreateRoutePolicy(ctx, orgID.String(), &route)
 	if err != nil {
 		return nil, err
 	}
 
-	return &alertmanagertypes.GettableExpressionRoute{
-		PostableExpressionRoute: *routeRequest,
-		ID:                      route.ID.StringValue(),
-		CreatedAt:               &route.CreatedAt,
-		UpdatedAt:               &route.UpdatedAt,
-		CreatedBy:               &route.CreatedBy,
-		UpdatedBy:               &route.UpdatedBy,
+	return &alertmanagertypes.GettableRoutePolicy{
+		PostableRoutePolicy: *routeRequest,
+		ID:                  route.ID.StringValue(),
+		CreatedAt:           &route.CreatedAt,
+		UpdatedAt:           &route.UpdatedAt,
+		CreatedBy:           &route.CreatedBy,
+		UpdatedBy:           &route.UpdatedBy,
 	}, nil
 }
 
-func (provider *provider) CreateRoutePolicies(ctx context.Context, routeRequests []*alertmanagertypes.PostableExpressionRoute) ([]*alertmanagertypes.GettableExpressionRoute, error) {
+func (provider *provider) CreateRoutePolicies(ctx context.Context, routeRequests []*alertmanagertypes.PostableRoutePolicy) ([]*alertmanagertypes.GettableRoutePolicy, error) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -279,18 +279,18 @@ func (provider *provider) CreateRoutePolicies(ctx context.Context, routeRequests
 	}
 
 	if len(routeRequests) == 0 {
-		return []*alertmanagertypes.GettableExpressionRoute{}, nil
+		return []*alertmanagertypes.GettableRoutePolicy{}, nil
 	}
 
-	routes := make([]*alertmanagertypes.ExpressionRoute, 0, len(routeRequests))
-	results := make([]*alertmanagertypes.GettableExpressionRoute, 0, len(routeRequests))
+	routes := make([]*alertmanagertypes.RoutePolicy, 0, len(routeRequests))
+	results := make([]*alertmanagertypes.GettableRoutePolicy, 0, len(routeRequests))
 
 	for _, routeRequest := range routeRequests {
 		if err := routeRequest.Validate(); err != nil {
 			return nil, err
 		}
 
-		route := &alertmanagertypes.ExpressionRoute{
+		route := &alertmanagertypes.RoutePolicy{
 			Expression:     routeRequest.Expression,
 			ExpressionKind: routeRequest.ExpressionKind,
 			Name:           routeRequest.Name,
@@ -313,17 +313,17 @@ func (provider *provider) CreateRoutePolicies(ctx context.Context, routeRequests
 		}
 
 		routes = append(routes, route)
-		results = append(results, &alertmanagertypes.GettableExpressionRoute{
-			PostableExpressionRoute: *routeRequest,
-			ID:                      route.ID.StringValue(),
-			CreatedAt:               &route.CreatedAt,
-			UpdatedAt:               &route.UpdatedAt,
-			CreatedBy:               &route.CreatedBy,
-			UpdatedBy:               &route.UpdatedBy,
+		results = append(results, &alertmanagertypes.GettableRoutePolicy{
+			PostableRoutePolicy: *routeRequest,
+			ID:                  route.ID.StringValue(),
+			CreatedAt:           &route.CreatedAt,
+			UpdatedAt:           &route.UpdatedAt,
+			CreatedBy:           &route.CreatedBy,
+			UpdatedBy:           &route.UpdatedBy,
 		})
 	}
 
-	err = provider.notificationManager.CreateRoutes(ctx, orgID.String(), routes)
+	err = provider.notificationManager.CreateRoutePolicies(ctx, orgID.String(), routes)
 	if err != nil {
 		return nil, err
 	}
@@ -331,7 +331,7 @@ func (provider *provider) CreateRoutePolicies(ctx context.Context, routeRequests
 	return results, nil
 }
 
-func (provider *provider) GetRoutePolicyByID(ctx context.Context, routeID string) (*alertmanagertypes.GettableExpressionRoute, error) {
+func (provider *provider) GetRoutePolicyByID(ctx context.Context, routeID string) (*alertmanagertypes.GettableRoutePolicy, error) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -341,13 +341,13 @@ func (provider *provider) GetRoutePolicyByID(ctx context.Context, routeID string
 		return nil, err
 	}
 
-	route, err := provider.notificationManager.GetRouteByID(ctx, orgID.String(), routeID)
+	route, err := provider.notificationManager.GetRoutePolicyByID(ctx, orgID.String(), routeID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &alertmanagertypes.GettableExpressionRoute{
-		PostableExpressionRoute: alertmanagertypes.PostableExpressionRoute{
+	return &alertmanagertypes.GettableRoutePolicy{
+		PostableRoutePolicy: alertmanagertypes.PostableRoutePolicy{
 			Expression:     route.Expression,
 			ExpressionKind: route.ExpressionKind,
 			Channels:       route.Channels,
@@ -364,7 +364,7 @@ func (provider *provider) GetRoutePolicyByID(ctx context.Context, routeID string
 	}, nil
 }
 
-func (provider *provider) GetAllRoutePolicies(ctx context.Context) ([]*alertmanagertypes.GettableExpressionRoute, error) {
+func (provider *provider) GetAllRoutePolicies(ctx context.Context) ([]*alertmanagertypes.GettableRoutePolicy, error) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -374,15 +374,15 @@ func (provider *provider) GetAllRoutePolicies(ctx context.Context) ([]*alertmana
 		return nil, err
 	}
 
-	routes, err := provider.notificationManager.GetAllRoutes(ctx, orgID.String())
+	routes, err := provider.notificationManager.GetAllRoutePolicies(ctx, orgID.String())
 	if err != nil {
 		return nil, err
 	}
 
-	results := make([]*alertmanagertypes.GettableExpressionRoute, 0, len(routes))
+	results := make([]*alertmanagertypes.GettableRoutePolicy, 0, len(routes))
 	for _, route := range routes {
-		results = append(results, &alertmanagertypes.GettableExpressionRoute{
-			PostableExpressionRoute: alertmanagertypes.PostableExpressionRoute{
+		results = append(results, &alertmanagertypes.GettableRoutePolicy{
+			PostableRoutePolicy: alertmanagertypes.PostableRoutePolicy{
 				Expression:     route.Expression,
 				ExpressionKind: route.ExpressionKind,
 				Channels:       route.Channels,
@@ -402,7 +402,7 @@ func (provider *provider) GetAllRoutePolicies(ctx context.Context) ([]*alertmana
 	return results, nil
 }
 
-func (provider *provider) UpdateRoutePolicyByID(ctx context.Context, routeID string, route *alertmanagertypes.PostableExpressionRoute) (*alertmanagertypes.GettableExpressionRoute, error) {
+func (provider *provider) UpdateRoutePolicyByID(ctx context.Context, routeID string, route *alertmanagertypes.PostableRoutePolicy) (*alertmanagertypes.GettableRoutePolicy, error) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return nil, errors.NewInvalidInputf(errors.CodeUnauthenticated, "invalid claims: %v", err)
@@ -424,12 +424,12 @@ func (provider *provider) UpdateRoutePolicyByID(ctx context.Context, routeID str
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid route: %v", err)
 	}
 
-	existingRoute, err := provider.notificationManager.GetRouteByID(ctx, claims.OrgID, routeID)
+	existingRoute, err := provider.notificationManager.GetRoutePolicyByID(ctx, claims.OrgID, routeID)
 	if err != nil {
 		return nil, errors.NewInvalidInputf(errors.CodeNotFound, "route not found: %v", err)
 	}
 
-	updatedRoute := &alertmanagertypes.ExpressionRoute{
+	updatedRoute := &alertmanagertypes.RoutePolicy{
 		Expression:     route.Expression,
 		ExpressionKind: route.ExpressionKind,
 		Name:           route.Name,
@@ -449,23 +449,23 @@ func (provider *provider) UpdateRoutePolicyByID(ctx context.Context, routeID str
 		},
 	}
 
-	err = provider.notificationManager.DeleteRoute(ctx, orgID.String(), routeID)
+	err = provider.notificationManager.DeleteRoutePolicy(ctx, orgID.String(), routeID)
 	if err != nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInternal, "error deleting existing route: %v", err)
 	}
 
-	err = provider.notificationManager.CreateRoute(ctx, orgID.String(), updatedRoute)
+	err = provider.notificationManager.CreateRoutePolicy(ctx, orgID.String(), updatedRoute)
 	if err != nil {
 		return nil, err
 	}
 
-	return &alertmanagertypes.GettableExpressionRoute{
-		PostableExpressionRoute: *route,
-		ID:                      updatedRoute.ID.StringValue(),
-		CreatedAt:               &updatedRoute.CreatedAt,
-		UpdatedAt:               &updatedRoute.UpdatedAt,
-		CreatedBy:               &updatedRoute.CreatedBy,
-		UpdatedBy:               &updatedRoute.UpdatedBy,
+	return &alertmanagertypes.GettableRoutePolicy{
+		PostableRoutePolicy: *route,
+		ID:                  updatedRoute.ID.StringValue(),
+		CreatedAt:           &updatedRoute.CreatedAt,
+		UpdatedAt:           &updatedRoute.UpdatedAt,
+		CreatedBy:           &updatedRoute.CreatedBy,
+		UpdatedBy:           &updatedRoute.UpdatedBy,
 	}, nil
 }
 
@@ -482,7 +482,7 @@ func (provider *provider) DeleteRoutePolicyByID(ctx context.Context, routeID str
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "routeID cannot be empty")
 	}
 
-	return provider.notificationManager.DeleteRoute(ctx, orgID.String(), routeID)
+	return provider.notificationManager.DeleteRoutePolicy(ctx, orgID.String(), routeID)
 }
 
 func (provider *provider) CreateInhibitRules(ctx context.Context, orgID valuer.UUID, rules []amConfig.InhibitRule) error {
@@ -507,10 +507,10 @@ func (provider *provider) DeleteAllRoutePoliciesByRuleId(ctx context.Context, na
 	if err != nil {
 		return err
 	}
-	return provider.notificationManager.DeleteAllRoutesByName(ctx, orgID.String(), names)
+	return provider.notificationManager.DeleteAllRoutePoliciesByName(ctx, orgID.String(), names)
 }
 
-func (provider *provider) UpdateAllRoutePoliciesByRuleId(ctx context.Context, names string, routes []*alertmanagertypes.PostableExpressionRoute) error {
+func (provider *provider) UpdateAllRoutePoliciesByRuleId(ctx context.Context, names string, routes []*alertmanagertypes.PostableRoutePolicy) error {
 	err := provider.DeleteAllRoutePoliciesByRuleId(ctx, names)
 	if err != nil {
 		return errors.NewInvalidInputf(errors.CodeInternal, "error deleting the routes: %v", err)

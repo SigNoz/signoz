@@ -44,7 +44,7 @@ func TestManager_PatchRule_PayloadVariations(t *testing.T) {
 		name           string
 		originalData   string
 		patchData      string
-		Route          []*alertmanagertypes.ExpressionRoute
+		Route          []*alertmanagertypes.RoutePolicy
 		Config         *alertmanagertypes.NotificationConfig
 		expectedResult func(*ruletypes.GettableRule) bool
 		expectError    bool
@@ -52,7 +52,7 @@ func TestManager_PatchRule_PayloadVariations(t *testing.T) {
 	}{
 		{
 			name: "patch complete rule with task sync validation",
-			Route: []*alertmanagertypes.ExpressionRoute{
+			Route: []*alertmanagertypes.RoutePolicy{
 				{
 					Expression:     fmt.Sprintf("ruleId == \"{{.ruleId}}\" && threshold.name == \"warning\""),
 					ExpressionKind: alertmanagertypes.RuleBasedExpression,
@@ -67,7 +67,7 @@ func TestManager_PatchRule_PayloadVariations(t *testing.T) {
 					RenotifyInterval: 4 * time.Hour,
 					NoDataInterval:   4 * time.Hour,
 				},
-				NotificationPolicy: false,
+				UsePolicy: false,
 			},
 			originalData: `{
 				"schemaVersion":"v1",
@@ -119,7 +119,7 @@ func TestManager_PatchRule_PayloadVariations(t *testing.T) {
 		},
 		{
 			name: "patch rule to disabled state",
-			Route: []*alertmanagertypes.ExpressionRoute{
+			Route: []*alertmanagertypes.RoutePolicy{
 				{
 					Expression:     fmt.Sprintf("ruleId == \"{{.ruleId}}\" && threshold.name == \"warning\""),
 					ExpressionKind: alertmanagertypes.RuleBasedExpression,
@@ -134,7 +134,7 @@ func TestManager_PatchRule_PayloadVariations(t *testing.T) {
 					RenotifyInterval: 4 * time.Hour,
 					NoDataInterval:   4 * time.Hour,
 				},
-				NotificationPolicy: false,
+				UsePolicy: false,
 			},
 			originalData: `{
 				"schemaVersion":"v2",
@@ -221,9 +221,9 @@ func TestManager_PatchRule_PayloadVariations(t *testing.T) {
 			}
 
 			// Update route expectations with actual rule ID
-			routesWithRuleID := make([]*alertmanagertypes.ExpressionRoute, len(tc.Route))
+			routesWithRuleID := make([]*alertmanagertypes.RoutePolicy, len(tc.Route))
 			for i, route := range tc.Route {
-				routesWithRuleID[i] = &alertmanagertypes.ExpressionRoute{
+				routesWithRuleID[i] = &alertmanagertypes.RoutePolicy{
 					Expression:     strings.Replace(route.Expression, "{{.ruleId}}", ruleID.String(), -1),
 					ExpressionKind: route.ExpressionKind,
 					Channels:       route.Channels,
@@ -366,13 +366,13 @@ func TestCreateRule(t *testing.T) {
 	claims.OrgID = orgId
 	testCases := []struct {
 		name    string
-		Route   []*alertmanagertypes.ExpressionRoute
+		Route   []*alertmanagertypes.RoutePolicy
 		Config  *alertmanagertypes.NotificationConfig
 		ruleStr string
 	}{
 		{
 			name: "validate stored rule data structure",
-			Route: []*alertmanagertypes.ExpressionRoute{
+			Route: []*alertmanagertypes.RoutePolicy{
 				{
 					Expression:     fmt.Sprintf("ruleId == \"{{.ruleId}}\" && threshold.name == \"warning\""),
 					ExpressionKind: alertmanagertypes.RuleBasedExpression,
@@ -387,7 +387,7 @@ func TestCreateRule(t *testing.T) {
 					RenotifyInterval: 4 * time.Hour,
 					NoDataInterval:   4 * time.Hour,
 				},
-				NotificationPolicy: false,
+				UsePolicy: false,
 			},
 			ruleStr: `{
 				"alert": "cpu usage",
@@ -425,7 +425,7 @@ func TestCreateRule(t *testing.T) {
 		},
 		{
 			name: "create complete v2 rule with thresholds",
-			Route: []*alertmanagertypes.ExpressionRoute{
+			Route: []*alertmanagertypes.RoutePolicy{
 				{
 					Expression:     fmt.Sprintf("ruleId == \"{{.ruleId}}\" && threshold.name == \"critical\""),
 					ExpressionKind: alertmanagertypes.RuleBasedExpression,
@@ -447,7 +447,7 @@ func TestCreateRule(t *testing.T) {
 					RenotifyInterval: 10 * time.Minute,
 					NoDataInterval:   4 * time.Hour,
 				},
-				NotificationPolicy: false,
+				UsePolicy: false,
 			},
 			ruleStr: `{
 				"schemaVersion":"v2",
@@ -551,9 +551,9 @@ func TestCreateRule(t *testing.T) {
 			}
 
 			// Update route expectations with actual rule ID
-			routesWithRuleID := make([]*alertmanagertypes.ExpressionRoute, len(tc.Route))
+			routesWithRuleID := make([]*alertmanagertypes.RoutePolicy, len(tc.Route))
 			for i, route := range tc.Route {
-				routesWithRuleID[i] = &alertmanagertypes.ExpressionRoute{
+				routesWithRuleID[i] = &alertmanagertypes.RoutePolicy{
 					Expression:     strings.Replace(route.Expression, "{{.ruleId}}", rule.ID.String(), -1),
 					ExpressionKind: route.ExpressionKind,
 					Channels:       route.Channels,
@@ -600,14 +600,14 @@ func TestEditRule(t *testing.T) {
 	testCases := []struct {
 		ruleID  string
 		name    string
-		Route   []*alertmanagertypes.ExpressionRoute
+		Route   []*alertmanagertypes.RoutePolicy
 		Config  *alertmanagertypes.NotificationConfig
 		ruleStr string
 	}{
 		{
 			ruleID: "12345678-1234-1234-1234-123456789012",
 			name:   "validate edit rule functionality",
-			Route: []*alertmanagertypes.ExpressionRoute{
+			Route: []*alertmanagertypes.RoutePolicy{
 				{
 					Expression:     fmt.Sprintf("ruleId == \"rule1\" && threshold.name == \"critical\""),
 					ExpressionKind: alertmanagertypes.RuleBasedExpression,
@@ -622,7 +622,7 @@ func TestEditRule(t *testing.T) {
 					RenotifyInterval: 4 * time.Hour,
 					NoDataInterval:   4 * time.Hour,
 				},
-				NotificationPolicy: false,
+				UsePolicy: false,
 			},
 			ruleStr: `{
 				"alert": "updated cpu usage",
@@ -661,7 +661,7 @@ func TestEditRule(t *testing.T) {
 		{
 			ruleID: "12345678-1234-1234-1234-123456789013",
 			name:   "edit complete v2 rule with thresholds",
-			Route: []*alertmanagertypes.ExpressionRoute{
+			Route: []*alertmanagertypes.RoutePolicy{
 				{
 					Expression:     fmt.Sprintf("ruleId == \"rule2\" && threshold.name == \"critical\""),
 					ExpressionKind: alertmanagertypes.RuleBasedExpression,
@@ -683,7 +683,7 @@ func TestEditRule(t *testing.T) {
 					RenotifyInterval: 10 * time.Minute,
 					NoDataInterval:   4 * time.Hour,
 				},
-				NotificationPolicy: false,
+				UsePolicy: false,
 			},
 			ruleStr: `{
 				"schemaVersion":"v2",
