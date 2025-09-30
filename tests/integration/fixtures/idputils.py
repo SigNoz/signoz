@@ -147,8 +147,7 @@ def create_oidc_client(
                 "alwaysDisplayInConsole": False,
                 "clientAuthenticatorType": "client-secret",
                 "redirectUris": [
-                        f"{urljoin(signoz.self.host_configs['8080'].base(), callback_path)}"
-
+                    f"{urljoin(signoz.self.host_configs['8080'].base(), callback_path)}"
                 ],
                 "webOrigins": ["/*"],
                 "notBefore": 0,
@@ -235,7 +234,7 @@ def get_oidc_settings(idp: types.TestContainerIDP) -> dict:
             password=IDP_ROOT_PASSWORD,
             realm_name="master",
         )
-        
+
         client_secrets = client.get_client_secrets(client.get_client_id(client_id))
 
         response = requests.get(
@@ -250,6 +249,7 @@ def get_oidc_settings(idp: types.TestContainerIDP) -> dict:
         }
 
     return _get_oidc_settings
+
 
 @pytest.fixture(name="create_user_idp", scope="function")
 def create_user_idp(idp: types.TestContainerIDP) -> Callable[[str, str, bool], None]:
