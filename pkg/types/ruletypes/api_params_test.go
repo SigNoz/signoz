@@ -633,7 +633,7 @@ func TestParseIntoRuleThresholdGeneration(t *testing.T) {
 		Labels: map[string]string{"test": "label"},
 	})
 	if err != nil {
-		t.Fatalf("Unexpected error in ShouldAlert: %v", err)
+		t.Fatalf("Unexpected error in shouldAlert: %v", err)
 	}
 
 	if len(vector) == 0 {
@@ -710,7 +710,7 @@ func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 		Labels: map[string]string{"service": "test"},
 	})
 	if err != nil {
-		t.Fatalf("Unexpected error in ShouldAlert: %v", err)
+		t.Fatalf("Unexpected error in shouldAlert: %v", err)
 	}
 
 	assert.Equal(t, 2, len(vector))
@@ -720,7 +720,7 @@ func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 		Labels: map[string]string{"service": "test"},
 	})
 	if err != nil {
-		t.Fatalf("Unexpected error in ShouldAlert: %v", err)
+		t.Fatalf("Unexpected error in shouldAlert: %v", err)
 	}
 
 	assert.Equal(t, 1, len(vector))

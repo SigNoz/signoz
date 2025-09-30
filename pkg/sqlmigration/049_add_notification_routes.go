@@ -181,7 +181,7 @@ func (migration *addRoutePolicies) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	err = migration.migrateRulesToNotificationRoutes(ctx, tx)
+	err = migration.migrateRulesToRoutePolicies(ctx, tx)
 	if err != nil {
 		return err
 	}
@@ -193,7 +193,7 @@ func (migration *addRoutePolicies) Up(ctx context.Context, db *bun.DB) error {
 	return nil
 }
 
-func (migration *addRoutePolicies) migrateRulesToNotificationRoutes(ctx context.Context, tx bun.Tx) error {
+func (migration *addRoutePolicies) migrateRulesToRoutePolicies(ctx context.Context, tx bun.Tx) error {
 	var rules []*rule
 	err := tx.NewSelect().
 		Model(&rules).
