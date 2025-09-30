@@ -17,7 +17,7 @@ import {
 import { BuildCreateAlertRulePayloadArgs } from './types';
 
 // Get formatted time/unit pairs for create alert api payload
-function getFormattedTimeValue(timeValue: number, unit: string): string {
+export function getFormattedTimeValue(timeValue: number, unit: string): string {
 	const unitMap: Record<string, string> = {
 		[UniversalYAxisUnit.SECONDS]: 's',
 		[UniversalYAxisUnit.MINUTES]: 'm',

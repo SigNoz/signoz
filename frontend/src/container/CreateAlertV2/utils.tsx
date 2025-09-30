@@ -50,7 +50,7 @@ export function Spinner(): JSX.Element | null {
 	);
 }
 
-function getColorForThreshold(thresholdLabel: string): string {
+export function getColorForThreshold(thresholdLabel: string): string {
 	if (thresholdLabel === 'CRITICAL') {
 		return Color.BG_SAKURA_500;
 	}
@@ -63,7 +63,7 @@ function getColorForThreshold(thresholdLabel: string): string {
 	return getRandomColor();
 }
 
-function parseGoTime(
+export function parseGoTime(
 	input: string,
 ): { time: number; unit: UniversalYAxisUnit } {
 	const regex = /(\d+)([hms])/g;
@@ -71,7 +71,7 @@ function parseGoTime(
 
 	const nonZero = matches.find(([, value]) => parseInt(value, 10) > 0);
 	if (!nonZero) {
-		throw new Error(`Invalid Go time format: ${input}`);
+		return { time: 1, unit: UniversalYAxisUnit.MINUTES };
 	}
 
 	const time = parseInt(nonZero[1], 10);
@@ -153,8 +153,10 @@ export function getEvaluationWindowStateFromAlertDef(
 				timeframe,
 				startingAt: {
 					...INITIAL_EVALUATION_WINDOW_STATE.startingAt,
-					number: parseGoTime(timeframe).time.toString(),
-					unit: parseGoTime(timeframe).unit,
+					number: parseGoTime(
+						alertDef.evaluation?.spec?.evalWindow || '1m',
+					).time.toString(),
+					unit: parseGoTime(alertDef.evaluation?.spec?.evalWindow || '1m').unit,
 				},
 			};
 		}
