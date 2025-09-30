@@ -14,7 +14,7 @@ from fixtures import types
 from fixtures.idp import IDP_ROOT_PASSWORD, IDP_ROOT_USERNAME
 
 
-@pytest.fixture(name="create_saml_client", scope="module")
+@pytest.fixture(name="create_saml_client", scope="function")
 def create_saml_client(
     idp: types.TestContainerIDP, signoz: types.SigNoz
 ) -> Callable[[str, str], None]:
@@ -121,7 +121,80 @@ def create_saml_client(
     return _create_saml_client
 
 
-@pytest.fixture(name="get_saml_settings", scope="module")
+@pytest.fixture(name="create_oidc_client", scope="function")
+def create_oidc_client(
+    idp: types.TestContainerIDP, signoz: types.SigNoz
+) -> Callable[[str, str], None]:
+    def _create_oidc_client(client_id: str, callback_path: str) -> None:
+        client = KeycloakAdmin(
+            server_url=idp.container.host_configs["6060"].base(),
+            username=IDP_ROOT_USERNAME,
+            password=IDP_ROOT_PASSWORD,
+            realm_name="master",
+        )
+
+        client.create_client(
+            skip_exists=True,
+            payload={
+                "clientId": f"{client_id}",
+                "name": f"{client_id}",
+                "description": f"client for {client_id}",
+                "rootUrl": "",
+                "adminUrl": "",
+                "baseUrl": "",
+                "surrogateAuthRequired": False,
+                "enabled": True,
+                "alwaysDisplayInConsole": False,
+                "clientAuthenticatorType": "client-secret",
+                "redirectUris": [
+                        f"{urljoin(signoz.self.host_configs['8080'].base(), callback_path)}"
+
+                ],
+                "webOrigins": ["/*"],
+                "notBefore": 0,
+                "bearerOnly": False,
+                "consentRequired": False,
+                "standardFlowEnabled": True,
+                "implicitFlowEnabled": False,
+                "directAccessGrantsEnabled": False,
+                "serviceAccountsEnabled": False,
+                "publicClient": False,
+                "frontchannelLogout": True,
+                "protocol": "openid-connect",
+                "attributes": {
+                    "realm_client": "false",
+                    "oidc.ciba.grant.enabled": "false",
+                    "backchannel.logout.session.required": "true",
+                    "standard.token.exchange.enabled": "false",
+                    "oauth2.device.authorization.grant.enabled": "false",
+                    "backchannel.logout.revoke.offline.tokens": "false",
+                },
+                "authenticationFlowBindingOverrides": {},
+                "fullScopeAllowed": True,
+                "nodeReRegistrationTimeout": -1,
+                "defaultClientScopes": [
+                    "web-origins",
+                    "acr",
+                    "roles",
+                    "profile",
+                    "basic",
+                    "email",
+                ],
+                "optionalClientScopes": [
+                    "address",
+                    "phone",
+                    "offline_access",
+                    "organization",
+                    "microprofile-jwt",
+                ],
+                "access": {"view": True, "configure": True, "manage": True},
+            },
+        )
+
+    return _create_oidc_client
+
+
+@pytest.fixture(name="get_saml_settings", scope="function")
 def get_saml_settings(idp: types.TestContainerIDP) -> dict:
     def _get_saml_settings() -> dict:
         response = requests.get(
@@ -153,8 +226,33 @@ def get_saml_settings(idp: types.TestContainerIDP) -> dict:
     return _get_saml_settings
 
 
+@pytest.fixture(name="get_oidc_settings", scope="function")
+def get_oidc_settings(idp: types.TestContainerIDP) -> dict:
+    def _get_oidc_settings(client_id: str) -> dict:
+        client = KeycloakAdmin(
+            server_url=idp.container.host_configs["6060"].base(),
+            username=IDP_ROOT_USERNAME,
+            password=IDP_ROOT_PASSWORD,
+            realm_name="master",
+        )
+        
+        client_secrets = client.get_client_secrets(client.get_client_id(client_id))
+
+        response = requests.get(
+            f"{idp.container.host_configs['6060'].base()}/realms/master/.well-known/openid-configuration",
+            timeout=5,
+        )
+
+        return {
+            "client_id": client_id,
+            "client_secret": client_secrets["value"],
+            "issuer": response.json()["issuer"],
+        }
+
+    return _get_oidc_settings
+
 @pytest.fixture(name="create_user_idp", scope="function")
-def create_user_idp(idp: types.TestContainerIDP) -> Callable[[str, str], None]:
+def create_user_idp(idp: types.TestContainerIDP) -> Callable[[str, str, bool], None]:
     client = KeycloakAdmin(
         server_url=idp.container.host_configs["6060"].base(),
         username=IDP_ROOT_USERNAME,
@@ -164,13 +262,14 @@ def create_user_idp(idp: types.TestContainerIDP) -> Callable[[str, str], None]:
 
     created_users = []
 
-    def _create_user_idp(email: str, password: str) -> None:
+    def _create_user_idp(email: str, password: str, verified: bool = True) -> None:
         user_id = client.create_user(
             exist_ok=False,
             payload={
                 "username": email,
                 "email": email,
                 "enabled": True,
+                "emailVerified": verified,
             },
         )
 

@@ -39,6 +39,9 @@ type Handler interface {
 	// Create a session for a user using saml callback.
 	CreateSessionBySAMLCallback(http.ResponseWriter, *http.Request)
 
+	// Create a session for a user using oidc callback.
+	CreateSessionByOIDCCallback(http.ResponseWriter, *http.Request)
+
 	// Rotate a token.
 	RotateSession(http.ResponseWriter, *http.Request)
 

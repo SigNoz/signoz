@@ -127,10 +127,11 @@ def get_token(signoz: types.SigNoz) -> Callable[[str, str], str]:
 
 
 # This is not a fixture purposefully, we just want to add a license to the signoz instance.
+# This is also idempotent in nature.
 def add_license(
     signoz: types.SigNoz,
     make_http_mocks: Callable[[types.TestContainerDocker, List[Mapping]], None],
-    get_token: Callable[[str, str], str], # pylint: disable=redefined-outer-name
+    get_token: Callable[[str, str], str],  # pylint: disable=redefined-outer-name
 ) -> None:
     make_http_mocks(
         signoz.zeus,
@@ -178,6 +179,9 @@ def add_license(
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,
     )
+
+    if response.status_code == HTTPStatus.CONFLICT:
+        return
 
     assert response.status_code == HTTPStatus.ACCEPTED
 

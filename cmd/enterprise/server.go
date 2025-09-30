@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/cmd"
+	"github.com/SigNoz/signoz/ee/authn/callbackauthn/oidccallbackauthn"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/samlcallbackauthn"
 	enterpriselicensing "github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
@@ -89,12 +90,18 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 				return nil, err
 			}
 
+			oidcCallbackAuthN, err := oidccallbackauthn.New(store, licensing, providerSettings)
+			if err != nil {
+				return nil, err
+			}
+
 			authNs, err := signoz.NewAuthNs(ctx, providerSettings, store, licensing)
 			if err != nil {
 				return nil, err
 			}
 
 			authNs[authtypes.AuthNProviderSAML] = samlCallbackAuthN
+			authNs[authtypes.AuthNProviderOIDC] = oidcCallbackAuthN
 
 			return authNs, nil
 		},
