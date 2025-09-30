@@ -79,6 +79,6 @@ func NewModules(
 		TraceFunnel:   impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 		RawDataExport: implrawdataexport.NewModule(querier),
 		AuthDomain:    implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)),
-		Session:       implsession.NewModule(authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)), tokenizer, orgGetter),
+		Session:       implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)), tokenizer, orgGetter),
 	}
 }
