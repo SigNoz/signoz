@@ -1,7 +1,13 @@
 import { cloneDeep, isEqual } from 'lodash-es';
 import { useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
+import {
+	Location,
+	NavigateFunction,
+	useLocation,
+	useNavigate,
+} from 'react-router-dom-v5-compat';
 
+// state uses 'any' because react-router's NavigateOptions interface uses it
 interface NavigateOptions {
 	replace?: boolean;
 	state?: any;
@@ -83,15 +89,28 @@ const isDefaultNavigation = (currentUrl: URL, targetUrl: URL): boolean => {
 
 	return newKeys.length > 0;
 };
-// Helper function to determine if an argument is an event
-const isEventObject = (arg: any): boolean =>
-	arg &&
-	(arg instanceof MouseEvent ||
+
+// Event types that have metaKey/ctrlKey properties
+type EventWithModifiers =
+	| MouseEvent
+	| KeyboardEvent
+	| React.MouseEvent<any, MouseEvent>
+	| React.KeyboardEvent<any>;
+
+// Helper function to determine if an argument is an event - Also used in utils/history.ts
+export const isEventObject = (arg: unknown): arg is EventWithModifiers => {
+	if (!arg || typeof arg !== 'object') return false;
+
+	return (
+		arg instanceof MouseEvent ||
 		arg instanceof KeyboardEvent ||
-		arg.nativeEvent instanceof MouseEvent ||
-		arg.nativeEvent instanceof KeyboardEvent ||
-		arg.metaKey !== undefined ||
-		arg.ctrlKey !== undefined);
+		('nativeEvent' in arg &&
+			(arg.nativeEvent instanceof MouseEvent ||
+				arg.nativeEvent instanceof KeyboardEvent)) ||
+		'metaKey' in arg ||
+		'ctrlKey' in arg
+	);
+};
 
 // Helper function to extract options from arguments
 const extractOptions = (
@@ -106,8 +125,7 @@ const extractOptions = (
 	const actualOptions = isEvent ? options : (optionsOrEvent as NavigateOptions);
 
 	const shouldOpenInNewTab =
-		isEvent &&
-		((optionsOrEvent as any).metaKey || (optionsOrEvent as any).ctrlKey);
+		isEvent && (optionsOrEvent.metaKey || optionsOrEvent.ctrlKey);
 
 	return {
 		...actualOptions,
@@ -118,7 +136,7 @@ const extractOptions = (
 // Helper function to create target URL
 const createTargetUrl = (
 	to: string | SafeNavigateParams,
-	location: { pathname: string; search: string },
+	location: Location,
 ): URL => {
 	if (typeof to === 'string') {
 		return new URL(to, window.location.origin);
@@ -132,7 +150,7 @@ const createTargetUrl = (
 // Helper function to handle new tab navigation
 const handleNewTabNavigation = (
 	to: string | SafeNavigateParams,
-	location: { pathname: string; search: string },
+	location: Location,
 ): void => {
 	const targetPath =
 		typeof to === 'string'
@@ -145,8 +163,8 @@ const handleNewTabNavigation = (
 const performNavigation = (
 	to: string | SafeNavigateParams,
 	navigationOptions: NavigateOptions,
-	navigate: any,
-	location: { pathname: string; search: string },
+	navigate: NavigateFunction,
+	location: Location,
 ): void => {
 	if (typeof to === 'string') {
 		navigate(to, navigationOptions);
