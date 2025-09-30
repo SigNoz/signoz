@@ -588,7 +588,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v2/sessions/context", am.OpenAccess(aH.Signoz.Handlers.Session.GetSessionContext)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/sessions/rotate", am.OpenAccess(aH.Signoz.Handlers.Session.RotateSession)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v2/sessions", am.OpenAccess(aH.Signoz.Handlers.Session.DeleteSession)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v2/sessions/complete/google", am.OpenAccess(aH.Signoz.Handlers.Session.CreateSessionByGoogleCallback)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/complete/google", am.OpenAccess(aH.Signoz.Handlers.Session.CreateSessionByGoogleCallback)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/domains", am.AdminAccess(aH.Signoz.Handlers.AuthDomain.List)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/domains", am.AdminAccess(aH.Signoz.Handlers.AuthDomain.Create)).Methods(http.MethodPost)
