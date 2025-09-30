@@ -54,48 +54,42 @@ func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *auth
 }
 
 func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtypes.CallbackIdentity, error) {
-	// Check for error from google
 	if err := query.Get("error"); err != "" {
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "error while authenticating with google").WithAdditional(query.Get("error_description"))
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: error while authenticating").WithAdditional(query.Get("error_description"))
 	}
 
-	// Retrieve state from google
 	state, err := authtypes.NewStateFromString(query.Get("state"))
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to parse state from google").WithAdditional(err.Error())
+		return nil, errors.Newf(errors.TypeInvalidInput, authtypes.ErrCodeInvalidState, "google: invalid state").WithAdditional(err.Error())
 	}
 
-	// Retrieve org domain from id. After this stage, we have the organization of the user.
 	authDomain, err := a.store.GetAuthDomainFromID(ctx, state.DomainID)
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get org domain from id").WithAdditional(err.Error())
+		return nil, err
 	}
 
-	// Prepare oauth2 config and exchange code for token.
 	oauth2Config := a.oauth2Config(state.URL, authDomain)
-
 	token, err := oauth2Config.Exchange(ctx, query.Get("code"))
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get token").WithAdditional(err.Error())
+		var retrieveError *oauth2.RetrieveError
+		if errors.As(err, &retrieveError) {
+			return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: failed to get token").WithAdditional(retrieveError.ErrorDescription).WithAdditional(string(retrieveError.Body))
+		}
+
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: failed to get token").WithAdditional(err.Error())
 	}
 
-	// Retrieve id token from token response.
 	rawIDToken, ok := token.Extra("id_token").(string)
 	if !ok {
-		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "google: no id_token in token response")
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google: no id_token in token response")
 	}
 
-	// Verify id token.
-	verifier := a.oidcProvider.Verifier(&oidc.Config{
-		ClientID: authDomain.AuthDomainConfig().Google.ClientID,
-	})
-
+	verifier := a.oidcProvider.Verifier(&oidc.Config{ClientID: authDomain.AuthDomainConfig().Google.ClientID})
 	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: failed to verify ID Token").WithAdditional(err.Error())
+		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: failed to verify token").WithAdditional(err.Error())
 	}
 
-	// Retrieve claims from id token.
 	var claims struct {
 		Name          string `json:"name"`
 		Email         string `json:"email"`
@@ -103,25 +97,24 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		HostedDomain  string `json:"hd"`
 	}
 
-	// Decode claims from id token.
 	if err := idToken.Claims(&claims); err != nil {
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "oidc: failed to decode claims: %v", err)
+		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: missing or invalid claims").WithAdditional(err.Error())
 	}
 
-	// Check if hosted domain is the same as the org domain.
 	if claims.HostedDomain != authDomain.StorableAuthDomain().Name {
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "oidc: unexpected hd claim %v", claims.HostedDomain)
+		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: unexpected hd claim %s", claims.HostedDomain)
 	}
 
 	email, err := valuer.NewEmail(claims.Email)
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "oidc: failed to parse email: %v", err)
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "google: failed to parse email").WithAdditional(err.Error())
 	}
 
 	return &authtypes.CallbackIdentity{
 		Name:  claims.Name,
 		Email: email,
 		OrgID: authDomain.StorableAuthDomain().OrgID,
+		State: state,
 	}, nil
 
 }

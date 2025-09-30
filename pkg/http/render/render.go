@@ -72,6 +72,8 @@ func Error(rw http.ResponseWriter, cause error) {
 		httpCode = statusClientClosedConnection
 	case errors.TypeTimeout:
 		httpCode = http.StatusGatewayTimeout
+	case errors.TypeLicenseUnavailable:
+		httpCode = http.StatusUnavailableForLegalReasons
 	}
 
 	rea := make([]responseerroradditional, len(a))
