@@ -24,6 +24,11 @@ jest.mock(
 	}),
 );
 
+jest.mock('container/CreateAlertV2/utils', () => ({
+	...jest.requireActual('container/CreateAlertV2/utils'),
+	showCondensedLayout: jest.fn().mockReturnValue(false),
+}));
+
 const initialNotificationSettings = createMockAlertContextState()
 	.notificationSettings;
 const mockSetNotificationSettings = jest.fn();

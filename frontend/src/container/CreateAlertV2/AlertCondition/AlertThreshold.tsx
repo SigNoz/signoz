@@ -5,6 +5,7 @@ import { Button, Select, Tooltip, Typography } from 'antd';
 import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Plus } from 'lucide-react';
+import { useEffect } from 'react';
 
 import { useCreateAlertState } from '../context';
 import {
@@ -45,6 +46,19 @@ function AlertThreshold({
 	const { currentQuery } = useQueryBuilder();
 
 	const queryNames = getQueryNames(currentQuery);
+
+	useEffect(() => {
+		if (
+			queryNames.length > 0 &&
+			!queryNames.some((query) => query.value === thresholdState.selectedQuery)
+		) {
+			setThresholdState({
+				type: 'SET_SELECTED_QUERY',
+				payload: queryNames[0].value,
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [queryNames, thresholdState.selectedQuery]);
 
 	const selectedCategory = getCategoryByOptionId(alertState.yAxisUnit || '');
 	const categorySelectOptions = getCategorySelectOptionByName(

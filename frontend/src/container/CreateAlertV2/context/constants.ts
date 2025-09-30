@@ -27,7 +27,7 @@ export const INITIAL_ALERT_STATE: AlertState = {
 
 export const INITIAL_CRITICAL_THRESHOLD: Threshold = {
 	id: v4(),
-	label: 'CRITICAL',
+	label: 'critical',
 	thresholdValue: 0,
 	recoveryThresholdValue: null,
 	unit: '',
@@ -37,7 +37,7 @@ export const INITIAL_CRITICAL_THRESHOLD: Threshold = {
 
 export const INITIAL_WARNING_THRESHOLD: Threshold = {
 	id: v4(),
-	label: 'WARNING',
+	label: 'warning',
 	thresholdValue: 0,
 	recoveryThresholdValue: null,
 	unit: '',
@@ -47,7 +47,7 @@ export const INITIAL_WARNING_THRESHOLD: Threshold = {
 
 export const INITIAL_INFO_THRESHOLD: Threshold = {
 	id: v4(),
-	label: 'INFO',
+	label: 'info',
 	thresholdValue: 0,
 	recoveryThresholdValue: null,
 	unit: '',
@@ -177,7 +177,7 @@ export const NOTIFICATION_MESSAGE_PLACEHOLDER =
 
 export const RE_NOTIFICATION_CONDITION_OPTIONS = [
 	{ value: 'firing', label: 'Firing' },
-	{ value: 'no-data', label: 'No Data' },
+	{ value: 'nodata', label: 'No Data' },
 ];
 
 export const INITIAL_NOTIFICATION_SETTINGS_STATE: NotificationSettingsState = {

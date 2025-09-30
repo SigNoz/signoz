@@ -6,6 +6,11 @@ import { AlertTypes } from 'types/api/alerts/alertTypes';
 import EvaluationSettings from '../EvaluationSettings';
 import { createMockAlertContextState } from './testUtils';
 
+jest.mock('container/CreateAlertV2/utils', () => ({
+	...jest.requireActual('container/CreateAlertV2/utils'),
+	showCondensedLayout: jest.fn().mockReturnValue(false),
+}));
+
 const mockSetEvaluationWindow = jest.fn();
 jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue(
 	createMockAlertContextState({

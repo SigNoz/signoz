@@ -53,6 +53,8 @@ export const alertCreationReducer = (
 			};
 		case 'RESET':
 			return INITIAL_ALERT_STATE;
+		case 'SET_INITIAL_STATE':
+			return action.payload;
 		default:
 			return state;
 	}
@@ -119,6 +121,8 @@ export const alertThresholdReducer = (
 			return { ...state, thresholds: action.payload };
 		case 'RESET':
 			return INITIAL_ALERT_THRESHOLD_STATE;
+		case 'SET_INITIAL_STATE':
+			return action.payload;
 		default:
 			return state;
 	}
@@ -174,6 +178,8 @@ export const advancedOptionsReducer = (
 				...state,
 				evaluationCadence: { ...state.evaluationCadence, mode: action.payload },
 			};
+		case 'SET_INITIAL_STATE':
+			return action.payload;
 		case 'RESET':
 			return INITIAL_ADVANCED_OPTIONS_STATE;
 		default:
@@ -202,6 +208,8 @@ export const evaluationWindowReducer = (
 			return { ...state, startingAt: action.payload };
 		case 'RESET':
 			return INITIAL_EVALUATION_WINDOW_STATE;
+		case 'SET_INITIAL_STATE':
+			return action.payload;
 		default:
 			return state;
 	}
@@ -222,6 +230,8 @@ export const notificationSettingsReducer = (
 			return { ...state, routingPolicies: action.payload };
 		case 'RESET':
 			return INITIAL_NOTIFICATION_SETTINGS_STATE;
+		case 'SET_INITIAL_STATE':
+			return action.payload;
 		default:
 			return state;
 	}
