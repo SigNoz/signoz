@@ -56,7 +56,7 @@ func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *auth
 func (a *AuthN) HandleCallback(ctx context.Context, formValues url.Values) (*authtypes.CallbackIdentity, error) {
 	state, err := authtypes.NewStateFromString(formValues.Get("RelayState"))
 	if err != nil {
-		return nil, err
+		return nil, errors.Newf(errors.TypeInvalidInput, authtypes.ErrCodeInvalidState, "saml: invalid state").WithAdditional(err.Error())
 	}
 
 	authDomain, err := a.store.GetAuthDomainFromID(ctx, state.DomainID)
@@ -66,7 +66,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, formValues url.Values) (*aut
 
 	_, err = a.licensing.GetActive(ctx, authDomain.StorableAuthDomain().OrgID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Newf(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license could not be detected").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
 	sp, err := a.serviceProvider(state.URL, authDomain)
@@ -76,22 +76,31 @@ func (a *AuthN) HandleCallback(ctx context.Context, formValues url.Values) (*aut
 
 	assertionInfo, err := sp.RetrieveAssertionInfo(formValues.Get("SAMLResponse"))
 	if err != nil {
+		if errors.As(err, &saml2.ErrVerification{}) {
+			return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, err.Error())
+		}
+
+		if errors.As(err, &saml2.ErrMissingElement{}) {
+			return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, err.Error())
+		}
+
 		return nil, err
 	}
 
 	if assertionInfo.WarningInfo.InvalidTime {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "saml: expired saml response")
+		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "saml: expired saml response")
 	}
 
 	email, err := valuer.NewEmail(assertionInfo.NameID)
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "saml: invalid email in the SSO response")
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "saml: invalid email").WithAdditional("The nameID assertion is used to retreive the email address, please check your IDP configuration and try again.")
 	}
 
 	return &authtypes.CallbackIdentity{
 		Name:  "",
 		Email: email,
 		OrgID: authDomain.StorableAuthDomain().OrgID,
+		State: state,
 	}, nil
 }
 

@@ -6,8 +6,13 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
+)
+
+var (
+	ErrCodeInvalidState = errors.MustNewCode("invalid_state")
 )
 
 var (
@@ -44,7 +49,7 @@ func NewState(siteURL *url.URL, domainID valuer.UUID) State {
 		Host:   siteURL.Host,
 		Path:   siteURL.Path,
 		RawQuery: url.Values{
-			"domain_id": {strings.Replace(domainID.String(), "-", ":", -1)},
+			"domain_id": {newDomainIDForState(domainID)},
 		}.Encode(),
 	}
 
@@ -60,7 +65,7 @@ func NewStateFromString(state string) (State, error) {
 		return State{}, err
 	}
 
-	domainID, err := valuer.NewUUID(u.Query().Get("domain_id"))
+	domainID, err := newDomainIDFromState(u.Query().Get("domain_id"))
 	if err != nil {
 		return State{}, err
 	}
@@ -69,6 +74,14 @@ func NewStateFromString(state string) (State, error) {
 		DomainID: domainID,
 		URL:      u,
 	}, nil
+}
+
+func newDomainIDForState(domainID valuer.UUID) string {
+	return strings.Replace(domainID.String(), "-", ":", -1)
+}
+
+func newDomainIDFromState(state string) (valuer.UUID, error) {
+	return valuer.NewUUID(strings.Replace(state, ":", "-", -1))
 }
 
 func NewIdentity(userID valuer.UUID, orgID valuer.UUID, email valuer.Email, role types.Role) *Identity {
