@@ -133,7 +133,7 @@ function LogDetailInner({
 	};
 
 	// Go to logs explorer page with the log data
-	const handleOpenInExplorer = (): void => {
+	const handleOpenInExplorer = (event: React.MouseEvent): void => {
 		const queryParams = {
 			[QueryParams.activeLogId]: `"${log?.id}"`,
 			[QueryParams.startTime]: minTime?.toString() || '',
@@ -146,7 +146,10 @@ function LogDetailInner({
 				),
 			),
 		};
-		safeNavigate(`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`);
+		safeNavigate(
+			`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`,
+			event,
+		);
 	};
 
 	const handleQueryExpressionChange = useCallback(
@@ -239,7 +242,7 @@ function LogDetailInner({
 							<Button
 								className="open-in-explorer-btn"
 								icon={<Compass size={16} />}
-								onClick={handleOpenInExplorer}
+								onClick={(event: React.MouseEvent): void => handleOpenInExplorer(event)}
 							>
 								Open in Explorer
 							</Button>
