@@ -13,6 +13,7 @@ export interface BasicThreshold {
 
 export interface PostableAlertRuleV2 {
 	schemaVersion: string;
+	id?: string;
 	alert: string;
 	alertType?: AlertTypes;
 	ruleType?: string;
@@ -55,6 +56,8 @@ export interface PostableAlertRuleV2 {
 	};
 	version?: string;
 	source?: string;
+	state?: string;
+	disabled?: boolean;
 }
 
 export interface AlertRuleV2 extends PostableAlertRuleV2 {

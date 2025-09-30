@@ -8,7 +8,7 @@ import { useCreateAlertState } from '../context';
 import LabelsInput from './LabelsInput';
 
 function CreateAlertHeader(): JSX.Element {
-	const { alertState, setAlertState } = useCreateAlertState();
+	const { alertState, setAlertState, isEditMode } = useCreateAlertState();
 
 	const { currentQuery } = useQueryBuilder();
 
@@ -35,9 +35,11 @@ function CreateAlertHeader(): JSX.Element {
 
 	return (
 		<div className="alert-header">
-			<div className="alert-header__tab-bar">
-				<div className="alert-header__tab">New Alert Rule</div>
-			</div>
+			{!isEditMode && (
+				<div className="alert-header__tab-bar">
+					<div className="alert-header__tab">New Alert Rule</div>
+				</div>
+			)}
 			<div className="alert-header__content">
 				<input
 					type="text"

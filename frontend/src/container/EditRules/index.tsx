@@ -1,5 +1,5 @@
 import { Form } from 'antd';
-import CreateAlertV2 from 'container/CreateAlertV2';
+import EditAlertV2 from 'container/EditAlertV2';
 import FormAlertRules from 'container/FormAlertRules';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
@@ -20,11 +20,9 @@ function EditRules({
 		initialV2AlertValue.schemaVersion === NEW_ALERT_SCHEMA_VERSION
 	) {
 		return (
-			<CreateAlertV2
-				alertType={initialValue.alertType as AlertTypes}
-				ruleId={ruleId}
+			<EditAlertV2
 				initialAlert={initialV2AlertValue}
-				isEditMode
+				alertType={initialValue.alertType as AlertTypes}
 			/>
 		);
 	}
