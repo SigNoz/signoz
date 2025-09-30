@@ -234,6 +234,11 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 
 	r.logger.InfoContext(ctx, "number of alerts found", "rule_name", r.Name(), "alerts_count", len(alerts))
 
+	ruleReceivers := r.Threshold.GetRuleReceivers()
+	ruleReceiverMap := make(map[string][]string)
+	for _, value := range ruleReceivers {
+		ruleReceiverMap[value.Name] = value.Channels
+	}
 	// alerts[h] is ready, add or update active list now
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.
@@ -241,7 +246,9 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		if alert, ok := r.Active[h]; ok && alert.State != model.StateInactive {
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
-			alert.Receivers = r.preferredChannels
+			if v, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
+				alert.Receivers = ruleReceiverMap[v]
+			}
 			continue
 		}
 

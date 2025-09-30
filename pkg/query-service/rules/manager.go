@@ -755,35 +755,44 @@ func (m *Manager) prepareTestNotifyFunc() NotifyFunc {
 			return
 		}
 
-		alert := alerts[0]
-		generatorURL := alert.GeneratorURL
-
-		a := &alertmanagertypes.PostableAlert{}
-		a.Annotations = alert.Annotations.Map()
-		a.StartsAt = strfmt.DateTime(alert.FiredAt)
-		a.Alert = alertmanagertypes.AlertModel{
-			Labels:       alert.Labels.Map(),
-			GeneratorURL: strfmt.URI(generatorURL),
-		}
-		if !alert.ResolvedAt.IsZero() {
-			a.EndsAt = strfmt.DateTime(alert.ResolvedAt)
-		} else {
-			a.EndsAt = strfmt.DateTime(alert.ValidUntil)
-		}
-
-		if len(alert.Receivers) == 0 {
-			channels, err := m.alertmanager.ListChannels(ctx, orgID)
-			if err != nil {
-				zap.L().Error("failed to list channels while sending test notification", zap.Error(err))
-				return
-			}
-
-			for _, channel := range channels {
-				alert.Receivers = append(alert.Receivers, channel.Name)
+		uniqueAlerts := make(map[string]*ruletypes.Alert)
+		for _, alert := range alerts {
+			if thresholdName, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
+				if _, exists := uniqueAlerts[thresholdName]; !exists {
+					uniqueAlerts[thresholdName] = alert
+				}
 			}
 		}
+		for _, alert := range uniqueAlerts {
+			generatorURL := alert.GeneratorURL
 
-		m.alertmanager.TestAlert(ctx, orgID, a, alert.Receivers)
+			a := &alertmanagertypes.PostableAlert{}
+			a.Annotations = alert.Annotations.Map()
+			a.StartsAt = strfmt.DateTime(alert.FiredAt)
+			a.Alert = alertmanagertypes.AlertModel{
+				Labels:       alert.Labels.Map(),
+				GeneratorURL: strfmt.URI(generatorURL),
+			}
+			if !alert.ResolvedAt.IsZero() {
+				a.EndsAt = strfmt.DateTime(alert.ResolvedAt)
+			} else {
+				a.EndsAt = strfmt.DateTime(alert.ValidUntil)
+			}
+
+			if len(alert.Receivers) == 0 {
+				channels, err := m.alertmanager.ListChannels(ctx, orgID)
+				if err != nil {
+					zap.L().Error("failed to list channels while sending test notification", zap.Error(err))
+					return
+				}
+
+				for _, channel := range channels {
+					alert.Receivers = append(alert.Receivers, channel.Name)
+				}
+			}
+			m.alertmanager.TestAlert(ctx, orgID, a, alert.Receivers)
+		}
+
 	}
 }
 
