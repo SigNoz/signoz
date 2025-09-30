@@ -101,7 +101,7 @@ func (migration *addRoutePolicies) Up(ctx context.Context, db *bun.DB) error {
 		_ = tx.Rollback()
 	}()
 
-	// Create the notification_routes table
+	// Create the route_policy table
 	_, err = tx.NewCreateTable().
 		Model((*expressionRoute)(nil)).
 		IfNotExists().

@@ -220,7 +220,6 @@ func (r *PostableRule) processRuleDefaults() error {
 				Kind: BasicThresholdKind,
 				Spec: BasicRuleThresholds{{
 					Name:        thresholdName,
-					RuleUnit:    r.RuleCondition.CompositeQuery.Unit,
 					TargetUnit:  r.RuleCondition.TargetUnit,
 					TargetValue: r.RuleCondition.Target,
 					MatchType:   r.RuleCondition.MatchType,

@@ -251,7 +251,7 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 				continue
 			}
 		}
-		results, err := r.Threshold.ShouldAlert(*series)
+		results, err := r.Threshold.ShouldAlert(*series, r.Unit())
 		if err != nil {
 			return nil, err
 		}
@@ -301,7 +301,7 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 				continue
 			}
 		}
-		results, err := r.Threshold.ShouldAlert(*series)
+		results, err := r.Threshold.ShouldAlert(*series, r.Unit())
 		if err != nil {
 			return nil, err
 		}

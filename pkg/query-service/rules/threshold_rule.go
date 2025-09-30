@@ -488,7 +488,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 				continue
 			}
 		}
-		resultSeries, err := r.Threshold.ShouldAlert(*series)
+		resultSeries, err := r.Threshold.ShouldAlert(*series, r.Unit())
 		if err != nil {
 			return nil, err
 		}
@@ -565,7 +565,7 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 				continue
 			}
 		}
-		resultSeries, err := r.Threshold.ShouldAlert(*series)
+		resultSeries, err := r.Threshold.ShouldAlert(*series, r.Unit())
 		if err != nil {
 			return nil, err
 		}
