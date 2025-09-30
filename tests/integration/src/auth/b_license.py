@@ -1,5 +1,6 @@
 import http
 import json
+from typing import Callable
 
 import requests
 from sqlalchemy import sql
@@ -14,7 +15,9 @@ from wiremock.client import (
 from fixtures.types import SigNoz
 
 
-def test_apply_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
+def test_apply_license(
+    signoz: SigNoz, make_http_mocks, get_token: Callable[[str, str], str]
+) -> None:
     make_http_mocks(
         signoz.zeus,
         [
@@ -53,7 +56,7 @@ def test_apply_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
         ],
     )
 
-    access_token = get_jwt_token("admin@integration.test", "password123Z$")
+    access_token = get_token("admin@integration.test", "password123Z$")
 
     response = requests.post(
         url=signoz.self.host_configs["8080"].get("/api/v3/licenses"),
