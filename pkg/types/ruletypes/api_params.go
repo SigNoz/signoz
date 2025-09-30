@@ -67,9 +67,9 @@ type PostableRule struct {
 }
 
 type NotificationSettings struct {
-	NotificationGroupBy []string `json:"notificationGroupBy,omitempty"`
-	Renotify            Renotify `json:"renotify,omitempty"`
-	NotificationPolicy  bool     `json:"notificationPolicy,omitempty"`
+	GroupBy   []string `json:"groupBy,omitempty"`
+	Renotify  Renotify `json:"renotify,omitempty"`
+	UsePolicy bool     `json:"usePolicy,omitempty"`
 }
 
 type Renotify struct {
@@ -92,7 +92,7 @@ func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanager
 		renotifyInterval = 8760 * time.Hour //1 year for no renotify substitute
 		noDataRenotifyInterval = 8760 * time.Hour
 	}
-	return alertmanagertypes.NewNotificationConfig(ns.NotificationGroupBy, renotifyInterval, noDataRenotifyInterval, ns.NotificationPolicy)
+	return alertmanagertypes.NewNotificationConfig(ns.GroupBy, renotifyInterval, noDataRenotifyInterval, ns.UsePolicy)
 }
 
 func (r *PostableRule) GetRuleRouteRequest(ruleId string) ([]*alertmanagertypes.PostableRoutePolicy, error) {

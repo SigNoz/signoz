@@ -356,7 +356,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 			if err != nil {
 				return err
 			}
-			if !parsedRule.NotificationSettings.NotificationPolicy {
+			if !parsedRule.NotificationSettings.UsePolicy {
 				request, err := parsedRule.GetRuleRouteRequest(id.StringValue())
 				if err != nil {
 					return err
@@ -563,7 +563,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 			if err != nil {
 				return err
 			}
-			if !parsedRule.NotificationSettings.NotificationPolicy {
+			if !parsedRule.NotificationSettings.UsePolicy {
 				request, err := parsedRule.GetRuleRouteRequest(id.StringValue())
 				if err != nil {
 					return err

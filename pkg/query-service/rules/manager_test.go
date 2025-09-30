@@ -508,7 +508,7 @@ func TestCreateRule(t *testing.T) {
 					}
 				},
 				"notificationSettings": {
-                    "notificationGroupBy": [
+                    "GroupBy": [
                          "k8s.node.name"
                     ],
                     "renotify": {
@@ -747,7 +747,7 @@ func TestEditRule(t *testing.T) {
 					"severity": "critical"
 				},
 				"notificationSettings": {
-                    "notificationGroupBy": [
+                    "GroupBy": [
                          "k8s.node.name"
                     ],
                     "renotify": {
