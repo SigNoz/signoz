@@ -226,6 +226,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		sqlstore:            o.SqlStore,
 	}
 
+	zap.L().Debug("Manager created successfully with NotificationGroup")
 	return m, nil
 }
 
@@ -278,7 +279,14 @@ func (m *Manager) initiate(ctx context.Context) error {
 				loadErrors = append(loadErrors, err)
 				continue
 			}
-
+			if parsedRule.NotificationSettings != nil {
+				config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
+				err = m.alertmanager.SetNotificationConfig(ctx, org.ID, rec.ID.StringValue(), &config)
+				if err != nil {
+					loadErrors = append(loadErrors, err)
+					zap.L().Info("failed to set rule notification config", zap.String("ruleId", rec.ID.StringValue()))
+				}
+			}
 			if !parsedRule.Disabled {
 				err := m.addTask(ctx, org.ID, &parsedRule, taskName)
 				if err != nil {
@@ -360,17 +368,22 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 		} else {
 			preferredChannels = parsedRule.PreferredChannels
 		}
-
 		err = cfg.UpdateRuleIDMatcher(id.StringValue(), preferredChannels)
 		if err != nil {
 			return err
+		}
+		if parsedRule.NotificationSettings != nil {
+			config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
+			err = m.alertmanager.SetNotificationConfig(ctx, orgID, existingRule.ID.StringValue(), &config)
+			if err != nil {
+				return err
+			}
 		}
 
 		err = m.alertmanager.SetConfig(ctx, cfg)
 		if err != nil {
 			return err
 		}
-
 		err = m.syncRuleStateWithTask(ctx, orgID, prepareTaskName(existingRule.ID.StringValue()), &parsedRule)
 		if err != nil {
 			return err
@@ -453,6 +466,11 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		return err
 	}
 
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		return err
+	}
+
 	return m.ruleStore.DeleteRule(ctx, id, func(ctx context.Context) error {
 		cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
 		if err != nil {
@@ -468,6 +486,8 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		if err != nil {
 			return err
 		}
+
+		err = m.alertmanager.DeleteNotificationConfig(ctx, orgID, id.String())
 
 		taskName := prepareTaskName(id.StringValue())
 		m.deleteTask(taskName)
@@ -547,6 +567,14 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 			preferredChannels = parsedRule.PreferredChannels
 		}
 
+		if parsedRule.NotificationSettings != nil {
+			config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
+			err = m.alertmanager.SetNotificationConfig(ctx, orgID, storedRule.ID.StringValue(), &config)
+			if err != nil {
+				return err
+			}
+		}
+
 		err = cfg.CreateRuleIDMatcher(id.StringValue(), preferredChannels)
 		if err != nil {
 			return err
@@ -558,7 +586,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 		}
 
 		taskName := prepareTaskName(id.StringValue())
-		if err := m.addTask(ctx, orgID, &parsedRule, taskName); err != nil {
+		if err = m.addTask(ctx, orgID, &parsedRule, taskName); err != nil {
 			return err
 		}
 
@@ -732,13 +760,12 @@ func (m *Manager) prepareTestNotifyFunc() NotifyFunc {
 		alert := alerts[0]
 		generatorURL := alert.GeneratorURL
 
-		a := &alertmanagertypes.PostableAlert{
-			Annotations: alert.Annotations.Map(),
-			StartsAt:    strfmt.DateTime(alert.FiredAt),
-			Alert: alertmanagertypes.AlertModel{
-				Labels:       alert.Labels.Map(),
-				GeneratorURL: strfmt.URI(generatorURL),
-			},
+		a := &alertmanagertypes.PostableAlert{}
+		a.Annotations = alert.Annotations.Map()
+		a.StartsAt = strfmt.DateTime(alert.FiredAt)
+		a.Alert = alertmanagertypes.AlertModel{
+			Labels:       alert.Labels.Map(),
+			GeneratorURL: strfmt.URI(generatorURL),
 		}
 		if !alert.ResolvedAt.IsZero() {
 			a.EndsAt = strfmt.DateTime(alert.ResolvedAt)

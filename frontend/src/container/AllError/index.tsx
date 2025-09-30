@@ -482,7 +482,7 @@ function AllErrors(): JSX.Element {
 			pagination={{
 				pageSize: getUpdatedPageSize,
 				responsive: true,
-				current: getUpdatedOffset / 10 + 1,
+				current: Math.floor(getUpdatedOffset / getUpdatedPageSize) + 1,
 				position: ['bottomLeft'],
 				total: errorCountResponse.data?.payload || 0,
 			}}

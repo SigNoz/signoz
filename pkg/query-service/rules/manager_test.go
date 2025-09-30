@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 
@@ -265,7 +266,8 @@ func setupTestManager(t *testing.T) (*Manager, *rulestoretest.MockSQLRuleStore, 
 		t.Fatalf("Failed to create noop sharder: %v", err)
 	}
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(testDB), noopSharder)
-	alertManager, err := signozalertmanager.New(context.TODO(), settings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, testDB, orgGetter)
+	notificationManager := nfmanagertest.NewMock()
+	alertManager, err := signozalertmanager.New(context.TODO(), settings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, testDB, orgGetter, notificationManager)
 	if err != nil {
 		t.Fatalf("Failed to create alert manager: %v", err)
 	}
