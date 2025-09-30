@@ -110,12 +110,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "google: failed to parse email").WithAdditional(err.Error())
 	}
 
-	return &authtypes.CallbackIdentity{
-		Name:  claims.Name,
-		Email: email,
-		OrgID: authDomain.StorableAuthDomain().OrgID,
-		State: state,
-	}, nil
+	return authtypes.NewCallbackIdentity(claims.Name, email, authDomain.StorableAuthDomain().OrgID, state), nil
 
 }
 
