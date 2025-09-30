@@ -209,6 +209,16 @@
 
 			.ant-select {
 				width: 40px;
+
+				.ant-select-selector {
+					&:hover {
+						border-color: var(--bg-vanilla-300);
+					}
+
+					&:focus {
+						border-color: var(--bg-vanilla-300);
+					}
+				}
 			}
 		}
 	}
@@ -231,6 +241,14 @@
 			border: 1px solid var(--bg-slate-400);
 			color: var(--bg-vanilla-100);
 			height: 32px;
+
+			&:hover {
+				border-color: var(--bg-vanilla-300);
+			}
+
+			&:focus {
+				border-color: var(--bg-vanilla-300);
+			}
 		}
 
 		&:hover {
@@ -379,6 +397,14 @@
 				background-color: var(--bg-vanilla-300);
 				border: 1px solid var(--bg-vanilla-300);
 				color: var(--bg-ink-400);
+
+				&:hover {
+					border-color: var(--bg-ink-300);
+				}
+
+				&:focus {
+					border-color: var(--bg-ink-300);
+				}
 			}
 
 			&:hover {

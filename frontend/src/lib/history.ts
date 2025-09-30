@@ -5,6 +5,7 @@ import {
 	LocationDescriptorObject,
 	LocationState,
 } from 'history';
+import { isEventObject } from 'hooks/useSafeNavigate';
 
 // Create the base history instance
 const baseHistory = createBrowserHistory();
@@ -37,14 +38,7 @@ history.push = function (
 	state?: any,
 ): void {
 	// Check if second argument is an event object
-	const isEvent =
-		eventOrState &&
-		(eventOrState instanceof MouseEvent ||
-			eventOrState instanceof KeyboardEvent ||
-			eventOrState.nativeEvent instanceof MouseEvent ||
-			eventOrState.nativeEvent instanceof KeyboardEvent ||
-			eventOrState.metaKey !== undefined ||
-			eventOrState.ctrlKey !== undefined);
+	const isEvent = isEventObject(eventOrState);
 
 	// If it's an event and meta/ctrl key is pressed, open in new tab
 	if (isEvent && (eventOrState.metaKey || eventOrState.ctrlKey)) {
