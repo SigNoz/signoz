@@ -110,8 +110,6 @@ func detectPlatform() string {
 		return "railway"
 	case os.Getenv("ECS_CONTAINER_METADATA_URI_V4") != "":
 		return "ecs"
-	case os.Getenv("RENDER_SERVICE_ID") != "":
-		return "render"
 	case os.Getenv("NOMAD_ALLOC_ID") != "":
 		return "nomad"
 	case os.Getenv("CONTAINER_APP_NAME") != "":
