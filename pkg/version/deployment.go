@@ -112,7 +112,7 @@ func detectPlatform() string {
 		return "ecs"
 	case os.Getenv("NOMAD_ALLOC_ID") != "":
 		return "nomad"
-	case os.Getenv("CONTAINER_APP_NAME") != "":
+	case os.Getenv("CONTAINER_APP_HOSTNAME") != "":
 		return "aca"
 	}
 
