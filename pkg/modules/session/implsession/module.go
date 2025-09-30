@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -45,6 +46,9 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 		return nil, err
 	}
 
+	// Since email is a valuer, we can be sure that it is a valid email and we can split it to get the domain name.
+	name := strings.Split(email.String(), "@")[1]
+
 	if len(users) == 0 {
 		context.Exists = false
 
@@ -54,7 +58,7 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 		}
 
 		for _, org := range orgs {
-			orgContext, err := module.getOrgSessionContext(ctx, org, siteURL)
+			orgContext, err := module.getOrgSessionContext(ctx, org, name, siteURL)
 			if err != nil {
 				return nil, err
 			}
@@ -72,7 +76,7 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 			return nil, err
 		}
 
-		orgContext, err := module.getOrgSessionContext(ctx, org, siteURL)
+		orgContext, err := module.getOrgSessionContext(ctx, org, name, siteURL)
 		if err != nil {
 			return nil, err
 		}
@@ -83,8 +87,8 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 	return context, nil
 }
 
-func (module *module) getOrgSessionContext(ctx context.Context, org *types.Organization, siteURL *url.URL) (*authtypes.OrgSessionContext, error) {
-	authDomain, err := module.authDomain.GetByNameAndOrgID(ctx, org.Name, org.ID)
+func (module *module) getOrgSessionContext(ctx context.Context, org *types.Organization, name string, siteURL *url.URL) (*authtypes.OrgSessionContext, error) {
+	authDomain, err := module.authDomain.GetByNameAndOrgID(ctx, name, org.ID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
 	}
