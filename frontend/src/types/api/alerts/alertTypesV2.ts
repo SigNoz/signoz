@@ -49,10 +49,13 @@ export interface PostableAlertRuleV2 {
 		summary: string;
 	};
 	notificationSettings?: {
-		notificationGroupBy?: string[];
-		renotify?: string;
-		alertStates?: string[];
-		notificationPolicy?: boolean;
+		groupBy?: string[];
+		renotify?: {
+			enabled: boolean;
+			interval?: string;
+			alertStates?: string[];
+		};
+		usePolicy?: boolean;
 	};
 	version?: string;
 	source?: string;

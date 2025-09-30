@@ -21,9 +21,9 @@ import {
 describe('CreateAlertV2 utils', () => {
 	describe('getColorForThreshold', () => {
 		it('should return the correct color for the pre-defined threshold', () => {
-			expect(getColorForThreshold('CRITICAL')).toBe(Color.BG_SAKURA_500);
-			expect(getColorForThreshold('WARNING')).toBe(Color.BG_AMBER_500);
-			expect(getColorForThreshold('INFO')).toBe(Color.BG_ROBIN_500);
+			expect(getColorForThreshold('critical')).toBe(Color.BG_SAKURA_500);
+			expect(getColorForThreshold('warning')).toBe(Color.BG_AMBER_500);
+			expect(getColorForThreshold('info')).toBe(Color.BG_ROBIN_500);
 		});
 	});
 
@@ -177,10 +177,13 @@ describe('CreateAlertV2 utils', () => {
 			const args: PostableAlertRuleV2 = {
 				...defaultPostableAlertRuleV2,
 				notificationSettings: {
-					notificationGroupBy: ['email'],
-					renotify: '1m0s',
-					alertStates: ['firing'],
-					notificationPolicy: true,
+					groupBy: ['email'],
+					renotify: {
+						enabled: true,
+						interval: '1m0s',
+						alertStates: ['firing'],
+					},
+					usePolicy: true,
 				},
 			};
 			const props = getNotificationSettingsStateFromAlertDef(args);
@@ -203,7 +206,8 @@ describe('CreateAlertV2 utils', () => {
 			const args: PostableAlertRuleV2 = {
 				...defaultPostableAlertRuleV2,
 				notificationSettings: {
-					notificationGroupBy: ['email'],
+					groupBy: ['email'],
+					usePolicy: false,
 				},
 			};
 			const props = getNotificationSettingsStateFromAlertDef(args);
@@ -278,7 +282,7 @@ describe('CreateAlertV2 utils', () => {
 					kind: 'basic',
 					spec: [
 						{
-							name: 'CRITICAL',
+							name: 'critical',
 							target: 1,
 							targetUnit: UniversalYAxisUnit.MINUTES,
 							channels: ['email'],
@@ -299,7 +303,7 @@ describe('CreateAlertV2 utils', () => {
 			thresholds: [
 				{
 					id: expect.any(String),
-					label: 'CRITICAL',
+					label: 'critical',
 					thresholdValue: 1,
 					recoveryThresholdValue: null,
 					unit: UniversalYAxisUnit.MINUTES,

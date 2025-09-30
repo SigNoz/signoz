@@ -19,10 +19,13 @@ const defaultAnnotations = {
 };
 
 const defaultNotificationSettings: PostableAlertRuleV2['notificationSettings'] = {
-	notificationGroupBy: [],
-	renotify: '',
-	alertStates: [],
-	notificationPolicy: false,
+	groupBy: [],
+	renotify: {
+		enabled: false,
+		interval: '1m',
+		alertStates: [],
+	},
+	usePolicy: false,
 };
 
 const defaultEvaluation: PostableAlertRuleV2['evaluation'] = {

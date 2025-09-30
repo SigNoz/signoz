@@ -35,7 +35,7 @@ export const showNewCreateAlertsPage = (): boolean =>
 // Layout 1 - Default layout
 // Layout 2 - Condensed layout
 export const showCondensedLayout = (): boolean =>
-	localStorage.getItem('showCondensedLayout') === 'true';
+	localStorage.getItem('hideCondensedLayout') !== 'true';
 
 export function Spinner(): JSX.Element | null {
 	const { isCreatingAlertRule, isUpdatingAlertRule } = useCreateAlertState();
@@ -51,13 +51,13 @@ export function Spinner(): JSX.Element | null {
 }
 
 export function getColorForThreshold(thresholdLabel: string): string {
-	if (thresholdLabel === 'CRITICAL') {
+	if (thresholdLabel === 'critical') {
 		return Color.BG_SAKURA_500;
 	}
-	if (thresholdLabel === 'WARNING') {
+	if (thresholdLabel === 'warning') {
 		return Color.BG_AMBER_500;
 	}
-	if (thresholdLabel === 'INFO') {
+	if (thresholdLabel === 'info') {
 		return Color.BG_ROBIN_500;
 	}
 	return getRandomColor();
@@ -188,21 +188,20 @@ export function getNotificationSettingsStateFromAlertDef(
 	alertDef: PostableAlertRuleV2,
 ): NotificationSettingsState {
 	const description = alertDef.annotations?.description || '';
-	const multipleNotifications =
-		alertDef.notificationSettings?.notificationGroupBy || [];
-	const routingPolicies =
-		alertDef.notificationSettings?.notificationPolicy || false;
+	const multipleNotifications = alertDef.notificationSettings?.groupBy || [];
+	const routingPolicies = alertDef.notificationSettings?.usePolicy || false;
 
-	const reNotificationEnabled = Boolean(alertDef.notificationSettings?.renotify);
+	const reNotificationEnabled =
+		alertDef.notificationSettings?.renotify?.enabled || false;
 	const reNotificationConditions =
-		alertDef.notificationSettings?.alertStates?.map(
+		alertDef.notificationSettings?.renotify?.alertStates?.map(
 			(state) => state as 'firing' | 'nodata',
 		) || [];
 	const reNotificationValue = alertDef.notificationSettings?.renotify
-		? parseGoTime(alertDef.notificationSettings.renotify).time
+		? parseGoTime(alertDef.notificationSettings.renotify.interval || '1m').time
 		: 1;
 	const reNotificationUnit = alertDef.notificationSettings?.renotify
-		? parseGoTime(alertDef.notificationSettings.renotify).unit
+		? parseGoTime(alertDef.notificationSettings.renotify.interval || '1m').unit
 		: UniversalYAxisUnit.MINUTES;
 
 	return {

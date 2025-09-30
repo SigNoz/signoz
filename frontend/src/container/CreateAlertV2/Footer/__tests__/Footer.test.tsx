@@ -121,7 +121,7 @@ describe('Footer', () => {
 		expect(mockTestAlertRule).toHaveBeenCalled();
 	});
 
-	it('buttons are disabled when creating alert rule', () => {
+	it('all buttons are disabled when creating alert rule', () => {
 		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			isCreatingAlertRule: true,
@@ -137,7 +137,7 @@ describe('Footer', () => {
 		expect(screen.getByRole('button', { name: /discard/i })).toBeDisabled();
 	});
 
-	it('buttons are disabled when updating alert rule', () => {
+	it('all buttons are disabled when updating alert rule', () => {
 		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			isUpdatingAlertRule: true,
@@ -154,7 +154,7 @@ describe('Footer', () => {
 		expect(screen.getByRole('button', { name: /discard/i })).toBeDisabled();
 	});
 
-	it('buttons are disabled when testing alert rule', () => {
+	it('all buttons are disabled when testing alert rule', () => {
 		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			isTestingAlertRule: true,
@@ -171,7 +171,7 @@ describe('Footer', () => {
 		expect(screen.getByRole('button', { name: /discard/i })).toBeDisabled();
 	});
 
-	it('buttons are disabled when alert name is missing', () => {
+	it('create and test buttons are disabled when alert name is missing', () => {
 		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			alertState: {
@@ -187,10 +187,9 @@ describe('Footer', () => {
 		expect(
 			screen.getByRole('button', { name: /test notification/i }),
 		).toBeDisabled();
-		expect(screen.getByRole('button', { name: /discard/i })).toBeDisabled();
 	});
 
-	it('buttons are disabled when notifcation channels are missing and routing policies are disabled', () => {
+	it('create and test buttons are disabled when notifcation channels are missing and routing policies are disabled', () => {
 		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			notificationSettings: {
@@ -216,7 +215,6 @@ describe('Footer', () => {
 		expect(
 			screen.getByRole('button', { name: /test notification/i }),
 		).toBeDisabled();
-		expect(screen.getByRole('button', { name: /discard/i })).toBeDisabled();
 	});
 
 	it('buttons are enabled even with no notification channels when routing policies are enabled', () => {

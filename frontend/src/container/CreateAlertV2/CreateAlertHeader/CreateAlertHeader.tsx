@@ -1,5 +1,6 @@
 import './styles.scss';
 
+import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useCallback, useMemo } from 'react';
 import { Labels } from 'types/api/alerts/def';
@@ -34,7 +35,9 @@ function CreateAlertHeader(): JSX.Element {
 	);
 
 	return (
-		<div className="alert-header">
+		<div
+			className={classNames('alert-header', { 'edit-alert-header': isEditMode })}
+		>
 			{!isEditMode && (
 				<div className="alert-header__tab-bar">
 					<div className="alert-header__tab">New Alert Rule</div>

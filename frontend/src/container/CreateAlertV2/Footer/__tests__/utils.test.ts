@@ -138,9 +138,13 @@ describe('Footer utils', () => {
 			const props = getNotificationSettingsProps(notificationSettings);
 			expect(props).toBeDefined();
 			expect(props).toStrictEqual({
-				alertStates: [],
-				notificationGroupBy: [],
-				notificationPolicy: false,
+				groupBy: [],
+				renotify: {
+					enabled: false,
+					interval: '1m',
+					alertStates: [],
+				},
+				usePolicy: false,
 			});
 		});
 	});
@@ -158,10 +162,13 @@ describe('Footer utils', () => {
 		const props = getNotificationSettingsProps(notificationSettings);
 		expect(props).toBeDefined();
 		expect(props).toStrictEqual({
-			alertStates: ['firing'],
-			notificationGroupBy: [],
-			notificationPolicy: false,
-			renotify: '1m',
+			groupBy: [],
+			renotify: {
+				enabled: true,
+				interval: '1m',
+				alertStates: ['firing'],
+			},
+			usePolicy: false,
 		});
 	});
 
@@ -173,9 +180,13 @@ describe('Footer utils', () => {
 		const props = getNotificationSettingsProps(notificationSettings);
 		expect(props).toBeDefined();
 		expect(props).toStrictEqual({
-			alertStates: [],
-			notificationGroupBy: [],
-			notificationPolicy: true,
+			groupBy: [],
+			renotify: {
+				enabled: false,
+				interval: '1m',
+				alertStates: [],
+			},
+			usePolicy: true,
 		});
 	});
 
@@ -187,9 +198,13 @@ describe('Footer utils', () => {
 		const props = getNotificationSettingsProps(notificationSettings);
 		expect(props).toBeDefined();
 		expect(props).toStrictEqual({
-			alertStates: [],
-			notificationGroupBy: ['test group'],
-			notificationPolicy: false,
+			groupBy: ['test group'],
+			renotify: {
+				enabled: false,
+				interval: '1m',
+				alertStates: [],
+			},
+			usePolicy: false,
 		});
 	});
 
@@ -460,7 +475,7 @@ describe('Footer utils', () => {
 							{
 								channels: [],
 								matchType: '1',
-								name: 'CRITICAL',
+								name: 'critical',
 								op: '1',
 								target: 0,
 								targetUnit: '',
@@ -477,9 +492,13 @@ describe('Footer utils', () => {
 				},
 				labels: {},
 				notificationSettings: {
-					alertStates: [],
-					notificationPolicy: false,
-					notificationGroupBy: [],
+					groupBy: [],
+					renotify: {
+						enabled: false,
+						interval: '1m',
+						alertStates: [],
+					},
+					usePolicy: false,
 				},
 				ruleType: 'threshold_rule',
 				schemaVersion: 'v2alpha1',
