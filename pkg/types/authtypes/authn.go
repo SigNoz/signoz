@@ -76,14 +76,6 @@ func NewStateFromString(state string) (State, error) {
 	}, nil
 }
 
-func newDomainIDForState(domainID valuer.UUID) string {
-	return strings.Replace(domainID.String(), "-", ":", -1)
-}
-
-func newDomainIDFromState(state string) (valuer.UUID, error) {
-	return valuer.NewUUID(strings.Replace(state, ":", "-", -1))
-}
-
 func NewIdentity(userID valuer.UUID, orgID valuer.UUID, email valuer.Email, role types.Role) *Identity {
 	return &Identity{
 		UserID: userID,
@@ -91,6 +83,23 @@ func NewIdentity(userID valuer.UUID, orgID valuer.UUID, email valuer.Email, role
 		Email:  email,
 		Role:   role,
 	}
+}
+
+func NewCallbackIdentity(name string, email valuer.Email, orgID valuer.UUID, state State) *CallbackIdentity {
+	return &CallbackIdentity{
+		Name:  name,
+		Email: email,
+		OrgID: orgID,
+		State: state,
+	}
+}
+
+func newDomainIDForState(domainID valuer.UUID) string {
+	return strings.Replace(domainID.String(), "-", ":", -1)
+}
+
+func newDomainIDFromState(state string) (valuer.UUID, error) {
+	return valuer.NewUUID(strings.Replace(state, ":", "-", -1))
 }
 
 func (typ Identity) MarshalBinary() ([]byte, error) {
