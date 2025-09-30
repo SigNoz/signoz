@@ -85,7 +85,9 @@ def test_oidc_authn(
 
     # change the url to the external resolvable hostname of the idp
     parsed_url = urlparse(url)
-    actual_url = f"{idp.container.host_configs['6060'].get(parsed_url.path)}?{parsed_url.query}"
+    actual_url = (
+        f"{idp.container.host_configs['6060'].get(parsed_url.path)}?{parsed_url.query}"
+    )
 
     driver.get(actual_url)
     idp_login("viewer@oidc.integration.test", "password123")
