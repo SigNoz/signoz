@@ -93,7 +93,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, formValues url.Values) (*aut
 
 	email, err := valuer.NewEmail(assertionInfo.NameID)
 	if err != nil {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "saml: invalid email").WithAdditional("The nameID assertion is used to retreive the email address, please check your IDP configuration and try again.")
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "saml: invalid email").WithAdditional("The nameID assertion is used to retrieve the email address, please check your IDP configuration and try again.")
 	}
 
 	return authtypes.NewCallbackIdentity("", email, authDomain.StorableAuthDomain().OrgID, state), nil
