@@ -15,7 +15,8 @@ jobs:
       matrix:
         src:
           - bootstrap
-          - auth
+          - passwordauthn
+          - callbackauthn
           - querier
         sqlstore-provider:
           - postgres
