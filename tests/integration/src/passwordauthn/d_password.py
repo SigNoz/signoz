@@ -65,7 +65,7 @@ def test_change_password(
         timeout=2,
     )
 
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.CREATED
 
     # Get the user id
     response = requests.get(
