@@ -27,9 +27,15 @@ type FormValues = {
 
 function Login(): JSX.Element {
 	const urlQueryParams = useUrlQuery();
-	const accessToken = urlQueryParams.get('accessToken') || '';
-	const refreshToken = urlQueryParams.get('refreshToken') || '';
-	// const callbackAuthError = urlQueryParams.get('callbackauthnerr') || '';
+	// override for callbackAuthN in case of some misconfiguration
+	const isPasswordAuthNEnabled = (urlQueryParams.get('password') || 'N') === 'Y';
+	const accessToken = urlQueryParams.get('access_token') || '';
+	const refreshToken = urlQueryParams.get('refresh_token') || '';
+	const callbackAuthError = urlQueryParams.get('callbackauthnerr') || '';
+	const callbackAuthErrorCode = urlQueryParams.get('code') || '';
+	const callbackAuthErrorMessage = urlQueryParams.get('message') || '';
+	const callbackAuthErrorURL = urlQueryParams.get('url') || '';
+	const callbackAuthErrorAdditional = urlQueryParams.get('additional') || '';
 
 	const [sessionsContext, setSessionsContext] = useState<SessionsContext>();
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -77,7 +83,11 @@ function Login(): JSX.Element {
 				ref: window.location.href,
 			});
 
-			if (!sessionsContextResponse.data.exists) {
+			const isCallbackAuthNEnabled = sessionsContextResponse.data.orgs.findIndex(
+				(orgSession) => orgSession.authNSupport?.callback?.length > 0,
+			);
+
+			if (!sessionsContextResponse.data.exists && isCallbackAuthNEnabled === -1) {
 				showErrorModal(
 					new APIError({
 						httpStatusCode: 404,
@@ -89,6 +99,7 @@ function Login(): JSX.Element {
 						},
 					}),
 				);
+				return;
 			}
 
 			setSessionsContext(sessionsContextResponse.data);
@@ -117,8 +128,8 @@ function Login(): JSX.Element {
 			}
 		});
 
-		return isPasswordAuthN;
-	}, [sessionsOrgId, sessionsContext]);
+		return isPasswordAuthN || isPasswordAuthNEnabled;
+	}, [sessionsContext, sessionsOrgId, isPasswordAuthNEnabled]);
 
 	const isCallbackAuthN = useMemo((): boolean => {
 		if (!sessionsContext) {
@@ -140,9 +151,10 @@ function Login(): JSX.Element {
 			}
 		});
 
-		return isCallbackAuthN;
-	}, [sessionsContext, sessionsOrgId, form]);
+		return isCallbackAuthN && !isPasswordAuthNEnabled;
+	}, [sessionsContext, sessionsOrgId, isPasswordAuthNEnabled, form]);
 
+	// once the callback authN redirects to the login screen with access_token and refresh_token navigate them to homepage
 	useEffect(() => {
 		if (accessToken && refreshToken) {
 			afterLogin(accessToken, refreshToken);
@@ -188,11 +200,28 @@ function Login(): JSX.Element {
 		}
 	};
 
-	// useEffect(() => {
-	// 	if (callbackAuthError) {
-
-	// 	}
-	// }, [callbackAuthError]);
+	useEffect(() => {
+		if (callbackAuthError) {
+			showErrorModal(
+				new APIError({
+					httpStatusCode: 500,
+					error: {
+						code: callbackAuthErrorCode,
+						message: callbackAuthErrorMessage,
+						url: callbackAuthErrorURL,
+						errors: (callbackAuthErrorAdditional as unknown) as string[],
+					},
+				}),
+			);
+		}
+	}, [
+		callbackAuthError,
+		callbackAuthErrorAdditional,
+		callbackAuthErrorCode,
+		callbackAuthErrorMessage,
+		callbackAuthErrorURL,
+		showErrorModal,
+	]);
 
 	return (
 		<div className="login-form-container">
@@ -308,9 +337,6 @@ function Login(): JSX.Element {
 							Login
 						</Button>
 					)}
-
-					{/* {precheckComplete && sso && renderSAMLAction()}
-					{!precheckComplete && ssoerror && renderOnSsoError()} */}
 				</Space>
 			</FormContainer>
 		</div>
