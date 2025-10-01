@@ -75,7 +75,9 @@ func (handler *handler) CreateSessionByGoogleCallback(rw http.ResponseWriter, re
 
 	redirectURL, err := handler.module.CreateCallbackAuthNSession(ctx, authtypes.AuthNProviderGoogle, values)
 	if err != nil {
-		http.Redirect(rw, req, fmt.Sprintf("/callbackauthnerr?%s", errors.UnwrapbAsURLValues(err).Encode()), http.StatusSeeOther)
+		values := errors.UnwrapbAsURLValues(err)
+		values.Add("callbackauthnerr", "true")
+		http.Redirect(rw, req, fmt.Sprintf("?%s", values.Encode()), http.StatusSeeOther)
 		return
 	}
 
@@ -94,7 +96,9 @@ func (handler *handler) CreateSessionBySAMLCallback(rw http.ResponseWriter, req 
 
 	redirectURL, err := handler.module.CreateCallbackAuthNSession(ctx, authtypes.AuthNProviderSAML, req.Form)
 	if err != nil {
-		http.Redirect(rw, req, fmt.Sprintf("/callbackauthnerr?%s", errors.UnwrapbAsURLValues(err).Encode()), http.StatusSeeOther)
+		values := errors.UnwrapbAsURLValues(err)
+		values.Add("callbackauthnerr", "true")
+		http.Redirect(rw, req, fmt.Sprintf("?%s", values.Encode()), http.StatusSeeOther)
 		return
 	}
 
@@ -108,7 +112,9 @@ func (handler *handler) CreateSessionByOIDCCallback(rw http.ResponseWriter, req 
 	values := req.URL.Query()
 	redirectURL, err := handler.module.CreateCallbackAuthNSession(ctx, authtypes.AuthNProviderOIDC, values)
 	if err != nil {
-		http.Redirect(rw, req, fmt.Sprintf("/callbackauthnerr?%s", errors.UnwrapbAsURLValues(err).Encode()), http.StatusSeeOther)
+		values := errors.UnwrapbAsURLValues(err)
+		values.Add("callbackauthnerr", "true")
+		http.Redirect(rw, req, fmt.Sprintf("?%s", values.Encode()), http.StatusSeeOther)
 		return
 	}
 
