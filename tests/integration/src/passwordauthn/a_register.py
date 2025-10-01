@@ -144,7 +144,7 @@ def test_invite_and_register(
         },
         timeout=2,
     )
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.CREATED
 
     # Verify that the invite token has been deleted
     response = requests.get(
