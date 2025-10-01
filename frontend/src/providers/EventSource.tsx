@@ -78,12 +78,7 @@ export function EventSourceProvider({
 			const response = await loginApi({
 				refreshToken: getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '',
 			});
-			afterLogin(
-				response.data.userId,
-				response.data.accessJwt,
-				response.data.refreshJwt,
-				true,
-			);
+			afterLogin(response.data.accessJwt, response.data.refreshJwt, true);
 			// If token refresh was successful, we'll let the component
 			// handle reconnection through the reconnectDueToError state
 			setReconnectDueToError(true);
