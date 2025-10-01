@@ -2,7 +2,6 @@ package implsession
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"strings"
 
@@ -158,7 +157,17 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 		return "", err
 	}
 
-	return fmt.Sprintf("%s?access_token=%s&refresh_token=%s&user_id=%s", callbackIdentity.State.URL.JoinPath("login").String(), token.AccessToken, token.RefreshToken, user.ID.String()), nil
+	redirectURL := &url.URL{
+		Scheme: callbackIdentity.State.URL.Scheme,
+		Host:   callbackIdentity.State.URL.Host,
+		Path:   callbackIdentity.State.URL.Path,
+		RawQuery: url.Values{
+			"access_token":  {token.AccessToken},
+			"refresh_token": {token.RefreshToken},
+		}.Encode(),
+	}
+
+	return redirectURL.String(), nil
 }
 
 func (module *module) RotateSession(ctx context.Context, accessToken string, refreshToken string) (*authtypes.Token, error) {
