@@ -2,9 +2,8 @@ import { Button, Card, Space, Typography } from 'antd';
 import changeMyPassword from 'api/v1/factor_password/changeMyPassword';
 import { useNotifications } from 'hooks/useNotifications';
 import { Save } from 'lucide-react';
-import { isPasswordNotValidMessage, isPasswordValid } from 'pages/SignUp/utils';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import APIError from 'types/api/error';
 
@@ -16,21 +15,10 @@ function PasswordContainer(): JSX.Element {
 	const { t } = useTranslation(['routes', 'settings', 'common']);
 	const { user } = useAppContext();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const [isPasswordPolicyError, setIsPasswordPolicyError] = useState<boolean>(
-		false,
-	);
 
 	const defaultPlaceHolder = '*************';
 
 	const { notifications } = useNotifications();
-
-	useEffect(() => {
-		if (currentPassword && !isPasswordValid(currentPassword)) {
-			setIsPasswordPolicyError(true);
-		} else {
-			setIsPasswordPolicyError(false);
-		}
-	}, [currentPassword]);
 
 	if (!user) {
 		return <div />;
@@ -40,11 +28,6 @@ function PasswordContainer(): JSX.Element {
 		try {
 			setIsLoading(true);
 
-			if (!isPasswordValid(currentPassword)) {
-				setIsPasswordPolicyError(true);
-				setIsLoading(false);
-				return;
-			}
 			await changeMyPassword({
 				newPassword: updatePassword,
 				oldPassword: currentPassword,
@@ -69,7 +52,6 @@ function PasswordContainer(): JSX.Element {
 		isLoading ||
 		currentPassword.length === 0 ||
 		updatePassword.length === 0 ||
-		isPasswordPolicyError ||
 		currentPassword === updatePassword;
 
 	return (
@@ -116,19 +98,6 @@ function PasswordContainer(): JSX.Element {
 						}}
 						value={updatePassword}
 					/>
-				</Space>
-				<Space>
-					{isPasswordPolicyError && (
-						<Typography.Paragraph
-							data-testid="validation-message"
-							style={{
-								color: '#D89614',
-								marginTop: '0.50rem',
-							}}
-						>
-							{isPasswordNotValidMessage}
-						</Typography.Paragraph>
-					)}
 				</Space>
 				<Button
 					disabled={isDisabled}

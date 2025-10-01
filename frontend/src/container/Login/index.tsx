@@ -7,6 +7,7 @@ import post from 'api/v2/sessions/email_password/post';
 import afterLogin from 'AppRoutes/utils';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
 import { useErrorModal } from 'providers/ErrorModalProvider';
@@ -17,9 +18,19 @@ import { SessionsContext } from 'types/api/v2/sessions/context/get';
 
 import { FormContainer, Label, ParentContainer } from './styles';
 
-type FormValues = { email: string; password: string; orgId: string };
+type FormValues = {
+	email: string;
+	password: string;
+	orgId: string;
+	url: string;
+};
 
 function Login(): JSX.Element {
+	const urlQueryParams = useUrlQuery();
+	const accessToken = urlQueryParams.get('accessToken') || '';
+	const refreshToken = urlQueryParams.get('refreshToken') || '';
+	// const callbackAuthError = urlQueryParams.get('callbackauthnerr') || '';
+
 	const [sessionsContext, setSessionsContext] = useState<SessionsContext>();
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 	const [form] = Form.useForm<FormValues>();
@@ -109,29 +120,79 @@ function Login(): JSX.Element {
 		return isPasswordAuthN;
 	}, [sessionsOrgId, sessionsContext]);
 
+	const isCallbackAuthN = useMemo((): boolean => {
+		if (!sessionsContext) {
+			return false;
+		}
+
+		if (!sessionsOrgId) {
+			return false;
+		}
+
+		let isCallbackAuthN = false;
+		sessionsContext.orgs.forEach((orgSession) => {
+			if (
+				orgSession.id === sessionsOrgId &&
+				orgSession.authNSupport?.callback?.length > 0
+			) {
+				isCallbackAuthN = true;
+				form.setFieldValue('url', orgSession.authNSupport.callback[0].url);
+			}
+		});
+
+		return isCallbackAuthN;
+	}, [sessionsContext, sessionsOrgId, form]);
+
+	useEffect(() => {
+		if (accessToken && refreshToken) {
+			afterLogin(accessToken, refreshToken);
+		}
+	}, [accessToken, refreshToken]);
+
 	const onSubmitHandler: () => Promise<void> = async () => {
-		const email = form.getFieldValue('email');
-		const password = form.getFieldValue('password');
-		const orgId = form.getFieldValue('orgId');
-
 		setIsSubmitting(true);
-		try {
-			const createSessionEmailPasswordResponse = await post({
-				email,
-				password,
-				orgId,
-			});
 
-			afterLogin(
-				createSessionEmailPasswordResponse.data.accessToken,
-				createSessionEmailPasswordResponse.data.refreshToken,
-			);
+		try {
+			if (isPasswordAuthN) {
+				const email = form.getFieldValue('email');
+				const orgId = form.getFieldValue('orgId');
+
+				const password = form.getFieldValue('password');
+				if (password === '') {
+					return;
+				}
+
+				const createSessionEmailPasswordResponse = await post({
+					email,
+					password,
+					orgId,
+				});
+
+				afterLogin(
+					createSessionEmailPasswordResponse.data.accessToken,
+					createSessionEmailPasswordResponse.data.refreshToken,
+				);
+			}
+			if (isCallbackAuthN) {
+				const url = form.getFieldValue('url');
+				if (!url) {
+					return;
+				}
+
+				window.location.href = url;
+			}
 		} catch (error) {
 			showErrorModal(error as APIError);
 		} finally {
 			setIsSubmitting(false);
 		}
 	};
+
+	// useEffect(() => {
+	// 	if (callbackAuthError) {
+
+	// 	}
+	// }, [callbackAuthError]);
 
 	return (
 		<div className="login-form-container">
@@ -221,6 +282,20 @@ function Login(): JSX.Element {
 							Next
 						</Button>
 					)}
+
+					{sessionsContext && isCallbackAuthN && (
+						<Button
+							disabled={isSubmitting}
+							type="primary"
+							htmlType="submit"
+							data-attr="signup"
+							className="periscope-btn primary next-btn"
+							icon={<ArrowRight size={12} />}
+						>
+							Login With Callback
+						</Button>
+					)}
+
 					{sessionsContext && isPasswordAuthN && (
 						<Button
 							disabled={isSubmitting}
