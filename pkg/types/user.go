@@ -37,11 +37,10 @@ type User struct {
 
 type PostableRegisterOrgAndAdmin struct {
 	Name           string       `json:"name"`
-	OrgID          string       `json:"orgId"`
-	OrgDisplayName string       `json:"orgDisplayName"`
-	OrgName        string       `json:"orgName"`
 	Email          valuer.Email `json:"email"`
 	Password       string       `json:"password"`
+	OrgDisplayName string       `json:"orgDisplayName"`
+	OrgName        string       `json:"orgName"`
 }
 
 func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUID) (*User, error) {

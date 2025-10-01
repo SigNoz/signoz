@@ -12,7 +12,7 @@ from fixtures.logs import Logs
 def test_logs_list(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
-    get_jwt_token: Callable[[], str],
+    get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
     """
@@ -75,7 +75,7 @@ def test_logs_list(
         ]
     )
 
-    token = get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
     # Query Logs for the last 10 seconds and check if the logs are returned in the correct order
     response = requests.post(
@@ -312,7 +312,7 @@ def test_logs_list(
 def test_logs_time_series_count(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
-    get_jwt_token: Callable[[str, str], str],
+    get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
     """
@@ -414,7 +414,7 @@ def test_logs_time_series_count(
         )
     insert_logs(logs)
 
-    token = get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
     # count() of all logs for the last 5 minutes
     response = requests.post(

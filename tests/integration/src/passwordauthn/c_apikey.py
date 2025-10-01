@@ -1,12 +1,13 @@
 from http import HTTPStatus
+from typing import Callable
 
 import requests
 
 from fixtures import types
 
 
-def test_api_key(signoz: types.SigNoz, get_jwt_token) -> None:
-    admin_token = get_jwt_token("admin@integration.test", "password123Z$")
+def test_api_key(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
+    admin_token = get_token("admin@integration.test", "password123Z$")
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/pats"),

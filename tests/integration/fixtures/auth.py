@@ -30,7 +30,6 @@ def create_user_admin(
             signoz.self.host_configs["8080"].get("/api/v1/register"),
             json={
                 "name": USER_ADMIN_NAME,
-                "orgId": "",
                 "orgName": "",
                 "email": USER_ADMIN_EMAIL,
                 "password": USER_ADMIN_PASSWORD,
@@ -57,24 +56,6 @@ def create_user_admin(
         delete,
         restore,
     )
-
-
-@pytest.fixture(name="get_jwt_token", scope="function")
-def get_jwt_token(signoz: types.SigNoz) -> Callable[[str, str], str]:
-    def _get_jwt_token(email: str, password: str) -> str:
-        response = requests.post(
-            signoz.self.host_configs["8080"].get("/api/v1/login"),
-            json={
-                "email": email,
-                "password": password,
-            },
-            timeout=5,
-        )
-        assert response.status_code == HTTPStatus.OK
-
-        return response.json()["data"]["accessJwt"]
-
-    return _get_jwt_token
 
 
 @pytest.fixture(name="get_session_context", scope="function")
