@@ -73,8 +73,8 @@ function ErrorContent({ error }: ErrorContentProps): JSX.Element {
 					<OverlayScrollbar>
 						<ul className="error-content__message-list">
 							{errorMessages?.map((error) => (
-								<li className="error-content__message-item" key={error.message}>
-									{error.message}
+								<li className="error-content__message-item" key={error}>
+									{error}
 								</li>
 							))}
 						</ul>

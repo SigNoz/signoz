@@ -109,7 +109,7 @@ const interceptorRejected = async (
 				}
 			}
 			// when refresh token is expired
-			if (response.status === 401 && response.config.url === '/login') {
+			if (response.status === 401 && response.config.url === '/sessions') {
 				Logout();
 			}
 		}
