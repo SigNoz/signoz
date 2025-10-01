@@ -4,7 +4,7 @@ import { Button, Form, Input, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import accept from 'api/v1/invite/id/accept';
 import getInviteDetails from 'api/v1/invite/id/get';
-import signUpApi from 'api/v1/register/signup';
+import signUpApi from 'api/v1/register/post';
 import passwordAuthNContext from 'api/v2/sessions/email_password/post';
 import afterLogin from 'AppRoutes/utils';
 import { useNotifications } from 'hooks/useNotifications';
