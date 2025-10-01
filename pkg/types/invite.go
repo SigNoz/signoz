@@ -25,7 +25,7 @@ type Invite struct {
 	Email valuer.Email `bun:"email,type:text" json:"email"`
 	Token string       `bun:"token,type:text" json:"token"`
 	Role  Role         `bun:"role,type:text" json:"role"`
-	OrgID valuer.UUID  `bun:"org_id,type:text" json:"orgID"`
+	OrgID valuer.UUID  `bun:"org_id,type:text" json:"orgId"`
 
 	InviteLink string `bun:"-" json:"inviteLink"`
 }
