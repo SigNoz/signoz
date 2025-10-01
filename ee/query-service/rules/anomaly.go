@@ -336,6 +336,12 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 	resultFPs := map[uint64]struct{}{}
 	var alerts = make(map[uint64]*ruletypes.Alert, len(res))
 
+	ruleReceivers := r.Threshold.GetRuleReceivers()
+	ruleReceiverMap := make(map[string][]string)
+	for _, value := range ruleReceivers {
+		ruleReceiverMap[value.Name] = value.Channels
+	}
+
 	for _, smpl := range res {
 		l := make(map[string]string, len(smpl.Metric))
 		for _, lbl := range smpl.Metric {
@@ -407,13 +413,12 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 			State:             model.StatePending,
 			Value:             smpl.V,
 			GeneratorURL:      r.GeneratorURL(),
-			Receivers:         r.PreferredChannels(),
+			Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
 			Missing:           smpl.IsMissing,
 		}
 	}
 
 	r.logger.InfoContext(ctx, "number of alerts found", "rule_name", r.Name(), "alerts_count", len(alerts))
-
 	// alerts[h] is ready, add or update active list now
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.
@@ -422,7 +427,9 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
-			alert.Receivers = r.PreferredChannels()
+			if v, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
+				alert.Receivers = ruleReceiverMap[v]
+			}
 			continue
 		}
 

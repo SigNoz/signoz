@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"log/slog"
 	"sort"
 	"strings"
@@ -754,36 +755,30 @@ func (m *Manager) prepareTestNotifyFunc() NotifyFunc {
 		if len(alerts) == 0 {
 			return
 		}
+		ruleID := alerts[0].Labels.Map()[labels.AlertRuleIdLabel]
+		receiverMap := make(map[*alertmanagertypes.PostableAlert][]string)
+		for _, alert := range alerts {
+			generatorURL := alert.GeneratorURL
 
-		alert := alerts[0]
-		generatorURL := alert.GeneratorURL
-
-		a := &alertmanagertypes.PostableAlert{}
-		a.Annotations = alert.Annotations.Map()
-		a.StartsAt = strfmt.DateTime(alert.FiredAt)
-		a.Alert = alertmanagertypes.AlertModel{
-			Labels:       alert.Labels.Map(),
-			GeneratorURL: strfmt.URI(generatorURL),
-		}
-		if !alert.ResolvedAt.IsZero() {
-			a.EndsAt = strfmt.DateTime(alert.ResolvedAt)
-		} else {
-			a.EndsAt = strfmt.DateTime(alert.ValidUntil)
-		}
-
-		if len(alert.Receivers) == 0 {
-			channels, err := m.alertmanager.ListChannels(ctx, orgID)
-			if err != nil {
-				zap.L().Error("failed to list channels while sending test notification", zap.Error(err))
-				return
+			a := &alertmanagertypes.PostableAlert{}
+			a.Annotations = alert.Annotations.Map()
+			a.StartsAt = strfmt.DateTime(alert.FiredAt)
+			a.Alert = alertmanagertypes.AlertModel{
+				Labels:       alert.Labels.Map(),
+				GeneratorURL: strfmt.URI(generatorURL),
 			}
-
-			for _, channel := range channels {
-				alert.Receivers = append(alert.Receivers, channel.Name)
+			if !alert.ResolvedAt.IsZero() {
+				a.EndsAt = strfmt.DateTime(alert.ResolvedAt)
+			} else {
+				a.EndsAt = strfmt.DateTime(alert.ValidUntil)
 			}
+			receiverMap[a] = alert.Receivers
 		}
-
-		m.alertmanager.TestAlert(ctx, orgID, a, alert.Receivers)
+		err := m.alertmanager.TestAlert(ctx, orgID, ruleID, receiverMap)
+		if err != nil {
+			zap.L().Error("failed to send test notification", zap.Error(err))
+			return
+		}
 	}
 }
 
@@ -980,6 +975,17 @@ func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleS
 	err := json.Unmarshal([]byte(ruleStr), &parsedRule)
 	if err != nil {
 		return 0, model.BadRequest(err)
+	}
+	if !parsedRule.NotificationSettings.UsePolicy {
+		parsedRule.NotificationSettings.GroupBy = append(parsedRule.NotificationSettings.GroupBy, ruletypes.LabelThresholdName)
+	}
+	config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
+	err = m.alertmanager.SetNotificationConfig(ctx, orgID, parsedRule.AlertName, &config)
+	if err != nil {
+		return 0, &model.ApiError{
+			Typ: model.ErrorBadData,
+			Err: err,
+		}
 	}
 
 	alertCount, apiErr := m.prepareTestRuleFunc(PrepareTestRuleOptions{
