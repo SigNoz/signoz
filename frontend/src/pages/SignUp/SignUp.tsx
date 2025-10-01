@@ -128,7 +128,7 @@ function SignUp(): JSX.Element {
 			});
 
 			const { data } = loginResponse;
-			await afterLogin(data.userId, data.accessJwt, data.refreshJwt);
+			await afterLogin(data.accessJwt, data.refreshJwt);
 		} catch (error) {
 			showErrorModal(error as APIError);
 		}
@@ -146,7 +146,7 @@ function SignUp(): JSX.Element {
 				password,
 			});
 			const { data } = loginResponse;
-			await afterLogin(data.userId, data.accessJwt, data.refreshJwt);
+			await afterLogin(data.accessJwt, data.refreshJwt);
 		} catch (error) {
 			notifications.error({
 				message: (error as APIError).getErrorCode(),

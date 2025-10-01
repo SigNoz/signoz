@@ -1,5 +1,5 @@
 import { Typography } from 'antd';
-import getUserVersion from 'api/v1/version/getVersion';
+import getUserVersion from 'api/v1/version/get';
 import Spinner from 'components/Spinner';
 import ResetPasswordContainer from 'container/ResetPassword';
 import { useAppContext } from 'providers/App/App';
@@ -21,23 +21,23 @@ function ResetPassword(): JSX.Element {
 	if (
 		versionResponse.status === 'error' ||
 		(versionResponse.status === 'success' &&
-			versionResponse.data?.statusCode !== 200)
+			versionResponse.data?.httpStatusCode !== 200)
 	) {
 		return (
 			<Typography>
-				{versionResponse.data?.error || t('something_went_wrong')}
+				{versionResponse.data?.httpStatusCode || t('something_went_wrong')}
 			</Typography>
 		);
 	}
 
 	if (
 		versionResponse.status === 'loading' ||
-		!(versionResponse.data && versionResponse.data.payload)
+		!(versionResponse.data && versionResponse.data.data)
 	) {
 		return <Spinner tip="Loading..." />;
 	}
 
-	const { version } = versionResponse.data.payload;
+	const { version } = versionResponse.data.data;
 
 	return <ResetPasswordContainer version={version} />;
 }

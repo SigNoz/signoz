@@ -81,12 +81,7 @@ const interceptorRejected = async (
 						refreshToken: getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '',
 					});
 
-					afterLogin(
-						response.data.userId,
-						response.data.accessJwt,
-						response.data.refreshJwt,
-						true,
-					);
+					afterLogin(response.data.accessJwt, response.data.refreshJwt, true);
 
 					try {
 						const reResponse = await axios(

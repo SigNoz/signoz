@@ -1,113 +1,56 @@
 import './Login.styles.scss';
 
-import { Button, Form, Input, Space, Tooltip, Typography } from 'antd';
-import getLocalStorageApi from 'api/browser/localstorage/get';
-import setLocalStorageApi from 'api/browser/localstorage/set';
-import loginApi from 'api/v1/login/login';
-import loginPrecheckApi from 'api/v1/login/loginPrecheck';
-import getUserVersion from 'api/v1/version/getVersion';
+import { Button, Form, Input, Select, Space, Tooltip, Typography } from 'antd';
+import getVersion from 'api/v1/version/get';
+import get from 'api/v2/sessions/context/get';
+import post from 'api/v2/sessions/email_password/post';
 import afterLogin from 'AppRoutes/utils';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
-import { useAppContext } from 'providers/App/App';
-import { useEffect, useState } from 'react';
+import { useErrorModal } from 'providers/ErrorModalProvider';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import APIError from 'types/api/error';
-import { Signup as PrecheckResultType } from 'types/api/user/loginPrecheck';
+import { SessionsContext } from 'types/api/v2/sessions/context/get';
 
 import { FormContainer, Label, ParentContainer } from './styles';
 
-interface LoginProps {
-	jwt: string;
-	refreshjwt: string;
-	userId: string;
-	ssoerror: string;
-	withPassword: string;
-}
+type FormValues = { email: string; password: string; orgId: string };
 
-type FormValues = { email: string; password: string };
-
-function Login({
-	jwt,
-	refreshjwt,
-	userId,
-	ssoerror = '',
-	withPassword = '0',
-}: LoginProps): JSX.Element {
-	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const { user } = useAppContext();
-
-	const [precheckResult, setPrecheckResult] = useState<PrecheckResultType>({
-		sso: false,
-		ssoUrl: '',
-		canSelfRegister: false,
-		isUser: true,
-	});
-
-	const [precheckInProcess, setPrecheckInProcess] = useState(false);
-	const [precheckComplete, setPrecheckComplete] = useState(false);
-
+function Login(): JSX.Element {
+	const [sessionsContext, setSessionsContext] = useState<SessionsContext>();
+	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+	const [form] = Form.useForm<FormValues>();
 	const { notifications } = useNotifications();
+	const { showErrorModal } = useErrorModal();
+	const sessionsOrgId = Form.useWatch('orgId', form);
 
-	const getUserVersionResponse = useQuery({
-		queryFn: getUserVersion,
-		queryKey: ['getUserVersion', user?.accessJwt],
+	// setupCompleted information to route to signup page in case setup is incomplete
+	const {
+		data: versionData,
+		isLoading: versionLoading,
+		error: versionError,
+	} = useQuery({
+		queryFn: getVersion,
+		queryKey: ['api/v1/version/get'],
 		enabled: true,
 	});
 
+	// in case of error do not route to signup page as it may lead to double registration
 	useEffect(() => {
 		if (
-			getUserVersionResponse.isFetched &&
-			getUserVersionResponse.data &&
-			getUserVersionResponse.data.payload
+			versionData &&
+			!versionLoading &&
+			!versionError &&
+			!versionData.data.setupCompleted
 		) {
-			const { setupCompleted } = getUserVersionResponse.data.payload;
-			if (!setupCompleted) {
-				// no org account registered yet, re-route user to sign up first
-				history.push(ROUTES.SIGN_UP);
-			}
+			history.push(ROUTES.SIGN_UP);
 		}
-	}, [getUserVersionResponse]);
+	}, [versionData, versionLoading, versionError]);
 
-	const [form] = Form.useForm<FormValues>();
-
-	useEffect(() => {
-		if (withPassword === 'Y') {
-			setPrecheckComplete(true);
-		}
-	}, [withPassword]);
-
-	useEffect(() => {
-		async function processJwt(): Promise<void> {
-			if (jwt && jwt !== '') {
-				setIsLoading(true);
-				await afterLogin(userId, jwt, refreshjwt);
-				setIsLoading(false);
-				const fromPathname = getLocalStorageApi(
-					LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
-				);
-				if (fromPathname) {
-					history.push(fromPathname);
-					setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
-				} else {
-					history.push(ROUTES.APPLICATION);
-				}
-			}
-		}
-		processJwt();
-	}, [jwt, refreshjwt, userId]);
-
-	useEffect(() => {
-		if (ssoerror !== '') {
-			notifications.error({
-				message: 'sorry, failed to login',
-			});
-		}
-	}, [ssoerror, notifications]);
-
+	// fetch the sessions context post user entering the email
 	const onNextHandler = async (): Promise<void> => {
 		const email = form.getFieldValue('email');
 		if (!email) {
@@ -116,96 +59,78 @@ function Login({
 			});
 			return;
 		}
-		setPrecheckInProcess(true);
+
 		try {
-			const response = await loginPrecheckApi({
+			const sessionsContextResponse = await get({
 				email,
+				ref: window.location.href,
 			});
 
-			if (response.statusCode === 200) {
-				setPrecheckResult({ ...precheckResult, ...response.payload });
-
-				const { isUser } = response.payload;
-				if (isUser) {
-					setPrecheckComplete(true);
-				} else {
-					notifications.error({
-						message:
-							'This account does not exist. To create a new account, contact your admin to get an invite link',
-					});
-				}
-			} else {
-				notifications.error({
-					message:
-						'Invalid configuration detected, please contact your administrator',
-				});
+			if (!sessionsContextResponse.data.exists) {
+				showErrorModal(
+					new APIError({
+						httpStatusCode: 404,
+						error: {
+							code: 'invalid_input',
+							message: "user doesn't exist",
+							url: '',
+							errors: [],
+						},
+					}),
+				);
 			}
-		} catch (e) {
-			console.log('failed to call precheck Api', e);
-			notifications.error({ message: 'Sorry, something went wrong' });
+
+			setSessionsContext(sessionsContextResponse.data);
+		} catch (error) {
+			showErrorModal(error as APIError);
 		}
-		setPrecheckInProcess(false);
 	};
 
-	const { sso, canSelfRegister } = precheckResult;
+	// post selection of email and session org decide on the authN mechanism to use
+	const isPasswordAuthN = useMemo((): boolean => {
+		if (!sessionsContext) {
+			return false;
+		}
+
+		if (!sessionsOrgId) {
+			return false;
+		}
+
+		let isPasswordAuthN = false;
+		sessionsContext.orgs.forEach((orgSession) => {
+			if (
+				orgSession.id === sessionsOrgId &&
+				orgSession.authNSupport.password.length > 0
+			) {
+				isPasswordAuthN = true;
+			}
+		});
+
+		return isPasswordAuthN;
+	}, [sessionsOrgId, sessionsContext]);
 
 	const onSubmitHandler: () => Promise<void> = async () => {
+		const email = form.getFieldValue('email');
+		const password = form.getFieldValue('password');
+		const orgId = form.getFieldValue('orgId');
+
+		setIsSubmitting(true);
 		try {
-			const { email, password } = form.getFieldsValue();
-			if (!precheckComplete) {
-				onNextHandler();
-				return;
-			}
-
-			if (precheckComplete && sso) {
-				window.location.href = precheckResult.ssoUrl || '';
-				return;
-			}
-
-			setIsLoading(true);
-
-			const response = await loginApi({
+			const createSessionEmailPasswordResponse = await post({
 				email,
 				password,
+				orgId,
 			});
 
 			afterLogin(
-				response.data.userId,
-				response.data.accessJwt,
-				response.data.refreshJwt,
+				createSessionEmailPasswordResponse.data.accessToken,
+				createSessionEmailPasswordResponse.data.refreshToken,
 			);
-			setIsLoading(false);
 		} catch (error) {
-			setIsLoading(false);
-			notifications.error({
-				message: (error as APIError).getErrorCode(),
-				description: (error as APIError).getErrorMessage(),
-			});
+			showErrorModal(error as APIError);
+		} finally {
+			setIsSubmitting(false);
 		}
-	};
-
-	const renderSAMLAction = (): JSX.Element => (
-		<Button
-			type="primary"
-			loading={isLoading}
-			disabled={isLoading}
-			href={precheckResult.ssoUrl}
-		>
-			Login with SSO
-		</Button>
-	);
-
-	const renderOnSsoError = (): JSX.Element | null => {
-		if (!ssoerror) {
-			return null;
-		}
-
-		return (
-			<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
-				Are you trying to resolve SSO configuration issue?{' '}
-				<a href="/login?password=Y">Login with password</a>.
-			</Typography.Paragraph>
-		);
 	};
 
 	return (
@@ -225,17 +150,39 @@ function Login({
 					<FormContainer.Item name="email">
 						<Input
 							type="email"
-							id="loginEmail"
+							id="email"
 							data-testid="email"
 							required
 							placeholder="name@yourcompany.com"
 							autoFocus
-							disabled={isLoading}
+							disabled={versionLoading}
 							className="login-form-input"
 						/>
 					</FormContainer.Item>
 				</ParentContainer>
-				{precheckComplete && !sso && (
+
+				{sessionsContext && (
+					<ParentContainer>
+						<Label htmlFor="orgId">Organization Name</Label>
+						<FormContainer.Item name="orgId">
+							<Select
+								id="orgId"
+								data-testid="orgId"
+								className="login-form-input"
+								placeholder="Select your organization"
+								options={sessionsContext.orgs.map((org) => ({
+									value: org.id,
+									label: org.name || 'default',
+								}))}
+								onChange={(value: string): void => {
+									form.setFieldsValue({ orgId: value });
+								}}
+							/>
+						</FormContainer.Item>
+					</ParentContainer>
+				)}
+
+				{sessionsContext && isPasswordAuthN && (
 					<ParentContainer>
 						<Label htmlFor="Password">Password</Label>
 						<FormContainer.Item name="password">
@@ -243,7 +190,7 @@ function Login({
 								required
 								id="currentPassword"
 								data-testid="password"
-								disabled={isLoading}
+								disabled={isSubmitting}
 								className="login-form-input"
 							/>
 						</FormContainer.Item>
@@ -255,16 +202,16 @@ function Login({
 						</div>
 					</ParentContainer>
 				)}
+
 				<Space
 					style={{ marginTop: 16 }}
 					align="start"
 					direction="vertical"
 					size={20}
 				>
-					{!precheckComplete && (
+					{!sessionsContext && (
 						<Button
-							disabled={precheckInProcess}
-							loading={precheckInProcess}
+							disabled={versionLoading}
 							type="primary"
 							onClick={onNextHandler}
 							data-testid="initiate_login"
@@ -274,10 +221,9 @@ function Login({
 							Next
 						</Button>
 					)}
-					{precheckComplete && !sso && (
+					{sessionsContext && isPasswordAuthN && (
 						<Button
-							disabled={isLoading}
-							loading={isLoading}
+							disabled={isSubmitting}
 							type="primary"
 							htmlType="submit"
 							data-attr="signup"
@@ -288,29 +234,8 @@ function Login({
 						</Button>
 					)}
 
-					{precheckComplete && sso && renderSAMLAction()}
-					{!precheckComplete && ssoerror && renderOnSsoError()}
-
-					{!canSelfRegister && (
-						<Typography.Paragraph className="no-acccount">
-							Don&apos;t have an account? Contact your admin to send you an invite
-							link.
-						</Typography.Paragraph>
-					)}
-
-					{canSelfRegister && (
-						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
-							If you are admin,{' '}
-							<Typography.Link
-								onClick={(): void => {
-									history.push(ROUTES.SIGN_UP);
-								}}
-								style={{ fontWeight: 700 }}
-							>
-								Create an account
-							</Typography.Link>
-						</Typography.Paragraph>
-					)}
+					{/* {precheckComplete && sso && renderSAMLAction()}
+					{!precheckComplete && ssoerror && renderOnSsoError()} */}
 				</Space>
 			</FormContainer>
 		</div>
