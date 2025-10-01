@@ -14,8 +14,8 @@ type OrgSessionContext struct {
 }
 
 type AuthNSupport struct {
-	Callback []CallbackAuthNSupport `json:"callback,omitempty"`
-	Password []PasswordAuthNSupport `json:"password,omitempty"`
+	Callback []CallbackAuthNSupport `json:"callback"`
+	Password []PasswordAuthNSupport `json:"password"`
 }
 
 type CallbackAuthNSupport struct {
