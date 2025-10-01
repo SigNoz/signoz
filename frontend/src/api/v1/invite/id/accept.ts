@@ -2,15 +2,12 @@ import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import {
-	LoginPrecheckResponse,
-	PayloadProps,
-	Props,
-} from 'types/api/user/accept';
+import { PayloadProps, Props } from 'types/api/user/accept';
+import { UserResponse } from 'types/api/user/getUser';
 
 const accept = async (
 	props: Props,
-): Promise<SuccessResponseV2<LoginPrecheckResponse>> => {
+): Promise<SuccessResponseV2<UserResponse>> => {
 	try {
 		const response = await axios.post<PayloadProps>(`/invite/accept`, props);
 		return {

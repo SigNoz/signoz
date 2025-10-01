@@ -1,5 +1,7 @@
+import { UserResponse } from './getUser';
+
 export interface PayloadProps {
-	data: Signup;
+	data: UserResponse;
 	status: string;
 }
 
