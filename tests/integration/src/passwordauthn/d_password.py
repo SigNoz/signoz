@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from typing import Callable
 
 import requests
 from sqlalchemy import sql
@@ -9,8 +10,10 @@ from fixtures.logger import setup_logger
 logger = setup_logger(__name__)
 
 
-def test_change_password(signoz: types.SigNoz, get_jwt_token) -> None:
-    admin_token = get_jwt_token("admin@integration.test", "password123Z$")
+def test_change_password(
+    signoz: types.SigNoz, get_token: Callable[[str, str], str]
+) -> None:
+    admin_token = get_token("admin@integration.test", "password123Z$")
 
     # Create another admin user
     response = requests.post(
@@ -84,7 +87,7 @@ def test_change_password(signoz: types.SigNoz, get_jwt_token) -> None:
     )
 
     # Try logging in with the password
-    token = get_jwt_token("admin+password@integration.test", "password123Z$")
+    token = get_token("admin+password@integration.test", "password123Z$")
     assert token is not None
 
     # Try changing the password with a bad old password which should fail
@@ -120,12 +123,14 @@ def test_change_password(signoz: types.SigNoz, get_jwt_token) -> None:
     assert response.status_code == HTTPStatus.NO_CONTENT
 
     # Try logging in with the new password
-    token = get_jwt_token("admin+password@integration.test", "password123Znew$")
+    token = get_token("admin+password@integration.test", "password123Znew$")
     assert token is not None
 
 
-def test_reset_password(signoz: types.SigNoz, get_jwt_token) -> None:
-    admin_token = get_jwt_token("admin@integration.test", "password123Z$")
+def test_reset_password(
+    signoz: types.SigNoz, get_token: Callable[[str, str], str]
+) -> None:
+    admin_token = get_token("admin@integration.test", "password123Z$")
 
     # Get the user id for admin+password@integration.test
     response = requests.get(
@@ -176,12 +181,14 @@ def test_reset_password(signoz: types.SigNoz, get_jwt_token) -> None:
 
     assert response.status_code == HTTPStatus.NO_CONTENT
 
-    token = get_jwt_token("admin+password@integration.test", "password123Z$NEWNEW#!")
+    token = get_token("admin+password@integration.test", "password123Z$NEWNEW#!")
     assert token is not None
 
 
-def test_reset_password_with_no_password(signoz: types.SigNoz, get_jwt_token) -> None:
-    admin_token = get_jwt_token("admin@integration.test", "password123Z$")
+def test_reset_password_with_no_password(
+    signoz: types.SigNoz, get_token: Callable[[str, str], str]
+) -> None:
+    admin_token = get_token("admin@integration.test", "password123Z$")
 
     # Get the user id for admin+password@integration.test
     response = requests.get(
@@ -231,5 +238,5 @@ def test_reset_password_with_no_password(signoz: types.SigNoz, get_jwt_token) ->
 
     assert response.status_code == HTTPStatus.NO_CONTENT
 
-    token = get_jwt_token("admin+password@integration.test", "FINALPASSword123!#[")
+    token = get_token("admin+password@integration.test", "FINALPASSword123!#[")
     assert token is not None

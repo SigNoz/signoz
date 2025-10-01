@@ -23,6 +23,7 @@ def test_telemetry_databases_exist(signoz: types.SigNoz) -> None:
         "signoz_traces",
         "signoz_metadata",
         "signoz_analytics",
+        "signoz_meter",
     ]
 
     for db_name in required_databases:

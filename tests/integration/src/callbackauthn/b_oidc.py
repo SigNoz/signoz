@@ -20,6 +20,9 @@ def test_apply_license(
     make_http_mocks: Callable[[TestContainerDocker, List[Mapping]], None],
     get_token: Callable[[str, str], str],
 ) -> None:
+    """
+    This applies a license to the signoz instance.
+    """
     add_license(signoz, make_http_mocks, get_token)
 
 
@@ -31,6 +34,9 @@ def test_create_auth_domain(
     create_user_admin: Callable[[], None],  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
+    """
+    This creates an OIDC auth domain in signoz.
+    """
     client_id = f"oidc.integration.test.{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}"
     # Create a saml client in the idp.
     create_oidc_client(client_id, "/api/v1/complete/oidc")
@@ -72,6 +78,10 @@ def test_oidc_authn(
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
 ) -> None:
+    """
+    This tests the OIDC authn flow.
+    It uses a web browser to login to the idp and then asserts that the user was created in signoz.
+    """
     # Create a user in the idp.
     create_user_idp("viewer@oidc.integration.test", "password123", True)
 
