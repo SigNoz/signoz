@@ -28,7 +28,7 @@ type Alertmanager interface {
 	TestReceiver(context.Context, string, alertmanagertypes.Receiver) error
 
 	// TestAlert sends an alert to a list of receivers.
-	TestAlert(ctx context.Context, orgID string, alert *alertmanagertypes.PostableAlert, receivers []string) error
+	TestAlert(ctx context.Context, orgID string, alert *alertmanagertypes.PostableAlert, receivers []string, usePolicy bool) error
 
 	// ListChannels lists all channels for the organization.
 	ListChannels(context.Context, string) ([]*alertmanagertypes.Channel, error)

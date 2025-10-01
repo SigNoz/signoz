@@ -330,8 +330,8 @@ func (server *Server) TestAlert(ctx context.Context, postableAlert *alertmanager
 		return errors.Join(err...)
 	}
 
-	if len(alerts) != 1 {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "expected 1 alert, got %d", len(alerts))
+	if len(alerts) == 0 {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "expected atleast 1 alert, got %d", len(alerts))
 	}
 
 	ch := make(chan error, len(receivers))

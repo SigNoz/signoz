@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"log/slog"
 	"sort"
 	"strings"
@@ -755,15 +756,7 @@ func (m *Manager) prepareTestNotifyFunc() NotifyFunc {
 			return
 		}
 
-		uniqueAlerts := make(map[string]*ruletypes.Alert)
 		for _, alert := range alerts {
-			if thresholdName, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
-				if _, exists := uniqueAlerts[thresholdName]; !exists {
-					uniqueAlerts[thresholdName] = alert
-				}
-			}
-		}
-		for _, alert := range uniqueAlerts {
 			generatorURL := alert.GeneratorURL
 
 			a := &alertmanagertypes.PostableAlert{}
@@ -779,18 +772,27 @@ func (m *Manager) prepareTestNotifyFunc() NotifyFunc {
 				a.EndsAt = strfmt.DateTime(alert.ValidUntil)
 			}
 
-			if len(alert.Receivers) == 0 {
-				channels, err := m.alertmanager.ListChannels(ctx, orgID)
-				if err != nil {
-					zap.L().Error("failed to list channels while sending test notification", zap.Error(err))
-					return
-				}
-
-				for _, channel := range channels {
-					alert.Receivers = append(alert.Receivers, channel.Name)
-				}
+			usePolicy := false
+			if alert.Labels.Has(labels.TestNotificationPolicyRule) {
+				usePolicy = true
 			}
-			m.alertmanager.TestAlert(ctx, orgID, a, alert.Receivers)
+
+			config := alertmanagertypes.NewNotificationConfig(nil, 0, 0, usePolicy)
+			uuid, err := valuer.NewUUID(orgID)
+			if err != nil {
+				zap.L().Error("failed to create uuid while sending test notification", zap.Error(err))
+				return
+			}
+			err = m.alertmanager.SetNotificationConfig(ctx, uuid, alert.Labels.Map()[labels.AlertRuleIdLabel], &config)
+			if err != nil {
+				zap.L().Error("failed to set notification config while sending test notification", zap.Error(err))
+				return
+			}
+			err = m.alertmanager.TestAlert(ctx, orgID, a, alert.Receivers, usePolicy)
+			if err != nil {
+				zap.L().Error("failed to send test notification", zap.Error(err))
+				return
+			}
 		}
 
 	}

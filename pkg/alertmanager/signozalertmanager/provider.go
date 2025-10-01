@@ -2,6 +2,8 @@ package signozalertmanager
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	"github.com/prometheus/common/model"
 	"time"
 
 	amConfig "github.com/prometheus/alertmanager/config"
@@ -98,7 +100,18 @@ func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiv
 	return provider.service.TestReceiver(ctx, orgID, receiver)
 }
 
-func (provider *provider) TestAlert(ctx context.Context, orgID string, alert *alertmanagertypes.PostableAlert, receivers []string) error {
+func (provider *provider) TestAlert(ctx context.Context, orgID string, alert *alertmanagertypes.PostableAlert, receivers []string, usePolicy bool) error {
+	set := model.LabelSet{}
+	for k, v := range alert.Labels {
+		set[model.LabelName(k)] = model.LabelValue(v)
+	}
+	if usePolicy {
+		match, err := provider.notificationManager.Match(ctx, orgID, alert.Labels[labels.AlertRuleIdLabel], set)
+		if err != nil {
+			return err
+		}
+		return provider.service.TestAlert(ctx, orgID, alert, match)
+	}
 	return provider.service.TestAlert(ctx, orgID, alert, receivers)
 }
 
