@@ -1,18 +1,20 @@
 import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
-import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { UserResponse } from 'types/api/user/getUser';
-import { PayloadProps } from 'types/api/user/loginPrecheck';
+import { ErrorV2Resp, RawSuccessResponse, SuccessResponseV2 } from 'types/api';
 import { Props } from 'types/api/user/signup';
+import { SignupResponse } from 'types/api/v1/register/post';
 
-const signup = async (
+const post = async (
 	props: Props,
-): Promise<SuccessResponseV2<UserResponse>> => {
+): Promise<SuccessResponseV2<SignupResponse>> => {
 	try {
-		const response = await axios.post<PayloadProps>(`/register`, {
-			...props,
-		});
+		const response = await axios.post<RawSuccessResponse<SignupResponse>>(
+			`/register`,
+			{
+				...props,
+			},
+		);
 		return {
 			httpStatusCode: response.status,
 			data: response.data.data,
@@ -22,4 +24,4 @@ const signup = async (
 	}
 };
 
-export default signup;
+export default post;
