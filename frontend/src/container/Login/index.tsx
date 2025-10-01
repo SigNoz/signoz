@@ -111,7 +111,7 @@ function Login(): JSX.Element {
 		sessionsContext.orgs.forEach((orgSession) => {
 			if (
 				orgSession.id === sessionsOrgId &&
-				orgSession.authNSupport.password.length > 0
+				orgSession.authNSupport?.password?.length > 0
 			) {
 				isPasswordAuthN = true;
 			}
