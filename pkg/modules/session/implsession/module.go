@@ -139,7 +139,7 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 
 	callbackIdentity, err := callbackAuthN.HandleCallback(ctx, values)
 	if err != nil {
-		module.settings.Logger().ErrorContext(ctx, "failed to handle callback", "error", err, "authNProvider", authNProvider)
+		module.settings.Logger().ErrorContext(ctx, "failed to handle callback", "error", err, "authn_provider", authNProvider)
 		return "", err
 	}
 
