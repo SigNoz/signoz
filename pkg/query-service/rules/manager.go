@@ -755,7 +755,8 @@ func (m *Manager) prepareTestNotifyFunc() NotifyFunc {
 		if len(alerts) == 0 {
 			return
 		}
-
+		ruleID := alerts[0].Labels.Map()[labels.AlertRuleIdLabel]
+		receiverMap := make(map[*alertmanagertypes.PostableAlert][]string)
 		for _, alert := range alerts {
 			generatorURL := alert.GeneratorURL
 
@@ -771,30 +772,13 @@ func (m *Manager) prepareTestNotifyFunc() NotifyFunc {
 			} else {
 				a.EndsAt = strfmt.DateTime(alert.ValidUntil)
 			}
-
-			usePolicy := false
-			if alert.Labels.Has(labels.TestNotificationPolicyRule) {
-				usePolicy = true
-			}
-
-			config := alertmanagertypes.NewNotificationConfig(nil, 0, 0, usePolicy)
-			uuid, err := valuer.NewUUID(orgID)
-			if err != nil {
-				zap.L().Error("failed to create uuid while sending test notification", zap.Error(err))
-				return
-			}
-			err = m.alertmanager.SetNotificationConfig(ctx, uuid, alert.Labels.Map()[labels.AlertRuleIdLabel], &config)
-			if err != nil {
-				zap.L().Error("failed to set notification config while sending test notification", zap.Error(err))
-				return
-			}
-			err = m.alertmanager.TestAlert(ctx, orgID, a, alert.Receivers, usePolicy)
-			if err != nil {
-				zap.L().Error("failed to send test notification", zap.Error(err))
-				return
-			}
+			receiverMap[a] = alert.Receivers
 		}
-
+		err := m.alertmanager.TestAlert(ctx, orgID, ruleID, receiverMap)
+		if err != nil {
+			zap.L().Error("failed to send test notification", zap.Error(err))
+			return
+		}
 	}
 }
 
@@ -991,6 +975,17 @@ func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleS
 	err := json.Unmarshal([]byte(ruleStr), &parsedRule)
 	if err != nil {
 		return 0, model.BadRequest(err)
+	}
+	if !parsedRule.NotificationSettings.UsePolicy {
+		parsedRule.NotificationSettings.GroupBy = append(parsedRule.NotificationSettings.GroupBy, ruletypes.LabelThresholdName)
+	}
+	config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
+	err = m.alertmanager.SetNotificationConfig(ctx, orgID, parsedRule.AlertName, &config)
+	if err != nil {
+		return 0, &model.ApiError{
+			Typ: model.ErrorBadData,
+			Err: err,
+		}
 	}
 
 	alertCount, apiErr := m.prepareTestRuleFunc(PrepareTestRuleOptions{

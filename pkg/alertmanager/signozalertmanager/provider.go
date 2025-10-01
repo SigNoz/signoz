@@ -100,19 +100,29 @@ func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiv
 	return provider.service.TestReceiver(ctx, orgID, receiver)
 }
 
-func (provider *provider) TestAlert(ctx context.Context, orgID string, alert *alertmanagertypes.PostableAlert, receivers []string, usePolicy bool) error {
-	set := model.LabelSet{}
-	for k, v := range alert.Labels {
-		set[model.LabelName(k)] = model.LabelValue(v)
+func (provider *provider) TestAlert(ctx context.Context, orgID string, ruleID string, receiversMap map[*alertmanagertypes.PostableAlert][]string) error {
+	config, err := provider.notificationManager.GetNotificationConfig(orgID, ruleID)
+	if err != nil {
+		return err
 	}
-	if usePolicy {
-		match, err := provider.notificationManager.Match(ctx, orgID, alert.Labels[labels.AlertRuleIdLabel], set)
-		if err != nil {
-			return err
+	if config.UsePolicy {
+		for alert, _ := range receiversMap {
+			set := make(model.LabelSet)
+			for k, v := range alert.Labels {
+				set[model.LabelName(k)] = model.LabelValue(v)
+			}
+			match, err := provider.notificationManager.Match(ctx, orgID, alert.Labels[labels.AlertRuleIdLabel], set)
+			if err != nil {
+				return err
+			}
+			if match == nil || len(match) == 0 {
+				delete(receiversMap, alert)
+			} else {
+				receiversMap[alert] = match
+			}
 		}
-		return provider.service.TestAlert(ctx, orgID, alert, match)
 	}
-	return provider.service.TestAlert(ctx, orgID, alert, receivers)
+	return provider.service.TestAlert(ctx, orgID, receiversMap, config)
 }
 
 func (provider *provider) ListChannels(ctx context.Context, orgID string) ([]*alertmanagertypes.Channel, error) {
