@@ -43,10 +43,6 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 		parsedRule.Labels[labels.RuleSourceLabel] = ""
 		parsedRule.Labels[labels.AlertRuleIdLabel] = ""
 
-		if parsedRule.NotificationSettings.UsePolicy {
-			parsedRule.Labels[labels.TestNotificationPolicyRule] = "true"
-		}
-
 		// create a threshold rule
 		rule, err = NewThresholdRule(
 			alertname,

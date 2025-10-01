@@ -28,8 +28,6 @@ const (
 	RuleThresholdLabel    = "threshold"
 	AlertSummaryLabel     = "summary"
 	AlertDescriptionLabel = "description"
-
-	TestNotificationPolicyRule = "test_notification_policy"
 )
 
 // Label is a key/value pair of strings.
