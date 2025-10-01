@@ -5,9 +5,10 @@ import (
 )
 
 type SamlConfig struct {
-	SamlEntity string `json:"samlEntity"`
-	SamlIdp    string `json:"samlIdp"`
-	SamlCert   string `json:"samlCert"`
+	SamlEntity                      string `json:"samlEntity"`
+	SamlIdp                         string `json:"samlIdp"`
+	SamlCert                        string `json:"samlCert"`
+	InsecureSkipAuthNRequestsSigned bool   `json:"insecureSkipAuthNRequestsSigned"`
 }
 
 func (config *SamlConfig) UnmarshalJSON(data []byte) error {

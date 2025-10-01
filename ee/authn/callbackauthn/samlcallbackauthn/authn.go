@@ -114,7 +114,7 @@ func (a *AuthN) serviceProvider(siteURL *url.URL, authDomain *authtypes.AuthDoma
 			Host:   siteURL.Host,
 			Path:   redirectPath,
 		}).String(),
-		SignAuthnRequests:      true,
+		SignAuthnRequests:      !authDomain.AuthDomainConfig().SAML.InsecureSkipAuthNRequestsSigned,
 		AllowMissingAttributes: true,
 		IDPCertificateStore:    certStore,
 		SPKeyStore:             dsig.RandomKeyStoreForTest(),
