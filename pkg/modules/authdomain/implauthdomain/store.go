@@ -100,17 +100,25 @@ func (store *store) GetByNameAndOrgID(ctx context.Context, name string, orgID va
 }
 
 func (store *store) ListByOrgID(ctx context.Context, orgId valuer.UUID) ([]*authtypes.AuthDomain, error) {
-	var authDomains []*authtypes.AuthDomain
+	var storableAuthDomains []*authtypes.StorableAuthDomain
 
 	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
-		Model(&authDomains).
+		Model(&storableAuthDomains).
 		Where("org_id = ?", orgId).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	authDomains := make([]*authtypes.AuthDomain, len(storableAuthDomains))
+	for i, storableAuthDomain := range storableAuthDomains {
+		authDomains[i], err = authtypes.NewAuthDomainFromStorableAuthDomain(storableAuthDomain)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return authDomains, nil
