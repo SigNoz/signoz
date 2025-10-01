@@ -123,12 +123,6 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 	var rule baserules.Rule
 	var err error
 
-	//need to add this label only for test
-	//otherwise we won't know whether to use policy or not
-	if parsedRule.NotificationSettings.UsePolicy {
-		parsedRule.Labels[labels.TestNotificationPolicyRule] = "true"
-	}
-
 	if parsedRule.RuleType == ruletypes.RuleTypeThreshold {
 
 		// add special labels for test alerts
