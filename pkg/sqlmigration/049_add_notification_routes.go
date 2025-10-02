@@ -101,84 +101,38 @@ func (migration *addRoutePolicies) Up(ctx context.Context, db *bun.DB) error {
 		_ = tx.Rollback()
 	}()
 
+	sqls := [][]byte{}
+
 	// Create the route_policy table
-	_, err = tx.NewCreateTable().
-		Model((*expressionRoute)(nil)).
-		IfNotExists().
-		Exec(ctx)
-	if err != nil {
-		return err
+	table := &sqlschema.Table{
+		Name: "route_policy",
+		Columns: []*sqlschema.Column{
+			{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+			{Name: "created_by", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "updated_by", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "expression", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "kind", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "channels", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "name", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "description", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "enabled", DataType: sqlschema.DataTypeBoolean, Nullable: false, Default: "true"},
+			{Name: "tags", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
+		},
+		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{
+			ColumnNames: []sqlschema.ColumnName{"id"},
+		},
 	}
 
-	// Create indexes
-	_, err = tx.NewCreateIndex().
-		Model((*expressionRoute)(nil)).
-		Index("idx_route_policy_org_id").
-		Column("org_id").
-		IfNotExists().
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
+	tableSQLs := migration.sqlschema.Operator().CreateTable(table)
+	sqls = append(sqls, tableSQLs...)
 
-	_, err = tx.NewCreateIndex().
-		Model((*expressionRoute)(nil)).
-		Index("idx_route_policy_enabled").
-		Column("enabled").
-		IfNotExists().
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.NewCreateIndex().
-		Model((*expressionRoute)(nil)).
-		Index("idx_route_policy_org_enabled").
-		Column("org_id", "enabled").
-		IfNotExists().
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.NewCreateIndex().
-		Model((*expressionRoute)(nil)).
-		Index("idx_route_policy_kind").
-		Column("kind").
-		IfNotExists().
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.NewCreateIndex().
-		Model((*expressionRoute)(nil)).
-		Index("idx_route_policy_org_kind").
-		Column("org_id", "kind").
-		IfNotExists().
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.NewCreateIndex().
-		Model((*expressionRoute)(nil)).
-		Index("idx_route_policy_name").
-		Column("name").
-		IfNotExists().
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.NewCreateIndex().
-		Model((*expressionRoute)(nil)).
-		Index("idx_route_policy_org_route_name").
-		Column("org_id", "name").
-		IfNotExists().
-		Exec(ctx)
-	if err != nil {
-		return err
+	for _, sqlStmt := range sqls {
+		if _, err := tx.ExecContext(ctx, string(sqlStmt)); err != nil {
+			return err
+		}
 	}
 
 	err = migration.migrateRulesToRoutePolicies(ctx, tx)
@@ -332,10 +286,15 @@ func (migration *addRoutePolicies) getAllChannelsInTx(ctx context.Context, tx bu
 }
 
 func (migration *addRoutePolicies) Down(ctx context.Context, db *bun.DB) error {
-	// Drop the table if it exists
-	_, err := db.NewDropTable().
-		Table("route_policy").
-		IfExists().
-		Exec(ctx)
-	return err
+	table := &sqlschema.Table{
+		Name: "route_policy",
+	}
+
+	dropSQL := migration.sqlschema.Operator().DropTable(table)
+	for _, sqlStmt := range dropSQL {
+		if _, err := db.ExecContext(ctx, string(sqlStmt)); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -106,7 +106,7 @@ func (provider *provider) TestAlert(ctx context.Context, orgID string, ruleID st
 		return err
 	}
 	if config.UsePolicy {
-		for alert, _ := range receiversMap {
+		for alert := range receiversMap {
 			set := make(model.LabelSet)
 			for k, v := range alert.Labels {
 				set[model.LabelName(k)] = model.LabelValue(v)
@@ -115,7 +115,7 @@ func (provider *provider) TestAlert(ctx context.Context, orgID string, ruleID st
 			if err != nil {
 				return err
 			}
-			if match == nil || len(match) == 0 {
+			if len(match) == 0 {
 				delete(receiversMap, alert)
 			} else {
 				receiversMap[alert] = match
