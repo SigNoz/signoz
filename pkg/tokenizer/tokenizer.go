@@ -29,5 +29,8 @@ type Tokenizer interface {
 	// Delete the identity by userID.
 	DeleteIdentity(context.Context, valuer.UUID) error
 
+	// Returns the config of the tokenizer.
+	Config() Config
+
 	statsreporter.StatsCollector
 }

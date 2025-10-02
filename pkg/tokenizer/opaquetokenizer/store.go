@@ -59,7 +59,25 @@ func (store *store) GetByAccessToken(ctx context.Context, accessToken string) (*
 		Where("access_token = ?", accessToken).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeTokenNotFound, "token with access token: %s does not exist", accessToken)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeTokenNotFound, "token does not exist", accessToken)
+	}
+
+	return token, nil
+}
+
+func (store *store) GetByAccessTokenOrPreviousAccessToken(ctx context.Context, accessToken string) (*authtypes.StorableToken, error) {
+	token := new(authtypes.StorableToken)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(token).
+		Where("access_token = ?", accessToken).
+		WhereOr("prev_access_token = ?", accessToken).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeTokenNotFound, "token does not exist", accessToken)
 	}
 
 	return token, nil
