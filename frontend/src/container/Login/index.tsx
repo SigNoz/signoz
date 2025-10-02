@@ -29,8 +29,8 @@ function Login(): JSX.Element {
 	const urlQueryParams = useUrlQuery();
 	// override for callbackAuthN in case of some misconfiguration
 	const isPasswordAuthNEnabled = (urlQueryParams.get('password') || 'N') === 'Y';
-	const accessToken = urlQueryParams.get('access_token') || '';
-	const refreshToken = urlQueryParams.get('refresh_token') || '';
+	const accessToken = urlQueryParams.get('accessToken') || '';
+	const refreshToken = urlQueryParams.get('refreshToken') || '';
 	const callbackAuthError = urlQueryParams.get('callbackauthnerr') || '';
 	const callbackAuthErrorCode = urlQueryParams.get('code') || '';
 	const callbackAuthErrorMessage = urlQueryParams.get('message') || '';
