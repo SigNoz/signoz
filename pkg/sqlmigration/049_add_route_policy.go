@@ -101,9 +101,9 @@ func (migration *addRoutePolicies) Up(ctx context.Context, db *bun.DB) error {
 			{Name: "kind", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "channels", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "name", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "description", DataType: sqlschema.DataTypeText},
+			{Name: "description", DataType: sqlschema.DataTypeText, Nullable: true},
 			{Name: "enabled", DataType: sqlschema.DataTypeBoolean, Nullable: false, Default: "true"},
-			{Name: "tags", DataType: sqlschema.DataTypeText},
+			{Name: "tags", DataType: sqlschema.DataTypeText, Nullable: true},
 			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 		},
 		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{
