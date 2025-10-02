@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -158,13 +159,10 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 	}
 
 	redirectURL := &url.URL{
-		Scheme: callbackIdentity.State.URL.Scheme,
-		Host:   callbackIdentity.State.URL.Host,
-		Path:   callbackIdentity.State.URL.Path,
-		RawQuery: url.Values{
-			"access_token":  {token.AccessToken},
-			"refresh_token": {token.RefreshToken},
-		}.Encode(),
+		Scheme:   callbackIdentity.State.URL.Scheme,
+		Host:     callbackIdentity.State.URL.Host,
+		Path:     callbackIdentity.State.URL.Path,
+		RawQuery: authtypes.NewURLValuesFromToken(token, module.GetRotationInterval(ctx)).Encode(),
 	}
 
 	return redirectURL.String(), nil
@@ -176,6 +174,10 @@ func (module *module) RotateSession(ctx context.Context, accessToken string, ref
 
 func (module *module) DeleteSession(ctx context.Context, accessToken string) error {
 	return module.tokenizer.DeleteToken(ctx, accessToken)
+}
+
+func (module *module) GetRotationInterval(context.Context) time.Duration {
+	return module.tokenizer.Config().Rotation.Interval
 }
 
 func getProvider[T authn.AuthN](authNProvider authtypes.AuthNProvider, authNs map[authtypes.AuthNProvider]authn.AuthN) (T, error) {
