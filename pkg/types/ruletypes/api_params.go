@@ -256,6 +256,7 @@ func (r *PostableRule) MarshalJSON() ([]byte, error) {
 		}
 		aux.Evaluation = nil
 		aux.SchemaVersion = ""
+		aux.NotificationSettings = nil
 		return json.Marshal(aux)
 	default:
 		copyStruct := *r
@@ -433,6 +434,7 @@ func (g *GettableRule) MarshalJSON() ([]byte, error) {
 		}
 		aux.Evaluation = nil
 		aux.SchemaVersion = ""
+		aux.NotificationSettings = nil
 		return json.Marshal(aux)
 	default:
 		copyStruct := *g
