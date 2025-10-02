@@ -83,12 +83,19 @@ function LogsExplorerList({
 		[options],
 	);
 	useEffect(() => {
-		if (!isLoading && !isFetching && !isError && logs.length !== 0) {
-			logEvent('Logs Explorer: Data present', {
-				panelType: 'LIST',
-			});
-		}
-	}, [isLoading, isFetching, isError, logs.length]);
+        if (!isLoading && !isFetching && !isError && logs.length !== 0) {
+            logEvent('Logs Explorer: Data present', {
+                panelType: 'LIST',
+            });
+
+            if(activeLogIndex !== -1 && ref.current){
+                ref.current.scrollToIndex({
+                    index: activeLogIndex,
+                    align: 'center',
+                })
+            }
+        }
+    }, [isLoading, isFetching, isError, logs.length, activeLogIndex]);
 
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
