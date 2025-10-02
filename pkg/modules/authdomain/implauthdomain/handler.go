@@ -99,7 +99,7 @@ func (h *handler) List(rw http.ResponseWriter, r *http.Request) {
 		authDomains[i] = authtypes.NewGettableAuthDomainFromAuthDomain(domain)
 	}
 
-	render.Success(rw, http.StatusOK, domains)
+	render.Success(rw, http.StatusOK, authDomains)
 }
 
 func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
