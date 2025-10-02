@@ -5,9 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log/slog"
-	"time"
-
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
@@ -17,40 +14,28 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
+	"log/slog"
 )
 
 // Shared types for migration
-type identifiable struct {
-	ID valuer.UUID `json:"id" bun:"id,pk,type:text"`
-}
-
-type timeAuditable struct {
-	CreatedAt time.Time `bun:"created_at" json:"createdAt"`
-	UpdatedAt time.Time `bun:"updated_at" json:"updatedAt"`
-}
-
-type userAuditable struct {
-	CreatedBy string `bun:"created_by,type:text" json:"createdBy"`
-	UpdatedBy string `bun:"updated_by,type:text" json:"updatedBy"`
-}
 
 type expressionRoute struct {
 	bun.BaseModel `bun:"table:route_policy"`
-	identifiable
-	timeAuditable
-	userAuditable
+	types.Identifiable
+	types.TimeAuditable
+	types.UserAuditable
 
-	Expression     string `bun:"expression,type:text,notnull" json:"expression"`
-	ExpressionKind string `bun:"kind,type:text" json:"kind"`
+	Expression     string `bun:"expression,type:text,notnull"`
+	ExpressionKind string `bun:"kind,type:text"`
 
-	Channels []string `bun:"channels,type:jsonb" json:"channels"`
+	Channels []string `bun:"channels,type:jsonb"`
 
-	Name        string   `bun:"name,type:text" json:"name"`
-	Description string   `bun:"description,type:text" json:"description"`
-	Enabled     bool     `bun:"enabled,type:boolean,default:true" json:"enabled"`
-	Tags        []string `bun:"tags,type:jsonb" json:"tags,omitempty"`
+	Name        string   `bun:"name,type:text"`
+	Description string   `bun:"description,type:text"`
+	Enabled     bool     `bun:"enabled,type:boolean,default:true"`
+	Tags        []string `bun:"tags,type:jsonb"`
 
-	OrgID string `bun:"org_id,type:text,notnull" json:"orgId"`
+	OrgID string `bun:"org_id,type:text,notnull"`
 }
 
 type rule struct {
@@ -116,9 +101,9 @@ func (migration *addRoutePolicies) Up(ctx context.Context, db *bun.DB) error {
 			{Name: "kind", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "channels", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "name", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "description", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "description", DataType: sqlschema.DataTypeText},
 			{Name: "enabled", DataType: sqlschema.DataTypeBoolean, Nullable: false, Default: "true"},
-			{Name: "tags", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "tags", DataType: sqlschema.DataTypeText},
 			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 		},
 		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{
@@ -171,26 +156,9 @@ func (migration *addRoutePolicies) migrateRulesToRoutePolicies(ctx context.Conte
 
 	var routesToInsert []*expressionRoute
 
-	for _, r := range rules {
-		existingRouteCount, err := tx.NewSelect().
-			Model((*expressionRoute)(nil)).
-			Where("name = ? AND kind = ? AND org_id = ?", r.ID.StringValue(), "rule", r.OrgID).
-			Count(ctx)
-		if err != nil {
-			return errors.NewInternalf(errors.CodeInternal, "failed to check existing route for rule %s", r.ID.StringValue())
-		}
-
-		if existingRouteCount > 0 {
-			continue
-		}
-
-		routeList, err := migration.convertRulesToRoutes([]*rule{r}, channelsByOrg)
-		if err != nil {
-			return errors.NewInternalf(errors.CodeInternal, "converting rules to routes error: %v", err)
-		}
-		if len(routeList) > 0 {
-			routesToInsert = append(routesToInsert, routeList...)
-		}
+	routesToInsert, err = migration.convertRulesToRoutes(rules, channelsByOrg)
+	if err != nil {
+		return errors.NewInternalf(errors.CodeInternal, "converting rules to routes error: %v", err)
 	}
 
 	// Insert all routes in a single batch operation
@@ -229,14 +197,14 @@ func (migration *addRoutePolicies) convertRulesToRoutes(rules []*rule, channelsB
 		}
 		expression := fmt.Sprintf(`%s == "%s" && %s == "%s"`, "threshold.name", severity, "ruleId", r.ID.String())
 		route := &expressionRoute{
-			identifiable: identifiable{
+			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
-			timeAuditable: timeAuditable{
+			TimeAuditable: types.TimeAuditable{
 				CreatedAt: r.CreatedAt,
 				UpdatedAt: r.UpdatedAt,
 			},
-			userAuditable: userAuditable{
+			UserAuditable: types.UserAuditable{
 				CreatedBy: r.CreatedBy,
 				UpdatedBy: r.UpdatedBy,
 			},
@@ -286,15 +254,5 @@ func (migration *addRoutePolicies) getAllChannelsInTx(ctx context.Context, tx bu
 }
 
 func (migration *addRoutePolicies) Down(ctx context.Context, db *bun.DB) error {
-	table := &sqlschema.Table{
-		Name: "route_policy",
-	}
-
-	dropSQL := migration.sqlschema.Operator().DropTable(table)
-	for _, sqlStmt := range dropSQL {
-		if _, err := db.ExecContext(ctx, string(sqlStmt)); err != nil {
-			return err
-		}
-	}
 	return nil
 }
