@@ -50,7 +50,7 @@ func (handler *handler) Create(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, authDomain)
+	render.Success(rw, http.StatusCreated, authDomain.StorableAuthDomain().ID)
 }
 
 func (handler *handler) Delete(rw http.ResponseWriter, req *http.Request) {
