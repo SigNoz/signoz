@@ -7,20 +7,43 @@ import (
 )
 
 type Config struct {
-	// GCInterval is the interval to perform garbage collection
-	GCInterval time.Duration `mapstructure:"gc_interval"`
+	// GC config
+	GC GCConfig `mapstructure:"gc"`
 
-	// Interval to rotate tokens
-	RotationInterval time.Duration `mapstructure:"rotation_interval"`
+	// Rotation config
+	Rotation RotationConfig `mapstructure:"rotation"`
 
-	// Max for a user to be idle before being required to authenticate
-	IdleDuration time.Duration `mapstructure:"idle_duration"`
+	// Lifetime config
+	Lifetime LifetimeConfig `mapstructure:"lifetime"`
 
-	// Max a user can remain logged in before being asked to login.
-	MaxDuration time.Duration `mapstructure:"max_duration"`
+	// Token config
+	Token TokenConfig `mapstructure:"token"`
+}
 
-	// Max tokens a user can have
-	MaxTokens int `mapstructure:"max_tokens"`
+type RotationConfig struct {
+	// The interval to rotate tokens in.
+	Interval time.Duration `mapstructure:"interval"`
+
+	// The duration for which the previous token pair remains valid after a token pair is rotated.
+	Duration time.Duration `mapstructure:"duration"`
+}
+
+type GCConfig struct {
+	// The interval to perform garbage collection.
+	Interval time.Duration `mapstructure:"interval"`
+}
+
+type LifetimeConfig struct {
+	// The duration for which a user can be idle before being required to authenticate.
+	Idle time.Duration `mapstructure:"idle"`
+
+	// The duration for which a user can remain logged in before being asked to login.
+	Max time.Duration `mapstructure:"max"`
+}
+
+type TokenConfig struct {
+	// The maximum number of tokens a user can have.
+	MaxPerUser int `mapstructure:"max_per_user"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -29,11 +52,20 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func newConfig() factory.Config {
 	return &Config{
-		GCInterval:       1 * time.Hour,
-		RotationInterval: 30 * time.Minute,
-		IdleDuration:     7 * 24 * time.Hour,
-		MaxDuration:      30 * 24 * time.Hour,
-		MaxTokens:        5,
+		GC: GCConfig{
+			Interval: 1 * time.Hour, // 1 hour
+		},
+		Rotation: RotationConfig{
+			Interval: 30 * time.Minute, // 30 minutes
+			Duration: 60 * time.Second, // 60 seconds
+		},
+		Lifetime: LifetimeConfig{
+			Idle: 7 * 24 * time.Hour,  // 7 days
+			Max:  30 * 24 * time.Hour, // 30 days
+		},
+		Token: TokenConfig{
+			MaxPerUser: 5,
+		},
 	}
 }
 

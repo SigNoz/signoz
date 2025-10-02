@@ -64,7 +64,7 @@ func (handler *handler) CreateSessionByEmailPassword(rw http.ResponseWriter, req
 		return
 	}
 
-	render.Success(rw, http.StatusOK, authtypes.NewGettableTokenFromToken(token))
+	render.Success(rw, http.StatusOK, authtypes.NewGettableTokenFromToken(token, handler.module.GetRotationInterval(ctx)))
 }
 
 func (handler *handler) CreateSessionByGoogleCallback(rw http.ResponseWriter, req *http.Request) {
@@ -143,7 +143,7 @@ func (handler *handler) RotateSession(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, authtypes.NewGettableTokenFromToken(token))
+	render.Success(rw, http.StatusOK, authtypes.NewGettableTokenFromToken(token, handler.module.GetRotationInterval(ctx)))
 }
 
 func (handler *handler) DeleteSession(rw http.ResponseWriter, req *http.Request) {
