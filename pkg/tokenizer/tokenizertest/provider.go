@@ -61,3 +61,7 @@ func (provider *Provider) DeleteIdentity(context.Context, valuer.UUID) error {
 func (provider *Provider) DeleteTokensByUserID(context.Context, valuer.UUID) error {
 	panic("unimplemented")
 }
+
+func (provider *Provider) Config() tokenizer.Config {
+	panic("unimplemented")
+}

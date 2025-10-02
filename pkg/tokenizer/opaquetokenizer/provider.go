@@ -48,7 +48,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 }
 
 func (provider *provider) Start(ctx context.Context) error {
-	ticker := time.NewTicker(provider.config.GCInterval)
+	ticker := time.NewTicker(provider.config.GC.Interval)
 	defer ticker.Stop()
 
 	for {
@@ -73,7 +73,7 @@ func (provider *provider) CreateToken(ctx context.Context, identity *authtypes.I
 		return nil, err
 	}
 
-	if len(existingTokens) >= provider.config.MaxTokens {
+	if len(existingTokens) >= provider.config.Token.MaxPerUser {
 		slices.SortFunc(existingTokens, func(a, b *authtypes.Token) int {
 			return a.CreatedAt.Compare(b.CreatedAt)
 		})
@@ -113,7 +113,7 @@ func (provider *provider) GetIdentity(ctx context.Context, accessToken string) (
 		return nil, err
 	}
 
-	if err := token.IsValid(provider.config.RotationInterval, provider.config.IdleDuration, provider.config.MaxDuration); err != nil {
+	if err := token.IsValid(provider.config.Rotation.Interval, provider.config.Lifetime.Idle, provider.config.Lifetime.Max); err != nil {
 		span.RecordError(err)
 		return nil, err
 	}
@@ -144,8 +144,32 @@ func (provider *provider) RotateToken(ctx context.Context, accessToken string, r
 	ctx, span := provider.settings.Tracer().Start(ctx, "tokenizer.RotateToken")
 	defer span.End()
 
-	token, err := provider.tokenStore.GetByAccessToken(ctx, accessToken)
+	token, err := provider.tokenStore.GetByAccessTokenOrPreviousAccessToken(ctx, accessToken)
 	if err != nil {
+		span.RecordError(err)
+		// If the token is not found, return an unauthenticated error.
+		if errors.Ast(err, errors.TypeNotFound) {
+			return nil, errors.Wrap(err, errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid access token")
+		}
+
+		return nil, err
+	}
+
+	if token.PrevAccessToken == accessToken {
+		if token.PrevRefreshToken == refreshToken {
+			// If the token has been rotated within the rotation duration, do nothing and return the same token.
+			if !token.RotatedAt.IsZero() && token.RotatedAt.Before(time.Now().Add(-provider.config.Rotation.Duration)) {
+				return token, nil
+			}
+		}
+
+		err := errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid access token")
+		span.RecordError(err)
+		return nil, err
+	}
+
+	if token.AccessToken != accessToken {
+		err := errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid access token")
 		span.RecordError(err)
 		return nil, err
 	}
@@ -156,7 +180,7 @@ func (provider *provider) RotateToken(ctx context.Context, accessToken string, r
 		return nil, err
 	}
 
-	if err := token.IsExpired(provider.config.IdleDuration, provider.config.MaxDuration); err != nil {
+	if err := token.IsExpired(provider.config.Lifetime.Idle, provider.config.Lifetime.Max); err != nil {
 		span.RecordError(err)
 		return nil, err
 	}
@@ -210,6 +234,10 @@ func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[s
 	}, nil
 }
 
+func (provider *provider) Config() tokenizer.Config {
+	return provider.config
+}
+
 func (provider *provider) gc(ctx context.Context) error {
 	start, end, err := provider.sharder.GetMyOwnedKeyRange(ctx)
 	if err != nil {
@@ -223,7 +251,7 @@ func (provider *provider) gc(ctx context.Context) error {
 
 	var tokensToDelete []valuer.UUID
 	for _, token := range tokens {
-		if err := token.IsExpired(provider.config.IdleDuration, provider.config.MaxDuration); err != nil {
+		if err := token.IsExpired(provider.config.Lifetime.Idle, provider.config.Lifetime.Max); err != nil {
 			tokensToDelete = append(tokensToDelete, token.ID)
 		}
 	}
@@ -254,7 +282,7 @@ func (provider *provider) getOrGetSetToken(ctx context.Context, accessToken stri
 		return nil, err
 	}
 
-	err = provider.cache.Set(ctx, emptyOrgID, accessTokenCacheKey(accessToken), token, provider.config.MaxDuration)
+	err = provider.cache.Set(ctx, emptyOrgID, accessTokenCacheKey(accessToken), token, provider.config.Lifetime.Max)
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +291,7 @@ func (provider *provider) getOrGetSetToken(ctx context.Context, accessToken stri
 }
 
 func (provider *provider) setToken(ctx context.Context, token *authtypes.Token, create bool) error {
-	err := provider.cache.Set(ctx, emptyOrgID, accessTokenCacheKey(token.AccessToken), token, provider.config.MaxDuration)
+	err := provider.cache.Set(ctx, emptyOrgID, accessTokenCacheKey(token.AccessToken), token, provider.config.Lifetime.Max)
 	if err != nil {
 		return err
 	}
