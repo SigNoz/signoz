@@ -25,7 +25,7 @@ type expressionRoute struct {
 	types.TimeAuditable
 	types.UserAuditable
 
-	Expression     string `bun:"expression,type:text,notnull"`
+	Expression     string `bun:"expression,type:text"`
 	ExpressionKind string `bun:"kind,type:text"`
 
 	Channels []string `bun:"channels,type:jsonb"`
@@ -35,7 +35,7 @@ type expressionRoute struct {
 	Enabled     bool     `bun:"enabled,type:boolean,default:true"`
 	Tags        []string `bun:"tags,type:jsonb"`
 
-	OrgID string `bun:"org_id,type:text,notnull"`
+	OrgID string `bun:"org_id,type:text"`
 }
 
 type rule struct {
@@ -43,8 +43,8 @@ type rule struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	Deleted int    `bun:"deleted,notnull,default:0"`
-	Data    string `bun:"data,type:text,notnull"`
+	Deleted int    `bun:"deleted,default:0"`
+	Data    string `bun:"data,type:text"`
 	OrgID   string `bun:"org_id,type:text"`
 }
 
