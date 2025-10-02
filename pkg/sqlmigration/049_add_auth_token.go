@@ -10,25 +10,25 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-type addToken struct {
+type addAuthToken struct {
 	sqlstore  sqlstore.SQLStore
 	sqlschema sqlschema.SQLSchema
 }
 
-func NewAddTokenFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.NewProviderFactory(factory.MustNewName("add_token"), func(ctx context.Context, providerSettings factory.ProviderSettings, config Config) (SQLMigration, error) {
-		return newAddToken(ctx, providerSettings, config, sqlstore, sqlschema)
+func NewAddAuthTokenFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
+	return factory.NewProviderFactory(factory.MustNewName("add_auth_token"), func(ctx context.Context, providerSettings factory.ProviderSettings, config Config) (SQLMigration, error) {
+		return newAddAuthToken(ctx, providerSettings, config, sqlstore, sqlschema)
 	})
 }
 
-func newAddToken(_ context.Context, _ factory.ProviderSettings, _ Config, sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) (SQLMigration, error) {
-	return &addToken{
+func newAddAuthToken(_ context.Context, _ factory.ProviderSettings, _ Config, sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) (SQLMigration, error) {
+	return &addAuthToken{
 		sqlstore:  sqlstore,
 		sqlschema: sqlschema,
 	}, nil
 }
 
-func (migration *addToken) Register(migrations *migrate.Migrations) error {
+func (migration *addAuthToken) Register(migrations *migrate.Migrations) error {
 	if err := migrations.Register(migration.Up, migration.Down); err != nil {
 		return err
 	}
@@ -36,7 +36,7 @@ func (migration *addToken) Register(migrations *migrate.Migrations) error {
 	return nil
 }
 
-func (migration *addToken) Up(ctx context.Context, db *bun.DB) error {
+func (migration *addAuthToken) Up(ctx context.Context, db *bun.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -47,11 +47,13 @@ func (migration *addToken) Up(ctx context.Context, db *bun.DB) error {
 	}()
 
 	token := &sqlschema.Table{
-		Name: "token",
+		Name: "auth_token",
 		Columns: []*sqlschema.Column{
 			{Name: sqlschema.ColumnName("id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
 			{Name: sqlschema.ColumnName("meta"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
+			{Name: sqlschema.ColumnName("prev_access_token"), DataType: sqlschema.DataTypeText, Nullable: true, Default: ""},
 			{Name: sqlschema.ColumnName("access_token"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
+			{Name: sqlschema.ColumnName("prev_refresh_token"), DataType: sqlschema.DataTypeText, Nullable: true, Default: ""},
 			{Name: sqlschema.ColumnName("refresh_token"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
 			{Name: sqlschema.ColumnName("last_observed_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: true, Default: ""},
 			{Name: sqlschema.ColumnName("rotated_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: true, Default: ""},
@@ -88,6 +90,6 @@ func (migration *addToken) Up(ctx context.Context, db *bun.DB) error {
 	return nil
 }
 
-func (migration *addToken) Down(ctx context.Context, db *bun.DB) error {
+func (migration *addAuthToken) Down(ctx context.Context, db *bun.DB) error {
 	return nil
 }

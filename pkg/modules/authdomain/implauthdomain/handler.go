@@ -50,7 +50,7 @@ func (handler *handler) Create(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, authDomain)
+	render.Success(rw, http.StatusCreated, authDomain.StorableAuthDomain().ID)
 }
 
 func (handler *handler) Delete(rw http.ResponseWriter, req *http.Request) {
@@ -99,7 +99,7 @@ func (h *handler) List(rw http.ResponseWriter, r *http.Request) {
 		authDomains[i] = authtypes.NewGettableAuthDomainFromAuthDomain(domain)
 	}
 
-	render.Success(rw, http.StatusOK, domains)
+	render.Success(rw, http.StatusOK, authDomains)
 }
 
 func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {

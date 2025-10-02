@@ -3,6 +3,8 @@ package authtypes
 import (
 	"context"
 	"encoding/json"
+	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -43,24 +45,26 @@ func (typ *PostableRotateToken) UnmarshalJSON(data []byte) error {
 type StorableToken = Token
 
 type GettableToken struct {
-	AccessToken  string `json:"accessToken"`
-	ExpiresIn    int    `json:"expiresIn"`
 	TokenType    string `json:"tokenType"`
+	AccessToken  string `json:"accessToken"`
 	RefreshToken string `json:"refreshToken"`
+	ExpiresIn    int    `json:"expiresIn"`
 }
 
 type Token struct {
-	bun.BaseModel `bun:"table:token"`
+	bun.BaseModel `bun:"table:auth_token"`
 
-	ID             valuer.UUID       `bun:"id,pk,type:text"`
-	Meta           map[string]string `bun:"meta,notnull"`
-	AccessToken    string            `bun:"access_token,notnull"`
-	RefreshToken   string            `bun:"refresh_token,notnull"`
-	LastObservedAt time.Time         `bun:"last_observed_at,nullzero"`
-	RotatedAt      time.Time         `bun:"rotated_at,nullzero"`
-	CreatedAt      time.Time         `bun:"created_at,notnull"`
-	UpdatedAt      time.Time         `bun:"updated_at,notnull"`
-	UserID         valuer.UUID       `bun:"user_id,notnull"`
+	ID               valuer.UUID       `bun:"id,pk,type:text"`
+	Meta             map[string]string `bun:"meta,notnull"`
+	PrevAccessToken  string            `bun:"prev_access_token,nullzero"`
+	AccessToken      string            `bun:"access_token,notnull"`
+	PrevRefreshToken string            `bun:"prev_refresh_token,nullzero"`
+	RefreshToken     string            `bun:"refresh_token,notnull"`
+	LastObservedAt   time.Time         `bun:"last_observed_at,nullzero"`
+	RotatedAt        time.Time         `bun:"rotated_at,nullzero"`
+	CreatedAt        time.Time         `bun:"created_at,notnull"`
+	UpdatedAt        time.Time         `bun:"updated_at,notnull"`
+	UserID           valuer.UUID       `bun:"user_id,notnull"`
 }
 
 func NewToken(meta map[string]string, userID valuer.UUID) (*Token, error) {
@@ -68,22 +72,35 @@ func NewToken(meta map[string]string, userID valuer.UUID) (*Token, error) {
 	refreshToken := password.MustGenerate(32, 12, 0, true, true)
 
 	return &Token{
-		ID:             valuer.GenerateUUID(),
-		Meta:           meta,
-		AccessToken:    accessToken,
-		RefreshToken:   refreshToken,
-		LastObservedAt: time.Time{},
-		RotatedAt:      time.Time{},
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
-		UserID:         userID,
+		ID:               valuer.GenerateUUID(),
+		Meta:             meta,
+		PrevAccessToken:  "",
+		AccessToken:      accessToken,
+		PrevRefreshToken: "",
+		RefreshToken:     refreshToken,
+		LastObservedAt:   time.Time{},
+		RotatedAt:        time.Time{},
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
+		UserID:           userID,
 	}, nil
 }
 
-func NewGettableTokenFromToken(token *Token) *GettableToken {
+func NewGettableTokenFromToken(token *Token, rotationInterval time.Duration) *GettableToken {
 	return &GettableToken{
+		TokenType:    "bearer",
 		AccessToken:  token.AccessToken,
 		RefreshToken: token.RefreshToken,
+		ExpiresIn:    int(time.Until(token.RotationAt(rotationInterval)).Seconds()),
+	}
+}
+
+func NewURLValuesFromToken(token *Token, rotationInterval time.Duration) url.Values {
+	return url.Values{
+		"tokenType":    {"bearer"},
+		"accessToken":  {token.AccessToken},
+		"refreshToken": {token.RefreshToken},
+		"expiresIn":    {strconv.Itoa(int(time.Until(token.RotationAt(rotationInterval)).Seconds()))},
 	}
 }
 
@@ -129,7 +146,9 @@ func (typ *Token) IsRotationRequired(rotationInterval time.Duration) error {
 
 func (typ *Token) Rotate() error {
 	// Generate new access and refresh tokens.
+	typ.PrevAccessToken = typ.AccessToken
 	typ.AccessToken = password.MustGenerate(32, 10, 0, true, true)
+	typ.PrevRefreshToken = typ.RefreshToken
 	typ.RefreshToken = password.MustGenerate(32, 12, 0, true, true)
 
 	// Set the rotated at time.
@@ -138,7 +157,18 @@ func (typ *Token) Rotate() error {
 	// Set the updated at time.
 	typ.UpdatedAt = time.Now()
 
+	// Reset the last observed at time.
+	typ.LastObservedAt = time.Time{}
+
 	return nil
+}
+
+func (typ *Token) RotationAt(rotationInterval time.Duration) time.Time {
+	if typ.RotatedAt.IsZero() {
+		return typ.CreatedAt.Add(rotationInterval)
+	}
+
+	return typ.RotatedAt.Add(rotationInterval)
 }
 
 func (typ Token) MarshalBinary() ([]byte, error) {
@@ -158,6 +188,9 @@ type TokenStore interface {
 
 	// Get a token by AccessToken.
 	GetByAccessToken(context.Context, string) (*StorableToken, error)
+
+	// Get a token by access token or previous access token.
+	GetByAccessTokenOrPreviousAccessToken(context.Context, string) (*StorableToken, error)
 
 	// Get a token by userID and refresh token.
 	GetByUserIDAndRefreshToken(context.Context, valuer.UUID, string) (*StorableToken, error)

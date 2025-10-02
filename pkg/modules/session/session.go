@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -24,6 +25,9 @@ type Module interface {
 
 	// Delete a session.
 	DeleteSession(ctx context.Context, accessToken string) error
+
+	// Get the rotation interval for the session.
+	GetRotationInterval(ctx context.Context) time.Duration
 }
 
 type Handler interface {
