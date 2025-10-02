@@ -114,3 +114,78 @@ func (index *UniqueIndex) ToDropSQL(fmter SQLFormatter) []byte {
 
 	return sql
 }
+
+type NormalIndex struct {
+	TableName   TableName
+	ColumnNames []ColumnName
+	name        string
+}
+
+func (index *NormalIndex) Name() string {
+	if index.name != "" {
+		return index.name
+	}
+
+	var b strings.Builder
+	b.WriteString(IndexTypeIndex.String())
+	b.WriteString("_")
+	b.WriteString(string(index.TableName))
+	b.WriteString("_")
+	for i, column := range index.ColumnNames {
+		if i > 0 {
+			b.WriteString("_")
+		}
+		b.WriteString(string(column))
+	}
+	return b.String()
+}
+
+func (index *NormalIndex) Named(name string) Index {
+	copyOfColumnNames := make([]ColumnName, len(index.ColumnNames))
+	copy(copyOfColumnNames, index.ColumnNames)
+
+	return &NormalIndex{
+		TableName:   index.TableName,
+		ColumnNames: copyOfColumnNames,
+		name:        name,
+	}
+}
+
+func (*NormalIndex) Type() IndexType {
+	return IndexTypeIndex
+}
+
+func (index *NormalIndex) Columns() []ColumnName {
+	return index.ColumnNames
+}
+
+func (index *NormalIndex) ToCreateSQL(fmter SQLFormatter) []byte {
+	sql := []byte{}
+
+	sql = append(sql, "CREATE INDEX IF NOT EXISTS "...)
+	sql = fmter.AppendIdent(sql, index.Name())
+	sql = append(sql, " ON "...)
+	sql = fmter.AppendIdent(sql, string(index.TableName))
+	sql = append(sql, " ("...)
+
+	for i, column := range index.ColumnNames {
+		if i > 0 {
+			sql = append(sql, ", "...)
+		}
+
+		sql = fmter.AppendIdent(sql, string(column))
+	}
+
+	sql = append(sql, ")"...)
+
+	return sql
+}
+
+func (index *NormalIndex) ToDropSQL(fmter SQLFormatter) []byte {
+	sql := []byte{}
+
+	sql = append(sql, "DROP INDEX IF EXISTS "...)
+	sql = fmter.AppendIdent(sql, index.Name())
+
+	return sql
+}

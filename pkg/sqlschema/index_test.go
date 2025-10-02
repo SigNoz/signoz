@@ -38,6 +38,31 @@ func TestIndexToCreateSQL(t *testing.T) {
 			},
 			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "my_index" ON "users" ("id", "name", "email")`,
 		},
+		{
+			name: "Normal_1Column",
+			index: &NormalIndex{
+				TableName:   "users",
+				ColumnNames: []ColumnName{"org_id"},
+			},
+			sql: `CREATE INDEX IF NOT EXISTS "ix_users_org_id" ON "users" ("org_id")`,
+		},
+		{
+			name: "Normal_2Columns",
+			index: &NormalIndex{
+				TableName:   "users",
+				ColumnNames: []ColumnName{"org_id", "status"},
+			},
+			sql: `CREATE INDEX IF NOT EXISTS "ix_users_org_id_status" ON "users" ("org_id", "status")`,
+		},
+		{
+			name: "Normal_3Columns_Named",
+			index: &NormalIndex{
+				TableName:   "route_policy",
+				ColumnNames: []ColumnName{"org_id", "enabled", "kind"},
+				name:        "idx_custom_name",
+			},
+			sql: `CREATE INDEX IF NOT EXISTS "idx_custom_name" ON "route_policy" ("org_id", "enabled", "kind")`,
+		},
 	}
 
 	for _, testCase := range testCases {
