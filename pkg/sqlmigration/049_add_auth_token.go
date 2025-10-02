@@ -71,10 +71,10 @@ func (migration *addAuthToken) Up(ctx context.Context, db *bun.DB) error {
 	createSQLs := migration.sqlschema.Operator().CreateTable(token)
 	sqls = append(sqls, createSQLs...)
 
-	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "token", ColumnNames: []sqlschema.ColumnName{"access_token"}})
+	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "auth_token", ColumnNames: []sqlschema.ColumnName{"access_token"}})
 	sqls = append(sqls, indexSQLs...)
 
-	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "token", ColumnNames: []sqlschema.ColumnName{"refresh_token"}})
+	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "auth_token", ColumnNames: []sqlschema.ColumnName{"refresh_token"}})
 	sqls = append(sqls, indexSQLs...)
 
 	for _, sql := range sqls {
