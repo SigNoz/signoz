@@ -77,6 +77,11 @@ func (migration *addRoutePolicies) Register(migrations *migrate.Migrations) erro
 }
 
 func (migration *addRoutePolicies) Up(ctx context.Context, db *bun.DB) error {
+	_, _, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("route_policy"))
+	if err == nil {
+		return nil
+	}
+
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -145,10 +150,6 @@ func (migration *addRoutePolicies) migrateRulesToRoutePolicies(ctx context.Conte
 		return errors.NewInternalf(errors.CodeInternal, "failed to fetch rules")
 	}
 
-	if len(rules) == 0 {
-		return nil
-	}
-
 	channelsByOrg, err := migration.getAllChannelsInTx(ctx, tx)
 	if err != nil {
 		return errors.NewInternalf(errors.CodeInternal, "fetching channels error: %v", err)
@@ -176,12 +177,10 @@ func (migration *addRoutePolicies) migrateRulesToRoutePolicies(ctx context.Conte
 
 func (migration *addRoutePolicies) convertRulesToRoutes(rules []*rule, channelsByOrg map[string][]string) ([]*expressionRoute, error) {
 	var routes []*expressionRoute
-	var errorList []error
 	for _, r := range rules {
 		var gettableRule ruletypes.GettableRule
 		if err := json.Unmarshal([]byte(r.Data), &gettableRule); err != nil {
-			errorList = append(errorList, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal gettableRule for rule %s : error : %v", r.ID.StringValue(), err))
-			continue
+			return nil, err
 		}
 
 		if len(gettableRule.PreferredChannels) == 0 {
@@ -218,9 +217,6 @@ func (migration *addRoutePolicies) convertRulesToRoutes(rules []*rule, channelsB
 			OrgID:          r.OrgID,
 		}
 		routes = append(routes, route)
-	}
-	if len(errorList) > 0 {
-		return nil, errors.Join(errorList...)
 	}
 	return routes, nil
 }
