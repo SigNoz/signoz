@@ -180,7 +180,7 @@ func (migration *addRoutePolicies) convertRulesToRoutes(rules []*rule, channelsB
 	for _, r := range rules {
 		var gettableRule ruletypes.GettableRule
 		if err := json.Unmarshal([]byte(r.Data), &gettableRule); err != nil {
-			return nil, err
+			return nil, errors.NewInternalf(errors.CodeInternal, "failed to unmarshal rule data for rule ID %s: %v", r.ID, err)
 		}
 
 		if len(gettableRule.PreferredChannels) == 0 {
