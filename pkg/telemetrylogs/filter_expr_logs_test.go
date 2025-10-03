@@ -462,8 +462,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "FREETEXT with conditions",
 			query:                 "error service.name=authentication",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?))",
-			expectedArgs:          []any{"error", "authentication", "NULL"},
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))",
+			expectedArgs:          []any{"error", "authentication"},
 			expectedErrorContains: "",
 		},
 
@@ -820,8 +820,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Basic equality",
 			query:                 "service.name=\"api\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?)",
-			expectedArgs:          []any{"api", "NULL"},
+			expectedQuery:         "WHERE (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)",
+			expectedArgs:          []any{"api"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1180,16 +1180,16 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "IN operator (parentheses)",
 			query:                 "service.name IN (\"api\", \"web\", \"auth\")",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ?) AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?)",
-			expectedArgs:          []any{"api", "web", "auth", "NULL"},
+			expectedQuery:         "WHERE ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ?) AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)",
+			expectedArgs:          []any{"api", "web", "auth"},
 			expectedErrorContains: "",
 		},
 		{
 			category:              "IN operator (parentheses)",
 			query:                 "environment IN (\"dev\", \"test\", \"staging\", \"prod\")",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? OR multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? OR multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? OR multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ?) AND multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) <> ?)",
-			expectedArgs:          []any{"dev", "test", "staging", "prod", "NULL"},
+			expectedQuery:         "WHERE ((multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? OR multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? OR multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? OR multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ?) AND multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) IS NOT NULL)",
+			expectedArgs:          []any{"dev", "test", "staging", "prod"},
 			expectedErrorContains: "",
 		},
 
@@ -1214,16 +1214,16 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "IN operator (brackets)",
 			query:                 "service.name IN [\"api\", \"web\", \"auth\"]",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ?) AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?)",
-			expectedArgs:          []any{"api", "web", "auth", "NULL"},
+			expectedQuery:         "WHERE ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ?) AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)",
+			expectedArgs:          []any{"api", "web", "auth"},
 			expectedErrorContains: "",
 		},
 		{
 			category:              "IN operator (brackets)",
 			query:                 "environment IN [\"dev\", \"test\", \"staging\", \"prod\"]",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? OR multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? OR multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? OR multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ?) AND multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) <> ?)",
-			expectedArgs:          []any{"dev", "test", "staging", "prod", "NULL"},
+			expectedQuery:         "WHERE ((multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? OR multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? OR multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? OR multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ?) AND multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) IS NOT NULL)",
+			expectedArgs:          []any{"dev", "test", "staging", "prod"},
 			expectedErrorContains: "",
 		},
 
@@ -1328,6 +1328,13 @@ func TestFilterExprLogs(t *testing.T) {
 			expectedArgs:          []any{true},
 			expectedErrorContains: "",
 		},
+		{
+			category:              "EXISTS operator on resource",
+			query:                 "service.name EXISTS",
+			shouldPass:            true,
+			expectedQuery:         "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL",
+			expectedErrorContains: "",
+		},
 
 		// NOT EXISTS
 		{
@@ -1368,6 +1375,13 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            true,
 			expectedQuery:         "WHERE mapContains(attributes_string, 'response.body.data') <> ?",
 			expectedArgs:          []any{true},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "EXISTS operator on resource",
+			query:                 "service.name NOT EXISTS",
+			shouldPass:            true,
+			expectedQuery:         "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NULL",
 			expectedErrorContains: "",
 		},
 
@@ -1540,8 +1554,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Explicit AND",
 			query:                 "status=200 AND service.name=\"api\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?))",
-			expectedArgs:          []any{float64(200), true, "api", "NULL"},
+			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))",
+			expectedArgs:          []any{float64(200), true, "api"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1574,8 +1588,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Explicit OR",
 			query:                 "service.name=\"api\" OR service.name=\"web\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?) OR (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?))",
-			expectedArgs:          []any{"api", "NULL", "web", "NULL"},
+			expectedQuery:         "WHERE ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) OR (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))",
+			expectedArgs:          []any{"api", "web"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1600,8 +1614,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "NOT with expressions",
 			query:                 "NOT service.name=\"api\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE NOT ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?))",
-			expectedArgs:          []any{"api", "NULL"},
+			expectedQuery:         "WHERE NOT ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))",
+			expectedArgs:          []any{"api"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1618,8 +1632,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "AND + OR combinations",
 			query:                 "status=200 AND (service.name=\"api\" OR service.name=\"web\")",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?) OR (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?))))",
-			expectedArgs:          []any{float64(200), true, "api", "NULL", "web", "NULL"},
+			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) OR (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))))",
+			expectedArgs:          []any{float64(200), true, "api", "web"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1644,8 +1658,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "AND + NOT combinations",
 			query:                 "status=200 AND NOT service.name=\"api\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND NOT ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?)))",
-			expectedArgs:          []any{float64(200), true, "api", "NULL"},
+			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND NOT ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)))",
+			expectedArgs:          []any{float64(200), true, "api"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1662,8 +1676,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "OR + NOT combinations",
 			query:                 "NOT status=200 OR NOT service.name=\"api\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (NOT ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?)) OR NOT ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?)))",
-			expectedArgs:          []any{float64(200), true, "api", "NULL"},
+			expectedQuery:         "WHERE (NOT ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?)) OR NOT ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)))",
+			expectedArgs:          []any{float64(200), true, "api"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1680,8 +1694,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "AND + OR + NOT combinations",
 			query:                 "status=200 AND (service.name=\"api\" OR NOT duration>1000)",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?) OR NOT ((toFloat64(attributes_number['duration']) > ? AND mapContains(attributes_number, 'duration') = ?)))))",
-			expectedArgs:          []any{float64(200), true, "api", "NULL", float64(1000), true},
+			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) OR NOT ((toFloat64(attributes_number['duration']) > ? AND mapContains(attributes_number, 'duration') = ?)))))",
+			expectedArgs:          []any{float64(200), true, "api", float64(1000), true},
 			expectedErrorContains: "",
 		},
 		{
@@ -1696,8 +1710,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "AND + OR + NOT combinations",
 			query:                 "NOT (status=200 AND service.name=\"api\") OR count>0",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (NOT ((((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?)))) OR (toFloat64(attributes_number['count']) > ? AND mapContains(attributes_number, 'count') = ?))",
-			expectedArgs:          []any{float64(200), true, "api", "NULL", float64(0), true},
+			expectedQuery:         "WHERE (NOT ((((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)))) OR (toFloat64(attributes_number['count']) > ? AND mapContains(attributes_number, 'count') = ?))",
+			expectedArgs:          []any{float64(200), true, "api", float64(0), true},
 			expectedErrorContains: "",
 		},
 
@@ -1706,8 +1720,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Implicit AND",
 			query:                 "status=200 service.name=\"api\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?))",
-			expectedArgs:          []any{float64(200), true, "api", "NULL"},
+			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))",
+			expectedArgs:          []any{float64(200), true, "api"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1732,8 +1746,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Mixed implicit/explicit AND",
 			query:                 "status=200 AND service.name=\"api\" duration<1000",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?) AND (toFloat64(attributes_number['duration']) < ? AND mapContains(attributes_number, 'duration') = ?))",
-			expectedArgs:          []any{float64(200), true, "api", "NULL", float64(1000), true},
+			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) AND (toFloat64(attributes_number['duration']) < ? AND mapContains(attributes_number, 'duration') = ?))",
+			expectedArgs:          []any{float64(200), true, "api", float64(1000), true},
 			expectedErrorContains: "",
 		},
 		{
@@ -1758,8 +1772,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Simple grouping",
 			query:                 "service.name=\"api\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?)",
-			expectedArgs:          []any{"api", "NULL"},
+			expectedQuery:         "WHERE (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)",
+			expectedArgs:          []any{"api"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1784,8 +1798,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Nested grouping",
 			query:                 "(((service.name=\"api\")))",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?))))",
-			expectedArgs:          []any{"api", "NULL"},
+			expectedQuery:         "WHERE ((((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))))",
+			expectedArgs:          []any{"api"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1802,8 +1816,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Complex nested grouping",
 			query:                 "(status=200 AND (service.name=\"api\" OR service.name=\"web\"))",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?) OR (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?)))))",
-			expectedArgs:          []any{float64(200), true, "api", "NULL", "web", "NULL"},
+			expectedQuery:         "WHERE (((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) OR (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)))))",
+			expectedArgs:          []any{float64(200), true, "api", "web"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1828,16 +1842,16 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Deep nesting",
 			query:                 "(((status=200 OR status=201) AND service.name=\"api\") OR ((status=202 OR status=203) AND service.name=\"web\"))",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (((((((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) OR (toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?))) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?))) OR (((((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) OR (toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?))) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?)))))",
-			expectedArgs:          []any{float64(200), true, float64(201), true, "api", "NULL", float64(202), true, float64(203), true, "web", "NULL"},
+			expectedQuery:         "WHERE (((((((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) OR (toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?))) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))) OR (((((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) OR (toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?))) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)))))",
+			expectedArgs:          []any{float64(200), true, float64(201), true, "api", float64(202), true, float64(203), true, "web"},
 			expectedErrorContains: "",
 		},
 		{
 			category:              "Deep nesting",
 			query:                 "(count>0 AND ((duration<1000 AND service.name=\"api\") OR (duration<500 AND service.name=\"web\")))",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (((toFloat64(attributes_number['count']) > ? AND mapContains(attributes_number, 'count') = ?) AND (((((toFloat64(attributes_number['duration']) < ? AND mapContains(attributes_number, 'duration') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?))) OR (((toFloat64(attributes_number['duration']) < ? AND mapContains(attributes_number, 'duration') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?)))))))",
-			expectedArgs:          []any{float64(0), true, float64(1000), true, "api", "NULL", float64(500), true, "web", "NULL"},
+			expectedQuery:         "WHERE (((toFloat64(attributes_number['count']) > ? AND mapContains(attributes_number, 'count') = ?) AND (((((toFloat64(attributes_number['duration']) < ? AND mapContains(attributes_number, 'duration') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))) OR (((toFloat64(attributes_number['duration']) < ? AND mapContains(attributes_number, 'duration') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)))))))",
+			expectedArgs:          []any{float64(0), true, float64(1000), true, "api", float64(500), true, "web"},
 			expectedErrorContains: "",
 		},
 
@@ -1846,16 +1860,16 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "String quote styles",
 			query:                 "service.name=\"api\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?)",
-			expectedArgs:          []any{"api", "NULL"},
+			expectedQuery:         "WHERE (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)",
+			expectedArgs:          []any{"api"},
 			expectedErrorContains: "",
 		},
 		{
 			category:              "String quote styles",
 			query:                 "service.name='api'",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?)",
-			expectedArgs:          []any{"api", "NULL"},
+			expectedQuery:         "WHERE (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)",
+			expectedArgs:          []any{"api"},
 			expectedErrorContains: "",
 		},
 		{
@@ -2014,29 +2028,29 @@ func TestFilterExprLogs(t *testing.T) {
 			category:      "Operator precedence",
 			query:         "NOT status=200 AND service.name=\"api\"",
 			shouldPass:    true,
-			expectedQuery: "WHERE (NOT ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?)) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?))",
-			expectedArgs:  []any{float64(200), true, "api", "NULL"}, // Should be (NOT status=200) AND service.name="api"
+			expectedQuery: "WHERE (NOT ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?)) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))",
+			expectedArgs:  []any{float64(200), true, "api"}, // Should be (NOT status=200) AND service.name="api"
 		},
 		{
 			category:      "Operator precedence",
 			query:         "status=200 AND service.name=\"api\" OR service.name=\"web\"",
 			shouldPass:    true,
-			expectedQuery: "WHERE (((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?)) OR (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?))",
-			expectedArgs:  []any{float64(200), true, "api", "NULL", "web", "NULL"}, // Should be (status=200 AND service.name="api") OR service.name="web"
+			expectedQuery: "WHERE (((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)) OR (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))",
+			expectedArgs:  []any{float64(200), true, "api", "web"}, // Should be (status=200 AND service.name="api") OR service.name="web"
 		},
 		{
 			category:      "Operator precedence",
 			query:         "NOT status=200 OR NOT service.name=\"api\"",
 			shouldPass:    true,
-			expectedQuery: "WHERE (NOT ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?)) OR NOT ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?)))",
-			expectedArgs:  []any{float64(200), true, "api", "NULL"}, // Should be (NOT status=200) OR (NOT service.name="api")
+			expectedQuery: "WHERE (NOT ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?)) OR NOT ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)))",
+			expectedArgs:  []any{float64(200), true, "api"}, // Should be (NOT status=200) OR (NOT service.name="api")
 		},
 		{
 			category:      "Operator precedence",
 			query:         "status=200 OR service.name=\"api\" AND level=\"ERROR\"",
 			shouldPass:    true,
-			expectedQuery: "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) OR ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?) AND (attributes_string['level'] = ? AND mapContains(attributes_string, 'level') = ?)))",
-			expectedArgs:  []any{float64(200), true, "api", "NULL", "ERROR", true}, // Should be status=200 OR (service.name="api" AND level="ERROR")
+			expectedQuery: "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) OR ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) AND (attributes_string['level'] = ? AND mapContains(attributes_string, 'level') = ?)))",
+			expectedArgs:  []any{float64(200), true, "api", "ERROR", true}, // Should be status=200 OR (service.name="api" AND level="ERROR")
 		},
 
 		// Different whitespace patterns
@@ -2060,8 +2074,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:      "Whitespace patterns",
 			query:         "status=200  AND     service.name=\"api\"",
 			shouldPass:    true,
-			expectedQuery: "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?))",
-			expectedArgs:  []any{float64(200), true, "api", "NULL"}, // Multiple spaces
+			expectedQuery: "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))",
+			expectedArgs:  []any{float64(200), true, "api"}, // Multiple spaces
 		},
 
 		// More Unicode characters
@@ -2230,8 +2244,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:      "More common filters",
 			query:         "service.name=\"api\" AND (status>=500 OR duration>1000) AND NOT message CONTAINS \"expected\"",
 			shouldPass:    true,
-			expectedQuery: "WHERE ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?) AND (((toFloat64(attributes_number['status']) >= ? AND mapContains(attributes_number, 'status') = ?) OR (toFloat64(attributes_number['duration']) > ? AND mapContains(attributes_number, 'duration') = ?))) AND NOT ((LOWER(attributes_string['message']) LIKE LOWER(?) AND mapContains(attributes_string, 'message') = ?)))",
-			expectedArgs:  []any{"api", "NULL", float64(500), true, float64(1000), true, "%expected%", true},
+			expectedQuery: "WHERE ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) AND (((toFloat64(attributes_number['status']) >= ? AND mapContains(attributes_number, 'status') = ?) OR (toFloat64(attributes_number['duration']) > ? AND mapContains(attributes_number, 'duration') = ?))) AND NOT ((LOWER(attributes_string['message']) LIKE LOWER(?) AND mapContains(attributes_string, 'message') = ?)))",
+			expectedArgs:  []any{"api", float64(500), true, float64(1000), true, "%expected%", true},
 		},
 
 		// Edge cases
@@ -2296,8 +2310,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:      "Unusual whitespace",
 			query:         "status   =    200    AND   service.name    =   \"api\"",
 			shouldPass:    true,
-			expectedQuery: "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?))",
-			expectedArgs:  []any{float64(200), true, "api", "NULL"},
+			expectedQuery: "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))",
+			expectedArgs:  []any{float64(200), true, "api"},
 		},
 		{
 			category:              "Unusual whitespace",
@@ -2357,13 +2371,13 @@ func TestFilterExprLogs(t *testing.T) {
 		  )
 		`,
 			shouldPass:    true,
-			expectedQuery: "WHERE ((((((((toFloat64(attributes_number['status']) >= ? AND mapContains(attributes_number, 'status') = ?) AND (toFloat64(attributes_number['status']) < ? AND mapContains(attributes_number, 'status') = ?))) OR (((toFloat64(attributes_number['status']) >= ? AND mapContains(attributes_number, 'status') = ?) AND (toFloat64(attributes_number['status']) < ? AND mapContains(attributes_number, 'status') = ?) AND NOT ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?)))))) AND ((((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ?) AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?) OR (((multiIf(resource.`service.type` IS NOT NULL, resource.`service.type`::String, mapContains(resources_string, 'service.type'), resources_string['service.type'], NULL) = ? AND multiIf(resource.`service.type` IS NOT NULL, resource.`service.type`::String, mapContains(resources_string, 'service.type'), resources_string['service.type'], NULL) <> ?) AND NOT ((multiIf(resource.`service.deprecated` IS NOT NULL, resource.`service.deprecated`::String, mapContains(resources_string, 'service.deprecated'), resources_string['service.deprecated'], NULL) = ? AND multiIf(resource.`service.deprecated` IS NOT NULL, resource.`service.deprecated`::String, mapContains(resources_string, 'service.deprecated'), resources_string['service.deprecated'], NULL) <> ?)))))))) AND (((((toFloat64(attributes_number['duration']) < ? AND mapContains(attributes_number, 'duration') = ?) OR ((toFloat64(attributes_number['duration']) BETWEEN ? AND ? AND mapContains(attributes_number, 'duration') = ?)))) AND ((multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) <> ? OR (((multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? AND multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) <> ?) AND (attributes_bool['is_automated_test'] = ? AND mapContains(attributes_bool, 'is_automated_test') = ?))))))) AND NOT ((((((LOWER(attributes_string['message']) LIKE LOWER(?) AND mapContains(attributes_string, 'message') = ?) OR (LOWER(attributes_string['message']) LIKE LOWER(?) AND mapContains(attributes_string, 'message') = ?))) AND (attributes_string['severity'] = ? AND mapContains(attributes_string, 'severity') = ?)))))",
+			expectedQuery: "WHERE ((((((((toFloat64(attributes_number['status']) >= ? AND mapContains(attributes_number, 'status') = ?) AND (toFloat64(attributes_number['status']) < ? AND mapContains(attributes_number, 'status') = ?))) OR (((toFloat64(attributes_number['status']) >= ? AND mapContains(attributes_number, 'status') = ?) AND (toFloat64(attributes_number['status']) < ? AND mapContains(attributes_number, 'status') = ?) AND NOT ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?)))))) AND ((((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ?) AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) OR (((multiIf(resource.`service.type` IS NOT NULL, resource.`service.type`::String, mapContains(resources_string, 'service.type'), resources_string['service.type'], NULL) = ? AND multiIf(resource.`service.type` IS NOT NULL, resource.`service.type`::String, mapContains(resources_string, 'service.type'), resources_string['service.type'], NULL) IS NOT NULL) AND NOT ((multiIf(resource.`service.deprecated` IS NOT NULL, resource.`service.deprecated`::String, mapContains(resources_string, 'service.deprecated'), resources_string['service.deprecated'], NULL) = ? AND multiIf(resource.`service.deprecated` IS NOT NULL, resource.`service.deprecated`::String, mapContains(resources_string, 'service.deprecated'), resources_string['service.deprecated'], NULL) IS NOT NULL)))))))) AND (((((toFloat64(attributes_number['duration']) < ? AND mapContains(attributes_number, 'duration') = ?) OR ((toFloat64(attributes_number['duration']) BETWEEN ? AND ? AND mapContains(attributes_number, 'duration') = ?)))) AND ((multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) <> ? OR (((multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? AND multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) IS NOT NULL) AND (attributes_bool['is_automated_test'] = ? AND mapContains(attributes_bool, 'is_automated_test') = ?))))))) AND NOT ((((((LOWER(attributes_string['message']) LIKE LOWER(?) AND mapContains(attributes_string, 'message') = ?) OR (LOWER(attributes_string['message']) LIKE LOWER(?) AND mapContains(attributes_string, 'message') = ?))) AND (attributes_string['severity'] = ? AND mapContains(attributes_string, 'severity') = ?)))))",
 			expectedArgs: []any{
 				float64(200), true, float64(300), true, float64(400), true, float64(500), true, float64(404), true,
-				"api", "web", "auth", "NULL",
-				"internal", "NULL", true, "NULL",
+				"api", "web", "auth",
+				"internal", true,
 				float64(1000), true, float64(1000), float64(5000), true,
-				"test", "test", "NULL", true, true,
+				"test", "test", true, true,
 				"%warning%", true, "%deprecated%", true,
 				"low", true,
 			},
