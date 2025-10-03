@@ -2,14 +2,12 @@ import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { PayloadProps, Signup } from 'types/api/user/loginPrecheck';
-import { Props } from 'types/api/user/signup';
+import { PayloadProps, UserResponse } from 'types/api/user/getUser';
 
-const signup = async (props: Props): Promise<SuccessResponseV2<Signup>> => {
+const get = async (): Promise<SuccessResponseV2<UserResponse>> => {
 	try {
-		const response = await axios.post<PayloadProps>(`/register`, {
-			...props,
-		});
+		const response = await axios.get<PayloadProps>(`/user/me`);
+
 		return {
 			httpStatusCode: response.status,
 			data: response.data.data,
@@ -19,4 +17,4 @@ const signup = async (props: Props): Promise<SuccessResponseV2<Signup>> => {
 	}
 };
 
-export default signup;
+export default get;

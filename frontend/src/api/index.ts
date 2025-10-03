@@ -2,7 +2,7 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import getLocalStorageApi from 'api/browser/localstorage/get';
-import loginApi from 'api/v1/login/login';
+import post from 'api/v2/sessions/rotate/post';
 import afterLogin from 'AppRoutes/utils';
 import axios, {
 	AxiosError,
@@ -77,16 +77,11 @@ const interceptorRejected = async (
 			// reject the refresh token error
 			if (response.status === 401 && response.config.url !== '/login') {
 				try {
-					const response = await loginApi({
+					const response = await post({
 						refreshToken: getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '',
 					});
 
-					afterLogin(
-						response.data.userId,
-						response.data.accessJwt,
-						response.data.refreshJwt,
-						true,
-					);
+					afterLogin(response.data.accessToken, response.data.refreshToken, true);
 
 					try {
 						const reResponse = await axios(
@@ -95,7 +90,7 @@ const interceptorRejected = async (
 								method: value.config.method,
 								headers: {
 									...value.config.headers,
-									Authorization: `Bearer ${response.data.accessJwt}`,
+									Authorization: `Bearer ${response.data.accessToken}`,
 								},
 								data: {
 									...JSON.parse(value.config.data || '{}'),
@@ -114,7 +109,7 @@ const interceptorRejected = async (
 				}
 			}
 			// when refresh token is expired
-			if (response.status === 401 && response.config.url === '/login') {
+			if (response.status === 401 && response.config.url === '/sessions') {
 				Logout();
 			}
 		}
