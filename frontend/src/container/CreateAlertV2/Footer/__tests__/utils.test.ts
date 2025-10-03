@@ -154,7 +154,7 @@ describe('Footer utils', () => {
 			...INITIAL_NOTIFICATION_SETTINGS_STATE,
 			reNotification: {
 				enabled: true,
-				value: 1,
+				value: 30,
 				unit: UniversalYAxisUnit.MINUTES,
 				conditions: ['firing'],
 			},
