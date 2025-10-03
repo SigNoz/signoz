@@ -223,3 +223,17 @@ func (r *maintenance) EditPlannedMaintenance(ctx context.Context, maintenance ru
 
 	return nil
 }
+
+func (r *maintenance) DeletePlannedMaintenanceRulesByRuleID(ctx context.Context, ruleID valuer.UUID) error {
+	_, err := r.sqlstore.
+		BunDBCtx(ctx).
+		NewDelete().
+		Model(new(ruletypes.StorablePlannedMaintenanceRule)).
+		Where("rule_id = ?", ruleID.StringValue()).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
