@@ -3440,6 +3440,8 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.U
 			GROUP BY le
 			ORDER BY le`, signozMetricDBName, signozTSTableNameV41Day, signozMetricDBName, signozMetadataTable)
 
+		fmt.Printf("=====> Query: %s\n", query)
+
 		rows, err := r.db.Query(ctx, query, metricName, metricName, serviceName, serviceName, serviceName)
 		if err != nil {
 			zap.L().Error("Error while querying histogram buckets", zap.Error(err))
