@@ -359,19 +359,11 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		}
 	}
 
-	if src, ok := presentByName["net.peer.name"]; ok {
-		appendAliasIfMissing("server.address", src)
-	}
-
-	if src, ok := presentByName["server.address"]; ok {
-		appendAliasIfMissing("net.peer.name", src)
-	}
-
-	if src, ok := presentByName["http.url"]; ok {
-		appendAliasIfMissing("url.full", src)
-	}
-	if src, ok := presentByName["url.full"]; ok {
-		appendAliasIfMissing("http.url", src)
+	backwardCompatKeys := GetBackwardCompatKeysForSignal(telemetrytypes.SignalTraces)
+	for srcKey, aliasKey := range backwardCompatKeys {
+		if src, ok := presentByName[srcKey]; ok {
+			appendAliasIfMissing(aliasKey, src)
+		}
 	}
 
 	return keys, complete, nil
@@ -820,6 +812,43 @@ func (t *telemetryMetaStore) getMeterSourceMetricKeys(ctx context.Context, field
 
 }
 
+// applyBackwardCompatibleKeys adds backward compatible key aliases to the map
+func applyBackwardCompatibleKeys(mapOfKeys map[string][]*telemetrytypes.TelemetryFieldKey) {
+	// Collect all signals present in the map
+	signalsPresent := make(map[telemetrytypes.Signal]bool)
+	for _, keysList := range mapOfKeys {
+		for _, key := range keysList {
+			signalsPresent[key.Signal] = true
+		}
+	}
+
+	// Apply backward compatible keys for each signal
+	for signal := range signalsPresent {
+		backwardCompatKeys := GetBackwardCompatKeysForSignal(signal)
+		for srcKey, aliasKey := range backwardCompatKeys {
+			if srcKeys, ok := mapOfKeys[srcKey]; ok {
+				if _, aliasExists := mapOfKeys[aliasKey]; !aliasExists {
+					aliasKeysList := make([]*telemetrytypes.TelemetryFieldKey, len(srcKeys))
+					for i, srcKeyEntry := range srcKeys {
+						if srcKeyEntry.Signal == signal {
+							aliasKeyEntry := &telemetrytypes.TelemetryFieldKey{
+								Name:          aliasKey,
+								Signal:        srcKeyEntry.Signal,
+								FieldContext:  srcKeyEntry.FieldContext,
+								FieldDataType: srcKeyEntry.FieldDataType,
+							}
+							aliasKeysList[i] = aliasKeyEntry
+						}
+					}
+					if len(aliasKeysList) > 0 && aliasKeysList[0] != nil {
+						mapOfKeys[aliasKey] = aliasKeysList
+					}
+				}
+			}
+		}
+	}
+}
+
 func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	var keys []*telemetrytypes.TelemetryFieldKey
 	var complete bool = true
@@ -873,6 +902,8 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *tele
 	for _, key := range keys {
 		mapOfKeys[key.Name] = append(mapOfKeys[key.Name], key)
 	}
+
+	applyBackwardCompatibleKeys(mapOfKeys)
 
 	return mapOfKeys, complete, nil
 }
@@ -936,6 +967,8 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors
 	for _, key := range meterSourceMetricsKeys {
 		mapOfKeys[key.Name] = append(mapOfKeys[key.Name], key)
 	}
+
+	applyBackwardCompatibleKeys(mapOfKeys)
 
 	return mapOfKeys, complete, nil
 }
