@@ -22,7 +22,7 @@ const defaultNotificationSettings: PostableAlertRuleV2['notificationSettings'] =
 	groupBy: [],
 	renotify: {
 		enabled: false,
-		interval: '1m',
+		interval: '30m',
 		alertStates: [],
 	},
 	usePolicy: false,

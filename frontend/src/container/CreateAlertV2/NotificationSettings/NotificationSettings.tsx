@@ -4,8 +4,8 @@ import { Input, Select, Typography } from 'antd';
 
 import { useCreateAlertState } from '../context';
 import {
-	ADVANCED_OPTIONS_TIME_UNIT_OPTIONS as RE_NOTIFICATION_UNIT_OPTIONS,
 	RE_NOTIFICATION_CONDITION_OPTIONS,
+	RE_NOTIFICATION_TIME_UNIT_OPTIONS,
 } from '../context/constants';
 import AdvancedOptionItem from '../EvaluationSettings/AdvancedOptionItem';
 import Stepper from '../Stepper';
@@ -45,7 +45,7 @@ function NotificationSettings(): JSX.Element {
 				value={notificationSettings.reNotification.unit || null}
 				placeholder="Select unit"
 				disabled={!notificationSettings.reNotification.enabled}
-				options={RE_NOTIFICATION_UNIT_OPTIONS}
+				options={RE_NOTIFICATION_TIME_UNIT_OPTIONS}
 				onChange={(value): void => {
 					setNotificationSettings({
 						type: 'SET_RE_NOTIFICATION',

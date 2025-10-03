@@ -4,8 +4,10 @@ import '../EvaluationSettings/styles.scss';
 import { Button, Select, Tooltip, Typography } from 'antd';
 import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import getRandomColor from 'lib/getRandomColor';
 import { Plus } from 'lucide-react';
 import { useEffect } from 'react';
+import { v4 } from 'uuid';
 
 import { useCreateAlertState } from '../context';
 import {
@@ -68,11 +70,15 @@ function AlertThreshold({
 	const addThreshold = (): void => {
 		let newThreshold;
 		if (thresholdState.thresholds.length === 1) {
-			newThreshold = INITIAL_WARNING_THRESHOLD;
+			newThreshold = { ...INITIAL_WARNING_THRESHOLD, id: v4() };
 		} else if (thresholdState.thresholds.length === 2) {
-			newThreshold = INITIAL_INFO_THRESHOLD;
+			newThreshold = { ...INITIAL_INFO_THRESHOLD, id: v4() };
 		} else {
-			newThreshold = INITIAL_RANDOM_THRESHOLD;
+			newThreshold = {
+				...INITIAL_RANDOM_THRESHOLD,
+				id: v4(),
+				color: getRandomColor(),
+			};
 		}
 		setThresholdState({
 			type: 'SET_THRESHOLDS',
