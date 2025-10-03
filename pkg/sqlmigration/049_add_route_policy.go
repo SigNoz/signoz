@@ -114,6 +114,13 @@ func (migration *addRoutePolicies) Up(ctx context.Context, db *bun.DB) error {
 		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{
 			ColumnNames: []sqlschema.ColumnName{"id"},
 		},
+		ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+			{
+				ReferencingColumnName: "org_id",
+				ReferencedTableName:   "organizations",
+				ReferencedColumnName:  "id",
+			},
+		},
 	}
 
 	tableSQLs := migration.sqlschema.Operator().CreateTable(table)
