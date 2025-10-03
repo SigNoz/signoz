@@ -103,6 +103,7 @@ function NotificationSettings(): JSX.Element {
 							},
 						});
 					}}
+					defaultShowInput={notificationSettings.reNotification.enabled}
 				/>
 			</div>
 		</div>

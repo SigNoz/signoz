@@ -14,11 +14,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
+	"github.com/prometheus/common/model"
 	"github.com/uptrace/bun"
 )
 
 const (
 	DefaultReceiverName string = "default-receiver"
+	DefaultGroupBy      string = "ruleId"
 )
 
 var (
@@ -397,4 +399,55 @@ type ConfigStore interface {
 func init() {
 	commoncfg.MarshalSecretValue = true
 	config.MarshalSecretValue = true
+}
+
+// NotificationConfig holds configuration for alert notifications timing.
+type NotificationConfig struct {
+	NotificationGroup map[model.LabelName]struct{}
+	Renotify          ReNotificationConfig
+}
+
+func (nc *NotificationConfig) DeepCopy() NotificationConfig {
+	deepCopy := *nc
+	deepCopy.NotificationGroup = make(map[model.LabelName]struct{})
+	deepCopy.Renotify.NoDataInterval = nc.Renotify.NoDataInterval
+	deepCopy.Renotify.RenotifyInterval = nc.Renotify.RenotifyInterval
+	for k, v := range nc.NotificationGroup {
+		deepCopy.NotificationGroup[k] = v
+	}
+	return deepCopy
+}
+
+type ReNotificationConfig struct {
+	NoDataInterval   time.Duration
+	RenotifyInterval time.Duration
+}
+
+func NewNotificationConfig(groups []string, renotifyInterval time.Duration, noDataRenotifyInterval time.Duration) NotificationConfig {
+	notificationConfig := GetDefaultNotificationConfig()
+
+	if renotifyInterval != 0 {
+		notificationConfig.Renotify.RenotifyInterval = renotifyInterval
+	}
+
+	if noDataRenotifyInterval != 0 {
+		notificationConfig.Renotify.NoDataInterval = noDataRenotifyInterval
+	}
+	for _, group := range groups {
+		notificationConfig.NotificationGroup[model.LabelName(group)] = struct{}{}
+	}
+
+	return notificationConfig
+}
+
+func GetDefaultNotificationConfig() NotificationConfig {
+	defaultGroups := make(map[model.LabelName]struct{})
+	defaultGroups[model.LabelName(DefaultGroupBy)] = struct{}{}
+	return NotificationConfig{
+		NotificationGroup: defaultGroups,
+		Renotify: ReNotificationConfig{
+			RenotifyInterval: 4 * time.Hour,
+			NoDataInterval:   4 * time.Hour,
+		}, //substitute for no - notify
+	}
 }
