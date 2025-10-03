@@ -198,10 +198,10 @@ export function getNotificationSettingsStateFromAlertDef(
 			(state) => state as 'firing' | 'nodata',
 		) || [];
 	const reNotificationValue = alertDef.notificationSettings?.renotify
-		? parseGoTime(alertDef.notificationSettings.renotify.interval || '1m').time
-		: 1;
+		? parseGoTime(alertDef.notificationSettings.renotify.interval || '30m').time
+		: 30;
 	const reNotificationUnit = alertDef.notificationSettings?.renotify
-		? parseGoTime(alertDef.notificationSettings.renotify.interval || '1m').unit
+		? parseGoTime(alertDef.notificationSettings.renotify.interval || '30m').unit
 		: UniversalYAxisUnit.MINUTES;
 
 	return {
