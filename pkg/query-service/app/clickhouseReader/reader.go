@@ -97,8 +97,8 @@ const (
 	signozUpdatedMetricsMetadataLocalTable = "updated_metadata"
 	signozUpdatedMetricsMetadataTable      = "distributed_updated_metadata"
 
-	signozMetadataLocalTable = "metadata"
-	signozMetadataTable      = "distributed_metadata"
+	signozMetricsMetadataLocalTable = "metadata"
+	signozMetricsMetadataTable      = "distributed_metadata"
 
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
@@ -3438,7 +3438,7 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.U
 				AND type = 'Histogram'
 				AND (JSONExtractString(labels, 'service_name') = $4 OR JSONExtractString(labels, 'service.name') = $5)
 			GROUP BY le
-			ORDER BY le`, signozMetricDBName, signozTSTableNameV41Day, signozMetricDBName, signozMetadataTable)
+			ORDER BY le`, signozMetricDBName, signozTSTableNameV41Day, signozMetricDBName, signozMetricsMetadataTable)
 
 		rows, err := r.db.Query(ctx, query, metricName, metricName, serviceName, serviceName, serviceName)
 		if err != nil {
