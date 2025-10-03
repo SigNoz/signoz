@@ -297,7 +297,7 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 		},
 		{
 			name:       "simple equality check - match",
-			expression: `threshold.name = 'auth' && ruleId = 'rule1'`,
+			expression: `threshold.name = 'auth' AND ruleId = 'rule1'`,
 			labelSet: model.LabelSet{
 				"threshold.name": "auth",
 				"ruleId":         "rule1",
@@ -526,7 +526,7 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 		},
 		{
 			name:       "alertname and ruleId combination",
-			expression: `alertname = "HighCPUUsage" AND ruleId == "cpu-alert-001"`,
+			expression: `alertname = "HighCPUUsage" AND ruleId = "cpu-alert-001"`,
 			labelSet: model.LabelSet{
 				"alertname": "HighCPUUsage",
 				"ruleId":    "cpu-alert-001",
