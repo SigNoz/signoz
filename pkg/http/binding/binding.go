@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	ErrCodeInvalidRequestBody = errors.MustNewCode("invalid_request_body")
+	ErrCodeInvalidRequestBody  = errors.MustNewCode("invalid_request_body")
+	ErrCodeInvalidRequestField = errors.MustNewCode("invalid_request_field")
 )
 
 var (

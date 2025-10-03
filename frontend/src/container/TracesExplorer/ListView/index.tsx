@@ -106,6 +106,19 @@ function ListView({
 			];
 		}
 
+		// add order by to trace operator
+		if (
+			query.builder.queryTraceOperator &&
+			query.builder.queryTraceOperator.length > 0
+		) {
+			query.builder.queryTraceOperator[0].orderBy = [
+				{
+					columnName: orderBy.split(':')[0],
+					order: orderBy.split(':')[1] as 'asc' | 'desc',
+				},
+			];
+		}
+
 		return query;
 	}, [stagedQuery, orderBy]);
 

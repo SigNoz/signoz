@@ -1,6 +1,6 @@
 import { getFieldValues } from 'api/dynamicVariables/getFieldValues';
 import { useQuery, UseQueryResult } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { SuccessResponseV2 } from 'types/api';
 import { FieldValueResponse } from 'types/api/dynamicVariables/getFieldValues';
 
 interface UseGetFieldValuesProps {
@@ -9,13 +9,15 @@ interface UseGetFieldValuesProps {
 	/** Name of the attribute for which values are being fetched */
 	name: string;
 	/** Optional search text */
-	value?: string;
+	searchText?: string;
 	/** Whether the query should be enabled */
 	enabled?: boolean;
 	/** Start Unix Milli */
 	startUnixMilli?: number;
 	/** End Unix Milli */
 	endUnixMilli?: number;
+	/** Existing query */
+	existingQuery?: string;
 }
 
 /**
@@ -30,16 +32,32 @@ interface UseGetFieldValuesProps {
 export const useGetFieldValues = ({
 	signal,
 	name,
-	value,
+	searchText,
 	startUnixMilli,
 	endUnixMilli,
 	enabled = true,
+	existingQuery,
 }: UseGetFieldValuesProps): UseQueryResult<
-	SuccessResponse<FieldValueResponse> | ErrorResponse
+	SuccessResponseV2<FieldValueResponse>
 > =>
-	useQuery<SuccessResponse<FieldValueResponse> | ErrorResponse>({
-		queryKey: ['fieldValues', signal, name, value, startUnixMilli, endUnixMilli],
+	useQuery<SuccessResponseV2<FieldValueResponse>>({
+		queryKey: [
+			'fieldValues',
+			signal,
+			name,
+			searchText,
+			startUnixMilli,
+			endUnixMilli,
+			existingQuery,
+		],
 		queryFn: () =>
-			getFieldValues(signal, name, value, startUnixMilli, endUnixMilli),
+			getFieldValues(
+				signal,
+				name,
+				searchText,
+				startUnixMilli,
+				endUnixMilli,
+				existingQuery,
+			),
 		enabled,
 	});

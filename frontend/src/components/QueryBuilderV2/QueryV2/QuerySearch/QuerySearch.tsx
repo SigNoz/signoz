@@ -23,6 +23,7 @@ import cx from 'classnames';
 import {
 	negationQueryOperatorSuggestions,
 	OPERATORS,
+	QUERY_BUILDER_FUNCTIONS,
 	QUERY_BUILDER_KEY_TYPES,
 	QUERY_BUILDER_OPERATORS_BY_KEY_TYPE,
 	queryOperatorSuggestions,
@@ -32,12 +33,14 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
 import { Info, TriangleAlert } from 'lucide-react';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	IDetailedError,
 	IQueryContext,
 	IValidationResult,
 } from 'types/antlrQueryTypes';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
@@ -77,16 +80,20 @@ const stopEventsExtension = EditorView.domEventHandlers({
 });
 
 function QuerySearch({
+	placeholder,
 	onChange,
 	queryData,
 	dataSource,
 	onRun,
 	signalSource,
+	hardcodedAttributeKeys,
 }: {
+	placeholder?: string;
 	onChange: (value: string) => void;
 	queryData: IBuilderQuery;
 	dataSource: DataSource;
 	signalSource?: string;
+	hardcodedAttributeKeys?: QueryKeyDataSuggestionsProps[];
 	onRun?: (query: string) => void;
 }): JSX.Element {
 	const isDarkMode = useIsDarkMode();
@@ -161,13 +168,15 @@ function QuerySearch({
 
 	const { handleRunQuery } = useQueryBuilder();
 
-	// const {
-	// 	data: queryKeySuggestions,
-	// 	refetch: refetchQueryKeySuggestions,
-	// } = useGetQueryKeySuggestions({
-	// 	signal: dataSource,
-	// 	name: searchText || '',
-	// });
+	const { selectedDashboard } = useDashboard();
+
+	const dynamicVariables = useMemo(
+		() =>
+			Object.values(selectedDashboard?.data?.variables || {})?.filter(
+				(variable: IDashboardVariable) => variable.type === 'DYNAMIC',
+			),
+		[selectedDashboard],
+	);
 
 	// Add back the generateOptions function and useEffect
 	const generateOptions = (keys: {
@@ -214,6 +223,11 @@ function QuerySearch({
 				return;
 			}
 
+			if (hardcodedAttributeKeys) {
+				setKeySuggestions(hardcodedAttributeKeys);
+				return;
+			}
+
 			lastFetchedKeyRef.current = searchText || '';
 
 			const response = await getKeySuggestions({
@@ -249,6 +263,7 @@ function QuerySearch({
 			toggleSuggestions,
 			queryData.aggregateAttribute?.key,
 			signalSource,
+			hardcodedAttributeKeys,
 		],
 	);
 
@@ -982,6 +997,25 @@ function QuerySearch({
 				option.label.toLowerCase().includes(searchText),
 			);
 
+			// Add dynamic variables suggestions for the current key
+			const variableName = dynamicVariables?.find(
+				(variable) => variable?.dynamicVariablesAttribute === keyName,
+			)?.name;
+
+			if (variableName) {
+				const variableValue = `$${variableName}`;
+				const variableOption = {
+					label: variableValue,
+					type: 'variable',
+					apply: variableValue,
+				};
+
+				// Add variable suggestion at the beginning if it matches the search text
+				if (variableValue.toLowerCase().includes(searchText.toLowerCase())) {
+					options = [variableOption, ...options];
+				}
+			}
+
 			// Trigger fetch only if needed
 			const shouldFetch =
 				// Fetch only if key is available
@@ -1034,6 +1068,9 @@ function QuerySearch({
 				} else if (option.type === 'array') {
 					// Arrays are already formatted as arrays
 					processedOption.apply = option.label;
+				} else if (option.type === 'variable') {
+					// Variables should be used as-is (they already have the $ prefix)
+					processedOption.apply = option.label;
 				}
 
 				return processedOption;
@@ -1050,11 +1087,11 @@ function QuerySearch({
 		}
 
 		if (queryContext.isInFunction) {
-			options = [
-				{ label: 'HAS', type: 'function' },
-				{ label: 'HASANY', type: 'function' },
-				{ label: 'HASALL', type: 'function' },
-			];
+			options = Object.values(QUERY_BUILDER_FUNCTIONS).map((option) => ({
+				label: option,
+				apply: `${option}()`,
+				type: 'function',
+			}));
 
 			// Add space after selection for functions
 			const optionsWithSpace = addSpaceToOptions(options);
@@ -1243,7 +1280,10 @@ function QuerySearch({
 					>
 						<Info
 							size={14}
-							style={{ opacity: 0.9, color: isDarkMode ? '#ffffff' : '#000000' }}
+							style={{
+								opacity: 0.9,
+								color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+							}}
 						/>
 					</a>
 				</Tooltip>
@@ -1306,7 +1346,7 @@ function QuerySearch({
 							]),
 						),
 					]}
-					placeholder="Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')"
+					placeholder={placeholder}
 					basicSetup={{
 						lineNumbers: false,
 					}}
@@ -1453,6 +1493,9 @@ function QuerySearch({
 QuerySearch.defaultProps = {
 	onRun: undefined,
 	signalSource: '',
+	hardcodedAttributeKeys: undefined,
+	placeholder:
+		"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
 };
 
 export default QuerySearch;

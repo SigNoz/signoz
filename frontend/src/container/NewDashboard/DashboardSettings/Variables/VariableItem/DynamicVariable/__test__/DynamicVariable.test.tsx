@@ -20,15 +20,16 @@ jest.mock('hooks/useDebounce', () => ({
 
 describe('DynamicVariable Component', () => {
 	const mockSetDynamicVariablesSelectedValue = jest.fn();
-	const ATTRIBUTE_PLACEHOLDER = 'Select an Attribute';
-	const LOADING_TEXT = 'We are updating the values...';
+	const ATTRIBUTE_PLACEHOLDER = 'Select a field';
+	const LOADING_TEXT = 'Refreshing values...';
 	const DEFAULT_PROPS = {
 		setDynamicVariablesSelectedValue: mockSetDynamicVariablesSelectedValue,
 		dynamicVariablesSelectedValue: undefined,
+		errorAttributeKeyMessage: '',
 	};
 
 	const mockFieldKeysResponse = {
-		payload: {
+		data: {
 			keys: {
 				'service.name': [],
 				'http.status_code': [],
@@ -36,7 +37,7 @@ describe('DynamicVariable Component', () => {
 			},
 			complete: true,
 		},
-		statusCode: 200,
+		httpStatusCode: 200,
 	};
 
 	beforeEach(() => {
@@ -63,7 +64,7 @@ describe('DynamicVariable Component', () => {
 
 		// Check for main components
 		expect(screen.getByText(ATTRIBUTE_PLACEHOLDER)).toBeInTheDocument();
-		expect(screen.getByText('All Sources')).toBeInTheDocument();
+		expect(screen.getByText('All telemetry')).toBeInTheDocument();
 		expect(screen.getByText('from')).toBeInTheDocument();
 	});
 
@@ -178,7 +179,7 @@ describe('DynamicVariable Component', () => {
 		// Check if the setter was called with the correct value
 		expect(mockSetDynamicVariablesSelectedValue).toHaveBeenCalledWith({
 			name: 'service.name',
-			value: 'All Sources',
+			value: 'All telemetry',
 		});
 	});
 
@@ -196,7 +197,7 @@ describe('DynamicVariable Component', () => {
 
 		// Get the Select component
 		const select = screen
-			.getByText('All Sources')
+			.getByText('All telemetry')
 			.closest('div[class*="ant-select"]');
 		expect(select).toBeInTheDocument();
 
@@ -240,7 +241,7 @@ describe('DynamicVariable Component', () => {
 		fireEvent.mouseDown(attributeSelectElement);
 
 		// Mock the filter function behavior
-		const attributeKeys = Object.keys(mockFieldKeysResponse.payload.keys);
+		const attributeKeys = Object.keys(mockFieldKeysResponse.data.keys);
 
 		// Only "http.status_code" should match the filter
 		const expectedFilteredKeys = attributeKeys.filter((key) =>
@@ -268,12 +269,13 @@ describe('DynamicVariable Component', () => {
 		// and needs to be fetched from the server
 		(useGetFieldKeys as jest.Mock).mockReturnValue({
 			data: {
-				payload: {
+				data: {
 					keys: {
 						'http.status_code': [],
 					},
 					complete: false, // This indicates server-side filtering is needed
 				},
+				httpStatusCode: 200,
 			},
 			error: null,
 			isLoading: false,

@@ -1,10 +1,14 @@
 import './DynamicVariable.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { Select, Typography } from 'antd';
 import CustomSelect from 'components/NewSelect/CustomSelect';
+import TextToolTip from 'components/TextToolTip';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { useGetFieldKeys } from 'hooks/dynamicVariables/useGetFieldKeys';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
+import { Info } from 'lucide-react';
 import {
 	Dispatch,
 	SetStateAction,
@@ -14,9 +18,10 @@ import {
 	useState,
 } from 'react';
 import { FieldKey } from 'types/api/dynamicVariables/getFieldKeys';
+import { isRetryableError as checkIfRetryableError } from 'utils/errorUtils';
 
 enum AttributeSource {
-	ALL_SOURCES = 'All Sources',
+	ALL_TELEMETRY = 'All telemetry',
 	LOGS = 'Logs',
 	METRICS = 'Metrics',
 	TRACES = 'Traces',
@@ -25,6 +30,7 @@ enum AttributeSource {
 function DynamicVariable({
 	setDynamicVariablesSelectedValue,
 	dynamicVariablesSelectedValue,
+	errorAttributeKeyMessage,
 }: {
 	setDynamicVariablesSelectedValue: Dispatch<
 		SetStateAction<
@@ -41,9 +47,10 @@ function DynamicVariable({
 				value: string;
 		  }
 		| undefined;
+	errorAttributeKeyMessage?: string;
 }): JSX.Element {
 	const sources = [
-		AttributeSource.ALL_SOURCES,
+		AttributeSource.ALL_TELEMETRY,
 		AttributeSource.LOGS,
 		AttributeSource.TRACES,
 		AttributeSource.METRICS,
@@ -53,7 +60,8 @@ function DynamicVariable({
 	const [attributes, setAttributes] = useState<Record<string, FieldKey[]>>({});
 	const [selectedAttribute, setSelectedAttribute] = useState<string>();
 	const [apiSearchText, setApiSearchText] = useState<string>('');
-
+	const [errorMessage, setErrorMessage] = useState<string>();
+	const [isRetryableError, setIsRetryableError] = useState<boolean>(true);
 	const debouncedApiSearchText = useDebounce(apiSearchText, DEBOUNCE_DELAY);
 
 	const [filteredAttributes, setFilteredAttributes] = useState<
@@ -75,21 +83,30 @@ function DynamicVariable({
 
 	const { data, error, isLoading, refetch } = useGetFieldKeys({
 		signal:
-			attributeSource === AttributeSource.ALL_SOURCES
+			attributeSource === AttributeSource.ALL_TELEMETRY
 				? undefined
 				: (attributeSource?.toLowerCase() as 'traces' | 'logs' | 'metrics'),
 		name: debouncedApiSearchText,
 	});
 
-	const isComplete = useMemo(() => data?.payload?.complete === true, [data]);
+	const isComplete = useMemo(() => data?.data?.complete === true, [data]);
 
 	useEffect(() => {
 		if (data) {
-			const newAttributes = data.payload?.keys ?? {};
+			const newAttributes = data.data?.keys ?? {};
 			setAttributes(newAttributes);
 			setFilteredAttributes(newAttributes);
 		}
 	}, [data]);
+
+	// Handle error from useGetFieldKeys
+	useEffect(() => {
+		if (error) {
+			// Check if error is retryable (5xx) or not (4xx)
+			const isRetryable = checkIfRetryableError(error);
+			setIsRetryableError(isRetryable);
+		}
+	}, [error]);
 
 	// refetch when attributeSource changes
 	useEffect(() => {
@@ -131,7 +148,7 @@ function DynamicVariable({
 				value:
 					attributeSource ||
 					dynamicVariablesSelectedValue?.value ||
-					AttributeSource.ALL_SOURCES,
+					AttributeSource.ALL_TELEMETRY,
 			});
 		}
 	}, [
@@ -142,38 +159,71 @@ function DynamicVariable({
 		dynamicVariablesSelectedValue?.value,
 	]);
 
-	const errorMessage = (error as any)?.message;
+	const isDarkMode = useIsDarkMode();
+	const errorText = (error as any)?.message || errorMessage;
 	return (
 		<div className="dynamic-variable-container">
-			<CustomSelect
-				placeholder="Select an Attribute"
-				options={Object.keys(filteredAttributes).map((key) => ({
-					label: key,
-					value: key,
-				}))}
-				loading={isLoading}
-				status={errorMessage ? 'error' : undefined}
-				onChange={(value): void => {
-					setSelectedAttribute(value);
-				}}
-				showSearch
-				errorMessage={errorMessage as any}
-				value={selectedAttribute || dynamicVariablesSelectedValue?.name}
-				onSearch={handleSearch}
-				onRetry={(): void => {
-					refetch();
-				}}
-			/>
-			<Typography className="dynamic-variable-from-text">from</Typography>
-			<Select
-				placeholder="Source"
-				defaultValue={AttributeSource.ALL_SOURCES}
-				options={sources.map((source) => ({ label: source, value: source }))}
-				onChange={(value): void => setAttributeSource(value as AttributeSource)}
-				value={attributeSource || dynamicVariablesSelectedValue?.value}
-			/>
+			<div className="dynamic-variable-config-container">
+				<CustomSelect
+					placeholder="Select a field"
+					options={Object.keys(filteredAttributes).map((key) => ({
+						label: key,
+						value: key,
+					}))}
+					loading={isLoading}
+					status={errorText ? 'error' : undefined}
+					onChange={(value): void => {
+						setSelectedAttribute(value);
+					}}
+					showSearch
+					errorMessage={errorText as any}
+					value={selectedAttribute || dynamicVariablesSelectedValue?.name}
+					onSearch={handleSearch}
+					onRetry={(): void => {
+						// reset error message
+						setErrorMessage(undefined);
+						setIsRetryableError(true);
+						refetch();
+					}}
+					showRetryButton={isRetryableError}
+				/>
+				<Typography className="dynamic-variable-from-text">from</Typography>
+				<span style={{ display: 'inline-flex', alignItems: 'center' }}>
+					<TextToolTip
+						text="By default, this searches across logs, traces, and metrics, which can be slow. Selecting a single source improves performance. Many fields share the same values across different signals (for example, `k8s.pod.name` is identical in logs, traces and metrics) making one source enough. Only use `All telemetry` when you need fields that have different values in different signal types."
+						useFilledIcon={false}
+						outlinedIcon={
+							<Info
+								size={14}
+								style={{
+									color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+									marginTop: 1,
+								}}
+							/>
+						}
+					/>
+				</span>
+				<Select
+					placeholder="Source"
+					defaultValue={AttributeSource.ALL_TELEMETRY}
+					options={sources.map((source) => ({ label: source, value: source }))}
+					onChange={(value): void => setAttributeSource(value as AttributeSource)}
+					value={attributeSource || dynamicVariablesSelectedValue?.value}
+				/>
+			</div>
+			{errorAttributeKeyMessage && (
+				<div>
+					<Typography.Text type="warning">
+						{errorAttributeKeyMessage}
+					</Typography.Text>
+				</div>
+			)}
 		</div>
 	);
 }
+
+DynamicVariable.defaultProps = {
+	errorAttributeKeyMessage: '',
+};
 
 export default DynamicVariable;

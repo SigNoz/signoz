@@ -1,6 +1,6 @@
 import './LiveLogsContainer.styles.scss';
 
-import { Button, Switch, Typography } from 'antd';
+import { Switch, Typography } from 'antd';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { MAX_LOGS_LIST_SIZE } from 'constants/liveTail';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -8,10 +8,8 @@ import GoToTop from 'container/GoToTop';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import useClickOutside from 'hooks/useClickOutside';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useEventSourceEvent } from 'hooks/useEventSourceEvent';
-import { Sliders } from 'lucide-react';
 import { useEventSource } from 'providers/EventSource';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -41,9 +39,6 @@ function LiveLogsContainer(): JSX.Element {
 
 	const batchedEventsRef = useRef<ILiveLogsLog[]>([]);
 
-	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
-	const menuRef = useRef<HTMLDivElement>(null);
-
 	const prevFilterExpressionRef = useRef<string | null>(null);
 
 	const { options, config } = useOptionsMenu({
@@ -72,18 +67,6 @@ function LiveLogsContainer(): JSX.Element {
 			},
 		},
 	];
-
-	const handleToggleShowFormatOptions = (): void =>
-		setShowFormatMenuItems(!showFormatMenuItems);
-
-	useClickOutside({
-		ref: menuRef,
-		onClickOutside: () => {
-			if (showFormatMenuItems) {
-				setShowFormatMenuItems(false);
-			}
-		},
-	});
 
 	const {
 		handleStartOpenConnection,
@@ -231,22 +214,11 @@ function LiveLogsContainer(): JSX.Element {
 						/>
 					</div>
 
-					<div className="format-options-container" ref={menuRef}>
-						<Button
-							className="periscope-btn ghost"
-							onClick={handleToggleShowFormatOptions}
-							icon={<Sliders size={14} />}
-						/>
-
-						{showFormatMenuItems && (
-							<LogsFormatOptionsMenu
-								title="FORMAT"
-								items={formatItems}
-								selectedOptionFormat={options.format}
-								config={config}
-							/>
-						)}
-					</div>
+					<LogsFormatOptionsMenu
+						items={formatItems}
+						selectedOptionFormat={options.format}
+						config={config}
+					/>
 				</div>
 
 				{showLiveLogsFrequencyChart && (

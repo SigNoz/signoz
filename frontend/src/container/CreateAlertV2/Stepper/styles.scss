@@ -1,0 +1,63 @@
+.stepper-container {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	margin-bottom: 16px;
+	padding: 16px 0;
+	border-radius: 8px;
+}
+
+.step-number {
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background-color: var(--bg-robin-400);
+	color: var(--text-slate-400);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 600;
+	font-size: 14px;
+	flex-shrink: 0;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.step-label {
+	font-size: 12px;
+	line-height: 20px;
+	font-weight: 500;
+	color: #e5e7eb;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	flex-shrink: 0;
+}
+
+.dotted-line {
+	flex: 1;
+	height: 8px;
+	background-image: radial-gradient(circle, #4a4a4a 1px, transparent 1px);
+	background-size: 8px 8px;
+	background-repeat: repeat-x;
+	background-position: center;
+	margin-left: 8px;
+}
+
+.lightMode {
+	.step-number {
+		background-color: var(--bg-robin-400);
+		color: var(--text-slate-400);
+	}
+
+	.step-label {
+		color: var(--bg-ink-300);
+	}
+
+	.dotted-line {
+		background-image: radial-gradient(
+			circle,
+			var(--bg-ink-200) 1px,
+			transparent 1px
+		);
+	}
+}

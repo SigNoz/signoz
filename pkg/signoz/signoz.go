@@ -2,8 +2,8 @@ package signoz
 
 import (
 	"context"
-
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
@@ -230,12 +230,24 @@ func New(
 	// Initialize user getter
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 
+	// shared NotificationManager instance for both alertmanager and rules
+	notificationManager, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		nfmanager.Config{},
+		NewNotificationManagerProviderFactories(),
+		"rulebased",
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize alertmanager from the available alertmanager provider factories
 	alertmanager, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		config.Alertmanager,
-		NewAlertmanagerProviderFactories(sqlstore, orgGetter),
+		NewAlertmanagerProviderFactories(sqlstore, orgGetter, notificationManager),
 		config.Alertmanager.Provider,
 	)
 	if err != nil {
@@ -265,7 +277,7 @@ func New(
 	}
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
+	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, querier)
 
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules, providerSettings)
@@ -315,6 +327,7 @@ func New(
 		Prometheus:      prometheus,
 		Alertmanager:    alertmanager,
 		Querier:         querier,
+		Rules:           ruler,
 		Zeus:            zeus,
 		Licensing:       licensing,
 		Emailing:        emailing,

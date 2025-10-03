@@ -2,9 +2,9 @@ package ssotypes
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"net/http"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
@@ -48,7 +48,7 @@ func (g *GoogleOAuthProvider) HandleCallback(r *http.Request) (identity *SSOIden
 
 	token, err := g.OAuth2Config.Exchange(r.Context(), q.Get("code"))
 	if err != nil {
-		return identity, fmt.Errorf("google: failed to get token: %v", err)
+		return identity, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: failed to get token: %v", err)
 	}
 
 	return g.createIdentity(r.Context(), token)
@@ -57,11 +57,11 @@ func (g *GoogleOAuthProvider) HandleCallback(r *http.Request) (identity *SSOIden
 func (g *GoogleOAuthProvider) createIdentity(ctx context.Context, token *oauth2.Token) (identity *SSOIdentity, err error) {
 	rawIDToken, ok := token.Extra("id_token").(string)
 	if !ok {
-		return identity, errors.New("google: no id_token in token response")
+		return identity, errors.New(errors.TypeInternal, errors.CodeInternal, "google: no id_token in token response")
 	}
 	idToken, err := g.Verifier.Verify(ctx, rawIDToken)
 	if err != nil {
-		return identity, fmt.Errorf("google: failed to verify ID Token: %v", err)
+		return identity, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: failed to verify ID Token: %v", err)
 	}
 
 	var claims struct {
@@ -71,11 +71,11 @@ func (g *GoogleOAuthProvider) createIdentity(ctx context.Context, token *oauth2.
 		HostedDomain  string `json:"hd"`
 	}
 	if err := idToken.Claims(&claims); err != nil {
-		return identity, fmt.Errorf("oidc: failed to decode claims: %v", err)
+		return identity, errors.Newf(errors.TypeInternal, errors.CodeInternal, "oidc: failed to decode claims: %v", err)
 	}
 
 	if claims.HostedDomain != g.HostedDomain {
-		return identity, fmt.Errorf("oidc: unexpected hd claim %v", claims.HostedDomain)
+		return identity, errors.Newf(errors.TypeInternal, errors.CodeInternal, "oidc: unexpected hd claim %v", claims.HostedDomain)
 	}
 
 	identity = &SSOIdentity{

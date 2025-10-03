@@ -137,10 +137,7 @@ prometheus:
 ##################### Alertmanager #####################
 alertmanager:
   # Specifies the alertmanager provider to use.
-  provider: legacy
-  legacy:
-    # The API URL (with prefix) of the legacy Alertmanager instance.
-    api_url: http://localhost:9093/api
+  provider: signoz
   signoz:
     # The poll interval for periodically syncing the alertmanager with the config in the store.
     poll_interval: 1m

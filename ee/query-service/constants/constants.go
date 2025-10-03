@@ -40,7 +40,7 @@ var IsDotMetricsEnabled = false
 var IsPreferSpanMetrics = false
 
 func init() {
-	if GetOrDefaultEnv(DotMetricsEnabled, "false") == "true" {
+	if GetOrDefaultEnv(DotMetricsEnabled, "true") == "true" {
 		IsDotMetricsEnabled = true
 	}
 

@@ -6,7 +6,6 @@ import setToLocalstorage from 'api/browser/localstorage/set';
 import { getQueryStats, WsDataEvent } from 'api/common/getQueryStats';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
@@ -25,7 +24,6 @@ import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
-import dayjs from 'dayjs';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
@@ -33,19 +31,10 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { FlatLogData } from 'lib/logs/flatLogData';
 import { getPaginationQueryDataV2 } from 'lib/newQueryBuilder/getPaginationQueryData';
-import {
-	cloneDeep,
-	defaultTo,
-	isEmpty,
-	isUndefined,
-	omit,
-	set,
-} from 'lodash-es';
+import { cloneDeep, defaultTo, isEmpty, isUndefined, set } from 'lodash-es';
 import LiveLogs from 'pages/LiveLogs';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
-import { useTimezone } from 'providers/Timezone';
 import {
 	Dispatch,
 	memo,
@@ -70,6 +59,7 @@ import {
 	Query,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { Filter } from 'types/api/v5/queryRange';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -182,6 +172,11 @@ function LogsExplorerViewsContainer({
 			return;
 		}
 
+		let updatedFilterExpression = listQuery.filter?.expression || '';
+		if (activeLogId) {
+			updatedFilterExpression = `${updatedFilterExpression} id <= '${activeLogId}'`.trim();
+		}
+
 		const modifiedQueryData: IBuilderQuery = {
 			...listQuery,
 			aggregateOperator: LogsAggregatorOperator.COUNT,
@@ -194,6 +189,10 @@ function LogsExplorerViewsContainer({
 				},
 			],
 			legend: '{{severity_text}}',
+			filter: {
+				...listQuery?.filter,
+				expression: updatedFilterExpression || '',
+			},
 			...(activeLogId && {
 				filters: {
 					...listQuery?.filters,
@@ -297,6 +296,7 @@ function LogsExplorerViewsContainer({
 				page: number;
 				pageSize: number;
 				filters: TagFilter;
+				filter: Filter;
 			},
 		): Query | null => {
 			if (!query) return null;
@@ -308,6 +308,7 @@ function LogsExplorerViewsContainer({
 
 			// Add filter for activeLogId if present
 			let updatedFilters = params.filters;
+			let updatedFilterExpression = params.filter?.expression || '';
 			if (activeLogId) {
 				updatedFilters = {
 					...params.filters,
@@ -326,6 +327,7 @@ function LogsExplorerViewsContainer({
 					],
 					op: 'AND',
 				};
+				updatedFilterExpression = `${updatedFilterExpression} id <= '${activeLogId}'`.trim();
 			}
 
 			// Create orderBy array based on orderDirection
@@ -347,6 +349,9 @@ function LogsExplorerViewsContainer({
 								...(listQuery || initialQueryBuilderFormValues),
 								...paginateData,
 								...(updatedFilters ? { filters: updatedFilters } : {}),
+								filter: {
+									expression: updatedFilterExpression || '',
+								},
 								...(selectedView === ExplorerViews.LIST
 									? { order: newOrderBy, orderBy: newOrderBy }
 									: { order: [] }),
@@ -379,7 +384,7 @@ function LogsExplorerViewsContainer({
 		if (isLimit) return;
 		if (logs.length < pageSize) return;
 
-		const { limit, filters } = listQuery;
+		const { limit, filters, filter } = listQuery;
 
 		const nextLogsLength = logs.length + pageSize;
 
@@ -390,6 +395,7 @@ function LogsExplorerViewsContainer({
 
 		const newRequestData = getRequestData(stagedQuery, {
 			filters: filters || { items: [], op: 'AND' },
+			filter: filter || { expression: '' },
 			page: page + 1,
 			pageSize: nextPageSize,
 		});
@@ -537,6 +543,7 @@ function LogsExplorerViewsContainer({
 
 			const newRequestData = getRequestData(stagedQuery, {
 				filters: listQuery?.filters || initialFilters,
+				filter: listQuery?.filter || { expression: '' },
 				page: 1,
 				pageSize,
 			});
@@ -607,29 +614,6 @@ function LogsExplorerViewsContainer({
 		setIsLoadingQueries,
 	]);
 
-	const { timezone } = useTimezone();
-
-	const flattenLogData = useMemo(
-		() =>
-			logs.map((log) => {
-				const timestamp =
-					typeof log.timestamp === 'string'
-						? dayjs(log.timestamp)
-								.tz(timezone.value)
-								.format(DATE_TIME_FORMATS.ISO_DATETIME_MS)
-						: dayjs(log.timestamp / 1e6)
-								.tz(timezone.value)
-								.format(DATE_TIME_FORMATS.ISO_DATETIME_MS);
-
-				return FlatLogData({
-					timestamp,
-					body: log.body,
-					...omit(log, 'timestamp', 'body'),
-				});
-			}),
-		[logs, timezone.value],
-	);
-
 	const handleToggleFrequencyChart = useCallback(() => {
 		const newShowFrequencyChart = !showFrequencyChart;
 
@@ -654,11 +638,12 @@ function LogsExplorerViewsContainer({
 						handleToggleFrequencyChart={handleToggleFrequencyChart}
 						orderBy={orderBy}
 						setOrderBy={setOrderBy}
-						flattenLogData={flattenLogData}
 						isFetching={isFetching}
 						isLoading={isLoading}
 						isError={isError}
 						isSuccess={isSuccess}
+						minTime={minTime}
+						maxTime={maxTime}
 					/>
 				)}
 

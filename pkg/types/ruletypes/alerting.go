@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
-
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
@@ -106,18 +105,19 @@ const (
 )
 
 type RuleCondition struct {
-	CompositeQuery    *v3.CompositeQuery `json:"compositeQuery,omitempty" yaml:"compositeQuery,omitempty"`
-	CompareOp         CompareOp          `yaml:"op,omitempty" json:"op,omitempty"`
-	Target            *float64           `yaml:"target,omitempty" json:"target,omitempty"`
-	AlertOnAbsent     bool               `yaml:"alertOnAbsent,omitempty" json:"alertOnAbsent,omitempty"`
-	AbsentFor         uint64             `yaml:"absentFor,omitempty" json:"absentFor,omitempty"`
+	CompositeQuery    *v3.CompositeQuery `json:"compositeQuery,omitempty"`
+	CompareOp         CompareOp          `json:"op,omitempty"`
+	Target            *float64           `json:"target,omitempty"`
+	AlertOnAbsent     bool               `json:"alertOnAbsent,omitempty"`
+	AbsentFor         uint64             `json:"absentFor,omitempty"`
 	MatchType         MatchType          `json:"matchType,omitempty"`
 	TargetUnit        string             `json:"targetUnit,omitempty"`
 	Algorithm         string             `json:"algorithm,omitempty"`
 	Seasonality       string             `json:"seasonality,omitempty"`
 	SelectedQuery     string             `json:"selectedQueryName,omitempty"`
-	RequireMinPoints  bool               `yaml:"requireMinPoints,omitempty" json:"requireMinPoints,omitempty"`
-	RequiredNumPoints int                `yaml:"requiredNumPoints,omitempty" json:"requiredNumPoints,omitempty"`
+	RequireMinPoints  bool               `json:"requireMinPoints,omitempty"`
+	RequiredNumPoints int                `json:"requiredNumPoints,omitempty"`
+	Thresholds        *RuleThresholdData `json:"thresholds,omitempty"`
 }
 
 func (rc *RuleCondition) GetSelectedQueryName() string {
@@ -188,10 +188,7 @@ func (rc *RuleCondition) IsValid() bool {
 	}
 
 	if rc.QueryType() == v3.QueryTypeBuilder {
-		if rc.Target == nil {
-			return false
-		}
-		if rc.CompareOp == "" {
+		if rc.Thresholds == nil {
 			return false
 		}
 	}

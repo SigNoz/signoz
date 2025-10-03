@@ -1,0 +1,51 @@
+.create-alert-v2-footer {
+	position: fixed;
+	bottom: 0;
+	left: 63px;
+	right: 0;
+	background-color: var(--bg-ink-500);
+	height: 70px;
+	border-top: 1px solid var(--bg-slate-500);
+	padding: 16px 24px;
+	z-index: 1000;
+	box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+
+	.button-group {
+		display: flex;
+		gap: 12px;
+	}
+
+	.ant-btn {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.ant-btn-default {
+		background-color: var(--bg-slate-500);
+		border: 1px solid var(--bg-slate-400);
+		color: var(--bg-vanilla-400);
+	}
+}
+
+.lightMode {
+	.create-alert-v2-footer {
+		background-color: var(--bg-vanilla-100);
+		border-top: 1px solid var(--bg-vanilla-300);
+
+		.ant-btn-default {
+			background-color: var(--bg-vanilla-300);
+			border: 1px solid var(--bg-vanilla-400);
+			color: var(--bg-ink-400);
+		}
+
+		.ant-btn-primary {
+			.ant-typography {
+				color: var(--bg-vanilla-100);
+			}
+		}
+	}
+}
