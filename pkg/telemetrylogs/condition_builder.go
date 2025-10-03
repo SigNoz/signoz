@@ -55,7 +55,7 @@ func (c *conditionBuilder) conditionFor(
 		tblFieldName, value = GetBodyJSONKey(ctx, key, operator, value)
 	}
 
-	tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName, operator.IsComparisonOperator())
+	tblFieldName, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, tblFieldName, operator)
 
 	// make use of case insensitive index for body
 	if tblFieldName == "body" {
