@@ -88,7 +88,7 @@ function RoutingPolicies(): JSX.Element {
 					isRoutingPoliciesError={isErrorRoutingPolicies}
 					handlePolicyDetailsModalOpen={handlePolicyDetailsModalOpen}
 					handleDeleteModalOpen={handleDeleteModalOpen}
-					hasSearchTerm={searchTerm.length > 0}
+					hasSearchTerm={(searchTerm?.length ?? 0) > 0}
 				/>
 				{policyDetailsModalState.isOpen && (
 					<RoutingPolicyDetails
