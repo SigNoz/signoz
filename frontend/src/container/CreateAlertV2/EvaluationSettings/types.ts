@@ -11,6 +11,7 @@ export interface IAdvancedOptionItemProps {
 	input: JSX.Element;
 	tooltipText?: string;
 	onToggle?: () => void;
+	defaultShowInput: boolean;
 }
 
 export enum RollingWindowTimeframes {
