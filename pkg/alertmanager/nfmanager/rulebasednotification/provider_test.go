@@ -296,8 +296,26 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:       "simple equality check - match",
+			expression: `threshold.name = 'auth' AND ruleId = 'rule1'`,
+			labelSet: model.LabelSet{
+				"threshold.name": "auth",
+				"ruleId":         "rule1",
+			},
+			expected: true,
+		},
+		{
 			name:       "simple equality check - no match",
 			expression: `service == "payment"`,
+			labelSet: model.LabelSet{
+				"service": "auth",
+				"env":     "production",
+			},
+			expected: false,
+		},
+		{
+			name:       "simple equality check - no match",
+			expression: `service = "payment"`,
 			labelSet: model.LabelSet{
 				"service": "auth",
 				"env":     "production",
@@ -314,8 +332,26 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:       "multiple conditions with AND - both match",
+			expression: `service = "auth" AND env = "production"`,
+			labelSet: model.LabelSet{
+				"service": "auth",
+				"env":     "production",
+			},
+			expected: true,
+		},
+		{
 			name:       "multiple conditions with AND - one doesn't match",
 			expression: `service == "auth" && env == "staging"`,
+			labelSet: model.LabelSet{
+				"service": "auth",
+				"env":     "production",
+			},
+			expected: false,
+		},
+		{
+			name:       "multiple conditions with AND - one doesn't match",
+			expression: `service = "auth" AND env = "staging"`,
 			labelSet: model.LabelSet{
 				"service": "auth",
 				"env":     "production",
@@ -332,8 +368,26 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:       "multiple conditions with OR - one matches",
+			expression: `service = "payment" OR env = "production"`,
+			labelSet: model.LabelSet{
+				"service": "auth",
+				"env":     "production",
+			},
+			expected: true,
+		},
+		{
 			name:       "multiple conditions with OR - none match",
 			expression: `service == "payment" || env == "staging"`,
+			labelSet: model.LabelSet{
+				"service": "auth",
+				"env":     "production",
+			},
+			expected: false,
+		},
+		{
+			name:       "multiple conditions with OR - none match",
+			expression: `service = "payment" OR env = "staging"`,
 			labelSet: model.LabelSet{
 				"service": "auth",
 				"env":     "production",
@@ -349,8 +403,24 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:       "in operator - value in list",
+			expression: `service IN ["auth", "payment", "notification"]`,
+			labelSet: model.LabelSet{
+				"service": "auth",
+			},
+			expected: true,
+		},
+		{
 			name:       "in operator - value not in list",
 			expression: `service in ["payment", "notification"]`,
+			labelSet: model.LabelSet{
+				"service": "auth",
+			},
+			expected: false,
+		},
+		{
+			name:       "in operator - value not in list",
+			expression: `service IN ["payment", "notification"]`,
 			labelSet: model.LabelSet{
 				"service": "auth",
 			},
@@ -365,8 +435,24 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:       "contains operator - substring match",
+			expression: `host CONTAINS "prod"`,
+			labelSet: model.LabelSet{
+				"host": "prod-server-01",
+			},
+			expected: true,
+		},
+		{
 			name:       "contains operator - no substring match",
 			expression: `host contains "staging"`,
+			labelSet: model.LabelSet{
+				"host": "prod-server-01",
+			},
+			expected: false,
+		},
+		{
+			name:       "contains operator - no substring match",
+			expression: `host CONTAINS "staging"`,
 			labelSet: model.LabelSet{
 				"host": "prod-server-01",
 			},
@@ -383,6 +469,16 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:       "complex expression with parentheses",
+			expression: `(service = "auth" AND env = "production") OR critical = "true"`,
+			labelSet: model.LabelSet{
+				"service":  "payment",
+				"env":      "staging",
+				"critical": "true",
+			},
+			expected: true,
+		},
+		{
 			name:       "missing label key",
 			expression: `"missing_key" == "value"`,
 			labelSet: model.LabelSet{
@@ -391,8 +487,26 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 			expected: false,
 		},
 		{
+			name:       "missing label key",
+			expression: `"missing_key" = "value"`,
+			labelSet: model.LabelSet{
+				"service": "auth",
+			},
+			expected: false,
+		},
+		{
 			name:       "rule-based expression with threshold name and ruleId",
 			expression: `'threshold.name' == "high-cpu" && ruleId == "rule-123"`,
+			labelSet: model.LabelSet{
+				"threshold.name": "high-cpu",
+				"ruleId":         "rule-123",
+				"service":        "auth",
+			},
+			expected: false, //no commas
+		},
+		{
+			name:       "rule-based expression with threshold name and ruleId",
+			expression: `'threshold.name' = "high-cpu" AND ruleId == "rule-123"`,
 			labelSet: model.LabelSet{
 				"threshold.name": "high-cpu",
 				"ruleId":         "rule-123",
@@ -411,8 +525,28 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:       "alertname and ruleId combination",
+			expression: `alertname = "HighCPUUsage" AND ruleId = "cpu-alert-001"`,
+			labelSet: model.LabelSet{
+				"alertname": "HighCPUUsage",
+				"ruleId":    "cpu-alert-001",
+				"severity":  "critical",
+			},
+			expected: true,
+		},
+		{
 			name:       "kubernetes namespace filtering",
 			expression: `k8s.namespace.name == "auth" && service in ["auth", "payment"]`,
+			labelSet: model.LabelSet{
+				"k8s.namespace.name": "auth",
+				"service":            "auth",
+				"host":               "k8s-node-1",
+			},
+			expected: true,
+		},
+		{
+			name:       "kubernetes namespace filtering",
+			expression: `k8s.namespace.name = "auth" && service IN ["auth", "payment"]`,
 			labelSet: model.LabelSet{
 				"k8s.namespace.name": "auth",
 				"service":            "auth",
@@ -431,8 +565,26 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:       "migration expression format from SQL migration",
+			expression: `threshold.name = "HighCPUUsage" && ruleId = "rule-uuid-123"`,
+			labelSet: model.LabelSet{
+				"threshold.name": "HighCPUUsage",
+				"ruleId":         "rule-uuid-123",
+				"severity":       "warning",
+			},
+			expected: true,
+		},
+		{
 			name:       "case sensitive matching",
 			expression: `service == "Auth"`, // capital A
+			labelSet: model.LabelSet{
+				"service": "auth", // lowercase a
+			},
+			expected: false,
+		},
+		{
+			name:       "case sensitive matching",
+			expression: `service = "Auth"`, // capital A
 			labelSet: model.LabelSet{
 				"service": "auth", // lowercase a
 			},
@@ -447,6 +599,14 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:       "numeric comparison as strings",
+			expression: `port = "8080"`,
+			labelSet: model.LabelSet{
+				"port": "8080",
+			},
+			expected: true,
+		},
+		{
 			name:       "quoted string with special characters",
 			expression: `service == "auth-service-v2"`,
 			labelSet: model.LabelSet{
@@ -455,8 +615,26 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:       "quoted string with special characters",
+			expression: `service = "auth-service-v2"`,
+			labelSet: model.LabelSet{
+				"service": "auth-service-v2",
+			},
+			expected: true,
+		},
+		{
 			name:       "boolean operators precedence",
 			expression: `service == "auth" && env == "prod" || critical == "true"`,
+			labelSet: model.LabelSet{
+				"service":  "payment",
+				"env":      "staging",
+				"critical": "true",
+			},
+			expected: true,
+		},
+		{
+			name:       "boolean operators precedence",
+			expression: `service = "auth" AND env = "prod" OR critical = "true"`,
 			labelSet: model.LabelSet{
 				"service":  "payment",
 				"env":      "staging",
@@ -555,6 +733,21 @@ func TestProvider_CreateRoute(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:  "valid route qb format",
+			orgID: "test-org-123",
+			route: &alertmanagertypes.RoutePolicy{
+				Identifiable:   types.Identifiable{ID: valuer.GenerateUUID()},
+				Expression:     `service = "auth"`,
+				ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+				Name:           "auth-service-route",
+				Description:    "Route for auth service alerts",
+				Enabled:        true,
+				OrgID:          "test-org-123",
+				Channels:       []string{"slack-channel"},
+			},
+			wantErr: false,
+		},
+		{
 			name:    "nil route",
 			orgID:   "test-org-123",
 			route:   nil,
@@ -576,6 +769,17 @@ func TestProvider_CreateRoute(t *testing.T) {
 			orgID: "test-org-123",
 			route: &alertmanagertypes.RoutePolicy{
 				Expression:     `service == "auth"`,
+				ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+				Name:           "", // empty name
+				OrgID:          "test-org-123",
+			},
+			wantErr: true,
+		},
+		{
+			name:  "invalid route - missing name",
+			orgID: "test-org-123",
+			route: &alertmanagertypes.RoutePolicy{
+				Expression:     `service = "auth"`,
 				ExpressionKind: alertmanagertypes.PolicyBasedExpression,
 				Name:           "", // empty name
 				OrgID:          "test-org-123",
