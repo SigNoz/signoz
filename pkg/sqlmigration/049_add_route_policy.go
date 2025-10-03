@@ -15,6 +15,7 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 	"log/slog"
+	"time"
 )
 
 // Shared types for migration
@@ -28,12 +29,12 @@ type expressionRoute struct {
 	Expression     string `bun:"expression,type:text"`
 	ExpressionKind string `bun:"kind,type:text"`
 
-	Channels []string `bun:"channels,type:jsonb"`
+	Channels []string `bun:"channels,type:text"`
 
 	Name        string   `bun:"name,type:text"`
 	Description string   `bun:"description,type:text"`
 	Enabled     bool     `bun:"enabled,type:boolean,default:true"`
-	Tags        []string `bun:"tags,type:jsonb"`
+	Tags        []string `bun:"tags,type:text"`
 
 	OrgID string `bun:"org_id,type:text"`
 }
@@ -157,7 +158,7 @@ func (migration *addRoutePolicies) migrateRulesToRoutePolicies(ctx context.Conte
 		return errors.NewInternalf(errors.CodeInternal, "failed to fetch rules")
 	}
 
-	channelsByOrg, err := migration.getAllChannelsInTx(ctx, tx)
+	channelsByOrg, err := migration.getAllChannels(ctx, tx)
 	if err != nil {
 		return errors.NewInternalf(errors.CodeInternal, "fetching channels error: %v", err)
 	}
@@ -207,8 +208,8 @@ func (migration *addRoutePolicies) convertRulesToRoutes(rules []*rule, channelsB
 				ID: valuer.GenerateUUID(),
 			},
 			TimeAuditable: types.TimeAuditable{
-				CreatedAt: r.CreatedAt,
-				UpdatedAt: r.UpdatedAt,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
 			},
 			UserAuditable: types.UserAuditable{
 				CreatedBy: r.CreatedBy,
@@ -218,9 +219,7 @@ func (migration *addRoutePolicies) convertRulesToRoutes(rules []*rule, channelsB
 			ExpressionKind: "rule",
 			Channels:       gettableRule.PreferredChannels,
 			Name:           r.ID.StringValue(),
-			Description:    "",
 			Enabled:        true,
-			Tags:           []string{},
 			OrgID:          r.OrgID,
 		}
 		routes = append(routes, route)
@@ -228,7 +227,7 @@ func (migration *addRoutePolicies) convertRulesToRoutes(rules []*rule, channelsB
 	return routes, nil
 }
 
-func (migration *addRoutePolicies) getAllChannelsInTx(ctx context.Context, tx bun.Tx) (map[string][]string, error) {
+func (migration *addRoutePolicies) getAllChannels(ctx context.Context, tx bun.Tx) (map[string][]string, error) {
 	type channel struct {
 		bun.BaseModel `bun:"table:notification_channel"`
 		types.Identifiable
