@@ -24,7 +24,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -51,7 +50,6 @@ type SigNoz struct {
 	StatsReporter   statsreporter.StatsReporter
 	Modules         Modules
 	Handlers        Handlers
-	RouteStore      alertmanagertypes.RouteStore
 }
 
 func New(
@@ -339,6 +337,5 @@ func New(
 		Sharder:         sharder,
 		Modules:         modules,
 		Handlers:        handlers,
-		RouteStore:      routeStore,
 	}, nil
 }
