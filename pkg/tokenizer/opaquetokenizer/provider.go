@@ -57,7 +57,13 @@ func (provider *provider) Start(ctx context.Context) error {
 			if err := provider.gc(ctx); err != nil {
 				provider.settings.Logger().ErrorContext(ctx, "failed to garbage collect tokens", "error", err)
 			}
-		case <-ctx.Done():
+
+			return nil
+		case <-ticker.C:
+			if err := provider.gc(ctx); err != nil {
+				provider.settings.Logger().ErrorContext(ctx, "failed to garbage collect tokens", "error", err)
+			}
+
 			return nil
 		}
 	}
