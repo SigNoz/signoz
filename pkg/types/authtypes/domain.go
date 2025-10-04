@@ -22,6 +22,7 @@ var (
 
 var (
 	ErrCodeAuthDomainInvalidConfig = errors.MustNewCode("auth_domain_invalid_config")
+	ErrCodeAuthDomainInvalidName   = errors.MustNewCode("auth_domain_invalid_name")
 	ErrCodeAuthDomainMismatch      = errors.MustNewCode("auth_domain_mismatch")
 	ErrCodeAuthDomainNotFound      = errors.MustNewCode("auth_domain_not_found")
 	ErrCodeAuthDomainAlreadyExists = errors.MustNewCode("auth_domain_already_exists")
@@ -33,8 +34,8 @@ type GettableAuthDomain struct {
 }
 
 type PostableAuthDomain struct {
-	*AuthDomainConfig
-	Name string `json:"name"`
+	Config AuthDomainConfig `json:"config"`
+	Name   string           `json:"name"`
 }
 
 type StorableAuthDomain struct {
@@ -134,11 +135,7 @@ func (typ *PostableAuthDomain) UnmarshalJSON(data []byte) error {
 	}
 
 	if !authDomainNameRegex.MatchString(temp.Name) {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid domain name %s", temp.Name)
-	}
-
-	if temp.AuthDomainConfig == nil {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "config is required")
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidName, "invalid domain name %s", temp.Name)
 	}
 
 	*typ = PostableAuthDomain(temp)
@@ -159,17 +156,9 @@ func (typ *AuthDomainConfig) UnmarshalJSON(data []byte) error {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "google auth config is required")
 		}
 
-		if temp.SAML != nil || temp.OIDC != nil {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "only google auth config is allowed")
-		}
-
 	case AuthNProviderSAML:
 		if temp.SAML == nil {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "saml config is required")
-		}
-
-		if temp.Google != nil || temp.OIDC != nil {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "only saml config is allowed")
 		}
 
 	case AuthNProviderOIDC:
@@ -177,12 +166,8 @@ func (typ *AuthDomainConfig) UnmarshalJSON(data []byte) error {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "oidc config is required")
 		}
 
-		if temp.Google != nil || temp.SAML != nil {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "only oidc config is allowed")
-		}
-
 	default:
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "invalid authn provider %q", temp.AuthNProvider)
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "invalid authn provider %q", temp.AuthNProvider.StringValue())
 	}
 
 	*typ = AuthDomainConfig(temp)
