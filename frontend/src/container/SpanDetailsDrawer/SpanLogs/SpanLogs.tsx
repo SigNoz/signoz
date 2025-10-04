@@ -260,28 +260,37 @@ function SpanLogs({
 		</div>
 	);
 
-	return (
-		<div className={cx('span-logs', { 'span-logs-empty': logs.length === 0 })}>
-			{(isLoading || isFetching) && <LogsLoading />}
-			{!isLoading &&
-				!isFetching &&
-				!isError &&
-				logs.length === 0 &&
-				(emptyStateConfig ? (
+	const renderSpanLogsContent = (): JSX.Element | null => {
+		if (isLoading || isFetching) {
+			return <LogsLoading />;
+		}
+
+		if (isError) {
+			return <LogsError />;
+		}
+
+		if (logs.length === 0) {
+			if (emptyStateConfig) {
+				return (
 					<EmptyLogsSearch
 						dataSource={DataSource.LOGS}
 						panelType="LIST"
 						customMessage={emptyStateConfig}
 					/>
-				) : (
-					renderNoLogsFound()
-				))}
-			{isError && !isLoading && !isFetching && <LogsError />}
-			{!isLoading && !isFetching && !isError && logs.length > 0 && renderContent}
+				);
+			}
+			return renderNoLogsFound();
+		}
+
+		return renderContent;
+	};
+
+	return (
+		<div className={cx('span-logs', { 'span-logs-empty': logs.length === 0 })}>
+			{renderSpanLogsContent()}
 		</div>
 	);
 }
-
 SpanLogs.defaultProps = {
 	emptyStateConfig: undefined,
 };
