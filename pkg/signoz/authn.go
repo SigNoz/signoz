@@ -21,6 +21,6 @@ func NewAuthNs(ctx context.Context, providerSettings factory.ProviderSettings, s
 
 	return map[authtypes.AuthNProvider]authn.AuthN{
 		authtypes.AuthNProviderEmailPassword: emailPasswordAuthN,
-		authtypes.AuthNProviderGoogle:        googleCallbackAuthN,
+		authtypes.AuthNProviderGoogleAuth:    googleCallbackAuthN,
 	}, nil
 }
