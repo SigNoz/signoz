@@ -150,9 +150,46 @@ func (provider *provider) RotateToken(ctx context.Context, accessToken string, r
 	ctx, span := provider.settings.Tracer().Start(ctx, "tokenizer.RotateToken")
 	defer span.End()
 
-	token, err := provider.tokenStore.GetByAccessTokenOrPreviousAccessToken(ctx, accessToken)
-	if err != nil {
+	var rotatedToken *authtypes.Token
+
+	if err := provider.tokenStore.GetOrUpdateByAccessTokenOrPrevAccessToken(ctx, accessToken, func(ctx context.Context, token *authtypes.StorableToken) error {
+		if token.PrevAccessToken == accessToken {
+			if token.PrevRefreshToken == refreshToken {
+				// If the token has been rotated within the rotation duration, do nothing and return the same token.
+				if !token.RotatedAt.IsZero() && token.RotatedAt.Before(time.Now().Add(-provider.config.Rotation.Duration)) {
+					rotatedToken = token
+					return nil
+				}
+			}
+
+			return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid access token")
+		}
+
+		if token.AccessToken != accessToken {
+			return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid access token")
+		}
+
+		if token.RefreshToken != refreshToken {
+			return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid refresh token")
+		}
+
+		if err := token.IsExpired(provider.config.Lifetime.Idle, provider.config.Lifetime.Max); err != nil {
+			return err
+		}
+
+		if err := token.Rotate(); err != nil {
+			return err
+		}
+
+		if err := provider.setToken(ctx, token, false); err != nil {
+			return err
+		}
+
+		rotatedToken = token
+		return nil
+	}); err != nil {
 		span.RecordError(err)
+
 		// If the token is not found, return an unauthenticated error.
 		if errors.Ast(err, errors.TypeNotFound) {
 			return nil, errors.Wrap(err, errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid access token")
@@ -161,47 +198,7 @@ func (provider *provider) RotateToken(ctx context.Context, accessToken string, r
 		return nil, err
 	}
 
-	if token.PrevAccessToken == accessToken {
-		if token.PrevRefreshToken == refreshToken {
-			// If the token has been rotated within the rotation duration, do nothing and return the same token.
-			if !token.RotatedAt.IsZero() && token.RotatedAt.Before(time.Now().Add(-provider.config.Rotation.Duration)) {
-				return token, nil
-			}
-		}
-
-		err := errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid access token")
-		span.RecordError(err)
-		return nil, err
-	}
-
-	if token.AccessToken != accessToken {
-		err := errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid access token")
-		span.RecordError(err)
-		return nil, err
-	}
-
-	if token.RefreshToken != refreshToken {
-		err := errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid refresh token")
-		span.RecordError(err)
-		return nil, err
-	}
-
-	if err := token.IsExpired(provider.config.Lifetime.Idle, provider.config.Lifetime.Max); err != nil {
-		span.RecordError(err)
-		return nil, err
-	}
-
-	if err := token.Rotate(); err != nil {
-		span.RecordError(err)
-		return nil, err
-	}
-
-	if err := provider.setToken(ctx, token, false); err != nil {
-		span.RecordError(err)
-		return nil, err
-	}
-
-	return token, nil
+	return rotatedToken, nil
 }
 
 func (provider *provider) DeleteTokensByUserID(ctx context.Context, userID valuer.UUID) error {
