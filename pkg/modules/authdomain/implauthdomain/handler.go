@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
@@ -38,7 +38,7 @@ func (handler *handler) Create(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	authDomain, err := authtypes.NewAuthDomainFromConfig(body.Name, body.AuthDomainConfig, valuer.MustNewUUID(claims.OrgID))
+	authDomain, err := authtypes.NewAuthDomainFromConfig(body.Name, &body.Config, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -50,7 +50,7 @@ func (handler *handler) Create(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, authDomain.StorableAuthDomain().ID)
+	render.Success(rw, http.StatusCreated, types.Identifiable{ID: authDomain.StorableAuthDomain().ID})
 }
 
 func (handler *handler) Delete(rw http.ResponseWriter, req *http.Request) {
@@ -102,7 +102,7 @@ func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
 
 	domainID, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
-		render.Error(rw, errors.WithAdditionalf(err, "domain id %s is invalid", domainID))
+		render.Error(rw, err)
 		return
 	}
 
