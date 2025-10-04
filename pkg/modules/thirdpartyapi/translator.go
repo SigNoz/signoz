@@ -1,14 +1,17 @@
 package thirdpartyapi
 
 import (
+	"context"
 	"fmt"
 	"github.com/SigNoz/signoz/pkg/types/thirdpartyapitypes"
 	"net"
 	"regexp"
 	"time"
 
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 const (
@@ -18,6 +21,149 @@ const (
 	urlPathKey       = "url.full"
 	serverAddressKey = "server.address"
 )
+
+type ColumnAvailability struct {
+	HttpURL       bool
+	URLFull       bool
+	NetPeerName   bool
+	ServerAddress bool
+}
+
+func CheckColumnAvailability(ctx context.Context, querier interface{}, orgID interface{}, start, end uint64) *ColumnAvailability {
+	availability := &ColumnAvailability{
+		HttpURL:       true,
+		URLFull:       false,
+		NetPeerName:   true,
+		ServerAddress: false,
+	}
+
+	var orgUUID valuer.UUID
+	if uuid, ok := orgID.(valuer.UUID); ok {
+		orgUUID = uuid
+	} else {
+		return availability
+	}
+
+	testQueries := map[string]*bool{
+		urlPathKey:       &availability.URLFull,
+		serverAddressKey: &availability.ServerAddress,
+	}
+
+	for attrKey, availabilityFlag := range testQueries {
+		testQuery := &qbtypes.QueryRangeRequest{
+			SchemaVersion: "v5",
+			Start:         start,
+			End:           end,
+			RequestType:   qbtypes.RequestTypeScalar,
+			CompositeQuery: qbtypes.CompositeQuery{
+				Queries: []qbtypes.QueryEnvelope{
+					{
+						Type: qbtypes.QueryTypeBuilder,
+						Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+							Name:         "test",
+							Signal:       telemetrytypes.SignalTraces,
+							StepInterval: qbtypes.Step{Duration: defaultStepInterval},
+							Aggregations: []qbtypes.TraceAggregation{
+								{Expression: "count()"},
+							},
+							Filter: &qbtypes.Filter{
+								Expression: fmt.Sprintf("%s EXISTS AND kind_string = 'Client'", attrKey),
+							},
+							Limit: 1,
+						},
+					},
+				},
+			},
+		}
+
+		if q, ok := querier.(interface {
+			QueryRange(context.Context, valuer.UUID, *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error)
+		}); ok {
+			v3CompositeQuery := &v3.CompositeQuery{
+				Queries: testQuery.CompositeQuery.Queries,
+			}
+
+			v3Query := &v3.QueryRangeParamsV3{
+				Start:          int64(start * 1000),
+				End:            int64(end * 1000),
+				CompositeQuery: v3CompositeQuery,
+			}
+
+			_, queryErrors, err := q.QueryRange(ctx, orgUUID, v3Query)
+			if err == nil && len(queryErrors) == 0 {
+				*availabilityFlag = true
+			} else {
+				*availabilityFlag = false
+			}
+		}
+	}
+
+	return availability
+}
+
+func getAvailableServerGroupBy(availability *ColumnAvailability) []qbtypes.GroupByKey {
+	var groupByKeys []qbtypes.GroupByKey
+
+	if availability.ServerAddress && availability.NetPeerName {
+		groupByKeys = dualSemconvGroupByKeys["server"]
+	} else if availability.ServerAddress {
+		groupByKeys = []qbtypes.GroupByKey{
+			{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name:          serverAddressKey,
+					FieldDataType: telemetrytypes.FieldDataTypeString,
+					FieldContext:  telemetrytypes.FieldContextAttribute,
+					Signal:        telemetrytypes.SignalTraces,
+				},
+			},
+		}
+	} else {
+		groupByKeys = []qbtypes.GroupByKey{
+			{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name:          serverAddressKeyLegacy,
+					FieldDataType: telemetrytypes.FieldDataTypeString,
+					FieldContext:  telemetrytypes.FieldContextAttribute,
+					Signal:        telemetrytypes.SignalTraces,
+				},
+			},
+		}
+	}
+
+	return groupByKeys
+}
+
+func getAvailableURLGroupBy(availability *ColumnAvailability) []qbtypes.GroupByKey {
+	var groupByKeys []qbtypes.GroupByKey
+
+	if availability.URLFull && availability.HttpURL {
+		groupByKeys = dualSemconvGroupByKeys["url"]
+	} else if availability.URLFull {
+		groupByKeys = []qbtypes.GroupByKey{
+			{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name:          urlPathKey,
+					FieldDataType: telemetrytypes.FieldDataTypeString,
+					FieldContext:  telemetrytypes.FieldContextAttribute,
+					Signal:        telemetrytypes.SignalTraces,
+				},
+			},
+		}
+	} else {
+		groupByKeys = []qbtypes.GroupByKey{
+			{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name:          urlPathKeyLegacy,
+					FieldDataType: telemetrytypes.FieldDataTypeString,
+					FieldContext:  telemetrytypes.FieldContextAttribute,
+					Signal:        telemetrytypes.SignalTraces,
+				},
+			},
+		}
+	}
+
+	return groupByKeys
+}
 
 var defaultStepInterval = 60 * time.Second
 
@@ -211,6 +357,29 @@ func isValidValue(val any) bool {
 	return true
 }
 
+func FilterNullValues(result *qbtypes.QueryRangeResponse) *qbtypes.QueryRangeResponse {
+	if result == nil || result.Data.Results == nil {
+		return result
+	}
+
+	for _, res := range result.Data.Results {
+		scalarData, ok := res.(*qbtypes.ScalarData)
+		if !ok {
+			continue
+		}
+
+		filteredData := make([][]any, 0)
+		for _, row := range scalarData.Data {
+			if len(row) > 0 && isValidValue(row[0]) {
+				filteredData = append(filteredData, row)
+			}
+		}
+		scalarData.Data = filteredData
+	}
+
+	return result
+}
+
 func FilterResponse(results []*qbtypes.QueryRangeResponse) []*qbtypes.QueryRangeResponse {
 	filteredResults := make([]*qbtypes.QueryRangeResponse, 0, len(results))
 
@@ -296,18 +465,18 @@ func mergeGroupBy(base, additional []qbtypes.GroupByKey) []qbtypes.GroupByKey {
 	return append(base, additional...)
 }
 
-func BuildDomainList(req *thirdpartyapitypes.ThirdPartyApiRequest) (*qbtypes.QueryRangeRequest, error) {
+func BuildDomainList(req *thirdpartyapitypes.ThirdPartyApiRequest, availability *ColumnAvailability) (*qbtypes.QueryRangeRequest, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
 	queries := []qbtypes.QueryEnvelope{
-		buildEndpointsQuery(req),
-		buildLastSeenQuery(req),
-		buildRpsQuery(req),
-		buildErrorQuery(req),
-		buildTotalSpanQuery(req),
-		buildP99Query(req),
+		buildEndpointsQuery(req, availability),
+		buildLastSeenQuery(req, availability),
+		buildRpsQuery(req, availability),
+		buildErrorQuery(req, availability),
+		buildTotalSpanQuery(req, availability),
+		buildP99Query(req, availability),
 		buildErrorRateFormula(),
 	}
 
@@ -325,16 +494,16 @@ func BuildDomainList(req *thirdpartyapitypes.ThirdPartyApiRequest) (*qbtypes.Que
 	}, nil
 }
 
-func BuildDomainInfo(req *thirdpartyapitypes.ThirdPartyApiRequest) (*qbtypes.QueryRangeRequest, error) {
+func BuildDomainInfo(req *thirdpartyapitypes.ThirdPartyApiRequest, availability *ColumnAvailability) (*qbtypes.QueryRangeRequest, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
 	queries := []qbtypes.QueryEnvelope{
-		buildEndpointsInfoQuery(req),
-		buildP99InfoQuery(req),
-		buildErrorRateInfoQuery(req),
-		buildLastSeenInfoQuery(req),
+		buildEndpointsInfoQuery(req, availability),
+		buildP99InfoQuery(req, availability),
+		buildErrorRateInfoQuery(req, availability),
+		buildLastSeenInfoQuery(req, availability),
 	}
 
 	return &qbtypes.QueryRangeRequest{
@@ -351,7 +520,7 @@ func BuildDomainInfo(req *thirdpartyapitypes.ThirdPartyApiRequest) (*qbtypes.Que
 	}, nil
 }
 
-func buildEndpointsQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildEndpointsQuery(req *thirdpartyapitypes.ThirdPartyApiRequest, availability *ColumnAvailability) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -361,13 +530,13 @@ func buildEndpointsQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.Q
 			Aggregations: []qbtypes.TraceAggregation{
 				{Expression: "count_distinct(http.url)"},
 			},
-			Filter:  buildBaseFilter(req.Filter),
-			GroupBy: mergeGroupBy(dualSemconvGroupByKeys["server"], req.GroupBy),
+			Filter:  buildBaseFilter(req.Filter, availability),
+			GroupBy: mergeGroupBy(getAvailableServerGroupBy(availability), req.GroupBy),
 		},
 	}
 }
 
-func buildLastSeenQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildLastSeenQuery(req *thirdpartyapitypes.ThirdPartyApiRequest, availability *ColumnAvailability) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -377,13 +546,13 @@ func buildLastSeenQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.Qu
 			Aggregations: []qbtypes.TraceAggregation{
 				{Expression: "max(timestamp)"},
 			},
-			Filter:  buildBaseFilter(req.Filter),
-			GroupBy: mergeGroupBy(dualSemconvGroupByKeys["server"], req.GroupBy),
+			Filter:  buildBaseFilter(req.Filter, availability),
+			GroupBy: mergeGroupBy(getAvailableServerGroupBy(availability), req.GroupBy),
 		},
 	}
 }
 
-func buildRpsQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildRpsQuery(req *thirdpartyapitypes.ThirdPartyApiRequest, availability *ColumnAvailability) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -393,13 +562,13 @@ func buildRpsQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.QueryEn
 			Aggregations: []qbtypes.TraceAggregation{
 				{Expression: "rate()"},
 			},
-			Filter:  buildBaseFilter(req.Filter),
-			GroupBy: mergeGroupBy(dualSemconvGroupByKeys["server"], req.GroupBy),
+			Filter:  buildBaseFilter(req.Filter, availability),
+			GroupBy: mergeGroupBy(getAvailableServerGroupBy(availability), req.GroupBy),
 		},
 	}
 }
 
-func buildErrorQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildErrorQuery(req *thirdpartyapitypes.ThirdPartyApiRequest, availability *ColumnAvailability) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -409,13 +578,13 @@ func buildErrorQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.Query
 			Aggregations: []qbtypes.TraceAggregation{
 				{Expression: "count()"},
 			},
-			Filter:  buildErrorFilter(req.Filter),
-			GroupBy: mergeGroupBy(dualSemconvGroupByKeys["server"], req.GroupBy),
+			Filter:  buildErrorFilter(req.Filter, availability),
+			GroupBy: mergeGroupBy(getAvailableServerGroupBy(availability), req.GroupBy),
 		},
 	}
 }
 
-func buildTotalSpanQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildTotalSpanQuery(req *thirdpartyapitypes.ThirdPartyApiRequest, availability *ColumnAvailability) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -425,13 +594,13 @@ func buildTotalSpanQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.Q
 			Aggregations: []qbtypes.TraceAggregation{
 				{Expression: "count()"},
 			},
-			Filter:  buildBaseFilter(req.Filter),
-			GroupBy: mergeGroupBy(dualSemconvGroupByKeys["server"], req.GroupBy),
+			Filter:  buildBaseFilter(req.Filter, availability),
+			GroupBy: mergeGroupBy(getAvailableServerGroupBy(availability), req.GroupBy),
 		},
 	}
 }
 
-func buildP99Query(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildP99Query(req *thirdpartyapitypes.ThirdPartyApiRequest, availability *ColumnAvailability) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -441,8 +610,8 @@ func buildP99Query(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.QueryEn
 			Aggregations: []qbtypes.TraceAggregation{
 				{Expression: "p99(duration_nano)"},
 			},
-			Filter:  buildBaseFilter(req.Filter),
-			GroupBy: mergeGroupBy(dualSemconvGroupByKeys["server"], req.GroupBy),
+			Filter:  buildBaseFilter(req.Filter, availability),
+			GroupBy: mergeGroupBy(getAvailableServerGroupBy(availability), req.GroupBy),
 		},
 	}
 }
@@ -457,7 +626,7 @@ func buildErrorRateFormula() qbtypes.QueryEnvelope {
 	}
 }
 
-func buildEndpointsInfoQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildEndpointsInfoQuery(req *thirdpartyapitypes.ThirdPartyApiRequest, availability *ColumnAvailability) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -467,13 +636,13 @@ func buildEndpointsInfoQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtyp
 			Aggregations: []qbtypes.TraceAggregation{
 				{Expression: "rate(http.url)"},
 			},
-			Filter:  buildBaseFilter(req.Filter),
-			GroupBy: mergeGroupBy(dualSemconvGroupByKeys["url"], req.GroupBy),
+			Filter:  buildBaseFilter(req.Filter, availability),
+			GroupBy: mergeGroupBy(getAvailableURLGroupBy(availability), req.GroupBy),
 		},
 	}
 }
 
-func buildP99InfoQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildP99InfoQuery(req *thirdpartyapitypes.ThirdPartyApiRequest, availability *ColumnAvailability) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -483,13 +652,13 @@ func buildP99InfoQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.Que
 			Aggregations: []qbtypes.TraceAggregation{
 				{Expression: "p99(duration_nano)"},
 			},
-			Filter:  buildBaseFilter(req.Filter),
+			Filter:  buildBaseFilter(req.Filter, availability),
 			GroupBy: req.GroupBy,
 		},
 	}
 }
 
-func buildErrorRateInfoQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildErrorRateInfoQuery(req *thirdpartyapitypes.ThirdPartyApiRequest, availability *ColumnAvailability) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -499,13 +668,13 @@ func buildErrorRateInfoQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtyp
 			Aggregations: []qbtypes.TraceAggregation{
 				{Expression: "rate()"},
 			},
-			Filter:  buildBaseFilter(req.Filter),
+			Filter:  buildBaseFilter(req.Filter, availability),
 			GroupBy: req.GroupBy,
 		},
 	}
 }
 
-func buildLastSeenInfoQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+func buildLastSeenInfoQuery(req *thirdpartyapitypes.ThirdPartyApiRequest, availability *ColumnAvailability) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -515,15 +684,24 @@ func buildLastSeenInfoQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtype
 			Aggregations: []qbtypes.TraceAggregation{
 				{Expression: "max(timestamp)"},
 			},
-			Filter:  buildBaseFilter(req.Filter),
+			Filter:  buildBaseFilter(req.Filter, availability),
 			GroupBy: req.GroupBy,
 		},
 	}
 }
 
-func buildBaseFilter(additionalFilter *qbtypes.Filter) *qbtypes.Filter {
-	baseExpression := fmt.Sprintf("(%s EXISTS OR %s EXISTS) AND kind_string = 'Client'",
-		urlPathKeyLegacy, urlPathKey)
+func buildBaseFilter(additionalFilter *qbtypes.Filter, availability *ColumnAvailability) *qbtypes.Filter {
+	var urlExistsExpression string
+
+	if availability.URLFull && availability.HttpURL {
+		urlExistsExpression = fmt.Sprintf("(%s EXISTS OR %s EXISTS)", urlPathKeyLegacy, urlPathKey)
+	} else if availability.URLFull {
+		urlExistsExpression = fmt.Sprintf("%s EXISTS", urlPathKey)
+	} else {
+		urlExistsExpression = fmt.Sprintf("%s EXISTS", urlPathKeyLegacy)
+	}
+
+	baseExpression := fmt.Sprintf("(%s) AND kind_string = 'Client'", urlExistsExpression)
 
 	if additionalFilter != nil && additionalFilter.Expression != "" {
 		if containsKindStringOverride(additionalFilter.Expression) {
@@ -535,9 +713,18 @@ func buildBaseFilter(additionalFilter *qbtypes.Filter) *qbtypes.Filter {
 	return &qbtypes.Filter{Expression: baseExpression}
 }
 
-func buildErrorFilter(additionalFilter *qbtypes.Filter) *qbtypes.Filter {
-	errorExpression := fmt.Sprintf("has_error = true AND (%s EXISTS OR %s EXISTS) AND kind_string = 'Client'",
-		urlPathKeyLegacy, urlPathKey)
+func buildErrorFilter(additionalFilter *qbtypes.Filter, availability *ColumnAvailability) *qbtypes.Filter {
+	var urlExistsExpression string
+
+	if availability.URLFull && availability.HttpURL {
+		urlExistsExpression = fmt.Sprintf("(%s EXISTS OR %s EXISTS)", urlPathKeyLegacy, urlPathKey)
+	} else if availability.URLFull {
+		urlExistsExpression = fmt.Sprintf("%s EXISTS", urlPathKey)
+	} else {
+		urlExistsExpression = fmt.Sprintf("%s EXISTS", urlPathKeyLegacy)
+	}
+
+	errorExpression := fmt.Sprintf("has_error = true AND (%s) AND kind_string = 'Client'", urlExistsExpression)
 
 	if additionalFilter != nil && additionalFilter.Expression != "" {
 		if containsKindStringOverride(additionalFilter.Expression) {
