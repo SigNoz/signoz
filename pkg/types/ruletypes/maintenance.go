@@ -337,4 +337,5 @@ type MaintenanceStore interface {
 	GetPlannedMaintenanceByID(context.Context, valuer.UUID) (*GettablePlannedMaintenance, error)
 	EditPlannedMaintenance(context.Context, GettablePlannedMaintenance, valuer.UUID) error
 	GetAllPlannedMaintenance(context.Context, string) ([]*GettablePlannedMaintenance, error)
+	DeletePlannedMaintenanceRulesByRuleID(context.Context, valuer.UUID) error
 }
