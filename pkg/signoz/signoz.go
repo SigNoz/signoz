@@ -2,6 +2,7 @@ package signoz
 
 import (
 	"context"
+
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfroutingstore/sqlroutingstore"
@@ -18,7 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
-	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
@@ -45,7 +45,6 @@ type SigNoz struct {
 	Prometheus      prometheus.Prometheus
 	Alertmanager    alertmanager.Alertmanager
 	Querier         querier.Querier
-	Rules           ruler.Ruler
 	Zeus            zeus.Zeus
 	Licensing       licensing.Licensing
 	Emailing        emailing.Emailing
@@ -247,14 +246,12 @@ func New(
 	// Initialize user getter
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 
-	// will need to create factory for all stores
-	routeStore := sqlroutingstore.NewStore(sqlstore)
-	// shared NotificationManager instance for both alertmanager and rules
+	// Initialize notification manager from the available notification manager provider factories
 	notificationManager, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		nfmanager.Config{},
-		NewNotificationManagerProviderFactories(routeStore),
+		NewNotificationManagerProviderFactories(sqlroutingstore.NewStore(sqlstore)),
 		"rulebased",
 	)
 	if err != nil {
@@ -355,7 +352,6 @@ func New(
 		Prometheus:      prometheus,
 		Alertmanager:    alertmanager,
 		Querier:         querier,
-		Rules:           ruler,
 		Zeus:            zeus,
 		Licensing:       licensing,
 		Emailing:        emailing,
