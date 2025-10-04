@@ -2,10 +2,15 @@ package rules
 
 import (
 	"context"
+	"fmt"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfroutingstore/nfroutingstoretest"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/rulebasednotification"
+	"github.com/prometheus/common/model"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 
@@ -32,19 +37,38 @@ func TestManager_PatchRule_PayloadVariations(t *testing.T) {
 		Email:  "test@example.com",
 		Role:   "admin",
 	}
-	manager, mockSQLRuleStore, orgId := setupTestManager(t)
+	manager, mockSQLRuleStore, mockRouteStore, nfmanager, orgId := setupTestManager(t)
 	claims.OrgID = orgId
 
 	testCases := []struct {
 		name           string
 		originalData   string
 		patchData      string
+		Route          []*alertmanagertypes.RoutePolicy
+		Config         *alertmanagertypes.NotificationConfig
 		expectedResult func(*ruletypes.GettableRule) bool
 		expectError    bool
 		description    string
 	}{
 		{
 			name: "patch complete rule with task sync validation",
+			Route: []*alertmanagertypes.RoutePolicy{
+				{
+					Expression:     fmt.Sprintf("ruleId == \"{{.ruleId}}\" && threshold.name == \"warning\""),
+					ExpressionKind: alertmanagertypes.RuleBasedExpression,
+					Channels:       []string{"test-alerts"},
+					Name:           "{{.ruleId}}",
+					Enabled:        true,
+				},
+			},
+			Config: &alertmanagertypes.NotificationConfig{
+				NotificationGroup: map[model.LabelName]struct{}{model.LabelName("ruleId"): {}},
+				Renotify: alertmanagertypes.ReNotificationConfig{
+					RenotifyInterval: 4 * time.Hour,
+					NoDataInterval:   4 * time.Hour,
+				},
+				UsePolicy: false,
+			},
 			originalData: `{
 				"schemaVersion":"v1",
 				"alert": "test-original-alert",
@@ -95,6 +119,23 @@ func TestManager_PatchRule_PayloadVariations(t *testing.T) {
 		},
 		{
 			name: "patch rule to disabled state",
+			Route: []*alertmanagertypes.RoutePolicy{
+				{
+					Expression:     fmt.Sprintf("ruleId == \"{{.ruleId}}\" && threshold.name == \"warning\""),
+					ExpressionKind: alertmanagertypes.RuleBasedExpression,
+					Channels:       []string{"test-alerts"},
+					Name:           "{{.ruleId}}",
+					Enabled:        true,
+				},
+			},
+			Config: &alertmanagertypes.NotificationConfig{
+				NotificationGroup: map[model.LabelName]struct{}{model.LabelName("ruleId"): {}},
+				Renotify: alertmanagertypes.ReNotificationConfig{
+					RenotifyInterval: 4 * time.Hour,
+					NoDataInterval:   4 * time.Hour,
+				},
+				UsePolicy: false,
+			},
 			originalData: `{
 				"schemaVersion":"v2",
 				"alert": "test-disable-alert",
@@ -179,6 +220,20 @@ func TestManager_PatchRule_PayloadVariations(t *testing.T) {
 				OrgID: claims.OrgID,
 			}
 
+			// Update route expectations with actual rule ID
+			routesWithRuleID := make([]*alertmanagertypes.RoutePolicy, len(tc.Route))
+			for i, route := range tc.Route {
+				routesWithRuleID[i] = &alertmanagertypes.RoutePolicy{
+					Expression:     strings.Replace(route.Expression, "{{.ruleId}}", ruleID.String(), -1),
+					ExpressionKind: route.ExpressionKind,
+					Channels:       route.Channels,
+					Name:           strings.Replace(route.Name, "{{.ruleId}}", ruleID.String(), -1),
+					Enabled:        route.Enabled,
+				}
+			}
+
+			mockRouteStore.ExpectDeleteRouteByName(existingRule.OrgID, ruleID.String())
+			mockRouteStore.ExpectCreateBatch(routesWithRuleID)
 			mockSQLRuleStore.ExpectGetStoredRule(ruleID, existingRule)
 			mockSQLRuleStore.ExpectEditRule(existingRule)
 
@@ -200,6 +255,12 @@ func TestManager_PatchRule_PayloadVariations(t *testing.T) {
 				assert.Nil(t, findTaskByName(manager.RuleTasks(), taskName), "Task should be removed for disabled rule")
 			} else {
 				syncCompleted := waitForTaskSync(manager, taskName, true, 2*time.Second)
+
+				// Verify notification config
+				config, err := nfmanager.GetNotificationConfig(orgId, result.Id)
+				assert.NoError(t, err)
+				assert.Equal(t, tc.Config, config)
+
 				assert.True(t, syncCompleted, "Task synchronization should complete within timeout")
 				assert.NotNil(t, findTaskByName(manager.RuleTasks(), taskName), "Task should be created/updated for enabled rule")
 				assert.Greater(t, len(manager.Rules()), 0, "Rules should be updated in manager")
@@ -234,7 +295,7 @@ func findTaskByName(tasks []Task, taskName string) Task {
 	return nil
 }
 
-func setupTestManager(t *testing.T) (*Manager, *rulestoretest.MockSQLRuleStore, string) {
+func setupTestManager(t *testing.T) (*Manager, *rulestoretest.MockSQLRuleStore, *nfroutingstoretest.MockSQLRouteStore, nfmanager.NotificationManager, string) {
 	settings := instrumentationtest.New().ToProviderSettings()
 	testDB := utils.NewQueryServiceDBForTests(t)
 
@@ -266,7 +327,11 @@ func setupTestManager(t *testing.T) (*Manager, *rulestoretest.MockSQLRuleStore, 
 		t.Fatalf("Failed to create noop sharder: %v", err)
 	}
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(testDB), noopSharder)
-	notificationManager := nfmanagertest.NewMock()
+	routeStore := nfroutingstoretest.NewMockSQLRouteStore()
+	notificationManager, err := rulebasednotification.New(t.Context(), settings, nfmanager.Config{}, routeStore)
+	if err != nil {
+		t.Fatalf("Failed to create alert manager: %v", err)
+	}
 	alertManager, err := signozalertmanager.New(context.TODO(), settings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, testDB, orgGetter, notificationManager)
 	if err != nil {
 		t.Fatalf("Failed to create alert manager: %v", err)
@@ -290,21 +355,40 @@ func setupTestManager(t *testing.T) (*Manager, *rulestoretest.MockSQLRuleStore, 
 	}
 
 	close(manager.block)
-	return manager, mockSQLRuleStore, testOrgID.StringValue()
+	return manager, mockSQLRuleStore, routeStore, notificationManager, testOrgID.StringValue()
 }
 
 func TestCreateRule(t *testing.T) {
 	claims := &authtypes.Claims{
 		Email: "test@example.com",
 	}
-	manager, mockSQLRuleStore, orgId := setupTestManager(t)
+	manager, mockSQLRuleStore, mockRouteStore, nfmanager, orgId := setupTestManager(t)
 	claims.OrgID = orgId
 	testCases := []struct {
 		name    string
+		Route   []*alertmanagertypes.RoutePolicy
+		Config  *alertmanagertypes.NotificationConfig
 		ruleStr string
 	}{
 		{
 			name: "validate stored rule data structure",
+			Route: []*alertmanagertypes.RoutePolicy{
+				{
+					Expression:     fmt.Sprintf("ruleId == \"{{.ruleId}}\" && threshold.name == \"warning\""),
+					ExpressionKind: alertmanagertypes.RuleBasedExpression,
+					Channels:       []string{"test-alerts"},
+					Name:           "{{.ruleId}}",
+					Enabled:        true,
+				},
+			},
+			Config: &alertmanagertypes.NotificationConfig{
+				NotificationGroup: map[model.LabelName]struct{}{model.LabelName("ruleId"): {}},
+				Renotify: alertmanagertypes.ReNotificationConfig{
+					RenotifyInterval: 4 * time.Hour,
+					NoDataInterval:   4 * time.Hour,
+				},
+				UsePolicy: false,
+			},
 			ruleStr: `{
 				"alert": "cpu usage",
 				"ruleType": "threshold_rule",
@@ -341,6 +425,30 @@ func TestCreateRule(t *testing.T) {
 		},
 		{
 			name: "create complete v2 rule with thresholds",
+			Route: []*alertmanagertypes.RoutePolicy{
+				{
+					Expression:     fmt.Sprintf("ruleId == \"{{.ruleId}}\" && threshold.name == \"critical\""),
+					ExpressionKind: alertmanagertypes.RuleBasedExpression,
+					Channels:       []string{"test-alerts"},
+					Name:           "{{.ruleId}}",
+					Enabled:        true,
+				},
+				{
+					Expression:     fmt.Sprintf("ruleId == \"{{.ruleId}}\" && threshold.name == \"warning\""),
+					ExpressionKind: alertmanagertypes.RuleBasedExpression,
+					Channels:       []string{"test-alerts"},
+					Name:           "{{.ruleId}}",
+					Enabled:        true,
+				},
+			},
+			Config: &alertmanagertypes.NotificationConfig{
+				NotificationGroup: map[model.LabelName]struct{}{model.LabelName("k8s.node.name"): {}, model.LabelName("ruleId"): {}},
+				Renotify: alertmanagertypes.ReNotificationConfig{
+					RenotifyInterval: 10 * time.Minute,
+					NoDataInterval:   4 * time.Hour,
+				},
+				UsePolicy: false,
+			},
 			ruleStr: `{
 				"schemaVersion":"v2",
 				"state": "firing",
@@ -399,6 +507,18 @@ func TestCreateRule(t *testing.T) {
 						"frequency": "1m"
 					}
 				},
+				"notificationSettings": {
+                    "GroupBy": [
+                         "k8s.node.name"
+                    ],
+                    "renotify": {
+						"interval":	"10m",
+						"enabled":	true,
+                    	"alertStates": [
+                        	"firing"
+                    	]
+					}
+                },
 				"labels": {
 					"severity": "warning"
 				},
@@ -429,6 +549,20 @@ func TestCreateRule(t *testing.T) {
 				},
 				OrgID: claims.OrgID,
 			}
+
+			// Update route expectations with actual rule ID
+			routesWithRuleID := make([]*alertmanagertypes.RoutePolicy, len(tc.Route))
+			for i, route := range tc.Route {
+				routesWithRuleID[i] = &alertmanagertypes.RoutePolicy{
+					Expression:     strings.Replace(route.Expression, "{{.ruleId}}", rule.ID.String(), -1),
+					ExpressionKind: route.ExpressionKind,
+					Channels:       route.Channels,
+					Name:           strings.Replace(route.Name, "{{.ruleId}}", rule.ID.String(), -1),
+					Enabled:        route.Enabled,
+				}
+			}
+
+			mockRouteStore.ExpectCreateBatch(routesWithRuleID)
 			mockSQLRuleStore.ExpectCreateRule(rule)
 
 			ctx := authtypes.NewContextWithClaims(context.Background(), *claims)
@@ -441,6 +575,12 @@ func TestCreateRule(t *testing.T) {
 			// Wait for task creation with proper synchronization
 			taskName := prepareTaskName(result.Id)
 			syncCompleted := waitForTaskSync(manager, taskName, true, 2*time.Second)
+
+			// Verify notification config
+			config, err := nfmanager.GetNotificationConfig(orgId, result.Id)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.Config, config)
+
 			assert.True(t, syncCompleted, "Task creation should complete within timeout")
 			assert.NotNil(t, findTaskByName(manager.RuleTasks(), taskName), "Task should be created with correct name")
 			assert.Greater(t, len(manager.Rules()), 0, "Rules should be added to manager")
@@ -455,14 +595,35 @@ func TestEditRule(t *testing.T) {
 	claims := &authtypes.Claims{
 		Email: "test@example.com",
 	}
-	manager, mockSQLRuleStore, orgId := setupTestManager(t)
+	manager, mockSQLRuleStore, mockRouteStore, nfmanager, orgId := setupTestManager(t)
 	claims.OrgID = orgId
 	testCases := []struct {
+		ruleID  string
 		name    string
+		Route   []*alertmanagertypes.RoutePolicy
+		Config  *alertmanagertypes.NotificationConfig
 		ruleStr string
 	}{
 		{
-			name: "validate edit rule functionality",
+			ruleID: "12345678-1234-1234-1234-123456789012",
+			name:   "validate edit rule functionality",
+			Route: []*alertmanagertypes.RoutePolicy{
+				{
+					Expression:     fmt.Sprintf("ruleId == \"rule1\" && threshold.name == \"critical\""),
+					ExpressionKind: alertmanagertypes.RuleBasedExpression,
+					Channels:       []string{"critical-alerts"},
+					Name:           "12345678-1234-1234-1234-123456789012",
+					Enabled:        true,
+				},
+			},
+			Config: &alertmanagertypes.NotificationConfig{
+				NotificationGroup: map[model.LabelName]struct{}{model.LabelName("ruleId"): {}},
+				Renotify: alertmanagertypes.ReNotificationConfig{
+					RenotifyInterval: 4 * time.Hour,
+					NoDataInterval:   4 * time.Hour,
+				},
+				UsePolicy: false,
+			},
 			ruleStr: `{
 				"alert": "updated cpu usage",
 				"ruleType": "threshold_rule",
@@ -498,7 +659,32 @@ func TestEditRule(t *testing.T) {
 			}`,
 		},
 		{
-			name: "edit complete v2 rule with thresholds",
+			ruleID: "12345678-1234-1234-1234-123456789013",
+			name:   "edit complete v2 rule with thresholds",
+			Route: []*alertmanagertypes.RoutePolicy{
+				{
+					Expression:     fmt.Sprintf("ruleId == \"rule2\" && threshold.name == \"critical\""),
+					ExpressionKind: alertmanagertypes.RuleBasedExpression,
+					Channels:       []string{"test-alerts"},
+					Name:           "12345678-1234-1234-1234-123456789013",
+					Enabled:        true,
+				},
+				{
+					Expression:     fmt.Sprintf("ruleId == \"rule2\" && threshold.name == \"warning\""),
+					ExpressionKind: alertmanagertypes.RuleBasedExpression,
+					Channels:       []string{"test-alerts"},
+					Name:           "12345678-1234-1234-1234-123456789013",
+					Enabled:        true,
+				},
+			},
+			Config: &alertmanagertypes.NotificationConfig{
+				NotificationGroup: map[model.LabelName]struct{}{model.LabelName("ruleId"): {}, model.LabelName("k8s.node.name"): {}},
+				Renotify: alertmanagertypes.ReNotificationConfig{
+					RenotifyInterval: 10 * time.Minute,
+					NoDataInterval:   4 * time.Hour,
+				},
+				UsePolicy: false,
+			},
 			ruleStr: `{
 				"schemaVersion":"v2",
 				"state": "firing",
@@ -560,6 +746,18 @@ func TestEditRule(t *testing.T) {
 				"labels": {
 					"severity": "critical"
 				},
+				"notificationSettings": {
+                    "GroupBy": [
+                         "k8s.node.name"
+                    ],
+                    "renotify": {
+						"interval":	"10m",
+						"enabled":	true,
+                    	"alertStates": [
+                        	"firing"
+                    	]
+					}
+                },
 				"annotations": {
 					"description": "This alert is fired when memory usage crosses the threshold",
 					"summary": "Memory usage threshold exceeded"
@@ -573,11 +771,13 @@ func TestEditRule(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ruleID := valuer.GenerateUUID()
-
+			ruleId, err := valuer.NewUUID(tc.ruleID)
+			if err != nil {
+				t.Errorf("error creating ruleId: %s", err)
+			}
 			existingRule := &ruletypes.Rule{
 				Identifiable: types.Identifiable{
-					ID: ruleID,
+					ID: ruleId,
 				},
 				TimeAuditable: types.TimeAuditable{
 					CreatedAt: time.Now(),
@@ -590,18 +790,24 @@ func TestEditRule(t *testing.T) {
 				Data:  `{"alert": "original cpu usage", "disabled": false}`,
 				OrgID: claims.OrgID,
 			}
-
-			mockSQLRuleStore.ExpectGetStoredRule(ruleID, existingRule)
+			mockRouteStore.ExpectDeleteRouteByName(existingRule.OrgID, ruleId.String())
+			mockRouteStore.ExpectCreateBatch(tc.Route)
+			mockSQLRuleStore.ExpectGetStoredRule(ruleId, existingRule)
 			mockSQLRuleStore.ExpectEditRule(existingRule)
 
 			ctx := authtypes.NewContextWithClaims(context.Background(), *claims)
-			err := manager.EditRule(ctx, tc.ruleStr, ruleID)
+			err = manager.EditRule(ctx, tc.ruleStr, ruleId)
 
 			assert.NoError(t, err)
 
 			// Wait for task update with proper synchronization
-			taskName := prepareTaskName(ruleID.StringValue())
+
+			taskName := prepareTaskName(ruleId.String())
 			syncCompleted := waitForTaskSync(manager, taskName, true, 2*time.Second)
+
+			config, err := nfmanager.GetNotificationConfig(orgId, ruleId.String())
+			assert.NoError(t, err)
+			assert.Equal(t, tc.Config, config)
 			assert.True(t, syncCompleted, "Task update should complete within timeout")
 			assert.NotNil(t, findTaskByName(manager.RuleTasks(), taskName), "Task should be updated with correct name")
 			assert.Greater(t, len(manager.Rules()), 0, "Rules should be updated in manager")

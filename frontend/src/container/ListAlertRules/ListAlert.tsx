@@ -1,6 +1,14 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Flex, Input, MenuProps, Typography } from 'antd';
+import {
+	Button,
+	Dropdown,
+	Flex,
+	Input,
+	MenuProps,
+	Tag,
+	Typography,
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
 import logEvent from 'api/common/logEvent';
@@ -118,12 +126,16 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const newAlertMenuItems: MenuProps['items'] = [
 		{
 			key: 'new',
-			label: 'Try the new experience',
+			label: (
+				<span>
+					Try the new experience <Tag color="blue">Beta</Tag>
+				</span>
+			),
 			onClick: onClickNewAlertV2Handler,
 		},
 		{
 			key: 'classic',
-			label: 'Continue with the current experience',
+			label: 'Continue with the classic experience',
 			onClick: onClickNewClassicAlertHandler,
 		},
 	];
