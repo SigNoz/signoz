@@ -203,6 +203,10 @@ export const useQueryOperations: UseQueryOperations = ({
 				case ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM:
 					setSpaceAggregationOptions(metricsHistogramSpaceAggregateOperatorOptions);
 					break;
+
+				case ATTRIBUTE_TYPES.SUMMARY:
+					setSpaceAggregationOptions(metricsGaugeSpaceAggregateOperatorOptions);
+					break;
 				default:
 					setSpaceAggregationOptions(metricsUnknownSpaceAggregateOperatorOptions);
 					break;
@@ -235,11 +239,17 @@ export const useQueryOperations: UseQueryOperations = ({
 					} else if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.GAUGE) {
 						newQuery.aggregateOperator = MetricAggregateOperator.AVG;
 						newQuery.timeAggregation = MetricAggregateOperator.AVG;
+					} else if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.SUMMARY) {
+						newQuery.aggregateOperator = MetricAggregateOperator.MAX;
+						newQuery.timeAggregation = MetricAggregateOperator.MAX;
+						newQuery.spaceAggregation = MetricAggregateOperator.MAX;
 					} else {
 						newQuery.timeAggregation = '';
 					}
 
-					newQuery.spaceAggregation = '';
+					if (newQuery.aggregateAttribute?.type !== ATTRIBUTE_TYPES.SUMMARY) {
+						newQuery.spaceAggregation = '';
+					}
 
 					// Handled query with unknown metric to avoid 400 and 500 errors
 					// With metric value typed and not available then - time - 'avg', space - 'avg'
@@ -283,6 +293,15 @@ export const useQueryOperations: UseQueryOperations = ({
 								metricName: newQuery.aggregateAttribute?.key || '',
 								temporality: '',
 								spaceAggregation: '',
+							},
+						];
+					} else if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.SUMMARY) {
+						newQuery.aggregations = [
+							{
+								timeAggregation: MetricAggregateOperator.MAX,
+								metricName: newQuery.aggregateAttribute?.key || '',
+								temporality: '',
+								spaceAggregation: MetricAggregateOperator.MAX,
 							},
 						];
 					} else {
