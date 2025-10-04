@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { AxiosResponse } from 'axios';
@@ -55,11 +56,10 @@ const useOptionsMenu = ({
 	initialOptions = {},
 }: UseOptionsMenuProps): UseOptionsMenu => {
 	const { notifications } = useNotifications();
-	const {
-		preferences,
-		updateColumns,
-		updateFormatting,
-	} = usePreferenceContext();
+	const prefCtx = usePreferenceContext();
+	// TODO: send null to updateColumns and updateFormatting if dataSource is not logs or traces
+	const slice = dataSource === DataSource.TRACES ? prefCtx.traces : prefCtx.logs;
+	const { preferences, updateColumns, updateFormatting } = slice;
 
 	const [searchText, setSearchText] = useState<string>('');
 	const [isFocused, setIsFocused] = useState<boolean>(false);

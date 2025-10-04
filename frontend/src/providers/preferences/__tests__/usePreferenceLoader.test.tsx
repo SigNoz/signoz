@@ -11,18 +11,18 @@ jest.mock('../configs/logsLoaderConfig', () => ({
 	__esModule: true,
 	default: {
 		priority: ['local', 'url', 'default'],
-		local: jest.fn().mockResolvedValue({
+		local: jest.fn(() => ({
 			columns: [{ name: 'local-column' }],
 			formatting: { maxLines: 5, format: 'table', fontSize: 'medium', version: 1 },
-		}),
-		url: jest.fn().mockResolvedValue({
+		})),
+		url: jest.fn(() => ({
 			columns: [{ name: 'url-column' }],
 			formatting: { maxLines: 3, format: 'table', fontSize: 'small', version: 1 },
-		}),
-		default: jest.fn().mockResolvedValue({
+		})),
+		default: jest.fn(() => ({
 			columns: [{ name: 'default-column' }],
 			formatting: { maxLines: 2, format: 'table', fontSize: 'small', version: 1 },
-		}),
+		})),
 	},
 }));
 
@@ -30,15 +30,15 @@ jest.mock('../configs/tracesLoaderConfig', () => ({
 	__esModule: true,
 	default: {
 		priority: ['local', 'url', 'default'],
-		local: jest.fn().mockResolvedValue({
+		local: jest.fn(() => ({
 			columns: [{ name: 'local-trace-column' }],
-		}),
-		url: jest.fn().mockResolvedValue({
+		})),
+		url: jest.fn(() => ({
 			columns: [{ name: 'url-trace-column' }],
-		}),
-		default: jest.fn().mockResolvedValue({
+		})),
+		default: jest.fn(() => ({
 			columns: [{ name: 'default-trace-column' }],
-		}),
+		})),
 	},
 }));
 
@@ -56,11 +56,6 @@ describe('usePreferenceLoader', () => {
 				setReSync,
 			}),
 		);
-
-		// Initially it should be loading
-		expect(result.current.loading).toBe(true);
-		expect(result.current.preferences).toBe(null);
-		expect(result.current.error).toBe(null);
 
 		// Wait for the loader to complete
 		await waitFor(() => {
@@ -123,30 +118,33 @@ describe('usePreferenceLoader', () => {
 	});
 
 	it('should handle errors during loading', async () => {
-		// Mock an error in the loader using jest.spyOn
-		const localSpy = jest.spyOn(logsLoaderConfig, 'local');
-		localSpy.mockRejectedValueOnce(new Error('Loading failed'));
+		// Make first call succeed (initial state), second call throw in reSync effect
+		const localSpy: jest.SpyInstance = jest.spyOn(logsLoaderConfig, 'local');
+		localSpy.mockImplementationOnce(() => ({
+			columns: [{ name: 'local-column' }],
+			formatting: { maxLines: 5, format: 'table', fontSize: 'medium', version: 1 },
+		}));
+		localSpy.mockImplementationOnce(() => {
+			throw new Error('Loading failed');
+		});
 
 		const setReSync = jest.fn();
 		const { result } = renderHook(() =>
 			usePreferenceLoader({
 				dataSource: DataSource.LOGS,
-				reSync: false,
+				reSync: true,
 				setReSync,
 			}),
 		);
 
-		// Wait for the loader to complete
 		await waitFor(() => {
-			expect(result.current.loading).toBe(false);
+			expect(result.current.error).toBeInstanceOf(Error);
+			expect(result.current.error?.message).toBe('Loading failed');
 		});
 
-		// Should have set the error
-		expect(result.current.error).toBeInstanceOf(Error);
-		expect(result.current.error?.message).toBe('Loading failed');
-		expect(result.current.preferences).toBe(null);
+		// Reset reSync should be called
+		expect(setReSync).toHaveBeenCalledWith(false);
 
-		// Restore original implementation
 		localSpy.mockRestore();
 	});
 });

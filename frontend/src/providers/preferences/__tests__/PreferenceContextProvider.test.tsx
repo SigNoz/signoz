@@ -1,11 +1,7 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { render, screen } from '@testing-library/react';
 import { TelemetryFieldKey } from 'api/v5/v5';
-import {
-	FormattingOptions,
-	PreferenceMode,
-	Preferences,
-} from 'providers/preferences/types';
+import { FormattingOptions, Preferences } from 'providers/preferences/types';
 import { MemoryRouter, Route, Switch } from 'react-router-dom';
 
 import {
@@ -37,17 +33,14 @@ function TestConsumer(): JSX.Element {
 	const context = usePreferenceContext();
 	return (
 		<div>
-			<div data-testid="mode">{context.mode}</div>
-			<div data-testid="dataSource">{context.dataSource}</div>
-			<div data-testid="loading">{String(context.loading)}</div>
-			<div data-testid="error">{String(context.error)}</div>
-			<div data-testid="savedViewId">{context.savedViewId || 'no-view-id'}</div>
+			<div data-testid="loading">{String(context.logs.loading)}</div>
+			<div data-testid="error">{String(context.logs.error)}</div>
 		</div>
 	);
 }
 
 describe('PreferenceContextProvider', () => {
-	it('should provide context with direct mode when no viewKey is present', () => {
+	it('should provide context with default values when no viewKey is present', () => {
 		render(
 			<MemoryRouter initialEntries={['/logs']}>
 				<Switch>
@@ -63,14 +56,11 @@ describe('PreferenceContextProvider', () => {
 			</MemoryRouter>,
 		);
 
-		expect(screen.getByTestId('mode')).toHaveTextContent(PreferenceMode.DIRECT);
-		expect(screen.getByTestId('dataSource')).toHaveTextContent('logs');
 		expect(screen.getByTestId('loading')).toHaveTextContent('false');
 		expect(screen.getByTestId('error')).toHaveTextContent('null');
-		expect(screen.getByTestId('savedViewId')).toHaveTextContent('no-view-id');
 	});
 
-	it('should provide context with savedView mode when viewKey is present', () => {
+	it('should render correctly when viewKey is present', () => {
 		render(
 			<MemoryRouter initialEntries={['/logs?viewKey="test-view-id"']}>
 				<Switch>
@@ -86,12 +76,10 @@ describe('PreferenceContextProvider', () => {
 			</MemoryRouter>,
 		);
 
-		expect(screen.getByTestId('mode')).toHaveTextContent('savedView');
-		expect(screen.getByTestId('dataSource')).toHaveTextContent('logs');
-		expect(screen.getByTestId('savedViewId')).toHaveTextContent('test-view-id');
+		expect(screen.getByTestId('loading')).toHaveTextContent('false');
 	});
 
-	it('should set traces dataSource when pathname includes traces', () => {
+	it('should render correctly for traces path as well', () => {
 		render(
 			<MemoryRouter initialEntries={['/traces']}>
 				<Switch>
@@ -106,8 +94,8 @@ describe('PreferenceContextProvider', () => {
 				</Switch>
 			</MemoryRouter>,
 		);
-
-		expect(screen.getByTestId('dataSource')).toHaveTextContent('traces');
+		// assert provider renders without mode/savedViewId
+		expect(screen.getByTestId('loading')).toBeInTheDocument();
 	});
 
 	it('should handle invalid viewKey JSON gracefully', () => {
@@ -130,7 +118,7 @@ describe('PreferenceContextProvider', () => {
 			</MemoryRouter>,
 		);
 
-		expect(screen.getByTestId('mode')).toHaveTextContent(PreferenceMode.DIRECT);
+		expect(screen.getByTestId('loading')).toBeInTheDocument();
 		expect(console.error).toHaveBeenCalled();
 
 		// Restore console.error

@@ -4,7 +4,6 @@ import {
 	PreferenceMode,
 } from 'providers/preferences/types';
 import React, { createContext, useContext, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceSync } from '../sync/usePreferenceSync';
@@ -18,7 +17,6 @@ export function PreferenceContextProvider({
 }: {
 	children: React.ReactNode;
 }): JSX.Element {
-	const location = useLocation();
 	const params = useUrlQuery();
 
 	let savedViewId = '';
@@ -30,41 +28,25 @@ export function PreferenceContextProvider({
 			console.error(e);
 		}
 	}
-	let dataSource: DataSource = DataSource.LOGS;
-	if (location.pathname.includes('traces')) dataSource = DataSource.TRACES;
 
-	const {
-		preferences,
-		loading,
-		error,
-		updateColumns,
-		updateFormatting,
-	} = usePreferenceSync({
+	const logsSlice = usePreferenceSync({
 		mode: savedViewId ? PreferenceMode.SAVED_VIEW : PreferenceMode.DIRECT,
 		savedViewId: savedViewId || undefined,
-		dataSource,
+		dataSource: DataSource.LOGS,
+	});
+
+	const tracesSlice = usePreferenceSync({
+		mode: savedViewId ? PreferenceMode.SAVED_VIEW : PreferenceMode.DIRECT,
+		savedViewId: savedViewId || undefined,
+		dataSource: DataSource.TRACES,
 	});
 
 	const value = useMemo<PreferenceContextValue>(
 		() => ({
-			preferences,
-			loading,
-			error,
-			mode: savedViewId ? PreferenceMode.SAVED_VIEW : PreferenceMode.DIRECT,
-			savedViewId: savedViewId || undefined,
-			dataSource,
-			updateColumns,
-			updateFormatting,
+			logs: logsSlice,
+			traces: tracesSlice,
 		}),
-		[
-			savedViewId,
-			dataSource,
-			preferences,
-			loading,
-			error,
-			updateColumns,
-			updateFormatting,
-		],
+		[logsSlice, tracesSlice],
 	);
 
 	return (

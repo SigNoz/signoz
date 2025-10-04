@@ -19,7 +19,6 @@ import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSea
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import createQueryParams from 'lib/createQueryParams';
 import { Compass } from 'lucide-react';
-import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { useCallback, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
@@ -212,24 +211,20 @@ function SpanLogs({
 	const renderContent = useMemo(
 		() => (
 			<div className="span-logs-list-container">
-				<PreferenceContextProvider>
-					<OverlayScrollbar isVirtuoso>
-						<Virtuoso
-							className="span-logs-virtuoso"
-							key="span-logs-virtuoso"
-							style={
-								logs.length <= 35 ? { height: `calc(${logs.length} * 22px)` } : {}
-							}
-							data={logs}
-							totalCount={logs.length}
-							itemContent={getItemContent}
-							overscan={200}
-							components={{
-								Footer: renderFooter,
-							}}
-						/>
-					</OverlayScrollbar>
-				</PreferenceContextProvider>
+				<OverlayScrollbar isVirtuoso>
+					<Virtuoso
+						className="span-logs-virtuoso"
+						key="span-logs-virtuoso"
+						style={logs.length <= 35 ? { height: `calc(${logs.length} * 22px)` } : {}}
+						data={logs}
+						totalCount={logs.length}
+						itemContent={getItemContent}
+						overscan={200}
+						components={{
+							Footer: renderFooter,
+						}}
+					/>
+				</OverlayScrollbar>
 			</div>
 		),
 		[logs, getItemContent, renderFooter],
