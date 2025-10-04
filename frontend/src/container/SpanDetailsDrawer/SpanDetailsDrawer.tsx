@@ -36,7 +36,9 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 	} = props;
 
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(true);
-	const [wasToggledVisible, setWasToggledVisible] = useState<boolean>(false);
+	const [shouldAutoFocusSearch, setShouldAutoFocusSearch] = useState<boolean>(
+		false,
+	);
 	const [isRelatedSignalsOpen, setIsRelatedSignalsOpen] = useState<boolean>(
 		false,
 	);
@@ -78,7 +80,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 					<Attributes
 						span={span}
 						isSearchVisible={isSearchVisible}
-						shouldFocusOnToggle={wasToggledVisible}
+						shouldFocusOnToggle={shouldAutoFocusSearch}
 					/>
 				),
 			},
@@ -258,7 +260,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 											const newValue = !prev;
 											// Only set toggle flag when search becomes visible
 											if (newValue) {
-												setWasToggledVisible(true);
+												setShouldAutoFocusSearch(true);
 											}
 											return newValue;
 										});
