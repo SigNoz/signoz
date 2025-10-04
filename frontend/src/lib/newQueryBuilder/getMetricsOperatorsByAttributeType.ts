@@ -29,6 +29,10 @@ export const getMetricsOperatorsByAttributeType = ({
 		if (aggregateAttributeType === ATTRIBUTE_TYPES.GAUGE) {
 			return metricsOperatorsByType.Gauge;
 		}
+
+		if (aggregateAttributeType === ATTRIBUTE_TYPES.SUMMARY) {
+			return metricsOperatorsByType.Gauge;
+		}
 	}
 
 	if (dataSource === DataSource.METRICS && isEmpty(aggregateAttributeType)) {
