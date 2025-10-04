@@ -31,6 +31,12 @@ jest.mock('react-router-dom', () => ({
 	}),
 }));
 
+jest.mock('@signozhq/button', () => ({
+	Button: ({ children }: { children: React.ReactNode }): JSX.Element => (
+		<div>{children}</div>
+	),
+}));
+
 const mockSafeNavigate = jest.fn();
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
