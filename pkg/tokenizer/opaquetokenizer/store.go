@@ -65,22 +65,29 @@ func (store *store) GetByAccessToken(ctx context.Context, accessToken string) (*
 	return token, nil
 }
 
-func (store *store) GetByAccessTokenOrPreviousAccessToken(ctx context.Context, accessToken string) (*authtypes.StorableToken, error) {
-	token := new(authtypes.StorableToken)
+func (store *store) GetOrUpdateByAccessTokenOrPrevAccessToken(ctx context.Context, accessToken string, updater func(ctx context.Context, token *authtypes.StorableToken) error) error {
+	return store.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		token := new(authtypes.StorableToken)
 
-	err := store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewSelect().
-		Model(token).
-		Where("access_token = ?", accessToken).
-		WhereOr("prev_access_token = ?", accessToken).
-		Scan(ctx)
-	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeTokenNotFound, "token does not exist", accessToken)
-	}
+		err := store.
+			sqlstore.
+			BunDBCtx(ctx).
+			NewSelect().
+			Model(token).
+			Where("access_token = ?", accessToken).
+			WhereOr("prev_access_token = ?", accessToken).
+			For("UPDATE").
+			Scan(ctx)
+		if err != nil {
+			return store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeTokenNotFound, "token does not exist", accessToken)
+		}
 
-	return token, nil
+		if err := updater(ctx, token); err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
 func (store *store) GetByUserIDAndRefreshToken(ctx context.Context, userID valuer.UUID, refreshToken string) (*authtypes.StorableToken, error) {

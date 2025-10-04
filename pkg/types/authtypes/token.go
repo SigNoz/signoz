@@ -189,8 +189,8 @@ type TokenStore interface {
 	// Get a token by AccessToken.
 	GetByAccessToken(context.Context, string) (*StorableToken, error)
 
-	// Get a token by access token or previous access token.
-	GetByAccessTokenOrPreviousAccessToken(context.Context, string) (*StorableToken, error)
+	// Updates or doesn't update a token by access token or previous access token with update. The callback is run in a transaction.
+	GetOrUpdateByAccessTokenOrPrevAccessToken(context.Context, string, func(context.Context, *StorableToken) error) error
 
 	// Get a token by userID and refresh token.
 	GetByUserIDAndRefreshToken(context.Context, valuer.UUID, string) (*StorableToken, error)
