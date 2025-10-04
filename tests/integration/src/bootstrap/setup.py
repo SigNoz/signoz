@@ -23,6 +23,7 @@ def test_telemetry_databases_exist(signoz: types.SigNoz) -> None:
         "signoz_traces",
         "signoz_metadata",
         "signoz_analytics",
+        "signoz_meter",
     ]
 
     for db_name in required_databases:
@@ -31,5 +32,10 @@ def test_telemetry_databases_exist(signoz: types.SigNoz) -> None:
         ), f"Database {db_name} not found"
 
 
-def test_teardown(signoz: types.SigNoz) -> None:  # pylint: disable=unused-argument
+def test_teardown(
+    signoz: types.SigNoz,  # pylint: disable=unused-argument
+    idp: types.TestContainerIDP,  # pylint: disable=unused-argument
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    migrator: types.Operation,  # pylint: disable=unused-argument
+) -> None:
     pass

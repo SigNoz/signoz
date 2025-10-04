@@ -38,7 +38,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystorehook"
-	routeTypes "github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/tokenizer"
+	"github.com/SigNoz/signoz/pkg/tokenizer/opaquetokenizer"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/SigNoz/signoz/pkg/web/noopweb"
@@ -67,9 +69,8 @@ func NewWebProviderFactories() factory.NamedMap[factory.ProviderFactory[web.Web,
 }
 
 func NewSQLStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]] {
-	hook := sqlstorehook.NewLoggingFactory()
 	return factory.MustNewNamedMap(
-		sqlitesqlstore.NewFactory(hook),
+		sqlitesqlstore.NewFactory(sqlstorehook.NewLoggingFactory(), sqlstorehook.NewInstrumentationFactory()),
 	)
 }
 
@@ -135,6 +136,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddMeterQuickFiltersFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateTTLSettingForCustomRetentionFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddRoutePolicyFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddAuthTokenFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -157,7 +159,7 @@ func NewPrometheusProviderFactories(telemetryStore telemetrystore.TelemetryStore
 	)
 }
 
-func NewNotificationManagerProviderFactories(routeStore routeTypes.RouteStore) factory.NamedMap[factory.ProviderFactory[nfmanager.NotificationManager, nfmanager.Config]] {
+func NewNotificationManagerProviderFactories(routeStore alertmanagertypes.RouteStore) factory.NamedMap[factory.ProviderFactory[nfmanager.NotificationManager, nfmanager.Config]] {
 	return factory.MustNewNamedMap(
 		rulebasednotification.NewFactory(routeStore),
 	)
@@ -199,5 +201,12 @@ func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetrySt
 func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, cache cache.Cache) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
 	return factory.MustNewNamedMap(
 		signozquerier.NewFactory(telemetryStore, prometheus, cache),
+	)
+}
+
+func NewTokenizerProviderFactories(cache cache.Cache, sqlstore sqlstore.SQLStore, sharder sharder.Sharder) factory.NamedMap[factory.ProviderFactory[tokenizer.Tokenizer, tokenizer.Config]] {
+	tokenStore := opaquetokenizer.NewStore(sqlstore)
+	return factory.MustNewNamedMap(
+		opaquetokenizer.NewFactory(cache, tokenStore, sharder),
 	)
 }

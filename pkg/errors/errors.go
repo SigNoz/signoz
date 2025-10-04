@@ -4,6 +4,7 @@ import (
 	"errors" //nolint:depguard
 	"fmt"
 	"log/slog"
+	"net/url"
 )
 
 // base is the fundamental struct that implements the error interface.
@@ -85,9 +86,8 @@ func Wrap(cause error, t typ, code Code, message string) *base {
 	}
 }
 
-// WithAdditional wraps an existing base error with a new formatted message.
-// It is used when the original error already contains type and code.
-func WithAdditional(cause error, format string, args ...any) *base {
+// WithAdditionalf adds an additional error message to the existing error.
+func WithAdditionalf(cause error, format string, args ...any) *base {
 	t, c, m, e, u, a := Unwrapb(cause)
 	b := &base{
 		t: t,
@@ -139,6 +139,26 @@ func Unwrapb(cause error) (typ, Code, string, error, string, []string) {
 	}
 
 	return TypeInternal, CodeUnknown, cause.Error(), cause, "", []string{}
+}
+
+// UnwrapbAsURLValues unwraps the error and returns the error as a url.Values.
+func UnwrapbAsURLValues(cause error) url.Values {
+	base, ok := cause.(*base)
+	if !ok {
+		return url.Values{
+			"type":    {TypeInternal.s},
+			"code":    {CodeUnknown.s},
+			"message": {cause.Error()},
+		}
+	}
+
+	return url.Values{
+		"type":       {base.t.s},
+		"code":       {base.c.s},
+		"message":    {base.m},
+		"url":        {base.u},
+		"additional": base.a,
+	}
 }
 
 // Ast checks if the provided error matches the specified custom error type.

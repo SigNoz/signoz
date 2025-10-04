@@ -109,7 +109,7 @@ func ConstructFunnelResponse(funnel *StorableFunnel, claims *authtypes.Claims) G
 	}
 
 	if funnel.CreatedByUser != nil {
-		resp.UserEmail = funnel.CreatedByUser.Email
+		resp.UserEmail = funnel.CreatedByUser.Email.String()
 	} else if claims != nil {
 		resp.UserEmail = claims.Email
 	}

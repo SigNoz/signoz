@@ -12,7 +12,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/extra/redisotel/v9"
+	"github.com/redis/go-redis/v9"
 )
 
 type provider struct {
@@ -33,6 +34,14 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	})
 
 	if err := client.Ping(ctx).Err(); err != nil {
+		return nil, err
+	}
+
+	if err := redisotel.InstrumentTracing(client, redisotel.WithTracerProvider(providerSettings.TracerProvider), redisotel.WithDBStatement(true)); err != nil {
+		return nil, err
+	}
+
+	if err := redisotel.InstrumentMetrics(client, redisotel.WithMeterProvider(providerSettings.MeterProvider)); err != nil {
 		return nil, err
 	}
 
