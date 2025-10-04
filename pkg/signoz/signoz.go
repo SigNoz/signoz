@@ -228,20 +228,20 @@ func New(
 		return nil, err
 	}
 
+	// Initialize organization getter
+	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstore), sharder)
+
 	// Initialize tokenizer from the available tokenizer provider factories
 	tokenizer, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		config.Tokenizer,
-		NewTokenizerProviderFactories(cache, sqlstore, sharder),
+		NewTokenizerProviderFactories(cache, sqlstore, orgGetter),
 		"opaque",
 	)
 	if err != nil {
 		return nil, err
 	}
-
-	// Initialize organization getter
-	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstore), sharder)
 
 	// Initialize user getter
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))

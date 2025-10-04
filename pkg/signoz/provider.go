@@ -204,9 +204,9 @@ func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, p
 	)
 }
 
-func NewTokenizerProviderFactories(cache cache.Cache, sqlstore sqlstore.SQLStore, sharder sharder.Sharder) factory.NamedMap[factory.ProviderFactory[tokenizer.Tokenizer, tokenizer.Config]] {
+func NewTokenizerProviderFactories(cache cache.Cache, sqlstore sqlstore.SQLStore, orgGetter organization.Getter) factory.NamedMap[factory.ProviderFactory[tokenizer.Tokenizer, tokenizer.Config]] {
 	tokenStore := opaquetokenizer.NewStore(sqlstore)
 	return factory.MustNewNamedMap(
-		opaquetokenizer.NewFactory(cache, tokenStore, sharder),
+		opaquetokenizer.NewFactory(cache, tokenStore, orgGetter),
 	)
 }
