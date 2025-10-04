@@ -41,7 +41,7 @@ func New(ctx context.Context, store authtypes.AuthNStore) (*AuthN, error) {
 }
 
 func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *authtypes.AuthDomain) (string, error) {
-	if authDomain.AuthDomainConfig().AuthNProvider != authtypes.AuthNProviderGoogle {
+	if authDomain.AuthDomainConfig().AuthNProvider != authtypes.AuthNProviderGoogleAuth {
 		return "", errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthDomainMismatch, "domain type is not google")
 	}
 
