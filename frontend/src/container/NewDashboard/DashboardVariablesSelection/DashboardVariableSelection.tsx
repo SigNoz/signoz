@@ -1,8 +1,11 @@
 import './DashboardVariableSelection.styles.scss';
 
 import { Row } from 'antd';
+import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
+import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
 import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
 import { memo, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -27,6 +30,8 @@ function DashboardVariableSelection(): JSX.Element | null {
 		variablesToGetUpdated,
 		setVariablesToGetUpdated,
 	} = useDashboard();
+
+	const { updateUrlVariable, getUrlVariables } = useVariablesFromUrl();
 
 	const { data } = selectedDashboard || {};
 
@@ -61,8 +66,11 @@ function DashboardVariableSelection(): JSX.Element | null {
 			tableRowData.sort((a, b) => a.order - b.order);
 
 			setVariablesTableData(tableRowData);
+
+			// Initialize variables with default values if not in URL
+			initializeDefaultVariables(variables, getUrlVariables, updateUrlVariable);
 		}
-	}, [variables]);
+	}, [getUrlVariables, updateUrlVariable, variables]);
 
 	useEffect(() => {
 		if (variablesTableData.length > 0) {
@@ -117,6 +125,12 @@ function DashboardVariableSelection(): JSX.Element | null {
 			const variable = variables?.[id] || variables?.[name];
 			const isDynamic = variable?.type === 'DYNAMIC';
 			updateLocalStorageDashboardVariables(name, value, allSelected, isDynamic);
+
+			if (allSelected) {
+				updateUrlVariable(name || id, ALL_SELECTED_VALUE);
+			} else {
+				updateUrlVariable(name || id, value);
+			}
 
 			if (selectedDashboard) {
 				setSelectedDashboard((prev) => {
