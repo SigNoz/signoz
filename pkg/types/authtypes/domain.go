@@ -3,12 +3,21 @@ package authtypes
 import (
 	"context"
 	"encoding/json"
+	"regexp"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
+)
+
+const (
+	authDomainNameRegexString string = `^([a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62}){1}(\.[a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})*?$`
+)
+
+var (
+	authDomainNameRegex = regexp.MustCompile(authDomainNameRegexString)
 )
 
 var (
@@ -24,7 +33,7 @@ type GettableAuthDomain struct {
 }
 
 type PostableAuthDomain struct {
-	AuthDomainConfig
+	*AuthDomainConfig
 	Name string `json:"name"`
 }
 
@@ -51,7 +60,7 @@ type AuthDomain struct {
 	authDomainConfig   *AuthDomainConfig
 }
 
-func NewAuthDomainFromConfig(name string, config AuthDomainConfig, orgID valuer.UUID) (*AuthDomain, error) {
+func NewAuthDomainFromConfig(name string, config *AuthDomainConfig, orgID valuer.UUID) (*AuthDomain, error) {
 	data, err := json.Marshal(config)
 	if err != nil {
 		return nil, err
@@ -116,25 +125,90 @@ func (typ *AuthDomain) Update(config *AuthDomainConfig) error {
 	return nil
 }
 
+func (typ *PostableAuthDomain) UnmarshalJSON(data []byte) error {
+	type Alias PostableAuthDomain
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if !authDomainNameRegex.MatchString(temp.Name) {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid domain name %s", temp.Name)
+	}
+
+	if temp.AuthDomainConfig == nil {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "config is required")
+	}
+
+	*typ = PostableAuthDomain(temp)
+	return nil
+}
+
+func (typ *AuthDomainConfig) UnmarshalJSON(data []byte) error {
+	type Alias AuthDomainConfig
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	switch temp.AuthNProvider {
+	case AuthNProviderGoogleAuth:
+		if temp.Google == nil {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "google auth config is required")
+		}
+
+		if temp.SAML != nil || temp.OIDC != nil {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only google auth config is allowed")
+		}
+
+	case AuthNProviderSAML:
+		if temp.SAML == nil {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "saml config is required")
+		}
+
+		if temp.Google != nil || temp.OIDC != nil {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only saml config is allowed")
+		}
+
+	case AuthNProviderOIDC:
+		if temp.OIDC == nil {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "oidc config is required")
+		}
+
+		if temp.Google != nil || temp.SAML != nil {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only oidc config is allowed")
+		}
+
+	default:
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid authn provider %s", temp.AuthNProvider)
+	}
+
+	*typ = AuthDomainConfig(temp)
+	return nil
+
+}
+
 type AuthDomainStore interface {
-	// Get org domain by id.
-	Get(ctx context.Context, id valuer.UUID) (*AuthDomain, error)
+	// Get by id.
+	Get(context.Context, valuer.UUID) (*AuthDomain, error)
 
 	// Get by name.
-	GetByName(ctx context.Context, name string) (*AuthDomain, error)
+	GetByName(context.Context, string) (*AuthDomain, error)
 
 	// Get by name and orgID.
-	GetByNameAndOrgID(ctx context.Context, name string, orgID valuer.UUID) (*AuthDomain, error)
+	GetByNameAndOrgID(context.Context, string, valuer.UUID) (*AuthDomain, error)
 
 	// List org domains by orgID.
-	ListByOrgID(ctx context.Context, orgId valuer.UUID) ([]*AuthDomain, error)
+	ListByOrgID(context.Context, valuer.UUID) ([]*AuthDomain, error)
 
 	// Create auth domain.
-	Create(ctx context.Context, domain *AuthDomain) error
+	Create(context.Context, *AuthDomain) error
 
 	// Update by id.
-	Update(ctx context.Context, domain *AuthDomain) error
+	Update(context.Context, *AuthDomain) error
 
 	// Delete by id.
-	Delete(ctx context.Context, id valuer.UUID) error
+	Delete(context.Context, valuer.UUID) error
 }
