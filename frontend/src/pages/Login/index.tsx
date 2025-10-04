@@ -1,6 +1,7 @@
 import './Login.styles.scss';
 
 import LoginContainer from 'container/Login';
+import DecorativeImage from 'components/DecorativeImage/DecorativeImage';
 import useURLQuery from 'hooks/useUrlQuery';
 
 function Login(): JSX.Element {
@@ -16,11 +17,7 @@ function Login(): JSX.Element {
 			<div className="perilin-bg" />
 			<div className="login-page-content">
 				<div className="brand-container">
-					<img
-						src="/Logos/signoz-brand-logo.svg"
-						alt="logo"
-						className="brand-logo"
-					/>
+					<DecorativeImage src="/Logos/signoz-brand-logo.svg" className="brand-logo" />
 
 					<div className="brand-title">SigNoz</div>
 				</div>
