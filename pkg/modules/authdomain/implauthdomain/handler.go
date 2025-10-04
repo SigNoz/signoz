@@ -59,7 +59,7 @@ func (handler *handler) Delete(rw http.ResponseWriter, req *http.Request) {
 
 	domainId, err := valuer.NewUUID(mux.Vars(req)["id"])
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid domain id"))
+		render.Error(rw, err)
 		return
 	}
 
@@ -82,13 +82,7 @@ func (h *handler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgId is not a valid uuid"))
-		return
-	}
-
-	domains, err := h.module.ListByOrgID(ctx, orgID)
+	domains, err := h.module.ListByOrgID(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -108,11 +102,11 @@ func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
 
 	domainID, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid domain id"))
+		render.Error(rw, errors.WithAdditionalf(err, "domain id %s is invalid", domainID))
 		return
 	}
 
-	body := new(authtypes.PostableAuthDomain)
+	body := new(authtypes.AuthDomainConfig)
 	if err := binding.JSON.BindBody(r.Body, body); err != nil {
 		render.Error(rw, err)
 		return
@@ -124,7 +118,7 @@ func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = authDomain.Update(&body.AuthDomainConfig)
+	err = authDomain.Update(body)
 	if err != nil {
 		render.Error(rw, err)
 		return
