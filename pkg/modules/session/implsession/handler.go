@@ -163,6 +163,7 @@ func (*handler) getRedirectURLFromErr(err error) string {
 	values.Add("callbackauthnerr", "true")
 
 	return (&url.URL{
+		// When UI is being served on a prefix, we need to redirect to the login page on the prefix.
 		Path:     "/login",
 		RawQuery: values.Encode(),
 	}).String()
