@@ -8,7 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/sharder"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
@@ -24,17 +24,17 @@ type provider struct {
 	settings   factory.ScopedProviderSettings
 	cache      cache.Cache
 	tokenStore authtypes.TokenStore
-	sharder    sharder.Sharder
+	orgGetter  organization.Getter
 	stopC      chan struct{}
 }
 
-func NewFactory(cache cache.Cache, tokenStore authtypes.TokenStore, sharder sharder.Sharder) factory.ProviderFactory[tokenizer.Tokenizer, tokenizer.Config] {
+func NewFactory(cache cache.Cache, tokenStore authtypes.TokenStore, orgGetter organization.Getter) factory.ProviderFactory[tokenizer.Tokenizer, tokenizer.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("opaque"), func(ctx context.Context, providerSettings factory.ProviderSettings, config tokenizer.Config) (tokenizer.Tokenizer, error) {
-		return New(ctx, providerSettings, config, cache, tokenStore, sharder)
+		return New(ctx, providerSettings, config, cache, tokenStore, orgGetter)
 	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config tokenizer.Config, cache cache.Cache, tokenStore authtypes.TokenStore, sharder sharder.Sharder) (tokenizer.Tokenizer, error) {
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config tokenizer.Config, cache cache.Cache, tokenStore authtypes.TokenStore, orgGetter organization.Getter) (tokenizer.Tokenizer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/tokenizer/opaquetokenizer")
 
 	return &provider{
@@ -42,7 +42,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		settings:   settings,
 		cache:      cache,
 		tokenStore: tokenStore,
-		sharder:    sharder,
+		orgGetter:  orgGetter,
 		stopC:      make(chan struct{}),
 	}, nil
 }
@@ -242,12 +242,17 @@ func (provider *provider) Config() tokenizer.Config {
 }
 
 func (provider *provider) gc(ctx context.Context) error {
-	start, end, err := provider.sharder.GetMyOwnedKeyRange(ctx)
+	orgs, err := provider.orgGetter.ListByOwnedKeyRange(ctx)
 	if err != nil {
 		return err
 	}
 
-	tokens, err := provider.tokenStore.ListByOwnedKeyRange(ctx, start, end)
+	orgIDs := make([]valuer.UUID, 0, len(orgs))
+	for _, org := range orgs {
+		orgIDs = append(orgIDs, org.ID)
+	}
+
+	tokens, err := provider.tokenStore.ListByOrgIDs(ctx, orgIDs)
 	if err != nil {
 		return err
 	}

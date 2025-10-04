@@ -127,7 +127,7 @@ func (store *store) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*auth
 	return tokens, nil
 }
 
-func (store *store) ListByOwnedKeyRange(ctx context.Context, start, end uint32) ([]*authtypes.StorableToken, error) {
+func (store *store) ListByOrgIDs(ctx context.Context, orgIDs []valuer.UUID) ([]*authtypes.StorableToken, error) {
 	tokens := make([]*authtypes.StorableToken, 0)
 
 	err := store.
@@ -135,12 +135,11 @@ func (store *store) ListByOwnedKeyRange(ctx context.Context, start, end uint32) 
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(&tokens).
-		Join("users").
+		Join("JOIN users").
 		JoinOn("users.id = tokens.user_id").
-		Join("organizations").
+		Join("JOIN organizations").
 		JoinOn("organizations.id = users.org_id").
-		Where("organizations.key >= ?", start).
-		Where("organizations.key <= ?", end).
+		Where("organizations.id IN (?)", orgIDs).
 		Scan(ctx)
 	if err != nil {
 		return nil, err

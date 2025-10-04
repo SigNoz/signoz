@@ -195,8 +195,8 @@ type TokenStore interface {
 	// Get a token by userID and refresh token.
 	GetByUserIDAndRefreshToken(context.Context, valuer.UUID, string) (*StorableToken, error)
 
-	// List all tokens.
-	ListByOwnedKeyRange(context.Context, uint32, uint32) ([]*StorableToken, error)
+	// List all tokens by orgIDs.
+	ListByOrgIDs(context.Context, []valuer.UUID) ([]*StorableToken, error)
 
 	// List all tokens by orgID.
 	ListByOrgID(context.Context, valuer.UUID) ([]*StorableToken, error)
