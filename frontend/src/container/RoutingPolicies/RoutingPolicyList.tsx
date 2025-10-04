@@ -10,6 +10,7 @@ function RoutingPolicyList({
 	isRoutingPoliciesError,
 	handlePolicyDetailsModalOpen,
 	handleDeleteModalOpen,
+	hasSearchTerm,
 }: RoutingPolicyListProps): JSX.Element {
 	const columns: TableProps<RoutingPolicy>['columns'] = [
 		{
@@ -25,6 +26,7 @@ function RoutingPolicyList({
 		},
 	];
 
+	/* eslint-disable no-nested-ternary */
 	const localeEmptyState = useMemo(
 		() => (
 			<div className="no-routing-policies-message-container">
@@ -41,12 +43,23 @@ function RoutingPolicyList({
 					<Typography.Text>
 						Something went wrong while fetching routing policies.
 					</Typography.Text>
+				) : hasSearchTerm ? (
+					<Typography.Text>No matching routing policies found.</Typography.Text>
 				) : (
-					<Typography.Text>No routing policies found.</Typography.Text>
+					<Typography.Text>
+						No routing policies yet,{' '}
+						<a
+							href="https://signoz.io/docs/alerts-management/routing-policy"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							Learn more here
+						</a>
+					</Typography.Text>
 				)}
 			</div>
 		),
-		[isRoutingPoliciesError],
+		[isRoutingPoliciesError, hasSearchTerm],
 	);
 
 	return (
