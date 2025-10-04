@@ -48,7 +48,6 @@ function EvaluationSettings(): JSX.Element {
 		</Popover>
 	);
 
-	// Layout consists of only the evaluation window popover
 	return (
 		<div
 			className="condensed-evaluation-settings-container"

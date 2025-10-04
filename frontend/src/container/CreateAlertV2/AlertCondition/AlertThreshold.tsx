@@ -160,8 +160,6 @@ function AlertThreshold({
 		}),
 	);
 
-	const evaluationWindowContext = <EvaluationSettings />;
-
 	return (
 		<div
 			className={classNames(
@@ -213,7 +211,7 @@ function AlertThreshold({
 						options={matchTypeOptionsWithTooltips}
 					/>
 					<Typography.Text className="sentence-text">
-						during the {evaluationWindowContext}
+						during the <EvaluationSettings />
 					</Typography.Text>
 				</div>
 			</div>
