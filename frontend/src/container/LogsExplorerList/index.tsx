@@ -83,6 +83,7 @@ function LogsExplorerList({
 		[options],
 	);
 	useEffect(() => {
+		
         if (!isLoading && !isFetching && !isError && logs.length !== 0) {
             logEvent('Logs Explorer: Data present', {
                 panelType: 'LIST',
