@@ -156,33 +156,33 @@ func (typ *AuthDomainConfig) UnmarshalJSON(data []byte) error {
 	switch temp.AuthNProvider {
 	case AuthNProviderGoogleAuth:
 		if temp.Google == nil {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "google auth config is required")
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "google auth config is required")
 		}
 
 		if temp.SAML != nil || temp.OIDC != nil {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only google auth config is allowed")
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "only google auth config is allowed")
 		}
 
 	case AuthNProviderSAML:
 		if temp.SAML == nil {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "saml config is required")
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "saml config is required")
 		}
 
 		if temp.Google != nil || temp.OIDC != nil {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only saml config is allowed")
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "only saml config is allowed")
 		}
 
 	case AuthNProviderOIDC:
 		if temp.OIDC == nil {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "oidc config is required")
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "oidc config is required")
 		}
 
 		if temp.Google != nil || temp.SAML != nil {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only oidc config is allowed")
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "only oidc config is allowed")
 		}
 
 	default:
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid authn provider %s", temp.AuthNProvider)
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "invalid authn provider %q", temp.AuthNProvider)
 	}
 
 	*typ = AuthDomainConfig(temp)
