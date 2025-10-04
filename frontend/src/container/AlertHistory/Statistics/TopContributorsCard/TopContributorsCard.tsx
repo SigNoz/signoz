@@ -43,7 +43,7 @@ function TopContributorsCard({
 
 			return newState;
 		});
-		history.push({ search: searchParams.toString() });
+		history.push(`${history.location.pathname}?${searchParams.toString()}`);
 	};
 
 	return (

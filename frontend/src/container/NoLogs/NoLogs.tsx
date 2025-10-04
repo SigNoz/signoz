@@ -38,7 +38,7 @@ export default function NoLogs({
 			} else {
 				link = ROUTES.GET_STARTED_LOGS_MANAGEMENT;
 			}
-			history.push(link);
+			history.push(link, e);
 		} else if (dataSource === 'traces') {
 			window.open(DOCLINKS.TRACES_EXPLORER_EMPTY_STATE, '_blank');
 		} else if (dataSource === DataSource.METRICS) {
