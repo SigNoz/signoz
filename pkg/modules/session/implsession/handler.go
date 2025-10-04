@@ -2,7 +2,6 @@ package implsession
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -75,9 +74,7 @@ func (handler *handler) CreateSessionByGoogleCallback(rw http.ResponseWriter, re
 
 	redirectURL, err := handler.module.CreateCallbackAuthNSession(ctx, authtypes.AuthNProviderGoogleAuth, values)
 	if err != nil {
-		values := errors.UnwrapbAsURLValues(err)
-		values.Add("callbackauthnerr", "true")
-		http.Redirect(rw, req, fmt.Sprintf("?%s", values.Encode()), http.StatusSeeOther)
+		http.Redirect(rw, req, handler.getRedirectURLFromErr(err), http.StatusSeeOther)
 		return
 	}
 
@@ -96,9 +93,7 @@ func (handler *handler) CreateSessionBySAMLCallback(rw http.ResponseWriter, req 
 
 	redirectURL, err := handler.module.CreateCallbackAuthNSession(ctx, authtypes.AuthNProviderSAML, req.Form)
 	if err != nil {
-		values := errors.UnwrapbAsURLValues(err)
-		values.Add("callbackauthnerr", "true")
-		http.Redirect(rw, req, fmt.Sprintf("?%s", values.Encode()), http.StatusSeeOther)
+		http.Redirect(rw, req, handler.getRedirectURLFromErr(err), http.StatusSeeOther)
 		return
 	}
 
@@ -112,9 +107,7 @@ func (handler *handler) CreateSessionByOIDCCallback(rw http.ResponseWriter, req 
 	values := req.URL.Query()
 	redirectURL, err := handler.module.CreateCallbackAuthNSession(ctx, authtypes.AuthNProviderOIDC, values)
 	if err != nil {
-		values := errors.UnwrapbAsURLValues(err)
-		values.Add("callbackauthnerr", "true")
-		http.Redirect(rw, req, fmt.Sprintf("?%s", values.Encode()), http.StatusSeeOther)
+		http.Redirect(rw, req, handler.getRedirectURLFromErr(err), http.StatusSeeOther)
 		return
 	}
 
@@ -163,4 +156,14 @@ func (handler *handler) DeleteSession(rw http.ResponseWriter, req *http.Request)
 	}
 
 	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (*handler) getRedirectURLFromErr(err error) string {
+	values := errors.UnwrapbAsURLValues(err)
+	values.Add("callbackauthnerr", "true")
+
+	return (&url.URL{
+		Path:     "/login",
+		RawQuery: values.Encode(),
+	}).String()
 }
