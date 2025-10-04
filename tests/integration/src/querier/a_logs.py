@@ -308,6 +308,74 @@ def test_logs_list(
     assert len(values) == 1
     assert 120 in values
 
+    # Ensure context-prefixed field (resource.service.name) resolves same as canonical service.name
+    response_service = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/values"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "logs",
+            "name": "service.name",
+            "searchText": "",
+        },
+    )
+    assert response_service.status_code == HTTPStatus.OK
+    assert response_service.json()["status"] == "success"
+    logs_service_values = response_service.json()["data"]["values"]["stringValues"]
+
+    response_resource_service = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/values"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "logs",
+            "name": "resource.service.name",
+            "searchText": "",
+        },
+    )
+    assert response_resource_service.status_code == HTTPStatus.OK
+    assert response_resource_service.json()["status"] == "success"
+    logs_resource_service_values = response_resource_service.json()["data"]["values"]["stringValues"]
+
+    assert set(logs_service_values) == set(logs_resource_service_values)
+    assert set(["java", "go"]).issubset(set(logs_service_values))
+
+    # Fields Keys should include service.name for both searches
+    response_keys1 = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/keys"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "logs",
+            "searchText": "servic",
+        },
+    )
+    assert response_keys1.status_code == HTTPStatus.OK
+    assert response_keys1.json()["status"] == "success"
+    keys_map1 = response_keys1.json()["data"]["keys"]
+    assert "service.name" in keys_map1
+
+    response_keys2 = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/keys"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "logs",
+            "searchText": "resource.servic",
+        },
+    )
+    assert response_keys2.status_code == HTTPStatus.OK
+    assert response_keys2.json()["status"] == "success"
+    keys_map2 = response_keys2.json()["data"]["keys"]
+    assert "service.name" in keys_map2
 
 def test_logs_time_series_count(
     signoz: types.SigNoz,
