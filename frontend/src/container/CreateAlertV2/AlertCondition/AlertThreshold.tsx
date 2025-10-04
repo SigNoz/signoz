@@ -18,7 +18,6 @@ import {
 	THRESHOLD_OPERATOR_OPTIONS,
 } from '../context/constants';
 import EvaluationSettings from '../EvaluationSettings/EvaluationSettings';
-import { showCondensedLayout } from '../utils';
 import ThresholdItem from './ThresholdItem';
 import { AnomalyAndThresholdProps, UpdateThreshold } from './types';
 import {
@@ -42,8 +41,6 @@ function AlertThreshold({
 		notificationSettings,
 		setNotificationSettings,
 	} = useCreateAlertState();
-
-	const showCondensedLayoutFlag = showCondensedLayout();
 
 	const { currentQuery } = useQueryBuilder();
 
@@ -163,17 +160,14 @@ function AlertThreshold({
 		}),
 	);
 
-	const evaluationWindowContext = showCondensedLayoutFlag ? (
-		<EvaluationSettings />
-	) : (
-		<strong>Evaluation Window.</strong>
-	);
+	const evaluationWindowContext = <EvaluationSettings />;
 
 	return (
 		<div
-			className={classNames('alert-threshold-container', {
-				'condensed-alert-threshold-container': showCondensedLayoutFlag,
-			})}
+			className={classNames(
+				'alert-threshold-container',
+				'condensed-alert-threshold-container',
+			)}
 		>
 			{/* Main condition sentence */}
 			<div className="alert-condition-sentences">
