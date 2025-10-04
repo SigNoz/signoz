@@ -11,7 +11,7 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Filter } from 'types/api/v5/queryRange';
 import { v4 as uuid } from 'uuid';
 
-import { getSpanLogsQueryPayload } from './constants';
+import { getSpanLogsQueryPayload, getTraceOnlyFilters } from './constants';
 
 interface UseSpanContextLogsProps {
 	traceId: string;
@@ -29,6 +29,7 @@ interface UseSpanContextLogsReturn {
 	isFetching: boolean;
 	spanLogIds: Set<string>;
 	isLogSpanRelated: (logId: string) => boolean;
+	hasTraceIdLogs: boolean;
 }
 
 const traceIdKey = {
@@ -264,6 +265,43 @@ export const useSpanContextLogs = ({
 		setAllLogs(combined);
 	}, [beforeLogs, spanLogs, afterLogs]);
 
+	// Phase 4: Check for trace_id-only logs when span has no logs
+	// This helps differentiate between "no logs for span" vs "no logs for trace"
+	const traceOnlyFilter = useMemo(() => {
+		if (spanLogs.length > 0) return null;
+		const filters = getTraceOnlyFilters(traceId);
+		return convertFiltersToExpression(filters);
+	}, [traceId, spanLogs.length]);
+
+	const traceOnlyQueryPayload = useMemo(() => {
+		if (!traceOnlyFilter) return null;
+		return getSpanLogsQueryPayload(
+			timeRange.startTime,
+			timeRange.endTime,
+			traceOnlyFilter,
+		);
+	}, [timeRange.startTime, timeRange.endTime, traceOnlyFilter]);
+
+	const { data: traceOnlyData } = useQuery({
+		queryKey: [
+			REACT_QUERY_KEY.TRACE_ONLY_LOGS,
+			traceId,
+			timeRange.startTime,
+			timeRange.endTime,
+		],
+		queryFn: () =>
+			GetMetricQueryRange(traceOnlyQueryPayload as any, ENTITY_VERSION_V5),
+		enabled: !!traceOnlyQueryPayload && spanLogs.length === 0,
+		staleTime: FIVE_MINUTES_IN_MS,
+	});
+
+	const hasTraceIdLogs = useMemo(() => {
+		if (spanLogs.length > 0) return true;
+		if (!traceOnlyData?.payload?.data?.newResult?.data?.result?.[0]?.list)
+			return false;
+		return traceOnlyData.payload.data.newResult.data.result[0].list.length > 0;
+	}, [spanLogs.length, traceOnlyData]);
+
 	// Helper function to check if a log belongs to the span
 	const isLogSpanRelated = useCallback(
 		(logId: string): boolean => spanLogIds.has(logId),
@@ -277,5 +315,6 @@ export const useSpanContextLogs = ({
 		isFetching: isSpanFetching || isBeforeFetching || isAfterFetching,
 		spanLogIds,
 		isLogSpanRelated,
+		hasTraceIdLogs,
 	};
 };

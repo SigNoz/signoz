@@ -12,7 +12,9 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import LogsError from 'container/LogsError/LogsError';
+import { EmptyLogsListConfig } from 'container/LogsExplorerList/utils';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
@@ -31,8 +33,6 @@ import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
-import { useSpanContextLogs } from './useSpanContextLogs';
-
 interface SpanLogsProps {
 	traceId: string;
 	spanId: string;
@@ -40,28 +40,28 @@ interface SpanLogsProps {
 		startTime: number;
 		endTime: number;
 	};
+	logs: ILog[];
+	isLoading: boolean;
+	isError: boolean;
+	isFetching: boolean;
+	isLogSpanRelated: (logId: string) => boolean;
 	handleExplorerPageRedirect: () => void;
+	emptyStateConfig?: EmptyLogsListConfig;
 }
 
 function SpanLogs({
 	traceId,
 	spanId,
 	timeRange,
+	logs,
+	isLoading,
+	isError,
+	isFetching,
+	isLogSpanRelated,
 	handleExplorerPageRedirect,
+	emptyStateConfig,
 }: SpanLogsProps): JSX.Element {
 	const { updateAllQueriesOperators } = useQueryBuilder();
-
-	const {
-		logs,
-		isLoading,
-		isError,
-		isFetching,
-		isLogSpanRelated,
-	} = useSpanContextLogs({
-		traceId,
-		spanId,
-		timeRange,
-	});
 
 	// Create trace_id and span_id filters for logs explorer navigation
 	const createLogsFilter = useCallback(
@@ -267,11 +267,23 @@ function SpanLogs({
 				!isFetching &&
 				!isError &&
 				logs.length === 0 &&
-				renderNoLogsFound()}
+				(emptyStateConfig ? (
+					<EmptyLogsSearch
+						dataSource={DataSource.LOGS}
+						panelType="LIST"
+						customMessage={emptyStateConfig}
+					/>
+				) : (
+					renderNoLogsFound()
+				))}
 			{isError && !isLoading && !isFetching && <LogsError />}
 			{!isLoading && !isFetching && !isError && logs.length > 0 && renderContent}
 		</div>
 	);
 }
+
+SpanLogs.defaultProps = {
+	emptyStateConfig: undefined,
+};
 
 export default SpanLogs;

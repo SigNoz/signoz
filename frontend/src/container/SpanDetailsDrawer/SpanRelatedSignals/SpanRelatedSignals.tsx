@@ -11,15 +11,17 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { getEmptyLogsListConfig } from 'container/LogsExplorerList/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Compass, X } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Span } from 'types/api/trace/getTraceV2';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 
 import { RelatedSignalsViews } from '../constants';
 import SpanLogs from '../SpanLogs/SpanLogs';
+import { useSpanContextLogs } from '../SpanLogs/useSpanContextLogs';
 
 const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
 
@@ -44,6 +46,22 @@ function SpanRelatedSignals({
 		initialView,
 	);
 	const isDarkMode = useIsDarkMode();
+
+	const {
+		logs,
+		isLoading,
+		isError,
+		isFetching,
+		isLogSpanRelated,
+		hasTraceIdLogs,
+	} = useSpanContextLogs({
+		traceId: selectedSpan.traceId,
+		spanId: selectedSpan.spanId,
+		timeRange: {
+			startTime: traceStartTime - FIVE_MINUTES_IN_MS,
+			endTime: traceEndTime + FIVE_MINUTES_IN_MS,
+		},
+	});
 
 	const handleTabChange = useCallback((e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
@@ -105,6 +123,14 @@ function SpanRelatedSignals({
 			'noopener,noreferrer',
 		);
 	}, [selectedSpan.traceId, traceStartTime, traceEndTime]);
+
+	const emptyStateConfig = useMemo(
+		() => ({
+			...getEmptyLogsListConfig(() => {}),
+			showClearFiltersButton: false,
+		}),
+		[],
+	);
 
 	return (
 		<Drawer
@@ -184,7 +210,13 @@ function SpanRelatedSignals({
 								startTime: traceStartTime - FIVE_MINUTES_IN_MS,
 								endTime: traceEndTime + FIVE_MINUTES_IN_MS,
 							}}
+							logs={logs}
+							isLoading={isLoading}
+							isError={isError}
+							isFetching={isFetching}
+							isLogSpanRelated={isLogSpanRelated}
 							handleExplorerPageRedirect={handleExplorerPageRedirect}
+							emptyStateConfig={!hasTraceIdLogs ? emptyStateConfig : undefined}
 						/>
 					)}
 				</div>
