@@ -87,6 +87,22 @@ func NewToken(meta map[string]string, userID valuer.UUID) (*Token, error) {
 	}, nil
 }
 
+func NewTokenFromAccessTokenAndRefreshToken(accessToken string, refreshToken string, meta map[string]string, userID valuer.UUID) (*Token, error) {
+	return &Token{
+		ID:               valuer.UUID{},
+		Meta:             meta,
+		PrevAccessToken:  "",
+		AccessToken:      accessToken,
+		PrevRefreshToken: "",
+		RefreshToken:     refreshToken,
+		LastObservedAt:   time.Time{},
+		RotatedAt:        time.Time{},
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
+		UserID:           userID,
+	}, nil
+}
+
 func NewGettableTokenFromToken(token *Token, rotationInterval time.Duration) *GettableToken {
 	return &GettableToken{
 		TokenType:    "bearer",
