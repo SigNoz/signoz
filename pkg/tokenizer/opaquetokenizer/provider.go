@@ -161,31 +161,7 @@ func (provider *provider) RotateToken(ctx context.Context, accessToken string, r
 	var rotatedToken *authtypes.Token
 
 	if err := provider.tokenStore.GetOrUpdateByAccessTokenOrPrevAccessToken(ctx, accessToken, func(ctx context.Context, token *authtypes.StorableToken) error {
-		if token.PrevAccessToken == accessToken {
-			if token.PrevRefreshToken == refreshToken {
-				// If the token has been rotated within the rotation duration, do nothing and return the same token.
-				if !token.RotatedAt.IsZero() && token.RotatedAt.Before(time.Now().Add(-provider.config.Rotation.Duration)) {
-					rotatedToken = token
-					return nil
-				}
-			}
-
-			return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid access token")
-		}
-
-		if token.AccessToken != accessToken {
-			return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid access token")
-		}
-
-		if token.RefreshToken != refreshToken {
-			return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid refresh token")
-		}
-
-		if err := token.IsExpired(provider.config.Lifetime.Idle, provider.config.Lifetime.Max); err != nil {
-			return err
-		}
-
-		if err := token.Rotate(); err != nil {
+		if err := token.Rotate(accessToken, refreshToken, provider.config.Rotation.Duration, provider.config.Lifetime.Idle, provider.config.Lifetime.Max); err != nil {
 			return err
 		}
 
