@@ -571,7 +571,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				<section className="right-action">
 					{!isOpen && appliedFiltersCount > 0 && (
 						<section className="right-action">
-							<span className="filter-count"> ({appliedFiltersCount})</span>
+							<span className="filter-count"> {appliedFiltersCount}</span>
 						</section>
 					)}
 					{isOpen && !!attributeValues.length && (
