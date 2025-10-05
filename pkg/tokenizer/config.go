@@ -3,21 +3,38 @@ package tokenizer
 import (
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
 type Config struct {
-	// GC config
-	GC GCConfig `mapstructure:"gc"`
+	// The provider to use for tokenization.
+	Provider string `mapstructure:"provider"`
+
+	// Config for the opaque tokenizer.
+	Opaque OpaqueConfig `mapstructure:"opaque"`
+
+	// Config for the JWT tokenizer.
+	JWT JWTConfig `mapstructure:"jwt"`
 
 	// Rotation config
 	Rotation RotationConfig `mapstructure:"rotation"`
 
 	// Lifetime config
 	Lifetime LifetimeConfig `mapstructure:"lifetime"`
+}
+
+type OpaqueConfig struct {
+	// GC config
+	GC GCConfig `mapstructure:"gc"`
 
 	// Token config
 	Token TokenConfig `mapstructure:"token"`
+}
+
+type JWTConfig struct {
+	// The secret to sign the JWT tokens.
+	Secret string `mapstructure:"secret"`
 }
 
 type GCConfig struct {
@@ -52,8 +69,17 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func newConfig() factory.Config {
 	return &Config{
-		GC: GCConfig{
-			Interval: 1 * time.Hour, // 1 hour
+		Provider: "jwt",
+		Opaque: OpaqueConfig{
+			GC: GCConfig{
+				Interval: 1 * time.Hour, // 1 hour
+			},
+			Token: TokenConfig{
+				MaxPerUser: 5,
+			},
+		},
+		JWT: JWTConfig{
+			Secret: "",
 		},
 		Rotation: RotationConfig{
 			Interval: 30 * time.Minute, // 30 minutes
@@ -63,12 +89,24 @@ func newConfig() factory.Config {
 			Idle: 7 * 24 * time.Hour,  // 7 days
 			Max:  30 * 24 * time.Hour, // 30 days
 		},
-		Token: TokenConfig{
-			MaxPerUser: 5,
-		},
 	}
 }
 
 func (c Config) Validate() error {
+	// Ensure that rotation interval is smaller than lifetime idle
+	if c.Rotation.Interval >= c.Lifetime.Idle {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "rotation::interval must be smaller than lifetime::idle")
+	}
+
+	// Ensure that lifetime idle interval is smaller than lifetime max
+	if c.Lifetime.Idle >= c.Lifetime.Max {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "lifetime::idle must be smaller than lifetime::max")
+	}
+
+	// Ensure that rotation duration is smaller than rotation interval
+	if c.Rotation.Duration >= c.Rotation.Interval {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "rotation::duration must be smaller than rotation::interval")
+	}
+
 	return nil
 }
