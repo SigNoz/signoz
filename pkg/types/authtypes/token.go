@@ -15,9 +15,10 @@ import (
 )
 
 var (
-	ErrCodeTokenRotationRequired = errors.MustNewCode("token_rotation_required")
-	ErrCodeTokenExpired          = errors.MustNewCode("token_expired")
-	ErrCodeTokenNotFound         = errors.MustNewCode("token_not_found")
+	ErrCodeTokenRotationRequired    = errors.MustNewCode("token_rotation_required")
+	ErrCodeTokenExpired             = errors.MustNewCode("token_expired")
+	ErrCodeTokenNotFound            = errors.MustNewCode("token_not_found")
+	ErrCodeTokenOlderLastObservedAt = errors.MustNewCode("token_older_last_observed_at")
 )
 
 var _ cachetypes.Cacheable = (*Token)(nil)
@@ -171,6 +172,17 @@ func (typ *Token) RotationAt(rotationInterval time.Duration) time.Time {
 	return typ.RotatedAt.Add(rotationInterval)
 }
 
+func (typ *Token) UpdateLastObservedAt(lastObservedAt time.Time) error {
+	if lastObservedAt.Before(typ.LastObservedAt) {
+		return errors.New(errors.TypeInvalidInput, ErrCodeTokenOlderLastObservedAt, "last observed at is before the current last observed at")
+	}
+
+	typ.LastObservedAt = lastObservedAt
+	typ.UpdatedAt = time.Now()
+
+	return nil
+}
+
 func (typ Token) MarshalBinary() ([]byte, error) {
 	return json.Marshal(typ)
 }
@@ -215,4 +227,7 @@ type TokenStore interface {
 
 	// Delete a token by userID.
 	DeleteByUserID(context.Context, valuer.UUID) error
+
+	// Update last observed at by access token.
+	UpdateLastObservedAtByAccessToken(context.Context, []map[string]any) error
 }

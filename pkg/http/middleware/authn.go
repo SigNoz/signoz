@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sharder"
@@ -13,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"golang.org/x/sync/singleflight"
 )
 
 const (
@@ -24,6 +26,7 @@ type AuthN struct {
 	headers   []string
 	sharder   sharder.Sharder
 	logger    *slog.Logger
+	sfGroup   *singleflight.Group
 }
 
 func NewAuthN(headers []string, sharder sharder.Sharder, tokenizer tokenizer.Tokenizer, logger *slog.Logger) *AuthN {
@@ -32,6 +35,7 @@ func NewAuthN(headers []string, sharder sharder.Sharder, tokenizer tokenizer.Tok
 		sharder:   sharder,
 		tokenizer: tokenizer,
 		logger:    logger,
+		sfGroup:   &singleflight.Group{},
 	}
 }
 
@@ -66,15 +70,30 @@ func (a *AuthN) Wrap(next http.Handler) http.Handler {
 		ctx = ctxtypes.SetAuthType(ctx, ctxtypes.AuthTypeJWT)
 
 		comment := ctxtypes.CommentFromContext(ctx)
-		comment.Set("auth_type", ctxtypes.AuthTypeJWT.StringValue())
+		comment.Set("auth_type", ctxtypes.AuthTypeOpaque.StringValue())
 		comment.Set("user_id", claims.UserID)
 		comment.Set("org_id", claims.OrgID)
 
 		r = r.WithContext(ctxtypes.NewContextWithComment(ctx, comment))
 
 		next.ServeHTTP(w, r)
-	})
 
+		accessToken, err := authtypes.AccessTokenFromContext(r.Context())
+		if err != nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		lastObservedAtCtx := context.WithoutCancel(r.Context())
+		_, _, _ = a.sfGroup.Do(accessToken, func() (any, error) {
+			if err := a.tokenizer.SetLastObservedAt(lastObservedAtCtx, accessToken, time.Now()); err != nil {
+				a.logger.ErrorContext(lastObservedAtCtx, "failed to set last observed at", "error", err)
+				return false, err
+			}
+
+			return true, nil
+		})
+	})
 }
 
 func (a *AuthN) contextFromRequest(ctx context.Context, values ...string) (context.Context, error) {

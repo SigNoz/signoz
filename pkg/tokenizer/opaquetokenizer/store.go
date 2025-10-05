@@ -226,3 +226,27 @@ func (store *store) ListByUserID(ctx context.Context, userID valuer.UUID) ([]*au
 
 	return tokens, nil
 }
+
+func (store *store) UpdateLastObservedAtByAccessToken(ctx context.Context, accessTokenToLastObservedAt []map[string]any) error {
+	values := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewValues(&accessTokenToLastObservedAt)
+
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewUpdate().
+		With("_data", values).
+		Model((*authtypes.StorableToken)(nil)).
+		TableExpr("auth_token").
+		Set("last_observed_at = _data.last_observed_at").
+		Where("auth_token.access_token = _data.access_token").
+		Where("auth_token.user_id = _data.user_id").
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
