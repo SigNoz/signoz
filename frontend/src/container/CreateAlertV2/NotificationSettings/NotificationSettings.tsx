@@ -9,13 +9,10 @@ import {
 } from '../context/constants';
 import AdvancedOptionItem from '../EvaluationSettings/AdvancedOptionItem';
 import Stepper from '../Stepper';
-import { showCondensedLayout } from '../utils';
 import MultipleNotifications from './MultipleNotifications';
 import NotificationMessage from './NotificationMessage';
 
 function NotificationSettings(): JSX.Element {
-	const showCondensedLayoutFlag = showCondensedLayout();
-
 	const {
 		notificationSettings,
 		setNotificationSettings,
@@ -82,10 +79,7 @@ function NotificationSettings(): JSX.Element {
 
 	return (
 		<div className="notification-settings-container">
-			<Stepper
-				stepNumber={showCondensedLayoutFlag ? 3 : 4}
-				label="Notification settings"
-			/>
+			<Stepper stepNumber={3} label="Notification settings" />
 			<NotificationMessage />
 			<div className="notification-settings-content">
 				<MultipleNotifications />
