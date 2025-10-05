@@ -2,6 +2,7 @@ package tokenizertest
 
 import (
 	"context"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -63,5 +64,9 @@ func (provider *Provider) DeleteTokensByUserID(context.Context, valuer.UUID) err
 }
 
 func (provider *Provider) Config() tokenizer.Config {
+	panic("unimplemented")
+}
+
+func (provider *Provider) SetLastObservedAt(context.Context, string, time.Time) error {
 	panic("unimplemented")
 }
