@@ -8,11 +8,10 @@ import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 
 import AlertCondition from '../CreateAlertV2/AlertCondition';
 import { buildInitialAlertDef } from '../CreateAlertV2/context/utils';
-import EvaluationSettings from '../CreateAlertV2/EvaluationSettings';
 import Footer from '../CreateAlertV2/Footer';
 import NotificationSettings from '../CreateAlertV2/NotificationSettings';
 import QuerySection from '../CreateAlertV2/QuerySection';
-import { showCondensedLayout, Spinner } from '../CreateAlertV2/utils';
+import { Spinner } from '../CreateAlertV2/utils';
 
 interface EditAlertV2Props {
 	alertType?: AlertTypes;
@@ -33,15 +32,12 @@ function EditAlertV2({
 
 	useShareBuilderUrl({ defaultValue: currentQueryToRedirect });
 
-	const showCondensedLayoutFlag = showCondensedLayout();
-
 	return (
 		<>
 			<Spinner />
 			<div className="create-alert-v2-container">
 				<QuerySection />
 				<AlertCondition />
-				{!showCondensedLayoutFlag ? <EvaluationSettings /> : null}
 				<NotificationSettings />
 			</div>
 			<Footer />

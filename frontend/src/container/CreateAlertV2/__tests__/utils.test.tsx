@@ -216,7 +216,7 @@ describe('CreateAlertV2 utils', () => {
 				multipleNotifications: ['email'],
 				reNotification: {
 					enabled: false,
-					value: 1,
+					value: 30,
 					unit: UniversalYAxisUnit.MINUTES,
 					conditions: [],
 				},
