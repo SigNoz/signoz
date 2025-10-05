@@ -145,7 +145,24 @@ func (typ *Token) IsRotationRequired(rotationInterval time.Duration) error {
 	return nil
 }
 
-func (typ *Token) Rotate() error {
+func (typ *Token) Rotate(accessTokenOrPrevAccessToken string, refreshTokenOrPrevRefreshToken string, rotationDuration time.Duration, idleDuration time.Duration, maxDuration time.Duration) error {
+	if typ.PrevAccessToken == accessTokenOrPrevAccessToken && typ.PrevRefreshToken == refreshTokenOrPrevRefreshToken {
+		// If the token has been rotated within the rotation duration, do nothing and return the same token.
+		if !typ.RotatedAt.IsZero() && typ.RotatedAt.Before(time.Now().Add(-rotationDuration)) {
+			return nil
+		}
+
+		return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid token pair")
+	}
+
+	if typ.AccessToken != accessTokenOrPrevAccessToken || typ.RefreshToken != refreshTokenOrPrevRefreshToken {
+		return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid token pair")
+	}
+
+	if err := typ.IsExpired(idleDuration, maxDuration); err != nil {
+		return err
+	}
+
 	// Generate new access and refresh tokens.
 	typ.PrevAccessToken = typ.AccessToken
 	typ.AccessToken = password.MustGenerate(32, 10, 0, true, true)
@@ -157,9 +174,6 @@ func (typ *Token) Rotate() error {
 
 	// Set the updated at time.
 	typ.UpdatedAt = time.Now()
-
-	// Reset the last observed at time.
-	typ.LastObservedAt = time.Time{}
 
 	return nil
 }
