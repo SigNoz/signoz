@@ -21,7 +21,7 @@ import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQue
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -570,9 +570,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				</section>
 				<section className="right-action">
 					{!isOpen && appliedFiltersCount > 0 && (
-						<section className="right-action">
-							<span className="filter-count"> {appliedFiltersCount}</span>
-						</section>
+						<span className="filter-count"> {appliedFiltersCount}</span>
 					)}
 					{isOpen && !!attributeValues.length && (
 						<Typography.Text
@@ -609,11 +607,15 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					{attributeValues.length > 0 ? (
 						<section className="values">
 							{currentAttributeKeys.map((value: string, index: number) => (
-								<>
+								<Fragment key={value}>
 									{index === checkedValuesCount && checkedValuesCount > 0 && (
-										<div key="separator" className="filter-separator" />
+										<div
+											key="separator"
+											className="filter-separator"
+											data-testid="filter-separator"
+										/>
 									)}
-									<div key={value} className="value">
+									<div className="value">
 										<Checkbox
 											onChange={(e): void => onChange(value, e.target.checked, false)}
 											checked={currentFilterState[value]}
@@ -656,7 +658,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 											</Button>
 										</div>
 									</div>
-								</>
+								</Fragment>
 							))}
 						</section>
 					) : isEmptyStateWithDocsEnabled ? (

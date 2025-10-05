@@ -4,7 +4,10 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQueryKeyValueSuggestions';
 import { quickFiltersAttributeValuesResponse } from 'mocks-server/__mockdata__/customQuickFilters';
 import { rest, server } from 'mocks-server/server';
+import { UseQueryResult } from 'react-query';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { SuccessResponse } from 'types/api';
+import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -100,7 +103,7 @@ describe('CheckboxFilter - User Flows', () => {
 				},
 			},
 			isLoading: false,
-		} as any);
+		} as UseQueryResult<SuccessResponse<IAttributeValuesResponse>>);
 
 		mockUseGetQueryKeyValueSuggestions.mockReturnValue({
 			data: null,
@@ -192,8 +195,7 @@ describe('CheckboxFilter - User Flows', () => {
 		});
 
 		// User should see visual separator between checked and unchecked items
-		const separator = document.querySelector('.filter-separator');
-		expect(separator).toBeInTheDocument();
+		expect(screen.getByTestId('filter-separator')).toBeInTheDocument();
 
 		// User should see checked items above separator, unchecked below
 		const checkboxes = screen.getAllByRole('checkbox');
