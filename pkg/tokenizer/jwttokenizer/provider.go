@@ -69,10 +69,7 @@ func (provider *provider) CreateToken(ctx context.Context, identity *authtypes.I
 		return nil, err
 	}
 
-	return &authtypes.Token{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}, nil
+	return authtypes.NewTokenFromAccessTokenAndRefreshToken(accessToken, refreshToken, meta, identity.UserID)
 }
 
 func (provider *provider) GetIdentity(ctx context.Context, accessToken string) (*authtypes.Identity, error) {
