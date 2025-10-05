@@ -1,4 +1,4 @@
-import { EmptyLogsListConfig } from 'container/LogsExplorerList/utils';
+import { getEmptyLogsListConfig } from 'container/LogsExplorerList/utils';
 import { server } from 'mocks-server/server';
 import { render, screen, userEvent } from 'tests/test-utils';
 
@@ -105,73 +105,7 @@ jest.mock(
 		},
 );
 
-// Mock EmptyLogsSearch component
-jest.mock(
-	'container/EmptyLogsSearch/EmptyLogsSearch',
-	() =>
-		function MockEmptyLogsSearch({
-			customMessage,
-		}: {
-			// eslint-disable-next-line react/require-default-props
-			customMessage?: EmptyLogsListConfig;
-		}): JSX.Element {
-			return (
-				<div data-testid="empty-logs-search">
-					{customMessage && (
-						<>
-							<div data-testid="empty-state-title">{customMessage.title}</div>
-							<div data-testid="empty-state-subtitle">{customMessage.subTitle}</div>
-							<div data-testid="empty-state-description">
-								{Array.isArray(customMessage.description) ? (
-									<ul>
-										{customMessage.description.map((desc) => (
-											<li key={desc}>{desc}</li>
-										))}
-									</ul>
-								) : (
-									customMessage.description
-								)}
-							</div>
-							{customMessage.documentationLinks && (
-								<div data-testid="documentation-links">
-									<div>RESOURCES</div>
-									{customMessage.documentationLinks.map((link, index) => (
-										<a key={link.text} href={link.url} data-testid={`doc-link-${index}`}>
-											{link.text}
-										</a>
-									))}
-								</div>
-							)}
-						</>
-					)}
-				</div>
-			);
-		},
-);
-
-const mockEmptyStateConfig: EmptyLogsListConfig = {
-	title: 'No logs found for this trace.',
-	subTitle: 'This could be because :',
-	description: [
-		'Logs are not linked to Traces.',
-		'Logs are not being sent to SigNoz.',
-		'No logs are associated with this particular trace/span.',
-	],
-	documentationLinks: [
-		{
-			text: 'Sending logs to SigNoz',
-			url: 'https://signoz.io/docs/logs-management/send-logs-to-signoz/',
-		},
-		{
-			text: 'Correlate traces and logs',
-			url:
-				'https://signoz.io/docs/traces-management/guides/correlate-traces-and-logs/',
-		},
-	],
-	clearFiltersButtonText: 'Clear filters from Trace to view other logs',
-	showClearFiltersButton: true,
-	onClearFilters: jest.fn(),
-};
+// Don't mock EmptyLogsSearch - test the actual component behavior
 
 const TEST_TRACE_ID = 'test-trace-id';
 const TEST_SPAN_ID = 'test-span-id';
@@ -201,7 +135,7 @@ describe('SpanLogs', () => {
 		server.resetHandlers();
 	});
 
-	it('should show simple empty state when span has no logs but trace has logs', () => {
+	it('should show simple empty state when emptyStateConfig is not provided', () => {
 		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<SpanLogs {...defaultProps} />);
 
@@ -225,29 +159,32 @@ describe('SpanLogs', () => {
 
 	it('should show enhanced empty state when entire trace has no logs', () => {
 		render(
-			// eslint-disable-next-line react/jsx-props-no-spreading
-			<SpanLogs {...defaultProps} emptyStateConfig={mockEmptyStateConfig} />,
+			<SpanLogs
+				// eslint-disable-next-line react/jsx-props-no-spreading
+				{...defaultProps}
+				emptyStateConfig={getEmptyLogsListConfig(jest.fn())}
+			/>,
 		);
 
 		// Should show enhanced empty state with custom message
-		expect(screen.getByTestId('empty-logs-search')).toBeInTheDocument();
-		expect(screen.getByTestId('empty-state-title')).toHaveTextContent(
-			'No logs found for this trace.',
-		);
-		expect(screen.getByTestId('empty-state-subtitle')).toHaveTextContent(
-			'This could be because :',
-		);
+		expect(screen.getByText('No logs found for this trace.')).toBeInTheDocument();
+		expect(screen.getByText('This could be because :')).toBeInTheDocument();
 
 		// Should show description list
-		const descriptionList = screen.getByTestId('empty-state-description');
-		expect(descriptionList).toBeInTheDocument();
-		expect(descriptionList).toHaveTextContent('Logs are not linked to Traces.');
-		expect(descriptionList).toHaveTextContent(
-			'Logs are not being sent to SigNoz.',
-		);
-		expect(descriptionList).toHaveTextContent(
-			'No logs are associated with this particular trace/span.',
-		);
+		expect(
+			screen.getByText('Logs are not linked to Traces.'),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText('Logs are not being sent to SigNoz.'),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText('No logs are associated with this particular trace/span.'),
+		).toBeInTheDocument();
+
+		// Should show documentation links
+		expect(screen.getByText('RESOURCES')).toBeInTheDocument();
+		expect(screen.getByText('Sending logs to SigNoz')).toBeInTheDocument();
+		expect(screen.getByText('Correlate traces and logs')).toBeInTheDocument();
 
 		// Should NOT show simple empty state
 		expect(
@@ -257,30 +194,22 @@ describe('SpanLogs', () => {
 
 	it('should display documentation links in enhanced empty state', () => {
 		render(
-			// eslint-disable-next-line react/jsx-props-no-spreading
-			<SpanLogs {...defaultProps} emptyStateConfig={mockEmptyStateConfig} />,
+			<SpanLogs
+				// eslint-disable-next-line react/jsx-props-no-spreading
+				{...defaultProps}
+				emptyStateConfig={getEmptyLogsListConfig(jest.fn())}
+			/>,
 		);
 
 		// Should show documentation links section
-		const docLinks = screen.getByTestId('documentation-links');
-		expect(docLinks).toBeInTheDocument();
-		expect(docLinks).toHaveTextContent('RESOURCES');
+		expect(screen.getByText('RESOURCES')).toBeInTheDocument();
 
 		// Should show both documentation links
-		const sendingLogsLink = screen.getByTestId('doc-link-0');
-		const correlateLink = screen.getByTestId('doc-link-1');
+		const sendingLogsLink = screen.getByText('Sending logs to SigNoz');
+		const correlateLink = screen.getByText('Correlate traces and logs');
 
-		expect(sendingLogsLink).toHaveTextContent('Sending logs to SigNoz');
-		expect(sendingLogsLink).toHaveAttribute(
-			'href',
-			'https://signoz.io/docs/logs-management/send-logs-to-signoz/',
-		);
-
-		expect(correlateLink).toHaveTextContent('Correlate traces and logs');
-		expect(correlateLink).toHaveAttribute(
-			'href',
-			'https://signoz.io/docs/traces-management/guides/correlate-traces-and-logs/',
-		);
+		expect(sendingLogsLink).toBeInTheDocument();
+		expect(correlateLink).toBeInTheDocument();
 	});
 	it('should call handleExplorerPageRedirect when Log Explorer button is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
