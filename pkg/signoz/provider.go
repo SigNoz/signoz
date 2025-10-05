@@ -39,6 +39,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystorehook"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
+	"github.com/SigNoz/signoz/pkg/tokenizer/jwttokenizer"
 	"github.com/SigNoz/signoz/pkg/tokenizer/opaquetokenizer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/version"
@@ -208,5 +209,6 @@ func NewTokenizerProviderFactories(cache cache.Cache, sqlstore sqlstore.SQLStore
 	tokenStore := opaquetokenizer.NewStore(sqlstore)
 	return factory.MustNewNamedMap(
 		opaquetokenizer.NewFactory(cache, tokenStore, orgGetter),
+		jwttokenizer.NewFactory(),
 	)
 }
