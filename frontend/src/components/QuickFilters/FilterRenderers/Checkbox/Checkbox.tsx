@@ -54,7 +54,8 @@ interface ICheckboxProps {
 export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	const { source, filter, onFilterChange } = props;
 	const [searchText, setSearchText] = useState<string>('');
-	const [isOpen, setIsOpen] = useState<boolean>(filter.defaultOpen);
+	// null = no user action, true = user opened, false = user closed
+	const [userToggleState, setUserToggleState] = useState<boolean | null>(null);
 	const [visibleItemsCount, setVisibleItemsCount] = useState<number>(10);
 
 	const {
@@ -62,6 +63,29 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		currentQuery,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
+
+	// Check if this filter has active filters in the query
+	const isSomeFilterPresentForCurrentAttribute = currentQuery.builder.queryData?.[
+		lastUsedQuery || 0
+	]?.filters?.items?.some((item) =>
+		isEqual(item.key?.key, filter.attributeKey.key),
+	);
+
+	// Derive isOpen from filter state + user action
+	const isOpen = useMemo(() => {
+		// If user explicitly toggled, respect that
+		if (userToggleState !== null) return userToggleState;
+
+		// Auto-open if this filter has active filters in the query
+		if (isSomeFilterPresentForCurrentAttribute) return true;
+
+		// Otherwise use default behavior (first 2 filters open)
+		return filter.defaultOpen;
+	}, [
+		userToggleState,
+		isSomeFilterPresentForCurrentAttribute,
+		filter.defaultOpen,
+	]);
 
 	const { data, isLoading } = useGetAggregateValues(
 		{
@@ -127,8 +151,6 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			(val) => val !== undefined && val !== null,
 		);
 	}, [data?.payload, filter.attributeKey.dataType, keyValueSuggestions, source]);
-
-	const currentAttributeKeys = attributeValues.slice(0, visibleItemsCount);
 
 	const setSearchTextDebounced = useDebouncedFn((...args) => {
 		setSearchText(args[0] as string);
@@ -202,6 +224,23 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	const isMultipleValuesTrueForTheKey =
 		Object.values(currentFilterState).filter((val) => val).length > 1;
 
+	// Sort checked items to the top, then unchecked items
+	const currentAttributeKeys = useMemo(() => {
+		const checkedValues = attributeValues.filter(
+			(val) => currentFilterState[val],
+		);
+		const uncheckedValues = attributeValues.filter(
+			(val) => !currentFilterState[val],
+		);
+		return [...checkedValues, ...uncheckedValues].slice(0, visibleItemsCount);
+	}, [attributeValues, currentFilterState, visibleItemsCount]);
+
+	// Count of checked values in the currently visible items
+	const checkedValuesCount = useMemo(
+		() => currentAttributeKeys.filter((val) => currentFilterState[val]).length,
+		[currentAttributeKeys, currentFilterState],
+	);
+
 	const handleClearFilterAttribute = (): void => {
 		const preparedQuery: Query = {
 			...currentQuery,
@@ -235,11 +274,35 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		}
 	};
 
-	const isSomeFilterPresentForCurrentAttribute = currentQuery.builder.queryData?.[
-		lastUsedQuery || 0
-	]?.filters?.items?.some((item) =>
-		isEqual(item.key?.key, filter.attributeKey.key),
-	);
+	// count of currently applied filters for this attribute
+	const appliedFiltersCount = useMemo(() => {
+		if (!isSomeFilterPresentForCurrentAttribute) {
+			return 0;
+		}
+		// For IN/= operators, count checked items
+		// For NOT IN/!= operators, count unchecked items (since they're excluded)
+		const filterSync = currentQuery?.builder.queryData?.[
+			lastUsedQuery || 0
+		]?.filters?.items.find((item) =>
+			isEqual(item.key?.key, filter.attributeKey.key),
+		);
+		if (!filterSync) return 0;
+
+		if (SELECTED_OPERATORS.includes(filterSync.op)) {
+			// IN or = operator: count how many values are selected
+			return isArray(filterSync.value) ? filterSync.value.length : 1;
+		}
+		if (NON_SELECTED_OPERATORS.includes(filterSync.op)) {
+			// NOT IN or != operator: count how many values are excluded
+			return isArray(filterSync.value) ? filterSync.value.length : 1;
+		}
+		return 0;
+	}, [
+		isSomeFilterPresentForCurrentAttribute,
+		currentQuery?.builder.queryData,
+		lastUsedQuery,
+		filter.attributeKey.key,
+	]);
 
 	const onChange = (
 		value: string,
@@ -490,10 +553,10 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				className="filter-header-checkbox"
 				onClick={(): void => {
 					if (isOpen) {
-						setIsOpen(false);
+						setUserToggleState(false);
 						setVisibleItemsCount(10);
 					} else {
-						setIsOpen(true);
+						setUserToggleState(true);
 					}
 				}}
 			>
@@ -506,6 +569,11 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					<Typography.Text className="title">{filter.title}</Typography.Text>
 				</section>
 				<section className="right-action">
+					{!isOpen && appliedFiltersCount > 0 && (
+						<section className="right-action">
+							<span className="filter-count"> ({appliedFiltersCount})</span>
+						</section>
+					)}
 					{isOpen && !!attributeValues.length && (
 						<Typography.Text
 							className="clear-all"
@@ -540,50 +608,55 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					)}
 					{attributeValues.length > 0 ? (
 						<section className="values">
-							{currentAttributeKeys.map((value: string) => (
-								<div key={value} className="value">
-									<Checkbox
-										onChange={(e): void => onChange(value, e.target.checked, false)}
-										checked={currentFilterState[value]}
-										disabled={isFilterDisabled}
-										rootClassName="check-box"
-									/>
+							{currentAttributeKeys.map((value: string, index: number) => (
+								<>
+									{index === checkedValuesCount && checkedValuesCount > 0 && (
+										<div key="separator" className="filter-separator" />
+									)}
+									<div key={value} className="value">
+										<Checkbox
+											onChange={(e): void => onChange(value, e.target.checked, false)}
+											checked={currentFilterState[value]}
+											disabled={isFilterDisabled}
+											rootClassName="check-box"
+										/>
 
-									<div
-										className={cx(
-											'checkbox-value-section',
-											isFilterDisabled ? 'filter-disabled' : '',
-										)}
-										onClick={(): void => {
-											if (isFilterDisabled) {
-												return;
-											}
-											onChange(value, currentFilterState[value], true);
-										}}
-									>
-										<div className={`${filter.title} label-${value}`} />
-										{filter.customRendererForValue ? (
-											filter.customRendererForValue(value)
-										) : (
-											<Typography.Text
-												className="value-string"
-												ellipsis={{ tooltip: { placement: 'right' } }}
-											>
-												{String(value)}
-											</Typography.Text>
-										)}
-										<Button type="text" className="only-btn">
-											{isSomeFilterPresentForCurrentAttribute
-												? currentFilterState[value] && !isMultipleValuesTrueForTheKey
-													? 'All'
-													: 'Only'
-												: 'Only'}
-										</Button>
-										<Button type="text" className="toggle-btn">
-											Toggle
-										</Button>
+										<div
+											className={cx(
+												'checkbox-value-section',
+												isFilterDisabled ? 'filter-disabled' : '',
+											)}
+											onClick={(): void => {
+												if (isFilterDisabled) {
+													return;
+												}
+												onChange(value, currentFilterState[value], true);
+											}}
+										>
+											<div className={`${filter.title} label-${value}`} />
+											{filter.customRendererForValue ? (
+												filter.customRendererForValue(value)
+											) : (
+												<Typography.Text
+													className="value-string"
+													ellipsis={{ tooltip: { placement: 'right' } }}
+												>
+													{String(value)}
+												</Typography.Text>
+											)}
+											<Button type="text" className="only-btn">
+												{isSomeFilterPresentForCurrentAttribute
+													? currentFilterState[value] && !isMultipleValuesTrueForTheKey
+														? 'All'
+														: 'Only'
+													: 'Only'}
+											</Button>
+											<Button type="text" className="toggle-btn">
+												Toggle
+											</Button>
+										</div>
 									</div>
-								</div>
+								</>
 							))}
 						</section>
 					) : isEmptyStateWithDocsEnabled ? (
