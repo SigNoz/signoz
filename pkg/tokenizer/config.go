@@ -20,17 +20,17 @@ type Config struct {
 	Token TokenConfig `mapstructure:"token"`
 }
 
+type GCConfig struct {
+	// The interval to perform garbage collection.
+	Interval time.Duration `mapstructure:"interval"`
+}
+
 type RotationConfig struct {
 	// The interval to rotate tokens in.
 	Interval time.Duration `mapstructure:"interval"`
 
 	// The duration for which the previous token pair remains valid after a token pair is rotated.
 	Duration time.Duration `mapstructure:"duration"`
-}
-
-type GCConfig struct {
-	// The interval to perform garbage collection.
-	Interval time.Duration `mapstructure:"interval"`
 }
 
 type LifetimeConfig struct {

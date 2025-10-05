@@ -3,6 +3,7 @@ package opaquetokenizer
 import (
 	"context"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache"
@@ -13,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/allegro/bigcache/v3"
 )
 
 var (
@@ -20,12 +22,13 @@ var (
 )
 
 type provider struct {
-	config     tokenizer.Config
-	settings   factory.ScopedProviderSettings
-	cache      cache.Cache
-	tokenStore authtypes.TokenStore
-	orgGetter  organization.Getter
-	stopC      chan struct{}
+	config              tokenizer.Config
+	settings            factory.ScopedProviderSettings
+	cache               cache.Cache
+	tokenStore          authtypes.TokenStore
+	orgGetter           organization.Getter
+	stopC               chan struct{}
+	lastObservedAtCache *bigcache.BigCache
 }
 
 func NewFactory(cache cache.Cache, tokenStore authtypes.TokenStore, orgGetter organization.Getter) factory.ProviderFactory[tokenizer.Tokenizer, tokenizer.Config] {
@@ -37,13 +40,24 @@ func NewFactory(cache cache.Cache, tokenStore authtypes.TokenStore, orgGetter or
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config tokenizer.Config, cache cache.Cache, tokenStore authtypes.TokenStore, orgGetter organization.Getter) (tokenizer.Tokenizer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/tokenizer/opaquetokenizer")
 
+	lastObservedAtCache, err := bigcache.New(ctx, bigcache.Config{
+		Shards:       1024,
+		LifeWindow:   config.Lifetime.Max,
+		CleanWindow:  config.GC.Interval,
+		StatsEnabled: false,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return &provider{
-		config:     config,
-		settings:   settings,
-		cache:      cache,
-		tokenStore: tokenStore,
-		orgGetter:  orgGetter,
-		stopC:      make(chan struct{}),
+		config:              config,
+		settings:            settings,
+		cache:               cache,
+		tokenStore:          tokenStore,
+		orgGetter:           orgGetter,
+		stopC:               make(chan struct{}),
+		lastObservedAtCache: lastObservedAtCache,
 	}, nil
 }
 
@@ -54,17 +68,11 @@ func (provider *provider) Start(ctx context.Context) error {
 	for {
 		select {
 		case <-provider.stopC:
-			if err := provider.gc(ctx); err != nil {
-				provider.settings.Logger().ErrorContext(ctx, "failed to garbage collect tokens", "error", err)
-			}
-
 			return nil
 		case <-ticker.C:
 			if err := provider.gc(ctx); err != nil {
 				provider.settings.Logger().ErrorContext(ctx, "failed to garbage collect tokens", "error", err)
 			}
-
-			return nil
 		}
 	}
 }
@@ -185,6 +193,9 @@ func (provider *provider) RotateToken(ctx context.Context, accessToken string, r
 			return err
 		}
 
+		// Delete the previous access token from the cache
+		provider.cache.Delete(ctx, emptyOrgID, accessTokenCacheKey(accessToken))
+
 		rotatedToken = token
 		return nil
 	}); err != nil {
@@ -221,9 +232,49 @@ func (provider *provider) DeleteIdentity(ctx context.Context, userID valuer.UUID
 	return nil
 }
 
-func (provider *provider) Stop(context.Context) error {
+func (provider *provider) Stop(ctx context.Context) error {
 	close(provider.stopC)
+
+	// garbage collect tokens on stop
+	if err := provider.gc(ctx); err != nil {
+		provider.settings.Logger().ErrorContext(ctx, "failed to garbage collect tokens", "error", err)
+	}
+
+	// flush tokens on stop
+	if err := provider.flushLastObservedAt(ctx); err != nil {
+		provider.settings.Logger().ErrorContext(ctx, "failed to flush tokens", "error", err)
+	}
 	return nil
+}
+
+func (provider *provider) SetLastObservedAt(ctx context.Context, accessToken string, lastObservedAt time.Time) error {
+	ctx, span := provider.settings.Tracer().Start(ctx, "tokenizer.SetLastObservedAt")
+	defer span.End()
+
+	token, err := provider.getOrGetSetToken(ctx, accessToken)
+	if err != nil {
+		return err
+	}
+
+	// If we can't update the last observed at, we return nil.
+	if err := token.UpdateLastObservedAt(lastObservedAt); err != nil {
+		return nil
+	}
+
+	if err := provider.lastObservedAtCache.Set(lastObservedAtCacheKey(accessToken, token.UserID), []byte(lastObservedAt.Format(time.RFC3339))); err != nil {
+		return err
+	}
+
+	err = provider.cache.Set(ctx, emptyOrgID, accessTokenCacheKey(accessToken), token, provider.config.Lifetime.Max)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (provider *provider) Config() tokenizer.Config {
+	return provider.config
 }
 
 func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
@@ -232,13 +283,28 @@ func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[s
 		return nil, err
 	}
 
-	return map[string]any{
-		"tokens": len(tokens),
-	}, nil
-}
+	stats := make(map[string]any)
+	stats["auth_token.count"] = len(tokens)
 
-func (provider *provider) Config() tokenizer.Config {
-	return provider.config
+	accessTokenToLastObservedAt, err := provider.listLastObservedAtDesc()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(accessTokenToLastObservedAt) == 0 {
+		return stats, nil
+	}
+
+	accessTokenToLastObservedAtMax := accessTokenToLastObservedAt[0]
+
+	if lastObservedAt, ok := accessTokenToLastObservedAtMax["last_observed_at"].(time.Time); ok {
+		if !lastObservedAt.IsZero() {
+			stats["auth_token.last_observed_at.max.time"] = lastObservedAt
+			stats["auth_token.last_observed_at.max.time_unix"] = lastObservedAt.Unix()
+		}
+	}
+
+	return stats, nil
 }
 
 func (provider *provider) gc(ctx context.Context) error {
@@ -269,6 +335,19 @@ func (provider *provider) gc(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (provider *provider) flushLastObservedAt(ctx context.Context) error {
+	accessTokenToLastObservedAt, err := provider.listLastObservedAtDesc()
+	if err != nil {
+		return err
+	}
+
+	if err := provider.tokenStore.UpdateLastObservedAtByAccessToken(ctx, accessTokenToLastObservedAt); err != nil {
+		return err
 	}
 
 	return nil
@@ -344,10 +423,59 @@ func (provider *provider) getOrGetSetIdentity(ctx context.Context, userID valuer
 	return identity, nil
 }
 
+func (provider *provider) listLastObservedAtDesc() ([]map[string]any, error) {
+	iterator := provider.lastObservedAtCache.Iterator()
+
+	var accessTokenToLastObservedAt []map[string]any
+
+	for iterator.SetNext() {
+		value, err := iterator.Value()
+		if err != nil {
+			return nil, err
+		}
+
+		accessToken, userID, err := accessTokenAndUserIDFromLastObservedAtCacheKey(value.Key())
+		if err != nil {
+			return nil, err
+		}
+
+		lastObservedAt, err := time.Parse(time.RFC3339, string(value.Value()))
+		if err != nil {
+			return nil, err
+		}
+
+		accessTokenToLastObservedAt = append(accessTokenToLastObservedAt, map[string]any{
+			"user_id":          userID,
+			"access_token":     accessToken,
+			"last_observed_at": lastObservedAt,
+		})
+	}
+
+	// sort by descending order of last_observed_at
+	slices.SortFunc(accessTokenToLastObservedAt, func(a, b map[string]any) int {
+		return b["last_observed_at"].(time.Time).Compare(a["last_observed_at"].(time.Time))
+	})
+
+	return accessTokenToLastObservedAt, nil
+}
+
 func accessTokenCacheKey(accessToken string) string {
-	return cachetypes.NewSha1CacheKey(accessToken)
+	return "access_token::" + cachetypes.NewSha1CacheKey(accessToken)
 }
 
 func identityCacheKey(userID valuer.UUID) string {
 	return "identity::" + userID.String()
+}
+
+func lastObservedAtCacheKey(accessToken string, userID valuer.UUID) string {
+	return "access_token::" + accessToken + "::" + userID.String()
+}
+
+func accessTokenAndUserIDFromLastObservedAtCacheKey(key string) (string, valuer.UUID, error) {
+	parts := strings.Split(key, "::")
+	if len(parts) != 3 {
+		return "", valuer.UUID{}, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid last observed at cache key")
+	}
+
+	return parts[1], valuer.MustNewUUID(parts[2]), nil
 }

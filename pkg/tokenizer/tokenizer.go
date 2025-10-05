@@ -2,6 +2,7 @@ package tokenizer
 
 import (
 	"context"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
@@ -28,6 +29,9 @@ type Tokenizer interface {
 
 	// Delete the identity by userID.
 	DeleteIdentity(context.Context, valuer.UUID) error
+
+	// Set the last observed at for an access token.
+	SetLastObservedAt(context.Context, string, time.Time) error
 
 	// Returns the config of the tokenizer.
 	Config() Config
