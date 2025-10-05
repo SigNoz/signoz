@@ -341,7 +341,9 @@ func New(
 	}
 
 	if tokenizerWithService, ok := tokenizer.(pkgtokenizer.TokenizerWithService); ok {
-		registry.Add(factory.NewNamedService(factory.MustNewName("tokenizer"), tokenizerWithService))
+		if err := registry.Add(factory.NewNamedService(factory.MustNewName("tokenizer"), tokenizerWithService)); err != nil {
+			return nil, err
+		}
 	}
 
 	return &SigNoz{
