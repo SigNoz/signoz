@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/uptrace/bun/dialect"
 )
 
 type store struct {
@@ -69,15 +70,19 @@ func (store *store) GetOrUpdateByAccessTokenOrPrevAccessToken(ctx context.Contex
 	return store.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		token := new(authtypes.StorableToken)
 
-		err := store.
+		selectQuery := store.
 			sqlstore.
 			BunDBCtx(ctx).
 			NewSelect().
 			Model(token).
 			Where("access_token = ?", accessToken).
-			WhereOr("prev_access_token = ?", accessToken).
-			For("UPDATE").
-			Scan(ctx)
+			WhereOr("prev_access_token = ?", accessToken)
+
+		if store.sqlstore.BunDBCtx(ctx).Dialect().Name() != dialect.SQLite {
+			selectQuery = selectQuery.For("UPDATE")
+		}
+
+		err := selectQuery.Scan(ctx)
 		if err != nil {
 			return store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeTokenNotFound, "token does not exist", accessToken)
 		}
