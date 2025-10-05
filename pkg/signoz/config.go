@@ -328,4 +328,9 @@ func mergeAndEnsureBackwardCompatibility(ctx context.Context, logger *slog.Logge
 			config.Gateway.URL = u
 		}
 	}
+
+	if os.Getenv("SIGNOZ_JWT_SECRET") != "" {
+		logger.WarnContext(ctx, "[Deprecated] env SIGNOZ_JWT_SECRET is deprecated and scheduled for removal. Please use SIGNOZ_TOKENIZER_JWT_SECRET instead.")
+		config.Tokenizer.JWT.Secret = os.Getenv("SIGNOZ_JWT_SECRET")
+	}
 }

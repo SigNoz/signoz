@@ -26,7 +26,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/tokenizer"
+	pkgtokenizer "github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -50,7 +50,7 @@ type SigNoz struct {
 	Emailing        emailing.Emailing
 	Sharder         sharder.Sharder
 	StatsReporter   statsreporter.StatsReporter
-	Tokenizer       tokenizer.Tokenizer
+	Tokenizer       pkgtokenizer.Tokenizer
 	Modules         Modules
 	Handlers        Handlers
 }
@@ -237,7 +237,7 @@ func New(
 		providerSettings,
 		config.Tokenizer,
 		NewTokenizerProviderFactories(cache, sqlstore, orgGetter),
-		"opaque",
+		config.Tokenizer.Provider,
 	)
 	if err != nil {
 		return nil, err
@@ -247,7 +247,7 @@ func New(
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 
 	// Initialize notification manager from the available notification manager provider factories
-	notificationManager, err := factory.NewProviderFromNamedMap(
+	nfManager, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		nfmanager.Config{},
@@ -263,7 +263,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Alertmanager,
-		NewAlertmanagerProviderFactories(sqlstore, orgGetter, notificationManager),
+		NewAlertmanagerProviderFactories(sqlstore, orgGetter, nfManager),
 		config.Alertmanager.Provider,
 	)
 	if err != nil {
@@ -335,10 +335,13 @@ func New(
 		factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanager),
 		factory.NewNamedService(factory.MustNewName("licensing"), licensing),
 		factory.NewNamedService(factory.MustNewName("statsreporter"), statsReporter),
-		factory.NewNamedService(factory.MustNewName("tokenizer"), tokenizer),
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	if tokenizerWithService, ok := tokenizer.(pkgtokenizer.TokenizerWithService); ok {
+		registry.Add(factory.NewNamedService(factory.MustNewName("tokenizer"), tokenizerWithService))
 	}
 
 	return &SigNoz{

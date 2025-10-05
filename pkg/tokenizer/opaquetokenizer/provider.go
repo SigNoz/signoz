@@ -18,7 +18,8 @@ import (
 )
 
 var (
-	emptyOrgID valuer.UUID = valuer.UUID{}
+	emptyOrgID valuer.UUID                    = valuer.UUID{}
+	_          tokenizer.TokenizerWithService = (*provider)(nil)
 )
 
 type provider struct {
@@ -43,14 +44,14 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	lastObservedAtCache, err := bigcache.New(ctx, bigcache.Config{
 		Shards:       1024,
 		LifeWindow:   config.Lifetime.Max,
-		CleanWindow:  config.GC.Interval,
+		CleanWindow:  config.Opaque.GC.Interval,
 		StatsEnabled: false,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &provider{
+	return tokenizer.NewWrappedTokenizer(settings, &provider{
 		config:              config,
 		settings:            settings,
 		cache:               cache,
@@ -58,11 +59,11 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		orgGetter:           orgGetter,
 		stopC:               make(chan struct{}),
 		lastObservedAtCache: lastObservedAtCache,
-	}, nil
+	}), nil
 }
 
 func (provider *provider) Start(ctx context.Context) error {
-	ticker := time.NewTicker(provider.config.GC.Interval)
+	ticker := time.NewTicker(provider.config.Opaque.GC.Interval)
 	defer ticker.Stop()
 
 	for {
@@ -78,39 +79,31 @@ func (provider *provider) Start(ctx context.Context) error {
 }
 
 func (provider *provider) CreateToken(ctx context.Context, identity *authtypes.Identity, meta map[string]string) (*authtypes.Token, error) {
-	ctx, span := provider.settings.Tracer().Start(ctx, "tokenizer.CreateToken")
-	defer span.End()
-
 	existingTokens, err := provider.tokenStore.ListByUserID(ctx, identity.UserID)
 	if err != nil {
-		span.RecordError(err)
 		return nil, err
 	}
 
-	if len(existingTokens) >= provider.config.Token.MaxPerUser {
+	if len(existingTokens) >= provider.config.Opaque.Token.MaxPerUser {
 		slices.SortFunc(existingTokens, func(a, b *authtypes.Token) int {
 			return a.CreatedAt.Compare(b.CreatedAt)
 		})
 
 		if err := provider.DeleteToken(ctx, existingTokens[0].AccessToken); err != nil {
-			span.RecordError(err)
 			return nil, err
 		}
 	}
 
 	token, err := authtypes.NewToken(meta, identity.UserID)
 	if err != nil {
-		span.RecordError(err)
 		return nil, err
 	}
 
 	if err := provider.setToken(ctx, token, true); err != nil {
-		span.RecordError(err)
 		return nil, err
 	}
 
 	if err := provider.setIdentity(ctx, identity); err != nil {
-		span.RecordError(err)
 		return nil, err
 	}
 
@@ -118,23 +111,17 @@ func (provider *provider) CreateToken(ctx context.Context, identity *authtypes.I
 }
 
 func (provider *provider) GetIdentity(ctx context.Context, accessToken string) (*authtypes.Identity, error) {
-	ctx, span := provider.settings.Tracer().Start(ctx, "tokenizer.GetIdentity")
-	defer span.End()
-
 	token, err := provider.getOrGetSetToken(ctx, accessToken)
 	if err != nil {
-		span.RecordError(err)
 		return nil, err
 	}
 
 	if err := token.IsValid(provider.config.Rotation.Interval, provider.config.Lifetime.Idle, provider.config.Lifetime.Max); err != nil {
-		span.RecordError(err)
 		return nil, err
 	}
 
 	identity, err := provider.getOrGetSetIdentity(ctx, token.UserID)
 	if err != nil {
-		span.RecordError(err)
 		return nil, err
 	}
 
@@ -142,12 +129,8 @@ func (provider *provider) GetIdentity(ctx context.Context, accessToken string) (
 }
 
 func (provider *provider) DeleteToken(ctx context.Context, accessToken string) error {
-	ctx, span := provider.settings.Tracer().Start(ctx, "tokenizer.DeleteToken")
-	defer span.End()
-
 	provider.cache.Delete(ctx, emptyOrgID, cachetypes.NewSha1CacheKey(accessToken))
 	if err := provider.tokenStore.DeleteByAccessToken(ctx, accessToken); err != nil {
-		span.RecordError(err)
 		return err
 	}
 
@@ -155,9 +138,6 @@ func (provider *provider) DeleteToken(ctx context.Context, accessToken string) e
 }
 
 func (provider *provider) RotateToken(ctx context.Context, accessToken string, refreshToken string) (*authtypes.Token, error) {
-	ctx, span := provider.settings.Tracer().Start(ctx, "tokenizer.RotateToken")
-	defer span.End()
-
 	var rotatedToken *authtypes.Token
 
 	if err := provider.tokenStore.GetOrUpdateByAccessTokenOrPrevAccessToken(ctx, accessToken, func(ctx context.Context, token *authtypes.StorableToken) error {
@@ -175,8 +155,6 @@ func (provider *provider) RotateToken(ctx context.Context, accessToken string, r
 		rotatedToken = token
 		return nil
 	}); err != nil {
-		span.RecordError(err)
-
 		// If the token is not found, return an unauthenticated error.
 		if errors.Ast(err, errors.TypeNotFound) {
 			return nil, errors.Wrap(err, errors.TypeUnauthenticated, errors.CodeUnauthenticated, "invalid access token")
@@ -224,9 +202,6 @@ func (provider *provider) Stop(ctx context.Context) error {
 }
 
 func (provider *provider) SetLastObservedAt(ctx context.Context, accessToken string, lastObservedAt time.Time) error {
-	ctx, span := provider.settings.Tracer().Start(ctx, "tokenizer.SetLastObservedAt")
-	defer span.End()
-
 	token, err := provider.getOrGetSetToken(ctx, accessToken)
 	if err != nil {
 		return err

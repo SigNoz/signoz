@@ -44,6 +44,10 @@ func NewRegistry(logger *slog.Logger, services ...NamedService) (*Registry, erro
 	}, nil
 }
 
+func (r *Registry) Add(service NamedService) error {
+	return r.services.Add(service)
+}
+
 func (r *Registry) Start(ctx context.Context) {
 	for _, s := range r.services.GetInOrder() {
 		go func(s NamedService) {
