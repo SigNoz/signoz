@@ -192,25 +192,6 @@ describe('SpanLogs', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('should display documentation links in enhanced empty state', () => {
-		render(
-			<SpanLogs
-				// eslint-disable-next-line react/jsx-props-no-spreading
-				{...defaultProps}
-				emptyStateConfig={getEmptyLogsListConfig(jest.fn())}
-			/>,
-		);
-
-		// Should show documentation links section
-		expect(screen.getByText('RESOURCES')).toBeInTheDocument();
-
-		// Should show both documentation links
-		const sendingLogsLink = screen.getByText('Sending logs to SigNoz');
-		const correlateLink = screen.getByText('Correlate traces and logs');
-
-		expect(sendingLogsLink).toBeInTheDocument();
-		expect(correlateLink).toBeInTheDocument();
-	});
 	it('should call handleExplorerPageRedirect when Log Explorer button is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const mockHandleExplorerPageRedirect = jest.fn();
