@@ -297,9 +297,9 @@ export const useSpanContextLogs = ({
 
 	const hasTraceIdLogs = useMemo(() => {
 		if (spanLogs.length > 0) return true;
-		if (!traceOnlyData?.payload?.data?.newResult?.data?.result?.[0]?.list)
-			return false;
-		return traceOnlyData.payload.data.newResult.data.result[0].list.length > 0;
+		return !!(
+			traceOnlyData?.payload?.data?.newResult?.data?.result?.[0]?.list?.length || 0
+		);
 	}, [spanLogs.length, traceOnlyData]);
 
 	// Helper function to check if a log belongs to the span
