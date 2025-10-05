@@ -42,18 +42,31 @@ export function useNavigateToExplorer(): (
 				builder: {
 					...widgetQuery.builder,
 					queryData: widgetQuery.builder.queryData
-						.map((item) => ({
-							...item,
-							dataSource,
-							aggregateOperator: MetricAggregateOperator.NOOP,
-							filters: {
-								...item.filters,
-								items: [...(item.filters?.items || []), ...selectedFilters],
-								op: item.filters?.op || 'AND',
-							},
-							groupBy: [],
-							disabled: false,
-						}))
+						.map((item) => {
+							// filter out filters with unique ids
+							const seen = new Set();
+							const filterItems = [
+								...(item.filters?.items || []),
+								...selectedFilters,
+							].filter((item) => {
+								if (seen.has(item.id)) return false;
+								seen.add(item.id);
+								return true;
+							});
+
+							return {
+								...item,
+								dataSource,
+								aggregateOperator: MetricAggregateOperator.NOOP,
+								filters: {
+									...item.filters,
+									items: filterItems,
+									op: item.filters?.op || 'AND',
+								},
+								groupBy: [],
+								disabled: false,
+							};
+						})
 						.slice(0, 1),
 					queryFormulas: [],
 				},

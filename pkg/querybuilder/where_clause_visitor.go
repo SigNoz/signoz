@@ -857,7 +857,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 		}
 	}
 
-	if len(fieldKeysForName) > 1 && !v.keysWithWarnings[keyName] {
+	if len(fieldKeysForName) > 1 {
 		warnMsg := fmt.Sprintf(
 			"Key `%s` is ambiguous, found %d different combinations of field context / data type: %v.",
 			fieldKey.Name,
@@ -869,6 +869,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 			mixedFieldContext[item.FieldContext.StringValue()] = true
 		}
 
+		// when there is both resource and attribute context, default to resource only
 		if mixedFieldContext[telemetrytypes.FieldContextResource.StringValue()] &&
 			mixedFieldContext[telemetrytypes.FieldContextAttribute.StringValue()] {
 			filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
@@ -882,9 +883,12 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 			warnMsg += " " + "Using `resource` context by default. To query attributes explicitly, " +
 				fmt.Sprintf("use the fully qualified name (e.g., 'attribute.%s')", fieldKey.Name)
 		}
-		v.mainWarnURL = "https://signoz.io/docs/userguide/field-context-data-types/"
-		// this is warning state, we must have a unambiguous key
-		v.warnings = append(v.warnings, warnMsg)
+
+		if !v.keysWithWarnings[keyName] {
+			v.mainWarnURL = "https://signoz.io/docs/userguide/field-context-data-types/"
+			// this is warning state, we must have a unambiguous key
+			v.warnings = append(v.warnings, warnMsg)
+		}
 		v.keysWithWarnings[keyName] = true
 		v.logger.Warn("ambiguous key", "field_key_name", fieldKey.Name) //nolint:sloglint
 	}

@@ -3,6 +3,8 @@ package ruletypes
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"slices"
 	"time"
 	"unicode/utf8"
 
@@ -12,6 +14,9 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+
+	"github.com/prometheus/alertmanager/config"
 )
 
 type AlertType string
@@ -57,6 +62,121 @@ type PostableRule struct {
 
 	Evaluation    *EvaluationEnvelope `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
 	SchemaVersion string              `json:"schemaVersion,omitempty"`
+
+	NotificationSettings *NotificationSettings `json:"notificationSettings,omitempty"`
+}
+
+type NotificationSettings struct {
+	GroupBy   []string `json:"groupBy,omitempty"`
+	Renotify  Renotify `json:"renotify,omitempty"`
+	UsePolicy bool     `json:"usePolicy,omitempty"`
+}
+
+type Renotify struct {
+	Enabled          bool               `json:"enabled"`
+	ReNotifyInterval Duration           `json:"interval,omitempty"`
+	AlertStates      []model.AlertState `json:"alertStates,omitempty"`
+}
+
+func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanagertypes.NotificationConfig {
+	var renotifyInterval time.Duration
+	var noDataRenotifyInterval time.Duration
+	if ns.Renotify.Enabled {
+		if slices.Contains(ns.Renotify.AlertStates, model.StateNoData) {
+			noDataRenotifyInterval = time.Duration(ns.Renotify.ReNotifyInterval)
+		}
+		if slices.Contains(ns.Renotify.AlertStates, model.StateFiring) {
+			renotifyInterval = time.Duration(ns.Renotify.ReNotifyInterval)
+		}
+	} else {
+		renotifyInterval = 8760 * time.Hour //1 year for no renotify substitute
+		noDataRenotifyInterval = 8760 * time.Hour
+	}
+	return alertmanagertypes.NewNotificationConfig(ns.GroupBy, renotifyInterval, noDataRenotifyInterval, ns.UsePolicy)
+}
+
+func (r *PostableRule) GetRuleRouteRequest(ruleId string) ([]*alertmanagertypes.PostableRoutePolicy, error) {
+	threshold, err := r.RuleCondition.Thresholds.GetRuleThreshold()
+	if err != nil {
+		return nil, err
+	}
+	receivers := threshold.GetRuleReceivers()
+	routeRequests := make([]*alertmanagertypes.PostableRoutePolicy, 0)
+	for _, receiver := range receivers {
+		expression := fmt.Sprintf(`%s == "%s" && %s == "%s"`, LabelThresholdName, receiver.Name, LabelRuleId, ruleId)
+		routeRequests = append(routeRequests, &alertmanagertypes.PostableRoutePolicy{
+			Expression:     expression,
+			ExpressionKind: alertmanagertypes.RuleBasedExpression,
+			Channels:       receiver.Channels,
+			Name:           ruleId,
+			Description:    fmt.Sprintf("Auto-generated route for rule %s", ruleId),
+			Tags:           []string{"auto-generated", "rule-based"},
+		})
+	}
+	return routeRequests, nil
+}
+
+func (r *PostableRule) GetInhibitRules(ruleId string) ([]config.InhibitRule, error) {
+	threshold, err := r.RuleCondition.Thresholds.GetRuleThreshold()
+	if err != nil {
+		return nil, err
+	}
+	var groups []string
+	if r.NotificationSettings != nil {
+		for k := range r.NotificationSettings.GetAlertManagerNotificationConfig().NotificationGroup {
+			groups = append(groups, string(k))
+		}
+	}
+	receivers := threshold.GetRuleReceivers()
+	var inhibitRules []config.InhibitRule
+	for i := 0; i < len(receivers)-1; i++ {
+		rule := config.InhibitRule{
+			SourceMatchers: config.Matchers{
+				{
+					Name:  LabelThresholdName,
+					Value: receivers[i].Name,
+				},
+				{
+					Name:  LabelRuleId,
+					Value: ruleId,
+				},
+			},
+			TargetMatchers: config.Matchers{
+				{
+					Name:  LabelThresholdName,
+					Value: receivers[i+1].Name,
+				},
+				{
+					Name:  LabelRuleId,
+					Value: ruleId,
+				},
+			},
+			Equal: groups,
+		}
+		inhibitRules = append(inhibitRules, rule)
+	}
+	return inhibitRules, nil
+}
+
+func (ns *NotificationSettings) UnmarshalJSON(data []byte) error {
+	type Alias NotificationSettings
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(ns),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	// Validate states after unmarshaling
+	for _, state := range ns.Renotify.AlertStates {
+		if state != model.StateFiring && state != model.StateNoData {
+			return fmt.Errorf("invalid alert state: %s", state)
+		}
+	}
+	return nil
 }
 
 func (r *PostableRule) processRuleDefaults() error {
@@ -99,15 +219,25 @@ func (r *PostableRule) processRuleDefaults() error {
 				Kind: BasicThresholdKind,
 				Spec: BasicRuleThresholds{{
 					Name:        thresholdName,
-					RuleUnit:    r.RuleCondition.CompositeQuery.Unit,
 					TargetUnit:  r.RuleCondition.TargetUnit,
 					TargetValue: r.RuleCondition.Target,
 					MatchType:   r.RuleCondition.MatchType,
 					CompareOp:   r.RuleCondition.CompareOp,
+					Channels:    r.PreferredChannels,
 				}},
 			}
 			r.RuleCondition.Thresholds = &thresholdData
 			r.Evaluation = &EvaluationEnvelope{RollingEvaluation, RollingWindow{EvalWindow: r.EvalWindow, Frequency: r.Frequency}}
+			r.NotificationSettings = &NotificationSettings{
+				Renotify: Renotify{
+					Enabled:          true,
+					ReNotifyInterval: Duration(4 * time.Hour),
+					AlertStates:      []model.AlertState{model.StateFiring},
+				},
+			}
+			if r.RuleCondition.AlertOnAbsent {
+				r.NotificationSettings.Renotify.AlertStates = append(r.NotificationSettings.Renotify.AlertStates, model.StateNoData)
+			}
 		}
 	}
 
@@ -126,6 +256,7 @@ func (r *PostableRule) MarshalJSON() ([]byte, error) {
 		}
 		aux.Evaluation = nil
 		aux.SchemaVersion = ""
+		aux.NotificationSettings = nil
 		return json.Marshal(aux)
 	default:
 		copyStruct := *r
@@ -148,7 +279,7 @@ func isValidLabelName(ln string) bool {
 		return false
 	}
 	for i, b := range ln {
-		if !((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_' || (b >= '0' && b <= '9' && i > 0)) {
+		if !((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_' || b == '.' || (b >= '0' && b <= '9' && i > 0)) {
 			return false
 		}
 	}
@@ -303,6 +434,7 @@ func (g *GettableRule) MarshalJSON() ([]byte, error) {
 		}
 		aux.Evaluation = nil
 		aux.SchemaVersion = ""
+		aux.NotificationSettings = nil
 		return json.Marshal(aux)
 	default:
 		copyStruct := *g
