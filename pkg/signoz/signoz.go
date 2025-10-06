@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfroutingstore/sqlroutingstore"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
@@ -230,12 +231,14 @@ func New(
 	// Initialize user getter
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 
+	// will need to create factory for all stores
+	routeStore := sqlroutingstore.NewStore(sqlstore)
 	// shared NotificationManager instance for both alertmanager and rules
 	notificationManager, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		nfmanager.Config{},
-		NewNotificationManagerProviderFactories(),
+		NewNotificationManagerProviderFactories(routeStore),
 		"rulebased",
 	)
 	if err != nil {
