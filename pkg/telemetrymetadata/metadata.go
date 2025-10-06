@@ -814,36 +814,33 @@ func (t *telemetryMetaStore) getMeterSourceMetricKeys(ctx context.Context, field
 
 // applyBackwardCompatibleKeys adds backward compatible key aliases to the map
 func applyBackwardCompatibleKeys(mapOfKeys map[string][]*telemetrytypes.TelemetryFieldKey) {
-	// Collect all signals present in the map
-	signalsPresent := make(map[telemetrytypes.Signal]bool)
-	for _, keysList := range mapOfKeys {
-		for _, key := range keysList {
-			signalsPresent[key.Signal] = true
-		}
+	// Get backward compatible keys for all signals
+	backwardCompatKeysBySignal := map[telemetrytypes.Signal]BackwardCompatibleKeyMap{
+		telemetrytypes.SignalTraces:  GetBackwardCompatKeysForSignal(telemetrytypes.SignalTraces),
+		telemetrytypes.SignalLogs:    GetBackwardCompatKeysForSignal(telemetrytypes.SignalLogs),
+		telemetrytypes.SignalMetrics: GetBackwardCompatKeysForSignal(telemetrytypes.SignalMetrics),
 	}
 
-	// Apply backward compatible keys for each signal
-	for signal := range signalsPresent {
-		backwardCompatKeys := GetBackwardCompatKeysForSignal(signal)
-		for srcKey, aliasKey := range backwardCompatKeys {
-			if srcKeys, ok := mapOfKeys[srcKey]; ok {
+	// Iterate over existing keys and add aliases if they exist in backward compat mapping
+	for srcKey, srcKeys := range mapOfKeys {
+		for _, srcKeyEntry := range srcKeys {
+			backwardCompatKeys := backwardCompatKeysBySignal[srcKeyEntry.Signal]
+			if backwardCompatKeys == nil {
+				continue
+			}
+
+			if aliasKey, ok := backwardCompatKeys[srcKey]; ok {
 				if _, aliasExists := mapOfKeys[aliasKey]; !aliasExists {
-					aliasKeysList := make([]*telemetrytypes.TelemetryFieldKey, len(srcKeys))
-					for i, srcKeyEntry := range srcKeys {
-						if srcKeyEntry.Signal == signal {
-							aliasKeyEntry := &telemetrytypes.TelemetryFieldKey{
-								Name:          aliasKey,
-								Signal:        srcKeyEntry.Signal,
-								FieldContext:  srcKeyEntry.FieldContext,
-								FieldDataType: srcKeyEntry.FieldDataType,
-							}
-							aliasKeysList[i] = aliasKeyEntry
-						}
+					aliasKeyEntry := &telemetrytypes.TelemetryFieldKey{
+						Name:          aliasKey,
+						Signal:        srcKeyEntry.Signal,
+						FieldContext:  srcKeyEntry.FieldContext,
+						FieldDataType: srcKeyEntry.FieldDataType,
 					}
-					if len(aliasKeysList) > 0 && aliasKeysList[0] != nil {
-						mapOfKeys[aliasKey] = aliasKeysList
-					}
+					mapOfKeys[aliasKey] = []*telemetrytypes.TelemetryFieldKey{aliasKeyEntry}
 				}
+				// Found the alias for this signal, no need to check other entries
+				break
 			}
 		}
 	}
