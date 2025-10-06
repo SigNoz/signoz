@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -279,6 +280,15 @@ func (store *store) DeleteUser(ctx context.Context, orgID string, id string) err
 		Exec(ctx)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete user")
+	}
+
+	// delete tokens
+	_, err = tx.NewDelete().
+		Model(new(authtypes.StorableToken)).
+		Where("user_id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete tokens")
 	}
 
 	err = tx.Commit()
