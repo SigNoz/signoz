@@ -209,7 +209,7 @@ function Login(): JSX.Element {
 						code: callbackAuthErrorCode,
 						message: callbackAuthErrorMessage,
 						url: callbackAuthErrorURL,
-						errors: (callbackAuthErrorAdditional as unknown) as string[],
+						errors: callbackAuthErrorAdditional as any,
 					},
 				}),
 			);

@@ -20,11 +20,15 @@ export interface SuccessResponse<T, P = unknown> {
 }
 
 // Standardize SuccessResponse and Error Response
+export interface AdditionalErrors {
+	message: string;
+}
+
 export interface ErrorV2 {
 	code: string;
 	message: string;
 	url: string;
-	errors: string[];
+	errors: AdditionalErrors[];
 }
 
 export interface ErrorV2Resp {
