@@ -14,6 +14,7 @@ import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useAlertRule } from 'providers/Alert';
 import { useCallback, useEffect, useState } from 'react';
 import { CSSProperties } from 'styled-components';
+import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
 import { AlertDef } from 'types/api/alerts/def';
 
 import { AlertHeaderProps } from '../AlertHeader';
@@ -60,14 +61,20 @@ function AlertActionButtons({
 		setIsRenameAlertOpen(false);
 	}, [handleAlertUpdate]);
 
+	const isV2Alert = alertDetails.schemaVersion === NEW_ALERT_SCHEMA_VERSION;
+
 	const menuItems: MenuProps['items'] = [
-		{
-			key: 'rename-rule',
-			label: 'Rename',
-			icon: <PenLine size={16} color={Color.BG_VANILLA_400} />,
-			onClick: handleRename,
-			style: menuItemStyle,
-		},
+		...(!isV2Alert
+			? [
+					{
+						key: 'rename-rule',
+						label: 'Rename',
+						icon: <PenLine size={16} color={Color.BG_VANILLA_400} />,
+						onClick: handleRename,
+						style: menuItemStyle,
+					},
+			  ]
+			: []),
 		{
 			key: 'duplicate-rule',
 			label: 'Duplicate',
