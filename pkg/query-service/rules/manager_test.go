@@ -821,7 +821,7 @@ func TestDeleteRule(t *testing.T) {
 	claims := &authtypes.Claims{
 		Email: "test@example.com",
 	}
-	manager, mockSQLRuleStore, orgId := setupTestManager(t)
+	manager, mockSQLRuleStore, mockRouteStore, _, orgId := setupTestManager(t)
 	claims.OrgID = orgId
 
 	testCases := []struct {
@@ -957,6 +957,7 @@ func TestDeleteRule(t *testing.T) {
 			}
 
 			mockSQLRuleStore.ExpectGetStoredRule(ruleID, existingRule)
+			mockRouteStore.ExpectDeleteRouteByName(existingRule.OrgID, ruleID.String())
 			mockSQLRuleStore.ExpectDeleteRule(ruleID)
 
 			ctx := authtypes.NewContextWithClaims(context.Background(), *claims)
