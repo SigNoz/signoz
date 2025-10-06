@@ -302,7 +302,7 @@ describe('SpanDetailsDrawer', () => {
 			expect(GetMetricQueryRange).toHaveBeenCalledTimes(4);
 		});
 
-		// Verify the three distinct queries were made
+		// Verify the four distinct queries were made
 		const {
 			span_logs: spanQuery,
 			before_logs: beforeQuery,
