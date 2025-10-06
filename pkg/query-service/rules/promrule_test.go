@@ -696,7 +696,7 @@ func TestPromRuleShouldAlert(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		resultVectors, err := rule.Threshold.ShouldAlert(toCommonSeries(c.values))
+		resultVectors, err := rule.Threshold.ShouldAlert(toCommonSeries(c.values), rule.Unit())
 		assert.NoError(t, err)
 
 		// Compare full result vector with expected vector

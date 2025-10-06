@@ -14,9 +14,7 @@ const deleteRoutingPolicy = async (
 	SuccessResponseV2<DeleteRoutingPolicyResponse> | ErrorResponseV2
 > => {
 	try {
-		const response = await axios.delete(
-			`/notification-policy/${routingPolicyId}`,
-		);
+		const response = await axios.delete(`/route_policies/${routingPolicyId}`);
 
 		return {
 			httpStatusCode: response.status,

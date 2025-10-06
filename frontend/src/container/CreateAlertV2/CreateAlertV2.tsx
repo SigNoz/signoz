@@ -8,12 +8,11 @@ import AlertCondition from './AlertCondition';
 import { CreateAlertProvider } from './context';
 import { buildInitialAlertDef } from './context/utils';
 import CreateAlertHeader from './CreateAlertHeader';
-import EvaluationSettings from './EvaluationSettings';
 import Footer from './Footer';
 import NotificationSettings from './NotificationSettings';
 import QuerySection from './QuerySection';
 import { CreateAlertV2Props } from './types';
-import { showCondensedLayout, Spinner } from './utils';
+import { Spinner } from './utils';
 
 function CreateAlertV2({ alertType }: CreateAlertV2Props): JSX.Element {
 	const queryToRedirect = buildInitialAlertDef(alertType);
@@ -23,8 +22,6 @@ function CreateAlertV2({ alertType }: CreateAlertV2Props): JSX.Element {
 
 	useShareBuilderUrl({ defaultValue: currentQueryToRedirect });
 
-	const showCondensedLayoutFlag = showCondensedLayout();
-
 	return (
 		<CreateAlertProvider initialAlertType={alertType}>
 			<Spinner />
@@ -32,7 +29,6 @@ function CreateAlertV2({ alertType }: CreateAlertV2Props): JSX.Element {
 				<CreateAlertHeader />
 				<QuerySection />
 				<AlertCondition />
-				{!showCondensedLayoutFlag ? <EvaluationSettings /> : null}
 				<NotificationSettings />
 			</div>
 			<Footer />

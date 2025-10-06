@@ -13,9 +13,10 @@ export interface BasicThreshold {
 
 export interface PostableAlertRuleV2 {
 	schemaVersion: string;
+	id?: string;
 	alert: string;
-	alertType: AlertTypes;
-	ruleType: string;
+	alertType?: AlertTypes;
+	ruleType?: string;
 	condition: {
 		thresholds?: {
 			kind: string;
@@ -28,13 +29,13 @@ export interface PostableAlertRuleV2 {
 		requireMinPoints?: boolean;
 		requiredNumPoints?: number;
 	};
-	evaluation: {
-		kind: 'rolling' | 'cumulative';
-		spec: {
+	evaluation?: {
+		kind?: 'rolling' | 'cumulative';
+		spec?: {
 			evalWindow?: string;
-			frequency: string;
+			frequency?: string;
 			schedule?: {
-				type: 'hourly' | 'daily' | 'monthly';
+				type?: 'hourly' | 'daily' | 'monthly';
 				minute?: number;
 				hour?: number;
 				day?: number;
@@ -42,19 +43,24 @@ export interface PostableAlertRuleV2 {
 			timezone?: string;
 		};
 	};
-	labels: Labels;
-	annotations: {
+	labels?: Labels;
+	annotations?: {
 		description: string;
 		summary: string;
 	};
-	notificationSettings: {
-		notificationGroupBy: string[];
-		renotify?: string;
-		alertStates: string[];
-		notificationPolicy: boolean;
+	notificationSettings?: {
+		groupBy?: string[];
+		renotify?: {
+			enabled: boolean;
+			interval?: string;
+			alertStates?: string[];
+		};
+		usePolicy?: boolean;
 	};
-	version: string;
-	source: string;
+	version?: string;
+	source?: string;
+	state?: string;
+	disabled?: boolean;
 }
 
 export interface AlertRuleV2 extends PostableAlertRuleV2 {
@@ -66,3 +72,5 @@ export interface AlertRuleV2 extends PostableAlertRuleV2 {
 	updateAt: string;
 	updateBy: string;
 }
+
+export const NEW_ALERT_SCHEMA_VERSION = 'v2alpha1';

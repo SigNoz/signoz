@@ -26,11 +26,17 @@ function Footer(): JSX.Element {
 		isCreatingAlertRule,
 		testAlertRule,
 		isTestingAlertRule,
+		updateAlertRule,
+		isUpdatingAlertRule,
+		isEditMode,
 	} = useCreateAlertState();
 	const { currentQuery } = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
 
-	const handleDiscard = (): void => discardAlertRule();
+	const handleDiscard = (): void => {
+		discardAlertRule();
+		safeNavigate('/alerts');
+	};
 
 	const alertValidationMessage = useMemo(
 		() =>
@@ -99,15 +105,27 @@ function Footer(): JSX.Element {
 			notificationSettings,
 			query: currentQuery,
 		});
-		createAlertRule(payload, {
-			onSuccess: () => {
-				toast.success('Alert rule created successfully');
-				safeNavigate('/alerts');
-			},
-			onError: (error) => {
-				toast.error(error.message);
-			},
-		});
+		if (isEditMode) {
+			updateAlertRule(payload, {
+				onSuccess: () => {
+					toast.success('Alert rule updated successfully');
+					safeNavigate('/alerts');
+				},
+				onError: (error) => {
+					toast.error(error.message);
+				},
+			});
+		} else {
+			createAlertRule(payload, {
+				onSuccess: () => {
+					toast.success('Alert rule created successfully');
+					safeNavigate('/alerts');
+				},
+				onError: (error) => {
+					toast.error(error.message);
+				},
+			});
+		}
 	}, [
 		alertType,
 		basicAlertState,
@@ -116,16 +134,22 @@ function Footer(): JSX.Element {
 		evaluationWindow,
 		notificationSettings,
 		currentQuery,
+		isEditMode,
+		updateAlertRule,
 		createAlertRule,
 		safeNavigate,
 	]);
 
 	const disableButtons =
-		isCreatingAlertRule || isTestingAlertRule || !!alertValidationMessage;
+		isCreatingAlertRule || isTestingAlertRule || isUpdatingAlertRule;
 
 	const saveAlertButton = useMemo(() => {
 		let button = (
-			<Button type="primary" onClick={handleSaveAlert} disabled={disableButtons}>
+			<Button
+				type="primary"
+				onClick={handleSaveAlert}
+				disabled={disableButtons || Boolean(alertValidationMessage)}
+			>
 				<Check size={14} />
 				<Typography.Text>Save Alert Rule</Typography.Text>
 			</Button>
@@ -141,7 +165,7 @@ function Footer(): JSX.Element {
 			<Button
 				type="default"
 				onClick={handleTestNotification}
-				disabled={disableButtons}
+				disabled={disableButtons || Boolean(alertValidationMessage)}
 			>
 				<Send size={14} />
 				<Typography.Text>Test Notification</Typography.Text>
@@ -155,7 +179,7 @@ function Footer(): JSX.Element {
 
 	return (
 		<div className="create-alert-v2-footer">
-			<Button type="text" onClick={handleDiscard} disabled={disableButtons}>
+			<Button type="default" onClick={handleDiscard} disabled={disableButtons}>
 				<X size={14} /> Discard
 			</Button>
 			<div className="button-group">

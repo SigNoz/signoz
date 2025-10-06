@@ -51,7 +51,6 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 			yAxisUnit={yAxisUnit || ''}
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
-			showSideLegend
 			additionalThresholds={thresholdState.thresholds}
 		/>
 	);
@@ -66,7 +65,6 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 			yAxisUnit={yAxisUnit || ''}
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
-			showSideLegend
 			additionalThresholds={thresholdState.thresholds}
 		/>
 	);

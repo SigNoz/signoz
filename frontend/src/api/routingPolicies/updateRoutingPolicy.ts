@@ -6,9 +6,7 @@ import { ErrorResponseV2, ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 export interface UpdateRoutingPolicyBody {
 	name: string;
 	expression: string;
-	actions: {
-		channels: string[];
-	};
+	channels: string[];
 	description: string;
 }
 
@@ -24,7 +22,7 @@ const updateRoutingPolicy = async (
 	SuccessResponseV2<UpdateRoutingPolicyResponse> | ErrorResponseV2
 > => {
 	try {
-		const response = await axios.put(`/notification-policy/${id}`, {
+		const response = await axios.put(`/route_policies/${id}`, {
 			...props,
 		});
 

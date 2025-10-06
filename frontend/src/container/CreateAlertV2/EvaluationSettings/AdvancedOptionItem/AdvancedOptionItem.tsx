@@ -2,7 +2,7 @@ import './styles.scss';
 
 import { Switch, Tooltip, Typography } from 'antd';
 import { Info } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { IAdvancedOptionItemProps } from '../types';
 
@@ -12,8 +12,13 @@ function AdvancedOptionItem({
 	input,
 	tooltipText,
 	onToggle,
+	defaultShowInput,
 }: IAdvancedOptionItemProps): JSX.Element {
 	const [showInput, setShowInput] = useState<boolean>(false);
+
+	useEffect(() => {
+		setShowInput(defaultShowInput);
+	}, [defaultShowInput]);
 
 	const handleOnToggle = (): void => {
 		onToggle?.();
@@ -42,7 +47,7 @@ function AdvancedOptionItem({
 				>
 					{input}
 				</div>
-				<Switch onChange={handleOnToggle} />
+				<Switch onChange={handleOnToggle} checked={showInput} />
 			</div>
 		</div>
 	);

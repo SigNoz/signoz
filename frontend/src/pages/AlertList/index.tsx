@@ -8,7 +8,6 @@ import ROUTES from 'constants/routes';
 import AllAlertRules from 'container/ListAlertRules';
 import { PlannedDowntime } from 'container/PlannedDowntime/PlannedDowntime';
 import RoutingPolicies from 'container/RoutingPolicies';
-import { showRoutingPoliciesPage } from 'container/RoutingPolicies/utils';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -28,36 +27,27 @@ function AllAlertList(): JSX.Element {
 
 	const search = urlQuery.get('search');
 
-	const showRoutingPoliciesPageFlag = showRoutingPoliciesPage();
-
 	const configurationTab = useMemo(() => {
-		if (showRoutingPoliciesPageFlag) {
-			const tabs = [
-				{
-					label: 'Planned Downtime',
-					key: 'planned-downtime',
-					children: <PlannedDowntime />,
-				},
-				{
-					label: 'Routing Policies',
-					key: 'routing-policies',
-					children: <RoutingPolicies />,
-				},
-			];
-			return (
-				<Tabs
-					className="configuration-tabs"
-					defaultActiveKey="planned-downtime"
-					items={tabs}
-				/>
-			);
-		}
+		const tabs = [
+			{
+				label: 'Planned Downtime',
+				key: 'planned-downtime',
+				children: <PlannedDowntime />,
+			},
+			{
+				label: 'Routing Policies',
+				key: 'routing-policies',
+				children: <RoutingPolicies />,
+			},
+		];
 		return (
-			<div className="planned-downtime-container">
-				<PlannedDowntime />
-			</div>
+			<Tabs
+				className="configuration-tabs"
+				defaultActiveKey="planned-downtime"
+				items={tabs}
+			/>
 		);
-	}, [showRoutingPoliciesPageFlag]);
+	}, []);
 
 	const items: TabsProps['items'] = [
 		{

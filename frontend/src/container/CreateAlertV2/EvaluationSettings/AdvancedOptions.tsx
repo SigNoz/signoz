@@ -42,6 +42,7 @@ function AdvancedOptions(): JSX.Element {
 								payload: !advancedOptions.sendNotificationIfDataIsMissing.enabled,
 							})
 						}
+						defaultShowInput={advancedOptions.sendNotificationIfDataIsMissing.enabled}
 					/>
 					<AdvancedOptionItem
 						title="Minimum data required"
@@ -72,6 +73,7 @@ function AdvancedOptions(): JSX.Element {
 								payload: !advancedOptions.enforceMinimumDatapoints.enabled,
 							})
 						}
+						defaultShowInput={advancedOptions.enforceMinimumDatapoints.enabled}
 					/>
 					{/* TODO: Add back when the functionality is implemented */}
 					{/* <AdvancedOptionItem

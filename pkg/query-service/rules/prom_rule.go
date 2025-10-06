@@ -147,13 +147,19 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 
 	var alerts = make(map[uint64]*ruletypes.Alert, len(res))
 
+	ruleReceivers := r.Threshold.GetRuleReceivers()
+	ruleReceiverMap := make(map[string][]string)
+	for _, value := range ruleReceivers {
+		ruleReceiverMap[value.Name] = value.Channels
+	}
+
 	for _, series := range res {
 
 		if len(series.Floats) == 0 {
 			continue
 		}
 
-		results, err := r.Threshold.ShouldAlert(toCommonSeries(series))
+		results, err := r.Threshold.ShouldAlert(toCommonSeries(series), r.Unit())
 		if err != nil {
 			return nil, err
 		}
@@ -165,7 +171,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			}
 			r.logger.DebugContext(ctx, "alerting for series", "rule_name", r.Name(), "series", series)
 
-			threshold := valueFormatter.Format(r.targetVal(), r.Unit())
+			threshold := valueFormatter.Format(result.Target, result.TargetUnit)
 
 			tmplData := ruletypes.AlertTemplateData(l, valueFormatter.Format(result.V, r.Unit()), threshold)
 			// Inject some convenience variables that are easier to remember for users
@@ -218,7 +224,6 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 				r.lastError = err
 				return nil, err
 			}
-
 			alerts[h] = &ruletypes.Alert{
 				Labels:            lbs,
 				QueryResultLables: resultLabels,
@@ -227,13 +232,12 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 				State:             model.StatePending,
 				Value:             result.V,
 				GeneratorURL:      r.GeneratorURL(),
-				Receivers:         r.preferredChannels,
+				Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
 			}
 		}
 	}
 
 	r.logger.InfoContext(ctx, "number of alerts found", "rule_name", r.Name(), "alerts_count", len(alerts))
-
 	// alerts[h] is ready, add or update active list now
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.
@@ -241,7 +245,9 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		if alert, ok := r.Active[h]; ok && alert.State != model.StateInactive {
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
-			alert.Receivers = r.preferredChannels
+			if v, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
+				alert.Receivers = ruleReceiverMap[v]
+			}
 			continue
 		}
 

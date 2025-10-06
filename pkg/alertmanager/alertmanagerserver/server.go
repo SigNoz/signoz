@@ -2,6 +2,9 @@ package alertmanagerserver
 
 import (
 	"context"
+	"fmt"
+	"github.com/prometheus/alertmanager/types"
+	"golang.org/x/sync/errgroup"
 	"log/slog"
 	"strings"
 	"sync"
@@ -321,39 +324,104 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 }
 
 func (server *Server) TestReceiver(ctx context.Context, receiver alertmanagertypes.Receiver) error {
-	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, alertmanagertypes.NewTestAlert(receiver, time.Now(), time.Now()))
+	testAlert := alertmanagertypes.NewTestAlert(receiver, time.Now(), time.Now())
+	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, testAlert.Labels, testAlert)
 }
 
-func (server *Server) TestAlert(ctx context.Context, postableAlert *alertmanagertypes.PostableAlert, receivers []string) error {
-	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(alertmanagertypes.PostableAlerts{postableAlert}, time.Duration(server.srvConfig.Global.ResolveTimeout), time.Now())
+func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmanagertypes.PostableAlert][]string, config *alertmanagertypes.NotificationConfig) error {
+	if len(receiversMap) == 0 {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
+			"expected at least 1 alert, got 0")
+	}
+
+	postableAlerts := make(alertmanagertypes.PostableAlerts, 0, len(receiversMap))
+	for alert := range receiversMap {
+		postableAlerts = append(postableAlerts, alert)
+	}
+
+	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(
+		postableAlerts,
+		time.Duration(server.srvConfig.Global.ResolveTimeout),
+		time.Now(),
+	)
 	if err != nil {
-		return errors.Join(err...)
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
+			"failed to construct alerts from postable alerts: %v", err)
 	}
 
-	if len(alerts) != 1 {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "expected 1 alert, got %d", len(alerts))
+	type alertGroup struct {
+		groupLabels model.LabelSet
+		alerts      []*types.Alert
+		receivers   map[string]struct{}
 	}
 
-	ch := make(chan error, len(receivers))
-	for _, receiverName := range receivers {
-		go func(receiverName string) {
-			receiver, err := server.alertmanagerConfig.GetReceiver(receiverName)
-			if err != nil {
-				ch <- err
-				return
+	groupMap := make(map[model.Fingerprint]*alertGroup)
+
+	for i, alert := range alerts {
+		labels := getGroupLabels(alert, config.NotificationGroup, config.GroupByAll)
+		fp := labels.Fingerprint()
+
+		postableAlert := postableAlerts[i]
+		alertReceivers := receiversMap[postableAlert]
+
+		if group, exists := groupMap[fp]; exists {
+			group.alerts = append(group.alerts, alert)
+			for _, r := range alertReceivers {
+				group.receivers[r] = struct{}{}
 			}
-			ch <- alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, alerts[0])
-		}(receiverName)
-	}
-
-	var errs []error
-	for i := 0; i < len(receivers); i++ {
-		if err := <-ch; err != nil {
-			errs = append(errs, err)
+		} else {
+			receiverSet := make(map[string]struct{})
+			for _, r := range alertReceivers {
+				receiverSet[r] = struct{}{}
+			}
+			groupMap[fp] = &alertGroup{
+				groupLabels: labels,
+				alerts:      []*types.Alert{alert},
+				receivers:   receiverSet,
+			}
 		}
 	}
 
-	if errs != nil {
+	var mu sync.Mutex
+	var errs []error
+
+	g, gCtx := errgroup.WithContext(ctx)
+	for _, group := range groupMap {
+		for receiverName := range group.receivers {
+			group := group
+			receiverName := receiverName
+
+			g.Go(func() error {
+				receiver, err := server.alertmanagerConfig.GetReceiver(receiverName)
+				if err != nil {
+					mu.Lock()
+					errs = append(errs, fmt.Errorf("failed to get receiver %q: %w", receiverName, err))
+					mu.Unlock()
+					return nil // Return nil to continue processing other goroutines
+				}
+
+				err = alertmanagertypes.TestReceiver(
+					gCtx,
+					receiver,
+					alertmanagernotify.NewReceiverIntegrations,
+					server.alertmanagerConfig,
+					server.tmpl,
+					server.logger,
+					group.groupLabels,
+					group.alerts...,
+				)
+				if err != nil {
+					mu.Lock()
+					errs = append(errs, fmt.Errorf("receiver %q test failed: %w", receiverName, err))
+					mu.Unlock()
+				}
+				return nil // Return nil to continue processing other goroutines
+			})
+		}
+	}
+	_ = g.Wait()
+
+	if len(errs) > 0 {
 		return errors.Join(errs...)
 	}
 

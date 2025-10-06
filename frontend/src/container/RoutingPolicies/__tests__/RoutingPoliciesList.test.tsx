@@ -28,6 +28,7 @@ describe('RoutingPoliciesList', () => {
 				isRoutingPoliciesError={useRoutingPolicesMockData.isErrorRoutingPolicies}
 				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
 				handleDeleteModalOpen={mockHandleDeleteModalOpen}
+				hasSearchTerm={false}
 			/>,
 		);
 
@@ -51,6 +52,7 @@ describe('RoutingPoliciesList', () => {
 				isRoutingPoliciesError={false}
 				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
 				handleDeleteModalOpen={mockHandleDeleteModalOpen}
+				hasSearchTerm={false}
 			/>,
 		);
 		// Check for loading spinner by class name
@@ -67,6 +69,7 @@ describe('RoutingPoliciesList', () => {
 				isRoutingPoliciesError
 				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
 				handleDeleteModalOpen={mockHandleDeleteModalOpen}
+				hasSearchTerm={false}
 			/>,
 		);
 		expect(
@@ -82,8 +85,9 @@ describe('RoutingPoliciesList', () => {
 				isRoutingPoliciesError={false}
 				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
 				handleDeleteModalOpen={mockHandleDeleteModalOpen}
+				hasSearchTerm={false}
 			/>,
 		);
-		expect(screen.getByText('No routing policies found.')).toBeInTheDocument();
+		expect(screen.getByText('No routing policies yet,')).toBeInTheDocument();
 	});
 });

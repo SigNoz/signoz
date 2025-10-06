@@ -27,6 +27,8 @@ type (
 	// An alias for the Alert type from the alertmanager package.
 	Alert = types.Alert
 
+	AlertSlice = types.AlertSlice
+
 	PostableAlert = models.PostableAlert
 
 	PostableAlerts = models.PostableAlerts
@@ -36,6 +38,10 @@ type (
 
 	// A slice of GettableAlert.
 	GettableAlerts = models.GettableAlerts
+)
+
+const (
+	NoDataLabel = model.LabelName("nodata")
 )
 
 type DeprecatedGettableAlert struct {
@@ -306,4 +312,12 @@ func receiversMatchFilter(receivers []string, filter *regexp.Regexp) bool {
 	}
 
 	return false
+}
+
+func NoDataAlert(alert *types.Alert) bool {
+	if _, ok := alert.Labels[NoDataLabel]; ok {
+		return true
+	} else {
+		return false
+	}
 }

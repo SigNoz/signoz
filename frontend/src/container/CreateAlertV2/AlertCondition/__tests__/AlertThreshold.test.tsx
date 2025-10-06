@@ -108,6 +108,10 @@ jest.mock('container/NewWidget/RightContainer/alertFomatCategories', () => ({
 	]),
 }));
 
+jest.mock('container/CreateAlertV2/utils', () => ({
+	...jest.requireActual('container/CreateAlertV2/utils'),
+}));
+
 const TEST_STRINGS = {
 	ADD_THRESHOLD: 'Add Threshold',
 	AT_LEAST_ONCE: 'AT LEAST ONCE',
@@ -154,7 +158,9 @@ describe('AlertThreshold', () => {
 		expect(screen.getByText('Send a notification when')).toBeInTheDocument();
 		expect(screen.getByText('the threshold(s)')).toBeInTheDocument();
 		expect(screen.getByText('during the')).toBeInTheDocument();
-		expect(screen.getByText('Evaluation Window.')).toBeInTheDocument();
+		expect(
+			screen.getByTestId('condensed-evaluation-settings-container'),
+		).toBeInTheDocument();
 	});
 
 	it('renders query selection dropdown', async () => {
@@ -204,11 +210,11 @@ describe('AlertThreshold', () => {
 
 		// First addition should add WARNING threshold
 		fireEvent.click(addButton);
-		expect(screen.getByText('WARNING')).toBeInTheDocument();
+		expect(screen.getByText('warning')).toBeInTheDocument();
 
 		// Second addition should add INFO threshold
 		fireEvent.click(addButton);
-		expect(screen.getByText('INFO')).toBeInTheDocument();
+		expect(screen.getByText('info')).toBeInTheDocument();
 
 		// Third addition should add random threshold
 		fireEvent.click(addButton);
@@ -280,7 +286,7 @@ describe('AlertThreshold', () => {
 		renderAlertThreshold();
 
 		// Should have initial critical threshold
-		expect(screen.getByText('CRITICAL')).toBeInTheDocument();
+		expect(screen.getByText('critical')).toBeInTheDocument();
 		verifySelectRenders(TEST_STRINGS.IS_ABOVE);
 		verifySelectRenders(TEST_STRINGS.AT_LEAST_ONCE);
 	});

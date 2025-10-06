@@ -824,7 +824,7 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 			values.Points[i].Timestamp = time.Now().UnixMilli()
 		}
 
-		resultVectors, err := rule.Threshold.ShouldAlert(c.values)
+		resultVectors, err := rule.Threshold.ShouldAlert(c.values, rule.Unit())
 		assert.NoError(t, err, "Test case %d", idx)
 
 		// Compare result vectors with expected behavior
@@ -1201,7 +1201,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 			values.Points[i].Timestamp = time.Now().UnixMilli()
 		}
 
-		vector, err := rule.Threshold.ShouldAlert(c.values)
+		vector, err := rule.Threshold.ShouldAlert(c.values, rule.Unit())
 		assert.NoError(t, err)
 
 		for name, value := range c.values.Labels {
@@ -1211,7 +1211,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 		}
 
 		// Get result vectors from threshold evaluation
-		resultVectors, err := rule.Threshold.ShouldAlert(c.values)
+		resultVectors, err := rule.Threshold.ShouldAlert(c.values, rule.Unit())
 		assert.NoError(t, err, "Test case %d", idx)
 
 		// Compare result vectors with expected behavior
@@ -1501,13 +1501,11 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					Name:          postableRule.AlertName,
-					TargetValue:   &c.target,
-					TargetUnit:    c.targetUnit,
-					RuleUnit:      postableRule.RuleCondition.CompositeQuery.Unit,
-					MatchType:     ruletypes.MatchType(c.matchType),
-					CompareOp:     ruletypes.CompareOp(c.compareOp),
-					SelectedQuery: postableRule.RuleCondition.SelectedQuery,
+					Name:        postableRule.AlertName,
+					TargetValue: &c.target,
+					TargetUnit:  c.targetUnit,
+					MatchType:   ruletypes.MatchType(c.matchType),
+					CompareOp:   ruletypes.CompareOp(c.compareOp),
 				},
 			},
 		}
@@ -1612,12 +1610,10 @@ func TestThresholdRuleNoData(t *testing.T) {
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					Name:          postableRule.AlertName,
-					TargetValue:   &target,
-					RuleUnit:      postableRule.RuleCondition.CompositeQuery.Unit,
-					MatchType:     ruletypes.AtleastOnce,
-					CompareOp:     ruletypes.ValueIsEq,
-					SelectedQuery: postableRule.RuleCondition.SelectedQuery,
+					Name:        postableRule.AlertName,
+					TargetValue: &target,
+					MatchType:   ruletypes.AtleastOnce,
+					CompareOp:   ruletypes.ValueIsEq,
 				},
 			},
 		}
@@ -1734,13 +1730,11 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					Name:          postableRule.AlertName,
-					TargetValue:   &c.target,
-					TargetUnit:    c.targetUnit,
-					RuleUnit:      postableRule.RuleCondition.CompositeQuery.Unit,
-					MatchType:     ruletypes.MatchType(c.matchType),
-					CompareOp:     ruletypes.CompareOp(c.compareOp),
-					SelectedQuery: postableRule.RuleCondition.SelectedQuery,
+					Name:        postableRule.AlertName,
+					TargetValue: &c.target,
+					TargetUnit:  c.targetUnit,
+					MatchType:   ruletypes.MatchType(c.matchType),
+					CompareOp:   ruletypes.CompareOp(c.compareOp),
 				},
 			},
 		}
@@ -1873,13 +1867,11 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					Name:          postableRule.AlertName,
-					TargetValue:   &c.target,
-					TargetUnit:    c.targetUnit,
-					RuleUnit:      postableRule.RuleCondition.CompositeQuery.Unit,
-					MatchType:     ruletypes.MatchType(c.matchType),
-					CompareOp:     ruletypes.CompareOp(c.compareOp),
-					SelectedQuery: postableRule.RuleCondition.SelectedQuery,
+					Name:        postableRule.AlertName,
+					TargetValue: &c.target,
+					TargetUnit:  c.targetUnit,
+					MatchType:   ruletypes.MatchType(c.matchType),
+					CompareOp:   ruletypes.CompareOp(c.compareOp),
 				},
 			},
 		}
@@ -2125,22 +2117,18 @@ func TestMultipleThresholdRule(t *testing.T) {
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					Name:          "first_threshold",
-					TargetValue:   &c.target,
-					TargetUnit:    c.targetUnit,
-					RuleUnit:      postableRule.RuleCondition.CompositeQuery.Unit,
-					MatchType:     ruletypes.MatchType(c.matchType),
-					CompareOp:     ruletypes.CompareOp(c.compareOp),
-					SelectedQuery: postableRule.RuleCondition.SelectedQuery,
+					Name:        "first_threshold",
+					TargetValue: &c.target,
+					TargetUnit:  c.targetUnit,
+					MatchType:   ruletypes.MatchType(c.matchType),
+					CompareOp:   ruletypes.CompareOp(c.compareOp),
 				},
 				{
-					Name:          "second_threshold",
-					TargetValue:   &c.secondTarget,
-					TargetUnit:    c.targetUnit,
-					RuleUnit:      postableRule.RuleCondition.CompositeQuery.Unit,
-					MatchType:     ruletypes.MatchType(c.matchType),
-					CompareOp:     ruletypes.CompareOp(c.compareOp),
-					SelectedQuery: postableRule.RuleCondition.SelectedQuery,
+					Name:        "second_threshold",
+					TargetValue: &c.secondTarget,
+					TargetUnit:  c.targetUnit,
+					MatchType:   ruletypes.MatchType(c.matchType),
+					CompareOp:   ruletypes.CompareOp(c.compareOp),
 				},
 			},
 		}

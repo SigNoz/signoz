@@ -37,6 +37,7 @@ export interface RoutingPolicyListProps {
 	isRoutingPoliciesError: boolean;
 	handlePolicyDetailsModalOpen: HandlePolicyDetailsModalOpen;
 	handleDeleteModalOpen: HandleDeleteModalOpen;
+	hasSearchTerm: boolean;
 }
 
 export interface RoutingPolicyListItemProps {

@@ -2,9 +2,10 @@ package ruletypes
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
@@ -303,10 +304,6 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 					t.Errorf("Expected threshold name 'warning' from severity label, got '%s'", spec.Name)
 				}
 
-				// Verify all fields are copied from RuleCondition
-				if spec.RuleUnit != "percent" {
-					t.Errorf("Expected RuleUnit 'percent', got '%s'", spec.RuleUnit)
-				}
 				if spec.TargetUnit != "%" {
 					t.Errorf("Expected TargetUnit '%%', got '%s'", spec.TargetUnit)
 				}
@@ -454,9 +451,6 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 				}
 				if spec.TargetUnit != "%" {
 					t.Errorf("Expected TargetUnit '%%' (overwritten), got '%s'", spec.TargetUnit)
-				}
-				if spec.RuleUnit != "percent" {
-					t.Errorf("Expected RuleUnit 'percent' (overwritten), got '%s'", spec.RuleUnit)
 				}
 
 				if rule.Evaluation == nil {
@@ -630,9 +624,9 @@ func TestParseIntoRuleThresholdGeneration(t *testing.T) {
 	vector, err := threshold.ShouldAlert(v3.Series{
 		Points: []v3.Point{{Value: 0.15, Timestamp: 1000}}, // 150ms in seconds
 		Labels: map[string]string{"test": "label"},
-	})
+	}, "")
 	if err != nil {
-		t.Fatalf("Unexpected error in ShouldAlert: %v", err)
+		t.Fatalf("Unexpected error in shouldAlert: %v", err)
 	}
 
 	if len(vector) == 0 {
@@ -707,9 +701,9 @@ func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 	vector, err := threshold.ShouldAlert(v3.Series{
 		Points: []v3.Point{{Value: 95.0, Timestamp: 1000}}, // 95% CPU usage
 		Labels: map[string]string{"service": "test"},
-	})
+	}, "")
 	if err != nil {
-		t.Fatalf("Unexpected error in ShouldAlert: %v", err)
+		t.Fatalf("Unexpected error in shouldAlert: %v", err)
 	}
 
 	assert.Equal(t, 2, len(vector))
@@ -717,9 +711,9 @@ func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 	vector, err = threshold.ShouldAlert(v3.Series{
 		Points: []v3.Point{{Value: 75.0, Timestamp: 1000}}, // 75% CPU usage
 		Labels: map[string]string{"service": "test"},
-	})
+	}, "")
 	if err != nil {
-		t.Fatalf("Unexpected error in ShouldAlert: %v", err)
+		t.Fatalf("Unexpected error in shouldAlert: %v", err)
 	}
 
 	assert.Equal(t, 1, len(vector))

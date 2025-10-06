@@ -488,7 +488,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 				continue
 			}
 		}
-		resultSeries, err := r.Threshold.ShouldAlert(*series)
+		resultSeries, err := r.Threshold.ShouldAlert(*series, r.Unit())
 		if err != nil {
 			return nil, err
 		}
@@ -565,7 +565,7 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 				continue
 			}
 		}
-		resultSeries, err := r.Threshold.ShouldAlert(*series)
+		resultSeries, err := r.Threshold.ShouldAlert(*series, r.Unit())
 		if err != nil {
 			return nil, err
 		}
@@ -602,6 +602,12 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 	resultFPs := map[uint64]struct{}{}
 	var alerts = make(map[uint64]*ruletypes.Alert, len(res))
 
+	ruleReceivers := r.Threshold.GetRuleReceivers()
+	ruleReceiverMap := make(map[string][]string)
+	for _, value := range ruleReceivers {
+		ruleReceiverMap[value.Name] = value.Channels
+	}
+
 	for _, smpl := range res {
 		l := make(map[string]string, len(smpl.Metric))
 		for _, lbl := range smpl.Metric {
@@ -610,7 +616,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 
 		value := valueFormatter.Format(smpl.V, r.Unit())
 		//todo(aniket): handle different threshold
-		threshold := valueFormatter.Format(r.targetVal(), r.Unit())
+		threshold := valueFormatter.Format(smpl.Target, smpl.TargetUnit)
 		r.logger.DebugContext(ctx, "Alert template data for rule", "rule_name", r.Name(), "formatter", valueFormatter.Name(), "value", value, "threshold", threshold)
 
 		tmplData := ruletypes.AlertTemplateData(l, value, threshold)
@@ -690,7 +696,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 			State:             model.StatePending,
 			Value:             smpl.V,
 			GeneratorURL:      r.GeneratorURL(),
-			Receivers:         r.preferredChannels,
+			Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
 			Missing:           smpl.IsMissing,
 		}
 	}
@@ -705,7 +711,9 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
-			alert.Receivers = r.preferredChannels
+			if v, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
+				alert.Receivers = ruleReceiverMap[v]
+			}
 			continue
 		}
 

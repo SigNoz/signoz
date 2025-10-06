@@ -10,17 +10,15 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/provider"
 	"github.com/prometheus/alertmanager/store"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-)
-
-const (
-	noDataLabel = model.LabelName("nodata")
 )
 
 // Dispatcher sorts incoming alerts into aggregation groups and
@@ -46,6 +44,7 @@ type Dispatcher struct {
 	logger              *slog.Logger
 	notificationManager nfmanager.NotificationManager
 	orgID               string
+	receiverRoutes      map[string]*dispatch.Route
 }
 
 // We use the upstream Limits interface from Prometheus
@@ -90,6 +89,7 @@ func (d *Dispatcher) Run() {
 
 	d.mtx.Lock()
 	d.aggrGroupsPerRoute = map[*dispatch.Route]map[model.Fingerprint]*aggrGroup{}
+	d.receiverRoutes = map[string]*dispatch.Route{}
 	d.aggrGroupsNum = 0
 	d.metrics.aggrGroups.Set(0)
 	d.ctx, d.cancel = context.WithCancel(context.Background())
@@ -125,8 +125,14 @@ func (d *Dispatcher) run(it provider.AlertIterator) {
 			}
 
 			now := time.Now()
-			for _, r := range d.route.Match(alert.Labels) {
-				d.processAlert(alert, r)
+			channels, err := d.notificationManager.Match(d.ctx, d.orgID, getRuleIDFromAlert(alert), alert.Labels)
+			if err != nil {
+				d.logger.ErrorContext(d.ctx, "Error on alert match", "err", err)
+				continue
+			}
+			for _, channel := range channels {
+				route := d.getOrCreateRoute(channel)
+				d.processAlert(alert, route)
 			}
 			d.metrics.processingDuration.Observe(time.Since(now).Seconds())
 
@@ -266,6 +272,7 @@ type notifyFunc func(context.Context, ...*types.Alert) bool
 
 // processAlert determines in which aggregation group the alert falls
 // and inserts it.
+// no data alert will only have ruleId and no data label
 func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 	ruleId := getRuleIDFromAlert(alert)
 	config, err := d.notificationManager.GetNotificationConfig(d.orgID, ruleId)
@@ -273,8 +280,14 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 		d.logger.ErrorContext(d.ctx, "error getting alert notification config", "rule_id", ruleId, "error", err)
 		return
 	}
+	renotifyInterval := config.Renotify.RenotifyInterval
 
-	groupLabels := getGroupLabels(alert, config.NotificationGroup)
+	groupLabels := getGroupLabels(alert, config.NotificationGroup, config.GroupByAll)
+
+	if alertmanagertypes.NoDataAlert(alert) {
+		renotifyInterval = config.Renotify.NoDataInterval
+		groupLabels[alertmanagertypes.NoDataLabel] = alert.Labels[alertmanagertypes.NoDataLabel] //to create new group key for no data alerts
+	}
 
 	fp := groupLabels.Fingerprint()
 
@@ -298,12 +311,6 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 		d.metrics.aggrGroupLimitReached.Inc()
 		d.logger.ErrorContext(d.ctx, "Too many aggregation groups, cannot create new group for alert", "groups", d.aggrGroupsNum, "limit", limit, "alert", alert.Name())
 		return
-	}
-	renotifyInterval := config.Renotify.RenotifyInterval
-
-	if noDataAlert(alert) {
-		renotifyInterval = config.Renotify.NoDataInterval
-		groupLabels[noDataLabel] = alert.Labels[noDataLabel]
 	}
 
 	ag = newAggrGroup(d.ctx, groupLabels, route, d.timeout, d.logger, renotifyInterval)
@@ -543,21 +550,35 @@ func deepCopyRouteOpts(opts dispatch.RouteOpts, renotify time.Duration) dispatch
 	return newOpts
 }
 
-func getGroupLabels(alert *types.Alert, groups map[model.LabelName]struct{}) model.LabelSet {
+func getGroupLabels(alert *types.Alert, groups map[model.LabelName]struct{}, groupByAll bool) model.LabelSet {
 	groupLabels := model.LabelSet{}
 	for ln, lv := range alert.Labels {
-		if _, ok := groups[ln]; ok {
+		if _, ok := groups[ln]; ok || groupByAll {
 			groupLabels[ln] = lv
 		}
 	}
-
 	return groupLabels
 }
 
-func noDataAlert(alert *types.Alert) bool {
-	if _, ok := alert.Labels[noDataLabel]; ok {
-		return true
-	} else {
-		return false
+func (d *Dispatcher) getOrCreateRoute(receiver string) *dispatch.Route {
+	d.mtx.Lock()
+	defer d.mtx.Unlock()
+	if route, exists := d.receiverRoutes[receiver]; exists {
+		return route
 	}
+	route := &dispatch.Route{
+		RouteOpts: dispatch.RouteOpts{
+			Receiver:      receiver,
+			GroupWait:     30 * time.Second,
+			GroupInterval: 5 * time.Minute,
+			GroupByAll:    false,
+		},
+		Matchers: labels.Matchers{{
+			Name:  "__receiver__",
+			Value: receiver,
+			Type:  labels.MatchEqual,
+		}},
+	}
+	d.receiverRoutes[receiver] = route
+	return route
 }

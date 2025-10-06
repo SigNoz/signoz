@@ -4,6 +4,9 @@ import (
 	"context"
 	"sync"
 
+	"github.com/prometheus/alertmanager/featurecontrol"
+	"github.com/prometheus/alertmanager/matcher/compat"
+
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -61,6 +64,7 @@ func New(
 }
 
 func (service *Service) SyncServers(ctx context.Context) error {
+	compat.InitFromFlags(service.settings.Logger(), featurecontrol.NoopFlags{})
 	orgs, err := service.orgGetter.ListByOwnedKeyRange(ctx)
 	if err != nil {
 		return err
@@ -142,7 +146,7 @@ func (service *Service) TestReceiver(ctx context.Context, orgID string, receiver
 	return server.TestReceiver(ctx, receiver)
 }
 
-func (service *Service) TestAlert(ctx context.Context, orgID string, alert *alertmanagertypes.PostableAlert, receivers []string) error {
+func (service *Service) TestAlert(ctx context.Context, orgID string, receiversMap map[*alertmanagertypes.PostableAlert][]string, config *alertmanagertypes.NotificationConfig) error {
 	service.serversMtx.RLock()
 	defer service.serversMtx.RUnlock()
 
@@ -151,7 +155,7 @@ func (service *Service) TestAlert(ctx context.Context, orgID string, alert *aler
 		return err
 	}
 
-	return server.TestAlert(ctx, alert, receivers)
+	return server.TestAlert(ctx, receiversMap, config)
 }
 
 func (service *Service) Stop(ctx context.Context) error {

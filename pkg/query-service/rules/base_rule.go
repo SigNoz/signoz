@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"math"
 	"net/url"
 	"sync"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/query-service/converter"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -167,22 +165,6 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	return baseRule, nil
 }
 
-func (r *BaseRule) targetVal() float64 {
-	if r.ruleCondition == nil || r.ruleCondition.Target == nil {
-		return 0
-	}
-
-	// get the converter for the target unit
-	unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
-	// convert the target value to the y-axis unit
-	value := unitConverter.Convert(converter.Value{
-		F: *r.ruleCondition.Target,
-		U: converter.Unit(r.ruleCondition.TargetUnit),
-	}, converter.Unit(r.Unit()))
-
-	return value.F
-}
-
 func (r *BaseRule) matchType() ruletypes.MatchType {
 	if r.ruleCondition == nil {
 		return ruletypes.AtleastOnce
@@ -219,10 +201,6 @@ func (r *BaseRule) EvalWindow() time.Duration {
 
 func (r *BaseRule) HoldDuration() time.Duration {
 	return r.holdDuration
-}
-
-func (r *BaseRule) TargetVal() float64 {
-	return r.targetVal()
 }
 
 func (r *ThresholdRule) hostFromSource() string {
@@ -378,232 +356,6 @@ func (r *BaseRule) ForEachActiveAlert(f func(*ruletypes.Alert)) {
 	for _, a := range r.Active {
 		f(a)
 	}
-}
-
-func (r *BaseRule) ShouldAlert(series v3.Series) (ruletypes.Sample, bool) {
-	var alertSmpl ruletypes.Sample
-	var shouldAlert bool
-	var lbls qslabels.Labels
-
-	for name, value := range series.Labels {
-		lbls = append(lbls, qslabels.Label{Name: name, Value: value})
-	}
-
-	series.Points = removeGroupinSetPoints(series)
-
-	// nothing to evaluate
-	if len(series.Points) == 0 {
-		return alertSmpl, false
-	}
-
-	if r.ruleCondition.RequireMinPoints {
-		if len(series.Points) < r.ruleCondition.RequiredNumPoints {
-			zap.L().Info("not enough data points to evaluate series, skipping", zap.String("ruleid", r.ID()), zap.Int("numPoints", len(series.Points)), zap.Int("requiredPoints", r.ruleCondition.RequiredNumPoints))
-			return alertSmpl, false
-		}
-	}
-
-	switch r.matchType() {
-	case ruletypes.AtleastOnce:
-		// If any sample matches the condition, the rule is firing.
-		if r.compareOp() == ruletypes.ValueIsAbove {
-			for _, smpl := range series.Points {
-				if smpl.Value > r.targetVal() {
-					alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = true
-					break
-				}
-			}
-		} else if r.compareOp() == ruletypes.ValueIsBelow {
-			for _, smpl := range series.Points {
-				if smpl.Value < r.targetVal() {
-					alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = true
-					break
-				}
-			}
-		} else if r.compareOp() == ruletypes.ValueIsEq {
-			for _, smpl := range series.Points {
-				if smpl.Value == r.targetVal() {
-					alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = true
-					break
-				}
-			}
-		} else if r.compareOp() == ruletypes.ValueIsNotEq {
-			for _, smpl := range series.Points {
-				if smpl.Value != r.targetVal() {
-					alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = true
-					break
-				}
-			}
-		} else if r.compareOp() == ruletypes.ValueOutsideBounds {
-			for _, smpl := range series.Points {
-				if math.Abs(smpl.Value) >= r.targetVal() {
-					alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = true
-					break
-				}
-			}
-		}
-	case ruletypes.AllTheTimes:
-		// If all samples match the condition, the rule is firing.
-		shouldAlert = true
-		alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: r.targetVal()}, Metric: lbls}
-		if r.compareOp() == ruletypes.ValueIsAbove {
-			for _, smpl := range series.Points {
-				if smpl.Value <= r.targetVal() {
-					shouldAlert = false
-					break
-				}
-			}
-			// use min value from the series
-			if shouldAlert {
-				var minValue float64 = math.Inf(1)
-				for _, smpl := range series.Points {
-					if smpl.Value < minValue {
-						minValue = smpl.Value
-					}
-				}
-				alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: minValue}, Metric: lbls}
-			}
-		} else if r.compareOp() == ruletypes.ValueIsBelow {
-			for _, smpl := range series.Points {
-				if smpl.Value >= r.targetVal() {
-					shouldAlert = false
-					break
-				}
-			}
-			if shouldAlert {
-				var maxValue float64 = math.Inf(-1)
-				for _, smpl := range series.Points {
-					if smpl.Value > maxValue {
-						maxValue = smpl.Value
-					}
-				}
-				alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: maxValue}, Metric: lbls}
-			}
-		} else if r.compareOp() == ruletypes.ValueIsEq {
-			for _, smpl := range series.Points {
-				if smpl.Value != r.targetVal() {
-					shouldAlert = false
-					break
-				}
-			}
-		} else if r.compareOp() == ruletypes.ValueIsNotEq {
-			for _, smpl := range series.Points {
-				if smpl.Value == r.targetVal() {
-					shouldAlert = false
-					break
-				}
-			}
-			// use any non-inf or nan value from the series
-			if shouldAlert {
-				for _, smpl := range series.Points {
-					if !math.IsInf(smpl.Value, 0) && !math.IsNaN(smpl.Value) {
-						alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: smpl.Value}, Metric: lbls}
-						break
-					}
-				}
-			}
-		} else if r.compareOp() == ruletypes.ValueOutsideBounds {
-			for _, smpl := range series.Points {
-				if math.Abs(smpl.Value) < r.targetVal() {
-					alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = false
-					break
-				}
-			}
-		}
-	case ruletypes.OnAverage:
-		// If the average of all samples matches the condition, the rule is firing.
-		var sum, count float64
-		for _, smpl := range series.Points {
-			if math.IsNaN(smpl.Value) || math.IsInf(smpl.Value, 0) {
-				continue
-			}
-			sum += smpl.Value
-			count++
-		}
-		avg := sum / count
-		alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: avg}, Metric: lbls}
-		if r.compareOp() == ruletypes.ValueIsAbove {
-			if avg > r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ruletypes.ValueIsBelow {
-			if avg < r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ruletypes.ValueIsEq {
-			if avg == r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ruletypes.ValueIsNotEq {
-			if avg != r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ruletypes.ValueOutsideBounds {
-			if math.Abs(avg) >= r.targetVal() {
-				shouldAlert = true
-			}
-		}
-	case ruletypes.InTotal:
-		// If the sum of all samples matches the condition, the rule is firing.
-		var sum float64
-
-		for _, smpl := range series.Points {
-			if math.IsNaN(smpl.Value) || math.IsInf(smpl.Value, 0) {
-				continue
-			}
-			sum += smpl.Value
-		}
-		alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: sum}, Metric: lbls}
-		if r.compareOp() == ruletypes.ValueIsAbove {
-			if sum > r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ruletypes.ValueIsBelow {
-			if sum < r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ruletypes.ValueIsEq {
-			if sum == r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ruletypes.ValueIsNotEq {
-			if sum != r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ruletypes.ValueOutsideBounds {
-			if math.Abs(sum) >= r.targetVal() {
-				shouldAlert = true
-			}
-		}
-	case ruletypes.Last:
-		// If the last sample matches the condition, the rule is firing.
-		shouldAlert = false
-		alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: series.Points[len(series.Points)-1].Value}, Metric: lbls}
-		if r.compareOp() == ruletypes.ValueIsAbove {
-			if series.Points[len(series.Points)-1].Value > r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ruletypes.ValueIsBelow {
-			if series.Points[len(series.Points)-1].Value < r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ruletypes.ValueIsEq {
-			if series.Points[len(series.Points)-1].Value == r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ruletypes.ValueIsNotEq {
-			if series.Points[len(series.Points)-1].Value != r.targetVal() {
-				shouldAlert = true
-			}
-		}
-	}
-	return alertSmpl, shouldAlert
 }
 
 func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, currentState model.AlertState, itemsToAdd []model.RuleStateHistory) error {

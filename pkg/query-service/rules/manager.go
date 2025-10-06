@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"log/slog"
 	"sort"
 	"strings"
@@ -350,39 +351,35 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 	existingRule.Data = ruleStr
 
 	return m.ruleStore.EditRule(ctx, existingRule, func(ctx context.Context) error {
-		cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
-		if err != nil {
-			return err
-		}
-
-		var preferredChannels []string
-		if len(parsedRule.PreferredChannels) == 0 {
-			channels, err := m.alertmanager.ListChannels(ctx, claims.OrgID)
-			if err != nil {
-				return err
-			}
-
-			for _, channel := range channels {
-				preferredChannels = append(preferredChannels, channel.Name)
-			}
-		} else {
-			preferredChannels = parsedRule.PreferredChannels
-		}
-		err = cfg.UpdateRuleIDMatcher(id.StringValue(), preferredChannels)
-		if err != nil {
-			return err
-		}
 		if parsedRule.NotificationSettings != nil {
 			config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
-			err = m.alertmanager.SetNotificationConfig(ctx, orgID, existingRule.ID.StringValue(), &config)
+			err = m.alertmanager.SetNotificationConfig(ctx, orgID, id.StringValue(), &config)
 			if err != nil {
 				return err
 			}
-		}
+			if !parsedRule.NotificationSettings.UsePolicy {
+				request, err := parsedRule.GetRuleRouteRequest(id.StringValue())
+				if err != nil {
+					return err
+				}
+				err = m.alertmanager.UpdateAllRoutePoliciesByRuleId(ctx, id.StringValue(), request)
+				if err != nil {
+					return err
+				}
+				err = m.alertmanager.DeleteAllInhibitRulesByRuleId(ctx, orgID, id.StringValue())
+				if err != nil {
+					return err
+				}
 
-		err = m.alertmanager.SetConfig(ctx, cfg)
-		if err != nil {
-			return err
+				inhibitRules, err := parsedRule.GetInhibitRules(id.StringValue())
+				if err != nil {
+					return err
+				}
+				err = m.alertmanager.CreateInhibitRules(ctx, orgID, inhibitRules)
+				if err != nil {
+					return err
+				}
+			}
 		}
 		err = m.syncRuleStateWithTask(ctx, orgID, prepareTaskName(existingRule.ID.StringValue()), &parsedRule)
 		if err != nil {
@@ -488,6 +485,19 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		}
 
 		err = m.alertmanager.DeleteNotificationConfig(ctx, orgID, id.String())
+		if err != nil {
+			return err
+		}
+
+		err = m.alertmanager.DeleteAllRoutePoliciesByRuleId(ctx, id.String())
+		if err != nil {
+			return err
+		}
+
+		err = m.alertmanager.DeleteAllInhibitRulesByRuleId(ctx, orgID, id.String())
+		if err != nil {
+			return err
+		}
 
 		taskName := prepareTaskName(id.StringValue())
 		m.deleteTask(taskName)
@@ -548,41 +558,30 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 	}
 
 	id, err := m.ruleStore.CreateRule(ctx, storedRule, func(ctx context.Context, id valuer.UUID) error {
-		cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
-		if err != nil {
-			return err
-		}
-
-		var preferredChannels []string
-		if len(parsedRule.PreferredChannels) == 0 {
-			channels, err := m.alertmanager.ListChannels(ctx, claims.OrgID)
-			if err != nil {
-				return err
-			}
-
-			for _, channel := range channels {
-				preferredChannels = append(preferredChannels, channel.Name)
-			}
-		} else {
-			preferredChannels = parsedRule.PreferredChannels
-		}
-
 		if parsedRule.NotificationSettings != nil {
 			config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
-			err = m.alertmanager.SetNotificationConfig(ctx, orgID, storedRule.ID.StringValue(), &config)
+			err = m.alertmanager.SetNotificationConfig(ctx, orgID, id.StringValue(), &config)
 			if err != nil {
 				return err
 			}
-		}
-
-		err = cfg.CreateRuleIDMatcher(id.StringValue(), preferredChannels)
-		if err != nil {
-			return err
-		}
-
-		err = m.alertmanager.SetConfig(ctx, cfg)
-		if err != nil {
-			return err
+			if !parsedRule.NotificationSettings.UsePolicy {
+				request, err := parsedRule.GetRuleRouteRequest(id.StringValue())
+				if err != nil {
+					return err
+				}
+				_, err = m.alertmanager.CreateRoutePolicies(ctx, request)
+				if err != nil {
+					return err
+				}
+				inhibitRules, err := parsedRule.GetInhibitRules(id.StringValue())
+				if err != nil {
+					return err
+				}
+				err = m.alertmanager.CreateInhibitRules(ctx, orgID, inhibitRules)
+				if err != nil {
+					return err
+				}
+			}
 		}
 
 		taskName := prepareTaskName(id.StringValue())
@@ -756,36 +755,30 @@ func (m *Manager) prepareTestNotifyFunc() NotifyFunc {
 		if len(alerts) == 0 {
 			return
 		}
+		ruleID := alerts[0].Labels.Map()[labels.AlertRuleIdLabel]
+		receiverMap := make(map[*alertmanagertypes.PostableAlert][]string)
+		for _, alert := range alerts {
+			generatorURL := alert.GeneratorURL
 
-		alert := alerts[0]
-		generatorURL := alert.GeneratorURL
-
-		a := &alertmanagertypes.PostableAlert{}
-		a.Annotations = alert.Annotations.Map()
-		a.StartsAt = strfmt.DateTime(alert.FiredAt)
-		a.Alert = alertmanagertypes.AlertModel{
-			Labels:       alert.Labels.Map(),
-			GeneratorURL: strfmt.URI(generatorURL),
-		}
-		if !alert.ResolvedAt.IsZero() {
-			a.EndsAt = strfmt.DateTime(alert.ResolvedAt)
-		} else {
-			a.EndsAt = strfmt.DateTime(alert.ValidUntil)
-		}
-
-		if len(alert.Receivers) == 0 {
-			channels, err := m.alertmanager.ListChannels(ctx, orgID)
-			if err != nil {
-				zap.L().Error("failed to list channels while sending test notification", zap.Error(err))
-				return
+			a := &alertmanagertypes.PostableAlert{}
+			a.Annotations = alert.Annotations.Map()
+			a.StartsAt = strfmt.DateTime(alert.FiredAt)
+			a.Alert = alertmanagertypes.AlertModel{
+				Labels:       alert.Labels.Map(),
+				GeneratorURL: strfmt.URI(generatorURL),
 			}
-
-			for _, channel := range channels {
-				alert.Receivers = append(alert.Receivers, channel.Name)
+			if !alert.ResolvedAt.IsZero() {
+				a.EndsAt = strfmt.DateTime(alert.ResolvedAt)
+			} else {
+				a.EndsAt = strfmt.DateTime(alert.ValidUntil)
 			}
+			receiverMap[a] = alert.Receivers
 		}
-
-		m.alertmanager.TestAlert(ctx, orgID, a, alert.Receivers)
+		err := m.alertmanager.TestAlert(ctx, orgID, ruleID, receiverMap)
+		if err != nil {
+			zap.L().Error("failed to send test notification", zap.Error(err))
+			return
+		}
 	}
 }
 
@@ -982,6 +975,17 @@ func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleS
 	err := json.Unmarshal([]byte(ruleStr), &parsedRule)
 	if err != nil {
 		return 0, model.BadRequest(err)
+	}
+	if !parsedRule.NotificationSettings.UsePolicy {
+		parsedRule.NotificationSettings.GroupBy = append(parsedRule.NotificationSettings.GroupBy, ruletypes.LabelThresholdName)
+	}
+	config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
+	err = m.alertmanager.SetNotificationConfig(ctx, orgID, parsedRule.AlertName, &config)
+	if err != nil {
+		return 0, &model.ApiError{
+			Typ: model.ErrorBadData,
+			Err: err,
+		}
 	}
 
 	alertCount, apiErr := m.prepareTestRuleFunc(PrepareTestRuleOptions{

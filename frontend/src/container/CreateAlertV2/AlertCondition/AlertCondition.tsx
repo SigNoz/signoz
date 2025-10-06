@@ -13,14 +13,12 @@ import APIError from 'types/api/error';
 import { useCreateAlertState } from '../context';
 import AdvancedOptions from '../EvaluationSettings/AdvancedOptions';
 import Stepper from '../Stepper';
-import { showCondensedLayout } from '../utils';
 import AlertThreshold from './AlertThreshold';
 import AnomalyThreshold from './AnomalyThreshold';
 import { ANOMALY_TAB_TOOLTIP, THRESHOLD_TAB_TOOLTIP } from './constants';
 
 function AlertCondition(): JSX.Element {
 	const { alertType, setAlertType } = useCreateAlertState();
-	const showCondensedLayoutFlag = showCondensedLayout();
 
 	const {
 		data,
@@ -108,11 +106,9 @@ function AlertCondition(): JSX.Element {
 					refreshChannels={refreshChannels}
 				/>
 			)}
-			{showCondensedLayoutFlag ? (
-				<div className="condensed-advanced-options-container">
-					<AdvancedOptions />
-				</div>
-			) : null}
+			<div className="condensed-advanced-options-container">
+				<AdvancedOptions />
+			</div>
 		</div>
 	);
 }

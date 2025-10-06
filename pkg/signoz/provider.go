@@ -38,6 +38,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystorehook"
+	routeTypes "github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/SigNoz/signoz/pkg/web/noopweb"
@@ -133,6 +134,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewQueryBuilderV5MigrationFactory(sqlstore, telemetryStore),
 		sqlmigration.NewAddMeterQuickFiltersFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateTTLSettingForCustomRetentionFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddRoutePolicyFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -155,9 +157,9 @@ func NewPrometheusProviderFactories(telemetryStore telemetrystore.TelemetryStore
 	)
 }
 
-func NewNotificationManagerProviderFactories() factory.NamedMap[factory.ProviderFactory[nfmanager.NotificationManager, nfmanager.Config]] {
+func NewNotificationManagerProviderFactories(routeStore routeTypes.RouteStore) factory.NamedMap[factory.ProviderFactory[nfmanager.NotificationManager, nfmanager.Config]] {
 	return factory.MustNewNamedMap(
-		rulebasednotification.NewFactory(),
+		rulebasednotification.NewFactory(routeStore),
 	)
 }
 
