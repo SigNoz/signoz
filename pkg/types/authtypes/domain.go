@@ -38,6 +38,10 @@ type PostableAuthDomain struct {
 	Name   string           `json:"name"`
 }
 
+type UpdateableAuthDomain struct {
+	Config AuthDomainConfig `json:"config"`
+}
+
 type StorableAuthDomain struct {
 	bun.BaseModel `bun:"table:org_domains"`
 

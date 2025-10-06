@@ -106,7 +106,7 @@ func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body := new(authtypes.AuthDomainConfig)
+	body := new(authtypes.UpdateableAuthDomain)
 	if err := binding.JSON.BindBody(r.Body, body); err != nil {
 		render.Error(rw, err)
 		return
@@ -118,7 +118,7 @@ func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = authDomain.Update(body)
+	err = authDomain.Update(&body.Config)
 	if err != nil {
 		render.Error(rw, err)
 		return
