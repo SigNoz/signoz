@@ -141,7 +141,7 @@ describe('Footer utils', () => {
 				groupBy: [],
 				renotify: {
 					enabled: false,
-					interval: '1m',
+					interval: '30m',
 					alertStates: [],
 				},
 				usePolicy: false,
@@ -154,7 +154,7 @@ describe('Footer utils', () => {
 			...INITIAL_NOTIFICATION_SETTINGS_STATE,
 			reNotification: {
 				enabled: true,
-				value: 1,
+				value: 30,
 				unit: UniversalYAxisUnit.MINUTES,
 				conditions: ['firing'],
 			},
@@ -165,7 +165,7 @@ describe('Footer utils', () => {
 			groupBy: [],
 			renotify: {
 				enabled: true,
-				interval: '1m',
+				interval: '30m',
 				alertStates: ['firing'],
 			},
 			usePolicy: false,
@@ -183,7 +183,7 @@ describe('Footer utils', () => {
 			groupBy: [],
 			renotify: {
 				enabled: false,
-				interval: '1m',
+				interval: '30m',
 				alertStates: [],
 			},
 			usePolicy: true,
@@ -201,7 +201,7 @@ describe('Footer utils', () => {
 			groupBy: ['test group'],
 			renotify: {
 				enabled: false,
-				interval: '1m',
+				interval: '30m',
 				alertStates: [],
 			},
 			usePolicy: false,
@@ -495,7 +495,7 @@ describe('Footer utils', () => {
 					groupBy: [],
 					renotify: {
 						enabled: false,
-						interval: '1m',
+						interval: '30m',
 						alertStates: [],
 					},
 					usePolicy: false,
