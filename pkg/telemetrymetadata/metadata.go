@@ -359,8 +359,8 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		}
 	}
 
-	backwardCompatKeys := GetBackwardCompatKeysForSignal(telemetrytypes.SignalTraces)
-	for srcKey, aliasKey := range backwardCompatKeys {
+	// Add backward compatible aliases for traces
+	for srcKey, aliasKey := range TracesBackwardCompatKeys {
 		if src, ok := presentByName[srcKey]; ok {
 			appendAliasIfMissing(aliasKey, src)
 		}
