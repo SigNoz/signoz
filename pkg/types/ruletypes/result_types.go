@@ -18,6 +18,10 @@ type Sample struct {
 	Metric labels.Labels
 
 	IsMissing bool
+
+	Target float64
+
+	TargetUnit string
 }
 
 func (s Sample) String() string {
