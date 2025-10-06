@@ -70,8 +70,92 @@ function Metadata({
 		[metadata],
 	);
 
+	const renderColumnValue = useCallback(
+		(field: { value: string; key: string }): JSX.Element => {
+			// Don't allow editing of unit if it's already set
+			const metricUnitAlreadySet = field.key === 'unit' && Boolean(metadata?.unit);
+			if (!isEditing || metricUnitAlreadySet) {
+				if (field.key === 'metric_type') {
+					return (
+						<div>
+							<MetricTypeRenderer type={field.value as MetricType} />
+						</div>
+					);
+				}
+				let fieldValue = field.value;
+				if (field.key === 'unit') {
+					fieldValue = getUniversalNameFromMetricUnit(field.value);
+				}
+				return <FieldRenderer field={fieldValue || '-'} />;
+			}
+			if (field.key === 'metric_type') {
+				return (
+					<Select
+						data-testid="metric-type-select"
+						options={Object.entries(METRIC_TYPE_VALUES_MAP).map(([key]) => ({
+							value: key,
+							label: METRIC_TYPE_LABEL_MAP[key as MetricType],
+						}))}
+						defaultValue={metricMetadata.metricType}
+						onChange={(value): void => {
+							setMetricMetadata((prev) => ({
+								...prev,
+								metricType: value as MetricType,
+							}));
+						}}
+					/>
+				);
+			}
+			if (field.key === 'unit') {
+				return (
+					<YAxisUnitSelector
+						value={metricMetadata.unit}
+						onChange={(value): void => {
+							setMetricMetadata((prev) => ({ ...prev, unit: value }));
+						}}
+					/>
+				);
+			}
+			if (field.key === 'temporality') {
+				return (
+					<Select
+						data-testid="temporality-select"
+						options={Object.values(Temporality).map((key) => ({
+							value: key,
+							label: key,
+						}))}
+						defaultValue={metricMetadata.temporality}
+						onChange={(value): void => {
+							setMetricMetadata((prev) => ({
+								...prev,
+								temporality: value as Temporality,
+							}));
+						}}
+					/>
+				);
+			}
+			return (
+				<Input
+					data-testid="description-input"
+					name={field.key}
+					defaultValue={
+						metricMetadata[
+							field.key as Exclude<keyof UpdateMetricMetadataProps, 'isMonotonic'>
+						]
+					}
+					onChange={(e): void => {
+						setMetricMetadata((prev) => ({
+							...prev,
+							[field.key]: e.target.value,
+						}));
+					}}
+				/>
+			);
+		},
+		[isEditing, metadata?.unit, metricMetadata],
+	);
+
 	const columns: ColumnsType<DataType> = useMemo(
-		// eslint-disable-next-line sonarjs/cognitive-complexity
 		() => [
 			{
 				title: 'Key',
@@ -96,91 +180,10 @@ function Metadata({
 				align: 'left',
 				ellipsis: true,
 				className: 'metric-metadata-value',
-				render: (field: { value: string; key: string }): JSX.Element => {
-					// Don't allow editing of unit if it's already set
-					const metricUnitAlreadySet =
-						field.key === 'unit' && Boolean(metadata?.unit);
-					if (!isEditing || metricUnitAlreadySet) {
-						if (field.key === 'metric_type') {
-							return (
-								<div>
-									<MetricTypeRenderer type={field.value as MetricType} />
-								</div>
-							);
-						}
-						let fieldValue = field.value;
-						if (field.key === 'unit') {
-							fieldValue = getUniversalNameFromMetricUnit(field.value);
-						}
-						return <FieldRenderer field={fieldValue || '-'} />;
-					}
-					if (field.key === 'metric_type') {
-						return (
-							<Select
-								data-testid="metric-type-select"
-								options={Object.entries(METRIC_TYPE_VALUES_MAP).map(([key]) => ({
-									value: key,
-									label: METRIC_TYPE_LABEL_MAP[key as MetricType],
-								}))}
-								defaultValue={metricMetadata.metricType}
-								onChange={(value): void => {
-									setMetricMetadata((prev) => ({
-										...prev,
-										metricType: value as MetricType,
-									}));
-								}}
-							/>
-						);
-					}
-					if (field.key === 'unit') {
-						return (
-							<YAxisUnitSelector
-								value={metricMetadata.unit}
-								onChange={(value): void => {
-									setMetricMetadata((prev) => ({ ...prev, unit: value }));
-								}}
-							/>
-						);
-					}
-					if (field.key === 'temporality') {
-						return (
-							<Select
-								data-testid="temporality-select"
-								options={Object.values(Temporality).map((key) => ({
-									value: key,
-									label: key,
-								}))}
-								defaultValue={metricMetadata.temporality}
-								onChange={(value): void => {
-									setMetricMetadata((prev) => ({
-										...prev,
-										temporality: value as Temporality,
-									}));
-								}}
-							/>
-						);
-					}
-					return (
-						<Input
-							data-testid="description-input"
-							name={field.key}
-							defaultValue={
-								metricMetadata[
-									field.key as Exclude<keyof UpdateMetricMetadataProps, 'isMonotonic'>
-								]
-							}
-							onChange={(e): void => {
-								setMetricMetadata((prev) => ({
-									...prev,
-									[field.key]: e.target.value,
-								}));
-							}}
-						/>
-					);
-				},
+				render: renderColumnValue,
 			},
 		],
-		[isEditing, metadata?.unit, metricMetadata],
+		[renderColumnValue],
 	);
 
 	const handleSave = useCallback(() => {
