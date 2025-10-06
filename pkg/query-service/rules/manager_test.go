@@ -610,3 +610,154 @@ func TestEditRule(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteRule(t *testing.T) {
+	claims := &authtypes.Claims{
+		Email: "test@example.com",
+	}
+	manager, mockSQLRuleStore, orgId := setupTestManager(t)
+	claims.OrgID = orgId
+
+	testCases := []struct {
+		name     string
+		ruleData string
+	}{
+		{
+			name: "delete rule with planned maintenance",
+			ruleData: `{
+				"alert": "cpu usage to delete",
+				"ruleType": "threshold_rule",
+				"evalWindow": "5m",
+				"frequency": "1m",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"builderQueries": {
+							"A": {
+								"expression": "A",
+								"disabled": false,
+								"dataSource": "metrics",
+								"aggregateOperator": "avg",
+								"aggregateAttribute": {
+									"key": "cpu_usage",
+									"type": "Gauge"
+								}
+							}
+						}
+					},
+					"op": "1",
+					"target": 80,
+					"matchType": "1"
+				},
+				"labels": {
+					"severity": "warning"
+				},
+				"disabled": false,
+				"preferredChannels": ["test-alerts"]
+			}`,
+		},
+		{
+			name: "delete v2 rule with thresholds",
+			ruleData: `{
+				"schemaVersion":"v2",
+				"state": "firing",
+				"alert": "test-multi-threshold-delete",
+				"alertType": "METRIC_BASED_ALERT",
+				"ruleType": "threshold_rule",
+				"evalWindow": "5m0s",
+				"condition": {
+					"thresholds": {
+						"kind": "basic",
+						"spec": [
+							{
+								"name": "CRITICAL",
+								"target": 10,
+								"matchType": "1",
+								"op": "1",
+								"selectedQuery": "A",
+								"channels": ["test-alerts"]
+							},
+							{
+								"name": "WARNING",
+								"target": 5,
+								"matchType": "1",
+								"op": "1",
+								"selectedQuery": "A",
+								"channels": ["test-alerts"]
+							}
+						]
+					},
+					"compositeQuery": {
+						"queryType": "builder",
+						"panelType": "graph",
+						"queries": [
+							{
+								"type": "builder_query",
+								"spec": {
+									"name": "A",
+									"signal": "metrics",
+									"disabled": false,
+									"aggregations": [
+										{
+											"metricName": "container.memory.usage",
+											"timeAggregation": "avg",
+											"spaceAggregation": "sum"
+										}
+									]
+								}
+							}
+						]
+					}
+				},
+				"evaluation": {
+					"kind": "rolling",
+					"spec": {
+						"evalWindow": "8m",
+						"frequency": "2m"
+					}
+				},
+				"labels": {
+					"severity": "critical"
+				},
+				"annotations": {
+					"description": "This alert is fired when memory usage crosses the threshold",
+					"summary": "Memory usage threshold exceeded"
+				},
+				"disabled": false,
+				"preferredChannels": ["#critical-alerts-v2"],
+				"version": "v5"
+			}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ruleID := valuer.GenerateUUID()
+
+			existingRule := &ruletypes.Rule{
+				Identifiable: types.Identifiable{
+					ID: ruleID,
+				},
+				TimeAuditable: types.TimeAuditable{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
+				UserAuditable: types.UserAuditable{
+					CreatedBy: "creator@example.com",
+					UpdatedBy: "creator@example.com",
+				},
+				Data:  tc.ruleData,
+				OrgID: claims.OrgID,
+			}
+
+			mockSQLRuleStore.ExpectGetStoredRule(ruleID, existingRule)
+			mockSQLRuleStore.ExpectDeleteRule(ruleID)
+
+			ctx := authtypes.NewContextWithClaims(context.Background(), *claims)
+			err := manager.DeleteRule(ctx, ruleID.StringValue())
+
+			assert.NoError(t, err)
+			assert.NoError(t, mockSQLRuleStore.AssertExpectations())
+		})
+	}
+}
