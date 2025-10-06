@@ -72,7 +72,7 @@ func (handler *handler) Delete(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (h *handler) List(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -82,7 +82,7 @@ func (h *handler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	domains, err := h.module.ListByOrgID(ctx, valuer.MustNewUUID(claims.OrgID))
+	domains, err := handler.module.ListByOrgID(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -96,7 +96,7 @@ func (h *handler) List(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, authDomains)
 }
 
-func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -112,7 +112,7 @@ func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authDomain, err := h.module.Get(ctx, domainID)
+	authDomain, err := handler.module.Get(ctx, domainID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -124,7 +124,7 @@ func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.module.Update(ctx, authDomain); err != nil {
+	if err := handler.module.Update(ctx, authDomain); err != nil {
 		render.Error(rw, err)
 		return
 	}
