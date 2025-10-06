@@ -5,10 +5,6 @@ import { SuccessResponseV2 } from 'types/api';
 
 import { RoutingPolicy } from './types';
 
-export function showRoutingPoliciesPage(): boolean {
-	return localStorage.getItem('showRoutingPoliciesPage') === 'true';
-}
-
 export function mapApiResponseToRoutingPolicies(
 	response: SuccessResponseV2<GetRoutingPoliciesResponse>,
 ): RoutingPolicy[] {
@@ -36,9 +32,7 @@ export function mapRoutingPolicyToCreateApiPayload(
 	return {
 		name,
 		expression,
-		actions: {
-			channels,
-		},
+		channels,
 		description,
 	};
 }
@@ -53,9 +47,7 @@ export function mapRoutingPolicyToUpdateApiPayload(
 	return {
 		name,
 		expression,
-		actions: {
-			channels,
-		},
+		channels,
 		description,
 	};
 }

@@ -494,15 +494,21 @@
 						}
 					}
 				}
+			}
 
-				.add-threshold-btn {
-					border: 1px dashed var(--bg-vanilla-300);
-					color: var(--bg-ink-300);
+			.add-threshold-btn,
+			.ant-btn.add-threshold-btn {
+				border: 1px dashed var(--bg-vanilla-300);
+				color: var(--bg-ink-300);
+				background-color: transparent;
 
-					&:hover {
-						border-color: var(--bg-ink-300);
-						color: var(--bg-ink-400);
-					}
+				.ant-typography {
+					color: var(--bg-ink-400);
+				}
+
+				&:hover {
+					border-color: var(--bg-ink-300);
+					color: var(--bg-ink-400);
 				}
 			}
 		}

@@ -110,6 +110,10 @@ func detectPlatform() string {
 		return "railway"
 	case os.Getenv("ECS_CONTAINER_METADATA_URI_V4") != "":
 		return "ecs"
+	case os.Getenv("NOMAD_ALLOC_ID") != "":
+		return "nomad"
+	case os.Getenv("CONTAINER_APP_HOSTNAME") != "":
+		return "aca"
 	}
 
 	// Try to detect cloud provider through metadata endpoints
@@ -137,7 +141,7 @@ func detectPlatform() string {
 	}
 
 	// Azure metadata
-	if req, err := http.NewRequest(http.MethodGet, "http://169.254.169.254/metadata/instance", nil); err == nil {
+	if req, err := http.NewRequest(http.MethodGet, "http://169.254.169.254/metadata/instance?api-version=2017-03-01", nil); err == nil {
 		req.Header.Add("Metadata", "true")
 		if resp, err := client.Do(req); err == nil {
 			resp.Body.Close()
@@ -153,6 +157,16 @@ func detectPlatform() string {
 			resp.Body.Close()
 			if resp.StatusCode == 200 {
 				return "digitalocean"
+			}
+		}
+	}
+
+	// Vultr metadata
+	if req, err := http.NewRequest(http.MethodGet, "http://169.254.169.254/v1/hostname", nil); err == nil {
+		if resp, err := client.Do(req); err == nil {
+			resp.Body.Close()
+			if resp.StatusCode == 200 {
+				return "vultr"
 			}
 		}
 	}
