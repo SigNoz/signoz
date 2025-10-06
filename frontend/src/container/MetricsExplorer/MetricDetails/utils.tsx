@@ -107,8 +107,6 @@ export function getMetricDetailsQuery(
 						key: metricName,
 						type: metricType ?? '',
 						id: `${metricName}----${metricType}---string--`,
-						isColumn: true,
-						isJSON: false,
 						dataType: DataTypes.String,
 					},
 					aggregations: [
@@ -145,8 +143,6 @@ export function getMetricDetailsQuery(
 									key: groupBy,
 									dataType: DataTypes.String,
 									type: 'tag',
-									isColumn: false,
-									isJSON: false,
 									id: `${groupBy}--string--tag--false`,
 								},
 						  ]
@@ -154,6 +150,7 @@ export function getMetricDetailsQuery(
 				},
 			],
 			queryFormulas: [],
+			queryTraceOperator: [],
 		},
 	};
 }

@@ -40,6 +40,13 @@ const useDragColumns = <T>(storageKey: LOCALSTORAGE): UseDragColumns<T> => {
 		[handleRedirectWithDraggedColumns],
 	);
 
+	const onColumnOrderChange = useCallback(
+		(newColumns: ColumnsType<T>): void => {
+			handleRedirectWithDraggedColumns(newColumns);
+		},
+		[handleRedirectWithDraggedColumns],
+	);
+
 	const redirectWithNewDraggedColumns = useCallback(
 		async (localStorageColumns: string) => {
 			let nextDraggedColumns: ColumnsType<T> = [];
@@ -69,6 +76,7 @@ const useDragColumns = <T>(storageKey: LOCALSTORAGE): UseDragColumns<T> => {
 	return {
 		draggedColumns,
 		onDragColumns,
+		onColumnOrderChange,
 	};
 };
 

@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/require"
 )
@@ -41,17 +42,25 @@ func TestFilterExprLogs(t *testing.T) {
 		// Single word searches
 		{
 			category:              "Single word",
-			query:                 "download",
+			query:                 "Download",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
-			expectedArgs:          []any{"download"},
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
+			expectedArgs:          []any{"Download"},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "Single word invalid regex",
+			query:                 "'[LocalLog partition=__cluster_metadata-0,'",
+			shouldPass:            true,
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
+			expectedArgs:          []any{"\\[LocalLog partition=__cluster_metadata-0,"},
 			expectedErrorContains: "",
 		},
 		{
 			category:              "Single word",
 			query:                 "LAMBDA",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"LAMBDA"},
 			expectedErrorContains: "",
 		},
@@ -59,7 +68,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Single word",
 			query:                 "AccessDenied",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"AccessDenied"},
 			expectedErrorContains: "",
 		},
@@ -67,7 +76,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Single word",
 			query:                 "42069",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"42069"},
 			expectedErrorContains: "",
 		},
@@ -75,7 +84,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Single word",
 			query:                 "pulljob",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"pulljob"},
 			expectedErrorContains: "",
 		},
@@ -83,7 +92,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Single word",
 			query:                 "<script>alert('xss')</script>",
 			shouldPass:            false,
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got '<'",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got '<'",
 		},
 
 		// Single word searches with spaces
@@ -91,7 +100,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Single word with spaces",
 			query:                 `" 504 "`,
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{" 504 "},
 			expectedErrorContains: "",
 		},
@@ -99,7 +108,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Single word with spaces",
 			query:                 `"Importing "`,
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"Importing "},
 			expectedErrorContains: "",
 		},
@@ -107,23 +116,55 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Single word with spaces",
 			query:                 `"Job ID"`,
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"Job ID"},
 			expectedErrorContains: "",
 		},
 
+		{
+			category:              "Key with curly brace",
+			query:                 `{UserId} = "U101"`,
+			shouldPass:            true,
+			expectedQuery:         "WHERE (attributes_string['{UserId}'] = ? AND mapContains(attributes_string, '{UserId}') = ?)",
+			expectedArgs:          []any{"U101", true},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "Key with @symbol",
+			query:                 `user@email = "u@example.com"`,
+			shouldPass:            true,
+			expectedQuery:         "WHERE (attributes_string['user@email'] = ? AND mapContains(attributes_string, 'user@email') = ?)",
+			expectedArgs:          []any{"u@example.com", true},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "Key with @symbol",
+			query:                 `#user_name = "anon42069"`,
+			shouldPass:            true,
+			expectedQuery:         "WHERE (attributes_string['#user_name'] = ? AND mapContains(attributes_string, '#user_name') = ?)",
+			expectedArgs:          []any{"anon42069", true},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "Key with @symbol",
+			query:                 `gen_ai.completion.0.content = "जब तक इस देश में सिनेमा है"`,
+			shouldPass:            true,
+			expectedQuery:         "WHERE (attributes_string['gen_ai.completion.0.content'] = ? AND mapContains(attributes_string, 'gen_ai.completion.0.content') = ?)",
+			expectedArgs:          []any{"जब तक इस देश में सिनेमा है", true},
+			expectedErrorContains: "",
+		},
 		// Searches with special characters
 		{
 			category:              "Special characters",
 			query:                 "[tracing]",
 			shouldPass:            false,
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got '['",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got '['",
 		},
 		{
 			category:              "Special characters",
 			query:                 "srikanth@signoz.io",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"srikanth@signoz.io"},
 			expectedErrorContains: "",
 		},
@@ -131,7 +172,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Special characters",
 			query:                 "cancel_membership",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"cancel_membership"},
 			expectedErrorContains: "",
 		},
@@ -139,7 +180,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Special characters",
 			query:                 `"ERROR: cannot execute update() in a read-only context"`,
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"ERROR: cannot execute update() in a read-only context"},
 			expectedErrorContains: "",
 		},
@@ -147,13 +188,13 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Special characters",
 			query:                 "ERROR: cannot execute update() in a read-only context",
 			shouldPass:            false,
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got ')'",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got ')'",
 		},
 		{
 			category:              "Special characters",
 			query:                 "https://example.com/user/default/0196877a-f01f-785e-a937-5da0a3efbb75",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"https://example.com/user/default/0196877a-f01f-785e-a937-5da0a3efbb75"},
 			expectedErrorContains: "",
 		},
@@ -161,7 +202,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Special characters",
 			query:                 "\"STEPS_PER_DAY\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"STEPS_PER_DAY"},
 			expectedErrorContains: "",
 		},
@@ -169,7 +210,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Special characters",
 			query:                 "#bvn",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"#bvn"},
 			expectedErrorContains: "",
 		},
@@ -177,7 +218,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Special characters",
 			query:                 "question?mark",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"question?mark"},
 			expectedErrorContains: "",
 		},
@@ -185,7 +226,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Special characters",
 			query:                 "backslash\\\\escape",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"backslash\\\\escape"},
 			expectedErrorContains: "",
 		},
@@ -193,7 +234,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Special characters",
 			query:                 "underscore_separator",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"underscore_separator"},
 			expectedErrorContains: "",
 		},
@@ -201,7 +242,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Special characters",
 			query:                 "\"Text with [brackets]\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"Text with [brackets]"},
 			expectedErrorContains: "",
 		},
@@ -211,7 +252,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Multi word",
 			query:                 "Fail to parse",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(body, ?) AND match(body, ?) AND match(body, ?))",
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND match(LOWER(body), LOWER(?)) AND match(LOWER(body), LOWER(?)))",
 			expectedArgs:          []any{"Fail", "to", "parse"},
 			expectedErrorContains: "",
 		},
@@ -219,7 +260,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Multi word",
 			query:                 "Importing file",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(body, ?) AND match(body, ?))",
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND match(LOWER(body), LOWER(?)))",
 			expectedArgs:          []any{"Importing", "file"},
 			expectedErrorContains: "",
 		},
@@ -227,7 +268,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Multi word",
 			query:                 "sync account status",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(body, ?) AND match(body, ?) AND match(body, ?))",
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND match(LOWER(body), LOWER(?)) AND match(LOWER(body), LOWER(?)))",
 			expectedArgs:          []any{"sync", "account", "status"},
 			expectedErrorContains: "",
 		},
@@ -235,7 +276,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Multi word",
 			query:                 "Download CSV Reports",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(body, ?) AND match(body, ?) AND match(body, ?))",
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND match(LOWER(body), LOWER(?)) AND match(LOWER(body), LOWER(?)))",
 			expectedArgs:          []any{"Download", "CSV", "Reports"},
 			expectedErrorContains: "",
 		},
@@ -243,7 +284,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Multi word",
 			query:                 "Emitted event to the Kafka topic",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(body, ?) AND match(body, ?) AND match(body, ?) AND match(body, ?) AND match(body, ?) AND match(body, ?))",
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND match(LOWER(body), LOWER(?)) AND match(LOWER(body), LOWER(?)) AND match(LOWER(body), LOWER(?)) AND match(LOWER(body), LOWER(?)) AND match(LOWER(body), LOWER(?)))",
 			expectedArgs:          []any{"Emitted", "event", "to", "the", "Kafka", "topic"},
 			expectedErrorContains: "",
 		},
@@ -251,7 +292,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Multi word",
 			query:                 "\"user authentication\" failed",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(body, ?) AND match(body, ?))",
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND match(LOWER(body), LOWER(?)))",
 			expectedArgs:          []any{"user authentication", "failed"},
 			expectedErrorContains: "",
 		},
@@ -261,7 +302,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "ID search",
 			query:                 "250430165501118HIgesxlEb9",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"250430165501118HIgesxlEb9"},
 			expectedErrorContains: "",
 		},
@@ -269,7 +310,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "ID search",
 			query:                 "d7b9d77aefa95aef19719775c10fda60c28342f23657d1e27304d6c59a3c3004",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"d7b9d77aefa95aef19719775c10fda60c28342f23657d1e27304d6c59a3c3004"},
 			expectedErrorContains: "",
 		},
@@ -277,7 +318,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "ID search",
 			query:                 "51183870",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"51183870"},
 			expectedErrorContains: "",
 		},
@@ -285,7 +326,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "ID search",
 			query:                 "79f82635-d014-4f99-adf5-41d31d291ae3",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"79f82635-d014-4f99-adf5-41d31d291ae3"},
 			expectedErrorContains: "",
 		},
@@ -295,7 +336,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Unicode",
 			query:                 "café",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"café"},
 			expectedErrorContains: "",
 		},
@@ -303,7 +344,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Unicode",
 			query:                 "résumé",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"résumé"},
 			expectedErrorContains: "",
 		},
@@ -311,7 +352,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Unicode",
 			query:                 "Россия",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"Россия"},
 			expectedErrorContains: "",
 		},
@@ -319,7 +360,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Unicode",
 			query:                 "\"I do not like emojis ❤️\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"I do not like emojis ❤️"},
 			expectedErrorContains: "",
 		},
@@ -329,7 +370,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Number format",
 			query:                 "123",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"123"},
 			expectedErrorContains: "",
 		},
@@ -337,7 +378,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Number format",
 			query:                 "3.14159",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"3.14159"},
 			expectedErrorContains: "",
 		},
@@ -345,7 +386,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Number format",
 			query:                 "-42",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"-42"},
 			expectedErrorContains: "",
 		},
@@ -353,7 +394,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Number format",
 			query:                 "1e6",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"1e6"},
 			expectedErrorContains: "",
 		},
@@ -361,15 +402,15 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Number format",
 			query:                 "+100",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
-			expectedArgs:          []any{"+100"},
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
+			expectedArgs:          []any{"\\+100"},
 			expectedErrorContains: "",
 		},
 		{
 			category:              "Number format",
 			query:                 "0xFF",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"0xFF"},
 			expectedErrorContains: "",
 		},
@@ -379,7 +420,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "FREETEXT with conditions",
 			query:                 "critical NOT resolved status=open",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(body, ?) AND NOT (match(body, ?)) AND (toString(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?))",
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND NOT (match(LOWER(body), LOWER(?))) AND (toString(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?))",
 			expectedArgs:          []any{"critical", "resolved", "open", true},
 			expectedErrorContains: "",
 		},
@@ -387,7 +428,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "FREETEXT with conditions",
 			query:                 "database error type=mysql",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(body, ?) AND match(body, ?) AND (attributes_string['type'] = ? AND mapContains(attributes_string, 'type') = ?))",
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND match(LOWER(body), LOWER(?)) AND (attributes_string['type'] = ? AND mapContains(attributes_string, 'type') = ?))",
 			expectedArgs:          []any{"database", "error", "mysql", true},
 			expectedErrorContains: "",
 		},
@@ -395,7 +436,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "FREETEXT with conditions",
 			query:                 "\"connection timeout\" duration>30",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(body, ?) AND (toFloat64(attributes_number['duration']) > ? AND mapContains(attributes_number, 'duration') = ?))",
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND (toFloat64(attributes_number['duration']) > ? AND mapContains(attributes_number, 'duration') = ?))",
 			expectedArgs:          []any{"connection timeout", float64(30), true},
 			expectedErrorContains: "",
 		},
@@ -403,7 +444,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "FREETEXT with conditions",
 			query:                 "warning level=critical",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(body, ?) AND (attributes_string['level'] = ? AND mapContains(attributes_string, 'level') = ?))",
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND (attributes_string['level'] = ? AND mapContains(attributes_string, 'level') = ?))",
 			expectedArgs:          []any{"warning", "critical", true},
 			expectedErrorContains: "",
 		},
@@ -411,8 +452,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "FREETEXT with conditions",
 			query:                 "error service.name=authentication",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(body, ?) AND (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?))",
-			expectedArgs:          []any{"error", "authentication", true},
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))",
+			expectedArgs:          []any{"error", "authentication"},
 			expectedErrorContains: "",
 		},
 
@@ -421,7 +462,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "FREETEXT with parentheses",
 			query:                 "error (status.code=500 OR status.code=503)",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(body, ?) AND (((toFloat64(attributes_number['status.code']) = ? AND mapContains(attributes_number, 'status.code') = ?) OR (toFloat64(attributes_number['status.code']) = ? AND mapContains(attributes_number, 'status.code') = ?))))",
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND (((toFloat64(attributes_number['status.code']) = ? AND mapContains(attributes_number, 'status.code') = ?) OR (toFloat64(attributes_number['status.code']) = ? AND mapContains(attributes_number, 'status.code') = ?))))",
 			expectedArgs:          []any{"error", float64(500), true, float64(503), true},
 			expectedErrorContains: "",
 		},
@@ -429,7 +470,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "FREETEXT with parentheses",
 			query:                 "(status.code=500 OR status.code=503) error",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((((toFloat64(attributes_number['status.code']) = ? AND mapContains(attributes_number, 'status.code') = ?) OR (toFloat64(attributes_number['status.code']) = ? AND mapContains(attributes_number, 'status.code') = ?))) AND match(body, ?))",
+			expectedQuery:         "WHERE ((((toFloat64(attributes_number['status.code']) = ? AND mapContains(attributes_number, 'status.code') = ?) OR (toFloat64(attributes_number['status.code']) = ? AND mapContains(attributes_number, 'status.code') = ?))) AND match(LOWER(body), LOWER(?)))",
 			expectedArgs:          []any{float64(500), true, float64(503), true, "error"},
 			expectedErrorContains: "",
 		},
@@ -437,7 +478,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "FREETEXT with parentheses",
 			query:                 "error AND (status.code=500 OR status.code=503)",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(body, ?) AND (((toFloat64(attributes_number['status.code']) = ? AND mapContains(attributes_number, 'status.code') = ?) OR (toFloat64(attributes_number['status.code']) = ? AND mapContains(attributes_number, 'status.code') = ?))))",
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND (((toFloat64(attributes_number['status.code']) = ? AND mapContains(attributes_number, 'status.code') = ?) OR (toFloat64(attributes_number['status.code']) = ? AND mapContains(attributes_number, 'status.code') = ?))))",
 			expectedArgs:          []any{"error", float64(500), true, float64(503), true},
 			expectedErrorContains: "",
 		},
@@ -445,7 +486,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "FREETEXT with parentheses",
 			query:                 "(status.code=500 OR status.code=503) AND error",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((((toFloat64(attributes_number['status.code']) = ? AND mapContains(attributes_number, 'status.code') = ?) OR (toFloat64(attributes_number['status.code']) = ? AND mapContains(attributes_number, 'status.code') = ?))) AND match(body, ?))",
+			expectedQuery:         "WHERE ((((toFloat64(attributes_number['status.code']) = ? AND mapContains(attributes_number, 'status.code') = ?) OR (toFloat64(attributes_number['status.code']) = ? AND mapContains(attributes_number, 'status.code') = ?))) AND match(LOWER(body), LOWER(?)))",
 			expectedArgs:          []any{float64(500), true, float64(503), true, "error"},
 			expectedErrorContains: "",
 		},
@@ -455,7 +496,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Whitespace with FREETEXT",
 			query:                 "term1    term2",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(body, ?) AND match(body, ?))",
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND match(LOWER(body), LOWER(?)))",
 			expectedArgs:          []any{"term1", "term2"},
 			expectedErrorContains: "",
 		},
@@ -465,7 +506,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Key token conflict",
 			query:                 "status.code",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"status.code"},
 			expectedErrorContains: "",
 		},
@@ -473,7 +514,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Key token conflict",
 			query:                 "array_field",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"array_field"},
 			expectedErrorContains: "",
 		},
@@ -481,7 +522,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Key token conflict",
 			query:                 "user_id.value",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"user_id.value"},
 			expectedErrorContains: "",
 		}, // Could be a key with dot notation or FREETEXT
@@ -491,7 +532,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Random cases",
 			query:                 "true",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"true"},
 			expectedErrorContains: "",
 		}, // Could be interpreted as boolean or FREETEXT
@@ -499,7 +540,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Random cases",
 			query:                 "false",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"false"},
 			expectedErrorContains: "",
 		}, // Could be interpreted as boolean or FREETEXT
@@ -507,7 +548,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Random cases",
 			query:                 "null",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"null"},
 			expectedErrorContains: "",
 		}, // Special value or FREETEXT
@@ -515,7 +556,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Random cases",
 			query:                 "123abc",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"123abc"},
 			expectedErrorContains: "",
 		}, // Starts with number but contains letters
@@ -523,7 +564,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Random cases",
 			query:                 "0x123F",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"0x123F"},
 			expectedErrorContains: "",
 		}, // Hex number format
@@ -531,7 +572,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Random cases",
 			query:                 "1.2.3",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"1.2.3"},
 			expectedErrorContains: "",
 		}, // Version number format
@@ -539,7 +580,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Random cases",
 			query:                 "a+b-c*d/e",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"a+b-c*d/e"},
 			expectedErrorContains: "",
 		}, // Mathematical expression as FREETEXT
@@ -547,7 +588,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Random cases",
 			query:                 "http://example.com/path",
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"http://example.com/path"},
 			expectedErrorContains: "",
 		}, // URL as FREETEXT
@@ -559,7 +600,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          []any{},
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got 'and'",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'and'",
 		},
 		{
 			category:              "Keyword conflict",
@@ -567,7 +608,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          []any{},
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got 'or'",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'or'",
 		},
 		{
 			category:              "Keyword conflict",
@@ -575,7 +616,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          []any{},
-			expectedErrorContains: "expecting one of {(, ), FREETEXT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got EOF",
+			expectedErrorContains: "expecting one of {(, ), FREETEXT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got EOF",
 		},
 		{
 			category:              "Keyword conflict",
@@ -583,7 +624,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          []any{},
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got 'like'",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'like'",
 		},
 		{
 			category:              "Keyword conflict",
@@ -591,7 +632,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          []any{},
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got 'between'",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'between'",
 		},
 		{
 			category:              "Keyword conflict",
@@ -599,7 +640,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          []any{},
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got 'in'",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'in'",
 		},
 		{
 			category:              "Keyword conflict",
@@ -607,7 +648,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          []any{},
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got 'exists'",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'exists'",
 		},
 		{
 			category:              "Keyword conflict",
@@ -615,7 +656,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          []any{},
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got 'regexp'",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'regexp'",
 		},
 		{
 			category:              "Keyword conflict",
@@ -623,7 +664,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          []any{},
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got 'contains'",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'contains'",
 		},
 		{
 			category:              "Keyword conflict",
@@ -655,7 +696,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Key-operator-value boundary",
 			query:                 `"not!equal"`,
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"not!equal"},
 			expectedErrorContains: "",
 		},
@@ -671,7 +712,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Key-operator-value boundary",
 			query:                 `"greater>than"`,
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"greater>than"},
 			expectedErrorContains: "",
 		},
@@ -687,7 +728,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Key-operator-value boundary",
 			query:                 `"less<than"`,
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"less<than"},
 			expectedErrorContains: "",
 		},
@@ -695,7 +736,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Key-operator-value boundary",
 			query:                 "single'quote'",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(body, ?) AND match(body, ?))",
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND match(LOWER(body), LOWER(?)))",
 			expectedArgs:          []any{"single", "quote"},
 			expectedErrorContains: "",
 		},
@@ -703,7 +744,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Key-operator-value boundary",
 			query:                 "quoted\"text\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(body, ?) AND match(body, ?))",
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND match(LOWER(body), LOWER(?)))",
 			expectedArgs:          []any{"quoted", "text"},
 			expectedErrorContains: "",
 		},
@@ -719,7 +760,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Key-operator-value boundary",
 			query:                 "function(param)",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (match(body, ?) AND (match(body, ?)))",
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND (match(LOWER(body), LOWER(?))))",
 			expectedArgs:          []any{"function", "param"},
 			expectedErrorContains: "",
 		},
@@ -727,7 +768,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Key-operator-value boundary",
 			query:                 `"function(param)"`,
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"function(param)"},
 			expectedErrorContains: "",
 		},
@@ -743,7 +784,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Key-operator-value boundary",
 			query:                 `"user=admin"`,
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{"user=admin"},
 			expectedErrorContains: "",
 		},
@@ -769,8 +810,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Basic equality",
 			query:                 "service.name=\"api\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?)",
-			expectedArgs:          []any{"api", true},
+			expectedQuery:         "WHERE (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)",
+			expectedArgs:          []any{"api"},
 			expectedErrorContains: "",
 		},
 		{
@@ -835,7 +876,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Not equals",
 			query:                 "service.name!=\"api\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE resources_string['service.name'] <> ?",
+			expectedQuery:         "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?",
 			expectedArgs:          []any{"api"},
 			expectedErrorContains: "",
 		},
@@ -1129,16 +1170,16 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "IN operator (parentheses)",
 			query:                 "service.name IN (\"api\", \"web\", \"auth\")",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((resources_string['service.name'] = ? OR resources_string['service.name'] = ? OR resources_string['service.name'] = ?) AND mapContains(resources_string, 'service.name') = ?)",
-			expectedArgs:          []any{"api", "web", "auth", true},
+			expectedQuery:         "WHERE ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ?) AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)",
+			expectedArgs:          []any{"api", "web", "auth"},
 			expectedErrorContains: "",
 		},
 		{
 			category:              "IN operator (parentheses)",
 			query:                 "environment IN (\"dev\", \"test\", \"staging\", \"prod\")",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((resources_string['environment'] = ? OR resources_string['environment'] = ? OR resources_string['environment'] = ? OR resources_string['environment'] = ?) AND mapContains(resources_string, 'environment') = ?)",
-			expectedArgs:          []any{"dev", "test", "staging", "prod", true},
+			expectedQuery:         "WHERE ((multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? OR multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? OR multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? OR multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ?) AND multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) IS NOT NULL)",
+			expectedArgs:          []any{"dev", "test", "staging", "prod"},
 			expectedErrorContains: "",
 		},
 
@@ -1163,16 +1204,16 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "IN operator (brackets)",
 			query:                 "service.name IN [\"api\", \"web\", \"auth\"]",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((resources_string['service.name'] = ? OR resources_string['service.name'] = ? OR resources_string['service.name'] = ?) AND mapContains(resources_string, 'service.name') = ?)",
-			expectedArgs:          []any{"api", "web", "auth", true},
+			expectedQuery:         "WHERE ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ?) AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)",
+			expectedArgs:          []any{"api", "web", "auth"},
 			expectedErrorContains: "",
 		},
 		{
 			category:              "IN operator (brackets)",
 			query:                 "environment IN [\"dev\", \"test\", \"staging\", \"prod\"]",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((resources_string['environment'] = ? OR resources_string['environment'] = ? OR resources_string['environment'] = ? OR resources_string['environment'] = ?) AND mapContains(resources_string, 'environment') = ?)",
-			expectedArgs:          []any{"dev", "test", "staging", "prod", true},
+			expectedQuery:         "WHERE ((multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? OR multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? OR multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? OR multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ?) AND multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) IS NOT NULL)",
+			expectedArgs:          []any{"dev", "test", "staging", "prod"},
 			expectedErrorContains: "",
 		},
 
@@ -1197,7 +1238,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "NOT IN operator (parentheses)",
 			query:                 "service.name NOT IN (\"database\", \"cache\")",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (resources_string['service.name'] <> ? AND resources_string['service.name'] <> ?)",
+			expectedQuery:         "WHERE (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?)",
 			expectedArgs:          []any{"database", "cache"},
 			expectedErrorContains: "",
 		},
@@ -1205,7 +1246,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "NOT IN operator (parentheses)",
 			query:                 "environment NOT IN (\"prod\")",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (resources_string['environment'] <> ?)",
+			expectedQuery:         "WHERE (multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) <> ?)",
 			expectedArgs:          []any{"prod"},
 			expectedErrorContains: "",
 		},
@@ -1231,7 +1272,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "NOT IN operator (brackets)",
 			query:                 "service.name NOT IN [\"database\", \"cache\"]",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (resources_string['service.name'] <> ? AND resources_string['service.name'] <> ?)",
+			expectedQuery:         "WHERE (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) <> ?)",
 			expectedArgs:          []any{"database", "cache"},
 			expectedErrorContains: "",
 		},
@@ -1239,7 +1280,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "NOT IN operator (brackets)",
 			query:                 "environment NOT IN [\"prod\"]",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (resources_string['environment'] <> ?)",
+			expectedQuery:         "WHERE (multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) <> ?)",
 			expectedArgs:          []any{"prod"},
 			expectedErrorContains: "",
 		},
@@ -1275,6 +1316,13 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            true,
 			expectedQuery:         "WHERE mapContains(attributes_string, 'response.body.data') = ?",
 			expectedArgs:          []any{true},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "EXISTS operator on resource",
+			query:                 "service.name EXISTS",
+			shouldPass:            true,
+			expectedQuery:         "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL",
 			expectedErrorContains: "",
 		},
 
@@ -1319,6 +1367,13 @@ func TestFilterExprLogs(t *testing.T) {
 			expectedArgs:          []any{true},
 			expectedErrorContains: "",
 		},
+		{
+			category:              "EXISTS operator on resource",
+			query:                 "service.name NOT EXISTS",
+			shouldPass:            true,
+			expectedQuery:         "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NULL",
+			expectedErrorContains: "",
+		},
 
 		// Basic REGEXP
 		{
@@ -1357,7 +1412,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "REGEXP operator",
 			query:                 `"^\[(INFO|WARN|ERROR|DEBUG)\] .+$"`,
 			shouldPass:            true,
-			expectedQuery:         "WHERE match(body, ?)",
+			expectedQuery:         "WHERE match(LOWER(body), LOWER(?))",
 			expectedArgs:          []any{`^\[(INFO|WARN|ERROR|DEBUG)\] .+$`},
 			expectedErrorContains: "",
 		},
@@ -1456,6 +1511,24 @@ func TestFilterExprLogs(t *testing.T) {
 			expectedErrorContains: "",
 		},
 
+		// HASTOKEN
+		{
+			category:              "hasToken",
+			query:                 "hasToken(body, \"download\")",
+			shouldPass:            true,
+			expectedQuery:         "WHERE hasToken(LOWER(body), LOWER(?))",
+			expectedArgs:          []any{"download"},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "hasTokenNumber",
+			query:                 "hasToken(body, 1)",
+			shouldPass:            false,
+			expectedQuery:         "WHERE hasToken(LOWER(body), LOWER(?))",
+			expectedArgs:          []any{"download"},
+			expectedErrorContains: "function `hasToken` expects value parameter to be a string",
+		},
+
 		// Basic materialized key
 		{
 			category:              "Materialized key",
@@ -1471,8 +1544,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Explicit AND",
 			query:                 "status=200 AND service.name=\"api\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?))",
-			expectedArgs:          []any{float64(200), true, "api", true},
+			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))",
+			expectedArgs:          []any{float64(200), true, "api"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1505,8 +1578,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Explicit OR",
 			query:                 "service.name=\"api\" OR service.name=\"web\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?) OR (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?))",
-			expectedArgs:          []any{"api", true, "web", true},
+			expectedQuery:         "WHERE ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) OR (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))",
+			expectedArgs:          []any{"api", "web"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1531,8 +1604,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "NOT with expressions",
 			query:                 "NOT service.name=\"api\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE NOT ((resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?))",
-			expectedArgs:          []any{"api", true},
+			expectedQuery:         "WHERE NOT ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))",
+			expectedArgs:          []any{"api"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1549,8 +1622,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "AND + OR combinations",
 			query:                 "status=200 AND (service.name=\"api\" OR service.name=\"web\")",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (((resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?) OR (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?))))",
-			expectedArgs:          []any{float64(200), true, "api", true, "web", true},
+			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) OR (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))))",
+			expectedArgs:          []any{float64(200), true, "api", "web"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1575,8 +1648,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "AND + NOT combinations",
 			query:                 "status=200 AND NOT service.name=\"api\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND NOT ((resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?)))",
-			expectedArgs:          []any{float64(200), true, "api", true},
+			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND NOT ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)))",
+			expectedArgs:          []any{float64(200), true, "api"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1593,8 +1666,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "OR + NOT combinations",
 			query:                 "NOT status=200 OR NOT service.name=\"api\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (NOT ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?)) OR NOT ((resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?)))",
-			expectedArgs:          []any{float64(200), true, "api", true},
+			expectedQuery:         "WHERE (NOT ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?)) OR NOT ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)))",
+			expectedArgs:          []any{float64(200), true, "api"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1611,8 +1684,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "AND + OR + NOT combinations",
 			query:                 "status=200 AND (service.name=\"api\" OR NOT duration>1000)",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (((resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?) OR NOT ((toFloat64(attributes_number['duration']) > ? AND mapContains(attributes_number, 'duration') = ?)))))",
-			expectedArgs:          []any{float64(200), true, "api", true, float64(1000), true},
+			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) OR NOT ((toFloat64(attributes_number['duration']) > ? AND mapContains(attributes_number, 'duration') = ?)))))",
+			expectedArgs:          []any{float64(200), true, "api", float64(1000), true},
 			expectedErrorContains: "",
 		},
 		{
@@ -1627,8 +1700,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "AND + OR + NOT combinations",
 			query:                 "NOT (status=200 AND service.name=\"api\") OR count>0",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (NOT ((((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?)))) OR (toFloat64(attributes_number['count']) > ? AND mapContains(attributes_number, 'count') = ?))",
-			expectedArgs:          []any{float64(200), true, "api", true, float64(0), true},
+			expectedQuery:         "WHERE (NOT ((((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)))) OR (toFloat64(attributes_number['count']) > ? AND mapContains(attributes_number, 'count') = ?))",
+			expectedArgs:          []any{float64(200), true, "api", float64(0), true},
 			expectedErrorContains: "",
 		},
 
@@ -1637,8 +1710,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Implicit AND",
 			query:                 "status=200 service.name=\"api\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?))",
-			expectedArgs:          []any{float64(200), true, "api", true},
+			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))",
+			expectedArgs:          []any{float64(200), true, "api"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1663,8 +1736,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Mixed implicit/explicit AND",
 			query:                 "status=200 AND service.name=\"api\" duration<1000",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?) AND (toFloat64(attributes_number['duration']) < ? AND mapContains(attributes_number, 'duration') = ?))",
-			expectedArgs:          []any{float64(200), true, "api", true, float64(1000), true},
+			expectedQuery:         "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) AND (toFloat64(attributes_number['duration']) < ? AND mapContains(attributes_number, 'duration') = ?))",
+			expectedArgs:          []any{float64(200), true, "api", float64(1000), true},
 			expectedErrorContains: "",
 		},
 		{
@@ -1689,8 +1762,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Simple grouping",
 			query:                 "service.name=\"api\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?)",
-			expectedArgs:          []any{"api", true},
+			expectedQuery:         "WHERE (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)",
+			expectedArgs:          []any{"api"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1715,8 +1788,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Nested grouping",
 			query:                 "(((service.name=\"api\")))",
 			shouldPass:            true,
-			expectedQuery:         "WHERE ((((resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?))))",
-			expectedArgs:          []any{"api", true},
+			expectedQuery:         "WHERE ((((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))))",
+			expectedArgs:          []any{"api"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1733,8 +1806,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Complex nested grouping",
 			query:                 "(status=200 AND (service.name=\"api\" OR service.name=\"web\"))",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (((resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?) OR (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?)))))",
-			expectedArgs:          []any{float64(200), true, "api", true, "web", true},
+			expectedQuery:         "WHERE (((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) OR (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)))))",
+			expectedArgs:          []any{float64(200), true, "api", "web"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1759,16 +1832,16 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Deep nesting",
 			query:                 "(((status=200 OR status=201) AND service.name=\"api\") OR ((status=202 OR status=203) AND service.name=\"web\"))",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (((((((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) OR (toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?))) AND (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?))) OR (((((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) OR (toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?))) AND (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?)))))",
-			expectedArgs:          []any{float64(200), true, float64(201), true, "api", true, float64(202), true, float64(203), true, "web", true},
+			expectedQuery:         "WHERE (((((((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) OR (toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?))) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))) OR (((((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) OR (toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?))) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)))))",
+			expectedArgs:          []any{float64(200), true, float64(201), true, "api", float64(202), true, float64(203), true, "web"},
 			expectedErrorContains: "",
 		},
 		{
 			category:              "Deep nesting",
 			query:                 "(count>0 AND ((duration<1000 AND service.name=\"api\") OR (duration<500 AND service.name=\"web\")))",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (((toFloat64(attributes_number['count']) > ? AND mapContains(attributes_number, 'count') = ?) AND (((((toFloat64(attributes_number['duration']) < ? AND mapContains(attributes_number, 'duration') = ?) AND (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?))) OR (((toFloat64(attributes_number['duration']) < ? AND mapContains(attributes_number, 'duration') = ?) AND (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?)))))))",
-			expectedArgs:          []any{float64(0), true, float64(1000), true, "api", true, float64(500), true, "web", true},
+			expectedQuery:         "WHERE (((toFloat64(attributes_number['count']) > ? AND mapContains(attributes_number, 'count') = ?) AND (((((toFloat64(attributes_number['duration']) < ? AND mapContains(attributes_number, 'duration') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))) OR (((toFloat64(attributes_number['duration']) < ? AND mapContains(attributes_number, 'duration') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)))))))",
+			expectedArgs:          []any{float64(0), true, float64(1000), true, "api", float64(500), true, "web"},
 			expectedErrorContains: "",
 		},
 
@@ -1777,16 +1850,16 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "String quote styles",
 			query:                 "service.name=\"api\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?)",
-			expectedArgs:          []any{"api", true},
+			expectedQuery:         "WHERE (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)",
+			expectedArgs:          []any{"api"},
 			expectedErrorContains: "",
 		},
 		{
 			category:              "String quote styles",
 			query:                 "service.name='api'",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?)",
-			expectedArgs:          []any{"api", true},
+			expectedQuery:         "WHERE (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)",
+			expectedArgs:          []any{"api"},
 			expectedErrorContains: "",
 		},
 		{
@@ -1927,9 +2000,9 @@ func TestFilterExprLogs(t *testing.T) {
 			expectedErrorContains: "",
 		},
 
-		{category: "Only keywords", query: "AND", shouldPass: false, expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got 'AND'"},
-		{category: "Only keywords", query: "OR", shouldPass: false, expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got 'OR'"},
-		{category: "Only keywords", query: "NOT", shouldPass: false, expectedErrorContains: "expecting one of {(, ), FREETEXT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got EOF"},
+		{category: "Only keywords", query: "AND", shouldPass: false, expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'AND'"},
+		{category: "Only keywords", query: "OR", shouldPass: false, expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'OR'"},
+		{category: "Only keywords", query: "NOT", shouldPass: false, expectedErrorContains: "expecting one of {(, ), FREETEXT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got EOF"},
 
 		{category: "Only functions", query: "has", shouldPass: false, expectedErrorContains: "expecting one of {(, )} but got EOF"},
 		{category: "Only functions", query: "hasAny", shouldPass: false, expectedErrorContains: "expecting one of {(, )} but got EOF"},
@@ -1945,29 +2018,29 @@ func TestFilterExprLogs(t *testing.T) {
 			category:      "Operator precedence",
 			query:         "NOT status=200 AND service.name=\"api\"",
 			shouldPass:    true,
-			expectedQuery: "WHERE (NOT ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?)) AND (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?))",
-			expectedArgs:  []any{float64(200), true, "api", true}, // Should be (NOT status=200) AND service.name="api"
+			expectedQuery: "WHERE (NOT ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?)) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))",
+			expectedArgs:  []any{float64(200), true, "api"}, // Should be (NOT status=200) AND service.name="api"
 		},
 		{
 			category:      "Operator precedence",
 			query:         "status=200 AND service.name=\"api\" OR service.name=\"web\"",
 			shouldPass:    true,
-			expectedQuery: "WHERE (((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?)) OR (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?))",
-			expectedArgs:  []any{float64(200), true, "api", true, "web", true}, // Should be (status=200 AND service.name="api") OR service.name="web"
+			expectedQuery: "WHERE (((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)) OR (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))",
+			expectedArgs:  []any{float64(200), true, "api", "web"}, // Should be (status=200 AND service.name="api") OR service.name="web"
 		},
 		{
 			category:      "Operator precedence",
 			query:         "NOT status=200 OR NOT service.name=\"api\"",
 			shouldPass:    true,
-			expectedQuery: "WHERE (NOT ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?)) OR NOT ((resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?)))",
-			expectedArgs:  []any{float64(200), true, "api", true}, // Should be (NOT status=200) OR (NOT service.name="api")
+			expectedQuery: "WHERE (NOT ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?)) OR NOT ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)))",
+			expectedArgs:  []any{float64(200), true, "api"}, // Should be (NOT status=200) OR (NOT service.name="api")
 		},
 		{
 			category:      "Operator precedence",
 			query:         "status=200 OR service.name=\"api\" AND level=\"ERROR\"",
 			shouldPass:    true,
-			expectedQuery: "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) OR ((resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?) AND (attributes_string['level'] = ? AND mapContains(attributes_string, 'level') = ?)))",
-			expectedArgs:  []any{float64(200), true, "api", true, "ERROR", true}, // Should be status=200 OR (service.name="api" AND level="ERROR")
+			expectedQuery: "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) OR ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) AND (attributes_string['level'] = ? AND mapContains(attributes_string, 'level') = ?)))",
+			expectedArgs:  []any{float64(200), true, "api", "ERROR", true}, // Should be status=200 OR (service.name="api" AND level="ERROR")
 		},
 
 		// Different whitespace patterns
@@ -1991,8 +2064,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:      "Whitespace patterns",
 			query:         "status=200  AND     service.name=\"api\"",
 			shouldPass:    true,
-			expectedQuery: "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?))",
-			expectedArgs:  []any{float64(200), true, "api", true}, // Multiple spaces
+			expectedQuery: "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))",
+			expectedArgs:  []any{float64(200), true, "api"}, // Multiple spaces
 		},
 
 		// More Unicode characters
@@ -2071,7 +2144,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "line 1:0 expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got 'and'",
+			expectedErrorContains: "line 1:0 expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'and'",
 		},
 		{
 			category:              "Operator keywords as keys",
@@ -2079,7 +2152,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "line 1:0 expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got 'or'",
+			expectedErrorContains: "line 1:0 expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'or'",
 		},
 		{
 			category:              "Operator keywords as keys",
@@ -2087,7 +2160,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "line 1:3 expecting one of {(, ), FREETEXT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got '='",
+			expectedErrorContains: "line 1:3 expecting one of {(, ), FREETEXT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got '='",
 		},
 		{
 			category:              "Operator keywords as keys",
@@ -2095,7 +2168,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "line 1:0 expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got 'between'",
+			expectedErrorContains: "line 1:0 expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'between'",
 		},
 		{
 			category:              "Operator keywords as keys",
@@ -2103,7 +2176,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "line 1:0 expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), number, quoted text} but got 'in'",
+			expectedErrorContains: "line 1:0 expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'in'",
 		},
 
 		// Using function keywords as keys
@@ -2161,8 +2234,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:      "More common filters",
 			query:         "service.name=\"api\" AND (status>=500 OR duration>1000) AND NOT message CONTAINS \"expected\"",
 			shouldPass:    true,
-			expectedQuery: "WHERE ((resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?) AND (((toFloat64(attributes_number['status']) >= ? AND mapContains(attributes_number, 'status') = ?) OR (toFloat64(attributes_number['duration']) > ? AND mapContains(attributes_number, 'duration') = ?))) AND NOT ((LOWER(attributes_string['message']) LIKE LOWER(?) AND mapContains(attributes_string, 'message') = ?)))",
-			expectedArgs:  []any{"api", true, float64(500), true, float64(1000), true, "%expected%", true},
+			expectedQuery: "WHERE ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) AND (((toFloat64(attributes_number['status']) >= ? AND mapContains(attributes_number, 'status') = ?) OR (toFloat64(attributes_number['duration']) > ? AND mapContains(attributes_number, 'duration') = ?))) AND NOT ((LOWER(attributes_string['message']) LIKE LOWER(?) AND mapContains(attributes_string, 'message') = ?)))",
+			expectedArgs:  []any{"api", float64(500), true, float64(1000), true, "%expected%", true},
 		},
 
 		// Edge cases
@@ -2227,8 +2300,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:      "Unusual whitespace",
 			query:         "status   =    200    AND   service.name    =   \"api\"",
 			shouldPass:    true,
-			expectedQuery: "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (resources_string['service.name'] = ? AND mapContains(resources_string, 'service.name') = ?))",
-			expectedArgs:  []any{float64(200), true, "api", true},
+			expectedQuery: "WHERE ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?) AND (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL))",
+			expectedArgs:  []any{float64(200), true, "api"},
 		},
 		{
 			category:              "Unusual whitespace",
@@ -2288,16 +2361,135 @@ func TestFilterExprLogs(t *testing.T) {
 		  )
 		`,
 			shouldPass:    true,
-			expectedQuery: "WHERE ((((((((toFloat64(attributes_number['status']) >= ? AND mapContains(attributes_number, 'status') = ?) AND (toFloat64(attributes_number['status']) < ? AND mapContains(attributes_number, 'status') = ?))) OR (((toFloat64(attributes_number['status']) >= ? AND mapContains(attributes_number, 'status') = ?) AND (toFloat64(attributes_number['status']) < ? AND mapContains(attributes_number, 'status') = ?) AND NOT ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?)))))) AND ((((resources_string['service.name'] = ? OR resources_string['service.name'] = ? OR resources_string['service.name'] = ?) AND mapContains(resources_string, 'service.name') = ?) OR (((resources_string['service.type'] = ? AND mapContains(resources_string, 'service.type') = ?) AND NOT ((resources_string['service.deprecated'] = ? AND mapContains(resources_string, 'service.deprecated') = ?)))))))) AND (((((toFloat64(attributes_number['duration']) < ? AND mapContains(attributes_number, 'duration') = ?) OR ((toFloat64(attributes_number['duration']) BETWEEN ? AND ? AND mapContains(attributes_number, 'duration') = ?)))) AND ((resources_string['environment'] <> ? OR (((resources_string['environment'] = ? AND mapContains(resources_string, 'environment') = ?) AND (attributes_bool['is_automated_test'] = ? AND mapContains(attributes_bool, 'is_automated_test') = ?))))))) AND NOT ((((((LOWER(attributes_string['message']) LIKE LOWER(?) AND mapContains(attributes_string, 'message') = ?) OR (LOWER(attributes_string['message']) LIKE LOWER(?) AND mapContains(attributes_string, 'message') = ?))) AND (attributes_string['severity'] = ? AND mapContains(attributes_string, 'severity') = ?)))))",
+			expectedQuery: "WHERE ((((((((toFloat64(attributes_number['status']) >= ? AND mapContains(attributes_number, 'status') = ?) AND (toFloat64(attributes_number['status']) < ? AND mapContains(attributes_number, 'status') = ?))) OR (((toFloat64(attributes_number['status']) >= ? AND mapContains(attributes_number, 'status') = ?) AND (toFloat64(attributes_number['status']) < ? AND mapContains(attributes_number, 'status') = ?) AND NOT ((toFloat64(attributes_number['status']) = ? AND mapContains(attributes_number, 'status') = ?)))))) AND ((((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ?) AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) OR (((multiIf(resource.`service.type` IS NOT NULL, resource.`service.type`::String, mapContains(resources_string, 'service.type'), resources_string['service.type'], NULL) = ? AND multiIf(resource.`service.type` IS NOT NULL, resource.`service.type`::String, mapContains(resources_string, 'service.type'), resources_string['service.type'], NULL) IS NOT NULL) AND NOT ((multiIf(resource.`service.deprecated` IS NOT NULL, resource.`service.deprecated`::String, mapContains(resources_string, 'service.deprecated'), resources_string['service.deprecated'], NULL) = ? AND multiIf(resource.`service.deprecated` IS NOT NULL, resource.`service.deprecated`::String, mapContains(resources_string, 'service.deprecated'), resources_string['service.deprecated'], NULL) IS NOT NULL)))))))) AND (((((toFloat64(attributes_number['duration']) < ? AND mapContains(attributes_number, 'duration') = ?) OR ((toFloat64(attributes_number['duration']) BETWEEN ? AND ? AND mapContains(attributes_number, 'duration') = ?)))) AND ((multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) <> ? OR (((multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) = ? AND multiIf(resource.`environment` IS NOT NULL, resource.`environment`::String, mapContains(resources_string, 'environment'), resources_string['environment'], NULL) IS NOT NULL) AND (attributes_bool['is_automated_test'] = ? AND mapContains(attributes_bool, 'is_automated_test') = ?))))))) AND NOT ((((((LOWER(attributes_string['message']) LIKE LOWER(?) AND mapContains(attributes_string, 'message') = ?) OR (LOWER(attributes_string['message']) LIKE LOWER(?) AND mapContains(attributes_string, 'message') = ?))) AND (attributes_string['severity'] = ? AND mapContains(attributes_string, 'severity') = ?)))))",
 			expectedArgs: []any{
 				float64(200), true, float64(300), true, float64(400), true, float64(500), true, float64(404), true,
-				"api", "web", "auth", true,
-				"internal", true, true, true,
+				"api", "web", "auth",
+				"internal", true,
 				float64(1000), true, float64(1000), float64(5000), true,
-				"test", "test", true, true, true,
+				"test", "test", true, true,
 				"%warning%", true, "%deprecated%", true,
 				"low", true,
 			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
+
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts)
+
+			if tc.shouldPass {
+				if err != nil {
+					t.Errorf("Failed to parse query: %s\nError: %v\n", tc.query, err)
+					return
+				}
+
+				if clause == nil {
+					t.Errorf("Expected clause for query: %s\n", tc.query)
+					return
+				}
+
+				// Build the SQL and print it for debugging
+				sql, args := clause.WhereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+				require.Equal(t, tc.expectedQuery, sql)
+				require.Equal(t, tc.expectedArgs, args)
+			} else {
+				require.Error(t, err, "Expected error for query: %s", tc.query)
+				_, _, _, _, _, a := errors.Unwrapb(err)
+				contains := false
+				for _, warn := range a {
+					if strings.Contains(warn, tc.expectedErrorContains) {
+						contains = true
+						break
+					}
+				}
+				require.True(t, contains)
+			}
+		})
+	}
+}
+
+// TestFilterExprLogs tests a comprehensive set of query patterns for logs search
+func TestFilterExprLogsConflictNegation(t *testing.T) {
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
+
+	// Define a comprehensive set of field keys to support all test cases
+	keys := buildCompleteFieldKeyMap()
+
+	keys["body"] = []*telemetrytypes.TelemetryFieldKey{
+		{
+			Name:          "body",
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		{
+			Name:          "body",
+			FieldContext:  telemetrytypes.FieldContextAttribute,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+	}
+
+	opts := querybuilder.FilterExprVisitorOpts{
+		Logger:           instrumentationtest.New().Logger(),
+		FieldMapper:      fm,
+		ConditionBuilder: cb,
+		FieldKeys:        keys,
+		FullTextColumn:   DefaultFullTextColumn,
+		JsonBodyPrefix:   BodyJSONStringSearchPrefix,
+		JsonKeyToKey:     GetBodyJSONKey,
+	}
+
+	testCases := []struct {
+		category              string
+		query                 string
+		shouldPass            bool
+		expectedQuery         string
+		expectedArgs          []any
+		expectedErrorContains string
+	}{
+		{
+			category:              "not_contains",
+			query:                 "body NOT CONTAINS 'done'",
+			shouldPass:            true,
+			expectedQuery:         "WHERE (LOWER(body) NOT LIKE LOWER(?) AND LOWER(attributes_string['body']) NOT LIKE LOWER(?))",
+			expectedArgs:          []any{"%done%", "%done%"},
+			expectedErrorContains: "",
+		},
+		{
+			category:   "not_like",
+			query:      "body NOT LIKE 'done'",
+			shouldPass: true,
+			// lower index search on body even for LIKE
+			expectedQuery:         "WHERE (LOWER(body) NOT LIKE LOWER(?) AND attributes_string['body'] NOT LIKE ?)",
+			expectedArgs:          []any{"done", "done"},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "not_equal",
+			query:                 "body != 'done'",
+			shouldPass:            true,
+			expectedQuery:         "WHERE (body <> ? AND attributes_string['body'] <> ?)",
+			expectedArgs:          []any{"done", "done"},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "not_regex",
+			query:                 "body NOT REGEXP 'done'",
+			shouldPass:            true,
+			expectedQuery:         "WHERE (NOT match(LOWER(body), LOWER(?)) AND NOT match(attributes_string['body'], ?))",
+			expectedArgs:          []any{"done", "done"},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "exists",
+			query:                 "body EXISTS",
+			shouldPass:            true,
+			expectedQuery:         "WHERE (body <> ? OR mapContains(attributes_string, 'body') = ?)",
+			expectedArgs:          []any{"", true},
+			expectedErrorContains: "",
 		},
 	}
 

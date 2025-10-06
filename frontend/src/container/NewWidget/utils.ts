@@ -393,6 +393,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		[DataSource.LOGS]: {
 			builder: {
 				queryData: [
+					'queryName',
 					'filters',
 					'filter',
 					'limit',
@@ -404,12 +405,13 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		},
 		[DataSource.METRICS]: {
 			builder: {
-				queryData: ['filters', 'filter', 'aggregations'],
+				queryData: ['queryName', 'filters', 'filter', 'aggregations'],
 			},
 		},
 		[DataSource.TRACES]: {
 			builder: {
 				queryData: [
+					'queryName',
 					'filters',
 					'filter',
 					'limit',
@@ -526,6 +528,10 @@ export function handleQueryChange(
 
 				return tempQuery;
 			}),
+			queryTraceOperator:
+				newPanelType === PANEL_TYPES.LIST
+					? []
+					: supersetQuery.builder.queryTraceOperator,
 		},
 	};
 }
@@ -537,7 +543,6 @@ export const getDefaultWidgetData = (
 	id,
 	title: '',
 	description: '',
-	isStacked: false,
 	nullZeroValues: '',
 	opacity: '',
 	panelTypes: name,
@@ -548,6 +553,7 @@ export const getDefaultWidgetData = (
 	timePreferance: 'GLOBAL_TIME',
 	softMax: null,
 	softMin: null,
+	stackedBarChart: name === PANEL_TYPES.BAR,
 	selectedLogFields: defaultLogsSelectedColumns.map((field) => ({
 		...field,
 		type: field.fieldContext ?? '',

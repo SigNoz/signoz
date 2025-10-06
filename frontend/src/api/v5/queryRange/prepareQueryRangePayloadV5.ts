@@ -1,15 +1,21 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+/* eslint-disable sonarjs/no-identical-functions */
+import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	IBuilderTraceOperator,
+} from 'types/api/queryBuilder/queryBuilderData';
 import {
 	BaseBuilderQuery,
 	FieldContext,
 	FieldDataType,
+	Filter,
 	FunctionName,
 	GroupByKey,
 	Having,
@@ -24,6 +30,7 @@ import {
 	TelemetryFieldKey,
 	TraceAggregation,
 	VariableItem,
+	VariableType,
 } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -66,9 +73,63 @@ function getSignalType(dataSource: string): 'traces' | 'logs' | 'metrics' {
 	return 'metrics';
 }
 
-/**
- * Creates base spec for builder queries
- */
+function isDeprecatedField(fieldName: string): boolean {
+	const deprecatedIntrinsicFields = [
+		'traceID',
+		'spanID',
+		'parentSpanID',
+		'spanKind',
+		'durationNano',
+		'statusCode',
+		'statusMessage',
+		'statusCodeString',
+	];
+
+	const deprecatedCalculatedFields = [
+		'responseStatusCode',
+		'externalHttpUrl',
+		'httpUrl',
+		'externalHttpMethod',
+		'httpMethod',
+		'httpHost',
+		'dbName',
+		'dbOperation',
+		'hasError',
+		'isRemote',
+		'serviceName',
+		'httpRoute',
+		'msgSystem',
+		'msgOperation',
+		'dbSystem',
+		'rpcSystem',
+		'rpcService',
+		'rpcMethod',
+		'peerService',
+	];
+
+	return (
+		deprecatedIntrinsicFields.includes(fieldName) ||
+		deprecatedCalculatedFields.includes(fieldName)
+	);
+}
+
+function getFilter(queryData: IBuilderQuery): Filter {
+	const { filter } = queryData;
+	if (filter?.expression) {
+		return {
+			expression: filter.expression,
+		};
+	}
+
+	if (queryData.filters && queryData.filters?.items?.length > 0) {
+		return convertFiltersToExpression(queryData.filters);
+	}
+
+	return {
+		expression: '',
+	};
+}
+
 function createBaseSpec(
 	queryData: IBuilderQuery,
 	requestType: RequestType,
@@ -80,16 +141,16 @@ function createBaseSpec(
 	)[])?.filter((c) => ('key' in c ? c?.key : c?.name));
 
 	return {
-		stepInterval: queryData?.stepInterval || undefined,
+		stepInterval: queryData?.stepInterval || null,
 		disabled: queryData.disabled,
-		filter: queryData?.filter?.expression ? queryData.filter : undefined,
+		filter: getFilter(queryData),
 		groupBy:
 			queryData.groupBy?.length > 0
 				? queryData.groupBy.map(
 						(item: any): GroupByKey => ({
 							name: item.key,
-							fieldDataType: item?.dataType,
-							fieldContext: item?.type,
+							fieldDataType: item?.dataType || '',
+							fieldContext: item?.type || '',
 							description: item?.description,
 							unit: item?.unit,
 							signal: item?.signal,
@@ -140,19 +201,33 @@ function createBaseSpec(
 		selectFields: isEmpty(nonEmptySelectColumns)
 			? undefined
 			: nonEmptySelectColumns?.map(
-					(column: any): TelemetryFieldKey => ({
-						name: column.name ?? column.key,
-						fieldDataType:
-							column?.fieldDataType ?? (column?.dataType as FieldDataType),
-						fieldContext: column?.fieldContext ?? (column?.type as FieldContext),
-						signal: column?.signal ?? undefined,
-					}),
+					(column: any): TelemetryFieldKey => {
+						const fieldName = column.name ?? column.key;
+						const isDeprecated = isDeprecatedField(fieldName);
+
+						const fieldObj: TelemetryFieldKey = {
+							name: fieldName,
+							fieldDataType:
+								column?.fieldDataType ?? (column?.dataType as FieldDataType),
+							signal: column?.signal ?? undefined,
+						};
+
+						// Only add fieldContext if the field is NOT deprecated
+						if (!isDeprecated && fieldName !== 'name') {
+							fieldObj.fieldContext =
+								column?.fieldContext ?? (column?.type as FieldContext);
+						}
+
+						return fieldObj;
+					},
 			  ),
 	};
 }
+
 // Utility to parse aggregation expressions with optional alias
 export function parseAggregations(
 	expression: string,
+	availableAlias?: string,
 ): { expression: string; alias?: string }[] {
 	const result: { expression: string; alias?: string }[] = [];
 	// Matches function calls like "count()" or "sum(field)" with optional alias like "as 'alias'"
@@ -161,7 +236,7 @@ export function parseAggregations(
 	let match = regex.exec(expression);
 	while (match !== null) {
 		const expr = match[1];
-		let alias = match[2];
+		let alias = match[2] || availableAlias; // Use provided alias or availableAlias if not matched
 		if (alias) {
 			// Remove quotes if present
 			alias = alias.replace(/^['"]|['"]$/g, '');
@@ -212,9 +287,14 @@ export function createAggregation(
 	}
 
 	if (queryData.aggregations?.length > 0) {
-		return isEmpty(parseAggregations(queryData.aggregations?.[0].expression))
-			? [{ expression: 'count()' }]
-			: parseAggregations(queryData.aggregations?.[0].expression);
+		return queryData.aggregations.flatMap(
+			(agg: { expression: string; alias?: string }) => {
+				const parsedAggregations = parseAggregations(agg.expression, agg?.alias);
+				return isEmpty(parsedAggregations)
+					? [{ expression: 'count()' }]
+					: parsedAggregations;
+			},
+		);
 	}
 
 	return [{ expression: 'count()' }];
@@ -270,6 +350,109 @@ export function convertBuilderQueriesToV5(
 
 			return {
 				type: 'builder_query' as QueryType,
+				spec,
+			};
+		},
+	);
+}
+
+function createTraceOperatorBaseSpec(
+	queryData: IBuilderTraceOperator,
+	requestType: RequestType,
+	panelType?: PANEL_TYPES,
+): BaseBuilderQuery {
+	const nonEmptySelectColumns = (queryData.selectColumns as (
+		| BaseAutocompleteData
+		| TelemetryFieldKey
+	)[])?.filter((c) => ('key' in c ? c?.key : c?.name));
+
+	const {
+		stepInterval,
+		groupBy,
+		limit,
+		offset,
+		legend,
+		having,
+		orderBy,
+		pageSize,
+	} = queryData;
+
+	return {
+		stepInterval: stepInterval || undefined,
+		groupBy:
+			groupBy?.length > 0
+				? groupBy.map(
+						(item: any): GroupByKey => ({
+							name: item.key,
+							fieldDataType: item?.dataType,
+							fieldContext: item?.type,
+							description: item?.description,
+							unit: item?.unit,
+							signal: item?.signal,
+							materialized: item?.materialized,
+						}),
+				  )
+				: undefined,
+		limit:
+			panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.LIST
+				? limit || pageSize || undefined
+				: limit || undefined,
+		offset: requestType === 'raw' || requestType === 'trace' ? offset : undefined,
+		order:
+			orderBy?.length > 0
+				? orderBy.map(
+						(order: any): OrderBy => ({
+							key: {
+								name: order.columnName,
+							},
+							direction: order.order,
+						}),
+				  )
+				: undefined,
+		legend: isEmpty(legend) ? undefined : legend,
+		having: isEmpty(having) ? undefined : (having as Having),
+		selectFields: isEmpty(nonEmptySelectColumns)
+			? undefined
+			: nonEmptySelectColumns?.map(
+					(column: any): TelemetryFieldKey => ({
+						name: column.name ?? column.key,
+						fieldDataType:
+							column?.fieldDataType ?? (column?.dataType as FieldDataType),
+						fieldContext: column?.fieldContext ?? (column?.type as FieldContext),
+						signal: column?.signal ?? undefined,
+					}),
+			  ),
+	};
+}
+
+export function convertTraceOperatorToV5(
+	traceOperator: Record<string, IBuilderTraceOperator>,
+	requestType: RequestType,
+	panelType?: PANEL_TYPES,
+): QueryEnvelope[] {
+	return Object.entries(traceOperator).map(
+		([queryName, traceOperatorData]): QueryEnvelope => {
+			const baseSpec = createTraceOperatorBaseSpec(
+				traceOperatorData,
+				requestType,
+				panelType,
+			);
+
+			// Skip aggregation for raw request type
+			const aggregations =
+				requestType === 'raw'
+					? undefined
+					: createAggregation(traceOperatorData, panelType);
+
+			const spec: QueryEnvelope['spec'] = {
+				name: queryName,
+				...baseSpec,
+				expression: traceOperatorData.expression || '',
+				aggregations: aggregations as TraceAggregation[],
+			};
+
+			return {
+				type: 'builder_trace_operator' as QueryType,
 				spec,
 			};
 		},
@@ -350,6 +533,7 @@ export const prepareQueryRangePayloadV5 = ({
 	formatForWeb,
 	originalGraphType,
 	fillGaps,
+	dynamicVariables,
 }: GetQueryResultsProps): PrepareQueryRangePayloadV5Result => {
 	let legendMap: Record<string, string> = {};
 	const requestType = mapPanelTypeToRequestType(graphType);
@@ -357,14 +541,28 @@ export const prepareQueryRangePayloadV5 = ({
 
 	switch (query.queryType) {
 		case EQueryType.QUERY_BUILDER: {
-			const { queryData: data, queryFormulas } = query.builder;
+			const { queryData: data, queryFormulas, queryTraceOperator } = query.builder;
 			const currentQueryData = mapQueryDataToApi(data, 'queryName', tableParams);
 			const currentFormulas = mapQueryDataToApi(queryFormulas, 'queryName');
+
+			const filteredTraceOperator =
+				queryTraceOperator && queryTraceOperator.length > 0
+					? queryTraceOperator.filter((traceOperator) =>
+							Boolean(traceOperator.expression.trim()),
+					  )
+					: [];
+
+			const currentTraceOperator = mapQueryDataToApi(
+				filteredTraceOperator,
+				'queryName',
+				tableParams,
+			);
 
 			// Combine legend maps
 			legendMap = {
 				...currentQueryData.newLegendMap,
 				...currentFormulas.newLegendMap,
+				...currentTraceOperator.newLegendMap,
 			};
 
 			// Convert builder queries
@@ -397,8 +595,14 @@ export const prepareQueryRangePayloadV5 = ({
 				}),
 			);
 
-			// Combine both types
-			queries = [...builderQueries, ...formulaQueries];
+			const traceOperatorQueries = convertTraceOperatorToV5(
+				currentTraceOperator.data,
+				requestType,
+				graphType,
+			);
+
+			// Combine all query types
+			queries = [...builderQueries, ...formulaQueries, ...traceOperatorQueries];
 			break;
 		}
 		case EQueryType.PROM: {
@@ -441,7 +645,12 @@ export const prepareQueryRangePayloadV5 = ({
 			fillGaps: fillGaps || false,
 		},
 		variables: Object.entries(variables).reduce((acc, [key, value]) => {
-			acc[key] = { value };
+			acc[key] = {
+				value,
+				type: dynamicVariables
+					?.find((v) => v.name === key)
+					?.type?.toLowerCase() as VariableType,
+			};
 			return acc;
 		}, {} as Record<string, VariableItem>),
 	};

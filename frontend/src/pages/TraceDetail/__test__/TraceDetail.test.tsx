@@ -8,6 +8,16 @@ import TraceDetail from '..';
 
 window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
+jest.mock('@signozhq/badge', () => ({
+	Badge: jest.fn(),
+}));
+
+jest.mock('@signozhq/resizable', () => ({
+	ResizableHandle: jest.fn(),
+	ResizablePanel: jest.fn(),
+	ResizablePanelGroup: jest.fn(),
+}));
+
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: (): { pathname: string; search: string } => ({
@@ -25,21 +35,16 @@ jest.mock('container/TraceFlameGraph/index.tsx', () => ({
 	default: (): JSX.Element => <div>TraceFlameGraph</div>,
 }));
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 describe('TraceDetail', () => {
+	beforeEach(() => {
+		jest.useFakeTimers();
+		jest.setSystemTime(new Date('2023-10-20'));
+	});
+
+	afterEach(() => {
+		jest.useRealTimers();
+	});
+
 	it('should render tracedetail', async () => {
 		const { findByText, getByText, getAllByText, getByPlaceholderText } = render(
 			<MemoryRouter initialEntries={['/trace/000000000000000071dc9b0a338729b4']}>

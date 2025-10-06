@@ -1,6 +1,7 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Spin, Switch, Table, Tooltip, Typography } from 'antd';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
+import { withErrorBoundary } from 'components/ErrorBoundaryHOC';
 import { DEFAULT_ENTITY_VERSION, ENTITY_VERSION_V4 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
@@ -58,8 +59,6 @@ function TopErrors({
 									id: '92b8a1c1',
 									key: {
 										dataType: DataTypes.String,
-										isColumn: false,
-										isJSON: false,
 										key: SPAN_ATTRIBUTES.URL_PATH,
 										type: 'tag',
 									},
@@ -250,4 +249,4 @@ function TopErrors({
 	);
 }
 
-export default TopErrors;
+export default withErrorBoundary(TopErrors);

@@ -64,8 +64,6 @@ export const getPodQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'container_cpu_usage--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: containerCpuUtilKey,
 								type: 'Gauge',
 							},
@@ -80,8 +78,7 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -93,8 +90,7 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -109,8 +105,6 @@ export const getPodQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_pod_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: k8sPodNameKey,
 									type: 'tag',
 								},
@@ -127,6 +121,7 @@ export const getPodQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: '9b92756a-b445-45f8-90f4-d26f3ef28f8f',
@@ -148,8 +143,6 @@ export const getPodQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'container_memory_usage--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: containerMemUsageKey,
 								type: 'Gauge',
 							},
@@ -164,8 +157,6 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -177,8 +168,6 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -193,8 +182,6 @@ export const getPodQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_pod_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: k8sPodNameKey,
 									type: 'tag',
 								},
@@ -211,6 +198,7 @@ export const getPodQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: 'a22c1e03-4876-4b3e-9a96-a3c3a28f9c0f',
@@ -232,8 +220,6 @@ export const getPodQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'container_cpu_usage--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: containerCpuUtilKey,
 								type: 'Gauge',
 							},
@@ -248,7 +234,6 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -260,7 +245,6 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -275,8 +259,6 @@ export const getPodQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_pod_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: k8sPodNameKey,
 									type: 'tag',
 								},
@@ -295,8 +277,6 @@ export const getPodQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_cpu_request--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sContainerCpuReqKey,
 								type: 'Gauge',
 							},
@@ -311,8 +291,6 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -324,8 +302,6 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -340,8 +316,6 @@ export const getPodQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_pod_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: k8sPodNameKey,
 									type: 'tag',
 								},
@@ -365,6 +339,7 @@ export const getPodQueryPayload = (
 							queryName: 'F1',
 						},
 					],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: '7bb3a6f5-d1c6-4f2e-9cc9-7dcc46db398f',
@@ -386,8 +361,6 @@ export const getPodQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'container_cpu_usage--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: containerCpuUtilKey,
 								type: 'Gauge',
 							},
@@ -402,7 +375,6 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -414,7 +386,6 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -429,8 +400,6 @@ export const getPodQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_pod_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: k8sPodNameKey,
 									type: 'tag',
 								},
@@ -449,8 +418,6 @@ export const getPodQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_cpu_limit--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: k8sContainerCpuLimitKey,
 								type: 'Gauge',
 							},
@@ -465,8 +432,6 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -478,8 +443,6 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -494,8 +457,6 @@ export const getPodQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_pod_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: k8sPodNameKey,
 									type: 'tag',
 								},
@@ -519,6 +480,7 @@ export const getPodQueryPayload = (
 							queryName: 'F1',
 						},
 					],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: '6d5ccd81-0ea1-4fb9-a66b-7f0fe2f15165',
@@ -540,8 +502,6 @@ export const getPodQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'container_memory_usage--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
 								key: containerMemUsageKey,
 								type: 'Gauge',
 							},
@@ -556,7 +516,7 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -568,7 +528,7 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -583,8 +543,7 @@ export const getPodQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_pod_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: k8sPodNameKey,
 									type: 'tag',
 								},
@@ -603,8 +562,7 @@ export const getPodQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_memory_request--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: k8sContainerMemReqKey,
 								type: 'Gauge',
 							},
@@ -619,8 +577,7 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -632,8 +589,7 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -648,8 +604,7 @@ export const getPodQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_pod_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: k8sPodNameKey,
 									type: 'tag',
 								},
@@ -673,6 +628,7 @@ export const getPodQueryPayload = (
 							queryName: 'F1',
 						},
 					],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: '4d03a0ff-4fa5-4b19-b397-97f80ba9e0ac',
@@ -694,8 +650,7 @@ export const getPodQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'container_memory_usage--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: containerMemUsageKey,
 								type: 'Gauge',
 							},
@@ -710,7 +665,7 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -722,7 +677,7 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -737,8 +692,7 @@ export const getPodQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_pod_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: k8sPodNameKey,
 									type: 'tag',
 								},
@@ -757,8 +711,7 @@ export const getPodQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_memory_limit--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: k8sContainerMemLimitKey,
 								type: 'Gauge',
 							},
@@ -773,8 +726,7 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -786,8 +738,7 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -802,8 +753,7 @@ export const getPodQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_pod_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: k8sPodNameKey,
 									type: 'tag',
 								},
@@ -827,6 +777,7 @@ export const getPodQueryPayload = (
 							queryName: 'F1',
 						},
 					],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: 'ad491f19-0f83-4dd4-bb8f-bec295c18d1b',
@@ -848,8 +799,7 @@ export const getPodQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_filesystem_available--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: k8sPodFsAvailKey,
 								type: 'Gauge',
 							},
@@ -864,7 +814,7 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -876,7 +826,7 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -891,8 +841,7 @@ export const getPodQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_pod_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: k8sPodNameKey,
 									type: 'tag',
 								},
@@ -911,8 +860,7 @@ export const getPodQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_filesystem_capacity--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: k8sPodFsCapKey,
 								type: 'Gauge',
 							},
@@ -927,7 +875,7 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -939,7 +887,7 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -954,8 +902,7 @@ export const getPodQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_pod_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: k8sPodNameKey,
 									type: 'tag',
 								},
@@ -979,6 +926,7 @@ export const getPodQueryPayload = (
 							queryName: 'F1',
 						},
 					],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: '16908d4e-1565-4847-8d87-01ebb8fc494a',
@@ -1001,8 +949,7 @@ export const getPodQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_network_io--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: k8sPodNetIoKey,
 								type: 'Sum',
 							},
@@ -1017,7 +964,7 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -1029,7 +976,7 @@ export const getPodQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sPodNameKey,
 											type: 'tag',
 										},
@@ -1044,7 +991,7 @@ export const getPodQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_pod_name--string--tag--false',
-									isColumn: false,
+
 									key: k8sPodNameKey,
 									type: 'tag',
 								},
@@ -1061,6 +1008,7 @@ export const getPodQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: '4b255d6d-4cde-474d-8866-f4418583c18b',
@@ -1122,8 +1070,7 @@ export const getNodeQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_cpu_time--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: k8sNodeCpuTimeKey,
 								type: 'Sum',
 							},
@@ -1138,7 +1085,7 @@ export const getNodeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -1150,7 +1097,7 @@ export const getNodeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sNodeNameKey,
 											type: 'tag',
 										},
@@ -1165,8 +1112,7 @@ export const getNodeQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_node_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: k8sNodeNameKey,
 									type: 'tag',
 								},
@@ -1185,8 +1131,7 @@ export const getNodeQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_allocatable_cpu--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: k8sNodeAllocCpuKey,
 								type: 'Gauge',
 							},
@@ -1201,7 +1146,7 @@ export const getNodeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sNodeNameKey,
 											type: 'tag',
 										},
@@ -1216,8 +1161,7 @@ export const getNodeQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_node_name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: k8sNodeNameKey,
 									type: 'tag',
 								},
@@ -1241,6 +1185,7 @@ export const getNodeQueryPayload = (
 							queryName: 'F1',
 						},
 					],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: '259295b5-774d-4b2e-8a4f-e5dd63e6c38d',
@@ -1263,8 +1208,7 @@ export const getNodeQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_memory_working_set--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: k8sNodeMemWsKey,
 								type: 'Gauge',
 							},
@@ -1279,7 +1223,7 @@ export const getNodeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -1291,7 +1235,7 @@ export const getNodeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sNodeNameKey,
 											type: 'tag',
 										},
@@ -1306,7 +1250,7 @@ export const getNodeQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_node_name--string--tag--false',
-									isColumn: false,
+
 									key: k8sNodeNameKey,
 									type: 'tag',
 								},
@@ -1325,8 +1269,7 @@ export const getNodeQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_allocatable_memory--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: k8sNodeAllocMemKey,
 								type: 'Gauge',
 							},
@@ -1341,7 +1284,7 @@ export const getNodeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sNodeNameKey,
 											type: 'tag',
 										},
@@ -1356,7 +1299,7 @@ export const getNodeQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_node_name--string--tag--false',
-									isColumn: false,
+
 									key: k8sNodeNameKey,
 									type: 'tag',
 								},
@@ -1380,6 +1323,7 @@ export const getNodeQueryPayload = (
 							queryName: 'F1',
 						},
 					],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: '486af4da-2a1a-4b8f-992c-eba098d3a6f9',
@@ -1402,8 +1346,7 @@ export const getNodeQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_network_io--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: k8sNodeNetIoKey,
 								type: 'Sum',
 							},
@@ -1418,7 +1361,7 @@ export const getNodeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -1430,7 +1373,7 @@ export const getNodeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sNodeNameKey,
 											type: 'tag',
 										},
@@ -1445,21 +1388,21 @@ export const getNodeQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'interface--string--tag--false',
-									isColumn: false,
+
 									key: 'interface',
 									type: 'tag',
 								},
 								{
 									dataType: DataTypes.String,
 									id: 'direction--string--tag--false',
-									isColumn: false,
+
 									key: 'direction',
 									type: 'tag',
 								},
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_node_name--string--tag--false',
-									isColumn: false,
+
 									key: k8sNodeNameKey,
 									type: 'tag',
 								},
@@ -1476,6 +1419,7 @@ export const getNodeQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: 'b56143c0-7d2f-4425-97c5-65ad6fc87366',
@@ -1497,8 +1441,7 @@ export const getNodeQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_filesystem_available--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: k8sNodeFsAvailKey,
 								type: 'Gauge',
 							},
@@ -1513,7 +1456,7 @@ export const getNodeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -1525,7 +1468,7 @@ export const getNodeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sNodeNameKey,
 											type: 'tag',
 										},
@@ -1540,7 +1483,7 @@ export const getNodeQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_node_name--string--tag--false',
-									isColumn: false,
+
 									key: k8sNodeNameKey,
 									type: 'tag',
 								},
@@ -1559,8 +1502,7 @@ export const getNodeQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_filesystem_capacity--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: k8sNodeFsCapKey,
 								type: 'Gauge',
 							},
@@ -1575,7 +1517,7 @@ export const getNodeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sClusterNameKey,
 											type: 'tag',
 										},
@@ -1587,7 +1529,7 @@ export const getNodeQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											isColumn: false,
+
 											key: k8sNodeNameKey,
 											type: 'tag',
 										},
@@ -1602,7 +1544,7 @@ export const getNodeQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_node_name--string--tag--false',
-									isColumn: false,
+
 									key: k8sNodeNameKey,
 									type: 'tag',
 								},
@@ -1626,6 +1568,7 @@ export const getNodeQueryPayload = (
 							queryName: 'F1',
 						},
 					],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: '57eeac15-615c-4a71-9c61-8e0c0c76b045',
@@ -1692,8 +1635,7 @@ export const getHostQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'system_cpu_time--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: cpuTimeKey,
 								type: 'Sum',
 							},
@@ -1708,8 +1650,7 @@ export const getHostQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'host_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: hostNameKey,
 											type: 'tag',
 										},
@@ -1724,8 +1665,7 @@ export const getHostQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'state--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: 'state',
 									type: 'tag',
 								},
@@ -1744,8 +1684,7 @@ export const getHostQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'system_cpu_time--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: cpuTimeKey,
 								type: 'Sum',
 							},
@@ -1760,8 +1699,7 @@ export const getHostQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'host_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: hostNameKey,
 											type: 'tag',
 										},
@@ -1792,6 +1730,7 @@ export const getHostQueryPayload = (
 							queryName: 'F1',
 						},
 					],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: '315b15fa-ff0c-442f-89f8-2bf4fb1af2f2',
@@ -1813,8 +1752,7 @@ export const getHostQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'system_memory_usage--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: memUsageKey,
 								type: 'Gauge',
 							},
@@ -1829,8 +1767,7 @@ export const getHostQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'host_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: hostNameKey,
 											type: 'tag',
 										},
@@ -1845,8 +1782,7 @@ export const getHostQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'state--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: 'state',
 									type: 'tag',
 								},
@@ -1863,6 +1799,7 @@ export const getHostQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: '40218bfb-a9b7-4974-aead-5bf666e139bf',
@@ -1884,8 +1821,7 @@ export const getHostQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'system_cpu_load_average_1m--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: load1mKey,
 								type: 'Gauge',
 							},
@@ -1900,8 +1836,7 @@ export const getHostQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'host_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: hostNameKey,
 											type: 'tag',
 										},
@@ -1927,8 +1862,7 @@ export const getHostQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'system_cpu_load_average_5m--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: load5mKey,
 								type: 'Gauge',
 							},
@@ -1943,8 +1877,7 @@ export const getHostQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'host_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: hostNameKey,
 											type: 'tag',
 										},
@@ -1970,8 +1903,7 @@ export const getHostQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'system_cpu_load_average_15m--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: load15mKey,
 								type: 'Gauge',
 							},
@@ -1986,8 +1918,7 @@ export const getHostQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'host_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: hostNameKey,
 											type: 'tag',
 										},
@@ -2011,6 +1942,7 @@ export const getHostQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: '8e6485ea-7018-43b0-ab27-b210f77b59ad',
@@ -2032,8 +1964,7 @@ export const getHostQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'system_network_io--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: netIoKey,
 								type: 'Sum',
 							},
@@ -2048,8 +1979,7 @@ export const getHostQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'host_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: hostNameKey,
 											type: 'tag',
 										},
@@ -2064,16 +1994,14 @@ export const getHostQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'direction--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: 'direction',
 									type: 'tag',
 								},
 								{
 									dataType: DataTypes.String,
 									id: 'device--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: 'device',
 									type: 'tag',
 								},
@@ -2096,6 +2024,7 @@ export const getHostQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: '47173220-44df-4ef6-87f4-31e333c180c7',
@@ -2117,8 +2046,7 @@ export const getHostQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'system_network_packets--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: netPktsKey,
 								type: 'Sum',
 							},
@@ -2133,8 +2061,7 @@ export const getHostQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'host_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: hostNameKey,
 											type: 'tag',
 										},
@@ -2149,16 +2076,14 @@ export const getHostQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'direction--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: 'direction',
 									type: 'tag',
 								},
 								{
 									dataType: DataTypes.String,
 									id: 'device--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: 'device',
 									type: 'tag',
 								},
@@ -2175,6 +2100,7 @@ export const getHostQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: '62eedbc6-c8ad-4d13-80a8-129396e1d1dc',
@@ -2196,8 +2122,7 @@ export const getHostQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'system_network_errors--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: netErrKey,
 								type: 'Sum',
 							},
@@ -2212,8 +2137,7 @@ export const getHostQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'host_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: hostNameKey,
 											type: 'tag',
 										},
@@ -2228,16 +2152,14 @@ export const getHostQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'direction--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: 'direction',
 									type: 'tag',
 								},
 								{
 									dataType: DataTypes.String,
 									id: 'device--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: 'device',
 									type: 'tag',
 								},
@@ -2254,6 +2176,7 @@ export const getHostQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: '5ddb1b38-53bb-46f5-b4fe-fe832d6b9b24',
@@ -2275,8 +2198,7 @@ export const getHostQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'system_network_dropped--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: netDropKey,
 								type: 'Sum',
 							},
@@ -2291,8 +2213,7 @@ export const getHostQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'host_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: hostNameKey,
 											type: 'tag',
 										},
@@ -2307,16 +2228,14 @@ export const getHostQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'direction--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: 'direction',
 									type: 'tag',
 								},
 								{
 									dataType: DataTypes.String,
 									id: 'device--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: 'device',
 									type: 'tag',
 								},
@@ -2333,6 +2252,7 @@ export const getHostQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: 'a849bcce-7684-4852-9134-530b45419b8f',
@@ -2354,8 +2274,7 @@ export const getHostQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'system_network_connections--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: netConnKey,
 								type: 'Gauge',
 							},
@@ -2370,8 +2289,7 @@ export const getHostQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'host_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: hostNameKey,
 											type: 'tag',
 										},
@@ -2386,16 +2304,14 @@ export const getHostQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'protocol--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: 'protocol',
 									type: 'tag',
 								},
 								{
 									dataType: DataTypes.String,
 									id: 'state--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: 'state',
 									type: 'tag',
 								},
@@ -2412,6 +2328,7 @@ export const getHostQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: 'ab685a3d-fa4c-4663-8d94-c452e59038f3',
@@ -2433,8 +2350,7 @@ export const getHostQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'system_disk_io--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: diskIoKey,
 								type: 'Sum',
 							},
@@ -2449,8 +2365,7 @@ export const getHostQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'host_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: hostNameKey,
 											type: 'tag',
 										},
@@ -2474,6 +2389,7 @@ export const getHostQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: '9bd40b51-0790-4cdd-9718-551b2ded5926',
@@ -2495,8 +2411,7 @@ export const getHostQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'system_disk_operation_time--float64--Sum--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: diskOpTimeKey,
 								type: 'Sum',
 							},
@@ -2511,8 +2426,7 @@ export const getHostQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'host_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: hostNameKey,
 											type: 'tag',
 										},
@@ -2527,16 +2441,14 @@ export const getHostQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'device--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: 'device',
 									type: 'tag',
 								},
 								{
 									dataType: DataTypes.String,
 									id: 'direction--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: 'direction',
 									type: 'tag',
 								},
@@ -2559,6 +2471,7 @@ export const getHostQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: '9c6d18ad-89ff-4e38-a15a-440e72ed6ca8',
@@ -2580,8 +2493,7 @@ export const getHostQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'system_disk_pending_operations--float64--Gauge--true',
-								isColumn: true,
-								isJSON: false,
+
 								key: diskPendingKey,
 								type: 'Gauge',
 							},
@@ -2596,8 +2508,7 @@ export const getHostQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'host_name--string--tag--false',
-											isColumn: false,
-											isJSON: false,
+
 											key: hostNameKey,
 											type: 'tag',
 										},
@@ -2612,8 +2523,7 @@ export const getHostQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'device--string--tag--false',
-									isColumn: false,
-									isJSON: false,
+
 									key: 'device',
 									type: 'tag',
 								},
@@ -2636,6 +2546,7 @@ export const getHostQueryPayload = (
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: 'f4cfc2a5-78fc-42cc-8f4a-194c8c916132',

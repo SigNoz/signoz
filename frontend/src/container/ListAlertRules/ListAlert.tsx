@@ -1,6 +1,14 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import { Flex, Input, Typography } from 'antd';
+import {
+	Button,
+	Dropdown,
+	Flex,
+	Input,
+	MenuProps,
+	Tag,
+	Typography,
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
 import logEvent from 'api/common/logEvent';
@@ -31,7 +39,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { GettableAlert } from 'types/api/alerts/get';
 
 import DeleteAlert from './DeleteAlert';
-import { Button, ColumnButton, SearchContainer } from './styles';
+import { ColumnButton, SearchContainer } from './styles';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
 import { alertActionLogEvent, filterAlerts } from './utils';
@@ -97,13 +105,40 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		});
 	}, [notificationsApi, t]);
 
-	const onClickNewAlertHandler = useCallback(() => {
+	const onClickNewAlertV2Handler = useCallback(() => {
 		logEvent('Alert: New alert button clicked', {
 			number: allAlertRules?.length,
+			layout: 'new',
+		});
+		history.push(`${ROUTES.ALERTS_NEW}?showNewCreateAlertsPage=true`);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	const onClickNewClassicAlertHandler = useCallback(() => {
+		logEvent('Alert: New alert button clicked', {
+			number: allAlertRules?.length,
+			layout: 'classic',
 		});
 		history.push(ROUTES.ALERTS_NEW);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	const newAlertMenuItems: MenuProps['items'] = [
+		{
+			key: 'new',
+			label: (
+				<span>
+					Try the new experience <Tag color="blue">Beta</Tag>
+				</span>
+			),
+			onClick: onClickNewAlertV2Handler,
+		},
+		{
+			key: 'classic',
+			label: 'Continue with the classic experience',
+			onClick: onClickNewClassicAlertHandler,
+		},
+	];
 
 	const onEditHandler = (record: GettableAlert, openInNewTab: boolean): void => {
 		const compositeQuery = mapQueryDataFromApi(record.condition.compositeQuery);
@@ -272,12 +307,11 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			width: 80,
 			key: 'severity',
 			sorter: (a, b): number =>
-				(a.labels ? a.labels.severity.length : 0) -
-				(b.labels ? b.labels.severity.length : 0),
+				(a?.labels?.severity?.length || 0) - (b?.labels?.severity?.length || 0),
 			render: (value): JSX.Element => {
-				const objectKeys = Object.keys(value);
+				const objectKeys = value ? Object.keys(value) : [];
 				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';
-				const severityValue = value[withSeverityKey];
+				const severityValue = withSeverityKey ? value[withSeverityKey] : '-';
 
 				return <Typography>{severityValue}</Typography>;
 			},
@@ -290,7 +324,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			align: 'center',
 			width: 100,
 			render: (value): JSX.Element => {
-				const objectKeys = Object.keys(value);
+				const objectKeys = value ? Object.keys(value) : [];
 				const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
 
 				if (withOutSeverityKeys.length === 0) {
@@ -369,13 +403,11 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				/>
 				<Flex gap={12}>
 					{addNewAlert && (
-						<Button
-							type="primary"
-							onClick={onClickNewAlertHandler}
-							icon={<PlusOutlined />}
-						>
-							New Alert
-						</Button>
+						<Dropdown menu={{ items: newAlertMenuItems }} trigger={['click']}>
+							<Button type="primary" icon={<PlusOutlined />}>
+								New Alert
+							</Button>
+						</Dropdown>
 					)}
 					<TextToolTip
 						{...{

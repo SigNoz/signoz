@@ -86,6 +86,8 @@ queries.active
 .devenv/**/tmp/**
 .qodo
 
+.dev
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -228,4 +230,6 @@ poetry.toml
 # LSP config files
 pyrightconfig.json
 
-# End of https://www.toptal.com/developers/gitignore/api/python
+
+# cursor files
+frontend/.cursor/

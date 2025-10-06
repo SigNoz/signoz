@@ -68,7 +68,6 @@ describe('logsUpdaterConfig', () => {
 				name: 'new-column',
 				fieldContext: '',
 				fieldDataType: DataTypes.String,
-				isColumn: true,
 			},
 		];
 
@@ -79,7 +78,6 @@ describe('logsUpdaterConfig', () => {
 					key: 'old-column',
 					type: 'tag',
 					dataType: DataTypes.String,
-					isColumn: true,
 				},
 			],
 			maxLines: 2,
@@ -117,7 +115,6 @@ describe('logsUpdaterConfig', () => {
 				name: 'new-column',
 				fieldContext: '',
 				fieldDataType: DataTypes.String,
-				isColumn: true,
 			},
 		];
 
@@ -154,7 +151,6 @@ describe('logsUpdaterConfig', () => {
 					key: 'column',
 					type: 'tag',
 					dataType: DataTypes.String,
-					isColumn: true,
 				},
 			],
 			maxLines: 2,
@@ -183,7 +179,6 @@ describe('logsUpdaterConfig', () => {
 				key: 'column',
 				type: 'tag',
 				dataType: DataTypes.String,
-				isColumn: true,
 			},
 		]); // Should preserve columns
 	});
@@ -209,7 +204,6 @@ describe('logsUpdaterConfig', () => {
 					key: 'column',
 					type: 'tag',
 					dataType: DataTypes.String,
-					isColumn: true,
 				},
 			],
 			maxLines: 2,

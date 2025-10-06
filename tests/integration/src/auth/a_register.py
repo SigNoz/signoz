@@ -8,6 +8,22 @@ from fixtures.logger import setup_logger
 logger = setup_logger(__name__)
 
 
+def test_register_with_invalid_password(signoz: types.SigNoz) -> None:
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/register"),
+        json={
+            "name": "admin",
+            "orgId": "",
+            "orgName": "integration.test",
+            "email": "admin@integration.test",
+            "password": "password",
+        },
+        timeout=2,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
 def test_register(signoz: types.SigNoz, get_jwt_token) -> None:
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/version"), timeout=2
@@ -23,7 +39,7 @@ def test_register(signoz: types.SigNoz, get_jwt_token) -> None:
             "orgId": "",
             "orgName": "integration.test",
             "email": "admin@integration.test",
-            "password": "password",
+            "password": "password123Z$",
         },
         timeout=2,
     )
@@ -36,7 +52,7 @@ def test_register(signoz: types.SigNoz, get_jwt_token) -> None:
     assert response.status_code == HTTPStatus.OK
     assert response.json()["setupCompleted"] is True
 
-    admin_token = get_jwt_token("admin@integration.test", "password")
+    admin_token = get_jwt_token("admin@integration.test", "password123Z$")
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user"),
@@ -72,7 +88,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
         json={"email": "editor@integration.test", "role": "EDITOR"},
         timeout=2,
         headers={
-            "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password")}"
+            "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password123Z$")}"
         },
     )
 
@@ -82,7 +98,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
         timeout=2,
         headers={
-            "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password")}"
+            "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password123Z$")}"
         },
     )
 
@@ -100,7 +116,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
         json={
-            "password": "password",
+            "password": "password123Z$",
             "displayName": "editor",
             "token": f"{found_invite['token']}",
         },
@@ -121,7 +137,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
         signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
         headers={
-            "Authorization": f"Bearer {get_jwt_token("editor@integration.test", "password")}"
+            "Authorization": f"Bearer {get_jwt_token("editor@integration.test", "password123Z$")}"
         },
     )
 
@@ -132,7 +148,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
         signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
         headers={
-            "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password")}"
+            "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password123Z$")}"
         },
     )
 
@@ -151,7 +167,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
 
 
 def test_revoke_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
-    admin_token = get_jwt_token("admin@integration.test", "password")
+    admin_token = get_jwt_token("admin@integration.test", "password123Z$")
     # Generate an invite token for the viewer user
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
@@ -166,7 +182,7 @@ def test_revoke_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
         timeout=2,
         headers={
-            "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password")}"
+            "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password123Z$")}"
         },
     )
 
@@ -192,7 +208,7 @@ def test_revoke_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
         json={
-            "password": "password",
+            "password": "password123Z$",
             "displayName": "viewer",
             "token": f"{found_invite["token"]}",
         },
@@ -203,7 +219,7 @@ def test_revoke_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None
 
 
 def test_self_access(signoz: types.SigNoz, get_jwt_token) -> None:
-    admin_token = get_jwt_token("admin@integration.test", "password")
+    admin_token = get_jwt_token("admin@integration.test", "password123Z$")
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user"),

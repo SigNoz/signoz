@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/gorilla/mux"
@@ -14,7 +15,8 @@ const (
 )
 
 type AuthZ struct {
-	logger *slog.Logger
+	logger       *slog.Logger
+	authzService authz.AuthZ
 }
 
 func NewAuthZ(logger *slog.Logger) *AuthZ {
@@ -100,6 +102,24 @@ func (middleware *AuthZ) SelfAccess(next http.HandlerFunc) http.HandlerFunc {
 
 func (middleware *AuthZ) OpenAccess(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		next(rw, req)
+	})
+}
+
+func (middleware *AuthZ) Check(next http.HandlerFunc, _ authtypes.Relation, translation authtypes.Relation, _ authtypes.Typeable, _ authtypes.Typeable, _ authtypes.SelectorCallbackFn) http.HandlerFunc {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		claims, err := authtypes.ClaimsFromContext(req.Context())
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, translation, authtypes.TypeableOrganization, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeOrganization, claims.OrgID)})
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
 		next(rw, req)
 	})
 }

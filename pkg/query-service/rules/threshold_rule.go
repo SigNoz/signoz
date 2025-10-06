@@ -38,8 +38,6 @@ import (
 	querierV5 "github.com/SigNoz/signoz/pkg/querier"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-
-	yaml "gopkg.in/yaml.v2"
 )
 
 type ThresholdRule struct {
@@ -478,11 +476,23 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		return resultVector, nil
 	}
 
+	if queryResult == nil {
+		r.logger.WarnContext(ctx, "query result is nil", "rule_name", r.Name(), "query_name", selectedQuery)
+		return resultVector, nil
+	}
+
 	for _, series := range queryResult.Series {
-		smpl, shouldAlert := r.ShouldAlert(*series)
-		if shouldAlert {
-			resultVector = append(resultVector, smpl)
+		if r.Condition() != nil && r.Condition().RequireMinPoints {
+			if len(series.Points) < r.ruleCondition.RequiredNumPoints {
+				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
+				continue
+			}
 		}
+		resultSeries, err := r.Threshold.ShouldAlert(*series, r.Unit())
+		if err != nil {
+			return nil, err
+		}
+		resultVector = append(resultVector, resultSeries...)
 	}
 
 	return resultVector, nil
@@ -549,10 +559,17 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 	}
 
 	for _, series := range queryResult.Series {
-		smpl, shouldAlert := r.ShouldAlert(*series)
-		if shouldAlert {
-			resultVector = append(resultVector, smpl)
+		if r.Condition() != nil && r.Condition().RequireMinPoints {
+			if len(series.Points) < r.Condition().RequiredNumPoints {
+				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
+				continue
+			}
 		}
+		resultSeries, err := r.Threshold.ShouldAlert(*series, r.Unit())
+		if err != nil {
+			return nil, err
+		}
+		resultVector = append(resultVector, resultSeries...)
 	}
 
 	return resultVector, nil
@@ -585,6 +602,12 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 	resultFPs := map[uint64]struct{}{}
 	var alerts = make(map[uint64]*ruletypes.Alert, len(res))
 
+	ruleReceivers := r.Threshold.GetRuleReceivers()
+	ruleReceiverMap := make(map[string][]string)
+	for _, value := range ruleReceivers {
+		ruleReceiverMap[value.Name] = value.Channels
+	}
+
 	for _, smpl := range res {
 		l := make(map[string]string, len(smpl.Metric))
 		for _, lbl := range smpl.Metric {
@@ -592,7 +615,8 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		}
 
 		value := valueFormatter.Format(smpl.V, r.Unit())
-		threshold := valueFormatter.Format(r.targetVal(), r.Unit())
+		//todo(aniket): handle different threshold
+		threshold := valueFormatter.Format(smpl.Target, smpl.TargetUnit)
 		r.logger.DebugContext(ctx, "Alert template data for rule", "rule_name", r.Name(), "formatter", valueFormatter.Name(), "value", value, "threshold", threshold)
 
 		tmplData := ruletypes.AlertTemplateData(l, value, threshold)
@@ -636,6 +660,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		}
 		if smpl.IsMissing {
 			lb.Set(labels.AlertNameLabel, "[No data] "+r.Name())
+			lb.Set(labels.NoDataLabel, "true")
 		}
 
 		// Links with timestamps should go in annotations since labels
@@ -671,7 +696,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 			State:             model.StatePending,
 			Value:             smpl.V,
 			GeneratorURL:      r.GeneratorURL(),
-			Receivers:         r.preferredChannels,
+			Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
 			Missing:           smpl.IsMissing,
 		}
 	}
@@ -686,7 +711,9 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
-			alert.Receivers = r.preferredChannels
+			if v, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
+				alert.Receivers = ruleReceiverMap[v]
+			}
 			continue
 		}
 
@@ -772,7 +799,7 @@ func (r *ThresholdRule) String() string {
 		PreferredChannels: r.preferredChannels,
 	}
 
-	byt, err := yaml.Marshal(ar)
+	byt, err := json.Marshal(ar)
 	if err != nil {
 		return fmt.Sprintf("error marshaling alerting rule: %s", err.Error())
 	}

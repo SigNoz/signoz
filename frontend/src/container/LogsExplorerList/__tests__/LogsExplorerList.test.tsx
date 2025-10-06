@@ -73,20 +73,6 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	}),
 }));
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 jest.mock('hooks/queryBuilder/useGetExplorerQueryRange', () => ({
 	__esModule: true,
 	useGetExplorerQueryRange: jest.fn(),
@@ -119,7 +105,6 @@ describe('LogsExplorerList - empty states', () => {
 											key: 'trace_id',
 											type: '',
 											dataType: 'string',
-											isColumn: true,
 										},
 										op: '=',
 										value: 'test-trace-id',
@@ -142,6 +127,7 @@ describe('LogsExplorerList - empty states', () => {
 						listQueryKeyRef={{ current: {} }}
 						chartQueryKeyRef={{ current: {} }}
 						setWarning={(): void => {}}
+						showLiveLogs={false}
 					/>
 				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,
@@ -184,7 +170,6 @@ describe('LogsExplorerList - empty states', () => {
 											key: 'service.name',
 											type: '',
 											dataType: 'string',
-											isColumn: true,
 										},
 										op: '=',
 										value: 'test-service-name',
@@ -207,6 +192,7 @@ describe('LogsExplorerList - empty states', () => {
 						listQueryKeyRef={{ current: {} }}
 						chartQueryKeyRef={{ current: {} }}
 						setWarning={(): void => {}}
+						showLiveLogs={false}
 					/>
 				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,

@@ -203,10 +203,10 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left small-col">Mem Usage</div>,
+		title: <div className="column-header-left small-col">Mem Usage (WSS)</div>,
 		dataIndex: 'memory',
 		key: 'memory',
-		width: 80,
+		width: 120,
 		sorter: true,
 		align: 'left',
 	},

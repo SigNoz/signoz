@@ -50,7 +50,6 @@ function LogsExplorerList({
 	isFilterApplied,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
-
 	const { activeLogId } = useCopyLogLink();
 
 	const {
@@ -90,6 +89,7 @@ function LogsExplorerList({
 			});
 		}
 	}, [isLoading, isFetching, isError, logs.length]);
+
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
 			if (options.format === 'raw') {

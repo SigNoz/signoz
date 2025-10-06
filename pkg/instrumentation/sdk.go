@@ -11,7 +11,7 @@ import (
 	contribsdkconfig "go.opentelemetry.io/contrib/config"
 	sdkmetric "go.opentelemetry.io/otel/metric"
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	sdktrace "go.opentelemetry.io/otel/trace"
 )
 
@@ -22,6 +22,7 @@ var _ Instrumentation = (*SDK)(nil)
 type SDK struct {
 	logger             *slog.Logger
 	sdk                contribsdkconfig.SDK
+	meterProvider      sdkmetric.MeterProvider
 	prometheusRegistry *prometheus.Registry
 	startCh            chan struct{}
 }
@@ -59,6 +60,9 @@ func New(ctx context.Context, cfg Config, build version.Build, serviceName strin
 		SchemaUrl:  &sch,
 	}
 
+	prometheusRegistry := prometheus.NewRegistry()
+	prometheusRegistry.MustRegister(collectors.NewBuildInfoCollector())
+
 	var tracerProvider *contribsdkconfig.TracerProvider
 	if cfg.Traces.Enabled {
 		tracerProvider = &contribsdkconfig.TracerProvider{
@@ -69,20 +73,26 @@ func New(ctx context.Context, cfg Config, build version.Build, serviceName strin
 		}
 	}
 
-	var meterProvider *contribsdkconfig.MeterProvider
+	// Use contrib config approach but with custom Prometheus registry
+	var meterProvider sdkmetric.MeterProvider
 	if cfg.Metrics.Enabled {
-		meterProvider = &contribsdkconfig.MeterProvider{
+		meterProviderConfig := &contribsdkconfig.MeterProvider{
 			Readers: []contribsdkconfig.MetricReader{
 				{Pull: &cfg.Metrics.Readers.Pull},
 			},
 		}
+
+		mp, _, err := meterProviderWithCustomRegistry(ctx, meterProviderConfig, resource, prometheusRegistry)
+		if err != nil {
+			return nil, err
+		}
+		meterProvider = mp
 	}
 
 	sdk, err := contribsdkconfig.NewSDK(
 		contribsdkconfig.WithContext(ctx),
 		contribsdkconfig.WithOpenTelemetryConfiguration(contribsdkconfig.OpenTelemetryConfiguration{
 			TracerProvider: tracerProvider,
-			MeterProvider:  meterProvider,
 			Resource:       &configResource,
 		}),
 	)
@@ -90,11 +100,9 @@ func New(ctx context.Context, cfg Config, build version.Build, serviceName strin
 		return nil, err
 	}
 
-	prometheusRegistry := prometheus.NewRegistry()
-	prometheusRegistry.MustRegister(collectors.NewBuildInfoCollector())
-
 	return &SDK{
 		sdk:                sdk,
+		meterProvider:      meterProvider,
 		prometheusRegistry: prometheusRegistry,
 		logger:             NewLogger(cfg),
 		startCh:            make(chan struct{}),

@@ -29,6 +29,7 @@ export const DATE_TIME_FORMATS = {
 	DATE_SHORT: 'MM/DD',
 	YEAR_SHORT: 'YY',
 	YEAR_MONTH: 'YY-MM',
+	SPAN_POPOVER_DATE: 'M/D/YY - HH:mm',
 
 	// Month name formats
 	MONTH_DATE_FULL: 'MMMM DD, YYYY',
@@ -39,6 +40,8 @@ export const DATE_TIME_FORMATS = {
 	MONTH_DATETIME_SECONDS: 'MMM DD YYYY HH:mm:ss',
 	MONTH_DATETIME_FULL: 'MMMM DD, YYYY HH:mm',
 	MONTH_DATETIME_FULL_SECONDS: 'MMM DD, YYYY, HH:mm:ss',
+	DD_MMM_YYYY_HH_MM: 'DD MMM YYYY, HH:mm',
+	DD_MMM_YYYY_HH_MM_SS: 'DD MMM YYYY, HH:mm:ss',
 
 	// Ordinal formats (1st, 2nd, 3rd, etc)
 	ORDINAL_DATE: 'Do MMM YYYY',

@@ -1277,6 +1277,13 @@ func getLocalTableName(tableName string) string {
 }
 
 func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+	hasCustomRetention, err := r.hasCustomRetentionColumn(ctx)
+	if hasCustomRetention {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("SetTTLV2 only supported")}
+	}
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing TTL")}
+	}
 	// uuid is used as transaction id
 	uuidWithHyphen := uuid.New()
 	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
@@ -1559,6 +1566,475 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 		}(distributedTableName)
 	}
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
+}
+
+func (r *ClickHouseReader) hasCustomRetentionColumn(ctx context.Context) (bool, error) {
+	// Directly query for the _retention_days column existence
+	query := fmt.Sprintf("SELECT 1 FROM system.columns WHERE database = '%s' AND table = '%s' AND name = '_retention_days' LIMIT 1", r.logsDB, r.logsLocalTableV2)
+
+	var exists uint8 // Changed from int to uint8 to match ClickHouse's UInt8 type
+	err := r.db.QueryRow(ctx, query).Scan(&exists)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Column doesn't exist
+			zap.L().Debug("_retention_days column not found in logs table", zap.String("table", r.logsLocalTableV2))
+			return false, nil
+		}
+		zap.L().Error("Error checking for _retention_days column", zap.Error(err))
+		return false, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error checking columns")
+	}
+
+	zap.L().Debug("Found _retention_days column in logs table", zap.String("table", r.logsLocalTableV2))
+	return true, nil
+}
+
+func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *model.CustomRetentionTTLParams) (*model.CustomRetentionTTLResponse, error) {
+
+	hasCustomRetention, err := r.hasCustomRetentionColumn(ctx)
+	if err != nil {
+		return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "custom retention not supported")
+	}
+
+	if !hasCustomRetention {
+		zap.L().Info("Custom retention not supported, falling back to standard TTL method",
+			zap.String("orgID", orgID))
+
+		ttlParams := &model.TTLParams{
+			Type:        params.Type,
+			DelDuration: int64(params.DefaultTTLDays * 24 * 3600),
+		}
+		if params.ColdStorageVolume != "" {
+			ttlParams.ColdStorageVolume = params.ColdStorageVolume
+		} else {
+			ttlParams.ColdStorageVolume = ""
+		}
+
+		if params.ToColdStorageDuration > 0 {
+			ttlParams.ToColdStorageDuration = params.ToColdStorageDuration
+		} else {
+			ttlParams.ToColdStorageDuration = 0
+		}
+
+		ttlResult, apiErr := r.SetTTL(ctx, orgID, ttlParams)
+		if apiErr != nil {
+			return nil, errorsV2.Wrapf(apiErr.Err, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to set standard TTL")
+		}
+
+		return &model.CustomRetentionTTLResponse{
+			Message: fmt.Sprintf("Custom retention not supported, applied standard TTL of %d days. %s", params.DefaultTTLDays, ttlResult.Message),
+		}, nil
+	}
+
+	// Keep only latest 100 transactions/requests
+	r.deleteTtlTransactions(ctx, orgID, 100)
+
+	uuidWithHyphen := valuer.GenerateUUID()
+	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
+
+	if params.Type != constants.LogsTTL {
+		return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "custom retention TTL only supported for logs")
+	}
+
+	// Validate TTL conditions
+	if err := r.validateTTLConditions(ctx, params.TTLConditions); err != nil {
+		return nil, err
+	}
+
+	// Calculate cold storage duration
+	coldStorageDuration := -1
+	if len(params.ColdStorageVolume) > 0 && params.ToColdStorageDuration > 0 {
+		coldStorageDuration = int(params.ToColdStorageDuration) // Already in days
+	}
+
+	tableNames := []string{
+		r.logsDB + "." + r.logsLocalTableV2,
+		r.logsDB + "." + r.logsResourceLocalTableV2,
+	}
+
+	for _, tableName := range tableNames {
+		statusItem, err := r.checkCustomRetentionTTLStatusItem(ctx, orgID, tableName)
+		if err != nil {
+			return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error in processing custom_retention_ttl_status check sql query")
+		}
+		if statusItem.Status == constants.StatusPending {
+			return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "custom retention TTL is already running")
+		}
+	}
+
+	multiIfExpr := r.buildMultiIfExpression(params.TTLConditions, params.DefaultTTLDays, false)
+	resourceMultiIfExpr := r.buildMultiIfExpression(params.TTLConditions, params.DefaultTTLDays, true)
+
+	ttlPayload := make(map[string][]string)
+
+	queries := []string{
+		fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT %s`,
+			tableNames[0], r.cluster, multiIfExpr),
+	}
+
+	if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 {
+		queries = append(queries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
+			tableNames[0], r.cluster, coldStorageDuration))
+
+		queries = append(queries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days_cold) TO VOLUME '%s' SETTINGS materialize_ttl_after_modify=0`,
+			tableNames[0], r.cluster, params.ColdStorageVolume))
+	}
+
+	ttlPayload[tableNames[0]] = queries
+
+	resourceQueries := []string{
+		fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT %s`,
+			tableNames[1], r.cluster, resourceMultiIfExpr),
+	}
+
+	if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 {
+		resourceQueries = append(resourceQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
+			tableNames[1], r.cluster, coldStorageDuration))
+
+		resourceQueries = append(resourceQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days) DELETE, toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days_cold) TO VOLUME '%s' SETTINGS materialize_ttl_after_modify=0`,
+			tableNames[1], r.cluster, params.ColdStorageVolume))
+	}
+
+	ttlPayload[tableNames[1]] = resourceQueries
+
+	ttlConditionsJSON, err := json.Marshal(params.TTLConditions)
+	if err != nil {
+		return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error marshalling TTL condition")
+	}
+
+	for tableName, queries := range ttlPayload {
+		customTTL := types.TTLSetting{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
+			TransactionID:  uuid,
+			TableName:      tableName,
+			TTL:            params.DefaultTTLDays,
+			Condition:      string(ttlConditionsJSON),
+			Status:         constants.StatusPending,
+			ColdStorageTTL: coldStorageDuration,
+			OrgID:          orgID,
+		}
+
+		// Insert TTL setting record
+		_, dbErr := r.sqlDB.BunDB().NewInsert().Model(&customTTL).Exec(ctx)
+		if dbErr != nil {
+			zap.L().Error("error in inserting to custom_retention_ttl_settings table", zap.Error(dbErr))
+			return nil, errorsV2.Wrapf(dbErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "error inserting TTL settings")
+		}
+
+		if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 {
+			err := r.setColdStorage(ctx, tableName, params.ColdStorageVolume)
+			if err != nil {
+				zap.L().Error("error in setting cold storage", zap.Error(err))
+				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusFailed)
+				return nil, errorsV2.Wrapf(err.Err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting cold storage for table %s", tableName)
+			}
+		}
+
+		for i, query := range queries {
+			zap.L().Debug("Executing custom retention TTL request: ", zap.String("request", query), zap.Int("step", i+1))
+			if err := r.db.Exec(ctx, query); err != nil {
+				zap.L().Error("error while setting custom retention ttl", zap.Error(err))
+				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusFailed)
+				return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting custom retention TTL for table %s, query: %s", tableName, query)
+			}
+		}
+
+		r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusSuccess)
+	}
+
+	return &model.CustomRetentionTTLResponse{
+		Message: "custom retention TTL has been successfully set up",
+	}, nil
+}
+
+// New method to build multiIf expressions with support for multiple AND conditions
+func (r *ClickHouseReader) buildMultiIfExpression(ttlConditions []model.CustomRetentionRule, defaultTTLDays int, isResourceTable bool) string {
+	var conditions []string
+
+	for i, rule := range ttlConditions {
+		zap.L().Debug("Processing rule", zap.Int("ruleIndex", i), zap.Int("ttlDays", rule.TTLDays), zap.Int("conditionsCount", len(rule.Filters)))
+
+		if len(rule.Filters) == 0 {
+			zap.L().Warn("Rule has no filters, skipping", zap.Int("ruleIndex", i))
+			continue
+		}
+
+		// Build AND conditions for this rule
+		var andConditions []string
+		for j, condition := range rule.Filters {
+			zap.L().Debug("Processing condition", zap.Int("ruleIndex", i), zap.Int("conditionIndex", j), zap.String("key", condition.Key), zap.Strings("values", condition.Values))
+
+			// This should not happen as validation should catch it
+			if len(condition.Values) == 0 {
+				zap.L().Error("Condition has no values - this should have been caught in validation", zap.Int("ruleIndex", i), zap.Int("conditionIndex", j))
+				continue
+			}
+
+			// Properly quote values for IN clause
+			quotedValues := make([]string, len(condition.Values))
+			for k, v := range condition.Values {
+				quotedValues[k] = fmt.Sprintf("'%s'", v)
+			}
+
+			var conditionExpr string
+			if isResourceTable {
+				// For resource table, use JSONExtractString
+				conditionExpr = fmt.Sprintf(
+					"JSONExtractString(labels, '%s') IN (%s)",
+					condition.Key,
+					strings.Join(quotedValues, ", "),
+				)
+			} else {
+				// For main logs table, use resources_string
+				conditionExpr = fmt.Sprintf(
+					"resources_string['%s'] IN (%s)",
+					condition.Key,
+					strings.Join(quotedValues, ", "),
+				)
+			}
+			andConditions = append(andConditions, conditionExpr)
+		}
+
+		if len(andConditions) > 0 {
+			// Join all conditions with AND
+			fullCondition := strings.Join(andConditions, " AND ")
+			conditionWithTTL := fmt.Sprintf("%s, %d", fullCondition, rule.TTLDays)
+			zap.L().Debug("Adding condition to multiIf", zap.String("condition", conditionWithTTL))
+			conditions = append(conditions, conditionWithTTL)
+		}
+	}
+
+	// Handle case where no valid conditions were found
+	if len(conditions) == 0 {
+		zap.L().Info("No valid conditions found, returning default TTL", zap.Int("defaultTTLDays", defaultTTLDays))
+		return fmt.Sprintf("%d", defaultTTLDays)
+	}
+
+	result := fmt.Sprintf(
+		"multiIf(%s, %d)",
+		strings.Join(conditions, ", "),
+		defaultTTLDays,
+	)
+
+	zap.L().Debug("Final multiIf expression", zap.String("expression", result))
+	return result
+}
+
+func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID string) (*model.GetCustomRetentionTTLResponse, error) {
+	// Check if V2 (custom retention) is supported
+	hasCustomRetention, err := r.hasCustomRetentionColumn(ctx)
+	if err != nil {
+		// If there's an error checking, assume V1 and proceed
+		zap.L().Warn("Error checking for custom retention column, assuming V1", zap.Error(err))
+		hasCustomRetention = false
+	}
+
+	response := &model.GetCustomRetentionTTLResponse{}
+
+	if hasCustomRetention {
+		// V2 - Custom retention is supported
+		response.Version = "v2"
+
+		// Get the latest custom retention TTL setting
+		customTTL := new(types.TTLSetting)
+		err := r.sqlDB.BunDB().NewSelect().
+			Model(customTTL).
+			Where("org_id = ?", orgID).
+			Where("table_name = ?", r.logsDB+"."+r.logsLocalTableV2).
+			OrderExpr("created_at DESC").
+			Limit(1).
+			Scan(ctx)
+
+		if err != nil && err != sql.ErrNoRows {
+			zap.L().Error("Error in processing sql query", zap.Error(err))
+			return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error in processing get custom ttl query")
+		}
+
+		if err == sql.ErrNoRows {
+			// No V2 configuration found, return defaults
+			response.DefaultTTLDays = 15
+			response.TTLConditions = []model.CustomRetentionRule{}
+			response.Status = constants.StatusFailed
+			return response, nil
+		}
+
+		// Parse TTL conditions from Condition
+		var ttlConditions []model.CustomRetentionRule
+		if customTTL.Condition != "" {
+			if err := json.Unmarshal([]byte(customTTL.Condition), &ttlConditions); err != nil {
+				zap.L().Error("Error parsing TTL conditions", zap.Error(err))
+				ttlConditions = []model.CustomRetentionRule{}
+			}
+		}
+
+		response.DefaultTTLDays = customTTL.TTL
+		response.TTLConditions = ttlConditions
+		response.Status = customTTL.Status
+		response.ColdStorageTTLDays = customTTL.ColdStorageTTL
+
+	} else {
+		// V1 - Traditional TTL
+		response.Version = "v1"
+
+		// Get V1 TTL configuration
+		ttlParams := &model.GetTTLParams{
+			Type: constants.LogsTTL,
+		}
+
+		ttlResult, apiErr := r.GetTTL(ctx, orgID, ttlParams)
+		if apiErr != nil {
+			return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error getting V1 TTL: %s", apiErr.Error())
+		}
+
+		// Map V1 fields to response
+		response.LogsTime = ttlResult.LogsTime
+		response.LogsMoveTime = ttlResult.LogsMoveTime
+		response.ExpectedLogsTime = ttlResult.ExpectedLogsTime
+		response.ExpectedLogsMoveTime = ttlResult.ExpectedLogsMoveTime
+		response.Status = ttlResult.Status
+		response.DefaultTTLDays = ttlResult.LogsTime / 24
+
+		// For V1, we don't have TTL conditions
+		response.TTLConditions = []model.CustomRetentionRule{}
+	}
+
+	return response, nil
+}
+
+func (r *ClickHouseReader) checkCustomRetentionTTLStatusItem(ctx context.Context, orgID string, tableName string) (*types.TTLSetting, error) {
+	ttl := new(types.TTLSetting)
+	err := r.sqlDB.BunDB().NewSelect().
+		Model(ttl).
+		Where("table_name = ?", tableName).
+		Where("org_id = ?", orgID).
+		OrderExpr("created_at DESC").
+		Limit(1).
+		Scan(ctx)
+
+	if err != nil && err != sql.ErrNoRows {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return ttl, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error in processing custom_retention_ttl_status check sql query")
+	}
+
+	return ttl, nil
+}
+
+func (r *ClickHouseReader) updateCustomRetentionTTLStatus(ctx context.Context, orgID, tableName, status string) {
+	statusItem, err := r.checkCustomRetentionTTLStatusItem(ctx, orgID, tableName)
+	if err == nil && statusItem != nil {
+		_, dbErr := r.sqlDB.BunDB().NewUpdate().
+			Model(new(types.TTLSetting)).
+			Set("updated_at = ?", time.Now()).
+			Set("status = ?", status).
+			Where("id = ?", statusItem.ID.StringValue()).
+			Exec(ctx)
+		if dbErr != nil {
+			zap.L().Error("Error in processing custom_retention_ttl_status update sql query", zap.Error(dbErr))
+		}
+	}
+}
+
+// Enhanced validation function with duplicate detection and efficient key validation
+func (r *ClickHouseReader) validateTTLConditions(ctx context.Context, ttlConditions []model.CustomRetentionRule) error {
+	if len(ttlConditions) == 0 {
+		return nil
+	}
+
+	// Collect all unique keys and detect duplicates
+	var allKeys []string
+	keySet := make(map[string]struct{})
+	conditionSignatures := make(map[string]bool)
+
+	for i, rule := range ttlConditions {
+		if len(rule.Filters) == 0 {
+			return errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "rule at index %d has no filters", i)
+		}
+
+		// Create a signature for this rule's conditions to detect duplicates
+		var conditionKeys []string
+		var conditionValues []string
+
+		for j, condition := range rule.Filters {
+			if len(condition.Values) == 0 {
+				return errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "condition at rule %d, condition %d has no values", i, j)
+			}
+
+			// Collect unique keys
+			if _, exists := keySet[condition.Key]; !exists {
+				allKeys = append(allKeys, condition.Key)
+				keySet[condition.Key] = struct{}{}
+			}
+
+			// Build signature for duplicate detection
+			conditionKeys = append(conditionKeys, condition.Key)
+			conditionValues = append(conditionValues, strings.Join(condition.Values, ","))
+		}
+
+		// Create signature by sorting keys and values to handle order-independent comparison
+		sort.Strings(conditionKeys)
+		sort.Strings(conditionValues)
+		signature := strings.Join(conditionKeys, "|") + ":" + strings.Join(conditionValues, "|")
+
+		if conditionSignatures[signature] {
+			return errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "duplicate rule detected at index %d: rules with identical conditions are not allowed", i)
+		}
+		conditionSignatures[signature] = true
+	}
+
+	if len(allKeys) == 0 {
+		return nil
+	}
+
+	// Create placeholders for IN query
+	placeholders := make([]string, len(allKeys))
+	for i := range allKeys {
+		placeholders[i] = "?"
+	}
+
+	// Efficient validation using IN query
+	query := fmt.Sprintf("SELECT name FROM %s.%s WHERE name IN (%s)",
+		r.logsDB, r.logsResourceKeys, strings.Join(placeholders, ", "))
+
+	// Convert keys to interface{} for query parameters
+	params := make([]interface{}, len(allKeys))
+	for i, key := range allKeys {
+		params[i] = key
+	}
+
+	rows, err := r.db.Query(ctx, query, params...)
+	if err != nil {
+		return errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to validate resource keys")
+	}
+	defer rows.Close()
+
+	// Collect valid keys
+	validKeys := make(map[string]struct{})
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to scan resource keys")
+		}
+		validKeys[name] = struct{}{}
+	}
+
+	// Find invalid keys
+	var invalidKeys []string
+	for _, key := range allKeys {
+		if _, exists := validKeys[key]; !exists {
+			invalidKeys = append(invalidKeys, key)
+		}
+	}
+
+	if len(invalidKeys) > 0 {
+		return errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "invalid resource keys found: %v. Please check logs_resource_keys table for valid keys", invalidKeys)
+	}
+
+	return nil
 }
 
 // SetTTL sets the TTL for traces or metrics or logs tables.
@@ -3640,28 +4116,8 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 	return seriesList, getPersonalisedError(rows.Err())
 }
 
-func logCommentKVs(ctx context.Context) map[string]string {
-	kv := ctx.Value(common.LogCommentKey)
-	if kv == nil {
-		return nil
-	}
-	logCommentKVs, ok := kv.(map[string]string)
-	if !ok {
-		return nil
-	}
-	return logCommentKVs
-}
-
 // GetTimeSeriesResultV3 runs the query and returns list of time series
 func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error) {
-
-	ctxArgs := map[string]interface{}{"query": query}
-	for k, v := range logCommentKVs(ctx) {
-		ctxArgs[k] = v
-	}
-
-	defer utils.Elapsed("GetTimeSeriesResultV3", ctxArgs)()
-
 	// Hook up query progress reporting if requested.
 	queryId := ctx.Value("queryId")
 	if queryId != nil {
@@ -3725,20 +4181,12 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 
 // GetListResultV3 runs the query and returns list of rows
 func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error) {
-
-	ctxArgs := map[string]interface{}{"query": query}
-	for k, v := range logCommentKVs(ctx) {
-		ctxArgs[k] = v
-	}
-
-	defer utils.Elapsed("GetListResultV3", ctxArgs)()
-
 	rows, err := r.db.Query(ctx, query)
-
 	if err != nil {
 		zap.L().Error("error while reading time series result", zap.Error(err))
 		return nil, errors.New(err.Error())
 	}
+
 	defer rows.Close()
 
 	var (
@@ -4117,103 +4565,6 @@ func (r *ClickHouseReader) GetSpanAttributeKeysByNames(ctx context.Context, name
 	}
 
 	return response, nil
-}
-
-func (r *ClickHouseReader) LiveTailLogsV4(ctx context.Context, query string, timestampStart uint64, idStart string, client *model.LogsLiveTailClientV2) {
-	if timestampStart == 0 {
-		timestampStart = uint64(time.Now().UnixNano())
-	} else {
-		timestampStart = uint64(utils.GetEpochNanoSecs(int64(timestampStart)))
-	}
-
-	ticker := time.NewTicker(time.Duration(r.liveTailRefreshSeconds) * time.Second)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			done := true
-			client.Done <- &done
-			zap.L().Debug("closing go routine : " + client.Name)
-			return
-		case <-ticker.C:
-			// get the new 100 logs as anything more older won't make sense
-			var tmpQuery string
-			bucketStart := (timestampStart / NANOSECOND) - 1800
-
-			// we have to form the query differently if the resource filters are used
-			if strings.Contains(query, r.logsResourceTableV2) {
-				tmpQuery = fmt.Sprintf("seen_at_ts_bucket_start >=%d)) AND ts_bucket_start >=%d AND timestamp >=%d", bucketStart, bucketStart, timestampStart)
-			} else {
-				tmpQuery = fmt.Sprintf("ts_bucket_start >=%d AND timestamp >=%d", bucketStart, timestampStart)
-			}
-			if idStart != "" {
-				tmpQuery = fmt.Sprintf("%s AND id > '%s'", tmpQuery, idStart)
-			}
-
-			// the reason we are doing desc is that we need the latest logs first
-			tmpQuery = query + tmpQuery + " order by timestamp desc, id desc limit 100"
-
-			// using the old structure since we can directly read it to the struct as use it.
-			response := []model.SignozLogV2{}
-			err := r.db.Select(ctx, &response, tmpQuery)
-			if err != nil {
-				zap.L().Error("Error while getting logs", zap.Error(err))
-				client.Error <- err
-				return
-			}
-			for i := len(response) - 1; i >= 0; i-- {
-				client.Logs <- &response[i]
-				if i == 0 {
-					timestampStart = response[i].Timestamp
-					idStart = response[i].ID
-				}
-			}
-		}
-	}
-}
-
-func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, timestampStart uint64, idStart string, client *model.LogsLiveTailClient) {
-	if timestampStart == 0 {
-		timestampStart = uint64(time.Now().UnixNano())
-	} else {
-		timestampStart = uint64(utils.GetEpochNanoSecs(int64(timestampStart)))
-	}
-
-	ticker := time.NewTicker(time.Duration(r.liveTailRefreshSeconds) * time.Second)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			done := true
-			client.Done <- &done
-			zap.L().Debug("closing go routine : " + client.Name)
-			return
-		case <-ticker.C:
-			// get the new 100 logs as anything more older won't make sense
-			tmpQuery := fmt.Sprintf("timestamp >='%d'", timestampStart)
-			if idStart != "" {
-				tmpQuery = fmt.Sprintf("%s AND id > '%s'", tmpQuery, idStart)
-			}
-			// the reason we are doing desc is that we need the latest logs first
-			tmpQuery = query + tmpQuery + " order by timestamp desc, id desc limit 100"
-
-			// using the old structure since we can directly read it to the struct as use it.
-			response := []model.SignozLog{}
-			err := r.db.Select(ctx, &response, tmpQuery)
-			if err != nil {
-				zap.L().Error("Error while getting logs", zap.Error(err))
-				client.Error <- err
-				return
-			}
-			for i := len(response) - 1; i >= 0; i-- {
-				client.Logs <- &response[i]
-				if i == 0 {
-					timestampStart = response[i].Timestamp
-					idStart = response[i].ID
-				}
-			}
-		}
-	}
 }
 
 func (r *ClickHouseReader) AddRuleStateHistory(ctx context.Context, ruleStateHistory []model.RuleStateHistory) error {
