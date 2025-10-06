@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/types/spanpercentiletypes"
 	"github.com/SigNoz/signoz/pkg/types/thirdpartyapitypes"
 	"math"
 	"net/http"
@@ -984,20 +983,6 @@ func ParseQueueBody(r *http.Request) (*queues2.QueueListRequest, *model.ApiError
 // ParseRequestBody for third party APIs
 func ParseRequestBody(r *http.Request) (*thirdpartyapitypes.ThirdPartyApiRequest, error) {
 	req := new(thirdpartyapitypes.ThirdPartyApiRequest)
-	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		return nil, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "cannot parse the request body: %v", err)
-	}
-
-	if err := req.Validate(); err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// ParseSpanPercentileRequestBody parses the request body for span percentile requests
-func ParseSpanPercentileRequestBody(r *http.Request) (*spanpercentiletypes.SpanPercentileRequest, error) {
-	req := new(spanpercentiletypes.SpanPercentileRequest)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		return nil, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "cannot parse the request body: %v", err)
 	}

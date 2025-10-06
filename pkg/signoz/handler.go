@@ -13,6 +13,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
+	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
+	"github.com/SigNoz/signoz/pkg/modules/spanpercentile/implspanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
@@ -23,27 +25,29 @@ import (
 )
 
 type Handlers struct {
-	Organization  organization.Handler
-	Preference    preference.Handler
-	User          user.Handler
-	SavedView     savedview.Handler
-	Apdex         apdex.Handler
-	Dashboard     dashboard.Handler
-	QuickFilter   quickfilter.Handler
-	TraceFunnel   tracefunnel.Handler
-	RawDataExport rawdataexport.Handler
+	Organization   organization.Handler
+	Preference     preference.Handler
+	User           user.Handler
+	SavedView      savedview.Handler
+	Apdex          apdex.Handler
+	Dashboard      dashboard.Handler
+	QuickFilter    quickfilter.Handler
+	TraceFunnel    tracefunnel.Handler
+	RawDataExport  rawdataexport.Handler
+	SpanPercentile spanpercentile.Handler
 }
 
 func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Handlers {
 	return Handlers{
-		Organization:  implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
-		Preference:    implpreference.NewHandler(modules.Preference),
-		User:          impluser.NewHandler(modules.User),
-		SavedView:     implsavedview.NewHandler(modules.SavedView),
-		Apdex:         implapdex.NewHandler(modules.Apdex),
-		Dashboard:     impldashboard.NewHandler(modules.Dashboard, providerSettings),
-		QuickFilter:   implquickfilter.NewHandler(modules.QuickFilter),
-		TraceFunnel:   impltracefunnel.NewHandler(modules.TraceFunnel),
-		RawDataExport: implrawdataexport.NewHandler(modules.RawDataExport),
+		Organization:   implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
+		Preference:     implpreference.NewHandler(modules.Preference),
+		User:           impluser.NewHandler(modules.User),
+		SavedView:      implsavedview.NewHandler(modules.SavedView),
+		Apdex:          implapdex.NewHandler(modules.Apdex),
+		Dashboard:      impldashboard.NewHandler(modules.Dashboard, providerSettings),
+		QuickFilter:    implquickfilter.NewHandler(modules.QuickFilter),
+		TraceFunnel:    impltracefunnel.NewHandler(modules.TraceFunnel),
+		RawDataExport:  implrawdataexport.NewHandler(modules.RawDataExport),
+		SpanPercentile: implspanpercentile.NewHandler(modules.SpanPercentile),
 	}
 }

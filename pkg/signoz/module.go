@@ -16,6 +16,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
+	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
+	"github.com/SigNoz/signoz/pkg/modules/spanpercentile/implspanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
@@ -30,16 +32,17 @@ import (
 )
 
 type Modules struct {
-	OrgGetter     organization.Getter
-	OrgSetter     organization.Setter
-	Preference    preference.Module
-	User          user.Module
-	SavedView     savedview.Module
-	Apdex         apdex.Module
-	Dashboard     dashboard.Module
-	QuickFilter   quickfilter.Module
-	TraceFunnel   tracefunnel.Module
-	RawDataExport rawdataexport.Module
+	OrgGetter      organization.Getter
+	OrgSetter      organization.Setter
+	Preference     preference.Module
+	User           user.Module
+	SavedView      savedview.Module
+	Apdex          apdex.Module
+	Dashboard      dashboard.Module
+	QuickFilter    quickfilter.Module
+	TraceFunnel    tracefunnel.Module
+	RawDataExport  rawdataexport.Module
+	SpanPercentile spanpercentile.Module
 }
 
 func NewModules(
@@ -56,15 +59,16 @@ func NewModules(
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
 	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), jwt, emailing, providerSettings, orgSetter, analytics)
 	return Modules{
-		OrgGetter:     orgGetter,
-		OrgSetter:     orgSetter,
-		Preference:    implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
-		SavedView:     implsavedview.NewModule(sqlstore),
-		Apdex:         implapdex.NewModule(sqlstore),
-		Dashboard:     impldashboard.NewModule(sqlstore, providerSettings, analytics),
-		User:          user,
-		QuickFilter:   quickfilter,
-		TraceFunnel:   impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
-		RawDataExport: implrawdataexport.NewModule(querier),
+		OrgGetter:      orgGetter,
+		OrgSetter:      orgSetter,
+		Preference:     implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
+		SavedView:      implsavedview.NewModule(sqlstore),
+		Apdex:          implapdex.NewModule(sqlstore),
+		Dashboard:      impldashboard.NewModule(sqlstore, providerSettings, analytics),
+		User:           user,
+		QuickFilter:    quickfilter,
+		TraceFunnel:    impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
+		RawDataExport:  implrawdataexport.NewModule(querier),
+		SpanPercentile: implspanpercentile.NewModule(querier),
 	}
 }

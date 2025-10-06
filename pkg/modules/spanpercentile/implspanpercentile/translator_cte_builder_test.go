@@ -1,4 +1,4 @@
-package spanpercentile
+package implspanpercentile
 
 import (
 	"fmt"
@@ -104,7 +104,7 @@ func TestSpanPercentileCTEBuilder(t *testing.T) {
 			stmt := builder.build()
 
 			if c.expectedErr != nil {
-				_, err := BuildSpanPercentileQuery(c.request)
+				_, err := buildSpanPercentileQuery(c.request)
 				require.Error(t, err)
 				require.Contains(t, err.Error(), c.expectedErr.Error())
 			} else {
@@ -155,7 +155,7 @@ func TestSpanPercentileCTEBuilderErrors(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			_, err := BuildSpanPercentileQuery(c.request)
+			_, err := buildSpanPercentileQuery(c.request)
 			require.Error(t, err)
 			require.Contains(t, err.Error(), c.expectedErr)
 		})
