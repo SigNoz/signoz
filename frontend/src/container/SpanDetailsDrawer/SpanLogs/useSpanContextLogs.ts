@@ -20,6 +20,7 @@ interface UseSpanContextLogsProps {
 		startTime: number;
 		endTime: number;
 	};
+	isDrawerOpen?: boolean;
 }
 
 interface UseSpanContextLogsReturn {
@@ -111,6 +112,7 @@ export const useSpanContextLogs = ({
 	traceId,
 	spanId,
 	timeRange,
+	isDrawerOpen = true,
 }: UseSpanContextLogsProps): UseSpanContextLogsReturn => {
 	const [allLogs, setAllLogs] = useState<ILog[]>([]);
 	const [spanLogIds, setSpanLogIds] = useState<Set<string>>(new Set());
@@ -291,7 +293,7 @@ export const useSpanContextLogs = ({
 		],
 		queryFn: () =>
 			GetMetricQueryRange(traceOnlyQueryPayload as any, ENTITY_VERSION_V5),
-		enabled: !!traceOnlyQueryPayload && spanLogs.length === 0,
+		enabled: isDrawerOpen && !!traceOnlyQueryPayload && spanLogs.length === 0,
 		staleTime: FIVE_MINUTES_IN_MS,
 	});
 
