@@ -1,6 +1,6 @@
-// test getGraphManagerTableColumns
-
-import { render, screen } from 'tests/test-utils';
+/* eslint-disable sonarjs/no-duplicate-string */
+/* eslint-disable react/jsx-props-no-spreading */
+import { render, screen, userEvent } from 'tests/test-utils';
 
 import GraphManager from '../GridCard/FullView/GraphManager';
 import {
@@ -177,5 +177,162 @@ describe('GraphManager', () => {
 		expect(screen.getByText('227 ops/s')).toBeInTheDocument();
 		expect(screen.getByText('83.8 ops/s')).toBeInTheDocument();
 		expect(screen.getByText('66.2 ops/s')).toBeInTheDocument();
+	});
+
+	it('should handle checkbox click correctly', async () => {
+		const mockToggleGraph = jest.fn();
+		const mockSetGraphsVisibilityStates = jest.fn();
+
+		const testProps: GraphManagerProps = {
+			data: [
+				[1759729380, 1759729440, 1759729500],
+				[66.167, 76.833, 83.767],
+				[46.6, 52.7, 70.867],
+			],
+			name: 'test-graph',
+			yAxisUnit: 'ops',
+			onToggleModelHandler: jest.fn(),
+			setGraphsVisibilityStates: mockSetGraphsVisibilityStates,
+			graphsVisibilityStates: [true, true, true],
+			lineChartRef: { current: { toggleGraph: mockToggleGraph } },
+			parentChartRef: { current: { toggleGraph: mockToggleGraph } },
+			options: {
+				series: [
+					{ label: 'Timestamp' },
+					{ label: '{service.name=""}' },
+					{ label: '{service.name="recommendationservice"}' },
+				],
+				width: 100,
+				height: 100,
+			},
+		};
+
+		render(<GraphManager {...testProps} />);
+
+		// Find the first checkbox input (index 1, since index 0 is timestamp)
+		const checkbox = screen.getAllByRole('checkbox')[0];
+		expect(checkbox).toBeInTheDocument();
+
+		// Simulate checkbox click
+		await userEvent.click(checkbox);
+
+		// Verify toggleGraph was called on both chart refs
+		expect(mockToggleGraph).toHaveBeenCalledWith(1, false);
+		expect(mockToggleGraph).toHaveBeenCalledTimes(2); // lineChartRef and parentChartRef
+
+		// Verify state update function was called
+		expect(mockSetGraphsVisibilityStates).toHaveBeenCalledWith([
+			true,
+			false,
+			true,
+		]);
+	});
+
+	it('should handle label click correctly for visibility toggle', async () => {
+		const mockToggleGraph = jest.fn();
+		const mockSetGraphsVisibilityStates = jest.fn();
+
+		const testProps: GraphManagerProps = {
+			data: [
+				[1759729380, 1759729440, 1759729500],
+				[66.167, 76.833, 83.767],
+				[46.6, 52.7, 70.867],
+			],
+			name: 'test-graph',
+			yAxisUnit: 'ops',
+			onToggleModelHandler: jest.fn(),
+			setGraphsVisibilityStates: mockSetGraphsVisibilityStates,
+			graphsVisibilityStates: [true, true, true],
+			lineChartRef: { current: { toggleGraph: mockToggleGraph } },
+			parentChartRef: { current: { toggleGraph: mockToggleGraph } },
+			options: {
+				series: [
+					{ label: 'Timestamp' },
+					{ label: '{service.name="loadgenerator"}' },
+					{ label: '{service.name="recommendationservice"}' },
+				],
+				width: 100,
+				height: 100,
+			},
+		};
+
+		render(<GraphManager {...testProps} />);
+
+		// Find the first label button (skip Cancel and Save buttons)
+		const buttons = screen.getAllByRole('button');
+		const label = buttons.find((button) =>
+			button.textContent?.includes('{service.name="loadgenerator"}'),
+		) as HTMLElement;
+		expect(label).toBeInTheDocument();
+
+		// Simulate label click
+		await userEvent.click(label);
+
+		// Verify setGraphsVisibilityStates was called with show-only behavior
+		expect(mockSetGraphsVisibilityStates).toHaveBeenCalledWith([
+			false,
+			true,
+			false,
+		]);
+
+		// Check if toggleGraph was called for each series
+		expect(mockToggleGraph).toHaveBeenCalledWith(0, false); // timestamp
+		expect(mockToggleGraph).toHaveBeenCalledWith(1, true); // selected series
+		expect(mockToggleGraph).toHaveBeenCalledWith(2, false); // other series
+		expect(mockToggleGraph).toHaveBeenCalledTimes(6); // 3 series × 2 chart refs
+	});
+
+	it('should handle label click to show all when only one is visible', async () => {
+		const mockToggleGraph = jest.fn();
+		const mockSetGraphsVisibilityStates = jest.fn();
+
+		const testProps: GraphManagerProps = {
+			data: [
+				[1759729380, 1759729440, 1759729500],
+				[66.167, 76.833, 83.767],
+				[46.6, 52.7, 70.867],
+			],
+			name: 'test-graph',
+			yAxisUnit: 'ops',
+			onToggleModelHandler: jest.fn(),
+			setGraphsVisibilityStates: mockSetGraphsVisibilityStates,
+			graphsVisibilityStates: [false, true, false], // Only one series visible
+			lineChartRef: { current: { toggleGraph: mockToggleGraph } },
+			parentChartRef: { current: { toggleGraph: mockToggleGraph } },
+			options: {
+				series: [
+					{ label: 'Timestamp' },
+					{ label: '{service.name=""}' },
+					{ label: '{service.name="recommendationservice"}' },
+				],
+				width: 100,
+				height: 100,
+			},
+		};
+
+		render(<GraphManager {...testProps} />);
+
+		// Find the visible label button (skip Cancel and Save buttons)
+		const buttons = screen.getAllByRole('button');
+		const label = buttons.find((button) =>
+			button.textContent?.includes('{service.name=""}'),
+		) as HTMLElement;
+		expect(label).toBeInTheDocument();
+
+		// Simulate label click (should show all since only this one is visible)
+		await userEvent.click(label);
+
+		// Verify setGraphsVisibilityStates was called with show-all behavior
+		expect(mockSetGraphsVisibilityStates).toHaveBeenCalledWith([
+			true,
+			true,
+			true,
+		]);
+
+		// Check if toggleGraph was called to show all series
+		expect(mockToggleGraph).toHaveBeenCalledWith(0, true); // timestamp
+		expect(mockToggleGraph).toHaveBeenCalledWith(1, true); // current series
+		expect(mockToggleGraph).toHaveBeenCalledWith(2, true); // other series
+		expect(mockToggleGraph).toHaveBeenCalledTimes(6); // 3 series × 2 chart refs
 	});
 });
