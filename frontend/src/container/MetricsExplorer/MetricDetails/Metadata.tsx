@@ -96,7 +96,7 @@ function Metadata({
 							value: key,
 							label: METRIC_TYPE_LABEL_MAP[key as MetricType],
 						}))}
-						defaultValue={metricMetadata.metricType}
+						value={metricMetadata.metricType}
 						onChange={(value): void => {
 							setMetricMetadata((prev) => ({
 								...prev,
@@ -124,7 +124,7 @@ function Metadata({
 							value: key,
 							label: key,
 						}))}
-						defaultValue={metricMetadata.temporality}
+						value={metricMetadata.temporality}
 						onChange={(value): void => {
 							setMetricMetadata((prev) => ({
 								...prev,
