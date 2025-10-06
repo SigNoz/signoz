@@ -2,6 +2,7 @@ package render
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	jsoniter "github.com/json-iterator/go"
@@ -98,4 +99,30 @@ func Error(rw http.ResponseWriter, cause error) {
 
 	rw.WriteHeader(httpCode)
 	_, _ = rw.Write(body)
+}
+
+func ErrorAsURLValues(cause error) url.Values {
+	// See if this is an instance of the base error or not
+	_, c, m, _, u, a := errors.Unwrapb(cause)
+
+	rea := make([]responseerroradditional, len(a))
+	for k, v := range a {
+		rea[k] = responseerroradditional{v}
+	}
+
+	errors, err := json.Marshal(rea)
+	if err != nil {
+		return url.Values{
+			"code":    {c.String()},
+			"message": {m},
+			"url":     {u},
+		}
+	}
+
+	return url.Values{
+		"code":    {c.String()},
+		"message": {m},
+		"url":     {u},
+		"errors":  {string(errors)},
+	}
 }

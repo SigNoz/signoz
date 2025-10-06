@@ -4,7 +4,6 @@ import (
 	"errors" //nolint:depguard
 	"fmt"
 	"log/slog"
-	"net/url"
 )
 
 // base is the fundamental struct that implements the error interface.
@@ -139,26 +138,6 @@ func Unwrapb(cause error) (typ, Code, string, error, string, []string) {
 	}
 
 	return TypeInternal, CodeUnknown, cause.Error(), cause, "", []string{}
-}
-
-// UnwrapbAsURLValues unwraps the error and returns the error as a url.Values.
-func UnwrapbAsURLValues(cause error) url.Values {
-	base, ok := cause.(*base)
-	if !ok {
-		return url.Values{
-			"type":    {TypeInternal.s},
-			"code":    {CodeUnknown.s},
-			"message": {cause.Error()},
-		}
-	}
-
-	return url.Values{
-		"type":       {base.t.s},
-		"code":       {base.c.s},
-		"message":    {base.m},
-		"url":        {base.u},
-		"additional": base.a,
-	}
 }
 
 // Ast checks if the provided error matches the specified custom error type.
