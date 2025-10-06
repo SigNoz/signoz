@@ -166,10 +166,7 @@ describe('SpanDetailsDrawer', () => {
 		mockWindowOpen.mockClear();
 		mockUpdateAllQueriesOperators.mockClear();
 
-		// Reset all timers to prevent timing issues
-		jest.useRealTimers();
-
-		// Setup API call tracking with proper async handling
+		// Setup API call tracking
 		(GetMetricQueryRange as jest.Mock).mockImplementation((query) => {
 			apiCallHistory.push(query);
 
@@ -198,10 +195,6 @@ describe('SpanDetailsDrawer', () => {
 
 	afterEach(() => {
 		server.resetHandlers();
-		// Clear any pending timers
-		jest.clearAllTimers();
-		// Ensure we're using real timers for cleanup
-		jest.useRealTimers();
 	});
 
 	// Mock QueryBuilder context value
