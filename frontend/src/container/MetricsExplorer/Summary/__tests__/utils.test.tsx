@@ -163,17 +163,17 @@ describe('formatDataForMetricsTable', () => {
 	it('should handle empty/null values', () => {
 		const mockData = [
 			{
-				metric_name: undefined,
-				description: undefined,
+				metric_name: '',
+				description: '',
 				type: MetricType.GAUGE,
-				unit: undefined,
+				unit: '',
 				[TreemapViewType.SAMPLES]: 0,
 				[TreemapViewType.TIMESERIES]: 0,
 				lastReceived: '2023-01-01T00:00:00Z',
 			},
 		];
 
-		const result = formatDataForMetricsTable(mockData as any);
+		const result = formatDataForMetricsTable(mockData);
 
 		// Verify empty metric name rendering
 		const metricNameElement = result[0].metric_name as JSX.Element;
