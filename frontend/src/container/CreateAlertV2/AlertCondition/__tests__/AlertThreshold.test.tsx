@@ -110,7 +110,6 @@ jest.mock('container/NewWidget/RightContainer/alertFomatCategories', () => ({
 
 jest.mock('container/CreateAlertV2/utils', () => ({
 	...jest.requireActual('container/CreateAlertV2/utils'),
-	showCondensedLayout: jest.fn().mockReturnValue(false),
 }));
 
 const TEST_STRINGS = {
@@ -159,7 +158,9 @@ describe('AlertThreshold', () => {
 		expect(screen.getByText('Send a notification when')).toBeInTheDocument();
 		expect(screen.getByText('the threshold(s)')).toBeInTheDocument();
 		expect(screen.getByText('during the')).toBeInTheDocument();
-		expect(screen.getByText('Evaluation Window.')).toBeInTheDocument();
+		expect(
+			screen.getByTestId('condensed-evaluation-settings-container'),
+		).toBeInTheDocument();
 	});
 
 	it('renders query selection dropdown', async () => {

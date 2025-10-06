@@ -27,16 +27,6 @@ import {
 import { EVALUATION_WINDOW_TIMEFRAME } from './EvaluationSettings/constants';
 import { GetCreateAlertLocalStateFromAlertDefReturn } from './types';
 
-// UI side feature flag
-export const showNewCreateAlertsPage = (): boolean =>
-	localStorage.getItem('showNewCreateAlertsPage') === 'true';
-
-// UI side FF to switch between the 2 layouts of the create alert page
-// Layout 1 - Default layout
-// Layout 2 - Condensed layout
-export const showCondensedLayout = (): boolean =>
-	localStorage.getItem('hideCondensedLayout') !== 'true';
-
 export function Spinner(): JSX.Element | null {
 	const { isCreatingAlertRule, isUpdatingAlertRule } = useCreateAlertState();
 
@@ -198,10 +188,10 @@ export function getNotificationSettingsStateFromAlertDef(
 			(state) => state as 'firing' | 'nodata',
 		) || [];
 	const reNotificationValue = alertDef.notificationSettings?.renotify
-		? parseGoTime(alertDef.notificationSettings.renotify.interval || '1m').time
-		: 1;
+		? parseGoTime(alertDef.notificationSettings.renotify.interval || '30m').time
+		: 30;
 	const reNotificationUnit = alertDef.notificationSettings?.renotify
-		? parseGoTime(alertDef.notificationSettings.renotify.interval || '1m').unit
+		? parseGoTime(alertDef.notificationSettings.renotify.interval || '30m').unit
 		: UniversalYAxisUnit.MINUTES;
 
 	return {
