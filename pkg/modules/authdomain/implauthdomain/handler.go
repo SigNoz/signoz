@@ -124,5 +124,10 @@ func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := h.module.Update(ctx, authDomain); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	render.Success(rw, http.StatusNoContent, nil)
 }
