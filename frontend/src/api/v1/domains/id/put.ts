@@ -10,7 +10,7 @@ const put = async (
 	try {
 		const response = await axios.put<RawSuccessResponse<null>>(
 			`/domains/${props.id}`,
-			props,
+			{ config: props.config },
 		);
 
 		return {

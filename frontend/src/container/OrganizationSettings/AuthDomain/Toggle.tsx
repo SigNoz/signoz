@@ -1,14 +1,11 @@
 import { Switch } from 'antd';
-import put from 'api/v1/domains/put';
+import put from 'api/v1/domains/id/put';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useState } from 'react';
 import APIError from 'types/api/error';
 import { GettableAuthDomain } from 'types/api/v1/domains/list';
 
-function SwitchComponent({
-	isDefaultChecked,
-	record,
-}: SwitchComponentProps): JSX.Element {
+function Toggle({ isDefaultChecked, record }: ToggleProps): JSX.Element {
 	const [isChecked, setIsChecked] = useState<boolean>(isDefaultChecked);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const { showErrorModal } = useErrorModal();
@@ -18,8 +15,14 @@ function SwitchComponent({
 
 		try {
 			await put({
-				...record,
-				ssoEnabled: checked,
+				id: record.id,
+				config: {
+					ssoEnabled: checked,
+					ssoType: record.ssoType,
+					googleAuthConfig: record.googleAuthConfig,
+					oidcConfig: record.oidcConfig,
+					samlConfig: record.samlConfig,
+				},
 			});
 			setIsChecked(checked);
 		} catch (error) {
@@ -34,9 +37,9 @@ function SwitchComponent({
 	);
 }
 
-interface SwitchComponentProps {
+interface ToggleProps {
 	isDefaultChecked: boolean;
 	record: GettableAuthDomain;
 }
 
-export default SwitchComponent;
+export default Toggle;

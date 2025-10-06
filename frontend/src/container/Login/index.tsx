@@ -18,6 +18,18 @@ import { SessionsContext } from 'types/api/v2/sessions/context/get';
 
 import { FormContainer, Label, ParentContainer } from './styles';
 
+function parseErrors(errors: string): { message: string }[] {
+	try {
+		const parsedErrors = JSON.parse(errors);
+		return parsedErrors.map((error: { message: string }) => ({
+			message: error.message,
+		}));
+	} catch (e) {
+		console.error('Failed to parse errors:', e);
+		return [];
+	}
+}
+
 type FormValues = {
 	email: string;
 	password: string;
@@ -29,13 +41,17 @@ function Login(): JSX.Element {
 	const urlQueryParams = useUrlQuery();
 	// override for callbackAuthN in case of some misconfiguration
 	const isPasswordAuthNEnabled = (urlQueryParams.get('password') || 'N') === 'Y';
+
+	// callbackAuthN handling
 	const accessToken = urlQueryParams.get('accessToken') || '';
 	const refreshToken = urlQueryParams.get('refreshToken') || '';
+
+	// callbackAuthN error handling
 	const callbackAuthError = urlQueryParams.get('callbackauthnerr') || '';
 	const callbackAuthErrorCode = urlQueryParams.get('code') || '';
 	const callbackAuthErrorMessage = urlQueryParams.get('message') || '';
 	const callbackAuthErrorURL = urlQueryParams.get('url') || '';
-	const callbackAuthErrorAdditional = urlQueryParams.get('additional') || '';
+	const callbackAuthErrorAdditional = urlQueryParams.get('errors') || '';
 
 	const [sessionsContext, setSessionsContext] = useState<SessionsContext>();
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -170,9 +186,6 @@ function Login(): JSX.Element {
 				const orgId = form.getFieldValue('orgId');
 
 				const password = form.getFieldValue('password');
-				if (password === '') {
-					return;
-				}
 
 				const createSessionEmailPasswordResponse = await post({
 					email,
@@ -187,9 +200,6 @@ function Login(): JSX.Element {
 			}
 			if (isCallbackAuthN) {
 				const url = form.getFieldValue('url');
-				if (!url) {
-					return;
-				}
 
 				window.location.href = url;
 			}
@@ -209,7 +219,7 @@ function Login(): JSX.Element {
 						code: callbackAuthErrorCode,
 						message: callbackAuthErrorMessage,
 						url: callbackAuthErrorURL,
-						errors: callbackAuthErrorAdditional as any,
+						errors: parseErrors(callbackAuthErrorAdditional),
 					},
 				}),
 			);

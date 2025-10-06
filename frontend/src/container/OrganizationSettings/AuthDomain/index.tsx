@@ -1,9 +1,9 @@
 import './AuthDomain.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Skeleton, Table, Typography } from 'antd';
+import { Button, Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import deleteDomain from 'api/v1/domains/delete';
+import deleteDomain from 'api/v1/domains/id/delete';
 import listAllDomain from 'api/v1/domains/list';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useState } from 'react';
@@ -11,8 +11,8 @@ import { useQuery } from 'react-query';
 import APIError from 'types/api/error';
 import { GettableAuthDomain, SSOType } from 'types/api/v1/domains/list';
 
-import CreateOrEdit from './CreateOrEdit';
-import SwitchComponent from './Switch';
+import CreateEdit from './CreateEdit/CreateEdit';
+import Toggle from './Toggle';
 
 const columns: ColumnsType<GettableAuthDomain> = [
 	{
@@ -28,7 +28,7 @@ const columns: ColumnsType<GettableAuthDomain> = [
 		key: 'ssoEnabled',
 		width: 80,
 		render: (value: boolean, record: GettableAuthDomain): JSX.Element => (
-			<SwitchComponent isDefaultChecked={value} record={record} />
+			<Toggle isDefaultChecked={value} record={record} />
 		),
 	},
 	{
@@ -37,14 +37,14 @@ const columns: ColumnsType<GettableAuthDomain> = [
 		key: 'action',
 		width: 100,
 		render: (_, record: GettableAuthDomain): JSX.Element => (
-			<div>
+			<section className="auth-domain-list-column-action">
 				<Typography.Link data-column-action="configure">
 					Configure {SSOType.get(record.ssoType)}
 				</Typography.Link>
 				<Typography.Link type="danger" data-column-action="delete">
 					Delete
 				</Typography.Link>
-			</div>
+			</section>
 		),
 	},
 ];
@@ -79,23 +79,18 @@ function AuthDomain(): JSX.Element {
 	});
 
 	return (
-		<div>
-			<section>
-				<Typography.Text>Authenticated Domains</Typography.Text>
+		<div className="auth-domain">
+			<section className="auth-domain-header">
+				<Typography.Title level={3}>Authenticated Domains</Typography.Title>
 				<Button
 					type="primary"
 					icon={<PlusOutlined />}
 					onClick={(): void => setAddDomain(true)}
+					className="button"
 				>
 					Add Domain
 				</Button>
 			</section>
-			{(isLoadingAuthDomainListResponse || isFetchingAuthDomainListResponse) && (
-				<>
-					<Skeleton active paragraph={{ rows: 2 }} />
-					<Skeleton active paragraph={{ rows: 2 }} />
-				</>
-			)}
 			{authDomainListResponse && (
 				<Table
 					columns={columns}
@@ -129,7 +124,7 @@ function AuthDomain(): JSX.Element {
 				/>
 			)}
 			{(addDomain || record) && (
-				<CreateOrEdit
+				<CreateEdit
 					isCreate={!record}
 					record={record}
 					onClose={(): void => {

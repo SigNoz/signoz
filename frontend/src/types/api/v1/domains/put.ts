@@ -1,12 +1,12 @@
 export interface UpdatableAuthDomain {
+	config: {
+		ssoEnabled: boolean;
+		ssoType: string;
+		samlConfig?: SAMLConfig;
+		googleAuthConfig?: GoogleAuthConfig;
+		oidcConfig?: OIDCConfig;
+	};
 	id: string;
-	name: string;
-	orgId: string;
-	ssoEnabled: boolean;
-	ssoType: string;
-	samlConfig?: SAMLConfig;
-	googleAuthConfig?: GoogleAuthConfig;
-	oidcConfig?: OIDCConfig;
 }
 
 export interface SAMLConfig {
