@@ -148,34 +148,6 @@ describe('CheckboxFilter - User Flows', () => {
 		});
 	});
 
-	it('should show count indicator when user sees collapsed filter with active filters', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-		// Mock query builder with active filters
-		mockUseQueryBuilder.mockReturnValue(createMockQueryBuilderData(true) as any);
-
-		const mockFilter = createMockFilter({ defaultOpen: false });
-
-		render(
-			<CheckboxFilter
-				filter={mockFilter}
-				source={QuickFiltersSource.LOGS_EXPLORER}
-			/>,
-		);
-
-		// Wait for filter to load and auto-open
-		await waitFor(() => {
-			expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
-		});
-
-		// User clicks to collapse the filter
-		await user.click(screen.getByText('Service Name'));
-
-		// User should see count indicator showing 2 active filters
-		expect(screen.getByText('2')).toBeInTheDocument();
-		expect(screen.getByText('2')).toHaveClass('filter-count');
-	});
-
 	it('should show visual separator when user expands filter with mixed checked/unchecked items', async () => {
 		// Mock query builder with active filters
 		mockUseQueryBuilder.mockReturnValue(createMockQueryBuilderData(true) as any);

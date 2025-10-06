@@ -274,36 +274,6 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		}
 	};
 
-	// count of currently applied filters for this attribute
-	const appliedFiltersCount = useMemo(() => {
-		if (!isSomeFilterPresentForCurrentAttribute) {
-			return 0;
-		}
-		// For IN/= operators, count checked items
-		// For NOT IN/!= operators, count unchecked items (since they're excluded)
-		const filterSync = currentQuery?.builder.queryData?.[
-			lastUsedQuery || 0
-		]?.filters?.items.find((item) =>
-			isEqual(item.key?.key, filter.attributeKey.key),
-		);
-		if (!filterSync) return 0;
-
-		if (SELECTED_OPERATORS.includes(filterSync.op)) {
-			// IN or = operator: count how many values are selected
-			return isArray(filterSync.value) ? filterSync.value.length : 1;
-		}
-		if (NON_SELECTED_OPERATORS.includes(filterSync.op)) {
-			// NOT IN or != operator: count how many values are excluded
-			return isArray(filterSync.value) ? filterSync.value.length : 1;
-		}
-		return 0;
-	}, [
-		isSomeFilterPresentForCurrentAttribute,
-		currentQuery?.builder.queryData,
-		lastUsedQuery,
-		filter.attributeKey.key,
-	]);
-
 	const onChange = (
 		value: string,
 		checked: boolean,
@@ -569,9 +539,6 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					<Typography.Text className="title">{filter.title}</Typography.Text>
 				</section>
 				<section className="right-action">
-					{!isOpen && appliedFiltersCount > 0 && (
-						<span className="filter-count"> {appliedFiltersCount}</span>
-					)}
 					{isOpen && !!attributeValues.length && (
 						<Typography.Text
 							className="clear-all"
