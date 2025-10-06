@@ -106,6 +106,10 @@ describe('Metadata', () => {
 				metricName: mockMetricName,
 				payload: expect.objectContaining({
 					description: 'Updated description',
+					metricType: MetricType.GAUGE,
+					temporality: Temporality.DELTA,
+					unit: 'test_unit',
+					isMonotonic: false,
 				}),
 			}),
 			expect.objectContaining({

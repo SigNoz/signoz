@@ -98,9 +98,9 @@ function Metadata({
 				className: 'metric-metadata-value',
 				render: (field: { value: string; key: string }): JSX.Element => {
 					// Don't allow editing of unit if it's already set
-					const disableEditingForMetricsWithUnits =
+					const metricUnitAlreadySet =
 						field.key === 'unit' && Boolean(metadata?.unit);
-					if (!isEditing || disableEditingForMetricsWithUnits) {
+					if (!isEditing || metricUnitAlreadySet) {
 						if (field.key === 'metric_type') {
 							return (
 								<div>
