@@ -15,6 +15,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/allegro/bigcache/v3"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -71,6 +73,8 @@ func (provider *provider) Start(ctx context.Context) error {
 		case <-provider.stopC:
 			return nil
 		case <-ticker.C:
+			ctx, span := provider.settings.Tracer().Start(ctx, "tokenizer.gc", trace.WithAttributes(attribute.String("tokenizer.provider", provider.config.Provider)))
+
 			if err := provider.gc(ctx); err != nil {
 				provider.settings.Logger().ErrorContext(ctx, "failed to garbage collect tokens", "error", err)
 			}
@@ -78,6 +82,8 @@ func (provider *provider) Start(ctx context.Context) error {
 			if err := provider.flushLastObservedAt(ctx); err != nil {
 				provider.settings.Logger().ErrorContext(ctx, "failed to flush tokens", "error", err)
 			}
+
+			span.End()
 		}
 	}
 }
