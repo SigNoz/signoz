@@ -15,6 +15,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/allegro/bigcache/v3"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -71,9 +73,17 @@ func (provider *provider) Start(ctx context.Context) error {
 		case <-provider.stopC:
 			return nil
 		case <-ticker.C:
+			ctx, span := provider.settings.Tracer().Start(ctx, "tokenizer.gc", trace.WithAttributes(attribute.String("tokenizer.provider", provider.config.Provider)))
+
 			if err := provider.gc(ctx); err != nil {
 				provider.settings.Logger().ErrorContext(ctx, "failed to garbage collect tokens", "error", err)
 			}
+
+			if err := provider.flushLastObservedAt(ctx); err != nil {
+				provider.settings.Logger().ErrorContext(ctx, "failed to flush tokens", "error", err)
+			}
+
+			span.End()
 		}
 	}
 }
@@ -128,15 +138,6 @@ func (provider *provider) GetIdentity(ctx context.Context, accessToken string) (
 	return identity, nil
 }
 
-func (provider *provider) DeleteToken(ctx context.Context, accessToken string) error {
-	provider.cache.Delete(ctx, emptyOrgID, cachetypes.NewSha1CacheKey(accessToken))
-	if err := provider.tokenStore.DeleteByAccessToken(ctx, accessToken); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (provider *provider) RotateToken(ctx context.Context, accessToken string, refreshToken string) (*authtypes.Token, error) {
 	var rotatedToken *authtypes.Token
 
@@ -166,6 +167,15 @@ func (provider *provider) RotateToken(ctx context.Context, accessToken string, r
 	return rotatedToken, nil
 }
 
+func (provider *provider) DeleteToken(ctx context.Context, accessToken string) error {
+	provider.cache.Delete(ctx, emptyOrgID, cachetypes.NewSha1CacheKey(accessToken))
+	if err := provider.tokenStore.DeleteByAccessToken(ctx, accessToken); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (provider *provider) DeleteTokensByUserID(ctx context.Context, userID valuer.UUID) error {
 	tokens, err := provider.tokenStore.ListByUserID(ctx, userID)
 	if err != nil {
@@ -173,9 +183,11 @@ func (provider *provider) DeleteTokensByUserID(ctx context.Context, userID value
 	}
 
 	for _, token := range tokens {
-		if err := provider.DeleteToken(ctx, token.AccessToken); err != nil {
-			return err
-		}
+		provider.cache.Delete(ctx, emptyOrgID, cachetypes.NewSha1CacheKey(token.AccessToken))
+	}
+
+	if err := provider.tokenStore.DeleteByUserID(ctx, userID); err != nil {
+		return err
 	}
 
 	return nil
