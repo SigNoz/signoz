@@ -157,4 +157,15 @@ describe('getYAxisFormattedValue - units', () => {
 		expect(getYAxisFormattedValue('32', 'fahrenheit')).toBe('32 °F');
 		expect(getYAxisFormattedValue('14', 'fahrenheit')).toBe('14 °F');
 	});
+
+	test('ms edge cases', () => {
+		expect(getYAxisFormattedValue('0', 'ms')).toBe('0 ms');
+		expect(getYAxisFormattedValue('-1500', 'ms')).toBe('-1.5 s');
+		expect(getYAxisFormattedValue('Infinity', 'ms')).toBe('∞');
+	});
+
+	test('bytes edge cases', () => {
+		expect(getYAxisFormattedValue('0', 'bytes')).toBe('0 B');
+		expect(getYAxisFormattedValue('-1024', 'bytes')).toBe('-1 KiB');
+	});
 });

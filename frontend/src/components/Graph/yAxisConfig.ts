@@ -8,8 +8,8 @@ import { isNaN } from 'lodash-es';
  * It avoids scientific notation and removes unnecessary trailing zeros.
  *
  * @example
- * formatDecimalWithLeadingZeros(1.2345); // "1.234"
- * formatDecimalWithLeadingZeros(0.0012345); // "0.00123"
+ * formatDecimalWithLeadingZeros(1.2345); // "1.2345"
+ * formatDecimalWithLeadingZeros(0.0012345); // "0.0012345"
  * formatDecimalWithLeadingZeros(5.0); // "5"
  *
  * @param value The number to format.
