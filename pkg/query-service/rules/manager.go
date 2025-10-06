@@ -471,11 +471,6 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		return err
 	}
 
-	err = m.maintenanceStore.DeletePlannedMaintenanceRulesByRuleID(ctx, id)
-	if err != nil {
-		return err
-	}
-
 	return m.ruleStore.DeleteRule(ctx, id, func(ctx context.Context) error {
 		cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
 		if err != nil {

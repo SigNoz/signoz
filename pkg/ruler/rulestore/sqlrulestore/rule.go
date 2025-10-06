@@ -58,6 +58,16 @@ func (r *rule) DeleteRule(ctx context.Context, id valuer.UUID, cb func(context.C
 		_, err := r.sqlstore.
 			BunDBCtx(ctx).
 			NewDelete().
+			Model(new(ruletypes.StorablePlannedMaintenanceRule)).
+			Where("rule_id = ?", id.StringValue()).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+		_, err = r.sqlstore.
+			BunDBCtx(ctx).
+			NewDelete().
 			Model(new(ruletypes.Rule)).
 			Where("id = ?", id.StringValue()).
 			Exec(ctx)
