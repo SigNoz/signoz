@@ -104,13 +104,7 @@ export const getYAxisFormattedValue = (
 	}
 };
 
-export const getToolTipValue = (value: string, format?: string): string => {
-	try {
-		return formattedValueToString(
-			getValueFormat(format)(parseFloat(value), undefined, undefined, undefined),
-		);
-	} catch (error) {
-		console.error(error);
-	}
-	return `${value}`;
-};
+export const getToolTipValue = (
+	value: string | number,
+	format?: string,
+): string => getYAxisFormattedValue(value?.toString(), format || 'none');
