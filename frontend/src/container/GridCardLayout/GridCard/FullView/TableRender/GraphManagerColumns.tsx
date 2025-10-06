@@ -88,7 +88,7 @@ export const getGraphManagerTableColumns = ({
 	},
 ];
 
-interface GetGraphManagerTableColumnsProps {
+export interface GetGraphManagerTableColumnsProps {
 	tableDataSet: ExtendedChartDataset[];
 	checkBoxOnChangeHandler: (e: CheckboxChangeEvent, index: number) => void;
 	labelClickedHandler: (labelIndex: number) => void;
