@@ -82,8 +82,8 @@ func newConfig() factory.Config {
 			Secret: "",
 		},
 		Rotation: RotationConfig{
-			Interval: 1 * time.Minute,  // 30 minutes
-			Duration: 20 * time.Second, // 60 seconds
+			Interval: 30 * time.Minute, // 30 minutes
+			Duration: 60 * time.Second, // 60 seconds
 		},
 		Lifetime: LifetimeConfig{
 			Idle: 7 * 24 * time.Hour,  // 7 days
