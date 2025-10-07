@@ -6,7 +6,6 @@ import get from 'api/v2/sessions/context/get';
 import post from 'api/v2/sessions/email_password/post';
 import afterLogin from 'AppRoutes/utils';
 import ROUTES from 'constants/routes';
-import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
@@ -56,7 +55,6 @@ function Login(): JSX.Element {
 	const [sessionsContext, setSessionsContext] = useState<SessionsContext>();
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 	const [form] = Form.useForm<FormValues>();
-	const { notifications } = useNotifications();
 	const { showErrorModal } = useErrorModal();
 	const sessionsOrgId = Form.useWatch('orgId', form);
 
@@ -86,37 +84,12 @@ function Login(): JSX.Element {
 	// fetch the sessions context post user entering the email
 	const onNextHandler = async (): Promise<void> => {
 		const email = form.getFieldValue('email');
-		if (!email) {
-			notifications.error({
-				message: 'Please enter a valid email address',
-			});
-			return;
-		}
 
 		try {
 			const sessionsContextResponse = await get({
 				email,
 				ref: window.location.href,
 			});
-
-			const isCallbackAuthNEnabled = sessionsContextResponse.data.orgs.findIndex(
-				(orgSession) => orgSession.authNSupport?.callback?.length > 0,
-			);
-
-			if (!sessionsContextResponse.data.exists && isCallbackAuthNEnabled === -1) {
-				showErrorModal(
-					new APIError({
-						httpStatusCode: 404,
-						error: {
-							code: 'invalid_input',
-							message: "user doesn't exist",
-							url: '',
-							errors: [],
-						},
-					}),
-				);
-				return;
-			}
 
 			setSessionsContext(sessionsContextResponse.data);
 		} catch (error) {
