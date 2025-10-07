@@ -23,11 +23,15 @@ const mockAlerts = [mockAlert1, mockAlert2];
 const mockDashboards = [mockDashboard1, mockDashboard2];
 
 const mockSafeNavigate = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): any => ({
-		safeNavigate: mockSafeNavigate,
-	}),
-}));
+jest.mock('hooks/useSafeNavigate', () => {
+	const actual = jest.requireActual('hooks/useSafeNavigate');
+	return {
+		...actual,
+		useSafeNavigate: (): any => ({
+			safeNavigate: mockSafeNavigate,
+		}),
+	};
+});
 
 const mockSetQuery = jest.fn();
 const mockUrlQuery = {
