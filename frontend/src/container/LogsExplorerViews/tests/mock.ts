@@ -61,6 +61,8 @@ export const logsQueryRangeSuccessNewFormatResponse = {
 };
 
 export const mockQueryBuilderContextValue = {
+	currentFilterExpression: {},
+	handleSetCurrentFilterExpression: noop,
 	isDefaultQuery: (): boolean => false,
 	currentQuery: {
 		...initialQueriesMap.logs,

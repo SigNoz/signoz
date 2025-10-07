@@ -183,6 +183,8 @@ describe('Logs Explorer Tests', () => {
 			>
 				<QueryBuilderContext.Provider
 					value={{
+						currentFilterExpression: {},
+						handleSetCurrentFilterExpression: noop,
 						isDefaultQuery: (): boolean => false,
 						currentQuery: {
 							...initialQueriesMap.metrics,
