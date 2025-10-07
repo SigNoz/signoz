@@ -15,6 +15,7 @@ import (
 type provider struct {
 	config   tokenizer.Config
 	settings factory.ScopedProviderSettings
+	stopC    chan struct{}
 }
 
 func NewFactory() factory.ProviderFactory[tokenizer.Tokenizer, tokenizer.Config] {
@@ -33,9 +34,14 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	return tokenizer.NewWrappedTokenizer(settings, &provider{
 		config:   config,
 		settings: settings,
+		stopC:    make(chan struct{}),
 	}), nil
 }
 
+func (provider *provider) Start(ctx context.Context) error {
+	<-provider.stopC
+	return nil
+}
 func (provider *provider) CreateToken(ctx context.Context, identity *authtypes.Identity, meta map[string]string) (*authtypes.Token, error) {
 	accessTokenClaims := Claims{
 		UserID: identity.UserID.String(),
@@ -134,4 +140,9 @@ func (provider *provider) getClaimsFromToken(token string) (Claims, error) {
 	}
 
 	return claims, nil
+}
+
+func (provider *provider) Stop(ctx context.Context) error {
+	close(provider.stopC)
+	return nil
 }

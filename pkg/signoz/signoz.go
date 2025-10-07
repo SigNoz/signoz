@@ -335,15 +335,10 @@ func New(
 		factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanager),
 		factory.NewNamedService(factory.MustNewName("licensing"), licensing),
 		factory.NewNamedService(factory.MustNewName("statsreporter"), statsReporter),
+		factory.NewNamedService(factory.MustNewName("tokenizer"), tokenizer),
 	)
 	if err != nil {
 		return nil, err
-	}
-
-	if tokenizerWithService, ok := tokenizer.(pkgtokenizer.TokenizerWithService); ok {
-		if err := registry.Add(factory.NewNamedService(factory.MustNewName("tokenizer"), tokenizerWithService)); err != nil {
-			return nil, err
-		}
 	}
 
 	return &SigNoz{
