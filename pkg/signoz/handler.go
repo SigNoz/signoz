@@ -48,6 +48,6 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Han
 		QuickFilter:   implquickfilter.NewHandler(modules.QuickFilter),
 		TraceFunnel:   impltracefunnel.NewHandler(modules.TraceFunnel),
 		RawDataExport: implrawdataexport.NewHandler(modules.RawDataExport),
-		ServicesQB:    implservicesqb.NewHandler(modules.ServicesQB.(*implservicesqb.Module)),
+		ServicesQB:    implservicesqb.NewHandler(modules.ServicesQB),
 	}
 }

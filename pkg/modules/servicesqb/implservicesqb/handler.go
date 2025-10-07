@@ -12,10 +12,14 @@ import (
 )
 
 type Handler struct {
-	Mod *Module
+	Mod servicesqb.Module
 }
 
-func NewHandler(m *Module) *Handler { return &Handler{Mod: m} }
+func NewHandler(m servicesqb.Module) *Handler {
+	return &Handler{
+		Mod: m,
+	}
+}
 
 func (h *Handler) Get(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 15*time.Second)
