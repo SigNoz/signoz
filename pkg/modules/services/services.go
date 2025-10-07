@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	"net/http"
+
+	"github.com/SigNoz/signoz/pkg/types/servicetypes"
 )
 
 // Handler exposes HTTP handler for services_qbv5
@@ -12,5 +14,5 @@ type Handler interface {
 
 // Module represents the services QBv5 module interface
 type Module interface {
-	Get(ctx context.Context, orgID string, req *Request) ([]*ResponseItem, error)
+	Get(ctx context.Context, orgID string, req *servicetypes.Request) ([]*servicetypes.ResponseItem, error)
 }

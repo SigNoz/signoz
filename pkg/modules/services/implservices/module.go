@@ -3,8 +3,8 @@ package implservices
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/types/servicetypes"
 )
 
 type Module struct {
@@ -18,6 +18,6 @@ func NewModule(q querier.Querier) *Module {
 }
 
 // Get implements services.Module
-func (m *Module) Get(ctx context.Context, orgID string, req *services.Request) ([]*services.ResponseItem, error) {
-	return []*services.ResponseItem{}, nil
+func (m *Module) Get(ctx context.Context, orgID string, req *servicetypes.Request) ([]*servicetypes.ResponseItem, error) {
+	return []*servicetypes.ResponseItem{}, nil
 }
