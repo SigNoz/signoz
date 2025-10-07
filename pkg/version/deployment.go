@@ -141,7 +141,7 @@ func detectPlatform() string {
 	}
 
 	// Azure metadata
-	if req, err := http.NewRequest(http.MethodGet, "http://169.254.169.254/metadata/instance", nil); err == nil {
+	if req, err := http.NewRequest(http.MethodGet, "http://169.254.169.254/metadata/instance?api-version=2017-03-01", nil); err == nil {
 		req.Header.Add("Metadata", "true")
 		if resp, err := client.Do(req); err == nil {
 			resp.Body.Close()

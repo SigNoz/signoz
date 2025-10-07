@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as createAlertContext from 'container/CreateAlertV2/context';
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
-import * as utils from 'container/CreateAlertV2/utils';
 
 import NotificationSettings from '../NotificationSettings';
 
@@ -26,7 +25,6 @@ jest.mock(
 
 jest.mock('container/CreateAlertV2/utils', () => ({
 	...jest.requireActual('container/CreateAlertV2/utils'),
-	showCondensedLayout: jest.fn().mockReturnValue(false),
 }));
 
 const initialNotificationSettings = createMockAlertContextState()
@@ -42,10 +40,10 @@ const REPEAT_NOTIFICATIONS_TEXT = 'Repeat notifications';
 const ENTER_TIME_INTERVAL_TEXT = 'Enter time interval...';
 
 describe('NotificationSettings', () => {
-	it('renders the notification settings tab with step number 4 and default values', () => {
+	it('renders the notification settings tab with step number 3 and default values', () => {
 		render(<NotificationSettings />);
 		expect(screen.getByText('Notification settings')).toBeInTheDocument();
-		expect(screen.getByText('4')).toBeInTheDocument();
+		expect(screen.getByText('3')).toBeInTheDocument();
 		expect(screen.getByTestId('multiple-notifications')).toBeInTheDocument();
 		expect(screen.getByTestId('notification-message')).toBeInTheDocument();
 		expect(screen.getByText(REPEAT_NOTIFICATIONS_TEXT)).toBeInTheDocument();
@@ -54,15 +52,6 @@ describe('NotificationSettings', () => {
 				'Send periodic notifications while the alert condition remains active.',
 			),
 		).toBeInTheDocument();
-	});
-
-	it('renders the notification settings tab with step number 3 in condensed layout', () => {
-		jest.spyOn(utils, 'showCondensedLayout').mockReturnValueOnce(true);
-		render(<NotificationSettings />);
-		expect(screen.getByText('Notification settings')).toBeInTheDocument();
-		expect(screen.getByText('3')).toBeInTheDocument();
-		expect(screen.getByTestId('multiple-notifications')).toBeInTheDocument();
-		expect(screen.getByTestId('notification-message')).toBeInTheDocument();
 	});
 
 	describe('Repeat notifications', () => {

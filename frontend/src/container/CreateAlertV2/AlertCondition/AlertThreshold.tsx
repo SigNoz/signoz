@@ -4,8 +4,10 @@ import '../EvaluationSettings/styles.scss';
 import { Button, Select, Tooltip, Typography } from 'antd';
 import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import getRandomColor from 'lib/getRandomColor';
 import { Plus } from 'lucide-react';
 import { useEffect } from 'react';
+import { v4 } from 'uuid';
 
 import { useCreateAlertState } from '../context';
 import {
@@ -16,7 +18,6 @@ import {
 	THRESHOLD_OPERATOR_OPTIONS,
 } from '../context/constants';
 import EvaluationSettings from '../EvaluationSettings/EvaluationSettings';
-import { showCondensedLayout } from '../utils';
 import ThresholdItem from './ThresholdItem';
 import { AnomalyAndThresholdProps, UpdateThreshold } from './types';
 import {
@@ -40,8 +41,6 @@ function AlertThreshold({
 		notificationSettings,
 		setNotificationSettings,
 	} = useCreateAlertState();
-
-	const showCondensedLayoutFlag = showCondensedLayout();
 
 	const { currentQuery } = useQueryBuilder();
 
@@ -68,11 +67,15 @@ function AlertThreshold({
 	const addThreshold = (): void => {
 		let newThreshold;
 		if (thresholdState.thresholds.length === 1) {
-			newThreshold = INITIAL_WARNING_THRESHOLD;
+			newThreshold = { ...INITIAL_WARNING_THRESHOLD, id: v4() };
 		} else if (thresholdState.thresholds.length === 2) {
-			newThreshold = INITIAL_INFO_THRESHOLD;
+			newThreshold = { ...INITIAL_INFO_THRESHOLD, id: v4() };
 		} else {
-			newThreshold = INITIAL_RANDOM_THRESHOLD;
+			newThreshold = {
+				...INITIAL_RANDOM_THRESHOLD,
+				id: v4(),
+				color: getRandomColor(),
+			};
 		}
 		setThresholdState({
 			type: 'SET_THRESHOLDS',
@@ -157,17 +160,12 @@ function AlertThreshold({
 		}),
 	);
 
-	const evaluationWindowContext = showCondensedLayoutFlag ? (
-		<EvaluationSettings />
-	) : (
-		<strong>Evaluation Window.</strong>
-	);
-
 	return (
 		<div
-			className={classNames('alert-threshold-container', {
-				'condensed-alert-threshold-container': showCondensedLayoutFlag,
-			})}
+			className={classNames(
+				'alert-threshold-container',
+				'condensed-alert-threshold-container',
+			)}
 		>
 			{/* Main condition sentence */}
 			<div className="alert-condition-sentences">
@@ -213,7 +211,7 @@ function AlertThreshold({
 						options={matchTypeOptionsWithTooltips}
 					/>
 					<Typography.Text className="sentence-text">
-						during the {evaluationWindowContext}
+						during the <EvaluationSettings />
 					</Typography.Text>
 				</div>
 			</div>
