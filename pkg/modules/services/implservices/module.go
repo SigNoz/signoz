@@ -12,7 +12,9 @@ type Module struct {
 }
 
 func NewModule(q querier.Querier) *Module {
-	return &Module{Querier: q}
+	return &Module{
+		Querier: q,
+	}
 }
 
 // Get implements services.Module

@@ -2,10 +2,10 @@ package implservices
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -16,7 +16,9 @@ type Handler struct {
 }
 
 func NewHandler(m services.Module) *Handler {
-	return &Handler{Mod: m}
+	return &Handler{
+		Mod: m,
+	}
 }
 
 func (h *Handler) Get(rw http.ResponseWriter, req *http.Request) {
@@ -30,7 +32,7 @@ func (h *Handler) Get(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	var in services.Request
-	if err := json.NewDecoder(req.Body).Decode(&in); err != nil {
+	if err := binding.JSON.BindBody(req.Body, &in); err != nil {
 		render.Error(rw, err)
 		return
 	}
