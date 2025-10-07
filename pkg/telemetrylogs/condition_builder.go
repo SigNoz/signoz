@@ -166,11 +166,10 @@ func (c *conditionBuilder) conditionFor(
 		var value any
 		switch column.Type {
 		case schema.JSONColumnType{}:
-			value = "NULL"
 			if operator == qbtypes.FilterOperatorExists {
-				return sb.NE(tblFieldName, value), nil
+				return sb.IsNotNull(tblFieldName), nil
 			} else {
-				return sb.E(tblFieldName, value), nil
+				return sb.IsNull(tblFieldName), nil
 			}
 		case schema.ColumnTypeString, schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}:
 			value = ""

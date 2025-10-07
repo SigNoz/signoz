@@ -134,7 +134,7 @@ const renderChartPreview = (): ReturnType<typeof render> =>
 		<Provider store={store}>
 			<QueryClientProvider client={queryClient}>
 				<MemoryRouter>
-					<CreateAlertProvider>
+					<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
 						<ChartPreview alertDef={mockAlertDef} />
 					</CreateAlertProvider>
 				</MemoryRouter>
