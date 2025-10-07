@@ -248,7 +248,7 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 				// try to convert the number attribute to string
 				tblFieldName = castString(tblFieldName) // numeric col vs string literal
 			} else {
-				tblFieldName = castFloat(tblFieldName)
+				tblFieldName = castFloatHack(tblFieldName)
 			}
 		case []any:
 			if allFloats(v) {
