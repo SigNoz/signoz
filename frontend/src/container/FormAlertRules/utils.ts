@@ -66,7 +66,7 @@ export const getSelectedQueryOptions = (
 	>,
 ): SelectProps['options'] =>
 	queries
-		.filter((query) => !query.disabled)
+		?.filter((query) => !query.disabled)
 		.map((query) => ({
 			label: 'queryName' in query ? query.queryName : query.name,
 			value: 'queryName' in query ? query.queryName : query.name,

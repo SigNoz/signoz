@@ -10,7 +10,9 @@ describe('YAxisUnitSelector', () => {
 	});
 
 	it('renders with default placeholder', () => {
-		render(<YAxisUnitSelector value="" onChange={mockOnChange} />);
+		render(
+			<YAxisUnitSelector value="" onChange={mockOnChange} initialValue="" />,
+		);
 		expect(screen.getByText('Please select a unit')).toBeInTheDocument();
 	});
 
@@ -20,13 +22,16 @@ describe('YAxisUnitSelector', () => {
 				value=""
 				onChange={mockOnChange}
 				placeholder="Custom placeholder"
+				initialValue=""
 			/>,
 		);
 		expect(screen.queryByText('Custom placeholder')).toBeInTheDocument();
 	});
 
 	it('calls onChange when a value is selected', () => {
-		render(<YAxisUnitSelector value="" onChange={mockOnChange} />);
+		render(
+			<YAxisUnitSelector value="" onChange={mockOnChange} initialValue="" />,
+		);
 		const select = screen.getByRole('combobox');
 
 		fireEvent.mouseDown(select);
@@ -41,7 +46,9 @@ describe('YAxisUnitSelector', () => {
 	});
 
 	it('filters options based on search input', () => {
-		render(<YAxisUnitSelector value="" onChange={mockOnChange} />);
+		render(
+			<YAxisUnitSelector value="" onChange={mockOnChange} initialValue="" />,
+		);
 		const select = screen.getByRole('combobox');
 
 		fireEvent.mouseDown(select);
@@ -52,7 +59,9 @@ describe('YAxisUnitSelector', () => {
 	});
 
 	it('shows all categories and their units', () => {
-		render(<YAxisUnitSelector value="" onChange={mockOnChange} />);
+		render(
+			<YAxisUnitSelector value="" onChange={mockOnChange} initialValue="" />,
+		);
 		const select = screen.getByRole('combobox');
 
 		fireEvent.mouseDown(select);
