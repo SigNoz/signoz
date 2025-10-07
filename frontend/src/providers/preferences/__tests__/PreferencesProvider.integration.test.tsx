@@ -72,323 +72,331 @@ function Consumer({
 	);
 }
 
-describe('PreferencesProvider per-source integration', () => {
+describe('PreferencesProvider integration', () => {
 	beforeEach(() => {
 		localStorage.clear();
 	});
 
-	it('logs: loads defaults when no localStorage or url provided', () => {
-		render(
-			<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
-			undefined,
-			{
-				initialRoute: ROUTE_LOGS,
-			},
-		);
-
-		expect(screen.getByTestId('logs-loading')).toHaveTextContent('false');
-		expect(
-			Number(screen.getByTestId('logs-columns-len').textContent),
-		).toBeGreaterThan(0);
-	});
-
-	it('traces: loads defaults when no localStorage or url provided', () => {
-		render(
-			<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
-			undefined,
-			{
-				initialRoute: ROUTE_TRACES,
-			},
-		);
-
-		expect(screen.getByTestId('traces-loading')).toHaveTextContent('false');
-		expect(
-			Number(screen.getByTestId('traces-columns-len').textContent),
-		).toBeGreaterThan(0);
-	});
-
-	it('logs: respects localStorage when present', () => {
-		setLocalStorageJSON(LOCALSTORAGE.LOGS_LIST_OPTIONS, {
-			selectColumns: [{ name: 'ls.col' }],
-			maxLines: 5,
-			format: 'json',
-			fontSize: 'large',
-			version: 2,
-		});
-
-		render(
-			<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
-			undefined,
-			{
-				initialRoute: ROUTE_LOGS,
-			},
-		);
-
-		expect(Number(screen.getByTestId('logs-columns-len').textContent)).toBe(1);
-	});
-
-	it('traces: respects localStorage when present', () => {
-		setLocalStorageJSON(LOCALSTORAGE.TRACES_LIST_OPTIONS, {
-			selectColumns: [{ name: 'trace.ls.col' }],
-		});
-
-		render(
-			<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
-			undefined,
-			{
-				initialRoute: ROUTE_TRACES,
-			},
-		);
-
-		expect(Number(screen.getByTestId('traces-columns-len').textContent)).toBe(1);
-	});
-
-	it('logs: direct mode updateColumns persists to localStorage', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		render(
-			<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
-			undefined,
-			{
-				initialRoute: ROUTE_LOGS,
-			},
-		);
-
-		await user.click(screen.getByTestId('logs-update-columns'));
-
-		const stored = getLocalStorageJSON<LogsLocalOptions>(
-			LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		);
-		expect(stored?.selectColumns?.length).toBe(1);
-	});
-
-	it('traces: direct mode updateColumns persists to localStorage', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		render(
-			<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
-			undefined,
-			{
-				initialRoute: ROUTE_TRACES,
-			},
-		);
-
-		await user.click(screen.getByTestId('traces-update-columns'));
-
-		const stored = getLocalStorageJSON<TracesLocalOptions>(
-			LOCALSTORAGE.TRACES_LIST_OPTIONS,
-		);
-		expect(stored?.selectColumns?.length).toBe(1);
-	});
-
-	it('logs: saved view mode uses in-memory preferences (no localStorage write)', async () => {
-		const viewKey = JSON.stringify('saved-view-id-1');
-		const initialEntry = `/logs?viewKey=${encodeURIComponent(viewKey)}`;
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-		render(
-			<Consumer dataSource={DataSource.LOGS} testIdPrefix="logs" />,
-			undefined,
-			{
-				initialRoute: initialEntry,
-			},
-		);
-
-		await user.click(screen.getByTestId('logs-update-columns'));
-
-		const stored = getLocalStorageJSON<LogsLocalOptions>(
-			LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		);
-		expect(stored?.selectColumns).toBeUndefined();
-	});
-
-	it('traces: saved view mode uses in-memory preferences (no localStorage write)', async () => {
-		const viewKey = JSON.stringify('saved-view-id-2');
-		const initialEntry = `/traces?viewKey=${encodeURIComponent(viewKey)}`;
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-		render(
-			<Consumer dataSource={DataSource.TRACES} testIdPrefix="traces" />,
-			undefined,
-			{
-				initialRoute: initialEntry,
-			},
-		);
-
-		await user.click(screen.getByTestId('traces-update-columns'));
-
-		const stored = getLocalStorageJSON<TracesLocalOptions>(
-			LOCALSTORAGE.TRACES_LIST_OPTIONS,
-		);
-		expect(stored?.selectColumns).toBeUndefined();
-	});
-
-	it('logs: url options override defaults', () => {
-		const options = {
-			selectColumns: [{ name: 'url.col' }],
-			maxLines: 7,
-			format: 'json',
-			fontSize: 'large',
-			version: 2,
-		};
-		const originalLocation = window.location;
-		Object.defineProperty(window, 'location', {
-			writable: true,
-			value: {
-				...originalLocation,
-				search: `?options=${encodeURIComponent(JSON.stringify(options))}`,
-			},
-		});
-
-		render(
-			<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
-			undefined,
-			{
-				initialRoute: ROUTE_LOGS,
-			},
-		);
-
-		// restore
-		Object.defineProperty(window, 'location', {
-			writable: true,
-			value: originalLocation,
-		});
-
-		expect(Number(screen.getByTestId('logs-columns-len').textContent)).toBe(1);
-	});
-
-	it('traces: url options override defaults', () => {
-		const options = {
-			selectColumns: [{ name: 'trace.url.col' }],
-		};
-		const originalLocation = window.location;
-		Object.defineProperty(window, 'location', {
-			writable: true,
-			value: {
-				...originalLocation,
-				search: `?options=${encodeURIComponent(JSON.stringify(options))}`,
-			},
-		});
-
-		render(
-			<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
-			undefined,
-			{ initialRoute: ROUTE_TRACES },
-		);
-
-		Object.defineProperty(window, 'location', {
-			writable: true,
-			value: originalLocation,
-		});
-
-		expect(Number(screen.getByTestId('traces-columns-len').textContent)).toBe(1);
-	});
-
-	it('logs: updateFormatting persists to localStorage in direct mode', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-		function FormattingConsumer(): JSX.Element {
-			const { logs } = usePreferenceContext();
-			return (
-				<button
-					data-testid="logs-update-formatting"
-					type="button"
-					onClick={(): void =>
-						logs.updateFormatting({
-							maxLines: 9,
-							format: 'json' as LogViewMode,
-							fontSize: 'large' as FontSize,
-							version: 2,
-						})
-					}
-				>
-					fmt
-				</button>
+	describe('Logs', () => {
+		it('loads defaults when no localStorage or url provided', () => {
+			render(
+				<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
+				undefined,
+				{
+					initialRoute: ROUTE_LOGS,
+				},
 			);
-		}
 
-		render(<FormattingConsumer />, undefined, { initialRoute: '/logs' });
+			expect(screen.getByTestId('logs-loading')).toHaveTextContent('false');
+			expect(
+				Number(screen.getByTestId('logs-columns-len').textContent),
+			).toBeGreaterThan(0);
+		});
 
-		await user.click(screen.getByTestId('logs-update-formatting'));
+		it('respects localStorage when present', () => {
+			setLocalStorageJSON(LOCALSTORAGE.LOGS_LIST_OPTIONS, {
+				selectColumns: [{ name: 'ls.col' }],
+				maxLines: 5,
+				format: 'json',
+				fontSize: 'large',
+				version: 2,
+			});
 
-		const stored = getLocalStorageJSON<LogsLocalOptions>(
-			LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		);
-		expect(stored?.maxLines).toBe(9);
-		expect(stored?.format).toBe('json');
-		expect(stored?.fontSize).toBe('large');
-		expect(stored?.version).toBe(2);
-	});
-
-	it('traces: updateFormatting is a no-op in direct mode (no localStorage write)', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-		function TracesFormattingConsumer(): JSX.Element {
-			const { traces } = usePreferenceContext();
-			return (
-				<button
-					data-testid="traces-update-formatting"
-					type="button"
-					onClick={(): void =>
-						traces.updateFormatting({
-							maxLines: 9,
-							format: 'json' as LogViewMode,
-							fontSize: 'large' as FontSize,
-							version: 2,
-						})
-					}
-				>
-					fmt
-				</button>
+			render(
+				<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
+				undefined,
+				{
+					initialRoute: ROUTE_LOGS,
+				},
 			);
-		}
 
-		render(<TracesFormattingConsumer />, undefined, { initialRoute: '/traces' });
+			expect(Number(screen.getByTestId('logs-columns-len').textContent)).toBe(1);
+		});
 
-		await user.click(screen.getByTestId('traces-update-formatting'));
+		it('direct mode updateColumns persists to localStorage', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			render(
+				<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
+				undefined,
+				{
+					initialRoute: ROUTE_LOGS,
+				},
+			);
 
-		const stored = getLocalStorageJSON<TracesLocalOptions>(
-			LOCALSTORAGE.TRACES_LIST_OPTIONS,
-		);
-		expect(stored).toBeNull();
+			await user.click(screen.getByTestId('logs-update-columns'));
+
+			const stored = getLocalStorageJSON<LogsLocalOptions>(
+				LOCALSTORAGE.LOGS_LIST_OPTIONS,
+			);
+			expect(stored?.selectColumns).toEqual([
+				defaultLogsSelectedColumns[0] as TelemetryFieldKey,
+			]);
+		});
+
+		it('saved view mode uses in-memory preferences (no localStorage write)', async () => {
+			const viewKey = JSON.stringify('saved-view-id-1');
+			const initialEntry = `/logs?viewKey=${encodeURIComponent(viewKey)}`;
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			render(
+				<Consumer dataSource={DataSource.LOGS} testIdPrefix="logs" />,
+				undefined,
+				{
+					initialRoute: initialEntry,
+				},
+			);
+
+			await user.click(screen.getByTestId('logs-update-columns'));
+
+			const stored = getLocalStorageJSON<LogsLocalOptions>(
+				LOCALSTORAGE.LOGS_LIST_OPTIONS,
+			);
+			expect(stored?.selectColumns).toBeUndefined();
+		});
+
+		it('url options override defaults', () => {
+			const options = {
+				selectColumns: [{ name: 'url.col' }],
+				maxLines: 7,
+				format: 'json',
+				fontSize: 'large',
+				version: 2,
+			};
+			const originalLocation = window.location;
+			Object.defineProperty(window, 'location', {
+				writable: true,
+				value: {
+					...originalLocation,
+					search: `?options=${encodeURIComponent(JSON.stringify(options))}`,
+				},
+			});
+
+			render(
+				<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
+				undefined,
+				{
+					initialRoute: ROUTE_LOGS,
+				},
+			);
+
+			// restore
+			Object.defineProperty(window, 'location', {
+				writable: true,
+				value: originalLocation,
+			});
+
+			expect(Number(screen.getByTestId('logs-columns-len').textContent)).toBe(1);
+		});
+
+		it('updateFormatting persists to localStorage in direct mode', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			function FormattingConsumer(): JSX.Element {
+				const { logs } = usePreferenceContext();
+				return (
+					<button
+						data-testid="logs-update-formatting"
+						type="button"
+						onClick={(): void =>
+							logs.updateFormatting({
+								maxLines: 9,
+								format: 'json' as LogViewMode,
+								fontSize: 'large' as FontSize,
+								version: 2,
+							})
+						}
+					>
+						fmt
+					</button>
+				);
+			}
+
+			render(<FormattingConsumer />, undefined, { initialRoute: '/logs' });
+
+			await user.click(screen.getByTestId('logs-update-formatting'));
+
+			const stored = getLocalStorageJSON<LogsLocalOptions>(
+				LOCALSTORAGE.LOGS_LIST_OPTIONS,
+			);
+			expect(stored?.maxLines).toBe(9);
+			expect(stored?.format).toBe('json');
+			expect(stored?.fontSize).toBe('large');
+			expect(stored?.version).toBe(2);
+		});
+
+		it('saved view mode updates in-memory preferences (columns-len changes)', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const viewKey = JSON.stringify('saved-view-id-3');
+			const initialEntry = `/logs?viewKey=${encodeURIComponent(viewKey)}`;
+
+			render(
+				<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
+				undefined,
+				{ initialRoute: initialEntry },
+			);
+
+			const before = Number(screen.getByTestId('logs-columns-len').textContent);
+			await user.click(screen.getByTestId('logs-update-columns'));
+			const after = Number(screen.getByTestId('logs-columns-len').textContent);
+			expect(after).toBeGreaterThanOrEqual(1);
+			// Should change from default to 1 for our new selection; tolerate default already being >=1
+			if (before !== after) {
+				expect(after).toBe(1);
+			}
+		});
 	});
 
-	it('logs: saved view mode updates in-memory preferences (columns-len changes)', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const viewKey = JSON.stringify('saved-view-id-3');
-		const initialEntry = `/logs?viewKey=${encodeURIComponent(viewKey)}`;
+	describe('Traces', () => {
+		it('loads defaults when no localStorage or url provided', () => {
+			render(
+				<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
+				undefined,
+				{
+					initialRoute: ROUTE_TRACES,
+				},
+			);
 
-		render(
-			<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
-			undefined,
-			{ initialRoute: initialEntry },
-		);
+			expect(screen.getByTestId('traces-loading')).toHaveTextContent('false');
+			expect(
+				Number(screen.getByTestId('traces-columns-len').textContent),
+			).toBeGreaterThan(0);
+		});
 
-		const before = Number(screen.getByTestId('logs-columns-len').textContent);
-		await user.click(screen.getByTestId('logs-update-columns'));
-		const after = Number(screen.getByTestId('logs-columns-len').textContent);
-		expect(after).toBeGreaterThanOrEqual(1);
-		// Should change from default to 1 for our new selection; tolerate default already being >=1
-		if (before !== after) {
-			expect(after).toBe(1);
-		}
-	});
+		it('respects localStorage when present', () => {
+			setLocalStorageJSON(LOCALSTORAGE.TRACES_LIST_OPTIONS, {
+				selectColumns: [{ name: 'trace.ls.col' }],
+			});
 
-	it('traces: saved view mode updates in-memory preferences (columns-len changes)', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const viewKey = JSON.stringify('saved-view-id-4');
-		const initialEntry = `/traces?viewKey=${encodeURIComponent(viewKey)}`;
+			render(
+				<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
+				undefined,
+				{
+					initialRoute: ROUTE_TRACES,
+				},
+			);
 
-		render(
-			<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
-			undefined,
-			{ initialRoute: initialEntry },
-		);
+			expect(Number(screen.getByTestId('traces-columns-len').textContent)).toBe(1);
+		});
 
-		const before = Number(screen.getByTestId('traces-columns-len').textContent);
-		await user.click(screen.getByTestId('traces-update-columns'));
-		const after = Number(screen.getByTestId('traces-columns-len').textContent);
-		expect(after).toBeGreaterThanOrEqual(1);
-		if (before !== after) {
-			expect(after).toBe(1);
-		}
+		it('direct mode updateColumns persists to localStorage', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			render(
+				<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
+				undefined,
+				{
+					initialRoute: ROUTE_TRACES,
+				},
+			);
+
+			await user.click(screen.getByTestId('traces-update-columns'));
+
+			const stored = getLocalStorageJSON<TracesLocalOptions>(
+				LOCALSTORAGE.TRACES_LIST_OPTIONS,
+			);
+			expect(stored?.selectColumns).toEqual([
+				defaultTraceSelectedColumns[0] as TelemetryFieldKey,
+			]);
+		});
+
+		it('saved view mode uses in-memory preferences (no localStorage write)', async () => {
+			const viewKey = JSON.stringify('saved-view-id-2');
+			const initialEntry = `/traces?viewKey=${encodeURIComponent(viewKey)}`;
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			render(
+				<Consumer dataSource={DataSource.TRACES} testIdPrefix="traces" />,
+				undefined,
+				{
+					initialRoute: initialEntry,
+				},
+			);
+
+			await user.click(screen.getByTestId('traces-update-columns'));
+
+			const stored = getLocalStorageJSON<TracesLocalOptions>(
+				LOCALSTORAGE.TRACES_LIST_OPTIONS,
+			);
+			expect(stored?.selectColumns).toBeUndefined();
+		});
+
+		it('url options override defaults', () => {
+			const options = {
+				selectColumns: [{ name: 'trace.url.col' }],
+			};
+			const originalLocation = window.location;
+			Object.defineProperty(window, 'location', {
+				writable: true,
+				value: {
+					...originalLocation,
+					search: `?options=${encodeURIComponent(JSON.stringify(options))}`,
+				},
+			});
+
+			render(
+				<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
+				undefined,
+				{ initialRoute: ROUTE_TRACES },
+			);
+
+			Object.defineProperty(window, 'location', {
+				writable: true,
+				value: originalLocation,
+			});
+
+			expect(Number(screen.getByTestId('traces-columns-len').textContent)).toBe(1);
+		});
+
+		it('updateFormatting is a no-op in direct mode (no localStorage write)', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			function TracesFormattingConsumer(): JSX.Element {
+				const { traces } = usePreferenceContext();
+				return (
+					<button
+						data-testid="traces-update-formatting"
+						type="button"
+						onClick={(): void =>
+							traces.updateFormatting({
+								maxLines: 9,
+								format: 'json' as LogViewMode,
+								fontSize: 'large' as FontSize,
+								version: 2,
+							})
+						}
+					>
+						fmt
+					</button>
+				);
+			}
+
+			render(<TracesFormattingConsumer />, undefined, { initialRoute: '/traces' });
+
+			await user.click(screen.getByTestId('traces-update-formatting'));
+
+			const stored = getLocalStorageJSON<TracesLocalOptions>(
+				LOCALSTORAGE.TRACES_LIST_OPTIONS,
+			);
+			expect(stored).toBeNull();
+		});
+
+		it('saved view mode updates in-memory preferences (columns-len changes)', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const viewKey = JSON.stringify('saved-view-id-4');
+			const initialEntry = `/traces?viewKey=${encodeURIComponent(viewKey)}`;
+
+			render(
+				<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
+				undefined,
+				{ initialRoute: initialEntry },
+			);
+
+			const before = Number(screen.getByTestId('traces-columns-len').textContent);
+			await user.click(screen.getByTestId('traces-update-columns'));
+			const after = Number(screen.getByTestId('traces-columns-len').textContent);
+			expect(after).toBeGreaterThanOrEqual(1);
+			if (before !== after) {
+				expect(after).toBe(1);
+			}
+		});
 	});
 });
