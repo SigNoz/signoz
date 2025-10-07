@@ -23,6 +23,14 @@ func NewWrappedTokenizer(settings factory.ScopedProviderSettings, tokenizer Toke
 	}
 }
 
+func (wrapped *wrappedTokenizer) Start(ctx context.Context) error {
+	return wrapped.tokenizer.Start(ctx)
+}
+
+func (wrapped *wrappedTokenizer) Stop(ctx context.Context) error {
+	return wrapped.tokenizer.Stop(ctx)
+}
+
 func (wrapped *wrappedTokenizer) CreateToken(ctx context.Context, identity *authtypes.Identity, meta map[string]string) (*authtypes.Token, error) {
 	ctx, span := wrapped.settings.Tracer().Start(ctx, "tokenizer.CreateToken", trace.WithAttributes(attribute.String("tokenizer.provider", wrapped.tokenizer.Config().Provider)))
 	defer span.End()

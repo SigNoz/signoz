@@ -11,6 +11,7 @@ import (
 )
 
 type Tokenizer interface {
+	factory.Service
 	// Create a new token.
 	CreateToken(context.Context, *authtypes.Identity, map[string]string) (*authtypes.Token, error)
 
@@ -36,9 +37,4 @@ type Tokenizer interface {
 	Config() Config
 
 	statsreporter.StatsCollector
-}
-
-type TokenizerWithService interface {
-	factory.Service
-	Tokenizer
 }
