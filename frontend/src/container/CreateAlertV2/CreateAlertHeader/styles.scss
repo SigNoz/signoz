@@ -175,10 +175,19 @@
 		}
 	}
 
+	.edit-alert-header {
+		width: 100%;
+	}
+
+	.edit-alert-header .alert-header__content {
+		background: var(--bg-vanilla-200);
+	}
+
 	.labels-input {
 		&__add-button {
 			color: var(--bg-ink-400);
 			border: 1px solid var(--bg-vanilla-300);
+			background-color: var(--bg-vanilla-100);
 
 			&:hover {
 				border-color: var(--bg-ink-300);

@@ -17,7 +17,7 @@ import {
 import { BuildCreateAlertRulePayloadArgs } from './types';
 
 // Get formatted time/unit pairs for create alert api payload
-function getFormattedTimeValue(timeValue: number, unit: string): string {
+export function getFormattedTimeValue(timeValue: number, unit: string): string {
 	const unitMap: Record<string, string> = {
 		[UniversalYAxisUnit.SECONDS]: 's',
 		[UniversalYAxisUnit.MINUTES]: 'm',
@@ -57,19 +57,17 @@ export function getNotificationSettingsProps(
 	notificationSettings: NotificationSettingsState,
 ): PostableAlertRuleV2['notificationSettings'] {
 	const notificationSettingsProps: PostableAlertRuleV2['notificationSettings'] = {
-		notificationGroupBy: notificationSettings.multipleNotifications || [],
-		alertStates: notificationSettings.reNotification.enabled
-			? notificationSettings.reNotification.conditions
-			: [],
-		notificationPolicy: notificationSettings.routingPolicies,
+		groupBy: notificationSettings.multipleNotifications || [],
+		usePolicy: notificationSettings.routingPolicies,
+		renotify: {
+			enabled: notificationSettings.reNotification.enabled,
+			interval: getFormattedTimeValue(
+				notificationSettings.reNotification.value,
+				notificationSettings.reNotification.unit,
+			),
+			alertStates: notificationSettings.reNotification.conditions,
+		},
 	};
-
-	if (notificationSettings.reNotification.enabled) {
-		notificationSettingsProps.renotify = getFormattedTimeValue(
-			notificationSettings.reNotification.value,
-			notificationSettings.reNotification.unit,
-		);
-	}
 
 	return notificationSettingsProps;
 }
