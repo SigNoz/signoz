@@ -329,7 +329,7 @@ class TestTTLMethods:
             "coldStorageDuration": 0
         }
         
-        response = self._make_ttl_request("/api/v2/settings/ttl", query_params=payload)
+        response = self._make_ttl_request("/api/v2/settings/ttl", json_body=payload)
         
         # Should return error for duplicate conditions
         assert response.status_code == HTTPStatus.BAD_REQUEST
