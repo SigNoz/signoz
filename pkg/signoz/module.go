@@ -19,6 +19,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
+	"github.com/SigNoz/signoz/pkg/modules/servicesqb"
+	"github.com/SigNoz/signoz/pkg/modules/servicesqb/implservicesqb"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -40,6 +42,7 @@ type Modules struct {
 	QuickFilter   quickfilter.Module
 	TraceFunnel   tracefunnel.Module
 	RawDataExport rawdataexport.Module
+	ServicesQB    servicesqb.Module
 }
 
 func NewModules(
@@ -66,5 +69,6 @@ func NewModules(
 		QuickFilter:   quickfilter,
 		TraceFunnel:   impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 		RawDataExport: implrawdataexport.NewModule(querier),
+		ServicesQB:    implservicesqb.NewModule(querier),
 	}
 }

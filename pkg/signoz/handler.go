@@ -16,6 +16,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
+	"github.com/SigNoz/signoz/pkg/modules/servicesqb"
+	"github.com/SigNoz/signoz/pkg/modules/servicesqb/implservicesqb"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -32,6 +34,7 @@ type Handlers struct {
 	QuickFilter   quickfilter.Handler
 	TraceFunnel   tracefunnel.Handler
 	RawDataExport rawdataexport.Handler
+	ServicesQB    servicesqb.Handler
 }
 
 func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Handlers {
@@ -45,5 +48,6 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Han
 		QuickFilter:   implquickfilter.NewHandler(modules.QuickFilter),
 		TraceFunnel:   impltracefunnel.NewHandler(modules.TraceFunnel),
 		RawDataExport: implrawdataexport.NewHandler(modules.RawDataExport),
+		ServicesQB:    implservicesqb.NewHandler(modules.ServicesQB.(*implservicesqb.Module)),
 	}
 }
