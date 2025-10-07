@@ -1449,45 +1449,45 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 	ttlTracesV2ResourceColdStorage := ", toDateTime(%s) + toIntervalSecond(1800) + INTERVAL %v SECOND TO VOLUME '%s'"
 
 	traceTTLConfigs := map[string]ttlConfig{
-		r.traceTableName: {
+		r.TraceDB + "." + r.traceTableName: {
 			TTLQuery:         ttlV2,
 			TTLColumn:        "timestamp",
 			ColdStorageQuery: ttlV2ColdStorage,
 		},
-		r.traceResourceTableV3: {
+		r.TraceDB + "." + r.traceResourceTableV3: {
 			TTLQuery:         ttlV2Resource,
 			TTLColumn:        "seen_at_ts_bucket_start",
 			ColdStorageQuery: ttlTracesV2ResourceColdStorage,
 		},
-		signozErrorIndexTable: {
+		r.TraceDB + "." + signozErrorIndexTable: {
 			TTLQuery:         ttlV2,
 			TTLColumn:        "timestamp",
 			ColdStorageQuery: ttlV2ColdStorage,
 		},
-		signozUsageExplorerTable: {
+		r.TraceDB + "." + signozUsageExplorerTable: {
 			TTLQuery:         ttlV2,
 			TTLColumn:        "timestamp",
 			ColdStorageQuery: ttlV2ColdStorage,
 		},
-		defaultDependencyGraphTable: {
+		r.TraceDB + "." + defaultDependencyGraphTable: {
 			TTLQuery:         ttlV2,
 			TTLColumn:        "timestamp",
 			ColdStorageQuery: ttlV2ColdStorage,
 		},
-		r.traceSummaryTable: {
+		r.TraceDB + "." + r.traceSummaryTable: {
 			TTLQuery:         ttlV2,
 			TTLColumn:        "end",
 			ColdStorageQuery: ttlV2ColdStorage,
 		},
-		r.spanAttributesKeysTable: {
-			TTLQuery:         ttlV2,
-			TTLColumn:        "timestamp",
+		r.TraceDB + "." + r.spanAttributesKeysTable: {
+			TTLQuery:  ttlV2,
+			TTLColumn: "timestamp",
 		},
 	}
 
 	// check if there is existing things to be done
 	for tableName := range traceTTLConfigs {
-		localTableName := getLocalTableName(r.TraceDB + "." + tableName)
+		localTableName := getLocalTableName(tableName)
 		statusItem, err := r.checkTTLStatusItem(ctx, orgID, localTableName)
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
@@ -1642,21 +1642,21 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	}
 
 	logsTTLConfigs := map[string]ttlConfig{
-		r.logsTableV2: {
+		r.logsDB + "." + r.logsTableV2: {
 			CustomRetentionQuery: "ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT " + multiIfExpr,
 			TTLQuery:             "ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(toUInt32(timestamp / 1000), 'UTC') INTERVAL %v DAY DELETE",
 			ColdStorageQuery:     ", toDateTime(toUInt32(timestamp / 1000), 'UTC') + INTERVAL %v DAY TO VOLUME '%s'",
 		},
-		r.logsResourceTableV2: {
+		r.logsDB + "." + r.logsResourceTableV2: {
 			CustomRetentionQuery: "ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT " + resourceMultiIfExpr,
 			TTLQuery:             "ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(toUInt32(seen_at_ts_bucket_start), 'UTC') + INTERVAL 1800 SECOND + INTERVAL %v DAY DELETE",
 			ColdStorageQuery:     ", toDateTime(toUInt32(seen_at_ts_bucket_start), 'UTC') + INTERVAL 1800 SECOND + INTERVAL %v DAY TO VOLUME '%s'",
 		},
-		r.logsAttributeKeys: {
-			TTLQuery: "ALTER TABLE %v ON CLUSTER %s MODIFY TTL timestamp INTERVAL %v DAY",
+		r.logsDB + "." + r.logsAttributeKeys: {
+			TTLQuery: "ALTER TABLE %v ON CLUSTER %s MODIFY TTL timestamp INTERVAL %v DAY DELETE",
 		},
-		r.logsResourceKeys: {
-			TTLQuery: "ALTER TABLE %v ON CLUSTER %s MODIFY TTL timestamp INTERVAL %v DAY",
+		r.logsDB + "." + r.logsResourceKeys: {
+			TTLQuery: "ALTER TABLE %v ON CLUSTER %s MODIFY TTL timestamp INTERVAL %v DAY DELETE",
 		},
 	}
 
