@@ -34,8 +34,12 @@ class TestTTLMethods:
             "Content-Type": "application/json"
         }
 
-    def _make_ttl_request(self, endpoint: str, query_params: Dict[str, Any] = {}, json_body: Dict[str, Any] = {}, method = requests.post) -> requests.Response:
+    def _make_ttl_request(self, endpoint: str, query_params: Dict[str, Any] = None, json_body: Dict[str, Any] = None, method = requests.post) -> requests.Response:
         """Helper method to make TTL API requests."""
+        if query_params is None:
+            query_params = {}
+        if json_body is None:
+            json_body = {}
         url = self.signoz.self.host_configs["8080"].get(endpoint)
         return method(url, json=json_body, params=query_params, headers=self.base_headers, timeout=30)
 
