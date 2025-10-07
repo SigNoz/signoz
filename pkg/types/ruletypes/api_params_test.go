@@ -718,3 +718,186 @@ func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 
 	assert.Equal(t, 1, len(vector))
 }
+
+func TestAnomalyNegation(t *testing.T) {
+	tests := []struct {
+		name        string
+		content     []byte
+		expectError bool
+		validate    func(*testing.T, *PostableRule)
+	}{
+		{
+			name: "anomaly rule with ValueIsBelow",
+			content: []byte(`{
+				"alert": "AnomalyBelowTest",
+				"ruleType": "anomaly_rule",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
+							}
+						}]
+					},
+					"target": 50.0,
+					"targetUnit": "ms",
+					"matchType": "1",
+					"op": "2",
+					"selectedQuery": "A"
+				}
+			}`),
+			expectError: false,
+			validate: func(t *testing.T, rule *PostableRule) {
+
+				if *rule.RuleCondition.Target != 50.0 {
+					t.Errorf("Expected original Target to be 50.0, got %v", *rule.RuleCondition.Target)
+				}
+
+				spec := rule.RuleCondition.Thresholds.Spec.(BasicRuleThresholds)[0]
+				if *spec.TargetValue != -50.0 {
+					t.Errorf("Expected negated TargetValue -50.0 in threshold, got %v", *spec.TargetValue)
+				}
+			},
+		},
+		{
+			name: "anomaly rule with ValueIsAbove",
+			content: []byte(`{
+				"alert": "AnomalyAboveTest",
+				"ruleType": "anomaly_rule",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
+							}
+						}]
+					},
+					"target": 75.0,
+					"targetUnit": "%",
+					"matchType": "1",
+					"op": "1",
+					"selectedQuery": "A"
+				}
+			}`),
+			expectError: false,
+			validate: func(t *testing.T, rule *PostableRule) {
+
+				spec := rule.RuleCondition.Thresholds.Spec.(BasicRuleThresholds)[0]
+				if spec.TargetValue == nil {
+					t.Fatal("Expected TargetValue in threshold to be set")
+				}
+
+				if *spec.TargetValue != 75.0 {
+					t.Errorf("Expected TargetValue 75.0 (not negated), got %v", *spec.TargetValue)
+				}
+			},
+		},
+		{
+			name: "anomaly rule with ValueIsOutOfBounds",
+			content: []byte(`{
+				"alert": "AnomalyAboveTest",
+				"ruleType": "anomaly_rule",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
+							}
+						}]
+					},
+					"target": 75.0,
+					"targetUnit": "%",
+					"matchType": "1",
+					"op": "7",
+					"selectedQuery": "A"
+				}
+			}`),
+			expectError: false,
+			validate: func(t *testing.T, rule *PostableRule) {
+
+				spec := rule.RuleCondition.Thresholds.Spec.(BasicRuleThresholds)[0]
+				if spec.TargetValue == nil {
+					t.Fatal("Expected TargetValue in threshold to be set")
+				}
+
+				if *spec.TargetValue != 75.0 {
+					t.Errorf("Expected TargetValue 75.0 (not negated), got %v", *spec.TargetValue)
+				}
+			},
+		},
+		{
+			name: "non-anomaly threshold rule",
+			content: []byte(`{
+				"alert": "ThresholdTest",
+				"ruleType": "threshold_rule",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
+							}
+						}]
+					},
+					"target": 90.0,
+					"targetUnit": "%",
+					"matchType": "1",
+					"op": "2",
+					"selectedQuery": "A"
+				}
+			}`),
+			expectError: false,
+			validate: func(t *testing.T, rule *PostableRule) {
+				specs, ok := rule.RuleCondition.Thresholds.Spec.(BasicRuleThresholds)
+				if !ok {
+					t.Fatalf("Expected BasicRuleThresholds, got %T", rule.RuleCondition.Thresholds.Spec)
+				}
+
+				spec := specs[0]
+				if *spec.TargetValue != 90.0 {
+					t.Errorf("Expected TargetValue 90.0 (not negated), got %v", *spec.TargetValue)
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rule := PostableRule{}
+			err := json.Unmarshal(tt.content, &rule)
+
+			if tt.expectError && err == nil {
+				t.Error("Expected error but got none")
+				return
+			}
+
+			if !tt.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+				return
+			}
+
+			if tt.validate != nil && err == nil {
+				tt.validate(t, &rule)
+			}
+		})
+	}
+}
