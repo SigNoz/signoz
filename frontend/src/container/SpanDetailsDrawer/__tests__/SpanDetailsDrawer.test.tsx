@@ -487,7 +487,7 @@ describe('SpanDetailsDrawer', () => {
 
 		// Wait for all API calls to complete first
 		await waitFor(() => {
-			expect(GetMetricQueryRange).toHaveBeenCalledTimes(3);
+			expect(GetMetricQueryRange).toHaveBeenCalledTimes(4);
 		});
 
 		// Wait for all logs to be rendered - both span logs and context logs
