@@ -12,6 +12,8 @@ import axios, {
 import { ENVIRONMENT } from 'constants/env';
 import { Events } from 'constants/events';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { SuccessResponseV2 } from 'types/api';
+import { Token } from 'types/api/v2/sessions/rotate/post';
 import { eventEmitter } from 'utils/getEventEmitter';
 
 import apiV1, {
@@ -26,6 +28,24 @@ import apiV1, {
 import { Logout } from './utils';
 
 const RESPONSE_TIMEOUT_THRESHOLD = 5000; // 5 seconds
+
+let sessionRotateRequest: Promise<SuccessResponseV2<Token>> | null;
+export async function sessionRotate(): Promise<SuccessResponseV2<Token>> {
+	return post({
+		refreshToken: getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '',
+	});
+}
+
+export const getSessionRotateRequest = (): Promise<
+	SuccessResponseV2<Token>
+> | null => sessionRotateRequest;
+
+export const setSessionRotateRequest = (): Promise<
+	SuccessResponseV2<Token>
+> => {
+	sessionRotateRequest = sessionRotate();
+	return sessionRotateRequest;
+};
 
 const interceptorsResponse = (
 	value: AxiosResponse<any>,
@@ -74,14 +94,29 @@ const interceptorRejected = async (
 	try {
 		if (axios.isAxiosError(value) && value.response) {
 			const { response } = value;
-			// reject the refresh token error
-			if (response.status === 401 && response.config.url !== '/login') {
-				try {
-					const response = await post({
-						refreshToken: getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '',
-					});
 
+			if (
+				response.status === 401 &&
+				// if the session rotate call errors out with 401 or the delete sessions call returns 401 then we do not retry!
+				response.config.url !== '/sessions/rotate' &&
+				!(
+					response.config.url === '/sessions' && response.config.method === 'delete'
+				)
+			) {
+				// generate the global session rotate promise if it doesn't exist
+				if (!sessionRotateRequest) {
+					sessionRotateRequest = sessionRotate();
+				}
+
+				try {
+					// get the response from the global promise
+					const response = await sessionRotateRequest;
 					afterLogin(response.data.accessToken, response.data.refreshToken, true);
+
+					// clear the global promise after 60 seconds as long running requests might inccur an unwanted rotation of session just post the previous rotation got completed
+					setTimeout(() => {
+						sessionRotateRequest = null;
+					}, 60000);
 
 					try {
 						const reResponse = await axios(
@@ -108,8 +143,8 @@ const interceptorRejected = async (
 					Logout();
 				}
 			}
-			// when refresh token is expired
-			if (response.status === 401 && response.config.url === '/sessions') {
+
+			if (response.status === 401 && response.config.url === '/sessions/rotate') {
 				Logout();
 			}
 		}

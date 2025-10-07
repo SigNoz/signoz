@@ -49,7 +49,6 @@ const columns: ColumnsType<GettableAuthDomain> = [
 	},
 ];
 
-// TODO check why is the error modal breaking here
 async function deleteDomainById(
 	id: string,
 	showErrorModal: (error: APIError) => void,

@@ -1,7 +1,7 @@
+import { getSessionRotateRequest, setSessionRotateRequest } from 'api';
 import { apiV3 } from 'api/apiV1';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import { Logout } from 'api/utils';
-import rotate from 'api/v2/sessions/rotate/post';
 import afterLogin from 'AppRoutes/utils';
 import { ENVIRONMENT } from 'constants/env';
 import { LIVE_TAIL_HEARTBEAT_TIMEOUT } from 'constants/liveTail';
@@ -75,10 +75,14 @@ export function EventSourceProvider({
 		setInitialLoading(false);
 
 		try {
-			const response = await rotate({
-				refreshToken: getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '',
-			});
+			let sessionsRotateRequest = getSessionRotateRequest();
+			if (!sessionsRotateRequest) {
+				sessionsRotateRequest = setSessionRotateRequest();
+			}
+
+			const response = await sessionsRotateRequest;
 			afterLogin(response.data.accessToken, response.data.refreshToken, true);
+
 			// If token refresh was successful, we'll let the component
 			// handle reconnection through the reconnectDueToError state
 			setReconnectDueToError(true);
