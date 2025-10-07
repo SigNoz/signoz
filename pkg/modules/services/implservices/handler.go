@@ -1,4 +1,4 @@
-package implservicesqb
+package implservices
 
 import (
 	"context"
@@ -7,18 +7,16 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/servicesqb"
+	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 )
 
 type Handler struct {
-	Mod servicesqb.Module
+	Mod services.Module
 }
 
-func NewHandler(m servicesqb.Module) *Handler {
-	return &Handler{
-		Mod: m,
-	}
+func NewHandler(m services.Module) *Handler {
+	return &Handler{Mod: m}
 }
 
 func (h *Handler) Get(rw http.ResponseWriter, req *http.Request) {
@@ -31,7 +29,7 @@ func (h *Handler) Get(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var in servicesqb.Request
+	var in services.Request
 	if err := json.NewDecoder(req.Body).Decode(&in); err != nil {
 		render.Error(rw, err)
 		return

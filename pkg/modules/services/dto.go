@@ -1,4 +1,4 @@
-package servicesqb
+package services
 
 import "time"
 
