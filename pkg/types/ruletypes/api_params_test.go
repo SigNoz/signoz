@@ -888,7 +888,7 @@ func TestAnomalyNegationShouldAlert(t *testing.T) {
 			series: v3.Series{
 				Labels: map[string]string{"host": "server1"},
 				Points: []v3.Point{
-					{Timestamp: 1000, Value: -2.1}, // all below -50
+					{Timestamp: 1000, Value: -2.1}, // all below -2
 					{Timestamp: 2000, Value: -2.2},
 					{Timestamp: 3000, Value: -2.5},
 				},
@@ -999,7 +999,7 @@ func TestAnomalyNegationShouldAlert(t *testing.T) {
 			expectedValue: 80.0,
 		},
 		{
-			name: "non-anomaly rule with ValueIsBelow - should alert",
+			name: "non-anomaly rule with ValueIsBelow - should not alert",
 			ruleJSON: []byte(`{
 				"alert": "ThresholdTest",
 				"ruleType": "threshold_rule",
