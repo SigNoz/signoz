@@ -20,8 +20,7 @@ import (
 )
 
 var (
-	emptyOrgID valuer.UUID                    = valuer.UUID{}
-	_          tokenizer.TokenizerWithService = (*provider)(nil)
+	emptyOrgID valuer.UUID = valuer.UUID{}
 )
 
 type provider struct {
