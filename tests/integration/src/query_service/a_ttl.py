@@ -132,7 +132,8 @@ class TestTTLMethods:
         ]
 
         # Query to get table engine info which includes TTL
-        query = f"SELECT engine_full FROM system.tables WHERE table in ['{"\',\'".join(tables_to_check)}']"
+        table_list = "', '".join(tables_to_check)
+        query = f"SELECT engine_full FROM system.tables WHERE table in ['{table_list}']"
         
         result = self.conn.query(query).result_rows
 
