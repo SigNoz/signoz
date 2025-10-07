@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 )
 
@@ -141,10 +142,10 @@ func (store *store) ListByOrgIDs(ctx context.Context, orgIDs []valuer.UUID) ([]*
 		NewSelect().
 		Model(&tokens).
 		Join("JOIN users").
-		JoinOn("users.id = tokens.user_id").
+		JoinOn("users.id = auth_token.user_id").
 		Join("JOIN organizations").
 		JoinOn("organizations.id = users.org_id").
-		Where("organizations.id IN (?)", orgIDs).
+		Where("organizations.id IN (?)", bun.In(orgIDs)).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -242,12 +243,12 @@ func (store *store) UpdateLastObservedAtByAccessToken(ctx context.Context, acces
 		sqlstore.
 		BunDBCtx(ctx).
 		NewUpdate().
-		With("_data", values).
+		With("update_cte", values).
 		Model((*authtypes.StorableToken)(nil)).
-		TableExpr("auth_token").
-		Set("last_observed_at = _data.last_observed_at").
-		Where("auth_token.access_token = _data.access_token").
-		Where("auth_token.user_id = _data.user_id").
+		TableExpr("update_cte").
+		Set("last_observed_at = update_cte.last_observed_at").
+		Where("access_token = update_cte.access_token").
+		Where("user_id = update_cte.user_id").
 		Exec(ctx)
 	if err != nil {
 		return err
