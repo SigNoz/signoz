@@ -16,11 +16,38 @@ import (
 )
 
 type conditionBuilder struct {
-	fm qbtypes.FieldMapper
+	fm           qbtypes.FieldMapper
+	bcb          *BodyConditionBuilder
+	jsonResolver *JSONFieldResolver
 }
 
-func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
-	return &conditionBuilder{fm: fm}
+func NewConditionBuilder(fm qbtypes.FieldMapper, bcb *BodyConditionBuilder) *conditionBuilder {
+	return &conditionBuilder{fm: fm, bcb: bcb}
+}
+
+func NewConditionBuilderWithJSONResolver(fm qbtypes.FieldMapper, bcb *BodyConditionBuilder, jsonResolver *JSONFieldResolver) *conditionBuilder {
+	return &conditionBuilder{fm: fm, bcb: bcb, jsonResolver: jsonResolver}
+}
+
+// ConditionForWithExtras implements the extras-aware path without changing the global interface.
+func (c *conditionBuilder) ConditionForWithExtras(
+	ctx context.Context,
+	key *telemetrytypes.TelemetryFieldKey,
+	operator qbtypes.FilterOperator,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) (string, qbtypes.ConditionExtras, error) {
+	if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) && c.bcb != nil {
+		cond, _, err := c.bcb.BuildConditionWithExtras(ctx, key, operator, value, sb)
+		if err != nil {
+			return "", qbtypes.ConditionExtras{}, err
+		}
+		// WHERE-only: no extras returned
+		return cond, qbtypes.ConditionExtras{}, nil
+	}
+	// fallback to legacy
+	cond, err := c.conditionFor(ctx, key, operator, value, sb)
+	return cond, qbtypes.ConditionExtras{}, err
 }
 
 func (c *conditionBuilder) conditionFor(
@@ -51,12 +78,18 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
-		tblFieldName, value = GetBodyJSONKey(ctx, key, operator, value)
+	if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) && c.bcb != nil {
+		// For callers of legacy ConditionFor, we still build the condition (WHERE-only).
+		cond, _, err := c.bcb.BuildConditionWithExtras(ctx, key, operator, value, sb)
+		if err != nil {
+			return "", err
+		}
+		return cond, nil
 	}
 
 	tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
 
+	// TODO: add body.message here
 	// make use of case insensitive index for body
 	if tblFieldName == "body" {
 		switch operator {
@@ -156,22 +189,33 @@ func (c *conditionBuilder) conditionFor(
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
 
 		if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
-			if operator == qbtypes.FilterOperatorExists {
-				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
+			// Use JSON typed expressions if feature flag is enabled and we have a JSON resolver
+			if c.jsonResolver != nil && IsBodyJSONQueryEnabled(ctx) {
+				expression, err := c.jsonResolver.BuildJSONFieldExpressionForFilter(ctx, key, operator)
+				if err != nil {
+					return "", err
+				}
+				return expression, nil
 			} else {
-				return "NOT " + GetBodyJSONKeyForExists(ctx, key, operator, value), nil
+				// Fall back to legacy string JSON approach
+				if operator == qbtypes.FilterOperatorExists {
+					return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
+				} else {
+					return "NOT " + GetBodyJSONKeyForExists(ctx, key, operator, value), nil
+				}
 			}
 		}
 
 		var value any
-		switch column.Type {
-		case schema.JSONColumnType{}:
+		if _, ok := column.Type.(schema.JSONColumnType); ok {
 			value = "NULL"
 			if operator == qbtypes.FilterOperatorExists {
 				return sb.NE(tblFieldName, value), nil
 			} else {
 				return sb.E(tblFieldName, value), nil
 			}
+		}
+		switch column.Type {
 		case schema.ColumnTypeString, schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}:
 			value = ""
 			if operator == qbtypes.FilterOperatorExists {
@@ -240,3 +284,6 @@ func (c *conditionBuilder) ConditionFor(
 	}
 	return condition, nil
 }
+
+// CTEs no longer applies; BodyConditionBuilder is WHERE-only.
+func (c *conditionBuilder) CTEs() []string { return nil }

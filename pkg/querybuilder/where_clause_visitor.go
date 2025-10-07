@@ -42,6 +42,7 @@ type filterExpressionVisitor struct {
 	variables          map[string]qbtypes.VariableItem
 
 	keysWithWarnings map[string]bool
+	extras           qbtypes.ConditionExtras
 }
 
 type FilterExprVisitorOpts struct {
@@ -77,6 +78,7 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		ignoreNotFoundKeys: opts.IgnoreNotFoundKeys,
 		variables:          opts.Variables,
 		keysWithWarnings:   make(map[string]bool),
+		extras:             qbtypes.ConditionExtras{},
 	}
 }
 
@@ -84,6 +86,7 @@ type PreparedWhereClause struct {
 	WhereClause    *sqlbuilder.WhereClause
 	Warnings       []string
 	WarningsDocURL string
+	Extras         qbtypes.ConditionExtras
 }
 
 // PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query
@@ -164,7 +167,7 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWher
 
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
 
-	return &PreparedWhereClause{whereClause, visitor.warnings, visitor.mainWarnURL}, nil
+	return &PreparedWhereClause{WhereClause: whereClause, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL, Extras: visitor.extras}, nil
 }
 
 // Visit dispatches to the specific visit method based on node type
@@ -375,11 +378,27 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		}
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, nil, v.builder)
-			if err != nil {
-				return ""
+			// Try extras-aware path
+			type extrasCB interface {
+				ConditionForWithExtras(context.Context, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any, *sqlbuilder.SelectBuilder) (string, qbtypes.ConditionExtras, error)
 			}
-			conds = append(conds, condition)
+			if ec, ok := v.conditionBuilder.(extrasCB); ok {
+				condition, extras, err := ec.ConditionForWithExtras(context.Background(), key, op, nil, v.builder)
+				if err != nil {
+					return ""
+				}
+				v.extras.CTEs = append(v.extras.CTEs, extras.CTEs...)
+				v.extras.CTEArgs = append(v.extras.CTEArgs, extras.CTEArgs...)
+				v.extras.ArrayJoins = append(v.extras.ArrayJoins, extras.ArrayJoins...)
+				v.extras.RequiresTypedProjection = v.extras.RequiresTypedProjection || extras.RequiresTypedProjection
+				conds = append(conds, condition)
+			} else {
+				condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, nil, v.builder)
+				if err != nil {
+					return ""
+				}
+				conds = append(conds, condition)
+			}
 		}
 		// if there is only one condition, return it directly, one less `()` wrapper
 		if len(conds) == 1 {
@@ -443,11 +462,26 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		}
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, values, v.builder)
-			if err != nil {
-				return ""
+			type extrasCB interface {
+				ConditionForWithExtras(context.Context, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any, *sqlbuilder.SelectBuilder) (string, qbtypes.ConditionExtras, error)
 			}
-			conds = append(conds, condition)
+			if ec, ok := v.conditionBuilder.(extrasCB); ok {
+				condition, extras, err := ec.ConditionForWithExtras(context.Background(), key, op, values, v.builder)
+				if err != nil {
+					return ""
+				}
+				v.extras.CTEs = append(v.extras.CTEs, extras.CTEs...)
+				v.extras.CTEArgs = append(v.extras.CTEArgs, extras.CTEArgs...)
+				v.extras.ArrayJoins = append(v.extras.ArrayJoins, extras.ArrayJoins...)
+				v.extras.RequiresTypedProjection = v.extras.RequiresTypedProjection || extras.RequiresTypedProjection
+				conds = append(conds, condition)
+			} else {
+				condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, values, v.builder)
+				if err != nil {
+					return ""
+				}
+				conds = append(conds, condition)
+			}
 		}
 		if len(conds) == 1 {
 			return conds[0]
@@ -475,11 +509,26 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, []any{value1, value2}, v.builder)
-			if err != nil {
-				return ""
+			type extrasCB interface {
+				ConditionForWithExtras(context.Context, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any, *sqlbuilder.SelectBuilder) (string, qbtypes.ConditionExtras, error)
 			}
-			conds = append(conds, condition)
+			if ec, ok := v.conditionBuilder.(extrasCB); ok {
+				condition, extras, err := ec.ConditionForWithExtras(context.Background(), key, op, []any{value1, value2}, v.builder)
+				if err != nil {
+					return ""
+				}
+				v.extras.CTEs = append(v.extras.CTEs, extras.CTEs...)
+				v.extras.CTEArgs = append(v.extras.CTEArgs, extras.CTEArgs...)
+				v.extras.ArrayJoins = append(v.extras.ArrayJoins, extras.ArrayJoins...)
+				v.extras.RequiresTypedProjection = v.extras.RequiresTypedProjection || extras.RequiresTypedProjection
+				conds = append(conds, condition)
+			} else {
+				condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, []any{value1, value2}, v.builder)
+				if err != nil {
+					return ""
+				}
+				conds = append(conds, condition)
+			}
 		}
 		if len(conds) == 1 {
 			return conds[0]
@@ -556,12 +605,28 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, value, v.builder)
-			if err != nil {
-				v.errors = append(v.errors, fmt.Sprintf("failed to build condition: %s", err.Error()))
-				return ""
+			type extrasCB interface {
+				ConditionForWithExtras(context.Context, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any, *sqlbuilder.SelectBuilder) (string, qbtypes.ConditionExtras, error)
 			}
-			conds = append(conds, condition)
+			if ec, ok := v.conditionBuilder.(extrasCB); ok {
+				condition, extras, err := ec.ConditionForWithExtras(context.Background(), key, op, value, v.builder)
+				if err != nil {
+					v.errors = append(v.errors, fmt.Sprintf("failed to build condition: %s", err.Error()))
+					return ""
+				}
+				v.extras.CTEs = append(v.extras.CTEs, extras.CTEs...)
+				v.extras.CTEArgs = append(v.extras.CTEArgs, extras.CTEArgs...)
+				v.extras.ArrayJoins = append(v.extras.ArrayJoins, extras.ArrayJoins...)
+				v.extras.RequiresTypedProjection = v.extras.RequiresTypedProjection || extras.RequiresTypedProjection
+				conds = append(conds, condition)
+			} else {
+				condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, value, v.builder)
+				if err != nil {
+					v.errors = append(v.errors, fmt.Sprintf("failed to build condition: %s", err.Error()))
+					return ""
+				}
+				conds = append(conds, condition)
+			}
 		}
 		if len(conds) == 1 {
 			return conds[0]
@@ -634,6 +699,21 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 	if v.fullTextColumn == nil {
 		v.errors = append(v.errors, "full text search is not supported")
 		return ""
+	}
+	type extrasCB interface {
+		ConditionForWithExtras(context.Context, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any, *sqlbuilder.SelectBuilder) (string, qbtypes.ConditionExtras, error)
+	}
+	if ec, ok := v.conditionBuilder.(extrasCB); ok {
+		cond, extras, err := ec.ConditionForWithExtras(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder)
+		if err != nil {
+			v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
+			return ""
+		}
+		v.extras.CTEs = append(v.extras.CTEs, extras.CTEs...)
+		v.extras.CTEArgs = append(v.extras.CTEArgs, extras.CTEArgs...)
+		v.extras.ArrayJoins = append(v.extras.ArrayJoins, extras.ArrayJoins...)
+		v.extras.RequiresTypedProjection = v.extras.RequiresTypedProjection || extras.RequiresTypedProjection
+		return cond
 	}
 	cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder)
 	if err != nil {

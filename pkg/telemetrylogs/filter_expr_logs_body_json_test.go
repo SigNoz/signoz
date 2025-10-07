@@ -14,7 +14,7 @@ import (
 // TestFilterExprLogsBodyJSON tests a comprehensive set of query patterns for body JSON search
 func TestFilterExprLogsBodyJSON(t *testing.T) {
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
+	cb := NewConditionBuilder(fm, nil)
 
 	// Define a comprehensive set of field keys to support all test cases
 	keys := buildCompleteFieldKeyMap()

@@ -57,13 +57,18 @@ var (
 )
 
 type fieldMapper struct {
+	jsonResolver *JSONFieldResolver
 }
 
 func NewFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
 }
 
-func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+func NewFieldMapperWithJSONResolver(jsonResolver *JSONFieldResolver) qbtypes.FieldMapper {
+	return &fieldMapper{jsonResolver: jsonResolver}
+}
+
+func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		return logsV2Columns["resource"], nil
@@ -89,6 +94,11 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 		if !ok {
 			// check if the key has body JSON search
 			if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+				// Use body_v2 if feature flag is enabled and we have a JSON resolver
+				if m.jsonResolver != nil && IsBodyJSONQueryEnabled(ctx) {
+					return logsV2Columns["body_v2"], nil
+				}
+				// Fall back to legacy body column
 				return logsV2Columns["body"], nil
 			}
 			return nil, qbtypes.ErrColumnNotFound
@@ -105,9 +115,19 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 		return "", err
 	}
 
-	switch column.Type {
-	case schema.JSONColumnType{}:
-		// json is only supported for resource context as of now
+	// handle non-comparable JSONColumnType explicitly
+	if _, ok := column.Type.(schema.JSONColumnType); ok {
+		// Check if this is a body JSON field and feature flag is enabled
+		if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) && m.jsonResolver != nil && IsBodyJSONQueryEnabled(ctx) {
+			// Use JSON typed column for body fields
+			expression, err := m.jsonResolver.BuildJSONFieldExpression(ctx, key)
+			if err != nil {
+				return "", err
+			}
+			return expression, nil
+		}
+
+		// json is only supported for resource context as of now (legacy behavior)
 		if key.FieldContext != telemetrytypes.FieldContextResource {
 			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
 		}
@@ -123,7 +143,9 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 		} else {
 			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
 		}
+	}
 
+	switch column.Type {
 	case schema.ColumnTypeString,
 		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 		schema.ColumnTypeUInt64,

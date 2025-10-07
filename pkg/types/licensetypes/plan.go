@@ -12,6 +12,7 @@ var (
 	UseSpanMetrics    = valuer.NewString("use_span_metrics")
 	AnomalyDetection  = valuer.NewString("anomaly_detection")
 	DotMetricsEnabled = valuer.NewString("dot_metrics_enabled")
+	BodyJSONQuery     = valuer.NewString("body_json_query")
 
 	// License State
 	LicenseStatusInvalid = valuer.NewString("invalid")
@@ -67,6 +68,13 @@ var BasicPlan = []*Feature{
 	},
 	{
 		Name:       DotMetricsEnabled,
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	{
+		Name:       BodyJSONQuery,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
@@ -131,6 +139,13 @@ var EnterprisePlan = []*Feature{
 		UsageLimit: -1,
 		Route:      "",
 	},
+	{
+		Name:       BodyJSONQuery,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
 }
 
 var DefaultFeatureSet = []*Feature{
@@ -143,6 +158,13 @@ var DefaultFeatureSet = []*Feature{
 	},
 	{
 		Name:       DotMetricsEnabled,
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	{
+		Name:       BodyJSONQuery,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,

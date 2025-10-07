@@ -84,7 +84,6 @@ func getBodyJSONPath(key *telemetrytypes.TelemetryFieldKey) string {
 }
 
 func GetBodyJSONKey(_ context.Context, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any) (string, any) {
-
 	dataType, value := inferDataType(value, operator, key)
 
 	// for array types, we need to extract the value from the JSON_QUERY

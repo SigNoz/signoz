@@ -8,4 +8,5 @@ const (
 	TagAttributesV2LocalTableName = "tag_attributes_v2"
 	LogAttributeKeysTblName       = "distributed_logs_attribute_keys"
 	LogResourceKeysTblName        = "distributed_logs_resource_keys"
+	PathTypesTableName            = "distributed_path_types"
 )

@@ -162,14 +162,15 @@ func (c *conditionBuilder) conditionFor(
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
 
 		var value any
-		switch column.Type {
-		case schema.JSONColumnType{}:
+		if _, ok := column.Type.(schema.JSONColumnType); ok {
 			value = "NULL"
 			if operator == qbtypes.FilterOperatorExists {
 				return sb.NE(tblFieldName, value), nil
 			} else {
 				return sb.E(tblFieldName, value), nil
 			}
+		}
+		switch column.Type {
 		case schema.ColumnTypeString,
 			schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			schema.FixedStringColumnType{Length: 32},
