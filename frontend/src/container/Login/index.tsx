@@ -54,9 +54,9 @@ function Login(): JSX.Element {
 
 	const [sessionsContext, setSessionsContext] = useState<SessionsContext>();
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+	const [sessionsOrgId, setSessionsOrgId] = useState<string>('');
 	const [form] = Form.useForm<FormValues>();
 	const { showErrorModal } = useErrorModal();
-	const sessionsOrgId = Form.useWatch('orgId', form);
 
 	// setupCompleted information to route to signup page in case setup is incomplete
 	const {
@@ -96,6 +96,12 @@ function Login(): JSX.Element {
 			showErrorModal(error as APIError);
 		}
 	};
+
+	useEffect(() => {
+		if (sessionsContext && sessionsContext.orgs.length === 1) {
+			setSessionsOrgId(sessionsContext.orgs[0].id);
+		}
+	}, [form, sessionsContext]);
 
 	// post selection of email and session org decide on the authN mechanism to use
 	const isPasswordAuthN = useMemo((): boolean => {
@@ -156,14 +162,13 @@ function Login(): JSX.Element {
 		try {
 			if (isPasswordAuthN) {
 				const email = form.getFieldValue('email');
-				const orgId = form.getFieldValue('orgId');
 
 				const password = form.getFieldValue('password');
 
 				const createSessionEmailPasswordResponse = await post({
 					email,
 					password,
-					orgId,
+					orgId: sessionsOrgId,
 				});
 
 				afterLogin(
@@ -234,7 +239,7 @@ function Login(): JSX.Element {
 					</FormContainer.Item>
 				</ParentContainer>
 
-				{sessionsContext && (
+				{sessionsContext && sessionsContext.orgs.length > 1 && (
 					<ParentContainer>
 						<Label htmlFor="orgId">Organization Name</Label>
 						<FormContainer.Item name="orgId">
@@ -248,7 +253,7 @@ function Login(): JSX.Element {
 									label: org.name || 'default',
 								}))}
 								onChange={(value: string): void => {
-									form.setFieldsValue({ orgId: value });
+									setSessionsOrgId(value);
 								}}
 							/>
 						</FormContainer.Item>
