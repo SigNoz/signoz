@@ -227,6 +227,7 @@ export type QueryBuilderData = {
 };
 
 export type QueryBuilderContextType = {
+	currentFilterExpression: Record<string, string | undefined>;
 	currentQuery: Query;
 	stagedQuery: Query | null;
 	lastUsedQuery: number | null;
@@ -240,6 +241,10 @@ export type QueryBuilderContextType = {
 	handleSetTraceOperatorData: (
 		index: number,
 		traceOperatorData: IBuilderTraceOperator,
+	) => void;
+	handleSetCurrentFilterExpression: (
+		expression: string,
+		queryName: string,
 	) => void;
 	handleSetFormulaData: (index: number, formulaData: IBuilderFormula) => void;
 	handleSetQueryItemData: (

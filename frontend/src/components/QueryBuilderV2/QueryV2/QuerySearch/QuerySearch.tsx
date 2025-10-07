@@ -89,7 +89,7 @@ function QuerySearch({
 	hardcodedAttributeKeys,
 }: {
 	placeholder?: string;
-	onChange: (value: string) => void;
+	onChange: (value: string, syncExpression?: boolean) => void;
 	queryData: IBuilderQuery;
 	dataSource: DataSource;
 	signalSource?: string;
@@ -97,7 +97,7 @@ function QuerySearch({
 	onRun?: (query: string) => void;
 }): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const [query, setQuery] = useState<string>(queryData.filter?.expression || '');
+	const [query, setQuery] = useState<string>('');
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
 	const [activeKey, setActiveKey] = useState<string>('');
 	const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -107,6 +107,10 @@ function QuerySearch({
 		message: '',
 		errors: [],
 	});
+
+	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
+	const [isFocused, setIsFocused] = useState(false);
+	const [hasInteractedWithQB, setHasInteractedWithQB] = useState(false);
 
 	const handleQueryValidation = (newQuery: string): void => {
 		try {
@@ -127,13 +131,28 @@ function QuerySearch({
 
 	useEffect(() => {
 		const newQuery = queryData.filter?.expression || '';
-		// Only mark as external change if the query actually changed from external source
+		// Only update query from external source when editor is not focused
+		// When focused, just update the lastExternalQuery to track changes
 		if (newQuery !== lastExternalQuery) {
 			setQuery(newQuery);
 			setIsExternalQueryChange(true);
 			setLastExternalQuery(newQuery);
 		}
-	}, [queryData.filter?.expression, lastExternalQuery]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [queryData.filter?.expression]);
+
+	useEffect(() => {
+		// Update the query when the editor is blurred and the query has changed
+		// Only call onChange if the editor has been focused before (not on initial mount)
+		if (
+			!isFocused &&
+			hasInteractedWithQB &&
+			query !== queryData.filter?.expression
+		) {
+			onChange(query, true);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isFocused]);
 
 	// Validate query when it changes externally (from queryData)
 	useEffect(() => {
@@ -148,9 +167,6 @@ function QuerySearch({
 	>(null);
 
 	const [showExamples] = useState(false);
-
-	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
-	const [isFocused, setIsFocused] = useState(false);
 
 	const [
 		isFetchingCompleteValuesList,
@@ -1352,8 +1368,13 @@ function QuerySearch({
 					}}
 					onFocus={(): void => {
 						setIsFocused(true);
+						setHasInteractedWithQB(true);
 					}}
 					onBlur={handleBlur}
+					onCreateEditor={(view: EditorView): EditorView => {
+						editorRef.current = view;
+						return view;
+					}}
 				/>
 
 				{query && validation.isValid === false && !isFocused && (

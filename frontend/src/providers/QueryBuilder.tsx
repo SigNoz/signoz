@@ -65,6 +65,7 @@ import { sanitizeOrderByForExplorer } from 'utils/sanitizeOrderBy';
 import { v4 as uuid } from 'uuid';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
+	currentFilterExpression: {},
 	currentQuery: initialQueriesMap.metrics,
 	supersetQuery: initialQueriesMap.metrics,
 	lastUsedQuery: null,
@@ -74,6 +75,7 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	initialDataSource: null,
 	panelType: PANEL_TYPES.TIME_SERIES,
 	isEnabledQuery: false,
+	handleSetCurrentFilterExpression: () => {},
 	handleSetQueryData: () => {},
 	handleSetTraceOperatorData: () => {},
 	handleSetFormulaData: () => {},
@@ -133,6 +135,9 @@ export function QueryBuilderProvider({
 	const [supersetQuery, setSupersetQuery] = useState<QueryState>(queryState);
 	const [lastUsedQuery, setLastUsedQuery] = useState<number | null>(0);
 	const [stagedQuery, setStagedQuery] = useState<Query | null>(null);
+	const [currentFilterExpression, setCurrentFilterExpression] = useState<
+		Record<string, string | undefined>
+	>({});
 
 	const [queryType, setQueryType] = useState<EQueryType>(queryTypeParam);
 
@@ -257,6 +262,7 @@ export function QueryBuilderProvider({
 
 			setStagedQuery(nextQuery);
 			setCurrentQuery(newQueryState);
+			setCurrentFilterExpression({});
 			setQueryType(type);
 		},
 		[prepareQueryBuilderData],
@@ -382,6 +388,16 @@ export function QueryBuilderProvider({
 			const result = query.builder[type].map(updateCallback);
 
 			return { ...query, builder: { ...query.builder, [type]: result } };
+		},
+		[],
+	);
+
+	const handleSetCurrentFilterExpression = useCallback(
+		(expression: string, queryName: string) => {
+			setCurrentFilterExpression((prevState) => ({
+				...prevState,
+				[queryName]: expression,
+			}));
 		},
 		[],
 	);
@@ -1027,9 +1043,10 @@ export function QueryBuilderProvider({
 					filter: {
 						...item.filter,
 						expression:
-							item.filter?.expression.trim() === ''
+							currentFilterExpression[item.queryName] ??
+							(item.filter?.expression?.trim() === ''
 								? ''
-								: item.filter?.expression ?? '',
+								: item.filter?.expression ?? ''),
 					},
 					filters: {
 						items: [],
@@ -1053,7 +1070,13 @@ export function QueryBuilderProvider({
 			},
 			queryType,
 		});
-	}, [currentQuery, location.pathname, queryType, redirectWithQueryBuilderData]);
+	}, [
+		currentQuery,
+		location.pathname,
+		queryType,
+		redirectWithQueryBuilderData,
+		currentFilterExpression,
+	]);
 
 	useEffect(() => {
 		if (location.pathname !== currentPathnameRef.current) {
@@ -1141,6 +1164,7 @@ export function QueryBuilderProvider({
 
 	const contextValues: QueryBuilderContextType = useMemo(
 		() => ({
+			currentFilterExpression,
 			currentQuery: query,
 			supersetQuery: superQuery,
 			lastUsedQuery,
@@ -1150,6 +1174,7 @@ export function QueryBuilderProvider({
 			initialDataSource,
 			panelType,
 			isEnabledQuery,
+			handleSetCurrentFilterExpression,
 			handleSetQueryData,
 			handleSetTraceOperatorData,
 			handleSetFormulaData,
@@ -1175,6 +1200,7 @@ export function QueryBuilderProvider({
 			isStagedQueryUpdated,
 		}),
 		[
+			currentFilterExpression,
 			query,
 			superQuery,
 			lastUsedQuery,
@@ -1182,6 +1208,7 @@ export function QueryBuilderProvider({
 			initialDataSource,
 			panelType,
 			isEnabledQuery,
+			handleSetCurrentFilterExpression,
 			handleSetQueryData,
 			handleSetTraceOperatorData,
 			handleSetFormulaData,

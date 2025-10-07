@@ -88,6 +88,7 @@ function LogsExplorer(): JSX.Element {
 		handleSetConfig,
 		updateAllQueriesOperators,
 		currentQuery,
+		currentFilterExpression,
 		updateQueriesData,
 	} = useQueryBuilder();
 
@@ -402,6 +403,11 @@ function LogsExplorer(): JSX.Element {
 								</ExplorerCard>
 							</div>
 							<div className="logs-explorer-views">
+								<p>{JSON.stringify(currentFilterExpression)}</p>
+								<p>
+									currentyQuery:{' '}
+									{JSON.stringify(currentQuery.builder.queryData[0].filter?.expression)}
+								</p>
 								<LogsExplorerViewsContainer
 									selectedView={selectedView}
 									listQueryKeyRef={listQueryKeyRef}
