@@ -247,6 +247,8 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 			if !operator.IsComparisonOperator() || !isNumber {
 				// try to convert the number attribute to string
 				tblFieldName = castString(tblFieldName) // numeric col vs string literal
+			} else {
+				tblFieldName = castFloat(tblFieldName)
 			}
 		case []any:
 			if allFloats(v) {

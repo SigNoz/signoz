@@ -978,6 +978,58 @@ def test_datatype_collision(
     count = results[0]["data"][0][0]
     assert count == 5
 
+    # count() of all logs for the where severity_number > '7.0'
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json={
+            "schemaVersion": "v1",
+            "start": int(
+                (
+                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+                    - timedelta(minutes=5)
+                ).timestamp()
+                * 1000
+            ),
+            "end": int(
+                datetime.now(tz=timezone.utc)
+                .replace(second=0, microsecond=0)
+                .timestamp()
+                * 1000
+            ),
+            "requestType": "scalar",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": False,
+                            "filter": {"expression": "severity_number > '7.0'"},
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": True, "fillGaps": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+
+    count = results[0]["data"][0][0]
+    assert count == 5
+
     # Test 2: severity_number comparison with string value
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),

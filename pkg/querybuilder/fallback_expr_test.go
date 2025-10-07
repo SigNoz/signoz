@@ -85,6 +85,7 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 			tblFieldName:      "attribute_float64_http$$request$$duration",
 			expectedFieldName: "toString(attribute_float64_http$$request$$duration)",
 			expectedValue:     "1234.56",
+			operator:          qbtypes.FilterOperatorEqual,
 		},
 		{
 			// we won't cast to string if it's a comparison operator
@@ -95,7 +96,7 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 			},
 			value:             "9",
 			tblFieldName:      "attribute_float64_http$$request$$duration",
-			expectedFieldName: "attribute_float64_http$$request$$duration",
+			expectedFieldName: "toFloat64OrNull(attribute_float64_http$$request$$duration)",
 			expectedValue:     "9",
 			operator:          qbtypes.FilterOperatorGreaterThan,
 		},
@@ -108,7 +109,7 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 			},
 			value:             "9.11",
 			tblFieldName:      "attribute_float64_http$$request$$duration",
-			expectedFieldName: "attribute_float64_http$$request$$duration",
+			expectedFieldName: "toFloat64OrNull(attribute_float64_http$$request$$duration)",
 			expectedValue:     "9.11",
 			operator:          qbtypes.FilterOperatorGreaterThan,
 		},
