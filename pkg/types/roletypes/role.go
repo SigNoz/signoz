@@ -21,6 +21,10 @@ var (
 	ErrCodeRoleFailedTransactionsFromString = errors.MustNewCode("role_failed_transactions_from_string")
 )
 
+var (
+	TypeableResourcesRoles = authtypes.MustNewTypeableResources(authtypes.MustNewName("roles"))
+)
+
 type StorableRole struct {
 	bun.BaseModel `bun:"table:role"`
 

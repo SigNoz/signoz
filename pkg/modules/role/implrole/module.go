@@ -46,6 +46,8 @@ func (module *module) GetResources(_ context.Context) []*authtypes.Resource {
 	for _, register := range module.registry {
 		typeables = append(typeables, register.MustGetTypeables()...)
 	}
+	// role module cannot self register itself!
+	typeables = append(typeables, module.MustGetTypeables()...)
 
 	resources := make([]*authtypes.Resource, 0)
 	for _, typeable := range typeables {
@@ -161,4 +163,8 @@ func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id va
 
 func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
 	return module.store.Delete(ctx, orgID, id)
+}
+
+func (module *module) MustGetTypeables() []authtypes.Typeable {
+	return []authtypes.Typeable{authtypes.TypeableRole, roletypes.TypeableResourcesRoles}
 }
