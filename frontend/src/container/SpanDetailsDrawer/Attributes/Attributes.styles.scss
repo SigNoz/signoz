@@ -86,9 +86,6 @@
 				top: 50%;
 				transform: translateY(-50%);
 				gap: 4px;
-				background: rgba(0, 0, 0, 0.8);
-				border-radius: 4px;
-				padding: 2px;
 
 				.filter-btn {
 					display: flex;
@@ -96,7 +93,7 @@
 					border: none;
 					box-shadow: none;
 					border-radius: 2px;
-					background: var(--bg-slate-400);
+					background: var(--bg-slate-500);
 					padding: 4px;
 					gap: 3px;
 					height: 24px;
@@ -142,6 +139,7 @@
 	.ant-popover-inner {
 		padding: 8px;
 		min-width: 160px;
+		background: var(--bg-slate-500);
 	}
 }
 
