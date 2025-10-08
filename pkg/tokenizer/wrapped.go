@@ -126,6 +126,10 @@ func (wrapped *wrappedTokenizer) Config() Config {
 	return wrapped.tokenizer.Config()
 }
 
+func (wrapped *wrappedTokenizer) ListMaxLastObservedAtByOrgID(ctx context.Context, orgID valuer.UUID) (map[valuer.UUID]time.Time, error) {
+	return wrapped.tokenizer.ListMaxLastObservedAtByOrgID(ctx, orgID)
+}
+
 func (wrapped *wrappedTokenizer) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
 	return wrapped.tokenizer.Collect(ctx, orgID)
 }

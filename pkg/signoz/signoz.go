@@ -321,7 +321,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.StatsReporter,
-		NewStatsReporterProviderFactories(telemetrystore, statsCollectors, orgGetter, userGetter, version.Info, config.Analytics),
+		NewStatsReporterProviderFactories(telemetrystore, statsCollectors, orgGetter, userGetter, tokenizer, version.Info, config.Analytics),
 		config.StatsReporter.Provider(),
 	)
 	if err != nil {
