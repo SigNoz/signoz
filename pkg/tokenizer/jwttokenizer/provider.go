@@ -146,3 +146,7 @@ func (provider *provider) Stop(ctx context.Context) error {
 	close(provider.stopC)
 	return nil
 }
+
+func (provider *provider) ListMaxLastObservedAtByOrgID(ctx context.Context, orgID valuer.UUID) (map[valuer.UUID]time.Time, error) {
+	return map[valuer.UUID]time.Time{}, nil
+}

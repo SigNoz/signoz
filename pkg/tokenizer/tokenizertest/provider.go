@@ -70,3 +70,7 @@ func (provider *Provider) Config() tokenizer.Config {
 func (provider *Provider) SetLastObservedAt(context.Context, string, time.Time) error {
 	panic("unimplemented")
 }
+
+func (provider *Provider) ListMaxLastObservedAtByOrgID(context.Context, valuer.UUID) (map[valuer.UUID]time.Time, error) {
+	panic("unimplemented")
+}

@@ -36,5 +36,8 @@ type Tokenizer interface {
 	// Returns the config of the tokenizer.
 	Config() Config
 
+	// Gets the last observed at for each user in an org.
+	ListMaxLastObservedAtByOrgID(context.Context, valuer.UUID) (map[valuer.UUID]time.Time, error)
+
 	statsreporter.StatsCollector
 }
