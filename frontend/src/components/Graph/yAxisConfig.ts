@@ -62,11 +62,8 @@ export const getToolTipValue = (value: string, format?: string): string => {
 		? UniversalUnitToGrafanaUnit[format as UniversalYAxisUnit]
 		: format;
 
-	console.log({
-		processedFormat,
-	});
-
 	// If using universal units but a compatible mapping is not found, use `short` for numeric formatting
+	// e.g. So that instead of showing "1000" it shows "1k"
 	if (universalMappingNotFound) {
 		processedFormat = 'short';
 	}
