@@ -92,7 +92,7 @@
 		"papaparse": "5.4.1",
 		"posthog-js": "1.160.3",
 		"rc-tween-one": "3.0.6",
-		"react": "18.2.0",
+		"react": "18.3.1",
 		"react-addons-update": "15.6.3",
 		"react-beautiful-dnd": "13.1.1",
 		"react-dnd": "16.0.1",
