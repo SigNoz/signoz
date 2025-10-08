@@ -35,9 +35,7 @@ function TopContributorsCard({
 		}
 	};
 
-	const toggleViewAllDrawer = (
-		event?: React.MouseEvent<HTMLButtonElement>,
-	): void => {
+	const toggleViewAllDrawer = (): void => {
 		setIsViewAllVisible((prev) => {
 			const newState = !prev;
 
@@ -45,7 +43,7 @@ function TopContributorsCard({
 
 			return newState;
 		});
-		history.push({ search: searchParams.toString() }, event);
+		history.push({ search: searchParams.toString() });
 	};
 
 	return (
@@ -54,13 +52,7 @@ function TopContributorsCard({
 				<div className="top-contributors-card__header">
 					<div className="title">top contributors</div>
 					{topContributorsData.length > 3 && (
-						<Button
-							type="text"
-							className="view-all"
-							onClick={(event: React.MouseEvent<HTMLButtonElement>): void =>
-								toggleViewAllDrawer(event)
-							}
-						>
+						<Button type="text" className="view-all" onClick={toggleViewAllDrawer}>
 							<div className="label">View all</div>
 							<div className="icon">
 								<ArrowRight
