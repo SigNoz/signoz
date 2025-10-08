@@ -17,8 +17,8 @@ type handler struct {
 	module role.Module
 }
 
-func NewHandler(module role.Module) (role.Handler, error) {
-	return &handler{module: module}, nil
+func NewHandler(module role.Module) role.Handler {
+	return &handler{module: module}
 }
 
 func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {

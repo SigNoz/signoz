@@ -36,7 +36,7 @@ func TestNewModules(t *testing.T) {
 	require.NoError(t, err)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
-	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, nil, nil)
+	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil)
 
 	reflectVal := reflect.ValueOf(modules)
 	for i := 0; i < reflectVal.NumField(); i++ {
