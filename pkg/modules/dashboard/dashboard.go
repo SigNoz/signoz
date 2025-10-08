@@ -27,6 +27,7 @@ type Module interface {
 	GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error)
 
 	statsreporter.StatsCollector
+
 	role.RegisterTypeable
 }
 
