@@ -821,7 +821,7 @@ def test_logs_time_series_count(
 def test_datatype_collision(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
-    get_jwt_token: Callable[[str, str], str],
+    get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
     """
@@ -924,7 +924,7 @@ def test_datatype_collision(
 
     insert_logs(logs)
 
-    token = get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
     # count() of all logs for the where severity_number > '7'
     response = requests.post(
