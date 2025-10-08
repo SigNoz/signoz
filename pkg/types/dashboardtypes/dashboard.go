@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	ResourceDashboard   = authtypes.MustNewTypeableResource(authtypes.MustNewName("dashboard"))
-	ResourcesDashboards = authtypes.MustNewTypeableResources(authtypes.MustNewName("dashboards"))
+	TypeableResourceDashboard   = authtypes.MustNewTypeableResource(authtypes.MustNewName("dashboard"))
+	TypeableResourcesDashboards = authtypes.MustNewTypeableResources(authtypes.MustNewName("dashboards"))
 )
 
 type StorableDashboard struct {
