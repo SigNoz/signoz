@@ -210,6 +210,7 @@ function TimeSeries({
 							onChange={onUnitChangeHandler}
 							loading={isMetricUnitsLoading}
 							disabled={isMetricUnitsLoading || isMetricUnitsError}
+							data-testid="metrics-explorer-y-axis-unit-selector"
 						/>
 						{showSaveUnitButton && (
 							<div className="save-unit-container">

@@ -15,6 +15,7 @@ import { LicenseEvent } from 'types/api/licensesV3/getActive';
 import { DataSource } from 'types/common/queryBuilder';
 
 import Explorer from '../Explorer';
+import * as useGetMetricUnitsHooks from '../utils';
 
 const mockSetSearchParams = jest.fn();
 const queryClient = new QueryClient();
@@ -126,6 +127,9 @@ jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 	...mockUseQueryBuilderData,
 } as any);
 
+const Y_AXIS_UNIT_SELECTOR_TEST_ID = 'metrics-explorer-y-axis-unit-selector';
+const SECONDS_UNIT_LABEL = 'Seconds (s)';
+
 describe('Explorer', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -203,5 +207,104 @@ describe('Explorer', () => {
 
 		const toggle = screen.getByRole('switch');
 		expect(toggle).not.toBeChecked();
+	});
+
+	it('should render pre-populated y axis unit for single metric', () => {
+		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
+			units: ['seconds'],
+			isLoading: false,
+			isError: false,
+			metrics: [],
+		} as any);
+
+		render(
+			<QueryClientProvider client={queryClient}>
+				<MemoryRouter>
+					<Provider store={store}>
+						<ErrorModalProvider>
+							<Explorer />
+						</ErrorModalProvider>
+					</Provider>
+				</MemoryRouter>
+			</QueryClientProvider>,
+		);
+
+		const yAxisUnitSelector = screen.getByTestId(Y_AXIS_UNIT_SELECTOR_TEST_ID);
+		expect(yAxisUnitSelector).toBeInTheDocument();
+		expect(yAxisUnitSelector).toHaveTextContent(SECONDS_UNIT_LABEL);
+	});
+
+	it('should render pre-populated y axis unit for mutliple metrics with same unit', () => {
+		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
+			units: ['seconds', 'seconds'],
+			isLoading: false,
+			isError: false,
+			metrics: [],
+		} as any);
+
+		render(
+			<QueryClientProvider client={queryClient}>
+				<MemoryRouter>
+					<Provider store={store}>
+						<ErrorModalProvider>
+							<Explorer />
+						</ErrorModalProvider>
+					</Provider>
+				</MemoryRouter>
+			</QueryClientProvider>,
+		);
+
+		const yAxisUnitSelector = screen.getByTestId(Y_AXIS_UNIT_SELECTOR_TEST_ID);
+		expect(yAxisUnitSelector).toBeInTheDocument();
+		expect(yAxisUnitSelector).toHaveTextContent(SECONDS_UNIT_LABEL);
+	});
+
+	it('should hide y axis unit selector for multiple metrics with different units', () => {
+		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
+			units: ['seconds', 'milliseconds'],
+			isLoading: false,
+			isError: false,
+			metrics: [],
+		} as any);
+
+		render(
+			<QueryClientProvider client={queryClient}>
+				<MemoryRouter>
+					<Provider store={store}>
+						<ErrorModalProvider>
+							<Explorer />
+						</ErrorModalProvider>
+					</Provider>
+				</MemoryRouter>
+			</QueryClientProvider>,
+		);
+
+		const yAxisUnitSelector = screen.queryByTestId(Y_AXIS_UNIT_SELECTOR_TEST_ID);
+		expect(yAxisUnitSelector).not.toBeInTheDocument();
+	});
+
+	it('should render empty y axis unit selector for a single metric with no unit', () => {
+		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
+			units: [],
+			isLoading: false,
+			isError: false,
+			metrics: [],
+		} as any);
+
+		render(
+			<QueryClientProvider client={queryClient}>
+				<MemoryRouter>
+					<Provider store={store}>
+						<ErrorModalProvider>
+							<Explorer />
+						</ErrorModalProvider>
+					</Provider>
+				</MemoryRouter>
+			</QueryClientProvider>,
+		);
+
+		const yAxisUnitSelector = screen.queryByTestId(Y_AXIS_UNIT_SELECTOR_TEST_ID);
+		expect(yAxisUnitSelector).toBeInTheDocument();
+		expect(yAxisUnitSelector).toHaveTextContent('Please select a unit');
 	});
 });
