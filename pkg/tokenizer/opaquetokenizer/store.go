@@ -247,8 +247,8 @@ func (store *store) UpdateLastObservedAtByAccessToken(ctx context.Context, acces
 		Model((*authtypes.StorableToken)(nil)).
 		TableExpr("update_cte").
 		Set("last_observed_at = update_cte.last_observed_at").
-		Where("access_token = update_cte.access_token").
-		Where("user_id = update_cte.user_id").
+		Where("auth_token.access_token = update_cte.access_token").
+		Where("auth_token.user_id = update_cte.user_id").
 		Exec(ctx)
 	if err != nil {
 		return err

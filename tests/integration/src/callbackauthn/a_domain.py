@@ -9,7 +9,7 @@ from fixtures.types import Operation, SigNoz
 
 def test_create_and_get_domain(
     signoz: SigNoz,
-    create_user_admin: Operation, # pylint: disable=unused-argument
+    create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -87,7 +87,7 @@ def test_create_and_get_domain(
 
 def test_create_invalid(
     signoz: SigNoz,
-    create_user_admin: Operation, # pylint: disable=unused-argument
+    create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
