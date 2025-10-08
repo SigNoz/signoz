@@ -118,7 +118,7 @@ describe('CheckboxFilter - User Flows', () => {
 		);
 	});
 
-	it('should auto-open filter and prioritize checked items when user opens page with active filters', async () => {
+	it('should auto-open filter and prioritize checked items with visual separator when user opens page with active filters', async () => {
 		// Mock query builder with active filters
 		mockUseQueryBuilder.mockReturnValue(createMockQueryBuilderData(true) as any);
 
@@ -138,43 +138,18 @@ describe('CheckboxFilter - User Flows', () => {
 			expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
 		});
 
+		// User should see visual separator between checked and unchecked items
+		expect(screen.getByTestId('filter-separator')).toBeInTheDocument();
+
 		// User should see checked items at the top
 		await waitFor(() => {
 			const checkboxes = screen.getAllByRole('checkbox');
+			expect(checkboxes).toHaveLength(4); // Ensure we have exactly 4 checkboxes
 			expect(checkboxes[0]).toBeChecked(); // otel-demo should be first and checked
 			expect(checkboxes[1]).toBeChecked(); // sample-flask should be second and checked
 			expect(checkboxes[2]).not.toBeChecked(); // mq-kafka should be unchecked
 			expect(checkboxes[3]).not.toBeChecked(); // otlp-python should be unchecked
 		});
-	});
-
-	it('should show visual separator when user expands filter with mixed checked/unchecked items', async () => {
-		// Mock query builder with active filters
-		mockUseQueryBuilder.mockReturnValue(createMockQueryBuilderData(true) as any);
-
-		const mockFilter = createMockFilter({ defaultOpen: false });
-
-		render(
-			<CheckboxFilter
-				filter={mockFilter}
-				source={QuickFiltersSource.LOGS_EXPLORER}
-			/>,
-		);
-
-		// Wait for filter to load
-		await waitFor(() => {
-			expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
-		});
-
-		// User should see visual separator between checked and unchecked items
-		expect(screen.getByTestId('filter-separator')).toBeInTheDocument();
-
-		// User should see checked items above separator, unchecked below
-		const checkboxes = screen.getAllByRole('checkbox');
-		expect(checkboxes[0]).toBeChecked(); // otel-demo - checked, above separator
-		expect(checkboxes[1]).toBeChecked(); // sample-flask - checked, above separator
-		expect(checkboxes[2]).not.toBeChecked(); // mq-kafka - unchecked, below separator
-		expect(checkboxes[3]).not.toBeChecked(); // otlp-python - unchecked, below separator
 	});
 
 	it('should respect user preference when user manually toggles filter over auto-open behavior', async () => {
