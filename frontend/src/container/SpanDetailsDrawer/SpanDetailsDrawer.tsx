@@ -16,6 +16,7 @@ import Attributes from './Attributes/Attributes';
 import { RelatedSignalsViews } from './constants';
 import Events from './Events/Events';
 import LinkedSpans from './LinkedSpans/LinkedSpans';
+import SpanFieldActions from './SpanFieldActions/SpanFieldActions';
 import SpanRelatedSignals from './SpanRelatedSignals/SpanRelatedSignals';
 
 interface ISpanDetailsDrawerProps {
@@ -141,6 +142,10 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 									</Typography.Text>
 								</div>
 							</Tooltip>
+							<SpanFieldActions
+								fieldDisplayName="span name"
+								fieldValue={selectedSpan.name}
+							/>
 						</div>
 						<div className="item">
 							<Typography.Text className="attribute-key">span id</Typography.Text>
@@ -149,6 +154,10 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 									{selectedSpan.spanId}
 								</Typography.Text>
 							</div>
+							<SpanFieldActions
+								fieldDisplayName="span id"
+								fieldValue={selectedSpan.spanId}
+							/>
 						</div>
 						<div className="item">
 							<Typography.Text className="attribute-key">start time</Typography.Text>
@@ -165,6 +174,10 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 									{getYAxisFormattedValue(`${selectedSpan.durationNano}`, 'ns')}
 								</Typography.Text>
 							</div>
+							<SpanFieldActions
+								fieldDisplayName="duration"
+								fieldValue={selectedSpan.durationNano.toString()}
+							/>
 						</div>
 						<div className="item">
 							<Typography.Text className="attribute-key">service</Typography.Text>
@@ -178,6 +191,10 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 									</Tooltip>
 								</div>
 							</div>
+							<SpanFieldActions
+								fieldDisplayName="service"
+								fieldValue={selectedSpan.serviceName}
+							/>
 						</div>
 						<div className="item">
 							<Typography.Text className="attribute-key">span kind</Typography.Text>
@@ -186,6 +203,10 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 									{selectedSpan.spanKind}
 								</Typography.Text>
 							</div>
+							<SpanFieldActions
+								fieldDisplayName="span kind"
+								fieldValue={selectedSpan.spanKind}
+							/>
 						</div>
 						<div className="item">
 							<Typography.Text className="attribute-key">
@@ -196,6 +217,10 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 									{selectedSpan.statusCodeString}
 								</Typography.Text>
 							</div>
+							<SpanFieldActions
+								fieldDisplayName="status code string"
+								fieldValue={selectedSpan.statusCodeString}
+							/>
 						</div>
 
 						{selectedSpan.statusMessage && (
