@@ -145,6 +145,12 @@ func (provider *provider) RotateToken(ctx context.Context, accessToken string, r
 			return err
 		}
 
+		// If the token passed the Rotate method and is the same as the input token, return the same token.
+		if token.AccessToken == accessToken && token.RefreshToken == refreshToken {
+			rotatedToken = token
+			return nil
+		}
+
 		if err := provider.setToken(ctx, token, false); err != nil {
 			return err
 		}
@@ -261,7 +267,7 @@ func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[s
 
 	if lastObservedAt, ok := accessTokenToLastObservedAtMax["last_observed_at"].(time.Time); ok {
 		if !lastObservedAt.IsZero() {
-			stats["auth_token.last_observed_at.max.time"] = lastObservedAt
+			stats["auth_token.last_observed_at.max.time"] = lastObservedAt.UTC()
 			stats["auth_token.last_observed_at.max.time_unix"] = lastObservedAt.Unix()
 		}
 	}
@@ -293,12 +299,12 @@ func (provider *provider) ListMaxLastObservedAtByOrgID(ctx context.Context, orgI
 		}
 
 		if _, ok := maxLastObservedAtPerUserID[userID]; !ok {
-			maxLastObservedAtPerUserID[userID] = lastObservedAt
+			maxLastObservedAtPerUserID[userID] = lastObservedAt.UTC()
 			continue
 		}
 
-		if lastObservedAt.After(maxLastObservedAtPerUserID[userID]) {
-			maxLastObservedAtPerUserID[userID] = lastObservedAt
+		if lastObservedAt.UTC().After(maxLastObservedAtPerUserID[userID]) {
+			maxLastObservedAtPerUserID[userID] = lastObservedAt.UTC()
 		}
 	}
 
