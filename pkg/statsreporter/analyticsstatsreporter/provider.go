@@ -111,11 +111,13 @@ func (provider *provider) Start(ctx context.Context) error {
 			return nil
 		case <-ticker.C:
 			ctx, span := provider.settings.Tracer().Start(ctx, "statsreporter.Report", trace.WithAttributes(attribute.String("statsreporter.provider", "analytics")))
-			defer span.End()
 
 			if err := provider.Report(ctx); err != nil {
+				span.RecordError(err)
 				provider.settings.Logger().WarnContext(ctx, "failed to report stats", "error", err)
 			}
+
+			span.End()
 		}
 	}
 }

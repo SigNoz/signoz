@@ -122,8 +122,8 @@ func (store *store) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*auth
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(&tokens).
-		Join("users").
-		JoinOn("users.id = tokens.user_id").
+		Join("JOIN users").
+		JoinOn("users.id = auth_token.user_id").
 		Where("org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {

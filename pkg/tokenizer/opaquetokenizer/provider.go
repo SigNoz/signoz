@@ -75,10 +75,12 @@ func (provider *provider) Start(ctx context.Context) error {
 			ctx, span := provider.settings.Tracer().Start(ctx, "tokenizer.GC", trace.WithAttributes(attribute.String("tokenizer.provider", provider.config.Provider)))
 
 			if err := provider.gc(ctx); err != nil {
+				span.RecordError(err)
 				provider.settings.Logger().ErrorContext(ctx, "failed to garbage collect tokens", "error", err)
 			}
 
 			if err := provider.flushLastObservedAt(ctx); err != nil {
+				span.RecordError(err)
 				provider.settings.Logger().ErrorContext(ctx, "failed to flush tokens", "error", err)
 			}
 
