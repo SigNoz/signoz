@@ -82,8 +82,7 @@ export const useGetYAxisUnitFromQuery = (
 		return query.builder.queryData.map(
 			(query) => query.aggregateAttribute?.key ?? '',
 		);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [JSON.stringify(query)]);
+	}, [query]);
 
 	const { units } = useGetMetricUnits(
 		metricNames,
@@ -93,6 +92,9 @@ export const useGetYAxisUnitFromQuery = (
 	return useMemo(() => {
 		if (!query || units.length === 0) {
 			return null;
+		}
+		if (query?.unit) {
+			return query.unit;
 		}
 		const areAllUnitsSame = units.every((unit) => unit === units[0]);
 		if (areAllUnitsSame) {
