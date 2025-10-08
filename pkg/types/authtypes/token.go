@@ -53,7 +53,7 @@ type GettableToken struct {
 }
 
 type Token struct {
-	bun.BaseModel `bun:"table:auth_token"`
+	bun.BaseModel `bun:"table:auth_token,alias:auth_token"`
 
 	ID               valuer.UUID       `bun:"id,pk,type:text"`
 	Meta             map[string]string `bun:"meta,notnull"`
