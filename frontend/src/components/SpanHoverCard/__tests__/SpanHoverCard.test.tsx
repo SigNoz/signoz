@@ -20,19 +20,6 @@ jest.mock('dayjs', () => {
 	return mockDayjs;
 });
 
-// Mock the time conversion utility
-jest.mock('container/TraceDetail/utils', () => ({
-	convertTimeToRelevantUnit: jest.fn((value: number) => ({
-		time: value < 1000 ? value : value / 1000,
-		timeUnitName: value < 1000 ? 'ms' : 's',
-	})),
-}));
-
-// Mock the toFixed utility
-jest.mock('utils/toFixed', () => ({
-	toFixed: jest.fn((value: number, decimals: number) => value.toFixed(decimals)),
-}));
-
 const HOVER_ELEMENT_ID = 'hover-element';
 
 const mockSpan: Span = {
@@ -166,7 +153,7 @@ describe('SpanHoverCard', () => {
 
 		// Check duration information
 		expect(screen.getByText('Duration:')).toBeInTheDocument();
-		expect(screen.getByText('150.00ms')).toBeInTheDocument();
+		expect(screen.getByText('150ms')).toBeInTheDocument();
 
 		// Check events count
 		expect(screen.getByText('Events:')).toBeInTheDocument();
