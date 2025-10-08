@@ -130,6 +130,20 @@ jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 const Y_AXIS_UNIT_SELECTOR_TEST_ID = 'metrics-explorer-y-axis-unit-selector';
 const SECONDS_UNIT_LABEL = 'Seconds (s)';
 
+function renderExplorer(): void {
+	render(
+		<QueryClientProvider client={queryClient}>
+			<MemoryRouter>
+				<Provider store={store}>
+					<ErrorModalProvider>
+						<Explorer />
+					</ErrorModalProvider>
+				</Provider>
+			</MemoryRouter>
+		</QueryClientProvider>,
+	);
+}
+
 describe('Explorer', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -146,17 +160,7 @@ describe('Explorer', () => {
 			mockSetSearchParams,
 		]);
 
-		render(
-			<QueryClientProvider client={queryClient}>
-				<MemoryRouter>
-					<Provider store={store}>
-						<ErrorModalProvider>
-							<Explorer />
-						</ErrorModalProvider>
-					</Provider>
-				</MemoryRouter>
-			</QueryClientProvider>,
-		);
+		renderExplorer();
 
 		expect(mockUpdateAllQueriesOperators).toHaveBeenCalledWith(
 			initialQueriesMap[DataSource.METRICS],
@@ -171,17 +175,7 @@ describe('Explorer', () => {
 			mockSetSearchParams,
 		]);
 
-		render(
-			<QueryClientProvider client={queryClient}>
-				<MemoryRouter>
-					<Provider store={store}>
-						<ErrorModalProvider>
-							<Explorer />
-						</ErrorModalProvider>
-					</Provider>
-				</MemoryRouter>
-			</QueryClientProvider>,
-		);
+		renderExplorer();
 
 		const toggle = screen.getByRole('switch');
 		expect(toggle).toBeChecked();
@@ -193,17 +187,7 @@ describe('Explorer', () => {
 			mockSetSearchParams,
 		]);
 
-		render(
-			<QueryClientProvider client={queryClient}>
-				<MemoryRouter>
-					<Provider store={store}>
-						<ErrorModalProvider>
-							<Explorer />
-						</ErrorModalProvider>
-					</Provider>
-				</MemoryRouter>
-			</QueryClientProvider>,
-		);
+		renderExplorer();
 
 		const toggle = screen.getByRole('switch');
 		expect(toggle).not.toBeChecked();
@@ -217,17 +201,7 @@ describe('Explorer', () => {
 			metrics: [],
 		} as any);
 
-		render(
-			<QueryClientProvider client={queryClient}>
-				<MemoryRouter>
-					<Provider store={store}>
-						<ErrorModalProvider>
-							<Explorer />
-						</ErrorModalProvider>
-					</Provider>
-				</MemoryRouter>
-			</QueryClientProvider>,
-		);
+		renderExplorer();
 
 		const yAxisUnitSelector = screen.getByTestId(Y_AXIS_UNIT_SELECTOR_TEST_ID);
 		expect(yAxisUnitSelector).toBeInTheDocument();
@@ -242,17 +216,7 @@ describe('Explorer', () => {
 			metrics: [],
 		} as any);
 
-		render(
-			<QueryClientProvider client={queryClient}>
-				<MemoryRouter>
-					<Provider store={store}>
-						<ErrorModalProvider>
-							<Explorer />
-						</ErrorModalProvider>
-					</Provider>
-				</MemoryRouter>
-			</QueryClientProvider>,
-		);
+		renderExplorer();
 
 		const yAxisUnitSelector = screen.getByTestId(Y_AXIS_UNIT_SELECTOR_TEST_ID);
 		expect(yAxisUnitSelector).toBeInTheDocument();
@@ -267,17 +231,7 @@ describe('Explorer', () => {
 			metrics: [],
 		} as any);
 
-		render(
-			<QueryClientProvider client={queryClient}>
-				<MemoryRouter>
-					<Provider store={store}>
-						<ErrorModalProvider>
-							<Explorer />
-						</ErrorModalProvider>
-					</Provider>
-				</MemoryRouter>
-			</QueryClientProvider>,
-		);
+		renderExplorer();
 
 		const yAxisUnitSelector = screen.queryByTestId(Y_AXIS_UNIT_SELECTOR_TEST_ID);
 		expect(yAxisUnitSelector).not.toBeInTheDocument();
@@ -291,17 +245,7 @@ describe('Explorer', () => {
 			metrics: [],
 		} as any);
 
-		render(
-			<QueryClientProvider client={queryClient}>
-				<MemoryRouter>
-					<Provider store={store}>
-						<ErrorModalProvider>
-							<Explorer />
-						</ErrorModalProvider>
-					</Provider>
-				</MemoryRouter>
-			</QueryClientProvider>,
-		);
+		renderExplorer();
 
 		const yAxisUnitSelector = screen.queryByTestId(Y_AXIS_UNIT_SELECTOR_TEST_ID);
 		expect(yAxisUnitSelector).toBeInTheDocument();
