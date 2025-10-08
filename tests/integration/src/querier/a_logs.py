@@ -887,11 +887,13 @@ def test_datatype_collision(
                     "code.function": "com.example.Integration.process",
                     "code.line": i + 1,
                     "telemetry.sdk.language": "go",
-                    "http.status_code": 404,     # Numeric value
-                    "response.time": 456.78,     # Numeric value
+                    "http.status_code": 404,  # Numeric value
+                    "response.time": 456.78,  # Numeric value
                 },
                 body=f"Test log {i+4} with numeric values",
-                severity_text=severity_levels_2[i],  # ERROR(17-20), FATAL(21-24), TRACE(1-4), DEBUG(5-8)
+                severity_text=severity_levels_2[
+                    i
+                ],  # ERROR(17-20), FATAL(21-24), TRACE(1-4), DEBUG(5-8)
             )
         )
 
@@ -914,8 +916,8 @@ def test_datatype_collision(
                 "code.function": "com.example.Integration.process",
                 "code.line": 1,
                 "telemetry.sdk.language": "python",
-                "http.status_code": "",          # Empty string
-                "response.time": 0,              # Zero value
+                "http.status_code": "",  # Empty string
+                "response.time": 0,  # Zero value
             },
             body="Edge case test log",
             severity_text="ERROR",
@@ -1062,7 +1064,9 @@ def test_datatype_collision(
                             "signal": "logs",
                             "stepInterval": 60,
                             "disabled": False,
-                            "filter": {"expression": "severity_number = '13'"},  # String comparison with numeric field
+                            "filter": {
+                                "expression": "severity_number = '13'"
+                            },  # String comparison with numeric field
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -1115,7 +1119,9 @@ def test_datatype_collision(
                             "signal": "logs",
                             "stepInterval": 60,
                             "disabled": False,
-                            "filter": {"expression": "http.status_code = 200"},  # Numeric comparison with string field
+                            "filter": {
+                                "expression": "http.status_code = 200"
+                            },  # Numeric comparison with string field
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -1168,7 +1174,9 @@ def test_datatype_collision(
                             "signal": "logs",
                             "stepInterval": 60,
                             "disabled": False,
-                            "filter": {"expression": "http.status_code = '404'"},  # String comparison with numeric field
+                            "filter": {
+                                "expression": "http.status_code = '404'"
+                            },  # String comparison with numeric field
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -1188,7 +1196,6 @@ def test_datatype_collision(
     count = results[0]["data"][0][0]
     # Should return 4 logs with http.status_code = 404 (next 4 logs have numeric value 404)
     assert count == 4
-
 
     # Test 5: Edge case - empty string comparison
     response = requests.post(
@@ -1222,7 +1229,9 @@ def test_datatype_collision(
                             "signal": "logs",
                             "stepInterval": 60,
                             "disabled": False,
-                            "filter": {"expression": "http.status_code = ''"},  # Empty string comparison
+                            "filter": {
+                                "expression": "http.status_code = ''"
+                            },  # Empty string comparison
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
