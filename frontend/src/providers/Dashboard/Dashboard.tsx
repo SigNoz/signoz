@@ -13,12 +13,13 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useTabVisibility from 'hooks/useTabFocus';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
-import { defaultTo } from 'lodash-es';
+import { defaultTo, isEmpty } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import isUndefined from 'lodash-es/isUndefined';
 import omitBy from 'lodash-es/omitBy';
 import { useAppContext } from 'providers/App/App';
 import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
+import { normalizeUrlValueForVariable } from 'providers/Dashboard/normalizeUrlValue';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import {
 	createContext,
@@ -247,13 +248,26 @@ export function DashboardProvider({
 				};
 
 				// respect the url variable if it is set, override the others
-				if (urlVariable) {
-					updatedVariable = {
-						...updatedVariable,
-						...(urlVariable !== ALL_SELECTED_VALUE &&
-							updatedVariable?.showALLOption && { selectedValue: urlVariable }),
-						...(urlVariable === ALL_SELECTED_VALUE && { allSelected: true }),
-					};
+				if (!isEmpty(urlVariable)) {
+					if (urlVariable === ALL_SELECTED_VALUE) {
+						updatedVariable = {
+							...updatedVariable,
+							allSelected: true,
+						};
+					} else {
+						// Normalize URL value to match variable's multiSelect configuration
+						const normalizedValue = normalizeUrlValueForVariable(
+							urlVariable,
+							variableData,
+						);
+
+						updatedVariable = {
+							...updatedVariable,
+							selectedValue: normalizedValue,
+							// Only set allSelected to false if showALLOption is available
+							...(updatedVariable?.showALLOption && { allSelected: false }),
+						};
+					}
 				}
 
 				updatedVariables[variable] = updatedVariable;
@@ -333,7 +347,7 @@ export function DashboardProvider({
 
 				if (!data?.data) return;
 				const updatedDashboardData = transformDashboardVariables(data?.data);
-				const updatedDate = dayjs(updatedDashboardData.updatedAt);
+				const updatedDate = dayjs(updatedDashboardData?.updatedAt);
 
 				setIsDashboardLocked(updatedDashboardData?.locked || false);
 
