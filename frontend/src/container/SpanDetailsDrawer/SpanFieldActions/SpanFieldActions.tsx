@@ -12,6 +12,7 @@ const SPAN_FIELD_MAPPING: Record<string, string> = {
 	service: 'serviceName',
 	'span kind': 'spanKind',
 	'status code string': 'statusCodeString',
+	'status message': 'statusMessage',
 };
 
 interface SpanFieldActionsProps {

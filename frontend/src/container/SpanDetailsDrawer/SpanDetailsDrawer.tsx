@@ -233,6 +233,10 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 										{selectedSpan.statusMessage}
 									</Typography.Text>
 								</div>
+								<SpanFieldActions
+									fieldDisplayName="status message"
+									fieldValue={selectedSpan.statusMessage}
+								/>
 							</div>
 						)}
 						<div className="item">

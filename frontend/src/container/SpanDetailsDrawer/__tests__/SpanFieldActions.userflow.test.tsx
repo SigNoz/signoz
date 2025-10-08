@@ -576,5 +576,84 @@ describe('SpanFieldActions User Flow Tests', () => {
 				expect(mockSetCopy).toHaveBeenCalledWith('"INTERNAL_ERROR"');
 			});
 		});
+
+		it('should handle status message field with action buttons when present', async () => {
+			const testSpan = createMockSpan({
+				statusMessage: 'Connection timeout error',
+			});
+			const { user } = renderSpanDetailsDrawer(testSpan);
+
+			// User sees the status message displayed
+			expect(screen.getByText('status message')).toBeInTheDocument();
+			expect(screen.getByText('Connection timeout error')).toBeInTheDocument();
+
+			// Find the status message field item
+			const statusMessageItem = screen
+				.getByText('status message')
+				.closest('.item');
+			expect(statusMessageItem).toBeInTheDocument();
+
+			// User hovers over the status message field to reveal action buttons
+			await user.hover(statusMessageItem!);
+
+			const filterForButton = statusMessageItem!.querySelector(
+				'[aria-label="Filter for value"]',
+			) as HTMLElement;
+			expect(filterForButton).toBeInTheDocument();
+
+			// User clicks "Filter for value" button
+			await user.click(filterForButton);
+
+			// Verify navigation to traces explorer with correct filter mapping
+			await waitFor(() => {
+				expect(mockRedirectWithQueryBuilderData).toHaveBeenCalledWith(
+					expect.objectContaining({
+						builder: expect.objectContaining({
+							queryData: expect.arrayContaining([
+								expect.objectContaining({
+									dataSource: 'traces',
+									filters: expect.objectContaining({
+										items: expect.arrayContaining([
+											expect.objectContaining({
+												key: expect.objectContaining({ key: 'statusMessage' }),
+												op: '=',
+												value: 'Connection timeout error',
+											}),
+										]),
+									}),
+								}),
+							]),
+						}),
+					}),
+					{},
+					ROUTES.TRACES_EXPLORER,
+				);
+			});
+
+			// Reset and test copy functionality
+			mockRedirectWithQueryBuilderData.mockClear();
+
+			// Test copy field name functionality
+			await user.hover(statusMessageItem!);
+			const moreActionsButton = statusMessageItem!
+				.querySelector('.lucide-ellipsis')
+				?.closest('button') as HTMLElement;
+			await user.click(moreActionsButton);
+
+			await waitFor(() => {
+				expect(screen.getByText('Copy Field Name')).toBeInTheDocument();
+			});
+
+			const copyFieldNameButton = screen.getByText('Copy Field Name');
+			fireEvent.click(copyFieldNameButton);
+
+			// Verify field name mapping (display "status message" → query "statusMessage")
+			await waitFor(() => {
+				expect(mockSetCopy).toHaveBeenCalledWith('statusMessage');
+				expect(mockNotifications.success).toHaveBeenCalledWith({
+					message: 'Field name copied to clipboard',
+				});
+			});
+		});
 	});
 });
