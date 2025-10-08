@@ -3,10 +3,11 @@ package implservices
 import (
 	"context"
 	"fmt"
-	"strings"
+	"time"
 
 	"strconv"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -126,11 +127,13 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 	}
 
 	out := make([]*servicetypes.ResponseItem, 0, len(sd.Data))
+	serviceNames := make([]string, 0, len(sd.Data))
 	for _, row := range sd.Data {
 		if serviceNameRespIndex >= len(row) {
 			continue
 		}
 		svcName := fmt.Sprintf("%v", row[serviceNameRespIndex])
+		serviceNames = append(serviceNames, svcName)
 
 		p99 := toFloat(row, aggIndexMappings[0])
 		avgDuration := toFloat(row, aggIndexMappings[1])
@@ -164,89 +167,56 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 			DataWarning:  servicetypes.DataWarning{TopLevelOps: []string{}},
 		})
 	}
+
+	// Fetch top level operations using TelemetryStore and attach
+	if len(serviceNames) > 0 {
+		startTime := time.Unix(0, int64(startNs)).UTC()
+		opsMap, err := m.FetchTopLevelOperations(ctx, startTime, serviceNames)
+		if err == nil && opsMap != nil {
+			for i := range out {
+				if tops, ok := opsMap[out[i].ServiceName]; ok {
+					out[i].DataWarning.TopLevelOps = tops
+				}
+			}
+		}
+	}
+
 	return out, nil
 }
 
-// buildFilterExpression converts tag filters into a QBv5-compatible boolean expression.
-func buildFilterExpression(tags []servicetypes.TagFilterItem) string {
-	if len(tags) == 0 {
-		return ""
+// FetchTopLevelOperations returns top-level operations per service using the legacy table
+func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, services []string) (map[string][]string, error) {
+	db := m.TelemetryStore.ClickhouseDB()
+	// Using distributed_top_level_operations under signoz_traces
+	// NOTE: we rely on the legacy semantics: SELECT name, serviceName, max(time)
+	query := "SELECT name, serviceName, max(time) as ts FROM signoz_traces.distributed_top_level_operations WHERE time >= @start"
+	args := []any{clickhouse.Named("start", start)}
+	if len(services) > 0 {
+		query += " AND serviceName IN @services"
+		args = append(args, clickhouse.Named("services", services))
 	}
-	parts := make([]string, 0, len(tags))
-	for _, t := range tags {
-		key := t.Key
-		switch strings.ToLower(t.Operator) {
-		case "in":
-			if len(t.StringValues) == 0 {
-				continue
-			}
-			ors := make([]string, 0, len(t.StringValues))
-			for _, v := range t.StringValues {
-				ors = append(ors, fmt.Sprintf("%s = '%s'", key, escapeSingleQuotes(v)))
-			}
-			parts = append(parts, "("+strings.Join(ors, " OR ")+")")
-		case "equal", "=":
-			if len(t.StringValues) == 0 {
-				continue
-			}
-			parts = append(parts, fmt.Sprintf("%s = '%s'", key, escapeSingleQuotes(t.StringValues[0])))
-		default:
-			// skip unsupported for now
-		}
-	}
-	return strings.Join(parts, " AND ")
-}
+	query += " GROUP BY name, serviceName ORDER BY ts DESC LIMIT 5000"
 
-// escapeSingleQuotes escapes single quotes in string literals for filter expressions.
-func escapeSingleQuotes(s string) string {
-	return strings.ReplaceAll(s, "'", "\\'")
-}
+	rows, err := db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-// toFloat safely converts a cell value to float64, returning 0 on type mismatch.
-func toFloat(row []any, idx int) float64 {
-	if idx < 0 || idx >= len(row) || row[idx] == nil {
-		return 0
-	}
-	switch v := row[idx].(type) {
-	case float64:
-		return v
-	case float32:
-		return float64(v)
-	case int64:
-		return float64(v)
-	case int:
-		return float64(v)
-	case uint64:
-		return float64(v)
-	default:
-		return 0
-	}
-}
-
-// toUint64 safely converts a cell value to uint64, guarding against negatives and nils.
-func toUint64(row []any, idx int) uint64 {
-	if idx < 0 || idx >= len(row) || row[idx] == nil {
-		return 0
-	}
-	switch v := row[idx].(type) {
-	case uint64:
-		return v
-	case int64:
-		if v < 0 {
-			return 0
+	ops := make(map[string][]string)
+	for rows.Next() {
+		var name, serviceName string
+		var ts time.Time
+		if err := rows.Scan(&name, &serviceName, &ts); err != nil {
+			return nil, err
 		}
-		return uint64(v)
-	case int:
-		if v < 0 {
-			return 0
+		if _, ok := ops[serviceName]; !ok {
+			ops[serviceName] = []string{"overflow_operation"}
 		}
-		return uint64(v)
-	case float64:
-		if v < 0 {
-			return 0
-		}
-		return uint64(v)
-	default:
-		return 0
+		ops[serviceName] = append(ops[serviceName], name)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return ops, nil
 }

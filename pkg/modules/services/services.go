@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/servicetypes"
 )
@@ -15,4 +16,5 @@ type Handler interface {
 // Module represents the services QBv5 module interface
 type Module interface {
 	Get(ctx context.Context, orgID string, req *servicetypes.Request) ([]*servicetypes.ResponseItem, error)
+	FetchTopLevelOperations(ctx context.Context, start time.Time, services []string) (map[string][]string, error)
 }
