@@ -52,7 +52,7 @@ func (m *Module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 		Signal: telemetrytypes.SignalTraces,
 		GroupBy: []qbtypes.GroupByKey{
 			{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "resource_string_service$name", // TODO(nikhilmantri0902): confirm whether to use serviceName, resource_string_service$name, or service.name
+				Name:          "resource_string_service$$name", // TODO(nikhilmantri0902): confirm whether to use serviceName, resource_string_service$name, or service.name
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			}},
 		},
