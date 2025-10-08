@@ -232,13 +232,13 @@ func (provider *provider) BatchCheck(ctx context.Context, tupleReq []*openfgav1.
 
 }
 
-func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, relation authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector) error {
+func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgId valuer.UUID, _ authtypes.Relation, translation authtypes.Relation, _ authtypes.Typeable, _ []authtypes.Selector) error {
 	subject, err := authtypes.NewSubject(authtypes.TypeUser, claims.UserID, authtypes.Relation{})
 	if err != nil {
 		return err
 	}
 
-	tuples, err := typeable.Tuples(subject, relation, selectors)
+	tuples, err := authtypes.TypeableOrganization.Tuples(subject, translation, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeOrganization, orgId.StringValue())}, orgId)
 	if err != nil {
 		return err
 	}
@@ -251,11 +251,21 @@ func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims aut
 	return nil
 }
 
-func (provider *provider) Write(ctx context.Context, req *openfgav1.WriteRequest) error {
+func (provider *provider) Write(ctx context.Context, additions []*openfgav1.TupleKey, deletions []*openfgav1.TupleKey) error {
+	deletionTuplesWithoutCondition := make([]*openfgav1.TupleKeyWithoutCondition, len(deletions))
+	for idx, tuple := range deletions {
+		deletionTuplesWithoutCondition[idx] = &openfgav1.TupleKeyWithoutCondition{User: tuple.User, Object: tuple.Object, Relation: tuple.Relation}
+	}
+
 	_, err := provider.openfgaServer.Write(ctx, &openfgav1.WriteRequest{
 		StoreId:              provider.storeID,
 		AuthorizationModelId: provider.modelID,
-		Writes:               req.Writes,
+		Writes: &openfgav1.WriteRequestWrites{
+			TupleKeys: additions,
+		},
+		Deletes: &openfgav1.WriteRequestDeletes{
+			TupleKeys: deletionTuplesWithoutCondition,
+		},
 	})
 
 	return err

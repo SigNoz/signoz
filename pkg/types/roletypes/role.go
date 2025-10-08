@@ -166,7 +166,7 @@ func (role *PatchableRole) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func GetAdditionTuples(id valuer.UUID, relation authtypes.Relation, additions []*authtypes.Object) ([]*openfgav1.TupleKey, error) {
+func GetAdditionTuples(id valuer.UUID, orgId valuer.UUID, relation authtypes.Relation, additions []*authtypes.Object) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, object := range additions {
@@ -179,6 +179,7 @@ func GetAdditionTuples(id valuer.UUID, relation authtypes.Relation, additions []
 			),
 			relation,
 			[]authtypes.Selector{object.Selector},
+			orgId,
 		)
 		if err != nil {
 			return nil, err
@@ -190,8 +191,8 @@ func GetAdditionTuples(id valuer.UUID, relation authtypes.Relation, additions []
 	return tuples, nil
 }
 
-func GetDeletionTuples(id valuer.UUID, relation authtypes.Relation, deletions []*authtypes.Object) ([]*openfgav1.TupleKeyWithoutCondition, error) {
-	tuples := make([]*openfgav1.TupleKeyWithoutCondition, 0)
+func GetDeletionTuples(id valuer.UUID, orgId valuer.UUID, relation authtypes.Relation, deletions []*authtypes.Object) ([]*openfgav1.TupleKey, error) {
+	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, object := range deletions {
 		typeable := authtypes.MustNewTypeableFromType(object.Resource.Type, object.Resource.Name)
@@ -203,21 +204,13 @@ func GetDeletionTuples(id valuer.UUID, relation authtypes.Relation, deletions []
 			),
 			relation,
 			[]authtypes.Selector{object.Selector},
+			orgId,
 		)
 		if err != nil {
 			return nil, err
 		}
 
-		deletionTuples := make([]*openfgav1.TupleKeyWithoutCondition, len(transactionTuples))
-		for idx, tuple := range transactionTuples {
-			deletionTuples[idx] = &openfgav1.TupleKeyWithoutCondition{
-				User:     tuple.User,
-				Relation: tuple.Relation,
-				Object:   tuple.Object,
-			}
-		}
-
-		tuples = append(tuples, deletionTuples...)
+		tuples = append(tuples, transactionTuples...)
 	}
 
 	return tuples, nil
