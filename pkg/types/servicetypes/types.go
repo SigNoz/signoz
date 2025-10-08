@@ -4,8 +4,9 @@ import "time"
 
 // Request mirrors the /services API input shape
 type Request struct {
-	Start uint64          `json:"start"`
-	End   uint64          `json:"end"`
+	// Start and End are epoch nanoseconds encoded as strings
+	Start string          `json:"start"`
+	End   string          `json:"end"`
 	Tags  []TagFilterItem `json:"tags"`
 }
 
