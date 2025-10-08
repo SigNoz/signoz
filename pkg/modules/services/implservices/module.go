@@ -44,7 +44,11 @@ func (m *Module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 		Name:   "A",
 		Signal: telemetrytypes.SignalTraces,
 		GroupBy: []qbtypes.GroupByKey{
-			{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service.name"}},
+			{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			}},
 		},
 		Aggregations: []qbtypes.TraceAggregation{
 			{Expression: "p99(duration_nano)", Alias: "p99"},
