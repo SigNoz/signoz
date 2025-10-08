@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
-interface LocalStoreDashboardVariables {
+export interface LocalStoreDashboardVariables {
 	[name: string]:
 		| IDashboardVariable['selectedValue'][]
 		| IDashboardVariable['selectedValue'];
