@@ -34,13 +34,13 @@ func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, 
 	}, nil
 }
 
-func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgId valuer.UUID, relation authtypes.Relation, _ authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector) error {
+func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation authtypes.Relation, _ authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector) error {
 	subject, err := authtypes.NewSubject(authtypes.TypeUser, claims.UserID, authtypes.Relation{})
 	if err != nil {
 		return err
 	}
 
-	tuples, err := typeable.Tuples(subject, relation, selectors, orgId)
+	tuples, err := typeable.Tuples(subject, relation, selectors, orgID)
 	if err != nil {
 		return err
 	}

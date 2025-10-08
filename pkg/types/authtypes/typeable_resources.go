@@ -23,10 +23,10 @@ func MustNewTypeableResources(name Name) Typeable {
 	return resources
 }
 
-func (typeableResources *typeableResources) Tuples(subject string, relation Relation, selector []Selector, orgId valuer.UUID) ([]*openfgav1.TupleKey, error) {
+func (typeableResources *typeableResources) Tuples(subject string, relation Relation, selector []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 	for _, selector := range selector {
-		object := typeableResources.Prefix(orgId) + "/" + selector.String()
+		object := typeableResources.Prefix(orgID) + "/" + selector.String()
 		tuples = append(tuples, &openfgav1.TupleKey{User: subject, Relation: relation.StringValue(), Object: object})
 	}
 
@@ -41,7 +41,7 @@ func (typeableResources *typeableResources) Name() Name {
 	return typeableResources.name
 }
 
-func (typeableResources *typeableResources) Prefix(orgId valuer.UUID) string {
-	// example: resources:orgId/0199c47d-f61b-7833-bc5f-c0730f12f046/dashboards
-	return typeableResources.Type().StringValue() + ":" + "organization" + "/" + orgId.StringValue() + "/" + typeableResources.Name().String()
+func (typeableResources *typeableResources) Prefix(orgID valuer.UUID) string {
+	// example: resources:organization/0199c47d-f61b-7833-bc5f-c0730f12f046/dashboards
+	return typeableResources.Type().StringValue() + ":" + "organization" + "/" + orgID.StringValue() + "/" + typeableResources.Name().String()
 }
