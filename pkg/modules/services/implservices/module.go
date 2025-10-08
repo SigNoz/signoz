@@ -39,14 +39,20 @@ func (m *Module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 	endMs := endNs / 1_000_000
 
 	filterExpr := buildFilterExpression(req.Tags)
+	// ensure we only consider root or entry-point spans
+	scopeExpr := "isRoot = 'true' OR isEntryPoint = 'true'"
+	if filterExpr != "" {
+		filterExpr = "(" + filterExpr + ") AND (" + scopeExpr + ")"
+	} else {
+		filterExpr = scopeExpr
+	}
 
 	q := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 		Name:   "A",
 		Signal: telemetrytypes.SignalTraces,
 		GroupBy: []qbtypes.GroupByKey{
 			{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "service.name",
-				FieldContext:  telemetrytypes.FieldContextResource,
+				Name:          "resource_string_service$name", // TODO(nikhilmantri0902): confirm whether to use serviceName, resource_string_service$name, or service.name
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			}},
 		},
@@ -58,8 +64,9 @@ func (m *Module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 			{Expression: "countIf(response_status_code >= 400 AND response_status_code < 500)", Alias: "num4XX"},
 		},
 	}
-	if filterExpr != "" {
-		q.Filter = &qbtypes.Filter{Expression: filterExpr}
+
+	q.Filter = &qbtypes.Filter{
+		Expression: filterExpr,
 	}
 
 	reqV5 := qbtypes.QueryRangeRequest{
