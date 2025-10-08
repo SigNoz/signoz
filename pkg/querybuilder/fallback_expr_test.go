@@ -88,7 +88,8 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 			operator:          qbtypes.FilterOperatorEqual,
 		},
 		{
-			// we won't cast to string if it's a comparison operator
+			// we cast to float64 if it's a comparison operator and the value is a stringified number
+			// reason:- https://github.com/SigNoz/signoz/pull/9154#issuecomment-3369941207
 			name: "http_request_duration_float_field_with_string_value_comparison_operator",
 			key: &telemetrytypes.TelemetryFieldKey{
 				Name:          "http.request.duration",
@@ -101,7 +102,8 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 			operator:          qbtypes.FilterOperatorGreaterThan,
 		},
 		{
-			// we won't cast to string if it's a comparison operator
+			// we cast to float64 if it's a comparison operator and the value is a stringified number
+			// reason:- https://github.com/SigNoz/signoz/pull/9154#issuecomment-3369941207
 			name: "http_request_duration_float_field_with_string_value_comparison_operator_1",
 			key: &telemetrytypes.TelemetryFieldKey{
 				Name:          "http.request.duration",
