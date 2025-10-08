@@ -2,7 +2,6 @@ import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { normalizeUrlValueForVariable } from '../normalizeUrlValue';
 
-// Test scenarios for normalizeUrlValueForVariable function
 // Mock variable configurations
 const singleSelectVariable: Partial<IDashboardVariable> = {
 	id: 'env',
@@ -141,37 +140,3 @@ describe('normalizeUrlValueForVariable', () => {
 		});
 	});
 });
-
-// Console test examples for manual verification
-console.log('=== Manual Test Results ===');
-
-// Test case 1: Single select with array input
-const singleResult = normalizeUrlValueForVariable(
-	['test', 'prod'],
-	singleSelectVariable as IDashboardVariable,
-);
-console.log('Single select with array ["test", "prod"]:', singleResult); // Expected: "test"
-
-// Test case 2: Multi select with string input
-const multiResult = normalizeUrlValueForVariable(
-	'test',
-	multiSelectVariable as IDashboardVariable,
-);
-console.log('Multi select with string "test":', multiResult); // Expected: ["test"]
-
-// Test case 3: Multi select with array input
-const multiArrayResult = normalizeUrlValueForVariable(
-	['service1', 'service2'],
-	multiSelectVariable as IDashboardVariable,
-);
-console.log(
-	'Multi select with array ["service1", "service2"]:',
-	multiArrayResult,
-); // Expected: ["service1", "service2"]
-
-// Test case 4: Single select with string input
-const singleStringResult = normalizeUrlValueForVariable(
-	'production',
-	singleSelectVariable as IDashboardVariable,
-);
-console.log('Single select with string "production":', singleStringResult); // Expected: "production"

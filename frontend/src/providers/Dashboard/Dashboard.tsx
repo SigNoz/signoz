@@ -337,7 +337,7 @@ export function DashboardProvider({
 			onError: (error) => {
 				showErrorModal(error as APIError);
 			},
-			// eslint-disable-next-line sonarjs/cognitive-complexity
+
 			onSuccess: (data) => {
 				// if the url variable is not set for any variable, set it to the default value
 				const variables = data?.data?.data?.variables;
@@ -345,7 +345,6 @@ export function DashboardProvider({
 					initializeDefaultVariables(variables, getUrlVariables, updateUrlVariable);
 				}
 
-				if (!data?.data) return;
 				const updatedDashboardData = transformDashboardVariables(data?.data);
 				const updatedDate = dayjs(updatedDashboardData?.updatedAt);
 
