@@ -65,10 +65,14 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	} = useQueryBuilder();
 
 	// Check if this filter has active filters in the query
-	const isSomeFilterPresentForCurrentAttribute = currentQuery.builder.queryData?.[
-		lastUsedQuery || 0
-	]?.filters?.items?.some((item) =>
-		isEqual(item.key?.key, filter.attributeKey.key),
+	const isSomeFilterPresentForCurrentAttribute = useMemo(
+		() =>
+			currentQuery.builder.queryData?.[
+				lastUsedQuery || 0
+			]?.filters?.items?.some((item) =>
+				isEqual(item.key?.key, filter.attributeKey.key),
+			),
+		[currentQuery.builder.queryData, lastUsedQuery, filter.attributeKey.key],
 	);
 
 	// Derive isOpen from filter state + user action
