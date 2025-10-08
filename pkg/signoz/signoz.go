@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/authn/authnstore/sqlauthnstore"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -62,6 +63,7 @@ func New(
 	zeusProviderFactory factory.ProviderFactory[zeus.Zeus, zeus.Config],
 	licenseConfig licensing.Config,
 	licenseProviderFactory func(sqlstore.SQLStore, zeus.Zeus, organization.Getter, analytics.Analytics) factory.ProviderFactory[licensing.Licensing, licensing.Config],
+	authzProviderFactoryCb func(sqlstore.SQLStore) factory.ProviderFactory[authz.AuthZ, authz.Config],
 	emailingProviderFactories factory.NamedMap[factory.ProviderFactory[emailing.Emailing, emailing.Config]],
 	cacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]],
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
@@ -295,12 +297,14 @@ func New(
 	// Initialize authns
 	store := sqlauthnstore.NewStore(sqlstore)
 	authNs, err := authNsCallback(ctx, providerSettings, store, licensing)
+	authzProviderFactory := authzProviderFactoryCb(sqlstore)
+	authz, err := authzProviderFactory.New(ctx, providerSettings, authz.Config{})
 	if err != nil {
 		return nil, err
 	}
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, authNs)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, authNs, authz)
 
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules, providerSettings)
@@ -337,6 +341,7 @@ func New(
 		factory.NewNamedService(factory.MustNewName("licensing"), licensing),
 		factory.NewNamedService(factory.MustNewName("statsreporter"), statsReporter),
 		factory.NewNamedService(factory.MustNewName("tokenizer"), tokenizer),
+		factory.NewNamedService(factory.MustNewName("authz"), authz),
 	)
 	if err != nil {
 		return nil, err

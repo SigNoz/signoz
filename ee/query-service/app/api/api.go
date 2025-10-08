@@ -83,14 +83,21 @@ func (ah *APIHandler) Gateway() *httputil.ReverseProxy {
 
 // RegisterRoutes registers routes for this handler on the given router
 func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
-	// note: add ee override methods first
-
-	// routes available only in ee version
+	// v1
 	router.HandleFunc("/api/v1/features", am.ViewAccess(ah.getFeatureFlags)).Methods(http.MethodGet)
 
 	// paid plans specific routes
 	router.HandleFunc("/api/v1/complete/saml", am.OpenAccess(ah.Signoz.Handlers.Session.CreateSessionBySAMLCallback)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/complete/oidc", am.OpenAccess(ah.Signoz.Handlers.Session.CreateSessionByOIDCCallback)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/roles/resources", am.OpenAccess(ah.Signoz.Handlers.Role.GetResources)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/roles", am.OpenAccess(ah.Signoz.Handlers.Role.List)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/roles", am.OpenAccess(ah.Signoz.Handlers.Role.Create)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/roles/{id}", am.OpenAccess(ah.Signoz.Handlers.Role.Get)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/roles/{id}/relation/{relation}/objects", am.OpenAccess(ah.Signoz.Handlers.Role.GetObjects)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/roles/{id}", am.OpenAccess(ah.Signoz.Handlers.Role.Patch)).Methods(http.MethodPatch)
+	router.HandleFunc("/api/v1/roles/{id}/relation/{relation}/objects", am.OpenAccess(ah.Signoz.Handlers.Role.PatchObjects)).Methods(http.MethodPatch)
+	router.HandleFunc("/api/v1/roles/{id}", am.OpenAccess(ah.Signoz.Handlers.Role.Delete)).Methods(http.MethodDelete)
 
 	// base overrides
 	router.HandleFunc("/api/v1/version", am.OpenAccess(ah.getVersion)).Methods(http.MethodGet)

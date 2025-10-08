@@ -78,6 +78,10 @@ func (typed *Type) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (typed Type) MarshalText() ([]byte, error) {
+	return []byte(typed.StringValue()), nil
+}
+
 func NewTypeableFromType(typed Type, name Name) (Typeable, error) {
 	switch typed {
 	case TypeRole:

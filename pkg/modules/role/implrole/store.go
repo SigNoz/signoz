@@ -13,8 +13,8 @@ type store struct {
 	sqlstore sqlstore.SQLStore
 }
 
-func NewStore(sqlstore sqlstore.SQLStore) (roletypes.Store, error) {
-	return &store{sqlstore: sqlstore}, nil
+func NewStore(sqlstore sqlstore.SQLStore) roletypes.Store {
+	return &store{sqlstore: sqlstore}
 }
 
 func (store *store) Create(ctx context.Context, role *roletypes.StorableRole) error {
