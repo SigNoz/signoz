@@ -16,6 +16,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/version"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type provider struct {
@@ -107,6 +109,9 @@ func (provider *provider) Start(ctx context.Context) error {
 		case <-provider.stopC:
 			return nil
 		case <-ticker.C:
+			ctx, span := provider.settings.Tracer().Start(ctx, "statsreporter.Report", trace.WithAttributes(attribute.String("statsreporter.provider", "analytics")))
+			defer span.End()
+
 			if err := provider.Report(ctx); err != nil {
 				provider.settings.Logger().WarnContext(ctx, "failed to report stats", "error", err)
 			}

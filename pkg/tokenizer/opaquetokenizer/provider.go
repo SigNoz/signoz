@@ -72,7 +72,7 @@ func (provider *provider) Start(ctx context.Context) error {
 		case <-provider.stopC:
 			return nil
 		case <-ticker.C:
-			ctx, span := provider.settings.Tracer().Start(ctx, "tokenizer.gc", trace.WithAttributes(attribute.String("tokenizer.provider", provider.config.Provider)))
+			ctx, span := provider.settings.Tracer().Start(ctx, "tokenizer.GC", trace.WithAttributes(attribute.String("tokenizer.provider", provider.config.Provider)))
 
 			if err := provider.gc(ctx); err != nil {
 				provider.settings.Logger().ErrorContext(ctx, "failed to garbage collect tokens", "error", err)
