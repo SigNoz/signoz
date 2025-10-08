@@ -27,6 +27,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 )
@@ -42,7 +43,7 @@ type Modules struct {
 	QuickFilter   quickfilter.Module
 	TraceFunnel   tracefunnel.Module
 	RawDataExport rawdataexport.Module
-	ServicesQB    services.Module
+	Services      services.Module
 }
 
 func NewModules(
@@ -54,6 +55,7 @@ func NewModules(
 	alertmanager alertmanager.Alertmanager,
 	analytics analytics.Analytics,
 	querier querier.Querier,
+	telemetryStore telemetrystore.TelemetryStore,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
@@ -69,6 +71,6 @@ func NewModules(
 		QuickFilter:   quickfilter,
 		TraceFunnel:   impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 		RawDataExport: implrawdataexport.NewModule(querier),
-		ServicesQB:    implservices.NewModule(querier),
+		Services:      implservices.NewModule(querier, telemetryStore),
 	}
 }

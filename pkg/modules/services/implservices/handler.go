@@ -12,17 +12,17 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/servicetypes"
 )
 
-type Handler struct {
-	Mod services.Module
+type handler struct {
+	Module services.Module
 }
 
-func NewHandler(m services.Module) *Handler {
-	return &Handler{
-		Mod: m,
+func NewHandler(m services.Module) services.Handler {
+	return &handler{
+		Module: m,
 	}
 }
 
-func (h *Handler) Get(rw http.ResponseWriter, req *http.Request) {
+func (h *handler) Get(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 15*time.Second)
 	defer cancel()
 
@@ -38,7 +38,7 @@ func (h *Handler) Get(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	out, err := h.Mod.Get(ctx, claims.OrgID, &in)
+	out, err := h.Module.Get(ctx, claims.OrgID, &in)
 	if err != nil {
 		render.Error(rw, err)
 		return

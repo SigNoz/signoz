@@ -34,7 +34,7 @@ type Handlers struct {
 	QuickFilter   quickfilter.Handler
 	TraceFunnel   tracefunnel.Handler
 	RawDataExport rawdataexport.Handler
-	ServicesQB    services.Handler
+	Services      services.Handler
 }
 
 func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Handlers {
@@ -48,6 +48,6 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Han
 		QuickFilter:   implquickfilter.NewHandler(modules.QuickFilter),
 		TraceFunnel:   impltracefunnel.NewHandler(modules.TraceFunnel),
 		RawDataExport: implrawdataexport.NewHandler(modules.RawDataExport),
-		ServicesQB:    implservices.NewHandler(modules.ServicesQB),
+		Services:      implservices.NewHandler(modules.Services),
 	}
 }

@@ -7,27 +7,31 @@ import (
 
 	"strconv"
 
+	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/servicetypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type Module struct {
-	Querier querier.Querier
+type module struct {
+	Querier        querier.Querier
+	TelemetryStore telemetrystore.TelemetryStore
 }
 
 // NewModule constructs the services module with the provided querier dependency.
-func NewModule(q querier.Querier) *Module {
-	return &Module{
-		Querier: q,
+func NewModule(q querier.Querier, ts telemetrystore.TelemetryStore) services.Module {
+	return &module{
+		Querier:        q,
+		TelemetryStore: ts,
 	}
 }
 
 // Get implements services.Module
 // Builds a QBv5 traces aggregation grouped by service.name and maps results to ResponseItem.
-func (m *Module) Get(ctx context.Context, orgID string, req *servicetypes.Request) ([]*servicetypes.ResponseItem, error) {
+func (m *module) Get(ctx context.Context, orgID string, req *servicetypes.Request) ([]*servicetypes.ResponseItem, error) {
 	if req == nil {
 		return nil, nil
 	}
@@ -99,19 +103,20 @@ func (m *Module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 		return []*servicetypes.ResponseItem{}, nil
 	}
 
-	groupIdx := -1
-	aggIdxByPos := map[int]int{}
+	// this stores the index at which service name is found in the response
+	serviceNameRespIndex := -1
+	aggIndexMappings := map[int]int{}
 	for i, c := range sd.Columns {
 		switch c.Type {
 		case qbtypes.ColumnTypeGroup:
 			if c.TelemetryFieldKey.Name == "service.name" {
-				groupIdx = i
+				serviceNameRespIndex = i
 			}
 		case qbtypes.ColumnTypeAggregation:
-			aggIdxByPos[int(c.AggregationIndex)] = i
+			aggIndexMappings[int(c.AggregationIndex)] = i
 		}
 	}
-	if groupIdx == -1 {
+	if serviceNameRespIndex == -1 {
 		return []*servicetypes.ResponseItem{}, nil
 	}
 
@@ -122,16 +127,16 @@ func (m *Module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 
 	out := make([]*servicetypes.ResponseItem, 0, len(sd.Data))
 	for _, row := range sd.Data {
-		if groupIdx >= len(row) {
+		if serviceNameRespIndex >= len(row) {
 			continue
 		}
-		svcName := fmt.Sprintf("%v", row[groupIdx])
+		svcName := fmt.Sprintf("%v", row[serviceNameRespIndex])
 
-		p99 := toFloat(row, aggIdxByPos[0])
-		avgDuration := toFloat(row, aggIdxByPos[1])
-		numCalls := toUint64(row, aggIdxByPos[2])
-		numErrors := toUint64(row, aggIdxByPos[3])
-		num4xx := toUint64(row, aggIdxByPos[4])
+		p99 := toFloat(row, aggIndexMappings[0])
+		avgDuration := toFloat(row, aggIndexMappings[1])
+		numCalls := toUint64(row, aggIndexMappings[2])
+		numErrors := toUint64(row, aggIndexMappings[3])
+		num4xx := toUint64(row, aggIndexMappings[4])
 
 		callRate := 0.0
 		if numCalls > 0 {

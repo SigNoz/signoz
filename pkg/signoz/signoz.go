@@ -2,6 +2,7 @@ package signoz
 
 import (
 	"context"
+
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfroutingstore/sqlroutingstore"
@@ -280,7 +281,7 @@ func New(
 	}
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, querier)
+	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore)
 
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules, providerSettings)
