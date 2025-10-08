@@ -88,6 +88,7 @@ func New(
 		orgGetter:      orgGetter,
 		userGetter:     userGetter,
 		analytics:      analytics,
+		tokenizer:      tokenizer,
 		build:          build,
 		deployment:     deployment,
 		stopC:          make(chan struct{}),
@@ -172,7 +173,7 @@ func (provider *provider) Report(ctx context.Context) error {
 		for _, user := range users {
 			traits := types.NewTraitsFromUser(user)
 			if maxLastObservedAt, ok := maxLastObservedAtPerUserID[user.ID]; ok {
-				traits["last_observed_at.max.time"] = maxLastObservedAt
+				traits["last_observed_at.max.time"] = maxLastObservedAt.UTC()
 				traits["last_observed_at.max.time_unix"] = maxLastObservedAt.Unix()
 			}
 
