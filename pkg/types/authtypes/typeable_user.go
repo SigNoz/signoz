@@ -28,5 +28,6 @@ func (typeableUser *typeableUser) Name() Name {
 }
 
 func (typeableUser *typeableUser) Prefix(orgId valuer.UUID) string {
-	return typeableUser.Type().StringValue() + ":" + "organization" + "/" + orgId.StringValue()
+	// example: user:orgId/0199c47d-f61b-7833-bc5f-c0730f12f046/user
+	return typeableUser.Type().StringValue() + ":" + "organization" + "/" + orgId.StringValue() + typeableUser.Name().String()
 }

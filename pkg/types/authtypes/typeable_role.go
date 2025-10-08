@@ -28,5 +28,6 @@ func (typeableRole *typeableRole) Name() Name {
 }
 
 func (typeableRole *typeableRole) Prefix(orgId valuer.UUID) string {
-	return typeableRole.Type().StringValue() + ":" + "organization" + "/" + orgId.StringValue()
+	// example: role:orgId/0199c47d-f61b-7833-bc5f-c0730f12f046/role
+	return typeableRole.Type().StringValue() + ":" + "organization" + "/" + orgId.StringValue() + "/" + typeableRole.Name().String()
 }
