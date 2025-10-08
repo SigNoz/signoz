@@ -76,6 +76,7 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 
 		// numbers
 		{
+			// we cast the key to string if the value is not a number or operator is not a comparison operator
 			name: "http_request_duration_float_field_with_string_value",
 			key: &telemetrytypes.TelemetryFieldKey{
 				Name:          "http.request.duration",
@@ -116,7 +117,7 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 			operator:          qbtypes.FilterOperatorGreaterThan,
 		},
 		{
-			// we won't cast to string if it's a comparison operator
+			// we cast the key to string if the value is not a number or operator is not a comparison operator
 			name: "http_request_duration_float_field_with_string_value_comparison_operator_2",
 			key: &telemetrytypes.TelemetryFieldKey{
 				Name:          "http.request.duration",
