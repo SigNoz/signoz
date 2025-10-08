@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/version"
@@ -36,6 +37,9 @@ type provider struct {
 	// used to get users
 	userGetter user.Getter
 
+	// used to get tokenizer
+	tokenizer tokenizer.Tokenizer
+
 	// used to send stats to an analytics backend
 	analytics analytics.Analytics
 
@@ -49,9 +53,9 @@ type provider struct {
 	stopC chan struct{}
 }
 
-func NewFactory(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, userGetter user.Getter, build version.Build, analyticsConfig analytics.Config) factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config] {
+func NewFactory(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, userGetter user.Getter, tokenizer tokenizer.Tokenizer, build version.Build, analyticsConfig analytics.Config) factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("analytics"), func(ctx context.Context, settings factory.ProviderSettings, config statsreporter.Config) (statsreporter.StatsReporter, error) {
-		return New(ctx, settings, config, telemetryStore, collectors, orgGetter, userGetter, build, analyticsConfig)
+		return New(ctx, settings, config, telemetryStore, collectors, orgGetter, userGetter, tokenizer, build, analyticsConfig)
 	})
 }
 
@@ -63,6 +67,7 @@ func New(
 	collectors []statsreporter.StatsCollector,
 	orgGetter organization.Getter,
 	userGetter user.Getter,
+	tokenizer tokenizer.Tokenizer,
 	build version.Build,
 	analyticsConfig analytics.Config,
 ) (statsreporter.StatsReporter, error) {
@@ -153,8 +158,20 @@ func (provider *provider) Report(ctx context.Context) error {
 			continue
 		}
 
+		maxLastObservedAtPerUserID, err := provider.tokenizer.ListMaxLastObservedAtByOrgID(ctx, org.ID)
+		if err != nil {
+			provider.settings.Logger().WarnContext(ctx, "failed to list max last observed at per user id", "error", err, "org_id", org.ID)
+			maxLastObservedAtPerUserID = make(map[valuer.UUID]time.Time)
+		}
+
 		for _, user := range users {
-			provider.analytics.IdentifyUser(ctx, org.ID.String(), user.ID.String(), types.NewTraitsFromUser(user))
+			traits := types.NewTraitsFromUser(user)
+			if maxLastObservedAt, ok := maxLastObservedAtPerUserID[user.ID]; ok {
+				traits["last_observed_at.max.time"] = maxLastObservedAt
+				traits["last_observed_at.max.time_unix"] = maxLastObservedAt.Unix()
+			}
+
+			provider.analytics.IdentifyUser(ctx, org.ID.String(), user.ID.String(), traits)
 		}
 	}
 

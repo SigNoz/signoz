@@ -269,6 +269,43 @@ func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[s
 	return stats, nil
 }
 
+func (provider *provider) ListMaxLastObservedAtByOrgID(ctx context.Context, orgID valuer.UUID) (map[valuer.UUID]time.Time, error) {
+	accessTokenToLastObservedAts, err := provider.listLastObservedAtDesc()
+	if err != nil {
+		return nil, err
+	}
+
+	maxLastObservedAtPerUserID := make(map[valuer.UUID]time.Time)
+
+	for _, accessTokenToLastObservedAt := range accessTokenToLastObservedAts {
+		userID, ok := accessTokenToLastObservedAt["user_id"].(valuer.UUID)
+		if !ok {
+			continue
+		}
+
+		lastObservedAt, ok := accessTokenToLastObservedAt["last_observed_at"].(time.Time)
+		if !ok {
+			continue
+		}
+
+		if lastObservedAt.IsZero() {
+			continue
+		}
+
+		if _, ok := maxLastObservedAtPerUserID[userID]; !ok {
+			maxLastObservedAtPerUserID[userID] = lastObservedAt
+			continue
+		}
+
+		if lastObservedAt.After(maxLastObservedAtPerUserID[userID]) {
+			maxLastObservedAtPerUserID[userID] = lastObservedAt
+		}
+	}
+
+	return maxLastObservedAtPerUserID, nil
+
+}
+
 func (provider *provider) gc(ctx context.Context) error {
 	orgs, err := provider.orgGetter.ListByOwnedKeyRange(ctx)
 	if err != nil {
