@@ -5,7 +5,7 @@ import cx from 'classnames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { cloneDeep, pullAt } from 'lodash-es';
 import { Plus } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
@@ -93,7 +93,8 @@ export default function QueryFunctions({
 			name: normalizeFunctionName(func.name) as any,
 		})),
 	);
-
+	console.log('functions', functions);
+	console.log('query functions', queryFunctions);
 	const [
 		isFunctionsSearchModalOpen,
 		setIsFunctionsSearchModalOpen,
@@ -199,16 +200,27 @@ export default function QueryFunctions({
 
 			<div className="query-functions-list">
 				{functions.map((func, index) => (
-					<Function
-						query={query}
-						funcData={func}
-						index={index}
-						// eslint-disable-next-line react/no-array-index-key
-						key={index}
-						handleUpdateFunctionArgs={handleUpdateFunctionArgs}
-						handleUpdateFunctionName={handleUpdateFunctionName}
-						handleDeleteFunction={handleDeleteFunction}
-					/>
+					<>
+						<Function
+							query={query}
+							funcData={func}
+							index={index}
+							// eslint-disable-next-line react/no-array-index-key
+							key={index}
+							handleUpdateFunctionArgs={handleUpdateFunctionArgs}
+							handleUpdateFunctionName={handleUpdateFunctionName}
+							handleDeleteFunction={handleDeleteFunction}
+						/>
+
+						<FunctionsSearchModal
+							funcData={func}
+							index={index}
+							onSelectFunction={handleUpdateFunctionName}
+							query={query}
+							isOpen={isFunctionsSearchModalOpen}
+							onClose={(): void => setIsFunctionsSearchModalOpen(false)}
+						/>
+					</>
 				))}
 			</div>
 
@@ -243,11 +255,6 @@ export default function QueryFunctions({
 					<Plus size={14} color={!isDarkMode ? '#0B0C0E' : 'white'} />
 				</Button>
 			</Tooltip>
-
-			<FunctionsSearchModal
-				isOpen={isFunctionsSearchModalOpen}
-				onClose={(): void => setIsFunctionsSearchModalOpen(false)}
-			/>
 		</div>
 	);
 }

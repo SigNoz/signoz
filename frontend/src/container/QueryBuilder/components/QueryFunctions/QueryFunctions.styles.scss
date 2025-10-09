@@ -1,4 +1,5 @@
 .query-functions-container {
+	position: relative;
 	display: flex;
 	margin: 0 12px;
 	justify-content: center;
@@ -151,6 +152,68 @@
 			&::after {
 				color: var(--bg-vanilla-300);
 				background-color: var(--bg-vanilla-300);
+			}
+		}
+	}
+}
+
+.functions-search-modal {
+	background-color: black;
+	position: absolute;
+	/**
+	 * TODO: get it from the design
+	**/
+
+	width: 40vw;
+	height: 40vh;
+
+	top: 120%;
+	left: 0;
+	right: 0;
+	z-index: 1000;
+	border-radius: 2px;
+
+	.functions-search-modal-body {
+		height: 70%;
+		overflow-y: auto;
+
+		&:focus-visible {
+			outline: none;
+		}
+
+		display: grid;
+		grid-template-columns: 2fr 1fr 1fr;
+
+		& > * {
+			padding: 8px 16px 24px;
+		}
+
+		& > :nth-child(2) {
+			border-left: 1px solid var(--bg-ink-200);
+			border-right: 1px solid var(--bg-ink-200);
+		}
+		& .functions-categories {
+			.active {
+				outline: 1px solid green;
+			}
+		}
+
+		& .functions-category-button {
+			display: block;
+
+			border: none;
+			cursor: pointer;
+			padding: 0;
+			margin: 0;
+
+			&.active {
+				background-color: yellow;
+			}
+		}
+
+		& .functions-function {
+			&.active {
+				background-color: yellow;
 			}
 		}
 	}
