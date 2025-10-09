@@ -29,26 +29,7 @@ func NewConditionBuilderWithJSONResolver(fm qbtypes.FieldMapper, bcb *BodyCondit
 	return &conditionBuilder{fm: fm, bcb: bcb, jsonResolver: jsonResolver}
 }
 
-// ConditionForWithExtras implements the extras-aware path without changing the global interface.
-func (c *conditionBuilder) ConditionForWithExtras(
-	ctx context.Context,
-	key *telemetrytypes.TelemetryFieldKey,
-	operator qbtypes.FilterOperator,
-	value any,
-	sb *sqlbuilder.SelectBuilder,
-) (string, qbtypes.ConditionExtras, error) {
-	if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) && c.bcb != nil {
-		cond, _, err := c.bcb.BuildConditionWithExtras(ctx, key, operator, value, sb)
-		if err != nil {
-			return "", qbtypes.ConditionExtras{}, err
-		}
-		// WHERE-only: no extras returned
-		return cond, qbtypes.ConditionExtras{}, nil
-	}
-	// fallback to legacy
-	cond, err := c.conditionFor(ctx, key, operator, value, sb)
-	return cond, qbtypes.ConditionExtras{}, err
-}
+// ConditionForWithExtras removed; extras path no longer used.
 
 func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
@@ -78,9 +59,10 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) && c.bcb != nil {
+	// TODO: reset this part
+	if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
 		// For callers of legacy ConditionFor, we still build the condition (WHERE-only).
-		cond, _, err := c.bcb.BuildConditionWithExtras(ctx, key, operator, value, sb)
+		cond, err := c.bcb.BuildCondition(ctx, key, operator, value, sb)
 		if err != nil {
 			return "", err
 		}
@@ -263,6 +245,15 @@ func (c *conditionBuilder) ConditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
+	if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+		// For callers of legacy ConditionFor, we still build the condition (WHERE-only).
+		cond, err := c.bcb.BuildCondition(ctx, key, operator, value, sb)
+		if err != nil {
+			return "", err
+		}
+		return cond, nil
+	}
+
 	condition, err := c.conditionFor(ctx, key, operator, value, sb)
 	if err != nil {
 		return "", err
@@ -272,7 +263,11 @@ func (c *conditionBuilder) ConditionFor(
 		// skip adding exists filter for intrinsic fields
 		// with an exception for body json search
 		field, _ := c.fm.FieldFor(ctx, key)
-		if slices.Contains(maps.Keys(IntrinsicFields), field) && !strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+		// Also skip for body JSON when BodyConditionBuilder is active; it handles existence semantics as needed
+		if c.bcb != nil && (strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) || strings.Contains(key.Name, ":")) {
+			return condition, nil
+		}
+		if slices.Contains(maps.Keys(IntrinsicFields), field) {
 			return condition, nil
 		}
 
@@ -284,6 +279,3 @@ func (c *conditionBuilder) ConditionFor(
 	}
 	return condition, nil
 }
-
-// CTEs no longer applies; BodyConditionBuilder is WHERE-only.
-func (c *conditionBuilder) CTEs() []string { return nil }

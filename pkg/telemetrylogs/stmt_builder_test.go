@@ -498,7 +498,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 	}
 }
 
-func TestStatementBuilderListQueryBodyArray(t *testing.T) {
+func TestStatementBuilderListQueryBody(t *testing.T) {
 	fm := NewFieldMapper()
 	// Enable BodyConditionBuilder for WHERE-only JSON body
 	cb := NewConditionBuilder(fm, buildTestBodyConditionBuilder())
@@ -551,7 +551,7 @@ func TestStatementBuilderListQueryBodyArray(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND arrayExists(education-> el.name IS NOT NULL, ifNull(dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'), [])) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND arrayExists(_x_education-> _x_education.name IS NOT NULL, dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -565,7 +565,7 @@ func TestStatementBuilderListQueryBodyArray(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND arrayExists(education-> arrayExists(awards_json-> awards_json.name IS NOT NULL, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), ifNull(dynamicElement(dynamicElement(education, 'JSON').awards, 'Array(Dynamic)'), [])))), ifNull(dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'), [])) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND arrayExists(_x_education-> arrayExists(_x_awards-> _x_awards.name IS NOT NULL, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(_x_education.awards, 'Array(Dynamic)')))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -583,13 +583,55 @@ func TestStatementBuilderListQueryBodyArray(t *testing.T) {
 SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string
 FROM signoz_logs.distributed_logs_v2
 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)
-    AND arrayExists(education-> arrayExists(awards_json-> dynamicElement(awards_json.name, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), ifNull(dynamicElement(dynamicElement(education, 'JSON').awards, 'Array(Dynamic)'), [])))), ifNull(dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'), []))
+    AND arrayExists(_x_education-> arrayExists(_x_awards-> dynamicElement(_x_awards.name, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(_x_education.awards, 'Array(Dynamic)')))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))
     AND timestamp >= ?
     AND ts_bucket_start >= ?
     AND timestamp < ?
     AND ts_bucket_start <= ?
 LIMIT ?`,
 				Args: []any{uint64(1747945619), uint64(1747983448), "Iron Award", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "Key inside Array(JSON) contains value",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "body.education:parameters Contains 1.65"},
+				Limit:  10,
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND arrayExists(_x_education-> arrayExists(x -> x = ?, dynamicElement(_x_education.parameters, 'Array(Nullable(Float64))')), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), 1.65, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "Key inside Array(JSON) contains String value",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "body.education:name Contains 'IIT'"},
+				Limit:  10,
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND arrayExists(_x_education-> arrayExists(x -> x = ?, dynamicElement(_x_education.name, 'String') LIKE ?), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "IIT", "%IIT%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "Super nested array contains value",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "body.interests:entities:reviews:entries:metadata:positions:ratings Contains 4"},
+				Limit:  10,
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND arrayExists(_x_interests-> arrayExists(_x_entities-> arrayExists(_x_reviews-> arrayExists(_x_entries-> arrayExists(_x_metadata-> arrayExists(_x_positions-> arrayExists(x -> x = ?, dynamicElement(_x_positions.ratings, 'Array(Nullable(Int64))')), dynamicElement(_x_metadata.positions, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))')), dynamicElement(_x_entries.metadata, 'Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))')), dynamicElement(_x_reviews.entries, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))')), dynamicElement(_x_entities.reviews, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')), dynamicElement(_x_interests.entities, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_v2.interests, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), float64(4), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
@@ -633,13 +675,31 @@ LIMIT ?`,
 }
 
 /*
-	 {
+		{
 	  "user": {
-	    "name": "John",
+	    "name": "John Doe",
 	    "age": 47,
 	    "height": 5.8
 	  },
 	  "education": [
+	    {
+	      "name": "Scaler School of Marketing",
+	      "type": 10024,
+	      "internal_type": "crash_course",
+	      "metadata": {
+	        "location": "Bengaluru, KA"
+	      },
+	      "parameters": [
+	        9.65,
+	        7.83,
+	        "passed",
+	        true
+	      ],
+	      "duration": "6m",
+	      "mode": "hybrid",
+	      "year": 2024,
+	      "field": "Marketing"
+	    },
 	    {
 	      "name": "Saint Xavier",
 	      "type": "high_school",
@@ -666,6 +726,68 @@ LIMIT ?`,
 	        85
 	      ]
 	    }
+	  ],
+	  "interests": [
+	    {
+	      "type": "education",
+	      "entities": [
+	        {
+	          "application_date": "27 Oct 2023",
+	          "reviews": [
+	            {
+	              "given_by": "Prof Stark",
+	              "remarks": "oki",
+	              "weight": 8.98,
+	              "passed": true
+	            },
+	            {
+	              "type": "analysis",
+	              "given_by": "Prof Jane",
+	              "analysis_type": 10023,
+	              "entries": [
+	                {
+	                  "subject": "Physics",
+	                  "status": "approved"
+	                },
+	                {
+	                  "subject": "Software Engineering",
+	                  "status": "approved",
+	                  "metadata": [
+	                    {
+	                      "company": "Xendar Technologies",
+	                      "experience": 18,
+	                      "unit": "months"
+	                    },
+	                    {
+	                      "company": "Hike Messanger",
+	                      "experience": 3.6,
+	                      "unit": "years",
+	                      "positions": [
+	                        {
+	                          "name": "Software Engineer 2",
+	                          "duration": 24,
+	                          "unit": "months"
+	                        },
+	                        {
+	                          "name": "Software Engineer",
+	                          "duration": 1.6,
+	                          "unit": "years",
+	                          "ratings": [
+	                            3,
+	                            4,
+	                            3
+	                          ]
+	                        }
+	                      ]
+	                    }
+	                  ]
+	                }
+	              ]
+	            }
+	          ]
+	        }
+	      ]
+	    }
 	  ]
 	}
 */
@@ -675,66 +797,55 @@ func buildTestBodyConditionBuilder() *BodyConditionBuilder {
 		lastSeen: 1747945619,
 	}
 
-	// From sample JSON comment:
-	// user.name -> String, user.age -> Int64, user.height -> Float64
-	{
-		set := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
-		set.Insert(telemetrytypes.String)
-		b.cache.Store("user.name", set)
-	}
-	{
-		set := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
-		set.Insert(telemetrytypes.Int)
-		b.cache.Store("user.age", set)
-	}
-	{
-		set := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
-		set.Insert(telemetrytypes.Float64)
-		b.cache.Store("user.height", set)
+	types := map[string][]telemetrytypes.JSONDataType{
+		"user.name":                                                      {telemetrytypes.String},
+		"user.age":                                                       {telemetrytypes.Int64},
+		"user.height":                                                    {telemetrytypes.Float64},
+		"education":                                                      {telemetrytypes.ArrayJSON},
+		"education:name":                                                 {telemetrytypes.String},
+		"education:type":                                                 {telemetrytypes.String, telemetrytypes.Int64},
+		"education:internal_type":                                        {telemetrytypes.String},
+		"education:metadata.location":                                    {telemetrytypes.String},
+		"education:parameters":                                           {telemetrytypes.ArrayFloat64, telemetrytypes.ArrayDynamic},
+		"education:duration":                                             {telemetrytypes.String},
+		"education:mode":                                                 {telemetrytypes.String},
+		"education:year":                                                 {telemetrytypes.Int64},
+		"education:field":                                                {telemetrytypes.String},
+		"education:awards":                                               {telemetrytypes.ArrayDynamic},
+		"education:awards.name":                                          {telemetrytypes.String},
+		"education:awards.type":                                          {telemetrytypes.String},
+		"education:awards.semester":                                      {telemetrytypes.Int64},
+		"interests":                                                      {telemetrytypes.ArrayJSON},
+		"interests:type":                                                 {telemetrytypes.String},
+		"interests:entities":                                             {telemetrytypes.ArrayJSON},
+		"interests:entities.application_date":                            {telemetrytypes.String},
+		"interests:entities:reviews":                                     {telemetrytypes.ArrayJSON},
+		"interests:entities:reviews:given_by":                            {telemetrytypes.String},
+		"interests:entities:reviews:remarks":                             {telemetrytypes.String},
+		"interests:entities:reviews:weight":                              {telemetrytypes.Float64},
+		"interests:entities:reviews:passed":                              {telemetrytypes.Bool},
+		"interests:entities:reviews:type":                                {telemetrytypes.String},
+		"interests:entities:reviews:analysis_type":                       {telemetrytypes.Int64},
+		"interests:entities:reviews:entries":                             {telemetrytypes.ArrayJSON},
+		"interests:entities:reviews:entries:subject":                     {telemetrytypes.String},
+		"interests:entities:reviews:entries:status":                      {telemetrytypes.String},
+		"interests:entities:reviews:entries:metadata":                    {telemetrytypes.ArrayJSON},
+		"interests:entities:reviews:entries:metadata:company":            {telemetrytypes.String},
+		"interests:entities:reviews:entries:metadata:experience":         {telemetrytypes.Int64},
+		"interests:entities:reviews:entries:metadata:unit":               {telemetrytypes.String},
+		"interests:entities:reviews:entries:metadata:positions":          {telemetrytypes.ArrayJSON},
+		"interests:entities:reviews:entries:metadata:positions:name":     {telemetrytypes.String},
+		"interests:entities:reviews:entries:metadata:positions:duration": {telemetrytypes.Int64},
+		"interests:entities:reviews:entries:metadata:positions:unit":     {telemetrytypes.String},
+		"interests:entities:reviews:entries:metadata:positions:ratings":  {telemetrytypes.ArrayInt64},
 	}
 
-	// education -> Array of JSON objects
-	{
-		set := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
-		set.Insert(telemetrytypes.ArrayJSON)
-		b.cache.Store("education", set)
-	}
-	// Fields inside each education object
-	{
-		set := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
-		set.Insert(telemetrytypes.String)
-		b.cache.Store("education:name", set)
-	}
-	{
-		set := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
-		set.Insert(telemetrytypes.String)
-		b.cache.Store("education:type", set)
-	}
-	{
-		set := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
-		set.Insert(telemetrytypes.String)
-		b.cache.Store("education:metadata.location", set)
-	}
-	// awards is an array inside education; include common object fields
-	{
-		set := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
-		set.Insert(telemetrytypes.ArrayDynamic)
-		b.cache.Store("education:awards", set)
-	}
-	{
-		set := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
-		set.Insert(telemetrytypes.String)
-		b.cache.Store("education:awards.name", set)
-	}
-	{
-		set := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
-		set.Insert(telemetrytypes.String)
-		b.cache.Store("education:awards.type", set)
-	}
-	{
-		set := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
-		set.Insert(telemetrytypes.Int)
-		b.cache.Store("education:awards.semester", set)
+	for path, types := range types {
+		typesSet := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
+		for _, t := range types {
+			typesSet.Insert(t)
+		}
+		b.cache.Store(path, typesSet)
 	}
 
 	return b

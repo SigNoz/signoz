@@ -47,15 +47,6 @@ type Statement struct {
 	WarningsDocURL string
 }
 
-// ConditionExtras carries non-WHERE artifacts produced while building a condition.
-// These are immutable, per-request fragments the statement builder will stitch in.
-type ConditionExtras struct {
-	CTEs                    []string
-	CTEArgs                 [][]any
-	ArrayJoins              []ArrayJoinReq
-	RequiresTypedProjection bool
-}
-
 // ArrayJoinReq describes one ARRAY JOIN pipeline stage.
 type ArrayJoinReq struct {
 	DynamicArrayExpr  string

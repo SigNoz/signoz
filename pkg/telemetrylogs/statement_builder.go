@@ -422,25 +422,6 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		sb.Offset(query.Offset)
 	}
 
-	// stitch extras from prepared where clause
-	if preparedWhereClause != nil {
-		if len(preparedWhereClause.Extras.CTEs) > 0 {
-			cteFragments = append(cteFragments, strings.Join(preparedWhereClause.Extras.CTEs, ", "))
-		}
-		// convert qbtypes.ArrayJoinReq to local ArrayJoinReq
-		for _, req := range preparedWhereClause.Extras.ArrayJoins {
-			arrayJoinCollector = append(arrayJoinCollector, ArrayJoinReq{
-				DynamicArrayExpr:  req.DynamicArrayExpr,
-				DynamicItemAlias:  req.DynamicItemAlias,
-				JSONItemAlias:     req.JSONItemAlias,
-				Path:              req.Path,
-				ScalarAccessHints: req.ScalarAccessHints,
-			})
-		}
-	}
-
-	// NOTE: ARRAY JOIN emission will be integrated in a follow-up using raw SQL injection at FROM.
-
 	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
@@ -651,23 +632,6 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		}
 
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
-
-		// stitch extras from prepared where clause
-		if preparedWhereClause != nil {
-			if len(preparedWhereClause.Extras.CTEs) > 0 {
-				cteFragments = append(cteFragments, strings.Join(preparedWhereClause.Extras.CTEs, ", "))
-			}
-			for _, req := range preparedWhereClause.Extras.ArrayJoins {
-				arrayJoinCollector = append(arrayJoinCollector, ArrayJoinReq{
-					DynamicArrayExpr:  req.DynamicArrayExpr,
-					DynamicItemAlias:  req.DynamicItemAlias,
-					JSONItemAlias:     req.JSONItemAlias,
-					Path:              req.Path,
-					ScalarAccessHints: req.ScalarAccessHints,
-				})
-			}
-		}
-
 		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 
 		// Stitch it all together:  WITH … SELECT …
@@ -694,23 +658,6 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		}
 
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
-
-		// stitch extras from prepared where clause
-		if preparedWhereClause != nil {
-			if len(preparedWhereClause.Extras.CTEs) > 0 {
-				cteFragments = append(cteFragments, strings.Join(preparedWhereClause.Extras.CTEs, ", "))
-			}
-			for _, req := range preparedWhereClause.Extras.ArrayJoins {
-				arrayJoinCollector = append(arrayJoinCollector, ArrayJoinReq{
-					DynamicArrayExpr:  req.DynamicArrayExpr,
-					DynamicItemAlias:  req.DynamicItemAlias,
-					JSONItemAlias:     req.JSONItemAlias,
-					Path:              req.Path,
-					ScalarAccessHints: req.ScalarAccessHints,
-				})
-			}
-		}
-
 		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 
 		// Stitch it all together:  WITH … SELECT …
@@ -921,20 +868,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
-	if preparedWhereClause != nil {
-		if len(preparedWhereClause.Extras.CTEs) > 0 {
-			cteFragments = append(cteFragments, strings.Join(preparedWhereClause.Extras.CTEs, ", "))
-		}
-		for _, req := range preparedWhereClause.Extras.ArrayJoins {
-			arrayJoinCollector = append(arrayJoinCollector, ArrayJoinReq{
-				DynamicArrayExpr:  req.DynamicArrayExpr,
-				DynamicItemAlias:  req.DynamicItemAlias,
-				JSONItemAlias:     req.JSONItemAlias,
-				Path:              req.Path,
-				ScalarAccessHints: req.ScalarAccessHints,
-			})
-		}
-	}
+	// No extras stitched; body JSON WHERE-only
 	// NOTE: ARRAY JOIN emission will be integrated in a follow-up using raw SQL injection at FROM.
 
 	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
