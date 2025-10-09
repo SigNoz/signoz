@@ -7,8 +7,14 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
+)
+
+var (
+	TypeableResourceDashboard   = authtypes.MustNewTypeableResource(authtypes.MustNewName("dashboard"))
+	TypeableResourcesDashboards = authtypes.MustNewTypeableResources(authtypes.MustNewName("dashboards"))
 )
 
 type StorableDashboard struct {

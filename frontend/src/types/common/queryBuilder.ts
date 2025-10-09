@@ -200,7 +200,7 @@ export enum QueryFunctionsTypes {
 	RUNNING_DIFF = 'runningDiff',
 	LOG_2 = 'log2',
 	LOG_10 = 'log10',
-	CUMULATIVE_SUM = 'cumSum',
+	CUMULATIVE_SUM = 'cumulativeSum',
 	EWMA_3 = 'ewma3',
 	EWMA_5 = 'ewma5',
 	EWMA_7 = 'ewma7',

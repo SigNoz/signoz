@@ -11,6 +11,7 @@ export interface IAdvancedOptionItemProps {
 	input: JSX.Element;
 	tooltipText?: string;
 	onToggle?: () => void;
+	defaultShowInput: boolean;
 }
 
 export enum RollingWindowTimeframes {
@@ -32,8 +33,6 @@ export enum CumulativeWindowTimeframes {
 export interface IEvaluationWindowPopoverProps {
 	evaluationWindow: EvaluationWindowState;
 	setEvaluationWindow: Dispatch<EvaluationWindowAction>;
-	isOpen: boolean;
-	setIsOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface IEvaluationWindowDetailsProps {

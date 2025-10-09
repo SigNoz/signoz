@@ -1,13 +1,13 @@
 import './styles.scss';
+import '../EvaluationSettings/styles.scss';
 
-import { Button, Select, Typography } from 'antd';
-import getAllChannels from 'api/channels/getAll';
+import { Button, Select, Tooltip, Typography } from 'antd';
+import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import getRandomColor from 'lib/getRandomColor';
 import { Plus } from 'lucide-react';
-import { useQuery } from 'react-query';
-import { SuccessResponseV2 } from 'types/api';
-import { Channels } from 'types/api/channels/getAll';
-import APIError from 'types/api/error';
+import { useEffect } from 'react';
+import { v4 } from 'uuid';
 
 import { useCreateAlertState } from '../context';
 import {
@@ -17,31 +17,47 @@ import {
 	THRESHOLD_MATCH_TYPE_OPTIONS,
 	THRESHOLD_OPERATOR_OPTIONS,
 } from '../context/constants';
+import EvaluationSettings from '../EvaluationSettings/EvaluationSettings';
 import ThresholdItem from './ThresholdItem';
-import { UpdateThreshold } from './types';
+import { AnomalyAndThresholdProps, UpdateThreshold } from './types';
 import {
 	getCategoryByOptionId,
 	getCategorySelectOptionByName,
+	getMatchTypeTooltip,
 	getQueryNames,
+	RoutingPolicyBanner,
 } from './utils';
 
-function AlertThreshold(): JSX.Element {
+function AlertThreshold({
+	channels,
+	isLoadingChannels,
+	isErrorChannels,
+	refreshChannels,
+}: AnomalyAndThresholdProps): JSX.Element {
 	const {
 		alertState,
 		thresholdState,
 		setThresholdState,
+		notificationSettings,
+		setNotificationSettings,
 	} = useCreateAlertState();
-	const { data, isLoading: isLoadingChannels } = useQuery<
-		SuccessResponseV2<Channels[]>,
-		APIError
-	>(['getChannels'], {
-		queryFn: () => getAllChannels(),
-	});
-	const channels = data?.data || [];
 
 	const { currentQuery } = useQueryBuilder();
 
 	const queryNames = getQueryNames(currentQuery);
+
+	useEffect(() => {
+		if (
+			queryNames.length > 0 &&
+			!queryNames.some((query) => query.value === thresholdState.selectedQuery)
+		) {
+			setThresholdState({
+				type: 'SET_SELECTED_QUERY',
+				payload: queryNames[0].value,
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [queryNames, thresholdState.selectedQuery]);
 
 	const selectedCategory = getCategoryByOptionId(alertState.yAxisUnit || '');
 	const categorySelectOptions = getCategorySelectOptionByName(
@@ -51,11 +67,15 @@ function AlertThreshold(): JSX.Element {
 	const addThreshold = (): void => {
 		let newThreshold;
 		if (thresholdState.thresholds.length === 1) {
-			newThreshold = INITIAL_WARNING_THRESHOLD;
+			newThreshold = { ...INITIAL_WARNING_THRESHOLD, id: v4() };
 		} else if (thresholdState.thresholds.length === 2) {
-			newThreshold = INITIAL_INFO_THRESHOLD;
+			newThreshold = { ...INITIAL_INFO_THRESHOLD, id: v4() };
 		} else {
-			newThreshold = INITIAL_RANDOM_THRESHOLD;
+			newThreshold = {
+				...INITIAL_RANDOM_THRESHOLD,
+				id: v4(),
+				color: getRandomColor(),
+			};
 		}
 		setThresholdState({
 			type: 'SET_THRESHOLDS',
@@ -81,8 +101,72 @@ function AlertThreshold(): JSX.Element {
 		});
 	};
 
+	const onTooltipOpenChange = (open: boolean): void => {
+		// Stop propagation of click events on tooltip text to dropdown
+		if (open) {
+			setTimeout(() => {
+				const tooltipElement = document.querySelector(
+					'.copyable-tooltip .ant-tooltip-inner',
+				);
+				if (tooltipElement) {
+					tooltipElement.addEventListener(
+						'click',
+						(e) => {
+							e.stopPropagation();
+							e.preventDefault();
+						},
+						true,
+					);
+					tooltipElement.addEventListener(
+						'mousedown',
+						(e) => {
+							e.stopPropagation();
+							e.preventDefault();
+						},
+						true,
+					);
+				}
+			}, 0);
+		}
+	};
+
+	const matchTypeOptionsWithTooltips = THRESHOLD_MATCH_TYPE_OPTIONS.map(
+		(option) => ({
+			...option,
+			label: (
+				<Tooltip
+					title={getMatchTypeTooltip(option.value, thresholdState.operator)}
+					placement="left"
+					overlayClassName="copyable-tooltip"
+					overlayStyle={{
+						maxWidth: '450px',
+						minWidth: '400px',
+					}}
+					overlayInnerStyle={{
+						padding: '12px 16px',
+						userSelect: 'text',
+						WebkitUserSelect: 'text',
+						MozUserSelect: 'text',
+						msUserSelect: 'text',
+					}}
+					mouseEnterDelay={0.2}
+					trigger={['hover', 'click']}
+					destroyTooltipOnHide={false}
+					onOpenChange={onTooltipOpenChange}
+				>
+					<span style={{ display: 'block', width: '100%' }}>{option.label}</span>
+				</Tooltip>
+			),
+		}),
+	);
+
 	return (
-		<div className="alert-threshold-container">
+		<div
+			className={classNames(
+				'alert-threshold-container',
+				'condensed-alert-threshold-container',
+			)}
+		>
 			{/* Main condition sentence */}
 			<div className="alert-condition-sentences">
 				<div className="alert-condition-sentence">
@@ -100,8 +184,7 @@ function AlertThreshold(): JSX.Element {
 						style={{ width: 80 }}
 						options={queryNames}
 					/>
-				</div>
-				<div className="alert-condition-sentence">
+					<Typography.Text className="sentence-text">is</Typography.Text>
 					<Select
 						value={thresholdState.operator}
 						onChange={(value): void => {
@@ -110,7 +193,7 @@ function AlertThreshold(): JSX.Element {
 								payload: value,
 							});
 						}}
-						style={{ width: 120 }}
+						style={{ width: 180 }}
 						options={THRESHOLD_OPERATOR_OPTIONS}
 					/>
 					<Typography.Text className="sentence-text">
@@ -124,11 +207,11 @@ function AlertThreshold(): JSX.Element {
 								payload: value,
 							});
 						}}
-						style={{ width: 140 }}
-						options={THRESHOLD_MATCH_TYPE_OPTIONS}
+						style={{ width: 180 }}
+						options={matchTypeOptionsWithTooltips}
 					/>
 					<Typography.Text className="sentence-text">
-						during the <strong>Evaluation Window.</strong>
+						during the <EvaluationSettings />
 					</Typography.Text>
 				</div>
 			</div>
@@ -144,6 +227,8 @@ function AlertThreshold(): JSX.Element {
 						channels={channels}
 						isLoadingChannels={isLoadingChannels}
 						units={categorySelectOptions}
+						isErrorChannels={isErrorChannels}
+						refreshChannels={refreshChannels}
 					/>
 				))}
 				<Button
@@ -155,6 +240,11 @@ function AlertThreshold(): JSX.Element {
 					Add Threshold
 				</Button>
 			</div>
+
+			<RoutingPolicyBanner
+				notificationSettings={notificationSettings}
+				setNotificationSettings={setNotificationSettings}
+			/>
 		</div>
 	);
 }

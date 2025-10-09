@@ -3,14 +3,17 @@ import './AlertList.styles.scss';
 import { Tabs } from 'antd';
 import { TabsProps } from 'antd/lib';
 import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import ROUTES from 'constants/routes';
 import AllAlertRules from 'container/ListAlertRules';
 import { PlannedDowntime } from 'container/PlannedDowntime/PlannedDowntime';
+import RoutingPolicies from 'container/RoutingPolicies';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { GalleryVerticalEnd, Pyramid } from 'lucide-react';
 import AlertDetails from 'pages/AlertDetails';
+import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 function AllAlertList(): JSX.Element {
@@ -24,11 +27,33 @@ function AllAlertList(): JSX.Element {
 
 	const search = urlQuery.get('search');
 
+	const configurationTab = useMemo(() => {
+		const tabs = [
+			{
+				label: 'Planned Downtime',
+				key: 'planned-downtime',
+				children: <PlannedDowntime />,
+			},
+			{
+				label: 'Routing Policies',
+				key: 'routing-policies',
+				children: <RoutingPolicies />,
+			},
+		];
+		return (
+			<Tabs
+				className="configuration-tabs"
+				defaultActiveKey="planned-downtime"
+				items={tabs}
+			/>
+		);
+	}, []);
+
 	const items: TabsProps['items'] = [
 		{
 			label: (
 				<div className="periscope-tab top-level-tab">
-					<GalleryVerticalEnd size={16} />
+					<GalleryVerticalEnd size={14} />
 					Triggered Alerts
 				</div>
 			),
@@ -38,7 +63,7 @@ function AllAlertList(): JSX.Element {
 		{
 			label: (
 				<div className="periscope-tab top-level-tab">
-					<Pyramid size={16} />
+					<Pyramid size={14} />
 					Alert Rules
 				</div>
 			),
@@ -52,16 +77,12 @@ function AllAlertList(): JSX.Element {
 		{
 			label: (
 				<div className="periscope-tab top-level-tab">
-					<ConfigureIcon />
+					<ConfigureIcon width={14} height={14} />
 					Configuration
 				</div>
 			),
 			key: 'Configuration',
-			children: (
-				<div className="planned-downtime-container">
-					<PlannedDowntime />
-				</div>
-			),
+			children: configurationTab,
 		},
 	];
 
@@ -82,6 +103,13 @@ function AllAlertList(): JSX.Element {
 			className={`alerts-container ${
 				isAlertHistory || isAlertOverview ? 'alert-details-tabs' : ''
 			}`}
+			tabBarExtraContent={
+				<HeaderRightSection
+					enableAnnouncements={false}
+					enableShare
+					enableFeedback
+				/>
+			}
 		/>
 	);
 }
