@@ -3,59 +3,10 @@ package implservices
 import (
 	"testing"
 
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 	"github.com/stretchr/testify/assert"
 )
-
-// func TestBuildFilterExpression(t *testing.T) {
-// 	tests := []struct {
-// 		name string
-// 		in   []servicetypesv1.TagFilterItem
-// 		want string
-// 	}{
-// 		{
-// 			name: "empty tags -> empty expr",
-// 			in:   nil,
-// 			want: "",
-// 		},
-// 		{
-// 			name: "IN with two values",
-// 			in: []servicetypesv1.TagFilterItem{
-// 				{Key: "service.name", Operator: "In", StringValues: []string{"frontend", "backend"}},
-// 			},
-// 			want: "service.name IN ['frontend','backend']",
-// 		},
-// 		{
-// 			name: "Equal operator",
-// 			in: []servicetypesv1.TagFilterItem{
-// 				{Key: "deployment.environment", Operator: "=", StringValues: []string{"prod"}},
-// 			},
-// 			want: "deployment.environment = 'prod'",
-// 		},
-// 		{
-// 			name: "Combine IN and = with AND",
-// 			in: []servicetypesv1.TagFilterItem{
-// 				{Key: "service.name", Operator: "in", StringValues: []string{"svc-a", "svc-b"}},
-// 				{Key: "env", Operator: "Equal", StringValues: []string{"staging"}},
-// 			},
-// 			want: "service.name IN ['svc-a','svc-b'] AND env = 'staging'",
-// 		},
-// 		{
-// 			name: "Escape single quotes",
-// 			in: []servicetypesv1.TagFilterItem{
-// 				{Key: "owner", Operator: "=", StringValues: []string{"O'Reilly"}},
-// 			},
-// 			want: "owner = 'O\\'Reilly'",
-// 		},
-// 	}
-
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			got := buildFilterExpression(tt.in)
-// 			assert.Equal(t, tt.want, got)
-// 		})
-// 	}
-// }
 
 func TestToFloat(t *testing.T) {
 	tests := []struct {
@@ -146,6 +97,115 @@ func TestApplyOpsToItems(t *testing.T) {
 					continue
 				}
 				assert.Equal(t, tt.want[i], tt.items[i].DataWarning.TopLevelOps)
+			}
+		})
+	}
+}
+
+func TestBuildFilterAndScopeExpression(t *testing.T) {
+	tests := []struct {
+		name     string
+		tags     []servicetypesv1.TagFilterItem
+		wantExpr string
+		assertV  func(t *testing.T, vars map[string]qbtypes.VariableItem)
+	}{
+		{
+			name:     "no tags -> scope only",
+			tags:     nil,
+			wantExpr: "isRoot = $1 OR isEntryPoint = $2",
+			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
+				v1, ok1 := vars["1"]
+				v2, ok2 := vars["2"]
+				assert.True(t, ok1)
+				assert.True(t, ok2)
+				assert.Equal(t, true, v1.Value)
+				assert.Equal(t, true, v2.Value)
+			},
+		},
+		{
+			name: "equal string",
+			tags: []servicetypesv1.TagFilterItem{
+				{Key: "deployment.environment", Operator: "equal", StringValues: []string{"prod"}},
+			},
+			wantExpr: "(deployment.environment = $1) AND (isRoot = $2 OR isEntryPoint = $3)",
+			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
+				assert.Equal(t, "prod", vars["1"].Value)
+				assert.Equal(t, true, vars["2"].Value)
+				assert.Equal(t, true, vars["3"].Value)
+			},
+		},
+		{
+			name: "in single string",
+			tags: []servicetypesv1.TagFilterItem{
+				{Key: "deployment.environment", Operator: "in", StringValues: []string{"staging"}},
+			},
+			wantExpr: "(deployment.environment IN $1) AND (isRoot = $2 OR isEntryPoint = $3)",
+			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
+				arr, ok := vars["1"].Value.([]any)
+				assert.True(t, ok)
+				assert.Len(t, arr, 1)
+				assert.Equal(t, "staging", arr[0])
+			},
+		},
+		{
+			name: "in multiple strings",
+			tags: []servicetypesv1.TagFilterItem{
+				{Key: "service.name", Operator: "IN", StringValues: []string{"svc-a", "svc-b"}},
+			},
+			wantExpr: "(service.name IN $1) AND (isRoot = $2 OR isEntryPoint = $3)",
+			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
+				arr, ok := vars["1"].Value.([]any)
+				assert.True(t, ok)
+				assert.ElementsMatch(t, []any{"svc-a", "svc-b"}, arr)
+			},
+		},
+		{
+			name: "in multiple numbers",
+			tags: []servicetypesv1.TagFilterItem{
+				{Key: "http.status_code", Operator: "in", NumberValues: []float64{200, 500}},
+			},
+			wantExpr: "(http.status_code IN $1) AND (isRoot = $2 OR isEntryPoint = $3)",
+			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
+				arr, ok := vars["1"].Value.([]any)
+				assert.True(t, ok)
+				assert.ElementsMatch(t, []any{200.0, 500.0}, arr)
+			},
+		},
+		{
+			name: "in multiple bools",
+			tags: []servicetypesv1.TagFilterItem{
+				{Key: "feature.flag", Operator: "IN", BoolValues: []bool{true, false}},
+			},
+			wantExpr: "(feature.flag IN $1) AND (isRoot = $2 OR isEntryPoint = $3)",
+			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
+				arr, ok := vars["1"].Value.([]any)
+				assert.True(t, ok)
+				assert.ElementsMatch(t, []any{true, false}, arr)
+			},
+		},
+		{
+			name: "equal bool and number",
+			tags: []servicetypesv1.TagFilterItem{
+				{Key: "feature.flag", Operator: "Equal", BoolValues: []bool{true}},
+				{Key: "http.status_code", Operator: "=", NumberValues: []float64{200}},
+			},
+			wantExpr: "(feature.flag = $1 AND http.status_code = $2) AND (isRoot = $3 OR isEntryPoint = $4)",
+			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
+				assert.Equal(t, true, vars["1"].Value)
+				assert.Equal(t, 200.0, vars["2"].Value)
+				assert.Equal(t, true, vars["3"].Value)
+				assert.Equal(t, true, vars["4"].Value)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, vars := buildFilterAndScopeExpression(tt.tags)
+			assert.Equal(t, tt.wantExpr, expr)
+			if tt.assertV != nil {
+				tt := tt
+				tt.assertV(t, vars)
 			}
 		})
 	}
