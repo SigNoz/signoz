@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/session"
@@ -158,7 +159,7 @@ func (handler *handler) DeleteSession(rw http.ResponseWriter, req *http.Request)
 }
 
 func (*handler) getRedirectURLFromErr(err error) string {
-	values := render.ErrorAsURLValues(err)
+	values := errors.AsURLValues(err)
 	values.Add("callbackauthnerr", "true")
 
 	return (&url.URL{
