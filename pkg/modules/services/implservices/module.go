@@ -50,7 +50,7 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 	}
 
 	// Process phase
-	items, serviceNames := m.mapScalarDataToServiceItems(resp, startMs, endMs)
+	items, serviceNames := m.mapQueryRangeRespToServices(resp, startMs, endMs)
 	if len(items) == 0 {
 		return []*servicetypes.ResponseItem{}, nil
 	}
@@ -171,8 +171,8 @@ func (m *module) executeQuery(ctx context.Context, orgID string, qr *qbtypes.Que
 	return m.Querier.QueryRange(ctx, orgUUID, qr)
 }
 
-// mapScalarDataToServiceItems converts the raw query response into service items and collected service names.
-func (m *module) mapScalarDataToServiceItems(resp *qbtypes.QueryRangeResponse, startMs, endMs uint64) ([]*servicetypes.ResponseItem, []string) {
+// mapQueryRangeRespToServices converts the raw query response into service items and collected service names.
+func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, startMs, endMs uint64) ([]*servicetypes.ResponseItem, []string) {
 	if resp == nil || len(resp.Data.Results) == 0 {
 		return []*servicetypes.ResponseItem{}, []string{}
 	}
@@ -256,13 +256,6 @@ func (m *module) attachTopLevelOps(ctx context.Context, serviceNames []string, s
 	if err != nil {
 		return err
 	}
-	if opsMap == nil {
-		return nil
-	}
-	for i := range items {
-		if tops, ok := opsMap[items[i].ServiceName]; ok {
-			items[i].DataWarning.TopLevelOps = tops
-		}
-	}
+	applyTopLevelOpsToItems(items, opsMap)
 	return nil
 }

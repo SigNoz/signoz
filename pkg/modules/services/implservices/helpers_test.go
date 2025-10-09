@@ -119,3 +119,59 @@ func TestToUint64(t *testing.T) {
 		})
 	}
 }
+
+func TestApplyTopLevelOpsToItems(t *testing.T) {
+	tests := []struct {
+		name  string
+		items []*servicetypes.ResponseItem
+		ops   map[string][]string
+		want  [][]string
+	}{
+		{
+			name: "maps ops to matching services",
+			items: []*servicetypes.ResponseItem{
+				{ServiceName: "svc-a", DataWarning: servicetypes.DataWarning{TopLevelOps: []string{}}},
+				{ServiceName: "svc-b", DataWarning: servicetypes.DataWarning{TopLevelOps: []string{}}},
+			},
+			ops: map[string][]string{
+				"svc-a": {"op1", "op2"},
+				"svc-c": {"opx"},
+			},
+			want: [][]string{
+				{"op1", "op2"},
+				{},
+			},
+		},
+		{
+			name: "nil ops map is no-op",
+			items: []*servicetypes.ResponseItem{
+				{ServiceName: "svc-a", DataWarning: servicetypes.DataWarning{TopLevelOps: []string{}}},
+				{ServiceName: "svc-b", DataWarning: servicetypes.DataWarning{TopLevelOps: []string{}}},
+			},
+			ops:  nil,
+			want: [][]string{{}, {}},
+		},
+		{
+			name:  "empty items slice is no-op",
+			items: []*servicetypes.ResponseItem{},
+			ops:   map[string][]string{"svc-a": {"op1"}},
+			want:  [][]string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			applyTopLevelOpsToItems(tt.items, tt.ops)
+			if len(tt.items) != len(tt.want) {
+				assert.Equal(t, len(tt.want), len(tt.items))
+				return
+			}
+			for i := range tt.items {
+				if tt.items[i] == nil {
+					continue
+				}
+				assert.Equal(t, tt.want[i], tt.items[i].DataWarning.TopLevelOps)
+			}
+		})
+	}
+}
