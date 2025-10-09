@@ -50,6 +50,7 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 	if startNs == 0 || endNs == 0 || startNs >= endNs {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid time range: start=%s end=%s", req.Start, req.End)
 	}
+
 	startMs := startNs / 1_000_000
 	endMs := endNs / 1_000_000
 
