@@ -67,10 +67,11 @@ func (a *AuthN) Wrap(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = ctxtypes.SetAuthType(ctx, ctxtypes.AuthTypeJWT)
+		ctx = ctxtypes.SetAuthType(ctx, ctxtypes.AuthTypeTokenizer)
 
 		comment := ctxtypes.CommentFromContext(ctx)
-		comment.Set("auth_type", ctxtypes.AuthTypeOpaque.StringValue())
+		comment.Set("auth_type", ctxtypes.AuthTypeTokenizer.StringValue())
+		comment.Set("tokenizer_provider", a.tokenizer.Config().Provider)
 		comment.Set("user_id", claims.UserID)
 		comment.Set("org_id", claims.OrgID)
 
