@@ -107,7 +107,7 @@ def test_invite_and_register(
     # Generate an invite token for the editor user
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": "editor@integration.test", "role": "EDITOR"},
+        json={"email": "editor@integration.test", "role": "EDITOR", "name": "editor"},
         timeout=2,
         headers={
             "Authorization": f"Bearer {get_token("admin@integration.test", "password123Z$")}"
