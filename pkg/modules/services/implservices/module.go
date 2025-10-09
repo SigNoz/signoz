@@ -170,13 +170,20 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 
 	// Fetch top level operations using TelemetryStore and attach
 	if len(serviceNames) > 0 {
+
 		startTime := time.Unix(0, int64(startNs)).UTC()
 		opsMap, err := m.FetchTopLevelOperations(ctx, startTime, serviceNames)
-		if err == nil && opsMap != nil {
-			for i := range out {
-				if tops, ok := opsMap[out[i].ServiceName]; ok {
-					out[i].DataWarning.TopLevelOps = tops
-				}
+		if err != nil {
+			return nil, err
+		}
+
+		if opsMap == nil {
+			return out, nil
+		}
+
+		for i := range out {
+			if tops, ok := opsMap[out[i].ServiceName]; ok {
+				out[i].DataWarning.TopLevelOps = tops
 			}
 		}
 	}
