@@ -7,6 +7,7 @@ It verifies the correct behavior of TTL settings for traces, metrics, and logs, 
 import time
 from http import HTTPStatus
 
+import pytest
 import requests
 
 from fixtures import types
@@ -15,6 +16,14 @@ from fixtures.logger import setup_logger
 from fixtures.logs import Logs
 
 logger = setup_logger(__name__)
+
+
+@pytest.fixture(name="ttl_test_suite_setup", scope="package", autouse=True)
+def ttl_test_suite_setup(create_user_admin):  # pylint: disable=unused-argument
+    # This fixture creates a admin user for the entire ttl test suite
+    # The create_user_admin fixture is executed just by being a dependency
+    print("Setting up ttl test suite")
+    yield
 
 
 def test_set_ttl_traces_success(signoz: types.SigNoz, get_jwt_token):
