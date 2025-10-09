@@ -177,6 +177,7 @@ func (provider *provider) isModelEqual(expected *openfgav1.AuthorizationModel, a
 }
 
 func (provider *provider) Check(ctx context.Context, tupleReq *openfgav1.TupleKey) error {
+	provider.mtx.RLock()
 	checkResponse, err := provider.openfgaServer.Check(
 		ctx,
 		&openfgav1.CheckRequest{
@@ -188,6 +189,7 @@ func (provider *provider) Check(ctx context.Context, tupleReq *openfgav1.TupleKe
 				Object:   tupleReq.Object,
 			},
 		})
+	provider.mtx.RUnlock()
 	if err != nil {
 		return errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthZUnavailable, "authorization server is unavailable").WithAdditional(err.Error())
 	}
@@ -211,6 +213,7 @@ func (provider *provider) BatchCheck(ctx context.Context, tupleReq []*openfgav1.
 		})
 	}
 
+	provider.mtx.RLock()
 	checkResponse, err := provider.openfgaServer.BatchCheck(
 		ctx,
 		&openfgav1.BatchCheckRequest{
@@ -221,6 +224,7 @@ func (provider *provider) BatchCheck(ctx context.Context, tupleReq []*openfgav1.
 	if err != nil {
 		return errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthZUnavailable, "authorization server is unavailable").WithAdditional(err.Error())
 	}
+	provider.mtx.RUnlock()
 
 	for _, checkResponse := range checkResponse.Result {
 		if checkResponse.GetAllowed() {
@@ -257,21 +261,34 @@ func (provider *provider) Write(ctx context.Context, additions []*openfgav1.Tupl
 		deletionTuplesWithoutCondition[idx] = &openfgav1.TupleKeyWithoutCondition{User: tuple.User, Object: tuple.Object, Relation: tuple.Relation}
 	}
 
+	provider.mtx.RLock()
 	_, err := provider.openfgaServer.Write(ctx, &openfgav1.WriteRequest{
 		StoreId:              provider.storeID,
 		AuthorizationModelId: provider.modelID,
-		Writes: &openfgav1.WriteRequestWrites{
-			TupleKeys: additions,
-		},
-		Deletes: &openfgav1.WriteRequestDeletes{
-			TupleKeys: deletionTuplesWithoutCondition,
-		},
+		Writes: func() *openfgav1.WriteRequestWrites {
+			if len(additions) == 0 {
+				return nil
+			}
+			return &openfgav1.WriteRequestWrites{
+				TupleKeys: additions,
+			}
+		}(),
+		Deletes: func() *openfgav1.WriteRequestDeletes {
+			if len(deletionTuplesWithoutCondition) == 0 {
+				return nil
+			}
+			return &openfgav1.WriteRequestDeletes{
+				TupleKeys: deletionTuplesWithoutCondition,
+			}
+		}(),
 	})
+	provider.mtx.RUnlock()
 
 	return err
 }
 
 func (provider *provider) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, typeable authtypes.Typeable) ([]*authtypes.Object, error) {
+	provider.mtx.RLock()
 	response, err := provider.openfgaServer.ListObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              provider.storeID,
 		AuthorizationModelId: provider.modelID,
@@ -279,6 +296,7 @@ func (provider *provider) ListObjects(ctx context.Context, subject string, relat
 		Relation:             relation.StringValue(),
 		Type:                 typeable.Type().StringValue(),
 	})
+	provider.mtx.RUnlock()
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, authtypes.ErrCodeAuthZUnavailable, "cannot list objects for subject %s with relation %s for type %s", subject, relation.StringValue(), typeable.Type().StringValue())
 	}

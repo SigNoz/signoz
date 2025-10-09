@@ -42,7 +42,7 @@ func (name Name) String() string {
 }
 
 func (name *Name) MarshalJSON() ([]byte, error) {
-	return []byte(name.val), nil
+	return json.Marshal(name.val)
 }
 
 func (name *Name) UnmarshalJSON(data []byte) error {

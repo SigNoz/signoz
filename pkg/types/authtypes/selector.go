@@ -55,11 +55,11 @@ func IsValidSelector(typed Type, selector string) error {
 		if !typeOrganizationSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeOrganizationSelectorRegex.String())
 		}
-	case TypeResource:
+	case TypeMetaResource:
 		if !typeResourceSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeResourceSelectorRegex.String())
 		}
-	case TypeResources:
+	case TypeMetaResources:
 		if !typeResourcesSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeResourcesSelectorRegex.String())
 		}
@@ -82,7 +82,7 @@ func (selector Selector) String() string {
 }
 
 func (selector *Selector) MarshalJSON() ([]byte, error) {
-	return []byte(selector.val), nil
+	return json.Marshal(selector.val)
 }
 
 func (typed *Selector) UnmarshalJSON(data []byte) error {
