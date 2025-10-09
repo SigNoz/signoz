@@ -178,7 +178,7 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 		}
 
 		if opsMap == nil {
-			return out, nil
+			return out, fmt.Errorf("no top level operations found")
 		}
 
 		for i := range out {
