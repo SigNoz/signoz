@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -38,8 +39,17 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 	}
 
 	// Parse start/end (nanoseconds) from strings and convert to milliseconds for QBv5
-	startNs, _ := strconv.ParseUint(req.Start, 10, 64)
-	endNs, _ := strconv.ParseUint(req.End, 10, 64)
+	startNs, err := strconv.ParseUint(req.Start, 10, 64)
+	if err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid start timestamp: %v", err)
+	}
+	endNs, err := strconv.ParseUint(req.End, 10, 64)
+	if err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid end timestamp: %v", err)
+	}
+	if startNs == 0 || endNs == 0 || startNs >= endNs {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid time range: start=%s end=%s", req.Start, req.End)
+	}
 	startMs := startNs / 1_000_000
 	endMs := endNs / 1_000_000
 
