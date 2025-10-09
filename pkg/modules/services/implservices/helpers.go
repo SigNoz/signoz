@@ -11,9 +11,6 @@ import (
 // buildFilterAndScopeExpression converts tag filters into a QBv5-compatible filter expression and set of variableItems
 func buildFilterAndScopeExpression(tags []servicetypesv1.TagFilterItem) (string, map[string]qbtypes.VariableItem) {
 	variables := make(map[string]qbtypes.VariableItem)
-	if len(tags) == 0 {
-		return "", make(map[string]qbtypes.VariableItem)
-	}
 	parts := make([]string, 0, len(tags))
 	valueItr := 1
 	for _, t := range tags {
@@ -44,21 +41,20 @@ func buildFilterAndScopeExpression(tags []servicetypesv1.TagFilterItem) (string,
 
 	// now also add the condition representing top level operations permitted only
 	filterExpr := strings.Join(parts, " AND ")
-	scopeExpr := "isRoot = $isRoot OR isEntryPoint = $isEntryPoint"
+	scopeExpr := fmt.Sprintf("isRoot = $%d OR isEntryPoint = $%d", valueItr, valueItr+1)
 	if filterExpr != "" {
 		filterExpr = "(" + filterExpr + ") AND (" + scopeExpr + ")"
 	} else {
 		filterExpr = scopeExpr
 	}
-	variables["isRoot"] = qbtypes.VariableItem{
+	variables[fmt.Sprintf("%d", valueItr)] = qbtypes.VariableItem{
 		Type:  qbtypes.DynamicVariableType,
 		Value: true,
 	}
-	variables["isEntryPoint"] = qbtypes.VariableItem{
+	variables[fmt.Sprintf("%d", valueItr+1)] = qbtypes.VariableItem{
 		Type:  qbtypes.DynamicVariableType,
 		Value: true,
 	}
-
 	return filterExpr, variables
 }
 
@@ -89,8 +85,8 @@ func pickInValuesFromTag(t servicetypesv1.TagFilterItem) ([]any, bool) {
 	return nil, false
 }
 
-// pickEqualValueFromTag returns a scalar any for EQUAL operator using the same
-// precedence order. Returns false if none are populated.
+// pickEqualValueFromTag returns a scalar any for EQUAL operator using the
+// precedence order string, bool, number. Returns false if none are populated.
 func pickEqualValueFromTag(t servicetypesv1.TagFilterItem) (any, bool) {
 	if len(t.StringValues) > 0 {
 		return t.StringValues[0], true

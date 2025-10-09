@@ -47,9 +47,9 @@ func TestBuildQueryRangeRequest(t *testing.T) {
 				// Filter should include both user filter and the scope expression
 				assert.NotNil(t, spec.Filter)
 				expr := spec.Filter.Expression
-				assert.Contains(t, expr, "service.name IN ['frontend','backend']")
-				assert.Contains(t, expr, "env = 'prod'")
-				assert.Contains(t, expr, "isRoot = 'true' OR isEntryPoint = 'true'")
+				assert.Contains(t, expr, "service.name IN $1")
+				assert.Contains(t, expr, "env = $2")
+				assert.Contains(t, expr, "isRoot = $3 OR isEntryPoint = $4")
 
 				// GroupBy should include service.name
 				if assert.Equal(t, 1, len(spec.GroupBy)) {
@@ -83,7 +83,7 @@ func TestBuildQueryRangeRequest(t *testing.T) {
 				qe := qr.CompositeQuery.Queries[0]
 				spec := qe.Spec.(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation])
 				if assert.NotNil(t, spec.Filter) {
-					assert.Equal(t, "isRoot = 'true' OR isEntryPoint = 'true'", spec.Filter.Expression)
+					assert.Equal(t, "isRoot = $1 OR isEntryPoint = $2", spec.Filter.Expression)
 				}
 			},
 		},
