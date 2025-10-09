@@ -7,8 +7,7 @@ type AuthType struct {
 }
 
 var (
-	AuthTypeJWT      = AuthType{valuer.NewString("jwt")}
-	AuthTypeOpaque   = AuthType{valuer.NewString("opaque")}
-	AuthTypeAPIKey   = AuthType{valuer.NewString("api_key")}
-	AuthTypeInternal = AuthType{valuer.NewString("internal")}
+	AuthTypeTokenizer = AuthType{valuer.NewString("tokenizer")}
+	AuthTypeAPIKey    = AuthType{valuer.NewString("api_key")}
+	AuthTypeInternal  = AuthType{valuer.NewString("internal")}
 )

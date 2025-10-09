@@ -106,7 +106,7 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 
 	diff := 0
 	// Allow multiple deletions for API key requests; enforce for others
-	if authType, ok := ctxtypes.AuthTypeFromContext(ctx); ok && authType == ctxtypes.AuthTypeJWT {
+	if authType, ok := ctxtypes.AuthTypeFromContext(ctx); ok && authType == ctxtypes.AuthTypeTokenizer {
 		diff = 1
 	}
 
