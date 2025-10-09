@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/types/servicetypes"
+	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 )
 
 // buildFilterExpression converts tag filters into a QBv5-compatible boolean expression.
-func buildFilterExpression(tags []servicetypes.TagFilterItem) string {
+func buildFilterExpression(tags []servicetypesv1.TagFilterItem) string {
 	if len(tags) == 0 {
 		return ""
 	}
@@ -94,7 +94,7 @@ func toUint64(row []any, idx int) uint64 {
 
 // applyTopLevelOpsToItems sets DataWarning.TopLevelOps for matching service names.
 // If opsMap is nil, it performs no changes and returns nil.
-func applyTopLevelOpsToItems(items []*servicetypes.ResponseItem, opsMap map[string][]string) {
+func applyTopLevelOpsToItems(items []*servicetypesv1.ResponseItem, opsMap map[string][]string) {
 	if len(items) == 0 {
 		return
 	}

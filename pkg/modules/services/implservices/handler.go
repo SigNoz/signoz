@@ -9,7 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/servicetypes"
+	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 )
 
 type handler struct {
@@ -32,7 +32,7 @@ func (h *handler) Get(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var in servicetypes.Request
+	var in servicetypesv1.Request
 	if err := binding.JSON.BindBody(req.Body, &in); err != nil {
 		render.Error(rw, err)
 		return

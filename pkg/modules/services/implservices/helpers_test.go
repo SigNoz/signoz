@@ -3,14 +3,14 @@ package implservices
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/servicetypes"
+	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBuildFilterExpression(t *testing.T) {
 	tests := []struct {
 		name string
-		in   []servicetypes.TagFilterItem
+		in   []servicetypesv1.TagFilterItem
 		want string
 	}{
 		{
@@ -20,21 +20,21 @@ func TestBuildFilterExpression(t *testing.T) {
 		},
 		{
 			name: "IN with two values",
-			in: []servicetypes.TagFilterItem{
+			in: []servicetypesv1.TagFilterItem{
 				{Key: "service.name", Operator: "In", StringValues: []string{"frontend", "backend"}},
 			},
 			want: "service.name IN ['frontend','backend']",
 		},
 		{
 			name: "Equal operator",
-			in: []servicetypes.TagFilterItem{
+			in: []servicetypesv1.TagFilterItem{
 				{Key: "deployment.environment", Operator: "=", StringValues: []string{"prod"}},
 			},
 			want: "deployment.environment = 'prod'",
 		},
 		{
 			name: "Combine IN and = with AND",
-			in: []servicetypes.TagFilterItem{
+			in: []servicetypesv1.TagFilterItem{
 				{Key: "service.name", Operator: "in", StringValues: []string{"svc-a", "svc-b"}},
 				{Key: "env", Operator: "Equal", StringValues: []string{"staging"}},
 			},
@@ -42,7 +42,7 @@ func TestBuildFilterExpression(t *testing.T) {
 		},
 		{
 			name: "Escape single quotes",
-			in: []servicetypes.TagFilterItem{
+			in: []servicetypesv1.TagFilterItem{
 				{Key: "owner", Operator: "=", StringValues: []string{"O'Reilly"}},
 			},
 			want: "owner = 'O\\'Reilly'",
@@ -123,15 +123,15 @@ func TestToUint64(t *testing.T) {
 func TestApplyTopLevelOpsToItems(t *testing.T) {
 	tests := []struct {
 		name  string
-		items []*servicetypes.ResponseItem
+		items []*servicetypesv1.ResponseItem
 		ops   map[string][]string
 		want  [][]string
 	}{
 		{
 			name: "maps ops to matching services",
-			items: []*servicetypes.ResponseItem{
-				{ServiceName: "svc-a", DataWarning: servicetypes.DataWarning{TopLevelOps: []string{}}},
-				{ServiceName: "svc-b", DataWarning: servicetypes.DataWarning{TopLevelOps: []string{}}},
+			items: []*servicetypesv1.ResponseItem{
+				{ServiceName: "svc-a", DataWarning: servicetypesv1.DataWarning{TopLevelOps: []string{}}},
+				{ServiceName: "svc-b", DataWarning: servicetypesv1.DataWarning{TopLevelOps: []string{}}},
 			},
 			ops: map[string][]string{
 				"svc-a": {"op1", "op2"},
@@ -144,16 +144,16 @@ func TestApplyTopLevelOpsToItems(t *testing.T) {
 		},
 		{
 			name: "nil ops map is no-op",
-			items: []*servicetypes.ResponseItem{
-				{ServiceName: "svc-a", DataWarning: servicetypes.DataWarning{TopLevelOps: []string{}}},
-				{ServiceName: "svc-b", DataWarning: servicetypes.DataWarning{TopLevelOps: []string{}}},
+			items: []*servicetypesv1.ResponseItem{
+				{ServiceName: "svc-a", DataWarning: servicetypesv1.DataWarning{TopLevelOps: []string{}}},
+				{ServiceName: "svc-b", DataWarning: servicetypesv1.DataWarning{TopLevelOps: []string{}}},
 			},
 			ops:  nil,
 			want: [][]string{{}, {}},
 		},
 		{
 			name:  "empty items slice is no-op",
-			items: []*servicetypes.ResponseItem{},
+			items: []*servicetypesv1.ResponseItem{},
 			ops:   map[string][]string{"svc-a": {"op1"}},
 			want:  [][]string{},
 		},

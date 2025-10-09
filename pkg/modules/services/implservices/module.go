@@ -12,7 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/servicetypes"
+	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -32,7 +32,7 @@ func NewModule(q querier.Querier, ts telemetrystore.TelemetryStore) services.Mod
 
 // Get implements services.Module
 // Builds a QBv5 traces aggregation grouped by service.name and maps results to ResponseItem.
-func (m *module) Get(ctx context.Context, orgID string, req *servicetypes.Request) ([]*servicetypes.ResponseItem, error) {
+func (m *module) Get(ctx context.Context, orgID string, req *servicetypesv1.Request) ([]*servicetypesv1.ResponseItem, error) {
 	if req == nil {
 		return nil, nil
 	}
@@ -52,7 +52,7 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 	// Process phase
 	items, serviceNames := m.mapQueryRangeRespToServices(resp, startMs, endMs)
 	if len(items) == 0 {
-		return []*servicetypes.ResponseItem{}, nil
+		return []*servicetypesv1.ResponseItem{}, nil
 	}
 
 	// attach top level ops to service items
@@ -103,7 +103,7 @@ func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, s
 }
 
 // buildQueryRangeRequest constructs the QBv5 QueryRangeRequest and computes the time window.
-func (m *module) buildQueryRangeRequest(req *servicetypes.Request) (qbtypes.QueryRangeRequest, uint64, uint64, error) {
+func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (qbtypes.QueryRangeRequest, uint64, uint64, error) {
 	// Parse start/end (nanoseconds) from strings and convert to milliseconds for QBv5
 	startNs, err := strconv.ParseUint(req.Start, 10, 64)
 	if err != nil {
@@ -172,14 +172,14 @@ func (m *module) executeQuery(ctx context.Context, orgID string, qr *qbtypes.Que
 }
 
 // mapQueryRangeRespToServices converts the raw query response into service items and collected service names.
-func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, startMs, endMs uint64) ([]*servicetypes.ResponseItem, []string) {
+func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, startMs, endMs uint64) ([]*servicetypesv1.ResponseItem, []string) {
 	if resp == nil || len(resp.Data.Results) == 0 { // no rows
-		return []*servicetypes.ResponseItem{}, []string{}
+		return []*servicetypesv1.ResponseItem{}, []string{}
 	}
 
 	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData) // empty rows
 	if !ok || sd == nil {
-		return []*servicetypes.ResponseItem{}, []string{}
+		return []*servicetypesv1.ResponseItem{}, []string{}
 	}
 
 	// this stores the index at which service name is found in the response
@@ -196,7 +196,7 @@ func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, s
 		}
 	}
 	if serviceNameRespIndex == -1 {
-		return []*servicetypes.ResponseItem{}, []string{}
+		return []*servicetypesv1.ResponseItem{}, []string{}
 	}
 
 	periodSeconds := float64((endMs - startMs) / 1000)
@@ -204,7 +204,7 @@ func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, s
 		periodSeconds = 1
 	}
 
-	out := make([]*servicetypes.ResponseItem, 0, len(sd.Data))
+	out := make([]*servicetypesv1.ResponseItem, 0, len(sd.Data))
 	serviceNames := make([]string, 0, len(sd.Data))
 	for _, row := range sd.Data {
 		if serviceNameRespIndex >= len(row) {
@@ -232,7 +232,7 @@ func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, s
 			fourXXRate = float64(num4xx) * 100 / float64(numCalls) // percentage
 		}
 
-		out = append(out, &servicetypes.ResponseItem{
+		out = append(out, &servicetypesv1.ResponseItem{
 			ServiceName:  svcName,
 			Percentile99: p99,
 			AvgDuration:  avgDuration,
@@ -242,7 +242,7 @@ func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, s
 			ErrorRate:    errorRate,
 			Num4XX:       num4xx,
 			FourXXRate:   fourXXRate,
-			DataWarning:  servicetypes.DataWarning{TopLevelOps: []string{}},
+			DataWarning:  servicetypesv1.DataWarning{TopLevelOps: []string{}},
 		})
 	}
 
@@ -250,7 +250,7 @@ func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, s
 }
 
 // attachTopLevelOps fetches top-level ops from TelemetryStore and attaches them to items.
-func (m *module) attachTopLevelOps(ctx context.Context, serviceNames []string, startMs uint64, items []*servicetypes.ResponseItem) error {
+func (m *module) attachTopLevelOps(ctx context.Context, serviceNames []string, startMs uint64, items []*servicetypesv1.ResponseItem) error {
 	startTime := time.UnixMilli(int64(startMs)).UTC()
 	opsMap, err := m.FetchTopLevelOperations(ctx, startTime, serviceNames)
 	if err != nil {

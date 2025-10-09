@@ -1,4 +1,4 @@
-package servicetypes
+package servicetypesv1
 
 import "time"
 

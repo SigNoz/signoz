@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/servicetypes"
+	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/assert"
 )
@@ -14,16 +14,16 @@ func TestBuildQueryRangeRequest(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		req      servicetypes.Request
+		req      servicetypesv1.Request
 		wantErr  string
 		assertOK func(t *testing.T, qr qbtypes.QueryRangeRequest, startMs, endMs uint64)
 	}{
 		{
 			name: "valid with tags builds scope+filter and query",
-			req: servicetypes.Request{
+			req: servicetypesv1.Request{
 				Start: "1000000000", // 1s in ns -> 1000 ms
 				End:   "2000000000", // 2s in ns -> 2000 ms
-				Tags: []servicetypes.TagFilterItem{
+				Tags: []servicetypesv1.TagFilterItem{
 					{Key: "service.name", Operator: "in", StringValues: []string{"frontend", "backend"}},
 					{Key: "env", Operator: "=", StringValues: []string{"prod"}},
 				},
@@ -73,7 +73,7 @@ func TestBuildQueryRangeRequest(t *testing.T) {
 		},
 		{
 			name: "valid without tags uses only scope filter",
-			req: servicetypes.Request{
+			req: servicetypesv1.Request{
 				Start: "3000000000", // 3s ns -> 3000 ms
 				End:   "5000000000", // 5s ns -> 5000 ms
 			},
@@ -89,22 +89,22 @@ func TestBuildQueryRangeRequest(t *testing.T) {
 		},
 		{
 			name:    "invalid start",
-			req:     servicetypes.Request{Start: "abc", End: "100"},
+			req:     servicetypesv1.Request{Start: "abc", End: "100"},
 			wantErr: "invalid start time",
 		},
 		{
 			name:    "invalid end",
-			req:     servicetypes.Request{Start: "100", End: "abc"},
+			req:     servicetypesv1.Request{Start: "100", End: "abc"},
 			wantErr: "invalid end time",
 		},
 		{
 			name:    "start not before end",
-			req:     servicetypes.Request{Start: "2000", End: "2000"},
+			req:     servicetypesv1.Request{Start: "2000", End: "2000"},
 			wantErr: "start must be before end",
 		},
 		{
 			name:    "start greater than end",
-			req:     servicetypes.Request{Start: "2001", End: "2000"},
+			req:     servicetypesv1.Request{Start: "2001", End: "2000"},
 			wantErr: "start must be before end",
 		},
 	}
@@ -140,7 +140,7 @@ func TestMapQueryRangeRespToServices(t *testing.T) {
 		name           string
 		resp           *qbtypes.QueryRangeResponse
 		startMs, endMs uint64
-		wantItems      []*servicetypes.ResponseItem
+		wantItems      []*servicetypesv1.ResponseItem
 		wantServices   []string
 	}{
 		{
@@ -150,7 +150,7 @@ func TestMapQueryRangeRespToServices(t *testing.T) {
 				Data: qbtypes.QueryData{Results: []any{}},
 			},
 			startMs: 1000, endMs: 2000,
-			wantItems:    []*servicetypes.ResponseItem{},
+			wantItems:    []*servicetypesv1.ResponseItem{},
 			wantServices: []string{},
 		},
 		{
@@ -160,7 +160,7 @@ func TestMapQueryRangeRespToServices(t *testing.T) {
 				Data: qbtypes.QueryData{Results: []any{"not-scalar"}},
 			},
 			startMs: 1000, endMs: 2000,
-			wantItems:    []*servicetypes.ResponseItem{},
+			wantItems:    []*servicetypesv1.ResponseItem{},
 			wantServices: []string{},
 		},
 		{
@@ -176,7 +176,7 @@ func TestMapQueryRangeRespToServices(t *testing.T) {
 				},
 			},
 			startMs: 1000, endMs: 2000,
-			wantItems:    []*servicetypes.ResponseItem{},
+			wantItems:    []*servicetypesv1.ResponseItem{},
 			wantServices: []string{},
 		},
 		{
@@ -194,7 +194,7 @@ func TestMapQueryRangeRespToServices(t *testing.T) {
 				},
 			},
 			startMs: 0, endMs: 10000, // 10s window -> callRate = 10/10=1, errorRate=20%, fourXXRate=10%
-			wantItems: []*servicetypes.ResponseItem{
+			wantItems: []*servicetypesv1.ResponseItem{
 				{
 					ServiceName:  "svc-a",
 					Percentile99: 123.0,
@@ -205,7 +205,7 @@ func TestMapQueryRangeRespToServices(t *testing.T) {
 					ErrorRate:    20.0, // in percentage
 					Num4XX:       1,
 					FourXXRate:   10.0, // in percentage
-					DataWarning:  servicetypes.DataWarning{TopLevelOps: []string{}},
+					DataWarning:  servicetypesv1.DataWarning{TopLevelOps: []string{}},
 				},
 			},
 			wantServices: []string{"svc-a"},
@@ -224,7 +224,7 @@ func TestMapQueryRangeRespToServices(t *testing.T) {
 				},
 			},
 			startMs: 0, endMs: 10000, // 10s window -> callRate = 2, errorRate=25%, fourXXRate=10%
-			wantItems: []*servicetypes.ResponseItem{
+			wantItems: []*servicetypesv1.ResponseItem{
 				{
 					ServiceName:  "svc-mid",
 					Percentile99: 200.0,
@@ -235,7 +235,7 @@ func TestMapQueryRangeRespToServices(t *testing.T) {
 					ErrorRate:    25.0, // in percentage
 					Num4XX:       2,
 					FourXXRate:   10.0, // in percentage
-					DataWarning:  servicetypes.DataWarning{TopLevelOps: []string{}},
+					DataWarning:  servicetypesv1.DataWarning{TopLevelOps: []string{}},
 				},
 			},
 			wantServices: []string{"svc-mid"},
@@ -254,7 +254,7 @@ func TestMapQueryRangeRespToServices(t *testing.T) {
 				},
 			},
 			startMs: 0, endMs: 10000,
-			wantItems:    []*servicetypes.ResponseItem{},
+			wantItems:    []*servicetypesv1.ResponseItem{},
 			wantServices: []string{},
 		},
 	}
