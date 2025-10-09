@@ -11,6 +11,11 @@ var (
 	nameRegex = regexp.MustCompile("^[a-z]{1,35}$")
 )
 
+var (
+	_ json.Marshaler   = new(Name)
+	_ json.Unmarshaler = new(Name)
+)
+
 type Name struct {
 	val string
 }
@@ -34,6 +39,10 @@ func MustNewName(name string) Name {
 
 func (name Name) String() string {
 	return name.val
+}
+
+func (name *Name) MarshalJSON() ([]byte, error) {
+	return []byte(name.val), nil
 }
 
 func (name *Name) UnmarshalJSON(data []byte) error {

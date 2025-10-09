@@ -28,14 +28,10 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	req := new(roletypes.PostableRole)
-	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+	if err := binding.JSON.BindBody(r.Body, req, binding.WithDisallowUnknownFields(true)); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -56,11 +52,7 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	id, ok := mux.Vars(r)["id"]
 	if !ok {
@@ -89,11 +81,7 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	id, ok := mux.Vars(r)["id"]
 	if !ok {
@@ -147,11 +135,7 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	roles, err := handler.module.List(ctx, orgID)
 	if err != nil {
@@ -169,11 +153,7 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	id, ok := mux.Vars(r)["id"]
 	if !ok {
@@ -187,7 +167,7 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	req := new(roletypes.PatchableRole)
-	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+	if err := binding.JSON.BindBody(r.Body, req, binding.WithDisallowUnknownFields(true)); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -208,11 +188,7 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	id, ok := mux.Vars(r)["id"]
 	if !ok {
@@ -237,7 +213,7 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	req := new(roletypes.PatchableObjects)
-	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+	if err := binding.JSON.BindBody(r.Body, req, binding.WithDisallowUnknownFields(true)); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -264,11 +240,7 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	id, ok := mux.Vars(r)["id"]
 	if !ok {
