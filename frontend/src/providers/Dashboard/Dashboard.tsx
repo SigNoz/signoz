@@ -233,10 +233,10 @@ export function DashboardProvider({
 		const updatedData = data;
 		if (data && localStorageVariables) {
 			const updatedVariables = data.data.variables;
+			const variablesFromUrl = getUrlVariables();
 			Object.keys(data.data.variables).forEach((variable) => {
 				const variableData = data.data.variables[variable];
 
-				const variablesFromUrl = getUrlVariables();
 				// values from url
 				const urlVariable = variableData?.name
 					? variablesFromUrl[variableData?.name] || variablesFromUrl[variableData.id]
@@ -328,7 +328,7 @@ export function DashboardProvider({
 					});
 				} catch (error) {
 					showErrorModal(error as APIError);
-					throw error;
+					return;
 				} finally {
 					setIsDashboardFetching(false);
 				}
@@ -338,7 +338,7 @@ export function DashboardProvider({
 				showErrorModal(error as APIError);
 			},
 
-			onSuccess: (data) => {
+			onSuccess: (data: SuccessResponseV2<Dashboard>) => {
 				// if the url variable is not set for any variable, set it to the default value
 				const variables = data?.data?.data?.variables;
 				if (variables) {

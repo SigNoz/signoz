@@ -204,7 +204,6 @@ describe('useVariablesFromUrl', () => {
 			emptyString: '',
 			emptyArray: [],
 			singleItemArray: ['solo'],
-			undefinedVar: undefined,
 		};
 
 		const encodedVariables = encodeURIComponent(
