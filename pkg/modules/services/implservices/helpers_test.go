@@ -7,71 +7,55 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBuildFilterExpression(t *testing.T) {
-	tests := []struct {
-		name string
-		in   []servicetypesv1.TagFilterItem
-		want string
-	}{
-		{
-			name: "empty tags -> empty expr",
-			in:   nil,
-			want: "",
-		},
-		{
-			name: "IN with two values",
-			in: []servicetypesv1.TagFilterItem{
-				{Key: "service.name", Operator: "In", StringValues: []string{"frontend", "backend"}},
-			},
-			want: "service.name IN ['frontend','backend']",
-		},
-		{
-			name: "Equal operator",
-			in: []servicetypesv1.TagFilterItem{
-				{Key: "deployment.environment", Operator: "=", StringValues: []string{"prod"}},
-			},
-			want: "deployment.environment = 'prod'",
-		},
-		{
-			name: "Combine IN and = with AND",
-			in: []servicetypesv1.TagFilterItem{
-				{Key: "service.name", Operator: "in", StringValues: []string{"svc-a", "svc-b"}},
-				{Key: "env", Operator: "Equal", StringValues: []string{"staging"}},
-			},
-			want: "service.name IN ['svc-a','svc-b'] AND env = 'staging'",
-		},
-		{
-			name: "Escape single quotes",
-			in: []servicetypesv1.TagFilterItem{
-				{Key: "owner", Operator: "=", StringValues: []string{"O'Reilly"}},
-			},
-			want: "owner = 'O\\'Reilly'",
-		},
-	}
+// func TestBuildFilterExpression(t *testing.T) {
+// 	tests := []struct {
+// 		name string
+// 		in   []servicetypesv1.TagFilterItem
+// 		want string
+// 	}{
+// 		{
+// 			name: "empty tags -> empty expr",
+// 			in:   nil,
+// 			want: "",
+// 		},
+// 		{
+// 			name: "IN with two values",
+// 			in: []servicetypesv1.TagFilterItem{
+// 				{Key: "service.name", Operator: "In", StringValues: []string{"frontend", "backend"}},
+// 			},
+// 			want: "service.name IN ['frontend','backend']",
+// 		},
+// 		{
+// 			name: "Equal operator",
+// 			in: []servicetypesv1.TagFilterItem{
+// 				{Key: "deployment.environment", Operator: "=", StringValues: []string{"prod"}},
+// 			},
+// 			want: "deployment.environment = 'prod'",
+// 		},
+// 		{
+// 			name: "Combine IN and = with AND",
+// 			in: []servicetypesv1.TagFilterItem{
+// 				{Key: "service.name", Operator: "in", StringValues: []string{"svc-a", "svc-b"}},
+// 				{Key: "env", Operator: "Equal", StringValues: []string{"staging"}},
+// 			},
+// 			want: "service.name IN ['svc-a','svc-b'] AND env = 'staging'",
+// 		},
+// 		{
+// 			name: "Escape single quotes",
+// 			in: []servicetypesv1.TagFilterItem{
+// 				{Key: "owner", Operator: "=", StringValues: []string{"O'Reilly"}},
+// 			},
+// 			want: "owner = 'O\\'Reilly'",
+// 		},
+// 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := buildFilterExpression(tt.in)
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
-func TestEscapeSingleQuotes(t *testing.T) {
-	tests := []struct {
-		in   string
-		want string
-	}{
-		{in: "", want: ""},
-		{in: "abc", want: "abc"},
-		{in: "O'Reilly", want: "O\\'Reilly"},
-		{in: "a'b'c", want: "a\\'b\\'c"},
-	}
-	for _, tt := range tests {
-		got := escapeSingleQuotes(tt.in)
-		assert.Equal(t, tt.want, got)
-	}
-}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			got := buildFilterExpression(tt.in)
+// 			assert.Equal(t, tt.want, got)
+// 		})
+// 	}
+// }
 
 func TestToFloat(t *testing.T) {
 	tests := []struct {

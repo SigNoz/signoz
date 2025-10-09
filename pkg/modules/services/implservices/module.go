@@ -121,41 +121,37 @@ func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (qbtypes.Qu
 	startMs := startNs / 1_000_000
 	endMs := endNs / 1_000_000
 
-	filterExpr := buildFilterExpression(req.Tags)
+	filterExpr, variables := buildFilterAndScopeExpression(req.Tags)
 	// ensure we only consider root or entry-point spans
-	scopeExpr := "isRoot = 'true' OR isEntryPoint = 'true'"
-	if filterExpr != "" {
-		filterExpr = "(" + filterExpr + ") AND (" + scopeExpr + ")"
-	} else {
-		filterExpr = scopeExpr
-	}
-
-	q := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Name:   "A",
-		Signal: telemetrytypes.SignalTraces,
-		GroupBy: []qbtypes.GroupByKey{
-			{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-				Name: "service.name",
-			}},
-		},
-		Aggregations: []qbtypes.TraceAggregation{
-			{Expression: "p99(duration_nano)", Alias: "p99"},
-			{Expression: "avg(duration_nano)", Alias: "avgDuration"},
-			{Expression: "count()", Alias: "numCalls"},
-			{Expression: "countIf(status_code = 2)", Alias: "numErrors"},
-			{Expression: "countIf(response_status_code >= 400 AND response_status_code < 500)", Alias: "num4XX"},
-		},
-	}
-
-	q.Filter = &qbtypes.Filter{Expression: filterExpr}
 
 	reqV5 := qbtypes.QueryRangeRequest{
 		Start:       startMs,
 		End:         endMs,
 		RequestType: qbtypes.RequestTypeScalar,
+		Variables:   variables,
 		CompositeQuery: qbtypes.CompositeQuery{
 			Queries: []qbtypes.QueryEnvelope{
-				{Type: qbtypes.QueryTypeBuilder, Spec: q},
+				{Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+						Name:   "A",
+						Signal: telemetrytypes.SignalTraces,
+						Filter: &qbtypes.Filter{
+							Expression: filterExpr,
+						},
+						GroupBy: []qbtypes.GroupByKey{
+							{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+								Name: "service.name",
+							}},
+						},
+						Aggregations: []qbtypes.TraceAggregation{
+							{Expression: "p99(duration_nano)", Alias: "p99"},
+							{Expression: "avg(duration_nano)", Alias: "avgDuration"},
+							{Expression: "count()", Alias: "numCalls"},
+							{Expression: "countIf(status_code = 2)", Alias: "numErrors"},
+							{Expression: "countIf(response_status_code >= 400 AND response_status_code < 500)", Alias: "num4XX"},
+						},
+					},
+				},
 			},
 		},
 	}
