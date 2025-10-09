@@ -1,6 +1,7 @@
 package authtypes
 
 import (
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -13,7 +14,7 @@ type OrgSessionContext struct {
 	ID           valuer.UUID  `json:"id"`
 	Name         string       `json:"name"`
 	AuthNSupport AuthNSupport `json:"authNSupport"`
-	Warning      string       `json:"warning,omitempty"`
+	Warning      *errors.JSON `json:"warning,omitempty"`
 }
 
 type AuthNSupport struct {
@@ -42,7 +43,7 @@ func NewOrgSessionContext(orgID valuer.UUID, name string) *OrgSessionContext {
 			Password: []PasswordAuthNSupport{},
 			Callback: []CallbackAuthNSupport{},
 		},
-		Warning: "",
+		Warning: nil,
 	}
 }
 
@@ -62,6 +63,6 @@ func (s *OrgSessionContext) AddCallbackAuthNSupport(provider AuthNProvider, url 
 }
 
 func (s *OrgSessionContext) AddWarning(warning error) *OrgSessionContext {
-	s.Warning = warning.Error()
+	s.Warning = errors.AsJSON(warning)
 	return s
 }
