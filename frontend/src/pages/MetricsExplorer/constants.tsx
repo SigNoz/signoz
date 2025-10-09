@@ -4,7 +4,6 @@ import ExplorerPage from 'container/MetricsExplorer/Explorer';
 import SummaryPage from 'container/MetricsExplorer/Summary';
 import { BarChart2, Compass, TowerControl } from 'lucide-react';
 import SaveView from 'pages/SaveView';
-import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 
 export const Summary: TabRoutes = {
 	Component: SummaryPage,
@@ -18,11 +17,7 @@ export const Summary: TabRoutes = {
 };
 
 export const Explorer: TabRoutes = {
-	Component: (): JSX.Element => (
-		<PreferenceContextProvider>
-			<ExplorerPage />
-		</PreferenceContextProvider>
-	),
+	Component: (): JSX.Element => <ExplorerPage />,
 	name: (
 		<div className="tab-item">
 			<Compass size={16} /> Explorer
