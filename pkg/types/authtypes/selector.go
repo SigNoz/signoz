@@ -13,6 +13,11 @@ var (
 )
 
 var (
+	_ json.Marshaler   = new(Selector)
+	_ json.Unmarshaler = new(Selector)
+)
+
+var (
 	typeUserSelectorRegex         = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
 	typeRoleSelectorRegex         = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
 	typeOrganizationSelectorRegex = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
@@ -74,6 +79,10 @@ func MustNewSelector(typed Type, input string) Selector {
 
 func (selector Selector) String() string {
 	return selector.val
+}
+
+func (selector *Selector) MarshalJSON() ([]byte, error) {
+	return []byte(selector.val), nil
 }
 
 func (typed *Selector) UnmarshalJSON(data []byte) error {

@@ -73,3 +73,7 @@ func (enum *String) UnmarshalText(text []byte) error {
 	*enum = NewString(string(text))
 	return nil
 }
+
+func (enum String) MarshalText() (text []byte, err error) {
+	return []byte(enum.StringValue()), nil
+}

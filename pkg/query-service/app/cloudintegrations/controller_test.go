@@ -43,7 +43,7 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
 	analytics := analyticstest.New()
-	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, nil)
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, nil, nil)
 	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	require.Nil(apiErr)
 
@@ -102,7 +102,7 @@ func TestAgentCheckIns(t *testing.T) {
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
 	analytics := analyticstest.New()
-	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, nil)
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, nil, nil)
 	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	require.Nil(apiErr)
 
@@ -200,7 +200,7 @@ func TestCantDisconnectNonExistentAccount(t *testing.T) {
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
 	analytics := analyticstest.New()
-	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, nil)
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, nil, nil)
 	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	require.Nil(apiErr)
 
@@ -230,7 +230,7 @@ func TestConfigureService(t *testing.T) {
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
 	analytics := analyticstest.New()
-	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, nil)
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, nil, nil)
 	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	require.Nil(apiErr)
 
