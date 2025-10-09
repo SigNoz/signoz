@@ -173,11 +173,11 @@ func (m *module) executeQuery(ctx context.Context, orgID string, qr *qbtypes.Que
 
 // mapQueryRangeRespToServices converts the raw query response into service items and collected service names.
 func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, startMs, endMs uint64) ([]*servicetypes.ResponseItem, []string) {
-	if resp == nil || len(resp.Data.Results) == 0 {
+	if resp == nil || len(resp.Data.Results) == 0 { // no rows
 		return []*servicetypes.ResponseItem{}, []string{}
 	}
 
-	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData)
+	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData) // empty rows
 	if !ok || sd == nil {
 		return []*servicetypes.ResponseItem{}, []string{}
 	}
@@ -225,11 +225,11 @@ func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, s
 		}
 		errorRate := 0.0
 		if numCalls > 0 {
-			errorRate = float64(numErrors) * 100 / float64(numCalls)
+			errorRate = float64(numErrors) * 100 / float64(numCalls) // percentage
 		}
 		fourXXRate := 0.0
 		if numCalls > 0 {
-			fourXXRate = float64(num4xx) * 100 / float64(numCalls)
+			fourXXRate = float64(num4xx) * 100 / float64(numCalls) // percentage
 		}
 
 		out = append(out, &servicetypes.ResponseItem{

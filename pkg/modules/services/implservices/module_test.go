@@ -124,3 +124,158 @@ func TestBuildQueryRangeRequest(t *testing.T) {
 		})
 	}
 }
+
+func TestMapQueryRangeRespToServices(t *testing.T) {
+	m := &module{}
+
+	groupCol := &qbtypes.ColumnDescriptor{
+		TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service.name"},
+		Type:              qbtypes.ColumnTypeGroup,
+	}
+	agg := func(idx int64) *qbtypes.ColumnDescriptor {
+		return &qbtypes.ColumnDescriptor{AggregationIndex: idx, Type: qbtypes.ColumnTypeAggregation}
+	}
+
+	tests := []struct {
+		name           string
+		resp           *qbtypes.QueryRangeResponse
+		startMs, endMs uint64
+		wantItems      []*servicetypes.ResponseItem
+		wantServices   []string
+	}{
+		{
+			name: "empty response -> no items",
+			resp: &qbtypes.QueryRangeResponse{
+				Type: qbtypes.RequestTypeScalar,
+				Data: qbtypes.QueryData{Results: []any{}},
+			},
+			startMs: 1000, endMs: 2000,
+			wantItems:    []*servicetypes.ResponseItem{},
+			wantServices: []string{},
+		},
+		{
+			name: "no ScalarData -> no items",
+			resp: &qbtypes.QueryRangeResponse{
+				Type: qbtypes.RequestTypeScalar,
+				Data: qbtypes.QueryData{Results: []any{"not-scalar"}},
+			},
+			startMs: 1000, endMs: 2000,
+			wantItems:    []*servicetypes.ResponseItem{},
+			wantServices: []string{},
+		},
+		{
+			name: "missing service.name column -> no items",
+			resp: &qbtypes.QueryRangeResponse{
+				Type: qbtypes.RequestTypeScalar,
+				Data: qbtypes.QueryData{
+					Results: []any{&qbtypes.ScalarData{
+						QueryName: "A",
+						Columns:   []*qbtypes.ColumnDescriptor{agg(0)}, Data: [][]any{},
+					},
+					},
+				},
+			},
+			startMs: 1000, endMs: 2000,
+			wantItems:    []*servicetypes.ResponseItem{},
+			wantServices: []string{},
+		},
+		{
+			name: "single row maps fields and rates",
+			resp: &qbtypes.QueryRangeResponse{
+				Type: qbtypes.RequestTypeScalar,
+				Data: qbtypes.QueryData{
+					Results: []any{
+						&qbtypes.ScalarData{
+							QueryName: "A",
+							Columns:   []*qbtypes.ColumnDescriptor{groupCol, agg(0), agg(1), agg(2), agg(3), agg(4)},
+							Data:      [][]any{{"svc-a", float64(123.0), float64(45.0), uint64(10), uint64(2), uint64(1)}},
+						},
+					},
+				},
+			},
+			startMs: 0, endMs: 10000, // 10s window -> callRate = 10/10=1, errorRate=20%, fourXXRate=10%
+			wantItems: []*servicetypes.ResponseItem{
+				{
+					ServiceName:  "svc-a",
+					Percentile99: 123.0,
+					AvgDuration:  45.0,
+					NumCalls:     10,
+					CallRate:     1.0,
+					NumErrors:    2,
+					ErrorRate:    20.0, // in percentage
+					Num4XX:       1,
+					FourXXRate:   10.0, // in percentage
+					DataWarning:  servicetypes.DataWarning{TopLevelOps: []string{}},
+				},
+			},
+			wantServices: []string{"svc-a"},
+		},
+		{
+			name: "group column in middle maps correctly",
+			resp: &qbtypes.QueryRangeResponse{
+				Type: qbtypes.RequestTypeScalar,
+				Data: qbtypes.QueryData{
+					Results: []any{&qbtypes.ScalarData{
+						QueryName: "A",
+						Columns:   []*qbtypes.ColumnDescriptor{agg(0), groupCol, agg(1), agg(2), agg(3), agg(4)},
+						Data:      [][]any{{float64(200.0), "svc-mid", float64(50.0), uint64(20), uint64(5), uint64(2)}},
+					},
+					},
+				},
+			},
+			startMs: 0, endMs: 10000, // 10s window -> callRate = 2, errorRate=25%, fourXXRate=10%
+			wantItems: []*servicetypes.ResponseItem{
+				{
+					ServiceName:  "svc-mid",
+					Percentile99: 200.0,
+					AvgDuration:  50.0,
+					NumCalls:     20,
+					CallRate:     2.0,
+					NumErrors:    5,
+					ErrorRate:    25.0, // in percentage
+					Num4XX:       2,
+					FourXXRate:   10.0, // in percentage
+					DataWarning:  servicetypes.DataWarning{TopLevelOps: []string{}},
+				},
+			},
+			wantServices: []string{"svc-mid"},
+		},
+		{
+			name: "row out of bounds compare to service index is skipped",
+			resp: &qbtypes.QueryRangeResponse{
+				Type: qbtypes.RequestTypeScalar,
+				Data: qbtypes.QueryData{
+					Results: []any{&qbtypes.ScalarData{
+						QueryName: "A",
+						Columns:   []*qbtypes.ColumnDescriptor{groupCol, agg(0), agg(1), agg(2), agg(3), agg(4)},
+						Data:      [][]any{{}},
+					},
+					},
+				},
+			},
+			startMs: 0, endMs: 10000,
+			wantItems:    []*servicetypes.ResponseItem{},
+			wantServices: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotItems, gotServices := m.mapQueryRangeRespToServices(tt.resp, tt.startMs, tt.endMs)
+			assert.Equal(t, tt.wantServices, gotServices)
+			assert.Equal(t, len(tt.wantItems), len(gotItems))
+			if len(tt.wantItems) == 1 {
+				assert.InDelta(t, tt.wantItems[0].Percentile99, gotItems[0].Percentile99, 1e-9)
+				assert.InDelta(t, tt.wantItems[0].AvgDuration, gotItems[0].AvgDuration, 1e-9)
+				assert.Equal(t, tt.wantItems[0].NumCalls, gotItems[0].NumCalls)
+				assert.InDelta(t, tt.wantItems[0].CallRate, gotItems[0].CallRate, 1e-9)
+				assert.Equal(t, tt.wantItems[0].NumErrors, gotItems[0].NumErrors)
+				assert.InDelta(t, tt.wantItems[0].ErrorRate, gotItems[0].ErrorRate, 1e-9)
+				assert.Equal(t, tt.wantItems[0].Num4XX, gotItems[0].Num4XX)
+				assert.InDelta(t, tt.wantItems[0].FourXXRate, gotItems[0].FourXXRate, 1e-9)
+				assert.Equal(t, tt.wantItems[0].DataWarning.TopLevelOps, gotItems[0].DataWarning.TopLevelOps)
+				assert.Equal(t, tt.wantItems[0].ServiceName, gotItems[0].ServiceName)
+			}
+		})
+	}
+}
