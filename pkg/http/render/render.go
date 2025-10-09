@@ -64,7 +64,7 @@ func Error(rw http.ResponseWriter, cause error) {
 		httpCode = http.StatusUnavailableForLegalReasons
 	}
 
-	body, err := json.Marshal(errors.AsJSON(cause))
+	body, err := json.Marshal(&response{Status: StatusError.s, Error: errors.AsJSON(cause)})
 	if err != nil {
 		// this should never be the case
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
