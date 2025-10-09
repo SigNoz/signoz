@@ -15,6 +15,7 @@ type SamlConfig struct {
 	SamlCert string `json:"samlCert"`
 
 	// Whether to skip signing the SAML requests. It can typically be found in the WantAuthnRequestsSigned attribute of the IDPSSODescriptor element in the SAML metadata of the identity provider. Example: <md:IDPSSODescriptor WantAuthnRequestsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+	// For providers like jumpcloud, this should be set to true.
 	// Note: This is the reverse of WantAuthnRequestsSigned. If WantAuthnRequestsSigned is false, then InsecureSkipAuthNRequestsSigned should be true.
 	InsecureSkipAuthNRequestsSigned bool `json:"insecureSkipAuthNRequestsSigned"`
 }
