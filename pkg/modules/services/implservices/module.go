@@ -37,11 +37,88 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 		return nil, nil
 	}
 
+	// Prepare phase
+	queryRangeReq, startMs, endMs, err := m.buildQueryRangeRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch phase
+	resp, err := m.executeQuery(ctx, orgID, &queryRangeReq)
+	if err != nil {
+		return nil, err
+	}
+
+	// Process phase
+	items, serviceNames := m.mapScalarDataToServiceItems(resp, startMs, endMs)
+	if len(items) == 0 {
+		return []*servicetypes.ResponseItem{}, nil
+	}
+
+	// attach top level ops to service items
+	if len(serviceNames) > 0 {
+		if err := m.attachTopLevelOps(ctx, serviceNames, startMs, items); err != nil {
+			return nil, err
+		}
+	}
+
+	return items, nil
+}
+
+// FetchTopLevelOperations returns top-level operations per service using the legacy table
+func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, services []string) (map[string][]string, error) {
+	db := m.TelemetryStore.ClickhouseDB()
+	// Using distributed_top_level_operations under signoz_traces
+	// NOTE: we rely on the legacy semantics: SELECT name, serviceName, max(time)
+	query := "SELECT name, serviceName, max(time) as ts FROM signoz_traces.distributed_top_level_operations WHERE time >= @start"
+	args := []any{clickhouse.Named("start", start)}
+	if len(services) > 0 {
+		query += " AND serviceName IN @services"
+		args = append(args, clickhouse.Named("services", services))
+	}
+	query += " GROUP BY name, serviceName ORDER BY ts DESC LIMIT 5000"
+
+	rows, err := db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	ops := make(map[string][]string)
+	for rows.Next() {
+		var name, serviceName string
+		var ts time.Time
+		if err := rows.Scan(&name, &serviceName, &ts); err != nil {
+			return nil, err
+		}
+		if _, ok := ops[serviceName]; !ok {
+			ops[serviceName] = []string{"overflow_operation"}
+		}
+		ops[serviceName] = append(ops[serviceName], name)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return ops, nil
+}
+
+// buildQueryRangeRequest constructs the QBv5 QueryRangeRequest and computes the time window.
+func (m *module) buildQueryRangeRequest(req *servicetypes.Request) (qbtypes.QueryRangeRequest, uint64, uint64, error) {
 	// Parse start/end (nanoseconds) from strings and convert to milliseconds for QBv5
-	startNs, _ := strconv.ParseUint(req.Start, 10, 64)
-	endNs, _ := strconv.ParseUint(req.End, 10, 64)
+	startNs, err := strconv.ParseUint(req.Start, 10, 64)
+	if err != nil {
+		return qbtypes.QueryRangeRequest{}, 0, 0, fmt.Errorf("invalid start time: %w", err)
+	}
+	endNs, err := strconv.ParseUint(req.End, 10, 64)
+	if err != nil {
+		return qbtypes.QueryRangeRequest{}, 0, 0, fmt.Errorf("invalid end time: %w", err)
+	}
 	startMs := startNs / 1_000_000
 	endMs := endNs / 1_000_000
+
+	if startMs >= endMs {
+		return qbtypes.QueryRangeRequest{}, 0, 0, fmt.Errorf("start must be before end")
+	}
 
 	filterExpr := buildFilterExpression(req.Tags)
 	// ensure we only consider root or entry-point spans
@@ -57,9 +134,7 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 		Signal: telemetrytypes.SignalTraces,
 		GroupBy: []qbtypes.GroupByKey{
 			{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-				Name: "service.name", // TODO(nikhilmantri0902): confirm whether to use serviceName, resource_string_service$name, or service.name
-				//FieldDataType: telemetrytypes.FieldDataTypeString,
-				// FieldContext: telemetrytypes.FieldContextResource,
+				Name: "service.name",
 			}},
 		},
 		Aggregations: []qbtypes.TraceAggregation{
@@ -71,9 +146,7 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 		},
 	}
 
-	q.Filter = &qbtypes.Filter{
-		Expression: filterExpr,
-	}
+	q.Filter = &qbtypes.Filter{Expression: filterExpr}
 
 	reqV5 := qbtypes.QueryRangeRequest{
 		Start:       startMs,
@@ -86,22 +159,27 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 		},
 	}
 
+	return reqV5, startMs, endMs, nil
+}
+
+// executeQuery calls the underlying Querier with the provided request.
+func (m *module) executeQuery(ctx context.Context, orgID string, qr *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
 	orgUUID, err := valuer.NewUUID(orgID)
 	if err != nil {
 		return nil, err
 	}
+	return m.Querier.QueryRange(ctx, orgUUID, qr)
+}
 
-	resp, err := m.Querier.QueryRange(ctx, orgUUID, &reqV5)
-	if err != nil {
-		return nil, err
-	}
+// mapScalarDataToServiceItems converts the raw query response into service items and collected service names.
+func (m *module) mapScalarDataToServiceItems(resp *qbtypes.QueryRangeResponse, startMs, endMs uint64) ([]*servicetypes.ResponseItem, []string) {
 	if resp == nil || len(resp.Data.Results) == 0 {
-		return []*servicetypes.ResponseItem{}, nil
+		return []*servicetypes.ResponseItem{}, []string{}
 	}
 
 	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData)
 	if !ok || sd == nil {
-		return []*servicetypes.ResponseItem{}, nil
+		return []*servicetypes.ResponseItem{}, []string{}
 	}
 
 	// this stores the index at which service name is found in the response
@@ -118,7 +196,7 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 		}
 	}
 	if serviceNameRespIndex == -1 {
-		return []*servicetypes.ResponseItem{}, nil
+		return []*servicetypes.ResponseItem{}, []string{}
 	}
 
 	periodSeconds := float64((endMs - startMs) / 1000)
@@ -168,62 +246,23 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypes.Reques
 		})
 	}
 
-	// Fetch top level operations using TelemetryStore and attach
-	if len(serviceNames) > 0 {
-
-		startTime := time.Unix(0, int64(startNs)).UTC()
-		opsMap, err := m.FetchTopLevelOperations(ctx, startTime, serviceNames)
-		if err != nil {
-			return nil, err
-		}
-
-		if opsMap == nil {
-			return out, fmt.Errorf("no top level operations found")
-		}
-
-		for i := range out {
-			if tops, ok := opsMap[out[i].ServiceName]; ok {
-				out[i].DataWarning.TopLevelOps = tops
-			}
-		}
-	}
-
-	return out, nil
+	return out, serviceNames
 }
 
-// FetchTopLevelOperations returns top-level operations per service using the legacy table
-func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, services []string) (map[string][]string, error) {
-	db := m.TelemetryStore.ClickhouseDB()
-	// Using distributed_top_level_operations under signoz_traces
-	// NOTE: we rely on the legacy semantics: SELECT name, serviceName, max(time)
-	query := "SELECT name, serviceName, max(time) as ts FROM signoz_traces.distributed_top_level_operations WHERE time >= @start"
-	args := []any{clickhouse.Named("start", start)}
-	if len(services) > 0 {
-		query += " AND serviceName IN @services"
-		args = append(args, clickhouse.Named("services", services))
-	}
-	query += " GROUP BY name, serviceName ORDER BY ts DESC LIMIT 5000"
-
-	rows, err := db.Query(ctx, query, args...)
+// attachTopLevelOps fetches top-level ops from TelemetryStore and attaches them to items.
+func (m *module) attachTopLevelOps(ctx context.Context, serviceNames []string, startMs uint64, items []*servicetypes.ResponseItem) error {
+	startTime := time.UnixMilli(int64(startMs)).UTC()
+	opsMap, err := m.FetchTopLevelOperations(ctx, startTime, serviceNames)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer rows.Close()
-
-	ops := make(map[string][]string)
-	for rows.Next() {
-		var name, serviceName string
-		var ts time.Time
-		if err := rows.Scan(&name, &serviceName, &ts); err != nil {
-			return nil, err
+	if opsMap == nil {
+		return fmt.Errorf("no top level operations found")
+	}
+	for i := range items {
+		if tops, ok := opsMap[items[i].ServiceName]; ok {
+			items[i].DataWarning.TopLevelOps = tops
 		}
-		if _, ok := ops[serviceName]; !ok {
-			ops[serviceName] = []string{"overflow_operation"}
-		}
-		ops[serviceName] = append(ops[serviceName], name)
 	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return ops, nil
+	return nil
 }
