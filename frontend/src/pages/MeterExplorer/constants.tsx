@@ -4,14 +4,9 @@ import BreakDownPage from 'container/MeterExplorer/Breakdown/BreakDown';
 import ExplorerPage from 'container/MeterExplorer/Explorer';
 import { Compass, TowerControl } from 'lucide-react';
 import SaveView from 'pages/SaveView';
-import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 
 export const Explorer: TabRoutes = {
-	Component: (): JSX.Element => (
-		<PreferenceContextProvider>
-			<ExplorerPage />
-		</PreferenceContextProvider>
-	),
+	Component: (): JSX.Element => <ExplorerPage />,
 	name: (
 		<div className="tab-item">
 			<Compass size={16} /> Explorer
