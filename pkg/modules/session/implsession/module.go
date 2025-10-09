@@ -63,7 +63,8 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 		for _, org := range orgs {
 			orgContext, err := module.getOrgSessionContext(ctx, org, name, siteURL)
 			if err != nil {
-				return nil, err
+				// For some reason, there was an error in getting the org session context. Instead of failing the context call, we create a PasswordAuthNSupport for the org and add a warning.
+				orgContext = authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword).AddWarning(err.Error())
 			}
 
 			context = context.AddOrgContext(orgContext)
@@ -81,7 +82,8 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 
 		orgContext, err := module.getOrgSessionContext(ctx, org, name, siteURL)
 		if err != nil {
-			return nil, err
+			// For some reason, there was an error in getting the org session context. Instead of failing the context call, we create a PasswordAuthNSupport for the org and add a warning.
+			orgContext = authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword).AddWarning(err.Error())
 		}
 
 		context = context.AddOrgContext(orgContext)

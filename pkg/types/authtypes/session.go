@@ -11,6 +11,7 @@ type OrgSessionContext struct {
 	ID           valuer.UUID  `json:"id"`
 	Name         string       `json:"name"`
 	AuthNSupport AuthNSupport `json:"authNSupport"`
+	Warnings     []string     `json:"warnings"`
 }
 
 type AuthNSupport struct {
@@ -32,10 +33,15 @@ func NewSessionContext() *SessionContext {
 }
 
 func NewOrgSessionContext(orgID valuer.UUID, name string) *OrgSessionContext {
-	return &OrgSessionContext{ID: orgID, Name: name, AuthNSupport: AuthNSupport{
-		Password: []PasswordAuthNSupport{},
-		Callback: []CallbackAuthNSupport{},
-	}}
+	return &OrgSessionContext{
+		ID:   orgID,
+		Name: name,
+		AuthNSupport: AuthNSupport{
+			Password: []PasswordAuthNSupport{},
+			Callback: []CallbackAuthNSupport{},
+		},
+		Warnings: []string{},
+	}
 }
 
 func (s *SessionContext) AddOrgContext(orgContext *OrgSessionContext) *SessionContext {
@@ -50,5 +56,10 @@ func (s *OrgSessionContext) AddPasswordAuthNSupport(provider AuthNProvider) *Org
 
 func (s *OrgSessionContext) AddCallbackAuthNSupport(provider AuthNProvider, url string) *OrgSessionContext {
 	s.AuthNSupport.Callback = append(s.AuthNSupport.Callback, CallbackAuthNSupport{Provider: provider, URL: url})
+	return s
+}
+
+func (s *OrgSessionContext) AddWarning(warning string) *OrgSessionContext {
+	s.Warnings = append(s.Warnings, warning)
 	return s
 }
