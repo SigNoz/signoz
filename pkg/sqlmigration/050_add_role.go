@@ -69,6 +69,9 @@ func (migration *addRole) Up(ctx context.Context, db *bun.DB) error {
 	})
 	sqls = append(sqls, tableSQLs...)
 
+	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "role", ColumnNames: []sqlschema.ColumnName{"display_name"}})
+	sqls = append(sqls, indexSQLs...)
+
 	for _, sqlStmt := range sqls {
 		if _, err := tx.ExecContext(ctx, string(sqlStmt)); err != nil {
 			return err

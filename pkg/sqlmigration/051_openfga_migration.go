@@ -58,7 +58,7 @@ func (migration *openfgaMigraion) Up(ctx context.Context, db *bun.DB) error {
 			{Name: "user_relation", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "user_type", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "ulid", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "inserted_at", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "inserted_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
 			{Name: "condition_name", DataType: sqlschema.DataTypeText, Nullable: true},
 			//todo check why openfga uses long blob for this
 			{Name: "condition_context", DataType: sqlschema.DataTypeText, Nullable: true},
@@ -131,7 +131,7 @@ func (migration *openfgaMigraion) Up(ctx context.Context, db *bun.DB) error {
 			{Name: "user_relation", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "operation", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "ulid", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "inserted_at", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "inserted_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
 			{Name: "condition_name", DataType: sqlschema.DataTypeText, Nullable: true},
 			{Name: "condition_context", DataType: sqlschema.DataTypeText, Nullable: true},
 		},

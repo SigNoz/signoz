@@ -22,7 +22,7 @@ var (
 )
 
 var (
-	TypeableResourcesRoles = authtypes.MustNewTypeableResources(authtypes.MustNewName("roles"))
+	TypeableResourcesRoles = authtypes.MustNewTypeableMetaResources(authtypes.MustNewName("roles"))
 )
 
 type StorableRole struct {
@@ -164,7 +164,7 @@ func (role *PatchableRole) UnmarshalJSON(data []byte) error {
 		return errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty role patch request received, at least one of displayName or description must be present")
 	}
 
-	if *shadowRole.DisplayName == "" {
+	if shadowRole.DisplayName != nil && *shadowRole.DisplayName == "" {
 		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "cannot set empty displayName for the role")
 	}
 
