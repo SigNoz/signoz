@@ -561,3 +561,20 @@ func (store *store) RunInTx(ctx context.Context, cb func(ctx context.Context) er
 		return cb(ctx)
 	})
 }
+
+func (store *store) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*types.User, error) {
+	users := []*types.User{}
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&users).
+		Where("email = ?", email).
+		Where("org_id IN (?)", bun.In(orgIDs)).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}

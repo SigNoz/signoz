@@ -2,12 +2,19 @@ package authtypes
 
 import (
 	"encoding/json"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 type GoogleConfig struct {
-	ClientID     string `json:"clientId"`
+	// ClientID is the application's ID. For example, 292085223830.apps.googleusercontent.com.
+	ClientID string `json:"clientId"`
+
+	// It is the application's secret.
 	ClientSecret string `json:"clientSecret"`
-	RedirectURI  string `json:"redirectURI"`
+
+	// What is the meaning of this? Should we remove this?
+	RedirectURI string `json:"redirectURI"`
 }
 
 func (config *GoogleConfig) UnmarshalJSON(data []byte) error {
@@ -18,7 +25,13 @@ func (config *GoogleConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	// Unfortunately, we have not being doing validations till now and putting validations here will break the existing data.
+	if temp.ClientID == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "clientId is required")
+	}
+
+	if temp.ClientSecret == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "clientSecret is required")
+	}
 
 	*config = GoogleConfig(temp)
 	return nil

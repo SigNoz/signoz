@@ -42,3 +42,12 @@ func (module *getter) GetUser(ctx context.Context, id valuer.UUID) (*types.User,
 
 	return user, nil
 }
+
+func (module *getter) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*types.User, error) {
+	users, err := module.store.ListUsersByEmailAndOrgIDs(ctx, email, orgIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
