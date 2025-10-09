@@ -1,9 +1,8 @@
 import { Page } from '@playwright/test';
 
 // Read credentials from environment variables
-const username = process.env.LOGIN_USERNAME;
-const password = process.env.LOGIN_PASSWORD;
-const baseURL = process.env.BASE_URL;
+const username = process.env.SIGNOZ_E2E_USERNAME;
+const password = process.env.SIGNOZ_E2E_PASSWORD;
 
 /**
  * Ensures the user is logged in. If not, performs the login steps.
@@ -11,17 +10,17 @@ const baseURL = process.env.BASE_URL;
  */
 export async function ensureLoggedIn(page: Page): Promise<void> {
 	// if already in home page, return
-	if (await page.url().includes('/home')) {
+	if (page.url().includes('/home')) {
 		return;
 	}
 
 	if (!username || !password) {
 		throw new Error(
-			'E2E_EMAIL and E2E_PASSWORD environment variables must be set.',
+			'SIGNOZ_E2E_USERNAME and SIGNOZ_E2E_PASSWORD environment variables must be set.',
 		);
 	}
 
-	await page.goto(`${baseURL}/login`);
+	await page.goto('/login');
 	await page.getByTestId('email').click();
 	await page.getByTestId('email').fill(username);
 	await page.getByTestId('initiate_login').click();

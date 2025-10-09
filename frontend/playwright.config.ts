@@ -45,14 +45,7 @@ export default defineConfig({
 	projects: [
 		{
 			name: 'chromium',
-			use: {
-				launchOptions: { args: ['--start-maximized'] },
-				viewport: null,
-				colorScheme: 'dark',
-				locale: 'en-US',
-				baseURL: 'https://app.us.staging.signoz.cloud',
-				trace: 'on-first-retry',
-			},
+			use: { ...devices['Desktop Chrome'] },
 		},
 
 		{

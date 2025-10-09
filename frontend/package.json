@@ -18,7 +18,12 @@
 		"husky:configure": "cd .. && husky install frontend/.husky && cd frontend && chmod ug+x .husky/*",
 		"commitlint": "commitlint --edit $1",
 		"test": "jest",
-		"test:changedsince": "jest --changedSince=main --coverage --silent"
+		"test:changedsince": "jest --changedSince=main --coverage --silent",
+		"e2e": "playwright test",
+		"e2e:ui": "playwright test --ui",
+		"e2e:headed": "playwright test --headed",
+		"e2e:debug": "playwright test --debug",
+		"e2e:report": "playwright show-report"
 	},
 	"engines": {
 		"node": ">=16.15.0"
