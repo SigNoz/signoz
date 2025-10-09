@@ -59,6 +59,9 @@ type Getter interface {
 
 	// Get user by id.
 	GetUser(context.Context, valuer.UUID) (*types.User, error)
+
+	// List users by email and org ids.
+	ListUsersByEmailAndOrgIDs(context.Context, valuer.Email, []valuer.UUID) ([]*types.User, error)
 }
 
 type Handler interface {

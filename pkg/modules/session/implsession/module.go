@@ -3,6 +3,7 @@ package implsession
 import (
 	"context"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -44,7 +45,22 @@ func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.A
 func (module *module) GetSessionContext(ctx context.Context, email valuer.Email, siteURL *url.URL) (*authtypes.SessionContext, error) {
 	context := authtypes.NewSessionContext()
 
-	users, err := module.userGetter.GetUsersByEmail(ctx, email)
+	orgs, err := module.orgGetter.ListByOwnedKeyRange(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(orgs) == 0 {
+		context.Exists = false
+		return context, nil
+	}
+
+	var orgIDs []valuer.UUID
+	for _, org := range orgs {
+		orgIDs = append(orgIDs, org.ID)
+	}
+
+	users, err := module.userGetter.ListUsersByEmailAndOrgIDs(ctx, email, orgIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -55,15 +71,11 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 	if len(users) == 0 {
 		context.Exists = false
 
-		orgs, err := module.orgGetter.ListByOwnedKeyRange(ctx)
-		if err != nil {
-			return nil, err
-		}
-
 		for _, org := range orgs {
 			orgContext, err := module.getOrgSessionContext(ctx, org, name, siteURL)
 			if err != nil {
-				return nil, err
+				// For some reason, there was an error in getting the org session context. Instead of failing the context call, we create a PasswordAuthNSupport for the org and add a warning.
+				orgContext = authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword).AddWarning(err)
 			}
 
 			context = context.AddOrgContext(orgContext)
@@ -74,14 +86,19 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 
 	context.Exists = true
 	for _, user := range users {
-		org, err := module.orgGetter.Get(ctx, user.OrgID)
-		if err != nil {
-			return nil, err
+		idx := slices.IndexFunc(orgs, func(org *types.Organization) bool {
+			return org.ID == user.OrgID
+		})
+
+		if idx == -1 {
+			continue
 		}
 
+		org := orgs[idx]
 		orgContext, err := module.getOrgSessionContext(ctx, org, name, siteURL)
 		if err != nil {
-			return nil, err
+			// For some reason, there was an error in getting the org session context. Instead of failing the context call, we create a PasswordAuthNSupport for the org and add a warning.
+			orgContext = authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword).AddWarning(err)
 		}
 
 		context = context.AddOrgContext(orgContext)

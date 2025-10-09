@@ -127,6 +127,9 @@ type UserStore interface {
 	// List users by org.
 	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*User, error)
 
+	// List users by email and org ids.
+	ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*User, error)
+
 	UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *User) (*User, error)
 	DeleteUser(ctx context.Context, orgID string, id string) error
 
