@@ -5,9 +5,14 @@ import (
 )
 
 type GoogleConfig struct {
-	ClientID     string `json:"clientId"`
+	// A public identifier for apps. For example, 292085223830.apps.googleusercontent.com.
+	ClientID string `json:"clientId"`
+
+	// A secret known only to the application and the authorization server.
 	ClientSecret string `json:"clientSecret"`
-	RedirectURI  string `json:"redirectURI"`
+
+	// What is the meaning of this? Should we remove this?
+	RedirectURI string `json:"redirectURI"`
 }
 
 func (config *GoogleConfig) UnmarshalJSON(data []byte) error {
