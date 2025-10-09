@@ -20,11 +20,12 @@ func buildFilterExpression(tags []servicetypes.TagFilterItem) string {
 			if len(t.StringValues) == 0 {
 				continue
 			}
-			ors := make([]string, 0, len(t.StringValues))
+			// Use QBv5 IN syntax directly: key IN ['a','b']
+			vals := make([]string, 0, len(t.StringValues))
 			for _, v := range t.StringValues {
-				ors = append(ors, fmt.Sprintf("%s = '%s'", key, escapeSingleQuotes(v)))
+				vals = append(vals, fmt.Sprintf("'%s'", escapeSingleQuotes(v)))
 			}
-			parts = append(parts, "("+strings.Join(ors, " OR ")+")")
+			parts = append(parts, fmt.Sprintf("%s IN [%s]", key, strings.Join(vals, ",")))
 		case "equal", "=":
 			if len(t.StringValues) == 0 {
 				continue
