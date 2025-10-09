@@ -232,7 +232,7 @@ func (p *BaseSeasonalProvider) getPredictedSeries(
 // moving avg of the previous period series + z score threshold * std dev of the series
 // moving avg of the previous period series - z score threshold * std dev of the series
 func (p *BaseSeasonalProvider) getBounds(
-	series, predictedSeries *qbtypes.TimeSeries,
+	series, predictedSeries, weekSeries *qbtypes.TimeSeries,
 	zScoreThreshold float64,
 ) (*qbtypes.TimeSeries, *qbtypes.TimeSeries) {
 	upperBoundSeries := &qbtypes.TimeSeries{
@@ -246,8 +246,8 @@ func (p *BaseSeasonalProvider) getBounds(
 	}
 
 	for idx, curr := range series.Values {
-		upperBound := p.getMovingAvg(predictedSeries, movingAvgWindowSize, idx) + zScoreThreshold*p.getStdDev(series)
-		lowerBound := p.getMovingAvg(predictedSeries, movingAvgWindowSize, idx) - zScoreThreshold*p.getStdDev(series)
+		upperBound := p.getMovingAvg(predictedSeries, movingAvgWindowSize, idx) + zScoreThreshold*p.getStdDev(weekSeries)
+		lowerBound := p.getMovingAvg(predictedSeries, movingAvgWindowSize, idx) - zScoreThreshold*p.getStdDev(weekSeries)
 		upperBoundSeries.Values = append(upperBoundSeries.Values, &qbtypes.TimeSeriesValue{
 			Timestamp: curr.Timestamp,
 			Value:     upperBound,
@@ -398,14 +398,15 @@ func (p *BaseSeasonalProvider) getAnomalies(ctx context.Context, orgID valuer.UU
 		aggOfInterest := result.Aggregations[0]
 
 		for _, series := range aggOfInterest.Series {
-			stdDev := p.getStdDev(series)
-			p.logger.InfoContext(ctx, "calculated standard deviation for series", "anomaly_std_dev", stdDev, "anomaly_labels", series.Labels)
 
 			pastPeriodSeries := p.getMatchingSeries(ctx, pastPeriodResult, series)
 			currentSeasonSeries := p.getMatchingSeries(ctx, currentSeasonResult, series)
 			pastSeasonSeries := p.getMatchingSeries(ctx, pastSeasonResult, series)
 			past2SeasonSeries := p.getMatchingSeries(ctx, past2SeasonResult, series)
 			past3SeasonSeries := p.getMatchingSeries(ctx, past3SeasonResult, series)
+
+			stdDev := p.getStdDev(currentSeasonSeries)
+			p.logger.InfoContext(ctx, "calculated standard deviation for series", "anomaly_std_dev", stdDev, "anomaly_labels", series.Labels)
 
 			prevSeriesAvg := p.getAvg(pastPeriodSeries)
 			currentSeasonSeriesAvg := p.getAvg(currentSeasonSeries)
@@ -435,6 +436,7 @@ func (p *BaseSeasonalProvider) getAnomalies(ctx context.Context, orgID valuer.UU
 			upperBoundSeries, lowerBoundSeries := p.getBounds(
 				series,
 				predictedSeries,
+				currentSeasonSeries,
 				zScoreThreshold,
 			)
 			aggOfInterest.UpperBoundSeries = append(aggOfInterest.UpperBoundSeries, upperBoundSeries)
