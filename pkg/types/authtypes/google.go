@@ -5,10 +5,10 @@ import (
 )
 
 type GoogleConfig struct {
-	// A public identifier for apps. For example, 292085223830.apps.googleusercontent.com.
+	// ClientID is the application's ID. For example, 292085223830.apps.googleusercontent.com.
 	ClientID string `json:"clientId"`
 
-	// A secret known only to the application and the authorization server.
+	// It is the application's secret.
 	ClientSecret string `json:"clientSecret"`
 
 	// What is the meaning of this? Should we remove this?

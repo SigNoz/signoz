@@ -7,7 +7,7 @@ import (
 )
 
 type OIDCConfig struct {
-	// The issuer is the URL identifier for the service. For example: "https://accounts.google.com" or "https://login.salesforce.com".
+	// It is the URL identifier for the service. For example: "https://accounts.google.com" or "https://login.salesforce.com".
 	Issuer string `json:"issuer"`
 
 	// Some offspec providers like Azure, Oracle IDCS have oidc discovery url different from issuer url which causes issuerValidation to fail
@@ -15,10 +15,10 @@ type OIDCConfig struct {
 	// from the .well-known/openid-configuration issuer
 	IssuerAlias string `json:"issuerAlias"`
 
-	// ClientID is the application's ID.
+	// It is the application's ID.
 	ClientID string `json:"clientId"`
 
-	// ClientSecret is the application's secret.
+	// It is the application's secret.
 	ClientSecret string `json:"clientSecret"`
 
 	// Mapping of claims to the corresponding fields in the token.
