@@ -55,7 +55,7 @@ func (c *conditionBuilder) ConditionFor(
 		return "", nil
 	}
 
-	tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
+	tblFieldName, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, tblFieldName, operator)
 
 	// key must exists to apply main filter
 	expr := `if(mapContains(%s, %s), %s, true)`
