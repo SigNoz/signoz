@@ -160,6 +160,7 @@ func (h *handler) DeleteInvite(w http.ResponseWriter, r *http.Request) {
 	}
 	render.Success(w, http.StatusNoContent, nil)
 }
+
 func (h *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()

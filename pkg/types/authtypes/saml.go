@@ -42,7 +42,6 @@ func (config *SamlConfig) UnmarshalJSON(data []byte) error {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "samlCert is required")
 	}
 
-	// Unfortunately, we have not being doing validations till now and putting validations here will break the existing data.
 	*config = SamlConfig(temp)
 	return nil
 }
