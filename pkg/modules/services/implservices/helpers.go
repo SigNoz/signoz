@@ -48,20 +48,7 @@ func toFloat(row []any, idx int) float64 {
 	if idx < 0 || idx >= len(row) || row[idx] == nil {
 		return 0
 	}
-	switch v := row[idx].(type) {
-	case float64:
-		return v
-	case float32:
-		return float64(v)
-	case int64:
-		return float64(v)
-	case int:
-		return float64(v)
-	case uint64:
-		return float64(v)
-	default:
-		return 0
-	}
+	return float64(row[idx].(float64))
 }
 
 // toUint64 safely converts a cell value to uint64, guarding against negatives and nils.
@@ -69,32 +56,12 @@ func toUint64(row []any, idx int) uint64 {
 	if idx < 0 || idx >= len(row) || row[idx] == nil {
 		return 0
 	}
-	switch v := row[idx].(type) {
-	case uint64:
-		return v
-	case int64:
-		if v < 0 {
-			return 0
-		}
-		return uint64(v)
-	case int:
-		if v < 0 {
-			return 0
-		}
-		return uint64(v)
-	case float64:
-		if v < 0 {
-			return 0
-		}
-		return uint64(v)
-	default:
-		return 0
-	}
+	return uint64(row[idx].(uint64))
 }
 
-// applyTopLevelOpsToItems sets DataWarning.TopLevelOps for matching service names.
+// applyOpsToItems sets DataWarning.TopLevelOps for matching service names.
 // If opsMap is nil, it performs no changes and returns nil.
-func applyTopLevelOpsToItems(items []*servicetypesv1.ResponseItem, opsMap map[string][]string) {
+func applyOpsToItems(items []*servicetypesv1.ResponseItem, opsMap map[string][]string) {
 	if len(items) == 0 {
 		return
 	}

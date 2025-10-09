@@ -240,23 +240,6 @@ func TestMapQueryRangeRespToServices(t *testing.T) {
 			},
 			wantServices: []string{"svc-mid"},
 		},
-		{
-			name: "row out of bounds compare to service index is skipped",
-			resp: &qbtypes.QueryRangeResponse{
-				Type: qbtypes.RequestTypeScalar,
-				Data: qbtypes.QueryData{
-					Results: []any{&qbtypes.ScalarData{
-						QueryName: "A",
-						Columns:   []*qbtypes.ColumnDescriptor{groupCol, agg(0), agg(1), agg(2), agg(3), agg(4)},
-						Data:      [][]any{{}},
-					},
-					},
-				},
-			},
-			startMs: 0, endMs: 10000,
-			wantItems:    []*servicetypesv1.ResponseItem{},
-			wantServices: []string{},
-		},
 	}
 
 	for _, tt := range tests {

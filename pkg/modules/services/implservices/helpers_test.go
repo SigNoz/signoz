@@ -81,13 +81,8 @@ func TestToFloat(t *testing.T) {
 		want float64
 	}{
 		{name: "float64", row: []any{1.5}, idx: 0, want: 1.5},
-		{name: "float32", row: []any{float32(2.25)}, idx: 0, want: 2.25},
-		{name: "int64", row: []any{int64(3)}, idx: 0, want: 3},
-		{name: "int", row: []any{-4}, idx: 0, want: -4},
-		{name: "uint64", row: []any{uint64(5)}, idx: 0, want: 5},
 		{name: "nil", row: []any{nil}, idx: 0, want: 0},
 		{name: "oob", row: []any{1}, idx: 1, want: 0},
-		{name: "unsupported type", row: []any{"x"}, idx: 0, want: 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -105,12 +100,8 @@ func TestToUint64(t *testing.T) {
 		want uint64
 	}{
 		{name: "uint64", row: []any{uint64(5)}, idx: 0, want: 5},
-		{name: "int64 positive", row: []any{int64(6)}, idx: 0, want: 6},
-		{name: "int negative -> 0", row: []any{-1}, idx: 0, want: 0},
-		{name: "float64 positive", row: []any{7.9}, idx: 0, want: 7},
 		{name: "nil -> 0", row: []any{nil}, idx: 0, want: 0},
 		{name: "oob -> 0", row: []any{1}, idx: 2, want: 0},
-		{name: "unsupported type -> 0", row: []any{"x"}, idx: 0, want: 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -120,7 +111,7 @@ func TestToUint64(t *testing.T) {
 	}
 }
 
-func TestApplyTopLevelOpsToItems(t *testing.T) {
+func TestApplyOpsToItems(t *testing.T) {
 	tests := []struct {
 		name  string
 		items []*servicetypesv1.ResponseItem
@@ -161,7 +152,7 @@ func TestApplyTopLevelOpsToItems(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			applyTopLevelOpsToItems(tt.items, tt.ops)
+			applyOpsToItems(tt.items, tt.ops)
 			if len(tt.items) != len(tt.want) {
 				assert.Equal(t, len(tt.want), len(tt.items))
 				return

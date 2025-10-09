@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -34,7 +35,7 @@ func NewModule(q querier.Querier, ts telemetrystore.TelemetryStore) services.Mod
 // Builds a QBv5 traces aggregation grouped by service.name and maps results to ResponseItem.
 func (m *module) Get(ctx context.Context, orgID string, req *servicetypesv1.Request) ([]*servicetypesv1.ResponseItem, error) {
 	if req == nil {
-		return nil, nil
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
 
 	// Prepare phase
@@ -107,14 +108,14 @@ func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (qbtypes.Qu
 	// Parse start/end (nanoseconds) from strings and convert to milliseconds for QBv5
 	startNs, err := strconv.ParseUint(req.Start, 10, 64)
 	if err != nil {
-		return qbtypes.QueryRangeRequest{}, 0, 0, fmt.Errorf("invalid start time: %w", err)
+		return qbtypes.QueryRangeRequest{}, 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid start time: %v", err)
 	}
 	endNs, err := strconv.ParseUint(req.End, 10, 64)
 	if err != nil {
-		return qbtypes.QueryRangeRequest{}, 0, 0, fmt.Errorf("invalid end time: %w", err)
+		return qbtypes.QueryRangeRequest{}, 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid end time: %v", err)
 	}
 	if startNs >= endNs {
-		return qbtypes.QueryRangeRequest{}, 0, 0, fmt.Errorf("start must be before end")
+		return qbtypes.QueryRangeRequest{}, 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "start must be before end")
 	}
 
 	startMs := startNs / 1_000_000
@@ -195,21 +196,12 @@ func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, s
 			aggIndexMappings[int(c.AggregationIndex)] = i
 		}
 	}
-	if serviceNameRespIndex == -1 {
-		return []*servicetypesv1.ResponseItem{}, []string{}
-	}
 
 	periodSeconds := float64((endMs - startMs) / 1000)
-	if periodSeconds <= 0 {
-		periodSeconds = 1
-	}
 
 	out := make([]*servicetypesv1.ResponseItem, 0, len(sd.Data))
 	serviceNames := make([]string, 0, len(sd.Data))
 	for _, row := range sd.Data {
-		if serviceNameRespIndex >= len(row) {
-			continue
-		}
 		svcName := fmt.Sprintf("%v", row[serviceNameRespIndex])
 		serviceNames = append(serviceNames, svcName)
 
@@ -256,6 +248,6 @@ func (m *module) attachTopLevelOps(ctx context.Context, serviceNames []string, s
 	if err != nil {
 		return err
 	}
-	applyTopLevelOpsToItems(items, opsMap)
+	applyOpsToItems(items, opsMap)
 	return nil
 }
