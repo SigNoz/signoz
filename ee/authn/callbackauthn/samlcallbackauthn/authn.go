@@ -105,19 +105,18 @@ func (a *AuthN) serviceProvider(siteURL *url.URL, authDomain *authtypes.AuthDoma
 		return nil, err
 	}
 
+	issuerURL := &url.URL{Scheme: siteURL.Scheme, Host: siteURL.Host}
+	acsURL := &url.URL{Scheme: siteURL.Scheme, Host: siteURL.Host, Path: redirectPath}
+
 	return &saml2.SAMLServiceProvider{
-		IdentityProviderSSOURL: authDomain.AuthDomainConfig().SAML.SamlIdp,
-		IdentityProviderIssuer: authDomain.AuthDomainConfig().SAML.SamlEntity,
-		ServiceProviderIssuer:  siteURL.Host,
-		AssertionConsumerServiceURL: (&url.URL{
-			Scheme: siteURL.Scheme,
-			Host:   siteURL.Host,
-			Path:   redirectPath,
-		}).String(),
-		SignAuthnRequests:      !authDomain.AuthDomainConfig().SAML.InsecureSkipAuthNRequestsSigned,
-		AllowMissingAttributes: true,
-		IDPCertificateStore:    certStore,
-		SPKeyStore:             dsig.RandomKeyStoreForTest(),
+		IdentityProviderSSOURL:      authDomain.AuthDomainConfig().SAML.SamlIdp,
+		IdentityProviderIssuer:      authDomain.AuthDomainConfig().SAML.SamlEntity,
+		ServiceProviderIssuer:       issuerURL.String(),
+		AssertionConsumerServiceURL: acsURL.String(),
+		SignAuthnRequests:           !authDomain.AuthDomainConfig().SAML.InsecureSkipAuthNRequestsSigned,
+		AllowMissingAttributes:      true,
+		IDPCertificateStore:         certStore,
+		SPKeyStore:                  dsig.RandomKeyStoreForTest(),
 	}, nil
 }
 
