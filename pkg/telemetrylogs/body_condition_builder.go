@@ -15,6 +15,15 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
+// Operator intent helpers
+func isMembershipContains(op qbtypes.FilterOperator) bool {
+	return op == qbtypes.FilterOperatorContains || op == qbtypes.FilterOperatorNotContains
+}
+
+func isMembershipLike(op qbtypes.FilterOperator) bool {
+	return op == qbtypes.FilterOperatorLike || op == qbtypes.FilterOperatorILike || op == qbtypes.FilterOperatorNotLike
+}
+
 type PathType struct {
 	Path     string `ch:"path"`
 	Type     string `ch:"type"`
@@ -221,28 +230,20 @@ func collectPresence(cached []telemetrytypes.JSONDataType) presence {
 
 // decideContains applies explicit priority rules for LIKE/Contains family
 func decideContains(p presence, dataType telemetrytypes.JSONDataType) (preferArray bool, elem telemetrytypes.JSONDataType) {
-	// String rules
-	if p.arrayString && p.scalarString {
-		return true, telemetrytypes.String
-	}
-	if p.arrayString {
-		return true, telemetrytypes.String
-	}
-	if p.scalarString {
-		return false, telemetrytypes.String
-	}
-	// Numeric/bool rules: prefer array if present, else scalar
 	switch dataType {
+	case telemetrytypes.String:
+		if p.arrayString {
+			return true, telemetrytypes.String
+		}
+		if p.scalarString {
+			return false, telemetrytypes.String
+		}
 	case telemetrytypes.Int64:
 		if p.arrayInt {
 			return true, telemetrytypes.Int64
 		}
 		if p.scalarInt {
 			return false, telemetrytypes.Int64
-		}
-		// both present → array preferred
-		if p.arrayInt && p.scalarInt {
-			return true, telemetrytypes.Int64
 		}
 	case telemetrytypes.Float64:
 		if p.arrayFloat {
@@ -251,9 +252,6 @@ func decideContains(p presence, dataType telemetrytypes.JSONDataType) (preferArr
 		if p.scalarFloat {
 			return false, telemetrytypes.Float64
 		}
-		if p.arrayFloat && p.scalarFloat {
-			return true, telemetrytypes.Float64
-		}
 	case telemetrytypes.Bool:
 		if p.arrayBool {
 			return true, telemetrytypes.Bool
@@ -261,12 +259,14 @@ func decideContains(p presence, dataType telemetrytypes.JSONDataType) (preferArr
 		if p.scalarBool {
 			return false, telemetrytypes.Bool
 		}
-		if p.arrayBool && p.scalarBool {
-			return true, telemetrytypes.Bool
-		}
 	}
-	// Fallback: treat as string scalar LIKE
-	return false, telemetrytypes.String
+	// Fallbacks when explicit type presence is inconclusive
+	// Prefer array-any if any array type for this path exists
+	if p.arrayInt || p.arrayFloat || p.arrayBool || p.arrayString {
+		return true, dataType
+	}
+	// Otherwise default to scalar of inferred type (safe fallback)
+	return false, dataType
 }
 
 // decideOther applies priority rules for non-LIKE-family operators
@@ -304,29 +304,9 @@ func decideOther(p presence, dataType telemetrytypes.JSONDataType) (preferArray 
 	// Default to scalar unknown → string, which is safe
 	return false, telemetrytypes.String
 }
-func (b *BodyConditionBuilder) chooseTerminalType(cached []telemetrytypes.JSONDataType, operator qbtypes.FilterOperator, value any) telemetrytypes.JSONDataType {
-	// Prefer String for string-oriented ops
-	if operator == qbtypes.FilterOperatorContains || operator == qbtypes.FilterOperatorILike || operator == qbtypes.FilterOperatorLike || operator == qbtypes.FilterOperatorNotContains || operator == qbtypes.FilterOperatorNotILike || operator == qbtypes.FilterOperatorNotLike || operator == qbtypes.FilterOperatorRegexp || operator == qbtypes.FilterOperatorNotRegexp {
-		for _, t := range cached {
-			if t == telemetrytypes.String {
-				return telemetrytypes.String
-			}
-		}
-		vt, _ := b.inferDataType(value, operator)
-		if vt == telemetrytypes.String {
-			return telemetrytypes.String
-		}
-		return vt
-	}
-	if len(cached) == 1 {
-		return cached[0]
-	}
+func (b *BodyConditionBuilder) chooseTerminalType(_ []telemetrytypes.JSONDataType, operator qbtypes.FilterOperator, value any) telemetrytypes.JSONDataType {
+	// Always derive from input value/operator. Fallbacks use inferred datatype only.
 	vt, _ := b.inferDataType(value, operator)
-	for _, t := range cached {
-		if t == vt {
-			return vt
-		}
-	}
 	return vt
 }
 
@@ -341,42 +321,14 @@ func wrapLikeValueIfNeeded(operator qbtypes.FilterOperator, value any) any {
 
 // chooseArrayPreference decides whether to search scalar or array at the terminal
 // and returns the preferred element type for the terminal comparison.
-func (b *BodyConditionBuilder) chooseArrayPreference(path string, operator qbtypes.FilterOperator, value any, insideArrayContext bool) (preferArray bool, elem telemetrytypes.JSONDataType) {
+func (b *BodyConditionBuilder) chooseArrayPreference(path string, operator qbtypes.FilterOperator, value any, _ bool) (preferArray bool, elem telemetrytypes.JSONDataType) {
 	cached := b.getTypeSet(path)
 	p := collectPresence(cached)
 	dataType, _ := b.inferDataType(value, operator)
-
-	if operator == qbtypes.FilterOperatorContains || operator == qbtypes.FilterOperatorNotContains || operator == qbtypes.FilterOperatorLike || operator == qbtypes.FilterOperatorILike || operator == qbtypes.FilterOperatorNotLike {
-		preferA, el := decideContains(p, dataType)
-		if !preferA && insideArrayContext {
-			// Heuristic default: when inside an outer array-of-JSON object and cache is inconclusive,
-			// prefer array search for non-string Contains to match nested array semantics.
-			if dataType == telemetrytypes.Int64 {
-				return true, telemetrytypes.Int64
-			}
-			if dataType == telemetrytypes.Float64 {
-				return true, telemetrytypes.Float64
-			}
-			if dataType == telemetrytypes.Bool {
-				return true, telemetrytypes.Bool
-			}
-		}
-		return preferA, el
+	if isMembershipContains(operator) || isMembershipLike(operator) {
+		return decideContains(p, dataType)
 	}
-	preferA, el := decideOther(p, dataType)
-	if !preferA && insideArrayContext {
-		// For non-Contains numeric ops inside array context, default to array-any if cache is inconclusive
-		if dataType == telemetrytypes.Int64 {
-			return true, telemetrytypes.Int64
-		}
-		if dataType == telemetrytypes.Float64 {
-			return true, telemetrytypes.Float64
-		}
-		if dataType == telemetrytypes.Bool {
-			return true, telemetrytypes.Bool
-		}
-	}
-	return preferA, el
+	return decideOther(p, dataType)
 }
 
 // BuildCondition builds the full WHERE condition for body_v2 JSON paths
@@ -396,14 +348,48 @@ type PathPlan struct {
 	TailFieldSegs  []string
 	TraversalSteps []planStep
 
-	PreferArrayAtEnd  bool
-	TerminalElemType  telemetrytypes.JSONDataType // element type for array membership or LIKE scalar
-	TerminalValueType telemetrytypes.JSONDataType // scalar coercion type for non-LIKE ops
+	PreferArrayAtEnd    bool
+	TerminalElemType    telemetrytypes.JSONDataType // element type for array membership or LIKE scalar
+	TerminalValueType   telemetrytypes.JSONDataType // scalar coercion type for non-LIKE ops
+	FullPathForMetadata string                      // full path for metadata lookup (e.g., "education:parameters")
 }
 
 type planStep struct {
 	isArr bool
 	Name  string
+}
+
+// branchState captures traversal context affecting JSON flavor selection
+type branchState struct {
+	cameFromDynamic bool // true if the immediate parent branch was Dynamic
+	jsonTypes       int  // active max_dynamic_types seed (>0 means in Dynamic→JSON subtree)
+	jsonPaths       int  // active max_dynamic_paths seed
+}
+
+func (s branchState) nextForJSON() branchState {
+	// If we just switched from Dynamic to JSON, seeds are set by caller.
+	// For pure JSON→JSON, divide by progression factors when seeds are active.
+	if s.jsonTypes > 0 {
+		return branchState{cameFromDynamic: false, jsonTypes: s.jsonTypes / 2, jsonPaths: s.jsonPaths / 4}
+	}
+	return branchState{cameFromDynamic: false, jsonTypes: 0, jsonPaths: 0}
+}
+
+func (s branchState) seedOnDynamicToJSON() branchState {
+	return branchState{cameFromDynamic: false, jsonTypes: 16, jsonPaths: 256}
+}
+
+func (s branchState) forDynamicChild() branchState {
+	// Entering Dynamic branch resets; next JSON hop will seed
+	return branchState{cameFromDynamic: true, jsonTypes: 0, jsonPaths: 0}
+}
+
+func (s branchState) jsonArrayExpr(parentAlias, field string, depth int) string {
+	if s.jsonTypes > 0 {
+		return fmt.Sprintf("dynamicElement(%s.%s, 'Array(JSON(max_dynamic_types=%d, max_dynamic_paths=%d))')", parentAlias, field, s.jsonTypes, s.jsonPaths)
+	}
+	jsonFlavor := telemetrytypes.NestedLevelArrayJSON(depth, true)
+	return fmt.Sprintf("dynamicElement(%s.%s, '%s')", parentAlias, field, jsonFlavor.StringValue())
 }
 
 // planJSONPath parses the JSON path and decides the traversal steps and terminal comparison strategy
@@ -412,6 +398,7 @@ func (b *BodyConditionBuilder) planJSONPath(path string, operator qbtypes.Filter
 	plan := PathPlan{}
 	plan.HasArrays = strings.Contains(path, ":")
 	if !plan.HasArrays {
+		plan.FullPathForMetadata = path
 		plan.PreferArrayAtEnd, plan.TerminalElemType = b.chooseArrayPreference(path, operator, value, false)
 		plan.TerminalValueType = b.chooseTerminalType(b.getTypeSet(path), operator, value)
 		return plan
@@ -465,6 +452,7 @@ func (b *BodyConditionBuilder) planJSONPath(path string, operator qbtypes.Filter
 
 	// The fullPath for terminal typing preference is the joined key (outer + tokens)
 	fullPath := strings.Join(parts, ":")
+	plan.FullPathForMetadata = fullPath
 	plan.PreferArrayAtEnd, plan.TerminalElemType = b.chooseArrayPreference(fullPath, operator, value, true)
 	plan.TerminalValueType = b.chooseTerminalType(b.getTypeSet(fullPath), operator, value)
 	return plan
@@ -510,19 +498,16 @@ func (b *BodyConditionBuilder) emitArrayCondition(plan PathPlan, fullPath string
 	// Build array aliases
 	aliases := b.buildArrayAliases(plan)
 
-	// Build terminal condition
-	terminalCond, err := b.buildTerminalCondition(plan, aliases, operator, value, effVal, sb)
+	// Build traversal + terminal recursively per-hop
+	compiled, err := b.recurseArrayHops(plan, aliases, 0, operator, value, effVal, sb)
 	if err != nil {
 		return "", err
 	}
 
-	// Wrap with array traversal
-	cond := b.wrapWithArrayTraversal(plan, aliases, terminalCond)
-
 	// Add to query - outermost array gets depth 1
 	outermostFlavor := telemetrytypes.NestedLevelArrayJSON(1, true)
 	sourceExpr := fmt.Sprintf("dynamicElement(body_v2.%s, '%s')", plan.OuterArray, outermostFlavor.StringValue())
-	finalCond := fmt.Sprintf("arrayExists(%s-> %s, %s)", aliases[0], cond, sourceExpr)
+	finalCond := fmt.Sprintf("arrayExists(%s-> %s, %s)", aliases[0], compiled, sourceExpr)
 	sb.AddWhereClause(sqlbuilder.NewWhereClause().AddWhereExpr(sb.Args, finalCond))
 	return finalCond, nil
 }
@@ -575,7 +560,41 @@ func (b *BodyConditionBuilder) buildTerminalCondition(plan PathPlan, aliases []s
 func (b *BodyConditionBuilder) buildArrayMembershipCondition(plan PathPlan, aliases []string, operator qbtypes.FilterOperator, value, effVal any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	// Build array expression
 	arrayPath := b.buildArrayPath(plan, aliases)
-	arrayExpr := fmt.Sprintf("dynamicElement(%s, '%s')", arrayPath, telemetrytypes.ScalerTypeToArrayType[plan.TerminalElemType].StringValue())
+
+	// Check if we should use Array(Dynamic) filtering or typed array
+	cached := b.getTypeSet(plan.FullPathForMetadata)
+
+	// Check if we have a typed array available for this element type
+	typedArrayType := telemetrytypes.ScalerTypeToArrayType[plan.TerminalElemType]
+	hasTypedArray := slices.Contains(cached, typedArrayType)
+	hasArrayDynamic := slices.Contains(cached, telemetrytypes.ArrayDynamic)
+
+	// If both typed array and Array(Dynamic) are present, OR both membership checks
+	if hasTypedArray && hasArrayDynamic {
+		typedArrayExpr := fmt.Sprintf("dynamicElement(%s, '%s')", arrayPath, typedArrayType.StringValue())
+		baseArrayDynamicExpr := fmt.Sprintf("dynamicElement(%s, 'Array(Dynamic)')", arrayPath)
+		filteredDynamicExpr := fmt.Sprintf("arrayMap(x->dynamicElement(x, '%s'), arrayFilter(x->(dynamicType(x) = '%s'), %s))",
+			plan.TerminalElemType.StringValue(),
+			plan.TerminalElemType.StringValue(),
+			baseArrayDynamicExpr)
+
+		m1 := b.buildArrayMembership(typedArrayExpr, operator, value, plan.TerminalElemType, sb)
+		m2 := b.buildArrayMembership(filteredDynamicExpr, operator, value, plan.TerminalElemType, sb)
+		return sb.Or(m1, m2), nil
+	}
+
+	var arrayExpr string
+	if hasTypedArray {
+		// Use the typed array directly when available
+		arrayExpr = fmt.Sprintf("dynamicElement(%s, '%s')", arrayPath, typedArrayType.StringValue())
+	} else {
+		// Fall back to Array(Dynamic) with filtering
+		baseArrayExpr := fmt.Sprintf("dynamicElement(%s, 'Array(Dynamic)')", arrayPath)
+		arrayExpr = fmt.Sprintf("arrayMap(x->dynamicElement(x, '%s'), arrayFilter(x->(dynamicType(x) = '%s'), %s))",
+			plan.TerminalElemType.StringValue(),
+			plan.TerminalElemType.StringValue(),
+			baseArrayExpr)
+	}
 
 	// For array membership, use original value (not LIKE-wrapped)
 	return b.buildArrayMembership(arrayExpr, operator, value, plan.TerminalElemType, sb), nil
@@ -599,49 +618,86 @@ func (b *BodyConditionBuilder) buildScalarCondition(plan PathPlan, aliases []str
 	return b.applyOperator(sb, fieldExpr, operator, effVal)
 }
 
-// wrapWithArrayTraversal wraps the terminal condition with nested arrayExists
-func (b *BodyConditionBuilder) wrapWithArrayTraversal(plan PathPlan, aliases []string, terminalCond string) string {
-	cond := terminalCond
+// recurseArrayHopsForward recursively wraps child conditions from hop index 0 forward, branching per-hop
+func (b *BodyConditionBuilder) recurseArrayHops(plan PathPlan, aliases []string, idx int, operator qbtypes.FilterOperator, value, effVal any, sb *sqlbuilder.SelectBuilder) (string, error) {
+	return b.recurseArrayHopsState(plan, aliases, idx, operator, value, effVal, sb, branchState{})
+}
 
-	// Wrap from innermost to outermost, skipping the terminal array if it's already handled
-	startIdx := len(plan.TraversalSteps) - 1
+// recurseArrayHopsState carries branching state: whether parent selection was Dynamic,
+// and the current JSON progression parameters (types, paths) when inside a Dynamic→JSON subtree.
+func (b *BodyConditionBuilder) recurseArrayHopsState(plan PathPlan, aliases []string, idx int, operator qbtypes.FilterOperator, value, effVal any, sb *sqlbuilder.SelectBuilder, st branchState) (string, error) {
+	// Compute the last hop to wrap (skip terminal hop if already handled by PreferArrayAtEnd)
+	lastHopIdx := len(plan.TraversalSteps) - 1
 	if plan.PreferArrayAtEnd {
-		startIdx-- // Skip terminal array hop
+		lastHopIdx--
 	}
 
-	for i := startIdx; i >= 0; i-- {
-		step := plan.TraversalSteps[i]
-		if !step.isArr {
-			continue
+	// Base case: past the last hop to wrap → build terminal at the leaf
+	if idx > lastHopIdx {
+		terminalCond, err := b.buildTerminalCondition(plan, aliases, operator, value, effVal, sb)
+		if err != nil {
+			return "", err
 		}
-
-		currAlias := aliases[i+1]
-		parentAlias := aliases[i]
-
-		// Build the path key up to this hop for metadata lookup: outer:step1:...:current
-		pathParts := make([]string, 0, i+2)
-		pathParts = append(pathParts, plan.OuterArray)
-		for j := 0; j <= i; j++ {
-			pathParts = append(pathParts, plan.TraversalSteps[j].Name)
-		}
-		pathKey := strings.Join(pathParts, ":")
-
-		// If metadata says this hop is Array(JSON), emit directly without Dynamic filtering
-		useArrayJSON := slices.Contains(b.getTypeSet(pathKey), telemetrytypes.ArrayJSON)
-		if useArrayJSON {
-			// Derive nested Array(JSON) flavor using helper for body_v2 paths
-			depth := i + 2 // first hop from outer array is depth 2
-			jsonFlavor := telemetrytypes.NestedLevelArrayJSON(depth, true)
-			arrayExpr := fmt.Sprintf("dynamicElement(%s.%s, '%s')", parentAlias, step.Name, jsonFlavor.StringValue())
-			cond = fmt.Sprintf("arrayExists(%s-> %s, %s)", currAlias, cond, arrayExpr)
-		} else {
-			arrayExpr := fmt.Sprintf("dynamicElement(%s.%s, 'Array(Dynamic)')", parentAlias, step.Name)
-			filteredArray := fmt.Sprintf("arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), %s))", arrayExpr)
-			cond = fmt.Sprintf("arrayExists(%s-> %s, %s)", currAlias, cond, filteredArray)
-		}
+		return terminalCond, nil
 	}
 
-	return cond
+	step := plan.TraversalSteps[idx]
+	if !step.isArr {
+		return b.recurseArrayHopsState(plan, aliases, idx+1, operator, value, effVal, sb, st)
+	}
+
+	currAlias := aliases[idx+1]
+	parentAlias := aliases[idx]
+
+	// Build the path key up to this hop for metadata lookup: outer:step1:...:current
+	pathParts := make([]string, 0, idx+2)
+	pathParts = append(pathParts, plan.OuterArray)
+	for j := 0; j <= idx; j++ {
+		pathParts = append(pathParts, plan.TraversalSteps[j].Name)
+	}
+	pathKey := strings.Join(pathParts, ":")
+
+	// Determine availability of Array(JSON) and Array(Dynamic) at this hop
+	typeSet := b.getTypeSet(pathKey)
+	hasArrayJSON := slices.Contains(typeSet, telemetrytypes.ArrayJSON)
+	hasArrayDynamic := slices.Contains(typeSet, telemetrytypes.ArrayDynamic)
+
+	// Build expressions for available array types at this hop
+	depth := idx + 2 // first hop from outer array is depth 2
+	// Determine current JSON state (seed now if switching Dynamic → JSON at this hop)
+	currentState := st
+	if st.cameFromDynamic && st.jsonTypes == 0 {
+		currentState = st.seedOnDynamicToJSON()
+	}
+	jsonArrayExpr := currentState.jsonArrayExpr(parentAlias, step.Name, depth)
+
+	dynBaseExpr := fmt.Sprintf("dynamicElement(%s.%s, 'Array(Dynamic)')", parentAlias, step.Name)
+	dynFilteredExpr := fmt.Sprintf("arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), %s))", dynBaseExpr)
+
+	// Then, at this hop, compute child per branch and wrap
+	branches := make([]string, 0, 2)
+	if hasArrayJSON {
+		// For JSON branch, advance JSON progression for children from current state
+		nextState := currentState.nextForJSON()
+		childGroupJSON, err := b.recurseArrayHopsState(plan, aliases, idx+1, operator, value, effVal, sb, nextState)
+		if err != nil {
+			return "", err
+		}
+		branches = append(branches, fmt.Sprintf("arrayExists(%s-> %s, %s)", currAlias, childGroupJSON, jsonArrayExpr))
+	}
+	if hasArrayDynamic || (!hasArrayJSON && !hasArrayDynamic) {
+		// Dynamic branch; children will see parentWasDynamic=true and reset JSON progression
+		childGroupDyn, err := b.recurseArrayHopsState(plan, aliases, idx+1, operator, value, effVal, sb, st.forDynamicChild())
+		if err != nil {
+			return "", err
+		}
+		branches = append(branches, fmt.Sprintf("arrayExists(%s-> %s, %s)", currAlias, childGroupDyn, dynFilteredExpr))
+	}
+
+	if len(branches) == 1 {
+		return branches[0], nil
+	}
+	return fmt.Sprintf("(%s)", strings.Join(branches, " OR ")), nil
 }
 
 // Helper functions
@@ -678,9 +734,18 @@ func (b *BodyConditionBuilder) buildArrayPath(plan PathPlan, aliases []string) s
 func (b *BodyConditionBuilder) buildArrayMembership(arrayExpr string, operator qbtypes.FilterOperator, value any, elemType telemetrytypes.JSONDataType, sb *sqlbuilder.SelectBuilder) string {
 	var membership string
 	if elemType == telemetrytypes.String {
-		// For string arrays, use LIKE for Contains operations
-		likeVal := wrapLikeValueIfNeeded(operator, value)
-		membership = fmt.Sprintf("arrayExists(x -> ilike(x, %s), %s)", sb.Var(likeVal), arrayExpr)
+		// For string arrays:
+		// - Contains/NotContains mean element membership equality
+		// - Like/ILike use substring match
+		if isMembershipContains(operator) {
+			membership = fmt.Sprintf("arrayExists(x -> x = %s, %s)", sb.Var(value), arrayExpr)
+		} else if isMembershipLike(operator) {
+			likeVal := wrapLikeValueIfNeeded(operator, value)
+			// TODO: applyOperator should be used here; this is way too hardcoded
+			membership = fmt.Sprintf("arrayExists(x -> %s, %s)", sb.Var(likeVal), arrayExpr)
+		} else {
+			membership = fmt.Sprintf("arrayExists(x -> x = %s, %s)", sb.Var(value), arrayExpr)
+		}
 	} else {
 		// For non-string types, use exact equality
 		membership = fmt.Sprintf("arrayExists(x -> x = %s, %s)", sb.Var(value), arrayExpr)

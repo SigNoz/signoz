@@ -40,7 +40,7 @@ func NestedLevelArrayJSON(level int, isBodyV2 bool) JSONDataType {
 	if isBodyV2 {
 		return JSONDataType{fmt.Sprintf("Array(JSON(max_dynamic_types=%d, max_dynamic_paths=0))", int(32/math.Pow(2, float64(level)))), true, "JSON"}
 	}
-	return JSONDataType{fmt.Sprintf("Array(JSON(max_dynamic_types=%d, max_dynamic_paths=%d))", int(32/math.Pow(2, float64(level))), int(1024/math.Pow(2, float64(level)))), true, "JSON"}
+	return JSONDataType{fmt.Sprintf("Array(JSON(max_dynamic_types=%d, max_dynamic_paths=%d))", int(32/math.Pow(2, float64(level))), int(1024/math.Pow(4, float64(level)))), true, "JSON"}
 }
 
 var MappingStringToJSONDataType = map[string]JSONDataType{
