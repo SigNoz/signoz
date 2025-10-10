@@ -86,7 +86,9 @@ function AuthDomain(): JSX.Element {
 				<Button
 					type="primary"
 					icon={<PlusOutlined />}
-					onClick={(): void => setAddDomain(true)}
+					onClick={(): void => {
+						setAddDomain(true);
+					}}
 					className="button"
 				>
 					Add Domain
@@ -108,6 +110,7 @@ function AuthDomain(): JSX.Element {
 							switch (columnAction) {
 								case 'configure':
 									setRecord(record);
+
 									break;
 								case 'delete':
 									deleteDomainById(

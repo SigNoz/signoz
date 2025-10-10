@@ -93,16 +93,13 @@ function Login(): JSX.Element {
 			});
 
 			setSessionsContext(sessionsContextResponse.data);
+			if (sessionsContextResponse.data.orgs.length === 1) {
+				setSessionsOrgId(sessionsContextResponse.data.orgs[0].id);
+			}
 		} catch (error) {
 			showErrorModal(error as APIError);
 		}
 	};
-
-	useEffect(() => {
-		if (sessionsContext && sessionsContext.orgs.length === 1) {
-			setSessionsOrgId(sessionsContext.orgs[0].id);
-		}
-	}, [form, sessionsContext]);
 
 	// post selection of email and session org decide on the authN mechanism to use
 	const isPasswordAuthN = useMemo((): boolean => {

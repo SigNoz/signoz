@@ -88,8 +88,12 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 		}
 	};
 
+	const onBackHandler = (): void => {
+		setAuthnProvider('');
+	};
+
 	return (
-		<Modal open closable={false} footer={null}>
+		<Modal open footer={null} onCancel={onClose}>
 			<Form
 				name="auth-domain"
 				initialValues={defaultTo(record, {
@@ -110,7 +114,8 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 					<div className="auth-domain-configure">
 						{configureAuthnProvider(authnProvider, isCreate)}
 						<section className="action-buttons">
-							<Button onClick={onClose}>Cancel</Button>
+							{isCreate && <Button onClick={onBackHandler}>Back</Button>}
+							{!isCreate && <Button onClick={onClose}>Cancel</Button>}
 							<Button onClick={onSubmitHandler} type="primary">
 								Save Changes
 							</Button>
