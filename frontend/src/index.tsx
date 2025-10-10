@@ -22,9 +22,11 @@ const queryClient = new QueryClient({
 					// in case of manually throwing errors please make sure to send error.response.status
 					(error instanceof AxiosError &&
 						error.response?.status &&
-						(error.response?.status >= 400 || error.response?.status <= 499)) ||
+						error.response?.status >= 400 &&
+						error.response?.status <= 499) ||
 					(error instanceof APIError &&
-						(error.getHttpStatusCode() >= 400 || error.getHttpStatusCode() <= 499))
+						error.getHttpStatusCode() >= 400 &&
+						error.getHttpStatusCode() <= 499)
 				) {
 					return false;
 				}
