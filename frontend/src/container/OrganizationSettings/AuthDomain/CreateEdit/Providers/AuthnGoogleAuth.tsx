@@ -36,6 +36,9 @@ function ConfigureGoogleAuthAuthnProvider({
 				label="Client ID"
 				name={['googleAuthConfig', 'clientId']}
 				className="field"
+				tooltip={{
+					title: `ClientID is the application's ID. For example, 292085223830.apps.googleusercontent.com.`,
+				}}
 			>
 				<Input />
 			</Form.Item>
@@ -44,6 +47,9 @@ function ConfigureGoogleAuthAuthnProvider({
 				label="Client Secret"
 				name={['googleAuthConfig', 'clientSecret']}
 				className="field"
+				tooltip={{
+					title: `It is the application's secret.`,
+				}}
 			>
 				<Input />
 			</Form.Item>
