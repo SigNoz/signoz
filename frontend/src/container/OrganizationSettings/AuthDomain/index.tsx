@@ -5,6 +5,7 @@ import { Button, Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import deleteDomain from 'api/v1/domains/id/delete';
 import listAllDomain from 'api/v1/domains/list';
+import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useState } from 'react';
 import { useQuery } from 'react-query';
@@ -70,6 +71,7 @@ function AuthDomain(): JSX.Element {
 		data: authDomainListResponse,
 		isLoading: isLoadingAuthDomainListResponse,
 		isFetching: isFetchingAuthDomainListResponse,
+		error: errorFetchingAuthDomainListResponse,
 		refetch: refetchAuthDomainListResponse,
 	} = useQuery({
 		queryFn: listAllDomain,
@@ -90,7 +92,10 @@ function AuthDomain(): JSX.Element {
 					Add Domain
 				</Button>
 			</section>
-			{authDomainListResponse && (
+			{(errorFetchingAuthDomainListResponse as APIError) && (
+				<ErrorContent error={errorFetchingAuthDomainListResponse as APIError} />
+			)}
+			{!(errorFetchingAuthDomainListResponse as APIError) && (
 				<Table
 					columns={columns}
 					dataSource={authDomainListResponse?.data}

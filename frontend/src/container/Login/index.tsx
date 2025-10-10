@@ -12,6 +12,7 @@ import { ArrowRight } from 'lucide-react';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
+import { ErrorV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { SessionsContext } from 'types/api/v2/sessions/context/get';
 
@@ -149,6 +150,25 @@ function Login(): JSX.Element {
 		return isCallbackAuthN && !isPasswordAuthNEnabled;
 	}, [sessionsContext, sessionsOrgId, isPasswordAuthNEnabled, form]);
 
+	const sessionsOrgWarning = useMemo((): ErrorV2 | null => {
+		if (!sessionsContext) {
+			return null;
+		}
+
+		if (!sessionsOrgId) {
+			return null;
+		}
+
+		let sessionsOrgWarning;
+		sessionsContext.orgs.forEach((orgSession) => {
+			if (orgSession.id === sessionsOrgId && orgSession.warning) {
+				sessionsOrgWarning = orgSession.warning;
+			}
+		});
+
+		return sessionsOrgWarning || null;
+	}, [sessionsContext, sessionsOrgId]);
+
 	// once the callback authN redirects to the login screen with access_token and refresh_token navigate them to homepage
 	useEffect(() => {
 		if (accessToken && refreshToken) {
@@ -210,6 +230,22 @@ function Login(): JSX.Element {
 		callbackAuthErrorURL,
 		showErrorModal,
 	]);
+
+	useEffect(() => {
+		if (sessionsOrgWarning) {
+			showErrorModal(
+				new APIError({
+					error: {
+						code: sessionsOrgWarning.code,
+						message: sessionsOrgWarning.message,
+						url: sessionsOrgWarning.url,
+						errors: sessionsOrgWarning.errors,
+					},
+					httpStatusCode: 400,
+				}),
+			);
+		}
+	}, [sessionsOrgWarning, showErrorModal]);
 
 	return (
 		<div className="login-form-container">

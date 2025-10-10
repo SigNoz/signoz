@@ -1,3 +1,5 @@
+import { ErrorV2 } from 'types/api';
+
 export interface Props {
 	email: string;
 	ref: string;
@@ -21,6 +23,7 @@ export interface OrgSessionContext {
 	id: string;
 	name: string;
 	authNSupport: AuthNSupport;
+	warning: ErrorV2;
 }
 
 export interface SessionsContext {
