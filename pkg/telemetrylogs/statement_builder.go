@@ -21,8 +21,6 @@ type logQueryStatementBuilder struct {
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
 
-	jsonResolver *JSONFieldResolver
-
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
 	jsonBodyPrefix string
 	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
@@ -40,7 +38,6 @@ func NewLogQueryStatementBuilder(
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonBodyPrefix string,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
-	jsonResolver *JSONFieldResolver,
 ) *logQueryStatementBuilder {
 	logsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrylogs")
 
@@ -54,7 +51,6 @@ func NewLogQueryStatementBuilder(
 		fullTextColumn:            fullTextColumn,
 		jsonBodyPrefix:            jsonBodyPrefix,
 		jsonKeyToKey:              jsonKeyToKey,
-		jsonResolver:              jsonResolver,
 	}
 }
 
@@ -92,23 +88,6 @@ func (b *logQueryStatementBuilder) Build(
 	}
 
 	return nil, fmt.Errorf("unsupported request type: %s", requestType)
-}
-
-// arrayJoinClause builds the ARRAY JOIN clause fragment for a given collector.
-// Returns an empty string if no joins are required.
-func arrayJoinClause(collector []ArrayJoinReq) string {
-	if len(collector) == 0 {
-		return ""
-	}
-	joins := make([]string, 0, len(collector))
-	for _, req := range collector {
-		jsonAlias := req.JSONItemAlias
-		if jsonAlias == "" {
-			jsonAlias = req.DynamicItemAlias + "_json"
-		}
-		joins = append(joins, fmt.Sprintf("ARRAY JOIN dynamicElement(%s, 'JSON') AS %s", req.DynamicArrayExpr, jsonAlias))
-	}
-	return " " + strings.Join(joins, ", ")
 }
 
 func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []*telemetrytypes.FieldKeySelector {
@@ -242,112 +221,6 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	// Plan ARRAY JOINs for JSON GROUP BY paths (centralized planning)
-	arrayJoinCollector, needsUnion := b.planArrayJoinsForGroupBy(ctx, query.GroupBy, joinPlanModeAuto)
-
-	// If UNION ALL is needed (both Array(JSON) and Array(Dynamic) exist), build two branches and union
-	if needsUnion {
-		buildBranch := func(mode joinPlanMode) (*qbtypes.Statement, error) {
-			// fresh collector for this branch
-			branchCollector, _ := b.planArrayJoinsForGroupBy(ctx, query.GroupBy, mode)
-
-			// clone a new builder for branch
-			branchSB := sqlbuilder.NewSelectBuilder()
-
-			// SELECT columns (same as below)
-			branchSB.Select(LogsV2TimestampColumn)
-			branchSB.SelectMore(LogsV2IDColumn)
-			if len(query.SelectFields) == 0 {
-				branchSB.SelectMore(LogsV2TraceIDColumn)
-				branchSB.SelectMore(LogsV2SpanIDColumn)
-				branchSB.SelectMore(LogsV2TraceFlagsColumn)
-				branchSB.SelectMore(LogsV2SeverityTextColumn)
-				branchSB.SelectMore(LogsV2SeverityNumberColumn)
-				branchSB.SelectMore(LogsV2ScopeNameColumn)
-				branchSB.SelectMore(LogsV2ScopeVersionColumn)
-				branchSB.SelectMore(LogsV2BodyV2Column)
-				branchSB.SelectMore(LogsV2PromotedColumn)
-				branchSB.SelectMore(LogsV2AttributesStringColumn)
-				branchSB.SelectMore(LogsV2AttributesNumberColumn)
-				branchSB.SelectMore(LogsV2AttributesBoolColumn)
-				branchSB.SelectMore(LogsV2ResourcesStringColumn)
-				branchSB.SelectMore(LogsV2ScopeStringColumn)
-			} else {
-				for index := range query.SelectFields {
-					if query.SelectFields[index].Name == LogsV2TimestampColumn || query.SelectFields[index].Name == LogsV2IDColumn {
-						continue
-					}
-					colExpr, err := b.fm.ColumnExpressionFor(ctx, &query.SelectFields[index], keys)
-					if err != nil {
-						return nil, err
-					}
-					branchSB.SelectMore(colExpr)
-				}
-			}
-
-			// FROM with branch joins
-			fromBase := fmt.Sprintf("%s.%s", DBName, LogsV2TableName)
-			if len(branchCollector) > 0 {
-				joins := make([]string, 0, len(branchCollector))
-				for _, req := range branchCollector {
-					jsonAlias := req.JSONItemAlias
-					if jsonAlias == "" {
-						jsonAlias = req.DynamicItemAlias + "_json"
-					}
-					joins = append(joins, fmt.Sprintf("ARRAY JOIN dynamicElement(%s, 'JSON') AS %s", req.DynamicArrayExpr, jsonAlias))
-				}
-				fromBase = fromBase + " " + strings.Join(joins, ", ")
-			}
-			branchSB.From(fromBase)
-
-			// WHERE/time filters
-			preparedWhereClause, err := b.addFilterCondition(ctx, branchSB, start, end, query, keys, variables)
-			if err != nil {
-				return nil, err
-			}
-
-			// ORDER BY
-			for _, orderBy := range query.Order {
-				colExpr, err := b.fm.ColumnExpressionFor(ctx, &orderBy.Key.TelemetryFieldKey, keys)
-				if err != nil {
-					return nil, err
-				}
-				branchSB.OrderBy(fmt.Sprintf("%s %s", colExpr, orderBy.Direction.StringValue()))
-			}
-
-			if query.Limit > 0 {
-				branchSB.Limit(query.Limit)
-			} else {
-				branchSB.Limit(100)
-			}
-			if query.Offset > 0 {
-				branchSB.Offset(query.Offset)
-			}
-
-			mainSQL, mainArgs := branchSB.BuildWithFlavor(sqlbuilder.ClickHouse)
-			stmt := &qbtypes.Statement{Query: mainSQL, Args: mainArgs}
-			if preparedWhereClause != nil {
-				stmt.Warnings = preparedWhereClause.Warnings
-				stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
-			}
-			return stmt, nil
-		}
-
-		left, err := buildBranch(joinPlanModeArrayJSON)
-		if err != nil {
-			return nil, err
-		}
-		right, err := buildBranch(joinPlanModeArrayDynamicFiltered)
-		if err != nil {
-			return nil, err
-		}
-
-		// UNION ALL both branches
-		unionSQL := fmt.Sprintf("(%s) UNION ALL (%s)", left.Query, right.Query)
-		unionArgs := append(left.Args, right.Args...)
-		return &qbtypes.Statement{Query: unionSQL, Args: unionArgs, Warnings: left.Warnings, WarningsDocURL: left.WarningsDocURL}, nil
-	}
-
 	// Select timestamp and id by default
 	sb.Select(LogsV2TimestampColumn)
 	sb.SelectMore(LogsV2IDColumn)
@@ -392,7 +265,6 @@ func (b *logQueryStatementBuilder) buildListQuery(
 
 	// From table (inject ARRAY JOINs if collected)
 	fromBase := fmt.Sprintf("%s.%s", DBName, LogsV2TableName)
-	fromBase = fromBase + arrayJoinClause(arrayJoinCollector)
 	sb.From(fromBase)
 
 	// Add filter conditions
@@ -453,94 +325,6 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		cteArgs      [][]any
 	)
 
-	// Plan ARRAY JOINs for JSON GROUP BY paths (centralized planning)
-	arrayJoinCollector, needsUnionTS := b.planArrayJoinsForGroupBy(ctx, query.GroupBy, joinPlanModeAuto)
-	if needsUnionTS {
-		// Build two full statements and UNION ALL them
-		buildTSBranch := func(mode joinPlanMode) (*qbtypes.Statement, error) {
-			// collector for this mode
-			branchCollector, _ := b.planArrayJoinsForGroupBy(ctx, query.GroupBy, mode)
-			// Create fresh builder and reuse existing logic with minimal duplication by temporarily swapping collector
-			// Build select ts, groupby dims, aggs
-			sbBranch := sqlbuilder.NewSelectBuilder()
-			sbBranch.SelectMore(fmt.Sprintf(
-				"toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts",
-				int64(query.StepInterval.Seconds()),
-			))
-			var allGroupByArgs []any
-			for _, gb := range query.GroupBy {
-				expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonBodyPrefix, b.jsonKeyToKey)
-				if err != nil {
-					return nil, err
-				}
-				colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
-				allGroupByArgs = append(allGroupByArgs, args...)
-				sbBranch.SelectMore(colExpr)
-			}
-			var allAggChArgs []any
-			for i, agg := range query.Aggregations {
-				rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, agg.Expression, uint64(query.StepInterval.Seconds()), keys)
-				if err != nil {
-					return nil, err
-				}
-				allAggChArgs = append(allAggChArgs, chArgs...)
-				sbBranch.SelectMore(fmt.Sprintf("%s AS __result_%d", rewritten, i))
-			}
-			fromBase := fmt.Sprintf("%s.%s", DBName, LogsV2TableName)
-			if len(branchCollector) > 0 {
-				joins := make([]string, 0, len(branchCollector))
-				for _, req := range branchCollector {
-					jsonAlias := req.JSONItemAlias
-					if jsonAlias == "" {
-						jsonAlias = req.DynamicItemAlias + "_json"
-					}
-					joins = append(joins, fmt.Sprintf("ARRAY JOIN dynamicElement(%s, 'JSON') AS %s", req.DynamicArrayExpr, jsonAlias))
-				}
-				fromBase = fromBase + " " + strings.Join(joins, ", ")
-			}
-			sbBranch.From(fromBase)
-			preparedWhereClause, err := b.addFilterCondition(ctx, sbBranch, start, end, query, keys, variables)
-			if err != nil {
-				return nil, err
-			}
-			sbBranch.GroupBy("ts")
-			sbBranch.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
-			if query.Having != nil && query.Having.Expression != "" {
-				rewriter := querybuilder.NewHavingExpressionRewriter()
-				rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
-				sbBranch.Having(rewrittenExpr)
-			}
-			if len(query.Order) != 0 {
-				for _, orderBy := range query.Order {
-					_, ok := aggOrderBy(orderBy, query)
-					if !ok {
-						sbBranch.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
-					}
-				}
-				sbBranch.OrderBy("ts desc")
-			}
-			combinedArgs := append(allGroupByArgs, allAggChArgs...)
-			mainSQL, mainArgs := sbBranch.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
-			stmt := &qbtypes.Statement{Query: mainSQL, Args: mainArgs}
-			if preparedWhereClause != nil {
-				stmt.Warnings = preparedWhereClause.Warnings
-				stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
-			}
-			return stmt, nil
-		}
-		left, err := buildTSBranch(joinPlanModeArrayJSON)
-		if err != nil {
-			return nil, err
-		}
-		right, err := buildTSBranch(joinPlanModeArrayDynamicFiltered)
-		if err != nil {
-			return nil, err
-		}
-		unionSQL := fmt.Sprintf("(%s) UNION ALL (%s)", left.Query, right.Query)
-		unionArgs := append(left.Args, right.Args...)
-		return &qbtypes.Statement{Query: unionSQL, Args: unionArgs, Warnings: left.Warnings, WarningsDocURL: left.WarningsDocURL}, nil
-	}
-
 	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
 		return nil, err
 	} else if frag != "" {
@@ -585,7 +369,6 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 
 	// From table (inject ARRAY JOINs if collected)
 	fromBase := fmt.Sprintf("%s.%s", DBName, LogsV2TableName)
-	fromBase = fromBase + arrayJoinClause(arrayJoinCollector)
 	sb.From(fromBase)
 	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 
@@ -693,96 +476,6 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		cteArgs      [][]any
 	)
 
-	// Plan ARRAY JOINs for JSON GROUP BY paths (centralized planning)
-	arrayJoinCollector, needsUnionScalar := b.planArrayJoinsForGroupBy(ctx, query.GroupBy, joinPlanModeAuto)
-	if needsUnionScalar {
-		buildScalarBranch := func(mode joinPlanMode) (*qbtypes.Statement, error) {
-			branchCollector, _ := b.planArrayJoinsForGroupBy(ctx, query.GroupBy, mode)
-			sbBranch := sqlbuilder.NewSelectBuilder()
-			// group by dims
-			var allGroupByArgs []any
-			for _, gb := range query.GroupBy {
-				expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonBodyPrefix, b.jsonKeyToKey)
-				if err != nil {
-					return nil, err
-				}
-				colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
-				allGroupByArgs = append(allGroupByArgs, args...)
-				sbBranch.SelectMore(colExpr)
-			}
-			// aggs
-			rateInterval := (end - start) / querybuilder.NsToSeconds
-			allAggChArgs := []any{}
-			if len(query.Aggregations) > 0 {
-				for idx := range query.Aggregations {
-					aggExpr := query.Aggregations[idx]
-					rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, aggExpr.Expression, rateInterval, keys)
-					if err != nil {
-						return nil, err
-					}
-					allAggChArgs = append(allAggChArgs, chArgs...)
-					sbBranch.SelectMore(fmt.Sprintf("%s AS __result_%d", rewritten, idx))
-				}
-			}
-			fromBase := fmt.Sprintf("%s.%s", DBName, LogsV2TableName)
-			if len(branchCollector) > 0 {
-				joins := make([]string, 0, len(branchCollector))
-				for _, req := range branchCollector {
-					jsonAlias := req.JSONItemAlias
-					if jsonAlias == "" {
-						jsonAlias = req.DynamicItemAlias + "_json"
-					}
-					joins = append(joins, fmt.Sprintf("ARRAY JOIN dynamicElement(%s, 'JSON') AS %s", req.DynamicArrayExpr, jsonAlias))
-				}
-				fromBase = fromBase + " " + strings.Join(joins, ", ")
-			}
-			sbBranch.From(fromBase)
-			preparedWhereClause, err := b.addFilterCondition(ctx, sbBranch, start, end, query, keys, variables)
-			if err != nil {
-				return nil, err
-			}
-			sbBranch.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
-			if query.Having != nil && query.Having.Expression != "" {
-				rewriter := querybuilder.NewHavingExpressionRewriter()
-				rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
-				sbBranch.Having(rewrittenExpr)
-			}
-			for _, orderBy := range query.Order {
-				idx, ok := aggOrderBy(orderBy, query)
-				if ok {
-					sbBranch.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
-				} else {
-					sbBranch.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
-				}
-			}
-			if len(query.Order) == 0 {
-				sbBranch.OrderBy("__result_0 DESC")
-			}
-			if query.Limit > 0 {
-				sbBranch.Limit(query.Limit)
-			}
-			combinedArgs := append(allGroupByArgs, allAggChArgs...)
-			mainSQL, mainArgs := sbBranch.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
-			stmt := &qbtypes.Statement{Query: mainSQL, Args: mainArgs}
-			if preparedWhereClause != nil {
-				stmt.Warnings = preparedWhereClause.Warnings
-				stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
-			}
-			return stmt, nil
-		}
-		left, err := buildScalarBranch(joinPlanModeArrayJSON)
-		if err != nil {
-			return nil, err
-		}
-		right, err := buildScalarBranch(joinPlanModeArrayDynamicFiltered)
-		if err != nil {
-			return nil, err
-		}
-		unionSQL := fmt.Sprintf("(%s) UNION ALL (%s)", left.Query, right.Query)
-		unionArgs := append(left.Args, right.Args...)
-		return &qbtypes.Statement{Query: unionSQL, Args: unionArgs, Warnings: left.Warnings, WarningsDocURL: left.WarningsDocURL}, nil
-	}
-
 	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
 		return nil, err
 	} else if frag != "" && !skipResourceCTE {
@@ -795,10 +488,26 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	var allGroupByArgs []any
 
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonBodyPrefix, b.jsonKeyToKey)
-		if err != nil {
-			return nil, err
+		var expr string
+		var args []any
+		var err error
+
+		// For body JSON fields with feature flag enabled, use field mapper directly
+		if strings.HasPrefix(gb.TelemetryFieldKey.Name, BodyJSONStringSearchPrefix) && IsBodyJSONQueryEnabled(ctx) {
+			expr, err = b.fm.FieldFor(ctx, &gb.TelemetryFieldKey)
+			if err != nil {
+				return nil, err
+			}
+			// No additional args for body JSON fields
+			args = []any{}
+		} else {
+			// Use the standard collision handling for other fields
+			expr, args, err = querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonBodyPrefix, b.jsonKeyToKey)
+			if err != nil {
+				return nil, err
+			}
 		}
+
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
@@ -826,7 +535,6 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 
 	// From table (inject ARRAY JOINs if collected)
 	fromBase := fmt.Sprintf("%s.%s", DBName, LogsV2TableName)
-	fromBase = fromBase + arrayJoinClause(arrayJoinCollector)
 	sb.From(fromBase)
 
 	// Add filter conditions
@@ -985,98 +693,4 @@ func (b *logQueryStatementBuilder) buildResourceFilterCTE(
 		query,
 		variables,
 	)
-}
-
-// planArrayJoinsForGroupBy centralizes planning of ARRAY JOINs for JSON group-by keys.
-// It interprets ':' as array hops and constructs DynamicArrayExpr per hop using body_v2 as base.
-// Typing: default to Array(Dynamic) base; JSON-only narrowing happens in ARRAY JOIN via dynamicElement(...,'JSON').
-type joinPlanMode int
-
-const (
-	joinPlanModeAuto joinPlanMode = iota
-	joinPlanModeArrayJSON
-	joinPlanModeArrayDynamicFiltered
-)
-
-// planArrayJoinsForGroupBy returns the planned joins and whether UNION ALL is required.
-func (b *logQueryStatementBuilder) planArrayJoinsForGroupBy(ctx context.Context, groupBys []qbtypes.GroupByKey, mode joinPlanMode) ([]ArrayJoinReq, bool) {
-	collector := make([]ArrayJoinReq, 0)
-	needsUnion := false
-	for _, gb := range groupBys {
-		name := gb.TelemetryFieldKey.Name
-		if !strings.HasPrefix(name, BodyJSONStringSearchPrefix) {
-			continue
-		}
-		path := strings.TrimPrefix(name, BodyJSONStringSearchPrefix)
-		// Only plan when array hops are present
-		if !strings.Contains(path, ":") {
-			continue
-		}
-		parts := strings.Split(path, ":")
-		// All but the last token are array hops; the final may contain dot-rest
-		arraySegs := parts[:len(parts)-1]
-
-		var prevJSONAlias string
-		for i, seg := range arraySegs {
-			dynAlias := fmt.Sprintf("dynamic_item_%d", i)
-			jsonAlias := fmt.Sprintf("json_item_%d", i)
-
-			var base string
-			if i == 0 {
-				base = "body_v2." + seg
-			} else {
-				base = fmt.Sprintf("%s.%s", prevJSONAlias, seg)
-			}
-
-			// Type-driven base selection using distributed_path_types via resolver
-			// If Array(JSON) exists => join directly on Array(JSON)
-			// Else if Array(Dynamic) exists => filter to JSON then join
-			// If resolver unavailable, default to Array(Dynamic)
-			dynamicArrayExpr := fmt.Sprintf("dynamicElement(%s, '%s')", base, telemetrytypes.ArrayDynamic.StringValue())
-			if b.jsonResolver != nil {
-				// resolve types for this hop key
-				typePlan, err := b.jsonResolver.ResolveJSONFieldTypes(ctx, seg)
-				if err == nil && typePlan != nil {
-					hasArrayJSON := false
-					hasArrayDynamic := false
-					for _, t := range typePlan.Types {
-						if strings.EqualFold(t, telemetrytypes.ArrayJSON.StringValue()) {
-							hasArrayJSON = true
-						}
-						if strings.EqualFold(t, telemetrytypes.ArrayDynamic.StringValue()) {
-							hasArrayDynamic = true
-						}
-					}
-					if mode == joinPlanModeAuto {
-						if hasArrayJSON && hasArrayDynamic {
-							needsUnion = true
-							// In auto mode we don't decide, leave collector filling below according to default (ArrayDynamic filtered)
-						}
-						if hasArrayJSON {
-							dynamicArrayExpr = fmt.Sprintf("dynamicElement(%s, '%s')", base, telemetrytypes.ArrayJSON.StringValue())
-						} else if hasArrayDynamic {
-							dynamicArrayExpr = fmt.Sprintf("arrayFilter(x -> dynamicType(x) = 'JSON', dynamicElement(%s, '%s'))", base, telemetrytypes.ArrayDynamic.StringValue())
-						}
-					} else if mode == joinPlanModeArrayJSON {
-						// Force Array(JSON) path
-						dynamicArrayExpr = fmt.Sprintf("dynamicElement(%s, '%s')", base, telemetrytypes.ArrayJSON.StringValue())
-					} else if mode == joinPlanModeArrayDynamicFiltered {
-						// Force Array(Dynamic) filtered path
-						dynamicArrayExpr = fmt.Sprintf("arrayFilter(x -> dynamicType(x) = 'JSON', dynamicElement(%s, '%s'))", base, telemetrytypes.ArrayDynamic.StringValue())
-					}
-				}
-			}
-
-			collector = append(collector, ArrayJoinReq{
-				DynamicArrayExpr:  dynamicArrayExpr,
-				DynamicItemAlias:  dynAlias,
-				JSONItemAlias:     jsonAlias,
-				Path:              strings.Join(parts[:i+1], ":"),
-				ScalarAccessHints: nil,
-			})
-
-			prevJSONAlias = jsonAlias
-		}
-	}
-	return collector, needsUnion
 }

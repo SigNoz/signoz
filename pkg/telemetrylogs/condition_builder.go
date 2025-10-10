@@ -16,20 +16,13 @@ import (
 )
 
 type conditionBuilder struct {
-	fm           qbtypes.FieldMapper
-	bcb          *BodyConditionBuilder
-	jsonResolver *JSONFieldResolver
+	fm  qbtypes.FieldMapper
+	bcb *BodyConditionBuilder
 }
 
 func NewConditionBuilder(fm qbtypes.FieldMapper, bcb *BodyConditionBuilder) *conditionBuilder {
 	return &conditionBuilder{fm: fm, bcb: bcb}
 }
-
-func NewConditionBuilderWithJSONResolver(fm qbtypes.FieldMapper, bcb *BodyConditionBuilder, jsonResolver *JSONFieldResolver) *conditionBuilder {
-	return &conditionBuilder{fm: fm, bcb: bcb, jsonResolver: jsonResolver}
-}
-
-// ConditionForWithExtras removed; extras path no longer used.
 
 func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
@@ -171,9 +164,9 @@ func (c *conditionBuilder) conditionFor(
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
 
 		if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
-			// Use JSON typed expressions if feature flag is enabled and we have a JSON resolver
-			if c.jsonResolver != nil && IsBodyJSONQueryEnabled(ctx) {
-				expression, err := c.jsonResolver.BuildJSONFieldExpressionForFilter(ctx, key, operator)
+			// Use JSON typed expressions if feature flag is enabled and we have a body condition builder
+			if c.bcb != nil && IsBodyJSONQueryEnabled(ctx) {
+				expression, err := c.bcb.BuildJSONFieldExpressionForFilter(ctx, key, operator)
 				if err != nil {
 					return "", err
 				}

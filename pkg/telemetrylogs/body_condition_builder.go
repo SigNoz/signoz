@@ -3,12 +3,12 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/SigNoz/signoz-otel-collector/utils"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -323,6 +323,9 @@ func wrapLikeValueIfNeeded(operator qbtypes.FilterOperator, value any) any {
 // and returns the preferred element type for the terminal comparison.
 func (b *BodyConditionBuilder) chooseArrayPreference(path string, operator qbtypes.FilterOperator, value any, _ bool) (preferArray bool, elem telemetrytypes.JSONDataType) {
 	cached := b.getTypeSet(path)
+	if cached == nil {
+		return false, telemetrytypes.String
+	}
 	p := collectPresence(cached)
 	dataType, _ := b.inferDataType(value, operator)
 	if isMembershipContains(operator) || isMembershipLike(operator) {
@@ -338,6 +341,176 @@ func (b *BodyConditionBuilder) BuildCondition(ctx context.Context, key *telemetr
 	path := strings.TrimPrefix(key.Name, BodyJSONStringSearchPrefix)
 	plan := b.planJSONPath(path, operator, value)
 	return b.emitPlannedCondition(plan, path, operator, value, sb)
+}
+
+// BuildJSONFieldExpression builds a dynamicElement expression for a JSON field (for SELECT/GroupBy)
+func (b *BodyConditionBuilder) BuildJSONFieldExpression(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	path := strings.TrimPrefix(key.Name, BodyJSONStringSearchPrefix)
+
+	// Get all types for this path
+	typeSet := b.getTypeSet(path)
+	if len(typeSet) == 0 {
+		return "", errors.Newf(errors.TypeNotFound, errors.CodeNotFound,
+			"No valid types found for JSON path: %s", path)
+	}
+
+	// For SELECT expressions, prefer scalar types if available
+	fieldPath := "body_v2." + path
+
+	// Check for scalar types first
+	scalarTypes := []string{}
+	arrayTypes := []string{}
+
+	for _, dataType := range typeSet {
+		typeStr := dataType.StringValue()
+		if strings.HasPrefix(typeStr, "Array(") {
+			arrayTypes = append(arrayTypes, typeStr)
+		} else {
+			scalarTypes = append(scalarTypes, typeStr)
+		}
+	}
+
+	if len(scalarTypes) > 0 {
+		// Use the first scalar type for SELECT
+		expression := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, scalarTypes[0])
+		return expression, nil
+	} else if len(arrayTypes) > 0 {
+		// Use the first array type for SELECT
+		expression := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, arrayTypes[0])
+		return expression, nil
+	}
+
+	return "", errors.Newf(errors.TypeNotFound, errors.CodeNotFound,
+		"No valid types found for JSON path: %s", path)
+}
+
+// BuildJSONFieldExpressionForFilter builds a context-aware expression based on filter operator
+func (b *BodyConditionBuilder) BuildJSONFieldExpressionForFilter(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator) (string, error) {
+	path := strings.TrimPrefix(key.Name, BodyJSONStringSearchPrefix)
+
+	// Get all types for this path
+	typeSet := b.getTypeSet(path)
+	if len(typeSet) == 0 {
+		return "", errors.Newf(errors.TypeNotFound, errors.CodeNotFound,
+			"No valid types found for JSON path: %s", path)
+	}
+
+	fieldPath := "body_v2." + path
+
+	// Context-aware expression building based on operator
+	switch operator {
+	case qbtypes.FilterOperatorEqual, qbtypes.FilterOperatorNotEqual,
+		qbtypes.FilterOperatorGreaterThan, qbtypes.FilterOperatorGreaterThanOrEq,
+		qbtypes.FilterOperatorLessThan, qbtypes.FilterOperatorLessThanOrEq:
+		// For equality/comparison operators, prefer scalar types
+		scalarTypes := []string{}
+		for _, dataType := range typeSet {
+			typeStr := dataType.StringValue()
+			if !strings.HasPrefix(typeStr, "Array(") {
+				scalarTypes = append(scalarTypes, typeStr)
+			}
+		}
+
+		if len(scalarTypes) > 0 {
+			expression := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, scalarTypes[0])
+			return expression, nil
+		} else {
+			// Fall back to array types if no scalars
+			arrayTypes := []string{}
+			for _, dataType := range typeSet {
+				typeStr := dataType.StringValue()
+				if strings.HasPrefix(typeStr, "Array(") {
+					arrayTypes = append(arrayTypes, typeStr)
+				}
+			}
+			if len(arrayTypes) > 0 {
+				expression := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, arrayTypes[0])
+				return expression, nil
+			}
+		}
+
+	case qbtypes.FilterOperatorContains, qbtypes.FilterOperatorNotContains,
+		qbtypes.FilterOperatorLike, qbtypes.FilterOperatorNotLike,
+		qbtypes.FilterOperatorILike, qbtypes.FilterOperatorNotILike:
+		// For contains/like operators, use both scalar and array types
+		return b.buildMultiTypeExpression(fieldPath, typeSet), nil
+
+	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
+		// For exists, check both scalar and array presence
+		return b.buildExistsExpression(fieldPath, typeSet), nil
+
+	default:
+		// Default to scalar preference
+		scalarTypes := []string{}
+		for _, dataType := range typeSet {
+			typeStr := dataType.StringValue()
+			if !strings.HasPrefix(typeStr, "Array(") {
+				scalarTypes = append(scalarTypes, typeStr)
+			}
+		}
+
+		if len(scalarTypes) > 0 {
+			expression := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, scalarTypes[0])
+			return expression, nil
+		}
+	}
+
+	return "", errors.Newf(errors.TypeNotFound, errors.CodeNotFound,
+		"No valid types found for JSON path: %s", path)
+}
+
+// buildMultiTypeExpression builds an expression that handles both scalar and array types
+func (b *BodyConditionBuilder) buildMultiTypeExpression(fieldPath string, typeSet []telemetrytypes.JSONDataType) string {
+	var expressions []string
+
+	// Add scalar types
+	for _, dataType := range typeSet {
+		typeStr := dataType.StringValue()
+		if !strings.HasPrefix(typeStr, "Array(") {
+			expressions = append(expressions, fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, typeStr))
+		}
+	}
+
+	// Add array types
+	for _, dataType := range typeSet {
+		typeStr := dataType.StringValue()
+		if strings.HasPrefix(typeStr, "Array(") {
+			expressions = append(expressions, fmt.Sprintf("arrayExists(x -> x, dynamicElement(%s, '%s'))", fieldPath, typeStr))
+		}
+	}
+
+	if len(expressions) == 0 {
+		return "false"
+	}
+
+	return strings.Join(expressions, " OR ")
+}
+
+// buildExistsExpression builds an expression that checks existence for both scalar and array types
+func (b *BodyConditionBuilder) buildExistsExpression(fieldPath string, typeSet []telemetrytypes.JSONDataType) string {
+	var expressions []string
+
+	// Add scalar existence checks
+	for _, dataType := range typeSet {
+		typeStr := dataType.StringValue()
+		if !strings.HasPrefix(typeStr, "Array(") {
+			expressions = append(expressions, fmt.Sprintf("isNotNull(dynamicElement(%s, '%s'))", fieldPath, typeStr))
+		}
+	}
+
+	// Add array existence checks
+	for _, dataType := range typeSet {
+		typeStr := dataType.StringValue()
+		if strings.HasPrefix(typeStr, "Array(") {
+			expressions = append(expressions, fmt.Sprintf("length(dynamicElement(%s, '%s')) > 0", fieldPath, typeStr))
+		}
+	}
+
+	if len(expressions) == 0 {
+		return "false"
+	}
+
+	return strings.Join(expressions, " OR ")
 }
 
 // PathPlan captures a normalized traversal and terminal strategy for a body_v2 JSON path.
@@ -400,7 +573,12 @@ func (b *BodyConditionBuilder) planJSONPath(path string, operator qbtypes.Filter
 	if !plan.HasArrays {
 		plan.FullPathForMetadata = path
 		plan.PreferArrayAtEnd, plan.TerminalElemType = b.chooseArrayPreference(path, operator, value, false)
-		plan.TerminalValueType = b.chooseTerminalType(b.getTypeSet(path), operator, value)
+		typeSet := b.getTypeSet(path)
+		if typeSet != nil {
+			plan.TerminalValueType = b.chooseTerminalType(typeSet, operator, value)
+		} else {
+			plan.TerminalValueType = telemetrytypes.String
+		}
 		return plan
 	}
 	parts := strings.Split(path, ":")
@@ -454,7 +632,12 @@ func (b *BodyConditionBuilder) planJSONPath(path string, operator qbtypes.Filter
 	fullPath := strings.Join(parts, ":")
 	plan.FullPathForMetadata = fullPath
 	plan.PreferArrayAtEnd, plan.TerminalElemType = b.chooseArrayPreference(fullPath, operator, value, true)
-	plan.TerminalValueType = b.chooseTerminalType(b.getTypeSet(fullPath), operator, value)
+	typeSet := b.getTypeSet(fullPath)
+	if typeSet != nil {
+		plan.TerminalValueType = b.chooseTerminalType(typeSet, operator, value)
+	} else {
+		plan.TerminalValueType = telemetrytypes.String
+	}
 	return plan
 }
 
@@ -566,8 +749,20 @@ func (b *BodyConditionBuilder) buildArrayMembershipCondition(plan PathPlan, alia
 
 	// Check if we have a typed array available for this element type
 	typedArrayType := telemetrytypes.ScalerTypeToArrayType[plan.TerminalElemType]
-	hasTypedArray := slices.Contains(cached, typedArrayType)
-	hasArrayDynamic := slices.Contains(cached, telemetrytypes.ArrayDynamic)
+	hasTypedArray := false
+	for _, t := range cached {
+		if t == typedArrayType {
+			hasTypedArray = true
+			break
+		}
+	}
+	hasArrayDynamic := false
+	for _, t := range cached {
+		if t == telemetrytypes.ArrayDynamic {
+			hasArrayDynamic = true
+			break
+		}
+	}
 
 	// If both typed array and Array(Dynamic) are present, OR both membership checks
 	if hasTypedArray && hasArrayDynamic {
@@ -659,8 +854,16 @@ func (b *BodyConditionBuilder) recurseArrayHopsState(plan PathPlan, aliases []st
 
 	// Determine availability of Array(JSON) and Array(Dynamic) at this hop
 	typeSet := b.getTypeSet(pathKey)
-	hasArrayJSON := slices.Contains(typeSet, telemetrytypes.ArrayJSON)
-	hasArrayDynamic := slices.Contains(typeSet, telemetrytypes.ArrayDynamic)
+	hasArrayJSON := false
+	hasArrayDynamic := false
+	for _, t := range typeSet {
+		if t == telemetrytypes.ArrayJSON {
+			hasArrayJSON = true
+		}
+		if t == telemetrytypes.ArrayDynamic {
+			hasArrayDynamic = true
+		}
+	}
 
 	// Build expressions for available array types at this hop
 	depth := idx + 2 // first hop from outer array is depth 2

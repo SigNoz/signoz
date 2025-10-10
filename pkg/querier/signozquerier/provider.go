@@ -106,10 +106,9 @@ func newProvider(
 		return nil, err
 	}
 
-	// Create JSON field resolver for body JSON queries
-	jsonResolver := telemetrylogs.NewJSONFieldResolver(telemetryStore)
-	logFieldMapper := telemetrylogs.NewFieldMapperWithJSONResolver(jsonResolver)
-	logConditionBuilder := telemetrylogs.NewConditionBuilderWithJSONResolver(logFieldMapper, pathMetadata, jsonResolver)
+	// Create field mapper and condition builder for body JSON queries
+	logFieldMapper := telemetrylogs.NewFieldMapperWithBodyConditionBuilder(pathMetadata)
+	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, pathMetadata)
 	logResourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
 		settings,
 		resourceFilterFieldMapper,
@@ -117,7 +116,7 @@ func newProvider(
 		telemetryMetadataStore,
 		telemetrylogs.DefaultFullTextColumn,
 		telemetrylogs.BodyJSONStringSearchPrefix,
-		telemetrylogs.JSONKeyResolver(jsonResolver),
+		telemetrylogs.GetBodyJSONKey,
 	)
 	logAggExprRewriter := querybuilder.NewAggExprRewriter(
 		settings,
@@ -125,7 +124,7 @@ func newProvider(
 		logFieldMapper,
 		logConditionBuilder,
 		telemetrylogs.BodyJSONStringSearchPrefix,
-		telemetrylogs.JSONKeyResolver(jsonResolver),
+		telemetrylogs.GetBodyJSONKey,
 	)
 	logStmtBuilder := telemetrylogs.NewLogQueryStatementBuilder(
 		settings,
@@ -136,7 +135,7 @@ func newProvider(
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,
 		telemetrylogs.BodyJSONStringSearchPrefix,
-		telemetrylogs.JSONKeyResolver(jsonResolver),
+		telemetrylogs.GetBodyJSONKey,
 	)
 
 	// Create metric statement builder

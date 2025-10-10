@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
@@ -196,7 +197,6 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 		DefaultFullTextColumn,
 		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
-		nil,
 	)
 
 	for _, c := range cases {
@@ -290,7 +290,6 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		DefaultFullTextColumn,
 		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
-		nil,
 	)
 
 	for _, c := range cases {
@@ -400,7 +399,6 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		DefaultFullTextColumn,
 		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
-		nil,
 	)
 
 	//
@@ -454,12 +452,46 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 					},
 				},
 			},
-			expectedErrContains: "Group by/Aggregation isn't available for the body column",
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(dynamicElement(body_v2.status, 'String')) AS `body.status`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `body.status` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(dynamicElement(body_v2.status, 'String') IS NOT NULL AND dynamicElement(body_v2.status, 'String') IS NOT NULL, JSON_VALUE(body, '$.\"status\"'), NULL)) AS `body.status`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`body.status`) GLOBAL IN (SELECT `body.status` FROM __limit_cte) GROUP BY ts, `body.status`",
+				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+			},
+		},
+		{
+			name:        "Time series with array GroupBy",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.LogAggregation{
+					{
+						Expression: "count()",
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "service.name = 'cartservice'",
+				},
+				Limit: 10,
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "body.education:awards:type",
+						},
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(dynamicElement(body_v2.education:awards:type, 'String')) AS `body.education:awards:type`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `body.education:awards:type` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(arrayExists(_x_education-> (arrayExists(_x_awards-> _x_awards.type IS NOT NULL, dynamicElement(_x_education.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(_x_awards-> _x_awards.type IS NOT NULL, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(_x_education.awards, 'Array(Dynamic)'))))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) AND arrayExists(_x_education-> (arrayExists(_x_awards-> _x_awards.type IS NOT NULL, dynamicElement(_x_education.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(_x_awards-> _x_awards.type IS NOT NULL, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(_x_education.awards, 'Array(Dynamic)'))))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')), JSON_VALUE(body, '$.\"education:awards:type\"'), NULL)) AS `body.education:awards:type`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`body.education:awards:type`) GLOBAL IN (SELECT `body.education:awards:type` FROM __limit_cte) GROUP BY ts, `body.education:awards:type`",
+				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+			},
 		},
 	}
 
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm, nil)
+	// Create BodyConditionBuilder with mock metadata
+	bcb := buildTestBodyConditionBuilder()
+
+	fm := NewFieldMapperWithBodyConditionBuilder(bcb)
+	cb := NewConditionBuilder(fm, bcb)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 
@@ -477,13 +509,16 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		DefaultFullTextColumn,
 		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
-		nil,
 	)
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			// Create context with feature flag enabled
+			ctx := context.WithValue(context.Background(), "feature_flags", []*licensetypes.Feature{
+				{Name: licensetypes.BodyJSONQuery, Active: true},
+			})
 
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 
 			if c.expectedErrContains != "" {
 				require.Error(t, err)
@@ -518,7 +553,6 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 		DefaultFullTextColumn,
 		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
-		nil,
 	)
 
 	cases := []struct {
@@ -935,6 +969,7 @@ func buildTestBodyConditionBuilder() *BodyConditionBuilder {
 		"user.name":                                                      {telemetrytypes.String},
 		"user.age":                                                       {telemetrytypes.Int64},
 		"user.height":                                                    {telemetrytypes.Float64},
+		"status":                                                         {telemetrytypes.String},
 		"education":                                                      {telemetrytypes.ArrayJSON},
 		"education:name":                                                 {telemetrytypes.String},
 		"education:type":                                                 {telemetrytypes.String, telemetrytypes.Int64},

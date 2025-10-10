@@ -20,7 +20,10 @@ func isBodyJSONQueryEnabled(ctx context.Context, featureFlags []*licensetypes.Fe
 // This is a placeholder - the actual implementation would depend on how
 // feature flags are passed through the context in your system
 func getFeatureFlagsFromContext(ctx context.Context) []*licensetypes.Feature {
-	// TODO: Implement actual feature flag extraction from context
+	// Check if feature flag is set in context for testing
+	if flags, ok := ctx.Value("feature_flags").([]*licensetypes.Feature); ok {
+		return flags
+	}
 	// For now, return empty slice (feature disabled by default)
 	return []*licensetypes.Feature{}
 }
