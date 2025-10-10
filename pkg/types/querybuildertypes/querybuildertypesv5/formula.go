@@ -191,13 +191,13 @@ func parseAggregationReference(variable string) (aggregationRef, error) {
 		// Simple query reference like "A" - defaults to first aggregation (index 0)
 		defaultIndex := 0
 		return aggregationRef{
-			QueryName: parts[0],
+			QueryName: strings.ToUpper(parts[0]),
 			Index:     &defaultIndex,
 		}, nil
 	}
 
 	if len(parts) == 2 {
-		queryName := parts[0]
+		queryName := strings.ToUpper(parts[0])
 		reference := parts[1]
 
 		// Try to parse as index
@@ -280,7 +280,15 @@ func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSer
 	for variable, aggRef := range fe.aggRefs {
 		// We are only interested in the time series data for the queries that are
 		// involved in the formula expression.
-		data, exists := timeSeriesData[aggRef.QueryName]
+		var data *TimeSeriesData
+		var exists bool
+		for queryName, tsData := range timeSeriesData {
+			if strings.EqualFold(queryName, aggRef.QueryName) {
+				data = tsData
+				exists = true
+				break
+			}
+		}
 		if !exists {
 			continue
 		}
