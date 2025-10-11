@@ -1,0 +1,11 @@
+node_modules/
+/test-results/
+/playwright-report/
+/playwright/.cache/
+.env
+.env.local
+dist/
+*.log
+yarn-error.log
+.yarn/cache
+.yarn/install-state.gz
