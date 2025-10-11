@@ -7,9 +7,8 @@ import changeMyPassword from 'api/v1/factor_password/changeMyPassword';
 import editUser from 'api/v1/user/id/update';
 import { useNotifications } from 'hooks/useNotifications';
 import { Check, FileTerminal, MailIcon, UserIcon } from 'lucide-react';
-import { isPasswordValid } from 'pages/SignUp/utils';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import APIError from 'types/api/error';
 
@@ -22,9 +21,6 @@ function UserInfo(): JSX.Element {
 	const [currentPassword, setCurrentPassword] = useState<string>('');
 	const [updatePassword, setUpdatePassword] = useState<string>('');
 	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const [isPasswordPolicyError, setIsPasswordPolicyError] = useState<boolean>(
-		false,
-	);
 
 	const [changedName, setChangedName] = useState<string>(
 		user?.displayName || '',
@@ -39,14 +35,6 @@ function UserInfo(): JSX.Element {
 	] = useState<boolean>(false);
 
 	const defaultPlaceHolder = '*************';
-
-	useEffect(() => {
-		if (currentPassword && !isPasswordValid(currentPassword)) {
-			setIsPasswordPolicyError(true);
-		} else {
-			setIsPasswordPolicyError(false);
-		}
-	}, [currentPassword]);
 
 	if (!user) {
 		return <div />;
@@ -64,11 +52,6 @@ function UserInfo(): JSX.Element {
 		try {
 			setIsLoading(true);
 
-			if (!isPasswordValid(currentPassword)) {
-				setIsPasswordPolicyError(true);
-				setIsLoading(false);
-				return;
-			}
 			await changeMyPassword({
 				newPassword: updatePassword,
 				oldPassword: currentPassword,
@@ -94,7 +77,6 @@ function UserInfo(): JSX.Element {
 		isLoading ||
 		currentPassword.length === 0 ||
 		updatePassword.length === 0 ||
-		isPasswordPolicyError ||
 		currentPassword === updatePassword;
 
 	const onSaveHandler = async (): Promise<void> => {

@@ -52,10 +52,6 @@ jest.mock(
 		},
 );
 
-jest.mock('api/common/getQueryStats', () => ({
-	getQueryStats: jest.fn(),
-}));
-
 jest.mock('constants/panelTypes', () => ({
 	AVAILABLE_EXPORT_PANEL_TYPES: ['graph', 'table'],
 }));

@@ -11,6 +11,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import store from 'store';
+import APIError from 'types/api/error';
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -19,9 +20,13 @@ const queryClient = new QueryClient({
 			retry(failureCount, error): boolean {
 				if (
 					// in case of manually throwing errors please make sure to send error.response.status
-					error instanceof AxiosError &&
-					error.response?.status &&
-					(error.response?.status >= 400 || error.response?.status <= 499)
+					(error instanceof AxiosError &&
+						error.response?.status &&
+						error.response?.status >= 400 &&
+						error.response?.status <= 499) ||
+					(error instanceof APIError &&
+						error.getHttpStatusCode() >= 400 &&
+						error.getHttpStatusCode() <= 499)
 				) {
 					return false;
 				}

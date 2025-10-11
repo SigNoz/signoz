@@ -3,7 +3,6 @@ import './LogsExplorerViews.styles.scss';
 
 import getFromLocalstorage from 'api/browser/localstorage/get';
 import setToLocalstorage from 'api/browser/localstorage/set';
-import { getQueryStats, WsDataEvent } from 'api/common/getQueryStats';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -132,7 +131,6 @@ function LogsExplorerViewsContainer({
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
 	const [queryId, setQueryId] = useState<string>(v4());
-	const [queryStats, setQueryStats] = useState<WsDataEvent>();
 	const [listChartQuery, setListChartQuery] = useState<Query | null>(null);
 
 	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
@@ -409,19 +407,6 @@ function LogsExplorerViewsContainer({
 		setQueryId(v4());
 	}, [data]);
 
-	useEffect(() => {
-		if (
-			!isEmpty(queryId) &&
-			(isLoading || isFetching) &&
-			selectedPanelType !== PANEL_TYPES.LIST
-		) {
-			setQueryStats(undefined);
-			setTimeout(() => {
-				getQueryStats({ queryId, setData: setQueryStats });
-			}, 500);
-		}
-	}, [queryId, isLoading, isFetching, selectedPanelType]);
-
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
 		if (!logEventCalledRef.current && !isUndefined(data?.payload)) {
@@ -632,7 +617,6 @@ function LogsExplorerViewsContainer({
 				{!showLiveLogs && (
 					<LogsActionsContainer
 						listQuery={listQuery}
-						queryStats={queryStats}
 						selectedPanelType={selectedPanelType}
 						showFrequencyChart={showFrequencyChart}
 						handleToggleFrequencyChart={handleToggleFrequencyChart}
