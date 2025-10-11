@@ -77,6 +77,9 @@ const useCreateAlerts = (
 		queryRangeMutation.mutate(queryPayload, {
 			onSuccess: (data) => {
 				const updatedQuery = mapQueryDataFromApi(data.data.compositeQuery);
+				if (widget?.yAxisUnit) {
+					updatedQuery.unit = widget?.yAxisUnit;
+				}
 				const url = `${ROUTES.ALERTS_NEW}?${
 					QueryParams.compositeQuery
 				}=${encodeURIComponent(JSON.stringify(updatedQuery))}&${

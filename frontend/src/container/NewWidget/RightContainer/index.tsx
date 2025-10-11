@@ -63,7 +63,7 @@ import LegendColors from './LegendColors/LegendColors';
 import ThresholdSelector from './Threshold/ThresholdSelector';
 import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
-import YAxisUnitSelector from './YAxisUnitSelector';
+import YAxisUnitSelector from './YAxisUnitSelectorV2';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -94,6 +94,7 @@ function RightContainer({
 	setSelectedTime,
 	selectedTime,
 	yAxisUnit,
+	initialYAxisUnit,
 	setYAxisUnit,
 	setGraphHandler,
 	thresholds,
@@ -346,8 +347,9 @@ function RightContainer({
 
 				{allowYAxisUnit && (
 					<YAxisUnitSelector
+						defaultValue={yAxisUnit}
+						initialValue={initialYAxisUnit || ''}
 						onSelect={setYAxisUnit}
-						value={yAxisUnit || ''}
 						fieldLabel={
 							selectedGraphType === PanelDisplay.VALUE ||
 							selectedGraphType === PanelDisplay.PIE
@@ -544,6 +546,7 @@ interface RightContainerProps {
 	setSelectedTime: Dispatch<SetStateAction<timePreferance>>;
 	selectedTime: timePreferance;
 	yAxisUnit: string;
+	initialYAxisUnit: string | undefined;
 	stackedBarChart: boolean;
 	setStackedBarChart: Dispatch<SetStateAction<boolean>>;
 	bucketWidth: number;

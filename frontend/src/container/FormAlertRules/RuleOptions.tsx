@@ -16,7 +16,6 @@ import {
 	getCategoryByOptionId,
 	getCategorySelectOptionByName,
 } from 'container/NewWidget/RightContainer/alertFomatCategories';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useTranslation } from 'react-i18next';
 import {
 	AlertDef,
@@ -43,10 +42,10 @@ function RuleOptions({
 	setAlertDef,
 	queryCategory,
 	queryOptions,
+	yAxisUnit,
 }: RuleOptionsProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
-	const { currentQuery } = useQueryBuilder();
 
 	const { ruleType } = alertDef;
 
@@ -365,7 +364,7 @@ function RuleOptions({
 		</InlineSelect>
 	);
 
-	const selectedCategory = getCategoryByOptionId(currentQuery?.unit || '');
+	const selectedCategory = getCategoryByOptionId(yAxisUnit);
 
 	const categorySelectOptions = getCategorySelectOptionByName(
 		selectedCategory?.name,
@@ -515,5 +514,6 @@ interface RuleOptionsProps {
 	setAlertDef: (a: AlertDef) => void;
 	queryCategory: EQueryType;
 	queryOptions: DefaultOptionType[];
+	yAxisUnit: string;
 }
 export default RuleOptions;
