@@ -643,6 +643,58 @@ describe('Login Component', () => {
 				).toBeInTheDocument();
 			});
 		});
+
+		it('shows warning modal when a warning org is selected among multiple orgs', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			// Mock multiple orgs including one with a warning
+			const mockMultiOrgWithWarning = {
+				orgs: [
+					{ id: 'org1', name: 'Org 1' },
+					{
+						id: 'org2',
+						name: 'Org 2',
+						warning: {
+							code: 'ORG_WARNING',
+							message: 'Organization has limited access',
+							url: 'https://example.com/warning',
+							errors: [{ message: 'Contact admin for full access' }],
+						} as ErrorV2,
+					},
+				],
+			};
+
+			server.use(
+				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
+					res(
+						ctx.status(200),
+						ctx.json({ status: 'success', data: mockMultiOrgWithWarning }),
+					),
+				),
+			);
+
+			const { getByTestId } = render(<Login />);
+
+			const emailInput = getByTestId('email');
+			const nextButton = getByTestId('initiate_login');
+
+			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
+			await user.click(nextButton);
+
+			await waitFor(() => {
+				expect(screen.getByRole('combobox')).toBeInTheDocument();
+			});
+
+			// Select the organization with a warning
+			await user.click(screen.getByRole('combobox'));
+			await user.click(screen.getByText('Org 2'));
+
+			await waitFor(() => {
+				expect(
+					screen.getByText(/organization has limited access/i),
+				).toBeInTheDocument();
+			});
+		});
 	});
 
 	describe('Form State Management', () => {
