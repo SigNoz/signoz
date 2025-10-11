@@ -18,6 +18,26 @@ interface UseSafeNavigateReturn {
 	>;
 }
 
+export const isEventObject = (
+	arg: unknown,
+): arg is
+	| MouseEvent
+	| KeyboardEvent
+	| React.MouseEvent
+	| React.KeyboardEvent => {
+	if (!arg || typeof arg !== 'object') return false;
+
+	return (
+		arg instanceof MouseEvent ||
+		arg instanceof KeyboardEvent ||
+		('nativeEvent' in arg &&
+			(arg.nativeEvent instanceof MouseEvent ||
+				arg.nativeEvent instanceof KeyboardEvent)) ||
+		'metaKey' in arg ||
+		'ctrlKey' in arg
+	);
+};
+
 export const useSafeNavigate = (): UseSafeNavigateReturn => ({
 	safeNavigate: jest.fn(
 		(to: SafeNavigateToType, options?: SafeNavigateOptions) => {
