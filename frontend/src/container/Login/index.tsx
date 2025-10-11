@@ -56,6 +56,10 @@ function Login(): JSX.Element {
 	const [sessionsContext, setSessionsContext] = useState<SessionsContext>();
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 	const [sessionsOrgId, setSessionsOrgId] = useState<string>('');
+	const [
+		sessionsContextLoading,
+		setIsLoadingSessionsContext,
+	] = useState<boolean>(false);
 	const [form] = Form.useForm<FormValues>();
 	const { showErrorModal } = useErrorModal();
 
@@ -85,6 +89,7 @@ function Login(): JSX.Element {
 	// fetch the sessions context post user entering the email
 	const onNextHandler = async (): Promise<void> => {
 		const email = form.getFieldValue('email');
+		setIsLoadingSessionsContext(true);
 
 		try {
 			const sessionsContextResponse = await get({
@@ -99,6 +104,7 @@ function Login(): JSX.Element {
 		} catch (error) {
 			showErrorModal(error as APIError);
 		}
+		setIsLoadingSessionsContext(false);
 	};
 
 	// post selection of email and session org decide on the authN mechanism to use
@@ -322,7 +328,7 @@ function Login(): JSX.Element {
 				>
 					{!sessionsContext && (
 						<Button
-							disabled={versionLoading}
+							disabled={versionLoading || sessionsContextLoading}
 							type="primary"
 							onClick={onNextHandler}
 							data-testid="initiate_login"
@@ -338,6 +344,7 @@ function Login(): JSX.Element {
 							disabled={isSubmitting}
 							type="primary"
 							htmlType="submit"
+							data-testid="callback_authn_submit"
 							data-attr="signup"
 							className="periscope-btn primary next-btn"
 							icon={<ArrowRight size={12} />}
@@ -350,6 +357,7 @@ function Login(): JSX.Element {
 						<Button
 							disabled={isSubmitting}
 							type="primary"
+							data-testid="password_authn_submit"
 							htmlType="submit"
 							data-attr="signup"
 							className="periscope-btn primary next-btn"

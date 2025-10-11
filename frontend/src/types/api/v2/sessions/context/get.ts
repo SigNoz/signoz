@@ -23,7 +23,7 @@ export interface OrgSessionContext {
 	id: string;
 	name: string;
 	authNSupport: AuthNSupport;
-	warning: ErrorV2;
+	warning?: ErrorV2;
 }
 
 export interface SessionsContext {
