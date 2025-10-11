@@ -2,7 +2,11 @@ import './styles.scss';
 
 import { Button } from 'antd';
 import classNames from 'classnames';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
+import {
+	initialQueryBuilderFormValuesMap,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import QuerySectionComponent from 'container/FormAlertRules/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { BarChart2, DraftingCompass, FileText, ScrollText } from 'lucide-react';
@@ -26,7 +30,15 @@ function QuerySection(): JSX.Element {
 	const alertDef = buildAlertDefForChartPreview({ alertType, thresholdState });
 
 	const onQueryCategoryChange = (val: EQueryType): void => {
-		const query: Query = { ...currentQuery, queryType: val };
+		const dataSource = ALERTS_DATA_SOURCE_MAP[alertType];
+		const query: Query = {
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: [initialQueryBuilderFormValuesMap[dataSource]],
+			},
+			queryType: val,
+		};
 		redirectWithQueryBuilderData(query);
 	};
 
