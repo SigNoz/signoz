@@ -32,23 +32,22 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         # Run the migrations for clickhouse
         request.getfixturevalue("migrator")
 
+        arch = platform.machine()
+        if arch == "x86_64":
+            arch = "amd64"
+
         # Build the image
         self = DockerImage(
             path="../../",
             dockerfile_path="cmd/enterprise/Dockerfile.integration",
             tag="signoz:integration",
-        )
-
-        arch = platform.machine()
-        if arch == "x86_64":
-            arch = "amd64"
-
-        self.build(
             buildargs={
                 "TARGETARCH": arch,
                 "ZEUSURL": zeus.container_configs["8080"].base(),
-            }
+            },
         )
+
+        self.build()
 
         env = (
             {

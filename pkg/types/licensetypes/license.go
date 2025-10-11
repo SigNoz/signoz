@@ -21,7 +21,7 @@ type StorableLicense struct {
 	Key             string         `bun:"key,type:text,notnull,unique"`
 	Data            map[string]any `bun:"data,type:text"`
 	LastValidatedAt time.Time      `bun:"last_validated_at,notnull"`
-	OrgID           valuer.UUID    `bun:"org_id,type:text,notnull" json:"orgID"`
+	OrgID           valuer.UUID    `bun:"org_id,type:text,notnull" json:"orgId"`
 }
 
 // this data excludes ID and Key

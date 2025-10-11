@@ -243,3 +243,28 @@ statsreporter:
 gateway:
   # The URL of the gateway's api.
   url: http://localhost:8080
+
+##################### Tokenizer #####################
+tokenizer:
+  # Specifies the tokenizer provider to use.
+  provider: jwt
+  lifetime:
+    # The duration for which a user can be idle before being required to authenticate.
+    idle: 168h
+    # The duration for which a user can remain logged in before being asked to login.
+    max: 720h
+  rotation:
+    # The interval to rotate tokens in.
+    interval: 30m
+    # The duration for which the previous token pair remains valid after a token pair is rotated.
+    duration: 60s
+  jwt:
+    # The secret to sign the JWT tokens.
+    secret: secret
+  opaque:
+    gc:
+      # The interval to perform garbage collection.
+      interval: 1h
+    token:
+      # The maximum number of tokens a user can have. This limits the number of concurrent sessions a user can have.
+      max_per_user: 5

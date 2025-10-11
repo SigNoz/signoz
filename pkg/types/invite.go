@@ -1,8 +1,7 @@
 package types
 
 import (
-	"fmt"
-	"strings"
+	"encoding/json"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -15,57 +14,20 @@ var (
 	ErrInviteNotFound      = errors.MustNewCode("invite_not_found")
 )
 
-type GettableEEInvite struct {
-	GettableInvite
-	PreCheck *GettableLoginPrecheck `bun:"-" json:"precheck"`
-}
-
-type GettableInvite struct {
-	Invite
-	Organization string `bun:"organization,type:text,notnull" json:"organization"`
-}
+type GettableInvite = Invite
 
 type Invite struct {
 	bun.BaseModel `bun:"table:user_invite"`
 
 	Identifiable
 	TimeAuditable
-	OrgID string `bun:"org_id,type:text,notnull" json:"orgID"`
-	Name  string `bun:"name,type:text,notnull" json:"name"`
-	Email string `bun:"email,type:text,notnull,unique" json:"email"`
-	Token string `bun:"token,type:text,notnull" json:"token"`
-	Role  string `bun:"role,type:text,notnull" json:"role"`
+	Name  string       `bun:"name,type:text" json:"name"`
+	Email valuer.Email `bun:"email,type:text" json:"email"`
+	Token string       `bun:"token,type:text" json:"token"`
+	Role  Role         `bun:"role,type:text" json:"role"`
+	OrgID valuer.UUID  `bun:"org_id,type:text" json:"orgId"`
 
 	InviteLink string `bun:"-" json:"inviteLink"`
-}
-
-func NewInvite(orgID, role, name, email string) (*Invite, error) {
-	if email == "" {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
-	}
-	_, err := NewRole(role)
-	if err != nil {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("invalid role for user: %s", email))
-	}
-
-	email = strings.TrimSpace(email)
-
-	invite := &Invite{
-		Identifiable: Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
-		TimeAuditable: TimeAuditable{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
-		Name:  name,
-		Email: email,
-		Token: valuer.GenerateUUID().String(),
-		Role:  role,
-		OrgID: orgID,
-	}
-
-	return invite, nil
 }
 
 type InviteEmailData struct {
@@ -75,11 +37,20 @@ type InviteEmailData struct {
 	Link         string
 }
 
+type PostableAcceptInvite struct {
+	DisplayName string `json:"displayName"`
+	InviteToken string `json:"token"`
+	Password    string `json:"password"`
+
+	// reference URL to track where the register request is coming from
+	SourceURL string `json:"sourceUrl"`
+}
+
 type PostableInvite struct {
-	Name            string `json:"name"`
-	Email           string `json:"email"`
-	Role            Role   `json:"role"`
-	FrontendBaseUrl string `json:"frontendBaseUrl"`
+	Name            string       `json:"name"`
+	Email           valuer.Email `json:"email"`
+	Role            Role         `json:"role"`
+	FrontendBaseUrl string       `json:"frontendBaseUrl"`
 }
 
 type PostableBulkInviteRequest struct {
@@ -88,4 +59,43 @@ type PostableBulkInviteRequest struct {
 
 type GettableCreateInviteResponse struct {
 	InviteToken string `json:"token"`
+}
+
+func NewInvite(name string, role Role, orgID valuer.UUID, email valuer.Email) (*Invite, error) {
+	invite := &Invite{
+		Identifiable: Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		Name:  name,
+		Email: email,
+		Token: valuer.GenerateUUID().String(),
+		Role:  role,
+		OrgID: orgID,
+		TimeAuditable: TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+	}
+
+	return invite, nil
+}
+
+func (request *PostableAcceptInvite) UnmarshalJSON(data []byte) error {
+	type Alias PostableAcceptInvite
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if temp.InviteToken == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invite token is required")
+	}
+
+	if !IsPasswordValid(temp.Password) {
+		return ErrInvalidPassword
+	}
+
+	*request = PostableAcceptInvite(temp)
+	return nil
 }
