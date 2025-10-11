@@ -20,11 +20,12 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 	const { user } = useAppContext();
 	const [action] = useComponentPermission(['new_alert_action'], user.role);
 
-	const onClickEditHandler = useCallback((id: string) => {
+	const onClickEditHandler = useCallback((id: string, e: React.MouseEvent) => {
 		history.push(
 			generatePath(ROUTES.CHANNELS_EDIT, {
 				channelId: id,
 			}),
+			e,
 		);
 	}, []);
 
@@ -52,7 +53,10 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 			width: 80,
 			render: (id: string): JSX.Element => (
 				<>
-					<Button onClick={(): void => onClickEditHandler(id)} type="link">
+					<Button
+						onClick={(e: React.MouseEvent): void => onClickEditHandler(id, e)}
+						type="link"
+					>
 						{t('column_channel_edit')}
 					</Button>
 					<Delete id={id} notifications={notifications} />

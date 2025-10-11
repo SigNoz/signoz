@@ -9,8 +9,8 @@ export default function FullScreenHeader({
 }: {
 	overrideRoute?: string;
 }): React.ReactElement {
-	const handleLogoClick = (): void => {
-		history.push(overrideRoute || '/');
+	const handleLogoClick = (event?: React.MouseEvent): void => {
+		history.push(overrideRoute || '/', event);
 	};
 	return (
 		<div className="full-screen-header-container">

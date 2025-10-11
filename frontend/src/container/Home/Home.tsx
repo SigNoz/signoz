@@ -413,12 +413,12 @@ export default function Home(): JSX.Element {
 											role="button"
 											tabIndex={0}
 											className="active-ingestion-card-actions"
-											onClick={(): void => {
+											onClick={(e): void => {
 												// eslint-disable-next-line sonarjs/no-duplicate-string
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Logs',
 												});
-												history.push(ROUTES.LOGS_EXPLORER);
+												history.push(ROUTES.LOGS_EXPLORER, e);
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
@@ -455,11 +455,11 @@ export default function Home(): JSX.Element {
 											className="active-ingestion-card-actions"
 											role="button"
 											tabIndex={0}
-											onClick={(): void => {
+											onClick={(e): void => {
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Traces',
 												});
-												history.push(ROUTES.TRACES_EXPLORER);
+												history.push(ROUTES.TRACES_EXPLORER, e);
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
@@ -496,11 +496,11 @@ export default function Home(): JSX.Element {
 											className="active-ingestion-card-actions"
 											role="button"
 											tabIndex={0}
-											onClick={(): void => {
+											onClick={(e): void => {
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Metrics',
 												});
-												history.push(ROUTES.METRICS_EXPLORER);
+												history.push(ROUTES.METRICS_EXPLORER, e);
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
@@ -550,11 +550,11 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Wrench size={14} />}
-												onClick={(): void => {
+												onClick={(e): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Logs',
 													});
-													history.push(ROUTES.LOGS_EXPLORER);
+													history.push(ROUTES.LOGS_EXPLORER, e);
 												}}
 											>
 												Open Logs Explorer
@@ -564,11 +564,11 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Wrench size={14} />}
-												onClick={(): void => {
+												onClick={(e): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Traces',
 													});
-													history.push(ROUTES.TRACES_EXPLORER);
+													history.push(ROUTES.TRACES_EXPLORER, e);
 												}}
 											>
 												Open Traces Explorer
@@ -578,11 +578,11 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Wrench size={14} />}
-												onClick={(): void => {
+												onClick={(e): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Metrics',
 													});
-													history.push(ROUTES.METRICS_EXPLORER_EXPLORER);
+													history.push(ROUTES.METRICS_EXPLORER_EXPLORER, e);
 												}}
 											>
 												Open Metrics Explorer
@@ -619,11 +619,11 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Plus size={14} />}
-												onClick={(): void => {
+												onClick={(e): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Dashboards',
 													});
-													history.push(ROUTES.ALL_DASHBOARD);
+													history.push(ROUTES.ALL_DASHBOARD, e);
 												}}
 											>
 												Create dashboard
@@ -661,11 +661,11 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Plus size={14} />}
-												onClick={(): void => {
+												onClick={(e): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Alerts',
 													});
-													history.push(ROUTES.ALERTS_NEW);
+													history.push(ROUTES.ALERTS_NEW, e);
 												}}
 											>
 												Create an alert
