@@ -87,6 +87,7 @@ function SpanHoverCard({
 					</Typography.Text>
 				</div>
 			}
+			mouseEnterDelay={0.5}
 			content={getContent()}
 			trigger="hover"
 			rootClassName="span-hover-card"
