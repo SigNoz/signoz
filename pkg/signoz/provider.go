@@ -135,6 +135,8 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddMeterQuickFiltersFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateTTLSettingForCustomRetentionFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddRoutePolicyFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddRoleFactory(sqlstore, sqlschema),
+		sqlmigration.NewOpenfgaMigrationFactory(sqlstore, sqlschema),
 	)
 }
 
