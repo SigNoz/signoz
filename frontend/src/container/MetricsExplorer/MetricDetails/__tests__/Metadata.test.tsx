@@ -7,6 +7,13 @@ import * as useNotificationsHooks from 'hooks/useNotifications';
 
 import Metadata from '../Metadata';
 
+jest.mock('react-query', () => ({
+	...jest.requireActual('react-query'),
+	useQueryClient: (): { invalidateQueries: () => void } => ({
+		invalidateQueries: jest.fn(),
+	}),
+}));
+
 const mockUseUpdateMetricMetadata = jest.fn();
 jest
 	.spyOn(useUpdateMetricMetadataHooks, 'useUpdateMetricMetadata')
@@ -99,6 +106,10 @@ describe('Metadata', () => {
 				metricName: mockMetricName,
 				payload: expect.objectContaining({
 					description: 'Updated description',
+					metricType: MetricType.GAUGE,
+					temporality: Temporality.DELTA,
+					unit: 'test_unit',
+					isMonotonic: false,
 				}),
 			}),
 			expect.objectContaining({
