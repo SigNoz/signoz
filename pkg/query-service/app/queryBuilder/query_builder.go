@@ -13,6 +13,7 @@ import (
 )
 
 var SupportedFunctions = []string{
+	"abs",
 	"exp",
 	"log",
 	"ln",

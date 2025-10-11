@@ -863,3 +863,39 @@ func TestComplexExpression(t *testing.T) {
 		}
 	}
 }
+
+func TestAbsValueExpression(t *testing.T) {
+	tsData := map[string]*TimeSeriesData{
+		"A": createFormulaTestTimeSeriesData("A", []*TimeSeries{
+			{
+				Labels: createLabels(map[string]string{"service_name": "frontend"}),
+				Values: createValues(map[int64]float64{
+					1: -10,
+					2: 20,
+				}),
+			},
+		}),
+		"B": createFormulaTestTimeSeriesData("B", []*TimeSeries{
+			{
+				Labels: createLabels(map[string]string{"service_name": "frontend"}),
+				Values: createValues(map[int64]float64{
+					1: 5,
+					2: -4,
+				}),
+			},
+		}),
+	}
+
+	evaluator, err := NewFormulaEvaluator("abs(A) + abs(B)", map[string]bool{"A": true, "B": true})
+	require.NoError(t, err)
+
+	result, err := evaluator.EvaluateFormula(tsData)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.Equal(t, 1, len(result))
+
+	series := result[0]
+	require.Equal(t, 2, len(series.Values))
+	assert.Equal(t, 15.0, series.Values[0].Value) // |−10| + |5| = 15
+	assert.Equal(t, 24.0, series.Values[1].Value) // |20| + |−4| = 24
+}
