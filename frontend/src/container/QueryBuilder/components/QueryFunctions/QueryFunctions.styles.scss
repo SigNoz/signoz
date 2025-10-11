@@ -165,9 +165,13 @@
 	**/
 
 	width: 40vw;
-	height: 40vh;
+	height: 25vh;
 
-	top: 120%;
+	@media (max-width: 768px) {
+		width: 40vw;
+	}
+
+	top: 4vh;
 	left: 0;
 	right: 0;
 	z-index: 1000;
@@ -205,6 +209,11 @@
 			cursor: pointer;
 			padding: 0;
 			margin: 0;
+			&:hover,
+			&:active,
+			&:focus {
+				background-color: yellow;
+			}
 
 			&.active {
 				background-color: yellow;
@@ -212,9 +221,28 @@
 		}
 
 		& .functions-function {
+			display: block;
+			&:hover,
+			&:active,
+			&:focus {
+				background-color: yellow;
+			}
+
 			&.active {
 				background-color: yellow;
 			}
+		}
+	}
+	.functions-search-modal-footer {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+
+		.enter-btn {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			margin-left: 25px;
 		}
 	}
 }

@@ -93,8 +93,7 @@ export default function QueryFunctions({
 			name: normalizeFunctionName(func.name) as any,
 		})),
 	);
-	console.log('functions', functions);
-	console.log('query functions', queryFunctions);
+
 	const [
 		isFunctionsSearchModalOpen,
 		setIsFunctionsSearchModalOpen,
@@ -132,8 +131,6 @@ export default function QueryFunctions({
 
 		setFunctions(functionsCopy);
 		onChange(functionsCopy);
-		// Open the modal after we've successfully added the function
-		setIsFunctionsSearchModalOpen(true);
 	};
 
 	const handleDeleteFunction = (
@@ -207,6 +204,9 @@ export default function QueryFunctions({
 							index={index}
 							// eslint-disable-next-line react/no-array-index-key
 							key={index}
+							handleOpenFunctionsSearchModal={(): void =>
+								setIsFunctionsSearchModalOpen(!isFunctionsSearchModalOpen)
+							}
 							handleUpdateFunctionArgs={handleUpdateFunctionArgs}
 							handleUpdateFunctionName={handleUpdateFunctionName}
 							handleDeleteFunction={handleDeleteFunction}

@@ -1,3 +1,11 @@
+import {
+	ArrowDownOutlined,
+	ArrowLeftOutlined,
+	ArrowRightOutlined,
+	ArrowUpOutlined,
+	EnterOutlined,
+} from '@ant-design/icons';
+import { Button, Input } from 'antd';
 import { QueryFunction } from 'api/v5/v5';
 import classNames from 'classnames';
 import {
@@ -6,7 +14,7 @@ import {
 	logsQueryFunctionOptions,
 	metricQueryFunctionOptions,
 } from 'constants/queryFunctionOptions';
-import { forwardRef, useRef, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
@@ -23,13 +31,14 @@ type FunctionsSearchModalProps = {
 type FunctionsCategoriesProps = {
 	categories: string[];
 	activeIndex: number | null;
+	onCategorySelect: (category: string) => void;
 };
 
 const FunctionsCategories = forwardRef<
 	HTMLUListElement,
 	FunctionsCategoriesProps
 >(
-	({ categories, activeIndex }, ref): JSX.Element => (
+	({ categories, activeIndex, onCategorySelect }, ref): JSX.Element => (
 		<ul ref={ref} role="menu" className="functions-categories">
 			{categories.map((category, index) => (
 				<li
@@ -38,7 +47,14 @@ const FunctionsCategories = forwardRef<
 						active: activeIndex === index,
 					})}
 				>
-					{category}
+					<button
+						tabIndex={-1}
+						role="menuitem"
+						type="button"
+						onClick={(): void => onCategorySelect(category)}
+					>
+						{category}
+					</button>
 				</li>
 			))}
 		</ul>
@@ -52,19 +68,23 @@ const Functions = forwardRef<
 	{
 		functions: SelectOption<string, string>[];
 		activeIndex: number | null;
+		onSelectFunction: (fn: string) => void;
 	}
 >(
-	({ functions, activeIndex }, ref): JSX.Element => (
+	({ functions, activeIndex, onSelectFunction }, ref): JSX.Element => (
 		<div ref={ref}>
 			{functions.map((fn, index) => (
-				<p
+				<button
+					type="button"
+					tabIndex={-1}
+					onClick={(): void => onSelectFunction(fn.value)}
 					key={fn.value}
 					className={classNames('functions-function', {
 						active: activeIndex === index,
 					})}
 				>
 					{fn.label}
-				</p>
+				</button>
 			))}
 		</div>
 	),
@@ -87,12 +107,13 @@ function FunctionDescription({
 function FunctionsSearchModal(
 	props: FunctionsSearchModalProps,
 ): JSX.Element | null {
-	const [selectedCategory, setSelectedCategory] = useState<
-		keyof typeof defaultFunctionDescription
-	>(functionTypes.arithmetic);
+	const [selectedCategory, setSelectedCategory] = useState<string>(
+		functionTypes.arithmetic,
+	);
 
 	const functionsCategoriesRef = useRef<HTMLUListElement>(null);
 	const functionsRef = useRef<HTMLDivElement>(null);
+	const containerRef = useRef<HTMLSelectElement>(null);
 
 	const [focusedElement, setFocusedElement] = useState<
 		React.RefObject<HTMLUListElement> | React.RefObject<HTMLDivElement> | null
@@ -104,6 +125,7 @@ function FunctionsSearchModal(
 	const [activeCategoryIndex, setActiveCategoryIndex] = useState<number | null>(
 		null,
 	);
+	const [categorySearch, setCategorySearch] = useState<string>('');
 
 	const { isOpen, onClose, query, onSelectFunction, funcData, index } = props;
 
@@ -127,6 +149,8 @@ function FunctionsSearchModal(
 			acc[option.type].push(option);
 			return acc;
 		}, {} as Record<string, SelectOption<string, string>[]>),
+	).filter((category) =>
+		category.toLowerCase().includes(categorySearch.toLowerCase()),
 	);
 
 	const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>): void => {
@@ -141,8 +165,12 @@ function FunctionsSearchModal(
 				) {
 					if (activeCategoryIndex === focusedElement.current.childNodes.length - 1) {
 						setActiveCategoryIndex(0);
+						setSelectedCategory(categories[0]);
 					} else {
 						setActiveCategoryIndex((prev) => (prev !== null ? prev + 1 : 0));
+						setSelectedCategory(
+							categories[activeCategoryIndex !== null ? activeCategoryIndex + 1 : 0],
+						);
 					}
 				}
 				if (
@@ -164,8 +192,14 @@ function FunctionsSearchModal(
 				) {
 					if (activeCategoryIndex === 0) {
 						setActiveCategoryIndex(focusedElement.current.childNodes.length - 1);
+						setSelectedCategory(
+							categories[focusedElement.current.childNodes.length - 1],
+						);
 					} else {
 						setActiveCategoryIndex((prev) => (prev !== null ? prev - 1 : 0));
+						setSelectedCategory(
+							categories[activeCategoryIndex !== null ? activeCategoryIndex - 1 : 0],
+						);
 					}
 				}
 				if (
@@ -194,8 +228,10 @@ function FunctionsSearchModal(
 				setActiveCategoryIndex(0);
 				setActiveFunctionIndex(0);
 				break;
+
 			case 'Enter':
 				e.preventDefault();
+
 				if (activeFunctionIndex !== null) {
 					onSelectFunction(
 						funcData,
@@ -207,6 +243,7 @@ function FunctionsSearchModal(
 				break;
 			case 'Tab':
 			default:
+				onClose();
 				break;
 		}
 	};
@@ -229,10 +266,75 @@ function FunctionsSearchModal(
 		setFocusedElement(null);
 	};
 
+	useEffect(() => {
+		let scrollTimeout: NodeJS.Timeout | null = null;
+
+		const updatePosition = (): void => {
+			if (containerRef.current && isOpen) {
+				const viewHeight = window.innerHeight;
+				const modalHeight = (25 * viewHeight) / 100;
+				const rect = containerRef.current.getBoundingClientRect();
+				const isTop = viewHeight - rect.bottom < modalHeight;
+				if (isTop) {
+					containerRef.current.style.top = '-25vh';
+				} else {
+					containerRef.current.style.top = '4vh';
+				}
+			}
+		};
+
+		const onScroll = (event: Event): void => {
+			// Check if scroll event is from within the modal's children
+			if (
+				containerRef.current &&
+				event.target instanceof Node &&
+				containerRef.current.contains(event.target)
+			) {
+				return;
+			}
+
+			if (scrollTimeout) {
+				clearTimeout(scrollTimeout);
+			}
+			scrollTimeout = setTimeout(() => {
+				updatePosition();
+			}, 150);
+		};
+
+		if (isOpen) {
+			updatePosition();
+			window.addEventListener('resize', updatePosition);
+			window.addEventListener('scroll', onScroll, true);
+		}
+
+		return (): void => {
+			if (scrollTimeout) {
+				clearTimeout(scrollTimeout);
+			}
+			window.removeEventListener('resize', updatePosition);
+			window.removeEventListener('scroll', onScroll, true);
+		};
+	}, [isOpen]);
+
+	const onChooseFunction = (fn: string): void => {
+		onSelectFunction(funcData, index, fn);
+		onClose();
+	};
+
+	const onChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+		setCategorySearch(e.target.value);
+	};
+
+	const onCategorySelect = (category: string): void => {
+		setSelectedCategory(category);
+	};
+
 	if (!isOpen) return null;
 	return (
-		<section className="functions-search-modal">
-			<header>header</header>
+		<section ref={containerRef} className="functions-search-modal">
+			<header>
+				<Input placeholder="Search for a function" onChange={onChange} />
+			</header>
 			<div
 				onBlur={onBlur}
 				tabIndex={0}
@@ -242,21 +344,39 @@ function FunctionsSearchModal(
 				className="functions-search-modal-body"
 			>
 				<FunctionsCategories
+					onCategorySelect={onCategorySelect}
 					activeIndex={activeCategoryIndex}
 					ref={functionsCategoriesRef}
 					categories={categories}
 				/>
 				<Functions
+					onSelectFunction={onChooseFunction}
 					activeIndex={activeFunctionIndex}
 					ref={functionsRef}
 					functions={filteredFunctionOptions}
 				/>
 				<FunctionDescription selectedCategory={selectedCategory} />
 			</div>
-			<footer>
-				<button type="button" onClick={onClose}>
-					Close
-				</button>
+			<footer className="functions-search-modal-footer">
+				<Button>
+					<ArrowDownOutlined />
+				</Button>
+				<Button>
+					<ArrowUpOutlined />
+				</Button>
+				<Button>
+					<ArrowLeftOutlined />
+				</Button>
+				<Button>
+					<ArrowRightOutlined />
+				</Button>
+				to navigate
+				<div className="enter-btn">
+					<Button>
+						<EnterOutlined />
+					</Button>
+					to add function
+				</div>
 			</footer>
 		</section>
 	);
