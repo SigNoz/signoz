@@ -9,7 +9,10 @@ import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/Que
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	initialQueryBuilderFormValuesMap,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
@@ -350,7 +353,17 @@ function FormAlertRules({
 				evalWindow: defaultEvalWindow,
 			});
 		}
-		const query: Query = { ...currentQuery, queryType: val };
+		const dataSource = ALERTS_DATA_SOURCE_MAP[alertType as AlertTypes];
+		const query: Query = {
+			...{
+				...currentQuery,
+				builder: {
+					...currentQuery.builder,
+					queryData: [initialQueryBuilderFormValuesMap[dataSource]],
+				},
+			},
+			queryType: val,
+		};
 
 		// update step interval is removed from here as if the user enters
 		// any value we will use that rather than auto update

@@ -117,6 +117,11 @@ function AlertDetails(): JSX.Element {
 		}
 	};
 
+	// Show spinner until we have alert data loaded
+	if (isLoading && !alertRuleDetails) {
+		return <Spinner />;
+	}
+
 	return (
 		<CreateAlertProvider
 			ruleId={ruleId || ''}

@@ -51,7 +51,13 @@ export const useCreateAlertState = (): ICreateAlertContextProps => {
 export function CreateAlertProvider(
 	props: ICreateAlertProviderProps,
 ): JSX.Element {
-	const { children, initialAlertState, isEditMode, ruleId } = props;
+	const {
+		children,
+		initialAlertState,
+		isEditMode,
+		ruleId,
+		initialAlertType,
+	} = props;
 
 	const [alertState, setAlertState] = useReducer(
 		alertCreationReducer,
@@ -62,9 +68,12 @@ export function CreateAlertProvider(
 	const location = useLocation();
 	const queryParams = new URLSearchParams(location.search);
 
-	const [alertType, setAlertType] = useState<AlertTypes>(() =>
-		getInitialAlertTypeFromURL(queryParams, currentQuery),
-	);
+	const [alertType, setAlertType] = useState<AlertTypes>(() => {
+		if (isEditMode) {
+			return initialAlertType;
+		}
+		return getInitialAlertTypeFromURL(queryParams, currentQuery);
+	});
 
 	const handleAlertTypeChange = useCallback(
 		(value: AlertTypes): void => {
