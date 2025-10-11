@@ -907,3 +907,69 @@ func TestProvider_CreateRoutes(t *testing.T) {
 		})
 	}
 }
+
+func TestConvertLabelSetToEnv(t *testing.T) {
+	tests := []struct {
+		name     string
+		labelSet model.LabelSet
+		expected map[string]interface{}
+	}{
+		{
+			name: "simple keys",
+			labelSet: model.LabelSet{
+				"key1": "value1",
+				"key2": "value2",
+			},
+			expected: map[string]interface{}{
+				"key1": "value1",
+				"key2": "value2",
+			},
+		},
+		{
+			name: "nested keys",
+			labelSet: model.LabelSet{
+				"foo.bar": "value1",
+				"foo.baz": "value2",
+			},
+			expected: map[string]interface{}{
+				"foo": map[string]interface{}{
+					"bar": "value1",
+					"baz": "value2",
+				},
+			},
+		},
+		{
+			name: "conflict - nested structure wins",
+			labelSet: model.LabelSet{
+				"foo.bar.baz": "deep",
+				"foo.bar":     "shallow",
+			},
+			expected: map[string]interface{}{
+				"foo": map[string]interface{}{
+					"bar": map[string]interface{}{
+						"baz": "deep",
+					},
+				},
+			},
+		},
+		{
+			name: "conflict - leaf value vs nested",
+			labelSet: model.LabelSet{
+				"foo.bar": "value",
+				"foo":     "should_be_ignored",
+			},
+			expected: map[string]interface{}{
+				"foo": map[string]interface{}{
+					"bar": "value",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := convertLabelSetToEnv(tt.labelSet)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}

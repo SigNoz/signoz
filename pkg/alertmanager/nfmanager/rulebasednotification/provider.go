@@ -210,7 +210,9 @@ func (r *provider) Match(ctx context.Context, orgID string, ruleID string, set m
 	return matchedChannels, nil
 }
 
-func (r *provider) evaluateExpr(expression string, labelSet model.LabelSet) (bool, error) {
+// convertLabelSetToEnv converts a flat label set with dotted keys into a nested map structure.
+// For conflicting keys (e.g., "foo.bar" and "foo.bar.baz"), nested structures take precedence.
+func convertLabelSetToEnv(labelSet model.LabelSet) map[string]interface{} {
 	env := make(map[string]interface{})
 
 	for k, v := range labelSet {
@@ -221,20 +223,54 @@ func (r *provider) evaluateExpr(expression string, labelSet model.LabelSet) (boo
 			parts := strings.Split(key, ".")
 			current := env
 
+			validPath := true
 			for i, part := range parts {
 				if i == len(parts)-1 {
-					current[part] = value
+					// if no conflict, set the value
+					if existing, exists := current[part]; exists {
+						// if there's already a map here, a longer path exists
+						if _, isMap := existing.(map[string]interface{}); isMap {
+							// TODO(srikanthccv): we need a better solution to handle this
+							validPath = false
+							break
+						}
+					}
+					if validPath {
+						current[part] = value
+					}
 				} else {
+					// ensure map
 					if current[part] == nil {
 						current[part] = make(map[string]interface{})
+					} else if _, ok := current[part].(map[string]interface{}); !ok {
+						// if this part is already a leaf value, not a map
+						// TODO(srikanthccv): we need a better solution to handle this
+						validPath = false
+						break
 					}
-					current = current[part].(map[string]interface{})
+					if validPath {
+						current = current[part].(map[string]interface{})
+					}
 				}
 			}
 		} else {
-			env[key] = value
+			// if no conflict, set value
+			if existing, exists := env[key]; exists {
+				if _, isMap := existing.(map[string]interface{}); !isMap {
+					env[key] = value
+				}
+				// already a map, skip
+			} else {
+				env[key] = value
+			}
 		}
 	}
+
+	return env
+}
+
+func (r *provider) evaluateExpr(expression string, labelSet model.LabelSet) (bool, error) {
+	env := convertLabelSetToEnv(labelSet)
 
 	program, err := expr.Compile(expression, expr.Env(env))
 	if err != nil {
