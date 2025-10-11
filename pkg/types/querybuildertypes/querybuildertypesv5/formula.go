@@ -277,15 +277,15 @@ func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSer
 		seriesMetadata: make(map[string]*TimeSeries),
 	}
 
-	normalized := make(map[string]*TimeSeriesData, len(timeSeriesData))
+	normalizedSeriesMap := make(map[string]*TimeSeriesData, len(timeSeriesData))
 	for name, ts := range timeSeriesData {
-		normalized[strings.ToUpper(name)] = ts
+		normalizedSeriesMap[strings.ToUpper(name)] = ts
 	}
 
 	for variable, aggRef := range fe.aggRefs {
 		// We are only interested in the time series data for the queries that are
 		// involved in the formula expression.
-		data, exists := normalized[aggRef.QueryName]
+		data, exists := normalizedSeriesMap[aggRef.QueryName]
 		if !exists {
 			continue
 		}
