@@ -863,3 +863,129 @@ func TestComplexExpression(t *testing.T) {
 		}
 	}
 }
+
+func TestCaseInsensitiveQueryNames(t *testing.T) {
+	tests := []struct {
+		name       string
+		expression string
+		tsData     map[string]*TimeSeriesData
+		expected   float64
+	}{
+		{
+			name:       "lowercase query names",
+			expression: "a / b",
+			tsData: map[string]*TimeSeriesData{
+				"A": createFormulaTestTimeSeriesData("A", []*TimeSeries{
+					{
+						Labels: createLabels(map[string]string{}),
+						Values: createValues(map[int64]float64{1: 10}),
+					},
+				}),
+				"B": createFormulaTestTimeSeriesData("B", []*TimeSeries{
+					{
+						Labels: createLabels(map[string]string{}),
+						Values: createValues(map[int64]float64{1: 2}),
+					},
+				}),
+			},
+			expected: 5.0,
+		},
+		{
+			name:       "mixed case query names",
+			expression: "A / b",
+			tsData: map[string]*TimeSeriesData{
+				"A": createFormulaTestTimeSeriesData("A", []*TimeSeries{
+					{
+						Labels: createLabels(map[string]string{}),
+						Values: createValues(map[int64]float64{1: 10}),
+					},
+				}),
+				"B": createFormulaTestTimeSeriesData("B", []*TimeSeries{
+					{
+						Labels: createLabels(map[string]string{}),
+						Values: createValues(map[int64]float64{1: 2}),
+					},
+				}),
+			},
+			expected: 5.0,
+		},
+		{
+			name:       "uppercase query names with lowercase data keys",
+			expression: "A / B",
+			tsData: map[string]*TimeSeriesData{
+				"a": createFormulaTestTimeSeriesData("a", []*TimeSeries{
+					{
+						Labels: createLabels(map[string]string{}),
+						Values: createValues(map[int64]float64{1: 10}),
+					},
+				}),
+				"b": createFormulaTestTimeSeriesData("b", []*TimeSeries{
+					{
+						Labels: createLabels(map[string]string{}),
+						Values: createValues(map[int64]float64{1: 2}),
+					},
+				}),
+			},
+			expected: 5.0,
+		},
+		{
+			name:       "all lowercase",
+			expression: "a/b",
+			tsData: map[string]*TimeSeriesData{
+				"a": createFormulaTestTimeSeriesData("a", []*TimeSeries{
+					{
+						Labels: createLabels(map[string]string{}),
+						Values: createValues(map[int64]float64{1: 100}),
+					},
+				}),
+				"b": createFormulaTestTimeSeriesData("b", []*TimeSeries{
+					{
+						Labels: createLabels(map[string]string{}),
+						Values: createValues(map[int64]float64{1: 10}),
+					},
+				}),
+			},
+			expected: 10.0,
+		},
+		{
+			name:       "complex expression with mixed case",
+			expression: "a + B * c",
+			tsData: map[string]*TimeSeriesData{
+				"A": createFormulaTestTimeSeriesData("A", []*TimeSeries{
+					{
+						Labels: createLabels(map[string]string{}),
+						Values: createValues(map[int64]float64{1: 5}),
+					},
+				}),
+				"b": createFormulaTestTimeSeriesData("b", []*TimeSeries{
+					{
+						Labels: createLabels(map[string]string{}),
+						Values: createValues(map[int64]float64{1: 3}),
+					},
+				}),
+				"C": createFormulaTestTimeSeriesData("C", []*TimeSeries{
+					{
+						Labels: createLabels(map[string]string{}),
+						Values: createValues(map[int64]float64{1: 2}),
+					},
+				}),
+			},
+			expected: 11.0, // 5 + 3 * 2 = 11
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			evaluator, err := NewFormulaEvaluator(tt.expression, map[string]bool{"a": true, "A": true, "b": true, "B": true, "c": true, "C": true})
+			require.NoError(t, err)
+
+			result, err := evaluator.EvaluateFormula(tt.tsData)
+			require.NoError(t, err)
+			require.NotNil(t, result)
+
+			assert.Equal(t, 1, len(result), "should have exactly one result series")
+			assert.Equal(t, 1, len(result[0].Values), "should have exactly one value")
+			assert.Equal(t, tt.expected, result[0].Values[0].Value, "calculated value should match expected")
+		})
+	}
+}
