@@ -658,9 +658,7 @@ export const getUPlotChartOptions = ({
 
 								// Marker click handler - checkbox behavior (toggle individual series)
 								if (currentMarker) {
-									currentMarker.addEventListener('click', (e) => {
-										e.stopPropagation?.(); // Prevent event bubbling to text handler
-
+									const markerClickHandler = (): void => {
 										if (stackChart) {
 											handleStackChart();
 										}
@@ -680,14 +678,36 @@ export const getUPlotChartOptions = ({
 												return newGraphVisibilityStates;
 											});
 										}
+									};
+
+									requestAnimationFrame(() => {
+										const currentMarkerElement = thElement.querySelector(
+											'.u-marker',
+										) as HTMLElement;
+										if (currentMarkerElement) {
+											currentMarkerElement.style.cursor = 'pointer';
+											currentMarkerElement.style.pointerEvents = 'auto';
+											currentMarkerElement.addEventListener(
+												'click',
+												markerClickHandler,
+												false,
+											);
+											currentMarkerElement.addEventListener(
+												'mousedown',
+												(e) => {
+													e.preventDefault();
+													markerClickHandler();
+												},
+												false,
+											);
+										}
 									});
 								}
 
 								// Text click handler - show only/show all behavior (existing behavior)
 								if (textElement) {
-									textElement.addEventListener('click', (e) => {
-										e.stopPropagation?.(); // Prevent event bubbling
-
+									// Create the click handler function
+									const clickHandler = (): void => {
 										if (stackChart) {
 											handleStackChart();
 										}
@@ -715,6 +735,42 @@ export const getUPlotChartOptions = ({
 												});
 												return newGraphVisibilityStates;
 											});
+										}
+									};
+
+									// Use requestAnimationFrame to ensure DOM is fully ready
+									requestAnimationFrame(() => {
+										// Re-query the element to ensure we have the current DOM element
+										const currentTextElement = thElement.querySelector(
+											'.legend-text',
+										) as HTMLElement;
+
+										if (currentTextElement) {
+											// Force the element to be clickable
+											currentTextElement.style.cursor = 'pointer';
+											currentTextElement.style.pointerEvents = 'auto';
+
+											// Add multiple event listeners to ensure we catch the click
+											currentTextElement.addEventListener('click', clickHandler, false);
+											currentTextElement.addEventListener(
+												'mousedown',
+												(e) => {
+													e.preventDefault();
+													clickHandler();
+												},
+												false,
+											);
+
+											// Also add to the parent th element as a fallback
+											thElement.addEventListener(
+												'click',
+												(e) => {
+													if (e.target === currentTextElement) {
+														clickHandler();
+													}
+												},
+												false,
+											);
 										}
 									});
 								}

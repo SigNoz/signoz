@@ -54,16 +54,34 @@ function GraphManager({
 
 	const labelClickedHandler = useCallback(
 		(labelIndex: number): void => {
-			const newGraphVisibilityStates = Array<boolean>(data.length).fill(false);
-			newGraphVisibilityStates[labelIndex] = true;
+			if (labelIndex < 0 || labelIndex >= graphsVisibilityStates.length) return;
 
+			const newGraphVisibilityStates = [...graphsVisibilityStates];
+			const isCurrentlyVisible = newGraphVisibilityStates[labelIndex];
+			const visibleCount = newGraphVisibilityStates.filter(Boolean).length;
+
+			if (isCurrentlyVisible && visibleCount === 1) {
+				newGraphVisibilityStates.fill(true);
+			} else if (isCurrentlyVisible) {
+				newGraphVisibilityStates.fill(false);
+				newGraphVisibilityStates[labelIndex] = true;
+			} else {
+				newGraphVisibilityStates[labelIndex] = true;
+			}
+
+			// Update all graphs based on new state
 			newGraphVisibilityStates.forEach((state, index) => {
 				lineChartRef?.current?.toggleGraph(index, state);
 				parentChartRef?.current?.toggleGraph(index, state);
 			});
 			setGraphsVisibilityStates(newGraphVisibilityStates);
 		},
-		[data.length, lineChartRef, parentChartRef, setGraphsVisibilityStates],
+		[
+			graphsVisibilityStates,
+			lineChartRef,
+			parentChartRef,
+			setGraphsVisibilityStates,
+		],
 	);
 
 	const columns = getGraphManagerTableColumns({
