@@ -9,10 +9,7 @@ import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/Que
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
-import {
-	initialQueryBuilderFormValuesMap,
-	PANEL_TYPES,
-} from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
@@ -355,12 +352,13 @@ function FormAlertRules({
 		}
 		const dataSource = ALERTS_DATA_SOURCE_MAP[alertType as AlertTypes];
 		const query: Query = {
-			...{
-				...currentQuery,
-				builder: {
-					...currentQuery.builder,
-					queryData: [initialQueryBuilderFormValuesMap[dataSource]],
-				},
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: currentQuery.builder.queryData.map((queryData) => ({
+					...queryData,
+					dataSource,
+				})),
 			},
 			queryType: val,
 		};
