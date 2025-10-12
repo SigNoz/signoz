@@ -164,20 +164,10 @@ func (c *conditionBuilder) conditionFor(
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
 
 		if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
-			// Use JSON typed expressions if feature flag is enabled and we have a body condition builder
-			if c.jqb != nil && IsBodyJSONQueryEnabled(ctx) {
-				expression, err := c.jqb.BuildJSONFieldExpressionForFilter(ctx, key, operator)
-				if err != nil {
-					return "", err
-				}
-				return expression, nil
+			if operator == qbtypes.FilterOperatorExists {
+				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
 			} else {
-				// Fall back to legacy string JSON approach
-				if operator == qbtypes.FilterOperatorExists {
-					return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
-				} else {
-					return "NOT " + GetBodyJSONKeyForExists(ctx, key, operator, value), nil
-				}
+				return "NOT " + GetBodyJSONKeyForExists(ctx, key, operator, value), nil
 			}
 		}
 

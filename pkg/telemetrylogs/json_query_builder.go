@@ -305,8 +305,25 @@ func decideOther(p presence, dataType telemetrytypes.JSONDataType) (preferArray 
 	// Default to scalar unknown → string, which is safe
 	return false, telemetrytypes.String
 }
-func (b *JSONQueryBuilder) chooseTerminalType(_ []telemetrytypes.JSONDataType, operator qbtypes.FilterOperator, value any) telemetrytypes.JSONDataType {
-	// Always derive from input value/operator. Fallbacks use inferred datatype only.
+func (b *JSONQueryBuilder) chooseTerminalType(availableTypes []telemetrytypes.JSONDataType, operator qbtypes.FilterOperator, value any) telemetrytypes.JSONDataType {
+	// For GroupBy operations (EXISTS operator with nil value), use the first available type
+	if operator == qbtypes.FilterOperatorExists && value == nil {
+		if len(availableTypes) > 0 {
+			// For GroupBy, prefer scalar types over array types
+			for _, t := range availableTypes {
+				if !t.IsArray {
+					return t
+				}
+			}
+			// If no scalar types, use the first available type
+			return availableTypes[0]
+		}
+
+		// Fallback to String if no types available
+		return telemetrytypes.String
+	}
+
+	// For other operations, derive from input value/operator
 	vt, _ := b.inferDataType(value, operator)
 	return vt
 }
@@ -390,135 +407,6 @@ func (b *JSONQueryBuilder) BuildJSONFieldExpression(ctx context.Context, key *te
 
 	return "", errors.Newf(errors.TypeNotFound, errors.CodeNotFound,
 		"No valid types found for JSON path: %s", path)
-}
-
-// BuildJSONFieldExpressionForFilter builds a context-aware expression based on filter operator
-func (b *JSONQueryBuilder) BuildJSONFieldExpressionForFilter(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator) (string, error) {
-	path := strings.TrimPrefix(key.Name, BodyJSONStringSearchPrefix)
-
-	// Get all types for this path
-	typeSet := b.getTypeSet(path)
-	if len(typeSet) == 0 {
-		return "", errors.Newf(errors.TypeNotFound, errors.CodeNotFound,
-			"No valid types found for JSON path: %s", path)
-	}
-
-	fieldPath := "body_v2." + path
-
-	// Context-aware expression building based on operator
-	switch operator {
-	case qbtypes.FilterOperatorEqual, qbtypes.FilterOperatorNotEqual,
-		qbtypes.FilterOperatorGreaterThan, qbtypes.FilterOperatorGreaterThanOrEq,
-		qbtypes.FilterOperatorLessThan, qbtypes.FilterOperatorLessThanOrEq:
-		// For equality/comparison operators, prefer scalar types
-		scalarTypes := []string{}
-		for _, dataType := range typeSet {
-			typeStr := dataType.StringValue()
-			if !strings.HasPrefix(typeStr, "Array(") {
-				scalarTypes = append(scalarTypes, typeStr)
-			}
-		}
-
-		if len(scalarTypes) > 0 {
-			expression := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, scalarTypes[0])
-			return expression, nil
-		} else {
-			// Fall back to array types if no scalars
-			arrayTypes := []string{}
-			for _, dataType := range typeSet {
-				typeStr := dataType.StringValue()
-				if strings.HasPrefix(typeStr, "Array(") {
-					arrayTypes = append(arrayTypes, typeStr)
-				}
-			}
-			if len(arrayTypes) > 0 {
-				expression := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, arrayTypes[0])
-				return expression, nil
-			}
-		}
-
-	case qbtypes.FilterOperatorContains, qbtypes.FilterOperatorNotContains,
-		qbtypes.FilterOperatorLike, qbtypes.FilterOperatorNotLike,
-		qbtypes.FilterOperatorILike, qbtypes.FilterOperatorNotILike:
-		// For contains/like operators, use both scalar and array types
-		return b.buildMultiTypeExpression(fieldPath, typeSet), nil
-
-	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-		// For exists, check both scalar and array presence
-		return b.buildExistsExpression(fieldPath, typeSet), nil
-
-	default:
-		// Default to scalar preference
-		scalarTypes := []string{}
-		for _, dataType := range typeSet {
-			typeStr := dataType.StringValue()
-			if !strings.HasPrefix(typeStr, "Array(") {
-				scalarTypes = append(scalarTypes, typeStr)
-			}
-		}
-
-		if len(scalarTypes) > 0 {
-			expression := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, scalarTypes[0])
-			return expression, nil
-		}
-	}
-
-	return "", errors.Newf(errors.TypeNotFound, errors.CodeNotFound,
-		"No valid types found for JSON path: %s", path)
-}
-
-// buildMultiTypeExpression builds an expression that handles both scalar and array types
-func (b *JSONQueryBuilder) buildMultiTypeExpression(fieldPath string, typeSet []telemetrytypes.JSONDataType) string {
-	var expressions []string
-
-	// Add scalar types
-	for _, dataType := range typeSet {
-		typeStr := dataType.StringValue()
-		if !strings.HasPrefix(typeStr, "Array(") {
-			expressions = append(expressions, fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, typeStr))
-		}
-	}
-
-	// Add array types
-	for _, dataType := range typeSet {
-		typeStr := dataType.StringValue()
-		if strings.HasPrefix(typeStr, "Array(") {
-			expressions = append(expressions, fmt.Sprintf("arrayExists(x -> x, dynamicElement(%s, '%s'))", fieldPath, typeStr))
-		}
-	}
-
-	if len(expressions) == 0 {
-		return "false"
-	}
-
-	return strings.Join(expressions, " OR ")
-}
-
-// buildExistsExpression builds an expression that checks existence for both scalar and array types
-func (b *JSONQueryBuilder) buildExistsExpression(fieldPath string, typeSet []telemetrytypes.JSONDataType) string {
-	var expressions []string
-
-	// Add scalar existence checks
-	for _, dataType := range typeSet {
-		typeStr := dataType.StringValue()
-		if !strings.HasPrefix(typeStr, "Array(") {
-			expressions = append(expressions, fmt.Sprintf("isNotNull(dynamicElement(%s, '%s'))", fieldPath, typeStr))
-		}
-	}
-
-	// Add array existence checks
-	for _, dataType := range typeSet {
-		typeStr := dataType.StringValue()
-		if strings.HasPrefix(typeStr, "Array(") {
-			expressions = append(expressions, fmt.Sprintf("length(dynamicElement(%s, '%s')) > 0", fieldPath, typeStr))
-		}
-	}
-
-	if len(expressions) == 0 {
-		return "false"
-	}
-
-	return strings.Join(expressions, " OR ")
 }
 
 // Node is now a tree structure representing the complete JSON path traversal
@@ -923,14 +811,6 @@ func (b *JSONQueryBuilder) buildArrayMembership(arrayExpr string, operator qbtyp
 	return membership
 }
 
-func (b *JSONQueryBuilder) isLikeOperator(op qbtypes.FilterOperator) bool {
-	return op == qbtypes.FilterOperatorContains || op == qbtypes.FilterOperatorLike || op == qbtypes.FilterOperatorILike
-}
-
-func (b *JSONQueryBuilder) isNotLikeOperator(op qbtypes.FilterOperator) bool {
-	return op == qbtypes.FilterOperatorNotContains || op == qbtypes.FilterOperatorNotLike || op == qbtypes.FilterOperatorNotILike
-}
-
 func (b *JSONQueryBuilder) isNotOperator(op qbtypes.FilterOperator) bool {
 	return op == qbtypes.FilterOperatorNotContains || op == qbtypes.FilterOperatorNotLike || op == qbtypes.FilterOperatorNotILike
 }
@@ -1001,18 +881,6 @@ type GroupByArrayJoinInfo struct {
 // BuildGroupByArrayJoins builds array join information for GroupBy operations
 func (b *JSONQueryBuilder) BuildGroupByArrayJoins(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*GroupByArrayJoinInfo, error) {
 	path := strings.TrimPrefix(key.Name, BodyJSONStringSearchPrefix)
-
-	// Check if this is a simple path (no array traversal)
-	if !strings.Contains(path, ":") {
-		// Simple path - just return the terminal field expression
-		terminalExpr := b.buildTerminalFieldExpression(path)
-		return &GroupByArrayJoinInfo{
-			ArrayJoinClauses: []string{},
-			TerminalExpr:     terminalExpr,
-		}, nil
-	}
-
-	// Use the new tree-based approach
 	plan := b.PlanJSONPath(path, qbtypes.FilterOperatorExists, nil)
 
 	// Build array join clauses by traversing the tree
@@ -1020,7 +888,13 @@ func (b *JSONQueryBuilder) BuildGroupByArrayJoins(ctx context.Context, key *tele
 
 	// Build terminal field expression using the terminal node
 	terminalNode := b.findTerminalNodeInTree(plan)
-	terminalExpr := fmt.Sprintf("dynamicElement(%s.%s, '%s')", terminalNode.Alias, terminalNode.Name, terminalNode.PreferredType.StringValue())
+	if terminalNode == nil {
+		return nil, errors.Newf(errors.TypeNotFound, errors.CodeNotFound,
+			"Could not find terminal node for path: %s", path)
+	}
+
+	// Use the correct terminal type from the plan
+	terminalExpr := b.buildTerminalExpressionFromNode(terminalNode)
 
 	return &GroupByArrayJoinInfo{
 		ArrayJoinClauses: arrayJoinClauses,
@@ -1040,13 +914,17 @@ func (b *JSONQueryBuilder) buildArrayJoinClausesFromTree(plan *Node) []string {
 		hasArrayDynamic := current.Branches[BranchDynamic] != nil
 
 		if hasArrayJSON || hasArrayDynamic {
-			// Build array expression
+			// Build array expression using the node's max_dynamic values
 			var arrayExpr string
 			if hasArrayJSON && hasArrayDynamic {
 				// Both types available - use Array(JSON) for GroupBy (simpler)
-				arrayExpr = fmt.Sprintf("dynamicElement(%s.%s, 'Array(JSON)')", parentAlias, current.Name)
+				// Use the node's MaxDynamicTypes and MaxDynamicPaths values
+				arrayExpr = fmt.Sprintf("dynamicElement(%s.%s, 'Array(JSON(max_dynamic_types=%d, max_dynamic_paths=%d))')",
+					parentAlias, current.Name, current.MaxDynamicTypes, current.MaxDynamicPaths)
 			} else if hasArrayJSON {
-				arrayExpr = fmt.Sprintf("dynamicElement(%s.%s, 'Array(JSON)')", parentAlias, current.Name)
+				// Only Array(JSON) available - use the node's max_dynamic values
+				arrayExpr = fmt.Sprintf("dynamicElement(%s.%s, 'Array(JSON(max_dynamic_types=%d, max_dynamic_paths=%d))')",
+					parentAlias, current.Name, current.MaxDynamicTypes, current.MaxDynamicPaths)
 			} else {
 				// Only Array(Dynamic) available - filter for JSON objects
 				dynBaseExpr := fmt.Sprintf("dynamicElement(%s.%s, 'Array(Dynamic)')", parentAlias, current.Name)
@@ -1058,8 +936,10 @@ func (b *JSONQueryBuilder) buildArrayJoinClausesFromTree(plan *Node) []string {
 			parentAlias = current.Alias
 		}
 
-		// Move to next level
+		// Move to next level - prefer JSON branch for GroupBy
 		if next, exists := current.Branches[BranchJSON]; exists {
+			current = next
+		} else if next, exists := current.Branches[BranchDynamic]; exists {
 			current = next
 		} else {
 			break
@@ -1073,7 +953,10 @@ func (b *JSONQueryBuilder) buildArrayJoinClausesFromTree(plan *Node) []string {
 func (b *JSONQueryBuilder) findTerminalNodeInTree(plan *Node) *Node {
 	current := plan
 	for current != nil && !current.IsTerminal {
+		// Prefer JSON branch for GroupBy, fallback to Dynamic
 		if next, exists := current.Branches[BranchJSON]; exists {
+			current = next
+		} else if next, exists := current.Branches[BranchDynamic]; exists {
 			current = next
 		} else {
 			break
@@ -1082,9 +965,24 @@ func (b *JSONQueryBuilder) findTerminalNodeInTree(plan *Node) *Node {
 	return current
 }
 
-// buildTerminalFieldExpression builds a simple terminal field expression
-func (b *JSONQueryBuilder) buildTerminalFieldExpression(fieldName string) string {
-	// For GroupBy, we always want scalar types, so we can use a simple field access
-	// The ARRAY JOINs will have already handled the array traversal
-	return fieldName
+// buildTerminalExpressionFromNode builds a terminal expression using the node's type information
+func (b *JSONQueryBuilder) buildTerminalExpressionFromNode(node *Node) string {
+	if node == nil {
+		return ""
+	}
+
+	// For GroupBy, we need to use the parent's alias and build the field path correctly
+	// The working pattern shows: dynamicElement(_x_education.awards.name, 'String')
+	// where _x_education is the parent alias and awards.name is the field path
+	var fieldPath string
+	if node.Parent != nil {
+		// Use parent's alias and the field name
+		fieldPath = fmt.Sprintf("%s.%s", node.Parent.Alias, node.Name)
+	} else {
+		// Fallback for root level fields
+		fieldPath = fmt.Sprintf("%s.%s", node.Alias, node.Name)
+	}
+
+	// Use the PreferredType from the node, which is properly calculated by the plan system
+	return fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, node.PreferredType.StringValue())
 }
