@@ -3,6 +3,7 @@ package authtypes
 import (
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
@@ -10,7 +11,7 @@ var _ Typeable = new(typeableOrganization)
 
 type typeableOrganization struct{}
 
-func (typeableOrganization *typeableOrganization) Tuples(subject string, relation Relation, selector []Selector) ([]*openfgav1.TupleKey, error) {
+func (typeableOrganization *typeableOrganization) Tuples(subject string, relation Relation, selector []Selector, _ valuer.UUID) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 	for _, selector := range selector {
 		object := strings.Join([]string{typeableOrganization.Type().StringValue(), selector.String()}, ":")
@@ -28,6 +29,6 @@ func (typeableOrganization *typeableOrganization) Name() Name {
 	return MustNewName("organization")
 }
 
-func (typeableOrganization *typeableOrganization) Prefix() string {
+func (typeableOrganization *typeableOrganization) Prefix(_ valuer.UUID) string {
 	return typeableOrganization.Type().StringValue()
 }

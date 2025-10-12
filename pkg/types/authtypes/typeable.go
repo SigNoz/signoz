@@ -30,8 +30,8 @@ var (
 type Typeable interface {
 	Type() Type
 	Name() Name
-	Prefix() string
-	Tuples(subject string, relation Relation, selector []Selector) ([]*openfgav1.TupleKey, error)
+	Prefix(orgId valuer.UUID) string
+	Tuples(subject string, relation Relation, selector []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error)
 }
 
 type Type struct{ valuer.String }

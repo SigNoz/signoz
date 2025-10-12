@@ -4,14 +4,9 @@ import { Compass, TowerControl, Workflow } from 'lucide-react';
 import LogsExplorer from 'pages/LogsExplorer';
 import Pipelines from 'pages/Pipelines';
 import SaveView from 'pages/SaveView';
-import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 
 export const logsExplorer: TabRoutes = {
-	Component: (): JSX.Element => (
-		<PreferenceContextProvider>
-			<LogsExplorer />
-		</PreferenceContextProvider>
-	),
+	Component: (): JSX.Element => <LogsExplorer />,
 	name: (
 		<div className="tab-item">
 			<Compass size={16} /> Explorer
@@ -22,11 +17,7 @@ export const logsExplorer: TabRoutes = {
 };
 
 export const logsPipelines: TabRoutes = {
-	Component: (): JSX.Element => (
-		<PreferenceContextProvider>
-			<Pipelines />
-		</PreferenceContextProvider>
-	),
+	Component: (): JSX.Element => <Pipelines />,
 	name: (
 		<div className="tab-item">
 			<Workflow size={16} /> Pipelines
