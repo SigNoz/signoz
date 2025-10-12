@@ -1441,12 +1441,12 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 	}
 
 	// TTL query
-	ttlV2 := "ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(%s) + INTERVAL %v SECOND DELETE"
-	ttlV2ColdStorage := ", toDateTime(%s) + INTERVAL %v SECOND TO VOLUME '%s'"
+	ttlV2 := "ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(%s) + INTERVAL " + fmt.Sprint(params.DelDuration) + " SECOND DELETE"
+	ttlV2ColdStorage := ", toDateTime(%s) + INTERVAL " + fmt.Sprint(params.ToColdStorageDuration) + " SECOND TO VOLUME '%s'"
 
 	// TTL query for resource table
-	ttlV2Resource := "ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(%s) + toIntervalSecond(1800) + INTERVAL %v SECOND DELETE"
-	ttlTracesV2ResourceColdStorage := ", toDateTime(%s) + toIntervalSecond(1800) + INTERVAL %v SECOND TO VOLUME '%s'"
+	ttlV2Resource := "ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(%s) + toIntervalSecond(1800) + INTERVAL " + fmt.Sprint(params.DelDuration) + " SECOND DELETE"
+	ttlTracesV2ResourceColdStorage := ", toDateTime(%s) + toIntervalSecond(1800) + INTERVAL " + fmt.Sprint(params.ToColdStorageDuration) + " SECOND TO VOLUME '%s'"
 
 	traceTTLConfigs := map[string]ttlConfig{
 		r.TraceDB + "." + r.traceTableName: {
@@ -1527,10 +1527,10 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 				return
 			}
 
-			req := fmt.Sprintf(ttlV2, tableName, r.cluster, timestamp, params.DelDuration)
+			req := fmt.Sprintf(ttlV2, tableName, r.cluster, timestamp)
 
 			if len(params.ColdStorageVolume) > 0 && len(ttlV2ColdStorage) > 0 {
-				req += fmt.Sprintf(ttlV2ColdStorage, timestamp, params.ToColdStorageDuration, params.ColdStorageVolume)
+				req += fmt.Sprintf(ttlV2ColdStorage, timestamp, params.ColdStorageVolume)
 
 				// set the cold storage volume if not already set
 				err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
@@ -1641,22 +1641,27 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 		ColdStorageQuery     string
 	}
 
+	maxTTLDays := params.DefaultTTLDays
+	for _, condition := range params.TTLConditions {
+		maxTTLDays = max(maxTTLDays, condition.TTLDays)
+	}
+
 	logsTTLConfigs := map[string]ttlConfig{
 		r.logsDB + "." + r.logsTableV2: {
 			CustomRetentionQuery: "ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT " + multiIfExpr,
-			TTLQuery:             "ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(toUInt32(timestamp / 1000), 'UTC') INTERVAL %v DAY DELETE",
-			ColdStorageQuery:     ", toDateTime(toUInt32(timestamp / 1000), 'UTC') + INTERVAL %v DAY TO VOLUME '%s'",
+			TTLQuery:             "ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(toUInt32(timestamp / 1000), 'UTC') INTERVAL " + fmt.Sprint(params.DefaultTTLDays) + " DAY DELETE",
+			ColdStorageQuery:     ", toDateTime(toUInt32(timestamp / 1000), 'UTC') + INTERVAL " + fmt.Sprint(params.ToColdStorageDuration) + " DAY TO VOLUME '%s'",
 		},
 		r.logsDB + "." + r.logsResourceTableV2: {
 			CustomRetentionQuery: "ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT " + resourceMultiIfExpr,
-			TTLQuery:             "ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(toUInt32(seen_at_ts_bucket_start), 'UTC') + INTERVAL 1800 SECOND + INTERVAL %v DAY DELETE",
-			ColdStorageQuery:     ", toDateTime(toUInt32(seen_at_ts_bucket_start), 'UTC') + INTERVAL 1800 SECOND + INTERVAL %v DAY TO VOLUME '%s'",
+			TTLQuery:             "ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(toUInt32(seen_at_ts_bucket_start), 'UTC') + INTERVAL 1800 SECOND + INTERVAL " + fmt.Sprint(params.DefaultTTLDays) + " DAY DELETE",
+			ColdStorageQuery:     ", toDateTime(toUInt32(seen_at_ts_bucket_start), 'UTC') + INTERVAL 1800 SECOND + INTERVAL " + fmt.Sprint(params.ToColdStorageDuration) + " DAY TO VOLUME '%s'",
 		},
 		r.logsDB + "." + r.logsAttributeKeys: {
-			TTLQuery: "ALTER TABLE %v ON CLUSTER %s MODIFY TTL timestamp INTERVAL %v DAY DELETE",
+			TTLQuery: "ALTER TABLE %v ON CLUSTER %s MODIFY TTL timestamp INTERVAL " + fmt.Sprint(maxTTLDays) + " DAY DELETE",
 		},
 		r.logsDB + "." + r.logsResourceKeys: {
-			TTLQuery: "ALTER TABLE %v ON CLUSTER %s MODIFY TTL timestamp INTERVAL %v DAY DELETE",
+			TTLQuery: "ALTER TABLE %v ON CLUSTER %s MODIFY TTL timestamp INTERVAL " + fmt.Sprint(maxTTLDays) + " DAY DELETE",
 		},
 	}
 
@@ -1714,10 +1719,10 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			}
 		}
 		// Set TTL based on custom retention column
-		ttlQuery := fmt.Sprintf(ttlConfig.TTLQuery, localTableName, r.cluster, params.DefaultTTLDays)
+		ttlQuery := fmt.Sprintf(ttlConfig.TTLQuery, localTableName, r.cluster)
 
 		if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 && ttlConfig.ColdStorageQuery != "" {
-			ttlQuery += fmt.Sprintf(ttlConfig.ColdStorageQuery, localTableName, r.cluster, coldStorageDuration, params.ColdStorageVolume)
+			ttlQuery += fmt.Sprintf(ttlConfig.ColdStorageQuery, localTableName, r.cluster, params.ColdStorageVolume)
 
 			// Enable cold storage volume
 			err := r.setColdStorage(ctx, localTableName, params.ColdStorageVolume)

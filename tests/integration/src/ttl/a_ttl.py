@@ -64,6 +64,7 @@ def test_set_ttl_traces_success(
         "usage_explorer",
         "dependency_graph_minutes_v2",
         "trace_summary",
+        "span_attributes_keys"
     ]
 
     # Query to get table engine info which includes TTL
@@ -252,13 +253,18 @@ def test_set_custom_retention_ttl_basic(
     time.sleep(2)
 
     # Check TTL settings on relevant tables
-    tables_to_check = [
+    tables_to_check_with_custom_retention = [
         "logs_v2",
         "logs_v2_resource",
     ]
 
+    tables_to_check_with_basic_retention = [
+        "logs_attribute_keys",
+        "logs_resource_keys"
+    ]
+
     # Query to get table engine info which includes TTL
-    table_list = "', '".join(tables_to_check)
+    table_list = "', '".join(tables_to_check_with_custom_retention)
     query = f"SELECT engine_full FROM system.tables WHERE table in ['{table_list}']"
     result = signoz.telemetrystore.conn.query(query).result_rows
 
@@ -290,6 +296,23 @@ def test_set_custom_retention_ttl_basic(
         assert (
             retention_col[3] == "100"
         ), f"Expected default value of _retention_days to be 100 in table {table}, but got {retention_col[3]}"
+
+
+
+    # Query to get table engine info which includes TTL
+    table_list = ", ".join(f"'{table}'" for table in tables_to_check_with_basic_retention)
+    query = f"SELECT engine_full FROM system.tables WHERE table in [{table_list}]"
+
+    result = signoz.telemetrystore.conn.query(query).result_rows
+
+    # Verify TTL exists in all table definitions
+    assert all("TTL" in r[0] for r in result)
+
+    assert all(" SETTINGS" in r[0] for r in result)
+
+    ttl_parts = [r[0].split("TTL ")[1].split(" SETTINGS")[0] for r in result]
+    # All TTLs should include toIntervalSecond(12960000) which is 3600h
+    assert all("100 Day" in ttl_part for ttl_part in ttl_parts)
 
 
 def test_set_custom_retention_ttl_basic_fallback(
