@@ -2,7 +2,6 @@ import './styles.scss';
 
 import { Button } from 'antd';
 import classNames from 'classnames';
-import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import QuerySectionComponent from 'container/FormAlertRules/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -27,21 +26,7 @@ function QuerySection(): JSX.Element {
 	const alertDef = buildAlertDefForChartPreview({ alertType, thresholdState });
 
 	const onQueryCategoryChange = (queryType: EQueryType): void => {
-		const dataSource = ALERTS_DATA_SOURCE_MAP[alertType];
-		// Here, onQueryCategoryChange is only triggered within the same data source
-		// e.g., from 'Metrics: PromQL' to 'Metrics: ClickHouse'
-		// So, we can safely update datasource for all queryData items without checking the previous data source
-		const query: Query = {
-			...currentQuery,
-			builder: {
-				...currentQuery.builder,
-				queryData: currentQuery.builder.queryData.map((queryData) => ({
-					...queryData,
-					dataSource,
-				})),
-			},
-			queryType,
-		};
+		const query: Query = { ...currentQuery, queryType };
 		redirectWithQueryBuilderData(query);
 	};
 

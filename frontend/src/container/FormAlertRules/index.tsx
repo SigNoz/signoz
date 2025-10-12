@@ -350,18 +350,7 @@ function FormAlertRules({
 				evalWindow: defaultEvalWindow,
 			});
 		}
-		const dataSource = ALERTS_DATA_SOURCE_MAP[alertType as AlertTypes];
-		const query: Query = {
-			...currentQuery,
-			builder: {
-				...currentQuery.builder,
-				queryData: currentQuery.builder.queryData.map((queryData) => ({
-					...queryData,
-					dataSource,
-				})),
-			},
-			queryType: val,
-		};
+		const query: Query = { ...currentQuery, queryType: val };
 
 		// update step interval is removed from here as if the user enters
 		// any value we will use that rather than auto update

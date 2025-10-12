@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import { QueryParams } from 'constants/query';
 import {
 	initialClickHouseData,
-	initialQueryBuilderFormValuesMap,
 	initialQueryPromQLData,
 } from 'constants/queryBuilder';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
@@ -375,10 +374,6 @@ describe('QuerySection', () => {
 
 		expect(queryArg).toEqual({
 			...mockUseQueryBuilder.currentQuery,
-			builder: {
-				...mockUseQueryBuilder.currentQuery.builder,
-				queryData: [initialQueryBuilderFormValuesMap.metrics],
-			},
 			queryType: EQueryType.PROM,
 		});
 
@@ -434,10 +429,6 @@ describe('QuerySection', () => {
 
 		expect(queryArg).toEqual({
 			...mockCurrentQueryWithPromQL,
-			builder: {
-				...mockCurrentQueryWithPromQL.builder,
-				queryData: [initialQueryBuilderFormValuesMap.logs],
-			},
 			queryType: EQueryType.QUERY_BUILDER,
 		});
 
@@ -493,10 +484,6 @@ describe('QuerySection', () => {
 
 		expect(queryArg).toEqual({
 			...mockCurrentQueryWithClickhouseSQL,
-			builder: {
-				...mockCurrentQueryWithClickhouseSQL.builder,
-				queryData: [initialQueryBuilderFormValuesMap.traces],
-			},
 			queryType: EQueryType.QUERY_BUILDER,
 		});
 
