@@ -179,7 +179,7 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 	}
 
 	jqb := buildTestJSONQueryBuilder()
-	fm := NewFieldMapperWithJSONQueryBuilder(jqb)
+	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm, jqb)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
@@ -274,7 +274,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	}
 
 	jqb := buildTestJSONQueryBuilder()
-	fm := NewFieldMapperWithJSONQueryBuilder(jqb)
+	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm, jqb)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
@@ -385,7 +385,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 	}
 
 	jqb := buildTestJSONQueryBuilder()
-	fm := NewFieldMapperWithJSONQueryBuilder(jqb)
+	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm, jqb)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
@@ -470,7 +470,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 	// Create JSONQueryBuilder with mock metadata
 	jqb := buildTestJSONQueryBuilder()
 
-	fm := NewFieldMapperWithJSONQueryBuilder(jqb)
+	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm, jqb)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
@@ -517,7 +517,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 
 func TestStatementBuilderListQueryBody(t *testing.T) {
 	jqb := buildTestJSONQueryBuilder()
-	fm := NewFieldMapperWithJSONQueryBuilder(jqb)
+	fm := NewFieldMapper()
 	// Enable JSONQueryBuilder for WHERE-only JSON body
 	cb := NewConditionBuilder(fm, jqb)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()

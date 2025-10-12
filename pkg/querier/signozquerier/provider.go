@@ -101,14 +101,14 @@ func newProvider(
 	)
 
 	// Create log statement builder
-	pathMetadata, err := telemetrylogs.NewJSONQueryBuilder(ctx, telemetryStore)
+	jqb, err := telemetrylogs.NewJSONQueryBuilder(ctx, telemetryStore)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create field mapper and condition builder for body JSON queries
-	logFieldMapper := telemetrylogs.NewFieldMapperWithJSONQueryBuilder(pathMetadata)
-	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, pathMetadata)
+	logFieldMapper := telemetrylogs.NewFieldMapper()
+	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, jqb)
 	logResourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
 		settings,
 		resourceFilterFieldMapper,
@@ -131,7 +131,7 @@ func newProvider(
 		telemetryMetadataStore,
 		logFieldMapper,
 		logConditionBuilder,
-		pathMetadata,
+		jqb,
 		logResourceFilterStmtBuilder,
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,

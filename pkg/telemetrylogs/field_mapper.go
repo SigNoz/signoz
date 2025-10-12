@@ -57,15 +57,10 @@ var (
 )
 
 type fieldMapper struct {
-	jsonQueryBuilder *JSONQueryBuilder
 }
 
 func NewFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
-}
-
-func NewFieldMapperWithJSONQueryBuilder(jqb *JSONQueryBuilder) qbtypes.FieldMapper {
-	return &fieldMapper{jsonQueryBuilder: jqb}
 }
 
 func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
@@ -95,7 +90,7 @@ func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.Telemet
 			// check if the key has body JSON search
 			if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
 				// Use body_v2 if feature flag is enabled and we have a body condition builder
-				if m.jsonQueryBuilder != nil && IsBodyJSONQueryEnabled(ctx) {
+				if IsBodyJSONQueryEnabled(ctx) {
 					return logsV2Columns["body_v2"], nil
 				}
 				// Fall back to legacy body column
@@ -117,16 +112,6 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 
 	// handle non-comparable JSONColumnType explicitly
 	if _, ok := column.Type.(schema.JSONColumnType); ok {
-		// Check if this is a body JSON field and feature flag is enabled
-		if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) && m.jsonQueryBuilder != nil && IsBodyJSONQueryEnabled(ctx) {
-			// Use JSON typed column for body fields
-			expression, err := m.jsonQueryBuilder.BuildJSONFieldExpression(ctx, key)
-			if err != nil {
-				return "", err
-			}
-			return expression, nil
-		}
-
 		// json is only supported for resource context as of now (legacy behavior)
 		if key.FieldContext != telemetrytypes.FieldContextResource {
 			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)

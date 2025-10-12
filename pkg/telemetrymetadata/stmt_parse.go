@@ -100,7 +100,6 @@ func (v *TelemetryFieldVisitor) VisitColumnDef(expr *parser.ColumnDef) error {
 }
 
 func ExtractFieldKeysFromTblStatement(statement string) ([]*telemetrytypes.TelemetryFieldKey, error) {
-	return nil, nil // temporary fix to remove the error from parser
 	// Parse the CREATE TABLE statement using the ClickHouse parser
 	p := parser.NewParser(statement)
 	stmts, err := p.ParseStmts()
