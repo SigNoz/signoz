@@ -62,7 +62,7 @@ export const alertCreationReducer = (
 
 export function getInitialAlertType(currentQuery: Query): AlertTypes {
 	const dataSource =
-		currentQuery.builder.queryData[0].dataSource || DataSource.METRICS;
+		currentQuery.builder.queryData?.[0]?.dataSource || DataSource.METRICS;
 	switch (dataSource) {
 		case DataSource.METRICS:
 			return AlertTypes.METRICS_BASED_ALERT;
