@@ -25,8 +25,8 @@ function QuerySection(): JSX.Element {
 
 	const alertDef = buildAlertDefForChartPreview({ alertType, thresholdState });
 
-	const onQueryCategoryChange = (val: EQueryType): void => {
-		const query: Query = { ...currentQuery, queryType: val };
+	const onQueryCategoryChange = (queryType: EQueryType): void => {
+		const query: Query = { ...currentQuery, queryType };
 		redirectWithQueryBuilderData(query);
 	};
 
