@@ -178,8 +178,9 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm, nil)
+	jqb := buildTestJSONQueryBuilder()
+	fm := NewFieldMapperWithJSONQueryBuilder(jqb)
+	cb := NewConditionBuilder(fm, jqb)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 
@@ -192,6 +193,7 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 		mockMetadataStore,
 		fm,
 		cb,
+		jqb,
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
@@ -236,7 +238,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -264,15 +266,16 @@ func TestStatementBuilderListQuery(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY `attribute_string_materialized$$key$$name` AS `materialized.key.name` desc LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY `attribute_string_materialized$$key$$name` AS `materialized.key.name` desc LIMIT ?",
 				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
 	}
 
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm, nil)
+	jqb := buildTestJSONQueryBuilder()
+	fm := NewFieldMapperWithJSONQueryBuilder(jqb)
+	cb := NewConditionBuilder(fm, jqb)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 
@@ -285,6 +288,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		mockMetadataStore,
 		fm,
 		cb,
+		jqb,
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
@@ -329,7 +333,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND match(LOWER(body), LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND match(LOWER(body), LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "hello", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -357,7 +361,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE ((simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (match(LOWER(body), LOWER(?))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY `attribute_string_materialized$$key$$name` AS `materialized.key.name` desc LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE ((simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (match(LOWER(body), LOWER(?))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY `attribute_string_materialized$$key$$name` AS `materialized.key.name` desc LIMIT ?",
 				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), "hello", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -373,15 +377,16 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (JSON_VALUE(body, '$.\"status\"') = ? AND JSON_EXISTS(body, '$.\"status\"')) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND dynamicElement(body_v2.status, 'String') = ? AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "success", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
 	}
 
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm, nil)
+	jqb := buildTestJSONQueryBuilder()
+	fm := NewFieldMapperWithJSONQueryBuilder(jqb)
+	cb := NewConditionBuilder(fm, jqb)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 
@@ -394,6 +399,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		mockMetadataStore,
 		fm,
 		cb,
+		jqb,
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
@@ -430,7 +436,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		expectedErrContains string
 	}{
 		{
-			name:        "Time series with limit and body group by",
+			name:        "Group By - x1",
 			requestType: qbtypes.RequestTypeTimeSeries,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal:       telemetrytypes.SignalLogs,
@@ -440,58 +446,33 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 						Expression: "count()",
 					},
 				},
-				Filter: &qbtypes.Filter{
-					Expression: "service.name = 'cartservice'",
-				},
+
 				Limit: 10,
 				GroupBy: []qbtypes.GroupByKey{
 					{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "body.status",
+							Name: "body.education:awards.name",
+						},
+					},
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "body.interests:entities:reviews:entries:metadata:positions:ratings",
 						},
 					},
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(dynamicElement(body_v2.status, 'String')) AS `body.status`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `body.status` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(dynamicElement(body_v2.status, 'String') IS NOT NULL AND dynamicElement(body_v2.status, 'String') IS NOT NULL, JSON_VALUE(body, '$.\"status\"'), NULL)) AS `body.status`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`body.status`) GLOBAL IN (SELECT `body.status` FROM __limit_cte) GROUP BY ts, `body.status`",
-				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
-			},
-		},
-		{
-			name:        "Time series with array GroupBy",
-			requestType: qbtypes.RequestTypeTimeSeries,
-			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal:       telemetrytypes.SignalLogs,
-				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
-				Aggregations: []qbtypes.LogAggregation{
-					{
-						Expression: "count()",
-					},
-				},
-				Filter: &qbtypes.Filter{
-					Expression: "service.name = 'cartservice'",
-				},
-				Limit: 10,
-				GroupBy: []qbtypes.GroupByKey{
-					{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "body.education:awards:type",
-						},
-					},
-				},
-			},
-			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(dynamicElement(body_v2.education:awards:type, 'String')) AS `body.education:awards:type`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `body.education:awards:type` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(arrayExists(_x_education-> (arrayExists(_x_awards-> _x_awards.type IS NOT NULL, dynamicElement(_x_education.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(_x_awards-> _x_awards.type IS NOT NULL, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(_x_education.awards, 'Array(Dynamic)'))))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) AND arrayExists(_x_education-> (arrayExists(_x_awards-> _x_awards.type IS NOT NULL, dynamicElement(_x_education.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(_x_awards-> _x_awards.type IS NOT NULL, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(_x_education.awards, 'Array(Dynamic)'))))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')), JSON_VALUE(body, '$.\"education:awards:type\"'), NULL)) AS `body.education:awards:type`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`body.education:awards:type`) GLOBAL IN (SELECT `body.education:awards:type` FROM __limit_cte) GROUP BY ts, `body.education:awards:type`",
-				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(dynamicElement(_x_education.awards.name, 'String')) AS `body.education:awards.name`, toString(dynamicElement(_x_interests_entities_reviews_entries_metadata_positions.ratings, 'String')) AS `body.interests:entities:reviews:entries:metadata:positions:ratings`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 ARRAY JOIN dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))') AS _x_education ARRAY JOIN dynamicElement(body_v2.interests, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))') AS _x_interests ARRAY JOIN dynamicElement(_x_interests.entities, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))') AS _x_interests_entities ARRAY JOIN dynamicElement(_x_interests_entities.reviews, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))') AS _x_interests_entities_reviews ARRAY JOIN dynamicElement(_x_interests_entities_reviews.entries, 'Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))') AS _x_interests_entities_reviews_entries ARRAY JOIN dynamicElement(_x_interests_entities_reviews_entries.metadata, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))') AS _x_interests_entities_reviews_entries_metadata ARRAY JOIN dynamicElement(_x_interests_entities_reviews_entries_metadata.positions, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))') AS _x_interests_entities_reviews_entries_metadata_positions WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `body.education:awards.name`, `body.interests:entities:reviews:entries:metadata:positions:ratings` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(dynamicElement(_x_education.awards.name, 'String')) AS `body.education:awards.name`, toString(dynamicElement(_x_interests_entities_reviews_entries_metadata_positions.ratings, 'String')) AS `body.interests:entities:reviews:entries:metadata:positions:ratings`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 ARRAY JOIN dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))') AS _x_education ARRAY JOIN dynamicElement(body_v2.interests, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))') AS _x_interests ARRAY JOIN dynamicElement(_x_interests.entities, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))') AS _x_interests_entities ARRAY JOIN dynamicElement(_x_interests_entities.reviews, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))') AS _x_interests_entities_reviews ARRAY JOIN dynamicElement(_x_interests_entities_reviews.entries, 'Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))') AS _x_interests_entities_reviews_entries ARRAY JOIN dynamicElement(_x_interests_entities_reviews_entries.metadata, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))') AS _x_interests_entities_reviews_entries_metadata ARRAY JOIN dynamicElement(_x_interests_entities_reviews_entries_metadata.positions, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))') AS _x_interests_entities_reviews_entries_metadata_positions WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`body.education:awards.name`, `body.interests:entities:reviews:entries:metadata:positions:ratings`) GLOBAL IN (SELECT `body.education:awards.name`, `body.interests:entities:reviews:entries:metadata:positions:ratings` FROM __limit_cte) GROUP BY ts, `body.education:awards.name`, `body.interests:entities:reviews:entries:metadata:positions:ratings`",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 			},
 		},
 	}
 
-	// Create BodyConditionBuilder with mock metadata
-	bcb := buildTestBodyConditionBuilder()
+	// Create JSONQueryBuilder with mock metadata
+	jqb := buildTestJSONQueryBuilder()
 
-	fm := NewFieldMapperWithBodyConditionBuilder(bcb)
-	cb := NewConditionBuilder(fm, bcb)
+	fm := NewFieldMapperWithJSONQueryBuilder(jqb)
+	cb := NewConditionBuilder(fm, jqb)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 
@@ -504,6 +485,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		mockMetadataStore,
 		fm,
 		cb,
+		jqb,
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
@@ -525,6 +507,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 				require.Contains(t, err.Error(), c.expectedErrContains)
 			} else {
 				require.NoError(t, err)
+				t.Log(q.Query)
 				require.Equal(t, c.expected.Query, q.Query)
 				require.Equal(t, c.expected.Args, q.Args)
 				require.Equal(t, c.expected.Warnings, q.Warnings)
@@ -534,9 +517,10 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 }
 
 func TestStatementBuilderListQueryBody(t *testing.T) {
-	fm := NewFieldMapper()
-	// Enable BodyConditionBuilder for WHERE-only JSON body
-	cb := NewConditionBuilder(fm, buildTestBodyConditionBuilder())
+	jqb := buildTestJSONQueryBuilder()
+	fm := NewFieldMapperWithJSONQueryBuilder(jqb)
+	// Enable JSONQueryBuilder for WHERE-only JSON body
+	cb := NewConditionBuilder(fm, jqb)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 
@@ -548,6 +532,7 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 		mockMetadataStore,
 		fm,
 		cb,
+		jqb,
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
@@ -614,15 +599,15 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 			},
 			expected: qbtypes.Statement{
 				Query: `WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?)
-SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string
-FROM signoz_logs.distributed_logs_v2
-WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)
-    AND arrayExists(_x_education-> (arrayExists(_x_awards-> dynamicElement(_x_awards.name, 'String') = ?, dynamicElement(_x_education.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(_x_awards-> dynamicElement(_x_awards.name, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(_x_education.awards, 'Array(Dynamic)'))))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))
-    AND timestamp >= ?
-    AND ts_bucket_start >= ?
-    AND timestamp < ?
-    AND ts_bucket_start <= ?
-LIMIT ?`,
+		SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string
+		FROM signoz_logs.distributed_logs_v2
+		WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)
+		    AND arrayExists(_x_education-> (arrayExists(_x_awards-> dynamicElement(_x_awards.name, 'String') = ?, dynamicElement(_x_education.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(_x_awards-> dynamicElement(_x_awards.name, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(_x_education.awards, 'Array(Dynamic)'))))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))
+		    AND timestamp >= ?
+		    AND ts_bucket_start >= ?
+		    AND timestamp < ?
+		    AND ts_bucket_start <= ?
+		LIMIT ?`,
 				Args: []any{uint64(1747945619), uint64(1747983448), "Iron Award", "Iron Award", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -650,8 +635,8 @@ LIMIT ?`,
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND arrayExists(_x_education-> arrayExists(x -> x = ?, dynamicElement(_x_education.name, 'String') LIKE ?), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{uint64(1747945619), uint64(1747983448), "IIT", "%IIT%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND arrayExists(_x_education-> LOWER(dynamicElement(_x_education.name, 'String')) LIKE LOWER(?), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "%%IIT%%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
@@ -959,8 +944,8 @@ LIMIT ?`,
 	  ]
 	}
 */
-func buildTestBodyConditionBuilder() *BodyConditionBuilder {
-	b := &BodyConditionBuilder{
+func buildTestJSONQueryBuilder() *JSONQueryBuilder {
+	b := &JSONQueryBuilder{
 		cache:    sync.Map{},
 		lastSeen: 1747945619,
 	}
@@ -969,7 +954,6 @@ func buildTestBodyConditionBuilder() *BodyConditionBuilder {
 		"user.name":                                                      {telemetrytypes.String},
 		"user.age":                                                       {telemetrytypes.Int64},
 		"user.height":                                                    {telemetrytypes.Float64},
-		"status":                                                         {telemetrytypes.String},
 		"education":                                                      {telemetrytypes.ArrayJSON},
 		"education:name":                                                 {telemetrytypes.String},
 		"education:type":                                                 {telemetrytypes.String, telemetrytypes.Int64},

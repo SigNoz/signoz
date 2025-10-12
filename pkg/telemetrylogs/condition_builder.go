@@ -17,11 +17,11 @@ import (
 
 type conditionBuilder struct {
 	fm  qbtypes.FieldMapper
-	bcb *BodyConditionBuilder
+	jqb *JSONQueryBuilder
 }
 
-func NewConditionBuilder(fm qbtypes.FieldMapper, bcb *BodyConditionBuilder) *conditionBuilder {
-	return &conditionBuilder{fm: fm, bcb: bcb}
+func NewConditionBuilder(fm qbtypes.FieldMapper, jqb *JSONQueryBuilder) *conditionBuilder {
+	return &conditionBuilder{fm: fm, jqb: jqb}
 }
 
 func (c *conditionBuilder) conditionFor(
@@ -55,7 +55,7 @@ func (c *conditionBuilder) conditionFor(
 	// TODO: reset this part
 	if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
 		// For callers of legacy ConditionFor, we still build the condition (WHERE-only).
-		cond, err := c.bcb.BuildCondition(ctx, key, operator, value, sb)
+		cond, err := c.jqb.BuildCondition(ctx, key, operator, value, sb)
 		if err != nil {
 			return "", err
 		}
@@ -165,8 +165,8 @@ func (c *conditionBuilder) conditionFor(
 
 		if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
 			// Use JSON typed expressions if feature flag is enabled and we have a body condition builder
-			if c.bcb != nil && IsBodyJSONQueryEnabled(ctx) {
-				expression, err := c.bcb.BuildJSONFieldExpressionForFilter(ctx, key, operator)
+			if c.jqb != nil && IsBodyJSONQueryEnabled(ctx) {
+				expression, err := c.jqb.BuildJSONFieldExpressionForFilter(ctx, key, operator)
 				if err != nil {
 					return "", err
 				}
@@ -240,7 +240,7 @@ func (c *conditionBuilder) ConditionFor(
 ) (string, error) {
 	if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
 		// For callers of legacy ConditionFor, we still build the condition (WHERE-only).
-		cond, err := c.bcb.BuildCondition(ctx, key, operator, value, sb)
+		cond, err := c.jqb.BuildCondition(ctx, key, operator, value, sb)
 		if err != nil {
 			return "", err
 		}
@@ -256,8 +256,8 @@ func (c *conditionBuilder) ConditionFor(
 		// skip adding exists filter for intrinsic fields
 		// with an exception for body json search
 		field, _ := c.fm.FieldFor(ctx, key)
-		// Also skip for body JSON when BodyConditionBuilder is active; it handles existence semantics as needed
-		if c.bcb != nil && (strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) || strings.Contains(key.Name, ":")) {
+		// Also skip for body JSON when JSONQueryBuilder is active; it handles existence semantics as needed
+		if c.jqb != nil && (strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) || strings.Contains(key.Name, ":")) {
 			return condition, nil
 		}
 		if slices.Contains(maps.Keys(IntrinsicFields), field) {
