@@ -278,7 +278,9 @@ func TestProvider_ConcurrentAccess(t *testing.T) {
 }
 
 func TestProvider_EvaluateExpression(t *testing.T) {
-	provider := &provider{}
+	provider := &provider{
+		settings: factory.NewScopedProviderSettings(createTestProviderSettings(), "provider_test"),
+	}
 
 	tests := []struct {
 		name       string
@@ -646,7 +648,7 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := provider.evaluateExpr(tt.expression, tt.labelSet)
+			result, err := provider.evaluateExpr(context.Background(), tt.expression, tt.labelSet)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, result, "Expression: %s", tt.expression)
 		})
@@ -966,9 +968,12 @@ func TestConvertLabelSetToEnv(t *testing.T) {
 		},
 	}
 
+	provider := &provider{
+		settings: factory.NewScopedProviderSettings(createTestProviderSettings(), "provider_test"),
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := convertLabelSetToEnv(tt.labelSet)
+			result := provider.convertLabelSetToEnv(context.Background(), tt.labelSet)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
