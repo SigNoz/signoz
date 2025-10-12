@@ -207,6 +207,7 @@ func (r *PostableRule) processRuleDefaults() error {
 				q.Expression = qLabel
 			}
 		}
+
 		//added alerts v2 fields
 		if r.SchemaVersion == DefaultSchemaVersion {
 			thresholdName := CriticalThresholdName
@@ -215,12 +216,20 @@ func (r *PostableRule) processRuleDefaults() error {
 					thresholdName = severity
 				}
 			}
+
+			// For anomaly detection with ValueIsBelow, negate the target
+			targetValue := r.RuleCondition.Target
+			if r.RuleType == RuleTypeAnomaly && r.RuleCondition.CompareOp == ValueIsBelow && targetValue != nil {
+				negated := -1 * *targetValue
+				targetValue = &negated
+			}
+
 			thresholdData := RuleThresholdData{
 				Kind: BasicThresholdKind,
 				Spec: BasicRuleThresholds{{
 					Name:        thresholdName,
 					TargetUnit:  r.RuleCondition.TargetUnit,
-					TargetValue: r.RuleCondition.Target,
+					TargetValue: targetValue,
 					MatchType:   r.RuleCondition.MatchType,
 					CompareOp:   r.RuleCondition.CompareOp,
 					Channels:    r.PreferredChannels,

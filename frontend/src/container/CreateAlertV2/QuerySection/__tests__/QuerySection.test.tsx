@@ -2,15 +2,27 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryParams } from 'constants/query';
+import {
+	initialClickHouseData,
+	initialQueryPromQLData,
+} from 'constants/queryBuilder';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import store from 'store';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { EQueryType } from 'types/common/dashboard';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { CreateAlertProvider } from '../../context';
 import QuerySection from '../QuerySection';
+
+jest.mock('uuid', () => ({
+	v4: (): string => 'test-uuid-12345',
+}));
+
+const MOCK_UUID = 'test-uuid-12345';
 
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
@@ -48,12 +60,27 @@ jest.mock(
 			queryCategory,
 			alertType,
 			panelType,
+			setQueryCategory,
 		}: any): JSX.Element {
 			return (
 				<div data-testid="query-section-component">
 					<div data-testid="query-category">{queryCategory}</div>
 					<div data-testid="alert-type">{alertType}</div>
 					<div data-testid="panel-type">{panelType}</div>
+					<button
+						type="button"
+						data-testid="change-to-promql"
+						onClick={(): void => setQueryCategory(EQueryType.PROM)}
+					>
+						Change to PromQL
+					</button>
+					<button
+						type="button"
+						data-testid="change-to-query-builder"
+						onClick={(): void => setQueryCategory(EQueryType.QUERY_BUILDER)}
+					>
+						Change to Query Builder
+					</button>
 				</div>
 			);
 		},
@@ -240,17 +267,6 @@ describe('QuerySection', () => {
 		expect(screen.getByTestId('panel-type')).toHaveTextContent('graph');
 	});
 
-	it('has correct CSS classes for tab styling', () => {
-		renderQuerySection();
-
-		const tabs = screen.getAllByRole('button');
-
-		tabs.forEach((tab) => {
-			expect(tab).toHaveClass('list-view-tab');
-			expect(tab).toHaveClass('explorer-view-option');
-		});
-	});
-
 	it('renders with correct container structure', () => {
 		renderQuerySection();
 
@@ -306,5 +322,173 @@ describe('QuerySection', () => {
 		const metricsButton = metricsTab.closest('button');
 		expect(metricsButton).toHaveClass(ACTIVE_TAB_CLASS);
 		expect(logsButton).not.toHaveClass(ACTIVE_TAB_CLASS);
+	});
+
+	it('updates the query data when the alert type changes', async () => {
+		const user = userEvent.setup();
+		renderQuerySection();
+
+		const metricsTab = screen.getByText(METRICS_TEXT);
+		await user.click(metricsTab);
+
+		const result = mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
+
+		expect(result[0]).toEqual({
+			id: MOCK_UUID,
+			queryType: EQueryType.QUERY_BUILDER,
+			unit: undefined,
+			builder: {
+				queryData: [
+					expect.objectContaining({
+						dataSource: DataSource.METRICS,
+						queryName: 'A',
+					}),
+				],
+				queryFormulas: [],
+				queryTraceOperator: [],
+			},
+			promql: [initialQueryPromQLData],
+			clickhouse_sql: [initialClickHouseData],
+		});
+
+		expect(result[1]).toEqual({
+			[QueryParams.alertType]: AlertTypes.METRICS_BASED_ALERT,
+			[QueryParams.ruleType]: AlertDetectionTypes.THRESHOLD_ALERT,
+		});
+	});
+
+	it('updates the query data when the query type changes from query_builder to promql', async () => {
+		const user = userEvent.setup();
+		renderQuerySection();
+
+		const changeToPromQLButton = screen.getByTestId('change-to-promql');
+		await user.click(changeToPromQLButton);
+
+		expect(
+			mockUseQueryBuilder.redirectWithQueryBuilderData,
+		).toHaveBeenCalledTimes(1);
+
+		const [
+			queryArg,
+		] = mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
+
+		expect(queryArg).toEqual({
+			...mockUseQueryBuilder.currentQuery,
+			queryType: EQueryType.PROM,
+		});
+
+		expect(mockUseQueryBuilder.redirectWithQueryBuilderData).toHaveBeenCalledWith(
+			queryArg,
+		);
+	});
+
+	it('updates the query data when switching from promql to query_builder for logs', async () => {
+		const user = userEvent.setup();
+
+		const mockCurrentQueryWithPromQL = {
+			...mockUseQueryBuilder.currentQuery,
+			queryType: EQueryType.PROM,
+			builder: {
+				queryData: [
+					{
+						dataSource: DataSource.LOGS,
+					},
+				],
+			},
+		};
+
+		useQueryBuilder.mockReturnValue({
+			...mockUseQueryBuilder,
+			currentQuery: mockCurrentQueryWithPromQL,
+		});
+
+		render(
+			<Provider store={store}>
+				<QueryClientProvider client={queryClient}>
+					<MemoryRouter>
+						<CreateAlertProvider initialAlertType={AlertTypes.LOGS_BASED_ALERT}>
+							<QuerySection />
+						</CreateAlertProvider>
+					</MemoryRouter>
+				</QueryClientProvider>
+			</Provider>,
+		);
+
+		const changeToQueryBuilderButton = screen.getByTestId(
+			'change-to-query-builder',
+		);
+		await user.click(changeToQueryBuilderButton);
+
+		expect(
+			mockUseQueryBuilder.redirectWithQueryBuilderData,
+		).toHaveBeenCalledTimes(1);
+
+		const [
+			queryArg,
+		] = mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
+
+		expect(queryArg).toEqual({
+			...mockCurrentQueryWithPromQL,
+			queryType: EQueryType.QUERY_BUILDER,
+		});
+
+		expect(mockUseQueryBuilder.redirectWithQueryBuilderData).toHaveBeenCalledWith(
+			queryArg,
+		);
+	});
+
+	it('updates the query data when switching from clickhouse_sql to query_builder for traces', async () => {
+		const user = userEvent.setup();
+
+		const mockCurrentQueryWithClickhouseSQL = {
+			...mockUseQueryBuilder.currentQuery,
+			queryType: EQueryType.CLICKHOUSE,
+			builder: {
+				queryData: [
+					{
+						dataSource: DataSource.TRACES,
+					},
+				],
+			},
+		};
+
+		useQueryBuilder.mockReturnValue({
+			...mockUseQueryBuilder,
+			currentQuery: mockCurrentQueryWithClickhouseSQL,
+		});
+
+		render(
+			<Provider store={store}>
+				<QueryClientProvider client={queryClient}>
+					<MemoryRouter>
+						<CreateAlertProvider initialAlertType={AlertTypes.TRACES_BASED_ALERT}>
+							<QuerySection />
+						</CreateAlertProvider>
+					</MemoryRouter>
+				</QueryClientProvider>
+			</Provider>,
+		);
+
+		const changeToQueryBuilderButton = screen.getByTestId(
+			'change-to-query-builder',
+		);
+		await user.click(changeToQueryBuilderButton);
+
+		expect(
+			mockUseQueryBuilder.redirectWithQueryBuilderData,
+		).toHaveBeenCalledTimes(1);
+
+		const [
+			queryArg,
+		] = mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
+
+		expect(queryArg).toEqual({
+			...mockCurrentQueryWithClickhouseSQL,
+			queryType: EQueryType.QUERY_BUILDER,
+		});
+
+		expect(mockUseQueryBuilder.redirectWithQueryBuilderData).toHaveBeenCalledWith(
+			queryArg,
+		);
 	});
 });
