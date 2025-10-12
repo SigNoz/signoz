@@ -9,9 +9,11 @@ import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
 
-// Mock dependencies before imports
 import ExplorerOptionWrapper from '../ExplorerOptionWrapper';
 import { getExplorerToolBarVisibility } from '../utils';
+
+// Mock dependencies
+jest.mock('hooks/dashboard/useUpdateDashboard');
 
 jest.mock('../utils', () => ({
 	getExplorerToolBarVisibility: jest.fn(),
@@ -26,9 +28,7 @@ const mockGetExplorerToolBarVisibility = jest.mocked(
 	getExplorerToolBarVisibility,
 );
 
-const mockUseUpdateDashboard = jest.fn() as jest.MockedFunction<
-	typeof useUpdateDashboard
->;
+const mockUseUpdateDashboard = jest.mocked(useUpdateDashboard);
 
 // Mock data
 const TEST_QUERY_ID = 'test-query-id';
