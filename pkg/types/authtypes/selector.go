@@ -17,7 +17,8 @@ var (
 	typeRoleSelectorRegex         = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
 	typeOrganizationSelectorRegex = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
 	typeResourceSelectorRegex     = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
-	typeResourcesSelectorRegex    = regexp.MustCompile(`^org/[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
+	// resources selectors are used to select either all or none
+	typeResourcesSelectorRegex = regexp.MustCompile(`^\*$`)
 )
 
 type SelectorCallbackFn func(context.Context, Claims) ([]Selector, error)
@@ -27,7 +28,7 @@ type Selector struct {
 }
 
 func NewSelector(typed Type, selector string) (Selector, error) {
-	err := IsValidSelector(typed, Selector{val: selector})
+	err := IsValidSelector(typed, selector)
 	if err != nil {
 		return Selector{}, err
 	}
@@ -35,26 +36,26 @@ func NewSelector(typed Type, selector string) (Selector, error) {
 	return Selector{val: selector}, nil
 }
 
-func IsValidSelector(typed Type, selector Selector) error {
+func IsValidSelector(typed Type, selector string) error {
 	switch typed {
 	case TypeUser:
-		if !typeUserSelectorRegex.MatchString(selector.String()) {
+		if !typeUserSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeUserSelectorRegex.String())
 		}
 	case TypeRole:
-		if !typeRoleSelectorRegex.MatchString(selector.String()) {
+		if !typeRoleSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeRoleSelectorRegex.String())
 		}
 	case TypeOrganization:
-		if !typeOrganizationSelectorRegex.MatchString(selector.String()) {
+		if !typeOrganizationSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeOrganizationSelectorRegex.String())
 		}
 	case TypeResource:
-		if !typeResourceSelectorRegex.MatchString(selector.String()) {
+		if !typeResourceSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeResourceSelectorRegex.String())
 		}
 	case TypeResources:
-		if !typeResourcesSelectorRegex.MatchString(selector.String()) {
+		if !typeResourcesSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeResourcesSelectorRegex.String())
 		}
 	}
