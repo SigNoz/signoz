@@ -545,6 +545,9 @@ func EvalFuncs() map[string]govaluate.ExpressionFunction {
 	rad180 := 180 / math.Pi
 
 	// Mathematical functions
+	funcs["abs"] = func(args ...any) (any, error) {
+		return math.Abs(args[0].(float64)), nil
+	}
 	funcs["exp"] = func(args ...any) (any, error) {
 		return math.Exp(args[0].(float64)), nil
 	}
@@ -623,7 +626,7 @@ func EvalFuncs() map[string]govaluate.ExpressionFunction {
 // GetSupportedFunctions returns the list of supported function names
 func GetSupportedFunctions() []string {
 	return []string{
-		"exp", "log", "ln", "exp2", "log2", "exp10", "log10",
+		"abs", "exp", "log", "ln", "exp2", "log2", "exp10", "log10",
 		"sqrt", "cbrt", "erf", "erfc", "lgamma", "tgamma",
 		"sin", "cos", "tan", "asin", "acos", "atan",
 		"degrees", "radians", "now",
