@@ -140,7 +140,10 @@ func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (qbtypes.Qu
 						},
 						GroupBy: []qbtypes.GroupByKey{
 							{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-								Name: "service.name",
+								Name:          "service.name",
+								FieldContext:  telemetrytypes.FieldContextResource,
+								FieldDataType: telemetrytypes.FieldDataTypeString,
+								Materialized:  true,
 							}},
 						},
 						Aggregations: []qbtypes.TraceAggregation{
