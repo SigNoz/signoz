@@ -132,36 +132,43 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 			>
 				<div className="exec-time-service">% exec time</div>
 				<div className="stats">
-					{Object.keys(serviceExecTime).map((service) => {
-						const spread = endTime - startTime;
-						const value = (serviceExecTime[service] * 100) / spread;
-						const color = generateColor(
-							service,
-							isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-						);
-						return (
-							<div key={service} className="value-row">
-								<section className="service-name">
-									<div className="square-box" style={{ backgroundColor: color }} />
-									<Tooltip title={service}>
-										<Typography.Text className="service-text" ellipsis>
-											{service}
+					{Object.keys(serviceExecTime)
+						.sort((a, b) => {
+							const spread = endTime - startTime;
+							const aValue = (serviceExecTime[a] * 100) / spread;
+							const bValue = (serviceExecTime[b] * 100) / spread;
+							return bValue - aValue;
+						})
+						.map((service) => {
+							const spread = endTime - startTime;
+							const value = (serviceExecTime[service] * 100) / spread;
+							const color = generateColor(
+								service,
+								isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+							);
+							return (
+								<div key={service} className="value-row">
+									<section className="service-name">
+										<div className="square-box" style={{ backgroundColor: color }} />
+										<Tooltip title={service}>
+											<Typography.Text className="service-text" ellipsis>
+												{service}
+											</Typography.Text>
+										</Tooltip>
+									</section>
+									<section className="progress-service">
+										<Progress
+											percent={parseFloat(value.toFixed(2))}
+											className="service-progress-indicator"
+											showInfo={false}
+										/>
+										<Typography.Text className="percent-value">
+											{parseFloat(value.toFixed(2))}%
 										</Typography.Text>
-									</Tooltip>
-								</section>
-								<section className="progress-service">
-									<Progress
-										percent={parseFloat(value.toFixed(2))}
-										className="service-progress-indicator"
-										showInfo={false}
-									/>
-									<Typography.Text className="percent-value">
-										{parseFloat(value.toFixed(2))}%
-									</Typography.Text>
-								</section>
-							</div>
-						);
-					})}
+									</section>
+								</div>
+							);
+						})}
 				</div>
 			</div>
 			<div
