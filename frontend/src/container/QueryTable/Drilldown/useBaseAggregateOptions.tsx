@@ -53,7 +53,6 @@ const getRoute = (key: string): string => {
 const useBaseAggregateOptions = ({
 	query,
 	onClose,
-	subMenu,
 	setSubMenu,
 	aggregateData,
 	contextLinks,
@@ -68,8 +67,6 @@ const useBaseAggregateOptions = ({
 		isLoading: isResolveQueryLoading,
 	} = useUpdatedQuery();
 	const { selectedDashboard } = useDashboard();
-
-	console.log('>>V subMenu', subMenu);
 
 	useEffect(() => {
 		if (!aggregateData) return;
