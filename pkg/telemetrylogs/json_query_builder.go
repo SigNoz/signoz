@@ -190,7 +190,8 @@ func (b *JSONQueryBuilder) getTypeSet(path string) []telemetrytypes.JSONDataType
 
 // IsPromoted reports whether a JSON path is present in the promoted paths set.
 func (b *JSONQueryBuilder) IsPromoted(path string) bool {
-	_, ok := b.promotedPaths.Load(path)
+	firstLeafNode := strings.Split(path, ":")[0]
+	_, ok := b.promotedPaths.Load(firstLeafNode)
 	return ok
 }
 
@@ -561,23 +562,6 @@ func (b *JSONQueryBuilder) configureTerminal(node *Node, operator qbtypes.Filter
 		Operator:         operator,
 		Value:            value,
 	}
-}
-
-// generateAlias creates a sanitized alias for a path segment
-func (b *JSONQueryBuilder) generateAlias(part string) string {
-	sanitize := func(s string) string {
-		var result strings.Builder
-		for _, r := range s {
-			if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_' {
-				result.WriteRune(r)
-			} else {
-				result.WriteByte('_')
-			}
-		}
-		return result.String()
-	}
-
-	return "_x_" + sanitize(part)
 }
 
 // String returns a visual representation of the tree structure
