@@ -1,4 +1,5 @@
 // Mock for useSafeNavigate hook to avoid React Router version conflicts in tests
+export { isEventObject } from '../src/hooks/useSafeNavigate';
 interface SafeNavigateOptions {
 	replace?: boolean;
 	state?: unknown;
@@ -17,26 +18,6 @@ interface UseSafeNavigateReturn {
 		(to: SafeNavigateToType, options?: SafeNavigateOptions) => void
 	>;
 }
-
-export const isEventObject = (
-	arg: unknown,
-): arg is
-	| MouseEvent
-	| KeyboardEvent
-	| React.MouseEvent
-	| React.KeyboardEvent => {
-	if (!arg || typeof arg !== 'object') return false;
-
-	return (
-		arg instanceof MouseEvent ||
-		arg instanceof KeyboardEvent ||
-		('nativeEvent' in arg &&
-			(arg.nativeEvent instanceof MouseEvent ||
-				arg.nativeEvent instanceof KeyboardEvent)) ||
-		'metaKey' in arg ||
-		'ctrlKey' in arg
-	);
-};
 
 export const useSafeNavigate = (): UseSafeNavigateReturn => ({
 	safeNavigate: jest.fn(
