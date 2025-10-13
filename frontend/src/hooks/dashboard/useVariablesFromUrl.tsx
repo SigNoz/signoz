@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useCallback } from 'react';
@@ -34,7 +35,10 @@ const useVariablesFromUrl = (): UseVariablesFromUrlReturn => {
 		try {
 			return JSON.parse(decodeURIComponent(variablesParam));
 		} catch (error) {
-			console.error('Failed to parse variables from URL:', error);
+			Sentry.captureEvent({
+				message: `Failed to parse dashboard variables from URL: ${error}`,
+				level: 'error',
+			});
 			return {};
 		}
 	}, [urlQuery]);
@@ -50,7 +54,10 @@ const useVariablesFromUrl = (): UseVariablesFromUrlReturn => {
 					const encodedVariables = encodeURIComponent(JSON.stringify(variables));
 					params.set(QueryParams.variables, encodedVariables);
 				} catch (error) {
-					console.error('Failed to serialize variables for URL:', error);
+					Sentry.captureEvent({
+						message: `Failed to serialize dashboard variables for URL: ${error}`,
+						level: 'error',
+					});
 				}
 			}
 
