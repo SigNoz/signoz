@@ -5,7 +5,6 @@ import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { themeColors } from 'constants/theme';
 import useGetTraceFlamegraph from 'hooks/trace/useGetTraceFlamegraph';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { useEffect, useMemo, useState } from 'react';
@@ -48,7 +47,6 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 		traceId,
 		selectedSpanId: firstSpanAtFetchLevel,
 	});
-	const isDarkMode = useIsDarkMode();
 
 	// get the current state of trace flamegraph based on the API lifecycle
 	const traceFlamegraphState = useMemo(() => {
@@ -142,10 +140,7 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 						.map((service) => {
 							const spread = endTime - startTime;
 							const value = (serviceExecTime[service] * 100) / spread;
-							const color = generateColor(
-								service,
-								isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-							);
+							const color = generateColor(service, themeColors.traceDetailColors);
 							return (
 								<div key={service} className="value-row">
 									<section className="service-name">
