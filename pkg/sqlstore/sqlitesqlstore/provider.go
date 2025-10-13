@@ -3,6 +3,7 @@ package sqlitesqlstore
 import (
 	"context"
 	"database/sql"
+	"net/url"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -39,7 +40,11 @@ func NewFactory(hookFactories ...factory.ProviderFactory[sqlstore.SQLStoreHook, 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config sqlstore.Config, hooks ...sqlstore.SQLStoreHook) (sqlstore.SQLStore, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/sqlitesqlstore")
 
-	sqldb, err := sql.Open("sqlite", "file:"+config.Sqlite.Path+"?_foreign_keys=true")
+	connectionParams := url.Values{}
+	// using the defaults from :https://github.com/mattn/go-sqlite3/blob/master/sqlite3.go#L1098
+	connectionParams.Add("_pragma", "busy_timeout(5000)")
+	connectionParams.Add("_pragma", "foreign_keys(1)")
+	sqldb, err := sql.Open("sqlite", "file:"+config.Sqlite.Path+"?"+connectionParams.Encode())
 	if err != nil {
 		return nil, err
 	}
