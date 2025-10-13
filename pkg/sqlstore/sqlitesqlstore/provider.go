@@ -3,7 +3,6 @@ package sqlitesqlstore
 import (
 	"context"
 	"database/sql"
-	"net/url"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -40,12 +39,7 @@ func NewFactory(hookFactories ...factory.ProviderFactory[sqlstore.SQLStoreHook, 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config sqlstore.Config, hooks ...sqlstore.SQLStoreHook) (sqlstore.SQLStore, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/sqlitesqlstore")
 
-	query := url.Values{}
-	query.Add("_pragma", "busy_timeout(100)")
-	query.Add("_pragma", "foreign_keys(1)")
-	query.Add("_pragma", "journal_mode(WAL)")
-
-	sqldb, err := sql.Open("sqlite", "file:"+config.Sqlite.Path+"?"+query.Encode())
+	sqldb, err := sql.Open("sqlite", "file:"+config.Sqlite.Path+"?_foreign_keys=true")
 	if err != nil {
 		return nil, err
 	}
