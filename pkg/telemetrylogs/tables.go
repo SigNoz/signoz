@@ -9,4 +9,5 @@ const (
 	LogAttributeKeysTblName       = "distributed_logs_attribute_keys"
 	LogResourceKeysTblName        = "distributed_logs_resource_keys"
 	PathTypesTableName            = "distributed_path_types"
+	PromotedPathsTableName        = "distributed_promoted_paths"
 )

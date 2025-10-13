@@ -35,6 +35,7 @@ type JSONQueryBuilder struct {
 	telemetryStore telemetrystore.TelemetryStore
 	cache          sync.Map // map[string]*utils.ConcurrentSet[telemetrytypes.JSONDataType]
 	lastSeen       uint64
+	promotedPaths  sync.Map // map[string]struct{} of promoted JSON paths
 }
 
 func NewJSONQueryBuilder(ctx context.Context, telemetryStore telemetrystore.TelemetryStore) (*JSONQueryBuilder, error) {
@@ -68,6 +69,21 @@ func (b *JSONQueryBuilder) init() {
 			if err != nil {
 				// TODO: add logger
 				fmt.Println("error fetching updates for path metadata", err)
+			}
+		}
+	}()
+
+	// refresh promoted paths every 10 seconds
+	go func() {
+		// load once initially
+		if err := b.syncPromoted(context.Background()); err != nil {
+			fmt.Println("error loading promoted paths", err)
+		}
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+		for range ticker.C {
+			if err := b.syncPromoted(context.Background()); err != nil {
+				fmt.Println("error refreshing promoted paths", err)
 			}
 		}
 	}()
@@ -168,6 +184,45 @@ func (b *JSONQueryBuilder) getTypeSet(path string) []telemetrytypes.JSONDataType
 		if set, ok := cachedSet.(*utils.ConcurrentSet[telemetrytypes.JSONDataType]); ok && set.Len() > 0 {
 			return set.ToSlice()
 		}
+	}
+	return nil
+}
+
+// IsPromoted reports whether a JSON path is present in the promoted paths set.
+func (b *JSONQueryBuilder) IsPromoted(path string) bool {
+	_, ok := b.promotedPaths.Load(path)
+	return ok
+}
+
+// syncPromoted refreshes the promoted paths from ClickHouse and reconciles the set.
+func (b *JSONQueryBuilder) syncPromoted(ctx context.Context) error {
+	query := fmt.Sprintf("SELECT path FROM %s.%s", DBName, PromotedPathsTableName)
+	rows, err := b.telemetryStore.ClickhouseDB().Query(ctx, query)
+	if err != nil {
+		return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to load promoted paths")
+	}
+	defer rows.Close()
+
+	next := make(map[string]struct{})
+	for rows.Next() {
+		var path string
+		if err := rows.Scan(&path); err != nil {
+			return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to scan promoted path")
+		}
+		next[path] = struct{}{}
+	}
+
+	// Delete stale
+	b.promotedPaths.Range(func(k, _ any) bool {
+		key, _ := k.(string)
+		if _, ok := next[key]; !ok {
+			b.promotedPaths.Delete(key)
+		}
+		return true
+	})
+	// Add new
+	for k := range next {
+		b.promotedPaths.Store(k, struct{}{})
 	}
 	return nil
 }
@@ -339,48 +394,16 @@ func (b *JSONQueryBuilder) BuildCondition(ctx context.Context, key *telemetrytyp
 
 	path := strings.TrimPrefix(key.Name, BodyJSONStringSearchPrefix)
 	plan := b.PlanJSONPath(path, operator, value)
-	return b.EmitPlannedCondition(plan, path, operator, value, sb)
-}
 
-// BuildJSONFieldExpression builds a dynamicElement expression for a JSON field (for SELECT/GroupBy)
-func (b *JSONQueryBuilder) BuildJSONFieldExpression(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	path := strings.TrimPrefix(key.Name, BodyJSONStringSearchPrefix)
-
-	// Get all types for this path
-	typeSet := b.getTypeSet(path)
-	if len(typeSet) == 0 {
-		return "", errors.Newf(errors.TypeNotFound, errors.CodeNotFound,
-			"No valid types found for JSON path: %s", path)
-	}
-
-	// For SELECT expressions, prefer scalar types if available
-	fieldPath := "body_v2." + path
-
-	// Check for scalar types first
-	scalarTypes := []string{}
-	arrayTypes := []string{}
-
-	for _, dataType := range typeSet {
-		typeStr := dataType.StringValue()
-		if strings.HasPrefix(typeStr, "Array(") {
-			arrayTypes = append(arrayTypes, typeStr)
-		} else {
-			scalarTypes = append(scalarTypes, typeStr)
+	conditions := []string{}
+	for _, plan := range plan {
+		condition, err := b.EmitPlannedCondition(plan, path, operator, value, sb)
+		if err != nil {
+			return "", err
 		}
+		conditions = append(conditions, condition)
 	}
-
-	if len(scalarTypes) > 0 {
-		// Use the first scalar type for SELECT
-		expression := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, scalarTypes[0])
-		return expression, nil
-	} else if len(arrayTypes) > 0 {
-		// Use the first array type for SELECT
-		expression := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, arrayTypes[0])
-		return expression, nil
-	}
-
-	return "", errors.Newf(errors.TypeNotFound, errors.CodeNotFound,
-		"No valid types found for JSON path: %s", path)
+	return sb.Or(conditions...), nil
 }
 
 // Node is now a tree structure representing the complete JSON path traversal
@@ -396,9 +419,6 @@ type Node struct {
 	AvailableTypes []telemetrytypes.JSONDataType
 	PreferredType  telemetrytypes.JSONDataType
 
-	// Precomputed aliases for this node
-	Alias string
-
 	// Array type branches (Array(JSON) vs Array(Dynamic))
 	Branches map[BranchType]*Node
 
@@ -413,8 +433,18 @@ type Node struct {
 	MaxDynamicPaths int
 }
 
+func (n *Node) Alias() string {
+	if n.Parent == nil {
+		return fmt.Sprintf("`%s`", n.Name)
+	}
+
+	return fmt.Sprintf("`%s:%s`",
+		strings.TrimRight(strings.TrimLeft(n.Parent.Alias(), "`"), "`"),
+		n.Name)
+}
+
 func (n *Node) FieldPath() string {
-	return n.Parent.Alias + "." + n.Name
+	return n.Parent.Alias() + "." + n.Name
 }
 
 type BranchType string
@@ -434,11 +464,25 @@ type TerminalConfig struct {
 
 // PlanJSONPath builds a tree structure representing the complete JSON path traversal
 // that precomputes all possible branches and their types
-func (b *JSONQueryBuilder) PlanJSONPath(path string, operator qbtypes.FilterOperator, value any) *Node {
+func (b *JSONQueryBuilder) PlanJSONPath(path string, operator qbtypes.FilterOperator, value any) []*Node {
 	parts := strings.Split(path, ":")
-	return b.buildPlan(parts, 0, operator, value, &Node{
-		Alias: "body_v2",
-	}, false)
+	plans := []*Node{
+		b.buildPlan(parts, 0, operator, value, &Node{
+			Name:            "body_v2",
+			MaxDynamicTypes: 32,
+			MaxDynamicPaths: 0,
+		}, false),
+	}
+
+	if b.IsPromoted(path) {
+		plans = append(plans, b.buildPlan(parts, 0, operator, value, &Node{
+			Name:            "promoted",
+			MaxDynamicTypes: 32,
+			MaxDynamicPaths: 1024,
+		}, true))
+	}
+
+	return plans
 }
 
 // buildPlan recursively builds the path plan tree
@@ -453,11 +497,7 @@ func (b *JSONQueryBuilder) buildPlan(parts []string, index int, operator qbtypes
 
 	// Calculate progression parameters based on parent's values
 	var maxTypes, maxPaths int
-	if index == 0 {
-		// Root node - use base values (16, 0)
-		maxTypes = 16
-		maxPaths = 0
-	} else if isDynArrChild {
+	if isDynArrChild {
 		// Child of Dynamic array - reset progression to base values (16, 256)
 		// This happens when we switch from Array(Dynamic) to Array(JSON)
 		maxTypes = 16
@@ -475,15 +515,15 @@ func (b *JSONQueryBuilder) buildPlan(parts []string, index int, operator qbtypes
 	}
 
 	// Create alias for this node
-	alias := b.generateAlias(part)
+	// alias := b.generateAlias(part)
 
 	// Create node for this path segment
 	node := &Node{
-		Name:            part,
-		Path:            pathSoFar,
-		IsArray:         !isTerminal, // Only non-terminal parts are arrays
-		IsTerminal:      isTerminal,
-		Alias:           alias,
+		Name:       part,
+		Path:       pathSoFar,
+		IsArray:    !isTerminal, // Only non-terminal parts are arrays
+		IsTerminal: isTerminal,
+		// Alias:           pathSoFar,
 		AvailableTypes:  b.getTypeSet(pathSoFar),
 		Branches:        make(map[BranchType]*Node),
 		Parent:          parent,
@@ -551,7 +591,7 @@ func (p *Node) printTree(indent int) string {
 	// Print current node
 	indentStr := strings.Repeat("  ", indent)
 	sb.WriteString(fmt.Sprintf("%s%s (path: %s, alias: %s)\n",
-		indentStr, p.Name, p.Path, p.Alias))
+		indentStr, p.Name, p.Path, p.Alias()))
 
 	// Print type information
 	if len(p.AvailableTypes) > 0 {
@@ -634,20 +674,8 @@ func (b *JSONQueryBuilder) buildArrayMembershipCondition(plan *Node, operator qb
 
 	// Check if we have a typed array available for this element type
 	typedArrayType := telemetrytypes.ScalerTypeToArrayType[plan.TerminalConfig.ElemType]
-	hasTypedArray := false
-	for _, t := range cached {
-		if t == typedArrayType {
-			hasTypedArray = true
-			break
-		}
-	}
-	hasArrayDynamic := false
-	for _, t := range cached {
-		if t == telemetrytypes.ArrayDynamic {
-			hasArrayDynamic = true
-			break
-		}
-	}
+	hasTypedArray := slices.Contains(cached, typedArrayType)
+	hasArrayDynamic := slices.Contains(cached, telemetrytypes.ArrayDynamic)
 
 	// If both typed array and Array(Dynamic) are present, OR both membership checks
 	if hasTypedArray && hasArrayDynamic {
@@ -694,8 +722,8 @@ func (b *JSONQueryBuilder) recurseArrayHopsState(current *Node, operator qbtypes
 		return terminalCond, nil
 	}
 
-	currAlias := current.Alias
-	parentAlias := current.Parent.Alias
+	currAlias := current.Alias()
+	fieldPath := current.FieldPath()
 	// Determine availability of Array(JSON) and Array(Dynamic) at this hop
 	hasArrayJSON := current.Branches[BranchJSON] != nil
 	hasArrayDynamic := current.Branches[BranchDynamic] != nil
@@ -703,7 +731,7 @@ func (b *JSONQueryBuilder) recurseArrayHopsState(current *Node, operator qbtypes
 	// Then, at this hop, compute child per branch and wrap
 	branches := make([]string, 0, 2)
 	if hasArrayJSON {
-		jsonArrayExpr := fmt.Sprintf("dynamicElement(%s.%s, 'Array(JSON(max_dynamic_types=%d, max_dynamic_paths=%d))')", parentAlias, current.Name, current.MaxDynamicTypes, current.MaxDynamicPaths)
+		jsonArrayExpr := fmt.Sprintf("dynamicElement(%s, 'Array(JSON(max_dynamic_types=%d, max_dynamic_paths=%d))')", fieldPath, current.MaxDynamicTypes, current.MaxDynamicPaths)
 		childGroupJSON, err := b.recurseArrayHopsState(current.Branches[BranchJSON], operator, value, effVal, sb)
 		if err != nil {
 			return "", err
@@ -711,7 +739,7 @@ func (b *JSONQueryBuilder) recurseArrayHopsState(current *Node, operator qbtypes
 		branches = append(branches, fmt.Sprintf("arrayExists(%s-> %s, %s)", currAlias, childGroupJSON, jsonArrayExpr))
 	}
 	if hasArrayDynamic {
-		dynBaseExpr := fmt.Sprintf("dynamicElement(%s.%s, 'Array(Dynamic)')", parentAlias, current.Name)
+		dynBaseExpr := fmt.Sprintf("dynamicElement(%s, 'Array(Dynamic)')", fieldPath)
 		dynFilteredExpr := fmt.Sprintf("arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), %s))", dynBaseExpr)
 
 		// Create the Query for Dynamic array
@@ -827,10 +855,10 @@ func (b *JSONQueryBuilder) BuildGroupByArrayJoins(ctx context.Context, key *tele
 	plan := b.PlanJSONPath(path, qbtypes.FilterOperatorExists, nil)
 
 	// Build array join clauses by traversing the tree
-	arrayJoinClauses := b.buildArrayJoinClausesFromTree(plan)
+	arrayJoinClauses := b.buildArrayJoinClausesFromTree(plan[0])
 
 	// Build terminal field expression using the terminal node
-	terminalNode := b.findTerminalNodeInTree(plan)
+	terminalNode := b.findTerminalNodeInTree(plan[0])
 	if terminalNode == nil {
 		return nil, errors.Newf(errors.TypeNotFound, errors.CodeNotFound,
 			"Could not find terminal node for path: %s", path)
@@ -846,12 +874,13 @@ func (b *JSONQueryBuilder) BuildGroupByArrayJoins(ctx context.Context, key *tele
 }
 
 // buildArrayJoinClausesFromTree builds array join clauses by traversing the tree
-func (b *JSONQueryBuilder) buildArrayJoinClausesFromTree(plan *Node) []string {
+func (b *JSONQueryBuilder) buildArrayJoinClausesFromTree(node *Node) []string {
 	var clauses []string
-	current := plan
-	parentAlias := "body_v2"
+	current := node
 
 	for current != nil && !current.IsTerminal {
+		fieldPath := current.FieldPath()
+
 		// Check if this node has array types
 		hasArrayJSON := current.Branches[BranchJSON] != nil
 		hasArrayDynamic := current.Branches[BranchDynamic] != nil
@@ -862,21 +891,20 @@ func (b *JSONQueryBuilder) buildArrayJoinClausesFromTree(plan *Node) []string {
 			if hasArrayJSON && hasArrayDynamic {
 				// Both types available - use Array(JSON) for GroupBy (simpler)
 				// Use the node's MaxDynamicTypes and MaxDynamicPaths values
-				arrayExpr = fmt.Sprintf("dynamicElement(%s.%s, 'Array(JSON(max_dynamic_types=%d, max_dynamic_paths=%d))')",
-					parentAlias, current.Name, current.MaxDynamicTypes, current.MaxDynamicPaths)
+				arrayExpr = fmt.Sprintf("dynamicElement(%s, 'Array(JSON(max_dynamic_types=%d, max_dynamic_paths=%d))')",
+					fieldPath, current.MaxDynamicTypes, current.MaxDynamicPaths)
 			} else if hasArrayJSON {
 				// Only Array(JSON) available - use the node's max_dynamic values
-				arrayExpr = fmt.Sprintf("dynamicElement(%s.%s, 'Array(JSON(max_dynamic_types=%d, max_dynamic_paths=%d))')",
-					parentAlias, current.Name, current.MaxDynamicTypes, current.MaxDynamicPaths)
+				arrayExpr = fmt.Sprintf("dynamicElement(%s, 'Array(JSON(max_dynamic_types=%d, max_dynamic_paths=%d))')",
+					fieldPath, current.MaxDynamicTypes, current.MaxDynamicPaths)
 			} else {
 				// Only Array(Dynamic) available - filter for JSON objects
-				dynBaseExpr := fmt.Sprintf("dynamicElement(%s.%s, 'Array(Dynamic)')", parentAlias, current.Name)
+				dynBaseExpr := fmt.Sprintf("dynamicElement(%s, 'Array(Dynamic)')", fieldPath)
 				arrayExpr = fmt.Sprintf("arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), %s))", dynBaseExpr)
 			}
 
-			clause := fmt.Sprintf("ARRAY JOIN %s AS %s", arrayExpr, current.Alias)
+			clause := fmt.Sprintf("ARRAY JOIN %s AS %s", arrayExpr, current.Alias())
 			clauses = append(clauses, clause)
-			parentAlias = current.Alias
 		}
 
 		// Move to next level - prefer JSON branch for GroupBy
@@ -917,14 +945,7 @@ func (b *JSONQueryBuilder) buildTerminalExpressionFromNode(node *Node) string {
 	// For GroupBy, we need to use the parent's alias and build the field path correctly
 	// The working pattern shows: dynamicElement(_x_education.awards.name, 'String')
 	// where _x_education is the parent alias and awards.name is the field path
-	var fieldPath string
-	if node.Parent != nil {
-		// Use parent's alias and the field name
-		fieldPath = fmt.Sprintf("%s.%s", node.Parent.Alias, node.Name)
-	} else {
-		// Fallback for root level fields
-		fieldPath = fmt.Sprintf("%s.%s", node.Alias, node.Name)
-	}
+	fieldPath := node.FieldPath()
 
 	// Use the PreferredType from the node, which is properly calculated by the plan system
 	return fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, node.PreferredType.StringValue())
