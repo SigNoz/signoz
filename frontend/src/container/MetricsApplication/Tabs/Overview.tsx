@@ -235,6 +235,7 @@ function Application(): JSX.Element {
 			timestamp: number,
 			apmToTraceQuery: Query,
 			isViewLogsClicked?: boolean,
+			event?: React.MouseEvent,
 		): (() => void) => (): void => {
 			const endTime = secondsToMilliseconds(timestamp);
 			const startTime = secondsToMilliseconds(timestamp - stepInterval);
@@ -259,7 +260,7 @@ function Application(): JSX.Element {
 				queryString,
 			);
 
-			history.push(newPath);
+			history.push(newPath, event);
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[stepInterval],
@@ -319,14 +320,16 @@ function Application(): JSX.Element {
 						type="default"
 						size="small"
 						id="Rate_button"
-						onClick={onViewTracePopupClick({
-							servicename,
-							selectedTraceTags,
-							timestamp: selectedTimeStamp,
-							apmToTraceQuery,
-							stepInterval,
-							safeNavigate,
-						})}
+						onClick={(event: React.MouseEvent): void =>
+							onViewTracePopupClick({
+								servicename,
+								selectedTraceTags,
+								timestamp: selectedTimeStamp,
+								apmToTraceQuery,
+								stepInterval,
+								safeNavigate,
+							})(event)
+						}
 					>
 						View Traces
 					</Button>
@@ -370,15 +373,12 @@ function Application(): JSX.Element {
 					<ColErrorContainer>
 						<GraphControlsPanel
 							id="Error_button"
-							onViewLogsClick={onErrorTrackHandler(
-								selectedTimeStamp,
-								logErrorQuery,
-								true,
-							)}
-							onViewTracesClick={onErrorTrackHandler(
-								selectedTimeStamp,
-								errorTrackQuery,
-							)}
+							onViewLogsClick={(event: React.MouseEvent): void =>
+								onErrorTrackHandler(selectedTimeStamp, logErrorQuery, true, event)()
+							}
+							onViewTracesClick={(event: React.MouseEvent): void =>
+								onErrorTrackHandler(selectedTimeStamp, errorTrackQuery, false, event)()
+							}
 						/>
 
 						<TopLevelOperation
