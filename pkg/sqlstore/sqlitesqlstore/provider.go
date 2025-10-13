@@ -3,6 +3,7 @@ package sqlitesqlstore
 import (
 	"context"
 	"database/sql"
+	"net/url"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -10,8 +11,8 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 
-	sqlite3 "modernc.org/sqlite"
-	sqlite3lib "modernc.org/sqlite/lib"
+	"modernc.org/sqlite"
+	sqlite3 "modernc.org/sqlite/lib"
 )
 
 type provider struct {
@@ -39,7 +40,12 @@ func NewFactory(hookFactories ...factory.ProviderFactory[sqlstore.SQLStoreHook, 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config sqlstore.Config, hooks ...sqlstore.SQLStoreHook) (sqlstore.SQLStore, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/sqlitesqlstore")
 
-	sqldb, err := sql.Open("sqlite", "file:"+config.Sqlite.Path+"?_foreign_keys=true")
+	query := url.Values{}
+	query.Add("_pragma", "busy_timeout(100)")
+	query.Add("_pragma", "foreign_keys(1)")
+	query.Add("_pragma", "journal_mode(WAL)")
+
+	sqldb, err := sql.Open("sqlite", "file:"+config.Sqlite.Path+"?"+query.Encode())
 	if err != nil {
 		return nil, err
 	}
@@ -83,8 +89,8 @@ func (provider *provider) WrapNotFoundErrf(err error, code errors.Code, format s
 }
 
 func (provider *provider) WrapAlreadyExistsErrf(err error, code errors.Code, format string, args ...any) error {
-	if sqlite3Err, ok := err.(*sqlite3.Error); ok {
-		if sqlite3Err.Code() == sqlite3lib.SQLITE_CONSTRAINT_UNIQUE || sqlite3Err.Code() == sqlite3lib.SQLITE_CONSTRAINT_PRIMARYKEY {
+	if sqlite3Err, ok := err.(*sqlite.Error); ok {
+		if sqlite3Err.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE || sqlite3Err.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY {
 			return errors.Wrapf(err, errors.TypeAlreadyExists, code, format, args...)
 		}
 	}
