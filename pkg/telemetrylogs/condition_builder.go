@@ -52,16 +52,6 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	// TODO: reset this part
-	if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
-		// For callers of legacy ConditionFor, we still build the condition (WHERE-only).
-		cond, err := c.jqb.BuildCondition(ctx, key, operator, value, sb)
-		if err != nil {
-			return "", err
-		}
-		return cond, nil
-	}
-
 	tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
 
 	// TODO: add body.message here

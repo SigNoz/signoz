@@ -251,17 +251,18 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 	// merge body_v2 and promoted into body
 	// TODO: move this where it suits best
 	if q.spec.Signal == telemetrytypes.SignalLogs {
-		typedPayload := payload.(*qbtypes.RawData)
-		for _, rr := range typedPayload.Rows {
-			body := rr.Data["body_v2"].(map[string]any)
-			promoted := rr.Data["promoted"].(map[string]any)
-			seed(promoted, body)
-			rr.Data["body"] = body
-			delete(rr.Data, "body_v2")
-			delete(rr.Data, "promoted")
+		switch typedPayload := payload.(type) {
+		case *qbtypes.RawData:
+			for _, rr := range typedPayload.Rows {
+				body := rr.Data["body_v2"].(map[string]any)
+				promoted := rr.Data["promoted"].(map[string]any)
+				seed(promoted, body)
+				rr.Data["body"] = body
+				delete(rr.Data, "body_v2")
+				delete(rr.Data, "promoted")
+			}
+			payload = typedPayload
 		}
-
-		payload = typedPayload
 	}
 
 	return &qbtypes.Result{

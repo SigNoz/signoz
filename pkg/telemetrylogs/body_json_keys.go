@@ -12,6 +12,8 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
+var CodeUnknownJSONDataType = errors.MustNewCode("unknown_json_data_type")
+
 // ExtractBodyPaths extracts body JSON paths from the path_types table
 // This function can be used by both JSONQueryBuilder and metadata extraction
 // lastSeen: 0 for full sync, >0 for incremental sync (only records newer than lastSeen)
@@ -94,7 +96,12 @@ func ExtractBodyPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 			paths[path] = set
 		}
 
-		set.Insert(telemetrytypes.MappingStringToJSONDataType[typ])
+		mapping, found := telemetrytypes.MappingStringToJSONDataType[typ]
+		if !found {
+			return nil, false, 0, errors.New(errors.TypeInternal, CodeUnknownJSONDataType, "failed to map type string to JSON data type")
+		}
+
+		set.Insert(mapping)
 	}
 
 	if rows.Err() != nil {

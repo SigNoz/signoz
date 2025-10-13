@@ -579,7 +579,7 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
-				Filter: &qbtypes.Filter{Expression: "body.education:awards.name Exists"},
+				Filter: &qbtypes.Filter{Expression: "body.education:awards:name Exists"},
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
@@ -593,7 +593,7 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
-				Filter: &qbtypes.Filter{Expression: "body.education:awards.name = 'Iron Award'"},
+				Filter: &qbtypes.Filter{Expression: "body.education:awards:name = 'Iron Award'"},
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{

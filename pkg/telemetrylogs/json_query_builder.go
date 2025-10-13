@@ -31,34 +31,6 @@ type PathType struct {
 	LastSeen uint64 `ch:"last_seen"`
 }
 
-// mapTypeStringToJSONDataType converts CH type strings persisted in metadata into JSONDataType
-func mapTypeStringToJSONDataType(t string) telemetrytypes.JSONDataType {
-	switch t {
-	case "String":
-		return telemetrytypes.String
-	case "Int64":
-		return telemetrytypes.Int64
-	case "Float64":
-		return telemetrytypes.Float64
-	case "Bool":
-		return telemetrytypes.Bool
-	case "Array(Nullable(String))":
-		return telemetrytypes.ArrayString
-	case "Array(Nullable(Int64))":
-		return telemetrytypes.ArrayInt64
-	case "Array(Nullable(Float64))":
-		return telemetrytypes.ArrayFloat64
-	case "Array(Nullable(Bool))":
-		return telemetrytypes.ArrayBool
-	case "Array(JSON)", "Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))":
-		return telemetrytypes.ArrayJSON
-	case "Array(Dynamic)":
-		return telemetrytypes.ArrayDynamic
-	default:
-		return telemetrytypes.Dynamic
-	}
-}
-
 type JSONQueryBuilder struct {
 	telemetryStore telemetrystore.TelemetryStore
 	cache          sync.Map // map[string]*utils.ConcurrentSet[telemetrytypes.JSONDataType]
@@ -191,8 +163,6 @@ func IsFloatActuallyInt(f float64) bool {
 	return float64(int64(f)) == f
 }
 
-// Deterministic planning helpers (no explicit enum needed in current design)
-
 func (b *JSONQueryBuilder) getTypeSet(path string) []telemetrytypes.JSONDataType {
 	if cachedSet, exists := b.cache.Load(path); exists {
 		if set, ok := cachedSet.(*utils.ConcurrentSet[telemetrytypes.JSONDataType]); ok && set.Len() > 0 {
@@ -201,8 +171,6 @@ func (b *JSONQueryBuilder) getTypeSet(path string) []telemetrytypes.JSONDataType
 	}
 	return nil
 }
-
-// ValueKind normalizes runtime value/operator intent to a coarse type for planning
 
 // presence summarizes what cache says exists at a terminal path
 type presence struct {
@@ -370,13 +338,6 @@ func (b *JSONQueryBuilder) BuildCondition(ctx context.Context, key *telemetrytyp
 	operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 
 	path := strings.TrimPrefix(key.Name, BodyJSONStringSearchPrefix)
-	// Normalize path: replace . with : after the first : to handle education:awards.name -> education:awards:name
-	if strings.Contains(path, ":") {
-		parts := strings.SplitN(path, ":", 2)
-		if len(parts) == 2 {
-			path = parts[0] + ":" + strings.ReplaceAll(parts[1], ".", ":")
-		}
-	}
 	plan := b.PlanJSONPath(path, operator, value)
 	return b.EmitPlannedCondition(plan, path, operator, value, sb)
 }
@@ -625,43 +586,12 @@ func (p *Node) printTree(indent int) string {
 func (b *JSONQueryBuilder) EmitPlannedCondition(plan *Node, fullPath string, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	effVal := wrapLikeValueIfNeeded(operator, value)
 
-	// Simple path: no array hops (no colons in path)
-	if !strings.Contains(fullPath, ":") {
-		return b.emitSimpleCondition(plan, fullPath, operator, effVal, sb)
-	}
-
-	// Array traversal
-	return b.emitArrayCondition(plan, operator, value, effVal, sb)
+	// plan traversal
+	return b.emitPlannedCondition(plan, operator, value, effVal, sb)
 }
 
-// emitSimpleCondition handles paths without array hops
-func (b *JSONQueryBuilder) emitSimpleCondition(plan *Node, fullPath string, operator qbtypes.FilterOperator, effVal any, sb *sqlbuilder.SelectBuilder) (string, error) {
-	base := "body_v2." + fullPath
-
-	if plan.TerminalConfig != nil && plan.TerminalConfig.PreferArrayAtEnd {
-		// Array membership check
-		arrayExpr := fmt.Sprintf("dynamicElement(%s, '%s')", base, telemetrytypes.ScalerTypeToArrayType[plan.TerminalConfig.ElemType].StringValue())
-		cond := b.buildArrayMembership(arrayExpr, operator, effVal, plan.TerminalConfig.ElemType, sb)
-		sb.AddWhereClause(sqlbuilder.NewWhereClause().AddWhereExpr(sb.Args, cond))
-		return cond, nil
-	}
-
-	// Scalar field access
-	elemType := plan.PreferredType
-	if plan.TerminalConfig != nil {
-		elemType = plan.TerminalConfig.ElemType
-	}
-	fieldExpr := fmt.Sprintf("dynamicElement(%s, '%s')", base, elemType.StringValue())
-	cond, err := b.applyOperator(sb, fieldExpr, operator, effVal)
-	if err != nil {
-		return "", err
-	}
-	sb.AddWhereClause(sqlbuilder.NewWhereClause().AddWhereExpr(sb.Args, cond))
-	return cond, nil
-}
-
-// emitArrayCondition handles paths with array traversal
-func (b *JSONQueryBuilder) emitArrayCondition(plan *Node, operator qbtypes.FilterOperator, value, effVal any, sb *sqlbuilder.SelectBuilder) (string, error) {
+// emitPlannedCondition handles paths with array traversal
+func (b *JSONQueryBuilder) emitPlannedCondition(plan *Node, operator qbtypes.FilterOperator, value, effVal any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	// Build traversal + terminal recursively per-hop
 	compiled, err := b.recurseArrayHopsState(plan, operator, value, effVal, sb)
 	if err != nil {
