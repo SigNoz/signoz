@@ -98,6 +98,7 @@ jobs:
       GO_BUILD_CONTEXT: ./cmd/enterprise
       GO_BUILD_FLAGS: >-
         -tags timetzdata
+        -ldflags='-s -w
         -X github.com/SigNoz/signoz/pkg/version.version=${{ needs.prepare.outputs.version }}
         -X github.com/SigNoz/signoz/pkg/version.variant=enterprise
         -X github.com/SigNoz/signoz/pkg/version.hash=${{ needs.prepare.outputs.hash }}
@@ -123,4 +124,4 @@ jobs:
       GITHUB_SILENT: true
       GITHUB_REPOSITORY_NAME: charts-saas-v3-staging
       GITHUB_EVENT_NAME: releaser
-      GITHUB_EVENT_PAYLOAD: "{\"deployment\": \"${{ needs.prepare.outputs.deployment }}\", \"signoz_version\": \"${{ needs.prepare.outputs.version }}\"}"
+      GITHUB_EVENT_PAYLOAD: '{"deployment": "${{ needs.prepare.outputs.deployment }}", "signoz_version": "${{ needs.prepare.outputs.version }}"}'

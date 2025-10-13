@@ -69,6 +69,7 @@ jobs:
       GO_BUILD_CONTEXT: ./cmd/community
       GO_BUILD_FLAGS: >-
         -tags timetzdata
+        -ldflags='-s -w
         -X github.com/SigNoz/signoz/pkg/version.version=${{ needs.prepare.outputs.version }}
         -X github.com/SigNoz/signoz/pkg/version.variant=community
         -X github.com/SigNoz/signoz/pkg/version.hash=${{ needs.prepare.outputs.hash }}

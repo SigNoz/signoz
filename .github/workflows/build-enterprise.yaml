@@ -99,6 +99,7 @@ jobs:
       GO_BUILD_CONTEXT: ./cmd/enterprise
       GO_BUILD_FLAGS: >-
         -tags timetzdata
+        -ldflags='-s -w
         -X github.com/SigNoz/signoz/pkg/version.version=${{ needs.prepare.outputs.version }}
         -X github.com/SigNoz/signoz/pkg/version.variant=enterprise
         -X github.com/SigNoz/signoz/pkg/version.hash=${{ needs.prepare.outputs.hash }}
