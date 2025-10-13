@@ -573,6 +573,40 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		}
 	}
 
+	bodyJSONSearchText := ""
+	bodyJSONLimit := 100
+	for _, selector := range fieldKeySelectors {
+		// Extract search text for body JSON keys
+		if strings.HasPrefix(selector.Name, "body.") {
+			bodyJSONSearchText = strings.TrimPrefix(selector.Name, "body.")
+		} else if selector.Name != "" {
+			bodyJSONSearchText = selector.Name
+		}
+
+		bodyJSONLimit += selector.Limit
+	}
+
+	bodyJSONPaths, bodyJSONComplete, _, err := telemetrylogs.ExtractBodyPaths(ctx, t.telemetrystore, bodyJSONSearchText, bodyJSONLimit, 0) // 0 for full sync in metadata
+	if err != nil {
+		t.logger.Error("failed to extract body JSON paths", "error", err)
+	} else {
+		// Add body JSON keys to results
+		for path, types := range bodyJSONPaths {
+			types.Iter(func(dataType telemetrytypes.JSONDataType) bool {
+				keys = append(keys, &telemetrytypes.TelemetryFieldKey{
+					Name:          telemetrylogs.BodyJSONStringSearchPrefix + path,
+					Signal:        telemetrytypes.SignalLogs,
+					FieldContext:  telemetrytypes.FieldContextLog,
+					FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[dataType],
+				})
+				return true
+			})
+		}
+
+		// Update completeness - if body JSON extraction was incomplete, overall result is incomplete
+		complete = complete && bodyJSONComplete
+	}
+
 	return keys, complete, nil
 }
 

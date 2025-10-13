@@ -90,3 +90,16 @@ var MappingFieldDataTypeToJSONDataType = map[FieldDataType]JSONDataType{
 	FieldDataTypeArrayFloat64: ArrayFloat64,
 	FieldDataTypeArrayBool:    ArrayBool,
 }
+
+var MappingJSONDataTypeToFieldDataType = map[JSONDataType]FieldDataType{
+	String:       FieldDataTypeString,
+	Int64:        FieldDataTypeInt64,
+	Float64:      FieldDataTypeFloat64,
+	Bool:         FieldDataTypeBool,
+	ArrayString:  FieldDataTypeArrayString,
+	ArrayInt64:   FieldDataTypeArrayInt64,
+	ArrayFloat64: FieldDataTypeArrayFloat64,
+	ArrayBool:    FieldDataTypeArrayBool,
+	ArrayDynamic: FieldDataTypeArrayDynamic,
+	ArrayJSON:    FieldDataTypeArrayObject,
+}

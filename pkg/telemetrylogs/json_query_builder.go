@@ -102,18 +102,25 @@ func (b *JSONQueryBuilder) init() {
 }
 
 func (b *JSONQueryBuilder) sync(ctx context.Context, fullLoad bool) error {
-	query := fmt.Sprintf("SELECT * FROM %s.%s FINAL ORDER BY last_seen DESC", DBName, PathTypesTableName)
+	var lastSeen uint64
 	if !fullLoad {
-		query = fmt.Sprintf("SELECT * FROM %s.%s WHERE last_seen > %d ORDER BY last_seen DESC", DBName, PathTypesTableName, b.lastSeen)
+		lastSeen = b.lastSeen
 	}
 
-	paths := []PathType{}
-	err := b.telemetryStore.ClickhouseDB().Select(ctx, &paths, query)
+	// Use the shared function to extract body JSON keys
+	// For full sync: limit=0 (no limit), for incremental sync: limit=10000 (reasonable limit)
+	var limit int
+	if fullLoad {
+		limit = 0 // No limit for full sync
+	} else {
+		limit = 10000 // Reasonable limit for incremental sync
+	}
+	bodyJSONPaths, _, highestLastSeen, err := ExtractBodyPaths(ctx, b.telemetryStore, "", limit, lastSeen)
 	if err != nil {
 		return err
 	}
 
-	if len(paths) == 0 {
+	if len(bodyJSONPaths) == 0 {
 		return nil
 	}
 
@@ -121,17 +128,23 @@ func (b *JSONQueryBuilder) sync(ctx context.Context, fullLoad bool) error {
 		b.cache = sync.Map{}
 	}
 
-	for _, path := range paths {
+	for path, types := range bodyJSONPaths {
 		setTyped := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
 
-		set, loaded := b.cache.LoadOrStore(path.Path, setTyped)
+		set, loaded := b.cache.LoadOrStore(path, setTyped)
 		if loaded {
 			setTyped = set.(*utils.ConcurrentSet[telemetrytypes.JSONDataType])
 		}
-		setTyped.Insert(mapTypeStringToJSONDataType(path.Type))
+		types.Iter(func(dataType telemetrytypes.JSONDataType) bool {
+			setTyped.Insert(dataType)
+			return true
+		})
 	}
 
-	b.lastSeen = paths[0].LastSeen
+	// Update lastSeen to the highest last_seen from the results
+	if highestLastSeen > 0 {
+		b.lastSeen = highestLastSeen
+	}
 	return nil
 }
 
