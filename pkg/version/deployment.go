@@ -119,6 +119,16 @@ func detectPlatform() string {
 	// Try to detect cloud provider through metadata endpoints
 	client := &http.Client{Timeout: 1 * gotime.Second}
 
+		// Vultr metadata
+	if req, err := http.NewRequest(http.MethodGet, "http://169.254.169.254/v1/hostname", nil); err == nil {
+		if resp, err := client.Do(req); err == nil {
+			resp.Body.Close()
+			if resp.StatusCode == 200 {
+				return "vultr"
+			}
+		}
+	}
+	
 	// AWS metadata
 	if req, err := http.NewRequest(http.MethodGet, "http://169.254.169.254/latest/meta-data/", nil); err == nil {
 		if resp, err := client.Do(req); err == nil {
@@ -157,16 +167,6 @@ func detectPlatform() string {
 			resp.Body.Close()
 			if resp.StatusCode == 200 {
 				return "digitalocean"
-			}
-		}
-	}
-
-	// Vultr metadata
-	if req, err := http.NewRequest(http.MethodGet, "http://169.254.169.254/v1/hostname", nil); err == nil {
-		if resp, err := client.Do(req); err == nil {
-			resp.Body.Close()
-			if resp.StatusCode == 200 {
-				return "vultr"
 			}
 		}
 	}
