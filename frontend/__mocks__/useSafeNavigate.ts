@@ -1,5 +1,9 @@
 // Mock for useSafeNavigate hook to avoid React Router version conflicts in tests
-export { isEventObject } from '../src/hooks/useSafeNavigate';
+const actualModule = jest.requireActual<
+	typeof import('../src/hooks/useSafeNavigate')
+>('../src/hooks/useSafeNavigate');
+export const { isEventObject } = actualModule;
+
 interface SafeNavigateOptions {
 	replace?: boolean;
 	state?: unknown;
