@@ -82,7 +82,7 @@ func NewDashboard(orgID valuer.UUID, createdBy string, storableDashboardData Sto
 	currentTime := time.Now()
 
 	return &Dashboard{
-		ID: "0199dc9b-e7df-7ad5-b447-ee0ab3c8621b",
+		ID: valuer.GenerateUUID().StringValue(),
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: currentTime,
 			UpdatedAt: currentTime,
