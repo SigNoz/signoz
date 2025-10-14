@@ -288,12 +288,12 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 				}),
 			);
 
-			// Verify that service.name is included (allowing for potential duplicates in current implementation)
+			// Verify that service.name is included
 			const calledWith = mockedConvertFiltersToExpression.mock.calls[0][0];
 			const serviceItems = calledWith.items.filter(
 				(item: TagFilterItem) => item.key?.key === 'service.name',
 			);
-			expect(serviceItems.length).toBeGreaterThan(0);
+			expect(serviceItems.length).toBe(1);
 
 			// Verify no priority items (k8s, cloud, host, container) are included
 			const priorityItems = calledWith.items.filter(
