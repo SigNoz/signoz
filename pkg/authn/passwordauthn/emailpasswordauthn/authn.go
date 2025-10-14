@@ -27,7 +27,7 @@ func (a *AuthN) Authenticate(ctx context.Context, email string, password string,
 	}
 
 	if !factorPassword.Equals(password) {
-		return nil, errors.New(errors.TypeInvalidInput, types.ErrCodeIncorrectPassword, "invalid password")
+		return nil, errors.New(errors.TypeUnauthenticated, types.ErrCodeIncorrectPassword, "invalid email orpassword")
 	}
 
 	return authtypes.NewIdentity(user.ID, orgID, user.Email, user.Role), nil
