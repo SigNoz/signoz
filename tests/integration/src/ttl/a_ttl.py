@@ -6,6 +6,7 @@ It verifies the correct behavior of TTL settings for traces, metrics, and logs, 
 
 import time
 from http import HTTPStatus
+from typing import Callable
 
 import pytest
 import requests
@@ -26,7 +27,9 @@ def ttl_test_suite_setup(create_user_admin):  # pylint: disable=unused-argument
     yield
 
 
-def test_set_ttl_traces_success(signoz: types.SigNoz, get_jwt_token):
+def test_set_ttl_traces_success(
+    signoz: types.SigNoz, get_token: Callable[[str, str], str]
+):
     """Test setting TTL for traces with new ttlConfig structure."""
     payload = {
         "type": "traces",
@@ -34,7 +37,7 @@ def test_set_ttl_traces_success(signoz: types.SigNoz, get_jwt_token):
     }
 
     headers = {
-        "Authorization": f"Bearer {get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -106,7 +109,9 @@ def test_set_ttl_traces_with_cold_storage(signoz: types.SigNoz, get_jwt_token):
     assert "successfully set up" in response_data["message"].lower()
 
 
-def test_set_ttl_metrics_success(signoz: types.SigNoz, get_jwt_token):
+def test_set_ttl_metrics_success(
+    signoz: types.SigNoz, get_token: Callable[[str, str], str]
+):
     """Test setting TTL for metrics using the new setTTLMetrics method."""
     payload = {
         "type": "metrics",
@@ -116,7 +121,7 @@ def test_set_ttl_metrics_success(signoz: types.SigNoz, get_jwt_token):
     }
 
     headers = {
-        "Authorization": f"Bearer {get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -163,7 +168,9 @@ def test_set_ttl_metrics_success(signoz: types.SigNoz, get_jwt_token):
     assert all("toIntervalSecond(7776000)" in ttl_part for ttl_part in ttl_parts)
 
 
-def test_set_ttl_metrics_with_cold_storage(signoz: types.SigNoz, get_jwt_token):
+def test_set_ttl_metrics_with_cold_storage(
+    signoz: types.SigNoz, get_token: Callable[[str, str], str]
+):
     """Test setting TTL for metrics with cold storage configuration."""
     payload = {
         "type": "metrics",
@@ -173,7 +180,7 @@ def test_set_ttl_metrics_with_cold_storage(signoz: types.SigNoz, get_jwt_token):
     }
 
     headers = {
-        "Authorization": f"Bearer {get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -189,7 +196,9 @@ def test_set_ttl_metrics_with_cold_storage(signoz: types.SigNoz, get_jwt_token):
     assert "successfully set up" in response_data["message"].lower()
 
 
-def test_set_ttl_invalid_type(signoz: types.SigNoz, get_jwt_token):
+def test_set_ttl_invalid_type(
+    signoz: types.SigNoz, get_token: Callable[[str, str], str]
+):
     """Test setting TTL with invalid type returns error."""
     payload = {
         "type": "invalid_type",
@@ -199,7 +208,7 @@ def test_set_ttl_invalid_type(signoz: types.SigNoz, get_jwt_token):
     }
 
     headers = {
-        "Authorization": f"Bearer {get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -212,7 +221,9 @@ def test_set_ttl_invalid_type(signoz: types.SigNoz, get_jwt_token):
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
-def test_set_custom_retention_ttl_basic(signoz: types.SigNoz, get_jwt_token):
+def test_set_custom_retention_ttl_basic(
+    signoz: types.SigNoz, get_token: Callable[[str, str], str]
+):
     """Test setting custom retention TTL with basic configuration."""
     payload = {
         "type": "logs",
@@ -223,7 +234,7 @@ def test_set_custom_retention_ttl_basic(signoz: types.SigNoz, get_jwt_token):
     }
 
     headers = {
-        "Authorization": f"Bearer {get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -283,7 +294,7 @@ def test_set_custom_retention_ttl_basic(signoz: types.SigNoz, get_jwt_token):
 
 
 def test_set_custom_retention_ttl_with_conditions(
-    signoz: types.SigNoz, get_jwt_token, insert_logs
+    signoz: types.SigNoz, get_token: Callable[[str, str], str], insert_logs
 ):
     """Test setting custom retention TTL with filter conditions."""
 
@@ -303,7 +314,7 @@ def test_set_custom_retention_ttl_with_conditions(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -334,7 +345,7 @@ def test_set_custom_retention_ttl_with_conditions(
 
 
 def test_set_custom_retention_ttl_with_cold_storage(
-    signoz: types.SigNoz, get_jwt_token, insert_logs
+    signoz: types.SigNoz, get_token: Callable[[str, str], str], insert_logs
 ):
     """Test setting custom retention TTL with cold storage configuration."""
     payload = {
@@ -357,7 +368,7 @@ def test_set_custom_retention_ttl_with_cold_storage(
     insert_logs(logs)
 
     headers = {
-        "Authorization": f"Bearer {get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -375,7 +386,7 @@ def test_set_custom_retention_ttl_with_cold_storage(
 
 
 def test_set_custom_retention_ttl_duplicate_conditions(
-    signoz: types.SigNoz, get_jwt_token
+    signoz: types.SigNoz, get_token: Callable[[str, str], str]
 ):
     """Test that duplicate TTL conditions are rejected."""
     payload = {
@@ -401,7 +412,7 @@ def test_set_custom_retention_ttl_duplicate_conditions(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -416,7 +427,7 @@ def test_set_custom_retention_ttl_duplicate_conditions(
 
 
 def test_set_custom_retention_ttl_invalid_condition(
-    signoz: types.SigNoz, get_jwt_token
+    signoz: types.SigNoz, get_token: Callable[[str, str], str]
 ):
     """Test that conditions with empty values are rejected."""
     payload = {
@@ -438,7 +449,7 @@ def test_set_custom_retention_ttl_invalid_condition(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -452,7 +463,9 @@ def test_set_custom_retention_ttl_invalid_condition(
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
-def test_get_custom_retention_ttl(signoz: types.SigNoz, get_jwt_token, insert_logs):
+def test_get_custom_retention_ttl(
+    signoz: types.SigNoz, get_token: Callable[[str, str], str], insert_logs
+):
     """Test getting custom retention TTL configuration."""
     # First set a custom retention TTL
     set_payload = {
@@ -475,7 +488,7 @@ def test_get_custom_retention_ttl(signoz: types.SigNoz, get_jwt_token, insert_lo
     insert_logs(logs)
 
     headers = {
-        "Authorization": f"Bearer {get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
     }
     set_response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/settings/ttl"),
@@ -490,7 +503,7 @@ def test_get_custom_retention_ttl(signoz: types.SigNoz, get_jwt_token, insert_lo
 
     # Now get the TTL configuration
     headers = {
-        "Authorization": f"Bearer {get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
     }
 
     get_response = requests.get(
@@ -513,7 +526,9 @@ def test_get_custom_retention_ttl(signoz: types.SigNoz, get_jwt_token, insert_lo
     ]
 
 
-def test_get_ttl_traces_success(signoz: types.SigNoz, get_jwt_token):
+def test_get_ttl_traces_success(
+    signoz: types.SigNoz, get_token: Callable[[str, str], str]
+):
     """Test getting TTL for traces."""
     # First set a TTL configuration for traces
     set_payload = {
@@ -522,7 +537,7 @@ def test_get_ttl_traces_success(signoz: types.SigNoz, get_jwt_token):
     }
 
     headers = {
-        "Authorization": f"Bearer {get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
     }
 
     set_response = requests.post(
@@ -561,7 +576,9 @@ def test_get_ttl_traces_success(signoz: types.SigNoz, get_jwt_token):
     )  # -1 indicates no cold storage configured
 
 
-def test_large_ttl_conditions_list(signoz: types.SigNoz, get_jwt_token, insert_logs):
+def test_large_ttl_conditions_list(
+    signoz: types.SigNoz, get_token: Callable[[str, str], str], insert_logs
+):
     """Test custom retention TTL with many conditions."""
     # Create a list of many TTL conditions to test performance and limits
     conditions = []
@@ -588,7 +605,7 @@ def test_large_ttl_conditions_list(signoz: types.SigNoz, get_jwt_token, insert_l
     }
 
     headers = {
-        "Authorization": f"Bearer {get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
