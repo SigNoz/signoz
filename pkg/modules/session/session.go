@@ -11,6 +11,9 @@ import (
 )
 
 type Module interface {
+	// This is soon be removed.
+	DeprecatedCreateSessionByEmailPassword(ctx context.Context, email valuer.Email, password string) (*authtypes.Token, error)
+
 	// Gets the session context for the user. The context contains information on what the user has to do in order to create a session.
 	GetSessionContext(ctx context.Context, email valuer.Email, siteURL *url.URL) (*authtypes.SessionContext, error)
 
@@ -33,6 +36,9 @@ type Module interface {
 type Handler interface {
 	// Get the session context for the user.
 	GetSessionContext(http.ResponseWriter, *http.Request)
+
+	// Create a session for a user using email and password.
+	DeprecatedCreateSessionByEmailPassword(http.ResponseWriter, *http.Request)
 
 	// Create a session for a user using email and password.
 	CreateSessionByEmailPassword(http.ResponseWriter, *http.Request)

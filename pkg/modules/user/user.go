@@ -66,7 +66,11 @@ type Getter interface {
 	// List users by email and org ids.
 	ListUsersByEmailAndOrgIDs(context.Context, valuer.Email, []valuer.UUID) ([]*types.User, error)
 
+	// Count users by org id.
 	CountByOrgID(context.Context, valuer.UUID) (int64, error)
+
+	// Get factor password by user id.
+	GetFactorPasswordByUserID(context.Context, valuer.UUID) (*types.FactorPassword, error)
 }
 
 type Handler interface {

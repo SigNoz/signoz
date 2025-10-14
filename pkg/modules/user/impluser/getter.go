@@ -69,3 +69,12 @@ func (module *getter) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int6
 
 	return count, nil
 }
+
+func (module *getter) GetFactorPasswordByUserID(ctx context.Context, userID valuer.UUID) (*types.FactorPassword, error) {
+	factorPassword, err := module.store.GetPasswordByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return factorPassword, nil
+}
