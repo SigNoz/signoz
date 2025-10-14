@@ -13,8 +13,6 @@ Before diving in, make sure you have these tools installed:
   - Download from [go.dev/dl](https://go.dev/dl/)
   - Check [go.mod](../../go.mod#L3) for the minimum version
 
-- **GCC** - Required for CGO dependencies
-  - Download from [gcc.gnu.org](https://gcc.gnu.org/)
 
 - **Node** - Powers our frontend
   - Download from [nodejs.org](https://nodejs.org)

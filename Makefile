@@ -114,9 +114,9 @@ $(GO_BUILD_ARCHS_COMMUNITY): go-build-community-%: $(TARGET_DIR)
 	@mkdir -p $(TARGET_DIR)/$(OS)-$*
 	@echo ">> building binary $(TARGET_DIR)/$(OS)-$*/$(NAME)-community"
 	@if [ $* = "arm64" ]; then \
-		CC=aarch64-linux-gnu-gcc CGO_ENABLED=1 GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_COMMUNITY) -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME)-community -ldflags "-linkmode external -extldflags '-static' -s -w $(GO_BUILD_LDFLAGS_COMMUNITY)"; \
+		GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_COMMUNITY) -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME)-community -ldflags "-s -w $(GO_BUILD_LDFLAGS_COMMUNITY)"; \
 	else \
-		CGO_ENABLED=1 GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_COMMUNITY) -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME)-community -ldflags "-linkmode external -extldflags '-static' -s -w $(GO_BUILD_LDFLAGS_COMMUNITY)"; \
+		GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_COMMUNITY) -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME)-community -ldflags "-s -w $(GO_BUILD_LDFLAGS_COMMUNITY)"; \
 	fi
 
 
@@ -127,9 +127,9 @@ $(GO_BUILD_ARCHS_ENTERPRISE): go-build-enterprise-%: $(TARGET_DIR)
 	@mkdir -p $(TARGET_DIR)/$(OS)-$*
 	@echo ">> building binary $(TARGET_DIR)/$(OS)-$*/$(NAME)"
 	@if [ $* = "arm64" ]; then \
-		CC=aarch64-linux-gnu-gcc CGO_ENABLED=1 GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_ENTERPRISE) -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME) -ldflags "-linkmode external -extldflags '-static' -s -w $(GO_BUILD_LDFLAGS_ENTERPRISE)"; \
+		GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_ENTERPRISE) -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME) -ldflags "-s -w $(GO_BUILD_LDFLAGS_ENTERPRISE)"; \
 	else \
-		CGO_ENABLED=1 GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_ENTERPRISE) -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME) -ldflags "-linkmode external -extldflags '-static' -s -w $(GO_BUILD_LDFLAGS_ENTERPRISE)"; \
+		GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_ENTERPRISE) -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME) -ldflags "-s -w $(GO_BUILD_LDFLAGS_ENTERPRISE)"; \
 	fi
 
 .PHONY: go-build-enterprise-race $(GO_BUILD_ARCHS_ENTERPRISE_RACE)
@@ -139,9 +139,9 @@ $(GO_BUILD_ARCHS_ENTERPRISE_RACE): go-build-enterprise-race-%: $(TARGET_DIR)
 	@mkdir -p $(TARGET_DIR)/$(OS)-$*
 	@echo ">> building binary $(TARGET_DIR)/$(OS)-$*/$(NAME)"
 	@if [ $* = "arm64" ]; then \
-		CC=aarch64-linux-gnu-gcc CGO_ENABLED=1 GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_ENTERPRISE) -race -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME) -ldflags "-linkmode external -extldflags '-static' -s -w $(GO_BUILD_LDFLAGS_ENTERPRISE)"; \
+		GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_ENTERPRISE) -race -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME) -ldflags "-s -w $(GO_BUILD_LDFLAGS_ENTERPRISE)"; \
 	else \
-		CGO_ENABLED=1 GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_ENTERPRISE) -race -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME) -ldflags "-linkmode external -extldflags '-static' -s -w $(GO_BUILD_LDFLAGS_ENTERPRISE)"; \
+		GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_ENTERPRISE) -race -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME) -ldflags "-s -w $(GO_BUILD_LDFLAGS_ENTERPRISE)"; \
 	fi
 
 ##############################################################
