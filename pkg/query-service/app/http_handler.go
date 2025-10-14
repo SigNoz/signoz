@@ -257,11 +257,12 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 	// if the first org with the first user is created then the setup is complete.
 	if len(orgs) == 1 {
-		users, err := opts.Signoz.Modules.UserGetter.ListByOrgID(context.Background(), orgs[0].ID)
+		count, err := opts.Signoz.Modules.UserGetter.CountByOrgID(context.Background(), orgs[0].ID)
 		if err != nil {
 			zap.L().Warn("unexpected error while fetch user count while initializing base api handler", zap.Error(err))
 		}
-		if len(users) > 0 {
+
+		if count > 0 {
 			aH.SetupCompleted = true
 		}
 	}

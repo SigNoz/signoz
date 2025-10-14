@@ -57,11 +57,16 @@ type Getter interface {
 	// Get users by email.
 	GetUsersByEmail(context.Context, valuer.Email) ([]*types.User, error)
 
+	// Get user by orgID and id.
+	GetByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*types.User, error)
+
 	// Get user by id.
-	GetUser(context.Context, valuer.UUID) (*types.User, error)
+	Get(context.Context, valuer.UUID) (*types.User, error)
 
 	// List users by email and org ids.
 	ListUsersByEmailAndOrgIDs(context.Context, valuer.Email, []valuer.UUID) ([]*types.User, error)
+
+	CountByOrgID(context.Context, valuer.UUID) (int64, error)
 }
 
 type Handler interface {

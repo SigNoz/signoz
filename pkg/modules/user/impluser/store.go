@@ -156,6 +156,24 @@ func (store *store) GetUser(ctx context.Context, id valuer.UUID) (*types.User, e
 	return user, nil
 }
 
+func (store *store) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.User, error) {
+	user := new(types.User)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(user).
+		Where("org_id = ?", orgID).
+		Where("id = ?", id).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with id %s does not exist", id)
+	}
+
+	return user, nil
+}
+
 func (store *store) GetUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error) {
 	user := new(types.User)
 	err := store.

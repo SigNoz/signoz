@@ -115,6 +115,9 @@ type UserStore interface {
 	// Get user by id.
 	GetUser(context.Context, valuer.UUID) (*User, error)
 
+	// Get user by orgID and id.
+	GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*User, error)
+
 	// Get user by email and orgID.
 	GetUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*User, error)
 

@@ -167,13 +167,13 @@ func (h *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
 
-	_, err := authtypes.ClaimsFromContext(ctx)
+	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	user, err := h.getter.GetUser(ctx, valuer.MustNewUUID(id))
+	user, err := h.getter.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -192,7 +192,7 @@ func (h *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.getter.GetUser(ctx, valuer.MustNewUUID(claims.UserID))
+	user, err := h.getter.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -273,14 +273,13 @@ func (handler *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Req
 
 	id := mux.Vars(r)["id"]
 
-	_, err := authtypes.ClaimsFromContext(ctx)
+	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	// check if the id lies in the same org as the claims
-	user, err := handler.getter.GetUser(ctx, valuer.MustNewUUID(id))
+	user, err := handler.getter.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -438,7 +437,7 @@ func (h *handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the user
-	createdByUser, err := h.getter.GetUser(ctx, existingAPIKey.UserID)
+	createdByUser, err := h.getter.Get(ctx, existingAPIKey.UserID)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -483,7 +482,7 @@ func (h *handler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the user
-	createdByUser, err := h.getter.GetUser(ctx, existingAPIKey.UserID)
+	createdByUser, err := h.getter.Get(ctx, existingAPIKey.UserID)
 	if err != nil {
 		render.Error(w, err)
 		return

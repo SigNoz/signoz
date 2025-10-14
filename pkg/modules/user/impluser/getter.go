@@ -34,7 +34,16 @@ func (module *getter) GetUsersByEmail(ctx context.Context, email valuer.Email) (
 	return users, nil
 }
 
-func (module *getter) GetUser(ctx context.Context, id valuer.UUID) (*types.User, error) {
+func (module *getter) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.User, error) {
+	user, err := module.store.GetByOrgIDAndID(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (module *getter) Get(ctx context.Context, id valuer.UUID) (*types.User, error) {
 	user, err := module.store.GetUser(ctx, id)
 	if err != nil {
 		return nil, err
@@ -50,4 +59,13 @@ func (module *getter) ListUsersByEmailAndOrgIDs(ctx context.Context, email value
 	}
 
 	return users, nil
+}
+
+func (module *getter) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
+	count, err := module.store.CountByOrgID(ctx, orgID)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
