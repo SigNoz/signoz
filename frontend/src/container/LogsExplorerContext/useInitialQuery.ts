@@ -11,8 +11,8 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { getFiltersFromResources } from './utils';
 
-const FALLBACK_STARTS_WITH_REGEX = /^(deployment)/;
-const FALLBACK_CONTAINS_REGEX = /(service|file|tenant)/;
+const FALLBACK_STARTS_WITH_REGEX = /^(k8s|cloud|host|deployment)/; // regex to filter out resources that start with the specified keywords
+const FALLBACK_CONTAINS_REGEX = /(env|service|file|container|tenant)/; // regex to filter out resources that contains the spefied keywords
 // Priority configuration
 const PRIORITY_CATEGORIES = [
 	['k8s.pod.uid', 'k8s.pod.name', 'k8s.deployment.name'],
@@ -71,7 +71,8 @@ const useInitialQuery = (log: ILog): Query => {
 			const { key } = item.key;
 
 			return (
-				FALLBACK_STARTS_WITH_REGEX.test(key) || FALLBACK_CONTAINS_REGEX.test(key)
+				!SERVICE_AND_ENVIRONMENT_KEYS.includes(key) &&
+				(FALLBACK_STARTS_WITH_REGEX.test(key) || FALLBACK_CONTAINS_REGEX.test(key))
 			);
 		});
 	};
