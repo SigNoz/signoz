@@ -198,7 +198,7 @@ func (r *provider) Match(ctx context.Context, orgID string, ruleID string, set m
 	}
 
 	for _, route := range expressionRoutes {
-		evaluateExpr, err := r.evaluateExpr(route.Expression, set)
+		evaluateExpr, err := r.evaluateExpr(ctx, route.Expression, set)
 		if err != nil {
 			continue
 		}
@@ -210,31 +210,70 @@ func (r *provider) Match(ctx context.Context, orgID string, ruleID string, set m
 	return matchedChannels, nil
 }
 
-func (r *provider) evaluateExpr(expression string, labelSet model.LabelSet) (bool, error) {
+// convertLabelSetToEnv converts a flat label set with dotted keys into a nested map structure for expr env.
+// when both a leaf and a deeper nested path exist (e.g. "foo" and "foo.bar"),
+// the nested structure takes precedence. That means we will replace an existing leaf at any
+// intermediate path with a map so we can materialize the deeper structure.
+// TODO(srikanthccv): we need a better solution to handle this, remove the following
+// when we update the expr to support dotted keys
+func (r *provider) convertLabelSetToEnv(ctx context.Context, labelSet model.LabelSet) map[string]interface{} {
 	env := make(map[string]interface{})
 
-	for k, v := range labelSet {
-		key := string(k)
-		value := string(v)
+	logForReview := false
+
+	for lk, lv := range labelSet {
+		key := strings.TrimSpace(string(lk))
+		value := string(lv)
 
 		if strings.Contains(key, ".") {
 			parts := strings.Split(key, ".")
 			current := env
 
-			for i, part := range parts {
-				if i == len(parts)-1 {
-					current[part] = value
-				} else {
-					if current[part] == nil {
-						current[part] = make(map[string]interface{})
+			for i, raw := range parts {
+				part := strings.TrimSpace(raw)
+
+				last := i == len(parts)-1
+				if last {
+					if _, isMap := current[part].(map[string]interface{}); isMap {
+						logForReview = true
+						// deeper structure already exists; do not overwrite.
+						break
 					}
-					current = current[part].(map[string]interface{})
+					current[part] = value
+					break
 				}
+
+				// ensure a map so we can keep descending.
+				if nextMap, ok := current[part].(map[string]interface{}); ok {
+					current = nextMap
+					continue
+				}
+
+				// if absent or a leaf, replace it with a map.
+				newMap := make(map[string]interface{})
+				current[part] = newMap
+				current = newMap
 			}
-		} else {
-			env[key] = value
+			continue
 		}
+
+		// if a map already sits here (due to nested keys), keep the map (nested wins).
+		if _, isMap := env[key].(map[string]interface{}); isMap {
+			logForReview = true
+			continue
+		}
+		env[key] = value
 	}
+
+	if logForReview {
+		r.settings.Logger().InfoContext(ctx, "found label set with conflicting prefix dotted keys", "labels", labelSet)
+	}
+
+	return env
+}
+
+func (r *provider) evaluateExpr(ctx context.Context, expression string, labelSet model.LabelSet) (bool, error) {
+	env := r.convertLabelSetToEnv(ctx, labelSet)
 
 	program, err := expr.Compile(expression, expr.Env(env))
 	if err != nil {
