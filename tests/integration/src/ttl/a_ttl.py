@@ -83,7 +83,7 @@ def test_set_ttl_traces_success(
     assert all("toIntervalSecond(12960000)" in ttl_part for ttl_part in ttl_parts)
 
 
-def test_set_ttl_traces_with_cold_storage(signoz: types.SigNoz, get_jwt_token):
+def test_set_ttl_traces_with_cold_storage(signoz: types.SigNoz, get_token: Callable[[str, str], str]):
     """Test setting TTL for traces with cold storage configuration."""
     payload = {
         "type": "traces",
@@ -93,7 +93,7 @@ def test_set_ttl_traces_with_cold_storage(signoz: types.SigNoz, get_jwt_token):
     }
 
     headers = {
-        "Authorization": f"Bearer {get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
