@@ -18,11 +18,11 @@ import (
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/rawbytes"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/maps"
+	_ "modernc.org/sqlite"
 )
 
 func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
