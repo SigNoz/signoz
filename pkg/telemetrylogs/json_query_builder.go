@@ -16,6 +16,15 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
+var (
+	CodeCurrentNodeNil           = errors.MustNewCode("current_node_nil")
+	CodeNextNodeNil              = errors.MustNewCode("next_node_nil")
+	CodeNestedExpressionsEmpty   = errors.MustNewCode("nested_expressions_empty")
+	CodeGroupByPlanEmpty         = errors.MustNewCode("group_by_plan_empty")
+	CodeArrayMapExpressionsEmpty = errors.MustNewCode("array_map_expressions_empty")
+	CodePromotedPlanMissing      = errors.MustNewCode("promoted_plan_missing")
+)
+
 // Operator intent helpers
 func isMembershipContains(op qbtypes.FilterOperator) bool {
 	return op == qbtypes.FilterOperatorContains || op == qbtypes.FilterOperatorNotContains
@@ -228,121 +237,7 @@ func (b *JSONQueryBuilder) syncPromoted(ctx context.Context) error {
 	return nil
 }
 
-// presence summarizes what cache says exists at a terminal path
-type presence struct {
-	scalarString bool
-	scalarInt    bool
-	scalarFloat  bool
-	scalarBool   bool
-
-	arrayString bool
-	arrayInt    bool
-	arrayFloat  bool
-	arrayBool   bool
-}
-
-func collectPresence(cached []telemetrytypes.JSONDataType) presence {
-	p := presence{}
-	for _, t := range cached {
-		switch t {
-		case telemetrytypes.String:
-			p.scalarString = true
-		case telemetrytypes.Int64:
-			p.scalarInt = true
-		case telemetrytypes.Float64:
-			p.scalarFloat = true
-		case telemetrytypes.Bool:
-			p.scalarBool = true
-		case telemetrytypes.ArrayString:
-			p.arrayString = true
-		case telemetrytypes.ArrayInt64:
-			p.arrayInt = true
-		case telemetrytypes.ArrayFloat64:
-			p.arrayFloat = true
-		case telemetrytypes.ArrayBool:
-			p.arrayBool = true
-		}
-	}
-	return p
-}
-
-// decideContains applies explicit priority rules for LIKE/Contains family
-func decideContains(p presence, dataType telemetrytypes.JSONDataType) (preferArray bool, elem telemetrytypes.JSONDataType) {
-	switch dataType {
-	case telemetrytypes.String:
-		if p.arrayString {
-			return true, telemetrytypes.String
-		}
-		if p.scalarString {
-			return false, telemetrytypes.String
-		}
-	case telemetrytypes.Int64:
-		if p.arrayInt {
-			return true, telemetrytypes.Int64
-		}
-		if p.scalarInt {
-			return false, telemetrytypes.Int64
-		}
-	case telemetrytypes.Float64:
-		if p.arrayFloat {
-			return true, telemetrytypes.Float64
-		}
-		if p.scalarFloat {
-			return false, telemetrytypes.Float64
-		}
-	case telemetrytypes.Bool:
-		if p.arrayBool {
-			return true, telemetrytypes.Bool
-		}
-		if p.scalarBool {
-			return false, telemetrytypes.Bool
-		}
-	}
-	// Fallbacks when explicit type presence is inconclusive
-	// Prefer array-any if any array type for this path exists
-	if p.arrayInt || p.arrayFloat || p.arrayBool || p.arrayString {
-		return true, dataType
-	}
-	// Otherwise default to scalar of inferred type (safe fallback)
-	return false, dataType
-}
-
-// decideOther applies priority rules for non-LIKE-family operators
-func decideOther(p presence, dataType telemetrytypes.JSONDataType) (preferArray bool, elem telemetrytypes.JSONDataType) {
-	switch dataType {
-	case telemetrytypes.String:
-		if p.scalarString {
-			return false, telemetrytypes.String
-		}
-		if p.arrayString {
-			return true, telemetrytypes.String
-		}
-	case telemetrytypes.Int64:
-		if p.scalarInt {
-			return false, telemetrytypes.Int64
-		}
-		if p.arrayInt {
-			return true, telemetrytypes.Int64
-		}
-	case telemetrytypes.Float64:
-		if p.scalarFloat {
-			return false, telemetrytypes.Float64
-		}
-		if p.arrayFloat {
-			return true, telemetrytypes.Float64
-		}
-	case telemetrytypes.Bool:
-		if p.scalarBool {
-			return false, telemetrytypes.Bool
-		}
-		if p.arrayBool {
-			return true, telemetrytypes.Bool
-		}
-	}
-	// Default to scalar unknown → string, which is safe
-	return false, telemetrytypes.String
-}
-func (b *JSONQueryBuilder) chooseTerminalType(availableTypes []telemetrytypes.JSONDataType, operator qbtypes.FilterOperator, value any) telemetrytypes.JSONDataType {
+func (b *JSONQueryBuilder) determineValueType(availableTypes []telemetrytypes.JSONDataType, operator qbtypes.FilterOperator, value any) telemetrytypes.JSONDataType {
 	// For GroupBy operations (EXISTS operator with nil value), use the first available type
 	if operator == qbtypes.FilterOperatorExists && value == nil {
 		if len(availableTypes) > 0 {
@@ -376,17 +271,56 @@ func wrapLikeValueIfNeeded(operator qbtypes.FilterOperator, value any) any {
 
 // chooseArrayPreference decides whether to search scalar or array at the terminal
 // and returns the preferred element type for the terminal comparison.
-func (b *JSONQueryBuilder) chooseArrayPreference(node *Node, operator qbtypes.FilterOperator, value any) (preferArray bool, elem telemetrytypes.JSONDataType) {
-	cached := node.AvailableTypes
-	if cached == nil {
-		return false, telemetrytypes.String
+func (b *JSONQueryBuilder) decideElemType(node *Node, operator qbtypes.FilterOperator, valueType telemetrytypes.JSONDataType) (preferArray bool, elem telemetrytypes.JSONDataType) {
+	available := node.AvailableTypes
+	// Rule: if no available types, decision cannot be made → ElemType = ValueType, no array preference
+	if len(available) == 0 {
+		return false, valueType
 	}
-	p := collectPresence(cached)
-	dataType, _ := b.inferDataType(value, operator)
-	if isMembershipContains(operator) || isMembershipLike(operator) {
-		return decideContains(p, dataType)
+
+	// Check availability for scalars and scalar arrays matching valueType
+	hasScalar := false
+	hasArray := false
+	switch valueType {
+	case telemetrytypes.String:
+		hasScalar = slices.Contains(available, telemetrytypes.String)
+		hasArray = slices.Contains(available, telemetrytypes.ArrayString)
+	case telemetrytypes.Int64:
+		hasScalar = slices.Contains(available, telemetrytypes.Int64)
+		hasArray = slices.Contains(available, telemetrytypes.ArrayInt64)
+	case telemetrytypes.Float64:
+		hasScalar = slices.Contains(available, telemetrytypes.Float64)
+		hasArray = slices.Contains(available, telemetrytypes.ArrayFloat64)
+	case telemetrytypes.Bool:
+		hasScalar = slices.Contains(available, telemetrytypes.Bool)
+		hasArray = slices.Contains(available, telemetrytypes.ArrayBool)
+	default:
+		// For Dynamic or anything else, treat as undecidable against scalar set
+		return false, valueType
 	}
-	return decideOther(p, dataType)
+
+	// Rule: With Contains/NotContains, PreferArrayAtEnd can only be true if matching typed array exists
+	if isMembershipContains(operator) {
+		if hasArray {
+			return true, telemetrytypes.ScalerTypeToArrayType[valueType]
+		}
+		// No matching typed array → must not prefer array; fall back to scalar if present
+		if hasScalar {
+			return false, valueType
+		}
+		// Neither present → undecidable → ElemType = ValueType
+		return false, valueType
+	}
+
+	// Rule: Universal logic for all operators
+	// Prefer scalar when available; if only array exists, choose array; else fallback to ValueType
+	if hasScalar {
+		return false, valueType
+	}
+	if hasArray {
+		return true, valueType
+	}
+	return false, valueType
 }
 
 // BuildCondition builds the full WHERE condition for body_v2 JSON paths
@@ -418,7 +352,6 @@ type Node struct {
 
 	// Precomputed type information (single source of truth)
 	AvailableTypes []telemetrytypes.JSONDataType
-	PreferredType  telemetrytypes.JSONDataType
 
 	// Array type branches (Array(JSON) vs Array(Dynamic))
 	Branches map[BranchType]*Node
@@ -550,15 +483,24 @@ func (b *JSONQueryBuilder) buildPlan(parts []string, index int, operator qbtypes
 	return node
 }
 
+// Rule 1: valueType is determined based on the Value
+// Rule 1.1: if Value is nil (incase of EXISTS/NOT EXISTS + GroupBy) then on Operator and AvailableTypes
+// Rule 2: decision cannot be made if no type available; set ElemType = ValueType
+// Rule 3: elemType is determined based on the Operator, ValueType and the AvailableTypes all three in consideration
+// Rule 4: PreferArrayAtEnd can never be true if Scaler Arrays with matching type with ValueType aren't available with Contains operator
 // configureTerminal sets up terminal node configuration
 func (b *JSONQueryBuilder) configureTerminal(node *Node, operator qbtypes.FilterOperator, value any) {
-	preferArray, elemType := b.chooseArrayPreference(node, operator, value)
+	// ValueType: inference for normal operators; for EXISTS/group-by pick from availability (rule 5)
+	valueType := b.determineValueType(node.AvailableTypes, operator, value)
 
-	node.PreferredType = b.chooseTerminalType(node.AvailableTypes, operator, value)
+	// ElemType: decision based only on scalar and scalar arrays + operator + ValueType (rules 1,3,4,6)
+	preferArray, elemType := b.decideElemType(node, operator, valueType)
+
+	// Rule: if decision couldn't be made, ElemType equals ValueType handled inside chooser
 	node.TerminalConfig = &TerminalConfig{
 		PreferArrayAtEnd: preferArray,
 		ElemType:         elemType,
-		ValueType:        node.PreferredType,
+		ValueType:        valueType,
 		Operator:         operator,
 		Value:            value,
 	}
@@ -617,7 +559,7 @@ func (b *JSONQueryBuilder) EmitPlannedCondition(plan *Node, fullPath string, ope
 // emitPlannedCondition handles paths with array traversal
 func (b *JSONQueryBuilder) emitPlannedCondition(plan *Node, operator qbtypes.FilterOperator, value, effVal any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	// Build traversal + terminal recursively per-hop
-	compiled, err := b.recurseArrayHopsState(plan, operator, value, effVal, sb)
+	compiled, err := b.recurseArrayHops(plan, operator, value, effVal, sb)
 	if err != nil {
 		return "", err
 	}
@@ -692,8 +634,8 @@ func (b *JSONQueryBuilder) buildArrayMembershipCondition(plan *Node, operator qb
 	return b.buildArrayMembership(arrayExpr, operator, value, plan.TerminalConfig.ElemType, sb), nil
 }
 
-// recurseArrayHopsState recursively builds array traversal conditions
-func (b *JSONQueryBuilder) recurseArrayHopsState(current *Node, operator qbtypes.FilterOperator, value, effVal any, sb *sqlbuilder.SelectBuilder) (string, error) {
+// recurseArrayHops recursively builds array traversal conditions
+func (b *JSONQueryBuilder) recurseArrayHops(current *Node, operator qbtypes.FilterOperator, value, effVal any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	if current == nil {
 		return "", fmt.Errorf("navigation failed, current node is nil")
 	}
@@ -716,7 +658,7 @@ func (b *JSONQueryBuilder) recurseArrayHopsState(current *Node, operator qbtypes
 	branches := make([]string, 0, 2)
 	if hasArrayJSON {
 		jsonArrayExpr := fmt.Sprintf("dynamicElement(%s, 'Array(JSON(max_dynamic_types=%d, max_dynamic_paths=%d))')", fieldPath, current.MaxDynamicTypes, current.MaxDynamicPaths)
-		childGroupJSON, err := b.recurseArrayHopsState(current.Branches[BranchJSON], operator, value, effVal, sb)
+		childGroupJSON, err := b.recurseArrayHops(current.Branches[BranchJSON], operator, value, effVal, sb)
 		if err != nil {
 			return "", err
 		}
@@ -727,7 +669,7 @@ func (b *JSONQueryBuilder) recurseArrayHopsState(current *Node, operator qbtypes
 		dynFilteredExpr := fmt.Sprintf("arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), %s))", dynBaseExpr)
 
 		// Create the Query for Dynamic array
-		childGroupDyn, err := b.recurseArrayHopsState(current.Branches[BranchDynamic], operator, value, effVal, sb)
+		childGroupDyn, err := b.recurseArrayHops(current.Branches[BranchDynamic], operator, value, effVal, sb)
 		if err != nil {
 			return "", err
 		}
@@ -833,104 +775,157 @@ type GroupByArrayJoinInfo struct {
 	TerminalExpr     string   // Terminal field expression for SELECT/GROUP BY
 }
 
-// BuildGroupByArrayJoins builds array join information for GroupBy operations
-func (b *JSONQueryBuilder) BuildGroupByArrayJoins(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*GroupByArrayJoinInfo, error) {
+// BuildGroupBy builds GroupBy information for body JSON fields using arrayConcat pattern
+func (b *JSONQueryBuilder) BuildGroupBy(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*GroupByArrayJoinInfo, error) {
 	path := strings.TrimPrefix(key.Name, BodyJSONStringSearchPrefix)
+
 	plan := b.PlanJSONPath(path, qbtypes.FilterOperatorExists, nil)
-
-	// Build array join clauses by traversing the tree
-	arrayJoinClauses := b.buildArrayJoinClausesFromTree(plan[0])
-
-	// Build terminal field expression using the terminal node
-	terminalNode := b.findTerminalNodeInTree(plan[0])
-	if terminalNode == nil {
-		return nil, errors.Newf(errors.TypeNotFound, errors.CodeNotFound,
-			"Could not find terminal node for path: %s", path)
+	if len(plan) == 0 {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
+			"Could not find any valid paths for: %s", path)
 	}
 
-	// Use the correct terminal type from the plan
-	terminalExpr := b.buildTerminalExpressionFromNode(terminalNode)
+	if plan[0].IsTerminal {
+		node := plan[0]
+
+		expr := fmt.Sprintf("dynamicElement(%s, '%s')", node.FieldPath(), node.TerminalConfig.ElemType.StringValue())
+		if b.IsPromoted(path) {
+			if len(plan) < 2 {
+				return nil, errors.Newf(errors.TypeUnexpected, CodePromotedPlanMissing,
+					"plan length is less than 2 for promoted path: %s", path)
+			}
+
+			// promoted column first then body_v2 column
+			expr = fmt.Sprintf("coalesce(%s, %s)",
+				fmt.Sprintf("dynamicElement(%s, '%s')", plan[1].FieldPath(), plan[1].TerminalConfig.ElemType.StringValue()),
+				expr,
+			)
+		}
+
+		return &GroupByArrayJoinInfo{
+			ArrayJoinClauses: []string{},
+			TerminalExpr:     expr,
+		}, nil
+	}
+
+	// Build arrayConcat pattern directly from the tree structure
+	arrayConcatExpr, err := b.buildArrayConcat(plan)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create single ARRAY JOIN clause with arrayFlatten
+	arrayJoinClause := fmt.Sprintf("ARRAY JOIN %s AS `%s`", arrayConcatExpr, key.Name)
 
 	return &GroupByArrayJoinInfo{
-		ArrayJoinClauses: arrayJoinClauses,
-		TerminalExpr:     terminalExpr,
+		ArrayJoinClauses: []string{arrayJoinClause},
+		TerminalExpr:     fmt.Sprintf("`%s`", key.Name),
 	}, nil
 }
 
-// buildArrayJoinClausesFromTree builds array join clauses by traversing the tree
-func (b *JSONQueryBuilder) buildArrayJoinClausesFromTree(node *Node) []string {
-	var clauses []string
-	current := node
+// buildArrayConcat builds the arrayConcat pattern directly from the tree structure
+func (b *JSONQueryBuilder) buildArrayConcat(plan []*Node) (string, error) {
+	if len(plan) == 0 {
+		return "", errors.Newf(errors.TypeInternal, CodeGroupByPlanEmpty, "group by plan is empty while building arrayConcat")
+	}
 
-	for current != nil && !current.IsTerminal {
-		fieldPath := current.FieldPath()
+	// Build arrayMap expressions for ALL available branches at the root level
+	var arrayMapExpressions []string
+	for _, node := range plan {
+		hasJSON := node.Branches[BranchJSON] != nil
+		hasDynamic := node.Branches[BranchDynamic] != nil
 
-		// Check if this node has array types
-		hasArrayJSON := current.Branches[BranchJSON] != nil
-		hasArrayDynamic := current.Branches[BranchDynamic] != nil
-
-		if hasArrayJSON || hasArrayDynamic {
-			// Build array expression using the node's max_dynamic values
-			var arrayExpr string
-			if hasArrayJSON && hasArrayDynamic {
-				// Both types available - use Array(JSON) for GroupBy (simpler)
-				// Use the node's MaxDynamicTypes and MaxDynamicPaths values
-				arrayExpr = fmt.Sprintf("dynamicElement(%s, 'Array(JSON(max_dynamic_types=%d, max_dynamic_paths=%d))')",
-					fieldPath, current.MaxDynamicTypes, current.MaxDynamicPaths)
-			} else if hasArrayJSON {
-				// Only Array(JSON) available - use the node's max_dynamic values
-				arrayExpr = fmt.Sprintf("dynamicElement(%s, 'Array(JSON(max_dynamic_types=%d, max_dynamic_paths=%d))')",
-					fieldPath, current.MaxDynamicTypes, current.MaxDynamicPaths)
-			} else {
-				// Only Array(Dynamic) available - filter for JSON objects
-				dynBaseExpr := fmt.Sprintf("dynamicElement(%s, 'Array(Dynamic)')", fieldPath)
-				arrayExpr = fmt.Sprintf("arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), %s))", dynBaseExpr)
+		if hasJSON {
+			jsonExpr, err := b.buildArrayMap(node, BranchJSON)
+			if err != nil {
+				return "", err
 			}
-
-			clause := fmt.Sprintf("ARRAY JOIN %s AS %s", arrayExpr, current.Alias())
-			clauses = append(clauses, clause)
+			arrayMapExpressions = append(arrayMapExpressions, jsonExpr)
 		}
 
-		// Move to next level - prefer JSON branch for GroupBy
-		if next, exists := current.Branches[BranchJSON]; exists {
-			current = next
-		} else if next, exists := current.Branches[BranchDynamic]; exists {
-			current = next
-		} else {
-			break
+		if hasDynamic {
+			dynamicExpr, err := b.buildArrayMap(node, BranchDynamic)
+			if err != nil {
+				return "", err
+			}
+			arrayMapExpressions = append(arrayMapExpressions, dynamicExpr)
 		}
 	}
+	if len(arrayMapExpressions) == 0 {
+		return "", errors.Newf(errors.TypeInternal, CodeArrayMapExpressionsEmpty, "array map expressions are empty while building arrayConcat")
+	}
 
-	return clauses
+	// Build the arrayConcat expression
+	arrayConcatExpr := fmt.Sprintf("arrayConcat(%s)", strings.Join(arrayMapExpressions, ", "))
+
+	// Wrap with arrayFlatten
+	arrayFlattenExpr := fmt.Sprintf("arrayFlatten(%s)", arrayConcatExpr)
+
+	return arrayFlattenExpr, nil
 }
 
-// findTerminalNodeInTree finds the terminal node in the tree
-func (b *JSONQueryBuilder) findTerminalNodeInTree(plan *Node) *Node {
-	current := plan
-	for current != nil && !current.IsTerminal {
-		// Prefer JSON branch for GroupBy, fallback to Dynamic
-		if next, exists := current.Branches[BranchJSON]; exists {
-			current = next
-		} else if next, exists := current.Branches[BranchDynamic]; exists {
-			current = next
-		} else {
-			break
+// buildArrayMap builds the arrayMap expression for a specific branch, handling all sub-branches
+func (b *JSONQueryBuilder) buildArrayMap(currentNode *Node, branchType BranchType) (string, error) {
+	if currentNode == nil {
+		return "", errors.Newf(errors.TypeInternal, CodeCurrentNodeNil, "current node is nil while building arrayMap")
+	}
+
+	nextNode := currentNode.Branches[branchType]
+	if nextNode == nil {
+		return "", errors.Newf(errors.TypeInternal, CodeNextNodeNil, "next node is nil while building arrayMap")
+	}
+
+	// Build the array expression for this level
+	var arrayExpr string
+	if branchType == BranchJSON {
+		// Array(JSON) branch
+		arrayExpr = fmt.Sprintf("dynamicElement(%s, 'Array(JSON(max_dynamic_types=%d, max_dynamic_paths=%d))')",
+			currentNode.FieldPath(), currentNode.MaxDynamicTypes, currentNode.MaxDynamicPaths)
+	} else {
+		// Array(Dynamic) branch - filter for JSON objects
+		dynBaseExpr := fmt.Sprintf("dynamicElement(%s, 'Array(Dynamic)')", currentNode.FieldPath())
+		arrayExpr = fmt.Sprintf("arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), %s))", dynBaseExpr)
+	}
+
+	// If this is the terminal level, return the simple arrayMap
+	if nextNode.IsTerminal {
+		dynamicElementExpr := fmt.Sprintf("dynamicElement(%s, '%s')", nextNode.FieldPath(),
+			nextNode.TerminalConfig.ElemType.StringValue(),
+		)
+		return fmt.Sprintf("arrayMap(%s->%s, %s)", currentNode.Alias(), dynamicElementExpr, arrayExpr), nil
+	}
+
+	// For non-terminal nodes, we need to handle ALL possible branches at the next level
+	var nestedExpressions []string
+	hasJSON := nextNode.Branches[BranchJSON] != nil
+	hasDynamic := nextNode.Branches[BranchDynamic] != nil
+
+	if hasJSON {
+		jsonNested, err := b.buildArrayMap(nextNode, BranchJSON)
+		if err != nil {
+			return "", err
 		}
-	}
-	return current
-}
-
-// buildTerminalExpressionFromNode builds a terminal expression using the node's type information
-func (b *JSONQueryBuilder) buildTerminalExpressionFromNode(node *Node) string {
-	if node == nil {
-		return ""
+		nestedExpressions = append(nestedExpressions, jsonNested)
 	}
 
-	// For GroupBy, we need to use the parent's alias and build the field path correctly
-	// The working pattern shows: dynamicElement(_x_education.awards.name, 'String')
-	// where _x_education is the parent alias and awards.name is the field path
-	fieldPath := node.FieldPath()
+	if hasDynamic {
+		dynamicNested, err := b.buildArrayMap(nextNode, BranchDynamic)
+		if err != nil {
+			return "", err
+		}
+		nestedExpressions = append(nestedExpressions, dynamicNested)
+	}
 
-	// Use the PreferredType from the node, which is properly calculated by the plan system
-	return fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, node.PreferredType.StringValue())
+	// If we have multiple nested expressions, we need to concat them
+	var nestedExpr string
+	if len(nestedExpressions) == 1 {
+		nestedExpr = nestedExpressions[0]
+	} else if len(nestedExpressions) > 1 {
+		// This shouldn't happen in our current tree structure, but handle it just in case
+		nestedExpr = fmt.Sprintf("arrayConcat(%s)", strings.Join(nestedExpressions, ", "))
+	} else {
+		return "", errors.Newf(errors.TypeInternal, CodeNestedExpressionsEmpty, "nested expressions are empty while building arrayMap")
+	}
+
+	return fmt.Sprintf("arrayMap(%s->%s, %s)", currentNode.Alias(), nestedExpr, arrayExpr), nil
 }

@@ -350,7 +350,6 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 
 	// Collect array join info for body JSON fields
 	var arrayJoinClauses []string
-	bodyJSONGroupByFields := make(map[string]string) // field name -> terminal expression
 
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
@@ -362,20 +361,14 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		// For body JSON fields with feature flag enabled, use array join logic
 		if strings.HasPrefix(gb.TelemetryFieldKey.Name, BodyJSONStringSearchPrefix) && IsBodyJSONQueryEnabled(ctx) {
 			// Build array join info for this field
-			joinInfo, err := b.jsonQueryBuilder.BuildGroupByArrayJoins(ctx, &gb.TelemetryFieldKey)
+			groupbyInfo, err := b.jsonQueryBuilder.BuildGroupBy(ctx, &gb.TelemetryFieldKey)
 			if err != nil {
 				return nil, err
 			}
 
 			// Collect array join clauses
-			arrayJoinClauses = append(arrayJoinClauses, joinInfo.ArrayJoinClauses...)
-
-			// Store the terminal expression for later use
-			bodyJSONGroupByFields[gb.TelemetryFieldKey.Name] = joinInfo.TerminalExpr
-
-			// Use the terminal expression as the field expression
-			expr = joinInfo.TerminalExpr
-			args = []any{}
+			arrayJoinClauses = append(arrayJoinClauses, groupbyInfo.ArrayJoinClauses...)
+			expr = groupbyInfo.TerminalExpr
 		} else {
 			// Use the standard collision handling for other fields
 			expr, args, err = querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonBodyPrefix, b.jsonKeyToKey)
@@ -531,7 +524,6 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 
 	// Collect array join info for body JSON fields
 	var arrayJoinClauses []string
-	bodyJSONGroupByFields := make(map[string]string) // field name -> terminal expression
 
 	for _, gb := range query.GroupBy {
 		var expr string
@@ -541,20 +533,14 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		// For body JSON fields with feature flag enabled, use array join logic
 		if strings.HasPrefix(gb.TelemetryFieldKey.Name, BodyJSONStringSearchPrefix) && IsBodyJSONQueryEnabled(ctx) {
 			// Build array join info for this field
-			joinInfo, err := b.jsonQueryBuilder.BuildGroupByArrayJoins(ctx, &gb.TelemetryFieldKey)
+			groupbyInfo, err := b.jsonQueryBuilder.BuildGroupBy(ctx, &gb.TelemetryFieldKey)
 			if err != nil {
 				return nil, err
 			}
 
 			// Collect array join clauses
-			arrayJoinClauses = append(arrayJoinClauses, joinInfo.ArrayJoinClauses...)
-
-			// Store the terminal expression for later use
-			bodyJSONGroupByFields[gb.TelemetryFieldKey.Name] = joinInfo.TerminalExpr
-
-			// Use the terminal expression as the field expression
-			expr = joinInfo.TerminalExpr
-			args = []any{}
+			arrayJoinClauses = append(arrayJoinClauses, groupbyInfo.ArrayJoinClauses...)
+			expr = groupbyInfo.TerminalExpr
 		} else {
 			// Use the standard collision handling for other fields
 			expr, args, err = querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonBodyPrefix, b.jsonKeyToKey)
