@@ -106,11 +106,6 @@ export const metricQueryFunctionOptions: SelectOption<string, string>[] = [
 		label: 'Time Shift',
 		type: functionTypes.timeShift,
 	},
-	{
-		value: QueryFunctionsTypes.TIME_SHIFT,
-		label: 'Time Shift',
-		type: functionTypes.timeShift,
-	},
 ];
 
 export const logsQueryFunctionOptions: SelectOption<string, string>[] = [

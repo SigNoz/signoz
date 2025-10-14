@@ -4,6 +4,7 @@ import {
 	ArrowRightOutlined,
 	ArrowUpOutlined,
 	EnterOutlined,
+	SearchOutlined,
 } from '@ant-design/icons';
 import { Button, Input } from 'antd';
 import { QueryFunction } from 'api/v5/v5';
@@ -14,7 +15,14 @@ import {
 	logsQueryFunctionOptions,
 	metricQueryFunctionOptions,
 } from 'constants/queryFunctionOptions';
-import { forwardRef, useEffect, useRef, useState } from 'react';
+import {
+	forwardRef,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
@@ -31,34 +39,53 @@ type FunctionsSearchModalProps = {
 type FunctionsCategoriesProps = {
 	categories: string[];
 	activeIndex: number | null;
-	onCategorySelect: (category: string) => void;
+	onCategorySelect: ({
+		category,
+		index,
+	}: {
+		category: string;
+		index: number;
+	}) => void;
 };
 
 const FunctionsCategories = forwardRef<
 	HTMLUListElement,
 	FunctionsCategoriesProps
 >(
-	({ categories, activeIndex, onCategorySelect }, ref): JSX.Element => (
-		<ul ref={ref} role="menu" className="functions-categories">
-			{categories.map((category, index) => (
-				<li
-					key={category}
-					className={classNames('functions-category-button', {
-						active: activeIndex === index,
-					})}
-				>
-					<button
-						tabIndex={-1}
-						role="menuitem"
-						type="button"
-						onClick={(): void => onCategorySelect(category)}
+	({ categories, activeIndex, onCategorySelect }, ref): JSX.Element => {
+		const onSelectCategory = (
+			e: React.MouseEvent<HTMLButtonElement>,
+			category: string,
+			index: number,
+		): void => {
+			e.stopPropagation();
+			onCategorySelect({ category, index });
+		};
+		return (
+			<ul ref={ref} role="menu">
+				{categories.map((category, index) => (
+					<li
+						key={category}
+						className={classNames('functions-category-button', {
+							active: activeIndex === index,
+						})}
 					>
-						{category}
-					</button>
-				</li>
-			))}
-		</ul>
-	),
+						<button
+							tabIndex={-1}
+							role="menuitem"
+							type="button"
+							className={classNames('functions-category-button-content', {
+								active: activeIndex === index,
+							})}
+							onClick={(e): void => onSelectCategory(e, category, index)}
+						>
+							{category}
+						</button>
+					</li>
+				))}
+			</ul>
+		);
+	},
 );
 
 FunctionsCategories.displayName = 'FunctionsCategories';
@@ -95,13 +122,15 @@ Functions.displayName = 'Functions';
 function FunctionDescription({
 	selectedCategory,
 }: {
-	selectedCategory: keyof typeof defaultFunctionDescription;
+	selectedCategory: string;
 }): JSX.Element {
-	return (
-		<p className="functions-function-description">
-			{defaultFunctionDescription[selectedCategory]}
-		</p>
-	);
+	const description =
+		selectedCategory in defaultFunctionDescription
+			? defaultFunctionDescription[
+					selectedCategory as keyof typeof defaultFunctionDescription
+			  ]
+			: '';
+	return <p className="functions-function-description">{description}</p>;
 }
 
 function FunctionsSearchModal(
@@ -113,7 +142,9 @@ function FunctionsSearchModal(
 
 	const functionsCategoriesRef = useRef<HTMLUListElement>(null);
 	const functionsRef = useRef<HTMLDivElement>(null);
-	const containerRef = useRef<HTMLSelectElement>(null);
+	const containerRef = useRef<HTMLDivElement>(null);
+	const modalBodyRef = useRef<HTMLDivElement>(null);
+	const firstTimeFocusRef = useRef<boolean>(false);
 
 	const [focusedElement, setFocusedElement] = useState<
 		React.RefObject<HTMLUListElement> | React.RefObject<HTMLDivElement> | null
@@ -133,14 +164,18 @@ function FunctionsSearchModal(
 		query.dataSource === DataSource.LOGS
 			? logsQueryFunctionOptions
 			: metricQueryFunctionOptions;
-	const filteredFunctionOptions =
-		query.dataSource === DataSource.LOGS
-			? logsQueryFunctionOptions.filter(
-					(option) => option.type === selectedCategory,
-			  )
-			: metricQueryFunctionOptions.filter(
-					(option) => option.type === selectedCategory,
-			  );
+
+	const filteredFunctionOptions = useMemo(
+		() =>
+			query.dataSource === DataSource.LOGS
+				? logsQueryFunctionOptions.filter(
+						(option) => option.type === selectedCategory,
+				  )
+				: metricQueryFunctionOptions.filter(
+						(option) => option.type === selectedCategory,
+				  ),
+		[query.dataSource, selectedCategory],
+	);
 
 	const categories = Object.keys(
 		functionOptions.reduce((acc, option) => {
@@ -153,93 +188,103 @@ function FunctionsSearchModal(
 		category.toLowerCase().includes(categorySearch.toLowerCase()),
 	);
 
+	const navigateCategoriesDown = (): void => {
+		if (!focusedElement?.current?.childNodes.length) return;
+		if (focusedElement !== functionsCategoriesRef) return;
+
+		const isLastItem =
+			activeCategoryIndex === focusedElement.current.childNodes.length - 1;
+		const nextIndex = isLastItem ? 0 : (activeCategoryIndex ?? -1) + 1;
+
+		setActiveCategoryIndex(nextIndex);
+		setSelectedCategory(categories[nextIndex]);
+	};
+
+	const navigateFunctionsDown = (): void => {
+		if (!focusedElement?.current?.childNodes.length) return;
+		if (focusedElement !== functionsRef) return;
+
+		const isLastItem =
+			activeFunctionIndex === focusedElement.current.childNodes.length - 1;
+		setActiveFunctionIndex(isLastItem ? 0 : (activeFunctionIndex ?? -1) + 1);
+	};
+
+	const navigateCategoriesUp = (): void => {
+		if (!focusedElement?.current?.childNodes.length) return;
+		if (focusedElement !== functionsCategoriesRef) return;
+
+		const isFirstItem = activeCategoryIndex === 0;
+		const previousIndex = isFirstItem
+			? focusedElement.current.childNodes.length - 1
+			: (activeCategoryIndex ?? 1) - 1;
+
+		setActiveCategoryIndex(previousIndex);
+		setSelectedCategory(categories[previousIndex]);
+	};
+
+	const navigateFunctionsUp = (): void => {
+		if (!focusedElement?.current?.childNodes.length) return;
+		if (focusedElement !== functionsRef) return;
+
+		const isFirstItem = activeFunctionIndex === 0;
+		setActiveFunctionIndex(
+			isFirstItem
+				? focusedElement.current.childNodes.length - 1
+				: (activeFunctionIndex ?? 1) - 1,
+		);
+	};
+
+	const moveFocusToFunctions = (): void => {
+		if (!functionsRef.current) return;
+
+		setFocusedElement(functionsRef);
+		setActiveFunctionIndex(0);
+	};
+
+	const moveFocusToCategories = (): void => {
+		if (!functionsCategoriesRef.current) return;
+
+		setFocusedElement(functionsCategoriesRef);
+		setActiveCategoryIndex(0);
+		setActiveFunctionIndex(0);
+	};
+
+	const selectActiveFunction = (): void => {
+		if (activeFunctionIndex === null) return;
+
+		onSelectFunction(
+			funcData,
+			index,
+			filteredFunctionOptions[activeFunctionIndex].value,
+		);
+		onClose();
+	};
+
 	const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>): void => {
 		const { key } = e;
 
 		switch (key) {
 			case 'ArrowDown':
 				e.preventDefault();
-				if (
-					focusedElement?.current?.childNodes.length &&
-					focusedElement === functionsCategoriesRef
-				) {
-					if (activeCategoryIndex === focusedElement.current.childNodes.length - 1) {
-						setActiveCategoryIndex(0);
-						setSelectedCategory(categories[0]);
-					} else {
-						setActiveCategoryIndex((prev) => (prev !== null ? prev + 1 : 0));
-						setSelectedCategory(
-							categories[activeCategoryIndex !== null ? activeCategoryIndex + 1 : 0],
-						);
-					}
-				}
-				if (
-					focusedElement?.current?.childNodes.length &&
-					focusedElement === functionsRef
-				) {
-					if (activeFunctionIndex === focusedElement.current.childNodes.length - 1) {
-						setActiveFunctionIndex(0);
-					} else {
-						setActiveFunctionIndex((prev) => (prev !== null ? prev + 1 : 0));
-					}
-				}
+				navigateCategoriesDown();
+				navigateFunctionsDown();
 				break;
 			case 'ArrowUp':
 				e.preventDefault();
-				if (
-					focusedElement?.current?.childNodes.length &&
-					focusedElement === functionsCategoriesRef
-				) {
-					if (activeCategoryIndex === 0) {
-						setActiveCategoryIndex(focusedElement.current.childNodes.length - 1);
-						setSelectedCategory(
-							categories[focusedElement.current.childNodes.length - 1],
-						);
-					} else {
-						setActiveCategoryIndex((prev) => (prev !== null ? prev - 1 : 0));
-						setSelectedCategory(
-							categories[activeCategoryIndex !== null ? activeCategoryIndex - 1 : 0],
-						);
-					}
-				}
-				if (
-					focusedElement === functionsRef &&
-					focusedElement?.current?.childNodes.length
-				) {
-					if (activeFunctionIndex === 0) {
-						setActiveFunctionIndex(focusedElement.current.childNodes.length - 1);
-					} else {
-						setActiveFunctionIndex((prev) => (prev !== null ? prev - 1 : 0));
-					}
-				}
+				navigateCategoriesUp();
+				navigateFunctionsUp();
 				break;
 			case 'ArrowRight':
 				e.preventDefault();
-				if (functionsRef.current) {
-					setFocusedElement(functionsRef);
-				}
-				setActiveFunctionIndex(0);
+				moveFocusToFunctions();
 				break;
 			case 'ArrowLeft':
 				e.preventDefault();
-				if (functionsCategoriesRef.current) {
-					setFocusedElement(functionsCategoriesRef);
-				}
-				setActiveCategoryIndex(0);
-				setActiveFunctionIndex(0);
+				moveFocusToCategories();
 				break;
-
 			case 'Enter':
 				e.preventDefault();
-
-				if (activeFunctionIndex !== null) {
-					onSelectFunction(
-						funcData,
-						index,
-						filteredFunctionOptions[activeFunctionIndex].value,
-					);
-				}
-				onClose();
+				selectActiveFunction();
 				break;
 			case 'Tab':
 			default:
@@ -249,72 +294,100 @@ function FunctionsSearchModal(
 	};
 
 	const onFocus = (): void => {
-		console.log(functionsCategoriesRef.current);
-		if (functionsCategoriesRef.current) {
+		if (functionsCategoriesRef.current && !firstTimeFocusRef.current) {
 			setFocusedElement(functionsCategoriesRef);
 			setActiveCategoryIndex(0);
 			setActiveFunctionIndex(0);
-			functionsCategoriesRef.current.style.outline = '2px solid green';
+			firstTimeFocusRef.current = true;
 		}
 	};
 	const onBlur = (): void => {
-		if (focusedElement && focusedElement.current) {
-			focusedElement.current.style.outline = 'none';
-		}
 		setActiveCategoryIndex(null);
 		setActiveFunctionIndex(null);
 		setFocusedElement(null);
 	};
 
+	const calculateTopPosition = useCallback(
+		(
+			modalHeight: number,
+			viewHeight: number,
+			parentRect: DOMRect,
+			parentHeight: number,
+		): string => {
+			const offsetFromTrigger = Math.max(8, viewHeight * 0.01);
+			const spaceBelow = viewHeight - parentRect.bottom;
+			const spaceAbove = parentRect.top;
+
+			const needsToBeAbove = spaceBelow < modalHeight + offsetFromTrigger;
+			const canFitAbove = spaceAbove >= modalHeight + offsetFromTrigger;
+
+			if (needsToBeAbove && canFitAbove) {
+				// Position above: modal should be above the parent button
+				return `-${modalHeight + offsetFromTrigger}px`;
+			}
+			// Position below: modal should be below the parent button
+			return `${parentHeight + offsetFromTrigger}px`;
+		},
+		[],
+	);
+
 	useEffect(() => {
+		if (modalBodyRef.current && isOpen) {
+			modalBodyRef.current.focus();
+		}
+
 		let scrollTimeout: NodeJS.Timeout | null = null;
+		let isUpdating = false;
+
+		const applyPosition = (): void => {
+			if (!containerRef.current?.parentElement) return;
+
+			const viewHeight = window.innerHeight;
+			const modalHeight = containerRef.current.offsetHeight;
+			const { parentElement } = containerRef.current;
+			const parentRect = parentElement.getBoundingClientRect();
+			const parentHeight = parentElement.offsetHeight;
+
+			const topPosition = calculateTopPosition(
+				modalHeight,
+				viewHeight,
+				parentRect,
+				parentHeight,
+			);
+			containerRef.current.style.top = topPosition;
+		};
 
 		const updatePosition = (): void => {
-			if (containerRef.current && isOpen) {
-				const viewHeight = window.innerHeight;
-				const modalHeight = (25 * viewHeight) / 100;
-				const rect = containerRef.current.getBoundingClientRect();
-				const isTop = viewHeight - rect.bottom < modalHeight;
-				if (isTop) {
-					containerRef.current.style.top = '-25vh';
-				} else {
-					containerRef.current.style.top = '4vh';
-				}
-			}
+			if (isUpdating) return;
+			isUpdating = true;
+			requestAnimationFrame(() => {
+				applyPosition();
+				isUpdating = false;
+			});
 		};
 
 		const onScroll = (event: Event): void => {
-			// Check if scroll event is from within the modal's children
-			if (
+			const isInternalScroll =
 				containerRef.current &&
 				event.target instanceof Node &&
-				containerRef.current.contains(event.target)
-			) {
-				return;
-			}
+				containerRef.current.contains(event.target);
 
-			if (scrollTimeout) {
-				clearTimeout(scrollTimeout);
-			}
-			scrollTimeout = setTimeout(() => {
-				updatePosition();
-			}, 150);
+			if (isInternalScroll) return;
+
+			if (scrollTimeout) clearTimeout(scrollTimeout);
+			scrollTimeout = setTimeout(updatePosition, 150);
 		};
 
-		if (isOpen) {
-			updatePosition();
-			window.addEventListener('resize', updatePosition);
-			window.addEventListener('scroll', onScroll, true);
-		}
+		setTimeout(updatePosition, 10);
+		window.addEventListener('resize', updatePosition);
+		window.addEventListener('scroll', onScroll, true);
 
 		return (): void => {
-			if (scrollTimeout) {
-				clearTimeout(scrollTimeout);
-			}
+			if (scrollTimeout) clearTimeout(scrollTimeout);
 			window.removeEventListener('resize', updatePosition);
 			window.removeEventListener('scroll', onScroll, true);
 		};
-	}, [isOpen]);
+	}, [isOpen, calculateTopPosition]);
 
 	const onChooseFunction = (fn: string): void => {
 		onSelectFunction(funcData, index, fn);
@@ -325,17 +398,33 @@ function FunctionsSearchModal(
 		setCategorySearch(e.target.value);
 	};
 
-	const onCategorySelect = (category: string): void => {
+	const onCategorySelect = ({
+		category,
+		index,
+	}: {
+		category: string;
+		index: number;
+	}): void => {
+		setActiveCategoryIndex(index);
 		setSelectedCategory(category);
+		setActiveFunctionIndex(0);
 	};
 
 	if (!isOpen) return null;
 	return (
 		<section ref={containerRef} className="functions-search-modal">
 			<header>
-				<Input placeholder="Search for a function" onChange={onChange} />
+				<Input
+					prefix={
+						<SearchOutlined size={14} style={{ color: '	var(--bg-slate-200)' }} />
+					}
+					size="large"
+					placeholder="Search for a function"
+					onChange={onChange}
+				/>
 			</header>
 			<div
+				ref={modalBodyRef}
 				onBlur={onBlur}
 				tabIndex={0}
 				role="menu"
@@ -358,21 +447,21 @@ function FunctionsSearchModal(
 				<FunctionDescription selectedCategory={selectedCategory} />
 			</div>
 			<footer className="functions-search-modal-footer">
-				<Button>
+				<Button tabIndex={-1} size="small">
 					<ArrowDownOutlined />
 				</Button>
-				<Button>
+				<Button tabIndex={-1} size="small">
 					<ArrowUpOutlined />
 				</Button>
-				<Button>
+				<Button tabIndex={-1} size="small">
 					<ArrowLeftOutlined />
 				</Button>
-				<Button>
+				<Button tabIndex={-1} size="small">
 					<ArrowRightOutlined />
 				</Button>
 				to navigate
 				<div className="enter-btn">
-					<Button>
+					<Button tabIndex={-1} size="small">
 						<EnterOutlined />
 					</Button>
 					to add function

@@ -211,15 +211,16 @@ export default function QueryFunctions({
 							handleUpdateFunctionName={handleUpdateFunctionName}
 							handleDeleteFunction={handleDeleteFunction}
 						/>
-
-						<FunctionsSearchModal
-							funcData={func}
-							index={index}
-							onSelectFunction={handleUpdateFunctionName}
-							query={query}
-							isOpen={isFunctionsSearchModalOpen}
-							onClose={(): void => setIsFunctionsSearchModalOpen(false)}
-						/>
+						{isFunctionsSearchModalOpen && (
+							<FunctionsSearchModal
+								funcData={func}
+								index={index}
+								onSelectFunction={handleUpdateFunctionName}
+								query={query}
+								isOpen={isFunctionsSearchModalOpen}
+								onClose={(): void => setIsFunctionsSearchModalOpen(false)}
+							/>
+						)}
 					</>
 				))}
 			</div>
