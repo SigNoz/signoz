@@ -27,22 +27,6 @@ type PostableRotateToken struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
-func (typ *PostableRotateToken) UnmarshalJSON(data []byte) error {
-	type Alias PostableRotateToken
-	var temp Alias
-
-	if err := json.Unmarshal(data, &temp); err != nil {
-		return err
-	}
-
-	if temp.RefreshToken == "" {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "refresh token is required")
-	}
-
-	*typ = PostableRotateToken(temp)
-	return nil
-}
-
 type StorableToken = Token
 
 type GettableToken struct {
@@ -119,6 +103,22 @@ func NewURLValuesFromToken(token *Token, rotationInterval time.Duration) url.Val
 		"refreshToken": {token.RefreshToken},
 		"expiresIn":    {strconv.Itoa(int(time.Until(token.RotationAt(rotationInterval)).Seconds()))},
 	}
+}
+
+func (typ *PostableRotateToken) UnmarshalJSON(data []byte) error {
+	type Alias PostableRotateToken
+	var temp Alias
+
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if temp.RefreshToken == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "refresh token is required")
+	}
+
+	*typ = PostableRotateToken(temp)
+	return nil
 }
 
 func (typ *Token) IsValid(rotationInterval time.Duration, idleDuration time.Duration, maxDuration time.Duration) error {
