@@ -107,33 +107,6 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 	return context, nil
 }
 
-func (module *module) getOrgSessionContext(ctx context.Context, org *types.Organization, name string, siteURL *url.URL) (*authtypes.OrgSessionContext, error) {
-	authDomain, err := module.authDomain.GetByNameAndOrgID(ctx, name, org.ID)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		return nil, err
-	}
-
-	if authDomain == nil {
-		return authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword), nil
-	}
-
-	if !authDomain.AuthDomainConfig().SSOEnabled {
-		return authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword), nil
-	}
-
-	provider, err := getProvider[authn.CallbackAuthN](authDomain.AuthDomainConfig().AuthNProvider, module.authNs)
-	if err != nil {
-		return nil, err
-	}
-
-	loginURL, err := provider.LoginURL(ctx, siteURL, authDomain)
-	if err != nil {
-		return nil, err
-	}
-
-	return authtypes.NewOrgSessionContext(org.ID, org.Name).AddCallbackAuthNSupport(authDomain.AuthDomainConfig().AuthNProvider, loginURL), nil
-}
-
 func (module *module) CreatePasswordAuthNSession(ctx context.Context, authNProvider authtypes.AuthNProvider, email valuer.Email, password string, orgID valuer.UUID) (*authtypes.Token, error) {
 	passwordAuthN, err := getProvider[authn.PasswordAuthN](authNProvider, module.authNs)
 	if err != nil {
@@ -195,6 +168,33 @@ func (module *module) DeleteSession(ctx context.Context, accessToken string) err
 
 func (module *module) GetRotationInterval(context.Context) time.Duration {
 	return module.tokenizer.Config().Rotation.Interval
+}
+
+func (module *module) getOrgSessionContext(ctx context.Context, org *types.Organization, name string, siteURL *url.URL) (*authtypes.OrgSessionContext, error) {
+	authDomain, err := module.authDomain.GetByNameAndOrgID(ctx, name, org.ID)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil, err
+	}
+
+	if authDomain == nil {
+		return authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword), nil
+	}
+
+	if !authDomain.AuthDomainConfig().SSOEnabled {
+		return authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword), nil
+	}
+
+	provider, err := getProvider[authn.CallbackAuthN](authDomain.AuthDomainConfig().AuthNProvider, module.authNs)
+	if err != nil {
+		return nil, err
+	}
+
+	loginURL, err := provider.LoginURL(ctx, siteURL, authDomain)
+	if err != nil {
+		return nil, err
+	}
+
+	return authtypes.NewOrgSessionContext(org.ID, org.Name).AddCallbackAuthNSupport(authDomain.AuthDomainConfig().AuthNProvider, loginURL), nil
 }
 
 func getProvider[T authn.AuthN](authNProvider authtypes.AuthNProvider, authNs map[authtypes.AuthNProvider]authn.AuthN) (T, error) {
