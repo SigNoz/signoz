@@ -164,6 +164,10 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 					]),
 				}),
 			);
+
+			// Verify exact call counts to catch unintended multiple invocations
+			expect(mockedConvertFiltersToExpression).toHaveBeenCalledTimes(1);
+			expect(mockUpdateAllQueriesOperators).toHaveBeenCalledTimes(1);
 		});
 	});
 
@@ -213,6 +217,10 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 				item.key?.key?.startsWith('host.'),
 			);
 			expect(hostItems).toHaveLength(0);
+
+			// Verify exact call counts to catch unintended multiple invocations
+			expect(mockedConvertFiltersToExpression).toHaveBeenCalledTimes(1);
+			expect(mockUpdateAllQueriesOperators).toHaveBeenCalledTimes(1);
 		});
 	});
 
@@ -257,6 +265,10 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 					]),
 				}),
 			);
+
+			// Verify exact call counts to catch unintended multiple invocations
+			expect(mockedConvertFiltersToExpression).toHaveBeenCalledTimes(1);
+			expect(mockUpdateAllQueriesOperators).toHaveBeenCalledTimes(1);
 		});
 	});
 
@@ -305,6 +317,10 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 						item.key.key.startsWith('container.')),
 			);
 			expect(priorityItems).toHaveLength(0);
+
+			// Verify exact call counts to catch unintended multiple invocations
+			expect(mockedConvertFiltersToExpression).toHaveBeenCalledTimes(1);
+			expect(mockUpdateAllQueriesOperators).toHaveBeenCalledTimes(1);
 		});
 	});
 });
