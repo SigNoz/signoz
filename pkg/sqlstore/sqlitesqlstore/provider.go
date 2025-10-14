@@ -42,7 +42,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 	connectionParams := url.Values{}
 	// using the defaults from :https://github.com/mattn/go-sqlite3/blob/master/sqlite3.go#L1098
-	connectionParams.Add("_pragma", "busy_timeout(5000)")
+	connectionParams.Add("_pragma", "busy_timeout(10000)")
 	connectionParams.Add("_pragma", "foreign_keys(1)")
 	sqldb, err := sql.Open("sqlite", "file:"+config.Sqlite.Path+"?"+connectionParams.Encode())
 	if err != nil {
