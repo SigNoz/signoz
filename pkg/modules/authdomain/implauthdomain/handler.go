@@ -57,13 +57,18 @@ func (handler *handler) Delete(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
 	defer cancel()
 
-	domainId, err := valuer.NewUUID(mux.Vars(req)["id"])
+	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = handler.module.Delete(ctx, domainId)
+	domainId, err := valuer.NewUUID(mux.Vars(req)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	err = handler.module.Delete(ctx, valuer.MustNewUUID(claims.OrgID), domainId)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -100,6 +105,12 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	domainID, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
 		render.Error(rw, err)
@@ -112,7 +123,7 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authDomain, err := handler.module.Get(ctx, domainID)
+	authDomain, err := handler.module.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), domainID)
 	if err != nil {
 		render.Error(rw, err)
 		return

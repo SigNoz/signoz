@@ -183,6 +183,9 @@ type AuthDomainStore interface {
 	// Get by id.
 	Get(context.Context, valuer.UUID) (*AuthDomain, error)
 
+	// Get by orgID and id.
+	GetByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*AuthDomain, error)
+
 	// Get by name.
 	GetByName(context.Context, string) (*AuthDomain, error)
 
@@ -195,9 +198,9 @@ type AuthDomainStore interface {
 	// Create auth domain.
 	Create(context.Context, *AuthDomain) error
 
-	// Update by id.
+	// Update by orgID and id.
 	Update(context.Context, *AuthDomain) error
 
-	// Delete by id.
-	Delete(context.Context, valuer.UUID) error
+	// Delete by orgID and id.
+	Delete(context.Context, valuer.UUID, valuer.UUID) error
 }

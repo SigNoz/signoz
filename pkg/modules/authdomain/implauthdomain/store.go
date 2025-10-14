@@ -30,7 +30,7 @@ func (store *store) Create(ctx context.Context, domain *authtypes.AuthDomain) er
 	return nil
 }
 
-func (store *store) Delete(ctx context.Context, id valuer.UUID) error {
+func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
 	authDomain := new(authtypes.StorableAuthDomain)
 
 	_, err := store.
@@ -39,6 +39,7 @@ func (store *store) Delete(ctx context.Context, id valuer.UUID) error {
 		NewDelete().
 		Model(authDomain).
 		Where("id = ?", id).
+		Where("org_id = ?", orgID).
 		Exec(ctx)
 	if err != nil {
 		return err
@@ -59,6 +60,24 @@ func (store *store) Get(ctx context.Context, id valuer.UUID) (*authtypes.AuthDom
 		Scan(ctx)
 	if err != nil {
 		return nil, store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeAuthDomainNotFound, "auth domain with id %s does not exist", id)
+	}
+
+	return authtypes.NewAuthDomainFromStorableAuthDomain(authDomain)
+}
+
+func (store *store) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.AuthDomain, error) {
+	authDomain := new(authtypes.StorableAuthDomain)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(authDomain).
+		Where("org_id = ?", orgID).
+		Where("id = ?", id).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeAuthDomainNotFound, "auth domain with id %s does not exist", orgID, id)
 	}
 
 	return authtypes.NewAuthDomainFromStorableAuthDomain(authDomain)

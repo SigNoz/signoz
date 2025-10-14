@@ -24,12 +24,16 @@ func (module *module) Get(ctx context.Context, id valuer.UUID) (*authtypes.AuthD
 	return module.store.Get(ctx, id)
 }
 
+func (module *module) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.AuthDomain, error) {
+	return module.store.GetByOrgIDAndID(ctx, orgID, id)
+}
+
 func (module *module) GetByNameAndOrgID(ctx context.Context, name string, orgID valuer.UUID) (*authtypes.AuthDomain, error) {
 	return module.store.GetByNameAndOrgID(ctx, name, orgID)
 }
 
-func (module *module) Delete(ctx context.Context, id valuer.UUID) error {
-	return module.store.Delete(ctx, id)
+func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	return module.store.Delete(ctx, orgID, id)
 }
 
 func (module *module) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*authtypes.AuthDomain, error) {
