@@ -413,3 +413,76 @@ def insert_logs(
     clickhouse.conn.query(
         f"TRUNCATE TABLE signoz_logs.logs_resource_keys ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
     )
+
+
+@pytest.fixture(name="ttl_legacy_logs_v2_table_setup", scope="function")
+def ttl_legacy_logs_v2_table_setup(signoz: types.SigNoz):
+    """
+    Fixture to setup and teardown legacy TTL test environment.
+    It renames existing logs tables to backup names and creates new empty tables for testing.
+    After the test, it restores the original tables.
+    """
+
+    # Setup code
+    result = signoz.telemetrystore.conn.query(
+        "RENAME TABLE signoz_logs.logs_v2 TO signoz_logs.logs_v2_backup;"
+    ).result_rows
+    assert result is not None
+
+    # Create new test tables
+    result = signoz.telemetrystore.conn.query(
+        """CREATE TABLE signoz_logs.logs_v2
+                                                (
+                                                    `id` String,
+                                                    `timestamp` UInt64 CODEC(DoubleDelta, LZ4)
+
+                                                )
+                                                ENGINE = MergeTree()
+                                                ORDER BY id;"""
+    ).result_rows
+
+    assert result is not None
+
+    yield  # Test runs here
+
+    # Teardown code (restores original tables)
+    signoz.telemetrystore.conn.query("DROP TABLE signoz_logs.logs_v2;")
+    signoz.telemetrystore.conn.query(
+        "RENAME TABLE signoz_logs.logs_v2_backup TO signoz_logs.logs_v2;"
+    )
+
+
+@pytest.fixture(name="ttl_legacy_logs_v2_resource_table_setup", scope="function")
+def ttl_legacy_logs_v2_resource_table_setup(signoz: types.SigNoz):
+    """
+    Fixture to setup and teardown legacy TTL test environment.
+    It renames existing logs tables to backup names and creates new empty tables for testing.
+    After the test, it restores the original tables.
+    """
+
+    # Setup code
+    result = signoz.telemetrystore.conn.query(
+        "RENAME TABLE signoz_logs.logs_v2_resource TO signoz_logs.logs_v2_resource_backup;"
+    ).result_rows
+    assert result is not None
+
+    # Create new test tables
+    result = signoz.telemetrystore.conn.query(
+        """CREATE TABLE signoz_logs.logs_v2_resource
+                                                (
+                                                    `id` String,
+                                                    `seen_at_ts_bucket_start` Int64 CODEC(Delta(8), ZSTD(1))
+                                                )
+                                                ENGINE = MergeTree()
+                                                ORDER BY id;"""
+    ).result_rows
+
+    assert result is not None
+
+    yield  # Test runs here
+
+    # Teardown code (restores original tables)
+    signoz.telemetrystore.conn.query("DROP TABLE signoz_logs.logs_v2_resource;")
+    signoz.telemetrystore.conn.query(
+        "RENAME TABLE signoz_logs.logs_v2_resource_backup TO signoz_logs.logs_v2_resource;"
+    )
