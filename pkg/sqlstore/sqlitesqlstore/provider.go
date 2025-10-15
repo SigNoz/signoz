@@ -42,8 +42,9 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/sqlitesqlstore")
 
 	connectionParams := url.Values{}
-	// using the defaults from :https://github.com/mattn/go-sqlite3/blob/master/sqlite3.go#L1098
-	connectionParams.Add("_pragma", "busy_timeout(5000)")
+	// do not update the order of the connection params as busy_timeout doesn't work if it's not the first parameter
+	connectionParams.Add("_pragma", "busy_timeout(5000)") // the defaults from https://github.com/mattn/go-sqlite3/blob/master/sqlite3.go#L1098
+	connectionParams.Add("_pragma", "journal_mode(WAL)")
 	connectionParams.Add("_pragma", "foreign_keys(1)")
 	sqldb, err := sql.Open("sqlite", "file:"+config.Sqlite.Path+"?"+connectionParams.Encode())
 	if err != nil {
