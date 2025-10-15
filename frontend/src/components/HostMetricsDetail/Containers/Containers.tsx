@@ -4,6 +4,7 @@ import { Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import WaitlistFragment from '../WaitlistFragment/WaitlistFragment';
+import DecorativeImage from 'components/DecorativeImage/DecorativeImage';
 
 const { Text } = Typography;
 
@@ -15,12 +16,7 @@ function Containers(): JSX.Element {
 			<div className="infra-container-card-container">
 				<div className="dev-status-container">
 					<div className="infra-container-card">
-						<img
-							src="/Icons/infraContainers.svg"
-							alt="infra-container"
-							width={32}
-							height={32}
-						/>
+						<DecorativeImage className="container-img" src="/Icons/infraContainers.svg" width="32" height="32" />
 
 						<Text className="infra-container-card-text">
 							{t('containers_visualization_message')}
@@ -29,7 +25,7 @@ function Containers(): JSX.Element {
 
 					<div className="infra-container-working-msg">
 						<Space>
-							<img src="/Icons/broom.svg" alt="broom" width={24} height={24} />
+							<DecorativeImage src="/Icons/broom.svg" width="24" height="24" />
 							<Text className="infra-container-card-text">{t('working_message')}</Text>
 						</Space>
 					</div>

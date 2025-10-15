@@ -9,6 +9,7 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { MoveUpRight, RotateCw } from 'lucide-react';
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { IntegrationsProps } from 'types/api/integrations/types';
+import DecorativeImage from 'components/DecorativeImage/DecorativeImage';
 
 import { handleContactSupport, INTEGRATION_TYPES } from './utils';
 
@@ -73,11 +74,7 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 			{!loading && isError && (
 				<div className="error-container">
 					<div className="error-content">
-						<img
-							src="/Icons/awwSnap.svg"
-							alt="error-emoji"
-							className="error-state-svg"
-						/>
+						<DecorativeImage src="/Icons/awwSnap.svg" className="error-state-svg" />
 						<Typography.Text>
 							Something went wrong :/ Please retry or contact support.
 						</Typography.Text>
@@ -118,7 +115,7 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 						>
 							<div style={{ display: 'flex', gap: '10px' }}>
 								<div className="list-item-image-container">
-									<img src={item.icon} alt={item.title} className="list-item-image" />
+									<DecorativeImage src={item.icon} className="list-item-image" />
 								</div>
 								<div className="list-item-details">
 									<Typography.Text className="heading">
