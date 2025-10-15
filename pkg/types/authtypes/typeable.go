@@ -14,11 +14,11 @@ var (
 )
 
 var (
-	TypeUser         = Type{valuer.NewString("user")}
-	TypeRole         = Type{valuer.NewString("role")}
-	TypeOrganization = Type{valuer.NewString("organization")}
-	TypeResource     = Type{valuer.NewString("resource")}
-	TypeResources    = Type{valuer.NewString("resources")}
+	TypeUser          = Type{valuer.NewString("user")}
+	TypeRole          = Type{valuer.NewString("role")}
+	TypeOrganization  = Type{valuer.NewString("organization")}
+	TypeMetaResource  = Type{valuer.NewString("metaresource")}
+	TypeMetaResources = Type{valuer.NewString("metaresources")}
 )
 
 var (
@@ -53,10 +53,10 @@ func NewType(input string) (Type, error) {
 		return TypeRole, nil
 	case "organization":
 		return TypeOrganization, nil
-	case "resource":
-		return TypeResource, nil
-	case "resources":
-		return TypeResources, nil
+	case "metaresource":
+		return TypeMetaResource, nil
+	case "metaresources":
+		return TypeMetaResources, nil
 	default:
 		return Type{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid type: %s", input)
 	}
@@ -86,14 +86,14 @@ func NewTypeableFromType(typed Type, name Name) (Typeable, error) {
 		return TypeableUser, nil
 	case TypeOrganization:
 		return TypeableOrganization, nil
-	case TypeResource:
-		resource, err := NewTypeableResource(name)
+	case TypeMetaResource:
+		resource, err := NewTypeableMetaResource(name)
 		if err != nil {
 			return nil, err
 		}
 		return resource, nil
-	case TypeResources:
-		resources, err := NewTypeableResources(name)
+	case TypeMetaResources:
+		resources, err := NewTypeableMetaResources(name)
 		if err != nil {
 			return nil, err
 		}

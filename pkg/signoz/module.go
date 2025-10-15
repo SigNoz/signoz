@@ -3,6 +3,7 @@ package signoz
 import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
@@ -17,6 +18,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
+	"github.com/SigNoz/signoz/pkg/modules/role"
+	"github.com/SigNoz/signoz/pkg/modules/role/implrole"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
@@ -40,6 +43,7 @@ type Modules struct {
 	QuickFilter   quickfilter.Module
 	TraceFunnel   tracefunnel.Module
 	RawDataExport rawdataexport.Module
+	Role          role.Module
 }
 
 func NewModules(
@@ -51,20 +55,23 @@ func NewModules(
 	alertmanager alertmanager.Alertmanager,
 	analytics analytics.Analytics,
 	querier querier.Querier,
+	authz authz.AuthZ,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
 	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), jwt, emailing, providerSettings, orgSetter, analytics)
+	dashboard := impldashboard.NewModule(sqlstore, providerSettings, analytics)
 	return Modules{
 		OrgGetter:     orgGetter,
 		OrgSetter:     orgSetter,
 		Preference:    implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
 		SavedView:     implsavedview.NewModule(sqlstore),
 		Apdex:         implapdex.NewModule(sqlstore),
-		Dashboard:     impldashboard.NewModule(sqlstore, providerSettings, analytics),
+		Dashboard:     dashboard,
 		User:          user,
 		QuickFilter:   quickfilter,
 		TraceFunnel:   impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 		RawDataExport: implrawdataexport.NewModule(querier),
+		Role:          implrole.NewModule(implrole.NewStore(sqlstore), authz, []role.RegisterTypeable{dashboard}),
 	}
 }
