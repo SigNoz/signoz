@@ -156,6 +156,9 @@ type ClickHouseReader struct {
 	cache                      cache.Cache
 	metadataDB                 string
 	metadataTable              string
+
+	pathTypesLocalTable string
+	pathTypesTable      string
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -223,6 +226,8 @@ func NewReaderFromClickhouseConnection(
 		cache:                      cache,
 		metadataDB:                 options.primary.MetadataDB,
 		metadataTable:              options.primary.MetadataTable,
+		pathTypesLocalTable:        options.primary.PathTypesLocalTable,
+		pathTypesTable:             options.primary.PathTypesTable,
 	}
 }
 
@@ -1327,9 +1332,21 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 			params.ToColdStorageDuration, params.ColdStorageVolume)
 	}
 
+	// TTL query for path_types table to follow the same TTL as logs
+	pathTypesLocal := fmt.Sprintf("%s.%s", r.logsDB, r.pathTypesLocalTable)
+	ttlPathTypes := fmt.Sprintf(
+		"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(last_seen / 1000000000) + "+
+			"INTERVAL %v SECOND DELETE", pathTypesLocal, r.cluster, params.DelDuration)
+	if len(params.ColdStorageVolume) > 0 {
+		ttlPathTypes += fmt.Sprintf(", toDateTime(last_seen / 1000000000) "+
+			"+ INTERVAL %v SECOND TO VOLUME '%s'",
+			params.ToColdStorageDuration, params.ColdStorageVolume)
+	}
+
 	ttlPayload := map[string]string{
 		tableNameArray[0]: ttlLogsV2,
 		tableNameArray[1]: ttlLogsV2Resource,
+		pathTypesLocal:    ttlPathTypes,
 	}
 
 	// set the ttl if nothing is pending/ no errors
