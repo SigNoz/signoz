@@ -82,7 +82,8 @@
 			}
 
 			.action-btn {
-				display: none;
+				// display: none;
+				display: flex;
 				position: absolute;
 				right: 8px;
 				top: 50%;
@@ -151,6 +152,9 @@
 	.attributes-corner {
 		.attributes-container {
 			.item {
+				&:hover {
+					background-color: var(--bg-vanilla-300);
+				}
 				.item-key {
 					color: var(--bg-ink-100);
 				}
@@ -165,8 +169,6 @@
 				}
 
 				.action-btn {
-					background: rgba(255, 255, 255, 0.9);
-
 					.filter-btn {
 						background: var(--bg-vanilla-200);
 
