@@ -1649,7 +1649,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	logsTTLConfigs := map[string]ttlConfig{
 		r.logsDB + "." + r.logsTableV2: {
 			CustomRetentionQuery: "ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT " + multiIfExpr,
-			TTLQuery:             "ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(toUInt32(timestamp / 1000), 'UTC') INTERVAL " + fmt.Sprint(params.DefaultTTLDays) + " DAY DELETE",
+			TTLQuery:             "ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(toUInt32(timestamp / 1000), 'UTC') + INTERVAL " + fmt.Sprint(params.DefaultTTLDays) + " DAY DELETE",
 			ColdStorageQuery:     ", toDateTime(toUInt32(timestamp / 1000), 'UTC') + INTERVAL " + fmt.Sprint(params.ToColdStorageDuration) + " DAY TO VOLUME '%s'",
 		},
 		r.logsDB + "." + r.logsResourceTableV2: {
@@ -1658,15 +1658,15 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			ColdStorageQuery:     ", toDateTime(toUInt32(seen_at_ts_bucket_start), 'UTC') + INTERVAL 1800 SECOND + INTERVAL " + fmt.Sprint(params.ToColdStorageDuration) + " DAY TO VOLUME '%s'",
 		},
 		r.logsDB + "." + r.logsAttributeKeys: {
-			TTLQuery: "ALTER TABLE %v ON CLUSTER %s MODIFY TTL timestamp INTERVAL " + fmt.Sprint(maxTTLDays) + " DAY DELETE",
+			TTLQuery: "ALTER TABLE %v ON CLUSTER %s MODIFY TTL timestamp + INTERVAL " + fmt.Sprint(maxTTLDays) + " DAY DELETE",
 		},
 		r.logsDB + "." + r.logsResourceKeys: {
-			TTLQuery: "ALTER TABLE %v ON CLUSTER %s MODIFY TTL timestamp INTERVAL " + fmt.Sprint(maxTTLDays) + " DAY DELETE",
+			TTLQuery: "ALTER TABLE %v ON CLUSTER %s MODIFY TTL timestamp + INTERVAL " + fmt.Sprint(maxTTLDays) + " DAY DELETE",
 		},
 	}
 
 	for tableName := range logsTTLConfigs {
-		localTableName := getLocalTableName(r.logsDB + "." + tableName)
+		localTableName := getLocalTableName(tableName)
 		statusItem, err := r.checkCustomRetentionTTLStatusItem(ctx, orgID, localTableName)
 		if err != nil {
 			return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error in processing custom_retention_ttl_status check sql query")
@@ -1683,7 +1683,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 
 	for tableName, ttlConfig := range logsTTLConfigs {
 
-		localTableName := getLocalTableName(r.logsDB + "." + tableName)
+		localTableName := getLocalTableName(tableName)
 		customTTL := types.TTLSetting{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
@@ -1714,7 +1714,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			zap.L().Debug("Executing custom retention TTL request: ", zap.String("request", customRetentionQuery))
 			if err := r.db.Exec(ctx, customRetentionQuery); err != nil {
 				zap.L().Error("error while setting custom retention ttl", zap.Error(err))
-				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusFailed)
+				r.updateCustomRetentionTTLStatus(ctx, orgID, localTableName, constants.StatusFailed)
 				return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting custom retention TTL for table %s, query: %s", tableName, ttlConfig.CustomRetentionQuery)
 			}
 		}
@@ -1728,19 +1728,20 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			err := r.setColdStorage(ctx, localTableName, params.ColdStorageVolume)
 			if err != nil {
 				zap.L().Error("error in setting cold storage", zap.Error(err))
-				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusFailed)
+				r.updateCustomRetentionTTLStatus(ctx, orgID, localTableName, constants.StatusFailed)
 				return nil, errorsV2.Wrapf(err.Err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting cold storage for table %s", tableName)
 			}
 		}
 
 		ttlQuery += " SETTINGS materialize_ttl_after_modify=0"
 		zap.L().Info("Executing TTL request: ", zap.String("request", ttlQuery))
+
 		if err := r.db.Exec(ctx, ttlQuery); err != nil {
 			zap.L().Error("error while setting ttl.", zap.Error(err))
-			r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusFailed)
+			r.updateCustomRetentionTTLStatus(ctx, orgID, localTableName, constants.StatusFailed)
 			return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting TTL for table %s, query: %s", tableName, ttlQuery)
 		}
-		r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusSuccess)
+		r.updateCustomRetentionTTLStatus(ctx, orgID, localTableName, constants.StatusSuccess)
 
 	}
 
