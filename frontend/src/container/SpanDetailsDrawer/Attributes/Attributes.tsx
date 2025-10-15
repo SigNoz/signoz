@@ -1,6 +1,6 @@
 import './Attributes.styles.scss';
 
-import { Input, Tooltip, Typography } from 'antd';
+import { Input, Typography } from 'antd';
 import cx from 'classnames';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { flattenObject } from 'container/LogDetailedView/utils';
@@ -97,15 +97,17 @@ function Attributes(props: IAttributesProps): JSX.Element {
 							)}
 						</div>
 						<div className="value-wrapper">
-							<Tooltip title={item.value}>
-								<div className="copy-wrapper">
-									<CopyClipboardHOC entityKey={item.value} textToCopy={item.value}>
-										<Typography.Text className="item-value" ellipsis>
-											{item.value}
-										</Typography.Text>
-									</CopyClipboardHOC>
-								</div>
-							</Tooltip>
+							<div className="copy-wrapper">
+								<CopyClipboardHOC
+									entityKey={item.value}
+									textToCopy={item.value}
+									tooltipText={item.value}
+								>
+									<Typography.Text className="item-value" ellipsis>
+										{item.value}
+									</Typography.Text>
+								</CopyClipboardHOC>
+							</div>
 							<AttributeActions
 								record={item}
 								isPinned={pinnedAttributes[item.field]}
