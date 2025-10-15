@@ -3,6 +3,7 @@ package querier
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -249,15 +250,23 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 	}
 
 	// merge body_v2 and promoted into body
-	// TODO: move this where it suits best
 	if q.spec.Signal == telemetrytypes.SignalLogs {
 		switch typedPayload := payload.(type) {
 		case *qbtypes.RawData:
 			for _, rr := range typedPayload.Rows {
+				if rr.Data["body_v2"] == nil || len(rr.Data["body_v2"].(map[string]any)) == 0 {
+					continue
+				}
+
 				body := rr.Data["body_v2"].(map[string]any)
 				promoted := rr.Data["promoted"].(map[string]any)
 				seed(promoted, body)
-				rr.Data["body"] = body
+
+				bytes, err := json.Marshal(body)
+				if err != nil {
+					return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal body")
+				}
+				rr.Data["body"] = string(bytes)
 				delete(rr.Data, "body_v2")
 				delete(rr.Data, "promoted")
 			}

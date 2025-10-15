@@ -399,6 +399,9 @@ type TerminalConfig struct {
 // PlanJSONPath builds a tree structure representing the complete JSON path traversal
 // that precomputes all possible branches and their types
 func (b *JSONQueryBuilder) PlanJSONPath(path string, operator qbtypes.FilterOperator, value any) []*Node {
+	// TODO: PlanJSONPath requires the Start and End of the Query to select correct column between promoted and body_v2 using
+	// creation time in distributed_promoted_paths
+
 	parts := strings.Split(path, ":")
 	plans := []*Node{
 		b.buildPlan(parts, 0, operator, value, &Node{
