@@ -79,6 +79,10 @@ func (m *MockSQLRuleStore) ExpectEditRule(rule *ruletypes.Rule) {
 
 // ExpectDeleteRule sets up SQL expectations for DeleteRule operation
 func (m *MockSQLRuleStore) ExpectDeleteRule(ruleID valuer.UUID) {
+	plannedMaintenancePattern := `DELETE FROM "planned_maintenance_rule".+WHERE \(rule_id = '` + ruleID.StringValue() + `'\)`
+	m.mock.ExpectExec(plannedMaintenancePattern).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
 	expectedPattern := `DELETE FROM "rule".+WHERE \(id = '` + ruleID.StringValue() + `'\)`
 	m.mock.ExpectExec(expectedPattern).
 		WillReturnResult(sqlmock.NewResult(1, 1))
