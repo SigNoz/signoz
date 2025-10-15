@@ -31,12 +31,14 @@
 	}
 
 	.tab {
-		border: 1px solid var(--bg-slate-400);
-		&:hover {
-			color: var(--text-vanilla-100);
-		}
-		&::before {
-			background: var(--bg-slate-400);
+		&:not(.ant-radio-button-wrapper-disabled) {
+			border: 1px solid var(--bg-slate-400);
+			&:hover {
+				color: var(--text-vanilla-100);
+			}
+			&::before {
+				background: var(--bg-slate-400);
+			}
 		}
 	}
 
@@ -56,16 +58,18 @@
 // Light mode styles
 .lightMode {
 	.signoz-radio-group {
-		&.ant-radio-group-disabled {
-			.tab,
-			.selected_view {
+		.tab,
+		.selected_view {
+			&.ant-radio-button-wrapper-disabled {
 				background: var(--bg-vanilla-200) !important;
 				border-color: var(--bg-vanilla-400) !important;
 				color: var(--text-ink-400) !important;
 			}
+		}
 
-			.tab:hover,
-			.selected_view:hover {
+		.tab:hover,
+		.selected_view:hover {
+			&:not(.ant-radio-button-wrapper-disabled) {
 				background: var(--bg-vanilla-200) !important;
 				border-color: var(--bg-vanilla-400) !important;
 				color: var(--text-ink-400) !important;
@@ -73,6 +77,7 @@
 		}
 
 		.tab {
+			border-color: var(--bg-vanilla-400) !important;
 			background: var(--bg-vanilla-100);
 		}
 
