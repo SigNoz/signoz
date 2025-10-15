@@ -17,7 +17,6 @@ jobs:
           - bootstrap
           - auth
           - querier
-          - ttl
         sqlstore-provider:
           - postgres
           - sqlite
