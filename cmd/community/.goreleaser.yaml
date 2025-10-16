@@ -12,12 +12,6 @@ builds:
   - id: signoz
     binary: bin/signoz
     main: ./cmd/community
-    env:
-      - CGO_ENABLED=1
-      - >-
-        {{- if eq .Os "linux" }}
-          {{- if eq .Arch "arm64" }}CC=aarch64-linux-gnu-gcc{{- end }}
-        {{- end }}
     goos:
       - linux
       - darwin
@@ -36,8 +30,6 @@ builds:
       - -X github.com/SigNoz/signoz/pkg/version.time={{ .CommitTimestamp }}
       - -X github.com/SigNoz/signoz/pkg/version.branch={{ .Branch }}
       - -X github.com/SigNoz/signoz/pkg/analytics.key=9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr
-      - >-
-        {{- if eq .Os "linux" }}-linkmode external -extldflags '-static'{{- end }}
     mod_timestamp: "{{ .CommitTimestamp }}"
     tags:
       - timetzdata

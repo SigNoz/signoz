@@ -3,8 +3,8 @@ name: build-community
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+"
 
 defaults:
   run:
@@ -69,14 +69,13 @@ jobs:
       GO_BUILD_CONTEXT: ./cmd/community
       GO_BUILD_FLAGS: >-
         -tags timetzdata
-        -ldflags='-linkmode external -extldflags \"-static\" -s -w
+        -ldflags='-s -w
         -X github.com/SigNoz/signoz/pkg/version.version=${{ needs.prepare.outputs.version }}
         -X github.com/SigNoz/signoz/pkg/version.variant=community
         -X github.com/SigNoz/signoz/pkg/version.hash=${{ needs.prepare.outputs.hash }}
         -X github.com/SigNoz/signoz/pkg/version.time=${{ needs.prepare.outputs.time }}
         -X github.com/SigNoz/signoz/pkg/version.branch=${{ needs.prepare.outputs.branch }}
         -X github.com/SigNoz/signoz/pkg/analytics.key=9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr'
-      GO_CGO_ENABLED: 1
       DOCKER_BASE_IMAGES: '{"alpine": "alpine:3.20.3"}'
       DOCKER_DOCKERFILE_PATH: ./cmd/community/Dockerfile.multi-arch
       DOCKER_MANIFEST: true
