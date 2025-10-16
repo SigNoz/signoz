@@ -1,3 +1,5 @@
+import { UserResponse } from './getUser';
+
 export interface Props {
 	token: string;
 	password: string;
@@ -13,6 +15,6 @@ export interface LoginPrecheckResponse {
 }
 
 export interface PayloadProps {
-	data: LoginPrecheckResponse;
+	data: UserResponse;
 	status: string;
 }

@@ -261,18 +261,16 @@ describe('SpanDetailsDrawer', () => {
 		const logsButton = screen.getByRole('radio', { name: /logs/i });
 		fireEvent.click(logsButton);
 
-		// Wait for logs view to open
+		// Wait for logs view to open and logs to be displayed
 		await waitFor(() => {
 			expect(screen.getByTestId('overlay-scrollbar')).toBeInTheDocument();
-		});
-
-		// Verify logs are displayed
-		await waitFor(() => {
 			// eslint-disable-next-line sonarjs/no-duplicate-string
 			expect(screen.getByTestId('raw-log-span-log-1')).toBeInTheDocument();
+			// eslint-disable-next-line sonarjs/no-duplicate-string
 			expect(screen.getByTestId('raw-log-span-log-2')).toBeInTheDocument();
 			// eslint-disable-next-line sonarjs/no-duplicate-string
 			expect(screen.getByTestId('raw-log-context-log-before')).toBeInTheDocument();
+			// eslint-disable-next-line sonarjs/no-duplicate-string
 			expect(screen.getByTestId('raw-log-context-log-after')).toBeInTheDocument();
 		});
 	});
@@ -285,12 +283,9 @@ describe('SpanDetailsDrawer', () => {
 		fireEvent.click(logsButton);
 
 		// Wait for all API calls to complete
-		await waitFor(
-			() => {
-				expect(GetMetricQueryRange).toHaveBeenCalledTimes(3);
-			},
-			{ timeout: 5000 },
-		);
+		await waitFor(() => {
+			expect(GetMetricQueryRange).toHaveBeenCalledTimes(3);
+		});
 
 		// Verify the three distinct queries were made
 		const [spanQuery, beforeQuery, afterQuery] = apiCallHistory;
@@ -319,12 +314,9 @@ describe('SpanDetailsDrawer', () => {
 		fireEvent.click(logsButton);
 
 		// Wait for all API calls to complete
-		await waitFor(
-			() => {
-				expect(GetMetricQueryRange).toHaveBeenCalledTimes(3);
-			},
-			{ timeout: 5000 },
-		);
+		await waitFor(() => {
+			expect(GetMetricQueryRange).toHaveBeenCalledTimes(3);
+		});
 
 		const [spanQuery, beforeQuery, afterQuery] = apiCallHistory;
 
@@ -484,9 +476,17 @@ describe('SpanDetailsDrawer', () => {
 		const logsButton = screen.getByRole('radio', { name: /logs/i });
 		fireEvent.click(logsButton);
 
-		// Wait for logs to load
+		// Wait for all API calls to complete first
+		await waitFor(() => {
+			expect(GetMetricQueryRange).toHaveBeenCalledTimes(3);
+		});
+
+		// Wait for all logs to be rendered - both span logs and context logs
 		await waitFor(() => {
 			expect(screen.getByTestId('raw-log-span-log-1')).toBeInTheDocument();
+			expect(screen.getByTestId('raw-log-span-log-2')).toBeInTheDocument();
+			expect(screen.getByTestId('raw-log-context-log-before')).toBeInTheDocument();
+			expect(screen.getByTestId('raw-log-context-log-after')).toBeInTheDocument();
 		});
 
 		// Verify span logs are highlighted

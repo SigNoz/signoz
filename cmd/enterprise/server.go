@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/cmd"
+	"github.com/SigNoz/signoz/ee/authn/callbackauthn/oidccallbackauthn"
+	"github.com/SigNoz/signoz/ee/authn/callbackauthn/samlcallbackauthn"
 	enterpriselicensing "github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
 	enterpriseapp "github.com/SigNoz/signoz/ee/query-service/app"
@@ -14,6 +16,7 @@ import (
 	enterprisezeus "github.com/SigNoz/signoz/ee/zeus"
 	"github.com/SigNoz/signoz/ee/zeus/httpzeus"
 	"github.com/SigNoz/signoz/pkg/analytics"
+	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -54,17 +57,14 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 
 	// add enterprise sqlstore factories to the community sqlstore factories
 	sqlstoreFactories := signoz.NewSQLStoreProviderFactories()
-	if err := sqlstoreFactories.Add(postgressqlstore.NewFactory(sqlstorehook.NewLoggingFactory())); err != nil {
+	if err := sqlstoreFactories.Add(postgressqlstore.NewFactory(sqlstorehook.NewLoggingFactory(), sqlstorehook.NewInstrumentationFactory())); err != nil {
 		logger.ErrorContext(ctx, "failed to add postgressqlstore factory", "error", err)
 		return err
 	}
 
-	jwt := authtypes.NewJWT(cmd.NewJWTSecret(ctx, logger), 30*time.Minute, 30*24*time.Hour)
-
 	signoz, err := signoz.New(
 		ctx,
 		config,
-		jwt,
 		enterprisezeus.Config(),
 		httpzeus.NewProviderFactory(),
 		enterpriselicensing.Config(24*time.Hour, 3),
@@ -84,13 +84,34 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		},
 		sqlstoreFactories,
 		signoz.NewTelemetryStoreProviderFactories(),
+		func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error) {
+			samlCallbackAuthN, err := samlcallbackauthn.New(ctx, store, licensing)
+			if err != nil {
+				return nil, err
+			}
+
+			oidcCallbackAuthN, err := oidccallbackauthn.New(store, licensing, providerSettings)
+			if err != nil {
+				return nil, err
+			}
+
+			authNs, err := signoz.NewAuthNs(ctx, providerSettings, store, licensing)
+			if err != nil {
+				return nil, err
+			}
+
+			authNs[authtypes.AuthNProviderSAML] = samlCallbackAuthN
+			authNs[authtypes.AuthNProviderOIDC] = oidcCallbackAuthN
+
+			return authNs, nil
+		},
 	)
 	if err != nil {
 		logger.ErrorContext(ctx, "failed to create signoz", "error", err)
 		return err
 	}
 
-	server, err := enterpriseapp.NewServer(config, signoz, jwt)
+	server, err := enterpriseapp.NewServer(config, signoz)
 	if err != nil {
 		logger.ErrorContext(ctx, "failed to create server", "error", err)
 		return err

@@ -10,7 +10,6 @@ import LogsFilters from 'container/LogsFilters';
 import LogsSearchFilter from 'container/LogsSearchFilter';
 import LogsTable from 'container/LogsTable';
 import history from 'lib/history';
-import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -83,71 +82,69 @@ function OldLogsExplorer(): JSX.Element {
 	};
 
 	return (
-		<PreferenceContextProvider>
-			<div className="old-logs-explorer">
-				<SpaceContainer
-					split={<Divider type="vertical" />}
-					align="center"
-					direction="horizontal"
-				>
-					<LogsSearchFilter />
-					<LogLiveTail />
-				</SpaceContainer>
+		<div className="old-logs-explorer">
+			<SpaceContainer
+				split={<Divider type="vertical" />}
+				align="center"
+				direction="horizontal"
+			>
+				<LogsSearchFilter />
+				<LogLiveTail />
+			</SpaceContainer>
 
-				<LogsAggregate />
+			<LogsAggregate />
 
-				<Row gutter={20} wrap={false}>
-					<LogsFilters />
-					<Col flex={1} className="logs-col-container">
-						<Row>
-							<Col flex={1}>
-								<Space align="baseline" direction="horizontal">
-									<Select
+			<Row gutter={20} wrap={false}>
+				<LogsFilters />
+				<Col flex={1} className="logs-col-container">
+					<Row>
+						<Col flex={1}>
+							<Space align="baseline" direction="horizontal">
+								<Select
+									getPopupContainer={popupContainer}
+									style={defaultSelectStyle}
+									value={selectedViewModeOption}
+									onChange={onChangeVeiwMode}
+								>
+									{viewModeOptionList.map((option) => (
+										<Select.Option key={option.value}>{option.label}</Select.Option>
+									))}
+								</Select>
+
+								{isFormatButtonVisible && (
+									<Popover
 										getPopupContainer={popupContainer}
-										style={defaultSelectStyle}
-										value={selectedViewModeOption}
-										onChange={onChangeVeiwMode}
+										placement="right"
+										content={renderPopoverContent}
 									>
-										{viewModeOptionList.map((option) => (
-											<Select.Option key={option.value}>{option.label}</Select.Option>
-										))}
-									</Select>
+										<Button>Format</Button>
+									</Popover>
+								)}
 
-									{isFormatButtonVisible && (
-										<Popover
-											getPopupContainer={popupContainer}
-											placement="right"
-											content={renderPopoverContent}
-										>
-											<Button>Format</Button>
-										</Popover>
-									)}
+								<Select
+									getPopupContainer={popupContainer}
+									style={defaultSelectStyle}
+									defaultValue={order}
+									onChange={handleChangeOrder}
+								>
+									{orderItems.map((item) => (
+										<Select.Option key={item.enum}>{item.name}</Select.Option>
+									))}
+								</Select>
+							</Space>
+						</Col>
 
-									<Select
-										getPopupContainer={popupContainer}
-										style={defaultSelectStyle}
-										defaultValue={order}
-										onChange={handleChangeOrder}
-									>
-										{orderItems.map((item) => (
-											<Select.Option key={item.enum}>{item.name}</Select.Option>
-										))}
-									</Select>
-								</Space>
-							</Col>
+						<Col>
+							<LogControls />
+						</Col>
+					</Row>
 
-							<Col>
-								<LogControls />
-							</Col>
-						</Row>
+					<LogsTable viewMode={viewMode} linesPerRow={linesPerRow} />
+				</Col>
+			</Row>
 
-						<LogsTable viewMode={viewMode} linesPerRow={linesPerRow} />
-					</Col>
-				</Row>
-
-				<LogDetailedView />
-			</div>
-		</PreferenceContextProvider>
+			<LogDetailedView />
+		</div>
 	);
 }
 
