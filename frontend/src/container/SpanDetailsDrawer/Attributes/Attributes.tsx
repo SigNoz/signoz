@@ -83,39 +83,41 @@ function Attributes(props: IAttributesProps): JSX.Element {
 			<section
 				className={cx('attributes-container', isSearchVisible ? 'border-top' : '')}
 			>
-				{datasource.map((item) => (
-					<div
-						className={cx('item', { pinned: pinnedAttributes[item.field] })}
-						key={`${item.field} + ${item.value}`}
-					>
-						<div className="item-key-wrapper">
-							<Typography.Text className="item-key" ellipsis>
-								{item.field}
-							</Typography.Text>
-							{pinnedAttributes[item.field] && (
-								<Pin size={14} className="pin-icon" fill="currentColor" />
-							)}
-						</div>
-						<div className="value-wrapper">
-							<div className="copy-wrapper">
-								<CopyClipboardHOC
-									entityKey={item.value}
-									textToCopy={item.value}
-									tooltipText={item.value}
-								>
-									<Typography.Text className="item-value" ellipsis>
-										{item.value}
-									</Typography.Text>
-								</CopyClipboardHOC>
+				{datasource
+					.filter((item) => !!item.value)
+					.map((item) => (
+						<div
+							className={cx('item', { pinned: pinnedAttributes[item.field] })}
+							key={`${item.field} + ${item.value}`}
+						>
+							<div className="item-key-wrapper">
+								<Typography.Text className="item-key" ellipsis>
+									{item.field}
+								</Typography.Text>
+								{pinnedAttributes[item.field] && (
+									<Pin size={14} className="pin-icon" fill="currentColor" />
+								)}
 							</div>
-							<AttributeActions
-								record={item}
-								isPinned={pinnedAttributes[item.field]}
-								onTogglePin={togglePin}
-							/>
+							<div className="value-wrapper">
+								<div className="copy-wrapper">
+									<CopyClipboardHOC
+										entityKey={item.value}
+										textToCopy={item.value}
+										tooltipText={item.value}
+									>
+										<Typography.Text className="item-value" ellipsis>
+											{item.value}
+										</Typography.Text>
+									</CopyClipboardHOC>
+								</div>
+								<AttributeActions
+									record={item}
+									isPinned={pinnedAttributes[item.field]}
+									onTogglePin={togglePin}
+								/>
+							</div>
 						</div>
-					</div>
-				))}
+					))}
 			</section>
 		</div>
 	);
