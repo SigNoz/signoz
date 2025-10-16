@@ -162,6 +162,10 @@ export const getDefaultOption = (route: string): Time => {
 	if (route === ROUTES.APPLICATION) {
 		return Options[2].value;
 	}
+
+	if (route === ROUTES.METER) {
+		return Options[5].value;
+	}
 	return Options[2].value;
 };
 
