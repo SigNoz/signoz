@@ -86,7 +86,9 @@ function HeaderRightSection({
 						className="share-feedback-btn periscope-btn ghost"
 						icon={<SquarePen size={14} />}
 						onClick={handleOpenFeedbackModal}
-					/>
+					>
+						Feedback
+					</Button>
 				</Popover>
 			)}
 
