@@ -8,10 +8,10 @@ import (
 
 	"github.com/SigNoz/signoz-otel-collector/utils"
 
+	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
-	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
@@ -428,6 +428,11 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 }
 
 func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
+	constants.BodyV2QueryEnabled = true
+	defer func() {
+		constants.BodyV2QueryEnabled = false
+	}()
+
 	cases := []struct {
 		name                string
 		requestType         qbtypes.RequestType
@@ -435,36 +440,36 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		expected            qbtypes.Statement
 		expectedErrContains string
 	}{
-		// {
-		// 	name:        "Group By - x1",
-		// 	requestType: qbtypes.RequestTypeTimeSeries,
-		// 	query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-		// 		Signal:       telemetrytypes.SignalLogs,
-		// 		StepInterval: qbtypes.Step{Duration: 30 * time.Second},
-		// 		Aggregations: []qbtypes.LogAggregation{
-		// 			{
-		// 				Expression: "count()",
-		// 			},
-		// 		},
-		// 		Limit: 10,
-		// 		GroupBy: []qbtypes.GroupByKey{
-		// 			{
-		// 				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-		// 					Name: "body.education:awards:name",
-		// 				},
-		// 			},
-		// 			{
-		// 				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-		// 					Name: "body.interests:entities:reviews:entries:metadata:positions:ratings",
-		// 				},
-		// 			},
-		// 		},
-		// 	},
-		// 	expected: qbtypes.Statement{
-		// 		Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(dynamicElement(`body_v2:education`.awards.name, 'String')) AS `body.education:awards.name`, toString(dynamicElement(`body_v2:interests:entities:reviews:entries:metadata:positions`.ratings, 'Array(Nullable(Int64))')) AS `body.interests:entities:reviews:entries:metadata:positions:ratings`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 ARRAY JOIN dynamicElement(`body_v2`.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))') AS `body_v2:education` ARRAY JOIN dynamicElement(`body_v2`.interests, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))') AS `body_v2:interests` ARRAY JOIN dynamicElement(`body_v2:interests`.entities, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))') AS `body_v2:interests:entities` ARRAY JOIN dynamicElement(`body_v2:interests:entities`.reviews, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))') AS `body_v2:interests:entities:reviews` ARRAY JOIN dynamicElement(`body_v2:interests:entities:reviews`.entries, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))') AS `body_v2:interests:entities:reviews:entries` ARRAY JOIN dynamicElement(`body_v2:interests:entities:reviews:entries`.metadata, 'Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))') AS `body_v2:interests:entities:reviews:entries:metadata` ARRAY JOIN dynamicElement(`body_v2:interests:entities:reviews:entries:metadata`.positions, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))') AS `body_v2:interests:entities:reviews:entries:metadata:positions` WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `body.education:awards.name`, `body.interests:entities:reviews:entries:metadata:positions:ratings` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(dynamicElement(`body_v2:education`.awards.name, 'String')) AS `body.education:awards.name`, toString(dynamicElement(`body_v2:interests:entities:reviews:entries:metadata:positions`.ratings, 'Array(Nullable(Int64))')) AS `body.interests:entities:reviews:entries:metadata:positions:ratings`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 ARRAY JOIN dynamicElement(`body_v2`.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))') AS `body_v2:education` ARRAY JOIN dynamicElement(`body_v2`.interests, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))') AS `body_v2:interests` ARRAY JOIN dynamicElement(`body_v2:interests`.entities, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))') AS `body_v2:interests:entities` ARRAY JOIN dynamicElement(`body_v2:interests:entities`.reviews, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))') AS `body_v2:interests:entities:reviews` ARRAY JOIN dynamicElement(`body_v2:interests:entities:reviews`.entries, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))') AS `body_v2:interests:entities:reviews:entries` ARRAY JOIN dynamicElement(`body_v2:interests:entities:reviews:entries`.metadata, 'Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))') AS `body_v2:interests:entities:reviews:entries:metadata` ARRAY JOIN dynamicElement(`body_v2:interests:entities:reviews:entries:metadata`.positions, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))') AS `body_v2:interests:entities:reviews:entries:metadata:positions` WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`body.education:awards.name`, `body.interests:entities:reviews:entries:metadata:positions:ratings`) GLOBAL IN (SELECT `body.education:awards.name`, `body.interests:entities:reviews:entries:metadata:positions:ratings` FROM __limit_cte) GROUP BY ts, `body.education:awards.name`, `body.interests:entities:reviews:entries:metadata:positions:ratings`",
-		// 		Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
-		// 	},
-		// },
+		{
+			name:        "Group By - x1",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.LogAggregation{
+					{
+						Expression: "count()",
+					},
+				},
+				Limit: 10,
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "body.education:awards:name",
+						},
+					},
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "body.interests:entities:reviews:entries:metadata:positions:ratings",
+						},
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(dynamicElement(`body_v2:education`.awards.name, 'String')) AS `body.education:awards.name`, toString(dynamicElement(`body_v2:interests:entities:reviews:entries:metadata:positions`.ratings, 'Array(Nullable(Int64))')) AS `body.interests:entities:reviews:entries:metadata:positions:ratings`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 ARRAY JOIN dynamicElement(`body_v2`.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))') AS `body_v2:education` ARRAY JOIN dynamicElement(`body_v2`.interests, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))') AS `body_v2:interests` ARRAY JOIN dynamicElement(`body_v2:interests`.entities, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))') AS `body_v2:interests:entities` ARRAY JOIN dynamicElement(`body_v2:interests:entities`.reviews, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))') AS `body_v2:interests:entities:reviews` ARRAY JOIN dynamicElement(`body_v2:interests:entities:reviews`.entries, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))') AS `body_v2:interests:entities:reviews:entries` ARRAY JOIN dynamicElement(`body_v2:interests:entities:reviews:entries`.metadata, 'Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))') AS `body_v2:interests:entities:reviews:entries:metadata` ARRAY JOIN dynamicElement(`body_v2:interests:entities:reviews:entries:metadata`.positions, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))') AS `body_v2:interests:entities:reviews:entries:metadata:positions` WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `body.education:awards.name`, `body.interests:entities:reviews:entries:metadata:positions:ratings` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(dynamicElement(`body_v2:education`.awards.name, 'String')) AS `body.education:awards.name`, toString(dynamicElement(`body_v2:interests:entities:reviews:entries:metadata:positions`.ratings, 'Array(Nullable(Int64))')) AS `body.interests:entities:reviews:entries:metadata:positions:ratings`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 ARRAY JOIN dynamicElement(`body_v2`.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))') AS `body_v2:education` ARRAY JOIN dynamicElement(`body_v2`.interests, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))') AS `body_v2:interests` ARRAY JOIN dynamicElement(`body_v2:interests`.entities, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))') AS `body_v2:interests:entities` ARRAY JOIN dynamicElement(`body_v2:interests:entities`.reviews, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))') AS `body_v2:interests:entities:reviews` ARRAY JOIN dynamicElement(`body_v2:interests:entities:reviews`.entries, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))') AS `body_v2:interests:entities:reviews:entries` ARRAY JOIN dynamicElement(`body_v2:interests:entities:reviews:entries`.metadata, 'Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))') AS `body_v2:interests:entities:reviews:entries:metadata` ARRAY JOIN dynamicElement(`body_v2:interests:entities:reviews:entries:metadata`.positions, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))') AS `body_v2:interests:entities:reviews:entries:metadata:positions` WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`body.education:awards.name`, `body.interests:entities:reviews:entries:metadata:positions:ratings`) GLOBAL IN (SELECT `body.education:awards.name`, `body.interests:entities:reviews:entries:metadata:positions:ratings` FROM __limit_cte) GROUP BY ts, `body.education:awards.name`, `body.interests:entities:reviews:entries:metadata:positions:ratings`",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+			},
+		},
 		{
 			name:        "Group By - x2",
 			requestType: qbtypes.RequestTypeTimeSeries,
@@ -524,12 +529,8 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			// Create context with feature flag enabled
-			ctx := context.WithValue(context.Background(), "feature_flags", []*licensetypes.Feature{
-				{Name: licensetypes.BodyJSONQuery, Active: true},
-			})
 
-			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
 
 			if c.expectedErrContains != "" {
 				require.Error(t, err)
@@ -546,6 +547,11 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 }
 
 func TestStatementBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
+	constants.BodyV2QueryEnabled = true
+	defer func() {
+		constants.BodyV2QueryEnabled = false
+	}()
+
 	cases := []struct {
 		name                string
 		requestType         qbtypes.RequestType
@@ -676,13 +682,7 @@ func TestStatementBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			// Create context with feature flag enabled
-			ctx := context.WithValue(context.Background(), "feature_flags", []*licensetypes.Feature{
-				{Name: licensetypes.BodyJSONQuery, Active: true},
-			})
-
-			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, nil)
-
+			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
 			if c.expectedErrContains != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), c.expectedErrContains)
@@ -698,6 +698,11 @@ func TestStatementBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
 }
 
 func TestStatementBuilderListQueryBody(t *testing.T) {
+	constants.BodyV2QueryEnabled = true
+	defer func() {
+		constants.BodyV2QueryEnabled = false
+	}()
+
 	jqb := buildTestJSONQueryBuilder()
 	fm := NewFieldMapper()
 	// Enable JSONQueryBuilder for WHERE-only JSON body
@@ -936,6 +941,11 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 }
 
 func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
+	constants.BodyV2QueryEnabled = true
+	defer func() {
+		constants.BodyV2QueryEnabled = false
+	}()
+
 	jqb := buildTestJSONQueryBuilder()
 	// promote paths for testing
 	jqb.promotedPaths.Store("education", struct{}{})

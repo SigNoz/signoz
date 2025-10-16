@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -90,7 +91,7 @@ func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.Telemet
 			// check if the key has body JSON search
 			if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
 				// Use body_v2 if feature flag is enabled and we have a body condition builder
-				if IsBodyJSONQueryEnabled(ctx) {
+				if constants.BodyV2QueryEnabled {
 					return logsV2Columns["body_v2"], nil
 				}
 				// Fall back to legacy body column

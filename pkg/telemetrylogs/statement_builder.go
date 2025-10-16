@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -359,7 +360,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		var err error
 
 		// For body JSON fields with feature flag enabled, use array join logic
-		if strings.HasPrefix(gb.TelemetryFieldKey.Name, BodyJSONStringSearchPrefix) && IsBodyJSONQueryEnabled(ctx) {
+		if strings.HasPrefix(gb.TelemetryFieldKey.Name, BodyJSONStringSearchPrefix) && constants.BodyV2QueryEnabled {
 			// Build array join info for this field
 			groupbyInfo, err := b.jsonQueryBuilder.BuildGroupBy(ctx, &gb.TelemetryFieldKey)
 			if err != nil {
@@ -531,7 +532,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		var err error
 
 		// For body JSON fields with feature flag enabled, use array join logic
-		if strings.HasPrefix(gb.TelemetryFieldKey.Name, BodyJSONStringSearchPrefix) && IsBodyJSONQueryEnabled(ctx) {
+		if strings.HasPrefix(gb.TelemetryFieldKey.Name, BodyJSONStringSearchPrefix) && constants.BodyV2QueryEnabled{
 			// Build array join info for this field
 			groupbyInfo, err := b.jsonQueryBuilder.BuildGroupBy(ctx, &gb.TelemetryFieldKey)
 			if err != nil {
@@ -619,9 +620,6 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	}
 
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
-
-	// No extras stitched; body JSON WHERE-only
-	// NOTE: ARRAY JOIN emission will be integrated in a follow-up using raw SQL injection at FROM.
 
 	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 
