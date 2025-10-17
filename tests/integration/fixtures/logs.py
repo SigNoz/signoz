@@ -450,7 +450,7 @@ def ttl_legacy_logs_v2_table_setup(request, signoz: types.SigNoz):
     yield  # Test runs here
 
 @pytest.fixture(name="ttl_legacy_logs_v2_resource_table_setup", scope="function")
-def ttl_legacy_logs_v2_resource_table_setup(signoz: types.SigNoz):
+def ttl_legacy_logs_v2_resource_table_setup(request, signoz: types.SigNoz):
     """
     Fixture to setup and teardown legacy TTL test environment.
     It renames existing logs tables to backup names and creates new empty tables for testing.
