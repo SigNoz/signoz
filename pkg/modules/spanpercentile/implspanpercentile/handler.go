@@ -49,7 +49,6 @@ func (h *handler) GetSpanPercentileDetails(w http.ResponseWriter, r *http.Reques
 	render.Success(w, http.StatusOK, result)
 }
 
-// parseSpanPercentileRequestBody parses the request body for span percentile requests
 func parseSpanPercentileRequestBody(r *http.Request) (*spanpercentiletypes.SpanPercentileRequest, error) {
 	req := new(spanpercentiletypes.SpanPercentileRequest)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {

@@ -33,9 +33,7 @@ func (m *module) GetSpanPercentileDetails(ctx context.Context, orgID valuer.UUID
 		userID = valuer.MustNewUUID(claims.UserID)
 	}
 
-	// If additional resource attributes provided, save to user preferences
 	if len(req.AdditionalResourceAttrs) > 0 && !userID.IsZero() {
-		// Update preference asynchronously, don't fail the request if it fails
 		_ = m.preferenceModule.UpdateByUser(
 			ctx,
 			userID,
@@ -43,7 +41,6 @@ func (m *module) GetSpanPercentileDetails(ctx context.Context, orgID valuer.UUID
 			req.AdditionalResourceAttrs,
 		)
 	} else if len(req.AdditionalResourceAttrs) == 0 {
-		// No attributes provided, fetch from user preferences
 		if !userID.IsZero() {
 			pref, err := m.preferenceModule.GetByUser(
 				ctx,
@@ -51,7 +48,6 @@ func (m *module) GetSpanPercentileDetails(ctx context.Context, orgID valuer.UUID
 				preferencetypes.NameSpanPercentileAdditionalResourceAttributes,
 			)
 			if err == nil && pref != nil {
-				// Extract string array from preference value by marshaling and unmarshaling
 				valueJSON, err := pref.Value.MarshalJSON()
 				if err == nil {
 					var attrs []string
@@ -62,7 +58,6 @@ func (m *module) GetSpanPercentileDetails(ctx context.Context, orgID valuer.UUID
 			}
 		}
 
-		// Default fallback if still empty
 		if len(req.AdditionalResourceAttrs) == 0 {
 			req.AdditionalResourceAttrs = []string{"deployment.environment"}
 		}

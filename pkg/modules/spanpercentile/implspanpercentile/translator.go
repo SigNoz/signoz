@@ -91,7 +91,6 @@ func (b *spanPercentileCTEBuilder) buildTargetSpanCTE() {
 
 	sb := sqlbuilder.NewSelectBuilder()
 
-	// Always select mandatory fields
 	sb.Select(
 		"span_id",
 		"duration_nano",
@@ -99,9 +98,7 @@ func (b *spanPercentileCTEBuilder) buildTargetSpanCTE() {
 		sqlbuilder.Escape("resource_string_service$$name")+" AS service_name",
 	)
 
-	// Select additional resource attributes dynamically
 	for _, attr := range b.additionalResourceAttrs {
-		// Use resources_string map for dynamic attribute access
 		column := fmt.Sprintf("resources_string['%s'] AS %s", attr, b.escapeResourceAttr(attr))
 		sb.SelectMore(column)
 	}
@@ -126,7 +123,6 @@ func (b *spanPercentileCTEBuilder) buildMainQuery() (string, []any) {
 
 	sb := sqlbuilder.NewSelectBuilder()
 
-	// Select target span details
 	sb.Select(
 		"(SELECT span_id FROM target) AS span_id",
 		"(SELECT duration_nano FROM target) AS duration_nano",
@@ -135,13 +131,11 @@ func (b *spanPercentileCTEBuilder) buildMainQuery() (string, []any) {
 		"(SELECT service_name FROM target) AS service_name",
 	)
 
-	// Select additional resource attributes from target
 	for _, attr := range b.additionalResourceAttrs {
 		escapedAttr := b.escapeResourceAttr(attr)
 		sb.SelectMore(fmt.Sprintf("(SELECT %s FROM target) AS %s", escapedAttr, escapedAttr))
 	}
 
-	// Select percentile calculations
 	sb.SelectMore(
 		"quantile(0.5)(s.duration_nano) / 1000000.0 AS p50_duration_ms",
 		"quantile(0.9)(s.duration_nano) / 1000000.0 AS p90_duration_ms",
@@ -151,7 +145,6 @@ func (b *spanPercentileCTEBuilder) buildMainQuery() (string, []any) {
 
 	sb.From(fmt.Sprintf("%s.%s AS s", telemetrytraces.DBName, telemetrytraces.SpanIndexV3TableName))
 
-	// Time range filters
 	sb.Where(
 		sb.GE("s.timestamp", fmt.Sprintf("%d", b.start)),
 		sb.L("s.timestamp", fmt.Sprintf("%d", b.end)),
@@ -159,28 +152,21 @@ func (b *spanPercentileCTEBuilder) buildMainQuery() (string, []any) {
 		sb.LE("s.ts_bucket_start", endBucket),
 	)
 
-	// MANDATORY: Match span name
 	sb.Where("s.name = (SELECT name FROM target)")
-
-	// MANDATORY: Match service.name using materialized column
 	sb.Where(sqlbuilder.Escape("s.resource_string_service$$name")+" = (SELECT service_name FROM target)")
 
-	// OPTIONAL: Match additional user-selected resource attributes
 	for _, attr := range b.additionalResourceAttrs {
 		escapedAttr := b.escapeResourceAttr(attr)
 		condition := fmt.Sprintf("s.resources_string['%s'] = (SELECT %s FROM target)", attr, escapedAttr)
 		sb.Where(condition)
 	}
 
-	// Add SETTINGS clause
 	sb.SQL("SETTINGS max_threads = 12, min_bytes_to_use_direct_io = 1, use_query_cache = 0, enable_filesystem_cache = 0, use_query_condition_cache = 0")
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return query, args
 }
 
-// escapeResourceAttr converts resource attribute name to safe column alias
-// e.g., "deployment.environment" -> "deployment_environment"
 func (b *spanPercentileCTEBuilder) escapeResourceAttr(attr string) string {
 	return strings.ReplaceAll(attr, ".", "_")
 }

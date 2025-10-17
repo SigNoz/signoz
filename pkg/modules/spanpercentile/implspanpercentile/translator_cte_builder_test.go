@@ -2,10 +2,11 @@ package implspanpercentile
 
 import (
 	"fmt"
+	"testing"
+
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spanpercentiletypes"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestSpanPercentileCTEBuilder(t *testing.T) {
@@ -16,46 +17,43 @@ func TestSpanPercentileCTEBuilder(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			name: "basic span percentile query without filter",
+			name: "basic span percentile query with default deployment.environment",
 			request: &spanpercentiletypes.SpanPercentileRequest{
-				SpanID: "span123456789abcdef",
-				Start:  1640995200000,
-				End:    1640995800000,
+				SpanID:                  "span123456789abcdef",
+				Start:                   1640995200000,
+				End:                     1640995800000,
+				AdditionalResourceAttrs: []string{"deployment.environment"},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH base_spans AS (SELECT *, resource_string_service$$name AS `service.name` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= '1640995200000000000' AND timestamp < '1640995800000000000' AND ts_bucket_start >= 1640993400 AND ts_bucket_start <= 1640995800), target_span AS (SELECT duration_nano, name, `service.name` as service_name, resources_string['deployment.environment'] as deployment_environment FROM base_spans WHERE span_id = 'span123456789abcdef' LIMIT 1) SELECT 'span123456789abcdef' as span_id, t.duration_nano, t.duration_nano as duration_ms, t.name as span_name, t.service_name, t.deployment_environment, round((sum(multiIf(s.duration_nano < t.duration_nano, 1, 0)) * 100.0) / count(*), 2) as percentile_position, quantile(0.50)(s.duration_nano) as p50_duration_ms, quantile(0.90)(s.duration_nano) as p90_duration_ms, quantile(0.99)(s.duration_nano) as p99_duration_ms, count(*) as total_spans_in_group FROM target_span t CROSS JOIN base_spans s WHERE s.name = t.name AND s.`service.name` = t.service_name AND s.resources_string['deployment.environment'] = t.deployment_environment GROUP BY t.duration_nano, t.name, t.service_name, t.deployment_environment",
+				Query: "WITH target AS (SELECT span_id, duration_nano, name, `resource_string_service$$name` AS service_name, resources_string['deployment.environment'] AS deployment_environment FROM signoz_traces.distributed_signoz_index_v3 WHERE span_id = 'span123456789abcdef' AND timestamp >= '1640995200000000000' AND timestamp < '1640995800000000000' AND ts_bucket_start >= 1640993400 AND ts_bucket_start <= 1640995800 LIMIT 1) SELECT (SELECT span_id FROM target) AS span_id, (SELECT duration_nano FROM target) AS duration_nano, (SELECT duration_nano FROM target) / 1000000.0 AS duration_ms, (SELECT name FROM target) AS span_name, (SELECT service_name FROM target) AS service_name, (SELECT deployment_environment FROM target) AS deployment_environment, quantile(0.5)(s.duration_nano) / 1000000.0 AS p50_duration_ms, quantile(0.9)(s.duration_nano) / 1000000.0 AS p90_duration_ms, quantile(0.99)(s.duration_nano) / 1000000.0 AS p99_duration_ms, round((100.0 * countIf(s.duration_nano <= (SELECT duration_nano FROM target))) / count(), 2) AS percentile_position FROM signoz_traces.distributed_signoz_index_v3 AS s WHERE s.timestamp >= '1640995200000000000' AND s.timestamp < '1640995800000000000' AND s.ts_bucket_start >= 1640993400 AND s.ts_bucket_start <= 1640995800 AND s.name = (SELECT name FROM target) AND `s.resource_string_service$$name` = (SELECT service_name FROM target) AND s.resources_string['deployment.environment'] = (SELECT deployment_environment FROM target) SETTINGS max_threads = 12, min_bytes_to_use_direct_io = 1, use_query_cache = 0, enable_filesystem_cache = 0, use_query_condition_cache = 0",
 				Args:  nil,
 			},
 			expectedErr: nil,
 		},
 		{
-			name: "span percentile query with resource filter",
+			name: "span percentile query with multiple additional resource attributes",
 			request: &spanpercentiletypes.SpanPercentileRequest{
-				SpanID: "span987654321fedcba",
-				Start:  1640995200000,
-				End:    1640995800000,
-				Filter: &qbtypes.Filter{
-					Expression: "simpleJSONExtractString(labels, 'service.name') = 'frontend' AND labels LIKE '%service.name%' AND labels LIKE '%service.name\":\"frontend%'",
-				},
+				SpanID:                  "span987654321fedcba",
+				Start:                   1640995200000,
+				End:                     1640995800000,
+				AdditionalResourceAttrs: []string{"deployment.environment", "k8s.cluster.name"},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE seen_at_ts_bucket_start >= '1640993400' AND seen_at_ts_bucket_start <= '1640995800' AND (simpleJSONExtractString(labels, 'service.name') = 'frontend' AND labels LIKE '%service.name%' AND labels LIKE '%service.name\":\"frontend%')), base_spans AS (SELECT *, resource_string_service$$name AS `service.name` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= '1640995200000000000' AND timestamp < '1640995800000000000' AND ts_bucket_start >= 1640993400 AND ts_bucket_start <= 1640995800 AND resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)), target_span AS (SELECT duration_nano, name, `service.name` as service_name, resources_string['deployment.environment'] as deployment_environment FROM base_spans WHERE span_id = 'span987654321fedcba' LIMIT 1) SELECT 'span987654321fedcba' as span_id, t.duration_nano, t.duration_nano as duration_ms, t.name as span_name, t.service_name, t.deployment_environment, round((sum(multiIf(s.duration_nano < t.duration_nano, 1, 0)) * 100.0) / count(*), 2) as percentile_position, quantile(0.50)(s.duration_nano) as p50_duration_ms, quantile(0.90)(s.duration_nano) as p90_duration_ms, quantile(0.99)(s.duration_nano) as p99_duration_ms, count(*) as total_spans_in_group FROM target_span t CROSS JOIN base_spans s WHERE s.name = t.name AND s.`service.name` = t.service_name AND s.resources_string['deployment.environment'] = t.deployment_environment GROUP BY t.duration_nano, t.name, t.service_name, t.deployment_environment",
+				Query: "WITH target AS (SELECT span_id, duration_nano, name, `resource_string_service$$name` AS service_name, resources_string['deployment.environment'] AS deployment_environment, resources_string['k8s.cluster.name'] AS k8s_cluster_name FROM signoz_traces.distributed_signoz_index_v3 WHERE span_id = 'span987654321fedcba' AND timestamp >= '1640995200000000000' AND timestamp < '1640995800000000000' AND ts_bucket_start >= 1640993400 AND ts_bucket_start <= 1640995800 LIMIT 1) SELECT (SELECT span_id FROM target) AS span_id, (SELECT duration_nano FROM target) AS duration_nano, (SELECT duration_nano FROM target) / 1000000.0 AS duration_ms, (SELECT name FROM target) AS span_name, (SELECT service_name FROM target) AS service_name, (SELECT deployment_environment FROM target) AS deployment_environment, (SELECT k8s_cluster_name FROM target) AS k8s_cluster_name, quantile(0.5)(s.duration_nano) / 1000000.0 AS p50_duration_ms, quantile(0.9)(s.duration_nano) / 1000000.0 AS p90_duration_ms, quantile(0.99)(s.duration_nano) / 1000000.0 AS p99_duration_ms, round((100.0 * countIf(s.duration_nano <= (SELECT duration_nano FROM target))) / count(), 2) AS percentile_position FROM signoz_traces.distributed_signoz_index_v3 AS s WHERE s.timestamp >= '1640995200000000000' AND s.timestamp < '1640995800000000000' AND s.ts_bucket_start >= 1640993400 AND s.ts_bucket_start <= 1640995800 AND s.name = (SELECT name FROM target) AND `s.resource_string_service$$name` = (SELECT service_name FROM target) AND s.resources_string['deployment.environment'] = (SELECT deployment_environment FROM target) AND s.resources_string['k8s.cluster.name'] = (SELECT k8s_cluster_name FROM target) SETTINGS max_threads = 12, min_bytes_to_use_direct_io = 1, use_query_cache = 0, enable_filesystem_cache = 0, use_query_condition_cache = 0",
 				Args:  nil,
 			},
 			expectedErr: nil,
 		},
 		{
-			name: "span percentile query with simple resource filter",
+			name: "span percentile query with no additional attributes (only mandatory name and service.name)",
 			request: &spanpercentiletypes.SpanPercentileRequest{
-				SpanID: "simple-filter-span",
-				Start:  1641081600000,
-				End:    1641085200000,
-				Filter: &qbtypes.Filter{
-					Expression: "service.name = 'auth-service'",
-				},
+				SpanID:                  "simple-filter-span",
+				Start:                   1641081600000,
+				End:                     1641085200000,
+				AdditionalResourceAttrs: []string{},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE seen_at_ts_bucket_start >= '1641079800' AND seen_at_ts_bucket_start <= '1641085200' AND (service.name = 'auth-service')), base_spans AS (SELECT *, resource_string_service$$name AS `service.name` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= '1641081600000000000' AND timestamp < '1641085200000000000' AND ts_bucket_start >= 1641079800 AND ts_bucket_start <= 1641085200 AND resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)), target_span AS (SELECT duration_nano, name, `service.name` as service_name, resources_string['deployment.environment'] as deployment_environment FROM base_spans WHERE span_id = 'simple-filter-span' LIMIT 1) SELECT 'simple-filter-span' as span_id, t.duration_nano, t.duration_nano as duration_ms, t.name as span_name, t.service_name, t.deployment_environment, round((sum(multiIf(s.duration_nano < t.duration_nano, 1, 0)) * 100.0) / count(*), 2) as percentile_position, quantile(0.50)(s.duration_nano) as p50_duration_ms, quantile(0.90)(s.duration_nano) as p90_duration_ms, quantile(0.99)(s.duration_nano) as p99_duration_ms, count(*) as total_spans_in_group FROM target_span t CROSS JOIN base_spans s WHERE s.name = t.name AND s.`service.name` = t.service_name AND s.resources_string['deployment.environment'] = t.deployment_environment GROUP BY t.duration_nano, t.name, t.service_name, t.deployment_environment",
+				Query: "WITH target AS (SELECT span_id, duration_nano, name, `resource_string_service$$name` AS service_name FROM signoz_traces.distributed_signoz_index_v3 WHERE span_id = 'simple-filter-span' AND timestamp >= '1641081600000000000' AND timestamp < '1641085200000000000' AND ts_bucket_start >= 1641079800 AND ts_bucket_start <= 1641085200 LIMIT 1) SELECT (SELECT span_id FROM target) AS span_id, (SELECT duration_nano FROM target) AS duration_nano, (SELECT duration_nano FROM target) / 1000000.0 AS duration_ms, (SELECT name FROM target) AS span_name, (SELECT service_name FROM target) AS service_name, quantile(0.5)(s.duration_nano) / 1000000.0 AS p50_duration_ms, quantile(0.9)(s.duration_nano) / 1000000.0 AS p90_duration_ms, quantile(0.99)(s.duration_nano) / 1000000.0 AS p99_duration_ms, round((100.0 * countIf(s.duration_nano <= (SELECT duration_nano FROM target))) / count(), 2) AS percentile_position FROM signoz_traces.distributed_signoz_index_v3 AS s WHERE s.timestamp >= '1641081600000000000' AND s.timestamp < '1641085200000000000' AND s.ts_bucket_start >= 1641079800 AND s.ts_bucket_start <= 1641085200 AND s.name = (SELECT name FROM target) AND `s.resource_string_service$$name` = (SELECT service_name FROM target) SETTINGS max_threads = 12, min_bytes_to_use_direct_io = 1, use_query_cache = 0, enable_filesystem_cache = 0, use_query_condition_cache = 0",
 				Args:  nil,
 			},
 			expectedErr: nil,
@@ -63,28 +61,27 @@ func TestSpanPercentileCTEBuilder(t *testing.T) {
 		{
 			name: "span percentile query with longer time range",
 			request: &spanpercentiletypes.SpanPercentileRequest{
-				SpanID: "long-range-span",
-				Start:  1640995200000,
-				End:    1641099600000,
+				SpanID:                  "long-range-span",
+				Start:                   1640995200000,
+				End:                     1641099600000,
+				AdditionalResourceAttrs: []string{"deployment.environment"},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH base_spans AS (SELECT *, resource_string_service$$name AS `service.name` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= '1640995200000000000' AND timestamp < '1641099600000000000' AND ts_bucket_start >= 1640993400 AND ts_bucket_start <= 1641099600), target_span AS (SELECT duration_nano, name, `service.name` as service_name, resources_string['deployment.environment'] as deployment_environment FROM base_spans WHERE span_id = 'long-range-span' LIMIT 1) SELECT 'long-range-span' as span_id, t.duration_nano, t.duration_nano as duration_ms, t.name as span_name, t.service_name, t.deployment_environment, round((sum(multiIf(s.duration_nano < t.duration_nano, 1, 0)) * 100.0) / count(*), 2) as percentile_position, quantile(0.50)(s.duration_nano) as p50_duration_ms, quantile(0.90)(s.duration_nano) as p90_duration_ms, quantile(0.99)(s.duration_nano) as p99_duration_ms, count(*) as total_spans_in_group FROM target_span t CROSS JOIN base_spans s WHERE s.name = t.name AND s.`service.name` = t.service_name AND s.resources_string['deployment.environment'] = t.deployment_environment GROUP BY t.duration_nano, t.name, t.service_name, t.deployment_environment",
+				Query: "WITH target AS (SELECT span_id, duration_nano, name, `resource_string_service$$name` AS service_name, resources_string['deployment.environment'] AS deployment_environment FROM signoz_traces.distributed_signoz_index_v3 WHERE span_id = 'long-range-span' AND timestamp >= '1640995200000000000' AND timestamp < '1641099600000000000' AND ts_bucket_start >= 1640993400 AND ts_bucket_start <= 1641099600 LIMIT 1) SELECT (SELECT span_id FROM target) AS span_id, (SELECT duration_nano FROM target) AS duration_nano, (SELECT duration_nano FROM target) / 1000000.0 AS duration_ms, (SELECT name FROM target) AS span_name, (SELECT service_name FROM target) AS service_name, (SELECT deployment_environment FROM target) AS deployment_environment, quantile(0.5)(s.duration_nano) / 1000000.0 AS p50_duration_ms, quantile(0.9)(s.duration_nano) / 1000000.0 AS p90_duration_ms, quantile(0.99)(s.duration_nano) / 1000000.0 AS p99_duration_ms, round((100.0 * countIf(s.duration_nano <= (SELECT duration_nano FROM target))) / count(), 2) AS percentile_position FROM signoz_traces.distributed_signoz_index_v3 AS s WHERE s.timestamp >= '1640995200000000000' AND s.timestamp < '1641099600000000000' AND s.ts_bucket_start >= 1640993400 AND s.ts_bucket_start <= 1641099600 AND s.name = (SELECT name FROM target) AND `s.resource_string_service$$name` = (SELECT service_name FROM target) AND s.resources_string['deployment.environment'] = (SELECT deployment_environment FROM target) SETTINGS max_threads = 12, min_bytes_to_use_direct_io = 1, use_query_cache = 0, enable_filesystem_cache = 0, use_query_condition_cache = 0",
 				Args:  nil,
 			},
 			expectedErr: nil,
 		},
 		{
-			name: "span percentile query with complex filter expression",
+			name: "span percentile query with host.name attribute",
 			request: &spanpercentiletypes.SpanPercentileRequest{
-				SpanID: "complex-filter-span",
-				Start:  1641000000000,
-				End:    1641003600000,
-				Filter: &qbtypes.Filter{
-					Expression: "service.name IN ('frontend', 'backend') AND deployment.environment = 'production'",
-				},
+				SpanID:                  "host-filter-span",
+				Start:                   1641000000000,
+				End:                     1641003600000,
+				AdditionalResourceAttrs: []string{"host.name"},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE seen_at_ts_bucket_start >= '1640998200' AND seen_at_ts_bucket_start <= '1641003600' AND (service.name IN ('frontend', 'backend') AND deployment.environment = 'production')), base_spans AS (SELECT *, resource_string_service$$name AS `service.name` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= '1641000000000000000' AND timestamp < '1641003600000000000' AND ts_bucket_start >= 1640998200 AND ts_bucket_start <= 1641003600 AND resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)), target_span AS (SELECT duration_nano, name, `service.name` as service_name, resources_string['deployment.environment'] as deployment_environment FROM base_spans WHERE span_id = 'complex-filter-span' LIMIT 1) SELECT 'complex-filter-span' as span_id, t.duration_nano, t.duration_nano as duration_ms, t.name as span_name, t.service_name, t.deployment_environment, round((sum(multiIf(s.duration_nano < t.duration_nano, 1, 0)) * 100.0) / count(*), 2) as percentile_position, quantile(0.50)(s.duration_nano) as p50_duration_ms, quantile(0.90)(s.duration_nano) as p90_duration_ms, quantile(0.99)(s.duration_nano) as p99_duration_ms, count(*) as total_spans_in_group FROM target_span t CROSS JOIN base_spans s WHERE s.name = t.name AND s.`service.name` = t.service_name AND s.resources_string['deployment.environment'] = t.deployment_environment GROUP BY t.duration_nano, t.name, t.service_name, t.deployment_environment",
+				Query: "WITH target AS (SELECT span_id, duration_nano, name, `resource_string_service$$name` AS service_name, resources_string['host.name'] AS host_name FROM signoz_traces.distributed_signoz_index_v3 WHERE span_id = 'host-filter-span' AND timestamp >= '1641000000000000000' AND timestamp < '1641003600000000000' AND ts_bucket_start >= 1640998200 AND ts_bucket_start <= 1641003600 LIMIT 1) SELECT (SELECT span_id FROM target) AS span_id, (SELECT duration_nano FROM target) AS duration_nano, (SELECT duration_nano FROM target) / 1000000.0 AS duration_ms, (SELECT name FROM target) AS span_name, (SELECT service_name FROM target) AS service_name, (SELECT host_name FROM target) AS host_name, quantile(0.5)(s.duration_nano) / 1000000.0 AS p50_duration_ms, quantile(0.9)(s.duration_nano) / 1000000.0 AS p90_duration_ms, quantile(0.99)(s.duration_nano) / 1000000.0 AS p99_duration_ms, round((100.0 * countIf(s.duration_nano <= (SELECT duration_nano FROM target))) / count(), 2) AS percentile_position FROM signoz_traces.distributed_signoz_index_v3 AS s WHERE s.timestamp >= '1641000000000000000' AND s.timestamp < '1641003600000000000' AND s.ts_bucket_start >= 1640998200 AND s.ts_bucket_start <= 1641003600 AND s.name = (SELECT name FROM target) AND `s.resource_string_service$$name` = (SELECT service_name FROM target) AND s.resources_string['host.name'] = (SELECT host_name FROM target) SETTINGS max_threads = 12, min_bytes_to_use_direct_io = 1, use_query_cache = 0, enable_filesystem_cache = 0, use_query_condition_cache = 0",
 				Args:  nil,
 			},
 			expectedErr: nil,
@@ -94,11 +91,11 @@ func TestSpanPercentileCTEBuilder(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			builder := &spanPercentileCTEBuilder{
-				start:   c.request.Start * 1000000,
-				end:     c.request.End * 1000000,
-				spanID:  c.request.SpanID,
-				filter:  c.request.Filter,
-				request: c.request,
+				start:                   c.request.Start * 1000000,
+				end:                     c.request.End * 1000000,
+				spanID:                  c.request.SpanID,
+				additionalResourceAttrs: c.request.AdditionalResourceAttrs,
+				request:                 c.request,
 			}
 
 			stmt := builder.build()
@@ -140,16 +137,14 @@ func TestSpanPercentileCTEBuilderErrors(t *testing.T) {
 			expectedErr: "start time must be before end time",
 		},
 		{
-			name: "empty filter expression",
+			name: "empty resource attribute",
 			request: &spanpercentiletypes.SpanPercentileRequest{
-				SpanID: "valid-span-id",
-				Start:  1640995200000,
-				End:    1640995800000,
-				Filter: &qbtypes.Filter{
-					Expression: "",
-				},
+				SpanID:                  "valid-span-id",
+				Start:                   1640995200000,
+				End:                     1640995800000,
+				AdditionalResourceAttrs: []string{""},
 			},
-			expectedErr: "filter expression cannot be empty when filter is provided",
+			expectedErr: "resource attribute cannot be empty",
 		},
 	}
 
@@ -163,72 +158,72 @@ func TestSpanPercentileCTEBuilderErrors(t *testing.T) {
 }
 
 func TestSpanPercentileCTEBuilderComponents(t *testing.T) {
-
-	t.Run("test base spans CTE with filter", func(t *testing.T) {
+	t.Run("test target span CTE generation with additional attributes", func(t *testing.T) {
 		builder := &spanPercentileCTEBuilder{
-			start:  1640995200000000000,
-			end:    1640995800000000000,
-			spanID: "test-span",
-			filter: &qbtypes.Filter{
-				Expression: "service.name = 'filtered-service'",
-			},
-		}
-
-		builder.buildResourceFilterCTE()
-		builder.buildBaseSpansCTE()
-		require.Len(t, builder.ctes, 2)
-
-		baseSpansCTE := builder.ctes[1]
-		require.Equal(t, "base_spans", baseSpansCTE.name)
-		require.Contains(t, baseSpansCTE.sql, "resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
-	})
-
-	t.Run("test target span CTE generation", func(t *testing.T) {
-		builder := &spanPercentileCTEBuilder{
-			start:  1640995200000000000,
-			end:    1640995800000000000,
-			spanID: "target-span-123",
+			start:                   1640995200000000000,
+			end:                     1640995800000000000,
+			spanID:                  "target-span-123",
+			additionalResourceAttrs: []string{"deployment.environment", "k8s.namespace"},
 		}
 
 		builder.buildTargetSpanCTE()
 		require.Len(t, builder.ctes, 1)
 
 		cte := builder.ctes[0]
-		require.Equal(t, "target_span", cte.name)
-		require.Contains(t, cte.sql, "SELECT duration_nano, name, `service.name` as service_name")
-		require.Contains(t, cte.sql, "resources_string['deployment.environment'] as deployment_environment")
-		require.Contains(t, cte.sql, "FROM base_spans")
+		require.Equal(t, "target", cte.name)
+		require.Contains(t, cte.sql, "SELECT span_id, duration_nano, name, `resource_string_service$$name` AS service_name")
+		require.Contains(t, cte.sql, "resources_string['deployment.environment'] AS deployment_environment")
+		require.Contains(t, cte.sql, "resources_string['k8s.namespace'] AS k8s_namespace")
+		require.Contains(t, cte.sql, "FROM signoz_traces.distributed_signoz_index_v3")
 		require.Contains(t, cte.sql, "span_id = 'target-span-123'")
 		require.Contains(t, cte.sql, "LIMIT 1")
 	})
 
-	t.Run("test main query generation", func(t *testing.T) {
+	t.Run("test target span CTE generation without additional attributes", func(t *testing.T) {
 		builder := &spanPercentileCTEBuilder{
-			spanID: "main-query-span",
+			start:                   1640995200000000000,
+			end:                     1640995800000000000,
+			spanID:                  "target-span-456",
+			additionalResourceAttrs: []string{},
+		}
+
+		builder.buildTargetSpanCTE()
+		require.Len(t, builder.ctes, 1)
+
+		cte := builder.ctes[0]
+		require.Equal(t, "target", cte.name)
+		require.Contains(t, cte.sql, "SELECT span_id, duration_nano, name, `resource_string_service$$name` AS service_name")
+		require.NotContains(t, cte.sql, "deployment.environment")
+	})
+
+	t.Run("test main query generation with additional attributes", func(t *testing.T) {
+		builder := &spanPercentileCTEBuilder{
+			start:                   1640995200000000000,
+			end:                     1640995800000000000,
+			spanID:                  "main-query-span",
+			additionalResourceAttrs: []string{"deployment.environment"},
 		}
 
 		query, args := builder.buildMainQuery()
 
-		require.Contains(t, query, "'main-query-span' as span_id")
-		require.Contains(t, query, "t.duration_nano")
-		require.Contains(t, query, "t.duration_nano as duration_ms")
-		require.Contains(t, query, "t.name as span_name")
-		require.Contains(t, query, "t.service_name")
-		require.Contains(t, query, "t.deployment_environment")
-		require.Contains(t, query, "round((sum(multiIf(s.duration_nano < t.duration_nano, 1, 0)) * 100.0) / count(*), 2) as percentile_position")
-		require.Contains(t, query, "quantile(0.50)(s.duration_nano) as p50_duration_ms")
-		require.Contains(t, query, "quantile(0.90)(s.duration_nano) as p90_duration_ms")
-		require.Contains(t, query, "quantile(0.99)(s.duration_nano) as p99_duration_ms")
-		require.Contains(t, query, "count(*) as total_spans_in_group")
+		require.Contains(t, query, "(SELECT span_id FROM target) AS span_id")
+		require.Contains(t, query, "(SELECT duration_nano FROM target) AS duration_nano")
+		require.Contains(t, query, "(SELECT duration_nano FROM target) / 1000000.0 AS duration_ms")
+		require.Contains(t, query, "(SELECT name FROM target) AS span_name")
+		require.Contains(t, query, "(SELECT service_name FROM target) AS service_name")
+		require.Contains(t, query, "(SELECT deployment_environment FROM target) AS deployment_environment")
+		require.Contains(t, query, "round((100.0 * countIf(s.duration_nano <= (SELECT duration_nano FROM target))) / count(), 2) AS percentile_position")
+		require.Contains(t, query, "quantile(0.5)(s.duration_nano) / 1000000.0 AS p50_duration_ms")
+		require.Contains(t, query, "quantile(0.9)(s.duration_nano) / 1000000.0 AS p90_duration_ms")
+		require.Contains(t, query, "quantile(0.99)(s.duration_nano) / 1000000.0 AS p99_duration_ms")
 
-		require.Contains(t, query, "FROM target_span t")
-		require.Contains(t, query, "CROSS JOIN base_spans s")
+		require.Contains(t, query, "FROM signoz_traces.distributed_signoz_index_v3 AS s")
 
-		require.Contains(t, query, "s.name = t.name")
-		require.Contains(t, query, "s.`service.name` = t.service_name")
-		require.Contains(t, query, "s.resources_string['deployment.environment'] = t.deployment_environment")
+		require.Contains(t, query, "s.name = (SELECT name FROM target)")
+		require.Contains(t, query, "`s.resource_string_service$$name` = (SELECT service_name FROM target)")
+		require.Contains(t, query, "s.resources_string['deployment.environment'] = (SELECT deployment_environment FROM target)")
 
-		require.Contains(t, query, "GROUP BY t.duration_nano, t.name, t.service_name, t.deployment_environment")
+		require.Contains(t, query, "SETTINGS max_threads = 12")
 
 		require.Empty(t, args)
 	})
@@ -271,6 +266,28 @@ func TestSpanPercentileCTEBuilderComponents(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				result := builder.interpolateArgs(tc.sql, tc.args)
+				require.Equal(t, tc.expected, result)
+			})
+		}
+	})
+
+	t.Run("test escapeResourceAttr", func(t *testing.T) {
+		builder := &spanPercentileCTEBuilder{}
+
+		testCases := []struct {
+			input    string
+			expected string
+		}{
+			{"deployment.environment", "deployment_environment"},
+			{"k8s.cluster.name", "k8s_cluster_name"},
+			{"host.name", "host_name"},
+			{"service.name", "service_name"},
+			{"simple", "simple"},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.input, func(t *testing.T) {
+				result := builder.escapeResourceAttr(tc.input)
 				require.Equal(t, tc.expected, result)
 			})
 		}

@@ -20,7 +20,6 @@ func (req *SpanPercentileRequest) Validate() error {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "start time must be before end time")
 	}
 
-	// Validate resource attributes are valid attribute names
 	for _, attr := range req.AdditionalResourceAttrs {
 		if attr == "" {
 			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "resource attribute cannot be empty")
