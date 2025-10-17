@@ -456,9 +456,6 @@ export const getUPlotChartOptions = ({
 			],
 			ready: [
 				(self): void => {
-					// Initialize cleanup array for tracking all event listeners
-					(self as ExtendedUPlot)._legendCleanups = [];
-
 					// Add CSS classes to the uPlot container based on legend position
 					const uplotContainer = self.root;
 					if (uplotContainer) {
