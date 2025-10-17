@@ -416,7 +416,7 @@ def insert_logs(
 
 
 @pytest.fixture(name="ttl_legacy_logs_v2_table_setup", scope="function")
-def ttl_legacy_logs_v2_table_setup(signoz: types.SigNoz):
+def ttl_legacy_logs_v2_table_setup(request, signoz: types.SigNoz):
     """
     Fixture to setup and teardown legacy TTL test environment.
     It renames existing logs tables to backup names and creates new empty tables for testing.
@@ -428,6 +428,8 @@ def ttl_legacy_logs_v2_table_setup(signoz: types.SigNoz):
         "RENAME TABLE signoz_logs.logs_v2 TO signoz_logs.logs_v2_backup;"
     ).result_rows
     assert result is not None
+    # Add cleanup to restore original table
+    request.addfinalizer(lambda:  signoz.telemetrystore.conn.query("RENAME TABLE signoz_logs.logs_v2_backup TO signoz_logs.logs_v2;"))
 
     # Create new test tables
     result = signoz.telemetrystore.conn.query(
@@ -442,15 +444,10 @@ def ttl_legacy_logs_v2_table_setup(signoz: types.SigNoz):
     ).result_rows
 
     assert result is not None
+    # Add cleanup to drop test table
+    request.addfinalizer(lambda:  signoz.telemetrystore.conn.query("DROP TABLE IF EXISTS signoz_logs.logs_v2;"))
 
     yield  # Test runs here
-
-    # Teardown code (restores original tables)
-    signoz.telemetrystore.conn.query("DROP TABLE signoz_logs.logs_v2;")
-    signoz.telemetrystore.conn.query(
-        "RENAME TABLE signoz_logs.logs_v2_backup TO signoz_logs.logs_v2;"
-    )
-
 
 @pytest.fixture(name="ttl_legacy_logs_v2_resource_table_setup", scope="function")
 def ttl_legacy_logs_v2_resource_table_setup(signoz: types.SigNoz):
@@ -465,6 +462,8 @@ def ttl_legacy_logs_v2_resource_table_setup(signoz: types.SigNoz):
         "RENAME TABLE signoz_logs.logs_v2_resource TO signoz_logs.logs_v2_resource_backup;"
     ).result_rows
     assert result is not None
+    # Add cleanup to restore original table
+    request.addfinalizer(lambda:  signoz.telemetrystore.conn.query("RENAME TABLE signoz_logs.logs_v2_resource_backup TO signoz_logs.logs_v2_resource;"))
 
     # Create new test tables
     result = signoz.telemetrystore.conn.query(
@@ -478,11 +477,7 @@ def ttl_legacy_logs_v2_resource_table_setup(signoz: types.SigNoz):
     ).result_rows
 
     assert result is not None
+    # Add cleanup to drop test table
+    request.addfinalizer(lambda:  signoz.telemetrystore.conn.query("DROP TABLE IF EXISTS signoz_logs.logs_v2_resource;"))
 
     yield  # Test runs here
-
-    # Teardown code (restores original tables)
-    signoz.telemetrystore.conn.query("DROP TABLE signoz_logs.logs_v2_resource;")
-    signoz.telemetrystore.conn.query(
-        "RENAME TABLE signoz_logs.logs_v2_resource_backup TO signoz_logs.logs_v2_resource;"
-    )
