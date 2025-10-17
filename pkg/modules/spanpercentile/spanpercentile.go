@@ -15,4 +15,5 @@ type Module interface {
 
 type Handler interface {
 	GetSpanPercentileDetails(http.ResponseWriter, *http.Request)
+	GetAdditionalResourceAttributes(http.ResponseWriter, *http.Request)
 }

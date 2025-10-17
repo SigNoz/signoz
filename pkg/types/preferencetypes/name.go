@@ -8,18 +8,19 @@ import (
 )
 
 var (
-	NameOrgOnboarding                           = Name{valuer.NewString("org_onboarding")}
-	NameWelcomeChecklistDoLater                 = Name{valuer.NewString("welcome_checklist_do_later")}
-	NameWelcomeChecklistSendLogsSkipped         = Name{valuer.NewString("welcome_checklist_send_logs_skipped")}
-	NameWelcomeChecklistSendTracesSkipped       = Name{valuer.NewString("welcome_checklist_send_traces_skipped")}
-	NameWelcomeChecklistSendInfraMetricsSkipped = Name{valuer.NewString("welcome_checklist_send_infra_metrics_skipped")}
-	NameWelcomeChecklistSetupDashboardsSkipped  = Name{valuer.NewString("welcome_checklist_setup_dashboards_skipped")}
-	NameWelcomeChecklistSetupAlertsSkipped      = Name{valuer.NewString("welcome_checklist_setup_alerts_skipped")}
-	NameWelcomeChecklistSetupSavedViewSkipped   = Name{valuer.NewString("welcome_checklist_setup_saved_view_skipped")}
-	NameSidenavPinned                           = Name{valuer.NewString("sidenav_pinned")}
-	NameNavShortcuts                            = Name{valuer.NewString("nav_shortcuts")}
-	NameLastSeenChangelogVersion                = Name{valuer.NewString("last_seen_changelog_version")}
-	NameSpanDetailsPinnedAttributes             = Name{valuer.NewString("span_details_pinned_attributes")}
+	NameOrgOnboarding                                    = Name{valuer.NewString("org_onboarding")}
+	NameWelcomeChecklistDoLater                          = Name{valuer.NewString("welcome_checklist_do_later")}
+	NameWelcomeChecklistSendLogsSkipped                  = Name{valuer.NewString("welcome_checklist_send_logs_skipped")}
+	NameWelcomeChecklistSendTracesSkipped                = Name{valuer.NewString("welcome_checklist_send_traces_skipped")}
+	NameWelcomeChecklistSendInfraMetricsSkipped          = Name{valuer.NewString("welcome_checklist_send_infra_metrics_skipped")}
+	NameWelcomeChecklistSetupDashboardsSkipped           = Name{valuer.NewString("welcome_checklist_setup_dashboards_skipped")}
+	NameWelcomeChecklistSetupAlertsSkipped               = Name{valuer.NewString("welcome_checklist_setup_alerts_skipped")}
+	NameWelcomeChecklistSetupSavedViewSkipped            = Name{valuer.NewString("welcome_checklist_setup_saved_view_skipped")}
+	NameSidenavPinned                                    = Name{valuer.NewString("sidenav_pinned")}
+	NameNavShortcuts                                     = Name{valuer.NewString("nav_shortcuts")}
+	NameLastSeenChangelogVersion                         = Name{valuer.NewString("last_seen_changelog_version")}
+	NameSpanDetailsPinnedAttributes                      = Name{valuer.NewString("span_details_pinned_attributes")}
+	NameSpanPercentileAdditionalResourceAttributes       = Name{valuer.NewString("span_percentile_additional_resource_attributes")}
 )
 
 type Name struct{ valuer.String }
@@ -39,6 +40,7 @@ func NewName(name string) (Name, error) {
 			NameNavShortcuts.StringValue(),
 			NameLastSeenChangelogVersion.StringValue(),
 			NameSpanDetailsPinnedAttributes.StringValue(),
+			NameSpanPercentileAdditionalResourceAttributes.StringValue(),
 		},
 		name,
 	)

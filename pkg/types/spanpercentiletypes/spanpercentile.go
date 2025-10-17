@@ -2,14 +2,13 @@ package spanpercentiletypes
 
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 type SpanPercentileRequest struct {
-	SpanID string          `json:"span_id"`
-	Start  uint64          `json:"start"`
-	End    uint64          `json:"end"`
-	Filter *qbtypes.Filter `json:"filters,omitempty"`
+	SpanID                  string   `json:"span_id"`
+	Start                   uint64   `json:"start"`
+	End                     uint64   `json:"end"`
+	AdditionalResourceAttrs []string `json:"additional_resource_attrs,omitempty"`
 }
 
 func (req *SpanPercentileRequest) Validate() error {
@@ -21,8 +20,11 @@ func (req *SpanPercentileRequest) Validate() error {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "start time must be before end time")
 	}
 
-	if req.Filter != nil && req.Filter.Expression == "" {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "filter expression cannot be empty when filter is provided")
+	// Validate resource attributes are valid attribute names
+	for _, attr := range req.AdditionalResourceAttrs {
+		if attr == "" {
+			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "resource attribute cannot be empty")
+		}
 	}
 
 	return nil

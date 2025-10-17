@@ -56,6 +56,6 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Han
 		RawDataExport:  implrawdataexport.NewHandler(modules.RawDataExport),
     AuthDomain:    implauthdomain.NewHandler(modules.AuthDomain),
 		Session:       implsession.NewHandler(modules.Session),
-		SpanPercentile: implspanpercentile.NewHandler(modules.SpanPercentile),
+		SpanPercentile: implspanpercentile.NewHandler(modules.SpanPercentile, modules.Preference),
 	}
 }

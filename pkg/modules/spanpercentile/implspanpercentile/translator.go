@@ -3,7 +3,6 @@ package implspanpercentile
 import (
 	"fmt"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spanpercentiletypes"
@@ -17,11 +16,11 @@ func buildSpanPercentileQuery(req *spanpercentiletypes.SpanPercentileRequest) (*
 	}
 
 	builder := &spanPercentileCTEBuilder{
-		start:   querybuilder.ToNanoSecs(req.Start),
-		end:     querybuilder.ToNanoSecs(req.End),
-		spanID:  req.SpanID,
-		filter:  req.Filter,
-		request: req,
+		start:                   querybuilder.ToNanoSecs(req.Start),
+		end:                     querybuilder.ToNanoSecs(req.End),
+		spanID:                  req.SpanID,
+		additionalResourceAttrs: req.AdditionalResourceAttrs,
+		request:                 req,
 	}
 
 	stmt := builder.build()
@@ -55,19 +54,16 @@ type cteNode struct {
 }
 
 type spanPercentileCTEBuilder struct {
-	start   uint64
-	end     uint64
-	spanID  string
-	filter  *qbtypes.Filter
-	request *spanpercentiletypes.SpanPercentileRequest
-	ctes    []cteNode
+	start                   uint64
+	end                     uint64
+	spanID                  string
+	additionalResourceAttrs []string
+	request                 *spanpercentiletypes.SpanPercentileRequest
+	ctes                    []cteNode
 }
 
 func (b *spanPercentileCTEBuilder) build() *qbtypes.Statement {
-	b.buildResourceFilterCTE()
-	b.buildBaseSpansCTE()
 	b.buildTargetSpanCTE()
-
 	mainSQL, mainArgs := b.buildMainQuery()
 
 	var cteFragments []string
@@ -89,99 +85,104 @@ func (b *spanPercentileCTEBuilder) build() *qbtypes.Statement {
 	}
 }
 
-func (b *spanPercentileCTEBuilder) buildResourceFilterCTE() {
-	if b.filter == nil || b.filter.Expression == "" {
-		return
+func (b *spanPercentileCTEBuilder) buildTargetSpanCTE() {
+	startBucket := b.start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
+	endBucket := b.end / querybuilder.NsToSeconds
+
+	sb := sqlbuilder.NewSelectBuilder()
+
+	// Always select mandatory fields
+	sb.Select(
+		"span_id",
+		"duration_nano",
+		"name",
+		sqlbuilder.Escape("resource_string_service$$name")+" AS service_name",
+	)
+
+	// Select additional resource attributes dynamically
+	for _, attr := range b.additionalResourceAttrs {
+		// Use resources_string map for dynamic attribute access
+		column := fmt.Sprintf("resources_string['%s'] AS %s", attr, b.escapeResourceAttr(attr))
+		sb.SelectMore(column)
 	}
 
-	startBucket := b.start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
-	endBucket := b.end / querybuilder.NsToSeconds
-
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("fingerprint")
-	sb.From(fmt.Sprintf("%s.%s", resourcefilter.TracesDBName, resourcefilter.TraceResourceV3TableName))
-	sb.Where(
-		sb.GE("seen_at_ts_bucket_start", fmt.Sprintf("%d", startBucket)),
-		sb.LE("seen_at_ts_bucket_start", fmt.Sprintf("%d", endBucket)),
-	)
-	sb.Where(fmt.Sprintf("(%s)", b.filter.Expression))
-
-	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	b.addCTE("__resource_filter", sql, args)
-}
-
-func (b *spanPercentileCTEBuilder) buildBaseSpansCTE() {
-	startBucket := b.start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
-	endBucket := b.end / querybuilder.NsToSeconds
-
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("*")
-	sb.SelectMore(sqlbuilder.Escape("resource_string_service$$name") + " AS `service.name`")
 	sb.From(fmt.Sprintf("%s.%s", telemetrytraces.DBName, telemetrytraces.SpanIndexV3TableName))
 	sb.Where(
+		sb.Equal("span_id", b.spanID),
 		sb.GE("timestamp", fmt.Sprintf("%d", b.start)),
 		sb.L("timestamp", fmt.Sprintf("%d", b.end)),
 		sb.GE("ts_bucket_start", startBucket),
 		sb.LE("ts_bucket_start", endBucket),
 	)
-
-	if b.filter != nil && b.filter.Expression != "" {
-		sb.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
-	}
-
-	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	b.addCTE("base_spans", sql, args)
-}
-
-func (b *spanPercentileCTEBuilder) buildTargetSpanCTE() {
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select(
-		"duration_nano",
-		"name",
-		"`service.name` as service_name",
-		"resources_string['deployment.environment'] as deployment_environment",
-	)
-	sb.From("base_spans")
-	sb.Where(fmt.Sprintf("span_id = '%s'", b.spanID))
 	sb.SQL("LIMIT 1")
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	b.addCTE("target_span", sql, args)
+	b.addCTE("target", sql, args)
 }
 
 func (b *spanPercentileCTEBuilder) buildMainQuery() (string, []any) {
+	startBucket := b.start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
+	endBucket := b.end / querybuilder.NsToSeconds
+
 	sb := sqlbuilder.NewSelectBuilder()
+
+	// Select target span details
 	sb.Select(
-		fmt.Sprintf("'%s' as span_id", b.spanID),
-		"t.duration_nano",
-		"t.duration_nano as duration_ms",
-		"t.name as span_name",
-		"t.service_name",
-		"t.deployment_environment",
-		"round((sum(multiIf(s.duration_nano < t.duration_nano, 1, 0)) * 100.0) / count(*), 2) as percentile_position",
-		"quantile(0.50)(s.duration_nano) as p50_duration_ms",
-		"quantile(0.90)(s.duration_nano) as p90_duration_ms",
-		"quantile(0.99)(s.duration_nano) as p99_duration_ms",
-		"count(*) as total_spans_in_group",
+		"(SELECT span_id FROM target) AS span_id",
+		"(SELECT duration_nano FROM target) AS duration_nano",
+		"(SELECT duration_nano FROM target) / 1000000.0 AS duration_ms",
+		"(SELECT name FROM target) AS span_name",
+		"(SELECT service_name FROM target) AS service_name",
 	)
 
-	sb.SQL("FROM target_span t")
-	sb.SQL("CROSS JOIN base_spans s")
+	// Select additional resource attributes from target
+	for _, attr := range b.additionalResourceAttrs {
+		escapedAttr := b.escapeResourceAttr(attr)
+		sb.SelectMore(fmt.Sprintf("(SELECT %s FROM target) AS %s", escapedAttr, escapedAttr))
+	}
+
+	// Select percentile calculations
+	sb.SelectMore(
+		"quantile(0.5)(s.duration_nano) / 1000000.0 AS p50_duration_ms",
+		"quantile(0.9)(s.duration_nano) / 1000000.0 AS p90_duration_ms",
+		"quantile(0.99)(s.duration_nano) / 1000000.0 AS p99_duration_ms",
+		"round((100.0 * countIf(s.duration_nano <= (SELECT duration_nano FROM target))) / count(), 2) AS percentile_position",
+	)
+
+	sb.From(fmt.Sprintf("%s.%s AS s", telemetrytraces.DBName, telemetrytraces.SpanIndexV3TableName))
+
+	// Time range filters
 	sb.Where(
-		"s.name = t.name",
-		"s.`service.name` = t.service_name",
-		"s.resources_string['deployment.environment'] = t.deployment_environment",
+		sb.GE("s.timestamp", fmt.Sprintf("%d", b.start)),
+		sb.L("s.timestamp", fmt.Sprintf("%d", b.end)),
+		sb.GE("s.ts_bucket_start", startBucket),
+		sb.LE("s.ts_bucket_start", endBucket),
 	)
 
-	sb.GroupBy(
-		"t.duration_nano",
-		"t.name",
-		"t.service_name",
-		"t.deployment_environment",
-	)
+	// MANDATORY: Match span name
+	sb.Where("s.name = (SELECT name FROM target)")
+
+	// MANDATORY: Match service.name using materialized column
+	sb.Where(sqlbuilder.Escape("s.resource_string_service$$name")+" = (SELECT service_name FROM target)")
+
+	// OPTIONAL: Match additional user-selected resource attributes
+	for _, attr := range b.additionalResourceAttrs {
+		escapedAttr := b.escapeResourceAttr(attr)
+		condition := fmt.Sprintf("s.resources_string['%s'] = (SELECT %s FROM target)", attr, escapedAttr)
+		sb.Where(condition)
+	}
+
+	// Add SETTINGS clause
+	sb.SQL("SETTINGS max_threads = 12, min_bytes_to_use_direct_io = 1, use_query_cache = 0, enable_filesystem_cache = 0, use_query_condition_cache = 0")
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return query, args
+}
+
+// escapeResourceAttr converts resource attribute name to safe column alias
+// e.g., "deployment.environment" -> "deployment_environment"
+func (b *spanPercentileCTEBuilder) escapeResourceAttr(attr string) string {
+	return strings.ReplaceAll(attr, ".", "_")
 }
 
 func (b *spanPercentileCTEBuilder) addCTE(name, sql string, args []any) {
