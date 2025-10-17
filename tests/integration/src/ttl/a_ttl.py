@@ -294,7 +294,7 @@ def test_set_custom_retention_ttl_basic(
 
 def test_set_custom_retention_ttl_basic_fallback(
     signoz: types.SigNoz,
-    get_jwt_token,
+    get_token,
     ttl_legacy_logs_v2_table_setup, # pylint: disable=unused-argument
     ttl_legacy_logs_v2_resource_table_setup, # pylint: disable=unused-argument
 ):
@@ -309,7 +309,7 @@ def test_set_custom_retention_ttl_basic_fallback(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -351,7 +351,7 @@ def test_set_custom_retention_ttl_basic_fallback(
     assert all("toIntervalSecond(8640000)" in ttl_part for ttl_part in ttl_parts)
 
 
-def test_set_custom_retention_ttl_basic_101_times(signoz: types.SigNoz, get_jwt_token):
+def test_set_custom_retention_ttl_basic_101_times(signoz: types.SigNoz, get_token):
     """Test setting custom retention TTL with basic configuration to trigger housekeeping."""
 
     for _ in range(101):
@@ -364,7 +364,7 @@ def test_set_custom_retention_ttl_basic_101_times(signoz: types.SigNoz, get_jwt_
         }
 
         headers = {
-            "Authorization": f"Bearer {get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+            "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
         }
 
         response = requests.post(
@@ -654,7 +654,7 @@ def test_get_custom_retention_ttl(
 
 def test_set_ttl_logs_success(
     signoz: types.SigNoz,
-    get_jwt_token,
+    get_token,
     ttl_legacy_logs_v2_table_setup,# pylint: disable=unused-argument
     ttl_legacy_logs_v2_resource_table_setup,# pylint: disable=unused-argument
 ):
@@ -666,7 +666,7 @@ def test_set_ttl_logs_success(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
