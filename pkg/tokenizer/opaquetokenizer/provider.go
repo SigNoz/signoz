@@ -175,7 +175,7 @@ func (provider *provider) RotateToken(ctx context.Context, accessToken string, r
 }
 
 func (provider *provider) DeleteToken(ctx context.Context, accessToken string) error {
-	provider.cache.Delete(ctx, emptyOrgID, cachetypes.NewSha1CacheKey(accessToken))
+	provider.cache.Delete(ctx, emptyOrgID, accessTokenCacheKey(accessToken))
 	if err := provider.tokenStore.DeleteByAccessToken(ctx, accessToken); err != nil {
 		return err
 	}
@@ -190,7 +190,7 @@ func (provider *provider) DeleteTokensByUserID(ctx context.Context, userID value
 	}
 
 	for _, token := range tokens {
-		provider.cache.Delete(ctx, emptyOrgID, cachetypes.NewSha1CacheKey(token.AccessToken))
+		provider.cache.Delete(ctx, emptyOrgID, accessTokenCacheKey(token.AccessToken))
 	}
 
 	if err := provider.tokenStore.DeleteByUserID(ctx, userID); err != nil {
@@ -201,7 +201,7 @@ func (provider *provider) DeleteTokensByUserID(ctx context.Context, userID value
 }
 
 func (provider *provider) DeleteIdentity(ctx context.Context, userID valuer.UUID) error {
-	provider.cache.Delete(ctx, emptyOrgID, "identity::"+userID.String())
+	provider.cache.Delete(ctx, emptyOrgID, identityCacheKey(userID))
 	return nil
 }
 
