@@ -15,13 +15,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
-	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
-	"github.com/SigNoz/signoz/pkg/modules/spanpercentile/implspanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/session/implsession"
+	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
+	"github.com/SigNoz/signoz/pkg/modules/spanpercentile/implspanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -38,8 +38,8 @@ type Handlers struct {
 	QuickFilter    quickfilter.Handler
 	TraceFunnel    tracefunnel.Handler
 	RawDataExport  rawdataexport.Handler
-  AuthDomain    authdomain.Handler
-	Session       session.Handler
+	AuthDomain     authdomain.Handler
+	Session        session.Handler
 	SpanPercentile spanpercentile.Handler
 }
 
@@ -47,15 +47,15 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Han
 	return Handlers{
 		Organization:   implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
 		Preference:     implpreference.NewHandler(modules.Preference),
-		User:           impluser.NewHandler(modules.User),
+		User:           impluser.NewHandler(modules.User, modules.UserGetter),
 		SavedView:      implsavedview.NewHandler(modules.SavedView),
 		Apdex:          implapdex.NewHandler(modules.Apdex),
 		Dashboard:      impldashboard.NewHandler(modules.Dashboard, providerSettings),
 		QuickFilter:    implquickfilter.NewHandler(modules.QuickFilter),
 		TraceFunnel:    impltracefunnel.NewHandler(modules.TraceFunnel),
 		RawDataExport:  implrawdataexport.NewHandler(modules.RawDataExport),
-    AuthDomain:    implauthdomain.NewHandler(modules.AuthDomain),
-		Session:       implsession.NewHandler(modules.Session),
+		AuthDomain:     implauthdomain.NewHandler(modules.AuthDomain),
+		Session:        implsession.NewHandler(modules.Session),
 		SpanPercentile: implspanpercentile.NewHandler(modules.SpanPercentile, modules.Preference),
 	}
 }
