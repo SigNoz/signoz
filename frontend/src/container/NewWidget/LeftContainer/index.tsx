@@ -30,25 +30,21 @@ function LeftContainer({
 	enableDrillDown = false,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
-	// const { selectedDashboard } = useDashboard();
 
-	const { selectedTime: globalSelectedInterval } = useSelector<
+	const { selectedTime: globalSelectedInterval, minTime, maxTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-	const queryResponse = useGetQueryRange(
-		requestData,
-		// selectedDashboard?.data?.version || DEFAULT_ENTITY_VERSION,
-		ENTITY_VERSION_V5,
-		{
-			enabled: !!stagedQuery,
-			queryKey: [
-				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				globalSelectedInterval,
-				requestData,
-			],
-		},
-	);
+	const queryResponse = useGetQueryRange(requestData, ENTITY_VERSION_V5, {
+		enabled: !!stagedQuery,
+		queryKey: [
+			REACT_QUERY_KEY.GET_QUERY_RANGE,
+			globalSelectedInterval,
+			requestData,
+			minTime,
+			maxTime,
+		],
+	});
 
 	// Update parent component with query response for legend colors
 	useEffect(() => {
