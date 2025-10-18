@@ -2,7 +2,7 @@
 name = "integration"
 version = "0.1.0"
 description = ""
-authors = ["grandwizard28 <vibhupandey28@gmail.com>"]
+authors = ["therealpandey <vibhupandey28@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]

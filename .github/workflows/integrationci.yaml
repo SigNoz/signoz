@@ -25,7 +25,7 @@ jobs:
         clickhouse-version:
           - 25.5.6
         schema-migrator-version:
-          - v0.129.6
+          - v0.129.7
         postgres-version:
           - 15
     if: |
