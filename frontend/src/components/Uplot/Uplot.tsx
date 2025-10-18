@@ -21,6 +21,8 @@ import { dataMatch, optionsUpdateState } from './utils';
 // Extended uPlot interface with custom properties
 interface ExtendedUPlot extends uPlot {
 	_legendScrollCleanup?: () => void;
+	_tooltipCleanup?: () => void;
+	_legendCleanups?: Array<() => void>;
 }
 
 export interface UplotProps {
@@ -71,10 +73,22 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 
 		const destroy = useCallback((chart: uPlot | null) => {
 			if (chart) {
-				// Clean up legend scroll event listener
+				// Clean up all event listeners before destroying
 				const extendedChart = chart as ExtendedUPlot;
+
+				// Clean up all legend event listeners
+				if (extendedChart._legendCleanups) {
+					extendedChart._legendCleanups.forEach((cleanup) => cleanup());
+				}
+
+				// Clean up legend scroll event listener
 				if (extendedChart._legendScrollCleanup) {
 					extendedChart._legendScrollCleanup();
+				}
+
+				// Clean up tooltip and global document listener
+				if (extendedChart._tooltipCleanup) {
+					extendedChart._tooltipCleanup();
 				}
 
 				onDeleteRef.current?.(chart);
@@ -94,7 +108,7 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 
 			// Clean up any remaining tooltips that might be detached
 			const tooltips = document.querySelectorAll(
-				'.uplot-tooltip, .tooltip-container',
+				'.uplot-tooltip, .tooltip-container, .legend-tooltip',
 			);
 			tooltips.forEach((tooltip) => {
 				if (tooltip && tooltip.parentNode) {

@@ -36,6 +36,7 @@ import { getYAxisScale } from './utils/getYAxisScale';
 interface ExtendedUPlot extends uPlot {
 	_legendScrollCleanup?: () => void;
 	_tooltipCleanup?: () => void;
+	_legendElementCleanup?: Array<() => void>;
 }
 
 export interface GetUPlotChartOptions {
@@ -473,6 +474,9 @@ export const getUPlotChartOptions = ({
 					if (legend) {
 						const legendElement = legend as HTMLElement;
 
+						// Initialize cleanup array for legend element listeners
+						(self as ExtendedUPlot)._legendElementCleanup = [];
+
 						// Apply enhanced legend styling
 						if (enhancedLegend) {
 							applyEnhancedLegendStyling(
@@ -639,6 +643,17 @@ export const getUPlotChartOptions = ({
 								thElement.addEventListener('mouseenter', showTooltip);
 								thElement.addEventListener('mouseleave', hideTooltip);
 
+								// Store cleanup function for tooltip listeners
+								(self as ExtendedUPlot)._legendElementCleanup?.push(() => {
+									thElement.removeEventListener('mouseenter', showTooltip);
+									thElement.removeEventListener('mouseleave', hideTooltip);
+									// Cleanup any lingering tooltip
+									if (tooltipElement) {
+										tooltipElement.remove();
+										tooltipElement = null;
+									}
+								});
+
 								// Add click handlers for marker and text separately
 								const currentMarker = thElement.querySelector('.u-marker');
 								const textElement = thElement.querySelector('.legend-text');
@@ -658,7 +673,7 @@ export const getUPlotChartOptions = ({
 
 								// Marker click handler - checkbox behavior (toggle individual series)
 								if (currentMarker) {
-									currentMarker.addEventListener('click', (e) => {
+									const markerClickHandler = (e: Event): void => {
 										e.stopPropagation?.(); // Prevent event bubbling to text handler
 
 										if (stackChart) {
@@ -680,12 +695,19 @@ export const getUPlotChartOptions = ({
 												return newGraphVisibilityStates;
 											});
 										}
+									};
+
+									currentMarker.addEventListener('click', markerClickHandler);
+
+									// Store cleanup function for marker click listener
+									(self as ExtendedUPlot)._legendElementCleanup?.push(() => {
+										currentMarker.removeEventListener('click', markerClickHandler);
 									});
 								}
 
 								// Text click handler - show only/show all behavior (existing behavior)
 								if (textElement) {
-									textElement.addEventListener('click', (e) => {
+									const textClickHandler = (e: Event): void => {
 										e.stopPropagation?.(); // Prevent event bubbling
 
 										if (stackChart) {
@@ -716,11 +738,45 @@ export const getUPlotChartOptions = ({
 												return newGraphVisibilityStates;
 											});
 										}
+									};
+
+									textElement.addEventListener('click', textClickHandler);
+
+									// Store cleanup function for text click listener
+									(self as ExtendedUPlot)._legendElementCleanup?.push(() => {
+										textElement.removeEventListener('click', textClickHandler);
 									});
 								}
 							}
 						});
 					}
+				},
+			],
+			destroy: [
+				(self): void => {
+					// Clean up legend scroll listener
+					if ((self as ExtendedUPlot)._legendScrollCleanup) {
+						(self as ExtendedUPlot)._legendScrollCleanup?.();
+						(self as ExtendedUPlot)._legendScrollCleanup = undefined;
+					}
+
+					// Clean up tooltip global listener
+					if ((self as ExtendedUPlot)._tooltipCleanup) {
+						(self as ExtendedUPlot)._tooltipCleanup?.();
+						(self as ExtendedUPlot)._tooltipCleanup = undefined;
+					}
+
+					// Clean up all legend element listeners
+					if ((self as ExtendedUPlot)._legendElementCleanup) {
+						(self as ExtendedUPlot)._legendElementCleanup?.forEach((cleanup) => {
+							cleanup();
+						});
+						(self as ExtendedUPlot)._legendElementCleanup = [];
+					}
+
+					// Clean up any remaining tooltips in DOM
+					const existingTooltips = document.querySelectorAll('.legend-tooltip');
+					existingTooltips.forEach((tooltip) => tooltip.remove());
 				},
 			],
 		},
