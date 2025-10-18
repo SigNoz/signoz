@@ -27,7 +27,7 @@ func RegisterSQL(parentCmd *cobra.Command, logger *slog.Logger, sqlSchemaProvide
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
-			config, err := NewSigNozConfig(ctx, signoz.DeprecatedFlags{})
+			config, err := NewSigNozConfig(ctx, logger, signoz.DeprecatedFlags{})
 			if err != nil {
 				return err
 			}
@@ -91,7 +91,7 @@ func RegisterSQL(parentCmd *cobra.Command, logger *slog.Logger, sqlSchemaProvide
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
-			config, err := NewSigNozConfig(ctx, signoz.DeprecatedFlags{})
+			config, err := NewSigNozConfig(ctx, logger, signoz.DeprecatedFlags{})
 			if err != nil {
 				return err
 			}

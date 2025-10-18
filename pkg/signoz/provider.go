@@ -100,8 +100,6 @@ func NewSQLSchemaProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[
 func NewSQLMigrationProviderFactories(
 	sqlstore sqlstore.SQLStore,
 	sqlschema sqlschema.SQLSchema,
-	telemetryStore telemetrystore.TelemetryStore,
-	providerSettings factory.ProviderSettings,
 ) factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]] {
 	return factory.MustNewNamedMap(
 		s100sqlmigration.NewV100Factory(sqlstore, sqlschema),
