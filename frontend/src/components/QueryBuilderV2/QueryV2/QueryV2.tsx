@@ -34,7 +34,11 @@ export const QueryV2 = memo(function QueryV2({
 	signalSource = '',
 	isMultiQueryAllowed = false,
 }: QueryProps & { ref: React.RefObject<HTMLDivElement> }): JSX.Element {
-	const { cloneQuery, panelType } = useQueryBuilder();
+	const {
+		cloneQuery,
+		panelType,
+		handleSetCurrentFilterExpression,
+	} = useQueryBuilder();
 
 	const showFunctions = query?.functions?.length > 0;
 	const { dataSource } = query;
@@ -96,12 +100,16 @@ export const QueryV2 = memo(function QueryV2({
 	);
 
 	const handleSearchChange = useCallback(
-		(value: string) => {
-			(handleChangeQueryData as HandleChangeQueryDataV5)('filter', {
-				expression: value,
-			});
+		(value: string, syncExpression = false) => {
+			handleSetCurrentFilterExpression(value, query.queryName);
+			if (syncExpression) {
+				(handleChangeQueryData as HandleChangeQueryDataV5)('filter', {
+					expression: value,
+				});
+			}
 		},
-		[handleChangeQueryData],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[handleSetCurrentFilterExpression, handleChangeQueryData],
 	);
 
 	const handleChangeAggregation = useCallback(
