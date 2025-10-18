@@ -73,13 +73,15 @@ describe('SpanDuration', () => {
 		});
 	});
 
-	it('updates URL and selected span when clicked', () => {
+	it('calls handleSpanClick when clicked', () => {
+		const mockHandleSpanClick = jest.fn();
+
 		render(
 			<SpanDuration
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
 				selectedSpan={undefined}
-				setSelectedSpan={mockSetSelectedSpan}
+				handleSpanClick={mockHandleSpanClick}
 				filteredSpanIds={[]}
 				isFilterActive={false}
 			/>,
@@ -89,16 +91,8 @@ describe('SpanDuration', () => {
 		const spanElement = screen.getByText(SPAN_DURATION_TEXT);
 		fireEvent.click(spanElement);
 
-		// Verify setSelectedSpan was called with the correct span
-		expect(mockSetSelectedSpan).toHaveBeenCalledWith(mockSpan);
-
-		// Verify URL query was updated
-		expect(mockUrlQuerySet).toHaveBeenCalledWith('spanId', 'test-span-id');
-
-		// Verify navigation was triggered
-		expect(mockSafeNavigate).toHaveBeenCalledWith({
-			search: 'spanId=test-span-id',
-		});
+		// Verify handleSpanClick was called with the correct span
+		expect(mockHandleSpanClick).toHaveBeenCalledWith(mockSpan);
 	});
 
 	it('shows action buttons on hover', () => {
@@ -107,7 +101,7 @@ describe('SpanDuration', () => {
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
 				selectedSpan={undefined}
-				setSelectedSpan={mockSetSelectedSpan}
+				handleSpanClick={mockSetSelectedSpan}
 				filteredSpanIds={[]}
 				isFilterActive={false}
 			/>,
@@ -135,7 +129,7 @@ describe('SpanDuration', () => {
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
 				selectedSpan={mockSpan}
-				setSelectedSpan={mockSetSelectedSpan}
+				handleSpanClick={mockSetSelectedSpan}
 				filteredSpanIds={[]}
 				isFilterActive={false}
 			/>,
@@ -154,7 +148,7 @@ describe('SpanDuration', () => {
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
 				selectedSpan={undefined}
-				setSelectedSpan={mockSetSelectedSpan}
+				handleSpanClick={mockSetSelectedSpan}
 				filteredSpanIds={[mockSpan.spanId]}
 				isFilterActive
 			/>,
@@ -173,7 +167,7 @@ describe('SpanDuration', () => {
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
 				selectedSpan={undefined}
-				setSelectedSpan={mockSetSelectedSpan}
+				handleSpanClick={mockSetSelectedSpan}
 				filteredSpanIds={['other-span-id']}
 				isFilterActive
 			/>,
@@ -192,7 +186,7 @@ describe('SpanDuration', () => {
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
 				selectedSpan={mockSpan}
-				setSelectedSpan={mockSetSelectedSpan}
+				handleSpanClick={mockSetSelectedSpan}
 				filteredSpanIds={[mockSpan.spanId]}
 				isFilterActive
 			/>,
@@ -212,7 +206,7 @@ describe('SpanDuration', () => {
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
 				selectedSpan={mockSpan}
-				setSelectedSpan={mockSetSelectedSpan}
+				handleSpanClick={mockSetSelectedSpan}
 				filteredSpanIds={['different-span-id']}
 				isFilterActive
 			/>,
@@ -233,7 +227,7 @@ describe('SpanDuration', () => {
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
 				selectedSpan={mockSpan}
-				setSelectedSpan={mockSetSelectedSpan}
+				handleSpanClick={mockSetSelectedSpan}
 				filteredSpanIds={[]}
 				isFilterActive={false}
 			/>,
@@ -254,7 +248,7 @@ describe('SpanDuration', () => {
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
 				selectedSpan={undefined}
-				setSelectedSpan={mockSetSelectedSpan}
+				handleSpanClick={mockSetSelectedSpan}
 				filteredSpanIds={[]} // Empty array but filter is active
 				isFilterActive // This is the key difference
 			/>,
