@@ -32,6 +32,7 @@ function Retention({
 	setRetentionValue,
 	text,
 	hide,
+	isS3ColdStorage = false,
 }: RetentionProps): JSX.Element | null {
 	const {
 		value: initialValue,
@@ -54,7 +55,8 @@ function Retention({
 	}, [initialTimeUnitValue]);
 
 	const menuItems = TimeUnits.filter((option) =>
-		type === 'logs' ? option.value !== TimeUnitsValues.hr : true,
+		type === 'logs' && isS3ColdStorage ? option.value !== TimeUnitsValues.hr && option.value !== TimeUnitsValues.month: true,
+
 	).map((option) => (
 		<Option key={option.value} value={option.value}>
 			{option.key}
@@ -134,6 +136,7 @@ interface RetentionProps {
 	text: string;
 	setRetentionValue: Dispatch<SetStateAction<number | null>>;
 	hide: boolean;
+	isS3ColdStorage: boolean;
 }
 
 export default Retention;
