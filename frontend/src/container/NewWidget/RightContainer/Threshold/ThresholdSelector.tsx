@@ -95,6 +95,7 @@ function ThresholdSelector({
 						tableOptions={aggregationQueries}
 						thresholdTableOptions={threshold.thresholdTableOptions}
 						columnUnits={columnUnits}
+						yAxisUnit={yAxisUnit}
 					/>
 				))}
 			</div>
