@@ -1,4 +1,3 @@
-version: "3"
 x-common: &common
   networks:
     - signoz-net
