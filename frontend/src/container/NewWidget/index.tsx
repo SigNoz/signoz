@@ -301,6 +301,12 @@ function NewWidget({
 		contextLinks,
 	]);
 
+	const initialYAxisUnit = useMemo(
+		() => selectedWidget?.yAxisUnit || 'none',
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[],
+	);
+
 	const closeModal = (): void => {
 		setSaveModal(false);
 		setDiscardModal(false);
@@ -821,6 +827,7 @@ function NewWidget({
 							setStackedBarChart={setStackedBarChart}
 							opacity={opacity}
 							yAxisUnit={yAxisUnit}
+							initialYAxisUnit={initialYAxisUnit}
 							columnUnits={columnUnits}
 							setColumnUnits={setColumnUnits}
 							bucketCount={bucketCount}

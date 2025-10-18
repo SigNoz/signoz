@@ -1,14 +1,18 @@
 import { SelectProps } from 'antd';
+import { useGetMetricUnits } from 'container/MetricsExplorer/Explorer/utils';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import getStep from 'lib/getStep';
+import { useMemo } from 'react';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
 	IBuilderTraceOperator,
 	IClickHouseQuery,
 	IPromQLQuery,
+	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 // toChartInterval converts eval window to chart selection time interval
 export const toChartInterval = (evalWindow: string | undefined): Time => {
@@ -62,8 +66,40 @@ export const getSelectedQueryOptions = (
 	>,
 ): SelectProps['options'] =>
 	queries
-		.filter((query) => !query.disabled)
+		?.filter((query) => !query.disabled)
 		.map((query) => ({
 			label: 'queryName' in query ? query.queryName : query.name,
 			value: 'queryName' in query ? query.queryName : query.name,
 		}));
+
+export const useGetYAxisUnitFromQuery = (
+	query: Query | null,
+): string | null => {
+	const metricNames = useMemo(() => {
+		if (!query) {
+			return [];
+		}
+		return query.builder.queryData.map(
+			(query) => query.aggregateAttribute?.key ?? '',
+		);
+	}, [query]);
+
+	const { units } = useGetMetricUnits(
+		metricNames,
+		query?.builder.queryData[0].dataSource === DataSource.METRICS,
+	);
+
+	return useMemo(() => {
+		if (!query || units.length === 0) {
+			return null;
+		}
+		if (query?.unit) {
+			return query.unit;
+		}
+		const areAllUnitsSame = units.every((unit) => unit === units[0]);
+		if (areAllUnitsSame) {
+			return units[0];
+		}
+		return null;
+	}, [query, units]);
+};
