@@ -2174,6 +2174,16 @@ func (aH *APIHandler) RegisterThirdPartyApiRoutes(router *mux.Router, am *middle
 	overviewRouter.HandleFunc("/domain", am.ViewAccess(aH.getDomainInfo)).Methods(http.MethodPost)
 }
 
+// RegisterSpanPercentileRoutes adds span percentile analysis routes
+func (aH *APIHandler) RegisterSpanPercentileRoutes(router *mux.Router, am *middleware.AuthZ) {
+
+	// Span percentile router
+	spanPercentileRouter := router.PathPrefix("/api/v1/span-percentile").Subrouter()
+
+	spanPercentileRouter.HandleFunc("/details", am.ViewAccess(aH.Signoz.Handlers.SpanPercentile.GetSpanPercentileDetails)).Methods(http.MethodPost)
+	spanPercentileRouter.HandleFunc("/additional-resource-attributes", am.ViewAccess(aH.Signoz.Handlers.SpanPercentile.GetAdditionalResourceAttributes)).Methods(http.MethodGet)
+}
+
 // not using md5 hashing as the plain string would work
 func uniqueIdentifier(params []string, separator string) string {
 	return strings.Join(params, separator)
