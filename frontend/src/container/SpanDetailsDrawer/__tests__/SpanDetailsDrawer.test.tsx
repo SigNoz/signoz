@@ -20,8 +20,9 @@ import {
 // Mock external dependencies
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
+	useLocation: (): { pathname: string; search: string } => ({
 		pathname: `${ROUTES.TRACE_DETAIL}`,
+		search: 'trace_id=test-trace-id',
 	}),
 }));
 
