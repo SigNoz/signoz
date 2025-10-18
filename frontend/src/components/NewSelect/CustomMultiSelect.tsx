@@ -32,6 +32,7 @@ import { popupContainer } from 'utils/selectPopupContainer';
 
 import { CustomMultiSelectProps, CustomTagProps, OptionData } from './types';
 import {
+	ALL_SELECTED_VALUE,
 	filterOptionsBySearch,
 	handleScrollToBottom,
 	prioritizeOrAddOptionForMultiSelect,
@@ -42,8 +43,6 @@ enum ToggleTagValue {
 	Only = 'Only',
 	All = 'All',
 }
-
-const ALL_SELECTED_VALUE = '__ALL__'; // Constant for the special value
 
 const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	placeholder = 'Search...',
