@@ -1,4 +1,6 @@
 // Mock for useSafeNavigate hook to avoid React Router version conflicts in tests
+export { isEventObject } from '../src/utils/isEventObject';
+
 interface SafeNavigateOptions {
 	replace?: boolean;
 	state?: unknown;
