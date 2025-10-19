@@ -73,7 +73,7 @@ func (c *conditionBuilder) conditionFor(
 			}
 		}
 	} else {
-		tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
+		tblFieldName, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, tblFieldName, operator)
 	}
 
 	// regular operators
@@ -164,11 +164,10 @@ func (c *conditionBuilder) conditionFor(
 		var value any
 		switch column.Type {
 		case schema.JSONColumnType{}:
-			value = "NULL"
 			if operator == qbtypes.FilterOperatorExists {
-				return sb.NE(tblFieldName, value), nil
+				return sb.IsNotNull(tblFieldName), nil
 			} else {
-				return sb.E(tblFieldName, value), nil
+				return sb.IsNull(tblFieldName), nil
 			}
 		case schema.ColumnTypeString,
 			schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},

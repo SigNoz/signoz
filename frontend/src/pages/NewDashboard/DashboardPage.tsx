@@ -4,7 +4,6 @@ import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import NewDashboard from 'container/NewDashboard';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { useEffect } from 'react';
 import { ErrorType } from 'types/common';
 
@@ -36,11 +35,7 @@ function DashboardPage(): JSX.Element {
 		return <Spinner tip="Loading.." />;
 	}
 
-	return (
-		<PreferenceContextProvider>
-			<NewDashboard />
-		</PreferenceContextProvider>
-	);
+	return <NewDashboard />;
 }
 
 export default DashboardPage;

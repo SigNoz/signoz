@@ -1,3 +1,4 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
@@ -50,10 +51,6 @@ jest.mock(
 			return <div>Histogram Chart</div>;
 		},
 );
-
-jest.mock('api/common/getQueryStats', () => ({
-	getQueryStats: jest.fn(),
-}));
 
 jest.mock('constants/panelTypes', () => ({
 	AVAILABLE_EXPORT_PANEL_TYPES: ['graph', 'table'],
@@ -261,6 +258,68 @@ describe('LogsExplorerViews -', () => {
 
 				// Verify the total number of filters (original + 1 new activeLogId filter)
 				expect(firstQuery.filters?.items.length).toBe(expectedFiltersLength);
+
+				// Verify the filter expression
+				expect(firstQuery.filter?.expression).toBe(`id <= '${ACTIVE_LOG_ID}'`);
+			}
+		});
+	});
+
+	it('should update filter expression with activeLogId when present with existing filter expression', async () => {
+		// Mock useCopyLogLink to return an activeLogId
+		(useCopyLogLink as jest.Mock).mockReturnValue({
+			activeLogId: ACTIVE_LOG_ID,
+		});
+
+		// Create a custom QueryBuilderContext with an existing filter expression
+		const customContext = {
+			...mockQueryBuilderContextValue,
+			panelType: PANEL_TYPES.LIST,
+			stagedQuery: {
+				...mockQueryBuilderContextValue.stagedQuery,
+				builder: {
+					...mockQueryBuilderContextValue.stagedQuery.builder,
+					queryData: [
+						{
+							...mockQueryBuilderContextValue.stagedQuery.builder.queryData[0],
+							filter: { expression: "service = 'frontend'" },
+						},
+					],
+				},
+			},
+		};
+
+		lodsQueryServerRequest();
+
+		render(
+			<QueryBuilderContext.Provider value={customContext as any}>
+				<PreferenceContextProvider>
+					<LogsExplorerViews
+						selectedView={ExplorerViews.LIST}
+						setIsLoadingQueries={(): void => {}}
+						listQueryKeyRef={{ current: {} }}
+						chartQueryKeyRef={{ current: {} }}
+						setWarning={(): void => {}}
+						showLiveLogs={false}
+					/>
+				</PreferenceContextProvider>
+			</QueryBuilderContext.Provider>,
+		);
+
+		await waitFor(() => {
+			// Find the call made for LIST panel type (main logs list request)
+			const listCall = (useGetExplorerQueryRange as jest.Mock).mock.calls.find(
+				(call) => call[1] === PANEL_TYPES.LIST && call[0],
+			);
+
+			expect(listCall).toBeDefined();
+			if (listCall) {
+				const queryArg = listCall[0];
+				const firstQuery = queryArg.builder.queryData[0];
+				// It should append the activeLogId condition to existing expression
+				expect(firstQuery.filter?.expression).toBe(
+					"service = 'frontend' id <= 'test-log-id'",
+				);
 			}
 		});
 	});

@@ -408,6 +408,7 @@ export default function Onboarding(): JSX.Element {
 				form={form}
 				isInviteTeamMemberModalOpen={isInviteTeamMemberModalOpen}
 				toggleModal={toggleModal}
+				onClose={(): void => {}}
 			/>
 		</div>
 	);
