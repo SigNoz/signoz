@@ -198,7 +198,12 @@ function GeneralSettings({
 	);
 
 	const s3Enabled = useMemo(
-		() => !!find(availableDisks, (disks: IDiskType) => disks?.type === 's3'),
+		() =>
+			!!find(
+				availableDisks,
+				(disks: IDiskType) =>
+					disks?.type === 's3' || disks?.type === 'ObjectStorage',
+			),
 		[availableDisks],
 	);
 
@@ -348,11 +353,15 @@ function GeneralSettings({
 
 			try {
 				if (type === 'logs') {
+					// Only send S3 values if user has specified a duration
+					const hasS3Retention = apiCallS3Retention && apiCallS3Retention > 0;
+
 					await setRetentionApiV2({
 						type,
 						defaultTTLDays: apiCallTotalRetention ? apiCallTotalRetention / 24 : -1, // convert Hours to days
-						coldStorageVolume: '',
-						coldStorageDuration: 0,
+						coldStorageVolume: hasS3Retention ? 's3' : '',
+						coldStorageDuration:
+							hasS3Retention && apiCallS3Retention ? apiCallS3Retention / 24 : 0, // convert Hours to days
 						ttlConditions: [],
 					});
 				} else {
@@ -524,6 +533,7 @@ function GeneralSettings({
 					value: logsS3RetentionPeriod,
 					setValue: setLogsS3RetentionPeriod,
 					hide: !s3Enabled,
+					isS3Field: true,
 				},
 			],
 			save: {
@@ -577,6 +587,7 @@ function GeneralSettings({
 									retentionValue={retentionField.value}
 									setRetentionValue={retentionField.setValue}
 									hide={!!retentionField.hide}
+									isS3Field={'isS3Field' in retentionField && retentionField.isS3Field}
 								/>
 							))}
 
