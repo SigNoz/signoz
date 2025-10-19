@@ -45,7 +45,7 @@ export const convertHoursValueToRelevantUnit = (
 	value: number,
 	availableUnits?: ITimeUnit[],
 ): ITimeUnitConversion => {
-	const unitsToConsider = availableUnits || TimeUnits;
+	const unitsToConsider = availableUnits?.length ? availableUnits : TimeUnits;
 
 	if (value) {
 		for (let idx = unitsToConsider.length - 1; idx >= 0; idx -= 1) {

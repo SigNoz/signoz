@@ -354,14 +354,16 @@ function GeneralSettings({
 			try {
 				if (type === 'logs') {
 					// Only send S3 values if user has specified a duration
-					const hasS3Retention = apiCallS3Retention && apiCallS3Retention > 0;
+					const s3RetentionDays =
+						apiCallS3Retention && apiCallS3Retention > 0
+							? apiCallS3Retention / 24
+							: 0;
 
 					await setRetentionApiV2({
 						type,
 						defaultTTLDays: apiCallTotalRetention ? apiCallTotalRetention / 24 : -1, // convert Hours to days
-						coldStorageVolume: hasS3Retention ? 's3' : '',
-						coldStorageDuration:
-							hasS3Retention && apiCallS3Retention ? apiCallS3Retention / 24 : 0, // convert Hours to days
+						coldStorageVolume: s3RetentionDays > 0 ? 's3' : '',
+						coldStorageDuration: s3RetentionDays,
 						ttlConditions: [],
 					});
 				} else {
