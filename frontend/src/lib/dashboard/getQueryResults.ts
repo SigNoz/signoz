@@ -28,6 +28,7 @@ import { prepareQueryRangePayload } from './prepareQueryRangePayload';
 import { QueryData } from 'types/api/widgets/getQuery';
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { EQueryType } from 'types/common/dashboard';
 
 /**
  * Validates if metric name is available for METRICS data source
@@ -142,6 +143,11 @@ export const getLegend = (
 	payloadQuery: Query,
 	labelName: string,
 ) => {
+	// For non-query builder queries, return the label name directly
+	if (payloadQuery.queryType !== EQueryType.QUERY_BUILDER) {
+		return labelName;
+	}
+
 	const aggregationPerQuery = payloadQuery?.builder?.queryData.reduce(
 		(acc, query) => {
 			if (query.queryName === queryData.queryName) {
