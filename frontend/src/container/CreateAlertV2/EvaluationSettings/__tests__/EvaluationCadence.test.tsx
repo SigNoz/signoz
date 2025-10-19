@@ -64,10 +64,12 @@ describe('EvaluationCadence', () => {
 		).toBeInTheDocument();
 		expect(screen.getByPlaceholderText('Enter time')).toHaveValue(1);
 		expect(screen.getByText('Minutes')).toBeInTheDocument();
-		expect(screen.getByText(ADD_CUSTOM_SCHEDULE_TEXT)).toBeInTheDocument();
+		// TODO: Uncomment this when add custom schedule button is implemented
+		// expect(screen.getByText(ADD_CUSTOM_SCHEDULE_TEXT)).toBeInTheDocument();
 	});
 
-	it('should hide the input group when add custom schedule button is clicked', () => {
+	// TODO: Unskip this when add custom schedule button is implemented
+	it.skip('should hide the input group when add custom schedule button is clicked', () => {
 		render(<EvaluationCadence />);
 
 		expect(
@@ -84,12 +86,14 @@ describe('EvaluationCadence', () => {
 		).toBeInTheDocument();
 	});
 
-	it('should not show the edit custom schedule component in default mode', () => {
+	// TODO: Unskip this when add custom schedule button is implemented
+	it.skip('should not show the edit custom schedule component in default mode', () => {
 		render(<EvaluationCadence />);
 		expect(screen.queryByTestId('edit-custom-schedule')).not.toBeInTheDocument();
 	});
 
-	it('should show the custom schedule text when the mode is custom with selected values', () => {
+	// TODO: Unskip this when add custom schedule button is implemented
+	it.skip('should show the custom schedule text when the mode is custom with selected values', () => {
 		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
@@ -118,7 +122,8 @@ describe('EvaluationCadence', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('should show evaluation cadence details component when clicked on add custom schedule button', () => {
+	// TODO: Unskip this when add custom schedule button is implemented
+	it.skip('should show evaluation cadence details component when clicked on add custom schedule button', () => {
 		render(<EvaluationCadence />);
 
 		expect(

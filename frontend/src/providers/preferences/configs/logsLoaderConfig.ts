@@ -10,10 +10,10 @@ import { FormattingOptions } from '../types';
 
 // --- LOGS preferences loader config ---
 const logsLoaders = {
-	local: async (): Promise<{
+	local: (): {
 		columns: BaseAutocompleteData[];
 		formatting: FormattingOptions;
-	}> => {
+	} => {
 		const local = getLocalStorageKey(LOCALSTORAGE.LOGS_LIST_OPTIONS);
 		if (local) {
 			try {
@@ -31,10 +31,10 @@ const logsLoaders = {
 		}
 		return { columns: [], formatting: undefined } as any;
 	},
-	url: async (): Promise<{
+	url: (): {
 		columns: BaseAutocompleteData[];
 		formatting: FormattingOptions;
-	}> => {
+	} => {
 		const urlParams = new URLSearchParams(window.location.search);
 		try {
 			const options = JSON.parse(urlParams.get('options') || '{}');
@@ -50,10 +50,10 @@ const logsLoaders = {
 		} catch {}
 		return { columns: [], formatting: undefined } as any;
 	},
-	default: async (): Promise<{
+	default: (): {
 		columns: TelemetryFieldKey[];
 		formatting: FormattingOptions;
-	}> => ({
+	} => ({
 		columns: defaultLogsSelectedColumns,
 		formatting: {
 			maxLines: 2,

@@ -52,6 +52,7 @@ jest.mock('container/InfraMonitoringK8s/commonUtils', () => ({
 const mockUseQueries = jest.fn();
 const mockUseQuery = jest.fn();
 jest.mock('react-query', () => ({
+	...jest.requireActual('react-query'),
 	useQueries: (queryConfigs: any[]): any[] => mockUseQueries(queryConfigs),
 	useQuery: (config: any): any => mockUseQuery(config),
 }));

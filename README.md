@@ -236,7 +236,7 @@ Not sure how to get started? Just ping us on `#contributing` in our [slack commu
 #### DevOps
 
 - [Prashant Shahi](https://github.com/prashant-shahi)
-- [Vibhu Pandey](https://github.com/grandwizard28)
+- [Vibhu Pandey](https://github.com/therealpandey)
 
 <br /><br />
 

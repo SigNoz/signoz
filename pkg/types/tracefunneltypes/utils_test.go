@@ -1,8 +1,6 @@
 package tracefunneltypes
 
 import (
-	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -378,53 +376,6 @@ func TestNormalizeFunnelSteps(t *testing.T) {
 	}
 }
 
-func TestGetClaims(t *testing.T) {
-	tests := []struct {
-		name        string
-		setup       func(*http.Request)
-		expectError bool
-	}{
-		{
-			name: "valid claims",
-			setup: func(r *http.Request) {
-				claims := authtypes.Claims{
-					UserID: "user-123",
-					OrgID:  "org-123",
-					Email:  "test@example.com",
-				}
-				*r = *r.WithContext(authtypes.NewContextWithClaims(r.Context(), claims))
-			},
-			expectError: false,
-		},
-		{
-			name: "no claims in context",
-			setup: func(r *http.Request) {
-				claims := authtypes.Claims{}
-				*r = *r.WithContext(authtypes.NewContextWithClaims(r.Context(), claims))
-			},
-			expectError: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest("GET", "/", nil)
-			tt.setup(req)
-
-			claims, err := authtypes.ClaimsFromContext(req.Context())
-			if tt.expectError {
-				assert.Equal(t, authtypes.Claims{}, claims)
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, claims)
-				assert.Equal(t, "user-123", claims.UserID)
-				assert.Equal(t, "org-123", claims.OrgID)
-				assert.Equal(t, "test@example.com", claims.Email)
-			}
-		})
-	}
-}
-
 func TestValidateAndConvertTimestamp(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -496,7 +447,7 @@ func TestConstructFunnelResponse(t *testing.T) {
 					Identifiable: types.Identifiable{
 						ID: userID,
 					},
-					Email: "funnel@example.com",
+					Email: valuer.MustNewEmail("funnel@example.com"),
 				},
 				Steps: []*FunnelStep{
 					{

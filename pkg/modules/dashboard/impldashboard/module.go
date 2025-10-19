@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -221,4 +222,8 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	}
 
 	return dashboardtypes.NewStatsFromStorableDashboards(dashboards), nil
+}
+
+func (module *module) MustGetTypeables() []authtypes.Typeable {
+	return []authtypes.Typeable{dashboardtypes.TypeableResourceDashboard, dashboardtypes.TypeableResourcesDashboards}
 }
