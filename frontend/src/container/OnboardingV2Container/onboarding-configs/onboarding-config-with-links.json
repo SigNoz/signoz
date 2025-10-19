@@ -97,7 +97,10 @@
 			"opentelemetry",
 			"migration guide",
 			"migrate",
-			"migration"
+			"migration",
+			"otel collector",
+			"opentelemetry collector",
+			"otlp"
 		],
 		"imgUrl": "/Logos/opentelemetry.svg",
 		"link": "https://signoz.io/docs/migration/migrate-from-opentelemetry-to-signoz/"
@@ -108,7 +111,7 @@
 		"label": "Java",
 		"id": "java",
 		"imgUrl": "/Logos/java.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -300,7 +303,7 @@
 		"dataSource": "python",
 		"label": "Python",
 		"imgUrl": "/Logos/python.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -465,7 +468,7 @@
 	{
 		"dataSource": "javascript",
 		"label": "JavaScript",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -712,7 +715,7 @@
 		"dataSource": "golang",
 		"label": "Golang",
 		"imgUrl": "/Logos/go.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -776,7 +779,7 @@
 		"dataSource": "php",
 		"label": "PHP",
 		"imgUrl": "/Logos/php.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -799,7 +802,6 @@
 			"php zipkin tracing",
 			"otel php exporter",
 			"php http instrumentation",
-			"php prometheus exporter",
 			"php-fpm monitoring",
 			"php on kubernetes",
 			"php in containers",
@@ -844,7 +846,7 @@
 		"dataSource": "dotnet",
 		"label": ".NET",
 		"imgUrl": "/Logos/dotnet.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -876,7 +878,6 @@
 			".net kubernetes",
 			"dotnet in containers",
 			"opentelemetry exporter .net",
-			".net prometheus exporter",
 			"c# opentelemetry",
 			"monitor c# app",
 			"entity framework telemetry",
@@ -917,7 +918,7 @@
 		"dataSource": "ruby-on-rails",
 		"label": "Ruby on Rails",
 		"imgUrl": "/Logos/ruby-on-rails.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -982,7 +983,7 @@
 		"dataSource": "elixir",
 		"label": "Elixir",
 		"imgUrl": "/Logos/elixir.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -1041,7 +1042,7 @@
 		"dataSource": "rust",
 		"label": "Rust",
 		"imgUrl": "/Logos/rust.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -1094,7 +1095,7 @@
 		"dataSource": "swift",
 		"label": "Swift",
 		"imgUrl": "/Logos/swift.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -1125,7 +1126,6 @@
 			"urlsession instrumentation",
 			"ios sdk opentelemetry",
 			"apple ecosystem observability",
-			"swift prometheus exporter",
 			"ios otlp exporter",
 			"ios telemetry sdk"
 		],
@@ -1161,7 +1161,7 @@
 		"dataSource": "opentelemetry-cpp",
 		"label": "C++",
 		"imgUrl": "/Logos/cpp.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -1203,7 +1203,7 @@
 		"dataSource": "nginx-tracing",
 		"label": "Nginx - Tracing",
 		"imgUrl": "/Logos/nginx.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": ["tracing", "nginx server", "nginx proxy", "nginx"],
 		"id": "nginx-tracing",
@@ -1213,7 +1213,7 @@
 		"dataSource": "opentelemetry-wordpress",
 		"label": "WordPress",
 		"imgUrl": "/Logos/wordpress.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -1239,7 +1239,7 @@
 		"dataSource": "opentelemetry-cloudflare",
 		"label": "Cloudflare",
 		"imgUrl": "/Logos/cloudflare.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces", "logs"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -1556,7 +1556,7 @@
 	},
 	{
 		"dataSource": "from-log-file",
-		"label": "From Log File",
+		"label": "Collect Logs From Log File",
 		"imgUrl": "/Logos/from-log-file.svg",
 		"tags": ["logs"],
 		"module": "logs",
@@ -2820,6 +2820,20 @@
 			"traces"
 		],
 		"link": "https://signoz.io/docs/vercel-ai-sdk-monitoring/"
+	},
+	{
+		"dataSource": "mastra-monitoring",
+		"label": "Mastra",
+		"imgUrl": "/Logos/mastra.svg",
+		"tags": ["LLM Monitoring"],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"mastra monitoring",
+			"mastra observability",
+			"mastra agent",
+			"traces"
+		],
+		"link": "https://signoz.io/docs/mastra-monitoring/"
 	},
 	{
 		"dataSource": "http-endpoints-monitoring",
