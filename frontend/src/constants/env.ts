@@ -1,7 +1,7 @@
 export const ENVIRONMENT = {
 	baseURL:
-		process?.env?.FRONTEND_API_ENDPOINT ||
-		process?.env?.GITPOD_WORKSPACE_URL?.replace('://', '://8080-') ||
+		import.meta.env?.VITE_FRONTEND_API_ENDPOINT ||
+		import.meta.env?.VITE_GITPOD_WORKSPACE_URL?.replace('://', '://8080-') ||
 		'',
-	wsURL: process?.env?.WEBSOCKET_API_ENDPOINT || '',
+	wsURL: import.meta.env?.VITE_WEBSOCKET_API_ENDPOINT || '',
 };

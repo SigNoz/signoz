@@ -21,7 +21,18 @@
 		"noEmit": true,
 		"baseUrl": "./src",
 		"paths": {
-			"@constants/*": ["/container/OnboardingContainer/constants/*"]
+			"utils/*": ["utils/*"],
+			"parser/*": ["parser/*"],
+			"types/*": ["types/*"],
+			"constants/*": ["constants/*"],
+			"components/*": ["components/*"],
+			"hooks/*": ["hooks/*"],
+			"providers/*": ["providers/*"],
+			"api/*": ["api/*"],
+			"store/*": ["store/*"],
+			"pages/*": ["pages/*"],
+			"assets/*": ["assets/*"],
+			"container/*": ["container/*"]
 		},
 		"downlevelIteration": true,
 		"plugins": [
@@ -50,6 +61,7 @@
 		"./tests/**.ts",
 		"./**/*.d.ts",
 		"./playwright.config.ts",
-		"./e2e/**/*.ts"
+		"./e2e/**/*.ts",
+		"./vite.config.ts"
 	]
 }

@@ -1,5 +1,5 @@
 import './ReactI18';
-import 'styles.scss';
+import './styles.scss';
 
 import AppRoutes from 'AppRoutes';
 import { AxiosError } from 'axios';
