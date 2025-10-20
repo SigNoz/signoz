@@ -8,6 +8,7 @@ import (
 
 var (
 	DataTypeText      = DataType{s: valuer.NewString("TEXT"), z: ""}
+	DataTypeVarchar   = DataType{s: valuer.NewString("VARCHAR"), z: ""} // Do not use this data type. Use DataTypeText instead.
 	DataTypeBigInt    = DataType{s: valuer.NewString("BIGINT"), z: int64(0)}
 	DataTypeInteger   = DataType{s: valuer.NewString("INTEGER"), z: int64(0)}
 	DataTypeNumeric   = DataType{s: valuer.NewString("NUMERIC"), z: float64(0)}
@@ -38,6 +39,13 @@ type Column struct {
 
 	// The default value of the column.
 	Default string
+}
+
+func (column *Column) Equals(other *Column) bool {
+	return column.Name == other.Name &&
+		column.DataType == other.DataType &&
+		column.Nullable == other.Nullable &&
+		column.Default == other.Default
 }
 
 func (column *Column) ToDefinitionSQL(fmter SQLFormatter) []byte {
@@ -125,6 +133,56 @@ func (column *Column) ToSetNotNullSQL(fmter SQLFormatter, tableName TableName) [
 	sql = append(sql, " ALTER COLUMN "...)
 	sql = fmter.AppendIdent(sql, string(column.Name))
 	sql = append(sql, " SET NOT NULL"...)
+
+	return sql
+}
+
+func (column *Column) ToDropNotNullSQL(fmter SQLFormatter, tableName TableName) []byte {
+	sql := []byte{}
+
+	sql = append(sql, "ALTER TABLE "...)
+	sql = fmter.AppendIdent(sql, string(tableName))
+	sql = append(sql, " ALTER COLUMN "...)
+	sql = fmter.AppendIdent(sql, string(column.Name))
+	sql = append(sql, " DROP NOT NULL"...)
+
+	return sql
+}
+
+func (column *Column) ToSetDefaultSQL(fmter SQLFormatter, tableName TableName) []byte {
+	sql := []byte{}
+
+	sql = append(sql, "ALTER TABLE "...)
+	sql = fmter.AppendIdent(sql, string(tableName))
+	sql = append(sql, " ALTER COLUMN "...)
+	sql = fmter.AppendIdent(sql, string(column.Name))
+	sql = append(sql, " SET DEFAULT "...)
+	sql = append(sql, column.Default...)
+
+	return sql
+}
+
+func (column *Column) ToDropDefaultSQL(fmter SQLFormatter, tableName TableName) []byte {
+	sql := []byte{}
+
+	sql = append(sql, "ALTER TABLE "...)
+	sql = fmter.AppendIdent(sql, string(tableName))
+	sql = append(sql, " ALTER COLUMN "...)
+	sql = fmter.AppendIdent(sql, string(column.Name))
+	sql = append(sql, " DROP DEFAULT"...)
+
+	return sql
+}
+
+func (column *Column) ToSetDataTypeSQL(fmter SQLFormatter, tableName TableName) []byte {
+	sql := []byte{}
+
+	sql = append(sql, "ALTER TABLE "...)
+	sql = fmter.AppendIdent(sql, string(tableName))
+	sql = append(sql, " ALTER COLUMN "...)
+	sql = fmter.AppendIdent(sql, string(column.Name))
+	sql = append(sql, " SET DATA TYPE "...)
+	sql = append(sql, fmter.SQLDataTypeOf(column.DataType)...)
 
 	return sql
 }
