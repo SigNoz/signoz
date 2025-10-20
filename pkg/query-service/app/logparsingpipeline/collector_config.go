@@ -2,17 +2,16 @@ package logparsingpipeline
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 	"sync"
 
-	"gopkg.in/yaml.v3"
-
+	pkgErrors "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	coreModel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 )
 
 var lockLogsPipelineSpec sync.RWMutex
@@ -57,7 +56,7 @@ type otelPipeline struct {
 
 func getOtelPipelineFromConfig(config map[string]interface{}) (*otelPipeline, error) {
 	if _, ok := config["service"]; !ok {
-		return nil, fmt.Errorf("service not found in OTEL config")
+		return nil, pkgErrors.NewInternalf(pkgErrors.CodeInternal, "service not found in OTEL config")
 	}
 	b, err := json.Marshal(config["service"])
 	if err != nil {
@@ -138,7 +137,7 @@ func buildCollectorPipelineProcessorsList(
 	if checkDuplicateString(newPipeline) {
 		// duplicates are most likely because the processor sequence in effective config conflicts
 		// with the planned sequence as per planned pipeline
-		return pipeline, fmt.Errorf("the effective config has an unexpected processor sequence: %v", pipeline)
+		return pipeline, pkgErrors.NewInternalf(pkgErrors.CodeInternal, "the effective config has an unexpected processor sequence: %v", pipeline)
 	}
 
 	return newPipeline, nil
@@ -186,8 +185,8 @@ func GenerateCollectorConfigWithPipelines(
 		procConf := signozPipelineProcessors[procName]
 		serializedProcConf, err := yaml.Marshal(procConf)
 		if err != nil {
-			return nil, coreModel.InternalError(fmt.Errorf(
-				"could not marshal processor config for %s: %w", procName, err,
+			return nil, coreModel.InternalError(pkgErrors.WrapInternalf(
+				err, pkgErrors.CodeInternal, "could not marshal processor config for %s", procName,
 			))
 		}
 		escapedSerializedConf := strings.ReplaceAll(
@@ -197,8 +196,8 @@ func GenerateCollectorConfigWithPipelines(
 		var escapedConf map[string]interface{}
 		err = yaml.Unmarshal([]byte(escapedSerializedConf), &escapedConf)
 		if err != nil {
-			return nil, coreModel.InternalError(fmt.Errorf(
-				"could not unmarshal dollar escaped processor config for %s: %w", procName, err,
+			return nil, coreModel.InternalError(pkgErrors.WrapInternalf(
+				err, pkgErrors.CodeInternal, "could not unmarshal dollar escaped processor config for %s", procName,
 			))
 		}
 
@@ -214,9 +213,8 @@ func GenerateCollectorConfigWithPipelines(
 		return nil, coreModel.BadRequest(err)
 	}
 	if p.Pipelines.Logs == nil {
-		return nil, coreModel.InternalError(fmt.Errorf(
-			"logs pipeline doesn't exist",
-		))
+		return nil, coreModel.InternalError(
+			pkgErrors.NewInternalf(pkgErrors.CodeInternal, "logs pipeline doesn't exist"))
 	}
 
 	updatedProcessorList, _ := buildCollectorPipelineProcessorsList(p.Pipelines.Logs.Processors, signozPipelineProcNames)

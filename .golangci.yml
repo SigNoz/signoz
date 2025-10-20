@@ -32,6 +32,9 @@ linters-settings:
   iface:
     enable:
       - identical
+  forbidigo:
+    forbid:
+      - fmt.Errorf
 issues:
   exclude-dirs:
     - "pkg/query-service"

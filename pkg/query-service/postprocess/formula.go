@@ -1,12 +1,12 @@
 package postprocess
 
 import (
-	"fmt"
 	"math"
 	"sort"
 	"time"
 
 	"github.com/SigNoz/govaluate"
+	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
@@ -143,7 +143,7 @@ func joinAndCalculate(
 
 		val, ok := newValue.(float64)
 		if !ok {
-			return nil, fmt.Errorf("expected float64, got %T", newValue)
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "expected float64, got %T", newValue)
 		}
 
 		if math.IsNaN(val) || math.IsInf(val, 0) {

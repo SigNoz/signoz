@@ -9,6 +9,7 @@ import (
 	_ "net/http/pprof" // http profiler
 	"slices"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 	"go.opentelemetry.io/otel/propagation"
@@ -104,15 +105,19 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 
 	integrationsController, err := integrations.NewController(signoz.SQLStore)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"couldn't create integrations controller: %w", err,
+		return nil, errors.WrapInternalf(
+			err,
+			errors.CodeInternal,
+			"couldn't create integrations controller",
 		)
 	}
 
 	cloudIntegrationsController, err := cloudintegrations.NewController(signoz.SQLStore)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"couldn't create cloud provider integrations controller: %w", err,
+		return nil, errors.WrapInternalf(
+			err,
+			errors.CodeInternal,
+			"couldn't create cloud provider integrations controller",
 		)
 	}
 
@@ -255,7 +260,7 @@ func (s *Server) initListeners() error {
 	var err error
 	publicHostPort := s.httpHostPort
 	if publicHostPort == "" {
-		return fmt.Errorf("baseconst.HTTPHostPort is required")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "baseconst.HTTPHostPort is required")
 	}
 
 	s.httpConn, err = net.Listen("tcp", publicHostPort)
@@ -360,7 +365,7 @@ func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertma
 	// create Manager
 	manager, err := baserules.NewManager(managerOpts)
 	if err != nil {
-		return nil, fmt.Errorf("rule manager error: %v", err)
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "rule manager error")
 	}
 
 	zap.L().Info("rules manager is ready")

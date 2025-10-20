@@ -433,10 +433,10 @@ type GetCustomRetentionTTLResponse struct {
 	ExpectedLogsMoveTime int `json:"expected_logs_move_ttl_duration_hrs,omitempty"`
 
 	// V2 fields
-	DefaultTTLDays        int                   `json:"default_ttl_days,omitempty"`
-	TTLConditions         []CustomRetentionRule `json:"ttl_conditions,omitempty"`
-	ColdStorageVolume     string                `json:"cold_storage_volume,omitempty"`
-	ColdStorageTTLDays    int                   `json:"cold_storage_ttl_days,omitempty"`
+	DefaultTTLDays     int                   `json:"default_ttl_days,omitempty"`
+	TTLConditions      []CustomRetentionRule `json:"ttl_conditions,omitempty"`
+	ColdStorageVolume  string                `json:"cold_storage_volume,omitempty"`
+	ColdStorageTTLDays int                   `json:"cold_storage_ttl_days,omitempty"`
 }
 
 type CustomRetentionTTLResponse struct {

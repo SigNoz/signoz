@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -90,7 +91,7 @@ func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery) (st
 	switch mq.AggregateOperator {
 	case v3.AggregateOperatorRate:
 		// TODO(srikanthccv): what should be the expected behavior here for metrics?
-		return "", fmt.Errorf("rate is not supported for table view")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "rate is not supported for table view")
 	case v3.AggregateOperatorSumRate, v3.AggregateOperatorAvgRate, v3.AggregateOperatorMaxRate, v3.AggregateOperatorMinRate:
 		op := fmt.Sprintf("%s(value)/%d", aggregateOperatorToSQLFunc[mq.AggregateOperator], step)
 		query := fmt.Sprintf(
@@ -142,8 +143,8 @@ func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery) (st
 		query := fmt.Sprintf(queryTmpl, groupTags, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
-		return "", fmt.Errorf("noop is not supported for table view")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "noop is not supported for table view")
 	default:
-		return "", fmt.Errorf("unsupported aggregate operator")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported aggregate operator")
 	}
 }

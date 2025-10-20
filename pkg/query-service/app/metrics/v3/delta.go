@@ -3,6 +3,7 @@ package v3
 import (
 	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -153,6 +154,6 @@ func buildDeltaMetricQuery(start, end, step int64, mq *v3.BuilderQuery) (string,
 		query := fmt.Sprintf(queryTmpl, step, filterSubQuery)
 		return query, nil
 	default:
-		return "", fmt.Errorf("unsupported aggregate operator")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported aggregate operator")
 	}
 }

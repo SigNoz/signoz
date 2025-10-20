@@ -9,6 +9,7 @@ import (
 	_ "net/http/pprof" // http profiler
 	"slices"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 
 	"github.com/gorilla/handlers"
@@ -233,7 +234,7 @@ func (s *Server) initListeners() error {
 	var err error
 	publicHostPort := s.httpHostPort
 	if publicHostPort == "" {
-		return fmt.Errorf("constants.HTTPHostPort is required")
+		return errors.NewInternalf(errors.CodeInternal, "constants.HTTPHostPort is required")
 	}
 
 	s.httpConn, err = net.Listen("tcp", publicHostPort)
@@ -343,7 +344,7 @@ func makeRulesManager(
 	// create Manager
 	manager, err := rules.NewManager(managerOpts)
 	if err != nil {
-		return nil, fmt.Errorf("rule manager error: %v", err)
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "rule manager error")
 	}
 
 	zap.L().Info("rules manager is ready")

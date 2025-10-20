@@ -3,9 +3,9 @@ package cloudintegrations
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -69,13 +69,12 @@ func (r *serviceConfigSQLRepository) get(
 		Scan(ctx)
 
 	if err == sql.ErrNoRows {
-		return nil, model.NotFoundError(fmt.Errorf(
-			"couldn't find config for cloud account %s",
-			cloudAccountId,
+		return nil, model.NotFoundError(errors.NewNotFoundf(
+			errors.CodeNotFound, "couldn't find config for cloud account %s", cloudAccountId,
 		))
 	} else if err != nil {
-		return nil, model.InternalError(fmt.Errorf(
-			"couldn't query cloud service config: %w", err,
+		return nil, model.InternalError(errors.WrapInternalf(
+			err, errors.CodeInternal, "couldn't query cloud service config",
 		))
 	}
 
@@ -106,8 +105,8 @@ func (r *serviceConfigSQLRepository) upsert(
 		Scan(ctx, &cloudIntegrationId)
 
 	if err != nil {
-		return nil, model.InternalError(fmt.Errorf(
-			"couldn't query cloud integration id: %w", err,
+		return nil, model.InternalError(errors.WrapInternalf(
+			err, errors.CodeInternal, "couldn't query cloud integration id",
 		))
 	}
 
@@ -126,8 +125,8 @@ func (r *serviceConfigSQLRepository) upsert(
 		On("conflict(cloud_integration_id, type) do update set config=excluded.config, updated_at=excluded.updated_at").
 		Exec(ctx)
 	if err != nil {
-		return nil, model.InternalError(fmt.Errorf(
-			"could not upsert cloud service config: %w", err,
+		return nil, model.InternalError(errors.WrapInternalf(
+			err, errors.CodeInternal, "could not upsert cloud service config",
 		))
 	}
 
@@ -149,8 +148,8 @@ func (r *serviceConfigSQLRepository) getAllForAccount(
 		Where("ci.org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
-		return nil, model.InternalError(fmt.Errorf(
-			"could not query service configs from db: %w", err,
+		return nil, model.InternalError(errors.WrapInternalf(
+			err, errors.CodeInternal, "could not query service configs from db",
 		))
 	}
 

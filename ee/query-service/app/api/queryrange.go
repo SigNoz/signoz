@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"runtime/debug"
@@ -78,7 +77,10 @@ func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
 			// checking if the expression is the same as the query name. if the expression is different
 			// then it is a formula. otherwise, it is simple builder query.
 			if query.DataSource != v3.DataSourceMetrics && query.QueryName == query.Expression {
-				RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("all queries must have metric data source")}, nil)
+				RespondError(w, &model.ApiError{
+					Typ: model.ErrorBadData,
+					Err: errors.NewInvalidInputf(errors.CodeInvalidInput, "all queries must have metric data source"),
+				}, nil)
 				return
 			}
 		}

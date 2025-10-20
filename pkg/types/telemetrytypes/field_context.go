@@ -2,9 +2,9 @@ package telemetrytypes
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -98,7 +98,7 @@ func (f *FieldContext) UnmarshalJSON(data []byte) error {
 // Scan implements the sql.Scanner interface
 func (f *FieldContext) Scan(value interface{}) error {
 	if f == nil {
-		return fmt.Errorf("fieldcontext: nil receiver")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "fieldcontext: nil receiver")
 	}
 
 	if value == nil {
@@ -108,7 +108,7 @@ func (f *FieldContext) Scan(value interface{}) error {
 
 	str, ok := value.(string)
 	if !ok {
-		return fmt.Errorf("fieldcontext: expected string, got %T", value)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "fieldcontext: expected string, got %T", value)
 	}
 
 	// Normalize the string

@@ -355,7 +355,7 @@ func TestParseQueryRangeParamsCompositeQuery(t *testing.T) {
 				},
 			},
 			expectErr: true,
-			errMsg:    "panel type is invalid",
+			errMsg:    "invalid-input(invalid_input): invalid panel type: invalid",
 		},
 		{
 			desc: "invalid query type",
@@ -370,7 +370,7 @@ func TestParseQueryRangeParamsCompositeQuery(t *testing.T) {
 				},
 			},
 			expectErr: true,
-			errMsg:    "query type is invalid",
+			errMsg:    "invalid-input(invalid_input): invalid query type: invalid",
 		},
 		{
 			desc: "invalid prometheus query",
@@ -475,7 +475,7 @@ func TestParseQueryRangeParamsCompositeQuery(t *testing.T) {
 				},
 			},
 			expectErr: true,
-			errMsg:    "data source is invalid",
+			errMsg:    "invalid-input(invalid_input): invalid data source: invalid",
 		},
 		// {
 		// 	desc: "invalid aggregate operator for builder query",
@@ -529,7 +529,7 @@ func TestParseQueryRangeParamsCompositeQuery(t *testing.T) {
 				},
 			},
 			expectErr: true,
-			errMsg:    "builder query A is invalid: group by is invalid",
+			errMsg:    "invalid-input(invalid_input): key is empty",
 		},
 		{
 			desc: "builder query with shift by",
@@ -680,7 +680,7 @@ func TestParseQueryRangeParamsExpressions(t *testing.T) {
 				},
 			},
 			expectErr: true,
-			errMsg:    "unknown variable B; unknown variable C",
+			errMsg:    "invalid-input(invalid_input): unknown variable B; invalid-input(invalid_input): unknown variable C",
 		},
 	}
 

@@ -1,7 +1,7 @@
 package kafka
 
 import (
-	"fmt"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -12,7 +12,7 @@ var defaultStepInterval int64 = 60
 func BuildQueryRangeParams(messagingQueue *MessagingQueue, queryContext string) (*v3.QueryRangeParamsV3, error) {
 
 	if constants.KafkaSpanEval == "false" && queryContext == "producer-consumer-eval" {
-		return nil, fmt.Errorf("span evaluation feature is disabled and is experimental")
+		return nil, errors.NewInternalf(errors.CodeInternal, "span evaluation feature is disabled and is experimental")
 	}
 
 	// ToDo: propagate this through APIs when there are different handlers
@@ -47,12 +47,12 @@ func buildClickHouseQueryNetwork(messagingQueue *MessagingQueue, queueType strin
 
 	consumerGroup, ok := messagingQueue.Variables["consumer_group"]
 	if !ok {
-		return nil, fmt.Errorf("consumer_group not found in the request")
+		return nil, errors.NewInternalf(errors.CodeInternal, "consumer_group not found in the request")
 	}
 
 	partitionID, ok := messagingQueue.Variables["partition"]
 	if !ok {
-		return nil, fmt.Errorf("partition not found in the request")
+		return nil, errors.NewInternalf(errors.CodeInternal, "partition not found in the request")
 	}
 
 	query := generateNetworkLatencyThroughputSQL(start, end, consumerGroup, partitionID, queueType)
@@ -355,7 +355,7 @@ func BuildClickHouseQuery(
 		var ok bool
 		topic, ok = messagingQueue.Variables["topic"]
 		if !ok {
-			return nil, fmt.Errorf("invalid type for Topic")
+			return nil, errors.NewInternalf(errors.CodeInternal, "invalid type for Topic")
 		}
 
 		if !(queryContext == "consumer-throughput-details" ||
@@ -363,7 +363,7 @@ func BuildClickHouseQuery(
 
 			partition, ok = messagingQueue.Variables["partition"]
 			if !ok {
-				return nil, fmt.Errorf("invalid type for Partition")
+				return nil, errors.NewInternalf(errors.CodeInternal, "invalid type for Partition")
 			}
 		}
 	}
@@ -376,7 +376,7 @@ func BuildClickHouseQuery(
 	case "consumer":
 		consumerGroup, ok := messagingQueue.Variables["consumer_group"]
 		if !ok {
-			return nil, fmt.Errorf("invalid type for consumer group")
+			return nil, errors.NewInternalf(errors.CodeInternal, "invalid type for consumer group")
 		}
 		query = generateConsumerSQL(start, end, topic, partition, consumerGroup, queueType)
 	case "producer-topic-throughput":
@@ -386,7 +386,7 @@ func BuildClickHouseQuery(
 	case "producer-throughput-details":
 		svcName, ok := messagingQueue.Variables["service_name"]
 		if !ok {
-			return nil, fmt.Errorf("invalid type for service")
+			return nil, errors.NewInternalf(errors.CodeInternal, "invalid type for service")
 		}
 		query = generateProducerTopicLatencySQL(start, end, topic, svcName, queueType)
 	case "consumer-throughput-overview":
@@ -394,7 +394,7 @@ func BuildClickHouseQuery(
 	case "consumer-throughput-details":
 		svcName, ok := messagingQueue.Variables["service_name"]
 		if !ok {
-			return nil, fmt.Errorf("invalid type for service")
+			return nil, errors.NewInternalf(errors.CodeInternal, "invalid type for service")
 		}
 		query = generateConsumerServiceLatencySQL(start, end, topic, svcName, queueType)
 	case "producer-consumer-eval":

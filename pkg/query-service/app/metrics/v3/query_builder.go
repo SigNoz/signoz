@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
@@ -208,7 +209,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery) (string, erro
 		query := fmt.Sprintf(queryTmpl, step, filterSubQuery)
 		return query, nil
 	default:
-		return "", fmt.Errorf("unsupported aggregate operator")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported aggregate operator")
 	}
 }
 
@@ -326,7 +327,7 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 	case v3.ReduceToOperatorMin:
 		query = fmt.Sprintf("SELECT *, now() AS ts FROM (SELECT minIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s)", selectLabels, query, groupBy)
 	default:
-		return "", fmt.Errorf("unsupported reduce operator")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported reduce operator")
 	}
 	return query, nil
 }

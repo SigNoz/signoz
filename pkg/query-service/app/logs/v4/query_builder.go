@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	logsV3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/app/resource"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
@@ -134,7 +135,7 @@ func buildAttributeFilter(item v3.FilterItem) (string, error) {
 	if op != v3.FilterOperatorExists && op != v3.FilterOperatorNotExists {
 		value, err = utils.ValidateAndCastValue(item.Value, item.Key.DataType)
 		if err != nil {
-			return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
+			return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to validate and cast value for %s", item.Key.Key)
 		}
 	}
 
@@ -142,7 +143,7 @@ func buildAttributeFilter(item v3.FilterItem) (string, error) {
 	// also for eq and contains as now it does a exact match
 	if key == "__attrs" {
 		if (op != v3.FilterOperatorEqual && op != v3.FilterOperatorContains) || item.Key.DataType != v3.AttributeKeyDataTypeString {
-			return "", fmt.Errorf("only = operator and string data type is supported for __attrs")
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "only = operator and string data type is supported for __attrs")
 		}
 		val := utils.ClickHouseFormattedValue(item.Value)
 		return fmt.Sprintf("has(mapValues(attributes_string), %s)", val), nil
@@ -184,7 +185,7 @@ func buildAttributeFilter(item v3.FilterItem) (string, error) {
 			return fmt.Sprintf("%s %s %s", keyName, logsOp, fmtVal), nil
 		}
 	} else {
-		return "", fmt.Errorf("unsupported operator: %s", op)
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %s", op)
 	}
 }
 
@@ -357,7 +358,7 @@ func generateAggregateClause(panelType v3.PanelType, start, end int64, aggOp v3.
 		query := fmt.Sprintf(queryTmpl, op, whereClause, groupBy, having, orderBy)
 		return query, nil
 	default:
-		return "", fmt.Errorf("unsupported aggregate operator")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported aggregate operator")
 	}
 }
 
@@ -495,7 +496,7 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 
 		return query, nil
 	default:
-		return "", fmt.Errorf("unsupported aggregate operator in live tail")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported aggregate operator in live tail")
 	}
 }
 
@@ -543,7 +544,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 	if panelType == v3.PanelTypeList {
 		// check if limit exceeded
 		if mq.Limit > 0 && mq.Offset >= mq.Limit {
-			return "", fmt.Errorf("max limit exceeded")
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "max limit exceeded")
 		}
 
 		// when pageSize is provided, we need to fetch the logs in chunks

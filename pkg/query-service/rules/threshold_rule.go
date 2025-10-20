@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/contextlinks"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
@@ -386,7 +387,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 	}
 	err = r.PopulateTemporality(ctx, orgID, params)
 	if err != nil {
-		return nil, fmt.Errorf("internal error while setting temporality")
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "internal error while setting temporality")
 	}
 
 	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
@@ -435,14 +436,14 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 
 	if err != nil {
 		r.logger.ErrorContext(ctx, "failed to get alert query range result", "rule_name", r.Name(), "error", err, "query_errors", queryErrors)
-		return nil, fmt.Errorf("internal error while querying")
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "internal error while querying")
 	}
 
 	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		results, err = postprocess.PostProcessResult(results, params)
 		if err != nil {
 			r.logger.ErrorContext(ctx, "failed to post process result", "rule_name", r.Name(), "error", err)
-			return nil, fmt.Errorf("internal error while post processing")
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "internal error while post processing")
 		}
 	}
 
@@ -511,7 +512,7 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 
 	if err != nil {
 		r.logger.ErrorContext(ctx, "failed to get alert query result", "rule_name", r.Name(), "error", err)
-		return nil, fmt.Errorf("internal error while querying")
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "internal error while querying")
 	}
 
 	for _, item := range v5Result.Data.Results {
@@ -685,7 +686,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		resultFPs[h] = struct{}{}
 
 		if _, ok := alerts[h]; ok {
-			return nil, fmt.Errorf("duplicate alert found, vector contains metrics with the same labelset after applying alert labels")
+			return nil, errors.NewInternalf(errors.CodeInternal, "duplicate alert found, vector contains metrics with the same labelset after applying alert labels")
 		}
 
 		alerts[h] = &ruletypes.Alert{

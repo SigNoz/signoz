@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
@@ -184,7 +185,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 			if op != v3.FilterOperatorExists && op != v3.FilterOperatorNotExists {
 				value, err = utils.ValidateAndCastValue(item.Value, item.Key.DataType)
 				if err != nil {
-					return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
+					return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to validate and cast value for %s", item.Key.Key)
 				}
 			}
 
@@ -220,7 +221,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
 				}
 			} else {
-				return "", fmt.Errorf("unsupported operator: %s", op)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %s", op)
 			}
 		}
 	}
@@ -360,7 +361,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		query := fmt.Sprintf(queryTmpl, timeFilter, filterSubQuery, orderBy)
 		return query, nil
 	default:
-		return "", fmt.Errorf("unsupported aggregate operator")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported aggregate operator")
 	}
 }
 
@@ -379,7 +380,7 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 
 		return query, nil
 	default:
-		return "", fmt.Errorf("unsupported aggregate operator in live tail")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported aggregate operator in live tail")
 	}
 }
 
@@ -465,7 +466,7 @@ func ReduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 	case v3.ReduceToOperatorMin:
 		query = fmt.Sprintf("SELECT min(value) as value, now() as ts FROM (%s)", query)
 	default:
-		return "", fmt.Errorf("unsupported reduce operator")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported reduce operator")
 	}
 	return query, nil
 }
@@ -534,7 +535,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 	if panelType == v3.PanelTypeList {
 		// check if limit exceeded
 		if mq.Limit > 0 && mq.Offset >= mq.Limit {
-			return "", fmt.Errorf("max limit exceeded")
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "max limit exceeded")
 		}
 
 		if mq.PageSize > 0 {

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	pkgErrors "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -30,7 +31,7 @@ func (d DataSource) Validate() error {
 	case DataSourceTraces, DataSourceLogs, DataSourceMetrics, DataSourceMeter:
 		return nil
 	default:
-		return fmt.Errorf("invalid data source: %s", d)
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "invalid data source: %s", d)
 	}
 }
 
@@ -103,7 +104,7 @@ func (a AggregateOperator) Validate() error {
 		AggregateOperatorHistQuant99:
 		return nil
 	default:
-		return fmt.Errorf("invalid operator: %s", a)
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "invalid operator: %s", a)
 	}
 }
 
@@ -175,7 +176,7 @@ func (r ReduceToOperator) Validate() error {
 	case ReduceToOperatorLast, ReduceToOperatorSum, ReduceToOperatorAvg, ReduceToOperatorMin, ReduceToOperatorMax:
 		return nil
 	default:
-		return fmt.Errorf("invalid reduce to operator: %s", r)
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "invalid reduce to operator: %s", r)
 	}
 }
 
@@ -193,7 +194,7 @@ func (q QueryType) Validate() error {
 	case QueryTypeBuilder, QueryTypeClickHouseSQL, QueryTypePromQL:
 		return nil
 	default:
-		return fmt.Errorf("invalid query type: %s", q)
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "invalid query type: %s", q)
 	}
 }
 
@@ -212,7 +213,7 @@ func (p PanelType) Validate() error {
 	case PanelTypeValue, PanelTypeGraph, PanelTypeTable, PanelTypeList, PanelTypeTrace:
 		return nil
 	default:
-		return fmt.Errorf("invalid panel type: %s", p)
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "invalid panel type: %s", p)
 	}
 }
 
@@ -242,7 +243,7 @@ func (q TagType) Validate() error {
 	case TagTypeTag, TagTypeResource, TagTypeInstrumentationScope:
 		return nil
 	default:
-		return fmt.Errorf("invalid tag type: %s", q)
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "invalid tag type: %s", q)
 	}
 }
 
@@ -289,7 +290,7 @@ func (q AttributeKeyDataType) Validate() error {
 	case AttributeKeyDataTypeString, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeBool:
 		return nil
 	default:
-		return fmt.Errorf("invalid tag data type: %s", q)
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "invalid tag data type: %s", q)
 	}
 }
 
@@ -318,15 +319,15 @@ type FilterAttributeValueRequest struct {
 
 func (f *FilterAttributeValueRequest) Validate() error {
 	if f.FilterAttributeKey == "" {
-		return fmt.Errorf("filterAttributeKey is required")
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "filterAttributeKey is required")
 	}
 
 	if f.StartTimeMillis == 0 {
-		return fmt.Errorf("startTimeMillis is required")
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "startTimeMillis is required")
 	}
 
 	if f.EndTimeMillis == 0 {
-		return fmt.Errorf("endTimeMillis is required")
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "endTimeMillis is required")
 	}
 
 	if f.Limit == 0 {
@@ -334,24 +335,24 @@ func (f *FilterAttributeValueRequest) Validate() error {
 	}
 
 	if f.Limit > 1000 {
-		return fmt.Errorf("limit must be less than 1000")
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "limit must be less than 1000")
 	}
 
 	if f.ExistingFilterItems != nil {
 		for _, value := range f.ExistingFilterItems {
 			if value.Key.Key == "" {
-				return fmt.Errorf("existingFilterItems must contain a valid key")
+				return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "existingFilterItems must contain a valid key")
 			}
 		}
 	}
 
 	if err := f.DataSource.Validate(); err != nil {
-		return fmt.Errorf("invalid data source: %w", err)
+		return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "invalid data source")
 	}
 
 	if f.DataSource != DataSourceMetrics {
 		if err := f.AggregateOperator.Validate(); err != nil {
-			return fmt.Errorf("invalid aggregate operator: %w", err)
+			return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "invalid aggregate operator")
 		}
 	}
 
@@ -397,7 +398,7 @@ func (a AttributeKey) Validate() error {
 	case AttributeKeyDataTypeBool, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeString, AttributeKeyDataTypeArrayFloat64, AttributeKeyDataTypeArrayString, AttributeKeyDataTypeArrayInt64, AttributeKeyDataTypeArrayBool, AttributeKeyDataTypeUnspecified:
 		break
 	default:
-		return fmt.Errorf("invalid attribute dataType: %s", a.DataType)
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "invalid attribute dataType: %s", a.DataType)
 	}
 
 	if a.IsColumn {
@@ -405,12 +406,12 @@ func (a AttributeKey) Validate() error {
 		case AttributeKeyTypeResource, AttributeKeyTypeTag, AttributeKeyTypeUnspecified, AttributeKeyTypeInstrumentationScope:
 			break
 		default:
-			return fmt.Errorf("invalid attribute type: %s", a.Type)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "invalid attribute type: %s", a.Type)
 		}
 	}
 
 	if a.Key == "" {
-		return fmt.Errorf("key is empty")
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "key is empty")
 	}
 
 	return nil
@@ -475,7 +476,7 @@ func (p *PromQuery) Validate() error {
 	}
 
 	if p.Query == "" {
-		return fmt.Errorf("query is empty")
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "query is empty")
 	}
 
 	return nil
@@ -503,7 +504,7 @@ func (c *ClickHouseQuery) Validate() error {
 	}
 
 	if c.Query == "" {
-		return fmt.Errorf("query is empty")
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "query is empty")
 	}
 
 	return nil
@@ -601,17 +602,17 @@ func (c *CompositeQuery) Sanitize() {
 
 func (c *CompositeQuery) Validate() error {
 	if c == nil {
-		return fmt.Errorf("composite query is required")
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "composite query is required")
 	}
 
 	if c.BuilderQueries == nil && c.ClickHouseQueries == nil && c.PromQueries == nil && len(c.Queries) == 0 {
-		return fmt.Errorf("composite query must contain at least one query type")
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "composite query must contain at least one query type")
 	}
 
 	if c.QueryType == QueryTypeBuilder {
 		for name, query := range c.BuilderQueries {
 			if err := query.Validate(c.PanelType); err != nil {
-				return fmt.Errorf("builder query %s is invalid: %w", name, err)
+				return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "builder query %s is invalid", name)
 			}
 		}
 	}
@@ -619,7 +620,7 @@ func (c *CompositeQuery) Validate() error {
 	if c.QueryType == QueryTypeClickHouseSQL {
 		for name, query := range c.ClickHouseQueries {
 			if err := query.Validate(); err != nil {
-				return fmt.Errorf("clickhouse query %s is invalid: %w", name, err)
+				return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "clickhouse query %s is invalid", name)
 			}
 		}
 	}
@@ -627,17 +628,17 @@ func (c *CompositeQuery) Validate() error {
 	if c.QueryType == QueryTypePromQL {
 		for name, query := range c.PromQueries {
 			if err := query.Validate(); err != nil {
-				return fmt.Errorf("prom query %s is invalid: %w", name, err)
+				return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "prom query %s is invalid", name)
 			}
 		}
 	}
 
 	if err := c.PanelType.Validate(); err != nil {
-		return fmt.Errorf("panel type is invalid: %w", err)
+		return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "panel type is invalid")
 	}
 
 	if err := c.QueryType.Validate(); err != nil {
-		return fmt.Errorf("query type is invalid: %w", err)
+		return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "query type is invalid")
 	}
 
 	return nil
@@ -658,7 +659,7 @@ func (t *Temporality) Scan(src interface{}) error {
 	}
 	s, ok := src.(string)
 	if !ok {
-		return fmt.Errorf("failed to scan Temporality: %v", src)
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "failed to scan Temporality: %v", src)
 	}
 	*t = Temporality(s)
 	return nil
@@ -692,7 +693,7 @@ func (t TimeAggregation) Validate() error {
 		TimeAggregationIncrease:
 		return nil
 	default:
-		return fmt.Errorf("invalid time aggregation: %s", t)
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "invalid time aggregation: %s", t)
 	}
 }
 
@@ -723,7 +724,7 @@ func (m *MetricType) Scan(src interface{}) error {
 	}
 	s, ok := src.(string)
 	if !ok {
-		return fmt.Errorf("failed to scan MetricType: %v", src)
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "failed to scan MetricType: %v", src)
 	}
 	*m = MetricType(s)
 	return nil
@@ -759,7 +760,7 @@ func (s SpaceAggregation) Validate() error {
 		SpaceAggregationPercentile99:
 		return nil
 	default:
-		return fmt.Errorf("invalid space aggregation: %s", s)
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "invalid space aggregation: %s", s)
 	}
 }
 
@@ -812,7 +813,7 @@ func (s SecondaryAggregation) Validate() error {
 		SecondaryAggregationMax:
 		return nil
 	default:
-		return fmt.Errorf("invalid series aggregation: %s", s)
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "invalid series aggregation: %s", s)
 	}
 }
 
@@ -859,7 +860,7 @@ func (f FunctionName) Validate() error {
 		FunctionNameAnomaly:
 		return nil
 	default:
-		return fmt.Errorf("invalid function name: %s", f)
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "invalid function name: %s", f)
 	}
 }
 
@@ -1016,68 +1017,68 @@ func (b *BuilderQuery) Validate(panelType PanelType) error {
 	}
 
 	if b.QueryName == "" {
-		return fmt.Errorf("query name is required")
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "query name is required")
 	}
 
 	// if expression is same as query name, it's a simple builder query and not a formula
 	// formula involves more than one data source, aggregate operator, etc.
 	if b.QueryName == b.Expression {
 		if err := b.DataSource.Validate(); err != nil {
-			return fmt.Errorf("data source is invalid: %w", err)
+			return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "data source is invalid")
 		}
 		if b.DataSource == DataSourceMetrics {
 			// if AggregateOperator is specified, then the request is using v3 payload
 			// if b.AggregateOperator != "" && b.SpaceAggregation == SpaceAggregationUnspecified {
 			// 	if err := b.AggregateOperator.Validate(); err != nil {
-			// 		return fmt.Errorf("aggregate operator is invalid: %w", err)
+			// 			return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "aggregate operator is invalid")
 			// 	}
 			// } else {
 			// 	// the time aggregation is not needed for percentile operators
 			// 	if !IsPercentileOperator(b.SpaceAggregation) {
 			// 		if err := b.TimeAggregation.Validate(); err != nil {
-			// 			return fmt.Errorf("time aggregation is invalid: %w", err)
+			// 			return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "time aggregation is invalid")
 			// 		}
 			// 	}
 
 			// 	if err := b.SpaceAggregation.Validate(); err != nil {
-			// 		return fmt.Errorf("space aggregation is invalid: %w", err)
+			// 		return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "space aggregation is invalid")
 			// 	}
 			// }
 		} else {
 			if err := b.AggregateOperator.Validate(); err != nil {
-				return fmt.Errorf("aggregate operator is invalid: %w", err)
+				return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "aggregate operator is invalid")
 			}
 		}
 		if b.AggregateAttribute == (AttributeKey{}) && b.AggregateOperator.RequireAttribute(b.DataSource) {
-			return fmt.Errorf("aggregate attribute is required")
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "aggregate attribute is required")
 		}
 	}
 
 	if b.Filters != nil {
 		if err := b.Filters.Validate(); err != nil {
-			return fmt.Errorf("filters are invalid: %w", err)
+			return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "filters are invalid")
 		}
 	}
 	if b.GroupBy != nil {
 		// if len(b.GroupBy) > 0 && panelType == PanelTypeList {
-		// 	return fmt.Errorf("group by is not supported for list panel type")
+		// 	return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "group by is not supported for list panel type")
 		// }
 
 		if panelType == PanelTypeValue && len(b.GroupBy) > 0 {
 			if err := b.SecondaryAggregation.Validate(); err != nil {
-				return fmt.Errorf("series aggregation is required for value type panel with group by: %w", err)
+				return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "series aggregation is required for value type panel with group by")
 			}
 		}
 
 		for _, groupBy := range b.GroupBy {
 			if err := groupBy.Validate(); err != nil {
-				return fmt.Errorf("group by is invalid %w", err)
+				return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "group by is invalid")
 			}
 		}
 
 		if b.DataSource == DataSourceMetrics && len(b.GroupBy) > 0 && b.SpaceAggregation == SpaceAggregationUnspecified {
 			if b.AggregateOperator == AggregateOperatorNoOp || b.AggregateOperator == AggregateOperatorRate {
-				return fmt.Errorf("group by requires aggregate operator other than noop or rate")
+				return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "group by requires aggregate operator other than noop or rate")
 			}
 		}
 	}
@@ -1085,36 +1086,36 @@ func (b *BuilderQuery) Validate(panelType PanelType) error {
 	if b.Having != nil {
 		for _, having := range b.Having {
 			if err := having.Operator.Validate(); err != nil {
-				return fmt.Errorf("having operator is invalid: %w", err)
+				return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "having operator is invalid")
 			}
 		}
 	}
 
 	for _, selectColumn := range b.SelectColumns {
 		if err := selectColumn.Validate(); err != nil {
-			return fmt.Errorf("select column is invalid %w", err)
+			return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "select column is invalid")
 		}
 	}
 
 	if b.Expression == "" {
-		return fmt.Errorf("expression is required")
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "expression is required")
 	}
 
 	if len(b.Functions) > 0 {
 		for _, function := range b.Functions {
 			if err := function.Name.Validate(); err != nil {
-				return fmt.Errorf("function name is invalid: %w", err)
+				return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "function name is invalid")
 			}
 			if function.Name == FunctionNameTimeShift {
 				if len(function.Args) == 0 {
-					return fmt.Errorf("timeShiftBy param missing in query")
+					return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "timeShiftBy param missing in query")
 				}
 				_, ok := function.Args[0].(float64)
 				if !ok {
 					// if string, attempt to convert to float
 					timeShiftBy, err := strconv.ParseFloat(function.Args[0].(string), 64)
 					if err != nil {
-						return fmt.Errorf("timeShiftBy param should be a number")
+						return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "timeShiftBy param should be a number")
 					}
 					function.Args[0] = timeShiftBy
 				}
@@ -1122,36 +1123,36 @@ func (b *BuilderQuery) Validate(panelType PanelType) error {
 				function.Name == FunctionNameEWMA5 ||
 				function.Name == FunctionNameEWMA7 {
 				if len(function.Args) == 0 {
-					return fmt.Errorf("alpha param missing in query")
+					return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "alpha param missing in query")
 				}
 				alpha, ok := function.Args[0].(float64)
 				if !ok {
 					// if string, attempt to convert to float
 					alpha, err := strconv.ParseFloat(function.Args[0].(string), 64)
 					if err != nil {
-						return fmt.Errorf("alpha param should be a float")
+						return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "alpha param should be a float")
 					}
 					function.Args[0] = alpha
 				}
 				if alpha < 0 || alpha > 1 {
-					return fmt.Errorf("alpha param should be between 0 and 1")
+					return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "alpha param should be between 0 and 1")
 				}
 			} else if function.Name == FunctionNameCutOffMax ||
 				function.Name == FunctionNameCutOffMin ||
 				function.Name == FunctionNameClampMax ||
 				function.Name == FunctionNameClampMin {
 				if len(function.Args) == 0 {
-					return fmt.Errorf("threshold param missing in query")
+					return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "threshold param missing in query")
 				}
 				_, ok := function.Args[0].(float64)
 				if !ok {
 					// if string, attempt to convert to float
 					if _, ok := function.Args[0].(string); !ok {
-						return fmt.Errorf("threshold param should be a float")
+						return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "threshold param should be a float")
 					}
 					threshold, err := strconv.ParseFloat(function.Args[0].(string), 64)
 					if err != nil {
-						return fmt.Errorf("threshold param should be a float")
+						return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "threshold param should be a float")
 					}
 					function.Args[0] = threshold
 				}
@@ -1182,11 +1183,11 @@ func (f *FilterSet) Validate() error {
 		return nil
 	}
 	if f.Operator != "" && f.Operator != "AND" && f.Operator != "OR" {
-		return fmt.Errorf("operator must be AND or OR")
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "operator must be AND or OR")
 	}
 	for _, item := range f.Items {
 		if err := item.Key.Validate(); err != nil {
-			return fmt.Errorf("filter item key is invalid: %w", err)
+			return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "filter item key is invalid")
 		}
 	}
 	return nil
@@ -1297,7 +1298,7 @@ func (h HavingOperator) Validate() error {
 		HavingOperator(strings.ToLower(string(HavingOperatorNotIn))):
 		return nil
 	default:
-		return fmt.Errorf("invalid having operator: %s", h)
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "invalid having operator: %s", h)
 	}
 }
 
@@ -1442,7 +1443,7 @@ type SavedView struct {
 func (eq *SavedView) Validate() error {
 
 	if eq.CompositeQuery == nil {
-		return fmt.Errorf("composite query is required")
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "composite query is required")
 	}
 
 	return eq.CompositeQuery.Validate()

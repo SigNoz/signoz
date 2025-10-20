@@ -3,8 +3,8 @@ package opamp
 import (
 	"context"
 	"crypto/sha256"
-	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	model "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig"
 	coreModel "github.com/SigNoz/signoz/pkg/query-service/model"
@@ -31,28 +31,28 @@ func UpsertControlProcessors(
 
 	if signal != string(Metrics) && signal != string(Traces) {
 		zap.L().Error("received invalid signal int UpsertControlProcessors", zap.String("signal", signal))
-		fnerr = coreModel.BadRequest(fmt.Errorf(
-			"signal not supported in ingestion rules: %s", signal,
+		fnerr = coreModel.BadRequest(errors.NewInvalidInputf(
+			errors.CodeUnsupported, "signal not supported in ingestion rules: %s", signal,
 		))
 		return
 	}
 
 	if opAmpServer == nil {
-		fnerr = coreModel.UnavailableError(fmt.Errorf(
-			"opamp server is down, unable to push config to agent at this moment",
+		fnerr = coreModel.UnavailableError(errors.NewInternalf(
+			errors.CodeInternal, "opamp server is down, unable to push config to agent at this moment",
 		))
 		return
 	}
 
 	agents := opAmpServer.agents.GetAllAgents()
 	if len(agents) == 0 {
-		fnerr = coreModel.UnavailableError(fmt.Errorf("no agents available at the moment"))
+		fnerr = coreModel.UnavailableError(errors.NewInternalf(errors.CodeInternal, "no agents available at the moment"))
 		return
 	}
 
 	if len(agents) > 1 && signal == string(Traces) {
 		zap.L().Debug("found multiple agents. this feature is not supported for traces pipeline (sampling rules)")
-		fnerr = coreModel.BadRequest(fmt.Errorf("multiple agents not supported in sampling rules"))
+		fnerr = coreModel.BadRequest(errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "multiple agents not supported in sampling rules"))
 		return
 	}
 

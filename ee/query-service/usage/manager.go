@@ -15,6 +15,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/encryption"
@@ -59,7 +60,7 @@ func New(licenseService licensing.Licensing, clickhouseConn clickhouse.Conn, zeu
 func (lm *Manager) Start(ctx context.Context) error {
 	// compares the locker and stateUnlocked if both are same lock is applied else returns error
 	if !atomic.CompareAndSwapUint32(&locker, stateUnlocked, stateLocked) {
-		return fmt.Errorf("usage exporter is locked")
+		return errors.NewInternalf(errors.CodeInternal, "usage exporter is locked")
 	}
 
 	// upload usage once when starting the service

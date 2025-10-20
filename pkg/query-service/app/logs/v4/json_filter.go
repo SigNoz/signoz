@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	logsV3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
@@ -37,7 +38,7 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 	// check if its an array and handle it
 	if val, ok := logsV3.ArrayValueTypeMapping[string(item.Key.DataType)]; ok {
 		if item.Operator != v3.FilterOperatorHas && item.Operator != v3.FilterOperatorNotHas {
-			return "", fmt.Errorf("only has operator is supported for array")
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "only has operator is supported for array")
 		}
 		isArray = true
 		dataType = v3.AttributeKeyDataType(val)
@@ -55,7 +56,7 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 	if op != v3.FilterOperatorExists && op != v3.FilterOperatorNotExists {
 		value, err = utils.ValidateAndCastValue(item.Value, dataType)
 		if err != nil {
-			return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
+			return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to validate and cast value for %s", item.Key.Key)
 		}
 	}
 
@@ -75,7 +76,7 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 			filter = fmt.Sprintf("%s %s %s", key, logsOp, fmtVal)
 		}
 	} else {
-		return "", fmt.Errorf("unsupported operator: %s", op)
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %s", op)
 	}
 
 	filters := []string{}

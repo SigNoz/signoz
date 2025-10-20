@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/metrics"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -38,14 +39,14 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 				} else if _, ok := val.(bool); ok {
 					x[i] = fmt.Sprintf("%v", val)
 				} else {
-					return nil, fmt.Errorf("invalid data type, expected string, got %v", reflect.TypeOf(val))
+					return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid data type, expected string, got %v", reflect.TypeOf(val))
 				}
 			}
 			return x, nil
 		case []string:
 			return x, nil
 		default:
-			return nil, fmt.Errorf("invalid data type, expected string, got %v", reflect.TypeOf(v))
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid data type, expected string, got %v", reflect.TypeOf(v))
 		}
 	case v3.AttributeKeyDataTypeBool:
 		switch x := v.(type) {
@@ -54,11 +55,11 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 				if _, ok := val.(string); ok {
 					boolean, err := strconv.ParseBool(val.(string))
 					if err != nil {
-						return nil, fmt.Errorf("invalid data type, expected bool, got %v", reflect.TypeOf(val))
+						return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid data type, expected bool, got %v", reflect.TypeOf(val))
 					}
 					x[i] = boolean
 				} else if _, ok := val.(bool); !ok {
-					return nil, fmt.Errorf("invalid data type, expected bool, got %v", reflect.TypeOf(val))
+					return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid data type, expected bool, got %v", reflect.TypeOf(val))
 				} else {
 					x[i] = val.(bool)
 				}
@@ -69,11 +70,11 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 		case string:
 			boolean, err := strconv.ParseBool(x)
 			if err != nil {
-				return nil, fmt.Errorf("invalid data type, expected bool, got %v", reflect.TypeOf(v))
+				return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid data type, expected bool, got %v", reflect.TypeOf(v))
 			}
 			return boolean, nil
 		default:
-			return nil, fmt.Errorf("invalid data type, expected bool, got %v", reflect.TypeOf(v))
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid data type, expected bool, got %v", reflect.TypeOf(v))
 		}
 	case v3.AttributeKeyDataTypeInt64:
 		switch x := v.(type) {
@@ -82,13 +83,13 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 				if _, ok := val.(string); ok {
 					int64val, err := strconv.ParseInt(val.(string), 10, 64)
 					if err != nil {
-						return nil, fmt.Errorf("invalid data type, expected int, got %v", reflect.TypeOf(val))
+						return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid data type, expected int, got %v", reflect.TypeOf(val))
 					}
 					x[i] = int64val
 				} else if _, ok := val.(int); ok {
 					x[i] = int64(val.(int))
 				} else if _, ok := val.(int64); !ok {
-					return nil, fmt.Errorf("invalid data type, expected int, got %v", reflect.TypeOf(val))
+					return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid data type, expected int, got %v", reflect.TypeOf(val))
 				} else {
 					x[i] = val.(int64)
 				}
@@ -103,11 +104,11 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 		case string:
 			int64val, err := strconv.ParseInt(x, 10, 64)
 			if err != nil {
-				return nil, fmt.Errorf("invalid data type, expected int, got %v", reflect.TypeOf(v))
+				return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid data type, expected int, got %v", reflect.TypeOf(v))
 			}
 			return int64val, nil
 		default:
-			return nil, fmt.Errorf("invalid data type, expected int, got %v", reflect.TypeOf(v))
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid data type, expected int, got %v", reflect.TypeOf(v))
 		}
 	case v3.AttributeKeyDataTypeFloat64:
 		switch x := v.(type) {
@@ -116,7 +117,7 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 				if _, ok := val.(string); ok {
 					float64val, err := strconv.ParseFloat(val.(string), 64)
 					if err != nil {
-						return nil, fmt.Errorf("invalid data type, expected float, got %v", reflect.TypeOf(val))
+						return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid data type, expected float, got %v", reflect.TypeOf(val))
 					}
 					x[i] = float64val
 				} else if _, ok := val.(float32); ok {
@@ -126,7 +127,7 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 				} else if _, ok := val.(int64); ok {
 					x[i] = float64(val.(int64))
 				} else if _, ok := val.(float64); !ok {
-					return nil, fmt.Errorf("invalid data type, expected float, got %v", reflect.TypeOf(val))
+					return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid data type, expected float, got %v", reflect.TypeOf(val))
 				} else {
 					x[i] = val.(float64)
 				}
@@ -137,7 +138,7 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 		case string:
 			float64val, err := strconv.ParseFloat(x, 64)
 			if err != nil {
-				return nil, fmt.Errorf("invalid data type, expected float, got %v", reflect.TypeOf(v))
+				return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid data type, expected float, got %v", reflect.TypeOf(v))
 			}
 			return float64val, nil
 		case int:
@@ -145,10 +146,10 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 		case int64:
 			return float64(x), nil
 		default:
-			return nil, fmt.Errorf("invalid data type, expected float, got %v", reflect.TypeOf(v))
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid data type, expected float, got %v", reflect.TypeOf(v))
 		}
 	default:
-		return nil, fmt.Errorf("invalid data type, expected float, bool, int, string or []interface{} but got %v", dataType)
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid data type, expected float, bool, int, string or []interface{} but got %v", dataType)
 	}
 }
 
@@ -246,7 +247,11 @@ func ClickHouseFormattedMetricNames(v interface{}) string {
 
 func AddBackTickToFormatTag(str string) string {
 	if strings.Contains(str, ".") || strings.Contains(str, "-") {
-		if strings.HasPrefix(str, "`") && strings.HasSuffix(str, "`") { return str } else { return "`" + str + "`" }
+		if strings.HasPrefix(str, "`") && strings.HasSuffix(str, "`") {
+			return str
+		} else {
+			return "`" + str + "`"
+		}
 	} else {
 		return str
 	}

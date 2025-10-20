@@ -1,10 +1,10 @@
 package queryprogress
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -25,9 +25,7 @@ func (tracker *inMemoryQueryProgressTracker) ReportQueryStarted(
 
 	_, exists := tracker.queries[queryId]
 	if exists {
-		return nil, model.BadRequest(fmt.Errorf(
-			"query %s already started", queryId,
-		))
+		return nil, model.BadRequest(errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "query %s already started", queryId))
 	}
 
 	tracker.queries[queryId] = newQueryTracker(queryId)
@@ -83,9 +81,7 @@ func (tracker *inMemoryQueryProgressTracker) getQueryTracker(
 
 	queryTracker := tracker.queries[queryId]
 	if queryTracker == nil {
-		return nil, model.NotFoundError(fmt.Errorf(
-			"query %s doesn't exist", queryId,
-		))
+		return nil, model.NotFoundError(errors.NewNotFoundf(errors.CodeNotFound, "query %s doesn't exist", queryId))
 	}
 
 	return queryTracker, nil
@@ -140,9 +136,7 @@ func (qt *queryTracker) subscribe() (
 	defer qt.lock.Unlock()
 
 	if qt.isFinished {
-		return nil, nil, model.NotFoundError(fmt.Errorf(
-			"query %s already finished", qt.queryId,
-		))
+		return nil, nil, model.NotFoundError(errors.NewNotFoundf(errors.CodeNotFound, "query %s already finished", qt.queryId))
 	}
 
 	subscriberId := uuid.NewString()

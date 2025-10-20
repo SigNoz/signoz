@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	pkgErrors "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
@@ -140,7 +141,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 			if spec, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator); ok {
 				// Parse expression to find dependencies
 				if err := spec.ParseExpression(); err != nil {
-					return nil, fmt.Errorf("failed to parse trace operator expression: %w", err)
+					return nil, pkgErrors.WrapInternalf(err, pkgErrors.CodeInternal, "failed to parse trace operator expression")
 				}
 
 				deps := spec.CollectReferencedQueries(spec.ParsedExpression)
@@ -386,7 +387,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			default:
-				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported builder spec type %T", query.Spec)
+				return nil, errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "unsupported builder spec type %T", query.Spec)
 			}
 		}
 	}
@@ -673,7 +674,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 			// Create a new query with the missing time range
 			rangedQuery := q.createRangedQuery(query, *tr)
 			if rangedQuery == nil {
-				errors[idx] = fmt.Errorf("failed to create ranged query for range %d-%d", tr.From, tr.To)
+				errors[idx] = pkgErrors.NewInternalf(pkgErrors.CodeInternal, "failed to create ranged query for range %d-%d", tr.From, tr.To)
 				return
 			}
 

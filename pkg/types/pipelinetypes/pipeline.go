@@ -2,11 +2,11 @@ package pipelinetypes
 
 import (
 	"encoding/json"
-	"fmt"
 	"regexp"
 	"slices"
 	"strings"
 
+	pkgErrors "github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/queryBuilderToExpr"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -208,20 +208,20 @@ type PostablePipeline struct {
 // IsValid checks if postable pipeline has all the required params
 func (p *PostablePipeline) IsValid() error {
 	if p.OrderID == 0 {
-		return fmt.Errorf("orderId with value > 1 is required")
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "orderId with value > 1 is required")
 	}
 	if p.Name == "" {
-		return fmt.Errorf("pipeline name is required")
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "pipeline name is required")
 	}
 
 	if p.Alias == "" {
-		return fmt.Errorf("pipeline alias is required")
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "pipeline alias is required")
 	}
 
 	// check the filter
 	_, err := queryBuilderToExpr.Parse(p.Filter)
 	if err != nil {
-		return fmt.Errorf("filter for pipeline %v is not correct: %v", p.Name, err.Error())
+		return pkgErrors.WrapInvalidInputf(err, pkgErrors.CodeInvalidInput, "filter for pipeline %v is not correct", p.Name)
 	}
 
 	idUnique := map[string]struct{}{}
@@ -230,30 +230,30 @@ func (p *PostablePipeline) IsValid() error {
 	l := len(p.Config)
 	for i, op := range p.Config {
 		if op.OrderId == 0 {
-			return fmt.Errorf("orderId with value > 1 is required in operator")
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "orderId with value > 1 is required in operator")
 		}
 		if op.ID == "" {
-			return fmt.Errorf("id of an operator cannot be empty")
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "id of an operator cannot be empty")
 		}
 		if op.Type == "" {
-			return fmt.Errorf("type of an operator cannot be empty")
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "type of an operator cannot be empty")
 		}
 		if i != (l-1) && op.Output == "" {
-			return fmt.Errorf("output of operator %s cannot be nil", op.ID)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "output of operator %s cannot be nil", op.ID)
 		}
 		if i == (l-1) && op.Output != "" {
-			return fmt.Errorf("output of operator %s should be empty", op.ID)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "output of operator %s should be empty", op.ID)
 		}
 
 		if _, ok := idUnique[op.ID]; ok {
-			return fmt.Errorf("duplicate id cannot be present")
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "duplicate id cannot be present")
 		}
 		if _, ok := outputUnique[op.Output]; ok {
-			return fmt.Errorf("duplicate output cannot be present")
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "duplicate output cannot be present")
 		}
 
 		if op.ID == op.Output {
-			return fmt.Errorf("id and output cannot be same")
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "id and output cannot be same")
 		}
 
 		err := isValidOperator(op)
@@ -275,25 +275,25 @@ func isValidOperator(op PipelineOperator) error {
 	switch op.Type {
 	case "json_parser":
 		if op.ParseFrom == "" && op.ParseTo == "" {
-			return fmt.Errorf("parse from and parse to of %s json operator cannot be empty", op.ID)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "parse from and parse to of %s json operator cannot be empty", op.ID)
 		}
 
 		for k := range op.Mapping {
 			if !slices.Contains(validMappingVariableTypes, strings.ToLower(k)) {
-				return fmt.Errorf("%s is not a valid mapping type in processor %s", k, op.ID)
+				return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "%s is not a valid mapping type in processor %s", k, op.ID)
 			}
 		}
 	case "grok_parser":
 		if op.Pattern == "" {
-			return fmt.Errorf("pattern of %s grok operator cannot be empty", op.ID)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "pattern of %s grok operator cannot be empty", op.ID)
 		}
 	case "regex_parser":
 		if op.Regex == "" {
-			return fmt.Errorf("regex of %s regex operator cannot be empty", op.ID)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "regex of %s regex operator cannot be empty", op.ID)
 		}
 		r, err := regexp.Compile(op.Regex)
 		if err != nil {
-			return fmt.Errorf("error compiling regex expression of %s regex operator", op.ID)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "error compiling regex expression of %s regex operator", op.ID)
 		}
 		namedCaptureGroups := 0
 		for _, groupName := range r.SubexpNames() {
@@ -302,27 +302,27 @@ func isValidOperator(op PipelineOperator) error {
 			}
 		}
 		if namedCaptureGroups == 0 {
-			return fmt.Errorf("no capture groups in regex expression of %s regex operator", op.ID)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "no capture groups in regex expression of %s regex operator", op.ID)
 		}
 	case "copy":
 		if op.From == "" || op.To == "" {
-			return fmt.Errorf("from or to of %s copy operator cannot be empty", op.ID)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "from or to of %s copy operator cannot be empty", op.ID)
 		}
 	case "move":
 		if op.From == "" || op.To == "" {
-			return fmt.Errorf("from or to of %s move operator cannot be empty", op.ID)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "from or to of %s move operator cannot be empty", op.ID)
 		}
 	case "add":
 		if op.Field == "" || op.Value == "" {
-			return fmt.Errorf("field or value of %s add operator cannot be empty", op.ID)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "field or value of %s add operator cannot be empty", op.ID)
 		}
 	case "remove":
 		if op.Field == "" {
-			return fmt.Errorf("field of %s remove operator cannot be empty", op.ID)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "field of %s remove operator cannot be empty", op.ID)
 		}
 	case "trace_parser":
 		if op.TraceParser == nil {
-			return fmt.Errorf("field of %s remove operator cannot be empty", op.ID)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "field of %s remove operator cannot be empty", op.ID)
 		}
 
 		hasTraceIdParseFrom := (op.TraceParser.TraceId != nil && op.TraceParser.TraceId.ParseFrom != "")
@@ -330,42 +330,40 @@ func isValidOperator(op PipelineOperator) error {
 		hasTraceFlagsParseFrom := (op.TraceParser.TraceFlags != nil && op.TraceParser.TraceFlags.ParseFrom != "")
 
 		if !(hasTraceIdParseFrom || hasSpanIdParseFrom || hasTraceFlagsParseFrom) {
-			return fmt.Errorf("one of trace_id, span_id, trace_flags of %s trace_parser operator must be present", op.ID)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "one of trace_id, span_id, trace_flags of %s trace_parser operator must be present", op.ID)
 		}
 
 		if hasTraceIdParseFrom && !isValidOtelValue(op.TraceParser.TraceId.ParseFrom) {
-			return fmt.Errorf("trace id can't be parsed from %s", op.TraceParser.TraceId.ParseFrom)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "trace id can't be parsed from %s", op.TraceParser.TraceId.ParseFrom)
 		}
 		if hasSpanIdParseFrom && !isValidOtelValue(op.TraceParser.SpanId.ParseFrom) {
-			return fmt.Errorf("span id can't be parsed from %s", op.TraceParser.SpanId.ParseFrom)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "span id can't be parsed from %s", op.TraceParser.SpanId.ParseFrom)
 		}
 		if hasTraceFlagsParseFrom && !isValidOtelValue(op.TraceParser.TraceFlags.ParseFrom) {
-			return fmt.Errorf("trace flags can't be parsed from %s", op.TraceParser.TraceFlags.ParseFrom)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "trace flags can't be parsed from %s", op.TraceParser.TraceFlags.ParseFrom)
 		}
 
 	case "retain":
 		if len(op.Fields) == 0 {
-			return fmt.Errorf("fields of %s retain operator cannot be empty", op.ID)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "fields of %s retain operator cannot be empty", op.ID)
 		}
 
 	case "time_parser":
 		if op.ParseFrom == "" {
-			return fmt.Errorf("parse from of time parsing processor %s cannot be empty", op.ID)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "parse from of time parsing processor %s cannot be empty", op.ID)
 		}
 		if op.LayoutType != "epoch" && op.LayoutType != "strptime" {
 			// TODO(Raj): Maybe add support for gotime format
-			return fmt.Errorf(
-				"invalid format type '%s' of time parsing processor %s", op.LayoutType, op.ID,
-			)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "invalid format type '%s' of time parsing processor %s", op.LayoutType, op.ID)
 		}
 		if op.Layout == "" {
-			return fmt.Errorf("format can not be empty for time parsing processor %s", op.ID)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "format can not be empty for time parsing processor %s", op.ID)
 		}
 
 		validEpochLayouts := []string{"s", "ms", "us", "ns", "s.ms", "s.us", "s.ns"}
 		if op.LayoutType == "epoch" && !slices.Contains(validEpochLayouts, op.Layout) {
-			return fmt.Errorf(
-				"invalid epoch format '%s' of time parsing processor %s", op.LayoutType, op.ID,
+			return pkgErrors.NewInvalidInputf(
+				pkgErrors.CodeInvalidInput, "invalid epoch format '%s' of time parsing processor %s", op.LayoutType, op.ID,
 			)
 		}
 
@@ -374,23 +372,30 @@ func isValidOperator(op PipelineOperator) error {
 		if op.LayoutType == "strptime" {
 			_, err := RegexForStrptimeLayout(op.Layout)
 			if err != nil {
-				return fmt.Errorf("invalid strptime format '%s' of time parsing processor %s: %w", op.LayoutType, op.ID, err)
+				return pkgErrors.WrapInvalidInputf(
+					err, pkgErrors.CodeInvalidInput, "invalid strptime format '%s' of time parsing processor %s",
+					op.LayoutType, op.ID,
+				)
 			}
 		}
 
 	case "severity_parser":
 		if op.ParseFrom == "" {
-			return fmt.Errorf("parse from of severity parsing processor %s cannot be empty", op.ID)
+			return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "parse from of severity parsing processor %s cannot be empty", op.ID)
 		}
 
 		for k := range op.Mapping {
 			if !slices.Contains(validMappingLevels, strings.ToLower(k)) {
-				return fmt.Errorf("%s is not a valid severity in processor %s", k, op.ID)
+				return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "%s is not a valid severity in processor %s", k, op.ID)
 			}
 		}
 
 	default:
-		return fmt.Errorf("operator type %s not supported for %s, use one of (grok_parser, regex_parser, copy, move, add, remove, trace_parser, retain)", op.Type, op.ID)
+		return pkgErrors.NewInvalidInputf(
+			pkgErrors.CodeInvalidInput,
+			"operator type %s not supported for %s, use one of (grok_parser, regex_parser, copy, move, add, remove, trace_parser, retain)",
+			op.Type, op.ID,
+		)
 	}
 
 	if !isValidOtelValue(op.ParseFrom) ||
@@ -399,7 +404,7 @@ func isValidOperator(op PipelineOperator) error {
 		!isValidOtelValue(op.To) ||
 		!isValidOtelValue(op.Field) {
 		valueErrStr := "value should have prefix of body, attributes, resource"
-		return fmt.Errorf("%s for operator Id %s", valueErrStr, op.ID)
+		return pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "%s for operator Id %s", valueErrStr, op.ID)
 	}
 	return nil
 }

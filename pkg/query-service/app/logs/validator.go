@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -11,13 +12,13 @@ import (
 
 func ValidateUpdateFieldPayload(field *model.UpdateField) error {
 	if field.Name == "" {
-		return fmt.Errorf("name cannot be empty")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "name cannot be empty")
 	}
 	if field.Type == "" {
-		return fmt.Errorf("type cannot be empty")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "type cannot be empty")
 	}
 	if field.DataType == "" {
-		return fmt.Errorf("dataType cannot be empty")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "dataType cannot be empty")
 	}
 
 	matched, err := regexp.MatchString(fmt.Sprintf("^(%s|%s|%s)$", constants.Static, constants.Attributes, constants.Resources), field.Type)
@@ -25,7 +26,7 @@ func ValidateUpdateFieldPayload(field *model.UpdateField) error {
 		return err
 	}
 	if !matched {
-		return fmt.Errorf("type %s not supported", field.Type)
+		return errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "type %s not supported", field.Type)
 	}
 
 	if field.IndexType != "" {
@@ -34,7 +35,7 @@ func ValidateUpdateFieldPayload(field *model.UpdateField) error {
 			return err
 		}
 		if !matched {
-			return fmt.Errorf("index type %s not supported", field.IndexType)
+			return errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "index type %s not supported", field.IndexType)
 		}
 	}
 	return nil
@@ -42,13 +43,13 @@ func ValidateUpdateFieldPayload(field *model.UpdateField) error {
 
 func ValidateUpdateFieldPayloadV2(field *model.UpdateField) error {
 	if field.Name == "" {
-		return fmt.Errorf("name cannot be empty")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "name cannot be empty")
 	}
 	if field.Type == "" {
-		return fmt.Errorf("type cannot be empty")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "type cannot be empty")
 	}
 	if field.DataType == "" {
-		return fmt.Errorf("dataType cannot be empty")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "dataType cannot be empty")
 	}
 
 	// the logs api uses the old names i.e attributes and resources while traces use tag and attribute.
@@ -58,7 +59,7 @@ func ValidateUpdateFieldPayloadV2(field *model.UpdateField) error {
 		return err
 	}
 	if !matched {
-		return fmt.Errorf("type %s not supported", field.Type)
+		return errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "type %s not supported", field.Type)
 	}
 
 	if field.IndexType != "" {
@@ -67,7 +68,7 @@ func ValidateUpdateFieldPayloadV2(field *model.UpdateField) error {
 			return err
 		}
 		if !matched {
-			return fmt.Errorf("index type %s not supported", field.IndexType)
+			return errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "index type %s not supported", field.IndexType)
 		}
 	}
 	return nil

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 )
 
@@ -26,7 +27,7 @@ func (f *TraceTimeRangeFinder) GetTraceTimeRange(ctx context.Context, traceID st
 
 func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, traceIDs []string) (startNano, endNano int64, err error) {
 	if len(traceIDs) == 0 {
-		return 0, 0, fmt.Errorf("no trace IDs provided")
+		return 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "no trace IDs provided")
 	}
 
 	cleanedIDs := make([]string, len(traceIDs))
@@ -54,9 +55,9 @@ func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, trace
 	err = row.Scan(&startNano, &endNano)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return 0, 0, fmt.Errorf("traces not found: %v", cleanedIDs)
+			return 0, 0, errors.NewNotFoundf(errors.CodeNotFound, "traces not found: %v", cleanedIDs)
 		}
-		return 0, 0, fmt.Errorf("failed to query trace time range: %w", err)
+		return 0, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to query trace time range")
 	}
 
 	if startNano > 1_000_000_000 {

@@ -2,11 +2,11 @@ package querier
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	logsV4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
 	metricsV3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
@@ -185,7 +185,7 @@ func (q *querier) runBuilderQueries(ctx context.Context, orgID valuer.UUID, para
 
 	var err error
 	if len(errs) > 0 {
-		err = fmt.Errorf("error in builder queries")
+		err = errors.NewInternalf(errors.CodeInternal, "error in builder queries")
 	}
 
 	return results, errQueriesByName, err
@@ -255,7 +255,7 @@ func (q *querier) runPromQueries(ctx context.Context, orgID valuer.UUID, params 
 
 	var err error
 	if len(errs) > 0 {
-		err = fmt.Errorf("error in prom queries")
+		err = errors.NewInternalf(errors.CodeInternal, "error in prom queries")
 	}
 
 	return results, errQueriesByName, err
@@ -296,7 +296,7 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 
 	var err error
 	if len(errs) > 0 {
-		err = fmt.Errorf("error in clickhouse queries")
+		err = errors.NewInternalf(errors.CodeInternal, "error in clickhouse queries")
 	}
 	return results, errQueriesByName, err
 }
@@ -338,7 +338,7 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 		// for logs we use pageSize to define the current limit and limit to define the absolute limit
 		limitWithOffset = pageSize + offset
 		if limit > 0 && offset >= limit {
-			return nil, nil, fmt.Errorf("max limit exceeded")
+			return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "max limit exceeded")
 		}
 	}
 
@@ -350,7 +350,7 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 		// max limit + offset is 10k for pagination for traces/logs
 		// TODO(nitya): define something for logs
 		if !isLogs && limitWithOffset > constants.TRACE_V4_MAX_PAGINATION_LIMIT {
-			return nil, nil, fmt.Errorf("maximum traces that can be paginated is 10000")
+			return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "maximum traces that can be paginated is 10000")
 		}
 
 		// we are updating the offset and limit based on the number of traces/logs we have found in the current timerange
@@ -388,7 +388,7 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 				errQueriesByName := map[string]error{
 					name: err,
 				}
-				return nil, errQueriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+				return nil, errQueriesByName, errors.WrapInternalf(multierr.Combine(errs...), errors.CodeInternal, "encountered multiple errors")
 			}
 			length += uint64(len(rowList))
 
@@ -493,7 +493,7 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 		})
 	}
 	if len(errs) != 0 {
-		return nil, errQueriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+		return nil, errQueriesByName, errors.WrapInternalf(multierr.Combine(errs...), errors.CodeInternal, "encountered multiple errors")
 	}
 	return res, nil, nil
 }
@@ -527,16 +527,16 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, params *v3.
 				results, errQueriesByName, err = q.runClickHouseQueries(ctx, params)
 			}
 		default:
-			err = fmt.Errorf("invalid query type")
+			err = errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid query type")
 		}
 	}
 
 	// return error if the number of series is more than one for value type panel
 	if params.CompositeQuery.PanelType == v3.PanelTypeValue {
 		if len(results) > 1 && params.CompositeQuery.EnabledQueries() > 1 {
-			err = fmt.Errorf("there can be only one active query for value type panel")
+			err = errors.NewInvalidInputf(errors.CodeInvalidInput, "there can be only one active query for value type panel")
 		} else if len(results) == 1 && len(results[0].Series) > 1 {
-			err = fmt.Errorf("there can be only one result series for value type panel but got %d", len(results[0].Series))
+			err = errors.NewInvalidInputf(errors.CodeInvalidInput, "there can be only one result series for value type panel but got %d", len(results[0].Series))
 		}
 	}
 

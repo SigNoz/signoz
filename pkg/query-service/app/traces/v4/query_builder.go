@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/app/resource"
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
@@ -93,7 +94,7 @@ func existsSubQueryForFixedColumn(key v3.AttributeKey, op v3.FilterOperator) (st
 			return fmt.Sprintf("%s %s ''", getColumnName(key, true), tracesOperatorMappingV3[v3.FilterOperatorEqual]), nil
 		}
 	} else {
-		return "", fmt.Errorf("unsupported operation, exists and not exists can only be applied on custom attributes or string type columns")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operation, exists and not exists can only be applied on custom attributes or string type columns")
 	}
 }
 
@@ -118,7 +119,7 @@ func BuildTracesFilterQuery(fs *v3.FilterSet, skipAllowed bool) (string, error) 
 				var err error
 				val, err = utils.ValidateAndCastValue(val, item.Key.DataType)
 				if err != nil {
-					return "", fmt.Errorf("invalid value for key %s: %v", item.Key.Key, err)
+					return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid value for key %s", item.Key.Key)
 				}
 			}
 			if val != nil {
@@ -150,7 +151,7 @@ func BuildTracesFilterQuery(fs *v3.FilterSet, skipAllowed bool) (string, error) 
 					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, operator, fmtVal))
 				}
 			} else {
-				return "", fmt.Errorf("unsupported operator %s", item.Operator)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator %s", item.Operator)
 			}
 		}
 	}
@@ -245,7 +246,7 @@ func buildSpanScopeQuery(fs *v3.FilterSet) (string, error) {
 			query = "((name, `resource_string_service$$name`) GLOBAL IN ( SELECT DISTINCT name, serviceName from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_TOP_LEVEL_OPERATIONS_TABLENAME + " )) AND parent_span_id != '' "
 			return query, nil
 		} else {
-			return "", fmt.Errorf("invalid scope item type: %s", item.Key.Type)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid scope item type: %s", item.Key.Type)
 		}
 	}
 	return "", nil
@@ -306,7 +307,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 		var query string
 		if panelType == v3.PanelTypeTrace {
 			if len(mq.OrderBy) > 1 {
-				return "", fmt.Errorf("multiple orderBy criteria are not supported for trace queries")
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "multiple orderBy criteria are not supported for trace queries")
 			}
 			orderBySpanCount := false
 
@@ -334,14 +335,14 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 			query += " settings distributed_product_mode='allow', max_memory_usage=10000000000"
 		} else if panelType == v3.PanelTypeList {
 			if len(mq.SelectColumns) == 0 {
-				return "", fmt.Errorf("select columns cannot be empty for panelType %s", panelType)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "select columns cannot be empty for panelType %s", panelType)
 			}
 			selectLabels = getSelectLabels(mq.SelectColumns)
 			// add it to the select labels
 			queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, span_id as spanID, trace_id as traceID,%s ", selectLabels) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_V3 + " where %s %s" + "%s"
 			query = fmt.Sprintf(queryNoOpTmpl, timeFilter, filterSubQuery, orderBy)
 		} else {
-			return "", fmt.Errorf("unsupported aggregate operator %s for panelType %s", mq.AggregateOperator, panelType)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported aggregate operator %s for panelType %s", mq.AggregateOperator, panelType)
 		}
 		return query, nil
 		// ---- NOOP ends here ----
@@ -449,7 +450,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	default:
-		return "", fmt.Errorf("unsupported aggregate operator %s", mq.AggregateOperator)
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported aggregate operator: %s", mq.AggregateOperator)
 	}
 }
 
