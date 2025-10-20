@@ -55,6 +55,164 @@
 			flex-direction: column;
 			gap: 8px;
 
+			.span-name-wrapper {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				gap: 8px;
+
+				.attribute-value {
+					border-right: 1px solid var(--bg-slate-400);
+				}
+
+				.span-percentile-value {
+					color: var(--Sakura-400, #f56c87);
+					font-variant-numeric: lining-nums tabular-nums stacked-fractions
+						slashed-zero;
+					font-feature-settings: 'dlig' on, 'salt' on;
+					font-family: Inter;
+					font-size: 14px;
+					font-style: normal;
+					min-width: 36px;
+					font-weight: 400;
+					line-height: 18px; /* 128.571% */
+					letter-spacing: -0.07px;
+					padding-right: 4px;
+
+					cursor: pointer;
+				}
+			}
+
+			.span-percentiles-container {
+				display: flex;
+				flex-direction: column;
+
+				fill: linear-gradient(
+					139deg,
+					rgba(18, 19, 23, 0.32) 0%,
+					rgba(18, 19, 23, 0.36) 98.68%
+				);
+
+				stroke-width: 1px;
+				stroke: var(--Slate-500, #161922);
+				filter: drop-shadow(2px 4px 16px rgba(0, 0, 0, 0.2));
+				backdrop-filter: blur(20px);
+				border: 1px solid var(--bg-slate-500);
+				border-radius: 4px;
+
+				.span-percentiles-header {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					gap: 8px;
+					padding: 8px 12px 8px 12px;
+					border-bottom: 1px solid var(--bg-slate-500);
+
+					.span-percentiles-header-text {
+						display: flex;
+						align-items: center;
+						gap: 8px;
+						cursor: pointer;
+					}
+				}
+
+				.span-percentile-content {
+					display: flex;
+					flex-direction: column;
+					gap: 8px;
+					padding: 8px;
+
+					.span-percentile-timerange {
+						width: 100%;
+
+						.span-percentile-timerange-select {
+							width: 100%;
+							margin-top: 8px;
+							margin-bottom: 16px;
+
+							.ant-select-selector {
+								border-radius: 50px;
+								border: 1px solid var(--Slate-400, #1d212d);
+								background: var(--Slate-500, #161922);
+								color: var(--bg-vanilla-400);
+								font-family: Inter;
+								font-size: 12px;
+								font-style: normal;
+								font-weight: 400;
+								line-height: 20px; /* 142.857% */
+								letter-spacing: 0.28px;
+
+								height: 32px;
+							}
+						}
+					}
+
+					.span-percentile-values-table {
+						.span-percentile-values-table-header-row {
+							display: flex;
+							align-items: center;
+							justify-content: space-between;
+							gap: 8px;
+
+							.span-percentile-values-table-header {
+								color: var(--text-vanilla-400);
+								text-align: right;
+								font-family: Inter;
+								font-size: 11px;
+								font-style: normal;
+								font-weight: 500;
+								line-height: 20px; /* 181.818% */
+								text-transform: uppercase;
+							}
+						}
+
+						.span-percentile-values-table-data-rows {
+							margin-top: 8px;
+							display: flex;
+							flex-direction: column;
+							gap: 4px;
+						}
+
+						.span-percentile-values-table-data-row {
+							display: flex;
+							align-items: center;
+							justify-content: space-between;
+							gap: 12px;
+
+							.span-percentile-values-table-data-row-item {
+								flex: 0 0 auto;
+								color: var(--Vanilla-100, #fff);
+								text-align: right;
+								font-family: Inter;
+								font-size: 12px;
+								font-style: normal;
+								font-weight: 500;
+								line-height: 20px; /* 166.667% */
+							}
+
+							.dashed-line {
+								flex: 1;
+								height: 0; /* line only */
+								margin: 0 8px;
+								border-top: 2px dashed #1d212d;
+
+								/* Use border image to control dash length & spacing */
+								border-top-width: 2px;
+								border-top-style: solid; /* temporary solid for image */
+								border-image: repeating-linear-gradient(
+										to right,
+										#1d212d 0,
+										#1d212d 10px,
+										transparent 10px,
+										transparent 20px
+									)
+									1 stretch;
+							}
+						}
+					}
+				}
+			}
+
 			.attribute-key {
 				color: var(--bg-vanilla-400);
 				font-family: Inter;
@@ -68,7 +226,6 @@
 
 			.value-wrapper {
 				display: flex;
-				padding: 2px 8px;
 				align-items: center;
 				width: fit-content;
 				max-width: 100%;
@@ -77,6 +234,7 @@
 				background: var(--bg-slate-500);
 
 				.attribute-value {
+					padding: 2px 8px;
 					color: var(--bg-vanilla-400);
 					font-family: 'Inter';
 					font-size: 14px;

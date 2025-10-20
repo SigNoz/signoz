@@ -1,14 +1,29 @@
 import './SpanDetailsDrawer.styles.scss';
 
-import { Button, Tabs, TabsProps, Tooltip, Typography } from 'antd';
+import { Button, Select, Tabs, TabsProps, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { Anvil, Bookmark, Link2, PanelRight, Search } from 'lucide-react';
-import { Dispatch, SetStateAction, useCallback, useState } from 'react';
+import {
+	Anvil,
+	Bookmark,
+	ChevronDown,
+	Link2,
+	PanelRight,
+	PlusIcon,
+	Search,
+} from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useMemo,
+	useState,
+} from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { formatEpochTimestamp } from 'utils/timeUtils';
 
@@ -26,6 +41,45 @@ interface ISpanDetailsDrawerProps {
 	traceEndTime: number;
 }
 
+const timerangeOptions = [
+	{
+		label: 'Last 1 hour',
+		value: '1h',
+	},
+	{
+		label: 'Last 3 hours',
+		value: '3h',
+	},
+	{
+		label: 'Last 6 hours',
+		value: '6h',
+	},
+	{
+		label: 'Last 9 hours',
+		value: '9h',
+	},
+	{
+		label: 'Last 12 hours',
+		value: '12h',
+	},
+	{
+		label: 'Last 15 hours',
+		value: '15h',
+	},
+	{
+		label: 'Last 18 hours',
+		value: '18h',
+	},
+	{
+		label: 'Last 21 hours',
+		value: '21h',
+	},
+	{
+		label: 'Last 24 hours',
+		value: '24h',
+	},
+];
+
 function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 	const {
 		isSpanDetailsDocked,
@@ -37,6 +91,9 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(true);
 	const [shouldAutoFocusSearch, setShouldAutoFocusSearch] = useState<boolean>(
+		false,
+	);
+	const [isSpanPercentilesOpen, setIsSpanPercentilesOpen] = useState<boolean>(
 		false,
 	);
 	const [isRelatedSignalsOpen, setIsRelatedSignalsOpen] = useState<boolean>(
@@ -123,6 +180,22 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		];
 	}
 
+	const spanPercentileTooltipText = useMemo(
+		() => (
+			<div className="span-percentile-tooltip-text">
+				<Typography.Text>
+					This span duration is p39 out of the distribution for this resource
+					evaluated for the past 1 hour.
+				</Typography.Text>
+				<br />
+				<Typography.Text className="span-percentile-tooltip-text-link">
+					Click to learn more
+				</Typography.Text>
+			</div>
+		),
+		[],
+	);
+
 	return (
 		<>
 			<section className="header">
@@ -143,13 +216,123 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 					<section className="description">
 						<div className="item">
 							<Typography.Text className="attribute-key">span name</Typography.Text>
-							<Tooltip title={selectedSpan.name}>
-								<div className="value-wrapper">
+
+							<div className="value-wrapper span-name-wrapper">
+								<Tooltip title={selectedSpan.name}>
 									<Typography.Text className="attribute-value" ellipsis>
 										{selectedSpan.name}
 									</Typography.Text>
-								</div>
-							</Tooltip>
+								</Tooltip>
+
+								<Tooltip
+									title={isSpanPercentilesOpen ? '' : spanPercentileTooltipText}
+									placement="bottomRight"
+								>
+									<Typography.Text
+										className="span-percentile-value"
+										onClick={(): void => setIsSpanPercentilesOpen((prev) => !prev)}
+									>
+										p39
+									</Typography.Text>
+								</Tooltip>
+							</div>
+
+							<AnimatePresence initial={false}>
+								{isSpanPercentilesOpen && (
+									<motion.div
+										initial={{ height: 0, opacity: 0 }}
+										animate={{ height: 'auto', opacity: 1 }}
+										exit={{ height: 0, opacity: 0 }}
+										key="box"
+									>
+										<div className="span-percentiles-container">
+											<div className="span-percentiles-header">
+												<Typography.Text
+													className="span-percentiles-header-text"
+													onClick={(): void => setIsSpanPercentilesOpen((prev) => !prev)}
+												>
+													<ChevronDown size={16} /> Span Percentile
+												</Typography.Text>
+
+												<PlusIcon
+													size={16}
+													className="cursor-pointer span-percentiles-header-icon"
+												/>
+											</div>
+
+											<div className="span-percentile-content">
+												<Typography.Text className="span-percentile-content-title">
+													This span duration is p39 out of the distribution for this resource
+													evaluated for the past 1 hour.
+												</Typography.Text>
+
+												<div className="span-percentile-timerange">
+													<Select
+														placeholder="Select timerange"
+														className="span-percentile-timerange-select"
+														options={timerangeOptions}
+														filterOption={(input, option): boolean =>
+															(option?.value ?? '')
+																.toLowerCase()
+																.includes(input.trim().toLowerCase())
+														}
+													/>
+												</div>
+
+												<div className="span-percentile-values-table">
+													<div className="span-percentile-values-table-header-row">
+														<Typography.Text className="span-percentile-values-table-header">
+															Percentile
+														</Typography.Text>
+
+														<Typography.Text className="span-percentile-values-table-header">
+															Duration
+														</Typography.Text>
+													</div>
+
+													<div className="span-percentile-values-table-data-rows">
+														<div className="span-percentile-values-table-data-row">
+															<Typography.Text className="span-percentile-values-table-data-row-item">
+																p39
+															</Typography.Text>
+
+															<div className="dashed-line" />
+
+															<Typography.Text className="span-percentile-values-table-data-row-item">
+																{getYAxisFormattedValue(`${selectedSpan.durationNano}`, 'ns')}
+															</Typography.Text>
+														</div>
+
+														<div className="span-percentile-values-table-data-row">
+															<Typography.Text className="span-percentile-values-table-data-row-item">
+																p39
+															</Typography.Text>
+
+															<div className="dashed-line" />
+
+															<Typography.Text className="span-percentile-values-table-data-row-item">
+																{getYAxisFormattedValue(`${selectedSpan.durationNano}`, 'ns')}
+															</Typography.Text>
+														</div>
+
+														<div className="span-percentile-values-table-data-row">
+															<Typography.Text className="span-percentile-values-table-data-row-item">
+																p39
+															</Typography.Text>
+
+															<div className="dashed-line" />
+
+															<Typography.Text className="span-percentile-values-table-data-row-item">
+																{getYAxisFormattedValue(`${selectedSpan.durationNano}`, 'ns')}
+															</Typography.Text>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</motion.div>
+								)}
+							</AnimatePresence>
 						</div>
 						<div className="item">
 							<Typography.Text className="attribute-key">span id</Typography.Text>
