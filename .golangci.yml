@@ -35,6 +35,7 @@ linters-settings:
   forbidigo:
     forbid:
       - fmt.Errorf
+      - ^(fmt\.Print.*|print|println)$
 issues:
   exclude-dirs:
     - "pkg/query-service"

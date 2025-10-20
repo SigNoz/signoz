@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"path"
 	"sort"
@@ -27,8 +28,7 @@ var (
 func List(cloudProvider string) ([]Definition, *model.ApiError) {
 	cloudServices, found := supportedServices[cloudProvider]
 	if !found || cloudServices == nil {
-		return nil, model.NotFoundError(errors.Newf(
-			errors.TypeNotFound, CodeUnsupportedCloudProvider,
+		return nil, model.NotFoundError(fmt.Errorf(
 			"unsupported cloud provider: %s", cloudProvider,
 		))
 	}
@@ -73,8 +73,8 @@ var supportedServices map[string]map[string]Definition
 func init() {
 	err := readAllServiceDefinitions()
 	if err != nil {
-		panic(errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't read cloud service definitions",
+		panic(fmt.Errorf(
+			"couldn't read cloud service definitions: %w", err,
 		))
 	}
 }
@@ -89,7 +89,7 @@ func readAllServiceDefinitions() error {
 
 	cloudProviderDirs, err := fs.ReadDir(definitionFiles, rootDirName)
 	if err != nil {
-		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't read dirs in %s", rootDirName)
+		return fmt.Errorf("couldn't read dirs in %s: %w", rootDirName, err)
 	}
 
 	for _, d := range cloudProviderDirs {
@@ -102,11 +102,11 @@ func readAllServiceDefinitions() error {
 		cloudProviderDirPath := path.Join(rootDirName, cloudProvider)
 		cloudServices, err := readServiceDefinitionsFromDir(cloudProvider, cloudProviderDirPath)
 		if err != nil {
-			return errors.WrapInternalf(err, errors.CodeInternal, "couldn't read %s service definitions", cloudProvider)
+			return fmt.Errorf("couldn't read %s service definitions: %w", cloudProvider, err)
 		}
 
 		if len(cloudServices) < 1 {
-			return errors.NewInternalf(errors.CodeInternal, "no %s services could be read", cloudProvider)
+			return fmt.Errorf("no %s services could be read", cloudProvider)
 		}
 
 		supportedServices[cloudProvider] = cloudServices
@@ -120,7 +120,7 @@ func readServiceDefinitionsFromDir(cloudProvider string, cloudProviderDirPath st
 ) {
 	svcDefDirs, err := fs.ReadDir(definitionFiles, cloudProviderDirPath)
 	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't list integrations dirs")
+		return nil, fmt.Errorf("couldn't list integrations dirs: %w", err)
 	}
 
 	svcDefs := map[string]Definition{}
@@ -133,13 +133,13 @@ func readServiceDefinitionsFromDir(cloudProvider string, cloudProviderDirPath st
 		svcDirPath := path.Join(cloudProviderDirPath, d.Name())
 		s, err := readServiceDefinition(cloudProvider, svcDirPath)
 		if err != nil {
-			return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't read svc definition for %s", d.Name())
+			return nil, fmt.Errorf("couldn't read svc definition for %s: %w", d.Name(), err)
 		}
 
 		_, exists := svcDefs[s.Id]
 		if exists {
-			return nil, errors.NewInternalf(
-				errors.CodeInternal, "duplicate service definition for id %s at %s", s.Id, d.Name(),
+			return nil, fmt.Errorf(
+				"duplicate service definition for id %s at %s", s.Id, d.Name(),
 			)
 		}
 		svcDefs[s.Id] = *s
@@ -153,21 +153,17 @@ func readServiceDefinition(cloudProvider string, svcDirpath string) (*Definition
 
 	serializedSpec, err := definitionFiles.ReadFile(integrationJsonPath)
 	if err != nil {
-		return nil, errors.WrapInternalf(
-			err,
-			errors.CodeInternal,
-			"couldn't find integration.json in %s",
-			svcDirpath,
+		return nil, fmt.Errorf(
+			"couldn't find integration.json in %s: %w",
+			svcDirpath, err,
 		)
 	}
 
 	integrationSpec, err := koanfJson.Parser().Unmarshal(serializedSpec)
 	if err != nil {
-		return nil, errors.WrapInternalf(
-			err,
-			errors.CodeInternal,
-			"couldn't parse integration.json from %s",
-			integrationJsonPath,
+		return nil, fmt.Errorf(
+			"couldn't parse integration.json from %s: %w",
+			integrationJsonPath, err,
 		)
 	}
 
@@ -175,28 +171,24 @@ func readServiceDefinition(cloudProvider string, svcDirpath string) (*Definition
 		integrationSpec, definitionFiles, svcDirpath,
 	)
 	if err != nil {
-		return nil, errors.WrapInternalf(
-			err,
-			errors.CodeInternal,
-			"couldn't hydrate files referenced in service definition %s",
-			integrationJsonPath,
+		return nil, fmt.Errorf(
+			"couldn't hydrate files referenced in service definition %s: %w",
+			integrationJsonPath, err,
 		)
 	}
 	hydratedSpec := hydrated.(map[string]any)
 
 	serviceDef, err := ParseStructWithJsonTagsFromMap[Definition](hydratedSpec)
 	if err != nil {
-		return nil, errors.WrapInternalf(
-			err,
-			errors.CodeInternal,
-			"couldn't parse hydrated JSON spec read from %s",
-			integrationJsonPath,
+		return nil, fmt.Errorf(
+			"couldn't parse hydrated JSON spec read from %s: %w",
+			integrationJsonPath, err,
 		)
 	}
 
 	err = validateServiceDefinition(serviceDef)
 	if err != nil {
-		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid service definition %s", serviceDef.Id)
+		return nil, fmt.Errorf("invalid service definition %s: %w", serviceDef.Id, err)
 	}
 
 	serviceDef.Strategy.Provider = cloudProvider
@@ -210,13 +202,13 @@ func validateServiceDefinition(s *Definition) error {
 	seenDashboardIds := map[string]interface{}{}
 	for _, dd := range s.Assets.Dashboards {
 		if _, seen := seenDashboardIds[dd.Id]; seen {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "duplicate dashboard id detected: %s", dd.Id)
+			return fmt.Errorf("multiple dashboards found with id %s", dd.Id)
 		}
 		seenDashboardIds[dd.Id] = nil
 	}
 
 	if s.Strategy == nil {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry_collection_strategy is required")
+		return fmt.Errorf("telemetry_collection_strategy is required")
 	}
 
 	// potentially more to follow
@@ -229,7 +221,7 @@ func ParseStructWithJsonTagsFromMap[StructType any](data map[string]any) (
 ) {
 	mapJson, err := json.Marshal(data)
 	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't marshal map to json")
+		return nil, fmt.Errorf("couldn't marshal map to json: %w", err)
 	}
 
 	var res StructType
@@ -237,7 +229,7 @@ func ParseStructWithJsonTagsFromMap[StructType any](data map[string]any) (
 	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&res)
 	if err != nil {
-		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "couldn't unmarshal json back to struct")
+		return nil, fmt.Errorf("couldn't unmarshal json back to struct: %w", err)
 	}
 	return &res, nil
 }

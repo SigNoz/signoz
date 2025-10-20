@@ -2,12 +2,11 @@ package metricsexplorer
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
-
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -32,7 +31,7 @@ func ParseFilterValueSuggestions(r *http.Request) (*metrics_explorer.FilterValue
 
 	// parse the request body
 	if err := json.NewDecoder(r.Body).Decode(&filterValueRequest); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot parse the request body")}
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
 
 	return &filterValueRequest, nil
@@ -43,7 +42,7 @@ func ParseSummaryListMetricsParams(r *http.Request) (*metrics_explorer.SummaryLi
 
 	// parse the request body
 	if err := json.NewDecoder(r.Body).Decode(&listMetricsParams); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot parse the request body")}
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
 
 	if listMetricsParams.OrderBy.ColumnName == "" || listMetricsParams.OrderBy.Order == "" {
@@ -63,7 +62,7 @@ func ParseTreeMapMetricsParams(r *http.Request) (*metrics_explorer.TreeMapMetric
 
 	// parse the request body
 	if err := json.NewDecoder(r.Body).Decode(&treeMapMetricParams); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot parse the request body")}
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
 
 	if treeMapMetricParams.Limit == 0 {
@@ -76,7 +75,7 @@ func ParseTreeMapMetricsParams(r *http.Request) (*metrics_explorer.TreeMapMetric
 func ParseRelatedMetricsParams(r *http.Request) (*metrics_explorer.RelatedMetricsRequest, *model.ApiError) {
 	var relatedMetricParams metrics_explorer.RelatedMetricsRequest
 	if err := json.NewDecoder(r.Body).Decode(&relatedMetricParams); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot parse the request body")}
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
 	return &relatedMetricParams, nil
 }
@@ -84,10 +83,10 @@ func ParseRelatedMetricsParams(r *http.Request) (*metrics_explorer.RelatedMetric
 func ParseInspectMetricsParams(r *http.Request) (*metrics_explorer.InspectMetricsRequest, *model.ApiError) {
 	var inspectMetricParams metrics_explorer.InspectMetricsRequest
 	if err := json.NewDecoder(r.Body).Decode(&inspectMetricParams); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot parse the request body")}
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
 	if inspectMetricParams.End-inspectMetricParams.Start > constants.InspectMetricsMaxTimeDiff { // half hour only
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: errors.NewInvalidInputf(errors.CodeInvalidInput, "time duration shouldn't be more than 30 mins")}
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("time duration shouldn't be more than 30 mins")}
 	}
 	return &inspectMetricParams, nil
 }
@@ -95,7 +94,7 @@ func ParseInspectMetricsParams(r *http.Request) (*metrics_explorer.InspectMetric
 func ParseUpdateMetricsMetadataParams(r *http.Request) (*metrics_explorer.UpdateMetricsMetadataRequest, *model.ApiError) {
 	var updateMetricsMetadataReq metrics_explorer.UpdateMetricsMetadataRequest
 	if err := json.NewDecoder(r.Body).Decode(&updateMetricsMetadataReq); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot parse the request body")}
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
 	updateMetricsMetadataReq.MetricName = mux.Vars(r)["metric_name"]
 
@@ -104,40 +103,40 @@ func ParseUpdateMetricsMetadataParams(r *http.Request) (*metrics_explorer.Update
 		if updateMetricsMetadataReq.Temporality == "" {
 			return nil, &model.ApiError{
 				Typ: model.ErrorBadData,
-				Err: errors.NewInvalidInputf(errors.CodeInvalidInput, "temporality is required when metric type is Sum"),
+				Err: fmt.Errorf("temporality is required when metric type is Sum"),
 			}
 		}
 
 		if updateMetricsMetadataReq.Temporality != v3.Cumulative && updateMetricsMetadataReq.Temporality != v3.Delta {
 			return nil, &model.ApiError{
 				Typ: model.ErrorBadData,
-				Err: errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid value for temporality"),
+				Err: fmt.Errorf("invalid value for temporality"),
 			}
 		}
 	case v3.MetricTypeHistogram:
 		if updateMetricsMetadataReq.Temporality == "" {
 			return nil, &model.ApiError{
 				Typ: model.ErrorBadData,
-				Err: errors.NewInvalidInputf(errors.CodeInvalidInput, "temporality is required when metric type is Histogram"),
+				Err: fmt.Errorf("temporality is required when metric type is Histogram"),
 			}
 		}
 		if updateMetricsMetadataReq.Temporality != v3.Cumulative && updateMetricsMetadataReq.Temporality != v3.Delta {
 			return nil, &model.ApiError{
 				Typ: model.ErrorBadData,
-				Err: errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid value for temporality"),
+				Err: fmt.Errorf("invalid value for temporality"),
 			}
 		}
 	case v3.MetricTypeExponentialHistogram:
 		if updateMetricsMetadataReq.Temporality == "" {
 			return nil, &model.ApiError{
 				Typ: model.ErrorBadData,
-				Err: errors.NewInvalidInputf(errors.CodeInvalidInput, "temporality is required when metric type is exponential histogram"),
+				Err: fmt.Errorf("temporality is required when metric type is exponential histogram"),
 			}
 		}
 		if updateMetricsMetadataReq.Temporality != v3.Cumulative && updateMetricsMetadataReq.Temporality != v3.Delta {
 			return nil, &model.ApiError{
 				Typ: model.ErrorBadData,
-				Err: errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid value for temporality"),
+				Err: fmt.Errorf("invalid value for temporality"),
 			}
 		}
 
@@ -149,7 +148,7 @@ func ParseUpdateMetricsMetadataParams(r *http.Request) (*metrics_explorer.Update
 	default:
 		return nil, &model.ApiError{
 			Typ: model.ErrorBadData,
-			Err: errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid metric type"),
+			Err: fmt.Errorf("invalid metric type"),
 		}
 	}
 	return &updateMetricsMetadataReq, nil

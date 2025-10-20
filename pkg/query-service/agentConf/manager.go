@@ -8,7 +8,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	pkgErrors "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
 	filterprocessor "github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig/filterprocessor"
 	tsp "github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig/tailsampler"
@@ -228,14 +227,14 @@ func Redeploy(ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType
 
 	if configVersion == nil || (configVersion != nil && configVersion.Config == "") {
 		zap.L().Debug("config version has no conf yaml", zap.Any("configVersion", configVersion))
-		return model.BadRequest(pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "the config version cannot be redeployed"))
+		return model.BadRequest(fmt.Errorf("the config version can not be redeployed"))
 	}
 	switch typ {
 	case opamptypes.ElementTypeSamplingRules:
 		var config *tsp.Config
 		if err := yaml.Unmarshal([]byte(configVersion.Config), &config); err != nil {
 			zap.L().Debug("failed to read last conf correctly", zap.Error(err))
-			return model.InternalError(pkgErrors.WrapInternalf(err, pkgErrors.CodeInternal, "failed to read the stored config correctly"))
+			return model.BadRequest(fmt.Errorf("failed to read the stored config correctly"))
 		}
 
 		// merge current config with new filter params
@@ -247,7 +246,7 @@ func Redeploy(ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType
 		configHash, err := opamp.UpsertControlProcessors(ctx, "traces", processorConf, m.OnConfigUpdate)
 		if err != nil {
 			zap.L().Error("failed to call agent config update for trace processor", zap.Error(err))
-			return model.InternalError(pkgErrors.WrapInternalf(err, pkgErrors.CodeInternal, "failed to deploy the config"))
+			return model.InternalError(fmt.Errorf("failed to deploy the config"))
 		}
 
 		m.updateDeployStatus(ctx, orgId, opamptypes.ElementTypeSamplingRules, version, opamptypes.DeployInitiated.StringValue(), "Deployment started", configHash, configVersion.Config)
@@ -255,7 +254,7 @@ func Redeploy(ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType
 		var filterConfig *filterprocessor.Config
 		if err := yaml.Unmarshal([]byte(configVersion.Config), &filterConfig); err != nil {
 			zap.L().Error("failed to read last conf correctly", zap.Error(err))
-			return model.InternalError(pkgErrors.NewInternalf(pkgErrors.CodeInternal, "failed to read the stored config correctly"))
+			return model.InternalError(fmt.Errorf("failed to read the stored config correctly"))
 		}
 		processorConf := map[string]interface{}{
 			"filter": filterConfig,
@@ -277,7 +276,7 @@ func Redeploy(ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType
 // UpsertFilterProcessor updates the agent config with new filter processor params
 func UpsertFilterProcessor(ctx context.Context, orgId valuer.UUID, version int, config *filterprocessor.Config) error {
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
-		return pkgErrors.NewInternalf(pkgErrors.CodeInternal, "agent updater is busy")
+		return fmt.Errorf("agent updater is busy")
 	}
 	defer atomic.StoreUint32(&m.lock, 0)
 
@@ -329,7 +328,7 @@ func (m *Manager) OnConfigUpdate(orgId valuer.UUID, agentId string, hash string,
 // UpsertSamplingProcessor updates the agent config with new filter processor params
 func UpsertSamplingProcessor(ctx context.Context, orgId valuer.UUID, version int, config *tsp.Config) error {
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
-		return pkgErrors.NewInternalf(pkgErrors.CodeInternal, "agent updater is busy")
+		return fmt.Errorf("agent updater is busy")
 	}
 	defer atomic.StoreUint32(&m.lock, 0)
 

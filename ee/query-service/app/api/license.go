@@ -7,7 +7,6 @@ import (
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/ee/query-service/model"
-	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 type DayWiseBreakdown struct {
@@ -61,7 +60,7 @@ func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
 	licenseKey := r.URL.Query().Get("licenseKey")
 
 	if licenseKey == "" {
-		RespondError(w, model.BadRequest(errors.NewInvalidInputf(errors.CodeInvalidInput, "license key is required")), nil)
+		RespondError(w, model.BadRequest(fmt.Errorf("license key is required")), nil)
 		return
 	}
 

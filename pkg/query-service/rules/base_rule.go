@@ -124,7 +124,7 @@ func WithSQLStore(sqlstore sqlstore.SQLStore) RuleOption {
 
 func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader interfaces.Reader, opts ...RuleOption) (*BaseRule, error) {
 	if p.RuleCondition == nil || !p.RuleCondition.IsValid() {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid rule condition")
+		return nil, fmt.Errorf("invalid rule condition")
 	}
 	threshold, err := p.RuleCondition.Thresholds.GetRuleThreshold()
 	if err != nil {

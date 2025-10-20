@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
@@ -76,12 +75,12 @@ func GetJSONFilterKey(key v3.AttributeKey, op v3.FilterOperator, isArray bool) (
 	keyArr := strings.Split(key.Key, ".")
 	// i.e it should be at least body.name, and not something like body
 	if len(keyArr) < 2 {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "incorrect key, should contain at least 2 parts")
+		return "", fmt.Errorf("incorrect key, should contain at least 2 parts")
 	}
 
 	// only body is supported as of now
 	if strings.Compare(keyArr[0], "body") != 0 {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "only body can be the root key")
+		return "", fmt.Errorf("only body can be the root key")
 	}
 
 	if op == v3.FilterOperatorExists || op == v3.FilterOperatorNotExists {
@@ -91,7 +90,7 @@ func GetJSONFilterKey(key v3.AttributeKey, op v3.FilterOperator, isArray bool) (
 	var dataType string
 	var ok bool
 	if dataType, ok = DataTypeMapping[string(key.DataType)]; !ok {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported dataType for JSON: %s", key.DataType)
+		return "", fmt.Errorf("unsupported dataType for JSON: %s", key.DataType)
 	}
 
 	path := GetPath(keyArr[1:])
@@ -139,7 +138,7 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 	// check if its an array and handle it
 	if val, ok := ArrayValueTypeMapping[string(item.Key.DataType)]; ok {
 		if item.Operator != v3.FilterOperatorHas && item.Operator != v3.FilterOperatorNotHas {
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "only has operator is supported for array")
+			return "", fmt.Errorf("only has operator is supported for array")
 		}
 		isArray = true
 		dataType = v3.AttributeKeyDataType(val)
@@ -157,7 +156,7 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 	if op != v3.FilterOperatorExists && op != v3.FilterOperatorNotExists {
 		value, err = utils.ValidateAndCastValue(item.Value, dataType)
 		if err != nil {
-			return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to validate and cast value for %s", item.Key.Key)
+			return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
 		}
 	}
 
@@ -177,7 +176,7 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 			filter = fmt.Sprintf("%s %s %s", key, logsOp, fmtVal)
 		}
 	} else {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %s", op)
+		return "", fmt.Errorf("unsupported operator: %s", op)
 	}
 
 	filters := []string{}

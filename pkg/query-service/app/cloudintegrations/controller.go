@@ -24,7 +24,7 @@ var SupportedCloudProviders = []string{
 
 func validateCloudProviderName(name string) *model.ApiError {
 	if !slices.Contains(SupportedCloudProviders, name) {
-		return model.BadRequest(errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid cloud provider: %s", name))
+		return model.BadRequest(fmt.Errorf("invalid cloud provider: %s", name))
 	}
 	return nil
 }
@@ -37,12 +37,12 @@ type Controller struct {
 func NewController(sqlStore sqlstore.SQLStore) (*Controller, error) {
 	accountsRepo, err := newCloudProviderAccountsRepository(sqlStore)
 	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't create cloud provider accounts repo")
+		return nil, fmt.Errorf("couldn't create cloud provider accounts repo: %w", err)
 	}
 
 	serviceConfigRepo, err := newServiceConfigRepository(sqlStore)
 	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't create cloud provider service config repo")
+		return nil, fmt.Errorf("couldn't create cloud provider service config repo: %w", err)
 	}
 
 	return &Controller{
@@ -104,7 +104,7 @@ type GenerateConnectionUrlResponse struct {
 func (c *Controller) GenerateConnectionUrl(ctx context.Context, orgId string, cloudProvider string, req GenerateConnectionUrlRequest) (*GenerateConnectionUrlResponse, *model.ApiError) {
 	// Account connection with a simple connection URL may not be available for all providers.
 	if cloudProvider != "aws" {
-		return nil, model.BadRequest(errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported cloud provider: %s", cloudProvider))
+		return nil, model.BadRequest(fmt.Errorf("unsupported cloud provider: %s", cloudProvider))
 	}
 
 	account, apiErr := c.accountsRepo.upsert(
@@ -199,8 +199,7 @@ func (c *Controller) CheckInAsAgent(ctx context.Context, orgId string, cloudProv
 
 	existingAccount, apiErr := c.accountsRepo.get(ctx, orgId, cloudProvider, req.ID)
 	if existingAccount != nil && existingAccount.AccountID != nil && *existingAccount.AccountID != req.AccountID {
-		return nil, model.BadRequest(errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
+		return nil, model.BadRequest(fmt.Errorf(
 			"can't check in with new %s account id %s for account %s with existing %s id %s",
 			cloudProvider, req.AccountID, existingAccount.ID.StringValue(), cloudProvider, *existingAccount.AccountID,
 		))
@@ -208,8 +207,7 @@ func (c *Controller) CheckInAsAgent(ctx context.Context, orgId string, cloudProv
 
 	existingAccount, apiErr = c.accountsRepo.getConnectedCloudAccount(ctx, orgId, cloudProvider, req.AccountID)
 	if existingAccount != nil && existingAccount.ID.StringValue() != req.ID {
-		return nil, model.BadRequest(errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
+		return nil, model.BadRequest(fmt.Errorf(
 			"can't check in to %s account %s with id %s. already connected with id %s",
 			cloudProvider, req.AccountID, req.ID, existingAccount.ID.StringValue(),
 		))
@@ -230,8 +228,8 @@ func (c *Controller) CheckInAsAgent(ctx context.Context, orgId string, cloudProv
 	// prepare and return integration config to be consumed by agent
 	compiledStrategy, err := NewCompiledCollectionStrategy(cloudProvider)
 	if err != nil {
-		return nil, model.InternalError(errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't init telemetry collection strategy",
+		return nil, model.InternalError(fmt.Errorf(
+			"couldn't init telemetry collection strategy: %w", err,
 		))
 	}
 
@@ -598,7 +596,7 @@ func (c *Controller) GetDashboardById(ctx context.Context, orgId valuer.UUID, da
 		}
 	}
 
-	return nil, model.NotFoundError(errors.NewNotFoundf(errors.CodeNotFound, "couldn't find dashboard with uuid: %s", dashboardUuid))
+	return nil, model.NotFoundError(fmt.Errorf("couldn't find dashboard with uuid: %s", dashboardUuid))
 }
 
 func (c *Controller) dashboardUuid(
@@ -610,7 +608,7 @@ func (c *Controller) dashboardUuid(
 func (c *Controller) parseDashboardUuid(dashboardUuid string) (cloudProvider string, svcId string, dashboardId string, apiErr *model.ApiError) {
 	parts := strings.SplitN(dashboardUuid, "--", 4)
 	if len(parts) != 4 || parts[0] != "cloud-integration" {
-		return "", "", "", model.BadRequest(errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid cloud integration dashboard id"))
+		return "", "", "", model.BadRequest(fmt.Errorf("invalid cloud integration dashboard id"))
 	}
 
 	return parts[1], parts[2], parts[3], nil

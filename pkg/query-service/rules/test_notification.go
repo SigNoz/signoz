@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -19,7 +18,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 	ctx := context.Background()
 
 	if opts.Rule == nil {
-		return 0, model.BadRequest(errors.NewInvalidInputf(errors.CodeInvalidInput, "rule is required"))
+		return 0, model.BadRequest(fmt.Errorf("rule is required"))
 	}
 
 	parsedRule := opts.Rule
@@ -80,7 +79,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 			return 0, model.BadRequest(err)
 		}
 	} else {
-		return 0, model.BadRequest(errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to derive ruletype with given information"))
+		return 0, model.BadRequest(fmt.Errorf("failed to derive ruletype with given information"))
 	}
 
 	// set timestamp to current utc time
@@ -89,11 +88,11 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 	count, err := rule.Eval(ctx, ts)
 	if err != nil {
 		zap.L().Error("evaluating rule failed", zap.String("rule", rule.Name()), zap.Error(err))
-		return 0, model.InternalError(errors.WrapInternalf(err, errors.CodeInternal, "rule evaluation failed"))
+		return 0, model.InternalError(fmt.Errorf("rule evaluation failed"))
 	}
 	alertsFound, ok := count.(int)
 	if !ok {
-		return 0, model.InternalError(errors.NewInternalf(errors.CodeInternal, "something went wrong"))
+		return 0, model.InternalError(fmt.Errorf("something went wrong"))
 	}
 	rule.SendAlerts(ctx, ts, 0, time.Duration(1*time.Minute), opts.NotifyFunc)
 

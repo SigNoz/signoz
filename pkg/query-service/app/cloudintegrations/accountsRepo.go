@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -63,8 +62,8 @@ func (r *cloudProviderAccountsSQLRepository) listConnected(
 		Scan(ctx)
 
 	if err != nil {
-		return nil, model.InternalError(errors.WrapInternalf(
-			err, errors.CodeInternal, "could not query connected cloud accounts",
+		return nil, model.InternalError(fmt.Errorf(
+			"could not query connected cloud accounts: %w", err,
 		))
 	}
 
@@ -84,12 +83,12 @@ func (r *cloudProviderAccountsSQLRepository) get(
 		Scan(ctx)
 
 	if err == sql.ErrNoRows {
-		return nil, model.NotFoundError(errors.NewNotFoundf(
-			errors.CodeNotFound, "couldn't find account with Id %s", id),
-		)
+		return nil, model.NotFoundError(fmt.Errorf(
+			"couldn't find account with Id %s", id,
+		))
 	} else if err != nil {
-		return nil, model.InternalError(errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't query cloud provider accounts",
+		return nil, model.InternalError(fmt.Errorf(
+			"couldn't query cloud provider accounts: %w", err,
 		))
 	}
 
@@ -111,12 +110,13 @@ func (r *cloudProviderAccountsSQLRepository) getConnectedCloudAccount(
 		Scan(ctx)
 
 	if err == sql.ErrNoRows {
-		return nil, model.NotFoundError(errors.NewNotFoundf(
-			errors.CodeNotFound, "couldn't find connected cloud account %s", accountId,
+		return nil, model.NotFoundError(fmt.Errorf(
+			"couldn't find connected cloud account %s", accountId,
 		))
 	} else if err != nil {
-		return nil, model.InternalError(
-			errors.WrapInternalf(err, errors.CodeInternal, "couldn't query cloud provider accounts"))
+		return nil, model.InternalError(fmt.Errorf(
+			"couldn't query cloud provider accounts: %w", err,
+		))
 	}
 
 	return &result, nil
@@ -201,15 +201,15 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 		Exec(ctx)
 
 	if dbErr != nil {
-		return nil, model.InternalError(errors.WrapInternalf(
-			dbErr, errors.CodeInternal, "could not upsert cloud account record",
+		return nil, model.InternalError(fmt.Errorf(
+			"could not upsert cloud account record: %w", dbErr,
 		))
 	}
 
 	upsertedAccount, apiErr := r.get(ctx, orgId, provider, *id)
 	if apiErr != nil {
-		return nil, model.InternalError(errors.WrapInternalf(
-			apiErr.ToError(), errors.CodeInternal, "couldn't fetch upserted account by id",
+		return nil, model.InternalError(fmt.Errorf(
+			"couldn't fetch upserted account by id: %w", apiErr.ToError(),
 		))
 	}
 

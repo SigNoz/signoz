@@ -3,10 +3,10 @@ package logparsingpipeline
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"slices"
 	"strings"
 
-	pkgErrors "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -84,7 +84,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 
 	cfg, err := agentConf.StartNewVersion(ctx, orgID, userID, opamptypes.ElementTypeLogPipelines, elements)
 	if err != nil || cfg == nil {
-		return nil, model.InternalError(pkgErrors.WrapInternalf(err, pkgErrors.CodeInternal, "failed to start new version"))
+		return nil, model.InternalError(fmt.Errorf("failed to start new version: %w", err))
 	}
 
 	return ic.GetPipelinesByVersion(ctx, orgID, cfg.Version)
@@ -125,8 +125,8 @@ func (ic *LogParsingPipelineController) ValidatePipelines(
 		ctx, gettablePipelines, sampleLogs,
 	)
 	if simulationErr != nil {
-		return model.BadRequest(pkgErrors.WrapInvalidInputf(
-			simulationErr.ToError(), pkgErrors.CodeInvalidInput, "invalid pipelines config",
+		return model.BadRequest(fmt.Errorf(
+			"invalid pipelines config: %w", simulationErr.ToError(),
 		))
 	}
 
@@ -144,8 +144,7 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 		savedPipelines, errors := ic.getPipelinesByVersion(ctx, orgID.String(), version)
 		if errors != nil {
 			zap.L().Error("failed to get pipelines for version", zap.Int("version", version), zap.Errors("errors", errors))
-			joinedErr := pkgErrors.Join(errors...)
-			return nil, model.InternalError(pkgErrors.WrapInternalf(joinedErr, pkgErrors.CodeInternal, "failed to get pipelines for given version"))
+			return nil, model.InternalError(fmt.Errorf("failed to get pipelines for given version %v", errors))
 		}
 		result = savedPipelines
 	}
@@ -200,7 +199,7 @@ func (ic *LogParsingPipelineController) GetPipelinesByVersion(
 	pipelines, errors := ic.getEffectivePipelinesByVersion(ctx, orgId, version)
 	if errors != nil {
 		zap.L().Error("failed to get pipelines for version", zap.Int("version", version), zap.Error(errors))
-		return nil, model.InternalError(pkgErrors.WrapInternalf(errors, pkgErrors.CodeInternal, "failed to get pipelines for given version"))
+		return nil, model.InternalError(fmt.Errorf("failed to get pipelines for given version %v", errors))
 	}
 
 	var configVersion *opamptypes.AgentConfigVersion

@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
@@ -333,7 +332,7 @@ func PrepareTimeseriesFilterQuery(start, end int64, mq *v3.BuilderQuery) (string
 			case v3.FilterOperatorNotILike:
 				conditions = append(conditions, fmt.Sprintf("notILike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
 			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported filter operator")
+				return "", fmt.Errorf("unsupported filter operator")
 			}
 		}
 	}
@@ -418,7 +417,7 @@ func PrepareTimeseriesFilterQueryV3(start, end int64, mq *v3.BuilderQuery) (stri
 			case v3.FilterOperatorNotExists:
 				conditions = append(conditions, fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", item.Key.Key))
 			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported filter operator")
+				return "", fmt.Errorf("unsupported filter operator")
 			}
 		}
 	}

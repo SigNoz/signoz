@@ -100,7 +100,7 @@ func (r *PromRule) getPqlQuery() (string, error) {
 				}
 			}
 		}
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql rule setup")
+		return "", fmt.Errorf("invalid promql rule setup")
 	}
 
 	if r.ruleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
@@ -109,14 +109,14 @@ func (r *PromRule) getPqlQuery() (string, error) {
 			if promQuery, ok := r.ruleCondition.CompositeQuery.PromQueries[selectedQuery]; ok {
 				query := promQuery.Query
 				if query == "" {
-					return query, errors.NewInvalidInputf(errors.CodeInvalidInput, "a promquery needs to be set for this rule to function")
+					return query, fmt.Errorf("a promquery needs to be set for this rule to function")
 				}
 				return query, nil
 			}
 		}
 	}
 
-	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql rule query")
+	return "", fmt.Errorf("invalid promql rule query")
 }
 
 func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
@@ -217,7 +217,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			resultFPs[h] = struct{}{}
 
 			if _, ok := alerts[h]; ok {
-				err = errors.NewInternalf(errors.CodeInternal, "vector contains metrics with the same labelset after applying alert labels")
+				err = fmt.Errorf("vector contains metrics with the same labelset after applying alert labels")
 				// We have already acquired the lock above hence using SetHealth and
 				// SetLastError will deadlock.
 				r.health = ruletypes.HealthBad
@@ -379,7 +379,7 @@ func (r *PromRule) RunAlertQuery(ctx context.Context, qs string, start, end time
 	case promql.Matrix:
 		return res.Value.(promql.Matrix), nil
 	default:
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "rule result is not a vector or scalar")
+		return nil, fmt.Errorf("rule result is not a vector or scalar")
 	}
 }
 

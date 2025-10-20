@@ -256,7 +256,7 @@ var timeSeriesFilterQueryData = []struct {
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeFloat64}, Value: true, Operator: "="},
 		}},
-		Error: "invalid-input(invalid_input): invalid data type, expected float, got bool",
+		Error: "failed to validate and cast value for bytes: invalid data type, expected float, got bool",
 	},
 	{
 		Name: "Test top level field with metadata",

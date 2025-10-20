@@ -6,7 +6,6 @@ import (
 
 	"github.com/SigNoz/govaluate"
 	"github.com/SigNoz/signoz/pkg/cache"
-	"github.com/SigNoz/signoz/pkg/errors"
 	metricsV3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -157,7 +156,7 @@ func (qb *QueryBuilder) PrepareLiveTailQuery(params *v3.QueryRangeParamsV3) (str
 	if compositeQuery != nil {
 		// There can only be a signle query and there is no concept of disabling queries
 		if len(compositeQuery.BuilderQueries) != 1 {
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "live tail is only supported for single query")
+			return "", fmt.Errorf("live tail is only supported for single query")
 		}
 		for queryName, query := range compositeQuery.BuilderQueries {
 			if query.Expression == queryName {

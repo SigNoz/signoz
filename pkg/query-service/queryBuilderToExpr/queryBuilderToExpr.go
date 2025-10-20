@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	expr "github.com/antonmedv/expr"
 	"go.uber.org/zap"
@@ -51,7 +50,7 @@ func Parse(filters *v3.FilterSet) (string, error) {
 	var res []string
 	for _, v := range filters.Items {
 		if _, ok := logOperatorsToExpr[v.Operator]; !ok {
-			return "", errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "operator not supported")
+			return "", fmt.Errorf("operator not supported")
 		}
 
 		name := getName(v.Key)

@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz-otel-collector/utils/fingerprint"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
@@ -32,7 +31,7 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 			Limit:      int(req.AttributesLimit),
 		})
 	if err != nil {
-		return nil, model.InternalError(errors.WrapInternalf(err, errors.CodeInternal, "couldn't get attribute keys"))
+		return nil, model.InternalError(fmt.Errorf("couldn't get attribute keys: %w", err))
 	}
 
 	suggestions.AttributeKeys = attribKeysResp.AttributeKeys
@@ -189,7 +188,9 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 	rows, err := r.db.Query(ctx, query, tagKeyQueryArgs...)
 	if err != nil {
 		zap.L().Error("couldn't query attrib values for suggestions", zap.Error(err))
-		return nil, model.InternalError(errors.WrapInternalf(err, errors.CodeInternal, "couldn't query attrib values for suggestions"))
+		return nil, model.InternalError(fmt.Errorf(
+			"couldn't query attrib values for suggestions: %w", err,
+		))
 	}
 	defer rows.Close()
 
@@ -212,7 +213,9 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 			&tagKey, &stringValue, &float64Value,
 		)
 		if err != nil {
-			return nil, model.InternalError(errors.WrapInternalf(err, errors.CodeInternal, "couldn't scan attrib value rows"))
+			return nil, model.InternalError(fmt.Errorf(
+				"couldn't scan attrib value rows: %w", err,
+			))
 		}
 
 		if len(stringValue) > 0 {
@@ -230,7 +233,9 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, model.InternalError(errors.WrapInternalf(err, errors.CodeInternal, "couldn't scan attrib value rows"))
+		return nil, model.InternalError(fmt.Errorf(
+			"couldn't scan attrib value rows: %w", err,
+		))
 	}
 
 	return result, nil

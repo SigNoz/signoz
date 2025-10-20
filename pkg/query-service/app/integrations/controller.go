@@ -2,8 +2,8 @@ package integrations
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -19,7 +19,7 @@ type Controller struct {
 func NewController(sqlStore sqlstore.SQLStore) (*Controller, error) {
 	mgr, err := NewManager(sqlStore)
 	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't create integrations manager")
+		return nil, fmt.Errorf("couldn't create integrations manager: %w", err)
 	}
 
 	return &Controller{
@@ -91,8 +91,8 @@ type UninstallIntegrationRequest struct {
 
 func (c *Controller) Uninstall(ctx context.Context, orgId string, req *UninstallIntegrationRequest) *model.ApiError {
 	if len(req.IntegrationId) < 1 {
-		return model.BadRequest(errors.NewInvalidInputf(
-			errors.CodeInvalidInput, "integration_id is required",
+		return model.BadRequest(fmt.Errorf(
+			"integration_id is required",
 		))
 	}
 

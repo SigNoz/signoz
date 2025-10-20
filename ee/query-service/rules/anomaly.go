@@ -12,7 +12,6 @@ import (
 
 	"github.com/SigNoz/signoz/ee/query-service/anomaly"
 	"github.com/SigNoz/signoz/pkg/cache"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/transition"
@@ -216,7 +215,7 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 	}
 	err = r.PopulateTemporality(ctx, orgID, params)
 	if err != nil {
-		return nil, errors.NewInternalf(errors.CodeInternal, "internal error while setting temporality")
+		return nil, fmt.Errorf("internal error while setting temporality")
 	}
 
 	anomalies, err := r.provider.GetAnomalies(ctx, orgID, &anomaly.GetAnomaliesRequest{
@@ -397,10 +396,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 
 		if _, ok := alerts[h]; ok {
 			r.logger.ErrorContext(ctx, "the alert query returns duplicate records", "rule_id", r.ID(), "alert", alerts[h])
-			err = errors.NewInternalf(
-				errors.CodeInternal,
-				"duplicate alert found, vector contains metrics with the same labelset after applying alert labels",
-			)
+			err = fmt.Errorf("duplicate alert found, vector contains metrics with the same labelset after applying alert labels")
 			return nil, err
 		}
 

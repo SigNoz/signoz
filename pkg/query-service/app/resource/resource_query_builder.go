@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
@@ -169,7 +168,7 @@ func buildResourceFiltersFromFilterItems(fs *v3.FilterSet) ([]string, error) {
 		// will be an interface if the operator is IN or NOT IN
 		if item.Key.DataType != v3.AttributeKeyDataTypeString &&
 			(op != v3.FilterOperatorIn && op != v3.FilterOperatorNotIn) {
-			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid data type for resource attribute: %s", item.Key.Key)
+			return nil, fmt.Errorf("invalid data type for resource attribute: %s", item.Key.Key)
 		}
 
 		var value interface{}
@@ -178,7 +177,7 @@ func buildResourceFiltersFromFilterItems(fs *v3.FilterSet) ([]string, error) {
 			// make sure to cast the value regardless of the actual type
 			value, err = utils.ValidateAndCastValue(item.Value, item.Key.DataType)
 			if err != nil {
-				return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to validate and cast value for %s", item.Key.Key)
+				return nil, fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
 			}
 		}
 
@@ -192,7 +191,7 @@ func buildResourceFiltersFromFilterItems(fs *v3.FilterSet) ([]string, error) {
 				conditions = append(conditions, resourceIndexFilter)
 			}
 		} else {
-			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %s", op)
+			return nil, fmt.Errorf("unsupported operator: %s", op)
 		}
 
 	}

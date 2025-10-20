@@ -5,7 +5,6 @@ import (
 	"math"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
@@ -159,7 +158,7 @@ func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 				var err error
 				val, err = utils.ValidateAndCastValue(val, item.Key.DataType)
 				if err != nil {
-					return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid value for key %s", item.Key.Key)
+					return "", fmt.Errorf("invalid value for key %s: %v", item.Key.Key, err)
 				}
 			}
 			if val != nil {
@@ -188,7 +187,7 @@ func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, operator, fmtVal))
 				}
 			} else {
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %s", item.Operator)
+				return "", fmt.Errorf("unsupported operator %s", item.Operator)
 			}
 		}
 	}
@@ -208,10 +207,7 @@ func ExistsSubQueryForFixedColumn(key v3.AttributeKey, op v3.FilterOperator) (st
 			return fmt.Sprintf("%s %s ''", key.Key, tracesOperatorMappingV3[v3.FilterOperatorEqual]), nil
 		}
 	} else {
-		return "", errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"unsupported operation: exists/not exists can only be applied on string-type columns or custom attributes",
-		)
+		return "", fmt.Errorf("unsupported operation, exists and not exists can only be applied on custom attributes or string type columns")
 	}
 }
 
@@ -341,7 +337,7 @@ func ReduceToQuery(query string, reduceTo v3.ReduceToOperator, _ v3.AggregateOpe
 	case v3.ReduceToOperatorMin:
 		query = fmt.Sprintf("SELECT min(value) as value, now() as ts FROM (%s) %s", query, groupBy)
 	default:
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported reduce operator: %s", reduceTo)
+		return "", fmt.Errorf("unsupported reduce operator")
 	}
 	return query, nil
 }

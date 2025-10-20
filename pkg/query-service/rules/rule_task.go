@@ -2,11 +2,11 @@ package rules
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"sync"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -258,7 +258,7 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 
 	from, ok := fromTask.(*RuleTask)
 	if !ok {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid from task for copy")
+		return fmt.Errorf("invalid from task for copy")
 	}
 	g.evaluationTime = from.evaluationTime
 	g.lastEvaluation = from.lastEvaluation

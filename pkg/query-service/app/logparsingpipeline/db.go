@@ -3,9 +3,9 @@ package logparsingpipeline
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
-	pkgErrors "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -55,7 +55,7 @@ func (r *Repo) insertPipeline(
 
 	claims, errv2 := authtypes.ClaimsFromContext(ctx)
 	if errv2 != nil {
-		return nil, model.UnauthorizedError(pkgErrors.WrapInternalf(errv2, pkgErrors.CodeInternal, "failed to get email from context"))
+		return nil, model.UnauthorizedError(fmt.Errorf("failed to get email from context"))
 	}
 
 	insertRow := &pipelinetypes.GettablePipeline{
@@ -110,7 +110,7 @@ func (r *Repo) getPipelinesByVersion(
 		Order("p.order_id ASC").
 		Scan(ctx)
 	if err != nil {
-		return nil, []error{pkgErrors.WrapInternalf(err, pkgErrors.CodeInternal, "failed to get pipelines from db")}
+		return nil, []error{fmt.Errorf("failed to get pipelines from db: %v", err)}
 	}
 
 	gettablePipelines := make([]pipelinetypes.GettablePipeline, len(storablePipelines))
@@ -149,7 +149,7 @@ func (r *Repo) GetPipeline(
 
 	if len(storablePipelines) == 0 {
 		zap.L().Warn("No row found for ingestion pipeline id", zap.String("id", id))
-		return nil, model.NotFoundError(pkgErrors.NewNotFoundf(pkgErrors.CodeNotFound, "no row found for ingestion pipeline id %v", id))
+		return nil, model.NotFoundError(fmt.Errorf("no row found for ingestion pipeline id %v", id))
 	}
 
 	if len(storablePipelines) == 1 {
@@ -170,7 +170,7 @@ func (r *Repo) GetPipeline(
 		return &gettablePipeline, nil
 	}
 
-	return nil, model.InternalError(pkgErrors.NewInternalf(pkgErrors.CodeInternal, "multiple pipelines with same id"))
+	return nil, model.InternalError(fmt.Errorf("multiple pipelines with same id"))
 }
 
 func (r *Repo) DeletePipeline(ctx context.Context, orgID string, id string) error {

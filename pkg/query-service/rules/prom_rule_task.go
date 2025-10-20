@@ -2,11 +2,11 @@ package rules
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"sync"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -264,7 +264,7 @@ func (g *PromRuleTask) CopyState(fromTask Task) error {
 
 	from, ok := fromTask.(*PromRuleTask)
 	if !ok {
-		return errors.NewInternalf(errors.CodeInternal, "you can only copy rule groups with same type")
+		return fmt.Errorf("you can only copy rule groups with same type")
 	}
 
 	g.evaluationTime = from.evaluationTime

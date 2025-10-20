@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -97,7 +96,7 @@ func buildSingleFilterCondition(key string, op v3.FilterOperator, fmtVal string,
 	case v3.FilterOperatorNotExists:
 		return fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", key), nil
 	default:
-		return "", errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "unsupported filter operator: %s", op)
+		return "", fmt.Errorf("unsupported filter operator: %s", op)
 	}
 }
 

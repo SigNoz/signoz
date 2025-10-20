@@ -3,10 +3,10 @@ package agentConf
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strings"
 	"time"
 
-	pkgErrors "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -106,8 +106,7 @@ func (r *Repo) insertConfig(
 ) (fnerr *model.ApiError) {
 
 	if c.ElementType.StringValue() == "" {
-		return model.BadRequest(pkgErrors.NewInvalidInputf(
-			pkgErrors.CodeInvalidInput,
+		return model.BadRequest(fmt.Errorf(
 			"element type is required for creating agent config version",
 		))
 	}
@@ -115,7 +114,7 @@ func (r *Repo) insertConfig(
 	// allowing empty elements for logs - use case is deleting all pipelines
 	if len(elements) == 0 && c.ElementType != opamptypes.ElementTypeLogPipelines {
 		zap.L().Error("insert config called with no elements ", zap.String("ElementType", c.ElementType.StringValue()))
-		return model.BadRequest(pkgErrors.NewInvalidInputf(pkgErrors.CodeInvalidInput, "config must have at least one element"))
+		return model.BadRequest(fmt.Errorf("config must have atleast one element"))
 	}
 
 	if c.Version != 0 {
@@ -123,8 +122,7 @@ func (r *Repo) insertConfig(
 		// in a monotonically increasing order starting with 1. hence, we reject insert
 		// requests with version anything other than 0. here, 0 indicates un-assigned
 		zap.L().Error("invalid version assignment while inserting agent config", zap.Int("version", c.Version), zap.String("ElementType", c.ElementType.StringValue()))
-		return model.BadRequest(pkgErrors.NewInvalidInputf(
-			pkgErrors.CodeInvalidInput,
+		return model.BadRequest(fmt.Errorf(
 			"user defined versions are not supported in the agent config",
 		))
 	}
@@ -132,7 +130,7 @@ func (r *Repo) insertConfig(
 	configVersion, err := r.GetLatestVersion(ctx, orgId, c.ElementType)
 	if err != nil && err.Type() != model.ErrorNotFound {
 		zap.L().Error("failed to fetch latest config version", zap.Error(err))
-		return model.InternalError(pkgErrors.WrapInternalf(err, pkgErrors.CodeInternal, "failed to fetch latest config version"))
+		return model.InternalError(fmt.Errorf("failed to fetch latest config version"))
 	}
 
 	if configVersion != nil {
@@ -208,7 +206,7 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 		Exec(ctx)
 	if err != nil {
 		zap.L().Error("failed to update deploy status", zap.Error(err))
-		return model.BadRequest(pkgErrors.WrapInternalf(err, pkgErrors.CodeInternal, "failed to update deploy status"))
+		return model.BadRequest(fmt.Errorf("failed to update deploy status"))
 	}
 
 	return nil
