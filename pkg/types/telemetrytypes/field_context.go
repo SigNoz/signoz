@@ -98,7 +98,7 @@ func (f *FieldContext) UnmarshalJSON(data []byte) error {
 // Scan implements the sql.Scanner interface
 func (f *FieldContext) Scan(value interface{}) error {
 	if f == nil {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "fieldcontext: nil receiver")
+		return errors.NewInternalf(errors.CodeInternal, "fieldcontext: nil receiver")
 	}
 
 	if value == nil {
@@ -108,7 +108,7 @@ func (f *FieldContext) Scan(value interface{}) error {
 
 	str, ok := value.(string)
 	if !ok {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "fieldcontext: expected string, got %T", value)
+		return errors.NewInternalf(errors.CodeInternal, "fieldcontext: expected string, got %T", value)
 	}
 
 	// Normalize the string

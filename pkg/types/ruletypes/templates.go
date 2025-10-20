@@ -299,12 +299,12 @@ func (te TemplateExpander) Expand() (result string, resultErr error) {
 
 	tmpl, err := text_template.New(te.name).Funcs(te.funcMap).Option("missingkey=zero").Parse(te.text)
 	if err != nil {
-		return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "error parsing template %v", te.name)
+		return "", errors.WrapInternalf(err, errors.CodeInternal, "error parsing template %v", te.name)
 	}
 	var buffer bytes.Buffer
 	err = tmpl.Execute(&buffer, te.data)
 	if err != nil {
-		return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "error executing template %v", te.name)
+		return "", errors.WrapInternalf(err, errors.CodeInternal, "error executing template %v", te.name)
 	}
 	return buffer.String(), nil
 }

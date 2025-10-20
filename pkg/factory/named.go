@@ -53,8 +53,8 @@ func (n *NamedMap[T]) Get(namestr string) (t T, err error) {
 
 	factory, ok := n.factories[name]
 	if !ok {
-		err = errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
+		err = errors.NewNotFoundf(
+			errors.CodeNotFound,
 			"factory %q not found or not registered",
 			name,
 		)
@@ -70,8 +70,9 @@ func (n *NamedMap[T]) Get(namestr string) (t T, err error) {
 func (n *NamedMap[T]) Add(factory T) (err error) {
 	name := factory.Name()
 	if _, ok := n.factories[name]; ok {
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
+		return errors.Newf(
+			errors.TypeAlreadyExists,
+			errors.CodeAlreadyExists,
 			"factory %q already exists",
 			name,
 		)

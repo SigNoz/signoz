@@ -185,7 +185,7 @@ func validateConfig(config Config) error {
 		}
 
 		if err := factoryConfig.Validate(); err != nil {
-			return errors.WrapInternalf(err, errors.CodeInternal, "failed to validate config %q", rvConfig.Type().Field(i).Tag.Get("mapstructure"))
+			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to validate config %q", rvConfig.Type().Field(i).Tag.Get("mapstructure"))
 		}
 	}
 
