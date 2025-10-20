@@ -27,6 +27,7 @@ func NewFactory(hookFactories ...factory.ProviderFactory[sqlstore.SQLStoreHook, 
 			if err != nil {
 				return nil, err
 			}
+
 			hooks[i] = hook
 		}
 

@@ -12,6 +12,7 @@ import (
 
 var (
 	ErrCodeUnknownValuerScan = errors.MustNewCode("unknown_valuer_scan")
+	ErrCodeInvalidValuer     = errors.MustNewCode("invalid_valuer")
 )
 
 type Valuer interface {
