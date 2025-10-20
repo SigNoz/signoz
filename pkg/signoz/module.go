@@ -3,10 +3,13 @@ package signoz
 import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
+	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
+	"github.com/SigNoz/signoz/pkg/modules/authdomain"
+	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -21,6 +24,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/modules/services/implservices"
+	"github.com/SigNoz/signoz/pkg/modules/session"
+	"github.com/SigNoz/signoz/pkg/modules/session/implsession"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -28,6 +33,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 )
@@ -37,6 +43,7 @@ type Modules struct {
 	OrgSetter     organization.Setter
 	Preference    preference.Module
 	User          user.Module
+	UserGetter    user.Getter
 	SavedView     savedview.Module
 	Apdex         apdex.Module
 	Dashboard     dashboard.Module
@@ -44,11 +51,13 @@ type Modules struct {
 	TraceFunnel   tracefunnel.Module
 	RawDataExport rawdataexport.Module
 	Services      services.Module
+	AuthDomain    authdomain.Module
+	Session       session.Module
 }
 
 func NewModules(
 	sqlstore sqlstore.SQLStore,
-	jwt *authtypes.JWT,
+	tokenizer tokenizer.Tokenizer,
 	emailing emailing.Emailing,
 	providerSettings factory.ProviderSettings,
 	orgGetter organization.Getter,
@@ -56,10 +65,12 @@ func NewModules(
 	analytics analytics.Analytics,
 	querier querier.Querier,
 	telemetryStore telemetrystore.TelemetryStore,
+	authNs map[authtypes.AuthNProvider]authn.AuthN,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
-	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), jwt, emailing, providerSettings, orgSetter, analytics)
+	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, analytics)
+	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 	return Modules{
 		OrgGetter:     orgGetter,
 		OrgSetter:     orgSetter,
@@ -68,9 +79,12 @@ func NewModules(
 		Apdex:         implapdex.NewModule(sqlstore),
 		Dashboard:     impldashboard.NewModule(sqlstore, providerSettings, analytics),
 		User:          user,
+		UserGetter:    userGetter,
 		QuickFilter:   quickfilter,
 		TraceFunnel:   impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 		RawDataExport: implrawdataexport.NewModule(querier),
 		Services:      implservices.NewModule(querier, telemetryStore),
+		AuthDomain:    implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)),
+		Session:       implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)), tokenizer, orgGetter),
 	}
 }

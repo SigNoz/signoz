@@ -4,6 +4,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
+	"github.com/SigNoz/signoz/pkg/modules/authdomain"
+	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -18,6 +20,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/modules/services/implservices"
+	"github.com/SigNoz/signoz/pkg/modules/session"
+	"github.com/SigNoz/signoz/pkg/modules/session/implsession"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -35,13 +39,15 @@ type Handlers struct {
 	TraceFunnel   tracefunnel.Handler
 	RawDataExport rawdataexport.Handler
 	Services      services.Handler
+	AuthDomain    authdomain.Handler
+	Session       session.Handler
 }
 
 func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Handlers {
 	return Handlers{
 		Organization:  implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
 		Preference:    implpreference.NewHandler(modules.Preference),
-		User:          impluser.NewHandler(modules.User),
+		User:          impluser.NewHandler(modules.User, modules.UserGetter),
 		SavedView:     implsavedview.NewHandler(modules.SavedView),
 		Apdex:         implapdex.NewHandler(modules.Apdex),
 		Dashboard:     impldashboard.NewHandler(modules.Dashboard, providerSettings),
@@ -49,5 +55,7 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Han
 		TraceFunnel:   impltracefunnel.NewHandler(modules.TraceFunnel),
 		RawDataExport: implrawdataexport.NewHandler(modules.RawDataExport),
 		Services:      implservices.NewHandler(modules.Services),
+		AuthDomain:    implauthdomain.NewHandler(modules.AuthDomain),
+		Session:       implsession.NewHandler(modules.Session),
 	}
 }

@@ -22,6 +22,7 @@ import EndPointDetails from '../Explorer/Domains/DomainDetails/EndPointDetails';
 
 // Mock dependencies
 jest.mock('react-query', () => ({
+	...jest.requireActual('react-query'),
 	useQueries: jest.fn(),
 }));
 
